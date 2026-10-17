@@ -41,6 +41,12 @@ object AutoEnrich:
   def queued(runId: String): String = s"enrichment queued: run $runId"
   def notQueued(why: String): String = s"enrichment not queued: $why"
 
+  /** The note when the source went to the enrich manager (docs/research-process-managers.md, phase 2):
+    * its item, and — unless the manager is active — that nothing runs until a person resumes it. */
+  def managed(item: Long, managerState: String): String =
+    s"enrichment queued: item #$item of the enrich manager" +
+      (if managerState == "active" then "" else s" ($managerState — resume it in the Managers window to start)")
+
   def note(skip: Skip): Option[String] = skip match
     case Skip.Off           => None
     case Skip.Enriched(why) => Some(notQueued(why))

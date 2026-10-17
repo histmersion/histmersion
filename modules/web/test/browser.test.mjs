@@ -1389,3 +1389,88 @@ test('#1946: a finding with no confidence is drawn unstated, not high, and the l
     assert.match(await page.locator('.leaflet-popup-content').innerText(), /confidence not stated/);
   });
 });
+
+// Process managers, phase 2: the goals window's New research area form and the article window's
+// Review / Extend / Enrich buttons, against fixed answers (nothing is written): the form refuses an
+// existing slug, creates the goal at the slug made from the title, starts the planner and creates the
+// seeding manager (paused) when ticked; watching is offered but disabled (phase 3). The buttons post the
+// kind to /api/agents/enqueue and say what was queued.
+test('managers phase 2: the New research area form and the Review / Extend / Enrich buttons', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/config', async route => {
+      const res = await route.fetch();
+      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true } });
+    });
+    const asked = [];
+    await page.route('**/api/goals/zz-pw-tin-trade', route => {
+      const r = route.request();
+      asked.push(`${r.method()} goal`);
+      if (r.method() === 'GET') return route.fulfill({ status: 404, json: { message: 'No goal', code: 'not-found' } });
+      asked.push(JSON.parse(r.postData()));
+      return route.fulfill({ json: { slug: 'zz-pw-tin-trade', title: 'Zz PW tin trade', status: 'planned', tags: ['tin'] } });
+    });
+    await page.route('**/api/goals/zz-pw-exists', route =>
+      route.fulfill({ json: { slug: 'zz-pw-exists', title: 'Exists', status: 'planned' } }));
+    await page.route('**/api/agents/runs', route => {
+      asked.push(['run', JSON.parse(route.request().postData())]);
+      return route.fulfill({ json: { id: 'zz-run', pipeline: 'plan-goal', target: 'zz-pw-tin-trade', status: 'queued' } });
+    });
+    await page.route('**/api/agents/managers', route => {
+      if (route.request().method() !== 'POST') return route.continue();
+      asked.push(['manager', JSON.parse(route.request().postData())]);
+      return route.fulfill({ json: { id: 'seed:zz-pw-tin-trade', kind: 'seed', goal: 'zz-pw-tin-trade', state: 'paused' } });
+    });
+    await page.route('**/api/goals/zz-pw-tin-trade/view', route => route.fulfill({ status: 404, json: { message: 'fixture' } }));
+    await page.goto(new URL('/#open=goals', baseURL).href);
+    await page.reload();
+    const pane = page.locator('.goals-pane');
+    await pane.locator('.goal-new > summary').click();
+    const form = pane.locator('.goal-new-form');
+    const watch = form.locator('.goal-on.is-disabled input');
+    assert.equal(await watch.isDisabled(), true, 'watch is phase 3');
+    // an existing slug is refused, never replaced
+    await form.locator('input[aria-label="title"]').fill('Exists');
+    await form.locator('input[aria-label="slug"]').fill('zz-pw-exists');
+    await form.locator('button', { hasText: 'create' }).click();
+    await form.locator('.form-error').waitFor();
+    assert.match(await form.locator('.form-error').innerText(), /exists already/);
+    assert.ok(!asked.some(a => a === 'PUT goal'));
+    // a new one: slug from the title, the goal, the planner, the seeding manager
+    await form.locator('input[aria-label="slug"]').fill('');
+    await form.locator('input[aria-label="title"]').fill('Zz PW tin trade');
+    await form.locator('input[aria-label="tags"]').fill('tin, trade');
+    await form.locator('button', { hasText: 'create' }).click();
+    await page.waitForFunction(() => document.querySelector('.goal-new-form .form-ok'));
+    assert.match(await form.locator('.form-ok').innerText(), /zz-pw-tin-trade created.*planner is running.*seed:zz-pw-tin-trade created paused/);
+    assert.deepEqual(asked.filter(a => typeof a === 'string'), ['GET goal', 'PUT goal']);
+    assert.deepEqual(asked.find(a => a.title).tags, ['tin', 'trade']);
+    const run = asked.find(a => a[0] === 'run')[1];
+    assert.deepEqual([run.pipeline, run.target], ['plan-goal', 'zz-pw-tin-trade']);
+    assert.deepEqual(asked.find(a => a[0] === 'manager')[1].goal, 'zz-pw-tin-trade');
+    assert.equal(asked.find(a => a[0] === 'manager')[1].kind, 'seed');
+
+    // the article window's buttons
+    const enq = [];
+    await page.route('**/api/agents/enqueue', route => {
+      const body = JSON.parse(route.request().postData());
+      enq.push(body);
+      const item = (id, kind, target) => ({ id, managerId: body.kind === 'enrich' ? 'enrich' : 'review', kind, target, status: 'pending' });
+      return route.fulfill({ json: body.kind === 'enrich'
+        ? { managerId: 'enrich', items: [item(1, 'source-enrich', 'a'), item(2, 'source-enrich', 'b')], skipped: ['[[c]]: notes'] }
+        : { managerId: 'review', items: [item(7, body.kind === 'extend' ? 'article-extend' : 'article-review', body.target)] } });
+    });
+    await page.goto(new URL('/#open=article:zz_pw_article', baseURL).href);
+    await page.reload();
+    const actions = page.locator('.wm-actions').filter({ has: page.locator('button', { hasText: 'extend' }) });
+    await actions.locator('button', { hasText: 'extend' }).click();
+    await actions.locator('.wm-note').waitFor();
+    assert.match(await actions.locator('.wm-note').innerText(), /queued to be extended, then reviewed \(item #7, pending\)/);
+    await actions.locator('button', { hasText: 'enrich' }).click();
+    await page.waitForFunction(() => /2 items queued for enrichment; 1 source enriched already/.test(
+      document.querySelector('.wm-actions .wm-note')?.innerText || ''));
+    await actions.locator('button', { hasText: 'review' }).click();
+    await page.waitForFunction(() => /queued for review/.test(document.querySelector('.wm-actions .wm-note')?.innerText || ''));
+    assert.deepEqual(enq.map(e => [e.kind, e.target, e.priority]),
+      [['extend', 'zz_pw_article', 10], ['enrich', 'zz_pw_article', 10], ['review', 'zz_pw_article', 10]]);
+  });
+});

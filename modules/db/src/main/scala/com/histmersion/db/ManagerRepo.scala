@@ -137,10 +137,10 @@ object ManagerRepo:
     * the priority is raised to `priority` (an active one keeps running). Returns the item's id and
     * whether it was new. */
   def upsert(ds: DataSource, managerId: String, kind: String, target: String, origin: ItemOrigin, priority: Int,
-      reopen: Boolean): (Long, Boolean) =
+      reopen: Boolean, initial: ItemState = ItemState()): (Long, Boolean) =
     transact(ds):
-      sql"""INSERT INTO manager_items (manager_id, kind, target, origin, priority)
-            VALUES ($managerId, $kind, $target, ${origin.wire}, $priority)
+      sql"""INSERT INTO manager_items (manager_id, kind, target, origin, priority, state)
+            VALUES ($managerId, $kind, $target, ${origin.wire}, $priority, $initial::jsonb)
             ON CONFLICT (manager_id, kind, target) DO NOTHING RETURNING id""".query[Long].run().headOption match
         case Some(id) => (id, true)
         case None =>
@@ -184,15 +184,17 @@ object ManagerRepo:
         case _ => Nil
     }
 
-  /** Record an evaluation (keyed by the run: a second evaluation of the same run changes nothing). */
+  /** Record an evaluation (keyed by the run: a second evaluation of the same run changes nothing).
+    * `hold` = the hold it is left in (`held`: waiting for an approval). */
   def evaluated(ds: DataSource, itemId: Long, run: Option[String], status: ItemStatus, notBefore: Option[java.time.Instant],
-      failures: Option[Int], state: ItemState, outcome: Option[String]): Boolean =
+      failures: Option[Int], state: ItemState, outcome: Option[String], hold: Option[Hold] = None): Boolean =
     val nb  = notBefore.map(_.toString)
     val key = run.getOrElse("")
     transact(ds):
       sql"""UPDATE manager_items SET status = ${status.wire}, evaluated_run = coalesce($run, evaluated_run),
                                      not_before = $nb::timestamptz, failures = coalesce($failures, failures),
-                                     state = $state::jsonb, outcome = coalesce($outcome, outcome), updated_at = now()
+                                     state = $state::jsonb, outcome = coalesce($outcome, outcome), hold = $hold::jsonb,
+                                     updated_at = now()
             WHERE id = $itemId AND status = 'active'
               AND coalesce(run_id, '') = $key AND evaluated_run IS DISTINCT FROM $run""".update.run() > 0
 
@@ -227,6 +229,27 @@ object ManagerRepo:
                                        to_jsonb(coalesce((state->>'reopened')::int, 0) + 1)),
                                      updated_at = now()
             WHERE id = $itemId AND status IN ('done', 'stopped', 'failed', 'cancelled')""".update.run() > 0
+
+  /** A converged item selected again because it went stale: pending at `priority` (exactly: the lowest),
+    * its runs counted from zero, its run history dropped (a new cycle), why in its outcome. */
+  def restale(ds: DataSource, itemId: Long, priority: Int, why: String): Boolean =
+    transact(ds):
+      sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, hold = NULL,
+                                     priority = $priority, origin = ${ItemOrigin.Selection.wire}, outcome = $why,
+                                     state = state - 'history', updated_at = now()
+            WHERE id = $itemId AND status = 'done'""".update.run() > 0
+
+  /** A manager's open items (pending, held, active) as (kind, target) — what [[com.histmersion.core.ManagerPolicy.waitsFor]] reads. */
+  def openKeys(ds: DataSource, managerId: String): List[(String, String)] =
+    connect(ds):
+      sql"""SELECT kind, target FROM manager_items WHERE manager_id = $managerId
+            AND status IN ('pending', 'held', 'active')""".query[(String, String)].run().toList
+
+  /** Does manager `managerId` have (or ever had) an item of `kind` on `target`? */
+  def hasItem(ds: DataSource, managerId: String, kind: String, target: String): Boolean =
+    connect(ds):
+      sql"""SELECT 1 FROM manager_items WHERE manager_id = $managerId AND kind = $kind AND target = $target"""
+        .query[Int].run().nonEmpty
 
   /** Every open item of a manager cancelled (a stop); returns how many. */
   def cancelOpen(ds: DataSource, managerId: String, why: String): Int =
@@ -274,6 +297,37 @@ object ManagerRepo:
               AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = $managerId AND i.kind = $kind
                               AND i.target = a.slug)
             ORDER BY a.updated_at, a.slug LIMIT ${math.max(1, limit)}""".query[String].run().toList
+
+  /** The review manager's stale candidates: its converged review items (by when they converged: their
+    * item's `updated_at`, with the filter hits recorded then), then articles whose ledger holds no open
+    * MAJOR and that no item of it drives (by the ledger's `updated_at`) — oldest first, `tags`/`goal`
+    * narrowing as in the selection. (slug, converged at, filter hits then, the done item if any). */
+  def staleCandidates(ds: DataSource, managerId: String, kind: String, tags: List[String], goal: Option[String],
+      limit: Int): List[(String, String, Option[Int], Option[Long])] =
+    val lim = math.max(1, limit)
+    val g   = goal.map(_.trim).getOrElse("")
+    connect(ds):
+      val done = Sql.of(
+        s"""SELECT i.target, ${at("i.updated_at")}, (i.state->>'filterHits')::int, i.id FROM manager_items i
+            JOIN articles a ON a.slug = i.target
+            WHERE i.manager_id = ? AND i.kind = ? AND i.status = 'done' AND a.tags @> ?::text[]
+              AND (? = '' OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = ?
+                                     AND g.kind = 'article' AND g.ref = a.slug))
+            ORDER BY i.updated_at, i.id LIMIT ?""",
+        Param.S(managerId), Param.S(kind), Param.A(tags), Param.S(g), Param.S(g), Param.I(lim))
+        .frag.query[(String, String, Option[Int], Long)].run().toList.map((s, t, n, id) => (s, t, n, Some(id)))
+      val ledgers = Sql.of(
+        s"""SELECT l.slug, ${at("l.updated_at")} FROM review_ledgers l JOIN articles a ON a.slug = l.slug
+            WHERE a.kind <> 'index' AND a.tags @> ?::text[]
+              AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
+                              WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')
+              AND (? = '' OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = ?
+                                     AND g.kind = 'article' AND g.ref = a.slug))
+              AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = ? AND i.kind = ? AND i.target = a.slug)
+            ORDER BY l.updated_at, l.slug LIMIT ?""",
+        Param.A(tags), Param.S(g), Param.S(g), Param.S(managerId), Param.S(kind), Param.I(lim))
+        .frag.query[(String, String)].run().toList.map((s, t) => (s, t, None, None))
+      (done ++ ledgers).sortBy(_._2).take(lim)
 
   /** An article's tags and the goals it is linked to (what a hint's effect matches). */
   def articleFacets(ds: DataSource, slug: String): (List[String], List[String]) =

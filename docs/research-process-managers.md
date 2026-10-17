@@ -132,3 +132,60 @@ paragraph, reasoned, or open) is a closed list the runs can finish.
   `pairsBefore` ≤ its last `pairsAfter`, both known). With only missing-critique MAJORs open the open-MAJOR
   no-progress rule does not apply (a MAJOR per open pair keeps it flat while the pairs go down);
   `maxRunsPerArticle`, escalation and the reopen limit still stop. Unknown counts never stall.
+
+## As built (phase 2)
+
+Branch `managers-phase2` (#1728). No migration: everything new lives in the V087 columns (`manager_items.kind/state/hold`
+jsonb, `approvals.kind/subject/proposal`) — V092 is not used.
+
+- **Item kinds** (`Managers`): review manager `article-review`, `infer-filter`, `article-extend`; enrich manager
+  `source-enrich`; seeding manager `propose-articles`, `article-compile`. `ItemOrigin` gains `ingest`. The supervisor
+  (`ManagerSupervisor`) runs `review`, `enrich` and `seed` managers; `watch` stays reserved. `ensureDefaults` now creates
+  `review` AND `enrich`, both **paused**; `seed:<goal>` is created paused by `POST /api/agents/managers {kind: seed, goal}`,
+  the New research area form, the goal's Extend button, or an approved plan.
+- **Two new pipelines** (planner role, read-only tools): `infer-filter <article>` (agent `filter-inferrer`) and
+  `propose-articles <goal>` (agent `article-planner`). Their pure checks are `core.FilterInference` (the filter returns
+  `agents.infer-filter.min-hits..max-hits` sources and at least `min-cited-share` of the sources the article cites; a
+  failing answer goes back with the numbers, the last attempt proposes nothing) and `core.PlanArticles` (valid, free slug
+  — no article, no old slug, not already planned —, filter ≥ `minSources` hits, overlap < `agents.seed.max-overlap` with
+  every article linked to the goal, every planned compile item, and every proposal kept before it).
+- **Deviation — non-blocking approvals.** §4 reads as if both pipelines wait for their approval. A waiting run counts
+  toward `maxRuns` (#1803), so two filters waiting for a person would stall the review manager. Instead the run records
+  an `article-filter` / `article-plan` approval (new `ApprovalKind`s, `blocking = false`, about a `subject`) and
+  finishes; the manager evaluates the run as `Next.Wait(approval)` and holds the item with `Hold.untilApproval`. The tick
+  settles it once a person decides: approved → done (an approved plan becomes one `article-compile` item per article,
+  carrying its `ArticleSpec` in `ItemState.spec`), rejected/failed → stopped. Approving an `article-filter` records the
+  filter (`Approvals.decideSubject`, unless the article got one meanwhile); `agents.approvals.article-filter = auto`
+  records it inside the run. `article-plan` is always manual — no setting.
+- **Infer-filter before review.** The selection (`ManagerPolicy.select`, pure) adds an `infer-filter` item at the
+  review's priority for an article that records no filter and never had one inferred; a person's enqueue does the same
+  (`ManagersHandlers.filterFirst`). Dispatch makes the review wait while that item is open (`ManagerPolicy.waitsFor`).
+  `inferFilter` (config, default `agents.managers.review.infer-filter = true`) turns it off.
+- **Stale.** A converged review item stores the filter's hit count (`ItemState.filterHits`). At most every
+  `stale-scan-minutes`, when the selection has room, `ManagerRepo.staleCandidates` (done items, then ledgers with no open
+  MAJOR and no item) are judged by `ManagerPolicy.staleWhy`: older than `staleAfterDays`, or the filter returns more
+  sources than at convergence (`staleAfterDays = 0` disables both). They are re-selected at priority −1 (`restale`:
+  counts reset, history dropped). Selection order: person 10 > chain 2 > open MAJORs 1 > never reviewed 0 > stale −1.
+- **chainReview** is set to `false` on every compile the managers start (`article-extend`, `article-compile`). A done
+  extension that appended re-queues the article's review in the review manager (origin `chain`, priority 2); a compiled
+  article is linked to the goal and queued for the review manager the same way. Whether a compile wrote is read from its
+  `write` step's checkpoint (`CompileArticlePipeline.Written`).
+- **Enrich manager absorbs auto-enrich.** `agents.auto-enrich` keeps its meaning (an ingest enriches its source) and its
+  rules (`AutoEnrich.decide`); with the managers on the source becomes an `ingest`-origin item of `enrich` instead of a
+  direct run, so `agents.managers.enrich.max-runs` (4, the old effective cap `max-concurrent-runs`) bounds it; budgets,
+  plan floors and approvals apply as before. **Behaviour change:** `enrich` is created paused — after deploying,
+  imports queue items and nothing is enriched until a person resumes it once (the job's progress line says so). With
+  `agents.managers.enabled = false` the old direct run is kept. At dispatch a non-person item whose source got findings,
+  notes or a live enrich run meanwhile is settled `done` without a run; a person's Enrich always runs.
+- **Surfaces.** `POST /api/agents/enqueue` now answers `EnqueueResult{managerId, items, skipped}` (phase 1 answered one
+  `ManagerItem`) and takes `review | extend | enrich | seed`; `enrich` of an article/goal queues only its unenriched
+  sources. CLI: `agent manager new review|enrich|seed --goal g`, `agent enqueue <kind> <target>`, `--json` on `managers`,
+  `manager new`, `status`, `items`. MCP `manager`: `create` (kind, goal), `enqueue` with `kind` (routed by kind when no
+  `id`). Web: the goals window's **New research area** form (title, slug from the title, notes, tags; plan / seed
+  checkboxes, watch disabled "phase 3"; an existing slug is refused, never replaced), Extend / Enrich on the goal window,
+  Review / Extend / Enrich on the article window; the manager settings form gains stale days, infer filter, min sources,
+  max articles.
+- Per-role `models` overrides are filtered to the roles of the pipeline a dispatch starts; a manager's `models` may name
+  any role its kind's pipelines use (`ManagerSupervisor.roles`). The starvation check looks at the roles of the due
+  items' pipelines only.
+- Not built: watch managers, schedules → managers, LLM-proposed hint effects, per-manager `dailyUsd` (phase 3).

@@ -932,6 +932,10 @@ token the live first-call counts of the panel show):
 
 ### Auto-enrich (2026-10-06, #986)
 
+> Since the process managers' phase 2 (docs/research-process-managers.md, "As built (phase 2)") the source becomes
+> an item of the `enrich` manager (created paused) rather than a run queued at once; the rules below still decide
+> whether it is enriched. With `agents.managers.enabled = false` it is the direct run described here.
+
 - `agents.auto-enrich` (`HISTMERSION_AGENTS_AUTO_ENRICH`, default `true`; it acts only with
   `agents.enabled`). After an OCR job stored its source, `IngestHandlers` asks
   `AgentsHandlers.autoEnrich`, the same place acquisition matching already hooks in. DOI ingests,

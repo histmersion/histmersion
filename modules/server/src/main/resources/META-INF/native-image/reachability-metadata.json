@@ -10703,6 +10703,9 @@
       "glob": "agents/acquisition-ranker.md"
     },
     {
+      "glob": "agents/article-planner.md"
+    },
+    {
       "glob": "agents/article-cold-reader.md"
     },
     {
@@ -10728,6 +10731,9 @@
     },
     {
       "glob": "agents/enrich-notes.md"
+    },
+    {
+      "glob": "agents/filter-inferrer.md"
     },
     {
       "glob": "agents/goal-planner.md"

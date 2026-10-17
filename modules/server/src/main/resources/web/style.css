@@ -868,6 +868,11 @@ a.chip:hover { border-color:var(--accent); }
 .goal-schedule { padding:6px 0; border-bottom:1px solid var(--line); }
 .goal-cron { width:200px; }
 .goal-on { display:inline-flex; align-items:center; gap:3px; font-size:12px; }
+.goal-on.is-disabled { color:var(--muted); }
+.goal-new { margin:var(--space-3) 0; }
+.goal-new > summary { cursor:pointer; font-weight:600; }
+.goal-new-form { display:flex; flex-direction:column; gap:var(--gap-inline); margin-top:var(--space-3); }
+.goal-new-options { flex-wrap:wrap; align-items:center; }
 .goal-unlink { margin-left:6px; font-size:11.5px; }
 .goal-link-add { flex-wrap:wrap; margin-top:6px; }
 .goal-plan summary { cursor:pointer; }

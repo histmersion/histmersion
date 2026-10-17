@@ -253,6 +253,10 @@ object AgentsMarkdown:
         val what = a.article.fold("an article")(d =>
           if d.mode == GoalPlans.DraftMode.Create then s"new article \"${d.title}\"" else "a section appended to")
         s"publish $what [[${a.subject.getOrElse("?")}]]"
+      case Some(ApprovalKind.ArticleFilter) =>
+        s"record the coverage filter of [[${a.subject.getOrElse("?")}]]: ${a.filter.fold("?")(_.filter.line)}"
+      case Some(ApprovalKind.ArticlePlan) =>
+        s"compile ${Plural.count(a.articles.fold(0)(_.articles.size), "new article")} for goal **${a.subject.getOrElse("?")}**"
       case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
 
   def approvalLine(a: ApprovalInfo): String =
@@ -267,9 +271,11 @@ object AgentsMarkdown:
     else "# Approvals\n\n" + pageLine(as.size, page, "approval", state) + as.map { a =>
       val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
       val note  = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
-      val detail = a.plan.map(planBlock).orElse(a.article.map(draftBlock(_, 1500))).fold("")(b => "\n\n" + indent(b) + "\n")
+      val detail = a.plan.map(planBlock).orElse(a.article.map(draftBlock(_, 1500)))
+        .orElse(a.filter.map(ArticlePlans.filterBlock)).orElse(a.articles.map(ArticlePlans.planBlock))
+        .fold("")(b => "\n\n" + indent(b) + "\n")
       // a plan's rationale is the head of its block; an article's summary has no other place
-      val evidence = if a.plan.isDefined then "" else s"\n  ${a.evidence.replace("\n", " ").take(400)}"
+      val evidence = if a.plan.isDefined || a.articles.isDefined then "" else s"\n  ${a.evidence.replace("\n", " ").take(400)}"
       s"- ${approvalLine(a)}$evidence$quote$note$detail"
     }.mkString("\n") + older.fold("")(o => s"\n\n$o")
 

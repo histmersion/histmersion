@@ -257,6 +257,10 @@ object Agents:
       "assess and followups over a goal's sources (no model): retractions applied as assess does, disagreement edges to sources in the corpus proposed for approval, citing papers outside it queued for acquisition")
     case AcquisitionSweep extends Pipeline("acquisition-sweep", 1, TargetKind.Goal, List(Role.Planner),
       "discover new works for a goal's queries, a model ranks them against the goal, and the relevant ones become acquisition items — never one already in the corpus or the queue")
+    case InferFilter extends Pipeline("infer-filter", 1, TargetKind.Article, List(Role.Planner),
+      "propose the coverage filter (query, topics, tags) of an article that records none; code runs it against the corpus and the article's own citations, and a person approves it (agents.approvals.article-filter) before it is recorded")
+    case ProposeArticles extends Pipeline("propose-articles", 1, TargetKind.Goal, List(Role.Planner),
+      "propose the articles a research area should have, each with a slug, title and filter; code checks every slug is free, every filter returns enough sources and none overlaps an article of the area by half, and a person ALWAYS approves the plan before the seeding manager compiles them")
 
   object Pipeline:
     def parse(s: String): Option[Pipeline] = values.find(_.wire == s.trim.toLowerCase)
@@ -369,7 +373,11 @@ object Agents:
         * the user message of the steps that act on them, the same on a resume. */
       notes: Option[List[String]] = None,
       /** compile-article: chain a review-article run after writing (None = `agents.compile.review`). */
-      chainReview: Option[Boolean] = None) derives KindlingsCodecAsObject:
+      chainReview: Option[Boolean] = None,
+      /** propose-articles: a proposed article's filter returns at least this many sources (None =
+        * `agents.seed.min-sources`), and at most `maxArticles` are proposed (None = `agents.seed.max-articles`). */
+      minSources: Option[Int] = None,
+      maxArticles: Option[Int] = None) derives KindlingsCodecAsObject:
     def fixes: Boolean = fix.contains(true)
     def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
@@ -552,6 +560,14 @@ object Agents:
     case Edge           extends ApprovalKind("edge", false)
     case GoalPlan       extends ApprovalKind("goal-plan", true)
     case ArticlePublish extends ApprovalKind("article-publish", true)
+    /** An article's inferred coverage filter (infer-filter): approving records it on the article. */
+    case ArticleFilter  extends ApprovalKind("article-filter", false)
+    /** The articles planned for a research area (propose-articles): approving lets its seeding manager
+      * compile them. */
+    case ArticlePlan    extends ApprovalKind("article-plan", false)
+
+    /** About a goal or an article (`subject`), not a source. */
+    def aboutSubject: Boolean = this != StatusChange && this != Edge
 
   object ApprovalKind:
     def parse(s: String): Option[ApprovalKind] = values.find(_.wire == s.trim.toLowerCase)
@@ -616,7 +632,11 @@ object Agents:
       decidedAt: Option[String] = None,
       subject: Option[String] = None,
       plan: Option[GoalPlans.Plan] = None,
-      article: Option[GoalPlans.ArticleDraft] = None
+      article: Option[GoalPlans.ArticleDraft] = None,
+      /** article-filter: the filter proposed, with what code measured. */
+      filter: Option[ArticlePlans.FilterProposal] = None,
+      /** article-plan: the articles proposed for the goal. */
+      articles: Option[ArticlePlans.ArticlePlan] = None
   ) derives KindlingsCodecAsObject:
     def approvalKind: Option[ApprovalKind] = ApprovalKind.parse(kind)
   object ApprovalInfo:

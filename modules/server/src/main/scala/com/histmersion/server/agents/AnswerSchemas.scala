@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{CompileArticle, EnrichSource, PlanGoal, ReviewArticle, Scheduling}
+import com.histmersion.core.{CompileArticle, EnrichSource, FilterInference, PlanArticles, PlanGoal, ReviewArticle, Scheduling}
 import com.histmersion.core.Agents.ProbeAnswer
 import sttp.ai.core.agent.ResponseSchema
 
@@ -22,9 +22,12 @@ object AnswerSchemas:
   val fixer: ResponseSchema[ReviewArticle.FixerAnswer]            = ResponseSchema.derived[ReviewArticle.FixerAnswer]()
   val plan: ResponseSchema[PlanGoal.PlanAnswer]                   = ResponseSchema.derived[PlanGoal.PlanAnswer]()
   val ranking: ResponseSchema[Scheduling.Ranking]                 = ResponseSchema.derived[Scheduling.Ranking]()
+  val filter: ResponseSchema[FilterInference.FilterAnswer]            = ResponseSchema.derived[FilterInference.FilterAnswer]()
+  val articles: ResponseSchema[PlanArticles.ArticlesAnswer]    = ResponseSchema.derived[PlanArticles.ArticlesAnswer]()
 
   /** Every step schema, by name. */
   val all: List[(String, ResponseSchema[?])] = List(
     "probe" -> probe, "classification" -> classification, "findings" -> findings, "notes" -> notes,
     "extract" -> extract, "draft" -> draft, "rules" -> rules, "cold-reader" -> coldReader, "skeptic" -> skeptic,
-    "recheck" -> recheck, "fixer" -> fixer, "plan" -> plan, "ranking" -> ranking)
+    "recheck" -> recheck, "fixer" -> fixer, "plan" -> plan, "ranking" -> ranking, "filter" -> filter,
+    "articles" -> articles)

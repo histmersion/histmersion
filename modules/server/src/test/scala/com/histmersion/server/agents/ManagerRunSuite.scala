@@ -52,7 +52,7 @@ class ManagerRunSuite extends munit.FunSuite:
     b.copy(db = b.db.copy(url = testDb.get),
       agents = b.agents.copy(enabled = true, prices = "scripted=1/2",
         roles = b.agents.roles.copy(reviewer = Model.wire, coldReader = Model.wire, skeptic = Model.wire, fixer = Model.wire),
-        managers = b.agents.managers.copy(review = b.agents.managers.review.copy(cooldownMinutes = 30)),
+        managers = b.agents.managers.copy(review = b.agents.managers.review.copy(cooldownMinutes = 30, inferFilter = false)),
         // the scripted rules reviewer looks nothing up: ReviewArticleRunSuite holds the spot-checks
         review = b.agents.review.copy(spotChecks = 0)))
 
@@ -67,6 +67,8 @@ class ManagerRunSuite extends munit.FunSuite:
     Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM agent_managers".update.run()
+      // a manager's runs, whatever their target (a selection that was not narrowed reaches other suites' rows)
+      sql"DELETE FROM jobs WHERE kind = 'agent' AND manager_id IS NOT NULL".update.run()
       sql"DELETE FROM agent_leases WHERE name LIKE 'zz%'".update.run()
       sql"DELETE FROM jobs WHERE kind = 'agent' AND target_id LIKE 'zzagent%'".update.run()
       sql"DELETE FROM approvals WHERE citekey LIKE 'zzagent%'".update.run()
@@ -113,7 +115,7 @@ class ManagerRunSuite extends munit.FunSuite:
     assert(out1.exists(_.contains("selected 2")), out1)
     val i1 = item("zzagent_m1"); val i2 = item("zzagent_m2")
     assertEquals((i1.priority, i2.priority), (1, 0))
-    assertEquals((i1.status, i2.status), ("active", "active"))
+    assertEquals((i1.status, i2.status), ("active", "active"), s"$out1 ${events.map(_.text)} ${AgentRepo.list(ds, None, 50).filter(r => r.status == "queued" || r.status == "running").map(r => (r.target, r.pipeline, r.status))}")
     val r1 = AgentRepo.get(ds, i1.runId.get).get
     assertEquals((r1.origin, r1.managerId, r1.managerItem, r1.status), (Some("manager"), Some(ReviewId), Some(i1.id), "queued"))
     assertEquals((r1.params.fix, r1.params.rounds), (Some(true), Some(3)))
@@ -454,7 +456,7 @@ class ManagerRunSuite extends munit.FunSuite:
 
   test("the Review button: enqueue routes to the review manager (created paused), priority 10"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_q1")
-    val i = a.managing.enqueue(EnqueueRequest("review", "zzagent_q1")).fold(e => fail(e.message), identity)
+    val i = a.managing.enqueue(EnqueueRequest("review", "zzagent_q1")).fold(e => fail(e.message), _.items.head)
     assertEquals((i.managerId, i.priority, i.status, i.origin), (ReviewId, 10, "pending", "person"))
     assertEquals(ManagerRepo.get(ds, ReviewId).map(_.state), Some("paused"))
     assert(a.managing.enqueue(EnqueueRequest("review", "zzagent_nope")).isLeft)

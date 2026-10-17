@@ -2,10 +2,10 @@ package com.histmersion.server.agents
 
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
-import com.histmersion.core.GoalPlans.Removed
+import com.histmersion.core.GoalPlans.{LinkKind, Removed}
 import com.histmersion.core.ManagerPolicy.ReviewSettings
 import com.histmersion.core.Managers.*
-import com.histmersion.db.{AgentRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo}
 
 import javax.sql.DataSource
 
@@ -25,9 +25,11 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
   private def notFound(what: String) = ApiError(what, Some(Write.CodeNotFound))
   private def conflict(m: String)    = ApiError(m, Some(AgentsApi.CodeConflict))
 
-  /** The settings in effect: the saved config over the server's defaults. */
+  private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
+
+  /** The settings in effect: the saved config over the server's defaults for its kind. */
   private def withEffective(m: ManagerInfo): ManagerInfo =
-    m.copy(effective = ReviewSettings.defaults(mcfg.review, mcfg).merge(m.config))
+    m.copy(effective = ReviewSettings.defaultsFor(kindOf(m), mcfg, cfg.seed).merge(m.config))
 
   private def manager(id: String): Either[ApiError, ManagerInfo] =
     ManagerRepo.get(ds, id.trim).map(withEffective).toRight(notFound(s"No manager '$id'"))
@@ -43,18 +45,34 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
   private def withRuns(is: List[ManagerItem]): List[ManagerItem] =
     is.map(i => i.copy(run = i.runId.flatMap(AgentRepo.get(ds, _))))
 
-  /** `POST /api/agents/managers` — phase 1 makes the review manager (id `review`, library-wide). */
+  /** `POST /api/agents/managers` — `review` (id `review`) and `enrich` (id `enrich`) are library-wide;
+    * `seed` needs its research area (`goal`; id `seed:<goal>`) and starts with the item that proposes
+    * its first articles. Created paused unless `paused` is false. */
   def create(in: ManagerCreate): Either[ApiError, ManagerInfo] =
+    val state = if in.paused.contains(false) then State.Active else State.Paused
+    val goal  = in.goal.map(_.trim).filter(_.nonEmpty)
+    def make(k: Kind, id: String, g: Option[String]): Either[ApiError, ManagerInfo] =
+      for
+        _ <- validate(k, in.config)
+        _ <- Either.cond(ManagerRepo.create(ds, id, k, g, state, in.config), (), conflict(s"the manager '$id' exists already"))
+        _  = ManagerRepo.event(ds, id, None, None, Feed.Paused, s"created ${state.wire}")
+        m <- manager(id)
+      yield m
     Kind.parse(in.kind) match
       case None => Left(ApiError(s"unknown manager kind '${in.kind}' (one of: ${Kind.values.map(_.wire).mkString(", ")})"))
-      case Some(Kind.Review) =>
-        val state = if in.paused.contains(false) then State.Active else State.Paused
-        if in.goal.exists(_.trim.nonEmpty) then Left(ApiError("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
-        else if !ManagerRepo.create(ds, ReviewId, Kind.Review, None, state, in.config) then
-          Left(conflict(s"the review manager '$ReviewId' exists already"))
-        else
-          ManagerRepo.event(ds, ReviewId, None, None, Feed.Paused, s"created ${state.wire}")
-          manager(ReviewId)
+      case Some(Kind.Review) if goal.isDefined =>
+        Left(ApiError("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
+      case Some(Kind.Review) => make(Kind.Review, ReviewId, None)
+      case Some(Kind.Enrich) if goal.isDefined => Left(ApiError("the enrich manager is library-wide: give no goal"))
+      case Some(Kind.Enrich) => make(Kind.Enrich, EnrichId, None)
+      case Some(Kind.Seed) =>
+        for
+          g <- goal.toRight(ApiError("a seeding manager is for one research area: give its goal"))
+          gl <- h.getGoal(g)
+          m <- make(Kind.Seed, seedId(gl.slug), Some(gl.slug))
+          _ <- addItem(m.id, EnqueueRequest(ProposeArticles, gl.slug))
+          out <- manager(m.id)
+        yield out
       case Some(k) => Left(ApiError(s"${k.wire} managers come in a later phase (docs/research-process-managers.md §4)"))
 
   /** `PUT /api/agents/managers/{id}` — the config is replaced as given (an absent key = the default). */
@@ -62,7 +80,7 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
     for
       m <- manager(id)
       c  = in.config.getOrElse(m.config)
-      _ <- validate(c)
+      _ <- validate(kindOf(m), c)
       cron <- in.cron.map(_.trim) match
                 case Some("") => Right(None)
                 case Some(t)  => Cron.parse(t).map(x => Some(x.text)).left.map(ApiError(_))
@@ -74,13 +92,14 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
       supervisor.nudge()
       out
 
-  private def validate(c: ManagerConfig): Either[ApiError, Unit] =
-    val roles = Pipeline.ReviewArticle.roles
+  /** The rounds within the cap, every model override for a role the manager's pipelines use. */
+  private def validate(k: Kind, c: ManagerConfig): Either[ApiError, Unit] =
+    val roles = ManagerSupervisor.roles(k)
     c.models.getOrElse(Nil).foldLeft[Either[ApiError, Unit]](
       Either.cond(c.rounds.forall(r => r >= 2 && r <= cfg.review.roundsCap), (),
         ApiError(s"rounds must be between 2 and ${cfg.review.roundsCap} (agents.review.rounds-cap)"))) { (acc, o) =>
       acc.flatMap(_ => Role.parse(o.role).filter(roles.contains)
-        .toRight(ApiError(s"models: '${o.role}' is not a role of review-article (${roles.map(_.wire).mkString(", ")})"))
+        .toRight(ApiError(s"models: '${o.role}' is not a role a ${k.wire} manager runs (${roles.map(_.wire).mkString(", ")})"))
         .flatMap(_ => ModelChains.parseChain(o.model).left.map(e => ApiError(s"models ${o.role}: $e")).map(_ => ())))
     }
 
@@ -140,39 +159,115 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
       val (rows, total) = ManagerRepo.items(ds, m.id, st, off, lim)
       ItemPage(withRuns(rows), total, off, lim)
 
-  /** The item an id or a target names, in manager `m`. */
+  /** The item an id or a target names, in manager `m` (its default item kind first, then the others). */
   private def itemOf(m: ManagerInfo, ref: String): Either[ApiError, ManagerItem] =
     val r = ref.trim
     r.toLongOption.flatMap(ManagerRepo.item(ds, _)).filter(_.managerId == m.id)
-      .orElse(ManagerRepo.itemFor(ds, m.id, itemKind(m), r))
+      .orElse(itemKinds(kindOf(m)).iterator.map(k => ManagerRepo.itemFor(ds, m.id, k, r)).collectFirst { case Some(i) => i })
       .toRight(notFound(s"No item '$ref' of manager ${m.id}"))
 
-  private def itemKind(m: ManagerInfo): String = ArticleReview
+  /** A target as an item of `kind` names it: an article's slug, a source's citekey, the goal (a seeding
+    * manager's own). A compile item is never added by hand: it comes from an approved plan. */
+  private def targetOf(m: ManagerInfo, kind: String, raw: String): Either[ApiError, String] =
+    kind match
+      case ArticleReview | InferFilter | ArticleExtend => h.getArticle(raw.trim).map(_.article.slug)
+      case SourceEnrich => h.getSource(raw.trim, body = false).map(_.source.citekey)
+      case ProposeArticles =>
+        val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
+        h.getGoal(g).map(_.slug).flatMap(s => Either.cond(m.goal.forall(_ == s), s,
+          ApiError(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")))
+      case ArticleCompile => Left(ApiError(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
+      case other => Left(ApiError(s"unknown item kind '$other'"))
 
-  /** Add (or bring back) a target: an article slug for the review manager. */
+  /** Add (or bring back) a target: `in.kind` names the item kind (`review`, `extend`, `filter`,
+    * `enrich`, `propose`, or the kind itself; blank = the manager's default). An article's review whose
+    * article records no filter brings an infer-filter item with it (the review manager's `inferFilter`). */
   def addItem(id: String, in: EnqueueRequest, origin: ItemOrigin = ItemOrigin.Person): Either[ApiError, ManagerItem] =
     for
-      m    <- manager(id)
-      kind <- Option(in.kind.trim).filter(k => k.isEmpty || k == ArticleReview || k == "review" || k == "article")
-                .map(_ => itemKind(m)).toRight(ApiError(s"manager ${m.id} drives '$ArticleReview' items, not '${in.kind}'"))
-      slug <- h.getArticle(in.target.trim).map(_.article.slug)
-      prio  = in.priority.getOrElse(ManagerSupervisor.PersonPriority)
-      (itemId, isNew) = ManagerRepo.upsert(ds, m.id, kind, slug, origin, prio, reopen = true)
-      _     = ManagerRepo.event(ds, m.id, Some(itemId), None, Feed.Evaluated,
-                s"$slug ${if isNew then "enqueued" else "enqueued again"} by a ${origin.wire} (priority $prio)")
-      item <- ManagerRepo.item(ds, itemId).toRight(notFound(s"item $itemId vanished"))
+      m      <- manager(id)
+      kind   <- itemKindOf(kindOf(m), in.kind).toRight(ApiError(
+                  s"manager ${m.id} drives ${itemKinds(kindOf(m)).mkString(", ")} items, not '${in.kind}'"))
+      target <- targetOf(m, kind, in.target)
+      prio    = in.priority.getOrElse(ManagerSupervisor.PersonPriority)
+      (itemId, isNew) = ManagerRepo.upsert(ds, m.id, kind, target, origin, prio, reopen = true)
+      label   = if kind == itemKinds(kindOf(m)).head then target else s"$target ($kind)"
+      _       = ManagerRepo.event(ds, m.id, Some(itemId), None, Feed.Evaluated,
+                  s"$label ${if isNew then "enqueued" else "enqueued again"} by a ${origin.wire} (priority $prio)")
+      _       = if kind == ArticleReview then filterFirst(m, target, prio)
+      item   <- ManagerRepo.item(ds, itemId).toRight(notFound(s"item $itemId vanished"))
     yield
       supervisor.nudge()
       item
 
-  /** `POST /api/agents/enqueue` — a page button: the target goes to the library-wide manager of its
-    * kind (phase 1: an article's review → `review`, created paused if it does not exist yet). */
-  def enqueue(in: EnqueueRequest): Either[ApiError, ManagerItem] =
-    in.kind.trim.toLowerCase match
-      case "review" | "article-review" | "article" | "" =>
+  /** An article that records no filter and never had an infer-filter item gets one, at its review's
+    * priority, so its review waits for it (when the manager's `inferFilter` is on). */
+  private def filterFirst(m: ManagerInfo, slug: String, priority: Int): Unit =
+    val on = m.config.inferFilter.getOrElse(mcfg.review.inferFilter)
+    val has = com.histmersion.db.ArticleRepo.load(ds, slug).flatMap(_.filter).isDefined
+    if on && !has && !ManagerRepo.hasItem(ds, m.id, InferFilter, slug) then
+      val (fid, _) = ManagerRepo.upsert(ds, m.id, InferFilter, slug, ItemOrigin.Chain, priority, reopen = false)
+      ManagerRepo.event(ds, m.id, Some(fid), None, Feed.Evaluated,
+        s"$slug ($InferFilter): it records no coverage filter — inferred before its review")
+
+  /** `POST /api/agents/enqueue` — a page button: `review` or `extend` an article (the review manager),
+    * `enrich` a source or the unenriched sources an article cites or a goal links (the enrich manager),
+    * `seed` a research area (its seeding manager proposes its next articles). A manager that does not
+    * exist yet is created PAUSED. */
+  def enqueue(in: EnqueueRequest): Either[ApiError, EnqueueResult] =
+    EnqueueKind.parse(in.kind) match
+      case None =>
+        Left(ApiError(s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})"))
+      case Some(EnqueueKind.Review) =>
         supervisor.ensureDefaults()
-        addItem(ReviewId, in.copy(kind = ArticleReview))
-      case other => Left(ApiError(s"nothing manages '$other' items yet (phase 1: review)"))
+        addItem(ReviewId, in.copy(kind = ArticleReview)).map(i => EnqueueResult(ReviewId, List(i)))
+      case Some(EnqueueKind.Extend) =>
+        supervisor.ensureDefaults()
+        addItem(ReviewId, in.copy(kind = ArticleExtend)).map(i => EnqueueResult(ReviewId, List(i)))
+      case Some(EnqueueKind.Seed) =>
+        h.getGoal(in.target.trim).flatMap { g =>
+          val id = seedId(g.slug)
+          val _  = supervisor.ensure(Kind.Seed, id, Some(g.slug))
+          addItem(id, in.copy(kind = ProposeArticles, target = g.slug)).map(i => EnqueueResult(id, List(i)))
+        }
+      case Some(EnqueueKind.Enrich) =>
+        supervisor.ensureDefaults()
+        enrichTargets(in.target.trim).map { (cks, skipped) =>
+          val items = cks.flatMap(ck => addItem(EnrichId, EnqueueRequest(SourceEnrich, ck, in.priority)).toOption)
+          EnqueueResult(EnrichId, items, skipped)
+        }
+
+  /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an
+    * article cites / a goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are
+    * reported as skipped, with why). */
+  private def enrichTargets(raw: String): Either[ApiError, (List[String], List[String])] =
+    h.getSource(raw, body = false).map(s => (List(s.source.citekey), Nil)).orElse {
+      val cited = h.getArticle(raw).map(v => h.citedSources(v.article.body))
+        .orElse(h.getGoal(raw).map(g => GoalLinkRepo.links(ds, g.slug).filter(_.kind == LinkKind.Source).map(_.ref)))
+      cited.left.map(_ => notFound(s"'$raw' is no source, article or goal")).map { cks =>
+        val (todo, done) = cks.distinct.map(ck => ck -> enrichedWhy(ck)).partition(_._2.isEmpty)
+        (todo.map(_._1), done.map((ck, why) => s"[[$ck]]: ${why.getOrElse("")}"))
+      }
+    }
+
+  /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
+  private def enrichedWhy(ck: String): Option[String] =
+    h.getSource(ck, body = false).toOption match
+      case None => Some("no such source")
+      case Some(src) =>
+        val runs = AgentRepo.forTarget(ds, Pipeline.EnrichSource, src.source.citekey).toList.filterNot(_.dryRun)
+          .flatMap(r => RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
+        AutoEnrich.enrichedBy(src.findings.size, src.source.notes, runs)
+
+  /** `agents.auto-enrich` with the managers on: the ingested source becomes an item of the enrich
+    * manager (created paused if missing). Answers the ingest job's progress note. */
+  def ingested(citekey: String): String =
+    supervisor.ensureDefaults()
+    val (itemId, isNew) = ManagerRepo.upsert(ds, EnrichId, SourceEnrich, citekey, ItemOrigin.Ingest, 0, reopen = true)
+    ManagerRepo.event(ds, EnrichId, Some(itemId), None, Feed.Evaluated,
+      s"$citekey ${if isNew then "enqueued" else "enqueued again"} by an ingest")
+    supervisor.nudge()
+    val state = ManagerRepo.get(ds, EnrichId).map(_.state).getOrElse(State.Paused.wire)
+    AutoEnrich.managed(itemId, state)
 
   def patchItem(id: String, ref: String, in: ItemPatch): Either[ApiError, ManagerItem] =
     for
@@ -244,8 +339,10 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
       hint
 
   private def applyEffect(m: ManagerInfo, hintId: Long, text: String, e: HintEffect): String =
-    // the named targets become items (an article that exists); the matched ones are the open items
-    val named = e.targets.flatMap(t => h.getArticle(t).toOption.map(_.article.slug)).distinct
+    // the named targets become items of the manager's default kind (a target that exists); the matched
+    // ones are the open items
+    val kind  = itemKinds(kindOf(m)).headOption.getOrElse(ArticleReview)
+    val named = e.targets.flatMap(t => targetOf(m, kind, t).toOption).distinct
     val open  = ManagerRepo.withStatus(ds, m.id, ItemStatus.Pending) ++ ManagerRepo.withStatus(ds, m.id, ItemStatus.Held)
     val matched = open.filter { i =>
       named.contains(i.target) || ((e.tag.isDefined || e.topic.isDefined || e.goal.isDefined) && {
@@ -257,7 +354,7 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
       case HintEffect.Prioritise =>
         val p = e.priority.getOrElse(ManagerSupervisor.HintPriority)
         val added = named.filterNot(t => open.exists(_.target == t)).count { t =>
-          ManagerRepo.upsert(ds, m.id, ArticleReview, t, ItemOrigin.Hint, p, reopen = true)
+          ManagerRepo.upsert(ds, m.id, kind, t, ItemOrigin.Hint, p, reopen = true)
           true
         }
         matched.foreach(i => ManagerRepo.setPriority(ds, i.id, math.max(i.priority, p)))
@@ -265,7 +362,7 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
       case HintEffect.HoldAction =>
         val hold = Hold(e.until, e.untilSource, s"hint #$hintId: ${text.take(200)}", Some(hintId))
         val added = named.filterNot(t => open.exists(_.target == t)).flatMap { t =>
-          val (id, _) = ManagerRepo.upsert(ds, m.id, ArticleReview, t, ItemOrigin.Hint, 0, reopen = true)
+          val (id, _) = ManagerRepo.upsert(ds, m.id, kind, t, ItemOrigin.Hint, 0, reopen = true)
           ManagerRepo.item(ds, id).filter(_.status == ItemStatus.Pending.wire)
         }
         (matched ++ added).count(i => ManagerRepo.hold(ds, i.id, hold))
@@ -298,5 +395,7 @@ object ManagersHandlers:
       c.reopenLimit.map(n => s"reopenLimit=$n"), c.cooldownMinutes.map(n => s"cooldownMinutes=$n"),
       c.lowWater.map(n => s"lowWater=$n"), c.refillBatch.map(n => s"refillBatch=$n"), c.maxFailures.map(n => s"maxFailures=$n"),
       c.budgetUsd.map(n => s"budgetUsd=$n"), c.includeTags.map(t => s"includeTags=${t.mkString(",")}"),
-      c.includeGoal.map(g => s"includeGoal=$g"), c.models.map(ms => s"models=${ms.map(_.text).mkString(";")}")).flatten
+      c.includeGoal.map(g => s"includeGoal=$g"), c.models.map(ms => s"models=${ms.map(_.text).mkString(";")}"),
+      c.staleAfterDays.map(n => s"staleAfterDays=$n"), c.inferFilter.map(b => s"inferFilter=$b"),
+      c.minSources.map(n => s"minSources=$n"), c.maxArticles.map(n => s"maxArticles=$n")).flatten
     if fields.isEmpty then "the defaults" else fields.mkString(", ")
