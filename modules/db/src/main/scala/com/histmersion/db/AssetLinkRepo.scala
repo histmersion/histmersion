@@ -23,7 +23,7 @@ object AssetMetaRepo:
       sql"""SELECT name, mime, length(bytes), sha256, width, height,
                    kind, caption, license,
                    ST_Y(geom::geometry), ST_X(geom::geometry),
-                   lower(period), upper(period) - 1
+                   ${SqlLiteral(PeriodSql.cols("period"))}
             FROM assets WHERE citekey = $citekey AND name = $name"""
         .query[AssetDetailRow].run().headOption.map { r =>
           AssetDetail(r.name, r.mime, r.bytes, r.sha256, r.width, r.height,
@@ -42,12 +42,14 @@ object AssetMetaRepo:
           case (Some(lat), Some(lon)) =>
             sql"UPDATE assets SET geom = ST_SetSRID(ST_Point($lon, $lat), 4326) WHERE citekey = $citekey AND name = $name".update.run()
           case _ => ()
-        (p.periodStart, p.periodEnd) match
-          case (Some(s), Some(e)) =>
-            val range = s"[$s,${e + 1})"
+        // a bound given alone replaces that bound; the other stays as stored ([[PeriodSql.merge]])
+        val stored = sql"SELECT ${SqlLiteral(PeriodSql.cols("period"))} FROM assets WHERE citekey = $citekey AND name = $name"
+          .query[(Option[Long], Option[Long])].run().head
+        PeriodSql.merge(stored, p.periodStart, p.periodEnd, s"asset '$citekey/$name'").getOrElse(Right(stored)).map { (s, e) =>
+          if (s, e) != stored then
+            val range = PeriodSql.literal(s, e)
             sql"UPDATE assets SET period = ${range}::int8range WHERE citekey = $citekey AND name = $name".update.run()
-          case _ => ()
-        Right(())
+        }
     .flatMap(_ => detail(ds, citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound))))
 
 object AssetLinkRepo:

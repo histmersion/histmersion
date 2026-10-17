@@ -20,7 +20,7 @@ object GoalRepo:
 
   private val cols =
     "g.slug, g.title, g.status, g.notes, g.tags, g.regions, " +
-      "lower(g.period), upper(g.period) - 1, g.parent_slug, g.updated_at::text"
+      s"${PeriodSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
 
   def list(ds: DataSource, status: Option[String], limit: Int, offset: Int): GoalList =
     val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
@@ -53,11 +53,14 @@ object GoalRepo:
   def exists(ds: DataSource, slug: String): Boolean =
     connect(ds)(sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty)
 
-  def put(ds: DataSource, slug: String, in: GoalPut): Unit =
+  /** Create or replace a goal. Either bound of its period may be given alone (an open period); one
+    * that starts after it ends is refused. */
+  def put(ds: DataSource, slug: String, in: GoalPut): Either[ApiError, Unit] =
+    PeriodSql.merge((None, None), in.periodStart, in.periodEnd, s"goal '$slug'").getOrElse(Right((None, None)))
+      .map((s, e) => putIn(ds, slug, in, PeriodSql.literal(s, e)))
+
+  private def putIn(ds: DataSource, slug: String, in: GoalPut, period: Option[String]): Unit =
     transact(ds):
-      val period = (in.periodStart, in.periodEnd) match
-        case (Some(s), Some(e)) => Some(s"[$s,${e + 1})")
-        case _ => None: Option[String]
       sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
             VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
                     ${in.tags}::text[], ${in.regions}::text[],
@@ -89,12 +92,14 @@ object GoalRepo:
           val usd = Option.when(v > 0)(BigDecimal(v))
           sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $slug".update.run()
         }
-        (p.periodStart, p.periodEnd) match
-          case (Some(s), Some(e)) =>
-            val range = s"[$s,${e + 1})"
+        // a bound given alone replaces that bound; the other stays as stored ([[PeriodSql.merge]])
+        val stored = sql"SELECT ${SqlLiteral(PeriodSql.cols("period"))} FROM goals WHERE slug = $slug"
+          .query[(Option[Long], Option[Long])].run().head
+        PeriodSql.merge(stored, p.periodStart, p.periodEnd, s"goal '$slug'").getOrElse(Right(stored)).map { (s, e) =>
+          if (s, e) != stored then
+            val range = PeriodSql.literal(s, e)
             sql"UPDATE goals SET period = ${range}::int8range, updated_at = now() WHERE slug = $slug".update.run()
-          case _ => ()
-        Right(())
+        }
 
   /** Rename a goal (V042), inside the caller's transaction: the slug moves with one UPDATE (its
     * sub-goals' parent cascades). What a bundle import does when a goal was renamed on the other side. */
