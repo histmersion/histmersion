@@ -59,13 +59,14 @@ class HttpChallengeSuite extends munit.FunSuite:
       assertEquals(seen.size, 2)
     }
 
-  test("the polite-pool User-Agent by default; a caller's own replaces it"):
+  test("the product's User-Agent by default, without the contact; a caller's own replaces it"):
     withServer { (base, seen) =>
       val http = SttpHttp(cfg)
       assertEquals(http.text(s"$base/default"), Right("ok"))
       assertEquals(http.text(s"$base/public", Map("user-agent" -> cfg.publicUserAgent)), Right("ok"))
       val ua = seen.asScala.toMap
-      assertEquals(ua.get("/default"), Some(cfg.politeUserAgent))
+      assertEquals(ua.get("/default"), Some(cfg.agent))
+      assert(!ua("/default").contains("someone"), "the contact never rides in a header (#1946)")
       assertEquals(ua.get("/public"), Some(cfg.publicUserAgent))
       assert(!cfg.publicUserAgent.contains("someone"), cfg.publicUserAgent)
     }

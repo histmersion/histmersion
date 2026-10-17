@@ -1,6 +1,6 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.core.AcquireConfig
+import com.histmersion.core.{AcquireConfig, HttpPolicy}
 
 import io.circe.Json
 import sttp.client4.*
@@ -24,8 +24,8 @@ trait Http:
   def bytes(url: String, headers: Map[String, String] = Map.empty): Either[String, Array[Byte]]
 
 object Http:
-  /** A caller's own `User-Agent` (the PMC hosts get the project's public identity, never the contact
-    * e-mail) replaces the polite-pool one. */
+  /** A caller's own `User-Agent` (the PMC hosts get the project's public identity) replaces the
+    * acquisition one; either goes through [[HttpPolicy.userAgent]], so neither can carry an e-mail. */
   val UserAgent = "User-Agent"
 
   /** A bot-protection CHALLENGE (Cloudflare's "Just a moment…" interstitial and its kin) rather than
@@ -47,50 +47,52 @@ object Url:
 /** The real client: java.net.http through sttp (the same backend `cli/Client.scala` uses, so the
   * native image needs no new reachability metadata beyond what the CLI already captures).
   *
-  * Politeness is the point of the headers: Crossref, OpenAlex and Unpaywall put requests that
-  * identify themselves into a faster pool, and the identification they ask for is a contact e-mail in
-  * the `User-Agent`. Rate limiting (429) and upstream hiccups (5xx) are retried with exponential
-  * backoff, exactly as `lib.get_json` did.
+  * Every request follows [[HttpPolicy]], the one outbound policy: the product's `User-Agent` (no
+  * e-mail — Crossref and OpenAlex take the contact as their `mailto` parameter), a slow-down answer
+  * (429, 502/503/504) asked again after its `Retry-After` or 1, 2, 4 … s, a host that asks for more
+  * than `maxRetryAfterSeconds` left alone. An unreachable host is asked again on the same schedule.
+  * `tries` counts the first request; `sleep` and `clock` are parameters so a test does not wait.
   */
-final class SttpHttp(cfg: AcquireConfig, tries: Int = 4) extends Http:
+final class SttpHttp(cfg: AcquireConfig, tries: Int = 4, maxRetryAfterSeconds: Int = 60,
+    sleep: Long => Unit = ms => Thread.sleep(ms), clock: () => java.time.Instant = () => java.time.Instant.now())
+    extends Http:
   // HTTP/1.1 on every request (#1523): java.net.http negotiates HTTP/2 by ALPN, and some hosts that
   // offer h2 then drop the stream — Europe PMC's www.ebi.ac.uk answered every h2 request with
   // "EOF reached while reading" (a ReadException after four retries) while HTTP/1.1 got a 200.
   // One download per request gains nothing from h2's multiplexing.
   private val backend = HttpClientSyncBackend(customizeRequest = SttpHttp.http11)
 
+  private val maxRetries = (tries - 1).max(0)
+
   private def send(url: String, headers: Map[String, String]): Either[String, Array[Byte]] =
     def attempt(n: Int): Either[String, Array[Byte]] =
       val ua  = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(Http.UserAgent) => v }
       val req = basicRequest
         .get(Uri.unsafeParse(url))
-        .header(Http.UserAgent, ua.getOrElse(cfg.politeUserAgent))
+        .header(Http.UserAgent, HttpPolicy.userAgent(ua.getOrElse(cfg.userAgent)))
         .headers(headers.filterNot(_._1.equalsIgnoreCase(Http.UserAgent)))
         .readTimeout(cfg.timeoutSeconds.seconds)
         .response(asByteArrayAlways)
-      def retryOr(why: String, giveUp: => String): Either[String, Array[Byte]] =
-        if n + 1 < tries then
-          backoff(n, url, why)
-          attempt(n + 1)
-        else Left(giveUp)
+      def again(ms: Long, why: String): Either[String, Array[Byte]] =
+        scribe.warn(s"acquire: $why — retrying $url in ${ms}ms")
+        sleep(ms)
+        attempt(n + 1)
 
       scala.util.Try(req.send(backend)) match
         case scala.util.Failure(e) =>
-          retryOr(e.getMessage, s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
+          if n < maxRetries then again(HttpPolicy.backoffMs(n), e.getMessage)
+          else Left(s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
         case scala.util.Success(resp) =>
           val code = resp.code.code
           if Http.isChallenge(code, resp.headers.map(h => h.name -> h.value).toMap, resp.body) then
             Left(s"$url: HTTP $code bot-protection challenge — treated as no copy")
-          else if code == 429 || code >= 500 then
-            retryOr(s"HTTP $code", s"$url failed after $tries attempts: HTTP $code")
-          else if code >= 400 then Left(s"$url: HTTP $code ${new String(resp.body.take(200), "UTF-8")}")
-          else Right(resp.body)
+          else
+            HttpPolicy.decide(code, resp.header("Retry-After"), n, maxRetries, maxRetryAfterSeconds, clock()) match
+              case HttpPolicy.Step.Accept        => Right(resp.body)
+              case HttpPolicy.Step.Wait(ms, why) => again(ms, why)
+              case HttpPolicy.Step.GiveUp(why) if HttpPolicy.Throttled(code) => Left(s"$url failed: $why")
+              case HttpPolicy.Step.GiveUp(_)     => Left(s"$url: HTTP $code ${new String(resp.body.take(200), "UTF-8")}")
     attempt(0)
-
-  private def backoff(n: Int, url: String, why: String): Unit =
-    val wait = (1L << n) * 1000
-    scribe.warn(s"acquire: $why — retrying $url in ${wait}ms")
-    Thread.sleep(wait)
 
   def bytes(url: String, headers: Map[String, String]): Either[String, Array[Byte]] = send(url, headers)
 

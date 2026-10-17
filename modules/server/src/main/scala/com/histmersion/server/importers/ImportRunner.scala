@@ -29,10 +29,11 @@ object ImportRunner:
 
   private[importers] def download(url: String): Either[String, String] =
     try
-      HttpURLConnection.setFollowRedirects(true)
+      // redirects are followed by THIS connection ([[HttpPolicy]]): the JVM-wide default it used to
+      // flip as well changed every other HttpURLConnection in the process
       val conn = URI.create(url).toURL.openConnection().asInstanceOf[HttpURLConnection]
       conn.setInstanceFollowRedirects(true)
-      conn.setRequestProperty("User-Agent", "Histmersion gazetteer importer")
+      conn.setRequestProperty("User-Agent", HttpPolicy.userAgent(s"Histmersion/${Version.version} (gazetteer import)"))
       conn.setConnectTimeout(30000)
       conn.setReadTimeout(120000)
       val code = conn.getResponseCode
