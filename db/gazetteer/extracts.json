@@ -15,16 +15,16 @@
     },
     {
       "attribution": "Contains information from the Getty Thesaurus of Geographic Names (TGN)®, which is made available under the ODC Attribution License (ODC-By 1.0) — explicit N-Triples export",
-      "built": "",
-      "bytes": 0,
-      "features": 0,
-      "file": "",
+      "built": "2026-10-17",
+      "bytes": 2156068,
+      "features": 32383,
+      "file": "tgn-2026-01-04.ndjson.gz",
       "licence": "ODC-By 1.0",
       "name": "tgn",
-      "sha256": "",
+      "sha256": "cab28bcb1219a79fcc80f618c4326d4cfa1b54c1b0745e414e57f942bd9d39db",
       "title": "Getty TGN places (historical and archaeological places, historic and dated names; research window)",
       "url": "",
-      "version": ""
+      "version": "2026-01-04"
     },
     {
       "attribution": "Wikidata (wikidata.org), CC0 — via the QLever SPARQL endpoint, index of the 2026-08-10 dump updated live, queried 2026-10-09",
