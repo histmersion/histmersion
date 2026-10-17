@@ -368,6 +368,126 @@ class FetchBackoff(unittest.TestCase):
         self.assertEqual(again["files"], meta["files"])
 
 
+class Tgn(unittest.TestCase):
+    """Getty TGN from its explicit N-Triples export (#1403): a fixture shaped like the real members."""
+    G = "http://vocab.getty.edu/"
+
+    def triples(self, rows):
+        return "".join(f"{s} {p} {o} .\n" for s, p, o in rows)
+
+    def build(self):
+        g, gvp = self.G, "<http://vocab.getty.edu/ontology#"
+        t = lambda i: f"<{g}tgn/{i}>"
+        term = lambda i: f"<{g}tgn/term/{i}>"
+        typ, pref, alt = build._P_TYPE, build._P_PREF, build._P_ALT
+        subjects = [
+            (t(7001393), typ, gvp + "AdminPlaceConcept>"), (t(7001393), build._P_PTYPE, f"<{g}aat/300008347>"),
+            (t(7001393), pref, term("42382-en")), (t(7001393), alt, term("1001436872-grc")),
+            (t(7001393), alt, term("165794-la")), (t(7001393), alt, term("156761")), (t(7001393), alt, term("1-zh")),
+            (t(7001393), build._P_NOTE, f"<{g}tgn/scopeNote/38678>"),
+            (t(7000001), typ, gvp + "AdminPlaceConcept>"), (t(7000001), build._P_PTYPE, f"<{g}aat/300008347>"),
+            (t(7000001), pref, term("2-en")),                                   # a plain town: dropped
+            (t(7000002), typ, gvp + "AdminPlaceConcept>"), (t(7000002), build._P_PTYPE, f"<{g}aat/300000810>"),
+            (t(7000002), pref, term("3-en")),                                   # archaeological site: kept
+            (t(7000003), typ, gvp + "PhysPlaceConcept>"), (t(7000003), pref, term("4-en")),
+            (t(7000003), alt, term("5-grc")),                                   # a river with an ancient name
+            (t(7000004), typ, gvp + "AdminPlaceConcept>"), (t(7000004), pref, term("6-la")),   # outside the window
+            (t(7030632), typ, gvp + "Facet>"),
+        ]
+        terms = [
+            (term("42382-en"), build._P_LITERAL, '"Athens"@en'),
+            (term("1001436872-grc"), build._P_LITERAL, '"Ἀθῆναι"@grc'),
+            (term("165794-la"), build._P_LITERAL, '"Athenae"@la'),
+            (term("165794-la"), build._P_START, '"-0200"^^<http://www.w3.org/2001/XMLSchema#gYear>'),
+            (term("165794-la"), build._P_END, '"9999"^^<http://www.w3.org/2001/XMLSchema#gYear>'),
+            (term("165794-la"), build._P_HISTORIC, "<http://vocab.getty.edu/historic/historic>"),
+            (term("156761"), build._P_LITERAL, '"Athenai"'),
+            (term("1-zh"), build._P_LITERAL, '"雅典"@zh'),
+            (term("2-en"), build._P_LITERAL, '"Newtown"@en'),
+            (term("3-en"), build._P_LITERAL, '"Old Mound"@en'),
+            (term("4-en"), build._P_LITERAL, '"Kizilirmak"@en'),
+            (term("5-grc"), build._P_LITERAL, '"Ἅλυς"@grc'),
+            (term("6-la"), build._P_LITERAL, '"Far away"@la'),
+        ]
+        coords = []
+        for i, (lat, lon) in {7001393: (37.983333, 23.733333), 7000001: (40.0, 30.0), 7000002: (41.0, 31.0),
+                              7000003: (41.7, 35.9), 7000004: (-30.0, 150.0)}.items():
+            coords += [(f"<{g}tgn/{i}-place>", build._P_LAT, f'"{lat}"^^<http://www.w3.org/2001/XMLSchema#decimal>'),
+                       (f"<{g}tgn/{i}-place>", build._P_LONG, f'"{lon}"^^<http://www.w3.org/2001/XMLSchema#decimal>')]
+        notes = [(f"<{g}tgn/scopeNote/38678>", build._P_VALUE, '"Was an ancient metropolis."@en')]
+        aat_subjects = [(f"<{g}aat/300008347>", build._P_PREF_GVP, f"<{g}aat/term/1000-en>"),
+                        (f"<{g}aat/300000810>", pref, f"<{g}aat/term/1001-en>"),
+                        (f"<{g}aat/300000810>", pref, f"<{g}aat/term/1002-de>")]
+        aat_terms = [(f"<{g}aat/term/1000-en>", build._P_LITERAL, '"inhabited places"@en'),
+                     (f"<{g}aat/term/1001-en>", build._P_LITERAL, '"archaeological sites"@en'),
+                     (f"<{g}aat/term/1002-de>", build._P_LITERAL, '"archäologische Stätte"@de')]
+        d = tempfile.mkdtemp()
+        tz, az, out = (os.path.join(d, f) for f in ("tgn.zip", "aat.zip", "tgn.ndjson.gz"))
+        # as in the real export: a concept's label links sit in the Terms file, its note link with the notes
+        links = [r for r in subjects if r[1] in (pref, alt)]
+        note_links = [r for r in subjects if r[1] == build._P_NOTE]
+        subjects = [r for r in subjects if r not in links and r not in note_links]
+        with zipfile.ZipFile(tz, "w") as z:
+            z.writestr("TGNOut_1Subjects.nt", self.triples(subjects))
+            z.writestr("TGNOut_2Terms.nt", self.triples(terms + links))
+            z.writestr("TGNOut_Coordinates.nt", self.triples(coords))
+            z.writestr("TGNOut_ScopeNotes.nt", self.triples(note_links + notes))
+        with zipfile.ZipFile(az, "w") as z:
+            z.writestr("AATOut_1Subjects.nt", "")
+            z.writestr("AATOut_2Terms.nt", self.triples(aat_terms + aat_subjects))
+        stats = build.tgn(tz, az, out)
+        return stats, {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}, out
+
+    def test_window_classes_and_the_keep_rule(self):
+        stats, fs, _ = self.build()
+        self.assertEqual(sorted(fs), ["7000002", "7000003", "7001393"],
+                         "a plain town is dropped, the far-away place and the facet are no candidates")
+        self.assertEqual((stats["window"], stats["candidates"], stats["kept"]), (4, 4, 3))
+
+    def test_athens(self):
+        _, fs, _ = self.build()
+        a = fs["7001393"]
+        self.assertEqual(a["@id"], "http://vocab.getty.edu/tgn/7001393")
+        self.assertEqual(a["properties"], {"title": "Athens", "kind": "site", "source": build.TGN_SOURCE,
+                                           "modern": True, "placeType": "inhabited places"})
+        self.assertEqual(a["geometry"], {"type": "Point", "coordinates": [23.73333, 37.98333]})
+        names = {(n["toponym"], n.get("lang", "")): n for n in a["names"]}
+        self.assertEqual(names[("Athenae", "la")]["when"], {"timespans": [{"start": {"in": "-200"}}]},
+                         "200 BCE on; 9999 is Getty's 'the present', an open end")
+        self.assertTrue(names[("Athenae", "la")]["historic"])
+        self.assertIn(("Ἀθῆναι", "grc"), names)
+        self.assertIn(("Athenai", ""), names)
+        self.assertNotIn(("雅典", "zh"), names, "a language outside the window's")
+        self.assertEqual(a["descriptions"], [{"value": "Was an ancient metropolis.", "lang": "en"}])
+        self.assertEqual(a["types"], [{"identifier": "aat:300008347", "label": "inhabited places"}])
+        self.assertNotIn("links", a, "TGN carries no links: it joins by its own id")
+
+    def test_kinds(self):
+        _, fs, _ = self.build()
+        self.assertEqual(fs["7000002"]["properties"]["kind"], "site")
+        self.assertEqual(fs["7000002"]["properties"]["placeType"], "archaeological sites")
+        self.assertEqual(fs["7000003"]["properties"]["kind"], "feature", "a physical place is a feature")
+        self.assertEqual(build.tgn_kind({"AdminPlaceConcept"}, "former nation/state/empire"), "polity")
+        self.assertEqual(build.tgn_kind({"AdminPlaceConcept"}, "historical region"), "region")
+        self.assertEqual(build.tgn_kind({"PhysAdminPlaceConcept"}, "islands"), "site")
+
+    def test_helpers(self):
+        self.assertEqual(build.tgn_year('"-0200"^^<http://www.w3.org/2001/XMLSchema#gYear>'), -200)
+        self.assertEqual(build.tgn_year('"1453"^^<x>'), 1453)
+        self.assertIsNone(build.tgn_year('"9999"^^<x>'))
+        self.assertIsNone(build.tgn_year('"-9999"^^<x>'))
+        self.assertEqual(build.tgn_lang("el-Latn"), "", "a transliteration is in no language")
+        self.assertEqual(build.tgn_lang("grc"), "grc")
+        self.assertEqual(build.tgn_lang("zh-Hant"), "zh")
+        self.assertEqual(build.getty_id("<http://vocab.getty.edu/tgn/term/165794-la>", "tgn/term"), "165794-la")
+        self.assertIsNone(build.getty_id("<http://vocab.getty.edu/aat/300008347>", "tgn"))
+
+    def test_deterministic_bytes(self):
+        _, _, a = self.build()
+        _, _, b = self.build()
+        self.assertEqual(build.sha256(a), build.sha256(b))
+
+
 class OutputDir(unittest.TestCase):
     """Built extracts go where the server reads them by default: the XDG cache directory (#1403)."""
 

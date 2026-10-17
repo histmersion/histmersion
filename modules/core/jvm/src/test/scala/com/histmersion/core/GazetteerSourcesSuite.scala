@@ -108,6 +108,25 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       Some("geonames_10"))
     assertEquals(Gazetteer.canonical(Nil), None)
 
+  test("Getty TGN (#1403): a source kind of its own, ranked between Wikidata and GeoNames, an imported source"):
+    assertEquals(GazetteerKind.parse("tgn"), Some(GazetteerKind.Tgn))
+    assertEquals(GazetteerKind.ofKey("tgn"), Some(GazetteerKind.Tgn))
+    assertEquals(Gazetteer.sourceKey(GazetteerKind.Tgn), "tgn")
+    val wd  = PlaceMatch("wikidata_q1", Some("wikidata"))
+    val tgn = PlaceMatch("tgn_7000001", Some("tgn"))
+    val gn  = PlaceMatch("geonames_1", Some("geonames"))
+    assertEquals(Gazetteer.canonical(List(gn, tgn, wd)), Some("wikidata_q1"))
+    assertEquals(Gazetteer.canonical(List(gn, tgn)), Some("tgn_7000001"))
+    assertEquals(List(None, Some("lpf:x"), Some("wikidata"), Some("tgn"), Some("geonames"), Some("other"))
+      .map(Geocode.tierOf), List(0, 1, 2, 3, 4, 5))
+    assertEquals(Gazetteer.ImportedSources, List("wikidata", "geonames", "tgn"))
+    assert(Gazetteer.unknownWhenSilent("tgn") && !Gazetteer.unknownWhenSilent("lpf:x") && !Gazetteer.unknownWhenSilent(""))
+    assert(Gazetteer.PointAreaSources.contains("tgn"))
+    val r = Gazetteer.fromFeature(io.circe.parser.parse(
+      """{"@id":"http://vocab.getty.edu/tgn/7001393","type":"Feature","properties":{"title":"Roma","kind":"site"},
+        |"geometry":{"type":"Point","coordinates":[12.483,41.883]}}""".stripMargin).toOption.get, "", 1)
+    assertEquals(r.map(x => (x.ref, x.placeId)), Right(("tgn:7001393", "tgn_7001393")))
+
   test("canonical: the record's own id decides before its links; a native id before a copied one"):
     // GeoNames 3188382 (Varaždin) names wd:Q5420; Wikidata Q5420 names gn:3188382 (native on its place);
     // a neighbouring record that joined wikidata_q1059359 copied wd:Q5420 there. The copy must not win.

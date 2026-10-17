@@ -15,11 +15,11 @@ import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import scala.util.Using
 
-/** The gazetteer's external sources (#1064) — the `geonames`, `wikidata` and `lpf` steps of the
+/** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the
   * one-time gazetteer import job ([[com.histmersion.server.Bootstrap]]'s init job, the same that
   * imports the bundled seed and fetches Cliopatria or PeriodO).
   *
-  *   - `geonames`, `wikidata`: a PINNED extract (`db/gazetteer/extracts.json`: file, version,
+  *   - `geonames`, `wikidata`, `tgn`: a PINNED extract (`db/gazetteer/extracts.json`: file, version,
   *     sha256), Linked Places Format with one feature per line, gzip. Looked for in
   *     `places.sources.dir`; when missing and its pin names a `url`, downloaded there first. Its
   *     sha256 is checked BEFORE anything is read — a mismatch is refused.
@@ -346,9 +346,11 @@ object GazetteerLoad:
         periodStart = r.periodStart, periodEnd = r.periodEnd))
     val pinned = manifest(s.paths).toOption.toList.flatMap(_.extracts).flatMap { x =>
       GazetteerKind.parse(x.name).filter(_ != GazetteerKind.Lpf).map { k =>
-        val at = locate(s.paths, x.file)
+        val built = x.file.trim.nonEmpty && x.sha256.trim.nonEmpty // a pin not built yet names no file
+        val at    = Option.when(built)(locate(s.paths, x.file)).flatten
         GazetteerSourceInfo(Gazetteer.sourceKey(k), k, x.title,
-          Some(at.getOrElse(s.paths.extracts.resolve(x.file)).toString), at.isDefined, Some(x.version), licence = Some(x.licence),
+          Option.when(built)(at.getOrElse(s.paths.extracts.resolve(x.file)).toString), at.isDefined,
+          Option.when(built)(x.version), licence = Some(x.licence),
           citation = x.attribution)
       }
     }

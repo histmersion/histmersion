@@ -103,6 +103,17 @@ class GazetteerLoadSuite extends munit.FunSuite:
     assert(GazetteerLoad.extract(q, x, noNet, 5).left.exists(_.contains("refused")))
     assert(Files.exists(bad.resolve(x.file)))
 
+  test("the committed manifest decodes; tgn is pinned but not built yet and says so"):
+    val root = Iterator.iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent).takeWhile(_ != null)
+      .find(d => Files.isRegularFile(d.resolve("db/gazetteer/extracts.json"))).getOrElse(fail("no db/gazetteer above"))
+    val p = GazetteerLoad.Paths(Files.createTempDirectory("gaz"), Path.of("/nowhere"), root.resolve("db/gazetteer/extracts.json"))
+    val m = GazetteerLoad.manifest(p).fold(e => fail(e), identity)
+    assertEquals(m.extracts.map(_.name), List("geonames", "tgn", "wikidata"))
+    assert(m.extracts.forall(x => GazetteerKind.parse(x.name).isDefined))
+    val tgn = m.extracts.find(_.name == "tgn").get
+    assertEquals(tgn.licence, "ODC-By 1.0")
+    assert(GazetteerLoad.extract(p, tgn, noNet, 5).left.exists(_.contains("not pinned yet")))
+
   test("the LPF drop folder lists data files only, never a sidecar"):
     val s = layout()
     assertEquals(GazetteerLoad.lpfFiles(s.paths.lpf).map(_.getFileName.toString), List("zzgaz_hittite.jsonld", "zzgaz_kultepe.tsv"))
@@ -110,10 +121,10 @@ class GazetteerLoadSuite extends munit.FunSuite:
   // ── the database ─────────────────────────────────────────────────────────────────────────────
 
   private def clean(): Unit = if testDb.nonEmpty then connect(ds):
-    val _ = sql"DELETE FROM places WHERE import_source IN ('geonames', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
-    val _ = sql"DELETE FROM place_names WHERE import_source IN ('geonames', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
-    val _ = sql"DELETE FROM place_links WHERE import_source IN ('geonames', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
-    val _ = sql"DELETE FROM gazetteer_sources WHERE key IN ('geonames', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
+    val _ = sql"DELETE FROM places WHERE import_source IN ('geonames', 'tgn', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
+    val _ = sql"DELETE FROM place_names WHERE import_source IN ('geonames', 'tgn', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
+    val _ = sql"DELETE FROM place_links WHERE import_source IN ('geonames', 'tgn', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
+    val _ = sql"DELETE FROM gazetteer_sources WHERE key IN ('geonames', 'tgn', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
 
   override def beforeAll(): Unit = clean()
   override def afterAll(): Unit  = clean()
@@ -154,6 +165,43 @@ class GazetteerLoadSuite extends munit.FunSuite:
     // idempotent: the same versions again change nothing
     val again = GazetteerLoad.load(ds, s, GazetteerKind.Lpf, apply = true, _ => ()).toOption.get ++
       GazetteerLoad.load(ds, s, GazetteerKind.Geonames, apply = true, _ => ()).toOption.get
+    assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
+
+  private val TgnSha = "2c386aa87210da40fc3bcba558ebfd99ff6fa3924c4139f139212095882c4384"
+
+  /** [[layout]] with a `tgn` extract pinned too. */
+  private def withTgn(s: GazetteerLoad.Settings): GazetteerLoad.Settings =
+    copyResource("tgn-fixture.ndjson.gz", s.paths.extracts.resolve("tgn-fixture.ndjson.gz"))
+    val m = GazetteerLoad.manifest(s.paths).toOption.get
+    val x = GazetteerExtract("tgn", "tgn-fixture.ndjson.gz", TgnSha, 449, 3, "fixture-t", "Getty TGN fixture",
+      "ODC-By 1.0", Some("Getty Thesaurus of Geographic Names (TGN), ODC-By 1.0"))
+    Files.writeString(s.paths.manifest, io.circe.syntax.EncoderOps(GazetteerManifest(m.extracts :+ x)).asJson.spaces2)
+    s
+
+  dbTest("Getty TGN (#1403): joins by a shared tgn id only, keeps open name spans, drops a point-only region"):
+    val s = withTgn(layout())
+    val _ = GazetteerLoad.load(ds, s, GazetteerKind.Lpf, apply = true, _ => ()).fold(e => fail(e), identity)
+    val hattusa = "lpf_zzgaz_hittite_hattusa"
+    // what the Wikidata extract does for 25 753 items: a tgn: link on a place (here, by hand)
+    connect(ds)(sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
+                      VALUES ($hattusa, 'tgn', '999000301', 'close_match')""".update.run())
+    val c = GazetteerLoad.load(ds, s, GazetteerKind.Tgn, apply = true, _ => ()).fold(e => fail(e), identity).head
+    assertEquals((c.source, c.records, c.joined, c.created, c.pointAreasSkipped), ("tgn", 3L, 1L, 1L, 1L), c.describe)
+    val span = connect(ds)(sql"""SELECT lower(period), upper(period) - 1 FROM place_names
+                                 WHERE place_id = $hattusa AND import_source = 'tgn' AND name = 'Zzgaz Hattusa (TGN)'"""
+      .query[(Option[Long], Option[Long])].run().head)
+    assertEquals(span, (Some(-1650L), None), "a name used from 1650 BCE on stays open")
+    val own = connect(ds)(sql"""SELECT import_source, lower_inf(period) AND upper_inf(period) FROM places
+                                WHERE id = 'tgn_999000302'""".query[(String, Boolean)].run().toList)
+    assertEquals(own, List(("tgn", true)), "a record no place names becomes tgn_<id>, undated")
+    assertEquals(connect(ds)(sql"SELECT count(*)::int FROM places WHERE id = 'tgn_999000303'".query[Int].run().head), 0,
+      "a TGN region known only by a point is no place")
+    val src = GazetteerRepo.sources(ds).find(_.key == "tgn").getOrElse(fail("recorded"))
+    assertEquals((src.kind, src.version, src.licence), ("tgn", "fixture-t", Some("ODC-By 1.0")))
+    val desc = connect(ds)(sql"SELECT text FROM place_descriptions WHERE place_id = $hattusa AND import_source = 'tgn'"
+      .query[String].run().toList)
+    assertEquals(desc, List("Capital of the Hittites."))
+    val again = GazetteerLoad.load(ds, s, GazetteerKind.Tgn, apply = true, _ => ()).fold(e => fail(e), identity)
     assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
 
   dbTest("a dry run counts and keeps nothing"):

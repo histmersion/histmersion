@@ -202,7 +202,7 @@ object Geocode:
   private def broad(kind: String) = kind == PlaceKind.Region || kind == PlaceKind.Polity
 
   /** Who brought a place in, best first: 0 the bundled seed or a person's own (`import_source` NULL),
-    * 1 an LPF dataset, 2 Wikidata, 3 GeoNames — [[Gazetteer.rank]]'s order, which also decides which
+    * 1 an LPF dataset, 2 Wikidata, 3 Getty TGN, 4 GeoNames — [[Gazetteer.rank]]'s order, which also decides which
     * place a record joins. `Geocoder.tierSql` is its SQL twin. */
   def tierOf(importSource: Option[String]): Int = Gazetteer.rank(PlaceMatch("", importSource))
 

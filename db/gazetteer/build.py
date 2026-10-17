@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Build the pinned gazetteer EXTRACTS (#1064) from GeoNames and Wikidata.
+"""Build the pinned gazetteer EXTRACTS (#1064) from GeoNames, Wikidata and Getty TGN (#1403).
 
     ./build.py geonames <allCountries.zip> <alternateNamesV2.zip> <out.ndjson.gz>
     ./build.py wikidata-fetch <endpoint> <out-dir>          # the SPARQL result files (TSV), see below
     ./build.py wikidata <dir of TSV results> <out.ndjson.gz>
+    ./build.py tgn <TGN explicit.zip> <AAT explicit.zip> <out.ndjson.gz>   # Getty TGN, the N-Triples dumps
     ./build.py pin <extracts.json> <name> <file> [key=value …]   # record version, sha256, size, counts
 
 An output (and `pin`'s file) given as a bare file name is written to (read from) the directory the server
@@ -825,6 +826,277 @@ def wd_feature(q, core, kind, labels, names, times, ids, stats, descriptions=())
     return f
 
 
+# ── Getty TGN ───────────────────────────────────────────────────────────────────────────────────
+# The Getty Thesaurus of Geographic Names (ODC-By 1.0), from its EXPLICIT N-Triples export — a public
+# dump, no login: http://tgndownloads.getty.edu/VocabData/explicit.zip (1.15 GB zipped, ~27 GB of
+# N-Triples, read in place, never unpacked). Place types are AAT concepts; their English labels come
+# from the AAT explicit export (http://aatdownloads.getty.edu/VocabData/explicit.zip, 93 MB). TGN
+# places carry no links to other gazetteers: they JOIN by their own id, which Wikidata items carry
+# (P1667, ~25 700 in the window — `tgn:` links in the Wikidata extract).
+
+TGN_SOURCE = "Getty Thesaurus of Geographic Names (TGN), ODC-By 1.0"
+_G = "http://vocab.getty.edu/"
+_GVP = "<http://vocab.getty.edu/ontology#"
+_P_TYPE = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
+_P_LAT, _P_LONG = "<http://www.w3.org/2003/01/geo/wgs84_pos#lat>", "<http://www.w3.org/2003/01/geo/wgs84_pos#long>"
+_P_PREF, _P_ALT = "<http://www.w3.org/2008/05/skos-xl#prefLabel>", "<http://www.w3.org/2008/05/skos-xl#altLabel>"
+_P_LITERAL = "<http://www.w3.org/2008/05/skos-xl#literalForm>"
+_P_NOTE, _P_VALUE = "<http://www.w3.org/2004/02/skos/core#scopeNote>", "<http://www.w3.org/1999/02/22-rdf-syntax-ns#value>"
+_P_PTYPE = _GVP + "placeTypePreferred>"
+_P_PREF_GVP = _GVP + "prefLabelGVP>"
+_P_START, _P_END, _P_HISTORIC = _GVP + "estStart>", _GVP + "estEnd>", _GVP + "historicFlag>"
+TGN_PLACE_CLASSES = {"AdminPlaceConcept", "PhysPlaceConcept", "PhysAdminPlaceConcept"}
+# Getty writes "the present" as 9999 and "unknown" as -9999 or so: a bound that far out is OPEN.
+TGN_OPEN_YEARS = 5000
+
+# What a place type (its AAT English label) says about the place: a historical or archaeological kind
+# is kept outright; a polity or region kind sets the kind. Order: the first match decides.
+TGN_HISTORICAL_TYPE = re.compile(r"\b(ancient|archaeolog|deserted|abandoned|former|historical|lost|ruin|necropol|"
+                                 r"tell\b|tumul|hillfort|oppid|colon(y|ia)\b|classical|medieval|prehistoric)", re.I)
+TGN_POLITY_TYPE = re.compile(r"\b(nation|empire|kingdom|sovereign|state|republic|principality|sultanate|caliphate|"
+                             r"khanate|emirate|duchy|county palatine|polity|confederation)\b", re.I)
+TGN_REGION_TYPE = re.compile(r"\b(region|province|district|department|county|canton|administrative|division|"
+                             r"governorate|prefecture|territory|oblast|kray|krai|vilayet|satrapy|diocese|area)\b", re.I)
+
+
+def nt_split(line):
+    """(subject, predicate, object) of one N-Triples line as text; None for a blank or comment line."""
+    line = line.strip()
+    if not line or line.startswith("#"):
+        return None
+    parts = line.split(" ", 2)
+    if len(parts) < 3:
+        return None
+    o = parts[2]
+    if o.endswith(" ."):
+        o = o[:-2].rstrip()
+    elif o.endswith("."):
+        o = o[:-1].rstrip()
+    return parts[0], parts[1], o
+
+
+def nt_triples(z, member, predicates):
+    """The triples of one zip member whose predicate is one of `predicates` (cheap bytes test first)."""
+    wanted = {p.encode() for p in predicates}
+    with z.open(member) as fh:
+        for raw in fh:
+            sp = raw.find(b" ")
+            if sp < 0:
+                continue
+            ep = raw.find(b" ", sp + 1)
+            if raw[sp + 1:ep] not in wanted:
+                continue
+            t = nt_split(raw.decode("utf-8", "replace"))
+            if t:
+                yield t
+
+
+def getty_id(term, kind):
+    """`<http://vocab.getty.edu/tgn/7001393>` → '7001393' for kind 'tgn' (and `…-place` for the
+    coordinate node), `<…/tgn/term/165794-la>` → '165794-la' for kind 'tgn/term'; None otherwise."""
+    pre = "<" + _G + kind + "/"
+    if not term.startswith(pre) or not term.endswith(">"):
+        return None
+    return term[len(pre):-1]
+
+
+def nt_literal(o):
+    """(text, lang, datatype) of an N-Triples literal object; text unescaped. A bare (non-literal)
+    object gives (o, '', '')."""
+    m = re.match(r'^"(.*)"(?:@([A-Za-z0-9-]+)|\^\^<([^>]+)>)?$', o, re.S)
+    if not m:
+        return o, "", ""
+    return unescape(m.group(1)), (m.group(2) or "").lower(), m.group(3) or ""
+
+
+def tgn_lang(tag):
+    """A name's language for the extract: the base language of a native-script tag ('grc', 'el'); a
+    transliteration (`el-Latn`) is no name IN that language — '' like GeoNames' bare variants."""
+    tag = (tag or "").lower()
+    if not tag or "-latn" in tag:
+        return ""
+    return tag.split("-")[0]
+
+
+def tgn_year(o):
+    """A Getty estimated date (`"-0200"^^xsd:gYear`) as a signed year, or None when absent or a
+    sentinel for "the present"/"unknown". Getty writes BCE years negative in historical reckoning (its
+    own data, not XSD 1.1's year zero): -200 is 200 BCE."""
+    text, _, _ = nt_literal(o)
+    m = re.match(r"^(-?)0*(\d+)$", text.strip())
+    if not m:
+        return None
+    y = int(m.group(1) + (m.group(2) or "0"))
+    if y == 0 or abs(y) >= TGN_OPEN_YEARS:
+        return None
+    return y
+
+
+def tgn_kind(classes, type_label):
+    if "PhysPlaceConcept" in classes and not ({"AdminPlaceConcept", "PhysAdminPlaceConcept"} & classes):
+        return "feature"
+    label = type_label or ""
+    if TGN_POLITY_TYPE.search(label):
+        return "polity"
+    if TGN_REGION_TYPE.search(label):
+        return "region"
+    return "site"
+
+
+def getty_members(z, *suffixes):
+    """The members of a Getty export whose names end with one of `suffixes`, in that order. (The
+    explicit exports keep a concept's label LINKS in the Terms file beside the terms themselves, and its
+    scope-note links beside the notes — so a pass is over every member that may hold a predicate.)"""
+    names = z.namelist()
+    return [m for suf in suffixes for m in names if m.endswith(suf)]
+
+
+def aat_labels(aat_zip, wanted):
+    """AAT concept id → its English label (`gvp:prefLabelGVP` when English, else the English
+    `xl:prefLabel`), for the `wanted` ids (the place types in use)."""
+    if not wanted:
+        return {}
+    with zipfile.ZipFile(aat_zip) as z:
+        members = getty_members(z, "1Subjects.nt", "2Terms.nt")
+        gvp, pref = {}, {}
+        for m in members:
+            for s, p, o in nt_triples(z, m, [_P_PREF_GVP, _P_PREF]):
+                a, t = getty_id(s, "aat"), getty_id(o, "aat/term")
+                if a in wanted and t and (t.endswith("-en") or t.endswith("-en-us")):
+                    (gvp if p == _P_PREF_GVP else pref).setdefault(a, t)
+        by_term = {}
+        for a in wanted:
+            t = gvp.get(a) or pref.get(a)
+            if t:
+                by_term[t] = a
+        out = {}
+        for m in getty_members(z, "2Terms.nt"):
+            for s, _, o in nt_triples(z, m, [_P_LITERAL]):
+                t = getty_id(s, "aat/term")
+                if t in by_term:
+                    out.setdefault(by_term[t], nt_literal(o)[0])
+    return out
+
+
+def tgn(tgn_zip, aat_zip, out):
+    """The TGN extract: places in the window whose type is historical or archaeological, or that have
+    a historic, dated or historical-language name; each with its names (language, use dates, historic
+    flag), its English scope note and its place type. Several passes over the zip, read in place."""
+    stats = {"window": 0, "candidates": 0, "kept": 0, "names": 0, "dated": 0, "described": 0}
+    with zipfile.ZipFile(tgn_zip) as z:
+        def scan(suffixes, predicates):
+            for m in getty_members(z, *suffixes):
+                yield from nt_triples(z, m, predicates)
+
+        # 1. where: the coordinates of `<tgn/X-place>`, clipped to the window
+        lat, lon = {}, {}
+        for s, p, o in scan(["Coordinates.nt"], [_P_LAT, _P_LONG]):
+            i = getty_id(s, "tgn")
+            if not i or not i.endswith("-place"):
+                continue
+            v = float(nt_literal(o)[0])
+            (lat if p == _P_LAT else lon)[i[:-6]] = v
+        where = {i: (r5(lon[i]), r5(lat[i])) for i in lat if i in lon and in_bbox(lon[i], lat[i])}
+        stats["window"] = len(where)
+        del lat, lon
+
+        # 2. what: class, place type, labels and scope notes of those
+        classes, ptype, terms, notes = {}, {}, {}, {}
+        # (in the export: the class in Subjects, the place type in PlaceTypes, the label links in Terms,
+        # the note links in ScopeNotes)
+        for s, p, o in scan(["1Subjects.nt", "PlaceTypes.nt", "2Terms.nt", "ScopeNotes.nt"],
+                            [_P_TYPE, _P_PTYPE, _P_PREF, _P_ALT, _P_NOTE]):
+            i = getty_id(s, "tgn")
+            if i not in where:
+                continue
+            if p == _P_TYPE:
+                if o.startswith(_GVP):
+                    classes.setdefault(i, set()).add(o[len(_GVP):-1])
+            elif p == _P_PTYPE:
+                ptype.setdefault(i, getty_id(o, "aat"))
+            elif p == _P_NOTE:
+                n = getty_id(o, "tgn/scopeNote")
+                if n:
+                    notes[n] = i
+            else:
+                t = getty_id(o, "tgn/term")
+                if t:
+                    terms[t] = (i, p == _P_PREF)
+        places = {i for i in where if classes.get(i, set()) & TGN_PLACE_CLASSES}
+        stats["candidates"] = len(places)
+
+        # 3. names: each label's text, language, dates and historic flag
+        names, title = {}, {}
+        info = {}
+        for s, p, o in scan(["2Terms.nt"], [_P_LITERAL, _P_START, _P_END, _P_HISTORIC]):
+            t = getty_id(s, "tgn/term")
+            if t not in terms or terms[t][0] not in places:
+                continue
+            d = info.setdefault(t, {})
+            if p == _P_LITERAL:
+                d["text"], d["tag"], _ = nt_literal(o)
+            elif p == _P_START:
+                d["start"] = tgn_year(o)
+            elif p == _P_END:
+                d["end"] = tgn_year(o)
+            else:
+                d["historic"] = o.rstrip(">").rsplit("/", 1)[-1].lower() in ("historic", "both")
+        for t in sorted(info):
+            d = info[t]
+            if not d.get("text"):
+                continue
+            i, pref = terms[t]
+            lang = tgn_lang(d.get("tag"))
+            if lang and lang not in LANGS:
+                continue
+            names.setdefault(i, []).append(name_obj(d["text"], lang, when(d.get("start"), d.get("end")),
+                                                    bool(d.get("historic"))))
+            if pref and (i not in title or lang == "en"):
+                title[i] = d["text"]
+        del info, terms
+
+        # 4. what it is, in words: the English scope notes
+        described = {}
+        if notes:
+            for s, _, o in scan(["ScopeNotes.nt"], [_P_VALUE]):
+                n = getty_id(s, "tgn/scopeNote")
+                if n in notes and notes[n] in places:
+                    text, tag, _ = nt_literal(o)
+                    if text.strip() and tag in ("", "en"):
+                        described.setdefault(notes[n], text.strip())
+
+    labels = aat_labels(aat_zip, {ptype[i] for i in places if ptype.get(i)}) if aat_zip else {}
+
+    def keep(i):
+        if TGN_HISTORICAL_TYPE.search(labels.get(ptype.get(i), "") or ""):
+            return True
+        return any(n.get("historic") or n.get("when") or n.get("lang") in HISTORICAL_LANGS for n in names.get(i, []))
+
+    def features():
+        for i in sorted(places, key=int):
+            if not keep(i) or not names.get(i):
+                continue
+            label = labels.get(ptype.get(i))
+            ns = dedup_names(names[i])
+            t = title.get(i) or ns[0]["toponym"]
+            props = {"title": t, "kind": tgn_kind(classes.get(i, set()), label), "source": TGN_SOURCE, "modern": True}
+            if label:
+                props["placeType"] = label
+            f = {"@id": f"{_G}tgn/{i}", "type": "Feature", "properties": props,
+                 "geometry": {"type": "Point", "coordinates": list(where[i])}, "names": ns}
+            if ptype.get(i):
+                f["types"] = [{"identifier": f"aat:{ptype[i]}", "label": label or ptype[i]}]
+            if i in described:
+                f["descriptions"] = [{"value": described[i], "lang": "en"}]
+                stats["described"] += 1
+            stats["names"] += len(ns)
+            stats["dated"] += 1 if any(n.get("when") for n in ns) else 0
+            yield f
+
+    stats["kept"] = write_ndjson_gz(out, features())
+    return stats
+
+
 # ── the manifest ────────────────────────────────────────────────────────────────────────────────
 
 def count_features(path):
@@ -895,6 +1167,8 @@ def main(argv):
         print(json.dumps(wikidata_fetch(argv[1], argv[2]), indent=2))
     elif len(argv) >= 3 and argv[0] == "wikidata":
         print(json.dumps(wikidata(argv[1], out_path(argv[2], out)), indent=2))
+    elif len(argv) >= 4 and argv[0] == "tgn":
+        print(json.dumps(tgn(argv[1], argv[2] or None, out_path(argv[3], out)), indent=2))
     elif len(argv) >= 4 and argv[0] == "pin":
         print(json.dumps(pin(argv[1], argv[2], out_path(argv[3], out), argv[4:]), indent=2))
     else:
