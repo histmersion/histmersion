@@ -171,6 +171,11 @@ plugin:
 cli-docs:
     ./tools/gen-cli-docs.sh
 
+# Regenerate README's index of every REST endpoint from Api.all
+[group('dev')]
+api-docs:
+    {{sbt}} "coreJVM/runMain com.histmersion.core.generateApiIndex {{justfile_directory()}}"
+
 # Remove build output (sbt targets, native images, dist/)
 [group('dev')]
 clean:
