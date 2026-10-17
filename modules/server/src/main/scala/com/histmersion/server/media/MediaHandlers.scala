@@ -46,7 +46,9 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
       case "" | "wikidata" | "commons" | MediaProvider.Commons => Right(MediaProvider.Commons)
       case other => Left(ApiError(s"unknown media provider '$other' (one of: wikidata)", Some(Write.CodeInvalid)))
 
-  /** One import run, answered when it ends: a dry run, or a real one of at most `media.max-limit`. */
+  /** One import run, answered when it ends: a dry run (at most `media.max-limit`), or a real one of
+    * ONE place or event. A real run over many is a job ([[importJob]], #1491): asked here it outlived
+    * the CLI's request while the server kept going. */
   def importMedia(req: MediaImportRequest): Either[ApiError, MediaImportReport] =
     def go: Either[ApiError, MediaImportReport] =
       providerOf(req.provider).flatMap { provider =>
@@ -64,7 +66,11 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
           finally busy.set(None)
         }
       }
-    if req.dryRun then go else deps.maintenance.guard("media_import")(go)
+    if req.dryRun then go
+    else if !MediaHandlers.single(req) then
+      Left(ApiError("an import over many places/events is a job: POST /api/media/import/job " +
+        "(`histmersion media import wikidata` starts and follows it)", Some(Write.CodeInvalid)))
+    else deps.maintenance.guard("media_import")(go)
 
   // ── jobs ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -104,49 +110,65 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
     providerOf(req.provider).flatMap { provider =>
       if req.dryRun then Left(ApiError("a dry run answers at once: POST /api/media/import", Some(Write.CodeInvalid)))
       else
-        val single = req.place.exists(_.trim.nonEmpty) || req.event.exists(_.trim.nonEmpty)
+        val single = MediaHandlers.single(req)
         // the one target must exist (and have an item) before a job is started for it
         val check =
           if single then MediaRepo.targets(ds, provider, req.place, req.event, 1, req.refresh)
             .left.map(ApiError(_, Some(Write.CodeNotFound))).map(_ => ())
           else Right(())
         check.flatMap { _ =>
-          val total = req.limit.filter(_ > 0)
+          val cap = req.limit.filter(_ > 0)
           val what = (if single then s"Wikidata pictures of ${req.place.orElse(req.event).getOrElse("")}"
-                      else s"Wikidata pictures of ${total.fold("every place and event")(n => s"up to $n places/events")} not asked yet") +
+                      else s"Wikidata pictures of ${cap.fold("every place and event")(n => s"up to $n places/events")} not asked yet") +
                      (if req.refresh then " (refresh)" else "")
           startJob(MediaHandlers.ImportJobKind, what) { progress =>
-            Right(MediaHandlers.summary(runImport(provider, req, single, total, progress)))
+            Right(MediaHandlers.summary(runImport(provider, req, single, cap, progress)))
           }
         }
     }
 
-  private def runImport(provider: String, req: MediaImportRequest, single: Boolean, total: Option[Int],
+  /** The job's body. Progress is `n/total` (#1491): the total is counted once, at the start — the
+    * places/events not asked yet (since this job's start, for a refresh), capped by `limit`. A failed
+    * picture is a line in the report, never the end of the job; a batch that throws is reported and
+    * ends it (its targets are not recorded as asked, so the next job resumes there, not past it). */
+  private def runImport(provider: String, req: MediaImportRequest, single: Boolean, limit: Option[Int],
       progress: String => Unit): MediaImportReport =
     val since = Option.when(req.refresh)(System.currentTimeMillis())
     val fetch = Polite(http, cfg.media)
     val run   = WikidataCommons(fetch, cfg.media)
     val store = DbMediaStore(ds)
     val batch = cfg.media.importBatch.max(1)
-    val cap   = total.getOrElse(Int.MaxValue)
+    val cap   = limit.getOrElse(Int.MaxValue)
+    progress("counting the places and events not asked yet")
+    val total = if single then 1 else MediaRepo.pending(ds, provider, since).min(cap)
     @annotation.tailrec
-    def loop(acc: MediaImportReport): MediaImportReport =
+    def loop(acc: MediaImportReport, seen: Set[String]): MediaImportReport =
       val left = cap - acc.targets
       if left <= 0 || deps.maintenance.active then acc
       else
         MediaRepo.targets(ds, provider, req.place, req.event, batch.min(left), req.refresh, since) match
           case Left(e)  => acc.copy(failed = acc.failed :+ e)
           case Right(Nil) => acc
+          // none of the last batch's checks were recorded: asking again would spin on the same ones
+          case Right(targets) if !single && targets.forall(t => seen(s"${t.targetType}:${t.id}")) =>
+            acc.copy(failed = acc.failed :+ s"${targets.size} place(s)/event(s) came back unrecorded (${targets.head.id}…); stopped")
           case Right(targets) =>
-            val r    = run.run(targets, dryRun = false, req.refresh, store)
-            val next = MediaImportReport.combine(acc, r.copy(batches = 1))
-            progress(s"batch ${next.batches}: ${next.targets} asked · ${next.stored} stored · ${next.linked} linked · " +
-              s"${fetch.requests} request(s)")
-            // a batch Wikidata did not answer at all ends the job (the next one resumes) rather than spin
-            if single || (r.items == 0 && r.failed.nonEmpty) then next else loop(next)
-    val out = loop(MediaImportReport(provider, dryRun = false))
+            scala.util.Try(run.run(targets, dryRun = false, req.refresh, store)) match
+              case scala.util.Failure(e: InterruptedException) => throw e
+              case scala.util.Failure(e) =>
+                scribe.error(s"media import job: batch ${acc.batches + 1} failed: ${e.getMessage}", e)
+                acc.copy(failed = acc.failed :+ s"batch ${acc.batches + 1} (${targets.head.id}…): " +
+                  s"${e.getClass.getSimpleName}: ${e.getMessage}")
+              case scala.util.Success(r) =>
+                val next = MediaImportReport.combine(acc, r.copy(batches = 1))
+                progress(MediaHandlers.progressLine(next, total, fetch.requests))
+                // a batch Wikidata did not answer at all ends the job (the next one resumes) rather than spin
+                if single || (r.items == 0 && r.failed.nonEmpty) then next
+                else loop(next, seen ++ targets.map(t => s"${t.targetType}:${t.id}"))
+    val out = loop(MediaImportReport(provider, dryRun = false), Set.empty)
     scribe.info(s"media import job: ${out.targets} target(s) in ${out.batches} batch(es), ${out.stored} stored, " +
-      s"${fetch.requests} request(s)")
+      s"${fetch.requests} request(s), ${out.failed.size} failed")
+    out.failed.take(50).foreach(f => scribe.warn(s"media import job: $f"))
     out.copy(pending = MediaRepo.pending(ds, provider, since))
 
   /** The sources' pictures, one run: a dry run (from the database alone), or — for one `citekey` —
@@ -214,6 +236,22 @@ object MediaHandlers:
     def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
       Left("no converter")
     def health: Either[String, String] = Left("no converter")
+
+  /** Pure: does the request name one place or event (not "every one not asked yet")? */
+  def single(req: MediaImportRequest): Boolean =
+    req.place.exists(_.trim.nonEmpty) || req.event.exists(_.trim.nonEmpty)
+
+  /** Pure: a running import job's progress line — `n/total` asked (a total of 0 or less is unknown,
+    * and a total passed by the asked count is the asked count: places cited meanwhile join in). */
+  def progressLine(r: MediaImportReport, total: Int, requests: Int): String =
+    val of = if total > 0 then s"/${total.max(r.targets)}" else ""
+    List(
+      Some(s"${r.targets}$of place(s)/event(s) asked"),
+      Some(s"batch ${r.batches}"),
+      Some(s"${r.stored} stored · ${r.linked} linked"),
+      Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed"),
+      Some(s"$requests request(s)")
+    ).flatten.mkString(" · ")
 
   /** Pure: a finished import job's line in `histmersion jobs`. */
   def summary(r: MediaImportReport): String =
