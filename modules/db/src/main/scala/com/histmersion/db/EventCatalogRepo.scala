@@ -3,7 +3,6 @@ package com.histmersion.db
 import com.histmersion.core.*
 
 import com.augustnagro.magnum.*
-import io.circe.syntax.*
 import javax.sql.DataSource
 
 private[db] final case class StoredEventRow(id: String, kind: String, notBefore: Option[Long], beginBy: Option[Long],
@@ -172,7 +171,7 @@ object EventCatalogRepo:
         .query[(String, String, String)].run().toList
       CatalogRecord.owner(id, cat, rows.map(r => (r._1, r._2)))
         .flatMap(k => rows.find(r => (r._1, r._2) == k))
-        .flatMap(r => io.circe.parser.decode[CatalogRecord](r._3).toOption)
+        .flatMap(r => Jsonb.read[CatalogRecord](r._3))
         .map(cat -> _)
     }
 
@@ -184,7 +183,7 @@ object EventCatalogRepo:
       val rows = sql"""SELECT c.event_id, e.kind, c.record::text FROM event_catalogue c JOIN events e ON e.id = c.event_id
                        WHERE ${provider.isEmpty} OR c.provider = ${provider.getOrElse("")}
                        ORDER BY c.provider, c.provider_id""".query[(String, String, String)].run().toList
-      val decoded = rows.map((id, kind, j) => io.circe.parser.decode[CatalogRecord](j).toOption.map((id, kind, _)))
+      val decoded = rows.map((id, kind, j) => Jsonb.read[CatalogRecord](j).map((id, kind, _)))
       (decoded.flatten, decoded.count(_.isEmpty))
 
   /** The kind each stored record of `provider` has, by key — what an item read again in another class
@@ -195,7 +194,7 @@ object EventCatalogRepo:
         .query[(String, String, String)].run().map((p, i, k) => (p, i) -> k).toMap
 
   private def upsertRecord(eventId: String, r: CatalogRecord)(using DbCon): Unit =
-    val json = r.asJson.noSpaces
+    val json = Jsonb.write(r)
     sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
                                        end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record)
           VALUES (${r.provider}, ${r.providerId}, $eventId, ${r.url}, ${r.label}, ${EventTaxonomy.canonical(r.kind)},
@@ -301,7 +300,7 @@ object EventCatalogRepo:
             WHERE c.event_id = $id AND (${withRejected} OR c.status <> 'rejected')
             ORDER BY c.status = 'confirmed' DESC, c.score DESC, c.citekey"""
         .query[CandidateRow].run().toList.map { r =>
-          val ps = io.circe.parser.decode[List[EventPassage]](r.passages).getOrElse(Nil)
+          val ps = Jsonb.read[List[EventPassage]](r.passages).getOrElse(Nil)
           EventLinkCandidate(r.eventId, r.citekey, r.score, r.status, r.title, r.findings, ps, r.reasons)
         }
 
@@ -311,7 +310,7 @@ object EventCatalogRepo:
     transact(ds):
       sql"DELETE FROM event_link_candidates WHERE event_id = $id AND status = 'proposed'".update.run()
       cs.foreach { c =>
-        val ps = c.passages.asJson.noSpaces
+        val ps = Jsonb.write(c.passages)
         sql"""INSERT INTO event_link_candidates (event_id, citekey, score, findings, passages, reasons)
               VALUES ($id, ${c.citekey}, ${c.score}, ${c.findings}::text[], $ps::jsonb, ${c.reasons}::text[])
               ON CONFLICT (event_id, citekey) DO UPDATE SET score = EXCLUDED.score, findings = EXCLUDED.findings,

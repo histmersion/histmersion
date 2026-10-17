@@ -3,7 +3,6 @@ package com.histmersion.db
 import com.histmersion.core.*
 
 import com.augustnagro.magnum.*
-import io.circe.parser
 import java.util.UUID
 import javax.sql.DataSource
 
@@ -57,13 +56,13 @@ object MergeRepo:
       find(idOrPrefix).map { r =>
         val (report, resolutions) = sql"SELECT report::text, resolutions::text FROM merges WHERE id = ${r.id}"
           .query[(String, Option[String])].run().head
-        val json = parser.parse(report).toOption
+        val json = Jsonb.read[io.circe.Json](report)
         // an apply wrote a MergeApplyResult (it has `applied` and `tally`), an import a BundleImportResult
         val applied  = json.filter(_.hcursor.downField("tally").succeeded).flatMap(_.as[MergeApplyResult].toOption)
         val imported = if applied.isDefined then None else json.flatMap(_.as[BundleImportResult].toOption)
         val remembered = sql"SELECT issue_id, decision FROM merge_decisions WHERE merge_id = ${r.id} ORDER BY issue_id"
           .query[(String, String)].run().toList.map((i, d) => MergeResolution(i, d))
-        MergeDetail(info(r), applied, imported, resolutions.flatMap(parser.decode[MergeResolutions](_).toOption), remembered)
+        MergeDetail(info(r), applied, imported, resolutions.flatMap(Jsonb.read[MergeResolutions]), remembered)
       }
 
   /** The ledger rows of one record (a uid — the bundle's or the one here — or a citekey), of one
@@ -123,12 +122,11 @@ object MergeRepo:
     connect(ds):
       Sql.of(s"SELECT resolutions::text, ${ts("updated_at")} FROM merge_sessions WHERE bundle = ?", Param.S(bundle))
         .frag.query[(String, String)].run().headOption
-        .flatMap((r, at) => parser.decode[MergeResolutions](r).toOption.map(MergeSession(bundle, _, Some(at))))
+        .flatMap((r, at) => Jsonb.read[MergeResolutions](r).map(MergeSession(bundle, _, Some(at))))
         .getOrElse(MergeSession(bundle))
 
   def putSession(ds: DataSource, bundle: String, r: MergeResolutions): MergeSession =
-    import io.circe.syntax.*
-    val json = r.asJson.noSpaces
+    val json = Jsonb.write(r)
     transact(ds):
       sql"""INSERT INTO merge_sessions (bundle, resolutions, updated_at) VALUES ($bundle, $json::jsonb, now())
             ON CONFLICT (bundle) DO UPDATE SET resolutions = EXCLUDED.resolutions, updated_at = now()""".update.run()

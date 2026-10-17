@@ -195,7 +195,7 @@ object BundleImport:
           import io.circe.syntax.*
           val report = base.copy(applied = true, backup = Some(dump), problems = Nil)
           val mergeId = ledgerAndMerge(m, bundleSha, input.ownBundle, planned.rows, report.asJson, report.changed + plan.changes,
-            Some((plan.planHash, dump, resolutions.asJson.noSpaces))).getOrElse(throw Abort(List("the merge wrote nothing")))
+            Some((plan.planHash, dump, Jsonb.write(resolutions)))).getOrElse(throw Abort(List("the merge wrote nothing")))
           ap.folds.foreach { f =>
             sql"""INSERT INTO uid_aliases (alias_uid, uid, kind, merge_id) VALUES (${f.foreignUid}, ${f.localUid}, ${f.kind.wire}, $mergeId)
                   ON CONFLICT (alias_uid) DO UPDATE SET uid = EXCLUDED.uid, kind = EXCLUDED.kind, merge_id = EXCLUDED.merge_id"""

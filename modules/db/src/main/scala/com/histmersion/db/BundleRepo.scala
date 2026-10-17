@@ -249,7 +249,7 @@ object BundleRepo:
       where(scope, "s.uid", "a.checked_at") ++ " ORDER BY s.uid")
       .frag.query[BAssessmentRow].run().map { r =>
         BundleAssessment(r.sourceUid, r.checkedAt, r.retracted,
-          io.circe.parser.parse(r.notices).getOrElse(io.circe.Json.arr()), r.citedBy, r.influential, r.verdict)
+          Jsonb.read[io.circe.Json](r.notices).getOrElse(io.circe.Json.arr()), r.citedBy, r.influential, r.verdict)
       }
 
   private[db] def aliases(scope: BundleScope)(using DbCon): Vector[BundleAlias] =
@@ -360,7 +360,7 @@ object BundleRepo:
     rows.map { r =>
       BundleGoal(r.uid, r.origin, r.slug, r.title, r.status, r.notes, r.tags, r.regions,
         range(r.pNull, r.pLo, r.pHi), r.parentUid, r.createdAt, r.updatedAt,
-        plan = r.plan.flatMap(io.circe.parser.parse(_).toOption),
+        plan = r.plan.flatMap(Jsonb.read[io.circe.Json]),
         planApprovedAt = r.planApprovedAt,
         budgetUsd = r.budgetUsd.map(_.toDouble),
         links = links.get(r.uid).map(_.toList.map(l => BundleGoalLink(l.kind, l.ref, l.refUid, l.note, l.createdAt)))
@@ -395,7 +395,7 @@ object BundleRepo:
         .query[BPlaceTypeRow].run().groupBy(_.placeId)
       rows.map { r =>
         BundlePlace(r.uid, r.origin, r.id, r.label, r.kind, r.geom, range(r.pNull, r.pLo, r.pHi), r.source,
-          r.properties.flatMap(io.circe.parser.parse(_).toOption),
+          r.properties.flatMap(Jsonb.read[io.circe.Json]),
           names.getOrElse(r.id, Vector.empty).toList.map(n =>
             BundlePlaceName(n.name, Option(n.lang).filter(_.nonEmpty), range(n.pNull, n.pLo, n.pHi))),
           rels.getOrElse(r.id, Vector.empty).toList.map(x => BundlePlaceRelation(x.parentId, x.kind, range(x.pNull, x.pLo, x.pHi))),
