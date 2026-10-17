@@ -16,7 +16,10 @@ import java.time.format.DateTimeFormatter
   *  - **Slow down**: a 429 or a 502/503/504 is asked again after the answer's `Retry-After` (seconds or
   *    an HTTP date), else after 1, 2, 4 … s; at most `maxRetries` times, and a host that asks for more
   *    than `maxRetryAfterSeconds` at once is left alone for this request ([[decide]]).
-  *  - **Redirects** are followed per client, never by flipping the JVM-wide default. */
+  *  - **Redirects** are followed per client, never by flipping the JVM-wide default.
+  *  - **Trust** (#1568): the JDK's roots, plus — only when configured (`acquire.tls`) — the operating
+  *    system's and a PEM file's ([[trust]]). Roots are only ever ADDED: every certificate chain is still
+  *    verified, and the host name checked, by the JDK; nothing here can switch that off. */
 object HttpPolicy:
 
   /** What to do with an answer. */
@@ -60,3 +63,42 @@ object HttpPolicy:
       else Step.Wait(wait, why)
     else if code >= 400 then Step.GiveUp(s"HTTP $code")
     else Step.Accept
+
+  // ── trust (#1568) ────────────────────────────────────────────────────────────────────────────────
+
+  /** Where the roots an outbound TLS connection trusts come from. */
+  enum Trust:
+    /** The JDK's own `cacerts` — always. */
+    case Jdk
+    /** macOS keychains, exported as PEM by `security find-certificate -a -p <keychain>` (the JDK's
+      * `KeychainStore-ROOT` reads the same roots, but through a JNI library the native image lacks). */
+    case Keychains(paths: List[String])
+    /** The first of these PEM bundles that exists — a Linux distribution's CA bundle. */
+    case Bundle(paths: List[String])
+    /** A PEM file the user named. */
+    case PemFile(path: String)
+
+  /** The macOS keychains that hold the system's roots: Apple's, and those an administrator added. */
+  val MacKeychains: List[String] =
+    List("/System/Library/Keychains/SystemRootCertificates.keychain", "/Library/Keychains/System.keychain")
+
+  /** Where Linux distributions keep their CA bundle (Debian/Ubuntu/Alpine, Fedora/RHEL, Arch/others). */
+  val LinuxBundles: List[String] =
+    List("/etc/ssl/certs/ca-certificates.crt", "/etc/pki/tls/certs/ca-bundle.crt", "/etc/ssl/cert.pem")
+
+  /** The trust sources of a configuration on an OS (`os.name`): the JDK's always; the system's when
+    * `systemTrust` (macOS keychains, else the Linux bundles); a PEM file when one is named. */
+  def trust(systemTrust: Boolean, extraCaFile: Option[String], osName: String): List[Trust] =
+    val mac = osName.toLowerCase(java.util.Locale.ROOT).contains("mac")
+    val system = Option.when(systemTrust)(if mac then Trust.Keychains(MacKeychains) else Trust.Bundle(LinuxBundles))
+    Trust.Jdk :: system.toList ++ extraCaFile.map(Trust.PemFile(_)).toList
+
+  private val PemCert = """(?s)-----BEGIN (?:TRUSTED |X509 )?CERTIFICATE-----(.*?)-----END (?:TRUSTED |X509 )?CERTIFICATE-----""".r
+
+  /** The DER bytes of every certificate in a PEM text, in order; anything else (keys, comments,
+    * `security`'s chatter, a block that is not base64) is skipped. */
+  def pemCertificates(text: String): List[Array[Byte]] =
+    PemCert.findAllMatchIn(Option(text).getOrElse("")).toList.flatMap { m =>
+      scala.util.Try(java.util.Base64.getMimeDecoder.decode(m.group(1).replaceAll("\\s+", ""))).toOption
+        .filter(_.nonEmpty)
+    }
