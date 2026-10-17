@@ -67,6 +67,8 @@ class ManagerRunSuite extends munit.FunSuite:
     Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM agent_managers".update.run()
+      // a manager's runs, whatever their target (a selection that was not narrowed reaches other suites' rows)
+      sql"DELETE FROM jobs WHERE kind = 'agent' AND manager_id IS NOT NULL".update.run()
       sql"DELETE FROM agent_leases WHERE name LIKE 'zz%'".update.run()
       sql"DELETE FROM jobs WHERE kind = 'agent' AND target_id LIKE 'zzagent%'".update.run()
       sql"DELETE FROM approvals WHERE citekey LIKE 'zzagent%'".update.run()
@@ -113,7 +115,7 @@ class ManagerRunSuite extends munit.FunSuite:
     assert(out1.exists(_.contains("selected 2")), out1)
     val i1 = item("zzagent_m1"); val i2 = item("zzagent_m2")
     assertEquals((i1.priority, i2.priority), (1, 0))
-    assertEquals((i1.status, i2.status), ("active", "active"))
+    assertEquals((i1.status, i2.status), ("active", "active"), s"$out1 ${events.map(_.text)} ${AgentRepo.list(ds, None, 50).filter(r => r.status == "queued" || r.status == "running").map(r => (r.target, r.pipeline, r.status))}")
     val r1 = AgentRepo.get(ds, i1.runId.get).get
     assertEquals((r1.origin, r1.managerId, r1.managerItem, r1.status), (Some("manager"), Some(ReviewId), Some(i1.id), "queued"))
     assertEquals((r1.params.fix, r1.params.rounds), (Some(true), Some(3)))

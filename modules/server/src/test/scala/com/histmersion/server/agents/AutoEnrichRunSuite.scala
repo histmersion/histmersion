@@ -32,7 +32,9 @@ class AutoEnrichRunSuite extends munit.FunSuite:
       converter = b.converter.copy(spoolDir = Files.createTempDirectory("histmersion-autoenrich").toString),
       agents = b.agents.copy(enabled = true, autoEnrich = true, prices = "zzautoenrich=0/0",
         enrich = b.agents.enrich.copy(upstream = false),
-        roles = b.agents.roles.copy(extractor = "local:zzautoenrich")))
+        roles = b.agents.roles.copy(extractor = "local:zzautoenrich"),
+        // the direct run: auto-enrich as it was before the managers' phase 2 (still what managers off does)
+        managers = b.agents.managers.copy(enabled = false)))
 
   private lazy val ds = Db.dataSource(baseCfg.db)
 
@@ -42,6 +44,7 @@ class AutoEnrichRunSuite extends munit.FunSuite:
       sql"DELETE FROM jobs WHERE citekey LIKE 'zzautoenrich%' OR target_id LIKE 'zzautoenrich%'".update.run()
       sql"DELETE FROM queue_items WHERE text LIKE '%zzautoenrich%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzautoenrich%'".update.run()
+      sql"DELETE FROM manager_items WHERE target LIKE 'zzautoenrich%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit   = clean()
@@ -85,6 +88,18 @@ class AutoEnrichRunSuite extends munit.FunSuite:
       val again = ingest(h)
       assertEquals(runs.map(_.id), List(run.id))
       assert(again.progress.exists(_.contains(s"enrichment not queued: enrich-source run ${run.id} is queued")), again.progress)
+    }
+
+  test("managers on (phase 2): the ingest hands the source to the enrich manager — an item, no run — and says it is paused"):
+    val on = baseCfg.copy(agents = baseCfg.agents.copy(managers = baseCfg.agents.managers.copy(enabled = true)))
+    withHandlers(on) { h =>
+      val job = ingest(h)
+      assertEquals(runs, Nil, "the manager starts it, not the ingest")
+      val item = com.histmersion.db.ManagerRepo.itemFor(ds, com.histmersion.core.Managers.EnrichId,
+        com.histmersion.core.Managers.SourceEnrich, Ck).getOrElse(fail("no item"))
+      assertEquals((item.origin, item.status), ("ingest", "pending"))
+      assert(job.progress.exists(p => p.contains(s"enrichment queued: item #${item.id} of the enrich manager") && p.contains("paused")),
+        job.progress)
     }
 
   test("switch off, or agents off: nothing queued and nothing said"):

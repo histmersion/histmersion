@@ -56,6 +56,8 @@ class ManagerPhase2Suite extends munit.FunSuite:
     Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM agent_managers".update.run()
+      // a manager's runs, whatever their target (a selection that was not narrowed reaches other suites' rows)
+      sql"DELETE FROM jobs WHERE kind = 'agent' AND manager_id IS NOT NULL".update.run()
       sql"DELETE FROM approvals WHERE subject LIKE 'zzagent%' OR citekey LIKE 'zzagent%'".update.run()
       sql"DELETE FROM jobs WHERE kind = 'agent' AND target_id LIKE 'zzagent%'".update.run()
       sql"DELETE FROM goals WHERE slug LIKE 'zzagent%'".update.run()
@@ -146,6 +148,7 @@ class ManagerPhase2Suite extends munit.FunSuite:
     val (a, h) = handlers(c, auto); seed(h)
     assert(h.putArticle("zzagent_f2", ArticlePut("Zz tin", "concept", articleBody, tags = List(Tag))).isRight)
     val r = a.managing.enqueue(EnqueueRequest("review", "zzagent_f2")).fold(e => fail(e.message), identity)
+    a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(Tag))))))
     assertEquals(r.items.map(_.kind), List(ArticleReview))
     assertEquals(item(ReviewId, InferFilter, "zzagent_f2").priority, 10, "at the review's priority")
     a.managing.action(ReviewId, "resume", None)
@@ -291,6 +294,7 @@ class ManagerPhase2Suite extends munit.FunSuite:
       filter = Some(ArticleFilter(topics = List("zzagent_tin"))))).isRight)
     val r = a.managing.enqueue(EnqueueRequest("extend", "zzagent_x1")).fold(e => fail(e.message), identity)
     assertEquals((r.managerId, r.items.map(i => (i.kind, i.priority))), (ReviewId, List((ArticleExtend, 10))))
+    a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(Tag))))))
     a.managing.action(ReviewId, "resume", None)
     a.managers.tick(t0)
     val run = AgentRepo.get(ds, item(ReviewId, ArticleExtend, "zzagent_x1").runId.get).get
