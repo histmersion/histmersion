@@ -346,9 +346,11 @@ object GazetteerLoad:
         periodStart = r.periodStart, periodEnd = r.periodEnd))
     val pinned = manifest(s.paths).toOption.toList.flatMap(_.extracts).flatMap { x =>
       GazetteerKind.parse(x.name).filter(_ != GazetteerKind.Lpf).map { k =>
-        val at = locate(s.paths, x.file)
+        val built = x.file.trim.nonEmpty && x.sha256.trim.nonEmpty // a pin not built yet names no file
+        val at    = Option.when(built)(locate(s.paths, x.file)).flatten
         GazetteerSourceInfo(Gazetteer.sourceKey(k), k, x.title,
-          Some(at.getOrElse(s.paths.extracts.resolve(x.file)).toString), at.isDefined, Some(x.version), licence = Some(x.licence),
+          Option.when(built)(at.getOrElse(s.paths.extracts.resolve(x.file)).toString), at.isDefined,
+          Option.when(built)(x.version), licence = Some(x.licence),
           citation = x.attribution)
       }
     }
