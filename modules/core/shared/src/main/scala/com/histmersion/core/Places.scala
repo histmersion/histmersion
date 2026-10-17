@@ -17,17 +17,45 @@ import sttp.tapir.Schema
 
 // ── domain ──────────────────────────────────────────────────────────────────────────────────────
 
+/** The side of a dating its source left OPEN (#1403): a timespan with a start and no end is "from
+  * the start on", one with an end and no start "until the end" — never the single known year.
+  *
+  * A [[Place]], [[PlaceName]] or [[PlaceRelation]] keeps its known bound(s) in `period` (a one-ended
+  * span as the one year it names) and the open side here; [[OpenSide.bounds]] is what is stored, the
+  * `int8range` `[start,)` or `(,end]` (`PeriodSql.bounds`). */
+enum OpenSide:
+  case Start, End
+
+object OpenSide:
+  /** The inclusive bounds to store: the known years of `period`, with the `open` side dropped. */
+  def bounds(period: Option[Period], open: Option[OpenSide]): (Option[Long], Option[Long]) =
+    (period.map(_.start).filterNot(_ => open.contains(Start)), period.map(_.end).filterNot(_ => open.contains(End)))
+
+  /** A span with optional sides as (`period`, `open`): both sides known is a closed period; one side
+    * known is that year with the other side open; neither is no period. */
+  def split(s: Span): (Option[Period], Option[OpenSide]) = s match
+    case Span(Some(a), Some(b)) => (Some(if a <= b then Period(a, b) else Period(b, a)), None)
+    case Span(Some(a), None)    => (Some(Period(a, a)), Some(End))
+    case Span(None, Some(b))    => (Some(Period(b, b)), Some(Start))
+    case Span(None, None)       => (None, None)
+
 /** One name a place is known by. `lang` is a BCP-47-ish tag or `""` when unspecified; `period` is
-  * when the name was in use (`None` = always). */
-final case class PlaceName(name: String, lang: String = "", period: Option[Period] = None)
+  * when the name was in use (`None` = always), `open` the side of it its source left open. */
+final case class PlaceName(name: String, lang: String = "", period: Option[Period] = None,
+    open: Option[OpenSide] = None):
+  /** The inclusive bounds stored for it ([[OpenSide.bounds]]). */
+  def bounds: (Option[Long], Option[Long]) = OpenSide.bounds(period, open)
 
 /** A hierarchy edge with its OWN validity — "Hatti part_of Anatolia" holds only for its `period`. */
 final case class PlaceRelation(
     childId: String,
     parentId: String,
     kind: String = PlaceRelation.PartOf,
-    period: Option[Period] = None
-)
+    period: Option[Period] = None,
+    open: Option[OpenSide] = None
+):
+  /** The inclusive bounds stored for it ([[OpenSide.bounds]]). */
+  def bounds: (Option[Long], Option[Long]) = OpenSide.bounds(period, open)
 
 object PlaceRelation:
   val PartOf         = "part_of"
@@ -53,8 +81,12 @@ final case class Place(
     geometry: Option[String] = None,
     period: Option[Period] = None,
     source: Option[String] = None,
-    properties: Option[String] = None
-)
+    properties: Option[String] = None,
+    /** The side of `period` its source left open ([[OpenSide]]). */
+    open: Option[OpenSide] = None
+):
+  /** The inclusive bounds stored for it ([[OpenSide.bounds]]). */
+  def bounds: (Option[Long], Option[Long]) = OpenSide.bounds(period, open)
 
 /** One place as it arrives from an import file: the row, its names and its parent edges. */
 final case class PlaceInput(place: Place, names: List[PlaceName] = Nil, relations: List[PlaceRelation] = Nil)
@@ -376,35 +408,39 @@ object Lpf:
           .orElse(obj(wide).flatMap(yearOf))
           .orElse(obj(narrow).flatMap(yearOf))
 
-  /** LPF `when` → a closed [[Period]] of signed years: the widest span across every timespan.
-    * Accepts the strict shape (`{"timespans":[{"start":…,"end":…}]}`), the flat shape
-    * (`{"start":…,"end":…}`), and a bare string/number. `None` when nothing datable is present. */
-  def parseWhen(j: Json): Option[Period] =
-    def span(o: JsonObject): Option[Period] =
+  /** LPF `when` → a [[Span]] of signed years that keeps an OPEN side open (#1403): the widest span
+    * across every timespan, where one timespan without `start` (or `end`) leaves that side of the
+    * whole unknown — a name used "from 1900" is not a name of the one year 1900. Accepts the strict
+    * shape (`{"timespans":[{"start":…,"end":…}]}`), the flat shape (`{"start":…,"end":…}`), and a bare
+    * string/number (that one year). `None` when nothing datable is present. */
+  def parseWhen(j: Json): Option[Span] =
+    def span(o: JsonObject): Option[Span] =
       val s = o("start").flatMap(bound(_, "earliest", "latest"))
       val e = o("end").flatMap(bound(_, "latest", "earliest"))
       (s, e) match
-        case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
-        case (Some(a), None)    => Some(Period(a, a))
-        case (None, Some(b))    => Some(Period(b, b))
+        case (Some(a), Some(b)) => Some(if a <= b then Span(s, e) else Span(e, s))
         case (None, None)       => None
+        case _                  => Some(Span(s, e))
     j.asObject match
-      case None => yearOf(j).map(y => Period(y, y))
+      case None => yearOf(j).map(y => Span(Some(y), Some(y)))
       case Some(obj) =>
         val spans = obj("timespans").flatMap(_.asArray).map(_.toList).getOrElse(Nil)
           .flatMap(_.asObject).flatMap(span)
-        val direct = span(obj).toList
-        (spans ++ direct) match
+        (spans ++ span(obj).toList) match
           case Nil => None
-          case ps  => Some(Period(ps.map(_.start).min, ps.map(_.end).max))
+          case ps =>
+            Some(Span(
+              if ps.forall(_.from.isDefined) then Some(ps.flatMap(_.from).min) else None,
+              if ps.forall(_.to.isDefined) then Some(ps.flatMap(_.to).max) else None))
 
-  /** A [[Period]] as the strict LPF `when` the reader accepts back.
+  /** A [[Period]] as the strict LPF `when` the reader accepts back; the `open` side is left out.
     * Years are written in historical reckoning (the practical convention in WHG/Pleiades data).
     * Use [[toIso]] explicitly when strict ISO 8601 output is needed. */
-  def renderWhen(p: Period): Json = Json.obj(
-    "timespans" -> Json.arr(Json.obj(
-      "start" -> Json.obj("in" -> Json.fromString(p.start.toString)),
-      "end"   -> Json.obj("in" -> Json.fromString(p.end.toString)))))
+  def renderWhen(p: Period, open: Option[OpenSide] = None): Json =
+    val (s, e) = OpenSide.bounds(Some(p), open)
+    Json.obj("timespans" -> Json.arr(Json.fromFields(
+      s.map(v => "start" -> Json.obj("in" -> Json.fromString(v.toString))).toList ++
+        e.map(v => "end" -> Json.obj("in" -> Json.fromString(v.toString))).toList)))
 
   // ── reading ──────────────────────────────────────────────────────────────────────────────────
 
@@ -415,17 +451,16 @@ object Lpf:
     s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
 
   /** `[a, b]`, `{"start":a,"end":b}`, `"a,b"` or a single year — the shapes a hand-made GeoJSON uses
-    * for `properties.period`. */
-  private def propertyPeriod(o: JsonObject): Option[Period] =
-    def fromPair(a: Option[Long], b: Option[Long]) = (a, b) match
-      case (Some(x), Some(y)) => Some(if x <= y then Period(x, y) else Period(y, x))
-      case (Some(x), None)    => Some(Period(x, x))
-      case (None, Some(y))    => Some(Period(y, y))
-      case _                  => None
+    * for `properties.period`. A pair with one side missing keeps that side open, as [[parseWhen]]. */
+  private def propertyPeriod(o: JsonObject): Option[Span] =
+    def fromPair(a: Option[Long], b: Option[Long]): Option[Span] = (a, b) match
+      case (Some(x), Some(y)) => Some(if x <= y then Span(a, b) else Span(b, a))
+      case (None, None)       => None
+      case _                  => Some(Span(a, b))
     o("period").flatMap { p =>
       p.asArray match
         case Some(v) if v.sizeIs >= 2 => fromPair(yearOf(v(0)), yearOf(v(1)))
-        case Some(v) if v.sizeIs == 1 => yearOf(v(0)).map(y => Period(y, y))
+        case Some(v) if v.sizeIs == 1 => yearOf(v(0)).map(y => Span(Some(y), Some(y)))
         case _ =>
           p.asString.filter(_.contains(",")) match
             case Some(s) =>
@@ -441,9 +476,10 @@ object Lpf:
   private def readNames(f: JsonObject, props: JsonObject, label: String): List[PlaceName] =
     val declared = f("names").orElse(props("names")).flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { n =>
       n.asString.map(s => PlaceName(s.trim)).orElse(n.asObject.flatMap { o =>
-        str(o, "toponym", "name", "title", "label").map(t =>
-          PlaceName(t, str(o, "lang", "language").getOrElse(""),
-            o("when").flatMap(parseWhen).orElse(propertyPeriod(o))))
+        str(o, "toponym", "name", "title", "label").map { t =>
+          val (period, open) = OpenSide.split(o("when").flatMap(parseWhen).orElse(propertyPeriod(o)).getOrElse(Span.always))
+          PlaceName(t, str(o, "lang", "language").getOrElse(""), period, open)
+        }
       })
     }
     // a plain GeoJSON keeps its alternates in a delimited property
@@ -469,7 +505,10 @@ object Lpf:
         val pred = str(o, "relationType", "relation_type", "kind", "type").getOrElse("gvp:broaderPartitive")
         val kind = if PartOfPredicates.contains(pred.toLowerCase) then PlaceRelation.PartOf else pred
         str(o, "relationTo", "relation_to", "parent", "parentId", "parent_id", "target")
-          .map(p => PlaceRelation(id, p, kind, o("when").flatMap(parseWhen).orElse(propertyPeriod(o))))
+          .map { p =>
+            val (period, open) = OpenSide.split(o("when").flatMap(parseWhen).orElse(propertyPeriod(o)).getOrElse(Span.always))
+            PlaceRelation(id, p, kind, period, open)
+          }
       })
     }
     val flat = str(props, "parent", "part_of", "partOf", "parentId")
@@ -497,8 +536,8 @@ object Lpf:
             .flatMap(PlaceKind.parse).headOption)
           .orElse(str(props, "featureType", "feature_type", "TYPE").flatMap(PlaceKind.parse))
           .getOrElse(defaultKind)
-        val period = f("when").flatMap(parseWhen).orElse(props("when").flatMap(parseWhen))
-          .orElse(propertyPeriod(props))
+        val (period, open) = OpenSide.split(f("when").flatMap(parseWhen).orElse(props("when").flatMap(parseWhen))
+          .orElse(propertyPeriod(props)).getOrElse(Span.always))
         val leftover = props.filterKeys(k => !OwnKeys.contains(k))
         Right(PlaceInput(
           Place(
@@ -508,7 +547,8 @@ object Lpf:
             geometry = f("geometry").filterNot(_.isNull).map(_.noSpaces),
             period = period,
             source = str(props, "source", "citation").orElse(str(f, "source")),
-            properties = Some(leftover).filter(_.nonEmpty).map(Json.fromJsonObject(_).noSpaces)),
+            properties = Some(leftover).filter(_.nonEmpty).map(Json.fromJsonObject(_).noSpaces),
+            open = open),
           readNames(f, props, if label.nonEmpty then label else id),
           readRelations(id, f, props)))
     }
@@ -548,13 +588,13 @@ object Lpf:
     fields += "type"       -> Json.fromString("Feature")
     fields += "properties" -> Json.fromJsonObject(props)
     fields += "types"      -> Json.arr(Json.obj("label" -> Json.fromString(in.place.kind)))
-    in.place.period.foreach(p => fields += "when" -> renderWhen(p))
+    in.place.period.foreach(p => fields += "when" -> renderWhen(p, in.place.open))
     if in.names.nonEmpty then
       fields += "names" -> Json.arr(in.names.map { n =>
         Json.fromFields(
           List("toponym" -> Json.fromString(n.name)) ++
             (if n.lang.isEmpty then Nil else List("lang" -> Json.fromString(n.lang))) ++
-            n.period.map(p => "when" -> renderWhen(p)).toList)
+            n.period.map(p => "when" -> renderWhen(p, n.open)).toList)
       }*)
     if in.relations.nonEmpty then
       fields += "relations" -> Json.arr(in.relations.map { r =>
@@ -563,7 +603,7 @@ object Lpf:
             "relationType" -> Json.fromString(
               if r.kind == PlaceRelation.PartOf then "gvp:broaderPartitive" else r.kind),
             "relationTo" -> Json.fromString(r.parentId)) ++
-            r.period.map(p => "when" -> renderWhen(p)).toList)
+            r.period.map(p => "when" -> renderWhen(p, r.open)).toList)
       }*)
     fields += "geometry" -> in.place.geometry
       .flatMap(io.circe.parser.parse(_).toOption).getOrElse(Json.Null)
