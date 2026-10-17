@@ -52,7 +52,7 @@ class ManagerRunSuite extends munit.FunSuite:
     b.copy(db = b.db.copy(url = testDb.get),
       agents = b.agents.copy(enabled = true, prices = "scripted=1/2",
         roles = b.agents.roles.copy(reviewer = Model.wire, coldReader = Model.wire, skeptic = Model.wire, fixer = Model.wire),
-        managers = b.agents.managers.copy(review = b.agents.managers.review.copy(cooldownMinutes = 30)),
+        managers = b.agents.managers.copy(review = b.agents.managers.review.copy(cooldownMinutes = 30, inferFilter = false)),
         // the scripted rules reviewer looks nothing up: ReviewArticleRunSuite holds the spot-checks
         review = b.agents.review.copy(spotChecks = 0)))
 
@@ -454,7 +454,7 @@ class ManagerRunSuite extends munit.FunSuite:
 
   test("the Review button: enqueue routes to the review manager (created paused), priority 10"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_q1")
-    val i = a.managing.enqueue(EnqueueRequest("review", "zzagent_q1")).fold(e => fail(e.message), identity)
+    val i = a.managing.enqueue(EnqueueRequest("review", "zzagent_q1")).fold(e => fail(e.message), _.items.head)
     assertEquals((i.managerId, i.priority, i.status, i.origin), (ReviewId, 10, "pending", "person"))
     assertEquals(ManagerRepo.get(ds, ReviewId).map(_.state), Some("paused"))
     assert(a.managing.enqueue(EnqueueRequest("review", "zzagent_nope")).isLeft)

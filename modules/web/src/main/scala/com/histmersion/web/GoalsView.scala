@@ -50,6 +50,30 @@ object GoalsView:
   def linkToAdd(kind: LinkKind, raw: String, note: String): Option[LinkAdd] =
     Option(raw).map(_.trim).filter(_.nonEmpty).map(r => LinkAdd(kind, r, Option(note).map(_.trim).filter(_.nonEmpty)))
 
+  /** A slug from a title: lower case, runs of anything but letters and digits as one '-'. */
+  def slugify(title: String): String =
+    title.trim.toLowerCase.replaceAll("[^a-z0-9]+", "-").stripPrefix("-").stripSuffix("-")
+
+  /** What the New research area form creates: the goal (at `slug`), and whether to plan it (a plan-goal
+    * run) and seed it (a seeding manager, created paused, whose first item proposes its articles). */
+  final case class NewArea(slug: String, put: GoalPut, plan: Boolean, seed: Boolean)
+
+  /** The form → what to create. A blank slug comes from the title; tags are comma-separated. */
+  def newArea(title: String, slug: String, notes: String, tags: String, plan: Boolean, seed: Boolean): Either[String, NewArea] =
+    val t = title.trim
+    val s = Option(slug.trim).filter(_.nonEmpty).getOrElse(slugify(t))
+    if t.isEmpty then Left("a research area needs a title")
+    else Articles.slugOf(s) match
+      case Left(m) => Left(m)
+      case Right(ok) =>
+        Right(NewArea(ok, GoalPut(t, GoalStatus.Planned, Option(notes.trim).filter(_.nonEmpty),
+          tags.split(",").toList.map(_.trim).filter(_.nonEmpty).distinct), plan, seed))
+
+  /** What the form did, in one line. */
+  def createdNote(a: NewArea, planned: Boolean, seeded: Option[String]): String =
+    s"research area ${a.slug} created" + (if planned then "; the planner is running (its plan waits for you)" else "") +
+      seeded.fold("")(id => s"; seeding manager $id created paused — resume it to propose its articles")
+
   // ── the goals window ────────────────────────────────────────────────────────────────────────────
 
   private val goals   = Var(List.empty[Goal])
@@ -66,6 +90,7 @@ object GoalsView:
       cls := "tool-pane goals-pane",
       onMountCallback { _ => loaded.set(false); refresh() },
       div(cls := "pane-bar", button(typ := "button", cls := "btn", "refresh", onClick --> (_ => refresh()))),
+      newAreaForm(() => refresh()),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child <-- goals.signal.combineWith(loaded.signal).map { (gs, isLoaded) =>
         if !isLoaded then p(cls := "muted", "Loading…")
@@ -77,6 +102,66 @@ object GoalsView:
               onClick --> (_ => WindowManager.open(WindowKey.Goal(g.slug)))))))
       }
     )
+
+  /** New research area: a goal, and — ticked — a plan-goal run for it and a seeding manager (created
+    * paused). Watching an area comes in phase 3. The slug must be free: an existing goal is never
+    * replaced. */
+  private def newAreaForm(refresh: () => Unit): HtmlElement =
+    val name = Var(""); val slug = Var(""); val notes = Var(""); val tags = Var("")
+    val plan = Var(true); val seed = Var(true)
+    val busy = Var(false)
+    val msg  = Var(Option.empty[Either[String, String]])
+    def field(v: Var[String], name: String, hint: String) =
+      input(typ := "text", cls := "field", aria.label := name, placeholder := hint,
+        controlled(value <-- v.signal, onInput.mapToValue --> v.writer))
+    def box(v: Var[Boolean], text: String) =
+      label(cls := "goal-on", input(typ := "checkbox", controlled(checked <-- v.signal, onClick.mapToChecked --> v.writer)), s" $text")
+    def submit(): Unit =
+      newArea(name.now(), slug.now(), notes.now(), tags.now(), plan.now(), seed.now()) match
+        case Left(m) => msg.set(Some(Left(m)))
+        case Right(a) =>
+          busy.set(true)
+          val created =
+            ApiClient.getGoal(a.slug).transformWith {
+              case scala.util.Success(_) => scala.concurrent.Future.failed(new Exception(s"a goal '${a.slug}' exists already"))
+              case scala.util.Failure(_) => ApiClient.putGoal(a.slug, a.put)
+            }.flatMap { _ =>
+              val planned = if a.plan then ApiClient.startRun(Agents.RunRequest(Pipeline.PlanGoal.wire, a.slug)).map(_ => true)
+                else scala.concurrent.Future.successful(false)
+              planned.flatMap { p =>
+                val seeded = if a.seed then ApiClient.managerCreate(Managers.ManagerCreate("seed", Some(a.slug))).map(m => Some(m.id))
+                  else scala.concurrent.Future.successful(None)
+                seeded.map(sd => createdNote(a, p, sd))
+              }
+            }
+          created.onComplete { r =>
+            busy.set(false)
+            msg.set(Some(r.fold(e => Left(e.getMessage), Right(_))))
+            if r.isSuccess then
+              name.set(""); slug.set(""); notes.set(""); tags.set("")
+              WindowManager.open(WindowKey.Goal(a.slug))
+            refresh()
+          }
+    htmlTag("details")(
+      cls := "goal-new",
+      htmlTag("summary")("New research area"),
+      child <-- Auth.writable.map { w =>
+        if !w then Auth.keyNeeded("create a research area")
+        else
+          div(cls := "goal-new-form",
+            div(cls := "form-row", field(name, "title", "title"), field(slug, "slug", "slug (from the title)")),
+            div(cls := "form-row", field(notes, "notes", "what it should establish (optional)"),
+              field(tags, "tags", "tags, comma-separated (optional)")),
+            div(cls := "form-row goal-new-options",
+              box(plan, "plan (sub-goals, queries, works)"), box(seed, "seed (propose and compile its articles)"),
+              label(cls := "goal-on is-disabled", title := "watching an area comes in phase 3",
+                input(typ := "checkbox", disabled := true), " watch (phase 3)"),
+              button(typ := "button", cls := "btn btn--primary", "create", disabled <-- busy, onClick --> (_ => submit()))),
+            child.maybe <-- msg.signal.map(_.map {
+              case Left(m)  => p(cls := "form-error", role := "alert", m)
+              case Right(m) => p(cls := "form-ok", m)
+            }))
+      })
 
   // ── one goal ────────────────────────────────────────────────────────────────────────────────────
 
@@ -137,6 +222,7 @@ object GoalsView:
                 dd(button(typ := "button", cls := "link-btn", ps, onClick --> (_ => WindowManager.open(WindowKey.Goal(ps))))))),
               v.budgetUsd.toList.flatMap(b => List(dt("run cap"), dd(s"${AgentsMarkdown.usd(b)} USD")))),
             planSection(slug, approvals.signal, busy.signal, () => plan()),
+            ManagersView.goalActions(v.goal.slug),
             Option.when(v.children.nonEmpty)(div(h4("Sub-goals"), ul(v.children.map(c =>
               li(button(typ := "button", cls := "link-btn", c.title, onClick --> (_ => WindowManager.open(WindowKey.Goal(c.slug)))),
                 span(cls := "muted", s" (${c.status})")))))),
