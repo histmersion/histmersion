@@ -85,6 +85,13 @@ class ConfigSuite extends munit.FunSuite:
     val e2 = AppConfig.loadWithUserFile(env(), Some(nested)).swap.getOrElse(fail("loaded"))
     assert(e2.contains(nested.toString) && e2.contains("'histmersion.agents.scheduler.enabled' must be true or false"), e2)
 
+  test("user file: the removed agents.scheduler.tick-seconds (phase 3) is ignored, not an error; the watch defaults load"):
+    val f = confFile("histmersion { agents { scheduler { tick-seconds = 60, min-interval-minutes = 90 } } }")
+    val c = loaded(env(), f).config
+    assertEquals(c.agents.scheduler.minIntervalMinutes, 90)
+    assertEquals((c.agents.managers.watch.cron, c.agents.managers.watch.autoIngestPerDay, c.agents.managers.watch.maxRuns),
+      ("@weekly", 5, 1))
+
   test("user file: env-style strings and plain numbers are accepted where the readers accept them"):
     val f = confFile("""histmersion.server.port = "8125"
                        |histmersion.agents.enabled = "true"

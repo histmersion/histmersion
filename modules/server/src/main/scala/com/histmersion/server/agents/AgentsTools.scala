@@ -103,11 +103,13 @@ object AgentsTools:
     val schedule =
       tool("goal_schedule")
         .description(
-          "A research goal's schedules (run by the server only while its agents are enabled): `currency` " +
-            "(assess + followups over the goal's sources; disagreement edges proposed for approval) and " +
+          "A research goal's schedules — the sweeps of its watcher manager `watch:<goal>` (created PAUSED: a person " +
+            "resumes it with the `manager` tool or the Managers window; it runs only while the server's agents are enabled): " +
+            "`currency` (assess + followups over the goal's sources; disagreement edges proposed for approval) and " +
             "`acquisition` (search the goal's queries; a model picks what to add to the acquisition list). " +
-            "With `cron` (five fields in UTC, or @daily/@weekly/@monthly) sets one; `remove: true` deletes " +
-            "it; with neither, lists every schedule. The daily/monthly cost caps are checked before each start.")
+            "With `cron` (five fields in UTC, or @daily/@weekly/@monthly; the watcher's one cron, shared by both) sets one; " +
+            "`remove: true` takes it out of the watcher; with neither, lists every schedule. The daily/monthly cost caps " +
+            "are checked before each start.")
         .input[ScheduleInput]
         .handle { in =>
           val out = (in.goal, in.kind) match
@@ -320,7 +322,7 @@ object AgentsTools:
       .modify(_.goal)(_.description("The goal's slug (omit with kind to list every schedule)"))
       .modify(_.kind)(_.description("currency | acquisition"))
       .modify(_.cron)(_.description("Five-field cron in UTC (minute hour day-of-month month day-of-week), or @daily, @weekly, @monthly"))
-      .modify(_.enabled)(_.description("false keeps the schedule but stops it firing"))
+      .modify(_.enabled)(_.description("false takes the sweep out of the watcher (its cron stays)"))
       .modify(_.budgetUsd)(_.description("The cost cap of each run it starts (default: the goal's, then the server's)"))
       .modify(_.remove)(_.description("Delete the schedule"))
 

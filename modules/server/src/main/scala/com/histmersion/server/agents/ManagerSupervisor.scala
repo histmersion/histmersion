@@ -104,6 +104,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
     if !cfg.enabled || !mcfg.enabled then Nil
     else
       val out = List.newBuilder[String]
+      out ++= migrateSchedules(now)
       val managers = ManagerRepo.list(ds).filter(m => State.parse(m.state).exists(_ != State.Stopped))
       managers.foreach { m =>
         guarded(m.id, out)(evaluate(m, now, out))
@@ -355,6 +356,46 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
             out += s"${i.target}: approval decided"
             if ok then afterDone(m, i, i.runId, out)
         }
+
+  // ── 0. schedules → watchers ────────────────────────────────────────────────────────────────────
+
+  /** Every `goal_schedules` row left becomes (part of) its goal's watcher `watch:<goal>` — created
+    * PAUSED, its cron, sweeps and per-run budget from the schedules ([[WatchSchedules.migrate]]; an
+    * existing watcher keeps its own settings) — and the rows go: one transaction per goal (the rows are
+    * taken out with DELETE … RETURNING, so two servers cannot both migrate them). Logged as the watcher's
+    * `migrated` event and a worklog line. Idempotent: run at every start and every tick (a bundle import
+    * still writes rows), it finds nothing once they are moved. Returns one line per goal migrated. */
+  def migrateSchedules(now: Instant): List[String] =
+    GoalLinkRepo.scheduleGoals(ds).flatMap { g =>
+      val id = watchId(g)
+      try
+        val moved = transact(ds) {
+          val rows = GoalLinkRepo.takeSchedulesIn(g)
+          Option.when(rows.nonEmpty) {
+            val existing = ManagerRepo.get(ds, id)
+            val plan = WatchSchedules.migrate(existing.map(m => WatchSchedules.Existing(m.config, m.cron, m.nextTickAt)), rows, now)
+            val next = plan.nextTick.flatMap(ManagerPolicy.parseInstant)
+            existing match
+              case None    => ManagerRepo.createIn(id, Kind.Watch, Some(g), State.Paused, plan.config, plan.cron, next)
+              case Some(_) => ManagerRepo.setConfigIn(id, plan.config, plan.cron, next)
+            val text = s"${Plural.count(rows.size, "goal schedule")} moved into this watcher" +
+              (if existing.isEmpty then " (created paused: resume it for them to fire)" else "") +
+              (if plan.notes.isEmpty then "" else s": ${plan.notes.mkString("; ")}")
+            ManagerRepo.eventIn(id, None, None, Feed.Migrated, text)
+            text
+          }
+        }
+        moved.toList.map { text =>
+          val _ = h.ops.queueAdd("log", QueueAdd(s"goal $g: $text (watcher $id)".take(1000)))
+          scribe.info(s"goal $g: $text")
+          s"$id: migrated"
+        }
+      catch
+        case e: InterruptedException => throw e
+        case e: Exception =>
+          scribe.warn(s"goal $g: its schedules were not moved into $id: ${e.getMessage}", e)
+          Nil
+    }
 
   // ── 3. the cron, then the refill ───────────────────────────────────────────────────────────────
 

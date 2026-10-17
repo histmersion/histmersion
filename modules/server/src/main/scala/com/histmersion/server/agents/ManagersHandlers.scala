@@ -406,6 +406,71 @@ final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, 
       Removed(gone)
     }
 
+  // ── goal schedules: a watcher's sweeps (phase 3) ───────────────────────────────────────────────
+
+  /** A goal's schedules (every goal's: None) as the goal surfaces show them — its watcher's sweeps
+    * ([[WatchSchedules.view]]), and any `goal_schedules` row the managers have not moved yet. */
+  def goalSchedules(goal: Option[String]): List[GoalPlans.GoalSchedule] =
+    ManagerRepo.list(ds).filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.contains(g)))
+      .flatMap(m => WatchSchedules.view(m, ManagerRepo.items(ds, m.id, None, 0, 20)._1)) ++ GoalLinkRepo.schedules(ds, goal)
+
+  /** `PUT /api/goals/{slug}/schedules/{kind}` — since phase 3 a goal's schedule is a sweep of its watcher
+    * `watch:<goal>` (created PAUSED when it does not exist: resume it for the schedule to fire). `enabled`
+    * puts the sweep in (or takes it out of) the watcher's sweeps; the cron (checked, no more often than
+    * `agents.scheduler.min-interval-minutes`) is the watcher's, shared by its sweeps; a budget given is its
+    * per-run cap. */
+  def setSchedule(goal: String, kind: GoalPlans.ScheduleKind, in: GoalPlans.ScheduleSet, now: java.time.Instant)
+      : Either[ApiError, GoalPlans.GoalSchedule] =
+    val id = watchId(goal)
+    val sw = WatchSchedules.sweepOf(kind)
+    for
+      cron <- ManagerPolicy.checkCron(in.cron, now, cfg.scheduler.minIntervalMinutes).left.map(ApiError(_))
+      _ = ManagerRepo.get(ds, id) match
+            case None =>
+              val c = ManagerConfig(sweeps = Some(if in.enabled then List(sw.wire) else Nil), budgetUsd = in.budgetUsd)
+              val _ = ManagerRepo.create(ds, id, Kind.Watch, Some(goal), State.Paused, c, Some(cron.text), cron.next(now))
+              ManagerRepo.event(ds, id, None, None, Feed.Paused, s"created paused by the goal's ${kind.wire} schedule " +
+                s"(cron `${cron.text}`): resume it for its sweeps to fire")
+            case Some(m) =>
+              val cur = Sweep.of(m.config)
+              val sweeps = Sweep.values.toList.filter(x => if x == sw then in.enabled else cur.contains(x))
+              val c = m.config.copy(sweeps = Some(sweeps.map(_.wire)), budgetUsd = in.budgetUsd.orElse(m.config.budgetUsd))
+              val next = if m.cron.contains(cron.text) && m.nextTickAt.isDefined then m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
+                         else cron.next(now)
+              val _ = ManagerRepo.setConfig(ds, id, c, Some(cron.text), next)
+              if !in.enabled then cancelSweep(m, sw, "its schedule was turned off")
+              ManagerRepo.event(ds, id, None, None, Feed.Hint, s"the goal's ${kind.wire} schedule set: cron `${cron.text}`, " +
+                s"${if in.enabled then "on" else "off"}; sweeps ${if sweeps.isEmpty then "none" else sweeps.map(_.wire).mkString(", ")}")
+      _ = GoalLinkRepo.removeSchedule(ds, goal, kind) // a row the managers had not moved yet is replaced
+      m <- manager(id)
+    yield
+      supervisor.nudge()
+      WatchSchedules.view(m, ManagerRepo.items(ds, id, None, 0, 20)._1).find(_.kind == kind)
+        .getOrElse(GoalPlans.GoalSchedule(goal, kind, cron.text, enabled = false, in.budgetUsd))
+
+  /** `DELETE /api/goals/{slug}/schedules/{kind}` — the sweep leaves the watcher (its open item is
+    * cancelled); the watcher itself stays. */
+  def removeSchedule(goal: String, kind: GoalPlans.ScheduleKind): GoalPlans.Removed =
+    val legacy = GoalLinkRepo.removeSchedule(ds, goal, kind)
+    val sw = WatchSchedules.sweepOf(kind)
+    val fromWatcher = ManagerRepo.get(ds, watchId(goal)).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
+      val rest = Sweep.of(m.config).filterNot(_ == sw)
+      val _ = ManagerRepo.setConfig(ds, m.id, m.config.copy(sweeps = Some(rest.map(_.wire))), m.cron,
+        m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
+      cancelSweep(m, sw, "its schedule was removed")
+      ManagerRepo.event(ds, m.id, None, None, Feed.Hint, s"the goal's ${kind.wire} schedule removed; sweeps " +
+        (if rest.isEmpty then "none" else rest.map(_.wire).mkString(", ")))
+      true
+    }
+    GoalPlans.Removed(legacy || fromWatcher)
+
+  /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
+  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: String): Unit =
+    m.goal.flatMap(g => ManagerRepo.itemFor(ds, m.id, sw.itemKind, g)).foreach { i =>
+      if ManagerRepo.settle(ds, i.id, ItemStatus.Cancelled, why, List(ItemStatus.Pending, ItemStatus.Held)) then
+        ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
+    }
+
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 
   def events(id: String, before: Option[Long], limit: Option[Int]): Either[ApiError, EventPage] =
