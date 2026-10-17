@@ -54,7 +54,10 @@ class GazetteerLoadSuite extends munit.FunSuite:
   test("a missing extract without a url says where to put it; with one it is downloaded and verified"):
     val bare = layout(withFile = false)
     val x0   = GazetteerLoad.manifest(bare.paths).toOption.get.extracts.head
-    assert(GazetteerLoad.extract(bare.paths, x0, noNet, 5).left.exists(_.contains("not found")))
+    val why  = GazetteerLoad.extract(bare.paths, x0, noNet, 5).left.getOrElse(fail("a missing file"))
+    val at   = bare.paths.extracts.resolve(x0.file).toString
+    assert(why.contains(s"is not at $at") && why.contains("no download url") && why.contains(FixtureSha) &&
+      why.contains("places.sources.dir"), s"names the exact path, the checksum and the setting: $why")
     val net = layout(withFile = false, url = Some("https://example.org/geonames-fixture.ndjson.gz"))
     val x1  = GazetteerLoad.manifest(net.paths).toOption.get.extracts.head
     val fetchOk: GazetteerLoad.Download = (_, to, _) =>
@@ -66,6 +69,12 @@ class GazetteerLoadSuite extends munit.FunSuite:
     val fetchBad: GazetteerLoad.Download = (_, to, _) => { Files.writeString(to, "not it"); Right(()) }
     assert(GazetteerLoad.extract(wrong.paths, x2, fetchBad, 5).left.exists(_.contains("refused")))
     assert(!Files.exists(wrong.paths.extracts.resolve(x2.file)))
+
+  test("a pin that is not built yet (no sha256) is named as such, never downloaded"):
+    val s = layout(sha = "", url = Some("https://example.org/x"))
+    val x = GazetteerLoad.manifest(s.paths).toOption.get.extracts.head
+    val r = GazetteerLoad.extract(s.paths, x, (_, _, _) => fail("no download for an unbuilt pin"), 5)
+    assert(r.left.exists(_.contains("not pinned yet")), r.toString)
 
   test("the LPF drop folder lists data files only, never a sidecar"):
     val s = layout()

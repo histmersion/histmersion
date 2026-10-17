@@ -102,14 +102,27 @@ object GazetteerLoad:
         Right(())
     catch case e: Exception => Left(s"download of $url failed: ${e.getMessage}")
 
+  /** Why a pinned extract cannot be read, and what to do: a pin with no checksum is not built yet; a
+    * missing file whose pin has no download url (the extracts are not hosted) must be PUT at the exact
+    * path the import reads — named here with its checksum and size, and the setting that moves it. */
+  def missing(p: Paths, x: GazetteerExtract): String =
+    val f = p.extracts.resolve(x.file)
+    if x.sha256.trim.isEmpty || x.file.trim.isEmpty then
+      s"${x.name} is not pinned yet (${p.manifest} names no built file or sha256 for it) — build it with " +
+        s"db/gazetteer/build.py and pin it (db/gazetteer/README.md, \"Rebuilding and re-pinning\")"
+    else
+      s"${x.name} ${x.version}: ${x.file} is not at $f, and its pin has no download url (the extracts are not " +
+        s"hosted). Put the file there — sha256 ${x.sha256}, ${Backup.humanBytes(x.bytes)} — copied from " +
+        s"another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is " +
+        s"places.sources.dir (HISTMERSION_GAZETTEER_DIR). Then run the load again."
+
   /** The pinned extract on disk, fetched first when it is missing and its pin names a url. */
   def extract(p: Paths, x: GazetteerExtract, download: Download, timeoutSeconds: Int): Either[String, Path] =
     val f = p.extracts.resolve(x.file)
-    if Files.isRegularFile(f) then verify(f, x).map(_ => f)
+    if x.sha256.trim.isEmpty || x.file.trim.isEmpty then Left(missing(p, x))
+    else if Files.isRegularFile(f) then verify(f, x).map(_ => f)
     else x.url.map(_.trim).filter(_.nonEmpty) match
-      case None =>
-        Left(s"${x.name} extract ${x.file} not found in ${p.extracts} — build it with db/gazetteer/build.py " +
-          s"(see db/gazetteer/README.md) and copy it there")
+      case None => Left(missing(p, x))
       case Some(url) =>
         Files.createDirectories(p.extracts)
         download(url, f, timeoutSeconds).flatMap { _ =>

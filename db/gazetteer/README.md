@@ -26,8 +26,10 @@ The extracts themselves are **not** in git and **not** in the bundle (the bundle
 directory, i.e. only the pins). The server looks for them in `places.sources.dir` (default
 `<data dir>/gazetteer`, i.e. `~/Library/Application Support/Histmersion/gazetteer` on macOS). A
 missing extract is downloaded from its pin's `url` when one is set (none is, yet: there is no
-hosting); either way its **sha256 is verified before a single line is read**, and a mismatch is
-refused. Why not the bundle: the two extracts are 82 MB together and change on their own schedule
+hosting — where to host them is still to be decided); without one, `places load` stops and names the
+exact path to put the file at, its sha256 and size, and the setting that moves the folder
+(`places.sources.dir`, `HISTMERSION_GAZETTEER_DIR`). Either way its **sha256 is verified before a
+single line is read**, and a mismatch is refused. Why not the bundle: the two extracts are 82 MB together and change on their own schedule
 (a re-pin is a commit to `extracts.json`, not a 3.3 GB rebuild); why not an upstream URL: GeoNames
 publishes only today's dump and Wikidata changes by the minute, so only OUR extract can be pinned.
 
