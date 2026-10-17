@@ -49,6 +49,13 @@ GENERATED (the export shows them between markers): a hand-written `## Not used` 
 the body is a MAJOR finding. When it records none (`article coverage` answers 404), say so in the
 report — set it with `histmersion article patch <slug> --filter-…` if the article's topic is clear.
 
+`article coverage` also shows the **critique checklist** (*Disagreements checked*): every
+challenges/refutes/updates/superseded_by edge touching a cited source — *addressed* when both sources
+are cited in one paragraph, *reasoned* when a reason is stored
+(`histmersion article patch <slug> --critique-reason <src>><dst>=<why>`), else *open*. Paste the open
+pairs into the skeptic's brief: it rules on each one (a `missing-critique` MAJOR naming the pair, or
+not material with a reason, which you store as a critique reason).
+
 ## 2. Run the panel — three agents, in parallel, in one message
 
 Spawn all three with the **Agent** tool in the same message (they are independent). Each brief

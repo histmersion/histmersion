@@ -137,22 +137,68 @@ class ManagerRunSuite extends munit.FunSuite:
     val done = item("zzagent_m1")
     assertEquals((done.status, done.outcome, done.attempts), ("done", Some("converged after 3 runs"), 3))
     assertEquals(done.state.history.map(_.after), List(1, 1, 0))
-    // m2: a run that ends with only a fresh skeptic missing-critique MAJOR → omission churn: stopped + task
+    // m2: runs that end with only a missing-critique MAJOR while the article's critique checklist has no
+    // open pair to work down (0 → 0): the first is no window yet (again), the second is omission churn
     val m2run = item("zzagent_m2").runId.get
+    assertEquals(item("zzagent_m2").state.pairsBefore, Some(0))
     settle(m2run, "zzagent_m2", List(finding("S1", Reviewer.Skeptic, "missing-critique")))
     a.managers.tick(t0.plusSeconds(72 * 60))
+    assertEquals(item("zzagent_m2").status, "pending")
+    assert(item("zzagent_m2").outcome.exists(_.contains("0 open critique pairs")), item("zzagent_m2").outcome)
+    a.managers.tick(t0.plusSeconds(103 * 60))
+    val m2run2 = item("zzagent_m2").runId.get
+    assertNotEquals(m2run2, m2run)
+    settle(m2run2, "zzagent_m2", List(finding("S1", Reviewer.Skeptic, "missing-critique")))
+    a.managers.tick(t0.plusSeconds(104 * 60))
     val stopped = item("zzagent_m2")
+    assertEquals(stopped.state.history.map(h => (h.pairsBefore, h.pairsAfter, h.churn)),
+      List((Some(0), Some(0), true), (Some(0), Some(0), true)))
     assertEquals(stopped.status, "stopped")
     assert(stopped.outcome.exists(o => o.contains("omission churn") && o.contains("task #")), stopped.outcome)
     val tasks = QueueRepo.list(ds, Queue.Kind.Tasks, all = false).filter(_.text.contains("zzagent_m2"))
     assertEquals(tasks.size, 1)
     assert(tasks.head.text.contains("review manager stopped: omission churn"), tasks.head.text)
     // the evaluation happened once per run, whatever the ticks
-    a.managers.tick(t0.plusSeconds(73 * 60))
+    a.managers.tick(t0.plusSeconds(105 * 60))
     assertEquals(events.count(e => e.kind == Feed.Stopped && e.itemId.contains(stopped.id)), 1)
     // re-open in one click: pending again, its runs counted from zero
     val re = a.managing.patchItem(ReviewId, "zzagent_m2", ItemPatch("reopen")).fold(e => fail(e.message), identity)
     assertEquals((re.status, re.attempts, re.state.reopened), ("pending", 0, 1))
+
+  test("omission churn no longer stops an article whose open critique pairs go down (§6.8)"):
+    val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_m5")
+    // two critics of the cited source: the checklist has two open pairs
+    List("zzagent2020_critic", "zzagent2021_critic").foreach { ck =>
+      assert(h.putSource(ck, SourcePut(title = s"Against $ck", year = Some(2020), body = Some("The tin was not from Anatolia."))).isRight)
+      assert(h.patchSource(ck, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes)))))).isRight)
+    }
+    activeReview(a, ManagerConfig(maxRunsPerArticle = Some(4), noProgressRuns = Some(2), cooldownMinutes = Some(0)))
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_m5")).fold(e => fail(e.message), identity)
+    a.managers.tick(t0)
+    assertEquals(item("zzagent_m5").state.pairsBefore, Some(2))
+    val sk = finding("S1", Reviewer.Skeptic, "missing-critique")
+    settle(item("zzagent_m5").runId.get, "zzagent_m5", List(sk))
+    // between the runs the article takes up one critique, in the paragraph that cites the source: 2 → 1
+    val addressed = Body.replace(s"Tin reached the Aegean by sea [[$Ck]].",
+      s"Tin reached the Aegean by sea [[$Ck]], which [[zzagent2020_critic]] disputes.")
+    assert(h.patchArticle("zzagent_m5", ArticlePatch(body = Some(addressed))).isRight)
+    assertEquals(h.openCritiques("zzagent_m5"), Some(1))
+    // (no cooldown: the tick that evaluates a run dispatches the next)
+    a.managers.tick(t0)
+    val run2 = item("zzagent_m5")
+    assertEquals((run2.status, run2.state.pairsBefore), ("active", Some(1)))
+    settle(run2.runId.get, "zzagent_m5", List(sk))
+    a.managers.tick(t0.plusSeconds(60))
+    // the old rule stopped after run 1 (only a fresh missing-critique open); the open-MAJOR rule would
+    // stop now (1 → 1 over two runs) — but the pairs went 2 → 1, so the item goes on
+    val going = item("zzagent_m5")
+    assertEquals(going.status, "active", going.outcome)
+    assert(going.outcome.exists(_.contains("1 open MAJOR, 1 open critique pair after run 2; again")), going.outcome)
+    assertEquals(going.state.history.map(m => (m.after, m.pairsBefore, m.pairsAfter)), List((1, Some(2), Some(1)), (1, Some(1), Some(1))))
+    // a third run that leaves the pairs where they were: the window 1 → 1 stalls, omission churn
+    settle(going.runId.get, "zzagent_m5", List(sk))
+    a.managers.tick(t0.plusSeconds(120))
+    assert(item("zzagent_m5").outcome.exists(_.contains("omission churn")), item("zzagent_m5").outcome)
 
   test("max runs per article and no progress stop with a task; a failed run backs off, the third stops"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_m3", "zzagent_m4")

@@ -118,7 +118,10 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
         val run   = item.runId.get
         val st    = RunState.parse(status).getOrElse(RunState.Failed)
         val ledger = ReviewLedgerRepo.get(ds, item.target).toOption.flatten
-        val facts = Option.when(st == RunState.Done)(ledger.map(ReviewFacts.of(_, run)).getOrElse(ReviewFacts(0, 0, 0, omissionChurn = false)))
+        val facts = Option.when(st == RunState.Done) {
+          val pairs = h.openCritiques(item.target)
+          ledger.map(ReviewFacts.of(_, pairs)).getOrElse(ReviewFacts(0, 0, 0, onlyMissingCritiques = false, pairs))
+        }
         val task  = ledger.flatMap(ReviewLedger.taskText(_, run))
         ManagerPolicy.evaluateReview(s, item.target, item.attempts, item.failures, item.state, run, st, error, facts, task, now) match
           case Next.Done(outcome, state) =>
@@ -321,16 +324,17 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
             val notes = hints.map(_.text.trim)
             val params = pr.params.copy(notes = Option.when(notes.nonEmpty)(notes))
             val before = ReviewLedgerRepo.get(ds, item.target).toOption.flatten.map(_.openMajors.size).getOrElse(0)
+            val pairs  = h.openCritiques(item.target)
             val id =
               try
                 Some(transact(ds) {
                   val id = AgentRepo.createIn(pr.pipeline, pr.target, pr.model, BigDecimal(pr.usd), pr.tokens, params, None,
                     pr.goal, None, Origin.Manager, pr.dryRun, Some(m.id), Some(item.id))
-                  if !ManagerRepo.dispatchIn(item.id, id, item.state.copy(before = Some(before))) then throw Lost()
+                  if !ManagerRepo.dispatchIn(item.id, id, item.state.copy(before = Some(before), pairsBefore = pairs)) then throw Lost()
                   ManagerRepo.usedIn(hints, id)
                   ManagerRepo.eventIn(m.id, Some(item.id), Some(id), Feed.Started,
                     s"${item.target}: run ${item.attempts + 1} (review-article fix, ${params.rounds.getOrElse(s.rounds)} rounds; " +
-                      s"$before open MAJOR(s))" + (if notes.nonEmpty then s" with ${Plural.count(notes.size, "note")}" else ""))
+                      s"$before open MAJOR(s)${pairs.fold("")(n => s", $n open critique pair(s)")})" + (if notes.nonEmpty then s" with ${Plural.count(notes.size, "note")}" else ""))
                   id
                 })
               catch case _: Lost => None

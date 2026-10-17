@@ -152,6 +152,26 @@ class ArticleCoverageHttpSuite extends munit.FunSuite:
         assertEquals(ms, 200, mb)
         assert(mb.contains(s"Coverage of [[$Slug]]") && mb.contains("neither cited nor given a reason"), mb)
 
+        // ── §6.8: the critique checklist — in the coverage, the Method note and over PATCH ─────
+        assertEquals(c.critiques.map(p => (p.ref.wire, p.state, p.src.cited, p.dst.cited)),
+          List((s"$Critic>$Cited2", CritiqueState.Open, false, true)))
+        assert(md.contains("disagreements checked: 1 pair — 0 addressed, 0 reasoned, 1 open"), md)
+        assert(mb.contains("Disagreements checked") && mb.contains(s"$Critic>$Cited2"), mb)
+        val token = again.article.updatedAt
+        assertEquals(patch(s"$url/api/articles/$Slug", s"""{"critiqueReasons":[{"src":"$Outside","dst":"$Cited2","reason":"x"}]}""")._1, 400,
+          "no disagreement edge joins them")
+        val (rs, rb) = patch(s"$url/api/articles/$Slug",
+          s"""{"critiqueReasons":[{"src":"$Cited2","dst":"$Critic","reason":"The article cites it for the wreck's date only."}]}""")
+        assertEquals(rs, 200, rb)
+        val reasoned = io.circe.parser.decode[ArticleView](get(s"$url/api/articles/$Slug")._2).toOption.get
+        assertEquals(reasoned.coverage.toList.flatMap(_.critiques).map(p => (p.ref.wire, p.state, p.reason, p.reasonBy)),
+          List((s"$Critic>$Cited2", CritiqueState.Reasoned, Some("The article cites it for the wreck's date only."), Some("person"))))
+        assertEquals(reasoned.article.updatedAt, token, "a critique reason alone does not move the article's token")
+        assert(ArticleMarkdown.article(reasoned).contains("disagreements checked: 1 pair — 0 addressed, 1 reasoned, 0 open"))
+        assertEquals(patch(s"$url/api/articles/$Slug", s"""{"critiqueReasons":[{"src":"$Critic","dst":"$Cited2","reason":""}]}""")._1, 200)
+        assertEquals(io.circe.parser.decode[Coverage](get(s"$url/api/articles/$Slug/coverage")._2).toOption.get.critiques.map(_.state),
+          List(CritiqueState.Open), "an empty reason removes it")
+
         // ── an article with no filter: 404 that says how to set one, and its page has no list ─
         assertEquals(put(s"$url/api/articles/$Plain", """{"title":"Plain","kind":"concept","body":"Plain [[zzcov2016_tin]]."}""")._1, 200)
         val (ns, nb) = get(s"$url/api/articles/$Plain/coverage")

@@ -247,9 +247,14 @@ object ArticleCli:
   private val reasonFlags: Opts[List[String]] =
     Opts.options[String]("reason", "<citekey>=<why the article leaves it out> — sets one source's reason; <citekey>= removes it (repeatable)").orEmpty
 
+  private val critiqueReasonFlags: Opts[List[String]] =
+    Opts.options[String]("critique-reason",
+      "<src>><dst>=<why the critique does not bear on the article> — sets the reason of one critique-checklist pair " +
+        "(the critic first); <src>><dst>= removes it (repeatable)").orEmpty
+
   /** `article coverage <slug>` (#958) — the article's recorded filter against the live corpus. */
   private val coverage = Opts.subcommand("coverage",
-      "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, and the generated sections") {
+      "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections") {
     (Opts.argument[String]("slug"), Opts.flag("json", "Print raw JSON instead of Markdown").orFalse).mapN { (slug, json) => (c: Client) =>
       c.articleCoverage(slug).map(r => println(if json then io.circe.syntax.EncoderOps(r).asJson.spaces2 else ArticleCoverage.markdown(r)))
     }
@@ -272,12 +277,14 @@ object ArticleCli:
       Opts.option[String]("if-updated-at", "Precondition: the updatedAt you last read").orNone,
       strictFlag,
       filterFlags,
-      reasonFlags
-    ).mapN { (slug, json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd, strict, ff, rs) =>
+      reasonFlags,
+      critiqueReasonFlags
+    ).mapN { (slug, json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd, strict, ff, rs, crs) =>
       (c: Client) =>
         ArticlePatches
           .build(json, title, summary, kind, bodyF, appendF, tAdd, tRem, tRep, regions, period, ifUpd)
           .flatMap(ArticlePatches.withCoverage(_, ff, rs))
+          .flatMap(ArticlePatches.withCritiques(_, crs))
           .flatMap(p =>
             c.patchArticle(slug, p, strict).map { v =>
               println(ArticleMarkdown.article(v))
@@ -370,6 +377,12 @@ object ArticlePatches:
             csv(f.places), Nil, period.map(_.start), period.map(_.end), f.extraQueries.map(_.trim).filter(_.nonEmpty)))
         else p.filter
       p.copy(filter = filter, reasons = if rs.isEmpty then p.reasons else p.reasons ++ rs)
+
+  /** Each `--critique-reason src>dst=text` sets the reason of one critique-checklist pair, `src>dst=`
+    * removes it; added to those of `--json`. */
+  def withCritiques(p: ArticlePatch, reasons: List[String]): Either[CliError, ArticlePatch] =
+    reasons.traverse(r => CritiqueReason.parse(r).left.map(m => CliError(s"--critique-reason: $m", exitCode = ExitCode.Usage)))
+      .map(rs => if rs.isEmpty then p else p.copy(critiqueReasons = p.critiqueReasons ++ rs))
 
   private def parse(json: Option[String]): Either[CliError, ArticlePatch] = json match
     case None => Right(ArticlePatch())
