@@ -545,20 +545,16 @@ object ArticleMarkdown:
     val sum = v.summary.map(s => s"\n\n_${s.take(200)}_").getOrElse("")
     s"### Version ${v.id} of ${v.slug}\n\n_saved ${v.updatedAt}, archived ${v.createdAt}_$sum\n\n---\n\n${v.body}"
 
+  /** Headed and footed like every offset-paged list ([[OffsetPage.markdown]]): a cut list says where
+    * the next page starts. */
   def list(r: ArticleList): String =
-    if r.articles.isEmpty then "_No matching articles._"
-    else
-      val items = r.articles.map { a =>
-        val tagsStr = a.tags.mkString(", ")
-        val meta = List(a.kind, YearFmt.period(a.periodStart, a.periodEnd), tagsStr)
-          .map(_.trim).filter(_.nonEmpty).mkString(" · ")
-        val sum = a.summary.map(s => s"\n  ${s.trim}").getOrElse("")
-        s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum"
-      }
-      val head =
-        if r.total > r.articles.size then s"### ${r.articles.size} of ${r.total} article(s)"
-        else s"### ${r.total} article(s)"
-      s"$head\n\n${items.mkString("\n")}"
+    OffsetPage.markdown(r.page, "article(s)", "_No matching articles._", r.articles) { a =>
+      val tagsStr = a.tags.mkString(", ")
+      val meta = List(a.kind, YearFmt.period(a.periodStart, a.periodEnd), tagsStr)
+        .map(_.trim).filter(_.nonEmpty).mkString(" · ")
+      val sum = a.summary.map(s => s"\n  ${s.trim}").getOrElse("")
+      s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum"
+    }
 
 // ── wire DTOs (Kindlings derives the circe codec AND the tapir schema from each) ────────────────
 
@@ -673,9 +669,16 @@ object ArticleView:
   given Schema[ArticleView] = KindlingsSchema.derived[ArticleView].schema
 
 /** `GET /api/articles` — `total` ignores limit/offset. */
-final case class ArticleList(total: Int, articles: List[ArticleSummary]) derives KindlingsCodecAsObject
+final case class ArticleList(total: Int, articles: List[ArticleSummary],
+    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
+    offset: Int = 0,
+    next: Option[Int] = None
+) derives KindlingsCodecAsObject:
+  def page: OffsetPage = OffsetPage(total, offset, articles.size)
 object ArticleList:
   given Schema[ArticleList] = KindlingsSchema.derived[ArticleList].schema
+  def of(total: Int, rows: List[ArticleSummary], offset: Int): ArticleList =
+    ArticleList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 /** `POST /api/articles/import`: one note's raw text, parsed server-side by [[ArticleNote.parse]].
   * The host-side path of `histmersion seed` for articles — the CLI can read the host's `wiki` directories, the
