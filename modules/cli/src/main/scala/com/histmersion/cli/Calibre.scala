@@ -315,6 +315,12 @@ object Calibre:
           s"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
           "to import into that record on purpose")
 
+  /** The summary an import writes (#896): Calibre's description only fills an empty one — a re-import
+    * into an existing record never replaces a summary an agent compiled with the (often truncated)
+    * Calibre comments. `None` leaves the record's summary alone. */
+  def importSummary(fromCalibre: Option[String], current: Option[String]): Option[String] =
+    if current.exists(_.trim.nonEmpty) then None else fromCalibre
+
   /** The formats `calibre push --replace` puts into an entry: the two the corpus imports. */
   val ReplaceableFormats: List[String] = List("pdf", "epub")
 
