@@ -170,7 +170,7 @@ object BundleRepo:
     s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   /** A range as the three columns [[range]] reads back. */
-  private def rangeCols(col: String): String = s"$col IS NULL, lower($col), upper($col) - 1"
+  private def rangeCols(col: String): String = s"$col IS NULL, ${PeriodSql.cols(col)}"
 
   private[db] def range(isNull: Boolean, lo: Option[Long], hi: Option[Long]): Option[BundleRange] =
     Option.when(!isNull)(BundleRange(lo, hi))
@@ -381,16 +381,16 @@ object BundleRepo:
     val ids = rows.map(_.id).toList
     if ids.isEmpty then Vector.empty
     else
-      val names = sql"""SELECT place_id, name, lang, period IS NULL, lower(period), upper(period) - 1 FROM place_names
+      val names = sql"""SELECT place_id, name, lang, ${SqlLiteral(rangeCols("period"))} FROM place_names
                         WHERE place_id = ANY($ids::text[]) AND import_source = '' ORDER BY place_id, name COLLATE "C", lang COLLATE "C""""
         .query[BPlaceNameRow].run().groupBy(_.placeId)
-      val rels = sql"""SELECT child_id, parent_id, kind, period IS NULL, lower(period), upper(period) - 1 FROM place_relations
+      val rels = sql"""SELECT child_id, parent_id, kind, ${SqlLiteral(rangeCols("period"))} FROM place_relations
                        WHERE child_id = ANY($ids::text[]) ORDER BY child_id, parent_id COLLATE "C", kind COLLATE "C""""
         .query[BPlaceRelRow].run().groupBy(_.childId)
       val links = sql"""SELECT place_id, scheme, external_id, relation FROM place_links WHERE place_id = ANY($ids::text[])
                         ORDER BY place_id, scheme COLLATE "C", external_id COLLATE "C""""
         .query[(String, String, String, String)].run().groupBy(_._1)
-      val types = sql"""SELECT place_id, type_label, period IS NULL, lower(period), upper(period) - 1, citekey
+      val types = sql"""SELECT place_id, type_label, ${SqlLiteral(rangeCols("period"))}, citekey
                         FROM place_types WHERE place_id = ANY($ids::text[]) ORDER BY place_id, type_label COLLATE "C""""
         .query[BPlaceTypeRow].run().groupBy(_.placeId)
       rows.map { r =>

@@ -96,7 +96,7 @@ object SourceRepo:
       throw IllegalStateException(s"'${s.citekey}' was renamed to '$now' — write to '$now' instead")
     }
     val status    = s.status.toString.toLowerCase
-    val periodLit = s.period.map(p => s"[${p.start},${p.end}]")
+    val periodLit = PeriodSql.literal(s.period)
     sql"""INSERT INTO sources
             (citekey, title, authors, year, venue, status, topics, regions, tags,
              period, summary, ocr_markdown, notes, source, calibre_id, doi,
@@ -127,7 +127,7 @@ object SourceRepo:
           WHERE citekey = ${s.citekey} AND NOT (id = ANY($keep::text[]))"""
       .update.run()
     s.findings.foreach { f =>
-      val fperiod = f.period.map(p => s"[${p.start},${p.end}]")
+      val fperiod = PeriodSql.literal(f.period)
       val lon     = f.geo.map(_.lon)
       val lat     = f.geo.map(_.lat)
       sql"""INSERT INTO findings (id, citekey, claim, region_name, geom, period, period_name, tags, confidence, significance)
@@ -191,12 +191,12 @@ object SourceRepo:
 
   private def load(citekey: String)(using DbCon): Option[Source] =
     sql"""SELECT citekey, title, authors, doi, year, venue, status, topics, regions, tags,
-                 lower(period), upper(period) - 1, summary, cited_by_count, influential_citations,
+                 ${SqlLiteral(PeriodSql.cols("period"))}, summary, cited_by_count, influential_citations,
                  source, calibre_id, ocr_markdown, notes,
                  to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
           FROM sources WHERE citekey = $citekey""".query[FullSourceRow].run().headOption.map { r =>
       val fs = sql"""SELECT id, claim, region_name, ST_X(geom), ST_Y(geom),
-                            lower(period), upper(period) - 1, period_name,
+                            ${SqlLiteral(PeriodSql.cols("period"))}, period_name,
                             tags, confidence, significance
                      FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingIdRow].run()
       // the DOMAIN edge list is both tables: where an edge is stored is a storage concern, and a
@@ -570,14 +570,14 @@ object SourceRepo:
   def get(ds: DataSource, citekey: String): Option[(SourceDetail, Vector[FindingRow])] =
     connect(ds):
       val src = sql"""SELECT citekey, title, authors, year, venue, status, topics, regions, tags,
-                             lower(period), upper(period) - 1,
+                             ${SqlLiteral(PeriodSql.cols("period"))},
                              summary, doi, ocr_markdown, notes,
                              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
                              source, uid, origin
                       FROM sources WHERE citekey = $citekey""".query[SourceDetail].run().headOption
       src.map { r =>
         val fs = sql"""SELECT claim, region_name, ST_X(geom), ST_Y(geom),
-                              lower(period), upper(period) - 1, period_name,
+                              ${SqlLiteral(PeriodSql.cols("period"))}, period_name,
                               tags, confidence, significance, uid
                        FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingRow].run()
         (r, fs)

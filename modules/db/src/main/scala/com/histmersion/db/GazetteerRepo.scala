@@ -64,7 +64,7 @@ object GazetteerRepo:
 
   def sources()(using DbCon): List[GazetteerSourceRow] =
     sql"""SELECT key, kind, title, version, sha256, file, url, licence, citation,
-                 lower(period), upper(period) - 1, places, names, links, imported_at::text
+                 ${SqlLiteral(PeriodSql.cols("period"))}, places, names, links, imported_at::text
           FROM gazetteer_sources ORDER BY key""".query[GazetteerSourceRow].run().toList
 
   /** Record a finished import: what was read, and what it now holds in the store. */
@@ -75,7 +75,7 @@ object GazetteerRepo:
     val _ = sql"""INSERT INTO gazetteer_sources (key, kind, title, version, sha256, file, url, licence, citation, period,
                     places, names, links, imported_at)
                   VALUES ($key, ${kind.wire}, $title, $version, $sha256, $file, $url, $licence, $citation,
-                    int8range(${lo}::bigint, ${hi}::bigint + 1, '[)'),
+                    ${PeriodSql.bounds(lo, hi)}::int8range,
                     (SELECT count(DISTINCT import_ref)::int FROM place_names WHERE import_source = $key),
                     (SELECT count(*)::int FROM place_names WHERE import_source = $key),
                     (SELECT count(*)::int FROM place_links WHERE import_source = $key), now())
@@ -294,7 +294,7 @@ object GazetteerRepo:
                 SELECT d.id, d.label, d.kind,
                        CASE WHEN d.gjson IS NOT NULL THEN ST_SetSRID(ST_GeomFromGeoJSON(d.gjson), 4326)
                             WHEN d.gwkt IS NOT NULL THEN ST_GeomFromText(d.gwkt, 4326) END,
-                       int8range(d.lo, d.hi + 1, '[)'), d.source, d.props::jsonb, 'seed', $source, d.ref, $version, d.su
+                       ${SqlLiteral(PeriodSql.range("d.lo", "d.hi"))}, d.source, d.props::jsonb, 'seed', $source, d.ref, $version, d.su
                 FROM jsonb_to_recordset(${Json0.print(doc)}::jsonb)
                   AS d(id text, label text, kind text, gjson text, gwkt text, lo bigint, hi bigint, su boolean,
                        source text, props text, ref text)
@@ -329,7 +329,7 @@ object GazetteerRepo:
                   WHERE d.pid = n.place_id AND d.name = n.name AND d.lang = n.lang AND d.ref = n.import_ref)""".update.run()
       val out =
         sql"""INSERT INTO place_names (place_id, name, lang, period, import_source, import_ref, import_version, citation)
-              SELECT d.pid, d.name, d.lang, int8range(d.lo, d.hi + 1, '[)'), $source, d.ref, $version, d.cite
+              SELECT d.pid, d.name, d.lang, ${SqlLiteral(PeriodSql.range("d.lo", "d.hi"))}, $source, d.ref, $version, d.cite
               FROM jsonb_to_recordset($text::jsonb)
                 AS d(pid text, name text, lang text, lo bigint, hi bigint, cite text, ref text)
               ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET
@@ -397,7 +397,7 @@ object GazetteerRepo:
                                        item_class, item_geom, item_period)
               SELECT DISTINCT ON (d.pid, d.scheme, d.eid) d.pid, d.scheme, d.eid, d.rel, $source, d.ref, $version,
                      d.cls, CASE WHEN GeometryType(g.geom) = 'POINT' THEN g.geom END,
-                     CASE WHEN d.dated THEN int8range(d.lo, d.hi + 1, '[)') END
+                     CASE WHEN d.dated THEN ${SqlLiteral(PeriodSql.range("d.lo", "d.hi"))} END
               FROM jsonb_to_recordset($text::jsonb)
                 AS d(pid text, scheme text, eid text, rel text, ref text, cls text, gjson text, gwkt text,
                      lo bigint, hi bigint, dated boolean)

@@ -30,19 +30,17 @@ object AggregateRepo:
     *    (so a source with no findings at all drops out, as it always has for places). */
   def periodsQuery(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     if unit == "findings" then
-      Sql.raw("SELECT lower(f.period), upper(f.period) - 1" +
+      Sql.raw(s"SELECT ${PeriodSql.cols("f.period")}" +
         " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
         FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope)
     else
       val gate =
         if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(" AND fp.matched > 0") else Sql.empty
-      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(p =>
-        Sql.of("s.period && int8range(?::bigint, ?::bigint, '[]')",
-          Param.L(p.start), Param.L(p.end)))
+      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(PeriodSql.overlaps("s.period", _))
       Sql.raw(
-        "SELECT COALESCE(lower(s.period), fp.min_start), COALESCE(upper(s.period) - 1, fp.max_end)" +
+        s"SELECT COALESCE(${PeriodSql.start("s.period")}, fp.min_start), COALESCE(${PeriodSql.end("s.period")}, fp.max_end)" +
           " FROM sources s LEFT JOIN LATERAL (" +
-          "SELECT min(lower(f.period)) AS min_start, max(upper(f.period) - 1) AS max_end," +
+          s"SELECT min(${PeriodSql.start("f.period")}) AS min_start, max(${PeriodSql.end("f.period")}) AS max_end," +
           " count(*) AS matched, count(*) FILTER (WHERE ") ++
         FilterSql.findingPeriodWhere(filter) ++
         Sql.raw(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ") ++

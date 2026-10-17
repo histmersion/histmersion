@@ -34,10 +34,10 @@ object Geocoder:
               SELECT id, true AS by_label, NULL::bigint AS nlo, NULL::bigint AS nhi
               FROM places WHERE histmersion_place_key(label) = $key
               UNION ALL
-              SELECT place_id, false, lower(period), upper(period) - 1
+              SELECT place_id, false, ${SqlLiteral(PeriodSql.cols("period"))}
               FROM place_names WHERE histmersion_place_key(name) = $key)
             SELECT p.id, p.label, p.kind, bool_or(h.by_label),
-                   greatest(lower(p.period), h.nlo), least(upper(p.period) - 1, h.nhi),
+                   greatest(${SqlLiteral(PeriodSql.start("p.period"))}, h.nlo), least(${SqlLiteral(PeriodSql.end("p.period"))}, h.nhi),
                    ST_Dimension(p.geom), ST_Area(p.geom),
                    CASE WHEN ST_Dimension(p.geom) = 0
                         THEN (SELECT count(*)::int FROM places q WHERE q.geom && p.geom AND ST_Equals(q.geom, p.geom))
@@ -120,7 +120,7 @@ object Geocoder:
          ORDER BY f.id, j.created_at DESC
        ), named AS (
          SELECT f.id, f.citekey, coalesce(a.place, btrim(f.region_name)) AS name, f.region_name,
-                ST_X(f.geom) AS lon, ST_Y(f.geom) AS lat, lower(f.period) AS p0, upper(f.period) - 1 AS p1
+                ST_X(f.geom) AS lon, ST_Y(f.geom) AS lat, ${PeriodSql.cols("f.period", "p0", "p1")}
          FROM findings f LEFT JOIN asked a ON a.id = f.id
          WHERE f.geom IS NOT NULL AND coalesce(a.place, btrim(f.region_name), '') <> ''
        ), names AS (
@@ -179,7 +179,7 @@ object Geocoder:
 
   /** The findings with a place name and no point — what `finding-unplaced` reads. */
   val unplacedSql: String =
-    """SELECT f.id, f.citekey, btrim(f.region_name), lower(f.period), upper(f.period) - 1
+    s"""SELECT f.id, f.citekey, btrim(f.region_name), ${PeriodSql.cols("f.period")}
        FROM findings f
        WHERE f.geom IS NULL AND btrim(coalesce(f.region_name, '')) <> ''
        ORDER BY f.citekey, f.id"""

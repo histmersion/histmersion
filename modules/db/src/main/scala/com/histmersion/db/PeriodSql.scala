@@ -11,15 +11,46 @@ import com.histmersion.core.*
   * "until b"; the open side reads back as NULL. Pure, apart from the SQL text it returns. */
 object PeriodSql:
 
-  /** `lower(col), upper(col) - 1` — the inclusive bounds of an `int8range` column, in that order. */
-  def cols(col: String): String = s"lower($col), upper($col) - 1"
+  /** `lower(col)` — the inclusive start of an `int8range` column; NULL when that side is open (Postgres
+    * reads an infinite bound as NULL), or the column is NULL or empty. */
+  def start(col: String): String = s"lower($col)"
 
-  /** The `int8range` literal of optional inclusive bounds (`[-1200,-999)`, `[-1200,)`, `(,-999)`), or
-    * `None` when neither is given — bind it as `${lit}::int8range`. */
+  /** `upper(col) - 1` — the inclusive end (the stored bound is exclusive); NULL when that side is open. */
+  def end(col: String): String = s"upper($col) - 1"
+
+  /** `lower(col), upper(col) - 1` — the inclusive bounds of an `int8range` column, in that order. */
+  def cols(col: String): String = s"${start(col)}, ${end(col)}"
+
+  /** The same, each named: `lower(col) AS a, upper(col) - 1 AS b`. */
+  def cols(col: String, startAs: String, endAs: String): String = s"${start(col)} AS $startAs, ${end(col)} AS $endAs"
+
+  /** `int8range(lo, hi + 1, '[)')` — the range of two INCLUSIVE bounds given as SQL expressions
+    * (columns, `?::bigint`); a NULL bound is an open side. */
+  def range(lo: String, hi: String): String = s"int8range($lo, $hi + 1, '[)')"
+
+  /** `col && int8range(lo, hi, '[]')` — the column overlaps the inclusive window `[lo, hi]` given as SQL
+    * expressions. The Scala twin is `FilterSql.overlaps`. */
+  def overlaps(col: String, lo: String, hi: String): String = s"$col && int8range($lo, $hi, '[]')"
+
+  /** [[overlaps]] with the window bound as two parameters. */
+  def overlaps(col: String, p: Period): Sql =
+    Sql.of(overlaps(col, "?::bigint", "?::bigint"), Param.L(p.start), Param.L(p.end))
+
+  /** The `int8range` literal of optional inclusive bounds — `[-1200,-999)`, `[-1200,)`, `(,-999)`, and
+    * `(,)` (every year) when neither is given. Bind it as `${lit}::int8range`. */
+  def bounds(start: Option[Long], end: Option[Long]): String =
+    s"${start.fold("(")(v => s"[$v")},${end.fold(")")(v => s"${v + 1})")}"
+
+  /** [[bounds]] of an optional closed period: `(,)` when there is none — a place, name or relation
+    * without a dating holds at every year. */
+  def always(p: Option[Period]): String = bounds(p.map(_.start), p.map(_.end))
+
+  /** [[bounds]], or `None` (SQL NULL: no period) when neither bound is given. */
   def literal(start: Option[Long], end: Option[Long]): Option[String] =
-    (start, end) match
-      case (None, None) => None
-      case (s, e)       => Some(s"${s.fold("(")(v => s"[$v")},${e.fold(")")(v => s"${v + 1})")}")
+    Option.when(start.isDefined || end.isDefined)(bounds(start, end))
+
+  /** [[literal]] of an optional closed period. */
+  def literal(p: Option[Period]): Option[String] = p.flatMap(x => literal(Some(x.start), Some(x.end)))
 
   /** A closed [[Period]] from two inclusive bounds read back with [[cols]]: `None` unless both are known. */
   def period(start: Option[Long], end: Option[Long]): Option[Period] =
