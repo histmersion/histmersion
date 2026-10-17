@@ -96,8 +96,10 @@ class PromptTrimSuite extends munit.FunSuite:
 
   test("each review role's fixed overhead stays under its ceiling (PromptBudget; raise it on purpose)"):
     // the rules reviewer's +500: its typed spot-checks, which code holds to the step's tool calls (#1840);
-    // the fixer's +300: declining a coverage MAJOR on an article with no recorded filter
-    val ceilings = Map("article-rules-reviewer" -> 26_000, "article-skeptic" -> 25_500, "article-fixer" -> 27_800,
+    // the fixer's +300: declining a coverage MAJOR on an article with no recorded filter;
+    // the critique checklist (§6.8): skeptic +1,200 (its rulings, `notMaterial`, a finding's `pair`), fixer +1,300
+    // (`setAside`), rules +400 (the `pair` field, the guide's same-paragraph line)
+    val ceilings = Map("article-rules-reviewer" -> 26_400, "article-skeptic" -> 26_700, "article-fixer" -> 29_100,
       "article-cold-reader" -> 7_500)
     val rows = PromptBudget.rows(d).map(r => r.agent -> r).toMap
     ceilings.foreach((a, max) => assert(rows(a).total <= max, s"$a: ${rows(a).total} characters a turn, over $max"))

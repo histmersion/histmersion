@@ -603,8 +603,14 @@ final case class ArticlePatch(
     /** Replace the filter the article is compiled from (#958); an empty filter `{}` clears it. */
     filter: Option[ArticleFilter] = None,
     /** Set the reason of each named source (an empty reason removes it); the others are kept. */
-    reasons: List[CoverageReason] = Nil
-)
+    reasons: List[CoverageReason] = Nil,
+    /** Set why a disagreement of the critique checklist does not bear on the article (V091), per pair
+      * (an empty reason removes it); the others are kept. Stored beside the article: a patch of these
+      * alone writes no version and leaves `updatedAt` as it is. */
+    critiqueReasons: List[CritiqueReason] = Nil
+):
+  /** Nothing but critique reasons (and the token): the article row is not written. */
+  def onlyCritiques: Boolean = critiqueReasons.nonEmpty && copy(critiqueReasons = Nil, ifUpdatedAt = None) == ArticlePatch()
 object ArticlePatch:
   given Schema[ArticlePatch] = KindlingsSchema.derived[ArticlePatch].schema
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */

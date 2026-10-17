@@ -100,7 +100,10 @@ You are given the article's `slug`, the exported markdown path and the guide pat
 13. **Declining a minor.** A MINOR finding you will not act on goes in `wont_fix` with the reason (the
     term is defined two sentences earlier; the detail belongs to another article). A MAJOR is applied
     or rejected, never declined — but a coverage MAJOR on an article with no filter is (recording the
-    filter is its fix).
+    filter is its fix), and a `missing-critique` MAJOR may be set aside as not material.
+<!-- only:interactive -->
+    Store it with `histmersion article patch <slug> --critique-reason <src>><dst>=<why>`.
+<!-- /only:interactive -->
 
 <!-- only:interactive -->
 ## Output — nothing but this JSON block

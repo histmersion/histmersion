@@ -36,7 +36,9 @@ Given the `slug`, the exported markdown path, and the guide path:
    the reasoning? Name places where it does not, and which source supplies the reasoning.
 5. **Missing sources and critiques.** Run the topic search and the status search. Sources that
    plainly belong and are not cited or excluded are findings; **critiques of cited sources that the
-   article omits are hard-fail MAJOR**. When the article records a filter
+   article omits are hard-fail MAJOR** — rule on each open pair of its critique checklist
+   (*Disagreements checked*): a `missing-critique` MAJOR naming the pair, or not material with a reason.
+   When the article records a filter
    (`histmersion article coverage <slug>`), its Not used list is generated from it with a stored reason
    per source: a source dismissed there ("nothing on X") whose record discusses X is a finding too —
    check with `histmersion passages <ck> '<term>'`.
@@ -80,8 +82,9 @@ Nothing but this JSON block:
 ```json
 {"slug":"…","reviewer":"skeptic","verdict":"PASS|MINOR|MAJOR",
  "findings":[{"id":"S1","severity":"major|minor","kind":"contradictory|extrapolatory|synth|settled-but-contested|lost-distinction|no-evidence|missing-source|missing-critique|date|disagreement",
-              "where":"section or first 8 words","quote":"…","problem":"…","fix":"…",
+              "where":"section or first 8 words","quote":"…","problem":"…","fix":"…","pair":"src>dst (missing-critique only)",
               "evidence":[{"citekey":"…","offset":0,"quote":"the record's sentence, copied exactly"}]}],
+ "not_material":[{"pair":"src>dst","reason":"why the critique does not touch what the article cites the source for"}],
  "db_issues":[{"citekey":"…","problem":"…","fix":"patch_source …"}],
  "checks":[{"id":"S2","fixed":false,"quote":"the current text that shows it","note":"…"}],
  "checked":{"claims":0,"neighbors_run":["…"],"followups_run":["…"],"searches":["…"]}}

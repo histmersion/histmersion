@@ -20,8 +20,8 @@ class ManagerPolicySuite extends munit.FunSuite:
   private def f(id: String, r: Reviewer, kind: String = "synth", sev: Severity = Severity.Major) =
     Finding(id, r, sev, kind, s"where $id", s"quote of $id", s"problem $id", "fix")
 
-  private def facts(open: Int, reopened: Int = 0, escalated: Int = 0, churn: Boolean = false) =
-    Some(ReviewFacts(open, reopened, escalated, churn))
+  private def facts(open: Int, reopened: Int = 0, escalated: Int = 0, onlyMissing: Boolean = false, pairs: Option[Int] = None) =
+    Some(ReviewFacts(open, reopened, escalated, onlyMissing, pairs))
 
   private def eval(st: ItemState = ItemState(), attempts: Int = 1, status: RunState = RunState.Done,
       fs: Option[ReviewFacts] = facts(2), task: Option[String] = Some("review-article [[tin]]: 2 open MAJORs — …"),
@@ -44,13 +44,38 @@ class ManagerPolicySuite extends munit.FunSuite:
         assert(note.contains("2 open MAJORs"), note)
       case other => fail(other.toString)
 
-  test("stop rules: omission churn first — the task is the ledger's line plus the reason"):
-    eval(fs = facts(2, churn = true)) match
-      case Next.Stop(o, Some(t), _) =>
-        assert(o.contains("omission churn"), o)
+  test("stop rules: omission churn — only missing-critique MAJORs AND the open critique pairs did not go down"):
+    // two runs, 5 open pairs before the first, 5 after the second: stalled
+    val stalled = ItemState(history = List(RunMark("r1", Some(2), 2, pairsBefore = Some(5), pairsAfter = Some(5))),
+      before = Some(2), pairsBefore = Some(5))
+    eval(st = stalled, attempts = 2, fs = facts(2, onlyMissing = true, pairs = Some(5))) match
+      case Next.Stop(o, Some(t), st) =>
+        assert(o.contains("omission churn") && o.contains("did not go down over 2 runs (now 5)"), o)
         assert(t.startsWith("review-article [[tin]]: 2 open MAJORs"), t)
         assert(t.contains("review manager stopped: omission churn"), t)
+        assertEquals(st.history.last, RunMark("run-1234567890", Some(2), 2, churn = true, pairsBefore = Some(5), pairsAfter = Some(5)))
       case other => fail(other.toString)
+
+  test("omission churn no longer stops while the open critique pairs go down — not even on flat open MAJORs"):
+    // the old rule stopped this run (every open MAJOR a fresh missing-critique); 9 → 6 → 3 pairs is progress
+    val going = ItemState(history = List(RunMark("r1", Some(2), 2, pairsBefore = Some(9), pairsAfter = Some(6))),
+      before = Some(2), pairsBefore = Some(6))
+    eval(st = going, attempts = 2, fs = facts(2, onlyMissing = true, pairs = Some(3))) match
+      case Next.Again(_, st, note) =>
+        assert(note.contains("3 open critique pairs"), note)
+        assertEquals(st.history.last.pairsAfter, Some(3))
+      case other => fail(other.toString)
+    // one run is no window: the first run's churn never stops it
+    assert(eval(st = ItemState(before = Some(2), pairsBefore = Some(4)), fs = facts(2, onlyMissing = true, pairs = Some(4)))
+      .isInstanceOf[Next.Again])
+    // counts unknown (runs evaluated before the checklist): no evidence of a stall
+    assert(!pairsStalled(List(RunMark("r1"), RunMark("r2")), 2))
+    // a rules MAJOR among them: the open-MAJOR rule applies as before
+    val flat = ItemState(history = List(RunMark("r1", Some(3), 3, pairsBefore = Some(9), pairsAfter = Some(6))), before = Some(3),
+      pairsBefore = Some(6))
+    assert(eval(st = flat, attempts = 2, fs = facts(3, pairs = Some(3))).isInstanceOf[Next.Stop])
+    // max runs per article still stops it
+    assert(eval(st = going, attempts = 3, fs = facts(2, onlyMissing = true, pairs = Some(3))).isInstanceOf[Next.Stop])
 
   test("stop rules: escalated, reopened to the limit, max runs per article, no progress"):
     def stopped(n: Next) = n match
@@ -91,25 +116,23 @@ class ManagerPolicySuite extends munit.FunSuite:
       case Next.Stop(_, None, _) => true
       case _                     => false)
 
-  test("facts from a ledger: open majors, reopen counts, escalation, omission churn of the last pass"):
+  test("facts from a ledger: open majors, reopen counts, escalation, whether every open MAJOR is a missing-critique"):
     val run = "run-a"
     val sk  = f("S1", Reviewer.Skeptic, MissingCritique)
     val sk2 = f("S2", Reviewer.Skeptic, MissingCritique)
-    // pass 1 raises S1; pass 3 (the run's last) raises S2; S1 is fixed in pass 2 → only S2 open: churn
     val l1 = absorb(Ledger("tin"), List(sk), run, 1)._1
     val l2 = applyChecks(applyFix(l1, Fix("b", Nil, List("S1"), Nil, Nil, Nil, "", 1, 1), run, 1), Reviewer.Skeptic,
       List(Check("S1", fixed = true, "q", "")), run, 2)
     val l3 = absorb(l2, List(sk2.copy(quote = "another passage entirely", where = "elsewhere", problem = "omits X's critique")), run, 3)._1
-    val fx = ReviewFacts.of(l3, run)
-    assertEquals(fx.openMajors, 1)
-    assert(fx.omissionChurn)
-    // a rules MAJOR among them: no churn
+    val fx = ReviewFacts.of(l3, Some(4))
+    assertEquals((fx.openMajors, fx.onlyMissingCritiques, fx.openPairs), (1, true, Some(4)))
+    // a rules MAJOR among them: not only missing critiques
     val mixed = absorb(l3, List(f("R1", Reviewer.Rules)), run, 3)._1
-    assert(!ReviewFacts.of(mixed, run).omissionChurn)
-    // a missing-critique raised in an EARLIER pass (or another run) is not churn
-    assert(!ReviewFacts.of(l1, "other-run").omissionChurn)
-    val stale = absorb(l2, List(sk2.copy(quote = "another passage entirely", where = "elsewhere", problem = "omits X")), run, 2)._1
-    assert(!ReviewFacts.of(absorb(stale, List(f("M1", Reviewer.Mechanical, "lint", Severity.Minor)), run, 3)._1, run).omissionChurn)
+    assert(!ReviewFacts.of(mixed).onlyMissingCritiques)
+    // nothing open: not "only missing critiques" either
+    assert(!ReviewFacts.of(l2).onlyMissingCritiques)
+    // a missing-critique of any pass or run counts (the pairs decide whether it is churn)
+    assert(ReviewFacts.of(l1).onlyMissingCritiques)
 
   test("dispatch order: priority, then the earliest not-before, then the oldest"):
     val cs = List(Candidate(3, "c", 0, None), Candidate(1, "a", 0, Some(now)), Candidate(2, "b", 10, None),

@@ -159,6 +159,8 @@ Disagreements are content, not problems. But they must be **proportional** (WP:W
 - Never turn absence of disagreement into consensus. State what was checked.
 - Never resolve a disagreement the sources have not resolved — represent it, both sides, years,
   evidence that separates them, the edge that connects them.
+- A disagreement edge touching a cited source counts as discussed when both sources are cited in the
+  **same paragraph**; one that does not bear on the article gets a stored reason, not prose.
 
 ### 4. Sections
 
@@ -211,7 +213,8 @@ is generated from the recorded filter:
 
 ```
 _Method: search {topics: ["steppe_hypothesis"]} → 16; statuses: 11 current, 5 contested; none
-superseded, debunked or retracted; disagreement edges touching the cited sources: [[a]] challenges [[b]]._
+superseded, debunked or retracted; disagreement edges touching the cited sources: [[a]] challenges [[b]];
+disagreements checked: 1 pair — 1 addressed, 0 reasoned, 0 open._
 ```
 
 ### 7. Before returning

@@ -98,7 +98,8 @@ object ReviewArticle:
       quote: String,
       problem: String,
       fix: String,
-      evidence: List[EvidenceAnswer] = Nil
+      evidence: List[EvidenceAnswer] = Nil,
+      pair: Option[String] = None
   ) derives KindlingsCodecAsObject
   object FindingAnswer:
     given Schema[FindingAnswer] = KindlingsSchema.derived[FindingAnswer].schema
@@ -111,6 +112,8 @@ object ReviewArticle:
       .modify(_.evidence)(_.description(
         s"The records the finding rests on (at most $MaxEvidence): citekey, offset, and the sentence copied exactly; " +
           "empty only when it rests on the article's own text"))
+      .modify(_.pair)(_.description(
+        "missing-critique only: the critique-checklist pair it is about, as src>dst (the critic first); null otherwise"))
 
   /** A cold reader's finding: the same, with no evidence — the reader sees no source. */
   final case class ReaderFindingAnswer(
@@ -188,7 +191,8 @@ object ReviewArticle:
       findings: List[FindingAnswer] = Nil,
       proposals: List[ProposalAnswer] = Nil,
       claimsChecked: Int,
-      checks: List[CheckAnswer] = Nil
+      checks: List[CheckAnswer] = Nil,
+      notMaterial: List[NotMaterialAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object SkepticAnswer:
     given Schema[SkepticAnswer] = KindlingsSchema.derived[SkepticAnswer].schema
@@ -196,6 +200,18 @@ object ReviewArticle:
       .modify(_.proposals)(_.description("Database errors you noticed, as changes for a person to approve: a status, or a disagreement edge — each with a quote from the record"))
       .modify(_.claimsChecked)(_.description("How many load-bearing claims you checked"))
       .modify(_.checks)(_.description(ChecksDescription))
+      .modify(_.notMaterial)(_.description(
+        "Each open pair of the critique checklist that does NOT bear on a claim the article makes, with why " +
+          "(every open pair shown is either here or named by a missing-critique MAJOR finding)"))
+
+  /** The skeptic's ruling that one open checklist pair does not bear on the article: code stores the
+    * reason (the pair becomes `reasoned`, §6.8). */
+  final case class NotMaterialAnswer(pair: String, reason: String) derives KindlingsCodecAsObject
+  object NotMaterialAnswer:
+    given Schema[NotMaterialAnswer] = KindlingsSchema.derived[NotMaterialAnswer].schema
+      .modify(_.pair)(_.description("The open pair, as src>dst"))
+      .modify(_.reason)(_.description(
+        "One sentence: what the article cites the source for, and why the critique does not touch it (quote the article's words)"))
 
   /** A reviewer's verdict on one of its own earlier findings (the review ledger, [[ReviewLedger]]):
     * fixed or not, shown by a quote of the CURRENT article. */
@@ -239,7 +255,8 @@ object ReviewArticle:
       unresolvedMoved: List[String] = Nil,
       notes: String,
       reasons: List[CoverageReason] = Nil,
-      wontFix: List[WontFixAnswer] = Nil
+      wontFix: List[WontFixAnswer] = Nil,
+      setAside: List[SetAsideAnswer] = Nil
   ) derives KindlingsCodecAsObject
   object FixerAnswer:
     given Schema[FixerAnswer] = KindlingsSchema.derived[FixerAnswer].schema
@@ -254,6 +271,19 @@ object ReviewArticle:
         "Why the article leaves out a source its filter returns, one per source (the generated Not used list shows them); " +
           "an empty reason removes one. Only for sources of the filter the article does not cite"))
       .modify(_.wontFix)(_.description("Findings you decline, with the reason: a MINOR, or a coverage MAJOR when no filter is recorded"))
+      .modify(_.setAside)(_.description(
+        "missing-critique findings you answer by setting the critique aside as not material — the reason is stored " +
+          "with the article and closes the finding (instead of an edit)"))
+
+  /** The fixer's answer to a missing-critique finding: the critique does not bear on what the article
+    * cites the source for. Code stores the reason with the article and closes the finding (§6.8). */
+  final case class SetAsideAnswer(id: String, pair: Option[String] = None, reason: String) derives KindlingsCodecAsObject
+  object SetAsideAnswer:
+    given Schema[SetAsideAnswer] = KindlingsSchema.derived[SetAsideAnswer].schema
+      .modify(_.id)(_.description("The id of the missing-critique finding"))
+      .modify(_.pair)(_.description("The pair, as src>dst — null to use the one the finding names"))
+      .modify(_.reason)(_.description(
+        "One sentence, after reading both records: what the article cites the source for, and why the critique does not touch it"))
 
   final case class WontFixAnswer(id: String, reason: String) derives KindlingsCodecAsObject
   object WontFixAnswer:
@@ -275,7 +305,9 @@ object ReviewArticle:
       /** The records it rests on, each quote found in its record by code. */
       evidence: List[Evidence] = Nil,
       /** A reviewer raised it again after the fixer rejected it in an earlier round. */
-      escalated: Boolean = false
+      escalated: Boolean = false,
+      /** A missing-critique finding's pair of the critique checklist (§6.8). */
+      pair: Option[CritiqueRef] = None
   ) derives KindlingsCodecAsObject:
     def major: Boolean = severity == Severity.Major
     /** One line for a person or a queue item. */
@@ -308,7 +340,9 @@ object ReviewArticle:
       /** Its verdicts on its own earlier findings (the ledger's open ones), each quote found in the body. */
       checks: List[Check] = Nil,
       /** The rules reviewer's verified spot-checks of cited claims (#1840). */
-      spotChecks: List[SpotCheck] = Nil
+      spotChecks: List[SpotCheck] = Nil,
+      /** The skeptic's verified rulings that an open checklist pair is not material (§6.8). */
+      notMaterial: List[CritiqueReason] = Nil
   ) derives KindlingsCodecAsObject
 
   /** A verified [[CheckAnswer]]. */
@@ -322,7 +356,9 @@ object ReviewArticle:
 
   /** The article as one round reviews it: its text and the token a patch must present. */
   final case class Snapshot(slug: String, title: String, kind: String, body: String, updatedAt: Option[String],
-      truncated: Boolean, coverage: Option[Coverage] = None, cited: List[CitedSource] = Nil) derives KindlingsCodecAsObject:
+      truncated: Boolean, coverage: Option[Coverage] = None, cited: List[CitedSource] = Nil,
+      /** The critique checklist of this body (§6.8), whether or not the article records a filter. */
+      critiques: List[CritiquePair] = Nil) derives KindlingsCodecAsObject:
     /** The sections code generates from the filter (#958), as the page shows them after the body. */
     def generated: Option[String] = coverage.map(ArticleCoverage.sections)
 
@@ -355,10 +391,15 @@ object ReviewArticle:
       /** The coverage reasons the fixer set (an empty one removes), already checked against the coverage. */
       reasons: List[CoverageReason] = Nil,
       /** Minor findings declined, with the reason. */
-      wontFix: List[WontFix] = Nil)
+      wontFix: List[WontFix] = Nil,
+      /** Missing-critique findings set aside as not material, each with the pair and the reason stored. */
+      setAside: List[SetAside] = Nil)
       derives KindlingsCodecAsObject
 
   final case class WontFix(id: String, reason: String) derives KindlingsCodecAsObject
+
+  /** A verified [[SetAsideAnswer]]: the finding, the checklist pair, the reason stored. */
+  final case class SetAside(id: String, pair: CritiqueRef, reason: String) derives KindlingsCodecAsObject
 
   /** What a round's patch did: the article version that holds the PREVIOUS text (undo from it), or
     * why nothing was written. */
@@ -494,7 +535,7 @@ object ReviewArticle:
       val evs = Option(a.evidence).getOrElse(Nil).take(MaxEvidence).map(ev)
       val f = Finding(id, r, s, Option(a.kind).map(_.trim).getOrElse(""), Option(a.where).map(_.trim).getOrElse(""),
         Option(a.quote).map(_.trim).getOrElse(""), a.problem.trim, Option(a.fix).map(_.trim).getOrElse(""),
-        evs.collect { case Right(e) => e })
+        evs.collect { case Right(e) => e }, pair = Option(a.pair).flatten.flatMap(CritiqueRef.parse(_).toOption))
       (f, evs.collect { case Left(m) => s"${r.wire}: $id evidence dropped — $m" })
     }
     (built.map(_._1), checked.collect { case Left(m) => m }, built.flatMap(_._2))
@@ -652,13 +693,112 @@ object ReviewArticle:
     * that is really in the record. Unverifiable ones are dropped with a warning (they are not
     * findings; nothing is lost by dropping them). Its findings' evidence is checked the same way. */
   def checkSkeptic(a: SkepticAnswer, last: Boolean, isCitekey: String => Boolean, text: String => Option[String],
-      minRatio: Double, prior: Option[Prior] = None): Either[List[String], (Report, List[String])] =
-    val (fs, ps, ds) = checkFindings(Reviewer.Skeptic, a.findings, evidenceCheck(isCitekey, text, minRatio))
+      minRatio: Double, prior: Option[Prior] = None, critique: Option[CritiqueRule] = None)
+      : Either[List[String], (Report, List[String])] =
+    val (stated, ps, ds) = checkFindings(Reviewer.Skeptic, a.findings, evidenceCheck(isCitekey, text, minRatio))
     val props    = a.proposals.map(AgentProposals.check(_, isCitekey, text, minRatio))
+    val verified = props.collect { case Right(p) => p }
+    val (fs, kps, kws) = critique.fold((stated, Nil, Nil))(checkCritiques(Reviewer.Skeptic, stated, _, verified, last))
+    val (nm, nps, nws) = critique.fold((Nil, Nil, Nil))(checkNotMaterial(Option(a.notMaterial).getOrElse(Nil), fs, _, last))
     val (cs, cps, cws) = checksOf(Reviewer.Skeptic, prior, a.checks, last)
-    settle(Reviewer.Skeptic, verdictOf(a.verdict, fs, last), fs, ps ++ cps, ds ++ cws, last)(v =>
-      Report(Reviewer.Skeptic, v, fs, proposals = props.collect { case Right(p) => p }, checks = cs))
+    // the stated verdict is held to the findings as stated: one code records minor does not make it a finding left out
+    val verdict = verdictOf(a.verdict, stated, last).map(_ => Verdict.of(fs))
+    settle(Reviewer.Skeptic, verdict, fs, ps ++ cps ++ kps ++ nps, ds ++ cws ++ kws ++ nws, last)(v =>
+      Report(Reviewer.Skeptic, v, fs, proposals = verified, checks = cs, notMaterial = nm))
       .map((r, ws) => (r, ws ++ props.collect { case Left(m) => s"skeptic: dropped $m" }))
+
+  // ── the critique checklist (docs/research-review-convergence.md §6.8) ──────────────────────────
+
+  /** The finding kind of an omitted critique. */
+  val MissingCritique = "missing-critique"
+
+  def isMissingCritique(f: Finding): Boolean = f.kind.trim.toLowerCase(java.util.Locale.ROOT) == MissingCritique
+
+  /** What a missing-critique finding is held to in one pass: the article's checklist (`pairs`), the
+    * open pairs the skeptic was shown in full and must rule on (`shown`; empty for a re-check, which
+    * is shown none), whether the fixer still works in this run after the pass (`fixable`: pass 1, not
+    * a re-check or the confirmation), and whether an answer may be sent back for it (`full`: a full
+    * panel's skeptic, which was shown the checklist). */
+  final case class CritiqueRule(pairs: List[CritiquePair], shown: List[CritiquePair], fixable: Boolean, full: Boolean)
+
+  private def recordedMinor(f: Finding, why: String): Finding =
+    f.copy(severity = Severity.Minor, problem = s"${f.problem.trim} (recorded minor: $why)")
+
+  /** A missing-critique MAJOR must name an OPEN pair of the checklist (`pair`, either direction; the
+    * finding then carries the checklist's own direction):
+    *   - an open pair: it stands;
+    *   - an addressed or reasoned pair: recorded MINOR, the note saying why (a wrong reason is the rules
+    *     reviewer's to challenge, as a normal finding);
+    *   - no pair on the checklist: the disagreement has no edge yet, so it must come with a verified
+    *     edge proposal of the same answer for that pair. With one it stands while the fixer works in
+    *     this run (pass 1), and is recorded MINOR with a warning in a re-check or the confirmation —
+    *     the next run finds the pair on its checklist once the edge exists. Without one a full panel's
+    *     answer is sent back; on the last attempt, or in a re-check, it is recorded minor.
+    * Minor missing-critique findings, and every other kind, pass unchanged. Returns (findings,
+    * problems to send back, warnings). */
+  def checkCritiques(r: Reviewer, fs: List[Finding], rule: CritiqueRule, proposals: List[Proposal], last: Boolean)
+      : (List[Finding], List[String], List[String]) =
+    val results = fs.map { f =>
+      if !isMissingCritique(f) || !f.major then Right((f, None))
+      else
+        val label = s"${f.id} (missing-critique, major)"
+        f.pair.flatMap(Critiques.find(rule.pairs, _)) match
+          case Some(p) if p.open => Right((f.copy(pair = Some(p.ref)), None))
+          case Some(p) =>
+            val why =
+              if p.state == CritiqueState.Addressed then s"${p.ref.wire} is addressed — both sources are cited in one paragraph"
+              else s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.getOrElse("").take(160)}\""
+            Right((recordedMinor(f.copy(pair = Some(p.ref)), why), Some(s"${r.wire}: $label — $why; recorded minor")))
+          case None =>
+            val proposed = f.pair.filter(ref => proposals.exists(pp =>
+              pp.kind == Agents.ApprovalKind.Edge && pp.target.exists(t => CritiqueRef(pp.citekey, t).same(ref))))
+            proposed match
+              case Some(_) if rule.fixable => Right((f, None))
+              case Some(ref) =>
+                val why = s"its edge (${ref.wire}) is proposed in this pass, too late for this run's fixer — carried to the next run"
+                Right((recordedMinor(f, why), Some(s"${r.wire}: $label — $why; recorded minor")))
+              case None if rule.full && !last =>
+                Left(s"$label names no open pair of the critique checklist" +
+                  f.pair.fold(" (its `pair` is empty)")(p => s" (${p.wire} is not on it)") +
+                  ": name the pair it is about in `pair` (src>dst), or — when the disagreement has no edge yet — propose " +
+                  "the edge in `proposals` with the record's sentence and name that pair")
+              case None =>
+                val why = "it names no open checklist pair and no proposed edge"
+                Right((recordedMinor(f, why), Some(s"${r.wire}: $label — $why; recorded minor")))
+    }
+    (results.collect { case Right((f, _)) => f }, results.collect { case Left(p) => p },
+      results.collect { case Right((_, Some(w))) => w })
+
+  /** The skeptic's rulings: every open pair it was shown in full is named by a missing-critique MAJOR
+    * (after [[checkCritiques]]) or ruled not material here, with a reason. A not-material ruling of an
+    * open pair of the checklist becomes a [[CritiqueReason]] to store (one the skeptic also raised as a
+    * MAJOR is dropped: the finding wins). A pair it did not rule on sends the answer back; on the last
+    * attempt it is a warning (the pair stays open). Returns (reasons, problems, warnings). */
+  def checkNotMaterial(as: List[NotMaterialAnswer], fs: List[Finding], rule: CritiqueRule, last: Boolean)
+      : (List[CritiqueReason], List[String], List[String]) =
+    val named = fs.filter(f => f.major && isMissingCritique(f)).flatMap(_.pair)
+    val results = as.map { a =>
+      val reason = Option(a.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
+      CritiqueRef.parse(Option(a.pair).getOrElse("")).flatMap { ref =>
+        Critiques.find(rule.pairs, ref) match
+          case None => Left(s"not material ${ref.wire}: not a pair of the critique checklist")
+          case Some(p) if !p.open => Left(s"not material ${p.ref.wire}: the pair is already ${p.state.wire}")
+          case Some(p) if named.exists(_.same(p.ref)) => Left(s"not material ${p.ref.wire}: a missing-critique MAJOR names it too (the finding stands)")
+          case Some(_) if reason.isEmpty => Left(s"not material ${ref.wire}: no reason")
+          case Some(p) if reason.length > CritiqueReason.MaxChars =>
+            Left(s"not material ${p.ref.wire}: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})")
+          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, reason))
+      }
+    }
+    val ok = results.collect { case Right(c) => c }.distinctBy(c => (c.src, c.dst))
+    val ruled = named ++ ok.map(_.ref)
+    val unruled = rule.shown.filter(p => p.open && !ruled.exists(_.same(p.ref))).map(_.ref.wire)
+    val missing = Option.when(unruled.nonEmpty)(
+      s"open pairs of the critique checklist without a ruling: ${unruled.mkString(", ")} — for each, a missing-critique " +
+        "MAJOR naming it in `pair` (it bears on a claim the article makes), or a `notMaterial` entry with the reason").toList
+    val dropped = results.collect { case Left(m) => s"skeptic: dropped — $m" }
+    if last then (ok, Nil, dropped ++ missing.map(m => s"skeptic: $m (left open)"))
+    else (ok, missing, dropped)
 
   // ── checks of earlier findings, and the verification pass (the review ledger) ──────────────────
 
@@ -723,9 +863,12 @@ object ReviewArticle:
   /** Verify a verification pass's answer: the checks ([[checkChecks]]), the new findings
     * ([[checkFindings]], then [[scope]]d to `edited`, the text of the edited passages) and the lessons. */
   def checkRecheck(r: Reviewer, a: RecheckAnswer, prior: Prior, edited: String, ev: EvidenceCheck,
-      last: Boolean): Either[List[String], (Recheck, List[String])] =
+      last: Boolean, critiques: List[CritiquePair] = Nil): Either[List[String], (Recheck, List[String])] =
     val (cs, cps, cws) = checkChecks(r, prior, a.checks, last)
-    val (fs, ps, ds)   = checkFindings(r, Option(a.findings).getOrElse(Nil), ev)
+    val (raw, ps, ds0) = checkFindings(r, Option(a.findings).getOrElse(Nil), ev)
+    // a re-check is shown no checklist: a missing-critique MAJOR on no open pair is recorded minor
+    val (fs, _, kws)   = checkCritiques(r, raw, CritiqueRule(critiques, Nil, fixable = false, full = false), Nil, last)
+    val ds      = ds0 ++ kws
     val scoped  = fs.map(scope(_, edited, prior.minRatio))
     val lessons = Option(a.lessons).getOrElse(Nil).map(_.trim).filter(_.nonEmpty).distinct.take(MaxLessonsPerAnswer).map(_.take(LessonChars))
     val problems = cps ++ ps
@@ -837,7 +980,8 @@ object ReviewArticle:
     * rejections that cannot be verified are listed as `unverified` (still open). */
   def checkFix(a: FixerAnswer, m: Merged, slug: String, before: String, kind: String, corpus: BodyCorpus,
       isCitekey: String => Boolean, text: String => Option[String], minRatio: Double,
-      last: Boolean, coverage: Option[Coverage] = None): Either[List[String], (Fix, List[String])] =
+      last: Boolean, coverage: Option[Coverage] = None, critiques: List[CritiquePair] = Nil)
+      : Either[List[String], (Fix, List[String])] =
     val ids   = m.findings.map(_.id).toSet
     val byId  = m.findings.map(f => f.id -> f).toMap
     val applied  = a.applied.map(_.trim).filter(_.nonEmpty).distinct
@@ -873,7 +1017,8 @@ object ReviewArticle:
         case Some(_) if Option(w.reason).forall(_.trim.isEmpty) => Left(s"won't fix $id: give the reason")
         case Some(_) => Right(WontFix(id, w.reason.trim))
     }
-    val decided  = applied.toSet ++ rejectedOk.map(_.id) ++ rejectedBad.map(_._1)
+    val (asides, asideProblems) = checkSetAside(Option(a.setAside).getOrElse(Nil), byId, critiques)
+    val decided  = applied.toSet ++ rejectedOk.map(_.id) ++ rejectedBad.map(_._1) ++ asides.map(_.id)
     val declinedOk = wont.collect { case Right(w) => w.id }.toSet
     val undecided = m.majors.filterNot(f => decided(f.id) || declinedOk(f.id)).map { f =>
       if needsFilter(f, coverage) then
@@ -885,16 +1030,43 @@ object ReviewArticle:
     val check = checkBody(slug, before, kind, ArticleEdits.Draft.Edits(edits), corpus)
     val stated = Option(a.reasons).getOrElse(Nil)
     val (reasons, reasonProblems) = checkReasons(stated, coverage, check.body, corpus.isCitekey, m, applied.toSet)
-    val noEdit = Option.when(applied.exists(ids) && !check.edits.exists(_.applied) && reasons.isEmpty)(
+    val noEdit = Option.when(applied.exists(ids) && !check.edits.exists(_.applied) && reasons.isEmpty && asides.isEmpty)(
       s"you list ${applied.mkString(", ")} as applied, but no edit changed the article")
     val problems = check.problems ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2) ++
-      wont.collect { case Left(p) => p }
+      wont.collect { case Left(p) => p } ++ asideProblems
     if problems.isEmpty || (last && !check.fatal) then
       val fix = Fix(check.body, check.edits, applied.filter(ids), rejectedOk, rejectedBad.map(_._1).filter(ids).distinct,
         a.unresolvedMoved.map(_.trim).filter(_.nonEmpty), Option(a.notes).map(_.trim).getOrElse(""), check.wordsBefore,
-        check.wordsAfter, reasons, wont.collect { case Right(w) => w }.filterNot(w => applied.contains(w.id)).distinctBy(_.id))
+        check.wordsAfter, reasons, wont.collect { case Right(w) => w }.filterNot(w => applied.contains(w.id)).distinctBy(_.id),
+        asides.filterNot(s => applied.contains(s.id) || rejectedOk.exists(_.id == s.id)))
       Right((fix, problems.map(p => s"fixer: kept despite — $p")))
     else Left(problems)
+
+  /** The fixer's set-asides (§6.8): each names a missing-critique finding, the pair (its own, or the
+    * finding's), which must be a pair of the article's critique checklist, and a one-line reason. Returns
+    * the verified ones and the problems. */
+  def checkSetAside(as: List[SetAsideAnswer], byId: Map[String, Finding], critiques: List[CritiquePair])
+      : (List[SetAside], List[String]) =
+    val results = as.map { a =>
+      val id = Option(a.id).map(_.trim).getOrElse("")
+      val reason = Option(a.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
+      byId.get(id) match
+        case None => Left(s"set aside '$id': there is no such finding")
+        case Some(f) if !isMissingCritique(f) => Left(s"set aside $id: only a missing-critique finding can be set aside")
+        case Some(f) =>
+          val ref = Option(a.pair).flatten.map(_.trim).filter(_.nonEmpty).map(CritiqueRef.parse) match
+            case Some(r) => r
+            case None    => f.pair.toRight(s"set aside $id: the finding names no pair — give it in `pair` (src>dst)")
+          ref.flatMap { r =>
+            Critiques.find(critiques, r) match
+              case None => Left(s"set aside $id: ${r.wire} is not a pair of the article's critique checklist (no recorded edge) — apply or reject the finding")
+              case Some(_) if reason.isEmpty => Left(s"set aside $id: give the reason")
+              case Some(_) if reason.length > CritiqueReason.MaxChars =>
+                Left(s"set aside $id: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})")
+              case Some(p) => Right(SetAside(id, p.ref, reason))
+          }
+    }
+    (results.collect { case Right(s) => s }.distinctBy(_.id), results.collect { case Left(p) => p })
 
   /** A MAJOR the fixer may decline: a coverage finding on an article that records no filter. Its fix is
     * recording the filter (`histmersion article patch <slug> --filter-…`), which no edit and no fixer
@@ -949,6 +1121,7 @@ object ReviewArticle:
       val esc = if f.escalated then " [raised again after a rejection]" else ""
       s"- ${f.id} [${f.reviewer.wire}, ${f.severity.wire}${if f.kind.nonEmpty then s", ${f.kind}" else ""}]$esc " +
         s"where: ${f.where}\n  quote: ${f.quote}\n  problem: ${f.problem}\n  fix: ${f.fix}" +
+        f.pair.fold("")(p => s"\n  pair: ${p.wire}") +
         f.evidence.map(e => s"\n  evidence: ${evidenceLine(e)}").mkString +
         notes.get(f.id).fold("")(n => s"\n  note: $n")
     }.mkString("\n")

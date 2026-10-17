@@ -1,7 +1,7 @@
 # Persistent process managers — design (approved 2026-10-15)
 
 User decisions:
-- Review "omission churn" (all open MAJORs are skeptic missing-critique raised in the run's last pass) → STOP the item and log a task (re-openable in one click).
+- Review "omission churn" (all open MAJORs are skeptic missing-critique raised in the run's last pass) → STOP the item and log a task (re-openable in one click). **Replaced 2026-10-17** (docs/research-review-convergence.md §6.8): churn = every open MAJOR a missing-critique AND the article's open critique-checklist pairs did not go down over `noProgressRuns` runs.
 - Watcher auto-ingest of legal-OA finds → OPT-IN per research area, default off, daily cap (5).
 - Build PHASE 1 now.
 
@@ -76,7 +76,7 @@ Notes from the person who runs this library (follow them unless they contradict 
 ```
 
 ## 4. Manager kinds
-(a) Review (`review`, library-wide). Config: maxRuns 2, rounds 3, maxRunsPerArticle 3, noProgressRuns 2, reopenLimit 2, staleAfterDays, include filter (tags, goal), per-role model override. Selection priority: person-enqueued > chain (fresh compile) > open MAJORs (`review_ledgers`, by count desc) > never reviewed > (phase 2) stale. Articles without a filter: phase 2 `infer-filter` item first. Step: `review-article <slug> fix rounds=N` origin `manager`. Evaluation from the ledger: no open MAJOR → Done("converged after k runs"); else Stop+task if attempts ≥ maxRunsPerArticle, or open-major count not decreasing over noProgressRuns runs (history in item.state), or any entry reopened ≥ reopenLimit or escalated, or OMISSION CHURN (every open MAJOR is skeptic `missing-critique` raised in this run's final pass) — task text = `ReviewLedger.taskText` + stop reason; else Again with cooldown. Edge/status proposals go to Approvals as today; the manager does not wait for them.
+(a) Review (`review`, library-wide). Config: maxRuns 2, rounds 3, maxRunsPerArticle 3, noProgressRuns 2, reopenLimit 2, staleAfterDays, include filter (tags, goal), per-role model override. Selection priority: person-enqueued > chain (fresh compile) > open MAJORs (`review_ledgers`, by count desc) > never reviewed > (phase 2) stale. Articles without a filter: phase 2 `infer-filter` item first. Step: `review-article <slug> fix rounds=N` origin `manager`. Evaluation from the ledger: no open MAJOR → Done("converged after k runs"); else Stop+task if attempts ≥ maxRunsPerArticle, or open-major count not decreasing over noProgressRuns runs (history in item.state), or any entry reopened ≥ reopenLimit or escalated, or OMISSION CHURN (every open MAJOR is skeptic `missing-critique` raised in this run's final pass; since 2026-10-17: every open MAJOR a missing-critique and the open critique-checklist pairs not down over noProgressRuns runs, which then also replaces the open-MAJOR no-progress rule — see the note at the end) — task text = `ReviewLedger.taskText` + stop reason; else Again with cooldown. Edge/status proposals go to Approvals as today; the manager does not wait for them.
 (b) Seeding (`seed:<goal>`) — phase 2: `propose-articles <goal>` (planner; search/facets/article_coverage/list_articles) → code-verified proposals (slug free, filter ≥ minSources, <50% overlap with existing goal articles) → always-manual `article-plan` approval → compile items with `chainReview=false` → on success upsert a review item (origin chain, priority 2) and link to goal.
 (c) Watcher (`watch:<goal>`) — phase 3: weekly acquisition-sweep + currency-check items; auto-ingest legal-OA OPT-IN per area (default off, autoIngestPerDay 5, the unauthorised mirror forced off); else acquire list. Enrich manager absorbs autoEnrich in phase 2.
 
@@ -117,3 +117,18 @@ Kept current while phase 1 is built (branch `managers-phase1`).
   REST and the MCP tool; the supervisor reports `starved: reviewer: no model …` and starts nothing.
 - Not built in phase 1: `RunParams.chainReview` is honoured but nothing sets it; `cron` on managers is stored, not fired;
   `dailyUsd` per manager not implemented; topic matching of hints has no data (articles have no topics).
+
+## As built: the critique checklist (2026-10-17)
+
+docs/research-review-convergence.md §6.8. The review manager's omission churn changed: 347 missing-critique MAJORs
+(315 fixed) showed the omissions are real and fixable, and 88 % sit on a typed disagreement edge, so an article's
+critique checklist (every challenges/refutes/updates/superseded_by edge touching a cited source: addressed in one
+paragraph, reasoned, or open) is a closed list the runs can finish.
+
+- `RunMark` gains `pairsBefore`/`pairsAfter`, `ItemState` gains `pairsBefore`: the open pairs, counted live
+  (`Handlers.openCritiques`) at dispatch and at evaluation. The dispatch event names them.
+- `ReviewFacts(openMajors, maxReopened, escalated, onlyMissingCritiques, openPairs)`; `omissionChurn` is gone.
+- Stop for churn only when every open MAJOR is a missing-critique AND `pairsStalled` (the window's first
+  `pairsBefore` ≤ its last `pairsAfter`, both known). With only missing-critique MAJORs open the open-MAJOR
+  no-progress rule does not apply (a MAJOR per open pair keeps it flat while the pairs go down);
+  `maxRunsPerArticle`, escalation and the reopen limit still stop. Unknown counts never stall.

@@ -195,7 +195,10 @@ final case class Coverage(
     drift: List[CoverageDrift],
     /** Catalogue events in the filter's period and region the body never names (#1449) — leads for
       * the writer, never prose. */
-    eventLeads: List[ArticleEventLead] = Nil
+    eventLeads: List[ArticleEventLead] = Nil,
+    /** The critique checklist (§6.8 of docs/research-review-convergence.md): every disagreement edge
+      * touching a cited source, addressed, reasoned or open. */
+    critiques: List[CritiquePair] = Nil
 ) derives KindlingsCodecAsObject:
   def capped: Boolean = checked < total
   def unplaced: List[String] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
@@ -314,7 +317,8 @@ object ArticleCoverage:
     val edges =
       if c.edges.isEmpty then "no challenges, refutes, updates or superseded_by edge touches a cited source (not evidence of agreement)"
       else s"disagreement edges touching the cited sources: ${c.edges.map(e => s"[[${e.from}]] ${e.kind} [[${e.to}]]").mkString("; ")}"
-    val parts = s"${escape(c.filterLine)} → ${c.total}" :: statuses ++ searches ++ outside ++ List(edges)
+    val parts = s"${escape(c.filterLine)} → ${c.total}" :: statuses ++ searches ++ outside ++ List(edges) ++
+      Critiques.methodPart(c.critiques).toList
     s"_Method: ${parts.mkString("; ")}._"
 
   private def orList(xs: List[String]): String = xs match
@@ -366,6 +370,8 @@ object ArticleCoverage:
           case DriftKind.ReasonOutside  => "given a reason but no longer returned by the filter"
         s"- ${Plural.count(d.citekeys.size, "source")} $what: ${d.citekeys.map(ck => s"[[$ck]]").mkString(", ")}"
       }.mkString("\n")
+    val critiques = Critiques.markdown(c.critiques)
     s"## Coverage of [[${c.slug}]]\n\n`${c.filterLine}` → ${c.total} (${c.cited.size} cited, ${c.notUsed.size} not used" +
-      s"${if c.capped then s", ${c.total - c.checked} not checked" else ""})\n\n### Drift\n\n$drift\n\n### Generated sections\n\n${sections(c)}" +
+      s"${if c.capped then s", ${c.total - c.checked} not checked" else ""})\n\n### Drift\n\n$drift" +
+      (if critiques.isEmpty then "" else s"\n\n$critiques") + s"\n\n### Generated sections\n\n${sections(c)}" +
       (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads))

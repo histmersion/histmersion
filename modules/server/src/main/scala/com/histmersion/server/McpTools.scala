@@ -481,7 +481,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "`kind`, `regions`, `period{start,end}` and `tags{add,remove,replace}` touch just " +
           "themselves. `filter` replaces the filter the article is compiled from ({} clears it); `reasons` " +
           "[{citekey, reason}] sets why each named source of that filter is left out (an empty reason removes " +
-          "one) — the page generates the Not used list and the Method note from the two. Pass ifUpdatedAt with the updatedAt you last read to be told — instead of " +
+          "one) — the page generates the Not used list and the Method note from the two. `critiqueReasons` " +
+          "[{src, dst, reason}] sets why one disagreement of the critique checklist (an edge src→dst of kind " +
+          "challenges/refutes/updates/superseded_by touching a cited source) does not bear on the article (empty removes; " +
+          "stored beside the article, it leaves updatedAt as it is). Pass ifUpdatedAt with the updatedAt you last read to be told — instead of " +
           s"silently clobbering — when someone else changed the article meanwhile. $ArticleRules " +
           s"$LinkRules $FormatRules")
       .input[PatchArticleInput]
@@ -1267,7 +1270,9 @@ object McpTools:
       "returns, which of them the body cites, every other one with its stored reason (or 'not yet assessed'), " +
       "the status breakdown, the disagreement edges (challenges, refutes, updates, superseded_by) touching the " +
       "cited sources, the further searches, and the DRIFT — sources neither cited nor given a reason, reasons " +
-      "that went stale. Then the Not used list and Method note exactly as the page generates them. An article " +
+      "that went stale; the CRITIQUE CHECKLIST (Disagreements checked: each edge touching a cited source, addressed " +
+      "when both sources are cited in one paragraph, reasoned when a critique reason is stored, else open). Then " +
+      "the Not used list and Method note exactly as the page generates them. An article " +
       "that records no filter has none (set it with patch_article `filter`)."
 
   /** `article_coverage`: the one handler, rendered. */

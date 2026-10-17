@@ -74,3 +74,13 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assert(ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(query = Some("x"), clear = true), Nil).isLeft)
     assert(ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(), List("no-equals-sign")).isLeft)
     assert(ArticlePatches.withCoverage(ArticlePatch(), ArticlePatches.FilterFlags(period = Some("-1500")), Nil).isLeft)
+
+  test("§6.8: --critique-reason sets or removes one checklist pair's reason, after those of --json"):
+    val base = build(json = Some("""{"critiqueReasons":[{"src":"a2000_x","dst":"b2001_y","reason":"from json"}]}""")).toOption.get
+    val p = ArticlePatches.withCritiques(base, List("smith1987_dying>frazer1922_golden=cited for the calendar only",
+      "[[jones2001_myth]] -> lee1990_ritual=")).toOption.get
+    assertEquals(p.critiqueReasons, List(CritiqueReason("a2000_x", "b2001_y", "from json"),
+      CritiqueReason("smith1987_dying", "frazer1922_golden", "cited for the calendar only"), CritiqueReason("jones2001_myth", "lee1990_ritual", "")))
+    assertEquals(ArticlePatches.withCritiques(base, Nil).toOption.get, base)
+    val bad = ArticlePatches.withCritiques(ArticlePatch(), List("smith1987_dying=no pair"))
+    assert(bad.left.exists(e => e.message.startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage), bad)

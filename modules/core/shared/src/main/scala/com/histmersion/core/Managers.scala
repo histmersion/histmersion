@@ -196,16 +196,19 @@ object Managers:
     given Schema[Hold] = KindlingsSchema.derived[Hold].schema
 
   /** What one evaluated run left: the open MAJORs before and after, the most often reopened finding,
-    * the escalated ones, and whether the open ones were all fresh missing-critique findings. */
+    * the escalated ones, whether every open MAJOR was a missing-critique finding (`churn`), and the
+    * open pairs of the article's critique checklist when the run was dispatched and after it
+    * (docs/research-review-convergence.md §6.8; None when not known — a run evaluated before them). */
   final case class RunMark(run: String, before: Option[Int] = None, after: Int = 0, maxReopened: Int = 0,
-      escalated: Int = 0, churn: Boolean = false) derives KindlingsCodecAsObject
+      escalated: Int = 0, churn: Boolean = false, pairsBefore: Option[Int] = None, pairsAfter: Option[Int] = None)
+      derives KindlingsCodecAsObject
   object RunMark:
     given Schema[RunMark] = KindlingsSchema.derived[RunMark].schema
 
-  /** An item's own memory (`manager_items.state`): the evaluated runs, the open MAJORs when the current
-    * run was dispatched, how often a person re-opened it. */
-  final case class ItemState(history: List[RunMark] = Nil, before: Option[Int] = None, reopened: Int = 0)
-      derives KindlingsCodecAsObject
+  /** An item's own memory (`manager_items.state`): the evaluated runs, the open MAJORs and the open
+    * critique-checklist pairs when the current run was dispatched, how often a person re-opened it. */
+  final case class ItemState(history: List[RunMark] = Nil, before: Option[Int] = None, reopened: Int = 0,
+      pairsBefore: Option[Int] = None) derives KindlingsCodecAsObject
   object ItemState:
     given Schema[ItemState] = KindlingsSchema.derived[ItemState].schema
 

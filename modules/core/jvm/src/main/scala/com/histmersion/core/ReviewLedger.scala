@@ -20,6 +20,9 @@ object ReviewLedger:
     case Fixed    extends Status("fixed")
     case Rejected extends Status("rejected")
     case WontFix  extends Status("wont-fix")
+    /** A missing-critique finding the fixer answered with a stored critique reason (§6.8): the critique
+      * exists, and does not bear on what the article cites the source for. */
+    case SetAside extends Status("set-aside")
 
   object Status:
     def parse(s: String): Option[Status] = values.find(_.wire == s.trim.toLowerCase)
@@ -138,9 +141,11 @@ object ReviewLedger:
               e.copy(finding = f.copy(id = id, escalated = true), status = Status.Open, claimed = false,
                 notFixed = e.closed.map(c => s"rejected before${c.citekey.fold("")(ck => s" ([[$ck]])")}: ${c.note}".take(300)),
                 closed = None)
-            case Status.WontFix if f.major =>
-              e.copy(finding = f.copy(id = id), status = Status.Open, claimed = false, closed = None)
-            case Status.WontFix => e
+            case Status.WontFix | Status.SetAside if f.major =>
+              e.copy(finding = f.copy(id = id), status = Status.Open, claimed = false,
+                notFixed = e.closed.filter(_ => e.status == Status.SetAside).map(c => s"set aside before: ${c.note}".take(300)),
+                closed = None)
+            case Status.WontFix | Status.SetAside => e
           (update(led, id)(_ => next), out :+ next.finding, seen + id)
         case None =>
           val id = nextId(led, f.reviewer)
@@ -192,7 +197,11 @@ object ReviewLedger:
         closed = Some(Closure("fixer", round, run, r.reason, r.quote, Some(r.citekey)))))))
     val declined = f.wontFix.foldLeft(rejected)((led, w) => led.entry(w.id).filter(e => e.open && !e.major).fold(led)(_ =>
       update(led, w.id)(_.copy(status = Status.WontFix, claimed = false, closed = Some(Closure("fixer", round, run, w.reason))))))
-    learn(declined, f.rejected.map(r => s"[[${r.citekey}]]: ${r.reason}"), LessonSource.Rejection, run, round)
+    // a critique set aside: closed with the reason stored with the article and the pair it is about
+    val setAside = f.setAside.foldLeft(declined)((led, a) => led.entry(a.id).filter(_.open).fold(led)(_ =>
+      update(led, a.id)(e => e.copy(finding = e.finding.copy(pair = Some(a.pair)), status = Status.SetAside, claimed = false,
+        closed = Some(Closure("fixer", round, run, a.reason, a.pair.wire))))))
+    learn(setAside, f.rejected.map(r => s"[[${r.citekey}]]: ${r.reason}"), LessonSource.Rejection, run, round)
 
   /** Add lessons: trimmed, at most [[LessonChars]] each, a lesson already held (normalised) not twice,
     * the newest [[MaxLessons]] kept. */
@@ -231,6 +240,7 @@ object ReviewLedger:
       case (Status.Fixed, Some(c))    => s"fixed, verified by ${c.by} in pass ${c.round}"
       case (Status.Rejected, Some(c)) => s"rejected${c.citekey.fold("")(ck => s" — [[$ck]]: \"${c.quote.take(120)}\"")}"
       case (Status.WontFix, Some(c))  => s"won't fix — ${c.note.take(120)}"
+      case (Status.SetAside, Some(c)) => s"set aside as not material (${c.quote}) — ${c.note.take(160)}"
       case (s, _)                     => s.wire
     s"${e.id} ${e.finding.severity.wire}$at: ${e.finding.problem.trim.take(140)} → $how"
 
