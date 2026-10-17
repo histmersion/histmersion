@@ -5,7 +5,6 @@ import com.histmersion.db.{JobRepo, PeriodRepo, PlaceRepo}
 import com.histmersion.server.importers.{GazetteerImporter, GazetteerLoad, ImportRunner, NaturalEarthLand, PeriodOFetch}
 
 import java.nio.file.{Files, Path}
-import java.util.concurrent.atomic.AtomicReference
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *
@@ -25,9 +24,9 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
   private val cfg         = deps.cfg
   private val maintenance = deps.maintenance
 
-  /** The init job running now, if any — one at a time: two concurrent seeds would only race each
-    * other over the same upserts. An `AtomicReference` because the job thread clears it. */
-  private val running = AtomicReference[Option[String]](None)
+  /** The init job running now, if any — one at a time ([[BackgroundJob]]): two concurrent seeds would
+    * only race each other over the same upserts. */
+  private val slot = BackgroundJob.Slot()
 
   private def dataDir: Path     = Path.of(cfg.init.dataDir)
   private def placesDir: Path   = dataDir.resolve("places")
@@ -147,26 +146,10 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
       fetch = if fetch then cfg.init.sources else Nil)
 
   private def start(p: InitPlan): Either[ApiError, JobInfo] =
-    if !running.compareAndSet(None, Some("starting")) then
-      Left(ApiError(s"an init job is already running (${running.get.getOrElse("?")}) — see `histmersion jobs`"))
-    else
-      val job = JobRepo.create(ds, Bootstrap.JobKind, None, None, detail = Some(JobDetail(init = Some(p))))
-      running.set(Some(job.id))
-      val t = Thread.ofPlatform().daemon(true).name("histmersion-init").unstarted { () =>
-        try run(job.id, p)
-        catch
-          case e: Throwable =>
-            scribe.error(s"init job ${job.id} died: ${e.getMessage}", e)
-            val _ = JobRepo.transition(ds, job.id, JobState.Running, JobState.Failed,
-              error = Some(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
-        finally running.set(None)
-      }
-      t.start()
-      Right(JobRepo.get(ds, job.id).getOrElse(job))
+    BackgroundJob.start(ds, Bootstrap.JobKind, Some(JobDetail(init = Some(p))), slot, "an init job")((job, note) =>
+      run(job.id, p, note))
 
-  private def run(id: String, p: InitPlan): Unit =
-    val _ = JobRepo.transition(ds, id, JobState.Queued, JobState.Running, Some("starting"))
-    def note(s: String): Unit = JobRepo.progress(ds, id, s)
+  private def run(id: String, p: InitPlan, note: String => Unit): BackgroundJob.Outcome =
     // the definitions a period import left out go on the job (#771), not just into the log
     def periods(r: PeriodImportResult): PeriodImportResult =
       if r.skippedCount > 0 then
@@ -196,9 +179,7 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
     val failed = results.collect { case (n, Left(e)) => s"$n: $e" }
     val done   = results.collect { case (n, Right(s)) => s"$n: $s" }
     val summary = if done.isEmpty then Some("nothing to do") else Some(done.mkString("; "))
-    val _ =
-      if failed.isEmpty then JobRepo.transition(ds, id, JobState.Running, JobState.Done, summary)
-      else JobRepo.transition(ds, id, JobState.Running, JobState.Failed, summary, Some(failed.mkString("; ")))
+    BackgroundJob.Outcome(summary, Option.when(failed.nonEmpty)(failed.mkString("; ")))
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it: [[PlaceSeed.files]] order,
     * then a second pass over every file that reported a dangling parent, then `finding_places`. */
