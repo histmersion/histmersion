@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{MediaRepo, SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceOverrideRepo, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
+import com.histmersion.db.{AliasRepo, MediaRepo, SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceOverrideRepo, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -162,6 +162,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * REST routes, the MCP tools, the CLI and the `/source/{id}` page (which redirects). */
   def canonical(id: String): String = SourceRepo.canonical(ds, id).getOrElse(id)
 
+  /** THE identifier resolution of every renamed kind (#1799, [[Aliases]]): the identifier the record
+    * answers to now — an old one resolves to where it went. Every read AND every write resolves here
+    * first, so a put, patch, delete or rename naming an old id goes to the current record. */
+  def current(k: AliasKind, id: String): String = AliasRepo.current(ds, k, id)
+
   def getSource(citekey: String, body: Boolean = true): Either[ApiError, SourceWithFindings] =
     SourceRepo.get(ds, canonical(citekey))
       .map((s, fs) => SourceWithFindings(if body then s else s.copy(ocrMarkdown = None), fs.toList,
@@ -319,16 +324,19 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
 
   /** Create or REPLACE everything under one citekey. */
+  /** An OLD citekey follows the alias (#1799): the put replaces the source it was renamed to — it
+    * never creates a second source under the old name, which the alias would then shadow. */
   def putSource(citekey: String, in: SourcePut, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
     maintenance.guard("put_source"):
-      Citekey.of(citekey).flatMap(notAnAlias).flatMap { _ =>
-      Write.applyPut(citekey, in, SourceRepo.aliasesOf(ds, citekey))
+      Citekey.of(citekey).map(_ => current(AliasKind.Source, citekey)).flatMap { ck =>
+      Write.applyPut(ck, in, SourceRepo.aliasesOf(ds, ck))
         .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
         .flatMap(s => strictGate(strict, sourceFormatting(s.summary, s.notes)).map(_ => s))
-        .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, tolKm); getSource(citekey).map(withFormatting) } }
+        .flatMap { s => val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, tolKm); getSource(ck).map(withFormatting) } }
 
-  /** A full replace or an import must not create a source under an OLD citekey: the alias and the
-    * new row would answer to the same name. (A patch is different — it follows the alias.) */
+  /** An IMPORT of a note must not land under an OLD citekey — the one exception to following the
+    * alias: a note named by an old citekey is a stale mirror file the export leaves behind (and
+    * prunes), and its findings are numbered under the old name. A put, patch or delete follows. */
   private def notAnAlias(ck: String): Either[ApiError, String] =
     SourceRepo.aliasOf(ds, ck) match
       case Some(now) => Left(ApiError(s"'$ck' was renamed to '$now' — write to '$now' instead",
@@ -338,10 +346,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `POST /api/sources/{ck}/rename` — see `SourceRepo.rename` for everything it touches. */
   def renameSource(citekey: String, req: RenameRequest): Either[ApiError, SourceRenamed] =
     maintenance.guard("rename_source"):
-      SourceRepo.rename(ds, citekey, req.newCitekey).flatMap { counts =>
+      val from = current(AliasKind.Source, citekey)
+      SourceRepo.rename(ds, from, req.newCitekey).flatMap { counts =>
         val now = req.newCitekey.trim
         getSource(now, body = false).map(sw =>
-          SourceRenamed(citekey, now, sw.source, counts, SourceRepo.calibreId(ds, now)))
+          SourceRenamed(from, now, sw.source, counts, SourceRepo.calibreId(ds, now)))
       }
 
   /** Every old citekey and the source it names now. */
@@ -353,7 +362,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * ([[StoredOriginals]]) are removed after the commit, best effort. Not an MCP tool, like deleting
     * an article: a person's decision. */
   def deleteSource(citekey: String, req: SourceDeleteRequest): Either[ApiError, SourceDeletion] =
-    val ck = citekey.trim
+    val ck = current(AliasKind.Source, citekey)
     def originals(p: SourceDeleteRepo.Plan): List[Path] =
       StoredOriginals.find(Path.of(cfg.converter.spoolDir), acquire.Spool.base(cfg.acquire.spoolDir),
         p.sha256, p.shaShared, p.keys)
@@ -641,19 +650,17 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** An old event id (V053) answers as the event it was renamed to. */
   def getEvent(id: String): Either[ApiError, EventDetail] =
-    EventRepo.get(ds, EventRepo.renamedTo(ds, id).getOrElse(id)).map(catalog.context)
+    EventRepo.get(ds, current(AliasKind.Event, id)).map(catalog.context)
       .toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
 
-  /** A write to an OLD id is refused with where the event went: it would make a second event. */
-  private def notRenamedEvent(id: String): Either[ApiError, Unit] =
-    EventRepo.renamedTo(ds, id).fold(Right(()))(now =>
-      Left(ApiError(s"'$id' was renamed to '$now' — write to '$now' instead", Some(Write.CodeInvalid))))
-
+  /** A write to an OLD id goes to the event it was renamed to (#1799) — a put replaces it, never
+    * creates a second event under the old id. */
   def putEvent(id: String, in: EventPut): Either[ApiError, EventDetail] =
     maintenance.guard("put_event"):
-      notRenamedEvent(id).flatMap(_ => validScale(in.scale)).flatMap { _ =>
-        EventRepo.put(ds, id, in)
-        getEvent(id)
+      val now = current(AliasKind.Event, id)
+      validScale(in.scale).flatMap { _ =>
+        EventRepo.put(ds, now, in)
+        getEvent(now)
       }
 
   /** An event's Wikidata item is a `Q…` id; `""` clears it. */
@@ -665,37 +672,52 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   def patchEvent(id: String, p: EventPatch): Either[ApiError, EventDetail] =
     maintenance.guard("patch_event"):
-      notRenamedEvent(id).flatMap(_ => validScale(p.scale)).flatMap(_ => validWikidata(p.wikidata))
-        .flatMap(_ => EventRepo.patch(ds, id, p).flatMap(_ => getEvent(id)))
+      val now = current(AliasKind.Event, id)
+      validScale(p.scale).flatMap(_ => validWikidata(p.wikidata))
+        .flatMap(_ => EventRepo.patch(ds, now, p).flatMap(_ => getEvent(now)))
 
   def deleteEvent(id: String): Either[ApiError, EventDeleted] =
     maintenance.guard("delete_event"):
-      notRenamedEvent(id).flatMap { _ =>
-        if EventRepo.delete(ds, id) then Right(EventDeleted(id, true))
-        else Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
-      }
+      val now = current(AliasKind.Event, id)
+      if EventRepo.delete(ds, now) then Right(EventDeleted(now, true))
+      else Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
 
   /** `POST /api/places/{id}/rename` — a new gazetteer id; the old one keeps resolving (V055), in
     * `GET /api/places/{old}` and in a `place=<old>` filter alike. */
   def renamePlace(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
     maintenance.guard("rename_place"):
+      val from = current(AliasKind.Place, id)
       for
-        to <- LabelRenames.validate(BundleKind.Place, id, req.to)
-        _  <- PlaceRepo.rename(ds, id, to)
-      yield LabelRenamed(BundleKind.Place, id.trim, to)
+        to <- LabelRenames.validate(BundleKind.Place, from, req.to)
+        _  <- PlaceRepo.rename(ds, from, to)
+      yield LabelRenamed(BundleKind.Place, from, to)
 
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
   def renameEvent(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
     maintenance.guard("rename_event"):
+      val from = current(AliasKind.Event, id)
       for
-        to <- LabelRenames.validate(BundleKind.Event, id, req.to)
-        _  <- EventRepo.rename(ds, id, to)
-      yield LabelRenamed(BundleKind.Event, id.trim, to)
+        to <- LabelRenames.validate(BundleKind.Event, from, req.to)
+        _  <- EventRepo.rename(ds, from, to)
+      yield LabelRenamed(BundleKind.Event, from, to)
 
   // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
 
+  /** A REFERENCE to a record of a renamed kind (an attestation's or an asset link's target) names it
+    * by its current identifier (#1799): `event`, `place`, `source` and `article` targets resolve an
+    * old one; other targets (a finding id, an edge) are kept as given. */
+  private def refId(targetType: String, id: String): String =
+    val kind = targetType.trim.toLowerCase(java.util.Locale.ROOT) match
+      case "event"   => Some(AliasKind.Event)
+      case "place"   => Some(AliasKind.Place)
+      case "source"  => Some(AliasKind.Source)
+      case "article" => Some(AliasKind.Article)
+      case _         => None
+    kind.fold(id)(current(_, id))
+
   def listAttestations(q: Api.AttestationQuery): AttestationList =
-    AttestationRepo.list(ds, q.citekey, q.targetType, q.targetId,
+    val target = for t <- q.targetType; i <- q.targetId yield refId(t, i)
+    AttestationRepo.list(ds, q.citekey.map(current(AliasKind.Source, _)), q.targetType, target.orElse(q.targetId),
       cfg.limits.page(q.limit, cfg.limits.search), q.offset.getOrElse(0))
 
   def getAttestation(id: Long): Either[ApiError, Attestation] =
@@ -703,7 +725,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   def createAttestation(in: AttestationPut): Either[ApiError, Attestation] =
     maintenance.guard("create_attestation"):
-      Right(AttestationRepo.create(ds, in))
+      Right(AttestationRepo.create(ds, in.copy(citekey = current(AliasKind.Source, in.citekey),
+        targetId = refId(in.targetType, in.targetId))))
 
   def patchAttestation(id: Long, p: AttestationPatch): Either[ApiError, Attestation] =
     maintenance.guard("patch_attestation"):
@@ -721,43 +744,43 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** An old goal slug (V053) answers as the goal it was renamed to. */
   def getGoal(slug: String): Either[ApiError, Goal] =
-    GoalRepo.get(ds, GoalRepo.renamedTo(ds, slug).getOrElse(slug)).toRight(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
+    GoalRepo.get(ds, current(AliasKind.Goal, slug)).toRight(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
 
-  private def notRenamedGoal(slug: String): Either[ApiError, Unit] =
-    GoalRepo.renamedTo(ds, slug).fold(Right(()))(now =>
-      Left(ApiError(s"'$slug' was renamed to '$now' — write to '$now' instead", Some(Write.CodeInvalid))))
-
+  /** A write to an OLD slug goes to the goal it was renamed to (#1799); a put replaces it. */
   def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] =
     maintenance.guard("put_goal"):
-      notRenamedGoal(slug).flatMap(_ => GoalRepo.put(ds, slug, in).flatMap(_ => getGoal(slug)))
+      val now = current(AliasKind.Goal, slug)
+      GoalRepo.put(ds, now, in).flatMap(_ => getGoal(now))
 
   def patchGoal(slug: String, p: GoalPatch): Either[ApiError, Goal] =
     maintenance.guard("patch_goal"):
-      notRenamedGoal(slug).flatMap(_ => GoalRepo.patch(ds, slug, p).flatMap(_ => getGoal(slug)))
+      val now = current(AliasKind.Goal, slug)
+      GoalRepo.patch(ds, now, p).flatMap(_ => getGoal(now))
 
   def deleteGoal(slug: String): Either[ApiError, GoalDeleted] =
     maintenance.guard("delete_goal"):
-      notRenamedGoal(slug).flatMap { _ =>
-        if GoalRepo.delete(ds, slug) then Right(GoalDeleted(slug, true))
-        else Left(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
-      }
+      val now = current(AliasKind.Goal, slug)
+      if GoalRepo.delete(ds, now) then Right(GoalDeleted(now, true))
+      else Left(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
 
   /** `POST /api/goals/{slug}/rename` — a new slug; the old one keeps resolving (V053). */
   def renameGoal(slug: String, req: LabelRename): Either[ApiError, LabelRenamed] =
     maintenance.guard("rename_goal"):
+      val from = current(AliasKind.Goal, slug)
       for
-        to <- LabelRenames.validate(BundleKind.Goal, slug, req.to)
-        _  <- GoalRepo.rename(ds, slug, to)
-      yield LabelRenamed(BundleKind.Goal, slug.trim, to)
+        to <- LabelRenames.validate(BundleKind.Goal, from, req.to)
+        _  <- GoalRepo.rename(ds, from, to)
+      yield LabelRenamed(BundleKind.Goal, from, to)
 
   /** `POST /api/articles/{slug}/rename` — a new slug; the old one keeps resolving (V042) and every
     * `[[old]]` in other articles is rewritten (each a new version). */
   def renameArticle(slug: String, req: LabelRename): Either[ApiError, LabelRenamed] =
     maintenance.guard("rename_article"):
+      val from = current(AliasKind.Article, norm(slug))
       for
-        to        <- LabelRenames.validate(BundleKind.Article, slug, req.to)
-        rewritten <- ArticleRepo.rename(ds, slug, to)
-      yield LabelRenamed(BundleKind.Article, slug.trim, to, rewritten)
+        to        <- LabelRenames.validate(BundleKind.Article, from, req.to)
+        rewritten <- ArticleRepo.rename(ds, from, to)
+      yield LabelRenamed(BundleKind.Article, from, to, rewritten)
 
   // ── agent state (plan §1.5) ────────────────────────────────────────────────────────────────
 
@@ -789,10 +812,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   def listAssetLinks(citekey: Option[String], asset: Option[String],
                      targetType: Option[String], targetId: Option[String]): AssetLinkList =
-    AssetLinkRepo.list(ds, citekey, asset, targetType, targetId)
+    val target = for t <- targetType; i <- targetId yield refId(t, i)
+    AssetLinkRepo.list(ds, citekey.map(current(AliasKind.Source, _)), asset, targetType, target.orElse(targetId))
 
   def createAssetLink(in: AssetLinkPut): Either[ApiError, AssetLink] =
-    maintenance.guard("create_asset_link")(AssetLinkRepo.create(ds, in))
+    maintenance.guard("create_asset_link")(AssetLinkRepo.create(ds, in.copy(
+      citekey = current(AliasKind.Source, in.citekey), targetId = refId(in.targetType, in.targetId))))
 
   def deleteAssetLink(id: Long): Either[ApiError, AssetLinkDeleted] =
     maintenance.guard("delete_asset_link"):
@@ -829,7 +854,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the
     * other collection) resolves to the place it names, as an old citekey does. */
-  private def placeId(id: String): String = PlaceRepo.renamedTo(ds, id).getOrElse(id)
+  private def placeId(id: String): String = current(AliasKind.Place, id)
 
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants)
     * and the same queries as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`. */
@@ -897,7 +922,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `POST /api/places/{id}/remove` (V080) — only a place nothing refers to; no re-seed brings it back. */
   def removePlace(id: String, in: PlaceRemoveIn): Either[ApiError, PlaceGone] =
     maintenance.guard("places/remove"):
-      PlaceOverrides.reason(in.reason).flatMap(r => PlaceOverrideRepo.remove(ds, id.trim, r))
+      PlaceOverrides.reason(in.reason).flatMap(r => PlaceOverrideRepo.remove(ds, placeId(id.trim), r))
 
   /** `GET /api/places/overrides?place=` — the kinds and periods people set, every place's or one's. */
   def placeOverrides(id: Option[String]): List[PlaceOverride] =
@@ -1136,7 +1161,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * the write when one of them is an error. */
   def putArticle(slug: String, in: ArticlePut, strict: Boolean = false): Either[ApiError, ArticleView] =
     maintenance.guard("put_article"):
-      Articles.applyPut(slug, in.copy(reasons = canonicalReasons(in.reasons)))
+      // an OLD slug follows the alias (#1799): the put replaces the renamed article
+      Articles.applyPut(Articles.slugOf(slug).fold(_ => slug, s => current(AliasKind.Article, s)),
+          in.copy(reasons = canonicalReasons(in.reasons)))
         .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
         .flatMap(a => strictGate(strict, articleFormatting(a.body, a.summary)).map(_ => a))
         .flatMap { a => val _ = ArticleRepo.put(ds, a); getArticle(a.slug) }
@@ -1145,11 +1172,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * `strict`, the merged result is checked first — an append is judged in the article it lands in. */
   def patchArticle(slug: String, p: ArticlePatch, strict: Boolean = false): Either[ApiError, ArticleView] =
     maintenance.guard("patch_article"):
-      Articles.slugOf(slug).left.map(m => ApiError(m, Some(Write.CodeInvalid)))
+      Articles.slugOf(slug).left.map(m => ApiError(m, Some(Write.CodeInvalid))).map(current(AliasKind.Article, _))
         .flatMap { s =>
           val gate =
             if !strict then Right(())
-            else ArticleRepo.load(ds, ArticleRepo.canonical(ds, s)).fold(Right(()))(cur =>
+            else ArticleRepo.load(ds, s).fold(Right(()))(cur =>
               Articles.applyPatch(cur, p).fold(_ => Right(()), next => strictGate(true, articleFormatting(next.body, next.summary))))
           gate.flatMap(_ => ArticleRepo.patch(ds, s, p.copy(reasons = canonicalReasons(p.reasons))))
         }
@@ -1157,25 +1184,26 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   def deleteArticle(slug: String): Either[ApiError, ArticleDeleted] =
     maintenance.guard("delete_article"):
-      if ArticleRepo.delete(ds, norm(slug)) then Right(ArticleDeleted(norm(slug), true))
+      val now = current(AliasKind.Article, norm(slug))
+      if ArticleRepo.delete(ds, now) then Right(ArticleDeleted(now, true))
       else Left(Articles.notFound(slug))
 
   /** The article as it would live on disk — `wiki/<kind>/<slug>.md`, with its generated coverage
     * sections after the body (between markers an import drops) and its filter and reasons in the
     * frontmatter (#958). */
   def exportArticle(slug: String): Either[ApiError, String] =
-    ArticleRepo.load(ds, norm(slug)).map(a => ArticleNote.render(a, coverageOf(a).map(ArticleCoverage.exported)))
+    ArticleRepo.load(ds, current(AliasKind.Article, norm(slug))).map(a => ArticleNote.render(a, coverageOf(a).map(ArticleCoverage.exported)))
       .toRight(Articles.notFound(slug))
 
   /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and
     * "no such article" are different answers). */
   def articleVersions(slug: String): Either[ApiError, List[ArticleVersion]] =
-    getArticle(norm(slug)).map(_ => ArticleRepo.listVersions(ds, norm(slug)))
+    getArticle(norm(slug)).map(v => ArticleRepo.listVersions(ds, v.article.slug))
 
   /** One historical version's full body. 404 when the slug or the version id is unknown. */
   def articleVersion(slug: String, versionId: Long): Either[ApiError, ArticleVersionFull] =
-    getArticle(norm(slug)).flatMap(_ =>
-      ArticleRepo.getVersion(ds, norm(slug), versionId)
+    getArticle(norm(slug)).flatMap(v =>
+      ArticleRepo.getVersion(ds, v.article.slug, versionId)
         .toRight(ApiError(s"No version $versionId for article '$slug'", Some(Write.CodeNotFound))))
 
   def articleSlugs: List[String] = ArticleRepo.slugs(ds).toList

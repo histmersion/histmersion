@@ -122,10 +122,7 @@ object GoalRepo:
     transact(ds)(renameIn(oldSlug.trim, newSlug.trim))
 
   /** The slug an OLD slug was renamed to — `None` when it is a live slug, or nothing. */
-  def renamedTo(ds: DataSource, slug: String): Option[String] =
-    connect(ds):
-      sql"SELECT goal_slug FROM goal_aliases WHERE alias = $slug AND NOT EXISTS (SELECT 1 FROM goals WHERE slug = $slug)"
-        .query[String].run().headOption
+  def renamedTo(ds: DataSource, slug: String): Option[String] = AliasRepo.renamedTo(ds, AliasKind.Goal, slug)
 
   def delete(ds: DataSource, slug: String): Boolean =
     transact(ds):
