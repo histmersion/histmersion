@@ -704,7 +704,7 @@ so it lists every endpoint the server defines even where the table above has no 
 | `POST` | `/api/agents/approvals/{id}/{decision}` |
 | `GET` | `/api/agents/compare` |
 | `GET` | `/api/agents/doctor` |
-| `POST` | `/api/agents/enqueue` | `EnqueueRequest{kind: review\|extend\|enrich\|seed, target, priority?}` | `EnqueueResult{managerId, items[ManagerItem], skipped}` — a page button: `review`/`extend` an article (the review manager; extend = compile its filter's new sources, then review), `enrich` a source or the unenriched sources an article cites or a goal links (the enrich manager), `seed` a goal (its seeding manager proposes its next articles); a missing manager is created paused; priority 10 by default |
+| `POST` | `/api/agents/enqueue` |
 | `POST` | `/api/agents/generate` |
 | `GET` · `POST` | `/api/agents/managers` |
 | `GET` · `PUT` · `DELETE` | `/api/agents/managers/{id}` |
