@@ -341,8 +341,12 @@ lazy val server = project
     } }.taskValue,
     Compile / resourceGenerators += Def.task {
       val log = streams.value.log
-      val _ = (web / Compile / fastLinkJS).value
-      val jsDir = (web / Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
+      // the FULL link is what the server ships (#1949): the optimiser's output with production
+      // semantics — no null check, cast check or bounds check on every access (fastLinkJS keeps them:
+      // 31 MB, against 18 MB here), 12 % less heap at load and a whole-range boundaries load 900 → 580 ms
+      // (docs/research-web-perf.md). `sbt ~web/fastLinkJS` + Vite stays the quick loop for development.
+      val _ = (web / Compile / fullLinkJS).value
+      val jsDir = (web / Compile / fullLinkJS / scalaJSLinkerOutputDirectory).value
       val src = jsDir / "main.js"
       val dst = (Compile / resourceManaged).value / "web" / "app.bundle.js"
       dst.getParentFile.mkdirs()
@@ -397,8 +401,8 @@ lazy val cli = project
 
 // ── web: Scala.js frontend — Laminar + sttp FetchBackend, derived from the same core endpoints. ──
 // Dev: `sbt ~web/fastLinkJS` + Vite (`cd modules/web && npx vite`) with proxy to the server.
-// Production: the server's resourceGenerator triggers web/fastLinkJS (or fullLinkJS for native-image)
-// and copies main.js into the server's classpath as web/app.bundle.js, served alongside vendor/ + CSS.
+// Production: the server's resourceGenerator triggers web/fullLinkJS and copies main.js into the
+// server's classpath as web/app.bundle.js, served alongside vendor/ + CSS.
 lazy val web = project
   .in(file("modules/web"))
   .enablePlugins(ScalaJSPlugin)
