@@ -41,12 +41,15 @@ object Autopilot:
     * the switch just did (an on/off answer only); `ingestedToday` / `ingestCap` = the legal open-access
     * ingests of all watchers today and their shared cap (0 = none); the last housekeeping runs. */
   final case class AutopilotStatus(on: Boolean, since: Option[String] = None, by: Option[String] = None,
-      agentsEnabled: Boolean = false, managersEnabled: Boolean = false, approvals: List[ApprovalRule] = Nil,
+      agentsEnabled: Boolean = false, managersEnabled: Boolean = false, cronsEnabled: Boolean = true, approvals: List[ApprovalRule] = Nil,
       ingestedToday: Int = 0, ingestCap: Int = 0, maxConcurrentRuns: Int = 0, lastBackup: Option[String] = None,
       lastLint: Option[String] = None, library: List[ManagerBrief] = Nil, goals: List[GoalProgress] = Nil,
       changes: List[String] = Nil) derives KindlingsCodecAsObject
   object AutopilotStatus:
     given Schema[AutopilotStatus] = KindlingsSchema.derived[AutopilotStatus].schema
+    /** What the status says while `agents.scheduler.enabled` is false. */
+    val CronsOff = "the managers' crons are off (agents.scheduler.enabled = false, HISTMERSION_AGENTS_SCHEDULER): " +
+      "each watcher sweeps once and never again, and no seeding manager proposes again — new sources are not looked for"
 
 /** The autopilot as Markdown — every surface (CLI, MCP) prints this. Pure. */
 object AutopilotMarkdown:
@@ -67,7 +70,8 @@ object AutopilotMarkdown:
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
     val warn = List(
       Option.when(!s.agentsEnabled)("agents are disabled on this server (agents.enabled = false): nothing runs"),
-      Option.when(s.agentsEnabled && !s.managersEnabled)("the managers are disabled (agents.managers.enabled = false): nothing runs")
+      Option.when(s.agentsEnabled && !s.managersEnabled)("the managers are disabled (agents.managers.enabled = false): nothing runs"),
+      Option.when(!s.cronsEnabled)(AutopilotStatus.CronsOff)
     ).flatten.map(w => s"- **$w**")
     val rules = s.approvals.map(r => s"${r.kind} ${r.mode}${if r.cap.nonEmpty then s" (${r.cap})" else ""}").mkString(", ")
     val facts = List(

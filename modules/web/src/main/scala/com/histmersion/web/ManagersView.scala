@@ -230,6 +230,7 @@ object ManagersView:
             s" · ${stages(s.goals)} · ingests today ${s.ingestedToday}${if s.ingestCap > 0 then s" of ${s.ingestCap}" else ""}" +
             s" · at most ${s.maxConcurrentRuns} runs at once"),
           div(cls := "muted", "approvals: " + s.approvals.map(r => s"${r.kind} ${r.mode}").mkString(" · ")),
+          Option.when(!s.cronsEnabled)(p(cls := "form-error", Autopilot.AutopilotStatus.CronsOff)),
           Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
           ul(cls := "job-list autopilot-goals", s.goals.map(g =>
             li(cls := "job-row",

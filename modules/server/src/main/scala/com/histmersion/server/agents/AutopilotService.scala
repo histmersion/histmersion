@@ -286,6 +286,7 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
           r.copy(mode = "auto (in the run, unchecked)")
         case r => r
     AutopilotStatus(row.enabled, Some(row.changedAt), Option(row.changedBy).filter(_.nonEmpty), cfg.enabled, cfg.managers.enabled,
+      cfg.scheduler.enabled,
       List(
         rule(Agents.ApprovalKind.GoalPlan, s"${caps.goalPlansPerDay} a day, sub-goals above depth ${caps.maxGoalDepth}"),
         rule(Agents.ApprovalKind.ArticlePlan, s"${caps.articlesPerGoalPerDay} articles per goal a day"),
