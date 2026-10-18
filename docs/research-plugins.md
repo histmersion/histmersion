@@ -330,6 +330,53 @@ reads must have a default in it.
   `systemEnvironment()` uses `StackValue`. Plugin decoding runs in `Main`'s composition root, right
   after `AppConfig.loadWithUserFile()`, and before `Deps` is built.
 
+### 3.5 Config changes on the fly: no restart, no relink (user, 2026-10-18)
+
+Only the **plugin set** (which jars are on the classpath) needs a relink (§7.3 compares its
+checksum). A plugin already on the classpath whose jar did not change needs nothing native when its
+config changes, and neither does enabling or disabling it: the image already holds it. A config
+change should then take effect **in the running server**, without even a restart.
+
+**Effect system.** The server has no Cats Effect: it is direct style — Ox structured concurrency
+(`supervised`, `forkUser`, scoped resources via `useInScope`/`releaseAfterScope`), Tapir on
+netty-sync, Magnum on plain JDBC. Cats Effect's `Resource` + `Hotswap` is exactly the right
+*shape*, but adding CE for this one feature would mean a second runtime, `IO` at the plugin boundary
+and more native-image surface. The same shape in Ox:
+
+```scala
+/** One generation = the plugins' registrations for one config, owning their resources in its own
+  * Ox scope (clients, pools, caches are `useInScope` inside `register`). */
+final class Generation(val config: Config, val registries: Registries, close: () => Unit, users: AtomicInteger)
+
+/** The Hotswap analogue: readers take a snapshot; a reload builds the next generation off to the
+  * side, publishes it atomically, then retires the old one once its last user lets go. */
+final class PluginRuntime(load: Config => Either[String, Generation]):
+  private val current = AtomicReference[Generation]
+  def use[A](f: Registries => A): A =                     // an operation pins one generation
+    val g = acquire(); try f(g.registries) finally release(g)
+  def reload(next: Config): Either[String, ReloadReport] =
+    load(next).map { g => val old = current.getAndSet(g); retireWhenIdle(old); report(old, g) }
+```
+
+- **Each plugin's `register` runs inside the generation's scope**, so whatever it allocates with
+  `useInScope` is closed when that generation retires. This is `Resource` semantics without `IO`.
+- **Callers pin a generation** (`runtime.use`): an import job or acquisition run started under the
+  old config finishes with it; new work sees the new one. No lock on the hot path, just an
+  `AtomicReference` and a use count.
+- **Only what changed is rebuilt**: the diff is per `histmersion.plugins.<id>` block. An unchanged
+  plugin's registrations, and their resources, are carried into the next generation as they are.
+- **A failed reload changes nothing.** The new generation is built completely (decode, layered
+  defaults, type checks, `register` into staged registries) before anything is published; on error
+  the running one stays and the error is reported.
+- **Triggers:** `histmersion config reload` (REST `POST /api/config/reload`, MCP), and optionally a
+  `WatchService` on `~/.config/histmersion/histmersion.conf` with a short debounce.
+- **Not everything is hot.** Keys are classified: plugin blocks and most behaviour knobs (agents
+  limits, managers, media allowlists, acquisition chain, TLS trust) reload; process-level keys
+  (database URL, server host/port, data directory, bundled Postgres) need a restart, and the reload
+  report says which changed keys were not applied and why.
+- The same mechanism can later carry the host's own settings (today `AppConfig` is read once in
+  `Main`), moving them one by one behind snapshots instead of process-wide values.
+
 ## 4. Native image: the closed world
 
 ### 4.1 What GraalVM 25 does
