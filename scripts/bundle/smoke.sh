@@ -141,8 +141,10 @@ out="$(reload)" || fail "config reload (database): $out"
 for n in pool migrations query-pool leases; do echo "$out" | grep -q -- "- $n" || fail "$n not rebuilt: $out"; done
 "$b/bin/histmersion" health | grep -q "db ok" || fail "health after the database swap"
 "$b/bin/histmersion" places search Anatolia | grep -q "anatolia" && fail "still on the first database after the swap"
-"$b/bin/histmersion" query "select current_database() as db, count(*) > 50 as migrated from flyway_schema_history" \
-  | grep "histmersion_smoke_b" | grep -q "true" || fail "the new database was not migrated (or /api/query is not on it)"
+# the read-only hatch answers from the new database, and only once its migrations are recorded there
+"$b/bin/histmersion" query --json \
+  "select current_database() as db from flyway_schema_history group by 1 having count(*) > 50" \
+  | grep -q "histmersion_smoke_b" || fail "the new database was not migrated (or /api/query is not on it)"
 conf '  limits.search = 7\n  agents.max-concurrent-runs = 2\n'
 out="$(reload)" || fail "config reload (back): $out"
 "$b/bin/histmersion" places search Anatolia | grep -q "anatolia" || fail "not back on the first database"
