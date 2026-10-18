@@ -231,3 +231,141 @@ hk_gpg_key() {
   [ -s "$f" ] && head -1 "$f"
   return 0
 }
+
+# ── GPG provenance of the server binary at each start (libexec/histmersion-server-verified) ─────────
+# With GPG provenance on, the service definition (LaunchAgent / systemd unit) starts the server through
+# libexec/histmersion-server-verified, which checks bin/histmersion-server against its signed checksum
+# (bin/histmersion-server.sha256 + .asc) and refuses to start it otherwise. With provenance off the
+# service runs bin/histmersion-server directly, as it always did.
+
+# The gpg program: HISTMERSION_GPG, else the one `histmersion-signing use-gpg` recorded (a LaunchAgent's
+# PATH is /usr/bin:/bin:/usr/sbin:/sbin and has no Homebrew or MacGPG2), else gpg on PATH, else the
+# usual install locations. Nothing (exit 1) when none is found.
+hk_gpg_program() {
+  local f p
+  if [ -n "${HISTMERSION_GPG:-}" ]; then printf '%s\n' "$HISTMERSION_GPG"; return 0; fi
+  f="$(hk_data_dir)/signing/gpg-program"
+  if [ -s "$f" ]; then p="$(head -1 "$f")"; [ -x "$p" ] && { printf '%s\n' "$p"; return 0; }; fi
+  p="$(command -v gpg 2>/dev/null || true)"
+  [ -n "$p" ] && { printf '%s\n' "$p"; return 0; }
+  for p in /opt/homebrew/bin/gpg /usr/local/bin/gpg /usr/local/MacGPG2/bin/gpg /usr/bin/gpg; do
+    [ -x "$p" ] && { printf '%s\n' "$p"; return 0; }
+  done
+  return 1
+}
+
+# The GnuPG home the key lives in: GNUPGHOME, else the one `use-gpg` recorded (only when it was not the
+# default), else nothing (gpg's default, ~/.gnupg).
+hk_gpg_home() {
+  local f; f="$(hk_data_dir)/signing/gnupg-home"
+  if [ -n "${GNUPGHOME:-}" ]; then printf '%s\n' "$GNUPGHOME"
+  elif [ -s "$f" ]; then head -1 "$f"; fi
+  return 0
+}
+
+# Verify a detached signature with the configured gpg; prints "<signing key> <primary key>" fingerprints
+# (VALIDSIG's first and last fields; the same twice for a key without subkeys). `use-gpg` stores the
+# primary's; a plugin's pinned signer is the signing key's (verify-file). 1 when the signature is not
+# good or the key is revoked; why on stderr.
+hk_gpg_verify() { # <file> <file.asc>
+  local g h status fpr
+  g="$(hk_gpg_program)" || { echo "no gpg program found (HISTMERSION_GPG, or histmersion-signing use-gpg records one)" >&2; return 1; }
+  h="$(hk_gpg_home)"
+  status="$( { [ -z "$h" ] || export GNUPGHOME="$h"; "$g" --batch --no-tty --status-fd 1 --verify "$2" "$1"; } 2>/dev/null || true)"
+  if printf '%s\n' "$status" | grep -q '^\[GNUPG:\] REVKEYSIG'; then echo "the signing key is revoked" >&2; return 1; fi
+  fpr="$(printf '%s\n' "$status" | awk '/^\[GNUPG:\] VALIDSIG/ {print $3, ($12 != "" ? $12 : $3); exit}')"
+  if [ -n "$fpr" ]; then printf '%s\n' "$fpr"; return 0; fi
+  fpr="$(printf '%s\n' "$status" | awk '/^\[GNUPG:\] (NO_PUBKEY|ERRSIG)/ {print $3; exit}')"
+  if [ -n "$fpr" ]; then echo "the signer's public key $fpr is not in the keyring${h:+ ($h)}" >&2
+  else echo "$(basename "$2") is not a valid signature of $(basename "$1")" >&2; fi
+  return 1
+}
+
+# 0 when <binary> is what its checksum file says and that file carries a good signature by <key>; one
+# line on stdout either way (what was verified, or why not).
+hk_verify_binary() { # <binary> <sha256 file> <its .asc> <key fingerprint>
+  local bin="$1" sums="$2" asc="$3" key="$4" signer want have err
+  [ -x "$bin" ] || { echo "no binary at $bin"; return 1; }
+  [ -f "$sums" ] && [ -f "$asc" ] || { echo "no signed checksum for $(basename "$bin") ($(basename "$asc") missing) — histmersion-signing sign-binary signs the installed one"; return 1; }
+  err="$(mktemp "${TMPDIR:-/tmp}/hk-verify.XXXXXX")"
+  signer="$(hk_gpg_verify "$sums" "$asc" 2>"$err")" || { echo "$(basename "$asc"): $(cat "$err")"; rm -f "$err"; return 1; }
+  rm -f "$err"
+  case " $signer " in *" $key "*) ;; *) echo "$(basename "$sums") is signed by ${signer##* }, not by the configured key $key"; return 1 ;; esac
+  signer="${signer##* }"
+  want="$(awk 'NR == 1 {print $1}' "$sums")"
+  have="$(hk_sha256 "$bin")"
+  [ -n "$want" ] && [ "$want" = "$have" ] || { echo "$(basename "$bin") has SHA-256 $have, its signed checksum says ${want:-nothing} — the binary changed since it was signed"; return 1; }
+  echo "verified $(basename "$bin") (SHA-256 ${have:0:16}…) signed by $signer"
+}
+
+# What the service definition should start for <install>: the verifying launcher when GPG provenance is
+# on and the bundle has one, else the server binary itself.
+hk_service_program() { # <install>
+  if [ -n "$(hk_gpg_key)" ] && [ -x "$1/libexec/histmersion-server-verified" ]; then
+    printf '%s\n' "$1/libexec/histmersion-server-verified"
+  else printf '%s\n' "$1/bin/histmersion-server"; fi
+}
+
+# The installed service definition's file (HISTMERSION_SERVICE_FILE overrides; the tests use it).
+hk_service_file() {
+  if [ -n "${HISTMERSION_SERVICE_FILE:-}" ]; then printf '%s\n' "$HISTMERSION_SERVICE_FILE"; return 0; fi
+  case "$(hk_service_kind)" in
+    launchd) printf '%s\n' "$HOME/Library/LaunchAgents/${HISTMERSION_SERVICE_LABEL:-com.histmersion.server}.plist" ;;
+    systemd) printf '%s\n' "${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/${HISTMERSION_SERVICE_UNIT:-histmersion.service}" ;;
+  esac
+  return 0
+}
+
+# The program the installed service definition starts; nothing when there is none.
+hk_service_current_program() {
+  local f; f="$(hk_service_file)"
+  [ -n "$f" ] && [ -f "$f" ] || return 0
+  case "$(hk_service_kind)" in
+    launchd) plutil -extract ProgramArguments.0 raw -o - "$f" 2>/dev/null || true ;;
+    systemd) sed -n 's/^ExecStart=//p' "$f" | head -1 ;;
+  esac
+  return 0
+}
+
+# Point the installed service of <install> at <program> (hk_service_program's choice) and, when it is
+# running and <restart> is non-empty, reload it so the change applies now. A definition that starts
+# another install's server is left alone. Says what it did.
+hk_service_repoint() { # <install> <program> <restart>
+  local install="$1" prog="$2" restart="$3" f cur uid label i
+  f="$(hk_service_file)"
+  if [ "$(hk_service_kind)" = none ] || [ -z "$f" ] || [ ! -f "$f" ]; then
+    echo "  service: none installed — nothing to point at $(basename "$prog")"; return 0
+  fi
+  cur="$(hk_service_current_program)"
+  case "$cur" in
+    "$install/bin/histmersion-server"|"$install/libexec/histmersion-server-verified") ;;
+    *) echo "  service: $f starts '${cur:-?}', not this install's server — left as it is"; return 0 ;;
+  esac
+  if [ "$cur" = "$prog" ]; then echo "  service: already starts $prog"; return 0; fi
+  case "$(hk_service_kind)" in
+    launchd)
+      plutil -replace ProgramArguments.0 -string "$prog" "$f"
+      plutil -lint -s "$f"
+      echo "  service: $(basename "$f") now starts $prog"
+      label="${HISTMERSION_SERVICE_LABEL:-com.histmersion.server}"; uid="$(id -u)"
+      if [ -n "$restart" ] && launchctl print "gui/$uid/$label" >/dev/null 2>&1; then
+        echo "  reloading the LaunchAgent so it applies now (the server restarts)"
+        launchctl bootout "gui/$uid/$label" >/dev/null 2>&1 || true
+        i=0
+        until launchctl bootstrap "gui/$uid" "$f" >/dev/null 2>&1; do
+          i=$((i + 1)); [ "$i" -lt 60 ] || { echo "  could not load $f again — launchctl bootstrap gui/$uid \"$f\"" >&2; return 1; }
+          sleep 1
+        done
+      elif [ -z "$restart" ]; then echo "  (not reloaded: applies at the next login or launchctl bootout/bootstrap)"; fi
+      ;;
+    systemd)
+      sed "s|^ExecStart=.*|ExecStart=$prog|" "$f" > "$f.tmp" && mv -f "$f.tmp" "$f"
+      echo "  service: $(basename "$f") now starts $prog"
+      systemctl --user daemon-reload
+      if [ -n "$restart" ] && systemctl --user is-active --quiet "${HISTMERSION_SERVICE_UNIT:-histmersion.service}"; then
+        echo "  restarting the unit so it applies now"
+        systemctl --user restart "${HISTMERSION_SERVICE_UNIT:-histmersion.service}"
+      elif [ -z "$restart" ]; then echo "  (not restarted: applies at the next start)"; fi
+      ;;
+  esac
+}

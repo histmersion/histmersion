@@ -18,6 +18,9 @@
 # repeat a binary already linked here from the same kit and plugins. --prebuilt takes the bundle's binary
 # as it is (no toolchain); --jvm runs the kit on a JDK. HISTMERSION_CORPUS_DIR, when set, is
 # passed to the server. To keep it running after logout: `loginctl enable-linger "$USER"`.
+# With GPG provenance on (`histmersion-signing use-gpg`), the unit starts libexec/histmersion-server-verified,
+# which starts the server only when its SHA-256 carries your signature (the installer signs the installed
+# binary); off, it starts bin/histmersion-server directly, as before.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=user-config.sh
@@ -72,6 +75,9 @@ mode="$(ib_mode "$build")" || exit 1
 HISTMERSION_HOME="$dest" HISTMERSION_DATA_DIR="$data" ib_build "$dest" "$mode" "$prev" || { echo "no server binary to run (see above)" >&2; exit 1; }
 rm -rf "$dest.old"
 
+# what the unit starts: the binary, or (GPG provenance on) the launcher that verifies it first
+program="$(HISTMERSION_DATA_DIR="$data" ib_service_program "$dest")"
+
 mkdir -p "$bindir" "$data/logs" "$unit_dir"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
 
@@ -88,7 +94,7 @@ Description=Histmersion research corpus (server, PostgreSQL, OCR converter)
 After=network.target
 
 [Service]
-ExecStart=$dest/bin/histmersion-server
+ExecStart=$program
 WorkingDirectory=$dest
 $env_line
 Restart=on-failure

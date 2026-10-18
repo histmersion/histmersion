@@ -128,6 +128,7 @@ test-scripts:
     scripts/bundle/tests/user-config-test.sh
     scripts/bundle/tests/relink-test.sh
     scripts/bundle/tests/kit-scripts-test.sh
+    scripts/bundle/tests/provenance-test.sh
     python3 -m unittest db/gazetteer/test_build.py
     python3 -m unittest db/places/test_build.py
 

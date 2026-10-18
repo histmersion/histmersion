@@ -27,6 +27,9 @@
 # HISTMERSION_CODESIGN_IDENTITY (default "Histmersion Local", created by `histmersion-signing setup-macos`)
 # signs the binaries with a stable identity when it exists, so macOS privacy permissions (Documents
 # access) survive updates; without it they stay ad-hoc signed, as built. Signing is optional (D6).
+# With GPG provenance on (`histmersion-signing use-gpg`), the LaunchAgent starts
+# libexec/histmersion-server-verified, which starts the server only when its SHA-256 carries your signature
+# (the installer signs the installed binary); off, it starts bin/histmersion-server directly, as before.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=launchagent-env.sh
@@ -90,6 +93,9 @@ if [ -x "$dest/bin/histmersion-signing" ]; then
   case "$ib_result" in prebuilt|kept) "$dest/bin/histmersion-signing" codesign "$dest/bin/histmersion-server" com.histmersion.server | sed 's/^/  server: /' ;; esac
 fi
 
+# what the LaunchAgent starts: the binary, or (GPG provenance on) the launcher that verifies it first
+program="$(HISTMERSION_DATA_DIR="$data" ib_service_program "$dest")"
+
 mkdir -p "$bindir" "$data/logs" "$(dirname "$plist")"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
 
@@ -103,7 +109,7 @@ cat > "$plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
   <key>Label</key><string>$label</string>
-  <key>ProgramArguments</key><array><string>$dest/bin/histmersion-server</string></array>
+  <key>ProgramArguments</key><array><string>$program</string></array>
   <key>WorkingDirectory</key><string>$dest</string>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>

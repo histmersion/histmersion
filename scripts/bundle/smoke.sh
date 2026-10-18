@@ -107,6 +107,33 @@ grep -q "the database is locked" "$data/self-check.out" || fail "--self-check do
 [ ! -e "$data/pg" ] && ! curl -fsS http://127.0.0.1:18000/api/health >/dev/null 2>&1 \
   || fail "--self-check started the bundled runtime or a listener"
 
+echo "→ GPG provenance at start: libexec/histmersion-server-verified on a COPY of bin/ (a temporary GNUPGHOME)"
+[ -x "$b/libexec/histmersion-server-verified" ] || fail "the bundle has no libexec/histmersion-server-verified"
+if command -v gpg >/dev/null 2>&1; then
+  vi="$data/verified-install"; vd="$data/verified-data"; vg="$data/verified-gnupg"
+  mkdir -p "$vi" "$vd" && mkdir -m 700 "$vg" && : > "$data/empty.conf"
+  cp -R "$b/bin" "$b/libexec" "$vi/"
+  # never the user's keyring, data directory, config or service
+  ver() { HISTMERSION_HOME="$vi" HISTMERSION_DATA_DIR="$vd" GNUPGHOME="$vg" HISTMERSION_SERVICE=none \
+    HISTMERSION_CONFIG="$data/empty.conf" "$@"; }
+  ver gpg --batch --pinentry-mode loopback --passphrase '' --quick-generate-key "Histmersion Smoke <smoke@localhost>" ed25519 sign 1d >/dev/null 2>&1 \
+    || fail "could not make a throw-away GPG key"
+  fpr="$(ver gpg --batch --with-colons --list-secret-keys | awk -F: '/^fpr:/ {print $10; exit}')"
+  ver "$vi/bin/histmersion-signing" use-gpg "$fpr" > "$data/use-gpg.out" 2>&1 || fail "use-gpg: $(cat "$data/use-gpg.out")"
+  rc=0; ver "$vi/libexec/histmersion-server-verified" --self-check > "$data/verified.out" 2>&1 || rc=$?
+  [ "$rc" = 0 ] && grep -q "histmersion-server-verified: verified histmersion-server" "$data/verified.out" \
+    && grep -q "^self-check" "$data/verified.out" || fail "the launcher did not verify and run the binary (exit $rc): $(cat "$data/verified.out")"
+  printf 'tampered' >> "$vi/bin/histmersion-server"
+  rc=0; ver "$vi/libexec/histmersion-server-verified" --self-check > "$data/verified.out" 2>&1 || rc=$?
+  [ "$rc" = 78 ] && grep -q "REFUSING to start" "$data/verified.out" && ! grep -q "^self-check" "$data/verified.out" \
+    || fail "the launcher started a changed binary (exit $rc): $(cat "$data/verified.out")"
+  echo "  the signed binary started through the launcher; a changed one was refused (exit 78)"
+  gpgconf --homedir "$vg" --kill all >/dev/null 2>&1 || true
+  rm -rf "$vi" "$vd" "$vg"
+else
+  echo "  skipped: no gpg"
+fi
+
 echo "→ relink: the hello test plugin into a COPY of the bundle (bin/, kit/, libexec/), with the CLI"
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 gv_version="$(cat "$b/kit/graalvm-version" 2>/dev/null || true)"

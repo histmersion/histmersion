@@ -25,7 +25,8 @@
 #   8. self-check    the NEW binary's --self-check: config and plugins load, the plugin-set digest is
 #                    the directory's, no new plugin failed — never started as a server
 #   9. sign          codesign with the identity (HISTMERSION_CODESIGN_IDENTITY, "-" = ad hoc) on macOS;
-#                    a detached .asc of its SHA-256 with the GPG key, when set up
+#                    a detached .asc of its SHA-256 with the GPG key, when set up — what
+#                    libexec/histmersion-server-verified checks at every start of the service (§21.3)
 #  10. swap          bin/histmersion-server → .prev, the new one in its place (one rename each), with
 #                    its records: the plugin set, and the build record (histmersion-server.build: the
 #                    kit, the plugin jars and the machine it was linked from — what lets an install
@@ -141,8 +142,25 @@ restart_and_check() { # 0 = healthy with the expected digest
   echo "  healthy${expected_digest:+, plugin set ${expected_digest:0:12}…}"
 }
 
+# the binary's SHA-256, signed with the GPG key when provenance is on: the service's launcher
+# (libexec/histmersion-server-verified) starts only a binary whose checksum carries that signature
+sign_checksum() { # <new binary in $work>
+  [ -n "$(hk_gpg_key)" ] || return 0
+  (cd "$work" && hk_sha256 "$(basename "$1")" | sed 's/$/  histmersion-server/' > histmersion-server.sha256)
+  if "$signing" sign "$work/histmersion-server.sha256"; then echo "  binary checksum signed with GPG key $(hk_gpg_key)"
+  elif [ -n "$unsigned" ]; then
+    echo "  warning: could not sign the binary's checksum — going on (--unsigned); with provenance on the service will not start it"
+    rm -f "$work/histmersion-server.sha256"
+  else hk_die 3 "could not sign the binary's checksum with GPG key $(hk_gpg_key) — pass --unsigned to relink without"; fi
+}
+
 if [ "$mode" = rollback ]; then
   [ -e "$server.prev" ] || hk_die 2 "no previous binary ($server.prev) to roll back to"
+  # with provenance on, the service would refuse a previous binary without a good signed checksum:
+  # say so now, before anything moves
+  if [ -n "$(hk_gpg_key)" ] && ! why="$(hk_verify_binary "$server.prev" "$bin/histmersion-server.sha256.prev" "$bin/histmersion-server.sha256.asc.prev" "$(hk_gpg_key)")"; then
+    hk_die 2 "the previous binary is not verified ($why) — the service would not start it; if you trust it: histmersion-signing sign-binary, then roll back"
+  fi
   step "roll back to the previous binary"
   for f in $records; do
     if [ -e "$bin/$f.prev" ]; then
@@ -230,6 +248,7 @@ if [ "$mode" = jvm ]; then
   step "switch to JVM mode"
   cp "$bin/histmersion-server-jvm" "$work/histmersion-server.new"
   chmod 0755 "$work/histmersion-server.new"
+  sign_checksum "$work/histmersion-server.new"
   hk_write_build_record "$work/histmersion-server.build" jvm "$kit" "$plugins" relink
   swap_in "$work/histmersion-server.new" "$work/plugin-set.json"
   restart_and_check || { put_back; hk_service_restart >/dev/null 2>&1 || true; hk_die 4 "JVM mode did not come up; the previous binary is back"; }
@@ -278,12 +297,7 @@ check_report "$work/self-check.out" "$rc" || { cat "$work/self-check.out" >> "$l
 
 # ── 9. sign ───────────────────────────────────────────────────────────────────────────────────────
 "$signing" codesign "$work/histmersion-server.new" com.histmersion.server | sed 's/^/  /'
-if [ -n "$(hk_gpg_key)" ]; then
-  (cd "$work" && hk_sha256 histmersion-server.new | sed 's/$/  histmersion-server/' > histmersion-server.sha256)
-  if "$signing" sign "$work/histmersion-server.sha256"; then echo "  binary checksum signed with GPG key $(hk_gpg_key)"
-  elif [ -n "$unsigned" ]; then echo "  warning: could not sign the binary's checksum — going on (--unsigned)"; rm -f "$work/histmersion-server.sha256"
-  else hk_die 3 "could not sign the binary's checksum with GPG key $(hk_gpg_key) — pass --unsigned to relink without"; fi
-fi
+sign_checksum "$work/histmersion-server.new"
 
 # what it was linked from, on which machine: an install that would link the same thing keeps it
 hk_write_build_record "$work/histmersion-server.build" native "$kit" "$plugins" relink
