@@ -1586,7 +1586,7 @@ that refuses every addition (as `sourceFetchers` has), so older contexts and plu
 | `MediaItem` | `key`, `title`, `pageUrl`, `imageUrl`, `rights: Either[String, MediaRights]`, `thumbUrl`, `originalUrl`, `geography` (most specific first), `period`, `ids` (gazetteer ids), `withheld` |
 | `MediaRights` | `licence` AS THE PROVIDER STATES IT (an id, a short name or a CC URL), `licenceUrl`, `author`, `credit` |
 | `MediaMatchRule` | `Museum` · `Map(maxYear)` · `PlaceIds(deeper)` — a choice among the host's rules, not a rule |
-| `EventCatalogue` | `title`, `licence`, `citation`, `home`, `requestIntervalMs`, `parts(CatalogueQuery)`, `read(part, query, PluginHttp): CataloguePage` |
+| `EventCatalogue` | `title`, `licence`, `citation`, `home`, `requestIntervalMs`, `floorYear` (`None`; added 2026-10-18, see below), `parts(CatalogueQuery)`, `read(part, query, PluginHttp): CataloguePage` |
 | `CatalogueQuery` | `from`, `to`, `area` (`minLon, minLat, maxLon, maxLat`) |
 | `CatalogueEvent` | the catalogue's id, url, label, kind, the four-point dating, position, historicity, VEI, magnitude, deaths, Wikidata item, names, description, group, stated year and ±, dating method, `raw` |
 | `CataloguePage` | `events`, `next` (the following page of a paged part) |
@@ -1615,12 +1615,40 @@ A plugin's catalogue is read by the host's `EventCatalogHandlers.runImport`: its
 read before skipped (as the built-ins' are; `--refresh` clears them), a paged part followed through
 `next`; each record checked by `PluginEvents.record` (an id and label; a historicity of the host's; a
 dating that does not run backwards; a position on the globe, both coordinates or neither; the kind
-spelled by `EventTaxonomy.refine`; a Wikidata id that is no item dropped) before the same years,
-`--bbox`, VEI/magnitude thresholds, the clamp to the present, `CatalogMerge.place` and the store. A
-refused record and a failed part are lines of the report; the import goes on. The card's catalogue line
-takes a plugin catalogue's title, licence and citation from the registry (the store keeps only the
-provider id). `events rederive` re-reads a plugin's records with no network: they are only clamped (the
-host has no parser for their `raw`). A catalogue may not take a built-in's name or alias.
+spelled by `EventTaxonomy.refine`; a Wikidata id that is no item dropped), then DATED by the host
+(`PluginEvents.derive`, below), before the same years, `--bbox`, VEI/magnitude thresholds,
+`CatalogMerge.place` and the store. A refused record and a failed part are lines of the report; the
+import goes on. The card's catalogue line takes a plugin catalogue's title, licence and citation from the
+registry (the store keeps only the provider id). A catalogue may not take a built-in's name or alias.
+
+**A plugin's dating, at the import and at rederive (follow-up, 2026-10-18).** The host has no parser for
+a plugin's `raw`, so it dates a plugin's records from the structured fields the SPI already carries, with
+ONE pure function, `PluginEvents.derive(record, limits)`, which the import and `events rederive` both call:
+
+- a record that gives none of the four points but a stated year (`central`, with `plusMinus`) is dated
+  `central ± plusMinus` (`CatalogDating.year` → `CatalogDating.span`) — exactly how the host dates the
+  GVP's and NOAA's stated years; a record that gives a span keeps it, and the stated year and ± are kept
+  as stated in either case (the card's "250 CE ± 2500");
+- every point is then held inside the limits (`CatalogDating.clamp`): the present for every catalogue,
+  as before, and — new — the catalogue's own floor: `EventCatalogue.floorYear: Option[Long] = None`, the
+  earliest year any of its events can be (as `events.gvp.floor-year` is the GVP's, −9700). One defaulted
+  member, so `Spi.Version` stays 1 and a plugin built against the earlier SPI is unchanged; a
+  `floorYear` that throws is no floor (`PluginEvents.limits`).
+
+`derive` is idempotent: a stored record already has its span, and clamping a clamped span changes
+nothing, so `events rederive` after an import changes no plugin record (tested). A plugin switched off
+since is re-derived with the present alone: its records were already held at its floor, so the looser
+limit changes nothing either. A record stored before this change that stated only a year ± is dated by
+the next `events rederive` — the same result the import now gives. Positions are not clamped, for
+plugins or built-ins: a plugin's position off the globe, or with one coordinate, is refused at the
+check (as before). `EventRederiveReport.fromRaw` now counts only built-in records with a `raw` (a
+plugin's `raw` is kept but never parsed). Tests: `ProviderPluginsSuite` (+2: `derive` — a stated year ±,
+a given span kept, the present and the floor, nothing invented, idempotent; `limits` — a floor, a
+throwing one, none), `ProviderSpiSuite` (`floorYear` defaults to `None`), `PluginCatalogueSuite` (+1, DB:
+a catalogue with a floor whose records reach past the present, before the floor, and state only a year
+± — stored held and dated at the import, the record and its event alike; `events rederive` then changes
+none, also with the plugin switched off). No native-image metadata change: no new config, DTO or
+reflective class.
 
 **The built-in plugins.** Host code, as phase 2's fetchers (`server/media/BuiltinMedia`,
 `server/events/BuiltinCatalogues`), handed to `PluginHost.build` by `Plugins.builtins` with the same
@@ -1691,8 +1719,10 @@ only what was left, the card's terms), and `PlaceHoverSuite` (the About section)
 
 **Not done.** Moving the built-ins into plugin-api-only modules (they read host settings and core's
 parsers, as the fetchers do); a plugin collection that asks about events (the host's collection import
-is for places); a parser hook so `events rederive` can re-derive a plugin's records; new providers
-(§5.3 row 4, the media providers "not in this slice").
+is for places); a parser hook so `events rederive` can re-read a plugin's `raw` (not needed for the
+dating, which the host derives from the structured fields — above; it would only matter for a plugin
+that changes how it reads its own records); new providers (§5.3 row 4, the media providers "not in this
+slice").
 
 ## 20. As built (defaults: the local build, one plugin per OA index; 2026-10-18)
 
@@ -1802,12 +1832,43 @@ credential.
 
 **Shared records.** The four plugins' fetchers come from ONE `OaIndex` per generation. The OpenAlex and
 DataCite records (`oa:records:<doi>`) and the Unpaywall record (`oa:unpaywall:<email>:<doi>`) are memoised
-per fetch, as before; the Unpaywall key includes the e-mail it was asked with, so when `oa-unpaywall` has
-a contact of its own the landing step (which uses Histmersion's contact) asks Unpaywall once more —
-with the default, one request as before. The landing step reads the indexes' records whichever of
-`oa-unpaywall`/`oa-openalex` is switched on: switching an index's fetcher off does not stop the landing
-step from reading its locations (switch `oa-landing` off for that). The landing step's Unpaywall record is
+per fetch, so each upstream is asked at most once per work. The landing step's Unpaywall record is
 passed by name, so a disabled landing step asks nothing.
+
+**The landing step reads an index only while that index's plugin is on (follow-up, 2026-10-18).** Until
+then it read Unpaywall's and OpenAlex's records whichever of `oa-unpaywall`/`oa-openalex` was switched on,
+so switching an index off did not stop requests to it. Decided semantics: the landing step reads an
+index's record ON BEHALF OF that index's plugin, so
+
+| `oa-unpaywall` | `oa-openalex` | the landing step reads |
+|---|---|---|
+| on | on | Unpaywall's and OpenAlex's locations, then the DataCite landing page — the default, unchanged |
+| off | on | OpenAlex's locations, then the DataCite page; Unpaywall is never asked |
+| on | off | Unpaywall's locations, then the DataCite page; OpenAlex is never asked |
+| off | off | the DOI alone: a Zenodo DOI's record (Zenodo's API), else the page DataCite says the DOI resolves to; a DOI DataCite does not know is a miss |
+
+Why: switching a plugin off is the user saying "do not use this service" (a contact they do not want
+sent, terms they do not accept, an index that is down); a request made for the landing step is still a
+request to that service. With both off the step still has a legitimate lead of its own, because Zenodo
+and DataCite are ITS settings (`acquire.zenodo.url`, `acquire.datacite.url`), not an index plugin's. A
+publisher link from Crossref metadata was considered and rejected: the landing step never reads a
+publisher's page (`acquire.landing.deny-*`, #1580), so it would add requests and no copy; the plain
+`doi.org` link is never followed blind for the same reason.
+
+- **Contact:** the landing step now asks Unpaywall with `oa-unpaywall`'s contact (its own
+  `contact-email`, else Histmersion's), not always Histmersion's — so with a contact of its own the two
+  steps share one memo key and Unpaywall is asked ONCE per work (it was asked twice, once per contact).
+  With no contact anywhere Unpaywall is not asked, as before.
+- **How the step knows:** `oa-unpaywall` and `oa-openalex` tell their `OaIndex` as they register
+  (`unpaywallRegistered(email)`, `openalexRegistered()`, only when their fetcher was added); the landing
+  step reads that at fetch time, so the order of the plugins does not matter.
+- **Reloads:** because the landing step reads what the other two registered, `oa-unpaywall`,
+  `oa-openalex` and `oa-landing` are carried over a reload together or rebuilt together
+  (`BuiltinFetchers.LandingGroup` in `Plugins.carried`): switching `oa-unpaywall` off on the fly also
+  rebuilds `oa-landing`, which then stops asking Unpaywall. `oa-core` is independent of the three.
+- **Default unchanged:** with every plugin on, the requests are byte-identical — the same URLs in the
+  same order, one per upstream per work (the test asserting the exact list passes on the code before
+  the change too).
 
 **The former `oa-index` (`server/plugins/LegacyPlugins`, pure).** Applied by `Plugins.load` before
 `PluginHost.build`, on every load and reload:
@@ -1836,7 +1897,9 @@ The live config has no `plugins.*` key, so for it nothing is mapped and nothing 
 25.0.1) with a legacy `oa-index` block, `order`, the legacy variable, `oa-core`'s secret and
 `oa-unpaywall`'s contact; the stale `oa-index.conf` resource entry was removed by hand.
 
-**Tests.** `BuiltinFetchersSuite` (+14): the seven built-ins and each `oa-*` plugin's one fetcher; each
+**Tests.** `BuiltinFetchersSuite` (+14, then +8 for the landing step's switches: all on (the exact
+requests), each index off, both off (DataCite; a Zenodo DOI's API), `oa-unpaywall`'s own contact shared,
+no contact, the reload group): the seven built-ins and each `oa-*` plugin's one fetcher; each
 index switched off by file or env with the chain otherwise unchanged; a setting of another index fails
 one plugin; `oa-unpaywall`'s contact (own, env, Histmersion's, none = not asked); `oa-core`'s key (a
 secret reaches the `Authorization` header and only its reference the report; Histmersion's key; none =
