@@ -6,8 +6,11 @@
 #   - histmersion-signing (signing.sh): GPG provenance with the REAL gpg in a temporary GNUPGHOME (a
 #     throw-away key without a passphrase; skipped with a note when gpg is not installed), and ad-hoc
 #     code signing of a copy of /usr/bin/true (macOS)
-#   - with HISTMERSION_TEST_KEYCHAIN=1 (macOS, opt-in): a self-signed identity in a TEMPORARY keychain,
-#     codesign with it, the designated requirement stable across two binaries; the user's keychain
+#   - with HISTMERSION_TEST_KEYCHAIN=1 (macOS, opt-in): an UNTRUSTED self-signed identity in a TEMPORARY
+#     keychain, codesign with it; two different binaries (different cdhashes) get one designated
+#     requirement and each satisfies the other's — what a TCC grant stores and checks, the automatable
+#     proxy for "a privacy permission survives a relink" (the real check needs a privacy prompt:
+#     scripts/bundle/tcc-check.sh); ad-hoc signing, the control, gives neither. The user's keychain
 #     search list is saved, the temporary keychain appended for the signing, the list restored and
 #     compared, the keychain deleted. The login keychain is never read or changed.
 #   - the installers' build step (install-build.sh): local by default, --prebuilt, --jvm, every fallback to
@@ -147,6 +150,47 @@ if [ "$(uname -s)" = Darwin ]; then
   info="$(codesign -dv "$tmp/bin-adhoc" 2>&1)"
   check "codesign with identity '-': ad hoc, the identifier set, nothing looked up" \
     'grep -q "signed ad hoc" "$tmp/c.out" && echo "$info" | grep -q "Identifier=com.histmersion.test" && echo "$info" | grep -q "Signature=adhoc"'
+fi
+
+# ── tcc-check.sh: the manual TCC procedure's mechanics (the privacy prompt itself is the user's) ────
+if [ "$(uname -s)" = Darwin ] && command -v clang >/dev/null 2>&1; then
+  echo "tcc-check"
+  tfakes="$tmp/tcc-fakes"; mkdir -p "$tfakes" "$tmp/tcc-target"; touch "$tmp/tcc-target/a" "$tmp/tcc-target/b"
+  # launchd stand-in: bootstrap/kickstart run the agent's program once, as launchd would
+  cat > "$tfakes/launchctl" <<SH
+#!/bin/bash
+echo "launchctl \$*" >> "$tmp/tcc.calls"
+case "\$1" in
+  print) [ -f "$tmp/tcc.loaded" ]; exit ;;
+  bootstrap|kickstart)
+    [ "\$1" = bootstrap ] && { touch "$tmp/tcc.loaded"; p="\$3"; } || p="$tmp/tcc-agents/com.histmersion.tcc-check.plist"
+    out="\$(plutil -extract StandardOutPath raw -o - "\$p")"
+    "\$(plutil -extract ProgramArguments.0 raw -o - "\$p")" "\$(plutil -extract ProgramArguments.1 raw -o - "\$p")" >> "\$out" 2>&1 || true ;;
+  bootout) rm -f "$tmp/tcc.loaded" ;;
+esac
+exit 0
+SH
+  printf '#!/bin/sh\necho "security $*" >> "%s/tcc.security"\nexit 1\n' "$tmp" > "$tfakes/security"
+  chmod +x "$tfakes"/*
+  tcc() { PATH="$tfakes:$PATH" HISTMERSION_TCC_DIR="$tmp/tcc-work" HISTMERSION_TCC_AGENTS="$tmp/tcc-agents" \
+    HISTMERSION_TCC_TARGET="$tmp/tcc-target" HISTMERSION_TCC_WAIT=5 "$src/tcc-check.sh" "$@"; }
+  tcc start --identity - > "$tmp/tcc.out" 2>&1
+  check "start: a probe built and signed, a throw-away LaunchAgent (never the server's) run once; it lists the target" \
+    'grep -q "probe: variant=1 ALLOWED $tmp/tcc-target: 4 entries" "$tmp/tcc.out" && [ "$(plutil -extract Label raw -o - "$tmp/tcc-agents/com.histmersion.tcc-check.plist")" = com.histmersion.tcc-check ] && grep -q "launchctl bootstrap gui/$(id -u) $tmp/tcc-agents/com.histmersion.tcc-check.plist" "$tmp/tcc.calls"'
+  cd1="$(codesign -dvvv "$tmp/tcc-work/histmersion-tcc-probe" 2>&1 | sed -n 's/^CDHash=//p')"
+  tcc relink > "$tmp/tcc.out" 2>&1
+  cd2="$(codesign -dvvv "$tmp/tcc-work/histmersion-tcc-probe" 2>&1 | sed -n 's/^CDHash=//p')"
+  check "relink: a DIFFERENT binary at the same path (new cdhash, same identifier), run again with kickstart, read as persisted" \
+    '[ -n "$cd1" ] && [ "$cd1" != "$cd2" ] && grep -q "Identifier=com.histmersion.tcc-probe" <(codesign -dv "$tmp/tcc-work/histmersion-tcc-probe" 2>&1) && grep -q "launchctl kickstart" "$tmp/tcc.calls" && grep -q "variant=2 ALLOWED" "$tmp/tcc.out" && grep -q "PERSISTED" "$tmp/tcc.out"'
+  chmod 000 "$tmp/tcc-target"; tcc control > "$tmp/tcc.out" 2>&1; chmod 755 "$tmp/tcc-target"
+  check "control: an ad-hoc probe; a denial is reported as the expected outcome" 'grep -q "variant=3 DENIED" "$tmp/tcc.out" && grep -q "as expected" "$tmp/tcc.out"'
+  check "result: every answer, newest last" '[ "$(tcc result | grep -c "variant=")" = 3 ]'
+  check "the keychain was never touched with an existing identity (no security call)" '[ ! -e "$tmp/tcc.security" ]'
+  tcc cleanup > "$tmp/tcc.out" 2>&1
+  check "cleanup: the agent unloaded, its plist and the work directory gone, the remaining manual step named" \
+    '[ ! -e "$tmp/tcc-agents/com.histmersion.tcc-check.plist" ] && [ ! -e "$tmp/tcc-work" ] && [ ! -e "$tmp/tcc.loaded" ] && grep -q "Files and Folders" "$tmp/tcc.out"'
+else
+  skip "tcc-check.sh (macOS with clang)"
 fi
 
 # ── the installers' build step (install-build.sh; D5: a local build by default) ─────────────────────
@@ -328,11 +372,34 @@ if [ "${HISTMERSION_TEST_KEYCHAIN:-}" = 1 ] && [ "$(uname -s)" = Darwin ]; then
     HISTMERSION_CODESIGN_IDENTITY="Histmersion Test Identity" HISTMERSION_CODESIGN_KEYCHAIN="$kc" \
       "$signing" codesign "$tmp/$b" com.histmersion.server > "$tmp/$b.out"
   done
-  dr1="$(codesign -d -r- "$tmp/b1" 2>&1 | sed -n 's/^designated => //p')"
-  dr2="$(codesign -d -r- "$tmp/b2" 2>&1 | sed -n 's/^designated => //p')"
-  check "signed with the untrusted identity" 'grep -q "signed as \"Histmersion Test Identity\"" "$tmp/b1.out"'
-  check "the designated requirement is the same for two different binaries (a certificate, not a cdhash)" \
-    '[ -n "$dr1" ] && [ "$dr1" = "$dr2" ] && echo "$dr1" | grep -q "certificate leaf"'
+  dr() { codesign -d -r- "$1" 2>&1 | sed -n 's/^\(# \)\{0,1\}designated => //p'; }
+  cdhash() { codesign -dvvv "$1" 2>&1 | sed -n 's/^CDHash=//p'; }
+  dr1="$(dr "$tmp/b1")"; dr2="$(dr "$tmp/b2")"
+  check "signed with the untrusted identity (created with --no-trust: no trust setting)" \
+    'grep -q "signed as \"Histmersion Test Identity\"" "$tmp/b1.out" && ! grep -q "trusting it" "$tmp/k.out"'
+  check "two different binaries (two cdhashes)" '[ -n "$(cdhash "$tmp/b1")" ] && [ "$(cdhash "$tmp/b1")" != "$(cdhash "$tmp/b2")" ]'
+  check "the designated requirement is the same for both (the identifier and the certificate, not a cdhash)" \
+    '[ -n "$dr1" ] && [ "$dr1" = "$dr2" ] && echo "$dr1" | grep -q "identifier \"com.histmersion.server\" and certificate leaf = H" && ! echo "$dr1" | grep -q cdhash'
+  check "each binary satisfies the OTHER's designated requirement (what a TCC grant re-checks after a relink)" \
+    'codesign --verify -R "=$dr1" "$tmp/b2" 2>/dev/null && codesign --verify -R "=$dr2" "$tmp/b1" 2>/dev/null'
+  cp /usr/bin/true "$tmp/a1"; cp /usr/bin/false "$tmp/a2"
+  for b in a1 a2; do HISTMERSION_CODESIGN_IDENTITY=- "$signing" codesign "$tmp/$b" com.histmersion.server > /dev/null; done
+  check "control: signed ad hoc, the two binaries' requirements differ (cdhash) and neither satisfies the identity's" \
+    '[ "$(dr "$tmp/a1")" != "$(dr "$tmp/a2")" ] && dr "$tmp/a1" | grep -q cdhash && ! codesign --verify -R "=$dr1" "$tmp/a1" 2>/dev/null && ! codesign --verify -R "=$(dr "$tmp/a1")" "$tmp/a2" 2>/dev/null'
+  # tcc-check.sh's default: a NEW untrusted identity in ITS temporary keychain (the launchd stand-in)
+  if [ -x "$tmp/tcc-fakes/launchctl" ]; then
+    mkdir -p "$tmp/tcc-lfakes"; cp "$tmp/tcc-fakes/launchctl" "$tmp/tcc-lfakes/"; rm -f "$tmp/tcc.loaded"
+    tcck() { PATH="$tmp/tcc-lfakes:$PATH" HISTMERSION_TCC_DIR="$tmp/tcc-work" HISTMERSION_TCC_AGENTS="$tmp/tcc-agents" \
+      HISTMERSION_TCC_TARGET="$tmp/tcc-target" HISTMERSION_TCC_WAIT=5 "$src/tcc-check.sh" "$@"; }
+    tcck start > "$tmp/tcc.out" 2>&1; d1="$(dr "$tmp/tcc-work/histmersion-tcc-probe")"
+    tcck relink > "$tmp/tcc2.out" 2>&1; d2="$(dr "$tmp/tcc-work/histmersion-tcc-probe")"
+    check "tcc-check start/relink: an untrusted identity in its own temporary keychain; one certificate requirement for both probes" \
+      'grep -q "variant=1 ALLOWED" "$tmp/tcc.out" && grep -q "variant=2 ALLOWED" "$tmp/tcc2.out" && [ "$d1" = "$d2" ] && echo "$d1" | grep -q "certificate leaf" && ! grep -q "trusting it" "$tmp/tcc.out"'
+    check "  …the search list as it was after each signing" \
+      '! grep -q "WARNING" "$tmp/tcc.out" "$tmp/tcc2.out" && ! security list-keychains -d user | grep -q tcc-check'
+    tcck cleanup > /dev/null 2>&1
+    check "  …and cleanup deleted its keychain" '[ ! -e "$tmp/tcc-work" ]'
+  fi
   restore
   trap cleanup EXIT
   check "the user's keychain search list is restored exactly" \
