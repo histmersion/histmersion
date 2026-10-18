@@ -1019,7 +1019,7 @@ defaults to its title as the query).
   `planner` ranks the rest against the goal (no tools; a pick that names an unlisted DOI is sent
   back); the picks are queued once and linked to the goal. Nothing is ingested: acquiring stays a
   person's call — unless a watcher opted in (phase 3 of the process managers: legal open access only,
-  never the unauthorised mirror, capped per day).
+  capped per day).
 - **The scheduler** (`Scheduler`): a daemon thread, started with the pool, only when `agents.enabled`
   and `agents.scheduler.enabled`. Every `tick-seconds` each due, enabled schedule (`cron`: five fields
   in UTC or `@hourly/@daily/@weekly/@monthly`, a pure `Cron` parser) either **starts** its pipeline

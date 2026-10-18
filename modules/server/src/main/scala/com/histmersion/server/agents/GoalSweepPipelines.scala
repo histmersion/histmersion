@@ -133,7 +133,7 @@ object CurrencyCheckPipeline:
   * acquisition items linked to the goal. Nothing is ingested — acquiring stays a person's call — unless
   * the run comes from a watcher that OPTED IN (`RunParams.autoIngest`, docs/research-process-managers.md
   * §4 (c)): then at most that many of the open-access picks are ingested through the LEGAL chain only
-  * (never the unauthorised mirror; a work with no legal file is not stored and is queued instead), each linked to the
+  * (never an unauthorised fetcher; a work with no legal file is not stored and is queued instead), each linked to the
   * goal and recorded as an `ingested` event of the watcher (what its daily cap counts).
   *
   * Steps: discover · rank · [ingest] · queue · close. The ingest step exists only when auto-ingest was
@@ -201,7 +201,7 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
   private def ingest(ctx: RunCtx, goal: String, picks: List[Picked], allowed: Int): List[Ingested] =
     Scheduling.ingestPicks(picks, (p: Picked) => p.candidate.isOa, allowed) { p =>
       val doi = p.candidate.doi
-      ctx.write(s"ingest $doi (legal open access, no unauthorised mirror) for goal $goal", io.circe.Json.obj("doi" -> doi.asJson,
+      ctx.write(s"ingest $doi (legal open access only) for goal $goal", io.circe.Json.obj("doi" -> doi.asJson,
           "title" -> p.candidate.title.asJson, "why" -> p.why.asJson))(
         upstream().ingestLegal(doi) match
           case Left(m) =>

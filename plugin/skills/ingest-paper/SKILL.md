@@ -20,8 +20,8 @@ histmersion ingest 10.1038/nature14317 --citekey haak2015_massive --arxiv 1502.0
 `mcp__histmersion__ingest_doi` with `id` (+ `citekey`, `arxiv`).
 
 One command does: OpenAlex metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → Europe
-PMC/PMC → arXiv → a repository landing page resolved one step (Zenodo, `citation_pdf_url`); PMC's JATS full text when no PDF is published; the unauthorised-mirror fallback only when
-`acquire.unlicensed.enabled`) → OCR job keeping figures → `references` edges from Crossref → an
+PMC/PMC → arXiv → a repository landing page resolved one step (Zenodo, `citation_pdf_url`); PMC's JATS full text when no PDF is published —
+the acquisition chain, `acquire.chain`) → OCR job keeping figures → `references` edges from Crossref → an
 assessment. It is **idempotent**: re-ingesting an existing citekey refreshes
 metadata and never wipes enrichment.
 

@@ -172,7 +172,7 @@ object GoalsView:
                 input(typ := "checkbox", controlled(checked <-- watch.signal, onClick.mapToChecked --> watch.writer)), " watch"),
               button(typ := "button", cls := "btn btn--primary", "create", disabled <-- busy, onClick --> (_ => submit()))),
             child.maybe <-- watch.signal.map(on => Option.when(on)(div(cls := "form-row goal-new-watch",
-              label(cls := "goal-on", title := "ingest the legal open-access works its sweep picks (never through the unauthorised mirror); off: they go to the acquisition list",
+              label(cls := "goal-on", title := "ingest the legal open-access works its sweep picks (legal open access only); off: they go to the acquisition list",
                 input(typ := "checkbox", controlled(checked <-- ingest.signal, onClick.mapToChecked --> ingest.writer)),
                 " ingest legal open-access finds (off by default)"),
               input(typ := "number", cls := "field goal-new-cap", aria.label := "ingests a day at most", placeholder := "a day at most (5)",
