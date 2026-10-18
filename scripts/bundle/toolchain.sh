@@ -3,6 +3,8 @@
 #
 #   histmersion-toolchain check      GraalVM, native-image, C toolchain, memory, disk: can this machine
 #                                    relink? (exit 0 yes, 2 no — and what to do)
+#   histmersion-toolchain preflight  the same without GraalVM: could it, once GraalVM is provisioned?
+#                                    (what an install asks before downloading it)
 #   histmersion-toolchain install    download GraalVM CE at the kit's pinned version from its official
 #                                    GitHub release, check its pinned SHA-256, unpack it into
 #                                    <data>/toolchain/graalvm-ce-<version> (~680 MB)
@@ -42,10 +44,13 @@ case "$cmd" in
     hk_find_graalvm "$v" || hk_die 2 "no GraalVM CE $v (histmersion-toolchain install)"
     ;;
 
-  check)
+  check|preflight)
+    # preflight: everything but GraalVM — what an installer asks BEFORE downloading ~325 MB of it
     ok=1
-    if gv="$(hk_find_graalvm "$v")"; then echo "- GraalVM CE $v: $gv"
-    else echo "- GraalVM CE $v: MISSING — histmersion-toolchain install (or HISTMERSION_GRAALVM_HOME)"; ok=""; fi
+    if [ "$cmd" = check ]; then
+      if gv="$(hk_find_graalvm "$v")"; then echo "- GraalVM CE $v: $gv"
+      else echo "- GraalVM CE $v: MISSING — histmersion-toolchain install (or HISTMERSION_GRAALVM_HOME)"; ok=""; fi
+    fi
     if cc="$(hk_cc)"; then echo "- C toolchain: $cc"
     else
       ok=""
@@ -54,9 +59,12 @@ case "$cmd" in
     fi
     mem="$(hk_mem_bytes)"; min="${HISTMERSION_RELINK_MIN_MEMORY_GB:-12}"
     if [ "$((mem / 1073741824))" -ge "$min" ]; then echo "- memory: $((mem / 1073741824)) GB (a relink peaks near 12 GB)"
-    else echo "- memory: $((mem / 1073741824)) GB — LESS than the ${min} GB a relink wants: use JVM mode"; ok=""; fi
-    free="$(hk_free_kb "$(hk_data_dir)" 2>/dev/null || hk_free_kb "$HOME")"
-    echo "- disk: $(( ${free:-0} / 1048576 )) GB free (GraalVM ~0.7 GB, each binary ~0.2 GB)"
+    else echo "- memory: $((mem / 1073741824)) GB — LESS than the ${min} GB a relink wants (HISTMERSION_RELINK_MIN_MEMORY_GB)"; ok=""; fi
+    where="$(hk_data_dir)"; while [ ! -d "$where" ] && [ "$where" != / ]; do where="$(dirname "$where")"; done
+    free="$(hk_free_kb "$where")"
+    need_kb=1048576; [ "$cmd" = preflight ] && [ -z "$(hk_find_graalvm "$v" 2>/dev/null)" ] && need_kb=2097152
+    if [ "${free:-0}" -ge "$need_kb" ]; then echo "- disk: $(( ${free:-0} / 1048576 )) GB free (GraalVM ~0.7 GB, each binary ~0.2 GB)"
+    else echo "- disk: $(( ${free:-0} / 1048576 )) GB free — LESS than the $((need_kb / 1048576)) GB a local build needs"; ok=""; fi
     if [ -n "$ok" ]; then echo "this machine can relink"; exit 0
     else echo "this machine cannot relink now — JVM mode (histmersion-relink --jvm) needs only a JDK"; exit 2; fi
     ;;
@@ -94,5 +102,5 @@ case "$cmd" in
     echo "removed $dest"
     ;;
 
-  *) hk_die 1 "unknown command '$cmd' (check, install, path, remove)" ;;
+  *) hk_die 1 "unknown command '$cmd' (check, preflight, install, path, remove)" ;;
 esac

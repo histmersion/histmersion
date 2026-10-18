@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Install a Histmersion bundle on macOS — no admin rights, nothing outside the user's home:
 #
-#   scripts/bundle/install-macos.sh <bundle-dir> [--move] [--local-build | --jvm]
+#   scripts/bundle/install-macos.sh <bundle-dir> [--move] [--prebuilt | --jvm]
 #
 #   ~/Applications/Histmersion/            the bundle (bin/, pg/, converter/)      HISTMERSION_INSTALL_DIR
 #   ~/Library/Application Support/Histmersion/   database, logs, backups (created by the server)
@@ -11,10 +11,13 @@
 #   ~/bin/histmersion                        the CLI                                 HISTMERSION_BIN_DIR
 #
 # --move renames the bundle into place instead of copying it (a developer build, short on disk).
-# The server binary (install-build.sh; HISTMERSION_BUILD=prebuilt|local|jvm): the bundle's prebuilt one by
-# default; --local-build links it on this Mac from the bundle's kit (GraalVM CE downloaded at its pinned
-# version and checksum into the data directory; Xcode command line tools needed), falling back to JVM
-# mode; --jvm runs the kit on a JDK. With plugins in the data directory's plugins/, an install relinks.
+# The server binary (install-build.sh; HISTMERSION_BUILD=local|prebuilt|jvm) is LINKED ON THIS MAC by
+# default, from the bundle's kit with the plugins of the data directory's plugins/: GraalVM CE downloaded
+# once at its pinned version and checksum into the data directory (~325 MB), Xcode command line tools,
+# ~12 GB of memory, about 2 minutes. When this Mac cannot (memory, toolchain, download, native-image, the
+# self-check), the install FALLS BACK to the bundle's prebuilt binary and says so — it still succeeds.
+# Nothing is linked when it would repeat a binary already linked here from the same kit and plugins.
+# --prebuilt takes the bundle's binary as it is (no toolchain); --jvm runs the kit on a JDK.
 # The server's settings: histmersion.conf (above), and over it the LaunchAgent's EnvironmentVariables
 # (an environment variable beats the same setting in the file). Every Histmersion setting of the
 # installed plist is carried over (launchagent-env.sh); HISTMERSION_CORPUS_DIR (the wiki/sources tree
@@ -32,13 +35,16 @@ here="$(cd "$(dirname "$0")" && pwd)"
 . "$here/user-config.sh"
 # shellcheck source=install-build.sh
 . "$here/install-build.sh"
-src="$(cd "${1:?usage: $0 <bundle-dir> [--move] [--local-build | --jvm]}" && pwd)"
+case "${1:-}" in -h|--help) sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;; esac
+src="$(cd "${1:?usage: $0 <bundle-dir> [--move] [--prebuilt | --jvm]}" && pwd)"
 shift
 move="" build="${HISTMERSION_BUILD:-}"
 for a; do
   case "$a" in
+    -h|--help) sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
     --move) move=--move ;;
-    --local-build) build=local ;;
+    --local-build) build=local ;;   # the default; kept so older command lines still work
+    --prebuilt) build=prebuilt ;;
     --jvm) build=jvm ;;
     *) echo "unknown argument '$a'" >&2; exit 1 ;;
   esac
@@ -65,22 +71,23 @@ mkdir -p "$(dirname "$dest")"
 if [ "$src" != "$dest" ]; then
   rm -rf "$dest.old"; [ -e "$dest" ] && mv "$dest" "$dest.old"
   if [ "$move" = "--move" ]; then mv "$src" "$dest"; else cp -R "$src" "$dest"; fi
-  rm -rf "$dest.old"
 fi
+# the previous install stays aside until the build step: its binary is kept when linking would repeat it
+prev=""; [ -d "$dest.old" ] && prev="$dest.old"
 # a bundle downloaded through a browser is quarantined; Gatekeeper would block every binary in it
 xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
 
-# the server binary: the prebuilt one, or linked here from the kit (user plugins, --local-build), or JVM mode
-plugin_jars="$( { find "$data/plugins" -maxdepth 1 -name '*.jar' 2>/dev/null || true; } | wc -l | tr -d ' ')"
-mode="$(ib_mode "$build" "$plugin_jars")"
-[ "$mode" = local ] && [ -z "$build" ] && echo "→ $plugin_jars plugin jar(s) in $data/plugins: linking them in"
-HISTMERSION_HOME="$dest" HISTMERSION_DATA_DIR="$data" ib_build "$dest" "$mode" || { echo "no server binary to run (see above)" >&2; exit 1; }
+# the server binary: linked on this machine from the kit with the user's plugins (the default), else the
+# bundle's prebuilt one (--prebuilt, or the fallback when this machine cannot link it), or JVM mode
+mode="$(ib_mode "$build")" || exit 1
+HISTMERSION_HOME="$dest" HISTMERSION_DATA_DIR="$data" ib_build "$dest" "$mode" "$prev" || { echo "no server binary to run (see above)" >&2; exit 1; }
+rm -rf "$dest.old"
 
 # sign with the local identity if there is one: a stable signature keeps macOS permissions across updates
 # (a relinked server was signed by histmersion-relink already; a JVM-mode launcher is a script)
 if [ -x "$dest/bin/histmersion-signing" ]; then
   "$dest/bin/histmersion-signing" codesign "$dest/bin/histmersion" com.histmersion.cli | sed 's/^/  cli: /'
-  [ "$mode" = prebuilt ] && "$dest/bin/histmersion-signing" codesign "$dest/bin/histmersion-server" com.histmersion.server | sed 's/^/  server: /'
+  case "$ib_result" in prebuilt|kept) "$dest/bin/histmersion-signing" codesign "$dest/bin/histmersion-server" com.histmersion.server | sed 's/^/  server: /' ;; esac
 fi
 
 mkdir -p "$bindir" "$data/logs" "$(dirname "$plist")"

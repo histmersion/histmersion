@@ -26,7 +26,10 @@
 #                    the directory's, no new plugin failed — never started as a server
 #   9. sign          codesign with the identity (HISTMERSION_CODESIGN_IDENTITY, "-" = ad hoc) on macOS;
 #                    a detached .asc of its SHA-256 with the GPG key, when set up
-#  10. swap          bin/histmersion-server → .prev, the new one in its place (one rename each)
+#  10. swap          bin/histmersion-server → .prev, the new one in its place (one rename each), with
+#                    its records: the plugin set, and the build record (histmersion-server.build: the
+#                    kit, the plugin jars and the machine it was linked from — what lets an install
+#                    keep a binary instead of linking the same one again)
 #  11. restart       the LaunchAgent / systemd unit (not with --no-restart); /api/health within 120 s
 #                    and /api/about's plugin digest the expected one — else the previous binary is put
 #                    back and the service restarted again
@@ -103,16 +106,18 @@ step() { echo "→ $*"; echo "$(date '+%F %T') $*" >> "$log"; }
 
 # ── swap and roll back ────────────────────────────────────────────────────────────────────────────
 expected_digest=""
+# the binary and what travels with it: its plugin set, its GPG-signed checksum, its build record
+records="histmersion-server histmersion-server.plugin-set.json histmersion-server.sha256 histmersion-server.sha256.asc histmersion-server.build"
 put_back() { # the .prev binary (and its records) back in place
   local f
-  for f in histmersion-server histmersion-server.plugin-set.json histmersion-server.sha256 histmersion-server.sha256.asc; do
+  for f in $records; do
     if [ -e "$bin/$f.prev" ]; then mv -f "$bin/$f.prev" "$bin/$f"
     elif [ "$f" != histmersion-server ]; then rm -f "$bin/$f"; fi
   done
 }
 swap_in() { # <new binary> <its plugin-set record> — the current one becomes .prev
   local f
-  for f in histmersion-server histmersion-server.plugin-set.json histmersion-server.sha256 histmersion-server.sha256.asc; do
+  for f in $records; do
     rm -f "$bin/$f.prev"
     [ -e "$bin/$f" ] && mv -f "$bin/$f" "$bin/$f.prev"
   done
@@ -120,6 +125,7 @@ swap_in() { # <new binary> <its plugin-set record> — the current one becomes .
   cp "$2" "$bin/histmersion-server.plugin-set.json"
   [ -f "$work/histmersion-server.sha256" ] && cp "$work/histmersion-server.sha256" "$bin/"
   [ -f "$work/histmersion-server.sha256.asc" ] && cp "$work/histmersion-server.sha256.asc" "$bin/"
+  [ -f "$work/histmersion-server.build" ] && cp "$work/histmersion-server.build" "$bin/"
   return 0
 }
 restart_and_check() { # 0 = healthy with the expected digest
@@ -138,11 +144,15 @@ restart_and_check() { # 0 = healthy with the expected digest
 if [ "$mode" = rollback ]; then
   [ -e "$server.prev" ] || hk_die 2 "no previous binary ($server.prev) to roll back to"
   step "roll back to the previous binary"
-  for f in histmersion-server histmersion-server.plugin-set.json histmersion-server.sha256 histmersion-server.sha256.asc; do
+  for f in $records; do
     if [ -e "$bin/$f.prev" ]; then
       [ -e "$bin/$f" ] && mv -f "$bin/$f" "$work/$f.swap"
       mv -f "$bin/$f.prev" "$bin/$f"
       [ -e "$work/$f.swap" ] && mv -f "$work/$f.swap" "$bin/$f.prev"
+    elif [ -e "$bin/$f" ]; then
+      # a record the previous binary did not have (its checksum, its build record) describes the binary
+      # going to .prev, so it goes with it — never left beside a binary it does not describe
+      mv -f "$bin/$f" "$bin/$f.prev"
     fi
   done
   if [ -f "$bin/histmersion-server.plugin-set.json" ]; then
@@ -220,6 +230,7 @@ if [ "$mode" = jvm ]; then
   step "switch to JVM mode"
   cp "$bin/histmersion-server-jvm" "$work/histmersion-server.new"
   chmod 0755 "$work/histmersion-server.new"
+  hk_write_build_record "$work/histmersion-server.build" jvm "$kit" "$plugins" relink
   swap_in "$work/histmersion-server.new" "$work/plugin-set.json"
   restart_and_check || { put_back; hk_service_restart >/dev/null 2>&1 || true; hk_die 4 "JVM mode did not come up; the previous binary is back"; }
   echo "JVM mode: bin/histmersion-server runs the kit on the JVM; plugins are found at each start"
@@ -273,6 +284,9 @@ if [ -n "$(hk_gpg_key)" ]; then
   elif [ -n "$unsigned" ]; then echo "  warning: could not sign the binary's checksum — going on (--unsigned)"; rm -f "$work/histmersion-server.sha256"
   else hk_die 3 "could not sign the binary's checksum with GPG key $(hk_gpg_key) — pass --unsigned to relink without"; fi
 fi
+
+# what it was linked from, on which machine: an install that would link the same thing keeps it
+hk_write_build_record "$work/histmersion-server.build" native "$kit" "$plugins" relink
 
 # ── 10–11. swap, restart, health; roll back on failure ────────────────────────────────────────────
 step "swap: $server (the current one kept as .prev)"

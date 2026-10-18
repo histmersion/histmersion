@@ -43,6 +43,12 @@ commit="$(git -C "$root" rev-parse --short=12 HEAD 2>/dev/null || echo -)"
 # the stock binary's plugin-set record: first-party plugins only
 printf '{\n  "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",\n  "spiVersion": %s,\n  "jars": [],\n  "mode": "native"\n}\n' \
   "$(sed -n 's/.*"spiVersion" *: *\([0-9]*\).*/\1/p' "$bundle/kit/kit.json" | head -1)" > "$out/histmersion-server.plugin-set.json"
+# the build record (kit-common.sh): linked HERE, from this kit, with no plugin jars — an install on this
+# same machine (`just install`) keeps this binary instead of linking the same one again; on any other
+# machine (a CI bundle) the machine differs and the install links its own
+# shellcheck source=kit-common.sh
+. "$root/scripts/bundle/kit-common.sh"
+hk_write_build_record "$out/histmersion-server.build" native "$bundle/kit" "$bundle/.no-plugins" bundle
 # the scripts around the kit
 mkdir -p "$bundle/libexec"
 install -m 0755 "$root/scripts/bundle/relink.sh"      "$out/histmersion-relink"

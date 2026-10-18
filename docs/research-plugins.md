@@ -6,7 +6,8 @@ where it differs from this proposal. Phase 2 (source fetchers; the unauthorised 
 built: §16. The in-place config reload (§3.5) and the hot component graph (§3.6) are built: §17. The
 install/build side — the relink kit, JVM mode, `histmersion plugin …`, the local build at setup and the
 optional signing (phases 3–5) — is built: §18. Phase 6's first part (media collections and event
-catalogues as plugins, the plugin list in the web About window) is built: §19. The
+catalogues as plugins, the plugin list in the web About window) is built: §19. Decisions D4 (one plugin
+per open-access index) and D5 (the local build is the default) are built: §20. The
 spike code is in `spike/plugins/`, a standalone sbt build that
 the root build does not aggregate. Measurements were taken on this machine: Apple M4 Pro, 14 cores,
 48 GB RAM, macOS 26.7, GraalVM CE 25.0.1 (the `.sdkmanrc` pin), sbt 2.0.7. Statements I could not
@@ -1017,7 +1018,11 @@ This is why §7.4 adds `--self-check`.
   or a fresh public repository.
 - **D4 — open-access indexes:** (not answered; phase 2 keeps one `oa-index` plugin, which registers
   one fetcher per index, §16).
-- **D5 — local build at setup:** (not answered explicitly; signing below assumes it is offered).
+- **D5 — local build at setup: decided (user, 2026-10-18) — building the native image locally is the
+  default.** The installers link the server on the machine from the kit; `--prebuilt` (or
+  `HISTMERSION_BUILD=prebuilt`) opts out, `--jvm` stays. A machine that cannot build (memory, toolchain,
+  the GraalVM download or its checksum, native-image, the self-check) falls back to the bundle's prebuilt
+  binary — never JVM mode — and the install still succeeds. As built: §20.1.
 - **D6 — signing:** optional.
 - **D7 — paid sources:** plugins with credentials are allowed. Credentials are passed as secret
   references (§3.7). Each plugin still implements only what its provider's terms permit (§11).
@@ -1479,7 +1484,8 @@ provisions (a full JDK), or any JDK of the pinned major via `HISTMERSION_JAVA_HO
   the link), "RESTART NEEDED" (relinked with `--no-restart`) or "UNKNOWN" (no record) — and prints the
   kit (version, GraalVM, SPI) and `histmersion-signing status`.
 
-**Local build at setup (§8, phase 4).** `scripts/bundle/install-build.sh`, sourced by both installers:
+**Local build at setup (§8, phase 4).** *(The default and the fallback changed with D5: §20.1.)*
+`scripts/bundle/install-build.sh`, sourced by both installers:
 `--local-build` / `--jvm` / `HISTMERSION_BUILD=prebuilt|local|jvm`; **prebuilt stays the default** (D5
 unanswered). `local` runs `histmersion-toolchain install` (GraalVM CE 25.0.1 from
 `graalvm/graalvm-ce-builds`'s release, the SHA-256 pinned in `scripts/bundle/graalvm-pins.txt` for
@@ -1684,3 +1690,79 @@ only what was left, the card's terms), and `PlaceHoverSuite` (the About section)
 parsers, as the fetchers do); a plugin collection that asks about events (the host's collection import
 is for places); a parser hook so `events rederive` can re-derive a plugin's records; new providers
 (§5.3 row 4, the media providers "not in this slice").
+
+## 20. As built (defaults: the local build, one plugin per OA index; 2026-10-18)
+
+### 20.1 D5: the installers link the server on the machine by default
+
+`scripts/bundle/install-build.sh` (sourced by `install-macos.sh` and `install-linux.sh`):
+
+| mode | chosen by | does |
+|---|---|---|
+| `local` | **the default** (`--local-build` and `HISTMERSION_BUILD=local` still accepted) | `histmersion-toolchain preflight` → `histmersion-toolchain path`, else `install` → `HISTMERSION_SERVICE=none histmersion-relink --no-restart` |
+| `prebuilt` | `--prebuilt`, `HISTMERSION_BUILD=prebuilt` | the bundle's binary as shipped; no toolchain. With plugin jars installed it says they are not in it |
+| `jvm` | `--jvm`, `HISTMERSION_BUILD=jvm` | `histmersion-relink --jvm --no-restart` (unchanged) |
+
+**The fallback is the prebuilt binary, never JVM mode.** Each failure is caught where it happens, and
+the installer says why, says it is falling back, and goes on with the bundle's binary (`ib_result=prebuilt`,
+which the macOS installer then signs like any prebuilt binary):
+
+| failure | caught by | downloaded? linked? |
+|---|---|---|
+| memory under `HISTMERSION_RELINK_MIN_MEMORY_GB` (default 12), no C toolchain, too little disk (2 GB without GraalVM, 1 GB with) | `histmersion-toolchain preflight` (new: `check` without GraalVM) | neither — asked before the ~325 MB download |
+| the GraalVM download, a missing pin, the SHA-256 | `histmersion-toolchain install` (exit 2) | not unpacked, no link |
+| the kit's checksums, the plugins' pre-flight on the JVM, provenance | `histmersion-relink` exit 2 | no link |
+| native-image, the new binary's `--self-check` | `histmersion-relink` exit 3 | the binary in `bin/` is untouched |
+
+The fallback is always available because a relink swaps only a binary that passed its self-check: on
+every failure the bundle's binary is still in `bin/`. With plugin jars installed, the message says the
+binary does NOT hold them and names `histmersion plugin rebuild` (and `--jvm`). A JVM mode that cannot be
+set up (no JDK) falls back the same way (it used to fail the install). The only way the build step fails
+is a bundle without a server binary, which the installers refuse before copying anyway.
+
+**Not linking twice (`bin/histmersion-server.build`).** A key=value record beside every binary linked on
+a machine: `mode` (`native`/`jvm`), `kit` (the SHA-256 of `kit/SHA256SUMS`, so every kit file), `plugins`
+(the SHA-256 of `"<sha256>  <jar>"` lines, sorted — computable in bash, unlike `PluginKit.digest`, which
+needs a JVM), `machine` (the SHA-256 of `histmersion:` + the hardware UUID on macOS or the machine-id on
+Linux — never the raw id), `origin` (`relink`/`bundle`), `built`. `histmersion-relink` writes it for native
+and JVM links and it travels with its binary (`.prev`, put back, rollback — a record the previous binary
+lacked now moves to `.prev` with the binary it describes instead of staying beside the wrong one);
+`scripts/bundle/server.sh` writes one for the bundle's own binary (no plugins, origin `bundle`). The
+install's `local` mode first asks `hk_build_current` (pure file reads and `shasum`, milliseconds):
+
+1. the bundle's binary is native, linked on THIS machine from THIS kit with exactly the installed plugin
+   jars → kept (`ib_result=kept`). That is `just install`: sbt linked it from the same kit minutes ago,
+   so a second link would only cost 2 minutes and 12 GB. A CI bundle's record names the CI machine and
+   never matches;
+2. else the PREVIOUS install's binary (the installers now keep `<dest>.old` until the build step) is
+   such a binary → carried over (`ib_result=reused`), the bundle's own binary kept as `.prev`, so
+   `plugin rollback` still reaches it. That is a reinstall of the same bundle with the same plugins;
+3. else link.
+
+A new kit (any update), a changed, added or removed plugin jar, a JVM-mode binary or another machine
+relinks. The toolchain being present is not part of the test: a binary that need not be linked needs no
+toolchain.
+
+**What changes for a user.** A first install on a machine now takes about 2 minutes longer and peaks
+near 12 GB of memory, plus a one-off GraalVM CE download of ~325 MB (macOS aarch64 tarball,
+325 442 578 B; Linux x64 339 260 460 B; checked 2026-10-18) unpacked to ~680 MB under
+`<data>/toolchain/`. Later installs of a new bundle relink (~2 minutes, no download); reinstalls of the
+same bundle, and `just install`, do not. Machines under 12 GB get the prebuilt binary, as before D5.
+
+**Installer surface.** `--help` prints the header (both installers); `just install` documents the default
+and passes `--prebuilt`/`--jvm` through. **Regression:** the installers no longer count the plugin jars
+themselves (`ib_build` does, with `hk_plugin_jars`, which is safe on a missing directory); cdd16b48's fix
+is kept covered by a test that runs the WHOLE installer of the platform with no `<data>/plugins`.
+
+**Tests.** `kit-scripts-test.sh` (install-build, 25 checks; installer, 3): the mode; the default's steps
+with GraalVM present and absent; fallbacks for native-image (exit 3), a refused pre-flight (exit 2),
+GraalVM not provisioned, a plugin jar installed (the message), no prebuilt binary (fails); with the REAL
+`histmersion-toolchain`: 8 GB of memory (nothing downloaded or linked), a SHA-256 mismatch on a fake
+tarball (no link), a good pinned download (provisioned, then linked); the record: an in-place reinstall
+kept, the bundle's binary built here kept, built on another machine or without the installed plugin
+linked, the previous install's binary carried over with the bundle's as `.prev`, a changed jar or a new
+kit linked; `--prebuilt` (nothing run; plugins noted); `--jvm` and its fallback; and the whole installer
+(temporary HOME and install, fake `launchctl`/`systemctl`/`curl`, no plugins directory, `pipefail`):
+exit 0, the server linked by default, `--help`. `relink-test.sh` (+4): the record's fields after a
+relink, current vs stale, rollback moving it with its binary, JVM mode's record.
+

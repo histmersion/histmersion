@@ -97,18 +97,26 @@ just install                  # builds dist/histmersion (~3.3 GB; models are ~1.
 open http://localhost:8000
 ```
 
-**The server binary: prebuilt, linked here, or JVM mode.** By default the install runs the bundle's
-prebuilt server. `just install --local-build` (or `scripts/bundle/install-{macos,linux}.sh <dir>
---local-build`, or `HISTMERSION_BUILD=local`) links it **on this machine** from the bundle's relink kit
-instead: the installer downloads GraalVM CE 25.0.1 from its official GitHub release, checks the pinned
-SHA-256 (`scripts/bundle/graalvm-pins.txt`; GPLv2 with the Classpath Exception), unpacks it into the data
-directory's `toolchain/` (~680 MB), checks the C toolchain (macOS: `xcode-select --install`; Linux:
-`build-essential zlib1g-dev`) and memory, and runs `histmersion-relink` — about 2 minutes and 12 GB of
-memory on an M4 Pro. A locally linked binary is never quarantined, so macOS never asks Gatekeeper about
-it. If any of that fails, it falls back to **JVM mode** (`--jvm`): the same kit on the provisioned JDK,
-no native binary (more memory, a slower start). When the data directory already holds plugins (see
-[Adding your own plugins](#adding-your-own-plugins)), every install relinks by itself — a prebuilt
-binary would not have them.
+**The server binary is linked on this machine.** By default the install links the server **here**,
+from the bundle's relink kit and the plugins you added (see [Adding your own plugins](#adding-your-own-plugins)):
+the installer checks the C toolchain (macOS: `xcode-select --install`; Linux: `build-essential
+zlib1g-dev`), memory (`HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12) and disk, downloads GraalVM CE 25.0.1
+**once** from its official GitHub release (~325 MB on macOS, ~340 MB on Linux), checks the pinned SHA-256
+(`scripts/bundle/graalvm-pins.txt`; GPLv2 with the Classpath Exception), unpacks it into the data
+directory's `toolchain/` (~680 MB), and runs `histmersion-relink` — about 2 minutes and 12 GB of memory on
+an M4 Pro. A locally linked binary is never quarantined, so macOS never asks Gatekeeper about it.
+
+- **Nothing is linked twice.** Beside the binary, `bin/histmersion-server.build` records the kit, the
+  plugin jars and the machine (a hash) it was linked from. When linking would repeat that — the bundle
+  `just install` just built on this machine and no plugin jars, or a reinstall of the same bundle with the
+  same plugins (the previous install's binary is carried over) — nothing is built.
+- **It falls back, never fails.** When this machine cannot link the server — too little memory, no C
+  toolchain, the download or its checksum, native-image, the new binary's self-check — the install says
+  why and **goes on with the bundle's prebuilt binary** (which does not hold your plugins; `histmersion
+  plugin rebuild` retries).
+- `just install --prebuilt` (or `scripts/bundle/install-{macos,linux}.sh <dir> --prebuilt`, or
+  `HISTMERSION_BUILD=prebuilt`) takes the bundle's binary as it is, with no toolchain; `--jvm` runs the
+  same kit on the provisioned JDK, no native binary (more memory, a slower start). `--help` lists it all.
 
 `just uninstall` removes the app and keeps the data (`just uninstall --purge` deletes it too).
 Logs: `<data>/logs/{server,postgres,converter}.log` (`just logs [server|postgres|converter]`). On Linux the
