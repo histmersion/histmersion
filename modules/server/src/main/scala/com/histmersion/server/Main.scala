@@ -3,9 +3,10 @@ package com.histmersion.server
 import sttp.tapir.server.netty.sync.NettySyncServer
 import sttp.tapir.server.netty.NettyConfig
 import scala.concurrent.duration.*
-import com.histmersion.core.{AppConfig, ConfigFileInfo}
+import com.histmersion.core.{AppConfig, ConfigFileInfo, PluginsMarkdown}
 import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.acquire.*
+import com.histmersion.server.plugins.{Generation, Plugins}
 
 /** Histmersion server — direct-style (Netty sync). Composition root: config → DataSource → migrate →
   * Handlers → HTTP (REST + pages + static) and MCP endpoints → bind. */
@@ -20,7 +21,7 @@ object Main:
     * through a fake converter (plan §1.8). */
   def server(cfg: AppConfig, host: String, port: Int, converter: ConverterClient,
       autoInit: Boolean = false, onHandlers: Handlers => Unit = _ => (),
-      configFile: ConfigFileInfo = ConfigFileInfo()): NettySyncServer =
+      configFile: ConfigFileInfo = ConfigFileInfo(), plugins: Generation = Generation.empty): NettySyncServer =
     val ds = Db.dataSource(cfg.db)
     val v  = Migrate.run(ds)
     scribe.info(s"schema version $v")
@@ -32,7 +33,7 @@ object Main:
         if done.nonEmpty then scribe.info(s"analyzed tables with no statistics: ${done.mkString(", ")}")
       catch case e: Throwable => scribe.warn(s"startup ANALYZE failed: ${e.getMessage}")
     }
-    val deps = Deps(cfg, ds, queryDataSource(cfg, ds), configFile = configFile)
+    val deps = Deps(cfg, ds, queryDataSource(cfg, ds), configFile = configFile, plugins = plugins)
     val h    = Handlers(deps, converter)
     onHandlers(h) // a test's handle on this server's handlers (its run tokens); nothing in production
     val _    = h.ingest.start()   // reconcile interrupted jobs, then start the bounded worker pool
@@ -124,7 +125,17 @@ object Main:
         deps.cfg.places.pointToleranceKm))
 
   def main(args: Array[String]): Unit =
-    val _ = args
+    // the command line first: an argument the server does not know ends it HERE, before the config, the
+    // bundled runtime or the database is touched. The usage and the self-check report are the binary's
+    // own output to a terminal, the one place this server writes to stdout/stderr directly.
+    val mode = ServerArgs.parse(args.toList) match
+      case Right(ServerMode.Help) =>
+        System.out.println(ServerArgs.Usage)
+        sys.exit(0)
+      case Right(m) => m
+      case Left(err) =>
+        System.err.println(s"histmersion-server: $err\n\n${ServerArgs.Usage}")
+        sys.exit(1)
     // netty's pooled allocator mishandles ByteBuf refCnt under native-image → use unpooled buffers.
     // (Safe: config never parses system properties, so these dotted keys don't reach sconfig.)
     System.setProperty("io.netty.allocator.type", "unpooled")
@@ -132,16 +143,24 @@ object Main:
     // eager, on the main thread (native-image StackValue constraint): reference.conf < the user config
     // file < the environment. A broken file stops the start — running on settings the user did not
     // ask for is worse than not running.
-    val (loaded, configFile) = AppConfig.loadWithUserFile() match
+    val (loaded, configFile, generation) = AppConfig.loadWithUserFile() match
       case Right(l) =>
         l.file.path.foreach(p =>
           if l.file.loaded then scribe.info(s"config file $p read")
           else scribe.info(s"no config file at $p (defaults and environment only)"))
         l.file.warnings.foreach(w => scribe.warn(w))
-        (l.config, l.file.info)
+        // the plugins, also on the main thread and before anything is opened: each block layered over
+        // the plugin's defaults, type-checked, decoded, its secrets resolved, registered (staged). A
+        // plugin that fails contributes nothing and the server still starts; --self-check says so.
+        (l.config, l.file.info, Plugins.load(l))
       case Left(err) =>
         scribe.error(err)
         sys.exit(3)
+    mode match
+      case ServerMode.SelfCheck =>
+        System.out.println(PluginsMarkdown.selfCheck(configFile, generation.report))
+        sys.exit(if generation.report.ok then 0 else 2)
+      case _ => ()
     // the native bundle: run the bundled Postgres + converter as children and point the config at them
     val cfg =
       val explicit = Option(System.getenv("HISTMERSION_RUNTIME")).map(_.trim.toLowerCase).filter(_.nonEmpty)
@@ -155,7 +174,7 @@ object Main:
             sys.exit(3)
     val srv =
       try server(cfg, cfg.server.host, cfg.server.port, ConverterClient.fromConfig(cfg.converter),
-        autoInit = cfg.init.auto, configFile = configFile)
+        autoInit = cfg.init.auto, configFile = configFile, plugins = generation)
       catch
         case e: Throwable =>
           scribe.error(s"Histmersion failed to start: ${e.getClass.getName}: ${e.getMessage}", e)

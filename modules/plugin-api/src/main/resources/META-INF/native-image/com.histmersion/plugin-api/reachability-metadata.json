@@ -1,0 +1,29 @@
+{
+  "reflection": [
+    {
+      "type": "com.histmersion.plugin.PluginConfig$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Boolean$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Double$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Int$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Long$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugin.Secret$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Secret$lzy1"
+        }
+      ]
+    }
+  ]
+}
