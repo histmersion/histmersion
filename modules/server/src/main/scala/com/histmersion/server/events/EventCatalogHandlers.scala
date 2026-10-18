@@ -49,6 +49,12 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
   /** The catalogues the plugins of the calling thread's generation registered (built-in and third-party). */
   private def registered = deps.plugins.registries.eventCatalogues
 
+  /** The limits of `provider`'s dating, the ONE rule of the import and of rederive: the present for
+    * every catalogue, the Holocene floor for the GVP's, a plugin catalogue's own floor for its. */
+  private def limitsOf(provider: String, present: Long): CatalogDating.Limits =
+    if CatalogProvider.all.contains(provider) then EventProviders.limits(provider, present, ec.gvp.floorYear)
+    else PluginEvents.limits(registered.get(provider), present)
+
   /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */
   private def infoOf(provider: String): Option[CatalogProviderInfo] = BuiltinCatalogues.info(provider, registered)
 
@@ -102,11 +108,14 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
       fetched match
         case Left(why) => report = report.copy(failed = report.failed :+ s"$part: $why")
         case Right(read) =>
-          // a catalogue's dating held inside the present (and the GVP's Holocene floor)
-          val lim  = EventProviders.limits(provider, presentYear(), ec.gvp.floorYear)
+          // a catalogue's dating held inside the present (and the GVP's Holocene floor, a plugin's own);
+          // a plugin's record dated from its stated year when it gives no span — as rederive does
+          val lim  = limitsOf(provider, presentYear())
+          val date: CatalogRecord => CatalogRecord =
+            if CatalogProvider.all.contains(provider) then CatalogDating.clamp(_, lim) else PluginEvents.derive(_, lim)
           // an item read again in a later (less specific) class keeps the kind it was stored with
           val kinds = if provider == CatalogProvider.Wikidata && !req.dryRun then EventCatalogRepo.storedKinds(ds, provider) else Map.empty
-          val recs = read.map(CatalogDating.clamp(_, lim)).map(r =>
+          val recs = read.map(date).map(r =>
             kinds.get(r.key).fold(r)(k => r.copy(kind = EventProviders.WikidataEvents.moreSpecific(classOrder, k, r.kind))))
           val judged = recs.map { r =>
             val span = EventGeo.outer(r.timeSpan)
@@ -261,7 +270,10 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
     val present = presentYear()
     def prec(r: CatalogRecord) = EventPrecision.of(r.timeSpan, r.plusMinus)
     val again = rows.map { (eventId, eventKind, r) =>
-      val d = EventProviders.rederive(r, EventProviders.limits(r.provider, present, ec.gvp.floorYear))
+      // a built-in's record re-parsed from its own; a plugin's derived from the stored one as at the import
+      val d =
+        if CatalogProvider.all.contains(r.provider) then EventProviders.rederive(r, limitsOf(r.provider, present))
+        else PluginEvents.derive(r, limitsOf(r.provider, present))
       // a Wikidata item read in two classes keeps the more specific kind (V085 stored the last class's)
       val k = if r.provider == CatalogProvider.Wikidata then EventProviders.WikidataEvents.moreSpecific(classOrder, d.kind, eventKind) else d.kind
       (eventId, r, d.copy(kind = k))
@@ -283,7 +295,7 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
       s"$id: ${years(a)} → ${years(b)}${EventPrecision.note(b.central, b.plusMinus, b.datingMethod).fold("")(n => s" ($n)")}, ${prec(b)}"
     } ++ Option.when(undecodable > 0)(s"$undecodable stored record(s) no longer decode — left alone").toList
     val out = EventRederiveReport(dryRun, provider.toList.ifEmpty((CatalogProvider.all ++ registered.keys).distinct), again.size, changed.size,
-      again.count(_._2.raw.isDefined), updated,
+      again.count((_, a, _) => a.raw.isDefined && CatalogProvider.all.contains(a.provider)), updated,
       EventCount.of(again.map((_, a, _) => prec(a))), EventCount.of(again.map((_, _, b) => prec(b))),
       again.count((_, _, b) => !EventPrecision.mapped(prec(b))), examples, counts)
     scribe.info(s"events rederive: ${EventRederiveReport.summary(out)}")

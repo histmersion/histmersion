@@ -23,6 +23,11 @@ final case class CatalogueQuery(from: Option[Long], to: Long, area: Option[(Doub
   * the start lies in `[notBefore, beginBy]`, the end in `[endFrom, notAfter]`; an uncertainty widens
   * the outer bounds and never invents a certain core (leave `beginBy`/`endFrom` empty then).
   *
+  * A catalogue that states only a year and its ± may leave the four points empty and give `central`
+  * and `plusMinus`: the host then dates the event `central ± plusMinus`, as it dates its own catalogues'
+  * stated years. Either way the host holds the dating inside the present and the catalogue's
+  * [[EventCatalogue.floorYear]] — at the import and again, identically, at `events rederive`.
+  *
   * @param id           the catalogue's own key for it — stable, so a re-import finds it
   * @param url          its page in the catalogue
   * @param kind         `eruption`, `earthquake`, `battle`, `siege`, `treaty` … (an open vocabulary; the
@@ -82,6 +87,11 @@ trait EventCatalogue:
 
   /** The least time between two requests to one host, in milliseconds (the provider's own terms). */
   def requestIntervalMs: Int = 1000
+
+  /** The earliest year (signed) any of its events can be, when the catalogue covers a period that starts
+    * there — as the Smithsonian's list is of HOLOCENE eruptions (`events.gvp.floor-year`). A dating whose
+    * uncertainty reaches further back is held at it by the host. `None` (the default): no floor. */
+  def floorYear: Option[Long] = None
 
   /** The parts of one import, in order (time windows, classes, datasets) — each a stable key, so a part
     * read and recorded is not asked again by the next import. */

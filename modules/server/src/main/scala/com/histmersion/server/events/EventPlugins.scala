@@ -1,7 +1,7 @@
 package com.histmersion.server.events
 
-import com.histmersion.core.{BBox, CatalogProvider, CatalogProviderInfo, CatalogRecord, EventTaxonomy, Historicity,
-  TimeSpan}
+import com.histmersion.core.{BBox, CatalogDating, CatalogProvider, CatalogProviderInfo, CatalogRecord, EventTaxonomy,
+  Historicity, TimeSpan}
 import com.histmersion.plugin.*
 import com.histmersion.server.acquire.fetchers.Builtin
 import com.histmersion.server.media.Polite
@@ -76,6 +76,24 @@ object BuiltinCatalogues:
 object PluginEvents:
 
   private val Qid = "^Q[1-9][0-9]*$"
+
+  /** The limits of a plugin catalogue's dating (pure but for asking the plugin) — the present, and the catalogue's own
+    * [[EventCatalogue.floorYear]] (`None` when it states none, throws, or is not registered now: a
+    * dating stored under a floor is already held at it, so a looser limit changes nothing). */
+  def limits(catalogue: Option[EventCatalogue], present: Long): CatalogDating.Limits =
+    CatalogDating.Limits(present, catalogue.flatMap(c => safe(c.floorYear).flatten))
+
+  /** Pure: a plugin catalogue's record dated as the host dates its own: a record that gives no point of
+    * its span but a stated year is `central ± plusMinus` ([[CatalogDating.year]], as the GVP's and NOAA's
+    * stated years are), then held inside `limits` ([[CatalogDating.clamp]]). The ONE derivation of the
+    * import and of `events rederive` (which re-reads the stored record — the central year and ± are
+    * kept as stated — so a record derived at the import derives to itself again). */
+  def derive(r: CatalogRecord, limits: CatalogDating.Limits): CatalogRecord =
+    val ts = r.timeSpan
+    val undated = List(ts.notBefore, ts.beginBy, ts.endFrom, ts.notAfter).forall(_.isEmpty)
+    val stated = r.central.filter(_ => undated).fold(r)(c =>
+      r.copy(timeSpan = CatalogDating.span(Some(CatalogDating.year(c, r.plusMinus)), None)))
+    CatalogDating.clamp(stated, limits)
 
   def query(from: Option[Long], to: Long, area: Option[BBox]): CatalogueQuery =
     CatalogueQuery(from, to, area.map(b => (b.minLon, b.minLat, b.maxLon, b.maxLat)))

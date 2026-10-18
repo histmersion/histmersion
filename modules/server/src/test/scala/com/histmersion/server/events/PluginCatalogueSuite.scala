@@ -66,6 +66,9 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     val _ = sql"DELETE FROM event_catalogue WHERE provider = $Catalogue".update.run()
     val _ = sql"DELETE FROM events WHERE id LIKE 'zq_quakes%'".update.run()
     val _ = sql"DELETE FROM event_import_parts WHERE provider = $Catalogue".update.run()
+    val _ = sql"DELETE FROM event_catalogue WHERE provider = $Floods".update.run()
+    val _ = sql"DELETE FROM events WHERE id LIKE 'zq_floods%'".update.run()
+    val _ = sql"DELETE FROM event_import_parts WHERE provider = $Floods".update.run()
 
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
@@ -114,6 +117,65 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assert(!h.catalogues.exists(_.id == Catalogue))
     val e = EventRepo.get(ds, "zq_quakes_b1").getOrElse(fail("gone"))
     assertEquals(h.context(e).catalogue.map(_.provider), List(Catalogue))
+
+  // ── a catalogue whose records need holding inside the limits (§19: the host dates them at the import) ──
+
+  private val Floods = "zq-floods"
+
+  /** A catalogue of floods from 3000 BCE (its floor) whose records reach past both ends of what may be,
+    * and one dated only by its stated year ±. */
+  private object ZqFloods extends spi.EventCatalogue:
+    val title = "Zq flood catalogue"; val licence = "CC0-1.0"; val citation = "Zq (2026)"; val home = "https://zq.example"
+    override val requestIntervalMs = 0
+    override val floorYear = Some(-3000L)
+    def parts(q: spi.CatalogueQuery) = List("all")
+    private def ev(id: String, nb: Option[Long], na: Option[Long]) =
+      spi.CatalogueEvent(id, s"https://zq.example/$id", s"Zq Flood $id", "flood", nb, na, lat = Some(30.0), lon = Some(31.0))
+    def read(part: String, q: spi.CatalogueQuery, http: spi.PluginHttp) =
+      http.get("https://zq.example/api/floods", Map.empty).map(_ => spi.CataloguePage(List(
+        ev("future", Some(2000L), Some(2500L)),                                   // past the present
+        ev("early", Some(-3500L), Some(-2900L)).copy(beginBy = Some(-3100L)),       // before the floor
+        ev("stated", None, None).copy(central = Some(-1000L), plusMinus = Some(50L)), // a year ± only
+        ev("plain", Some(-1200L), Some(-1200L)))))                                 // nothing to hold
+
+  private final class FloodsPlugin extends spi.Plugin:
+    type Config = ZqCatalogueConfig
+    val info = spi.PluginInfo("zq-floods-plugin", "0.1.0", spi.Spi.Version)
+    override def defaultsResource = "zq-none.conf"
+    def register(c: ZqCatalogueConfig, ctx: spi.PluginContext) = ctx.eventCatalogues.add(Floods, ZqFloods)
+
+  private def floodsGeneration: Generation =
+    PluginHost.build(Plugins.providers :+ FloodsPlugin(), ConfigFactory.parseString("histmersion.plugins.zq-floods-plugin.enabled = true"),
+      ConfigFactory.empty, Plugins.services(() => new spi.PluginHttp { def get(u: String, h: Map[String, String]) = Left("no") },
+        ConfigFactory.empty))
+
+  private def storedFloods: Map[String, (TimeSpan, TimeSpan, Option[Long], Option[Long])] =
+    val events = EventCatalogRepo.stored(ds).map(e => e.id -> e.timeSpan).toMap
+    EventCatalogRepo.records(ds, Some(Floods))._1.map((id, _, r) =>
+      r.providerId -> (r.timeSpan, events.getOrElse(id, fail(s"no event $id")), r.central, r.plusMinus)).toMap
+
+  test("a plugin's records are held inside the present and its floor AT THE IMPORT; rederive then changes nothing"):
+    val h = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = floodsGeneration), fake2, () => 2026L)
+    val r = h.runImport(Floods, EventImportRequest(Floods, dryRun = false, to = Some(3000L)), None, _ => ())
+    assertEquals((r.records, r.kept, r.created, r.failed), (4, 4, 4, Nil), r.toString)
+    val at = storedFloods
+    // the record and its event both carry the held dating
+    assertEquals(at("future")._1, TimeSpan(Some(2000L), None, None, Some(2026L)))
+    assertEquals(at("early")._1, TimeSpan(Some(-3000L), Some(-3000L), None, Some(-2900L)))
+    assertEquals(at("stated")._1, TimeSpan(Some(-1050L), None, None, Some(-950L)))
+    assertEquals((at("stated")._3, at("stated")._4), (Some(-1000L), Some(50L)), "the stated year and ± kept as stated")
+    assertEquals(at("plain")._1, TimeSpan(Some(-1200L), None, None, Some(-1200L)))
+    at.foreach((k, v) => assertEquals(v._2, v._1, s"$k: the event's dating is its record's"))
+    // re-derived from the stored records (no network): the same datings, nothing changed
+    val again = h.runRederive(Some(Floods), dryRun = false, _ => ())
+    assertEquals((again.records, again.changed, again.fromRaw), (4, 0, 0), again.toString)
+    assertEquals(storedFloods, at)
+    // and with the plugin switched off since (no floor known): still nothing to change
+    val off = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = Plugins.offline), fake2, () => 2026L)
+    assertEquals(off.runRederive(Some(Floods), dryRun = true, _ => ()).changed, 0)
+
+  private def fake2 = FakeMediaHttp(url =>
+    if url == "https://zq.example/api/floods" then FakeMediaHttp.json("{}") else Left(s"unexpected $url"))
 
 /** The fixture plugin's (empty) settings. */
 final case class ZqCatalogueConfig() derives hearth.kindlings.sconfigderivation.ConfigReader

@@ -26,6 +26,7 @@ class ProviderSpiSuite extends munit.FunSuite:
 
   test("a catalogue's defaults and its parts for a query"):
     assertEquals(Quakes.requestIntervalMs, 1000)
+    assertEquals(Quakes.floorYear, None)
     assertEquals(Quakes.parts(CatalogueQuery(Some(-3000), 2026)), List("to:2026"))
     val e = CatalogueEvent("1", "u", "Quake", "earthquake", Some(-1200L), Some(-1200L))
     assertEquals((e.historicity, e.beginBy, e.endFrom), ("attested", None, None))
