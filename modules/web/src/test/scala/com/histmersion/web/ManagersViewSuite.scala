@@ -102,6 +102,9 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(GoalsView.newArea("Zz tin", "", "", "", false, false).map(_.watch), Right(None))
     val note = GoalsView.createdNote(on.toOption.get, planned = false, seeded = None, watched = Some("watch:zz-tin"))
     assert(note.contains("watcher watch:zz-tin created paused") && note.contains("ingests legal open-access finds"), note)
+    val auto = GoalsView.createdNote(on.toOption.get, planned = false, seeded = None, watched = Some("watch:zz-tin"),
+      active = Set("watch:zz-tin"))
+    assert(auto.contains("watcher watch:zz-tin created active (the autopilot is on)"), auto)
 
   test("watcher settings: sweeps, auto-ingest and its cap round-trip; a watcher's form leaves out the review settings"):
     val c = ManagersView.config(Map("sweeps" -> "currency, acquisition-sweep", "autoIngest" -> "on", "autoIngestPerDay" -> "2"))

@@ -57,12 +57,15 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
     val _ = ensure(Kind.Review, ReviewId, None)
     val _ = ensure(Kind.Enrich, EnrichId, None)
 
-  /** Manager `id` of kind `k` exists (created PAUSED when it did not); true = it was created now. */
+  /** Manager `id` of kind `k` exists (created PAUSED when it did not — active while the autopilot is on,
+    * which runs every manager); true = it was created now. */
   def ensure(k: Kind, id: String, goal: Option[String]): Boolean =
-    val made = ManagerRepo.create(ds, id, k, goal, State.Paused, ManagerConfig())
+    val auto = agents.autopilot.on
+    val made = ManagerRepo.create(ds, id, k, goal, if auto then State.Active else State.Paused, ManagerConfig())
     if made then
-      ManagerRepo.event(ds, id, None, None, Feed.Paused,
-        s"created paused: resume it to start ${ManagerSupervisor.purpose(k)} (nothing is spent until then)")
+      ManagerRepo.event(ds, id, None, None, if auto then Feed.Autopilot else Feed.Paused,
+        if auto then s"created active (the autopilot is on): ${ManagerSupervisor.purpose(k)}"
+        else s"created paused: resume it to start ${ManagerSupervisor.purpose(k)} (nothing is spent until then)")
     made
 
   def start(): Unit =
