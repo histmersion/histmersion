@@ -168,7 +168,7 @@ test('phone and desktop search preserve multiword input and share the draft', as
   });
 });
 
-test('#718: the About button opens the server report — build, health states, job queue, store', async () => {
+test('#718: the About button opens the server report — build, health states, job queue, store, plugins', async () => {
   for (const viewport of [{ width: 1440, height: 900 }, phone]) {
     await withPage(viewport, async page => {
       if (viewport.width < 760) await page.locator('.mb-maptools').click();
@@ -177,7 +177,9 @@ test('#718: the About button opens the server report — build, health states, j
       await pane.waitFor();
       const text = await pane.innerText();
       for (const label of ['Server', 'commit', 'schema version', 'Health', 'converter', 'Job queue', 'queued',
-        'Backups', 'last backup', 'Store', 'gazetteer places', 'period presets'])
+        'Backups', 'last backup', 'Store', 'gazetteer places', 'period presets',
+        // #2018: the plugins in the binary, the built-in media collections and event catalogues among them
+        'Plugins', 'media-met', 'media-collection:met', 'events-gvp', 'event-catalogue:gvp'])
         assert.ok(text.includes(label), `About shows ${label}`);
       // every health check carries a state the stylesheet knows, whatever text the server sent
       const states = await page.locator('.about-state').evaluateAll(els => els.map(e => e.className));

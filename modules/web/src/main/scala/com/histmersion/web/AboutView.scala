@@ -53,7 +53,27 @@ object AboutView:
       Row("period presets", c.presets.toString))))
     val problems = Option.when(a.problems.nonEmpty)(
       Section(if a.problems.size == 1 then "Problem" else "Problems", a.problems.map(p => Row("", p))))
-    List(build, health, jobs, backup) ++ store ++ problems.toList
+    List(build, health, jobs, backup) ++ store ++ plugins(a.plugins).toList ++ problems.toList
+
+  /** The plugins in this binary (#2018): one row each — its id, what became of it (a badge: registered
+    * ok, disabled grey, failed or refused down), its version, what it registered and its settings. A
+    * secret is only ever its reference there (`env:NAME`, `vault:ref`, `value:***`): the server never
+    * puts a value into the report. None when the report lists no plugin (an older server). */
+  private[web] def plugins(r: PluginsReport): Option[Section] =
+    Option.when(r.plugins.nonEmpty || r.warnings.nonEmpty)(Section("Plugins",
+      r.plugins.map { p =>
+        val st = PluginState.parse(p.state) match
+          case Some(PluginState.Registered)                   => ServiceState.Ok
+          case Some(PluginState.Failed | PluginState.Refused) => ServiceState.Down
+          case _                                              => ServiceState.Unknown
+        val detail = List(
+          Some(s"v${p.version}"),
+          Option.when(p.provides.nonEmpty)(p.provides.mkString(", ")),
+          Option.when(p.settings.nonEmpty)(p.settings.map(s => s"${s.key} = ${s.value}").mkString(", ")),
+          p.error,
+          Option.when(p.warnings.nonEmpty)(p.warnings.mkString("; "))).flatten.mkString(" · ")
+        Row(p.id, p.state, Some(st), Some(detail))
+      } ++ r.warnings.map(w => Row("", w))))
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
