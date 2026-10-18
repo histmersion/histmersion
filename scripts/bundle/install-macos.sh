@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Install a Histmersion bundle on macOS — no admin rights, nothing outside the user's home:
 #
-#   scripts/bundle/install-macos.sh <bundle-dir> [--move]
+#   scripts/bundle/install-macos.sh <bundle-dir> [--move] [--local-build | --jvm]
 #
 #   ~/Applications/Histmersion/            the bundle (bin/, pg/, converter/)      HISTMERSION_INSTALL_DIR
 #   ~/Library/Application Support/Histmersion/   database, logs, backups (created by the server)
@@ -11,23 +11,38 @@
 #   ~/bin/histmersion                        the CLI                                 HISTMERSION_BIN_DIR
 #
 # --move renames the bundle into place instead of copying it (a developer build, short on disk).
+# The server binary (install-build.sh; HISTMERSION_BUILD=prebuilt|local|jvm): the bundle's prebuilt one by
+# default; --local-build links it on this Mac from the bundle's kit (GraalVM CE downloaded at its pinned
+# version and checksum into the data directory; Xcode command line tools needed), falling back to JVM
+# mode; --jvm runs the kit on a JDK. With plugins in the data directory's plugins/, an install relinks.
 # The server's settings: histmersion.conf (above), and over it the LaunchAgent's EnvironmentVariables
 # (an environment variable beats the same setting in the file). Every Histmersion setting of the
 # installed plist is carried over (launchagent-env.sh); HISTMERSION_CORPUS_DIR (the wiki/sources tree
 # `histmersion seed` reads), HISTMERSION_ACQUIRE_CONTACT_EMAIL (the OpenAlex/Crossref/Unpaywall contact)
 # and HISTMERSION_AGENTS_*, when set in the caller's environment, override it; the claude/codex/opencode
 # commands are resolved on this PATH when nothing names them. What changed is printed, secrets masked.
-# HISTMERSION_CODESIGN_IDENTITY (default "Histmersion Local", created by codesign-identity-macos.sh) signs
-# the two binaries with a stable identity when it exists, so macOS privacy permissions (Documents access)
-# survive updates; without it they stay ad-hoc signed, as built.
+# HISTMERSION_CODESIGN_IDENTITY (default "Histmersion Local", created by `histmersion-signing setup-macos`)
+# signs the binaries with a stable identity when it exists, so macOS privacy permissions (Documents
+# access) survive updates; without it they stay ad-hoc signed, as built. Signing is optional (D6).
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=launchagent-env.sh
 . "$here/launchagent-env.sh"
 # shellcheck source=user-config.sh
 . "$here/user-config.sh"
-src="$(cd "${1:?usage: $0 <bundle-dir> [--move]}" && pwd)"
-move="${2:-}"
+# shellcheck source=install-build.sh
+. "$here/install-build.sh"
+src="$(cd "${1:?usage: $0 <bundle-dir> [--move] [--local-build | --jvm]}" && pwd)"
+shift
+move="" build="${HISTMERSION_BUILD:-}"
+for a; do
+  case "$a" in
+    --move) move=--move ;;
+    --local-build) build=local ;;
+    --jvm) build=jvm ;;
+    *) echo "unknown argument '$a'" >&2; exit 1 ;;
+  esac
+done
 dest="${HISTMERSION_INSTALL_DIR:-$HOME/Applications/Histmersion}"
 bindir="${HISTMERSION_BIN_DIR:-$HOME/bin}"
 label="com.histmersion.server"
@@ -55,16 +70,17 @@ fi
 # a bundle downloaded through a browser is quarantined; Gatekeeper would block every binary in it
 xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
 
+# the server binary: the prebuilt one, or linked here from the kit (user plugins, --local-build), or JVM mode
+plugin_jars="$(find "$data/plugins" -maxdepth 1 -name '*.jar' 2>/dev/null | wc -l | tr -d ' ')"
+mode="$(ib_mode "$build" "$plugin_jars")"
+[ "$mode" = local ] && [ -z "$build" ] && echo "→ $plugin_jars plugin jar(s) in $data/plugins: linking them in"
+HISTMERSION_HOME="$dest" HISTMERSION_DATA_DIR="$data" ib_build "$dest" "$mode" || { echo "no server binary to run (see above)" >&2; exit 1; }
+
 # sign with the local identity if there is one: a stable signature keeps macOS permissions across updates
-identity="${HISTMERSION_CODESIGN_IDENTITY:-Histmersion Local}"
-# (any identity with that name, trusted or not: the signature's identity is what keeps the permissions)
-if security find-identity -p codesigning 2>/dev/null | grep -qF "\"$identity\""; then
-  echo "→ signing the binaries as \"$identity\""
-  codesign --force --sign "$identity" --identifier com.histmersion.cli "$dest/bin/histmersion"
-  codesign --force --sign "$identity" --identifier com.histmersion.server "$dest/bin/histmersion-server"
-else
-  echo "note: no \"$identity\" code-signing identity — binaries stay ad-hoc signed; macOS may ask for"
-  echo "      folder permissions again after each update (create one: scripts/bundle/codesign-identity-macos.sh)"
+# (a relinked server was signed by histmersion-relink already; a JVM-mode launcher is a script)
+if [ -x "$dest/bin/histmersion-signing" ]; then
+  "$dest/bin/histmersion-signing" codesign "$dest/bin/histmersion" com.histmersion.cli | sed 's/^/  cli: /'
+  [ "$mode" = prebuilt ] && "$dest/bin/histmersion-signing" codesign "$dest/bin/histmersion-server" com.histmersion.server | sed 's/^/  server: /'
 fi
 
 mkdir -p "$bindir" "$data/logs" "$(dirname "$plist")"

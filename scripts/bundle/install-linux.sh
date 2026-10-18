@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Install a Histmersion bundle on Linux — no root, nothing outside the user's home:
 #
-#   scripts/bundle/install-linux.sh <bundle-dir> [--move]
+#   scripts/bundle/install-linux.sh <bundle-dir> [--move] [--local-build | --jvm]
 #
 #   ~/.local/opt/histmersion/                    the bundle (bin/, pg/, converter/)   HISTMERSION_INSTALL_DIR
 #   ${XDG_DATA_HOME:-~/.local/share}/histmersion/  database, logs, backups (created by the server)
@@ -10,14 +10,29 @@
 #                                                when there is none; an existing file is never touched)
 #   ~/.local/bin/histmersion                      the CLI                               HISTMERSION_BIN_DIR
 #
-# --move renames the bundle into place instead of copying it. HISTMERSION_CORPUS_DIR, when set, is
+# --move renames the bundle into place instead of copying it. The server binary (install-build.sh;
+# HISTMERSION_BUILD=prebuilt|local|jvm): the prebuilt one by default; --local-build links it here from the
+# bundle's kit (GraalVM CE at its pinned version and checksum; gcc + zlib headers), falling back to JVM
+# mode; --jvm runs the kit on a JDK. With plugins in the data directory, an install relinks.
+# HISTMERSION_CORPUS_DIR, when set, is
 # passed to the server. To keep it running after logout: `loginctl enable-linger "$USER"`.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=user-config.sh
 . "$here/user-config.sh"
-src="$(cd "${1:?usage: $0 <bundle-dir> [--move]}" && pwd)"
-move="${2:-}"
+# shellcheck source=install-build.sh
+. "$here/install-build.sh"
+src="$(cd "${1:?usage: $0 <bundle-dir> [--move] [--local-build | --jvm]}" && pwd)"
+shift
+move="" build="${HISTMERSION_BUILD:-}"
+for a; do
+  case "$a" in
+    --move) move=--move ;;
+    --local-build) build=local ;;
+    --jvm) build=jvm ;;
+    *) echo "unknown argument '$a'" >&2; exit 1 ;;
+  esac
+done
 dest="${HISTMERSION_INSTALL_DIR:-$HOME/.local/opt/histmersion}"
 bindir="${HISTMERSION_BIN_DIR:-$HOME/.local/bin}"
 data="${XDG_DATA_HOME:-$HOME/.local/share}/histmersion"
@@ -44,6 +59,12 @@ if [ "$src" != "$dest" ]; then
   if [ "$move" = "--move" ]; then mv "$src" "$dest"; else cp -R "$src" "$dest"; fi
   rm -rf "$dest.old"
 fi
+
+# the server binary: the prebuilt one, or linked here from the kit (user plugins, --local-build), or JVM mode
+plugin_jars="$(find "$data/plugins" -maxdepth 1 -name '*.jar' 2>/dev/null | wc -l | tr -d ' ')"
+mode="$(ib_mode "$build" "$plugin_jars")"
+[ "$mode" = local ] && [ -z "$build" ] && echo "→ $plugin_jars plugin jar(s) in $data/plugins: linking them in"
+HISTMERSION_HOME="$dest" HISTMERSION_DATA_DIR="$data" ib_build "$dest" "$mode" || { echo "no server binary to run (see above)" >&2; exit 1; }
 
 mkdir -p "$bindir" "$data/logs" "$unit_dir"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"

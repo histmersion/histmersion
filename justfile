@@ -36,10 +36,10 @@ bundle dir=bundle_dir:
     scripts/bundle/converter.sh {{dir}}
     scripts/bundle/server.sh {{dir}}
 
-# Build the bundle and install it (macOS: LaunchAgent; Linux: systemd user service)
+# Build the bundle and install it (macOS: LaunchAgent; Linux: systemd user service); `just install --local-build` links the server on this machine, `--jvm` runs it on a JDK
 [group('app')]
-install: bundle
-    HISTMERSION_CORPUS_DIR="{{corpus_dir}}" scripts/bundle/install-{{platform}}.sh {{bundle_dir}} --move
+install *args: bundle
+    HISTMERSION_CORPUS_DIR="{{corpus_dir}}" scripts/bundle/install-{{platform}}.sh {{bundle_dir}} --move {{args}}
     just mcp-json
 
 # Write .mcp.json and plugin/.mcp.json (the MCP server entry) from HISTMERSION_PUBLIC_URL
@@ -126,6 +126,8 @@ test-scripts:
     python3 -m unittest scripts/perf/tests/test_bench.py
     scripts/bundle/tests/launchagent-env-test.sh
     scripts/bundle/tests/user-config-test.sh
+    scripts/bundle/tests/relink-test.sh
+    scripts/bundle/tests/kit-scripts-test.sh
     python3 -m unittest db/gazetteer/test_build.py
     python3 -m unittest db/places/test_build.py
 

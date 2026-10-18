@@ -1,0 +1,13 @@
+# GraalVM CE releases `histmersion-toolchain install` may download (docs/research-plugins.md §8.1–§8.2).
+# One line per platform: <version> <platform> <sha256> <url>. The version is .sdkmanrc's pin; the sha256
+# is the release's own (graalvm/graalvm-ce-builds publishes <asset>.sha256 beside each tarball, and
+# GitHub's asset digest agrees — both checked 2026-10-18). Moving the pin = new lines here in the same
+# commit as .sdkmanrc and the workflows.
+#
+# Licence: GraalVM Community Edition is GPLv2 with the Classpath Exception (Substrate VM, the runtime
+# linked into every native image, included), so it may be downloaded, used and redistributed, and a
+# binary linked with it is not made GPL by that.
+25.0.1 macos-aarch64 066339f24a8ab5c161548491a9400f7344e7761a1e46f8979e76c7ef11d5bc76 https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.1/graalvm-community-jdk-25.0.1_macos-aarch64_bin.tar.gz
+25.0.1 macos-x64 a3d895b4cd1c783badbd277ec70409806bd4102fca0d2a60dbaeb0bab41aec30 https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.1/graalvm-community-jdk-25.0.1_macos-x64_bin.tar.gz
+25.0.1 linux-x64 01e39fe1a87f28b842a3e4e3b77be9b544dca3a58fa6e93b924a6106c8bac7fb https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.1/graalvm-community-jdk-25.0.1_linux-x64_bin.tar.gz
+25.0.1 linux-aarch64 7aa0b9935a80e67f37c6025678393dbd123bb6f2226811decbc1a13093fc8ae2 https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.1/graalvm-community-jdk-25.0.1_linux-aarch64_bin.tar.gz

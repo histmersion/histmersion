@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # Start a bundle in isolation and prove it works end to end — what CI runs on every platform:
 # first-run initdb, Postgres + converter as children, /api/health all ok, the CLI, a real OCR
-# conversion OFFLINE with the bundled models, a clean stop that leaves no process behind.
+# conversion OFFLINE with the bundled models, a clean stop that leaves no process behind — and a REAL
+# relink of a copy of the bundle with a test plugin (docs/research-plugins.md §7.4): the native binary
+# linked from the kit holds the plugin, says so in --self-check, and JVM mode finds it too.
 #
 #   scripts/bundle/smoke.sh <bundle-dir>
+# The relink needs GraalVM CE of the kit's version (GRAALVM_HOME, HISTMERSION_GRAALVM_HOME or sdkman's
+# pin) and ~11 GB of memory; without them, or with HISTMERSION_SMOKE_RELINK=0, it is skipped and says so.
 # Ports are offset (18000/15433/18100) so it can run next to an installed Histmersion.
 set -euo pipefail
 b="$(cd "${1:?usage: $0 <bundle-dir>}" && pwd)"
@@ -83,6 +87,66 @@ rc="$(selfcheck wrong-password)"
 grep -q "the database is locked" "$data/self-check.out" || fail "--self-check does not say the vault is locked"
 [ ! -e "$data/pg" ] && ! curl -fsS http://127.0.0.1:18000/api/health >/dev/null 2>&1 \
   || fail "--self-check started the bundled runtime or a listener"
+
+echo "→ relink: the hello test plugin into a COPY of the bundle (bin/, kit/, libexec/), with the CLI"
+root="$(cd "$(dirname "$0")/../.." && pwd)"
+gv_version="$(cat "$b/kit/graalvm-version" 2>/dev/null || true)"
+gv=""
+for h in "${HISTMERSION_GRAALVM_HOME:-}" "${GRAALVM_HOME:-}" "${SDKMAN_DIR:-$HOME/.sdkman}/candidates/java/$gv_version-graalce"; do
+  [ -n "$h" ] && [ -x "$h/bin/native-image" ] && grep -q "JAVA_VERSION=\"$gv_version\"" "$h/release" 2>/dev/null && { gv="$h"; break; }
+done
+hello="$(find "$root/target/out" -name 'histmersion-plugin-hello_3-*.jar' 2>/dev/null | head -1)"
+if [ "${HISTMERSION_SMOKE_RELINK:-1}" = 0 ]; then echo "  skipped (HISTMERSION_SMOKE_RELINK=0)"
+elif [ ! -f "$b/kit/kit.json" ]; then fail "the bundle has no relink kit (kit/kit.json)"
+elif [ -z "$gv" ]; then echo "  skipped: no GraalVM CE $gv_version with native-image (GRAALVM_HOME / HISTMERSION_GRAALVM_HOME)"
+elif [ -z "$hello" ]; then fail "no hello test plugin jar under target/out (sbt pluginHello/package; scripts/bundle/server.sh builds it)"
+else
+  ri="$data/relink-install"; rd="$data/relink-data"
+  mkdir -p "$ri" "$rd"
+  cp -R "$b/bin" "$b/kit" "$b/libexec" "$ri/"
+  printf 'histmersion.plugins.hello { enabled = true, greeter = LoudGreeter, greeting = "relinked" }\n' > "$data/relink.conf"
+  # the CLI acts on this temporary install and data directory, never on ~/Applications/Histmersion;
+  # nothing is restarted (no service), nothing signed with a keychain identity
+  rel() { HISTMERSION_INSTALL_DIR="$ri" HISTMERSION_HOME="$ri" HISTMERSION_DATA_DIR="$rd" HISTMERSION_CONFIG="$data/relink.conf" \
+    HISTMERSION_GRAALVM_HOME="$gv" HISTMERSION_SERVICE=none HISTMERSION_CODESIGN_IDENTITY=- "$@"; }
+  rel "$ri/bin/histmersion" plugin add "$hello" --yes > "$data/add.out" 2>&1 || fail "plugin add: $(cat "$data/add.out")"
+  sed 's/^/  /' "$data/add.out"
+  grep -q "plugin hello 0.1.0 · SPI 1 · access: open · provides source-fetcher:hello" "$data/add.out" || fail "plugin add did not describe the plugin"
+  [ -f "$rd/plugins/hello-0.1.0.jar" ] || fail "plugin add did not install hello-0.1.0.jar"
+  rel "$ri/bin/histmersion" plugin status > "$data/status.out" 2>&1 || fail "plugin status: $(cat "$data/status.out")"
+  grep -q "REBUILD NEEDED" "$data/status.out" || fail "plugin status does not ask for a rebuild: $(cat "$data/status.out")"
+  start=$(date +%s)
+  timed=""  # the peak memory of the whole relink (native-image is the peak): macOS time -l, GNU time -v
+  if [ -x /usr/bin/time ]; then if [ "$(uname -s)" = Darwin ]; then timed="/usr/bin/time -l"; else timed="/usr/bin/time -v"; fi; fi
+  # shellcheck disable=SC2086
+  rel $timed "$ri/bin/histmersion" plugin rebuild --no-restart > "$data/relink.out" 2>&1 \
+    || fail "plugin rebuild (the relink) failed: $(tail -30 "$data/relink.out"; tail -30 "$rd/logs/relink.log" 2>/dev/null)"
+  grep -E "^→|built in|relinked|maximum resident|Maximum resident" "$data/relink.out" | sed 's/^/  /'
+  echo "  relink wall time: $(( $(date +%s) - start )) s"
+  rc=0; rel "$ri/bin/histmersion-server" --self-check > "$data/relinked.out" 2>&1 || rc=$?
+  sed -n '/^- hello/p; /^- plugin set/p; /^- plugin-set digest/p; /^self-check/p' "$data/relinked.out" | sed 's/^/  relinked: /'
+  [ "$rc" = 0 ] || fail "the relinked binary's --self-check exited $rc: $(cat "$data/relinked.out")"
+  # registered = its greeter (chosen by name) was found: the plugin jar's OWN reachability metadata is in the image
+  grep -qF "hello 0.1.0 — registered (source-fetcher:hello)" "$data/relinked.out" || fail "the relinked binary does not have the hello plugin"
+  want="$(printf 'hello-0.1.0.jar %s\n' "$(shasum -a 256 "$rd/plugins/hello-0.1.0.jar" | awk '{print $1}')" | shasum -a 256 | awk '{print $1}')"
+  grep -q "^- plugin-set digest: $want" "$data/relinked.out" || fail "the relinked binary's plugin-set digest is not the directory's ($want)"
+  [ -x "$ri/bin/histmersion-server.prev" ] || fail "the relink kept no previous binary"
+  rel "$ri/bin/histmersion" plugin status > "$data/status.out" 2>&1 || true
+  grep -q "verdict: up to date" "$data/status.out" || fail "plugin status after the relink: $(cat "$data/status.out")"
+  rel "$ri/bin/histmersion" plugin list | grep -q "hello-0.1.0.jar — hello 0.1.0 (open) · in the binary" || fail "plugin list after the relink"
+  if grep -q "sun.misc.Unsafe" "$data/relinked.out"; then fail "the relinked binary prints the sun.misc.Unsafe warning"; fi
+  # JVM mode: the same kit and plugin on the JDK, found at start
+  rc=0; rel env HISTMERSION_JAVA_HOME="$gv" "$ri/bin/histmersion-server-jvm" --self-check > "$data/jvm.out" 2>&1 || rc=$?
+  [ "$rc" = 0 ] && grep -qF "hello 0.1.0 — registered (source-fetcher:hello)" "$data/jvm.out" \
+    && grep -q "^- plugin set: .*(jvm): hello-0.1.0.jar" "$data/jvm.out" && grep -q "^- plugin-set digest: $want" "$data/jvm.out" \
+    || fail "JVM mode does not find the plugin (exit $rc): $(cat "$data/jvm.out")"
+  echo "  JVM mode: hello registered, plugin set $want"
+  # back to the stock binary
+  rel "$ri/bin/histmersion" plugin rollback --no-restart > "$data/rollback.out" 2>&1 || fail "plugin rollback: $(cat "$data/rollback.out")"
+  rel "$ri/bin/histmersion-server" --self-check | grep -q "^- plugin set: first-party plugins only" || fail "rollback did not bring the stock binary back"
+  echo "  rolled back to the stock binary"
+  rm -rf "$ri" "$rd"
+fi
 
 echo "→ start (first run: initdb)"
 "$b/bin/histmersion-server" > "$data/server.out" 2>&1 &
