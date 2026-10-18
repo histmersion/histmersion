@@ -370,12 +370,72 @@ final class PluginRuntime(load: Config => Either[String, Generation]):
   the running one stays and the error is reported.
 - **Triggers:** `histmersion config reload` (REST `POST /api/config/reload`, MCP), and optionally a
   `WatchService` on `~/.config/histmersion/histmersion.conf` with a short debounce.
-- **Not everything is hot.** Keys are classified: plugin blocks and most behaviour knobs (agents
-  limits, managers, media allowlists, acquisition chain, TLS trust) reload; process-level keys
-  (database URL, server host/port, data directory, bundled Postgres) need a restart, and the reload
-  report says which changed keys were not applied and why.
+- **Everything is hot, the database included** (user, 2026-10-18; see §3.6). The only thing a
+  config change cannot do in place is change the server's listening port, and even that can be a
+  second listener started before the old one stops.
 - The same mechanism can later carry the host's own settings (today `AppConfig` is read once in
   `Main`), moving them one by one behind snapshots instead of process-wide values.
+
+### 3.6 Hot components with dependencies: the database is swappable too (user, 2026-10-18)
+
+**Today.** `object Db` keeps a process-wide cache of Hikari pools keyed by (url, user)
+(`db/Db.scala`); `Main` builds `Deps` from it once; 74 files take a `DataSource` and keep it. A
+change of database URL, credentials or pool size therefore means a restart. The rule from now on:
+**no global or static JDBC** — a pool is a component like any other, owned by a scope, reachable
+only through a handle.
+
+**Ox has no `Hotswap`, so we add a small one**: a graph of hot components. Each node is built from
+the config and the *current values of its dependencies*, inside its own Ox scope (so its resources
+are `useInScope`/`releaseAfterScope` and close with the scope). Users hold a **stable handle**, never
+the value, so a swap never needs them to reload.
+
+```scala
+/** A stable handle to a value that may be rebuilt. `use` pins the current generation for the call. */
+trait Hot[+A]:
+  def use[B](f: A => B): B
+
+/** A node: how to build its value from config + its dependencies' current values, in a scope. */
+final case class Node[A](name: String, deps: List[Hot[?]], keys: ConfigKeys)(
+    build: (AppConfig, Deps) => Ox ?=> Either[String, A])
+
+/** The graph. A config change → the set of nodes whose keys changed → those plus everything that
+  * depends on them, rebuilt in topological order into a NEW generation off to the side; if every
+  * node built, the generation is published atomically (one AtomicReference per node, swapped
+  * together under one version number); the old nodes' scopes close when their last user lets go.
+  * A failed build publishes nothing. */
+final class HotGraph:
+  def node[A](n: Node[A]): Hot[A]
+  def reload(next: AppConfig): Either[String, ReloadReport]
+```
+
+For the database, the graph is roughly:
+
+```
+config ─► pool (Hikari, own scope) ─► migrations (Flyway, re-run on a new database) ─► repos
+       └► query pool (read-only role)                                                 ├► jobs, managers, agents engine
+                                                                                      └► plugin generation (§3.5)
+```
+
+- **Repos get a `Hot[DataSource]` (or a `DataSource` proxy that delegates each `getConnection` to the
+  current pool).** The proxy is the cheapest migration of the 74 call sites: they keep their
+  `DataSource` type, and a connection obtained before a swap stays on the old pool until it is closed;
+  the old pool shuts down when its last connection comes back. Long-lived users (the jobs workers,
+  the managers' tick, the agents engine) take a fresh connection per unit of work already, so they
+  move to the new database at their next step.
+- **Swapping a node re-runs the initialisation of everything that depends on it**: a new database
+  gets its migrations, the query role's pool is rebuilt, the jobs/managers lease is re-acquired on
+  the new database (the old lease expires on its own), and the plugin generation is rebuilt only if
+  a plugin depends on the pool. Nodes that do not depend on the changed one are carried over as is.
+- **In-flight work** pins its generation: an HTTP request, a job step, an agent step finish against
+  the database they started on. A swap waits (bounded) for the old generation's users, then closes
+  its scope; anything still running after the bound is reported, not killed silently.
+- **Tests stop needing the global cache.** The reason for `Db`'s static cache is that many suites
+  share one JVM; they move to one pool per test DB owned by a suite-level fixture scope.
+- **The listening port** is the one process-level thing: a swap can start the new listener, move
+  traffic, then stop the old one — or keep it restart-only if that is not worth it.
+- **What it costs:** a `Hot` + `HotGraph` module (pure graph logic in core, scopes in server), the
+  `DataSource` proxy, `Deps` built from the graph instead of from `Main`'s locals, and removing
+  `object Db`'s cache. The config reload trigger is the same as §3.5's.
 
 ## 4. Native image: the closed world
 
