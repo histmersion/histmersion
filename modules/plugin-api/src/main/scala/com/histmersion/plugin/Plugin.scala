@@ -62,8 +62,9 @@ trait Plugin:
 
 /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new
   * extension point is a new registry here, not a new service type, so existing plugin jars keep loading.
-  * (Two so far: [[secretVaults]] and [[sourceFetchers]]. Media collections and event catalogues are
-  * added with the phases that move those parts of the app.) */
+  * (Four: [[secretVaults]], [[sourceFetchers]], [[mediaCollections]] and [[eventCatalogues]]. Each one
+  * added after the first has a default that refuses every addition, so a context written for an
+  * earlier extension point — a test's — still compiles, and `Spi.Version` stayed 1.) */
 trait PluginContext:
   /** The host's outbound HTTP — the one policy (User-Agent without personal data, Retry-After,
     * bot challenges stop the request). A plugin never opens its own sockets. */
@@ -88,6 +89,15 @@ trait PluginContext:
     * has no acquisition chain refuses every addition — the default, so a context written for an
     * earlier extension point (a test's) still compiles. */
   def sourceFetchers: Registry[SourceFetcher] = Registry.refusing("this host has no acquisition chain")
+
+  /** The media collections `histmersion media import <id>` runs (docs/research-plugins.md §6): each under
+    * its own id — the name the import is asked for, and the provider its pictures are stored under. The
+    * host judges every licence and every match itself ([[MediaCollection]]). */
+  def mediaCollections: Registry[MediaCollection] = Registry.refusing("this host has no media import")
+
+  /** The event catalogues `histmersion events import <id>` reads, each under its own id — the import's
+    * name and the catalogue its records are stored under. */
+  def eventCatalogues: Registry[EventCatalogue] = Registry.refusing("this host has no event catalogues")
 
 /** One extension point. `add` refuses an id already taken in this registry. */
 trait Registry[A]:

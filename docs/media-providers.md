@@ -212,6 +212,39 @@ Petra whose period is 300 BCE–100 CE). Open Context's label for that Pleiades 
 not the label, is what is compared. Most of Open Context is Anatolian, Levantine and Italian fieldwork
 (Domuztepe, Çatalhöyük, Petra, Poggio Civitate…); a search for "Mycenae" answered nothing on 2026-10-17.
 
+## A plugin's own collection
+
+Every provider above is a built-in **plugin** (`media-wikidata`, `media-depicts`, `media-met`,
+`media-cleveland`, `media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`;
+docs/research-plugins.md §18), and a third-party plugin can register a collection of its own
+(`com.histmersion.plugin.MediaCollection`). `histmersion media providers` lists what this server has;
+`histmersion media import <name>` runs a plugin's collection exactly like a built-in one — dry run, job,
+`--place`, `--refresh`.
+
+A plugin's collection only **searches and describes**: for a place it returns records with the licence
+**as the provider states it** (an id such as `CC-BY-4.0`, a short name such as `CC BY-NC 4.0`, or a
+Creative Commons URL), a credit line, its place fields and dates, and the rendition to store. Everything
+that decides what is stored is the server's and the same as for the built-in collections:
+
+- **The licence** is classified by the server from the statement (the licence URL when the statement is
+  unclear); a statement it cannot read is *unknown*. It is judged against `media.collections.licences`
+  (default `cc0,public-domain,cc-by,cc-by-sa`) or, for one collection,
+  `media.collections.per-collection.<name>` — settings of the server's config, never of the plugin, so a
+  plugin cannot widen them. A provider-stated CC BY-NC record is refused until the user lists `cc-by-nc`
+  for that collection; unknown and all-rights-reserved never pass. A record without a credit line is
+  refused.
+- **The match** is one of the server's rules, chosen by the collection: the museum rule (the most
+  specific place field names this place and no other, by the gazetteer's name key; uncertain values
+  ignored; the dates overlap), the map rule (a location names this place alone; dated by a year the
+  collection gives), or the id rule (a gazetteer id the record carries, else the museum rule). The
+  reason is stored on the link.
+- **The rest** — the polite client (the server's User-Agent replaces any the plugin sends), the
+  download within `media.max-bytes`, the thumbnail, the credit line, the place recorded as asked, and
+  a later `--refresh` re-reading the licence — is the server's import.
+
+A plugin's collection asks about places (its pictures play the role `object`, `map` or `image`); it may
+not take the name of a built-in provider, an alias of one, or a provider pictures are stored under.
+
 ## Not built: Arachne / iDAI.objects and ARIADNE
 
 Both were checked on 2026-10-17 with read-only requests to their JSON endpoints:
@@ -248,4 +281,8 @@ Both were checked on 2026-10-17 with read-only requests to their JSON endpoints:
 `media.depicts.*`, `media.met.*`, `media.cleveland.*`, `media.aic.*`, `media.loc.*`, `media.pleiades.*`,
 `media.open-context.*` and `media.samples` — see the README's configuration table. A collection can be switched off with
 `media.<provider>.enabled = false` (env `HISTMERSION_MEDIA_<PROVIDER>_ENABLED`, `…_OPEN_CONTEXT_…` for
-Open Context); its import then answers with that reason.
+Open Context); its import then answers with that reason. Each is also a plugin:
+`histmersion.plugins.media-<provider>.enabled = false` (env `HISTMERSION_PLUGIN_MEDIA_<PROVIDER>_ENABLED`)
+takes it out of `media import` and `media providers` altogether — both switches must be on for a
+collection to run. A plugin's collection is judged by `media.collections.licences` and
+`media.collections.per-collection.<name>`.

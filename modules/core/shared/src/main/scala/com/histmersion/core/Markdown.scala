@@ -751,6 +751,17 @@ object Markdown:
     if cs.isEmpty then "none"
     else cs.map(c => s"${c.key} ${c.n}${if c.allowed then "" else " (not allowed)"}").mkString(" · ")
 
+  /** `histmersion media providers`: one line per provider `media import` can run. */
+  def mediaProviders(ps: List[MediaProviderInfo]): String =
+    if ps.isEmpty then "No media provider is registered (every media plugin is switched off)."
+    else
+      ps.map { p =>
+        val origin = if p.builtin then s"built in, plugin `${p.plugin}`" else s"plugin `${p.plugin}`"
+        val terms  = if p.licences.trim.isEmpty then "" else s" · licences: ${p.licences}"
+        s"- **`${p.name}`** — ${p.title} (${p.over}; $origin$terms)" +
+          (if p.description.trim.isEmpty then "" else s"\n  ${p.description.trim}")
+      }.mkString("## Media providers\n\n", "\n", "\n\n`histmersion media import <name>` runs one.")
+
   def mediaImportReport(r: MediaImportReport): String =
     val mode = if r.dryRun then "dry run — nothing stored" else "stored"
     val licences = if r.byLicence.isEmpty then "_none_" else
