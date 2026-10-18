@@ -16,18 +16,25 @@ import scala.util.control.NonFatal
   * by the rest of the app; an immutable snapshot of one [[Generation]]. */
 final case class Registries(
     secretVaults: ListMap[String, SecretVault] = ListMap.empty,
-    sourceFetchers: ListMap[String, SourceFetcher] = ListMap.empty):
+    sourceFetchers: ListMap[String, SourceFetcher] = ListMap.empty,
+    mediaCollections: ListMap[String, MediaCollection] = ListMap.empty,
+    eventCatalogues: ListMap[String, EventCatalogue] = ListMap.empty):
   def provides: List[String] =
     secretVaults.keys.toList.map(k => s"${Registries.SecretVault}:$k") ++
-      sourceFetchers.keys.toList.map(k => s"${Registries.SourceFetcher}:$k")
+      sourceFetchers.keys.toList.map(k => s"${Registries.SourceFetcher}:$k") ++
+      mediaCollections.keys.toList.map(k => s"${Registries.MediaCollection}:$k") ++
+      eventCatalogues.keys.toList.map(k => s"${Registries.EventCatalogue}:$k")
 
-  /** Both registries, the other's entries after this one's. */
+  /** Every registry, the other's entries after this one's. */
   def ++(other: Registries): Registries =
-    Registries(secretVaults ++ other.secretVaults, sourceFetchers ++ other.sourceFetchers)
+    Registries(secretVaults ++ other.secretVaults, sourceFetchers ++ other.sourceFetchers,
+      mediaCollections ++ other.mediaCollections, eventCatalogues ++ other.eventCatalogues)
 
 object Registries:
-  val SecretVault   = "secret-vault"
-  val SourceFetcher = "source-fetcher"
+  val SecretVault     = "secret-vault"
+  val SourceFetcher   = "source-fetcher"
+  val MediaCollection = "media-collection"
+  val EventCatalogue  = "event-catalogue"
   val empty: Registries = Registries()
 
 /** One load of the plugins for one config: the registries and the report. Built by
@@ -289,6 +296,28 @@ object PluginHost:
     else if f == null then Some(s"source fetcher '$id' is null")
     else None
 
+  /** A media collection: a kebab-case id; a plugin's may not take a name of the host's own providers
+    * (an import's name or an alias of one, or a provider pictures are stored under — its pictures would
+    * be mistaken for theirs); its role is one a collection's pictures may play. */
+  private def validCollection(id: String, c: MediaCollection): Option[String] =
+    if !id.matches(IdPattern) then Some(s"'$id': a media collection id is $IdPattern")
+    else if c == null then Some(s"media collection '$id' is null")
+    else if c.isInstanceOf[com.histmersion.server.media.HostMediaCollection] then None
+    else if com.histmersion.server.media.BuiltinMedia.reserved(id) then
+      Some(s"'$id' is the name of one of Histmersion's own media providers")
+    else if !MediaCollection.Roles(c.role) then
+      Some(s"media collection '$id': role '${c.role}' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}")
+    else None
+
+  /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues. */
+  private def validCatalogue(id: String, c: EventCatalogue): Option[String] =
+    if !id.matches(IdPattern) then Some(s"'$id': an event catalogue id is $IdPattern")
+    else if c == null then Some(s"event catalogue '$id' is null")
+    else if c.isInstanceOf[com.histmersion.server.events.HostEventCatalogue] then None
+    else if com.histmersion.server.events.BuiltinCatalogues.reserved(id) then
+      Some(s"'$id' is the name of one of Histmersion's own event catalogues")
+    else None
+
   private def validVault(id: String, v: SecretVault): Option[String] =
     if Set(SecretRef.ValueScheme, SecretRef.EnvScheme)(id) then Some(s"'$id' is a reserved secret scheme, not a vault name")
     else if !id.matches(IdPattern) then Some(s"'$id': a vault name is $IdPattern")
@@ -405,6 +434,8 @@ object PluginHost:
       case None =>
         val staged   = Staged[SecretVault](Registries.SecretVault, regs.secretVaults, validVault)
         val fetchers = Staged[SourceFetcher](Registries.SourceFetcher, regs.sourceFetchers, validFetcher)
+        val media    = Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection)
+        val events   = Staged[EventCatalogue](Registries.EventCatalogue, regs.eventCatalogues, validCatalogue)
         val ctx = new PluginContext:
           lazy val http: PluginHttp = services.http()
           val log: PluginLog = new PluginLog:
@@ -414,10 +445,12 @@ object PluginHost:
           def secret(s: Secret) = resolved(s)
           def secretVaults = staged
           override def sourceFetchers = fetchers
+          override def mediaCollections = media
+          override def eventCatalogues = events
         val outcome =
           try pr.call(ctx)
           catch case NonFatal(e) => Left(s"register threw ${e.getClass.getSimpleName}: ${e.getMessage}")
-        val added = Registries(staged.close(), fetchers.close())
+        val added = Registries(staged.close(), fetchers.close(), media.close(), events.close())
         outcome match
           case Left(e) => fail(e)
           case Right(_) =>

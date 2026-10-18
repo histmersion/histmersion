@@ -938,6 +938,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy38"
+        },
+        {
+          "name": "derived$ConfigReader$lzy39"
         }
       ]
     },
@@ -2960,6 +2963,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy31"
+        },
+        {
+          "name": "derived$ConfigReader$lzy32"
         }
       ]
     },
@@ -2974,6 +2980,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy32"
+        },
+        {
+          "name": "derived$ConfigReader$lzy33"
         }
       ]
     },
@@ -2988,6 +2997,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy36"
+        },
+        {
+          "name": "derived$ConfigReader$lzy37"
         }
       ]
     },
@@ -3002,6 +3014,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy35"
+        },
+        {
+          "name": "derived$ConfigReader$lzy36"
         }
       ]
     },
@@ -3016,6 +3031,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy33"
+        },
+        {
+          "name": "derived$ConfigReader$lzy34"
         }
       ]
     },
@@ -3041,6 +3059,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy34"
+        },
+        {
+          "name": "derived$ConfigReader$lzy35"
         }
       ]
     },
@@ -3075,6 +3096,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy19"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy20"
         },
         {
           "name": "given_Schema_FigureLicenceFill$lzy1"
@@ -4479,6 +4503,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy29"
+        },
+        {
+          "name": "derived$ConfigReader$lzy30"
         }
       ]
     },
@@ -4490,6 +4517,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy17"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy18"
         },
         {
           "name": "given_Schema_MediaCoversReport$lzy1"
@@ -4504,6 +4534,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy15"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy16"
         },
         {
           "name": "given_Schema_MediaCoversRequest$lzy1"
@@ -4532,6 +4565,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy18"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy19"
         },
         {
           "name": "given_Schema_MediaFacets$lzy1"
@@ -4563,6 +4599,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy30"
+        },
+        {
+          "name": "derived$ConfigReader$lzy31"
         }
       ]
     },
@@ -4576,6 +4615,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy14"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy15"
+        },
+        {
           "name": "given_Schema_MediaImportReport$lzy1"
         }
       ]
@@ -4585,6 +4627,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
         },
         {
           "name": "given_Schema_MediaImportRequest$lzy1"
@@ -4614,10 +4659,32 @@
       ]
     },
     {
+      "type": "com.histmersion.core.MediaPluginCollectionsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy29"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.MediaProviderInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "given_Schema_MediaProviderInfo$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.MediaSample$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy13"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
         },
         {
           "name": "given_Schema_MediaSample$lzy1"
@@ -4632,6 +4699,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy16"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
         },
         {
           "name": "given_Schema_MediaSourceLine$lzy1"
@@ -6579,6 +6649,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy37"
+        },
+        {
+          "name": "derived$ConfigReader$lzy38"
         }
       ]
     },
@@ -7211,6 +7284,12 @@
       "type": "com.histmersion.db.ManagerRepo$",
       "fields": [
         {
+          "name": "configCodec$lzy1"
+        },
+        {
+          "name": "effectCodec$lzy1"
+        },
+        {
           "name": "given_DbCodec_HintRow$lzy1"
         },
         {
@@ -7221,6 +7300,12 @@
         },
         {
           "name": "given_DbCodec_ManagerRow$lzy1"
+        },
+        {
+          "name": "holdCodec$lzy1"
+        },
+        {
+          "name": "stateCodec$lzy1"
         }
       ]
     },
@@ -11352,7 +11437,40 @@
       "glob": "META-INF/histmersion/plugins/bitwarden.conf"
     },
     {
+      "glob": "META-INF/histmersion/plugins/events-gvp.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/events-noaa.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/events-wikidata.conf"
+    },
+    {
       "glob": "META-INF/histmersion/plugins/keepassxc.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/media-aic.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/media-cleveland.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/media-depicts.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/media-loc.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/media-met.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/media-opencontext.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/media-pleiades.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/media-wikidata.conf"
     },
     {
       "glob": "META-INF/histmersion/plugins/oa-index.conf"

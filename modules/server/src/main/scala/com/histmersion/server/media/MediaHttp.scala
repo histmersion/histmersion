@@ -86,12 +86,15 @@ final class Polite(http: MediaHttp, cfg: MediaConfig, sleep: Long => Unit = ms =
     }
     last(h) = clock()
 
-  def get(url: String): Either[String, HttpAnswer] =
+  /** One GET, paced and retried. `headers` are sent as given, except the User-Agent: always the
+    * configured one (a plugin's request too). */
+  def get(url: String, headers: Map[String, String] = Map.empty): Either[String, HttpAnswer] =
     val h = host(url)
+    val sent = headers.filterNot(_._1.equalsIgnoreCase("User-Agent")) + ("User-Agent" -> HttpPolicy.userAgent(cfg.userAgent))
     def attempt(n: Int): Either[String, HttpAnswer] =
       pace(h)
       count += 1
-      http.get(url, Map("User-Agent" -> HttpPolicy.userAgent(cfg.userAgent))).flatMap { a =>
+      http.get(url, sent).flatMap { a =>
         Politeness.decide(a, n, cfg.maxRetries, cfg.maxRetryAfterSeconds, Instant.ofEpochMilli(clock())) match
           case Politeness.Step.Accept => Right(a)
           case Politeness.Step.Wait(ms, why) =>

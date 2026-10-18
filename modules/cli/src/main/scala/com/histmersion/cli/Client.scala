@@ -267,6 +267,7 @@ final class Client(serverUrl: String, token: Option[String] = None):
   def mediaList(q: Api.MediaQuery): Either[CliError, MediaList]                  = call(Api.mediaList)(q)
   def mediaShow(uid: String): Either[CliError, MediaItem]                        = call(Api.mediaShow)(uid)
   def mediaFacets: Either[CliError, MediaFacets]                                 = call(Api.mediaFacets)(())
+  def mediaProviders: Either[CliError, List[MediaProviderInfo]]                  = call(Api.mediaProviders)(())
   def fillFigureLicences(apply: Boolean): Either[CliError, FigureLicenceFill]    = call(Api.fillFigureLicences)(apply)
 
 /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */

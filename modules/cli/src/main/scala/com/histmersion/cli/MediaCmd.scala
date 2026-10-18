@@ -30,65 +30,37 @@ object MediaCmd:
 
   // ── media from outside providers (#1446) ──
 
-  /** One `media import <provider>` subcommand: the same flags and the same job for every provider. */
-  private def importSub(name: String, help: String, placesOnly: Boolean = false, eventsOnly: Boolean = false) =
-    Opts.subcommand(name, help) {
-      val place = if eventsOnly then Opts(None) else Opts.option[String]("place", "Only this place").orNone
-      val event = if placesOnly then Opts(None) else Opts.option[String]("event", "Only this event (its --wikidata item)").orNone
-      (Opts.flag("dry-run", "Read one batch, store nothing; print the counts per licence (and the matches, with their reasons)").orFalse,
-        Opts.option[Int]("limit", "Targets to ask about (a dry run: default media.default-limit; a job: all not asked yet)").orNone,
-        place, event,
-        Opts.flag("refresh", "Ask again about ones already asked, and re-read the licences of stored pictures").orFalse,
-        Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
-        .mapN { (dry, limit, place, event, refresh, noWait) => (c: Client) =>
-          val req = MediaImportRequest(name, dry, limit, place, event, refresh)
-          if dry then c.mediaImport(req).map(r => println(Markdown.mediaImportReport(r)))
-          else
-            c.mediaImportJob(req).flatMap { j =>
-              println(s"media import job `${j.id}` started: ${j.detail.flatMap(_.media).getOrElse("")} (`histmersion jobs` lists it)")
-              if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
-            }
-        }
-    }
+  /** `media import <provider>`: the same flags and the same job for every provider — the built-in ones
+    * and any a plugin of the server registered (`media providers` lists them; the server decides). */
+  private val importCmd = Opts.subcommand("import",
+      "Bring in pictures from an outside provider (legally reusable only): wikidata (the default), depicts, met, " +
+        "cleveland, aic, loc, pleiades, opencontext, or a plugin's collection — `histmersion media providers` " +
+        "lists them with their terms. --dry-run asks about one batch and prints the counts per licence (and a " +
+        "collection's matches, with their reasons); otherwise a server JOB asks about every place (or event) not " +
+        "asked yet, batch by batch, and resumes where it stopped") {
+    (Opts.argument[String]("provider"),
+      Opts.flag("dry-run", "Read one batch, store nothing; print the counts per licence (and the matches, with their reasons)").orFalse,
+      Opts.option[Int]("limit", "Targets to ask about (a dry run: default media.default-limit; a job: all not asked yet)").orNone,
+      Opts.option[String]("place", "Only this place").orNone,
+      Opts.option[String]("event", "Only this event (its --wikidata item; providers that ask about events)").orNone,
+      Opts.flag("refresh", "Ask again about ones already asked, and re-read the licences of stored pictures").orFalse,
+      Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
+      .mapN { (name, dry, limit, place, event, refresh, noWait) => (c: Client) =>
+        val req = MediaImportRequest(name, dry, limit, place, event, refresh)
+        if dry then c.mediaImport(req).map(r => println(Markdown.mediaImportReport(r)))
+        else
+          c.mediaImportJob(req).flatMap { j =>
+            println(s"media import job `${j.id}` started: ${j.detail.flatMap(_.media).getOrElse("")} (`histmersion jobs` lists it)")
+            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+          }
+      }
+  }
 
-  private val importWikidata = importSub("wikidata",
-      "Pictures of places and events from their Wikidata items (image, locator map, plan, aerial view, " +
-        "route map), licensed on Wikimedia Commons. --dry-run asks about one batch and prints the counts per " +
-        "licence; otherwise a server JOB asks about every place on the map not asked yet (one per Wikidata " +
-        "item, most-cited sites first), batch by batch, and resumes where it stopped")
-
-  private val importDepicts = importSub("depicts",
-      "Pictures that depict events: Wikimedia Commons files whose structured data says P180 'depicts' the event's " +
-        "Wikidata item, and the images of the works its item lists as P1299 'depicted by'; licence read from Commons",
-      eventsOnly = true)
-
-  private val museumHelp = " — Open Access objects only (as the record itself says), tied to a place on the map " +
-    "when the object's most specific place field names it (and no other) and its dates overlap the place's; " +
-    "--dry-run lists the matches with their reasons"
-
-  private val importMet = importSub("met", "The Metropolitan Museum of Art (CC0, isPublicDomain)" + museumHelp, placesOnly = true)
-  private val importCleveland = importSub("cleveland", "The Cleveland Museum of Art (CC0, share_license_status)" + museumHelp,
-    placesOnly = true)
-  private val importAic = importSub("aic", "The Art Institute of Chicago (CC0, is_public_domain; IIIF images)" + museumHelp,
-    placesOnly = true)
-  private val importLoc = importSub("loc",
-      "Historical maps from the Library of Congress, Geography and Map Division: public domain only (rights " +
-        "'No known restrictions' and dated by media.loc.max-year), linked as role map to the places their " +
-        "locations name", placesOnly = true)
-
-  private val importPleiades = importSub("pleiades",
-      "Wikimedia Commons files that Pleiades place records link, for the places on the map that carry a Pleiades " +
-        "id (matched by that id, no name matching); licence read from Commons; links to Flickr (needs a key), " +
-        "Commons categories and other sites are counted, not taken", placesOnly = true)
-  private val importOpenContext = importSub("opencontext",
-      "Open Context's excavation media (photographs, drawings), each record under its own Creative Commons licence " +
-        "(read from the search record and again from the media item); tied to a place on the map by a shared " +
-        "Pleiades/GeoNames/Wikidata id, else by its site's name in its context path, and its dates; records flagged " +
-        "as related to human remains are not shown; --dry-run lists the matches with their reasons", placesOnly = true)
-
-  private val importCmd = Opts.subcommand("import", "Bring in pictures from an outside provider (legally reusable only)") {
-    importWikidata orElse importDepicts orElse importMet orElse importCleveland orElse importAic orElse importLoc orElse
-      importPleiades orElse importOpenContext
+  /** `media providers`: what `media import` can run on this server — its plugins' registered collections. */
+  private val providersCmd = Opts.subcommand("providers",
+      "The providers `media import` can run on this server: the built-in ones and any a plugin registered, " +
+        "with what each asks about, the plugin that provides it and the licences it may store") {
+    Opts.unit.map { _ => (c: Client) => c.mediaProviders.map(ps => println(Markdown.mediaProviders(ps))) }
   }
 
   private val listCmd = Opts.subcommand("list", "Stored pictures — source figures and providers' — with licence and credit") {
@@ -159,7 +131,7 @@ object MediaCmd:
 
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("media", "Pictures: import from providers, covers and illustrations of sources, list, show, fill-licences; a figure's detail, patch") {
-      importCmd orElse coversCmd orElse listCmd orElse showCmd orElse fillCmd orElse detail orElse patch
+      importCmd orElse providersCmd orElse coversCmd orElse listCmd orElse showCmd orElse fillCmd orElse detail orElse patch
     }
 
 object AssetLinksCmd:

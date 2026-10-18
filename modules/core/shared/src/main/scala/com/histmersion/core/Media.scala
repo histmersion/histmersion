@@ -311,6 +311,29 @@ object MediaCount:
     keys.groupBy(identity).toList.map((k, v) => MediaCount(k, v.size, allowed(k)))
       .sortBy(c => (-c.n, c.key))
 
+/** One provider `media import <name>` can run (`GET /api/media/providers`): the registered media
+  * collections of the plugins in this server — the built-in ones and any a third-party plugin added.
+  *
+  * @param name        what `media import` is asked for
+  * @param title       what its jobs are called
+  * @param over        what it asks about: `places`, `events`, `places and events`
+  * @param description what it brings and on what terms
+  * @param plugin      the plugin that registered it (`histmersion.plugins.<plugin>.enabled` switches it)
+  * @param builtin     Histmersion's own provider (its settings are `media.<provider>.*`)
+  * @param licences    the licence families its pictures may be stored under (a plugin's: the host's
+  *                    `media.collections` allowlist for it) */
+final case class MediaProviderInfo(
+    name: String,
+    title: String,
+    over: String,
+    description: String,
+    plugin: String,
+    builtin: Boolean,
+    licences: String
+) derives KindlingsCodecAsObject
+object MediaProviderInfo:
+  given Schema[MediaProviderInfo] = KindlingsSchema.derived[MediaProviderInfo].schema
+
 /** `POST /api/media/import`: ask a provider about places and events — `wikidata` (the default),
   * `depicts`, `met`, `cleveland`, `aic`, `loc`, `pleiades` or `opencontext` (docs/media-providers.md). `dryRun` (the default) reads
   * the provider's statements and licences and stores NOTHING; `place`/`event` narrow it to one;
