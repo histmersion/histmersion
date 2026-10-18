@@ -71,7 +71,7 @@ fi
 xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
 
 # the server binary: the prebuilt one, or linked here from the kit (user plugins, --local-build), or JVM mode
-plugin_jars="$(find "$data/plugins" -maxdepth 1 -name '*.jar' 2>/dev/null | wc -l | tr -d ' ')"
+plugin_jars="$( { find "$data/plugins" -maxdepth 1 -name '*.jar' 2>/dev/null || true; } | wc -l | tr -d ' ')"
 mode="$(ib_mode "$build" "$plugin_jars")"
 [ "$mode" = local ] && [ -z "$build" ] && echo "→ $plugin_jars plugin jar(s) in $data/plugins: linking them in"
 HISTMERSION_HOME="$dest" HISTMERSION_DATA_DIR="$data" ib_build "$dest" "$mode" || { echo "no server binary to run (see above)" >&2; exit 1; }
