@@ -216,7 +216,7 @@ not the label, is what is compared. Most of Open Context is Anatolian, Levantine
 
 Every provider above is a built-in **plugin** (`media-wikidata`, `media-depicts`, `media-met`,
 `media-cleveland`, `media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`;
-docs/research-plugins.md §18), and a third-party plugin can register a collection of its own
+docs/research-plugins.md §19), and a third-party plugin can register a collection of its own
 (`com.histmersion.plugin.MediaCollection`). `histmersion media providers` lists what this server has;
 `histmersion media import <name>` runs a plugin's collection exactly like a built-in one — dry run, job,
 `--place`, `--refresh`.

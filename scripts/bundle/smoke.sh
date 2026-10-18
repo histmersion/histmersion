@@ -78,6 +78,11 @@ for line in "archive-org 1.0.0 — registered (source-fetcher:archive-org)" \
     "pmc 1.0.0 — registered (source-fetcher:pmc, source-fetcher:pmc-text)"; do
   grep -qF "$line" "$data/self-check.out" || fail "--self-check: not reported: $line"
 done
+# the built-in media collections and event catalogues (#2018 phase 6): registered by default
+for id in media-wikidata media-depicts media-met media-cleveland media-aic media-loc media-pleiades \
+    media-opencontext events-gvp events-noaa events-wikidata; do
+  grep -qE "^ *(- )?$id [0-9.]+ — registered" "$data/self-check.out" || fail "--self-check: $id is not registered"
+done
 printf 'histmersion.plugins.arxiv.enabled = false\n' > "$data/fetchers.conf"
 HISTMERSION_CONFIG="$data/fetchers.conf" "$b/bin/histmersion-server" --self-check > "$data/fetchers.out" 2>&1 \
   || fail "--self-check with arxiv switched off failed: $(cat "$data/fetchers.out")"
