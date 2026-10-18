@@ -3,7 +3,8 @@
 **Status:** research and design proposal for #2017, with two proof-of-concept spikes (§10). Phase 1
 (the SPI, the config contract, secrets and the built-in vaults) is built: §15 says what was built and
 where it differs from this proposal. Phase 2 (source fetchers; the unauthorised fallback removed) is
-built: §16. The spike code is in `spike/plugins/`, a standalone sbt build that
+built: §16. The in-place config reload (§3.5) and the hot component graph (§3.6) are built: §17. The
+spike code is in `spike/plugins/`, a standalone sbt build that
 the root build does not aggregate. Measurements were taken on this machine: Apple M4 Pro, 14 cores,
 48 GB RAM, macOS 26.7, GraalVM CE 25.0.1 (the `.sdkmanrc` pin), sbt 2.0.7. Statements I could not
 check are marked **(unverified)**. Everything quoted from the web was fetched on 2026-10-18.
@@ -634,7 +635,7 @@ plugins directory and compares the two. A first-party-only image has a fixed dig
    - **On failure:** move `server.prev` back, kickstart again and report the build log.
    - Keep one `.prev` for `histmersion plugin rollback`.
 
-Plugin config changes alone (`enabled = false`) need only a restart, not a relink.
+Plugin config changes alone (`enabled = false`) need only a config reload — no restart, no relink (§17).
 
 ## 8. Building the native image locally at setup
 
@@ -1227,3 +1228,147 @@ native binary lists the four as registered with their fetchers, and one switched
 
 **Not in phase 2:** fetchers for new repositories (§5.3 row 4), subscription fetchers, a per-step trace
 in the ingest report, moving the built-ins out of the server.
+
+## 17. As built (hot graph, 2026-10-18)
+
+#2018's §3.5 and §3.6: the config is reloaded in the running server, the database included, with no
+restart and no relink. There is no global or static JDBC any more.
+
+**Pure, in core.** `HotPlan` orders the graph (Kahn's algorithm, declaration order among independent
+nodes) and refuses a name used twice, a dependency on no node and a cycle (named: `a → c → b → a`);
+`plan(nodes, changed)` is the nodes whose declared key prefixes a changed key matches (the key, one
+under it, or a block above it) plus every dependent, in build order. `ConfigReload` diffs two merged
+configs leaf by leaf (`histmersion { … }` only; a list is one leaf), splits the changes into applied and
+restart-only, and builds the effective config: the new one with every restart-only key put back to its
+running value, so what the server reports is what it runs. `LoadedConfig` keeps the merged settings for
+this (`merged`). `ReloadReport` / `ReloadMarkdown` are the wire shape and its Markdown. Tests:
+`HotPlanSuite`.
+
+**The graph, in server (`server/hot`).**
+
+- `Hot[A]` is the stable handle: `use(f)` runs `f` on the value of the generation the calling thread is
+  pinned to, or pins the current generation for the call; `peek` reads without pinning; `latest` reads
+  the latest published value.
+- `HotGraph[C]` holds the nodes. `node(name, deps, keys, idle, onPublish)(build)` builds the first value
+  at once. Each value is built **in an Ox `supervised` scope of its own, on a virtual thread that holds
+  the scope open** until the value is retired; what the build acquires with `useInScope` /
+  `releaseAfterScope` is released when that scope ends — or at once when the build returns `Left` or
+  throws. `BuildCtx` gives the build the config, its dependencies' values in the generation being
+  built, and on a rebuild its own previous value and config and the changed keys.
+- `reload(next, changed)` rebuilds `HotPlan.plan`'s nodes in order into a new generation off to the
+  side; if all built, it is published with one `AtomicReference` swap (a generation is an immutable
+  snapshot: number, config, one instance per node), the `onPublish` hooks run **pinned to the new
+  generation**, and the replaced instances are retired dependents first. If one failed, what the reload
+  built is closed and nothing is published.
+- **Pins.** A pin counts a user on every instance of one snapshot (count, then check that it is still
+  the current snapshot — a reload that published meanwhile may already be draining it — else undo and
+  retry). It is a thread-local; work handed to another thread carries it explicitly (`carry`, a
+  `Carried` that is `run` or `drop`ped, releasing the pin either way). A retired instance is closed
+  when no pin holds it and its own `idle` check holds (a pool: no connection out). A reload waits
+  `config.drain-seconds` for that (not counting the reloading request's own pin) and then names what is
+  still in use in the report and the log; a background drainer closes it when it is free. Nothing is
+  closed under its user; at shutdown (`close`) what is still in use after the bound is closed with a
+  warning.
+- `Pinning` is the small interface the rest of the server sees (`pinned`, `carry`); `Pinning.none`
+  stands for "no graph" (a test's fixed `Deps`).
+
+Tests: `HotGraphSuite` — dependencies' values; a reload rebuilds the touched node and its dependents
+and carries the rest (the same instance), closing the old dependents first; a key no node declares
+publishes the config and rebuilds nothing; a failed build (and a build that throws) publishes nothing
+and closes what the reload built; a duplicate name is refused; a pinned user keeps its generation and
+the old values close only after it lets go (reported as draining at the bound); carried work runs on
+its generation, a dropped carry releases it; an `idle` check holds a retired pool open; `onPublish`
+runs on the new generation; a failed build's own resources are released at once.
+
+**The server's nodes (`ServerGraph`, `Main`).**
+
+```
+config ─► pool ─► migrations ─► query-pool
+                         └─────► leases
+       ─► plugins ─► acquisition
+       ─► watch
+```
+
+| node | keys | value | build |
+|---|---|---|---|
+| `pool` | `histmersion.db` | the application `HikariDataSource` | the bundle creates the database first (`Supervisor.reloadSource`); `Db.pool` in the node's scope; a connection is tried (no database → the build fails) |
+| `migrations` | — | the schema version | Flyway on the new pool, the database-level settings, an eviction, the background `ANALYZE` (a daemon fork of the node's scope) |
+| `query-pool` | `histmersion.query`, `histmersion.db` | `ReadOnlyPool(ds, own)` | the role provisioned on the new database, its own small pool; the loud fallback to the application pool as before |
+| `leases` | — | lease held | on a swap, the agent lease claimed on the new database before publishing, released on the old one when its generation closes; once published (`onPublish`), the new database's interrupted jobs failed and — when the lease is held — its runs reconciled and queued ones enqueued (`AgentsHandlers.adoptDatabase`), as a start does |
+| `plugins` | `histmersion.plugins`, `histmersion.acquire`, `histmersion.media.max-retry-after-seconds` | the plugin `Generation` | `Plugins.load(loaded, previous, changed)` — below |
+| `acquisition` | `histmersion.acquire`, `histmersion.media.max-retry-after-seconds` | `AcquireClients` | one HTTP client (TLS roots included), the upstream clients, the fetch chain of the plugins' generation |
+| `watch` | `histmersion.config` | watching | with `config.watch`, a `WatchService` on the config file's directory in a daemon fork of the node's scope; `watch-debounce-ms` after the last event it starts a reload on a thread of its own (never on the fork, which that reload may close) |
+
+**No static pool.** `object Db`'s cache keyed by (url, user) is gone: `Db.pool` / `Db.queryPool` build a
+new pool the caller owns; `Db.evict(ds)` and `Db.activeConnections(ds)` unwrap a pool from any
+`DataSource` that wraps one. The repos keep their `DataSource` parameter: `HotDataSource` is a
+`DataSource` whose every `getConnection` comes from the pool of the generation the calling thread is
+pinned to (else the current one), itself taken pinned, so a pool cannot close between being chosen and
+lending a connection. A connection taken before a swap stays on its pool, and that pool closes when its
+last connection came back (the `idle` check). This was preferred to a `Hot[DataSource]` in all 74
+signatures (every call site wrapped in `use` for nothing: the pin is per request or per job already) and
+to a delegating `Connection` (more surface; Hikari's active count already says when a pool is free).
+
+**`Deps`** is a class now: `cfg`, `configFile` and `plugins` are read from the graph at each call
+(the pinned generation's, else the current one), `ds`/`queryDs` are the two proxies, `pins` carries work
+to other threads, `reloader` is the reload. `Deps(cfg, ds[, queryDs])` builds a fixed one (tests).
+
+**Pinned work.** Every HTTP request — REST, MCP, pages — is pinned by a tapir `RequestInterceptor`
+(`PinRequests`; netty-sync runs the server logic on the request's thread). Carried to their threads: an
+OCR job (queued with its submitter's pin, its failure recorded on the same generation), an agent run
+(queued with its submitter's pin; the whole run is one unit — it finishes on the database it started
+on), the parallel steps of a run, a background job (`BackgroundJob.start`), a backup, a merge apply, a
+media job, the Retraction Watch refresh. The long-lived loops take a connection per unit of work and
+move at their next one: the managers' tick (pinned per tick), the engine's resume/stall check (pinned
+per pass), the lease renewal (unpinned, current database). Stopping a pool drops the pins of what was
+still queued (the rows stay queued in their database).
+
+**Config consumers.** Each handler reads `deps.cfg` where it uses it (`private def cfg`, never a `val`
+captured at construction); classes that took a config value take it by name (`cfg: => AgentsConfig` in
+the engine, the pipelines, the managers, the model picker, the plan pools and approvals; `BackupService`,
+`HttpConverterClient`, `SourcePictures`, `JavaMediaHttp`'s request timeout, the toolbox caps). So the
+agents' limits, the managers' settings (their tick interval included), media allowlists, quotas, the
+backup settings, the converter URL and the API key (the auth handler is always in the pipeline and
+reads the key per request) apply at once. The acquisition chain and its TLS trust are the
+`acquisition` node.
+
+**Restart-only** (`ConfigReload.RestartOnly`; kept at the running value, listed in the report):
+`server.host`, `server.port`, `server.request-timeout-seconds`, `runtime.*`, `agents.enabled`,
+`agents.max-concurrent-runs`, `agents.max-llm-calls-in-flight`, `converter.parallelism`. **The listening
+port stays restart-only** rather than a second listener started before the old one stops: the port is
+also in the LaunchAgent, `.mcp.json` and the public URL, which a reload cannot change, a second netty
+bind would need the whole pipeline (auth, run tokens, pinning) rebuilt for a few seconds' gain, and a
+LaunchAgent restart is cheap. The environment is the one read at startup (a native image reads it
+through StackValue on the main thread): a reload re-reads the file only.
+
+**Plugins: only what changed (§3.5).** `PluginHost.build` takes `carried`: plugins whose status and
+contributions are taken over as they are, in their place in the order, without decoding, resolving or
+registering them again. `Plugins.carried(previous, changed)` carries a plugin when its
+`histmersion.plugins.<id>` block did not change and it was disabled, or registered with no secret in its
+config. All are rebuilt when `plugins.order` changed, the whole block, a host key the built-ins read
+(`acquire.*`), or the block of a plugin that registered a secret vault. A plugin holding a secret is
+never carried (§3.7: a rotated password needs only a reload); a failed one is retried. `Generation`
+records `contributions` (per plugin), `rebuilt` (the report's `plugins`) and `withSecrets`. Tests in
+`PluginHostSuite`.
+
+**Triggers.** `histmersion config reload` (exit 2 when an error left the config unchanged), `POST
+/api/config/reload` (always 200; the report says whether anything was published), the MCP tool `config`
+(`action: "reload"`; one tool more), and the watcher (`config.watch`, default off). A server started
+without a config source (a test's) answers with an error that it has no config file to reload.
+
+**Tests stop needing the global cache.** `DbSuite` (db test sources): each suite owns its pools —
+`testPool(cfg)`, `testQueryPool(db, q)`, one per database and role, closed after the suite's own
+`afterSuite` clean-up (`afterAll` is final there). The suites run one at a time, so a run holds one
+suite's pools plus those of the servers it starts; `Main.server` now needs an Ox scope, and the
+server's pools, job pool and agents close with it. `HotReloadSuite` (server, against two databases it
+creates on the test cluster): an OCR job held in its conversion and a request in flight on database A
+across a swap to B finish on A (the job's row and source are in A, not B); new requests and jobs go to B;
+B was migrated; the reload reports the held generation as draining and the server holds no connection
+to A once it drained. A file that does not parse, a database that is not there and a mistyped value
+each change nothing. A changed `plugins.pmc.enabled` registers `pmc` alone again (rebuilding `plugins`
+and `acquisition`), a hot key applies and `server.port` is reported restart-only.
+
+**Not done.** The managers' and the engine's threads are not tested across a swap with agents on (a
+test server never enables the agents — that would generate runtime trees and need models); they take a
+connection per unit of work and are pinned per tick and per run, which the job and request tests
+exercise through the same mechanism. A second listener for a changed port (above).

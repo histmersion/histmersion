@@ -125,6 +125,35 @@ echo "$st" | grep -q "| done |" || fail "the first-run init job did not finish: 
 "$b/bin/histmersion" places search Anatolia | grep -q "anatolia" || fail "no gazetteer after the first start"
 "$b/bin/histmersion" places sources | grep -q "geonames" || fail "the bundle pins no gazetteer extracts (db/gazetteer/extracts.json)"
 
+echo "→ config reload, no restart: a hot key, a database swap and back, a restart-only key"
+conf() { printf 'histmersion {\n  server.port = 18999\n  smoke-typo = 1\n%b}\n' "$1" > "$data/histmersion.conf"; }
+reload() { "$b/bin/histmersion" config reload 2>&1; }
+conf '  limits.search = 7\n  agents.max-concurrent-runs = 2\n'
+out="$(reload)" || fail "config reload (hot key): $out"
+echo "$out" | grep -q "Config reloaded" || fail "no new generation: $out"
+echo "$out" | grep -q -- "- histmersion.limits.search" || fail "the hot key is not reported applied: $out"
+echo "$out" | grep -A3 "after a restart" | grep -q -- "- histmersion.agents.max-concurrent-runs" \
+  || fail "the restart-only key is not reported as such: $out"
+# the database: a name of its own in the bundled cluster — created, migrated, swapped to, while the
+# server keeps running; the gazetteer is not there, and is there again after swapping back
+conf '  limits.search = 7\n  agents.max-concurrent-runs = 2\n  db.url = "jdbc:postgresql://localhost:5432/histmersion_smoke_b"\n'
+out="$(reload)" || fail "config reload (database): $out"
+for n in pool migrations query-pool leases; do echo "$out" | grep -q -- "- $n" || fail "$n not rebuilt: $out"; done
+"$b/bin/histmersion" health | grep -q "db ok" || fail "health after the database swap"
+"$b/bin/histmersion" places search Anatolia | grep -q "anatolia" && fail "still on the first database after the swap"
+"$b/bin/histmersion" query "select current_database() as db, count(*) > 50 as migrated from flyway_schema_history" \
+  | grep "histmersion_smoke_b" | grep -q "true" || fail "the new database was not migrated (or /api/query is not on it)"
+conf '  limits.search = 7\n  agents.max-concurrent-runs = 2\n'
+out="$(reload)" || fail "config reload (back): $out"
+"$b/bin/histmersion" places search Anatolia | grep -q "anatolia" || fail "not back on the first database"
+# a broken file changes nothing, and says so (exit 2)
+printf 'histmersion { db.url = \n' > "$data/histmersion.conf"
+rc=0; out="$(reload)" || rc=$?
+[ "$rc" = 2 ] || fail "a broken config reload exited $rc, not 2: $out"
+"$b/bin/histmersion" places search Anatolia | grep -q "anatolia" || fail "a broken reload moved the server"
+conf '  limits.search = 7\n  agents.max-concurrent-runs = 2\n'
+echo "  reloaded in place: a hot key, the database there and back, a restart-only key reported; a broken file refused"
+
 echo "→ OCR, offline, bundled models"
 pdf="$data/sample.pdf"
 "$b/converter/python/bin/python3" - "$pdf" <<'PY'
