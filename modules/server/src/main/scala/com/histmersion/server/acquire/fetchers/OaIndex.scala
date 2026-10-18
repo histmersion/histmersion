@@ -6,42 +6,50 @@ import com.histmersion.server.acquire.{FetchedFile, Http, OaFetch, OpenAlexCross
 
 import io.circe.Json
 
-/** The `oa-index` plugin's four fetchers, all by DOI: Unpaywall's best OA location, CORE's download
-  * URLs (with a key), OpenAlex's OA locations, and the repository landing pages those indexes and
-  * DataCite name (#1580). The Unpaywall and OpenAlex records are asked once per work and shared by the
-  * direct steps and the landing step, through the fetch's memo. */
+/** The fetchers of the four open-access index plugins (D4), all by DOI: Unpaywall's best OA location
+  * (`oa-unpaywall`), CORE's download URLs with a key (`oa-core`), OpenAlex's OA locations (`oa-openalex`),
+  * and the repository landing pages those indexes and DataCite name (`oa-landing`, #1580). One instance
+  * per plugin generation, shared by the four plugins: the Unpaywall and OpenAlex records are asked once
+  * per work and shared by the direct steps and the landing step, through the fetch's memo (keys
+  * `oa:<what>:<doi>` — no one plugin owns them). */
 final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => OpenAlexCrossref):
   import Fetching.*
 
   /** The OA indexes' records of one DOI, asked lazily and at most once per fetch. */
   private final class OaRecords(val doi: String):
-    // Unpaywall answers 422 to a request without an e-mail, so without a contact it is not asked
-    lazy val unpaywall: Option[Json] =
-      cfg.contact.flatMap(email => http().json(Url(cfg.unpaywall.url, s"/$doi", "email" -> email)).toOption)
     lazy val openalex: Option[Json] = openalexClient().raw(doi).toOption
     /** Where DataCite says the DOI resolves — `None` for a DOI it does not register (a Crossref one). */
     lazy val datacite: Option[String] = dataciteUrl(doi)
 
   private def records(ctx: FetchContext, doi: String): OaRecords =
-    ctx.memo(s"oa-index:records:$doi")(OaRecords(doi))
+    ctx.memo(s"oa:records:$doi")(OaRecords(doi))
+
+  /** Unpaywall's record of `doi`, asked with `email` at most once per fetch. Unpaywall answers 422 to a
+    * request without an e-mail, so without one it is not asked. The `unpaywall` step and the landing
+    * step share it when they use the same contact (the default: both Histmersion's `acquire.contact-email`). */
+  private def unpaywallRecord(ctx: FetchContext, doi: String, email: Option[String]): Option[Json] =
+    email.flatMap(e => ctx.memo(s"oa:unpaywall:$e:$doi")(http().json(Url(cfg.unpaywall.url, s"/$doi", "email" -> e)).toOption))
 
   private def byDoi(step: String)(f: (FetchContext, String) => Option[FetchedFile]): SourceFetcher =
     open((work: WorkKey, ctx: FetchContext) =>
       work.doi.fold[Fetch](Fetch.Miss(s"$step needs a DOI"))(d => answer(f(ctx, d), s"$step has no copy of $d")))
 
-  val unpaywall: SourceFetcher = byDoi("unpaywall")((ctx, d) => unpaywallPdf(records(ctx, d)))
-  val core: SourceFetcher      = byDoi("core")((_, d) => corePdf(d))
-  val openalex: SourceFetcher  = byDoi("openalex")((ctx, d) => openalexOa(records(ctx, d)))
-  val landing: SourceFetcher   = byDoi("landing")((ctx, d) => landingPdf(records(ctx, d)))
+  /** `unpaywall`, asking with `email` (the plugin's `contact-email`, else Histmersion's). */
+  def unpaywall(email: Option[String]): SourceFetcher =
+    byDoi("unpaywall")((ctx, d) => unpaywallPdf(unpaywallRecord(ctx, d, email)))
+  /** `core`, with CORE's API key; without one it is never asked (a miss). */
+  def core(key: Option[String]): SourceFetcher = byDoi("core")((_, d) => corePdf(d, key))
+  val openalex: SourceFetcher = byDoi("openalex")((ctx, d) => openalexOa(records(ctx, d)))
+  val landing: SourceFetcher  = byDoi("landing")((ctx, d) => landingPdf(records(ctx, d), unpaywallRecord(ctx, d, cfg.contact)))
 
-  private def unpaywallPdf(r: OaRecords): Option[FetchedFile] =
-    r.unpaywall.toList.map(AcquireParse.unpaywall)
+  private def unpaywallPdf(record: Option[Json]): Option[FetchedFile] =
+    record.toList.map(AcquireParse.unpaywall)
       .flatMap(_._1)
       .flatMap(u => tryUrl(http(), "unpaywall", u))
       .headOption
 
-  private def corePdf(doi: String): Option[FetchedFile] =
-    cfg.core.key.flatMap { key =>
+  private def corePdf(doi: String, key: Option[String]): Option[FetchedFile] =
+    key.flatMap { key =>
       http().json(Url(cfg.core.url, "/search/works", "q" -> s"""doi:"$doi"""", "limit" -> "1"),
         Map("Authorization" -> s"Bearer $key")).toOption
         .toList.flatMap(AcquireParse.coreDownloadUrls)
@@ -66,14 +74,14 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
     * DataCite DOI resolves to. A `doi.org` link is never followed blind (it may land on a publisher):
     * a Zenodo DOI goes to Zenodo's API, any other is replaced by where DataCite says it resolves, and
     * a DOI DataCite does not know is skipped. */
-  private def landingPdf(r: OaRecords): Option[FetchedFile] =
+  private def landingPdf(r: OaRecords, unpaywall: => Option[Json]): Option[FetchedFile] =
     if !cfg.landing.enabled then None
     else
       val rules = cfg.landing.rules
       val doiUrl = s"https://doi.org/${r.doi}"
       val indexed = RepositoryLanding.distinct(
         RepositoryLanding.zenodoRecordId(r.doi).map(_ => RepositoryLanding.Candidate(doiUrl, true)).toList ++
-          r.unpaywall.toList.flatMap(RepositoryLanding.unpaywallCandidates) ++
+          unpaywall.toList.flatMap(RepositoryLanding.unpaywallCandidates) ++
           r.openalex.toList.flatMap(RepositoryLanding.openalexCandidates))
       def viaDoi(c: RepositoryLanding.Candidate): LazyList[RepositoryLanding.Candidate] =
         val isDoi = RepositoryLanding.host(c.url).exists(h => h == "doi.org" || h == "dx.doi.org")

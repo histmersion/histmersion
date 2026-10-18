@@ -170,7 +170,8 @@ object PluginTool:
     val discovered = PluginHost.discover(loader)._1.map(_.info.id)
     val builtins   = Try(Plugins.builtins(AppConfig.load(ConfigFactory.empty("plugin-tool")), () => sys.error("no HTTP here")).map(_.info.id))
       .getOrElse(Nil)
-    (discovered ++ builtins).map(_ -> "this Histmersion (a first-party plugin)").toMap
+    (discovered ++ builtins).map(_ -> "this Histmersion (a first-party plugin)").toMap ++
+      LegacyPlugins.All.map(s => s.id -> s"this Histmersion (a former first-party plugin, now ${s.into.mkString(", ")})")
 
   private def kitClassPath(kit: Path): List[Path] =
     val order = kit.resolve("classpath")

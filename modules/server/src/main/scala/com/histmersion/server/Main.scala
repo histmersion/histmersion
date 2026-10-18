@@ -137,7 +137,8 @@ object Main:
 
   /** The acquisition clients for one config and one plugin generation: one HTTP client (`acquire.tls`
     * included), the upstream clients built over it, and the chain of the generation's source fetchers
-    * (the built-in archive-org, oa-index, pmc and arxiv unless switched off) in `acquire.chain` order. */
+    * (the built-in archive-org, oa-unpaywall, oa-core, oa-openalex, oa-landing, pmc and arxiv unless
+    * switched off) in `acquire.chain` order. */
   private def acquireClients(app: AppConfig, plugins: Generation): AcquireClients =
     val cfg = app.acquire
     // the one outbound policy's Retry-After cap is the media one (`media.max-retry-after-seconds`)

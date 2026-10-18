@@ -28,13 +28,22 @@ object Plugins:
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     // ONE acquisition client for every plugin and built-in fetcher of this generation, built on first use
     lazy val http = acquisitionHttp(loaded.config)
-    val g = PluginHost.build(found ++ builtins(loaded.config, () => http), loaded.user, loaded.env,
-      services(() => HttpPlugin(http), loaded.env), errors, previous.fold(Map.empty)(carried(_, changed)))
+    val all = found ++ builtins(loaded.config, () => http)
+    // a split plugin's former settings (oa-index) mapped onto its successors, with a deprecation warning
+    val legacy = LegacyPlugins.migrate(loaded.user, loaded.env, defaultKeys(all))
+    val g = PluginHost.build(all, legacy.user, legacy.env,
+      services(() => HttpPlugin(http), loaded.env), errors ++ legacy.warnings, previous.fold(Map.empty)(carried(_, changed)))
     // the user-added plugin set this binary was linked with (a relink writes it; none in a stock image)
     val (set, setError) = PluginSetResource.load(getClass.getClassLoader) match
       case Right(s) => (s, Nil)
       case Left(e)  => (None, List(e))
     g.copy(report = g.report.copy(set = set, warnings = g.report.warnings ++ setError))
+
+  /** The keys each plugin's defaults resource declares (`enabled` aside): where a former plugin's key goes. */
+  def defaultKeys(plugins: List[Plugin]): String => Set[String] =
+    val keys = plugins.map(p => p.info.id ->
+      PluginHost.defaults(p).toOption.map(_.root.keySet.asScala.toSet - "enabled").getOrElse(Set.empty[String])).toMap
+    id => keys.getOrElse(id, Set.empty)
 
   /** The plugins of `previous` a reload that changed `changed` may carry over unchanged. Pure.
     *
@@ -46,7 +55,8 @@ object Plugins:
   def carried(previous: Generation, changed: List[String],
       independent: Set[String] = BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds): Map[String, (PluginStatus, Registries)] =
     val relevant = changed.filter(k => Keys.exists(HotPlan.keyMatches(k, _)))
-    val ids      = relevant.map(pluginId)
+    // a former plugin's key (oa-index) concerns its successors
+    val ids      = relevant.map(pluginId).flatMap(_.fold(List(Option.empty[String]))(id => LegacyPlugins.expand(id).map(Some(_))))
     val vaults   = previous.contributions.collect { case (id, r) if r.secretVaults.nonEmpty => id }.toSet
     val whole    = relevant.exists(k => HotPlan.keyMatches(k, PluginHost.Root))
     if ids.flatten.exists(vaults) || (whole && ids.contains(None)) then Map.empty
@@ -66,7 +76,8 @@ object Plugins:
       case _ => None
 
   /** The plugins the host itself supplies, each its own plugin, enabled by default and switched off like
-    * any other: today's acquisition steps (`archive-org`, `oa-index`, `pmc`, `arxiv`), media collections
+    * any other: today's acquisition steps (`archive-org`, the open-access indexes `oa-unpaywall`, `oa-core`,
+    * `oa-openalex`, `oa-landing`, then `pmc`, `arxiv`), media collections
     * (`media-wikidata`, `media-depicts`, `media-met`, … — [[BuiltinMedia]]) and event catalogues
     * (`events-gvp`, `events-noaa`, `events-wikidata` — [[BuiltinCatalogues]]). */
   def builtins(cfg: AppConfig, http: () => Http): List[Plugin] =

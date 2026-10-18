@@ -62,7 +62,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     val all = Plugins.builtins(com.histmersion.core.AppConfig.load(), () => fail("no HTTP at registration"))
     val g   = build(all)
     assert(g.report.ok, g.report.toString)
-    assertEquals(g.report.plugins.size, 4 + 8 + 3)
+    assertEquals(g.report.plugins.size, 7 + 8 + 3) // fetchers (four open-access indexes, D4), collections, catalogues
 
   test("a built-in switched off is out of its registry; the import names the switch"):
     val g = build(Plugins.providers, "histmersion.plugins { media-met.enabled = false, events-noaa.enabled = false }")
