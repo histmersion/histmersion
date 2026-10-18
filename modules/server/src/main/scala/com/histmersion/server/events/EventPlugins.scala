@@ -77,7 +77,7 @@ object PluginEvents:
 
   private val Qid = "^Q[1-9][0-9]*$"
 
-  /** Pure: the limits of a plugin catalogue's dating — the present, and the catalogue's own
+  /** The limits of a plugin catalogue's dating (pure but for asking the plugin) — the present, and the catalogue's own
     * [[EventCatalogue.floorYear]] (`None` when it states none, throws, or is not registered now: a
     * dating stored under a floor is already held at it, so a looser limit changes nothing). */
   def limits(catalogue: Option[EventCatalogue], present: Long): CatalogDating.Limits =
