@@ -39,6 +39,10 @@ object BuiltinFetchers:
   /** The ids of the open-access index plugins, in the order the chain asks their fetchers. */
   val OaIndexes: List[String] = List("oa-unpaywall", "oa-core", "oa-openalex", "oa-landing")
 
+  /** The plugins whose state the landing step reads (it reads Unpaywall's and OpenAlex's records only
+    * while their plugins are on): carried over a reload together or rebuilt together. */
+  val LandingGroup: Set[String] = Set("oa-unpaywall", "oa-openalex", "oa-landing")
+
   /** The plugins, over the host's acquisition settings and clients. The clients are asked for only
     * when a fetch runs: registering opens nothing (`--self-check`). */
   def plugins(cfg: AcquireConfig, http: () => Http, openalex: () => OpenAlexCrossref,
@@ -47,11 +51,12 @@ object BuiltinFetchers:
     List(
       Builtin("archive-org", ctx => ctx.sourceFetchers.add("archive-org", ArchiveOrgFetcher(archive))),
       BuiltinWith[UnpaywallConfig]("oa-unpaywall", (c, ctx) =>
-        ctx.sourceFetchers.add("unpaywall", oa.unpaywall(c.email.orElse(cfg.contact)))),
+        val email = c.email.orElse(cfg.contact)
+        ctx.sourceFetchers.add("unpaywall", oa.unpaywall(email)).map(_ => oa.unpaywallRegistered(email))),
       BuiltinWith[CoreConfig]("oa-core", (c, ctx) =>
         c.apiKey.fold[Either[String, Option[String]]](Right(cfg.core.key))(s => ctx.secret(s).map(CoreConfig.nonBlank))
           .flatMap(key => ctx.sourceFetchers.add("core", oa.core(key)))),
-      Builtin("oa-openalex", ctx => ctx.sourceFetchers.add("openalex", oa.openalex)),
+      Builtin("oa-openalex", ctx => ctx.sourceFetchers.add("openalex", oa.openalex).map(_ => oa.openalexRegistered())),
       Builtin("oa-landing", ctx => ctx.sourceFetchers.add("landing", oa.landing)),
       Builtin("pmc", ctx =>
         val pmc = Pmc(cfg, http)

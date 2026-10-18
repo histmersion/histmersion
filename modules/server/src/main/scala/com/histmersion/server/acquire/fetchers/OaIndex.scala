@@ -11,9 +11,28 @@ import io.circe.Json
   * and the repository landing pages those indexes and DataCite name (`oa-landing`, #1580). One instance
   * per plugin generation, shared by the four plugins: the Unpaywall and OpenAlex records are asked once
   * per work and shared by the direct steps and the landing step, through the fetch's memo (keys
-  * `oa:<what>:<doi>` — no one plugin owns them). */
+  * `oa:<what>:<doi>` — no one plugin owns them).
+  *
+  * The landing step reads an index's record ON BEHALF OF that index's plugin (§20.2): Unpaywall's only
+  * when `oa-unpaywall` registered in this generation, asked with that plugin's contact; OpenAlex's only
+  * when `oa-openalex` did. With neither it works from the DOI alone — a Zenodo DOI's record, the page
+  * DataCite says the DOI resolves to. The two plugins say so as they register ([[unpaywallRegistered]],
+  * [[openalexRegistered]]); [[com.histmersion.server.plugins.Plugins.carried]] rebuilds the three together
+  * on a reload, so a carried landing step never reads the state of a generation that has gone. */
 final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => OpenAlexCrossref):
   import Fetching.*
+
+  /** What the landing step may read, as the index plugins of this generation registered: `Some(contact)`
+    * once `oa-unpaywall` registered (its contact, `None` when it has none), and whether `oa-openalex` did.
+    * Written only while the generation is built (one register call at a time), read by fetches after;
+    * atomics so a fetch on another thread sees the build's writes. */
+  private val unpaywallFor = java.util.concurrent.atomic.AtomicReference[Option[Option[String]]](None)
+  private val openalexFor  = java.util.concurrent.atomic.AtomicBoolean(false)
+
+  /** `oa-unpaywall` registered its fetcher, asking with `email`: the landing step may read its record. */
+  def unpaywallRegistered(email: Option[String]): Unit = unpaywallFor.set(Some(email))
+  /** `oa-openalex` registered its fetcher: the landing step may read OpenAlex's record. */
+  def openalexRegistered(): Unit = openalexFor.set(true)
 
   /** The OA indexes' records of one DOI, asked lazily and at most once per fetch. */
   private final class OaRecords(val doi: String):
@@ -40,7 +59,10 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
   /** `core`, with CORE's API key; without one it is never asked (a miss). */
   def core(key: Option[String]): SourceFetcher = byDoi("core")((_, d) => corePdf(d, key))
   val openalex: SourceFetcher = byDoi("openalex")((ctx, d) => openalexOa(records(ctx, d)))
-  val landing: SourceFetcher  = byDoi("landing")((ctx, d) => landingPdf(records(ctx, d), unpaywallRecord(ctx, d, cfg.contact)))
+  /** `landing`: the indexes' records only of the index plugins registered, Unpaywall's with the very
+    * contact (so the very memo key) `oa-unpaywall` asks with — one request per upstream per work. */
+  val landing: SourceFetcher = byDoi("landing")((ctx, d) =>
+    landingPdf(records(ctx, d), unpaywallFor.get.flatMap(e => unpaywallRecord(ctx, d, e)), openalexFor.get))
 
   private def unpaywallPdf(record: Option[Json]): Option[FetchedFile] =
     record.toList.map(AcquireParse.unpaywall)
@@ -73,8 +95,9 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
     * Zenodo record of a Zenodo DOI, the OA indexes' repository and landing locations, then the page a
     * DataCite DOI resolves to. A `doi.org` link is never followed blind (it may land on a publisher):
     * a Zenodo DOI goes to Zenodo's API, any other is replaced by where DataCite says it resolves, and
-    * a DOI DataCite does not know is skipped. */
-  private def landingPdf(r: OaRecords, unpaywall: => Option[Json]): Option[FetchedFile] =
+    * a DOI DataCite does not know is skipped. `unpaywall` is Unpaywall's record (`None` when its plugin
+    * is off); `openalex` says whether OpenAlex's record may be read (its plugin on). */
+  private def landingPdf(r: OaRecords, unpaywall: => Option[Json], openalex: Boolean): Option[FetchedFile] =
     if !cfg.landing.enabled then None
     else
       val rules = cfg.landing.rules
@@ -82,7 +105,7 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
       val indexed = RepositoryLanding.distinct(
         RepositoryLanding.zenodoRecordId(r.doi).map(_ => RepositoryLanding.Candidate(doiUrl, true)).toList ++
           unpaywall.toList.flatMap(RepositoryLanding.unpaywallCandidates) ++
-          r.openalex.toList.flatMap(RepositoryLanding.openalexCandidates))
+          (if openalex then r.openalex.toList else Nil).flatMap(RepositoryLanding.openalexCandidates))
       def viaDoi(c: RepositoryLanding.Candidate): LazyList[RepositoryLanding.Candidate] =
         val isDoi = RepositoryLanding.host(c.url).exists(h => h == "doi.org" || h == "dx.doi.org")
         if !isDoi || RepositoryLanding.zenodoRecordId(c.url).isDefined then LazyList(c)
