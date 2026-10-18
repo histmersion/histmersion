@@ -35,7 +35,9 @@ ServiceLoader, and registered, ordered and reported like any other plugin (§16)
 A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit
 (`server/relinkKit`: the Sloth-patched class path and `serverNativeOpts`, the ONE list of native-image
 flags) — or run on the JVM (`bin/histmersion-server-jvm`); `histmersion plugin …` manages them on the
-local machine and never touches the database (§18).
+local machine and never touches the database (§18). With GPG provenance on, the service starts
+`libexec/histmersion-server-verified`, which checks the binary's signed SHA-256 first; off, it starts the
+binary directly — keep both paths working when touching the installers or the relink (§21.3).
 
 **The CLI must never gain a dependency on `db`.** No pgjdbc in the CLI binary, no database
 credentials on the host. Every CLI command — reads and writes both — goes over HTTP through an sttp

@@ -1339,6 +1339,20 @@ same kit and plugins on a JDK (`bin/histmersion-server-jvm`, `HISTMERSION_JVM_OP
 plugins found at every start — adding one then needs a restart, not a relink. `plugin rebuild` returns
 to a native binary.
 
+**Relink kits from CI.** Every bundle carries its kit, so a relink never needs the source. A release also
+publishes each platform's kit on its own, next to the bundle: `histmersion-<tag>-<platform>-kit.tar.zst`
+(~100 MB: `kit/`, `libexec/` and the relink scripts), its `.sha256`, and its `kit.json` as `-kit.json`
+(version, commit, GraalVM version, plugin SPI, every file's SHA-256). A manual run of the `bundle` workflow
+keeps the same three as a workflow artifact for 7 days. Use it to repair an install whose kit no longer
+matches its `SHA256SUMS` (the relink refuses it) without downloading the ~1 GB bundle again — always the
+kit of the version you have installed (`histmersion about` shows it; `kit.json` names its own):
+
+```bash
+shasum -a 256 -c histmersion-v1.2.0-macos-arm64-kit.tar.zst.sha256
+zstd -dc histmersion-v1.2.0-macos-arm64-kit.tar.zst | tar -C ~/Applications/Histmersion -xf -
+histmersion plugin rebuild
+```
+
 **Signing is optional.** Without it binaries are ad-hoc signed, as before. `histmersion-signing
 setup-macos` creates a self-signed code-signing identity in your login keychain (only when you run it,
 after asking): relinked binaries then keep one designated requirement, so macOS privacy permissions
@@ -1348,6 +1362,22 @@ use), the plugins directory's manifest is signed and verified before every relin
 start (a jar dropped in afterwards is refused until you `plugin add` it), and each relinked binary's
 SHA-256 is signed. Passphrases stay with gpg-agent; only the key's fingerprint is stored
 (`<data>/signing/gpg-key`). `histmersion-signing status` shows what is set up.
+
+With GPG provenance on, **the service verifies the server binary at every start**: `use-gpg` signs the
+installed binary's SHA-256 (and the previous one's) and points the LaunchAgent / systemd unit at
+`libexec/histmersion-server-verified`, which starts `bin/histmersion-server` only when its SHA-256 is the
+signed one, and otherwise logs why to `server.log` and does not start it (exit 78; the service manager
+retries, so a fix is picked up by itself). Relinks, JVM mode and rollbacks carry the signed record with
+their binary; a rollback to a binary without one is refused. `histmersion-signing sign-binary` signs the
+installed binary when you trust it (e.g. after a manual change); `off-gpg` points the service back at the
+binary. Without GPG provenance the service starts the binary directly, exactly as before. Installers make
+the same choice; if they cannot sign (no secret key, pinentry cancelled) they start the binary unverified
+and say so.
+
+Whether a privacy permission granted to a binary signed by an **untrusted** self-signed identity
+(`setup-macos --no-trust`) survives a relink needs a real macOS prompt to find out:
+`scripts/bundle/tcc-check.sh` runs that check once (`start`, click Allow, `relink`, `control`, `cleanup`)
+with a throw-away probe and LaunchAgent, never the server's.
 
 ## Backup and restore
 
