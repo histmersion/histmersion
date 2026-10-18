@@ -281,3 +281,89 @@ Branch `managers-phase3`. No migration: everything new lives in the V087 columns
   watcher's sweeps travel in a bundle), web unit suites and a browser test (the watch box, the day's spend, the
   Sweeps section).
 
+
+## As built: the autopilot (2026-10-19)
+
+Branch `autopilot`. Goal: a research goal goes from `planned` to `reviewed` with no person in the loop, inside
+the rails the managers already had (budgets, plan floors, `dailyUsd`, `max-concurrent-runs`, `maxRuns`, legal
+open access only, stop rules that file tasks). **V096** `agent_autopilot` — one row: the switch, who/when, the
+managers it paused when turned off, and when it last ensured / backed up / linted (so a restart does not repeat a
+daily job). V092 and V095 stay unused.
+
+What already worked and was kept: the review chain after a compile (`chainReview = false` + a chained review
+item), the stale re-review, the watcher's opt-in legal auto-ingest with its daily cap, cron firing, the
+article-filter `auto` mode, and every stop rule.
+
+- **The switch.** `histmersion agent autopilot [status|on|off] [--json]`, `GET|POST /api/agents/autopilot
+  {on, by?}`, the MCP `manager` tool's `autopilot` action (`on: true|false`; no new tool — still 68), and the
+  Managers window's toggle (the new state shows at once; the server's answer follows). On: `review` and `enrich`
+  are resumed, and every tick (`AutopilotService.tick`, at most every `agents.autopilot.ensure-minutes`, at once
+  on `on` and after a plan created sub-goals) applies `AutopilotPolicy.ensure` and `AutopilotPolicy.advance`.
+  Off: every ACTIVE seeding manager and watcher is paused and remembered; `on` again resumes exactly those —
+  a manager a person paused is never resumed, a setting a person chose is never overwritten (only an unset
+  cron, auto-ingest or extend threshold is filled). While it is on, a manager created without an explicit
+  `paused` (the New research area form, the Extend/Enrich buttons) is created active.
+- **Ensure** (pure, `AutopilotPolicy.ensure`): every goal not `reviewed`/`done` gets `seed:<g>` and `watch:<g>`,
+  both active; a reviewed/done goal only a watcher on `finished-watch-cron` (`@monthly`). Watchers get
+  `autoIngest = on` at `watch-ingest-per-day` (5). Crons `@daily/@weekly/@monthly` are spread per manager id
+  (`AutopilotPolicy.stagger`: minute, hour and weekday/day-of-month from a stable hash), so 60+ watchers do not
+  fire in one minute. **Sub-goals:** every goal gets its own managers — leaves and parents alike — and
+  `propose-articles` now measures overlap (and lists "its articles") over the goal, its ancestors and its
+  descendants, and their seeding managers' planned compiles, so parent and child do not plan the same article.
+- **Planned = no plan yet.** A goal that records no plan and links no query gets a `plan-goal` item (new item
+  kind of the seeding manager, priority 1) before its first `propose-articles` (`ManagerPolicy.waitsFor`). Its
+  run is the existing blocking plan-goal; with `subGoals = Some(0)` (`RunParams.subGoals`) when the goal is at
+  `agents.approvals.auto.max-goal-depth` (2) — the planner is told to propose queries and works only — so an
+  auto-approved plan cannot nest goals forever. An approved plan's sub-goals get their managers at the next tick.
+- **Checked auto approvals** (`AutoApprovals`, every tick, before evaluation): an OPEN `article-plan`,
+  `goal-plan` or `article-publish` approval is decided by code when `agents.approvals.article-plan|goal-plan =
+  auto` (or `checked`), `agents.approvals.article-publish = checked`, or the `autoApprove` setting of the
+  manager whose run opened it (wins either way). Checks (`AutopilotPolicy.articlePlan|articlePublish|goalPlan`,
+  against the corpus as it is NOW): plan — every slug still free and every filter ≥ min-sources; publish — the
+  run recorded a filter (its `snapshot` checkpoint), the filter returned ≥ `publish-min-sources` (its `filter`
+  checkpoint), the self-check left no problem, it cites a source, a new slug is still free; goal plan — proposes
+  something, sub-goals only above the depth limit. Caps per UTC day (counted from the approvals noted
+  `autopilot: approved`): `articles-per-goal-per-day` 6, `publish-per-day` 10, `goal-plans-per-day` 5. The
+  decision goes through `AgentsHandlers.decide` — exactly a person's click (a blocking run is woken; an approved
+  plan becomes compile items) — with the note `autopilot: approved|rejected — why`, an `approval` event on the
+  manager and a worklog line; to undo: skip the compile items, or `article versions`/restore the article. A
+  reached cap leaves it open (one event per change) for a person or the next day. A draft the checks REJECTED is
+  compiled again (`StepFacts.Redo` → retry with backoff, a task after `max-failures`). **Deviation:**
+  `article-publish = auto` keeps its old meaning (approved inside the run, unchecked); `checked` is the gated
+  one, because changing `auto` would have silently gated existing installs. Shipped defaults stay `manual`.
+- **Goal status** (pure `AutopilotPolicy.advance`, applied deepest goal first, only while on, forward only,
+  `done` untouched): `seeding` once its seeding manager or watcher is active; `compiled` once it has an article
+  (a parent: once its sub-goals are compiled) and its seeding manager has no compile open (nor a plan/proposal
+  held or running); `reviewed` once every linked article has a ledger with no open MAJOR and no open review
+  item, and every sub-goal is reviewed. Logged as an `autopilot` event and a worklog line.
+- **New sources reach articles.** Stale selection only re-reviewed. Now the review manager's refill also looks
+  (at most every `stale-scan-minutes`) for articles whose filter returns ≥ `extendMinNew` sources they neither
+  cite nor give a reason for (`Handlers.newFilterSources`, over the first `limits.coverage-sources`), not
+  extended within `extend-cooldown-days` (14) and with no open item: an `article-extend` item (selection), whose
+  review follows as a chained item. `agents.managers.review.extend-min-new` ships 0 (off); the autopilot sets
+  the review manager's `extendMinNew` to `agents.autopilot.extend-min-new` (3) when it has none.
+- **Shared caps.** A watcher's sweep ingests at most min(its own allowance, `agents.autopilot.ingest-per-day`
+  minus every watcher's `ingested` events today) while the autopilot is on. Model spend stays bounded by what
+  already existed: `max-concurrent-runs`, the budgets, plan floors, `dailyUsd`, `maxRuns` per manager.
+- **Dispatch guard narrowed for goals.** A goal's plan, proposal and sweeps used to wait for any unsettled run
+  on the goal — a plan waiting days for a person stopped the goal's watcher. Now (`ManagerPolicy.blocks`) a
+  goal-targeted item waits only for a run of its own pipeline; articles and sources keep one writer at a time.
+- **Housekeeping** (only while on; each on its own thread, one at a time, never beside a restore, a backup or a
+  vacuum — `Handlers.housekeepingBlock`; pg_dump reads one snapshot, so ingests and runs beside it are fine):
+  a backup every `backup-hours` (24; `backups.keep` prunes as usual) and the safe `lint --fix` repairs every
+  `lint-hours` (24), each recorded when started and logged when done. **Not built: the markdown export.**
+  `histmersion export wiki` and `queue export meta` are CLI operations that write into the caller's working
+  tree (the research repo's `wiki/`/`meta/` symlinks into Nextcloud); the server has no configured path there
+  and the export logic lives in the CLI, so it stays a host job (a launchd/cron entry running those two commands
+  from the research repo).
+- **Status** (`AutopilotStatus`, a few aggregate queries for every goal: `ManagerRepo.light/pace`,
+  `GoalLinkRepo.linkCounts/articlesByGoal`, `AgentRepo.openBySubject`): per goal its stage, managers with their
+  status lines, sources, articles, open approvals (about the goal and its articles), last activity, items
+  settled in the last 7 days, items open, and `etaDays` at that pace; plus the approval rules, today's ingests
+  against the shared cap, the last housekeeping.
+- Tests: `AutopilotPolicySuite` (every check and cap, advance, ensure idempotence, stagger, extend, blocks,
+  Redo), `ManagerAutopilotSuite` (DB, scripted models: planned → plan → proposal → compile → review →
+  `reviewed` with checked approvals; with the defaults nothing is decided by code; a manager's `autoApprove`
+  wins; sub-goals and the depth limit; off/on and a person's pause; a reviewed goal's watcher; the article-plan
+  cap and a rejected thin filter; the shared ingest cap; extend and its cooldown; lint housekeeping),
+  `ManagersViewSuite`, and a browser test of the toggle.
