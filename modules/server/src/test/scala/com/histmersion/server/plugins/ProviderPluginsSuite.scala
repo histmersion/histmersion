@@ -211,6 +211,50 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(PluginEvents.record("x", ok.copy(lat = Some(95.0))), Left("q-1: its position is not on the globe"))
     assertEquals(PluginEvents.record("x", ok.copy(lon = None)), Left("q-1: a position needs both latitude and longitude"))
 
+  test("a plugin catalogue's record is dated as the host dates its own: a stated year ± when no span, held inside the limits"):
+    import com.histmersion.core.{CatalogDating, TimeSpan}
+    val base = PluginEvents.record("zq", CatalogueEvent("e", "u", "Zq Flood", "flood", None, None, lat = Some(38.0),
+      lon = Some(23.0), central = Some(-1000L), plusMinus = Some(50L))).fold(fail(_), identity)
+    val now = CatalogDating.Limits(2026)
+    // the span the record does not give, from its stated year and ±; the statement itself kept
+    val d = PluginEvents.derive(base, now)
+    assertEquals(d.timeSpan, TimeSpan(Some(-1050L), None, None, Some(-950L)))
+    assertEquals((d.central, d.plusMinus), (Some(-1000L), Some(50L)))
+    // a span the record gives is the record's; only the limits touch it
+    val spanned = base.copy(timeSpan = TimeSpan(Some(-1200L), None, None, Some(-1100L)))
+    assertEquals(PluginEvents.derive(spanned, now).timeSpan, spanned.timeSpan)
+    // the present and the catalogue's floor hold every point, the central year stays as stated
+    val future = base.copy(central = Some(2020L), plusMinus = Some(10L))
+    assertEquals(PluginEvents.derive(future, now).timeSpan, TimeSpan(Some(2010L), None, None, Some(2026L)))
+    assertEquals(PluginEvents.derive(future, now).central, Some(2020L))
+    val early = spanned.copy(timeSpan = TimeSpan(Some(-3500L), Some(-3100L), Some(-2950L), Some(-2900L)))
+    assertEquals(PluginEvents.derive(early, CatalogDating.Limits(2026, Some(-3000L))).timeSpan,
+      TimeSpan(Some(-3000L), Some(-3000L), Some(-2950L), Some(-2900L)))
+    // undated and no stated year: nothing invented
+    assertEquals(PluginEvents.derive(base.copy(central = None), now).timeSpan, TimeSpan())
+    // derived once, derived again: the same record (what makes rederive a no-op after an import)
+    List(base, spanned, future, early).foreach { r =>
+      val l = CatalogDating.Limits(2026, Some(-3000L))
+      val once = PluginEvents.derive(r, l)
+      assertEquals(PluginEvents.derive(once, l), once)
+    }
+
+  test("a plugin catalogue's limits: the present, and its own floor when it states one"):
+    val floored = new EventCatalogue:
+      val title = "t"; val licence = "l"; val citation = "c"; val home = "h"
+      override def floorYear = Some(-9700L)
+      def parts(q: CatalogueQuery) = Nil
+      def read(p: String, q: CatalogueQuery, h: PluginHttp) = Left("no")
+    val throws = new EventCatalogue:
+      val title = "t"; val licence = "l"; val citation = "c"; val home = "h"
+      override def floorYear = throw IllegalStateException("boom")
+      def parts(q: CatalogueQuery) = Nil
+      def read(p: String, q: CatalogueQuery, h: PluginHttp) = Left("no")
+    import com.histmersion.core.CatalogDating.Limits
+    assertEquals(PluginEvents.limits(Some(floored), 2026), Limits(2026, Some(-9700L)))
+    assertEquals(PluginEvents.limits(Some(throws), 2026), Limits(2026, None))
+    assertEquals(PluginEvents.limits(None, 2026), Limits(2026, None))
+
   test("the host's own catalogues and collections are never searched through the SPI"):
     val gvp = BuiltinCatalogues.entries.head
     assertEquals((gvp.plugin, gvp.name, gvp.title), ("events-gvp", "gvp", "Smithsonian Global Volcanism Program"))
