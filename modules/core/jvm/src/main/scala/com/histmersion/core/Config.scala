@@ -266,6 +266,12 @@ final case class InitConfig(auto: Boolean, dataDir: String, fetchSources: String
   * read APIs) stay open. Empty = no auth (local-only mode). */
 final case class AuthConfig(apiKey: String) derives ConfigReader
 
+/** Reloading the config in place (docs/research-plugins.md §3.5): `histmersion config reload`, or —
+  * with `watch` — by itself when the config file changes, `watchDebounceMs` after the last change.
+  * `drainSeconds` is how long a reload waits for the previous generation's last users (an in-flight
+  * request, a job step) before it reports them as still draining. */
+final case class ConfigReloadConfig(watch: Boolean, watchDebounceMs: Int, drainSeconds: Int) derives ConfigReader
+
 /** The native bundle: when `enabled`, the server itself runs the bundled PostgreSQL and
   * OCR converter as child processes (`com.histmersion.server.Supervisor`). `home` is the bundle root holding
   * `pg/` and `converter/` (empty = the directory above the running executable's `bin/`); `dataDir`
@@ -409,7 +415,8 @@ final case class AppConfig(
     runtime: RuntimeConfig,
     agents: AgentsConfig,
     media: MediaConfig,
-    events: EventsConfig
+    events: EventsConfig,
+    config: ConfigReloadConfig
 ) derives ConfigReader
 
 object AppConfig:
@@ -442,14 +449,17 @@ object AppConfig:
     def inFile(p: java.nio.file.Path)(msg: String) =
       s"Histmersion config file $p: ${msg.stripPrefix(s"$p: ")}"
     file match
-      case None => decode(ConfigLayers.merged(reference, ConfigFactory.empty, env))
-          .left.map(e => s"Histmersion config error: $e")
-          .map(LoadedConfig(_, UserConfigFile(None, loaded = false), env = env))
+      case None =>
+        val merged = ConfigLayers.merged(reference, ConfigFactory.empty, env)
+        decode(merged).left.map(e => s"Histmersion config error: $e")
+          .map(LoadedConfig(_, UserConfigFile(None, loaded = false), env = env, merged = ConfigReload.settings(merged)))
       case Some(p) =>
         ConfigLayers.parse(p).left.map(inFile(p)).flatMap {
-          case None => decode(ConfigLayers.merged(reference, ConfigFactory.empty, env))
-              .left.map(e => s"Histmersion config error: $e")
-              .map(LoadedConfig(_, UserConfigFile(Some(p), loaded = false), env = env))
+          case None =>
+            val merged = ConfigLayers.merged(reference, ConfigFactory.empty, env)
+            decode(merged).left.map(e => s"Histmersion config error: $e")
+              .map(LoadedConfig(_, UserConfigFile(Some(p), loaded = false), env = env,
+                merged = ConfigReload.settings(merged)))
           case Some(user) =>
             for
               // the settings and the KIND of each from the defaults alone: an env value is always a
@@ -462,7 +472,8 @@ object AppConfig:
               _       <- ConfigLayers.typeCheck(keys.settings, asFiled, known).left.map(inFile(p))
               merged  <- resolved(ConfigLayers.merged(reference, user, env)).left.map(inFile(p))
               cfg     <- decode(merged).left.map(inFile(p))
-            yield LoadedConfig(cfg, UserConfigFile(Some(p), loaded = true, keys.unknown), user, env)
+            yield LoadedConfig(cfg, UserConfigFile(Some(p), loaded = true, keys.unknown), user, env,
+              ConfigReload.settings(merged))
         }
 
   /** An environment `Config` as a lookup (its keys are variable names, not paths). */
@@ -472,6 +483,10 @@ object AppConfig:
   private def resolved(c: => org.ekrich.config.Config): Either[String, org.ekrich.config.Config] =
     try Right(c.resolve())
     catch case e: org.ekrich.config.ConfigException => Left(e.getMessage)
+
+  /** Decode the settings of a merged tree (`LoadedConfig.merged`, or one [[ConfigReload.effective]]
+    * made of it). */
+  def fromMerged(c: org.ekrich.config.Config): Either[String, AppConfig] = decode(c)
 
   private def decode(c: => org.ekrich.config.Config): Either[String, AppConfig] =
     try ConfigReader[AppConfig].from(c.getConfig("histmersion").root).left.map(ConfigLayers.describe)
