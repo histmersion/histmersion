@@ -35,7 +35,7 @@ ib_build() { # <dest> <mode>
       return $?
       ;;
     local)
-      echo "→ server: linked on this machine from the bundle's kit (GraalVM CE, ~2 minutes, ~11 GB of memory)"
+      echo "→ server: linked on this machine from the bundle's kit (GraalVM CE, ~2 minutes, ~12 GB of memory)"
       if "$b/histmersion-toolchain" path >/dev/null 2>&1 || "$b/histmersion-toolchain" install; then
         if "$b/histmersion-toolchain" check && HISTMERSION_SERVICE=none "$b/histmersion-relink" --no-restart; then
           return 0

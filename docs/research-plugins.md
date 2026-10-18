@@ -4,6 +4,8 @@
 (the SPI, the config contract, secrets and the built-in vaults) is built: §15 says what was built and
 where it differs from this proposal. Phase 2 (source fetchers; the unauthorised fallback removed) is
 built: §16. The in-place config reload (§3.5) and the hot component graph (§3.6) are built: §17. The
+install/build side — the relink kit, JVM mode, `histmersion plugin …`, the local build at setup and the
+optional signing (phases 3–5) — is built: §18. The
 spike code is in `spike/plugins/`, a standalone sbt build that
 the root build does not aggregate. Measurements were taken on this machine: Apple M4 Pro, 14 cores,
 48 GB RAM, macOS 26.7, GraalVM CE 25.0.1 (the `.sdkmanrc` pin), sbt 2.0.7. Statements I could not
@@ -1372,3 +1374,185 @@ and `acquisition`), a hot key applies and `server.port` is reported restart-only
 test server never enables the agents — that would generate runtime trees and need models); they take a
 connection per unit of work and are pinned per tick and per run, which the job and request tests
 exercise through the same mechanism. A second listener for a changed port (above).
+
+## 18. As built (kit: relink, JVM mode, user plugins, local build, signing; 2026-10-18)
+
+Phases 3, 4 and 5 of #2018, with §14's decisions over the older text: signing is **optional** (D6);
+a plugin is installed by dropping a jar in, `plugin add <path>`, `<url>` or `<group:artifact:version>`
+(D8); first-party plugins stay built in and disablable (D2); only a changed plugin SET relinks — a
+config change reloads in place (§17). D5 was not answered, so the prebuilt binary stays the default and
+the local build is an installer option.
+
+**The kit (§7.4, §8.7).** `server/relinkKit` (build.sbt) writes the Sloth-patched class path `nativeImage`
+links — 133 jars, all jars (sbt 2 exports the modules as jars; a class directory or two jars of one name
+fail the task) — with its order (`kit/classpath`), the native-image flags (`kit/native-image.args`,
+`--no-fallback` + `serverNativeOpts`, now ONE list in build.sbt for both), the main class, and Sloth with
+its verifier (`kit/tools/`). `scripts/bundle/server.sh` copies it into the bundle, adds
+`kit/graalvm-version` (the `.sdkmanrc` pin) and runs `PluginTool kit-manifest`: `kit/kit.json` (format,
+version, commit, GraalVM version, plugin SPI, main class, every file's SHA-256) and `kit/SHA256SUMS` (the
+same sums in the format `shasum -c` reads, which is what the relink checks — never with the kit's own
+code). The server's reachability metadata is inside its jar, as every module's is. Beside the binary:
+`bin/histmersion-server.plugin-set.json`, the set the installed binary was linked with (the empty set's
+for the stock binary). Size: 105 MB.
+
+**The plugin set (§7.3).** `PluginSet{digest, spiVersion, jars[{file, sha256, plugins[{id, version,
+spiVersion, provides, access, error}]}], mode (native|jvm), kit, linkedAt}` (core). The digest is
+`PluginKit.digest` (§7.3's, moved to core; `PluginHost.digest` delegates). A relink writes it into a small
+generated jar on the image class path, `META-INF/histmersion/plugin-set.json`, and that jar carries its
+own `META-INF/native-image/com.histmersion/plugin-set/reachability-metadata.json` registering the
+resource — as a plugin jar would; the host build is not involved. `Plugins.load` reads it
+(`PluginSetResource`), so `PluginsReport.set` reaches `/api/about`, `/api/config`, `histmersion about`
+(`plugin set: <digest> · 1 jar (native): hello-0.1.0.jar`, or `first-party plugins only`) and
+`--self-check` (`plugin-set digest: <sha256>` — what the relink compares).
+
+**`PluginTool`** (server, a JVM main never reached from `Main`, so not in the image), run with the kit
+on the class path:
+
+- `describe <jar>…` — instantiates each provider loaded FROM that jar (code source checked), then
+  registers it alone with its defaults (`enabled = true`, nothing else; the HTTP client refuses every
+  request) into throw-away registries: id, version, SPI, what it registers, and the `Access` of each
+  source fetcher. That is how `plugin add` shows "declared access" — the SPI has no static descriptor,
+  and registering is the only truthful way to learn it. A plugin that needs settings to register
+  says so (`error`); its access is then unknown.
+- `check <kit> <jar>…` — refuses: a jar with no provider, a provider that cannot be loaded, a foreign
+  SPI, an id twice (among the jars, or one the binary has: the kit's ServiceLoader plugins and the
+  host's built-ins), and **a class twice** (in the kit's jars or an earlier plugin jar — one class loader,
+  so a second copy is a conflict, §7.1).
+- `plugin-set <out.jar> <record.json> <mode> <kit> <jar>…` and `kit-manifest`.
+
+**`bin/histmersion-relink`** (bash 3.2, `scripts/bundle/relink.sh`) does §7.4 in this order: lock
+(`<data>/plugins/.relink.lock`, a stale one taken over) → kit checksums (and no jar the manifest lacks) →
+toolchain (GraalVM CE of exactly the kit's version with `native-image`; Xcode's clang / `cc`; memory ≥
+`HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12, else refused naming JVM mode, `--ignore-memory`; 1 GB of
+disk) → GPG provenance when set up → **pre-flight on the JVM**: `PluginTool check`, then the server's own
+`Main --self-check` over kit + plugin-set jar + plugins with the user's config, which must load (exit 3
+refuses), report the expected digest and every new plugin registered — so a decode error stops the
+relink in seconds, before 12 GB are spent → Sloth over copies of the plugin jars + `SlothVerify` →
+`native-image @kit/native-image.args -cp <kit in order>:<plugin-set.jar>:<plugins> Main` into
+`<install>/.relink/` (same file system as `bin/`, so the swap is a rename) → the **new binary's
+`--self-check`** (same requirements: this is where a plugin whose jar lacks its own reachability metadata
+fails, as spike A's `hello-no-reflection` did) → sign → swap (`bin/histmersion-server` and its records to
+`.prev`) → restart (`launchctl kickstart -k`, `systemctl --user restart`; `HISTMERSION_SERVICE=none` and
+`--no-restart` skip it) → `/api/health` within 120 s and `/api/about`'s plugin-set digest the expected
+one, else the previous binary is put back and the service restarted again. Exit 0 / 1 usage / 2 refused
+before building / 3 build or self-check failed, nothing changed / 4 rolled back. `--check` (pre-flight
+only), `--rollback` (swaps `.prev` back; the replaced binary becomes `.prev`, so a second rollback
+undoes the first), `--describe`, `--jvm`.
+
+**JVM mode (§8.5).** `bin/histmersion-server-jvm` builds the plugin-set jar for this start (mode `jvm`),
+verifies the plugins directory when GPG provenance is on, and execs `java -cp kit/lib/<in order>:
+plugin-set.jar:plugins/*.jar com.histmersion.server.Main "$@"` with `HISTMERSION_HOME=<install>` and
+`HISTMERSION_RUNTIME=true` — the process is `java`, so the bundle cannot be found from the executable's
+location (`Supervisor.bundled`) — and `argv[0]` set to the launcher (`exec -a`), so `pgrep -f
+<install>/bin/histmersion-server` still finds it. **Deviation:** §8.5 kept the LaunchAgent pointing at
+"whichever launcher is active"; instead `histmersion-relink --jvm` swaps the launcher in AS
+`bin/histmersion-server` (with `.prev`, health and rollback like a relink), so the LaunchAgent, the systemd
+unit and the installers never change, and `plugin rebuild` returns to native the same way.
+**Deviation:** there is no JDK in the bundle; "the bundled JDK" is the GraalVM CE the toolchain step
+provisions (a full JDK), or any JDK of the pinned major via `HISTMERSION_JAVA_HOME`.
+
+**`histmersion plugin …` (§7.2; the CLI, `cli/PluginCmd`).** `add (path|url|group:artifact:version)
+[--yes] [--rebuild] [--verify] [--unsigned] [--sha256 h]`, `rm <id|file> [--rebuild]`, `list`, `status`,
+`rebuild [--no-restart] [--unsigned] [--ignore-memory] [--jvm] [--check]`, `rollback [--no-restart]`.
+
+- **Local only.** The CLI stays a pure HTTP client of the server for everything else; these commands
+  act on THIS machine's install (`cli.plugins.install-dir`, else the install the CLI binary sits in —
+  `~/bin/histmersion` resolved through its symlink — else the platform default) and data directory, and
+  refuse with exit 1 when `cli.server-url` is not a loopback address. They never touch the database. The
+  running server is only asked `/api/about` (status, list), when it answers.
+- **add** stages the jar in `<data>/plugins/.staging/`, shows its SHA-256, verifies a signature when
+  required, describes it through `histmersion-relink --describe`, refuses what `PluginKit.refusals` names
+  (no plugin, foreign SPI, a broken provider) before asking — `y/N` on a terminal, `--yes` otherwise (no
+  terminal and no `--yes` = not installed) — and installs it as `<id>-<version>.jar` (§7.1's name),
+  replacing another version of the same plugin. `<data>/plugins/index.json` records where each jar came
+  from, when, what it holds and its signer; a dropped-in jar has no entry and is still part of the set.
+- **Maven (D8) without coursier.** §7.2 planned coursier's launcher on the bundled JDK. A plugin shades
+  every dependency the host does not ship (§7.1), so there is exactly one artifact to resolve: `PluginOps`
+  fetches `<repo>/<group path>/<artifact>/<version>/<artifact>-<version>.jar` from each repository of
+  `cli.plugins.maven-repos` in turn (default Maven Central) with curl, and checks it against the
+  `.sha256` the repository publishes beside it, else the `.sha1` (Central always has one); no POM walk.
+  `group::artifact:version` names the Scala 3 artifact (`artifact_3`). coursier would have added a JVM
+  start and ~30 MB for the same single download, and transitive resolution a plugin must not need.
+- **status** compares three digests (`PluginKit.status`): the directory's, the installed binary's record
+  and the running server's — "up to date", "REBUILD NEEDED" (with the jars added, removed or changed since
+  the link), "RESTART NEEDED" (relinked with `--no-restart`) or "UNKNOWN" (no record) — and prints the
+  kit (version, GraalVM, SPI) and `histmersion-signing status`.
+
+**Local build at setup (§8, phase 4).** `scripts/bundle/install-build.sh`, sourced by both installers:
+`--local-build` / `--jvm` / `HISTMERSION_BUILD=prebuilt|local|jvm`; **prebuilt stays the default** (D5
+unanswered). `local` runs `histmersion-toolchain install` (GraalVM CE 25.0.1 from
+`graalvm/graalvm-ce-builds`'s release, the SHA-256 pinned in `scripts/bundle/graalvm-pins.txt` for
+macOS aarch64/x64 and Linux x64/aarch64 — the release's own `.sha256` files and GitHub's asset digests
+agree, checked 2026-10-18 — unpacked into `<data>/toolchain/graalvm-ce-25.0.1`), `histmersion-toolchain
+check`, then `histmersion-relink --no-restart` before the service starts; any failure falls back to JVM
+mode, and failing that keeps the prebuilt binary. **Deviation:** §8.1 put GraalVM under
+`~/Applications/Histmersion/graalvm`; an install replaces that directory wholesale, so it lives in the
+data directory, versioned by its pin. An install also relinks by itself when `<data>/plugins` holds jars
+(§8.6: the user's plugins carried over an update; a stale SPI is refused there by name). The licence
+(GPLv2 + Classpath Exception) is printed with the download and noted in the pins file.
+
+**Signing (§9, phase 5, optional — D6).** `bin/histmersion-signing`:
+
+- `setup-macos [--name N] [--no-trust]` creates the self-signed identity in the login keychain — only
+  when the user runs it, after a y/N question (`codesign-identity-macos.sh`, now with `--no-trust` and a
+  keychain override for tests). Trusting stays the default: TCC with an untrusted identity is still
+  unverified (§9.2). **Found here:** `codesign --sign "<name>"` looks among VALID identities only and
+  answers "no identity found" for an untrusted one; the script signs with the identity's SHA-1 hash
+  (as the spike did), and then an untrusted identity works. The relink and the installers sign through
+  it (`codesign <file> <identifier>`); no identity → ad hoc, said once; `HISTMERSION_CODESIGN_IDENTITY=-`
+  signs ad hoc without looking anything up (what the tests and the smoke run use).
+- `use-gpg <key>` / `generate-gpg` / `off-gpg` — GPG provenance. Only the fingerprint is stored
+  (`<data>/signing/gpg-key`); passphrases stay with gpg-agent/pinentry. With it on: `plugin add` needs a
+  valid `<jar>.asc` (or `--unsigned`) and pins the signer per plugin id (`index.json`, trust on first use;
+  §9.3 put the pin in `histmersion.conf`, but the CLI never writes the user's config); `add`/`rm` re-sign
+  `<data>/plugins/plugins.manifest` (the jars' SHA-256s); the relink refuses a directory that does not
+  match its signed manifest (a jar dropped in later is approved with `plugin add <that jar>`) unless
+  `--unsigned`, and signs the new binary's SHA-256 (`bin/histmersion-server.sha256.asc`); the JVM launcher
+  will not start on an unverified directory. A Maven author's key that is not in the keyring is named
+  with the `gpg --recv-keys` to run — never fetched silently.
+
+**Tests.** `PluginKitSuite` (core: digest, set round trip, the four status verdicts, coordinates and
+origins, loopback, index and trust on first use, refusals, the kit manifest and `SHA256SUMS`),
+`PluginsReportSuite` (the plugin-set lines), `PluginToolSuite` (server, against the REAL hello jar built
+by sbt: describe, a foreign SPI, a jar without a provider, a broken provider, duplicate classes with
+the kit and between plugins, the same id twice, the host's ids, the plugin-set jar found on a class path
+with its metadata, the kit manifest), `PluginCmdSuite` (cli: locating the install, the remote refusal,
+add from a path / a local HTTP server through the real curl / a fake Maven repository with SHA-1 checks
+and a fallback repository, upgrade, signatures and the pinned signer, rm, list, status, rebuild).
+`scripts/bundle/tests/relink-test.sh` (35 checks: the whole relink against fakes — success, every
+refusal, native-image and self-check failures, a binary that does not come up and one that runs the
+wrong set rolled back, the lock, memory, the kit's checksums, toolchain, provenance, `--jvm`,
+rollback) and `kit-scripts-test.sh` (the JVM launcher, the toolchain against a fake GraalVM tarball on
+file://, GPG provenance with the real gpg in a temporary GNUPGHOME, ad-hoc codesign, the installers' build
+step; with `HISTMERSION_TEST_KEYCHAIN=1` a temporary keychain: an untrusted identity signs two different
+binaries with one designated requirement, and the user's search list is restored and compared).
+
+**The proof (`scripts/bundle/smoke.sh`).** On a copy of the bundle's `bin/`, `kit/`, `libexec/` and a
+temporary data directory, through the native CLI: `plugin add <hello jar> --yes` (described: `hello
+0.1.0 · SPI 1 · access: open · provides source-fetcher:hello`), `plugin status` (REBUILD NEEDED),
+`plugin rebuild --no-restart` (a real native-image link), the relinked binary's `--self-check` with
+`hello { enabled = true, greeter = LoudGreeter }` (registered — the greeter is found by name, so the
+plugin jar's own metadata is in the image — and the directory's digest), `plugin status` (up to date),
+`plugin list`, JVM mode's `--self-check` (registered, `(jvm)`, same digest), `plugin rollback` (the stock
+binary, first-party only). Skipped with a note when no GraalVM of the kit's version is found or
+`HISTMERSION_SMOKE_RELINK=0`.
+
+**Measurements** (this machine, as §8.3; the smoke run of 2026-10-18 on the bundle of commit `c0c506d5`):
+
+| step | wall | peak RSS | notes |
+|---|---|---|---|
+| `just bundle` (Postgres, converter with its models, both binaries, the kit) | 7 min 21 s | — | sbt disk cache warm; 1256 s user CPU |
+| the kit | — | — | 133 jars + Sloth + manifests = 139 files, 105 MB |
+| `plugin add <hello jar>` (copy, describe on the JVM) | ~1 s | — | |
+| `plugin rebuild --no-restart` (the whole relink: checks, JVM pre-flight, Sloth, link, self-check, swap) | **108 s** | **12.43 GB** (`time -l`; native-image's own "Peak RSS: 12,43GB") | of which native-image 102 s |
+| the relinked binary | — | — | 210 MB, the same size as the stock one; the hello plugin registered with `LoudGreeter` found by name |
+
+The peak is 1.5 GB above spike B's 10.97 GB (the server grew since); `HISTMERSION_RELINK_MIN_MEMORY_GB`
+defaults to 12, compared with the machine's TOTAL memory on macOS (it has no trustworthy "available"
+figure) and with `MemAvailable` on Linux.
+
+**Not done.** CI publishing kits as release artifacts (§13 phase 4's second bullet: `bundle.yml` is not
+changed — a bundle already carries its kit); checking TCC persistence with an untrusted identity (needs
+a real privacy prompt); GPG verification of the relinked binary at each start (the launcher verifies the
+plugins directory; the native binary is checked at relink time); `-H:LayerCreate` relinks (still
+experimental, §4.1).

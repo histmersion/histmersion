@@ -21,6 +21,7 @@ server─ MCP + REST + web UI; the ONLY database client.        depends on core,
 cli   ── a PURE HTTP CLIENT of the server.                                   depends on core ONLY
 plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
+plugin-fixtures/hello ─ a TEST plugin jar (relink tests, smoke.sh); never on the server's class path
 ```
 
 A plugin — first-party or not — compiles against `plugin-api` alone and never sees `core`, `db` or
@@ -29,6 +30,11 @@ A plugin — first-party or not — compiles against `plugin-api` alone and neve
 (`server/acquire/fetchers`: `archive-org`, `oa-index`, `pmc`, `arxiv`): they are host code over the
 `acquire.*` settings, supplied to `PluginHost` by `server/plugins/Plugins.builtins` instead of
 ServiceLoader, and registered, ordered and reported like any other plugin (§16).
+
+A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit
+(`server/relinkKit`: the Sloth-patched class path and `serverNativeOpts`, the ONE list of native-image
+flags) — or run on the JVM (`bin/histmersion-server-jvm`); `histmersion plugin …` manages them on the
+local machine and never touches the database (§18).
 
 **The CLI must never gain a dependency on `db`.** No pgjdbc in the CLI binary, no database
 credentials on the host. Every CLI command — reads and writes both — goes over HTTP through an sttp

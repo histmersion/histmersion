@@ -172,7 +172,7 @@ if [ -n "$need_native" ]; then
   min_gb="${HISTMERSION_RELINK_MIN_MEMORY_GB:-12}"
   mem="$(hk_mem_bytes)"
   if [ "$((mem / 1073741824))" -lt "$min_gb" ] && [ -z "$ignore_memory" ]; then
-    hk_die 2 "$((mem / 1073741824)) GB of memory; a relink peaks near 11 GB (needs ${min_gb}) — use JVM mode (histmersion-relink --jvm) or --ignore-memory"
+    hk_die 2 "$((mem / 1073741824)) GB of memory; a relink peaks near 12 GB (needs ${min_gb}) — use JVM mode (histmersion-relink --jvm) or --ignore-memory"
   fi
   free_kb="$(hk_free_kb "$install")"
   [ "${free_kb:-0}" -ge 1048576 ] || hk_die 2 "less than 1 GB free under $install — a relink writes a ~210 MB binary and keeps the previous one"
@@ -248,10 +248,12 @@ if [ "${#jars[@]}" -gt 0 ]; then
 fi
 
 # ── 7. native-image ───────────────────────────────────────────────────────────────────────────────
-step "native-image (about 2 minutes and 11 GB of memory; log: $log)"
+step "native-image (about 2 minutes and 12 GB of memory; log: $log)"
 start=$(date +%s)
 rc=0
-"$gv/bin/native-image" "@$kit/native-image.args" -cp "$(kit_cp):$patched" "$main_class" "$work/histmersion-server.new" >> "$log" 2>&1 || rc=$?
+# in the work dir: native-image leaves reports (build artifacts, crash notes) in its working directory
+(cd "$work" && "$gv/bin/native-image" "@$kit/native-image.args" -cp "$(kit_cp):$patched" "$main_class" \
+  "$work/histmersion-server.new") >> "$log" 2>&1 || rc=$?
 [ "$rc" = 0 ] && [ -x "$work/histmersion-server.new" ] || { tail -20 "$log" >&2; hk_die 3 "native-image failed (exit $rc) — the current binary is unchanged; JVM mode works with the same plugins: histmersion-relink --jvm"; }
 peak="$(grep -o 'Peak RSS: [0-9.,]*[A-Z]*' "$log" | tail -1 || true)"
 echo "  built in $(( $(date +%s) - start )) s${peak:+ · $peak}"
