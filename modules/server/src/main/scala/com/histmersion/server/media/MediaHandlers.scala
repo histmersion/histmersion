@@ -39,11 +39,19 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
 
   private def notFound(uid: String) = ApiError(s"No picture '$uid'", Some(Write.CodeNotFound))
 
-  /** The importer an import request names ([[MediaHandlers.importerName]]), built for this server's
-    * config — or why it cannot run (unknown, or switched off). */
+  /** The importer an import request names, from the media collections the plugins of the calling
+    * thread's generation registered (built-in and third-party), built for this server's config — or why
+    * it cannot run (unknown, its plugin switched off, or its own `media.<provider>.enabled` off). */
   private[media] def providerOf(p: String): Either[ApiError, MediaImporter] =
-    MediaHandlers.importerName(p).left.map(ApiError(_, Some(Write.CodeInvalid))).flatMap(n =>
-      MediaImporter.of(n, deps, http, converter).left.map(ApiError(_, Some(Write.CodeInvalid))))
+    MediaImporters.resolve(p, deps.plugins.registries.mediaCollections, deps, http, converter)
+      .left.map(ApiError(_, Some(Write.CodeInvalid)))
+
+  /** `GET /api/media/providers`: what `media import` can run, as the registries hold it. */
+  def providers: List[MediaProviderInfo] =
+    val gen = deps.plugins
+    val owner = gen.contributions.toList.flatMap((id, r) => r.mediaCollections.keys.map(_ -> id)).toMap
+    MediaImporters.infos(gen.registries.mediaCollections, n => owner.getOrElse(n, ""),
+      n => cfg.media.collections.licencesFor(n))
 
   /** One import run, answered when it ends: a dry run (at most `media.max-limit`), or a real one of
     * ONE place or event. A real run over many is a job ([[importJob]], #1491): asked here it outlived
@@ -235,22 +243,6 @@ object MediaHandlers:
     def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
       Left("no converter")
     def health: Either[String, String] = Left("no converter")
-
-  /** Pure: the importer a request names. `wikidata` (the default), `commons`, `wikimedia-commons`:
-    * pictures from Wikidata statements; `depicts`: Commons files depicting events; `met`,
-    * `cleveland`, `aic`: museum objects; `loc`: historical maps; `pleiades`: Commons files Pleiades
-    * place records link; `opencontext`: Open Context's excavation media. */
-  def importerName(p: String): Either[String, String] =
-    p.trim.toLowerCase(java.util.Locale.ROOT) match
-      case "" | "wikidata" | "commons" | MediaProvider.Commons => Right(MediaImporter.Wikidata)
-      case "depicts" | "depictions" | CommonsDepictions.Check  => Right(MediaImporter.Depicts)
-      case "met" | MediaProvider.Met                           => Right(MediaImporter.Met)
-      case "cleveland" | "cma" | MediaProvider.Cleveland       => Right(MediaImporter.Cleveland)
-      case "aic" | "artic" | MediaProvider.ArtInstitute        => Right(MediaImporter.Aic)
-      case "loc" | MediaProvider.LibraryOfCongress             => Right(MediaImporter.Loc)
-      case "pleiades"                                          => Right(MediaImporter.Pleiades)
-      case "opencontext" | "open-context" | "oc"               => Right(MediaImporter.OpenContext)
-      case other => Left(s"unknown media provider '$other' (one of: ${MediaImporter.names.mkString(", ")})")
 
   /** Pure: does the request name one place or event (not "every one not asked yet")? */
   def single(req: MediaImportRequest): Boolean =

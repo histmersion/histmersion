@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.core.{AppConfig, ConfigFileInfo, ReloadReport}
 import com.histmersion.server.hot.Pinning
-import com.histmersion.server.plugins.Generation
+import com.histmersion.server.plugins.{Generation, Plugins}
 import javax.sql.DataSource
 
 /** Everything the handlers need. Built once in `Main` (the composition root) and passed down — no
@@ -42,9 +42,10 @@ final class Deps(
   def plugins: Generation = pluginsNow()
 
 object Deps:
-  /** A fixed `Deps` — one config, one pair of DataSources, nothing hot (tests, tools). */
+  /** A fixed `Deps` — one config, one pair of DataSources, nothing hot (tests, tools); its plugins are
+    * the built-in media collections and event catalogues and no fetcher ([[Plugins.offline]]). */
   def apply(cfg: AppConfig, ds: DataSource, queryDs: DataSource, maintenance: Maintenance = Maintenance(),
-      configFile: ConfigFileInfo = ConfigFileInfo(), plugins: Generation = Generation.empty): Deps =
+      configFile: ConfigFileInfo = ConfigFileInfo(), plugins: Generation = Plugins.offline): Deps =
     new Deps(() => cfg, ds, queryDs, maintenance, () => configFile, () => plugins)
 
   /** A fixed `Deps` whose read-only DataSource is the application one: for a test that does not

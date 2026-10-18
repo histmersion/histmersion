@@ -633,7 +633,7 @@ object Api:
     // asset links (1.6)
     mediaGeo, assetLinks, createAssetLink, deleteAssetLink,
     // media from outside providers (#1446): `media/facets|import|fill-licences` before `media/{uid}`
-    mediaFacets, mediaImport, mediaImportJob, mediaCovers, mediaCoversJob, putSourceCover, fillFigureLicences,
+    mediaFacets, mediaProviders, mediaImport, mediaImportJob, mediaCovers, mediaCoversJob, putSourceCover, fillFigureLicences,
     mediaList, mediaShow, mediaThumb, mediaFile,
     // IIIF Image API (4.3): info.json before the image endpoint
     iiifInfo, iiifImage,
@@ -1135,15 +1135,19 @@ object Api:
   val mediaFacets: PublicEndpoint[Unit, ApiError, MediaFacets, Any] =
     base.get.in("media" / "facets").out(jsonBody[MediaFacets])
 
+  /** `GET /api/media/providers` — the providers `media import` can run: the media collections the
+    * plugins of this server registered (built-in and third-party), in the order they are listed. */
+  val mediaProviders: PublicEndpoint[Unit, ApiError, List[MediaProviderInfo], Any] =
+    base.get.in("media" / "providers").out(jsonBody[List[MediaProviderInfo]])
+
   /** `GET /api/media/{uid}` — one picture: its origin, licence, credit and links. */
   val mediaShow: PublicEndpoint[String, ApiError, MediaItem, Any] =
     base.get.in("media" / path[String]("uid")).out(jsonBody[MediaItem])
       .errorOut(statusCode(StatusCode.NotFound))
 
   /** `POST /api/media/import` — ask a provider (`wikidata`, `depicts`, `met`, `cleveland`, `aic`, `loc`,
-    * `pleiades`, `opencontext`)
-    * about places and events; a dry run (the default) reports the counts per licence, and a
-    * collection's matches with their reasons, and stores nothing. A real run here takes ONE `place` or `event`;
+    * `pleiades`, `opencontext`, or a plugin's collection: [[mediaProviders]]) about places and events;
+    * a dry run (the default) reports the counts per licence, and a collection's matches with their reasons, and stores nothing. A real run here takes ONE `place` or `event`;
     * over many it is refused — that is [[mediaImportJob]] (#1491: a 500-place run outlived the request). */
   val mediaImport: PublicEndpoint[MediaImportRequest, ApiError, MediaImportReport, Any] =
     base.post.in("media" / "import").in(jsonBody[MediaImportRequest]).out(jsonBody[MediaImportReport])

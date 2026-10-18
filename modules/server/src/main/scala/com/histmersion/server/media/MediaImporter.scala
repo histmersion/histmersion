@@ -101,7 +101,9 @@ object MediaImporter:
               def requests = fetch.requests)
       case other     => Left(s"unknown media provider '$other' (one of: ${names.mkString(", ")})")
 
-  private def collection(col: Collection, what: String, key: String, ds: javax.sql.DataSource, cfg: MediaConfig,
+  /** The import of one [[Collection]] (a built-in one, or a plugin's through [[PluginCollection]]): the
+    * places not asked yet, at the collection's own pace. */
+  private[media] def collection(col: Collection, what: String, key: String, ds: javax.sql.DataSource, cfg: MediaConfig,
       http: MediaHttp, converter: ConverterClient, store: MediaStore): Either[String, MediaImporter] =
     if !col.conf.enabled then Left(s"${MediaProvider.title(col.provider)} is switched off ($key.enabled = false)")
     else Right(new MediaImporter:

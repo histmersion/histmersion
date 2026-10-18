@@ -46,16 +46,22 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
 
   // ── the import ──────────────────────────────────────────────────────────────────────────────
 
-  def catalogues: List[CatalogProviderInfo] = CatalogProvider.infos
+  /** The catalogues the plugins of the calling thread's generation registered (built-in and third-party). */
+  private def registered = deps.plugins.registries.eventCatalogues
+
+  /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */
+  private def infoOf(provider: String): Option[CatalogProviderInfo] = BuiltinCatalogues.info(provider, registered)
+
+  def catalogues: List[CatalogProviderInfo] = BuiltinCatalogues.infos(registered)
 
   def importJob(req: EventImportRequest): Either[ApiError, JobInfo] =
     for
-      provider <- CatalogProvider.parse(req.provider).left.map(invalid)
+      provider <- BuiltinCatalogues.resolve(req.provider, registered).left.map(invalid)
       area     <- req.bbox.map(_.trim).filter(_.nonEmpty) match
                     case Some(b) => BBox.parse(b).toRight(invalid(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat")).map(Some(_))
                     case None    => Right(None)
       job      <- startJob(EventCatalogHandlers.ImportJobKind,
-                    s"${CatalogProvider.info(provider).fold(provider)(_.title)} events${if req.dryRun then " (dry run)" else ""}",
+                    s"${infoOf(provider).fold(provider)(_.title)} events${if req.dryRun then " (dry run)" else ""}",
                     write = !req.dryRun) { (job, progress) =>
                     val r = runImport(provider, req, area, progress)
                     JobRepo.get(ds, job.id).foreach(j =>
@@ -72,7 +78,8 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
     * what this run placed before, and (not a dry run) write the part and record it as read. */
   private[events] def runImport(provider: String, req: EventImportRequest, area: Option[BBox],
       progress: String => Unit): EventImportReport =
-    val info  = CatalogProvider.info(provider)
+    val info  = infoOf(provider)
+    val catalogue = registered.get(provider)
     val to    = req.to.getOrElse(ec.maxYear)
     val from  = req.from
     val limit = req.limit.filter(_ > 0).getOrElse(ec.defaultLimit)
@@ -144,7 +151,8 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
 
     def full = report.kept >= limit || deps.maintenance.active
 
-    provider match
+    /** One of the host's own catalogues, read as it always was. */
+    def runHost(name: String): Unit = name match
       case CatalogProvider.Gvp =>
         val c = client(ec.gvp.requestIntervalMs)
         EventProviders.Gvp.windows(from.getOrElse(ec.minYear), to, ec.gvp.windowYears).foreach { (a, b) =>
@@ -177,14 +185,48 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
             handle(part, c.json(EventProviders.WikidataEvents.sparqlUrl(ec.wikidata.sparqlUrl, q))
               .flatMap(EventProviders.WikidataEvents.parse(_, kind)))
         }
-    val pending = provider match
-      case CatalogProvider.Gvp if !req.dryRun =>
+
+    /** A plugin's catalogue: its parts in its order, each read once (a part read before is skipped, as
+      * the built-ins' are), a paged part followed to its last page; every record checked by the host
+      * ([[PluginEvents.record]]) before the same thresholds, merge and store as the built-ins'. */
+    def runPlugin(cat: com.histmersion.plugin.EventCatalogue): Unit =
+      val c = client(PluginEvents.safe(cat.requestIntervalMs).getOrElse(1000))
+      val h = PluginEvents.http(c)
+      val q = PluginEvents.query(from, to, area)
+      PluginEvents.guard(Right(cat.parts(q))) match
+        case Left(why) => report = report.copy(failed = report.failed :+ s"parts: $why")
+        case Right(parts) =>
+          parts.distinct.foreach { first =>
+            // `var`: the next page of a paged part
+            var next = Option(first).filter(p => !done(p))
+            while next.isDefined && !full do
+              val part = next.get
+              val got  = PluginEvents.guard(cat.read(part, q, h))
+              val recs = got.map(_.events.map(PluginEvents.record(provider, _)))
+              recs.foreach(rs => if rs.exists(_.isLeft) then
+                report = report.copy(failed = report.failed ++ rs.collect { case Left(w) => s"$part: $w" }.take(20)))
+              handle(part, recs.map(_.collect { case Right(r) => r }))
+              next = got.toOption.flatMap(_.next).filterNot(p => done(p) || p == part)
+          }
+
+    catalogue match
+      case None =>
+        report = report.copy(failed = report.failed :+ BuiltinCatalogues.resolve(provider, registered).fold(identity, _ => provider))
+      case Some(c: HostEventCatalogue) => runHost(c.name)
+      case Some(c) => runPlugin(c)
+
+    val pending = catalogue match
+      case Some(cat) if !req.dryRun && !cat.isInstanceOf[HostEventCatalogue] =>
         val now = EventCatalogRepo.partsDone(ds, provider)
-        EventProviders.Gvp.windows(from.getOrElse(ec.minYear), to, ec.gvp.windowYears).count((a, b) => !now(s"years:$a..$b"))
-      case CatalogProvider.Wikidata if !req.dryRun =>
-        val now = EventCatalogRepo.partsDone(ds, provider)
-        ec.wikidata.classList.count((q, _) => !now(s"class:$q"))
-      case _ => 0
+        PluginEvents.guard(Right(cat.parts(PluginEvents.query(from, to, area)))).fold(_ => 0, _.distinct.count(p => !now(p)))
+      case _ => provider match
+        case CatalogProvider.Gvp if !req.dryRun =>
+          val now = EventCatalogRepo.partsDone(ds, provider)
+          EventProviders.Gvp.windows(from.getOrElse(ec.minYear), to, ec.gvp.windowYears).count((a, b) => !now(s"years:$a..$b"))
+        case CatalogProvider.Wikidata if !req.dryRun =>
+          val now = EventCatalogRepo.partsDone(ds, provider)
+          ec.wikidata.classList.count((q, _) => !now(s"class:$q"))
+        case _ => 0
     val out = report.copy(pending = pending, requests = clients.map(_.requests).sum + report.requests)
     scribe.info(s"events import: ${EventImportReport.summary(out)}")
     out
@@ -194,10 +236,14 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
   def rederiveJob(req: EventRederiveRequest): Either[ApiError, JobInfo] =
     for
       provider <- req.provider.map(_.trim).filter(_.nonEmpty) match
-                    case Some(p) => CatalogProvider.parse(p).left.map(invalid).map(Some(_))
+                    case Some(p) =>
+                      // no network: a built-in catalogue switched off since still has its records to re-derive
+                      val n = BuiltinCatalogues.canonical(p)
+                      if CatalogProvider.all.contains(n) then Right(Some(n))
+                      else BuiltinCatalogues.resolve(p, registered).left.map(invalid).map(Some(_))
                     case None    => Right(None)
       job      <- startJob(EventCatalogHandlers.RederiveJobKind,
-                    s"re-derive the dating of ${provider.fold("every catalogue's")(p => CatalogProvider.info(p).fold(p)(_.title) + "'s")} " +
+                    s"re-derive the dating of ${provider.fold("every catalogue's")(p => infoOf(p).fold(p)(_.title) + "'s")} " +
                       s"events${if req.dryRun then " (dry run)" else ""}", write = !req.dryRun) { (job, progress) =>
                     val r = runRederive(provider, req.dryRun, progress)
                     JobRepo.get(ds, job.id).foreach(j =>
@@ -236,7 +282,7 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
       def years(r: CatalogRecord) = EventGeo.outer(r.timeSpan).fold("undated")((x, y) => s"${YearFmt(x)}…${YearFmt(y)}")
       s"$id: ${years(a)} → ${years(b)}${EventPrecision.note(b.central, b.plusMinus, b.datingMethod).fold("")(n => s" ($n)")}, ${prec(b)}"
     } ++ Option.when(undecodable > 0)(s"$undecodable stored record(s) no longer decode — left alone").toList
-    val out = EventRederiveReport(dryRun, provider.toList.ifEmpty(CatalogProvider.all), again.size, changed.size,
+    val out = EventRederiveReport(dryRun, provider.toList.ifEmpty((CatalogProvider.all ++ registered.keys).distinct), again.size, changed.size,
       again.count(_._2.raw.isDefined), updated,
       EventCount.of(again.map((_, a, _) => prec(a))), EventCount.of(again.map((_, _, b) => prec(b))),
       again.count((_, _, b) => !EventPrecision.mapped(prec(b))), examples, counts)
@@ -397,7 +443,10 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
     val lead = EventCatalogRepo.leadRows(ds, com.histmersion.db.Sql.of("e.id = ?", com.histmersion.db.Param.S(id)),
       ec.leads.km, ec.leads.years, 1, 0)._2.flatMap(leadOf)
     d.copy(tier = tier, names = names.filterNot(_ == d.event.label),
-      catalogue = EventCatalogRepo.catalogueRefs(ds, id),
+      catalogue = EventCatalogRepo.catalogueRefs(ds, id).map(r =>
+        // a plugin's catalogue: its terms come from the plugin, which the store does not know
+        if r.licence.nonEmpty then r
+        else infoOf(r.provider).fold(r)(i => r.copy(title = i.title, licence = i.licence, citation = i.citation))),
       sources = sources,
       findings = EventCatalogRepo.nearFindings(ds, id, ec.links.km, ec.links.years, ec.links.nearFindings),
       articles = EventCatalogRepo.articlesCiting(ds, sources.map(_.citekey), 10),
@@ -412,7 +461,7 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
       .take(ec.leads.articleLimit)
       .map((id, label, kind, ts, _, vei, mag, n, prov) =>
         ArticleEventLead(id, label, EventTaxonomy.canonical(kind), EventLeads.years(ts), EventLeads.size(vei, mag), n,
-          CatalogProvider.info(prov).fold(prov)(_.title)))
+          infoOf(prov).fold(prov)(_.title)))
 
   // ── site types ──────────────────────────────────────────────────────────────────────────────
 

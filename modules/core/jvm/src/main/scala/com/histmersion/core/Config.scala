@@ -321,6 +321,7 @@ final case class MediaConfig(
     loc: MediaCollectionConfig,
     pleiades: MediaCollectionConfig,
     openContext: MediaCollectionConfig,
+    collections: MediaPluginCollectionsConfig,
     samples: Int
 ) derives ConfigReader:
   /** `--limit`, clamped to `1 … max-limit`; absent or ≤ 0 = `default-limit`. */
@@ -348,6 +349,17 @@ final case class MediaDepictsConfig(perEvent: Int, searchLimit: Int, depictedBy:
 final case class MediaCollectionConfig(enabled: Boolean, apiUrl: String, imageUrl: String, candidates: Int,
     perPlace: Int, requestIntervalMs: Int, displayPx: Int, maxYear: Int, licences: String) derives ConfigReader:
   def allowed: Set[String] = MediaLicence.allowList(licences)
+
+/** The media collections PLUGINS register (`media.collections`, docs/research-plugins.md §6): the licence
+  * families their pictures may be stored under. The host judges each record's stated licence against
+  * this — never against anything the plugin says — so a plugin cannot widen it; the user can, per
+  * collection (`per-collection.<id>`, which replaces `licences` for that one). The built-in collections
+  * keep their own `media.<provider>.licences`. */
+final case class MediaPluginCollectionsConfig(licences: String, perCollection: Map[String, String]) derives ConfigReader:
+  def allowed(collection: String): Set[String] =
+    MediaLicence.allowList(perCollection.getOrElse(collection, licences))
+  /** The allowlist as written for `collection` (what a report quotes). */
+  def licencesFor(collection: String): String = perCollection.getOrElse(collection, licences)
 
 /** Book covers (`media.covers`): the Open Library Covers API and its own, slower pace. */
 final case class MediaCoversConfig(openLibraryUrl: String, openLibraryPage: String, requestIntervalMs: Int,

@@ -81,7 +81,8 @@ object EventsCmd:
 
   private val importCmd = Opts.subcommand("import",
       "Bring in every event a catalogue knows — gvp (Smithsonian Holocene eruptions), noaa (NCEI earthquakes, " +
-        "eruptions, tsunamis), wikidata (battles, sieges, wars, treaties, revolts, disasters) — merged with the " +
+        "eruptions, tsunamis), wikidata (battles, sieges, wars, treaties, revolts, disasters), or a plugin's catalogue " +
+        "(`histmersion events catalogues` lists them) — merged with the " +
         "events there (never overwriting a compiled one). A server job; resumable; --dry-run stores nothing and " +
         "prints what it would import") {
     (Opts.argument[String]("provider"),
@@ -104,7 +105,7 @@ object EventsCmd:
       "Compute the dating of the stored catalogue records again from the records as read — NO network — and " +
         "refresh the events the catalogues created (corrections by hand kept): the step after an importer's " +
         "dating rules change. A server job; --dry-run counts what would change") {
-    (Opts.option[String]("provider", "Only this catalogue: gvp | noaa | wikidata (default: all)").orNone,
+    (Opts.option[String]("provider", "Only this catalogue: gvp | noaa | wikidata | a plugin's (default: all)").orNone,
       Opts.flag("dry-run", "Count what would change, store nothing").orFalse,
       Opts.flag("no-wait", "Print the job id and return").orFalse)
       .mapN { (p, dry, noWait) => (c: Client) =>
@@ -129,7 +130,7 @@ object EventsCmd:
       }
   }
 
-  private val cataloguesCmd = Opts.subcommand("catalogues", "The event catalogues, their licences and how to cite them") {
+  private val cataloguesCmd = Opts.subcommand("catalogues", "The event catalogues `events import` can read on this server (the built-in ones and any a plugin registered), their licences and how to cite them") {
     Opts.unit.map { _ => (c: Client) =>
       c.call(EventsApi.catalogues)(()).map(cs => println(cs.map(i =>
         s"- **${i.id}** — ${i.title} (${i.home})\n  - licence: ${i.licence}\n  - cite as: ${i.citation}").mkString("\n")))

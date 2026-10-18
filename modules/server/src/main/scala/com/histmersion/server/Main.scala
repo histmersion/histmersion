@@ -25,7 +25,7 @@ object Main:
     * was started from, and how to read it again. */
   def server(cfg: AppConfig, host: String, port: Int, converter: ConverterClient,
       autoInit: Boolean = false, onHandlers: Handlers => Unit = _ => (),
-      configFile: ConfigFileInfo = ConfigFileInfo(), plugins: Generation = Generation.empty,
+      configFile: ConfigFileInfo = ConfigFileInfo(), plugins: Generation = Plugins.offline,
       source: Option[(LoadedConfig, ConfigSource)] = None)(using Ox): NettySyncServer =
     build(hotConfig(cfg, configFile, source.map(_._1)), source.map(_._2), host, port, Some(converter), autoInit,
       onHandlers, plugins)
@@ -42,7 +42,7 @@ object Main:
     * may move it). */
   private def build(hc: HotConfig, source: Option[ConfigSource], host: String, port: Int,
       converter: Option[ConverterClient], autoInit: Boolean = false, onHandlers: Handlers => Unit = _ => (),
-      plugins: Generation = Generation.empty)(using Ox): NettySyncServer =
+      plugins: Generation = Plugins.offline)(using Ox): NettySyncServer =
     val sg = ServerGraph.start(hc, source, Some(plugins)).fold(e => throw IllegalStateException(e), identity)
     releaseAfterScope(sg.close())
     val deps = sg.deps(Maintenance())

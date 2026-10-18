@@ -154,6 +154,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.deleteAssetLink.serverLogic[Identity](id => h.deleteAssetLink(id)),
     // media from outside providers (#1446): the fixed paths before `media/{uid}`
     Api.mediaFacets.serverLogicSuccess[Identity](_ => h.media.facets),
+    Api.mediaProviders.serverLogicSuccess[Identity](_ => h.media.providers),
     Api.mediaImport.serverLogic[Identity](req => h.media.importMedia(req)),
     Api.mediaImportJob.serverLogic[Identity](req => h.media.importJob(req)),
     Api.mediaCovers.serverLogic[Identity](req => h.media.covers(req)),
