@@ -146,6 +146,8 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
     a.managers.ensureDefaults()
+    // the review manager's own selection narrowed to this goal (other suites' articles must not take its slots)
+    a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeGoal = Some(Goal))))).fold(e => fail(e.message), identity)
     val on = a.managing.setAutopilot(AutopilotSet(on = true, Some("test"))).fold(e => fail(e.message), identity)
     assert(on.on)
     assert(on.changes.contains(s"${seedId(Goal)} created") && on.changes.contains(s"${watchId(Goal)} created") &&
@@ -224,6 +226,8 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
     assertEquals((g.status, g.articles, g.openApprovals), (GoalStatus.Reviewed, 1, 0))
     assert(g.doneLast7 >= 3, g)
     assert(AutopilotMarkdown.status(st).contains(s"**$Goal** _(reviewed)_"))
+    assert(!AutopilotMarkdown.status(st).contains("crons are off"))
+    assert(AutopilotMarkdown.status(st.copy(cronsEnabled = false)).contains("crons are off"))
 
   test("autopilot, approvals a person's (the defaults): managers and plans start, nothing is approved by itself"):
     val c = ScriptedClient(Model)
