@@ -88,6 +88,13 @@ object PluginHost:
     val unknown = listed.filterNot(ids.contains).map(id => s"$Root.$OrderKey names '$id', which is no plugin in this binary")
     (listed.filter(ids.contains) ++ ids.filterNot(listed.contains).sorted, unknown)
 
+  /** Pure: one digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent. What
+    * a relink records in the image and `histmersion plugin status` recomputes over the plugins
+    * directory (docs/research-plugins.md §7.3; used from phase 3 on). */
+  def digest(entries: List[(String, String)]): String =
+    val text = entries.sortBy(_._1).map((n, h) => s"$n $h\n").mkString
+    java.security.MessageDigest.getInstance("SHA-256").digest(text.getBytes("UTF-8")).map(x => f"$x%02x").mkString
+
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
   def configuredOrder(user: Config, env: Config): Either[String, List[String]] =
     val path = s"$Root.$OrderKey"
@@ -324,7 +331,8 @@ object PluginHost:
         val stuck = left.map { pr =>
           val names = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !vs.contains(v) => v }.distinct
           pr.p.info.id -> status(pr.p, true, PluginState.Failed, Some(pr.block),
-            Some(s"no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered (enable the plugin that provides it)"))
+            Some(s"$Root.${pr.p.info.id}: no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered " +
+              "(enable the plugin that provides it)"))
         }
         (vs, ds ++ stuck)
       else passes(left, vs, ds)
