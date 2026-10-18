@@ -224,7 +224,7 @@ new_dest "$dest"; real_toolchain "$dest"
 rc_mem=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((8 * 1073741824)) HISTMERSION_GRAALVM_PINS="$tmp/pins" \
   HISTMERSION_HOME="$dest" ib_build "$dest" local > "$tmp/ib.out" 2>&1 || rc_mem=$?
 check "8 GB of memory (under HISTMERSION_RELINK_MIN_MEMORY_GB): the prebuilt binary, nothing downloaded or linked" \
-  '[ "$rc_mem" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && grep -q "LESS than the 12 GB" "$tmp/ib.out" && [ ! -s "$tmp/steps" ] && [ ! -e "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.1" ]'
+  '[ "$rc_mem" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && grep -q "LESS than the 16 GB" "$tmp/ib.out" && [ ! -s "$tmp/steps" ] && [ ! -e "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.1" ]'
 new_dest "$dest"; real_toolchain "$dest"
 rc_sum=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((48 * 1073741824)) HISTMERSION_GRAALVM_PINS="$tmp/pins-bad" \
   HISTMERSION_HOME="$dest" ib_build "$dest" local > "$tmp/ib.out" 2>&1 || rc_sum=$?

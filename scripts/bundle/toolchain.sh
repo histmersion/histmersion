@@ -57,8 +57,8 @@ case "$cmd" in
       if [ "$(hk_os)" = macos ]; then echo "- C toolchain: MISSING — xcode-select --install"
       else echo "- C toolchain: MISSING — apt install build-essential zlib1g-dev (or dnf install gcc glibc-devel zlib-devel libstdc++-static)"; fi
     fi
-    mem="$(hk_mem_bytes)"; min="${HISTMERSION_RELINK_MIN_MEMORY_GB:-12}"
-    if [ "$((mem / 1073741824))" -ge "$min" ]; then echo "- memory: $((mem / 1073741824)) GB (a relink peaks near 12 GB)"
+    mem="$(hk_mem_bytes)"; min="${HISTMERSION_RELINK_MIN_MEMORY_GB:-16}"
+    if [ "$((mem / 1073741824))" -ge "$min" ]; then echo "- memory: $((mem / 1073741824)) GB (a relink peaks near 13.5 GB)"
     else echo "- memory: $((mem / 1073741824)) GB — LESS than the ${min} GB a relink wants (HISTMERSION_RELINK_MIN_MEMORY_GB)"; ok=""; fi
     where="$(hk_data_dir)"; while [ ! -d "$where" ] && [ "$where" != / ]; do where="$(dirname "$where")"; done
     free="$(hk_free_kb "$where")"
