@@ -82,6 +82,11 @@ object Managers:
     val Cron      = "cron"
     /** A schedule was migrated into the manager. */
     val Migrated  = "migrated"
+    /** The supervisor decided (or left for a person) an approval of the manager's runs by its code
+      * checks (the autopilot's auto approvals). */
+    val Approval  = "approval"
+    /** The autopilot changed the manager or its goal (created, resumed, paused, the goal's status). */
+    val Autopilot = "autopilot"
 
   /** The item kinds. The review manager's: one article until its review converges; the coverage filter
     * an article lacks, inferred before its review; an article extended from its filter's new sources
@@ -96,12 +101,15 @@ object Managers:
   /** The watcher's: one research area's acquisition sweep and its currency check (target: the goal). */
   val AcquisitionSweep = "acquisition-sweep"
   val CurrencyCheck    = "currency-check"
+  /** The seeding manager's first item for a goal with no plan (the autopilot): a `plan-goal` run —
+    * sub-goals, queries and works — before its articles are proposed (target: the goal). */
+  val PlanGoalItem     = "plan-goal"
 
   /** The item kinds a manager of kind `k` drives (its first is its default). */
   def itemKinds(k: Kind): List[String] = k match
     case Kind.Review => List(ArticleReview, InferFilter, ArticleExtend)
     case Kind.Enrich => List(SourceEnrich)
-    case Kind.Seed   => List(ProposeArticles, ArticleCompile)
+    case Kind.Seed   => List(ProposeArticles, ArticleCompile, PlanGoalItem)
     case Kind.Watch  => List(AcquisitionSweep, CurrencyCheck)
 
   /** The item kind a person's word names (`review`, `extend`, `enrich`, `propose`, `compile`, or the
@@ -120,6 +128,7 @@ object Managers:
         case "compile"                  => ArticleCompile
         case "sweep" | "acquisition"    => AcquisitionSweep
         case "currency"                 => CurrencyCheck
+        case "plan-goal" | "goal-plan"  => PlanGoalItem
         case other                      => other
       Option(alias).filter(kinds.contains)
 
@@ -209,7 +218,14 @@ object Managers:
       /** No run is started once the manager's METERED spend this UTC day (its runs' step costs) reaches
         * this many USD. Plan-billed calls cost 0 USD, so they never count — their tokens are shown beside
         * it. None (or 0) = no cap of its own (`agents.managers.daily-usd`; the global caps still apply). */
-      dailyUsd: Option[Double] = None
+      dailyUsd: Option[Double] = None,
+      /** The approvals its runs open (article-plan, goal-plan, article-publish): true = decided by the
+        * supervisor's code checks whatever `agents.approvals.*` says, false = always a person's; None =
+        * `agents.approvals.*`. */
+      autoApprove: Option[Boolean] = None,
+      /** review: an article whose filter returns at least this many sources it neither cites nor gives a
+        * reason for gets an `article-extend` item (0 = never; None = `agents.managers.review.extend-min-new`). */
+      extendMinNew: Option[Int] = None
   ) derives KindlingsCodecAsObject:
     /** `other`'s values where it has one, else these. */
     def merge(other: ManagerConfig): ManagerConfig = ManagerConfig(
@@ -220,7 +236,8 @@ object Managers:
       other.budgetUsd.orElse(budgetUsd), other.includeTags.orElse(includeTags), other.includeGoal.orElse(includeGoal),
       other.models.orElse(models), other.staleAfterDays.orElse(staleAfterDays), other.inferFilter.orElse(inferFilter),
       other.minSources.orElse(minSources), other.maxArticles.orElse(maxArticles), other.sweeps.orElse(sweeps),
-      other.autoIngest.orElse(autoIngest), other.autoIngestPerDay.orElse(autoIngestPerDay), other.dailyUsd.orElse(dailyUsd))
+      other.autoIngest.orElse(autoIngest), other.autoIngestPerDay.orElse(autoIngestPerDay), other.dailyUsd.orElse(dailyUsd),
+      other.autoApprove.orElse(autoApprove), other.extendMinNew.orElse(extendMinNew))
   object ManagerConfig:
     given Schema[ManagerConfig] = KindlingsSchema.derived[ManagerConfig].schema
 
@@ -250,6 +267,8 @@ object Managers:
                 case "autoIngestPerDay" | "auto-ingest-per-day" => int.map(n => c.copy(autoIngestPerDay = Some(n)))
                 case "inferFilter" | "infer-filter" => bool(k, v).map(b => c.copy(inferFilter = Some(b)))
                 case "autoIngest" | "auto-ingest"   => bool(k, v).map(b => c.copy(autoIngest = Some(b)))
+                case "autoApprove" | "auto-approve" => bool(k, v).map(b => c.copy(autoApprove = Some(b)))
+                case "extendMinNew" | "extend-min-new" => int.map(n => c.copy(extendMinNew = Some(n)))
                 case "sweeps" =>
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
                   ws.find(w => Sweep.parse(w).isEmpty) match
@@ -559,7 +578,8 @@ object ManagersMarkdown:
       c.staleAfterDays.map(n => s"staleAfterDays=$n"), c.inferFilter.map(b => s"inferFilter=$b"),
       c.minSources.map(n => s"minSources=$n"), c.maxArticles.map(n => s"maxArticles=$n"),
       c.sweeps.map(ws => s"sweeps=${ws.mkString(",")}"), c.autoIngest.map(b => s"autoIngest=$b"),
-      c.autoIngestPerDay.map(n => s"autoIngestPerDay=$n"), c.dailyUsd.map(n => s"dailyUsd=$n")).flatten.mkString(", ") match
+      c.autoIngestPerDay.map(n => s"autoIngestPerDay=$n"), c.dailyUsd.map(n => s"dailyUsd=$n"),
+      c.autoApprove.map(b => s"autoApprove=$b"), c.extendMinNew.map(n => s"extendMinNew=$n")).flatten.mkString(", ") match
       case "" => "the defaults"
       case s  => s
 
@@ -588,7 +608,9 @@ object ManagersMarkdown:
       cfg.maxArticles.map(n => s"max-articles $n"), cfg.sweeps.map(ws => s"sweeps ${if ws.isEmpty then "none" else ws.mkString(", ")}"),
       cfg.autoIngest.map(b => if b then s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
         else "auto-ingest off"),
-      cfg.dailyUsd.filter(_ > 0).map(u => s"daily cap ${usd(u)} USD (metered spend; plan-billed runs count 0 USD)")).flatten.mkString(" · ")
+      cfg.dailyUsd.filter(_ > 0).map(u => s"daily cap ${usd(u)} USD (metered spend; plan-billed runs count 0 USD)"),
+      cfg.autoApprove.map(b => if b then "its approvals decided by code checks" else "its approvals always a person's"),
+      cfg.extendMinNew.filter(_ > 0).map(n => s"extend at $n new sources")).flatten.mkString(" · ")
     val cron = m.cron.fold("")(c => s"\n- cron `$c` (UTC)" + m.nextTickAt.fold("")(t => s", next $t"))
     s"# Manager ${m.id}\n\n- ${line(m)}\n- settings: $settings$cron\n" +
       "\n## In flight\n\n" + (if d.current.isEmpty then "_none_" else d.current.map(i => s"- ${item(i)}").mkString("\n")) +

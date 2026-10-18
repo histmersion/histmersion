@@ -387,7 +387,10 @@ object Agents:
         * at dispatch (what is left of the watcher's daily cap), so a resumed run keeps it. */
       autoIngest: Option[Int] = None,
       /** hint-effect: the hint (`manager_hints.id`) whose action the run proposes. */
-      hint: Option[Long] = None) derives KindlingsCodecAsObject:
+      hint: Option[Long] = None,
+      /** plan-goal: at most this many sub-goals (None = `agents.plan.max-sub-goals`); the autopilot gives
+        * 0 to a goal at `agents.approvals.auto.max-goal-depth`. */
+      subGoals: Option[Int] = None) derives KindlingsCodecAsObject:
     def fixes: Boolean = fix.contains(true)
     def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
