@@ -66,8 +66,8 @@ locked dependencies and docling's models). Nothing is installed system-wide, not
 
 ```
 macOS                                                 Linux
-~/Applications/Histmersion/                           ~/.local/opt/histmersion/                    the bundle: bin/ · pg/ · converter/
-~/Library/Application Support/Histmersion/            ~/.local/share/histmersion/                  pg/ (the database) · logs/ · backups/ · uploads/
+~/Applications/Histmersion/                           ~/.local/opt/histmersion/                    the bundle: bin/ · pg/ · converter/ · kit/ (relink kit)
+~/Library/Application Support/Histmersion/            ~/.local/share/histmersion/                  pg/ (the database) · logs/ · backups/ · uploads/ · plugins/ · toolchain/
 ~/Library/LaunchAgents/com.histmersion.server.plist   ~/.config/systemd/user/histmersion.service   starts it with the session, restarts it if it dies
 ~/bin/histmersion                                     ~/.local/bin/histmersion                     the CLI (symlink)
 ~/.config/histmersion/histmersion.conf                ~/.config/histmersion/histmersion.conf       your settings (see Configuration)
@@ -96,6 +96,19 @@ just install                  # builds dist/histmersion (~3.3 GB; models are ~1.
                               # (an unpacked release archive: scripts/bundle/install-{macos,linux}.sh <dir>)
 open http://localhost:8000
 ```
+
+**The server binary: prebuilt, linked here, or JVM mode.** By default the install runs the bundle's
+prebuilt server. `just install --local-build` (or `scripts/bundle/install-{macos,linux}.sh <dir>
+--local-build`, or `HISTMERSION_BUILD=local`) links it **on this machine** from the bundle's relink kit
+instead: the installer downloads GraalVM CE 25.0.1 from its official GitHub release, checks the pinned
+SHA-256 (`scripts/bundle/graalvm-pins.txt`; GPLv2 with the Classpath Exception), unpacks it into the data
+directory's `toolchain/` (~680 MB), checks the C toolchain (macOS: `xcode-select --install`; Linux:
+`build-essential zlib1g-dev`) and memory, and runs `histmersion-relink` — about 2 minutes and 12 GB of
+memory on an M4 Pro. A locally linked binary is never quarantined, so macOS never asks Gatekeeper about
+it. If any of that fails, it falls back to **JVM mode** (`--jvm`): the same kit on the provisioned JDK,
+no native binary (more memory, a slower start). When the data directory already holds plugins (see
+[Adding your own plugins](#adding-your-own-plugins)), every install relinks by itself — a prebuilt
+binary would not have them.
 
 `just uninstall` removes the app and keeps the data (`just uninstall --purge` deletes it too).
 Logs: `<data>/logs/{server,postgres,converter}.log` (`just logs [server|postgres|converter]`). On Linux the
@@ -334,6 +347,12 @@ What each provider is asked, the licence and match rules, and the providers not 
 | `histmersion jobs [--status <string>] [--limit <integer>] [--before <string>] [<id>]` | Recent OCR jobs, or one job by id |
 | `histmersion config path` | Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about |
 | `histmersion config reload [--json]` | Make the server read its config file again and apply it in place, no restart (restart-only settings are listed, not applied) |
+| `histmersion plugin add [--yes] [--rebuild] [--verify] [--unsigned] [--sha256 <string>] <path|url|group:artifact:version>` | Install a plugin jar on this machine: a local path (copied), an https URL (downloaded, SHA-256 shown) or group:artifact:version from Maven (group::artifact:version = a Scala 3 artifact); shows its id, version, SPI and access first |
+| `histmersion plugin rm [--rebuild] <id|file>` | Remove an installed plugin (by id or jar file name) from this machine's plugins directory |
+| `histmersion plugin list` | The plugin jars in this machine's plugins directory, and whether the installed binary was linked with each |
+| `histmersion plugin status` | Compare the plugins directory's digest with the installed binary's and the running server's: is a rebuild (relink) or restart needed? Also the kit and signing |
+| `histmersion plugin rebuild [--no-restart] [--unsigned] [--ignore-memory] [--jvm] [--check]` | Relink the server with the plugins directory (bin/histmersion-relink: pre-flight, native-image, self-check, swap, restart, health; the previous binary comes back on failure) |
+| `histmersion plugin rollback [--no-restart]` | Put the previous server binary back (the one before the last relink) and restart |
 
 Global: `--server <url>` overrides the configured server (`$HISTMERSION_SERVER_URL`).
 
@@ -516,7 +535,7 @@ the single definition the server interprets and the CLI derives its client from.
 |---|---|---|---|
 | `GET` | `/api/version` · `/api/health` · `/api/config` | — | build info · db + schema version · the `ui` config block the page reads, plus `writeKeyRequired` (whether writes need the API key — never the key) |
 | `POST` | `/api/config/reload` | — | `ReloadReport{published, generation, applied[], restartOnly[], rebuilt[], plugins[], draining[], errors[], warnings[], file}` — the config file read again and applied in place (see *Reloading the config*); a failed reload is a 200 whose `errors` say why nothing changed |
-| `GET` | `/api/about` | — | `About{name, build{version, gitCommit, commitDate, dirty}, health, jobs{queued, running, done, failed}, counts{sources, findings, articles, events, places, periods, presets}, lastBackup, lastBackupAgeSeconds, problems[], configFile{path, loaded, unknownKeys}}` — the web UI's About panel and `histmersion about`; a part that cannot be read is a `problems` line, never an error |
+| `GET` | `/api/about` | — | `About{name, build{version, gitCommit, commitDate, dirty}, health, jobs{queued, running, done, failed}, counts{sources, findings, articles, events, places, periods, presets}, lastBackup, lastBackupAgeSeconds, problems[], configFile{path, loaded, unknownKeys}, plugins{spiVersion, plugins[], warnings[], set{digest, jars[], mode, kit, linkedAt}}}` — the web UI's About panel and `histmersion about`; a part that cannot be read is a `problems` line, never an error |
 | `GET` | `/api/sources` | the **filter params** (below) | `SearchResult{total, hits[{source, matched[], why[]}], offset, next?}` — the source is the unit; `next` is the offset of the next page (absent on the last) |
 | `GET` | `/api/facets` | `field`, `prefix` + filter params | `[{value, count}]` (distinct sources, case-folded) |
 | `GET` | `/api/findings` | filter params (+ legacy `region`), `limit`, `offset` | `[GeoHit]` — the map layer; antimeridian bbox split server-side |
@@ -1124,6 +1143,9 @@ polls, so a change can take a few seconds to be seen).
 | `events.links.*` | — | `km 150`, `years 100`, `name-weight 1.0`, `finding-weight 0.6`, `min-score 0.3`, `min-name-chars 5`, `max-candidates 12` | the deterministic link matcher: findings within the distance and years, a passage naming the event |
 | `events.leads.*` | — | `km 300`, `years 100`, `article-km 300`, `large-vei 5`, `large-magnitude 7.0`, `article-limit 15` | the leads on an event card and an article's coverage |
 | `events.site-types.batch` · `.superclass-depth` | — | `50` · `2` | `places site-types`: items per request, P279 steps walked |
+| `cli.plugins.install-dir` | `HISTMERSION_INSTALL_DIR` | *(empty)* | the install `histmersion plugin …` manages (*empty* = the one this CLI belongs to, else `~/Applications/Histmersion` / `~/.local/opt/histmersion`); it must hold the relink kit |
+| `cli.plugins.maven-repos` | `HISTMERSION_PLUGIN_MAVEN_REPOS` | `https://repo1.maven.org/maven2` | comma-separated repositories `plugin add group:artifact:version` tries in order |
+| `cli.plugins.curl` | `HISTMERSION_CURL` | `curl` | the downloader of `plugin add <url>` and Maven |
 | `cli.calibre.library-dir` | `HISTMERSION_CALIBRE_LIBRARY_DIR` | `~/Calibre Library` | the host Calibre library `histmersion calibre` reads (read-only) |
 | `cli.calibre.calibredb` · `.sqlite` | `HISTMERSION_CALIBRE_CALIBREDB` · `_SQLITE3` | `calibredb` · `sqlite3` | the two readers: `calibredb` first, `sqlite3 -readonly` while the Calibre GUI holds the library |
 | `cli.calibre.originals-dir` | `HISTMERSION_CALIBRE_ORIGINALS_DIR` | *(empty)* | optional host directory of originals as `<citekey>/paper.*`; `calibre push`/`sync` otherwise download the original the server stored (`GET /api/sources/{ck}/original`) |
@@ -1236,6 +1258,66 @@ still starts. `histmersion-server --self-check` loads the config and the plugins
 secrets, prints that report and exits — 0 all good, 2 a plugin failed or was refused, 3 the config is
 broken — without opening a database connection or a port; any other argument is an error (exit 1)
 before anything is opened.
+
+### Adding your own plugins
+
+A third-party plugin is a jar compiled against `modules/plugin-api` alone, with its provider in
+`META-INF/services/com.histmersion.plugin.Plugin`, its defaults in `META-INF/histmersion/plugins/<id>.conf`,
+its own `META-INF/native-image/<group>/<artifact>/reachability-metadata.json` (from the tracing agent in
+its own build) and every dependency the server does not ship shaded in. `modules/plugin-fixtures/hello`
+is a tiny one (a test fixture). Plugins live in the data directory's `plugins/`, one jar each:
+
+```bash
+histmersion plugin add ~/Downloads/portal-plugin-1.2.0.jar        # a local jar, copied in
+histmersion plugin add https://example.org/portal-plugin-1.2.0.jar # downloaded; its SHA-256 is shown (--sha256 <hex> to pin it)
+histmersion plugin add org.example::portal-plugin:1.2.0            # Maven (group::artifact = the Scala 3 artifact _3)
+histmersion plugin list                                            # what is in plugins/, and whether the binary has it
+histmersion plugin status                                          # rebuild needed? (the directory's digest vs the binary's and the running server's)
+histmersion plugin rebuild                                         # relink, swap, restart, check health
+histmersion plugin rollback                                        # the binary before the last relink
+histmersion plugin rm portal-plugin
+```
+
+`add` shows what the jar is before installing it — the plugin's id, version, plugin SPI version, what it
+registers and the **access** its source fetchers declare (open, subscription, unauthorised) — and refuses
+one built for another SPI version; an older version of the same plugin is replaced. Dropping a jar into
+`plugins/` by hand works too. Maven coordinates are resolved by fetching the one jar from each repository
+of `cli.plugins.maven-repos` in turn, checked against the SHA-256/SHA-1 the repository publishes (a
+plugin shades its dependencies, so there is nothing else to resolve). These commands manage files on
+**this** machine and run the bundle's scripts; they never touch the database, and they refuse when
+`histmersion` points at a server elsewhere. Describing a jar runs its code once in a short-lived JVM (no
+sandbox exists for a plugin: it runs in the server's process — install only what you trust).
+
+**Relink.** A native binary cannot load classes at run time, so a changed plugin set needs a new link;
+changing a plugin's *settings* (`histmersion.plugins.<id>`, `enabled` included) needs only `histmersion
+config reload`. `bin/histmersion-relink` (what `plugin rebuild` runs) re-runs GraalVM `native-image` over
+the bundle's `kit/` — the server's Sloth-patched jars, their order and native-image flags, `kit.json` +
+`SHA256SUMS` — plus the plugin jars: no sbt, no compile. It locks, checks the kit's checksums, the
+toolchain (`histmersion-toolchain check`; `histmersion-toolchain install` provisions GraalVM CE), memory
+(`HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12) and disk; runs a **pre-flight on the JVM** (every jar has
+a provider of this SPI, no id or class twice, then the server's own `--self-check` with the plugins and
+your config) before spending 12 GB; Sloth-patches the plugin jars; links; runs the **new binary's
+`--self-check`** (never as a server) and requires the directory's plugin-set digest and every new plugin
+registered; signs it; swaps it in keeping the old one as `bin/histmersion-server.prev`; restarts the
+service and waits for `/api/health` and the expected digest in `/api/about` — else the previous binary
+goes back. Exit codes: 2 refused before building, 3 the build or the self-check failed (nothing changed),
+4 rolled back. Log: `<data>/logs/relink.log`. `/api/about`, `histmersion about` and `--self-check` report
+the binary's **plugin set** (`plugin set: <digest> · 1 jar (native): …`, or first-party plugins only).
+
+**JVM mode** (`histmersion plugin rebuild --jvm`) is the fallback when no native link is possible: the
+same kit and plugins on a JDK (`bin/histmersion-server-jvm`, `HISTMERSION_JVM_OPTS` for heap options),
+plugins found at every start — adding one then needs a restart, not a relink. `plugin rebuild` returns
+to a native binary.
+
+**Signing is optional.** Without it binaries are ad-hoc signed, as before. `histmersion-signing
+setup-macos` creates a self-signed code-signing identity in your login keychain (only when you run it,
+after asking): relinked binaries then keep one designated requirement, so macOS privacy permissions
+survive relinks. `histmersion-signing use-gpg <key id>` (or `generate-gpg`) turns on GPG provenance:
+`plugin add` requires a valid signature (`<jar>.asc`; the signer's key is pinned per plugin id on first
+use), the plugins directory's manifest is signed and verified before every relink and every JVM-mode
+start (a jar dropped in afterwards is refused until you `plugin add` it), and each relinked binary's
+SHA-256 is signed. Passphrases stay with gpg-agent; only the key's fingerprint is stored
+(`<data>/signing/gpg-key`). `histmersion-signing status` shows what is set up.
 
 ## Backup and restore
 

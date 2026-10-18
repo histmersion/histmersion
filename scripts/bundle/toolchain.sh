@@ -53,7 +53,7 @@ case "$cmd" in
       else echo "- C toolchain: MISSING — apt install build-essential zlib1g-dev (or dnf install gcc glibc-devel zlib-devel libstdc++-static)"; fi
     fi
     mem="$(hk_mem_bytes)"; min="${HISTMERSION_RELINK_MIN_MEMORY_GB:-12}"
-    if [ "$((mem / 1073741824))" -ge "$min" ]; then echo "- memory: $((mem / 1073741824)) GB (a relink peaks near 11 GB)"
+    if [ "$((mem / 1073741824))" -ge "$min" ]; then echo "- memory: $((mem / 1073741824)) GB (a relink peaks near 12 GB)"
     else echo "- memory: $((mem / 1073741824)) GB — LESS than the ${min} GB a relink wants: use JVM mode"; ok=""; fi
     free="$(hk_free_kb "$(hk_data_dir)" 2>/dev/null || hk_free_kb "$HOME")"
     echo "- disk: $(( ${free:-0} / 1048576 )) GB free (GraalVM ~0.7 GB, each binary ~0.2 GB)"
