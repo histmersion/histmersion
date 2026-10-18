@@ -124,6 +124,7 @@ new_install() {
   install -m 0755 "$src/signing.sh" "$INSTALL/bin/histmersion-signing"
   install -m 0755 "$src/server-jvm.sh" "$INSTALL/bin/histmersion-server-jvm"
   install -m 0644 "$src/kit-common.sh" "$INSTALL/libexec/kit-common.sh"
+  install -m 0755 "$src/server-verified.sh" "$INSTALL/libexec/histmersion-server-verified"
   printf '#!/bin/sh\n# digest=e3b0\necho old\n' > "$INSTALL/bin/histmersion-server"; chmod +x "$INSTALL/bin/histmersion-server"
   echo '{"digest":"e3b0","spiVersion":1,"jars":[],"mode":"native"}' > "$INSTALL/bin/histmersion-server.plugin-set.json"
   echo "kit jar" > "$INSTALL/kit/lib/a.jar"
@@ -269,6 +270,23 @@ rc="$(relink)"
 check "a jar dropped in after signing: refused (exit 2)" '[ "$rc" = 2 ] && grep -q "does not match its signed manifest" "$tmp/out"'
 rc="$(relink --unsigned)"
 check "--unsigned goes on with a warning" '[ "$rc" = 0 ] && grep -q "going on (--unsigned)" "$tmp/out"'
+lrc=0; "$INSTALL/libexec/histmersion-server-verified" > "$tmp/l.out" 2>&1 || lrc=$?
+check "the service's launcher verifies the relinked binary and starts it" '[ "$lrc" = 0 ] && grep -q "verified histmersion-server .* signed by FAKEKEY" "$tmp/l.out"'
+rc="$(relink --rollback --no-restart)"
+check "rollback with provenance: the previous (signed) binary back, its signed record with it" \
+  '[ "$rc" = 0 ] && "$INSTALL/libexec/histmersion-server-verified" > "$tmp/l.out" 2>&1 && grep -q verified "$tmp/l.out"'
+
+new_install
+mkdir -p "$HISTMERSION_DATA_DIR/signing"; echo FAKEKEY > "$HISTMERSION_DATA_DIR/signing/gpg-key"
+"$INSTALL/bin/histmersion-signing" sign-plugins > /dev/null
+rc="$(relink --no-restart)"
+rc="$(relink --rollback --no-restart)"
+check "provenance on, the previous binary never signed (the stock one): rollback refused (exit 2) before anything moved" \
+  '[ "$rc" = 2 ] && grep -q "previous binary is not verified" "$tmp/out" && binary_has "digest=d1"'
+"$INSTALL/bin/histmersion-signing" sign-binary > /dev/null
+rc="$(relink --rollback --no-restart)"
+check "…signed with sign-binary (you vouch for it): rolled back, and the launcher starts it" \
+  '[ "$rc" = 0 ] && binary_has "digest=e3b0" && "$INSTALL/libexec/histmersion-server-verified" > "$tmp/l.out" 2>&1 && grep -q verified "$tmp/l.out"'
 
 # ── JVM mode ──────────────────────────────────────────────────────────────────────────────────────
 new_install
@@ -277,6 +295,13 @@ check "--jvm: no build; the launcher becomes bin/histmersion-server, the record 
   '[ "$rc" = 0 ] && [ ! -e "$state/ni.calls" ] && cmp -s "$INSTALL/bin/histmersion-server" "$INSTALL/bin/histmersion-server-jvm" && grep -q "\"mode\":\"jvm\"" "$INSTALL/bin/histmersion-server.plugin-set.json"'
 check "--jvm: the build record says jvm, so an install never takes it for a native binary" \
   'grep -qx "mode=jvm" "$INSTALL/bin/histmersion-server.build" && ! hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$HISTMERSION_DATA_DIR/plugins" >/dev/null'
+check "--jvm without provenance: no signed checksum" '[ ! -e "$INSTALL/bin/histmersion-server.sha256.asc" ]'
+new_install
+mkdir -p "$HISTMERSION_DATA_DIR/signing"; echo FAKEKEY > "$HISTMERSION_DATA_DIR/signing/gpg-key"
+"$INSTALL/bin/histmersion-signing" sign-plugins > /dev/null
+rc="$(relink --jvm --no-restart)"
+check "--jvm with provenance: the launcher put in bin/ has its SHA-256 signed, so the service's verified start accepts it" \
+  '[ "$rc" = 0 ] && hk_verify_binary "$INSTALL/bin/histmersion-server" "$INSTALL/bin/histmersion-server.sha256" "$INSTALL/bin/histmersion-server.sha256.asc" FAKEKEY >/dev/null'
 
 rc="$(relink --describe "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar")"
 check "--describe prints the kit tool's JSON" '[ "$rc" = 0 ] && grep -q "\"plugins\":\[\]" "$tmp/out"'

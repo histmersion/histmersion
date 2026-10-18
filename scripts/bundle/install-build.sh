@@ -125,3 +125,26 @@ ib_build() { # <dest> <mode> [<previous install>]
     *) echo "unknown build mode '$mode'" >&2; return 1 ;;
   esac
 }
+
+# What the service definition starts (docs/research-plugins.md §21.3), printed on stdout; everything it
+# says goes to stderr. GPG provenance off (the default): <dest>/bin/histmersion-server, as always. On:
+# the installed binary (and .prev) get their SHA-256 signed — installing a bundle is the moment you
+# vouch for it; a relinked binary was signed by the relink already — and the service starts
+# <dest>/libexec/histmersion-server-verified, which checks that signature at every start. When the
+# signing fails (no secret key, pinentry cancelled) the service starts the binary directly and the
+# installer says loudly that it is NOT verified, and how to fix it: an install never leaves a service
+# that refuses to start. Run AFTER any codesign of the binary (that changes its SHA-256).
+ib_service_program() { # <dest>
+  local dest="$1"
+  if [ -n "$(hk_gpg_key)" ] && [ -x "$dest/libexec/histmersion-server-verified" ]; then
+    echo "→ GPG provenance is on: the service verifies the server binary's signed SHA-256 at each start" >&2
+    if HISTMERSION_HOME="$dest" "$dest/bin/histmersion-signing" sign-binary 2>&1 | sed 's/^/  /' >&2 \
+        && HISTMERSION_HOME="$dest" "$dest/bin/histmersion-signing" verify-binary >/dev/null 2>&1; then
+      printf '%s\n' "$dest/libexec/histmersion-server-verified"
+      return 0
+    fi
+    echo "  WARNING: the server binary's checksum could not be signed with GPG key $(hk_gpg_key) (above)." >&2
+    echo "  The service starts it WITHOUT verification; fix gpg, then: histmersion-signing use-gpg $(hk_gpg_key)" >&2
+  fi
+  printf '%s\n' "$dest/bin/histmersion-server"
+}

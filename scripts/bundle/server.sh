@@ -56,6 +56,7 @@ install -m 0755 "$root/scripts/bundle/server-jvm.sh"  "$out/histmersion-server-j
 install -m 0755 "$root/scripts/bundle/toolchain.sh"   "$out/histmersion-toolchain"
 install -m 0755 "$root/scripts/bundle/signing.sh"     "$out/histmersion-signing"
 install -m 0644 "$root/scripts/bundle/kit-common.sh"  "$bundle/libexec/kit-common.sh"
+install -m 0755 "$root/scripts/bundle/server-verified.sh" "$bundle/libexec/histmersion-server-verified"
 install -m 0644 "$root/scripts/bundle/graalvm-pins.txt" "$bundle/libexec/graalvm-pins.txt"
 install -m 0755 "$root/scripts/bundle/codesign-identity-macos.sh" "$bundle/libexec/codesign-identity-macos.sh"
 du -sh "$bundle/kit" | sed 's/^/  kit: /'
