@@ -10,7 +10,7 @@ import com.histmersion.core.*
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the
   * server interprets, so request/response shapes cannot drift. Sync (java.net.http), native-safe.
   * `token` is the `Authorization: Bearer <key>` value for authenticated servers; `None` = local. */
-final class Client(serverUrl: String, token: Option[String] = None):
+final class Client(val serverUrl: String, token: Option[String] = None):
   private val base = Uri.unsafeParse(serverUrl)
 
   // HTTP/1.1, explicitly. sttp's sync backend is java.net.http, whose default HTTP/2 client reuses a

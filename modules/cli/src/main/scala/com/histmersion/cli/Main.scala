@@ -419,7 +419,9 @@ object Main:
           // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
           // which owns the name and dispatches file-vs-DOI)
           orElse IngestCmd.all
-          orElse ConfigCmd.command).tupled
+          orElse ConfigCmd.command
+          // the plugins of the install on THIS machine (docs/research-plugins.md §7): files + the relink
+          orElse PluginCmd.command).tupled
     }
 
   def main(args: Array[String]): Unit =
