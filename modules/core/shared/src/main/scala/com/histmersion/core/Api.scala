@@ -349,6 +349,13 @@ object Api:
 
   /** `POST /api/backup` — `pg_dump -Fc` of the SERVER's own database into `backups.dir`. The CLI has
     * no credentials (§2.5), so the dump is taken by the process that has them. */
+  /** `POST /api/config/reload` — read the config file again and switch the running server to it in
+    * place (docs/research-plugins.md §3.5, §3.6): what changed is rebuilt beside the running
+    * components and swapped in when all of it built; restart-only settings are reported, not applied.
+    * A failed reload is still a 200 — its report says why nothing changed. */
+  val configReload: PublicEndpoint[Unit, ApiError, ReloadReport, Any] =
+    writeBase.post.in("config" / "reload").out(jsonBody[ReloadReport])
+
   val backup: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
     writeBase.post.in("backup").out(jsonBody[BackupStatus])
 
@@ -595,7 +602,7 @@ object Api:
   lazy val all: List[AnyEndpoint] = List(version, health, about, config, search, sources, facets,
     // `sources/{ck}/articles`, `sources/{ck}/view`, `…/passages` and `sources/{ck}/export` are longer paths than `sources/{ck}` — register first
     sourceArticles, sourceView, passages, lintSource, fixSourceFormat, getSource, findingsPage, findings, aggregate, neighbors, graph, contradictions, seed,
-    putSource, patchSource, renameSource, deleteSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, backup, backups, downloadBackup, restore, maintenanceVacuum,
+    putSource, patchSource, renameSource, deleteSource, sourceAliases, importNote, exportSource, citekeys, resolveEdges, reindex, configReload, backup, backups, downloadBackup, restore, maintenanceVacuum,
     // portable bundles: `bundle/verify` and `bundle/import` are POSTs, the export the one GET
     instance, setInstance, exportBundle, verifyBundle, importBundle, uploadBundle, mergePlan, mergeImport, mergeApply,
     mergeApplyStatus, mergeSession, putMergeSession, parseResolutions,

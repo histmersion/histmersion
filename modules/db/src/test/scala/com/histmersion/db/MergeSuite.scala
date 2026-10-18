@@ -12,11 +12,11 @@ import javax.sql.DataSource
   * own; work's bundle planned in home must give EXACTLY the expected issue list in one run. Then the
   * import's refusal, the id map (`uid_aliases`) and the ISBN key. Skipped without
   * HISTMERSION_TEST_DB_URL. */
-class MergeSuite extends munit.FunSuite with Bounded:
+class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg              = AppConfig.load()
-  private lazy val admin            = Db.dataSource(cfg.db.copy(url = testDb.get))
+  private lazy val admin            = testPool(cfg.db.copy(url = testDb.get))
   private val created               = scala.collection.mutable.ListBuffer.empty[String]
   private val tmp                   = Files.createTempDirectory("histmersion-merge-suite")
 
@@ -30,11 +30,11 @@ class MergeSuite extends munit.FunSuite with Bounded:
     exec(admin, s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
     exec(admin, s"CREATE DATABASE $name")
     created += name
-    val ds = Db.dataSource(cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
+    val ds = testPool(cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
     Migrate.run(ds)
     ds
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if testDb.isDefined then created.foreach(n => exec(admin, s"DROP DATABASE IF EXISTS $n WITH (FORCE)"))
 
   private def spool(n: String): Path = Files.createDirectories(tmp.resolve(n))

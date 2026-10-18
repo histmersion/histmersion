@@ -11,12 +11,12 @@ import java.nio.file.{Files, Path, StandardCopyOption}
   * drop folder (a hand-written Linked Places Format file following the spec, an LP-TSV file with a
   * `.meta.json` sidecar). The DB half runs against HISTMERSION_TEST_DB_URL (skipped otherwise); it
   * does not re-materialise `finding_places`, which other suites assert on. */
-class GazetteerLoadSuite extends munit.FunSuite:
+class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
   private val testDb = TestDb.url
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(base.db.copy(url = testDb.get))
+    val d = testPool(base.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val FixtureSha = "20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b"
@@ -129,7 +129,7 @@ class GazetteerLoadSuite extends munit.FunSuite:
     val _ = sql"DELETE FROM gazetteer_sources WHERE key IN ('geonames', 'tgn', 'lpf:zzgaz_hittite', 'lpf:zzgaz_kultepe')".update.run()
 
   override def beforeAll(): Unit = clean()
-  override def afterAll(): Unit  = clean()
+  override def afterSuite(): Unit  = clean()
 
   private def dbTest(name: String)(body: => Unit): Unit =
     test(name)(if testDb.isEmpty then () else { clean(); body })

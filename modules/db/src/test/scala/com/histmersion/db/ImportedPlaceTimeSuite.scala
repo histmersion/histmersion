@@ -17,13 +17,13 @@ import com.augustnagro.magnum.*
   *   - V074's repair of stored rows and the importer agree (a re-run after it changes nothing).
   * Fixtures sit at 150°W 60°S, where no other suite has any; ids carry `99950` or `zzpt`. The real
   * `wikidata`/`geonames` source keys are written WITHOUT the sweep, so no other suite's rows go. */
-class ImportedPlaceTimeSuite extends munit.FunSuite with Bounded:
+class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -35,7 +35,7 @@ class ImportedPlaceTimeSuite extends munit.FunSuite with Bounded:
     val _ = sql"DELETE FROM place_descriptions WHERE import_ref LIKE '%99950%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit                       = if testDb.isDefined then clean()
+  override def afterSuite(): Unit                       = if testDb.isDefined then clean()
 
   private val Lon = -150.0
   private val Lat = -60.0

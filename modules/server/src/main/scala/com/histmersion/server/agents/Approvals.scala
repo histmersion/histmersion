@@ -14,7 +14,7 @@ import javax.sql.DataSource
   * applies it through [[Handlers.patchSource]], exactly the patch a person would send.
   *
   * A run does not wait for its approvals: it finishes, and the proposal stays open until decided. */
-final class Approvals(h: Handlers, ds: DataSource, cfg: AgentsConfig,
+final class Approvals(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
     applyHint: Managers.HintProposal => Either[String, String] = _ => Left("no managers to apply it")):
   import Approvals.Outcome
 

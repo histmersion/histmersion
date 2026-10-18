@@ -21,7 +21,7 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
     gazetteerDownload: GazetteerLoad.Download = GazetteerLoad.httpDownload):
 
   private val ds          = deps.ds
-  private val cfg         = deps.cfg
+  private def cfg         = deps.cfg
   private val maintenance = deps.maintenance
 
   /** The init job running now, if any — one at a time ([[BackgroundJob]]): two concurrent seeds would
@@ -146,7 +146,8 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
       fetch = if fetch then cfg.init.sources else Nil)
 
   private def start(p: InitPlan): Either[ApiError, JobInfo] =
-    BackgroundJob.start(ds, Bootstrap.JobKind, Some(JobDetail(init = Some(p))), slot, "an init job")((job, note) =>
+    BackgroundJob.start(ds, Bootstrap.JobKind, Some(JobDetail(init = Some(p))), slot, "an init job",
+      pins = deps.pins)((job, note) =>
       run(job.id, p, note))
 
   private def run(id: String, p: InitPlan, note: String => Unit): BackgroundJob.Outcome =

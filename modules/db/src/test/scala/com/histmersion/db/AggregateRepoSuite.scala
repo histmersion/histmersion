@@ -4,12 +4,12 @@ import com.histmersion.core.*
 
 /** `periods` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * The bucketing itself is pure and covered by `core/AggregateSuite`. */
-class AggregateRepoSuite extends munit.FunSuite:
+class AggregateRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = Db.dataSource(base.copy(url = testDb.get))
+    val d    = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   /** A source dated −1300…−1200 with one Anatolian finding at −1250 (the §1.7 acceptance shape). */

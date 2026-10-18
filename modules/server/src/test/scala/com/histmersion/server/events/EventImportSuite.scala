@@ -15,7 +15,7 @@ import com.augustnagro.magnum.*
   * held inside the present with its year, ± and method kept; `--refresh` reads again and refreshes the
   * event; `rederive` recomputes a pre-V088 row from what is stored with NO request, a correction by
   * hand kept. */
-class EventImportSuite extends munit.FunSuite:
+class EventImportSuite extends com.histmersion.db.DbSuite:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -50,7 +50,7 @@ class EventImportSuite extends munit.FunSuite:
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(base.db.copy(url = testDb.get))
+    val d = testPool(base.db.copy(url = testDb.get))
     Migrate.run(d)
     d
   private lazy val cfg = base.copy(
@@ -67,7 +67,7 @@ class EventImportSuite extends munit.FunSuite:
     val _ = sql"DELETE FROM places WHERE id IN ('wikidata_q9100001', 'wikidata_q9100002')".update.run()
 
   override def beforeAll(): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def run(h: EventCatalogHandlers, provider: String, dry: Boolean): EventImportReport =
     h.runImport(provider, EventImportRequest(provider, dryRun = dry), None, _ => ())

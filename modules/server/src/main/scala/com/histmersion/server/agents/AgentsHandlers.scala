@@ -25,8 +25,12 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The server's own providers ([[LlmClient.factory]]: the HTTP ones and the CLI runtimes). */
   def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps.cfg))
 
-  private val cfg     = deps.cfg.agents
+  /** Read at each use: a config reload switches it (Deps). */
+  private def cfg     = deps.cfg.agents
   private val ds      = deps.ds
+
+  /** How the engine, the managers and their threads keep work on the generation it started on. */
+  val pins: com.histmersion.server.hot.Pinning = deps.pins
 
   /** The acquisition toolset (OpenAlex/Crossref, refs, assess, followups). A `var` because it is built
     * AFTER [[Handlers]] (it needs the ingest queue), and attached by `Main` before the pool starts;
@@ -176,6 +180,18 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     managers.stop()
     engine.stop()
     lease.stop()
+
+  /** A config reload swapped the database and this server holds the agent lease on the new one
+    * (docs/research-plugins.md §3.6): do there what a start does — the goal schedules moved, the
+    * default managers made, interrupted runs paused and queued ones enqueued (the engine and the
+    * managers keep their threads; their next unit of work runs on the new database). */
+  def adoptDatabase(): Unit =
+    if cfg.enabled then
+      val _ = managers.migrateSchedules(java.time.Instant.now())
+      managers.ensureDefaults()
+      val paused = engine.start()
+      managers.start()
+      scribe.info(s"agents: running on the new database ($paused interrupted run(s) paused there)")
 
   /** Off unless `agents.enabled`: every agent operation but the read-only model listing refuses. */
   private def enabled: Either[ApiError, Unit] =

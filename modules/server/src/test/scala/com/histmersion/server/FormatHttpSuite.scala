@@ -11,7 +11,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * and a source, `POST /api/lint/markdown`, the corpus rules in `/api/lint`, the `lint` MCP tool on one
   * article, the notice on the rendered page — and `POST /api/places/{id}/rename` (#890), whose old id
   * keeps resolving. Skipped without HISTMERSION_TEST_DB_URL. */
-class FormatHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
+class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -156,7 +156,7 @@ class FormatHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
   test("places rename: REST and MCP, the old id keeps resolving, a taken one is refused (#890)"):
     withServer { url =>
       // a previous run's renamed places and their old ids must not be in the way
-      val ds = com.histmersion.db.Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+      val ds = testPool(AppConfig.load().db.copy(url = testDb.get))
       com.augustnagro.magnum.connect(ds):
         import com.augustnagro.magnum.*
         sql"DELETE FROM place_aliases WHERE alias LIKE 'zz_fmt_place%'".update.run()

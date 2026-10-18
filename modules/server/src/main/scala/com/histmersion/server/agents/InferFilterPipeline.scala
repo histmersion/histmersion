@@ -23,7 +23,7 @@ import javax.sql.DataSource
   * auto`, is recorded at once) · close (the worklog line).
   *
   * A DRY run records the approval (or the write) it would make on its step and makes neither. */
-final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig) extends PipelineDef:
+final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.InferFilter
   import InferFilterPipeline.*
 

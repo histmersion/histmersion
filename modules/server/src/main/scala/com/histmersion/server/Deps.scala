@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.core.{AppConfig, ConfigFileInfo}
+import com.histmersion.core.{AppConfig, ConfigFileInfo, ReloadReport}
+import com.histmersion.server.hot.Pinning
+import com.histmersion.server.plugins.Generation
 import javax.sql.DataSource
 
 /** Everything the handlers need. Built once in `Main` (the composition root) and passed down — no
@@ -10,17 +12,46 @@ import javax.sql.DataSource
   * goes through it. `queryDs` is the `histmersion_query` read-only role (migration V011) and is used by
   * exactly ONE operation — the `query` escape hatch — because that is the one place arbitrary,
   * model-written SQL is executed. Mixing them up is the bug the second field exists to make visible.
-  */
-final case class Deps(cfg: AppConfig, ds: DataSource, queryDs: DataSource,
-    maintenance: Maintenance = Maintenance(),
-    /** The user config file `cfg` was read with (`about` shows it). */
-    configFile: ConfigFileInfo = ConfigFileInfo(),
-    /** The plugins' generation `Main` built for this config: their registries and the report
-      * `about` and `/api/config` show. */
-    plugins: com.histmersion.server.plugins.Generation = com.histmersion.server.plugins.Generation.empty)
+  *
+  * HOT (docs/research-plugins.md §3.5, §3.6): in the server, `cfg`, `configFile` and `plugins` are
+  * read from the hot component graph at each call — the generation the calling thread is pinned to
+  * (an HTTP request, a job, an agent run), else the current one — and `ds`/`queryDs` are proxies that
+  * take each connection from that generation's pool. So read `deps.cfg` where it is used (a `def`,
+  * never a `val` captured at construction), and once into a local where one unit of work needs one
+  * consistent config. Work handed to another thread carries its generation with [[pins]]. */
+final class Deps(
+    cfgNow: () => AppConfig,
+    val ds: DataSource,
+    val queryDs: DataSource,
+    val maintenance: Maintenance,
+    configFileNow: () => ConfigFileInfo,
+    pluginsNow: () => Generation,
+    /** Pins work to a generation; [[Pinning.none]] without a hot graph (a test's fixed `Deps`). */
+    val pins: Pinning = Pinning.none,
+    /** `histmersion config reload`: read the config file again and switch to it. */
+    val reloader: () => ReloadReport = Deps.NoReload):
+
+  /** The config the calling thread sees (its pinned generation's, else the current one). */
+  def cfg: AppConfig = cfgNow()
+
+  /** The user config file `cfg` was read with (`about` shows it). */
+  def configFile: ConfigFileInfo = configFileNow()
+
+  /** The plugins' generation for this config: their registries and the report `about` and
+    * `/api/config` show. */
+  def plugins: Generation = pluginsNow()
 
 object Deps:
-  /** The ordinary construction: the read-only DataSource comes from `histmersion.query.user/password`.
-    * A test that does not exercise `query` can use this and never think about the second role. */
-  def apply(cfg: AppConfig, ds: DataSource): Deps =
-    Deps(cfg, ds, com.histmersion.db.Db.queryDataSource(cfg.db, cfg.query))
+  /** A fixed `Deps` — one config, one pair of DataSources, nothing hot (tests, tools). */
+  def apply(cfg: AppConfig, ds: DataSource, queryDs: DataSource, maintenance: Maintenance = Maintenance(),
+      configFile: ConfigFileInfo = ConfigFileInfo(), plugins: Generation = Generation.empty): Deps =
+    new Deps(() => cfg, ds, queryDs, maintenance, () => configFile, () => plugins)
+
+  /** A fixed `Deps` whose read-only DataSource is the application one: for a test that does not
+    * exercise `query` (a second role would need a second pool someone has to own and close). */
+  def apply(cfg: AppConfig, ds: DataSource): Deps = apply(cfg, ds, ds)
+
+  /** The reload of a server that was started without a config file to read again. */
+  val NoReload: () => ReloadReport = () =>
+    ReloadReport(published = false, generation = 0,
+      errors = List("this server was started without a config file to reload"))

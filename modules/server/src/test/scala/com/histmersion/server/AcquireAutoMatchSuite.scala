@@ -14,7 +14,7 @@ import java.nio.file.{Files, Path}
   * LISTS the items that resemble it — a preprint's published version among them — in the job's
   * progress. A re-OCR imports nothing and matches nothing; an explicit `acquireItem` is the whole
   * story. Skipped without HISTMERSION_TEST_DB_URL. */
-class AcquireAutoMatchSuite extends munit.FunSuite:
+class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(90, "s")
@@ -45,14 +45,14 @@ class AcquireAutoMatchSuite extends munit.FunSuite:
       converter = base.converter.copy(spoolDir = Files.createTempDirectory("histmersion-automatch").toString))
 
   private def clean(): Unit =
-    val ds = Db.dataSource(cfg.db)
+    val ds = testPool(cfg.db)
     com.histmersion.db.Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM queue_items WHERE text LIKE 'zzauto%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzauto%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = clean()
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def tempPdf(marker: String): Path =
     val p = Files.createTempFile("histmersion-automatch-", ".pdf")

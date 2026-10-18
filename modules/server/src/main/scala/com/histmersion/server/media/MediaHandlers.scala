@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
 final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClient):
 
   private val ds  = deps.ds
-  private val cfg = deps.cfg
+  private def cfg = deps.cfg
 
   def this(deps: Deps, http: MediaHttp) = this(deps, http, MediaHandlers.NoThumbnails)
   def this(deps: Deps, converter: ConverterClient) =
@@ -82,7 +82,8 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
       claim(describe).map { _ =>
         val job = JobRepo.create(ds, kind, None, None, detail = Some(JobDetail(media = Some(describe))))
         busy.set(Some(s"job ${job.id}"))
-        val t = Thread.ofPlatform().daemon(true).name(s"histmersion-$kind").unstarted { () =>
+        // on the generation (database, config) the request was pinned to
+        val work = deps.pins.carry {
           try
             val _ = JobRepo.transition(ds, job.id, JobState.Queued, JobState.Running, Some("starting"))
             val out =
@@ -97,6 +98,7 @@ final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClien
               case Left(why)      => JobRepo.transition(ds, job.id, JobState.Running, JobState.Failed, None, Some(why))
           finally busy.set(None)
         }
+        val t = Thread.ofPlatform().daemon(true).name(s"histmersion-$kind").unstarted(() => work.run())
         t.start()
         JobRepo.get(ds, job.id).getOrElse(job)
       }

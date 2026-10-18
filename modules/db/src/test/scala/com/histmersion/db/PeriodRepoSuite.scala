@@ -7,12 +7,12 @@ import com.augustnagro.magnum.*
 /** Named periods against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise (#719): the
   * upsert keeps the foreign-key order, reads the inclusive upper bound back, is idempotent, and the
   * placement it reports is what keeps a re-import from moving a period. Fixture ids are `zzr*`. */
-class PeriodRepoSuite extends munit.FunSuite:
+class PeriodRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val ids = List("zzr_root", "zzr_bronze", "zzr_lba", "zzr_lm", "zzr_other", "zzr_gone", "zzr_mine")
@@ -22,7 +22,7 @@ class PeriodRepoSuite extends munit.FunSuite:
     ids.reverse.foreach(id => transact(ds)(sql"DELETE FROM periods WHERE id = $id".update.run()))
 
   override def beforeAll(): Unit = if testDb.nonEmpty then clean()
-  override def afterAll(): Unit  = if testDb.nonEmpty then clean()
+  override def afterSuite(): Unit  = if testDb.nonEmpty then clean()
 
   private def hp(id: String, s: Long, e: Long, parent: Option[String] = None) =
     HistoricalPeriod(id, id.toUpperCase, Some(s"PeriodO $id · test"), Period(s, e), Some("Zzrland"), parent)

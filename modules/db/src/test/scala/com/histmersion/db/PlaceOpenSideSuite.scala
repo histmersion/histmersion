@@ -6,13 +6,13 @@ import com.augustnagro.magnum.*
 
 /** A one-ended LPF timespan is stored OPEN (#1403): `[start,)` / `(,end]`, never the one known year —
   * for the place, its names and its relations. Against a real PostGIS (HISTMERSION_TEST_DB_URL). */
-class PlaceOpenSideSuite extends munit.FunSuite:
+class PlaceOpenSideSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private def clean(): Unit = connect(ds):
@@ -21,7 +21,7 @@ class PlaceOpenSideSuite extends munit.FunSuite:
     val _ = sql"DELETE FROM places WHERE id LIKE 'zzpo_%'".update.run()
 
   override def beforeAll(): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit  = if testDb.isDefined then clean()
+  override def afterSuite(): Unit  = if testDb.isDefined then clean()
 
   private val doc =
     """{"type":"FeatureCollection","features":[

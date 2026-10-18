@@ -7,13 +7,13 @@ import com.augustnagro.magnum.*
 /** The About counts against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Other suites
   * write into the same database at the same time, so each count is compared with its own table read
   * in the same breath, not with a fixed number. */
-class StatsRepoSuite extends munit.FunSuite:
+class StatsRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = Db.dataSource(base.copy(url = testDb.get))
+    val d    = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private def count(table: String): Int =

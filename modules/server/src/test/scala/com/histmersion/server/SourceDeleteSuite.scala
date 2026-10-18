@@ -12,7 +12,7 @@ import java.nio.file.{Files, Path}
   * that held the source, parks other sources' edges to it, drops its old citekeys, leaves a tombstone,
   * logs itself, keeps Calibre's id in the answer and removes the stored originals after the commit.
   * Skipped without HISTMERSION_TEST_DB_URL. */
-class SourceDeleteSuite extends munit.FunSuite:
+class SourceDeleteSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -36,9 +36,9 @@ class SourceDeleteSuite extends munit.FunSuite:
       converter = b.converter.copy(spoolDir = spool.toString),
       acquire = b.acquire.copy(spoolDir = acquire.toString))
   private lazy val deps =
-    val ds = Db.dataSource(cfg.db)
+    val ds = testPool(cfg.db)
     Migrate.run(ds)
-    Deps(cfg, ds, Db.queryDataSource(cfg.db, cfg.query))
+    Deps(cfg, ds, testQueryPool(cfg.db, cfg.query))
   private lazy val ds = deps.ds
   private lazy val h  = Handlers(deps, NoConverter)
 
@@ -71,7 +71,7 @@ class SourceDeleteSuite extends munit.FunSuite:
       sql"DELETE FROM queue_items WHERE text LIKE ${"%" + Prefix + "%"}".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = clean()
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def count(q: Frag): Int = connect(ds)(q.query[Int].run().head)
 

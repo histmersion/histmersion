@@ -11,13 +11,13 @@ import scala.util.Random
   * not depend on their order; corrections by hand survive a re-import — kept while the catalogue is
   * unchanged, retired once it agrees, flagged when it changes to something else — follow a rename, go
   * with a delete, and a conflict is a lint item. Ids start with `zqcr` (provider `zzcr`). */
-class EventCorrectionsRepoSuite extends munit.FunSuite:
+class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -29,7 +29,7 @@ class EventCorrectionsRepoSuite extends munit.FunSuite:
     val _ = sql"DELETE FROM event_aliases WHERE alias LIKE 'zzcr%'".update.run()
 
   override def beforeAll(): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def put(id: String, ts: TimeSpan, lon: Double = 160.0) =
     EventRepo.put(ds, id, EventPut(s"Zqcr $id", "eruption", ts, geometry = Some(s"""{"type":"Point","coordinates":[$lon,-45.0]}""")))

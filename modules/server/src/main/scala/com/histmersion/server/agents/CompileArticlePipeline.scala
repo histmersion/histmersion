@@ -35,7 +35,7 @@ import javax.sql.DataSource
   * A DRY run opens no approval (the draft is treated as approved), records the article it would
   * create or the section it would append (and the tasks, link and log lines) on their steps, and
   * starts NO review run: there is no written text for one to review. */
-final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
+final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
     startChild: (RunRequest, RunInfo) => Either[ApiError, RunInfo]) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.CompileArticle
   import CompileArticlePipeline.*

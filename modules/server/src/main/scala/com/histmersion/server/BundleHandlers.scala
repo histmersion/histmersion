@@ -23,7 +23,7 @@ final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
 
 
   private val ds          = deps.ds
-  private val cfg         = deps.cfg
+  private def cfg         = deps.cfg
   private val maintenance = deps.maintenance
 
   private def dir: Path = Path.of(cfg.bundles.dir).toAbsolutePath.normalize
@@ -165,7 +165,7 @@ final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
     applyJobs.status(job).toRight(ApiError(s"no merge apply '$job' on this server " +
       "(`histmersion merge list` shows what was merged)", Some(Write.CodeNotFound)))
 
-  private val applyJobs = MergeApplyJobs(ds, cfg.merge.applyWaitSeconds)
+  private val applyJobs = MergeApplyJobs(ds, cfg.merge.applyWaitSeconds, deps.pins)
 
   // ── the review screen's draft, the resolution file, the merges (M6–M7) ─────────────────────────
 
@@ -203,7 +203,7 @@ final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
     try use(in) finally in.close()
 
   /** The server's stored originals: the converter's spool, `<sha256>.<ext>`. */
-  private val originals: Originals = Originals.inDir(Path.of(cfg.converter.spoolDir))
+  private def originals: Originals = Originals.inDir(Path.of(cfg.converter.spoolDir))
 
 object BundleHandlers:
   /** How many merges `merge list` shows, and ledger rows `merge ledger`, unless asked. */
@@ -243,7 +243,8 @@ object BundleHandlers:
   * across a restart: what it reported once done, and — when the server stopped while it ran —
   * `interrupted` (the startup reconciliation fails every unfinished job; the apply's transaction
   * committed or rolled back as a whole). Only the wait for the first answer is in memory. */
-final class MergeApplyJobs(ds: javax.sql.DataSource, waitSeconds: Int):
+final class MergeApplyJobs(ds: javax.sql.DataSource, waitSeconds: => Int,
+    pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none):
   import com.histmersion.db.JobRepo
   import java.util.concurrent.{CompletableFuture, TimeUnit, TimeoutException}
 
@@ -255,13 +256,15 @@ final class MergeApplyJobs(ds: javax.sql.DataSource, waitSeconds: Int):
       else
         val id   = JobRepo.startMergeApply(ds, bundle, planHash)
         val done = CompletableFuture[Unit]()
-        val _ = Thread.ofPlatform().daemon(true).name("histmersion-merge-apply").start { () =>
+        // on the generation (database) the request was pinned to
+        val work = pins.carry {
           val outcome = scala.util.Try(run()).toEither.left.map(e =>
             s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}").flatten
           try JobRepo.finishMergeApply(ds, id, outcome)
           catch case e: Exception => scribe.error(s"merge apply $id: could not record its end: ${e.getMessage}", e)
           finally { val _ = done.complete(()) }
         }
+        val _ = Thread.ofPlatform().daemon(true).name("histmersion-merge-apply").start(() => work.run())
         Right(id -> done)
     }.map { (id, done) =>
       try { val _ = done.get(math.max(0, waitSeconds).toLong, TimeUnit.SECONDS) }

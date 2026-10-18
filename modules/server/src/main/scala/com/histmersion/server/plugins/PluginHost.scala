@@ -34,7 +34,18 @@ object Registries:
   * [[PluginHost.build]] as a pure function of (plugins, user config, environment, host services) —
   * no global state, no static cache — so a later config reload (docs/research-plugins.md §3.5) builds
   * the next generation beside the running one and swaps it in only when it is complete. */
-final case class Generation(registries: Registries, report: PluginsReport)
+final case class Generation(registries: Registries, report: PluginsReport,
+    /** What each registered plugin contributed — what a partial rebuild carries over unchanged. */
+    contributions: Map[String, Registries] = Map.empty,
+    /** The plugins this build registered afresh (all of them on a full build); the others were
+      * carried over from the previous generation (config reload, §3.5). */
+    rebuilt: List[String] = Nil,
+    /** The registered plugins whose config holds a secret: never carried over, so a reload resolves
+      * their secrets again (a rotated password needs only `config reload`, §3.7). */
+    withSecrets: Set[String] = Set.empty):
+  /** A plugin's status and contributions, to carry into the next generation unchanged. */
+  def carry(id: String): Option[(PluginStatus, Registries)] =
+    report.plugins.find(_.id == id).map(st => st -> contributions.getOrElse(id, Registries.empty))
 
 object Generation:
   val empty: Generation = Generation(Registries.empty, PluginsReport(Spi.Version))
@@ -252,7 +263,7 @@ object PluginHost:
     * applied to the value `p.configReader` decoded — built where that value still has type `p.Config`,
     * so no cast is ever needed. */
   private final case class Prepared(p: Plugin, block: Config, secrets: List[Secret],
-      call: PluginContext => Either[String, Unit])
+      call: PluginContext => Either[String, Unit], carried: Option[(PluginStatus, Registries)] = None)
 
   /** A registry whose additions are kept apart until the plugin's `register` returned. Mutable, but
     * owned by ONE register call: `close` ends it, after which any add (a plugin that kept the context)
@@ -290,7 +301,11 @@ object PluginHost:
     * the others (a vault plugin may sort after the plugins that use it); one still waiting when no
     * pass registers anything more fails, naming the vault. Every failure is that plugin's alone. */
   def build(plugins: List[Plugin], user: Config, env: Config, services: HostServices,
-      discoveryErrors: List[String] = Nil): Generation =
+      discoveryErrors: List[String] = Nil,
+      /** Plugins whose block did not change since the previous generation (a config reload): their
+        * status and contributions are taken over as they are — not decoded, resolved or registered
+        * again. A registered one goes into the registries in its place in the order. */
+      carried: Map[String, (PluginStatus, Registries)] = Map.empty): Generation =
     val infos    = plugins.map(_.info)
     val refused  = check(infos, Spi.Version)
     val accepted = plugins.filterNot(p => refused.contains(p.info.id))
@@ -312,19 +327,23 @@ object PluginHost:
     // the config of every accepted plugin, in order
     val prepared: List[(String, Either[PluginStatus, Prepared])] = ordered.map { id =>
       val p = byId(id)
-      val r = for
-        defs  <- defaults(p).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
-        // the defaults resolved on their own: `${?ENV}` lines leave the default standing
-        known  = Try(defs.resolve()).getOrElse(defs)
-        _     <- typeCheck(id, user, known) match
-                   case Nil  => Right(())
-                   case errs => Left(status(p, Try(user.getBoolean(s"$Root.$id.enabled")).getOrElse(false),
-                     PluginState.Failed, error = Some(errs.mkString("; "))))
-        conf  <- block(user, defs, env, id).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
-        on    <- enabled(conf, id).left.map(e => status(p, false, PluginState.Failed, Some(conf), Some(e)))
-        _     <- Either.cond(on, (), status(p, false, PluginState.Disabled, Some(conf)))
-        typed <- decode(p, conf).left.map(e => status(p, true, PluginState.Failed, Some(conf), Some(e)))
-      yield Prepared(p, conf, secretsIn(typed), ctx => p.register(typed, ctx))
+      val r = carried.get(id) match
+        case Some((st, _)) if st.state != PluginState.Registered.wire => Left(st)
+        case Some(c) => Right(Prepared(p, ConfigFactory.empty, Nil, _ => Right(()), Some(c)))
+        case None =>
+          for
+            defs  <- defaults(p).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
+            // the defaults resolved on their own: `${?ENV}` lines leave the default standing
+            known  = Try(defs.resolve()).getOrElse(defs)
+            _     <- typeCheck(id, user, known) match
+                       case Nil  => Right(())
+                       case errs => Left(status(p, Try(user.getBoolean(s"$Root.$id.enabled")).getOrElse(false),
+                         PluginState.Failed, error = Some(errs.mkString("; "))))
+            conf  <- block(user, defs, env, id).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
+            on    <- enabled(conf, id).left.map(e => status(p, false, PluginState.Failed, Some(conf), Some(e)))
+            _     <- Either.cond(on, (), status(p, false, PluginState.Disabled, Some(conf)))
+            typed <- decode(p, conf).left.map(e => status(p, true, PluginState.Failed, Some(conf), Some(e)))
+          yield Prepared(p, conf, secretsIn(typed), ctx => p.register(typed, ctx))
       id -> r
     }
 
@@ -332,21 +351,21 @@ object PluginHost:
     val cache = scala.collection.mutable.Map.empty[SecretRef, String] // local to this build, never shared
     @annotation.tailrec
     def passes(waiting: List[Prepared], regs: Registries,
-        done: Map[String, PluginStatus]): (Registries, Map[String, PluginStatus]) =
+        done: Map[String, (PluginStatus, Registries)]): (Registries, Map[String, (PluginStatus, Registries)]) =
       val (rs, ds, left, progressed) = waiting.foldLeft((regs, done, List.empty[Prepared], false)) {
         case ((rs, ds, left, prog), pr) =>
           val missing = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }
           if missing.nonEmpty then (rs, ds, left :+ pr, prog)
           else
-            val (st, added) = register(pr, rs, env, services, cache)
-            (rs ++ added, ds.updated(pr.p.info.id, st), left, true)
+            val (st, added) = pr.carried.getOrElse(register(pr, rs, env, services, cache))
+            (rs ++ added, ds.updated(pr.p.info.id, (st, added)), left, true)
       }
       if left.isEmpty || !progressed then
         val stuck = left.map { pr =>
           val names = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }.distinct
-          pr.p.info.id -> status(pr.p, true, PluginState.Failed, Some(pr.block),
+          pr.p.info.id -> (status(pr.p, true, PluginState.Failed, Some(pr.block),
             Some(s"$Root.${pr.p.info.id}: no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered " +
-              "(enable the plugin that provides it)"))
+              "(enable the plugin that provides it)")), Registries.empty)
         }
         (rs, ds ++ stuck)
       else passes(left, rs, ds)
@@ -355,12 +374,15 @@ object PluginHost:
     val (registries, registered) = passes(ready, Registries.empty, Map.empty)
     val statuses = prepared.map {
       case (_, Left(st))  => st
-      case (id, Right(_)) => registered(id)
+      case (id, Right(_)) => registered(id)._1
     } ++ plugins.filter(p => refused.contains(p.info.id)).map(p =>
       status(p, false, PluginState.Refused, error = refused.get(p.info.id)))
     statuses.filter(_.state == PluginState.Failed.wire).foreach(s =>
       services.log(s.id, true, s.error.getOrElse("failed")))
-    Generation(registries, PluginsReport(Spi.Version, statuses, warnings))
+    Generation(registries, PluginsReport(Spi.Version, statuses, warnings),
+      registered.collect { case (id, (st, regs)) if st.state == PluginState.Registered.wire => id -> regs },
+      plugins.map(_.info.id).filterNot(carried.contains),
+      ready.filter(_.secrets.nonEmpty).map(_.p.info.id).toSet)
 
   /** Resolve one prepared plugin's secrets and call its `register` with a staged context. */
   private def register(pr: Prepared, regs: Registries, env: Config, services: HostServices,

@@ -24,7 +24,7 @@ import javax.sql.DataSource
   * Every write goes through the run's gate ([[RunCtx.write]]): the patch, `refs`/`assess` applied, the
   * status proposal, the acquisition item and the log line. A DRY run records each on its step instead
   * (`refs` and `assess` then only read upstream). */
-final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
+final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
     upstream: () => AgentUpstream, approvals: Approvals) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire

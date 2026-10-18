@@ -6,13 +6,13 @@ import com.augustnagro.magnum.*
 /** Full-text search against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Covers the point of plan §1.4: bodies far bigger than tsvector's 1 MB per-row limit are searchable
   * because they are chunked, and every hit carries the passage that matched. */
-class FtsSuite extends munit.FunSuite:
+class FtsSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -100,12 +100,12 @@ class FtsSuite extends munit.FunSuite:
     assert(search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))
 
 /** Planner/statistics upkeep against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
-class PlannerUpkeepSuite extends munit.FunSuite:
+class PlannerUpkeepSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
     Migrate.run(d)
     d
 

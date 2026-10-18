@@ -5,13 +5,13 @@ import com.histmersion.core.*
 /** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped
   * otherwise. Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source
   * matches through its own metadata OR its findings, and every count is DISTINCT sources. */
-class FilterRepoSuite extends munit.FunSuite:
+class FilterRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = Db.dataSource(base.copy(url = testDb.get))
+    val d    = testPool(base.copy(url = testDb.get))
     Migrate.run(d)
     seed(d)
     d

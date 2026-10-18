@@ -191,6 +191,18 @@ object Supervisor:
     Runtime.getRuntime.addShutdownHook(Thread(() => shutdown(l)))
     configured
 
+  /** How a config reload is fitted to the running bundle (docs/research-plugins.md §3.5): every
+    * reloaded config is pointed at the bundled Postgres and converter the way [[start]] pointed the
+    * first one (the children themselves, `runtime.*`, are restart-only), and a database the reload
+    * names is created in the bundled cluster before a pool opens on it. `started` is the config
+    * [[start]] was given. */
+  def reloadSource(started: AppConfig, read: () => Either[String, LoadedConfig]): ConfigSource =
+    val l = layout(started.runtime, currentExecutable, k => Option(System.getenv(k)), System.getProperty("os.name", ""))
+      .fold(e => throw IllegalStateException(e), identity)
+    val bind = Option(System.getenv("HISTMERSION_BIND"))
+    ConfigSource(read, c => configure(c, l, bind),
+      c => scala.util.Try(ensureDatabase(c)).toEither.left.map(e => s"cannot create the database: ${e.getMessage}"))
+
   private def initCluster(l: Layout, user: String, password: String): Unit =
     val pw = Files.createTempFile("histmersion-pw", "")
     try

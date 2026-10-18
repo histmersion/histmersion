@@ -9,7 +9,7 @@ import com.augustnagro.magnum.*
   * The point of these tests is the SAFETY PROPERTY: a write must fail at the Postgres level, not at
   * a keyword blacklist we wrote — so every refusal below is asserted to carry Postgres's own
   * "read-only transaction" message, and the store is checked afterwards to prove nothing changed. */
-class QueryRepoSuite extends munit.FunSuite:
+class QueryRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -19,7 +19,7 @@ class QueryRepoSuite extends munit.FunSuite:
   /** The APPLICATION role — schema owner, superuser in every deployment we ship. Used here only to
     * migrate and to seed the probe row. */
   private lazy val ds =
-    val d = Db.dataSource(dbCfg)
+    val d = testPool(dbCfg)
     Migrate.run(d)
     d
 
@@ -30,7 +30,7 @@ class QueryRepoSuite extends munit.FunSuite:
     Db.provisionQueryRole(ds, cfg.query) match
       case Right(_) => ()
       case Left(m)  => fail(s"could not provision the read-only role: $m")
-    val q = Db.queryDataSource(dbCfg, cfg.query)
+    val q = testQueryPool(dbCfg, cfg.query)
     Db.canConnect(q).left.foreach(m => fail(s"the read-only role cannot connect: $m"))
     q
 
@@ -213,7 +213,7 @@ class QueryRepoSuite extends munit.FunSuite:
     try
       assertEquals(Db.provisionQueryRole(ds, qc), Right(()))
       assertEquals(Db.provisionQueryRole(ds, qc), Right(()), "idempotent")
-      val q = Db.queryDataSource(dbCfg, qc)
+      val q = testQueryPool(dbCfg, qc)
       assertEquals(Db.canConnect(q), Right(()))
       assert(QueryRepo.run(q, s"SELECT title FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isRight)
       assert(QueryRepo.run(q, s"DELETE FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isLeft)

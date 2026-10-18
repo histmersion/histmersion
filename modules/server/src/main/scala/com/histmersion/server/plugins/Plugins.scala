@@ -1,6 +1,8 @@
 package com.histmersion.server.plugins
 
-import com.histmersion.core.{AppConfig, LoadedConfig}
+import com.histmersion.core.{AppConfig, HotPlan, LoadedConfig, PluginState, PluginStatus}
+import org.ekrich.config.ConfigUtil
+import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.{Plugin, PluginHttp}
 import com.histmersion.server.acquire.{ArchiveOrg, Http, HttpPlugin, OpenAlexCrossref, OutboundTls, SttpHttp}
 import com.histmersion.server.acquire.fetchers.BuiltinFetchers
@@ -11,12 +13,41 @@ import com.histmersion.server.acquire.fetchers.BuiltinFetchers
   * for it) — so `--self-check` can call it. */
 object Plugins:
 
-  def load(loaded: LoadedConfig): Generation =
+  /** The config keys the plugin generation is built from: every plugin's block (and `order`), and the
+    * host settings the built-in fetchers read (the acquisition endpoints, TLS roots and politeness). */
+  val Keys: List[String] = List(PluginHost.Root, "histmersion.acquire", "histmersion.media.max-retry-after-seconds")
+
+  /** Build the generation for `loaded`. On a config reload, `previous` is the running generation and
+    * `changed` the keys that changed: a plugin whose block did not change is carried over as it is
+    * (not decoded, resolved or registered again) — unless it holds a secret (re-resolved on every
+    * reload, §3.7), it failed last time, a secret vault's plugin changed, or a host key every
+    * plugin reads changed (`order`, `acquire.*`), which rebuilds them all. */
+  def load(loaded: LoadedConfig, previous: Option[Generation] = None, changed: List[String] = Nil): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     // ONE acquisition client for every plugin and built-in fetcher of this generation, built on first use
     lazy val http = acquisitionHttp(loaded.config)
     PluginHost.build(found ++ builtins(loaded.config, () => http), loaded.user, loaded.env,
-      services(() => HttpPlugin(http), loaded.env), errors)
+      services(() => HttpPlugin(http), loaded.env), errors, previous.fold(Map.empty)(carried(_, changed)))
+
+  /** The plugins of `previous` a reload that changed `changed` may carry over unchanged. Pure. */
+  def carried(previous: Generation, changed: List[String]): Map[String, (PluginStatus, Registries)] =
+    val relevant = changed.filter(k => Keys.exists(HotPlan.keyMatches(k, _)))
+    val ids      = relevant.map(pluginId)
+    val vaults   = previous.contributions.collect { case (id, r) if r.secretVaults.nonEmpty => id }.toSet
+    if ids.contains(None) || ids.flatten.exists(vaults) then Map.empty
+    else
+      val touched = ids.flatten.toSet
+      previous.report.plugins.filter { st =>
+        !touched(st.id) && (st.state == PluginState.Disabled.wire ||
+          st.state == PluginState.Registered.wire && !previous.withSecrets(st.id))
+      }.flatMap(st => previous.carry(st.id)).map(c => c._1.id -> c).toMap
+
+  /** The plugin a changed key belongs to (`histmersion.plugins.<id>.…`); `None` for any other key —
+    * `order`, the whole block, a host setting — which concerns every plugin. */
+  def pluginId(key: String): Option[String] =
+    scala.util.Try(ConfigUtil.splitPath(key).asScala.toList).toOption match
+      case Some("histmersion" :: "plugins" :: id :: _) if id != PluginHost.OrderKey => Some(id)
+      case _ => None
 
   /** The plugins the host itself supplies: today's acquisition steps (`archive-org`, `oa-index`,
     * `pmc`, `arxiv`), each its own plugin, enabled by default and switched off like any other. */

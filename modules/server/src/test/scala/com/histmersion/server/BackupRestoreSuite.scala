@@ -17,7 +17,7 @@ import java.nio.file.{Files, Path}
   * client tools come from homebrew's keg-only libpq: `brew install libpq` puts them in
   * `/opt/homebrew/opt/libpq/bin` (checked below), and the server finds them via
   * `HISTMERSION_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin`. */
-class BackupRestoreSuite extends munit.FunSuite:
+class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
   private val testDb = com.histmersion.db.TestDb.url
 
@@ -56,7 +56,7 @@ class BackupRestoreSuite extends munit.FunSuite:
     (prefix + "postgres", name, prefix + name)
 
   private def admin(sql: String): Unit =
-    val c = Db.dataSource(base.db.copy(url = adminUrl)).getConnection
+    val c = testPool(base.db.copy(url = adminUrl)).getConnection
     try { val s = c.createStatement(); try { val _ = s.execute(sql) } finally s.close() }
     finally c.close()
 
@@ -66,7 +66,7 @@ class BackupRestoreSuite extends munit.FunSuite:
       backups = base.backups.copy(dir = backupDir.toString, pgBinDir = pgBinDir.get))
 
   private lazy val backupDir: Path = Files.createTempDirectory("histmersion-backup-e2e")
-  private lazy val ds              = Db.dataSource(cfg.db)
+  private lazy val ds              = testPool(cfg.db)
 
   override def beforeAll(): Unit =
     if skipReason.isEmpty then
@@ -74,7 +74,7 @@ class BackupRestoreSuite extends munit.FunSuite:
       admin(s"CREATE DATABASE $scratchDb")
       val _ = Migrate.run(ds)
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if skipReason.isEmpty then
       scala.util.Try(admin(s"DROP DATABASE IF EXISTS $scratchDb WITH (FORCE)"))
       scala.util.Try {
@@ -185,6 +185,9 @@ class BackupRestoreSuite extends munit.FunSuite:
         assertEquals(number(fb, "sourcesBefore"), 1L)
         assertEquals(number(fb, "sourcesAfter"), 2L)
         assertEquals(field(fb, "schemaVersion"), Migrate.current(ds).getOrElse("?"))
+        // the server evicted ITS pools; this suite's own pool (a second client of the same database, as
+        // `h` is) holds sessions that cached the types the restore dropped — throw them away too
+        com.histmersion.db.Db.evict(ds)
 
         // 8. …and search finds it again, findings and all
         val after = h.sources(Filter(tags = List("zz-backup-test"), limit = 10))
@@ -236,7 +239,7 @@ class BackupRestoreSuite extends munit.FunSuite:
     assertEquals(scalar(ds, "SELECT tableowner FROM pg_tables WHERE tablename = 'articles'"),
       scalar(ds, "SELECT current_user"))
     // the read-only role was re-granted after the restore (the dump's GRANTs are skipped)
-    val q = Db.queryDataSource(cfg.db, cfg.query)
+    val q = testQueryPool(cfg.db, cfg.query)
     assert(scalar(q, "SELECT count(*) FROM sources WHERE citekey = 'zz_backup_roles'") == "1")
 
   test("an empty database restores WITHOUT force"):

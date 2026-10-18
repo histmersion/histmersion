@@ -33,7 +33,7 @@ enum PickFailure:
   * pool taken AFTER the limit was reported says the pool is usable for them (#1827: the plan's limits
   * were reset early, and only a restart brought the model back; `agent quota refresh <pool>` takes
   * such a reading). In memory on purpose — a restart is a fair moment to try again. */
-final class ModelPicker(ds: DataSource, cfg: AgentsConfig, resolve: ModelRef => Either[String, (LlmClient, Billing)],
+final class ModelPicker(ds: DataSource, cfg: => AgentsConfig, resolve: ModelRef => Either[String, (LlmClient, Billing)],
     val pools: PlanPools):
 
   /** model wire → (skipped until, when its plan reported the limit) */

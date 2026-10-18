@@ -12,10 +12,10 @@ import javax.sql.DataSource
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5):
   * REST ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call
   * these. Reading and changing a manager works with agents off (nothing starts until they are on). */
-final class ManagersHandlers(ds: DataSource, cfg: AgentsConfig, limits: Limits, agents: AgentsHandlers,
+final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Limits, agents: AgentsHandlers,
     supervisor: ManagerSupervisor, h: com.histmersion.server.Handlers):
 
-  private val mcfg = cfg.managers
+  private def mcfg = cfg.managers
 
   /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
   def runs(id: String, status: Option[String], limit: Option[Int]): List[RunInfo] =

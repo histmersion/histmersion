@@ -14,7 +14,7 @@ import java.nio.file.{Files, Path}
   * second import of the same file; a chain with no ready model is a note on the job, never a failed
   * ingest. The run pool is never started, so no model is called. Skipped without
   * HISTMERSION_TEST_DB_URL. */
-class AutoEnrichRunSuite extends munit.FunSuite:
+class AutoEnrichRunSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(120, "s")
@@ -36,7 +36,7 @@ class AutoEnrichRunSuite extends munit.FunSuite:
         // the direct run: auto-enrich as it was before the managers' phase 2 (still what managers off does)
         managers = b.agents.managers.copy(enabled = false)))
 
-  private lazy val ds = Db.dataSource(baseCfg.db)
+  private lazy val ds = testPool(baseCfg.db)
 
   private def clean(): Unit =
     Migrate.run(ds)

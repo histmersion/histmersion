@@ -14,9 +14,9 @@ import javax.sql.DataSource
   * Thumbnails come from the OCR sidecar ([[ConverterClient.thumbnail]]): the native server has no
   * image codec that works (ImageIO hangs under native-image on macOS). Without one, the card shows
   * the picture's own bytes. */
-final class SourcePictures(ds: DataSource, cfg: MediaConfig, http: MediaHttp, converter: ConverterClient):
+final class SourcePictures(ds: DataSource, cfg: => MediaConfig, http: MediaHttp, converter: ConverterClient):
 
-  private val rules = cfg.illustrations.rules
+  private def rules = cfg.illustrations.rules
 
   /** Pure: a figure row as [[FigurePick]] weighs it. */
   private def toFigure(f: MediaRepo.SourceFigure): FigurePick.Figure =

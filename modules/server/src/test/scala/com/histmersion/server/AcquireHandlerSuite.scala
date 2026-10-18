@@ -10,7 +10,7 @@ import java.nio.file.Path
   * replaced by a fake. What is exercised here is the part fixtures cannot reach: resolving references
   * to stored citekeys, writing typed edges, applying a verdict to `status`, and the ingest sequence —
   * including that a re-ingest does NOT wipe an enriched source. */
-class AcquireHandlerSuite extends munit.FunSuite:
+class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -19,7 +19,7 @@ class AcquireHandlerSuite extends munit.FunSuite:
     val base = AppConfig.load()
     base.copy(db = base.db.copy(url = testDb.get))
   private lazy val ds =
-    val d = Db.dataSource(cfg.db); Migrate.run(d); d
+    val d = testPool(cfg.db); Migrate.run(d); d
 
   // ── fakes ───────────────────────────────────────────────────────────────────────────────────
 

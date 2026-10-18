@@ -24,7 +24,7 @@ trait MediaHttp:
 
 /** The real client: `java.net.http`, following redirects, the URL used exactly as built (the provider
   * URLs are already percent-encoded). */
-final class JavaMediaHttp(timeoutSeconds: Int) extends MediaHttp:
+final class JavaMediaHttp(timeoutSeconds: => Int) extends MediaHttp: // by name: read per request
   private val client = HttpClient.newBuilder()
     .followRedirects(HttpClient.Redirect.NORMAL)
     .connectTimeout(Duration.ofSeconds(timeoutSeconds.toLong.max(1)))

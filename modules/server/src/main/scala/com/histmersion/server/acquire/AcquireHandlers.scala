@@ -18,17 +18,19 @@ import java.nio.file.Path
   */
 final class AcquireHandlers(
     deps: Deps,
-    discovery: DiscoveryClient,
-    citations: CitationsClient,
-    oa: OaFetcher,
-    wiki: WikiClient,
-    archive: ArchiveClient,
-    retractionWatch: RetractionWatchClient,
+    // by name: the server passes the acquisition node's clients, read at each use, so a reload that
+    // changed `acquire.*` or the plugins (the chain) takes effect without rebuilding this
+    discovery: => DiscoveryClient,
+    citations: => CitationsClient,
+    oa: => OaFetcher,
+    wiki: => WikiClient,
+    archive: => ArchiveClient,
+    retractionWatch: => RetractionWatchClient,
     jobs: IngestJobs
 ):
   private val ds  = deps.ds
-  private val cfg = deps.cfg
-  private val acq = deps.cfg.acquire
+  private def cfg = deps.cfg
+  private def acq = deps.cfg.acquire
 
   /** The restore lock (plan §1.10). Acquisition WRITES — `assess --apply` patches a status,
     * `followups` adds edges, `ingest`/`archive import` create sources, `calibre pushed` writes the
@@ -208,7 +210,8 @@ final class AcquireHandlers(
     if !rwRunning.compareAndSet(false, true) then Right(retractionsStatus)
     else
       rwError.set(None)
-      val _ = Thread.ofVirtual().name("retraction-watch-refresh").start(() =>
+      // on the generation (database, clients) the request was pinned to
+      val work = deps.pins.carry(
         try
           retractionWatch.csv() match
             case Left(e) =>
@@ -222,6 +225,7 @@ final class AcquireHandlers(
             scribe.error(s"acquire: Retraction Watch refresh crashed: ${e.getMessage}", e)
             rwError.set(Some(e.getMessage))
         finally rwRunning.set(false))
+      val _ = Thread.ofVirtual().name("retraction-watch-refresh").start(() => work.run())
       Right(retractionsStatus.copy(running = true))
 
   /** How the mirror is doing: how many rows it holds, whether a refresh is in flight, and the last

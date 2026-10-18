@@ -14,13 +14,13 @@ import com.augustnagro.magnum.*
   * present-day city; a place whose start is unknown (a stored window). Fixtures sit at 100–109°E,
   * 55°S — a degree (≈ 64 km) apart, beyond the point tolerance — where no other suite has any; ids
   * start with `zqtv`. */
-class PlaceTimeSuite extends munit.FunSuite with Bounded:
+class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -64,7 +64,7 @@ class PlaceTimeSuite extends munit.FunSuite with Bounded:
         cfg.limits.chunkChars, cfg.places.pointToleranceKm)
       EventRepo.put(ds, "zqtv_event", EventPut("Zqtv siege",
         timeSpan = TimeSpan(notBefore = Some(-1520), notAfter = Some(-1480)), placeId = Some("zqtv_evt")))
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private val Ours = "\"id\":\"(zqtv_[a-z]+)\"".r
 

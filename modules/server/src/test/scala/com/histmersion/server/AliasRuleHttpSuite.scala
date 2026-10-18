@@ -11,7 +11,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * record under its current one, and the answer names the current one; a reference (an attestation's
   * target) is stored against the current id; a `place=<old id>` filter selects what `place=<new id>`
   * does. Skipped without HISTMERSION_TEST_DB_URL. */
-class AliasRuleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
+class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -45,7 +45,7 @@ class AliasRuleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
 
   /** A previous run's rows and aliases must not be in the way. */
   private def clean(): Unit =
-    val ds = com.histmersion.db.Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+    val ds = testPool(AppConfig.load().db.copy(url = testDb.get))
     com.augustnagro.magnum.transact(ds):
       import com.augustnagro.magnum.*
       sql"DELETE FROM attestations WHERE citekey LIKE 'zzalias%'".update.run()

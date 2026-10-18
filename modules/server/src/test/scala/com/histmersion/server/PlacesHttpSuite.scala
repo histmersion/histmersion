@@ -9,7 +9,7 @@ import com.histmersion.core.*
   * Deliberately does NOT call `POST /api/places/rebuild`: that re-materialises `finding_places` for
   * the WHOLE corpus, and the db-module suites (which may run in another JVM against the same test
   * database) assert on it. `PlaceRepoSuite` covers the rebuild. */
-class PlacesHttpSuite extends munit.FunSuite:
+class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -174,7 +174,7 @@ class PlacesHttpSuite extends munit.FunSuite:
     supervised {
       val b   = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
-      val clean = com.histmersion.db.Db.dataSource(cfg.db)
+      val clean = testPool(cfg.db)
       def wipe() = com.augustnagro.magnum.connect(clean):
         import com.augustnagro.magnum.*
         val _ = sql"DELETE FROM places WHERE id LIKE 'zzn_%' OR id LIKE 'local_zzn_%'".update.run()
@@ -238,7 +238,7 @@ class PlacesHttpSuite extends munit.FunSuite:
     supervised {
       val b   = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
-      val clean = com.histmersion.db.Db.dataSource(cfg.db)
+      val clean = testPool(cfg.db)
       def wipe() = com.augustnagro.magnum.connect(clean):
         import com.augustnagro.magnum.*
         val _ = sql"DELETE FROM places WHERE id LIKE 'zzo_%'".update.run()

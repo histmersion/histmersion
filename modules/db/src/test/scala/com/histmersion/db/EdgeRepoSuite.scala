@@ -7,12 +7,12 @@ import com.augustnagro.magnum.*
 /** `edges` connects stored sources only (V026): the migration's data move, the write-path routing
   * into `unresolved_edges`, promotion when the target arrives, and the graph/neighbors reads built on
   * that invariant. Against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
-class EdgeRepoSuite extends munit.FunSuite:
+class EdgeRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg              = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val Prefix = "zzedge"

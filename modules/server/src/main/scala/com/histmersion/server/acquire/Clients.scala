@@ -286,3 +286,13 @@ final class ArchiveOrg(cfg: AcquireConfig, http: Http) extends ArchiveClient:
 
 final class RetractionWatch(cfg: AcquireConfig, http: Http) extends RetractionWatchClient:
   def csv(): Either[String, String] = http.text(cfg.retractionWatch.csvUrl)
+
+/** The acquisition clients of one config and one plugin generation (the server's `acquisition` hot
+  * node): rebuilt together when `acquire.*` or the plugins change. */
+final case class AcquireClients(
+    discovery: DiscoveryClient,
+    citations: CitationsClient,
+    oa: OaFetcher,
+    wiki: WikiClient,
+    archive: ArchiveClient,
+    retractionWatch: RetractionWatchClient)

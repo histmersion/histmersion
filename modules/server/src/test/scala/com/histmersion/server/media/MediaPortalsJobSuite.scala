@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets.UTF_8
   * record's own Pleiades id, and both jobs storing a picture with its basis on the link. Open Context,
   * Pleiades and Commons are one stand-in server on this machine (the config's URLs point at it) — no
   * request leaves it. Fixtures: ids `zqmp_*` and `pleiades_9990000…`, names `Zqmp…`. */
-class MediaPortalsJobSuite extends munit.FunSuite:
+class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -90,7 +90,7 @@ class MediaPortalsJobSuite extends munit.FunSuite:
         pleiades = m.pleiades.copy(apiUrl = providerUrl, requestIntervalMs = 0),
         openContext = m.openContext.copy(apiUrl = providerUrl, requestIntervalMs = 0)))
   private lazy val ds =
-    val d = Db.dataSource(cfg.db)
+    val d = testPool(cfg.db)
     Migrate.run(d)
     d
 
@@ -126,7 +126,7 @@ class MediaPortalsJobSuite extends munit.FunSuite:
         sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zqmp2020_x#1', 'zqmp_site'),
               ('zqmp2020_x#1', 'zqmp_region'), ('zqmp2020_x#1', 'pleiades_99900002')""".update.run()
         ()
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if testDb.isDefined then
       clean()
       providerServer.stop(0)

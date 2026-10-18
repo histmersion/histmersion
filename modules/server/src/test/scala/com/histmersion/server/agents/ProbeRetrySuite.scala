@@ -15,7 +15,7 @@ import java.nio.file.Files
   * says so if the model never fills them. An answer in prose (#915, claude-code:haiku) is asked again
   * the same way — through the real `claude-code` client on a fake `claude`. Skipped without
   * HISTMERSION_TEST_DB_URL. */
-class ProbeRetrySuite extends munit.FunSuite:
+class ProbeRetrySuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(60, "s")
@@ -29,7 +29,7 @@ class ProbeRetrySuite extends munit.FunSuite:
     b.copy(db = b.db.copy(url = testDb.get), server = b.server.copy(host = "127.0.0.1"),
       agents = b.agents.copy(enabled = true, prices = "zzProbe=0/0", enrich = b.agents.enrich.copy(upstream = false)))
 
-  private lazy val ds = Db.dataSource(cfg.db)
+  private lazy val ds = testPool(cfg.db)
 
   private def clean(): Unit =
     Migrate.run(ds)

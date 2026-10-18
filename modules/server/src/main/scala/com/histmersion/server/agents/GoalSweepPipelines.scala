@@ -59,7 +59,7 @@ private[agents] trait GoalSweep:
   * assesses without applying, and records the proposals, items and log line it would write.
   *
   * Steps: load · assess · followups · close. */
-final class CurrencyCheckPipeline(protected val h: Handlers, protected val ds: DataSource, cfg: AgentsConfig,
+final class CurrencyCheckPipeline(protected val h: Handlers, protected val ds: DataSource, cfg: => AgentsConfig,
     upstream: () => AgentUpstream, approvals: Approvals) extends PipelineDef with GoalSweep:
   val pipeline: Pipeline = Pipeline.CurrencyCheck
   import CurrencyCheckPipeline.*
@@ -139,7 +139,7 @@ object CurrencyCheckPipeline:
   * Steps: discover · rank · [ingest] · queue · close. The ingest step exists only when auto-ingest was
   * allowed, so a run without it has exactly the steps it always had. A DRY run records the items, the
   * ingests (and the log line) it would make. */
-final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds: DataSource, cfg: AgentsConfig,
+final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds: DataSource, cfg: => AgentsConfig,
     upstream: () => AgentUpstream) extends PipelineDef with GoalSweep:
   val pipeline: Pipeline = Pipeline.AcquisitionSweep
   import AcquisitionSweepPipeline.*

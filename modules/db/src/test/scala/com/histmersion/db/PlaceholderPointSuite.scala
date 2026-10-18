@@ -14,13 +14,13 @@ import com.augustnagro.magnum.*
   *   - the representative point the geocoder gives an area is a placeholder too;
   *   - an unnamed placeholder keeps its areas by containment and is listed by `finding-placeholder`;
   *   - a precise point is matched as before; nobody loses their last place; a write and a rebuild agree. */
-class PlaceholderPointSuite extends munit.FunSuite with Bounded:
+class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb              = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
   private def tol = cfg.places.pointToleranceKm
@@ -30,7 +30,7 @@ class PlaceholderPointSuite extends munit.FunSuite with Bounded:
     val _ = sql"DELETE FROM places WHERE id LIKE 'zzph%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit                       = if testDb.isDefined then clean()
+  override def afterSuite(): Unit                       = if testDb.isDefined then clean()
 
   private def pt(lon: Double, lat: Double) = Some(s"""{"type":"Point","coordinates":[$lon,$lat]}""")
   private def box(x0: Double, y0: Double, x1: Double, y1: Double) =

@@ -10,13 +10,13 @@ import com.augustnagro.magnum.*
   * the dry run, and the geocoder reading a dated name. Every fixture id is `pleiades_99900…`,
   * `zzgaz…` or an authority id in the 99900000… range, and the sources are `lpf:zzgaz…` or the
   * `wikidata`/`geonames` keys with refs nothing else uses. */
-class GazetteerRepoSuite extends munit.FunSuite with Bounded:
+class GazetteerRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -33,7 +33,7 @@ class GazetteerRepoSuite extends munit.FunSuite with Bounded:
     val _ = sql"DELETE FROM gazetteer_sources WHERE key = ANY($Mine::text[]) AND key LIKE 'lpf:zzgaz%'".update.run()
 
   override def beforeAll(): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit  = if testDb.isDefined then clean()
+  override def afterSuite(): Unit  = if testDb.isDefined then clean()
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
 
   private def pt(lon: Double, lat: Double) = Some(GazGeometry.GeoJson(s"""{"type":"Point","coordinates":[$lon,$lat]}"""))

@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets.UTF_8
   * link, and the place recorded as asked. The Art Institute of Chicago is a stand-in server on this
   * machine (the config's API and IIIF URLs point at it) — no request leaves it. Fixtures: ids
   * `zqmc_*`, names `Zqmc…`. */
-class MediaCollectionsJobSuite extends munit.FunSuite:
+class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -68,7 +68,7 @@ class MediaCollectionsJobSuite extends munit.FunSuite:
       media = base.media.copy(requestIntervalMs = 0,
         aic = base.media.aic.copy(apiUrl = s"$providerUrl/api", imageUrl = s"$providerUrl/iiif", requestIntervalMs = 0)))
   private lazy val ds =
-    val d = Db.dataSource(cfg.db)
+    val d = testPool(cfg.db)
     Migrate.run(d)
     d
 
@@ -100,7 +100,7 @@ class MediaCollectionsJobSuite extends munit.FunSuite:
         sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zqmc2020_x#1', 'zqmc_site'),
               ('zqmc2020_x#2', 'zqmc_site'), ('zqmc2020_x#3', 'zqmc_thebai_a'), ('zqmc2020_x#3', 'zqmc_thebai_b')""".update.run()
         ()
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if testDb.isDefined then
       clean()
       providerServer.stop(0)

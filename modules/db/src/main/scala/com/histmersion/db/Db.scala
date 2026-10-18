@@ -5,10 +5,9 @@ import com.histmersion.core.*
 import com.zaxxer.hikari.HikariDataSource
 import org.postgresql.ds.PGSimpleDataSource
 import java.sql.SQLException
-import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 
-/** Postgres DataSources from the HOCON config (see [[AppConfig]] / reference.conf).
+/** Postgres connection pools from the HOCON config (see [[AppConfig]] / reference.conf).
   *
   * **Pooled.** `PGSimpleDataSource` opens a fresh TCP connection, TLS handshake and startup packet
   * for every `connect`/`transact` — i.e. for every repo call — which is most of the latency of a
@@ -16,22 +15,21 @@ import javax.sql.DataSource
   * it needs) and the pool is small on purpose: the server is the only database client and only a
   * handful of netty threads ever ask.
   *
-  * Pools are CACHED per (url, user). A pool is a heavyweight resource holding real connections, so
-  * handing the same one back is both the correct thing and what keeps a test run — dozens of suites,
-  * each building "its own" DataSource in the same JVM — from exhausting `max_connections`.
-  */
+  * **Owned, never cached.** Each call builds a NEW pool, and whoever asked for it owns it and closes
+  * it: the server's hot component graph (`server/hot`, docs/research-plugins.md §3.6) holds its pools
+  * in the scope of the node that built them, so a config reload can swap the database; a test suite
+  * holds its own in a fixture. There is no process-wide pool — a static cache keyed by URL is exactly
+  * what made a change of database a restart. */
 object Db:
 
-  private val pools = ConcurrentHashMap[(String, String), HikariDataSource]()
-
-  /** The APPLICATION DataSource: owns the schema, runs the migrations, serves every repo. */
-  def dataSource(cfg: DbConfig): DataSource =
+  /** The APPLICATION pool: owns the schema, runs the migrations, serves every repo. */
+  def pool(cfg: DbConfig): HikariDataSource =
     pooled(cfg.url, cfg.user, cfg.password, cfg.pool.max, "histmersion")
 
-  /** The READ-ONLY DataSource behind `POST /api/query` — the `histmersion_query` role of migration V011,
+  /** The READ-ONLY pool behind `POST /api/query` — the `histmersion_query` role of migration V011,
     * which holds nothing but SELECT. Deliberately tiny: the hatch is an interactive escape valve,
     * not a serving path. */
-  def queryDataSource(db: DbConfig, q: QueryConfig): DataSource =
+  def queryPool(db: DbConfig, q: QueryConfig): HikariDataSource =
     pooled(db.url, q.user, q.password, math.min(4, math.max(1, db.pool.max)), "histmersion-query")
 
   /** Build a pool the way a NATIVE IMAGE can.
@@ -49,23 +47,35 @@ object Db:
     *
     * Neither is a workaround for a missing agent run: both are the shapes that have no reflection in
     * them at all, which is the rule this codebase already follows for everything else. */
-  private def pooled(url: String, user: String, password: String, max: Int, name: String): DataSource =
-    pools.computeIfAbsent((url, user), _ => {
-      val pg = PGSimpleDataSource()
-      pg.setUrl(url)
-      pg.setUser(user)
-      pg.setPassword(password)
-      val ds = HikariDataSource()
-      ds.setDataSource(pg)
-      ds.setMaximumPoolSize(math.max(1, max))
-      // idle connections are not free on the Postgres side, and a test JVM builds many pools;
-      // keep one warm and let the rest go.
-      ds.setMinimumIdle(1)
-      ds.setPoolName(s"$name-${pools.size + 1}")
-      ds
-    })
+  private def pooled(url: String, user: String, password: String, max: Int, name: String): HikariDataSource =
+    val pg = PGSimpleDataSource()
+    pg.setUrl(url)
+    pg.setUser(user)
+    pg.setPassword(password)
+    val ds = HikariDataSource()
+    ds.setDataSource(pg)
+    ds.setMaximumPoolSize(math.max(1, max))
+    // idle connections are not free on the Postgres side, and a test run opens a pool per suite;
+    // keep one warm and let the rest go.
+    ds.setMinimumIdle(1)
+    ds.setPoolName(s"$name@${databaseOf(url)}")
+    ds
 
-  def fromConfig(): DataSource = dataSource(AppConfig.load().db)
+  /** The database a JDBC URL names (`jdbc:postgresql://h:p/NAME?…`), for a pool's name in the log. */
+  private[db] def databaseOf(url: String): String =
+    url.takeWhile(_ != '?').reverse.takeWhile(_ != '/').reverse
+
+  /** Connections the pool behind `ds` has lent out now (0 for a pool that has not started, or no
+    * pool at all). A retired pool is closed only when this is 0. */
+  def activeConnections(ds: DataSource): Int =
+    hikari(ds).flatMap(p => Option(p.getHikariPoolMXBean)).map(_.getActiveConnections).getOrElse(0)
+
+  private def hikari(ds: DataSource): Option[HikariDataSource] =
+    ds match
+      case h: HikariDataSource => Some(h)
+      case other =>
+        try Option.when(other.isWrapperFor(classOf[HikariDataSource]))(other.unwrap(classOf[HikariDataSource]))
+        catch case _: SQLException => None
 
   /** Database-level settings (V023), re-applied at every startup. `ALTER DATABASE … SET` lives in
     * the cluster catalog, not in the schema, so a `pg_dump`/`pg_restore` without `--create` — i.e.
@@ -115,16 +125,16 @@ object Db:
       names
     finally c.close()
 
-  /** Throw away every pooled connection, gracefully (in-flight work finishes; the connection is
-    * closed instead of returned).
+  /** Throw away the pooled connections of `ds` (the pool itself, or a proxy that unwraps to one),
+    * gracefully (in-flight work finishes; the connection is closed instead of returned).
     *
     * `pg_restore --clean` drops and recreates every type in the database, and a session that was
     * open across that keeps PostGIS's per-session type/opclass cache from BEFORE the restore — the
     * next spatial query then fails with "no spatial operator found for st_coveredby: opfamily …".
     * Unpooled code never hit this because every call opened a fresh session; a pool must be told. */
-  def evictAll(): Unit =
-    pools.values.forEach { p =>
-      try p.getHikariPoolMXBean.softEvictConnections()
+  def evict(ds: DataSource): Unit =
+    hikari(ds).foreach { p =>
+      try Option(p.getHikariPoolMXBean).foreach(_.softEvictConnections())
       catch case e: Throwable => scribe.warn(s"could not evict ${p.getPoolName}: ${e.getMessage}")
     }
 

@@ -15,7 +15,7 @@ import com.histmersion.db.{Geocoder, GoalLinkRepo, GoalRepo, LintRepo, PlaceRevi
   */
 final class OpsHandlers(deps: Deps):
   private val ds          = deps.ds
-  private val cfg         = deps.cfg
+  private def cfg         = deps.cfg
   private val maintenance = deps.maintenance
 
   // ── lint ─────────────────────────────────────────────────────────────────────────────────────

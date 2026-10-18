@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 /** `passages` (#954) over real HTTP and MCP against a seeded multi-heading body: hits, the offset
   * round trip through `get_source`'s body slice, headings, limit, errors, and an old (renamed)
   * citekey resolving. Skipped without HISTMERSION_TEST_DB_URL. */
-class PassagesHttpSuite extends munit.FunSuite:
+class PassagesHttpSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -52,7 +52,7 @@ class PassagesHttpSuite extends munit.FunSuite:
     base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = Key))
 
   private def clean(): Unit =
-    val ds = Db.dataSource(cfg.db)
+    val ds = testPool(cfg.db)
     Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM source_aliases WHERE alias LIKE 'zzpass%'".update.run()
@@ -80,7 +80,7 @@ class PassagesHttpSuite extends munit.FunSuite:
   test("the body passages searches is the body get_source slices"):
     withServer { url =>
       seed(url)
-      val ds = Db.dataSource(cfg.db)
+      val ds = testPool(cfg.db)
       assertEquals(PassageFinder.body(SourceRepo.bodyChunks(ds, Ck)), SourceRepo.bodyText(ds, Ck))
     }
 

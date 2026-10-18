@@ -13,7 +13,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * test database (HISTMERSION_TEST_DB_URL; skipped otherwise), then what the web UI and the CLI read —
   * the place card's thumbnail, the thumbnail bytes served locally, the list, facets and one picture,
   * an event's Wikidata item, the import's refusals, the figure-licence count. No live network. */
-class MediaHttpSuite extends munit.FunSuite:
+class MediaHttpSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -21,7 +21,7 @@ class MediaHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     base.copy(db = base.db.copy(url = testDb.get), media = base.media.copy(requestIntervalMs = 0))
   private lazy val ds =
-    val d = Db.dataSource(cfg.db)
+    val d = testPool(cfg.db)
     Migrate.run(d)
     d
 
@@ -58,7 +58,7 @@ class MediaHttpSuite extends munit.FunSuite:
             VALUES ($PlaceId, 'wikidata', 'Q132564', 'exact_match', 'test', 'zqmh')""".update.run())
       EventRepo.put(ds, EventId, EventPut("Zqmh battle", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)),
         placeId = Some(PlaceId)))
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def fakeProvider: FakeMediaHttp = FakeMediaHttp { url =>
     if url.contains("action=wbgetentities") then FakeMediaHttp.json(FakeMediaHttp.fixture("wbgetentities.json"))

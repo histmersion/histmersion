@@ -8,13 +8,13 @@ import com.augustnagro.magnum.*
   * Athenian tribe beside Athens, provinces and a site on atlas grid squares' centres, a withdrawn
   * duplicate and its replacement, a deme filed as a region. Around 140–145°E 45–50°S, where no other
   * suite has any; ids are `pleiades_99910…` and `zzrc…`, the source `zzrc_src`. */
-trait RegionCleanupFixtures extends munit.FunSuite with Bounded:
+trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   protected val testDb              = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   protected lazy val cfg = AppConfig.load()
   protected lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -24,7 +24,7 @@ trait RegionCleanupFixtures extends munit.FunSuite with Bounded:
     val _ = sql"DELETE FROM places WHERE id LIKE 'pleiades_99910%' OR id LIKE 'zzrc%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit                       = if testDb.isDefined then clean()
+  override def afterSuite(): Unit                       = if testDb.isDefined then clean()
 
   protected def pt(lon: Double, lat: Double) = Some(s"""{"type":"Point","coordinates":[$lon,$lat]}""")
   protected def types(t: String) = Some(s"""{"feature_types":"$t"}""")

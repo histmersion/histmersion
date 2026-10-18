@@ -7,12 +7,12 @@ import java.nio.file.Files
 /** The write paths against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Covers the acceptance lines of plan §1.9a that need a database: put→get, patch semantics, id
   * allocation, the `ifUpdatedAt` precondition, the seed guard, and the export round trip. */
-class WriteRepoSuite extends munit.FunSuite:
+class WriteRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = Db.dataSource(base.copy(url = testDb.get))
+    val d    = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val ck = "zz_write_source"

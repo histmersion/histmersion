@@ -18,7 +18,7 @@ import java.time.Instant
   * a paused manager fires nothing, a firing re-opens a watcher's settled sweeps). Models are scripted and
   * the acquisition toolset is a fixture ([[StubUpstream]]): nothing reaches a provider or the network.
   * Skipped without HISTMERSION_TEST_DB_URL. */
-class ManagerPhase3Suite extends munit.FunSuite:
+class ManagerPhase3Suite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(180, "s")
@@ -35,7 +35,7 @@ class ManagerPhase3Suite extends munit.FunSuite:
       agents = b.agents.copy(enabled = true, prices = "scripted=1/2",
         roles = b.agents.roles.copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m)))
 
-  private lazy val ds = Db.dataSource(baseCfg.db)
+  private lazy val ds = testPool(baseCfg.db)
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
 

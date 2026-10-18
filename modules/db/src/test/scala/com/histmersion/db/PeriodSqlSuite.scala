@@ -6,7 +6,7 @@ import com.augustnagro.magnum.*
 
 /** [[PeriodSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or
   * an asset patched with ONE bound (it used to be silently ignored), read back through [[PeriodSql.cols]]. */
-class PeriodSqlSuite extends munit.FunSuite:
+class PeriodSqlSuite extends com.histmersion.db.DbSuite:
 
   // ── pure ───────────────────────────────────────────────────────────────────────────────────────
   test("literal: closed, open on either side, none"):
@@ -49,7 +49,7 @@ class PeriodSqlSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private def dbTest(name: String)(body: => Unit): Unit =

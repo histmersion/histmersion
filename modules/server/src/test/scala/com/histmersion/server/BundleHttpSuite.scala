@@ -12,7 +12,7 @@ import java.nio.file.Files
   * `POST /api/bundle/verify` and `POST /api/bundle/import` — the wiring, the write gate, the
   * download name, and an instance importing its own bundle changing nothing. The behaviour in depth
   * is `db.BundleSuite`'s. Skipped without HISTMERSION_TEST_DB_URL. */
-class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
+class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -26,7 +26,7 @@ class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
       bundles = base.bundles.copy(dir = work.toString))
 
   private def withServer(body: String => Unit): Unit =
-    Migrate.run(Db.dataSource(cfg.db))
+    Migrate.run(testPool(cfg.db))
     supervised {
       val b = Main.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}")
@@ -149,7 +149,7 @@ class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
 
   test("the review draft, resolution files, merge list/show/ledger and label renames over HTTP and MCP"):
     withServer { url =>
-      val ds  = Db.dataSource(cfg.db)
+      val ds  = testPool(cfg.db)
       val sha = "a" * 64
       // the review screen's draft: empty until written, the whole set replaced, gated like any write
       assertEquals(decode[MergeSession](String(get(s"$url/api/merge/sessions/$sha").body, "UTF-8")).resolutions, MergeResolutions())
@@ -236,7 +236,7 @@ class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
   test("merge apply jobs outlive a restart: a finished one answers its report, one cut short is interrupted"):
     val name = "histmersion_bundlehttp_restart_test"
     def exec(stmt: String): Unit =
-      val c = Db.dataSource(cfg.db).getConnection
+      val c = testPool(cfg.db).getConnection
       try { val st = c.createStatement(); try { val _ = st.execute(stmt) } finally st.close() }
       finally c.close()
     exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
@@ -257,7 +257,7 @@ class BundleHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
         job = ap.job
       }
       // the server stopped while an apply ran (its row still says running)
-      val cut = com.histmersion.db.JobRepo.startMergeApply(Db.dataSource(own.db), "c" * 64, "feedbeef")
+      val cut = com.histmersion.db.JobRepo.startMergeApply(testPool(own.db), "c" * 64, "feedbeef")
       serve { url =>
         val done = get(s"$url/api/merge/apply/$job")
         assertEquals(done.statusCode, 200, String(done.body, "UTF-8"))

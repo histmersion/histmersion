@@ -9,7 +9,8 @@ import javax.sql.DataSource
   * of `place_names` (3.7 GB) runs for minutes, past any request timeout. It answers at once with the job; `histmersion jobs <id>` follows it, and a restart fails it as `interrupted`
   * like every other unfinished job. One at a time; each table is its own statement outside any
   * transaction, so a failure or a restore stops the job between tables, never inside one. */
-final class VacuumJobs(ds: DataSource, maintenance: Maintenance, defaults: () => List[String]):
+final class VacuumJobs(ds: DataSource, maintenance: Maintenance, defaults: () => List[String],
+    pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none):
 
   /** One vacuum at a time ([[BackgroundJob]]). */
   private val slot = BackgroundJob.Slot()
@@ -21,7 +22,7 @@ final class VacuumJobs(ds: DataSource, maintenance: Maintenance, defaults: () =>
     maintenance.guard("maintenance/vacuum"):
       Vacuum.plan(in, defaults(), VacuumRepo.tables(ds)).flatMap { plan =>
         BackgroundJob.start(ds, Vacuum.JobKind, Some(JobDetail(vacuum = Some(plan))), slot, "a vacuum job",
-          Some(Backup.CodeMaintenance))((_, progress) => run(plan, progress))
+          Some(Backup.CodeMaintenance), pins)((_, progress) => run(plan, progress))
       }
 
   private def run(plan: VacuumPlan, progress: String => Unit): BackgroundJob.Outcome =

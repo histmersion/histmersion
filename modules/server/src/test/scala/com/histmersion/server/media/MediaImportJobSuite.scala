@@ -19,7 +19,7 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
   * config's API URLs point at it); the database is the test one (HISTMERSION_TEST_DB_URL; skipped
   * otherwise). Fixtures: events `0zqmj_*` (sorting before every other event, so a `limit` job takes
   * exactly these), pictures `File:Zqmj *`. */
-class MediaImportJobSuite extends munit.FunSuite:
+class MediaImportJobSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -105,7 +105,7 @@ class MediaImportJobSuite extends munit.FunSuite:
         wikidata = base.media.wikidata.copy(apiUrl = s"$providerUrl/wikidata", batch = 50),
         commons = base.media.commons.copy(apiUrl = s"$providerUrl/commons", batch = 50)))
   private lazy val ds =
-    val d = Db.dataSource(cfg.db)
+    val d = testPool(cfg.db)
     Migrate.run(d)
     d
 
@@ -121,7 +121,7 @@ class MediaImportJobSuite extends munit.FunSuite:
       (0 until N).foreach(i => EventRepo.put(ds, id(i), EventPut(s"Zqmj event $i", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)))))
       connect(ds)(sql"""UPDATE events SET wikidata = 'Q' || (9100000 + substring(id FROM 7)::int)::text
             WHERE id LIKE '0zqmj%'""".update.run())
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if testDb.isDefined then
       clean()
       providerServer.stop(0)

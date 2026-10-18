@@ -9,7 +9,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 /** The toolbar's notices over HTTP: `GET /api/ui/counters` counts what waits and says what is new,
   * `POST /api/ui/seen/{board}` marks a window read — without the API key, which every other write
   * still needs — and the mark only moves forward. Skipped without HISTMERSION_TEST_DB_URL. */
-class UiNoticesHttpSuite extends munit.FunSuite:
+class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -32,11 +32,11 @@ class UiNoticesHttpSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
-      lock = com.histmersion.db.Db.dataSource(AppConfig.load().db.copy(url = testDb.get)).getConnection
+      lock = testPool(AppConfig.load().db.copy(url = testDb.get)).getConnection
       val st = lock.createStatement()
       try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") } finally st.close()
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if lock != null then
       val st = lock.createStatement()
       try { val _ = st.execute(s"SELECT pg_advisory_unlock($LockKey)") } finally st.close()

@@ -18,7 +18,7 @@ import java.time.Instant
   * approval → compile items with chainReview off → a chained review item and the goal link), the enrich
   * manager absorbing auto-enrich, stale selection, and the enqueue routing of the page buttons. Models
   * are scripted ([[ScriptedClient]]); no provider is called. Skipped without HISTMERSION_TEST_DB_URL. */
-class ManagerPhase2Suite extends munit.FunSuite:
+class ManagerPhase2Suite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(180, "s")
@@ -42,7 +42,7 @@ class ManagerPhase2Suite extends munit.FunSuite:
         approvals = b.agents.approvals.copy(articlePublish = "auto"),
         review = b.agents.review.copy(spotChecks = 0)))
 
-  private lazy val ds = Db.dataSource(baseCfg.db)
+  private lazy val ds = testPool(baseCfg.db)
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces

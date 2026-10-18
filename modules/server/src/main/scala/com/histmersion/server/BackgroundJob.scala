@@ -53,7 +53,11 @@ object BackgroundJob:
     * running one — when the slot is held. `what` names this kind of work in that refusal ("a vacuum
     * job"), `busyCode` is its error code. Answers the job as it stands once its thread is started. */
   def start(ds: DataSource, kind: String, detail: Option[JobDetail], slot: Slot, what: String,
-      busyCode: Option[String] = None)(body: (JobInfo, String => Unit) => Outcome): Either[ApiError, JobInfo] =
+      busyCode: Option[String] = None,
+      /** The job runs on the generation (database, config) the caller is pinned to, even across a
+        * config reload (docs/research-plugins.md §3.6). */
+      pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none)(
+      body: (JobInfo, String => Unit) => Outcome): Either[ApiError, JobInfo] =
     if !slot.claim("starting") then Left(busy(what, slot.current, busyCode))
     else
       val job =
@@ -63,7 +67,7 @@ object BackgroundJob:
             slot.free()
             throw e
       slot.note(s"job ${job.id}")
-      val t = Thread.ofPlatform().daemon(true).name(s"histmersion-$kind").unstarted { () =>
+      val work = pins.carry {
         try
           val _ = JobRepo.transition(ds, job.id, JobState.Queued, JobState.Running, Some("starting"))
           val out =
@@ -77,5 +81,6 @@ object BackgroundJob:
             case Some(e) => JobRepo.transition(ds, job.id, JobState.Running, JobState.Failed, out.summary, Some(e))
         finally slot.free()
       }
+      val t = Thread.ofPlatform().daemon(true).name(s"histmersion-$kind").unstarted(() => work.run())
       t.start()
       Right(JobRepo.get(ds, job.id).getOrElse(job))

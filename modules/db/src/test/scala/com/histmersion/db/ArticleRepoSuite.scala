@@ -5,12 +5,12 @@ import com.histmersion.core.*
 /** The article store against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Covers the acceptance lines of plan §5.2 stream 2.7 that need a database: put/patch, the link
   * graph maintained from the body, backlinks in both directions, the cited-sources footer, and FTS. */
-class ArticleRepoSuite extends munit.FunSuite:
+class ArticleRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = Db.dataSource(base.copy(url = testDb.get))
+    val d    = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val slug = "zz_article_sea"
