@@ -104,7 +104,7 @@ object ManagersView:
     "models" -> "models (role=provider:model; …)", "staleAfterDays" -> "review again after (days; 0 never)",
     "inferFilter" -> "infer a missing filter first (on/off)", "minSources" -> "seed: sources per article at least",
     "maxArticles" -> "seed: articles per plan at most", "sweeps" -> "watch: sweeps (acquisition, currency)",
-    "autoIngest" -> "watch: ingest legal open-access finds (on/off; never the unauthorised mirror)", "autoIngestPerDay" -> "watch: ingests a day at most")
+    "autoIngest" -> "watch: ingest legal open-access finds (on/off; legal open access only)", "autoIngestPerDay" -> "watch: ingests a day at most")
 
   /** What a manager's settings form offers: every setting, but a watcher's only to a watcher (and the
     * review settings not to one). */
@@ -312,7 +312,7 @@ object ManagersView:
           s"Cron `$c` (UTC)" + d.manager.nextTickAt.fold("")(t => s", next $t") +
             (if d.manager.state == State.Active.wire then "" else " — fires once it is resumed") + ". " +
             (if d.manager.effective.autoIngest.contains(true)
-             then s"Legal open-access picks are ingested, at most ${d.manager.effective.autoIngestPerDay.getOrElse(0)} a day (never through the unauthorised mirror)."
+             then s"Legal open-access picks are ingested, at most ${d.manager.effective.autoIngestPerDay.getOrElse(0)} a day (legal open access only)."
              else "Its picks go to the acquisition list (auto-ingest off)."))),
         child <-- events.signal.map(sweepEvents).map(es =>
           if es.isEmpty then p(cls := "muted", "No sweep has settled yet.")

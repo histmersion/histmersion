@@ -201,8 +201,8 @@ object Managers:
       maxArticles: Option[Int] = None,
       /** watch: what it sweeps — `acquisition`, `currency` (None = both). */
       sweeps: Option[List[String]] = None,
-      /** watch: ingest the legal open-access works its acquisition sweep picks (OPT-IN, default off; never
-        * through the unauthorised mirror); off — or past the daily cap — they go to the acquisition list. */
+      /** watch: ingest the legal open-access works its acquisition sweep picks (OPT-IN, default off; the
+        * legal chain only); off — or past the daily cap — they go to the acquisition list. */
       autoIngest: Option[Boolean] = None,
       /** watch: at most this many such ingests per UTC day. */
       autoIngestPerDay: Option[Int] = None,

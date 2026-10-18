@@ -20,8 +20,8 @@ trait AgentUpstream:
   def followups(id: String, since: Option[Int], limit: Option[Int]): Either[String, FollowupsResult]
   /** An OpenAlex search, each hit marked `inDb` (the discover path). */
   def discover(query: String, limit: Int): Either[String, DiscoverResult]
-  /** A watcher's auto-ingest of one DOI: the LEGAL open-access chain only (never the unauthorised mirror, whatever
-    * `acquire.unlicensed.enabled` says), refused when no legal file exists (nothing is stored then). Not
+  /** A watcher's auto-ingest of one DOI: the LEGAL open-access chain only (never an unauthorised
+    * fetcher, whatever `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not
     * connected by default: a fixture that does not answer it ingests nothing. */
   def ingestLegal(doi: String): Either[String, IngestReport] = Left("the acquisition toolset is not connected")
 

@@ -78,7 +78,7 @@ Notes from the person who runs this library (follow them unless they contradict 
 ## 4. Manager kinds
 (a) Review (`review`, library-wide). Config: maxRuns 2, rounds 3, maxRunsPerArticle 3, noProgressRuns 2, reopenLimit 2, staleAfterDays, include filter (tags, goal), per-role model override. Selection priority: person-enqueued > chain (fresh compile) > open MAJORs (`review_ledgers`, by count desc) > never reviewed > (phase 2) stale. Articles without a filter: phase 2 `infer-filter` item first. Step: `review-article <slug> fix rounds=N` origin `manager`. Evaluation from the ledger: no open MAJOR → Done("converged after k runs"); else Stop+task if attempts ≥ maxRunsPerArticle, or open-major count not decreasing over noProgressRuns runs (history in item.state), or any entry reopened ≥ reopenLimit or escalated, or OMISSION CHURN (every open MAJOR is skeptic `missing-critique` raised in this run's final pass; since 2026-10-17: every open MAJOR a missing-critique and the open critique-checklist pairs not down over noProgressRuns runs, which then also replaces the open-MAJOR no-progress rule — see the note at the end) — task text = `ReviewLedger.taskText` + stop reason; else Again with cooldown. Edge/status proposals go to Approvals as today; the manager does not wait for them.
 (b) Seeding (`seed:<goal>`) — phase 2: `propose-articles <goal>` (planner; search/facets/article_coverage/list_articles) → code-verified proposals (slug free, filter ≥ minSources, <50% overlap with existing goal articles) → always-manual `article-plan` approval → compile items with `chainReview=false` → on success upsert a review item (origin chain, priority 2) and link to goal.
-(c) Watcher (`watch:<goal>`) — phase 3: weekly acquisition-sweep + currency-check items; auto-ingest legal-OA OPT-IN per area (default off, autoIngestPerDay 5, the unauthorised mirror forced off); else acquire list. Enrich manager absorbs autoEnrich in phase 2.
+(c) Watcher (`watch:<goal>`) — phase 3: weekly acquisition-sweep + currency-check items; auto-ingest legal-OA OPT-IN per area (default off, autoIngestPerDay 5, legal chain only); else acquire list. Enrich manager absorbs autoEnrich in phase 2.
 
 ## 5. Surfaces
 REST (AgentsApi/AgentsRoutes; new ManagersHandlers): GET/POST /api/agents/managers; GET|PUT|DELETE /api/agents/managers/{id}; POST …/{id}/{pause|resume|stop}?runs=true; GET …/{id}/items?status=&offset=&limit=, POST …/items, PATCH …/items/{item}; GET|POST …/{id}/hints, DELETE …/hints/{h}; GET …/{id}/events?before=&limit=; POST /api/agents/enqueue {kind,target} (routes to the library-wide manager; used by page buttons).
@@ -207,7 +207,7 @@ Branch `managers-phase3`. No migration: everything new lives in the V087 columns
   the steps are exactly v1's, so the pipeline version stays 1) offers the picks marked open access in the
   model's order until that many were ingested (`Scheduling.ingestPicks`: a failure does not count, the next is
   tried) through `AgentUpstream.ingestLegal` → `AcquireHandlers.ingestLegal`: the legal chain only
-  (`OaFetcher.fetchLegal` never asks the unauthorised mirror, whatever `acquire.unlicensed.enabled` says) and **no source without a
+  (`OaFetcher.fetchLegal` never runs an `Access.Unauthorised` fetcher, whatever `acquire.allow-unauthorised` says) and **no source without a
   legal file** (refused before anything is stored). An ingested work is linked to the goal and recorded as an
   `ingested` event; everything else — closed picks, failures, picks past the cap, and every pick with
   auto-ingest off — goes to the acquisition list as before. The currency check is unchanged (its outside papers
@@ -275,7 +275,7 @@ Branch `managers-phase3`. No migration: everything new lives in the V087 columns
   the status-change line); the runs window links a run on a manager.
 - Tests: `ManagerPolicySuite` (watcher settings, ingest allowance, cron steps, `checkCron`, daily cap),
   `SchedulingSuite` (`ingestPicks`), `WatchSchedulesSuite`, `HintProposalsSuite`, `ConfigSuite` (the removed
-  key), `OaFetchSuite` (the unauthorised mirror never asked by `fetchLegal`), `ManagerPhase3Suite` (DB: watcher, opt-in ingest
+  key), `FetchChainSuite` (no unauthorised fetcher on the legal path), `ManagerPhase3Suite` (DB: watcher, opt-in ingest
   and the cap, off by default, cron firing, proposals via MCP/`propose`, `config` proposals, `suggest` with a
   scripted model, the daily cap), `SchedulerRunSuite` (the facade, the migration), `MergeExtrasDbSuite` (a
   watcher's sweeps travel in a bundle), web unit suites and a browser test (the watch box, the day's spend, the

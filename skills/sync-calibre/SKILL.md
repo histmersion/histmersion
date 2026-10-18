@@ -79,7 +79,7 @@ import closes the acquisition item that names the book's DOI, and lists similar 
 - **Books and articles both belong in Calibre** — the user keeps papers there too.
 - If a source's metadata is thin, enrich it first (`{{tool:patch_source}}` →
   `metadata.title/authors/year/doi`) so Calibre gets clean fields rather than "Unknown".
-- Skip an item deliberately only when the user says so (e.g. an unauthorised-mirror file they do not want in
+- Skip an item deliberately only when the user says so (e.g. a file they do not want in
   their library). The default is: everything fetched goes into Calibre.
 
 ## Done means
