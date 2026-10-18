@@ -120,6 +120,13 @@ class PluginHostSuite extends munit.FunSuite:
     assert(PluginHost.configuredOrder(conf("histmersion.plugins.order = b"), ConfigFactory.empty).left.exists(_.contains("must be a list")))
     assertEquals(PluginHost.configuredOrder(ConfigFactory.empty, ConfigFactory.empty), Right(Nil))
 
+  test("digest is order-independent and changes with any jar"):
+    val a = List("a.jar" -> "11", "b.jar" -> "22")
+    assertEquals(PluginHost.digest(a), PluginHost.digest(a.reverse))
+    assertNotEquals(PluginHost.digest(a), PluginHost.digest(List("a.jar" -> "11", "b.jar" -> "23")))
+    assertNotEquals(PluginHost.digest(a), PluginHost.digest(a.take(1)))
+    assertEquals(PluginHost.digest(Nil).length, 64)
+
   test("decode: kebab-case keys into the plugin's own case class; `enabled` is the host's"):
     val p = EchoPlugin()
     val c = conf("enabled = true\ngreeting = g\nmax-items = \"3\"\nmirrors = []\ntoken = null")
@@ -238,10 +245,11 @@ class PluginHostSuite extends munit.FunSuite:
       """histmersion.plugins { echo.enabled = true, consumer { enabled = true, token = "keepassxc:x#password" } }""")
     val st = statusOf(g, "consumer")
     assertEquals(st.state, PluginState.Failed.wire)
-    assertEquals(st.error, Some("no secret vault 'keepassxc' is registered (enable the plugin that provides it)"))
+    assertEquals(st.error,
+      Some("histmersion.plugins.consumer: no secret vault 'keepassxc' is registered (enable the plugin that provides it)"))
     assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
     assert(!g.report.ok)
-    assert(logs.lines.exists(_.startsWith("W consumer: no secret vault 'keepassxc'")), logs.lines)
+    assert(logs.lines.exists(_.startsWith("W consumer: histmersion.plugins.consumer: no secret vault 'keepassxc'")), logs.lines)
     assertEquals(got.toList, Nil, "register was never called")
 
   test("an unresolvable secret (unset env, a vault error, a vault that throws) fails registration with the reference"):

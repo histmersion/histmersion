@@ -31,6 +31,48 @@ fail() { echo "::error::$*"; for f in server postgres converter; do echo "──
 export HISTMERSION_CONFIG="$data/histmersion.conf"
 printf 'histmersion {\n  server.port = 18999\n  smoke-typo = 1\n}\n' > "$data/histmersion.conf"
 
+echo "→ the server's command line: nothing is opened before it is understood"
+rc=0; "$b/bin/histmersion-server" --no-such-flag > "$data/flag.out" 2>&1 || rc=$?
+[ "$rc" = 1 ] || fail "an unknown flag exited $rc, not 1: $(cat "$data/flag.out")"
+grep -q "unknown argument '--no-such-flag'" "$data/flag.out" || fail "no usage error for an unknown flag: $(cat "$data/flag.out")"
+[ ! -e "$data/pg" ] || fail "an unknown flag started the bundled PostgreSQL"
+
+echo "→ --self-check: the built-in plugins, two vaults enabled against FAKE CLIs (never a real vault)"
+# bitwarden's session is a secret held in keepassxc: it resolves through the keepassxc vault, whose
+# master password comes from the environment — the subprocess, the env: and the vault: paths, natively
+fake="$data/fake-bin"; mkdir -p "$fake"
+cat > "$fake/keepassxc-cli" <<'SH'
+#!/bin/sh
+IFS= read -r pw
+[ "$pw" = "smoke-master" ] || { echo "Error while reading the database: Invalid credentials were provided" >&2; exit 1; }
+for a; do e=$a; done
+printf 'session-from-%s\n' "$e"
+SH
+printf '#!/bin/sh\nexit 0\n' > "$fake/bw"
+chmod +x "$fake/keepassxc-cli" "$fake/bw"; : > "$data/vault.kdbx"
+selfcheck() { # <password> → the report in $data/self-check.out, the exit code echoed
+  printf 'histmersion.plugins {\n  keepassxc { enabled = true, database = "%s", password = "env:SMOKE_KP_PASSWORD" }\n  bitwarden { enabled = true, session = "keepassxc:Smoke/bw#password" }\n}\n' \
+    "$data/vault.kdbx" > "$data/plugins.conf"
+  local rc=0
+  HISTMERSION_CONFIG="$data/plugins.conf" SMOKE_KP_PASSWORD="$1" PATH="$fake:$PATH" \
+    "$b/bin/histmersion-server" --self-check > "$data/self-check.out" 2>&1 || rc=$?
+  echo "$rc"
+}
+rc="$(selfcheck smoke-master)"
+sed 's/^/  /' "$data/self-check.out"
+[ "$rc" = 0 ] || fail "--self-check exited $rc: $(cat "$data/self-check.out")"
+grep -qF "keepassxc 1.0.0 — registered (secret-vault:keepassxc)" "$data/self-check.out" || fail "--self-check: keepassxc not registered"
+grep -qF "bitwarden 1.0.0 — registered (secret-vault:bitwarden)" "$data/self-check.out" || fail "--self-check: bitwarden not registered"
+grep -qF "1password 1.0.0 — disabled" "$data/self-check.out" || fail "--self-check: 1password is not reported disabled"
+grep -qF "session = keepassxc:Smoke/bw#password" "$data/self-check.out" || fail "--self-check: the secret reference is not shown"
+if grep -qE "smoke-master|session-from" "$data/self-check.out"; then fail "--self-check printed a secret value"; fi
+grep -q "self-check passed" "$data/self-check.out" || fail "--self-check gave no verdict"
+rc="$(selfcheck wrong-password)"
+[ "$rc" = 2 ] || fail "--self-check with a locked vault exited $rc, not 2: $(cat "$data/self-check.out")"
+grep -q "the database is locked" "$data/self-check.out" || fail "--self-check does not say the vault is locked"
+[ ! -e "$data/pg" ] && ! curl -fsS http://127.0.0.1:18000/api/health >/dev/null 2>&1 \
+  || fail "--self-check started the bundled runtime or a listener"
+
 echo "→ start (first run: initdb)"
 "$b/bin/histmersion-server" > "$data/server.out" 2>&1 &
 server=$!
