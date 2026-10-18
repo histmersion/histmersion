@@ -1016,8 +1016,10 @@ This is why §7.4 adds `--self-check`.
   fallback is removed from the repository once the acquisition chain runs through plugins (§13
   phase 2). Note: the git history still contains it; open-sourcing needs either a history rewrite
   or a fresh public repository.
-- **D4 — open-access indexes:** (not answered; phase 2 keeps one `oa-index` plugin, which registers
-  one fetcher per index, §16).
+- **D4 — open-access indexes: decided (user, 2026-10-18) — each open-access index is its own plugin.**
+  Phase 2's one `oa-index` plugin (§16) became `oa-unpaywall`, `oa-core`, `oa-openalex` and `oa-landing`,
+  each with its own enable switch and only the settings it uses; a config written for `oa-index` is
+  still honoured, with a deprecation warning. As built: §20.2.
 - **D5 — local build at setup: decided (user, 2026-10-18) — building the native image locally is the
   default.** The installers link the server on the machine from the kit; `--prebuilt` (or
   `HISTMERSION_BUILD=prebuilt`) opts out, `--jvm` stays. A machine that cannot build (memory, toolchain,
@@ -1181,7 +1183,8 @@ ingest now calls with the DOI, arXiv id, title, authors and year), and owns:
 - **refusals** are logged and not asked again; when nothing is found the message is today's
   ("no legal open-access PDF found"), with each refusal appended (`(archive-org: … lending-only …)`).
 
-**The built-in plugins (`server/acquire/fetchers`).** Today's steps, each a plugin with its own
+**The built-in plugins (`server/acquire/fetchers`).** *(D4 split `oa-index` into one plugin per index:
+§20.2.)* Today's steps, each a plugin with its own
 `enabled` (default `true`, `HISTMERSION_PLUGIN_<ID>_ENABLED`) and nothing else in its block:
 
 | plugin | fetchers it registers | from |
@@ -1765,4 +1768,83 @@ kit linked; `--prebuilt` (nothing run; plugins noted); `--jvm` and its fallback;
 (temporary HOME and install, fake `launchctl`/`systemctl`/`curl`, no plugins directory, `pipefail`):
 exit 0, the server linked by default, `--help`. `relink-test.sh` (+4): the record's fields after a
 relink, current vs stale, rollback moving it with its binary, JVM mode's record.
+
+### 20.2 D4: one plugin per open-access index
+
+**Ids.** `oa-unpaywall`, `oa-core`, `oa-openalex`, `oa-landing` — registering the fetchers `unpaywall`,
+`core`, `openalex`, `landing`, whose ids did not change, so `acquire.chain` (default
+`archive-org,unpaywall,core,openalex,pmc,arxiv,landing,pmc-text`) orders them exactly as before and the
+chain as it runs is the same. Why the `oa-` prefix, when `archive-org`, `arxiv` and `pmc` have none:
+
+- those three are named after the repository that holds the file; these four are *indexes* of where
+  copies live (and `landing` is no provider at all, but the step that follows their repository
+  locations), so the prefix says what kind of step they are — the precedent is §19's `media-`/`events-`;
+- `core` alone reads as Histmersion's own core (`HISTMERSION_PLUGIN_CORE_ENABLED`, a `core` block), and
+  bare `landing` says nothing;
+- `oa-` is the former id's prefix, so `oa-index`'s successors are found next to it in every sorted list
+  (`--self-check`, `/api/about`, the web About window).
+
+| plugin | fetcher | its own settings (defaults resource) | Histmersion settings it still reads |
+|---|---|---|---|
+| `oa-unpaywall` | `unpaywall` | `contact-email` (`null`; env `HISTMERSION_PLUGIN_OA_UNPAYWALL_CONTACT_EMAIL`) — the e-mail Unpaywall requires, sent only as its `email` parameter | `acquire.unpaywall.url`; `acquire.contact-email` when its own is `null` |
+| `oa-core` | `core` | `api-key` (`null`) — a `Secret` REFERENCE (`env:…`, a vault's), resolved by the host before `register`, shown only as the reference | `acquire.core.url`; `acquire.core.api-key` when its own is `null` |
+| `oa-openalex` | `openalex` | — | `acquire.openalex.url`, `acquire.contact-email` (the OpenAlex client is shared with discover and followups) |
+| `oa-landing` | `landing` | — | `acquire.landing.*` (`acquire.landing.enabled` still switches the step off too), `acquire.zenodo.url`, `acquire.datacite.url`; the Unpaywall record with `acquire.contact-email` |
+
+Each has `enabled` (default `true`, env `HISTMERSION_PLUGIN_<ID>_ENABLED`), its own `Config` type
+(`UnpaywallConfig`, `CoreConfig`; the other two none, `BuiltinConfig`) and its defaults resource
+`META-INF/histmersion/plugins/<id>.conf`, which is also its key schema: a key of another plugin's fails
+that plugin alone, as before. **No e-mail or key is in the repository:** both defaults are `null`, and
+the contact stays a per-install setting (the installers pass `HISTMERSION_ACQUIRE_CONTACT_EMAIL` on).
+Endpoints stay host settings for the reason §16 gave (moving them would rename every documented key and
+env variable for no change in behaviour); a plugin block holds what is the user's own — a contact, a
+credential.
+
+**Shared records.** The four plugins' fetchers come from ONE `OaIndex` per generation. The OpenAlex and
+DataCite records (`oa:records:<doi>`) and the Unpaywall record (`oa:unpaywall:<email>:<doi>`) are memoised
+per fetch, as before; the Unpaywall key includes the e-mail it was asked with, so when `oa-unpaywall` has
+a contact of its own the landing step (which uses Histmersion's contact) asks Unpaywall once more —
+with the default, one request as before. The landing step reads the indexes' records whichever of
+`oa-unpaywall`/`oa-openalex` is switched on: switching an index's fetcher off does not stop the landing
+step from reading its locations (switch `oa-landing` off for that). The landing step's Unpaywall record is
+passed by name, so a disabled landing step asks nothing.
+
+**The former `oa-index` (`server/plugins/LegacyPlugins`, pure).** Applied by `Plugins.load` before
+`PluginHost.build`, on every load and reload:
+
+- `histmersion.plugins.oa-index.enabled` is copied to each successor whose block does not set `enabled`
+  (so `oa-index.enabled = false` switches all four off, and `oa-core.enabled = true` beside it keeps CORE);
+- another key of the block goes to the successor whose defaults have it (`api-key` → `oa-core`,
+  `contact-email` → `oa-unpaywall`) unless that successor sets it; a key none has is a warning and is
+  ignored — `oa-index` itself only ever accepted `enabled`;
+- the block is then removed, so no "configures no plugin" warning;
+- `HISTMERSION_PLUGIN_OA_INDEX_ENABLED` is copied into the environment the host layers as each
+  successor's `HISTMERSION_PLUGIN_<ID>_ENABLED` that is not set — so it keeps the precedence it had (the
+  environment over the file, also over a successor's own `enabled` in the file);
+- `oa-index` in `histmersion.plugins.order` is replaced in place by the four (those not listed already);
+- every one of these adds a deprecation warning to the report: `--self-check` (`- warning: …`, exit code
+  unchanged), `/api/about`, `/api/config`, `histmersion about`, the web About window;
+- a reload whose changed key is under `histmersion.plugins.oa-index` rebuilds the four (`Plugins.carried`
+  expands the id);
+- `oa-index` is reserved: `PluginTool.hostIds` names it, so a third-party plugin cannot take it (its
+  settings would be read as the successors').
+
+The live config has no `plugins.*` key, so for it nothing is mapped and nothing is warned.
+
+**Native image.** The four defaults resources, `UnpaywallConfig$`/`CoreConfig$`'s derived readers and
+`Secret$`'s reader were recorded with the tracing agent during a `--self-check` (pinned GraalVM CE
+25.0.1) with a legacy `oa-index` block, `order`, the legacy variable, `oa-core`'s secret and
+`oa-unpaywall`'s contact; the stale `oa-index.conf` resource entry was removed by hand.
+
+**Tests.** `BuiltinFetchersSuite` (+14): the seven built-ins and each `oa-*` plugin's one fetcher; each
+index switched off by file or env with the chain otherwise unchanged; a setting of another index fails
+one plugin; `oa-unpaywall`'s contact (own, env, Histmersion's, none = not asked); `oa-core`'s key (a
+secret reaches the `Authorization` header and only its reference the report; Histmersion's key; none =
+not asked; an unset `env:` fails it alone); and through `LegacyPlugins`: no legacy config = no warning,
+`oa-index.enabled = false`, a successor's own switch, the legacy variable and its precedence, sub-keys
+routed and an unknown one warned, `order`, a reload. `LegacyPluginsSuite` (7, pure), `PluginToolSuite`
+(the four ids and the reserved former id), `ProviderPluginsSuite` (7 + 8 + 3 built-ins). `smoke.sh` checks
+the four registered lines on the native binary, and a `--self-check` with `oa-index.enabled = false`
+plus `oa-core { enabled = true, api-key = "env:…" }`: three disabled, CORE registered, the reference shown
+and never the key, the deprecation warning.
 
