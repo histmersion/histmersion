@@ -1,0 +1,10 @@
+{
+  "reflection": [
+    { "type": "com.histmersion.spike.hello.LoudGreeter", "methods": [ { "name": "<init>", "parameterTypes": [] } ] },
+    { "type": "com.histmersion.spike.hello.QuietGreeter", "methods": [ { "name": "<init>", "parameterTypes": [] } ] }
+  ],
+  "resources": [
+    { "glob": "META-INF/histmersion/plugins/hello.conf" },
+    { "glob": "reference.conf" }
+  ]
+}
