@@ -1,6 +1,6 @@
 ---
 name: histmersion-dev
-description: Build, test, run and package the Histmersion Scala codebase — sbt 2 gotchas, the GraalVM native-image workflow and its tracing-agent metadata, Flyway migrations, and the native bundle. Use when changing Histmersion's Scala sources, adding a dependency, or when a native image or bundle build fails.
+description: Build, test, run and package the Histmersion Scala codebase — sbt 2 gotchas, the GraalVM native-image workflow and its tracing-agent metadata, Flyway migrations, the native bundle, and plugins (the SPI, writing one, plugin add/rebuild, relink, JVM mode, signing, config reload, secret references). Use when changing Histmersion's Scala sources, adding a dependency, writing or installing a plugin, or when a native image, relink or bundle build fails.
 ---
 
 # Developing Histmersion
@@ -134,7 +134,69 @@ just install                                  # replace the installed app with i
 `scripts/bundle/postgres.sh` copies PostgreSQL 18 + PostGIS from the pixi environment in
 `runtime/postgres`; `converter.sh` builds a python-build-standalone Python with the locked `ocr`
 extra and downloads docling's models; `server.sh` builds both native images with the pinned JDK.
-`.github/workflows/bundle.yml` builds and smoke-tests the bundle per platform.
+`.github/workflows/bundle.yml` builds and smoke-tests the bundle per platform, and publishes each platform's
+relink kit with a release.
+
+## Plugins
+
+Design and as-built notes: `docs/research-plugins.md` (§2 the SPI, §3 config, §7–9 user plugins, the
+relink and signing, §15–21 as built).
+
+**The SPI** (`modules/plugin-api`, `com.histmersion.plugin`; a plugin sees nothing else — no core, db or
+server). ONE ServiceLoader service, `Plugin` (listed in `META-INF/services/com.histmersion.plugin.Plugin`,
+a public class with a no-argument constructor):
+
+- `info = PluginInfo(id, version, Spi.Version)` — `id` is kebab-case and the config key
+  `histmersion.plugins.<id>`; another SPI version is refused.
+- `type Config` with `given configReader` — path-dependent: derive it (`final case class XConfig(…) derives
+  ConfigReader`, with `import com.histmersion.plugin.PluginConfig.given` for env-friendly numbers and
+  booleans); the host decodes the block with THIS plugin's reader and hands it to THIS plugin only.
+- Defaults in `META-INF/histmersion/plugins/<id>.conf` — also the key schema (every key has a default, `null`
+  for optional ones; an unknown key fails that plugin alone). `enabled` is the host's key: absent = disabled.
+  Env overrides go in the defaults: `key = ${?HISTMERSION_PLUGIN_<ID>_<KEY>}`.
+- `register(config, ctx): Either[String, Unit]` — called once per config generation, only when enabled,
+  after every `Secret` in the config was resolved. Add contributions to `ctx`'s registries:
+  `secretVaults`, `sourceFetchers`, `mediaCollections`, `eventCatalogues` (`Registry.add(id, impl)`; staged
+  — a `Left` discards all this plugin added). Outbound HTTP only through `ctx.http`; logs through `ctx.log`.
+
+**Writing one: copy `modules/plugin-fixtures/hello`** (build.sbt `pluginHello`: `dependsOn(pluginApi)` only,
+packaged as its own jar). It shows the provider, a derived `Config`, the defaults resource, one
+`SourceFetcher`, and — because its greeter is chosen by name — its OWN
+`META-INF/native-image/<group>/<artifact>/reachability-metadata.json`. A plugin jar must carry that
+metadata (record it with the tracing agent in the plugin's build) and shade every dependency the server
+does not ship; a relink fails at the new binary's self-check otherwise. Built-in plugins
+(`modules/plugin-vaults`, the `oa-*`/`media-*`/`events-*` ones) follow the same SPI.
+
+**Config and secrets.** Plugin settings live in `histmersion.conf` under `histmersion.plugins.<id>`. A
+settings change (`enabled` included) needs no restart: `histmersion config reload` (or `config.watch`)
+rebuilds the changed plugins in place; a failed reload changes nothing. Credentials are `Secret` fields
+holding a REFERENCE, never the value: `env:NAME`, `<vault>:<ref>` (resolved by a registered `SecretVault`,
+e.g. `keepassxc:Group/entry#password`), or `value:<literal>` (allowed, warned about, masked everywhere).
+
+**Installing and linking** (local only — they act on this machine's install and data directory, never
+the database):
+
+```bash
+histmersion plugin add <jar | url | group::artifact:version> [--yes]   # describes it first; refuses a foreign SPI
+histmersion plugin list ; histmersion plugin status          # REBUILD NEEDED / RESTART NEEDED / up to date
+histmersion plugin rebuild [--jvm] [--check] [--no-restart]   # bin/histmersion-relink over the bundle's kit/
+histmersion plugin rollback ; histmersion plugin rm <id>
+```
+
+- A native binary cannot load classes, so a changed plugin SET needs a relink: `native-image` over the
+  bundle's `kit/` (the server's Sloth-patched jars, flags, `kit.json` + `SHA256SUMS`) plus the plugin jars —
+  no sbt. JVM pre-flight first, then ~2 min and ~13.5 GB; the new binary must pass `--self-check` before it
+  is swapped in (`.prev` kept; failure to come up rolls back). Log: `<data>/logs/relink.log`.
+- JVM mode (`rebuild --jvm`): the same kit on a JDK, plugins found at each start; no native link.
+- Installers link the server on the machine by default (D5); `--prebuilt` takes the bundle's binary,
+  `--jvm` JVM mode; a machine that cannot link falls back to the prebuilt binary. Each platform's kit is
+  also published by CI (`…-kit.tar.zst`).
+- Signing is optional: `bin/histmersion-signing setup-macos [--no-trust]` (a stable code-signing identity,
+  so macOS permissions survive relinks), `use-gpg <key>` (GPG provenance: signed plugin manifest, signed
+  binary checksums, and the service starts through `libexec/histmersion-server-verified`, which refuses an
+  unsigned or changed binary), `off-gpg`, `status`.
+- Testing the scripts: `just test-scripts` (fakes and temporary dirs only); the real relink is
+  `scripts/bundle/smoke.sh`. Never run them against `~/Applications/Histmersion` or the real data dir.
 
 ## Docs and skills that are generated or checked
 
