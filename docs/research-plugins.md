@@ -42,8 +42,8 @@ The coordinator added an eighth: a signing key, so that every local build has th
   resource entries came from its own jar.
 - **Source fetching first.** Split today's `OaFetch` chain into ordered fetcher plugins, each
   declaring `Access.Open | Subscription | Unauthorised`. The host refuses to run an `Unauthorised`
-  fetcher unless config allows it, and never runs one on the legal-only path. The unauthorised mirror becomes a
-  separate artefact that is not linked unless chosen. ResearchGate gets no fetcher. A JSTOR fetcher
+  fetcher unless config allows it, and never runs one on the legal-only path. No unauthorised fetcher
+  lives in, or is named by, this repository (decided 2026-10-18, §14). ResearchGate gets no fetcher. A JSTOR fetcher
   is not possible inside JSTOR's terms (§11).
 - **Media collections next.** The media collections already have a near-SPI (`media/Collection`).
   Event catalogues come third. Gazetteer sources stay a data-level extension: the Linked Places
@@ -437,6 +437,31 @@ config ─► pool (Hikari, own scope) ─► migrations (Flyway, re-run on a ne
   `DataSource` proxy, `Deps` built from the graph instead of from `Main`'s locals, and removing
   `object Db`'s cache. The config reload trigger is the same as §3.5's.
 
+### 3.7 Secrets (user, 2026-10-18)
+
+A plugin config (and the host's own) may hold credentials. A secret is never typed into the config
+as a bare string field: its config type is `Secret`, and its value in HOCON is a **reference**:
+
+| form | example | notes |
+|---|---|---|
+| `value:<literal>` | `password = "value:hunter2"` | discouraged; allowed; the reload report and `/api/config` warn about it |
+| `env:<NAME>` | `password = "env:JSTOR_PASSWORD"` | read from the server's environment |
+| `<vault>:<ref>` | `password = "keepassxc:Histmersion/JSTOR#password"` | resolved by a configured vault backend |
+
+- **Vault backends are themselves an extension point** (a `secretVaults` registry in the plugin
+  context), several can be configured at once, each with its own name: e.g. `keepassxc` (KeePassXC
+  via `keepassxc-cli show -a <attr> <db> <entry>`, the database unlocked through its own prompt or
+  key file — never a stored master password), `1password` (`op read op://vault/item/field`),
+  `bitwarden` (`bw get <field> <id>` with a session token from `env:`), later the macOS keychain
+  (`security find-generic-password -w`). The first-party ones ship built in and disabled.
+- **Decoding:** `Secret` has a `ConfigReader` that parses the reference only; resolution happens when
+  the plugin is registered (§3.5), through the context, so a missing or locked vault fails that
+  plugin's registration with a clear error and leaves the others running.
+- **Handling:** `Secret` has no `toString` value (prints `Secret(env:JSTOR_PASSWORD)` — the
+  reference, never the value), is masked in every REST/MCP/CLI output, never written to the
+  database, bundles, logs or the exported config, and is re-resolved on every reload (so a rotated
+  password needs only `config reload`). Values are cached per generation, not process-wide.
+
 ## 4. Native image: the closed world
 
 ### 4.1 What GraalVM 25 does
@@ -470,7 +495,7 @@ config ─► pool (Hikari, own scope) ─► migrations (Flyway, re-run on a ne
 
 | option | how | plus | minus |
 |---|---|---|---|
-| **A. Build-time selection** | config lists plugins → only their artefacts join `-cp` | smallest binary; a plugin not chosen is physically absent (good for the unauthorised mirror) | every change of the set is a ~2 min / ~11 GB relink; first-party plugins need a resolver at build time |
+| **A. Build-time selection** | config lists plugins → only their artefacts join `-cp` | smallest binary; a plugin not chosen is physically absent | every change of the set is a ~2 min / ~11 GB relink; first-party plugins need a resolver at build time |
 | **B. Ship all first-party, enable at run time** | every first-party plugin on `-cp`; `histmersion.plugins.<id>.enabled` | toggling is a restart; one CI-tested image | binary grows with each plugin (small: they reuse sttp/circe already in the image); cannot cover third-party plugins |
 | **C. JVM mode** | `java -cp kit/*:plugins/*` | plugins are discovered at startup, no relink | more RAM, slower start, a JDK at run time — a fallback, not the default |
 | **D. Layers** | base layer + plugin layer | fast relinks | experimental (§4.1) |
@@ -478,8 +503,7 @@ config ─► pool (Hikari, own scope) ─► migrations (Flyway, re-run on a ne
 **Recommendation: B for first-party plugins, A for third-party plugins, C as the fallback.**
 
 - Every first-party plugin is in every image and enabled by config.
-- The one exception is the unauthorised mirror. It is an `Unauthorised` fetcher, so it is a separate first-party
-  artefact that joins the image only when the user explicitly selects it.
+- First-party plugins can still be disabled one by one (`histmersion.plugins.<id>.enabled = false`).
 - Third-party plugins live in the plugins directory and trigger a relink (§7).
 - When the toolchain is missing or the relink fails, the kit runs in JVM mode.
 
@@ -523,7 +547,6 @@ for users (open decision D4).
 | 2 | `arxiv`, `pmc` (PDF + JATS) | Open | `OaFetch.arxivPdf`, `PmcLookup` | self-contained; PMC already has its own User-Agent rule |
 | 3 | `oa-index` (Unpaywall, OpenAlex OA, CORE, repository landing, Zenodo, DataCite) | Open | rest of `OaFetch` | shares records (§5.2) |
 | 4 | new OA repositories: DOAB/OAPEN (OA books), HAL, Persée, Gallica, HathiTrust full view, BHL | Open | new | each is a documented API with its own terms (§11); books matter most for this corpus |
-| 5 | `unlicensed` | **Unauthorised** | `OaFetch.unlicensed` | moved out of the default image (§4.2); off unless selected **and** allowed |
 | later | subscription TDM APIs (Elsevier, Wiley, Springer Nature) | Subscription | new | only with the user's own key and entitlement, within the provider's TDM terms (§11) |
 
 ## 6. Do the other providers move to the same SPI?
@@ -916,7 +939,7 @@ This is why §7.4 adds `--self-check`.
 | **ResearchGate** | no public API, and its terms forbid automated access as the task states (the terms page answered HTTP 403 to my fetch, so I have not quoted it). Only a human route: the author's own copy, or a full-text request through the site by the user | **no fetcher plugin.** At most, an `acquire` queue item carrying the RG URL for the user. A third-party RG scraper is refused at review, and `Access` cannot describe it honestly |
 | **JSTOR** | Terms §4 prohibit "any activity that automatically downloads or exports Content", including "web scraping, web harvesting, web data extraction". §3 allows "downloading or printing Content in reasonable amounts for non-commercial, scholarly purposes". The exceptions are Early Journal Content, Open JSTOR Collection Content and Open Artstor Content, under their own rights statements. TDM goes through JSTOR's own text-analysis service (fetched 2026-10-18) | **no subscription fetcher**, even with the user's credentials. Allowed: (i) a `jstor-open` fetcher for the openly licensed collections, only where their rights statement permits automated retrieval **(unverified per collection)**; (ii) a link-out: the user downloads by hand, then `histmersion ingest <file>` |
 | **Subscription publishers with TDM APIs** (Elsevier, Wiley, Springer Nature) | only with the user's own API key or token and institutional entitlement, inside that provider's TDM terms (rate, non-commercial, no redistribution); the specific terms are **(unverified)** in this research | `Access.Subscription`; `secretKeys` masked; one plugin per provider, each citing the terms it implements |
-| **The unauthorised mirror** | distributes copyrighted papers without authorisation; legality varies by jurisdiction; off by default (existing rule) | `Access.Unauthorised`; a separate artefact, not in the default image; runs only with `allow-unauthorised = true`; never on `fetchLegal`; logged at WARN |
+| **Unauthorised sources** | not part of this repository and not named in it; a user's own plugin kept elsewhere must declare `Access.Unauthorised` | runs only with `allow-unauthorised = true`; never on `fetchLegal`; logged at WARN |
 | **Media collections** | licence read from each record, judged by the host's allowlist; credit line kept; originals stay at the provider (docs/media-providers.md) | the licence judgement stays in the host, so a plugin cannot loosen it |
 | **User plugins** | the user installs them and is responsible for the provider's terms; Histmersion's review applies only to first-party plugins | `plugin add` shows the plugin's `Access` and declared hosts before installing; an `Unauthorised` plugin needs the same config switch |
 
@@ -954,7 +977,9 @@ This is why §7.4 adds `--self-check`.
    - Move the host-side chain runner, legal gate, PDF check and memo into the host.
    - Port `archive-org`, `arxiv`, `pmc` and `oa-index` as first-party plugins in the same image (B),
      keeping today's order.
-   - Turn `acquire.unlicensed` into the separate `unlicensed` artefact with `allow-unauthorised`.
+   - Remove the unauthorised fallback from this repository entirely (code, config keys, web UI,
+     skills, docs, tests, native-image metadata); a user who wants it keeps it as a private plugin
+     outside the repository.
    - Golden tests: the fixture-driven `OaFetch` tests must pass unchanged through the chain.
 3. **Phase 3, the relink kit and JVM mode.**
    - `server.sh` writes `kit/`, and `bin/histmersion-relink` does pre-flight → Sloth → native-image
@@ -974,19 +999,23 @@ This is why §7.4 adds `--self-check`.
 6. **Phase 6, more kinds.** `MediaCollection` (from `media/Collection`), then `EventCatalogue`.
    Then the new OA repositories of §5.3 (row 4), one plugin per provider, each citing its terms.
 
-## 14. Open decisions for the user
+## 14. Decisions (user, 2026-10-18)
 
-- **D1:** `plugin-api` as its own module (recommended) or a package in `core`?
-- **D2:** first-party plugins all in the image and enabled by config (recommended), or build-time
-  selection for first-party plugins too?
-- **D3:** The unauthorised mirror as a separate opt-in artefact outside the default image (recommended), or keep it
-  in the image behind its config switch as today?
-- **D4:** split the OA indexes into one plugin per index, or keep a single `oa-index` plugin
-  (recommended for phase 2)?
-- **D5:** local build as the **default** install path (prebuilt only as a fallback), or keep
-  prebuilt as the default and local as an option?
-- **D6:** GPG provenance opt-in at setup (recommended) or required? And should a relink refuse
-  unsigned third-party jars by default?
-- **D7:** may a user plugin be `Access.Subscription` with stored credentials? (Recommended: yes, in
-  `histmersion.conf` or env, masked in every output, never in the database.)
-- **D8:** `plugin add` by Maven coordinates (needs coursier) in phase 4, or path/URL only?
+- **D1 — module:** `plugin-api` is its own module. It holds the interfaces plugins compile against
+  and nothing else; plugins never see implementations (no `core`/`db`/`server` on their classpath).
+- **D2 — first-party plugins:** built into the image and each one can be disabled by config.
+- **D3 — unauthorised sources:** may exist as plugins, but they do not live in, and are not
+  mentioned anywhere in, the Histmersion repository (it is to be open-sourced). Today's built-in
+  fallback is removed from the repository once the acquisition chain runs through plugins (§13
+  phase 2). Note: the git history still contains it; open-sourcing needs either a history rewrite
+  or a fresh public repository.
+- **D4 — open-access indexes:** (not answered; phase 2 keeps one `oa-index` plugin and can split later).
+- **D5 — local build at setup:** (not answered explicitly; signing below assumes it is offered).
+- **D6 — signing:** optional.
+- **D7 — paid sources:** plugins with credentials are allowed. Credentials are passed as secret
+  references (§3.7). Each plugin still implements only what its provider's terms permit (§11).
+- **D8 — installing a plugin:** Maven coordinates are one way among several: drop the jar into the
+  plugins directory; `plugin add <path>` (copied in); `plugin add <url>` (downloaded, checksum
+  shown, optionally verified); `plugin add <group:artifact:version>` (resolved from Maven).
+- **One service type** and the app context (§2.2), **in-place config reload** (§3.5) and the **hot
+  component graph** with no global JDBC (§3.6) were decided the same day.
