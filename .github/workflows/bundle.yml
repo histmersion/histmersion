@@ -4,8 +4,15 @@ name: bundle
 # isolation (first-run initdb, children, health, CLI, offline OCR, clean stop).
 #
 # Runs when the bundle can change, on demand, and for releases. A `v*` tag attaches the archives
-# to a GitHub release; other runs upload nothing (a bundle is ~1 GB compressed — artifact storage
+# to a GitHub release; other runs upload no bundle (a bundle is ~1 GB compressed — artifact storage
 # on a private repo is far smaller). macOS minutes cost 10x on private repos, hence the path filter.
+#
+# The RELINK KIT of each platform (docs/research-plugins.md §21.1) is packaged on every run, after its
+# checksums are verified: kit/ (the server's Sloth-patched jars in class-path order, the native-image
+# arguments, kit.json, SHA256SUMS, graalvm-version), libexec/ and the relink scripts —
+# histmersion-<ref>-<platform>-kit.tar.zst (~100 MB), its .sha256, and its kit.json as -kit.json. A tag
+# attaches the three to the release next to the bundle; a manual run (workflow_dispatch) uploads them as
+# a workflow artifact kept 7 days; push and pull-request runs upload nothing (storage, as above).
 on:
   push:
     tags: ['v*']
@@ -82,7 +89,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo loginctl enable-linger "$USER"
-          export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+          XDG_RUNTIME_DIR="/run/user/$(id -u)"; export XDG_RUNTIME_DIR
           for _ in $(seq 30); do systemctl --user show-environment >/dev/null 2>&1 && break; sleep 1; done
           scripts/bundle/install-linux.sh dist/histmersion   # a copy: relocates the PostgreSQL again
           ~/.local/bin/histmersion health
@@ -93,7 +100,35 @@ jobs:
           tar -C dist -cf - histmersion | zstd -T0 -12 -q -o "$name"
           du -sh dist/histmersion/* "$name"
           echo "ARCHIVE=$name" >> "$GITHUB_ENV"
+      - name: package the relink kit
+        run: |
+          (cd dist/histmersion/kit && shasum -a 256 -c --quiet SHA256SUMS)   # publish only a consistent kit
+          kit="histmersion-${GITHUB_REF_NAME//\//-}-${{ matrix.platform }}-kit"
+          tar -C dist/histmersion -cf - kit libexec \
+              bin/histmersion-relink bin/histmersion-toolchain bin/histmersion-signing bin/histmersion-server-jvm \
+            | zstd -T0 -12 -q -o "$kit.tar.zst"
+          shasum -a 256 "$kit.tar.zst" > "$kit.tar.zst.sha256"
+          cp dist/histmersion/kit/kit.json "$kit.json"
+          du -sh dist/histmersion/kit "$kit.tar.zst"
+          echo "KIT=$kit" >> "$GITHUB_ENV"
+      - name: upload the relink kit (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: relink-kit-${{ matrix.platform }}
+          path: |
+            ${{ env.KIT }}.tar.zst
+            ${{ env.KIT }}.tar.zst.sha256
+            ${{ env.KIT }}.json
+          retention-days: 7
+          compression-level: 0   # zstd already
+          if-no-files-found: error
       - name: attach to the release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
-        with: { files: '${{ env.ARCHIVE }}' }
+        with:
+          files: |
+            ${{ env.ARCHIVE }}
+            ${{ env.KIT }}.tar.zst
+            ${{ env.KIT }}.tar.zst.sha256
+            ${{ env.KIT }}.json
