@@ -50,7 +50,7 @@ object ManagersView:
   def config(f: Map[String, String]): Either[String, ManagerConfig] =
     def g(k: String) = f.getOrElse(k, "").trim
     val bad = List("maxRuns", "maxOpen", "rounds", "maxRunsPerArticle", "noProgressRuns", "reopenLimit", "cooldownMinutes",
-      "lowWater", "refillBatch", "maxFailures", "staleAfterDays", "minSources", "maxArticles", "autoIngestPerDay")
+      "lowWater", "refillBatch", "maxFailures", "staleAfterDays", "minSources", "maxArticles", "autoIngestPerDay", "extendMinNew")
       .filter(k => g(k).nonEmpty && int(g(k)).isEmpty)
     def onOff(k: String, what: String): Either[String, Option[Boolean]] = g(k).toLowerCase match
       case "" => Right(None)
@@ -61,16 +61,17 @@ object ManagersView:
     val infer = for
       i  <- onOff("inferFilter", "infer filter")
       ai <- onOff("autoIngest", "ingest legal open access")
+      aa <- onOff("autoApprove", "decide its approvals by code checks")
       _  <- sweeps.toList.flatten.collectFirst { case Left(w) => w }
               .fold[Either[String, Unit]](Right(()))(w => Left(s"sweeps: '$w' is not acquisition or currency"))
-    yield (i, ai)
+    yield (i, ai, aa)
     val usd = g("budgetUsd")
     val daily = g("dailyUsd")
     val models = list(g("models"), ";").getOrElse(Nil).map(Agents.ModelOverride.parse)
     if bad.nonEmpty then Left(s"not a whole number: ${bad.mkString(", ")}")
     else if usd.nonEmpty && usd.toDoubleOption.forall(_ <= 0) then Left("budget USD is not a positive number")
     else if daily.nonEmpty && daily.toDoubleOption.forall(_ < 0) then Left("daily cap USD is not a number (0 = no cap)")
-    else infer.flatMap((inf, ai) => models.collectFirst { case Left(e) => e } match
+    else infer.flatMap((inf, ai, aa) => models.collectFirst { case Left(e) => e } match
       case Some(e) => Left(s"models: $e")
       case None =>
         Right(ManagerConfig(int(g("maxRuns")), int(g("maxOpen")), int(g("rounds")), int(g("maxRunsPerArticle")),
@@ -78,7 +79,7 @@ object ManagersView:
           int(g("maxFailures")), usd.toDoubleOption, list(g("includeTags"), ","), Option(g("includeGoal")).filter(_.nonEmpty),
           Option(models.collect { case Right(m) => m }).filter(_.nonEmpty), int(g("staleAfterDays")), inf,
           int(g("minSources")), int(g("maxArticles")), sweeps.map(_.collect { case Right(s) => s.wire }.distinct), ai,
-          int(g("autoIngestPerDay")), daily.toDoubleOption)))
+          int(g("autoIngestPerDay")), daily.toDoubleOption, aa, int(g("extendMinNew")))))
 
   /** A config as the form shows it (blank = the default). */
   def fields(c: ManagerConfig): Map[String, String] = Map(
@@ -86,8 +87,9 @@ object ManagersView:
     "noProgressRuns" -> c.noProgressRuns, "reopenLimit" -> c.reopenLimit, "cooldownMinutes" -> c.cooldownMinutes,
     "lowWater" -> c.lowWater, "refillBatch" -> c.refillBatch, "maxFailures" -> c.maxFailures,
     "staleAfterDays" -> c.staleAfterDays, "minSources" -> c.minSources, "maxArticles" -> c.maxArticles,
-    "autoIngestPerDay" -> c.autoIngestPerDay
+    "autoIngestPerDay" -> c.autoIngestPerDay, "extendMinNew" -> c.extendMinNew
   ).view.mapValues(_.fold("")(_.toString)).toMap ++ Map("inferFilter" -> c.inferFilter.fold("")(b => if b then "on" else "off"),
+    "autoApprove" -> c.autoApprove.fold("")(b => if b then "on" else "off"),
     "autoIngest" -> c.autoIngest.fold("")(b => if b then "on" else "off"), "sweeps" -> c.sweeps.fold("")(_.mkString(", ")),
     "budgetUsd" -> c.budgetUsd.fold("")(_.toString), "dailyUsd" -> c.dailyUsd.fold("")(_.toString),
     "includeTags" -> c.includeTags.getOrElse(Nil).mkString(", "),
@@ -104,14 +106,16 @@ object ManagersView:
     "models" -> "models (role=provider:model; …)", "staleAfterDays" -> "review again after (days; 0 never)",
     "inferFilter" -> "infer a missing filter first (on/off)", "minSources" -> "seed: sources per article at least",
     "maxArticles" -> "seed: articles per plan at most", "sweeps" -> "watch: sweeps (acquisition, currency)",
-    "autoIngest" -> "watch: ingest legal open-access finds (on/off; legal open access only)", "autoIngestPerDay" -> "watch: ingests a day at most")
+    "autoIngest" -> "watch: ingest legal open-access finds (on/off; legal open access only)", "autoIngestPerDay" -> "watch: ingests a day at most",
+    "autoApprove" -> "decide its runs' plans and drafts by code checks (on/off; blank = agents.approvals)",
+    "extendMinNew" -> "extend an article at this many new sources (0 never)")
 
   /** What a manager's settings form offers: every setting, but a watcher's only to a watcher (and the
     * review settings not to one). */
   def settingsFor(kind: String): List[(String, String)] =
     val watchOnly = Set("sweeps", "autoIngest", "autoIngestPerDay")
     val reviewOnly = Set("rounds", "maxRunsPerArticle", "noProgressRuns", "reopenLimit", "lowWater", "refillBatch",
-      "includeTags", "includeGoal", "staleAfterDays", "inferFilter")
+      "includeTags", "includeGoal", "staleAfterDays", "inferFilter", "extendMinNew")
     if kind == Kind.Watch.wire then Settings.filterNot((k, _) => reviewOnly(k))
     else Settings.filterNot((k, _) => watchOnly(k))
 
@@ -183,6 +187,62 @@ object ManagersView:
       (EnqueueKind.Seed, Icon.Edit, "extend", "propose the next articles of this research area (you approve the plan)"),
       (EnqueueKind.Enrich, Icon.Runs, "enrich", "enrich the sources linked to this goal that are not enriched yet")))
 
+  // ── the autopilot ───────────────────────────────────────────────────────────────────────────────
+
+  /** One goal's line in the autopilot's table: its counts and its pace. */
+  def goalLine(g: Autopilot.GoalProgress): String =
+    s"${Plural.count(g.sources, "source")} · ${Plural.count(g.articles, "article")}" +
+      (if g.openApprovals > 0 then s" · ${Plural.count(g.openApprovals, "open approval")}" else "") +
+      s" · ${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)")
+
+  /** The goals by stage, in the order a goal moves through them: how many in each. */
+  def stages(gs: List[Autopilot.GoalProgress]): String =
+    GoalStatus.all.map(st => st -> gs.count(_.status == st)).filter(_._2 > 0).map((st, n) => s"$n $st").mkString(" · ")
+
+  /** The switch and the status: on/off (the click shows the new state at once; the server's answer
+    * follows), the approval rules, today's ingests, and every goal's stage, counts and pace. */
+  def autopilotSection: HtmlElement =
+    val st      = Var(Option.empty[Autopilot.AutopilotStatus])
+    val pending = Var(Option.empty[Boolean])
+    val failure = Var(Option.empty[String])
+    def load(): Unit = ApiClient.autopilot.onComplete(_.fold(e => failure.set(Some(e.getMessage)), s => { failure.set(None); st.set(Some(s)) }))
+    def flip(on: Boolean): Unit =
+      pending.set(Some(on))
+      ApiClient.setAutopilot(on).onComplete { r =>
+        pending.set(None)
+        r.fold(e => failure.set(Some(s"autopilot: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) })
+      }
+    val shownOn = st.signal.combineWith(pending.signal).map((s, p) => p.orElse(s.map(_.on)).getOrElse(false))
+    div(
+      cls := "autopilot",
+      onMountCallback(_ => load()),
+      div(cls := "toolbar",
+        div(cls := "btn-group",
+          span(cls := "autopilot-state", cls("is-on") <-- shownOn, child.text <-- shownOn.map(on => if on then "Autopilot ON" else "Autopilot off")),
+          child <-- shownOn.map(on =>
+            if on then WriteButton(Icon.Managers, "turn off", "pause the seeding managers and watchers the autopilot runs", () => flip(false))
+            else WriteButton(Icon.Managers, "turn on",
+              "every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself", () => flip(true))))),
+      ErrorLine(failure.signal),
+      child.maybe <-- st.signal.map(_.map { s =>
+        div(cls := "autopilot-status",
+          div(cls := "muted", s.since.fold("")(t => s"since $t") + s.by.fold("")(b => s" by $b") +
+            s" · ${stages(s.goals)} · ingests today ${s.ingestedToday}${if s.ingestCap > 0 then s" of ${s.ingestCap}" else ""}" +
+            s" · at most ${s.maxConcurrentRuns} runs at once"),
+          div(cls := "muted", "approvals: " + s.approvals.map(r => s"${r.kind} ${r.mode}").mkString(" · ")),
+          Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
+          ul(cls := "job-list autopilot-goals", s.goals.map(g =>
+            li(cls := "job-row",
+              span(cls := s"job-state state-${g.status}", g.status),
+              div(cls := "job-main",
+                div(cls := "job-subject",
+                  button(typ := "button", cls := "link-btn", g.slug, onClick --> (_ => WindowManager.open(WindowKey.Goal(g.slug)))),
+                  span(cls := "muted", s" · ${g.title}")),
+                div(cls := "job-meta muted", goalLine(g)),
+                Option.when(g.managers.nonEmpty)(div(cls := "muted", g.managers.map(m => s"${m.id} ${m.state}").mkString(" · "))))))))
+      })
+    )
+
   // ── the managers window ─────────────────────────────────────────────────────────────────────────
 
   private def stateBadge(m: ManagerInfo): HtmlElement =
@@ -201,6 +261,7 @@ object ManagersView:
       div(cls := "pane-bar", button(typ := "button", cls := "btn", "refresh", onClick --> (_ => refresh()))),
       child.maybe <-- RunsView.enabled.signal.map(on => Option.when(!on)(p(cls := "muted",
         "Embedded agents are off on this server (agents.enabled): no manager starts a run."))),
+      autopilotSection,
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child <-- ms.signal.combineWith(loaded.signal).map { (xs, isLoaded) =>
         if !isLoaded then p(cls := "muted", "Loading…")
