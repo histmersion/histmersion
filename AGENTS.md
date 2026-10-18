@@ -27,8 +27,9 @@ plugin-fixtures/hello ─ a TEST plugin jar (relink tests, smoke.sh); never on t
 A plugin — first-party or not — compiles against `plugin-api` alone and never sees `core`, `db` or
 `server`; the server discovers it through ServiceLoader (`server/plugins/PluginHost`). See
 `docs/research-plugins.md` (§15: as built). The one exception is the built-in acquisition plugins
-(`server/acquire/fetchers`: `archive-org`, `oa-index`, `pmc`, `arxiv`): they are host code over the
-`acquire.*` settings, supplied to `PluginHost` by `server/plugins/Plugins.builtins` instead of
+(`server/acquire/fetchers`: `archive-org`, `oa-unpaywall`, `oa-core`, `oa-openalex`, `oa-landing`, `pmc`,
+`arxiv`; the former `oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`): they are host code
+over the `acquire.*` settings, supplied to `PluginHost` by `server/plugins/Plugins.builtins` instead of
 ServiceLoader, and registered, ordered and reported like any other plugin (§16).
 
 A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit

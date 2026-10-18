@@ -1106,13 +1106,15 @@ polls, so a change can take a few seconds to be seen).
 | `init.fetch-sources` | `HISTMERSION_INIT_FETCH_SOURCES` | `cliopatria,awmc,land,periodo` | what `histmersion init --fetch` downloads, in order |
 | `auth.api-key` | `HISTMERSION_API_KEY` | *(empty)* | when set, every POST/PUT/PATCH/DELETE needs `Authorization: Bearer <key>` (401 otherwise); reads stay open. The web UI asks for the key before offering a write and keeps it in the browser's storage |
 | `cli.server-url` | `HISTMERSION_SERVER_URL` | `http://localhost:8000` | where `histmersion` looks for the server |
-| `acquire.contact-email` | `HISTMERSION_ACQUIRE_CONTACT_EMAIL` | the maintainer's address | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for, sent only as their `mailto`/`email` parameter — never in a header (`HttpPolicy`). Sent nowhere else. |
+| `acquire.contact-email` | `HISTMERSION_ACQUIRE_CONTACT_EMAIL` | *(empty)* — set per install | the **polite-pool** identity Crossref/OpenAlex/Unpaywall ask for, sent only as their `mailto`/`email` parameter — never in a header (`HttpPolicy`). Sent nowhere else. |
 | `acquire.openalex.url` · `crossref.url` · `unpaywall.url` · `arxiv.url` · `archive-org.url` · `wikipedia.url` | `HISTMERSION_ACQUIRE_*_URL` | the public APIs | upstream endpoints; point them at a mirror or a stub to work offline |
 | `acquire.core.api-key` · `acquire.semantic-scholar.api-key` | `HISTMERSION_ACQUIRE_CORE_API_KEY` · `..._SEMANTIC_SCHOLAR_API_KEY` | *(empty)* | optional; both APIs are keyless today, a key only raises the rate limit |
 | `acquire.retraction-watch.csv-url` | `HISTMERSION_ACQUIRE_RETRACTION_WATCH_CSV_URL` | Crossref's RW export | mirrored into the `retraction_watch` table by `histmersion assess update-retractions` |
 | `acquire.chain` | `HISTMERSION_ACQUIRE_CHAIN` | `archive-org,unpaywall,core,openalex,pmc,arxiv,landing,pmc-text` | the acquisition chain: source-fetcher ids, asked in this order until one has a copy. A fetcher not listed runs after these, in plugin order; an id no enabled plugin registered is skipped (logged at startup with the chain as it runs) |
 | `acquire.allow-unauthorised` | `HISTMERSION_ACQUIRE_ALLOW_UNAUTHORISED` | `false` | a fetcher plugin that declares `Access.Unauthorised` (none ships with Histmersion) runs only when this is `true`, after the others and logged at WARN — and never on the legal path (a watcher's auto-ingest, an archive.org import), whatever this says |
-| `plugins.archive-org.enabled` · `plugins.oa-index.enabled` · `plugins.pmc.enabled` · `plugins.arxiv.enabled` | `HISTMERSION_PLUGIN_ARCHIVE_ORG_ENABLED` · `_OA_INDEX_` · `_PMC_` · `_ARXIV_ENABLED` | `true` | the built-in acquisition plugins; `false` takes the plugin's fetchers out of the chain (`oa-index`: `unpaywall`, `core`, `openalex`, `landing`; `pmc`: `pmc`, `pmc-text`). `archive-org` is also the download of `histmersion archive import` |
+| `plugins.archive-org.enabled` · `plugins.oa-unpaywall.enabled` · `plugins.oa-core.enabled` · `plugins.oa-openalex.enabled` · `plugins.oa-landing.enabled` · `plugins.pmc.enabled` · `plugins.arxiv.enabled` | `HISTMERSION_PLUGIN_ARCHIVE_ORG_ENABLED` · `_OA_UNPAYWALL_` · `_OA_CORE_` · `_OA_OPENALEX_` · `_OA_LANDING_` · `_PMC_` · `_ARXIV_ENABLED` | `true` | the built-in acquisition plugins, one per open-access index; `false` takes the plugin's fetchers out of the chain (`oa-unpaywall`: `unpaywall`; `oa-core`: `core`; `oa-openalex`: `openalex`; `oa-landing`: `landing`; `pmc`: `pmc`, `pmc-text`). `archive-org` is also the download of `histmersion archive import`. The four `oa-*` were one plugin, `oa-index`, until 2026-10-18: `plugins.oa-index.enabled` and `HISTMERSION_PLUGIN_OA_INDEX_ENABLED` still switch all four (a successor's own setting wins), with a deprecation warning in `--self-check` and `histmersion about` |
+| `plugins.oa-unpaywall.contact-email` | `HISTMERSION_PLUGIN_OA_UNPAYWALL_CONTACT_EMAIL` | `null` = `acquire.contact-email` | the e-mail Unpaywall requires, sent only as its `email` parameter; set per install, never in the repository. Without any, Unpaywall is not asked |
+| `plugins.oa-core.api-key` | — | `null` = `acquire.core.api-key` | CORE's API key as a **secret reference** (`env:<NAME>` or a vault's, e.g. `keepassxc:CORE#password`), never the key itself; shown in reports as the reference. Without any key, CORE is not asked |
 | `plugins.media-<provider>.enabled` — `media-wikidata` · `media-depicts` · `media-met` · `media-cleveland` · `media-aic` · `media-loc` · `media-pleiades` · `media-opencontext` | `HISTMERSION_PLUGIN_MEDIA_<PROVIDER>_ENABLED` | `true` | the built-in media collections, one plugin each; `false` takes the provider out of `media import` and `media providers`. Their settings stay `media.<provider>.*`, read at each import; a collection's own `media.<provider>.enabled = false` still refuses its import too (both switches must be on) |
 | `plugins.events-gvp.enabled` · `plugins.events-noaa.enabled` · `plugins.events-wikidata.enabled` | `HISTMERSION_PLUGIN_EVENTS_GVP_ENABLED` · `_NOAA_` · `_WIKIDATA_ENABLED` | `true` | the built-in event catalogues; `false` takes the catalogue out of `events import` and `events catalogues` (its events on the map stay; `events rederive` still reads them). Their settings stay `events.<catalogue>.*` |
 | `acquire.europepmc.url` · `acquire.pmc-dataset.url` | `HISTMERSION_ACQUIRE_EUROPEPMC_URL` · `..._PMC_DATASET_URL` | Europe PMC REST · NCBI's PMC Article Datasets bucket | the PMC step of the OA chain: Europe PMC's DOI search names the PMCID and its free (`OA`/`F`) PDF links; NCBI's dataset record names the PDF (MD5-checked) and, when there is none, the JATS XML that the ingest job renders to Markdown itself. A bot-protection challenge from any host counts as no copy |
@@ -1242,7 +1244,7 @@ Plugins add to the server through one service (`com.histmersion.plugin.Plugin`, 
 `modules/plugin-api`; the design is [`docs/research-plugins.md`](docs/research-plugins.md)). Each one has
 its own block, `histmersion.plugins.<id> { … }`, layered over the defaults it ships
 (`META-INF/histmersion/plugins/<id>.conf`) with the environment over both. The built-in ones are the
-three secret vaults above, all disabled by default, and — all enabled — the four acquisition plugins,
+three secret vaults above, all disabled by default, and — all enabled — the seven acquisition plugins,
 the eight media collections (`media-wikidata`, `media-depicts`, `media-met`, `media-cleveland`,
 `media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`) and the three event catalogues
 (`events-gvp`, `events-noaa`, `events-wikidata`).
@@ -1250,8 +1252,10 @@ the eight media collections (`media-wikidata`, `media-depicts`, `media-met`, `me
 **Acquisition runs through plugins.** `ingest <doi>` and `archive import` fetch through one chain of
 *source fetchers* that plugins register, asked in `acquire.chain` order until one has a copy. The built-in
 plugins and their fetchers: `archive-org` (`archive-org`: a public archive.org item; a lending-only one
-is refused), `oa-index` (`unpaywall`, `core`, `openalex`, `landing`), `pmc` (`pmc`, `pmc-text`) and
-`arxiv` (`arxiv`); `histmersion.plugins.<id>.enabled = false` takes one plugin's fetchers out. Each
+is refused), one plugin per open-access index — `oa-unpaywall` (`unpaywall`), `oa-core` (`core`),
+`oa-openalex` (`openalex`), `oa-landing` (`landing`: repository landing pages) — `pmc` (`pmc`,
+`pmc-text`) and `arxiv` (`arxiv`); `histmersion.plugins.<id>.enabled = false` takes one plugin's
+fetchers out, and the chain keeps its order. Each
 fetcher declares its access — open, subscription, or *unauthorised* — and the server alone decides what
 runs: an unauthorised fetcher (none ships with Histmersion) runs only when `acquire.allow-unauthorised =
 true`, and never on the legal path (a watcher's auto-ingest, an archive.org import). The server also

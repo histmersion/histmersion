@@ -74,7 +74,10 @@ grep -q "self-check passed" "$data/self-check.out" || fail "--self-check gave no
 # the built-in acquisition plugins: in the binary, enabled by default, their fetchers registered
 for line in "archive-org 1.0.0 — registered (source-fetcher:archive-org)" \
     "arxiv 1.0.0 — registered (source-fetcher:arxiv)" \
-    "oa-index 1.0.0 — registered (source-fetcher:unpaywall, source-fetcher:core, source-fetcher:openalex, source-fetcher:landing)" \
+    "oa-unpaywall 1.0.0 — registered (source-fetcher:unpaywall)" \
+    "oa-core 1.0.0 — registered (source-fetcher:core)" \
+    "oa-openalex 1.0.0 — registered (source-fetcher:openalex)" \
+    "oa-landing 1.0.0 — registered (source-fetcher:landing)" \
     "pmc 1.0.0 — registered (source-fetcher:pmc, source-fetcher:pmc-text)"; do
   grep -qF "$line" "$data/self-check.out" || fail "--self-check: not reported: $line"
 done
@@ -87,6 +90,17 @@ printf 'histmersion.plugins.arxiv.enabled = false\n' > "$data/fetchers.conf"
 HISTMERSION_CONFIG="$data/fetchers.conf" "$b/bin/histmersion-server" --self-check > "$data/fetchers.out" 2>&1 \
   || fail "--self-check with arxiv switched off failed: $(cat "$data/fetchers.out")"
 grep -qF "arxiv 1.0.0 — disabled" "$data/fetchers.out" || fail "--self-check: arxiv is not reported disabled"
+# one plugin per open-access index (D4): the former oa-index's switch still turns all four off — a
+# successor's own setting wins — with a deprecation warning; oa-core's key is a secret reference
+printf 'histmersion.plugins {\n  oa-index.enabled = false\n  oa-core { enabled = true, api-key = "env:SMOKE_CORE_KEY" }\n}\n' > "$data/legacy.conf"
+HISTMERSION_CONFIG="$data/legacy.conf" SMOKE_CORE_KEY=smoke-core-secret "$b/bin/histmersion-server" --self-check > "$data/legacy.out" 2>&1 \
+  || fail "--self-check with the former oa-index switched off failed: $(cat "$data/legacy.out")"
+sed -n '/oa-/p' "$data/legacy.out" | sed 's/^/  /'
+for line in "oa-unpaywall 1.0.0 — disabled" "oa-openalex 1.0.0 — disabled" "oa-landing 1.0.0 — disabled" \
+    "oa-core 1.0.0 — registered (source-fetcher:core)" "api-key = env:SMOKE_CORE_KEY" "histmersion.plugins.oa-index is deprecated"; do
+  grep -qF "$line" "$data/legacy.out" || fail "--self-check (oa-index): not reported: $line"
+done
+if grep -q smoke-core-secret "$data/legacy.out"; then fail "--self-check printed oa-core's key"; fi
 rc="$(selfcheck wrong-password)"
 [ "$rc" = 2 ] || fail "--self-check with a locked vault exited $rc, not 2: $(cat "$data/self-check.out")"
 grep -q "the database is locked" "$data/self-check.out" || fail "--self-check does not say the vault is locked"
