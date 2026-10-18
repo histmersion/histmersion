@@ -177,6 +177,13 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(itemKindOf(Kind.Seed, "plan-goal"), Some(PlanGoalItem))
     assertEquals(itemKindOf(Kind.Seed, "plan"), Some(ProposeArticles), "`plan` keeps naming the article plan")
 
+  test("blocks: an article waits for any run on it; a goal's item only for a run of its own pipeline"):
+    assert(ManagerPolicy.blocks(ArticleReview, "review-article", List("compile-article")))
+    assert(!ManagerPolicy.blocks(ArticleReview, "review-article", Nil))
+    assert(!ManagerPolicy.blocks(AcquisitionSweep, "acquisition-sweep", List("plan-goal", "propose-articles")))
+    assert(ManagerPolicy.blocks(AcquisitionSweep, "acquisition-sweep", List("acquisition-sweep")))
+    assert(!ManagerPolicy.blocks(ProposeArticles, "propose-articles", List("currency-check")))
+
   test("evaluateStep: a draft the checks rejected is compiled again after the backoff, then stopped with a task"):
     val s = ReviewSettings(1, 2, 1, 1, 1, 1, 0, 0, 0, maxFailures = 2, backoffMinutes = 15, maxBackoffMinutes = 360)
     ManagerPolicy.evaluateStep(s, ArticleCompile, "x", 0, ItemState(), "run-12345678", RunState.Done, None,

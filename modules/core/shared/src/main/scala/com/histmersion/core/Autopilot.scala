@@ -10,8 +10,8 @@ import sttp.tapir.Schema
   * The rules are in `core/jvm` ([[AutopilotPolicy]]), the work in the server's supervisor. */
 object Autopilot:
 
-  /** `POST /api/agents/autopilot` — turn it on or off (idempotent). */
-  final case class AutopilotSet(on: Boolean) derives KindlingsCodecAsObject
+  /** `POST /api/agents/autopilot` — turn it on or off (idempotent); `by` = who (default `person`). */
+  final case class AutopilotSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject
   object AutopilotSet:
     given Schema[AutopilotSet] = KindlingsSchema.derived[AutopilotSet].schema
 

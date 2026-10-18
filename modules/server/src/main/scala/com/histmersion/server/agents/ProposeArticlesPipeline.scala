@@ -5,7 +5,7 @@ import com.histmersion.core.Agents.{ApprovalKind, Pipeline}
 import com.histmersion.core.ArticlePlans.ArticlePlan
 import com.histmersion.core.GoalPlans.LinkKind
 import com.histmersion.core.PlanArticles.ArticlesAnswer
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ManagerRepo}
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
@@ -16,9 +16,11 @@ import javax.sql.DataSource
   * manager's planner step. A model proposes the articles a research area should have; CODE keeps the
   * ones that can be compiled and are new ([[PlanArticles.verify]]: the slug free, the filter
   * returning at least `minSources` sources, less than `maxOverlap` of them shared with an article of
-  * the area — linked to the goal, or already planned by its seeding manager); the plan becomes an
-  * `article-plan` approval a person ALWAYS decides (no config makes it automatic). The run does not wait
-  * for it: approving it lets the seeding manager compile the articles, one compile-article run each.
+  * the area — linked to the goal, its parent goals or its sub-goals, or already planned by one of their
+  * seeding managers); the plan becomes an `article-plan` approval — a person's, unless
+  * `agents.approvals.article-plan = auto` (or the manager's `autoApprove`) lets the managers' supervisor
+  * decide it by code checks ([[AutoApprovals]]). The run does not wait for it: approving it lets the
+  * seeding manager compile the articles, one compile-article run each.
   *
   * Steps: load · propose (LLM, `article-planner`: `search`, `facets`, `get_article`, `article_coverage`,
   * `get_source`, read only; a plan with nothing left after the checks goes back with why) · record (the
@@ -44,19 +46,30 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
+  /** The goals above `slug` and below it: an area's articles overlap its parent's and its sub-areas' as
+    * much as its own (the autopilot seeds them all). */
+  private def family(slug: String): List[String] =
+    val up = Iterator.iterate(GoalRepo.get(ds, slug).flatMap(_.parentSlug))(_.flatMap(p => GoalRepo.get(ds, p).flatMap(_.parentSlug)))
+      .takeWhile(_.isDefined).take(16).flatten.toList
+    def down(s: String, depth: Int): List[String] =
+      if depth > 16 then Nil else GoalRepo.children(ds, s).flatMap(c => c.slug :: down(c.slug, depth + 1))
+    (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
+
   private def load(slug: String): Either[String, Loaded] =
     h.getGoal(slug).left.map(_.message).map { g =>
       val links = GoalLinkRepo.links(ds, g.slug)
-      val articles = links.filter(_.kind == LinkKind.Article).flatMap { l =>
-        h.getArticle(l.ref).toOption.map { v =>
+      val area  = g.slug :: family(g.slug)
+      val articles = area.flatMap(a => GoalLinkRepo.refs(ds, a, LinkKind.Article)).distinct.flatMap { ref =>
+        h.getArticle(ref).toOption.map { v =>
           val f = com.histmersion.db.ArticleRepo.load(ds, v.article.slug).flatMap(_.filter)
           Existing(v.article.slug, v.article.title, f, h.citedSources(v.article.body))
         }
       }
-      // what its seeding manager will compile already counts as the area's
-      val planned = ManagerRepo.items(ds, Managers.seedId(g.slug), None, 0, 1000)._1
+      // what its seeding manager (or a parent's or sub-area's) will compile already counts as the area's
+      val planned = area.flatMap(a => ManagerRepo.items(ds, Managers.seedId(a), None, 0, 1000)._1)
         .filter(i => i.kind == Managers.ArticleCompile && !Managers.ItemStatus.parse(i.status).exists(s => s.isFinal && s != Managers.ItemStatus.Done))
         .flatMap(i => i.state.spec.map(sp => Existing(i.target, sp.title, Some(sp.filter), Nil)))
+        .foldLeft(List.empty[Existing])((acc, e) => if acc.exists(_.slug == e.slug) then acc else acc :+ e)
       val vocab = (field: String) =>
         h.facets(field, None, Filter()).toOption.toList.flatten.sortBy(-_.count).take(VocabularySize).map(_.value)
       Loaded(g.slug, g.title, g.notes, g.tags, g.regions, g.periodStart, g.periodEnd,
@@ -73,7 +86,7 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
     val area = s"slug: ${l.slug}\ntitle: ${l.title}\nnotes: ${l.notes.getOrElse("none")}\ntags: ${l.tags.mkString(", ")}\n" +
       s"regions: ${l.regions.mkString(", ")}\nperiod: $period"
     s"Plan the articles of this research area.\n\n${Prompt.data("research-area", area)}\n\n" +
-      s"Its articles (and the ones already planned): ${list(l.articles.map(a => s"[[${a.slug}]] — ${a.title}" +
+      s"Its articles, its parent's and its sub-areas' (and the ones already planned): ${list(l.articles.map(a => s"[[${a.slug}]] — ${a.title}" +
         a.filter.fold(" (no filter)")(f => s" · ${f.line}")))}\n\nIts search queries: ${list(l.queries)}\n\n" +
       s"The corpus's most used topics: ${l.topics.mkString(", ")}\nIts most used tags: ${l.tags0.mkString(", ")}\n\n" +
       f"Limits: at most ${lim.maxArticles} articles; each filter returns at least ${lim.minSources} sources, and less than " +

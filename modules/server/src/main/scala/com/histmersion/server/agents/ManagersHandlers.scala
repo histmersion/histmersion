@@ -195,7 +195,7 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
     kind match
       case ArticleReview | InferFilter | ArticleExtend => h.getArticle(raw.trim).map(_.article.slug)
       case SourceEnrich => h.getSource(raw.trim, body = false).map(_.source.citekey)
-      case ProposeArticles =>
+      case ProposeArticles | PlanGoalItem =>
         val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
         h.getGoal(g).map(_.slug).flatMap(s => Either.cond(m.goal.forall(_ == s), s,
           ApiError(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")))
@@ -523,6 +523,15 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
       if ManagerRepo.settle(ds, i.id, ItemStatus.Cancelled, why, List(ItemStatus.Pending, ItemStatus.Held)) then
         ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
     }
+
+  // ── the autopilot ──────────────────────────────────────────────────────────────────────────────
+
+  /** `GET /api/agents/autopilot` — readable with agents off. */
+  def autopilot: Autopilot.AutopilotStatus = agents.autopilot.status()
+
+  /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
+  def setAutopilot(in: Autopilot.AutopilotSet): Either[ApiError, Autopilot.AutopilotStatus] =
+    Right(agents.autopilot.set(in))
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 

@@ -449,6 +449,26 @@ object AgentRepo:
         kind.fold(Sql.empty)(k => Sql.of(" AND kind = ?", Param.S(k.wire))) ++ Sql.of(" ORDER BY id"))
         .frag.query[ApprovalRow].run().toList.map(toApproval)
 
+  /** The approvals of `kind` the autopilot APPROVED since `since` (their note starts with
+    * `autopilot: approved`) — what its daily caps count. */
+  def autoApprovedSince(ds: DataSource, kind: ApprovalKind, since: java.time.Instant): List[ApprovalInfo] =
+    val t = since.toString
+    connect(ds):
+      (approvalSelect ++ Sql.of(" WHERE kind = ? AND note LIKE 'autopilot: approved%' AND decided_at >= ?::timestamptz ORDER BY id",
+        Param.S(kind.wire), Param.S(t))).frag.query[ApprovalRow].run().toList.map(toApproval)
+
+  /** The OPEN approvals of the given kinds, oldest first (what the supervisor's checks look at). */
+  def openOfKinds(ds: DataSource, kinds: List[ApprovalKind], limit: Int): List[ApprovalInfo] =
+    connect(ds):
+      (approvalSelect ++ Sql.of(" WHERE state = 'open' AND kind = ANY(?::text[]) ORDER BY id LIMIT ?",
+        Param.A(kinds.map(_.wire)), Param.I(math.max(1, limit)))).frag.query[ApprovalRow].run().toList.map(toApproval)
+
+  /** Open approvals per subject (a goal or an article slug). */
+  def openBySubject(ds: DataSource): Map[String, Int] =
+    connect(ds):
+      sql"""SELECT subject, count(*)::int FROM approvals WHERE state = 'open' AND subject IS NOT NULL GROUP BY subject"""
+        .query[(String, Int)].run().toMap
+
   /** The approval step `seq` of run `jobId` opened, if it did. */
   def forStep(ds: DataSource, jobId: String, seq: Int): Option[ApprovalInfo] =
     connect(ds)((approvalSelect ++ Sql.of(" WHERE job_id = ? AND seq = ?", Param.S(jobId), Param.I(seq)))

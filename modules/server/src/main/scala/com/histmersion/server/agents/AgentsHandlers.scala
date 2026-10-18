@@ -69,6 +69,12 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The operations on the managers (REST, MCP, CLI). */
   val managing: ManagersHandlers = ManagersHandlers(ds, cfg, deps.cfg.limits, this, managers, h)
 
+  /** The checked auto approvals the managers' tick runs (article-plan, goal-plan, article-publish). */
+  val autoApprovals: AutoApprovals = AutoApprovals(ds, cfg, h, this)
+
+  /** The autopilot: one switch that lets the managers carry every goal from planned to reviewed. */
+  val autopilot: AutopilotService = AutopilotService(ds, cfg, h, this)
+
   /** One agent server per database: the engine and the managers start only in the server that holds it
     * (ttl 3 × the managers' tick). */
   val lease: AgentLease = AgentLease(ds, 3 * math.max(5, cfg.managers.tickSeconds))

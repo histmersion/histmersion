@@ -22,5 +22,7 @@ object ManagersRoutes:
     ManagersApi.removeHint.serverLogic[Identity]((id, h) => m.deleteHint(id, h)),
     ManagersApi.events.serverLogic[Identity]((id, before, limit) => m.events(id, before, limit)),
     ManagersApi.action.serverLogic[Identity]((id, action, runs) => m.action(id, action, runs)),
-    ManagersApi.enqueue.serverLogic[Identity](in => m.enqueue(in))
+    ManagersApi.enqueue.serverLogic[Identity](in => m.enqueue(in)),
+    ManagersApi.autopilot.serverLogicSuccess[Identity](_ => m.autopilot),
+    ManagersApi.setAutopilot.serverLogic[Identity](in => m.setAutopilot(in))
   )

@@ -105,6 +105,10 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
     else
       val out = List.newBuilder[String]
       out ++= migrateSchedules(now)
+      // the autopilot first (its new managers are dispatched in this tick), then the approvals its checks
+      // decide (a decided plan settles its held item below)
+      out ++= guarded("autopilot", out)(agents.autopilot.tick(now))
+      out ++= guarded("auto-approvals", out)(agents.autoApprovals.sweep(now))
       val managers = ManagerRepo.list(ds).filter(m => State.parse(m.state).exists(_ != State.Stopped))
       managers.foreach { m =>
         guarded(m.id, out)(evaluate(m, now, out))
@@ -232,10 +236,21 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       case ArticleCompile =>
         written(run) match
           case Some(w) if w.written => StepFacts.Finished(s"compiled (${w.why})")
-          case Some(w)              => StepFacts.NotDone(s"stopped: no article written — ${w.why}", None)
+          case Some(w) =>
+            // a draft the autopilot's checks rejected is compiled again (a new draft may pass them)
+            AgentRepo.approvalsOf(ds, run, Some(ApprovalKind.ArticlePublish)).lastOption
+              .filter(a => a.state == ApprovalState.Rejected.wire && a.note.exists(_.startsWith(AutopilotPolicy.NotePrefix))) match
+              case Some(a) => StepFacts.Redo(s"draft rejected by the autopilot's checks (approval #${a.id}: " +
+                                a.note.getOrElse("").stripPrefix(AutopilotPolicy.NotePrefix).trim.take(300) + ")")
+              case None    => StepFacts.NotDone(s"stopped: no article written — ${w.why}", None)
           case None                 => StepFacts.NotDone(s"stopped: nothing compiled — $progress", None)
       case AcquisitionSweep | CurrencyCheck =>
         StepFacts.Finished(closeLine(run).getOrElse(s"${item.kind} done — $progress").take(1000))
+      case PlanGoalItem =>
+        // a blocking approval: the run ends only once its plan was decided
+        AgentRepo.approvalsOf(ds, run, Some(ApprovalKind.GoalPlan)).lastOption match
+          case None    => StepFacts.Finished(s"nothing planned — $progress")
+          case Some(a) => StepFacts.Finished(s"plan #${a.id} " + ManagerPolicy.decided(a.state, a.result.orElse(a.note)).getOrElse(a.state))
       case _ => StepFacts.Finished("enriched")
 
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for
@@ -276,6 +291,10 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       case ProposeArticles =>
         run.toList.flatMap(r => AgentRepo.approvalsOf(ds, r, Some(ApprovalKind.ArticlePlan)))
           .filter(_.state == ApprovalState.Approved.wire).foreach(a => applyPlan(a, out): Unit)
+      case PlanGoalItem =>
+        // an approved plan may have created sub-goals: the autopilot gives them their managers next tick
+        if run.toList.flatMap(r => AgentRepo.approvalsOf(ds, r, Some(ApprovalKind.GoalPlan))).exists(_.state == ApprovalState.Approved.wire)
+        then agents.autopilot.soon()
       case AcquisitionSweep | CurrencyCheck =>
         // what the sweep found, as the watcher's own event (the run's worklog line, and the works it picked)
         run.foreach { r =>
@@ -474,6 +493,39 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
         if added.nonEmpty then
           ManagerRepo.event(ds, m.id, None, None, Feed.Evaluated, s"selected ${Plural.count(added.size, "item")}: ${added.mkString(", ")}".take(2000))
           out += s"${m.id}: selected ${added.size}"
+      extensions(m, now, out)
+
+  /** When each review manager last looked for articles to extend (epoch ms); in memory. */
+  private val lastExtend = java.util.concurrent.ConcurrentHashMap[String, java.lang.Long]()
+
+  /** New sources reaching the articles they belong to (the autopilot): at most every `stale-scan-minutes`,
+    * an article whose filter returns at least `extendMinNew` sources it neither cites nor gives a reason
+    * for — and that was not extended in `extend-cooldown-days` — gets an `article-extend` item; the
+    * extension's review follows as a chained item. `extendMinNew` 0 = never. */
+  private def extensions(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[String, List[String]]): Unit =
+    val min = m.config.extendMinNew.getOrElse(mcfg.review.extendMinNew)
+    val last = Option(lastExtend.get(m.id)).map(_.longValue)
+    val every = math.max(1, mcfg.review.staleScanMinutes).toLong * 60000L
+    if min > 0 && last.forall(l => now.toEpochMilli - l >= every) then
+      lastExtend.put(m.id, now.toEpochMilli)
+      val s = settings(m)
+      val tags = m.config.includeTags.getOrElse(Nil)
+      val goal = m.config.includeGoal.filter(_.trim.nonEmpty)
+      val due = ManagerRepo.extendCandidates(ds, m.id, tags, goal, math.max(1, s.refillBatch) * ManagerSupervisor.StaleLookahead)
+        .filter((slug, _) => AgentRepo.unsettledOn(ds, slug).isEmpty)
+        .flatMap { (slug, at) =>
+          h.newFilterSources(slug).flatMap(n => AutopilotPolicy.extendDue(n, min, at.flatMap(ManagerPolicy.parseInstant),
+            mcfg.review.extendCooldownDays, now)).map(slug -> _)
+        }.take(math.max(1, s.refillBatch))
+      val added = due.flatMap { (slug, why) =>
+        val (id, isNew) = ManagerRepo.upsert(ds, m.id, ArticleExtend, slug, ItemOrigin.Selection, 0, reopen = true)
+        val item = ManagerRepo.item(ds, id)
+        Option.when(isNew || item.exists(_.status == ItemStatus.Pending.wire))(s"$slug ($why)")
+      }
+      if added.nonEmpty then
+        ManagerRepo.event(ds, m.id, None, None, Feed.Evaluated,
+          s"to extend with new sources: ${added.mkString(", ")}".take(2000))
+        out += s"${m.id}: ${added.size} to extend"
 
   /** Converged articles that are due again (at most every `stale-scan-minutes` per manager): (slug, why,
     * its done item). Their filter is counted only for the ones whose count was recorded. */
@@ -615,7 +667,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
   /** Start the next run of one item; Some(manager id) when it started. */
   private def dispatch(m: ManagerInfo, s: ReviewSettings, item: ManagerItem, now: Instant,
       out: collection.mutable.Builder[String, List[String]]): Option[String] =
-    if AgentRepo.unsettledOn(ds, item.target).nonEmpty then None // another run (any origin) writes it: wait
+    if ManagerSupervisor.blocks(item.kind, AgentRepo.unsettledOn(ds, item.target)) then None // another run writes it: wait
     else item.kind match
       case ArticleReview =>
         if ManagerPolicy.waitsFor(item.kind, item.target, ManagerRepo.openKeys(ds, m.id)) then None
@@ -672,15 +724,29 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
                 title = Some(sp.title), kind = Some(sp.kind), query = sp.filter.query, topics = sp.filter.topics,
                 tags = sp.filter.tags, goal = m.goal),
               _.copy(chainReview = Some(false)), item.state, "compile-article (new; its review follows as an item)", out)
+      case PlanGoalItem =>
+        h.getGoal(item.target) match
+          case Left(_) => settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
+          case Right(g) =>
+            // sub-goals only above the depth limit (a goal there gets queries and works, no children)
+            val depth = AutopilotPolicy.depth(g.slug, s => com.histmersion.db.GoalRepo.get(ds, s).flatMap(_.parentSlug))
+            val leaf  = depth >= cfg.approvals.auto.maxGoalDepth
+            start(m, item, RunRequest(Pipeline.PlanGoal.wire, g.slug, budgetUsd = m.config.budgetUsd),
+              p => if leaf then p.copy(subGoals = Some(0)) else p, item.state,
+              s"plan-goal (depth $depth${if leaf then ": queries and works, no sub-goals" else ""})", out)
       case AcquisitionSweep | CurrencyCheck =>
         h.getGoal(item.target) match
           case Left(_) => settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
           case Right(g) =>
             val sweep   = item.kind == AcquisitionSweep
-            val allowed = if sweep then ManagerPolicy.ingestAllowance(m.config, mcfg,
+            val own     = if sweep then ManagerPolicy.ingestAllowance(m.config, mcfg,
                             ManagerRepo.countEvents(ds, m.id, Feed.Ingested, ManagerPolicy.dayStart(now))) else 0
+            // the autopilot's cap shared by every watcher (none while it is off)
+            val shared  = if own > 0 then agents.autopilot.sharedIngestLeft(now) else None
+            val allowed = shared.fold(own)(math.min(own, _))
             val auto    = if !sweep then "" else if m.config.autoIngest.contains(true) then
-                            s"; auto-ingest of legal open access: ${Plural.count(allowed, "work")} left today" else "; auto-ingest off"
+                            s"; auto-ingest of legal open access: ${Plural.count(allowed, "work")} left today" +
+                              shared.fold("")(n => s" (all watchers: $n left)") else "; auto-ingest off"
             start(m, item, RunRequest(ManagerSupervisor.pipelineOf(item.kind).wire, g.slug, budgetUsd = m.config.budgetUsd),
               p => if allowed > 0 then p.copy(autoIngest = Some(allowed)) else p, item.state, s"${item.kind}$auto", out)
       case other => settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
@@ -736,6 +802,7 @@ private[agents] final case class Zero[A](value: A)
 private[agents] object Zero:
   given Zero[Unit]    = Zero(())
   given Zero[Boolean] = Zero(false)
+  given Zero[List[String]] = Zero(Nil)
 
 object ManagerSupervisor:
   /** The priority a prioritise hint gives when it names none (a person's enqueue is 10). */
@@ -747,6 +814,10 @@ object ManagerSupervisor:
   /** Stale candidates read per article the selection has room for (most are not due yet). */
   val StaleLookahead = 5
 
+  /** [[ManagerPolicy.blocks]] over the unsettled runs on an item's target. */
+  def blocks(kind: String, unsettled: Seq[Agents.RunInfo]): Boolean =
+    ManagerPolicy.blocks(kind, pipelineOf(kind).wire, unsettled.map(_.pipeline))
+
   /** The pipeline an item kind runs. */
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case InferFilter                    => Pipeline.InferFilter
@@ -755,6 +826,7 @@ object ManagerSupervisor:
     case ProposeArticles                => Pipeline.ProposeArticles
     case AcquisitionSweep               => Pipeline.AcquisitionSweep
     case CurrencyCheck                  => Pipeline.CurrencyCheck
+    case PlanGoalItem                   => Pipeline.PlanGoal
     case _                              => Pipeline.ReviewArticle
 
   /** The roles a manager of kind `k` runs (what its `models` setting may name). */
