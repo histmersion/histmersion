@@ -62,7 +62,10 @@ final case class UiConfig(
     agentsEnabled: Boolean = false,
     /** Whether the configured `tiles` are a light or a dark map (`ui.tiles-tone`: "light" or "dark"):
       * the map's place names are drawn dark on a light halo over light tiles, and the inverse over dark. */
-    tilesTone: String = "light"
+    tilesTone: String = "light",
+    /** The server's plugins (`histmersion.plugins`), filled in by the server like `writeKeyRequired` —
+      * NOT a configuration key of its own. Secret settings show their reference, never the value. */
+    plugins: PluginsReport = PluginsReport()
 ) derives KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema
