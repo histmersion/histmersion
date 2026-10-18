@@ -207,6 +207,112 @@ class BuiltinFetchersSuite extends munit.FunSuite:
     assertEquals(c.plan.map(_._1).toSet, Today.toSet)
     assertEquals(notes, Nil)
 
+  // ── the landing step reads an index only while its plugin is on (§20.2) ─────────────────────
+
+  private val LandingDoi = "10.9999/landing.1"
+  private val UpPage = "https://repo-u.example.org/item/1" // Unpaywall's repository location
+  private val OaPage = "https://repo-o.example.org/item/1" // OpenAlex's
+  private val DcPage = "https://repo-d.example.org/item/1" // where DataCite says the DOI resolves
+  private val host   = cfg.copy(contactEmail = "host@example.org")
+
+  /** The three indexes answer with one repository location each; every page is a 404, so the chain
+    * reads each page it is given and finds no copy — the requests are the whole record. */
+  private final class Indexes(c: AcquireConfig) extends Http:
+    var asked: List[String] = Nil // a test double's record of calls
+    private def answer(url: String): Either[String, Array[Byte]] =
+      asked = asked :+ url
+      val body =
+        if url.startsWith(s"${c.unpaywall.url}/") then
+          Some(s"""{"doi":"$LandingDoi","oa_locations":[{"host_type":"repository","url_for_landing_page":"$UpPage"}]}""")
+        else if url.startsWith(s"${c.openalex.url}/") then
+          Some(s"""{"id":"https://openalex.org/W1","locations":[{"landing_page_url":"$OaPage","source":{"type":"repository"}}]}""")
+        else if url == s"${c.datacite.url}/dois/$LandingDoi" then Some(s"""{"data":{"attributes":{"url":"$DcPage"}}}""")
+        else None
+      body.map(_.getBytes("UTF-8")).toRight(s"$url: HTTP 404")
+    def bytes(url: String, headers: Map[String, String]) = answer(url)
+    def text(url: String, headers: Map[String, String])  = answer(url).map(new String(_, "UTF-8"))
+    def json(url: String, headers: Map[String, String]): Either[String, Json] =
+      text(url, headers).flatMap(t => io.circe.parser.parse(t).left.map(_.getMessage))
+
+  /** The index steps and the landing step of a generation built over `http`, run in today's order with
+    * one memo for the work, as an ingest runs them. */
+  private def runIndexes(user: String, http: Indexes, acquire: AcquireConfig = host): Generation =
+    val plugins = BuiltinFetchers.plugins(acquire, () => http, () => OpenAlexCrossref(acquire, http), () => fail("archive asked"))
+    val g = PluginHost.build(plugins, ConfigFactory.parseString(user), ConfigFactory.empty,
+      Plugins.services(() => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") }, ConfigFactory.empty))
+    val steps = List("unpaywall", "openalex", "landing").flatMap(id => g.registries.sourceFetchers.get(id).map(id -> _))
+    assertEquals(FetchChain(steps).fetch(Some(LandingDoi), None), Left(FetchChain.NoCopy))
+    g
+
+  private def unpaywallAsked(h: Indexes)  = h.asked.filter(_.startsWith(s"${host.unpaywall.url}/"))
+  private def openalexAsked(h: Indexes)   = h.asked.filter(_.startsWith(s"${host.openalex.url}/"))
+  private def pagesRead(h: Indexes)       = h.asked.filter(u => Set(UpPage, OaPage, DcPage)(u))
+
+  test("landing, all indexes on: each upstream asked ONCE for the work (records shared), every location read"):
+    val h = Indexes(host)
+    runIndexes("", h)
+    // byte-identical to the requests before the landing step followed the plugin switches
+    assertEquals(h.asked, List(
+      s"${host.unpaywall.url}/$LandingDoi?email=host@example.org",
+      openalexAsked(h).headOption.getOrElse(fail(h.asked.mkString("\n"))),
+      UpPage, OaPage,
+      s"${host.datacite.url}/dois/$LandingDoi", DcPage))
+    assertEquals(openalexAsked(h).size, 1)
+
+  test("landing, oa-unpaywall off: Unpaywall is never asked, not even on the landing step's behalf"):
+    val h = Indexes(host)
+    runIndexes("histmersion.plugins.oa-unpaywall.enabled = false", h)
+    assertEquals(unpaywallAsked(h), Nil)
+    assertEquals(openalexAsked(h).size, 1)
+    assertEquals(pagesRead(h), List(OaPage, DcPage))
+
+  test("landing, oa-openalex off: OpenAlex is never asked; Unpaywall's locations and DataCite's page still read"):
+    val h = Indexes(host)
+    runIndexes("histmersion.plugins.oa-openalex.enabled = false", h)
+    assertEquals(openalexAsked(h), Nil)
+    assertEquals(unpaywallAsked(h).size, 1)
+    assertEquals(pagesRead(h), List(UpPage, DcPage))
+
+  test("landing, both indexes off: the DOI alone — DataCite's landing page, no index asked"):
+    val h = Indexes(host)
+    runIndexes("histmersion.plugins.oa-unpaywall.enabled = false\nhistmersion.plugins.oa-openalex.enabled = false", h)
+    assertEquals(h.asked, List(s"${host.datacite.url}/dois/$LandingDoi", DcPage))
+
+  test("landing, both indexes off: a Zenodo DOI still goes to Zenodo's API"):
+    val h = Indexes(host)
+    val plugins = BuiltinFetchers.plugins(host, () => h, () => fail("openalex asked"), () => fail("archive asked"))
+    val g = PluginHost.build(plugins,
+      ConfigFactory.parseString("histmersion.plugins.oa-unpaywall.enabled = false\nhistmersion.plugins.oa-openalex.enabled = false"),
+      ConfigFactory.empty, Plugins.services(() => new PluginHttp { def get(u: String, hs: Map[String, String]) = Left("offline") },
+        ConfigFactory.empty))
+    val got = FetchChain(List("landing" -> g.registries.sourceFetchers("landing"))).fetch(Some("10.5281/zenodo.3695551"), None)
+    assertEquals(got, Left(FetchChain.NoCopy))
+    assert(h.asked.contains(s"${host.zenodo.url}/api/records/3695551"), h.asked.mkString("\n"))
+    assert(!h.asked.exists(u => u.startsWith(s"${host.unpaywall.url}/") || u.startsWith(s"${host.openalex.url}/")))
+
+  test("landing asks Unpaywall with oa-unpaywall's own contact: one request, not one per contact"):
+    val h = Indexes(host)
+    runIndexes("histmersion.plugins.oa-unpaywall.contact-email = \"plugin@example.org\"", h)
+    assertEquals(unpaywallAsked(h).map(emailOf), List(Some("plugin@example.org")))
+
+  test("landing with oa-unpaywall on but no contact anywhere: Unpaywall is not asked (it answers 422)"):
+    val noContact = host.copy(contactEmail = "")
+    val h = Indexes(noContact)
+    runIndexes("", h, noContact)
+    assertEquals(unpaywallAsked(h), Nil)
+    assertEquals(pagesRead(h), List(OaPage, DcPage))
+
+  test("reload: oa-unpaywall, oa-openalex and oa-landing are carried together or rebuilt together"):
+    val g = generation()
+    List("oa-unpaywall", "oa-openalex", "oa-landing").foreach { id =>
+      val carried = Plugins.carried(g, List(s"histmersion.plugins.$id.enabled"), independent = Set.empty)
+      assertEquals(carried.keySet, Set("archive-org", "oa-core", "pmc", "arxiv"), id)
+    }
+    assertEquals(Plugins.carried(g, List("histmersion.plugins.oa-core.enabled"), independent = Set.empty).keySet,
+      Set("archive-org", "oa-unpaywall", "oa-openalex", "oa-landing", "pmc", "arxiv"))
+    // a reload that changes no plugin carries all three
+    assert(BuiltinFetchers.LandingGroup.subsetOf(Plugins.carried(g, Nil, independent = Set.empty).keySet))
+
   // ── archive-org ─────────────────────────────────────────────────────────────────────────────
 
   private object Ctx extends FetchContext:

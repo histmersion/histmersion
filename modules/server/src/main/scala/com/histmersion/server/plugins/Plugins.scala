@@ -51,7 +51,8 @@ object Plugins:
     * changed HOST key (`acquire.*`, the media politeness) rebuilds every plugin but the `independent`
     * ones — the built-in media collections and event catalogues, which read their settings at each
     * import and never the HTTP client a host key shapes — so a media/events plugin is rebuilt only
-    * when its own block changes. */
+    * when its own block changes. `oa-unpaywall`, `oa-openalex` and `oa-landing` are carried only all
+    * together ([[BuiltinFetchers.LandingGroup]]): the landing step reads what the other two registered. */
   def carried(previous: Generation, changed: List[String],
       independent: Set[String] = BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds): Map[String, (PluginStatus, Registries)] =
     val relevant = changed.filter(k => Keys.exists(HotPlan.keyMatches(k, _)))
@@ -63,10 +64,13 @@ object Plugins:
     else
       val touched   = ids.flatten.toSet
       val hostKey   = ids.contains(None)
-      previous.report.plugins.filter { st =>
+      val kept = previous.report.plugins.filter { st =>
         !touched(st.id) && (!hostKey || independent(st.id)) && (st.state == PluginState.Disabled.wire ||
           st.state == PluginState.Registered.wire && !previous.withSecrets(st.id))
       }.flatMap(st => previous.carry(st.id)).map(c => c._1.id -> c).toMap
+      // the landing step reads which of oa-unpaywall/oa-openalex registered: the three go together
+      val group = BuiltinFetchers.LandingGroup.filter(id => previous.report.plugins.exists(_.id == id))
+      if group.forall(kept.contains) then kept else kept -- group
 
   /** The plugin a changed key belongs to (`histmersion.plugins.<id>.…`); `None` for any other key —
     * `order`, the whole block, a host setting — which concerns every plugin. */
