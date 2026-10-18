@@ -7,7 +7,8 @@ built: §16. The in-place config reload (§3.5) and the hot component graph (§3
 install/build side — the relink kit, JVM mode, `histmersion plugin …`, the local build at setup and the
 optional signing (phases 3–5) — is built: §18. Phase 6's first part (media collections and event
 catalogues as plugins, the plugin list in the web About window) is built: §19. Decisions D4 (one plugin
-per open-access index) and D5 (the local build is the default) are built: §20. The
+per open-access index) and D5 (the local build is the default) are built: §20. §18's follow-ups — CI
+kits, the TCC check, GPG verification at each start — are built: §21. The
 spike code is in `spike/plugins/`, a standalone sbt build that
 the root build does not aggregate. Measurements were taken on this machine: Apple M4 Pro, 14 cores,
 48 GB RAM, macOS 26.7, GraalVM CE 25.0.1 (the `.sdkmanrc` pin), sbt 2.0.7. Statements I could not
@@ -1565,7 +1566,7 @@ figure) and with `MemAvailable` on Linux.
 changed — a bundle already carries its kit); checking TCC persistence with an untrusted identity (needs
 a real privacy prompt); GPG verification of the relinked binary at each start (the launcher verifies the
 plugins directory; the native binary is checked at relink time); `-H:LayerCreate` relinks (still
-experimental, §4.1).
+experimental, §4.1). *(The first three: §21. `-H:LayerCreate` stays not done.)*
 
 ## 19. As built (providers, 2026-10-18)
 
@@ -1848,3 +1849,127 @@ the four registered lines on the native binary, and a `--self-check` with `oa-in
 plus `oa-core { enabled = true, api-key = "env:…" }`: three disabled, CORE registered, the reference shown
 and never the key, the deprecation warning.
 
+## 21. As built (kit follow-ups: CI kits, the TCC check, GPG verification at each start; 2026-10-18)
+
+#2028, §18's "not done" list less `-H:LayerCreate`.
+
+### 21.1 CI publishes each platform's relink kit
+
+`.github/workflows/bundle.yml`, after the bundle is packaged, on every platform of the matrix:
+`shasum -c` over `dist/histmersion/kit/SHA256SUMS` (only a consistent kit is published), then
+`histmersion-<ref>-<platform>-kit.tar.zst` — `kit/` (jars in class-path order, `native-image.args`,
+`main-class`, `kit.json`, `SHA256SUMS`, `graalvm-version`, Sloth), `libexec/` (kit-common, the GraalVM
+pins, the identity script, the verifying launcher) and `bin/histmersion-{relink,toolchain,signing,server-jvm}`
+— with its `.sha256` and the kit's `kit.json` as `…-kit.json`, so its version, commit, GraalVM and SPI can
+be read without downloading ~100 MB.
+
+| run | kit uploaded |
+|---|---|
+| a `v*` tag | attached to the GitHub release, next to the bundle archive |
+| `workflow_dispatch` | a workflow artifact `relink-kit-<platform>`, kept 7 days (`compression-level: 0`: zstd already) |
+| push to master, pull request | packaged and checked, not uploaded — three ~100 MB kits per run would exhaust a private repository's artifact storage, the reason the bundle itself is not uploaded either |
+
+A bundle already carries its kit, so a relink never needs the source; the separate kit repairs an install
+whose kit fails its `SHA256SUMS` (the relink refuses it) without the ~1 GB bundle: extract it over the
+install of the **same** version (README, "Relink kits from CI"). Nothing checks that the kit's version is
+the installed bundle's — `kit.json` names it, and a mismatched kit would link a server of another version
+than the bundle's PostgreSQL and converter. `actionlint` passes (its one warning, SC2155 in the Linux
+install step, predated this and was fixed). The packaging step was run locally against a fake
+`dist/` (names, contents, `.sha256`); the workflow itself has not run yet.
+
+### 21.2 TCC persistence with an untrusted identity
+
+What a TCC grant stores for a non-bundled binary is its path and its code requirement (`csreq`), and on
+a later access the binary at that path must satisfy that requirement. So the question splits:
+
+- **Automated (the proxy).** `kit-scripts-test.sh` with `HISTMERSION_TEST_KEYCHAIN=1` (macOS, opt-in;
+  a temporary keychain appended to the search list for the signing, the list saved, restored and
+  compared, the keychain deleted; the login keychain never read or changed): an identity made with
+  `--no-trust` signs copies of `/usr/bin/true` and `/usr/bin/false`; their cdhashes differ, their
+  designated requirements are equal (`identifier "com.histmersion.server" and certificate leaf = H"…"`, no
+  cdhash), and **each satisfies the other's** (`codesign --verify -R "=<requirement>"`) — what TCC re-checks
+  after a relink. The control: the same two signed ad hoc have different `cdhash` requirements and
+  satisfy neither. `codesign --verify` passes on the untrusted signature. 10 checks, run 2026-10-18: all
+  pass.
+- **Manual (the user's, once).** Whether TCC honours a requirement anchored on an UNTRUSTED certificate
+  is decided inside `tccd`, and only a real prompt shows it. `scripts/bundle/tcc-check.sh` does
+  everything but the click: `start` compiles a 20-line probe (`opendir`/`readdir` of `~/Documents`, a
+  variant string compiled in so every build has a new cdhash), signs it with a new untrusted identity in
+  a temporary keychain (or `--identity NAME`), and runs it as the throw-away LaunchAgent
+  `com.histmersion.tcc-check` (launchd makes it its own responsible process, as the server is; run from
+  Terminal it would be covered by Terminal's grant) → macOS asks for Documents access: **Allow**.
+  `relink` swaps a new variant in at the same path, signed by the same identity, and runs it again:
+  `ALLOWED` with no prompt = **the grant persisted**. `control` does the same ad hoc (expected: a new
+  prompt or `DENIED`), showing the check tells the two apart. `result` prints every answer and the
+  current requirement; `cleanup` unloads and deletes the agent, the keychain and the work directory
+  (`~/Library/Caches/com.histmersion.tcc-check`). The grant itself stays in System Settings › Privacy &
+  Security › Files and Folders as `histmersion-tcc-probe` — `tccutil reset` takes only a bundle id, and
+  without one it would reset every app's Documents grant. Tested against a launchd stand-in (always) and
+  with a real temporary keychain (opt-in). **Not yet run with a real prompt**; until it is, `setup-macos`
+  keeps trusting the identity by default (§18).
+
+### 21.3 GPG verification of the server binary at each start
+
+§18 checked the native binary only at relink time; at a start the service ran whatever was in
+`bin/histmersion-server`. Now, with GPG provenance on:
+
+- **`libexec/histmersion-server-verified`** (`scripts/bundle/server-verified.sh`, bash 3.2) is what the
+  LaunchAgent / systemd unit starts. It requires `bin/histmersion-server.sha256` (`<sha256>
+  histmersion-server`, the record relink.sh already wrote) to carry a good signature
+  (`bin/histmersion-server.sha256.asc`) by the configured key, and the binary's SHA-256 to be the one in
+  it; then it `exec`s the binary — same pid, `argv[0]` the binary, so `pgrep -f <install>/bin/histmersion-server`
+  and the installers' wait still work. Otherwise one line to `server.log` (why, and the two ways out:
+  `sign-binary`, `off-gpg`) and exit 78 (EX_CONFIG); launchd retries about every 10 s and systemd every
+  5 s, so an imported key or a re-signed binary is picked up without a reinstall, and a refused binary is
+  never run. Provenance switched off under it: it starts the binary unverified and says so.
+- **Not changed without GPG.** The service definition points at the launcher ONLY while provenance is on;
+  otherwise it starts `bin/histmersion-server` directly, as before — so the default install's TCC identity,
+  process tree and start-up are untouched. That is why the choice is the definition's, not the launcher's.
+- **The LaunchAgent environment.** Its PATH is `/usr/bin:/bin:/usr/sbin:/sbin` and it has no
+  `GNUPGHOME`; neither Homebrew's nor MacGPG2's gpg is on it. `use-gpg` therefore records the gpg program
+  and `GNUPGHOME` it ran with (`<data>/signing/gpg-program`, `gnupg-home`; nothing secret), and the
+  launcher uses them (`HISTMERSION_GPG` and `GNUPGHOME` still win).
+- **`histmersion-signing`.** `use-gpg <key> [--no-restart]` also signs the installed binary and `.prev`
+  (`sign-binary`) and points the service at the launcher; `off-gpg [--no-restart]` points it back. Pointing
+  rewrites `ProgramArguments.0` (`plutil -replace`) or `ExecStart=` and reloads: `launchctl bootout` +
+  `bootstrap` when loaded (a plist change needs that; `kickstart` reuses the loaded definition), or
+  `daemon-reload` + `restart` when active. A definition that starts another install's server is left
+  alone. `sign-binary` signs only a binary whose record does not verify — it is how the user vouches for
+  a binary; `verify-binary` runs the launcher's check (exit 2 when the installed binary fails); `status`
+  says how the service starts.
+- **Relink, JVM mode, rollback.** Unchanged for native relinks (the checksum was already signed after
+  codesign). `--jvm` now signs the launcher it puts in `bin/` too — before, a JVM-mode `bin/histmersion-server`
+  had no signed record. `--rollback` with provenance on refuses (exit 2, before anything moves) a previous
+  binary whose record does not verify, naming `sign-binary`; the records already travel with their binary
+  (`.sha256.prev`, `.sha256.asc.prev`). A relink whose signing fails under `--unsigned` swaps in a binary the
+  service will refuse — the restart then fails and the relink rolls back (exit 4), which is the point.
+- **Installers.** `ib_service_program` (install-build.sh) runs after any codesign (which changes the
+  SHA-256): provenance off → `bin/histmersion-server`; on → `sign-binary` (installing a bundle is the
+  moment you vouch for it; a relinked binary is already signed) and the launcher. When signing fails (no
+  secret key, pinentry cancelled), the install points the service at the binary with a WARNING and the fix
+  (`histmersion-signing use-gpg <key>`): an install never leaves a service that refuses to start.
+  `install-macos.sh` writes the program into `ProgramArguments`, `install-linux.sh` into `ExecStart`; the
+  LaunchAgent environment merge (`la_env_*`) is unchanged. A bundle without the launcher (older) keeps the
+  direct start.
+- **A key that signs with a subkey.** `use-gpg` stores the PRIMARY key's fingerprint; GnuPG's `VALIDSIG`
+  names the signing subkey first and the primary last. The binary check and `verify-plugins` now accept
+  either (before, a subkey-signing key failed `verify-plugins`); `verify-file` still prints the signing
+  key's, which a plugin's pinned signer (`index.json`) holds.
+- **Not covered.** The check and the `exec` are two steps: a binary swapped between them runs unverified
+  (a relink swaps only while it holds its lock and then restarts the service, so this needs a local
+  attacker who can already write `bin/`). The launcher script itself, `kit-common.sh` and the plist are
+  not verified — something that can rewrite them can also rewrite the binary's start; the check guards the
+  binary against being replaced, not the install directory against its owner.
+
+**Tests.** `provenance-test.sh` (36; real gpg in temporary GNUPGHOMEs, keys without a passphrase): provenance
+off — the direct start and the launcher's pass-through; `use-gpg`'s records; a LaunchAgent-like start
+(`env -i`, PATH without gpg) verified and `exec`'d (its parent is the caller); refused (78, not run): a
+changed binary, no signature, another key's good signature, a validly signed checksum of another binary,
+a changed record, the signer missing from the keyring, no gpg; `sign-binary` (and `.prev` under its rotated
+names), `verify-binary`; a subkey-signing key; the service definition pointed and back (systemd unit and
+— macOS — plist, with fake `launchctl`/`systemctl`; reloads, `--no-restart`, another install's left
+alone); the whole installer (`--prebuilt`, temporary HOME, fake service, `codesign` and health) off, on,
+and on-but-unsignable. `relink-test.sh` (+6, fake gpg): the launcher accepts a relinked binary; rollback
+with provenance keeps it verifiable; a rollback to the never-signed stock binary refused, then allowed after
+`sign-binary`; `--jvm` with and without provenance. `smoke.sh` runs the REAL native binary's `--self-check`
+through the launcher (a copy of `bin/`, a temporary GNUPGHOME) and sees a changed binary refused with 78.
