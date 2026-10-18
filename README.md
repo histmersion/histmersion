@@ -414,7 +414,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | tool | when to use it |
 |---|---|
 | `discover` | **literature we do NOT have yet.** `query` searches OpenAlex, `doi` fetches one paper's metadata, `wikipediaUrl` harvests every DOI a Wikipedia article cites (the trailhead). Each hit carries the citekey it would get; `notInDb: true` gives the delta. |
-| `ingest_doi` | bring a paper in by DOI or `arxiv:<id>`: metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → Europe PMC/PMC → arXiv → repository landing pages resolved one step: Zenodo, an institutional repository's `citation_pdf_url`; else PMC's JATS full text, rendered without OCR) → OCR job → reference edges → assessment. Idempotent; never wipes enrichment. A metadata-only source is fetched and converted; one with its original keeps it unless `refetch`. |
+| `ingest_doi` | bring a paper in by DOI or `arxiv:<id>`: metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → Europe PMC/PMC → arXiv → repository landing pages resolved one step: Zenodo, an institutional repository's `citation_pdf_url`; else PMC's JATS full text, rendered without OCR — the acquisition chain, `acquire.chain`, each step a built-in plugin that can be switched off) → OCR job → reference edges → assessment. Idempotent; never wipes enrichment. A metadata-only source is fetched and converted; one with its original keeps it unless `refetch`. |
 | `ingest` | OCR a PDF/EPUB into a source **keeping its figures**. Takes a `path` the SERVER can see or a `base64` payload (≤ `limits.inline-bytes`); returns a **job id**, because a long scan takes minutes. `acquireItem` names the acquisition item the document fulfils: the job ticks it off when it succeeds. Without it, the job ticks off every open acquisition item that names the source's DOI and lists the items with a similar title as possible matches, never closing those. |
 | `job_status` | where an OCR job got to — `queued\|running\|done\|failed`, its progress line or the reason it failed. No `id` lists recent jobs, headed `Latest N of M` when there are more; `before: <id of the last job shown>` lists the next older page. |
 | `assets` | the figures stored with a source: name, mime, pixel size, and the URL each is served at. |
@@ -1165,7 +1165,17 @@ Plugins add to the server through one service (`com.histmersion.plugin.Plugin`, 
 `modules/plugin-api`; the design is [`docs/research-plugins.md`](docs/research-plugins.md)). Each one has
 its own block, `histmersion.plugins.<id> { … }`, layered over the defaults it ships
 (`META-INF/histmersion/plugins/<id>.conf`) with the environment over both. The built-in ones are the
-three secret vaults above, all disabled by default.
+three secret vaults above, all disabled by default, and the four acquisition plugins, all enabled.
+
+**Acquisition runs through plugins.** `ingest <doi>` and `archive import` fetch through one chain of
+*source fetchers* that plugins register, asked in `acquire.chain` order until one has a copy. The built-in
+plugins and their fetchers: `archive-org` (`archive-org`: a public archive.org item; a lending-only one
+is refused), `oa-index` (`unpaywall`, `core`, `openalex`, `landing`), `pmc` (`pmc`, `pmc-text`) and
+`arxiv` (`arxiv`); `histmersion.plugins.<id>.enabled = false` takes one plugin's fetchers out. Each
+fetcher declares its access — open, subscription, or *unauthorised* — and the server alone decides what
+runs: an unauthorised fetcher (none ships with Histmersion) runs only when `acquire.allow-unauthorised =
+true`, and never on the legal path (a watcher's auto-ingest, an archive.org import). The server also
+checks that every "PDF" is one, and logs the chain it runs at startup.
 
 A credential in a plugin's settings is never written as a bare value: it is a **secret reference**,
 resolved when the plugin is registered and never stored, logged or returned:

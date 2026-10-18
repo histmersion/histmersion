@@ -2,7 +2,8 @@
 
 **Status:** research and design proposal for #2017, with two proof-of-concept spikes (§10). Phase 1
 (the SPI, the config contract, secrets and the built-in vaults) is built: §15 says what was built and
-where it differs from this proposal. The spike code is in `spike/plugins/`, a standalone sbt build that
+where it differs from this proposal. Phase 2 (source fetchers; the unauthorised fallback removed) is
+built: §16. The spike code is in `spike/plugins/`, a standalone sbt build that
 the root build does not aggregate. Measurements were taken on this machine: Apple M4 Pro, 14 cores,
 48 GB RAM, macOS 26.7, GraalVM CE 25.0.1 (the `.sdkmanrc` pin), sbt 2.0.7. Statements I could not
 check are marked **(unverified)**. Everything quoted from the web was fetched on 2026-10-18.
@@ -71,7 +72,7 @@ The coordinator added an eighth: a signing key, so that every local build has th
 
 | area | where | shape today | plugin-readiness |
 |---|---|---|---|
-| OA acquisition | `server/acquire/Clients.scala` `OaFetch` | one class; a `LazyList` of steps: Unpaywall → CORE → OpenAlex OA → Europe PMC/PMC PDF → arXiv → repository landing pages (Zenodo API, `citation_pdf_url`, DataCite) → PMC JATS text → an unauthorised fallback, off by default, which `fetchLegal` skips (to be removed from the repository, §14 D3) | the steps are private methods sharing two lazy records (`OaRecords`, `PmcLookup`). They must be split before they can be plugins (§5.3) |
+| OA acquisition | `server/acquire/Clients.scala` `OaFetch` | one class; a `LazyList` of steps: Unpaywall → CORE → OpenAlex OA → Europe PMC/PMC PDF → arXiv → repository landing pages (Zenodo API, `citation_pdf_url`, DataCite) → PMC JATS text → an unauthorised fallback, off by default, which `fetchLegal` skipped (removed from the repository in phase 2, §16) | the steps were private methods sharing two lazy records (`OaRecords`, `PmcLookup`); phase 2 split them into fetcher plugins (§16) |
 | archive.org | `ArchiveOrg` (`ArchiveClient`: search / info / download) | a separate surface (`histmersion archive …`), not in the DOI chain | a fetcher by identifier, not by DOI. The `WorkKey` needs an `archive` id (§5.1) |
 | Outbound HTTP | `acquire/Http.scala` (`SttpHttp`), `media/MediaHttp.scala` (`Polite`), `core/HttpPolicy` | one policy (#1946): User-Agent without an e-mail, Retry-After, back-off, bot challenges never worked around | **the host service a plugin must use** (`PluginHttp`, §2) |
 | Media | `server/media/Collections.scala` `trait Collection`; `MediaImporter.of` (a `match` over names) | Met, Cleveland, AIC, LoC, Open Context are `Collection`s. Wikidata, depicts and Pleiades are bespoke runs | `Collection` is already an SPI in all but name |
@@ -1010,7 +1011,8 @@ This is why §7.4 adds `--self-check`.
   fallback is removed from the repository once the acquisition chain runs through plugins (§13
   phase 2). Note: the git history still contains it; open-sourcing needs either a history rewrite
   or a fresh public repository.
-- **D4 — open-access indexes:** (not answered; phase 2 keeps one `oa-index` plugin and can split later).
+- **D4 — open-access indexes:** (not answered; phase 2 keeps one `oa-index` plugin, which registers
+  one fetcher per index, §16).
 - **D5 — local build at setup:** (not answered explicitly; signing below assumes it is offered).
 - **D6 — signing:** optional.
 - **D7 — paid sources:** plugins with credentials are allowed. Credentials are passed as secret
@@ -1125,3 +1127,103 @@ the master password is wrong — and neither run starts the bundled runtime or a
 the relink kit, `histmersion plugin add/list/…`, signing, `config reload` (§3.5) and the hot component
 graph (§3.6). `PluginHost.digest` (§7.3) was moved over from the spike with its test, unused until the
 relink kit. The spike under `spike/plugins/` stays as the evidence §10.1 quotes.
+
+## 16. As built (phase 2, 2026-10-18)
+
+Phase 2 of #2018 (source fetchers) and #2019 (the unauthorised fallback removed). Acquisition behaves as
+before for every work: the same upstreams are asked in the same order with the same requests, and the
+fixture suites of the chain (`OaFetchSuite`, `PmcFetchSuite`, `LandingFetchSuite`) pass unchanged
+through it. The one removed behaviour is the fallback, which the live config never enabled.
+
+**The SPI (plugin-api, still `Spi.Version` 1).** `PluginContext.sourceFetchers: Registry[SourceFetcher]`,
+with a default that refuses every addition, so a context written for phase 1 (a test's) still compiles.
+The record types, in `SourceFetcher.scala`:
+
+| type | shape |
+|---|---|
+| `WorkKey` | `doi`, `arxiv`, `pmid`, `pmcid`, `archive` (an archive.org identifier), `isbn`, `title`, `authors`, `year`, and `format` (the file format the caller prefers when a work has several) |
+| `Access` | `Open` · `Subscription` · `Unauthorised` — generic; no provider is named anywhere |
+| `FetchedFile` | `source` (the provenance it is stored with), `url`, `bytes`, `extension`. The server's `acquire.FetchedFile` is an alias of it, so a plugin's copy is the one ingest stores |
+| `Fetch` | `Found(file)` · `Miss(why)` · `Refused(why)` |
+| `SourceFetcher` | `access`, `fetch(work, ctx): Fetch` — stateless across works; failures are values, an exception is read as a miss |
+| `FetchContext` | `memo(key)(compute)` (one per fetch of one work, shared by every fetcher) and `log` |
+
+**The host (`server/acquire/FetchChain`).** The chain over a generation's registered fetchers. It
+implements the server's `OaFetcher` (`fetch`, `fetchLegal`, and `fetchWork(WorkKey, legalOnly)`, which
+ingest now calls with the DOI, arXiv id, title, authors and year), and owns:
+
+- **order:** `histmersion.acquire.chain` (comma-separated fetcher ids, like the landing lists, so an env
+  override works; default `archive-org,unpaywall,core,openalex,pmc,arxiv,landing,pmc-text`), then every
+  other registered fetcher in plugin registration order — a new plugin's fetcher runs with no config
+  change. A listed id nothing registered (a disabled plugin) is skipped, noted once at startup, and the
+  chain as it will run is logged (`acquire: chain archive-org → unpaywall → …`);
+- **the legal gate** (`FetchChain.runs`, pure, tested): `Open` and `Subscription` always run;
+  `Unauthorised` only with `histmersion.acquire.allow-unauthorised = true` (default `false`), never on the
+  legal path — `fetchLegal` (a watcher's auto-ingest) and an archive.org import — and each run is logged at
+  WARN. An unauthorised fetcher left off is noted at startup;
+- **the PDF check:** a `Found` whose extension is `pdf` and whose bytes fail `looksLikePdf` (the magic
+  bytes in the first KiB of a plausible size — moved here from `OaFetch`) is a miss; other formats (JATS
+  `xml`, `epub`) are not PDF-checked;
+- **the memo** (§5.2, decided here): per fetch, offered through `FetchContext.memo`, rather than kept as
+  host-side lookups. The shared records are a plugin's own business (oa-index's Unpaywall/OpenAlex/DataCite
+  records, pmc's Europe PMC hit and dataset record), the plugin knows when it needs them, and a third-party
+  plugin with two steps gets the same tool; the host only scopes the values to one fetch. Keys are
+  `<plugin id>:<what>:<identifier>`; the values are untyped, so a key reused with another type fails;
+- **refusals** are logged and not asked again; when nothing is found the message is today's
+  ("no legal open-access PDF found"), with each refusal appended (`(archive-org: … lending-only …)`).
+
+**The built-in plugins (`server/acquire/fetchers`).** Today's steps, each a plugin with its own
+`enabled` (default `true`, `HISTMERSION_PLUGIN_<ID>_ENABLED`) and nothing else in its block:
+
+| plugin | fetchers it registers | from |
+|---|---|---|
+| `archive-org` | `archive-org` — a public item's file by identifier (`WorkKey.format`, else EPUB, text PDF, PDF); a lending-only item is `Refused` | `ArchiveOrg` + `AcquireParse.pickArchiveFile` |
+| `oa-index` | `unpaywall`, `core`, `openalex`, `landing` (Zenodo API, `citation_pdf_url`, DataCite) | `OaFetch`'s first three steps and its landing step |
+| `pmc` | `pmc` (Europe PMC's free links, else the PMC Article Datasets PDF, MD5-checked), `pmc-text` (the JATS full text) | `OaFetch.PmcLookup` |
+| `arxiv` | `arxiv` | `OaFetch.arxivPdf` |
+
+A plugin registers several fetchers because its steps are not adjacent in today's order (the PMC PDF
+before arXiv, its text after the landing pages; Unpaywall and OpenAlex before PMC, the landing pages
+after arXiv). The step bodies are today's code, moved; they still try the candidates within a step in
+the same order and log the same lines.
+
+These four are **host code**, not plugin-api-only modules like the vaults: they read the host's
+`histmersion.acquire` settings (endpoints, the contact e-mail, the landing rules, the CORE key) and core's
+parsers (`AcquireParse`, `RepositoryLanding`, `Jats`), and the server's `Http` (the challenge rule, the
+PMC User-Agent). Compiling them against plugin-api alone would have meant moving every `acquire.*`
+endpoint key into four plugin blocks (new keys and env names for users) and core's parsers into a plugin
+module, for no change in behaviour. So `Plugins.builtins` constructs them over the host's settings and
+lazily built clients (registration opens nothing, so `--self-check` lists them) and hands them to
+`PluginHost.build` beside the ServiceLoader-discovered plugins: the same ordering, enable switch, type
+check (an unknown key in a built-in's block fails that plugin alone), staged registration and report.
+Their defaults resources are in the server (`META-INF/histmersion/plugins/{archive-org,oa-index,pmc,arxiv}.conf`),
+and their metadata (the resources, `Builtin`'s and `BuiltinConfig`'s lazy-val fields) is in the server's
+`reachability-metadata.json`, recorded by the tracing agent during a `--self-check`. Moving them into a
+plugin-api-only module stays possible later, once a plugin block may carry endpoint settings.
+
+**Wiring.** `Plugins.load` builds ONE lazily created acquisition client (`acquire.tls` included) for the
+generation; `Main.acquireHandlers` runs `FetchChain.of(generation.registries.sourceFetchers, …)`.
+`OaFetch(cfg, http, openalex)` is now that same chain over the built-ins registered through
+`PluginHost.build` with an empty user config — what the fixture suites and `AcquireLiveSuite` call, so
+they exercise registration too. A server started without a generation (`Main.server`'s default, used by
+tests) has an empty chain: every fetch is a miss, as offline. `archive import` checks the item (lending,
+a file to take) as before, then downloads through the chain's legal path with `WorkKey(archive, format)`:
+switching `archive-org` off switches the import's download off. It asks archive.org's metadata once more
+than before (the fetcher checks the item itself).
+
+**#2019.** The fallback's step, its config block and env variables, its config class, its test, its
+native-image metadata entries, three of its mirror hosts on the landing deny list, and every mention in
+the README, docs, skills (`plugin/` regenerated), the web UI's watcher texts and the pipeline/manager
+descriptions are gone; `git grep -i` for its name and its common spellings returns nothing. No
+replacement exists in the repository. The git history still contains it (§14 D3).
+
+**Tests.** `SourceFetcherSuite` (plugin-api: `WorkKey.isEmpty`, the refusing registry, a phase-1
+context), `FetchChainSuite` (order, the legal gate in all four combinations, the PDF check, first copy
+wins, exceptions, refusals, the memo per fetch, `fetchWork`'s key, `of`'s notes), `BuiltinFetchersSuite`
+(the four register without asking any upstream; today's chain; a plugin switched off by config or by
+environment; an unknown key fails one plugin alone; the archive-org fetcher's miss, refusal and format
+choice) and the unchanged fixture suites. `scripts/bundle/smoke.sh` checks that `--self-check` on the
+native binary lists the four as registered with their fetchers, and one switched off as disabled.
+
+**Not in phase 2:** fetchers for new repositories (§5.3 row 4), subscription fetchers, a per-step trace
+in the ingest report, moving the built-ins out of the server.
