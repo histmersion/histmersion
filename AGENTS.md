@@ -25,7 +25,10 @@ plugin-vaults ─ the built-in secret-vault plugins.                          de
 
 A plugin — first-party or not — compiles against `plugin-api` alone and never sees `core`, `db` or
 `server`; the server discovers it through ServiceLoader (`server/plugins/PluginHost`). See
-`docs/research-plugins.md` (§15: as built).
+`docs/research-plugins.md` (§15: as built). The one exception is the built-in acquisition plugins
+(`server/acquire/fetchers`: `archive-org`, `oa-index`, `pmc`, `arxiv`): they are host code over the
+`acquire.*` settings, supplied to `PluginHost` by `server/plugins/Plugins.builtins` instead of
+ServiceLoader, and registered, ordered and reported like any other plugin (§16).
 
 **The CLI must never gain a dependency on `db`.** No pgjdbc in the CLI binary, no database
 credentials on the host. Every CLI command — reads and writes both — goes over HTTP through an sttp

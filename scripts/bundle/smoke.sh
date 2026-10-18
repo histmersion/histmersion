@@ -67,6 +67,17 @@ grep -qF "1password 1.0.0 — disabled" "$data/self-check.out" || fail "--self-c
 grep -qF "session = keepassxc:Smoke/bw#password" "$data/self-check.out" || fail "--self-check: the secret reference is not shown"
 if grep -qE "smoke-master|session-from" "$data/self-check.out"; then fail "--self-check printed a secret value"; fi
 grep -q "self-check passed" "$data/self-check.out" || fail "--self-check gave no verdict"
+# the built-in acquisition plugins: in the binary, enabled by default, their fetchers registered
+for line in "archive-org 1.0.0 — registered (source-fetcher:archive-org)" \
+    "arxiv 1.0.0 — registered (source-fetcher:arxiv)" \
+    "oa-index 1.0.0 — registered (source-fetcher:unpaywall, source-fetcher:core, source-fetcher:openalex, source-fetcher:landing)" \
+    "pmc 1.0.0 — registered (source-fetcher:pmc, source-fetcher:pmc-text)"; do
+  grep -qF "$line" "$data/self-check.out" || fail "--self-check: not reported: $line"
+done
+printf 'histmersion.plugins.arxiv.enabled = false\n' > "$data/fetchers.conf"
+HISTMERSION_CONFIG="$data/fetchers.conf" "$b/bin/histmersion-server" --self-check > "$data/fetchers.out" 2>&1 \
+  || fail "--self-check with arxiv switched off failed: $(cat "$data/fetchers.out")"
+grep -qF "arxiv 1.0.0 — disabled" "$data/fetchers.out" || fail "--self-check: arxiv is not reported disabled"
 rc="$(selfcheck wrong-password)"
 [ "$rc" = 2 ] || fail "--self-check with a locked vault exited $rc, not 2: $(cat "$data/self-check.out")"
 grep -q "the database is locked" "$data/self-check.out" || fail "--self-check does not say the vault is locked"
