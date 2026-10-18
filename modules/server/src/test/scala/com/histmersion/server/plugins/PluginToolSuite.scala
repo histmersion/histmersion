@@ -101,6 +101,9 @@ class PluginToolSuite extends munit.FunSuite:
     assert(twice.exists(_.startsWith("hello-copy.jar duplicates classes")), twice)
     assertEquals(PluginTool.hostIds(loader).get("archive-org"), Some("this Histmersion (a first-party plugin)"))
     assert(PluginTool.hostIds(loader).contains("keepassxc"), PluginTool.hostIds(loader).keys)
+    // the open-access indexes (D4), and the former id their settings are still read under
+    assert(Set("oa-unpaywall", "oa-core", "oa-openalex", "oa-landing").subsetOf(PluginTool.hostIds(loader).keySet))
+    assert(PluginTool.hostIds(loader).get("oa-index").exists(_.contains("former first-party plugin")), PluginTool.hostIds(loader))
 
   tmp.test("plugin-set jar: written, found on a class path, the digest over the jars' names and checksums"): d =>
     val set = PluginKit.pluginSet(List(PluginTool.describe(hello, loader)), Spi.Version, "native", Some("0.1.0 (abc)"), None)

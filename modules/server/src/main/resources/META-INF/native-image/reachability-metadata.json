@@ -941,6 +941,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy39"
+        },
+        {
+          "name": "derived$ConfigReader$lzy40"
         }
       ]
     },
@@ -1467,6 +1470,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy20"
+        },
+        {
+          "name": "derived$ConfigReader$lzy21"
         }
       ]
     },
@@ -1870,6 +1876,14 @@
       ]
     },
     {
+      "type": "com.histmersion.core.CliPluginsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy16"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.CodexConfig$",
       "fields": [
         {
@@ -2017,6 +2031,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy21"
+        },
+        {
+          "name": "derived$ConfigReader$lzy22"
         }
       ]
     },
@@ -2966,6 +2983,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy32"
+        },
+        {
+          "name": "derived$ConfigReader$lzy33"
         }
       ]
     },
@@ -2983,6 +3003,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy33"
+        },
+        {
+          "name": "derived$ConfigReader$lzy34"
         }
       ]
     },
@@ -3000,6 +3023,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy37"
+        },
+        {
+          "name": "derived$ConfigReader$lzy38"
         }
       ]
     },
@@ -3017,6 +3043,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy36"
+        },
+        {
+          "name": "derived$ConfigReader$lzy37"
         }
       ]
     },
@@ -3034,6 +3063,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy34"
+        },
+        {
+          "name": "derived$ConfigReader$lzy35"
         }
       ]
     },
@@ -3062,6 +3094,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy35"
+        },
+        {
+          "name": "derived$ConfigReader$lzy36"
         }
       ]
     },
@@ -3721,6 +3756,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy19"
+        },
+        {
+          "name": "derived$ConfigReader$lzy20"
         }
       ]
     },
@@ -4450,6 +4488,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy28"
+        },
+        {
+          "name": "derived$ConfigReader$lzy29"
         }
       ]
     },
@@ -4464,6 +4505,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy26"
+        },
+        {
+          "name": "derived$ConfigReader$lzy27"
         }
       ]
     },
@@ -4478,6 +4522,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy24"
+        },
+        {
+          "name": "derived$ConfigReader$lzy25"
         }
       ]
     },
@@ -4506,6 +4553,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy30"
+        },
+        {
+          "name": "derived$ConfigReader$lzy31"
         }
       ]
     },
@@ -4551,6 +4601,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy27"
+        },
+        {
+          "name": "derived$ConfigReader$lzy28"
         }
       ]
     },
@@ -4602,6 +4655,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy31"
+        },
+        {
+          "name": "derived$ConfigReader$lzy32"
         }
       ]
     },
@@ -4663,6 +4719,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy29"
+        },
+        {
+          "name": "derived$ConfigReader$lzy30"
         }
       ]
     },
@@ -4741,6 +4800,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy25"
+        },
+        {
+          "name": "derived$ConfigReader$lzy26"
         }
       ]
     },
@@ -5257,6 +5319,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy18"
+        },
+        {
+          "name": "derived$ConfigReader$lzy19"
         }
       ]
     },
@@ -5271,6 +5336,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy23"
+        },
+        {
+          "name": "derived$ConfigReader$lzy24"
         }
       ]
     },
@@ -5527,6 +5595,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy17"
+        },
+        {
+          "name": "derived$ConfigReader$lzy18"
         }
       ]
     },
@@ -5612,6 +5683,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy16"
+        },
+        {
+          "name": "derived$ConfigReader$lzy17"
         }
       ]
     },
@@ -5827,6 +5901,17 @@
         },
         {
           "name": "given_Schema_WindowStatus$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.PluginSet$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_PluginSet$lzy1"
         }
       ]
     },
@@ -6525,6 +6610,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy22"
+        },
+        {
+          "name": "derived$ConfigReader$lzy23"
         }
       ]
     },
@@ -6652,6 +6740,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy38"
+        },
+        {
+          "name": "derived$ConfigReader$lzy39"
         }
       ]
     },
@@ -7472,6 +7563,14 @@
         },
         {
           "name": "given_DbCodec_TreeRowRaw$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugin.Secret$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Secret$lzy1"
         }
       ]
     },
@@ -8483,6 +8582,22 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.acquire.fetchers.CoreConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.acquire.fetchers.UnpaywallConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy2"
         }
       ]
     },
@@ -11425,6 +11540,9 @@
   ],
   "resources": [
     {
+      "glob": "META-INF/histmersion/plugin-set.json"
+    },
+    {
       "glob": "META-INF/histmersion/plugins/1password.conf"
     },
     {
@@ -11473,7 +11591,16 @@
       "glob": "META-INF/histmersion/plugins/media-wikidata.conf"
     },
     {
-      "glob": "META-INF/histmersion/plugins/oa-index.conf"
+      "glob": "META-INF/histmersion/plugins/oa-core.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/oa-landing.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/oa-openalex.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/oa-unpaywall.conf"
     },
     {
       "glob": "META-INF/histmersion/plugins/pmc.conf"
