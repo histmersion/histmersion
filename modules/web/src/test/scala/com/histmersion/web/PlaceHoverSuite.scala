@@ -174,6 +174,29 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals((cf.value, cf.detail), ("read", Some("/c/histmersion.conf")))
   }
 
+  test("#2018: the About panel lists the plugins — state badge, version, what each registered, settings as references") {
+    val report = PluginsReport(1, List(
+      PluginStatus("media-met", "1.0.0", 1, enabled = true, "registered", List("media-collection:met")),
+      PluginStatus("portal", "0.2.0", 1, enabled = true, "registered", List("media-collection:portal", "event-catalogue:portal"),
+        List(PluginSetting("token", "env:PORTAL_TOKEN"), PluginSetting("key", "value:***"))),
+      PluginStatus("1password", "1.0.0", 1, enabled = false, "disabled"),
+      PluginStatus("broken", "0.1.0", 1, enabled = true, "failed", error = Some("histmersion.plugins.broken.x: bad"))),
+      List("histmersion.plugins.helo configures no plugin in this binary — ignored"))
+    val s = AboutView.sections(about.copy(plugins = report))
+    assertEquals(s.map(_.title), List("Server", "Health", "Job queue", "Backups", "Store", "Plugins"))
+    val rows = s.find(_.title == "Plugins").get.rows
+    def row(id: String) = rows.find(_.label == id).get
+    assertEquals((row("media-met").value, row("media-met").state), ("registered", Some(ServiceState.Ok)))
+    assertEquals(row("media-met").detail, Some("v1.0.0 · media-collection:met"))
+    assertEquals(row("portal").detail,
+      Some("v0.2.0 · media-collection:portal, event-catalogue:portal · token = env:PORTAL_TOKEN, key = value:***"))
+    assertEquals(row("1password").state, Some(ServiceState.Unknown))
+    assertEquals((row("broken").state, row("broken").detail),
+      (Some(ServiceState.Down), Some("v0.1.0 · histmersion.plugins.broken.x: bad")))
+    assertEquals(rows.last, AboutView.Row("", "histmersion.plugins.helo configures no plugin in this binary — ignored"))
+    assertEquals(AboutView.plugins(PluginsReport()), None)
+  }
+
   test("#718: an unknown converter wording renders as unknown with its text; missing parts are said") {
     val odd = about.copy(health = about.health.copy(converter = Some("calibrating flux")), counts = None,
       lastBackup = None, lastBackupAgeSeconds = None, build = BuildStamp("1.2.3"),
