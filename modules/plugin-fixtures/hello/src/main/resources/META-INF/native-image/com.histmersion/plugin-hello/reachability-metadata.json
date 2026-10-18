@@ -1,0 +1,43 @@
+{
+  "reflection": [
+    {
+      "type": "com.histmersion.fixtures.hello.HelloConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.fixtures.hello.HelloPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.fixtures.hello.LoudGreeter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.fixtures.hello.QuietGreeter",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/histmersion/plugins/hello.conf"
+    }
+  ]
+}
