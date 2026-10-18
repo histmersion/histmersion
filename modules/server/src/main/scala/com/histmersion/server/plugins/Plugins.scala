@@ -26,8 +26,13 @@ object Plugins:
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     // ONE acquisition client for every plugin and built-in fetcher of this generation, built on first use
     lazy val http = acquisitionHttp(loaded.config)
-    PluginHost.build(found ++ builtins(loaded.config, () => http), loaded.user, loaded.env,
+    val g = PluginHost.build(found ++ builtins(loaded.config, () => http), loaded.user, loaded.env,
       services(() => HttpPlugin(http), loaded.env), errors, previous.fold(Map.empty)(carried(_, changed)))
+    // the user-added plugin set this binary was linked with (a relink writes it; none in a stock image)
+    val (set, setError) = PluginSetResource.load(getClass.getClassLoader) match
+      case Right(s) => (s, Nil)
+      case Left(e)  => (None, List(e))
+    g.copy(report = g.report.copy(set = set, warnings = g.report.warnings ++ setError))
 
   /** The plugins of `previous` a reload that changed `changed` may carry over unchanged. Pure. */
   def carried(previous: Generation, changed: List[String]): Map[String, (PluginStatus, Registries)] =

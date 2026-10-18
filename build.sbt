@@ -157,6 +157,21 @@ def checkNoLegacyNativeConfigs(dir: File): Unit = {
         "  Delete them, then regenerate with the pinned JDK (CLAUDE.md, 'The tracing-agent rule').")
 }
 
+// The server's native-image flags — ONE list, used by `server/nativeImage` and written into the relink
+// kit (`relinkKit`), so a relinked binary is linked exactly as the bundled one.
+// Reachability metadata comes from the tracing agent (META-INF/native-image/reachability-metadata.json)
+// — it covers flexmark's enum reflection, snakeyaml, pgjdbc, flyway, and the config/web resources.
+// Flags: keep netty's excluded JNI transports at run-time init (→ NIO); and let scribe's SLF4J
+// logger adapter be created at build time. Netty classes that are build-time initialised keep an
+// SLF4J logger in a static field, which since #824 is a scribe adapter. It holds only its name and
+// looks the scribe configuration up on every call, so baking it into the image heap is safe.
+val serverNativeOpts = Seq(
+  "--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll",
+  "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter",
+  "--enable-url-protocols=https")
+
+val relinkKit = taskKey[File]("Write the relink kit: the Sloth-patched class path, its order, the native-image arguments")
+
 // NOTE: `Compile / mainClass` is set inline in each project, NOT here — sbt 2 identifies settings by
 // source position, so a `:=` inside a shared def would make the last caller win for every project.
 def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String] = Nil): Seq[Setting[?]] =
@@ -246,6 +261,15 @@ lazy val pluginVaults = project
   .settings(name := "histmersion-plugin-vaults")
   .settings(commonDeps)
 
+// ── plugin-fixtures/hello: a TEST plugin (spike A's `hello`), compiled against plugin-api only and
+//    packaged as a jar of its own, as a third-party plugin is. Never on the server's class path: the
+//    plugin tests and scripts/bundle/smoke.sh's relink drop its jar into a plugins directory.
+lazy val pluginHello = project
+  .in(file("modules/plugin-fixtures/hello"))
+  .dependsOn(pluginApi)
+  .settings(name := "histmersion-plugin-hello", publish / skip := true)
+  .settings(commonDeps)
+
 // ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
 lazy val db = project
   .in(file("modules/db"))
@@ -317,19 +341,44 @@ lazy val server = project
     Test / parallelExecution := false)
   .settings(commonDeps)
   .settings(writeClasspathSetting).settings(agentRunSettings)
-  .settings(nativeImageSettings(
-    "com.histmersion.server.Main",
-    "histmersion-server",
-    // Reachability metadata comes from the tracing agent (META-INF/native-image/reachability-metadata.json)
-    // — it covers flexmark's enum reflection, snakeyaml, pgjdbc, flyway, and the config/web resources.
-    // Flags: keep netty's excluded JNI transports at run-time init (→ NIO); and let scribe's SLF4J
-    // logger adapter be created at build time. Netty classes that are build-time initialised keep an
-    // SLF4J logger in a static field, which since #824 is a scribe adapter. It holds only its name and
-    // looks the scribe configuration up on every call, so baking it into the image heap is safe.
-    Seq("--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll",
-        "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter",
-        "--enable-url-protocols=https")
-  ))
+  .settings(nativeImageSettings("com.histmersion.server.Main", "histmersion-server", serverNativeOpts))
+  .settings(
+    // the relink kit (docs/research-plugins.md §7.4, §8.7): what `bin/histmersion-relink` links a
+    // binary with user plugins from, without sbt — the Sloth-patched class path the native image is
+    // built from, in its order, and the native-image arguments of `serverNativeOpts`. scripts/bundle/
+    // server.sh copies it into the bundle and adds the manifest (kit.json, SHA256SUMS).
+    // UNCACHED for the reason `nativeImage` is: its output is files, not the task's result.
+    relinkKit := Def.uncached {
+      val log     = streams.value.log
+      val conv    = fileConverter.value
+      val entries = (Compile / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
+      val cp      = slothPatch(log, (ThisBuild / slothJar).value, entries, target.value / "sloth")
+      val dirs    = cp.filterNot(_.getName.endsWith(".jar"))
+      if (dirs.nonEmpty) sys.error(s"relink kit: a class directory on the class path (${dirs.mkString(", ")}) — the kit holds jars only")
+      val names = cp.map(_.getName)
+      val dup   = names.diff(names.distinct).distinct
+      if (dup.nonEmpty) sys.error(s"relink kit: two class path jars share a file name: ${dup.mkString(", ")}")
+      val out = target.value / "kit"
+      IO.delete(out)
+      cp.foreach(j => IO.copyFile(j, out / "lib" / j.getName))
+      IO.writeLines(out / "classpath", names)
+      IO.writeLines(out / "native-image.args", "--no-fallback" +: serverNativeOpts)
+      IO.write(out / "main-class", "com.histmersion.server.Main\n")
+      // Sloth and its verifier, for the PLUGIN jars a relink links (these are patched already)
+      (ThisBuild / slothJar).value.foreach(j => IO.copyFile(j, out / "tools" / "sloth.jar"))
+      IO.copyFile(file("scripts") / "bundle" / "SlothVerify.java", out / "tools" / "SlothVerify.java")
+      log.info(s"relink kit: ${cp.size} jar(s) → $out")
+      out
+    },
+    // the test plugin's jar (modules/plugin-fixtures/hello), for the suites that install, describe
+    // and check a third-party plugin — never on the server's own class path
+    Test / resourceGenerators += Def.task {
+      val jar = fileConverter.value.toPath((pluginHello / Compile / packageBin).value).toFile
+      val out = (Test / resourceManaged).value / "plugin-fixtures.txt"
+      IO.write(out, s"hello=${jar.getAbsolutePath}\n")
+      Seq(out)
+    }.taskValue
+  )
   .settings(
     // UNCACHED: the commit changes without any sbt input changing
     Compile / sourceGenerators += Def.task { Def.uncached {
@@ -444,5 +493,5 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, db, server, cli, web)
+  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, pluginHello, db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)
