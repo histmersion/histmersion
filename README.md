@@ -103,7 +103,7 @@ the installer checks the C toolchain (macOS: `xcode-select --install`; Linux: `b
 zlib1g-dev`), memory (`HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12) and disk, downloads GraalVM CE 25.0.1
 **once** from its official GitHub release (~325 MB on macOS, ~340 MB on Linux), checks the pinned SHA-256
 (`scripts/bundle/graalvm-pins.txt`; GPLv2 with the Classpath Exception), unpacks it into the data
-directory's `toolchain/` (~680 MB), and runs `histmersion-relink` — about 2 minutes and 12 GB of memory on
+directory's `toolchain/` (~680 MB), and runs `histmersion-relink` — about 2 minutes and ~13.5 GB of memory (16 GB required) on
 an M4 Pro. A locally linked binary is never quarantined, so macOS never asks Gatekeeper about it.
 
 - **Nothing is linked twice.** Beside the binary, `bin/histmersion-server.build` records the kit, the
@@ -1326,7 +1326,7 @@ the bundle's `kit/` — the server's Sloth-patched jars, their order and native-
 toolchain (`histmersion-toolchain check`; `histmersion-toolchain install` provisions GraalVM CE), memory
 (`HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12) and disk; runs a **pre-flight on the JVM** (every jar has
 a provider of this SPI, no id or class twice, then the server's own `--self-check` with the plugins and
-your config) before spending 12 GB; Sloth-patches the plugin jars; links; runs the **new binary's
+your config) before spending ~13.5 GB; Sloth-patches the plugin jars; links; runs the **new binary's
 `--self-check`** (never as a server) and requires the directory's plugin-set digest and every new plugin
 registered; signs it; swaps it in keeping the old one as `bin/histmersion-server.prev`; restarts the
 service and waits for `/api/health` and the expected digest in `/api/about` — else the previous binary
