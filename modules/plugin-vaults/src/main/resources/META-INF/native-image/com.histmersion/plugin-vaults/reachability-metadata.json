@@ -1,4 +1,54 @@
 {
+  "reflection": [
+    {
+      "type": "com.histmersion.plugins.vaults.BitwardenConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.vaults.BitwardenPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.vaults.KeePassXcConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.vaults.KeePassXcPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.vaults.OnePasswordConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.vaults.OnePasswordPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy2"
+        }
+      ]
+    }
+  ],
   "resources": [
     {
       "glob": "META-INF/histmersion/plugins/1password.conf"
@@ -8,6 +58,9 @@
     },
     {
       "glob": "META-INF/histmersion/plugins/keepassxc.conf"
+    },
+    {
+      "glob": "META-INF/services/com.histmersion.plugin.Plugin"
     }
   ]
 }

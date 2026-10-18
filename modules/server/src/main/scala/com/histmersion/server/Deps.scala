@@ -14,7 +14,10 @@ import javax.sql.DataSource
 final case class Deps(cfg: AppConfig, ds: DataSource, queryDs: DataSource,
     maintenance: Maintenance = Maintenance(),
     /** The user config file `cfg` was read with (`about` shows it). */
-    configFile: ConfigFileInfo = ConfigFileInfo())
+    configFile: ConfigFileInfo = ConfigFileInfo(),
+    /** The plugins' generation `Main` built for this config: their registries and the report
+      * `about` and `/api/config` show. */
+    plugins: com.histmersion.server.plugins.Generation = com.histmersion.server.plugins.Generation.empty)
 
 object Deps:
   /** The ordinary construction: the read-only DataSource comes from `histmersion.query.user/password`.

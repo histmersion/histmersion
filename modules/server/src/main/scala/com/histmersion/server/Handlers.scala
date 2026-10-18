@@ -86,7 +86,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       lastBackupAgeSeconds = age,
       problems = List(jobs, counts, listed).flatMap(_.left.toOption),
       configFile = deps.configFile,
-      agentLease = agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)))
+      agentLease = agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)),
+      plugins = deps.plugins.report)
 
   /** `GET /api/ui/counters` — the toolbar's counts and "something new" marks ([[UiNotices]]). */
   def uiCounters: UiNotices.Counters = com.histmersion.db.UiRepo.counters(ds)
@@ -109,8 +110,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       val _ = com.histmersion.db.UiRepo.markSeen(ds, b, at)
       uiCounters
 
-  /** The `ui` config block, plus whether writes need a key — never the key itself. */
-  def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty, agentsEnabled = cfg.agents.enabled)
+  /** The `ui` config block, plus whether writes need a key — never the key itself — and the plugins
+    * (their settings with secrets as references, never values). */
+  def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty, agentsEnabled = cfg.agents.enabled,
+    plugins = deps.plugins.report)
 
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered
     * search and dropping the evidence, so there is ONE query path (FTS ranking and snippets
