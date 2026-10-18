@@ -5,7 +5,8 @@
 where it differs from this proposal. Phase 2 (source fetchers; the unauthorised fallback removed) is
 built: §16. The in-place config reload (§3.5) and the hot component graph (§3.6) are built: §17. The
 install/build side — the relink kit, JVM mode, `histmersion plugin …`, the local build at setup and the
-optional signing (phases 3–5) — is built: §18. The
+optional signing (phases 3–5) — is built: §18. Phase 6's first part (media collections and event
+catalogues as plugins, the plugin list in the web About window) is built: §19. The
 spike code is in `spike/plugins/`, a standalone sbt build that
 the root build does not aggregate. Measurements were taken on this machine: Apple M4 Pro, 14 cores,
 48 GB RAM, macOS 26.7, GraalVM CE 25.0.1 (the `.sdkmanrc` pin), sbt 2.0.7. Statements I could not
@@ -1556,3 +1557,130 @@ changed — a bundle already carries its kit); checking TCC persistence with an 
 a real privacy prompt); GPG verification of the relinked binary at each start (the launcher verifies the
 plugins directory; the native binary is checked at relink time); `-H:LayerCreate` relinks (still
 experimental, §4.1).
+
+## 19. As built (providers, 2026-10-18)
+
+Phase 6 of #2018, its first part: media collections and event catalogues are extension points, today's
+providers are built-in plugins, and the web About window lists the plugins. Every media and events
+import behaves as before: the fixture suites (`MediaImportJobSuite`, `MediaCollectionsJobSuite`,
+`MediaPortalsJobSuite`, `MediaHttpSuite`, `MediaSourcesSuite`, `CollectionsSuite`, `PortalsSuite`,
+`CommonsDepictionsSuite`, `WikidataCommonsSuite`, `EventImportSuite`) pass unchanged, now resolving their
+provider through the registries. No migration.
+
+**The SPI (plugin-api, still `Spi.Version` 1).** Two registries on `PluginContext`, each with a default
+that refuses every addition (as `sourceFetchers` has), so older contexts and plugins still compile:
+
+| type | shape |
+|---|---|
+| `MediaCollection` | `title`, `description`, `role` (`object` · `map` · `image`), `matchRule`, `perPlace` (3), `requestIntervalMs` (1000), `search(MediaPlace, PluginHttp)`, `complete(MediaItem, PluginHttp)` |
+| `MediaPlace` | `id`, `label`, `wikidata`, `lat`, `lon`, `period` — the place on the map the host asks about |
+| `MediaItem` | `key`, `title`, `pageUrl`, `imageUrl`, `rights: Either[String, MediaRights]`, `thumbUrl`, `originalUrl`, `geography` (most specific first), `period`, `ids` (gazetteer ids), `withheld` |
+| `MediaRights` | `licence` AS THE PROVIDER STATES IT (an id, a short name or a CC URL), `licenceUrl`, `author`, `credit` |
+| `MediaMatchRule` | `Museum` · `Map(maxYear)` · `PlaceIds(deeper)` — a choice among the host's rules, not a rule |
+| `EventCatalogue` | `title`, `licence`, `citation`, `home`, `requestIntervalMs`, `parts(CatalogueQuery)`, `read(part, query, PluginHttp): CataloguePage` |
+| `CatalogueQuery` | `from`, `to`, `area` (`minLon, minLat, maxLon, maxLat`) |
+| `CatalogueEvent` | the catalogue's id, url, label, kind, the four-point dating, position, historicity, VEI, magnitude, deaths, Wikidata item, names, description, group, stated year and ±, dating method, `raw` |
+| `CataloguePage` | `events`, `next` (the following page of a paged part) |
+
+**§11 holds: the judgement is the host's.** A plugin's collection runs through the host's own
+`CollectionImport`, adapted by `server/media/PluginCollection`:
+
+- the stated licence is classified by the host (`MediaLicence.classify`, `ofUrl` for a URL, the licence
+  URL when the statement is unclear); unknown stays unknown and is never stored; a record without a
+  credit line is refused;
+- the allowlist is `media.collections.licences` (default `cc0,public-domain,cc-by,cc-by-sa`), replaced for
+  one collection by `media.collections.per-collection.<name>` (an open block in `ConfigLayers.check`) —
+  host settings, read at each import; nothing the plugin declares takes part. A provider-stated CC BY-NC
+  record is refused until the user lists `cc-by-nc` for that collection (tested);
+- the match is `MediaMatch` (`museum`, `map`, `withIds`) under the rule the collection chose: names only
+  by `Geocode.key`, uncertain values ignored, the dates overlapping, the basis stored on the link;
+- the host's `Polite` client of the run carries the plugin's requests (`PluginHttp`; the configured
+  User-Agent replaces any the plugin sends — `Polite.get` gained a `headers` argument), and the host
+  downloads, thumbnails, stores, credits and records the check;
+- a plugin's exception or `null` is a failure of that call (`guard`), never the end of the import;
+- a plugin's collection asks about places; it may not register under a host name (a built-in import, an
+  alias of one, or a provider pictures are stored under — `BuiltinMedia.reserved`), nor with a role
+  outside `MediaCollection.Roles` (the database allows no other on a link).
+
+A plugin's catalogue is read by the host's `EventCatalogHandlers.runImport`: its parts in order, a part
+read before skipped (as the built-ins' are; `--refresh` clears them), a paged part followed through
+`next`; each record checked by `PluginEvents.record` (an id and label; a historicity of the host's; a
+dating that does not run backwards; a position on the globe, both coordinates or neither; the kind
+spelled by `EventTaxonomy.refine`; a Wikidata id that is no item dropped) before the same years,
+`--bbox`, VEI/magnitude thresholds, the clamp to the present, `CatalogMerge.place` and the store. A
+refused record and a failed part are lines of the report; the import goes on. The card's catalogue line
+takes a plugin catalogue's title, licence and citation from the registry (the store keeps only the
+provider id). `events rederive` re-reads a plugin's records with no network: they are only clamped (the
+host has no parser for their `raw`). A catalogue may not take a built-in's name or alias.
+
+**The built-in plugins.** Host code, as phase 2's fetchers (`server/media/BuiltinMedia`,
+`server/events/BuiltinCatalogues`), handed to `PluginHost.build` by `Plugins.builtins` with the same
+`Builtin` wrapper, ordering, enable switch, type check and report:
+
+| plugin | registers | settings |
+|---|---|---|
+| `media-wikidata` · `media-depicts` · `media-met` · `media-cleveland` · `media-aic` · `media-loc` · `media-pleiades` · `media-opencontext` | `media-collection:wikidata` · `depicts` · `met` · `cleveland` · `aic` · `loc` · `pleiades` · `opencontext` | `media.<provider>.*`, unchanged |
+| `events-gvp` · `events-noaa` · `events-wikidata` | `event-catalogue:gvp` · `noaa` · `wikidata` | `events.<catalogue>.*`, unchanged |
+
+Plugin ids are prefixed (`media-`, `events-`) because the registry names collide across kinds
+(`wikidata` is a media import and a catalogue) and one switch per provider was asked for; the registry
+names are what `media import` and `events import` take, so the commands are unchanged.
+
+Their entries are `HostMediaCollection` / `HostEventCatalogue`: SPI values whose `search`/`read` are never
+called, which the host recognises and runs with today's code (`MediaImporter.of`, the GVP/NOAA/Wikidata
+branches) over the settings of the calling thread's config. **Config keys are layered, not mapped:**
+`histmersion.plugins.<id>.enabled` (default `true`, env `HISTMERSION_PLUGIN_<ID>_ENABLED`) decides
+whether the provider is registered; `media.<provider>.enabled` is still read at the import, so both
+must be on, and every other `media.*`/`events.*` key keeps its meaning and env name. Mapping the old
+keys into plugin blocks would have renamed every documented key and env variable for no change in
+behaviour; reading them at each import also keeps them hot without rebuilding a plugin.
+
+**Resolution.** `MediaHandlers.providerOf` asks `MediaImporters.resolve` over
+`deps.plugins.registries.mediaCollections` — the generation the request (or job) is pinned to; aliases
+(`commons`, `cma`, `artic`, `oc`, the stored provider names…) resolve to the built-ins; an unknown name
+lists the registered ones (built-ins in their old order, then plugins' in registration order) and a
+switched-off built-in names its switch, both `400`. Events: `BuiltinCatalogues.resolve` the same way;
+`events catalogues` lists the registry. `Deps(cfg, ds)` and `Main.server`'s default generation are now
+`Plugins.offline` — the built-in providers and no fetcher (still offline) — which is how the golden suites
+reach the registries without a config file.
+
+**Surfaces.** `GET /api/media/providers` (`[MediaProviderInfo{name, title, over, description, plugin,
+builtin, licences}]`, REST only like the import itself) and the registry-backed `GET /api/events/catalogues`.
+The CLI's `media import` takes the provider as an argument (it was one subcommand per provider) and
+`histmersion media providers` lists them, so a third-party plugin's collection appears with no CLI change;
+the per-provider help text moved to that list. `PluginStatus.provides` names `media-collection:<name>`
+and `event-catalogue:<name>`.
+
+**Hot reload (§17).** The plugins node still rebuilds only the plugins whose block changed. New:
+`Plugins.carried` keeps the media/events built-ins across a change of a host key (`acquire.*`,
+`media.max-retry-after-seconds`) — they read no host key at registration and never the HTTP client one
+shapes — while the fetchers and third-party plugins (whose `ctx.http` follows `acquire.tls`) are rebuilt
+as before; `order`, the whole block or a vault's block still rebuild all. A `media.*`/`events.*` change
+rebuilds no plugin. Long work pins its generation as before: a media job (`deps.pins.carry`) and an
+events job (`BackgroundJob.start(pins = deps.pins)`) keep the collection or catalogue of the generation
+they started on until they finish.
+
+**Web About window.** A *Plugins* section (`AboutView.plugins`): one row per plugin — its state as the
+health badge (registered ok, disabled grey, failed or refused down), its version, what it registered and
+its settings (a secret only ever as its reference: the report never holds a value) — and the report's
+warnings. Read once when the window opens, as the other sections; nothing cached, nothing to clean up.
+
+**Native image.** The eleven defaults resources and the new config/DTO lazy-val fields were recorded
+with the tracing agent (a `--self-check` with one built-in switched off, and the server and CLI over
+`/api/media/providers`, `/api/events/catalogues` and `/api/about`).
+
+**Tests.** `ProviderSpiSuite` (plugin-api: defaults, the refusing registries, SPI 1), `ProviderPluginsSuite`
+(the built-ins registered and switched off by config or env; aliases and the unknown-name message; a
+third-party collection and catalogue registered and listed after the built-ins; host names and foreign
+roles refused; the reload carry rule; the host's reading of stated licences; a plugin item and a
+catalogue record checked), `PluginMediaImportSuite` (DB: a third-party collection through `media import`
+— a stated CC BY-NC record refused under the default allowlist, stored once allowed per collection,
+all-rights-reserved never; the match basis on the link; the host's User-Agent on the plugin's request;
+`/api/media/providers` and `/api/about` through the server), `PluginCatalogueSuite` (DB: a third-party
+catalogue's parts, a followed page, a refused record and a failed part reported, a second import reading
+only what was left, the card's terms), and `PlaceHoverSuite` (the About section).
+
+**Not done.** Moving the built-ins into plugin-api-only modules (they read host settings and core's
+parsers, as the fetchers do); a plugin collection that asks about events (the host's collection import
+is for places); a parser hook so `events rederive` can re-derive a plugin's records; new providers
+(§5.3 row 4, the media providers "not in this slice").
