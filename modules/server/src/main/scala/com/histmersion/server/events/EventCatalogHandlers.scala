@@ -49,13 +49,13 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
   /** The catalogues the plugins of the calling thread's generation registered (built-in and third-party). */
   private def registered = deps.plugins.registries.eventCatalogues
 
-  /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */
   /** The limits of `provider`'s dating, the ONE rule of the import and of rederive: the present for
     * every catalogue, the Holocene floor for the GVP's, a plugin catalogue's own floor for its. */
   private def limitsOf(provider: String, present: Long): CatalogDating.Limits =
     if CatalogProvider.all.contains(provider) then EventProviders.limits(provider, present, ec.gvp.floorYear)
     else PluginEvents.limits(registered.get(provider), present)
 
+  /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */
   private def infoOf(provider: String): Option[CatalogProviderInfo] = BuiltinCatalogues.info(provider, registered)
 
   def catalogues: List[CatalogProviderInfo] = BuiltinCatalogues.infos(registered)
