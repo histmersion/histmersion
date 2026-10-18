@@ -21,11 +21,6 @@ final case class KeyedServiceConfig(url: String, apiKey: String) derives ConfigR
 /** Retraction Watch: the CSV Crossref publishes, mirrored into the `retraction_watch` table. */
 final case class RetractionWatchConfig(csvUrl: String) derives ConfigReader
 
-/** The unauthorised mirror is the LAST resort and OFF by default. It distributes copyrighted papers without
-  * publisher authorisation and its legality varies by jurisdiction; enabling it is a deliberate,
-  * per-deployment decision, and every use is logged as a warning. */
-final case class UnlicensedConfig(enabled: Boolean, mirror: String) derives ConfigReader
-
 /** Repository landing pages (#1580, [[RepositoryLanding]]): whether the fetch resolves them one step,
   * how many it reads per work, and the host and platform lists that decide what is a repository (each
   * comma-separated; a host matches itself and its subdomains). `denyHosts` — publishers, and sites
@@ -95,7 +90,8 @@ final case class AcquireConfig(
     archiveOrg: ServiceConfig,
     wikipedia: ServiceConfig,
     retractionWatch: RetractionWatchConfig,
-    unlicensed: UnlicensedConfig,
+    chain: String,
+    allowUnauthorised: Boolean,
     userAgent: String,
     timeoutSeconds: Int,
     spoolDir: String,
@@ -113,6 +109,10 @@ final case class AcquireConfig(
 
   /** The `mailto` value; empty without a contact, and `Url` drops an empty parameter. */
   def mailto: String = contact.getOrElse("")
+
+  /** The acquisition chain's order: the source-fetcher ids `chain` lists (comma-separated); fetchers
+    * it does not name run after these, in plugin registration order. */
+  def chainIds: List[String] = LandingConfig.split(chain)
 
 /** Host-side Calibre integration (the ONE local integration the CLI is allowed — Calibre lives on
   * the user's machine, not in the container).

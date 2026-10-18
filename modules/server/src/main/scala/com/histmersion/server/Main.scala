@@ -113,11 +113,16 @@ object Main:
     tls.foreach((_, line) => scribe.info(line))
     val http     = SttpHttp(cfg, maxRetryAfterSeconds = deps.cfg.media.maxRetryAfterSeconds, tls = tls.map(_._1))
     val openalex = OpenAlexCrossref(cfg, http)
+    // the acquisition chain: the source fetchers this generation's plugins registered (the built-in
+    // archive-org, oa-index, pmc and arxiv unless switched off), in `acquire.chain` order
+    val (chain, notes) = FetchChain.of(deps.plugins.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised)
+    notes.foreach(n => scribe.info(n))
+    scribe.info(s"acquire: chain ${chain.plan.map(_._1).mkString(" → ")}")
     AcquireHandlers(
       deps,
       discovery = openalex,
       citations = SemanticScholar(cfg, http, openalex),
-      oa = OaFetch(cfg, http, openalex),
+      oa = chain,
       wiki = Wikipedia(cfg, http),
       archive = ArchiveOrg(cfg, http),
       retractionWatch = RetractionWatch(cfg, http),

@@ -14,11 +14,20 @@ import scala.util.control.NonFatal
 
 /** What the registered plugins contribute, one map per extension point, in registration order. Read
   * by the rest of the app; an immutable snapshot of one [[Generation]]. */
-final case class Registries(secretVaults: ListMap[String, SecretVault] = ListMap.empty):
-  def provides: List[String] = secretVaults.keys.toList.map(k => s"${Registries.SecretVault}:$k")
+final case class Registries(
+    secretVaults: ListMap[String, SecretVault] = ListMap.empty,
+    sourceFetchers: ListMap[String, SourceFetcher] = ListMap.empty):
+  def provides: List[String] =
+    secretVaults.keys.toList.map(k => s"${Registries.SecretVault}:$k") ++
+      sourceFetchers.keys.toList.map(k => s"${Registries.SourceFetcher}:$k")
+
+  /** Both registries, the other's entries after this one's. */
+  def ++(other: Registries): Registries =
+    Registries(secretVaults ++ other.secretVaults, sourceFetchers ++ other.sourceFetchers)
 
 object Registries:
-  val SecretVault = "secret-vault"
+  val SecretVault   = "secret-vault"
+  val SourceFetcher = "source-fetcher"
   val empty: Registries = Registries()
 
 /** One load of the plugins for one config: the registries and the report. Built by
@@ -264,6 +273,11 @@ object PluginHost:
       open = false
       added
 
+  private def validFetcher(id: String, f: SourceFetcher): Option[String] =
+    if !id.matches(IdPattern) then Some(s"'$id': a source fetcher id is $IdPattern")
+    else if f == null then Some(s"source fetcher '$id' is null")
+    else None
+
   private def validVault(id: String, v: SecretVault): Option[String] =
     if Set(SecretRef.ValueScheme, SecretRef.EnvScheme)(id) then Some(s"'$id' is a reserved secret scheme, not a vault name")
     else if !id.matches(IdPattern) then Some(s"'$id': a vault name is $IdPattern")
@@ -317,28 +331,28 @@ object PluginHost:
     // registration passes; the secret cache is this generation's own (re-resolved on every build)
     val cache = scala.collection.mutable.Map.empty[SecretRef, String] // local to this build, never shared
     @annotation.tailrec
-    def passes(waiting: List[Prepared], vaults: ListMap[String, SecretVault],
-        done: Map[String, PluginStatus]): (ListMap[String, SecretVault], Map[String, PluginStatus]) =
-      val (vs, ds, left, progressed) = waiting.foldLeft((vaults, done, List.empty[Prepared], false)) {
-        case ((vs, ds, left, prog), pr) =>
-          val missing = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !vs.contains(v) => v }
-          if missing.nonEmpty then (vs, ds, left :+ pr, prog)
+    def passes(waiting: List[Prepared], regs: Registries,
+        done: Map[String, PluginStatus]): (Registries, Map[String, PluginStatus]) =
+      val (rs, ds, left, progressed) = waiting.foldLeft((regs, done, List.empty[Prepared], false)) {
+        case ((rs, ds, left, prog), pr) =>
+          val missing = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }
+          if missing.nonEmpty then (rs, ds, left :+ pr, prog)
           else
-            val (st, added) = register(pr, vs, env, services, cache)
-            (vs ++ added, ds.updated(pr.p.info.id, st), left, true)
+            val (st, added) = register(pr, rs, env, services, cache)
+            (rs ++ added, ds.updated(pr.p.info.id, st), left, true)
       }
       if left.isEmpty || !progressed then
         val stuck = left.map { pr =>
-          val names = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !vs.contains(v) => v }.distinct
+          val names = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }.distinct
           pr.p.info.id -> status(pr.p, true, PluginState.Failed, Some(pr.block),
             Some(s"$Root.${pr.p.info.id}: no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered " +
               "(enable the plugin that provides it)"))
         }
-        (vs, ds ++ stuck)
-      else passes(left, vs, ds)
+        (rs, ds ++ stuck)
+      else passes(left, rs, ds)
 
     val ready = prepared.collect { case (_, Right(pr)) => pr }
-    val (vaults, registered) = passes(ready, ListMap.empty, Map.empty)
+    val (registries, registered) = passes(ready, Registries.empty, Map.empty)
     val statuses = prepared.map {
       case (_, Left(st))  => st
       case (id, Right(_)) => registered(id)
@@ -346,28 +360,29 @@ object PluginHost:
       status(p, false, PluginState.Refused, error = refused.get(p.info.id)))
     statuses.filter(_.state == PluginState.Failed.wire).foreach(s =>
       services.log(s.id, true, s.error.getOrElse("failed")))
-    Generation(Registries(vaults), PluginsReport(Spi.Version, statuses, warnings))
+    Generation(registries, PluginsReport(Spi.Version, statuses, warnings))
 
   /** Resolve one prepared plugin's secrets and call its `register` with a staged context. */
-  private def register(pr: Prepared, vaults: ListMap[String, SecretVault], env: Config, services: HostServices,
-      cache: scala.collection.mutable.Map[SecretRef, String]): (PluginStatus, ListMap[String, SecretVault]) =
+  private def register(pr: Prepared, regs: Registries, env: Config, services: HostServices,
+      cache: scala.collection.mutable.Map[SecretRef, String]): (PluginStatus, Registries) =
     val p  = pr.p
     val id = p.info.id
     def resolved(s: Secret): Either[String, String] =
       cache.get(s.ref) match
         case Some(v) => Right(v)
-        case None    => resolve(s.ref, env, vaults).map { v => cache.update(s.ref, v); v }
+        case None    => resolve(s.ref, env, regs.secretVaults).map { v => cache.update(s.ref, v); v }
     val literal = pr.secrets.exists(_.ref.isInstanceOf[SecretRef.Value])
     val warns = if !literal then Nil else List(s"$Root.$id: a secret is written into the config (value:${SecretRef.Mask}) — " +
       "use env:<NAME> or a vault reference")
     warns.foreach(w => services.log(id, true, w))
     def fail(e: String) =
       (PluginStatus(id, p.info.version, p.info.spiVersion, true, PluginState.Failed.wire, Nil, settings(pr.block),
-        warns, Some(s"$Root.$id: $e")), ListMap.empty[String, SecretVault])
+        warns, Some(s"$Root.$id: $e")), Registries.empty)
     pr.secrets.iterator.map(resolved).collectFirst { case Left(e) => e } match
       case Some(e) => fail(e)
       case None =>
-        val staged = Staged[SecretVault](Registries.SecretVault, vaults, validVault)
+        val staged   = Staged[SecretVault](Registries.SecretVault, regs.secretVaults, validVault)
+        val fetchers = Staged[SourceFetcher](Registries.SourceFetcher, regs.sourceFetchers, validFetcher)
         val ctx = new PluginContext:
           lazy val http: PluginHttp = services.http()
           val log: PluginLog = new PluginLog:
@@ -376,12 +391,13 @@ object PluginHost:
           def env(name: String) = Option(services.env.root.get(name)).flatMap(v => Option(v.unwrapped)).map(_.toString)
           def secret(s: Secret) = resolved(s)
           def secretVaults = staged
+          override def sourceFetchers = fetchers
         val outcome =
           try pr.call(ctx)
           catch case NonFatal(e) => Left(s"register threw ${e.getClass.getSimpleName}: ${e.getMessage}")
-        val added = staged.close()
+        val added = Registries(staged.close(), fetchers.close())
         outcome match
           case Left(e) => fail(e)
           case Right(_) =>
             (PluginStatus(id, p.info.version, p.info.spiVersion, true, PluginState.Registered.wire,
-              Registries(added).provides, settings(pr.block), warns), added)
+              added.provides, settings(pr.block), warns), added)

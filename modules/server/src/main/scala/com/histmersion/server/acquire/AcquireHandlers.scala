@@ -316,11 +316,13 @@ final class AcquireHandlers(
         SourceRepo.load(ds, citekey).map(_.ocrMarkdown), AssetRepo.sha256Of(ds, citekey))
       val skip = original.filter(_ => !refetch)
 
-      // ── the PDF: legal OA first, the unauthorised mirror only when a deployment switched it on ──
+      // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal
+      //    ones alone for a watcher's auto-ingest) ──
+      val key = com.histmersion.plugin.WorkKey(doi = doi, arxiv = arxiv.orElse(work.flatMap(_.arxivId)),
+        title = work.flatMap(_.title), authors = work.map(_.authors).getOrElse(Nil), year = work.flatMap(_.year))
       val fetched = skip match
         case Some(have) => Left(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")
-        case None if legalOnly => oa.fetchLegal(doi, arxiv.orElse(work.flatMap(_.arxivId)))
-        case None              => oa.fetch(doi, arxiv.orElse(work.flatMap(_.arxivId)))
+        case None       => oa.fetchWork(key, legalOnly)
       fetched match
         case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes" +
           AcquireHandlers.hostOf(f.url).fold("")(h => s" from $h") +
@@ -439,7 +441,10 @@ final class AcquireHandlers(
             val citekey = validCk.toString
             steps += IngestStep("metadata", true,
               s"${item.title.getOrElse(item.identifier)} (${item.year.map(_.toString).getOrElse("?")})")
-            archive.download(item.identifier, file.name).left.map(err).flatMap { f =>
+            // the download is the chain's `archive-org` fetcher (the legal chain: a public item only)
+            oa.fetchWork(com.histmersion.plugin.WorkKey(archive = Some(item.identifier), format = req.format,
+                title = item.title, authors = item.creator, year = item.year), legalOnly = true)
+              .left.map(e => err(s"'${item.identifier}': $e")).flatMap { f =>
               steps += IngestStep("fetch", true, s"archive.org: ${f.bytes.length} bytes (${file.name})")
               val spooled = Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
                 case Right(p) => Some(p)
@@ -499,9 +504,9 @@ final class AcquireHandlers(
     maintenance.guard("acquire/ingest")(ingestNow(req))
 
   /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)): the LEGAL
-    * open-access chain only — the unauthorised mirror is never asked, whatever `acquire.unlicensed.enabled` says — and a work
-    * with no legal file is refused (Left) rather than stored as metadata alone, so it goes to the
-    * acquisition list instead. An existing source is never fetched again. */
+    * open-access chain only — no unauthorised fetcher is asked, whatever `acquire.allow-unauthorised`
+    * says — and a work with no legal file is refused (Left) rather than stored as metadata alone, so it
+    * goes to the acquisition list instead. An existing source is never fetched again. */
   def ingestLegal(req: IngestRequest): Either[ApiError, IngestReport] =
     maintenance.guard("acquire/ingest")(ingestNow(req.copy(refetch = false), legalOnly = true))
 

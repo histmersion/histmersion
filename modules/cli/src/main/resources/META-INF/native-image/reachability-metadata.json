@@ -4562,14 +4562,6 @@
       ]
     },
     {
-      "type": "com.histmersion.core.UnlicensedConfig$",
-      "fields": [
-        {
-          "name": "derived$ConfigReader$lzy4"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.core.SearchHit$",
       "fields": [
         {
