@@ -108,7 +108,8 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
       else Right(plan)
     }
 
-  /** The plan as an `article-plan` approval (always a person's decision), through the write gate. */
+  /** The plan as an `article-plan` approval (a person's, or the supervisor's checks — [[AutoApprovals]]), through
+    * the write gate. */
   private def record(ctx: RunCtx, goal: String, plan: ArticlePlan): Either[String, Recorded] =
     if plan.isEmpty then Right(Recorded(None, s"nothing survived the checks; no approval was opened"))
     else

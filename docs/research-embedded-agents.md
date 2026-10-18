@@ -950,7 +950,7 @@ run replays its finished steps, reaches the approval step again, checkpoints the
 decision that lands between the approval being opened and the run's transition is caught (the engine
 looks once more after the transition). Cancelling a waiting run rejects its open approval. In `auto`
 mode the approval is recorded already approved and the run does not stop. The two blocking kinds are
-`goal-plan` (always manual) and `article-publish` (`agents.approvals.article-publish`, `manual` by
+`goal-plan` (manual; since the autopilot, `agents.approvals.goal-plan = auto` lets the managers' supervisor decide it by code checks — docs/research-process-managers.md "As built: the autopilot") and `article-publish` (`agents.approvals.article-publish`, `manual` by
 default); P2's `status-change` and `edge` are applied by the decision itself, as before.
 
 **`plan-goal <goal>`** — load · propose · verify · approve · apply.
@@ -963,7 +963,7 @@ default); P2's `status-change` and `edge` are applied by the decision itself, as
 - `verify` (code): every DOI through the discover path (`AgentUpstream.meta`, i.e. OpenAlex/
   Crossref). A DOI that does not resolve, or a retracted work, is dropped and shown as dropped — a
   person never sees an unverified work. Works already in the corpus carry their citekey.
-- `approve` (blocking, always manual): nothing exists yet. A plan with nothing left after the checks
+- `approve` (blocking, manual unless `agents.approvals.goal-plan = auto`): nothing exists yet. A plan with nothing left after the checks
   opens no approval; the run closes with a log line.
 - `apply` (code, on approval): sub-goals created as children of the goal (inheriting its regions and
   period), query links, works in the corpus linked as sources, the others added to the acquisition
