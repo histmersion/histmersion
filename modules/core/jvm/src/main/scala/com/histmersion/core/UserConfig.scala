@@ -71,7 +71,33 @@ final case class UserConfigFile(path: Option[Path], loaded: Boolean, unknownKeys
       s"$where: unknown setting '$k' is ignored$hint"
     }
 
-final case class LoadedConfig(config: AppConfig, file: UserConfigFile)
+/** @param user the user config file as parsed (empty when there is none): the plugin host cuts each
+  *             plugin's block, `histmersion.plugins.<id>`, out of it
+  * @param env  the environment the load read (main thread: a native image reads it through StackValue) */
+final case class LoadedConfig(config: AppConfig, file: UserConfigFile, user: Config = ConfigFactory.empty,
+    env: Config = ConfigFactory.empty)
+
+/** The environment as a layer of HOCON: for every key of `defaults` whose value is exactly a `${?VAR}`
+  * the environment sets, that variable's value. Laid OVER a user's settings, it makes the precedence
+  * environment > user file > defaults hold although the defaults carry their overrides as
+  * substitutions (see [[ConfigLayers]] for why `user.withFallback(defaults)` alone loses them). Used
+  * for `reference.conf` and for each plugin's defaults resource. Pure. */
+object EnvOverrides:
+  private val Marker = "\u0001histmersion-env\u0001"
+
+  def layer(defaults: Config, env: Config): Config =
+    val names   = env.root.keySet.asScala.toList
+    val markers = ConfigValueFactory.fromMap(names.map(n => n -> (Marker + n)).toMap.asJava).toConfig
+    val own     = defaults.root.keySet.asScala.toSet
+    val marked  = defaults.withFallback(markers).resolve()
+    marked.entrySet.asScala.foldLeft(ConfigFactory.empty) { (acc, e) =>
+      // the markers' own keys (the variable names at the root) are no setting of `defaults`
+      val first = ConfigUtil.splitPath(e.getKey).asScala.headOption
+      e.getValue.unwrapped match
+        case s: String if first.exists(own) && s.startsWith(Marker) && env.root.containsKey(s.drop(Marker.length)) =>
+          acc.withValue(e.getKey, env.root.get(s.drop(Marker.length)))
+        case _ => acc
+    }
 
 /** Reading `reference.conf`, the user config file and the environment into one HOCON tree, with
   * the precedence ENVIRONMENT > USER FILE > reference.conf.
@@ -90,24 +116,14 @@ final case class LoadedConfig(config: AppConfig, file: UserConfigFile)
   * with reference.conf. */
 private[core] object ConfigLayers:
 
-  private val Marker = "\u0001histmersion-env\u0001"
-
   def reference: Config = ConfigFactory.parseResources("reference.conf")
 
   /** The env-override layer: `histmersion.<key> = <value of its variable>` for every key of
     * `reference` whose `${?VAR}` the environment sets. */
   def envOverrides(reference: Config, env: Config): Config =
-    val names   = env.root.keySet.asScala.toList
-    val markers = ConfigValueFactory.fromMap(names.map(n => n -> (Marker + n)).toMap.asJava).toConfig
-    val marked  = reference.withFallback(markers).resolve()
-    if !marked.hasPath("histmersion") then ConfigFactory.empty
-    else
-      marked.getConfig("histmersion").entrySet.asScala.foldLeft(ConfigFactory.empty) { (acc, e) =>
-        e.getValue.unwrapped match
-          case s: String if s.startsWith(Marker) && env.root.containsKey(s.drop(Marker.length)) =>
-            acc.withValue(s"histmersion.${e.getKey}", env.root.get(s.drop(Marker.length)))
-          case _ => acc
-      }
+    val layer = EnvOverrides.layer(reference, env)
+    if !layer.hasPath("histmersion") then ConfigFactory.empty
+    else layer.withOnlyPath("histmersion")
 
   /** Every key the user file sets (full paths, sorted), each with
     * whether its value is a block. Unresolved values are leaves; an object that cannot be listed
@@ -131,7 +147,10 @@ private[core] object ConfigLayers:
   /** Blocks whose keys are the user's own (a map, e.g. the variables of the `claude` CLI's
     * environment), not a fixed set of settings: any key under one is known, and its value — any
     * string, or null — is left to the reader. */
-  val OpenBlocks: List[List[String]] = List(List("histmersion", "agents", "providers", "claude-code", "env"))
+  val OpenBlocks: List[List[String]] = List(List("histmersion", "agents", "providers", "claude-code", "env"),
+    // each plugin's block is checked by the plugin host against THAT plugin's defaults resource
+    // (com.histmersion.server.plugins.PluginHost.typeCheck), so `order` and every `<id> { … }` are open here
+    List("histmersion", "plugins"))
 
   private def inOpenBlock(keys: List[String]): Boolean =
     OpenBlocks.exists(b => keys.length > b.length && keys.startsWith(b))

@@ -179,6 +179,35 @@ class ConfigSuite extends munit.FunSuite:
       Set("histmersion.server.port", "histmersion.agents.providers.anthropic.api-key"))
     assertEquals(layer.getString("histmersion.server.port"), "9")
 
+  test("plugins: histmersion.plugins is an open block — no unknown keys, the file and env kept for the host"):
+    val f = confFile("""histmersion.plugins {
+                       |  order = [keepassxc]
+                       |  keepassxc { enabled = true, database = "/x.kdbx", whatever = [1, 2] }
+                       |  not-installed { enabled = true }
+                       |}
+                       |histmersion.server.port = 8125
+                       |""".stripMargin)
+    val l = loaded(env("SOME_VAR" -> "1"), f)
+    assertEquals(l.file.unknownKeys, Nil, "plugin keys are the plugin host's to check")
+    assertEquals(l.config.server.port, 8125)
+    assertEquals(l.user.getString("histmersion.plugins.keepassxc.database"), "/x.kdbx")
+    assertEquals(l.env.getString("SOME_VAR"), "1")
+    assertEquals(loaded(env("SOME_VAR" -> "2"), confFile("histmersion.server.port = 1")).env.getString("SOME_VAR"), "2")
+
+  test("plugins: a single value where the plugins block belongs is an error"):
+    val f = confFile("histmersion.plugins = true")
+    val e = AppConfig.loadWithUserFile(env(), Some(f)).swap.getOrElse(fail("loaded"))
+    assert(e.contains("histmersion.plugins"), e)
+
+  test("the generic env layer: any defaults tree, only keys that are exactly a set ${?VAR}"):
+    val defaults = org.ekrich.config.ConfigFactory.parseString(
+      "max-items = 5\nmax-items = ${?P_MAX}\nname = n\nname = ${?P_NAME}\npath = \"a/\"${?P_SUB}\nnested { x = 1, x = ${?P_X} }")
+    val layer = EnvOverrides.layer(defaults, env("P_MAX" -> "9", "P_X" -> "2", "P_SUB" -> "b", "HOME" -> "/h"))
+    assertEquals(layer.entrySet.asScala.map(_.getKey).toSet, Set("max-items", "nested.x"),
+      "a derived value (path) and the variables themselves are no override")
+    assertEquals(layer.getString("max-items"), "9")
+    assertEquals(EnvOverrides.layer(defaults, env()).isEmpty, true)
+
   test("the cache directory: XDG_CACHE_HOME, else ~/.cache, on every platform (#1403)"):
     def e(kv: (String, String)*): String => Option[String] = kv.toMap.get
     assertEquals(UserPaths.cacheDir(e("HOME" -> "/Users/u")), Some(Path.of("/Users/u/.cache/histmersion")))

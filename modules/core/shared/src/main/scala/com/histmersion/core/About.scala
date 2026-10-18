@@ -106,7 +106,9 @@ final case class About(
     /** The user config file this server started with. */
     configFile: ConfigFileInfo = ConfigFileInfo(),
     /** The agent lease's holder (None: no server has claimed it — agents off everywhere). */
-    agentLease: Option[AgentLeaseInfo] = None
+    agentLease: Option[AgentLeaseInfo] = None,
+    /** The plugins in this binary and what became of each (secrets as references, never values). */
+    plugins: PluginsReport = PluginsReport()
 ) derives KindlingsCodecAsObject
 object About:
   given Schema[About] = KindlingsSchema.derived[About].schema
@@ -168,7 +170,7 @@ object AboutMarkdown:
       s"- last backup: $backup",
       s"- config file: ${ConfigFileInfo.describe(a.configFile)}",
       s"- agent lease: ${a.agentLease.fold("none (no server runs agents on this database)")(_.describe)}"
-    ) ++ a.counts.toList.flatMap(c => List(
+    ) ++ PluginsMarkdown.summary(a.plugins) ++ a.counts.toList.flatMap(c => List(
       s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
         s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
       s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period")} · ${Plural.count(c.presets, "preset")}"

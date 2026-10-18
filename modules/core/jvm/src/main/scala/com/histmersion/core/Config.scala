@@ -444,12 +444,12 @@ object AppConfig:
     file match
       case None => decode(ConfigLayers.merged(reference, ConfigFactory.empty, env))
           .left.map(e => s"Histmersion config error: $e")
-          .map(LoadedConfig(_, UserConfigFile(None, loaded = false)))
+          .map(LoadedConfig(_, UserConfigFile(None, loaded = false), env = env))
       case Some(p) =>
         ConfigLayers.parse(p).left.map(inFile(p)).flatMap {
           case None => decode(ConfigLayers.merged(reference, ConfigFactory.empty, env))
               .left.map(e => s"Histmersion config error: $e")
-              .map(LoadedConfig(_, UserConfigFile(Some(p), loaded = false)))
+              .map(LoadedConfig(_, UserConfigFile(Some(p), loaded = false), env = env))
           case Some(user) =>
             for
               // the settings and the KIND of each from the defaults alone: an env value is always a
@@ -462,7 +462,7 @@ object AppConfig:
               _       <- ConfigLayers.typeCheck(keys.settings, asFiled, known).left.map(inFile(p))
               merged  <- resolved(ConfigLayers.merged(reference, user, env)).left.map(inFile(p))
               cfg     <- decode(merged).left.map(inFile(p))
-            yield LoadedConfig(cfg, UserConfigFile(Some(p), loaded = true, keys.unknown))
+            yield LoadedConfig(cfg, UserConfigFile(Some(p), loaded = true, keys.unknown), user, env)
         }
 
   /** An environment `Config` as a lookup (its keys are variable names, not paths). */
