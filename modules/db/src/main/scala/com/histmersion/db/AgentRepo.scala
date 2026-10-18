@@ -201,14 +201,17 @@ object AgentRepo:
 
   /** Startup: a run that was `running` when the process died is RESUMABLE — `paused: interrupted`,
     * not failed (its finished steps are checkpointed). Queued runs stay queued; the caller re-enqueues
-    * them. Returns (the ids of the runs paused now, with their origin; the ids to re-enqueue). */
-  def reconcile(ds: DataSource): (Vector[(String, Option[String])], Vector[String]) =
+    * them. Returns (the ids of the runs paused now, with their origin; the ids to re-enqueue). `except`: the runs this
+    * process is running or holding queued (a config reload swapping back to a database). */
+  def reconcile(ds: DataSource, except: List[String] = Nil): (Vector[(String, Option[String])], Vector[String]) =
     transact(ds):
       val paused = sql"""UPDATE jobs SET status = ${RunState.Paused.wire}, error = ${PauseReason.Interrupted.wire},
                                          updated_at = now()
                          WHERE kind = $JobKind AND status = ${RunState.Running.wire}
+                           AND NOT (id = ANY($except::text[]))
                          RETURNING id, origin""".query[(String, Option[String])].run()
       val queued = sql"""SELECT id FROM jobs WHERE kind = $JobKind AND status = ${RunState.Queued.wire}
+                           AND NOT (id = ANY($except::text[]))
                          ORDER BY created_at""".query[String].run()
       (paused, queued)
 

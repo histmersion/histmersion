@@ -10,13 +10,13 @@ import java.nio.file.{Files, Path}
   * HISTMERSION_TEST_DB_URL. The network is a function the test supplies, and the data directory is a
   * temporary one holding the REAL committed period seed — never the 16 000-place gazetteer, whose
   * import re-materialises `finding_places` for the whole test database other suites assert on. */
-class BootstrapSuite extends munit.FunSuite:
+class BootstrapSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(base.db.copy(url = testDb.get))
+    val d = testPool(base.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val repoRoot = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
@@ -41,7 +41,7 @@ class BootstrapSuite extends munit.FunSuite:
     transact(ds)(sql"DELETE FROM seed_versions WHERE name = ${Bootstrap.PeriodSeed}".update.run())
 
   override def beforeAll(): Unit = if testDb.nonEmpty then clean()
-  override def afterAll(): Unit  = if testDb.nonEmpty then clean()
+  override def afterSuite(): Unit  = if testDb.nonEmpty then clean()
 
   test("periods seed imports the bundled presets: the BSA's Bronze Age → Minoan → phases"):
     val r = bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message), identity)

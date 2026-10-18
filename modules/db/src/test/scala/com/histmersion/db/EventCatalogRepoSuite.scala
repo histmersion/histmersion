@@ -9,13 +9,13 @@ import com.augustnagro.magnum.*
   * the kind-group / tier / area / catalogue-context filters of the events feed, findings near an event,
   * the sources naming it, stored candidates and their statuses, lead facts, an article's catalogue
   * events, and site types in the places feed. Fixtures sit at 150–152°E, 40°S; ids start with `zqec`. */
-class EventCatalogRepoSuite extends munit.FunSuite:
+class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -53,7 +53,7 @@ class EventCatalogRepoSuite extends munit.FunSuite:
       EventRepo.put(ds, "zqec_compiled", EventPut("Zqec compiled eruption", "natural_disaster",
         TimeSpan(Some(-1615), None, None, Some(-1605)),
         geometry = Some(s"""{"type":"Point","coordinates":[150.0,$Lat]}"""), citekey = Some("zqec_src2020")))
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   test("V085: the tables are there and the compiled event's kind is refined only on migration"):
     val tables = connect(ds)(sql"""SELECT table_name FROM information_schema.tables

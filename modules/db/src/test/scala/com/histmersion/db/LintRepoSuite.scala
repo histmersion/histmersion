@@ -9,13 +9,13 @@ import com.augustnagro.magnum.*
   *
   * The fixtures are deliberately one source per defect, all under a `zzlint_` prefix, so the
   * assertions can ignore whatever else the test database happens to hold. */
-class LintRepoSuite extends munit.FunSuite:
+class LintRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 

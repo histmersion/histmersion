@@ -55,7 +55,7 @@ import javax.sql.DataSource
   * Writes (the patch, the ledger, the proposals, the log and tasks lines) go through the run's gate. A
   * DRY run records them on their steps, carries the ledger in memory, and hands the fixer's unwritten
   * revision to the next pass IN MEMORY, so a `fix` dry run exercises every pass a real one would. */
-final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
+final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
     approvals: Approvals, definitions: AgentDefinitions) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.ReviewArticle
 

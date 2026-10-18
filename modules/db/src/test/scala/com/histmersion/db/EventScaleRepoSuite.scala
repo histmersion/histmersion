@@ -10,13 +10,13 @@ import com.augustnagro.magnum.*
   * `auto` reset, and `EventRepo.geo` — each event's anchor (a point, or the point-on-surface of an
   * area), the outline of a REGIONAL event's area only, the unplaced count — and the bundle carrying a
   * stated scale. Fixtures sit at 120–125°E, 50°S, ids start with `zqes`. */
-class EventScaleRepoSuite extends munit.FunSuite with Bounded:
+class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -54,7 +54,7 @@ class EventScaleRepoSuite extends munit.FunSuite with Bounded:
       ev("zqes_own_area", "event", geometry = Square)                      // its own area: regional
       ev("zqes_unplaced", "battle")                                        // nowhere
       ev("zqes_stated", "battle", place = Some("zqes_area"), scale = Some("regional"))
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def summary(id: String): EventSummary = EventRepo.get(ds, id).getOrElse(fail(s"no $id")).event
 

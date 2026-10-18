@@ -18,9 +18,10 @@ import java.nio.charset.StandardCharsets
   *
   * One instance per connection (`initPipeline` runs per channel): `discarding` is that connection's
   * state, never shared. */
-final class AuthHandler(apiKey: String, tokens: com.histmersion.server.agents.RunTokens = com.histmersion.server.agents.RunTokens())
+final class AuthHandler(apiKey: () => String, tokens: com.histmersion.server.agents.RunTokens = com.histmersion.server.agents.RunTokens())
     extends ChannelInboundHandlerAdapter:
-  private val expected = s"Bearer $apiKey"
+  /** The key is read per request (a config reload may set, change or clear it); none = no gate. */
+  private def expected: Option[String] = Option(apiKey()).filter(_.nonEmpty).map(k => s"Bearer $k")
   private val body401  = """{"message":"unauthorized"}""".getBytes(StandardCharsets.UTF_8)
   // `var`: this connection is between a refused request's head and its last chunk
   private var discarding = false
@@ -28,7 +29,7 @@ final class AuthHandler(apiKey: String, tokens: com.histmersion.server.agents.Ru
   override def channelRead(ctx: ChannelHandlerContext, msg: AnyRef): Unit =
     msg match
       case req: HttpRequest if AuthHandler.isWrite(req.method()) &&
-          req.headers().get(HttpHeaderNames.AUTHORIZATION) != expected && !byRunToken(req) && !AuthHandler.open(req) =>
+          expected.exists(_ != req.headers().get(HttpHeaderNames.AUTHORIZATION)) && !byRunToken(req) && !AuthHandler.open(req) =>
         discarding = !req.isInstanceOf[LastHttpContent]
         val keepAlive = HttpUtil.isKeepAlive(req)
         val _ = ReferenceCountUtil.release(req)

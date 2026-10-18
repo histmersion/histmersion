@@ -8,7 +8,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 /** The stream-2.8 surface over real HTTP: status codes and JSON shapes are part of the contract, so
   * they are asserted through the wire rather than through the handlers. Skipped without
   * HISTMERSION_TEST_DB_URL. */
-class OpsHttpSuite extends munit.FunSuite:
+class OpsHttpSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -36,11 +36,11 @@ class OpsHttpSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
-      lock = com.histmersion.db.Db.dataSource(AppConfig.load().db.copy(url = testDb.get)).getConnection
+      lock = testPool(AppConfig.load().db.copy(url = testDb.get)).getConnection
       val st = lock.createStatement()
       try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") } finally st.close()
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if lock != null then
       val st = lock.createStatement()
       try { val _ = st.execute(s"SELECT pg_advisory_unlock($LockKey)") } finally st.close()

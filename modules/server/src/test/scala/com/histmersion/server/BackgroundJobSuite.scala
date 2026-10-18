@@ -7,7 +7,7 @@ import java.util.concurrent.CountDownLatch
 
 /** [[BackgroundJob]] (#1946): the one runner of the server's long work. Pure parts always; the job rows
   * on a test database (gated on HISTMERSION_TEST_DB_URL). */
-class BackgroundJobSuite extends munit.FunSuite:
+class BackgroundJobSuite extends com.histmersion.db.DbSuite:
   import BackgroundJob.Outcome
 
   test("an outcome: a summary, and why it failed when it did"):
@@ -24,7 +24,7 @@ class BackgroundJobSuite extends munit.FunSuite:
   // ── on a test database ────────────────────────────────────────────────────────────────────────
   private val testDb = com.histmersion.db.TestDb.url
   private lazy val ds =
-    val d = Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private def dbTest(name: String)(body: => Unit): Unit =

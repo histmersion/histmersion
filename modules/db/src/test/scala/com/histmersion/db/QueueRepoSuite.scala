@@ -10,12 +10,12 @@ import com.augustnagro.magnum.*
   * The parser and renderer are pure and covered by `core/QueueSuite` on the REAL `meta` files; what is
   * tested here is that a row survives the database unchanged — multi-line text, unicode headings,
   * status transitions and the insertion order the export depends on. */
-class QueueRepoSuite extends munit.FunSuite:
+class QueueRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -34,7 +34,7 @@ class QueueRepoSuite extends munit.FunSuite:
       val st = lock.createStatement()
       try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") } finally st.close()
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if lock != null then
       val st = lock.createStatement()
       try { val _ = st.execute(s"SELECT pg_advisory_unlock($LockKey)") } finally st.close()

@@ -3,12 +3,12 @@ package com.histmersion.db
 import com.histmersion.core.*
 
 /** Round-trips against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. */
-class RepoSuite extends munit.FunSuite:
+class RepoSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = Db.dataSource(base.copy(url = testDb.get))
+    val d    = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val src = Source(

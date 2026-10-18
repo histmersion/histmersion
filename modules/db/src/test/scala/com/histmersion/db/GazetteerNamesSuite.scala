@@ -13,13 +13,13 @@ import java.nio.file.{Files, Path}
   *
   * Only the places listed in [[Wanted]] are imported, under their real ids; this suite deletes exactly
   * those (and its `zzgn_` fixtures) before and after. */
-class GazetteerNamesSuite extends munit.FunSuite with Bounded:
+class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
   private lazy val settings =
@@ -72,7 +72,7 @@ class GazetteerNamesSuite extends munit.FunSuite with Bounded:
       assertEquals(seed.map(_.place.id).toSet, Wanted, "every wanted place is in the bundled seed")
       val _ = PlaceRepo.upsertPlaces(ds, seed)
 
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def resolve(name: String, at: Option[Period] = None) =
     Geocoder.resolve(ds, name, KindHint.Unknown, at, cfg.places.geocodePlaceholderMin)

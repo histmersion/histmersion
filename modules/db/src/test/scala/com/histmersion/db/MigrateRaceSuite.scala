@@ -10,11 +10,11 @@ import scala.jdk.CollectionConverters.*
   * creates is cluster-global, so both used to try to create it and the second failed. Works in
   * databases of its own (`histmersion_race_*_test`) and a throwaway role, both dropped afterwards.
   * Skipped without HISTMERSION_TEST_DB_URL. */
-class MigrateRaceSuite extends munit.FunSuite with Bounded:
+class MigrateRaceSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg              = AppConfig.load()
-  private lazy val admin            = Db.dataSource(cfg.db.copy(url = testDb.get))
+  private lazy val admin            = testPool(cfg.db.copy(url = testDb.get))
   private val created               = scala.collection.mutable.ListBuffer.empty[String]
   private val role                  = s"histmersion_race_${java.lang.Long.toHexString(System.nanoTime)}"
 
@@ -41,7 +41,7 @@ class MigrateRaceSuite extends munit.FunSuite with Bounded:
       pool.invokeAll(tasks.asJava, 4, TimeUnit.MINUTES).asScala.toList.map(_.get)
     finally pool.shutdownNow(): Unit
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if testDb.isDefined then
       created.foreach(n => exec(admin, s"DROP DATABASE IF EXISTS $n WITH (FORCE)"))
       exec(admin, s"DROP ROLE IF EXISTS $role")
@@ -59,7 +59,7 @@ class MigrateRaceSuite extends munit.FunSuite with Bounded:
       exec(admin, s"CREATE DATABASE $n")
       created += n
     }
-    val dss = names.map(n => Db.dataSource(cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$n$$1"))))
+    val dss = names.map(n => testPool(cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$n$$1"))))
     val outcomes = together(2)(i => Migrate.run(dss(i)))
     assert(outcomes.forall(_.isSuccess), outcomes.collect { case scala.util.Failure(e) => e.getMessage })
     assertEquals(outcomes.map(_.get).distinct.size, 1, "both at the same version")

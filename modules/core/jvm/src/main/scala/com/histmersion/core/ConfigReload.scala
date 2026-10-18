@@ -26,6 +26,7 @@ object ConfigReload:
     "histmersion.runtime"                        -> "the bundled PostgreSQL and converter are started once",
     "histmersion.agents.enabled"                 -> "the agent pool is started (or not) at startup",
     "histmersion.agents.max-concurrent-runs"     -> "the size of the agent pool, started once",
+    "histmersion.agents.max-llm-calls-in-flight" -> "the LLM-call semaphore, sized once",
     "histmersion.converter.parallelism"          -> "the size of the OCR worker pool, started once")
 
   def restartOnly(key: String): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))

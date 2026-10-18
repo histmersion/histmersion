@@ -39,9 +39,9 @@ import javax.sql.DataSource
   * A dispatch is ONE transaction — the run row, the item's compare-and-set to active, the hints it
   * reached, the event — and the run is submitted only after the commit (a crash in between leaves a
   * queued run, which the engine's restart re-enqueues). */
-final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsHandlers, h: com.histmersion.server.Handlers):
+final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: AgentsHandlers, h: com.histmersion.server.Handlers):
 
-  private val mcfg = cfg.managers
+  private def mcfg = cfg.managers
 
   /** The ticking thread; a `var` because it starts after construction and stops in tests. */
   @volatile private var thread: Option[Thread] = None
@@ -78,14 +78,14 @@ final class ManagerSupervisor(ds: DataSource, cfg: AgentsConfig, agents: AgentsH
     thread = None
 
   private def loop(): Unit =
-    val every = math.max(1, mcfg.tickSeconds).toLong
     try
       while !stopping do
-        try { val _ = tick(Instant.now()) }
+        // one tick, one generation: its database and config throughout (a reload moves the next one)
+        try { val _ = agents.pins.pinned(tick(Instant.now())) }
         catch
           case e: InterruptedException => throw e
           case e: Exception            => scribe.warn(s"agent managers tick failed: ${e.getMessage}", e)
-        val _ = nudges.poll(every, TimeUnit.SECONDS)
+        val _ = nudges.poll(math.max(1, mcfg.tickSeconds).toLong, TimeUnit.SECONDS)
         nudges.clear()
     catch case _: InterruptedException => ()
 

@@ -55,7 +55,7 @@ final case class Refreshed(mode: String, ok: Boolean, detail: String):
   * through its probe — one at a time per pool ([[RefreshGate]]), at most once per `stale-minutes`. A
   * pool whose runtime has no login is unavailable, never offered. `seams` are how a test stands in for
   * the CLIs. */
-final class PlanPools(ds: DataSource, cfg: AgentsConfig, codexHome: () => Option[java.nio.file.Path],
+final class PlanPools(ds: DataSource, cfg: => AgentsConfig, codexHome: () => Option[java.nio.file.Path],
     seams: PlanPools.Seams = PlanPools.Seams.Real) extends PoolSink:
 
   private val slots = ConcurrentHashMap[PoolId, Semaphore]()

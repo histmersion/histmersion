@@ -11,7 +11,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * runs): a seeding manager is created paused with its first propose item, `/api/agents/enqueue` routes
   * review / extend / enrich / seed, a bad kind is a 400, and the `manager` tool creates and enqueues
   * through the same handlers. Skipped without HISTMERSION_TEST_DB_URL. */
-class ManagersHttpSuite extends munit.FunSuite:
+class ManagersHttpSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -30,7 +30,7 @@ class ManagersHttpSuite extends munit.FunSuite:
   private val Goal = "zqmgr-http-goal"
 
   private def clean(cfg: AppConfig): Unit =
-    val ds = com.histmersion.db.Db.dataSource(cfg.db)
+    val ds = testPool(cfg.db)
     com.histmersion.db.Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM agent_managers".update.run()

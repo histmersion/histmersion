@@ -14,14 +14,15 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def this(deps: Deps) = this(deps, ConverterClient.fromConfig(deps.cfg.converter))
 
   private val ds  = deps.ds
-  private val cfg = deps.cfg
+  /** Read at each use: a config reload switches it (Deps). */
+  private def cfg = deps.cfg
 
   /** Every source write re-materialises that citekey's `finding_places` (see `SourceRepo.write`), so
     * the gazetteer tolerance travels with the write rather than only with `places rebuild`. */
-  private val tolKm = cfg.places.pointToleranceKm
-  private val backups = BackupService(cfg)
-  private val backupJobs = BackupJobs(backups, cfg.backups.requestWaitSeconds)
-  private val vacuumJobs = VacuumJobs(ds, deps.maintenance, () => cfg.maintenance.tables)
+  private def tolKm = cfg.places.pointToleranceKm
+  private val backups = BackupService(deps.cfg)
+  private val backupJobs = BackupJobs(backups, deps.cfg.backups.requestWaitSeconds, deps.pins)
+  private val vacuumJobs = VacuumJobs(ds, deps.maintenance, () => cfg.maintenance.tables, deps.pins)
 
   /** One lock per server (plan §1.10): held by a restore, checked by EVERY write — here, in
     * `OpsHandlers`, in `IngestHandlers` and in the acquisition handlers, which is why it lives on
@@ -57,6 +58,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   val agents: com.histmersion.server.agents.AgentsHandlers = com.histmersion.server.agents.AgentsHandlers(deps, this)
 
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
+
+  /** `POST /api/config/reload` (MCP `config`, `histmersion config reload`): the config file read again
+    * and the server switched to it in place — docs/research-plugins.md §3.5. */
+  def configReload(): ReloadReport = deps.reloader()
 
   def health: Health =
     val conv = ingest.converterHealth
@@ -944,7 +949,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or
     * why it failed. */
   private def placesJob(kind: String, about: String)(run: => Either[String, String]): Either[ApiError, JobInfo] =
-    BackgroundJob.start(ds, kind, Some(JobDetail(about = Some(about))), placesSlot, "a places job")((_, progress) =>
+    BackgroundJob.start(ds, kind, Some(JobDetail(about = Some(about))), placesSlot, "a places job",
+      pins = deps.pins)((_, progress) =>
       progress(about)
       scribe.info(s"[import] $about…")
       val r = run
@@ -1062,7 +1068,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         // Every pooled connection now holds a session cache describing types the restore dropped;
         // PostGIS in particular fails outright on the next spatial query. Throw them away here,
         // while the maintenance lock still keeps everyone else out.
-        _     = com.histmersion.db.Db.evictAll()
+        _     = { com.histmersion.db.Db.evict(ds); com.histmersion.db.Db.evict(deps.queryDs) }
         // An older dump comes up to this build's schema now rather than at the next restart; the
         // database settings and the read-only role's grants are not in a `--no-privileges` dump.
         _    <- scala.util.Try(Migrate.run(ds)).toEither.left.map(e =>
@@ -1070,7 +1076,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         _     = com.histmersion.db.Db.ensureDatabaseSettings(ds)
         role  = com.histmersion.db.Db.provisionQueryRole(ds, cfg.query).left.toOption
                   .map(m => s"the read-only role '${cfg.query.user}' was not re-provisioned: $m").toList
-        _     = com.histmersion.db.Db.evictAll()
+        _     = { com.histmersion.db.Db.evict(ds); com.histmersion.db.Db.evict(deps.queryDs) }
         v    <- Migrate.validate(ds).left.map(m => ApiError(s"restored ${req.file}, but the schema does not validate: $m"))
       yield RestoreResult(req.file, v, before, BackupRepo.sourceCount(ds), r._1, r._2 ++ role)
 

@@ -42,14 +42,14 @@ final class Maintenance:
   *
   * Nothing here is a constant: the directory, the optional binary directory and the timeout all come
   * from `histmersion.backups.*`. */
-final class BackupService(cfg: AppConfig):
+final class BackupService(cfg: => AppConfig): // by name: read at each use (a config reload switches it)
 
-  private val backups   = cfg.backups
-  private val timeoutS  = math.max(1, backups.timeoutSeconds)
+  private def backups   = cfg.backups
+  private def timeoutS  = math.max(1, backups.timeoutSeconds)
   private val createdAt = DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC)
 
   /** Absolute, so a relative config value does not depend on where a handler thread thinks it is. */
-  val dir: Path = Path.of(backups.dir).toAbsolutePath.normalize
+  def dir: Path = Path.of(backups.dir).toAbsolutePath.normalize
 
   // ── locating the binaries ─────────────────────────────────────────────────────────────────────
 
@@ -226,7 +226,8 @@ final class BackupService(cfg: AppConfig):
   * `running`, and `GET /api/backup/status` reports the job until it is done or failed.
   *
   * One job at a time: a second `start` while one runs joins it rather than dumping twice. */
-final class BackupJobs(service: BackupService, waitSeconds: Int):
+final class BackupJobs(service: BackupService, waitSeconds: => Int,
+    pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none):
   import java.util.concurrent.{CompletableFuture, TimeoutException}
   import java.util.concurrent.atomic.AtomicReference
 
@@ -244,9 +245,9 @@ final class BackupJobs(service: BackupService, waitSeconds: Int):
           val f = CompletableFuture[Either[ApiError, BackupResult]]()
           val j = Job(p.file, System.nanoTime(), f)
           current.set(Some(j))
-          val _ = Thread.ofPlatform().daemon(true).name("histmersion-backup").start { () =>
-            f.complete(scala.util.Try(p.run()).toEither.left.map(e => ApiError(s"backup crashed: ${e.getMessage}")).flatten)
-          }
+          // the dump runs on the generation (database) the request was pinned to
+          val work = pins.carry(f.complete(scala.util.Try(p.run()).toEither.left.map(e => ApiError(s"backup crashed: ${e.getMessage}")).flatten))
+          val _ = Thread.ofPlatform().daemon(true).name("histmersion-backup").start(() => { val _ = work.run() })
           j
         }
     job.map { j =>

@@ -34,14 +34,14 @@ import scala.jdk.OptionConverters.*
 final class IngestHandlers(deps: Deps, converter: ConverterClient,
     afterStore: String => Option[String] = _ => None):
   private val ds          = deps.ds
-  private val cfg         = deps.cfg
+  private def cfg         = deps.cfg
   private val maintenance = deps.maintenance
 
   /** Everything a queued job needs that is not in its row. Concurrent because the HTTP thread writes
     * it and a worker thread reads it; entries die with the process, exactly like the queue. */
   private val pending = java.util.concurrent.ConcurrentHashMap[String, IngestHandlers.Pending]()
 
-  private val pool = Jobs(ds, cfg.converter.parallelism, runJob)
+  private val pool = Jobs(ds, cfg.converter.parallelism, runJob, deps.pins)
 
   /** Started by the composition root, after construction. Returns the jobs a restart had to fail. */
   def start(): Int =

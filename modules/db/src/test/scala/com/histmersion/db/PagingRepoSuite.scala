@@ -9,13 +9,13 @@ import com.augustnagro.magnum.*
   * Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write jobs and approvals at the
   * same time, so each fixture is kept apart: its jobs carry a status of their own, its runs a goal of
   * their own, its approvals sit in 1971, older than anything another suite writes. */
-class PagingRepoSuite extends munit.FunSuite:
+class PagingRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = Db.dataSource(base.copy(url = testDb.get))
+    val d    = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val tag = s"zzpg${System.nanoTime().toHexString.takeRight(8)}"
@@ -31,7 +31,7 @@ class PagingRepoSuite extends munit.FunSuite:
       }
     ids.reverse // newest first
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if testDb.nonEmpty then
       transact(ds):
         sql"DELETE FROM approvals WHERE citekey LIKE ${tag + "%"}".update.run()

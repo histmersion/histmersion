@@ -17,6 +17,32 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
 
   def isHeld: Boolean = held
 
+  /** Has [[start]] run (agents on)? Only then is the lease kept — and claimed again on a swapped
+    * database. */
+  def started: Boolean = thread.isDefined
+
+  /** A swapped database (docs/research-plugins.md §3.6): claim the lease on `target` — the new pool,
+    * before the swap is published — when this server keeps it at all. `true` = held there. The renewal
+    * thread goes on renewing it through the server's DataSource, which then is the new pool. */
+  def claimOn(target: DataSource): Boolean =
+    if !started then false
+    else
+      val ok =
+        try ManagerRepo.claim(target, AgentLease.Name, owner, ttlSeconds)
+        catch
+          case e: Exception =>
+            scribe.warn(s"agent lease: could not claim it on the new database: ${e.getMessage}")
+            false
+      held = ok
+      ok
+
+  /** Give the lease up on `target` (an old database, when its generation closes) if this server holds
+    * it there; nothing otherwise. */
+  def releaseOn(target: DataSource): Unit =
+    if started then
+      try ManagerRepo.release(target, AgentLease.Name, owner)
+      catch case e: Exception => scribe.warn(s"agent lease: could not release it on the old database: ${e.getMessage}")
+
   /** Claim or renew now; `true` = held. A database error is a lost renewal, logged. */
   def claim(): Boolean =
     val ok =
@@ -29,7 +55,7 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
     held = ok
     ok
 
-  private def holderText: String =
+  def holderText: String =
     try ManagerRepo.holder(ds, AgentLease.Name).fold("nobody")((o, until, _) => s"$o until $until")
     catch case _: Exception => "unknown"
 

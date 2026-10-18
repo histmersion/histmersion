@@ -20,7 +20,7 @@ import scala.jdk.CollectionConverters.*
   * the lease, and the hints (snapshotted into the run, reaching the fixer's and the skeptic's user
   * message, once-hints retired). Runs are scripted ([[PanelClient]]) or settled by hand; no provider
   * is ever called. Skipped without HISTMERSION_TEST_DB_URL. */
-class ManagerRunSuite extends munit.FunSuite:
+class ManagerRunSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(180, "s")
@@ -56,7 +56,7 @@ class ManagerRunSuite extends munit.FunSuite:
         // the scripted rules reviewer looks nothing up: ReviewArticleRunSuite holds the spot-checks
         review = b.agents.review.copy(spotChecks = 0)))
 
-  private lazy val ds = Db.dataSource(baseCfg.db)
+  private lazy val ds = testPool(baseCfg.db)
 
   private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)

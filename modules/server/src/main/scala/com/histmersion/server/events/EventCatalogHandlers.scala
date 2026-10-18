@@ -16,8 +16,8 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
   def this(deps: Deps) = this(deps, JavaMediaHttp(deps.cfg.events.timeoutSeconds))
 
   private val ds  = deps.ds
-  private val cfg = deps.cfg
-  private val ec  = cfg.events
+  private def cfg = deps.cfg
+  private def ec  = cfg.events
 
   /** The configured Wikidata classes' kinds, the most specific first. */
   private def classOrder: List[String] = ec.wikidata.classList.map(_._2)
@@ -39,7 +39,8 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
   private def startJob(kind: String, describe: String, write: Boolean)(body: (JobInfo, String => Unit) => Either[String, String])
       : Either[ApiError, JobInfo] =
     def go: Either[ApiError, JobInfo] =
-      BackgroundJob.start(ds, kind, Some(JobDetail(events = Some(describe))), slot, "an events run")((job, progress) =>
+      BackgroundJob.start(ds, kind, Some(JobDetail(events = Some(describe))), slot, "an events run",
+        pins = deps.pins)((job, progress) =>
         BackgroundJob.Outcome.of(body(job, progress)))
     if write then deps.maintenance.guard(kind)(go) else go
 

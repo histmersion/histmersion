@@ -42,7 +42,7 @@ enum ToolName(val wire: String):
   case CheckEdits extends ToolName("check_edits")
   case ArticleCoverage extends ToolName("article_coverage")
 
-final class Toolbox(h: Handlers, upstream: () => AgentUpstream, caps: AgentToolsConfig = AgentToolsConfig.Off):
+final class Toolbox(h: Handlers, upstream: () => AgentUpstream, caps: => AgentToolsConfig = AgentToolsConfig.Off):
   import ToolResultCap.cap
 
   private def max = caps.resultMaxChars

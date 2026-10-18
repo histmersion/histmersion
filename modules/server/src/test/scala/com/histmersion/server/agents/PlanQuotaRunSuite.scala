@@ -16,7 +16,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * `plan-quota` until the reset instead of falling through to a paid key (unless the role allows it),
   * resumes it once the window resets; the readings repo keeps the newest; the quota-guard endpoint;
   * the REST surface with a run token under an API key. Skipped without HISTMERSION_TEST_DB_URL. */
-class PlanQuotaRunSuite extends munit.FunSuite:
+class PlanQuotaRunSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
@@ -35,7 +35,7 @@ class PlanQuotaRunSuite extends munit.FunSuite:
         roles = b.agents.roles.copy(extractor = s"${Plan.wire} > ${Paid.wire}"),
         providers = b.agents.providers.copy(codex = b.agents.providers.codex.copy(appServer = false))))
 
-  private lazy val ds = Db.dataSource(baseCfg.db)
+  private lazy val ds = testPool(baseCfg.db)
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private val Body = "# Introduction\n\nTin was essential for bronze. The Uluburun ship carried ten tons of copper and one ton of tin.\n"

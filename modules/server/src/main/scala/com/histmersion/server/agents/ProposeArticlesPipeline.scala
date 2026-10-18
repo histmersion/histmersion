@@ -23,7 +23,7 @@ import javax.sql.DataSource
   * Steps: load · propose (LLM, `article-planner`: `search`, `facets`, `get_article`, `article_coverage`,
   * `get_source`, read only; a plan with nothing left after the checks goes back with why) · record (the
   * approval) · close (the worklog line). A DRY run records the approval it would open on its step. */
-final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig) extends PipelineDef:
+final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.ProposeArticles
   import ProposeArticlesPipeline.*
 

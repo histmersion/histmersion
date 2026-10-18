@@ -10,7 +10,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * (and so `article get`), the `/article/{slug}` page, the export (and the import that drops them
   * again), the `article_coverage` MCP tool, and the 404 of an article that records no filter.
   * Skipped without HISTMERSION_TEST_DB_URL. */
-class ArticleCoverageHttpSuite extends munit.FunSuite:
+class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
@@ -49,7 +49,7 @@ class ArticleCoverageHttpSuite extends munit.FunSuite:
   private def clean(url: String, cfg: AppConfig): Unit =
     List(Slug, Plain).foreach(s => delete(s"$url/api/articles/$s"))
     import com.augustnagro.magnum.*
-    connect(com.histmersion.db.Db.dataSource(cfg.db)):
+    connect(testPool(cfg.db)):
       sql"DELETE FROM sources WHERE citekey LIKE 'zzcov%'".update.run()
 
   private val Body =

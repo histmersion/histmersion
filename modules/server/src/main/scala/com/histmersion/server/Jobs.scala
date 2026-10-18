@@ -19,9 +19,17 @@ import java.util.concurrent.LinkedBlockingQueue
   *
   * Structured concurrency is Ox's: the workers are `forkUser`s inside one `supervised` scope, which
   * lives on a single daemon thread so that binding the HTTP port is not blocked by it. */
-final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit):
+final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit,
+    pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none):
 
-  private val queue = LinkedBlockingQueue[String]()
+  /** A job id and the generation it was submitted on: it runs there — on the database its row is in,
+    * even after a config reload swapped the database (docs/research-plugins.md §3.6). */
+  private final case class Queued(id: String, work: com.histmersion.server.hot.Carried[Unit])
+  private val queue = LinkedBlockingQueue[Queued]()
+
+  /** The jobs this pool holds — queued in memory or running: a reconciliation never fails them (a
+    * config reload that swapped back to their database runs one, §3.6). */
+  private val held = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
 
   /** The thread hosting the Ox scope. A `var` because the pool is started by the composition root
     * AFTER construction (no side effects in initialisers) and stopped by tests. */
@@ -45,7 +53,8 @@ final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit):
   /** Reconcile interrupted jobs, then start `parallelism` workers. Returns how many rows the restart
     * had to fail. Idempotent: calling it twice does not start a second pool. */
   def start(): Int =
-    val interrupted = JobRepo.failInterrupted(ds)
+    import scala.jdk.CollectionConverters.*
+    val interrupted = JobRepo.failInterrupted(ds, held.asScala.toList)
     if scope.isEmpty then
       val t = Thread.ofPlatform().daemon(true).name("histmersion-jobs").unstarted(() => pool())
       scope = Some(t)
@@ -55,10 +64,25 @@ final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit):
   /** Hand a job id to the pool. The queue is unbounded on purpose: admission control is the `jobs`
     * table (a duplicate upload is refused before it ever gets here), and dropping an accepted job
     * would strand a row in `queued` forever. */
-  def submit(jobId: String): Unit = queue.put(jobId)
+  def submit(jobId: String): Unit =
+    val _ = held.add(jobId)
+    queue.put(Queued(jobId, pins.carry(try runOne(jobId) finally { val _ = held.remove(jobId) })))
+
+  /** One job, its unexpected failure recorded — both on the job's own generation. */
+  private def runOne(id: String): Unit =
+    try run(id)
+    catch
+      case e: InterruptedException => throw e
+      case e: Throwable =>
+        // a worker must outlive one bad job: record the failure and take the next id
+        scribe.error(s"job $id failed unexpectedly: ${e.getMessage}", e)
+        val _ = JobRepo.transition(ds, id, JobState.Running, JobState.Failed,
+          error = Some(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
 
   /** Stop the pool (tests, shutdown). Interrupting the scope thread cancels every fork. */
   def stop(): Unit =
+    // a queued job's row stays queued, and the next start fails it as interrupted; its pin goes now
+    Iterator.continually(queue.poll()).takeWhile(_ != null).foreach { q => q.work.drop(); val _ = held.remove(q.id) }
     scope.foreach(_.interrupt())
     scope = None
 
@@ -78,14 +102,10 @@ final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit):
     var running = true                               // the loop's exit flag; interruption clears it
     while running do
       try
-        val id = queue.take()
+        val q = queue.take()
         awaitResume()                                // a restore holds the pool here
-        try run(id)
+        try q.work.run()
         catch
           case e: InterruptedException => throw e
-          case e: Throwable =>
-            // a worker must outlive one bad job: record the failure and take the next id
-            scribe.error(s"job $id failed unexpectedly: ${e.getMessage}", e)
-            val _ = JobRepo.transition(ds, id, JobState.Running, JobState.Failed,
-              error = Some(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
+          case e: Throwable => scribe.error(s"job ${q.id}: recording its failure failed: ${e.getMessage}", e)
       catch case _: InterruptedException => running = false

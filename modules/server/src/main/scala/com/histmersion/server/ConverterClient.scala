@@ -32,7 +32,8 @@ object ConverterClient:
   /** A thumbnail the sidecar made. */
   final case class Thumb(bytes: Array[Byte], mime: String, width: Int, height: Int)
 
-  def fromConfig(cfg: ConverterConfig): ConverterClient = JatsConverter(HttpConverterClient(cfg))
+  /** By name: the server passes `deps.cfg.converter`, read at each request. */
+  def fromConfig(cfg: => ConverterConfig): ConverterClient = JatsConverter(HttpConverterClient(cfg))
 
   /** What `/inspect` reports: all pages, and how many of them have no text layer. */
   final case class PageCount(pages: Int, scanned: Int = 0)
@@ -71,7 +72,7 @@ final class JatsConverter(sidecar: ConverterClient) extends ConverterClient:
 
 /** Multipart `POST /convert` against the sidecar. Stateless and thread-safe: one `HttpClient` is
   * shared by the worker pool, and every request carries its own body. */
-final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
+final class HttpConverterClient(cfg: => ConverterConfig) extends ConverterClient: // by name: a reload may move it
   // HTTP/1.1 explicitly: java.net.http defaults to HTTP/2 and offers an h2c upgrade
   // (`Connection: Upgrade, HTTP2-Settings` + `Upgrade: h2c`), on which uvicorn DISCARDS the request
   // body — the sidecar then answers 422 "field required: file" for a perfectly well-formed upload.
@@ -79,7 +80,7 @@ final class HttpConverterClient(cfg: ConverterConfig) extends ConverterClient:
     .version(HttpClient.Version.HTTP_1_1)
     .connectTimeout(Duration.ofSeconds(10))
     .build()
-  private val base    = cfg.url.trim.stripSuffix("/")
+  private def base    = cfg.url.trim.stripSuffix("/")
 
   private val ConversionTimeoutHint =
     "raise converter.seconds-per-page or converter.timeout-seconds for documents like this one"

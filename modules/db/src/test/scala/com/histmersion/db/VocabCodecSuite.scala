@@ -7,13 +7,13 @@ import com.augustnagro.magnum.*
 /** The vocabulary codecs (#1798 item 11): a stored value the vocabulary does not know reads as its
   * UNKNOWN — a confidence as "not stated", a status as unassessed, a place's dating as unknown —
   * never as a confident member (an unknown confidence used to read as `high`). */
-class VocabCodecSuite extends munit.FunSuite:
+class VocabCodecSuite extends com.histmersion.db.DbSuite:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val ck = "zzvocab_src"
@@ -37,7 +37,7 @@ class VocabCodecSuite extends munit.FunSuite:
 
 /** [[Jsonb]] (#1946): one rule for a jsonb column — what does not decode reads as the fallback or as
   * absent, never as an exception; nulls are dropped only when asked. */
-class JsonbCodecSuite extends munit.FunSuite:
+class JsonbCodecSuite extends com.histmersion.db.DbSuite:
   import hearth.kindlings.circederivation.KindlingsCodecAsObject
 
   final case class Doc(a: Int = 1, b: Option[String] = None) derives KindlingsCodecAsObject

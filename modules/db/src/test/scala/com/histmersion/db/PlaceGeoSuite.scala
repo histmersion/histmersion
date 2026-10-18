@@ -5,7 +5,7 @@ import com.histmersion.core.*
 /** The map layer draws each state ONCE (`PlaceRepo.geoJson`): pure checks of the query, and — against
   * a disposable Postgres (`TestDb`) — the de-duplication on real shapes. Fixtures sit around 150–171°E,
   * 36–41°S, where no other fixture lives. */
-class PlaceGeoSuite extends munit.FunSuite:
+class PlaceGeoSuite extends com.histmersion.db.DbSuite:
   import Param.*
 
   test("an as-of query ranks sources and drops shadowed shapes; the limit comes last"):
@@ -109,7 +109,7 @@ class PlaceGeoSuite extends munit.FunSuite:
 
   private val testDb = TestDb.url
   private lazy val ds =
-    val d = Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private def box(a: Double, b: Double, c: Double, d: Double) =

@@ -8,13 +8,13 @@ import com.augustnagro.magnum.*
   * otherwise. Each test runs the new query and a REFERENCE — the old SQL, kept here verbatim, or the
   * rule computed the plain way — over the same database and compares the whole answers, so the other
   * suites' fixtures in a shared test database only make the comparison stronger. */
-class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
+class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
@@ -72,7 +72,7 @@ class InteractiveQueriesSuite extends munit.FunSuite with Bounded:
         .foreach((id, y, ck) => EventRepo.put(ds, id, EventPut(label = s"Zzi event $id",
           timeSpan = TimeSpan(Some(y), None, None, Some(y)), citekey = ck)))
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if testDb.isDefined then
       List("zzi_art_a", "zzi_art_b").foreach(s => ArticleRepo.delete(ds, s))
       List("zzi_ev_a", "zzi_ev_b", "zzi_ev_none").foreach(e => EventRepo.delete(ds, e))

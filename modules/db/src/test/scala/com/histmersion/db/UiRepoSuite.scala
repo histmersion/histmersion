@@ -9,12 +9,12 @@ import com.augustnagro.magnum.*
   * approval's proposal and its decision both count as a change, a goal's edit does, the open ones are
   * counted, V083 left a baseline mark for every board, and a mark only moves forward. Assertions are
   * about this suite's own rows (other suites write approvals and goals at the same time). */
-class UiRepoSuite extends munit.FunSuite:
+class UiRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
     Migrate.run(d)
     d
 

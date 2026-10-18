@@ -7,13 +7,13 @@ import com.augustnagro.magnum.*
 /** V089 (#1768) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the generated
   * `events.outer_span` is core.EventGeo.outer — an open-ended event covers the end it states, not every
   * year after it — and the map's feed (`/api/events/geo`) and the list follow it. Ids start `zqos`. */
-class EventOuterSpanSuite extends munit.FunSuite:
+class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -21,7 +21,7 @@ class EventOuterSpanSuite extends munit.FunSuite:
     val _ = sql"DELETE FROM events WHERE id LIKE 'zqos%'".update.run()
 
   override def beforeAll(): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def put(id: String, ts: TimeSpan, kind: String = "war") =
     EventRepo.put(ds, id, EventPut(s"Zqos $id", kind, ts, geometry = Some("""{"type":"Point","coordinates":[163.0,-46.0]}""")))

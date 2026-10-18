@@ -16,11 +16,11 @@ import javax.sql.DataSource
   * Every test works in databases of its OWN (`histmersion_bundle_*_test`, created from the test
   * cluster and dropped afterwards), because an export reads the whole database and an "empty
   * instance" must really be empty. Skipped without HISTMERSION_TEST_DB_URL. */
-class BundleSuite extends munit.FunSuite with Bounded:
+class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg              = AppConfig.load()
-  private lazy val admin            = Db.dataSource(cfg.db.copy(url = testDb.get))
+  private lazy val admin            = testPool(cfg.db.copy(url = testDb.get))
   private val created               = scala.collection.mutable.ListBuffer.empty[String]
   private val tmp                   = Files.createTempDirectory("histmersion-bundle-suite")
 
@@ -38,14 +38,14 @@ class BundleSuite extends munit.FunSuite with Bounded:
     exec(admin, s"CREATE DATABASE $name")
     created += name
     val url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")
-    val ds  = Db.dataSource(cfg.db.copy(url = url))
+    val ds  = testPool(cfg.db.copy(url = url))
     Migrate.run(ds)
     // the reference data both sides share (an event points into it)
     val _ = PlaceRepo.upsertPlaces(ds, List(PlaceInput(Place("zzb_place", "Hattusa", "site",
       Some("""{"type":"Point","coordinates":[34.61,40.02]}""")))))
     ds
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if testDb.isDefined then created.foreach(n => exec(admin, s"DROP DATABASE IF EXISTS $n WITH (FORCE)"))
 
   private def spool(n: String): Path = Files.createDirectories(tmp.resolve(n))

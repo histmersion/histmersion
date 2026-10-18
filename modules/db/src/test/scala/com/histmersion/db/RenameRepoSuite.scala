@@ -8,12 +8,12 @@ import com.augustnagro.magnum.*
   * ids move, `[[links]]` in articles (versioned) and source notes follow, parked edges waiting for
   * the new name are promoted, and the old citekey keeps resolving as an alias. Against a real
   * Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
-class RenameRepoSuite extends munit.FunSuite:
+class RenameRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg              = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val Prefix = "zzrn"
@@ -49,7 +49,7 @@ class RenameRepoSuite extends munit.FunSuite:
       sql"DELETE FROM jobs WHERE id LIKE ${Prefix + "%"}".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = clean()
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def count(q: Frag): Int = connect(ds)(q.query[Int].run().head)
 

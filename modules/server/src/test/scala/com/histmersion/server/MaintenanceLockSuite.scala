@@ -9,15 +9,15 @@ import com.histmersion.db.{Db, Migrate}
   * that is about to be replaced, and the writer is told it succeeded. This drives the handlers
   * directly rather than over HTTP: the point is that no write path forgets the guard, and the route
   * layer only translates the answer into a 503. */
-class MaintenanceLockSuite extends munit.FunSuite:
+class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = { val b = AppConfig.load(); b.copy(db = b.db.copy(url = testDb.get)) }
   private lazy val deps =
-    val ds = Db.dataSource(cfg.db)
+    val ds = testPool(cfg.db)
     Migrate.run(ds)
-    Deps(cfg, ds, Db.queryDataSource(cfg.db, cfg.query))
+    Deps(cfg, ds, testQueryPool(cfg.db, cfg.query))
 
   private lazy val h = Handlers(deps, NoConverter)
 

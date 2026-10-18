@@ -20,7 +20,7 @@ import javax.sql.DataSource
   * (then [[ManagersHandlers.applyProposal]]). Started by a person (`suggest` on a hint).
   *
   * Steps: load · propose · record · close. A DRY run records the approval it would open. */
-final class HintEffectPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig) extends PipelineDef:
+final class HintEffectPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.HintEffect
   import HintEffectPipeline.*
 

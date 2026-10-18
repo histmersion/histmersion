@@ -40,7 +40,20 @@ object ConfigCmd:
               Right(()))
   }
 
+  /** `histmersion config reload` — the SERVER reads its config file again and applies it in place
+    * (docs/research-plugins.md §3.5); exit 2 when an error left its config unchanged. */
+  private val reload = Opts.subcommand("reload",
+    "Make the server read its config file again and apply it in place, no restart (restart-only settings are listed, not applied)") {
+    Output.jsonFlag.map { json => (c: Client) =>
+      c.configReload.flatMap { r =>
+        Output.emit(json, r)(ReloadMarkdown.report)
+        if r.errors.isEmpty then Right(())
+        else Left(CliError("the config was not reloaded", exitCode = ExitCode.Refused))
+      }
+    }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("config", "The user config file: settings over the defaults, under the environment") {
-      path
+    Opts.subcommand("config", "The config file: where it is (this machine), and making the server reload it") {
+      path orElse reload
     }

@@ -6,12 +6,12 @@ import com.histmersion.core.*
   * lists are the items RELATED to the sources the global filter selects: an article that cites a
   * matching source is listed, one citing none is not; an event is listed when its source matches and
   * its own span overlaps the period; the title filter narrows each list by the item's own title. */
-class RelatedListsRepoSuite extends munit.FunSuite:
+class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = Db.dataSource(base.copy(url = testDb.get))
+    val d    = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val Tag = "zz-rel-tag"
@@ -43,7 +43,7 @@ class RelatedListsRepoSuite extends munit.FunSuite:
       event("zz_rel_ev_other", "Zz Rel other battle", -1274, Some("zz_rel_other"))
       event("zz_rel_ev_nosrc", "Zz Rel unsourced flood", -1250, None)
 
-  override def afterAll(): Unit =
+  override def afterSuite(): Unit =
     if testDb.isDefined then
       List("zz_rel_cites_match", "zz_rel_cites_other", "zz_rel_cites_none").foreach(s => ArticleRepo.delete(ds, s))
       List("zz_rel_ev_match", "zz_rel_ev_late", "zz_rel_ev_other", "zz_rel_ev_nosrc").foreach(e => EventRepo.delete(ds, e))

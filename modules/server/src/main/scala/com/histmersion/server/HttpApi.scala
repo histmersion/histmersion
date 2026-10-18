@@ -52,6 +52,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.resolveEdges.serverLogic[Identity](_ => h.resolveEdges),
     Api.reindex.serverLogic[Identity]((after, limit) => h.reindex(after, limit)),
     // ── backup / restore (plan §1.10); the listing route precedes the per-file download ──
+    Api.configReload.serverLogic[Identity](_ => Right(h.configReload())),
     Api.backup.serverLogic[Identity](_ => h.backup()),
     Api.maintenanceVacuum.serverLogic[Identity](in => h.vacuum(in)),
     Api.backupStatus.serverLogic[Identity](_ => h.backupStatus),
@@ -232,7 +233,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
 
   // ── IIIF Image API Level 1 (plan §4.3) ───────────────────────────────────────────────────────
 
-  private val baseUrl = deps.cfg.server.publicUrl.stripSuffix("/")
+  private def baseUrl = deps.cfg.server.publicUrl.stripSuffix("/")
 
   private val iiifInfoRoute: ServerEndpoint[Any, Identity] =
     Api.iiifInfo.serverLogic[Identity] { (ck, name) =>

@@ -11,7 +11,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * answer, and the old citekey still answering every read — the JSON routes, the resolver, the
   * export, the article page's links, the MCP tool, and `/source/{old}` redirecting to the new URL.
   * Skipped without HISTMERSION_TEST_DB_URL. */
-class RenameHttpSuite extends munit.FunSuite:
+class RenameHttpSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -38,7 +38,7 @@ class RenameHttpSuite extends munit.FunSuite:
     base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = Key))
 
   private def clean(): Unit =
-    val ds = Db.dataSource(cfg.db)
+    val ds = testPool(cfg.db)
     Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM source_aliases WHERE alias LIKE 'zzhttp%'".update.run()

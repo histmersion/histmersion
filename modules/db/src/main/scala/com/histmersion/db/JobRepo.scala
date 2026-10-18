@@ -110,13 +110,16 @@ object JobRepo:
 
   /** Startup reconciliation: nothing survives the process, so anything still `running` failed with
     * it. Returns how many rows were corrected. Agent runs are NOT touched: their finished steps are
-    * checkpointed, so an interrupted run is paused and resumable (`AgentRepo.reconcile`). */
-  def failInterrupted(ds: DataSource): Int =
+    * checkpointed, so an interrupted run is paused and resumable (`AgentRepo.reconcile`). *
+    * `except`: the jobs this process is still running or holding queued — a config reload that swapped
+    * back to a database (docs/research-plugins.md §3.6) must not fail its own work there. */
+  def failInterrupted(ds: DataSource, except: List[String] = Nil): Int =
     transact(ds):
       sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
                             progress = NULL, updated_at = now()
             WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire})
-              AND kind <> ${Agents.JobKind}""".update.run()
+              AND kind <> ${Agents.JobKind}
+              AND NOT (id = ANY($except::text[]))""".update.run()
 
   // ── merge apply (#888) ─────────────────────────────────────────────────────────────────────────
 

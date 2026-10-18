@@ -14,7 +14,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * figures with a thumbnail from the (fake) converter and shown on the source's card; a Calibre cover
   * uploaded and shown before it; Open Library's cover by ISBN, politely, 404 as "none"; a place's card
   * through an equivalent; the import as a JOB, batch by batch, followed in `jobs`. Fixtures: `zqms`. */
-class MediaSourcesSuite extends munit.FunSuite:
+class MediaSourcesSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -24,7 +24,7 @@ class MediaSourcesSuite extends munit.FunSuite:
       media = base.media.copy(requestIntervalMs = 0, importBatch = 1,
         covers = base.media.covers.copy(requestIntervalMs = 0)))
   private lazy val ds =
-    val d = Db.dataSource(cfg.db)
+    val d = testPool(cfg.db)
     Migrate.run(d)
     d
 
@@ -76,7 +76,7 @@ class MediaSourcesSuite extends munit.FunSuite:
           List(PlaceName("Zqms Mykenai"))),
         PlaceInput(Place("zqms_dup", "Zqms Mykenai", PlaceKind.Site, Some("""{"type":"Point","coordinates":[-60.005,-50]}""")),
           List(PlaceName("Zqms Mykenai")))))
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   test("a paper's illustration: the map, not the logo; its thumbnail from the converter; dry run first"):
     val conv = ThumbConverter()

@@ -9,13 +9,13 @@ import com.histmersion.core.Tree.TreeRow
   * **two OVERLAPPING polity polygons** under one parent region, so a finding in the overlap is
   * materialised into both (non-additive counts), a period on each polity so the as-of walk has
   * something to drop, and **one finding nowhere at all** so the `unlocated` leaf has an occupant. */
-class TreeRepoSuite extends munit.FunSuite:
+class TreeRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =

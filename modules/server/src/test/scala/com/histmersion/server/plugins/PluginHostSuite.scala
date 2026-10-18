@@ -375,3 +375,53 @@ class PluginHostSuite extends munit.FunSuite:
     val shown = g.report.toString + logs.lines.mkString
     assert(!shown.contains("session-from") && !shown.contains("kp-master"), shown)
     assert(statusOf(g, "bitwarden").settings.contains(PluginSetting("session", "keepassxc:Histmersion/bw#password")))
+
+  // ── a config reload: only the plugins whose block changed (docs/research-plugins.md §3.5) ────────
+
+  test("reload: an unchanged plugin is carried over, a changed one registered again"):
+    val seen    = scala.collection.mutable.Buffer.empty[String]
+    val calls   = AtomicInteger()
+    val makerUp = scala.collection.mutable.Buffer.empty[PluginContext]
+    def plugins = List(EchoPlugin(seen), MakerPlugin(calls, escape = makerUp), ConsumerPlugin(scala.collection.mutable.Buffer.empty))
+    val before = "histmersion.plugins { echo { enabled = true, greeting = hi }, maker.enabled = true }"
+    val (g1, _) = build(plugins, before)
+    assertEquals(g1.rebuilt.toSet, Set("echo", "maker", "consumer"))
+    assertEquals(makerUp.size, 1)
+    // only echo's block changed: maker (a vault, unchanged) and consumer (disabled) are carried
+    val changed = List("histmersion.plugins.echo.greeting")
+    val carried = Plugins.carried(g1, changed)
+    assertEquals(carried.keySet, Set("maker", "consumer"))
+    val (l, s) = services()
+    val g2 = PluginHost.build(plugins, conf("histmersion.plugins { echo { enabled = true, greeting = hey }, maker.enabled = true }"),
+      ConfigFactory.empty, s, carried = carried)
+    assertEquals(g2.rebuilt, List("echo"))
+    assertEquals(makerUp.size, 1, "maker was not registered again")
+    assertEquals(seen.toList.map(_.takeWhile(_ != '|')), List("hi", "hey"))
+    assertEquals(g2.registries.secretVaults.keySet, Set("fake"), "the carried vault is still registered")
+    assertEquals(statusOf(g2, "maker").state, "registered")
+    assertEquals(statusOf(g2, "consumer").state, "disabled")
+    assertEquals(g2.report.plugins.map(_.id), g1.report.plugins.map(_.id), "the order is kept")
+
+  test("reload: a vault plugin changed, `order` changed or a host key changed — every plugin is registered again"):
+    val (g1, _) = build(List(EchoPlugin(), MakerPlugin()), "histmersion.plugins { echo.enabled = true, maker.enabled = true }")
+    assertEquals(Plugins.carried(g1, List("histmersion.plugins.maker.vault")), Map.empty)
+    assertEquals(Plugins.carried(g1, List("histmersion.plugins.order")), Map.empty)
+    assertEquals(Plugins.carried(g1, List("histmersion.acquire.chain")), Map.empty)
+    assertEquals(Plugins.carried(g1, List("histmersion.plugins")), Map.empty)
+    // keys no plugin reads do not count
+    assertEquals(Plugins.carried(g1, List("histmersion.limits.search")).keySet, Set("echo", "maker"))
+
+  test("reload: a plugin holding a secret is never carried (a rotated password needs only a reload); a failed one is retried"):
+    val user = "histmersion.plugins { maker.enabled = true, consumer { enabled = true, token = \"fake:t\" }, echo { enabled = true, max-items = many } }"
+    val (g1, _) = build(List(MakerPlugin(), ConsumerPlugin(scala.collection.mutable.Buffer.empty), EchoPlugin()), user)
+    assertEquals(statusOf(g1, "consumer").state, "registered")
+    assertEquals(statusOf(g1, "echo").state, "failed")
+    assertEquals(g1.withSecrets, Set("consumer"))
+    assertEquals(Plugins.carried(g1, List("histmersion.plugins.other.x")).keySet, Set("maker"))
+
+  test("pluginId: the plugin a key belongs to, quoted ids too; None for order and the block"):
+    assertEquals(Plugins.pluginId("histmersion.plugins.pmc.enabled"), Some("pmc"))
+    assertEquals(Plugins.pluginId("histmersion.plugins.\"1password\".enabled"), Some("1password"))
+    assertEquals(Plugins.pluginId("histmersion.plugins.order"), None)
+    assertEquals(Plugins.pluginId("histmersion.plugins"), None)
+    assertEquals(Plugins.pluginId("histmersion.acquire.chain"), None)

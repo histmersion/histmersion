@@ -4,12 +4,12 @@ import com.histmersion.core.AppConfig
 
 /** The schema version without a Flyway instance (#880), against a real Postgres
   * (HISTMERSION_TEST_DB_URL); skipped otherwise. */
-class MigrateCurrentSuite extends munit.FunSuite with Bounded:
+class MigrateCurrentSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = Db.dataSource(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
     Migrate.run(d); d
 
   /** The scribe records Flyway logs on THIS thread while `f` runs (other suites migrate concurrently). */

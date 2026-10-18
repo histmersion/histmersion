@@ -368,6 +368,24 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   /** Backup is here because an agent asked to "save the state before a big reseed" should be able to
     * do it; RESTORE deliberately is NOT — it drops the database, which is not a decision to leave to
     * a tool call (`histmersion restore` asks a human to confirm). */
+  /** The config reload (docs/research-plugins.md §3.5): an agent that edited the user's config file
+    * on request applies it without a restart. */
+  private val configTool =
+    tool("config")
+      .description(
+        "The server's own configuration. `action: \"reload\"` reads the config file again and switches the " +
+          "running server to it in place — no restart: changed components (the database pool, a new " +
+          "database's migrations, the plugins whose block changed, the acquisition clients) are built " +
+          "beside the running ones and swapped in only when all of them built, so a broken config changes " +
+          "nothing. Answers what was applied, what needs a restart (the listening host/port, the bundled " +
+          "runtime, pool sizes), what was rebuilt, and any error.")
+      .input[ConfigInput]
+      .handle { in =>
+        in.action.trim.toLowerCase(java.util.Locale.ROOT) match
+          case "reload" => ToolResult.text(ReloadMarkdown.report(h.configReload()))
+          case other    => McpOut.error(ApiError(s"unknown action '$other' (one of: reload)"))
+      }
+
   private val backup =
     tool("backup")
       .description(
@@ -934,7 +952,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   val server = McpServer(tools =
     List(ping, search, facets, getSource, passages, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
-      backup, vacuumTool, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, exportArticle,
+      backup, configTool, vacuumTool, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, exportArticle,
       articleVersions, articleVersion, places, placeNames, placeOverride, addPlaceTool, periods, events, patchEventTool,
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
@@ -1205,6 +1223,12 @@ object McpTools:
   object HistogramInput:
     given Schema[HistogramInput] = FilterDocs.describe(KindlingsSchema.derived[HistogramInput].schema)
       .modify(_.unit)(_.description("What to count: sources (default) | findings"))
+
+  /** The `config` tool's input: what to do with the server's configuration. */
+  final case class ConfigInput(action: String) derives KindlingsCodecAsObject
+  object ConfigInput:
+    given Schema[ConfigInput] = KindlingsSchema.derived[ConfigInput].schema
+      .modify(_.action)(_.description("reload: read the config file again and apply it in place"))
 
   final case class BackupInput() derives KindlingsCodecAsObject
   object BackupInput:

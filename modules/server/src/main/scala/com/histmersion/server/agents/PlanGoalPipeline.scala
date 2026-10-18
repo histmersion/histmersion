@@ -22,7 +22,7 @@ import javax.sql.DataSource
   * Steps: load · propose (LLM: `search`, `facets`, `get_source`, read only) · verify · approve
   * (blocking) · apply. A DRY run opens no approval (the plan is treated as approved) and `apply`
   * records the plan it would apply instead of applying it; the log line likewise. */
-final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: AgentsConfig,
+final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
     upstream: () => AgentUpstream) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.PlanGoal
   import PlanGoalPipeline.*

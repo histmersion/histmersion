@@ -19,7 +19,7 @@ import java.time.Instant
   * resumes by itself once a window frees, the settings saved over config survive a restart, `agent
   * doctor` spends nothing, and `/mcp/agent` offers the read-only tools only. Skipped without
   * HISTMERSION_TEST_DB_URL. */
-class ModelChainRunSuite extends munit.FunSuite:
+class ModelChainRunSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
@@ -41,7 +41,7 @@ class ModelChainRunSuite extends munit.FunSuite:
       agents = b.agents.copy(enabled = true, prices = "zzA=1/2; zzB=1/2; sonnet=0/0", enrich = b.agents.enrich.copy(upstream = false),
         roles = b.agents.roles.copy(extractor = s"${A.wire} > ${B.wire}")))
 
-  private lazy val ds = Db.dataSource(baseCfg.db)
+  private lazy val ds = testPool(baseCfg.db)
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def tool(name: String, args: String) =

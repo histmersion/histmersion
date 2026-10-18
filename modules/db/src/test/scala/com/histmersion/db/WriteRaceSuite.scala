@@ -10,13 +10,13 @@ import scala.jdk.CollectionConverters.*
   * saw the token they were given, both "succeeded", and the first writer's edit was gone.
   *
   * These tests race two real threads against one row; exactly one must win. */
-class WriteRaceSuite extends munit.FunSuite:
+class WriteRaceSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   /** Run `a` and `b` at the same moment (a latch, not a hope) and collect both outcomes. */

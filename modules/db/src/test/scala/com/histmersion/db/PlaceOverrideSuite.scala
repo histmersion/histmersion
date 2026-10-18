@@ -11,13 +11,13 @@ import com.augustnagro.magnum.*
   * no longer lists a place a person decided. A merge moves a place into the one it is the same as, a
   * removal deletes one nothing refers to; no seed import brings either back. Around 150–152°E 30–32°S;
   * ids `zzpo…`. */
-class PlaceOverrideSuite extends munit.FunSuite with Bounded:
+class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb              = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
   private def tol = cfg.places.pointToleranceKm
@@ -30,7 +30,7 @@ class PlaceOverrideSuite extends munit.FunSuite with Bounded:
     val _ = sql"DELETE FROM place_removals WHERE id LIKE 'zzpo%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit                       = if testDb.isDefined then clean()
+  override def afterSuite(): Unit                       = if testDb.isDefined then clean()
 
   private def pt(lon: Double, lat: Double) = Some(s"""{"type":"Point","coordinates":[$lon,$lat]}""")
 

@@ -38,7 +38,7 @@ final class StubUpstream extends AgentUpstream:
   * compile-article (claim table with verified quotes, evidence, draft, the blocking approval, a new
   * article written only after approval, the chained review run, an extension dropped on 412, and the
   * `auto` mode). Skipped without HISTMERSION_TEST_DB_URL. */
-class GoalAgentsRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
+class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout         = scala.concurrent.duration.Duration(120, "s")
@@ -57,7 +57,7 @@ class GoalAgentsRunSuite extends munit.FunSuite with com.histmersion.db.Bounded:
       agents = b.agents.copy(enabled = true, prices = "scripted=1/2",
         roles = b.agents.roles.copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m)))
 
-  private lazy val ds = Db.dataSource(baseCfg.db)
+  private lazy val ds = testPool(baseCfg.db)
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def tool(name: String, args: String) =

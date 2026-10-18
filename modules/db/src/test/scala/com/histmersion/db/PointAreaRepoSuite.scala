@@ -10,13 +10,13 @@ import com.augustnagro.magnum.*
   * keeping a place) and `--fix` — bounded per call, every dependent row gone, the affected findings
   * matched again, a shape, a site and a seed place untouched. Fixtures around 150°E 60°S, where no other
   * suite has any; ids `wikidata_q9992…`, `geonames_9992…`, `zzpa…`. */
-class PointAreaRepoSuite extends munit.FunSuite with Bounded:
+class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -26,7 +26,7 @@ class PointAreaRepoSuite extends munit.FunSuite with Bounded:
     val _ = sql"DELETE FROM places WHERE id LIKE 'wikidata_q9992%' OR id LIKE 'geonames_9992%' OR id LIKE 'zzpa%'".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
-  override def afterAll(): Unit                       = if testDb.isDefined then clean()
+  override def afterSuite(): Unit                       = if testDb.isDefined then clean()
 
   private val Site    = "zzpa_site"          // a seed site on the region's point
   private val Region  = "wikidata_q999200001" // holds finding 1, which Site holds too

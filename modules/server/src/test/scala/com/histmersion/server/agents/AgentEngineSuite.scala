@@ -31,7 +31,7 @@ final class ScriptedClient(val model: ModelRef) extends LlmClient:
   * scripted model in place of a provider: checkpoints, resume without repeating an LLM step, the
   * per-step tool allowlist, verified quotes, gazetteer geocoding, the single patch, budgets, prompt
   * injection, cancellation and restart reconciliation. Skipped without HISTMERSION_TEST_DB_URL. */
-class AgentEngineSuite extends munit.FunSuite:
+class AgentEngineSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   // a DB suite driving a run pool: never let a hang run for hours (#865)
@@ -54,7 +54,7 @@ class AgentEngineSuite extends munit.FunSuite:
       agents = b.agents.copy(enabled = true, prices = "scripted=1/2",
         roles = b.agents.roles.copy(extractor = Model.wire)))
 
-  private lazy val ds = Db.dataSource(baseCfg.db)
+  private lazy val ds = testPool(baseCfg.db)
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def tool(name: String, args: String) =

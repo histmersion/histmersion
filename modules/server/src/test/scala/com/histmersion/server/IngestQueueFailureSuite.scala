@@ -6,7 +6,7 @@ import java.nio.file.{Files, Path}
 
 /** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job
   * because its optional acquisition bookkeeping failed. Uses only the disposable *_test database. */
-class IngestQueueFailureSuite extends munit.FunSuite:
+class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = TestDb.url.isEmpty
 
   test("a queue-write failure leaves the stored OCR job done, with a bookkeeping warning"):
@@ -14,7 +14,7 @@ class IngestQueueFailureSuite extends munit.FunSuite:
     val cfg = base.copy(
       db = base.db.copy(url = TestDb.url.get),
       converter = base.converter.copy(spoolDir = Files.createTempDirectory("ingest-queue-spool").toString))
-    val ds = Db.dataSource(cfg.db)
+    val ds = testPool(cfg.db)
     Migrate.run(ds)
     val converter = new ConverterClient:
       def health = Right("ok")
@@ -59,4 +59,4 @@ class IngestQueueFailureSuite extends munit.FunSuite:
       sql("DROP FUNCTION IF EXISTS zz_ingest_reject_done()")
       QueueRepo.delete(ds, item.id)
       Files.deleteIfExists(pdf)
-      // Db.dataSource returns the process-wide cached pool, shared by the other suites.
+      // the pool is this suite's own (DbSuite) and closes after it

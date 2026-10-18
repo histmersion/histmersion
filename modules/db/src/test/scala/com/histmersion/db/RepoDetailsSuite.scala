@@ -6,13 +6,13 @@ import com.augustnagro.magnum.*
 
 /** The small, sharp-edged repo fixes: the `ts_headline` word bounds, the assets contract, and the
   * `findings_flat` upper bound. */
-class RepoDetailsSuite extends munit.FunSuite:
+class RepoDetailsSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val ck = "zzdetail_src"

@@ -67,7 +67,7 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
   * round's escalation of a re-raised rejection, the tasks item for an open MAJOR, a 412 from a
   * concurrent writer, and a resume that replays the finished parallel steps. Skipped without
   * HISTMERSION_TEST_DB_URL. */
-class ReviewArticleRunSuite extends munit.FunSuite:
+class ReviewArticleRunSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   // a DB suite driving parallel steps: never let a hang run for hours (#865)
@@ -118,7 +118,7 @@ class ReviewArticleRunSuite extends munit.FunSuite:
       agents = b.agents.copy(enabled = true, prices = "scripted=1/2",
         roles = b.agents.roles.copy(reviewer = Model.wire, coldReader = Model.wire, skeptic = Model.wire, fixer = Model.wire)))
 
-  private lazy val ds = Db.dataSource(baseCfg.db)
+  private lazy val ds = testPool(baseCfg.db)
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def tool(name: String, args: String) =

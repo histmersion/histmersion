@@ -63,7 +63,11 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
     * pause — but every step that finished is checkpointed either way, so a resume re-runs only the
     * ones that did not. */
   def parallel[A](steps: List[() => Either[Halt, A]]): Either[Halt, List[A]] =
-    val results = ox.par(steps.map(s => () => s()))
+    // each step carries the run's generation (its database, its config) onto its fork
+    val results = ox.par(steps.map { s =>
+      val c = engine.agents.pins.carry(s())
+      () => c.run()
+    })
     val halts   = results.collect { case Left(h) => h }
     halts.collectFirst { case h @ Halt.Cancel => h }
       .orElse(halts.collectFirst { case h: Halt.Fail => h })
@@ -399,10 +403,16 @@ private[agents] final class RunBudget(spentUsd: BigDecimal, spentTokens: Long, c
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon
   * thread hosting an Ox scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]).
   * Runs are durable — `jobs` + `agent_steps` — so the in-memory queue is rebuilt at [[start]]. */
-final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: AgentsHandlers,
+final class Engine(val ds: DataSource, cfgNow: => AgentsConfig, val agents: AgentsHandlers,
     pipelines: Map[Pipeline, PipelineDef]):
 
-  private val queue = LinkedBlockingQueue[String]()
+  /** Read at each use (a config reload switches it); a run reads it once, into its [[RunCtx]]. */
+  def cfg: AgentsConfig = cfgNow
+
+  /** A queued run and the generation it was queued on: it runs there — on the database it was queued
+    * in, even after a config reload swapped the database (docs/research-plugins.md §3.6). */
+  private final case class Queued(id: String, work: com.histmersion.server.hot.Carried[Unit])
+  private val queue = LinkedBlockingQueue[Queued]()
   val llmSlots: Semaphore = Semaphore(math.max(1, cfg.maxLlmCallsInFlight))
 
   /** When the trace was last pruned (epoch ms; 0 = not yet in this process). */
@@ -493,7 +503,7 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
   def start(): Int =
     val (paused, queued) = reconcile()
     val _ = pruneTrace(force = true)
-    queued.foreach(queue.put)
+    queued.foreach(submit)
     if scope.isEmpty then
       stopping = false
       val t = Thread.ofPlatform().daemon(true).name("histmersion-agents").unstarted(() => pool())
@@ -507,7 +517,12 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
   /** [[start]]'s first half: a run left `running` is paused as interrupted (and, when nobody watches
     * it, set to resume by itself shortly). Returns how many were paused, and the queued runs. */
   private[agents] def reconcile(): (Int, Vector[String]) =
-    val (paused, queued) = AgentRepo.reconcile(ds)
+    // a run this engine is running is not interrupted, and one it holds queued is not queued twice: a
+    // config reload that swapped back to its database must leave them be (docs/research-plugins.md §3.6)
+    import scala.jdk.CollectionConverters.*
+    val inQueue = queue.asScala.map(_.id).toSet
+    val (paused, queuedAll) = AgentRepo.reconcile(ds, running.keySet.asScala.toList)
+    val queued = queuedAll.filterNot(inQueue)
     // a run nobody is watching goes on by itself after a restart; a person's waits for them
     val at = java.time.Instant.now().plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes).toLong * 60L)
     paused.foreach { (id, origin) =>
@@ -525,11 +540,12 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
     try
       while !stopping do
         Thread.sleep(every)
-        try
+        try agents.pins.pinned {
           val now = java.time.Instant.now()
           val _ = checkStalls(now.toEpochMilli)
           val _ = resumeDue(now)
           val _ = resumeFreed(now)
+        }
         catch
           case e: InterruptedException => throw e
           case e: Exception            => scribe.warn(s"agent resume check failed: ${e.getMessage}")
@@ -578,12 +594,14 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
 
   def stop(): Unit =
     stopping = true
+    // the queued runs stay queued in the database (a start re-enqueues them); their pins go
+    Iterator.continually(queue.poll()).takeWhile(_ != null).foreach(_.work.drop())
     scope.foreach(_.interrupt())
     scope = None
     waker.foreach(_.interrupt())
     waker = None
 
-  def submit(id: String): Unit = queue.put(id)
+  def submit(id: String): Unit = queue.put(Queued(id, agents.pins.carry(execute(id))))
 
   private def pool(): Unit =
     try
@@ -599,11 +617,12 @@ final class Engine(val ds: DataSource, val cfg: AgentsConfig, val agents: Agents
     var alive = true // the loop's exit flag; interruption of the pool clears it
     while alive && !stopping do
       try
-        val id = queue.take()
+        val q = queue.take()
         Thread.interrupted() // a cancel aimed at the previous run must not leak into this one
         if !stopping then
-          execute(id)
+          q.work.run()
           val _ = pruneTrace()
+        else q.work.drop()
       catch case _: InterruptedException => alive = false
 
   /** Run one queued run to its next resting state. */

@@ -9,14 +9,14 @@ import com.histmersion.db.{CritiqueRepo, Db, Migrate}
   * disagreement edge, kept under the edge's direction, removed by an empty reason, and following the
   * article (rename, delete) and both sources (a citekey rename, a delete); the checklist itself with
   * aliases resolved. Skipped without HISTMERSION_TEST_DB_URL. */
-class CritiqueReasonsSuite extends munit.FunSuite:
+class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg =
     val b = AppConfig.load()
     b.copy(db = b.db.copy(url = testDb.get))
-  private lazy val ds = Db.dataSource(cfg.db)
+  private lazy val ds = testPool(cfg.db)
   private lazy val h  = Handlers(Deps(cfg, ds))
 
   private val Slug   = "zzcrit_bough"

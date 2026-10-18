@@ -14,7 +14,7 @@ import java.nio.file.Path
   * says where to read on, `passages` still finds a quotation past the slice, and `query` shows few
   * rows. Exactly what the agent MCP endpoint answers (it calls the same tools). Skipped without
   * HISTMERSION_TEST_DB_URL; writes only `zztool*` rows of a `*_test` database. */
-class AgentToolCapSuite extends munit.FunSuite:
+class AgentToolCapSuite extends com.histmersion.db.DbSuite:
   private val testDb                = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -25,9 +25,9 @@ class AgentToolCapSuite extends munit.FunSuite:
     val b = AppConfig.load()
     b.copy(db = b.db.copy(url = testDb.get))
   private lazy val deps =
-    val ds = Db.dataSource(cfg.db)
+    val ds = testPool(cfg.db)
     Migrate.run(ds)
-    Deps(cfg, ds, Db.queryDataSource(cfg.db, cfg.query))
+    Deps(cfg, ds, testQueryPool(cfg.db, cfg.query))
   private lazy val h = Handlers(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
@@ -51,7 +51,7 @@ class AgentToolCapSuite extends munit.FunSuite:
       findings = List(FindingInput("The formula *gʷhen- dhgʷhim recurs across the traditions."),
         FindingInput("The formula is Proto-Indo-European.")))
     assert(h.putSource(Ck, put).isRight)
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def call(box: Toolbox, t: ToolName, args: Json): String =
     val tool = box.tool(t)

@@ -10,13 +10,13 @@ import com.augustnagro.magnum.*
   * and period, the cards' thumbnails, which places and events an import asks about, the list, facets
   * and media-layer filters, the figure-licence fill and the `media-licence` lint rule. Fixtures:
   * ids and citekeys start with `zqmd`, at 130°E 40°S. */
-class MediaRepoSuite extends munit.FunSuite with Bounded:
+class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -63,7 +63,7 @@ class MediaRepoSuite extends munit.FunSuite with Bounded:
       val _ = AssetRepo.add(ds, "zqmd2020_figs", List(AssetRepo.Stored("fig1.png", "image/png", png ++ Array[Byte](1), None, None),
         AssetRepo.Stored("fig2.png", "image/png", png ++ Array[Byte](2), None, None)))
       val _ = AssetRepo.add(ds, "zqmd2021_nolic", List(AssetRepo.Stored("fig.png", "image/png", png ++ Array[Byte](3), None, None)))
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def asset(key: String, license: String = Lic, credit: String = "Ann, CC BY-SA 9.9, via Wikimedia Commons",
       thumb: Boolean = true) =

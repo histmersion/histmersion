@@ -8,13 +8,13 @@ import com.augustnagro.magnum.*
 /** The geocoder against a real gazetteer (HISTMERSION_TEST_DB_URL; skipped otherwise), seeded to mirror
   * the failures of 2026-10-06 (#981). Every fixture name starts with "Zz" and every id with `zzgeo_`,
   * so whatever else the shared test database holds cannot match. */
-class GeocoderSuite extends munit.FunSuite with Bounded:
+class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = Db.dataSource(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
 
@@ -75,7 +75,7 @@ class GeocoderSuite extends munit.FunSuite with Bounded:
           }
         }
 
-  override def afterAll(): Unit = if testDb.isDefined then clean()
+  override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def resolve(name: String, hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
     Geocoder.resolve(ds, name, hint, at, min)
