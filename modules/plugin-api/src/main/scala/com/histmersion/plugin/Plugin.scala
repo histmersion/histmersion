@@ -62,7 +62,7 @@ trait Plugin:
 
 /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new
   * extension point is a new registry here, not a new service type, so existing plugin jars keep loading.
-  * (Phase 1 has one: [[secretVaults]]. Source fetchers, media collections and event catalogues are
+  * (Two so far: [[secretVaults]] and [[sourceFetchers]]. Media collections and event catalogues are
   * added with the phases that move those parts of the app.) */
 trait PluginContext:
   /** The host's outbound HTTP — the one policy (User-Agent without personal data, Retry-After,
@@ -83,9 +83,20 @@ trait PluginContext:
   /** Named secret backends: `<name>:<ref>` references are resolved by the vault registered as `name`. */
   def secretVaults: Registry[SecretVault]
 
+  /** The acquisition chain (docs/research-plugins.md §5): each fetcher under its own id, which is
+    * what `histmersion.acquire.chain` orders. A plugin may add several (one per step). A host that
+    * has no acquisition chain refuses every addition — the default, so a context written for an
+    * earlier extension point (a test's) still compiles. */
+  def sourceFetchers: Registry[SourceFetcher] = Registry.refusing("this host has no acquisition chain")
+
 /** One extension point. `add` refuses an id already taken in this registry. */
 trait Registry[A]:
   def add(id: String, a: A): Either[String, Unit]
+
+object Registry:
+  /** A registry that takes nothing, saying why. */
+  def refusing[A](why: String): Registry[A] = new Registry[A]:
+    def add(id: String, a: A) = Left(s"'$id': $why")
 
 /** The host's HTTP client, as a plugin sees it. Failures are `Left(message)`, never exceptions. */
 trait PluginHttp:
