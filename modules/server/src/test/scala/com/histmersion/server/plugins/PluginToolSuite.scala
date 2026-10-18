@@ -1,0 +1,129 @@
+package com.histmersion.server.plugins
+
+import com.histmersion.core.{PluginJar, PluginKit, PluginSet}
+import com.histmersion.plugin.Spi
+
+import java.net.URLClassLoader
+import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.{Files, Path}
+import java.util.jar.{JarEntry, JarFile, JarOutputStream}
+import scala.jdk.CollectionConverters.*
+
+/** The relink kit's JVM tool against a REAL third-party plugin jar: modules/plugin-fixtures/hello,
+  * built by sbt and never on the server's class path. */
+class PluginToolSuite extends munit.FunSuite:
+
+  private lazy val hello: Path =
+    val in = getClass.getClassLoader.getResourceAsStream("plugin-fixtures.txt")
+    val line = String(in.readAllBytes(), UTF_8).linesIterator.find(_.startsWith("hello=")).get
+    Path.of(line.stripPrefix("hello="))
+
+  private val tmp = FunFixture[Path](_ => Files.createTempDirectory("plugin-tool"), d =>
+    Files.walk(d).sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) }))
+
+  /** A copy of `src` with `services` as its ServiceLoader file and `extra` entries added. */
+  private def variant(src: Path, out: Path, services: Option[String], extra: Map[String, Array[Byte]] = Map.empty,
+      keep: String => Boolean = _ => true): Path =
+    val jf  = JarFile(src.toFile)
+    val jos = JarOutputStream(Files.newOutputStream(out))
+    try
+      jf.entries().asScala.filter(e => keep(e.getName)).foreach { e =>
+        if e.getName == "META-INF/services/com.histmersion.plugin.Plugin" then
+          services.foreach { s => jos.putNextEntry(JarEntry(e.getName)); jos.write(s.getBytes(UTF_8)); jos.closeEntry() }
+        else
+          jos.putNextEntry(JarEntry(e.getName))
+          jos.write(jf.getInputStream(e).readAllBytes())
+          jos.closeEntry()
+      }
+      extra.foreach { (n, b) => jos.putNextEntry(JarEntry(n)); jos.write(b); jos.closeEntry() }
+    finally { jos.close(); jf.close() }
+    out
+
+  private def loader = getClass.getClassLoader
+
+  test("describe: the hello plugin's id, version, SPI, what it registers and its access"):
+    val j = PluginTool.describe(hello, loader)
+    assertEquals(j.file, hello.getFileName.toString)
+    assertEquals(j.sha256, PluginTool.sha256(hello))
+    assertEquals(j.plugins.map(p => (p.id, p.version, p.spiVersion)), List(("hello", "0.1.0", Spi.Version)))
+    assertEquals(j.plugins.head.provides, List("source-fetcher:hello"))
+    assertEquals(j.plugins.head.access, List("open"))
+    assertEquals(j.plugins.head.error, None)
+
+  tmp.test("describe: a foreign SPI is reported, a jar without a provider holds nothing"): d =>
+    val foreign = variant(hello, d.resolve("foreign.jar"), Some("com.histmersion.fixtures.hello.ForeignSpiPlugin\n"))
+    val f = PluginTool.describe(foreign, loader)
+    assertEquals(f.plugins.map(p => (p.id, p.spiVersion)), List(("foreign-spi", Spi.Version + 98)))
+    assert(f.plugins.head.error.exists(_.contains("SPI")), f.plugins.head.error)
+    val none = variant(hello, d.resolve("none.jar"), None)
+    assertEquals(PluginTool.describe(none, loader).plugins, Nil)
+    val broken = variant(hello, d.resolve("broken.jar"), Some("com.histmersion.fixtures.hello.NoSuchPlugin\n"))
+    val b = PluginTool.describe(broken, loader)
+    assert(b.plugins.headOption.flatMap(_.error).exists(_.contains("NoSuchPlugin")), b)
+
+  test("duplicates: a class the kit or an earlier plugin already has, named with its owner"):
+    val kit = Set("a/A.class", "a/B.class")
+    assertEquals(PluginTool.duplicates(kit, List("p.jar" -> Set("p/P.class"))), Nil)
+    val dups = PluginTool.duplicates(kit, List("p.jar" -> Set("a/A.class", "p/P.class"), "q.jar" -> Set("p/P.class")))
+    assertEquals(dups.size, 2)
+    assert(dups.head.startsWith("p.jar duplicates") && dups.head.contains("1 with the kit (a.A)"), dups.head)
+    assert(dups(1).startsWith("q.jar duplicates") && dups(1).contains("1 with p.jar (p.P)"), dups(1))
+
+  private def kitWith(d: Path, jars: Map[String, Map[String, Array[Byte]]]): Path =
+    val kit = Files.createDirectories(d.resolve("kit").resolve("lib")).getParent
+    jars.foreach { (name, entries) =>
+      val jos = JarOutputStream(Files.newOutputStream(kit.resolve("lib").resolve(name)))
+      try entries.foreach { (n, b) => jos.putNextEntry(JarEntry(n)); jos.write(b); jos.closeEntry() }
+      finally jos.close()
+    }
+    Files.writeString(kit.resolve("classpath"), jars.keys.mkString("", "\n", "\n"))
+    kit
+
+  tmp.test("check: the hello plugin passes against a kit that does not have its classes"): d =>
+    val kit = kitWith(d, Map("other.jar" -> Map("x/X.class" -> Array[Byte](1))))
+    val (lines, problems) = PluginTool.check(kit, List(hello), loader)
+    assertEquals(problems, Nil)
+    assertEquals(lines, List(s"plugin: hello 0.1.0 (SPI ${Spi.Version}) in ${hello.getFileName} · access open · provides source-fetcher:hello"))
+
+  tmp.test("check: refuses a class twice, a foreign SPI, the same id twice, an id the binary has"): d =>
+    val cls = "com/histmersion/fixtures/hello/HelloFetcher.class"
+    val kit = kitWith(d, Map("shaded-elsewhere.jar" -> Map(cls -> Array[Byte](1))))
+    val (_, dup) = PluginTool.check(kit, List(hello), loader)
+    assert(dup.exists(p => p.contains("duplicates classes") && p.contains("the kit") &&
+      p.contains("com.histmersion.fixtures.hello.HelloFetcher")), dup)
+    val clean   = kitWith(Files.createDirectories(d.resolve("k2")), Map.empty)
+    val foreign = variant(hello, d.resolve("foreign.jar"), Some("com.histmersion.fixtures.hello.ForeignSpiPlugin\n"))
+    val (_, spi) = PluginTool.check(clean, List(foreign), loader)
+    assert(spi.exists(_.contains(s"built for plugin SPI ${Spi.Version + 98}")), spi)
+    val twin = variant(hello, d.resolve("hello-copy.jar"), Some("com.histmersion.fixtures.hello.HelloPlugin\n"))
+    val (_, twice) = PluginTool.check(clean, List(hello, twin), loader)
+    assert(twice.exists(_.contains(s"plugin id 'hello' is already provided by ${hello.getFileName}")), twice)
+    assert(twice.exists(_.startsWith("hello-copy.jar duplicates classes")), twice)
+    assertEquals(PluginTool.hostIds(loader).get("archive-org"), Some("this Histmersion (a first-party plugin)"))
+    assert(PluginTool.hostIds(loader).contains("keepassxc"), PluginTool.hostIds(loader).keys)
+
+  tmp.test("plugin-set jar: written, found on a class path, the digest over the jars' names and checksums"): d =>
+    val set = PluginKit.pluginSet(List(PluginTool.describe(hello, loader)), Spi.Version, "native", Some("0.1.0 (abc)"), None)
+    val jar = d.resolve("plugin-set.jar")
+    PluginSetResource.writeJar(jar, set)
+    val found = PluginSetResource.load(URLClassLoader(Array(jar.toUri.toURL), null))
+    assertEquals(found, Right(Some(set)))
+    assertEquals(set.digest, PluginKit.digest(List(hello.getFileName.toString -> PluginTool.sha256(hello))))
+    // its own native-image metadata registers the resource, as a plugin jar's does
+    val jf = JarFile(jar.toFile)
+    try
+      val meta = String(jf.getInputStream(jf.getEntry("META-INF/native-image/com.histmersion/plugin-set/reachability-metadata.json")).readAllBytes(), UTF_8)
+      assert(meta.contains(PluginSet.Resource), meta)
+    finally jf.close()
+    assertEquals(PluginSetResource.load(URLClassLoader(Array.empty, null)), Right(None))
+
+  tmp.test("kit manifest: every file but the manifests, with its SHA-256, and the main class"): d =>
+    val kit = kitWith(d, Map("a.jar" -> Map("a/A.class" -> Array[Byte](1))))
+    Files.writeString(kit.resolve("main-class"), "com.histmersion.server.Main\n")
+    Files.writeString(kit.resolve("kit.json"), "{}")
+    val m = PluginTool.kitManifest(kit, "0.1.0", Some("abc"), "25.0.1")
+    assertEquals(m.files.map(_.file), List("classpath", "lib/a.jar", "main-class"))
+    assertEquals(m.files.find(_.file == "lib/a.jar").map(_.sha256), Some(PluginTool.sha256(kit.resolve("lib/a.jar"))))
+    assertEquals((m.mainClass, m.graalvm, m.spiVersion), ("com.histmersion.server.Main", "25.0.1", Spi.Version))
+    val actual = m.files.map(f => f.file -> PluginTool.sha256(kit.resolve(f.file))).toMap
+    assertEquals(PluginKit.verifyKit(m.files, actual), Nil)

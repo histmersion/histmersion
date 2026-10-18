@@ -186,7 +186,14 @@ final case class QueryConfig(user: String, password: String, timeoutMs: Int, max
 final case class LintConfig(maxItems: Int, suggestions: Int) derives ConfigReader
 
 /** `calibre` is the host-side Calibre integration (see [[CalibreCliConfig]]); the server never uses it. */
-final case class CliConfig(serverUrl: String, calibre: CalibreCliConfig) derives ConfigReader
+final case class CliConfig(serverUrl: String, calibre: CalibreCliConfig, plugins: CliPluginsConfig) derives ConfigReader
+
+/** `histmersion plugin …` (docs/research-plugins.md §7.2): the plugins of the Histmersion installed on
+  * THIS machine. `installDir` empty = the install this CLI binary belongs to (the directory above its
+  * `bin/`), else the platform default; `mavenRepos` is comma-separated (an env override is one string),
+  * tried in order for `plugin add group:artifact:version`; `curl` downloads (`plugin add <url>`). */
+final case class CliPluginsConfig(installDir: String, mavenRepos: String, curl: String) derives ConfigReader:
+  def repos: List[String] = mavenRepos.split(",").toList.map(_.trim).filter(_.nonEmpty)
 
 /** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place
   * (a Pleiades site has no extent) to count as inside it; polygons use exact containment. The limits

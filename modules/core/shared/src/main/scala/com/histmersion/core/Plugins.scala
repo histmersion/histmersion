@@ -51,8 +51,10 @@ object PluginStatus:
 
 /** Every plugin in this binary, in registration order, and what is wrong with the config around them
   * (a block no plugin claims, an `order` entry naming no plugin). `spiVersion` is the SPI this server
-  * speaks. */
-final case class PluginsReport(spiVersion: Int = 0, plugins: List[PluginStatus] = Nil, warnings: List[String] = Nil)
+  * speaks. `set` is the user-added plugin set the binary was linked with (§7.3; `None`: first-party
+  * plugins only, as a stock image). */
+final case class PluginsReport(spiVersion: Int = 0, plugins: List[PluginStatus] = Nil, warnings: List[String] = Nil,
+    set: Option[PluginSet] = None)
     derives KindlingsCodecAsObject:
   /** Every plugin that was enabled is registered, and none was refused. */
   def ok: Boolean = plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire)
@@ -77,7 +79,7 @@ object PluginsMarkdown:
     val enabled = r.plugins.count(_.enabled)
     val head = s"- plugins: ${Plural.count(r.plugins.size, "plugin")} in this binary · $enabled enabled" +
       (if r.ok then "" else " · PROBLEMS")
-    head :: (r.plugins.map(p => s"  - ${line(p)}") ++
+    head :: s"  - plugin set: ${PluginSet.describe(r.set)}" :: (r.plugins.map(p => s"  - ${line(p)}") ++
       r.plugins.flatMap(p => p.warnings.map(w => s"  - warning: $w")) ++
       r.warnings.map(w => s"  - warning: $w"))
 
@@ -94,5 +96,7 @@ object PluginsMarkdown:
       s"- config file: ${ConfigFileInfo.describe(file)}",
       s"- plugin SPI: ${r.spiVersion}",
       s"- plugins: ${Plural.count(r.plugins.size, "plugin")} · ${r.plugins.count(_.enabled)} enabled",
+      s"- plugin set: ${PluginSet.describe(r.set)}",
+      s"- plugin-set digest: ${r.set.fold(PluginSet.EmptyDigest)(_.digest)}",
       ""
     ) ++ plugins ++ r.warnings.map(w => s"- warning: $w") ++ List("", verdict)).mkString("\n")

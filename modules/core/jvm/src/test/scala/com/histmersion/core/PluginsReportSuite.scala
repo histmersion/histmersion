@@ -42,7 +42,15 @@ class PluginsReportSuite extends munit.FunSuite:
     assert(md.contains("  - warning: histmersion.plugins.helo configures no plugin"), md)
     val none = AboutMarkdown.render(About("histmersion", BuildStamp("1"), Health("ok", "ok", None, None), JobCounts(),
       None, None, None))
-    assert(none.endsWith("- plugins: 0 plugins in this binary · 0 enabled"), none)
+    assert(none.contains("- plugins: 0 plugins in this binary · 0 enabled\n  - plugin set: first-party plugins only"), none)
+    // a relinked binary names its plugin set (docs/research-plugins.md §7.3)
+    val set = PluginKit.pluginSet(List(PluginJar("hello-0.1.0.jar", "ab")), 1, "native", None, None)
+    val linked = AboutMarkdown.render(About("histmersion", BuildStamp("1"), Health("ok", "ok", None, None), JobCounts(),
+      None, None, None, plugins = PluginsReport(1, set = Some(set))))
+    assert(linked.contains(s"  - plugin set: ${set.digest.take(12)}… · 1 jar (native): hello-0.1.0.jar"), linked)
+    val check = PluginsMarkdown.selfCheck(ConfigFileInfo(), PluginsReport(1, set = Some(set)))
+    assert(check.contains(s"- plugin-set digest: ${set.digest}"), check)
+    assert(PluginsMarkdown.selfCheck(ConfigFileInfo(), PluginsReport(1)).contains(s"- plugin-set digest: ${PluginSet.EmptyDigest}"))
 
   test("the self-check report shows settings as references and ends with the verdict"):
     val ok = PluginsMarkdown.selfCheck(ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true),
