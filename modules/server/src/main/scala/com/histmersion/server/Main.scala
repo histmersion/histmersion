@@ -117,7 +117,9 @@ object Main:
     // archive-org, oa-index, pmc and arxiv unless switched off), in `acquire.chain` order
     val (chain, notes) = FetchChain.of(deps.plugins.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised)
     notes.foreach(n => scribe.info(n))
-    scribe.info(s"acquire: chain ${chain.plan.map(_._1).mkString(" → ")}")
+    scribe.info(chain.plan match
+      case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
+      case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")
     AcquireHandlers(
       deps,
       discovery = openalex,
