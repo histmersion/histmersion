@@ -23,9 +23,10 @@ The coordinator added an eighth: a signing key, so that every local build has th
 ## 0. The recommendation in brief
 
 - **The SPI.** Add a small module, `modules/plugin-api`, that depends only on sconfig and
-  kindlings-sconfig-derivation. It holds one abstract class per kind (`SourceFetcherPlugin[C]`, …).
-  Each kind is discovered with `java.util.ServiceLoader`. The plugin's config type `C` gets its
-  reader derived at the plugin's `extends` clause. The host cuts out `histmersion.plugins.<id> { … }`,
+  kindlings-sconfig-derivation. **One** ServiceLoader service, `Plugin` (decided 2026-10-18, §2.2):
+  a plugin defines its config type and reader as path-dependent members, `Main` decodes its block
+  and calls `register(config, ctx)`, and the plugin adds to whichever registries of the app context
+  it extends (source fetchers, media collections, event catalogues, …). The host cuts out `histmersion.plugins.<id> { … }`,
   layers it over the plugin's own defaults resource, type-checks it by key, decodes it with the
   plugin's reader and passes in the typed value. A plugin never sees raw HOCON. Spike A proves all
   of this on the JVM and in a native image.
@@ -96,7 +97,85 @@ re-exports and depends on. My reasons:
 If the user prefers one module, putting the package `com.histmersion.plugin` inside `core` works
 just as well technically (open decision D1).
 
-### 2.2 Code sketch (as built in spike A, `spike/plugins/api/…/Plugin.scala`)
+### 2.2 Decided (user, 2026-10-18): ONE service type; a plugin registers into the app context
+
+A plugin is not "a source fetcher" or "a media collection": one plugin may add to several parts of
+the app at once (a portal plugin can bring a source fetcher, a media collection and an event
+catalogue that share one client and one config). So there is **one** ServiceLoader service,
+`com.histmersion.plugin.Plugin`. Each plugin defines its config type and its reader as
+**path-dependent** members; `Main` parses the plugin's config block with that reader and passes the
+typed value, together with the app context, to `register`. The plugin registers whatever it
+contributes into the context's registries. This supersedes spike A's one-abstract-class-per-kind
+shape (§2.2 as first written) and design rule "one ServiceLoader service per kind" (§2.3).
+
+```scala
+package com.histmersion.plugin
+
+/** id = the config key histmersion.plugins.<id> (kebab-case); spiVersion = the SPI it was built for */
+final case class PluginInfo(id: String, version: String, spiVersion: Int)
+
+trait Plugin:
+  type Config
+  def info: PluginInfo
+  given configReader: ConfigReader[Config]             // path-dependent: p.Config, p.configReader
+  /** its defaults: own name per plugin — never reference.conf */
+  def defaultsResource: String = s"META-INF/histmersion/plugins/${info.id}.conf"
+  /** Called once, only when enabled, after Main decoded `histmersion.plugins.<id>` into Config. */
+  def register(config: Config, ctx: PluginContext): Either[String, Unit]
+
+/** What the app lends a plugin, and where it plugs in. Each registry is one extension point. */
+trait PluginContext:
+  def http: PluginHttp                                  // the host's HttpPolicy client
+  def log(message: String): Unit
+  def sourceFetchers: Registry[SourceFetcher]           // acquisition chain
+  def mediaCollections: Registry[MediaCollection]       // media import providers
+  def eventCatalogues: Registry[EventCatalogue]         // event catalogue importers
+  // later: gazetteer sources, lints, exporters … — a new extension point is a new registry here,
+  // not a new service type, so existing plugin jars keep loading (SPI minor version).
+
+trait Registry[A]:
+  def add(id: String, a: A): Either[String, Unit]       // refuses a duplicate id per registry
+
+/** A plugin author derives the reader at the definition site; the provider stays a class with a
+  * public no-argument constructor, as ServiceLoader requires. */
+final case class PortalConfig(baseUrl: String, perHost: Int, licences: List[String]) derives ConfigReader
+
+final class PortalPlugin extends Plugin:
+  type Config = PortalConfig
+  given configReader: ConfigReader[PortalConfig] = summon
+  val info = PluginInfo("portal", "0.1.0", Spi.Version)
+  def register(c: PortalConfig, ctx: PluginContext) =
+    val client = PortalClient(c, ctx.http)
+    for
+      _ <- ctx.sourceFetchers.add("portal", PortalFetcher(client))
+      _ <- ctx.mediaCollections.add("portal", PortalMedia(client, c.licences))
+    yield ()
+```
+
+`Main` (one generic loop, no per-kind code, no casts — the decoded value has type `p.Config`):
+
+```scala
+def load(p: Plugin, conf: Config, ctx: PluginContext): Either[String, Unit] =
+  for
+    block <- PluginConfig.layered(p, conf)                     // defaults resource ⊕ user block, types checked (§3)
+    typed <- p.configReader.from(block.root).left.map(describe(p.info.id, _))   // : p.Config
+    _     <- p.register(typed, ctx)
+  yield ()
+
+ServiceLoader.load(classOf[Plugin]).asScala
+  .filter(p => enabled(p.info.id))
+  .foreach(p => load(p, conf, ctx).left.foreach(err => log.warn(s"plugin ${p.info.id}: $err")))
+```
+
+Consequences: the registries are what the rest of the app reads (the acquisition chain asks
+`sourceFetchers`, `media import <provider>` asks `mediaCollections`); registration order is the
+order in config (`histmersion.plugins.order`), then by id; a plugin whose `register` fails
+contributes nothing (registries are staged and committed per plugin); the native-image story (§4) is
+unchanged — still one `META-INF/services/com.histmersion.plugin.Plugin` per jar, auto-registered by
+GraalVM 25, plus the plugin's own reachability metadata.
+
+### 2.2a Code sketch as built in spike A (superseded by §2.2; kept for the evidence)
+
 
 ```scala
 package com.histmersion.plugin
@@ -161,8 +240,8 @@ def decode(p: SourceFetcherPlugin[?], conf: Config): Either[String, p.Config] =
 
 ### 2.3 Design rules
 
-- **One ServiceLoader service per kind.** The host loads `ServiceLoader.load(classOf[SourceFetcherPlugin[?]])`
-  and gets that kind, typed. It never loads a generic `Plugin` and filters with `isInstanceOf`.
+- **One ServiceLoader service** (`Plugin`, §2.2, decided 2026-10-18). Kinds are registries in the
+  `PluginContext`, not service types; the host never filters plugins with `isInstanceOf`.
 - **The provider is a class, not an `object`.** ServiceLoader needs a public no-argument
   constructor or a static `provider()` method, and a Scala `object` offers neither.
 - **Descriptor before instance.** Instantiating a provider must be cheap and side-effect-free (the
@@ -764,7 +843,7 @@ This is why §7.4 adds `--self-check`.
    - Make `ConfigLayers.check` treat `histmersion.plugins` as an open block.
    - Report plugins in `/api/about` and `/api/config`, and add `--self-check` to the server.
 2. **Phase 2, source fetchers.**
-   - Add `SourceFetcherPlugin` and a `WorkKey` with every identifier.
+   - Add the `sourceFetchers` registry to `PluginContext` and a `WorkKey` with every identifier.
    - Move the host-side chain runner, legal gate, PDF check and memo into the host.
    - Port `archive-org`, `arxiv`, `pmc` and `oa-index` as first-party plugins in the same image (B),
      keeping today's order.
