@@ -15,7 +15,7 @@
 #   1. lock          <data>/plugins/.relink.lock — one relink at a time
 #   2. kit           every kit file matches SHA256SUMS
 #   3. toolchain     GraalVM CE of the kit's version (histmersion-toolchain install), a C toolchain
-#                    (Xcode CLT / cc), memory (HISTMERSION_RELINK_MIN_MEMORY_GB, default 12) and disk
+#                    (Xcode CLT / cc), memory (HISTMERSION_RELINK_MIN_MEMORY_GB, default 16) and disk
 #   4. provenance    with a GPG key set up (histmersion-signing use-gpg): the plugins directory matches
 #                    its signed manifest — else refused unless --unsigned
 #   5. pre-flight    on the JVM: a provider in every jar, its SPI, no id or class twice; then the
@@ -179,10 +179,10 @@ if [ -n "$need_native" ]; then
   gv="$(hk_find_graalvm "$graalvm_version")" \
     || hk_die 2 "GraalVM CE $graalvm_version with native-image not found — run histmersion-toolchain install (or set HISTMERSION_GRAALVM_HOME); JVM mode needs no build: histmersion-relink --jvm"
   hk_cc >/dev/null || hk_die 2 "no C toolchain — $( [ "$(hk_os)" = macos ] && echo "xcode-select --install" || echo "install gcc, glibc-devel/zlib headers (build-essential zlib1g-dev)")"
-  min_gb="${HISTMERSION_RELINK_MIN_MEMORY_GB:-12}"
+  min_gb="${HISTMERSION_RELINK_MIN_MEMORY_GB:-16}"
   mem="$(hk_mem_bytes)"
   if [ "$((mem / 1073741824))" -lt "$min_gb" ] && [ -z "$ignore_memory" ]; then
-    hk_die 2 "$((mem / 1073741824)) GB of memory; a relink peaks near 12 GB (needs ${min_gb}) — use JVM mode (histmersion-relink --jvm) or --ignore-memory"
+    hk_die 2 "$((mem / 1073741824)) GB of memory; a relink peaks near 13.5 GB (needs ${min_gb}) — use JVM mode (histmersion-relink --jvm) or --ignore-memory"
   fi
   free_kb="$(hk_free_kb "$install")"
   [ "${free_kb:-0}" -ge 1048576 ] || hk_die 2 "less than 1 GB free under $install — a relink writes a ~210 MB binary and keeps the previous one"
@@ -259,7 +259,7 @@ if [ "${#jars[@]}" -gt 0 ]; then
 fi
 
 # ── 7. native-image ───────────────────────────────────────────────────────────────────────────────
-step "native-image (about 2 minutes and 12 GB of memory; log: $log)"
+step "native-image (about 2 minutes and ~13.5 GB of memory; log: $log)"
 start=$(date +%s)
 rc=0
 # in the work dir: native-image leaves reports (build artifacts, crash notes) in its working directory

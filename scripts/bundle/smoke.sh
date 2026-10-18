@@ -7,7 +7,7 @@
 #
 #   scripts/bundle/smoke.sh <bundle-dir>
 # The relink needs GraalVM CE of the kit's version (GRAALVM_HOME, HISTMERSION_GRAALVM_HOME or sdkman's
-# pin) and ~12 GB of memory; without them, or with HISTMERSION_SMOKE_RELINK=0, it is skipped and says so.
+# pin) and ~16 GB of memory; without them, or with HISTMERSION_SMOKE_RELINK=0, it is skipped and says so.
 # Ports are offset (18000/15433/18100) so it can run next to an installed Histmersion.
 set -euo pipefail
 b="$(cd "${1:?usage: $0 <bundle-dir>}" && pwd)"
