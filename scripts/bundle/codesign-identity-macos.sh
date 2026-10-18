@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Create a local code-signing identity for Histmersion's binaries — free, no Apple Developer account:
 #
-#   scripts/bundle/codesign-identity-macos.sh [name]        (default name: "Histmersion Local")
+#   scripts/bundle/codesign-identity-macos.sh [--no-trust] [name]     (default name: "Histmersion Local")
+#   (in a bundle: libexec/codesign-identity-macos.sh, run by `histmersion-signing setup-macos`)
 #
 # Why: the native binaries are otherwise signed ad hoc, and macOS privacy permissions (e.g. access to
 # ~/Documents) are tied to an ad-hoc binary's exact hash — every rebuild looks like a new app and the
@@ -11,12 +12,23 @@
 #
 # Idempotent: does nothing if the identity already exists. Creating the trust setting asks for your
 # login password once (a macOS dialog). install-macos.sh then signs with it automatically.
+#
+# --no-trust skips that step: codesign signs with an UNTRUSTED identity just as well, and its designated
+# requirement is as stable (docs/research-plugins.md §9.2). Whether macOS privacy grants (TCC) persist
+# for an untrusted identity is unverified, so trusting stays the default.
+# HISTMERSION_KEYCHAIN puts the identity into another keychain than the login one — the tests use a
+# temporary keychain they delete; they never touch the login keychain.
 set -euo pipefail
+trust=1
+if [ "${1:-}" = "--no-trust" ]; then trust=""; shift; fi
 name="${1:-Histmersion Local}"
-keychain="$HOME/Library/Keychains/login.keychain-db"
+keychain="${HISTMERSION_KEYCHAIN:-$HOME/Library/Keychains/login.keychain-db}"
 openssl=/usr/bin/openssl   # the system LibreSSL writes a PKCS#12 that `security import` reads
 
-if security find-identity -v -p codesigning | grep -qF "\"$name\""; then
+exists() { # trusted or not, in that keychain
+  security find-identity -p codesigning "$keychain" 2>/dev/null | grep -qF "\"$name\""
+}
+if exists; then
   echo "code-signing identity \"$name\" already exists — nothing to do"
   exit 0
 fi
@@ -43,15 +55,17 @@ pass="$("$openssl" rand -hex 16)"
 "$openssl" pkcs12 -export -inkey "$tmp/key.pem" -in "$tmp/cert.pem" -name "$name" \
   -out "$tmp/id.p12" -passout "pass:$pass"
 
-echo "→ importing it into the login keychain (codesign may use the key without asking)"
+echo "→ importing it into $keychain (codesign may use the key without asking)"
 security import "$tmp/id.p12" -k "$keychain" -P "$pass" -T /usr/bin/codesign >/dev/null
 
-echo "→ trusting it for code signing on this Mac (macOS asks for your login password)"
-security add-trusted-cert -r trustRoot -p codeSign -k "$keychain" "$tmp/cert.pem"
+if [ -n "$trust" ]; then
+  echo "→ trusting it for code signing on this Mac (macOS asks for your login password)"
+  security add-trusted-cert -r trustRoot -p codeSign -k "$keychain" "$tmp/cert.pem"
+fi
 
-if security find-identity -v -p codesigning | grep -qF "\"$name\""; then
-  echo "done: \"$name\" is a valid code-signing identity. The next install signs with it."
+if exists; then
+  echo "done: \"$name\" is a code-signing identity${trust:+ trusted on this Mac}. Installs and relinks sign with it."
 else
-  echo "the identity was imported but is not valid for code signing — check Keychain Access" >&2
+  echo "the identity was imported but is not a code-signing identity — check Keychain Access" >&2
   exit 1
 fi
