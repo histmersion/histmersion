@@ -17,9 +17,15 @@ The product plan and its waves: `docs/plan.md`. What it is: `README.md`.
 core  ── the CONTRACT: domain model, wire DTOs, Filter, Tapir endpoint defs, Markdown, config,
          frontmatter parsing.            NO database code, NO side effects.
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on core
-server─ MCP + REST + web UI; the ONLY database client.                       depends on core, db
+server─ MCP + REST + web UI; the ONLY database client.        depends on core, db, plugin-api (+ plugin-vaults)
 cli   ── a PURE HTTP CLIENT of the server.                                   depends on core ONLY
+plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
+plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
 ```
+
+A plugin — first-party or not — compiles against `plugin-api` alone and never sees `core`, `db` or
+`server`; the server discovers it through ServiceLoader (`server/plugins/PluginHost`). See
+`docs/research-plugins.md` (§15: as built).
 
 **The CLI must never gain a dependency on `db`.** No pgjdbc in the CLI binary, no database
 credentials on the host. Every CLI command — reads and writes both — goes over HTTP through an sttp

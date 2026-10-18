@@ -111,6 +111,8 @@ histmersion health
 
 **Changing a setting:** edit `histmersion.conf` (`histmersion config path` prints where it is; the
 installer writes a commented template there) and restart. See [Configuration](#configuration).
+`~/Applications/Histmersion/bin/histmersion-server --self-check` checks the config and the plugins
+without starting anything ([Plugins and secrets](#plugins-and-secrets)).
 
 **Exposing on the LAN:** add `HISTMERSION_BIND=0.0.0.0` (and `HISTMERSION_API_KEY`, which gates every write)
 to the LaunchAgent's `EnvironmentVariables` (Linux: an `Environment=` line in the service), then
@@ -1136,6 +1138,11 @@ settings, when there is no file, and never touch an existing one.
 | `agents.infer-filter.min-hits` · `.max-hits` · `.min-cited-share` · `.sample` | file only | `3` · `300` · `0.6` · `5` | an inferred filter must return between min and max sources and at least this share of the sources the article cites; `sample` uncited hits are shown with it |
 | `agents.seed.max-articles` · `.min-sources` · `.max-overlap` | file only | `6` · `5` · `0.5` | propose-articles: articles per plan; each one's filter returns at least min-sources and shares less than max-overlap of them with any article of the area (a seeding manager's `minSources`/`maxArticles` config wins) |
 | `agents.prompts-dir` | `HISTMERSION_AGENTS_PROMPTS_DIR` | *(empty)* | a directory overriding the bundled agent definitions file by file, mirroring the bundled `agents/` tree (`article-skeptic.md`, `_shared/review-fixer.md`, `skills/<name>/SKILL.md`, …) — iterate on a prompt without a rebuild (`histmersion agent generate` carries it into the CLI runtimes' trees) |
+| `plugins.order` | — | `[]` | plugin registration order: these ids first, then the rest by id. `histmersion.plugins` is an **open block**: each `plugins.<id> { … }` is that plugin's own settings, checked by the plugin host against the plugin's defaults (a mistyped key fails that plugin, naming the key; a block no plugin claims is a warning) — see *Plugins and secrets* below |
+| `plugins.<id>.enabled` | `HISTMERSION_PLUGIN_<ID>_ENABLED` (when the plugin declares it) | `false` for the first-party plugins | the host's key in every plugin block. First-party plugins are built into the binary and disabled until enabled here |
+| `plugins.keepassxc.database` · `.key-file` · `.password` · `.attribute` · `.cli` · `.timeout-seconds` | `HISTMERSION_PLUGIN_KEEPASSXC_DATABASE` (others: file only) | `""` · `""` · `null` · `password` · `keepassxc-cli` · `10` | the KeePassXC vault: `keepassxc:<entry>[#<attribute>]` runs `keepassxc-cli show -q -a <attribute> [-k <key-file>] [--no-password] <database> <entry>`. `password` is a **secret reference** (`env:KEEPASSXC_PASSWORD`), sent on the tool's stdin, never stored; without it `--no-password` is passed (a key file alone must open the database), else the vault reports locked |
+| `plugins.1password.account` · `.service-account-token` · `.cli` · `.timeout-seconds` | file only | `""` · `null` · `op` · `10` | the 1Password vault: `1password:op://<vault>/<item>/<field>` runs `op read …` (`--account` when set); `service-account-token` is a secret reference passed as `OP_SERVICE_ACCOUNT_TOKEN` to `op` only — without it the desktop app signs `op` in |
+| `plugins.bitwarden.session` · `.field` · `.cli` · `.timeout-seconds` | file only | `null` · `password` · `bw` · `10` | the Bitwarden vault: `bitwarden:<item>[#<field>]` runs `bw get <field> <item> --nointeraction`; `session` is a secret reference (`env:BW_SESSION`, from `bw unlock`) passed as `BW_SESSION` to `bw` only — without it the vault reports locked |
 
 The installed service reads only its own environment: the LaunchAgent's `EnvironmentVariables`
 (macOS) or the unit's `Environment=` lines (Linux). `just install` fills in `HISTMERSION_CORPUS_DIR`,
@@ -1149,6 +1156,31 @@ prints what it kept, set, changed and dropped, with secret values masked. To dro
 before installing. A `.env` in the
 repo (copy [`.env.example`](.env.example)) is read by `just` only — the recipes and the install
 scripts they run.
+
+### Plugins and secrets
+
+Plugins add to the server through one service (`com.histmersion.plugin.Plugin`, module
+`modules/plugin-api`; the design is [`docs/research-plugins.md`](docs/research-plugins.md)). Each one has
+its own block, `histmersion.plugins.<id> { … }`, layered over the defaults it ships
+(`META-INF/histmersion/plugins/<id>.conf`) with the environment over both. The built-in ones are the
+three secret vaults above, all disabled by default.
+
+A credential in a plugin's settings is never written as a bare value: it is a **secret reference**,
+resolved when the plugin is registered and never stored, logged or returned:
+
+| form | example | |
+|---|---|---|
+| `env:<NAME>` | `token = "env:PORTAL_TOKEN"` | a variable of the server's environment |
+| `<vault>:<ref>` | `token = "keepassxc:Histmersion/Portal#password"` | asked of an enabled vault plugin (`keepassxc`, `1password`, `bitwarden`) |
+| `value:<literal>` | `token = "value:…"` | allowed but discouraged: the server warns, and shows it as `value:***` |
+
+`/api/about`, `/api/config` and `histmersion about` list every plugin — registered, disabled, failed
+(with why) or refused (a plugin built for another SPI version, a duplicate id) — and its effective
+settings with each secret as its reference. A plugin that fails contributes nothing and the server
+still starts. `histmersion-server --self-check` loads the config and the plugins, resolves their
+secrets, prints that report and exits — 0 all good, 2 a plugin failed or was refused, 3 the config is
+broken — without opening a database connection or a port; any other argument is an error (exit 1)
+before anything is opened.
 
 ## Backup and restore
 
