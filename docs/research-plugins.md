@@ -1,7 +1,8 @@
 # Plugins: an SPI, typed config, native image, user plugins, local builds (research, 2026-10-18)
 
-**Status:** research and design proposal for #2017, with two proof-of-concept spikes (§10). Nothing
-here changes the shipped build. The spike code is in `spike/plugins/`, a standalone sbt build that
+**Status:** research and design proposal for #2017, with two proof-of-concept spikes (§10). Phase 1
+(the SPI, the config contract, secrets and the built-in vaults) is built: §15 says what was built and
+where it differs from this proposal. The spike code is in `spike/plugins/`, a standalone sbt build that
 the root build does not aggregate. Measurements were taken on this machine: Apple M4 Pro, 14 cores,
 48 GB RAM, macOS 26.7, GraalVM CE 25.0.1 (the `.sdkmanrc` pin), sbt 2.0.7. Statements I could not
 check are marked **(unverified)**. Everything quoted from the web was fetched on 2026-10-18.
@@ -1019,3 +1020,108 @@ This is why §7.4 adds `--self-check`.
   shown, optionally verified); `plugin add <group:artifact:version>` (resolved from Maven).
 - **One service type** and the app context (§2.2), **in-place config reload** (§3.5) and the **hot
   component graph** with no global JDBC (§3.6) were decided the same day.
+
+## 15. As built (phase 1, 2026-10-18)
+
+Phase 1 of #2018: the SPI, the config contract, secrets and the built-in vaults. Nothing that existed
+before changed behaviour; acquisition, media and events do not go through plugins yet.
+
+**Modules.**
+
+| module | holds | depends on |
+|---|---|---|
+| `modules/plugin-api` (`com.histmersion.plugin`) | `Plugin`, `PluginInfo`, `Spi.Version` (= 1), `PluginContext`, `Registry[A]`, `PluginHttp`, `PluginLog`, `Secret` / `SecretRef`, `SecretVault`, `PluginConfig.given` (lenient readers) | sconfig + kindlings-sconfig-derivation only (D1) |
+| `modules/plugin-vaults` (`com.histmersion.plugins.vaults`) | the `keepassxc`, `1password` and `bitwarden` plugins, `Subprocess` | plugin-api only — compiled as a third-party plugin would be |
+| `server/plugins` | `PluginHost` (discovery, layering, type check, decode, secrets, staged registration), `Plugins` (the composition root's wiring), `Registries`, `Generation` | core, plugin-api; plugin-vaults on the class path |
+| `core` | `PluginStatus` / `PluginsReport` / `PluginsMarkdown` (the report on every surface), `EnvOverrides`, the open `histmersion.plugins` block | — |
+
+**The SPI as built (differences from §2.2's sketch).**
+
+- `given configReader: ConfigReader[Config] = deferred`. Scala 3.8 rejects an abstract given, and a
+  deferred one is filled in by the compiler: a plugin whose `Config` `derives ConfigReader` writes
+  nothing (`type Config = KeePassXcConfig` is enough).
+- Plugin ids are `[a-z0-9][a-z0-9-]*` (a leading digit is allowed for `1password`; HOCON reads
+  `histmersion.plugins.1password` as a plain key, tested). `order` is reserved: it is the host's key.
+- `PluginContext` has `http`, `log` (`info`/`warn`, the plugin's id on every line), `env(name)` (the
+  environment read once on the main thread — for `PATH`, not for credentials), `secret(s)` and the one
+  registry of phase 1, `secretVaults`. **The other extension points are not declared yet**:
+  `sourceFetchers`, `mediaCollections` and `eventCatalogues` each need record types (`WorkKey`/`Fetch`,
+  `MediaRecord`, `CatalogRecord`) that are not trivially small and belong to the phase that moves
+  that part of the app. Adding a registry is compatible (§2.2), so `Spi.Version` stays 1 when they come.
+- §3.4's `def secretKeys: Set[String]` is not needed: secrets are typed. The host finds every `Secret`
+  in the decoded config by walking it (`productIterator`, options, collections, maps — generated code,
+  no reflection), and the reported settings are the HOCON block, where a secret is only ever its
+  reference.
+
+**Secrets (§3.7).** `Secret` is a reference, `value:<literal>` | `env:<NAME>` | `<vault>:<ref>`
+(vault names `[a-z0-9][a-z0-9-]*`, `env` and `value` reserved). Its reader parses the reference only,
+and its errors never echo the text. `toString` is `Secret(env:NAME)`, a literal `Secret(value:***)`.
+The host resolves every secret of an enabled plugin before `register`: `value:` is used and warned
+about, `env:` reads the environment, `<vault>:<ref>` asks the vault registered under that name. The
+values are cached for that generation only (a rebuild resolves them again). Reports show the
+reference; a literal is shown as `value:***`, inside lists and objects too.
+
+**The host.** `PluginHost.build(plugins, user file, env, services): Generation` is a pure function of
+its inputs — no global state, no static cache — which is what a later reload (§3.5) needs: build the
+next generation beside the running one, swap it when complete.
+
+- Refused (reported, never loaded): a foreign `spiVersion`, an id claimed twice (all claimants), an id
+  that is no config key, the reserved `order`. A provider that cannot be instantiated is a warning.
+- Order: `histmersion.plugins.order`, then by id; an `order` entry that is no plugin is a warning, and
+  so is a block no plugin claims.
+- Effective block: **the env overrides the plugin's defaults declare > the user's block > the
+  defaults**. The spike laid the user's block over the env-resolved defaults, so a file value beat
+  the environment; `EnvOverrides.layer` (the marker technique `ConfigLayers` already used for
+  `reference.conf`, now generic) restores the precedence the host's own settings have.
+- Type check by key against the defaults resolved on their own (a `null` default — an optional value
+  such as an optional `Secret` — takes any value and is left to the reader). A **disabled** plugin's
+  block is type-checked but not decoded, so a half-written block of a disabled plugin is not an error.
+- A plugin whose secrets name a vault that no plugin has registered **yet** is set aside and retried
+  after the others: a vault plugin may sort after the plugins that use it (bitwarden's session can
+  live in keepassxc). One still waiting when a pass registers nothing more fails, naming the vault.
+- Registration is staged: what a plugin adds is committed only when `register` returned `Right`; a
+  `Left` or an exception discards it. An `add` after `register` returned (a plugin that kept the
+  context) is refused. A vault must be registered under its own `name`.
+- A failure is the plugin's alone; the server still starts and reports it.
+
+**Surfaces.** `/api/about` (`plugins`), `/api/config` (`plugins`, filled in by the server like
+`writeKeyRequired`) and `histmersion about` (a summary line per plugin). `histmersion.plugins` is an open
+block for `ConfigLayers.check`; `reference.conf` documents it and its `order`.
+
+**The server's command line.** `histmersion-server` takes no argument (serve), `--self-check` or
+`--help`/`-h`; anything else exits 1 with the usage **before** the config, the bundled runtime or the
+database is touched (§10.3's incident). `--self-check` loads the config and the plugins, resolves the
+secrets, prints `PluginsMarkdown.selfCheck` and exits 0 (all good), 2 (a plugin failed or was refused)
+or 3 (the config is broken) — no database connection, no bundled runtime, no listener.
+
+**The vaults.** Each runs its CLI as a subprocess: an argument vector, never a shell; the bare name
+looked up on the server's `PATH` (or a full path in `cli`); a timeout (`timeout-seconds`, default 10)
+after which the process and its descendants are killed; the value read from stdout and never put into
+an error, which quotes the tool's stderr. An argument starting with `-` is refused (it would read as an
+option). No master password is stored:
+
+- `keepassxc` — `keepassxc-cli show -q -a <attr> [-k <key-file>] [--no-password] <database> <entry>`;
+  `password` (a `Secret`, e.g. `env:`) is written to the tool's stdin; without one `--no-password` is
+  passed, and a database that needs a password reports locked.
+- `1password` — `op read op://… [--account a]`; `service-account-token` (a `Secret`) becomes
+  `OP_SERVICE_ACCOUNT_TOKEN` for `op` only; otherwise the desktop app signs `op` in.
+- `bitwarden` — `bw get <field> <item> --nointeraction` with `BW_SESSION` from `session` (a `Secret`);
+  without it the vault reports locked.
+
+Tests run fake CLIs (shell scripts on a temporary `PATH`), never a real vault.
+
+**Native image.** The plugin-api and plugin-vaults classes are on the server's image class path, so
+the three plugins are in every binary (§4.2 option B). GraalVM registered the
+`META-INF/services/com.histmersion.plugin.Plugin` providers by itself. Each plugin module carries its
+own `META-INF/native-image/com.histmersion/<module>/reachability-metadata.json` (the defaults
+resources and the lazy-val fields the tracing agent recorded during a `--self-check` with all three
+vaults enabled against fake CLIs), as a third-party plugin jar would. `scripts/bundle/smoke.sh` proves
+it on the built bundle: an unknown flag exits 1 with no Postgres started; `--self-check` with
+keepassxc and bitwarden enabled against fake CLIs reports both registered, 1password disabled, the
+session as its reference and never its value, exits 0, and exits 2 saying the database is locked when
+the master password is wrong — and neither run starts the bundled runtime or a listener.
+
+**Not in phase 1** (unchanged plan): moving acquisition/media/events to plugins (§13 phases 2 and 6),
+the relink kit, `histmersion plugin add/list/…`, signing, `config reload` (§3.5) and the hot component
+graph (§3.6). `PluginHost.digest` (§7.3) was moved over from the spike with its test, unused until the
+relink kit. The spike under `spike/plugins/` stays as the evidence §10.1 quotes.
