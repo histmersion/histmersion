@@ -193,7 +193,10 @@ object AgentsTools:
             "citekey exists), `hint` (`text`: a note its runs' fixer and skeptic read; `item` scopes it to one " +
             "target, `once` to the next run; `effect` = a structured action you PROPOSE — hold/prioritise/skip targets " +
             "or `config` settings — recorded as a hint-effect approval and applied only when a person approves it; " +
-            "`suggest: true` asks the server's model to propose one). Change only what the user asked for.")
+            "`suggest: true` asks the server's model to propose one), `autopilot` (no `on`: the status — per research goal " +
+            "its stage, managers, sources, articles, open approvals, last activity and pace; `on: true|false` turns the " +
+            "autopilot on — every goal gets its seeding manager and watcher and moves from planned to reviewed by itself — " +
+            "or off). Change only what the user asked for.")
         .input[ManagerInput]
         .handle { in =>
           val m  = a.managing
@@ -217,7 +220,10 @@ object AgentsTools:
                              .flatMap(t => m.addHint(id, Managers.HintAdd(t, in.item, Some(in.once), in.effect, Some("mcp"),
                                propose = Some(in.effect.isDefined), suggest = Some(in.suggest))))
                              .map(ManagersMarkdown.hint)
-            case other => Left(ApiError(s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint)"))
+            case "autopilot" => in.on match
+                                  case None    => Right(AutopilotMarkdown.status(m.autopilot))
+                                  case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some("mcp"))).map(AutopilotMarkdown.status)
+            case other => Left(ApiError(s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot)"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -347,11 +353,12 @@ object AgentsTools:
       text: Option[String] = None, item: Option[String] = None, once: Boolean = false, runs: Boolean = false,
       priority: Option[Int] = None, until: Option[String] = None, untilSource: Option[String] = None,
       kind: Option[String] = None, goal: Option[String] = None, cron: Option[String] = None,
-      effect: Option[Managers.HintEffect] = None, suggest: Boolean = false)
+      effect: Option[Managers.HintEffect] = None, suggest: Boolean = false, on: Option[Boolean] = None)
       derives KindlingsCodecAsObject
   object ManagerInput:
     given Schema[ManagerInput] = KindlingsSchema.derived[ManagerInput].schema
-      .modify(_.action)(_.description("list | show | create | pause | resume | enqueue | hold | hint"))
+      .modify(_.action)(_.description("list | show | create | pause | resume | enqueue | hold | hint | autopilot"))
+      .modify(_.on)(_.description("autopilot: true turns it on, false off; absent: its status"))
       .modify(_.id)(_.description("The manager (default: review; enqueue without it routes by kind)"))
       .modify(_.target)(_.description("enqueue, hold: an article slug, a citekey or a goal (by kind)"))
       .modify(_.kind)(_.description("create: review | enrich | seed | watch; enqueue: review | extend | enrich | seed (with id: the item kind)"))

@@ -35,9 +35,9 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
     val slug = ctx.run.target
     for
       loaded   <- ctx.code[Loaded]("load")(load(slug))
-      proposed <- ctx.llm[PlanAnswer, Proposed]("propose", StepAgent.GoalPlanner, input(loaded),
+      proposed <- ctx.llm[PlanAnswer, Proposed]("propose", StepAgent.GoalPlanner, input(loaded, caps(ctx)),
                     AnswerSchemas.plan)((a, last) =>
-                    PlanGoal.check(a, slug, taken, loaded.queries.toSet, cfg.plan.caps, last)
+                    PlanGoal.check(a, slug, taken, loaded.queries.toSet, caps(ctx), last)
                       .map(Checked(_, _)))
       plan     <- ctx.code[Plan]("verify")(Right(verify(ctx, proposed, slug)))
       line     <-
@@ -50,6 +50,11 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
             applied <- ctx.code[Applied]("apply")(apply(ctx, slug, plan, decided))
           yield applied.line
     yield line
+
+  /** `agents.plan.*`, with the run's own sub-goal cap (the autopilot gives 0 at its depth limit). */
+  private def caps(ctx: RunCtx): Caps =
+    val c = cfg.plan.caps
+    ctx.run.params.subGoals.fold(c)(n => c.copy(subGoals = math.max(0, math.min(n, c.subGoals))))
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -66,7 +71,7 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
         vocab("topics"), vocab("tags"))
     }
 
-  private def input(l: Loaded): String =
+  private def input(l: Loaded, caps: Caps): String =
     val period = (l.periodStart, l.periodEnd) match
       case (Some(a), Some(b)) => s"$a to $b (signed years, BCE negative)"
       case _                  => "not given"
@@ -76,8 +81,10 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
     s"Plan the research of this goal.\n\n${Prompt.data("goal", goal)}\n\n" +
       s"Its sub-goals: ${list(l.children)}\n\nIts queries: ${list(l.queries)}\n\nLinked to it: ${list(l.linked)}\n\n" +
       s"The corpus's most used topics: ${l.topics.mkString(", ")}\nIts most used tags: ${l.tags0.mkString(", ")}\n\n" +
-      s"Limits: at most ${cfg.plan.maxSubGoals} sub-goals, ${cfg.plan.maxQueries} queries, ${cfg.plan.maxWorks} works; " +
-      s"a query is at most ${cfg.plan.queryChars} characters."
+      (if caps.subGoals == 0 then "Propose NO sub-goals: this goal is split far enough; give queries and works. "
+       else "") +
+      s"Limits: at most ${caps.subGoals} sub-goals, ${caps.queries} queries, ${caps.works} works; " +
+      s"a query is at most ${caps.queryChars} characters."
 
   /** Every DOI through the discover path (OpenAlex/Crossref). Offline, every work is dropped — a
     * person never sees a DOI code could not check. */

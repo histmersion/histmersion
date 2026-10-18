@@ -55,6 +55,25 @@ object GoalLinkRepo:
   def children(ds: DataSource, goal: String): List[Goal] =
     GoalRepo.children(ds, goal)
 
+  /** Every goal's links counted by kind: (goal, kind) → n. Article links count only articles that
+    * exist. */
+  def linkCounts(ds: DataSource): Map[(String, String), Int] =
+    connect(ds):
+      sql"""SELECT l.goal_slug, l.kind, count(*)::int FROM goal_links l
+            WHERE l.kind <> 'article' OR EXISTS (SELECT 1 FROM articles a WHERE a.slug = l.ref)
+            GROUP BY l.goal_slug, l.kind""".query[(String, String, Int)].run().map((g, k, n) => (g, k) -> n).toMap
+
+  /** The goals that record an approved plan. */
+  def planned(ds: DataSource): Set[String] =
+    connect(ds)(sql"SELECT slug FROM goals WHERE plan IS NOT NULL".query[String].run().toSet)
+
+  /** Every goal's linked articles that exist: goal → slugs. */
+  def articlesByGoal(ds: DataSource): Map[String, List[String]] =
+    connect(ds):
+      sql"""SELECT l.goal_slug, l.ref FROM goal_links l JOIN articles a ON a.slug = l.ref
+            WHERE l.kind = 'article' ORDER BY l.goal_slug, l.ref""".query[(String, String)].run().toList
+        .groupMap(_._1)(_._2)
+
   // ── plan and run cap ───────────────────────────────────────────────────────────────────────────
 
   /** The approved plan (its JSON) and the goal's run cap. `None` = no such goal. */

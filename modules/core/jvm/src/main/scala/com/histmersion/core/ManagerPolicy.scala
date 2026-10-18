@@ -303,6 +303,17 @@ object ManagerPolicy:
     (kind == ArticleReview && open.contains((InferFilter, target))) ||
       (kind == ProposeArticles && open.contains((PlanGoalItem, target)))
 
+  /** The item kinds whose target is a goal. */
+  val GoalKinds: Set[String] = Set(PlanGoalItem, ProposeArticles, AcquisitionSweep, CurrencyCheck)
+
+  /** Must an item of `kind` (whose pipeline is `pipeline`) wait for the unsettled runs on its target (their
+    * pipelines)? On an article or a source: any of them (one writer at a time). On a goal — its plan, its
+    * article proposal, its sweeps — only a run of the same pipeline: they write different things (the
+    * plan and queries, an approval, sources and acquisition items), so a plan waiting days for a person
+    * does not stop its watcher, nor a sweep the proposal (which waits for the plan through [[waitsFor]]). */
+  def blocks(kind: String, pipeline: String, unsettled: Seq[String]): Boolean =
+    if GoalKinds(kind) then unsettled.contains(pipeline) else unsettled.nonEmpty
+
   /** Why a converged article is due again, if it is: its review converged more than `days` days ago, or
     * its filter returns more sources now (`hitsNow`) than when it converged (`hitsThen`). `days` 0 =
     * never. */

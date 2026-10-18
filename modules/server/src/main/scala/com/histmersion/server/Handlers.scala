@@ -1036,6 +1036,15 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * `maintenance.vacuum-tables`) as a job (see [[VacuumJobs]]). */
   def vacuum(in: VacuumRequest): Either[ApiError, JobInfo] = vacuumJobs.start(in)
 
+  /** Why a scheduled backup or repair must not start now (the autopilot's housekeeping): a restore
+    * holds the maintenance lock, or a backup or a vacuum is still running. pg_dump reads one consistent
+    * snapshot, so ingests, OCR and agent runs going on beside it are fine. */
+  def housekeepingBlock: Option[String] =
+    if maintenance.active then Some("a restore holds the maintenance lock")
+    else if backupJobs.running then Some("a backup is still running")
+    else if vacuumJobs.isRunning then Some("a vacuum is still running")
+    else None
+
   def backupStatus: Either[ApiError, BackupStatus] =
     backupJobs.status.toRight(ApiError("no backup has run since the server started", Some(Write.CodeNotFound)))
 
@@ -1169,6 +1178,17 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * the review manager's stale check. */
   def articleFilterTotal(slug: String): Option[Int] =
     ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).flatMap(_.filter).map(af => filterReach(af, Nil, 0)._1)
+
+  /** How many sources an article's filter returns (of the first `limits.coverage-sources`) that its body
+    * neither cites nor gives a reason for — what an extension would add (the autopilot's article-extend
+    * threshold). None: no such article, or it records no filter. */
+  def newFilterSources(slug: String): Option[Int] =
+    ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).flatMap(a => a.filter.map { af =>
+      val f = af.toFilter
+      val (_, hits) = CoverageRepo.sourceSet(ds, f, scopeOf(f), cfg.limits.coverageSources)
+      val cited = citedOf(a.body, bodyLinks(a.body)).toSet
+      hits.map(_.citekey).count(ck => !cited(ck) && !a.reasons.contains(ck))
+    })
 
   /** How many pairs of the article's critique checklist are open now (None: no such article) — what
     * the review manager tracks per run (§6.8). */

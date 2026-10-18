@@ -357,6 +357,72 @@ object ManagerRepo:
         .frag.query[(String, String)].run().toList.map((s, t) => (s, t, None, None))
       (done ++ ledgers).sortBy(_._2).take(lim)
 
+  /** Articles that record a coverage filter and that no item of this manager has open (pending, held,
+    * active), with when their last extension item settled (None: never extended) — the ones never
+    * extended first, then the longest ago; `tags`/`goal` narrow as in the selection. */
+  def extendCandidates(ds: DataSource, managerId: String, tags: List[String], goal: Option[String],
+      limit: Int): List[(String, Option[String])] =
+    val g = goal.map(_.trim).getOrElse("")
+    connect(ds):
+      Sql.of(
+        s"""SELECT a.slug, ${at("x.updated_at")} FROM articles a
+            LEFT JOIN manager_items x ON x.manager_id = ? AND x.kind = ? AND x.target = a.slug
+            WHERE a.coverage_filter IS NOT NULL AND a.kind <> 'index' AND a.tags @> ?::text[]
+              AND (? = '' OR EXISTS (SELECT 1 FROM goal_links gl WHERE gl.goal_slug = ?
+                                     AND gl.kind = 'article' AND gl.ref = a.slug))
+              AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = ? AND i.target = a.slug
+                              AND i.status IN ('pending', 'held', 'active'))
+            ORDER BY x.updated_at NULLS FIRST, a.slug LIMIT ?""",
+        Param.S(managerId), Param.S(ArticleExtend), Param.A(tags), Param.S(g), Param.S(g), Param.S(managerId),
+        Param.I(math.max(1, limit))).frag.query[(String, Option[String])].run().toList
+
+  // ── the autopilot's views (few queries for every manager at once) ──────────────────────────────
+
+  /** A manager without its counts: what the autopilot's ensure and status read for every manager.
+    * `planItem` = it has a plan-goal item (any status). */
+  final case class Light(id: String, kind: String, goal: Option[String], state: String, cron: Option[String],
+      config: ManagerConfig, statusNote: Option[String], planItem: Boolean)
+  private given DbCodec[Light] = DbCodec.derived
+
+  def light(ds: DataSource): List[Light] =
+    connect(ds):
+      Sql.of(s"""SELECT m.id, m.kind, m.goal_slug, m.state, m.cron, m.config::text, m.status_note,
+                        EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = m.id AND i.kind = ?)
+                 FROM agent_managers m ORDER BY m.id""", Param.S(PlanGoalItem)).frag.query[Light].run().toList
+
+  /** Per manager: its open items (pending, held, active), the items it settled since `since`, and when
+    * it last recorded an event. */
+  def pace(ds: DataSource, since: java.time.Instant): Map[String, (Int, Int, Option[String])] =
+    val t = since.toString
+    connect(ds):
+      Sql.of(s"""SELECT m.id,
+                        (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.status IN ('pending', 'held', 'active')),
+                        (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id
+                           AND i.status IN ('done', 'stopped', 'failed') AND i.updated_at >= ?::timestamptz),
+                        (SELECT ${at("max(e.at)")} FROM manager_events e WHERE e.manager_id = m.id)
+                 FROM agent_managers m""", Param.S(t))
+        .frag.query[(String, Int, Int, Option[String])].run().toList.map((id, o, d, l) => id -> (o, d, l)).toMap
+
+  /** Open items of `kind` in manager `id` (pending, held or active) — e.g. a goal's compiles. */
+  def openOf(ds: DataSource, managerId: String, kinds: List[String], statuses: List[String]): Int =
+    connect(ds)(Sql.of("SELECT count(*)::int FROM manager_items WHERE manager_id = ? AND kind = ANY(?::text[]) AND status = ANY(?::text[])",
+      Param.S(managerId), Param.A(kinds), Param.A(statuses)).frag.query[Int].run().head)
+
+  /** The articles that passed their review: a review ledger with no open MAJOR, and no open item of
+    * review manager `reviewId` (a review queued or running is not passed yet). */
+  def passedReview(ds: DataSource, reviewId: String): Set[String] =
+    connect(ds):
+      sql"""SELECT l.slug FROM review_ledgers l
+            WHERE NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
+                              WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')
+              AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = $reviewId AND i.target = l.slug
+                              AND i.status IN ('pending', 'held', 'active'))""".query[String].run().toSet
+
+  /** Open items on `target` in manager `id`, any kind. */
+  def openOn(ds: DataSource, managerId: String, target: String): Boolean =
+    connect(ds)(sql"""SELECT 1 FROM manager_items WHERE manager_id = $managerId AND target = $target
+                      AND status IN ('pending', 'held', 'active') LIMIT 1""".query[Int].run().nonEmpty)
+
   /** An article's tags and the goals it is linked to (what a hint's effect matches). */
   def articleFacets(ds: DataSource, slug: String): (List[String], List[String]) =
     connect(ds):
@@ -397,6 +463,13 @@ object ManagerRepo:
     val at = since.toString
     connect(ds)(sql"""SELECT count(*)::int FROM manager_events WHERE manager_id = $managerId AND kind = $kind
                       AND at >= $at::timestamptz""".query[Int].run().head)
+
+  /** How many events of `kind` ALL managers recorded since `since` (every watcher's ingests today: the
+    * autopilot's shared cap). */
+  def countEventsAll(ds: DataSource, kind: String, since: java.time.Instant): Int =
+    val at = since.toString
+    connect(ds)(sql"""SELECT count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz"""
+      .query[Int].run().head)
 
   /** The newest event of `kind` (a starved note is logged once per change). */
   def lastEventOf(ds: DataSource, managerId: String, kind: String): Option[ManagerEvent] =

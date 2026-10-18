@@ -12023,6 +12023,9 @@
       "glob": "db/migration/V094__media_collections.sql"
     },
     {
+      "glob": "db/migration/V096__agent_autopilot.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
