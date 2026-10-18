@@ -282,6 +282,10 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
     assert(h.putGoal("zzagent-aplate", GoalPut("Zz later")).isRight)
     Clock(Instant.now().plusSeconds(3600)).tick(a)
     assertEquals(ManagerRepo.get(ds, seedId("zzagent-aplate")).map(_.state), Some("active"))
+    // the New research area form's watcher, asked for while it is on, is created active (paused only when asked)
+    assert(h.putGoal("zzagent-apform", GoalPut("Zz form")).isRight)
+    assertEquals(a.managing.create(ManagerCreate("watch", Some("zzagent-apform"))).map(_.state), Right("active"))
+    assertEquals(a.managing.create(ManagerCreate("seed", Some("zzagent-apform"), paused = Some(true))).map(_.state), Right("paused"))
 
   test("a reviewed goal gets a watcher on the slow cron and no seeding manager"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)

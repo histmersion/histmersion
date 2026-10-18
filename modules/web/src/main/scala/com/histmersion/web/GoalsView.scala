@@ -78,10 +78,13 @@ object GoalsView:
           tags.split(",").toList.map(_.trim).filter(_.nonEmpty).distinct), plan, seed, w))
 
   /** What the form did, in one line. */
-  def createdNote(a: NewArea, planned: Boolean, seeded: Option[String], watched: Option[String] = None): String =
+  def createdNote(a: NewArea, planned: Boolean, seeded: Option[String], watched: Option[String] = None,
+      active: Set[String] = Set.empty): String =
+    def made(id: String, resume: String) =
+      if active(id) then s"$id created active (the autopilot is on)" else s"$id created paused — resume it $resume"
     s"research area ${a.slug} created" + (if planned then "; the planner is running (its plan waits for you)" else "") +
-      seeded.fold("")(id => s"; seeding manager $id created paused — resume it to propose its articles") +
-      watched.fold("")(id => s"; watcher $id created paused — resume it for its weekly sweeps" +
+      seeded.fold("")(id => s"; seeding manager ${made(id, "to propose its articles")}") +
+      watched.fold("")(id => s"; watcher ${made(id, "for its weekly sweeps")}" +
         (if a.watch.exists(_.autoIngest.contains(true)) then " (it ingests legal open-access finds)" else ""))
 
   // ── the goals window ────────────────────────────────────────────────────────────────────────────
@@ -139,12 +142,13 @@ object GoalsView:
               val planned = if a.plan then ApiClient.startRun(Agents.RunRequest(Pipeline.PlanGoal.wire, a.slug)).map(_ => true)
                 else scala.concurrent.Future.successful(false)
               planned.flatMap { p =>
-                val seeded = if a.seed then ApiClient.managerCreate(Managers.ManagerCreate("seed", Some(a.slug))).map(m => Some(m.id))
+                val seeded = if a.seed then ApiClient.managerCreate(Managers.ManagerCreate("seed", Some(a.slug))).map(m => Some(m))
                   else scala.concurrent.Future.successful(None)
                 seeded.flatMap { sd =>
-                  val watched = a.watch.fold(scala.concurrent.Future.successful(Option.empty[String]))(c =>
-                    ApiClient.managerCreate(Managers.ManagerCreate("watch", Some(a.slug), c)).map(m => Some(m.id)))
-                  watched.map(w => createdNote(a, p, sd, w))
+                  val watched = a.watch.fold(scala.concurrent.Future.successful(Option.empty[Managers.ManagerInfo]))(c =>
+                    ApiClient.managerCreate(Managers.ManagerCreate("watch", Some(a.slug), c)).map(m => Some(m)))
+                  watched.map(w => createdNote(a, p, sd.map(_.id), w.map(_.id),
+                    (sd.toList ++ w.toList).filter(_.state == Managers.State.Active.wire).map(_.id).toSet))
                 }
               }
             }

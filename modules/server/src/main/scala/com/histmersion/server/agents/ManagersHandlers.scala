@@ -49,9 +49,11 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
     * `seed` needs its research area (`goal`; id `seed:<goal>`) and starts with the item that proposes
     * its first articles; `watch` needs its research area too (id `watch:<goal>`), gets the cron
     * `agents.managers.watch.cron` unless `cron` names another, and starts with one item per sweep (they
-    * run when it is resumed, then on its cron). Created paused unless `paused` is false. */
+    * run when it is resumed, then on its cron). Created paused unless `paused` is false — or, `paused`
+    * not given, while the autopilot is on (it runs every goal's managers). */
   def create(in: ManagerCreate, now: java.time.Instant = java.time.Instant.now()): Either[ApiError, ManagerInfo] =
-    val state = if in.paused.contains(false) then State.Active else State.Paused
+    // created paused unless asked otherwise — or, when nothing is asked, while the autopilot runs the goals
+    val state = if in.paused.contains(false) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
     val goal  = in.goal.map(_.trim).filter(_.nonEmpty)
     def make(k: Kind, id: String, g: Option[String], cron: Option[String] = None): Either[ApiError, ManagerInfo] =
       for
