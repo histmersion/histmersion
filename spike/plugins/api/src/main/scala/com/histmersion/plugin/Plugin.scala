@@ -43,7 +43,7 @@ enum Access:
   case Open
   /** The user's own subscription or account, inside the provider's terms. */
   case Subscription
-  /** Distributed without the rights holder's authorisation (the unauthorised mirror). */
+  /** Distributed without the rights holder's authorisation. Never part of this repository. */
   case Unauthorised
 
 /** One answer of a fetcher. `Miss` lets the chain go on; `Refused` (a bot challenge, a 401/403, a
