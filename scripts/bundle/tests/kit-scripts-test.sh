@@ -10,6 +10,9 @@
 #     codesign with it, the designated requirement stable across two binaries; the user's keychain
 #     search list is saved, the temporary keychain appended for the signing, the list restored and
 #     compared, the keychain deleted. The login keychain is never read or changed.
+#   - the installers' build step (install-build.sh): local by default, --prebuilt, --jvm, every fallback to
+#     the prebuilt binary, the build record that spares a second link; and the WHOLE installer of this
+#     platform against fakes (temporary HOME and install, fake launchctl/systemctl and health)
 #
 #   scripts/bundle/tests/kit-scripts-test.sh        (also: just test-scripts)
 set -euo pipefail
@@ -146,47 +149,162 @@ if [ "$(uname -s)" = Darwin ]; then
     'grep -q "signed ad hoc" "$tmp/c.out" && echo "$info" | grep -q "Identifier=com.histmersion.test" && echo "$info" | grep -q "Signature=adhoc"'
 fi
 
-# ── the installers' build step (install-build.sh) ─────────────────────────────────────────────────
+# ── the installers' build step (install-build.sh; D5: a local build by default) ─────────────────────
 echo "install-build"
 # shellcheck source=../install-build.sh
 . "$src/install-build.sh"
-check "mode: prebuilt by default, local when plugins exist, as asked otherwise" \
-  '[ "$(ib_mode "" 0)" = prebuilt ] && [ "$(ib_mode "" 2)" = local ] && [ "$(ib_mode jvm 2)" = jvm ] && [ "$(ib_mode prebuilt 3)" = prebuilt ]'
-check "mode: an unknown one is refused" '! ib_mode fast 0 >/dev/null 2>&1'
-dest="$tmp/dest"; mkdir -p "$dest/bin"
-fake_step() { # <name> <exit code> — records its call
-  printf '#!/bin/sh
-echo "%s $*" >> "%s/steps"
-exit %s
-' "$1" "$tmp" "$2" > "$dest/bin/$1"; chmod +x "$dest/bin/$1"
+check "mode: local by default, as asked otherwise" \
+  '[ "$(ib_mode "")" = local ] && [ "$(ib_mode local)" = local ] && [ "$(ib_mode jvm)" = jvm ] && [ "$(ib_mode prebuilt)" = prebuilt ]'
+check "mode: an unknown one is refused" '! ib_mode fast >/dev/null 2>&1'
+
+# a tool that records its call and exits with $tmp/rc.<name>.<first argument> (default 0); a relink
+# that succeeds puts a "linked" binary in bin/ with its build record, as the real one does
+fake_tool() { # <dest> <name>
+  cat > "$1/bin/$2" <<SH
+#!/bin/bash
+echo "$2 \$*" >> "$tmp/steps"
+rc="\$(cat "$tmp/rc.$2.\$1" 2>/dev/null || echo 0)"
+if [ "$2" = histmersion-relink ] && [ "\$rc" = 0 ]; then
+  mode=native; [ "\$1" = --jvm ] && mode=jvm; d="\${HISTMERSION_HOME:-$1}"
+  printf '#!/bin/sh\n# linked %s\n' "\$mode" > "\$d/bin/histmersion-server"; chmod +x "\$d/bin/histmersion-server"
+  . "$src/kit-common.sh"; hk_write_build_record "\$d/bin/histmersion-server.build" "\$mode" "\$d/kit" "\$HISTMERSION_DATA_DIR/plugins" relink
+fi
+exit "\$rc"
+SH
+  chmod +x "$1/bin/$2"
+}
+new_dest() { # <dir> — a bundle with a prebuilt binary, a kit, fake toolchain and relink
+  rm -rf "$1" "$tmp"/rc.* && mkdir -p "$1/bin" "$1/kit" "$1/libexec"
+  printf '#!/bin/sh\n# prebuilt\n' > "$1/bin/histmersion-server"; chmod +x "$1/bin/histmersion-server"
+  echo 25.0.1 > "$1/kit/graalvm-version"; echo kit-jar > "$1/kit/a.jar"
+  (cd "$1/kit" && shasum -a 256 a.jar graalvm-version > SHA256SUMS)
+  install -m 0644 "$src/kit-common.sh" "$1/libexec/kit-common.sh"
+  fake_tool "$1" histmersion-toolchain; fake_tool "$1" histmersion-relink
+  : > "$tmp/steps"
 }
 steps() { tr '\n' ';' < "$tmp/steps"; }
-fake_step histmersion-toolchain 0; fake_step histmersion-relink 0; : > "$tmp/steps"
-ib_build "$dest" prebuilt > /dev/null
-check "prebuilt: nothing run" '[ ! -s "$tmp/steps" ]'
-ib_build "$dest" local > /dev/null
-check "local: toolchain, check, relink without a restart" \
-  '[ "$(steps)" = "histmersion-toolchain path;histmersion-toolchain check;histmersion-relink --no-restart;" ]'
-: > "$tmp/steps"; fake_step histmersion-relink 3
-printf '#!/bin/sh
-echo "histmersion-relink $*" >> "%s/steps"
-case "$*" in *--jvm*) exit 0;; esac
-exit 3
-' "$tmp" > "$dest/bin/histmersion-relink"
-ib_build "$dest" local > "$tmp/ib.out"
-check "local, the link fails: JVM mode instead" \
-  '[ "$(steps)" = "histmersion-toolchain path;histmersion-toolchain check;histmersion-relink --no-restart;histmersion-relink --jvm --no-restart;" ] && grep -q "falling back to JVM mode" "$tmp/ib.out"'
-: > "$tmp/steps"
-printf '#!/bin/sh
-echo "histmersion-toolchain $*" >> "%s/steps"
-case "$1" in path) exit 2;; install) exit 2;; esac
-' "$tmp" > "$dest/bin/histmersion-toolchain"
-ib_build "$dest" local > /dev/null
-check "local, no GraalVM can be provisioned: JVM mode attempted, no link" \
-  '[ "$(steps)" = "histmersion-toolchain path;histmersion-toolchain install;histmersion-relink --jvm --no-restart;" ]'
-: > "$tmp/steps"
-ib_build "$dest" jvm > /dev/null && rc=0 || rc=$?
-check "jvm: no JDK can be provisioned → the step fails" '[ "$rc" != 0 ] && [ "$(steps)" = "histmersion-toolchain path;histmersion-toolchain install;" ]'
+build() { # <dest> <mode> [<previous>] → output in $tmp/ib.out, rc in $ib_rc
+  ib_rc=0; HISTMERSION_HOME="$1" ib_build "$@" > "$tmp/ib.out" 2>&1 || ib_rc=$?
+}
+is_prebuilt() { grep -q "# prebuilt" "$1/bin/histmersion-server"; }
+fakebin="$tmp/fake-cc"; mkdir -p "$fakebin"
+printf '#!/bin/sh\necho /usr/bin/clang\n' > "$fakebin/xcrun"; printf '#!/bin/sh\necho /usr/bin/cc\n' > "$fakebin/cc"
+chmod +x "$fakebin"/*
+export HISTMERSION_MACHINE_ID=this-machine
+rm -rf "$HISTMERSION_DATA_DIR/plugins" "$HISTMERSION_DATA_DIR/toolchain"
+dest="$tmp/dest"
+
+new_dest "$dest"; build "$dest" local
+check "local (the default): preflight, GraalVM found, relink without a restart" \
+  '[ "$ib_rc" = 0 ] && [ "$ib_result" = local ] && [ "$(steps)" = "histmersion-toolchain preflight;histmersion-toolchain path;histmersion-relink --no-restart;" ] && grep -q "# linked native" "$dest/bin/histmersion-server"'
+new_dest "$dest"; echo 2 > "$tmp/rc.histmersion-toolchain.path"; build "$dest" local
+check "local, no GraalVM yet: provisioned (its size said), then the relink" \
+  '[ "$ib_result" = local ] && [ "$(steps)" = "histmersion-toolchain preflight;histmersion-toolchain path;histmersion-toolchain install;histmersion-relink --no-restart;" ] && grep -q "325 MB" "$tmp/ib.out"'
+new_dest "$dest"; echo 3 > "$tmp/rc.histmersion-relink.--no-restart"; build "$dest" local
+check "local, native-image fails (relink exit 3): the prebuilt binary, the install goes on, the cause said" \
+  '[ "$ib_rc" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && grep -q "FALLING BACK to the bundle.s prebuilt binary" "$tmp/ib.out" && grep -q "exit 3" "$tmp/ib.out"'
+check "  …and nothing else was tried (no JVM mode)" '[ "$(steps)" = "histmersion-toolchain preflight;histmersion-toolchain path;histmersion-relink --no-restart;" ]'
+new_dest "$dest"; echo 2 > "$tmp/rc.histmersion-relink.--no-restart"; build "$dest" local
+check "local, the relink's pre-flight or self-check refuses (exit 2): the prebuilt binary" \
+  '[ "$ib_rc" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && grep -q "exit 2" "$tmp/ib.out"'
+new_dest "$dest"; echo 2 > "$tmp/rc.histmersion-toolchain.path"; echo 2 > "$tmp/rc.histmersion-toolchain.install"; build "$dest" local
+check "local, GraalVM cannot be provisioned: the prebuilt binary, no relink" \
+  '[ "$ib_rc" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && ! grep -q relink "$tmp/steps" && grep -q "could not be provisioned" "$tmp/ib.out"'
+mkdir -p "$HISTMERSION_DATA_DIR/plugins"; echo p > "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar"
+new_dest "$dest"; echo 3 > "$tmp/rc.histmersion-relink.--no-restart"; build "$dest" local
+check "a fallback with plugins installed says the binary does not hold them, and how to link them" \
+  '[ "$ib_result" = prebuilt ] && grep -q "does NOT hold your 1 plugin jar" "$tmp/ib.out" && grep -q "histmersion plugin rebuild" "$tmp/ib.out"'
+new_dest "$dest"; rm "$dest/bin/histmersion-server"; echo 3 > "$tmp/rc.histmersion-relink.--no-restart"; build "$dest" local
+check "no prebuilt binary to fall back to: the step fails" '[ "$ib_rc" != 0 ]'
+rm -rf "$HISTMERSION_DATA_DIR/plugins"
+
+# the REAL histmersion-toolchain: its memory, download and checksum verdicts drive the fallback
+real_toolchain() { install -m 0755 "$src/toolchain.sh" "$1/bin/histmersion-toolchain"; }
+new_dest "$dest"; real_toolchain "$dest"
+rc_mem=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((8 * 1073741824)) HISTMERSION_GRAALVM_PINS="$tmp/pins" \
+  HISTMERSION_HOME="$dest" ib_build "$dest" local > "$tmp/ib.out" 2>&1 || rc_mem=$?
+check "8 GB of memory (under HISTMERSION_RELINK_MIN_MEMORY_GB): the prebuilt binary, nothing downloaded or linked" \
+  '[ "$rc_mem" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && grep -q "LESS than the 12 GB" "$tmp/ib.out" && [ ! -s "$tmp/steps" ] && [ ! -e "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.1" ]'
+new_dest "$dest"; real_toolchain "$dest"
+rc_sum=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((48 * 1073741824)) HISTMERSION_GRAALVM_PINS="$tmp/pins-bad" \
+  HISTMERSION_HOME="$dest" ib_build "$dest" local > "$tmp/ib.out" 2>&1 || rc_sum=$?
+check "the GraalVM download fails its pinned checksum: the prebuilt binary, no relink" \
+  '[ "$rc_sum" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && grep -q "SHA-256 mismatch" "$tmp/ib.out" && [ ! -s "$tmp/steps" ]'
+new_dest "$dest"; real_toolchain "$dest"
+rc_ok=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((48 * 1073741824)) HISTMERSION_GRAALVM_PINS="$tmp/pins" \
+  HISTMERSION_HOME="$dest" ib_build "$dest" local > "$tmp/ib.out" 2>&1 || rc_ok=$?
+check "enough memory, the pinned download good: GraalVM provisioned, then linked" \
+  '[ "$rc_ok" = 0 ] && [ "$ib_result" = local ] && [ -x "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.1/Contents/Home/bin/native-image" ] && [ "$(steps)" = "histmersion-relink --no-restart;" ]'
+
+# nothing linked again when it would give the same binary (the build record)
+new_dest "$dest"; build "$dest" local; : > "$tmp/steps"
+build "$dest" local
+check "reinstalled in place, same kit and plugins: kept, nothing run" '[ "$ib_result" = kept ] && [ ! -s "$tmp/steps" ]'
+new_dest "$dest"; . "$src/kit-common.sh"
+hk_write_build_record "$dest/bin/histmersion-server.build" native "$dest/kit" "$tmp/no-plugins" bundle
+build "$dest" local
+check "the bundle's binary was built on this machine from this kit (just install), no plugins: kept" \
+  '[ "$ib_result" = kept ] && [ ! -s "$tmp/steps" ] && is_prebuilt "$dest" && grep -q "nothing to build" "$tmp/ib.out"'
+HISTMERSION_MACHINE_ID=ci-runner hk_write_build_record "$dest/bin/histmersion-server.build" native "$dest/kit" "$tmp/no-plugins" bundle
+build "$dest" local
+check "…built on ANOTHER machine (a CI bundle): linked here" '[ "$ib_result" = local ] && grep -q "linked on another machine" "$tmp/ib.out"'
+mkdir -p "$HISTMERSION_DATA_DIR/plugins"; echo p > "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar"
+new_dest "$dest"; hk_write_build_record "$dest/bin/histmersion-server.build" native "$dest/kit" "$tmp/no-plugins" bundle
+build "$dest" local
+check "…with a plugin jar installed: linked here (the bundle's binary lacks it)" '[ "$ib_result" = local ] && grep -q "linked with other plugins" "$tmp/ib.out"'
+prev="$tmp/prev"; new_dest "$prev"; build "$prev" local      # the previous install: linked here, with hello
+new_dest "$dest"; build "$dest" local "$prev"
+check "a reinstall of the same bundle: the previous install's binary is carried over, nothing linked" \
+  '[ "$ib_result" = reused ] && [ ! -s "$tmp/steps" ] && grep -q "# linked native" "$dest/bin/histmersion-server" && cmp -s "$prev/bin/histmersion-server.build" "$dest/bin/histmersion-server.build"'
+check "  …and the bundle's own binary is kept as .prev (plugin rollback goes back to it)" 'grep -q "# prebuilt" "$dest/bin/histmersion-server.prev"'
+echo changed > "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar"
+new_dest "$dest"; build "$dest" local "$prev"
+check "a plugin jar changed since: linked again" '[ "$ib_result" = local ] && grep -q "histmersion-relink --no-restart" "$tmp/steps"'
+new_dest "$dest"; echo other > "$dest/kit/a.jar"; (cd "$dest/kit" && shasum -a 256 a.jar graalvm-version > SHA256SUMS)
+build "$prev" local; : > "$tmp/steps"; build "$dest" local "$prev"
+check "a new kit (an update): linked again" '[ "$ib_result" = local ] && grep -q "histmersion-relink --no-restart" "$tmp/steps"'
+rm -rf "$HISTMERSION_DATA_DIR/plugins"
+
+# --prebuilt and --jvm
+new_dest "$dest"; build "$dest" prebuilt
+check "prebuilt: nothing run, the bundle's binary" '[ "$ib_rc" = 0 ] && [ "$ib_result" = prebuilt ] && [ ! -s "$tmp/steps" ] && is_prebuilt "$dest"'
+mkdir -p "$HISTMERSION_DATA_DIR/plugins"; echo p > "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar"
+new_dest "$dest"; build "$dest" prebuilt
+check "prebuilt with plugins installed: says they are not in it" '[ "$ib_result" = prebuilt ] && grep -q "does NOT hold the 1 plugin jar" "$tmp/ib.out"'
+rm -rf "$HISTMERSION_DATA_DIR/plugins"
+new_dest "$dest"; build "$dest" jvm
+check "jvm: the JDK found, the relink switches to JVM mode" \
+  '[ "$ib_result" = jvm ] && [ "$(steps)" = "histmersion-toolchain path;histmersion-relink --jvm --no-restart;" ]'
+new_dest "$dest"; echo 2 > "$tmp/rc.histmersion-toolchain.path"; echo 2 > "$tmp/rc.histmersion-toolchain.install"; build "$dest" jvm
+check "jvm, no JDK can be provisioned: the prebuilt binary instead, the install goes on" \
+  '[ "$ib_rc" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && [ "$(steps)" = "histmersion-toolchain path;histmersion-toolchain install;" ]'
+
+# the whole installer against fakes (temporary HOME, install and bin dirs; fake service manager and
+# health): the default local build runs, and a data directory with NO plugins/ directory does not
+# abort it under `set -o pipefail` (regression: cdd16b48)
+echo "installer"
+ihome="$tmp/ihome"; ibundle="$tmp/ibundle"; ifakes="$tmp/ifakes"
+rm -rf "$ihome" "$ibundle" "$ifakes"; new_dest "$ibundle"; mkdir -p "$ihome" "$ifakes" "$ibundle/pg/bin"
+printf '#!/bin/sh\nexit 0\n' > "$ibundle/pg/bin/pg_ctl"; printf '#!/bin/sh\nexit 0\n' > "$ibundle/bin/histmersion"
+printf '#!/bin/sh\necho "signing $*" >> "%s/steps"\n' "$tmp" > "$ibundle/bin/histmersion-signing"
+chmod +x "$ibundle/pg/bin/pg_ctl" "$ibundle/bin/histmersion" "$ibundle/bin/histmersion-signing"
+printf '#!/bin/sh\necho "launchctl $*" >> "%s/svc"\ncase "$1" in print) exit 1;; esac\nexit 0\n' "$tmp" > "$ifakes/launchctl"
+printf '#!/bin/sh\necho "systemctl $*" >> "%s/svc"\ncase "$*" in *is-active*) exit 3;; esac\nexit 0\n' "$tmp" > "$ifakes/systemctl"
+printf '#!/bin/sh\nexit 0\n' > "$ifakes/curl"
+cp "$fakebin"/* "$ifakes/"; chmod +x "$ifakes"/*
+installer="$src/install-linux.sh"; [ "$(uname -s)" = Darwin ] && installer="$src/install-macos.sh"
+irc=0
+env -i HOME="$ihome" USER="${USER:-test}" TMPDIR="$tmp" PATH="$ifakes:/usr/bin:/bin:/usr/sbin:/sbin" \
+  HISTMERSION_INSTALL_DIR="$ihome/opt/histmersion" HISTMERSION_BIN_DIR="$ihome/bin" HISTMERSION_MACHINE_ID=this-machine \
+  bash "$installer" "$ibundle" > "$tmp/install.out" 2>&1 || irc=$?
+idata="$ihome/.local/share/histmersion"; [ "$(uname -s)" = Darwin ] && idata="$ihome/Library/Application Support/Histmersion"
+check "the installer, no plugins directory, set -o pipefail: completes (exit 0)" \
+  '[ "$irc" = 0 ] && [ ! -e "$idata/plugins" ] || { sed "s/^/    /" "$tmp/install.out"; false; }'
+check "  …linking the server on this machine by default (preflight, relink), the service started" \
+  'grep -q "histmersion-toolchain preflight" "$tmp/steps" && grep -q "histmersion-relink --no-restart" "$tmp/steps" && grep -q "# linked native" "$ihome/opt/histmersion/bin/histmersion-server" && grep -qE "launchctl bootstrap|systemctl --user enable" "$tmp/svc"'
+check "  …and the installer explains its options (--help)" \
+  'bash "$installer" --help | grep -q -- "--prebuilt takes the bundle.s binary"'
+unset HISTMERSION_MACHINE_ID
 
 # ── opt-in: a stable identity from a TEMPORARY keychain ───────────────────────────────────────────
 if [ "${HISTMERSION_TEST_KEYCHAIN:-}" = 1 ] && [ "$(uname -s)" = Darwin ]; then

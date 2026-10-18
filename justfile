@@ -36,7 +36,7 @@ bundle dir=bundle_dir:
     scripts/bundle/converter.sh {{dir}}
     scripts/bundle/server.sh {{dir}}
 
-# Build the bundle and install it (macOS: LaunchAgent; Linux: systemd user service); `just install --local-build` links the server on this machine, `--jvm` runs it on a JDK
+# Build the bundle and install it (macOS: LaunchAgent; Linux: systemd user service); the server is linked on this machine unless the bundle's binary already was (`--prebuilt` takes it as it is, `--jvm` runs it on a JDK)
 [group('app')]
 install *args: bundle
     HISTMERSION_CORPUS_DIR="{{corpus_dir}}" scripts/bundle/install-{{platform}}.sh {{bundle_dir}} --move {{args}}

@@ -154,6 +154,76 @@ hk_running_digest() {
     || echo "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 }
 
+# ── the build record (bin/histmersion-server.build) ───────────────────────────────────────────────
+# Beside a binary linked ON A MACHINE (a relink, or the bundle's own build by scripts/bundle/server.sh):
+# what it was linked from, so an install can tell — cheaply, without a JVM — that linking again would
+# give the same binary. Key=value lines:
+#   mode     native | jvm
+#   kit      hk_kit_fingerprint of the kit it was linked from (every kit file's SHA-256, via SHA256SUMS)
+#   plugins  hk_plugins_fingerprint of the plugin jars linked in
+#   machine  hk_machine_id of the machine that linked it
+#   origin   relink | bundle
+# Nothing in it is secret or personal: the machine id is a hash.
+
+hk_sha256_text() { # stdin → hex
+  if command -v shasum >/dev/null 2>&1; then shasum -a 256 | awk '{print $1}'
+  else sha256sum | awk '{print $1}'; fi
+}
+
+hk_kit_fingerprint() { # <kit dir> → the SHA-256 of its SHA256SUMS (every kit file's sum); nothing without one
+  if [ -f "$1/SHA256SUMS" ]; then hk_sha256 "$1/SHA256SUMS"; fi
+  return 0
+}
+
+# The plugin jars of <plugins dir> as one hash: "<sha256>  <file name>" per jar, sorted by name.
+# No jars (or no directory) → the empty text's hash.
+hk_plugins_fingerprint() { # <plugins dir>
+  local j
+  hk_plugin_jars "$1" | while IFS= read -r j; do printf '%s  %s\n' "$(hk_sha256 "$j")" "$(basename "$j")"; done \
+    | hk_sha256_text
+}
+
+# This machine, as a hash: the hardware UUID on macOS, the machine-id on Linux (HISTMERSION_MACHINE_ID
+# overrides, for the tests). Nothing when none can be read — and a record without one never matches.
+hk_machine_id() {
+  local raw=""
+  if [ -n "${HISTMERSION_MACHINE_ID:-}" ]; then raw="$HISTMERSION_MACHINE_ID"
+  elif [ "$(hk_os)" = macos ]; then
+    raw="$(ioreg -rd1 -c IOPlatformExpertDevice 2>/dev/null | awk -F'"' '/IOPlatformUUID/ {print $4; exit}')"
+  else raw="$(cat /etc/machine-id 2>/dev/null || cat /var/lib/dbus/machine-id 2>/dev/null || true)"; fi
+  if [ -n "$raw" ]; then printf 'histmersion:%s' "$raw" | hk_sha256_text; fi
+  return 0
+}
+
+hk_write_build_record() { # <file> <mode> <kit dir> <plugins dir> <origin>
+  { echo "mode=$2"
+    echo "kit=$(hk_kit_fingerprint "$3")"
+    echo "plugins=$(hk_plugins_fingerprint "$4")"
+    echo "machine=$(hk_machine_id)"
+    echo "origin=$5"
+    echo "built=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"; } > "$1"
+}
+
+hk_record_value() { # <record file> <key>
+  sed -n "s/^$2=//p" "$1" 2>/dev/null | head -1
+}
+
+# 0 when <binary>'s build record (<binary>.build) says it is a NATIVE binary linked on THIS machine from
+# <kit dir> with exactly the jars of <plugins dir>: linking again would give the same binary. Else 1,
+# and why on stdout.
+hk_build_current() { # <binary> <kit dir> <plugins dir>
+  local rec="$1.build" m k
+  [ -x "$1" ] || { echo "no binary"; return 1; }
+  [ -f "$rec" ] || { echo "no build record"; return 1; }
+  [ "$(hk_record_value "$rec" mode)" = native ] || { echo "not a native binary"; return 1; }
+  m="$(hk_machine_id)"
+  { [ -n "$m" ] && [ "$(hk_record_value "$rec" machine)" = "$m" ]; } || { echo "linked on another machine"; return 1; }
+  k="$(hk_kit_fingerprint "$2")"
+  { [ -n "$k" ] && [ "$(hk_record_value "$rec" kit)" = "$k" ]; } || { echo "linked from another kit"; return 1; }
+  [ "$(hk_record_value "$rec" plugins)" = "$(hk_plugins_fingerprint "$3")" ] || { echo "linked with other plugins"; return 1; }
+  return 0
+}
+
 # The GPG key (fingerprint) Histmersion's provenance is signed with, when the user set one up
 # (`histmersion-signing use-gpg`); nothing when signing is off — the default.
 hk_gpg_key() {

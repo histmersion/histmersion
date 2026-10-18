@@ -142,7 +142,7 @@ new_install() {
 }
 export HISTMERSION_GRAALVM_HOME="$graal" HISTMERSION_SERVICE=launchd HISTMERSION_SERVICE_LABEL=test.histmersion.relink \
        HISTMERSION_RELINK_MEMORY_BYTES=$((48 * 1073741824)) HISTMERSION_RELINK_HEALTH_SECONDS=2 \
-       HISTMERSION_CODESIGN_IDENTITY=- HISTMERSION_SERVER_URL=http://127.0.0.1:1
+       HISTMERSION_CODESIGN_IDENTITY=- HISTMERSION_SERVER_URL=http://127.0.0.1:1 HISTMERSION_MACHINE_ID=relink-test
 relink() { local rc=0; "$INSTALL/bin/histmersion-relink" "$@" > "$tmp/out" 2>&1 || rc=$?; echo "$rc"; }
 binary_has() { grep -q "$1" "$INSTALL/bin/histmersion-server"; }
 
@@ -162,10 +162,18 @@ check "the service was restarted once and reports the new digest" '[ "$(grep -c 
 check "signed ad hoc, the keychain never asked (identity -)" 'grep -q "codesign --force --sign - --identifier com.histmersion.server" "$state/codesign.calls" && [ ! -e "$state/security.calls" ]'
 check "the work dir and the lock are gone; a log was written" '[ ! -e "$INSTALL/.relink" ] && [ ! -e "$HISTMERSION_DATA_DIR/plugins/.relink.lock" ] && grep -q native-image "$HISTMERSION_DATA_DIR/logs/relink.log"'
 check "it reports the build and the peak memory" 'grep -q "Peak RSS: 1,23GB" "$tmp/out"'
+# shellcheck source=../kit-common.sh
+. "$src/kit-common.sh"
+rec="$INSTALL/bin/histmersion-server.build"
+check "the build record: native, this kit, these plugin jars, this machine, a relink" \
+  '[ "$(hk_record_value "$rec" mode)" = native ] && [ "$(hk_record_value "$rec" kit)" = "$(hk_kit_fingerprint "$INSTALL/kit")" ] && [ "$(hk_record_value "$rec" plugins)" = "$(hk_plugins_fingerprint "$HISTMERSION_DATA_DIR/plugins")" ] && [ "$(hk_record_value "$rec" machine)" = "$(hk_machine_id)" ] && [ "$(hk_record_value "$rec" origin)" = relink ]'
+check "the record says the binary is current; another plugin jar makes it stale" \
+  'hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$HISTMERSION_DATA_DIR/plugins" >/dev/null && ! hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$tmp/no-plugins" >/dev/null'
 
 rc="$(relink --rollback)"
 check "rollback: the previous binary back, the replaced one kept as .prev" '[ "$rc" = 0 ] && binary_has "digest=e3b0" && grep -q "digest=d1" "$INSTALL/bin/histmersion-server.prev"'
 check "rollback: the records follow" 'grep -q e3b0 "$INSTALL/bin/histmersion-server.plugin-set.json" && grep -q d1 "$INSTALL/bin/histmersion-server.plugin-set.json.prev"'
+check "rollback: the build record goes with its binary (the stock one had none)" '[ ! -e "$rec" ] && [ -f "$rec.prev" ]'
 
 new_install
 rc="$(relink --check)"
@@ -267,6 +275,8 @@ new_install
 rc="$(relink --jvm)"
 check "--jvm: no build; the launcher becomes bin/histmersion-server, the record says jvm" \
   '[ "$rc" = 0 ] && [ ! -e "$state/ni.calls" ] && cmp -s "$INSTALL/bin/histmersion-server" "$INSTALL/bin/histmersion-server-jvm" && grep -q "\"mode\":\"jvm\"" "$INSTALL/bin/histmersion-server.plugin-set.json"'
+check "--jvm: the build record says jvm, so an install never takes it for a native binary" \
+  'grep -qx "mode=jvm" "$INSTALL/bin/histmersion-server.build" && ! hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$HISTMERSION_DATA_DIR/plugins" >/dev/null'
 
 rc="$(relink --describe "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar")"
 check "--describe prints the kit tool's JSON" '[ "$rc" = 0 ] && grep -q "\"plugins\":\[\]" "$tmp/out"'
