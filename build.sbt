@@ -223,6 +223,29 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
 lazy val coreJVM = core.jvm
 lazy val coreJS  = core.js
 
+// ── plugin-api: the SPI a plugin compiles against (docs/research-plugins.md §2, decision D1). ──
+//    Interfaces, the `Secret` reference type and the lenient config readers — nothing else: sconfig +
+//    kindlings-sconfig-derivation only, so no core/db/server class is ever on a plugin's classpath.
+lazy val pluginApi = project
+  .in(file("modules/plugin-api"))
+  .settings(name := "histmersion-plugin-api")
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.ekrich"   %% "sconfig"                      % V.sconfig,
+      "com.kubuszok" %% "kindlings-sconfig-derivation" % V.kindlings
+    )
+  )
+
+// ── plugin-vaults: the first-party secret vaults (KeePassXC, 1Password, Bitwarden) as built-in
+//    plugins, DISABLED by default (§3.7, D2). Compiled against plugin-api ONLY, as a third-party plugin
+//    would be; the server puts them on its classpath, so they are in every native image.
+lazy val pluginVaults = project
+  .in(file("modules/plugin-vaults"))
+  .dependsOn(pluginApi)
+  .settings(name := "histmersion-plugin-vaults")
+  .settings(commonDeps)
+
 // ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
 lazy val db = project
   .in(file("modules/db"))
@@ -285,7 +308,7 @@ def buildMetaSource(base: File): String = {
 // ── server: MCP (Chimp) + REST (Tapir/netty-sync) + web UI; the only DB client. Native image. ───
 lazy val server = project
   .in(file("modules/server"))
-  .dependsOn(coreJVM, db % "compile->compile;test->test")
+  .dependsOn(coreJVM, db % "compile->compile;test->test", pluginApi, pluginVaults)
   .settings(name := "histmersion-server", Compile / mainClass := Some("com.histmersion.server.Main"),
     // Serialized on purpose, for two reasons: the backup/restore suite creates+restores a scratch
     // database (parallel suites saw "connection refused" mid-restore), and server startup RECONCILES
@@ -421,5 +444,5 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, db, server, cli, web)
+  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)

@@ -1,0 +1,13 @@
+{
+  "resources": [
+    {
+      "glob": "META-INF/histmersion/plugins/1password.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/bitwarden.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/keepassxc.conf"
+    }
+  ]
+}
