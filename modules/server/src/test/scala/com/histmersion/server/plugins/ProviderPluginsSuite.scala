@@ -8,7 +8,7 @@ import org.ekrich.config.ConfigFactory
 
 import scala.collection.immutable.ListMap
 
-/** Media collections and event catalogues as plugins (docs/research-plugins.md §6, §18): the built-in
+/** Media collections and event catalogues as plugins (docs/research-plugins.md §6, §19): the built-in
   * ones registered through the plugin host and switched off like any plugin; a third-party plugin's
   * collection and catalogue registered beside them, refused under a host name; the provider lists
   * from the registries; the host's reading of a stated licence and of a catalogue's record; and a
