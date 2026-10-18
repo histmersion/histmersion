@@ -27,20 +27,31 @@ trait CitationsClient:
   /** `(backend, rows)` — Semantic Scholar (intents + influence + contexts), OpenAlex as fallback. */
   def citing(work: WorkRef, since: Option[Int], limit: Int): Either[String, (String, List[FollowupRow])]
 
-/** A downloaded file plus where it came from. */
-final case class FetchedFile(source: String, url: Option[String], bytes: Array[Byte], extension: String)
+/** A downloaded file plus where it came from — the plugin SPI's type, so a fetcher plugin's copy is
+  * the one ingest stores. */
+type FetchedFile = com.histmersion.plugin.FetchedFile
+val FetchedFile = com.histmersion.plugin.FetchedFile
 
-/** Resolve a legal open-access PDF: Unpaywall → CORE → OpenAlex OA locations → Europe PMC / PMC →
-  * arXiv → repository landing pages resolved one step (Zenodo's API, an institutional repository's
-  * `citation_pdf_url`; #1580) → PMC's JATS full text (when there is no PDF anywhere), and the unauthorised mirror
-  * only when it is switched on in config. */
+/** Resolve a legal copy of a work: the acquisition chain ([[FetchChain]]) — the source fetchers the
+  * plugins registered, in `acquire.chain` order. Built in: archive.org, Unpaywall → CORE → OpenAlex
+  * OA locations → Europe PMC / PMC → arXiv → repository landing pages resolved one step (Zenodo's API,
+  * an institutional repository's `citation_pdf_url`; #1580) → PMC's JATS full text (when there is no
+  * PDF anywhere). */
 trait OaFetcher:
   def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile]
 
-  /** [[fetch]] through the LEGAL sources only — never the unauthorised mirror, whatever `acquire.unlicensed.enabled` says
-    * (a watcher's auto-ingest, docs/research-process-managers.md §4 (c)). An implementation with a
-    * non-legal fallback must override it; one without (a test's fixture) is legal as it is. */
+  /** [[fetch]] through the LEGAL sources only — never an `Access.Unauthorised` fetcher, whatever
+    * `acquire.allow-unauthorised` says (a watcher's auto-ingest, docs/research-process-managers.md
+    * §4 (c)). An implementation that can run one must override it; one that cannot (a test's fixture)
+    * is legal as it is. */
   def fetchLegal(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] = fetch(doi, arxiv)
+
+  /** A work by every identifier the caller has ([[com.histmersion.plugin.WorkKey]]). An implementation
+    * that reads only a DOI and an arXiv id (a test's fixture) has no copy of anything else. */
+  def fetchWork(work: com.histmersion.plugin.WorkKey, legalOnly: Boolean): Either[String, FetchedFile] =
+    if work.doi.isEmpty && work.arxiv.isEmpty then Left(FetchChain.NoCopy)
+    else if legalOnly then fetchLegal(work.doi, work.arxiv)
+    else fetch(work.doi, work.arxiv)
 
 trait WikiClient:
   def refs(articleUrl: String): Either[String, WikirefsResult]
@@ -207,244 +218,26 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http, openalex: OpenAlexCr
           "select" -> "id,doi,display_name,publication_year,authorships,cited_by_count,locations",
           "mailto" -> cfg.mailto)).map(AcquireParse.openalexCitations)
 
-/** Legal open access first, always. The unauthorised mirror exists in this class only because the workspace config can
-  * switch it on; it is OFF by default, tried last, and every use is logged. */
-final class OaFetch(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) extends OaFetcher:
-
-  /** A PDF that is really a PDF. We cannot read page text without a PDF library, so this is the
-    * cheap structural check `fetch_oa.py` did first: the magic bytes and a plausible size. Publisher
-    * "you do not have access" interstitials are HTML and fail the magic-byte test. */
-  private def looksLikePdf(b: Array[Byte]): Boolean =
-    b.length > 1024 && new String(b.take(1024), "ISO-8859-1").contains("%PDF")
-
-  private def tryUrl(source: String, url: String, headers: Map[String, String] = Map.empty): Option[FetchedFile] =
-    http.bytes(url, headers) match
-      case Right(b) if looksLikePdf(b) => Some(FetchedFile(source, Some(url), b, "pdf"))
-      case Right(b) =>
-        scribe.info(s"acquire: $source: $url returned ${b.length} bytes that are not a PDF — skipping")
-        None
-      case Left(e) =>
-        scribe.info(s"acquire: $source fetch failed ($e)")
-        None
-
-  def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] = fetchWith(doi, arxiv, unlicensedOk = true)
-
-  /** Never the unauthorised mirror: the legal chain alone, whatever the config says. */
-  override def fetchLegal(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] =
-    fetchWith(doi, arxiv, unlicensedOk = false)
-
-  private def fetchWith(doi: Option[String], arxiv: Option[String], unlicensedOk: Boolean): Either[String, FetchedFile] =
-    // one Europe PMC search and one dataset record per fetch, shared by the PDF and the text steps;
-    // one Unpaywall and one OpenAlex record, shared by the direct-PDF and the landing-page steps
-    val pmc = doi.map(d => PmcLookup(d))
-    val oa  = doi.map(d => OaRecords(d))
-    val attempts: LazyList[Option[FetchedFile]] =
-      LazyList.from(
-        oa.toList.flatMap(r => List(() => unpaywall(r), () => core(r.doi), () => openalexOa(r))) ++
-          pmc.toList.map(p => () => p.pdf) ++
-          arxiv.toList.map(a => () => arxivPdf(a)) ++
-          oa.toList.map(r => () => landing(r)) ++
-          pmc.toList.map(p => () => p.fullText) ++
-          doi.toList.filter(_ => unlicensedOk).map(d => () => unlicensed(d))
-      ).map(_())
-    attempts.collectFirst { case Some(f) => f }
-      .toRight("no legal open-access PDF found")
-
-  /** The OA indexes' records of one DOI, asked lazily and at most once per fetch. */
-  private final class OaRecords(val doi: String):
-    // Unpaywall answers 422 to a request without an e-mail, so without a contact it is not asked
-    lazy val unpaywall: Option[Json] =
-      cfg.contact.flatMap(email => http.json(Url(cfg.unpaywall.url, s"/$doi", "email" -> email)).toOption)
-    lazy val openalex: Option[Json] = OaFetch.this.openalex.raw(doi).toOption
-    /** Where DataCite says the DOI resolves — `None` for a DOI it does not register (a Crossref one). */
-    lazy val datacite: Option[String] = dataciteUrl(doi)
-
-  private def unpaywall(r: OaRecords): Option[FetchedFile] =
-    r.unpaywall.toList.map(AcquireParse.unpaywall)
-      .flatMap(_._1)
-      .flatMap(u => tryUrl("unpaywall", u))
-      .headOption
-
-  private def core(doi: String): Option[FetchedFile] =
-    cfg.core.key.flatMap { key =>
-      http.json(Url(cfg.core.url, "/search/works", "q" -> s"""doi:"$doi"""", "limit" -> "1"),
-        Map("Authorization" -> s"Bearer $key")).toOption
-        .toList.flatMap(AcquireParse.coreDownloadUrls)
-        .flatMap(u => tryUrl("core", u)).headOption
-    }
-
-  private def openalexOa(r: OaRecords): Option[FetchedFile] =
-    r.openalex.toList
-      .flatMap(AcquireParse.openalexPdfUrls)
-      .flatMap(u => tryUrl("openalex", u)).headOption
-
-  // ── repository landing pages (#1580) ────────────────────────────────────────────────────────
-
-  private def dataciteUrl(doi: String): Option[String] =
-    http.json(Url(cfg.datacite.url, s"/dois/$doi")) match
-      case Right(j) => RepositoryLanding.dataciteUrl(j)
-      case Left(e) =>
-        scribe.info(s"acquire: datacite: no record for $doi ($e)"); None
-
-  /** The landing pages of the work, resolved ONE step each, at most `acquire.landing.max-pages`: the
-    * Zenodo record of a Zenodo DOI, the OA indexes' repository and landing locations, then the page a
-    * DataCite DOI resolves to. A `doi.org` link is never followed blind (it may land on a publisher):
-    * a Zenodo DOI goes to Zenodo's API, any other is replaced by where DataCite says it resolves, and
-    * a DOI DataCite does not know is skipped. */
-  private def landing(r: OaRecords): Option[FetchedFile] =
-    if !cfg.landing.enabled then None
-    else
-      val rules = cfg.landing.rules
-      val doiUrl = s"https://doi.org/${r.doi}"
-      val indexed = RepositoryLanding.distinct(
-        RepositoryLanding.zenodoRecordId(r.doi).map(_ => RepositoryLanding.Candidate(doiUrl, true)).toList ++
-          r.unpaywall.toList.flatMap(RepositoryLanding.unpaywallCandidates) ++
-          r.openalex.toList.flatMap(RepositoryLanding.openalexCandidates))
-      def viaDoi(c: RepositoryLanding.Candidate): LazyList[RepositoryLanding.Candidate] =
-        val isDoi = RepositoryLanding.host(c.url).exists(h => h == "doi.org" || h == "dx.doi.org")
-        if !isDoi || RepositoryLanding.zenodoRecordId(c.url).isDefined then LazyList(c)
-        else
-          val d = c.url.replaceFirst("(?i)^https?://(dx\\.)?doi\\.org/", "")
-          LazyList.from((if d.equalsIgnoreCase(r.doi) then r.datacite else dataciteUrl(d))
-            .map(RepositoryLanding.Candidate(_, c.repository, c.publisher)))
-      // the DOI's own DataCite landing page last, unless a location already named it
-      val pages = (LazyList.from(indexed).flatMap(viaDoi) ++
-        LazyList(()).flatMap(_ => LazyList.from(r.datacite.map(RepositoryLanding.Candidate(_, false)))))
-        .scanLeft((Set.empty[String], Option.empty[RepositoryLanding.Candidate])) { case ((seen, _), c) =>
-          if seen(c.url) then (seen, None) else (seen + c.url, Some(c))
-        }.flatMap(_._2)
-        // a publisher's page is never read, and does not use up the pages a work may read
-        .filter(c => RepositoryLanding.zenodoRecordId(c.url).isDefined || !publisherPage(c, rules))
-        .take(math.max(0, cfg.landing.maxPages))
-      pages.map(resolvePage(_, rules)).collectFirst { case Some(f) => f }
-
-  /** An OA index calls it a publisher's location, or its host is denied (`acquire.landing.deny-*`). */
-  private def publisherPage(c: RepositoryLanding.Candidate, rules: RepositoryLanding.Rules): Boolean =
-    val no = c.publisher || RepositoryLanding.host(c.url).exists(rules.denied)
-    if no then scribe.info(s"acquire: landing: ${c.url} is a publisher's page — not read")
-    no
-
-  /** One landing page, one step: a Zenodo record by its API; anything else is read, and a repository's
-    * page gives its `citation_pdf_url`s (a page that turns out to be the PDF is taken as it is). */
-  private def resolvePage(c: RepositoryLanding.Candidate, rules: RepositoryLanding.Rules): Option[FetchedFile] =
-    RepositoryLanding.zenodoRecordId(c.url) match
-      case Some(id) => zenodo(id)
-      case None if publisherPage(c, rules) => None
-      case None =>
-        http.bytes(c.url) match
-          case Left(e) =>
-            scribe.info(s"acquire: landing: ${c.url} failed ($e)"); None
-          case Right(b) if looksLikePdf(b) => Some(FetchedFile("repository", Some(c.url), b, "pdf"))
-          case Right(b) if !RepositoryLanding.looksLikeHtml(b) =>
-            scribe.info(s"acquire: landing: ${c.url} is neither a PDF nor a page — skipping"); None
-          case Right(b) =>
-            val html = new String(b, "UTF-8")
-            val pdfs = RepositoryLanding.pdfsOf(c.url, c.repository, html, rules)
-            if pdfs.isEmpty then
-              val why = if RepositoryLanding.isRepository(c.url, c.repository, html, rules) then "names no citation_pdf_url"
-                        else "is not a repository's page"
-              scribe.info(s"acquire: landing: ${c.url} $why — skipping")
-            pdfs.iterator.map(u => tryUrl("repository", u)).collectFirst { case Some(f) => f }
-
-  /** An open Zenodo record's PDF, by its REST API, checked against the record's MD5. */
-  private def zenodo(id: String): Option[FetchedFile] =
-    http.json(Url(cfg.zenodo.url, s"/api/records/$id")) match
-      case Left(e) =>
-        scribe.info(s"acquire: zenodo: record $id failed ($e)"); None
-      case Right(j) =>
-        val files = RepositoryLanding.zenodoFiles(j)
-        if files.isEmpty then scribe.info(s"acquire: zenodo: record $id has no open PDF")
-        files.iterator.map { f =>
-          tryUrl("zenodo", f.url).filter { got =>
-            val ok = f.md5.forall(m => OaFetch.md5(got.bytes).forall(_ == m))
-            if !ok then scribe.warn(s"acquire: zenodo: ${f.url} does not match the MD5 its record gives — skipping")
-            ok
-          }
-        }.collectFirst { case Some(f) => f }
-
-  // ── Europe PMC and NCBI's PMC Article Datasets (#1523) ──────────────────────────────────────
-
-  /** The PMC hosts get the project's public identity — no contact e-mail, no `email` parameter. */
-  private def pmcHeaders = Map(Http.UserAgent -> cfg.publicUserAgent)
-
-  /** Everything PMC can offer for one DOI, asked lazily and at most once.
-    *
-    * 1. Europe PMC's REST search names the PMCID and the PDF links it lists as free (`OA`/`F`); those
-    *    are tried first (europepmc.org may answer with a bot-protection challenge, which is no copy).
-    * 2. NCBI's PMC Article Datasets record for that PMCID names the PDF it publishes (the open-access
-    *    subset and most author manuscripts), verified against the record's MD5.
-    * 3. With no PDF anywhere, the record's JATS XML — the article's own full text — is the copy; the
-    *    ingest job renders it to Markdown ([[com.histmersion.server.JatsConverter]]) instead of OCR. */
-  private final class PmcLookup(doi: String):
-    lazy val hit: Option[EuropePmcHit] =
-      http.json(Url(cfg.europepmc.url, "/search",
-        "query" -> s"""DOI:"$doi"""", "resultType" -> "core", "format" -> "json", "pageSize" -> "5"),
-        pmcHeaders) match
-        case Right(j) => AcquireParse.europepmcHit(j, doi)
-        case Left(e) =>
-          scribe.info(s"acquire: europepmc search failed ($e)")
-          None
-
-    lazy val record: Option[PmcRecord] =
-      hit.flatMap(_.pmcid).flatMap { id =>
-        http.text(Url(cfg.pmcDataset.url, "/", "list-type" -> "2", "prefix" -> s"metadata/$id."), pmcHeaders)
-          .left.map(e => scribe.info(s"acquire: pmc dataset listing failed ($e)")).toOption
-          .flatMap(AcquireParse.pmcLatestVersion(_, id))
-          .flatMap(v => http.json(s"${cfg.pmcDataset.url}/metadata/$id.$v.json", pmcHeaders)
-            .left.map(e => scribe.info(s"acquire: pmc dataset record failed ($e)")).toOption)
-          .flatMap(AcquireParse.pmcRecord)
-      }
-
-    def pdf: Option[FetchedFile] =
-      hit.toList.flatMap(_.pdfUrls).iterator.map(u => tryUrl("europepmc", u, pmcHeaders))
-        .collectFirst { case Some(f) => f }
-        .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, "pdf")(looksLikePdf)))
-
-    def fullText: Option[FetchedFile] =
-      record.flatMap(_.xml).flatMap(o => dataset(o, "xml")(b => Jats.isJats(new String(b, "UTF-8"))))
-
-    private def dataset(o: PmcObject, ext: String)(ok: Array[Byte] => Boolean): Option[FetchedFile] =
-      val url = s"${cfg.pmcDataset.url}/${o.key}"
-      http.bytes(url, pmcHeaders) match
-        case Left(e) =>
-          scribe.info(s"acquire: pmc fetch failed ($e)"); None
-        case Right(b) if !ok(b) =>
-          scribe.info(s"acquire: pmc: $url returned ${b.length} bytes that are not a $ext — skipping"); None
-        case Right(b) if o.md5.exists(m => OaFetch.md5(b).exists(_ != m)) =>
-          scribe.warn(s"acquire: pmc: $url does not match the MD5 its record gives — skipping"); None
-        case Right(b) => Some(FetchedFile("pmc", Some(url), b, ext))
-
-  private def arxivPdf(id: String): Option[FetchedFile] =
-    tryUrl("arxiv", s"${cfg.arxiv.url}/pdf/$id")
-
-  private val PdfHref = """(?i)(?:src|href)\s*=\s*["']([^"']+\.pdf[^"']*)["']""".r
-
-  /** Last resort, OFF by default (`acquire.unlicensed.enabled = false`).
-    *
-    * The unauthorised mirror distributes copyrighted papers without publisher authorisation and its legality varies by
-    * jurisdiction, so it is never reached unless a deployment deliberately enables it, and every use
-    * is logged at WARN with the DOI. It is tried only after Unpaywall, CORE, OpenAlex and arXiv have
-    * all failed.
-    */
-  private def unlicensed(doi: String): Option[FetchedFile] =
-    if !cfg.unlicensed.enabled then None
-    else
-      scribe.warn(s"acquire: all legal OA sources failed for $doi — falling back to the unauthorised mirror " +
-        s"(${cfg.unlicensed.mirror}); this distributes copyrighted work without authorisation and is " +
-        "enabled only because acquire.unlicensed.enabled = true")
-      http.text(s"${cfg.unlicensed.mirror}/$doi").toOption.flatMap { html =>
-        PdfHref.findFirstMatchIn(html).map(_.group(1)).map { href =>
-          if href.startsWith("//") then "https:" + href
-          else if href.startsWith("http") then href
-          else cfg.unlicensed.mirror + (if href.startsWith("/") then href else "/" + href)
-        }.flatMap(u => tryUrl("unlicensed", u))
-      }
-
+/** The acquisition chain over the BUILT-IN fetchers (archive.org, Unpaywall, CORE, OpenAlex, PMC,
+  * arXiv, landing pages, PMC's JATS text) — registered through the plugin host exactly as the server
+  * registers them, every one enabled, in `acquire.chain` order. What a test or a one-off caller runs;
+  * the server runs the chain of its own plugin generation, which may hold more fetchers or fewer. */
 object OaFetch:
-  /** Hex MD5 of a download, to compare with the one a PMC dataset record states; `None` when the
-    * runtime offers no MD5 (the check is then skipped, never failed). */
+  def apply(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref): FetchChain =
+    val generation = com.histmersion.server.plugins.PluginHost.build(
+      fetchers.BuiltinFetchers.plugins(cfg, () => http, () => openalex, () => ArchiveOrg(cfg, http)),
+      org.ekrich.config.ConfigFactory.empty, org.ekrich.config.ConfigFactory.empty,
+      com.histmersion.server.plugins.Plugins.services(() => HttpPlugin(http), org.ekrich.config.ConfigFactory.empty))
+    FetchChain.of(generation.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised)._1
+
+  /** Hex MD5 of a download, to compare with the one a PMC dataset record or a Zenodo record states;
+    * `None` when the runtime offers no MD5 (the check is then skipped, never failed). */
   def md5(b: Array[Byte]): Option[String] =
     scala.util.Try(java.security.MessageDigest.getInstance("MD5").digest(b).map("%02x".format(_)).mkString).toOption
+
+/** The host's [[Http]] as the plugin SPI's client: plugins get bytes, and parse what they asked for. */
+final class HttpPlugin(http: Http) extends com.histmersion.plugin.PluginHttp:
+  def get(url: String, headers: Map[String, String]) = http.bytes(url, headers)
 
 final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
   def refs(articleUrl: String): Either[String, WikirefsResult] =

@@ -362,7 +362,10 @@ class AcquireHandlerSuite extends munit.FunSuite:
       creator = List("Carleton Zzacqcoon"), year = Some(1939), publisher = Some("Macmillan"),
       files = List(ArchiveFile("racesofeurope.pdf", Some("Text PDF"), 40.0),
         ArchiveFile("racesofeurope.epub", Some("EPUB"), 3.0)))
-    val r = handlers(archive = FakeArchive(item)).archiveImport(ArchiveImportRequest("racesofeurope"))
+    // the download is the acquisition chain's archive-org fetcher, over the same client
+    val archive = FakeArchive(item)
+    val chain   = FetchChain(List("archive-org" -> fetchers.ArchiveOrgFetcher(() => archive)))
+    val r = handlers(archive = archive, oa = chain).archiveImport(ArchiveImportRequest("racesofeurope"))
       .fold(e => fail(e.message), identity)
     assertEquals(r.citekey, "zzacqcoon1939_races")
     assertEquals(SourceRepo.load(ds, "zzacqcoon1939_races").flatMap(_.provenance), Some("archive_org"))
