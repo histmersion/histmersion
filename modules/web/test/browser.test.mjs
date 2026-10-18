@@ -1549,3 +1549,47 @@ test('managers phase 3: the watch box, the daily spend, a watcher\'s sweeps', as
     assert.doesNotMatch(text, /run 1/);
   });
 });
+
+// The autopilot, against fixed answers (nothing is written): the managers window shows the switch and every
+// goal's stage, counts and pace; turning it on shows the new state at once and then what the server did.
+test('autopilot: the switch and the goals\' stages in the managers window', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/config', async route => {
+      const res = await route.fetch();
+      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true } });
+    });
+    const goals = [
+      { slug: 'zz-pw-ap', title: 'Zz PW autopilot', status: 'seeding', managers: [{ id: 'seed:zz-pw-ap', kind: 'seed', state: 'active' }],
+        sources: 4, articles: 1, openApprovals: 1, doneLast7: 7, open: 2, etaDays: 2 },
+      { slug: 'zz-pw-ap2', title: 'Zz PW planned', status: 'planned', managers: [], sources: 0, articles: 0, openApprovals: 0,
+        doneLast7: 0, open: 0 }];
+    const off = { on: false, agentsEnabled: true, managersEnabled: true, approvals: [{ kind: 'article-plan', mode: 'person' }],
+      ingestedToday: 0, ingestCap: 0, maxConcurrentRuns: 4, library: [], goals, changes: [] };
+    const posted = [];
+    await page.route('**/api/agents/managers', route => route.fulfill({ json: [] }));
+    await page.route('**/api/agents/autopilot', async route => {
+      if (route.request().method() === 'POST') {
+        posted.push(JSON.parse(route.request().postData()));
+        await new Promise(r => setTimeout(r, 300));
+        return route.fulfill({ json: { ...off, on: true, since: '2026-10-19T00:00:00Z', by: 'web', ingestCap: 20,
+          approvals: [{ kind: 'article-plan', mode: 'checked' }], changes: ['turned on by web', 'seed:zz-pw-ap2 created'] } });
+      }
+      return route.fulfill({ json: off });
+    });
+    await page.goto(new URL('/#open=managers', baseURL).href);
+    await page.reload();
+    const ap = page.locator('.autopilot');
+    await ap.locator('.autopilot-goals li').first().waitFor();
+    assert.match(await ap.innerText(), /Autopilot off/);
+    assert.match(await ap.innerText(), /1 planned · 1 seeding/);
+    const row = ap.locator('.autopilot-goals li').filter({ hasText: 'zz-pw-ap' }).first();
+    assert.match(await row.innerText(), /4 sources · 1 article · 1 open approval · 7 done in 7 days, 2 open \(~2 d\)/);
+    await ap.locator('button', { hasText: 'turn on' }).click();
+    // the new state shows before the server answers (the answer takes 300 ms here)
+    await page.waitForFunction(() => document.querySelector('.autopilot-state.is-on'), null, { timeout: 250 });
+    await page.waitForFunction(() => /seed:zz-pw-ap2 created/.test(document.querySelector('.autopilot').innerText));
+    assert.deepEqual(posted, [{ on: true, by: 'web' }]);
+    assert.match(await ap.innerText(), /article-plan checked/);
+    assert.match(await ap.innerText(), /ingests today 0 of 20/);
+  });
+});

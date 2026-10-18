@@ -115,3 +115,18 @@ class ManagersViewSuite extends munit.FunSuite:
     val es = List(ManagerEvent(3, "watch:t", kind = "ingested", text = "[[a]] ingested"), ManagerEvent(2, "watch:t", kind = "started"),
       ManagerEvent(1, "watch:t", kind = "swept", text = "acquisition-sweep goal t: …"))
     assertEquals(ManagersView.sweepEvents(es).map(_.id), List(3L, 1L))
+
+  test("autopilot settings: auto-approve and extend-min-new round-trip; extend is the review manager's"):
+    val c = ManagersView.config(Map("autoApprove" -> "on", "extendMinNew" -> "3"))
+    assertEquals(c.map(x => (x.autoApprove, x.extendMinNew)), Right((Some(true), Some(3))))
+    assert(ManagersView.config(Map("autoApprove" -> "sometimes")).isLeft)
+    assertEquals(ManagersView.fields(ManagerConfig(autoApprove = Some(false)))("autoApprove"), "off")
+    assert(ManagersView.settingsFor("review").map(_._1).contains("extendMinNew"))
+    assert(!ManagersView.settingsFor("watch").map(_._1).contains("extendMinNew"))
+
+  test("autopilot status: a goal's line and the stages count"):
+    import com.histmersion.core.Autopilot.GoalProgress
+    val gs = List(GoalProgress("a", "A", "seeding", sources = 3, articles = 1, openApprovals = 2, doneLast7 = 7, open = 4, etaDays = Some(4)),
+      GoalProgress("b", "B", "planned"), GoalProgress("c", "C", "seeding"))
+    assertEquals(ManagersView.goalLine(gs.head), "3 sources · 1 article · 2 open approvals · 7 done in 7 days, 4 open (~4 d)")
+    assertEquals(ManagersView.stages(gs), "1 planned · 2 seeding")

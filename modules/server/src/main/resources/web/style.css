@@ -830,6 +830,15 @@ a.chip:hover { border-color:var(--accent); }
 .approval-plan a, .approval-draft a { color:var(--accent); }
 .job-state.state-waiting { background:#2a2440; color:var(--accent); }
 .job-state.state-dry-run { background:#2a2440; color:var(--accent); margin-left:var(--gap-inline); }
+/* a research goal's stage (the autopilot's table in the managers window) */
+.job-state.state-planned { background:#2a2f3a; color:var(--muted); }
+.job-state.state-seeding { background:#2a2440; color:var(--accent); }
+.job-state.state-compiled { background:#1a2e3a; color:#6eb8e7; }
+.job-state.state-reviewed { background:#1a3a2a; color:var(--health-ok); }
+.autopilot { border-bottom:1px solid var(--line); padding-bottom:var(--gap-group); margin-bottom:var(--gap-group); }
+.autopilot-state { font-weight:600; color:var(--muted); align-self:center; margin-right:var(--gap-inline); }
+.autopilot-state.is-on { color:var(--health-ok); }
+.autopilot-goals { max-height:40vh; overflow:auto; }
 .run-waiting { color:var(--accent); }
 .approval-plan h5, .approval-draft h5, .goal-section h5 { margin:8px 0 2px; font-size:12px; color:var(--muted); text-transform:capitalize; }
 .approval-plan ul, .approval-draft ul { margin:2px 0 6px; padding-left:18px; font-size:12.5px; }

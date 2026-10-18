@@ -20,7 +20,8 @@ object ManagerCmd:
   /** The settings `--config` and `config` take. */
   private val SettingKeys = "max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, " +
     "low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, " +
-    "max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none)"
+    "max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none), auto-approve (its runs' " +
+    "plans and drafts decided by code checks), extend-min-new"
 
   private val create = Opts.subcommand("new",
       "Create a manager: review (library-wide, id 'review'), enrich (library-wide, id 'enrich'), seed --goal g (id 'seed:g'; " +
@@ -43,6 +44,22 @@ object ManagerCmd:
     (Opts.argument[String]("kind"), Opts.argument[String]("target"),
       Opts.option[Int]("priority", "Its priority (default 10: first)").orNone, Output.jsonFlag).mapN { (kind, t, p, json) => (c: Client) =>
       c.call(ManagersApi.enqueue)(EnqueueRequest(kind, t, p)).map(r => Output.emit(json, r)(ManagersMarkdown.enqueued))
+    }
+  }
+
+  /** `histmersion agent autopilot [status|on|off]` — the one switch (docs/research-process-managers.md
+    * "As built: the autopilot"). */
+  val autopilot: Opts[Client => Either[CliError, Unit]] = Opts.subcommand("autopilot",
+      "The autopilot: status (default) — per research goal its stage, managers, sources, articles, open approvals, last " +
+        "activity and pace; on — every goal gets an active seeding manager and watcher and moves from planned to reviewed " +
+        "by itself (within every cap, budget and plan floor); off — the seeding managers and watchers it runs are paused") {
+    (Opts.argument[String]("status|on|off").withDefault("status"), Output.jsonFlag).mapN { (verb, json) => (c: Client) =>
+      val call = verb.trim.toLowerCase match
+        case "status" => Right(c.call(ManagersApi.autopilot)(()))
+        case "on"     => Right(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = true, Some("cli"))))
+        case "off"    => Right(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = false, Some("cli"))))
+        case other    => Left(CliError(s"unknown autopilot verb '$other' (status, on, off)", exitCode = ExitCode.Usage))
+      call.flatten.map(s => Output.emit(json, s)(AutopilotMarkdown.status))
     }
   }
 
