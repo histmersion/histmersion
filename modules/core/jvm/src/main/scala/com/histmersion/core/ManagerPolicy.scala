@@ -48,7 +48,7 @@ object ManagerPolicy:
         maxRunsPerArticle = Some(d.maxRunsPerArticle), noProgressRuns = Some(d.noProgressRuns),
         reopenLimit = Some(d.reopenLimit), cooldownMinutes = Some(d.cooldownMinutes), lowWater = Some(d.lowWater),
         refillBatch = Some(d.refillBatch), maxFailures = Some(m.maxFailures), staleAfterDays = Some(d.staleAfterDays),
-        inferFilter = Some(d.inferFilter), dailyUsd = dailyCap(ManagerConfig(), m))
+        inferFilter = Some(d.inferFilter), dailyUsd = dailyCap(ManagerConfig(), m), extendMinNew = Some(d.extendMinNew))
 
     /** The defaults of a manager of kind `k`; a seeding manager's also show the plan's checks (`seed`). */
     def defaultsFor(k: Kind, m: AgentManagersConfig, seed: AgentSeedConfig): ManagerConfig = k match
@@ -229,6 +229,10 @@ object ManagerPolicy:
     case Finished(outcome: String)
     case Waiting(approval: Long, what: String)
     case NotDone(outcome: String, task: Option[String])
+    /** Its work was refused by a check that a new run may pass (a draft the autopilot's checks
+      * rejected): run it again after the backoff, counted as a failure, stopped with a task after
+      * `maxFailures`. */
+    case Redo(outcome: String)
 
   /** Evaluate a one-run item (`label` = its kind, for the texts) after its run settled `status`:
     * done → finished, held for an approval, or stopped; failed → retried after the backoff, stopped
@@ -241,6 +245,12 @@ object ManagerPolicy:
           case StepFacts.Finished(o)      => Next.Done(o, state)
           case StepFacts.Waiting(id, w)   => Next.Wait(id, w)
           case StepFacts.NotDone(o, task) => Next.Stop(o, task.map(_.take(2000)), state)
+          case StepFacts.Redo(o) =>
+            val n = failures + 1
+            if n >= s.maxFailures then
+              Next.Stop(s"stopped: $o (${Plural.count(n, "attempt")})",
+                Some(s"$label manager item stopped [[$target]]: $o, ${Plural.count(n, "attempt")} (agent run ${run.take(8)})".take(2000)), state)
+            else Next.Retry(now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, n)), n, s"$o ($n of ${s.maxFailures}); again")
       case RunState.Cancelled => Next.Stop("stopped: its run was cancelled", None, state)
       case _ =>
         val n = failures + 1
@@ -287,10 +297,11 @@ object ManagerPolicy:
     }
 
   /** Must an item of `kind` on `target` wait — an article's review while an infer-filter item for the
-    * same article is still open (pending, held or active)? `open` = the manager's open items (kind,
-    * target). */
+    * same article is still open (pending, held or active), a goal's article proposal while its plan-goal
+    * item is? `open` = the manager's open items (kind, target). */
   def waitsFor(kind: String, target: String, open: List[(String, String)]): Boolean =
-    kind == ArticleReview && open.contains((InferFilter, target))
+    (kind == ArticleReview && open.contains((InferFilter, target))) ||
+      (kind == ProposeArticles && open.contains((PlanGoalItem, target)))
 
   /** Why a converged article is due again, if it is: its review converged more than `days` days ago, or
     * its filter returns more sources now (`hitsNow`) than when it converged (`hitsThen`). `days` 0 =

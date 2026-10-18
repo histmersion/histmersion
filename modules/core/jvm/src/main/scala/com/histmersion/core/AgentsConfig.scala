@@ -197,7 +197,8 @@ object FinalPanel:
   * `unassessed` with `current`/`foundational`; `edges` covers the disagreement edges (challenges,
   * refutes, updates, superseded_by). Anything but `auto` is manual. */
 final case class AgentApprovalsConfig(statusChange: String, edges: String, articlePublish: String,
-    articleFilter: String = "manual") derives ConfigReader:
+    articleFilter: String = "manual", articlePlan: String = "manual", goalPlan: String = "manual",
+    auto: AutoApprovalsConfig = AutoApprovalsConfig()) derives ConfigReader:
   def statusMode: Agents.ApprovalMode  = AgentApprovalsConfig.mode(statusChange)
   def edgeMode: Agents.ApprovalMode    = AgentApprovalsConfig.mode(edges)
   /** `compile-article`: `manual` (the default) waits for a person before the article is written. */
@@ -205,7 +206,32 @@ final case class AgentApprovalsConfig(statusChange: String, edges: String, artic
   /** `infer-filter`: `manual` (the default) records the filter only once a person approves it. */
   def filterMode: Agents.ApprovalMode  = AgentApprovalsConfig.mode(articleFilter)
 
+  /** Whether the managers' supervisor decides an open approval of `kind` by its code checks (the
+    * autopilot's auto approvals, docs/research-process-managers.md "As built: the autopilot"):
+    * `article-plan` and `goal-plan` = `auto` (or `checked`); `article-publish` = `checked` — its `auto`
+    * approves in the run at once, unchecked, as before, and the supervisor only decides what was left
+    * open. Any other kind, or any other value, is a person's. */
+  def checked(kind: Agents.ApprovalKind): Boolean = kind match
+    case Agents.ApprovalKind.ArticlePlan    => AgentApprovalsConfig.isChecked(articlePlan)
+    case Agents.ApprovalKind.GoalPlan       => AgentApprovalsConfig.isChecked(goalPlan)
+    case Agents.ApprovalKind.ArticlePublish => AgentApprovalsConfig.isChecked(articlePublish)
+    case _                                  => false
+
+/** The caps and the thresholds of the checked auto approvals ([[AgentApprovalsConfig.checked]]): at
+  * most `articlesPerGoalPerDay` planned articles of one research area, `publishPerDay` article drafts and
+  * `goalPlansPerDay` goal plans approved automatically per UTC day (what is over waits for a person, or
+  * the next day); a draft is published only when its filter returns at least `publishMinSources`
+  * sources; a goal plan may propose sub-goals only for a goal less than `maxGoalDepth` levels below a
+  * root goal (0 = a root). */
+final case class AutoApprovalsConfig(articlesPerGoalPerDay: Int = 6, publishPerDay: Int = 10, goalPlansPerDay: Int = 5,
+    publishMinSources: Int = 3, maxGoalDepth: Int = 2) derives ConfigReader
+
 object AgentApprovalsConfig:
+  /** `auto` or `checked`, in any case. */
+  def isChecked(raw: String): Boolean =
+    val v = Option(raw).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT)
+    v == "auto" || v == "checked"
+
   /** A value that is not `auto` — a typo included — is the safe one. */
   def mode(raw: String): Agents.ApprovalMode =
     Agents.ApprovalMode.parse(raw).getOrElse(Agents.ApprovalMode.Manual)
@@ -258,10 +284,13 @@ final case class AgentWatchdogConfig(stallMinutes: Int, resumeMinutes: Int, maxS
 /** The review manager's defaults (a value saved in the manager's config wins). `staleAfterDays`: a
   * converged article is selected again (lowest priority) after this many days, or when its filter gained
   * sources (0 = never); looked for at most every `staleScanMinutes`. `inferFilter`: an article without a
-  * coverage filter gets an infer-filter item before its review. */
+  * coverage filter gets an infer-filter item before its review. `extendMinNew`: an article whose filter
+  * returns at least this many sources it neither cites nor gives a reason for gets an `article-extend`
+  * item (0 = never), at most every `extendCooldownDays` per article. */
 final case class ReviewManagerConfig(maxRuns: Int, rounds: Int, maxRunsPerArticle: Int, noProgressRuns: Int,
     reopenLimit: Int, cooldownMinutes: Int, lowWater: Int, refillBatch: Int, staleAfterDays: Int,
-    inferFilter: Boolean = true, staleScanMinutes: Int = 60) derives ConfigReader
+    inferFilter: Boolean = true, staleScanMinutes: Int = 60, extendMinNew: Int = 0, extendCooldownDays: Int = 14)
+    derives ConfigReader
 
 /** A library-wide or per-area manager with nothing but its runs at once to set: the enrich manager
   * (`agents.managers.enrich`) and the seeding managers (`agents.managers.seed`). */
@@ -277,6 +306,24 @@ final case class WatchManagerConfig(maxRuns: Int, cron: String, autoIngestPerDay
 final case class AgentManagersConfig(enabled: Boolean, tickSeconds: Int, keepEventsDays: Int, backoffMinutes: Int,
     maxBackoffMinutes: Int, maxFailures: Int, review: ReviewManagerConfig, enrich: SimpleManagerConfig,
     seed: SimpleManagerConfig, watch: WatchManagerConfig, dailyUsd: Double = 0) derives ConfigReader
+
+/** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the
+  * database (`histmersion agent autopilot on|off`), that makes the managers carry every research goal
+  * from planned to reviewed. These are its settings while it is on:
+  *
+  * - `ensureMinutes`: how often the supervisor makes sure every goal has its managers and moves the goal
+  *   statuses on from the facts (also at once when it is turned on);
+  * - `ingestPerDay`: legal open-access works ALL watchers together may ingest per UTC day (0 = only each
+  *   watcher's own cap); `watchIngestPerDay`: a watcher's own cap when the autopilot creates it;
+  * - `watchCron`, `seedCron`: the cron a watcher and a seeding manager it creates gets (an `@daily` /
+  *   `@weekly` / `@monthly` is spread over the hours and days per goal, so 60 watchers do not fire at
+  *   the same minute); `finishedWatchCron`: a reviewed goal's watcher;
+  * - `extendMinNew`: what the review manager's `extendMinNew` is set to (when it has none);
+  * - `backupHours`, `lintHours`: a backup (pg_dump, the configured pruning) and the safe `lint --fix`
+  *   repairs every so many hours (0 = never), never while a backup, a vacuum or a restore runs. */
+final case class AgentAutopilotConfig(ensureMinutes: Int = 5, ingestPerDay: Int = 20, watchIngestPerDay: Int = 5,
+    watchCron: String = "@weekly", seedCron: String = "@weekly", finishedWatchCron: String = "@monthly",
+    extendMinNew: Int = 3, backupHours: Int = 24, lintHours: Int = 24) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,
@@ -315,7 +362,8 @@ final case class AgentsConfig(
     watchdog: AgentWatchdogConfig,
     managers: AgentManagersConfig,
     runtimes: AgentRuntimesConfig,
-    quota: QuotaConfig
+    quota: QuotaConfig,
+    autopilot: AgentAutopilotConfig = AgentAutopilotConfig()
 ) derives ConfigReader:
 
   /** The HTTP provider block for a kind; the CLI providers have none ([[providers]]). */

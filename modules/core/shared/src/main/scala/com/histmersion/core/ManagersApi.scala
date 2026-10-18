@@ -81,6 +81,17 @@ object ManagersApi:
   val enqueue: PublicEndpoint[EnqueueRequest, ApiError, EnqueueResult, Any] =
     endpoint.post.in("api" / "agents" / "enqueue").errorOut(errors).in(jsonBody[EnqueueRequest]).out(jsonBody[EnqueueResult])
 
+  /** `GET /api/agents/autopilot` — the switch, and per research goal its stage, managers, counts, open
+    * approvals, last activity and pace (docs/research-process-managers.md "As built: the autopilot"). */
+  val autopilot: PublicEndpoint[Unit, ApiError, Autopilot.AutopilotStatus, Any] =
+    endpoint.get.in("api" / "agents" / "autopilot").errorOut(errors).out(jsonBody[Autopilot.AutopilotStatus])
+
+  /** `POST /api/agents/autopilot {on}` — turn it on (every goal gets its managers, at once) or off (the
+    * seeding managers and watchers it runs are paused). Idempotent; answers the status with what it did. */
+  val setAutopilot: PublicEndpoint[Autopilot.AutopilotSet, ApiError, Autopilot.AutopilotStatus, Any] =
+    endpoint.post.in("api" / "agents" / "autopilot").errorOut(errors).in(jsonBody[Autopilot.AutopilotSet])
+      .out(jsonBody[Autopilot.AutopilotStatus])
+
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
-    removeHint, events, action, enqueue)
+    removeHint, events, action, enqueue, autopilot, setAutopilot)
