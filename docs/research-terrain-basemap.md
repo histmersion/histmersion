@@ -55,12 +55,13 @@ its documented, dated public builds and its `landcover` layer (satellite-derived
 
 ## What is kept
 
-`basemap.vector.layers`: `earth`; `water` without canals, ditches, drains, docks, pools, fountains
-and basins; `landcover` forest, grassland, scrub, barren, glacier (not farmland or urban areas). The
-thinning keeps or drops whole layers and features by their `kind` without decoding geometry
-(`server/basemap/Mvt`), so what is kept is byte-identical to the source.
+*Superseded the same day by the drop list (below, "Styles, names and the broad extract").* The first
+build kept only `earth`; `water` without canals, ditches, drains, docks, pools, fountains and basins;
+`landcover` forest, grassland, scrub, barren, glacier (`basemap.vector.layers`). The thinning keeps or
+drops whole layers and features by their `kind` without decoding geometry (`server/basemap/Mvt`), so
+what is kept is byte-identical to the source.
 
-OSM's `landuse` layer was measured and dropped from the default: at zoom 7–10 it is 80–90 % of the
+OSM's `landuse` layer was measured and dropped from that default: at zoom 7–10 it is 80–90 % of the
 thinned bytes (874 → 138 MB at zoom 10 without it) and its woods and wetlands are mapped very
 unevenly from country to country — a border would show as a change in vegetation. `landcover`
 exists to zoom 7; the page draws those tiles larger beyond.
@@ -115,3 +116,93 @@ downloaded, ~0.63 GB kept.
   steep ground.
 - Headless Chromium draws canvases in software; real browsers draw faster. The budgets are set on
   headless figures.
+
+## Styles, names and the broad extract (as built, 2026-10-19)
+
+**The style is a document.** What the page draws moved out of code into a declarative style document
+(`core/TerrainStyle`, the built-in one `core/jvm/resources/basemap/styles.conf`, user guide
+how-to/terrain-styles.md): named styles of ordered fill/line/label layers selecting features by
+source, data layer, geometry, `kind`, `kind_detail` and zoom; colours (a CSS colour or `var(--token)`
+of the page's theme); zoom-dependent numbers as linear stops; the relief's colours, opacities, light
+and exaggeration; a tone; labels and their language. A user file (`basemap.style`, default
+`basemap-style.conf` beside `histmersion.conf`, HOCON or JSON) is merged over the built-in styles by
+id: `extends`, layers patched by id (`remove`, `before`), `hidden`. Parsing is pure and checked: every
+error names its path (`styles[0].layers[2].width: the stops' zooms must ascend`), an unknown key is a
+warning; any error refuses the whole file and the built-in styles are served, the error in the
+answer's `warnings`, `/api/health` (`warnings`) and `/api/about` (`problems`). Built in: *Terrain*
+(the former look), *Terrain + vegetation* (stronger tints, OSM land use's woods, scrub and
+wetlands), *Relief only*, *Parchment* (light).
+
+**Hot, without a watcher.** `server/basemap/BasemapStyles` keys its answer on (file path, size,
+mtime, language, check interval): each `GET /api/basemap/styles` costs one `stat`, the parse happens
+once per change, and a config reload naming another file or language applies at the next read
+(`deps.cfg` is read per call). The page asks every `basemap.style-check-seconds` (5) while it shows
+the terrain map and redraws when `version` (a digest of the served styles) changed — measured in the
+browser test: an edited file shows within the interval, no reload. `GET /api/basemap/styles/example`
+and `POST …/check` back `histmersion basemap styles [--example|--check FILE]`.
+
+**Precompiled.** `web/TerrainRules` compiles a style once into protomaps-leaflet rules: a selector of
+sets (geometry, kinds, not-kinds, details, own `min_zoom`), colours resolved against the theme once,
+constants as numbers and stops as one small function each (paint functions get the DATA zoom, one
+below the map's: `levelDiff` 1). Labels are a second protomaps-leaflet layer (zIndex 3, in the tile
+pane): above the relief, so it never shades them, below every marker pane; placed in rule order and,
+within a rule, by the feature's own `min_zoom` (protomaps-leaflet's labeler handles the collisions
+across tiles). A *names* toggle switches them.
+
+**The names.** Seas, oceans, bays, straits, islands and the small lakes and rivers are already in the
+Protomaps build (water points with `name`/`name:*` and `min_zoom`; `earth` island points; named
+river lines — lakes and rivers only from zoom 10). Mountain ranges, deserts, plateaus, peninsulas,
+island groups, large lakes, major rivers and peaks are not; they come from Natural Earth 5.1.2's
+GeoJSON label layers (public domain): `geography_regions_polys` (a polygon's name at the middle of the
+widest stretch of the line through its largest part's centre of area — a crescent range's centroid
+falls outside it), `geography_regions_points`, `geography_regions_elevation_points`, `lakes` (not
+reservoirs) and `rivers_lake_centerlines` (rivers as lines, simplified to about a pixel per zoom and
+clipped per tile; not canals). `server/basemap/BasemapLabels` keeps their names in every language NE
+has (as `name:<code>`, Chinese as `zh-Hans`/`zh-Hant` like Protomaps), their label zoom (`min_label`,
+else `min_zoom`, else `scalerank`), and writes `labels.pmtiles` (layers `physical`, `rivers`) — a
+third base-map layer, `histmersion basemap fetch --layer labels` (part of `all`). No settlement,
+country or road file is read. Sizes: default region 755 names (253 rivers, 160 peaks, 143 lakes, 71
+ranges, 33 deserts, …), 2 555 tiles, **1.39 MB**; `-25,5,95,66` 1 066 names, 1.91 MB; about 20 MB
+downloaded either way. A label's language: `en` → `name:en`, `name`; `local` → `name`; another code →
+`name:<code>`, `name:en`, `name` (`basemap.labels.language`, the file's `language`, a style's).
+
+**The broad extract (user, 2026-10-19).** Restyling must never need a new download, so the vector
+fetch now DROPS only what a map of the past never needs — `basemap.vector.drop = "roads; transit;
+buildings; boundaries; places; pois +peak +volcano +saddle …"` (a layer whole, some kinds, or all
+but `+kinds`) — and keeps everything else, including layers a newer build adds; `--keep-all`
+stores the tiles unfiltered. The archive's metadata records what it kept (`histmersion.drop` /
+`keepAll`); `basemap status` prints it, and for an extract without that record (fetched before)
+recommends one `fetch --layer vector`. Stored, default region, measured on build 20261019 (z0–9 from
+one unfiltered z9 extract of the whole region, 625 MB downloaded; z10 from an unfiltered z10 extract
+of `5,35,30,50`, 361 MB, scaled by its z10/z9 ratio per filter):
+
+| zooms | unfiltered (`--keep-all`) | default drop list | the former keep list |
+|---|---|---|---|
+| 0–8 | 210 MB | 184 MB | 16 MB |
+| 0–9 | 614 MB | 535 MB | 57 MB |
+| 0–10 | ≈ 1.5 GB | ≈ 1.3 GB | 138 MB |
+
+At zoom 9, each layer alone (gzip): landuse 311 MB, roads 39, water 39, places 8, boundaries 6,
+earth 3, pois 1 — land use is nine tenths of the default extract. Dropping it (`; landuse`) brings
+the download back near the former sizes; the docs say so.
+
+**Drawing cost, and the remedy.** protomaps-leaflet decodes every layer of a tile, drawn or not. On
+the broad Aegean fixture (4.2 MB, z0–9, default drop list) the terrain budget then failed on memory:
+heap **94.5 MB** (budget 60) with interaction still fine (drawn 857–865 ms, pan input p95 33–35 ms,
+0–0.6 % dropped). Remedy: the page asks for what it draws — `GET /api/basemap/{layer}/{z}/{x}/{y}
+?layers=earth:a,water:pl,…` (layers and geometries, `Basemap.parseSubset`), which the server cuts
+from the stored tile without decoding geometry (`Mvt.filter` with a geometry rule, a 512-entry cache
+of recent cuts); each of the two canvas layers asks for its own rules' reads (`TerrainRules.subsets`).
+With it, labels on: drawn **876 ms**, no long task, pan input p95 **36 ms**, 0 % dropped, wheel zooms
+p95 33 ms, 0 % dropped, heap **37.6 MB** (JVM test server, headless Chromium).
+
+**Found on the way.** A `FileChannel` is interruptible: a tile request the page cancelled (its
+virtual thread interrupted mid-read) closed the shared channel, and every later tile and status
+answer failed with `ClosedChannelException` until a restart. `PmTilesFile` now opens a channel closed
+that way again (the interrupted read fails; the others go on) — test in `PmTilesSuite`.
+
+**Not done.** Per-zoom keep rules (e.g. land use only to zoom 8) — the subset makes the page's cost
+independent of the extract's breadth, so only the disk pays for it. Labels for OSM's own peaks
+(`pois`, zoom ≥ 10 in the build; drawn by the built-in style from zoom 10). Line labels for Natural
+Earth's ranges (a range's name sits at a point, not along it).
+
