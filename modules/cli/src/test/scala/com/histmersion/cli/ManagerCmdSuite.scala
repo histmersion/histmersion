@@ -1,6 +1,12 @@
 package com.histmersion.cli
 
+import com.histmersion.core.RepairAcquire
 import com.monovore.decline.Command
+import com.sun.net.httpserver.{HttpExchange, HttpServer}
+import io.circe.syntax.*
+import java.io.ByteArrayOutputStream
+import java.net.InetSocketAddress
+import java.nio.charset.StandardCharsets.UTF_8
 
 /** `histmersion agent manager new review|enrich|seed …`, `agent enqueue <kind> <target>` and the --json
   * flags parse (phase 2 of docs/research-process-managers.md); a bad setting is refused before any
@@ -27,3 +33,30 @@ class ManagerCmdSuite extends munit.FunSuite:
   test("the agent command offers enqueue"):
     val agent = Command("histmersion", "test")(AgentCmd.command)
     assert(agent.parse(List("agent", "enqueue", "review", "x"), Map.empty).isRight)
+
+  test("autopilot repair-acquire [--dry-run] posts the request and prints what it did; an unknown verb is a usage error"):
+    val seen = java.util.concurrent.ConcurrentLinkedQueue[String]()
+    val answer = RepairAcquire.RepairResult(dryRun = true, moved = 1, untouched = 3,
+      rows = List(RepairAcquire.RepairRow(7, "10.1/x", List("g"), "watch:g", RepairAcquire.Move, "legal open access")),
+      backlog = 1, backlogDays = Some(1))
+    val srv = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+    srv.createContext("/", (ex: HttpExchange) =>
+      seen.add(s"${ex.getRequestMethod} ${ex.getRequestURI.getPath} ${new String(ex.getRequestBody.readAllBytes(), UTF_8)}")
+      val bytes = answer.asJson.noSpaces.getBytes(UTF_8)
+      ex.getResponseHeaders.add("Content-Type", "application/json")
+      ex.sendResponseHeaders(200, bytes.length.toLong)
+      ex.getResponseBody.write(bytes)
+      ex.close())
+    srv.start()
+    try
+      val cmd = Command("t", "test")(ManagerCmd.autopilot)
+      val f = cmd.parse(List("autopilot", "repair-acquire", "--dry-run"), Map.empty).fold(h => fail(h.toString), identity)
+      val out = ByteArrayOutputStream()
+      val r = Console.withOut(out)(f(Client(s"http://127.0.0.1:${srv.getAddress.getPort}")))
+      assertEquals(r, Right(()))
+      assert(seen.peek().startsWith("POST /api/agents/autopilot/repair-acquire") && seen.peek().contains("\"dryRun\":true"), seen.peek())
+      val text = out.toString(UTF_8)
+      assert(text.contains("would move 1 legal open-access work") && text.contains("#7 https://doi.org/10.1/x"), text)
+      val bad = cmd.parse(List("autopilot", "repair"), Map.empty).fold(h => fail(h.toString), identity)
+      assert(bad(Client("http://127.0.0.1:1")).left.exists(_.message.contains("repair-acquire")))
+    finally srv.stop(0)
