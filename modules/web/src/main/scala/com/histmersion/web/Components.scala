@@ -58,6 +58,10 @@ enum Icon(val paths: List[String]):
                                       "M19.5 16.5h-1.5", "M15.5 16.5h-1.5", "M13.5 14.5v-1.5", "M13.5 11v-1.5"))
   /** A mountain with a name line under it: the terrain map's physical names. */
   case MapNames     extends Icon(List("M3 15l5-8 3.5 5 2-3 4.5 6z", "M5 19.5h14"))
+  /** Three nested contour rings: the terrain map's contour lines. */
+  case MapContours  extends Icon(List("M12 3.5c5 0 9 3.6 9 8.3S17 20.5 12 20.5 3 16.5 3 11.8 7 3.5 12 3.5z",
+                                      "M12 7c3 0 5.5 2.1 5.5 4.8S15 16.8 12 16.8 6.5 14.5 6.5 11.8 9 7 12 7z",
+                                      "M12 10.3c1.3 0 2.3.7 2.3 1.6s-1 1.6-2.3 1.6-2.3-.7-2.3-1.6 1-1.6 2.3-1.6z"))
   /** An irregular outline: the regions and polities (their boundaries). */
   case Region       extends Icon(List("M4 8l6-4 7 2 3.5 6-3 7-8 1-5.5-5z"))
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",

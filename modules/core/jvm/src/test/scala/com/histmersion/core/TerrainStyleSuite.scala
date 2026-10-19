@@ -12,11 +12,30 @@ class TerrainStyleSuite extends munit.FunSuite:
 
   private def style(l: TerrainStyleFile.Loaded, id: String): TerrainStyle = l.styles.find(_.id == id).getOrElse(fail(s"no $id in ${l.styles.map(_.id)}"))
 
-  test("the built-in document is valid: four named styles, Terrain the default, every layer complete"):
+  test("the built-in document is valid: six named styles, Natural the default, every layer complete"):
     val l = TerrainStyleFile.combine(builtIn, None).fold(e => fail(e.mkString("\n")), identity)
-    assertEquals(l.styles.map(_.id), List("terrain", "terrain-vegetation", "relief", "parchment"))
-    assertEquals(l.styles.map(_.name), List("Terrain", "Terrain + vegetation", "Relief only", "Parchment"))
-    assertEquals((l.default, l.source, l.warnings), ("terrain", TerrainStyles.BuiltIn, Nil))
+    assertEquals(l.styles.map(_.id), List("natural", "contour", "terrain", "terrain-vegetation", "relief", "parchment"))
+    assertEquals(l.styles.map(_.name), List("Natural", "Contour map", "Terrain", "Terrain + vegetation", "Relief only", "Parchment"))
+    assertEquals((l.default, l.source, l.warnings), ("natural", TerrainStyles.BuiltIn, Nil))
+    // Natural: light; the ground tinted by elevation, no land fill over it; the sea glowing at the shore; contours
+    val nat = style(l, "natural")
+    assertEquals(nat.tone, "light")
+    assert(nat.relief.tint.size >= 8 && nat.relief.tint.map(_.elevation) == nat.relief.tint.map(_.elevation).sorted)
+    assertEquals(nat.layers.head.id, "land", "the land's fill: what shows where there is no elevation")
+    assert(nat.relief.heights && nat.relief.seaFloor && nat.relief.seaTint.map(_.elevation).forall(_ < 0))
+    val terrain = style(l, "terrain")
+    assert(terrain.relief.tint.nonEmpty && !terrain.relief.heights && !terrain.relief.seaFloor, "carried, switched off")
+    assert(nat.layers.find(_.id == "water").exists(_.glow.isDefined))
+    assert(nat.hasContours && nat.relief.contours.minZoom == 11.0)
+    assertEquals(nat.relief.contours.interval.step(12.5), 50.0)
+    assert(nat.relief.multidirectional > 0)
+    assert(nat.layers.filter(_.draw == "label").forall(_.font.exists(_.family.startsWith("'Noto Serif'"))), "the bundled serif")
+    assert(nat.layers.filter(l => l.draw == "label" && l.dataLayers.contains("water") && l.geometry.contains("point"))
+      .forall(_.font.exists(_.style == "italic")), "water names in italics")
+    val contour = style(l, "contour")
+    assertEquals((contour.relief.contours.minZoom, contour.relief.contours.interval.step(9), contour.relief.contours.labels), (9.0, 200.0, true))
+    assert(contour.relief.tintOpacity < nat.relief.tintOpacity && contour.relief.tint == nat.relief.tint, "the relief merged key by key")
+    assertEquals(contour.relief.contours.indexEvery, 5, "the contours merged key by key too")
     val t = style(l, "terrain")
     assertEquals(t.layers.head.id, "land")
     assertEquals(t.layers.find(_.id == "forest").map(_.dataLayers), Some(List("landcover")), "land use is not drawn by default")
@@ -82,7 +101,7 @@ class TerrainStyleSuite extends munit.FunSuite:
         |  { id = "parchment", hidden = true }
         |]""".stripMargin)
     assertEquals(l.warnings, Nil)
-    assertEquals(l.styles.map(_.id), List("terrain", "terrain-vegetation", "relief", "night"))
+    assertEquals(l.styles.map(_.id), List("natural", "contour", "terrain", "terrain-vegetation", "relief", "night"))
     assertEquals((l.default, l.language), ("night", Some("local")))
     assert(l.source.contains("basemap-style.conf over the built-in styles"), l.source)
     val n = style(l, "night")
@@ -98,8 +117,8 @@ class TerrainStyleSuite extends munit.FunSuite:
 
   test("a partial file: only the default or the language; JSON works too"):
     val l = combine("""{ "default": "relief" }""")
-    assertEquals((l.default, l.styles.size, l.warnings), ("relief", 4, Nil))
-    assertEquals(combine("").styles.size, 4)
+    assertEquals((l.default, l.styles.size, l.warnings), ("relief", 6, Nil))
+    assertEquals(combine("").styles.size, 6)
     assertEquals(combine("""{"styles": [{"id": "relief", "extends": "relief", "relief": {"azimuth": 270}}]}""")
       .styles.find(_.id == "relief").map(_.relief.azimuth), Some(270.0))
 
@@ -122,7 +141,7 @@ class TerrainStyleSuite extends munit.FunSuite:
         |  { id = "c bad" }
         |]""".stripMargin)
     assertEquals(l.source, TerrainStyles.BuiltIn)
-    assertEquals(l.styles.map(_.id), List("terrain", "terrain-vegetation", "relief", "parchment"))
+    assertEquals(l.styles.map(_.id), List("natural", "contour", "terrain", "terrain-vegetation", "relief", "parchment"))
     val w = l.warnings.mkString("\n")
     assert(l.warnings.head.contains("is not used — the built-in terrain styles are shown instead"), w)
     assert(w.contains("styles[0].background: \"bluish\" is not a colour"), w)
@@ -146,9 +165,32 @@ class TerrainStyleSuite extends munit.FunSuite:
     assertEquals(syntax.source, TerrainStyles.BuiltIn)
     assert(syntax.warnings.exists(_.contains("basemap-style.conf: 1")), syntax.warnings.toString)
     assert(combine("""default = "nope"""").warnings.exists(_.contains("default: no style 'nope'")))
-    val none = combine("""styles = [ {id=terrain, hidden=true}, {id=terrain-vegetation, hidden=true}, {id=relief, hidden=true}, {id=parchment, hidden=true} ]""")
+    val none = combine("""styles = [ {id=natural, hidden=true}, {id=contour, hidden=true}, {id=terrain, hidden=true},
+                          |  {id=terrain-vegetation, hidden=true}, {id=relief, hidden=true}, {id=parchment, hidden=true} ]""".stripMargin)
     assert(none.warnings.exists(_.contains("every style is hidden")), none.warnings.toString)
-    assertEquals(none.styles.size, 4)
+    assertEquals(none.styles.size, 6)
+
+  test("the relief's new keys: tint stops, multidirectional, contours; a layer's glow, padding and line height; checked at their paths"):
+    val l = combine(
+      """styles = [ { id = "t", extends = "natural", name = "T",
+        |  relief { multidirectional = 1, tint = [[0, "#000"], [100, "white"]], contours { interval = [[10, 25]], index-every = 4 } },
+        |  layers = [ { id = "water", glow { color = "#fff", width = 4 } }, { id = "oceans", padding = 6, line-height = 1.5 } ] } ]""".stripMargin)
+    assertEquals(l.warnings, Nil)
+    val t = style(l, "t")
+    assertEquals(t.relief.tint, List(TintStop(0, "#000"), TintStop(100, "white")))
+    assertEquals((t.relief.multidirectional, t.relief.contours.interval.step(12), t.relief.contours.indexEvery), (1.0, 25.0, 4))
+    assert(t.relief.contours.enabled, "inherited")
+    assertEquals(t.layers.find(_.id == "water").flatMap(_.glow).map(g => (g.color, g.width.at(9))), Some(("#fff", 4.0)))
+    assertEquals(t.layers.find(_.id == "oceans").map(o => (o.padding, o.lineHeight)), Some((6.0, 1.5)))
+    val bad = combine(
+      """styles = [ { id = "natural", extends = "natural", relief { tint = [[100, "#000"], [0, "#fff"]], multidirectional = 2,
+        |  contours { index-every = 0, colour = "red" } } } ]""".stripMargin)
+    val w = bad.warnings.mkString("\n")
+    assert(w.contains("styles[0].relief.tint: the elevations must ascend"), w)
+    assert(w.contains("styles[0].relief.multidirectional: 2.0 is outside 0…1"), w)
+    assert(w.contains("styles[0].relief.contours.index-every"), w)
+    assertEquals(ZoomValue(List(ZoomStop(11, 100), ZoomStop(13, 20))).step(12.9), 100.0)
+    assertEquals(ZoomValue(List(ZoomStop(11, 100), ZoomStop(13, 20))).step(5), 100.0, "below the first stop: the first")
 
   test("merging layers by id: patch, remove, insert before, append; relief key by key"):
     import io.circe.Json

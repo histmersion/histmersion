@@ -70,12 +70,17 @@ object TerrainRules:
       paintReads: Map[String, Map[String, Set[Int]]], labelReads: Map[String, Map[String, Set[Int]]])
 
   /** Compile `style` for the `sources` the server has; the label rules only when `labelsOn`. */
-  def compile(style: TerrainStyle, language: String, sources: Set[String], labelsOn: Boolean, lookup: String => String): Compiled =
-    val layers = usable(style.layers, sources)
+  def compile(style: TerrainStyle, language: String, sources: Set[String], labelsOn: Boolean, lookup: String => String,
+      paintOnly: StyleLayer => Boolean = _ => true): Compiled =
+    val layers = usable(style.layers, sources).filter(l => l.draw == "label" || paintOnly(l))
     val paint = layers.filter(l => l.draw == "fill" || l.draw == "line").flatMap { l =>
       val sel = selector(l)
       val sym: js.Object =
-        if l.draw == "fill" then
+        if l.draw == "fill" && l.glow.isDefined then
+          val g = l.glow.get
+          TerrainLabels.glowFill(colour(l.fill.getOrElse("transparent"), lookup),
+            z => l.opacity.fold(1.0)(_.at(z + 1)), colour(g.color, lookup), z => g.width.at(z + 1))
+        else if l.draw == "fill" then
           val o = js.Dynamic.literal(fill = colour(l.fill.getOrElse("transparent"), lookup))
           l.opacity.foreach(v => o.opacity = zoomed(v, 1))
           new PolygonSymbolizer(o)
@@ -104,7 +109,13 @@ object TerrainRules:
         l.transform.filter(_ != "none").foreach(t => o.textTransform = t)
         l.letterSpacing.foreach(s => o.letterSpacing = s)
         l.maxLineChars.foreach(n => o.maxLineChars = n)
-        val sym: js.Object = if l.placement == "line" then new LineLabelSymbolizer(o) else new CenteredTextSymbolizer(o)
+        // a name at a point: our own symbolizer, its box the whole block (TerrainLabels); along a line, the library's
+        val sym: js.Object =
+          if l.placement == "line" then new LineLabelSymbolizer(o)
+          else TerrainLabels.symbolizer(TerrainLabels.Spec(props, z => cssFont(font, z), z => font.size.at(z),
+            colour(l.color.getOrElse("transparent"), lookup), colour(l.halo.getOrElse("transparent"), lookup),
+            z => l.haloWidth.fold(0.0)(_.at(z)), l.transform.filter(_ != "none"), l.letterSpacing.getOrElse(0),
+            l.maxLineChars.getOrElse(15), l.padding, l.lineHeight))
         val filter: js.Function2[Double, PmFeature, Boolean] =
           (z, f) => sel.matches(f.geomType, text(f, "kind"), text(f, "kind_detail"), num(f.props.get("min_zoom")), z)
         // the more important first: the lower a feature's own min_zoom, the earlier it is placed
@@ -119,6 +130,21 @@ object TerrainRules:
     val drawn = layers.filter(l => l.draw == "fill" || l.draw == "line")
     val named = if !labelsOn || !style.labels then Nil else layers.filter(_.draw == "label")
     Compiled(js.Array(paint*), js.Array(labels*), subsets(drawn), subsets(named))
+
+  /** Is a layer the GROUND under a tinted relief — the land's fill or the open sea's — drawn below the
+    * colours by height and depth, so they cover it where there is elevation and it shows where there is
+    * none? Everything else (land cover, lakes, rivers, the shore) lies over them. Pure. */
+  def isGround(l: StyleLayer): Boolean =
+    l.draw == "fill" && l.glow.isEmpty &&
+      ((l.dataLayers == List("earth") && l.kinds.isEmpty) || (l.dataLayers == List("water") && l.kinds == List("ocean")))
+
+  /** A label font as the canvas takes it: style, weight, size at zoom `z`, family. Pure. */
+  def cssFont(f: StyleFont, z: Double): String = s"${f.style} ${f.weight} ${f.size.at(z)}px ${f.family}"
+
+  /** The font families a style's names use (to load them before drawing). Pure. */
+  def fontsOf(style: TerrainStyle): List[String] =
+    (style.layers.filter(_.draw == "label").flatMap(_.font).map(f => s"${f.style} ${f.weight} 12px ${f.family}") ++
+      Option.when(style.hasContours)(style.relief.contours.font).map(f => s"${f.style} ${f.weight} 12px ${f.family}").toList).distinct
 
   private def rule(l: StyleLayer, dataLayer: String, sym: js.Object, filter: js.Function2[Double, PmFeature, Boolean]): js.Object =
     val r = js.Dynamic.literal(dataSource = l.source, dataLayer = dataLayer, symbolizer = sym, filter = filter)

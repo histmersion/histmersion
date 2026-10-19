@@ -276,8 +276,10 @@ object MapView:
         // current while it is off, so switching it back on shows the current span at once
         UiState.sources.signal.foreach(showSources)(using ctx.owner)
         // the base map, and for the terrain map its style and its names: each change draws it again
-        UiState.baseMap.signal.combineWith(UiState.terrainStyle.signal, UiState.terrainLabels.signal)
-          .foreach((b, _, _) => setBaseMap(b, ui))(using ctx.owner)
+        UiState.baseMap.signal.combineWith(UiState.terrainStyle.signal)
+          .foreach((b, _) => setBaseMap(b, ui))(using ctx.owner)
+        // the viewer's map options over the preset: drawn again at once (only the names when only they changed)
+        UiState.terrainView.signal.changes.foreach(_ => TerrainMap.viewChanged())(using ctx.owner)
 
         map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>
           val target = e.target.asInstanceOf[dom.Element]

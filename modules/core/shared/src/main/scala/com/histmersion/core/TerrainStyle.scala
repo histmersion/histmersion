@@ -19,6 +19,9 @@ final case class ZoomValue(stops: List[ZoomStop]) derives KindlingsCodecAsObject
   def at(z: Double): Double = ZoomValue.interpolate(stops, z)
   /** Whether it is the same at every zoom. */
   def constant: Boolean = stops.map(_.value).distinct.size <= 1
+  /** The value of the last stop at or below zoom `z` (the first stop's below it): a step, not a ramp —
+    * for values that must not take the numbers between stops (a contour interval). Pure. */
+  def step(z: Double): Double = stops.takeWhile(_.zoom <= z).lastOption.orElse(stops.headOption).fold(0.0)(_.value)
 
 object ZoomValue:
   given Schema[ZoomValue] = KindlingsSchema.derived[ZoomValue].schema
@@ -40,6 +43,12 @@ final case class StyleFont(family: String = "sans-serif", size: ZoomValue = Zoom
     style: String = "normal") derives KindlingsCodecAsObject
 object StyleFont:
   given Schema[StyleFont] = KindlingsSchema.derived[StyleFont].schema
+
+/** A soft inner edge of an area (the sea's shore): `color` drawn inside its outline, fading over `width`
+  * pixels. */
+final case class StyleGlow(color: String, width: ZoomValue = ZoomValue.const(6)) derives KindlingsCodecAsObject
+object StyleGlow:
+  given Schema[StyleGlow] = KindlingsSchema.derived[StyleGlow].schema
 
 /** One drawing rule of a terrain style, bottom to top: the features of the `dataLayers` of one `source`
   * (`vector`: the Protomaps extract; `labels`: the physical names) that `geometry`, `kinds` (the
@@ -69,14 +78,51 @@ final case class StyleLayer(
     transform: Option[String] = None,
     letterSpacing: Option[Double] = None,
     maxLineChars: Option[Int] = None,
-    ownMinZoom: Boolean = true
+    ownMinZoom: Boolean = true,
+    /** A fill's soft inner edge ([[StyleGlow]]). */
+    glow: Option[StyleGlow] = None,
+    /** A name's free space around it, in pixels: no other name comes closer. */
+    padding: Double = 3,
+    /** A name's line height, a multiple of its font size. */
+    lineHeight: Double = 1.2
 ) derives KindlingsCodecAsObject
 object StyleLayer:
   given Schema[StyleLayer] = KindlingsSchema.derived[StyleLayer].schema
 
+/** One stop of a hypsometric tint: ground at `elevation` metres is `color`. */
+final case class TintStop(elevation: Double, color: String) derives KindlingsCodecAsObject
+object TintStop:
+  given Schema[TintStop] = KindlingsSchema.derived[TintStop].schema
+
+/** Contour lines drawn from the elevation tiles from `minZoom` on: every `interval` metres (a step by
+  * zoom: the interval of the last stop at or below the map's zoom), every `indexEvery`-th line an index
+  * line — thicker, darker, its elevation written along it when `labels`. */
+final case class ContourStyle(
+    enabled: Boolean = false,
+    minZoom: Double = 11,
+    interval: ZoomValue = ZoomValue(List(ZoomStop(0, 200), ZoomStop(12, 100), ZoomStop(13, 50), ZoomStop(15, 20))),
+    indexEvery: Int = 5,
+    color: String = "var(--terrain-contour)",
+    indexColor: String = "var(--terrain-contour-index)",
+    width: Double = 0.7,
+    indexWidth: Double = 1.4,
+    labels: Boolean = true,
+    /** Depth contours (isobaths) under the sea every this many metres (a step by zoom; 0: none), in `depthColor`. */
+    depthInterval: ZoomValue = ZoomValue.const(0),
+    depthColor: String = "var(--terrain-isobath)",
+    labelColor: String = "var(--terrain-contour-label)",
+    halo: String = "var(--terrain-contour-halo)",
+    font: StyleFont = StyleFont(family = "\"Noto Serif\", serif", size = ZoomValue.const(10))
+) derives KindlingsCodecAsObject
+object ContourStyle:
+  given Schema[ContourStyle] = KindlingsSchema.derived[ContourStyle].schema
+
 /** The relief shaded from the elevation tiles: the shadow and highlight colours and their strongest
-  * opacity, the light's direction (azimuth clockwise from north) and height, and how much the slopes
-  * are steepened at each zoom. */
+  * opacity, the light's direction (azimuth clockwise from north) and height, how much the slopes are
+  * steepened at each zoom, and how much of the light also comes from the other directions
+  * (`multidirectional`, 0–1: the shading of slopes turned away from the main light too). With `tint`,
+  * the ground is coloured by its elevation under the vector layer's land cover (`tintOpacity`); with
+  * `contours`, contour lines are drawn over the shading. */
 final case class ReliefStyle(
     enabled: Boolean = true,
     shadow: String = "var(--terrain-shadow)",
@@ -85,7 +131,21 @@ final case class ReliefStyle(
     highlightOpacity: Double = 0.2,
     azimuth: Double = 315,
     altitude: Double = 45,
-    exaggeration: ZoomValue = ZoomValue(List(ZoomStop(0, 7.6), ZoomStop(11, 1)))
+    exaggeration: ZoomValue = ZoomValue(List(ZoomStop(0, 7.6), ZoomStop(11, 1))),
+    multidirectional: Double = 0,
+    tint: List[TintStop] = Nil,
+    tintOpacity: Double = 1,
+    contours: ContourStyle = ContourStyle(),
+    /** The sea coloured by its depth (negative elevations, from the sea-floor layer): [[TintStop]]s; empty:
+      * the sea is the vector layer's water. */
+    seaTint: List[TintStop] = Nil,
+    /** How strongly the sea floor is shaded, against the land (0–1). */
+    seaShading: Double = 0.5,
+    /** Whether the colours by height (`tint`) are shown — a preset may carry them switched off, for a viewer
+      * to switch on in the map's options. */
+    heights: Boolean = true,
+    /** Whether the sea's colours by depth (`seaTint`) are shown. */
+    seaFloor: Boolean = true
 ) derives KindlingsCodecAsObject
 object ReliefStyle:
   given Schema[ReliefStyle] = KindlingsSchema.derived[ReliefStyle].schema
@@ -105,6 +165,7 @@ final case class TerrainStyle(
     layers: List[StyleLayer] = Nil
 ) derives KindlingsCodecAsObject:
   def hasLabels: Boolean = layers.exists(_.draw == "label")
+  def hasContours: Boolean = relief.enabled && relief.contours.enabled
 object TerrainStyle:
   given Schema[TerrainStyle] = KindlingsSchema.derived[TerrainStyle].schema
 
@@ -173,14 +234,17 @@ object TerrainStyleDoc:
   /** The parsed document: its styles (resolved), the default, the language, and the warnings. */
   final case class Parsed(styles: List[TerrainStyle], default: Option[String], language: Option[String], warnings: List[String])
 
-  private val DocKeys   = Set("version", "default", "language", "styles")
+  private val DocKeys   = Set("version", "default", "language", "styles", "fonts")
   private val StyleKeys = Set("id", "name", "description", "extends", "hidden", "tone", "background", "labels", "language",
     "relief", "layers")
   private val ReliefKeys = Set("enabled", "shadow", "shadow-opacity", "highlight", "highlight-opacity", "azimuth", "altitude",
-    "exaggeration")
+    "exaggeration", "multidirectional", "tint", "tint-opacity", "contours", "sea-tint", "sea-shading", "heights", "sea-floor")
+  private val ContourKeys = Set("enabled", "min-zoom", "interval", "index-every", "color", "index-color", "width", "index-width",
+    "labels", "label-color", "halo", "font", "depth-interval", "depth-color")
+  private val GlowKeys = Set("color", "width")
   private val LayerKeys = Set("id", "type", "source", "layer", "geometry", "kinds", "not-kinds", "details", "min-zoom",
     "max-zoom", "fill", "color", "opacity", "width", "dash", "placement", "halo", "halo-width", "font", "transform",
-    "letter-spacing", "max-line-chars", "own-min-zoom", "remove", "before")
+    "letter-spacing", "max-line-chars", "own-min-zoom", "remove", "before", "glow", "padding", "line-height")
   private val FontKeys = Set("family", "size", "weight", "style")
 
   // ── colours ─────────────────────────────────────────────────────────────────────────────────────
@@ -283,6 +347,23 @@ object TerrainStyleDoc:
                 else if ss.exists(s => s.value < min || s.value > max) then { err(k, s"a stop's value is outside $min…$max"); None }
                 else Some(ZoomValue(ss))
     }
+    /** `[[elevation, colour], …]`, elevations ascending. */
+    def tint(k: String): Option[List[TintStop]] = o(k).flatMap { j =>
+      val bad = s"expected [[elevation, colour], …], got ${describe(j)}"
+      j.asArray.map(_.toList) match
+        case None => err(k, bad); None
+        case Some(pairs) =>
+          val stops = pairs.map(_.asArray.map(_.toList)).map {
+            case Some(List(e, c)) => e.asNumber.map(_.toDouble).zip(c.asString)
+            case _                => None
+          }
+          if stops.exists(_.isEmpty) then { err(k, bad); None }
+          else
+            val ss = stops.flatten.map(TintStop(_, _))
+            ss.filterNot(t => validColour(t.color)).foreach(t => err(k, s"\"${t.color}\" is not a colour"))
+            if ss.zip(ss.drop(1)).exists((a, b) => b.elevation < a.elevation) then { err(k, "the elevations must ascend"); None }
+            else Some(ss.map(t => t.copy(color = t.color.trim)))
+    }
     def obj(k: String): Option[Obj] = o(k).flatMap { j =>
       j.asObject.map(Obj(at(k), _, n)).orElse { err(k, s"expected an object { … }, got ${describe(j)}"); None }
     }
@@ -315,6 +396,10 @@ object TerrainStyleDoc:
     val color = l.colour("color")
     val halo = l.colour("halo")
     val font = l.obj("font").flatMap(checkFont)
+    val glow = l.obj("glow").map { g =>
+      g.unknown(GlowKeys)
+      StyleGlow(g.colour("color").getOrElse("transparent"), g.zoomValue("width", 0, 64).getOrElse(ZoomValue.const(6)))
+    }
     val layerOut = StyleLayer(
       id = id.getOrElse(""), draw = draw.getOrElse(""), source = source.getOrElse(TerrainStyles.SourceVector),
       dataLayers = layer.getOrElse(Nil), geometry = geometry,
@@ -325,7 +410,8 @@ object TerrainStyleDoc:
       dash = l.numbers("dash").getOrElse(Nil), placement = l.oneOf("placement", List("point", "line")).getOrElse("point"),
       halo = halo, haloWidth = l.zoomValue("halo-width", 0, 16), font = font,
       transform = l.oneOf("transform", TerrainStyles.Transforms), letterSpacing = l.num("letter-spacing", 0, 32),
-      maxLineChars = l.int("max-line-chars", 1, 200), ownMinZoom = l.bool("own-min-zoom").getOrElse(true))
+      maxLineChars = l.int("max-line-chars", 1, 200), ownMinZoom = l.bool("own-min-zoom").getOrElse(true),
+      glow = glow, padding = l.num("padding", 0, 64).getOrElse(3), lineHeight = l.num("line-height", 0.8, 3).getOrElse(1.2))
     l.bool("remove"); l.str("before")
     if complete then
       val where = s"layer '${layerOut.id}' of style '$styleId'"
@@ -339,13 +425,28 @@ object TerrainStyleDoc:
       for a <- layerOut.minZoom; b <- layerOut.maxZoom if a > b do l.err("min-zoom", s"$where: min-zoom $a is above max-zoom $b")
     Some(layerOut)
 
+  private def checkContours(c: Obj): ContourStyle =
+    c.unknown(ContourKeys)
+    val d = ContourStyle()
+    ContourStyle(c.bool("enabled").getOrElse(true), c.num("min-zoom", 0, 24).getOrElse(d.minZoom),
+      c.zoomValue("interval", 1, 5000).getOrElse(d.interval), c.int("index-every", 1, 50).getOrElse(d.indexEvery),
+      c.colour("color").getOrElse(d.color), c.colour("index-color").getOrElse(d.indexColor),
+      c.num("width", 0, 16).getOrElse(d.width), c.num("index-width", 0, 16).getOrElse(d.indexWidth),
+      c.bool("labels").getOrElse(d.labels), c.zoomValue("depth-interval", 0, 5000).getOrElse(d.depthInterval),
+      c.colour("depth-color").getOrElse(d.depthColor), c.colour("label-color").getOrElse(d.labelColor), c.colour("halo").getOrElse(d.halo),
+      c.obj("font").flatMap(checkFont).getOrElse(d.font))
+
   private def checkRelief(r: Obj): ReliefStyle =
     r.unknown(ReliefKeys)
     val d = ReliefStyle()
     ReliefStyle(r.bool("enabled").getOrElse(d.enabled), r.colour("shadow").getOrElse(d.shadow),
       r.num("shadow-opacity", 0, 1).getOrElse(d.shadowOpacity), r.colour("highlight").getOrElse(d.highlight),
       r.num("highlight-opacity", 0, 1).getOrElse(d.highlightOpacity), r.num("azimuth", 0, 360).getOrElse(d.azimuth),
-      r.num("altitude", 1, 90).getOrElse(d.altitude), r.zoomValue("exaggeration", 0, 100).getOrElse(d.exaggeration))
+      r.num("altitude", 1, 90).getOrElse(d.altitude), r.zoomValue("exaggeration", 0, 100).getOrElse(d.exaggeration),
+      r.num("multidirectional", 0, 1).getOrElse(d.multidirectional), r.tint("tint").getOrElse(d.tint),
+      r.num("tint-opacity", 0, 1).getOrElse(d.tintOpacity), r.obj("contours").map(checkContours).getOrElse(d.contours),
+      r.tint("sea-tint").getOrElse(d.seaTint), r.num("sea-shading", 0, 1).getOrElse(d.seaShading),
+      r.bool("heights").getOrElse(d.heights), r.bool("sea-floor").getOrElse(d.seaFloor))
 
   /** One style object: every key given checked (a raw style of the file), and when `complete` (a
     * style after merging) the keys it needs. */
@@ -381,7 +482,12 @@ object TerrainStyleDoc:
         case "extends" => acc
         case "relief" =>
           val merged = (acc("relief").flatMap(_.asObject), v.asObject) match
-            case (Some(a), Some(b)) => Json.fromJsonObject(b.toList.foldLeft(a)((o, kv) => o.add(kv._1, kv._2)))
+            case (Some(a), Some(b)) => Json.fromJsonObject(b.toList.foldLeft(a) { (o, kv) =>
+              // the contours, like the relief, merged key by key
+              (kv._1, o("contours").flatMap(_.asObject), kv._2.asObject) match
+                case ("contours", Some(c0), Some(c1)) => o.add("contours", Json.fromJsonObject(c1.toList.foldLeft(c0)((x, y) => x.add(y._1, y._2))))
+                case _                                => o.add(kv._1, kv._2)
+            })
             case _                  => v
           acc.add("relief", merged)
         case "layers" =>
