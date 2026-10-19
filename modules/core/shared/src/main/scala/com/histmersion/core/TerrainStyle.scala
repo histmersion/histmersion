@@ -152,6 +152,13 @@ object TerrainStyles:
   /** A language a label can be shown in: `local`, or a code like `en`, `de`, `zh-Hans`. Pure. */
   def validLanguage(s: String): Boolean = s == "local" || s.matches("[a-z]{2,3}(-[A-Za-z]{2,8})?")
 
+/** `POST /api/basemap/styles/check`: what a style file would give, without using it — the styles it
+  * would show, or its errors (each at its place in the file), and the keys it would ignore. */
+final case class TerrainStyleCheck(ok: Boolean, styles: List[String] = Nil, default: Option[String] = None,
+    errors: List[String] = Nil, warnings: List[String] = Nil) derives KindlingsCodecAsObject
+object TerrainStyleCheck:
+  given Schema[TerrainStyleCheck] = KindlingsSchema.derived[TerrainStyleCheck].schema
+
 /** The terrain style document (docs/user-guide/how-to/terrain-styles.md): HOCON or JSON, its `styles`
   * merged over the built-in ones by `id`. Parsing and checking are pure: JSON in, styles or errors out —
   * every error names its place in the file (`styles[1].layers[3].width`), and an unknown key is a

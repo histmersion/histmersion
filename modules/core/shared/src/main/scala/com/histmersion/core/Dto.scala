@@ -145,12 +145,15 @@ final case class VersionInfo(name: String, version: String) derives KindlingsCod
 object VersionInfo:
   given Schema[VersionInfo] = KindlingsSchema.derived[VersionInfo].schema
 
-/** `/api/health`: each dependency reports ok/error text (`converter` = the OCR sidecar, plan §1.8). */
+/** `/api/health`: each dependency reports ok/error text (`converter` = the OCR sidecar, plan §1.8).
+  * `warnings`: what the server runs without but someone should know — a style file refused, say —
+  * never a reason for `status` to change. */
 final case class Health(
     status: String,
     db: String,
     schemaVersion: Option[String],
-    converter: Option[String] = None
+    converter: Option[String] = None,
+    warnings: List[String] = Nil
 ) derives KindlingsCodecAsObject
 object Health:
   given Schema[Health] = KindlingsSchema.derived[Health].schema

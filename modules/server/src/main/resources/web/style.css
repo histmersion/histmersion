@@ -56,13 +56,15 @@
   --bubble-coin:rgba(255,255,255,.92); --bubble-line:#000000;
   /* a filter menu option's badge fill: mid-grey, 3.5:1 against the panel, white on it 4.8:1 */
   --opt-badge-fill:#6b7385;
-  /* the terrain base map (TerrainMap): muted and dark so the dots, names and boundaries stay on top —
-     land, water and rivers; land cover as translucent tints over the land; the relief's shadow and
-     highlight with their greatest opacity (0–1) */
+  /* the terrain base map's built-in "Terrain" style (basemap/styles.conf names these): muted and dark
+     so the dots, names and boundaries stay on top — land, water and rivers; land cover as translucent
+     tints over the land; the relief's shadow and highlight colours (their opacity is the style's); the
+     physical names on land and on water, and their halo */
   --terrain-land:#31343a; --terrain-water:#141b24; --terrain-river:#3a6488;
   --terrain-forest:rgba(76,116,78,.24); --terrain-scrub:rgba(118,124,84,.14); --terrain-wetland:rgba(72,112,112,.2);
   --terrain-barren:rgba(150,128,98,.14); --terrain-sand:rgba(176,154,108,.18); --terrain-ice:rgba(214,226,238,.3);
-  --terrain-shadow:#000000; --terrain-shadow-alpha:.72; --terrain-highlight:#ffffff; --terrain-highlight-alpha:.2;
+  --terrain-shadow:#000000; --terrain-highlight:#ffffff;
+  --terrain-label:#c9bc9c; --terrain-label-water:#7fa3c0; --terrain-label-halo:rgba(16,19,26,.82);
 }
 /* ── the control tokens: ONE scale for every button, toggle, field and bar ───────────────────────────
    Every control is built from the shared classes below, never styled one widget at a time:

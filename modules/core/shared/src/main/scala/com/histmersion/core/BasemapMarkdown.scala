@@ -25,6 +25,29 @@ object BasemapMarkdown:
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
 
+  /** The named styles (`histmersion basemap styles`): the menu's entries, where they came from, and
+    * what was refused or ignored. */
+  def styles(t: TerrainStyles): String =
+    val rows = t.styles.map { s =>
+      val marks = List(Option.when(s.id == t.default)("default"), Option.when(s.tone == "light")("light"),
+        Option.when(!s.labels || !s.hasLabels)("no names"), Option.when(!s.relief.enabled)("no relief")).flatten
+      s"| `${s.id}` | ${s.name} | ${s.layers.size} | ${marks.mkString(", ")} | ${s.description} |"
+    }
+    val table = ("| id | name | layers | | |" :: "|---|---|---|---|---|" :: rows).mkString("\n")
+    val file = t.file.fold("")(f => s" Style file: `$f`.")
+    val notes = s"From: ${t.source}.$file Names in: ${t.language}." ::
+      t.warnings.map(w => s"- $w")
+    (s"${t.styles.size} terrain map ${if t.styles.size == 1 then "style" else "styles"}:" :: "" :: table :: "" :: notes)
+      .mkString("\n")
+
+  /** A style file's check (`histmersion basemap styles --check FILE`). */
+  def styleCheck(c: TerrainStyleCheck): String =
+    val head =
+      if c.ok then s"The file is valid: the base-map menu would show ${c.styles.map(s => s"`$s`").mkString(", ")}" +
+        c.default.fold("")(d => s" (default `$d`)") + "."
+      else s"The file is NOT valid (${c.errors.size} ${if c.errors.size == 1 then "error" else "errors"}) — the server would keep the built-in styles:"
+    (head :: c.errors.map(e => s"- $e") ::: c.warnings.map(w => s"- warning: $w")).mkString("\n")
+
   /** A credit line without its links (the page shows them; a terminal does not). */
   def plain(html: String): String = html.replaceAll("<[^>]+>", "")
 

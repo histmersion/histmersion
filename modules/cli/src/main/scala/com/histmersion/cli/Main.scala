@@ -22,7 +22,8 @@ object Main:
   }
 
   private val health = Opts.subcommand("health", "Server health (db, schema version)") {
-    Opts.unit.map(_ => (c: Client) => c.health.map(h => println(s"${h.status} · db ${h.db} · schema ${h.schemaVersion.getOrElse("?")}")))
+    Opts.unit.map(_ => (c: Client) => c.health.map(h => println((s"${h.status} · db ${h.db} · schema ${h.schemaVersion.getOrElse("?")}" ::
+      h.warnings.map(w => s"warning: $w")).mkString("\n"))))
   }
 
   private val about = Opts.subcommand("about", "Server build (version, commit), health, job queue, last backup and store counts") {

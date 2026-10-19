@@ -55,6 +55,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   val basemap: com.histmersion.server.basemap.BasemapService = com.histmersion.server.basemap.BasemapService(deps,
     () => com.histmersion.server.basemap.JavaRangeHttp(deps.cfg.basemap.timeoutSeconds, deps.cfg.basemap.retries))
 
+  /** The terrain map's named styles: the built-in ones and the user's style file, read again when it
+    * changes (docs/user-guide/how-to/terrain-styles.md) — same arrangement. */
+  val basemapStyles: com.histmersion.server.basemap.BasemapStyles = com.histmersion.server.basemap.BasemapStyles(deps)
+
   /** The portable bundle — instance identity, export, verify, import (docs/research-merge-import.md). */
   val bundles: BundleHandlers = BundleHandlers(deps, () => backups.create(Instant.now()).map(_.file))
 
@@ -71,8 +75,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def health: Health =
     val conv = ingest.converterHealth
     scala.util.Try(Migrate.current(ds)) match
-      case scala.util.Success(v) => Health(if conv.healthy then "ok" else "degraded", "ok", v, Some(conv.render))
-      case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv.render))
+      case scala.util.Success(v) => Health(if conv.healthy then "ok" else "degraded", "ok", v, Some(conv.render), basemapStyles.warnings)
+      case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv.render), basemapStyles.warnings)
 
   /** `GET /api/about` — the build, the health report, the job queue, the newest backup and the store's
     * counts. Each part that cannot be read becomes a `problems` line, never a failed request: this is
@@ -94,7 +98,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       counts = counts.toOption,
       lastBackup = last,
       lastBackupAgeSeconds = age,
-      problems = List(jobs, counts, listed).flatMap(_.left.toOption),
+      problems = List(jobs, counts, listed).flatMap(_.left.toOption) ++ basemapStyles.warnings,
       configFile = deps.configFile,
       agentLease = agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)),
       plugins = deps.plugins.report)
