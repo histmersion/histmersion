@@ -51,15 +51,22 @@ object ManagerCmd:
     * "As built: the autopilot"). */
   val autopilot: Opts[Client => Either[CliError, Unit]] = Opts.subcommand("autopilot",
       "The autopilot: status (default) — per research goal its stage, managers, sources, articles, open approvals, last " +
-        "activity and pace; on — every goal gets an active seeding manager and watcher and moves from planned to reviewed " +
-        "by itself (within every cap, budget and plan floor); off — the seeding managers and watchers it runs are paused") {
-    (Opts.argument[String]("status|on|off").withDefault("status"), Output.jsonFlag).mapN { (verb, json) => (c: Client) =>
-      val call = verb.trim.toLowerCase match
-        case "status" => Right(c.call(ManagersApi.autopilot)(()))
-        case "on"     => Right(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = true, Some("cli"))))
-        case "off"    => Right(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = false, Some("cli"))))
-        case other    => Left(CliError(s"unknown autopilot verb '$other' (status, on, off)", exitCode = ExitCode.Usage))
-      call.flatten.map(s => Output.emit(json, s)(AutopilotMarkdown.status))
+        "activity and pace, and the watchers' ingest backlog; on — every goal gets an active seeding manager and watcher and " +
+        "moves from planned to reviewed by itself (within every cap, budget and plan floor); off — the seeding managers and " +
+        "watchers it runs are paused; repair-acquire [--dry-run] — move the acquisition items a watcher's sweep created for " +
+        "legal open-access works into the watchers' ingest backlog (a person's items are never touched)") {
+    (Opts.argument[String]("status|on|off|repair-acquire").withDefault("status"),
+      Opts.flag("dry-run", "repair-acquire: list what it would do, change nothing").orFalse, Output.jsonFlag).mapN {
+      (verb, dry, json) => (c: Client) =>
+        def status(call: Either[CliError, Autopilot.AutopilotStatus]) = call.map(s => Output.emit(json, s)(AutopilotMarkdown.status))
+        verb.trim.toLowerCase match
+          case "status" => status(c.call(ManagersApi.autopilot)(()))
+          case "on"     => status(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = true, Some("cli"))))
+          case "off"    => status(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = false, Some("cli"))))
+          case "repair-acquire" =>
+            c.call(ManagersApi.repairAcquire)(RepairAcquire.RepairRequest(dry, Some("cli")))
+              .map(r => Output.emit(json, r)(RepairAcquire.markdown))
+          case other => Left(CliError(s"unknown autopilot verb '$other' (status, on, off, repair-acquire)", exitCode = ExitCode.Usage))
     }
   }
 
