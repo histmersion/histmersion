@@ -79,13 +79,13 @@ object ViewportToggle:
     }
     button(
       typ := "button",
-      cls := "btn btn--toggle terrain-names-toggle",
+      cls := "btn btn--toggle btn--icon terrain-names-toggle",   // an icon: the row must not wrap
+      aria.label := "names",
       aria.pressed <-- UiState.terrainLabels.signal.map(_.toString),
       disabled <-- usable.map(!_),
       title <-- usable.map(u => if u then "Physical names on the terrain map: seas, ranges, deserts, lakes, rivers"
         else "Physical names — choose a terrain style that has them first"),
       Icon(Icon.MapNames),
-      span("names"),
       onClick.compose(_.sample(UiState.terrainLabels.signal)) --> (on => UiState.set(UiState.terrainLabels := !on)())
     )
 
