@@ -56,6 +56,13 @@
   --bubble-coin:rgba(255,255,255,.92); --bubble-line:#000000;
   /* a filter menu option's badge fill: mid-grey, 3.5:1 against the panel, white on it 4.8:1 */
   --opt-badge-fill:#6b7385;
+  /* the terrain base map (TerrainMap): muted and dark so the dots, names and boundaries stay on top —
+     land, water and rivers; land cover as translucent tints over the land; the relief's shadow and
+     highlight with their greatest opacity (0–1) */
+  --terrain-land:#31343a; --terrain-water:#141b24; --terrain-river:#3a6488;
+  --terrain-forest:rgba(76,116,78,.24); --terrain-scrub:rgba(118,124,84,.14); --terrain-wetland:rgba(72,112,112,.2);
+  --terrain-barren:rgba(150,128,98,.14); --terrain-sand:rgba(176,154,108,.18); --terrain-ice:rgba(214,226,238,.3);
+  --terrain-shadow:#000000; --terrain-shadow-alpha:.72; --terrain-highlight:#ffffff; --terrain-highlight-alpha:.2;
 }
 /* ── the control tokens: ONE scale for every button, toggle, field and bar ───────────────────────────
    Every control is built from the shared classes below, never styled one widget at a time:
@@ -363,6 +370,15 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* `Dark` base map: the configured (light) tiles, inverted — no second tile server */
 .map-tiles-dark .leaflet-tile-pane { filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
 .map-tiles-dark.leaflet-container { background:var(--bg); }
+/* `Terrain` base map (TerrainMap): outside the downloaded region there is no tile — the page's own
+   background; while it is not downloaded, the standard tiles stand in, dimmed like `Dark` */
+.terrain-missing .leaflet-tile-pane { filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
+.terrain-missing.leaflet-container, .terrain-on.leaflet-container { background:var(--bg); }
+.terrain-notice { background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px; color:var(--ink);
+  font-size:var(--fs-sm); line-height:1.35; padding:var(--space-3) var(--space-4); max-width:300px; }
+.terrain-notice a { color:var(--accent); white-space:nowrap; }
+.terrain-notice.is-missing { border-color:var(--format-error); }
+[data-layout="narrow"] .terrain-notice { max-width:220px; font-size:var(--fs-xs); }
 .hd-site-marker { cursor:pointer; }
 /* a region or polity known only by a POINT (no boundary yet): its name, never a dot — and nothing at all
    while the map is zoomed out (`.map-far`, PlaceGlyph), where one name would stand for a whole country */

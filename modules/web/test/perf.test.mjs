@@ -47,6 +47,10 @@ const BUDGETS = {
   eventLayer: { drawnMs: 2500, longTaskMax: 200, 'pan.inputP95': 200, 'pan.longTaskMax': 250, 'pan.droppedPct': 12,
     'zoom.longTaskMax': 150, 'zoom.droppedPct': 8 },
   memoryEventLayer: { heapMB: 75, nodes: 12000, listeners: 2000 },
+  // the terrain base map (the Aegean fixture): vector tiles on canvas, the relief shaded in the page
+  terrainMap: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
+    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15 },
+  memoryTerrainMap: { heapMB: 60 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
   soak: { heapMB: 6, nodes: 150, listeners: 20, leafletLayers: 0 },
 };
@@ -112,6 +116,15 @@ test('budgets: the events layer draws 2 400 markers, pans and zooms smoothly', a
   await withPerfPage(async ({ page, cdp }) => {
     within('eventLayer', await paths.eventLayer(page, baseURL, -3500, 1500, { atLeast: 2000 }));
     within('memoryEventLayer', await memory(page, cdp));
+  });
+});
+
+test('budgets: the terrain base map draws, pans and zooms within the pan\'s budget', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  await withPerfPage(async ({ page, cdp }) => {
+    within('terrainMap', await paths.terrainMap(page, baseURL));
+    within('memoryTerrainMap', await memory(page, cdp));
   });
 });
 
