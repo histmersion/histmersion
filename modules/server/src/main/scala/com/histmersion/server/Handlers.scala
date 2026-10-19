@@ -1155,6 +1155,24 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val stored = CritiqueRepo.list(ds, ArticleRepo.canonical(ds, norm(slug)))
     critiquesOf(body, links, edges, extra ++ stored.filterNot(s => extra.exists(_.ref.same(s.ref))))
 
+  /** THE PAIRING RULE of a body (docs/research-review-convergence.md §6.9, lint
+    * `article-critique-pairing`): each paragraph that cites one side of a disagreement edge and names
+    * the other side's author without citing it, and the body with the mechanical ones repaired (the
+    * missing citekey appended to the paragraph's citation). Read only. */
+  def pairing(body: String): (List[CritiquePairing.Hit], String => Option[String]) =
+    val links = bodyLinks(body)
+    val cited = citedOf(body, links)
+    val edges = CoverageRepo.edgesTouching(ds, cited, ArticleCoverage.DisagreementKinds)
+    val works = SourceRepo.refs(ds, edges.flatMap(e => List(e.from, e.to)).distinct)
+      .map(r => r.citekey -> CritiquePairing.Work(r.citekey, CritiquePairing.names(r.citekey, r.authors), r.year)).toMap
+    val resolve: String => Option[String] = t => links(t).collect { case r: SourceRef => r.citekey }
+    (CritiquePairing.hits(body, resolve, edges, works.get), resolve)
+
+  /** [[pairing]]'s mechanical repair: the body with each named partner's citekey appended, and the
+    * hits applied. */
+  def repairPairing(body: String): (String, List[CritiquePairing.Hit]) =
+    CritiquePairing.repair(body, pairing(body)._1)
+
   /** What filter `af` returns from the live corpus: its source count, which of `citekeys` it returns,
     * and up to `cap` of its sources (by citekey) — what the managers' code checks measure
     * (infer-filter, propose-articles; docs/research-process-managers.md, phase 2). */
@@ -1170,10 +1188,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def articleFilterTotal(slug: String): Option[Int] =
     ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).flatMap(_.filter).map(af => filterReach(af, Nil, 0)._1)
 
-  /** How many pairs of the article's critique checklist are open now (None: no such article) — what
-    * the review manager tracks per run (§6.8). */
+  /** How many pairs of the article's critique checklist are open now and bear on a work it cites
+    * (None: no such article) — what the review manager tracks per run (§6.8). An open pair on a work
+    * the article does not cite is background (§6.9): no run owes it anything, so it is not counted. */
   def openCritiques(slug: String): Option[Int] =
-    ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).map(a => critiques(a.slug, a.body).count(_.open))
+    ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).map(a => Critiques.toRule(critiques(a.slug, a.body)).size)
 
   private def critiquesOf(body: String, links: String => Option[LinkTarget], edges: List[CoverageEdge],
       reasons: List[CritiqueReason]): List[CritiquePair] =

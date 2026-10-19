@@ -133,3 +133,30 @@ class CritiquesSuite extends munit.FunSuite:
     assert(ArticlePatch(critiqueReasons = List(CritiqueReason("a", "b", "x")), ifUpdatedAt = Some("t")).onlyCritiques)
     assert(!ArticlePatch(body = Some("b"), critiqueReasons = List(CritiqueReason("a", "b", "x"))).onlyCritiques)
     assert(!ArticlePatch().onlyCritiques)
+
+  // ── §6.9: blocks with their lines, the criticised side, bearing pairs ─────────────────────────────
+
+  test("units: each paragraph with the body lines it was read from; a hand-written Not used section left out"):
+    val body = "# T\n\nOne [[a]] and\ntwo [[b]].\n\n- item [[a]]\n  more [[c]]\n| x [[a]] |\n\n## Not used\n\n- [[a]] — off\n\n## After\n\nLast [[b]]."
+    assertEquals(Critiques.units(body).map(u => (u.from, u.to, u.text)), List(
+      (2, 3, "One [[a]] and two [[b]]."), (5, 6, "- item [[a]] more [[c]]"), (7, 7, "| x [[a]] |"), (15, 15, "Last [[b]].")))
+    assert(Critiques.together(body, CritiqueRef("a", "b"), Some(_)))
+    assert(!Critiques.together(body, CritiqueRef("b", "c"), Some(_)))
+
+  test("criticised: the target of challenges/refutes/updates, the source of superseded_by; bearing = open on a cited work"):
+    val ch = pair("c1", "challenges", "d1", srcCited = false, dstCited = true)
+    assertEquals((ch.criticised.citekey, ch.critic.citekey, ch.bearing), ("d1", "c1", true))
+    val sup = pair("old1", "superseded_by", "new1", srcCited = false, dstCited = true)
+    assertEquals((sup.criticised.citekey, sup.critic.citekey, sup.bearing), ("old1", "new1", false))
+    assert(!pair("c2", "challenges", "d2", srcCited = true, dstCited = false).bearing, "a cited critic of an uncited work: background")
+    assert(!pair("c3", "refutes", "d3", true, true, state = CritiqueState.Addressed).bearing)
+
+  test("the skeptic's brief rules only on bearing pairs, once per two sources; the background is named, owing nothing"):
+    val ps = List(pair("a1", "refutes", "b1", srcCited = true, dstCited = true), pair("b1", "challenges", "a1", srcCited = true, dstCited = true),
+      pair("c2", "challenges", "d2", srcCited = true, dstCited = false))
+    assertEquals(Critiques.toRule(ps).map(_.ref.wire), List("a1>b1"))
+    val (text, shown) = Critiques.promptText(ps, maxOpen = 10, maxReasoned = 10)
+    assertEquals(shown.map(_.ref.wire), List("a1>b1"))
+    assert(text.contains("(1 open pair on a work the article does not cite — it states none of that work's claims, so no ruling is owed: c2>d2)"), text)
+    val (bg, none) = Critiques.promptText(ps.drop(2), 10, 10)
+    assert(bg.contains("No open pair is on a work the article cites.") && none.isEmpty, bg)
