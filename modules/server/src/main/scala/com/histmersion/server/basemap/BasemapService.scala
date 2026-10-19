@@ -263,13 +263,13 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       s"${BasemapService.describe(l, plan, dryRun = false)}; stored ${done._2} tiles in ${Backup.humanBytes(done._1)} at ${path(l)}"
 
   /** The physical names: Natural Earth's label files read whole (a few MB each), cut to the region and
-    * written as `labels.pmtiles` (about 1 MB) — no range requests, nothing to resume. */
+    * written as `labels.pmtiles` (about 1.4 MB for the default region) — no range requests, nothing to resume. */
   private def labels(a: Ask, note: String => Unit): Either[String, String] =
     val lc    = cfg.labels
     val files = lc.files.map(f => f -> lc.url.replace("{file}", f))
     if a.dryRun then
       Right(s"labels (Natural Earth, zoom 0–${lc.maxZoom}): would download ${files.size} files — ${lc.files.mkString(", ")} — " +
-        "about 20 MB, of which about 1 MB is kept")
+        "about 20 MB, of which about 1.4 MB is kept")
     else
       val free = freeSpace(BasemapService.existing(dir))
       val need = 64L * 1024 * 1024
@@ -304,7 +304,7 @@ object BasemapService:
       s"can draw only coast, water and land cover from it. One `${Basemap.FetchCommand} --layer vector` stores the broader " +
       "extract (or `" + Basemap.FetchCommand + "` for everything); restyling never needs a download after that.").toList ++
     Option.when(vector && !labels)(s"The physical names (mountain ranges, deserts, peninsulas, lakes, major rivers, peaks) " +
-      s"are not downloaded: `${Basemap.FetchCommand} --layer labels` adds them (about 20 MB read, about 1 MB kept).").toList
+      s"are not downloaded: `${Basemap.FetchCommand} --layer labels` adds them (about 20 MB read, about 1.4 MB kept).").toList
 
   /** The names archive's metadata: its layers, credit, and where and when it came from. Pure. */
   def labelsMetadata(lc: BasemapLabelsConfig, b: BBox, names: Int, fetchedAt: String): io.circe.Json =
