@@ -45,7 +45,13 @@ object ViewportToggle:
         value <-- UiState.baseMap.signal.map(_.wire),
         onChange.mapToValue --> { v => BaseMap.fromWire(v).foreach(b => UiState.set(UiState.baseMap := b)()) }
       ),
-      BaseMap.values.toList.map(b => option(value := b.wire, b.label))
+      BaseMap.values.toList.map { b =>
+        if b == BaseMap.Terrain then
+          option(value := b.wire, child.text <-- TerrainMap.status.signal.map(TerrainMap.optionLabel),
+            title <-- TerrainMap.status.signal.map(s => if s.forall(_.available) then TerrainMap.PastNotice else TerrainMap.missingNotice(s)))
+        else option(value := b.wire, b.label)
+      },
+      onMountCallback(_ => { val _ = TerrainMap.refresh() })
     )
 
   /** The help of the "States shown" menu ([[UiState.areaPick]]). */

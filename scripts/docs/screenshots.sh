@@ -89,6 +89,8 @@ node docs/demo/converter-stub.mjs "$stub_port" & stub_pid=$!
   export HISTMERSION_CONVERTER_URL="http://127.0.0.1:$stub_port"
   export HISTMERSION_SPOOL_DIR="$tmp/spool" HISTMERSION_BACKUPS_DIR="$tmp/backups" HISTMERSION_BUNDLES_DIR="$tmp/bundles"
   export HISTMERSION_PG_BIN_DIR="$pg" HISTMERSION_INIT_DATA_DIR="$repo/db"
+  # the terrain base map: the small Aegean extract the browser tests use (no download)
+  export HISTMERSION_BASEMAP_DIR="$repo/modules/web/test/fixtures/basemap"
   unset ANTHROPIC_API_KEY OPENAI_API_KEY HISTMERSION_AGENTS_LOCAL_API_KEY
   exec "$jh/bin/java" -Duser.home="$tmp/home" -cp "$(cat "$classpath_file")" com.histmersion.server.Main
 ) >"$tmp/server.log" 2>&1 & server_pid=$!

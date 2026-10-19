@@ -1593,3 +1593,44 @@ test('autopilot: the switch and the goals\' stages in the managers window', asyn
     assert.match(await ap.innerText(), /ingests today 0 of 20/);
   });
 });
+
+test('the terrain base map: drawn from the server\'s extract, no raster tiles, the past-landscape notice, credits; back to standard', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  await withPage({ width: 1280, height: 800 }, async page => {
+    const option = page.locator('.map-style-select option[value="terrain"]');
+    assert.equal(await option.textContent(), 'Terrain (no modern features)');
+    await page.locator('.map-style-select').selectOption('terrain');
+    const notice = page.locator('.terrain-notice');
+    await notice.waitFor();
+    assert.match(await notice.textContent(), /Coastlines, rivers, lakes and vegetation were different in the past/);
+    assert.match(await notice.locator('a').getAttribute('href'), /exploring\/web-ui\.md#the-terrain-map$/);
+    await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 7, { animate: false }));
+    // the vector tiles and the relief are canvases; the raster layer is gone
+    await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane canvas').length > 4 &&
+      document.querySelectorAll('.terrain-relief canvas').length > 0);
+    assert.equal(await page.locator('.leaflet-tile-pane img.leaflet-tile').count(), 0);
+    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('terrain-on')));
+    const credit = await page.locator('.leaflet-control-attribution').textContent();
+    assert.match(credit, /OpenStreetMap/);
+    assert.match(credit, /Mapterhorn/);
+    // a relief tile was shaded: some of its pixels are drawn, some are not
+    const drawn = await page.evaluate(() => {
+      const c = [...document.querySelectorAll('.terrain-relief canvas')].find(c => c.width === 512);
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
+      return n / (d.length / 4);
+    });
+    assert.ok(drawn > 0.05 && drawn < 1, `share of shaded pixels ${drawn}`);
+    // kept like the other base maps
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('.terrain-notice').waitFor();
+    assert.equal(await page.locator('.map-style-select').inputValue(), 'terrain');
+    // and back: the notice and the canvases go, the tiles return
+    await page.locator('.map-style-select').selectOption('standard');
+    await page.waitForFunction(() => !document.querySelector('.terrain-notice') &&
+      !document.querySelector('.terrain-relief') && !document.getElementById('map').classList.contains('terrain-on'));
+    await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane img.leaflet-tile').length > 0);
+  });
+});

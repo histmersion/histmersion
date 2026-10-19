@@ -67,13 +67,30 @@ object MapView:
   def setTileUrl(url: String, maxZoom: Int): Unit =
     if map != null && tileLayerRef != null && url != tileUrl then
       tileUrl = url
+      val was = map.hasLayer(tileLayerRef)
       map.removeLayer(tileLayerRef)
       tileLayerRef = L.tileLayer(url, js.Dynamic.literal(
         attribution = attributionFor(url),
         maxZoom = maxZoom,
         opacity = 0.85
       ).asInstanceOf[js.Object])
-      tileLayerRef.addTo(map)
+      if was then tileLayerRef.addTo(map)
+
+  /** The raster tiles on the map, or away (the terrain map draws its own). Idempotent. */
+  private def raster(on: Boolean): Unit =
+    if map != null && tileLayerRef != null then
+      if on && !map.hasLayer(tileLayerRef) then tileLayerRef.addTo(map)
+      else if !on && map.hasLayer(tileLayerRef) then map.removeLayer(tileLayerRef)
+
+  /** The base map `b`: raster tiles from its URL (or the configured ones), or the terrain map. */
+  private def setBaseMap(b: BaseMap, ui: UiConfig): Unit =
+    if b == BaseMap.Terrain then
+      setTileUrl(ui.tiles, ui.tilesMaxZoom)   // what shows while the terrain is missing
+      TerrainMap.enter(map, ui.docsUrl, raster)
+    else
+      TerrainMap.leave(map)
+      setTileUrl(b.url.getOrElse(ui.tiles), ui.tilesMaxZoom)
+      raster(true)
 
   def setPlaybackMode(on: Boolean): Unit = playbackMode = on
 
@@ -258,7 +275,7 @@ object MapView:
         // the finding markers follow their switch the same way; `render` keeps the cluster's content
         // current while it is off, so switching it back on shows the current span at once
         UiState.sources.signal.foreach(showSources)(using ctx.owner)
-        UiState.baseMap.signal.foreach(b => setTileUrl(b.url.getOrElse(ui.tiles), ui.tilesMaxZoom))(using ctx.owner)
+        UiState.baseMap.signal.foreach(b => setBaseMap(b, ui))(using ctx.owner)
 
         map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>
           val target = e.target.asInstanceOf[dom.Element]

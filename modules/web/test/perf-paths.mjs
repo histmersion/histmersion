@@ -211,4 +211,25 @@ export async function eventLayer(page, baseURL, from, to, { atLeast = 1 } = {}) 
   return { markers: drawn.n, drawnMs: Math.round(drawn.at - t0), longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom };
 }
 
+/** The terrain base map over the Aegean (the fixture extract): from the reload to the notice and every
+  * tile drawn, then a pan and wheel zooms — the vector tiles drawn on canvas and the relief shaded in
+  * the page, all of it inside the pan's budget. */
+export async function terrainMap(page, baseURL) {
+  await page.evaluate(() => localStorage.setItem('histmersion.ui.baseMap', '["terrain"]'));
+  await page.goto(new URL('/', baseURL).href);
+  await page.reload();
+  await ready(page);
+  const t0 = await page.evaluate(() => performance.now());
+  await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 7, { animate: false }));
+  await valueOf(page, () => document.querySelector('.terrain-notice') && document.querySelector('.terrain-relief canvas'));
+  await quiet(page);
+  const drawnMs = Math.round(await page.evaluate(() => performance.now()) - t0);
+  // the terrain's own work: what ran after the view was set (the app's start is firstRender's)
+  const lt = (await page.evaluate(() => window.__perf.longTasks)).filter(t => t.start >= t0);
+  const pan = await mapPan(page);
+  await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 6, { animate: false }));
+  const zoom = await mapZoom(page);
+  return { drawnMs, longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom };
+}
+
 export { memory };

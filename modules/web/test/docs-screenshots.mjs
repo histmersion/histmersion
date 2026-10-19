@@ -154,6 +154,16 @@ const shots = {
   'home-muted': { local: { layers: allLayers, baseMap: '["muted"]' }, hash: 'from=-1700&to=-1000',
     run: async (page, shoot) => { await view(page, 36.6, 29.5, 5); await shoot(); } },
 
+  // The terrain base map (no modern features), drawn from the server's own extract — here the small
+  // Aegean fixture (modules/web/test/fixtures/basemap) — with its notice about the past landscape.
+  'home-terrain': { local: { layers: '["events"]', baseMap: '["terrain"]' }, hash: 'from=-1700&to=-1000',
+    run: async (page, shoot) => {
+      await page.locator('.terrain-notice').waitFor();
+      await view(page, 37.8, 25.4, 8);
+      await settle(page, 1500);
+      await shoot();
+    } },
+
   // The phone layout: the map first, the controls on buttons, the list as a sheet.
   'phone': { viewport: phone, local: { layers: '["events","media"]', sheet: '["half"]' }, hash: 'from=-1700&to=-1000',
     run: async (page, shoot) => { await view(page, 36.0, 28.5, 5); await shoot(); } },
