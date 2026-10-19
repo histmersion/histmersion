@@ -20,14 +20,14 @@ object ModelChains:
   /** `"claude-code:sonnet > anthropic:claude-sonnet-4-5 > local:qwen3"` — tried in that order. One
     * model is a chain of one (every `roles.*` written before chains existed still reads). Blank = no
     * model. A model id never contains `>`. */
-  def parseChain(s: String): Either[String, List[ModelRef]] =
+  def parseChain(s: String, known: Set[String] = Set.empty): Either[String, List[ModelRef]] =
     val parts = s.split('>').toList.map(_.trim)
     if parts.forall(_.isEmpty) then Right(Nil)
-    else parseModels(parts)
+    else parseModels(parts, known)
 
   /** A chain given as separate model references (the REST body, the CLI's arguments). */
-  def parseModels(refs: List[String]): Either[String, List[ModelRef]] =
-    val parsed = refs.map(_.trim).filter(_.nonEmpty).map(ModelRef.parse)
+  def parseModels(refs: List[String], known: Set[String] = Set.empty): Either[String, List[ModelRef]] =
+    val parsed = refs.map(_.trim).filter(_.nonEmpty).map(ModelRef.parse(_, known))
     parsed.collect { case Left(m) => m } match
       case Nil =>
         val ms = parsed.collect { case Right(m) => m }
@@ -144,12 +144,13 @@ object ModelChains:
       case Provider(k) => m.provider == k
 
   object Target:
-    def parse(s: String): Either[String, Target] =
+    /** `known`: the names plugin providers are registered under now. */
+    def parse(s: String, known: Set[String] = Set.empty): Either[String, Target] =
       val t = s.trim
       if t.endsWith(":*") then
         val p = t.dropRight(2)
-        ProviderKind.parse(p).map(Provider(_)).toRight(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.values.map(_.wire).mkString(", ")})")
-      else ModelRef.parse(t).map(Model(_))
+        ProviderKind.parse(p, known).map(Provider(_)).toRight(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})")
+      else ModelRef.parse(t, known).map(Model(_))
 
   /** Pause using what `target` covers once less than `reservePct` % of any limit is left. */
   final case class Allowance(target: Target, limits: List[Limit], reservePct: Int):
@@ -167,12 +168,12 @@ object ModelChains:
   /** `agents.allowances`: `"<target> = <limit>, <limit>, reserve <n>%; <target> = …"`, e.g.
     * `"claude-code:* = 2M tokens/5h, 20M tokens/7d, reserve 10%; anthropic:claude-sonnet-4-5 = 5 usd/day"`.
     * Every malformed entry is reported — a typo must not lift a cap. */
-  def parseAllowances(s: String): Either[String, List[Allowance]] =
+  def parseAllowances(s: String, known: Set[String] = Set.empty): Either[String, List[Allowance]] =
     val entries = s.split(';').toList.map(_.trim).filter(_.nonEmpty)
     val parsed = entries.map { e =>
       e.indexOf('=') match
         case -1 => Left(s"'$e' is not <provider:model or provider:*> = <limits>")
-        case i  => parseAllowance(e.substring(0, i), e.substring(i + 1).split(',').toList)
+        case i  => parseAllowance(e.substring(0, i), e.substring(i + 1).split(',').toList, known)
     }
     parsed.collect { case Left(m) => m } match
       case Nil =>
@@ -182,11 +183,11 @@ object ModelChains:
       case errs => Left(errs.mkString("; "))
 
   /** One allowance from its target and its items (`500k tokens/5h`, `reserve 10%`). */
-  def parseAllowance(target: String, items: List[String]): Either[String, Allowance] =
+  def parseAllowance(target: String, items: List[String], known: Set[String] = Set.empty): Either[String, Allowance] =
     val ts = items.map(_.trim).filter(_.nonEmpty)
     val (reserves, limits) = ts.partition(_.toLowerCase(java.util.Locale.ROOT).startsWith("reserve"))
     for
-      t  <- Target.parse(target)
+      t  <- Target.parse(target, known)
       rs <- reserves match
               case Nil      => Right(0)
               case r :: Nil => parseReserve(r.drop("reserve".length))

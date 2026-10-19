@@ -65,6 +65,15 @@ class ModelChainsSuite extends munit.FunSuite:
     assert(parseAllowances("local:x = 1 usd/day; local:x = 2 usd/day").left.exists(_.contains("twice")))
     assert(parseAllowances("local:x = 1 usd/day, 2 usd/day").left.exists(_.contains("same measure and window")))
 
+  test("chains and allowances name a plugin provider only while it is registered"):
+    assert(parseChain("gemini:pro > local:x").left.exists(_.contains("unknown provider 'gemini'")))
+    assertEquals(parseChain("gemini:pro > local:x", Set("gemini")).map(_.map(_.wire)), Right(List("gemini:pro", "local:x")))
+    assert(parseAllowances("gemini:* = 1 usd/day").left.exists(_.contains("unknown provider 'gemini'")))
+    val a = parseAllowances("gemini:* = 1 usd/day", Set("gemini")).toOption.get.head
+    assert(a.target.covers(ModelRef(ProviderKind.Plugin("gemini"), "pro")))
+    assert(!a.target.covers(ModelRef(ProviderKind.Local, "pro")))
+    assertEquals(Target.parse("gemini:pro", Set("gemini")).map(_.wire), Right("gemini:pro"))
+
   private val H = 3600L * 1000L
 
   test("a limit counts only its rolling window; usable while used < amount − reserve"):

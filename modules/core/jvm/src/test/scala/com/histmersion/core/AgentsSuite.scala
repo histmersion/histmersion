@@ -14,6 +14,24 @@ class AgentsSuite extends munit.FunSuite:
     assert(ModelRef.parse("local:").left.exists(_.contains("names no model")))
     assert(ModelRef.parse("qwen").left.exists(_.contains("provider:model")))
 
+  test("ModelRef: a plugin provider's name parses only while it is registered (known), never a host name"):
+    assert(ModelRef.parse("gemini:pro").left.exists(e => e.contains("unknown provider 'gemini'") && !e.contains("gemini,")))
+    assertEquals(ModelRef.parse("gemini:pro", Set("gemini")), Right(ModelRef(ProviderKind.Plugin("gemini"), "pro")))
+    assertEquals(ModelRef.parse(" Gemini:pro:v2 ", Set("gemini")).map(_.wire), Right("gemini:pro:v2"))
+    // a host name stays the host's, whatever a plugin claims
+    assertEquals(ModelRef.parse("local:x", Set("local")), Right(ModelRef(ProviderKind.Local, "x")))
+    assert(ModelRef.parse("ollama:x", Set("gemini")).left.exists(_.contains("one of: anthropic, openai, local, claude-code, codex, opencode, gemini")))
+    assertEquals(ProviderKind.values.map(_.wire), List("anthropic", "openai", "local", "claude-code", "codex", "opencode"))
+    assert(!ProviderKind.Plugin("gemini").isCli)
+
+  test("a plugin provider's model is metered: no plan pool, paid, needs a price"):
+    val m = ModelRef(ProviderKind.Plugin("gemini"), "pro")
+    assertEquals(PlanQuota.poolOf(m, PlanQuota.Logins()), None)
+    assert(PlanQuota.paid(m, PlanQuota.Logins()))
+    assert(Prices.billing(Map.empty, m, None).left.exists(_.contains("model 'pro' has no price")))
+    assertEquals(Prices.billing(Map("pro" -> Price(BigDecimal(1), BigDecimal(2))), m, None),
+      Right(Billing.Metered(Price(BigDecimal(1), BigDecimal(2)))))
+
   test("Prices: two or four numbers per model, ; separated"):
     val p = Prices.parse("qwen2.5-coder:32b=0/0; claude-x=3/15/0.3/3.75").toOption.get
     assertEquals(p("qwen2.5-coder:32b"), Price(BigDecimal(0), BigDecimal(0)))

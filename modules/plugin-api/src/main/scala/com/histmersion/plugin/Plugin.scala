@@ -62,7 +62,8 @@ trait Plugin:
 
 /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new
   * extension point is a new registry here, not a new service type, so existing plugin jars keep loading.
-  * (Four: [[secretVaults]], [[sourceFetchers]], [[mediaCollections]] and [[eventCatalogues]]. Each one
+  * (Five: [[secretVaults]], [[sourceFetchers]], [[mediaCollections]], [[eventCatalogues]] and
+  * [[aiProviders]]. Each one
   * added after the first has a default that refuses every addition, so a context written for an
   * earlier extension point — a test's — still compiles, and `Spi.Version` stayed 1.) */
 trait PluginContext:
@@ -98,6 +99,11 @@ trait PluginContext:
   /** The event catalogues `histmersion events import <id>` reads, each under its own id — the import's
     * name and the catalogue its records are stored under. */
   def eventCatalogues: Registry[EventCatalogue] = Registry.refusing("this host has no event catalogues")
+
+  /** The AI providers the embedded agents call (docs/research-plugins.md §22), each under its PROVIDER
+    * NAME — the part before the colon of a `provider:model` reference. The host runs the tool loop, the
+    * tools, the validation and every budget; the provider answers one model call at a time. */
+  def aiProviders: Registry[AiProvider] = Registry.refusing("this host has no AI providers")
 
 /** One extension point. `add` refuses an id already taken in this registry. */
 trait Registry[A]:
