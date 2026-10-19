@@ -37,6 +37,6 @@ The logs are in the data folder's `logs/` (`server.log`, `postgres.log`, `conver
 | Native binary dies on a missing class or resource | metadata is stale. Run the app once under sbt (`sbt server/run`), commit the changed `META-INF/native-image/reachability-metadata.json`, rebuild. |
 | `sbt test` "passes" without running | sbt 2 caches test results. `sbt "testOnly *"`. |
 | An env var is ignored by sbt | the sbt 2 thin client shares a server and drops the environment. `sbt --server -batch <task>`. |
-| Map tiles do not load | offline or firewalled. Point `HISTMERSION_TILES` at a local tile server. Leaflet itself is vendored, so the rest of the page works. |
+| Map tiles do not load | offline or firewalled, on an online base map. Download the local map once (`histmersion basemap fetch --keep-all`) and choose Standard instead of Standard (online), or set `ui.base-map-source = "local"`: [Working offline](../how-to/offline.md). Leaflet itself is vendored, so the rest of the page works. |
 | Server exits 3 at startup | a Flyway migration failed, or the database is unreachable. `just logs`; the message names the migration. |
 | `git status` shows `agent-pid*/` | a forked `sbt run` was killed mid-write. Safe to delete; they are gitignored. |

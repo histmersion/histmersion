@@ -23,11 +23,22 @@ switched on and off:
 | **areas** | regions and the states of the time, drawn as shapes. |
 
 Hover over a marker for a short card; click it (or press Enter on it) for the details — a site
-click also filters the lists by that place. Four base maps are offered, in the menu at the end of
-the layer buttons: standard, muted and dark — today's map, with roads, towns and borders — and
-[terrain](#the-terrain-map). The first three come from OpenStreetMap unless the server is
-configured otherwise (`ui.tiles`), so they need the internet; the terrain map comes from your own
-server, and everything else works offline.
+click also filters the lists by that place. The **base map** is chosen in the menu at the end of the
+layer buttons:
+
+- **Standard**, **Muted** and **Dark** — today's map, with roads, towns, borders and place names —
+  and the [terrain styles](#the-terrain-map), which leave every modern feature out. Your server draws
+  all of them from a download it keeps, so they work without the internet;
+- **Standard (online)**, **Muted (online)** and **Dark (online)** — the same kind of map as tiles from
+  OpenStreetMap's servers (or the ones `ui.tiles` names), which need the internet. They are offered
+  only while the server cannot draw its own Standard yet, or when `ui.base-map-source = "online"`.
+
+Once the download is complete, the page asks no other computer for anything:
+[Working offline](../how-to/offline.md).
+
+<figure markdown>
+  ![Attica on the local Standard map: land use, roads by class, borders and the names of towns, drawn by the server](../assets/screenshots/local-standard.png){ loading=lazy }
+</figure>
 
 ### The terrain map
 
@@ -54,15 +65,16 @@ and on. You can change the styles or add your own without restarting anything:
     show one: a notice in its corner says so whenever it is on. Read a site's setting from your
     sources, not from the background.
 
-The map is drawn in your browser from two files your server keeps (about 0.6 GB for the default
-region, Atlantic Europe to the Indus). They are not there until someone downloads them once:
+The map is drawn in your browser from files your server keeps (about 1.8 GB for the default region,
+Atlantic Europe to the Indus). They are not there until someone downloads them once:
 
 ```bash
 histmersion basemap fetch      # see Open data → The terrain base map
 ```
 
-Until then the menu says "not downloaded", and choosing it shows the standard tiles, dimmed, with a
-note on how to fetch it. Outside the downloaded region the terrain map is blank.
+Until then the menu says "not downloaded", and choosing it shows the online standard tiles, dimmed
+(nothing, on a page that has only the local maps), with a note on how to fetch it. Outside the
+downloaded region the map is blank.
 
 ## The timeline
 

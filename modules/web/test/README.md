@@ -33,7 +33,7 @@ HISTMERSION_SERVER_URL=http://127.0.0.1:18080 npm --prefix modules/web run test:
 ```
 
 `HISTMERSION_BASEMAP_DIR` points the server at a small Aegean extract of the terrain base map
-(`fixtures/basemap`, 5.4 MB with its physical names, its licences in its README); without it the
+(`fixtures/basemap`, 6.8 MB with its physical names, its licences in its README); without it the
 terrain tests are skipped. The style hot-reload test also needs the server started with
 `HISTMERSION_BASEMAP_STYLE=<a file>` and the tests run with `HISTMERSION_TEST_STYLE_FILE=<the same
 file>` (it writes the file, and empties it afterwards).

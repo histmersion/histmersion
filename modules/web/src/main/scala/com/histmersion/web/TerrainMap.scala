@@ -12,7 +12,7 @@ import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits.*
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 
-/** The local base map ([[BaseMap.Local]], docs/research-terrain-basemap.md, docs/research-offline-maps.md),
+/** The local base map ([[BaseMap.Local]], docs/research-terrain-basemap.md, its "Local street maps" section),
   * drawn in the page from the extracts the server holds (`GET /api/basemap/{layer}/{z}/{x}/{y}`) with
   * one of the named styles it serves (`GET /api/basemap/styles`, [[TerrainRules]]) — the terrain styles
   * (MODERN terrain only) and the street maps (`modern`: Standard, Muted, Dark):

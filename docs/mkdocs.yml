@@ -86,6 +86,7 @@ nav:
       - "Books and Calibre": "how-to/books-and-calibre.md"
       - "Open data: places, periods, events, pictures, the terrain map": "how-to/open-data.md"
       - "Customising the terrain map": "how-to/terrain-styles.md"
+      - "Working offline": "how-to/offline.md"
       - "AI providers, budgets and quotas": "how-to/ai-providers.md"
       - "Backups, exports and moving a collection": "how-to/backup-and-bundles.md"
   - "Plugins":

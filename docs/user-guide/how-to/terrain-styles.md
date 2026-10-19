@@ -9,15 +9,24 @@ a few seconds.
 
 ## The named styles
 
-Every style is an entry of the base-map menu at the end of the map's layer buttons. Four come with
-Histmersion:
+Every style is an entry of the base-map menu at the end of the map's layer buttons. Seven come with
+Histmersion — three street maps and four terrain styles:
 
 | style | what it shows |
 |---|---|
-| **Terrain** (the default) | today's terrain, dark and muted so your markers, names and boundaries stay on top: land, seas, lakes and rivers, a light tint for forest, grassland, scrub, bare ground and ice, the shaded relief, and the physical names |
+| **Standard** (the default of a page with only the local maps) | today's map: land cover and land use, water, roads by class, country and province borders, and the names of countries, cities, towns and villages (more of them the further you zoom in) and of the seas |
+| **Muted** | the same in pale, quiet colours, so your markers stand out |
+| **Dark** | the same in dark colours |
+| **Terrain** | today's terrain, dark and muted so your markers, names and boundaries stay on top: land, seas, lakes and rivers, a light tint for forest, grassland, scrub, bare ground and ice, the shaded relief, and the physical names |
 | **Terrain + vegetation** | the same with the land cover drawn strongly, and OpenStreetMap's own woods, scrub and wetlands where they are mapped |
 | **Relief only** | land, water and the relief — no land cover, no names |
 | **Parchment** | a light, old-atlas look: pale land and sea, sepia relief, brown names in a serif type |
+
+The street maps draw roads, places and borders, which the download leaves out unless it is made
+with `--keep-all` ([Working offline](offline.md#the-one-time-download)); until then the menu marks
+them "needs the full download" and draws them with what is there. `histmersion basemap styles`
+lists the data layers each style draws, and `histmersion basemap status` which of them the download
+on the server lacks. They have no dots for towns: the dots on the map are your corpus's.
 
 <figure markdown>
   ![The Aegean in the Terrain style: dark land, shaded mountains, sea, gulf and island names](../assets/screenshots/terrain-labels.png){ loading=lazy }
@@ -112,7 +121,8 @@ styles = [
 ### The format
 
 **A style:** `id` (letters, digits, `-`, `_`), `name` (the menu's text), `description`, `extends`
-(another style's id), `hidden`, `tone` (`dark` or `light` — the map's own names follow it),
+(another style's id), `hidden`, `modern` (`true` for a map of today's world — no "(no modern
+features)" in the menu, no notice about the past landscape), `tone` (`dark` or `light` — the map's own names follow it),
 `background` (a colour), `labels` (`true`/`false`: whether its label layers are drawn), `language`,
 `relief` and `layers`.
 
@@ -127,8 +137,8 @@ clockwise from north; 315 = north-west), `altitude` (how high it stands, degrees
 |---|---|
 | `id` | its name, by which a style that extends this one changes it |
 | `type` | `fill` (areas), `line`, or `label` (names) |
-| `source` | `vector` (the default: coast, water, land cover and use, natural points) or `labels` (Natural Earth's names) |
-| `layer` | the data layer(s) it draws, one or a list: `earth`, `water`, `landcover`, `landuse`, `pois` — or `physical` and `rivers` for `source = "labels"` |
+| `source` | `vector` (the default: coast, water, land cover and use, natural points; roads, places and borders after a `--keep-all` download) or `labels` (Natural Earth's names) |
+| `layer` | the data layer(s) it draws, one or a list: `earth`, `water`, `landcover`, `landuse`, `pois`, `roads`, `places`, `boundaries` — or `physical` and `rivers` for `source = "labels"`. A style needs every vector layer it draws: one the download left out makes it "need the full download" |
 | `geometry` | `point`, `line` or `polygon` (all when left out) |
 | `kinds`, `not-kinds` | the features' `kind`s drawn, or not drawn (`forest`, `river`, `sea`, `range`, `peak`, …) |
 | `details` | their `kind_detail` (a lake is a `water` of detail `lake`) |
@@ -142,7 +152,8 @@ clockwise from north; 315 = north-west), `altitude` (how high it stands, degrees
 | `own-min-zoom` | a name also waits for the zoom its data says it starts at (default `true`) |
 | `remove`, `before` | in a style that extends another: drop this layer; put a new one before that id |
 
-Names are placed in layer order: where two would overlap, the earlier one wins.
+Names are placed in layer order: where two would overlap, the earlier one wins; within a layer, the
+one whose own `min_zoom` is lower first, then the larger place (`population_rank`).
 
 **Colours:** `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb(…)`, `rgba(…)`, `hsl(…)`, a CSS colour name, or
 `var(--token)` — a colour of the web page's own theme (the built-in Terrain style uses

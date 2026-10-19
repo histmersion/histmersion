@@ -136,12 +136,15 @@ How to reuse a picture: [Pictures](../exploring/media.md#reusing-a-picture).
 ## The terrain base map
 
 The web page's [terrain map](../exploring/web-ui.md#the-terrain-map) — relief, coast, water,
-rivers, land cover and the physical names, without modern roads, towns or borders — is drawn from
-three files the server downloads once and then serves itself. Nothing is downloaded until you ask:
+rivers, land cover and the physical names, without modern roads, towns or borders — and its local
+**Standard, Muted and Dark** maps (today's roads, towns and borders) are drawn from three files the
+server downloads once and then serves itself, so the map works without the internet
+([Working offline](offline.md)). Nothing is downloaded until you ask:
 
 ```bash
 histmersion basemap fetch --dry-run     # reads only the providers' indexes; prints the sizes
 histmersion basemap fetch               # the download, as a job (it can be stopped and resumed)
+histmersion basemap fetch --keep-all    # the same, keeping roads, places and borders: the street maps too
 histmersion basemap status              # what is there, where, and how much space is left
 histmersion basemap rm                  # remove it again (--layer vector|terrain|labels)
 histmersion basemap fetch --layer labels   # only the physical names (about 20 MB read, 1.4 MB kept)
@@ -149,7 +152,7 @@ histmersion basemap fetch --layer labels   # only the physical names (about 20 M
 
 | layer | what | source | licence and credit |
 |---|---|---|---|
-| `vector` | coastlines, seas, lakes, rivers and streams with their names; land cover and land use; natural points (peaks, springs) | a [Protomaps](https://protomaps.com) daily build of OpenStreetMap and Natural Earth | © OpenStreetMap contributors, [ODbL](https://www.openstreetmap.org/copyright); Natural Earth public domain |
+| `vector` | coastlines, seas, lakes, rivers and streams with their names; land cover and land use; natural points (peaks, springs); with `--keep-all` also roads, places and borders | a [Protomaps](https://protomaps.com) daily build of OpenStreetMap and Natural Earth | © OpenStreetMap contributors, [ODbL](https://www.openstreetmap.org/copyright); Natural Earth public domain |
 | `labels` | the names of mountain ranges, deserts, plateaus, peninsulas, island groups, large lakes, major rivers and peaks | [Natural Earth](https://www.naturalearthdata.com) 5.1.2's label layers | public domain (credited on the map all the same) |
 | `terrain` | elevation, shaded into relief by the page | [Mapterhorn](https://mapterhorn.com), mostly the Copernicus GLO-30 elevation model | © Mapterhorn; Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA; further open sources are listed on [Mapterhorn's attribution page](https://mapterhorn.com/attribution) |
 
@@ -160,22 +163,24 @@ dozen large requests a quarter of a second apart. Roads, transit, buildings, pla
 modern points of interest are dropped before it is stored (`basemap.vector.drop`); **everything else
 is kept** — land use, every water feature and its names in every language, natural points — and the
 [style](terrain-styles.md) decides what is drawn, so changing the look never needs another download.
-`--keep-all` stores the vector layer unfiltered. `histmersion basemap status` says what the stored
-extract kept, and recommends one more fetch for one made before 2026-10-19 (which kept only coast,
-water and land cover).
+`--keep-all` stores the vector layer unfiltered: the roads, places and borders the local **Standard,
+Muted and Dark** maps draw (about 0.2 GB more). `histmersion basemap status` says what the stored
+extract kept, which styles lack something in it and the command that adds it, and recommends one
+more fetch for one made before 2026-10-19 (which kept only coast, water and land cover).
 
 **Sizes** for the default region (`basemap.bbox`, `-12,20,90,62`: Atlantic Europe to the Indus,
-the Sahel to southern Scandinavia), measured on 2026-10-19:
+the Sahel to southern Scandinavia), measured on one complete zoom-10 download of the whole region
+(2026-10-20; zooms 8 and 9 are its first zooms):
 
 | `--max-zoom` (vector) | downloaded | stored (default) | stored (`--keep-all`) |
 |---|---|---|---|
 | 8 | 0.22 GB | 0.18 GB | 0.21 GB |
-| 9 | 0.63 GB | 0.54 GB | 0.61 GB |
-| **10** (default) | **1.5 GB** | **≈ 1.3 GB** | ≈ 1.5 GB |
+| 9 | 0.63 GB | 0.53 GB | 0.61 GB |
+| **10** (default) | **1.54 GB** | **1.30 GB** | **1.52 GB** |
 
 Nine tenths of it is OpenStreetMap's land use (woods, fields, towns, mapped in fine detail where
-people mapped it), which only the *Terrain + vegetation* style draws; the zoom-10 figures are
-estimated from a measured part of the region. To keep the download small, drop it:
+people mapped it), which only *Terrain + vegetation* and the street maps draw. To keep the download
+small, drop it:
 `basemap.vector.drop = "roads; transit; buildings; boundaries; places; landuse; pois +peak +volcano"`
 (then close to 16, 56 and 138 MB, as before 2026-10-19). The web page asks the server only for the layers its style draws,
 so a large extract costs the page nothing it does not show.
@@ -188,7 +193,7 @@ so a large extract costs the page nothing it does not show.
 | 9 | 1.6 GB |
 | 10 | 5.0 GB |
 
-So the default fetch downloads about 2 GB and keeps about 1.8 GB. A larger region costs less than
+So the default fetch downloads about 2 GB and keeps about 1.8 GB (2.0 GB with `--keep-all`). A larger region costs less than
 its area suggests (the sea is one tile repeated): `-25,5,95,66` is 1.9 GB downloaded at vector zoom
 10, 0.67 GB of terrain at zoom 8. Each zoom deeper roughly triples the terrain.
 
