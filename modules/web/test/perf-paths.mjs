@@ -211,10 +211,10 @@ export async function eventLayer(page, baseURL, from, to, { atLeast = 1 } = {}) 
   return { markers: drawn.n, drawnMs: Math.round(drawn.at - t0), longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom };
 }
 
-/** The terrain base map over the Aegean (the fixture extract): from the reload to the notice and every
-  * tile drawn, then a pan and wheel zooms — the vector tiles drawn on canvas and the relief shaded in
+/** The terrain base map over the Aegean (the fixture extract), in its default style — the physical
+  * names on when the server has them: from the reload to the notice and every tile drawn, then a pan and wheel zooms — the vector tiles drawn on canvas and the relief shaded in
   * the page, all of it inside the pan's budget. */
-export async function terrainMap(page, baseURL) {
+export async function terrainMap(page, baseURL, { names = false } = {}) {
   await page.evaluate(() => localStorage.setItem('histmersion.ui.baseMap', '["terrain"]'));
   await page.goto(new URL('/', baseURL).href);
   await page.reload();
@@ -223,6 +223,8 @@ export async function terrainMap(page, baseURL) {
   const t0 = await page.evaluate(() => performance.now());
   await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 7, { animate: false }));
   await valueOf(page, () => document.querySelector('.terrain-notice') && document.querySelector('.terrain-relief canvas'));
+  // with the names (the server has labels.pmtiles): their own layer is drawn too, inside the same budget
+  if (names) await valueOf(page, () => document.querySelector('.terrain-labels canvas'));
   await quiet(page);
   const drawnMs = Math.round(await page.evaluate(() => performance.now()) - t0);
   // the terrain's own work: what ran after the view was set (the app's start is firstRender's)
