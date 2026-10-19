@@ -182,6 +182,7 @@ object TerrainMap:
     notice = js.undefined
     map.getContainer().classList.remove("terrain-missing")
     map.getContainer().classList.remove("terrain-on")
+    map.getContainer().asInstanceOf[dom.HTMLElement].style.removeProperty("--terrain-bg")
 
   private def lookup(token: String): String = ThemeTokens(token)
 
@@ -216,6 +217,7 @@ object TerrainMap:
       l.addTo(map)
       l
     map.getContainer().classList.add("terrain-on")
+    map.getContainer().asInstanceOf[dom.HTMLElement].style.setProperty("--terrain-bg", TerrainRules.colour(style.background, lookup))
     val base = layer(rules.paint, js.Array(), rules.paintReads, 1, "terrain-base", background = true)
     val relief = Option.when(style.relief.enabled)(()).flatMap(_ =>
       template(s, BasemapLayer.Terrain).zip(s.layers.find(_.layer == BasemapLayer.Terrain.wire))).map { (url, info) =>
