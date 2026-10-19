@@ -1,4 +1,4 @@
-# Open data: places, periods, events, pictures
+# Open data: places, periods, events, pictures, the terrain map
 
 Besides your sources, Histmersion can import public datasets: places for the map, named periods for
 the timeline, events, and pictures. Each comes with **its own licence and terms** — some ask to be
@@ -132,3 +132,66 @@ The rules every provider follows:
 
 Details of each provider, and those not included and why: {{ repo_file("docs/media-providers.md") }}.
 How to reuse a picture: [Pictures](../exploring/media.md#reusing-a-picture).
+
+## The terrain base map
+
+The web page's [terrain map](../exploring/web-ui.md#the-terrain-map) — relief, coast, water,
+rivers and land cover, without modern roads, towns or borders — is drawn from two files the server
+downloads once and then serves itself. Nothing is downloaded until you ask:
+
+```bash
+histmersion basemap fetch --dry-run     # reads only the providers' indexes; prints the sizes
+histmersion basemap fetch               # the download, as a job (it can be stopped and resumed)
+histmersion basemap status              # what is there, where, and how much space is left
+histmersion basemap rm                  # remove it again (--layer vector|terrain)
+```
+
+| layer | what | source | licence and credit |
+|---|---|---|---|
+| `vector` | coastlines, seas, lakes, rivers and streams; land cover (forest, grassland, scrub, bare ground, ice) | a [Protomaps](https://protomaps.com) daily build of OpenStreetMap and Natural Earth | © OpenStreetMap contributors, [ODbL](https://www.openstreetmap.org/copyright); Natural Earth public domain |
+| `terrain` | elevation, shaded into relief by the page | [Mapterhorn](https://mapterhorn.com), mostly the Copernicus GLO-30 elevation model | © Mapterhorn; Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA; further open sources are listed on [Mapterhorn's attribution page](https://mapterhorn.com/attribution) |
+
+The credits are shown on the map whenever it is on. Both providers publish one large file for the
+whole world (139 GB and 356 GB) and document downloading **a region of it** with HTTP range requests,
+which is what the fetch does: it reads their index, then only the tiles of your region, in a few
+dozen large requests a quarter of a second apart. Every road, building, place name, border and
+piece of modern land use is dropped before it is stored (`basemap.vector.layers`).
+
+**Sizes** for the default region (`basemap.bbox`, `-12,20,90,62`: Atlantic Europe to the Indus,
+the Sahel to southern Scandinavia), measured on 2026-10-19:
+
+| `--max-zoom` (vector) | downloaded | stored |
+|---|---|---|
+| 8 | 0.22 GB | 16 MB |
+| 9 | 0.63 GB | 56 MB |
+| **10** (default) | **1.5 GB** | **138 MB** |
+
+| `--terrain-max-zoom` (512-pixel tiles) | downloaded = stored |
+|---|---|
+| 6 | 0.05 GB |
+| 7 | 0.16 GB |
+| **8** (default) | **0.49 GB** |
+| 9 | 1.6 GB |
+| 10 | 5.0 GB |
+
+So the default fetch downloads about 2 GB and keeps about 0.6 GB. A larger region costs less than
+its area suggests (the sea is one tile repeated): `-25,5,95,66` is 1.9 GB downloaded at vector zoom
+10, 0.67 GB of terrain at zoom 8. Each zoom deeper roughly triples the terrain.
+
+**Disk space.** The fetch first adds up what it will download and store, and refuses — before
+downloading anything — when that would leave less than `basemap.min-free-gb` (5 GB) free where the
+files go; it checks again before each request. The downloaded parts are deleted once the files are
+written.
+
+**Where the files are.** In the cache directory, `$XDG_CACHE_HOME/histmersion/basemap` (by default
+`~/.cache/histmersion/basemap`, on macOS too): they can always be fetched again. Set `basemap.dir`
+(`HISTMERSION_BASEMAP_DIR`) to put them elsewhere, an external disk for instance.
+
+**Interrupted?** Run the same command again: the parts already downloaded are kept, and the fetch
+continues with the same build. A fetch with another region or zoom starts afresh. The fetch checks
+that every part comes from the same version of the provider's file (its size and ETag); when a new
+build replaces it mid-download, the fetch stops and says so — run it again.
+
+**Updating.** The landscape barely changes; there is no need to fetch again. `basemap.vector.build`
+pins a Protomaps build (`"20261019.pmtiles"`) instead of the newest.
+

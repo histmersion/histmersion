@@ -23,9 +23,40 @@ switched on and off:
 | **areas** | regions and the states of the time, drawn as shapes. |
 
 Hover over a marker for a short card; click it (or press Enter on it) for the details — a site
-click also filters the lists by that place. Three base maps are offered: standard, muted and dark. The tiles come from OpenStreetMap unless the
-server is configured otherwise (`ui.tiles`), so the background map needs the internet; everything
-else works offline.
+click also filters the lists by that place. Four base maps are offered, in the menu at the end of
+the layer buttons: standard, muted and dark — today's map, with roads, towns and borders — and
+[terrain](#the-terrain-map). The first three come from OpenStreetMap unless the server is
+configured otherwise (`ui.tiles`), so they need the internet; the terrain map comes from your own
+server, and everything else works offline.
+
+### The terrain map
+
+**Terrain (no modern features)** shows the land itself — relief, coastlines, seas, lakes, rivers
+and a light tint for forest, grassland, scrub, bare ground and ice — and nothing people built: no
+roads, towns, place names, borders or buildings. The markers, names and state outlines of your
+own corpus are then the only human geography on the map.
+
+<figure markdown>
+  ![The Aegean on the terrain map: shaded mountains, the sea and the islands, no modern roads or towns, the notice in the corner](../assets/screenshots/home-terrain.png){ loading=lazy }
+</figure>
+
+!!! warning "Today's landscape, not the past's"
+    The terrain map is drawn from **present-day** data. Coastlines have moved (silted harbours such as
+    Ephesus and Troy, the Nile and Mesopotamian deltas, the Black Sea's shores), rivers have changed
+    course, lakes have grown, shrunk or been dammed, and the vegetation is today's. No reliable,
+    worldwide map of how these looked in a given century exists, so the map does not pretend to
+    show one: a notice in its corner says so whenever it is on. Read a site's setting from your
+    sources, not from the background.
+
+The map is drawn in your browser from two files your server keeps (about 0.6 GB for the default
+region, Atlantic Europe to the Indus). They are not there until someone downloads them once:
+
+```bash
+histmersion basemap fetch      # see Open data → The terrain base map
+```
+
+Until then the menu says "not downloaded", and choosing it shows the standard tiles, dimmed, with a
+note on how to fetch it. Outside the downloaded region the terrain map is blank.
 
 ## The timeline
 
