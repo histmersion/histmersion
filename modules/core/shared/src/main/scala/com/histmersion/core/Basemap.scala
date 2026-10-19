@@ -17,6 +17,9 @@ enum BasemapLayer(val wire: String, val title: String):
   /** The physical names — ranges, deserts, peninsulas, lakes, major rivers, peaks — from Natural
     * Earth, a small vector archive built by the fetch (seas and gulfs come with the vector layer). */
   case Labels  extends BasemapLayer("labels", "physical names")
+  /** The sea floor: terrarium-encoded elevation tiles whose sea is its depth (ETOPO1's bathymetry, NOAA,
+    * public domain), read tile by tile — the relief's own tiles have the sea flat at 0. */
+  case Bathymetry extends BasemapLayer("bathymetry", "sea floor")
 
   def file: String = s"$wire.pmtiles"
 
@@ -27,7 +30,7 @@ object BasemapLayer:
   def parseMany(s: String): Either[String, List[BasemapLayer]] =
     s.trim.toLowerCase(java.util.Locale.ROOT) match
       case "" | "all" => Right(values.toList)
-      case other      => parse(other).map(List(_)).toRight(s"unknown base-map layer '$s' (vector, terrain, labels or all)")
+      case other      => parse(other).map(List(_)).toRight(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)")
 
 /** One downloaded layer, as the server finds it on disk. */
 final case class BasemapLayerInfo(

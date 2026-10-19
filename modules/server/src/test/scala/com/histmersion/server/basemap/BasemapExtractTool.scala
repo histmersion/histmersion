@@ -25,7 +25,42 @@ object BasemapExtractTool:
   def main(args: Array[String]): Unit = args.toList match
     case "extract" :: build :: bbox :: z :: out :: rest => extract(build, bbox, z.toInt, Path.of(out), rest.headOption.contains("keep-all"))
     case "sizes" :: file :: Nil => sizes(Path.of(file))
+    case "kinds" :: file :: z :: Nil => kinds(Path.of(file), z.toInt)
+    case "relief" :: bbox :: z0 :: z1 :: out :: Nil => relief(bbox, z0.toInt, z1.toInt, Some(Path.of(out)))
+    case "relief-size" :: bbox :: z0 :: z1 :: Nil => relief(bbox, z0.toInt, z1.toInt, None)
     case _ => sys.error("extract <build|latest> <bbox> <maxZoom> <out> [keep-all] | sizes <file>")
+
+  /** Every layer's `kind`s at zoom `z` of an archive, counted over its tiles (what a style can select). */
+  private def kinds(file: Path, z: Int): Unit =
+    val f = PmTilesFile.open(file).fold(sys.error, identity)
+    val h = f.header
+    val ((x0, x1), (y0, y1)) = Basemap.tileRange(BBox(h.minLon, h.minLat, h.maxLon, h.maxLat), z)
+    val counts = scala.collection.mutable.Map.empty[(String, String), Int].withDefaultValue(0)
+    for x <- x0 to x1; y <- y0 to y1; b <- f.tile(z, x, y).toOption.flatten do
+      val raw = PmTiles.gunzip(b).getOrElse(b)
+      Mvt.layerNames(raw).getOrElse(Nil).foreach(l => Mvt.kinds(raw, l).getOrElse(Nil).foreach(k => counts((l, k)) += 1))
+    counts.toList.sortBy(_._1).foreach { case ((l, k), n) => println(s"$l\t$k\t$n") }
+
+  /** The relief of a region from zoom `z0` to `z1` (a focus region, as `fetch --focus` stores it): its
+    * download measured from the directories alone, or written to `out`. */
+  private def relief(bbox: String, z0: Int, z1: Int, out: Option[Path]): Unit =
+    val cfg  = AppConfig.load().basemap
+    val http = JavaRangeHttp(cfg.timeoutSeconds, cfg.retries)
+    val src  = BasemapFetch.Source(cfg.terrain.url, cfg.terrain.url)
+    val pace = BasemapFetch.Pace(cfg.requestGapMs.toLong, cfg.maxRequestMb.toLong << 20, cfg.overfetch)
+    val note = (s: String) => scribe.info(s)
+    val plan = BasemapFetch.plan(http, src, BBox.parse(bbox).get, z1, pace, note, minZoom = Some(z0)).fold(sys.error, identity)
+    println(s"RELIEF $bbox z$z0-$z1: ${plan.tiles.size} tiles, ${plan.requestBytes} bytes in ${plan.requests.size} requests, contents ${plan.contentBytes}")
+    out.foreach { o =>
+      val work = o.resolveSibling(o.getFileName.toString + ".work")
+      BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, "relief"))
+      BasemapFetch.download(http, plan, work, pace, note, _ => Right(())).fold(sys.error, identity)
+      val meta = BasemapFetch.localMetadata(plan, Set.empty, cfg.terrain.attribution, java.time.Instant.now().toString, BasemapLayer.Terrain)
+      val (bytes, tiles) = BasemapFetch.assemble(plan, work, o, b => Right(Some(b)), BasemapFetch.localHeader(plan), meta, note)
+        .fold(sys.error, identity)
+      BasemapService.deleteTree(work)
+      println(s"RELIEF $o: $tiles tiles, $bytes bytes")
+    }
 
   private def extract(build: String, bbox: String, z: Int, out: Path, keepAll: Boolean): Unit =
     val cfg  = AppConfig.load().basemap

@@ -295,6 +295,7 @@ final case class BasemapConfig(
     vector: BasemapVectorConfig,
     terrain: BasemapTerrainConfig,
     labels: BasemapLabelsConfig,
+    bathymetry: BasemapBathymetryConfig,
     style: String,
     styleCheckSeconds: Int
 ) derives ConfigReader
@@ -318,6 +319,10 @@ final case class BasemapOnDemandConfig(enabled: Boolean, maxZoom: Int, cacheGb: 
   * zooms 0…`maxZoom`; `language` is the names a style shows unless it says otherwise. */
 final case class BasemapLabelsConfig(url: String, files: List[String], maxZoom: Int, language: String,
     attribution: String) derives ConfigReader
+
+/** The sea floor: terrarium tiles at `url` (`{z}/{x}/{y}`), zooms 0…`maxZoom` of the region, one GET a
+  * tile, `requestGapMs` apart. */
+final case class BasemapBathymetryConfig(url: String, maxZoom: Int, requestGapMs: Int, attribution: String) derives ConfigReader
 
 final case class ConfigReloadConfig(watch: Boolean, watchDebounceMs: Int, drainSeconds: Int) derives ConfigReader
 
