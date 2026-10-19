@@ -193,6 +193,12 @@ The relink also runs **Sloth** over plugin jars, which rewrites lazy vals compil
 Inside this repository, `sbt pluginHello/package` and `sbt pluginHelloAi/package` build the two
 fixtures; `sbt pluginApi/publishLocal` puts the SPI in your local repository for an outside build.
 
+**An example external plugin.** `histmersion-plugin-oabooks`, a separate repository, is a complete
+plugin built outside this one: an open-access source fetcher for openly licensed books in the OAPEN
+Library and DOAB. It builds against the locally published SPI (Provided), shades its own dependency
+into one jar with sbt-assembly, carries its defaults and native-image metadata, and tests its fetcher
+against a fake host HTTP client.
+
 ## Testing
 
 - **Unit-test `register` with a fake `PluginContext`.** Every registry but `secretVaults` has a
