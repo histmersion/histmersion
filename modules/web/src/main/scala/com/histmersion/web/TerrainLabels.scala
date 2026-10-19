@@ -122,6 +122,7 @@ object TerrainLabels:
   def glowFill(fill: String, opacity: Double => Double, glow: String, width: Double => Double): js.Object =
     val draw: js.Function4[dom.CanvasRenderingContext2D, js.Array[js.Array[js.Dynamic]], Double, js.Any, Unit] = (ctx, geom, z, _) =>
       val path = new dom.Path2D()
+      // `var`s: the area's bounding box, gathered while its path is built
       var minX = Double.MaxValue; var minY = Double.MaxValue; var maxX = -Double.MaxValue; var maxY = -Double.MaxValue
       geom.foreach { ring =>
         ring.zipWithIndex.foreach { (p, i) =>

@@ -141,9 +141,9 @@ async function marker(page, re) {
 }
 
 /** A terrain-style shot: the notice up, the Aegean at zoom 7, the tiles and names drawn. */
-async function terrainShot(page, shoot) {
+async function terrainShot(page, shoot, [lat, lon, zoom] = [38.0, 25.2, 7]) {
   await page.locator('.terrain-notice').waitFor();
-  await view(page, 38.0, 25.2, 7);
+  await view(page, lat, lon, zoom);
   // the relief, shaded once its elevation tiles arrived (Relief only, Parchment and Terrain all have one)
   await page.waitForFunction(() => [...document.querySelectorAll('.terrain-relief canvas')].some(c => {
     if (!c.width) return false;
@@ -187,6 +187,25 @@ const shots = {
     hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
   'terrain-relief': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["relief"]' },
     hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
+  // the Natural style (the default): the Aegean at zoom 7 — colours by height, land cover, the sea floor
+  // (the shelf light, the North Aegean Trough and the Cretan Sea dark), names in Noto Serif
+  'terrain-natural': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["natural"]' },
+    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
+  // close in: the Argolid around Mycenae at zoom 12 (the fixture's focus region), contours every 50 m
+  'terrain-mycenae': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["natural"]' },
+    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot, [37.73, 22.756, 12]) },
+  'terrain-contour': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["contour"]' },
+    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot, [37.73, 22.756, 12]) },
+  // the map options, open over the Aegean
+  'map-options': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["natural"]' },
+    hash: 'from=-1700&to=-1000', run: async (page, shoot) => {
+      await terrainShot(page, async () => {}, [37.6, 24.2, 8]);
+      await page.locator('.map-options-btn').click();
+      await page.locator('.map-options').waitFor();
+      await settle(page, 300);
+      const b = await page.locator('.map-options').boundingBox();
+      await shoot({ x: Math.max(0, b.x - 360), y: Math.max(0, b.y - 60), width: b.width + 520, height: b.height + 160 });
+    } },
 
   // The phone layout: the map first, the controls on buttons, the list as a sheet.
   'phone': { viewport: phone, local: { layers: '["events","media"]', sheet: '["half"]' }, hash: 'from=-1700&to=-1000',
