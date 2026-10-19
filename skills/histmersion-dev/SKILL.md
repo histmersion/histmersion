@@ -172,6 +172,9 @@ settings change (`enabled` included) needs no restart: `histmersion config reloa
 rebuilds the changed plugins in place; a failed reload changes nothing. Credentials are `Secret` fields
 holding a REFERENCE, never the value: `env:NAME`, `<vault>:<ref>` (resolved by a registered `SecretVault`,
 e.g. `keepassxc:Group/entry#password`), or `value:<literal>` (allowed, warned about, masked everywhere).
+The `keepassxc` vault also opens YubiKey-protected databases: `yubikey = "2:<serial>"` or a list tried in
+order (`ykman list --serials`, when installed, limits it to the connected keys); test it with fake
+`keepassxc-cli`/`ykman` scripts only, never a real database or key.
 
 **Installing and linking** (local only — they act on this machine's install and data directory, never
 the database):
