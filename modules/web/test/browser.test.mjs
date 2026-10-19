@@ -1728,7 +1728,7 @@ test('a changed style file is picked up by the server and the open map redraws, 
       await page.locator('.terrain-notice').waitFor();
       await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 8, { animate: false }));
       await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
-      fs.writeFileSync(file, 'styles = [ { id = "terrain", extends = "terrain", name = "After", background = "#ff0000", layers = [ { id = "land", fill = "#00ff00" } ] } ]\n');
+      fs.writeFileSync(file, 'styles = [ { id = "terrain", extends = "terrain", name = "After", background = "#ff0000", layers = [ { id = "land", fill = "#00ff00" }, { id = "water", fill = "#ff0000" } ] } ]\n');
       const t1 = Date.now();
       await page.waitForFunction(() => [...document.querySelectorAll('.map-style-select option')].some(o => o.textContent.startsWith('After')),
         null, { timeout: 30000 });

@@ -9,20 +9,39 @@ import java.util.concurrent.ConcurrentHashMap
 
 /** A PMTiles archive on the local disk, opened once and read by many requests at a time: positional
   * reads on one [[FileChannel]] are thread-safe, and the leaf directories already read are kept
-  * (bounded by `maxLeaves`) so a pan never re-reads the same directory. */
-final class PmTilesFile private (val path: Path, ch: FileChannel, val header: PmTiles.Header,
+  * (bounded by `maxLeaves`) so a pan never re-reads the same directory.
+  *
+  * A `FileChannel` is an interruptible channel: a request thread interrupted while it reads (the page
+  * cancelled a tile it no longer needs) CLOSES it for every thread. So a channel closed that way is
+  * opened again — the interrupted read fails, every other request goes on. */
+final class PmTilesFile private (val path: Path, first: FileChannel, val header: PmTiles.Header,
     root: Vector[PmTiles.Entry], val metadata: Json, maxLeaves: Int) extends AutoCloseable:
 
   private val leaves = ConcurrentHashMap[Long, Vector[PmTiles.Entry]]()
+  // the channel now (replaced when an interrupt closed it) and whether `close` was called
+  @volatile private var ch: FileChannel = first
+  @volatile private var closed          = false
+
+  private def reopen(broken: FileChannel): Unit = synchronized {
+    if !closed && (ch eq broken) then ch = FileChannel.open(path, StandardOpenOption.READ)
+  }
 
   private def read(offset: Long, length: Int): Array[Byte] =
-    val buf = ByteBuffer.allocate(length)
-    var at  = offset // positional reads may return short
-    while buf.hasRemaining do
-      val n = ch.read(buf, at)
-      if n < 0 then throw java.io.EOFException(s"$path ends before byte ${offset + length}")
-      at += n
-    buf.array()
+    def attempt(retry: Boolean): Array[Byte] =
+      val c = ch
+      try
+        val buf = ByteBuffer.allocate(length)
+        var at  = offset // positional reads may return short
+        while buf.hasRemaining do
+          val n = c.read(buf, at)
+          if n < 0 then throw java.io.EOFException(s"$path ends before byte ${offset + length}")
+          at += n
+        buf.array()
+      catch
+        case e: java.nio.channels.ClosedChannelException if !closed =>
+          reopen(c)
+          if retry && !Thread.currentThread().isInterrupted then attempt(retry = false) else throw e
+    attempt(retry = true)
 
   private def leaf(e: PmTiles.Entry): Either[String, Vector[PmTiles.Entry]] =
     Option(leaves.get(e.offset)).map(Right(_)).getOrElse {
@@ -52,9 +71,11 @@ final class PmTilesFile private (val path: Path, ch: FileChannel, val header: Pm
   def tile(z: Int, x: Long, y: Long): Either[String, Option[Array[Byte]]] =
     entry(z, x, y).map(_.map(e => read(header.dataOffset + e.offset, e.length)))
 
-  def size: Long = ch.size()
+  def size: Long =
+    val c = ch
+    try c.size() catch case _: java.nio.channels.ClosedChannelException if !closed => { reopen(c); ch.size() }
 
-  def close(): Unit = ch.close()
+  def close(): Unit = synchronized { closed = true; ch.close() }
 
 object PmTilesFile:
 
