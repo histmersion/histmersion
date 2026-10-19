@@ -21,8 +21,8 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
   private def cfg = deps.cfg.basemap
   private val slot = BackgroundJob.Slot()
 
-  /** The open archives, by layer, with the file stamp they were opened at. */
-  private val open = ConcurrentHashMap[BasemapLayer, (String, PmTilesFile)]()
+  /** The open archives, by file, with the file stamp they were opened at. */
+  private val open = ConcurrentHashMap[Path, (String, PmTilesFile)]()
 
   def dir: Path = BasemapService.dir(deps.cfg)
 
@@ -44,22 +44,24 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     else Some(s"${Files.size(p).toHexString}${Files.getLastModifiedTime(p).toMillis.toHexString}")
 
   /** The layer's archive, opened once and again only when the file changed. */
-  def reader(l: BasemapLayer): Either[String, Option[PmTilesFile]] =
-    val p = path(l)
+  def reader(l: BasemapLayer): Either[String, Option[PmTilesFile]] = readerAt(path(l))
+
+  /** The archive at `p` (a layer's, a focus region's), opened once and again only when the file changed. */
+  def readerAt(p: Path): Either[String, Option[PmTilesFile]] =
     stamp(p) match
       case None =>
-        Option(open.remove(l)).foreach(_._2.close())
+        Option(open.remove(p)).foreach(_._2.close())
         Right(None)
       case Some(s) =>
-        Option(open.get(l)) match
+        Option(open.get(p)) match
           case Some((at, f)) if at == s => Right(Some(f))
           case _ =>
             synchronized {
-              Option(open.get(l)) match
+              Option(open.get(p)) match
                 case Some((at, f)) if at == s => Right(Some(f))
                 case old =>
                   PmTilesFile.open(p).map { f =>
-                    open.put(l, (s, f))
+                    open.put(p, (s, f))
                     // an archive replaced while a request reads it: the old channel stays readable
                     // on macOS and Linux until closed; requests that hold it finish first
                     old.foreach(o => BasemapService.closeLater(o._2))
@@ -82,7 +84,9 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           source = mine.get[String]("build").toOption.orElse(mine.get[String]("source").toOption),
           fetchedAt = mine.get[String]("fetchedAt").toOption, version = stamp(p),
           kept = Option.when(l == BasemapLayer.Vector)(Basemap.keptLine(mine.get[Boolean]("keepAll").getOrElse(false),
-            mine.get[String]("drop").toOption)))
+            mine.get[String]("drop").toOption)),
+          onDemand = Option.when(l == BasemapLayer.Terrain)(onDemand.status),
+          focus = if l == BasemapLayer.Terrain then focusInfo else Nil)
 
   def status: BasemapStatus =
     val layers = BasemapLayer.values.toList.map(info)
@@ -93,6 +97,49 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       freeBytes = freeSpace(BasemapService.existing(dir)), running = slot.current,
       hints = BasemapService.hints(ok(BasemapLayer.Vector), ok(BasemapLayer.Labels),
         layers.exists(i => i.layer == BasemapLayer.Vector.wire && i.present && i.error.isEmpty && i.kept.exists(_.contains("before the drop list")))))
+
+  // ── the relief deeper than the extract: focus regions and on demand ────────────────────────────
+
+  /** Where the focus regions' relief archives are. */
+  def focusDir: Path = dir.resolve("terrain-focus")
+
+  /** The focus regions' archives, by name. */
+  def focusFiles: List[(String, Path)] =
+    if !Files.isDirectory(focusDir) then Nil
+    else Using.resource(Files.list(focusDir))(_.toArray.toList.map(_.asInstanceOf[Path]))
+      .filter(p => p.getFileName.toString.endsWith(".pmtiles") && Files.isRegularFile(p))
+      .map(p => (p.getFileName.toString.stripSuffix(".pmtiles"), p)).sortBy(_._1)
+
+  def focusInfo: List[BasemapFocus] = focusFiles.flatMap { (name, p) =>
+    readerAt(p).toOption.flatten.map { f =>
+      val h = f.header
+      BasemapFocus(name, p.toString, f.size, s"${h.minLon},${h.minLat},${h.maxLon},${h.maxLat}", h.minZoom, h.maxZoom,
+        h.addressedTiles, f.metadata.hcursor.downField("histmersion").get[String]("fetchedAt").toOption)
+    }
+  }
+
+  // the on-demand relief of the directory configured now (`basemap.dir` may change with a reload)
+  @volatile private var demand: Option[TerrainOnDemand] = None
+
+  /** The on-demand relief and its cache (`terrain-cache/` beside the extract). */
+  def onDemand: TerrainOnDemand =
+    val at = dir.resolve("terrain-cache")
+    demand.filter(_.dir == at).getOrElse(synchronized {
+      demand.filter(_.dir == at).getOrElse {
+        val d = TerrainOnDemand(at, () => cfg.terrain.onDemand, () => cfg.terrain.url, http)
+        demand = Some(d)
+        d
+      }
+    })
+
+  /** A relief tile deeper than the extract (or outside it): a focus region's, else the on-demand one. */
+  private def deeperRelief(z: Int, x: Long, y: Long, extractMax: Int): Either[String, Option[Array[Byte]]] =
+    val focused = focusFiles.iterator.flatMap(f => readerAt(f._2).toOption.flatten)
+      .filter(f => z >= f.header.minZoom && z <= f.header.maxZoom)
+      .map(_.tile(z, x, y)).collectFirst { case Right(Some(b)) => b }
+    focused match
+      case Some(b) => Right(Some(b))
+      case None    => if onDemand.serves(z, extractMax) then onDemand.tile(z, x, y) else Right(None)
 
   /** Subset tiles cut lately, by (file stamp, layer, tile, subset): a pan asks for the same few again. */
   private val cut = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap[String, Array[Byte]](256, 0.75f, true):
@@ -108,9 +155,14 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       l     <- BasemapLayer.parse(layer).toRight(ApiError(s"no base-map layer '$layer' (vector, terrain or labels)", Some(Write.CodeNotFound)))
       f     <- reader(l).left.map(e => ApiError(e)).flatMap(_.toRight(
                  ApiError(s"the ${l.title} layer is not downloaded — run `${Basemap.FetchCommand}`", Some(Write.CodeNotFound))))
-      found <- f.tile(z, x, y).left.map(ApiError(_))
+      stored <- f.tile(z, x, y).left.map(ApiError(_))
+      // the relief deeper than the extract: a focus region's, or read now from the provider (no tile, and
+      // not cached by the browser, when it cannot be read now — offline)
+      deeper = Option.when(stored.isEmpty && l == BasemapLayer.Terrain && z > f.header.maxZoom)(deeperRelief(z, x, y, f.header.maxZoom))
+      found  = stored.orElse(deeper.flatMap(_.toOption.flatten))
       mime   = f.header.tileType.mime
       out   <- (found, rules.filter(_ => f.header.tileType == PmTiles.TileType.Mvt)) match
+                 case (None, _) if deeper.exists(_.isLeft) => Right((Array.emptyByteArray, mime, None, "no-store", StatusCode.NoContent))
                  case (None, _) => Right((Array.emptyByteArray, mime, None, cache, StatusCode.NoContent))
                  case (Some(b), None) =>
                    val enc = Option.when(f.header.tileCompression == PmTiles.Compression.Gzip && PmTiles.isGzip(b))("gzip")
@@ -124,50 +176,97 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
 
   // ── removing ───────────────────────────────────────────────────────────────────────────────────
 
-  def remove(layer: String): Either[ApiError, BasemapRemoved] =
-    BasemapLayer.parseMany(layer).left.map(e => ApiError(e, Some(Write.CodeInvalid))).flatMap { ls =>
+  def remove(q: BasemapRemoveQuery): Either[ApiError, BasemapRemoved] =
+    val layers = if q.layer.trim.equalsIgnoreCase("none") then Right(Nil) else BasemapLayer.parseMany(q.layer)
+    val all    = q.layer.trim.equalsIgnoreCase("all") || q.layer.trim.isEmpty
+    val focus  = q.focus.map(_.trim).filter(_.nonEmpty) match
+      case Some("all")              => Right(focusFiles.map(_._1))
+      case Some(n)                  => Basemap.validFocusName(n).flatMap(n =>
+                                         Either.cond(focusFiles.exists(_._1 == n) || Files.isDirectory(focusWork(n)), List(n),
+                                           s"no focus region '$n' (${focusFiles.map(_._1).mkString(", ")})"))
+      case None if all              => Right(focusFiles.map(_._1))
+      case None                     => Right(Nil)
+    layers.flatMap(ls => focus.map((ls, _))).left.map(e => ApiError(e, Some(Write.CodeInvalid))).flatMap { (ls, fs) =>
       if slot.isRunning then Left(BackgroundJob.busy("a base-map fetch", slot.current, Some(BasemapApi.Busy)))
       else
-        val gone = ls.flatMap { l =>
-          Option(open.remove(l)).foreach(_._2.close())
-          val f     = path(l)
+        def gone(f: Path, w: Path): List[(String, Long)] =
+          Option(open.remove(f)).foreach(_._2.close())
           val bytes = if Files.isRegularFile(f) then Files.size(f) else 0L
           val file  = Option.when(Files.deleteIfExists(f))((f.toString, bytes))
-          val parts = BasemapService.deleteTree(work(l)).map(b => (work(l).toString, b))
+          val parts = BasemapService.deleteTree(w).map(b => (w.toString, b))
           file.toList ++ parts.toList
-        }
-        Right(BasemapRemoved(gone.map(_._1), gone.map(_._2).sum))
+        val files  = ls.flatMap(l => gone(path(l), work(l))) ++ fs.flatMap(n => gone(focusDir.resolve(s"$n.pmtiles"), focusWork(n)))
+        val cached = Option.when(q.cache || all) {
+          val c = onDemand.dir
+          Option.when(Files.exists(c))((c.toString, onDemand.cache.clear() + BasemapService.deleteTree(c).getOrElse(0L)))
+        }.flatten
+        val out = files ++ cached.toList
+        Right(BasemapRemoved(out.map(_._1), out.map(_._2).sum))
     }
+
+  /** The unfinished download of a focus region. */
+  def focusWork(name: String): Path = dir.resolve(s".terrain-focus-$name.part")
 
   // ── fetching ───────────────────────────────────────────────────────────────────────────────────
 
   /** What the next fetch of these options will do, decided before the job starts: refused here when
     * an option is out of range, so the person learns it at once. */
   private final case class Ask(layers: List[BasemapLayer], bbox: BBox, vectorZoom: Int, terrainZoom: Int, dryRun: Boolean,
-      keepAll: Boolean)
+      keepAll: Boolean, focus: Option[(String, BBox)] = None)
 
   private def ask(q: BasemapFetchQuery): Either[String, Ask] =
     def zoom(z: Int, what: String) =
       Either.cond(z >= 0 && z <= Basemap.MaxZoomCap, z, s"$what $z is outside 0–${Basemap.MaxZoomCap}")
+    val asked = q.bbox.map(_.trim).filter(_.nonEmpty)
     for
       ls <- BasemapLayer.parseMany(q.layer)
-      b  <- Basemap.validBBox(q.bbox.map(_.trim).filter(_.nonEmpty).getOrElse(cfg.bbox))
+      b  <- Basemap.validBBox(asked.getOrElse(cfg.bbox))
+      onlyTerrain = ls == List(BasemapLayer.Terrain)
+      // the relief alone: --max-zoom is its depth too
+      tzAsked = q.terrainMaxZoom.orElse(q.maxZoom.filter(_ => onlyTerrain))
+      focus <- BasemapService.focusOf(q.focus, asked.map(_ => b), onlyTerrain, tzAsked, cfg.terrain)
       vz <- zoom(q.maxZoom.getOrElse(cfg.vector.maxZoom), "--max-zoom")
-      tz <- zoom(q.terrainMaxZoom.getOrElse(cfg.terrain.maxZoom), "--terrain-max-zoom")
+      tz <- zoom(tzAsked.getOrElse(if focus.isDefined then cfg.terrain.onDemand.maxZoom else cfg.terrain.maxZoom), "--terrain-max-zoom")
+      _  <- Either.cond(focus.isEmpty || tz > cfg.terrain.maxZoom, (),
+              s"a focus region holds the zooms deeper than the extract's (${cfg.terrain.maxZoom}): ask for more than that")
       _  <- Basemap.parseDrop(cfg.vector.drop)
-    yield Ask(ls, b, vz, tz, q.dryRun, q.keepAll)
+    yield Ask(if focus.isDefined then List(BasemapLayer.Terrain) else ls, focus.fold(b)(_._2), vz, tz, q.dryRun, q.keepAll, focus)
 
   def fetch(q: BasemapFetchQuery): Either[ApiError, JobInfo] =
     deps.maintenance.guard("basemap/fetch"):
       ask(q).left.map(e => ApiError(e, Some(Write.CodeInvalid))).flatMap { a =>
-        val what = s"${if a.dryRun then "dry run: " else ""}terrain base map — ${a.layers.map(_.wire).mkString(" + ")}, " +
-          s"bbox ${q.bbox.getOrElse(cfg.bbox)}, zoom ≤ ${a.vectorZoom} (vector) / ${a.terrainZoom} (terrain)"
+        val what = a.focus match
+          case Some((name, b)) =>
+            s"${if a.dryRun then "dry run: " else ""}terrain base map — the relief of focus region '$name' " +
+              s"(${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}), zoom ${cfg.terrain.maxZoom + 1}–${a.terrainZoom}"
+          case None =>
+            s"${if a.dryRun then "dry run: " else ""}terrain base map — ${a.layers.map(_.wire).mkString(" + ")}, " +
+              s"bbox ${q.bbox.getOrElse(cfg.bbox)}, zoom ≤ ${a.vectorZoom} (vector) / ${a.terrainZoom} (terrain)"
         BackgroundJob.start(deps.ds, BasemapService.JobKind, Some(JobDetail(about = Some(what))), slot, "a base-map fetch",
           Some(BasemapApi.Busy), deps.pins)((_, note) => BackgroundJob.Outcome.of(run(a, note)))
       }
 
   /** The job: each layer in turn — planned, checked against the free disk, downloaded, assembled. */
   private def run(a: Ask, note: String => Unit): Either[String, String] =
+    a.focus match
+      case Some((name, _)) => focusFetch(a, name, note)
+      case None => layers(a, note)
+
+  /** A focus region's relief: zooms deeper than the extract, into `terrain-focus/<name>.pmtiles`. */
+  private def focusFetch(a: Ask, name: String, note: String => Unit): Either[String, String] =
+    val h     = http()
+    val src   = BasemapFetch.Source(cfg.terrain.url, cfg.terrain.url)
+    val extra = s"focus $name from ${cfg.terrain.maxZoom + 1}"
+    for
+      plan <- BasemapFetch.plan(h, src, a.bbox, a.terrainZoom, pace, note, minZoom = Some(cfg.terrain.maxZoom + 1))
+      out  <- if a.dryRun then Right(s"focus '$name': " + BasemapService.describe(BasemapLayer.Terrain, plan, dryRun = true))
+              else
+                Files.createDirectories(focusDir)
+                download(BasemapLayer.Terrain, plan, Nil, extra, h, note, keepAll = false,
+                  out = Some(focusDir.resolve(s"$name.pmtiles")), workDir = Some(focusWork(name))).map(s => s"focus '$name': $s")
+    yield out
+
+  private def layers(a: Ask, note: String => Unit): Either[String, String] =
     a.layers.foldLeft[Either[String, List[String]]](Right(Nil)) { (acc, l) =>
       acc.flatMap(done => one(a, l, s => note(s"${l.wire}: $s")).map(done :+ _))
     }.map(_.mkString("; "))
@@ -229,9 +328,10 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     yield out
 
   private def download(l: BasemapLayer, plan: BasemapFetch.Plan, rules: List[Basemap.DropRule], extra: String,
-      h: RangeHttp, note: String => Unit, keepAll: Boolean): Either[String, String] =
+      h: RangeHttp, note: String => Unit, keepAll: Boolean, out: Option[Path] = None, workDir: Option[Path] = None): Either[String, String] =
     Files.createDirectories(dir)
-    val work  = this.work(l)
+    val work   = workDir.getOrElse(this.work(l))
+    val target = out.getOrElse(path(l))
     val state = BasemapFetch.stateOf(plan, extra).deepMerge(io.circe.Json.obj("label" -> io.circe.Json.fromString(plan.source.label)))
     val had   = BasemapFetch.prepare(work, state)
     val pendingBytes = BasemapFetch.pending(plan, work).map(_._2).sum
@@ -256,11 +356,11 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
         case _ => (b: Array[Byte]) => Right(Some(b))
       meta = BasemapFetch.localMetadata(plan, rules.filter(_.whole).map(_.layer).toSet, attribution(l),
         Instant.now().toString, l, Option.when(l == BasemapLayer.Vector)((keepAll, cfg.vector.drop)))
-      done <- BasemapFetch.assemble(plan, work, path(l), transform, BasemapFetch.localHeader(plan), meta, note)
+      done <- BasemapFetch.assemble(plan, work, target, transform, BasemapFetch.localHeader(plan), meta, note)
     yield
       val _ = BasemapService.deleteTree(work)
-      val _ = reader(l)
-      s"${BasemapService.describe(l, plan, dryRun = false)}; stored ${done._2} tiles in ${Backup.humanBytes(done._1)} at ${path(l)}"
+      val _ = readerAt(target)
+      s"${BasemapService.describe(l, plan, dryRun = false)}; stored ${done._2} tiles in ${Backup.humanBytes(done._1)} at $target"
 
   /** The physical names: Natural Earth's label files read whole (a few MB each), cut to the region and
     * written as `labels.pmtiles` (about 1.4 MB for the default region) — no range requests, nothing to resume. */
@@ -297,6 +397,21 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
         }
 
 object BasemapService:
+
+  /** The focus region a fetch asks for: `--focus <name>` (one of `basemap.terrain.focus-regions`, or a
+    * new name with `--bbox`), or — the relief alone, with a region and deeper than the extract — one
+    * named after its box, so a deep regional fetch never replaces the broad extract. Pure. */
+  def focusOf(focus: Option[String], bbox: Option[BBox], onlyTerrain: Boolean, terrainZoom: Option[Int],
+      t: BasemapTerrainConfig): Either[String, Option[(String, BBox)]] =
+    val named = t.focusRegions.flatMap(r => Basemap.focusRegion(r).toOption)
+    focus.map(_.trim).filter(_.nonEmpty) match
+      case Some(f) =>
+        Basemap.validFocusName(f).flatMap { n =>
+          bbox.orElse(named.find(_._1 == n).map(_._2)).map(b => Some((n, b)))
+            .toRight(s"no focus region '$n' in basemap.terrain.focus-regions (${named.map(_._1).mkString(", ")}): give its --bbox")
+        }
+      case None =>
+        Right(bbox.filter(_ => onlyTerrain && terrainZoom.exists(_ > t.maxZoom)).map(b => (Basemap.focusNameOf(b), b)))
 
   /** What a fetch would add: the physical names to an extract that has the map but not them. Pure. */
   def hints(vector: Boolean, labels: Boolean, narrow: Boolean = false): List[String] =

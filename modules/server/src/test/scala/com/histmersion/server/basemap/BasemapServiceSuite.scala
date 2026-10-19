@@ -30,7 +30,8 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get), basemap = base.basemap.copy(dir = dir.toString, requestGapMs = 0,
       bbox = "22,35,29,41", vector = base.basemap.vector.copy(url = "fake://v/{build}", maxZoom = 4),
-      terrain = base.basemap.terrain.copy(url = "fake://t", maxZoom = 3),
+      terrain = base.basemap.terrain.copy(url = "fake://t", maxZoom = 3,
+        onDemand = base.basemap.terrain.onDemand.copy(maxZoom = 5, requestsPerSecond = 1000), focusRegions = List("crete 23,34.8,26.5,35.7")),
       labels = base.basemap.labels.copy(url = "fake://ne/{file}.geojson", files = List("ranges", "rivers"), maxZoom = 6)))
     val router = new RangeHttp:
       private def pick(url: String) = if url.startsWith("fake://v") then v else t
@@ -86,7 +87,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assertEquals(svc.tile("vector", 4, 9, 6, Some("roads")).map(_._5.code), Right(204), "nothing left: no content")
     assert(svc.tile("vector", 4, 9, 6, Some("water:q")).isLeft)
     assertEquals(svc.tile("terrain", 3, 4, 3, Some("water")).map(_._3), Right(None), "an image is never cut")
-    val gone = svc.remove("all").fold(e => fail(e.message), identity)
+    val gone = svc.remove(BasemapRemoveQuery()).fold(e => fail(e.message), identity)
     assertEquals(gone.removed.size, 3)
     assert(!svc.status.available)
 
@@ -130,6 +131,44 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assert(!j.succeeded)
     assert(j.error.exists(e => e.contains("refused") && e.contains("min-free-gb")), j.error.toString)
     assertEquals(v.downloads.get, 0)
+
+  test("the relief deeper than the extract: a focus region kept apart, the rest read on demand and cached; rm of each"):
+    val dir = Files.createTempDirectory("basemap")
+    val (svc, _, t) = service(dir)
+    assert(await(svc.fetch(BasemapFetchQuery(layer = "terrain")).fold(e => fail(e.message), _.id)).succeeded)
+    val base = svc.status.layers.find(_.layer == "terrain").get
+    assertEquals((base.maxZoom, base.deepest, base.onDemand.map(_.tiles)), (Some(3), Some(5), Some(0L)))
+    // a focus region (named in the config): zooms 4–5 only, beside the extract, which stays as it was
+    val dry = await(svc.fetch(BasemapFetchQuery(focus = Some("crete"), dryRun = true)).fold(e => fail(e.message), _.id))
+    assert(dry.progress.exists(p => p.contains("focus 'crete'") && p.contains("would download")), dry.progress.toString)
+    val j = await(svc.fetch(BasemapFetchQuery(focus = Some("crete"))).fold(e => fail(e.message), _.id))
+    assert(j.succeeded, j.toString)
+    val st = svc.status.layers.find(_.layer == "terrain").get
+    assertEquals(st.maxZoom, Some(3), "the extract is not replaced")
+    assertEquals(st.focus.map(f => (f.name, f.minZoom, f.maxZoom)), List(("crete", 4, 5)))
+    // a tile of the focus region: from its archive, the provider not asked
+    val asked = t.requests.get
+    val (fb, fmime, _, _, fcode) = svc.tile("terrain", 5, Basemap.tileX(24.5, 5), Basemap.tileY(35.2, 5)).fold(e => fail(e.message), identity)
+    assertEquals((fcode.code, fmime, String(fb)), (200, "image/webp", s"RIFF5/${Basemap.tileX(24.5, 5)}/${Basemap.tileY(35.2, 5)}"))
+    assertEquals(t.requests.get, asked)
+    // elsewhere at zoom 5: read now from the provider, then cached
+    val (ob, _, _, _, ocode) = svc.tile("terrain", 5, 0, 0).fold(e => fail(e.message), identity)
+    assertEquals((ocode.code, String(ob)), (200, "RIFF5/0/0"))
+    assertEquals(svc.status.layers.find(_.layer == "terrain").get.onDemand.map(_.tiles), Some(1L))
+    // deeper than on-demand goes: none
+    assertEquals(svc.tile("terrain", 6, 0, 0).map(_._5.code), Right(204))
+    // a regional relief fetch deeper than the extract becomes a focus region of its own
+    assert(await(svc.fetch(BasemapFetchQuery(layer = "terrain", maxZoom = Some(4), bbox = Some("22.5,37.4,23.2,37.9")))
+      .fold(e => fail(e.message), _.id)).succeeded)
+    assertEquals(svc.status.layers.find(_.layer == "terrain").get.focus.map(_.name), List("bbox-22p5-37p4-23p2-37p9", "crete"))
+    assert(svc.fetch(BasemapFetchQuery(focus = Some("crete"), terrainMaxZoom = Some(3))).isLeft, "not deeper than the extract")
+    val f = svc.remove(BasemapRemoveQuery("none", focus = Some("crete"))).fold(e => fail(e.message), identity)
+    assertEquals(f.removed.map(java.nio.file.Path.of(_).getFileName.toString), List("crete.pmtiles"))
+    val c = svc.remove(BasemapRemoveQuery("none", cache = true)).fold(e => fail(e.message), identity)
+    assertEquals(c.removed.size, 1)
+    assertEquals(svc.status.layers.find(_.layer == "terrain").get.onDemand.map(_.tiles), Some(0L))
+    assert(svc.status.layers.find(_.layer == "terrain").get.present, "the extract stays")
+    assert(svc.remove(BasemapRemoveQuery("none", focus = Some("nowhere"))).isLeft)
 
   test("bad options are refused before a job starts"):
     val (svc, _, _) = service(Files.createTempDirectory("basemap"))

@@ -304,7 +304,14 @@ final case class BasemapConfig(
 final case class BasemapVectorConfig(buildsUrl: String, url: String, build: String, maxZoom: Int,
     drop: String, attribution: String) derives ConfigReader
 
-final case class BasemapTerrainConfig(url: String, maxZoom: Int, attribution: String) derives ConfigReader
+/** `onDemand`: the deeper relief read from `url` as a page needs it ([[BasemapOnDemandConfig]]);
+  * `focusRegions`: "name minLon,minLat,maxLon,maxLat" — the regions `fetch --focus <name>` keeps to that depth. */
+final case class BasemapTerrainConfig(url: String, maxZoom: Int, attribution: String, onDemand: BasemapOnDemandConfig,
+    focusRegions: List[String]) derives ConfigReader
+
+/** The relief deeper than the extract, read tile by tile when a page shows an area, cached to `cacheGb`. */
+final case class BasemapOnDemandConfig(enabled: Boolean, maxZoom: Int, cacheGb: Double, concurrency: Int,
+    requestsPerSecond: Double, retryAfterSeconds: Int) derives ConfigReader
 
 /** The physical names (seas, ranges, deserts, lakes, rivers, peaks …): Natural Earth's label layers,
   * `url` with `{file}` for each of `files`, cut to the region and written as a small vector archive of
