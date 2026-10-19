@@ -30,9 +30,11 @@ elevation tile's pixels (`web/Hillshade`, Horn's method, 2–8 ms a tile, run wh
 during a gesture). Chosen: protomaps-leaflet, vendored at `web/vendor/protomaps-leaflet/` (BSD-3)
 and loaded only when the terrain map is first chosen.
 
-On the test server with the Aegean fixture (perf.test.mjs, "terrain base map"): drawn 870 ms after
-the view is set, no long task; drag input p95 32–35 ms, 0 % dropped; wheel zooms 0 long tasks,
-0.6 % dropped; heap 36 MB.
+On the native test server with the Aegean fixture (perf.test.mjs, "terrain base map", measured after
+the app has settled): drawn 828 ms after the view is set, no long task; drag input p95 32 ms, 0 %
+dropped; wheel zooms input p95 34 ms, no long task, 0 % dropped; heap 35.5 MB (budget 60). The
+map-pan figures of the raster map on the same run: p95 32 ms, 0 % dropped — the terrain map costs a
+pan nothing measurable.
 
 ## The data
 

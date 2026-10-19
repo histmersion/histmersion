@@ -219,6 +219,7 @@ export async function terrainMap(page, baseURL) {
   await page.goto(new URL('/', baseURL).href);
   await page.reload();
   await ready(page);
+  await settled(page);   // the app's own start (the findings, the list) is firstRender's, not the terrain's
   const t0 = await page.evaluate(() => performance.now());
   await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 7, { animate: false }));
   await valueOf(page, () => document.querySelector('.terrain-notice') && document.querySelector('.terrain-relief canvas'));
