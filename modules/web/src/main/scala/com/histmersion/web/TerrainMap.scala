@@ -13,12 +13,17 @@ import scala.scalajs.js.Thenable.Implicits.*
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 
 /** The terrain base map ([[BaseMap.Terrain]], docs/research-terrain-basemap.md): MODERN terrain only,
-  * drawn in the page from the two extracts the server holds (`GET /api/basemap/{layer}/{z}/{x}/{y}`):
+  * drawn in the page from the extracts the server holds (`GET /api/basemap/{layer}/{z}/{x}/{y}`) with
+  * one of the named styles it serves (`GET /api/basemap/styles`, [[TerrainRules]]):
   *
-  *  - the coast, water, rivers and natural land cover — vector tiles, drawn on canvas by
-  *    protomaps-leaflet (loaded on first use) with our own paint rules, coloured by the stylesheet's
-  *    `--terrain-*` tokens; there are no roads, places, borders or buildings in the data at all;
-  *  - the relief — elevation tiles shaded here ([[Hillshade]]) into a translucent layer above them.
+  *  - the coast, water, rivers and land cover — vector tiles, drawn on canvas by protomaps-leaflet
+  *    (loaded on first use) with the style's fills and lines; no roads, places, borders or buildings;
+  *  - the relief — elevation tiles shaded here ([[Hillshade]]) into a translucent layer above them;
+  *  - the physical names — seas, ranges, deserts, lakes, rivers — the style's labels, in a layer of their
+  *    own above the relief and below every marker of the map.
+  *
+  * While it is shown, the page asks every `checkSeconds` whether the styles changed (the server reads
+  * the style file again when it changes) and draws the map again when they did.
   *
   * Always with a notice that this is TODAY's landscape. When the server has not downloaded it, the
   * standard tiles stay, dimmed, and the notice says how to fetch it. */
@@ -27,11 +32,38 @@ object TerrainMap:
   /** What the server reports (`GET /api/basemap`); `None` until asked. */
   val status: Var[Option[BasemapStatus]] = Var(None)
 
+  /** The named styles the server serves; `None` until asked. */
+  val styles: Var[Option[TerrainStyles]] = Var(None)
+
+  /** The tone of the style shown: the map's own names follow it ([[MapLabels]]). */
+  val tone: Var[MapTone] = Var(MapTone.Dark)
+
   /** Ask the server again (on start, and each time the terrain map is chosen). */
   def refresh(): Future[BasemapStatus] =
     val f = ApiClient.basemap()
     f.foreach(s => status.set(Some(s)))
+    refreshStyles()
     f
+
+  def refreshStyles(): Future[TerrainStyles] =
+    val f = ApiClient.basemapStyles()
+    f.foreach(s => if !styles.now().exists(_.version == s.version) then styles.set(Some(s)))
+    f
+
+  /** The base-map menu's value for a terrain style. */
+  def optionValue(id: String): String = s"${BaseMap.Terrain.wire}:$id"
+
+  /** A menu value → the base map and, for the terrain map, the style it names. Pure. */
+  def parseOption(v: String): Option[(BaseMap, Option[String])] =
+    v.split(":", 2).toList match
+      case b :: id :: Nil => BaseMap.fromWire(b).filter(_ == BaseMap.Terrain).map(_ -> Some(id).filter(_.nonEmpty))
+      case b :: Nil       => BaseMap.fromWire(b).map(_ -> None)
+      case _              => None
+
+  /** The menu's value for the map shown. Pure. */
+  def selectValue(b: BaseMap, style: Option[String], ss: Option[TerrainStyles]): String =
+    if b != BaseMap.Terrain then b.wire
+    else ss.flatMap(_.pick(style)).fold(b.wire)(s => optionValue(s.id))
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -49,9 +81,15 @@ object TerrainMap:
     s"The terrain map is not downloaded on this server. Run `${s.map(_.fetchCommand).getOrElse(Basemap.FetchCommand)}` " +
       "on the machine that runs it (a few hundred MB to a few GB), then choose Terrain again."
 
-  /** The base-map menu's label for the terrain map: it says when the data is missing. */
-  def optionLabel(s: Option[BasemapStatus]): String =
-    if s.forall(_.available) then BaseMap.Terrain.label else s"${BaseMap.Terrain.label} — not downloaded"
+  /** The base-map menu's label for a terrain style (`None`: before the styles are known): it says
+    * when the data is missing. */
+  def optionLabel(s: Option[BasemapStatus], style: Option[TerrainStyle] = None): String =
+    val name = style.fold(BaseMap.Terrain.label)(t => s"${t.name} (no modern features)")
+    if s.forall(_.available) then name else s"$name — not downloaded"
+
+  /** The sources the server has (`vector`, `labels`), as the style's layers name them. */
+  def sources(s: BasemapStatus): Set[String] =
+    TerrainStyles.Sources.toSet.filter(src => BasemapLayer.parse(src).exists(l => template(s, l).isDefined))
 
   /** A layer's tile URL template, when it is there. */
   def template(s: BasemapStatus, l: BasemapLayer): Option[String] =
@@ -66,16 +104,6 @@ object TerrainMap:
   def attribution(s: BasemapStatus): String =
     s.layers.filter(i => i.present && i.error.isEmpty).map(_.attribution).filter(_.nonEmpty).distinct.mkString(" · ")
 
-  /** A kind's paint group: which `--terrain-*` token fills a land-cover polygon of that kind. */
-  def coverToken(kind: String): Option[String] = kind match
-    case "forest" | "wood"                                   => Some("--terrain-forest")
-    case "scrub" | "heath" | "grassland" | "meadow"          => Some("--terrain-scrub")
-    case "wetland" | "marsh" | "swamp" | "bog"               => Some("--terrain-wetland")
-    case "barren" | "bare_rock" | "scree" | "desert"         => Some("--terrain-barren")
-    case "sand" | "beach"                                    => Some("--terrain-sand")
-    case "glacier"                                           => Some("--terrain-ice")
-    case _                                                   => None
-
   // ── drawing ─────────────────────────────────────────────────────────────────────────────────────
 
   // `var`s: what this module put on the map, and which request is the latest (a quick switch away
@@ -83,6 +111,9 @@ object TerrainMap:
   private var shown: List[Layer]          = Nil
   private var notice: js.UndefOr[js.Dynamic] = js.undefined
   private var generation                  = 0
+  private var poll: Int                   = 0
+  // what `enter` was called with, for a redraw when the styles change
+  private var entered: Option[(LeafletMap, String, Boolean => Unit)] = None
 
   private val ScriptSrc = "/web/vendor/protomaps-leaflet/protomaps-leaflet.js"
 
@@ -104,15 +135,20 @@ object TerrainMap:
     val mine = generation
     clear(map)
     // the server's answer (else what it said last), then the renderer — only when there is a map to draw
+    entered = Some((map, docsUrl, raster))
     val known = refresh().map(Option(_)).recover { case _ => status.now() }
-    known.flatMap(s => if s.exists(_.available) then renderer.map(_ => s) else Future.successful(s)).onComplete { r =>
+    val ss    = refreshStyles().map(Option(_)).recover { case _ => styles.now() }
+    known.zip(ss).flatMap((s, t) => if s.exists(_.available) then renderer.map(_ => (s, t)) else Future.successful((s, t))).onComplete { r =>
       if mine == generation then
-        val s = r.toOption.flatten
-        s.flatMap(st => template(st, BasemapLayer.Vector).map(st -> _)) match
-          case Some((st, vector)) =>
+        val s = r.toOption.flatMap(_._1)
+        val style = r.toOption.flatMap(_._2).flatMap(_.pick(UiState.terrainStyle.now()))
+        s.flatMap(st => template(st, BasemapLayer.Vector).map(st -> _)).zip(style.zip(r.toOption.flatMap(_._2))) match
+          case Some(((st, vector), (style, all))) =>
             raster(false)
-            draw(map, st, vector)
+            tone.set(if style.tone == "light" then MapTone.Light else MapTone.Dark)
+            draw(map, st, vector, style, all)
             setNotice(map, PastNotice, docsUrl, missing = false)
+            watch(mine, all.checkSeconds)
           case None =>
             raster(true)
             setNotice(map, r.failed.toOption.fold(missingNotice(s))(e => s"The terrain map could not be drawn: ${e.getMessage}."),
@@ -122,9 +158,24 @@ object TerrainMap:
   /** Leave the terrain map: its layers and its notice go. */
   def leave(map: LeafletMap): Unit =
     generation += 1
+    entered = None
     clear(map)
 
+  /** While this drawing is the current one, ask every `seconds` whether the styles changed (only
+    * while the page is visible), and draw the map again when they did. */
+  private def watch(mine: Int, seconds: Int): Unit =
+    if seconds > 0 then
+      poll = dom.window.setInterval(() =>
+        if mine == generation && !dom.document.hidden then
+          val was = styles.now().map(_.version)
+          refreshStyles().foreach { s =>
+            if mine == generation && !was.contains(s.version) then entered.foreach((m, d, r) => enter(m, d, r))
+          }
+      , seconds * 1000.0)
+
   private def clear(map: LeafletMap): Unit =
+    dom.window.clearInterval(poll)
+    tone.set(MapTone.Dark)
     shown.foreach(l => map.removeLayer(l))
     shown = Nil
     notice.foreach(_.remove())
@@ -132,62 +183,53 @@ object TerrainMap:
     map.getContainer().classList.remove("terrain-missing")
     map.getContainer().classList.remove("terrain-on")
 
-  private def color(token: String): String = ThemeTokens(token)
+  private def lookup(token: String): String = ThemeTokens(token)
 
-  private def polygon(token: String): PolygonSymbolizer =
-    new PolygonSymbolizer(js.Dynamic.literal(fill = color(token)))
-
-  private def kindOf(f: PmFeature): String = f.props.get("kind").map(_.toString).getOrElse("")
-
-  private def rule(layer: String, sym: js.Object, filter: (Int, PmFeature) => Boolean): js.Object =
-    js.Dynamic.literal(dataLayer = layer, symbolizer = sym, filter = (filter: js.Function2[Int, PmFeature, Boolean]))
-
-  /** The paint rules, bottom to top: land, land cover (by kind), water bodies, rivers and streams. */
-  private def paintRules: js.Array[js.Object] =
-    val cover = List("--terrain-forest", "--terrain-scrub", "--terrain-wetland", "--terrain-barren", "--terrain-sand", "--terrain-ice")
-    val covers = cover.flatMap { token =>
-      List("landcover", "landuse").map(l => rule(l, polygon(token), (_, f) => f.geomType == 3 && coverToken(kindOf(f)).contains(token)))
+  private def sourcesOf(s: BasemapStatus, which: Set[String]): js.Object =
+    val o = js.Dynamic.literal()
+    which.foreach { src =>
+      BasemapLayer.parse(src).foreach { l =>
+        template(s, l).foreach { url =>
+          o.updateDynamic(src)(js.Dynamic.literal(url = url,
+            maxDataZoom = s.layers.find(_.layer == l.wire).flatMap(_.maxZoom).getOrElse(10)))
+        }
+      }
     }
-    val riverWidth: js.Function1[Int, Double] = z => math.max(0.6, (z - 4) * 0.45)
-    val streamWidth: js.Function1[Int, Double] = z => math.max(0.4, (z - 8) * 0.4)
-    js.Array(
-      (rule("earth", polygon("--terrain-land"), (_, f) => f.geomType == 3) ::
-        covers :::
-        List(
-          rule("water", polygon("--terrain-water"), (_, f) => f.geomType == 3),
-          rule("water", new LineSymbolizer(js.Dynamic.literal(color = color("--terrain-river"), width = riverWidth)),
-            (_, f) => f.geomType == 2 && kindOf(f) == "river"),
-          rule("water", new LineSymbolizer(js.Dynamic.literal(color = color("--terrain-river"), width = streamWidth)),
-            (z, f) => f.geomType == 2 && z >= 9 && kindOf(f) == "stream")))*)
+    o
 
-  private def draw(map: LeafletMap, s: BasemapStatus, vector: String): Unit =
+  private def draw(map: LeafletMap, s: BasemapStatus, vector: String, style: TerrainStyle, all: TerrainStyles): Unit =
     val credit = attribution(s)
     val vinfo  = s.layers.find(_.layer == BasemapLayer.Vector.wire)
-    val vopts = js.Dynamic.literal(
-      url = vector,
-      paintRules = paintRules,
-      labelRules = js.Array[js.Object](),
-      backgroundColor = color("--terrain-water"),
-      maxDataZoom = vinfo.flatMap(_.maxZoom).getOrElse(10),
-      attribution = credit,
-      zIndex = 1)
-    vinfo.flatMap(bounds).foreach(b => vopts.bounds = b)
+    val have   = sources(s)
+    val rules  = TerrainRules.compile(style, TerrainRules.language(style, all), have, UiState.terrainLabels.now(), lookup)
+    def layer(paint: js.Array[js.Object], labels: js.Array[js.Object], z: Int, cls: String, background: Boolean): Layer =
+      val used = (paint ++ labels).map(_.asInstanceOf[js.Dynamic].dataSource.asInstanceOf[String]).toSet
+      val o = js.Dynamic.literal(sources = sourcesOf(s, used), paintRules = paint, labelRules = labels,
+        attribution = credit, zIndex = z, className = cls)
+      if background then o.backgroundColor = TerrainRules.colour(style.background, lookup)
+      vinfo.flatMap(bounds).foreach(b => o.bounds = b)
+      val l = Protomaps.leafletLayer(o)
+      l.addTo(map)
+      l
     map.getContainer().classList.add("terrain-on")
-    val vlayer = Protomaps.leafletLayer(vopts)
-    vlayer.addTo(map)
-    val relief = template(s, BasemapLayer.Terrain).zip(s.layers.find(_.layer == BasemapLayer.Terrain.wire)).map { (url, info) =>
-      val l = reliefLayer(url, info)
+    val base = layer(rules.paint, js.Array(), 1, "terrain-base", background = true)
+    val relief = Option.when(style.relief.enabled)(()).flatMap(_ =>
+      template(s, BasemapLayer.Terrain).zip(s.layers.find(_.layer == BasemapLayer.Terrain.wire))).map { (url, info) =>
+      val l = reliefLayer(url, info, style.relief)
       l.addTo(map)
       l
     }
-    shown = vlayer :: relief.toList
+    // the names in a layer of their own: above the relief (never shaded), below every marker
+    val names = Option.when(rules.labels.nonEmpty)(layer(js.Array(), rules.labels, 3, "terrain-labels", background = false))
+    shown = base :: relief.toList ++ names.toList
 
   /** The relief: a grid of 512-pixel canvases, one per elevation tile (a 512-pixel tile of zoom
     * `z − 1` covers a 512-pixel cell of zoom `z`), shaded as they arrive. */
-  private def reliefLayer(url: String, info: BasemapLayerInfo): Layer =
+  private def reliefLayer(url: String, info: BasemapLayerInfo, r: ReliefStyle): Layer =
     val maxData = info.maxZoom.getOrElse(8)
-    val shadow  = tint("--terrain-shadow")
-    val light   = tint("--terrain-highlight")
+    val shadow  = tint(r.shadow, r.shadowOpacity)
+    val light   = tint(r.highlight, r.highlightOpacity)
+    val sun     = Hillshade.Light(r.azimuth, r.altitude)
     val create: js.Function2[js.Dynamic, js.Function2[js.Any, dom.HTMLCanvasElement, Unit], dom.HTMLCanvasElement] =
       (coords, done) =>
         val canvas = dom.document.createElement("canvas").asInstanceOf[dom.HTMLCanvasElement]
@@ -197,7 +239,7 @@ object TerrainMap:
         val x = coords.x.asInstanceOf[Double]
         val y = coords.y.asInstanceOf[Double]
         val tileUrl = url.replace("{z}", z.toString).replace("{x}", x.toLong.toString).replace("{y}", y.toLong.toString)
-        shadeInto(canvas, tileUrl, z, y, shadow, light).onComplete { r =>
+        shadeInto(canvas, tileUrl, z, y, shadow, light, sun, r.exaggeration).onComplete { r =>
           done(r.failed.toOption.map(e => js.Error(e.getMessage): js.Any).getOrElse(null), canvas)
         }
         canvas
@@ -207,15 +249,15 @@ object TerrainMap:
     bounds(info).foreach(b => opts.bounds = b)
     js.Dynamic.newInstance(cls)(opts).asInstanceOf[Layer]
 
-  private def tint(token: String): Hillshade.Tint =
-    val (r, g, b) = ThemeTokens.rgb(color(token)).getOrElse((0, 0, 0))
-    val alpha = color(s"$token-alpha").toDoubleOption.getOrElse(0.5)
+  /** A relief colour (a token, hex or rgb) and its strongest opacity. */
+  private def tint(c: String, alpha: Double): Hillshade.Tint =
+    val (r, g, b) = ThemeTokens.rgb(TerrainRules.colour(c, lookup)).getOrElse((0, 0, 0))
     Hillshade.Tint(r, g, b, math.round(alpha * 255).toInt)
 
   /** Fetch one elevation tile, shade it, draw it into `canvas`. A tile the extract does not have
     * (204) leaves the canvas transparent. */
   private def shadeInto(canvas: dom.HTMLCanvasElement, url: String, z: Int, y: Double,
-      shadow: Hillshade.Tint, light: Hillshade.Tint): Future[Unit] =
+      shadow: Hillshade.Tint, light: Hillshade.Tint, sun: Hillshade.Light, ex: ZoomValue): Future[Unit] =
     dom.fetch(url).toFuture.flatMap { r =>
       if r.status == 204 || !r.ok then Future.unit
       else
@@ -231,7 +273,7 @@ object TerrainMap:
             val px  = ctx.getImageData(0, 0, w, h)
             val out = ctx.createImageData(w, h)
             Hillshade.shade(px.data.asInstanceOf[Uint8ClampedArray], w, h, Hillshade.metresPerPixel(z, y, w),
-              Hillshade.exaggeration(z + 1), Hillshade.Light(), shadow, light, out.data.asInstanceOf[Uint8ClampedArray])
+              ex.at(z + 1), sun, shadow, light, out.data.asInstanceOf[Uint8ClampedArray])
             ctx.putImageData(out, 0, 0)
           }
         }

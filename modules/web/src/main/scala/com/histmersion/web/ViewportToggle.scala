@@ -37,21 +37,49 @@ object ViewportToggle:
   def viewBox: Option[BBox] =
     Option(MapView.leafletMap).flatMap(m => scala.util.Try(bboxOf(m)).toOption).flatMap(BBox.parse)
 
+  /** The base maps, the terrain map once per named style the server serves ([[TerrainMap]]). */
   private def baseMapSelect: HtmlElement =
+    val terrainOptions = TerrainMap.styles.signal.combineWith(TerrainMap.status.signal).map { (ss, st) =>
+      val tip = if st.forall(_.available) then TerrainMap.PastNotice else TerrainMap.missingNotice(st)
+      ss.map(_.styles).filter(_.nonEmpty) match
+        case None => List(option(value := BaseMap.Terrain.wire, TerrainMap.optionLabel(st), title := tip))
+        case Some(styles) => styles.map(t => option(value := TerrainMap.optionValue(t.id), TerrainMap.optionLabel(st, Some(t)),
+          title := (if t.description.nonEmpty && st.forall(_.available) then s"${t.description}. $tip" else tip)))
+    }
     select(
       cls := "field map-style-select",
       aria.label := "base map",
+      BaseMap.values.toList.filter(_ != BaseMap.Terrain).map(b => option(value := b.wire, b.label)),
+      children <-- terrainOptions,
       controlled(
-        value <-- UiState.baseMap.signal.map(_.wire),
-        onChange.mapToValue --> { v => BaseMap.fromWire(v).foreach(b => UiState.set(UiState.baseMap := b)()) }
+        value <-- UiState.baseMap.signal.combineWith(UiState.terrainStyle.signal, TerrainMap.styles.signal)
+          .map(TerrainMap.selectValue.tupled),
+        onChange.mapToValue --> { v =>
+          TerrainMap.parseOption(v).foreach { (b, style) =>
+            if b == BaseMap.Terrain then UiState.set(UiState.baseMap := b, UiState.terrainStyle := style)()
+            else UiState.set(UiState.baseMap := b)()
+          }
+        }
       ),
-      BaseMap.values.toList.map { b =>
-        if b == BaseMap.Terrain then
-          option(value := b.wire, child.text <-- TerrainMap.status.signal.map(TerrainMap.optionLabel),
-            title <-- TerrainMap.status.signal.map(s => if s.forall(_.available) then TerrainMap.PastNotice else TerrainMap.missingNotice(s)))
-        else option(value := b.wire, b.label)
-      },
       onMountCallback(_ => { val _ = TerrainMap.refresh() })
+    )
+
+  /** The terrain map's names (seas, ranges, rivers …) on or off; usable while a terrain style with
+    * names is shown — otherwise it stays in place, disabled, its title saying why. */
+  private def terrainNamesToggle: HtmlElement =
+    val usable = UiState.baseMap.signal.combineWith(UiState.terrainStyle.signal, TerrainMap.styles.signal).map { (b, id, ss) =>
+      b == BaseMap.Terrain && ss.flatMap(_.pick(id)).exists(t => t.labels && t.hasLabels)
+    }
+    button(
+      typ := "button",
+      cls := "btn btn--toggle terrain-names-toggle",
+      aria.pressed <-- UiState.terrainLabels.signal.map(_.toString),
+      disabled <-- usable.map(!_),
+      title <-- usable.map(u => if u then "Physical names on the terrain map: seas, ranges, deserts, lakes, rivers"
+        else "Physical names — choose a terrain style that has them first"),
+      Icon(Icon.MapNames),
+      span("names"),
+      onClick.compose(_.sample(UiState.terrainLabels.signal)) --> (on => UiState.set(UiState.terrainLabels := !on)())
     )
 
   /** The help of the "States shown" menu ([[UiState.areaPick]]). */
@@ -136,7 +164,7 @@ object ViewportToggle:
         MapLayer.values.toList.map(layerGroup),
         div(cls := "btn-group tier-group", role := "group", aria.label := "event tier",
           IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers), off(MapLayer.Events), offWhy(MapLayer.Events))),
-        div(cls := "btn-group", baseMapSelect)
+        div(cls := "btn-group", baseMapSelect, terrainNamesToggle)
       ),
       drawerTools,
       onMountUnmountCallbackWithState(

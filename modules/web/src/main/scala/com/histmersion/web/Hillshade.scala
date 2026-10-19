@@ -12,8 +12,8 @@ import scala.scalajs.js.typedarray.{Float32Array, Uint8ClampedArray}
   * arrives, it is shaded once, it is drawn). */
 object Hillshade:
 
-  /** The light and how strongly it shades. `exaggeration` multiplies the slopes; [[exaggeration]]
-    * gives the zoom's. */
+  /** Where the light comes from (degrees clockwise from north) and how high it stands; the slopes'
+    * exaggeration per zoom is the style's ([[ReliefStyle]]). */
   final case class Light(azimuthDeg: Double = 315, altitudeDeg: Double = 45)
 
   /** An RGB colour and the most opacity (0–255) it is drawn with. */
@@ -27,10 +27,6 @@ object Hillshade:
     val n   = math.pow(2, z)
     val lat = math.atan(math.sinh(math.Pi * (1 - 2 * (y + 0.5) / n)))
     40075016.686 * math.cos(lat) / (n * size)
-
-  /** How much the slopes are steepened at zoom `z`: relief is invisible at a continent's scale
-    * without it (a pixel there is kilometres wide), and needs none close up. */
-  def exaggeration(z: Int): Double = 1.0 + math.max(0, 11 - z) * 0.6
 
   /** The light falling on one cell (0 dark … 1 facing the sun) from its 3×3 neighbourhood,
     * `a b c / d · f / g h i`, with cells `mpp` metres apart. */
