@@ -8,6 +8,7 @@ import com.histmersion.server.acquire.{ArchiveOrg, Http, HttpPlugin, OpenAlexCro
 import com.histmersion.server.acquire.fetchers.BuiltinFetchers
 import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.BuiltinMedia
+import com.histmersion.server.agents.BuiltinAi
 
 /** The composition root's handle on the plugins: discover the providers on the server's class path,
   * add the host's built-in ones, and build the generation for a loaded config. Opens nothing — no
@@ -54,7 +55,7 @@ object Plugins:
     * when its own block changes. `oa-unpaywall`, `oa-openalex` and `oa-landing` are carried only all
     * together ([[BuiltinFetchers.LandingGroup]]): the landing step reads what the other two registered. */
   def carried(previous: Generation, changed: List[String],
-      independent: Set[String] = BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds): Map[String, (PluginStatus, Registries)] =
+      independent: Set[String] = BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds): Map[String, (PluginStatus, Registries)] =
     val relevant = changed.filter(k => Keys.exists(HotPlan.keyMatches(k, _)))
     // a former plugin's key (oa-index) concerns its successors
     val ids      = relevant.map(pluginId).flatMap(_.fold(List(Option.empty[String]))(id => LegacyPlugins.expand(id).map(Some(_))))
@@ -83,17 +84,18 @@ object Plugins:
     * any other: today's acquisition steps (`archive-org`, the open-access indexes `oa-unpaywall`, `oa-core`,
     * `oa-openalex`, `oa-landing`, then `pmc`, `arxiv`), media collections
     * (`media-wikidata`, `media-depicts`, `media-met`, … — [[BuiltinMedia]]) and event catalogues
-    * (`events-gvp`, `events-noaa`, `events-wikidata` — [[BuiltinCatalogues]]). */
+    * (`events-gvp`, `events-noaa`, `events-wikidata` — [[BuiltinCatalogues]]) and AI providers (`ai-anthropic`,
+    * `ai-openai`, `ai-local`, `ai-claude-code`, `ai-codex`, `ai-opencode` — [[BuiltinAi]]). */
   def builtins(cfg: AppConfig, http: () => Http): List[Plugin] =
     lazy val openalex = OpenAlexCrossref(cfg.acquire, http())
     lazy val archive  = ArchiveOrg(cfg.acquire, http())
     BuiltinFetchers.plugins(cfg.acquire, http, () => openalex, () => archive) ++ providers
 
-  /** The built-in media collections and event catalogues: they read nothing at registration. */
-  def providers: List[Plugin] = BuiltinMedia.plugins ++ BuiltinCatalogues.plugins
+  /** The built-in media collections, event catalogues and AI providers: they read nothing at registration. */
+  def providers: List[Plugin] = BuiltinMedia.plugins ++ BuiltinCatalogues.plugins ++ BuiltinAi.plugins
 
   /** The generation of a server or a `Deps` built without a config to load plugins from (a test's):
-    * the built-in media collections and event catalogues, registered through the plugin host with an
+    * the built-in media collections, event catalogues and AI providers, registered through the plugin host with an
     * empty user config — and no acquisition fetcher, so nothing is fetched (offline). */
   def offline: Generation =
     PluginHost.build(providers, ConfigFactory.empty, ConfigFactory.empty,

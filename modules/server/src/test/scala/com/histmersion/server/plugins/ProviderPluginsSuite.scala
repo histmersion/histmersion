@@ -4,6 +4,7 @@ import com.histmersion.core.{MediaLicence, MediaRecord}
 import com.histmersion.plugin.*
 import com.histmersion.server.events.{BuiltinCatalogues, HostEventCatalogue, PluginEvents}
 import com.histmersion.server.media.{BuiltinMedia, MediaImporters, PluginCollection}
+import com.histmersion.server.agents.BuiltinAi
 import org.ekrich.config.ConfigFactory
 
 import scala.collection.immutable.ListMap
@@ -49,7 +50,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
   test("the built-in media collections and event catalogues register as plugins, enabled by default"):
     val g = Plugins.offline
     assert(g.report.ok, g.report.toString)
-    assertEquals(g.report.plugins.map(_.id).toSet, BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds)
+    assertEquals(g.report.plugins.map(_.id).toSet, BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds)
     assert(g.report.plugins.forall(_.state == "registered"), g.report.toString)
     assertEquals(g.report.plugins.find(_.id == "media-met").map(_.provides), Some(List("media-collection:met")))
     assertEquals(g.report.plugins.find(_.id == "events-gvp").map(_.provides), Some(List("event-catalogue:gvp")))
@@ -62,7 +63,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     val all = Plugins.builtins(com.histmersion.core.AppConfig.load(), () => fail("no HTTP at registration"))
     val g   = build(all)
     assert(g.report.ok, g.report.toString)
-    assertEquals(g.report.plugins.size, 7 + 8 + 3) // fetchers (four open-access indexes, D4), collections, catalogues
+    assertEquals(g.report.plugins.size, 7 + 8 + 3 + 6) // fetchers (four open-access indexes, D4), collections, catalogues, AI providers
 
   test("a built-in switched off is out of its registry; the import names the switch"):
     val g = build(Plugins.providers, "histmersion.plugins { media-met.enabled = false, events-noaa.enabled = false }")
@@ -145,13 +146,13 @@ class ProviderPluginsSuite extends munit.FunSuite:
   test("reload: a host key (acquire.*) rebuilds the fetchers and third-party plugins, never the media/events built-ins"):
     val g1 = build(Plugins.providers :+ Portal(), portalOn)
     val carried = Plugins.carried(g1, List("histmersion.acquire.chain"))
-    assertEquals(carried.keySet, BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds)
+    assertEquals(carried.keySet, BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds)
     // their own block rebuilds them alone
     assertEquals(Plugins.carried(g1, List("histmersion.plugins.media-met.enabled")).keySet,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds + "zq-plugin" - "media-met")
+      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds + "zq-plugin" - "media-met")
     // a media setting is no plugin key: nothing is rebuilt (the import reads it at each run)
     assertEquals(Plugins.carried(g1, List("histmersion.media.met.licences")).keySet,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds + "zq-plugin")
+      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds + "zq-plugin")
     assertEquals(Plugins.carried(g1, List("histmersion.plugins.order")), Map.empty)
     assertEquals(Plugins.carried(g1, List("histmersion.plugins")), Map.empty)
     // the carried built-in is the same instance in the next generation

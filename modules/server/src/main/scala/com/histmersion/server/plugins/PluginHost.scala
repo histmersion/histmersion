@@ -18,23 +18,27 @@ final case class Registries(
     secretVaults: ListMap[String, SecretVault] = ListMap.empty,
     sourceFetchers: ListMap[String, SourceFetcher] = ListMap.empty,
     mediaCollections: ListMap[String, MediaCollection] = ListMap.empty,
-    eventCatalogues: ListMap[String, EventCatalogue] = ListMap.empty):
+    eventCatalogues: ListMap[String, EventCatalogue] = ListMap.empty,
+    aiProviders: ListMap[String, AiProvider] = ListMap.empty):
   def provides: List[String] =
     secretVaults.keys.toList.map(k => s"${Registries.SecretVault}:$k") ++
       sourceFetchers.keys.toList.map(k => s"${Registries.SourceFetcher}:$k") ++
       mediaCollections.keys.toList.map(k => s"${Registries.MediaCollection}:$k") ++
-      eventCatalogues.keys.toList.map(k => s"${Registries.EventCatalogue}:$k")
+      eventCatalogues.keys.toList.map(k => s"${Registries.EventCatalogue}:$k") ++
+      aiProviders.keys.toList.map(k => s"${Registries.AiProvider}:$k")
 
   /** Every registry, the other's entries after this one's. */
   def ++(other: Registries): Registries =
     Registries(secretVaults ++ other.secretVaults, sourceFetchers ++ other.sourceFetchers,
-      mediaCollections ++ other.mediaCollections, eventCatalogues ++ other.eventCatalogues)
+      mediaCollections ++ other.mediaCollections, eventCatalogues ++ other.eventCatalogues,
+      aiProviders ++ other.aiProviders)
 
 object Registries:
   val SecretVault     = "secret-vault"
   val SourceFetcher   = "source-fetcher"
   val MediaCollection = "media-collection"
   val EventCatalogue  = "event-catalogue"
+  val AiProvider      = "ai-provider"
   val empty: Registries = Registries()
 
 /** One load of the plugins for one config: the registries and the report. Built by
@@ -316,6 +320,16 @@ object PluginHost:
       Some(s"'$id' is the name of one of Histmersion's own event catalogues")
     else None
 
+  /** An AI provider: its name is the provider half of `provider:model`, so kebab-case; a plugin's may not
+    * take the name of one of the host's own providers (its models would be mistaken for theirs). */
+  private def validAiProvider(id: String, a: AiProvider): Option[String] =
+    if !id.matches(IdPattern) then Some(s"'$id': an AI provider name is $IdPattern")
+    else if a == null then Some(s"AI provider '$id' is null")
+    else if a.isInstanceOf[com.histmersion.server.agents.HostAiProvider] then None
+    else if com.histmersion.server.agents.BuiltinAi.reserved(id) then
+      Some(s"'$id' is the name of one of Histmersion's own AI providers")
+    else None
+
   private def validVault(id: String, v: SecretVault): Option[String] =
     if Set(SecretRef.ValueScheme, SecretRef.EnvScheme)(id) then Some(s"'$id' is a reserved secret scheme, not a vault name")
     else if !id.matches(IdPattern) then Some(s"'$id': a vault name is $IdPattern")
@@ -434,6 +448,7 @@ object PluginHost:
         val fetchers = Staged[SourceFetcher](Registries.SourceFetcher, regs.sourceFetchers, validFetcher)
         val media    = Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection)
         val events   = Staged[EventCatalogue](Registries.EventCatalogue, regs.eventCatalogues, validCatalogue)
+        val ai       = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider)
         val ctx = new PluginContext:
           lazy val http: PluginHttp = services.http()
           val log: PluginLog = new PluginLog:
@@ -445,10 +460,11 @@ object PluginHost:
           override def sourceFetchers = fetchers
           override def mediaCollections = media
           override def eventCatalogues = events
+          override def aiProviders = ai
         val outcome =
           try pr.call(ctx)
           catch case NonFatal(e) => Left(s"register threw ${e.getClass.getSimpleName}: ${e.getMessage}")
-        val added = Registries(staged.close(), fetchers.close(), media.close(), events.close())
+        val added = Registries(staged.close(), fetchers.close(), media.close(), events.close(), ai.close())
         outcome match
           case Left(e) => fail(e)
           case Right(_) =>

@@ -22,8 +22,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
 
   private def this(deps: Deps, h: Handlers, w: (LlmClient.Factory, CliRuntime)) = this(deps, h, w._1, w._2, PlanPools.Seams.Real)
 
-  /** The server's own providers ([[LlmClient.factory]]: the HTTP ones and the CLI runtimes). */
-  def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps.cfg))
+  /** The server's own providers ([[LlmClient.factory]]: the ones registered in the pinned plugin
+    * generation — the HTTP ones, the CLI runtimes and any plugin's). */
+  def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps))
 
   /** Read at each use: a config reload switches it (Deps). */
   private def cfg     = deps.cfg.agents
@@ -218,8 +219,15 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
       c  <- clientFor(cfg, m)
     yield (c, b)
 
+  /** The names plugin AI providers are registered under in the pinned generation — what a
+    * `provider:model` may name besides the host's own (docs/research-plugins.md §22). */
+  /** The client plugin AI providers' doctor checks and model listings go through. */
+  private val aiHttp: com.histmersion.plugin.AiHttp = HostAiHttp()
+
+  def knownProviders: Set[String] = BuiltinAi.known(deps.plugins.registries.aiProviders)
+
   /** The model chains and allowances in effect, and the choice before every LLM call. */
-  val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools)
+  val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools, () => knownProviders)
 
   /** A role's chain can run at all: at least one of its models is on a plan or priced, and buildable (allowances
     * are not looked at — a run whose models are all spent queues and pauses until a window frees). */
@@ -267,7 +275,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   def setChain(role: String, in: ModelChains.ChainSet): Either[ApiError, ModelChains.RoleChain] =
     for
       r  <- roleOf(role)
-      ms <- ModelChains.parseModels(in.models).left.map(ApiError(_))
+      ms <- ModelChains.parseModels(in.models, knownProviders).left.map(ApiError(_))
       _  <- Either.cond(ms.nonEmpty, (), ApiError("a chain needs at least one provider:model (reset the role to go back to config)"))
       _ = ModelSettingsRepo.setChain(ds, r.wire, ms.map(_.wire))
       c  <- chainOf(r)
@@ -284,7 +292,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** `PUT /api/agents/allowances` — one model's or provider's limits and reserve, saved over config. */
   def setAllowance(in: ModelChains.AllowanceSet): Either[ApiError, ModelChains.AllowanceStatus] =
     for
-      t  <- ModelChains.Target.parse(in.target).left.map(ApiError(_))
+      t  <- ModelChains.Target.parse(in.target, knownProviders).left.map(ApiError(_))
       ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
               case (Nil, ok) => Right(ok)
               case (errs, _) => Left(ApiError(errs.mkString("; ")))
@@ -296,12 +304,13 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
 
   /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
   def removeAllowance(target: String): Either[ApiError, GoalPlans.Removed] =
-    ModelChains.Target.parse(target).left.map(ApiError(_))
+    ModelChains.Target.parse(target, knownProviders).left.map(ApiError(_))
       .map(t => GoalPlans.Removed(ModelSettingsRepo.removeAllowance(ds, t.wire)))
 
   /** `GET /api/agents/doctor` — every provider checked without spending anything. */
   def doctor(offline: Boolean): Agents.DoctorReport =
-    val r = AgentDoctor(deps.cfg, picker, resolve).report(online = !offline)
+    val r = AgentDoctor(deps.cfg, picker, resolve, registry = Some(deps.plugins.registries.aiProviders), aiHttp = aiHttp)
+      .report(online = !offline)
     val held = lease.status match
       case Some((o, u, false, true))  => DoctorCheck("agent lease", CheckLevel.Ok, s"held by this server ($o) until $u")
       case Some((o, u, false, false)) => DoctorCheck("agent lease", CheckLevel.Warn,
@@ -419,7 +428,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
           _ <- Either.cond(roles.contains(r), (), ApiError(s"--model-for: ${p.wire} uses no ${r.wire} role " +
                  s"(its roles: ${if roles.isEmpty then "none — it calls no model" else roles.map(_.wire).mkString(", ")})"))
           _ <- Either.cond(!m.contains(r), (), ApiError(s"--model-for: the ${r.wire} role is given twice"))
-          _ <- ModelChains.parseChain(o.model).left.map(e => ApiError(s"--model-for ${r.wire}: $e"))
+          _ <- ModelChains.parseChain(o.model, knownProviders).left.map(e => ApiError(s"--model-for ${r.wire}: $e"))
         yield m + (r -> o.model.trim)
       }
     }
@@ -516,7 +525,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
 
   /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */
   private def billingOf(ref: String): Option[String] =
-    ModelRef.parse(ref).toOption.flatMap(m => prices.toOption.flatMap(ps => Agents.Prices.billing(ps, m, pools.poolOf(m)).toOption))
+    ModelRef.parse(ref, knownProviders).toOption.flatMap(m => prices.toOption.flatMap(ps => Agents.Prices.billing(ps, m, pools.poolOf(m)).toOption))
       .map(_.describe)
 
   def control(id: String, action: String, budgetUsd: Option[Double], budgetTokens: Option[Long]): Either[ApiError, RunInfo] =
@@ -676,9 +685,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
 
 object AgentsHandlers:
   /** The server's providers over one [[CliRuntime]]. */
-  def serverWiring(app: com.histmersion.core.AppConfig): (LlmClient.Factory, CliRuntime) =
-    val rt = CliRuntime(app)
-    (LlmClient.factory(rt), rt)
+  def serverWiring(deps: Deps): (LlmClient.Factory, CliRuntime) =
+    val rt = CliRuntime(deps.cfg)
+    (LlmClient.factory(rt, () => deps.plugins.registries.aiProviders), rt)
 
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]])
     * apart from a broken provider. */

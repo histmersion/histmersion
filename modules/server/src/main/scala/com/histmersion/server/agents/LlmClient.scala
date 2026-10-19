@@ -104,9 +104,21 @@ object LlmClient:
   /** How the engine builds a client for a model (the seam a test fills with sttp-ai's scripted model). */
   type Factory = (AgentsConfig, ModelRef) => Either[String, LlmClient]
 
-  /** The server's factory: the HTTP providers from `agents.providers.*`, and the CLI providers
-    * (`claude-code`, `codex`, `opencode`) on the generated trees, run tokens and plan pools of `rt`. */
-  def factory(rt: CliRuntime): Factory =
+  /** The server's factory, resolving the provider through `providers` — the AI-provider registry of the
+    * plugin generation the calling thread is pinned to (docs/research-plugins.md §22): a host provider
+    * (its built-in plugin on) runs today's client — the HTTP providers from `agents.providers.*`, the
+    * CLI providers (`claude-code`, `codex`, `opencode`) on the generated trees, run tokens and plan pools
+    * of `rt`; a plugin's provider runs through the host's tool loop ([[PluginAiClient]]); a switched-off
+    * or unregistered one is refused, saying which. */
+  def factory(rt: CliRuntime, providers: () => scala.collection.immutable.ListMap[String, com.histmersion.plugin.AiProvider],
+      http: com.histmersion.plugin.AiHttp = HostAiHttp()): Factory =
+    (cfg, ref) => BuiltinAi.lookup(ref.provider, providers()).left.map(why => s"${ref.wire}: $why").flatMap {
+      case _: HostAiProvider => host(rt)(cfg, ref)
+      case p                 => PluginAiClient.client(ref, p, http, rt.loopback)
+    }
+
+  /** The host's own providers, as before the registry: the CLI runtimes on `rt`, else the HTTP ones. */
+  def host(rt: CliRuntime): Factory =
     (cfg, ref) => ref.provider match
       case ProviderKind.ClaudeCode => ClaudeCode.client(cfg.providers.claudeCode, rt, ref)
       case ProviderKind.Codex      => Codex.client(cfg.providers.codex, rt, ref)
@@ -120,7 +132,6 @@ object LlmClient:
     val timeout = math.max(1, p.timeoutSeconds).seconds
     Uri.parse(p.baseUrl).left.map(e => s"agents.providers.${ref.provider.wire}.base-url: $e").flatMap { uri =>
       ref.provider match
-        case k if k.isCli => Left(s"${ref.wire}: ${k.wire} is not an HTTP provider")
         case ProviderKind.Anthropic if p.apiKey.isEmpty =>
           Left("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
         case ProviderKind.OpenAI if p.apiKey.isEmpty =>
@@ -132,6 +143,7 @@ object LlmClient:
           // a local server needs no key, but the client always sends the header: send a placeholder
           val key = if p.apiKey.isEmpty then "none" else p.apiKey
           Right(OpenAICompatible(ref, new OpenAI(key, uri, timeout = timeout), p.strictTools, httpBackend(30)))
+        case k => Left(s"${ref.wire}: ${k.wire} is not an HTTP provider")
     }
     }
 

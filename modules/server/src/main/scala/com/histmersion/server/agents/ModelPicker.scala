@@ -34,7 +34,10 @@ enum PickFailure:
   * were reset early, and only a restart brought the model back; `agent quota refresh <pool>` takes
   * such a reading). In memory on purpose — a restart is a fair moment to try again. */
 final class ModelPicker(ds: DataSource, cfg: => AgentsConfig, resolve: ModelRef => Either[String, (LlmClient, Billing)],
-    val pools: PlanPools):
+    val pools: PlanPools,
+    /** The names plugin AI providers are registered under now (the pinned generation's): what a chain or
+      * an allowance may name besides the host's providers. */
+    known: () => Set[String] = () => Set.empty):
 
   /** model wire → (skipped until, when its plan reported the limit) */
   private val cooldown = ConcurrentHashMap[String, (Long, Long)]()
@@ -64,7 +67,7 @@ final class ModelPicker(ds: DataSource, cfg: => AgentsConfig, resolve: ModelRef 
     * lifting those a later reading of their pool clears (`agent quota`, `agent quota refresh`). */
   def cooldowns(now: Long = System.currentTimeMillis()): List[(String, Instant)] =
     import scala.jdk.CollectionConverters.*
-    cooldown.keySet.asScala.toList.sorted.flatMap(w => ModelRef.parse(w).toOption.flatMap(m => cooling(m, now))
+    cooldown.keySet.asScala.toList.sorted.flatMap(w => ModelRef.parse(w, known()).toOption.flatMap(m => cooling(m, now))
       .map(u => w -> Instant.ofEpochMilli(u)))
 
   // ── what is in effect ──────────────────────────────────────────────────────────────────────────
@@ -72,14 +75,14 @@ final class ModelPicker(ds: DataSource, cfg: => AgentsConfig, resolve: ModelRef 
   /** A role's chain and where it comes from: saved, else `agents.roles.<role>`. */
   def chain(role: Role): Either[String, (List[ModelRef], SettingSource)] =
     ModelSettingsRepo.chains(ds).get(role.wire) match
-      case Some(ms) => parseModels(ms).map(_ -> SettingSource.Saved).left.map(m => s"the saved chain of ${role.wire}: $m")
-      case None     => parseChain(cfg.role(role)).map(_ -> SettingSource.Config)
+      case Some(ms) => parseModels(ms, known()).map(_ -> SettingSource.Saved).left.map(m => s"the saved chain of ${role.wire}: $m")
+      case None     => parseChain(cfg.role(role), known()).map(_ -> SettingSource.Config)
                          .left.map(m => s"agents.roles.${role.wire}: $m")
 
   /** The chain a call uses: the run's own model (`--model`) when it names one, else the role's. */
   def chainFor(role: Role, overrideRef: Option[String]): Either[String, List[ModelRef]] =
     overrideRef.map(_.trim).filter(_.nonEmpty) match
-      case Some(ref) => parseChain(ref)
+      case Some(ref) => parseChain(ref, known())
       case None =>
         chain(role).map(_._1).flatMap { ms =>
           Either.cond(ms.nonEmpty, ms, s"no model for the ${role.wire} role — set agents.roles.${role.wire} " +
@@ -100,12 +103,12 @@ final class ModelPicker(ds: DataSource, cfg: => AgentsConfig, resolve: ModelRef 
   /** Config's allowances with the saved ones over them (a saved target replaces config's). A config
     * string that does not parse is one problem, and caps nothing it could not read. */
   def allowances: (List[Effective], List[String]) =
-    val (fromConfig, problem) = parseAllowances(cfg.allowances) match
+    val (fromConfig, problem) = parseAllowances(cfg.allowances, known()) match
       case Right(as) => (as.map(a => Effective(a.target.wire, Right(a), SettingSource.Config)), Nil)
       case Left(m)   => (Nil, List(s"agents.allowances: $m"))
     val saved = ModelSettingsRepo.allowances(ds).map { s =>
       val a = for
-        t  <- Target.parse(s.target)
+        t  <- Target.parse(s.target, known())
         ss <- s.limits
         ls <- ss.map(Limit.fromSpec).partitionMap(identity) match
                 case (Nil, ok) => Right(ok)
@@ -121,7 +124,7 @@ final class ModelPicker(ds: DataSource, cfg: => AgentsConfig, resolve: ModelRef 
 
   /** Every allowance covering `m` with its limits' states at `now`. */
   private def covering(m: ModelRef, effective: List[Effective], now: Long): List[(Effective, Either[String, List[LimitState]])] =
-    effective.filter(e => e.allowance.fold(_ => Target.parse(e.target).exists(_.covers(m)), _.target.covers(m)))
+    effective.filter(e => e.allowance.fold(_ => Target.parse(e.target, known()).exists(_.covers(m)), _.target.covers(m)))
       .map(e => e -> e.allowance.map(a => states(a, spendsOf(a), now)))
 
   private def spendsOf(a: Allowance): Vector[Spend] =
