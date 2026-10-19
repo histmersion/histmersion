@@ -18,9 +18,12 @@ object BasemapMarkdown:
         s"| ${l.layer} | $what | $state | $zoom | ${l.bbox.getOrElse("")} | ${l.source.getOrElse("")}${l.fetchedAt.fold("")(t => s", $t")} |"
     }
     val table = ("| layer | what | size | zoom | region | source, fetched |" :: "|---|---|---|---|---|---|" :: rows).mkString("\n")
+    val kept = s.layers.find(l => l.layer == BasemapLayer.Vector.wire && l.present).flatMap(_.kept)
     val notes = List(
+      kept.map(k => s"The vector layer keeps $k."),
       Some(s"Files: `${s.dir}` (${Backup.humanBytes(s.freeBytes)} free). The next fetch downloads `${s.bbox}` (basemap.bbox)."),
       s.running.map(r => s"A fetch is running ($r) — `histmersion jobs`."),
+      Option.when(s.hints.nonEmpty)(s.hints.mkString(" ")),
       Option.when(s.layers.exists(_.present))("Credits: " + s.layers.filter(_.present).map(l => plain(l.attribution)).distinct.mkString(" · "))
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")

@@ -74,20 +74,20 @@ object Mvt:
 
   /** Which features of one layer stay: those whose string `kind` is in `keep` (every kind when it is
     * empty) and not in `drop`. A feature without a `kind` stays unless `keep` is given. */
-  final case class Rule(keep: Set[String] = Set.empty, drop: Set[String] = Set.empty):
+  final case class Rule(keep: Set[String] = Set.empty, drop: Set[String] = Set.empty, none: Boolean = false):
     def keeps(kind: Option[String]): Boolean = kind match
       case None    => keep.isEmpty
       case Some(k) => (keep.isEmpty || keep(k)) && !drop(k)
-    def all: Boolean = keep.isEmpty && drop.isEmpty
+    def all: Boolean = keep.isEmpty && drop.isEmpty && !none
 
-  /** The tile with only the layers `rules` names, each thinned by its [[Rule]]. A layer left with no
-    * feature is dropped too. */
-  def filter(tile: Array[Byte], rules: Map[String, Rule]): Either[String, Array[Byte]] =
+  /** The tile with the layers `rules` names thinned by their [[Rule]] (a `none` rule drops the layer)
+    * and the others kept when `others`, dropped otherwise. A layer left with no feature is dropped too. */
+  def filter(tile: Array[Byte], rules: Map[String, Rule], others: Boolean = false): Either[String, Array[Byte]] =
     attempt {
       val out = ByteArrayOutputStream(tile.length)
       fields(tile, 0, tile.length).foreach { f =>
         if f.number == 3 && f.wireType == 2 then
-          rules.get(name(tile, f)).foreach { rule =>
+          rules.get(name(tile, f)).orElse(Option.when(others)(Rule())).filterNot(_.none).foreach { rule =>
             if rule.all then out.write(tile, f.start, f.end - f.start)
             else thinLayer(tile, f, rule).foreach(l => writeField(out, 3, l))
           }
@@ -145,8 +145,13 @@ object Mvt:
   /** A layer of `features` (each: its geometry type 1–3, its command-encoded geometry, its string
     * properties). Extent 4096, version 2. */
   def layer(name: String, features: List[(Int, Vector[Int], Map[String, String])]): Array[Byte] =
-    val keys   = features.flatMap(_._3.keys).distinct.toVector
-    val values = features.flatMap(_._3.values).distinct.toVector
+    typedLayer(name, features.map((g, c, p) => (g, c, p.toList)))
+
+  /** The same with text or whole-number properties (a number as `sint_value`, as the Protomaps
+    * builds store `min_zoom`), in the order given. */
+  def typedLayer(name: String, features: List[(Int, Vector[Int], List[(String, String | Long)])]): Array[Byte] =
+    val keys   = features.flatMap(_._3.map(_._1)).distinct.toVector
+    val values = features.flatMap(_._3.map(_._2)).distinct.toVector
     val out = ByteArrayOutputStream()
     writeVarint(out, (15L << 3) | 0); writeVarint(out, 2)
     writeField(out, 1, name.getBytes(StandardCharsets.UTF_8))
@@ -164,11 +169,38 @@ object Mvt:
     keys.foreach(k => writeField(out, 3, k.getBytes(StandardCharsets.UTF_8)))
     values.foreach { v =>
       val vb = ByteArrayOutputStream()
-      writeField(vb, 1, v.getBytes(StandardCharsets.UTF_8))
+      v match
+        case s: String => writeField(vb, 1, s.getBytes(StandardCharsets.UTF_8))
+        case n: Long   => writeVarint(vb, (6L << 3) | 0); writeVarint(vb, zigzag(n))
       writeField(out, 4, vb.toByteArray)
     }
     writeVarint(out, (5L << 3) | 0); writeVarint(out, 4096)
     out.toByteArray
+
+  /** Protobuf's zig-zag encoding of a signed number (geometry deltas, `sint_value`). Pure. */
+  def zigzag(n: Long): Long = (n << 1) ^ (n >> 63)
+
+  /** A point's geometry commands: MoveTo(1) and its zig-zagged position. Pure. */
+  def pointGeometry(x: Int, y: Int): Vector[Int] = Vector(9, zigzag(x).toInt, zigzag(y).toInt)
+
+  /** A (multi)line's geometry commands: per part MoveTo its first point, LineTo the rest — positions
+    * as deltas from the previous point, parts of fewer than two points skipped. Pure. */
+  def lineGeometry(parts: Seq[Seq[(Int, Int)]]): Vector[Int] =
+    val out = Vector.newBuilder[Int]
+    // `var`s: the cursor the deltas are taken from, carried across parts as the spec requires
+    var cx = 0
+    var cy = 0
+    parts.filter(_.size >= 2).foreach { part =>
+      val (x0, y0) = part.head
+      out += 9; out += zigzag(x0 - cx).toInt; out += zigzag(y0 - cy).toInt
+      cx = x0; cy = y0
+      out += (2 | ((part.size - 1) << 3))
+      part.tail.foreach { (x, y) =>
+        out += zigzag(x - cx).toInt; out += zigzag(y - cy).toInt
+        cx = x; cy = y
+      }
+    }
+    out.result()
 
   /** A tile of encoded layers. */
   def tile(layers: List[Array[Byte]]): Array[Byte] =

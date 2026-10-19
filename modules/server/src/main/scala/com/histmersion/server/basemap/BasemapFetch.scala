@@ -255,13 +255,16 @@ object BasemapFetch:
       minLon = b.minLon, minLat = b.minLat, maxLon = b.maxLon, maxLat = b.maxLat,
       centerZoom = math.min(p.maxZoom, 5), centerLon = (b.minLon + b.maxLon) / 2, centerLat = (b.minLat + b.maxLat) / 2)
 
-  /** The local archive's metadata: the source's, its `vector_layers` cut to `keep` (when given), its
-    * attribution replaced by `attribution`, and where and when it came from under `histmersion`. */
-  def localMetadata(p: Plan, keep: Option[Set[String]], attribution: String, fetchedAt: String, layer: BasemapLayer): Json =
+  /** The local archive's metadata: the source's, its `vector_layers` without the `dropped` ones, its
+    * attribution replaced by `attribution`, and where and when it came from — and, for the vector
+    * layer, what it kept (`filter`: `keepAll` or the `drop` list) — under `histmersion`. */
+  def localMetadata(p: Plan, dropped: Set[String], attribution: String, fetchedAt: String, layer: BasemapLayer,
+      filter: Option[(Boolean, String)] = None): Json =
     val src = p.metadata.asObject.getOrElse(io.circe.JsonObject.empty)
-    val layers = keep.fold(src)(k => src("vector_layers").flatMap(_.asArray) match
-      case Some(ls) => src.add("vector_layers", Json.fromValues(ls.filter(l => l.hcursor.get[String]("id").toOption.exists(k))))
-      case None     => src)
+    val layers = src("vector_layers").flatMap(_.asArray) match
+      case Some(ls) if dropped.nonEmpty =>
+        src.add("vector_layers", Json.fromValues(ls.filterNot(l => l.hcursor.get[String]("id").toOption.exists(dropped))))
+      case _ => src
     val b = p.bbox
     Json.fromJsonObject(layers.add("attribution", attribution.asJson).add("histmersion", Json.obj(
       "layer"     -> layer.wire.asJson,
@@ -270,7 +273,8 @@ object BasemapFetch:
       "etag"      -> p.remote.etag.asJson,
       "bbox"      -> s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}".asJson,
       "maxZoom"   -> p.maxZoom.asJson,
-      "fetchedAt" -> fetchedAt.asJson)))
+      "fetchedAt" -> fetchedAt.asJson).deepMerge(filter.fold(Json.obj())((all, drop) =>
+        Json.obj("keepAll" -> all.asJson, "drop" -> (if all then "" else drop).asJson)))))
 
   /** The resume record of a work directory: a fetch continues only the download it describes. */
   def stateOf(p: Plan, extra: String): Json = Json.obj(

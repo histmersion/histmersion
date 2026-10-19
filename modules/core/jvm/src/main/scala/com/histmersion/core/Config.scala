@@ -299,8 +299,10 @@ final case class BasemapConfig(
     styleCheckSeconds: Int
 ) derives ConfigReader
 
+/** `drop`: the vector layers (or their kinds) never stored — [[Basemap.parseDrop]]; everything else is
+  * kept and the style decides what is drawn. */
 final case class BasemapVectorConfig(buildsUrl: String, url: String, build: String, maxZoom: Int,
-    layers: String, attribution: String) derives ConfigReader
+    drop: String, attribution: String) derives ConfigReader
 
 final case class BasemapTerrainConfig(url: String, maxZoom: Int, attribution: String) derives ConfigReader
 

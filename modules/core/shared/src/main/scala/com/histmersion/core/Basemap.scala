@@ -9,21 +9,25 @@ import sttp.tapir.Schema
   * server downloads once (`histmersion basemap fetch`) and serves (`GET /api/basemap/{layer}/{z}/{x}/{y}`).
   * The wire types and the pure tile arithmetic; the server owns the files. */
 enum BasemapLayer(val wire: String, val title: String):
-  /** Coast, water, rivers and land cover: vector tiles (MVT) thinned to those layers. */
+  /** Coast, water, rivers, land cover and land use, natural points: vector tiles (MVT) without the
+    * modern layers (`basemap.vector.drop`: roads, buildings, places, boundaries …). */
   case Vector  extends BasemapLayer("vector", "coast, water and land cover")
   /** Elevation, terrarium-encoded raster tiles the page shades into relief. */
   case Terrain extends BasemapLayer("terrain", "relief")
+  /** The physical names — ranges, deserts, peninsulas, lakes, major rivers, peaks — from Natural
+    * Earth, a small vector archive built by the fetch (seas and gulfs come with the vector layer). */
+  case Labels  extends BasemapLayer("labels", "physical names")
 
   def file: String = s"$wire.pmtiles"
 
 object BasemapLayer:
   def parse(s: String): Option[BasemapLayer] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
-  /** `all` (or blank) is both layers. */
+  /** `all` (or blank) is every layer. */
   def parseMany(s: String): Either[String, List[BasemapLayer]] =
     s.trim.toLowerCase(java.util.Locale.ROOT) match
       case "" | "all" => Right(values.toList)
-      case other      => parse(other).map(List(_)).toRight(s"unknown base-map layer '$s' (vector, terrain or all)")
+      case other      => parse(other).map(List(_)).toRight(s"unknown base-map layer '$s' (vector, terrain, labels or all)")
 
 /** One downloaded layer, as the server finds it on disk. */
 final case class BasemapLayerInfo(
@@ -43,6 +47,8 @@ final case class BasemapLayerInfo(
     version: Option[String] = None,
     /** The credit line (HTML) the page shows with the layer. */
     attribution: String = "",
+    /** What the extract kept ([[Basemap.keptLine]]): the vector layer's filter. */
+    kept: Option[String] = None,
     /** Why the file is there but cannot be read. */
     error: Option[String] = None
 ) derives KindlingsCodecAsObject
@@ -63,7 +69,9 @@ final case class BasemapStatus(
     /** Free space where the files go, in bytes. */
     freeBytes: Long = 0,
     /** A fetch job running now. */
-    running: Option[String] = None
+    running: Option[String] = None,
+    /** What a fetch would add (the physical names to an extract made before they existed). */
+    hints: List[String] = Nil
 ) derives KindlingsCodecAsObject
 
 object BasemapStatus:
@@ -78,7 +86,7 @@ object BasemapRemoved:
 /** The fetch's options: which layers, how deep, where; a dry run downloads only the directories and
   * reports what the extract would take. Empty values fall back to the configuration. */
 final case class BasemapFetchQuery(layer: String = "all", maxZoom: Option[Int] = None, terrainMaxZoom: Option[Int] = None,
-    bbox: Option[String] = None, dryRun: Boolean = false)
+    bbox: Option[String] = None, dryRun: Boolean = false, keepAll: Boolean = false)
 
 object Basemap:
 
@@ -122,19 +130,33 @@ object Basemap:
       else Right(b)
     }
 
-  /** One kept layer of the vector extract: its name and the feature kinds it keeps (all when empty)
-    * or drops. */
-  final case class LayerRule(layer: String, keep: Set[String], drop: Set[String])
+  /** One entry of `basemap.vector.drop`: a vector layer dropped whole (`roads`), only some of its
+    * kinds (`water swimming_pool fountain`), or all of it but some kinds (`pois +peak +volcano`). */
+  final case class DropRule(layer: String, whole: Boolean, drop: Set[String] = Set.empty, spare: Set[String] = Set.empty)
 
-  /** `basemap.vector.layers`: "earth; water -canal -ditch; landcover forest scrub" — `;` between
-    * layers, then each layer's kinds kept (`kind`) or dropped (`-kind`). Pure. */
-  def parseLayers(s: String): Either[String, List[LayerRule]] =
-    val rules = s.split(";").toList.map(_.trim).filter(_.nonEmpty).map { part =>
-      val words = part.split("\\s+").toList
+  /** `basemap.vector.drop`: "roads; buildings; pois +peak" — `;` between layers; a layer alone is
+    * dropped whole, `kind` drops that kind, `+kind` spares it and drops the rest. Everything not named
+    * is KEPT, so a style can draw it without a new download. Empty: nothing dropped. Pure. */
+  def parseDrop(s: String): Either[String, List[DropRule]] =
+    val parts = s.split(";").toList.map(_.trim).filter(_.nonEmpty).map(_.split("\\s+").toList)
+    val rules = parts.map { words =>
       val kinds = words.tail
-      LayerRule(words.head, kinds.filterNot(_.startsWith("-")).toSet, kinds.filter(_.startsWith("-")).map(_.drop(1)).filter(_.nonEmpty).toSet)
+      val spare = kinds.filter(_.startsWith("+")).map(_.drop(1)).filter(_.nonEmpty).toSet
+      val drop  = kinds.filterNot(_.startsWith("+")).toSet
+      DropRule(words.head, kinds.isEmpty, drop, spare)
     }
-    if rules.isEmpty then Left("basemap.vector.layers names no layer")
-    else
-      val dup = rules.groupBy(_.layer).collect { case (l, rs) if rs.size > 1 => l }
-      if dup.nonEmpty then Left(s"basemap.vector.layers names ${dup.mkString(", ")} twice") else Right(rules)
+    val dup = rules.groupBy(_.layer).collect { case (l, rs) if rs.size > 1 => l }
+    val mixed = rules.filter(r => r.drop.nonEmpty && r.spare.nonEmpty).map(_.layer)
+    if dup.nonEmpty then Left(s"basemap.vector.drop names ${dup.mkString(", ")} twice")
+    else if mixed.nonEmpty then Left(s"basemap.vector.drop: ${mixed.mkString(", ")} both drops kinds and spares kinds (+kind) — one or the other")
+    else Right(rules)
+
+  /** What an extract kept, said in a line (`basemap status`): from its metadata — `keepAll`, the drop
+    * list it was thinned with, or neither (an extract made before the drop list, which kept only coast,
+    * water and land cover). Pure. */
+  def keptLine(keepAll: Boolean, drop: Option[String]): String =
+    if keepAll then "everything (unfiltered)"
+    else drop match
+      case Some(d) if d.trim.isEmpty => "everything (nothing dropped)"
+      case Some(d)                   => s"all but: $d"
+      case None                      => "earth, water and land cover only (fetched before the drop list)"

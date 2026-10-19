@@ -18,13 +18,15 @@ object BasemapApi:
   val status: PublicEndpoint[Unit, ApiError, BasemapStatus, Any] =
     base.get.out(jsonBody[BasemapStatus])
 
-  /** `POST /api/basemap/fetch?layer=&maxZoom=&terrainMaxZoom=&bbox=&dryRun=` — download the extracts
+  /** `POST /api/basemap/fetch?layer=&maxZoom=&terrainMaxZoom=&bbox=&dryRun=&keepAll=` — download the extracts
+    * (`keepAll`: the vector layer unfiltered, not even `basemap.vector.drop`)
     * as a background JOB (poll `GET /api/jobs/{id}`); resumable, refused when the disk would be left
     * with less than `basemap.min-free-gb`. A dry run reads only the directories and reports sizes. */
   val fetch: PublicEndpoint[BasemapFetchQuery, ApiError, JobInfo, Any] =
     endpoint.post.in("api" / "basemap" / "fetch")
       .in(query[String]("layer").default("all").and(query[Option[Int]]("maxZoom")).and(query[Option[Int]]("terrainMaxZoom"))
-        .and(query[Option[String]]("bbox")).and(query[Boolean]("dryRun").default(false)).mapTo[BasemapFetchQuery])
+        .and(query[Option[String]]("bbox")).and(query[Boolean]("dryRun").default(false))
+        .and(query[Boolean]("keepAll").default(false)).mapTo[BasemapFetchQuery])
       .errorOut(fetchErrors).out(jsonBody[JobInfo])
 
   /** `DELETE /api/basemap?layer=vector|terrain|all` — remove the downloaded files (and an unfinished

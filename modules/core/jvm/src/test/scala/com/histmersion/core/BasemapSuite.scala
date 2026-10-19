@@ -3,8 +3,9 @@ package com.histmersion.core
 /** The terrain base map's shared pure parts: layer names, the status as Markdown. */
 class BasemapSuite extends munit.FunSuite:
 
-  test("layers by name; all is both"):
-    assertEquals(BasemapLayer.parseMany("all"), Right(List(BasemapLayer.Vector, BasemapLayer.Terrain)))
+  test("layers by name; all is every one"):
+    assertEquals(BasemapLayer.parseMany("all"), Right(List(BasemapLayer.Vector, BasemapLayer.Terrain, BasemapLayer.Labels)))
+    assertEquals(BasemapLayer.parseMany("labels"), Right(List(BasemapLayer.Labels)))
     assertEquals(BasemapLayer.parseMany(" Terrain "), Right(List(BasemapLayer.Terrain)))
     assert(BasemapLayer.parseMany("roads").isLeft)
     assertEquals(BasemapApi.tileTemplate(BasemapLayer.Vector, "v1"), "/api/basemap/vector/{z}/{x}/{y}?v=v1")
@@ -19,6 +20,9 @@ class BasemapSuite extends munit.FunSuite:
     assert(md.contains("| vector | coast, water and land cover | 138.0 MB | 0–10 |"), md)
     assert(md.contains("| terrain | relief | not downloaded |"), md)
     assert(md.contains("Credits: © OpenStreetMap"), md)
+    val hinted = BasemapMarkdown.status(BasemapStatus(available = true, "/c", "x", List(v, t), Basemap.FetchCommand,
+      hints = List("Run `histmersion basemap fetch --layer labels`.")))
+    assert(hinted.contains("Run `histmersion basemap fetch --layer labels`."), hinted)
     val none = BasemapMarkdown.status(BasemapStatus(available = false, "/c", "x", List(t), Basemap.FetchCommand))
     assert(none.contains("run `histmersion basemap fetch`"), none)
     assertEquals(BasemapMarkdown.removed(BasemapRemoved(Nil, 0)), "Nothing to remove: no base-map file is downloaded.")

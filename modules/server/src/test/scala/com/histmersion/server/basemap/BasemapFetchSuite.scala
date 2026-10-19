@@ -10,8 +10,8 @@ class BasemapFetchSuite extends munit.FunSuite:
 
   private val noPause = BasemapFetch.Pace(0, 1L << 20, 0.05, _ => ())
   private val aegean  = BBox(22, 35, 29, 41)
-  private val keep = Basemap.parseLayers(AppConfig.load().basemap.vector.layers).fold(fail(_), identity)
-    .map(r => r.layer -> Mvt.Rule(r.keep, r.drop)).toMap
+  private val dropRules = Basemap.parseDrop(AppConfig.load().basemap.vector.drop).fold(fail(_), identity)
+  private val keep = BasemapService.mvtRules(dropRules)
 
   private def tmp(): Path = Files.createTempDirectory("basemap")
 
@@ -27,23 +27,31 @@ class BasemapFetchSuite extends munit.FunSuite:
     assertEquals(BasemapFetch.coalesce(List((0L, 600L), (600L, 600L)), 1000, 0.05), Vector((0L, 600L), (600L, 600L)))
     assertEquals(BasemapFetch.coalesce(Nil, 10, 0.05), Vector.empty)
 
-  test("the layers setting: kinds kept and dropped, a layer named twice refused"):
-    assertEquals(Basemap.parseLayers("earth; water -canal -ditch; landcover forest"),
-      Right(List(Basemap.LayerRule("earth", Set(), Set()), Basemap.LayerRule("water", Set(), Set("canal", "ditch")),
-        Basemap.LayerRule("landcover", Set("forest"), Set()))))
-    assert(Basemap.parseLayers(" ; ").isLeft)
-    assert(Basemap.parseLayers("earth; earth").isLeft)
+  test("the drop list: whole layers, some kinds, all but some kinds; nothing named twice or mixed"):
+    assertEquals(Basemap.parseDrop("roads; water swimming_pool fountain; pois +peak +volcano"),
+      Right(List(Basemap.DropRule("roads", whole = true), Basemap.DropRule("water", whole = false, drop = Set("swimming_pool", "fountain")),
+        Basemap.DropRule("pois", whole = false, spare = Set("peak", "volcano")))))
+    assertEquals(Basemap.parseDrop(" ; "), Right(Nil), "nothing dropped")
+    assert(Basemap.parseDrop("roads; roads").isLeft)
+    assert(Basemap.parseDrop("pois peak +volcano").isLeft)
+    assertEquals(Basemap.keptLine(keepAll = true, Some("roads")), "everything (unfiltered)")
+    assertEquals(Basemap.keptLine(keepAll = false, Some("roads; places")), "all but: roads; places")
+    assert(Basemap.keptLine(keepAll = false, None).contains("before the drop list"))
     assert(Basemap.validBBox("29,35,22,41").isLeft)
     assert(Basemap.validBBox("-200,0,10,10").isLeft)
     assertEquals(Basemap.validBBox("22,35,29,41"), Right(aegean))
 
-  test("a vector tile is thinned: no roads, places or land use; canals and farmland gone; rivers and forest kept"):
+  test("a vector tile is thinned by the drop list: no roads, places or modern POIs; everything else kept for the style"):
     val raw  = BasemapFixtures.vectorTile(3, 4, 3)
     val thin = BasemapService.thin(PmTiles.gzip(raw), PmTiles.Compression.Gzip, keep).fold(fail(_), identity).get
     val t    = PmTiles.gunzip(thin).fold(fail(_), identity)
-    assertEquals(Mvt.layerNames(t), Right(List("earth", "water", "landcover")))
-    assertEquals(Mvt.kinds(t, "water"), Right(List("ocean", "river")))
-    assertEquals(Mvt.kinds(t, "landcover"), Right(List("forest")))
+    assertEquals(Mvt.layerNames(t), Right(List("earth", "water", "landcover", "landuse", "pois", "physical_point")))
+    assertEquals(Mvt.kinds(t, "water"), Right(List("ocean", "river", "canal", "sea")))
+    assertEquals(Mvt.kinds(t, "landcover"), Right(List("forest", "farmland")))
+    assertEquals(Mvt.kinds(t, "pois"), Right(List("peak")), "a peak spared, the restaurant dropped")
+    // nothing filtered at all: --keep-all stores the tile as it is
+    assertEquals(BasemapService.thin(PmTiles.gzip(raw), PmTiles.Compression.Gzip, Map.empty).map(_.map(b => PmTiles.gunzip(b).toOption.get.toList)),
+      Right(Some(raw.toList)))
     // nothing left: the tile is dropped
     val roadsOnly = Mvt.tile(List(Mvt.layer("roads", List((2, Vector(9, 0, 0, 10, 5, 5), Map("kind" -> "highway"))))))
     assertEquals(BasemapService.thin(roadsOnly, PmTiles.Compression.None, keep), Right(None))
@@ -75,8 +83,8 @@ class BasemapFetchSuite extends munit.FunSuite:
     BasemapFetch.download(http, plan, work, noPause, _ => (), _ => Right(())).fold(fail(_), identity)
     val out = dir.resolve("vector.pmtiles")
     val (_, n) = BasemapFetch.assemble(plan, work, out, b => BasemapService.thin(b, PmTiles.Compression.Gzip, keep),
-      BasemapFetch.localHeader(plan), BasemapFetch.localMetadata(plan, Some(keep.keySet), "© OSM", "2026-10-19T00:00:00Z",
-        BasemapLayer.Vector), _ => ()).fold(fail(_), identity)
+      BasemapFetch.localHeader(plan), BasemapFetch.localMetadata(plan, dropRules.filter(_.whole).map(_.layer).toSet, "© OSM",
+        "2026-10-19T00:00:00Z", BasemapLayer.Vector, Some((false, "roads; places"))), _ => ()).fold(fail(_), identity)
     assertEquals(n, plan.tiles.size.toLong)
     val f = PmTilesFile.open(out).fold(fail(_), identity)
     try
@@ -86,7 +94,8 @@ class BasemapFetchSuite extends munit.FunSuite:
       assert(!Mvt.layerNames(t).toOption.get.contains("roads"))
       assertEquals(f.tile(5, 0, 0), Right(None), "outside the region")
       assertEquals(f.metadata.hcursor.downField("histmersion").get[String]("build"), Right("planet"))
-      assertEquals(f.metadata.hcursor.downField("vector_layers").as[List[Json]].map(_.size), Right(3))
+      assertEquals(f.metadata.hcursor.downField("vector_layers").as[List[Json]].map(_.size), Right(4), "earth, water, landcover, landuse")
+      assertEquals(f.metadata.hcursor.downField("histmersion").get[String]("drop"), Right("roads; places"))
     finally f.close()
 
   test("an interrupted download resumes: the parts already there are not asked for again"):
