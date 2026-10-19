@@ -94,20 +94,33 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       hints = BasemapService.hints(ok(BasemapLayer.Vector), ok(BasemapLayer.Labels),
         layers.exists(i => i.layer == BasemapLayer.Vector.wire && i.present && i.error.isEmpty && i.kept.exists(_.contains("before the drop list")))))
 
-  /** One tile, as stored, with its content type and encoding: 204 where the extract has none. */
-  def tile(layer: String, z: Int, x: Long, y: Long): Either[ApiError, (Array[Byte], String, Option[String], String, StatusCode)] =
+  /** Subset tiles cut lately, by (file stamp, layer, tile, subset): a pan asks for the same few again. */
+  private val cut = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap[String, Array[Byte]](256, 0.75f, true):
+    override def removeEldestEntry(e: java.util.Map.Entry[String, Array[Byte]]): Boolean = size() > 512)
+
+  /** One tile with its content type and encoding: as stored, or — a vector tile with `subset` — only
+    * the layers and geometries asked for; 204 where the extract (or the subset) has none. */
+  def tile(layer: String, z: Int, x: Long, y: Long, subset: Option[String] = None): Either[ApiError, (Array[Byte], String, Option[String], String, StatusCode)] =
     val cache = s"public, max-age=${cfg.tileCacheSeconds}"
-    BasemapLayer.parse(layer).toRight(ApiError(s"no base-map layer '$layer' (vector or terrain)", Some(Write.CodeNotFound)))
-      .flatMap(l => reader(l).left.map(e => ApiError(e)).flatMap(_.toRight(
-        ApiError(s"the ${l.title} layer is not downloaded — run `${Basemap.FetchCommand}`", Some(Write.CodeNotFound)))))
-      .flatMap { f =>
-        f.tile(z, x, y).left.map(ApiError(_)).map {
-          case None => (Array.emptyByteArray, f.header.tileType.mime, None, cache, StatusCode.NoContent)
-          case Some(b) =>
-            val enc = Option.when(f.header.tileCompression == PmTiles.Compression.Gzip && PmTiles.isGzip(b))("gzip")
-            (b, f.header.tileType.mime, enc, cache, StatusCode.Ok)
-        }
-      }
+    val sub   = subset.map(_.trim).filter(_.nonEmpty)
+    for
+      rules <- sub.fold(Right(None))(s => Basemap.parseSubset(s).map(Some(_))).left.map(e => ApiError(s"layers: $e", Some(Write.CodeInvalid)))
+      l     <- BasemapLayer.parse(layer).toRight(ApiError(s"no base-map layer '$layer' (vector, terrain or labels)", Some(Write.CodeNotFound)))
+      f     <- reader(l).left.map(e => ApiError(e)).flatMap(_.toRight(
+                 ApiError(s"the ${l.title} layer is not downloaded — run `${Basemap.FetchCommand}`", Some(Write.CodeNotFound))))
+      found <- f.tile(z, x, y).left.map(ApiError(_))
+      mime   = f.header.tileType.mime
+      out   <- (found, rules.filter(_ => f.header.tileType == PmTiles.TileType.Mvt)) match
+                 case (None, _) => Right((Array.emptyByteArray, mime, None, cache, StatusCode.NoContent))
+                 case (Some(b), None) =>
+                   val enc = Option.when(f.header.tileCompression == PmTiles.Compression.Gzip && PmTiles.isGzip(b))("gzip")
+                   Right((b, mime, enc, cache, StatusCode.Ok))
+                 case (Some(b), Some(rs)) =>
+                   val key = s"$layer|${stamp(path(l)).getOrElse("")}|$z/$x/$y|${sub.getOrElse("")}"
+                   Option(cut.get(key)).map(Right(_))
+                     .getOrElse(BasemapService.subset(b, f.header.tileCompression, rs).left.map(ApiError(_)).map { t => cut.put(key, t); t })
+                     .map(t => if t.isEmpty then (t, mime, None, cache, StatusCode.NoContent) else (t, mime, Some("gzip"), cache, StatusCode.Ok))
+    yield out
 
   // ── removing ───────────────────────────────────────────────────────────────────────────────────
 
@@ -339,6 +352,12 @@ object BasemapService:
         b.hcursor.get[String]("key").toOption.filter(_.endsWith(".pmtiles")).map(k => (k, b.hcursor.get[Long]("size").getOrElse(-1L)))
       }.sortBy(_._1))
     }
+
+  /** A stored vector tile cut to `rules` (layer → geometries; none = all), gzip-compressed; empty when
+    * nothing is left. Pure. */
+  def subset(stored: Array[Byte], c: PmTiles.Compression, rules: Map[String, Set[Int]]): Either[String, Array[Byte]] =
+    val raw = if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(stored) else Right(stored)
+    raw.flatMap(Mvt.filter(_, rules.map((l, g) => l -> Mvt.Rule(geoms = g)))).map(t => if t.isEmpty then t else PmTiles.gzip(t))
 
   /** The drop list as the MVT filter's rules: a layer dropped whole, only some kinds, or all but some. Pure. */
   def mvtRules(rules: List[Basemap.DropRule]): Map[String, Mvt.Rule] =

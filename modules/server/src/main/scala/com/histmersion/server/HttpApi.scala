@@ -28,7 +28,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     BasemapApi.stylesCheck.serverLogicSuccess[Identity](t => h.basemapStyles.check(t)),
     BasemapApi.fetch.serverLogic[Identity](q => h.basemap.fetch(q)),
     BasemapApi.remove.serverLogic[Identity](l => h.basemap.remove(l)),
-    BasemapApi.tile.serverLogic[Identity]((l, z, x, y) => h.basemap.tile(l, z, x, y)),
+    BasemapApi.tile.serverLogic[Identity]((l, z, x, y, sub) => h.basemap.tile(l, z, x, y, sub)),
     Api.search.serverLogicSuccess[Identity]((q, limit) => h.search(q, limit)),
     Api.sources.serverLogicSuccess[Identity](f => h.sources(f)),
     Api.facets.serverLogic[Identity]((field, prefix, f) => h.facets(field, prefix, f)),
