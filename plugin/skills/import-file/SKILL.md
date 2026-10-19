@@ -85,5 +85,7 @@ Or leave it for the **sync-calibre** skill / the `histmersion calibre gaps --qui
 ## Note on provenance
 
 This skill only imports a file the user already has on disk, obtained legally; it never downloads
-anything. Histmersion records uploaded files as `provenance: ocr` — there is currently no flag to tag
-the actual channel (`ill`/`author`), so say it in the source `notes` instead.
+anything. Histmersion records uploaded files as `provenance: ocr`. To record that the file came from
+outside the automated pipeline, patch `metadata.provenance` to `external-file` (a file the user
+brought in from elsewhere); there is no value for the actual channel (`ill`/`author`), so say it in
+the source `notes` as well.

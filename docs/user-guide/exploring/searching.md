@@ -58,7 +58,8 @@ histmersion facets status --tag steppe       # statuses, inside another filter
 ```
 
 `facets` works for `tags`, `authors`, `places`, `topics`, `status` and `provenance` (how a source was
-acquired), always within the current filter. On the web page the filter bar suggests the same
+acquired: `oa` and the index that found it, `calibre`, `archive_org`, `ocr` for an upload, `manual`,
+`external-file` for a file brought in from elsewhere, …), always within the current filter. On the web page the filter bar suggests the same
 values as you type.
 
 ## Counts by time and by region
