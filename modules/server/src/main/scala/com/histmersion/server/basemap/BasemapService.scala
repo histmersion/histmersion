@@ -95,7 +95,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     BasemapStatus(
       available = ok(BasemapLayer.Vector),
       dir = dir.toString, bbox = cfg.bbox, layers = layers, fetchCommand = Basemap.FetchCommand,
-      freeBytes = freeSpace(BasemapService.existing(dir)), running = slot.current,
+      freeBytes = freeSpace(BasemapService.existing(dir)), running = slot.current, mapMaxZoom = cfg.mapMaxZoom,
       hints = BasemapService.hints(ok(BasemapLayer.Vector), ok(BasemapLayer.Labels),
         layers.exists(i => i.layer == BasemapLayer.Vector.wire && i.present && i.error.isEmpty && i.kept.exists(_.contains("before the drop list")))))
 
@@ -243,7 +243,11 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
               s"(${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}), zoom ${cfg.terrain.maxZoom + 1}–${a.terrainZoom}"
           case None =>
             s"${if a.dryRun then "dry run: " else ""}terrain base map — ${a.layers.map(_.wire).mkString(" + ")}, " +
-              s"bbox ${q.bbox.getOrElse(cfg.bbox)}, zoom ≤ ${a.vectorZoom} (vector) / ${a.terrainZoom} (terrain)"
+              s"bbox ${q.bbox.getOrElse(cfg.bbox)}, zoom ≤ " + a.layers.collect {
+                case BasemapLayer.Vector     => s"${a.vectorZoom} (vector)"
+                case BasemapLayer.Terrain    => s"${a.terrainZoom} (terrain)"
+                case BasemapLayer.Bathymetry => s"${cfg.bathymetry.maxZoom} (sea floor)"
+              }.mkString(" / ")
         BackgroundJob.start(deps.ds, BasemapService.JobKind, Some(JobDetail(about = Some(what))), slot, "a base-map fetch",
           Some(BasemapApi.Busy), deps.pins)((_, note) => BackgroundJob.Outcome.of(run(a, note)))
       }

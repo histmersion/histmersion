@@ -98,7 +98,9 @@ final case class BasemapStatus(
     /** A fetch job running now. */
     running: Option[String] = None,
     /** What a fetch would add (the physical names to an extract made before they existed). */
-    hints: List[String] = Nil
+    hints: List[String] = Nil,
+    /** How far the page zooms in on the terrain map (`basemap.map-max-zoom`). */
+    mapMaxZoom: Int = 16
 ) derives KindlingsCodecAsObject
 
 object BasemapStatus:

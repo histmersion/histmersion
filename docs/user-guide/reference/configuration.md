@@ -315,6 +315,7 @@ The settings of backups and portable bundles are listed with them, in
 | `basemap.labels.attribution` | — | Natural Earth | the names' credit line |
 | `basemap.style` | `HISTMERSION_BASEMAP_STYLE` | *(empty)* = `basemap-style.conf` (or `.json`) beside `histmersion.conf` | the [terrain style file](../how-to/terrain-styles.md) (`~/` = home, relative = beside the config file); read again when it changes, no restart |
 | `basemap.style-check-seconds` | — | `5` | how often a page showing the terrain map asks whether the styles changed (and redraws) |
+| `basemap.map-max-zoom` | `HISTMERSION_BASEMAP_MAP_MAX_ZOOM` | `16` | how far the map zooms in while it shows the terrain map (its relief resampled beyond zoom 13, contours to 10 m); the online maps keep `ui.tiles-max-zoom` |
 | `ui.docs-url` | `HISTMERSION_UI_DOCS_URL` | this guide on GitHub | the user guide's root; the web page links into it (the terrain map's notice) |
 | `config.watch` | `HISTMERSION_CONFIG_WATCH` | `false` | reload the config by itself when the file changes (see [Reloading the config](#reloading-the-config-no-restart)) |
 | `config.watch-debounce-ms` | `HISTMERSION_CONFIG_WATCH_DEBOUNCE_MS` | `500` | …this long after its last change (an editor writes in steps) |
