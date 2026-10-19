@@ -17,7 +17,7 @@ histmersion periods fetch periodo --collection p0qp9rs   # one more authority (h
 
 A server imports this file by itself on a start that finds the `periods` table empty **or** finds the
 bundled seed newer than the one it last applied (`histmersion.version` in the file against the
-`seed_versions` table, V062), and `histmersion init` does the same on demand (see the main README).
+`seed_versions` table, V062), and `histmersion init` does the same on demand (see `docs/user-guide/getting-started/install.md`, "First-run data").
 So an existing install follows a new seed on its next start; `periods seed --replace` is only needed
 to also DELETE what an older seed brought in and this one no longer has.
 

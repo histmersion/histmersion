@@ -1,6 +1,6 @@
 # Histmersion — design
 
-> The Docker deployment described below was replaced by the native bundle (2026-09); for install, run, backup and restore see [`README.md`](../README.md).
+> The Docker deployment described below was replaced by the native bundle (2026-09); for install, run, backup and restore see the documentation site ([`user-guide/getting-started/install.md`](user-guide/getting-started/install.md), [`user-guide/how-to/backup-and-bundles.md`](user-guide/how-to/backup-and-bundles.md)).
 
 **Status:** the stack section below describes what is *built*, not what was once proposed
 (updated 2026-08-25). Roadmap and open work: [`plan.md`](plan.md). Code rules: [`../AGENTS.md`](../AGENTS.md).
@@ -132,8 +132,8 @@ back is `upper − 1`.
 
 Every operation is implemented **once** in `server/Handlers`; the REST route, the MCP tool and the CLI
 command are three views of it, all rendering the same Markdown. Current tools: `ping`, `search`,
-`get_source`, `geo_when`, `neighbors`. Endpoints, config keys and CLI commands are tabulated in
-[`../README.md`](../README.md); the roadmap (filters/facets, FTS, writes, aggregation, gazetteer,
+`get_source`, `geo_when`, `neighbors`. Endpoints, config keys and CLI commands are tabulated in the documentation's reference pages
+([`user-guide/reference/`](user-guide/reference/cli.md)); the roadmap (filters/facets, FTS, writes, aggregation, gazetteer,
 articles) is in `plan.md`.
 
 ## OCR flow
@@ -145,7 +145,7 @@ returns Markdown → the server stores `ocr_markdown` + skeleton metadata → an
 ## Backup
 
 - **Postgres:** `pg_dump -Fc` into the bind-mounted `backups/` volume, plus the data volume for a
-  physical snapshot. Restore = `pg_restore` into a fresh container. Commands in `../README.md`;
+  physical snapshot. Restore = `pg_restore` into a fresh container. Commands in `user-guide/how-to/backup-and-bundles.md`;
   `histmersion backup`/`restore` wrap them in wave 2.5.
 - **Markdown export:** `histmersion export` rewrites `wiki/sources/*.md` from the database — a portable,
   Obsidian-usable second axis, independent of Postgres.

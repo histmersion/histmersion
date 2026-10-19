@@ -7,7 +7,8 @@ Flyway for schema, GraalVM native-image for both binaries. There is no effect mo
 there is not going to be one.
 
 The build/test/native workflow in mechanical detail: the **`histmersion-dev`** skill (`skills/histmersion-dev/`).
-The product plan and its waves: `docs/plan.md`. What it is: `README.md`.
+The product plan and its waves: `docs/plan.md`. What it is: `README.md`; the documentation site:
+`docs/user-guide/` (`just docs-serve`).
 
 ---
 
@@ -261,9 +262,14 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 
 ## Docs and skills
 
-- `README.md` — what it is, install, run, and the reference tables (CLI, MCP, REST, config).
-  The **CLI table is generated**: `./tools/gen-cli-docs.sh` (or `just cli-docs`) rewrites it between
-  the `CLI REFERENCE` markers from decline's own `--help`. Do not hand-edit inside those markers.
+- `README.md` — a short overview: what it is, a quick start, responsible use. Everything else is in
+  the **documentation site**, `docs/user-guide/` (Zensical, `docs/mkdocs.yml`; `just docs-build` checks
+  every link, `just docs-serve` previews it). User pages are written for non-programmers; technical
+  depth goes in `reference/` and `contributing/` (see `contributing/docs.md`).
+- The reference pages hold the tables (CLI, MCP, REST, config). The **CLI table is generated**:
+  `./tools/gen-cli-docs.sh` (or `just cli-docs`) rewrites `docs/user-guide/reference/cli.md` between
+  the `CLI REFERENCE` markers from decline's own `--help`; `just api-docs` rewrites the endpoint index
+  in `reference/rest-api.md`. Do not hand-edit inside those markers.
 - `docs/writing-guide.md` — the rules for prose compiled out of the corpus. They live there **once**;
   skills link to it rather than restating it.
 - `skills/<name>/SKILL.md` and `agents/<name>.md` are canonical (tools named `{{tool:<name>}}`);
@@ -271,8 +277,8 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
   and `.claude-plugin/marketplace.json` are its checked-in Claude Code output — regenerate with
   `just plugin` (`PluginTreeSuite` fails when stale); `.claude/skills` and `.opencode/skill` point at
   `plugin/skills`. Edit the canonical copies only.
-- When you change a CLI flag, an MCP tool, an endpoint or a config key, update the matching README
-  table in the same commit. Docs that lie are worse than missing docs.
+- When you change a CLI flag, an MCP tool, an endpoint or a config key, update the matching reference
+  page (`docs/user-guide/reference/`) in the same commit. Docs that lie are worse than missing docs.
 - A part of an agent body, a fragment or the writing guide that only one audience acts on is marked
   `<!-- only:interactive -->` (the person's own CLI session), `<!-- only:headless -->` (a server step)
   or `<!-- only:writer -->` (the guide's procedure for whoever compiles an article; reviewers and the

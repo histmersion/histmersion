@@ -207,9 +207,10 @@ Three artefacts must not drift from the code. None of them is edited by hand alo
 
 | artefact | kept honest by |
 |---|---|
-| the **CLI reference table** in `README.md` | `./tools/gen-cli-docs.sh` (`--check` in CI) — regenerates it from the CLI's own `--help` |
+| the **CLI reference table** in `docs/user-guide/reference/cli.md` | `./tools/gen-cli-docs.sh` (`just cli-docs`; `--check` in CI) — regenerates it from the CLI's own `--help` |
+| the **REST endpoint index** in `docs/user-guide/reference/rest-api.md` | `just api-docs` — regenerates it from `Api.all`; `ApiSurfaceSuite` fails when stale |
 | the `histmersion …` commands and `mcp__histmersion__*` names in `skills/*/SKILL.md` | `./tools/check_skills.sh` — every command must `--help` with exit 0, every tool name must appear in the live `tools/list` |
-| the **MCP tool table** in `README.md` and `plugin/README.md` | generated from `tools/list` against a running server; regenerate both after adding, renaming or removing a tool |
+| the **MCP tool table** in `docs/user-guide/reference/mcp-tools.md` and `plugin/README.md` | generated from `tools/list` against a running server; regenerate both after adding, renaming or removing a tool (`OpsHttpSuite` checks every tool and the count) |
 
 ```bash
 ./tools/check_skills.sh                       # against $HISTMERSION_SERVER_URL or http://localhost:8000
@@ -218,7 +219,7 @@ HISTMERSION_CLI=/path/to/histmersion-cli ./tools/check_skills.sh
 
 **Adding or renaming an MCP tool is a docs change too.** The tool's own `description` is what an
 agent reads first, so it belongs in the same commit as the handler; then run `check_skills.sh` and
-refresh both README tables.
+refresh both MCP tool tables.
 
 ### Adding a lint rule
 
@@ -226,21 +227,22 @@ Rules are a catalog in `modules/core/src/main/scala/com/histmersion/core/Lint.sc
 description)`, wire spelling `--rule dangling-edges`) with the SQL in
 `modules/db/src/main/scala/com/histmersion/db/LintRepo.scala`. Adding one means: the catalog entry, the
 query, a `LintRepoSuite` case, and the count in every description that says "13 rules" — the CLI
-help string, the MCP tool description and `README.md`. `docs/plan.md` §6 lists two prose rules
+help string, the MCP tool description and the docs' reference pages. `docs/plan.md` §6 lists two prose rules
 (`article-filler`, `article-uncited-paragraph`) that the writing guide already names.
 
 ## The writing rules apply to the docs too
 
 `docs/writing-guide.md` governs compiled prose, but its plain-language half — numbers over
 adjectives, no banned filler, no sentence that survives a topic swap, define a term on first use —
-is the house style for `README.md`, `AGENTS.md`, the skills and every tool description.
+is the house style for `README.md`, the documentation site (`docs/user-guide/`), `AGENTS.md`, the skills and every tool description.
 
 ## Before you commit
 
 ```bash
 sbt "testOnly *"                 # bypass the result cache
 sbt cli/nativeImage server/nativeImage
-./tools/gen-cli-docs.sh --check  # README CLI table still matches the binary
+./tools/gen-cli-docs.sh --check  # the docs' CLI table still matches the binary
+just docs-build                  # the documentation site builds, every link checked
 ./tools/check_skills.sh          # skills name only commands and tools that exist
 git status                       # no agent-pid*/ dirs, metadata JSON changes intentional
 ```

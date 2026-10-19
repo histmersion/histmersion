@@ -279,7 +279,7 @@ Both were checked on 2026-10-17 with read-only requests to their JSON endpoints:
 ## Configuration
 
 `media.depicts.*`, `media.met.*`, `media.cleveland.*`, `media.aic.*`, `media.loc.*`, `media.pleiades.*`,
-`media.open-context.*` and `media.samples` — see the README's configuration table. A collection can be switched off with
+`media.open-context.*` and `media.samples` — see the configuration reference (`docs/user-guide/reference/configuration.md`). A collection can be switched off with
 `media.<provider>.enabled = false` (env `HISTMERSION_MEDIA_<PROVIDER>_ENABLED`, `…_OPEN_CONTEXT_…` for
 Open Context); its import then answers with that reason. Each is also a plugin:
 `histmersion.plugins.media-<provider>.enabled = false` (env `HISTMERSION_PLUGIN_MEDIA_<PROVIDER>_ENABLED`)

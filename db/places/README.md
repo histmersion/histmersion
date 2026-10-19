@@ -10,7 +10,7 @@ histmersion search --place anatolia --from -1500 --to -1200
 ```
 
 A server imports this directory by itself on its first start, when the `places` table is empty (the
-bundle ships a copy; see "First-run data" in the main README), and `histmersion init` does the same on
+bundle ships a copy; see "First-run data" in `docs/user-guide/getting-started/install.md`), and `histmersion init` does the same on
 demand — `places seed` is for a checkout, where the CLI reads the files on the host.
 
 Nothing here is generated at run time and nothing needs the network: `fetch.sh` regenerates the
@@ -92,7 +92,7 @@ hand-traced polygons under `polities/` use. `histmersion places import <file>` l
 - **Natural Earth physical features and cities are the plain English names** — "Balkans" (a further
   name of NE's "Balkan Peninsula"), "Black Sea", "Dnieper", "Kraków". They are undated, so they are
   flagged `properties.modern = true`; they exist to be found and to place findings. A view at a time
-  (the time rule, main README) shows a city only from `places.modern-from` (1500) on, and a physical
+  (the time rule, `places.modern-from` in `docs/user-guide/reference/configuration.md`) shows a city only from `places.modern-from` (1500) on, and a physical
   feature (kind `feature`, or a physical `region`) at any time; the map across all time draws neither. A label is NE's own `name`, spelled out ("Balkan Pen." → "Balkan
   Peninsula"); its looser `name_en` is a further name, because the geocoder ranks a label above a
   name and "Levant" must stay the region, not NE's "Levant Coast". 1:10m, clipped to lon −25–150,
