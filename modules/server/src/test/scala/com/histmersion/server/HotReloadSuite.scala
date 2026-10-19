@@ -253,3 +253,28 @@ class HotReloadSuite extends DbSuite:
       assert(again.contains("\"published\":false") && list(again, "restartOnly") == List("histmersion.server.port"), again)
       b.stop()
     }
+
+  test("an AI provider switched off by a reload is out of every chain at once; switched on again, it is back"):
+    write(DbB, "agents.roles.extractor = \"local:zzhot\"\n  agents.prices = \"zzhot=0/0\"")
+    val l   = loaded
+    val gen = Plugins.load(l)
+    supervised {
+      val b   = Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source))).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      val Off = "switched off (histmersion.plugins.ai-local.enabled = false)"
+      val (s0, m0) = get(s"$url/api/agents/models")
+      assertEquals(s0, 200, m0)
+      assert(m0.contains("local:zzhot") && !m0.contains(Off), m0.take(2000))
+      write(DbB, "agents.roles.extractor = \"local:zzhot\"\n  agents.prices = \"zzhot=0/0\"\n  plugins.ai-local.enabled = false")
+      val (_, r) = post(s"$url/api/config/reload")
+      assert(r.contains("\"published\":true"), r)
+      assertEquals(list(r, "plugins"), List("ai-local"), "the one plugin whose block changed")
+      val (_, m1) = get(s"$url/api/agents/models")
+      assert(m1.contains(Off), m1.take(2000))
+      write(DbB, "agents.roles.extractor = \"local:zzhot\"\n  agents.prices = \"zzhot=0/0\"")
+      val (_, r2) = post(s"$url/api/config/reload")
+      assertEquals(list(r2, "plugins"), List("ai-local"))
+      val (_, m2) = get(s"$url/api/agents/models")
+      assert(!m2.contains(Off), m2.take(2000))
+      b.stop()
+    }

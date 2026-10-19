@@ -86,10 +86,15 @@ for id in media-wikidata media-depicts media-met media-cleveland media-aic media
     media-opencontext events-gvp events-noaa events-wikidata; do
   grep -qE "^ *(- )?$id [0-9.]+ — registered" "$data/self-check.out" || fail "--self-check: $id is not registered"
 done
-printf 'histmersion.plugins.arxiv.enabled = false\n' > "$data/fetchers.conf"
+# the built-in AI providers (docs/research-plugins.md §23): registered by default, one switch each
+for p in anthropic openai local claude-code codex opencode; do
+  grep -qF "ai-$p 1.0.0 — registered (ai-provider:$p)" "$data/self-check.out" || fail "--self-check: ai-$p is not registered"
+done
+printf 'histmersion.plugins.arxiv.enabled = false\nhistmersion.plugins.ai-codex.enabled = false\n' > "$data/fetchers.conf"
 HISTMERSION_CONFIG="$data/fetchers.conf" "$b/bin/histmersion-server" --self-check > "$data/fetchers.out" 2>&1 \
   || fail "--self-check with arxiv switched off failed: $(cat "$data/fetchers.out")"
 grep -qF "arxiv 1.0.0 — disabled" "$data/fetchers.out" || fail "--self-check: arxiv is not reported disabled"
+grep -qF "ai-codex 1.0.0 — disabled" "$data/fetchers.out" || fail "--self-check: ai-codex is not reported disabled"
 # one plugin per open-access index (D4): the former oa-index's switch still turns all four off — a
 # successor's own setting wins — with a deprecation warning; oa-core's key is a secret reference
 printf 'histmersion.plugins {\n  oa-index.enabled = false\n  oa-core { enabled = true, api-key = "env:SMOKE_CORE_KEY" }\n}\n' > "$data/legacy.conf"
