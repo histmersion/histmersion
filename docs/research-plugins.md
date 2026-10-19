@@ -2195,3 +2195,118 @@ the tracing agent during a `--self-check`.
    its readers are per vendor and the UI draws each pool. Opening it is a config, schema (`plan_quota_*`
    rows keyed by pool) and UI change whose only user would be a subscription runtime — item 4. A plugin
    provider is metered, and allowances (tokens/USD per rolling window on `<provider>:*`) already cap it.
+
+## 23. As built (AI providers, 2026-10-19)
+
+§22.7's items 1 and 2: the `aiProviders` registry with a turn-level SPI, the adapter that runs a plugin's
+provider in the host's own loop, and today's six providers as built-in, switchable plugins. Items 3–5
+(the built-ins' code moved into plugin-api-only modules, a runtime SPI, plugin plan pools) are not built,
+for §22.7's reasons. No migration; no config key or env variable renamed.
+
+**The SPI (plugin-api, still `Spi.Version` 1)** — `AiProvider.scala`:
+
+| type | shape |
+|---|---|
+| `AiProvider` | `title`, `description`, `capabilities` (`tools` true, `structuredOutput` false), `spendsPersonalPlan` (false), `check(model)`, `models(http)` (`Right(Nil)`), `doctor(online, http)` (`Nil`), `turn(request, http)` |
+| `AiTurnRequest` | `model`, `system`, `messages`, `tools` (offered on THIS call), `answerSchema` (JSON Schema text), `maxTokens`, `iteration`, `maxIterations` |
+| `AiMessage` | `User(text)` · `Assistant(text, toolCalls)` · `ToolResult(callId, tool, output)` |
+| `AiTool` / `AiToolCall` | `name, description, inputSchema` (JSON Schema text) / `id, tool, input` (JSON text) |
+| `AiTurn` | `text`, `toolCalls`, `stop` (`EndTurn · ToolUse · MaxTokens · Other`), `usage: Option[AiUsage]` (`input` counts cached tokens too), `servedBy` |
+| `AiFailure` | `Error(message)` · `LimitReached(message, untilEpochMs)` |
+| `AiHttp` | `post(url, headers, body, timeoutSeconds)`, `get(url, headers, timeoutSeconds)` → `AiHttpResponse(status, body, headers)`; `AiHttp.Offline` |
+
+`PluginContext.aiProviders: Registry[AiProvider]`, refusing by default (a context or plugin written for
+the earlier registries compiles unchanged; tested).
+
+**Model references (core).** `ProviderKind` gained `Plugin(name)`; its `values` are still the six host
+providers (an explicit list: an enum with a parameterised case has none of its own). `ProviderKind.parse`,
+`ModelRef.parse`, `ModelChains.parseChain/parseModels/parseAllowances/parseAllowance` and `Target.parse`
+take `known: Set[String] = Set.empty` — the names plugin providers are registered under. A host name is
+always the host's (a plugin cannot shadow `local`), an unknown one gives today's message ("unknown provider
+'x' in 'x:y' (one of: …)", the plugins' names appended when there are any). The server passes
+`BuiltinAi.known(deps.plugins.registries.aiProviders)` — the pinned generation's — wherever it parses: the
+picker (chains, saved chains, `--model`, allowances, cool-downs), `agent models set`, allowances, `--model-for`,
+`agent compare`'s billing and the managers' model overrides. A plugin provider's model is metered
+(`PlanQuota.poolOf` is `None`, `paid` is true): priced in `agents.prices`, capped by allowances.
+
+**The built-ins (`server/agents/AiPlugins.scala`).** `BuiltinAi.plugins`: `ai-anthropic`, `ai-openai`,
+`ai-local`, `ai-claude-code`, `ai-codex`, `ai-opencode` (the same `Builtin` wrapper as the fetchers, media
+and events), each registering a `HostAiProvider(plugin, kind)` under the provider's name; defaults
+resources `META-INF/histmersion/plugins/ai-<name>.conf` (`enabled = true`, env
+`HISTMERSION_PLUGIN_AI_<NAME>_ENABLED`). They are in `Plugins.providers`, so `Plugins.offline` (a test's
+`Deps`) has them, and in `Plugins.carried`'s independent set (a host-key change never rebuilds them). A
+plugin may not register a host provider's name, even with the built-in switched off (`BuiltinAi.reserved`).
+
+**Resolution.** `LlmClient.factory(rt, providers, http)` — the server's — first does
+`BuiltinAi.lookup(ref.provider, providers())`; `AgentsHandlers.serverWiring(deps)` passes
+`() => deps.plugins.registries.aiProviders`, read at each pick (a run is pinned to its generation, so its
+provider stays the one it started with across a reload). A `HostAiProvider` → `LlmClient.host(rt)`, which
+is the former factory, unchanged; a plugin's → `PluginAiClient.client`; none → "the codex provider is
+switched off (histmersion.plugins.ai-codex.enabled = false)" or "no AI provider 'x' is registered". The
+picker shows that reason for the model as not ready, exactly as a missing key is shown today. A test's
+own factory (`AgentsHandlers(deps, h, factory)`, the scripted clients) is untouched.
+
+**The adapter (`server/agents/PluginAiClient.scala`).** `AgentBuilder[Identity, PluginModel.type](conf =>
+Turns(…))` — sttp-ai's public builder over a custom `AgentBackend` — configured by the same
+`LlmClient.configure` the API providers use, so the loop, the step's tools (the allowlist: a tool the step
+does not offer answers "not found"; tested with a `query` call), the interceptors (each turn is one call:
+the trace, the run budget, the LLM slot, the first-call probe, the allowance guard), the response decoding
+and `max-tokens` are sttp-ai's and the host's. `includeTools = false` on the last iteration reaches the
+provider as an empty tool list. A `LimitReached` is `ModelLimitReached` (the cool-down and the chain's
+next model, as for `claude -p`); an `Error`, an exception or a `null` is an `IOException` (a provider
+error: the run pauses with `provider`). `client` refuses a `spendsPersonalPlan` provider beyond loopback
+and passes the provider's own `check`. `HostAiHttp`: java.net.http, HTTP/1.1, 30 s connect, a per-call
+timeout, `HttpPolicy.userAgent("Histmersion/<v> (agents)")` replacing any User-Agent the plugin sets, and
+errors that carry the exception's message only (never a header); its `HttpClient` is built on the first
+call, so a server that never calls a plugin provider starts no selector thread.
+
+**Doctor.** `AgentDoctor` takes the registry (`registry`, `aiHttp`). A host provider whose plugin is off
+gets a first check `plugin` — fail when a role uses it, else warn — naming the switch; otherwise its
+section is as before. Each plugin provider gets a section: `plugin` (its title), its own `doctor` checks
+(a level that is no `ok`/`warn`/`fail` reads as warn), its free listing online (`models`; the chained
+models present upstream, as for the HTTP providers), and every chained model priced and buildable. Nothing
+the plugin throws ends the report.
+
+**Surfaces.** No new endpoint, tool or command: `--self-check`, `/api/about`, `histmersion about` and the web
+About window list the six (`ai-<name> 1.0.0 — registered (ai-provider:<name>)`) from the plugin report;
+`agent models` and `agent doctor` show plugin providers; `agent models set` accepts their models.
+
+**The test provider (`modules/plugin-fixtures/hello-ai`).** `hello-ai` 0.1.0, compiled against plugin-api
+alone, in a jar of its own (never on the server's class path; `plugin-fixtures.txt` names it for the
+suites). Its answers are scripted in its block (`replies = [{ when, text, tool, input }]`: the first whose
+`when` occurs in the step's answer schema; a `tool` is called once first when offered); the model `limited`
+reports its plan's limit; `broken` fails its `check`; an optional `token` secret shows credentials arrive
+as references. It opens no socket.
+
+**Tests.** `AiProviderSpiSuite` (plugin-api: defaults, a turn, the offline client, a pre-AI context refusing
+the registry, SPI 1); `AgentsSuite`/`ModelChainsSuite` (+4, core: a plugin name parses only when known, a
+host name stays the host's, the message lists the plugin names, a plugin model is metered; chains,
+allowances and targets with `known`); `AiProvidersSuite` (server, 12, no DB: the six registered and
+switched off by file and by env, a plugin's provider beside them, host names refused also with the built-in
+off, the reload carry rule, the factory — every host provider resolves exactly as `LlmClient.host`, a
+switched-off one names its switch, a plugin's check and the loopback rule, an unregistered one — and the
+host's loop over a plugin's turns: the host's tool run, the answer decoded, usage summed over turns, what
+the provider was told, a disallowed tool not run, no tools on the last iteration, an interceptor per turn,
+the four failure kinds); `PluginAiRunSuite` (DB: the jar discovered and registered with its secret
+resolved, the report holding the reference only; `enrich-source` end to end on `hello-ai:echo` through the
+server's own factory — classify with a `facets` call in the host, findings, notes, the source written, the
+served model recorded; `hello-ai:limited > hello-ai:echo` moving on and cooling `limited`; `agent models`,
+the doctor section with the token never shown, `models set` accepted, then refused — and the saved chain no
+longer readable — once the plugin is off); `HotReloadSuite` (+1: a reload switching `ai-local` off rebuilds
+that plugin alone and `local:*` is out of the chain at once; switched on again, back);
+`ProviderPluginsSuite` counts the six. `smoke.sh` checks the six registered in the native binary's
+`--self-check` and `ai-codex` reported disabled when switched off.
+
+**Native image.** The six defaults resources were recorded by the tracing agent (pinned 25.0.1-graalce, a
+`--self-check` with `ai-opencode` off, temporary config and data directory); the same run added config-reader
+lazy-val fields (`AgentAutopilotConfig$`, `AutoApprovalsConfig$`, and later-numbered fields of others) that
+the previous recording had missed. A plugin provider's path (the adapter, `HostAiHttp`) is reflection-free
+Scala over classes the image already holds; it runs natively only in a relinked binary, as any plugin's code.
+
+**What changes on deploy.** Nothing a user has to do. Six more plugins in every report; `agent doctor`
+unchanged unless a provider is switched off. Registration order in reports is by plugin id, as for the
+other built-ins (`ai-…` sort first).
+
+**Not done.** A provider-run loop for third-party CLIs, plugin plan pools and moving the built-ins out of
+the server (§22.7); a run that is mid-step during a reload is pinned by §17's mechanism (HotGraphSuite
+covers the pin; no agents-on test server exists, §17 "Not done"), not by a test of its own.

@@ -22,6 +22,7 @@ cli   ── a PURE HTTP CLIENT of the server.                                  
 plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
 plugin-fixtures/hello ─ a TEST plugin jar (relink tests, smoke.sh); never on the server's class path
+plugin-fixtures/hello-ai ─ a TEST AI-provider plugin jar (scripted, no network; the AI-provider suites)
 ```
 
 A plugin — first-party or not — compiles against `plugin-api` alone and never sees `core`, `db` or
@@ -30,7 +31,9 @@ A plugin — first-party or not — compiles against `plugin-api` alone and neve
 (`server/acquire/fetchers`: `archive-org`, `oa-unpaywall`, `oa-core`, `oa-openalex`, `oa-landing`, `pmc`,
 `arxiv`; the former `oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`): they are host code
 over the `acquire.*` settings, supplied to `PluginHost` by `server/plugins/Plugins.builtins` instead of
-ServiceLoader, and registered, ordered and reported like any other plugin (§16).
+ServiceLoader, and registered, ordered and reported like any other plugin (§16). The media collections,
+event catalogues and AI providers (`server/agents/AiPlugins`: `ai-anthropic` … `ai-opencode`, over
+`agents.providers.*`, §23) are built in the same way.
 
 A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit
 (`server/relinkKit`: the Sloth-patched class path and `serverNativeOpts`, the ONE list of native-image
