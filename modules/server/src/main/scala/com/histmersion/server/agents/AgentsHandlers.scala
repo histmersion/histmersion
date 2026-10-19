@@ -50,6 +50,10 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     * forward reference to [[managing]] is safe). */
   val approvals: Approvals = Approvals(h, ds, cfg, p => managing.applyProposal(p))
 
+  /** The watchers' ingest backlog: the legal open-access picks past a day's allowance, ingested on later
+    * days (the sweep parks them, the managers' tick drains them). */
+  val oaBacklog: OaBacklog = OaBacklog(ds, cfg, h, () => upstream, this)
+
   /** The run pool. Constructed here, started by [[start]] (from `Main`, after the OCR pool). */
   val engine: Engine = Engine(ds, cfg, this, Map(
     Pipeline.EnrichSource     -> EnrichSourcePipeline(h, ds, cfg, () => upstream, approvals),
@@ -58,7 +62,7 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     Pipeline.CompileArticle   -> CompileArticlePipeline(h, ds, cfg,
                                    (req, parent) => startRunAs(req, Origin.Run, Some(parent))),
     Pipeline.CurrencyCheck    -> CurrencyCheckPipeline(h, ds, cfg, () => upstream, approvals),
-    Pipeline.AcquisitionSweep -> AcquisitionSweepPipeline(h, ds, cfg, () => upstream),
+    Pipeline.AcquisitionSweep -> AcquisitionSweepPipeline(h, ds, cfg, () => upstream, oaBacklog),
     Pipeline.InferFilter      -> InferFilterPipeline(h, ds, cfg),
     Pipeline.ProposeArticles  -> ProposeArticlesPipeline(h, ds, cfg),
     Pipeline.HintEffect       -> HintEffectPipeline(h, ds, cfg)))

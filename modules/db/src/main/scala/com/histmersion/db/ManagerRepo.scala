@@ -391,16 +391,18 @@ object ManagerRepo:
                  FROM agent_managers m ORDER BY m.id""", Param.S(PlanGoalItem)).frag.query[Light].run().toList
 
   /** Per manager: its open items (pending, held, active), the items it settled since `since`, and when
-    * it last recorded an event. */
+    * it last recorded an event. A watcher's ingest backlog is not counted: it drains by the day's ingest
+    * caps, not at the pace of its runs (it has its own estimate, [[com.histmersion.core.IngestBacklog.daysToDrain]]). */
   def pace(ds: DataSource, since: java.time.Instant): Map[String, (Int, Int, Option[String])] =
     val t = since.toString
     connect(ds):
       Sql.of(s"""SELECT m.id,
-                        (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.status IN ('pending', 'held', 'active')),
-                        (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id
+                        (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.kind <> ?
+                           AND i.status IN ('pending', 'held', 'active')),
+                        (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.kind <> ?
                            AND i.status IN ('done', 'stopped', 'failed') AND i.updated_at >= ?::timestamptz),
                         (SELECT ${at("max(e.at)")} FROM manager_events e WHERE e.manager_id = m.id)
-                 FROM agent_managers m""", Param.S(t))
+                 FROM agent_managers m""", Param.S(OaIngest), Param.S(OaIngest), Param.S(t))
         .frag.query[(String, Int, Int, Option[String])].run().toList.map((id, o, d, l) => id -> (o, d, l)).toMap
 
   /** Open items of `kind` in manager `id` (pending, held or active) — e.g. a goal's compiles. */
@@ -435,6 +437,97 @@ object ManagerRepo:
     val r = ref.trim
     val doi = r.toLowerCase.stripPrefix("https://doi.org/").stripPrefix("doi:")
     connect(ds)(sql"""SELECT 1 FROM sources WHERE citekey = $r OR lower(doi) = $doi LIMIT 1""".query[Int].run().nonEmpty)
+
+  // ── the watchers' ingest backlog (`oa-ingest` items) ───────────────────────────────────────────
+
+  /** Every pending backlog item of an ACTIVE watcher, the most urgent first (priority, then the oldest). */
+  def backlogPending(ds: DataSource): List[ManagerItem] =
+    connect(ds)((itemSelect ++ Sql.of(
+      """ WHERE kind = ? AND status = 'pending'
+            AND manager_id IN (SELECT id FROM agent_managers WHERE kind = 'watch' AND state = 'active')
+          ORDER BY priority DESC, id""", Param.S(OaIngest))).frag.query[ItemRow].run().toList.map(toItem))
+
+  /** The open (pending, held, active) backlog items of every watcher — the dedupe across watchers. */
+  def backlogOpen(ds: DataSource): List[ManagerItem] =
+    connect(ds)((itemSelect ++ Sql.of(" WHERE kind = ? AND status IN ('pending', 'held', 'active') ORDER BY id",
+      Param.S(OaIngest))).frag.query[ItemRow].run().toList.map(toItem))
+
+  /** The open backlog item of any watcher for this DOI, if one exists (the oldest). */
+  def backlogOpenFor(ds: DataSource, doi: String): Option[ManagerItem] =
+    connect(ds)((itemSelect ++ Sql.of(" WHERE kind = ? AND target = ? AND status IN ('pending', 'held', 'active') ORDER BY id LIMIT 1",
+      Param.S(OaIngest), Param.S(doi))).frag.query[ItemRow].run().headOption.map(toItem))
+
+  /** Per watcher: its backlog items by status (pending, held) — what the status lines count. */
+  def backlogCounts(ds: DataSource): Map[String, (Int, Int)] =
+    connect(ds):
+      sql"""SELECT manager_id, count(*) FILTER (WHERE status = 'pending')::int, count(*) FILTER (WHERE status = 'held')::int
+            FROM manager_items WHERE kind = $OaIngest AND status IN ('pending', 'held') GROUP BY manager_id"""
+        .query[(String, Int, Int)].run().toList.map((m, p, h) => m -> (p, h)).toMap
+
+  /** Per manager: its events of `kind` since `since` (every watcher's ingests today, in one query). */
+  def countEventsBy(ds: DataSource, kind: String, since: java.time.Instant): Map[String, Int] =
+    val at = since.toString
+    connect(ds)(sql"""SELECT manager_id, count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz
+                      GROUP BY manager_id""".query[(String, Int)].run().toMap)
+
+  /** An item's state replaced (a backlog entry gained a goal); a CAS on the statuses it may be in. */
+  def setItemState(ds: DataSource, itemId: Long, state: ItemState, from: List[ItemStatus]): Boolean =
+    val fs = from.map(_.wire)
+    transact(ds):
+      sql"""UPDATE manager_items SET state = $state::jsonb, updated_at = now()
+            WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
+
+  /** A pending backlog item tried again later: one more failure, not before `notBefore`, why. */
+  def backlogRetry(ds: DataSource, itemId: Long, failures: Int, notBefore: java.time.Instant, outcome: String): Boolean =
+    val nb = notBefore.toString
+    transact(ds):
+      sql"""UPDATE manager_items SET failures = $failures, attempts = attempts + 1, not_before = $nb::timestamptz,
+                                     outcome = $outcome, updated_at = now()
+            WHERE id = $itemId AND status = 'pending'""".update.run() > 0
+
+  /** The citekey of the source holding this DOI, if one does. */
+  def citekeyOfDoi(ds: DataSource, doi: String): Option[String] =
+    val d = doi.trim.toLowerCase
+    connect(ds)(sql"SELECT citekey FROM sources WHERE lower(doi) = $d ORDER BY citekey LIMIT 1".query[String].run().headOption)
+
+  /** One open acquisition item a WATCHER'S SWEEP created, found by structure, not by its wording: an
+    * `acquisition-sweep` run dispatched by a watcher (`jobs.manager_id`) picked the DOI (its `rank`
+    * step's checked answer), the item was created while that run's `queue` step ran (the only step that
+    * adds acquisition items), and the run linked it to its goal by that DOI (`goal_links` kind
+    * `queue-item`, note = the DOI). A person's item, a plan's, a currency check's match none of the three.
+    * `isOa` = the ranking marked the work open access. */
+  final case class SweepAcquireItem(item: Int, text: String, topic: Option[String], goal: String, managerId: String,
+      job: String, doi: String, isOa: Boolean, title: Option[String], year: Option[Int], authors: List[String],
+      venue: Option[String], why: Option[String])
+  private given DbCodec[SweepAcquireItem] = DbCodec.derived
+
+  def sweepAcquireItems(ds: DataSource): List[SweepAcquireItem] =
+    connect(ds):
+      sql"""WITH picks AS (
+              SELECT j.id AS job, j.target_id AS goal, j.manager_id, lower(p->'candidate'->>'doi') AS doi,
+                     coalesce((p->'candidate'->>'isOa')::boolean, false) AS oa, p->'candidate'->>'title' AS title,
+                     (p->'candidate'->>'year')::int AS year,
+                     ARRAY(SELECT jsonb_array_elements_text(coalesce(p->'candidate'->'authors', '[]'::jsonb))) AS authors,
+                     p->'candidate'->>'venue' AS venue, p->>'why' AS why
+              FROM jobs j
+              JOIN agent_steps s ON s.job_id = j.id AND s.name = 'rank' AND s.status = 'done'
+              CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(s.output) = 'array' THEN s.output
+                                                            ELSE '[]'::jsonb END) p
+              WHERE j.kind = $JobKind AND j.pipeline = 'acquisition-sweep' AND j.manager_id LIKE 'watch:%')
+            SELECT DISTINCT ON (q.id, p.goal) q.id, q.text, q.topic, p.goal, p.manager_id, p.job, p.doi, p.oa, p.title,
+                   p.year, p.authors, p.venue, p.why
+            FROM queue_items q
+            JOIN goal_links gl ON gl.kind = 'queue-item' AND gl.ref = q.id::text
+            JOIN picks p ON p.goal = gl.goal_slug AND lower(gl.note) = p.doi
+            JOIN agent_steps qs ON qs.job_id = p.job AND qs.name = 'queue' AND qs.finished_at IS NOT NULL
+                               AND q.created_at BETWEEN qs.started_at - interval '2 seconds'
+                                                    AND qs.finished_at + interval '2 seconds'
+            WHERE q.list = 'acquire' AND q.status = 'open'
+            ORDER BY q.id, p.goal, p.oa DESC, p.job""".query[SweepAcquireItem].run().toList
+
+  /** How many acquisition items are open. */
+  def openAcquireCount(ds: DataSource): Int =
+    connect(ds)(sql"SELECT count(*)::int FROM queue_items WHERE list = 'acquire' AND status = 'open'".query[Int].run().head)
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 

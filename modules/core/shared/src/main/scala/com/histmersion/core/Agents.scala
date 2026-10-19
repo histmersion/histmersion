@@ -404,7 +404,12 @@ object Agents:
       hint: Option[Long] = None,
       /** plan-goal: at most this many sub-goals (None = `agents.plan.max-sub-goals`); the autopilot gives
         * 0 to a goal at `agents.approvals.auto.max-goal-depth`. */
-      subGoals: Option[Int] = None) derives KindlingsCodecAsObject:
+      subGoals: Option[Int] = None,
+      /** acquisition-sweep from a watcher with auto-ingest on: the legal open-access picks past
+        * `autoIngest` wait in the watcher's ingest backlog (ingested on a later day, within the caps)
+        * instead of going to the acquisition list — which keeps only the works with no legal copy. Set at
+        * dispatch; a run dispatched before it existed keeps its old steps. */
+      oaBacklog: Option[Boolean] = None) derives KindlingsCodecAsObject:
     def fixes: Boolean = fix.contains(true)
     def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)

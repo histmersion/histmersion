@@ -39,17 +39,67 @@ object Autopilot:
 
   /** `GET /api/agents/autopilot`. `since`/`by` = when and by whom it was last switched; `changes` = what
     * the switch just did (an on/off answer only); `ingestedToday` / `ingestCap` = the legal open-access
-    * ingests of all watchers today and their shared cap (0 = none); the last housekeeping runs. */
+    * ingests of all watchers today and their shared cap (0 = none); `backlog` / `backlogDays` = the legal
+    * open-access works waiting in the watchers' ingest backlogs and the days they take to drain at the
+    * current allowance (0 = today; None = they do not drain); the last housekeeping runs. */
   final case class AutopilotStatus(on: Boolean, since: Option[String] = None, by: Option[String] = None,
       agentsEnabled: Boolean = false, managersEnabled: Boolean = false, cronsEnabled: Boolean = true, approvals: List[ApprovalRule] = Nil,
       ingestedToday: Int = 0, ingestCap: Int = 0, maxConcurrentRuns: Int = 0, lastBackup: Option[String] = None,
       lastLint: Option[String] = None, library: List[ManagerBrief] = Nil, goals: List[GoalProgress] = Nil,
-      changes: List[String] = Nil) derives KindlingsCodecAsObject
+      changes: List[String] = Nil, backlog: Int = 0, backlogDays: Option[Int] = None) derives KindlingsCodecAsObject
   object AutopilotStatus:
     given Schema[AutopilotStatus] = KindlingsSchema.derived[AutopilotStatus].schema
     /** What the status says while `agents.scheduler.enabled` is false. */
     val CronsOff = "the managers' crons are off (agents.scheduler.enabled = false, HISTMERSION_AGENTS_SCHEDULER): " +
       "each watcher sweeps once and never again, and no seeding manager proposes again — new sources are not looked for"
+
+/** `POST /api/agents/autopilot/repair-acquire` and what it did: the one-shot repair of the acquisition
+  * list (docs/research-process-managers.md "As built: the ingest backlog"). */
+object RepairAcquire:
+
+  /** `dryRun` = list what it would do and change nothing; `by` = who asked. */
+  final case class RepairRequest(dryRun: Boolean = false, by: Option[String] = None) derives KindlingsCodecAsObject
+  object RepairRequest:
+    given Schema[RepairRequest] = KindlingsSchema.derived[RepairRequest].schema
+
+  /** One acquisition item a watcher's sweep created: `move` (a legal open-access work: into the watcher's
+    * ingest backlog, item `backlogItem`, and the acquisition item removed), `remove` (in the corpus
+    * already: the acquisition item removed), `keep` (why it stays on the list). */
+  final case class RepairRow(item: Int, doi: String, goals: List[String] = Nil, watcher: String = "", action: String = "",
+      detail: String = "", backlogItem: Option[Long] = None) derives KindlingsCodecAsObject
+  object RepairRow:
+    given Schema[RepairRow] = KindlingsSchema.derived[RepairRow].schema
+
+  /** What it did (a dry run: would do). `untouched` = the open acquisition items NOT created by a
+    * watcher's sweep (a person's, a plan's, a currency check's): never changed. `backlog` / `backlogDays`
+    * = the ingest backlog afterwards and the days to drain it at the current allowance. */
+  final case class RepairResult(dryRun: Boolean, moved: Int = 0, removed: Int = 0, kept: Int = 0, untouched: Int = 0,
+      rows: List[RepairRow] = Nil, backlog: Int = 0, backlogDays: Option[Int] = None) derives KindlingsCodecAsObject
+  object RepairResult:
+    given Schema[RepairResult] = KindlingsSchema.derived[RepairResult].schema
+
+  val Move   = "move"
+  val Remove = "remove"
+  val Keep   = "keep"
+
+  def markdown(r: RepairResult): String =
+    val verb = if r.dryRun then "would " else ""
+    val head = s"# Repair of the acquisition list${if r.dryRun then " (dry run: nothing changed)" else ""}\n\n" +
+      s"- ${verb}move ${Plural.count(r.moved, "legal open-access work")} into the watchers' ingest backlogs\n" +
+      s"- ${verb}remove ${Plural.count(r.removed, "item")} already in the corpus\n" +
+      s"- keep ${Plural.count(r.kept, "sweep item")} on the list (no legal open-access copy known, or a watcher that does not ingest)\n" +
+      s"- ${Plural.count(r.untouched, "open acquisition item")} not created by a watcher's sweep: untouched\n" +
+      s"- ${ManagersMarkdown.backlog(r.backlog, r.backlogDays)}"
+    val rows = r.rows.map { row =>
+      val what = row.action match
+        case Move   => s"${verb}move to ${row.watcher}" + row.backlogItem.fold("")(i => s" (backlog item #$i)")
+        case Remove => s"${verb}remove"
+        case _      => "keep"
+      s"- #${row.item} https://doi.org/${row.doi} · goal ${row.goals.mkString(", ")} · $what" +
+        (if row.detail.nonEmpty then s": ${row.detail}" else "")
+    }
+    if rows.isEmpty then head + "\n\n_No acquisition item created by a watcher's sweep is open._"
+    else head + "\n\n## Items\n\n" + rows.mkString("\n")
 
 /** The autopilot as Markdown — every surface (CLI, MCP) prints this. Pure. */
 object AutopilotMarkdown:
@@ -77,6 +127,7 @@ object AutopilotMarkdown:
     val facts = List(
       s"- approvals: ${if rules.isEmpty then "a person's" else rules}",
       s"- legal open-access ingests today: ${s.ingestedToday}${if s.ingestCap > 0 then s" of ${s.ingestCap} (all watchers)" else ""}",
+      s"- ${ManagersMarkdown.backlog(s.backlog, s.backlogDays)}",
       s"- runs at once: at most ${s.maxConcurrentRuns} (agents.max-concurrent-runs)",
       s"- last backup: ${s.lastBackup.getOrElse("never by the autopilot")} · last lint --fix: ${s.lastLint.getOrElse("never by the autopilot")}",
       s"- library: ${if s.library.isEmpty then "no review or enrich manager" else s.library.map(brief).mkString("; ")}")

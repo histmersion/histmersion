@@ -27,14 +27,19 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
 
   private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
 
-  /** The settings in effect: the saved config over the server's defaults for its kind. */
-  private def withEffective(m: ManagerInfo): ManagerInfo =
-    m.copy(effective = ReviewSettings.defaultsFor(kindOf(m), mcfg, cfg.seed).merge(m.config))
+  /** The settings in effect: the saved config over the server's defaults for its kind; a watcher's ingest
+    * backlog and the days it takes to drain (`backlog` = one snapshot for every manager listed). */
+  private def withEffective(m: ManagerInfo, backlog: => OaBacklog.Snapshot): ManagerInfo =
+    val e = m.copy(effective = ReviewSettings.defaultsFor(kindOf(m), mcfg, cfg.seed).merge(m.config))
+    if kindOf(m) != Kind.Watch then e
+    else backlog.perManager.get(m.id).fold(e)((n, days) => e.copy(backlog = n, backlogDays = days))
 
   private def manager(id: String): Either[ApiError, ManagerInfo] =
-    ManagerRepo.get(ds, id.trim).map(withEffective).toRight(notFound(s"No manager '$id'"))
+    ManagerRepo.get(ds, id.trim).map(m => withEffective(m, agents.oaBacklog.snapshot())).toRight(notFound(s"No manager '$id'"))
 
-  def list: List[ManagerInfo] = ManagerRepo.list(ds).map(withEffective)
+  def list: List[ManagerInfo] =
+    lazy val snap = agents.oaBacklog.snapshot()
+    ManagerRepo.list(ds).map(withEffective(_, snap))
 
   def get(id: String): Either[ApiError, ManagerDetail] =
     manager(id).map { m =>
@@ -202,6 +207,7 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
         h.getGoal(g).map(_.slug).flatMap(s => Either.cond(m.goal.forall(_ == s), s,
           ApiError(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")))
       case ArticleCompile => Left(ApiError(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
+      case OaIngest => Acquire.normalizeDoi(raw).toRight(ApiError(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)"))
       case AcquisitionSweep | CurrencyCheck =>
         val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
         h.getGoal(g).map(_.slug).flatMap(s => Either.cond(m.goal.forall(_ == s), s,
@@ -530,6 +536,11 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
 
   /** `GET /api/agents/autopilot` — readable with agents off. */
   def autopilot: Autopilot.AutopilotStatus = agents.autopilot.status()
+
+  /** `POST /api/agents/autopilot/repair-acquire {dryRun}` — the one-shot repair of the acquisition list
+    * ([[OaBacklog.repair]]); readable and runnable with agents off (nothing is ingested until they are on). */
+  def repairAcquire(in: RepairAcquire.RepairRequest): Either[ApiError, RepairAcquire.RepairResult] =
+    Right(agents.oaBacklog.repair(in))
 
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
   def setAutopilot(in: Autopilot.AutopilotSet): Either[ApiError, Autopilot.AutopilotStatus] =

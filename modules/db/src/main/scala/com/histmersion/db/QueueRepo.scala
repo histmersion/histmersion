@@ -45,6 +45,17 @@ object QueueRepo:
       val refs = ids.distinct.map(_.toString)
       connect(ds)(sql"SELECT $Cols FROM queue_items WHERE id::text = ANY($refs::text[]) ORDER BY id".query[QueueItem].run())
 
+  /** The acquisition items (any status) whose text names `doi`, by id — the lookup a sweep's dedupe and
+    * the ingest backlog make right before adding one (a sweep's snapshot of the list can be minutes old,
+    * and another watcher's sweep may have added it since). */
+  def acquireNaming(ds: DataSource, doi: String): Vector[QueueItem] =
+    val d = doi.trim.toLowerCase
+    if d.isEmpty then Vector.empty
+    else
+      connect(ds)(sql"""SELECT $Cols FROM queue_items WHERE list = ${Kind.Acquire.label} AND strpos(lower(text), $d) > 0
+                        ORDER BY id""".query[QueueItem].run())
+        .filter(i => Scheduling.dois(i.text).contains(d))
+
   /** Insert one row. `createdAt` (an ISO instant) is honoured when given — an imported LOG entry
     * keeps the date from its heading, which is what orders the exported file. */
   def add(ds: DataSource, kind: Kind, in: QueueAdd): QueueItem =

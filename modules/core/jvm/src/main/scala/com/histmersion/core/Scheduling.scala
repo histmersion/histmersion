@@ -105,6 +105,17 @@ object Scheduling:
       if done.size >= allowed then done else ingest(p).fold(done)(b => done :+ (p -> b))
     }.toList
 
+  /** [[ingestPicks]] when the misses matter (a watcher with an ingest backlog): the same order and cap,
+    * and what was offered and FAILED, with why — a work with no legal file goes to the acquisition list,
+    * any other failure back to the backlog. The open-access picks never offered are the caller's: they
+    * wait in the backlog. */
+  def ingestOa[A, B](picks: List[A], isOa: A => Boolean, allowed: Int)(ingest: A => Either[String, B]): (List[(A, B)], List[(A, String)]) =
+    val (done, failed) = picks.filter(isOa).foldLeft((Vector.empty[(A, B)], Vector.empty[(A, String)])) { case ((ok, ko), p) =>
+      if ok.size >= allowed then (ok, ko)
+      else ingest(p).fold(why => (ok, ko :+ (p -> why)), b => (ok :+ (p -> b), ko))
+    }
+    (done.toList, failed.toList)
+
   /** The acquisition item a picked candidate becomes (the DOI as a resolver URL, so [[dois]] finds it). */
   def acquireText(c: Candidate, goal: String, why: String): String =
     val who  = c.authors.headOption.map(a => if c.authors.size > 1 then s"$a et al." else a)

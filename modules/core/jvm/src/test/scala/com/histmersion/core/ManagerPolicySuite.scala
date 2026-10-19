@@ -266,8 +266,10 @@ class ManagerPolicySuite extends munit.FunSuite:
     SimpleManagerConfig(4), SimpleManagerConfig(1), watch)
 
   test("watcher: its item kinds and words, its sweeps (none named = both), its settings and defaults"):
-    assertEquals(itemKinds(Kind.Watch), List(AcquisitionSweep, CurrencyCheck))
+    assertEquals(itemKinds(Kind.Watch), List(AcquisitionSweep, CurrencyCheck, OaIngest))
     assertEquals(itemKindOf(Kind.Watch, ""), Some(AcquisitionSweep))
+    assertEquals(itemKindOf(Kind.Watch, "backlog"), Some(OaIngest))
+    assertEquals(itemKindOf(Kind.Review, "ingest"), None)
     assertEquals(itemKindOf(Kind.Watch, "currency"), Some(CurrencyCheck))
     assertEquals(itemKindOf(Kind.Watch, "review"), None)
     assertEquals(watchId(" tin "), "watch:tin")

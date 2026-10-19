@@ -29,6 +29,10 @@ import javax.sql.DataSource
   *     is open, never when a role's chain is starved or a day's or month's spend reached its cap;
   *  5. the status line, and an event for every change.
   *
+  * Between 2 and 3 the watchers' INGEST BACKLOG drains ([[OaBacklog.drain]]): a few of the legal
+  * open-access works that waited for a day's allowance are ingested — before any new sweep, which gets only
+  * what the backlog leaves of the allowance.
+  *
   * Four kinds run: `review` (library-wide: article-review, infer-filter and article-extend items),
   * `enrich` (library-wide: source-enrich items — what `agents.auto-enrich` feeds), `seed:<goal>`
   * (propose-articles, then one article-compile item per article a person approved; a compiled article
@@ -117,6 +121,8 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
         guarded(m.id, out)(evaluate(m, now, out))
         guarded(m.id, out)(releaseHolds(m, now, out))
       }
+      // the watchers' ingest backlog, before any sweep is dispatched (a sweep gets what it leaves)
+      out ++= guarded("ingest-backlog", out)(agents.oaBacklog.drain(now))
       // the ones that may start runs, refilled, then dispatched round-robin over the global room
       val live = ManagerRepo.list(ds).filter(m => State.parse(m.state).contains(State.Active) &&
         Kind.parse(m.kind).exists(Running))
@@ -592,7 +598,8 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
     val room   = math.max(0, cfg.maxConcurrentRuns - AgentRepo.active(ds))
     val plans = ms.map { m =>
       val s       = settings(m)
-      val pending = ManagerRepo.pending(ds, m.id)
+      // the ingest backlog is not dispatched as runs: the drain ingests it
+      val pending = ManagerRepo.pending(ds, m.id).filterNot(_.kind == OaIngest)
       val due     = ManagerPolicy.order(pending.map(i => Candidate(i.id, i.target, i.priority,
         i.notBefore.flatMap(ManagerPolicy.parseInstant)))).filter(ManagerPolicy.due(_, now))
       val needs   = due.flatMap(c => pending.find(_.id == c.id)).map(i => ManagerSupervisor.pipelineOf(i.kind)).distinct
@@ -742,16 +749,23 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
           case Left(_) => settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
           case Right(g) =>
             val sweep   = item.kind == AcquisitionSweep
+            val autoOn  = sweep && m.config.autoIngest.contains(true)
             val own     = if sweep then ManagerPolicy.ingestAllowance(m.config, mcfg,
                             ManagerRepo.countEvents(ds, m.id, Feed.Ingested, ManagerPolicy.dayStart(now))) else 0
             // the autopilot's cap shared by every watcher (none while it is off)
-            val shared  = if own > 0 then agents.autopilot.sharedIngestLeft(now) else None
-            val allowed = shared.fold(own)(math.min(own, _))
-            val auto    = if !sweep then "" else if m.config.autoIngest.contains(true) then
+            val shared  = if autoOn then agents.autopilot.sharedIngestLeft(now) else None
+            // the ingest backlog drains first: a sweep's new finds get what it leaves of the allowance
+            val (mine, all) = if autoOn then agents.oaBacklog.reserved(m.id) else (0, 0)
+            val allowed = if autoOn then IngestBacklog.sweepAllowance(own, shared, mine, all) else 0
+            val auto    = if !sweep then "" else if autoOn then
                             s"; auto-ingest of legal open access: ${Plural.count(allowed, "work")} left today" +
-                              shared.fold("")(n => s" (all watchers: $n left)") else "; auto-ingest off"
+                              shared.fold("")(n => s" (all watchers: $n left)") +
+                              (if all > 0 then s"; ${Plural.count(all, "work")} wait in the ingest backlog first" +
+                                (if mine > 0 then s" ($mine of them its own)" else "") else "") +
+                              "; the open-access picks past it wait in the backlog" else "; auto-ingest off"
             start(m, item, RunRequest(ManagerSupervisor.pipelineOf(item.kind).wire, g.slug, budgetUsd = m.config.budgetUsd),
-              p => if allowed > 0 then p.copy(autoIngest = Some(allowed)) else p, item.state, s"${item.kind}$auto", out)
+              p => if autoOn then p.copy(autoIngest = Option.when(allowed > 0)(allowed), oaBacklog = Some(true)) else p,
+              item.state, s"${item.kind}$auto", out)
       case other => settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
 
   /** Create, mark and submit one run: ONE transaction (the run row, the item's compare-and-set, the hints
@@ -833,7 +847,7 @@ object ManagerSupervisor:
     case _                              => Pipeline.ReviewArticle
 
   /** The roles a manager of kind `k` runs (what its `models` setting may name). */
-  def roles(k: Kind): List[Role] = itemKinds(k).map(pipelineOf).flatMap(_.roles).distinct
+  def roles(k: Kind): List[Role] = itemKinds(k).filterNot(_ == OaIngest).map(pipelineOf).flatMap(_.roles).distinct
 
   /** What a manager of kind `k` does, for its created-paused event. */
   def purpose(k: Kind): String = k match

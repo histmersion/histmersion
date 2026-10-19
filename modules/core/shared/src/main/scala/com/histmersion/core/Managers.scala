@@ -104,13 +104,18 @@ object Managers:
   /** The seeding manager's first item for a goal with no plan (the autopilot): a `plan-goal` run —
     * sub-goals, queries and works — before its articles are proposed (target: the goal). */
   val PlanGoalItem     = "plan-goal"
+  /** The watcher's INGEST BACKLOG: one legal open-access work its sweep picked past the day's ingest
+    * allowance (target: its DOI, state: [[OaWork]]). Not a run: the supervisor ingests it through the
+    * legal chain on a later day, within the caps, the oldest (highest priority) first; one with no legal
+    * file goes to the acquisition list then. */
+  val OaIngest         = "oa-ingest"
 
   /** The item kinds a manager of kind `k` drives (its first is its default). */
   def itemKinds(k: Kind): List[String] = k match
     case Kind.Review => List(ArticleReview, InferFilter, ArticleExtend)
     case Kind.Enrich => List(SourceEnrich)
     case Kind.Seed   => List(ProposeArticles, ArticleCompile, PlanGoalItem)
-    case Kind.Watch  => List(AcquisitionSweep, CurrencyCheck)
+    case Kind.Watch  => List(AcquisitionSweep, CurrencyCheck, OaIngest)
 
   /** The item kind a person's word names (`review`, `extend`, `enrich`, `propose`, `compile`, or the
     * item kind itself), among those of manager kind `k`; blank = its default. */
@@ -129,6 +134,7 @@ object Managers:
         case "sweep" | "acquisition"    => AcquisitionSweep
         case "currency"                 => CurrencyCheck
         case "plan-goal" | "goal-plan"  => PlanGoalItem
+        case "ingest" | "backlog"       => OaIngest
         case other                      => other
       Option(alias).filter(kinds.contains)
 
@@ -211,7 +217,8 @@ object Managers:
       /** watch: what it sweeps — `acquisition`, `currency` (None = both). */
       sweeps: Option[List[String]] = None,
       /** watch: ingest the legal open-access works its acquisition sweep picks (OPT-IN, default off; the
-        * legal chain only); off — or past the daily cap — they go to the acquisition list. */
+        * legal chain only); past the daily cap they wait in its ingest backlog (`oa-ingest` items) for a
+        * later day; off, they go to the acquisition list. */
       autoIngest: Option[Boolean] = None,
       /** watch: at most this many such ingests per UTC day. */
       autoIngestPerDay: Option[Int] = None,
@@ -344,7 +351,12 @@ object Managers:
       /** What its runs spent this UTC day: metered USD (what `dailyUsd` caps; a plan-billed call costs 0)
         * and tokens (every call's, plan-billed ones too). */
       spentTodayUsd: Double = 0,
-      tokensToday: Long = 0
+      tokensToday: Long = 0,
+      /** A watcher's ingest backlog: the legal open-access works waiting for a day's allowance (pending
+        * or held `oa-ingest` items), and the days it takes to drain at the current allowance (0 = today;
+        * None = it does not drain: auto-ingest off, a cap of 0, or the manager not active). */
+      backlog: Int = 0,
+      backlogDays: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object ManagerInfo:
     given Schema[ManagerInfo] = KindlingsSchema.derived[ManagerInfo].schema
@@ -372,10 +384,22 @@ object Managers:
     * compile item's approved `spec`; and the sources a review item's article filter returned when its
     * review converged (`filterHits` — more now makes it stale). */
   final case class ItemState(history: List[RunMark] = Nil, before: Option[Int] = None, reopened: Int = 0,
-      pairsBefore: Option[Int] = None, spec: Option[ArticleSpec] = None, filterHits: Option[Int] = None)
+      pairsBefore: Option[Int] = None, spec: Option[ArticleSpec] = None, filterHits: Option[Int] = None,
+      oa: Option[OaWork] = None)
       derives KindlingsCodecAsObject
   object ItemState:
     given Schema[ItemState] = KindlingsSchema.derived[ItemState].schema
+
+  /** A legal open-access work waiting in a watcher's ingest backlog (an `oa-ingest` item's state): what
+    * the sweep knew of it, every research goal that found it (one entry however many watchers did; each
+    * goal is linked to the source once it is ingested, or to the acquisition item when it has no legal
+    * file), why it was picked, the sweep run that found it, and — moved by `repair-acquire` — the text of
+    * the acquisition item it replaced (kept for that item, should it go back to the list). */
+  final case class OaWork(doi: String, title: String = "", year: Option[Int] = None, authors: List[String] = Nil,
+      venue: Option[String] = None, goals: List[String] = Nil, why: String = "", foundBy: Option[String] = None,
+      acquireText: Option[String] = None) derives KindlingsCodecAsObject
+  object OaWork:
+    given Schema[OaWork] = KindlingsSchema.derived[OaWork].schema
 
   /** One work item. `run` is its current (or last) run, for its progress. */
   final case class ManagerItem(
@@ -529,10 +553,18 @@ object ManagersMarkdown:
     def one(x: Double) = BigDecimal(x).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
     if n >= 1000000 then s"${one(n / 1e6)}M" else if n >= 1000 then s"${one(n / 1e3)}k" else n.toString
 
+  /** The ingest backlog in a few words: how many wait and when they are in (0 days = today). */
+  def backlog(n: Int, days: Option[Int]): String =
+    s"${Plural.count(n, "legal open-access work")} in the ingest backlog" + (if n == 0 then "" else days match
+      case Some(0) => " (drained today at the current allowance)"
+      case Some(d) => s" (~${Plural.count(d, "more day")} at the current allowance)"
+      case None    => " (not draining: auto-ingest off, a cap of 0, or the watcher not active)")
+
   def line(m: ManagerInfo): String =
     val goal = m.goal.fold("")(g => s" · goal $g")
     val runs = if m.pauseRuns then " (its runs paused too)" else ""
     s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight · ${today(m)}" +
+      (if m.backlog > 0 then s" · ${backlog(m.backlog, m.backlogDays)}" else "") +
       m.statusNote.filter(_.nonEmpty).fold("")(n => s" · $n") +
       m.lastEvent.fold("")(e => s" · last: ${e.kind} ${e.text.take(120)}")
 
