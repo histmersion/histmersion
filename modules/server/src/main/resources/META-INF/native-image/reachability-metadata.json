@@ -12624,6 +12624,87 @@
       "glob": "web/vendor/lucide/LICENSE.txt"
     },
     {
+      "glob": "web/vendor/noto-fonts/OFL.txt"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-fonts.css"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-naskh-arabic-arabic-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-armenian-armenian-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-ext-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-ext-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-ext-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-georgian-georgian-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-ext-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-ext-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-ext-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-hebrew-hebrew-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-ext-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-ext-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-ext-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-vietnamese-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-vietnamese-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-vietnamese-600-normal.woff2"
+    },
+    {
       "glob": "web/vendor/protomaps-leaflet/LICENSE.txt"
     },
     {
