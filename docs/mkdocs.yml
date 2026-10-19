@@ -57,6 +57,7 @@ theme:
 nav:
   - "Welcome": "index.md"
   - "Responsible use": "responsible-use.md"
+  - "Legal notice": "legal.md"
   - "Getting started":
       - "What Histmersion is": "getting-started/what-is-histmersion.md"
       - "Installing": "getting-started/install.md"

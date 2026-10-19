@@ -68,3 +68,6 @@ and centuries far better than others, and every one of them is incomplete.
   sources agree.
 
 Treat every gap as a question to look into, never as an answer.
+
+For how the software's licence relates to your own texts and to the sources you store, and who may
+reach an instance that holds paid material, see the [legal notice](legal.md).
