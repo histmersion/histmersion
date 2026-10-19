@@ -48,11 +48,15 @@ object Vaults:
 
 // ── KeePassXC ───────────────────────────────────────────────────────────────────────────────────
 
-/** `keepassxc:<entry>[#<attribute>]`. `database` is the `.kdbx` file; it is unlocked with `key-file`
-  * and/or `password` (a Secret, e.g. `env:KEEPASSXC_PASSWORD` — never a literal you would not put in
-  * the file). With no password, `--no-password` is passed: a key file alone must open it. */
+/** `keepassxc:<entry>[#<attribute>]`. `database` is the `.kdbx` file; it is unlocked with `key-file`,
+  * `password` (a Secret, e.g. `env:KEEPASSXC_PASSWORD` — never a literal you would not put in the file)
+  * and/or a YubiKey's challenge-response (`yubikey`: `"<slot>[:<serial>]"` or a list of them, tried in
+  * order — see [[YubiKey]]). With no password, `--no-password` is passed: the key file and/or the
+  * YubiKey alone must open it. `ykman` (a name on the PATH or a full path; `""` = none) tells which
+  * keys are connected, so only those are tried. */
 final case class KeePassXcConfig(cli: String, database: String, keyFile: String, password: Option[Secret],
-    attribute: String, timeoutSeconds: Int) derives ConfigReader
+    attribute: String, timeoutSeconds: Int, yubikey: Option[YubiKey.Setting], yubikeyTimeoutSeconds: Int,
+    ykman: String) derives ConfigReader
 
 final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig
@@ -67,22 +71,95 @@ final class KeePassXcPlugin extends Plugin:
       key  = Option(c.keyFile).map(_.trim).filter(_.nonEmpty).map(Vaults.expand(_, home))
       _   <- key.fold(Right(()))(k => Either.cond(Files.isRegularFile(Path.of(k)), (), s"key-file $k does not exist"))
       exe <- Subprocess.locate(c.cli, ctx.env("PATH"))
+      yks <- YubiKey.parseAll(c.yubikey.fold(Nil)(_.entries))
+      det <- if yks.isEmpty then Right(None) else detector(c.ykman, ctx)
       pw  <- Vaults.optional(c.password, ctx)
       _   <- ctx.secretVaults.add(info.id, KeePassXcVault(info.id, exe, db, key, pw, c.attribute,
-               Vaults.timeout(c.timeoutSeconds)))
+               Vaults.timeout(c.timeoutSeconds), yks, det, Vaults.timeout(c.yubikeyTimeoutSeconds), ctx.log))
     yield ()
 
+  /** `ykman`, when it can be found: a bare name missing from the PATH only means the keys are tried in
+    * order; a path that was given and is wrong is an error. */
+  private def detector(ykman: String, ctx: PluginContext): Either[String, Option[String]] =
+    val t = Option(ykman).map(_.trim).getOrElse("")
+    if t.isEmpty then
+      ctx.log.info("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order")
+      Right(None)
+    else Subprocess.locate(t, ctx.env("PATH")) match
+      case Right(p) => Right(Some(p))
+      case Left(e) if !t.contains('/') =>
+        ctx.log.info(s"$e: the configured YubiKeys are tried in order (install ykman to try only the connected ones)")
+        Right(None)
+      case Left(e) => Left(s"ykman: $e")
+
 final class KeePassXcVault(val name: String, exe: String, db: String, keyFile: Option[String],
-    password: Option[String], attribute: String, timeout: FiniteDuration) extends SecretVault:
+    password: Option[String], attribute: String, timeout: FiniteDuration,
+    yubikeys: List[YubiKey.Slot], ykman: Option[String], yubikeyTimeout: FiniteDuration, log: PluginLog)
+    extends SecretVault:
+
+  /** The YubiKey that opened the database last, tried first next time (a resolve may run on any thread). */
+  private val lastOpened = new java.util.concurrent.atomic.AtomicReference[Option[YubiKey.Slot]](None)
+
   def resolve(ref: String): Either[String, String] =
     val (entry, attr) = Vaults.entryAndField(ref, attribute)
     for
       e <- Subprocess.plain("the entry", entry)
       a <- Subprocess.plain("the attribute", attr)
-      argv = List(exe, "show", "-q", "-a", a) ++ keyFile.toList.flatMap(k => List("-k", k)) ++
-        (if password.isEmpty then List("--no-password") else Nil) ++ List(db, e)
-      v <- Vaults.answer(name, ref, Subprocess.run(argv, Map.empty, password.map(_ + "\n"), timeout), classify(e))
+      v <- if yubikeys.nonEmpty then withYubiKey(ref, a, e)
+           else Vaults.answer(name, ref, Subprocess.run(argv(a, e, None), Map.empty, stdin, timeout), classify(e))
     yield v
+
+  private def stdin = password.map(_ + "\n")
+
+  private def argv(attr: String, entry: String, yk: Option[YubiKey.Slot]): List[String] =
+    List(exe, "show", "-q", "-a", attr) ++ keyFile.toList.flatMap(k => List("-k", k)) ++
+      yk.toList.flatMap(y => List("-y", y.shown)) ++
+      (if password.isEmpty then List("--no-password") else Nil) ++ List(db, entry)
+
+  /** The connected serials, when `ykman` can tell; `None` = unknown (then every entry is tried). */
+  private def connected(): Option[Set[Long]] =
+    ykman.flatMap { y =>
+      Subprocess.run(List(y, "list", "--serials"), Map.empty, None, timeout) match
+        case Right(r) if r.exit == 0 => Some(YubiKey.serials(r.out))
+        case Right(r) =>
+          log.info(s"ykman list failed (exit ${r.exit}: ${Subprocess.problem(r.err)}): trying the YubiKeys in order"); None
+        case Left(why) => log.info(s"$why: trying the YubiKeys in order"); None
+    }
+
+  /** Each planned key in turn until one opens the database; a failure that no other key could fix
+    * stops at once. The error names every entry: tried (and why it failed) or not connected. */
+  private def withYubiKey(ref: String, attr: String, entry: String): Either[String, String] =
+    val found = connected()
+    val (planned, absent) = YubiKey.plan(yubikeys, found, lastOpened.get)
+    val notConnected = absent.map(s => s"${s.shown}: not connected")
+    def report(tried: List[String], tail: String) =
+      val parts = (tried ++ notConnected).mkString("; ")
+      Left(s"$name: could not read '$ref' with a YubiKey — $parts$tail")
+    if planned.isEmpty then
+      val seen = found.fold("")(s => if s.isEmpty then " (ykman sees no YubiKey)" else s" (ykman sees ${s.toList.sorted.mkString(", ")})")
+      Left(s"$name: none of the configured YubiKeys is connected$seen — ${yubikeys.map(_.shown).mkString(", ")}; plug one in")
+    else
+      @annotation.tailrec
+      def go(rest: List[YubiKey.Slot], tried: List[String]): Either[String, String] = rest match
+        case Nil => report(tried, " — plug in (or touch) one of them")
+        case yk :: more =>
+          log.info(s"opening ${Path.of(db).getFileName} with YubiKey ${yk.shown} for '$ref' — touch your YubiKey if it blinks " +
+            s"(waiting up to ${yubikeyTimeout.toSeconds} s)")
+          Subprocess.run(argv(attr, entry, Some(yk)), Map.empty, stdin, yubikeyTimeout) match
+            case Left(why) =>
+              val what = if why.contains("did not answer") then s"not touched in time ($why)" else why
+              report(tried :+ s"${yk.shown}: $what", "; not trying further keys")
+            case Right(r) if r.exit == 0 =>
+              lastOpened.set(Some(yk))
+              Vaults.answer(name, ref, Right(r), _ => None)
+            case Right(r) =>
+              val msg = YubiKey.problem(r.err)
+              YubiKey.failure(r.err.toLowerCase(java.util.Locale.ROOT), entry) match
+                case YubiKey.Failure.Next(why) => go(more, tried :+ s"${yk.shown}: $why ($msg)")
+                case YubiKey.Failure.Stop(why) =>
+                  if why.startsWith("no entry") then Left(s"$name: $why")
+                  else report(tried :+ s"${yk.shown}: $why ($msg)", "; not trying further keys")
+      go(planned, Nil)
 
   private def classify(entry: String)(err: String): Option[String] =
     if err.contains("invalid credentials") || err.contains("wrong key") || err.contains("unable to unlock") ||
