@@ -244,6 +244,9 @@ final class Client(val serverUrl: String, token: Option[String] = None):
     call(Api.ingest)((p, file))
   def reocr(ck: String, quality: Boolean): Either[CliError, IngestAccepted] = call(Api.reocr)((ck, quality))
   def job(id: String): Either[CliError, JobInfo]                            = call(Api.job)(id)
+  def basemapStatus(): Either[CliError, BasemapStatus]                      = call(BasemapApi.status)(())
+  def basemapFetch(q: BasemapFetchQuery): Either[CliError, JobInfo]         = call(BasemapApi.fetch)(q)
+  def basemapRemove(layer: String): Either[CliError, BasemapRemoved]        = call(BasemapApi.remove)(layer)
   def jobs(status: Option[String], limit: Option[Int], before: Option[String] = None)
       : Either[CliError, (List[JobInfo], Paging.Page)] =
     call(Api.jobs)((status, limit, before, None))

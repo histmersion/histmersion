@@ -65,7 +65,9 @@ final case class UiConfig(
     tilesTone: String = "light",
     /** The server's plugins (`histmersion.plugins`), filled in by the server like `writeKeyRequired` —
       * NOT a configuration key of its own. Secret settings show their reference, never the value. */
-    plugins: PluginsReport = PluginsReport()
+    plugins: PluginsReport = PluginsReport(),
+    /** The user guide's root URL (`ui.docs-url`): the page links into it (the terrain map's notice). */
+    docsUrl: String = ""
 ) derives KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema

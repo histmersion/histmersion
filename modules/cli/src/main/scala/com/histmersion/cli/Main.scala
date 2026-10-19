@@ -420,6 +420,8 @@ object Main:
           // which owns the name and dispatches file-vs-DOI)
           orElse IngestCmd.all
           orElse ConfigCmd.command
+          // the terrain base map's extracts on the server's machine
+          orElse BasemapCmd.command
           // the plugins of the install on THIS machine (docs/research-plugins.md §7): files + the relink
           orElse PluginCmd.command).tupled
     }
