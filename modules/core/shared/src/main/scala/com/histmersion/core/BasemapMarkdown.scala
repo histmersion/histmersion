@@ -21,9 +21,12 @@ object BasemapMarkdown:
     val notes = List(
       Some(s"Files: `${s.dir}` (${Backup.humanBytes(s.freeBytes)} free). The next fetch downloads `${s.bbox}` (basemap.bbox)."),
       s.running.map(r => s"A fetch is running ($r) — `histmersion jobs`."),
-      Option.when(s.layers.exists(_.present))("Credits: " + s.layers.filter(_.present).map(_.attribution).distinct.mkString(" · "))
+      Option.when(s.layers.exists(_.present))("Credits: " + s.layers.filter(_.present).map(l => plain(l.attribution)).distinct.mkString(" · "))
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
+
+  /** A credit line without its links (the page shows them; a terminal does not). */
+  def plain(html: String): String = html.replaceAll("<[^>]+>", "")
 
   def removed(r: BasemapRemoved): String =
     if r.removed.isEmpty then "Nothing to remove: no base-map file is downloaded."
