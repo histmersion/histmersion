@@ -23,8 +23,9 @@ class VaultsSuite extends munit.FunSuite:
   /** A context with an environment of its own (PATH = the fake tools), secrets from `secrets`. */
   private final class Ctx(envVars: Map[String, String], secrets: Map[SecretRef, String] = Map.empty) extends PluginContext:
     var vaults: List[(String, SecretVault)] = Nil // what the plugin registered (test-local)
+    var infos: List[String] = Nil                  // what it logged at info (test-local)
     def http = new PluginHttp { def get(url: String, headers: Map[String, String]) = Left("no network in tests") }
-    val log  = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+    val log  = new PluginLog { def info(m: String) = infos = infos :+ m; def warn(m: String) = () }
     def env(name: String) = envVars.get(name)
     def secret(s: Secret) = secrets.get(s.ref).toRight(s"no value for ${s.ref.shown}")
     val secretVaults = new Registry[SecretVault]:
@@ -156,6 +157,173 @@ class VaultsSuite extends munit.FunSuite:
     fakeKeePassXc(d)
     assert(reg(s"""database = "$db", password = "env:UNSET"""", Ctx(Map("PATH" -> d.toString))).left.exists(_.contains("env:UNSET")))
     assert(reg(s"""database = "$db", key-file = "${d.resolve("nokey")}"""", Ctx(Map("PATH" -> d.toString))).left.exists(_.contains("key-file")))
+
+  // ── KeePassXC + YubiKey ─────────────────────────────────────────────────────────────────────
+
+  test("yubikey: parsing <slot>[:<serial>], lists without repeats, the setting as a string or a list"):
+    assertEquals(YubiKey.parse("2"), Right(YubiKey.Slot(2, None)))
+    assertEquals(YubiKey.parse(" 1:7370001 "), Right(YubiKey.Slot(1, Some(7370001L))))
+    assertEquals(YubiKey.Slot(2, Some(5L)).shown, "2:5")
+    List("3", "0", "x", "2:", "2:abc", "2:-1", "2:1:3", "", ":5").foreach(b =>
+      assert(YubiKey.parse(b).left.exists(_.contains("<slot>[:<serial>]")), b))
+    assertEquals(YubiKey.parseAll(List("2:1", "", "2:1", "1")), Right(List(YubiKey.Slot(2, Some(1)), YubiKey.Slot(1, None))))
+    assert(YubiKey.parseAll(List("2:1", "9")).left.exists(_.contains("'9'")))
+    assertEquals(decode(KeePassXcPlugin(), "").yubikey, None)
+    assertEquals(decode(KeePassXcPlugin(), "yubikey = \"2:12345678\"").yubikey, Some(YubiKey.Setting(List("2:12345678"))))
+    assertEquals(decode(KeePassXcPlugin(), "yubikey = \"2:1, 1\"").yubikey, Some(YubiKey.Setting(List("2:1", "1"))))
+    assertEquals(decode(KeePassXcPlugin(), "yubikey = [\"2:1\", \"2:2\", \"1\"]").yubikey,
+      Some(YubiKey.Setting(List("2:1", "2:2", "1"))))
+    val c = decode(KeePassXcPlugin(), "")
+    assertEquals((c.yubikeyTimeoutSeconds, c.ykman), (30, "ykman"))
+
+  test("yubikey: serials from ykman, the plan with and without detection, the last key first"):
+    assertEquals(YubiKey.serials("12345678\n 87654321 \nWARNING: x\n\n"), Set(12345678L, 87654321L))
+    val a = YubiKey.Slot(2, Some(1)); val b = YubiKey.Slot(2, Some(2)); val any = YubiKey.Slot(1, None)
+    assertEquals(YubiKey.plan(List(a, b, any), None), (List(a, b, any), Nil))
+    assertEquals(YubiKey.plan(List(a, b, any), Some(Set(2L))), (List(b, any), List(a)))
+    assertEquals(YubiKey.plan(List(a, b, any), Some(Set.empty)), (Nil, List(a, b, any)))
+    assertEquals(YubiKey.plan(List(a, b, any), Some(Set(1L, 2L)), Some(b)), (List(b, a, any), Nil))
+    assertEquals(YubiKey.plan(List(a, b), Some(Set(1L)), Some(b)), (List(a), List(b)))
+
+  test("yubikey: KeePassXC's messages — absent or failed is the next key; credentials, entry, touch stop"):
+    import YubiKey.Failure.*
+    def f(m: String) = YubiKey.failure(m.toLowerCase(java.util.Locale.ROOT), "E")
+    assert(f("Could not find hardware key with serial number 1. Please plug it in to continue.").isInstanceOf[Next])
+    assert(f("Failed to complete a challenge-response, the specific error was: x").isInstanceOf[Next])
+    assert(f("Hardware key slot is not configured.").isInstanceOf[Next])
+    assert(f("Please present or touch your YubiKey to continue.\nError while reading the database: Invalid credentials were provided").isInstanceOf[Stop])
+    assertEquals(f("Hardware key timed out waiting for user interaction."), Stop("the YubiKey was not touched in time"))
+    assertEquals(f("Could not find entry with path E."), Stop("no entry 'E'"))
+    assert(f("Segmentation fault").isInstanceOf[Stop])
+    assertEquals(YubiKey.problem("Please present or touch your YubiKey to continue.\n\nError: no key\n"), "Error: no key")
+
+  /** A fake keepassxc-cli with YubiKeys: `$d/plugged` lists the serials "connected" (one per line), and
+    * the database opens with slot 2 of any of them plus (unless `$d/key-only`) the password `master-pw`.
+    * Each call appends its argv to `$d/kp-calls`, one call per line. */
+  private def fakeKeePassXcYk(d: Path): Path =
+    script(d, "keepassxc-cli", """dir=$(dirname "$0")
+      |echo "$*" >> "$dir/kp-calls"
+      |for a; do entry=$a; done
+      |nopw=""; yk=""; prev=""
+      |for a; do
+      |  [ "$a" = "--no-password" ] && nopw=1
+      |  [ "$prev" = "-y" ] && yk=$a
+      |  prev=$a
+      |done
+      |if [ -n "$nopw" ]; then
+      |  [ -f "$dir/key-only" ] || { echo "Error while reading the database: Invalid credentials were provided, please try again." >&2; exit 1; }
+      |else
+      |  IFS= read -r pw
+      |  [ "$pw" = "master-pw" ] || { echo "Please present or touch your YubiKey to continue." >&2; echo "Error while reading the database: Invalid credentials were provided, please try again." >&2; exit 1; }
+      |fi
+      |slot=${yk%%:*}; serial=""; case "$yk" in *:*) serial=${yk#*:};; esac
+      |[ -f "$dir/slow" ] && sleep 30
+      |if [ -n "$serial" ]; then
+      |  grep -qx "$serial" "$dir/plugged" 2>/dev/null || { echo "Error while reading the database: Could not find hardware key with serial number $serial. Please plug it in to continue." >&2; exit 1; }
+      |else
+      |  [ -s "$dir/plugged" ] || { echo "Error while reading the database: No YubiKey detected" >&2; exit 1; }
+      |fi
+      |[ "$slot" = "2" ] || { echo "Error while reading the database: Failed to complete a challenge-response, the specific error was: Hardware key slot is not configured." >&2; exit 1; }
+      |printf '%s\n' "secret of $entry"
+      |""".stripMargin)
+
+  /** A fake ykman: `list --serials` prints `$d/plugged`; anything else fails. */
+  private def fakeYkman(d: Path): Path =
+    script(d, "ykman", """dir=$(dirname "$0")
+      |echo "$*" >> "$dir/ykman-calls"
+      |[ "$1 $2" = "list --serials" ] || exit 2
+      |cat "$dir/plugged" 2>/dev/null
+      |exit 0
+      |""".stripMargin)
+
+  private def plug(d: Path, serials: String*): Unit = Files.writeString(d.resolve("plugged"), serials.map(_ + "\n").mkString)
+  private def calls(d: Path): List[String] =
+    if Files.exists(d.resolve("kp-calls")) then Files.readAllLines(d.resolve("kp-calls")).asScala.toList else Nil
+
+  private def ykVault(d: Path, extra: String, pw: String = "master-pw"): (SecretVault, Ctx) =
+    val db = d.resolve("v.kdbx"); if !Files.exists(db) then Files.writeString(db, "")
+    val ctx = Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("KP") -> pw))
+    (registered(KeePassXcPlugin(), s"""database = "$db", password = "env:KP", $extra""", ctx), ctx)
+
+  test("yubikey: a single entry adds -y <slot:serial> beside the password on stdin, and says to touch it"):
+    val d = bin(); fakeKeePassXcYk(d); plug(d, "12345678")
+    val (v, ctx) = ykVault(d, "yubikey = \"2:12345678\"")
+    assertEquals(v.resolve("Portal"), Right("secret of Portal"))
+    assertEquals(calls(d), List(s"show -q -a password -y 2:12345678 ${d.resolve("v.kdbx")} Portal"))
+    assert(ctx.infos.exists(m => m.contains("touch your YubiKey") && m.contains("2:12345678")), ctx.infos)
+    assert(ctx.infos.exists(_.contains("ykman was not found")), ctx.infos) // no ykman here: tried in order
+    assert(!ctx.infos.exists(_.contains("master-pw")))
+
+  test("yubikey: with ykman, an absent first key is skipped without running keepassxc-cli; the present one opens"):
+    val d = bin(); fakeKeePassXcYk(d); fakeYkman(d); plug(d, "87654321")
+    val (v, _) = ykVault(d, "yubikey = [\"2:12345678\", \"2:87654321\", \"1\"]")
+    assertEquals(v.resolve("Portal"), Right("secret of Portal"))
+    assertEquals(calls(d).map(_.split(' ')(5)), List("2:87654321"))
+    assertEquals(Files.readAllLines(d.resolve("ykman-calls")).asScala.toList, List("list --serials"))
+    // the key that worked goes first next time
+    plug(d, "12345678", "87654321")
+    assertEquals(v.resolve("Other"), Right("secret of Other"))
+    assertEquals(calls(d).map(_.split(' ')(5)), List("2:87654321", "2:87654321"))
+
+  test("yubikey: with ykman and no key plugged in, nothing is run and the error lists what was configured"):
+    val d = bin(); fakeKeePassXcYk(d); fakeYkman(d); plug(d)
+    val (v, _) = ykVault(d, "yubikey = [\"2:12345678\", \"1\"]")
+    assertEquals(v.resolve("Portal"),
+      Left("keepassxc: none of the configured YubiKeys is connected (ykman sees no YubiKey) — 2:12345678, 1; plug one in"))
+    assertEquals(calls(d), Nil)
+
+  test("yubikey: without detection, entries are tried in order — absent and failed slots go on, the error names each"):
+    val d = bin(); fakeKeePassXcYk(d); plug(d, "87654321")
+    val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:12345678\", \"1\", \"2:87654321\"]")
+    assertEquals(v.resolve("Portal"), Right("secret of Portal"))
+    assertEquals(calls(d).map(_.split(' ')(5)), List("2:12345678", "1", "2:87654321"))
+    val d2 = bin(); fakeKeePassXcYk(d2); plug(d2)
+    val (none, _) = ykVault(d2, "ykman = \"\", yubikey = [\"2:12345678\", \"2\"]")
+    val err = none.resolve("Portal")
+    assert(err.left.exists(e => e.contains("2:12345678: not connected (Error while reading the database: Could not find hardware key") &&
+      e.contains("; 2: not connected (Error while reading the database: No YubiKey detected)") &&
+      e.contains("plug in (or touch) one of them")), err)
+
+  test("yubikey: a wrong password stops at the first key — no other key is tried, and the password is never shown"):
+    val d = bin(); fakeKeePassXcYk(d); plug(d, "1", "2")
+    val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"]", pw = "wrong-pw")
+    val r = v.resolve("Portal")
+    assert(r.left.exists(e => e.contains("2:1: invalid credentials") && e.contains("not trying further keys") &&
+      !e.contains("Please present")), r)
+    assert(!r.left.exists(_.contains("wrong-pw")))
+    assertEquals(calls(d).size, 1)
+
+  test("yubikey: an attempt nobody answers is killed at yubikey-timeout-seconds and stops the search"):
+    val d = bin(); fakeKeePassXcYk(d); plug(d, "1"); Files.writeString(d.resolve("slow"), "")
+    val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"], yubikey-timeout-seconds = 1")
+    val t0 = System.nanoTime
+    val r = v.resolve("Portal")
+    assert(r.left.exists(e => e.contains("2:1: not touched in time (keepassxc-cli did not answer within 1 s)") &&
+      e.contains("not trying further keys")), r)
+    assertEquals(calls(d).size, 1)
+    assert((System.nanoTime - t0).nanos < 10.seconds)
+
+  test("yubikey: a key-only database (no password) passes --no-password with -y, and a key file with both"):
+    val d = bin(); fakeKeePassXcYk(d); plug(d, "5"); Files.writeString(d.resolve("key-only"), "")
+    val db = Files.writeString(d.resolve("v.kdbx"), ""); val key = Files.writeString(d.resolve("v.key"), "k")
+    val v = registered(KeePassXcPlugin(), s"""database = "$db", yubikey = "2:5"""", Ctx(Map("PATH" -> d.toString)))
+    assertEquals(v.resolve("E"), Right("secret of E"))
+    assertEquals(calls(d).last, s"show -q -a password -y 2:5 --no-password $db E")
+    val k = registered(KeePassXcPlugin(), s"""database = "$db", key-file = "$key", yubikey = "2:5"""", Ctx(Map("PATH" -> d.toString)))
+    assertEquals(k.resolve("E"), Right("secret of E"))
+    assertEquals(calls(d).last, s"show -q -a password -k $key -y 2:5 --no-password $db E")
+
+  test("yubikey: registration refuses a malformed entry and a wrong ykman path; a missing entry is named"):
+    val d = bin(); fakeKeePassXcYk(d); plug(d, "1")
+    val db = Files.writeString(d.resolve("v.kdbx"), "")
+    val p = KeePassXcPlugin()
+    def reg(h: String) = p.register(decode(p, s"""database = "$db", $h"""), Ctx(Map("PATH" -> d.toString)))
+    assert(reg("yubikey = [\"2:1\", \"3\"]").left.exists(_.contains("yubikey '3' is not <slot>[:<serial>]")))
+    assert(reg(s"""yubikey = "2:1", ykman = "${d.resolve("no-ykman")}"""").left.exists(_.startsWith("ykman: ")))
+    assertEquals(reg(s"""ykman = "${d.resolve("no-ykman")}"""").isRight, true) // no yubikey: ykman is not looked at
+    script(d, "keepassxc-cli", "echo 'Could not find entry with path missing.' >&2\nexit 1\n")
+    val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"]")
+    assertEquals(v.resolve("missing"), Left("keepassxc: no entry 'missing'"))
 
   // ── 1Password ───────────────────────────────────────────────────────────────────────────────
 
