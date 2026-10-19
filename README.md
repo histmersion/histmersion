@@ -73,4 +73,7 @@ Read [Responsible use](docs/user-guide/responsible-use.md) before you start. In 
 
 ## Licence
 
-Not decided yet.
+Not decided yet; the GNU Affero General Public License v3 (AGPL-3.0) is being considered. Whatever the
+software's licence, it does not apply to what you store or write with it: your articles and notes stay
+yours, and every source keeps its own copyright and licence. See the
+[legal notice](docs/user-guide/legal.md).
