@@ -51,7 +51,7 @@ places and times fits.
 
     The full text: [Responsible use](responsible-use.md).
 
-## Two ways in, one collection
+## Three ways in, one collection
 
 | you are | you use | what you get |
 |---|---|---|
