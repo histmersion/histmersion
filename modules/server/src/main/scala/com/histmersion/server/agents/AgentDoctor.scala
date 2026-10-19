@@ -20,7 +20,12 @@ import scala.jdk.CollectionConverters.*
   * `listModels` and `runCommand` are seams a test fills (a stub server, a fake executable). */
 final class AgentDoctor(app: AppConfig, picker: ModelPicker, resolve: ModelRef => Either[String, (LlmClient, Billing)],
     listModels: (String, List[(String, String)], Int) => Either[String, List[String]] = AgentDoctor.listModels,
-    runCommand: (List[String], Map[String, Option[String]], Int) => Either[String, (Int, String)] = AgentDoctor.runCommand):
+    runCommand: (List[String], Map[String, Option[String]], Int) => Either[String, (Int, String)] = AgentDoctor.runCommand,
+    /** The AI-provider registry of the pinned plugin generation (docs/research-plugins.md §22): a host
+      * provider whose plugin is off says so, and each plugin provider gets its own section. None: every
+      * host provider is taken as on, and there is no plugin provider (a test's doctor). */
+    registry: Option[scala.collection.immutable.ListMap[String, com.histmersion.plugin.AiProvider]] = None,
+    aiHttp: com.histmersion.plugin.AiHttp = com.histmersion.plugin.AiHttp.Offline):
 
   private val cfg = app.agents
 
@@ -44,8 +49,10 @@ final class AgentDoctor(app: AppConfig, picker: ModelPicker, resolve: ModelRef =
           case Right((_, b)) => ok(s"model ${m.wire}", s"${b.describe}; its client can be built")
           case Left(why) => fail(s"model ${m.wire}", why)
       }
-      ProviderDoctor(k.wire, models.nonEmpty, models.map(_.wire), checks ++ priced, upstream)
-    }
+      val off = registry.filterNot(_.contains(k.wire)).map(_ => BuiltinAi.lookup(k, scala.collection.immutable.ListMap.empty)
+        .left.toOption.getOrElse("switched off")).map(why => (if models.nonEmpty then fail else warn)("plugin", why)).toList
+      ProviderDoctor(k.wire, models.nonEmpty, models.map(_.wire), off ++ checks ++ priced, upstream)
+    } ++ plugins(chained, online)
     val roleChecks = chains.flatMap {
       case (r, Left(m)) => List(fail(s"role ${r.wire}", m))
       case (r, Right((Nil, _))) if neededBy(r) => List(warn(s"role ${r.wire}", s"no model — ${r.wire} steps are refused"))
@@ -58,6 +65,35 @@ final class AgentDoctor(app: AppConfig, picker: ModelPicker, resolve: ModelRef =
         allowances.collect { case e if e.allowance.isLeft => fail(s"allowance ${e.target}", e.allowance.left.toOption.getOrElse("")) } ++
         roleChecks
     DoctorReport(cfg.enabled, online, providers, global)
+
+  /** One section per PLUGIN provider: what it is, its own checks, its free model listing (online only),
+    * and every chained model priced and buildable. Nothing it does is allowed to throw the report away. */
+  private def plugins(chained: List[ModelRef], online: Boolean): List[ProviderDoctor] =
+    registry.toList.flatMap(_.toList).collect { case (name, p) if !p.isInstanceOf[HostAiProvider] =>
+      val kind = ProviderKind.Plugin(name)
+      val models = chained.filter(_.provider == kind)
+      def safe[A](what: String, a: => A, orElse: String => A): A =
+        try a catch case scala.util.control.NonFatal(e) => orElse(s"$what threw ${e.getClass.getSimpleName}")
+      val own = safe("its doctor", p.doctor(online, aiHttp), why => List(com.histmersion.plugin.AiCheck("doctor", "fail", why)))
+        .map(c => DoctorCheck(c.name, CheckLevel.parse(c.level).getOrElse(CheckLevel.Warn), c.detail))
+      val (listing, upstream) =
+        if !online then (List(ok("models listing", "offline: not asked")), Nil)
+        else safe("its model listing", p.models(aiHttp), why => Left(why)) match
+          case Left(why) => (List((if models.nonEmpty then fail else warn)("models listing", why)), Nil)
+          case Right(Nil) => (List(ok("models listing", "the provider has none")), Nil)
+          case Right(ids) =>
+            (ok("models listing", s"${ids.size} model(s), free call") :: models.map { m =>
+              if ids.contains(m.model) then ok(s"upstream ${m.wire}", "listed by the provider")
+              else warn(s"upstream ${m.wire}", s"not in the provider's list of ${ids.size} model(s) — an alias, or a typo?")
+            }, ids)
+      val priced = models.map { m =>
+        resolve(m) match
+          case Right((_, b)) => ok(s"model ${m.wire}", s"${b.describe}; its client can be built")
+          case Left(why)     => fail(s"model ${m.wire}", why)
+      }
+      ProviderDoctor(name, models.nonEmpty, models.map(_.wire),
+        ok("plugin", safe("its title", p.title, identity)) :: (own ++ listing ++ priced), upstream)
+    }
 
   /** A role some pipeline uses (the probe is optional). */
   private def neededBy(r: Role): Boolean = Pipeline.values.exists(_.roles.contains(r))

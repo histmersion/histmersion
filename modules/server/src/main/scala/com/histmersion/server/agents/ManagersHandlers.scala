@@ -125,7 +125,7 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
         ApiError(s"rounds must be between 2 and ${cfg.review.roundsCap} (agents.review.rounds-cap)"))) { (acc, o) =>
       acc.flatMap(_ => Role.parse(o.role).filter(roles.contains)
         .toRight(ApiError(s"models: '${o.role}' is not a role a ${k.wire} manager runs (${roles.map(_.wire).mkString(", ")})"))
-        .flatMap(_ => ModelChains.parseChain(o.model).left.map(e => ApiError(s"models ${o.role}: $e")).map(_ => ())))
+        .flatMap(_ => ModelChains.parseChain(o.model, agents.knownProviders).left.map(e => ApiError(s"models ${o.role}: $e")).map(_ => ())))
     }
 
   def delete(id: String): Either[ApiError, Removed] =
