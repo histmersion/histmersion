@@ -279,7 +279,9 @@ final case class AuthConfig(apiKey: String) derives ConfigReader
   * request, a job step) before it reports them as still draining. */
 /** The terrain base map (docs/research-terrain-basemap.md): where its two PMTiles extracts live
   * (empty = the XDG cache directory, [[UserPaths.cacheDir]]), the region fetched, the free disk a
-  * fetch must leave, how politely the range requests go, and the two sources. */
+  * fetch must leave, how politely the range requests go, the sources (the Protomaps vector build,
+  * Mapterhorn's elevation, Natural Earth's physical names), and the style file the map is drawn with
+  * (`style`: empty = `basemap-style.conf` beside the config file, [[TerrainStyleFile]]). */
 final case class BasemapConfig(
     dir: String,
     bbox: String,
@@ -291,13 +293,22 @@ final case class BasemapConfig(
     retries: Int,
     tileCacheSeconds: Int,
     vector: BasemapVectorConfig,
-    terrain: BasemapTerrainConfig
+    terrain: BasemapTerrainConfig,
+    labels: BasemapLabelsConfig,
+    style: String,
+    styleCheckSeconds: Int
 ) derives ConfigReader
 
 final case class BasemapVectorConfig(buildsUrl: String, url: String, build: String, maxZoom: Int,
     layers: String, attribution: String) derives ConfigReader
 
 final case class BasemapTerrainConfig(url: String, maxZoom: Int, attribution: String) derives ConfigReader
+
+/** The physical names (seas, ranges, deserts, lakes, rivers, peaks …): Natural Earth's label layers,
+  * `url` with `{file}` for each of `files`, cut to the region and written as a small vector archive of
+  * zooms 0…`maxZoom`; `language` is the names a style shows unless it says otherwise. */
+final case class BasemapLabelsConfig(url: String, files: List[String], maxZoom: Int, language: String,
+    attribution: String) derives ConfigReader
 
 final case class ConfigReloadConfig(watch: Boolean, watchDebounceMs: Int, drainSeconds: Int) derives ConfigReader
 
