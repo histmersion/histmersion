@@ -150,10 +150,11 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     * the layers and geometries asked for; 204 where the extract (or the subset) has none. */
   def tile(layer: String, z: Int, x: Long, y: Long, subset: Option[String] = None): Either[ApiError, (Array[Byte], String, Option[String], String, StatusCode)] =
     val cache = s"public, max-age=${cfg.tileCacheSeconds}"
-    val sub   = subset.map(_.trim).filter(_.nonEmpty)
+    // the subset at this zoom: a layer asked for only from a deeper zoom is left out here
+    val sub   = subset.map(_.trim).filter(_.nonEmpty).map(Basemap.subsetAt(_, z))
     for
       rules <- sub.fold(Right(None))(s => Basemap.parseSubset(s).map(Some(_))).left.map(e => ApiError(s"layers: $e", Some(Write.CodeInvalid)))
-      l     <- BasemapLayer.parse(layer).toRight(ApiError(s"no base-map layer '$layer' (vector, terrain or labels)", Some(Write.CodeNotFound)))
+      l     <- BasemapLayer.parse(layer).toRight(ApiError(s"no base-map layer '$layer' (vector, terrain, labels or bathymetry)", Some(Write.CodeNotFound)))
       f     <- reader(l).left.map(e => ApiError(e)).flatMap(_.toRight(
                  ApiError(s"the ${l.title} layer is not downloaded — run `${Basemap.FetchCommand}`", Some(Write.CodeNotFound))))
       stored <- f.tile(z, x, y).left.map(ApiError(_))

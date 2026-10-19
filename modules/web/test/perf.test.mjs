@@ -49,7 +49,7 @@ const BUDGETS = {
   memoryEventLayer: { heapMB: 75, nodes: 12000, listeners: 2000 },
   // the terrain base map (the Aegean fixture): vector tiles on canvas, the relief shaded in the page
   terrainMap: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
-    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15 },
+    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15, 'options.inputP95': INPUT, 'options.longTaskMax': 150 },
   memoryTerrainMap: { heapMB: 60 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
   soak: { heapMB: 6, nodes: 150, listeners: 20, leafletLayers: 0 },

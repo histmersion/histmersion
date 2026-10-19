@@ -274,15 +274,15 @@ object TerrainMap:
   private def lookup(token: String): String = ThemeTokens(token)
 
   /** A tile URL template asking only for `reads` (the layers and geometries the rules draw). Pure. */
-  def withSubset(url: String, reads: Map[String, Set[Int]]): String =
-    if reads.isEmpty then url else s"$url&layers=${scala.scalajs.js.URIUtils.encodeURIComponent(Basemap.subsetParam(reads))}"
+  def withSubset(url: String, reads: Map[String, Set[Int]], fromZoom: Map[String, Int] = Map.empty): String =
+    if reads.isEmpty then url else s"$url&layers=${scala.scalajs.js.URIUtils.encodeURIComponent(Basemap.subsetParam(reads, fromZoom))}"
 
-  private def sourcesOf(s: BasemapStatus, reads: Map[String, Map[String, Set[Int]]]): js.Object =
+  private def sourcesOf(s: BasemapStatus, reads: Map[String, Map[String, Set[Int]]], zooms: Map[String, Map[String, Int]]): js.Object =
     val o = js.Dynamic.literal()
     reads.foreach { (src, layers) =>
       BasemapLayer.parse(src).foreach { l =>
         template(s, l).foreach { url =>
-          o.updateDynamic(src)(js.Dynamic.literal(url = withSubset(url, layers),
+          o.updateDynamic(src)(js.Dynamic.literal(url = withSubset(url, layers, zooms.getOrElse(src, Map.empty)),
             maxDataZoom = s.layers.find(_.layer == l.wire).flatMap(_.maxZoom).getOrElse(10)))
         }
       }
@@ -292,8 +292,8 @@ object TerrainMap:
   private def draw(map: LeafletMap, s: BasemapStatus, vector: String, style: TerrainStyle, all: TerrainStyles): Unit =
     val have   = sources(s)
     val rules  = TerrainRules.compile(style, TerrainRules.language(style, all), have, style.labels, lookup)
-    def layer(paint: js.Array[js.Object], labels: js.Array[js.Object], reads: Map[String, Map[String, Set[Int]]], z: Int,
-        cls: String, background: Boolean): Layer = vectorLayer(map, s, style, paint, labels, reads, z, cls, background)
+    def layer(paint: js.Array[js.Object], labels: js.Array[js.Object], reads: (Map[String, Map[String, Set[Int]]], Map[String, Map[String, Int]]),
+        z: Int, cls: String, background: Boolean): Layer = vectorLayer(map, s, style, paint, labels, reads, z, cls, background)
     map.getContainer().classList.add("terrain-on")
     map.getContainer().asInstanceOf[dom.HTMLElement].style.setProperty("--terrain-bg", TerrainRules.colour(style.background, lookup))
     // bottom to top: the elevation tint (a style with one), the vector layer, the shading and contours,
@@ -308,15 +308,15 @@ object TerrainMap:
     val reliefs = setup.toList.flatMap((su, info) => ReliefLayer.layers(su, reliefBounds(info), tintZ = 1, shadeZ = 3))
     // with a tint: the ground (the land's fill, the open sea's) under it, the rest of the vector layer over it
     val base =
-      if !tinted then List(layer(rules.paint, js.Array(), rules.paintReads, 2, "terrain-base", background = true))
+      if !tinted then List(layer(rules.paint, js.Array(), (rules.paintReads, rules.paintZooms), 2, "terrain-base", background = true))
       else
         val ground = TerrainRules.compile(style, "en", have, false, lookup, TerrainRules.isGround)
         val cover  = TerrainRules.compile(style, "en", have, false, lookup, l => !TerrainRules.isGround(l))
-        List(layer(ground.paint, js.Array(), ground.paintReads, 0, "terrain-ground", background = true),
-          layer(cover.paint, js.Array(), cover.paintReads, 2, "terrain-base", background = false))
+        List(layer(ground.paint, js.Array(), (ground.paintReads, ground.paintZooms), 0, "terrain-ground", background = true),
+          layer(cover.paint, js.Array(), (cover.paintReads, cover.paintZooms), 2, "terrain-base", background = false))
     reliefs.foreach(_.addTo(map))
     // the names in a layer of their own: above the relief (never shaded), below every marker
-    val names = Option.when(rules.labels.nonEmpty)(layer(js.Array(), rules.labels, rules.labelReads, 4, "terrain-labels", background = false))
+    val names = Option.when(rules.labels.nonEmpty)(layer(js.Array(), rules.labels, (rules.labelReads, rules.labelZooms), 4, "terrain-labels", background = false))
     names.foreach(exposeLabels)
     namesLayer = names
     drawn = Some((map, s, "", style, all))
@@ -324,8 +324,9 @@ object TerrainMap:
 
   /** A protomaps-leaflet layer of the vector sources (the extract, the names). */
   private def vectorLayer(map: LeafletMap, s: BasemapStatus, style: TerrainStyle, paint: js.Array[js.Object],
-      labels: js.Array[js.Object], reads: Map[String, Map[String, Set[Int]]], z: Int, cls: String, background: Boolean): Layer =
-    val o = js.Dynamic.literal(sources = sourcesOf(s, reads), paintRules = paint, labelRules = labels,
+      labels: js.Array[js.Object], reads: (Map[String, Map[String, Set[Int]]], Map[String, Map[String, Int]]), z: Int, cls: String,
+      background: Boolean): Layer =
+    val o = js.Dynamic.literal(sources = sourcesOf(s, reads._1, reads._2), paintRules = paint, labelRules = labels,
       attribution = attribution(s), zIndex = z, className = cls)
     if background then o.backgroundColor = TerrainRules.colour(style.background, lookup)
     s.layers.find(_.layer == BasemapLayer.Vector.wire).flatMap(bounds).foreach(b => o.bounds = b)
@@ -336,13 +337,14 @@ object TerrainMap:
   /** The names' layer alone (another language, names on again): the style's label rules compiled again. */
   private def drawNames(map: LeafletMap, s: BasemapStatus, style: TerrainStyle, all: TerrainStyles): Option[Layer] =
     val rules = TerrainRules.compile(style, TerrainRules.language(style, all), sources(s), style.labels, lookup)
-    val names = Option.when(rules.labels.nonEmpty)(vectorLayer(map, s, style, js.Array(), rules.labels, rules.labelReads, 4,
+    val names = Option.when(rules.labels.nonEmpty)(vectorLayer(map, s, style, js.Array(), rules.labels, (rules.labelReads, rules.labelZooms), 4,
       "terrain-labels", background = false))
     names.foreach(exposeLabels)
     names
 
   /** For the browser regressions: `window.__terrainLabelBoxes()` answers the names placed now, per zoom —
-    * each box (minX, minY, maxX, maxY, the label's number) from protomaps-leaflet's own collision index,
+    * each box (minX, minY, maxX, maxY, the label's number, its text when it is a name at a point) from
+    * protomaps-leaflet's own collision index,
     * which is what decides what is drawn. */
   private def exposeLabels(names: Layer): Unit =
     val fn: js.Function0[js.Any] = () =>
@@ -355,7 +357,7 @@ object TerrainMap:
           labeler.index.tree.all().asInstanceOf[js.Array[js.Dynamic]].foreach { e =>
             val lab = e.indexedLabel
             if !ids.has(lab).asInstanceOf[Boolean] then ids.set(lab, ids.size)
-            boxes.push(js.Array(e.minX, e.minY, e.maxX, e.maxY, ids.get(lab)))
+            boxes.push(js.Array(e.minX, e.minY, e.maxX, e.maxY, ids.get(lab), lab.deduplicationKey))
           }
           out(zoom.toString) = boxes
         ): js.Function2[js.Dynamic, js.Any, Unit])

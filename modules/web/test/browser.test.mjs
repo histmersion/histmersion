@@ -1594,53 +1594,23 @@ test('autopilot: the switch and the goals\' stages in the managers window', asyn
   });
 });
 
-test('the terrain base map: drawn from the server\'s extract, no raster tiles, the past-landscape notice, credits; back to standard', async t => {
-  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  await withPage({ width: 1280, height: 800 }, async page => {
-    const option = page.locator('.map-style-select option[value="terrain:terrain"]');
-    await option.waitFor({ state: 'attached' });
-    assert.equal(await option.textContent(), 'Terrain (no modern features)');
-    await page.locator('.map-style-select').selectOption('terrain:terrain');
-    const notice = page.locator('.terrain-notice');
-    await notice.waitFor();
-    assert.match(await notice.textContent(), /Coastlines, rivers, lakes and vegetation were different in the past/);
-    assert.match(await notice.locator('a').getAttribute('href'), /exploring\/web-ui\.md#the-terrain-map$/);
-    await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 7, { animate: false }));
-    // the vector tiles and the relief are canvases; the raster layer is gone
-    await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane canvas').length > 4 &&
-      document.querySelectorAll('.terrain-relief canvas').length > 0);
-    assert.equal(await page.locator('.leaflet-tile-pane img.leaflet-tile').count(), 0);
-    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('terrain-on')));
-    const credit = await page.locator('.leaflet-control-attribution').textContent();
-    assert.match(credit, /OpenStreetMap/);
-    assert.match(credit, /Mapterhorn/);
-    // a relief tile was shaded (once its elevation arrived): some of its pixels are drawn, some are not
-    const drawn = await (await page.waitForFunction(() => {
-      const share = c => {
-        const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-        let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
-        return n / (d.length / 4);
-      };
-      const best = Math.max(0, ...[...document.querySelectorAll('.terrain-relief canvas')].map(share));
-      return best > 0.05 && best;
-    })).jsonValue();
-    assert.ok(drawn < 1, `share of shaded pixels ${drawn}`);
-    // kept like the other base maps
-    await page.reload();
-    await page.waitForFunction(() => window.__testMap);
-    await page.locator('.terrain-notice').waitFor();
-    assert.equal(await page.locator('.map-style-select').inputValue(), 'terrain:terrain');
-    // and back: the notice and the canvases go, the tiles return
-    await page.locator('.map-style-select').selectOption('standard');
-    await page.waitForFunction(() => !document.querySelector('.terrain-notice') &&
-      !document.querySelector('.terrain-relief') && !document.getElementById('map').classList.contains('terrain-on'));
-    await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane img.leaflet-tile').length > 0);
-  });
-});
+/** Choose the Histmersion map and a preset: the family menu, then the preset in the map-options panel. */
+async function histmersionMap(page, style) {
+  await page.locator('.map-family-select').selectOption('histmersion');
+  await page.locator('.terrain-notice').waitFor();
+  if (style) {
+    await openOptions(page);
+    await page.locator('.terrain-style-select').selectOption(style);
+    await page.waitForFunction(s => document.querySelector('.terrain-style-select')?.value === s, style);
+  }
+}
 
-/** The share of a layer's canvases' pixels that are drawn (alpha > 0), the best tile's; and the mean
-  * colour of the land in the middle of the map (the base layer's centre tile). */
+async function openOptions(page) {
+  if (await page.locator('.map-options').isHidden()) await page.locator('.map-options-btn').click();
+  await page.locator('.map-options').waitFor();
+}
+
+/** The share of a layer's canvases' pixels that are drawn (alpha > 0), the best tile's. */
 const drawnShare = sel => {
   const share = c => {
     if (!c.width) return 0;
@@ -1651,67 +1621,237 @@ const drawnShare = sel => {
   return Math.max(0, ...[...document.querySelectorAll(sel)].map(share));
 };
 
-test('terrain styles: one menu entry each; another style draws other colours and the light tone; the names on their own layer, on and off', async t => {
+/** The colour at the map's centre, from the topmost canvas of `sel` under it. */
+const centrePixel = sel => {
+  const map = document.getElementById('map').getBoundingClientRect();
+  const x = map.left + map.width / 2, y = map.top + map.height / 2;
+  for (const c of document.querySelectorAll(sel)) {
+    const r = c.getBoundingClientRect();
+    if (x >= r.left && x < r.right && y >= r.top && y < r.bottom && c.width) {
+      const d = c.getContext('2d').getImageData(Math.floor((x - r.left) * c.width / r.width), Math.floor((y - r.top) * c.height / r.height), 1, 1).data;
+      return [d[0], d[1], d[2], d[3]];
+    }
+  }
+  return null;
+};
+
+/** A digest of what the relief's canvases hold now: changes when they are drawn again differently. */
+const reliefDigest = () => {
+  let h = 0;
+  for (const c of document.querySelectorAll('.terrain-relief canvas, .terrain-tint canvas')) {
+    if (!c.width) continue;
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    for (let i = 0; i < d.length; i += 4093) h = (h * 31 + d[i]) | 0;
+  }
+  return h;
+};
+
+test('the base map in two steps: the Histmersion map (drawn from the server\'s extract, the notice, credits) and the online maps', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  await withPage({ width: 1280, height: 800 }, async page => {
+    assert.equal(await page.locator('.map-family-select option[value="histmersion"]').textContent(), 'Histmersion map');
+    assert.ok(await page.locator('.map-options-btn').isDisabled(), 'no options on an online map');
+    await histmersionMap(page);
+    const notice = page.locator('.terrain-notice');
+    assert.match(await notice.textContent(), /Coastlines, rivers, lakes and vegetation were different in the past/);
+    assert.match(await notice.locator('a').getAttribute('href'), /exploring\/web-ui\.md#the-terrain-map$/);
+    assert.ok(await page.locator('.map-style-select').isHidden(), 'the online maps\' menu is away');
+    await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 7, { animate: false }));
+    await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane canvas').length > 4 &&
+      document.querySelectorAll('.terrain-relief canvas').length > 0);
+    assert.equal(await page.locator('.leaflet-tile-pane img.leaflet-tile').count(), 0);
+    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('terrain-on')));
+    const credit = await page.locator('.leaflet-control-attribution').textContent();
+    for (const c of [/OpenStreetMap/, /Mapterhorn/, /ETOPO1/]) assert.match(credit, c);
+    // the shading: some pixels drawn, some not; the colours by height: every land pixel
+    const drawn = await (await page.waitForFunction(`(${drawnShare})('.terrain-relief canvas') > 0.05 && (${drawnShare})('.terrain-relief canvas')`)).jsonValue();
+    assert.ok(drawn < 1, `share of shaded pixels ${drawn}`);
+    await page.waitForFunction(`(${drawnShare})('.terrain-tint canvas') > 0.9`);
+    // kept like the other base maps
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('.terrain-notice').waitFor();
+    assert.equal(await page.locator('.map-family-select').inputValue(), 'histmersion');
+    // and back to an online map: the notice and the canvases go, the tiles return; the choice among them stays
+    await page.locator('.map-family-select').selectOption('raster');
+    await page.waitForFunction(() => !document.querySelector('.terrain-notice') &&
+      !document.querySelector('.terrain-relief') && !document.getElementById('map').classList.contains('terrain-on'));
+    await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane img.leaflet-tile').length > 0);
+    await page.locator('.map-style-select').selectOption('dark');
+    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-dark')));
+    await histmersionMap(page);
+    await page.locator('.map-family-select').selectOption('raster');
+    assert.equal(await page.locator('.map-style-select').inputValue(), 'dark');
+    await page.locator('.map-style-select').selectOption('standard');
+  });
+});
+
+test('map options: each preset, light and dark; names on their own layer, on and off; reset; kept across a reload', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   const styles = await (await fetch(new URL('/api/basemap/styles', baseURL))).json();
   const hasNames = status.layers.some(l => l.layer === 'labels' && l.present);
   await withPage({ width: 1280, height: 800 }, async page => {
-    const options = page.locator('.map-style-select option[value^="terrain:"]');
-    await options.first().waitFor({ state: 'attached' });
-    assert.deepEqual(await options.evaluateAll(os => os.map(o => o.value)), styles.styles.map(s => `terrain:${s.id}`));
-    assert.ok(styles.styles.some(s => s.id === 'parchment'), 'the built-in styles');
-    await page.locator('.map-style-select').selectOption('terrain:terrain');
-    await page.locator('.terrain-notice').waitFor();
+    await histmersionMap(page);
+    await openOptions(page);
+    assert.deepEqual(await page.locator('.terrain-style-select option').evaluateAll(os => os.map(o => o.value)), styles.styles.map(s => s.id));
+    assert.equal(await page.locator('.terrain-style-select').inputValue(), styles.default, 'the server\'s default preset');
     await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 8, { animate: false }));
     await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
-    const pixel = () => page.evaluate(() => {
-      // the colour at the map's centre, from the base layer's canvas under it
-      const map = document.getElementById('map').getBoundingClientRect();
-      const x = map.left + map.width / 2, y = map.top + map.height / 2;
-      for (const c of document.querySelectorAll('.terrain-base canvas')) {
-        const r = c.getBoundingClientRect();
-        if (x >= r.left && x < r.right && y >= r.top && y < r.bottom && c.width) {
-          const d = c.getContext('2d').getImageData(Math.floor((x - r.left) * c.width / r.width), Math.floor((y - r.top) * c.height / r.height), 1, 1).data;
-          return [d[0], d[1], d[2]];
-        }
-      }
-      return null;
-    });
-    await page.waitForFunction(() => document.querySelector('.terrain-base canvas'));
-    await page.waitForTimeout(800);
-    const dark = await pixel();
-    assert.ok(dark && dark[0] + dark[1] + dark[2] < 300, `Terrain is dark: ${dark}`);
-    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-dark')));
+    // Natural: light — the land green to tan; the panel stays open while options change
+    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-light'));
     if (hasNames) {
       await page.waitForFunction(`(${drawnShare})('.terrain-labels canvas') > 0.001`, null, { timeout: 15000 });
-      // the names are below every marker pane
       const z = await page.evaluate(() => [getComputedStyle(document.querySelector('.leaflet-tile-pane')).zIndex,
         getComputedStyle(document.querySelector('.leaflet-marker-pane')).zIndex].map(Number));
       assert.ok(z[0] < z[1], `tiles ${z[0]} under markers ${z[1]}`);
-      // off: the names layer goes; on again: it is back
-      const toggle = page.locator('.terrain-names-toggle');
-      assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
-      await toggle.click();
+      const names = page.locator('.map-option-names');
+      assert.ok(await names.isChecked());
+      await names.uncheck();
       await page.waitForFunction(() => !document.querySelector('.terrain-labels'));
-      await toggle.click();
+      assert.ok(await page.locator('.map-options').isVisible(), 'still open');
+      assert.ok(await page.locator('.map-options-reset').isEnabled());
+      await page.locator('.map-options-reset').click();
       await page.waitForFunction(() => document.querySelector('.terrain-labels'));
+      assert.ok(await names.isChecked());
+      assert.ok(await page.locator('.map-options-reset').isDisabled(), 'nothing to reset');
     }
-    // another style: other colours, the light tone, no names toggle when the style has none
-    await page.locator('.map-style-select').selectOption('terrain:parchment');
+    // the dark Terrain and the light Parchment
+    await page.locator('.terrain-style-select').selectOption('terrain');
+    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-dark'));
+    await page.waitForTimeout(800);
+    const dark = await page.evaluate(centrePixel, '.terrain-base canvas');
+    assert.ok(dark && dark[0] + dark[1] + dark[2] < 300, `Terrain is dark: ${dark}`);
+    await page.locator('.terrain-style-select').selectOption('parchment');
     await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-light'));
     await page.waitForTimeout(800);
-    const light = await pixel();
+    const light = await page.evaluate(centrePixel, '.terrain-base canvas');
     assert.ok(light && light[0] + light[1] + light[2] > 450, `Parchment is light: ${light}`);
-    await page.locator('.map-style-select').selectOption('terrain:relief');
-    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-dark') && !document.querySelector('.terrain-labels'));
-    assert.ok(await page.locator('.terrain-names-toggle').isDisabled(), 'Relief only has no names');
-    // kept like the base map
+    await page.locator('.terrain-style-select').selectOption('relief');
+    await page.waitForFunction(() => !document.querySelector('.terrain-labels'));
+    assert.ok(!(await page.locator('.map-option-names').isChecked()), 'Relief only shows no names…');
+    assert.ok(await page.locator('.map-option-contours').isEnabled() && !(await page.locator('.map-option-contours').isChecked()));
+    await page.locator('.map-option-names').check();
+    await page.waitForFunction(() => document.querySelector('.terrain-labels'));   // …but a viewer may switch them on
+    await page.locator('.map-options-reset').click();
+    await page.waitForFunction(() => !document.querySelector('.terrain-labels'));
+    // Escape closes the panel, the focus back on its button
+    await page.keyboard.press('Escape');
+    await page.locator('.map-options').waitFor({ state: 'hidden' });
+    assert.equal(await page.evaluate(() => document.activeElement?.id), 'map-options-button');
+    // kept: the preset and a changed option, across a reload
+    await openOptions(page);
+    await page.locator('.terrain-style-select').selectOption('natural');
+    await page.locator('.map-option-contours').uncheck();
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.locator('.terrain-notice').waitFor();
-    assert.equal(await page.locator('.map-style-select').inputValue(), 'terrain:relief');
-    await page.locator('.map-style-select').selectOption('terrain:terrain');
+    await openOptions(page);
+    assert.equal(await page.locator('.terrain-style-select').inputValue(), 'natural');
+    assert.ok(!(await page.locator('.map-option-contours').isChecked()), 'the viewer\'s change is kept');
+    await page.locator('.map-options-reset').click();
+    assert.ok(await page.locator('.map-option-contours').isChecked());
+  });
+});
+
+test('map options: every option draws the map again (relief, colours by height, land cover, sea floor, contours and their interval)', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  await withPage({ width: 1280, height: 800 }, async page => {
+    await histmersionMap(page, 'natural');
+    // the Argolid: its focus region holds the relief to zoom 11 — contours from 11 on
+    await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 12, { animate: false }));
+    await page.waitForFunction(`(${drawnShare})('.terrain-relief canvas') > 0.3`, null, { timeout: 20000 });
+    await page.waitForTimeout(500);
+    const changes = async (act, why) => {
+      const before = await page.evaluate(reliefDigest);
+      const t0 = Date.now();
+      await act();
+      await page.waitForFunction(b => {
+        const d = (() => { let h = 0; for (const c of document.querySelectorAll('.terrain-relief canvas, .terrain-tint canvas')) {
+          if (!c.width) continue; const x = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+          for (let i = 0; i < x.length; i += 4093) h = (h * 31 + x[i]) | 0; } return h; })();
+        return d !== b;
+      }, before, { timeout: 15000 });
+      return Date.now() - t0;
+    };
+    await changes(() => page.locator('.map-option-relief').fill('0.3'), 'relief');
+    await changes(() => page.locator('.map-option-contours').uncheck(), 'contours off');
+    assert.ok(await page.locator('.terrain-interval-select').isDisabled());
+    await changes(() => page.locator('.map-option-contours').check(), 'contours on');
+    await changes(() => page.locator('.terrain-interval-select').selectOption('20'), 'interval');
+    await changes(() => page.locator('.map-option-heights').uncheck(), 'colours by height');
+    // without them the ground is the land's own fill (the tint layer has gone or holds only the sea)
+    await page.locator('.map-option-landCover').uncheck();
+    await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 0);
+    // the sea floor, over the Aegean
+    await page.evaluate(() => window.__testMap.setView([37.2, 25.2], 7, { animate: false }));
+    await page.waitForFunction(`(${drawnShare})('.terrain-tint canvas') > 0.3`, null, { timeout: 20000 });
+    const deep = await page.evaluate(centrePixel, '.terrain-tint canvas');
+    assert.ok(deep && deep[3] > 200 && deep[2] > deep[0], `the sea coloured by depth: ${deep}`);
+    await changes(() => page.locator('.map-option-seaFloor').uncheck(), 'sea floor');
+    await page.locator('.map-options-reset').click();
+  });
+});
+
+test('map options: an option whose data is not downloaded is disabled, its line saying what to fetch', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  await withPage({ width: 1280, height: 800 }, async page => {
+    // the server as if it had no sea floor and no relief
+    await page.route('**/api/basemap', async route => {
+      const res = await route.fetch();
+      const s = await res.json();
+      s.layers = s.layers.map(l => (l.layer === 'bathymetry' || l.layer === 'terrain') ? { ...l, present: false } : l);
+      await route.fulfill({ response: res, json: s });
+    });
+    await histmersionMap(page, 'natural');
+    await openOptions(page);
+    for (const k of ['seaFloor', 'heights', 'contours']) assert.ok(await page.locator(`.map-option-${k}`).isDisabled(), k);
+    assert.ok(await page.locator('.map-option-relief').isDisabled());
+    const why = await page.locator('.map-option-why').allTextContents();
+    assert.ok(why.some(w => w.includes('histmersion basemap fetch --layer terrain')), why.join(' | '));
+    assert.ok(await page.locator('.map-option-names').isEnabled(), 'the names need no relief');
+    assert.equal(await page.locator('.terrain-relief').count(), 0);
+  });
+});
+
+test('the names: no two placed names overlap (z5–8 over the Aegean, every line, halo and margin); local names in their own script', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available || !status.layers.some(l => l.layer === 'labels' && l.present)) { t.skip('the test server has no terrain names'); return; }
+  await withPage({ width: 1280, height: 800 }, async page => {
+    await histmersionMap(page, 'natural');
+    const placed = z => page.evaluate(z => {
+      const all = window.__terrainLabelBoxes?.()[String(z)] || [];
+      const hits = [];
+      for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+        const a = all[i], b = all[j];
+        if (a[4] !== b[4] && a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3]) hits.push([a[5], b[5]]);
+      }
+      return { n: all.length, hits, texts: all.map(b => b[5]).filter(Boolean) };
+    }, z);
+    for (const z of [5, 6, 7, 8]) {
+      await page.evaluate(z => window.__testMap.setView([37.8, 25.3], z, { animate: false }), z);
+      await page.waitForFunction(z => (window.__terrainLabelBoxes?.()[String(z)] || []).length > 0, z, { timeout: 15000 });
+      await page.waitForTimeout(600);
+      const r = await placed(z);
+      assert.deepEqual(r.hits, [], `zoom ${z}: overlapping names`);
+    }
+    // a multi-line name's box holds every line: taller than one line of its font
+    const tall = await page.evaluate(() => Object.values(window.__terrainLabelBoxes()).flat().some(b => b[3] - b[1] > 30));
+    assert.ok(tall, 'a wrapped name\'s box spans its lines');
+    // Local: the Greek names in Greek; then English again
+    await openOptions(page);
+    const t0 = Date.now();
+    await page.locator('.terrain-language-select').selectOption('local');
+    await page.waitForFunction(() => Object.values(window.__terrainLabelBoxes?.() || {}).flat().some(b => /[Ͱ-Ͽ]/.test(b[5] || '')),
+      null, { timeout: 15000 });
+    assert.ok(await page.locator('.terrain-relief canvas').count() > 0, 'only the names were drawn again');
+    await page.locator('.terrain-language-select').selectOption('en');
+    await page.waitForFunction(() => { const t = Object.values(window.__terrainLabelBoxes?.() || {}).flat().map(b => b[5] || '');
+      return t.some(x => /Aegean|Myrtoan|Cyclades|Saronic/.test(x)) && !t.some(x => /[Ͱ-Ͽ]/.test(x)); }, null, { timeout: 15000 });
+    assert.ok(Date.now() - t0 < 15000);
   });
 });
 
@@ -1723,14 +1863,15 @@ test('a changed style file is picked up by the server and the open map redraws, 
   fs.writeFileSync(file, 'styles = [ { id = "terrain", extends = "terrain", name = "Before" } ]\n');
   try {
     await withPage({ width: 1280, height: 800 }, async page => {
-      await page.waitForFunction(() => [...document.querySelectorAll('.map-style-select option')].some(o => o.textContent.startsWith('Before')));
-      await page.locator('.map-style-select').selectOption('terrain:terrain');
-      await page.locator('.terrain-notice').waitFor();
+      await histmersionMap(page);
+      await openOptions(page);
+      await page.waitForFunction(() => [...document.querySelectorAll('.terrain-style-select option')].some(o => o.textContent.startsWith('Before')));
+      await page.locator('.terrain-style-select').selectOption('terrain');
       await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 8, { animate: false }));
       await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
       fs.writeFileSync(file, 'styles = [ { id = "terrain", extends = "terrain", name = "After", background = "#ff0000", layers = [ { id = "land", fill = "#00ff00" }, { id = "water", fill = "#ff0000" } ] } ]\n');
       const t1 = Date.now();
-      await page.waitForFunction(() => [...document.querySelectorAll('.map-style-select option')].some(o => o.textContent.startsWith('After')),
+      await page.waitForFunction(() => [...document.querySelectorAll('.terrain-style-select option')].some(o => o.textContent.startsWith('After')),
         null, { timeout: 30000 });
       await page.waitForFunction(() => {
         const map = document.getElementById('map').getBoundingClientRect();

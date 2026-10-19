@@ -32,7 +32,8 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
       bbox = "22,35,29,41", vector = base.basemap.vector.copy(url = "fake://v/{build}", maxZoom = 4),
       terrain = base.basemap.terrain.copy(url = "fake://t", maxZoom = 3,
         onDemand = base.basemap.terrain.onDemand.copy(maxZoom = 5, requestsPerSecond = 1000), focusRegions = List("crete 23,34.8,26.5,35.7")),
-      labels = base.basemap.labels.copy(url = "fake://ne/{file}.geojson", files = List("ranges", "rivers"), maxZoom = 6)))
+      labels = base.basemap.labels.copy(url = "fake://ne/{file}.geojson", files = List("ranges", "rivers"), maxZoom = 6),
+      bathymetry = base.basemap.bathymetry.copy(url = "fake://sea/{z}/{x}/{y}.png", maxZoom = 3, requestGapMs = 0)))
     val router = new RangeHttp:
       private def pick(url: String) = if url.startsWith("fake://v") then v else t
       def text(url: String) =
@@ -41,6 +42,12 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
         else v.text(url)
       def bytes(url: String, o: Long, l: Long) = pick(url).bytes(url, o, l)
       def download(url: String, o: Long, l: Long, to: Path) = pick(url).download(url, o, l, to)
+      // the sea floor's tiles: whole files, one a tile; the bucket has none for x = 0
+      override def file(url: String) =
+        val Sea = "fake://sea/(\\d+)/(\\d+)/(\\d+).png".r
+        url match
+          case Sea(z, x, y) => BasemapServiceSuite.seaGets.incrementAndGet(); Right(Option.when(x != "0")(s"PNG$z/$x/$y".getBytes))
+          case _            => Left(s"$url: unexpected")
     (BasemapService(Deps(cfg, ds), () => router, _ => free), v, t)
 
   test("a dry run reads directories only and reports the sizes; nothing is written"):
@@ -59,7 +66,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assert(j.succeeded, j.toString)
     val st = svc.status
     assert(st.available, st.toString)
-    assertEquals(st.layers.map(l => (l.layer, l.maxZoom)), List(("vector", Some(4)), ("terrain", Some(3)), ("labels", Some(6))))
+    assertEquals(st.layers.map(l => (l.layer, l.maxZoom)), List(("vector", Some(4)), ("terrain", Some(3)), ("labels", Some(6)), ("bathymetry", Some(3))))
     assertEquals(st.hints, Nil)
     assert(st.layers.head.kept.exists(_.startsWith("all but: roads; transit; buildings")), st.layers.head.kept.toString)
     val names = st.layers.find(_.layer == "labels").get
@@ -88,7 +95,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assert(svc.tile("vector", 4, 9, 6, Some("water:q")).isLeft)
     assertEquals(svc.tile("terrain", 3, 4, 3, Some("water")).map(_._3), Right(None), "an image is never cut")
     val gone = svc.remove(BasemapRemoveQuery()).fold(e => fail(e.message), identity)
-    assertEquals(gone.removed.size, 3)
+    assertEquals(gone.removed.size, 4)
     assert(!svc.status.available)
 
   test("an extract without the names: the status says a fetch of the labels adds them, and that fetch adds only them"):
@@ -170,6 +177,24 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assert(svc.status.layers.find(_.layer == "terrain").get.present, "the extract stays")
     assert(svc.remove(BasemapRemoveQuery("none", focus = Some("nowhere"))).isLeft)
 
+  test("the sea floor: one GET a tile of the region, those the bucket has kept; a status entry, its tiles served; resumed, not read again"):
+    val dir = Files.createTempDirectory("basemap")
+    val (svc, _, _) = service(dir)
+    val dry = await(svc.fetch(BasemapFetchQuery(layer = "bathymetry", dryRun = true)).fold(e => fail(e.message), _.id))
+    assert(dry.progress.exists(_.contains("bathymetry (zoom 0–3): would download")), dry.progress.toString)
+    val before = BasemapServiceSuite.seaGets.get
+    val j = await(svc.fetch(BasemapFetchQuery(layer = "bathymetry")).fold(e => fail(e.message), _.id))
+    assert(j.succeeded, j.toString)
+    val asked = BasemapServiceSuite.seaGets.get - before
+    assertEquals(asked.toLong, Basemap.tileCount(BBox(22, 35, 29, 41), 0, 3))
+    val sea = svc.status.layers.find(_.layer == "bathymetry").get
+    assertEquals((sea.present, sea.maxZoom, sea.tileType), (true, Some(3), Some("image/png")))
+    assert(sea.attribution.contains("ETOPO1"), sea.attribution)
+    val (b, mime, _, _, code) = svc.tile("bathymetry", 3, 4, 3).fold(e => fail(e.message), identity)
+    assertEquals((code.code, mime, String(b)), (200, "image/png", "PNG3/4/3"))
+    assertEquals(svc.tile("bathymetry", 0, 0, 0).map(_._5.code), Right(204), "the bucket had none")
+    assert(!Files.exists(dir.resolve(".bathymetry.part")), "the parts are removed once written")
+
   test("bad options are refused before a job starts"):
     val (svc, _, _) = service(Files.createTempDirectory("basemap"))
     assert(svc.fetch(BasemapFetchQuery(layer = "roads")).isLeft)
@@ -177,6 +202,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assert(svc.fetch(BasemapFetchQuery(maxZoom = Some(15))).isLeft)
 
 object BasemapServiceSuite:
+  val seaGets = java.util.concurrent.atomic.AtomicInteger(0)
   /** Two Natural Earth-shaped files: a range in the region and one far away; a river in it. */
   val Ranges: String =
     """{"type":"FeatureCollection","features":[
