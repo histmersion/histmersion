@@ -1614,14 +1614,17 @@ test('the terrain base map: drawn from the server\'s extract, no raster tiles, t
     const credit = await page.locator('.leaflet-control-attribution').textContent();
     assert.match(credit, /OpenStreetMap/);
     assert.match(credit, /Mapterhorn/);
-    // a relief tile was shaded: some of its pixels are drawn, some are not
-    const drawn = await page.evaluate(() => {
-      const c = [...document.querySelectorAll('.terrain-relief canvas')].find(c => c.width === 512);
-      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-      let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
-      return n / (d.length / 4);
-    });
-    assert.ok(drawn > 0.05 && drawn < 1, `share of shaded pixels ${drawn}`);
+    // a relief tile was shaded (once its elevation arrived): some of its pixels are drawn, some are not
+    const drawn = await (await page.waitForFunction(() => {
+      const share = c => {
+        const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+        let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
+        return n / (d.length / 4);
+      };
+      const best = Math.max(0, ...[...document.querySelectorAll('.terrain-relief canvas')].map(share));
+      return best > 0.05 && best;
+    })).jsonValue();
+    assert.ok(drawn < 1, `share of shaded pixels ${drawn}`);
     // kept like the other base maps
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
