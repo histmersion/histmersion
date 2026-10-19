@@ -1120,6 +1120,7 @@ polls, so a change can take a few seconds to be seen).
 | `plugins.oa-core.api-key` | — | `null` = `acquire.core.api-key` | CORE's API key as a **secret reference** (`env:<NAME>` or a vault's, e.g. `keepassxc:CORE#password`), never the key itself; shown in reports as the reference. Without any key, CORE is not asked |
 | `plugins.media-<provider>.enabled` — `media-wikidata` · `media-depicts` · `media-met` · `media-cleveland` · `media-aic` · `media-loc` · `media-pleiades` · `media-opencontext` | `HISTMERSION_PLUGIN_MEDIA_<PROVIDER>_ENABLED` | `true` | the built-in media collections, one plugin each; `false` takes the provider out of `media import` and `media providers`. Their settings stay `media.<provider>.*`, read at each import; a collection's own `media.<provider>.enabled = false` still refuses its import too (both switches must be on) |
 | `plugins.events-gvp.enabled` · `plugins.events-noaa.enabled` · `plugins.events-wikidata.enabled` | `HISTMERSION_PLUGIN_EVENTS_GVP_ENABLED` · `_NOAA_` · `_WIKIDATA_ENABLED` | `true` | the built-in event catalogues; `false` takes the catalogue out of `events import` and `events catalogues` (its events on the map stay; `events rederive` still reads them). Their settings stay `events.<catalogue>.*` |
+| `plugins.ai-anthropic.enabled` · `plugins.ai-openai.enabled` · `plugins.ai-local.enabled` · `plugins.ai-claude-code.enabled` · `plugins.ai-codex.enabled` · `plugins.ai-opencode.enabled` | `HISTMERSION_PLUGIN_AI_ANTHROPIC_ENABLED` · `_AI_OPENAI_` · `_AI_LOCAL_` · `_AI_CLAUDE_CODE_` · `_AI_CODEX_` · `_AI_OPENCODE_ENABLED` | `true` | the built-in AI providers; `false` takes `<name>:*` models out of every role's chain and the doctor. Their settings stay `agents.providers.<name>.*`, read at each call |
 | `acquire.europepmc.url` · `acquire.pmc-dataset.url` | `HISTMERSION_ACQUIRE_EUROPEPMC_URL` · `..._PMC_DATASET_URL` | Europe PMC REST · NCBI's PMC Article Datasets bucket | the PMC step of the OA chain: Europe PMC's DOI search names the PMCID and its free (`OA`/`F`) PDF links; NCBI's dataset record names the PDF (MD5-checked) and, when there is none, the JATS XML that the ingest job renders to Markdown itself. A bot-protection challenge from any host counts as no copy |
 | `acquire.zenodo.url` · `acquire.datacite.url` | `HISTMERSION_ACQUIRE_ZENODO_URL` · `..._DATACITE_URL` | `https://zenodo.org` · `https://api.datacite.org` | the landing-page step (#1580): Zenodo's `/api/records/<id>` names an open record's PDF files (MD5-checked); DataCite's `/dois/<doi>` says where a DataCite DOI (a repository's thesis, report or chapter) resolves — a `doi.org` link is never followed blind |
 | `acquire.landing.enabled` · `.max-pages` | `HISTMERSION_ACQUIRE_LANDING_ENABLED` · `_MAX_PAGES` | `true` · `4` | resolve repository landing pages one step, reading at most this many per work: a Zenodo record by its API, any other page for its `citation_pdf_url` meta tag — only on a repository, never on a publisher. Bot protection or a 403 is no copy (the work goes to the acquire queue) |
@@ -1227,7 +1228,7 @@ polls, so a change can take a few seconds to be seen).
 | `config.watch-debounce-ms` | `HISTMERSION_CONFIG_WATCH_DEBOUNCE_MS` | `500` | …this long after its last change (an editor writes in steps) |
 | `config.drain-seconds` | `HISTMERSION_CONFIG_DRAIN_SECONDS` | `10` | how long a reload waits for the previous generation's users (in-flight requests, job steps) before it reports them as still draining |
 | `plugins.order` | — | `[]` | plugin registration order: these ids first, then the rest by id. `histmersion.plugins` is an **open block**: each `plugins.<id> { … }` is that plugin's own settings, checked by the plugin host against the plugin's defaults (a mistyped key fails that plugin, naming the key; a block no plugin claims is a warning) — see *Plugins and secrets* below |
-| `plugins.<id>.enabled` | `HISTMERSION_PLUGIN_<ID>_ENABLED` (when the plugin declares it) | `false` for the secret vaults; `true` for the acquisition, media and events built-ins | the host's key in every plugin block. First-party plugins are built into the binary; a vault is disabled until enabled here, a built-in provider enabled until switched off here |
+| `plugins.<id>.enabled` | `HISTMERSION_PLUGIN_<ID>_ENABLED` (when the plugin declares it) | `false` for the secret vaults; `true` for the acquisition, media, events and AI-provider built-ins | the host's key in every plugin block. First-party plugins are built into the binary; a vault is disabled until enabled here, a built-in provider enabled until switched off here |
 | `plugins.keepassxc.database` · `.key-file` · `.password` · `.attribute` · `.cli` · `.timeout-seconds` | `HISTMERSION_PLUGIN_KEEPASSXC_DATABASE` (others: file only) | `""` · `""` · `null` · `password` · `keepassxc-cli` · `10` | the KeePassXC vault: `keepassxc:<entry>[#<attribute>]` runs `keepassxc-cli show -q -a <attribute> [-k <key-file>] [--no-password] <database> <entry>`. `password` is a **secret reference** (`env:KEEPASSXC_PASSWORD`), sent on the tool's stdin, never stored; without it `--no-password` is passed (a key file alone must open the database), else the vault reports locked |
 | `plugins.1password.account` · `.service-account-token` · `.cli` · `.timeout-seconds` | file only | `""` · `null` · `op` · `10` | the 1Password vault: `1password:op://<vault>/<item>/<field>` runs `op read …` (`--account` when set); `service-account-token` is a secret reference passed as `OP_SERVICE_ACCOUNT_TOKEN` to `op` only — without it the desktop app signs `op` in |
 | `plugins.bitwarden.session` · `.field` · `.cli` · `.timeout-seconds` | file only | `null` · `password` · `bw` · `10` | the Bitwarden vault: `bitwarden:<item>[#<field>]` runs `bw get <field> <item> --nointeraction`; `session` is a secret reference (`env:BW_SESSION`, from `bw unlock`) passed as `BW_SESSION` to `bw` only — without it the vault reports locked |
@@ -1253,8 +1254,9 @@ its own block, `histmersion.plugins.<id> { … }`, layered over the defaults it 
 (`META-INF/histmersion/plugins/<id>.conf`) with the environment over both. The built-in ones are the
 three secret vaults above, all disabled by default, and — all enabled — the seven acquisition plugins,
 the eight media collections (`media-wikidata`, `media-depicts`, `media-met`, `media-cleveland`,
-`media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`) and the three event catalogues
-(`events-gvp`, `events-noaa`, `events-wikidata`).
+`media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`), the three event catalogues
+(`events-gvp`, `events-noaa`, `events-wikidata`) and the six AI providers (`ai-anthropic`, `ai-openai`,
+`ai-local`, `ai-claude-code`, `ai-codex`, `ai-opencode`).
 
 **Acquisition runs through plugins.** `ingest <doi>` and `archive import` fetch through one chain of
 *source fetchers* that plugins register, asked in `acquire.chain` order until one has a copy. The built-in
@@ -1278,6 +1280,15 @@ overlapping, the reason kept on the link), downloads, thumbnails and stores it. 
 returns each part's records; the server checks each one, applies the years and thresholds, merges it
 with the events there and records the part, so a second import reads only what is left. Neither may take
 a name of the server's own providers.
+
+**AI providers are plugins too.** The provider half of a `provider:model` reference (`agents.roles.*`,
+`agent models set`, an allowance's target) names an AI provider in the plugins' registry. The six built-in
+ones keep their settings under `agents.providers.<name>.*`; `histmersion.plugins.ai-<name>.enabled = false`
+takes `<name>:*` models out of every chain (the chain passes them over, naming the switch) and `agent
+doctor` says so. A plugin's provider answers one model call at a time; the server keeps the prompts, the
+tool loop and the tools, the answer's validation, the budgets, allowances and approvals. Its models are
+metered — price them in `agents.prices` (`0/0` for a free one) — and a reference to it is accepted only
+while its plugin is registered. Its credentials are secret references in its own block.
 
 A credential in a plugin's settings is never written as a bare value: it is a **secret reference**,
 resolved when the plugin is registered and never stored, logged or returned:
