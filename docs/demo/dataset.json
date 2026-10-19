@@ -1,0 +1,1851 @@
+{
+ "sources": [
+  {
+   "citekey": "kaniewski2011_peoples",
+   "licence": "CC-BY-4.0",
+   "title": "The Sea Peoples, from Cuneiform Tablets to Carbon Dating",
+   "authors": [
+    "David Kaniewski",
+    "Elise Van Campo",
+    "Karel Van Lerberghe",
+    "Tom Boiy",
+    "Klaas Vansteenhuyse",
+    "Greta Jans",
+    "Karin Nys",
+    "Harvey Weiss",
+    "Christophe Morhange",
+    "Thierry Otto",
+    "Joachim Bretschneider"
+   ],
+   "year": 2011,
+   "venue": "PLoS ONE",
+   "doi": "10.1371/journal.pone.0020232",
+   "status": "unassessed",
+   "topics": [
+    "sea_peoples",
+    "bronze_age_collapse",
+    "radiocarbon_dating",
+    "late_bronze_age",
+    "eastern_mediterranean",
+    "aegean",
+    "deep_time",
+    "levant_near_east",
+    "phoenician_levantine"
+   ],
+   "regions": [
+    "Northern Levant",
+    "Syria",
+    "Ugarit",
+    "Gibala (Tell Tweini)",
+    "Cyprus",
+    "Aegean"
+   ],
+   "tags": [],
+   "periodStart": -1215,
+   "periodEnd": -1190,
+   "summary": "Kaniewski et al. (2011) present the first stratified radiocarbon-based chronology for the Sea Peoples invasion in the northern Levant, using AMS 14C dates from the destruction layer (Level 7A) at the harbour town Gibala (Tell Tweini), a coastal site of the Ugarit kingdom in Syria. By correlating the radiocarbon results with cuneiform tablets, Egyptian royal chronologies, and a solar eclipse recorded at Ugarit on 21 January 1192 BC, they establish a precise date of 1192-1190 BC for terminal Late Bronze Age destructions across the northern Levant. The study argues that the Egyptian Ramses III evidence represents only the final stage of a longer collapse that had intensified from at least 1215 BC, predating the traditional Ramessid anchor date used in scholarship. The Sea Peoples' material culture (Mycenaean IIIC Early pottery, Aegean-type architecture) appears immediately after the destruction layer, indicating direct settlement by the invaders.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "Radiocarbon dating of the destruction layer (Level 7A) at Gibala-Tell Tweini, combined with cuneiform and astronomical data, establishes 1192-1190 BC as the absolute date of the Sea Peoples' terminal destruction of northern Levantine cities.",
+     "region": "Northern Levant, Syria",
+     "lon": 35.9368,
+     "lat": 35.3717,
+     "periodStart": -1192,
+     "periodEnd": -1190,
+     "periodName": "Late Bronze Age collapse",
+     "confidence": "high",
+     "tags": [
+      "sea_peoples",
+      "radiocarbon_dating",
+      "bronze_age_collapse",
+      "ugarit"
+     ]
+    },
+    {
+     "claim": "The traditional Egyptian date derived from Ramses III's Medinet Habu reliefs reflects only the final phase of the Sea Peoples' activity; the northern Levant was devastated by 1192-1190 BC, well before Ramses III's eighth regnal year battle (c. 1176-1179 BC).",
+     "region": "Egypt, Nile Delta",
+     "lon": 32.6394,
+     "lat": 25.7188,
+     "periodStart": -1192,
+     "periodEnd": -1176,
+     "periodName": "Late Bronze Age collapse",
+     "confidence": "high",
+     "tags": [
+      "sea_peoples",
+      "ramesses_iii",
+      "egyptian_chronology",
+      "bronze_age_collapse"
+     ]
+    },
+    {
+     "claim": "Material culture immediately following the Gibala destruction layer—locally made Mycenaean IIIC Early pottery, Aegean-type architecture, hand-made burnished pottery, and Aegean-type loom-weights—indicates direct settlement by Sea Peoples at the site.",
+     "region": "Northern Levant, Syria",
+     "lon": 35.9368,
+     "lat": 35.3717,
+     "periodStart": -1190,
+     "periodEnd": -1100,
+     "periodName": "Early Iron Age",
+     "confidence": "medium",
+     "tags": [
+      "sea_peoples",
+      "philistines",
+      "aegean_migration",
+      "material_culture"
+     ]
+    }
+   ],
+   "edges": [],
+   "body": "# The Sea Peoples, from Cuneiform Tablets to Carbon Dating\n\n_David Kaniewski, Elise Van Campo, Karel Van Lerberghe, Tom Boiy, Klaas Vansteenhuyse, Greta Jans, Karin Nys, Harvey Weiss, Christophe Morhange, Thierry Otto, Joachim Bretschneider (2011). PLOS ONE. https://doi.org/10.1371/journal.pone.0020232 — published under the Creative Commons Attribution licence. This demo keeps an excerpt: the abstract and introduction._\n\n## Abstract\n\nThe 13th century BC witnessed the zenith of the Aegean and Eastern Mediterranean civilizations which declined at the end of the Bronze Age, ∼3200 years ago. Weakening of this ancient flourishing Mediterranean world shifted the political and economic centres of gravity away from the Levant towards Classical Greece and Rome, and led, in the long term, to the emergence of the modern western civilizations. Textual evidence from cuneiform tablets and Egyptian reliefs from the New Kingdom relate that seafaring tribes, the Sea Peoples, were the final catalyst that put the fall of cities and states in motion. However, the lack of a stratified radiocarbon-based archaeology for the Sea People event has led to a floating historical chronology derived from a variety of sources spanning dispersed areas. Here, we report a stratified radiocarbon-based archaeology with anchor points in ancient epigraphic-literary sources, Hittite-Levantine-Egyptian kings and astronomical observations to precisely date the Sea People event. By confronting historical and science-based archaeology, we establish an absolute age range of 1192–1190 BC for terminal destructions and cultural collapse in the northern Levant. This radiocarbon-based archaeology has far-reaching implications for the wider Mediterranean, where an elaborate network of international relations and commercial activities are intertwined with the history of civilizations.\n\n## Introduction\n\nThe late 13th century BC was a time of uncertainty and conflict for peoples and polities of the Aegean and Eastern Mediterranean [1], [2], [3]. Written evidences relate a weakening of central administrations [2], an erosion of political powers [4], [5], and a widespread food shortage [6]–[8] underpinned by devastating drought [9], [10]. This sequence of high-magnitude events led to the Sea People event and to the collapse of the ancient Mediterranean world around 1200 BC [1], [3], [5]. Cuneiform tablets foreshadowing the fall of the thriving coastal city Ugarit [2], and reliefs from Ramses III's mortuary temple at Medinet Habou depicting a chaotic scene of boats and warriors entwined in battle in the Nile delta [11], attest that vast movements of seafaring and inland tribes, the Sea Peoples [12] (or Land and Sea Peoples), lie at the heart of changes for this period.\n\nThe Sea Peoples were seaborne foes [13], [14], [15] from different origins [6], [12]. They launched a combined land-sea invasion (Fig. 1) that destabilized the already weakened power base of empires and kingdoms of the old world, and attempted to enter or control the Egyptian territory [11]. The Sea Peoples symbolize the last step of a long and complex spiral of decline in the ancient Mediterranean world [2], [3], [4], [5]. Cuneiform tablets from Ugarit provide an impressive glimpse of the frantic preparations which the city and her neighbours pursued, in vain, to ward against the invasions [2]. The destructive operations of the Sea Peoples are later narrated by Ramses III who claims on his mortuary temple: “No land could stand before their arms: from Hatti, Qode, Carchemish, Arzawa, and Alashiya on, being cut off (destroyed) at one time” [16]. Within the conventional view, the Sea Peoples are linked in history to the collapse of the Late Bronze Age cultures [4], and 1200 BC stands as a symbolic date in human civilization.\n\nWhereas the Sea People event constitutes a major turning point in ancient world history, attested by both written and archaeological (e.g. Ugarit, Enkomi, Kition, Byblos) evidence, our knowledge of when these waves of destructions occurred rests on translation of cuneiform tablets preceding the invasions (terminus ante quem) and on Ramses III's reign (terminus post quem). Here, we report the first absolute chronology of the invasion from a rare, well-preserved Sea People destruction layer (Fig. 2) from a Levantine harbour town of the Ugarit kingdom. The destruction layer contains remains of conflicts (bronze arrowheads scattered around the town, fallen walls, burnt houses), ash from the conflagration of houses, and chronologically well-constrained ceramic assemblages fragmented by the collapse of the town. This stratified radiocarbon-based archaeology, with anchor points in ancient epigraphic-literary sources, Hittite-Levantine-Egyptian kings and astronomical observations, was used to precisely date the Sea People invasion in northern Levant, a decisive episode in a long-term collapse of the ancient Eastern Mediterranean world. By confronting historical and science-based archaeology, the data offer the first firm chronology for this key period in human society.\n\n### The harbour town Gibala, Ugarit Kingdom\n\nSample collection for radiocarbon (14C) dating of the Sea People event was performed at the harbour town Gibala [17], [18], [19], a thriving Levantine trade center located at the southernmost edge of the powerful Ugarit kingdom [20], [21]. Gibala (present Tell Tweini, 35°22′17.93″N, 35°56′12.60″E; elevation: 19 to 27 meters above sea level ) was integrated into a large network of long-distance trading and cultural exchanges between the Aegean, Cyprus, the Levant, Egypt and Western Asia. Direct access from the Mediterranean to the Syrian heartland, Anatolia, and Mesopotamia afforded the ports of the Ugarit kingdom their wealth. This strategic position sets the chronology obtained for the destruction of Gibala by the Sea Peoples in a Mediterranean-wide perspective for the end of the Late Bronze Age (Fig. 1), extending over trade routes that crossed both land and sea. The place name Gibala appears on two 14th century BC cuneiform tablets from Ugarit [17]. The written Bronze Age sources or epigraphic finds for Gibala cease as soon as Ugarit was destroyed by the Sea Peoples. Gibala-Tell Tweini is a large multi-period site of ∼12 hectares (Fig. 2), which was occupied from Early Bronze Age IV (2400 BC) to Iron Age III (500 BC). During the past 11 years, large-scale excavations have elucidated a thriving Bronze Age city that remained occupied during the Iron Age, with only short periods of abandonment despite a massive fire at the end of the Early Iron Age [short-lived sample: 2845±35 14C years before the present (14C yr BP from AD 1950)] (Fig. S1) (Supporting Information S1). Gibala is a rare coastal settlement, alongside Tell Kazel, Ras Ibn Hani and Ras el-Bassit, with reoccupations after the Sea People event. A stable water supply, provided by the northern Rumailiah River and the southern Ain Fawar spring-complex, may explain resettlements on the Gibala's alluvial plain since the Early Iron Age [10].\n"
+  },
+  {
+   "citekey": "kaniewski2013_environmental",
+   "licence": "CC-BY-4.0",
+   "title": "Environmental Roots of the Late Bronze Age Crisis",
+   "authors": [
+    "David Kaniewski",
+    "Elise Van Campo",
+    "Joël Guiot",
+    "Sabine Le Burel",
+    "Thierry Otto",
+    "Cécile Baeteman"
+   ],
+   "year": 2013,
+   "venue": "PLoS ONE",
+   "doi": "10.1371/journal.pone.0071004",
+   "status": "contested",
+   "topics": [
+    "bronze_age_collapse",
+    "palaeoclimate",
+    "drought",
+    "sea_peoples",
+    "3.2ka_event",
+    "eastern_mediterranean_prehistory",
+    "eastern_mediterranean",
+    "deep_time",
+    "levant_near_east",
+    "phoenician_levantine"
+   ],
+   "regions": [
+    "Cyprus",
+    "Levant",
+    "Eastern Mediterranean",
+    "Syria",
+    "Egypt",
+    "Anatolia"
+   ],
+   "tags": [
+    "drought",
+    "famine",
+    "climate-change",
+    "contested"
+   ],
+   "periodStart": -1300,
+   "periodEnd": -850,
+   "summary": "Kaniewski et al. (2013) present pollen-based palaeoclimate data from a sediment core (B22) at Hala Sultan Tekke, Larnaca Salt Lake, southeastern Cyprus, documenting an abrupt shift toward arid conditions beginning around 1200 BCE and persisting for roughly 300 years — the '3.2 ka event'. Cross-correlation with a previously published pollen record from Gibala-Tell Tweini on the Syrian coast yields a statistically significant synchrony (LDCC r = 0.626), anchored by the same radiocarbon pooled-mean age (~2962 ¹⁴C yr BP, calibrated 1215–1160 cal BCE) as the archaeological destruction layer at Tell Tweini. The authors argue that this drought triggered crop failures, famine, and mass migrations that drove the Sea Peoples phenomenon, making climate change the ultimate cause and the Sea Peoples' raids merely the proximate trigger of the Late Bronze Age collapse across Cyprus, the Levant, Anatolia, and Egypt. Supporting proxies from Soreq Cave, Ashdod Coast, the Dead Sea, the Nile Delta, and Tigris-Euphrates discharge records corroborate the region-wide hydrological anomaly. The paper is a foundational data-paper for the climate-collapse thesis, though the causal primacy of drought versus systemic fragility remains debated in subsequent literature.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "Pollen core B22 from Larnaca Salt Lake (Hala Sultan Tekke) records a sharp transition from Mediterranean woodland to dry steppe vegetation beginning ca. 1200 cal BCE, indicating a ~300-year drought episode that made sustained agriculture impossible in southeastern Cyprus.",
+     "region": "Cyprus",
+     "lon": 33.615,
+     "lat": 34.883,
+     "periodStart": -1200,
+     "periodEnd": -850,
+     "periodName": "Late Bronze Age–Early Iron Age",
+     "confidence": "high",
+     "tags": [
+      "drought",
+      "pollen-proxy",
+      "vegetation-shift",
+      "agriculture-collapse"
+     ]
+    },
+    {
+     "claim": "The Gibala-Tell Tweini (Syrian coast, Ugarit kingdom) pollen record shows a coeval long-term dry period and agricultural decline, confirmed by radiocarbon (pooled mean 2962±9 ¹⁴C yr BP = 1215–1160 cal BCE), statistically synchronous with the Cyprus drought (LDCC r = 0.626).",
+     "region": "Syria",
+     "lon": 35.93,
+     "lat": 35.63,
+     "periodStart": -1215,
+     "periodEnd": -850,
+     "periodName": "Late Bronze Age Crisis",
+     "confidence": "high",
+     "tags": [
+      "drought",
+      "pollen-proxy",
+      "radiocarbon",
+      "ugarit"
+     ]
+    },
+    {
+     "claim": "A radiocarbon-based matrix integrating the onset of drought in Syria (core TW1, 2970±40 ¹⁴C yr BP) with the destruction layer at Gibala-Tell Tweini (Sea People raid) is statistically indistinguishable at 95% confidence, indicating the climate event and the military/political collapse are the same calendric event.",
+     "region": "Syria",
+     "lon": 35.93,
+     "lat": 35.63,
+     "periodStart": -1215,
+     "periodEnd": -1160,
+     "periodName": "Late Bronze Age Collapse",
+     "confidence": "high",
+     "tags": [
+      "radiocarbon",
+      "sea-peoples",
+      "collapse",
+      "destruction-layer"
+     ]
+    },
+    {
+     "claim": "Multiple independent proxies across the Eastern Mediterranean — Soreq Cave δ¹⁸O (Israel), Ashdod Coast δ¹⁸O, Dead Sea pollen, Nile flood records (Lake Qarun), and Tigris-Euphrates discharge estimates — all register a pronounced hydrological minimum synchronous with the 1200–850 BCE drought window identified in Cyprus and Syria.",
+     "region": "Eastern Mediterranean",
+     "lon": 35.5,
+     "lat": 32.5,
+     "periodStart": -1200,
+     "periodEnd": -850,
+     "periodName": "3.2 ka Event",
+     "confidence": "high",
+     "tags": [
+      "multi-proxy",
+      "drought",
+      "speleothem",
+      "nile",
+      "dead-sea"
+     ]
+    },
+    {
+     "claim": "The Hala Sultan Tekke harbour (southeastern Cyprus) ceased functioning as a sheltered marine embayment between ca. 1450–1350 cal BCE, gradually silting to a lagoon and then a salt lake; this environmental shift predates the main drought and coincides with the harbour's economic decline, with Kition taking over as the main southern-coast port only in the 13th century BCE.",
+     "region": "Cyprus",
+     "lon": 33.615,
+     "lat": 34.883,
+     "periodStart": -1450,
+     "periodEnd": -1300,
+     "periodName": "Late Cypriot IIA–IIB",
+     "confidence": "medium",
+     "tags": [
+      "coastal-geomorphology",
+      "harbour",
+      "trade",
+      "lagoon"
+     ]
+    },
+    {
+     "claim": "Agricultural activity in the Hala Sultan Tekke hinterland, rich through the Late Bronze Age, declined sharply after 1200 cal BCE during the drought and did not recover as a significant landscape component until ca. 850–750 cal BCE, consistent with the reappearance of state-level polities in Cyprus during the 8th century BCE.",
+     "region": "Cyprus",
+     "lon": 33.63,
+     "lat": 34.88,
+     "periodStart": -1200,
+     "periodEnd": -750,
+     "periodName": "Late Bronze Age–Iron Age I",
+     "confidence": "medium",
+     "tags": [
+      "agriculture-collapse",
+      "drought",
+      "recovery",
+      "iron-age"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "dst": "kaniewski2011_peoples",
+     "kind": "references"
+    }
+   ],
+   "body": "# Environmental Roots of the Late Bronze Age Crisis\n\n_David Kaniewski, Elise Van Campo, Joël Guiot, Sabine Le Burel, Thierry Otto, Cecile Baeteman (2013). PLOS ONE. https://doi.org/10.1371/journal.pone.0071004 — published under the Creative Commons Attribution licence. This demo keeps an excerpt: the abstract and introduction and conclusions._\n\n## Abstract\n\nThe Late Bronze Age world of the Eastern Mediterranean, a rich linkage of Aegean, Egyptian, Syro-Palestinian, and Hittite civilizations, collapsed famously 3200 years ago and has remained one of the mysteries of the ancient world since the event’s retrieval began in the late 19th century AD/CE. Iconic Egyptian bas-reliefs and graphic hieroglyphic and cuneiform texts portray the proximate cause of the collapse as the invasions of the “Peoples-of-the-Sea” at the Nile Delta, the Turkish coast, and down into the heartlands of Syria and Palestine where armies clashed, famine-ravaged cities abandoned, and countrysides depopulated. Here we report palaeoclimate data from Cyprus for the Late Bronze Age crisis, alongside a radiocarbon-based chronology integrating both archaeological and palaeoclimate proxies, which reveal the effects of abrupt climate change-driven famine and causal linkage with the Sea People invasions in Cyprus and Syria. The statistical analysis of proximate and ultimate features of the sequential collapse reveals the relationships of climate-driven famine, sea-borne-invasion, region-wide warfare, and politico-economic collapse, in whose wake new societies and new ideologies were created.\n\n## Introduction\n\nCompared to the Last Glacial period, the amplitude of Holocene climate fluctuations is less pronounced. Nevertheless, climate fluctuations on multi-centennial to millennial time-scales and rapid shifts occurred during the Holocene [1]–[4], and significantly impacted human societies [5]–[10]. New light has recently been shed by both paleoclimate [11]–[16] and archaeological communities 17–19 on the so-called 3.2 ka event, also termed Late Bronze Age (LBA) collapse or crisis [20]–[21] This event was associated with a major cultural disruption at ca. 1200 BC, with population migrations and wars. From this crisis arose new societies and new ideologies [22].\n\nBefore the LBA crisis (ca. 1200 BC), the Eastern Mediterranean hosted some of the world’s most advanced civilizations. In the Aegean, the Mycenaean culture was flourishing with powerful urban centres such as Mycenae and Tiryns in Argolis, Pylos in Messenia, Athens in Attica, Thebes and Orchomenus in Boeotia, Iolkos in Thessaly, and Knossos in Crete [23]. The Hittites had carved out a vast empire encompassing a large part of Anatolia, the north-western region of Syria, and extending eastward into Upper Mesopotamia [24]. In the Levant, the Canaanite coastal cities were prospering through trade from Egypt to Mesopotamia, and Canaan was the sphere of interest of the Egyptian and Hittite empires [25]. In Egypt, the New Kingdom was at its height during the prosperous reign of Seti I (first regnal year: 1307–1296 cal yr BC; historical date 1295–1279 BC) and Ramses II (first regnal year: 1292–1281 cal yr BC; historical date 1279–1213 BC) [26]–[27]. However, around 1200 BC, at the end of the LBA, the Eastern Mediterranean civilization declined or collapsed 20,28–33. Several not mutually exclusive causes were put forward to explain the situation of decline, including natural disasters (tsunami, earthquake), technological innovations, internal collapses, and anthropological or sociological theories dealing with states of inequality and the resulting political struggle between urban centre and periphery [20], [21], [24], [30], [34]–[39]. Written sources from Ugarit (Syria) and Medinet Habou (Egypt) [32], [34], [40]–[42] revealed that the final catalyst that put the fall of cities and states in motion was due to vast movements of seafaring and inland tribes, the Sea Peoples [43]–[44]. The last written correspondences between Levantine, Hittite, and Egyptian kings indicate that these nomadic raiders were of great concern for the coastal towns as well as great empires and vassal kingdoms [34].\n\nDespite the abundant literature devoted to the Sea peoples, we still do not know exactly who they were, where they came from, why they attacked, and, finally, where they disappeared to after their raids. Some scholars are even uncertain whether the Sea People’s existence was a cause or an effect of the decline of the LBA. Recent studies [12], [22] have suggested that the Sea People raids were the final step in a long and complex spiral of decline in the Eastern Mediterranean world, and that this unstable period was, at least partly, related to environmental causes operating over sizable areas. A climate shift, centred on the 13th–9th centuries BC, could not be without consequences on Eastern Mediterranean and West Asian environments where dry farming agro-production, pastoral nomadism and fishing were the primary or secondary subsistence systems. Reduced precipitation probably affected the outlying nomad habitats, and led rain-fed cereal agriculturalists to habitat-tracking when agro-innovations are not available [8], [45]–[46]. According to this theory, the enigmatic Sea Peoples were not a bunch of pirates merely in pursuit of the richness of the Near East, but they rather constituted a set of ethnic entities fleeing inhospitable regions to conquer new lands, already undermined by the widespread drought [22].\n\nHowever, the debate about the role of climate in shaping ancient societies has emerged because a direct causation fails to be proven [47], specifically when human-climate linkages are proposed at a wide regional scale. An unequivocal spatial and temporal fit between both, confirmed by local written evidences, may offer a valuable case for emphasizing an ecological-climate influence on past societal shifts.\n\nHere, we focus on Cyprus, an island located at the heart of the ancient civilizations and trade routes of the Eastern Mediterranean during the LBA [48]. A numerical-derived climatic proxy based on a pollen record from Hala Sultan Tekke, Larnaca Salt Lake, details the environmental context along the southeastern Cypriot coast during the LBA crisis (Fig. 1). Data from Hala Sultan Tekke were correlated with the climate reconstruction from Gibala-Tell Tweini, a thriving trade center located on the coast of the Ugarit kingdom in Syria, which provided the only known radiocarbon (14C) date for the LBA crisis and the Sea People raid. Cyprus and Syria had a long and rich story of commercial relationships before the Sea People event. They now meet through a common climate story to decipher the environmental roots of the LBA crisis.\n\n## Conclusions\n\nBy combining data from coastal Cyprus and coastal Syria, this study shows that the LBA crisis coincided with the onset of a ca. 300-year drought event 3200 years ago. This climate shift caused crop failures, dearth and famine, which precipitated or hastened socio-economic crises and forced regional human migrations at the end of the LBA in the Eastern Mediterranean and southwest Asia. The integration of environmental and archaeological data along the Cypriot and Syrian coasts offers a first comprehensive insight into how and why things may have happened during this chaotic period. The 3.2 ka BP event underlines the agro-productive sensitivity of ancient Mediterranean societies to climate and demystifies the crisis at the Late Bronze Age-Iron Age transition.\n"
+  },
+  {
+   "citekey": "finn2017_late",
+   "licence": "CC-BY-4.0",
+   "title": "Late Bronze Age climate change and the destruction of the Mycenaean Palace of Nestor at Pylos",
+   "authors": [
+    "Martin Finné",
+    "Karin Holmgren",
+    "Chuan‐Chou Shen",
+    "Hsun‐Ming Hu",
+    "Meighan Boyd",
+    "Sharon R. Stocker"
+   ],
+   "year": 2017,
+   "venue": "PLoS ONE",
+   "doi": "10.1371/journal.pone.0189447",
+   "status": "current",
+   "topics": [
+    "bronze_age_collapse",
+    "climate_collapse",
+    "mycenaean_greece",
+    "palaeoclimate",
+    "speleothem_proxies",
+    "aegean_prehistory",
+    "dark_ages",
+    "palatial_redistribution",
+    "aegean",
+    "deep_time",
+    "mycenaean"
+   ],
+   "regions": [
+    "Peloponnese",
+    "SW Greece",
+    "Eastern Mediterranean"
+   ],
+   "tags": [
+    "drought",
+    "speleothem",
+    "pylos"
+   ],
+   "periodStart": -1350,
+   "periodEnd": -1000,
+   "summary": "Finné et al. (2017) present high-resolution δ18O and δ13C data from stalagmite S1 (Mavri Trypa Cave, Schiza Island, SW Peloponnese), dated by 24 U-Th ages to an average precision of ±26 years — one of the most tightly constrained palaeoclimate records for the Late Bronze Age eastern Mediterranean. The record shows generally wet conditions at the moment the Palace of Nestor at Pylos was destroyed (~1200 BCE, LH IIIB/IIIC transition), with a brief ~20-year dry episode centred on ~3200 yrs BP (~1250 BCE) that preceded destruction by two to eight decades. Progressive aridity developing from ~3150 yrs BP onward (LH IIIC) is identified as a key mechanism inhibiting agricultural surplus production and thus blocking the reconstitution of palatial authority. The authors argue that climate was not the direct trigger for the palace's destruction but was a significant contributing factor in the inability to rebuild — reframing the climate-collapse relationship from event-causation to multi-decadal process.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "Stalagmite S1 from Mavri Trypa Cave (Schiza Island, 4 km off SW Peloponnese) records generally wet conditions at ~3150–3130 yrs BP, the moment the Palace of Nestor at Pylos was destroyed, providing no support for acute drought as a direct destruction trigger.",
+     "region": "SW Peloponnese, Greece",
+     "lon": 21.76,
+     "lat": 36.74,
+     "periodStart": -1200,
+     "periodEnd": -1180,
+     "periodName": "LH IIIB/IIIC transition",
+     "confidence": "high",
+     "tags": [
+      "speleothem",
+      "drought",
+      "mycenaean_collapse",
+      "pylos"
+     ]
+    },
+    {
+     "claim": "A ~20-year dry episode centred on ~3200 yrs BP (~1250 BCE) is identified in the Mavri Trypa δ18O record, falling firmly in LH IIIB, two to eight decades before the palace's destruction; this drought was minor compared with post-palatial aridity and did not immediately topple the centralized system.",
+     "region": "SW Peloponnese, Greece",
+     "lon": 21.76,
+     "lat": 36.74,
+     "periodStart": -1260,
+     "periodEnd": -1240,
+     "periodName": "LH IIIB",
+     "confidence": "high",
+     "tags": [
+      "drought",
+      "3200_BP_event",
+      "speleothem",
+      "palatial_economy"
+     ]
+    },
+    {
+     "claim": "Progressive aridity develops from ~3150 yrs BP onward through LH IIIC (~1200–1000 BCE) in the Mavri Trypa record, with the most pronounced dry conditions appearing in the Protogeometric period (~1000 BCE) before the stalagmite ceased growing at 2953±63 yrs BP; this multi-decadal drying is interpreted as the key constraint on agricultural surplus and palatial reconstruction.",
+     "region": "SW Peloponnese, Greece",
+     "lon": 21.76,
+     "lat": 36.74,
+     "periodStart": -1200,
+     "periodEnd": -1000,
+     "periodName": "LH IIIC and Early Iron Age",
+     "confidence": "high",
+     "tags": [
+      "aridity",
+      "agricultural_stress",
+      "dark_ages",
+      "speleothem"
+     ]
+    },
+    {
+     "claim": "The Mavri Trypa record aligns with a broader pattern of developing aridity recorded in high-resolution speleothem and lake records across the eastern and central Mediterranean (Jeita Cave, Lebanon; Renella Cave, Italy; Sofular Cave, Turkey; Nar Gölü, Turkey) all showing aridity peaking after 3200 yrs BP, confirming a large-scale hydroclimatic signal.",
+     "region": "Eastern Mediterranean",
+     "lon": 30.0,
+     "lat": 36.0,
+     "periodStart": -1250,
+     "periodEnd": -1000,
+     "periodName": "Late Bronze Age to Early Iron Age",
+     "confidence": "high",
+     "tags": [
+      "regional_aridity",
+      "eastern_mediterranean",
+      "speleothem",
+      "3200_BP_event"
+     ]
+    },
+    {
+     "claim": "The Mycenaean palatial economy of Messinia (SW Peloponnese) was predominantly rainfed, dependent on winter/spring precipitation for cereal, olive, and flax yields; Linear B tablets confirm that small-scale independent producers worked marginal lands by LH IIIB, making the system critically vulnerable to even moderate precipitation deficits.",
+     "region": "Messinia, SW Peloponnese",
+     "lon": 21.95,
+     "lat": 37.05,
+     "periodStart": -1300,
+     "periodEnd": -1200,
+     "periodName": "LH IIIB",
+     "confidence": "medium",
+     "tags": [
+      "agricultural_economy",
+      "linear_b",
+      "palatial_redistribution",
+      "rainfall_dependence"
+     ]
+    },
+    {
+     "claim": "An earlier dry phase (~3550–3400 yrs BP, ~1600–1450 BCE) is also recorded in the Mavri Trypa stalagmite, roughly coinciding with the Middle Bronze Age–Late Bronze Age transition and the expansion of Mycenaean civilization, suggesting climate variability influenced earlier Bronze Age social trajectories on the Peloponnese as well.",
+     "region": "SW Peloponnese, Greece",
+     "lon": 21.76,
+     "lat": 36.74,
+     "periodStart": -1600,
+     "periodEnd": -1450,
+     "periodName": "MBA/LBA transition",
+     "confidence": "medium",
+     "tags": [
+      "speleothem",
+      "holocene_climate",
+      "mycenaean_expansion"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "dst": "kaniewski2013_environmental",
+     "kind": "references"
+    }
+   ],
+   "body": "# Late Bronze Age climate change and the destruction of the Mycenaean Palace of Nestor at Pylos\n\n_Martin Finné, Karin Holmgren, Chuan-Chou Shen, Hsun-Ming Hu, Meighan Boyd, Sharon Stocker (2017). PLOS ONE. https://doi.org/10.1371/journal.pone.0189447 — published under the Creative Commons Attribution licence. This demo keeps an excerpt: the abstract and 1. introduction and 4. conclusions._\n\n## Abstract\n\nThis paper offers new high-resolution oxygen and carbon isotope data from Stalagmite S1 from Mavri Trypa Cave, SW Peloponnese. Our data provide the climate background to the destruction of the nearby Mycenaean Palace of Nestor at Pylos at the transition from Late Helladic (LH) IIIB to LH IIIC, ~3150–3130 years before present (before AD 1950, hereafter yrs BP) and the subsequent period. S1 is dated by 24 U-Th dates with an averaged precision of ±26 yrs (2σ), providing one of the most robust paleoclimate records from the eastern Mediterranean for the end of the Late Bronze Age (LBA). The δ18O record shows generally wetter conditions at the time when the Palace of Nestor at Pylos was destroyed, but a brief period of drier conditions around 3200 yrs BP may have disrupted the Mycenaean agricultural system that at the time was likely operating close to its limit. Gradually developing aridity after 3150 yrs BP, i.e. subsequent to the destruction, probably reduced crop yields and helped to erode the basis for the reinstitution of a central authority and the Palace itself.\n\n## 1. Introduction\n\nThe impact of past climate variability and abrupt climate change on ancient human societies is an ongoing debate. This debate often focuses around 1) certain time periods, commonly around so-called climate events, i.e. times when the climate rapidly changed, e.g. at 8200, 4200 and 3200 years before present (before AD 1950, hereafter yrs BP), and 2) archaeologically rich areas, such as SE Mexico (Yucatan Peninsula), the Indus Valley and the eastern Mediterranean [1–6]. In the eastern Mediterranean, there has been intense discussion about the impact of climate change on the fall of the Akkadian Empire and the end of the Late Bronze Age (LBA) occurring at ~4200 and ~3200 yrs BP respectively [7–18].\n\nThe debate about the causes of the rapid demise of many societies in the eastern Mediterranean at the end of the LBA includes a number of factors such as climate change, earthquakes, famine, political instability and/or invasions by the infamous Sea Peoples [17,19–23]. Lately the number of studies investigating the role played by climate at the end of the LBA in the eastern Mediterranean has increased and a number of them suggest aridity as a major factor [9,10,12,14,15,18]. Paleoclimate data, primarily from Cyprus and the Levant, suggest that a 300-year period of arid conditions that began around 3200 yrs BP led to reductions in agricultural productivity and subsequently contributed to a general socioeconomic crisis in the eastern Mediterranean [10,14,15,18]. However, it was recently pointed out that many of these datasets do not have sufficient chronological resolution to reliably tie climate information to archaeological data [20]. Despite chronological uncertainties and the fact that attributing sociopolitical changes to drought can be seen as overly simplistic and deterministic [21,24,25], the idea of widespread aridity has recently gained a prominent position in discussions about LBA societal change in the eastern Mediterranean as well as on the Greek mainland. Even though direct climate evidence from mainland Greece has not been available for this period, it has been suggested that the destruction of the Mycenaean Palatial centers towards the end of the LBA should be viewed in light of the severe aridity recorded for this period elsewhere see e.g. [10]. In this paper, we present new high-resolution paleoclimate data extracted from a cave located just off the coast of the Greek mainland, in close proximity to one of the major Mycenaean Palatial centers.\n\nDuring the LBA the Mycenaean culture made a strong imprint on a large part of the Aegean world and in particular on the Peloponnesian Peninsula in southern Greece, where a number of palaces functioned as administrative and economic centers [26,27]. One of these was the Mycenaean Palace of Nestor at Pylos, located in present day Messinia in the SW Peloponnese, which controlled large areas of land in that region. The Mycenaean culture reached its zenith between approximately 3350 and 3150 yrs BP. The destruction of the Mycenaean palaces throughout the Peloponnese occurred at the transition between the Late Helladic (LH) IIIB (~3280 to ~3150 yrs BP) and LH IIIC (~3150 to ~3020 yrs BP). It was followed by a period of abrupt decline, during which the use of writing (Linear B) and complex forms of political, economic and social organization disappeared, settlement patterns changed, and the size and number of sites were drastically reduced [26–32]. However, some Mycenaean cultural traits continued throughout the LH IIIC period [26,29]. In addition, there is also evidence for rebuilding at the Mycenaean palace at Tiryns, some 120 km to the NE of Pylos [33]. By the Protogeometric period (~3020 yrs BP), new social frameworks were established displacing Mycenaean traditions [26,29]. The destruction of the palaces has often been seen as the prime marker for societal change on the mainland. However, the broader question is not why the palaces were destroyed, but rather why they were not rebuilt [12]. Several factors, among them rapid climate change, have been discussed as triggers for the sudden destruction of the palaces and the inability of Mycenaean society to recover [26,29,30].\n\nThe Mycenaean Palace of Nestor at Pylos provides a rare case study where textual and archaeological evidence can be combined to offer a more complete picture of the local economy (S1 File). The Palace functioned as the central administrative center of ancient Messinia and played a crucial role in the economy, but it did not maintain control over every aspect [34,35]. Mycenaean palaces were redistributive centers, although in a more nuanced manner than traditionally thought, based upon their ability to mobilize resources [36–38]. The economy was organized around the production, acquisition and distribution of raw materials and prestige goods, such as textiles, i.e., linen and wool, and perfumed olive oil [34,35]. The Palace did not, however, maintain control over the production of all staple goods; for example Linear B tablets indicate that there were local, independent small-scale producers of cereal crops [34,35]. The agricultural economy of the area was largely rainfed and land use would have ranged from large-scale flax fields and olive groves, possibly grazed by sheep, to small-scale units of land devoted to cereal production [34,35]. The importance of land in the Pylian economy is evident from textual evidence, much of which is concerned with landholdings and crops, and some of the land near the Palace is measured in seed-grain [36,38]. Although the Mycenaeans were familiar with hydrological engineering, there was a strong dependence on winter and spring precipitation for crop yields, a dependence that carries through to modern times [39,40].\n\nThroughout the LH IIIB period the increase in the size and number of sites in the area surrounding the Palace is a good indicator of population growth in Messinia (S1 File). Such a demographic increase likely added additional stresses to the agricultural system and forced the cultivation of marginal lands. Agricultural products sustained the majority of the population of the kingdom of Pylos, and a dynamic relationship existed between the agricultural and social systems [41]. During the height of the LH IIIB period, the economy was a finely tuned system that depended on the proper functioning of all its components: agriculture, redistribution and tax collection [41].\n\nThe richness of the archaeological and textual evidence from the Peloponnese has, up to now, not been matched by the quality of the paleoclimate information from the area [42]. This means that inferences about socio-environmental links rely on paleoclimate data from other areas of the eastern Mediterranean, which, considering local variability, is problematic [11,42]. Here, we present a high-resolution, stable isotope based climate record from stalagmite S1 that formed from 4687 to 1297 yrs BP, in three discrete growth periods. The record covers large parts of the Greek Bronze Age, during which the Peloponnese saw the development of interconnected and complex societies and the intensification of agriculture, although with strong regional variability [43–45]. The record further covers the period extending from late Hellenistic times through the transition to the Byzantine period. The S1 proxy record sheds new light on the effects of climate on, the large scale social reorganization that occurred ~4200 yrs BP, the expansion in the area embraced by Mycenaean civilization ~3400 yrs BP, the subsequent destruction of the Mycenaean palaces ~3200 yrs BP, and the expansion in the number of rural settlements in the late Roman period. Here, however, we evaluate and investigate principally the chronological fit between variability in climate and the destruction of the Mycenaean Palace at Pylos and the subsequent sociopolitical change that took place at the end of the palatial period on the Greek mainland.\n\n## 4. Conclusions\n\nThe influence of climate on the Mycenaean world and the destruction of the Palace of Nestor at Pylos can, for the first time, be assessed through the investigation of a local high-resolution δ18O record that is the most precisely dated paleoclimate record from the eastern Mediterranean for the end of the LBA.\n\nThe Mavri Trypa δ18O record shows little or no unequivocal evidence for drier conditions when the palace in Pylos is destroyed ~3150–3130 yrs BP, at the transition from LH IIIB to LH IIIC. While the new paleoclimate evidence from the Greek mainland does not support a clear chronological synchronism between the destruction of the Mycenaean Palace at Pylos and drier conditions, as has been suggested previously, it does offer an insight into difficulties that existed several decades before the collapse of the palatial system.\n\nThere is evidence for a dry phase extending for approximately two decades around 3200±30 yrs BP, which can be firmly placed in the LH IIIB period, i.e. before the destruction of the palace. Evidently the centralized administrative system at Pylos managed to survive that period of drought, although evidence suggests that cracks were beginning to emerge in the period immediately preceding the palace’s destruction. This dry period was slight in comparison to what would come 100 years later, both in terms of magnitude and duration, but it nevertheless would have been felt in the agriculturally dominant palace economy. With the evidence in hand, the precise reasons for the destruction should be sought beyond climate explanations, although the effect of the climate should be considered as a contributing factor.\n\nFollowing the destruction of the Mycenaean Palace at Pylos, there is strong evidence that climate conditions became progressively more arid during the LH IIIC period, and pronounced aridity is evident at the very end of the LBA and in the Protogeometric period, before the Mavri Trypa stalagmite stopped growing at 2953±63 yrs BP. We suggest this clear trend towards drier conditions caused reduced agricultural output, hampering the restoration of a central authority or the formation of new social elites. Small-scale subsistence agriculture however, persisted in the area.\n\nFor the first time, there are indications that climate may be one mechanism behind the process that led to the failure of the Mycenaean way of life in Pylos and there is strong evidence that developing aridity following the destruction of the Palace made it difficult for social elites to re-form and for the palatial system to be re-established. One cannot, however, attribute the collapse of the Mycenaean way of life to a single monolithic cause or event. Instead one should look for a suite of factors that contributed to the inability of the palatial elite to reconstitute the political, economic, and social organization that existed at the end of LH IIIB. Climate change is certainly a critical component in the equation.\n"
+  },
+  {
+   "citekey": "manning2020_beyond",
+   "licence": "CC-BY-4.0",
+   "title": "Beyond megadrought and collapse in the Northern Levant: The chronology of Tell Tayinat and two historical inflection episodes, around 4.2ka BP, and following 3.2ka BP",
+   "authors": [
+    "Sturt W. Manning",
+    "Brita Lorentzen",
+    "Lynn Welton",
+    "Stephen Batiuk",
+    "Timothy P. Harrison"
+   ],
+   "year": 2020,
+   "venue": "PLoS ONE",
+   "doi": "10.1371/journal.pone.0240799",
+   "status": "current",
+   "topics": [
+    "bronze_age_collapse",
+    "radiocarbon_dating",
+    "climate_and_society",
+    "levantine_archaeology",
+    "iron_age_levant",
+    "deep_time",
+    "levant_near_east"
+   ],
+   "regions": [
+    "Tell Tayinat",
+    "Amuq Plain",
+    "Northern Levant",
+    "Southeastern Turkey",
+    "Orontes Valley"
+   ],
+   "tags": [],
+   "periodStart": -2500,
+   "periodEnd": -600,
+   "summary": "Manning et al. (2020) present a large radiocarbon dataset with Bayesian chronological modelling for Tell Tayinat in the Amuq Plain (southeastern Turkey), establishing a refined absolute chronology for the site's two main occupation phases: the Early Bronze Age IVB (ca. 2300–2000 BCE) and the Iron Age I–III (ca. 1200–600 BCE). The paper challenges simplistic megadrought-collapse narratives by demonstrating that Tell Tayinat flourished during both the 4.2 ka BP (~2200 BCE) and 3.2 ka BP (~1200 BCE) climate episodes, offering an alternative developmental trajectory to regional collapse. The site's resilience is attributed to its favorable location on the Orontes River with access to karstic aquifers, adaptive agricultural strategies, and local geopolitical reorganization rather than climate-driven collapse.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "Tell Tayinat's Early Bronze Age IVB occupation (Phases 7–8) dates to ca. 2300–2100/2000 BCE by Bayesian-modelled radiocarbon, placing the site's terminal EB decline around and shortly after the onset of the 4.2 ka BP climate episode (~2200 BCE) rather than as a direct consequence of it.",
+     "region": "Tell Tayinat, Amuq Plain, Turkey",
+     "lon": 36.35,
+     "lat": 36.23,
+     "periodStart": -2500,
+     "periodEnd": -2000,
+     "periodName": "Early Bronze Age IVA-B",
+     "confidence": "high",
+     "tags": [
+      "4.2ka_event",
+      "radiocarbon_dating",
+      "bronze_age_collapse",
+      "climate_resilience"
+     ]
+    },
+    {
+     "claim": "Tell Tayinat's earliest Iron Age occupation (Phase 6c) begins in the early 12th century BCE, demonstrating that the site re-emerged as a major settlement precisely during the period of Late Bronze Age collapse (~1200 BCE), and grew into the Neo-Hittite kingdom of Palistin/Patina during the 11th–9th centuries BCE.",
+     "region": "Tell Tayinat, Amuq Plain, Turkey",
+     "lon": 36.35,
+     "lat": 36.23,
+     "periodStart": -1200,
+     "periodEnd": -738,
+     "periodName": "Iron Age I–IIB",
+     "confidence": "high",
+     "tags": [
+      "late_bronze_age_collapse",
+      "iron_age",
+      "neo_hittite",
+      "radiocarbon_dating"
+     ]
+    },
+    {
+     "claim": "For the approximately 2200 BCE episode, Manning and colleagues discuss Weiss’s proposal that the Euphrates and especially Orontes valleys and karstic-spring areas functioned as refugia. They regard local ecology as relevant but also emphasize trade and economic reorientation. Their discussion of Tayinat’s Early Bronze Age crop and water evidence concerns late-third-millennium conditions; it is not a direct demonstration of the same refugium mechanism during the collapse around 1200 BCE.",
+     "region": "Tell Tayinat",
+     "lon": 36.37594,
+     "lat": 36.24827,
+     "periodStart": -2200,
+     "periodEnd": -2200,
+     "periodName": "4.2 ka episode: cited refugia hypothesis",
+     "confidence": "medium",
+     "tags": [
+      "climate_resilience",
+      "climate_and_society",
+      "megadrought",
+      "levantine_archaeology"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "dst": "finn2017_late",
+     "kind": "references"
+    },
+    {
+     "dst": "kaniewski2013_environmental",
+     "kind": "challenges"
+    }
+   ],
+   "body": "# Beyond megadrought and collapse in the Northern Levant: The chronology of Tell Tayinat and two historical inflection episodes, around 4.2ka BP, and following 3.2ka BP\n\n_Sturt W. Manning, Brita Lorentzen, Lynn Welton, Stephen Batiuk, Timothy P. Harrison (2020). PLOS ONE. https://doi.org/10.1371/journal.pone.0240799 — published under the Creative Commons Attribution licence. This demo keeps an excerpt: the abstract and introduction and conclusions._\n\n## Abstract\n\nThere has been considerable focus on the main, expansionary, and inter-regionally linked or ‘globalising’ periods in Old World pre- and proto-history, with a focus on identifying, analyzing and dating collapse at the close of these pivotal periods. The end of the Early Bronze Age in the late third millennium BCE and a subsequent ‘intermediate’ or transitional period before the Middle Bronze Age (~2200–1900 BCE), and the end of the Late Bronze Age in the late second millennium BCE and the ensuing period of transformation during the Early Iron Age (~1200–900 BCE), are key examples. Among other issues, climate change is regularly invoked as a cause or factor in both cases. Recent considerations of “collapse” have emphasized the unpredictability and variability of responses during such periods of reorganization and transformation. Yet, a gap in scholarly attention remains in documenting the responses observed at important sites during these ‘transformative’ periods in the Old World region. Tell Tayinat in southeastern Turkey, as a major archaeological site occupied during these two major ‘in between’ periods of transformation, offers a unique case for comparing and contrasting differing responses to change. To enable scholarly assessment of associations between the local trajectory of the site and broader regional narratives, an essential preliminary need is a secure, resolved timeframe for the site. Here we report a large set of radiocarbon data and incorporate the stratigraphic sequence using Bayesian chronological modelling to create a refined timeframe for Tell Tayinat and a secure basis for analysis of the site with respect to its broader regional context and climate history.\n\n## Introduction\n\nMuch recent scholarship has focused on identifying apparent periodic episodes of substantial and longer-lasting drought–so-called megadroughts–which arguably appear to correlate, at least approximately in temporal terms, with episodes of major collapse, change, or reorientation in human civilization in various regions of the world [1–3]. Whether mere approximate contemporaneity is indicative of explanation is another question, and recent discussions of social responses to climatic change have highlighted the unpredictability and variability of possible outcomes, precluding a simplistic association between environmental change and societal collapse [4–11]. Nonetheless, chronological resolution is an essential component of consideration of any possible relationships between environmental change and social response [12], and the absence of an appropriate close temporal association undermines many purported causal connections (e.g. [9, 13–15]). The potential importance of such historically relevant climate forcing episodes, both in explaining history, but also as laboratory of current and future relevance, should not be overlooked–and this general topic has been the subject of much recent research, as in other regions, in the Mediterranean-Near East (e.g. [1–3, 16–23]), but also debate (e.g. [4–11, 24]). In several instances, the exact associations and causal connections between observed proxy evidence for climate change and human history have been demonstrated to be both complex and multi-faceted, and often not as clear in temporal or causal terms as sometimes stated by proponents of one or other specific viewpoint (e.g. [9, 14, 15]).\n\nTwo multi-century climate change episodes with special relevance to the Levant/East Mediterranean region are regularly cited and stated as occurring from (i) ca. 4200 BP/2200 BCE and (ii) 3200 BP/1200 BCE (BP here from 2000 CE) (e.g. [16–23, 25, 26]). In each instance, there is purportedly a multi-century episode of collapse, then general hiatus and transformation before a subsequent return to ‘high’ civilization—the Middle Bronze Age (the Middle Kingdom in Egypt, the Old Babylonian period in Mesopotamia) from around 2000/1900 BCE for the first, and the Iron Age ‘renaissance’ from the 9-8th centuries BCE for the second (the latter perhaps linked to a major solar irradiance minimum and climate shift [3, 27, 28, ref. 29 pp. 112–115]).\n\nThe 2200 BCE episode in the later Early Bronze Age (hereafter EB) is well-dated, both in terms of some wider proxies indicating a shift to cooler and more arid conditions, and in terms of the demise and abandonment of the formerly primate site of Tell Leilan in northern Syria just before 2200 BCE [25, 30, 31]. However, the impact of this climate event is more difficult to reconstruct in the Levant and tightly resolved higher frequency records are sparse. Recent syntheses of radiocarbon (14C) evidence have decoupled the chronology of this event from the long-recognized decline in settlement during the EB IV in the southern Levant, which is now recognized to have begun several centuries earlier, ca. 2500 BCE [32, 33]. It is also increasingly evident that sites in the northern Levantine region, which were in less fragile dry-farming loci with significant access to reliable water resources in the form of karstic aquifers, were variably affected and not all collapsed [25, 34, 35]. Weiss indeed argues that the Euphrates and especially Orontes river valleys, and the area of ‘karstic’ springs, formed refugia during the 2200 BCE episode with growth supplemented by habitat-tracking out of other less resilient regions of northern Mesopotamia/Syria [25, 35]. He points to the take-off of Tell Tayinat as an example of this [35]. While the variable ecological context is undoubtedly relevant, other factors also appear to be in play, and not just survival in the face of climate crisis, including the re-orientation and transformation of interregional trade and local economies, and of the relevant trade routes. In particular, these processes saw Anatolia and the East Mediterranean (and so maritime connectivities, versus, or in addition to, land routes) become more important foci for the Levant in the later/late 3rd millennium BCE [36, 37]. In fact, contrary to the pattern observed in areas of northern Mesopotamia, the northern Levant witnesses a persistent tradition of urbanism continuing through and following the period at 2200 BCE [34, 38, 39]. As such, this region offers a key venue for observing alternative trajectories and responses to the 4.2k climate episode.\n\nThe 1200 BCE episode, around the close of the Late Bronze Age, involves a long-recognized widespread set of site abandonments, destructions and changes across the East Mediterranean and Levantine region, the collapse of the previous ‘palatial’ economies and inter-linked trading systems and an ensuing ‘dark age’ [11, 15, 24, 40–42]. Associated proxy climate evidence indicates another shift around this period to cooler and more arid conditions [20–23, 26, 43]. The widespread collapse of the internationalized political economies of the Late Bronze Age is real, and many sites do experience destruction, decline, or abandonment. But the collapse of the region is not total. It is increasingly clear that this episode is as much a reorientation and shift to differing social and economic models as simple collapse [11, 36], a reorganization that represents a key formative period that shapes the later developments of the Iron Age. The climate proxy data, while relatively consistent in indicating cooler, more arid conditions, are as yet poorly constrained in temporal terms in many cases, and exact associations with cultural and political developments therefore remain problematic [15].\n\nIn each of these cases there remains much to be investigated and learnt in order to be able to write a detailed history successfully and convincingly linking archaeology-history and climate. However, even more pressing is the question: what happened around and particularly after these apparent episodes of collapse/change, during the periods of ensuing transformation prior to the generally accepted return of ‘high’ civilization? Despite terms like megadrought and collapse, it is of course widely understood that archaeological and historical evidence continues through these episodes, at least in several areas. We consider here the northern Levantine Early Bronze Age IV as conventionally ca. 2500–2000 BCE (EB IVA ca. 2500–2300; EB IVB ca. 2300–2000 BCE) and the early Iron Age as the period during and after the 12th century BCE in the northern Levant (ca. 1200–900 BCE, Iron Age I). On the principle that both humans and nature abhor a vacuum, we may also assume a corollary if there is a climate association with the changes occurring ca. 2200 BCE and 1200 BCE (or even if there is simply a key structural change in social and economic systems). Thus, if such climate (or other) changes negatively affect one existing set of sites and their environmental and locational contexts, it is also likely that other loci may find an opportunity to fill this void and to offer ‘alternative’ trajectories and histories. These cases might involve societies centered on a different, more resilient, economic base–like pastoralism in the Levant [4, 44], societies constructed on differing socio-political scales (e.g. smaller units), based in less affected geographic contexts, or with access to alternative trade networks [36, 41]. In other words, we open perspective towards both resilience and alternatives to simple collapse, and more nuanced approaches that incorporate a heterogeneity of response and opportunity at local level in the face of regional-global climate processes.\n\nThe large and important site of Tell Tayinat in southeast Turkey offers one such alternative history [45–51]. In this paper, we use radiocarbon dates and analysis of these to investigate and define the chronology of the site of Tell Tayinat, and demonstrate that its substantive history of occupation(s) includes the periods of response to the ‘megadrought’ eras associated with both the 2200 BCE and 1200 BCE episodes. The site is largely not occupied during the ‘high-civilization’ periods of the Middle and Late Bronze Age. Instead, the local regional occupation in these periods is at Tell Atchana (ancient Alalakh), and the switch to Atchana from Tayinat at the end of the Early Bronze Age, followed by a return to Tayinat at the end of the Late Bronze Age, forms a local version of the wider ‘alternative’ paradigm of interest [45–51]. Tell Tayinat thus represents an alternative history and trajectory to the ‘palatial’ mainstream of the Levantine region, and a prime case study illustrating how change—whether forced by economics, climate, geography or other factors—is rarely universal. Instead, negative or positive factors affecting one set of circumstances may well have differing and even opposite effects elsewhere. The context and societal formations at Tell Tayinat—and the contrast, locally, with Tell Atchana, and more widely with the major Middle–Late Bronze Age primate sites across the east Mediterranean and Levant—offer us one rich window into a resilient and successful response, and alternative to collapse, in the face of regional megadrought in the Old World.\n\n### Tell Tayinat\n\nTell Tayinat, located in the Amuq Plain of southeastern Turkey and centrally positioned in the northern Levantine region, comprises a large, low-lying mound within the flood plain of the Orontes River. Tayinat sits on the northern bend of the Orontes, downstream of its entrance into the Amuq Plain, at the point where it turns westward toward Antakya (ancient Antioch) and the Mediterranean Sea (Fig 1). The site has long been a focus of excavation and study, starting with large-scale excavations conducted by the Oriental Institute of the University of Chicago between 1935 and 1938 [52, 53]. More recently, it has been the focus of work by the Tayinat Archaeological Project (TAP) based at the University of Toronto, which began with pedestrian and geomagnetic survey between 1999–2002 [54], further geomagnetic survey in 2003 (http://sites.utoronto.ca/tap/assets/2003geomagneticsurvey_en.pdf), followed by excavations and study from 2004 onwards [45–51, 55, 56]. The earlier excavations demonstrated that the site was occupied during significant portions of the 3rd millennium BCE, from at least the EB III [52]. To date, the new excavations at the site have produced materials and contexts dating from the later part of the Early Bronze Age (EB IVA-B, late 3rd millennium BCE) and spanning the Iron Age, with significant attention paid to the monumental structures of the Iron II and Iron III levels [53, 57, 58].\n\nHistorically, the site is also well-attested. The Early Bronze Age city is perhaps the location referred to as Alalaḫu in records preserved on clay tablets from the late 3rd millennium BCE archive found at the site of Ebla in Syria [49, 50, 59]. For the Iron Age, interpretation of inscriptional evidence has led to suggestions that by at least the 11th century BCE, early Iron Age Tell Tayinat represented the center of a kingdom named Palastin or Walastin, with one king being a certain Taita, “Hero and King of Palastin”, best known from inscriptions in the Aleppo Temple [60–63]. Later historical records, dating to the 9th-early 8th centuries BCE, refer to the kingdom as Patina or Unqi [64–66]. The Assyrians took control of the city in 738 BCE and the region became part of their province of Kinalia under an Assyrian governor [65–69].\n\nThe end of the first primary period of occupation at Tell Tayinat in the late 3rd millennium BCE corresponds in general with the period of change and re-orientation across much of the Old World from around 4200 years BP or 2200 BCE [16–19, 25]. In the northern Levant, this episode is in general associated with the EB IVB period. The overall dates for the wider period of societal change, commonly associated with a shift(s) in climate affecting especially the Old World region, are largely uncontested—although the exact timings, scale, extent, coherence and uniformity of the climate episode remains debated even in the Mediterranean-Levant region (e.g. [70–73]). Correlating with the end of the Akkadian Empire and the First Intermediate Period in Egypt, a beginning for this period of change in the later 23rd century BCE and especially around 2200 BCE is largely agreed. It is generally accepted that there is a period(s) of apparently cooler and drier conditions in this region that lasts until around the 20th century BCE (ending broadly by around 1900 BCE) [16–19, 25, 30, 31, 70–74, 77, 78]. The area for debate is exactly whether, how, and how comprehensively, the latter causes the former [4, 7–8, 16, 19, 25, 31, 35, 75, 76]. The site of Tell Leilan in northeastern Syria offers a closely resolved date for the beginning of this period [30, 31], as do a variety of proxy climate indicators [25, 70–74, 77, 78]. Its end is marked by the re-emergence of wider trade networks and state-polities (like the Middle Kingdom of Egypt, Old Babylonian Period in Mesopotamia) during the 20th century BCE.\n\nThe issue for Tell Tayinat is to position the site and its EB occupation in terms of this wider general timeframe. In contrast to regions such as northern Mesopotamia, whose chronologies have been more closely tied to the 4.2k event, and its apparent historical effects, northern Levantine chronologies generally have not accounted for this event. The general chronological framework for the northern Levant, largely based on sequences from Hama, Ebla and the early Amuq excavations [79], is generally agreed upon, with the EB IVB period conventionally dated to ca. 2300–2000 BCE. More recently, the creation of an EBA-MBA transitional subdivision, ca. 2100–2000 BCE, has been proposed [34, 80, 81]. This chronological framework, however, has been developed primarily from relative ceramic sequences and has not been anchored to 14C dates [34, 79, 82]. An independent and direct timeframe is thus lacking. More recently this situation has started to change. 14C dates pertaining to several late 3rd millennium BCE sites have been published, including Tell Mardikh/Ebla [83], Rawda [34, 84], Qatna [85] and Umm el-Marra [34]. The suggested date for the destruction of Palace G at Ebla, representing the local transition from the EB IVA to EB IVB, is suggested to date to 2367–2293 BCE, with ca. 54% probability [83], roughly in line with the conventional date for this transition, and placing the 4.2ka (2200 BCE) climate event firmly during the EB IVB period.\n\nThe Early Iron Age is more problematic. There has been a long-standing challenge resolving Iron Age chronology in the northern Levant in this period [51, 56, 86, 87]. The close of the Late Bronze Age is characterized by the collapse of the wide-reaching and literate trading systems of previous centuries [15, 40–42, 88–90]. We also lose the well-defined sequence of historical rulers from the unified New Kingdom of Egypt. The result is that archaeologists lack the confident ability to employ replicated material culture associations to tie object types, assemblages, and sites across the eastern Mediterranean to the historical chronology of Egypt. This situation has led to much scholarly uncertainty and debate over dates based on relatively scarce, ambiguous, or contradictory evidence (e.g. [56, 90]). The past couple of decades have, unsurprisingly, seen scholars trying to find alternative means to establish secure chronological timeframes for the early Iron Age in several areas of the East Mediterranean and Aegean, and have–almost inevitably–created controversy as previous hypotheses are challenged, usually by new radiocarbon evidence [86, 87, 91–97].\n\nIn the northern Levant, especially, there has been lack of both data and scholarly focus. After the collapse and transformation of the well-known Late Bronze Age civilizations and their major, often ‘palatial’, centers around the close of the 13th century BCE and into the early 12th century BCE [11, 15, 42, 88, 89, 90], the social, political and economic processes of the subsequent earlier Iron Age are much less well understood [51]. This is particularly true in the period stretching from the late 12th through 10th centuries BCE, where historical documentation has been scarce. Although new inscriptional evidence is beginning to provide a historical framework for this period, the precise chronology of these historical developments remains fluid, uncertain, and largely based on paleographical grounds as newly emerging finds regularly require the revision of historical chronologies and king lists [60–62, 98, 99]. In the 9th–8th centuries BCE, historical documentation becomes more frequent from Neo-Assyrian records, as a result of their increasing contacts with this region, and then their takeover and administrative control from the late 8th century BCE onward [65–68, 100]. Following the conquest of Kunulua–the ancient name in this period for Tell Tayinat–by the Assyrian ruler Tiglath-pileser III in 738 BCE, Tayinat became the capital of the Assyrian province of Kinalia [58, 64, 65, 101]. The available textual evidence suggests that in the intervening period, the larger political structures of the Late Bronze Age had vanished and in their place was a collection of relatively small territorial states [45, 46, 51, 55, 100–103]. The trajectories and chronologies of these profound changes and of the emergence of these new socio-political formations remains largely unclear. Hence establishing a defined and robust chronology for a key site like Tell Tayinat represents a critical step towards a more nuanced understanding of this time period.\n\nIn contrast to the southern Levant and a few other areas, where the widespread use of radiocarbon evidence to address issues of Iron Age chronology has led to the development of a large dataset of chronometric evidence (e.g. [87, 91–97]), available radiocarbon data in the northern Levant is extremely scarce [15, 23, 51, 104]. This has led to the development of a series of relative regional chronologies, often employing widely varying chronological terminologies based on locally-defined or somewhat arbitrary subdivisions [86, 105–108]. These are often based on linkages in material culture and styles within the Levant and with the Aegean and Cyprus [56, 109]. As a result, the issue of chronology has been problematic and largely based on circular reasoning and imprecise criteria.\n\nOne of the key discoveries during recent excavations at Tell Tayinat is the articulation of a sequence of early Iron Age remains, after a settlement hiatus during the Middle and Late Bronze Ages, that were unattested in the earlier excavations at the site [45–47, 51, 55, 110]. With an area from ca. 12–20 hectares in extent, Tell Tayinat is one of the larger early Iron Age sites known in the eastern Mediterranean, and represents an important regional sequence for the early Iron Age in the northern Levant. As a result, we report work aimed at remedying the lack of chronological data for this region through establishing a high-resolution calendar timescale for early Iron Age Tell Tayinat. The use of data from Tell Tayinat for the development of a regional sequence is particularly appropriate, given the important role the site played in the early development of radiocarbon dating. A sample of charcoal from Tell Tayinat in fact appeared on Libby’s famous ‘curve of knowns’ as a measurement by the University of Chicago. Libby wrote:\n\n“The next sample, which is marked “Tayinat,” is from a house in Asia Minor which was burned in 675 B.C. It was wood from the floor of a central room in a large hilani (“palace”) of the “Syro-Hittite” period in the city of Tayinat in northwest Persia. Its known age is 2625 ± 50 years” [111].\n\nThis statement is historic, but also both remarkable and (retrospectively) distressing. A charcoal sample of the scale required at this time for radiocarbon dating likely had a considerable number of tree-rings. Thus it could quite well today have offered a potentially important dendrochronological sample, or least a highly resolved dendro-14C-wiggle-match sample. Such a sample could have enabled precise dating (as undertaken at some other Anatolian Bronze and Iron Age cases [78, 112–116]) of some considerable value, perhaps tied to a specific construction episode at the site (its context from the floor in a central room suggests a fallen roof beam). Sadly, no charcoal recovered so far in the recent Tayinat excavations has been of anywhere near such a scale for dendrochronological analysis, and the whereabouts of Libby’s original sample or any others that may have been collected in the 1930s remains unknown. The confidence expressed in the dating of the context and sample from the site is also striking, and almost certainly misplaced, given the complex history of the specific bīt-hilāni palace from which the sample was taken (Rooms I-J, 1st floor in Building I) (e.g., [53, 57, 117, 118]).\n\nIn view of these research opportunities and the current limitations in terms of dating, our project therefore seeks to integrate the archaeology with the radiocarbon evidence to achieve a secure timeframe for Tell Tayinat in both the late Early Bronze Age and the Early Iron Age. We use organic samples (identified wood charcoal and especially short-lived seed material) from well-defined archaeological contexts at Tell Tayinat for a program of radiocarbon dating. In particular, we have carefully selected sets of short-lived sample material where possible–offering ages contemporary with use–from stratigraphic sequences. These circumstances, where we have an archaeologically-ordered sequence of contexts and samples, allows in addition the application of Bayesian chronological modeling approaches [119–123], where prior archaeological or historical knowledge can be integrated with the radiocarbon probabilities, in order to achieve more precise and more robust chronologies.\n\n## Conclusions\n\nThe absolute dating of the later Early Bronze Age and earlier Iron Age occupation periods at Tell Tayinat and associated northern Levantine sites has been the subject of debate and ambiguity for many years. The regional chronological frameworks for the northern Levant during both periods have never been adequately addressed in absolute chronological terms, but rather have been largely based on relative chronologies derived from regional ceramic sequences. The chronology of the early Iron Age, in particular, has been linked only approximately to material and stylistic associations and thence to debates in other areas, in both the Aegean and the wider East Mediterranean, concerning the centuries following the collapse of the 13th century BCE palace-era Late Bronze Age civilizations. Our chronology, based on the integration of the archaeological sequence at Tell Tayinat with radiocarbon dates, provides for the first time a directly relevant, refined, and robust timeframe for this important site and its region. The chronological framework thus developed places the two major occupation phases at Tell Tayinat firmly within temporal contexts relevant to ongoing debates about two periods of supposed climate crisis (around and following ca. 4200 BP/2200 BCE and around and following ca. 3200 BP/ 1200 BCE). The complex and contrasting responses observed at Tell Tayinat during these two transformative periods positions the site as a locus strategic to understanding the diverse ‘alternative’ developmental trajectories observed during these two intermediate eras.\n"
+  },
+  {
+   "citekey": "middlesea2021_review",
+   "licence": "CC-BY-4.0",
+   "title": "Establishing the Middle Sea: The Late Bronze Age of Mediterranean Europe (1700–900 BC)",
+   "authors": [
+    "F. Iacono",
+    "Elisabetta Borgna",
+    "Maurizio Cattani",
+    "Claudio Cavazzuti"
+   ],
+   "year": 2021,
+   "venue": "Journal of Archaeological Research",
+   "doi": "10.1007/s10814-021-09165-1",
+   "status": "current",
+   "topics": [
+    "bronze_age",
+    "mediterranean",
+    "late_bronze_age",
+    "synthesis_review",
+    "bronze_age_collapse",
+    "trade_networks",
+    "human_mobility",
+    "transculture",
+    "cremation_diffusion",
+    "warrior_ideology",
+    "ancient_dna",
+    "isotope_analysis",
+    "aegean",
+    "europe",
+    "minoan"
+   ],
+   "regions": [
+    "Greece",
+    "Italy",
+    "Iberian Peninsula",
+    "Sardinia",
+    "Sicily",
+    "Balkans",
+    "Southern France",
+    "Balearic Islands",
+    "Malta",
+    "Corsica"
+   ],
+   "tags": [],
+   "periodStart": -1700,
+   "periodEnd": -900,
+   "summary": "This is a major synthesis review covering the Late Bronze Age (1700–900 BC) of Mediterranean Europe from Greece to Iberia, surveying over half a millennium of archaeological, archaeometric, and bioarchaeological evidence across the entire northern littoral of the Mediterranean. The review demonstrates that the period was defined by an exponential growth of interconnected exchange networks — involving metals, people, and ideas — that effectively merged previously disparate regions into a recognisable 'Middle Sea' system, while simultaneously revealing extreme variability in social organisation from Mycenaean palace-states to egalitarian Nuragic communities. Key thematic contributions include a comparative treatment of Bronze Age collapse c. 1200 BC (rejecting single-cause models in favour of entangled systemic stressors), a pan-Mediterranean survey of transcultural phenomena (cremation diffusion, warrior iconography, solar/boat symbolism), and an integration of aDNA and stable isotope evidence for human mobility that documents sex-biased steppe introgression in Iberia and genetic conservatism in Nuragic Sardinia. The review updates and challenges the traditional Aegean-centric framing by foregrounding the central and western Mediterranean as equal participants in Bronze Age dynamics, following Broodbank's 'Making of the Middle Sea' framework.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "Mycenaean palatial centres (Mycenae, Pylos, Thebes) experienced near-simultaneous violent destructions c. 1200 BC, ending complex administrative systems; post-collapse depopulation was severe in Messenia but resilience is visible at Tiryns and in Achaea.",
+     "region": "Southern Greece / Peloponnese",
+     "lon": 22.76,
+     "lat": 37.73,
+     "periodStart": -1300,
+     "periodEnd": -1100,
+     "periodName": "Late Helladic IIIB–IIIC",
+     "confidence": "high",
+     "tags": [
+      "collapse",
+      "mycenaean",
+      "palatial_system",
+      "destruction_horizon"
+     ]
+    },
+    {
+     "claim": "Nuragic Sardinia shows a conservative genetic pool with no significant steppe ancestry introgression (unlike most of Europe), while experiencing demographic and economic growth during the LBA, and developing a distinctive elite emergence via bronze-votive sanctuaries by the late second millennium BC.",
+     "region": "Sardinia",
+     "lon": 9.07,
+     "lat": 40.12,
+     "periodStart": -1600,
+     "periodEnd": -900,
+     "periodName": "Nuragic Bronze Age",
+     "confidence": "high",
+     "tags": [
+      "nuragic",
+      "ancient_dna",
+      "steppe_ancestry_absent",
+      "elite_formation",
+      "sanctuary"
+     ]
+    },
+    {
+     "claim": "Stable isotope analyses at northern Italian Terramare sites (Fondo Paviani, Casinalbo, Frattesina) document that elite individuals were more mobile than commoners; almost 50% of individuals at Scalvinetto (Fondo Paviani) were non-local, with some potentially from southern Italy or the eastern Mediterranean.",
+     "region": "Po Valley / northern Italy",
+     "lon": 11.3,
+     "lat": 45.12,
+     "periodStart": -1400,
+     "periodEnd": -1100,
+     "periodName": "Recent Bronze Age / Final Bronze Age",
+     "confidence": "high",
+     "tags": [
+      "isotope_analysis",
+      "mobility",
+      "terramare",
+      "elite_mobility",
+      "frattesina"
+     ]
+    },
+    {
+     "claim": "Two major genetic shifts are documented in Iberia: (1) steppe ancestry introgression c. 2500–2000 BC with sex-biased male migration replacing local Y-chromosome haplogroups with R1b-M269; (2) a second shift at the Bronze Age–Iron Age transition linked to northern/central European Urnfield ancestry.",
+     "region": "Iberian Peninsula",
+     "lon": -3.5,
+     "lat": 40.0,
+     "periodStart": -2500,
+     "periodEnd": -900,
+     "periodName": "Chalcolithic to Final Bronze Age",
+     "confidence": "high",
+     "tags": [
+      "ancient_dna",
+      "steppe_ancestry",
+      "sex_bias",
+      "urnfield",
+      "migration"
+     ]
+    },
+    {
+     "claim": "Cremation burial spread as a transcultural phenomenon across a broad peri-Mediterranean arc (Balkans, Italy, Malta, southern France, Iberia) during the LBA, blending with or replacing existing inhumation traditions; Sardinia and the Balearics are notable exceptions falling outside this pattern.",
+     "region": "Mediterranean Europe",
+     "lon": 12.5,
+     "lat": 42.5,
+     "periodStart": -1300,
+     "periodEnd": -900,
+     "periodName": "Late / Final Bronze Age",
+     "confidence": "high",
+     "tags": [
+      "cremation",
+      "urnfield",
+      "funerary_practice",
+      "transculture",
+      "diffusion"
+     ]
+    },
+    {
+     "claim": "The Argaric state of southeast Iberia (c. 2200–1550 BC) collapsed suddenly c. 1550 BC, most likely from internal revolt driven by subsistence shortages from barley monoculture and escalating social exploitation, rather than external invasion; post-Argaric communities show political decentralisation and high inter-regional mobility.",
+     "region": "Southeast Iberia",
+     "lon": -1.85,
+     "lat": 37.8,
+     "periodStart": -1700,
+     "periodEnd": -1550,
+     "periodName": "Post-Argaric transition",
+     "confidence": "medium",
+     "tags": [
+      "el_argar",
+      "collapse",
+      "social_stratification",
+      "subsistence_crisis"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "dst": "finn2017_late",
+     "kind": "references"
+    }
+   ]
+  },
+  {
+   "citekey": "meyer2021_resilient",
+   "licence": "CC-BY-4.0",
+   "title": "Resilient Social Actors in the Transition from the Late Bronze to the Early Iron Age on Cyprus",
+   "authors": [
+    "Nathan Meyer",
+    "A. Bernard Knapp"
+   ],
+   "year": 2021,
+   "venue": "Journal of World Prehistory",
+   "doi": "10.1007/s10963-021-09163-7",
+   "status": "current",
+   "topics": [
+    "Cyprus",
+    "Late Bronze Age",
+    "Early Iron Age",
+    "political economy",
+    "social change",
+    "Complex Adaptive Systems"
+   ],
+   "regions": [
+    "Cyprus",
+    "eastern Mediterranean",
+    "Aegean"
+   ],
+   "tags": [
+    "cyprus",
+    "late_bronze_age",
+    "early_iron_age",
+    "political_economy",
+    "social_change",
+    "complex_adaptive_systems"
+   ],
+   "periodStart": -1300,
+   "periodEnd": -750,
+   "summary": "Our understanding of the earliest Iron Age on Cyprus has long remained somewhat obscure. This is the result of both a relative lack of material evidence and the fact that scholarly attention has focused more on the preceding Late Bronze Age and on the subsequent Cypro-Archaic period. As more, and more varied, data have accumulated, there have been calls for a more theoretically informed approach to considering the social changes involved, and even for prehistorians to extend their work into the Cypriot Iron Age. As a response to this, the present study considers a broad range of material and documentary evidence, attempts to reconstruct the political economy, and offers an interpretative framework based on social understandings of Complex Adaptive Systems theory. Using this approach, the authors conclude that, while the enduring realities of Cyprus—its geography, copper resources and long tradition of agropastoralism—continued to shape Cypriot culture, the Iron Age is not simply a continuation of its Bronze Age sociopolitical forms. We argue instead that the earliest Iron Age involved social actors negotiating new politico-economic agendas in response to changing conditions in the Iron Age eastern Mediterranean.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "The authors argue that Cyprus’s earliest Iron Age involved new social and politico-economic agendas rather than simply continuing Bronze Age sociopolitical forms.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodName": "Early Iron Age",
+     "confidence": "high",
+     "tags": [
+      "social_change",
+      "political_economy"
+     ]
+    },
+    {
+     "claim": "The authors state that Cyprus’s Bronze Age political and economic regimes disappeared and society adapted to new Iron Age conditions.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodName": "Late Bronze Age to Early Iron Age transition",
+     "confidence": "high",
+     "tags": [
+      "political_economy",
+      "social_change"
+     ]
+    },
+    {
+     "claim": "During the eleventh century BCE, Proto-White Painted ware appeared across Cyprus as the result of unified technical and industrialized fast-wheel production.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodStart": -1100,
+     "periodEnd": -1001,
+     "confidence": "high",
+     "tags": [
+      "pottery_production",
+      "proto_white_painted_ware"
+     ]
+    },
+    {
+     "claim": "Cyprus’s Iron Age polities should not be understood as a close reenactment of its Late Bronze Age political-economic tradition or as a simple reflection of regional developments.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "confidence": "high",
+     "tags": [
+      "iron_age",
+      "polities",
+      "continuity"
+     ]
+    },
+    {
+     "claim": "Cyprus ultimately underwent the changing geopolitical realities that followed the Bronze Age, despite weathering transformations in the surrounding region during the twelfth century BCE.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodStart": -1200,
+     "periodEnd": -1101,
+     "periodName": "twelfth century BCE",
+     "confidence": "high",
+     "tags": [
+      "late_bronze_age",
+      "early_iron_age",
+      "geopolitics"
+     ]
+    },
+    {
+     "claim": "Territorial boundaries established in CG III most likely reflect expanded territorial control, including access to copper ores, alongside the reemergence of state-level complexity.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodName": "CG III",
+     "confidence": "medium",
+     "tags": [
+      "territorial_control",
+      "copper",
+      "state_formation"
+     ]
+    },
+    {
+     "claim": "The authors reject the case for significant continuity between Cyprus’s Late Bronze Age and Early Iron Age, while acknowledging disagreement over when Iron Age city-states formed.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodName": "Late Bronze Age–Early Iron Age",
+     "confidence": "high",
+     "tags": [
+      "continuity",
+      "city_states",
+      "state_formation"
+     ]
+    },
+    {
+     "claim": "Cyprus eventually succumbed to Early Iron Age economic conditions, including the decline of specialized exchange systems partly centered on Cypriot copper, and several smaller local or regional polities subsequently emerged.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodStart": -1200,
+     "periodEnd": -1101,
+     "periodName": "Early Iron Age",
+     "confidence": "high",
+     "tags": [
+      "copper",
+      "trade",
+      "polities",
+      "economic_change"
+     ]
+    },
+    {
+     "claim": "The authors estimate that Cyprus’s political economy contracted during the transition to the Early Iron Age and began expanding again toward the end of the Cypro-Geometric period.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodStart": -750,
+     "periodEnd": -750,
+     "periodName": "Cypro-Geometric period",
+     "confidence": "medium",
+     "tags": [
+      "political_economy"
+     ]
+    },
+    {
+     "claim": "The authors identify two competing explanations for Cyprus’s Early Iron Age polities: consolidation of formations originating in the twelfth century BCE, or new formations emerging from the ninth–eighth centuries BCE onward.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodStart": -1100,
+     "periodEnd": -800,
+     "periodName": "Early Iron Age",
+     "confidence": "high",
+     "tags": [
+      "polities",
+      "settlement_evidence"
+     ]
+    },
+    {
+     "claim": "Cyprus’s copper was extracted from massive sulphide ore deposits in the Pillow Lavas around the central Troodos range, using local forests for fuel.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodName": "Early Iron Age",
+     "confidence": "high",
+     "tags": [
+      "copper",
+      "political_economy"
+     ]
+    },
+    {
+     "claim": "LC IIIB mortuary changes included more investment in tombs and burial goods, limited tomb reuse, and the first cremation burials, making mortuary display important for social signalling again.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodStart": -1200,
+     "periodEnd": -1200,
+     "periodName": "LC IIIB",
+     "confidence": "high",
+     "tags": [
+      "mortuary_practices",
+      "social_signalling"
+     ]
+    },
+    {
+     "claim": "The studies reviewed describe changing social stratification in Cyprus, with wealth and stratification increasing in CG III and continuing into CA I after diminished wealth in CG II.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodName": "LC IIIB–CA I",
+     "confidence": "medium",
+     "tags": [
+      "mortuary_evidence",
+      "social_stratification"
+     ]
+    },
+    {
+     "claim": "Rural sanctuaries in Cyprus appeared mainly in CG III and proliferated during the CA period.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodName": "CG III–CA",
+     "confidence": "high",
+     "tags": [
+      "rural_sanctuaries",
+      "archaeology"
+     ]
+    },
+    {
+     "claim": "The authors argue that territorial expansion and spatial control in Cyprus became an issue only in the latter part of the CG period.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodName": "latter part of the CG period",
+     "confidence": "medium",
+     "tags": [
+      "territoriality",
+      "rural_sanctuaries"
+     ]
+    },
+    {
+     "claim": "Aegean-style wheel-made pottery production increased dramatically at the opening of the twelfth century BCE.",
+     "region": "Cyprus",
+     "lon": 33.03299545440986,
+     "lat": 34.839879999999994,
+     "periodStart": -1200,
+     "periodEnd": -1200,
+     "confidence": "high",
+     "tags": [
+      "pottery_production",
+      "craft_specialization"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "dst": "kaniewski2013_environmental",
+     "kind": "references"
+    }
+   ]
+  },
+  {
+   "citekey": "molloy2022_there",
+   "licence": "CC-BY-4.0",
+   "title": "Was There a 3.2 ka Crisis in Europe? A Critical Comparison of Climatic, Environmental, and Archaeological Evidence for Radical Change during the Bronze Age–Iron Age Transition",
+   "authors": [
+    "Barry Molloy"
+   ],
+   "year": 2022,
+   "venue": "Journal of Archaeological Research",
+   "doi": "10.1007/s10814-022-09176-6",
+   "status": "current",
+   "topics": [
+    "bronze_age_collapse",
+    "late_bronze_age",
+    "climate_archaeology",
+    "societal_resilience",
+    "paleoclimatology",
+    "aegean",
+    "deep_time",
+    "levant_near_east"
+   ],
+   "regions": [
+    "Ireland",
+    "Britain",
+    "Scandinavia",
+    "Carpathian Basin",
+    "Po Valley",
+    "Aegean",
+    "Greece"
+   ],
+   "tags": [],
+   "periodStart": -1300,
+   "periodEnd": -1000,
+   "summary": "Molloy (2022) presents the first systematic parallel review of paleoclimatic and archaeological data for five European regions (Ireland/Britain, Nordic area, Carpathian Basin, Po Valley, Aegean) during the 13th–11th centuries BC. The paper argues that a 3.2 ka climate event is detectable across Europe around 1200 BC, manifesting as increased aridity in Mediterranean zones and warmer/drier conditions in northern regions, but that climate change acted as a 'force multiplier' rather than a primary trigger—it undermined societal resilience in populations already stressed by internal conflicts, over-extension, and deforestation. Societies in the Aegean, Po Valley, and Pannonian Plain that had developed complex, landscape-dependent political systems between 1500 and 1200 BC were most devastated, while Atlantic-facing Ireland/Britain and parts of northern Greece actually saw modest growth during the same period. The paper explicitly rejects both climate determinism and the dismissal of climate as irrelevant, instead advocating a coupled human–climate systems approach that traces how socio-political fragility transformed climate stress into collapse.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "The collapse of Mycenaean palatial systems ca. 1200 BC correlates with increasingly arid and cooler conditions in Greece during the 12th century, but climate change followed rather than caused the initial destructions, constraining recovery and preventing political reconsolidation in the two to four generations after 1200 BC.",
+     "region": "Aegean / Mycenaean Greece",
+     "lon": 22.75,
+     "lat": 37.73,
+     "periodStart": -1200,
+     "periodEnd": -1050,
+     "periodName": "Late Bronze Age / Early Iron Age transition",
+     "confidence": "medium",
+     "tags": [
+      "bronze_age_collapse",
+      "mycenaean",
+      "paleoclimatology",
+      "aridity",
+      "societal_resilience"
+     ]
+    },
+    {
+     "claim": "The mega-fort settlement network of the southern Pannonian Plain (including sites >1000 ha) was effectively abandoned between 1250 and 1150 BC, correlating with an aridity peak; an exponential increase in bronze hoarding in the same window is interpreted as a crisis-response ritual behavior linked to both social disruption and climate stress.",
+     "region": "Pannonian Plain / Carpathian Basin",
+     "lon": 20.5,
+     "lat": 45.75,
+     "periodStart": -1250,
+     "periodEnd": -1100,
+     "periodName": "Late Bronze Age",
+     "confidence": "medium",
+     "tags": [
+      "bronze_age_collapse",
+      "late_bronze_age",
+      "hoarding",
+      "aridity",
+      "settlement_abandonment"
+     ]
+    },
+    {
+     "claim": "Molloy reports that settlement numbers in the northern Po Valley fell from their thirteenth-century peak to less than one-quarter by the mid-twelfth century BCE. In the southern area, virtually all settlements were abandoned by 1150 BCE. He discusses increasing aridity in an already heavily deforested landscape, but cautions that Terramare chronological boundaries remain debated and rest on few absolute dates, limiting precise correlations between climatic and social change.",
+     "region": "Po Valley, northern Italy",
+     "lon": 11.0,
+     "lat": 44.9,
+     "periodStart": -1200,
+     "periodEnd": -1150,
+     "periodName": "Final Bronze Age",
+     "confidence": "high",
+     "tags": [
+      "bronze_age_collapse",
+      "terramare",
+      "aridity",
+      "deforestation",
+      "settlement_abandonment"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "dst": "finn2017_late",
+     "kind": "references"
+    },
+    {
+     "dst": "manning2020_beyond",
+     "kind": "references"
+    }
+   ]
+  },
+  {
+   "citekey": "manning2023_severe",
+   "licence": "CC-BY-4.0",
+   "title": "Severe multi-year drought coincident with Hittite collapse around 1198–1196 bc",
+   "authors": [
+    "Sturt W. Manning",
+    "Cindy Kocik",
+    "Brita Lorentzen",
+    "Jed P. Sparks"
+   ],
+   "year": 2023,
+   "venue": "Nature",
+   "doi": "10.1038/s41586-022-05693-y",
+   "status": "current",
+   "topics": [
+    "bronze_age_collapse",
+    "climate_collapse",
+    "drought",
+    "dendrochronology",
+    "hittite_anatolia",
+    "stable_isotope_paleoclimate",
+    "aegean",
+    "deep_time",
+    "levant_near_east"
+   ],
+   "regions": [
+    "Anatolia",
+    "Hittite Empire",
+    "Eastern Mediterranean",
+    "Northern Levant"
+   ],
+   "tags": [
+    "drought",
+    "tree-rings",
+    "gordion"
+   ],
+   "periodStart": -1250,
+   "periodEnd": -1130,
+   "summary": "Manning et al. (2023) use annually resolved ring-width and stable carbon isotope (δ¹³C) records from juniper timbers excavated at Gordion, central Anatolia (dated ~1775–748 ± 3 BCE), to reconstruct a high-resolution moisture proxy for the Late Bronze Age. The analysis reveals three consecutive years of extreme drought (~1198–1196 BCE) — falling in the lowest 6.25% of all moisture values across a 700-year record — coincident with the collapse of the Hittite Empire and abandonment of Hattusa. Stable isotopes from the Gordion trees, corroborated by speleothem records from Sofular Cave (NW Anatolia) and Kocain Cave (SW Anatolia), show a progressive drying trend from ~1232 to ~1192 BCE, with peak aridity around 1196 BCE. The authors argue that while low-frequency century-scale drying provided background stress, it was this rare multi-year consecutive drought — outside any plausible buffer of grain storage or social networking — that constituted a tipping point overwhelming Hittite resilience strategies, contributing decisively to imperial collapse. The study explicitly acknowledges the drought as a probable contributing cause rather than a sole determinant, noting that human actors and political fault lines interacted with the climatic shock.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "Gordion juniper tree-ring chronology (23 samples, ~18 trees) shows three consecutive years ~1198–1196 BCE in the lowest 6.25% of moisture values across the 700-year record (~1497–797 BCE) — the only such trio in the 135-year window 1270–1135 BCE.",
+     "region": "Central Anatolia (Gordion)",
+     "lon": 32.0,
+     "lat": 39.65,
+     "periodStart": -1198,
+     "periodEnd": -1196,
+     "periodName": "Late Bronze Age collapse",
+     "confidence": "high",
+     "tags": [
+      "dendrochronology",
+      "drought",
+      "tree_rings",
+      "gordion"
+     ]
+    },
+    {
+     "claim": "Gordion δ¹³C stable isotope record shows a marked drying trend from ~1232 to ~1192 BCE with peak aridity spiking around 1222–1221 BCE and again ~1195 BCE, consistent with ring-width minima and contemporary Hittite textual references to grain shortages.",
+     "region": "Central Anatolia (Gordion)",
+     "lon": 32.0,
+     "lat": 39.65,
+     "periodStart": -1232,
+     "periodEnd": -1192,
+     "periodName": "Late Bronze Age",
+     "confidence": "high",
+     "tags": [
+      "stable_isotopes",
+      "delta13C",
+      "drought",
+      "grain_shortage"
+     ]
+    },
+    {
+     "claim": "Speleothem δ¹³C and δ¹⁸O records from Sofular Cave (NW Anatolia, ~41.4°N 31.9°E) independently corroborate a drying trend toward ~1200 BCE, aligning with the Gordion tree-ring signal.",
+     "region": "NW Anatolia (Sofular Cave)",
+     "lon": 31.9,
+     "lat": 41.4,
+     "periodStart": -1250,
+     "periodEnd": -1150,
+     "periodName": "Late Bronze Age",
+     "confidence": "medium",
+     "tags": [
+      "speleothem",
+      "stable_isotopes",
+      "cave_record",
+      "paleoclimate"
+     ]
+    },
+    {
+     "claim": "Kocain Cave speleothem record (SW Anatolia, ~37.5°N 30.5°E) shows consistent δ¹³C and δ¹⁸O drying signals toward 1200 BCE, confirming a broad Anatolian-scale moisture decline rather than a local Gordion anomaly.",
+     "region": "Kocain Cave",
+     "lon": 30.711271,
+     "lat": 37.232631,
+     "periodStart": -1250,
+     "periodEnd": -1150,
+     "periodName": "Late Bronze Age",
+     "confidence": "medium",
+     "tags": [
+      "speleothem",
+      "stable_isotopes",
+      "paleoclimate",
+      "regional_signal"
+     ]
+    },
+    {
+     "claim": "In the 12-year period from 1198 to 1187 BCE, 50–67% of years fell in the lowest 20% of moisture values; smoothed over a human-generational (~28-year) window this interval represents either the driest or second-driest multi-year stretch between 1400 and 1000 BCE in central Anatolia.",
+     "region": "Central Anatolia",
+     "lon": 33.0,
+     "lat": 39.9,
+     "periodStart": -1198,
+     "periodEnd": -1187,
+     "periodName": "Late Bronze Age collapse",
+     "confidence": "high",
+     "tags": [
+      "multi_year_drought",
+      "food_security",
+      "hittite_empire",
+      "famine"
+     ]
+    },
+    {
+     "claim": "Modern Palmer Drought Severity Index reconstructions (Old World Drought Atlas) for comparable back-to-back severe drought years (AD 1607–1608 and AD 1927–1928) show drought spreading across all of Anatolia/Turkey — supporting inference that the ~1198–1196 BCE event affected the full Hittite heartland, not just the Gordion region 230 km west of Hattusa.",
+     "region": "Anatolia / Hittite heartland",
+     "lon": 34.6,
+     "lat": 39.9,
+     "periodStart": -1198,
+     "periodEnd": -1187,
+     "periodName": "Late Bronze Age collapse",
+     "confidence": "medium",
+     "tags": [
+      "spatial_extent",
+      "PDSI",
+      "drought_atlas",
+      "hattusa"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "dst": "manning2020_beyond",
+     "kind": "references"
+    }
+   ]
+  },
+  {
+   "citekey": "middleton2023_getting",
+   "licence": "CC-BY-4.0",
+   "title": "Getting closer to the Late Bronze Age collapse in the Aegean and eastern Mediterranean, c. 1200 BC",
+   "authors": [
+    "Guy D. Middleton"
+   ],
+   "year": 2023,
+   "venue": "Antiquity",
+   "doi": "10.15184/aqy.2023.187",
+   "status": "current",
+   "topics": [
+    "bronze_age_collapse",
+    "mycenaean_civilization",
+    "destruction_horizons",
+    "historiography_of_collapse",
+    "late_bronze_age",
+    "aegean",
+    "deep_time",
+    "levant_near_east"
+   ],
+   "regions": [
+    "Aegean",
+    "Greece",
+    "Anatolia",
+    "Cyprus",
+    "Levant",
+    "Eastern Mediterranean"
+   ],
+   "tags": [],
+   "periodStart": -1300,
+   "periodEnd": -1100,
+   "summary": "Middleton's review article (Antiquity 2024) evaluates two books that reassess the conventional narrative of the Late Bronze Age collapse c. 1200 BC. Millek's Destruction and its impact (2023) re-examines 153 proposed destructions and concludes that 94 (61%) are 'false' — misdated, assumed, or resting on citations unsupported by excavation reports; Middleton judges that it shows the dominant narrative of 'the collapse c. 1200 BC' to be at least in part a modern myth and an artefact of scholarship, while Millek still accepts some destructions around 1200 BC. Jung and Kardamaki's edited volume Synchronizing the destructions of the Mycenaean palaces (2022) uses pottery and architecture to date palace destructions, showing that they were not simultaneous and that earlier destructions occurred throughout the palatial period; within it Maran argues for internal, longer-term drivers of Mycenaean state collapse rather than a single 'silver bullet' cause.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "Middleton reports that Millek (2023) finds 94 (61%) of the 153 destructions proposed for c. 1200 BC to be 'false' — 33 misdated (outside a 1225–1175 BC window), 35 assumed rather than evidenced, 26 resting on 'false citations' unsupported by excavation reports — which casts further doubt on a single destruction horizon with a single cause, though Millek accepts some destructions in the 50 years around 1200 BC.",
+     "lon": 33.0,
+     "lat": 36.0,
+     "periodStart": -1225,
+     "periodEnd": -1175,
+     "periodName": "Late Bronze Age collapse horizon",
+     "confidence": "high",
+     "tags": [
+      "destruction_horizons",
+      "bronze_age_collapse",
+      "historiography_of_collapse"
+     ]
+    },
+    {
+     "claim": "In the reviewed volume edited by Jung and Kardamaki (2022), Mycenaean palace destructions are not simultaneous: Ayios Vasileios burned in mid-LH IIIB and ceased to function as a palace; Mycenae, Tiryns and Thebes were destroyed at the end of LH IIIB (Thebes probably slightly after the Argolid centres); Vitale, Stocker and Davis place the final destruction of Pylos in LH IIIC Early (1190/80–1150 BC), after the Argolid centres, Thebes and Gla — whereas Andronikou puts Thebes around the same time as Pylos.",
+     "lon": 22.76,
+     "lat": 37.73,
+     "periodStart": -1300,
+     "periodEnd": -1150,
+     "periodName": "LH IIIB–IIIC Early",
+     "confidence": "high",
+     "tags": [
+      "mycenaean_civilization",
+      "bronze_age_collapse",
+      "destruction_horizons"
+     ]
+    },
+    {
+     "claim": "In the Jung and Kardamaki volume, Joseph Maran favours internal factors of change — conflicts within elites, the impact of big construction projects and changes in the military make-up of the Mycenaean states, working over middling to longer periods — over any sudden single 'silver bullet' cause of Mycenaean state collapse.",
+     "lon": 22.76,
+     "lat": 37.73,
+     "periodStart": -1300,
+     "periodEnd": -1150,
+     "periodName": "Late Mycenaean palatial period",
+     "confidence": "medium",
+     "tags": [
+      "mycenaean_civilization",
+      "bronze_age_collapse",
+      "historiography_of_collapse"
+     ]
+    },
+    {
+     "claim": "Of the 12 mainland Greek destructions Millek assigns to c. 1200 BC, he proposes that Midea and Pylos may have been destroyed in warfare, Tiryns by warfare or arson, and Gla and Dimini by arson (weapons in the destruction layers at Midea, Pylos and Tiryns; only particular buildings targeted at Tiryns, Gla and Dimini); the other seven causes are 'unknown'.",
+     "lon": 22.76,
+     "lat": 37.73,
+     "periodStart": -1225,
+     "periodEnd": -1175,
+     "periodName": "Late Bronze Age collapse horizon",
+     "confidence": "medium",
+     "tags": [
+      "destruction_horizons",
+      "bronze_age_collapse",
+      "warfare"
+     ]
+    }
+   ],
+   "edges": []
+  },
+  {
+   "citekey": "resilience2023_settlement",
+   "licence": "CC-BY-4.0",
+   "title": "Resilience, innovation and collapse of settlement networks in later Bronze Age Europe: New survey data from the southern Carpathian Basin",
+   "authors": [
+    "Barry Molloy",
+    "Dragan Jovanović",
+    "Caroline Bruyère",
+    "Marta Estanqueiro"
+   ],
+   "year": 2023,
+   "venue": "PLoS ONE",
+   "doi": "10.1371/journal.pone.0288750",
+   "status": "current",
+   "topics": [
+    "bronze_age_collapse",
+    "settlement_networks",
+    "resilience",
+    "systems_collapse",
+    "carpathian_basin_bronze_age",
+    "megaforts",
+    "climate_and_society",
+    "challenges_tell_decline_model"
+   ],
+   "regions": [
+    "Carpathian Basin",
+    "Pannonian Plain",
+    "Vojvodina (Serbia)",
+    "Banat (Romania/Serbia/Hungary)",
+    "Southern Hungary"
+   ],
+   "tags": [],
+   "periodStart": -2200,
+   "periodEnd": -1100,
+   "summary": "This PLoS ONE research article (Molloy et al. 2023) presents new field survey data from the southern Carpathian Basin (the Tisza Site Group, ca. 8,000 km²) that challenges the long-standing model of Late Bronze Age decline in this region. Rather than a post-MBA collapse into simplicity, the authors document a dense, hierarchically organised network of over 100 enclosed settlements—including massive megaforts up to 1,765 ha—that flourished between ca. 1600–1200 BC in a climatically enabled wetland-oriented landscape niche. They argue that the 16th-century BC abandonment of MBA tells represented not collapse but proactive socio-political reorganisation, and that a fully opposite trajectory—increased settlement scale, complexity, and long-distance connectivity—followed. The network's abrupt en masse abandonment around 1200 BC is attributed to the combined pressures of increasing aridity (ca. 3.2 kya climate event), a finely balanced hydrological dependency, and consequent social fragmentation.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "A network of over 100 densely spaced Late Bronze Age enclosed settlements (Tisza Site Group, TSG) flourished in the southern Pannonian Plain ca. 1600–1200 BC, contradicting the prior model of LBA decline following MBA tell abandonment.",
+     "region": "Vojvodina, Serbia / southern Pannonian Plain",
+     "lon": 20.5,
+     "lat": 45.3,
+     "periodStart": -1600,
+     "periodEnd": -1200,
+     "periodName": "Late Bronze Age LBA 1–2",
+     "confidence": "high",
+     "tags": [
+      "settlement_networks",
+      "megaforts",
+      "resilience",
+      "carpathian_basin_bronze_age"
+     ]
+    },
+    {
+     "claim": "Middle Bronze Age tell communities in the southeast Pannonian Plain were virtually all abandoned between ca. 1600–1500 BC, but this represents active socio-political reorganisation rather than population collapse; new LBA settlements emerged within decades in the same region.",
+     "region": "Southern Carpathian Basin (Banat/Pannonian Plain)",
+     "lon": 20.8,
+     "lat": 45.8,
+     "periodStart": -1600,
+     "periodEnd": -1500,
+     "periodName": "MBA–LBA transition",
+     "confidence": "high",
+     "tags": [
+      "bronze_age_collapse",
+      "systems_collapse",
+      "tell_settlements"
+     ]
+    },
+    {
+     "claim": "Palaeoclimate proxies (speleothem data from Trio, Ascunsă, Poleva, and Ursilor caves) show cooler, wetter conditions from the 16th century BC that created a specific wetland-oriented environmental niche exploited by TSG communities; increasing aridity from ca. 1250 BC correlates with TSG abandonment.",
+     "region": "Carpathian Basin / western Romania caves",
+     "lon": 22.0,
+     "lat": 45.5,
+     "periodStart": -1600,
+     "periodEnd": -1100,
+     "periodName": "LBA 1–3 climate sequence",
+     "confidence": "medium",
+     "tags": [
+      "climate_and_society",
+      "resilience",
+      "systems_collapse"
+     ]
+    },
+    {
+     "claim": "Corneşti-Iarcuri (western Romanian Banat) was the largest Bronze Age construction in Europe at ca. 1,765 ha enclosed by 33 km of ditches and ramparts, functioning as a communal congregation centre for the lower Pannonian network rather than a permanently occupied settlement.",
+     "region": "Banat, Romania (near Timişoara)",
+     "lon": 21.3,
+     "lat": 45.75,
+     "periodStart": -1600,
+     "periodEnd": -1200,
+     "periodName": "Late Bronze Age LBA 1–2",
+     "confidence": "high",
+     "tags": [
+      "megaforts",
+      "settlement_networks",
+      "carpathian_basin_bronze_age"
+     ]
+    },
+    {
+     "claim": "The lower Pannonian network participated in long-distance exchange networks linking it to the Adriatic, Po Valley Terramare, the Aegean, and Cyprus (Cypriot copper attested for the first time in LBA contexts), indicating it was a major cultural centre rather than a Bronze Age periphery.",
+     "region": "Pannonian Plain",
+     "lon": 20.5,
+     "lat": 45.5,
+     "periodStart": -1500,
+     "periodEnd": -1200,
+     "periodName": "Late Bronze Age LBA 2",
+     "confidence": "medium",
+     "tags": [
+      "long_distance_exchange",
+      "bronze_age_connectivity",
+      "carpathian_basin_bronze_age"
+     ]
+    },
+    {
+     "claim": "The TSG and wider lower Pannonian network were abandoned en masse around 1200 BC, coinciding with a 3.2 kya aridification event; a massive increase in bronze-hoard deposition in the 13th–12th centuries BC is interpreted as a material signature of social crisis and fragmentation.",
+     "region": "Southern Pannonian Plain / Vojvodina",
+     "lon": 20.5,
+     "lat": 45.2,
+     "periodStart": -1300,
+     "periodEnd": -1100,
+     "periodName": "LBA 3 / 3.2 kya collapse horizon",
+     "confidence": "high",
+     "tags": [
+      "bronze_age_collapse",
+      "systems_collapse",
+      "hoarding",
+      "climate_and_society"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "dst": "manning2020_beyond",
+     "kind": "references"
+    },
+    {
+     "dst": "molloy2022_there",
+     "kind": "references"
+    }
+   ],
+   "body": "# Resilience, innovation and collapse of settlement networks in later Bronze Age Europe: New survey data from the southern Carpathian Basin\n\n_Barry Molloy, Dragan Jovanović, Caroline Bruyere, Marta Estanqueiro, Miroslav Birclin, Lidija Milašinović, Aleksandar Šalamon, Kristina Penezić, Christopher Bronk Ramsey, Darja Grosman (2023). PLOS ONE. https://doi.org/10.1371/journal.pone.0288750 — published under the Creative Commons Attribution licence. This demo keeps an excerpt: the abstract and conclusion._\n\n## Abstract\n\nSocieties of the later Early to Middle Bronze Age (ca. 2200–1600 BC) in the Carpathian Basin exhibited complex, hierarchical and regionally influential socio-political organisation that came to an abrupt end in the 16th century BC. Considered a collapse by some, this change was characterised by abandonment of virtually all central places / nodes in settlement networks. Until recently, the complexity that characterised the period was believed to have substantially diminished alongside depopulation. This model was reinforced by a combination of the loss of established external networks and low-resolution knowledge of where and how people lived in the first stages of the Late Bronze Age (between 1600 and 1200 BC). We contest the idea of a diminished Late Bronze Age and argue that a fully opposite trajectory can be identified–increased scale, complexity and density in settlement systems and intensification of long-distance networks. We present results of a settlement survey in the southern Pannonian Plain using remote and pedestrian prospection, augmented by small-scale excavations. New absolute dates are used to define the occupational history of sites dating primarily between 1500–1200 BC. We argue that climate change played a substantial role in in the transformation of settlement networks, creating a particular ecological niche enabling societies to thrive. New and specific forms of landscape exploitation developed that were characterised by proximity to wetlands and minor watercourses. In this context, the largest monuments of Bronze Age Europe were created and inhabited. In considering the origins and demise of these megasites and related settlements, we provide a new model for Late Bronze Age societies in the Carpathian Basin and their regional relevance.\n\n## Conclusion\n\nThe 16th century BC was a time of social upheaval in the Pannonian Plain, with the decline of long-established centres of power, climaxing with the abandonment of settlements and most cemeteries. Ancestral claims to places of the living and the dead to legitimate power in earlier generations were cut off permanently. In some areas this was accompanied by depopulation and the simplification of settlement networks. In the south Pannonian Plain, however, massive new monumental settlements were established alongside many smaller sites with similar features. These emerged together with both appropriated mortuary monuments and the creation of new cemeteries and mortuary rites.\n\nWe have discussed the discovery of a network of over 100 densely spaced settlements, many with large, monumental enclosures. Their society was evidently culturally permeable and they embraced material and mortuary heritage from disparate traditions. TSG settlements emerged in a particular climatic niche that enabled them to successfully occupy very low-lying parts of the landscape that connected them intimately with waterways and wetlands, promoting a wetland-oriented lifeway. Rising temperatures and increased aridity in the 13th to 12th centuries BC appear to have severely impacted on these niche human-landscape relations that sustained TSG communities and their relationships with one another. In a society where sun worship was paramount or even exclusive, we should also take account of the impact of severe shifts in weather patterns on beliefs, both in divine forces and the ability of social leaders to propitiate them [9, 81, 206].\n\nThere was a coherency to the development of the lower Pannonian network that indicates communities were participants in a social phenomenon with a regional political order. They were motivated to build massive, enclosed sites with different spatial zones within. Lands locked between this chain were an integral part of the network, with enclosures serving as focal points punctuating a widely exploited landscape. Sites served different roles, ranging from status to function based, and some may have been designed to support regular population dispersal and aggregation, potentially as seasonal phenomena linked to semi-sedentary lifeways. Constructing enclosures was part of a trajectory that began around 1600 BC, increased in intensity by 1500 BC, saw a consolidation phase around 1400 BC, began to decline after 1300 BC and came to an end point by ca. 1200 BC.\n\nThe TSG sites as a phenomenon are remarkable due to their visibility allowing them to be remotely identified and then for their extent to be defined and aspects of their internal organisation evaluated using remote sensing and basic survey data. This network of over 100 sites, impressive as it is in its own right, was participating in a cultural landscape that gave rise to the construction of the largest monuments of the entire European Bronze Age. More striking still is the creation of the TSG built environment that operated at a near total-landscape level through the chain of co-dependent monumental settlements. The legacy of these massive, monumental, defensible central sites of earth and wood with comparatively low-density occupation may be recognised in the hillforts of the European Iron Age.\n"
+  },
+  {
+   "citekey": "linkov2024_lessons",
+   "licence": "CC-BY-4.0",
+   "title": "Are civilizations destined to collapse? Lessons from the Mediterranean Bronze Age",
+   "authors": [
+    "Linkov, Igor",
+    "Galaitsi, Stephanie",
+    "Trump, Benjamin D.",
+    "Pinigina, Elizaveta",
+    "Rand, Krista",
+    "Cline, Eric H.",
+    "Kitsak, Maksim"
+   ],
+   "year": 2024,
+   "venue": "Global Environmental Change",
+   "doi": "10.1016/j.gloenvcha.2023.102792",
+   "status": "current",
+   "topics": [
+    "bronze_age_collapse",
+    "societal_resilience",
+    "network_analysis",
+    "climate_collapse",
+    "palaeoclimate",
+    "eastern_mediterranean",
+    "societal_collapse",
+    "deep_time",
+    "europe"
+   ],
+   "regions": [
+    "eastern_mediterranean",
+    "anatolia",
+    "greece",
+    "near_east",
+    "mesopotamia",
+    "europe"
+   ],
+   "tags": [],
+   "periodStart": -1700,
+   "periodEnd": -1100,
+   "summary": "Linkov, Galaitsi, Trump et al. (2024) apply network science and resilience theory to the Late Bronze Age Collapse (~1200–1100 BCE) in the Eastern Mediterranean, modeling the political and commercial ties among ten polities (including the Hittites, Egypt, Ugarit, Mycenaean Greece, Cyprus, and Canaan) as a two-layer multiplex network. Their stress-testing shows that the network was robust to any single-node failure, but that the simultaneous collapse of the Hittite Empire and Ugarit was sufficient to trigger a cascading failure across the entire network—a scenario consistent with the historical record. The authors argue that the region's extreme interconnectedness, while a source of prosperity and redundancy, also created vulnerability to compounding multi-nodal disruptions amplified by background climate deterioration. Drawing on panarchy theory, they conclude that civilizational collapse is not inevitable: it depends on adaptive capacity, and societies that recognize and respond to compounding stressors can potentially prevent cascade failures.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "Network stress-testing of 10 Late Bronze Age polities shows that no single-node removal triggers a cascade: in eight of ten 1-node cases the network stays stable, and in the remaining two (Mainland Greece, the Hittites) it loses one additional node (11% damage).",
+     "region": "eastern_mediterranean",
+     "lon": 33.0,
+     "lat": 35.0,
+     "periodStart": -1200,
+     "periodEnd": -1100,
+     "periodName": "Late Bronze Age Collapse",
+     "confidence": "high",
+     "tags": [
+      "network_resilience",
+      "bronze_age_collapse",
+      "cascading_failure"
+     ]
+    },
+    {
+     "claim": "Stress-testing found two 2-node combinations that trigger cascading failure across the network: Hittites + Egypt and Hittites + Ugarit. The authors dismiss Hittites + Egypt because Egypt did not collapse, leaving the simultaneous failure of the Hittite Empire and Ugarit as the historically plausible scenario.",
+     "region": "anatolia",
+     "lon": 34.62,
+     "lat": 40.02,
+     "periodStart": -1200,
+     "periodEnd": -1185,
+     "periodName": "Hittite and Ugarit collapse",
+     "confidence": "high",
+     "tags": [
+      "hittites",
+      "bronze_age_collapse",
+      "cascading_failure",
+      "sea_peoples"
+     ]
+    },
+    {
+     "claim": "Ugarit, a major international entrepôt, maintained normal operations until its sudden destruction and complete abandonment ca. 1185 BCE, illustrating how networked systems can appear functional while underlying structural resilience is already compromised.",
+     "region": "near_east",
+     "lon": 35.78,
+     "lat": 35.6,
+     "periodStart": -1200,
+     "periodEnd": -1185,
+     "periodName": "Destruction of Ugarit",
+     "confidence": "high",
+     "tags": [
+      "ugarit",
+      "bronze_age_collapse",
+      "societal_resilience"
+     ]
+    },
+    {
+     "claim": "Palaeoclimate evidence from lake sediments, cave stalagmites, and lagoon cores across the Eastern Mediterranean documents drier and colder conditions toward the end of the Late Bronze Age (ca. 1300–1100 BCE), likely reducing crop yields and weakening individual nodes before the network-level collapse.",
+     "region": "eastern_mediterranean",
+     "lon": 34.0,
+     "lat": 36.5,
+     "periodStart": -1300,
+     "periodEnd": -1100,
+     "periodName": "Late Bronze Age climate deterioration",
+     "confidence": "high",
+     "tags": [
+      "palaeoclimate",
+      "climate_collapse",
+      "drought",
+      "bronze_age_collapse"
+     ]
+    },
+    {
+     "claim": "Egypt, Assyria, and Babylonia were modeled as the last nodes to be destabilized in cascade scenarios, consistent with the historical record that Egypt survived the Collapse in diminished form and Assyria recovered to form the Neo-Assyrian Empire by the 9th century BCE.",
+     "region": "mesopotamia",
+     "lon": 44.0,
+     "lat": 33.0,
+     "periodStart": -1100,
+     "periodEnd": -900,
+     "periodName": "Post-collapse recovery",
+     "confidence": "medium",
+     "tags": [
+      "societal_resilience",
+      "assyria",
+      "bronze_age_collapse"
+     ]
+    },
+    {
+     "claim": "Bronze (90% copper, 10% tin) required international trade for copper from Cyprus and tin from either Turkey or Central Asia (Afghanistan, Uzbekistan, Tajikistan), so the 10-node Eastern Mediterranean network was embedded in a wider supply chain.",
+     "region": "eastern_mediterranean",
+     "lon": 33.0,
+     "lat": 35.0,
+     "periodStart": -1700,
+     "periodEnd": -1200,
+     "periodName": "Late Bronze Age",
+     "confidence": "high",
+     "tags": [
+      "trade_networks",
+      "bronze_age_collapse",
+      "copper",
+      "tin"
+     ]
+    }
+   ],
+   "edges": [
+    {
+     "dst": "kaniewski2013_environmental",
+     "kind": "references"
+    },
+    {
+     "dst": "manning2023_severe",
+     "kind": "references"
+    }
+   ]
+  },
+  {
+   "citekey": "manning2022_thera",
+   "licence": "CC-BY-4.0",
+   "title": "Second Intermediate Period date for the Thera (Santorini) eruption and historical implications",
+   "authors": [
+    "Sturt W. Manning",
+    "Peter F. Biehl"
+   ],
+   "year": 2022,
+   "venue": "PLoS ONE",
+   "doi": "10.1371/journal.pone.0274835",
+   "status": "current",
+   "topics": [
+    "thera_eruption",
+    "radiocarbon_dating",
+    "aegean_chronology",
+    "late_bronze_age",
+    "aegean"
+   ],
+   "regions": [
+    "Thera",
+    "Aegean",
+    "Crete",
+    "Southern Greece"
+   ],
+   "tags": [],
+   "periodStart": -1650,
+   "periodEnd": -1500,
+   "summary": "Manning and Biehl (2022) compare radiocarbon dates directly associated with the Thera (Santorini) eruption from Aegean contexts on and remote from Thera, and model them with Bayesian analysis together with the stratigraphy on Thera just before the eruption and the wider Aegean archaeological sequence. The model dates the eruption to ~1606–1589 BCE (68.3% probability) or ~1609–1560 BCE (95.4%). Archaeologists had long placed the eruption around 1500 BCE, in the Egyptian New Kingdom; the revised date puts it in the earlier Second Intermediate Period, which changes the historical context of the New Palace Period on Crete and the Shaft Grave era in southern Greece. The authors also infer a period of likely devastating regional impact of the eruption in the earlier-mid 16th century BCE southern Aegean, where chronological data placed soon after the eruption are absent.",
+   "provenance": "oa",
+   "findings": [
+    {
+     "claim": "Bayesian modelling of the radiocarbon dates associated with the eruption, with the stratigraphy on Thera and the wider Aegean sequence, dates the Thera eruption to ~1606–1589 BCE (68.3% probability) and ~1609–1560 BCE (95.4% probability).",
+     "periodStart": -1609,
+     "periodEnd": -1560,
+     "confidence": "high",
+     "tags": [
+      "thera_eruption",
+      "radiocarbon_dating",
+      "bayesian_chronology"
+     ],
+     "lat": 36.3517,
+     "lon": 25.4033,
+     "region": "Thera (Santorini)"
+    },
+    {
+     "claim": "Archaeologists long placed the eruption around 1500 BCE, during the Egyptian New Kingdom; radiocarbon pointed to dates at least 50–100 years earlier, in the Second Intermediate Period.",
+     "periodStart": -1610,
+     "periodEnd": -1500,
+     "confidence": "high",
+     "tags": [
+      "aegean_chronology",
+      "high_low_chronology"
+     ],
+     "lat": 36.3517,
+     "lon": 25.4033,
+     "region": "Thera (Santorini)"
+    },
+    {
+     "claim": "Radiocarbon dates associated with the eruption from Aegean contexts on and remote from Thera agree, which removes volcanic CO2 as the explanation of the discrepancy with the archaeological date.",
+     "periodStart": -1609,
+     "periodEnd": -1560,
+     "confidence": "high",
+     "tags": [
+      "radiocarbon_dating",
+      "volcanic_co2"
+     ],
+     "lat": 36.3517,
+     "lon": 25.4033,
+     "region": "Thera (Santorini)"
+    },
+    {
+     "claim": "The revised date places the eruption in the Second Intermediate Period, which alters the historical context of the New Palace Period on Crete.",
+     "region": "Crete",
+     "lat": 35.2979,
+     "lon": 25.1631,
+     "periodStart": -1609,
+     "periodEnd": -1560,
+     "confidence": "medium",
+     "tags": [
+      "new_palace_period",
+      "aegean_chronology"
+     ]
+    },
+    {
+     "claim": "With no southern Aegean chronological data placed soon after the eruption, the authors infer a period of likely devastating regional impact in the earlier-mid 16th century BCE.",
+     "region": "Southern Aegean",
+     "lat": 36.6,
+     "lon": 25.3,
+     "periodStart": -1600,
+     "periodEnd": -1530,
+     "confidence": "medium",
+     "tags": [
+      "thera_eruption",
+      "eruption_impact"
+     ]
+    }
+   ],
+   "edges": [],
+   "body": "# Second Intermediate Period date for the Thera (Santorini) eruption and historical implications\n\n_Sturt W. Manning, Peter F. Biehl (2022). PLOS ONE. https://doi.org/10.1371/journal.pone.0274835 — published under the Creative Commons Attribution licence. This demo keeps an excerpt: the abstract and introduction._\n\n## Abstract\n\nThe historical relevance of the Thera (Santorini) volcanic eruption is unclear because of major dating uncertainty. Long placed ~1500 BCE and during the Egyptian New Kingdom (starts ~1565–1540 BCE) by archaeologists, 14C pointed to dates ≥50–100 years earlier during the preceding Second Intermediate Period. Several decades of debate have followed with no clear resolution of the problem—despite wide recognition that this uncertainty undermines an ability to synchronize the civilizations of the eastern Mediterranean in the mid-second millennium BCE and write wider history. Recent work permits substantial progress. Volcanic CO2 was often blamed for the discrepancy. However, comparison of 14C dates directly associated with the eruption from contemporary Aegean contexts—both on and remote from Thera—can now remove this caveat. In turn, using Bayesian analysis, a revised and substantially refined date range for the Thera eruption can be determined, both through the integration of the large 14C dataset relevant to the Thera eruption with the local stratigraphic sequence on Thera immediately prior to the eruption, and in conjunction with the wider stratigraphically-defined Aegean archaeological sequence from before to after the eruption. This enables a robust high-resolution dating for the eruption ~1606–1589 BCE (68.3% probability), ~1609–1560 BCE (95.4% probability). This dating clarifies long-disputed synchronizations between Aegean and East Mediterranean cultures, placing the eruption during the earlier and very different Second Intermediate Period with its Canaanite-Levantine dominated world-system. This gives an importantly altered cultural and historical context for the New Palace Period on Crete and the contemporary Shaft Grave era in southern Greece. In addition, the revised dating, and a current absence of southern Aegean chronological data placed soon afterwards, highlights a period of likely devastating regional eruption impact in the earlier-mid 16th century BCE southern Aegean.\n\n## Introduction\n\nLikely the largest global volcanic eruption by volume of material ejected of the last several thousand years [1], and regularly mentioned as a pivotal event in the prehistory of the Aegean and wider East Mediterranean [2–9], the Minoan eruption of the Thera (or Santorini) volcano is in fact best known for a long-running debate over its absolute (calendar) date [4–14]. In relative terms the eruption is placed late in, or at the end of, the Late Minoan (LM) IA cultural period in the southern Aegean (or regional equivalents: Late Cycladic (LC) I and Late Helladic (LH) I). The LMIA period marks the high-point of the Minoan New Palace civilization of Crete [15–19], a time when its major center at Knossos perhaps had a population of 20,000–25,000 people [20], and the Minoan culture including its language (written primarily as untranslated Linear A in this period) was a dominant force in the Aegean [15–18, 21–24]. Little of this is disputed. The controversy surrounds the calendar date of the eruption, and hence the wider cultural-historical placements and synchronizations of the eruption and the associated Aegean archaeological phases versus the cultural phases and history of the eastern Mediterranean (e.g. Egypt, the Levant, Mesopotamia, Cyprus, Anatolia) [4–13, 25, 26].\n\nBefore the advent of science-based dating, the chronology of the Aegean Bronze Age was derived from the interpretation of material culture and stylistic linkages between the archaeological record in the Aegean versus contexts dated by the approximate Egyptian historical chronology [9, 25, 27–29]. No clear or undisputed material culture or stylistic linkages for the LMIA period exist. However, the subsequent LMIB and LHIIA periods offered several associations with the reign of the Egyptian king Tuthmosis III. The accession of this king was conventionally placed either ~1504 BCE or ~1479 BCE. As a result, the Thera eruption and the close of the LMIA period was placed ~1500 BCE or ~1480 BCE contemporary with the earlier 18th Dynasty of the Egyptian New Kingdom (NK) [6, 9, 25, 27–30]. A date range of ~1530–1500 BCE remains the ‘conventional’ date for the Thera eruption [6, 8, 25, 27–30]. At a minimum, several authors categorically state that the eruption must be placed after the start of the Egyptian New Kingdom (stated as after ~1550 BCE by [13] citing [30]), e.g. “…that the eruption occurred after the start of the New Kingdom seems in little doubt” ([13] at p. 168). Thus, in an effort to conform to this conventional chronology (and the associated conventional history), dates no earlier than ca. 1560 BCE are sought (e.g. [13] at p.176), and since indeed even this date appears too early for the strict conventional chronology, there is hence also a careful listing of other possible later 16th century BCE suggested possibilities such as 1554, 1548, 1546, 1544 and 1524 BCE ([13] at p.177).\n\nHowever, then radiocarbon (14C) suggested an earlier date range by ≥50–100+ years [7, 9, 31], and so the possibility of a date during the very different Second Intermediate Period (SIP), when a Canaanite dynasty, known as the Hyksos, controlled Lower Egypt and dominated regional interactions [32–35]. This raised (or lent support to) the possibility of a very different cultural history and set of associations in the East Mediterranean and Aegean region [9, 36] (potentially undermining what, until now, have been the very successful efforts of the later New Kingdom state to minimize or remove the Hyksos from history [32–34, 37]). The Hyksos capital city and major port site of Avaris, occupying around 250 ha, was the mega-site of the East Mediterranean at this time [35, 38–40]. The difference in dates and associations thus leaves the Thera eruption on one side or other of a key historical bifurcation ([35] at pp.383-386). The conventional position leaves the majority of the LMIA period and all of the subsequent LMIB period contemporary with and influenced by the New Kingdom Egyptian Empire that expands into southwest Asia from the mid-16th century BCE. In contrast, the earlier date as suggested by 14C places all of LMIA and potentially some of LMIB into the time period and cultural influence of the Canaanite Middle Bronze Age world system driven from Avaris. These are two very different contexts and histories (see further below).\n\nResolution of the Thera eruption date is therefore central to the synchronization of civilizations in the eastern Mediterranean in the later Middle Bronze Age (MBA) and early Late Bronze Age (LBA). The current discrepancy has led to rival and largely incompatible ‘high’ and ‘low’ chronologies and different histories [4–13, 25, 26, 28–31]. Recent work has much better defined the 14C calibration curve 1700–1500 BCE [12, 41] (Fig 1) reducing the discrepancy and leading to compromise suggestions of a mid to later 16th century BCE date [12, 42]—but even the new data still leave wide ambiguity between potential later 17th century through 16th century BCE ranges [13, 14, 42–45]. The problem is a reversal-plateau in the 14C calibration curve that spreads calendar dating probability (Fig 2). The disjuncture and lack of dating clarity undermines wider understanding of the role and impacts of the Thera eruption. To quote one study describing the time of the Thera eruption: “It was summer time, around 1525 B.C. (or was it 1646?)…” ([46] at p.175). While archaeology and geology record the stages of the eruption, its destruction and burial of prehistoric settlements across Thera, its precipitation of devastating tsunamis in the Aegean region, and the covering of a large area of the eastern Mediterranean in tephra [1–4, 9, 13, 17, 45–56], the date is the critical factor for assessing impacts and relevance versus wider archaeology, history and environmental records.\n\nThe correct historical narratives, in particular, have been much debated. There are two main topics. First, the subsequent cultural period on Crete after the Thera eruption and the close of the LMIA period is the LMIB period (and its mainland contemporary: LHIIA). The LMIB period on Crete famously ends in a set of well-known destructions at a number of sites [3, 17, 18, 49, 58, 59]. Both archaeology and 14C place these close of LMIB destructions in the mid-15th century BCE [3, 5, 8, 9, 18, 25]. The question of whether or not there was an association between the LMIB destructions and the Thera eruption, direct or indirect, has occupied scholarship for over 80 years [3, 17, 18, 49, 58–60]. Second, as already noted, there is the need to elucidate the relationship and synchronization of the enormous Thera volcanic episode with the wider East Mediterranean—for example the approximately historical world of ancient Egypt [4–12, 25–30, 42, 61]. In both cases everything depends on the date. The original ‘low’ date range suggests any eruption impacts are during the earlier 18th Dynasty of Egypt (begins ~1565–1540 BCE) [61–63] and that the eruption was perhaps within 50 years or less of the LMIB destructions and thus potentially linked, even if indirectly [17, 49, 60]. In contrast, the ‘higher’ 14C date range places the eruption into the SIP [7, 9, 11, 36, 44, 61–63], when lower Egypt and the Levant were part of a different, culturally mixed, not well-understood, Levantine-Canaanite associated and oriented world-system (in terms of aspects of culture, trade, art, ideas, language) centered at the Hyksos capital of Avaris in the Nile Delta [32–35, 37–40, 64, 65] that dominated the region until the kings of Upper Egypt reconquered all Egypt—sacking Avaris in what is described as “a major rupture and redirecting moment in the history of the Mediterranean” ([35] at p.386)—and going on to create an Egyptian Empire in the Levant. This would be some ≥100 years before the LMIB destructions and it is very difficult, in this case, to see any association between the Thera eruption and the LMIB destructions. There has long seemed no way to overcome the contradictions and impasse between the respective ‘low’ v. ‘high’ chronology positions.\n\nHowever, recent work and observations prompt and enable a substantial rethink of the topic of the Thera eruption date based on directly relevant 14C evidence from the Aegean region. An initial issue is that there has long been one fundamental question mark rendering any 14C-based date uncertain or carrying some degree of caveat: are the 14C dates from the Minoan eruption volcanic destruction level (VDL) on Thera affected by volcanic carbon dioxide (CO2) emissions [4–6, 8, 9, 66–69]? It is argued here that findings reported lately permit resolution of the volcanic CO2 question through a comparison of sets of 14C dates for the eruption episode from well away from Thera versus the 14C dates from Thera itself. It is thus possible to make progress. At the same time, previous assumptions of possible associations of the Thera eruption with volcanic signals observed in ice-cores or with tree-ring growth anomalies have been critiqued and revised [70], and new information is also available [14], all of which highlight the need for critical re-examination of the topic by returning to the available data directly relevant to the Thera eruption. In this paper I argue that the relevance of an important stratigraphically defined temporal sequence in the period immediately before the eruption has not been appreciated and appropriately incorporated into previous dating analyses. By bringing the available data and this observed sequence together via Bayesian chronological modeling, it is possible to determine a better, revised, and refined dating for the Thera eruption.\n\nFor the information of readers, I note that the next section, Material and methods, is quite long and detailed. This is because it is (i) important to highlight the sizeable scale and constitution of the datasets used, (ii) essential to recognize and address the possible issues raised in previous scholarship, and (iii) key to explain the novel methods employed in this paper, that, together with the data, enable a distinct (new), much refined, and robust finding to be reported in this study (see Results section). Hence the data and methods are presented here in the main text, providing the necessary details to justify/explain this study and its findings and to allow other investigators to fully replicate this study. Those less interested in materials and methods may wish to skip to the subsequent section: Results.\n"
+  }
+ ],
+ "article": {
+  "slug": "climate-and-the-late-bronze-age-collapse",
+  "title": "Climate and the Late Bronze Age collapse",
+  "kind": "concept",
+  "summary": "What drought records say about the collapse around 1200 BCE, and the sources that see climate as one stress among several.",
+  "tags": [
+   "bronze_age_collapse",
+   "palaeoclimate"
+  ],
+  "regions": [
+   "Eastern Mediterranean",
+   "Aegean",
+   "Anatolia"
+  ],
+  "periodStart": -1300,
+  "periodEnd": -1100,
+  "body": "## Summary\n\nAround 1200 BCE, palaces and kingdoms across the eastern Mediterranean were destroyed or abandoned: the **Late Bronze Age collapse** (the end of the palace-centred states of the Aegean, Anatolia and the Levant). Pollen from a sediment core at Hala Sultan Tekke on Cyprus records an abrupt shift to arid conditions from about 1200 BCE that lasted roughly 300 years, and its authors argue that this drought was the ultimate cause of the crisis [[kaniewski2013_environmental]] (contested — challenged by [[manning2020_beyond]], 2020). The later records below date dry spells more finely and treat climate as one stress among several.\n\n## What the sources say\n\n### Drought records\n\nTree rings from Gordion in central Anatolia show three consecutive years of extreme drought, about 1198–1196 BCE, in the lowest 6.25% of moisture values over a 700-year record, coinciding with the collapse of the Hittite Empire [[manning2023_severe]]. The authors call the drought a probable contributing cause, not the sole one.\n\nA stalagmite from Mavri Trypa Cave, 4 km off the south-west Peloponnese, records generally wet conditions when the Palace of Nestor at Pylos was destroyed (about 1200 BCE), a dry episode of about 20 years around 1250 BCE, and growing aridity afterwards [[finn2017_late]]. Its authors argue that climate did not trigger the destruction but helped block the rebuilding of palatial authority.\n\n### Resilience and networks\n\nAt Tell Tayinat in south-eastern Turkey, radiocarbon dates show a major settlement re-emerging in the early 12th century BCE [[manning2020_beyond]]. The authors present the site as an alternative to collapse and attribute its resilience to its place on the Orontes river, access to karstic aquifers and local political reorganisation.\n\nAcross five European regions, a climate event around 1200 BCE is visible in the proxies, but it acted as a force multiplier on societies already under stress rather than as a primary trigger [[molloy2022_there]].\n\nA network model of ten Late Bronze Age polities finds that no single failure brings the whole network down, while the joint loss of the Hittites and Ugarit triggers a cascade [[linkov2024_lessons]].\n\n## Disagreements\n\n[[kaniewski2013_environmental]] makes drought the ultimate cause of the collapse and the raids of the Sea Peoples its proximate trigger. [[manning2020_beyond]] challenges this megadrought-and-collapse narrative with a site that flourished through both the 4.2 ka and the 3.2 ka dry episodes.\n\n## Open questions\n\nThe drought dates at Gordion [[manning2023_severe]] and the dry episode at Mavri Trypa [[finn2017_late]] each come from one site. Whether dry years caused the destructions, or only hindered recovery, would be narrowed by annually dated climate records from more sites next to destroyed palaces.\n\n## Glossary\n\n| term | meaning |\n|---|---|\n| Late Bronze Age collapse | the destruction or abandonment of the palace-centred states of the eastern Mediterranean around 1200 BCE |\n| proxy | a natural record (pollen, tree rings, a stalagmite's isotopes) that stands in for past climate |\n| stalagmite | a mineral column growing up from a cave floor; its layers record rainfall over time |\n| karstic aquifer | water stored underground in limestone that rivers and springs draw on |\n| Sea Peoples | seaborne raiders named in Egyptian texts of the late 13th and early 12th centuries BCE |\n| 3.2 ka event | a dry episode about 3,200 years ago, around 1200 BCE |\n",
+  "filter": {
+   "topics": [
+    "bronze_age_collapse"
+   ]
+  },
+  "reasons": [
+   {
+    "citekey": "kaniewski2011_peoples",
+    "reason": "Dates the destruction of Gibala-Tell Tweini by radiocarbon; it reports no climate record."
+   },
+   {
+    "citekey": "middlesea2021_review",
+    "reason": "A survey of Mediterranean Europe as a whole; its findings place no climate record against the destructions."
+   },
+   {
+    "citekey": "middleton2023_getting",
+    "reason": "A review of how the destructions are dated, not of climate."
+   },
+   {
+    "citekey": "resilience2023_settlement",
+    "reason": "The Carpathian Basin lies outside the eastern Mediterranean this article covers."
+   }
+  ]
+ },
+ "events": [
+  {
+   "id": "thera-eruption",
+   "label": "Minoan eruption of Thera",
+   "kind": "eruption",
+   "scale": "local",
+   "historicity": "attested",
+   "placeId": "pleiades_599971",
+   "citekey": "manning2022_thera",
+   "timeSpan": {
+    "notBefore": -1609,
+    "beginBy": -1606,
+    "endFrom": -1589,
+    "notAfter": -1560
+   },
+   "description": "Dated ~1606–1589 BCE (68.3% probability), ~1609–1560 BCE (95.4%) by Bayesian modelling of the radiocarbon evidence (manning2022_thera)."
+  },
+  {
+   "id": "destruction-of-pylos",
+   "label": "Destruction of the Palace of Nestor",
+   "kind": "destruction",
+   "scale": "local",
+   "historicity": "attested",
+   "placeId": "pleiades_156116232",
+   "citekey": "finn2017_late",
+   "timeSpan": {
+    "notBefore": -1200,
+    "notAfter": -1180
+   },
+   "description": "At the transition from LH IIIB to LH IIIC, ~3150–3130 years before present (finn2017_late)."
+  },
+  {
+   "id": "destruction-of-gibala",
+   "label": "Destruction of Gibala-Tell Tweini",
+   "kind": "destruction",
+   "scale": "local",
+   "historicity": "attested",
+   "geometry": "{\"type\": \"Point\", \"coordinates\": [35.9368, 35.3717]}",
+   "citekey": "kaniewski2011_peoples",
+   "timeSpan": {
+    "notBefore": -1192,
+    "notAfter": -1190
+   },
+   "description": "Level 7A, dated 1192–1190 BC from radiocarbon, cuneiform and astronomical evidence (kaniewski2011_peoples)."
+  },
+  {
+   "id": "destruction-of-ugarit",
+   "label": "Destruction of Ugarit",
+   "kind": "destruction",
+   "scale": "local",
+   "historicity": "attested",
+   "placeId": "ugarit_lba",
+   "citekey": "linkov2024_lessons",
+   "timeSpan": {
+    "notBefore": -1200,
+    "notAfter": -1185
+   },
+   "description": "Sudden destruction and complete abandonment ca. 1185 BCE (linkov2024_lessons)."
+  },
+  {
+   "id": "gordion-drought",
+   "label": "Three-year drought in central Anatolia",
+   "kind": "event",
+   "scale": "local",
+   "historicity": "attested",
+   "geometry": "{\"type\": \"Point\", \"coordinates\": [32.0, 39.65]}",
+   "citekey": "manning2023_severe",
+   "timeSpan": {
+    "notBefore": -1198,
+    "notAfter": -1196
+   },
+   "description": "Three consecutive years in the lowest 6.25% of moisture values in the Gordion juniper record (manning2023_severe)."
+  }
+ ],
+ "attestations": [
+  {
+   "citekey": "manning2022_thera",
+   "targetType": "event",
+   "targetId": "thera-eruption",
+   "quote": "This enables a robust high-resolution dating for the eruption ~1606–1589 BCE (68.3% probability), ~1609–1560 BCE (95.4% probability)."
+  },
+  {
+   "citekey": "finn2017_late",
+   "targetType": "event",
+   "targetId": "destruction-of-pylos",
+   "quote": "The δ18O record shows generally wetter conditions at the time when the Palace of Nestor at Pylos was destroyed"
+  },
+  {
+   "citekey": "kaniewski2011_peoples",
+   "targetType": "event",
+   "targetId": "destruction-of-ugarit",
+   "quote": "The written Bronze Age sources or epigraphic finds for Gibala cease as soon as Ugarit was destroyed by the Sea Peoples."
+  }
+ ],
+ "goal": {
+  "slug": "late-bronze-age-collapse",
+  "title": "The Late Bronze Age collapse",
+  "status": "seeding",
+  "notes": "What ended the palace states of the eastern Mediterranean around 1200 BCE, and what the climate records add.",
+  "tags": [
+   "bronze_age_collapse"
+  ],
+  "regions": [
+   "Eastern Mediterranean"
+  ],
+  "periodStart": -1300,
+  "periodEnd": -1100,
+  "links": [
+   {
+    "kind": "article",
+    "ref": "climate-and-the-late-bronze-age-collapse"
+   },
+   {
+    "kind": "query",
+    "ref": "topic:bronze_age_collapse"
+   }
+  ]
+ },
+ "managers": [
+  {
+   "kind": "seed",
+   "goal": "late-bronze-age-collapse"
+  },
+  {
+   "kind": "watch",
+   "goal": "late-bronze-age-collapse"
+  },
+  {
+   "kind": "review",
+   "items": [
+    {
+     "kind": "article",
+     "target": "climate-and-the-late-bronze-age-collapse"
+    }
+   ]
+  }
+ ],
+ "queues": {
+  "acquire": [
+   {
+    "text": "Knapp & Manning (2016), Crisis in Context: The End of the Late Bronze Age in the Eastern Mediterranean, AJA 120 — no open-access copy; borrow from a library",
+    "topic": "bronze_age_collapse",
+    "createdAt": "2026-10-12T09:00:00Z"
+   }
+  ],
+  "tasks": [
+   {
+    "text": "Assess [[kaniewski2011_peoples]] — its status is still unassessed",
+    "topic": "bronze_age_collapse",
+    "createdAt": "2026-10-12T09:05:00Z"
+   },
+   {
+    "text": "Find a dated climate record near Mycenae or Tiryns for the climate article",
+    "topic": "bronze_age_collapse",
+    "createdAt": "2026-10-12T09:10:00Z"
+   }
+  ],
+  "log": [
+   {
+    "text": "Imported 12 open-access sources on the Late Bronze Age collapse and the Thera eruption",
+    "topic": "bronze_age_collapse",
+    "createdAt": "2026-10-12T08:30:00Z"
+   },
+   {
+    "text": "Wrote [[climate-and-the-late-bronze-age-collapse]]",
+    "topic": "bronze_age_collapse",
+    "createdAt": "2026-10-12T10:00:00Z"
+   }
+  ]
+ }
+}
