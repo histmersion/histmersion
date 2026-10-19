@@ -1373,7 +1373,7 @@ object McpTools:
       .modify(_.base64)(_.description("Base64-encoded document (alternative to path)"))
       .modify(_.quality)(_.description("Use the slow, accurate OCR path (docling)"))
       .modify(_.force)(_.description("Accept a file already stored under another citekey"))
-      .modify(_.provenance)(_.description("How the source was acquired: manual|ill|author|scan|calibre|archive|oa"))
+      .modify(_.provenance)(_.description("How the source was acquired: manual|ill|author|scan|external-file|calibre|archive|oa"))
       .modify(_.acquireItem)(_.description(
         "Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds"))
 

@@ -300,6 +300,17 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(count(b, "SELECT count(*)::int FROM merges"), 1)
     assert(java.util.Arrays.equals(exportOf(b, sb), second), "a repeated import changed the export")
 
+  test("a bundle carrying a retired provenance value imports it under its current name (core.Provenance)"):
+    val retired = "756e6c6973746564".grouped(2).map(Integer.parseInt(_, 16).toChar).mkString
+    val (a, b)   = (fresh("prova"), fresh("provb"))
+    val (sa, sb) = (spool("prova"), spool("provb"))
+    put(a, source(G1, Some("# Gamma\n\nshort"), 0))
+    // written past the write path, as an instance that predates V097 would have it
+    exec(a, s"UPDATE sources SET source = '$retired' WHERE citekey = '$G1'")
+    val result = importInto(b, exportOf(a, sa), sb)
+    assert(result.applied, result.problems.mkString("\n"))
+    assertEquals(count(b, s"SELECT count(*)::int FROM sources WHERE citekey = '$G1' AND source = 'external-file'"), 1)
+
   /** The bundle with the event-catalogue files taken out, as a bundle written before they existed. */
   private def withoutEventSets(bundle: Array[Byte]): Array[Byte] =
     val gone = Set(BundleFiles.EventCatalogue, BundleFiles.EventCandidates, BundleFiles.EventChecks,
