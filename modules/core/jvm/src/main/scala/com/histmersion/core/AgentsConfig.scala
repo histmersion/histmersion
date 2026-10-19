@@ -371,7 +371,8 @@ final case class AgentsConfig(
     case Agents.ProviderKind.Anthropic  => Some(providers.anthropic)
     case Agents.ProviderKind.OpenAI     => Some(providers.openai)
     case Agents.ProviderKind.Local      => Some(providers.local)
-    case Agents.ProviderKind.ClaudeCode | Agents.ProviderKind.Codex | Agents.ProviderKind.Opencode => None
+    case Agents.ProviderKind.ClaudeCode | Agents.ProviderKind.Codex | Agents.ProviderKind.Opencode |
+         Agents.ProviderKind.Plugin(_) => None
 
   /** The configured `provider:model` of a role, as written (empty = unset). */
   def role(r: Agents.Role): String = r match
