@@ -12096,6 +12096,9 @@
       "glob": "db/migration/V096__agent_autopilot.sql"
     },
     {
+      "glob": "db/migration/V097__neutral_provenance.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
