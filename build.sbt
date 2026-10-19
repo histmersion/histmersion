@@ -270,6 +270,15 @@ lazy val pluginHello = project
   .settings(name := "histmersion-plugin-hello", publish / skip := true)
   .settings(commonDeps)
 
+// ── plugin-fixtures/hello-ai: a TEST AI provider (docs/research-plugins.md §23) — scripted, no network —
+//    compiled against plugin-api only and packaged as a jar of its own. Never on the server's class path:
+//    the AI-provider suites load its jar, as the plugin host would a user's plugin.
+lazy val pluginHelloAi = project
+  .in(file("modules/plugin-fixtures/hello-ai"))
+  .dependsOn(pluginApi)
+  .settings(name := "histmersion-plugin-hello-ai", publish / skip := true)
+  .settings(commonDeps)
+
 // ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
 lazy val db = project
   .in(file("modules/db"))
@@ -374,8 +383,9 @@ lazy val server = project
     // and check a third-party plugin — never on the server's own class path
     Test / resourceGenerators += Def.task {
       val jar = fileConverter.value.toPath((pluginHello / Compile / packageBin).value).toFile
+      val ai  = fileConverter.value.toPath((pluginHelloAi / Compile / packageBin).value).toFile
       val out = (Test / resourceManaged).value / "plugin-fixtures.txt"
-      IO.write(out, s"hello=${jar.getAbsolutePath}\n")
+      IO.write(out, s"hello=${jar.getAbsolutePath}\nhello-ai=${ai.getAbsolutePath}\n")
       Seq(out)
     }.taskValue
   )
@@ -493,5 +503,5 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, pluginHello, db, server, cli, web)
+  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, pluginHello, pluginHelloAi, db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)
