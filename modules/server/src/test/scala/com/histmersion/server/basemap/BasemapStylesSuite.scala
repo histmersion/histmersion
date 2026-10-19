@@ -43,8 +43,8 @@ class BasemapStylesSuite extends munit.FunSuite:
   test("no file: the built-in styles; a file appears, changes, breaks and goes — each picked up at the next read"):
     val f = Fixture(Files.createTempDirectory("styles-hot"))
     val s0 = f.styles.current
-    assertEquals(s0.styles.map(_.id), List("terrain", "terrain-vegetation", "relief", "parchment"))
-    assertEquals((s0.source, s0.default, s0.language, s0.warnings), (TerrainStyles.BuiltIn, "terrain", "en", Nil))
+    assertEquals(s0.styles.map(_.id), List("natural", "contour", "terrain", "terrain-vegetation", "relief", "parchment"))
+    assertEquals((s0.source, s0.default, s0.language, s0.warnings), (TerrainStyles.BuiltIn, "natural", "en", Nil))
     assertEquals(s0.file, Some(f.file.toString))
     assertEquals(s0.checkSeconds, f.cfg.basemap.styleCheckSeconds)
     assert(s0.version.nonEmpty)

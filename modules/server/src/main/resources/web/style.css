@@ -65,6 +65,9 @@
   --terrain-barren:rgba(150,128,98,.14); --terrain-sand:rgba(176,154,108,.18); --terrain-ice:rgba(214,226,238,.3);
   --terrain-shadow:#000000; --terrain-highlight:#ffffff;
   --terrain-label:#c9bc9c; --terrain-label-water:#7fa3c0; --terrain-label-halo:rgba(16,19,26,.82);
+  /* the relief's contour lines (a style's own colours override them) */
+  --terrain-contour:rgba(128,92,52,.38); --terrain-contour-index:rgba(116,80,42,.72);
+  --terrain-contour-label:#6b4a2a; --terrain-contour-halo:rgba(250,248,238,.9); --terrain-isobath:rgba(40,90,140,.45);
 }
 /* ── the control tokens: ONE scale for every button, toggle, field and bar ───────────────────────────
    Every control is built from the shared classes below, never styled one widget at a time:
@@ -383,6 +386,20 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .terrain-notice a { color:var(--accent); white-space:nowrap; }
 .terrain-notice.is-missing { border-color:var(--format-error); }
 [data-layout="narrow"] .terrain-notice { max-width:220px; font-size:var(--fs-xs); }
+/* the base map's options (MapOptions): a compact popover under its button, open while options change */
+.map-options-anchor { position:relative; display:inline-flex; }
+.map-options { position:absolute; top:100%; right:0; z-index:1100; width:min(300px, 92vw); margin-top:var(--space-2);
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg); box-shadow:0 4px 16px rgba(0,0,0,.5);
+  padding:var(--space-3) var(--space-4); display:flex; flex-direction:column; gap:var(--space-2); font-size:var(--fs-control); }
+.map-option label { display:flex; align-items:center; gap:var(--gap-inline); cursor:pointer; color:var(--ink); }
+.map-option-row label { justify-content:space-between; }
+.map-option-row label > span { color:var(--muted); min-width:64px; }
+.map-option-row .field, .map-option-row input[type="range"] { flex:1; min-width:0; }
+.map-option.is-disabled label { color:var(--muted); cursor:default; }
+.map-option-why { color:var(--muted); font-size:var(--fs-xs); margin:2px 0 0 22px; overflow-wrap:anywhere; }
+.map-option-row:last-child { justify-content:flex-end; display:flex; gap:var(--gap-inline); border-top:1px solid var(--line);
+  padding-top:var(--space-2); }
+[data-layout="narrow"] .map-options { position:fixed; left:var(--pad); right:var(--pad); top:auto; width:auto; }
 .hd-site-marker { cursor:pointer; }
 /* a region or polity known only by a POINT (no boundary yet): its name, never a dot — and nothing at all
    while the map is zoomed out (`.map-far`, PlaceGlyph), where one name would stand for a whole country */

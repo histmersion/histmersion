@@ -14,7 +14,7 @@ object Diagnostics:
   /** Every cache and its figures, by name. */
   def caches: List[(String, BoundedCache.Stats)] =
     List("places.geo" -> MapView.geoCacheStats, "ident" -> IdentLink.cacheStats,
-      "places.labels" -> PlacesInput.cacheStats) ++ Preview.cacheStats ++ MapLabels.stats ++
+      "places.labels" -> PlacesInput.cacheStats, "relief.dem" -> ReliefLayer.stats) ++ Preview.cacheStats ++ MapLabels.stats ++
       List("findings.kept" -> BoundedCache.Stats(App.keptFindings, 0, 0L, 0L))
 
   /** Pure: the figures as a plain object (one per cache: entries, maxEntries, weight, maxWeight). */

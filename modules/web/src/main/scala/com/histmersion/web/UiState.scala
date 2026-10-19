@@ -230,8 +230,9 @@ object UiState:
   /** Which named terrain style ([[TerrainMap]]) the terrain base map is drawn with: `None` = the
     * server's default. Per device. */
   val terrainStyle  = Field[Option[String]]("terrainStyle", "terrainStyle", None, Persist.Local, Role.View)
-  /** The terrain map's physical names (seas, ranges, rivers …), where its style has them. Per device. */
-  val terrainLabels = Field[Boolean]("terrainLabels", "terrainLabels", true, Persist.Local, Role.View)
+  /** The map options a viewer set over the Histmersion map's presets ([[MapOptions]]): the names' language
+    * and each preset's changes. Per device. */
+  val terrainView = Field[ViewPrefs]("terrainView", "terrainView", ViewPrefs(), Persist.Local, Role.View)
   /** The media layer's provider and licence filters (#1446): `None` = every one. Per device. */
   val mediaProvider = Field[Option[String]]("mediaProvider", "mediaProvider", None, Persist.Local, Role.View)
   val mediaLicense  = Field[Option[String]]("mediaLicense", "mediaLicense", None, Persist.Local, Role.View)
@@ -265,7 +266,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, terrainStyle, terrainLabels, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
+      inView, open, tab, layers, sources, baseMap, terrainStyle, terrainView, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
       mergeBundle, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
