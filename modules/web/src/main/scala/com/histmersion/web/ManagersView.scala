@@ -229,6 +229,7 @@ object ManagersView:
           div(cls := "muted", s.since.fold("")(t => s"since $t") + s.by.fold("")(b => s" by $b") +
             s" · ${stages(s.goals)} · ingests today ${s.ingestedToday}${if s.ingestCap > 0 then s" of ${s.ingestCap}" else ""}" +
             s" · at most ${s.maxConcurrentRuns} runs at once"),
+          Option.when(s.backlog > 0)(div(cls := "muted", ManagersMarkdown.backlog(s.backlog, s.backlogDays))),
           div(cls := "muted", "approvals: " + s.approvals.map(r => s"${r.kind} ${r.mode}").mkString(" · ")),
           Option.when(!s.cronsEnabled)(p(cls := "form-error", role := "alert", Autopilot.AutopilotStatus.CronsOff)),
           Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
@@ -277,6 +278,7 @@ object ManagersView:
               m.statusNote.filter(_.nonEmpty).map(n => div(cls := "job-progress", n)),
               div(cls := "job-meta muted", counts(m.counts), s" · ${Plural.count(m.inFlight, "run")} in flight",
                 s" · ${ManagersMarkdown.today(m)}"),
+              Option.when(m.backlog > 0)(div(cls := "muted", ManagersMarkdown.backlog(m.backlog, m.backlogDays))),
               m.lastEvent.map(e => div(cls := "muted", s"${e.at} · ${e.kind}: ${e.text.take(160)}"))))))
       }
     )
@@ -428,6 +430,7 @@ object ManagersView:
         dt("items"), dd(counts(m.counts)),
         m.cron.toList.flatMap(c => List(dt("cron"), dd(s"$c (UTC)" + m.nextTickAt.fold("")(t => s", next $t")))),
         dt("in flight"), dd(Plural.count(m.inFlight, "run")),
+        Option.when(m.backlog > 0)(List(dt("ingest backlog"), dd(ManagersMarkdown.backlog(m.backlog, m.backlogDays)))).toList.flatten,
         dt("today"), dd(span(ManagersMarkdown.today(m)), span(cls := "muted",
           " — the daily cap counts metered spend; a plan-billed run (Claude or ChatGPT plan) costs 0 USD, its tokens are shown")),
         dt("settings"), dd(ManagersHandlersText.describe(m.effective))),
