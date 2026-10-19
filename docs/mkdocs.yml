@@ -84,7 +84,7 @@ nav:
       - "Credentials and secrets": "how-to/credentials.md"
       - "Open-access papers": "how-to/open-access-papers.md"
       - "Books and Calibre": "how-to/books-and-calibre.md"
-      - "Open data: places, periods, events, pictures": "how-to/open-data.md"
+      - "Open data: places, periods, events, pictures, the terrain map": "how-to/open-data.md"
       - "AI providers, budgets and quotas": "how-to/ai-providers.md"
       - "Backups, exports and moving a collection": "how-to/backup-and-bundles.md"
   - "Plugins":
