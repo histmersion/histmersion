@@ -182,7 +182,7 @@ object TerrainMap:
     notice = js.undefined
     map.getContainer().classList.remove("terrain-missing")
     map.getContainer().classList.remove("terrain-on")
-    map.getContainer().asInstanceOf[dom.HTMLElement].style.removeProperty("--terrain-bg")
+    map.getContainer().asInstanceOf[dom.HTMLElement].style.setProperty("--terrain-bg", "")   // empty: the declaration goes
 
   private def lookup(token: String): String = ThemeTokens(token)
 

@@ -79,9 +79,9 @@ object StyleLayer:
   * are steepened at each zoom. */
 final case class ReliefStyle(
     enabled: Boolean = true,
-    shadow: String = "#000000",
+    shadow: String = "var(--terrain-shadow)",
     shadowOpacity: Double = 0.72,
-    highlight: String = "#ffffff",
+    highlight: String = "var(--terrain-highlight)",
     highlightOpacity: Double = 0.2,
     azimuth: Double = 315,
     altitude: Double = 45,
