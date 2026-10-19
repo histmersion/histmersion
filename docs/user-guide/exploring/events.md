@@ -15,6 +15,12 @@ destruction, an eruption, an earthquake, a treaty, a migration. Each event has:
 On the web page, switch on the events layer and open the **events** tab. Play the timeline to watch
 them appear and fade.
 
+<figure markdown="span">
+  ![The events tab listing the Minoan eruption of Thera, with its card open: eruption, 1609–1560 BCE, attested, its id, its description, the source that attests it, and the findings near it in time and space](../assets/screenshots/event.png){ loading=lazy }
+  <figcaption>An event's card: its kind, span and historicity, the source that <strong>attests</strong> it (a
+  confirmed quote), and the findings near it — proposals, not yet evidence.</figcaption>
+</figure>
+
 ```bash
 histmersion events search "siege" --from -1300 --to -1100
 histmersion events search --kind eruption --place-id <place-id>

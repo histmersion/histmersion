@@ -188,3 +188,9 @@ still starts. `histmersion-server --self-check` loads the config and the plugins
 secrets, prints that report and exits — 0 all good, 2 a plugin failed or was refused, 3 the config is
 broken — without opening a database connection or a port; any other argument is an error (exit 1)
 before anything is opened.
+
+<figure markdown="span">
+  ![The About window scrolled to its Plugins column: each plugin by id — 1password, the AI providers, archive-org, arxiv, bitwarden, the event catalogues, keepassxc, the media collections — with a green dot and "registered" or a grey dot and "disabled", its version, what it provides, and its settings](../assets/screenshots/about-plugins.png){ loading=lazy }
+  <figcaption>The web page's About window lists the same: every plugin, its state, what it provides
+  and its effective settings (the vaults are off until you enable them).</figcaption>
+</figure>
