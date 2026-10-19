@@ -193,8 +193,9 @@ heap **94.5 MB** (budget 60) with interaction still fine (drawn 857–865 ms, pa
 ?layers=earth:a,water:pl,…` (layers and geometries, `Basemap.parseSubset`), which the server cuts
 from the stored tile without decoding geometry (`Mvt.filter` with a geometry rule, a 512-entry cache
 of recent cuts); each of the two canvas layers asks for its own rules' reads (`TerrainRules.subsets`).
-With it, labels on: drawn **876 ms**, no long task, pan input p95 **36 ms**, 0 % dropped, wheel zooms
-p95 33 ms, 0 % dropped, heap **37.6 MB** (JVM test server, headless Chromium).
+With it, labels on, on the native test server (perf.test.mjs): drawn **842 ms**, no long task, pan
+input p95 **31 ms**, 0 % dropped, wheel zooms p95 33 ms, 0 % dropped, heap **37.5 MB** — the same as
+the narrow extract without names (828 ms, p95 32 ms, 35.5 MB).
 
 **Found on the way.** A `FileChannel` is interruptible: a tile request the page cancelled (its
 virtual thread interrupted mid-read) closed the shared channel, and every later tile and status
