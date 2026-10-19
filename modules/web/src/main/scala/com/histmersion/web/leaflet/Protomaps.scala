@@ -23,6 +23,17 @@ class PolygonSymbolizer(options: js.Object) extends js.Object
 @JSGlobal("protomapsL.LineSymbolizer")
 class LineSymbolizer(options: js.Object) extends js.Object
 
+/** A label centred on a point (`labelProps`, `fill`, `stroke`, `width` — the halo — `fontFamily`,
+  * `fontSize`, `fontWeight`, `fontStyle`, `textTransform`, `letterSpacing`, `maxLineChars`). */
+@js.native
+@JSGlobal("protomapsL.CenteredTextSymbolizer")
+class CenteredTextSymbolizer(options: js.Object) extends js.Object
+
+/** A label along a line (a river): the same options, `repeatDistance` between repeats. */
+@js.native
+@JSGlobal("protomapsL.LineLabelSymbolizer")
+class LineLabelSymbolizer(options: js.Object) extends js.Object
+
 /** A feature as a paint rule's filter sees it: `props` (its tags) and `geomType` (1 point, 2 line,
   * 3 polygon). */
 @js.native

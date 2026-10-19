@@ -39,20 +39,59 @@ class TerrainMapSuite extends munit.FunSuite:
     assertEquals(TerrainMap.attribution(s), "credit vector · credit terrain")
     assertEquals(TerrainMap.bounds(s.layers.head).map(_.toList.map(_.toList)), Some(List(List(35.0, 22.0), List(41.0, 29.0))))
 
-  test("land cover kinds fall into the tint groups; modern land use has none"):
-    assertEquals(TerrainMap.coverToken("wood"), Some("--terrain-forest"))
-    assertEquals(TerrainMap.coverToken("marsh"), Some("--terrain-wetland"))
-    assertEquals(TerrainMap.coverToken("glacier"), Some("--terrain-ice"))
-    assertEquals(TerrainMap.coverToken("residential"), None)
-    assertEquals(TerrainMap.coverToken("farmland"), None)
+  private lazy val styles = TerrainStyles(List(
+    TerrainStyle("terrain", "Terrain", background = "var(--terrain-water)",
+      layers = List(StyleLayer("land", "fill", dataLayers = List("earth"), fill = Some("var(--terrain-land)")),
+        StyleLayer("seas", "label", dataLayers = List("water"), geometry = Some("point"), kinds = List("sea"), color = Some("#fff")))),
+    TerrainStyle("parchment", "Parchment", tone = "light", background = "#c6d3d0", labels = false, language = Some("de"))),
+    default = "terrain", language = "en", source = "built-in")
+
+  test("the menu: one entry per named style, its value names it; the map and style it stands for; the tone"):
+    assertEquals(TerrainMap.optionValue("parchment"), "terrain:parchment")
+    assertEquals(TerrainMap.parseOption("terrain:parchment"), Some((BaseMap.Terrain, Some("parchment"))))
+    assertEquals(TerrainMap.parseOption("terrain"), Some((BaseMap.Terrain, None)))
+    assertEquals(TerrainMap.parseOption("dark"), Some((BaseMap.Dark, None)))
+    assertEquals(TerrainMap.parseOption("dark:x"), None)
+    assertEquals(TerrainMap.selectValue(BaseMap.Terrain, None, Some(styles)), "terrain:terrain", "the default")
+    assertEquals(TerrainMap.selectValue(BaseMap.Terrain, Some("parchment"), Some(styles)), "terrain:parchment")
+    assertEquals(TerrainMap.selectValue(BaseMap.Terrain, Some("gone"), Some(styles)), "terrain:terrain", "a style no longer served")
+    assertEquals(TerrainMap.selectValue(BaseMap.Terrain, None, None), "terrain")
+    assertEquals(TerrainMap.selectValue(BaseMap.Muted, Some("parchment"), Some(styles)), "muted")
+    assertEquals(TerrainMap.optionLabel(Some(status(true, false)), styles.find("parchment")), "Parchment (no modern features)")
+    assertEquals(TerrainMap.optionLabel(Some(status(false, false)), styles.find("parchment")), "Parchment (no modern features) — not downloaded")
+    assertEquals(BaseMap.tone(BaseMap.Terrain, MapTone.Dark, MapTone.Light), MapTone.Light)
+    assertEquals(TerrainMap.sources(status(true, true)), Set("vector"), "no names archive in this status")
+
+  test("compiled selectors: geometry, kinds, not-kinds, details, and a label's own min_zoom"):
+    val sea = TerrainRules.selector(styles.styles.head.layers(1))
+    assert(sea.matches(1, "sea", "", 7, 7) && !sea.matches(1, "sea", "", 7, 6.5), "waits for its own min_zoom")
+    assert(sea.matches(1, "sea", "", Double.NaN, 3), "no min_zoom: always")
+    assert(!sea.matches(2, "sea", "", 0, 9) && !sea.matches(1, "bay", "", 0, 9))
+    val water = TerrainRules.selector(StyleLayer("w", "fill", dataLayers = List("water"), geometry = Some("polygon"),
+      notKinds = List("swimming_pool"), details = List("lake")))
+    assert(water.matches(3, "water", "lake", Double.NaN, 9))
+    assert(!water.matches(3, "swimming_pool", "lake", Double.NaN, 9) && !water.matches(3, "water", "reservoir", Double.NaN, 9))
+    assert(!water.ownMinZoom, "a fill ignores min_zoom")
+
+  test("colours resolve stylesheet tokens once; zoom values are numbers or functions of the data zoom; only drawable sources"):
+    val tokens = Map("--terrain-land" -> " #31343a ")
+    assertEquals(TerrainRules.colour("var(--terrain-land)", tokens.getOrElse(_, "")), "#31343a")
+    assertEquals(TerrainRules.colour("var(--nope)", tokens.getOrElse(_, "")), "transparent")
+    assertEquals(TerrainRules.colour("#abc", _ => "x"), "#abc")
+    assertEquals(TerrainRules.zoomed(ZoomValue.const(2), 1), 2.0: Any)
+    val f = TerrainRules.zoomed(ZoomValue(List(ZoomStop(4, 0), ZoomStop(8, 4))), 1).asInstanceOf[scala.scalajs.js.Function1[Double, Double]]
+    assertEquals(f(5), 2.0, "data zoom 5 is map zoom 6")
+    val ls = List(StyleLayer("a", "fill", dataLayers = List("earth"), fill = Some("#000")),
+      StyleLayer("b", "label", source = "labels", dataLayers = List("physical"), color = Some("#fff")))
+    assertEquals(TerrainRules.usable(ls, Set("vector")).map(_.id), List("a"), "an extract without the names draws the rest")
+    assertEquals(TerrainRules.language(styles.styles(1), styles), "de")
+    assertEquals(TerrainRules.language(styles.styles.head, styles), "en")
 
   test("terrarium elevations and ground resolution"):
     assertEquals(Hillshade.elevation(128, 0, 0), 0.0)
     assertEquals(Hillshade.elevation(128, 100, 128), 100.5)
     assertEqualsDouble(Hillshade.metresPerPixel(0, 0, 256), 156543.03, 1.0)
     assert(Hillshade.metresPerPixel(8, 90, 512) < Hillshade.metresPerPixel(8, 128, 512), "narrower towards the poles")
-    assert(Hillshade.exaggeration(4) > Hillshade.exaggeration(10))
-    assertEquals(Hillshade.exaggeration(11), 1.0)
 
   test("flat ground is transparent; a slope away from the north-west light is shadowed, one towards it lit"):
     val light = Hillshade.Light()

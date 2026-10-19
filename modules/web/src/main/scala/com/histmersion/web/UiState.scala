@@ -181,12 +181,13 @@ object MapTone:
 object BaseMap:
   def fromWire(s: String): Option[BaseMap] = values.find(_.wire == s.trim.toLowerCase)
 
-  /** Pure: the tone of base map `b`, when the configured tiles (`ui.tiles`) are `configured`. */
-  def tone(b: BaseMap, configured: MapTone): MapTone = b match
+  /** Pure: the tone of base map `b`, when the configured tiles (`ui.tiles`) are `configured` and the
+    * terrain style shown is `terrain` (its own `tone`). */
+  def tone(b: BaseMap, configured: MapTone, terrain: MapTone = MapTone.Dark): MapTone = b match
     case Standard => configured
     case Muted    => MapTone.Light
     case Dark     => MapTone.Dark
-    case Terrain  => MapTone.Dark
+    case Terrain  => terrain
 
   /** Pure: is base map `b` drawn by darkening light tiles? Not when the configured tiles already are dark. */
   def darkened(b: BaseMap, configured: MapTone): Boolean = b == Dark && configured == MapTone.Light
@@ -226,6 +227,11 @@ object UiState:
     * restore it without the markers. A key of its own that is absent until first toggled keeps them on. */
   val sources  = Field[Boolean]("sources", "sources", true, Persist.Local, Role.View)
   val baseMap  = Field[BaseMap]("baseMap", "baseMap", BaseMap.Standard, Persist.Local, Role.View)
+  /** Which named terrain style ([[TerrainMap]]) the terrain base map is drawn with: `None` = the
+    * server's default. Per device. */
+  val terrainStyle  = Field[Option[String]]("terrainStyle", "terrainStyle", None, Persist.Local, Role.View)
+  /** The terrain map's physical names (seas, ranges, rivers …), where its style has them. Per device. */
+  val terrainLabels = Field[Boolean]("terrainLabels", "terrainLabels", true, Persist.Local, Role.View)
   /** The media layer's provider and licence filters (#1446): `None` = every one. Per device. */
   val mediaProvider = Field[Option[String]]("mediaProvider", "mediaProvider", None, Persist.Local, Role.View)
   val mediaLicense  = Field[Option[String]]("mediaLicense", "mediaLicense", None, Persist.Local, Role.View)
@@ -259,7 +265,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
+      inView, open, tab, layers, sources, baseMap, terrainStyle, terrainLabels, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
       mergeBundle, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
