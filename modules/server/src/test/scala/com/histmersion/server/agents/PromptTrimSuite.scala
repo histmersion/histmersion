@@ -98,8 +98,11 @@ class PromptTrimSuite extends munit.FunSuite:
     // the rules reviewer's +500: its typed spot-checks, which code holds to the step's tool calls (#1840);
     // the fixer's +300: declining a coverage MAJOR on an article with no recorded filter;
     // the critique checklist (§6.8): skeptic +1,200 (its rulings, `notMaterial`, a finding's `pair`), fixer +1,300
-    // (`setAside`), rules +400 (the `pair` field, the guide's same-paragraph line)
-    val ceilings = Map("article-rules-reviewer" -> 26_400, "article-skeptic" -> 26_700, "article-fixer" -> 29_100,
-      "article-cold-reader" -> 7_500)
+    // (`setAside`), rules +400 (the `pair` field, the guide's same-paragraph line);
+    // convergence (§6.9): skeptic +1,150 (the severity of a missing critique, the final pass), fixer +1,000 (code's
+    // co-citation check and repair, citations that bring critiques, closed findings), rules +200 (a missing critique's
+    // severity), cold reader +200 (its ledger is its own); the guide's pairing line +100 each but the cold reader's
+    val ceilings = Map("article-rules-reviewer" -> 26_700, "article-skeptic" -> 28_000, "article-fixer" -> 30_200,
+      "article-cold-reader" -> 7_700)
     val rows = PromptBudget.rows(d).map(r => r.agent -> r).toMap
     ceilings.foreach((a, max) => assert(rows(a).total <= max, s"$a: ${rows(a).total} characters a turn, over $max"))

@@ -1,0 +1,109 @@
+{
+ "slug": "mycenaean",
+ "entries": [
+  {
+   "run": "b73f70ee-7e0f-4458-a3ca-8c8371304f64",
+   "round": 3,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S20",
+    "fix": "Contrast Drews's 1993 military-revolution explanation with Millek's 2023 reassessment of destruction dates and patterns.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "millek2023_destruction",
+     "src": "drews1993_endbronze"
+    },
+    "quote": "Millek therefore considers a connected cause unlikely",
+    "where": "The collapse and its aftermath",
+    "problem": "Attributable to Millek, but Drews's opposing interpretation of a geographically comprehensive destruction horizon is omitted. The recorded challenge is material to this conclusion, although Drews predates Millek and must not be described as responding to him.",
+    "evidence": [
+     {
+      "quote": "The destruction horizon is geographically comprehensive — Hattusa, Ugarit, Mycenae, Tiryns, numerous Cypriot and Levantine cities all destroyed or abandoned within roughly a generation — supporting a single systemic cause rather than local or sequential disasters.",
+      "ratio": 1.0,
+      "offset": null,
+      "citekey": "drews1993_endbronze"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": null,
+   "reopened": 0
+  },
+  {
+   "run": "b73f70ee-7e0f-4458-a3ca-8c8371304f64",
+   "round": 3,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S21",
+    "fix": "In the same comparison, explain that Millek audits the archaeological inventory underpinning Drews's common-cause argument; one paragraph can address both directions.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "millek2023_destruction",
+     "src": "drews1993_endbronze"
+    },
+    "quote": "Gla and Pylos were destroyed decades apart; Gla was systematically abandoned, while nearby Orchomenos and Krisa were not destroyed.",
+    "where": "The collapse and its aftermath",
+    "problem": "Attributable, but the article omits the underlying dispute with Drews's destruction inventory. This is the reciprocal checklist pair for the same substantive disagreement.",
+    "evidence": [
+     {
+      "quote": "Millek collected 153 destruction events at 148 sites cited in the scholarly literature as occurring ca. 1200 BCE; 94 of them (61 percent) are misdated (33), assumed without the requisite evidence (35) or false citations of sites the excavators never called destroyed (26), among them Knossos, Miletus, Hazor, Orchomenos, Alaca Höyük, Hama, Qatna, Ashkelon and Kition.",
+      "ratio": 1.0,
+      "offset": null,
+      "citekey": "millek2023_destruction"
+     },
+     {
+      "quote": "The destruction horizon is geographically comprehensive — Hattusa, Ugarit, Mycenae, Tiryns, numerous Cypriot and Levantine cities all destroyed or abandoned within roughly a generation — supporting a single systemic cause rather than local or sequential disasters.",
+      "ratio": 1.0,
+      "offset": null,
+      "citekey": "drews1993_endbronze"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": null,
+   "reopened": 0
+  },
+  {
+   "run": "b73f70ee-7e0f-4458-a3ca-8c8371304f64",
+   "round": 3,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S22",
+    "fix": "Add Knapp and Manning (2016) to the drought discussion, explaining the proxy-resolution limitation.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "kaniewski2013_environmental",
+     "src": "knapp2016"
+    },
+    "quote": "Kaniewski and colleagues (2013) interpret pollen from Cyprus and coastal Syria as evidence of prolonged drought beginning around 1200 BCE, linking agricultural decline and political collapse",
+    "where": "The collapse and its aftermath",
+    "problem": "Attributable, and explicitly contested, but Knapp and Manning's material critique remains unnamed. Their objection separates evidence of regional aridity from chronological evidence for individual destruction events.",
+    "evidence": [
+     {
+      "quote": "Paleoclimatic proxy data (pollen cores from Tell Tweini and Sea of Galilee, speleothems from Sofular Cave) consistently suggest increased aridity in the eastern Mediterranean between c. 1300 and 1000 BCE, but all records are of too low chronological resolution to establish direct causal linkage with individual site destructions.",
+      "ratio": 1.0,
+      "offset": null,
+      "citekey": "knapp2016"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": null,
+   "reopened": 0
+  }
+ ],
+ "lessons": [],
+ "task": null
+}

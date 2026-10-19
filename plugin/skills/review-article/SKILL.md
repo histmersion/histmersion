@@ -53,8 +53,13 @@ report — set it with `histmersion article patch <slug> --filter-…` if the ar
 challenges/refutes/updates/superseded_by edge touching a cited source — *addressed* when both sources
 are cited in one paragraph, *reasoned* when a reason is stored
 (`histmersion article patch <slug> --critique-reason <src>><dst>=<why>`), else *open*. Paste the open
-pairs into the skeptic's brief: it rules on each one (a `missing-critique` MAJOR naming the pair, or
-not material with a reason, which you store as a critique reason).
+pairs into the skeptic's brief: it rules on each one (a `missing-critique` finding naming the pair, or
+not material with a reason, which you store as a critique reason). A missing critique is MAJOR only
+when its edge is recorded and the article states the criticised claim unqualified (no hedge, no
+status label on the criticised work in that clause); otherwise minor. Pairs on a work the article
+does not cite owe nothing. Before the fixer, run `histmersion lint --rule article-critique-pairing`:
+a paragraph that names the author of the work it answers but cites only the critic is fixed with
+`--fix` (the missing citekey appended), not by hand.
 
 ## 2. Run the panel — three agents, in parallel, in one message
 
@@ -110,8 +115,12 @@ passages only; outside them only a factual error with evidence counts as MAJOR. 
 forward under their ids (`agent-state` `review/<slug>/ledger`): fixed, rejected (with the record's
 sentence), still open, plus a lesson for each rejection or failed fix, which the fixer reads next
 time. Fix again while a MAJOR is open and `--rounds` (default 3) allows; when none is open, run the
-full panel once more, with the ledger, to confirm. Rejected findings that a reviewer raises again
-are escalated to the user, not silently dropped.
+full panel once more, with the ledger, to confirm. That confirming pass **verifies**: a MAJOR it
+raises for the first time that the run's own edits did not cause (a pair the run had answered and
+broke, a factual error in text the fixer wrote) is logged in the article's task item for the next
+run, not counted in this run's verdict. Before applying a fix, check it does not reopen a closed
+finding (a critique split from the work it answers, fixed text written back). Rejected findings that
+a reviewer raises again are escalated to the user, not silently dropped.
 
 After the last round, majors that are **contained** (one sentence, and the reviewer quoted the
 record) may be applied by the orchestrator directly — verify each with your own `histmersion passages <ck> "<term>"`

@@ -160,7 +160,8 @@ Disagreements are content, not problems. But they must be **proportional** (WP:W
 - Never resolve a disagreement the sources have not resolved — represent it, both sides, years,
   evidence that separates them, the edge that connects them.
 - A disagreement edge touching a cited source counts as discussed when both sources are cited in the
-  **same paragraph**; one that does not bear on the article gets a stored reason, not prose.
+  **same paragraph** — the one that states the criticised claim; one that does not bear on the article
+  gets a stored reason, not prose. A paragraph that names an author's work cites it there.
 
 ### 4. Sections
 

@@ -1,0 +1,199 @@
+{
+ "slug": "gods_and_migrations",
+ "entries": [
+  {
+   "run": "29fc71d4-155c-4471-9b88-623fecfd8dc2",
+   "round": 3,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S7",
+    "fix": "Add Walker's distinction between inherited myths and a reconstructed social organization, including his objection to the chronology of the proposed classes.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "dumezil1968_mythe1",
+     "src": "walker2015_twin"
+    },
+    "quote": "Dumézil (1968) argues that comparable three-part patterns in Greek, Irish, Norse and Slavic narratives probably reflect shared inheritance rather than historical contact",
+    "where": "2 · The steppe inheritance: Indo-European religion",
+    "problem": "Attributable, but Walker's distinct historical objection to projecting the three classes into a common ancestral society is omitted.",
+    "evidence": [
+     {
+      "quote": "There may be shared myths that show an interest in bishops, knights, and pawns, but we cannot conclude that there was an IndoEuropean society based on these three classes.",
+      "ratio": 1.0,
+      "offset": 69562,
+      "citekey": "walker2015_twin"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": "fixed in pass 2, raised again in pass 3",
+   "reopened": 2
+  },
+  {
+   "run": "959312a8-0869-4075-8d12-d1a47ee9cf99",
+   "round": 1,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S24",
+    "fix": "Add Chang's semantic and derivational drift objection alongside Gray and Atkinson, distinguishing it from the already discussed binary-coding critique.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "gray2003_language",
+     "src": "chang2015"
+    },
+    "quote": "Gray and Atkinson (2003) dated the first split to 7,800–9,800 years before present",
+    "where": "Disagreements 5",
+    "problem": "The date is attributable, but Chang's objection to the underlying assumption of non-recurrent lexical innovation is not explained.",
+    "evidence": [
+     {
+      "quote": "The authors also demonstrate that root-meaning lexical traits are routinely homoplastic through semantic and derivational drift, undermining the no-homoplasy assumption on which Gray/Atkinson and Bouckaert relied.",
+      "ratio": 1.0,
+      "offset": null,
+      "citekey": "chang2015"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": "fixed in pass 2, raised again in pass 3",
+   "reopened": 1
+  },
+  {
+   "run": "959312a8-0869-4075-8d12-d1a47ee9cf99",
+   "round": 1,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S31",
+    "fix": "Cite contact2022_langtrees and explain its borrowing-aware comparison, specifying that its empirical test covers Celtic–Germanic–Romance rather than the entire family.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "bouckaert2012",
+     "src": "contact2022_langtrees"
+    },
+    "quote": "Bouckaert et al. (2012, contested; updated by Neureiter et al. 2022) found decisive support for an Anatolian over a steppe homeland",
+    "where": "Disagreements 5",
+    "problem": "Attributable as Bouckaert's result, but naming an update without citing or explaining it omits the material contact-model challenge.",
+    "evidence": [
+     {
+      "quote": "The contact-aware contacTrees model estimates the Celtic-Germanic-Romance root age at ~5384 years BP, compared to ~7206 years for the no-contact model on the same data; the contact estimate is more compatible with both bouckaert2012 (~5700 yr) and chang2015 (~4200 yr) estimates, showing that prior disagreement partly reflects unmodelled borrowing.",
+      "ratio": 1.0,
+      "offset": null,
+      "citekey": "contact2022_langtrees"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": "fixed in pass 2, raised again in pass 3",
+   "reopened": 1
+  },
+  {
+   "run": "959312a8-0869-4075-8d12-d1a47ee9cf99",
+   "round": 3,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S35",
+    "fix": "Add Bjørn's 2024 objection and his positive argument for temporal and spatial correspondence between archaeological expansions and language dispersal.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "demoule2023_indo",
+     "src": "bjrn2024_twenty"
+    },
+    "quote": "he favours gradual genetic and cultural mixing over a warrior-led mass migration",
+    "where": "2 · The steppe inheritance: Indo-European religion",
+    "problem": "Attributable to Demoule, but Bjørn's material challenge to his characterization of the steppe model is omitted.",
+    "evidence": [
+     {
+      "quote": "Bjørn finds Demoule's representations of the comparative method 'naïve and selectively framed': Demoule calls the satem–centum division obsolete where Bjørn takes it as a likely Indo-Armenian isogloss of branches still contiguous around 2500 BC, dismisses substrates as mostly hypothetical, and argues against strawmen ('conquerors', a 'homogenous... biological entity') to cast the steppe origin as a superiority hypothesis.",
+      "ratio": 1.0,
+      "offset": null,
+      "citekey": "bjrn2024_twenty"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": null,
+   "reopened": 0
+  },
+  {
+   "run": "959312a8-0869-4075-8d12-d1a47ee9cf99",
+   "round": 3,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S36",
+    "fix": "Present Olander's 2022 shared-innovation evidence alongside Demoule, distinguishing supported subgrouping from uncertain nodes and migration correlations.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "demoule2023_indo",
+     "src": "olander2022_ielanguage"
+    },
+    "quote": "their trees measure distances under selected criteria, but do not establish a single history of descent and dispersal; contact and convergence can also shape languages",
+    "where": "Disagreements 5",
+    "problem": "Attributable to Demoule, but the counterargument from linguistic shared innovations is missing. Olander's volume distinguishes that evidence from automated tree inference rather than treating all trees as equivalent.",
+    "evidence": [
+     {
+      "quote": "Computational cladistics (Bayesian phylogenetics) is assessed as a valuable but imperfect supplement to the comparative method; chapters by Ringe and Piwowarczyk identify both the utility and key limitations of automated subgrouping, affirming that linguistic shared innovations remain the gold standard.",
+      "ratio": 1.0,
+      "offset": null,
+      "citekey": "olander2022_ielanguage"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": null,
+   "reopened": 0
+  },
+  {
+   "run": "959312a8-0869-4075-8d12-d1a47ee9cf99",
+   "round": 3,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S37",
+    "fix": "Add Parker's argument that Potnia coexists with named goddesses, citing the 2024 volume alongside Chadwick.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "chadwick1976_mycenaean",
+     "src": "killen2024_documents_v1"
+    },
+    "quote": "Chadwick (1976) instead interprets the qualified Potnia titles as forms of a dominant Earth Mother",
+    "where": "4 · The Mycenaean bridge",
+    "problem": "Attributable, but the 2024 handbook's direct objection to deriving the goddesses from one Great Goddess is absent.",
+    "evidence": [
+     {
+      "quote": "He argues that Potnia coexists with named goddesses and so is no more than one goddess or cluster among many, telling against the derivation of Classical goddesses from a single Great Goddess, and notes that the tablets, like Classical sacred calendars, are budgets that reveal little about ritual itself.",
+      "ratio": 1.0,
+      "offset": null,
+      "citekey": "killen2024_documents_v1"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": null,
+   "reopened": 0
+  }
+ ],
+ "lessons": [],
+ "task": null
+}

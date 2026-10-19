@@ -70,8 +70,9 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
   private final case class State(merged: Merged, snap: Snapshot, carry: Carry, unwritten: Option[String],
       targeted: Boolean = false)
 
-  /** The last pass: its number, and whether it was the confirming full panel. */
-  private final case class End(state: State, round: Int, confirmed: Boolean)
+  /** The last pass: its number, whether it was the confirming full panel, and the MAJORs that panel
+    * found new and deferred to the next run (§6.9). */
+  private final case class End(state: State, round: Int, confirmed: Boolean, deferred: List[String] = Nil)
 
   private val Reviewers = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic)
 
@@ -82,20 +83,21 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
     for
       ledger <- ctx.code[Ledger]("ledger")(load(slug))
       first  <- full(ctx, slug, 1, Carry(ledger, 0, 0, fixed = false), None, fixable = fix)
-      end    <- loop(ctx, slug, 1, rounds, fix, first)
+      end    <- loop(ctx, slug, 1, rounds, fix, first, first.snap)
       line   <- ctx.code[String]("record")(record(ctx, slug, end))
     yield line
 
-  /** After pass `r`: fix and verify while a MAJOR is open and passes remain, then (maybe) confirm. */
-  private def loop(ctx: RunCtx, slug: String, r: Int, rounds: Int, fix: Boolean, st: State): Either[Halt, End] =
-    if done(st.merged, r, rounds, fix) then finish(ctx, slug, r, st)
+  /** After pass `r`: fix and verify while a MAJOR is open and passes remain, then (maybe) confirm.
+    * `start`: the run's first snapshot — what the confirming panel's regressions are measured from. */
+  private def loop(ctx: RunCtx, slug: String, r: Int, rounds: Int, fix: Boolean, st: State, start: Snapshot): Either[Halt, End] =
+    if done(st.merged, r, rounds, fix) then finish(ctx, slug, r, st, start)
     else if st.snap.truncated then
       ctx.warn(s"round $r: the article is longer than agents.review.article-chars; it was reviewed cut and is not revised")
-      finish(ctx, slug, r, st)
+      finish(ctx, slug, r, st, start)
     else
       val c = st.carry
       for
-        fixed   <- fixer(ctx, st.snap, st.merged, c.ledger, r)
+        fixed   <- fixer(ctx, st.snap, st.merged, c.ledger, r, c.reasons)
         after    = ReviewLedger.applyFix(c.ledger, fixed, ctx.run.id, r)
         patched <- ctx.code[ReviewArticle.Patched](s"patch-$r")(write(ctx, st.snap, fixed, r, after))
         carry    = Carry(if patched.conflict then c.ledger else after, c.applied + fixed.applied.size,
@@ -104,38 +106,50 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
         unwritten = if patched.conflict then None else Option.when(ctx.dryRun)(fixed.body)
         next    <- if patched.conflict then full(ctx, slug, r + 1, carry, None, fixable = r + 1 < rounds)
                    else targeted(ctx, slug, r + 1, st.snap, carry, unwritten)
-        end     <- loop(ctx, slug, r + 1, rounds, fix, next)
+        end     <- loop(ctx, slug, r + 1, rounds, fix, next, if patched.conflict then next.snap else start)
       yield end
 
   /** The passes are over: a run whose last pass verified a fix ends with a full panel when
     * `agents.review.final-panel` asks for one (by default: only when no MAJOR is open). A run whose last
     * pass was a full one (no fix, or a fix lost to a concurrent writer) has nothing to confirm. */
-  private def finish(ctx: RunCtx, slug: String, r: Int, st: State): Either[Halt, End] =
+  private def finish(ctx: RunCtx, slug: String, r: Int, st: State, start: Snapshot): Either[Halt, End] =
     val confirm = st.targeted && (cfg.review.finalPanelMode match
       case FinalPanel.Always => true
       case FinalPanel.Clear  => st.merged.majors.isEmpty
       case FinalPanel.Never  => false)
     if !confirm then Right(End(st, r, confirmed = false))
-    else full(ctx, slug, r + 1, st.carry, st.unwritten, fixable = false).map(End(_, r + 1, confirmed = true))
+    else full(ctx, slug, r + 1, st.carry, st.unwritten, fixable = false, confirming = Some(start))
+      .map(f => End(f, r + 1, confirmed = true, f.merged.deferred))
 
   /** A full panel: every reviewer over the whole article, with the ledger. `fixable`: the fixer still
-    * works in this run after it (pass 1 of a fixing run, not the confirmation) — what a missing-critique
-    * MAJOR on a freshly proposed edge needs to stand (§6.8). The skeptic's not-material rulings are
-    * stored as critique reasons with the ledger. */
+    * works in this run after it (pass 1 of a fixing run). `confirming`: this is the run's confirming
+    * panel, and the run's first snapshot — the final pass VERIFIES (§6.9): it owes no rulings on the
+    * checklist, and a MAJOR it finds new that is no regression of the run is deferred to the next run.
+    * The skeptic's not-material rulings are stored as critique reasons with the ledger. */
   private def full(ctx: RunCtx, slug: String, r: Int, carry: Carry, unwritten: Option[String],
-      fixable: Boolean): Either[Halt, State] =
+      fixable: Boolean, confirming: Option[Snapshot] = None): Either[Halt, State] =
     for
       snap    <- ctx.code[Snapshot](s"snapshot-$r")(snapshot(ctx, slug, unwritten, carry.reasons))
       mech    <- ctx.code[List[Finding]](s"mechanical-$r")(Right(mechanicalOf(ctx, snap, r, None)))
-      reports <- panel(ctx, snap, r, carry.ledger, fixable)
+      reports <- panel(ctx, snap, r, carry.ledger, fixable, confirming.isDefined)
       stored   = notMaterial(ctx, reports)
       ledger  <- ctx.code[Ledger](s"ledger-$r") {
                    storeReasons(ctx, slug, stored)
-                   Right(persist(ctx, absorbFull(ctx, carry.ledger, r, mech, reports)))
+                   val absorbed = absorbFull(ctx, carry.ledger, r, mech, reports, snap)
+                   val led = confirming.fold(absorbed) { start =>
+                     val edited = ReviewLedger.editedPassages(start.body, snap.body).text
+                     val (d, ids) = ReviewLedger.deferFinal(carry.ledger, absorbed, ctx.run.id, f =>
+                       finalRegression(f, start.critiques, snap.critiques, edited, cfg.verify.quoteMinRatio))
+                     if ids.nonEmpty then
+                       ctx.warn(s"round $r (the final pass): ${Plural.count(ids.size, "new MAJOR")} deferred to the next run — " +
+                         ids.mkString(", ") + " (logged in the ledger and the backlog item; not this run's verdict)")
+                     d
+                   }
+                   Right(persist(ctx, led))
                  }
       cold     = reports.find(_.reviewer == Reviewer.ColdReader)
       merged  <- ctx.code[Merged](s"merge-$r")(Right(ReviewLedger.merged(ledger, r, cold.flatMap(_.explainBack),
-                   cold.toList.flatMap(_.emptySlots), reports.flatMap(_.proposals).distinct)))
+                   cold.toList.flatMap(_.emptySlots), reports.flatMap(_.proposals).distinct, Some(ctx.run.id))))
       _       <- ctx.code[List[String]](s"proposals-$r")(Right(propose(ctx, merged)))
     yield State(merged, snap, carry.copy(ledger = ledger, reasons = carry.reasons ++ stored), unwritten)
 
@@ -148,8 +162,8 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
       mech    <- ctx.code[List[Finding]](s"mechanical-$r")(Right(mechanicalOf(ctx, snap, r, Some(prev.body))))
       edited   = ReviewLedger.editedPassages(prev.body, snap.body)
       checks  <- recheck(ctx, snap, r, carry.ledger, edited)
-      ledger  <- ctx.code[Ledger](s"ledger-$r")(Right(persist(ctx, absorbTargeted(ctx, carry.ledger, r, mech, checks))))
-      merged  <- ctx.code[Merged](s"merge-$r")(Right(ReviewLedger.merged(ledger, r)))
+      ledger  <- ctx.code[Ledger](s"ledger-$r")(Right(persist(ctx, absorbTargeted(ctx, carry.ledger, r, mech, checks, snap))))
+      merged  <- ctx.code[Merged](s"merge-$r")(Right(ReviewLedger.merged(ledger, r, run = Some(ctx.run.id))))
     yield State(merged, snap, carry.copy(ledger = ledger), unwritten, targeted = true)
 
   // ── the ledger ─────────────────────────────────────────────────────────────────────────────────
@@ -164,26 +178,36 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
     l
 
   /** A full pass into the ledger: the mechanical findings re-checked by code, each reviewer's checks of
-    * its open findings, then the pass's findings (deduplicated across reviewers by [[merge]]) matched
-    * to the ledger or added. */
-  private def absorbFull(ctx: RunCtx, l: Ledger, r: Int, mech: List[Finding], reports: List[Report]): Ledger =
+    * its open findings (a "fixed" missing critique whose pair is still open recorded not fixed, §6.9),
+    * then the pass's findings — one per critique pair, deduplicated across reviewers by [[merge]] —
+    * matched to the ledger or added. */
+  private def absorbFull(ctx: RunCtx, l: Ledger, r: Int, mech: List[Finding], reports: List[Report], s: Snapshot): Ledger =
     val run    = ctx.run.id
     val pass   = merge(r, mech, reports, Nil)
     val (m, _) = ReviewLedger.recheckMechanical(l, pass.findings.filter(_.reviewer == Reviewer.Mechanical), run, r)
-    val checked = reports.foldLeft(m)((led, rep) => ReviewLedger.applyChecks(led, rep.reviewer, rep.checks, run, r))
+    val checked = reports.foldLeft(m)((led, rep) => ReviewLedger.applyChecks(led, rep.reviewer, held(ctx, l, rep.checks, s), run, r))
     val counted = reports.find(_.reviewer == Reviewer.ColdReader)
       .fold(checked)(c => ReviewLedger.recheckTermCount(checked, c.findings, run, r))
-    ReviewLedger.absorb(counted, pass.findings.filterNot(_.reviewer == Reviewer.Mechanical), run, r)._1
+    val skeptics = l.open.filter(_.reviewer == Reviewer.Skeptic).flatMap(_.finding.pair)
+    val (fs, dropped) = onePerPair(pass.findings.filterNot(_.reviewer == Reviewer.Mechanical), skeptics)
+    dropped.foreach(ctx.warn)
+    ReviewLedger.absorb(counted, fs, run, r)._1
 
-  private def absorbTargeted(ctx: RunCtx, l: Ledger, r: Int, mech: List[Finding], checks: List[Recheck]): Ledger =
+  private def absorbTargeted(ctx: RunCtx, l: Ledger, r: Int, mech: List[Finding], checks: List[Recheck], s: Snapshot): Ledger =
     val (m, _) = ReviewLedger.recheckMechanical(l, mech, ctx.run.id, r)
-    checks.foldLeft(m)((led, rc) => ReviewLedger.applyRecheck(led, rc, ctx.run.id, r))
+    checks.foldLeft(m)((led, rc) => ReviewLedger.applyRecheck(led, rc.copy(checks = held(ctx, l, rc.checks, s)), ctx.run.id, r))
+
+  /** The checks of a pass, held to the checklist of the body it reviewed ([[holdPairChecks]]). */
+  private def held(ctx: RunCtx, l: Ledger, cs: List[Check], s: Snapshot): List[Check] =
+    val (out, ws) = holdPairChecks(cs, l.entries.map(_.finding), s.critiques)
+    ws.foreach(ctx.warn)
+    out
 
   /** The ledger as a reviewer of a full pass reads it, after the article (empty when it has none).
     * `lookups`: the reviewer reads the database — told the ledger does not replace that (a sonnet rules
     * reviewer given a ledger answered from it alone, with no tool call, #1840); the cold reader is not. */
-  private def ledgerText(l: Ledger, lookups: Boolean): String =
-    val t = ReviewLedger.promptText(l, ReviewLedger.OpenStyle.Full, cfg.review.ledgerClosedLines)
+  private def ledgerText(l: Ledger, lookups: Boolean, only: Option[Reviewer] = None): String =
+    val t = ReviewLedger.promptText(l, ReviewLedger.OpenStyle.Full, cfg.review.ledgerClosedLines, only)
     val full = if lookups then "every check of your instructions, the database look-ups included" else "every check of your instructions"
     if t.isEmpty then ""
     else "\n\nThis article has been reviewed before. Its review ledger follows: give a check for each OPEN finding " +
@@ -200,9 +224,10 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
   private def notMaterial(ctx: RunCtx, reports: List[Report]): List[CritiqueReason] =
     reports.filter(_.reviewer == Reviewer.Skeptic).flatMap(_.notMaterial).map(_.copy(by = Some(by(ctx, "skeptic"))))
 
-  /** The fixer's set-asides, as the reasons its patch stores. */
+  /** The fixer's set-asides (of a finding, or of a pair alone), as the reasons its patch stores. */
   private def setAsideReasons(ctx: RunCtx, f: Fix): List[CritiqueReason] =
-    f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, a.reason, Some(by(ctx, "fixer"))))
+    (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, a.reason)) ++ f.pairsAside)
+      .distinctBy(r => (r.src, r.dst)).map(_.copy(by = Some(by(ctx, "fixer"))))
 
   /** Store reasons through the run's gate (a dry run records them; its snapshots count them from the
     * carry). A refusal — the edge went meanwhile — is a warning, never a failed run. */
@@ -214,12 +239,17 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
         case Left(m)  => ctx.warn(s"critique reasons not stored: $m")
         case Right(_) => ()
 
-  /** The skeptic's part of the brief: the checklist (§6.8), the open pairs it rules on shown in full. */
-  private def checklistText(s: Snapshot): (String, List[CritiquePair]) =
+  /** The skeptic's part of the brief: the checklist (§6.8), the open pairs it rules on shown in full —
+    * in the confirming panel only to verify (§6.9). */
+  private def checklistText(s: Snapshot, confirming: Boolean): (String, List[CritiquePair]) =
     val (t, shown) = Critiques.promptText(s.critiques, cfg.review.critiquePairs, cfg.review.critiqueReasoned)
+    val task =
+      if confirming then "This is the run's FINAL pass: it verifies. No ruling is owed; raise a missing-critique MAJOR only " +
+        "for a pair the revision left open or broke, and only when the article states the criticised claim unqualified."
+      else "Rule on every open pair shown in full."
     if t.isEmpty then ("", Nil)
     else ("\n\nThe article's critique checklist, built by code from the typed edges (a pair is addressed when both sources " +
-      "are cited in one paragraph; reasoned when a reason is stored; else open). Rule on every open pair shown in full.\n\n" +
+      s"are cited in one paragraph; reasoned when a reason is stored; else open). $task\n\n" +
       Prompt.data("critique-checklist", t), shown)
 
   /** The rules reviewer's part: the stored critique reasons, so a wrong one can be challenged. */
@@ -296,6 +326,12 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
     s"Review the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind}.$cut\n\n${Prompt.data("article", s.body)}" +
       generatedText(s)
 
+  /** What the confirming panel is told (§6.9): it verifies; a new MAJOR is the next run's. */
+  private val FinalNote =
+    "\n\nThis is the run's FINAL pass: it confirms what the run fixed. Check your open findings and the text the run " +
+      "changed; a MAJOR you raise for the first time that the run's edits did not cause is recorded for the next run, " +
+      "not this one."
+
   /** The sources the article cites with each one's recorded status — what check 2 of the rules
     * reviewer would otherwise query for (the cold reader, who reads the article alone, never gets it). */
   private def citedText(s: Snapshot): String =
@@ -313,19 +349,22 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
 
   /** The three reviewers, in parallel, each with the ledger and asked to check its own open findings.
     * The step numbers are taken first, in a fixed order. */
-  private def panel(ctx: RunCtx, s: Snapshot, r: Int, l: Ledger, fixable: Boolean): Either[Halt, List[Report]] =
-    val user = reviewInput(s)
-    def ledger(lookups: Boolean) = ledgerText(l, lookups)
-    val (checklist, shown) = checklistText(s)
-    val critique = CritiqueRule(s.critiques, shown, fixable, full = true)
+  private def panel(ctx: RunCtx, s: Snapshot, r: Int, l: Ledger, fixable: Boolean, confirming: Boolean): Either[Halt, List[Report]] =
+    val user = reviewInput(s) + (if confirming then FinalNote else "")
+    def ledger(lookups: Boolean, only: Option[Reviewer] = None) = ledgerText(l, lookups, only)
+    val (checklist, shown) = checklistText(s, confirming)
+    // the final pass owes no rulings: it verifies the checklist, it does not work through it (§6.9)
+    val critique = CritiqueRule(s.critiques, if confirming then Nil else shown, full = true, s.body, cfg.verify.quoteMinRatio)
     val seqs = ctx.reserve(3)
     def prior(rv: Reviewer) = Some(Prior(l.open.filter(_.reviewer == rv).map(_.finding), s.body, cfg.verify.quoteMinRatio))
     ctx.parallel(List(
       () => ctx.llmAtSeen[RulesAnswer, Report](seqs(0), s"rules-$r", StepAgent.RulesReviewer, user + ledger(true) + citedText(s) + reasonsText(s),
               AnswerSchemas.rules)((a, last, calls) =>
                 checkRules(a, last, evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio), prior(Reviewer.Rules),
-                  spotRule(s, calls)).map(Checked(_, _))),
-      () => ctx.llmAt[ColdReaderAnswer, Report](seqs(1), s"cold-reader-$r", StepAgent.ColdReader, user + ledger(false),
+                  spotRule(s, calls), Some(critique)).map(Checked(_, _))),
+      // the cold reader reads only its own ledger findings: it judges the text, not the sources
+      () => ctx.llmAt[ColdReaderAnswer, Report](seqs(1), s"cold-reader-$r", StepAgent.ColdReader,
+              user + ledger(false, Some(Reviewer.ColdReader)),
               AnswerSchemas.coldReader)((a, last) => checkColdReader(a, last, prior(Reviewer.ColdReader)).map(Checked(_, _))),
       () => ctx.llmAt[SkepticAnswer, Report](seqs(2), s"skeptic-$r", StepAgent.Skeptic,
               user + ledger(true) + citedText(s) + checklist + ctx.notes,
@@ -394,7 +433,12 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
       o.line
     }
 
-  private def fixer(ctx: RunCtx, s: Snapshot, m: Merged, l: Ledger, r: Int): Either[Halt, Fix] =
+  /** The fixer: every open finding to answer, with the ledger's history, and the critique work code
+    * worked out (§6.9) — where each missing critique goes, the paragraphs that name a partner they do
+    * not cite. Its revision is checked with the guards: the pairing repair, the pairs its edits leave
+    * unanswered or bring in, the closed findings they would reopen. `reasons`: the critique reasons
+    * this run stored (a dry run's count as stored). */
+  private def fixer(ctx: RunCtx, s: Snapshot, m: Merged, l: Ledger, r: Int, reasons: List[CritiqueReason]): Either[Halt, Fix] =
     val explain = m.explainBack.fold("")(e => s"\n\nThe cold reader's explain-back: $e")
     val history = ReviewLedger.promptText(l, ReviewLedger.OpenStyle.Omit, cfg.review.ledgerClosedLines)
     val ledger  = if history.isEmpty then "" else "\n\nWhat earlier passes closed, and the lessons — do not undo a fix, " +
@@ -403,23 +447,63 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
       "the text below (anchors copied from it exactly)" +
       (if s.coverage.isDefined then ", and with `reasons` for the sources of its filter it leaves out" else "") +
       ".\n\n" + Prompt.data("article", s.body) + generatedText(s) + citedText(s) +
-      s"\n\nThe open findings after pass $r:\n\n${findingsText(m, ReviewLedger.notes(l))}$explain$ledger" + ctx.notes
+      s"\n\nThe open findings after pass $r:\n\n${findingsText(m, ReviewLedger.notes(l))}$explain" +
+      critiqueWork(s, m, l) + ledger + ctx.notes
     // more findings, more lookups: the fixer's turns grow with them (agents.review.fixer-turns-*)
     val turns = definitions.agent(StepAgent.Fixer).toOption.map(d =>
       fixerTurns(d.maxTurns, m, cfg.review.fixerTurnsPerFinding, cfg.review.fixerTurnsCap))
+    // the checklist and the citations of a body, read once per body (a revision is checked several times)
+    val extra = if ctx.dryRun then reasons else Nil
+    val pairsMemo = java.util.concurrent.ConcurrentHashMap[String, List[CritiquePair]]()
+    val citedMemo = java.util.concurrent.ConcurrentHashMap[String, Set[String]]()
+    def pairsOf(b: String) = if b == s.body then s.critiques else pairsMemo.computeIfAbsent(b, x => h.critiques(s.slug, x, extra))
+    def cites(b: String, ck: String) = citedMemo.computeIfAbsent(b, x => h.citedSources(x).toSet)(ck)
+    def answered(b: String, ref: CritiqueRef) = Critiques.find(pairsOf(b), ref).exists(!_.open)
+    val guards = FixGuards(pairsOf,
+      (b0, b1) => ReviewLedger.guard(l, b0, b1, answered, cites, cfg.verify.quoteMinRatio),
+      b => h.repairPairing(b))
     ctx.llm[FixerAnswer, Fix](s"fixer-$r", StepAgent.Fixer, user,
       AnswerSchemas.fixer, Some(cfg.review.fixerMaxTokens), turns) { (a, last) =>
       val corpus = h.bodyCorpus(s.body :: Option(a.edits).getOrElse(Nil).flatMap(_.text), generated = s.coverage.isDefined)
       checkFix(a, m, s.slug, s.body, s.kind, corpus, isCitekey, records(), cfg.verify.quoteMinRatio, last, s.coverage,
-        s.critiques).map(Checked(_, _))
+        s.critiques, Some(guards)).map(Checked(_, _))
     }
+
+  /** The critique work of a fix (§6.9), as the fixer reads it (`<critique-work>`): for each open
+    * missing-critique finding, the paragraph its critique goes in (the one its quote is in, when that
+    * cites the criticised work) — the ones found not fixed twice or more first, flagged; then the
+    * paragraphs that name a disagreement partner they do not cite where code cannot tell which work
+    * the name means. Code appends a citekey itself where the name is unambiguous, after the fix. */
+  private def critiqueWork(s: Snapshot, m: Merged, l: Ledger): String =
+    val (hits, resolve) = h.pairing(s.body)
+    val units = Critiques.units(s.body)
+    def near(f: Finding) =
+      Option(units.indexWhere(u => f.quote.trim.nonEmpty && AgentVerify.findQuote(f.quote, u.text, cfg.verify.quoteMinRatio).accepted))
+        .filter(_ >= 0)
+    val stubborn = ReviewLedger.stubborn(l).map(_.id).toSet
+    val critiques = m.findings.filter(f => isMissingCritique(f) && f.pair.isDefined)
+      .sortBy(f => (!stubborn(f.id), !f.major))
+      .flatMap { f =>
+        f.pair.flatMap(Critiques.find(s.critiques, _)).filter(_.open).flatMap(p =>
+          CritiquePairing.instruction(s.body, p, resolve, near(f)).map { line =>
+            val flag = l.entry(f.id).filter(e => stubborn(e.id)).fold("")(e =>
+              s" [not fixed ${e.notFixedCount} times — the critique must sit in the same paragraph as the work it answers, both cited]")
+            s"- ${f.id}$flag: $line"
+          })
+      }
+    val named = hits.filterNot(_.mechanical).map(x => s"- ${x.line}")
+    if critiques.isEmpty && named.isEmpty then ""
+    else "\n\nThe critique work, worked out by code from the checklist (a pair is answered when both sources are cited in one " +
+      "paragraph, or set aside with a reason; code checks it after your edits, and appends a citekey itself where a paragraph " +
+      "already names that work's author unambiguously):\n\n" +
+      Prompt.data("critique-work", (critiques ++ named).mkString("\n"))
 
   /** The one write of a round: the revised body, guarded by the snapshot's token. A 412 (someone
     * else wrote the article meanwhile) drops this fix — the next round reviews their text — and never
     * overwrites it. */
   private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: Int, after: Ledger): Either[String, ReviewArticle.Patched] =
     val bodyChanged = f.body.trim != s.body.trim
-    if !bodyChanged && f.reasons.isEmpty && f.setAside.isEmpty then
+    if !bodyChanged && f.reasons.isEmpty && f.setAside.isEmpty && f.pairsAside.isEmpty then
       persist(ctx, after)
       Right(ReviewArticle.Patched(written = false, None, conflict = false))
     else
@@ -427,7 +511,8 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
         critiqueReasons = setAsideReasons(ctx, f))
       // a dry run: not written — the next round reviews the revision in memory
       ctx.write(s"patch article [[${s.slug}]] (round $r): ${f.applied.size} finding(s) answered, ${f.edits.size} edit(s)" +
-          (if f.setAside.isEmpty then "" else s", ${f.setAside.size} critique(s) set aside"), p.asJson)(
+          (if f.setAside.isEmpty && f.pairsAside.isEmpty then "" else s", ${f.setAside.size + f.pairsAside.size} critique(s) set aside") +
+          (if f.repairs.isEmpty then "" else s", ${f.repairs.size} citation(s) added by the pairing repair"), p.asJson)(
           h.patchArticle(s.slug, p).map(_ => true))(Right(false)) match
         case Right(false) =>
           persist(ctx, after)
@@ -456,6 +541,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
     val pairs   = h.critiques(slug, body, if ctx.dryRun then c.reasons else Nil)
     val line    = logLine(outcome, last, ctx.run.id) +
       (if end.confirmed then ", confirmed by a full panel" else "") +
+      (if end.deferred.isEmpty then "" else s"; ${Plural.count(end.deferred.size, "new MAJOR")} of the final pass deferred to the next run") +
       s"; ledger ${ledger.entries.count(_.status == ReviewLedger.Status.Fixed)} fixed, ${ledger.open.size} open" +
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
     Pipelines.log(h, ctx, line)
