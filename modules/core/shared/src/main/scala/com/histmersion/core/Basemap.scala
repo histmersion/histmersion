@@ -151,6 +151,28 @@ object Basemap:
     else if mixed.nonEmpty then Left(s"basemap.vector.drop: ${mixed.mkString(", ")} both drops kinds and spares kinds (+kind) — one or the other")
     else Right(rules)
 
+  /** A served tile's subset (`?layers=earth,water:pl,pois:p`): the layers a page draws and, per layer,
+    * the geometries (`p` points, `l` lines, `a` areas; all when none is given) — so a page never decodes
+    * what its style does not draw. Pure. */
+  def parseSubset(s: String): Either[String, Map[String, Set[Int]]] =
+    val parts = s.split(",").toList.map(_.trim).filter(_.nonEmpty)
+    val parsed = parts.map { p =>
+      p.split(":", 2).toList match
+        case l :: g :: Nil =>
+          val codes = g.toList.map { case 'p' => 1; case 'l' => 2; case 'a' => 3; case _ => 0 }
+          Either.cond(l.nonEmpty && codes.nonEmpty && !codes.contains(0), l -> codes.toSet, s"'$p': geometries are p, l and a")
+        case l :: Nil => Right(l -> Set.empty[Int])
+        case _        => Left(s"'$p' is not layer[:geometries]")
+    }
+    parsed.collectFirst { case Left(e) => e }.toLeft(parsed.collect { case Right(kv) => kv }
+      .groupMapReduce(_._1)(_._2)((a, b) => if a.isEmpty || b.isEmpty then Set.empty else a ++ b))
+
+  /** The query value for a subset ([[parseSubset]]'s inverse), sorted so a page asks one URL. Pure. */
+  def subsetParam(m: Map[String, Set[Int]]): String =
+    m.toList.sortBy(_._1).map { (l, gs) =>
+      if gs.isEmpty then l else l + ":" + gs.toList.sorted.map { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }.mkString
+    }.mkString(",")
+
   /** What an extract kept, said in a line (`basemap status`): from its metadata — `keepAll`, the drop
     * list it was thinned with, or neither (an extract made before the drop list, which kept only coast,
     * water and land cover). Pure. */

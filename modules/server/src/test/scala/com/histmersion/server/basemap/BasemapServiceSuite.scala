@@ -76,6 +76,16 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     val layers = Mvt.layerNames(PmTiles.gunzip(bytes).toOption.get).toOption.get
     assert(!layers.contains("roads") && !layers.contains("places"), layers.toString)
     assertEquals(svc.tile("vector", 4, 0, 0).map(_._5.code), Right(204))
+    // a subset: only the layers and geometries a style draws — the sea's name without the polygons
+    val (sb, _, senc, _, scode) = svc.tile("vector", 4, 9, 6, Some("water:p,earth")).fold(e => fail(e.message), identity)
+    assertEquals((scode.code, senc), (200, Some("gzip")))
+    val st4 = PmTiles.gunzip(sb).toOption.get
+    assertEquals(Mvt.layerNames(st4), Right(List("earth", "water")))
+    assertEquals(Mvt.kinds(st4, "water"), Right(List("sea")))
+    assert(sb.length < bytes.length, s"${sb.length} < ${bytes.length}")
+    assertEquals(svc.tile("vector", 4, 9, 6, Some("roads")).map(_._5.code), Right(204), "nothing left: no content")
+    assert(svc.tile("vector", 4, 9, 6, Some("water:q")).isLeft)
+    assertEquals(svc.tile("terrain", 3, 4, 3, Some("water")).map(_._3), Right(None), "an image is never cut")
     val gone = svc.remove("all").fold(e => fail(e.message), identity)
     assertEquals(gone.removed.size, 3)
     assert(!svc.status.available)

@@ -85,6 +85,16 @@ class TerrainMapSuite extends munit.FunSuite:
       StyleLayer("b", "label", source = "labels", dataLayers = List("physical"), color = Some("#fff")))
     assertEquals(TerrainRules.usable(ls, Set("vector")).map(_.id), List("a"), "an extract without the names draws the rest")
     assertEquals(TerrainRules.language(styles.styles(1), styles), "de")
+    // what the tiles are asked for: the layers and geometries the rules read, per source
+    val reads = TerrainRules.subsets(List(
+      StyleLayer("land", "fill", dataLayers = List("earth"), geometry = Some("polygon"), fill = Some("#000")),
+      StyleLayer("seas", "label", dataLayers = List("water", "earth"), geometry = Some("point"), color = Some("#fff")),
+      StyleLayer("rivers", "line", dataLayers = List("water"), geometry = Some("line"), color = Some("#00f")),
+      StyleLayer("ranges", "label", source = "labels", dataLayers = List("physical"), color = Some("#fff"))))
+    assertEquals(reads, Map("vector" -> Map("earth" -> Set(3, 1), "water" -> Set(1, 2)), "labels" -> Map("physical" -> Set.empty[Int])))
+    assertEquals(Basemap.subsetParam(reads("vector")), "earth:pa,water:pl")
+    assertEquals(TerrainMap.withSubset("/api/basemap/vector/{z}/{x}/{y}?v=1", Map("water" -> Set(1))),
+      "/api/basemap/vector/{z}/{x}/{y}?v=1&layers=water%3Ap")
     assertEquals(TerrainRules.language(styles.styles.head, styles), "en")
 
   test("terrarium elevations and ground resolution"):

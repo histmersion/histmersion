@@ -10,6 +10,14 @@ class BasemapSuite extends munit.FunSuite:
     assert(BasemapLayer.parseMany("roads").isLeft)
     assertEquals(BasemapApi.tileTemplate(BasemapLayer.Vector, "v1"), "/api/basemap/vector/{z}/{x}/{y}?v=v1")
 
+  test("a tile subset: layers and their geometries, merged, written back sorted"):
+    assertEquals(Basemap.parseSubset("earth:a, water:pl,pois"), Right(Map("earth" -> Set(3), "water" -> Set(1, 2), "pois" -> Set.empty[Int])))
+    assertEquals(Basemap.parseSubset("water:p,water:l"), Right(Map("water" -> Set(1, 2))))
+    assertEquals(Basemap.parseSubset("water:p,water"), Right(Map("water" -> Set.empty[Int])), "all wins")
+    assert(Basemap.parseSubset("water:x").isLeft)
+    assertEquals(Basemap.subsetParam(Map("water" -> Set(2, 1), "earth" -> Set.empty)), "earth,water:pl")
+    assertEquals(Basemap.parseSubset(Basemap.subsetParam(Map("a" -> Set(3), "b" -> Set(1)))), Right(Map("a" -> Set(3), "b" -> Set(1))))
+
   test("the status reads as Markdown: what is there, the command when nothing is, credits without links"):
     val v = BasemapLayerInfo("vector", present = true, file = "/c/vector.pmtiles", bytes = 138000000, minZoom = Some(0),
       maxZoom = Some(10), bbox = Some("-12,20,90,62"), source = Some("20261019.pmtiles"),

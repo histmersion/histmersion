@@ -185,12 +185,16 @@ object TerrainMap:
 
   private def lookup(token: String): String = ThemeTokens(token)
 
-  private def sourcesOf(s: BasemapStatus, which: Set[String]): js.Object =
+  /** A tile URL template asking only for `reads` (the layers and geometries the rules draw). Pure. */
+  def withSubset(url: String, reads: Map[String, Set[Int]]): String =
+    if reads.isEmpty then url else s"$url&layers=${scala.scalajs.js.URIUtils.encodeURIComponent(Basemap.subsetParam(reads))}"
+
+  private def sourcesOf(s: BasemapStatus, reads: Map[String, Map[String, Set[Int]]]): js.Object =
     val o = js.Dynamic.literal()
-    which.foreach { src =>
+    reads.foreach { (src, layers) =>
       BasemapLayer.parse(src).foreach { l =>
         template(s, l).foreach { url =>
-          o.updateDynamic(src)(js.Dynamic.literal(url = url,
+          o.updateDynamic(src)(js.Dynamic.literal(url = withSubset(url, layers),
             maxDataZoom = s.layers.find(_.layer == l.wire).flatMap(_.maxZoom).getOrElse(10)))
         }
       }
@@ -202,9 +206,9 @@ object TerrainMap:
     val vinfo  = s.layers.find(_.layer == BasemapLayer.Vector.wire)
     val have   = sources(s)
     val rules  = TerrainRules.compile(style, TerrainRules.language(style, all), have, UiState.terrainLabels.now(), lookup)
-    def layer(paint: js.Array[js.Object], labels: js.Array[js.Object], z: Int, cls: String, background: Boolean): Layer =
-      val used = (paint ++ labels).map(_.asInstanceOf[js.Dynamic].dataSource.asInstanceOf[String]).toSet
-      val o = js.Dynamic.literal(sources = sourcesOf(s, used), paintRules = paint, labelRules = labels,
+    def layer(paint: js.Array[js.Object], labels: js.Array[js.Object], reads: Map[String, Map[String, Set[Int]]], z: Int,
+        cls: String, background: Boolean): Layer =
+      val o = js.Dynamic.literal(sources = sourcesOf(s, reads), paintRules = paint, labelRules = labels,
         attribution = credit, zIndex = z, className = cls)
       if background then o.backgroundColor = TerrainRules.colour(style.background, lookup)
       vinfo.flatMap(bounds).foreach(b => o.bounds = b)
@@ -212,7 +216,7 @@ object TerrainMap:
       l.addTo(map)
       l
     map.getContainer().classList.add("terrain-on")
-    val base = layer(rules.paint, js.Array(), 1, "terrain-base", background = true)
+    val base = layer(rules.paint, js.Array(), rules.paintReads, 1, "terrain-base", background = true)
     val relief = Option.when(style.relief.enabled)(()).flatMap(_ =>
       template(s, BasemapLayer.Terrain).zip(s.layers.find(_.layer == BasemapLayer.Terrain.wire))).map { (url, info) =>
       val l = reliefLayer(url, info, style.relief)
@@ -220,7 +224,7 @@ object TerrainMap:
       l
     }
     // the names in a layer of their own: above the relief (never shaded), below every marker
-    val names = Option.when(rules.labels.nonEmpty)(layer(js.Array(), rules.labels, 3, "terrain-labels", background = false))
+    val names = Option.when(rules.labels.nonEmpty)(layer(js.Array(), rules.labels, rules.labelReads, 3, "terrain-labels", background = false))
     shown = base :: relief.toList ++ names.toList
 
   /** The relief: a grid of 512-pixel canvases, one per elevation tile (a 512-pixel tile of zoom

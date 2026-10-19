@@ -35,11 +35,14 @@ object BasemapApi:
     endpoint.delete.in("api" / "basemap").in(query[String]("layer").default("all"))
       .errorOut(fetchErrors).out(jsonBody[BasemapRemoved])
 
-  /** `GET /api/basemap/{layer}/{z}/{x}/{y}` — one stored tile, as stored: a vector tile gzip-encoded
-    * (`Content-Encoding: gzip`), a terrain tile as its image. 204 (empty) where the extract has no
-    * tile — outside its region or deeper than it goes — so the page draws nothing there. */
-  val tile: PublicEndpoint[(String, Int, Long, Long), ApiError, (Array[Byte], String, Option[String], String, StatusCode), Any] =
+  /** `GET /api/basemap/{layer}/{z}/{x}/{y}[?layers=]` — one stored tile, as stored: a vector tile
+    * gzip-encoded (`Content-Encoding: gzip`), a terrain tile as its image. 204 (empty) where the extract
+    * has no tile — outside its region or deeper than it goes — so the page draws nothing there. With
+    * `layers` ([[Basemap.parseSubset]]) a vector tile holds only those layers and geometries: the page
+    * asks for what its style draws, and the extract on disk keeps the rest. */
+  val tile: PublicEndpoint[(String, Int, Long, Long, Option[String]), ApiError, (Array[Byte], String, Option[String], String, StatusCode), Any] =
     endpoint.get.in("api" / "basemap" / path[String]("layer") / path[Int]("z") / path[Long]("x") / path[Long]("y"))
+      .in(query[Option[String]]("layers"))
       .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
       .out(byteArrayBody)
       .out(header[String](HeaderNames.ContentType))

@@ -74,11 +74,12 @@ object Mvt:
 
   /** Which features of one layer stay: those whose string `kind` is in `keep` (every kind when it is
     * empty) and not in `drop`. A feature without a `kind` stays unless `keep` is given. */
-  final case class Rule(keep: Set[String] = Set.empty, drop: Set[String] = Set.empty, none: Boolean = false):
+  final case class Rule(keep: Set[String] = Set.empty, drop: Set[String] = Set.empty, none: Boolean = false,
+      geoms: Set[Int] = Set.empty):
     def keeps(kind: Option[String]): Boolean = kind match
       case None    => keep.isEmpty
       case Some(k) => (keep.isEmpty || keep(k)) && !drop(k)
-    def all: Boolean = keep.isEmpty && drop.isEmpty && !none
+    def all: Boolean = keep.isEmpty && drop.isEmpty && !none && geoms.isEmpty
 
   /** The tile with the layers `rules` names thinned by their [[Rule]] (a `none` rule drops the layer)
     * and the others kept when `others`, dropped otherwise. A layer left with no feature is dropped too. */
@@ -104,7 +105,11 @@ object Mvt:
     def kind(feature: Field): Option[String] =
       if kindKey < 0 then None
       else tags(b, feature).grouped(2).collectFirst { case Vector(k, v) if k == kindKey => values.lift(v).flatten }.flatten
-    def dropped(feature: Field): Boolean = !rule.keeps(kind(feature))
+    def geomType(feature: Field): Int =
+      fields(b, feature.payloadStart, feature.end).find(f => f.number == 3 && f.wireType == 0)
+        .map(f => { val r = Reader(b, f.start, f.end); r.varint(); r.varint().toInt }).getOrElse(0)
+    def dropped(feature: Field): Boolean =
+      !rule.keeps(kind(feature)) || (rule.geoms.nonEmpty && !rule.geoms(geomType(feature)))
     val features = fs.filter(f => f.number == 2 && f.wireType == 2)
     val gone     = features.filter(dropped).map(_.start).toSet
     if gone.size == features.size then None

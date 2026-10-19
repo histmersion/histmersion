@@ -1598,9 +1598,10 @@ test('the terrain base map: drawn from the server\'s extract, no raster tiles, t
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   await withPage({ width: 1280, height: 800 }, async page => {
-    const option = page.locator('.map-style-select option[value="terrain"]');
+    const option = page.locator('.map-style-select option[value="terrain:terrain"]');
+    await option.waitFor({ state: 'attached' });
     assert.equal(await option.textContent(), 'Terrain (no modern features)');
-    await page.locator('.map-style-select').selectOption('terrain');
+    await page.locator('.map-style-select').selectOption('terrain:terrain');
     const notice = page.locator('.terrain-notice');
     await notice.waitFor();
     assert.match(await notice.textContent(), /Coastlines, rivers, lakes and vegetation were different in the past/);
@@ -1629,11 +1630,119 @@ test('the terrain base map: drawn from the server\'s extract, no raster tiles, t
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.locator('.terrain-notice').waitFor();
-    assert.equal(await page.locator('.map-style-select').inputValue(), 'terrain');
+    assert.equal(await page.locator('.map-style-select').inputValue(), 'terrain:terrain');
     // and back: the notice and the canvases go, the tiles return
     await page.locator('.map-style-select').selectOption('standard');
     await page.waitForFunction(() => !document.querySelector('.terrain-notice') &&
       !document.querySelector('.terrain-relief') && !document.getElementById('map').classList.contains('terrain-on'));
     await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane img.leaflet-tile').length > 0);
   });
+});
+
+/** The share of a layer's canvases' pixels that are drawn (alpha > 0), the best tile's; and the mean
+  * colour of the land in the middle of the map (the base layer's centre tile). */
+const drawnShare = sel => {
+  const share = c => {
+    if (!c.width) return 0;
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
+    return n / (d.length / 4);
+  };
+  return Math.max(0, ...[...document.querySelectorAll(sel)].map(share));
+};
+
+test('terrain styles: one menu entry each; another style draws other colours and the light tone; the names on their own layer, on and off', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  const styles = await (await fetch(new URL('/api/basemap/styles', baseURL))).json();
+  const hasNames = status.layers.some(l => l.layer === 'labels' && l.present);
+  await withPage({ width: 1280, height: 800 }, async page => {
+    const options = page.locator('.map-style-select option[value^="terrain:"]');
+    await options.first().waitFor({ state: 'attached' });
+    assert.deepEqual(await options.evaluateAll(os => os.map(o => o.value)), styles.styles.map(s => `terrain:${s.id}`));
+    assert.ok(styles.styles.some(s => s.id === 'parchment'), 'the built-in styles');
+    await page.locator('.map-style-select').selectOption('terrain:terrain');
+    await page.locator('.terrain-notice').waitFor();
+    await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 8, { animate: false }));
+    await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
+    const pixel = () => page.evaluate(() => {
+      // the colour at the map's centre, from the base layer's canvas under it
+      const map = document.getElementById('map').getBoundingClientRect();
+      const x = map.left + map.width / 2, y = map.top + map.height / 2;
+      for (const c of document.querySelectorAll('.terrain-base canvas')) {
+        const r = c.getBoundingClientRect();
+        if (x >= r.left && x < r.right && y >= r.top && y < r.bottom && c.width) {
+          const d = c.getContext('2d').getImageData(Math.floor((x - r.left) * c.width / r.width), Math.floor((y - r.top) * c.height / r.height), 1, 1).data;
+          return [d[0], d[1], d[2]];
+        }
+      }
+      return null;
+    });
+    await page.waitForFunction(() => document.querySelector('.terrain-base canvas'));
+    await page.waitForTimeout(800);
+    const dark = await pixel();
+    assert.ok(dark && dark[0] + dark[1] + dark[2] < 300, `Terrain is dark: ${dark}`);
+    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-dark')));
+    if (hasNames) {
+      await page.waitForFunction(`(${drawnShare})('.terrain-labels canvas') > 0.001`, null, { timeout: 15000 });
+      // the names are below every marker pane
+      const z = await page.evaluate(() => [getComputedStyle(document.querySelector('.leaflet-tile-pane')).zIndex,
+        getComputedStyle(document.querySelector('.leaflet-marker-pane')).zIndex].map(Number));
+      assert.ok(z[0] < z[1], `tiles ${z[0]} under markers ${z[1]}`);
+      // off: the names layer goes; on again: it is back
+      const toggle = page.locator('.terrain-names-toggle');
+      assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
+      await toggle.click();
+      await page.waitForFunction(() => !document.querySelector('.terrain-labels'));
+      await toggle.click();
+      await page.waitForFunction(() => document.querySelector('.terrain-labels'));
+    }
+    // another style: other colours, the light tone, no names toggle when the style has none
+    await page.locator('.map-style-select').selectOption('terrain:parchment');
+    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-light'));
+    await page.waitForTimeout(800);
+    const light = await pixel();
+    assert.ok(light && light[0] + light[1] + light[2] > 450, `Parchment is light: ${light}`);
+    await page.locator('.map-style-select').selectOption('terrain:relief');
+    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-dark') && !document.querySelector('.terrain-labels'));
+    assert.ok(await page.locator('.terrain-names-toggle').isDisabled(), 'Relief only has no names');
+    // kept like the base map
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('.terrain-notice').waitFor();
+    assert.equal(await page.locator('.map-style-select').inputValue(), 'terrain:relief');
+    await page.locator('.map-style-select').selectOption('terrain:terrain');
+  });
+});
+
+test('a changed style file is picked up by the server and the open map redraws, with no reload', async t => {
+  const file = process.env.HISTMERSION_TEST_STYLE_FILE;
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!file || !status.available) { t.skip('start the test server with HISTMERSION_BASEMAP_STYLE=<file> and set HISTMERSION_TEST_STYLE_FILE to it'); return; }
+  const fs = await import('node:fs');
+  fs.writeFileSync(file, 'styles = [ { id = "terrain", extends = "terrain", name = "Before" } ]\n');
+  try {
+    await withPage({ width: 1280, height: 800 }, async page => {
+      await page.waitForFunction(() => [...document.querySelectorAll('.map-style-select option')].some(o => o.textContent.startsWith('Before')));
+      await page.locator('.map-style-select').selectOption('terrain:terrain');
+      await page.locator('.terrain-notice').waitFor();
+      await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 8, { animate: false }));
+      await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
+      fs.writeFileSync(file, 'styles = [ { id = "terrain", extends = "terrain", name = "After", background = "#ff0000", layers = [ { id = "land", fill = "#00ff00" } ] } ]\n');
+      const t1 = Date.now();
+      await page.waitForFunction(() => [...document.querySelectorAll('.map-style-select option')].some(o => o.textContent.startsWith('After')),
+        null, { timeout: 30000 });
+      await page.waitForFunction(() => {
+        const map = document.getElementById('map').getBoundingClientRect();
+        const x = map.left + map.width / 2, y = map.top + map.height / 2;
+        return [...document.querySelectorAll('.terrain-base canvas')].some(c => {
+          const r = c.getBoundingClientRect();
+          if (!(x >= r.left && x < r.right && y >= r.top && y < r.bottom && c.width)) return false;
+          const d = c.getContext('2d').getImageData(Math.floor((x - r.left) * c.width / r.width), Math.floor((y - r.top) * c.height / r.height), 1, 1).data;
+          return (d[1] > 200 && d[0] < 80) || (d[0] > 200 && d[1] < 80);   // the new land or the new sea
+        });
+      }, null, { timeout: 30000 });
+      assert.ok(Date.now() - t1 < 30000);
+    });
+  } finally { fs.writeFileSync(file, ''); }
 });
