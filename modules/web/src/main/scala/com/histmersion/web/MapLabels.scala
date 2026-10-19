@@ -111,7 +111,7 @@ object MapLabels:
     m.on("zoomend", (_: LeafletEvent) => flight = None)
     m.on("moveend", (_: LeafletEvent) => { moving = false; flight = None; schedule() })
     val configured = MapTone.parse(ui.tilesTone)
-    UiState.baseMap.signal.combineWith(TerrainMap.tone.signal).foreach { (b, terrain) =>
+    TerrainMap.shown.signal.combineWith(TerrainMap.tone.signal).foreach { (b, terrain) =>
       val c = m.getContainer().classList
       val dark = BaseMap.tone(b, configured, terrain) == MapTone.Dark
       c.toggle("map-tone-dark", dark)

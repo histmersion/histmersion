@@ -46,13 +46,17 @@ object TerrainRules:
   /** The layers that can be drawn: those of a source the server has. Pure. */
   def usable(layers: List[StyleLayer], sources: Set[String]): List[StyleLayer] = layers.filter(l => sources(l.source))
 
-  /** What a set of style layers reads, per source: each data layer and its geometries (empty: all) —
-    * the `?layers=` a tile URL asks the server for ([[Basemap.subsetParam]]), so the page never
-    * downloads or decodes what the style does not draw. Pure. */
-  def subsets(layers: List[StyleLayer]): Map[String, Map[String, Set[Int]]] =
+  /** What a set of style layers reads, per source: each data layer, its geometries and kinds (empty:
+    * all) — the `?layers=` a tile URL asks the server for ([[Basemap.subsetParam]]), so the page never
+    * downloads or decodes what the style does not draw. A layer drawn by a rule with `not-kinds` or
+    * without `kinds` is read whole (all its kinds). Pure. */
+  def subsets(layers: List[StyleLayer]): Map[String, Map[String, Basemap.Read]] =
     layers.groupBy(_.source).view.mapValues { ls =>
-      ls.flatMap(l => l.dataLayers.map(_ -> geomCode(l.geometry))).groupMap(_._1)(_._2).view
-        .mapValues(gs => if gs.contains(0) then Set.empty[Int] else gs.toSet).toMap
+      ls.flatMap { l =>
+        val kinds = if l.notKinds.isEmpty then l.kinds.toSet else Set.empty[String]
+        val geoms = geomCode(l.geometry) match { case 0 => Set.empty[Int]; case g => Set(g) }
+        l.dataLayers.map(_ -> Basemap.Read(geoms, kinds))
+      }.groupMapReduce(_._1)(_._2)(_.merge(_))
     }.toMap
 
   /** The language a style's names are in: its own, else the document's. */
@@ -65,9 +69,25 @@ object TerrainRules:
 
   private def text(f: PmFeature, k: String): String = f.props.get(k).map(_.toString).getOrElse("")
 
-  /** The style's rules, ready for `protomapsL.leafletLayer`. */
+  /** Label order: negative when `a` (its own min_zoom, its population rank) is placed before `b` — the
+    * lower min_zoom first, then the higher rank; a missing value after any present one. Pure. */
+  def order(aMin: Double, aRank: Double, bMin: Double, bRank: Double): Double =
+    val byZoom = (if aMin.isNaN then 99 else aMin) - (if bMin.isNaN then 99 else bMin)
+    if byZoom != 0 then byZoom else (if bRank.isNaN then -1 else bRank) - (if aRank.isNaN then -1 else aRank)
+
+  /** The feature properties the paint rules read (their filters). */
+  val PaintKeys: List[String] = List("kind", "kind_detail")
+
+  /** The feature properties the label rules read: their filters, their order, and the names in
+    * `language` ([[TerrainStyles.labelProps]]). Pure. */
+  def labelKeys(language: String): List[String] =
+    List("kind", "kind_detail", "min_zoom", "population_rank") ++ TerrainStyles.labelProps(language)
+
+  /** The style's rules, ready for `protomapsL.leafletLayer`, with what each of its two layers asks the
+    * server for: the data layers and geometries, and the properties. */
   final case class Compiled(paint: js.Array[js.Object], labels: js.Array[js.Object],
-      paintReads: Map[String, Map[String, Set[Int]]], labelReads: Map[String, Map[String, Set[Int]]])
+      paintReads: Map[String, Map[String, Basemap.Read]], labelReads: Map[String, Map[String, Basemap.Read]],
+      paintKeys: List[String] = PaintKeys, labelKeys: List[String] = Nil)
 
   /** Compile `style` for the `sources` the server has; the label rules only when `labelsOn`. */
   def compile(style: TerrainStyle, language: String, sources: Set[String], labelsOn: Boolean, lookup: String => String): Compiled =
@@ -107,9 +127,10 @@ object TerrainRules:
         val sym: js.Object = if l.placement == "line" then new LineLabelSymbolizer(o) else new CenteredTextSymbolizer(o)
         val filter: js.Function2[Double, PmFeature, Boolean] =
           (z, f) => sel.matches(f.geomType, text(f, "kind"), text(f, "kind_detail"), num(f.props.get("min_zoom")), z)
-        // the more important first: the lower a feature's own min_zoom, the earlier it is placed
+        // the more important first: the lower a feature's own min_zoom, the earlier it is placed; among
+        // equals, the larger place (`population_rank`, the Protomaps places' size class)
         val sort: js.Function2[js.Dictionary[js.Any], js.Dictionary[js.Any], Double] =
-          (a, b) => { val x = num(a.get("min_zoom")); val y = num(b.get("min_zoom")); (if x.isNaN then 99 else x) - (if y.isNaN then 99 else y) }
+          (a, b) => order(num(a.get("min_zoom")), num(a.get("population_rank")), num(b.get("min_zoom")), num(b.get("population_rank")))
         l.dataLayers.map { dl =>
           val r = rule(l, dl, sym, filter).asInstanceOf[js.Dynamic]
           r.sort = sort
@@ -118,7 +139,7 @@ object TerrainRules:
       }
     val drawn = layers.filter(l => l.draw == "fill" || l.draw == "line")
     val named = if !labelsOn || !style.labels then Nil else layers.filter(_.draw == "label")
-    Compiled(js.Array(paint*), js.Array(labels*), subsets(drawn), subsets(named))
+    Compiled(js.Array(paint*), js.Array(labels*), subsets(drawn), subsets(named), PaintKeys, labelKeys(language))
 
   private def rule(l: StyleLayer, dataLayer: String, sym: js.Object, filter: js.Function2[Double, PmFeature, Boolean]): js.Object =
     val r = js.Dynamic.literal(dataSource = l.source, dataLayer = dataLayer, symbolizer = sym, filter = filter)

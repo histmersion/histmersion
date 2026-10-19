@@ -51,6 +51,18 @@ const BUDGETS = {
   terrainMap: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
     'zoom.longTaskMax': 150, 'zoom.droppedPct': 15 },
   memoryTerrainMap: { heapMB: 60 },
+  // the local street maps over Athens at zoom 9 (roads by class, borders, land use, place names), the page
+  // asking for the kinds and properties its rules read; each style its own budget (they share Standard's
+  // layers, so their cost is the same — a regression in one shows in all three)
+  localStandard: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
+    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15 },
+  memoryLocalStandard: { heapMB: 60 },
+  localMuted: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
+    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15 },
+  memoryLocalMuted: { heapMB: 60 },
+  localDark: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
+    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15 },
+  memoryLocalDark: { heapMB: 60 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
   soak: { heapMB: 6, nodes: 150, listeners: 20, leafletLayers: 0 },
 };
@@ -73,9 +85,11 @@ function within(name, measured, budget = BUDGETS[name]) {
   }
 }
 
-/** A page with the probe and the fixtures; it fails on an application error or a refused write. */
-async function withPerfPage(run, viewport) {
-  const s = await newPerfPage(browser, origin, viewport);
+/** A page with the probe and the fixtures; it fails on an application error or a refused write. The
+  * app's own budgets are measured over the online base map (its tiles refused: nothing drawn), as they
+  * were set; the local maps' budgets (`source: 'local'`) over the local map. */
+async function withPerfPage(run, viewport, { source = 'online' } = {}) {
+  const s = await newPerfPage(browser, origin, viewport, { source });
   try {
     await routeFixtures(s.page);
     await s.page.goto(baseURL);
@@ -128,6 +142,21 @@ test('budgets: the terrain base map draws (with its names), pans and zooms withi
     within('memoryTerrainMap', await memory(page, cdp));
   });
 });
+
+for (const [style, name] of [['standard', 'Standard'], ['muted', 'Muted'], ['dark', 'Dark']]) {
+  test(`budgets: the local ${name} map (roads, borders, land use, names) draws, pans and zooms within the pan's budget`, async t => {
+    const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+    const st = status.styles?.find(s => s.id === style);
+    if (!status.available || !st || st.missing.length) {
+      t.skip('the test server has no extract that draws it whole (the fixture: HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return;
+    }
+    const key = `local${name}`;
+    await withPerfPage(async ({ page, cdp }) => {
+      within(key, await paths.localMap(page, baseURL, style));
+      within(`memory${name === 'Standard' ? 'LocalStandard' : `Local${name}`}`, await memory(page, cdp));
+    }, undefined, { source: 'local' });
+  });
+}
 
 test('every cache the page keeps is bounded', async () => {
   await withPerfPage(async ({ page }) => {

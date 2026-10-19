@@ -15,7 +15,10 @@ before(async () => {
 });
 after(async () => { await browser?.close(); });
 
-async function withPage(viewport, run) {
+/** `source`: the base-map family the page is told it has (`/api/config`'s resolved `ui.base-map-source`),
+  * `local` or `online`; by default what the server says. `outside`: every request to another host is
+  * recorded there (and refused, as always). */
+async function withPage(viewport, run, { source, outside } = {}) {
   const context = await browser.newContext({ viewport, isMobile: viewport.width < 760, hasTouch: true });
   try {
     const page = await context.newPage();
@@ -42,8 +45,15 @@ async function withPage(viewport, run) {
         },
       });
     });
-    await page.route('**/*', route => new URL(route.request().url()).origin === origin
-      ? route.continue() : route.abort()); // No third-party tile servers are needed.
+    await page.route('**/*', route => {
+      if (new URL(route.request().url()).origin === origin) return route.continue();
+      outside?.push(route.request().url());
+      return route.abort(); // No third-party tile servers are needed.
+    });
+    if (source) await page.route('**/api/config', async route => {
+      const res = await route.fetch();
+      await route.fulfill({ response: res, json: { ...(await res.json()), baseMapSource: source } });
+    });
     await page.goto(baseURL);
     await page.waitForFunction(() => window.__testMap);
     await run(page);
@@ -1636,7 +1646,7 @@ test('the terrain base map: drawn from the server\'s extract, no raster tiles, t
     await page.waitForFunction(() => !document.querySelector('.terrain-notice') &&
       !document.querySelector('.terrain-relief') && !document.getElementById('map').classList.contains('terrain-on'));
     await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane img.leaflet-tile').length > 0);
-  });
+  }, { source: 'online' });
 });
 
 /** The share of a layer's canvases' pixels that are drawn (alpha > 0), the best tile's; and the mean
@@ -1745,4 +1755,93 @@ test('a changed style file is picked up by the server and the open map redraws, 
       assert.ok(Date.now() - t1 < 30000);
     });
   } finally { fs.writeFileSync(file, ''); }
+});
+
+/** The colour at the map's centre, from the local map's base canvas under it. */
+const centrePixel = () => {
+  const map = document.getElementById('map').getBoundingClientRect();
+  const x = map.left + map.width / 2, y = map.top + map.height / 2;
+  for (const c of document.querySelectorAll('.terrain-base canvas')) {
+    const r = c.getBoundingClientRect();
+    if (x >= r.left && x < r.right && y >= r.top && y < r.bottom && c.width) {
+      const d = c.getContext('2d').getImageData(Math.floor((x - r.left) * c.width / r.width), Math.floor((y - r.top) * c.height / r.height), 1, 1).data;
+      return [d[0], d[1], d[2]];
+    }
+  }
+  return null;
+};
+
+test('offline: with the local maps only, the page asks no other host — the street maps and the terrain draw from the server alone', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  const whole = status.styles.find(s => s.id === 'standard')?.missing.length === 0;
+  // the server's own answer: a --keep-all extract (the fixture) makes `auto` local
+  const config = await (await fetch(new URL('/api/config', baseURL))).json();
+  if (whole) assert.equal(config.baseMapSource, 'local', 'auto is local with an extract that draws Standard whole');
+  const outside = [];
+  await withPage({ width: 1280, height: 800 }, async page => {
+    // no online entry in the menu; the first local style (Standard) is shown without anyone choosing it
+    const options = page.locator('.map-style-select option');
+    await page.locator('.map-style-select option[value="terrain:standard"]').waitFor({ state: 'attached' });
+    const values = await options.evaluateAll(os => os.map(o => o.value));
+    assert.ok(values.every(v => v.startsWith('terrain:')), `only local maps: ${values}`);
+    assert.equal(await page.locator('.map-style-select').inputValue(), 'terrain:standard');
+    await page.evaluate(() => window.__testMap.setView([37.95, 23.7], 9, { animate: false }));
+    await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
+    await page.waitForFunction(`(${drawnShare})('.terrain-labels canvas') > 0.001`, null, { timeout: 15000 });
+    await page.waitForTimeout(600);
+    const px = await page.evaluate(centrePixel);
+    assert.ok(px && px[0] + px[1] + px[2] > 450, `Standard is a light map: ${px}`);
+    assert.equal(await page.locator('.leaflet-tile-pane img.leaflet-tile').count(), 0, 'no raster tile');
+    assert.equal(await page.locator('.terrain-notice').count(), 0, 'a street map has no past-landscape notice');
+    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-light')));
+    // every local map, a pan and a zoom: still nothing from outside
+    for (const id of ['muted', 'dark', 'terrain', 'parchment']) {
+      await page.locator('.map-style-select').selectOption(`terrain:${id}`);
+      await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
+      await page.waitForTimeout(400);
+    }
+    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-light')), 'Parchment is light');
+    await page.locator('.map-style-select').selectOption('terrain:dark');
+    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-dark'));
+    await page.evaluate(() => { window.__testMap.panBy([300, 120], { animate: false }); window.__testMap.setZoom(7, { animate: false }); });
+    await page.waitForTimeout(1500);
+    // an online choice kept by this browser is drawn locally
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.baseMap', '["muted"]'));
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 0);
+    assert.equal(await page.locator('.map-style-select').inputValue(), 'terrain:muted');
+    await page.waitForTimeout(1000);
+    assert.deepEqual(outside, [], 'requests to other hosts');
+  }, { source: 'local', outside });
+});
+
+test('base-map families: online maps offered (first) when online; a local style the download cannot draw whole is marked and says what to run', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  await withPage({ width: 1280, height: 800 }, async page => {
+    // the status of a server whose download left out roads, places and borders
+    await page.route('**/api/basemap', async route => {
+      const res = await route.fetch();
+      const s = await res.json();
+      s.styles = s.styles.map(st => ['standard', 'muted', 'dark'].includes(st.id) ? { ...st, missing: ['boundaries', 'places', 'roads'] } : st);
+      await route.fulfill({ response: res, json: s });
+    });
+    const options = page.locator('.map-style-select option');
+    await page.locator('.map-style-select option[value="terrain:standard"]').waitFor({ state: 'attached' });
+    const labels = await options.evaluateAll(os => os.map(o => o.textContent));
+    assert.deepEqual(labels.slice(0, 3), ['Standard (online)', 'Muted (online)', 'Dark (online)']);
+    assert.ok(labels.includes('Terrain (no modern features)'));
+    // choosing it asks for the status again (the route above answers)
+    await page.locator('.map-style-select').selectOption('terrain:standard');
+    const notice = page.locator('.terrain-notice');
+    await notice.waitFor();
+    await page.waitForFunction(() => [...document.querySelectorAll('.map-style-select option')].some(o => o.textContent === 'Standard — needs the full download'));
+    assert.match(await notice.textContent(), /boundaries, places, roads/);
+    assert.match(await notice.textContent(), /histmersion basemap fetch --layer vector --keep-all/);
+    assert.match(await notice.locator('a').getAttribute('href'), /how-to\/offline\.md/);
+    await page.locator('.map-style-select').selectOption('terrain:terrain');
+    await page.waitForFunction(() => /different in the past/.test(document.querySelector('.terrain-notice')?.textContent ?? ''));
+  }, { source: 'online' });
 });

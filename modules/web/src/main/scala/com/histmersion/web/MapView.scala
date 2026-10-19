@@ -32,6 +32,8 @@ object MapView:
   private var tileUrl: String               = ""
   private var tileMaxZoom: Int              = 12
   private var playbackMode: Boolean         = false
+  // `ui.base-map-source` as the server resolved it: `local` = the online tiles are never put on the map
+  private var localOnly: Boolean            = false
 
   def leafletMap: LeafletMap = map
 
@@ -76,20 +78,24 @@ object MapView:
       ).asInstanceOf[js.Object])
       if was then tileLayerRef.addTo(map)
 
-  /** The raster tiles on the map, or away (the terrain map draws its own). Idempotent. */
+  /** The raster tiles on the map, or away (the local map draws its own). Never on for a `local` page:
+    * it asks no other host for anything. Idempotent. */
   private def raster(on: Boolean): Unit =
     if map != null && tileLayerRef != null then
-      if on && !map.hasLayer(tileLayerRef) then tileLayerRef.addTo(map)
-      else if !on && map.hasLayer(tileLayerRef) then map.removeLayer(tileLayerRef)
+      if on && !localOnly && !map.hasLayer(tileLayerRef) then tileLayerRef.addTo(map)
+      else if (!on || localOnly) && map.hasLayer(tileLayerRef) then map.removeLayer(tileLayerRef)
 
-  /** The base map `b`: raster tiles from its URL (or the configured ones), or the terrain map. */
-  private def setBaseMap(b: BaseMap, ui: UiConfig): Unit =
-    if b == BaseMap.Terrain then
-      setTileUrl(ui.tiles, ui.tilesMaxZoom)   // what shows while the terrain is missing
-      TerrainMap.enter(map, ui.docsUrl, raster)
+  /** The base map `b` (with `style` for the local one, as [[TerrainMap.effective]] maps the choice):
+    * raster tiles from its URL (or the configured ones), or the local map. */
+  private def setBaseMap(b: BaseMap, style: Option[String], ui: UiConfig): Unit =
+    val (shown, id) = TerrainMap.effective(b, style, localOnly)
+    TerrainMap.shown.set(shown)
+    if shown == BaseMap.Local then
+      setTileUrl(ui.tiles, ui.tilesMaxZoom)   // what shows while the local map is missing (an online page only)
+      TerrainMap.enter(map, ui.docsUrl, raster, id)
     else
       TerrainMap.leave(map)
-      setTileUrl(b.url.getOrElse(ui.tiles), ui.tilesMaxZoom)
+      setTileUrl(shown.url.getOrElse(ui.tiles), ui.tilesMaxZoom)
       raster(true)
 
   def setPlaybackMode(on: Boolean): Unit = playbackMode = on
@@ -197,6 +203,7 @@ object MapView:
 
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius
+    localOnly = ui.baseMapSource == BaseMapSource.Local
     // the span the page opens on (UiState is restored before this mounts): the overlays switched on
     // from the browser's storage load at once, and loaded the placeholder span (0, 1) — a wasted request
     // and a wrong first drawing — until the first findings arrived
@@ -205,18 +212,20 @@ object MapView:
       idAttr := "map",
       cls := "map-container",
       onMountCallback { ctx =>
-        map = L.map("map", js.Dynamic.literal(worldCopyJump = true).asInstanceOf[js.Object])
+        // the map's own zoom limit: the online tiles' (the cluster group needs one before any tile layer is on,
+        // and a local page never puts one on)
+        map = L.map("map", js.Dynamic.literal(worldCopyJump = true, maxZoom = ui.tilesMaxZoom).asInstanceOf[js.Object])
         // every layer goes into its own pane: a dot stays above a region, whichever came last
         MapPanes.ensure(map)
         map.setView(js.Array(37.0, 30.0), 5)
         tileUrl = ui.tiles
         tileMaxZoom = ui.tilesMaxZoom
+        // made, not shown: the base map's signal below puts it on the map when an online map is chosen
         tileLayerRef = L.tileLayer(ui.tiles, js.Dynamic.literal(
           attribution = attributionFor(ui.tiles),
           maxZoom = ui.tilesMaxZoom,
           opacity = 0.85
         ).asInstanceOf[js.Object])
-        tileLayerRef.addTo(map)
 
         cluster = L.markerClusterGroup(js.Dynamic.literal(
           maxClusterRadius = clusterRadius(maxDotRadius, PointKinds.all.map(_.box)),
@@ -277,7 +286,7 @@ object MapView:
         UiState.sources.signal.foreach(showSources)(using ctx.owner)
         // the base map, and for the terrain map its style and its names: each change draws it again
         UiState.baseMap.signal.combineWith(UiState.terrainStyle.signal, UiState.terrainLabels.signal)
-          .foreach((b, _, _) => setBaseMap(b, ui))(using ctx.owner)
+          .foreach((b, style, _) => setBaseMap(b, style, ui))(using ctx.owner)
 
         map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>
           val target = e.target.asInstanceOf[dom.Element]
