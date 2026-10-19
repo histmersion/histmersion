@@ -23,6 +23,9 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     // the terrain base map: REST and the CLI only (BasemapApi says why); tiles before nothing else —
     // `basemap/fetch` is a POST, so the GET `basemap/{layer}/…` never shadows it
     BasemapApi.status.serverLogicSuccess[Identity](_ => h.basemap.status),
+    BasemapApi.styles.serverLogicSuccess[Identity](_ => h.basemapStyles.current),
+    BasemapApi.stylesExample.serverLogicSuccess[Identity](_ => h.basemapStyles.example),
+    BasemapApi.stylesCheck.serverLogicSuccess[Identity](t => h.basemapStyles.check(t)),
     BasemapApi.fetch.serverLogic[Identity](q => h.basemap.fetch(q)),
     BasemapApi.remove.serverLogic[Identity](l => h.basemap.remove(l)),
     BasemapApi.tile.serverLogic[Identity]((l, z, x, y) => h.basemap.tile(l, z, x, y)),

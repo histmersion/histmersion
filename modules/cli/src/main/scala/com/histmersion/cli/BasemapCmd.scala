@@ -4,13 +4,32 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*
 
-/** `histmersion basemap status|fetch|rm` — the terrain base map's extracts on the SERVER's machine
-  * (docs/user-guide/how-to/open-data.md): what is there, downloading them (a job, followed here), and
-  * removing them. */
+/** `histmersion basemap status|styles|fetch|rm` — the terrain base map's extracts on the SERVER's
+  * machine (docs/user-guide/how-to/open-data.md): what is there, its named styles (and checking a style
+  * file), downloading them (a job, followed here), and removing them. */
 object BasemapCmd:
 
   private val statusCmd = Opts.subcommand("status", "What is downloaded, where, and the free space there") {
     Output.jsonFlag.map { json => (c: Client) => c.basemapStatus().map(s => Output.emit(json, s)(BasemapMarkdown.status)) }
+  }
+
+  private val stylesCmd = Opts.subcommand("styles",
+      "The terrain map's named styles — the built-in ones and your style file over them — and what was refused") {
+    (Opts.flag("example", "Print the built-in style document (commented): a start for basemap-style.conf").orFalse,
+      Opts.option[java.nio.file.Path]("check", "Check a style file (HOCON or JSON) without using it").orNone,
+      Output.jsonFlag).mapN { (example, check, json) => (c: Client) =>
+        check match
+          case Some(p) =>
+            scala.util.Try(java.nio.file.Files.readString(p)).toEither.left
+              .map(e => CliError(s"cannot read $p: ${e.getMessage}", exitCode = ExitCode.Usage))
+              .flatMap(c.basemapStylesCheck)
+              .flatMap { r =>
+                Output.emit(json, r)(BasemapMarkdown.styleCheck)
+                Either.cond(r.ok, (), CliError(s"$p is not a valid style file", exitCode = ExitCode.Refused))
+              }
+          case None if example => c.basemapStylesExample().map(t => print(t))
+          case None            => c.basemapStyles().map(s => Output.emit(json, s)(BasemapMarkdown.styles))
+      }
   }
 
   private val fetchCmd = Opts.subcommand("fetch",
@@ -37,6 +56,6 @@ object BasemapCmd:
   }
 
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("basemap", "The terrain base map of the web UI: status, fetch, rm") {
-      statusCmd orElse fetchCmd orElse rmCmd
+    Opts.subcommand("basemap", "The terrain base map of the web UI: status, styles, fetch, rm") {
+      statusCmd orElse stylesCmd orElse fetchCmd orElse rmCmd
     }
