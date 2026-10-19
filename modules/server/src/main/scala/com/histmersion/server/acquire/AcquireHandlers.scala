@@ -336,7 +336,7 @@ final class AcquireHandlers(
 
       // a watcher's auto-ingest brings a work in only WITH its legal file: no metadata-only source
       if legalOnly && fetched.isLeft then
-        Left(err(s"no legal open-access copy of ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}"))
+        Left(err(s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}"))
       else
         val spooled: Option[Path] = fetched.toOption.flatMap { f =>
           Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match

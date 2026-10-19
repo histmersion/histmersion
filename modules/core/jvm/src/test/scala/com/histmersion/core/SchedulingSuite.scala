@@ -81,3 +81,12 @@ class SchedulingSuite extends munit.FunSuite:
     assertEquals(got.map(_._2), List("A", "D"))
     assertEquals(tried.toList, List("a", "c", "d"), "closed ones are never offered, nothing past the cap")
     assertEquals(Scheduling.ingestPicks(picks, (_: (String, Boolean))._2, 0)(p => Some(p._1)), Nil)
+
+  test("ingestOa: the same order and cap as ingestPicks, and what failed with why (the unoffered rest is the caller's)"):
+    val picks = List("a" -> true, "b" -> false, "c" -> true, "d" -> true, "e" -> true)
+    val (ok, ko) = Scheduling.ingestOa(picks, (_: (String, Boolean))._2, 2) { (n, _) =>
+      if n == "c" then Left("no legal open-access copy of c") else Right(n.toUpperCase)
+    }
+    assertEquals(ok.map(_._2), List("A", "D"))
+    assertEquals(ko.map((p, why) => (p._1, why)), List("c" -> "no legal open-access copy of c"))
+    assertEquals(Scheduling.ingestOa(picks, (_: (String, Boolean))._2, 0)(p => Right(p._1)), (Nil, Nil), "nothing offered at 0")

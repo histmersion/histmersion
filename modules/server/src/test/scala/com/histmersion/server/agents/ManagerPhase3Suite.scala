@@ -101,7 +101,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite:
     assertEquals(a.managers.tick(now).filter(_.contains("started")), Nil, "paused: nothing starts")
     assertEquals(AgentRepo.forManager(ds, m.id), Vector.empty)
 
-  test("watch sweep with auto-ingest ON: legal OA picks ingested up to the daily cap (one with no legal copy queued instead), the rest queued; events record it"):
+  test("watch sweep with auto-ingest ON: legal OA picks ingested up to the daily cap (one with no legal copy queued instead), the open ones past it in the backlog, the closed queued; events record it"):
     val c = ScriptedClient(Model)
     c.scripts += Seq(text("""{"picks":[{"doi":"10.5555/zzagent.a","why":"core"},{"doi":"10.5555/zzagent.b","why":"closed"},""" +
       """{"doi":"10.5555/zzagent.c","why":"no copy"},{"doi":"10.5555/zzagent.d","why":"open"},{"doi":"10.5555/zzagent.e","why":"over cap"}]}"""))
@@ -118,7 +118,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite:
     assertEquals(sweep.status, "active", out.mkString("\n"))
     assertEquals(item(m.id, CurrencyCheck).status, "pending", "the currency check waits: the sweep works on the same goal")
     val run = AgentRepo.get(ds, sweep.runId.get).get
-    assertEquals((run.pipeline, run.origin, run.params.autoIngest), ("acquisition-sweep", Some("manager"), Some(2)))
+    assertEquals((run.pipeline, run.origin, run.params.autoIngest, run.params.oaBacklog), ("acquisition-sweep", Some("manager"), Some(2), Some(true)))
     assert(events(m.id, Feed.Started).exists(_.text.contains("2 works left today")), events(m.id, Feed.Started))
     a.engine.execute(run.id)
     val done = AgentRepo.get(ds, run.id).get
@@ -130,10 +130,12 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite:
     assertEquals(h.getSource("zzagent105555zzagenta", body = false).map(_.source.title), Right("Ingested 10.5555/zzagent.a"))
     assert(GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.Source && l.ref == "zzagent105555zzagentd"))
     val queued = acquire(h).map(_.text)
-    assertEquals(queued.size, 3, queued.mkString("\n"))
-    assert(List("zzagent.b", "zzagent.c", "zzagent.e").forall(d => queued.exists(_.contains(d))), queued)
-    assert(done.progress.exists(_.contains("2 ingested (legal open access [[zzagent105555zzagenta]] [[zzagent105555zzagentd]])")),
-      done.progress)
+    assertEquals(queued.size, 2, queued.mkString("\n"))
+    assert(List("zzagent.b", "zzagent.c").forall(d => queued.exists(_.contains(d))), queued)
+    assertEquals(ManagerRepo.backlogOpen(ds).map(i => (i.managerId, i.target)), List(m.id -> "10.5555/zzagent.e"),
+      "the open-access pick past the cap waits in the ingest backlog, not on the acquisition list")
+    assert(done.progress.exists(p => p.contains("2 ingested (legal open access [[zzagent105555zzagenta]] [[zzagent105555zzagentd]])") &&
+      p.contains("1 to the ingest backlog") && p.contains("2 queued for acquisition")), done.progress)
     assertEquals(events(m.id, Feed.Ingested).size, 2)
     // the evaluation: done, and the sweep's own event says what it found
     a.managers.tick(now)
@@ -160,7 +162,8 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite:
     assert(events(m.id, Feed.Started).exists(_.text.contains("0 works left today")))
     a.engine.execute(again.id)
     assertEquals(up.calls.asScala.count(_.startsWith("ingest")), 3, "no further ingest")
-    assert(acquire(h).exists(_.text.contains("zzagent.f")))
+    assert(!acquire(h).exists(_.text.contains("zzagent.f")), "an open-access find past the cap is not the person's to buy")
+    assertEquals(ManagerRepo.backlogOpen(ds).map(_.target), List("10.5555/zzagent.e", "10.5555/zzagent.f"))
 
   test("watch sweep with auto-ingest OFF (the default): every pick goes to the acquisition list, nothing is ingested"):
     val c = ScriptedClient(Model)

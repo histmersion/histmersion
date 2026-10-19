@@ -5,7 +5,7 @@ import com.histmersion.core.Agents.{Pipeline, Role}
 import com.histmersion.core.GoalPlans.LinkKind
 import com.histmersion.core.Queue.QueueAdd
 import com.histmersion.core.Scheduling.{Candidate, CurrencyAction, Ranking}
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo, QueueRepo}
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
@@ -30,11 +30,12 @@ private[agents] trait GoalSweep:
     h.ops.queueList("acquire", all = true).toOption.toList.flatMap(_.items)
       .flatMap(i => Scheduling.dois(i.text).map(_ -> i.id)).toMap
 
-  /** Queue `text` for acquisition unless `doi` is already queued; link the item to the goal either
-    * way. `Right(true)` = a new item (a dry run: one it would add). Both writes go through the run's
-    * gate. */
+  /** Queue `text` for acquisition unless `doi` is already queued — in the run's snapshot of the list, or
+    * added since (another watcher's sweep: looked up again right before adding); link the item to the goal
+    * either way. `Right(true)` = a new item (a dry run: one it would add). Both writes go through the
+    * run's gate. */
   protected def queueOnce(ctx: RunCtx, goal: String, doi: String, text: String, queued: Map[String, Int]): Either[String, Boolean] =
-    queued.get(doi) match
+    queued.get(doi).orElse(QueueRepo.acquireNaming(ds, doi).headOption.map(_.id)) match
       case Some(id) =>
         ctx.write(s"link queue item $id to goal $goal", io.circe.Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson))(
           { val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, id.toString, Some(doi)) })(())
@@ -138,9 +139,15 @@ object CurrencyCheckPipeline:
   *
   * Steps: discover · rank · [ingest] · queue · close. The ingest step exists only when auto-ingest was
   * allowed, so a run without it has exactly the steps it always had. A DRY run records the items, the
-  * ingests (and the log line) it would make. */
+  * ingests (and the log line) it would make.
+  *
+  * A watcher's run with an INGEST BACKLOG (`RunParams.oaBacklog`, docs/research-process-managers.md "As
+  * built: the ingest backlog"): discover · rank · [ingest] · backlog · queue · close — the open-access picks
+  * past the allowance (and the ones that failed for another reason than a missing legal file) wait in the
+  * watcher's backlog ([[OaBacklog.add]]) for a later day; the acquisition list gets only the closed picks
+  * and the ones with no legal file. */
 final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds: DataSource, cfg: => AgentsConfig,
-    upstream: () => AgentUpstream) extends PipelineDef with GoalSweep:
+    upstream: () => AgentUpstream, backlog: OaBacklog) extends PipelineDef with GoalSweep:
   val pipeline: Pipeline = Pipeline.AcquisitionSweep
   import AcquisitionSweepPipeline.*
 
@@ -159,19 +166,52 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
                         AnswerSchemas.ranking)((r, last) =>
                         Scheduling.checkRanking(r, found.candidates, last).map((ps, ws) =>
                           Checked(ps.map((c, why) => Picked(c, why)), ws)))
-            took   <- if allowed > 0 then ctx.code[List[Ingested]]("ingest")(Right(ingest(ctx, goal, picks, allowed)))
-                      else Right(Nil)
-            added  <- ctx.code[Int]("queue")(Right(queue(ctx, goal, picks.filterNot(p => took.exists(_.doi == p.candidate.doi)))))
-            line   <- ctx.code[String]("close")(log(ctx, s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), " +
-                        s"${found.candidates.size} new candidate(s), ${picks.size} picked, " +
-                        (if allowed > 0 then s"${took.size} ingested (legal open access${took.map(i => s" [[${i.citekey}]]").mkString}), "
-                         else "") +
-                        s"$added queued for acquisition (${skippedText(found.skipped)}) (agent run ${ctx.run.id.take(8)})"))
+            backed  = ctx.run.params.oaBacklog.contains(true) && ctx.run.managerId.isDefined
+            line   <- if backed then withBacklog(ctx, goal, found, picks, allowed) else withoutBacklog(ctx, goal, found, picks, allowed)
           yield line
+    yield line
+
+  /** The steps after the ranking as they always were: the open-access picks within the allowance ingested,
+    * every other pick queued for acquisition. */
+  private def withoutBacklog(ctx: RunCtx, goal: String, found: Found, picks: List[Picked], allowed: Int): Either[Halt, String] =
+    for
+      took  <- if allowed > 0 then ctx.code[List[Ingested]]("ingest")(Right(ingest(ctx, goal, picks, allowed)))
+               else Right(Nil)
+      added <- ctx.code[Int]("queue")(Right(queue(ctx, goal, picks.filterNot(p => took.exists(_.doi == p.candidate.doi)))))
+      line  <- ctx.code[String]("close")(log(ctx, s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), " +
+                 s"${found.candidates.size} new candidate(s), ${picks.size} picked, " +
+                 (if allowed > 0 then s"${took.size} ingested (legal open access${took.map(i => s" [[${i.citekey}]]").mkString}), "
+                  else "") +
+                 s"$added queued for acquisition (${skippedText(found.skipped)}) (agent run ${ctx.run.id.take(8)})"))
+    yield line
+
+  /** The steps after the ranking for a watcher with an ingest backlog: the open-access picks within today's
+    * allowance ingested; the rest of them — and the ones whose ingest failed for another reason than a
+    * missing legal file — parked in the backlog; the closed picks and the ones with no legal file queued
+    * for acquisition. */
+  private def withBacklog(ctx: RunCtx, goal: String, found: Found, picks: List[Picked], allowed: Int): Either[Halt, String] =
+    for
+      tried  <- if allowed > 0 then ctx.code[Tried]("ingest")(Right(ingestOa(ctx, goal, picks, allowed))) else Right(Tried())
+      noCopy  = tried.failed.filter(_.noCopy).map(_.doi).toSet
+      waiting = picks.filter(p => p.candidate.isOa && !tried.ingested.exists(_.doi == p.candidate.doi) && !noCopy(p.candidate.doi))
+      parked <- ctx.code[Parked]("backlog")(Right(park(ctx, goal, waiting)))
+      added  <- ctx.code[Int]("queue")(Right(queue(ctx, goal, picks.filter(p => !p.candidate.isOa || noCopy(p.candidate.doi)))))
+      line   <- ctx.code[String]("close")(log(ctx, s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), " +
+                  s"${found.candidates.size} new candidate(s), ${picks.size} picked, " +
+                  s"${tried.ingested.size} ingested (legal open access${tried.ingested.map(i => s" [[${i.citekey}]]").mkString}), " +
+                  s"${parked.waiting} to the ingest backlog (legal open access past today's allowance)" +
+                  (if parked.known > 0 then s", ${parked.known} in the corpus or on the acquisition list already" else "") +
+                  s", $added queued for acquisition (${skippedText(found.skipped)}) (agent run ${ctx.run.id.take(8)})"))
     yield line
 
   private def skippedText(m: Map[String, Int]): String =
     if m.isEmpty then "none left out" else m.toList.sortBy(_._1).map((k, n) => s"$n $k").mkString(", ")
+
+  /** The DOIs in a watcher's ingest backlog that this goal found already (a pick another goal found joins
+    * that entry, so it is offered to this goal's ranking too). */
+  private def backlogged(goal: String): Set[String] =
+    ManagerRepo.backlogOpen(ds).filter(i => i.state.oa.exists(_.goals.contains(goal)) || i.managerId == Managers.watchId(goal))
+      .map(_.target).toSet
 
   private def discover(ctx: RunCtx, goal: String): Either[String, Found] =
     h.getGoal(goal).left.map(_.message).map { g =>
@@ -181,7 +221,7 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
           case Left(m)  => ctx.warn(s"discover '$q': $m"); Nil
           case Right(r) => r.works.map(q -> _)
       }
-      val (cands, skipped) = Scheduling.candidates(found, queuedDois().keySet, cfg.scheduler.sweepCandidates)
+      val (cands, skipped) = Scheduling.candidates(found, queuedDois().keySet ++ backlogged(goal), cfg.scheduler.sweepCandidates)
       Found(g.title, g.notes, queries, cands, skipped)
     }
 
@@ -200,20 +240,51 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
     * and the next open-access pick is tried. */
   private def ingest(ctx: RunCtx, goal: String, picks: List[Picked], allowed: Int): List[Ingested] =
     Scheduling.ingestPicks(picks, (p: Picked) => p.candidate.isOa, allowed) { p =>
-      val doi = p.candidate.doi
-      ctx.write(s"ingest $doi (legal open access only) for goal $goal", io.circe.Json.obj("doi" -> doi.asJson,
-          "title" -> p.candidate.title.asJson, "why" -> p.why.asJson))(
-        upstream().ingestLegal(doi) match
-          case Left(m) =>
-            ctx.warn(s"ingest: $doi not ingested, queued instead — $m")
-            None
-          case Right(r) =>
-            val _ = GoalLinkRepo.link(ds, goal, LinkKind.Source, r.citekey, Some(s"ingested by a watcher sweep: ${p.why}".take(500)))
-            ctx.run.managerId.foreach(mid => ManagerRepo.event(ds, mid, ctx.run.managerItem, Some(ctx.run.id), Managers.Feed.Ingested,
-              s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source)}): ${p.candidate.title} — https://doi.org/$doi"))
-            Some(Ingested(doi, r.citekey)))(
-        Some(Ingested(doi, s"(${AgentsMarkdown.DryRunNote})")))
+      ingestOne(ctx, goal, p) match
+        case Left(m) =>
+          ctx.warn(s"ingest: ${p.candidate.doi} not ingested, queued instead — $m")
+          None
+        case Right(i) => Some(i)
     }.map(_._2)
+
+  /** One open-access pick through the legal chain: linked to the goal and recorded as an `ingested` event
+    * of the watcher (what its daily cap counts). Left = why not. */
+  private def ingestOne(ctx: RunCtx, goal: String, p: Picked): Either[String, Ingested] =
+    val doi = p.candidate.doi
+    ctx.write(s"ingest $doi (legal open access only) for goal $goal", io.circe.Json.obj("doi" -> doi.asJson,
+        "title" -> p.candidate.title.asJson, "why" -> p.why.asJson))(
+      upstream().ingestLegal(doi).map { r =>
+        val _ = GoalLinkRepo.link(ds, goal, LinkKind.Source, r.citekey, Some(s"ingested by a watcher sweep: ${p.why}".take(500)))
+        ctx.run.managerId.foreach(mid => ManagerRepo.event(ds, mid, ctx.run.managerItem, Some(ctx.run.id), Managers.Feed.Ingested,
+          s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source)}): ${p.candidate.title} — https://doi.org/$doi"))
+        Ingested(doi, r.citekey)
+      })(
+      Right(Ingested(doi, s"(${AgentsMarkdown.DryRunNote})")))
+
+  /** [[ingest]] for a watcher with a backlog: what failed is kept too (a missing legal file → the
+    * acquisition list; anything else → the backlog, tried again on a later day). */
+  private def ingestOa(ctx: RunCtx, goal: String, picks: List[Picked], allowed: Int): Tried =
+    val (ok, ko) = Scheduling.ingestOa(picks, (p: Picked) => p.candidate.isOa, allowed)(ingestOne(ctx, goal, _))
+    ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — $why"))
+    Tried(ok.map(_._2), ko.map((p, why) => Failed(p.candidate.doi, why.take(500), IngestBacklog.isNoLegalCopy(why))))
+
+  /** The open-access picks not ingested now, into the watcher's ingest backlog (deduplicated against the
+    * corpus, the acquisition list and every watcher's backlog). */
+  private def park(ctx: RunCtx, goal: String, picks: List[Picked]): Parked =
+    val mid = ctx.run.managerId.getOrElse(Managers.watchId(goal))
+    val placed = picks.map { p =>
+      val c = p.candidate
+      val w = Managers.OaWork(c.doi, c.title, c.year, c.authors, c.venue, List(goal), p.why, Some(ctx.run.id))
+      ctx.write(s"ingest backlog of $mid: ${c.doi} for goal $goal", io.circe.Json.obj("doi" -> c.doi.asJson,
+          "title" -> c.title.asJson, "why" -> p.why.asJson))(backlog.add(mid, goal, w))(IngestBacklog.Placement.New)
+    }
+    Parked(placed.count {
+      case IngestBacklog.Placement.New | IngestBacklog.Placement.JoinBacklog(_) => true
+      case _ => false
+    }, placed.count {
+      case IngestBacklog.Placement.InCorpus(_) | IngestBacklog.Placement.JoinAcquire(_) => true
+      case _ => false
+    })
 
   private def queue(ctx: RunCtx, goal: String, picks: List[Picked]): Int =
     val queued = queuedDois()
@@ -229,3 +300,10 @@ object AcquisitionSweepPipeline:
   final case class Picked(candidate: Candidate, why: String) derives KindlingsCodecAsObject
   /** A pick the watcher's auto-ingest brought in (`citekey` the new source's). */
   final case class Ingested(doi: String, citekey: String) derives KindlingsCodecAsObject
+  /** An open-access pick whose ingest failed: why, and whether the legal chain has no file for it. */
+  final case class Failed(doi: String, why: String, noCopy: Boolean) derives KindlingsCodecAsObject
+  /** What the ingest step of a run with a backlog did. */
+  final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil) derives KindlingsCodecAsObject
+  /** What the backlog step did: picks waiting in a backlog (new entries and ones joined), and picks the
+    * corpus or the acquisition list had already. */
+  final case class Parked(waiting: Int, known: Int) derives KindlingsCodecAsObject

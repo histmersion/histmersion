@@ -270,6 +270,7 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
     val links    = GoalLinkRepo.linkCounts(ds)
     val arts     = GoalLinkRepo.articlesByGoal(ds)
     val open     = AgentRepo.openBySubject(ds)
+    val backlog  = agents.oaBacklog.snapshot(now)
     def brief(m: ManagerRepo.Light) = ManagerBrief(m.id, m.kind, m.state, m.statusNote)
     val progress = goals.sortBy(_.slug).map { g =>
       val mine = managers.filter(_.goal.contains(g.slug))
@@ -294,4 +295,5 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
           s"${caps.publishPerDay} a day, filter at least ${caps.publishMinSources} sources")),
       ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)), if row.enabled then acfg.ingestPerDay else 0,
       cfg.maxConcurrentRuns, row.lastBackupAt, row.lastLintAt,
-      managers.filter(m => m.id == ReviewId || m.id == EnrichId).map(brief), progress)
+      managers.filter(m => m.id == ReviewId || m.id == EnrichId).map(brief), progress,
+      backlog = backlog.total, backlogDays = backlog.totalDays)
