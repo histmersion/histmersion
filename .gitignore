@@ -58,3 +58,8 @@ db/gazetteer/*.ndjson.gz
 
 # Test fixtures that are gzipped on purpose (a global *.gz ignore would drop them)
 !modules/server/src/test/resources/gazetteer/*.gz
+
+# the documentation site: its project-local venv and the built site (just docs-venv / docs-build)
+/docs/.venv/
+/docs/site/
+/docs/.cache/
