@@ -196,6 +196,11 @@ docs-build:
 docs-serve:
     just -f docs/Justfile serve
 
+# Regenerate the documentation's screenshots from the demo collection (docs/demo) on a throwaway server and database
+[group('docs')]
+docs-screenshots *args:
+    scripts/docs/screenshots.sh {{args}}
+
 # Remove build output (sbt targets, native images, dist/)
 [group('dev')]
 clean:
