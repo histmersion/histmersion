@@ -1,14 +1,14 @@
 ---
 name: import-file
-description: Import a book/paper FILE the user downloaded themselves (an unauthorised book mirror, an author site, interlibrary loan, a scan, a colleague) into the corpus. Use when the user says they've downloaded or saved a PDF/EPUB and want it in the research corpus. Uploads it to Histmersion, OCRs it, and pushes the original into Calibre.
+description: Import a book/paper FILE the user obtained themselves (a purchase, an author's site, interlibrary loan, a scan, a colleague) into the corpus. Use when the user says they've downloaded or saved a PDF/EPUB and want it in the research corpus. Uploads it to Histmersion, OCRs it, and pushes the original into Calibre.
 allowed-tools: Bash(histmersion:*), mcp__histmersion__*
 ---
 
 # Import a manually-downloaded file
 
-For sources the automated pipeline cannot fetch but the user obtained by hand. The usual channel is
-**an unauthorised book mirror** (browser-only, login + CAPTCHA, a few downloads/day) for the gated monographs in
-`histmersion queue acquire`. The user downloads in the browser; this brings the file in.
+For sources the automated pipeline cannot fetch but the user obtained by hand — bought, borrowed
+through a library or interlibrary loan, sent by the author, scanned — usually the gated monographs in
+`histmersion queue acquire`. This brings the file in.
 
 ## 1. Upload + OCR
 
@@ -84,7 +84,6 @@ Or leave it for the **sync-calibre** skill / the `histmersion calibre gaps --qui
 
 ## Note on provenance
 
-An unauthorised book mirror is a shadow library (copyrighted books, legally contested). This skill only imports a file
-the user already has on disk; it never downloads from or scrapes an unauthorised book mirror. Histmersion records uploaded
-files as `provenance: ocr` — there is currently no flag to tag the actual channel
-(`external`/`ill`/`author`), so say it in the source `notes` instead.
+This skill only imports a file the user already has on disk, obtained legally; it never downloads
+anything. Histmersion records uploaded files as `provenance: ocr` — there is currently no flag to tag
+the actual channel (`ill`/`author`), so say it in the source `notes` instead.

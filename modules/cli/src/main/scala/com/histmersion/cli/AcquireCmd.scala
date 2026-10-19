@@ -160,7 +160,7 @@ object AcquireCmd:
       Opts.options[String]("author", "File upload: author, used only when the source is being created (repeatable)").orEmpty,
       Opts.option[Int]("year", "File upload: publication year, used only when the source is being created").orNone,
       Opts.option[String]("doi", "File upload: DOI, used only when the source is being created").orNone,
-      Opts.option[String]("provenance", "How the source was acquired: manual|external|ill|author|scan|calibre|archive|oa (default: manual for file, oa for DOI)").orNone,
+      Opts.option[String]("provenance", "How the source was acquired: manual|ill|author|scan|calibre|archive|oa (default: manual for file, oa for DOI)").orNone,
       Opts.flag("no-wait", "File upload: print the job id and return instead of following it").orFalse,
       Opts.flag("refetch", "Identifier: fetch and convert again although the source already has its original (replaces its body)").orFalse,
       Opts.option[Int]("acquire-item", "File upload: id of the acquisition-queue item this file fulfils — ticked off when the OCR job succeeds").orNone,

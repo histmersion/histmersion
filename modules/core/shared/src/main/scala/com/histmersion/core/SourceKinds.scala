@@ -17,7 +17,8 @@ object SourceKinds:
     * absent: it holds papers as often as data. */
   private val DataDoiPrefixes = List("10.5061/", "10.6084/", "10.17632/", "10.7910/")
 
-  /** Acquisitions that bring in whole books (a Calibre entry, an unauthorised-mirror or archive.org download). */
+  /** Acquisitions that bring in whole books (a Calibre entry, an archive.org download; one more value is
+    * kept only so that records written with it before stay classified as books). */
   private val BookProvenance = Set("calibre", "external", "archive", "archive_org")
 
   /** Pure: what a source is — from its own words (a tag or topic naming a thesis or a dataset, a venue

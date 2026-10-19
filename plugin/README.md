@@ -27,7 +27,7 @@ runs adversarial reviews — all through one plugin install.
 | `ingest-paper` | ingest one paper by DOI/arXiv/title — fetch, OCR, enrich with findings, topics, regions, period |
 | `import-archive` | acquire a book from the Internet Archive (public items only) |
 | `import-calibre` | import a purchased book from the local Calibre library |
-| `import-file` | import a manually-downloaded file (an unauthorised book mirror, author site, interlibrary loan) |
+| `import-file` | import a file the user obtained (a purchase, an author's site, interlibrary loan) |
 | `find-followups` | walk the citation graph forward — classify citing papers as confirms/challenges/refutes/supersedes |
 | `assess-paper` | retraction/correction/impact check before ingesting or periodically |
 | `update-topic` | refresh an existing topic by fetching only the delta since the last expansion |
@@ -182,7 +182,7 @@ Check it: `curl -fsS "$HISTMERSION_PUBLIC_URL/api/health"` (or `just health`).
 Histmersion ships its own **local marketplace** (`.claude-plugin/marketplace.json` at the repo root).
 
 ```bash
-# from the workspace you want to use it in — e.g. ~/Documents/research
+# from the workspace you want to use it in — e.g. your research project
 claude plugin marketplace add /path/to/histmersion
 claude plugin install histmersion@histmersion
 ```

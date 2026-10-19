@@ -47,7 +47,7 @@ final case class SourceDetail(
     notes: Option[String] = None,
     /** Opaque last-write token; echo it back as `patch_source`'s `ifUpdatedAt` precondition. */
     updatedAt: Option[String] = None,
-    /** How the source was acquired: manual|external|ill|author|scan|calibre|archive|oa. */
+    /** How the source was acquired: manual|ill|author|scan|calibre|archive|oa. */
     provenance: Option[String] = None,
     /** The permanent identity (V030): unlike the citekey it survives a rename, and a bundle carries it
       * to another instance. */
