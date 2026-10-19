@@ -17,7 +17,7 @@ class ApiSurfaceSuite extends munit.FunSuite:
 
   private val modules: List[(String, AnyRef)] =
     List("Api" -> Api, "OpsApi" -> OpsApi, "AgentsApi" -> AgentsApi, "ManagersApi" -> ManagersApi,
-      "UiApi" -> UiApi, "EventsApi" -> EventsApi, "AcquireApi" -> AcquireApi)
+      "UiApi" -> UiApi, "EventsApi" -> EventsApi, "AcquireApi" -> AcquireApi, "BasemapApi" -> BasemapApi)
 
   /** `GET /api/sources/{citekey}` — how an endpoint is named here and in the docs. */
   private def key(e: AnyEndpoint): String =

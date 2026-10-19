@@ -277,6 +277,28 @@ final case class AuthConfig(apiKey: String) derives ConfigReader
   * with `watch` — by itself when the config file changes, `watchDebounceMs` after the last change.
   * `drainSeconds` is how long a reload waits for the previous generation's last users (an in-flight
   * request, a job step) before it reports them as still draining. */
+/** The terrain base map (docs/research-terrain-basemap.md): where its two PMTiles extracts live
+  * (empty = the XDG cache directory, [[UserPaths.cacheDir]]), the region fetched, the free disk a
+  * fetch must leave, how politely the range requests go, and the two sources. */
+final case class BasemapConfig(
+    dir: String,
+    bbox: String,
+    minFreeGb: Double,
+    requestGapMs: Int,
+    maxRequestMb: Int,
+    overfetch: Double,
+    timeoutSeconds: Int,
+    retries: Int,
+    tileCacheSeconds: Int,
+    vector: BasemapVectorConfig,
+    terrain: BasemapTerrainConfig
+) derives ConfigReader
+
+final case class BasemapVectorConfig(buildsUrl: String, url: String, build: String, maxZoom: Int,
+    layers: String, attribution: String) derives ConfigReader
+
+final case class BasemapTerrainConfig(url: String, maxZoom: Int, attribution: String) derives ConfigReader
+
 final case class ConfigReloadConfig(watch: Boolean, watchDebounceMs: Int, drainSeconds: Int) derives ConfigReader
 
 /** The native bundle: when `enabled`, the server itself runs the bundled PostgreSQL and
@@ -435,7 +457,8 @@ final case class AppConfig(
     agents: AgentsConfig,
     media: MediaConfig,
     events: EventsConfig,
-    config: ConfigReloadConfig
+    config: ConfigReloadConfig,
+    basemap: BasemapConfig
 ) derives ConfigReader
 
 object AppConfig:
