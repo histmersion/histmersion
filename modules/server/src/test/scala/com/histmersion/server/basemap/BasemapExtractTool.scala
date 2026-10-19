@@ -25,6 +25,8 @@ object BasemapExtractTool:
   def main(args: Array[String]): Unit = args.toList match
     case "extract" :: build :: bbox :: z :: out :: rest => extract(build, bbox, z.toInt, Path.of(out), rest.headOption.contains("keep-all"))
     case "sizes" :: file :: Nil => sizes(Path.of(file))
+    case "inspect" :: file :: bbox :: z :: Nil => inspect(Path.of(file), BBox.parse(bbox).get, z.toInt)
+    case "subset" :: in :: bbox :: z :: out :: Nil => subset(Path.of(in), BBox.parse(bbox).get, z.toInt, Path.of(out))
     case _ => sys.error("extract <build|latest> <bbox> <maxZoom> <out> [keep-all] | sizes <file>")
 
   private def extract(build: String, bbox: String, z: Int, out: Path, keepAll: Boolean): Unit =
@@ -76,4 +78,49 @@ object BasemapExtractTool:
         }
       scribe.info(f"z$z%2d  keep-all ${sums(0) / 1e6}%8.2f MB   default drop ${sums(1) / 1e6}%8.2f MB   old keep list ${sums(2) / 1e6}%8.2f MB")
     scribe.info(s"z${h.maxZoom} by layer (gzip, each alone): " + perLayer.map((l, n) => f"$l ${n / 1e6}%.1f MB").mkString(", "))
+    f.close()
+
+  private def inspect(file: Path, b: BBox, z: Int): Unit =
+    val f = PmTilesFile.open(file).fold(sys.error, identity)
+    val kinds = collection.mutable.TreeMap.empty[String, Int]
+    val keys  = collection.mutable.TreeMap.empty[String, Int]
+    val bytes = collection.mutable.TreeMap.empty[String, Long]
+    val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
+    for x <- x0 to x1; y <- y0 to y1 do
+      f.tile(z, x, y).toOption.flatten.foreach { stored =>
+        val raw = PmTiles.gunzip(stored).fold(sys.error, identity)
+        Mvt.layerNames(raw).toOption.get.foreach { l =>
+          bytes(l) = bytes.getOrElse(l, 0L) + PmTiles.gzip(Mvt.filter(raw, Map(l -> Mvt.Rule())).toOption.get).length
+        }
+        Mvt.features(raw).fold(sys.error, identity).foreach { (l, g, p) =>
+          val k = s"$l g$g ${p.getOrElse("kind", "-")}/${p.getOrElse("kind_detail", "-")}"
+          kinds(k) = kinds.getOrElse(k, 0) + 1
+          p.keys.map(k => if k.startsWith("name:") || k.startsWith("pgf:name:") then k.takeWhile(_ != ':') + ":*" else k)
+            .toSet.foreach(k => keys(s"$l.$k") = keys.getOrElse(s"$l.$k", 0) + 1)
+        }
+      }
+    println(s"z$z bytes per layer (gzip, alone): " + bytes.map((l, n) => f"$l ${n / 1e6}%.2f MB").mkString(", "))
+    kinds.foreach((k, n) => println(f"$n%8d  $k"))
+    keys.foreach((k, n) => println(f"$n%8d  key $k"))
+    f.close()
+
+  private def subset(in: Path, b: BBox, maxZoom: Int, out: Path): Unit =
+    val f = PmTilesFile.open(in).fold(sys.error, identity)
+    val w = PmTilesWriter(out)
+    val ids = (f.header.minZoom to maxZoom.min(f.header.maxZoom)).flatMap { z =>
+      val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
+      for x <- x0 to x1; y <- y0 to y1 yield PmTiles.tileId(z, x, y)
+    }.sorted
+    ids.foreach { id =>
+      val (z, x, y) = PmTiles.zxy(id)
+      f.tile(z, x, y).toOption.flatten.foreach(w.add(id, _))
+    }
+    val meta = f.metadata.deepMerge(io.circe.Json.obj("histmersion" -> f.metadata.hcursor.downField("histmersion").focus
+      .getOrElse(io.circe.Json.obj()).deepMerge(io.circe.Json.obj(
+        "bbox" -> io.circe.Json.fromString(s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}"),
+        "maxZoom" -> io.circe.Json.fromInt(maxZoom)))))
+    val size = w.finish(f.header.copy(maxZoom = maxZoom.min(f.header.maxZoom), minLon = b.minLon, minLat = b.minLat,
+      maxLon = b.maxLon, maxLat = b.maxLat, centerLon = (b.minLon + b.maxLon) / 2, centerLat = (b.minLat + b.maxLat) / 2,
+      centerZoom = maxZoom.min(f.header.maxZoom) / 2), meta)
+    scribe.info(s"$out: ${w.tileCount} tiles, $size bytes")
     f.close()

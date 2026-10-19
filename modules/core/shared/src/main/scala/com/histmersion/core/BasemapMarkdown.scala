@@ -5,8 +5,8 @@ object BasemapMarkdown:
 
   def status(s: BasemapStatus): String =
     val head =
-      if s.available then "The terrain base map is downloaded."
-      else s"The terrain base map is not downloaded — run `${s.fetchCommand}`."
+      if s.available then "The local base map is downloaded."
+      else s"The local base map is not downloaded — run `${s.fetchCommand}`."
     val rows = s.layers.map { l =>
       val what = BasemapLayer.parse(l.layer).map(_.title).getOrElse(l.layer)
       if !l.present then s"| ${l.layer} | $what | not downloaded | | | |"
@@ -21,6 +21,9 @@ object BasemapMarkdown:
     val kept = s.layers.find(l => l.layer == BasemapLayer.Vector.wire && l.present).flatMap(_.kept)
     val notes = List(
       kept.map(k => s"The vector layer keeps $k."),
+      Option.when(s.available && s.styles.nonEmpty)("Styles: " + s.styles.map { st =>
+        if st.missing.isEmpty then st.name else s"${st.name} (lacks ${st.missing.mkString(", ")})"
+      }.mkString(", ") + "."),
       Some(s"Files: `${s.dir}` (${Backup.humanBytes(s.freeBytes)} free). The next fetch downloads `${s.bbox}` (basemap.bbox)."),
       s.running.map(r => s"A fetch is running ($r) — `histmersion jobs`."),
       Option.when(s.hints.nonEmpty)(s.hints.mkString(" ")),
@@ -32,15 +35,15 @@ object BasemapMarkdown:
     * what was refused or ignored. */
   def styles(t: TerrainStyles): String =
     val rows = t.styles.map { s =>
-      val marks = List(Option.when(s.id == t.default)("default"), Option.when(s.tone == "light")("light"),
+      val marks = List(Option.when(s.id == t.default)("default"), Option.when(s.modern)("modern"), Option.when(s.tone == "light")("light"),
         Option.when(!s.labels || !s.hasLabels)("no names"), Option.when(!s.relief.enabled)("no relief")).flatten
-      s"| `${s.id}` | ${s.name} | ${s.layers.size} | ${marks.mkString(", ")} | ${s.description} |"
+      s"| `${s.id}` | ${s.name} | ${s.needs.mkString(", ")} | ${marks.mkString(", ")} | ${s.description} |"
     }
-    val table = ("| id | name | layers | | |" :: "|---|---|---|---|---|" :: rows).mkString("\n")
+    val table = ("| id | name | draws | | |" :: "|---|---|---|---|---|" :: rows).mkString("\n")
     val file = t.file.fold("")(f => s" Style file: `$f`.")
     val notes = s"From: ${t.source}.$file Names in: ${t.language}." ::
       t.warnings.map(w => s"- $w")
-    (s"${t.styles.size} terrain map ${if t.styles.size == 1 then "style" else "styles"}:" :: "" :: table :: "" :: notes)
+    (s"${t.styles.size} base-map ${if t.styles.size == 1 then "style" else "styles"}:" :: "" :: table :: "" :: notes)
       .mkString("\n")
 
   /** A style file's check (`histmersion basemap styles --check FILE`). */

@@ -90,9 +90,11 @@ final case class ReliefStyle(
 object ReliefStyle:
   given Schema[ReliefStyle] = KindlingsSchema.derived[ReliefStyle].schema
 
-/** One named look of the terrain map — an entry of the base-map menu. `tone`: whether it is a light or
-  * a dark map (the map's own names follow it). `labels`: whether its label rules are drawn; `language`
-  * the names shown (else the document's, else `basemap.labels.language`). */
+/** One named look of the map drawn from the server's own extracts — an entry of the base-map menu.
+  * `tone`: whether it is a light or a dark map (the map's own names follow it). `labels`: whether its
+  * label rules are drawn; `language` the names shown (else the document's, else
+  * `basemap.labels.language`). `modern`: a map of today's world with its roads, towns and borders
+  * (Standard, Muted, Dark) — no "no modern features" in the menu, no past-landscape notice. */
 final case class TerrainStyle(
     id: String,
     name: String,
@@ -102,9 +104,14 @@ final case class TerrainStyle(
     labels: Boolean = true,
     language: Option[String] = None,
     relief: ReliefStyle = ReliefStyle(),
-    layers: List[StyleLayer] = Nil
+    layers: List[StyleLayer] = Nil,
+    modern: Boolean = false
 ) derives KindlingsCodecAsObject:
   def hasLabels: Boolean = layers.exists(_.draw == "label")
+  /** The vector extract's data layers this style draws, sorted: what a download must have kept for
+    * it ([[Basemap.missingFor]]). */
+  def needs: List[String] =
+    layers.filter(_.source == TerrainStyles.SourceVector).flatMap(_.dataLayers).distinct.sorted
 object TerrainStyle:
   given Schema[TerrainStyle] = KindlingsSchema.derived[TerrainStyle].schema
 
@@ -175,7 +182,7 @@ object TerrainStyleDoc:
 
   private val DocKeys   = Set("version", "default", "language", "styles")
   private val StyleKeys = Set("id", "name", "description", "extends", "hidden", "tone", "background", "labels", "language",
-    "relief", "layers")
+    "relief", "layers", "modern")
   private val ReliefKeys = Set("enabled", "shadow", "shadow-opacity", "highlight", "highlight-opacity", "azimuth", "altitude",
     "exaggeration")
   private val LayerKeys = Set("id", "type", "source", "layer", "geometry", "kinds", "not-kinds", "details", "min-zoom",
@@ -370,7 +377,8 @@ object TerrainStyleDoc:
         s.err("layers", s"style '$sid' has two layers with the id '$i'"))
     Some(TerrainStyle(id = sid, name = name.getOrElse(sid), description = s.str("description").getOrElse(""),
       tone = tone.getOrElse("dark"), background = background.getOrElse(""), labels = s.bool("labels").getOrElse(true),
-      language = language, relief = relief.getOrElse(ReliefStyle()), layers = layers.getOrElse(Nil)))
+      language = language, relief = relief.getOrElse(ReliefStyle()), layers = layers.getOrElse(Nil),
+      modern = s.bool("modern").getOrElse(false)))
 
   // ── merging ────────────────────────────────────────────────────────────────────────────────────
 

@@ -53,7 +53,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The terrain base map (docs/research-terrain-basemap.md): its extracts, their fetch job and the
     * tiles the web page draws — same arrangement. */
   val basemap: com.histmersion.server.basemap.BasemapService = com.histmersion.server.basemap.BasemapService(deps,
-    () => com.histmersion.server.basemap.JavaRangeHttp(deps.cfg.basemap.timeoutSeconds, deps.cfg.basemap.retries))
+    () => com.histmersion.server.basemap.JavaRangeHttp(deps.cfg.basemap.timeoutSeconds, deps.cfg.basemap.retries),
+    styles = () => basemapStyles.current.styles)
 
   /** The terrain map's named styles: the built-in ones and the user's style file, read again when it
     * changes (docs/user-guide/how-to/terrain-styles.md) — same arrangement. */
@@ -127,7 +128,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The `ui` config block, plus whether writes need a key — never the key itself — and the plugins
     * (their settings with secrets as references, never values). */
   def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty, agentsEnabled = cfg.agents.enabled,
-    plugins = deps.plugins.report)
+    plugins = deps.plugins.report, baseMapSource = baseMapSource)
+
+  /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract
+    * can draw the default local style whole — a `stat` and a cached header read. */
+  def baseMapSource: String =
+    cfg.ui.baseMapSource.trim.toLowerCase(java.util.Locale.ROOT) match
+      case s @ (BaseMapSource.Local | BaseMapSource.Online) => s
+      case _ => BaseMapSource.resolve(cfg.ui.baseMapSource, basemap.status, Some(basemapStyles.current.default))
 
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered
     * search and dropping the evidence, so there is ONE query path (FTS ranking and snippets

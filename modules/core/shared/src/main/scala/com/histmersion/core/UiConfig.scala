@@ -67,7 +67,11 @@ final case class UiConfig(
       * NOT a configuration key of its own. Secret settings show their reference, never the value. */
     plugins: PluginsReport = PluginsReport(),
     /** The user guide's root URL (`ui.docs-url`): the page links into it (the terrain map's notice). */
-    docsUrl: String = ""
+    docsUrl: String = "",
+    /** Which base maps the page offers (`ui.base-map-source`, [[BaseMapSource]]): `local` (only those
+      * drawn from the server's extracts — no request to any other host), `online` (the online raster
+      * maps too), or `auto`. The server answers it resolved: `local` or `online`. */
+    baseMapSource: String = "auto"
 ) derives KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema

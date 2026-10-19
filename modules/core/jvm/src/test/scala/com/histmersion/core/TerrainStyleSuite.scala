@@ -12,11 +12,12 @@ class TerrainStyleSuite extends munit.FunSuite:
 
   private def style(l: TerrainStyleFile.Loaded, id: String): TerrainStyle = l.styles.find(_.id == id).getOrElse(fail(s"no $id in ${l.styles.map(_.id)}"))
 
-  test("the built-in document is valid: four named styles, Terrain the default, every layer complete"):
+  test("the built-in document is valid: three street maps and four terrain styles, Standard the default, every layer complete"):
     val l = TerrainStyleFile.combine(builtIn, None).fold(e => fail(e.mkString("\n")), identity)
-    assertEquals(l.styles.map(_.id), List("terrain", "terrain-vegetation", "relief", "parchment"))
-    assertEquals(l.styles.map(_.name), List("Terrain", "Terrain + vegetation", "Relief only", "Parchment"))
-    assertEquals((l.default, l.source, l.warnings), ("terrain", TerrainStyles.BuiltIn, Nil))
+    assertEquals(l.styles.map(_.id), List("standard", "muted", "dark", "terrain", "terrain-vegetation", "relief", "parchment"))
+    assertEquals(l.styles.map(_.name), List("Standard", "Muted", "Dark", "Terrain", "Terrain + vegetation", "Relief only", "Parchment"))
+    assertEquals((l.default, l.source, l.warnings), ("standard", TerrainStyles.BuiltIn, Nil))
+    assertEquals(l.styles.filter(_.modern).map(_.id), List("standard", "muted", "dark"))
     val t = style(l, "terrain")
     assertEquals(t.layers.head.id, "land")
     assertEquals(t.layers.find(_.id == "forest").map(_.dataLayers), Some(List("landcover")), "land use is not drawn by default")
@@ -40,6 +41,27 @@ class TerrainStyleSuite extends munit.FunSuite:
     assertEquals(parchment.tone, "light")
     assertEquals(parchment.layers.find(_.id == "land").flatMap(_.fill), Some("#efe4c6"))
     assertEquals(parchment.layers.find(_.id == "land").map(_.geometry), Some(Some("polygon")), "a patch keeps the parent's other keys")
+
+  test("the street maps: roads by class (casings under fills), borders, land use, place names; the layers they need"):
+    val l = TerrainStyleFile.combine(builtIn, None).fold(e => fail(e.mkString("\n")), identity)
+    val std = style(l, "standard")
+    assertEquals(std.needs, List("boundaries", "earth", "landcover", "landuse", "places", "roads", "water"))
+    assertEquals(List("terrain", "terrain-vegetation", "relief", "parchment").map(style(l, _).needs).flatten.distinct.sorted,
+      List("earth", "landcover", "landuse", "pois", "water"), "the terrain styles need nothing the default download leaves out")
+    val ids = std.layers.map(_.id)
+    assert(ids.indexOf("case-highway") < ids.indexOf("minor") && ids.indexOf("major") < ids.indexOf("highway"), ids.toString)
+    val roads = std.layers.filter(_.dataLayers == List("roads")).flatMap(_.kinds).distinct.sorted
+    assertEquals(roads, List("aeroway", "highway", "major_road", "minor_road", "rail"))
+    val places = std.layers.filter(l => l.draw == "label" && l.dataLayers == List("places"))
+    assertEquals(places.map(_.id), List("countries", "cities", "regions", "towns", "villages", "hamlets"))
+    assert(places.forall(_.ownMinZoom), "each place waits for its own min_zoom: the density")
+    assert(std.layers.filter(_.draw != "label").forall(l => l.fill.orElse(l.color).exists(c => !c.startsWith("var("))),
+      "its own colours, not the terrain tokens")
+    assertEquals((std.tone, style(l, "muted").tone, style(l, "dark").tone), ("light", "light", "dark"))
+    assert(!style(l, "muted").relief.enabled)
+    assertEquals(style(l, "dark").layers.map(_.id), ids, "Dark patches Standard's layers, adds none")
+    assertNotEquals(style(l, "dark").layers.find(_.id == "land").flatMap(_.fill), std.layers.find(_.id == "land").flatMap(_.fill))
+    assert(style(l, "muted").modern && style(l, "dark").modern, "modern is inherited")
 
   test("zoom-dependent values: linear between stops, constant beyond, one stop a constant"):
     val v = ZoomValue(List(ZoomStop(4, 1), ZoomStop(8, 3), ZoomStop(10, 3)))
@@ -82,7 +104,7 @@ class TerrainStyleSuite extends munit.FunSuite:
         |  { id = "parchment", hidden = true }
         |]""".stripMargin)
     assertEquals(l.warnings, Nil)
-    assertEquals(l.styles.map(_.id), List("terrain", "terrain-vegetation", "relief", "night"))
+    assertEquals(l.styles.map(_.id), List("standard", "muted", "dark", "terrain", "terrain-vegetation", "relief", "night"))
     assertEquals((l.default, l.language), ("night", Some("local")))
     assert(l.source.contains("basemap-style.conf over the built-in styles"), l.source)
     val n = style(l, "night")
@@ -98,8 +120,8 @@ class TerrainStyleSuite extends munit.FunSuite:
 
   test("a partial file: only the default or the language; JSON works too"):
     val l = combine("""{ "default": "relief" }""")
-    assertEquals((l.default, l.styles.size, l.warnings), ("relief", 4, Nil))
-    assertEquals(combine("").styles.size, 4)
+    assertEquals((l.default, l.styles.size, l.warnings), ("relief", 7, Nil))
+    assertEquals(combine("").styles.size, 7)
     assertEquals(combine("""{"styles": [{"id": "relief", "extends": "relief", "relief": {"azimuth": 270}}]}""")
       .styles.find(_.id == "relief").map(_.relief.azimuth), Some(270.0))
 
@@ -122,7 +144,7 @@ class TerrainStyleSuite extends munit.FunSuite:
         |  { id = "c bad" }
         |]""".stripMargin)
     assertEquals(l.source, TerrainStyles.BuiltIn)
-    assertEquals(l.styles.map(_.id), List("terrain", "terrain-vegetation", "relief", "parchment"))
+    assertEquals(l.styles.map(_.id), List("standard", "muted", "dark", "terrain", "terrain-vegetation", "relief", "parchment"))
     val w = l.warnings.mkString("\n")
     assert(l.warnings.head.contains("is not used — the built-in terrain styles are shown instead"), w)
     assert(w.contains("styles[0].background: \"bluish\" is not a colour"), w)
@@ -146,9 +168,9 @@ class TerrainStyleSuite extends munit.FunSuite:
     assertEquals(syntax.source, TerrainStyles.BuiltIn)
     assert(syntax.warnings.exists(_.contains("basemap-style.conf: 1")), syntax.warnings.toString)
     assert(combine("""default = "nope"""").warnings.exists(_.contains("default: no style 'nope'")))
-    val none = combine("""styles = [ {id=terrain, hidden=true}, {id=terrain-vegetation, hidden=true}, {id=relief, hidden=true}, {id=parchment, hidden=true} ]""")
+    val none = combine("""styles = [ {id=standard, hidden=true}, {id=muted, hidden=true}, {id=dark, hidden=true}, {id=terrain, hidden=true}, {id=terrain-vegetation, hidden=true}, {id=relief, hidden=true}, {id=parchment, hidden=true} ]""")
     assert(none.warnings.exists(_.contains("every style is hidden")), none.warnings.toString)
-    assertEquals(none.styles.size, 4)
+    assertEquals(none.styles.size, 7)
 
   test("merging layers by id: patch, remove, insert before, append; relief key by key"):
     import io.circe.Json

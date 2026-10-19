@@ -16,7 +16,8 @@ import scala.util.Using
   * The extracts are a CACHE — fetched again at will — so they live in the XDG cache directory
   * (`basemap.dir` moves them), never in the data directory with the corpus. `http` and `freeSpace`
   * are the seams a test substitutes for the network and the disk. */
-final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path => Long = BasemapService.usable):
+final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path => Long = BasemapService.usable,
+    styles: () => List[TerrainStyle] = () => Nil):
 
   private def cfg = deps.cfg.basemap
   private val slot = BackgroundJob.Slot()
@@ -82,27 +83,34 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           source = mine.get[String]("build").toOption.orElse(mine.get[String]("source").toOption),
           fetchedAt = mine.get[String]("fetchedAt").toOption, version = stamp(p),
           kept = Option.when(l == BasemapLayer.Vector)(Basemap.keptLine(mine.get[Boolean]("keepAll").getOrElse(false),
-            mine.get[String]("drop").toOption)))
+            mine.get[String]("drop").toOption)),
+          dropped = if l != BasemapLayer.Vector then Nil
+                    else Basemap.droppedLayers(mine.get[Boolean]("keepAll").getOrElse(false), mine.get[String]("drop").toOption))
 
   def status: BasemapStatus =
     val layers = BasemapLayer.values.toList.map(info)
     def ok(l: BasemapLayer) = layers.exists(i => i.layer == l.wire && i.present && i.error.isEmpty)
+    val vector = layers.find(i => i.layer == BasemapLayer.Vector.wire && i.present && i.error.isEmpty)
+    val states = BasemapService.styleStates(scala.util.Try(styles()).getOrElse(Nil), vector.map(_.dropped))
     BasemapStatus(
       available = ok(BasemapLayer.Vector),
       dir = dir.toString, bbox = cfg.bbox, layers = layers, fetchCommand = Basemap.FetchCommand,
       freeBytes = freeSpace(BasemapService.existing(dir)), running = slot.current,
       hints = BasemapService.hints(ok(BasemapLayer.Vector), ok(BasemapLayer.Labels),
-        layers.exists(i => i.layer == BasemapLayer.Vector.wire && i.present && i.error.isEmpty && i.kept.exists(_.contains("before the drop list")))))
+        vector.exists(_.kept.exists(_.contains("before the drop list")))) ++ BasemapService.lackingHint(states),
+      styles = states)
 
   /** Subset tiles cut lately, by (file stamp, layer, tile, subset): a pan asks for the same few again. */
   private val cut = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap[String, Array[Byte]](256, 0.75f, true):
     override def removeEldestEntry(e: java.util.Map.Entry[String, Array[Byte]]): Boolean = size() > 512)
 
   /** One tile with its content type and encoding: as stored, or — a vector tile with `subset` — only
-    * the layers and geometries asked for; 204 where the extract (or the subset) has none. */
-  def tile(layer: String, z: Int, x: Long, y: Long, subset: Option[String] = None): Either[ApiError, (Array[Byte], String, Option[String], String, StatusCode)] =
+    * the layers and geometries asked for (and with `keys` only those properties); 204 where the extract
+    * (or the subset) has none. */
+  def tile(layer: String, z: Int, x: Long, y: Long, subset: Option[String] = None, keys: Option[String] = None): Either[ApiError, (Array[Byte], String, Option[String], String, StatusCode)] =
     val cache = s"public, max-age=${cfg.tileCacheSeconds}"
     val sub   = subset.map(_.trim).filter(_.nonEmpty)
+    val props = keys.map(_.split(",").map(_.trim).filter(_.nonEmpty).toSet).filter(_.nonEmpty)
     for
       rules <- sub.fold(Right(None))(s => Basemap.parseSubset(s).map(Some(_))).left.map(e => ApiError(s"layers: $e", Some(Write.CodeInvalid)))
       l     <- BasemapLayer.parse(layer).toRight(ApiError(s"no base-map layer '$layer' (vector, terrain or labels)", Some(Write.CodeNotFound)))
@@ -116,9 +124,9 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
                    val enc = Option.when(f.header.tileCompression == PmTiles.Compression.Gzip && PmTiles.isGzip(b))("gzip")
                    Right((b, mime, enc, cache, StatusCode.Ok))
                  case (Some(b), Some(rs)) =>
-                   val key = s"$layer|${stamp(path(l)).getOrElse("")}|$z/$x/$y|${sub.getOrElse("")}"
+                   val key = s"$layer|${stamp(path(l)).getOrElse("")}|$z/$x/$y|${sub.getOrElse("")}|${props.fold("")(_.toList.sorted.mkString(","))}"
                    Option(cut.get(key)).map(Right(_))
-                     .getOrElse(BasemapService.subset(b, f.header.tileCompression, rs).left.map(ApiError(_)).map { t => cut.put(key, t); t })
+                     .getOrElse(BasemapService.subset(b, f.header.tileCompression, rs, props).left.map(ApiError(_)).map { t => cut.put(key, t); t })
                      .map(t => if t.isEmpty then (t, mime, None, cache, StatusCode.NoContent) else (t, mime, Some("gzip"), cache, StatusCode.Ok))
     yield out
 
@@ -306,6 +314,28 @@ object BasemapService:
     Option.when(vector && !labels)(s"The physical names (mountain ranges, deserts, peninsulas, lakes, major rivers, peaks) " +
       s"are not downloaded: `${Basemap.FetchCommand} --layer labels` adds them (about 20 MB read, about 1.4 MB kept).").toList
 
+  /** Each style against the stored vector extract's left-out layers (`None`: no extract — nothing is
+    * said to be missing, the whole map is). Pure. */
+  def styleStates(styles: List[TerrainStyle], dropped: Option[List[String]]): List[BasemapStyleState] =
+    styles.map(s => BasemapStyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d))))
+
+  /** What to run when some styles lack layers the download left out. Pure. */
+  def lackingHint(states: List[BasemapStyleState]): List[String] =
+    val lacking = states.filter(_.missing.nonEmpty)
+    Option.when(lacking.nonEmpty) {
+      val layers = lacking.flatMap(_.missing).distinct.sorted
+      s"${names(lacking.map(_.name))} ${if lacking.size == 1 then "needs" else "need"} ${names(layers)}, which this download " +
+        s"left out (basemap.vector.drop): `${Basemap.KeepAllCommand}` stores the vector layer whole (about 1.5 GB at zoom 10; " +
+        "`--dry-run` first says how much), or take those layers out of basemap.vector.drop and run `" +
+        Basemap.FetchCommand + " --layer vector`."
+    }.toList
+
+  /** "a", "a and b", "a, b and c". Pure. */
+  def names(xs: List[String]): String = xs match
+    case Nil         => ""
+    case one :: Nil  => one
+    case _           => xs.init.mkString(", ") + " and " + xs.last
+
   /** The names archive's metadata: its layers, credit, and where and when it came from. Pure. */
   def labelsMetadata(lc: BasemapLabelsConfig, b: BBox, names: Int, fetchedAt: String): io.circe.Json =
     import io.circe.Json
@@ -353,11 +383,13 @@ object BasemapService:
       }.sortBy(_._1))
     }
 
-  /** A stored vector tile cut to `rules` (layer → geometries; none = all), gzip-compressed; empty when
-    * nothing is left. Pure. */
-  def subset(stored: Array[Byte], c: PmTiles.Compression, rules: Map[String, Set[Int]]): Either[String, Array[Byte]] =
+  /** A stored vector tile cut to `rules` (layer → geometries and kinds; none = all) and, given `props`,
+    * to those properties; gzip-compressed; empty when nothing is left. Pure. */
+  def subset(stored: Array[Byte], c: PmTiles.Compression, rules: Map[String, Basemap.Read],
+      props: Option[Set[String]] = None): Either[String, Array[Byte]] =
     val raw = if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(stored) else Right(stored)
-    raw.flatMap(Mvt.filter(_, rules.map((l, g) => l -> Mvt.Rule(geoms = g)))).map(t => if t.isEmpty then t else PmTiles.gzip(t))
+    raw.flatMap(Mvt.filter(_, rules.map((l, r) => l -> Mvt.Rule(keep = r.kinds, geoms = r.geoms, props = props))))
+      .map(t => if t.isEmpty then t else PmTiles.gzip(t))
 
   /** The drop list as the MVT filter's rules: a layer dropped whole, only some kinds, or all but some. Pure. */
   def mvtRules(rules: List[Basemap.DropRule]): Map[String, Mvt.Rule] =
