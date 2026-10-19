@@ -119,11 +119,12 @@ test('budgets: the events layer draws 2 400 markers, pans and zooms smoothly', a
   });
 });
 
-test('budgets: the terrain base map draws, pans and zooms within the pan\'s budget', async t => {
+test('budgets: the terrain base map draws (with its names), pans and zooms within the pan\'s budget', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   await withPerfPage(async ({ page, cdp }) => {
-    within('terrainMap', await paths.terrainMap(page, baseURL));
+    const names = status.layers.some(l => l.layer === 'labels' && l.present);
+    within('terrainMap', await paths.terrainMap(page, baseURL, { names }));
     within('memoryTerrainMap', await memory(page, cdp));
   });
 });
