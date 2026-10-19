@@ -169,12 +169,12 @@ native:
 plugin:
     {{sbt}} "server/Test/runMain com.histmersion.server.agents.GeneratePlugin {{justfile_directory()}}"
 
-# Regenerate the CLI reference table in README.md from `histmersion --help`
+# Regenerate the CLI reference table (docs/user-guide/reference/cli.md) from `histmersion --help`
 [group('dev')]
 cli-docs:
     ./tools/gen-cli-docs.sh
 
-# Regenerate README's index of every REST endpoint from Api.all
+# Regenerate the index of every REST endpoint (docs/user-guide/reference/rest-api.md) from Api.all
 [group('dev')]
 api-docs:
     {{sbt}} "coreJVM/runMain com.histmersion.core.generateApiIndex {{justfile_directory()}}"

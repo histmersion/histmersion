@@ -1,6 +1,6 @@
 name: ci
 # Every push and PR: the whole test suite against the PostgreSQL Histmersion actually ships
-# (runtime/postgres — PG 18 + PostGIS 3.6), the converter's tests, and the README's CLI
+# (runtime/postgres — PG 18 + PostGIS 3.6), the converter's tests, and the docs' CLI
 # table. Building and smoke-testing the per-platform bundles is bundle.yml.
 on:
   push: { branches: [master] }
@@ -42,7 +42,7 @@ jobs:
       - name: converter tests
         working-directory: converter
         run: uv run --frozen pytest -q
-      - name: CLI reference in README is current
+      - name: CLI reference in the docs is current
         run: |
           sbt --server -batch cli/nativeImage
           ./tools/gen-cli-docs.sh --check

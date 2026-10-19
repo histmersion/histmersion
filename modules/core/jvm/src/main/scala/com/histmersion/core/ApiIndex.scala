@@ -2,7 +2,7 @@ package com.histmersion.core
 
 import sttp.tapir.AnyEndpoint
 
-/** README's generated index of the REST surface (#1946): every endpoint of [[Api.all]], one row per
+/** The documentation's generated index of the REST surface (#1946, `docs/user-guide/reference/rest-api.md`): every endpoint of [[Api.all]], one row per
   * path with its methods, so the hand-written REST table above it can never silently miss one. The
   * index sits between [[Begin]] and [[End]]; `just api-docs` rewrites it, `ApiSurfaceSuite` fails when
   * it is stale. Pure. */
@@ -24,10 +24,13 @@ object ApiIndex:
     (s"${Plural.count(endpoints.size, "endpoint")} on ${Plural.count(byPath.size, "path")}:" ::
       "" :: "| methods | path |" :: "|---|---|" :: rows).mkString("\n")
 
+  /** The page that holds the index, relative to the repository root. */
+  val Page = "docs/user-guide/reference/rest-api.md"
+
   /** `readme` with the index between the markers replaced by `index`; `Left` when the markers are missing. */
   def splice(readme: String, index: String): Either[String, String] =
     val (b, e) = (readme.indexOf(Begin), readme.indexOf(End))
-    if b < 0 || e < b then Left(s"README.md has no $Begin … $End block")
+    if b < 0 || e < b then Left(s"$Page has no $Begin … $End block")
     else Right(readme.substring(0, b + Begin.length) + "\n" + index + "\n" + readme.substring(e))
 
   /** The index in `readme` now, if it has one. */
@@ -35,9 +38,9 @@ object ApiIndex:
     val (b, e) = (readme.indexOf(Begin), readme.indexOf(End))
     Option.when(b >= 0 && e > b)(readme.substring(b + Begin.length, e).trim)
 
-/** `just api-docs`: rewrite README's API index from [[Api.all]]. */
+/** `just api-docs`: rewrite the documentation's API index ([[ApiIndex.Page]]) from [[Api.all]]. */
 @main def generateApiIndex(repo: String): Unit =
-  val p = java.nio.file.Path.of(repo).resolve("README.md")
+  val p = java.nio.file.Path.of(repo).resolve(ApiIndex.Page)
   ApiIndex.splice(java.nio.file.Files.readString(p), ApiIndex.markdown(Api.all)) match
     case Left(e)  => throw IllegalStateException(e)
     case Right(s) => val _ = java.nio.file.Files.writeString(p, s)

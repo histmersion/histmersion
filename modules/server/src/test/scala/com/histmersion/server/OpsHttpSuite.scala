@@ -197,7 +197,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
   // The READMEs said "29 tools" and listed 30 of 48; nothing kept them honest. The server's own
   // tools/list is the authority — every tool it advertises must be documented, with the right count.
-  test("every MCP tool the server advertises is documented in both READMEs, with the right count"):
+  test("every MCP tool the server advertises is documented in the docs and the plugin README, with the right count"):
     val base = AppConfig.load()
     val cfg  = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
@@ -220,7 +220,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(named.filterNot(tools.toSet).toList.sorted, Nil, "placeholders naming no MCP tool")
       val root = Iterator.iterate(java.nio.file.Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)
         .takeWhile(_ != null).find(d => java.nio.file.Files.exists(d.resolve("build.sbt"))).get
-      for doc <- List("README.md", "plugin/README.md") do
+      for doc <- List("docs/user-guide/reference/mcp-tools.md", "plugin/README.md") do
         val text = java.nio.file.Files.readString(root.resolve(doc))
         val missing = tools.filterNot(t => text.contains(s"`$t`"))
         assert(missing.isEmpty, s"$doc does not document: ${missing.mkString(", ")}")
