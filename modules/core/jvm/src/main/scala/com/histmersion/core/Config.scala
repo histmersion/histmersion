@@ -297,7 +297,8 @@ final case class BasemapConfig(
     labels: BasemapLabelsConfig,
     bathymetry: BasemapBathymetryConfig,
     style: String,
-    styleCheckSeconds: Int
+    styleCheckSeconds: Int,
+    mapMaxZoom: Int
 ) derives ConfigReader
 
 /** `drop`: the vector layers (or their kinds) never stored — [[Basemap.parseDrop]]; everything else is

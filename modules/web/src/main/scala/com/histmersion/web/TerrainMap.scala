@@ -185,6 +185,9 @@ object TerrainMap:
         s.flatMap(st => template(st, BasemapLayer.Vector).map(st -> _)).zip(style.zip(r.toOption.flatMap(_._2))) match
           case Some(((st, vector), (style, all))) =>
             raster(false)
+            // closer in than the raster tiles go: the relief is resampled, the contours get finer
+            if rasterMaxZoom.isEmpty then rasterMaxZoom = Some(map.asInstanceOf[js.Dynamic].getMaxZoom().asInstanceOf[Double])
+            map.asInstanceOf[js.Dynamic].setMaxZoom(st.mapMaxZoom)
             tone.set(if style.tone == "light" then MapTone.Light else MapTone.Dark)
             draw(map, st, vector, effective(style, st), all)
             setNotice(map, PastNotice, docsUrl, missing = false)
@@ -257,8 +260,13 @@ object TerrainMap:
           }
       , seconds * 1000.0)
 
+  // the map's own deepest zoom while the terrain map raises it, to put back when it goes
+  private var rasterMaxZoom: Option[Double] = None
+
   private def clear(map: LeafletMap): Unit =
     dom.window.clearInterval(poll)
+    rasterMaxZoom.foreach(z => map.asInstanceOf[js.Dynamic].setMaxZoom(z))
+    rasterMaxZoom = None
     ReliefLayer.reset()
     drawn = None
     namesLayer = None
