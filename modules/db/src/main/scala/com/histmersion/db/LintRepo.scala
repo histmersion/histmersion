@@ -126,6 +126,11 @@ object LintRepo:
        WHERE coalesce(length(s.ocr_markdown), 0) > 0
          AND NOT EXISTS (SELECT 1 FROM source_chunks c WHERE c.citekey = s.citekey)
        ORDER BY s.citekey"""
+  // ── article-critique-pairing: the disagreement edges, the sources' names, the aliases ─────────
+  val disagreementEdgesSql =
+    "SELECT src, kind, dst FROM edges WHERE kind IN ('challenges', 'refutes', 'updates', 'superseded_by') ORDER BY 1, 2, 3"
+  val sourceNamesSql = "SELECT citekey, authors, year FROM sources ORDER BY citekey"
+  val sourceAliasesSql = "SELECT alias, citekey FROM source_aliases"
   // ── wave 3 fetches ────────────────────────────────────────────────────────────────────────
   val tagsSql    = "SELECT citekey, tags FROM sources ORDER BY citekey"
   val yearsSql   = "SELECT citekey, year FROM sources ORDER BY citekey"
@@ -146,6 +151,7 @@ object LintRepo:
     case YearCitekeyMismatch                      => List(yearsSql)
     case AuthorPipe                               => List(authorsSql)
     case ArticleFiller | ArticleUncitedParagraph  => List(articlesSql)
+    case ArticleCritiquePairing                   => List(articlesSql, disagreementEdgesSql, sourceNamesSql, sourceAliasesSql)
     case ArticleThinSummary                       => List(articleSummariesSql)
     case ArticleFormat                            => List(articleTextsSql)
     case NoteFormat                               => List(noteTextsSql)
@@ -195,6 +201,9 @@ object LintRepo:
             case AuthorPipe              => Lint.authorPipe(authorRows)
             case ArticleFiller           => Lint.articleFiller(articleRows)
             case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(articleRows)
+            case ArticleCritiquePairing  =>
+              val c = pairingCorpusIn()
+              Lint.articleCritiquePairing(articleRows, c.resolve, c.edges, c.work)
             case ArticleThinSummary      => Lint.articleThinSummary(pairs(articleSummariesSql))
             case ArticleFormat           => Lint.formatItems(triples(articleTextsSql).flatMap((slug, body, summary) =>
                                               List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))), format)
@@ -210,6 +219,36 @@ object LintRepo:
           Lint.report(r, items, maxItems)
       }
       LintReport(reports)
+
+  // ── article-critique-pairing ─────────────────────────────────────────────────────────────────
+
+  /** What the pairing rule reads from the corpus: how a `[[target]]` resolves, the disagreement
+    * edges, and each source's names and year. */
+  final case class PairingCorpus(resolve: String => Option[String], edges: List[CoverageEdge],
+      work: String => Option[CritiquePairing.Work])
+
+  private def pairingCorpusIn()(using DbCon): PairingCorpus =
+    val names = Sql.raw(sourceNamesSql).frag.query[(String, List[String], Option[Int])].run()
+      .map((ck, authors, year) => ck -> CritiquePairing.Work(ck, CritiquePairing.names(ck, Option(authors).getOrElse(Nil)), year)).toMap
+    val aliases = pairs(sourceAliasesSql).toMap
+    val edges = Sql.raw(disagreementEdgesSql).frag.query[(String, String, String)].run()
+      .map((src, kind, dst) => CoverageEdge(src, kind, dst)).toList
+    PairingCorpus(CritiquePairing.resolver(names.keySet, aliases), edges, names.get)
+
+  /** One article the pairing repair would change: its token, the repaired body, the hits applied. */
+  final case class PairingRepair(slug: String, updatedAt: Option[String], body: String, applied: List[CritiquePairing.Hit])
+
+  /** The mechanical pairing repairs of every article ([[CritiquePairing.repair]]) — computed, not
+    * written: `histmersion lint --rule article-critique-pairing --fix` writes each through the article
+    * patch, guarded by its token. */
+  def pairingRepairs(ds: DataSource): List[PairingRepair] =
+    connect(ds):
+      val c = pairingCorpusIn()
+      sql"""SELECT slug, body, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM articles ORDER BY slug"""
+        .query[(String, String, Option[String])].run().toList.flatMap { (slug, body, at) =>
+          val (fixed, done) = CritiquePairing.repair(body, CritiquePairing.hits(body, c.resolve, c.edges, c.work))
+          Option.when(done.nonEmpty)(PairingRepair(slug, at, fixed, done))
+        }
 
   // ── the safe fixes ───────────────────────────────────────────────────────────────────────────
 

@@ -246,9 +246,9 @@ object Agents:
       val describe: String):
     case EnrichSource extends Pipeline("enrich-source", 2, TargetKind.Source, List(Role.Extractor),
       "read one source and propose its summary, classification, period, findings (each with a verbatim quote) and notes; code verifies and patches")
-    case ReviewArticle extends Pipeline("review-article", 5, TargetKind.Article,
+    case ReviewArticle extends Pipeline("review-article", 6, TargetKind.Article,
       List(Role.Reviewer, Role.ColdReader, Role.Skeptic, Role.Fixer),
-      "the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code into the article's review ledger, the skeptic ruling on each open pair of its critique checklist; with fix, a fixer revises it, each reviewer verifies the findings it claims fixed and the edited passages, until no major finding remains — then a full panel confirms")
+      "the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code into the article's review ledger, the skeptic ruling on each open pair of its critique checklist; with fix, a fixer revises it (code adds the citations a paragraph already names and guards closed findings), each reviewer verifies the findings it claims fixed and the edited passages, until no major finding remains — then a full panel confirms, deferring what it finds new to the next run")
     case PlanGoal extends Pipeline("plan-goal", 1, TargetKind.Goal, List(Role.Planner),
       "propose sub-goals, search queries and candidate works (DOIs checked upstream by code) for one goal; nothing is created until a person approves the plan")
     case CompileArticle extends Pipeline("compile-article", 2, TargetKind.Article, List(Role.Extractor, Role.Writer),

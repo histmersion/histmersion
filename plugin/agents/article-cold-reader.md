@@ -49,6 +49,8 @@ raised, each under an id that never changes (`C2`, `C9`), open or closed, and th
 - For every **open** finding of yours, give a **check**: `fixed` true or false, and a quote of the
   CURRENT article that shows it (the sentence that now defines the term, or the one still opaque). Do
   not raise it again as a new finding. A closed finding stays closed unless the text has regressed.
+- The ledger shows only your own findings. Which sources the article should cite is not yours to
+  judge: report what a reader cannot follow, never a missing source.
 
 **Verification pass.** After a fix you may be asked only to verify: you get the findings of yours the
 fixer claims to have fixed (`<findings-to-check>`), the **edited passages** (`<edited-passages>`) and

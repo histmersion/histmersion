@@ -88,6 +88,7 @@ object Lint:
   val ArticleUncitedParagraph = "article-uncited-paragraph"
   val ArticleThinSummary      = "article-thin-summary"
   val SupersededWithoutEdge   = "superseded-without-edge"
+  val ArticleCritiquePairing  = "article-critique-pairing"
   // ── formatting (the Markdown agents write; checks in server.MarkdownLint) ─────────────────────
   val ArticleFormat           = "article-markdown"
   val NoteFormat              = "note-markdown"
@@ -127,6 +128,7 @@ object Lint:
     Rule(ArticleFiller, "articles whose body contains banned filler phrases from the writing guide"),
     Rule(ArticleUncitedParagraph, "article body paragraphs with no [[citekey]] citation"),
     Rule(ArticleThinSummary, s"article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than $MinSummaryChars characters — the card and the search hit show nothing useful"),
+    Rule(ArticleCritiquePairing, "article paragraphs that cite one side of a disagreement edge (challenges, refutes, updates, superseded_by) and name the other side's author without citing it — the critique is written but the pair stays open; `lint --rule article-critique-pairing --fix` appends the missing citekey where the name points at exactly one work"),
     Rule(SupersededWithoutEdge, "sources with status=superseded but no superseded_by edge — set the edge or change the status"),
     Rule(ArticleFormat, "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)"),
     Rule(NoteFormat, "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)"),
@@ -351,6 +353,13 @@ object Lint:
       if uncited.isEmpty then None
       else Some(LintItem(slug, s"${uncited.size} paragraph(s) with no [[citekey]]: \"${uncited.head.take(60)}…\""))
     }.sortBy(_.citekey)
+
+  /** `article-critique-pairing` ([[CritiquePairing]]): one item per paragraph hit, over `(slug, body)`.
+    * `resolve`, `edges` and `work` are the corpus's (canonical citekeys). */
+  def articleCritiquePairing(articles: List[(String, String)], resolve: String => Option[String], edges: List[CoverageEdge],
+      work: String => Option[CritiquePairing.Work]): List[LintItem] =
+    articles.flatMap((slug, body) => CritiquePairing.hits(body, resolve, edges, work).map(h => LintItem(slug, h.line)))
+      .sortBy(_.citekey)
 
   /** The longest text that may introduce a list without a citation of its own. */
   val MaxListLeadIn = 300

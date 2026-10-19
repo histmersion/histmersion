@@ -20,15 +20,25 @@ class ReviewCritiqueSuite extends munit.FunSuite:
   private val aside   = pair("jones2001_myth", "frazer1922_golden", CritiqueState.Reasoned, Some("cited for the calendar only"))
   private val pairs   = List(open1, open2, done, aside)
 
+  /** A missing-critique finding quoting the article's sentence `the dying god is a universal type (<id>)`. */
   private def mc(id: String, pair: Option[String], sev: Severity = Severity.Major) =
-    Finding(id, Reviewer.Skeptic, sev, "missing-critique", "Intro", s"quote $id", s"omits a critique $id", "cite it",
-      pair = pair.flatMap(CritiqueRef.parse(_).toOption))
+    Finding(id, Reviewer.Skeptic, sev, "missing-critique", "Intro", s"the dying god is a universal type ($id)",
+      s"omits a critique $id", "cite it", pair = pair.flatMap(CritiqueRef.parse(_).toOption))
   private def edgeProposal(src: String, dst: String) =
     Proposal(ApprovalKind.Edge, src, edgeKind = Some(EdgeKind.Refutes), target = Some(dst), quote = Some("q"))
 
-  private val pass1   = CritiqueRule(pairs, List(open1, open2), fixable = true, full = true)
-  private val confirm = CritiqueRule(pairs, List(open1, open2), fixable = false, full = true)
-  private val recheck = CritiqueRule(pairs, Nil, fixable = false, full = false)
+  /** The article: S1–S3 state the claim unqualified; S8 hedged; S9 not in it at all. */
+  private val body =
+    """Frazer shows that the dying god is a universal type (S1), and that the dying god is a universal type (S2) [[frazer1922_golden]].
+      |
+      |The bough proves that the dying god is a universal type (S3) [[frazer1922_golden]].
+      |
+      |Frazer argued that the dying god may be a universal type, though the dying god is a universal type (S8) only perhaps [[frazer1922_golden]].
+      |""".stripMargin
+
+  private val pass1   = CritiqueRule(pairs, List(open1, open2), full = true, body, 0.9)
+  private val confirm = CritiqueRule(pairs, Nil, full = true, body, 0.9)
+  private val recheck = CritiqueRule(pairs, Nil, full = false, body, 0.9)
 
   test("a missing-critique MAJOR naming an open pair stands, in the checklist's own direction"):
     val (fs, ps, ws) = checkCritiques(Reviewer.Skeptic, List(mc("S1", Some("frazer1922_golden>smith1987_dying"))), pass1, Nil, last = false)
@@ -46,29 +56,101 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       assertEquals((ps, ws.size), (Nil, 2))
     }
 
-  test("no pair on the checklist: with a proposed edge it stands in pass 1, is minor (carried) in a confirmation or re-check"):
+  test("calibration (§6.9): no recorded edge is minor in every pass, a proposal or not; an EMPTY pair goes back on a full panel"):
     val f = mc("S1", Some("new2020_critic>frazer1922_golden"))
     val proposed = List(edgeProposal("frazer1922_golden", "new2020_critic"))  // either direction
-    val (p1, pp1, pw1) = checkCritiques(Reviewer.Skeptic, List(f), pass1, proposed, last = false)
-    assertEquals((p1.map(_.severity), pp1, pw1), (List(Severity.Major), Nil, Nil))
-    val (c1, cp1, cw1) = checkCritiques(Reviewer.Skeptic, List(f), confirm, proposed, last = false)
-    assertEquals((c1.map(_.severity), cp1), (List(Severity.Minor), Nil))
-    assert(cw1.exists(_.contains("carried to the next run")), cw1)
-    // a re-check proposes nothing: no open pair and no edge → minor, never sent back (it was shown no checklist)
-    val (r1, rp1, rw1) = checkCritiques(Reviewer.Skeptic, List(f), recheck, Nil, last = false)
-    assertEquals((r1.map(_.severity), rp1), (List(Severity.Minor), Nil))
-    assert(rw1.exists(_.contains("names no open checklist pair and no proposed edge")), rw1)
-
-  test("no pair and no proposal: a full panel's answer is sent back; on the last attempt it is recorded minor"):
+    List(pass1, confirm, recheck).foreach { rule =>
+      val (fs, ps, ws) = checkCritiques(Reviewer.Skeptic, List(f), rule, proposed, last = false)
+      assertEquals((fs.map(_.severity), ps), (List(Severity.Minor), Nil))
+      assert(fs.head.problem.contains("no edge is recorded between [[new2020_critic]] and [[frazer1922_golden]] — its proposed edge waits for approval"),
+        fs.head.problem)
+      assert(ws.exists(_.contains("recorded minor")), ws)
+    }
+    assert(!checkCritiques(Reviewer.Skeptic, List(f), pass1, Nil, last = false)._1.head.problem.contains("proposed edge"))
+    // an empty pair: back on a full panel (it may name a recorded pair); minor on the last attempt, and in a re-check
     val (_, ps, _) = checkCritiques(Reviewer.Skeptic, List(mc("S1", None)), pass1, Nil, last = false)
-    assertEquals(ps.size, 1)
-    assert(ps.head.contains("S1 (missing-critique, major) names no open pair of the critique checklist (its `pair` is empty)"), ps.head)
-    val (fs, ps2, ws) = checkCritiques(Reviewer.Skeptic, List(mc("S1", Some("zz>frazer1922_golden"))), confirm, Nil, last = true)
-    assertEquals((fs.map(_.severity), ps2, ws.size), (List(Severity.Minor), Nil, 1))
+    assert(ps.size == 1 && ps.head.contains("S1 (missing-critique, major) names no pair of the critique checklist (its `pair` is empty)"), ps)
+    assertEquals(checkCritiques(Reviewer.Skeptic, List(mc("S1", None)), pass1, Nil, last = true)._1.map(_.severity), List(Severity.Minor))
+    assertEquals(checkCritiques(Reviewer.Skeptic, List(mc("S1", None)), recheck, Nil, last = false)._1.map(_.severity), List(Severity.Minor))
     // minors and other kinds pass untouched
     val other = mc("S2", None).copy(kind = "date")
     assertEquals(checkCritiques(Reviewer.Skeptic, List(other, mc("S3", None, Severity.Minor)), pass1, Nil, last = false)._1,
       List(other, mc("S3", None, Severity.Minor)))
+
+  test("calibration (§6.9): MAJOR only when the article cites the criticised work and states the claim unqualified"):
+    def one(f: Finding, rule: CritiqueRule = pass1, last: Boolean = false) = checkCritiques(Reviewer.Skeptic, List(f), rule, Nil, last)
+    // stands: open pair, frazer cited, the quoted sentence carries no hedge
+    assertEquals(one(mc("S3", Some("smith1987_dying>frazer1922_golden")))._1.map(_.severity), List(Severity.Major))
+    // the sentence is hedged ("may", "perhaps"): minor, with the sentence
+    val (h, _, hw) = one(mc("S8", Some("smith1987_dying>frazer1922_golden")))
+    assertEquals(h.map(_.severity), List(Severity.Minor))
+    assert(h.head.problem.contains("the article already qualifies the claim: \"Frazer argued that the dying god may be"), h.head.problem)
+    assert(hw.exists(_.contains("S8 (missing-critique, major)")), hw)
+    // the quote is not in the article: back on a full panel's skeptic, minor on the last attempt and in a re-check
+    val (_, ps, _) = one(mc("S9", Some("smith1987_dying>frazer1922_golden")))
+    assert(ps.exists(_.contains("S9 (missing-critique, major): its quote is not in the article")), ps)
+    assertEquals(one(mc("S9", Some("smith1987_dying>frazer1922_golden")), last = true)._1.map(_.severity), List(Severity.Minor))
+    assertEquals(one(mc("S9", Some("smith1987_dying>frazer1922_golden")), recheck)._1.map(_.severity), List(Severity.Minor))
+    // the criticised work is not cited: the article states none of its claims
+    val uncited = CritiquePair(side("frazer1922_golden", cited = true), List("refutes"), side("old1900_myth", cited = false), CritiqueState.Open)
+    val (u, _, _) = one(mc("S1", Some("frazer1922_golden>old1900_myth")), pass1.copy(pairs = uncited :: pairs))
+    assertEquals(u.map(_.severity), List(Severity.Minor))
+    assert(u.head.problem.contains("the article does not cite [[old1900_myth]], so it states none of its claims"), u.head.problem)
+    // superseded_by is stored on the OLDER work: there the source is the criticised side
+    val older = CritiquePair(side("frazer1922_golden", cited = true), List("superseded_by"), side("new2010_rites", cited = false), CritiqueState.Open)
+    assertEquals((older.criticised.citekey, older.critic.citekey, older.bearing), ("frazer1922_golden", "new2010_rites", true))
+    assertEquals(one(mc("S1", Some("frazer1922_golden>new2010_rites")), pass1.copy(pairs = older :: pairs))._1.map(_.severity),
+      List(Severity.Major))
+    // no body to check against (a rule without one): the quote is not held
+    assertEquals(one(mc("S9", Some("smith1987_dying>frazer1922_golden")), pass1.copy(body = ""))._1.map(_.severity), List(Severity.Major))
+
+  test("claimSentence and qualified: the sentence that holds a quote; hedges and contest words, outside links"):
+    assertEquals(claimSentence(body, "the dying god is a universal type (S3)", 0.9),
+      Some("The bough proves that the dying god is a universal type (S3) [[frazer1922_golden]]."))
+    assertEquals(claimSentence(body, "nothing like this", 0.9), None)
+    // an abbreviation or an initial ends no sentence; a quote across two sentences gets both, not the paragraph
+    val p = "Chang et al. (2015, contested) date the split to 6000 BP [[chang2015]]. M. L. West disagrees. It may be older. The end."
+    assertEquals(sentences(p), List("Chang et al. (2015, contested) date the split to 6000 BP [[chang2015]].", "M. L. West disagrees.",
+      "It may be older.", "The end."))
+    assertEquals(claimSentence(p, "Chang et al. (2015, contested) date the split", 0.9), Some(sentences(p).head))
+    assertEquals(claimSentence(p, "M. L. West disagrees. It may be older", 0.9), Some("M. L. West disagrees. It may be older."))
+    assert(qualified("The date is disputed [[a2000_x]]."))
+    assert(qualified("It may date to 1200 BCE."))
+    assert(!qualified("It dates to 1200 BCE [[mayer2000_may]]."), "a link is no hedge")
+    assert(!qualified("Mayhew shows the date."))
+
+  test("qualifiedClaim: the claim's own clause and a status label on the criticised work — not another source's (live sentences)"):
+    // gods_and_migrations S24: Gray and Atkinson are stated plain; the "contested" belongs to Bouckaert, in the next clause
+    val gray = "Earlier phylogenetic studies favoured an Anatolian farming origin: Gray and Atkinson (2003) dated the first split to " +
+      "7,800–9,800 years before present [[gray2003_language]], and Bouckaert et al. (2012, contested; updated by Neureiter et al. 2022) " +
+      "found decisive support for an Anatolian origin [[bouckaert2012]]."
+    assert(!qualifiedClaim(gray, "Gray and Atkinson (2003) dated the first split to 7,800–9,800 years before present", "gray2003_language"))
+    assert(qualifiedClaim(gray, "Bouckaert et al. (2012, contested; updated by Neureiter et al. 2022) found decisive support", "bouckaert2012"))
+    // levant_near_east S36: the sentence labels Smith (1998) itself as contested
+    val smith = "Comparing the myth with Ugaritic royal funeral texts, Smith (1998) suggests that Baal's death represents a king's death " +
+      "and his return the living successor; he also proposes that divine death expresses the dynasty's fragility " +
+      "([[smith1998_death]], contested — challenged by [[wyatt2019_problem]])."
+    assert(qualifiedClaim(smith, "Smith (1998) suggests that Baal's death represents a king's death", "smith1998_death"))
+    // mycenaean S22: the status label follows a short-form link
+    val kan = "Kaniewski and colleagues (2013) interpret pollen as evidence of prolonged drought [[kaniewski2013]] (contested — " +
+      "challenged by [[middleton2020_collapse]], 2020)."
+    assert(qualifiedClaim(kan, "interpret pollen as evidence of prolonged drought", "kaniewski2013_environmental"))
+    // gods_and_migrations S37: Chadwick's interpretation is stated plain — "doubtful" is about another reading, after ", and"
+    val chad = "Chadwick (1976) instead interprets the qualified Potnia titles as forms of a dominant Earth Mother, like “Our Lady” of " +
+      "different places, and regards the reading Athana Potnia as doubtful [[chadwick1976_mycenaean]]."
+    assert(!qualifiedClaim(chad, "Chadwick (1976) instead interprets the qualified Potnia titles as forms of a dominant Earth Mother",
+      "chadwick1976_mycenaean"))
+
+  test("one finding per pair: the skeptic's kept, a duplicate in either direction and another reviewer's echo dropped"):
+    val s1 = mc("S1", Some("smith1987_dying>frazer1922_golden"))
+    val s2 = mc("S2", Some("frazer1922_golden>smith1987_dying"))    // the reciprocal of the same two sources
+    val r1 = mc("R1", Some("smith1987_dying>frazer1922_golden")).copy(reviewer = Reviewer.Rules)
+    val c1 = mc("C1", Some("brown1999_rites>frazer1922_golden")).copy(reviewer = Reviewer.ColdReader)
+    val other = mc("S3", None).copy(kind = "date")
+    val (kept, ws) = onePerPair(List(r1, s1, s2, other, c1), heldBySkeptic = List(CritiqueRef("frazer1922_golden", "brown1999_rites")))
+    assertEquals(kept.map(_.id), List("S1", "S3"))
+    assertEquals(ws.size, 3)
+    assert(ws.exists(_.startsWith("cold-reader: C1 dropped")), ws)
 
   test("rulings: every open pair shown is named by a MAJOR or ruled not material; a ruling becomes a reason"):
     val fs = List(mc("S1", Some("smith1987_dying>frazer1922_golden")))
@@ -88,7 +170,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     assertEquals(ws4.count(_.startsWith("skeptic: dropped — not material")), 4, ws4)
 
   test("the skeptic's answer as a whole: findings held to the checklist, rulings kept on the report"):
-    val a = SkepticAnswer("MAJOR", List(FindingAnswer("major", "missing-critique", "Intro", "", "omits Smith", "cite Smith",
+    val a = SkepticAnswer("MAJOR", List(FindingAnswer("major", "missing-critique", "Intro", "the dying god is a universal type (S3)", "omits Smith", "cite Smith",
       pair = Some("smith1987_dying>frazer1922_golden"))), Nil, 6, Nil,
       List(NotMaterialAnswer("brown1999_rites>frazer1922_golden", "Off the article's question.")))
     val (rep, _) = checkSkeptic(a, last = false, _ => true, _ => None, 0.9, None, Some(pass1)).toOption.get
@@ -113,15 +195,20 @@ class ReviewCritiqueSuite extends munit.FunSuite:
   private val byId = merged.findings.map(f => f.id -> f).toMap
 
   test("set aside: a missing-critique finding, a pair of the checklist (its own or given), a reason"):
-    val (ok, ps) = checkSetAside(List(SetAsideAnswer("S1", None, "Cited for the date only."),
-      SetAsideAnswer("S2", Some("brown1999_rites>frazer1922_golden"), "Off the point.")), byId, pairs)
+    val (ok, pairOnly, ps) = checkSetAside(List(SetAsideAnswer("S1", None, "Cited for the date only."),
+      SetAsideAnswer("S2", Some("brown1999_rites>frazer1922_golden"), "Off the point."),
+      SetAsideAnswer("", Some("frazer1922_golden>brown1999_rites"), "No finding names it.")), byId, pairs)
     assertEquals(ok, List(SetAside("S1", CritiqueRef("smith1987_dying", "frazer1922_golden"), "Cited for the date only."),
       SetAside("S2", CritiqueRef("brown1999_rites", "frazer1922_golden"), "Off the point.")))
     assertEquals(ps, Nil)
-    val (none, bad) = checkSetAside(List(SetAsideAnswer("R1", None, "x"), SetAsideAnswer("S2", None, "x"),
-      SetAsideAnswer("S1", Some("zz2000_a>zz2001_b"), "x"), SetAsideAnswer("S1", None, ""), SetAsideAnswer("S9", None, "x")), byId, pairs)
-    assertEquals(none, Nil)
-    assertEquals(bad.map(_.takeWhile(_ != ':')), List("set aside R1", "set aside S2", "set aside S1", "set aside S1", "set aside 'S9'"))
+    // a pair alone (no id): the checklist's own direction, stored as a reason
+    assertEquals(pairOnly, List(CritiqueReason("brown1999_rites", "frazer1922_golden", "No finding names it.")))
+    val (none, noPair, bad) = checkSetAside(List(SetAsideAnswer("R1", None, "x"), SetAsideAnswer("S2", None, "x"),
+      SetAsideAnswer("S1", Some("zz2000_a>zz2001_b"), "x"), SetAsideAnswer("S1", None, ""), SetAsideAnswer("S9", None, "x"),
+      SetAsideAnswer("", None, "x"), SetAsideAnswer("", Some("zz2000_a>zz2001_b"), "x")), byId, pairs)
+    assertEquals((none, noPair), (Nil, Nil))
+    assertEquals(bad.map(_.takeWhile(_ != ':')), List("set aside R1", "set aside S2", "set aside S1", "set aside S1", "set aside 'S9'",
+      "a set-aside with neither an id nor a pair — give the finding's id, or the pair (src>dst)", "set aside zz2000_a>zz2001_b"))
 
   test("the fixer's answer: a set-aside decides a MAJOR, with no edit; the ledger closes it as set aside, with the reason"):
     val body = "Tin [[knapp2016_tin]].\n\n## Disagreements\n\nArgued [[knapp2016_tin]].\n\n## Open questions\n\nOpen [[knapp2016_tin]].\n\n## Not used\n\n- none\n"

@@ -414,6 +414,100 @@ reasoned pair; the rules reviewer's `<critique-reasons>` one line per reasoned p
 cannot resume (the engine refuses a changed pipeline; start it again). Let running reviews finish before
 deploying. V091 applies on start (one empty table).
 
+### 6.9 Convergence: a closed checklist up front, a final pass that verifies, guards in code (2026-10-19)
+
+**Evidence** (the live database, 2026-10-19, read-only): 85 articles; 76 last reviewed MINOR, 8 MAJOR with 32 open
+MAJOR ledger entries (gods_and_migrations 10, achilles_origins 7, mycenaean 6, etruscan_religion 3,
+levant_near_east 2, aegean 2, persephone_hades_origins 1, creation_cosmogony 1). By kind: skeptic missing-critique
+22, cold-reader `lost` 4, rules coverage 2, other 4. 24 of the 32 were raised first by the confirming panel (pass 3
+of a `--rounds 2` run); 12 carry `notFixed` notes; 4 were "fixed in pass 2, raised again in pass 3".
+
+**Root causes, from the runs' own steps** (gods_and_migrations, run 959312a8, read from `agent_steps`):
+
+| failure | what the steps show | cause |
+|---|---|---|
+| late new critiques | snapshot-1: 53 open pairs; skeptic-1 was shown 25 and ruled on them (17 MAJOR, 8 not material). skeptic-3 (the confirmation) ruled on the rest: 10 more MAJORs. Two of them (`bjrn2024>demoule2023`, `olander2022>demoule2023`) were not on the checklist at pass 1: the fixer had cited `demoule2023` to answer five other pairs | the cap on the pairs shown (`critique-pairs` 25), half of them on works the article does not cite; the confirmation owed rulings like pass 1 (§6.8: "MAJOR, open for the next run"); a citation the fixer adds brings its own critiques, and nothing checked them |
+| "fixed in pass 2, raised again in pass 3" | `chang2015>gray2003_language`, `contact2022_langtrees>bouckaert2012`, `phylo2026_validity>gray2003_language` are **open in snapshot-1, -2 and -3**; skeptic-check-2 called each "fixed" on a quote describing the critique | corrected: not a later fix undoing an earlier one, but a re-check accepting a description of the critique while code's own checklist showed the pair open |
+| not fixed, again and again | achilles_origins S4/S5/S6: "The paragraph still cites only [[kelly2021_gods]]; [[bachvarova2016_hittite]] is not cited in it" — the paragraph names Bachvarova; one `[[citekey]]` is missing | a claim of "applied" was never checked against the checklist; the one mechanical repair was left to a model |
+| echoes | achilles C12 (cold reader): "omits Ballesteros (2024) … the open ledger item S3 remains unaddressed"; R8 (rules) the same pair as S3; mycenaean S21 "the reciprocal checklist pair" of S20 | the cold reader read every reviewer's ledger entries; nothing kept one finding per pair |
+| severity | most missing-critique MAJORs quote a claim the article already hedges or labels ("Chang et al. (2015, contested) …", "Kaniewski … (contested — challenged by Middleton, 2020)") | MAJOR whenever a critique was missing, whatever the article said |
+
+**Design (as built).**
+
+1. **The checklist up front, bearing pairs only** (`core.Critiques`). A pair's *criticised* side is the target of
+   challenges/refutes/updates and the SOURCE of superseded_by (stored on the older work); a pair *bears* when it is
+   open and the article cites the criticised work. The skeptic's brief shows every bearing pair (`toRule`: once
+   per two sources, reciprocal pairs collapsed; `agents.review.critique-pairs` now 40) and names the rest as
+   background, owing no ruling. `Handlers.openCritiques` (the review manager's pair count) counts bearing pairs.
+   The fixer gets the work as `<critique-work>`: for each missing-critique finding the paragraph its critique goes
+   in (the one its quote is in, when that cites the criticised work), flagged when it was found not fixed twice
+   or more. The compile writer's evidence model says the same rule (both sources of an edge in one paragraph).
+2. **The final pass verifies.** The confirming panel's user message says so; it owes no rulings; and code
+   (`ReviewLedger.deferFinal`) marks every MAJOR it raises *new* (an entry the ledger did not have, or an open
+   minor raised to MAJOR) `deferred = <run>` unless `ReviewArticle.finalRegression` says the run caused it: a
+   pair answered in the run's first snapshot and open now, or a factual error (`FactualKinds`, or `synth`) quoted
+   from text the run changed. A reopened, re-raised or escalated finding is not new. Deferred entries stay open
+   and MAJOR in the ledger and the backlog item ("[new in the final pass: deferred to the next run]"); the run's
+   `merge-F` lists them in `deferred` and its verdict counts them as minor; the log line says how many. The next
+   run's pass 1 hands them to the fixer like any open MAJOR.
+3. **Co-citation in code** (`core.CritiquePairing`, lint `article-critique-pairing`). A paragraph that cites one
+   side of a disagreement edge and names the other side's author (surnames from the authors, matched to the
+   citekey's leading name: "Drews Robert" → Drews, Bjørn → `bjrn2024_…`) without citing it is a hit. It is
+   MECHANICAL when the name points at one work the article already cites elsewhere: that work's year beside a
+   mention or no other year, no other candidate or cited work sharing the name. `lint --rule
+   article-critique-pairing --fix` appends the missing citekey to the paragraph's last citation (one patch per
+   article, guarded by its token); the review pipeline applies the same repair to every fixer revision, and the
+   findings whose pair it answers are `repaired` — claimed for their reviewer's re-check. A non-mechanical hit is
+   a line of `<critique-work>`. Code never brings in a source the article cites nowhere (a new source brings its
+   own critiques, and nobody read its record).
+4. **The regression guard** (`ReviewLedger.guard`). Before a revision is written: a finding the ledger closed as
+   fixed must stay fixed — its pair still answered, its problem text not written back, the citations its fix
+   rests on still cited. An answer that reopens one is sent back ("your edits reopen a closed finding — S1
+   (closed): …"); on the last attempt the edits that reopen it are dropped, one at a time from the last. A
+   re-check (or a full panel's check) that calls a missing critique fixed while its pair still bears is recorded
+   NOT fixed (`holdPairChecks`), with that as the note.
+5. **Severity calibration** (`ReviewArticle.checkCritiques`, rules reviewer and skeptic alike). A missing-critique
+   MAJOR stands only when its pair is an open pair of the checklist (the edge is recorded), the article cites
+   the criticised work, and the finding's quote is the article's sentence stating the claim, with no hedge or
+   contest word in the claim's own clause and no status label on the criticised work (`qualifiedClaim`: "Gray
+   and Atkinson (2003) dated … [[gray2003_language]], and Bouckaert et al. (2012, contested)" — the label is
+   Bouckaert's, so Gray and Atkinson's claim is unqualified). Anything else is recorded minor, with why: no
+   recorded edge (a proposed one waits for approval and joins the next run's checklist — no longer MAJOR in pass
+   1), a work the article does not cite, a qualified claim, a quote not in the body (sent back on a full panel's
+   skeptic). One missing-critique finding per pair and pass (`onePerPair`): the skeptic's is kept, a reciprocal
+   or another reviewer's echo dropped with a warning; the cold reader reads only its own ledger findings.
+6. **The fixer cannot skip silently.** A missing critique listed as applied whose pair is still unanswered after
+   the revision (and the repair) is sent back; on the last attempt it is not claimed. A citation the revision
+   brings in whose critique no paragraph discusses is sent back (cite the critic, or `setAside` the pair with no
+   `id`). Every open finding the fixer neither applied, rejected, declined nor set aside goes into `Fix.notFixed`
+   with why; the ledger records it (`notFixed`, `notFixedCount`), and an entry found not fixed twice is flagged in
+   the next fixer's `<critique-work>`.
+
+**The effect on the eight MAJOR articles**, replaying the deterministic parts on their current bodies and ledgers
+(a temporary suite over a read-only export; no model): of the 32 open MAJORs, 13 are new in a final pass and
+would be deferred; 11 are recorded minor by the calibration (9 on a claim the article already qualifies, 1 on a
+work it does not cite, 1 reciprocal of a deferred one); 3 (achilles S4, S5, S6) are answered by the pairing
+repair; 5 remain: achilles R8 and C12 (the Ballesteros critique the article never names: R8 is dropped as the
+skeptic's echo by the next pass, the fixer is told where it goes), gods_and_migrations S24 and S32 (the open
+`chang2015>gray2003_language` and `phylo2026_validity>gray2003_language`, Gray and Atkinson stated unqualified),
+persephone_hades_origins C25 (a reader lost, reopened). Five of the eight (mycenaean, etruscan_religion,
+levant_near_east, aegean, creation_cosmogony) would have ended below MAJOR, each with its deferred findings in its
+backlog item. The repair would add 20 citations across the eight bodies (11 in achilles_origins, most in its
+etymology table).
+
+**The review manager.** Unchanged code. Deferred entries are open MAJORs in the ledger, so `ReviewFacts.openMajors`
+counts them and the manager runs the article again (the next run fixes them); `openCritiques` now counts bearing
+pairs, so omission churn compares the pairs a run owes something.
+
+**Prompt size** (`PromptBudget`, fixed overhead a turn): skeptic 26,513 → 27,951 (+1,438: the severity rule, the
+final pass), fixer 28,910 → 30,120 (+1,210: code's co-citation check and repair, brought citations, closed
+findings), rules reviewer 26,169 → 26,620 (+451), cold reader 7,587 (its ledger is its own); each includes the
+guide's new pairing line (+101). `<critique-work>` is data, one line per finding.
+
+**Deploying.** The review pipeline's version is now 6 (`Merged.deferred`, `Fix.repaired/repairs/notFixed/
+pairsAside`, `Entry.notFixedCount/deferred` — all defaulted, so stored ledgers decode): a run started on version
+5 and paused cannot resume; start it again. No migration.
+
 ## 7. Expected saving per article
 
 From §5, the old flow: full panel 609k + fixer 1,128k + full panel 616k = **2.35M**.

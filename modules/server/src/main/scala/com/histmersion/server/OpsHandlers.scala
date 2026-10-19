@@ -5,7 +5,7 @@ import com.histmersion.core.Lint.*
 import com.histmersion.core.Query.*
 import com.histmersion.core.Queue.*
 import com.histmersion.core.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{Geocoder, GoalLinkRepo, GoalRepo, LintRepo, PlaceReviewRepo, PointAreaRepo, QueryRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{ArticleRepo, Geocoder, GoalLinkRepo, GoalRepo, LintRepo, PlaceReviewRepo, PointAreaRepo, QueryRepo, QueueRepo, SourceRepo}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the
   * read-only query (plan §5.2). Reached by REST through [[OpsRoutes]] and by MCP through
@@ -83,6 +83,15 @@ final class OpsHandlers(deps: Deps):
     val pointAreas =
       if !asked(PlaceImportedPointArea) then None
       else Some(PointAreaRepo.remove(ds, pointAreaSettings))
+    // each article's paragraphs that name a disagreement partner they do not cite: the citekey
+    // appended, one patch per article guarded by its token (a concurrent writer wins; the next lint
+    // lists it again)
+    val paired =
+      if !asked(ArticleCritiquePairing) then None
+      else
+        val rs = LintRepo.pairingRepairs(ds)
+        val written = rs.filter(r => ArticleRepo.patch(ds, r.slug, ArticlePatch(body = Some(r.body), ifUpdatedAt = r.updatedAt)).isRight)
+        Some((written.size, written.map(_.applied.size).sum))
     LintFixResult(
       applied = List(
         s"resolve-edges: $resolved edge target(s) rewritten",
@@ -91,7 +100,8 @@ final class OpsHandlers(deps: Deps):
         placed.map(n => s"$FindingUnplaced: $n finding(s) given the point of the place they name").toList ++
         reviewed.map((r, m) => s"$PlaceKindRule: $r place(s) reclassified, $m merged into their replacement").toList ++
         relocated.map(n => s"$PlaceGridPoint: $n place(s) moved from a grid square's centre to their linked record's point").toList ++
-        pointAreas.map(r => PointAreas.fixed(r.removed, r.remaining, r.findings, r.sources)).toList,
+        pointAreas.map(r => PointAreas.fixed(r.removed, r.remaining, r.findings, r.sources)).toList ++
+        paired.map((a, n) => s"$ArticleCritiquePairing: $n citation(s) added to the paragraphs that name them, in $a article(s)").toList,
       edgesResolved = resolved,
       sourcesReindexed = r.sources,
       chunksWritten = r.chunks,
