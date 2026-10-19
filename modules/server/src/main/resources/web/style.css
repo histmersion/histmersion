@@ -378,6 +378,11 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .terrain-missing.leaflet-container { background:var(--bg); }
 /* the terrain style's own background (its sea) beyond the extract, set by TerrainMap as --terrain-bg */
 .terrain-on.leaflet-container { background:var(--terrain-bg, var(--bg)); }
+/* the local map's credits are long (OpenStreetMap, Natural Earth, Protomaps, Mapterhorn): one line that
+   starts with © OpenStreetMap, so it never covers the markers along the map's foot; all of it on hover */
+.terrain-on .leaflet-control-attribution { max-width:min(60%, 520px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.terrain-on .leaflet-control-attribution:hover,
+.terrain-on .leaflet-control-attribution:focus-within { max-width:none; white-space:normal; }
 .terrain-notice { background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px; color:var(--ink);
   font-size:var(--fs-sm); line-height:1.35; padding:var(--space-3) var(--space-4); max-width:300px; }
 .terrain-notice a { color:var(--accent); white-space:nowrap; }
