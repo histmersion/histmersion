@@ -150,6 +150,10 @@ const shots = {
   'home-dark': { local: { layers: allLayers, baseMap: '["dark"]' }, hash: 'from=-1700&to=-1000',
     run: async (page, shoot) => { await view(page, 36.6, 29.5, 5); await shoot(); } },
 
+  // The same view on the muted base map (OpenStreetMap's Humanitarian style, from OSM France).
+  'home-muted': { local: { layers: allLayers, baseMap: '["muted"]' }, hash: 'from=-1700&to=-1000',
+    run: async (page, shoot) => { await view(page, 36.6, 29.5, 5); await shoot(); } },
+
   // The phone layout: the map first, the controls on buttons, the list as a sheet.
   'phone': { viewport: phone, local: { layers: '["events","media"]', sheet: '["half"]' }, hash: 'from=-1700&to=-1000',
     run: async (page, shoot) => { await view(page, 36.0, 28.5, 5); await shoot(); } },
@@ -251,6 +255,39 @@ const shots = {
       await settle(page);
       await shoot();
     } },
+
+  // The welcome page's tour: one source on the map — the title filter leaves only its findings, one
+  // finding's popup is open, and its window sits beside them.
+  'tour-source-map': { hash: 'title=Environmental%20Roots&open=source:kaniewski2013_environmental&from=-1700&to=-1000',
+    local: { layers: '["boundaries"]' },
+    run: async (page, shoot) => {
+      await placeWindow(page, { x: 8, y: 8, w: 560, h: 884 });
+      await view(page, 33.73, 31.54, 7);
+      const m = await marker(page, /Environmental Roots.*1200 BCE–850 BCE.*open this finding/);
+      await page.mouse.click(m.x, m.y);
+      await page.evaluate(() => window.getSelection()?.removeAllRanges());
+      await page.waitForTimeout(600);
+      await settle(page);
+      await shoot();
+    } },
+
+  // The welcome page's tour: an article's citation hovered — the cited source's card, with its status.
+  'tour-article-cite': { hash: `open=article:${ARTICLE}&from=-1300&to=-1100`,
+    run: async (page, shoot) => {
+      const win = await placeWindow(page, { x: 8, y: 8, w: 760, h: 700 });
+      const content = win.locator('.wm-content');
+      const frame = await content.locator('iframe').count() ? content.frameLocator('iframe') : content;
+      await frame.getByText('Kaniewski et al. 2013', { exact: true }).first().hover();
+      await page.waitForTimeout(1200);
+      await settle(page);
+      await shoot({ x: 0, y: 0, width: 780, height: 808 });
+    } },
+
+  // A source's and an article's own pages (the windows' "open in new tab"): the same content, full page.
+  'source-page': { path: '/source/kaniewski2013_environmental', viewport: { width: 960, height: 760 },
+    run: async (page, shoot) => { await shoot(); } },
+  'article-page': { path: `/article/${ARTICLE}`, viewport: { width: 960, height: 760 },
+    run: async (page, shoot) => { await shoot(); } },
 
   // An article: its text with its citations, and the generated coverage sections at its end.
   'article': { hash: `open=article:${ARTICLE}&from=-1300&to=-1100`,
