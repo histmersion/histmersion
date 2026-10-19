@@ -32,9 +32,15 @@ server, and everything else works offline.
 ### The terrain map
 
 **Terrain (no modern features)** shows the land itself — relief, coastlines, seas, lakes, rivers
-and a light tint for forest, grassland, scrub, bare ground and ice — and nothing people built: no
-roads, towns, place names, borders or buildings. The markers, names and state outlines of your
-own corpus are then the only human geography on the map.
+and a light tint for forest, grassland, scrub, bare ground and ice, with the names of the seas,
+mountain ranges, deserts, lakes and rivers — and nothing people built: no roads, towns, place
+names, borders or buildings. The markers, names and state outlines of your own corpus are then the
+only human geography on the map.
+
+It comes in several **styles**, each an entry of the base-map menu — Terrain, Terrain + vegetation,
+Relief only and Parchment — and the **names** button beside the menu switches the physical names off
+and on. You can change the styles or add your own without restarting anything:
+[Customising the terrain map](../how-to/terrain-styles.md).
 
 <figure markdown>
   ![The Aegean on the terrain map: shaded mountains, the sea and the islands, no modern roads or towns, the notice in the corner](../assets/screenshots/home-terrain.png){ loading=lazy }

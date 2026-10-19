@@ -140,6 +140,21 @@ async function marker(page, re) {
   return hit;
 }
 
+/** A terrain-style shot: the notice up, the Aegean at zoom 7, the tiles and names drawn. */
+async function terrainShot(page, shoot) {
+  await page.locator('.terrain-notice').waitFor();
+  await view(page, 38.0, 25.2, 7);
+  // the relief, shaded once its elevation tiles arrived (Relief only, Parchment and Terrain all have one)
+  await page.waitForFunction(() => [...document.querySelectorAll('.terrain-relief canvas')].some(c => {
+    if (!c.width) return false;
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let n = 0; for (let i = 3; i < d.length; i += 16) if (d[i] > 0) n++;
+    return n > d.length / 16 * 0.05;
+  }), null, { timeout: 30000 });
+  await settle(page, 2500);
+  await shoot();
+}
+
 // ── the shots ────────────────────────────────────────────────────────────────────────────────────
 // Each: name → how to take it. `shoot(page, clip?)` writes <name>.png.
 const shots = {
@@ -163,6 +178,15 @@ const shots = {
       await settle(page, 1500);
       await shoot();
     } },
+
+  // Customising the terrain map (how-to/terrain-styles.md): three named styles over the same view, the
+  // physical names on — the Aegean fixture with its labels.pmtiles, nothing of the corpus on top.
+  'terrain-labels': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["terrain"]' },
+    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
+  'terrain-parchment': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["parchment"]' },
+    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
+  'terrain-relief': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["relief"]' },
+    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
 
   // The phone layout: the map first, the controls on buttons, the list as a sheet.
   'phone': { viewport: phone, local: { layers: '["events","media"]', sheet: '["half"]' }, hash: 'from=-1700&to=-1000',

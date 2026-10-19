@@ -375,7 +375,9 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* `Terrain` base map (TerrainMap): outside the downloaded region there is no tile — the page's own
    background; while it is not downloaded, the standard tiles stand in, dimmed like `Dark` */
 .terrain-missing .leaflet-tile-pane { filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
-.terrain-missing.leaflet-container, .terrain-on.leaflet-container { background:var(--bg); }
+.terrain-missing.leaflet-container { background:var(--bg); }
+/* the terrain style's own background (its sea) beyond the extract, set by TerrainMap as --terrain-bg */
+.terrain-on.leaflet-container { background:var(--terrain-bg, var(--bg)); }
 .terrain-notice { background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px; color:var(--ink);
   font-size:var(--fs-sm); line-height:1.35; padding:var(--space-3) var(--space-4); max-width:300px; }
 .terrain-notice a { color:var(--accent); white-space:nowrap; }
