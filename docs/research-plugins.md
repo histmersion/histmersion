@@ -1118,6 +1118,22 @@ option). No master password is stored:
 - `keepassxc` — `keepassxc-cli show -q -a <attr> [-k <key-file>] [--no-password] <database> <entry>`;
   `password` (a `Secret`, e.g. `env:`) is written to the tool's stdin; without one `--no-password` is
   passed, and a database that needs a password reports locked.
+  **YubiKey (2026-10-19).** `yubikey` = `"<slot>[:<serial>]"` or a list of them (`["2:12345678",
+  "2:87654321", "1"]`; a string may also separate several with commas), default `null`: each attempt
+  adds `-y <slot>[:<serial>]` beside the password and/or key file (no password still means
+  `--no-password`, so a YubiKey-only database opens). Malformed entries fail registration. If `ykman`
+  is found (`ykman = "ykman"` by default; a bare name missing from the PATH just turns detection off, a
+  wrong full path is an error, `""` = off), `ykman list --serials` runs first and only the connected
+  keys are tried: an entry with a serial when that serial is listed, one without when any key is; none
+  connected fails at once without running `keepassxc-cli`. Without detection every entry is tried in
+  order. A KeePassXC message saying the key is absent ("Could not find hardware key…") or the
+  challenge-response failed (slot not configured, USB error) moves to the next entry; invalid
+  credentials, a missing entry, KeePassXC's own touch time-out, an unknown error or our per-attempt
+  time-out (`yubikey-timeout-seconds`, 30) stop at once — another key cannot fix a wrong password, and
+  an unanswered touch would only wait again. Each attempt logs "touch your YubiKey" at info. The error
+  names every entry: tried and why, or not connected. The entry that opened the database last is tried
+  first next time. `keepassxc-cli` 2.7 has no way to list keys, so detection is `ykman` only. Tests
+  run fake `keepassxc-cli` and `ykman` scripts; `smoke.sh` checks a two-key list natively.
 - `1password` — `op read op://… [--account a]`; `service-account-token` (a `Secret`) becomes
   `OP_SERVICE_ACCOUNT_TOKEN` for `op` only; otherwise the desktop app signs `op` in.
 - `bitwarden` — `bw get <field> <item> --nointeraction` with `BW_SESSION` from `session` (a `Secret`);
