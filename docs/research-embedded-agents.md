@@ -613,7 +613,7 @@ run the full tool loop with a typed answer, and the binary grows by about 10%.
 
 **Built**
 
-- **Config** (`agents { … }` in `reference.conf`, see the README table). `enabled = false` by default:
+- **Config** (`agents { … }` in `reference.conf`, see the configuration reference, `docs/user-guide/reference/configuration.md`). `enabled = false` by default:
   every agent operation except `GET /api/agents/models` refuses, and no run pool starts.
   - Providers: `anthropic`, `openai` and `local`, each with a base URL, a key from the environment, a
     `strict-tools` flag and a timeout.
