@@ -50,9 +50,11 @@ Given the `slug`, the exported markdown path, and the guide path:
 4. **Missing depth.** Where the article asserts a conclusion, does it give the evidence type and
    the reasoning? Name places where it does not, and which source supplies the reasoning.
 5. **Missing sources and critiques.** Run the topic search and the status search. Sources that
-   plainly belong and are not cited or excluded are findings; **critiques of cited sources that the
-   article omits are hard-fail MAJOR** — rule on each open pair of its critique checklist
-   (*Disagreements checked*): a `missing-critique` MAJOR naming the pair, or not material with a reason.
+   plainly belong and are not cited or excluded are findings; **a critique of a cited source that the
+   article omits is MAJOR when the article states the criticised claim unqualified** (or the critique
+   would change its conclusion), minor when the article already qualifies the claim — rule on each
+   open pair of its critique checklist (*Disagreements checked*): a `missing-critique` finding naming
+   the pair, its `quote` the article's sentence that states the claim, or not material with a reason.
    When the article records a filter
    (`histmersion article coverage <slug>`), its Not used list is generated from it with a stored reason
    per source: a source dismissed there ("nothing on X") whose record discusses X is a finding too —
@@ -77,6 +79,10 @@ the record's sentence, or declined — and the lessons learned.
   as a new finding.
 - A **closed** finding stays closed. Raise it again only when the text has regressed (quote the
   regression), or — for a rejected one — with new evidence that answers the record's sentence.
+
+**The final pass.** A run ends with a full panel that confirms what it fixed. A MAJOR that pass raises
+for the first time, and that the run's own edits did not cause, is recorded for the NEXT run (it does
+not decide this one): spend that pass on what the run changed and on the findings it closed.
 
 **Verification pass.** After a fix you may be asked only to verify: you get the findings of yours the
 fixer claims to have fixed (`<findings-to-check>`), the **edited passages** (`<edited-passages>`: each

@@ -13,7 +13,16 @@
   find is dropped, so the fixer never sees it. A finding with verified evidence is acted on; one
   without is re-checked, and one the fixer cannot confirm is rejected.
 - **The critique checklist** (`<critique-checklist>`): for EACH open pair shown in full, a
-  `missing-critique` MAJOR with `pair` set to it when the critique bears on a claim the article makes,
+  `missing-critique` finding with `pair` set to it when the critique bears on a claim the article makes,
   else `notMaterial` (`{pair, reason}`: one sentence quoting what the article cites the source for;
-  code stores it). A missing-critique MAJOR must name an open pair — with no edge yet, propose the
-  edge and name that pair. Challenge a wrong stored reason as a finding.
+  code stores it). Pairs on a work the article does not cite are listed by name only: no ruling is
+  owed. Challenge a wrong stored reason as a finding.
+- **Severity of a missing critique** (code holds you to it): MAJOR only when the pair is a RECORDED
+  edge (on the checklist) AND the article states the criticised claim unqualified — or the critique
+  would change the article's conclusion. `quote` is then that sentence of the article, copied exactly,
+  with no hedge ("may", "probably", "disputed", "contested"…) in it. Otherwise it is minor: a claim
+  the article already qualifies, a work it does not cite, a disagreement with no edge yet (propose the
+  edge instead; the next run's checklist has it once approved). One finding per pair.
+- **The final pass verifies.** When the brief says it is the run's final pass, check what the run
+  fixed and the passages it changed; a MAJOR you raise that is new — not a regression of the run's
+  edits — is recorded for the next run, not this one.

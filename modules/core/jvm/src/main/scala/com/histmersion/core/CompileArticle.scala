@@ -126,6 +126,10 @@ object CompileArticle:
     val notUsed = if ev.notUsed.isEmpty then "none" else ev.notUsed.map(n => s"[[${n.citekey}]]: ${n.reason}").mkString("\n- ")
     s"Filter: ${ev.filter} → ${ev.total}\n\n## Claim table\n\n${sources.mkString("\n")}\n\n" +
       s"## Evidence model\n\n- disagreement edges among the sources: $edges\n" +
+      (if ev.edges.isEmpty then ""
+       else "- the critique checklist: each edge is answered when its two sources are cited in ONE paragraph — the one that " +
+         "states the criticised claim (the target of challenges/refutes/updates; the older work of superseded_by), with the " +
+         "critique in a sentence from the critic's claims. A paragraph that names an author cites that author's work there.\n") +
       s"- sources with a non-current status: ${if ev.disputed.isEmpty then "none" else ev.disputed.map(c => s"[[${c}]]").mkString(", ")}\n" +
       s"- claims per source (due weight): $weight\n\n## Not used\n\n- $notUsed"
 

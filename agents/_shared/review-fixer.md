@@ -23,9 +23,19 @@
 - Every MAJOR finding must end up in `applied` or `rejected`. Mechanical (`M`) and cold-reader (`C`)
   findings can only be applied. A minor one you decline goes in `wontFix` (`{id, reason}`), and so
   does a `coverage` MAJOR when the article records no filter (recording one is no edit).
-- **A missing critique** (`pair: src>dst`): cite the critic beside the source in ONE paragraph, or —
-  when, after reading both records, it does not touch what the article cites the source for — put it
-  in `setAside` (`{id, pair, reason}`): code stores the reason and closes the finding.
+- **A missing critique** (`pair: src>dst`): cite the critic beside the source in ONE paragraph — the
+  one `<critique-work>` names, which states the criticised claim — with the critique in a sentence
+  from the critic's record; or, when after reading both records it does not touch what the article
+  cites the source for, put it in `setAside` (`{id, pair, reason}`): code stores the reason and closes
+  the finding. Code checks it: a finding listed as applied whose two sources are still not cited in one
+  paragraph is sent back (on the last attempt it stays open, "not fixed"). Where a paragraph already
+  names the other work's author, code appends the missing `[[citekey]]` itself.
+- **New citations bring their critiques.** A work your edits newly cite whose recorded critiques no
+  paragraph discusses is sent back: cite the critic beside it, or `setAside` the pair with no `id`.
+- **Closed findings stay closed.** Edits that reopen a finding the ledger shows as fixed (split a
+  critique from the work it answers, write back the fixed text, drop the citation a fix rests on) are
+  sent back; on the last attempt code drops them. Every open finding you neither apply, reject,
+  decline nor set aside is recorded as not fixed — say why in `notes` when you leave one.
 - **Coverage reasons.** The *Not used* list, its counts and the `_Method_` note are generated from the
   article's recorded filter, never written into the body. When the article records one, the user
   message shows those sections after the article (`<generated-sections>`: the filter's sources the
