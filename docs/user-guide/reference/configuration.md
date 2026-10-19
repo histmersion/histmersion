@@ -75,6 +75,24 @@ applied because of an error. With `config.watch = true` the server reloads by it
 `config.watch-debounce-ms` after the file last changed (off by default; on macOS the JDK's file watcher
 polls, so a change can take a few seconds to be seen).
 
+## Blocking more hosts
+
+The landing-page step of the acquisition chain (`oa-landing`) never reads a page from a host in
+`acquire.landing.deny-hosts`, nor a PDF such a page names: the shipped list names publishers and
+sites that are not repositories.
+To block further sites, list them in `deny-hosts-extra`, which is **added** to that list. Setting
+`deny-hosts` itself replaces the whole list, so the shipped publishers would no longer be denied:
+
+```hocon
+histmersion {
+  # hosts this install must never fetch from (each entry also matches its subdomains)
+  acquire.landing.deny-hosts-extra = "blocked.example,another.example"
+}
+```
+
+Then run `histmersion config reload`. The same value can come from
+`HISTMERSION_ACQUIRE_LANDING_DENY_HOSTS_EXTRA`.
+
 ## Every setting
 
 The settings of backups and portable bundles are listed with them, in
@@ -169,6 +187,7 @@ The settings of backups and portable bundles are listed with them, in
 | `acquire.zenodo.url` · `acquire.datacite.url` | `HISTMERSION_ACQUIRE_ZENODO_URL` · `..._DATACITE_URL` | `https://zenodo.org` · `https://api.datacite.org` | the landing-page step (#1580): Zenodo's `/api/records/<id>` names an open record's PDF files (MD5-checked); DataCite's `/dois/<doi>` says where a DataCite DOI (a repository's thesis, report or chapter) resolves — a `doi.org` link is never followed blind |
 | `acquire.landing.enabled` · `.max-pages` | `HISTMERSION_ACQUIRE_LANDING_ENABLED` · `_MAX_PAGES` | `true` · `4` | resolve repository landing pages one step, reading at most this many per work: a Zenodo record by its API, any other page for its `citation_pdf_url` meta tag — only on a repository, never on a publisher. Bot protection or a 403 is no copy (the work goes to the acquire queue) |
 | `acquire.landing.allow-hosts` · `.deny-hosts` · `.deny-host-words` · `.academic-host-words` · `.generators` · `.deny-generators` | `HISTMERSION_ACQUIRE_LANDING_*` | see `reference.conf` | what is a repository's page: an OA index says so (OpenAlex `source.type`, Unpaywall `host_type`), an allowed host, an academic host (`.edu`, `.ac.<cc>`, a label such as `repository`, `eprints`, `pure`, `uni-…`) or a repository platform's `generator` tag (DSpace, EPrints, Pure, Invenio, …). A denied host (publishers, academia.edu, ResearchGate), a label such as `press` or `journals` (unless allowed) or a journal platform's generator (Open Journal Systems) is never read, whatever else says so; a host entry matches its subdomains |
+| `acquire.landing.deny-hosts-extra` | `HISTMERSION_ACQUIRE_LANDING_DENY_HOSTS_EXTRA` | *(empty)* | more hosts to deny, **added** to `deny-hosts` (comma-separated, each matching its subdomains). Use this to block further sites: setting `deny-hosts` itself replaces the whole shipped list, publishers included. See *Blocking more hosts* below |
 | `acquire.public-user-agent` | `HISTMERSION_ACQUIRE_PUBLIC_USER_AGENT` | `Histmersion (+https://github.com/MateuszKubuszok/histmersion)` | what the PMC hosts see: the project and its repository, **no e-mail and no personal data** |
 | `acquire.user-agent` · `.timeout-seconds` · `.spool-dir` | `HISTMERSION_ACQUIRE_*` | `histmersion/0.1` · `60` · *(tmp)* | HTTP identity (an e-mail in it is dropped) and budget, and where a fetched PDF waits for the converter; a 429/502/503/504 waits for its Retry-After up to `media.max-retry-after-seconds` |
 | `acquire.tls.system-trust` | `HISTMERSION_ACQUIRE_TLS_SYSTEM_TRUST` | `false` | **opt-in.** Acquisition requests also trust the operating system's roots — macOS: the system keychains (`SystemRootCertificates`, `/Library/Keychains/System.keychain`), read with `security find-certificate -a -p`, which works in the native image (the JDK's `KeychainStore-ROOT` does not: its JNI library is missing there); Linux: the distribution's CA bundle. For a repository whose root the JDK lacks — `archiv.ub.uni-heidelberg.de` chains to HARICA TLS RSA Root CA 2021. Roots are only ADDED to the JDK's; every chain and host name is still verified. The start-up log names how many roots each source gave |

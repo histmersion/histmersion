@@ -24,19 +24,22 @@ final case class RetractionWatchConfig(csvUrl: String) derives ConfigReader
 /** Repository landing pages (#1580, [[RepositoryLanding]]): whether the fetch resolves them one step,
   * how many it reads per work, and the host and platform lists that decide what is a repository (each
   * comma-separated; a host matches itself and its subdomains). `denyHosts` — publishers, and sites
-  * that are not repositories — wins over every other signal. */
+  * that are not repositories — wins over every other signal; `denyHostsExtra` is added to it, so a
+  * user's config can deny more hosts without restating the shipped list. */
 final case class LandingConfig(
     enabled: Boolean,
     maxPages: Int,
     allowHosts: String,
     denyHosts: String,
+    denyHostsExtra: String,
     academicHostWords: String,
     generators: String,
     denyGenerators: String,
     denyHostWords: String
 ) derives ConfigReader:
   def rules: RepositoryLanding.Rules =
-    RepositoryLanding.Rules(LandingConfig.split(allowHosts), LandingConfig.split(denyHosts),
+    RepositoryLanding.Rules(LandingConfig.split(allowHosts),
+      (LandingConfig.split(denyHosts) ++ LandingConfig.split(denyHostsExtra)).distinct,
       LandingConfig.split(academicHostWords), LandingConfig.split(generators), LandingConfig.split(denyGenerators),
       LandingConfig.split(denyHostWords))
 
