@@ -36,23 +36,30 @@ object BasemapCmd:
       "Download the terrain base map (coast, water, rivers, land cover; relief; physical names) as a server job — resumable; " +
         "refused when the disk would be left with less than basemap.min-free-gb") {
     (Opts.option[String]("layer", "vector, terrain, labels or all (default all)").withDefault("all"),
-      Opts.option[Int]("max-zoom", "Deepest zoom of the vector layer (default basemap.vector.max-zoom)").orNone,
+      Opts.option[Int]("max-zoom", "Deepest zoom of the vector layer (default basemap.vector.max-zoom; with --layer terrain alone, of the relief)").orNone,
       Opts.option[Int]("terrain-max-zoom", "Deepest zoom of the relief, 512-pixel tiles (default basemap.terrain.max-zoom)").orNone,
       Opts.option[String]("bbox", "Region as minLon,minLat,maxLon,maxLat (default basemap.bbox)").orNone,
+      Opts.option[String]("focus", "Keep the relief of a region deeper than the extract, to basemap.terrain.on-demand.max-zoom: " +
+        "a name of basemap.terrain.focus-regions (aegean, anatolia, levant, mesopotamia, nile-delta, argolid) or a new one with --bbox").orNone,
       Opts.flag("dry-run", "Read only the directories and report what the download would take").orFalse,
       Opts.flag("keep-all", "Store the vector layer unfiltered — roads, buildings and places too (basemap.vector.drop not applied)").orFalse,
       Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
-      .mapN { (layer, z, tz, bbox, dry, keepAll, noWait) => (c: Client) =>
-        c.basemapFetch(BasemapFetchQuery(layer, z, tz, bbox, dry, keepAll)).flatMap { j =>
+      .mapN { (layer, z, tz, bbox, focus, dry, keepAll, noWait) => (c: Client) =>
+        c.basemapFetch(BasemapFetchQuery(if focus.isDefined then "terrain" else layer, z, tz, bbox, dry, keepAll, focus)).flatMap { j =>
           println(s"base-map job `${j.id}` started: ${j.detail.flatMap(_.about).getOrElse("")} (`histmersion jobs` lists it)")
           if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
         }
       }
   }
 
-  private val rmCmd = Opts.subcommand("rm", "Remove the downloaded base-map files (and an unfinished download)") {
-    Opts.option[String]("layer", "vector, terrain, labels or all (default all)").withDefault("all").map { layer => (c: Client) =>
-      c.basemapRemove(layer).map(r => println(BasemapMarkdown.removed(r)))
+  private val rmCmd = Opts.subcommand("rm",
+      "Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache") {
+    (Opts.option[String]("layer", "vector, terrain, labels or all — all includes the focus regions and the relief cache " +
+        "(default all; none when only --focus or --cache is given)").orNone,
+      Opts.option[String]("focus", "A focus region's relief, by name, or all").orNone,
+      Opts.flag("cache", "The on-demand relief cache").orFalse).mapN { (layer, focus, cache) => (c: Client) =>
+      val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
+      c.basemapRemove(BasemapRemoveQuery(l, focus, cache)).map(r => println(BasemapMarkdown.removed(r)))
     }
   }
 

@@ -18,21 +18,24 @@ object BasemapApi:
   val status: PublicEndpoint[Unit, ApiError, BasemapStatus, Any] =
     base.get.out(jsonBody[BasemapStatus])
 
-  /** `POST /api/basemap/fetch?layer=&maxZoom=&terrainMaxZoom=&bbox=&dryRun=&keepAll=` — download the extracts
-    * (`keepAll`: the vector layer unfiltered, not even `basemap.vector.drop`)
+  /** `POST /api/basemap/fetch?layer=&maxZoom=&terrainMaxZoom=&bbox=&dryRun=&keepAll=&focus=` — download the extracts
+    * (`keepAll`: the vector layer unfiltered, not even `basemap.vector.drop`; `focus`: the relief of a named
+    * region — `basemap.terrain.focus-regions`, or `bbox` — from the extract's depth to the on-demand depth, kept apart)
     * as a background JOB (poll `GET /api/jobs/{id}`); resumable, refused when the disk would be left
     * with less than `basemap.min-free-gb`. A dry run reads only the directories and reports sizes. */
   val fetch: PublicEndpoint[BasemapFetchQuery, ApiError, JobInfo, Any] =
     endpoint.post.in("api" / "basemap" / "fetch")
       .in(query[String]("layer").default("all").and(query[Option[Int]]("maxZoom")).and(query[Option[Int]]("terrainMaxZoom"))
         .and(query[Option[String]]("bbox")).and(query[Boolean]("dryRun").default(false))
-        .and(query[Boolean]("keepAll").default(false)).mapTo[BasemapFetchQuery])
+        .and(query[Boolean]("keepAll").default(false)).and(query[Option[String]]("focus")).mapTo[BasemapFetchQuery])
       .errorOut(fetchErrors).out(jsonBody[JobInfo])
 
-  /** `DELETE /api/basemap?layer=vector|terrain|all` — remove the downloaded files (and an unfinished
-    * download's parts). */
-  val remove: PublicEndpoint[String, ApiError, BasemapRemoved, Any] =
-    endpoint.delete.in("api" / "basemap").in(query[String]("layer").default("all"))
+  /** `DELETE /api/basemap?layer=vector|terrain|labels|all|none&focus=<name>|all&cache=true` — remove the
+    * downloaded files (and an unfinished download's parts), a focus region's relief, the on-demand relief
+    * cache (`all` removes the focus regions and the cache too). */
+  val remove: PublicEndpoint[BasemapRemoveQuery, ApiError, BasemapRemoved, Any] =
+    endpoint.delete.in("api" / "basemap").in(query[String]("layer").default("all")
+        .and(query[Option[String]]("focus")).and(query[Boolean]("cache").default(false)).mapTo[BasemapRemoveQuery])
       .errorOut(fetchErrors).out(jsonBody[BasemapRemoved])
 
   /** `GET /api/basemap/{layer}/{z}/{x}/{y}[?layers=]` — one stored tile, as stored: a vector tile

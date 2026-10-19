@@ -47,7 +47,9 @@ object BasemapFetch:
       /** Requests the plan itself made (header, metadata, directories). */
       directoryRequests: Int,
       bbox: BBox,
-      maxZoom: Int):
+      maxZoom: Int,
+      /** The shallowest zoom planned (a focus region starts below the extract's depth). */
+      minZoom: Int = 0):
     def requestBytes: Long = requests.map(_._2).sum
 
   /** The politeness of the requests: the pause between two, the largest, and how much of a gap is
@@ -97,7 +99,8 @@ object BasemapFetch:
 
   // ── 1. the plan ────────────────────────────────────────────────────────────────────────────────
 
-  def plan(http: RangeHttp, source: Source, bbox: BBox, maxZoom: Int, pace: Pace, note: String => Unit): Either[String, Plan] =
+  def plan(http: RangeHttp, source: Source, bbox: BBox, maxZoom: Int, pace: Pace, note: String => Unit,
+      minZoom: Option[Int] = None): Either[String, Plan] =
     var requests = 0 // directory requests made, each after a pause
     def get(offset: Long, length: Long): Either[String, (Array[Byte], RemoteFile)] =
       if requests > 0 then pace.sleep(pace.gapMs)
@@ -118,14 +121,15 @@ object BasemapFetch:
                 .flatMap(b => io.circe.parser.parse(String(b, "UTF-8")).left.map(e => s"metadata is not JSON: ${e.getMessage}"))
       region = clip(bbox, h)
       top    = math.min(maxZoom, h.maxZoom)
-      ids    = wantedIds(region, h.minZoom, top)
-      _      = note(s"reading the directories of ${ids.length} tiles (zoom ${h.minZoom}–$top)")
+      low    = minZoom.fold(h.minZoom)(_.max(h.minZoom)).min(top)
+      ids    = wantedIds(region, low, top)
+      _      = note(s"reading the directories of ${ids.length} tiles (zoom $low–$top)")
       tiles <- resolve(root, ids, h, pace, get, 0)
     yield
       val sorted   = tiles.sortBy(_.id)
       val contents = sorted.map(t => (t.offset, t.length.toLong)).distinct.sortBy(_._1)
       Plan(source, h, meta, remote, sorted, coalesce(contents, pace.maxRequestBytes, pace.overfetch),
-        contents.map(_._2).sum, requests, region, top)
+        contents.map(_._2).sum, requests, region, top, low)
 
   /** The stored tiles of `ids` (sorted) under one directory: its runs, and the leaf directories it
     * points to — fetched in merged requests, as the tiles are — searched in turn. */
@@ -251,9 +255,9 @@ object BasemapFetch:
     * region. The writer fills in the offsets. */
   def localHeader(p: Plan): PmTiles.Header =
     val b = p.bbox
-    p.header.copy(minZoom = p.header.minZoom, maxZoom = p.maxZoom,
+    p.header.copy(minZoom = p.minZoom, maxZoom = p.maxZoom,
       minLon = b.minLon, minLat = b.minLat, maxLon = b.maxLon, maxLat = b.maxLat,
-      centerZoom = math.min(p.maxZoom, 5), centerLon = (b.minLon + b.maxLon) / 2, centerLat = (b.minLat + b.maxLat) / 2)
+      centerZoom = math.max(p.minZoom, math.min(p.maxZoom, 5)), centerLon = (b.minLon + b.maxLon) / 2, centerLat = (b.minLat + b.maxLat) / 2)
 
   /** The local archive's metadata: the source's, its `vector_layers` without the `dropped` ones, its
     * attribution replaced by `attribution`, and where and when it came from — and, for the vector

@@ -19,14 +19,26 @@ object BasemapMarkdown:
     }
     val table = ("| layer | what | size | zoom | region | source, fetched |" :: "|---|---|---|---|---|---|" :: rows).mkString("\n")
     val kept = s.layers.find(l => l.layer == BasemapLayer.Vector.wire && l.present).flatMap(_.kept)
+    val terrain = s.layers.find(_.layer == BasemapLayer.Terrain.wire)
+    val focus = terrain.toList.flatMap(_.focus).map(f =>
+      s"- focus region `${f.name}`: zoom ${f.minZoom}–${f.maxZoom}, ${f.bbox}, ${Backup.humanBytes(f.bytes)}${f.fetchedAt.fold("")(t => s", $t")}")
     val notes = List(
       kept.map(k => s"The vector layer keeps $k."),
+      terrain.flatMap(_.onDemand).map(onDemand),
+      Option.when(focus.nonEmpty)(("Relief kept deeper for:" :: focus).mkString("\n")),
       Some(s"Files: `${s.dir}` (${Backup.humanBytes(s.freeBytes)} free). The next fetch downloads `${s.bbox}` (basemap.bbox)."),
       s.running.map(r => s"A fetch is running ($r) — `histmersion jobs`."),
       Option.when(s.hints.nonEmpty)(s.hints.mkString(" ")),
       Option.when(s.layers.exists(_.present))("Credits: " + s.layers.filter(_.present).map(l => plain(l.attribution)).distinct.mkString(" · "))
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
+
+  /** The on-demand relief in a line: to what zoom, its cache, whether it is reachable. Pure. */
+  def onDemand(o: BasemapOnDemand): String =
+    if !o.enabled then "Relief deeper than the extract: off (basemap.terrain.on-demand.enabled)."
+    else s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
+      s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
+      o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
   /** The named styles (`histmersion basemap styles`): the menu's entries, where they came from, and
     * what was refused or ignored. */
