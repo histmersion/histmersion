@@ -28,6 +28,12 @@ histmersion agent approve <id> --note "checked against p. 212"
 histmersion agent reject <id> --note "the citing paper agrees, it does not challenge"
 ```
 
+<figure markdown="span">
+  ![The approvals window with decided ones shown too: an open proposal that molloy2022_there challenges kaniewski2013_environmental, with the evidence, the quoted sentence, a note field and approve and reject buttons; below it an approved proposal that manning2020_beyond challenges the same paper, with its quote, the person's note and the result, edge added](../assets/screenshots/approvals.png){ loading=lazy }
+  <figcaption>Two proposed disagreement links: one open, with the agent's evidence and the quote code found in
+  the record; one approved, with the note and what applying it did.</figcaption>
+</figure>
+
 An approved source change is applied through the ordinary `patch`. An approved plan or article lets
 the run that was waiting go on. A rejected one stays on record.
 

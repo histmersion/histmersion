@@ -15,6 +15,11 @@ Goals are useful without AI as a way to organise work: link the sources and arti
 to it and use it as a to-do list. With the built-in agents switched on, a goal is also what they
 work through.
 
+<figure markdown="span">
+  ![A goal's window: status seeding, The Late Bronze Age collapse, its notes, slug, tags and regions; the Plan button; the linked article and query; a form to link more; and its schedules, a weekly currency check whose watcher is paused](../assets/screenshots/goal.png){ loading=lazy }
+  <figcaption>A goal's window: its status and notes, what is linked to it, its plan, and its schedules.</figcaption>
+</figure>
+
 ## Creating a goal
 
 On the web page, open **research goals** in the toolbar and use **New research area**: a title,

@@ -11,7 +11,15 @@ The stored file is the provider's own web-sized copy; the original stays with th
 
 ## Seeing them
 
-Switch on the pictures layer on the map, or open a place's or an event's card. From the command line:
+Switch on the pictures layer on the map, or open a place's or an event's card.
+
+<figure markdown="span">
+  ![A picture on the map of Cyprus, opened: a photograph of a small striped Mycenaean stirrup jar, with its credit line naming The Cleveland Museum of Art and CC0, its licence, its kind and years, and its caption](../assets/screenshots/media.png){ loading=lazy }
+  <figcaption>A museum picture opened from the pictures layer: the credit line in the provider's own form, the
+  licence (CC0), the years and the caption, under the picture.</figcaption>
+</figure>
+
+From the command line:
 
 ```bash
 histmersion media list --place <place-id>          # pictures of one place, with licence and credit

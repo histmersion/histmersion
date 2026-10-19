@@ -15,6 +15,11 @@ Open <http://localhost:8000> in your browser. On a fresh install the map shows p
 gazetteer once the first-run import has finished, and the timeline offers period presets. There are
 no sources yet. [The web page](../exploring/web-ui.md) explains every part of it.
 
+<figure markdown="span">
+  ![The web page with a small collection loaded: filters and timeline at the top, the map of the eastern Mediterranean with markers and state outlines, the list of sources on the right](../assets/screenshots/home-light.png){ loading=lazy }
+  <figcaption>The same page once a collection is in: here twelve open-access papers on the Late Bronze Age.</figcaption>
+</figure>
+
 ## 3. Bring in a first source
 
 By DOI (a paper's permanent identifier) — Histmersion looks for a legal open-access copy, reads it,
@@ -45,6 +50,12 @@ histmersion passages author2020_short "Hittite" # every passage that says "Hitti
 ```
 
 On the web page, search for it in the sources list and click it.
+
+<figure markdown="span">
+  ![A source's window scrolled to its findings: each claim with its confidence, place and years](../assets/screenshots/source-findings.png){ loading=lazy }
+  <figcaption>A source's window: what an enriched source looks like — its findings, each with a place and a
+  date (step 5).</figcaption>
+</figure>
 
 ## 5. Add what it says (enrichment)
 
