@@ -22,6 +22,8 @@ trait RangeHttp:
   def bytes(url: String, offset: Long, length: Long): Either[String, (Array[Byte], RemoteFile)]
   /** The same, streamed into the file `to` (tile data, megabytes at a time). */
   def download(url: String, offset: Long, length: Long, to: Path): Either[String, RemoteFile]
+  /** A whole small file (one map tile): `None` when the server has none (404, or 403 from a bucket). */
+  def file(url: String): Either[String, Option[Array[Byte]]] = Left(s"$url: whole files are not read by this client")
 
 object RangeHttp:
 
@@ -96,6 +98,14 @@ final class JavaRangeHttp(timeoutSeconds: Int, retries: Int, userAgent: String =
         case Left(e)      => r.body.close(); Left(e)
         case Right(total) => Right((r, total))
     }
+
+  override def file(url: String): Either[String, Option[Array[Byte]]] =
+    send(url, request(url, None)).flatMap(r => reading(r) { r =>
+      r.statusCode match
+        case 200       => Right(Some(r.body.readNBytes(16 * 1024 * 1024)))
+        case 403 | 404 => Right(None)
+        case c         => Left(s"$url: HTTP $c")
+    })
 
   def text(url: String): Either[String, String] =
     send(url, request(url, None)).flatMap(r => reading(r) { r =>

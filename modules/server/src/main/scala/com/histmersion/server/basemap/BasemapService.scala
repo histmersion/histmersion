@@ -35,6 +35,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     case BasemapLayer.Vector  => cfg.vector.attribution
     case BasemapLayer.Terrain => cfg.terrain.attribution
     case BasemapLayer.Labels  => cfg.labels.attribution
+    case BasemapLayer.Bathymetry => cfg.bathymetry.attribution
 
   // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
@@ -281,6 +282,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
   private def source(l: BasemapLayer, a: Ask, extra: String): Either[String, BasemapFetch.Source] = l match
     case BasemapLayer.Terrain => Right(BasemapFetch.Source(cfg.terrain.url, cfg.terrain.url))
     case BasemapLayer.Labels  => Left("the physical names are not read with range requests") // `labels` fetches them
+    case BasemapLayer.Bathymetry => Left("the sea floor is not read with range requests")      // `bathymetry` fetches it
     case BasemapLayer.Vector =>
       val pinned = cfg.vector.build.trim
       resumable(l, a, extra) match
@@ -310,9 +312,13 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     case BasemapLayer.Vector  => a.vectorZoom
     case BasemapLayer.Terrain => a.terrainZoom
     case BasemapLayer.Labels  => cfg.labels.maxZoom
+    case BasemapLayer.Bathymetry => cfg.bathymetry.maxZoom
 
   private def one(a: Ask, l: BasemapLayer, note: String => Unit): Either[String, String] =
-    if l == BasemapLayer.Labels then labels(a, note) else ranged(a, l, note)
+    l match
+      case BasemapLayer.Labels     => labels(a, note)
+      case BasemapLayer.Bathymetry => bathymetry(a, note)
+      case _                       => ranged(a, l, note)
 
   /** A PMTiles layer (vector, terrain): planned, checked against the free disk, downloaded, assembled. */
   private def ranged(a: Ask, l: BasemapLayer, note: String => Unit): Either[String, String] =
@@ -361,6 +367,70 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       val _ = BasemapService.deleteTree(work)
       val _ = readerAt(target)
       s"${BasemapService.describe(l, plan, dryRun = false)}; stored ${done._2} tiles in ${Backup.humanBytes(done._1)} at $target"
+
+  /** The sea floor: every tile of zooms 0…`bathymetry.max-zoom` over the region, one GET each (a
+    * public bucket of map tiles: no range requests), kept in a work directory as they come — so an
+    * interrupted fetch resumes — then written as `bathymetry.pmtiles`. */
+  private def bathymetry(a: Ask, note: String => Unit): Either[String, String] =
+    val bc   = cfg.bathymetry
+    // every tile of the region, in tile-id order (the archive's)
+    val tiles = (0 to bc.maxZoom).flatMap { z =>
+      val ((x0, x1), (y0, y1)) = Basemap.tileRange(a.bbox, z)
+      for x <- x0 to x1; y <- y0 to y1 yield (PmTiles.tileId(z, x, y), (z, x, y))
+    }.sortBy(_._1)
+    val ids  = tiles.map(_._1)
+    val each = 80L * 1024   // a tile, about (measured: 2026-10-20)
+    if a.dryRun then
+      Right(s"bathymetry (zoom 0–${bc.maxZoom}): would download ${ids.length} tiles, about ${Backup.humanBytes(ids.length * each)}")
+    else
+      val need = ids.length * each * 2
+      val free = freeSpace(BasemapService.existing(dir))
+      if free - need < minFree then
+        Left(s"refused: the sea floor needs about ${Backup.humanBytes(need)} on $dir (${Backup.humanBytes(free)} free), " +
+          s"which would leave less than ${Backup.humanBytes(minFree)} (basemap.min-free-gb)")
+      else
+        val work = this.work(BasemapLayer.Bathymetry)
+        Files.createDirectories(work)
+        val h = http()
+        val coords = tiles.map(_._2)
+        val got = coords.zipWithIndex.foldLeft[Either[String, Int]](Right(0)) { case (acc, ((z, x, y), i)) =>
+          acc.flatMap { n =>
+            val f = work.resolve(s"$z-$x-$y.png")
+            val none = work.resolve(s"$z-$x-$y.none")
+            if Files.isRegularFile(f) || Files.isRegularFile(none) then Right(n)
+            else
+              if n > 0 then pace.sleep(bc.requestGapMs.toLong)
+              if Thread.interrupted() then throw InterruptedException()
+              if i % 50 == 0 then note(s"downloading ${i + 1} of ${ids.length} tiles")
+              h.file(bc.url.replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)).map {
+                case Some(b) => Files.write(f, b); n + 1
+                case None    => Files.write(none, Array.emptyByteArray); n + 1
+              }
+          }
+        }
+        got.map { _ =>
+          note("writing bathymetry.pmtiles")
+          val out = path(BasemapLayer.Bathymetry)
+          val w = PmTilesWriter(out)
+          var stored = 0L // tiles written
+          ids.zip(coords).foreach { case (id, (z, x, y)) =>
+            val f = work.resolve(s"$z-$x-$y.png")
+            if Files.isRegularFile(f) then { w.add(id, Files.readAllBytes(f)); stored += 1 }
+          }
+          val header = PmTiles.Header(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, PmTiles.Compression.Gzip, PmTiles.Compression.None,
+            PmTiles.TileType.Png, 0, bc.maxZoom, a.bbox.minLon, a.bbox.minLat, a.bbox.maxLon, a.bbox.maxLat,
+            math.min(bc.maxZoom, 5), (a.bbox.minLon + a.bbox.maxLon) / 2, (a.bbox.minLat + a.bbox.maxLat) / 2)
+          val meta = io.circe.Json.obj("name" -> io.circe.Json.fromString("histmersion sea floor"),
+            "attribution" -> io.circe.Json.fromString(bc.attribution),
+            "histmersion" -> io.circe.Json.obj("layer" -> io.circe.Json.fromString(BasemapLayer.Bathymetry.wire),
+              "source" -> io.circe.Json.fromString(bc.url), "build" -> io.circe.Json.fromString("ETOPO1 (Mapzen terrain tiles)"),
+              "bbox" -> io.circe.Json.fromString(s"${a.bbox.minLon},${a.bbox.minLat},${a.bbox.maxLon},${a.bbox.maxLat}"),
+              "maxZoom" -> io.circe.Json.fromInt(bc.maxZoom), "fetchedAt" -> io.circe.Json.fromString(Instant.now().toString)))
+          val bytes = w.finish(header, meta)
+          val _ = BasemapService.deleteTree(work)
+          val _ = reader(BasemapLayer.Bathymetry)
+          s"bathymetry (zoom 0–${bc.maxZoom}): $stored tiles, ${Backup.humanBytes(bytes)} at $out"
+        }
 
   /** The physical names: Natural Earth's label files read whole (a few MB each), cut to the region and
     * written as `labels.pmtiles` (about 1.4 MB for the default region) — no range requests, nothing to resume. */
