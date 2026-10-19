@@ -47,6 +47,14 @@
           "name": "configReader$lzy2"
         }
       ]
+    },
+    {
+      "type": "com.histmersion.plugins.vaults.YubiKey$Setting$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Setting$lzy1"
+        }
+      ]
     }
   ],
   "resources": [

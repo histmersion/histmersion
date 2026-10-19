@@ -109,6 +109,28 @@ if grep -q smoke-core-secret "$data/legacy.out"; then fail "--self-check printed
 rc="$(selfcheck wrong-password)"
 [ "$rc" = 2 ] || fail "--self-check with a locked vault exited $rc, not 2: $(cat "$data/self-check.out")"
 grep -q "the database is locked" "$data/self-check.out" || fail "--self-check does not say the vault is locked"
+# a YubiKey list (KeePassXC challenge-response): a FAKE ykman reports one key connected, so the absent
+# one is skipped, the connected one opens the database, and the slots/serials are shown — never the password
+ykfake="$data/yk-bin"; mkdir -p "$ykfake"
+cat > "$ykfake/keepassxc-cli" <<'SH'
+#!/bin/sh
+IFS= read -r pw
+[ "$pw" = "smoke-master" ] || { echo "Error while reading the database: Invalid credentials were provided" >&2; exit 1; }
+yk=""; prev=""; for a; do [ "$prev" = "-y" ] && yk=$a; prev=$a; e=$a; done
+[ "$yk" = "2:222" ] || { echo "Error while reading the database: Could not find hardware key with serial number ${yk#*:}. Please plug it in to continue." >&2; exit 1; }
+printf 'session-from-%s\n' "$e"
+SH
+printf '#!/bin/sh\n[ "$1 $2" = "list --serials" ] && echo 222\n' > "$ykfake/ykman"
+chmod +x "$ykfake/keepassxc-cli" "$ykfake/ykman"
+printf 'histmersion.plugins {\n  keepassxc { enabled = true, cli = "%s", ykman = "%s", database = "%s", password = "env:SMOKE_KP_PASSWORD", yubikey = ["2:111", "2:222"] }\n  bitwarden { enabled = true, session = "keepassxc:Smoke/bw#password" }\n}\n' \
+  "$ykfake/keepassxc-cli" "$ykfake/ykman" "$data/vault.kdbx" > "$data/yubikey.conf"
+HISTMERSION_CONFIG="$data/yubikey.conf" SMOKE_KP_PASSWORD=smoke-master PATH="$fake:$PATH" \
+  "$b/bin/histmersion-server" --self-check > "$data/yubikey.out" 2>&1 \
+  || fail "--self-check with a YubiKey list failed: $(cat "$data/yubikey.out")"
+grep -F 'yubikey' "$data/yubikey.out" | sed 's/^/  /'
+grep -qF 'yubikey = ["2:111","2:222"]' "$data/yubikey.out" || fail "--self-check: the yubikey setting is not shown"
+grep -qF "bitwarden 1.0.0 — registered (secret-vault:bitwarden)" "$data/yubikey.out" || fail "--self-check: the YubiKey did not open the vault"
+if grep -qE "smoke-master|session-from" "$data/yubikey.out"; then fail "--self-check (yubikey) printed a secret value"; fi
 [ ! -e "$data/pg" ] && ! curl -fsS http://127.0.0.1:18000/api/health >/dev/null 2>&1 \
   || fail "--self-check started the bundled runtime or a listener"
 
