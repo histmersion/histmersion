@@ -41,6 +41,12 @@ acquisition list.
 
 The web page's **agent managers** window shows the same, with buttons.
 
+<figure markdown="span">
+  ![The agent managers window: the autopilot off, with a turn on button, and the approval modes; the goal The Late Bronze Age collapse, seeding, with its paused seeding manager and watcher; then four managers, all paused — review, enrich, seed and watch — each with its pending items, runs in flight, the day's spending and its last event](../assets/screenshots/managers.png){ loading=lazy }
+  <figcaption>The managers window with the autopilot off: every manager paused, nothing spent; the last event of
+  each says what it did.</figcaption>
+</figure>
+
 ## The autopilot
 
 The autopilot is one switch that lets the managers carry every research goal from `planned` to

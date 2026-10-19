@@ -16,6 +16,12 @@ Histmersion records this in two ways: **links between sources** and a **status**
 Only the last four are disagreements. A `challenges`, `refutes` or `updates` link is stored on the
 source that makes the criticism; a `superseded_by` link on the older source, pointing at the newer.
 
+<figure markdown="span">
+  ![A source's window scrolled to its citation links: Cites (1), a reference to an unassessed 2011 paper; Cited by (6), first a 2020 paper that challenges it, then papers that reference it, each with its status badge, and the article that cites it](../assets/screenshots/source-citations.png){ loading=lazy }
+  <figcaption>A source's links, with the status of each source on the other side: here a 2020 paper
+  <code>challenges</code> this one, which is why its own status is <code>contested</code>.</figcaption>
+</figure>
+
 ```bash
 histmersion neighbors cline2014          # links to and from one source, and the articles citing it
 histmersion graph cline2014 --depth 2    # the network around it (the web page draws it)
@@ -68,3 +74,9 @@ histmersion followups <citekey>           # later papers citing it, each with a 
 
 On the web page, each source shows its status as a coloured badge, and the citation graph window
 draws the links.
+
+<figure markdown="span">
+  ![The citation graph window: a contested source in the middle as a pink node, the papers citing it and the one it cites around it as blue and grey nodes, joined by arrows; a legend for current, contested, unassessed, references and challenges](../assets/screenshots/graph.png){ loading=lazy }
+  <figcaption>The citation graph around one source: colour is status, an arrow is a link (hover a node for its
+  card, double-click to open it).</figcaption>
+</figure>

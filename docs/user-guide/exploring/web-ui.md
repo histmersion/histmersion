@@ -1,23 +1,13 @@
 # The web page
 
-Open <http://localhost:8000>. The page has four parts: the **map**, the **timeline** under it, the
-**side panel** with filters and lists, and the **toolbar** that opens windows.
+Open <http://localhost:8000>. The page has four parts: the **toolbar** that opens windows, the
+**filters** and the **timeline** under it, the **map**, and the **side panel** with the lists.
 
-```mermaid
-flowchart TB
-    subgraph page["http://localhost:8000"]
-      direction TB
-      subgraph top[" "]
-        direction LR
-        side["Side panel<br/>search · filters ·<br/>sources · articles · events ·<br/>by time · by region"]
-        map["Map<br/>findings · sites · events ·<br/>pictures · regions and states"]
-      end
-      tl["Timeline<br/>the years you look at · period presets · playback"]
-      tb["Toolbar<br/>goals · backlog · to acquire · upload · jobs · worklog · about …"]
-    end
-    side --- map
-    map --- tl
-```
+<figure markdown="span">
+  ![The web page at 1440 by 900 pixels: toolbar buttons across the top, the search and filter fields, the timeline with its bars, the layer switches, the map of the eastern Mediterranean, and the list of sources on the right](../assets/screenshots/home-light.png){ loading=lazy }
+  <figcaption>Every layer switched on for 1700–1000 BCE: numbered circles group nearby claims, diamonds
+  are single claims, the outlines are the states of the time.</figcaption>
+</figure>
 
 ## The map
 
@@ -51,6 +41,12 @@ era are negative (1200 BCE is −1200).
 - The bars above the strip show **when the evidence is**: how many sources fall into each stretch of
   time.
 
+<figure markdown="span">
+  ![The timeline with its period presets menu open: groups by region, Anatolia unfolded, each period with its years and the authority that dates it](../assets/screenshots/timeline-presets.png){ loading=lazy }
+  <figcaption>The presets menu: each period as one authority dates it for one region, the region the
+  map shows first.</figcaption>
+</figure>
+
 ## The side panel
 
 At the top is one **title box** that narrows every list. Below it are the **filters** — words,
@@ -72,6 +68,12 @@ do not add up to the total. That is expected.
 Clicking a source or an article opens it in a **window** on top of the map. Several can be open at
 once; they can be moved, resized and minimised, and the page's address remembers them, so a reload
 or a shared link brings them back.
+
+<figure markdown="span">
+  ![A source's window over the map: its title, authors as chips, year, venue, an orange "contested" badge, its period, DOI, topics, regions, tags and summary, then the first of its findings](../assets/screenshots/source.png){ loading=lazy }
+  <figcaption>A source's window. Windows can be moved, resized and minimised; the address bar keeps
+  them, so a reload or a shared link reopens them.</figcaption>
+</figure>
 
 | window | what is in it |
 |---|---|
@@ -95,6 +97,12 @@ The toolbar opens the others:
 | API key | enter the key writes need (shown only when the server asks for one) |
 | about | version, health, the job queue, the last backup, counts, plugins |
 
+<figure markdown="span">
+  ![The About window: server version and commit, schema version, the config file; health of the server, database and converter, all green; the job queue; the last backup; the counts of sources, findings, articles, events, places and periods; the first plugins](../assets/screenshots/about.png){ loading=lazy }
+  <figcaption>The About window: what is running, whether its parts are healthy, and how much is
+  stored.</figcaption>
+</figure>
+
 ## Reading and writing
 
 Reading needs nothing. Changing anything (editing a source, uploading, deciding an approval) works at
@@ -106,3 +114,9 @@ for it before the first change and keeps it in the browser.
 At 760 pixels wide or less, the page switches to a phone layout: the map first, the filters,
 timeline, layers and tools on buttons (or a swipe in from the edge), the list as a sheet that slides
 up, and windows full screen.
+
+<figure markdown="span">
+  ![The phone layout, 390 pixels wide: a bar with the menu, the search field, the time span and the layers button; the map; and the list as a sheet pulled half way up](../assets/screenshots/phone.png){ width="300" loading=lazy }
+  <figcaption>On a phone: the map first, the controls behind the buttons of the top bar, the list as a
+  sheet you pull up.</figcaption>
+</figure>

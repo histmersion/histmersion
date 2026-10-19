@@ -11,6 +11,12 @@ A **gazetteer** is a list of places. Each place in Histmersion has:
 - its **parents**: what it lies inside — a city inside a region inside a continent, as it stood in a
   given year.
 
+<figure markdown="span">
+  ![The map at 1300–1200 BCE with the states of the time outlined; the pointer rests on the Hittite Empire, which is highlighted, and its card shows: polity, 1400–1180 BCE, its id hittite_empire_lba, part of Anatolia and the Levant, where its outline comes from, and 5 sources, 14 findings, 1 article and 3 events](../assets/screenshots/place.png){ loading=lazy }
+  <figcaption>A place's card (rest the pointer on a state, a region or a site): its kind and years, its id, what
+  it lies inside, where its shape comes from, and what the collection holds about it.</figcaption>
+</figure>
+
 ### Finding a place's id
 
 A name you write ("Anatolia", "Ugarit") is only text. A place **id** matches everything inside the
@@ -57,6 +63,12 @@ two authorities can date the same name differently.
 
 The timeline's **presets** are such periods, grouped by region. The bundled set is a curated part of
 PeriodO; [Open data](../how-to/open-data.md) shows how to import more.
+
+<figure markdown="span">
+  ![The page after choosing the preset Hittite Empire: the timeline shows 1350 to 1200 BCE, the map the states of those years and the events in them, the list the sources about those years](../assets/screenshots/timeline-period.png){ loading=lazy }
+  <figcaption>The preset <em>Hittite Empire</em> (1350–1200 BCE, as one authority dates it for Anatolia) chosen:
+  the timeline, the map's states and events, and the lists all follow.</figcaption>
+</figure>
 
 ## The map's layers
 

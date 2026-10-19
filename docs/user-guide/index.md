@@ -5,6 +5,16 @@ books and papers into it. It reads them once, keeps their full text, and places 
 **map** and a **timeline**. You can then ask: *what do my sources say about this place, at this
 time?* — and see the answer on the map, with every claim linked back to the page it came from.
 
+<figure markdown="span">
+  ![The Histmersion web page: a map of the eastern Mediterranean with numbered markers, state outlines, a timeline above it set to 1700–1000 BCE, and a list of sources on the right](assets/screenshots/home-light.png#only-light){ loading=lazy }
+  ![The same web page with the dark base map](assets/screenshots/home-dark.png#only-dark){ loading=lazy }
+  <figcaption>Twelve open-access papers on the Late Bronze Age, 1700–1000 BCE: the markers are their
+  claims (findings), ancient sites and events, the outlines are the states of the time, and the list
+  shows each source with the findings that fall in the selected years.</figcaption>
+</figure>
+
+How a book or paper becomes something you can see on that map:
+
 ```mermaid
 flowchart LR
     A["Books and papers<br/>(PDF, EPUB)"] --> B["Read once<br/>(text recognition)"]

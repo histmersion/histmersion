@@ -19,22 +19,15 @@ which every sentence points back to its source.
 
 ## What you see
 
-```mermaid
-flowchart TB
-    subgraph "The web page"
-      M["Map<br/>findings · sites · events · pictures · regions"]
-      T["Timeline<br/>drag a window of years, play it"]
-      L["Lists<br/>sources · articles · events · by time · by region"]
-      W["Windows<br/>a source · an article · a citation graph · jobs · goals"]
-    end
-    M <--> T
-    T <--> L
-    L --> W
-```
+<figure markdown="span">
+  ![The web page: the toolbar and filters at the top left, the timeline under them, the map below, and the list of sources on the right](../assets/screenshots/home-light.png){ loading=lazy }
+  <figcaption>The four parts of the page: filters and timeline at the top, the map, the list on the
+  right — and windows, which open on top of the map.</figcaption>
+</figure>
 
 - **The map** shows dots where your sources make claims, plus ancient sites, events (battles,
   eruptions, earthquakes) and pictures. Regions and states of the time are drawn as areas.
-- **The timeline** under the map selects the years you are looking at. Move it and the map changes.
+- **The timeline** above the map selects the years you are looking at. Move it and the map changes.
   Press play and the map animates through time.
 - **The lists** on the side show the sources that match, the articles, the events, and counts
   grouped by time or by region.

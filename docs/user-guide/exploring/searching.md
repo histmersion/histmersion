@@ -22,6 +22,12 @@ passages that mention both, not a book that says "bronze" on page 3 and "collaps
 histmersion search '"sea peoples"' --limit 30
 ```
 
+<figure markdown="span">
+  ![A search for "drought" on the web page: the word in the search field, the map showing only the places of matching findings, and the list with four sources, each with the findings and the passage that matched, the word marked](../assets/screenshots/search.png){ loading=lazy }
+  <figcaption>A search for <em>drought</em>: the list says why each source matched (title, summary, full
+  text, findings) and marks the word in the passage; the map keeps only those findings.</figcaption>
+</figure>
+
 ## Filters
 
 | filter | CLI flag | matches |

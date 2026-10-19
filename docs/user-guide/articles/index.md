@@ -28,6 +28,12 @@ database as the sources, and every claim in it points to the source it rests on.
 Open it from the **articles** tab on the web page (or at `http://localhost:8000/article/<slug>`), or
 with `histmersion article get <slug>`.
 
+<figure markdown="span">
+  ![An article window, Climate and the Late Bronze Age collapse: kind concept, its regions, years and tags, then its Summary, where each citation is a linked author-year with a number, and the first contested source carries its status and its critic inline](../assets/screenshots/article.png){ loading=lazy }
+  <figcaption>An article: every citation links to its source, and the first citation of a contested source says
+  so, with the source that challenges it.</figcaption>
+</figure>
+
 - **Citations.** `[[cline2014]]` is a link to a source; `[[bronze-age-collapse]]` a link to another
   article. Follow them. Every paragraph cites at least one source.
 - **Statuses in the text.** When an article relies on a source that is not simply `current`, it says
@@ -60,6 +66,12 @@ time you open it. Nobody writes them by hand:
 
 Because these are computed from the live collection, they change when you add sources: a new source
 that matches the filter shows up under *Not used* until someone cites it or gives a reason.
+
+<figure markdown="span">
+  ![The end of the same article: Not used, saying the filter returns 10 sources of which 6 are cited, and listing the other 4 each with its reason; the Method line with the filter, the statuses and the one disagreement, addressed; then Sources cited, six sources with their status badges](../assets/screenshots/article-coverage.png){ loading=lazy }
+  <figcaption>The generated end of an article: <em>Not used</em> with a reason per source, the <em>Method</em>
+  line, and <em>Sources cited</em> with each source's status.</figcaption>
+</figure>
 
 ```bash
 histmersion article coverage <slug>      # the same, in detail: cited, not used, reasons, drift
