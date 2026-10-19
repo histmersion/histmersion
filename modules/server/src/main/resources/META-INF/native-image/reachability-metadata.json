@@ -10254,6 +10254,9 @@
       "type": "java.lang.Object[][]"
     },
     {
+      "type": "java.lang.Object[][][]"
+    },
+    {
       "type": "java.lang.ProcessHandle",
       "methods": [
         {
