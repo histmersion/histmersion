@@ -204,6 +204,7 @@ object MapView:
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius
     localOnly = ui.baseMapSource == BaseMapSource.Local
+    TerrainMap.localOnly.set(localOnly)
     // the span the page opens on (UiState is restored before this mounts): the overlays switched on
     // from the browser's storage load at once, and loaded the placeholder span (0, 1) — a wasted request
     // and a wrong first drawing — until the first findings arrived

@@ -42,6 +42,10 @@ object TerrainMap:
   /** The tone of the style shown: the map's own names follow it ([[MapLabels]]). */
   val tone: Var[MapTone] = Var(MapTone.Dark)
 
+  /** Whether the page has only the local maps (`ui.base-map-source` resolved to `local`, set once by
+    * [[MapView.init]]): any base-map control reads it — no online map is offered, none is drawn. */
+  val localOnly: Var[Boolean] = Var(false)
+
   /** The base map drawn — the choice as [[effective]] maps it: what the names' tone and the names
     * toggle follow. */
   val shown: Var[BaseMap] = Var(BaseMap.Standard)

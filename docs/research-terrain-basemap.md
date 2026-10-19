@@ -207,3 +207,50 @@ independent of the extract's breadth, so only the disk pays for it. Labels for O
 (`pois`, zoom ≥ 10 in the build; drawn by the built-in style from zoom 10). Line labels for Natural
 Earth's ranges (a range's name sits at a point, not along it).
 
+
+## Local street maps and offline (as built, 2026-10-20)
+
+**Why.** The Standard, Muted and Dark base maps were OSM raster tiles (`ui.tiles`, OSM France HOT, the
+stylesheet's darkening) — the only requests the page made to another host. They are now styles of
+the same document, drawn by the same renderer from the same extract (`modern = true`: no "no modern
+features", no past-landscape notice); the raster maps stay as "Standard (online)" etc.
+
+**The data they need.** A style needs every vector layer it draws (`TerrainStyle.needs`); the extract's
+metadata says what the fetch dropped whole (`Basemap.droppedLayers`: the drop list's whole layers,
+none for `--keep-all`, earth/water/landcover-only for an extract without the record). The status
+answers per style the layers it lacks and a hint naming `histmersion basemap fetch --layer vector
+--keep-all` (or a drop list without them); the menu marks such a style "needs the full download", and
+choosing it draws what is there under a notice. The default drop list is unchanged — the terrain
+styles need nothing it leaves out — so the 1.3 GB default keeps working as it was; a drop list that
+keeps roads, places and boundaries serves the street maps too.
+
+What the schema holds at zoom ≤ 10 (inspected over Attica and the Aegean, `BasemapExtractTool inspect`):
+roads `highway` (motorway, links) and `major_road` (trunk … tertiary, links) and `aeroway`; no
+`minor_road` and no road names below zoom 11 (only `ref`/`shield_text`) — so there are no road labels;
+places `country`, `region`, `locality` (city, town, village, hamlet) and `macrohood`, each with its own
+`min_zoom` and `population_rank`; boundaries `country` (2), `region` (3–4), `county`, `locality`; no
+`buildings` or `transit` at all. The styles draw land cover to zoom 8 and OSM land use (kinds the
+style names) from 9, roads by class with casings, country and province borders, and the names of
+countries, cities, towns, villages and seas in `basemap.labels.language`, placed by own `min_zoom`
+then population rank (protomaps-leaflet's labeler handles collisions), in the label layer under every
+marker. No town dots: the dots on the map are the corpus's.
+
+**The source setting.** `ui.base-map-source = auto | local | online`; `/api/config` answers it
+resolved. `local`: only the local styles; the online tile layer is never put on the map (the map has
+its own `maxZoom`, which the cluster group needs), and a kept online choice is drawn as the local style
+of the same name. `online`: the online maps first, then the local ones. `auto`: `local` once the
+extract can draw the default local style (Standard) whole. The browser test records every request to
+another host through every local style, a pan, a zoom and a reload: none.
+
+**Cost.** Roads and place names made the tiles heavier where it matters (zoom 8–10). The page's cut
+grew two parts: kinds (`?layers=landuse:a~forest|wood,roads:l~highway|major_road`, a rule with
+`not-kinds` or no `kinds` reads the layer whole) and properties (`&keys=kind,kind_detail,…,name:en,name`:
+the key and value tables rebuilt, every feature's tags renumbered, geometry copied byte for byte —
+`Mvt.withProps`). The Athens tile of zoom 8: stored 94.8 KB (gzip); the paint layer's cut 70.9 KB,
+with its keys 69.1 KB; the label layer's cut 7.0 KB, with its keys 2.1 KB (the names in ~100 languages
+dropped).
+
+Sizes, measured on one complete zoom-10 `--keep-all` download of the default region (2026-10-20,
+1.54 GB downloaded in 6 min): stored z0–8 210 MB, z0–9 614 MB, z0–10 **1.52 GB**; the same tiles with
+the default drop list 184 MB, 535 MB, **1.30 GB** — the street maps cost 0.22 GB (z10 per layer, gzip,
+each alone: land use 681 MB, water 80, roads 66, places 54, boundaries 25, earth 7, pois 2).
