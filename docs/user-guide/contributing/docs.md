@@ -50,7 +50,7 @@ agents are on, so their windows exist, but no provider is configured and every m
 
 It needs the pinned JDK 25, sbt, pixi, node with `npm ci --prefix modules/web`, and Playwright's
 Chromium (`npm --prefix modules/web exec -- playwright install chromium`). The map's background is
-OpenStreetMap's, so it needs the internet (`HISTMERSION_SCREENSHOTS_OFFLINE=1` leaves it blank); keep
+OpenStreetMap's (the muted base map's, OpenStreetMap France's), so it needs the internet (`HISTMERSION_SCREENSHOTS_OFFLINE=1` leaves it blank); keep
 its attribution in the picture. `pngquant` and `oxipng`, when installed, shrink the files.
 
 To add a screenshot: add a key to `shots` in the Playwright script (what to open, where to point,
@@ -66,7 +66,9 @@ what to click), add the data it needs to the demo collection, run `just docs-scr
 
 Every picture has alt text (what is in it) and a caption (what to look at). A page may show a light and
 a dark variant with `#only-light` / `#only-dark` after the file name, as the welcome page does with
-the standard and the dark base map. Regenerate the screenshots when the web page changes, and commit
+the standard and the dark base map. To compare several pictures of one thing without a wall of images, put them in
+content tabs (`=== "Name"`, the figure indented under it), as the welcome page's tour does with the
+three base maps. Regenerate the screenshots when the web page changes, and commit
 the PNGs with the change.
 
 ## Generated pages
