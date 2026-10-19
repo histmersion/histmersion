@@ -207,3 +207,88 @@ independent of the extract's breadth, so only the disk pays for it. Labels for O
 (`pois`, zoom ≥ 10 in the build; drawn by the built-in style from zoom 10). Line labels for Natural
 Earth's ranges (a range's name sits at a point, not along it).
 
+
+## A readable map: Natural, the relief to zoom 12, the sea floor, map options (as built, 2026-10-20)
+
+**Why.** The user, on the fetched map: "not really readable: terrain is pixelated; everything is too dark
+and with too small contrast" — wanting higher resolution, pleasant water, the colours of mountains,
+vegetation, ice and deserts, "all the visual clues about the terrain at first sight (e.g. that Mykenai is
+a non-forested area on top of a small hill next to two other hills)", contours close in; then: names
+overlapping (two lines of one name over each other), a better font, the sea floor's topography, a
+language switch, and a base-map control in two steps.
+
+**The relief to zoom 12, without downloading it all.** The extract stops at zoom 8 (0.5 GB); zoom 12 for
+the default region would be ~170 GB. So (`server/basemap/TerrainOnDemand`):
+
+- *On demand*: a terrain tile deeper than the extract is read, when a page asks for it, from Mapterhorn's
+  planet file by range request — its header and root once, the 11 KB leaf directory of 4 096 tiles once,
+  then one request a tile (~100 KB) — and kept in `terrain-cache/` (`DiskLru`: bytes-bounded, least
+  recently used first, use = the file's mtime so the order survives a restart; a tile the provider lacks
+  is remembered as `.none`). Mapterhorn documents range-request extracts (`pmtiles extract`) and a public
+  tile endpoint; neither states a rate limit, so the server keeps to 2 requests at a time and 8 a second,
+  reads a tile asked for twice at once only once, and after a failure asks nothing for 30 s (the page then
+  draws the coarser relief: a missing deep tile falls back a zoom at a time to the extract). The page
+  never asks for more than the tiles in view (Leaflet's grid), and only from zoom 9 on.
+- *Focus regions*: `fetch --layer terrain --focus <name>` keeps a region's zooms 9–12 for good in
+  `terrain-focus/<name>.pmtiles` (never evicted); a deep `--layer terrain --bbox` fetch becomes one
+  instead of replacing the broad extract. Sizes (dry run on the directories, 2026-10-20): Aegean 0.43 GB,
+  Anatolia 2.0 GB, Levant 0.36 GB, Mesopotamia 1.3 GB, Nile delta 0.05 GB, Argolid 7 MB.
+
+**Drawn at the screen's density, smooth, seamless** (`web/Relief`, `web/ReliefLayer`). Each map tile (a
+512-pixel grid) takes the deepest data tile there is and the part of it it covers; a window of it with 2
+pixels around — read from the neighbouring tiles, so the gradient and the contours run on across tile
+edges — is resampled bicubic (Catmull-Rom, separable) to the tile's device pixels (≤ 1024), then shaded
+(Horn's gradient against up to four lights, `multidirectional`) and tinted. At the data's own zoom and
+density the window is used as is. The decoded elevation (16-bit whole metres — the provider's are whole)
+is kept in a 16-tile cache; a tile is computed once, when its data arrives, for both of its layers (the
+tint under the vector layer, the shading over it): 10–25 ms a 512-pixel tile in headless Chromium.
+
+**Colours.** Hypsometric tint (`relief.tint`) under translucent land cover (Protomaps' `landcover` to zoom
+8, OSM `landuse` from 9 — and only read from 9: a tile subset entry may carry a zoom, `landuse:a@8`,
+which the server applies per tile), the sea a soft blue lighter along the shore (`glow`: the outline
+stroked inside a clip, the tile's own cuts through the polygon left out). The land's and the open sea's
+fills are a third canvas layer, the *ground*, under the tint: they show only where there is no
+elevation.
+
+**The sea floor.** Mapterhorn's sea is flat (0, sometimes −1). Sources weighed: GEBCO (15″, ~450 m; free
+with attribution) is published as whole-grid NetCDF/GeoTIFF (several GB) or through an interactive
+subset page — mirrors as cloud-optimised GeoTIFF exist, but reading them needs a TIFF decoder in the
+server and the mirrors are third parties'; Natural Earth's bathymetry polygons (public domain) give only
+depth bands. Chosen: Mapzen's terrain tiles on AWS Open Data — terrarium tiles like the relief's, whose
+sea is NOAA's ETOPO1 (1′, ~1.8 km, public domain): one GET a tile, zooms 0–7 of the region, ~65 KB a
+tile, ~80 MB for the default region (`--layer bathymetry`). The page fills the relief's sea pixels with
+their depth (bilinear from the sea-floor tile), keeps a resampled sea mask for the tint (`sea-tint`: the
+shelf light with a step at ~200 m, the basins dark) and weakens the sea floor's shading (`sea-shading`);
+the Contour map adds isobaths (`depth-interval`). Depressions on land (the Dead Sea) stay land: only
+pixels at 0 or −1 are sea.
+
+**Contours** (`web/Contours`): marching squares over the resampled grid, one pass, each cell visiting only
+the levels between its corners; crossings computed per grid edge so neighbouring cells — and tiles —
+join exactly; index lines joined into polylines by their shared edges and labelled half way along,
+upright, kept from the tile's edges and from each other.
+
+**Names that never overlap.** protomaps-leaflet's text symbolizer spaced a wrapped name's lines by the
+ink height of its longest line (an all-capitals line has no descender, so the next line came closer than
+a line is tall) and its collision box held neither the halo nor the lower lines' descenders.
+`web/TerrainLabels` places a point name as one block — the font's ascent and descent, `line-height`, the
+halo and `padding` all round — and draws exactly that; the library's labeler keeps its per-zoom index
+across tiles, and repeats of a name within reach are dropped. The browser test reads the placed boxes
+from that index (`window.__terrainLabelBoxes`) at zooms 5–8 over the Aegean: none intersect.
+
+**Fonts.** Noto Serif (Latin, Greek, Cyrillic; regular, italic, semibold) and Noto Serif Armenian,
+Georgian, Hebrew and Noto Naskh Arabic, woff2 subsets of @fontsource 5.3.0 (SIL OFL), 505 KB in all and
+~45 KB for an English map (each subset loads by its unicode-range); loaded before the names are drawn
+(a canvas never redraws for a late font). Compared: Source Serif 4 and EB Garamond cover Latin, Greek
+and Cyrillic but no companions for the other scripts, EB Garamond's small x-height reads poorly at 10 px;
+Libertinus adds Hebrew only.
+
+**Map options** (`web/MapOptions`, `web/TerrainView`): the family (Histmersion map / online raster) and a
+popover over the chosen preset — names and their language, relief strength, colours by height, land
+cover, sea floor, contours and interval, reset — stored per viewer and per preset as one JSON value
+(`terrainView`). The drawn style is the preset with the options applied (pure); a change of the names
+alone redraws only the names' layer.
+
+**Measured** (headless Chromium, the JVM test server, Aegean fixture, perf.test.mjs "terrain base
+map"): drawn 887 ms after the view is set, no long task; pan input p95 51 ms, 4.6 % dropped; wheel zooms
+input p95 46 ms, 1.3 % dropped; map options input p95 77 ms (≤ 100), longest task 72 ms; heap 34.9 MB
+(budget 60).

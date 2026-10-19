@@ -203,8 +203,8 @@ hand.
 | `histmersion config reload [--json]` | Make the server read its config file again and apply it in place, no restart (restart-only settings are listed, not applied) |
 | `histmersion basemap status [--json]` | What is downloaded, where, and the free space there |
 | `histmersion basemap styles [--example] [--check <path>] [--json]` | The terrain map's named styles — the built-in ones and your style file over them — and what was refused |
-| `histmersion basemap fetch [--layer <string>] [--max-zoom <integer>] [--terrain-max-zoom <integer>] [--bbox <string>] [--dry-run] [--keep-all] [--no-wait]` | Download the terrain base map (coast, water, rivers, land cover; relief; physical names) as a server job — resumable; refused when the disk would be left with less than basemap.min-free-gb |
-| `histmersion basemap rm [--layer <string>]` | Remove the downloaded base-map files (and an unfinished download) |
+| `histmersion basemap fetch [--layer <string>] [--max-zoom <integer>] [--terrain-max-zoom <integer>] [--bbox <string>] [--focus <string>] [--dry-run] [--keep-all] [--no-wait]` | Download the terrain base map (coast, water, rivers, land cover; relief; physical names; sea floor) as a server job — resumable; refused when the disk would be left with less than basemap.min-free-gb |
+| `histmersion basemap rm [--layer <string>] [--focus <string>] [--cache]` | Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache |
 | `histmersion plugin add [--yes] [--rebuild] [--verify] [--unsigned] [--sha256 <string>] <path|url|group:artifact:version>` | Install a plugin jar on this machine: a local path (copied), an https URL (downloaded, SHA-256 shown) or group:artifact:version from Maven (group::artifact:version = a Scala 3 artifact); shows its id, version, SPI and access first |
 | `histmersion plugin rm [--rebuild] <id|file>` | Remove an installed plugin (by id or jar file name) from this machine's plugins directory |
 | `histmersion plugin list` | The plugin jars in this machine's plugins directory, and whether the installed binary was linked with each |

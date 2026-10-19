@@ -172,7 +172,31 @@ styles = [
 **The relief:** `enabled`, `shadow` and `highlight` (colours), `shadow-opacity` and
 `highlight-opacity` (0–1, on the steepest slope), `azimuth` (where the light comes from, degrees
 clockwise from north; 315 = north-west), `altitude` (how high it stands, degrees), `exaggeration`
-(how much the slopes are steepened — relief is invisible at a continent's scale without it).
+(how much the slopes are steepened — relief is invisible at a continent's scale without it),
+`multidirectional` (0–1: how much light also comes from three more directions);
+`tint` (colours by height: `[[metres, colour], …]`, elevations ascending), `tint-opacity`, `heights`
+(whether they are shown — a preset may carry them switched off for the map options);
+`sea-tint` (the sea by its depth, negative metres), `sea-shading` (0–1, the sea floor's shading against
+the land's), `sea-floor` (shown or not); and `contours`:
+
+| contour key | meaning |
+|---|---|
+| `enabled` | drawn (`true` as soon as a `contours { }` block is given) |
+| `min-zoom` | from this map zoom on (Natural 11) |
+| `interval` | metres between lines, by zoom — a step, not a ramp: `[[11, 100], [12, 50], [14, 20]]` is 100 m at zoom 11, 50 m from 12, 20 m from 14 |
+| `index-every` | every n-th line an index line (thicker, its height written along it) |
+| `color`, `index-color`, `width`, `index-width` | the lines |
+| `labels`, `label-color`, `halo`, `font { … }` | the heights on the index lines |
+| `depth-interval`, `depth-color` | depth lines under the sea, by zoom (0: none) |
+
+```hocon
+styles = [
+  { id = "mine", extends = "natural", name = "Steep and bare",
+    relief { multidirectional = 1, shadow-opacity = 0.8,
+             contours { min-zoom = 10, interval = [[10, 100], [13, 25]], index-every = 4 } }
+    layers = [ { id = "forest", remove = true }, { id = "water", glow { color = "white", width = 10 } } ] }
+]
+```
 
 **A layer**, bottom to top:
 
@@ -193,9 +217,15 @@ clockwise from north; 315 = north-west), `altitude` (how high it stands, degrees
 | `font { family, size, weight, style }` | e.g. `{ family = "Georgia, serif", size = 11, style = "italic" }` |
 | `transform`, `letter-spacing`, `max-line-chars` | `uppercase`/`lowercase`/`capitalize`; spacing in pixels; where a long name wraps |
 | `own-min-zoom` | a name also waits for the zoom its data says it starts at (default `true`) |
+| `glow { color, width }` | an area's soft inner edge: `color` along its outline, fading inwards over `width` pixels (the sea's shore) |
+| `padding`, `line-height` | a name's free space all round, in pixels (3), and the distance of its lines, × its size (1.2) |
 | `remove`, `before` | in a style that extends another: drop this layer; put a new one before that id |
 
-Names are placed in layer order: where two would overlap, the earlier one wins.
+Names are placed in layer order: where two would overlap, the earlier one wins. A name's room is its
+whole block — every line of it, its halo and its `padding` — so two names never touch.
+
+**Values to share:** a top-level `fonts { … }` holds values the styles refer to with HOCON's
+`${fonts.serif}` (the built-in file's `serif` is the bundled Noto Serif family with its companions).
 
 **Colours:** `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb(…)`, `rgba(…)`, `hsl(…)`, a CSS colour name, or
 `var(--token)` — a colour of the web page's own theme (the built-in Terrain style uses

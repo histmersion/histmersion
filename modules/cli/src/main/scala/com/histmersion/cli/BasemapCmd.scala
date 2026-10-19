@@ -33,9 +33,9 @@ object BasemapCmd:
   }
 
   private val fetchCmd = Opts.subcommand("fetch",
-      "Download the terrain base map (coast, water, rivers, land cover; relief; physical names) as a server job — resumable; " +
+      "Download the terrain base map (coast, water, rivers, land cover; relief; physical names; sea floor) as a server job — resumable; " +
         "refused when the disk would be left with less than basemap.min-free-gb") {
-    (Opts.option[String]("layer", "vector, terrain, labels or all (default all)").withDefault("all"),
+    (Opts.option[String]("layer", "vector, terrain, labels, bathymetry or all (default all)").withDefault("all"),
       Opts.option[Int]("max-zoom", "Deepest zoom of the vector layer (default basemap.vector.max-zoom; with --layer terrain alone, of the relief)").orNone,
       Opts.option[Int]("terrain-max-zoom", "Deepest zoom of the relief, 512-pixel tiles (default basemap.terrain.max-zoom)").orNone,
       Opts.option[String]("bbox", "Region as minLon,minLat,maxLon,maxLat (default basemap.bbox)").orNone,
@@ -54,7 +54,7 @@ object BasemapCmd:
 
   private val rmCmd = Opts.subcommand("rm",
       "Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache") {
-    (Opts.option[String]("layer", "vector, terrain, labels or all — all includes the focus regions and the relief cache " +
+    (Opts.option[String]("layer", "vector, terrain, labels, bathymetry or all — all includes the focus regions and the relief cache " +
         "(default all; none when only --focus or --cache is given)").orNone,
       Opts.option[String]("focus", "A focus region's relief, by name, or all").orNone,
       Opts.flag("cache", "The on-demand relief cache").orFalse).mapN { (layer, focus, cache) => (c: Client) =>

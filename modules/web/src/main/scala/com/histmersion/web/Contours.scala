@@ -11,7 +11,8 @@ import scala.scalajs.js.typedarray.Float32Array
   * from grids that share their edge values join at the tile edge too.
   *
   * Pure: a grid in, segments and polylines out. One pass over the cells, each cell visiting only the
-  * levels between its lowest and highest corner. */
+  * levels between its lowest and highest corner — `while` loops over `var`s: a quarter of a million
+  * cells a tile, on the page's own thread. */
 object Contours:
 
   /** Segments `x1 y1 x2 y2 …` in grid coordinates (column, row of the grid's samples), the ordinary
