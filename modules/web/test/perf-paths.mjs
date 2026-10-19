@@ -232,7 +232,18 @@ export async function terrainMap(page, baseURL, { names = false } = {}) {
   const pan = await mapPan(page);
   await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 6, { animate: false }));
   const zoom = await mapZoom(page);
-  return { drawnMs, longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom };
+  // the map options: each change answers within the input budget (the map redraws after, off the input)
+  await page.locator('.map-options-btn').click();
+  await page.locator('.map-options').waitFor();
+  const options = await measure(page, async () => {
+    for (const act of [() => page.locator('.map-option-contours').uncheck(), () => page.locator('.map-option-contours').check(),
+      () => page.locator('.map-option-landCover').uncheck(), () => page.locator('.map-option-landCover').check(),
+      () => page.locator('.terrain-language-select').selectOption('local'), () => page.locator('.terrain-language-select').selectOption('en')]) {
+      await act(); await page.waitForTimeout(500);
+    }
+  });
+  await page.keyboard.press('Escape');
+  return { drawnMs, longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom, options };
 }
 
 export { memory };

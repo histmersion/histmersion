@@ -9,15 +9,30 @@ a few seconds.
 
 ## The named styles
 
-Every style is an entry of the base-map menu at the end of the map's layer buttons. Four come with
+Every style is a **preset** of the map options' *Style* menu (the button beside the base-map menu, with
+the *Histmersion map* chosen — see [The base map](../exploring/web-ui.md#the-base-map)). Six come with
 Histmersion:
 
 | style | what it shows |
 |---|---|
-| **Terrain** (the default) | today's terrain, dark and muted so your markers, names and boundaries stay on top: land, seas, lakes and rivers, a light tint for forest, grassland, scrub, bare ground and ice, the shaded relief, and the physical names |
+| **Natural** (the default) | a light, natural map: the ground coloured by its height, the land cover in its own colours, the relief shaded from several directions, the sea coloured by its depth and lighter along the shore, contour lines from zoom 11; names in Noto Serif — italic for water, letter-spaced capitals for ranges and regions |
+| **Contour map** | Natural as a topographic map: contour lines from zoom 9 (every 200 m, then 100, 50, 20, 10 as you zoom in), depth lines under the sea, pale colours, faint shading |
+| **Terrain** | today's terrain, dark and muted so your markers, names and boundaries stay on top: land, seas, lakes and rivers, a light tint for forest, grassland, scrub, bare ground and ice, the shaded relief, and the physical names |
 | **Terrain + vegetation** | the same with the land cover drawn strongly, and OpenStreetMap's own woods, scrub and wetlands where they are mapped |
 | **Relief only** | land, water and the relief — no land cover, no names |
 | **Parchment** | a light, old-atlas look: pale land and sea, sepia relief, brown names in a serif type |
+
+<figure markdown>
+  ![The Aegean in the Natural style at zoom 7: the land green to tan by height and shaded, the shallow shelf light and the deep basins of the Aegean and the Cretan Sea darker, the seas' names in italics](../assets/screenshots/terrain-natural.png){ loading=lazy }
+</figure>
+
+<figure markdown>
+  ![The Argolid around Mycenae at zoom 12 in the Natural style: the plain, the hills coloured and shaded, contour lines every 50 m with their heights](../assets/screenshots/terrain-mycenae.png){ loading=lazy }
+</figure>
+
+<figure markdown>
+  ![The same place in the Contour map: the contour lines first, the colours pale](../assets/screenshots/terrain-contour.png){ loading=lazy }
+</figure>
 
 <figure markdown>
   ![The Aegean in the Terrain style: dark land, shaded mountains, sea, gulf and island names](../assets/screenshots/terrain-labels.png){ loading=lazy }
@@ -27,13 +42,39 @@ Histmersion:
   ![The same view in the Parchment style: pale land and sea, sepia relief, brown names](../assets/screenshots/terrain-parchment.png){ loading=lazy }
 </figure>
 
-<figure markdown>
-  ![The same view in Relief only: the mountains, without land cover or names](../assets/screenshots/terrain-relief.png){ loading=lazy }
-</figure>
+The map options change a preset for you alone — names and their language, relief strength, colours by
+height, land cover, sea floor, contours and their interval — and are remembered by this browser per
+preset until *Reset to preset*; the style file stays the source of the presets. An option a preset has
+nothing for (Terrain carries no contours; Relief only no names) or whose data is not downloaded is
+disabled, its line saying why.
 
+## How the Natural map is drawn
 
-The **names** button beside the menu switches the physical names off and on (it is greyed out when
-the style shown has none). Your choice of style and of names is remembered by this browser.
+- **Colours by height** (`relief.tint`): the elevation of every pixel through a ramp of `[metres,
+  colour]` stops — lowland green, upland tan, mountain grey-brown, snow white — under the land cover's
+  translucent fills, so a forest on a mountain is a darker green over the mountain's tan.
+- **Land cover**: Protomaps' `landcover` (satellite-derived, the same everywhere) to zoom 8, then
+  OpenStreetMap's own `landuse` — forest and wood dark green, grass and meadow light green, scrub and
+  heath olive, farmland pale, bare rock grey, sand and beach ochre, wetland blue-green, glacier white.
+- **The relief**, shaded from several directions (`relief.multidirectional`, 0–1: light from the main
+  direction and three more), so a slope turned away from the main light still shows its shape. It is
+  computed for the screen's own pixels: a zoom deeper than the data is resampled smoothly (bicubic),
+  never in blocks, and each tile takes its neighbours' edge pixels, so no seam shows. To zoom 8 it comes
+  from the downloaded extract; deeper (to 12, about 30 m) the server reads the tiles you look at
+  ([Open data → The terrain base map](open-data.md#the-terrain-base-map)).
+- **The sea floor** (`relief.sea-tint`, `relief.sea-shading`): the sea coloured by its depth — light over
+  the shelf, a step at its edge near 200 m, darker over the basins — and its floor faintly shaded, from
+  the `bathymetry` layer (ETOPO1). Without it the sea is one shallow colour.
+- **Water**: a soft blue, lighter along every shore (`glow` on the water layer: a band inside the outline
+  fading towards open water); rivers by size — the major rivers wide at a continent's scale, then
+  OpenStreetMap's rivers, then streams from zoom 11.
+- **Contours** (`relief.contours`): traced from the same elevation in your browser, once per tile — every
+  `interval` metres by zoom (Natural 100 m at zoom 11, 50 m at 12, 20 m at 14, 10 m at 16), every
+  `index-every`-th line thicker with its height written along it; `depth-interval` adds depth lines under
+  the sea (the Contour map). The *Contour lines* option switches them, and *Interval* fixes one.
+
+Each tile's relief is computed once, when it arrives — never during a pan or a zoom — in a few
+milliseconds, and the decoded elevation is kept in a small bounded cache.
 
 ## The physical names
 
@@ -46,11 +87,23 @@ The names on the terrain map are those of the land and the water, never of anyth
   a separate download of about 20 MB, of which about 1.4 MB is kept.
 
 No towns, countries, borders or roads are named. The names are drawn below every marker of the map,
-and fewer of them show the further out you zoom. They are shown in **English** by default; set
-`basemap.labels.language` (or `language` in your style file, or in one style) to `local` for each
-name in its own language, or to another language code the data carries (`de`, `fr`, `el`, `tr`,
-`ar`, `ru`, `zh-Hans`, …). A place without a name in that language falls back to English, then to
-its local name.
+and fewer of them show the further out you zoom; two never overlap (each takes the room of its whole
+block — every line, its halo and a margin — and the more important, placed first, wins). They are shown
+in **English** by default; the map options' *Language* switches them for you (English, *Local* — each
+name in its own language and script — Deutsch, Français, Italiano, Español, Ελληνικά, Türkçe, Русский,
+العربية, עברית, فارسی, 中文). The default for everyone is `basemap.labels.language` (or `language` in
+your style file, or in one style). A place without a name in that language falls back to English, then
+to its local name. Natural Earth's names (ranges, deserts, lakes, rivers, peaks) exist in Arabic,
+Bengali, Chinese, Dutch, English, French, German, Greek, Hebrew, Hindi, Hungarian, Indonesian, Italian,
+Japanese, Korean, Persian, Polish, Portuguese, Russian, Spanish, Swedish, Turkish, Ukrainian, Urdu and
+Vietnamese; OpenStreetMap's (seas, gulfs, islands, smaller lakes and rivers) in whatever languages
+people mapped them — for the Aegean, Greek and Turkish nearly always.
+
+**The fonts** are served by Histmersion itself, so the map needs no font service: Noto Serif (Latin,
+Greek, Cyrillic) with Noto Serif Armenian, Georgian and Hebrew and Noto Naskh Arabic for local names in
+those scripts (SIL Open Font License). Each label layer names its own `font { family … }`; the built-in
+styles use `${fonts.serif}` — water italic, ranges and regions in letter-spaced capitals, islands,
+peninsulas and peaks in regular, smaller type.
 
 !!! note "A download made before the names existed"
     `histmersion basemap status` says when the names are missing, and what to run. Natural Earth's

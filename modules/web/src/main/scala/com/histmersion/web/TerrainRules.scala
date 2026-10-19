@@ -55,6 +55,16 @@ object TerrainRules:
         .mapValues(gs => if gs.contains(0) then Set.empty[Int] else gs.toSet).toMap
     }.toMap
 
+  /** From which TILE zoom each data layer is read, per source — when every layer reading it starts at a
+    * zoom (`min-zoom`, a map zoom: the tile is one zoom less, `levelDiff` 1); a layer read at every zoom
+    * is absent. The server then leaves it out of shallower tiles ([[Basemap.subsetAt]]). Pure. */
+  def subsetZooms(layers: List[StyleLayer]): Map[String, Map[String, Int]] =
+    layers.groupBy(_.source).view.mapValues { ls =>
+      ls.flatMap(l => l.dataLayers.map(_ -> l.minZoom)).groupMap(_._1)(_._2).collect {
+        case (dl, zs) if zs.forall(_.isDefined) => dl -> math.max(0, math.floor(zs.flatten.min).toInt - 1)
+      }
+    }.toMap
+
   /** The language a style's names are in: its own, else the document's. */
   def language(style: TerrainStyle, styles: TerrainStyles): String = style.language.getOrElse(styles.language)
 
@@ -67,7 +77,8 @@ object TerrainRules:
 
   /** The style's rules, ready for `protomapsL.leafletLayer`. */
   final case class Compiled(paint: js.Array[js.Object], labels: js.Array[js.Object],
-      paintReads: Map[String, Map[String, Set[Int]]], labelReads: Map[String, Map[String, Set[Int]]])
+      paintReads: Map[String, Map[String, Set[Int]]], labelReads: Map[String, Map[String, Set[Int]]],
+      paintZooms: Map[String, Map[String, Int]] = Map.empty, labelZooms: Map[String, Map[String, Int]] = Map.empty)
 
   /** Compile `style` for the `sources` the server has; the label rules only when `labelsOn`. */
   def compile(style: TerrainStyle, language: String, sources: Set[String], labelsOn: Boolean, lookup: String => String,
@@ -129,7 +140,7 @@ object TerrainRules:
       }
     val drawn = layers.filter(l => l.draw == "fill" || l.draw == "line")
     val named = if !labelsOn || !style.labels then Nil else layers.filter(_.draw == "label")
-    Compiled(js.Array(paint*), js.Array(labels*), subsets(drawn), subsets(named))
+    Compiled(js.Array(paint*), js.Array(labels*), subsets(drawn), subsets(named), subsetZooms(drawn), subsetZooms(named))
 
   /** Is a layer the GROUND under a tinted relief — the land's fill or the open sea's — drawn below the
     * colours by height and depth, so they cover it where there is elevation and it shows where there is

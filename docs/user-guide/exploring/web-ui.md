@@ -23,24 +23,58 @@ switched on and off:
 | **areas** | regions and the states of the time, drawn as shapes. |
 
 Hover over a marker for a short card; click it (or press Enter on it) for the details — a site
-click also filters the lists by that place. Four base maps are offered, in the menu at the end of
-the layer buttons: standard, muted and dark — today's map, with roads, towns and borders — and
-[terrain](#the-terrain-map). The first three come from OpenStreetMap unless the server is
-configured otherwise (`ui.tiles`), so they need the internet; the terrain map comes from your own
-server, and everything else works offline.
+click also filters the lists by that place.
+
+### The base map
+
+The base map is chosen in two steps, at the end of the layer buttons. The first menu picks the
+**family**:
+
+- **Histmersion map** — [the terrain map](#the-terrain-map), drawn in your browser from data your own
+  server keeps, with no modern features, and adjustable;
+- **Online map** — OpenStreetMap's tiles, today's map with roads, towns and borders, in three looks
+  (*Standard*, *Muted*, *Dark*, the second menu). They need the internet (or the server's `ui.tiles`).
+
+For the Histmersion map, the button beside the menu opens the **map options**: the style (the
+*preset*) and what you change of it for yourself. They stay open while you change things (Escape, or
+a click elsewhere, closes them), each change shows at once, and your changes are remembered by this
+browser, per preset, until **Reset to preset**:
+
+| option | what it does |
+|---|---|
+| **Style** | the preset: *Natural* (the default), *Contour map*, *Terrain*, *Terrain + vegetation*, *Relief only*, *Parchment*, and any your [style file](../how-to/terrain-styles.md) adds |
+| **Names** · **Language** | the physical names on or off; *English*, *Local* (each name in its own language and script) or another language — a name missing in it falls back to English, then to the local name |
+| **Relief** | how strongly the slopes are shaded (none … twice the preset's) |
+| **Colours by height** | the ground coloured by its elevation (lowland green, upland tan, mountain grey-brown, snow) |
+| **Land cover** | forest, grass, scrub, farmland, bare rock, sand, wetland and ice |
+| **Sea floor by depth** | the sea coloured and shaded by its depth: the shallow shelf light, the deep basins dark |
+| **Contour lines** · **Interval** | lines of equal height from zoom 11 (*Contour map*: 9), every 200, 100, 50 or 20 m as you zoom in — or a fixed interval |
+
+An option a preset cannot offer, or whose data the server has not downloaded, is shown disabled with
+a line saying why — and, for missing data, the command that fetches it.
+
+<figure markdown>
+  ![The map options over the Aegean: the style, names and language, relief, colours by height, land cover, sea floor, contours](../assets/screenshots/map-options.png){ loading=lazy }
+</figure>
 
 ### The terrain map
 
-**Terrain (no modern features)** shows the land itself — relief, coastlines, seas, lakes, rivers
-and a light tint for forest, grassland, scrub, bare ground and ice, with the names of the seas,
-mountain ranges, deserts, lakes and rivers — and nothing people built: no roads, towns, place
-names, borders or buildings. The markers, names and state outlines of your own corpus are then the
-only human geography on the map.
+The **Histmersion map** shows the land itself — relief, coastlines, seas and the sea floor, lakes,
+rivers and the land cover, with the names of the seas, mountain ranges, deserts, lakes and rivers — and
+nothing people built: no roads, towns, place names, borders or buildings. The markers, names and state
+outlines of your own corpus are then the only human geography on the map.
 
-It comes in several **styles**, each an entry of the base-map menu — Terrain, Terrain + vegetation,
-Relief only and Parchment — and the **names** button beside the menu switches the physical names off
-and on. You can change the styles or add your own without restarting anything:
+Its default style, **Natural**, is a light map that tells the lie of the land at a glance: the ground
+coloured by its height, forests, grass, bare rock, sand and ice in their own colours, the slopes shaded
+from several directions, the sea a soft blue lighter along the shore and darker over its deep basins,
+and — close in — contour lines with their heights, so a citadel on a small hill between two others
+reads as just that. Zoomed close, the relief goes to about 30 m detail (the server reads the tiles you
+look at once and keeps them). You can change the styles or add your own without restarting anything:
 [Customising the terrain map](../how-to/terrain-styles.md).
+
+<figure markdown>
+  ![The Argolid around Mycenae at zoom 12 in the Natural style: the plain, the hills coloured and shaded, contour lines every 50 m with their heights](../assets/screenshots/terrain-mycenae.png){ loading=lazy }
+</figure>
 
 <figure markdown>
   ![The Aegean on the terrain map: shaded mountains, the sea and the islands, no modern roads or towns, the notice in the corner](../assets/screenshots/home-terrain.png){ loading=lazy }
@@ -54,15 +88,16 @@ and on. You can change the styles or add your own without restarting anything:
     show one: a notice in its corner says so whenever it is on. Read a site's setting from your
     sources, not from the background.
 
-The map is drawn in your browser from two files your server keeps (about 0.6 GB for the default
-region, Atlantic Europe to the Indus). They are not there until someone downloads them once:
+The map is drawn in your browser from files your server keeps (about 2 GB for the default region,
+Atlantic Europe to the Indus). They are not there until someone downloads them once:
 
 ```bash
 histmersion basemap fetch      # see Open data → The terrain base map
 ```
 
 Until then the menu says "not downloaded", and choosing it shows the standard tiles, dimmed, with a
-note on how to fetch it. Outside the downloaded region the terrain map is blank.
+note on how to fetch it. Outside the downloaded region the terrain map is blank; beyond the downloaded
+zooms of the relief (8 by default), it is read from the provider as you look, when the server is online.
 
 ## The timeline
 

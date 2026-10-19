@@ -136,15 +136,17 @@ How to reuse a picture: [Pictures](../exploring/media.md#reusing-a-picture).
 ## The terrain base map
 
 The web page's [terrain map](../exploring/web-ui.md#the-terrain-map) — relief, coast, water,
-rivers, land cover and the physical names, without modern roads, towns or borders — is drawn from
-three files the server downloads once and then serves itself. Nothing is downloaded until you ask:
+rivers, land cover, the sea floor and the physical names, without modern roads, towns or borders — is
+drawn from four files the server downloads once and then serves itself. Nothing is downloaded until you ask:
 
 ```bash
 histmersion basemap fetch --dry-run     # reads only the providers' indexes; prints the sizes
 histmersion basemap fetch               # the download, as a job (it can be stopped and resumed)
 histmersion basemap status              # what is there, where, and how much space is left
-histmersion basemap rm                  # remove it again (--layer vector|terrain|labels)
+histmersion basemap rm                  # remove it again (--layer vector|terrain|labels|bathymetry, --focus, --cache)
 histmersion basemap fetch --layer labels   # only the physical names (about 20 MB read, 1.4 MB kept)
+histmersion basemap fetch --layer bathymetry   # only the sea floor (about 80 MB)
+histmersion basemap fetch --layer terrain --focus aegean   # the Aegean's relief to zoom 12, kept for good
 ```
 
 | layer | what | source | licence and credit |
@@ -152,6 +154,11 @@ histmersion basemap fetch --layer labels   # only the physical names (about 20 M
 | `vector` | coastlines, seas, lakes, rivers and streams with their names; land cover and land use; natural points (peaks, springs) | a [Protomaps](https://protomaps.com) daily build of OpenStreetMap and Natural Earth | © OpenStreetMap contributors, [ODbL](https://www.openstreetmap.org/copyright); Natural Earth public domain |
 | `labels` | the names of mountain ranges, deserts, plateaus, peninsulas, island groups, large lakes, major rivers and peaks | [Natural Earth](https://www.naturalearthdata.com) 5.1.2's label layers | public domain (credited on the map all the same) |
 | `terrain` | elevation, shaded into relief by the page | [Mapterhorn](https://mapterhorn.com), mostly the Copernicus GLO-30 elevation model | © Mapterhorn; Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA; further open sources are listed on [Mapterhorn's attribution page](https://mapterhorn.com/attribution) |
+| `bathymetry` | the sea floor's depth, coloured and shaded by the page (Mapterhorn's sea is flat at 0) | [Mapzen's terrain tiles](https://registry.opendata.aws/terrain-tiles/) on AWS Open Data, whose sea is NOAA's [ETOPO1](https://www.ncei.noaa.gov/products/etopo-global-relief-model) (1 arc-minute, about 1.8 km) | ETOPO1: U.S. Government work, public domain, *not to be used for navigation*; credited as "ETOPO1 (NOAA) via Mapzen Terrain Tiles" ([attribution](https://github.com/tilezen/joerd/blob/master/docs/attribution.md)) |
+
+The map's label fonts — Noto Serif, Noto Serif Armenian, Georgian and Hebrew, Noto Naskh Arabic — are
+part of Histmersion itself (SIL Open Font License 1.1, its text beside the files in
+`web/vendor/noto-fonts/`), so the names show in their own scripts with no font service.
 
 The credits are shown on the map whenever it is on. Both providers publish one large file for the
 whole world (139 GB and 356 GB) and document downloading **a region of it** with HTTP range requests,
@@ -187,6 +194,33 @@ so a large extract costs the page nothing it does not show.
 | **8** (default) | **0.49 GB** |
 | 9 | 1.6 GB |
 | 10 | 5.0 GB |
+
+**The relief deeper than the extract** (zooms 9 to 12 — 12 is about the 30 m of the Copernicus model)
+is not downloaded for the whole region: when you look at an area that closely, the server reads just
+the tiles you see from Mapterhorn's planet file (by range request, the access the provider documents
+for extracts; at most `basemap.terrain.on-demand.concurrency` requests at once and
+`requests-per-second` a second) and keeps them in a cache beside the extract (`terrain-cache/`, at
+most `on-demand.cache-gb`, 3 GB, the least recently seen going first). An area seen once shows again
+offline. Offline elsewhere, the map shows the coarser relief. `on-demand.enabled = false` switches it
+off. To keep a region's detail for good — before a trip without internet, say — fetch it as a
+**focus region** (`--focus <name>`: one of `basemap.terrain.focus-regions`, or a name of your own
+with `--bbox`; stored in `terrain-focus/`, never evicted). Measured on 2026-10-20, zooms 9–12:
+
+| focus region | box | tiles | downloaded = stored |
+|---|---|---|---|
+| `aegean` | 21.5,35,28.5,41.5 | 10 299 | 0.43 GB |
+| `anatolia` | 26,36,45,42.5 | 28 313 | 2.0 GB |
+| `levant` | 33.5,29.5,37.5,37.5 | 6 837 | 0.36 GB |
+| `mesopotamia` | 38,29,49,38 | 20 873 | 1.3 GB |
+| `nile-delta` | 29,30,32.5,31.7 | 1 296 | 0.05 GB |
+| `argolid` | 22.5,37.4,23.2,37.9 | 92 | 7 MB |
+
+`histmersion basemap fetch --layer terrain --focus aegean --dry-run` prints the figure for any box
+first. A `--layer terrain --bbox …` fetch deeper than `basemap.terrain.max-zoom` becomes a focus
+region of its own (named after its box), so it never replaces the broad extract.
+
+**The sea floor** (`bathymetry`, zooms 0–7 of the region, 256-pixel tiles): about 1 200 tiles, 80 MB
+for the default region, one request each a tenth of a second apart.
 
 So the default fetch downloads about 2 GB and keeps about 1.8 GB. A larger region costs less than
 its area suggests (the sea is one tile repeated): `-25,5,95,66` is 1.9 GB downloaded at vector zoom

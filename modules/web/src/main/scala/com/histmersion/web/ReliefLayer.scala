@@ -40,8 +40,8 @@ object ReliefLayer:
       depthColor: String)
 
   // the decoded elevation tiles: 512 KB each (whole metres as 16-bit integers); the sea floor's, 128 KB
-  private val dems = BoundedCache[String, Future[Option[Int16Array]]](20)
-  private val seas = BoundedCache[String, Future[Option[Int16Array]]](24)
+  private val dems = BoundedCache[String, Future[Option[Int16Array]]](16)
+  private val seas = BoundedCache[String, Future[Option[Int16Array]]](16)
 
   /** The cache's figures, for the page's diagnostics. */
   def stats: BoundedCache.Stats = BoundedCache.stats(dems)
@@ -125,16 +125,16 @@ object ReliefLayer:
   private final case class Computed(r: Int, shade: dom.ImageData, tint: Option[dom.ImageData], contours: Option[Contours.Traced],
       index: List[(Double, js.Array[Double])], isobaths: Option[Contours.Traced])
 
-  /** The sea-floor tiles (256 pixels, zoom `bz`) a window of the elevation tile `src` covers, from
-    * (x0, y0), `side` pixels: their columns and rows, and the scale from elevation pixels to theirs. Pure. */
-  def seaTiles(src: Relief.Source, x0: Int, y0: Int, side: Int, bathyMax: Int): (Int, Double, List[(Long, Long)]) =
+  /** The sea-floor tiles (256 pixels, zoom `bz`) under the part of the elevation tile `src` a map tile
+    * covers (its window's few pixels around it take the nearest of them): their columns and rows, and the
+    * scale from elevation pixels to theirs. Pure. */
+  def seaTiles(src: Relief.Source, bathyMax: Int): (Int, Double, List[(Long, Long)]) =
     val bz = math.max(0, math.min(bathyMax, src.z + 1))
     val f  = math.pow(2, bz - src.z - 1).toDouble
-    val gx0 = (src.x * Relief.Tile + x0) * f; val gy0 = (src.y * Relief.Tile + y0) * f
+    val gx0 = (src.x * Relief.Tile + src.ox) * f; val gy0 = (src.y * Relief.Tile + src.oy) * f
     val n = 1L << bz
-    val xs = (math.floor(gx0 / 256 - 0.01).toLong to math.floor((gx0 + side * f) / 256 + 0.01).toLong).toList
-    val ys = (math.floor(gy0 / 256 - 0.01).toLong to math.floor((gy0 + side * f) / 256 + 0.01).toLong).toList.filter(y => y >= 0 && y < n)
-    (bz, f, for y <- ys; x <- xs yield (x, y))
+    def range(a: Double) = (math.floor(a / 256).toLong to math.floor((a + src.span * f - 1e-9) / 256).toLong).toList
+    (bz, f, for y <- range(gy0).filter(y => y >= 0 && y < n); x <- range(gx0) yield (x, y))
 
   /** A tile computed from the deepest data there is: a zoom deeper than the extract that has no tile there
     * (outside a focus region, the on-demand relief off or offline) falls back a zoom at a time — a coarser
@@ -157,7 +157,7 @@ object ReliefLayer:
     val centre = dem(s.url, src.z, src.x, src.y)
     val around = Future.sequence(need.map((dx, dy) => dem(s.url, src.z, src.x + dx, src.y + dy).map(d => (dx, dy) -> d)))
     // the sea floor under the window (its own tiles, coarser), when the server has it
-    val (bz, bf, bts) = s.bathymetry.fold((0, 1.0, List.empty[(Long, Long)]))((_, m) => seaTiles(src, x0, y0, side, m))
+    val (bz, bf, bts) = s.bathymetry.fold((0, 1.0, List.empty[(Long, Long)]))((_, m) => seaTiles(src, m))
     val floors = s.bathymetry.fold(Future.successful(List.empty[((Long, Long), Option[Int16Array])])) { (u, _) =>
       Future.sequence(bts.map((bx, by) => dem(u, bz, bx, by, seas, 256).map(d => (bx, by) -> d)))
     }
@@ -173,6 +173,8 @@ object ReliefLayer:
         // (bilinear), at least a metre deep; a mask of it for the tint and the shading
         bufSeaWin = grow(bufSeaWin, side * side)
         val floor = fl.collect { case (k, Some(t)) => k -> t }.toMap
+        val (fx0, fx1) = (bts.map(_._1).minOption.getOrElse(0L), bts.map(_._1).maxOption.getOrElse(0L))
+        val (fy0, fy1) = (bts.map(_._2).minOption.getOrElse(0L), bts.map(_._2).maxOption.getOrElse(0L))
         val gx0 = (src.x * Relief.Tile + x0).toDouble; val gy0 = (src.y * Relief.Tile + y0).toDouble
         var i = 0
         while i < side * side do
@@ -181,7 +183,9 @@ object ReliefLayer:
             bufSeaWin(i) = 1
             if floor.nonEmpty then
               val px = (gx0 + i % side + 0.5) * bf - 0.5; val py = (gy0 + i / side + 0.5) * bf - 0.5
-              val tx = math.floor((px + 0.5) / 256).toLong; val ty = math.floor((py + 0.5) / 256).toLong
+              // the tile under it — for the few pixels around the window, the nearest one fetched
+              val tx = math.max(fx0, math.min(fx1, math.floor((px + 0.5) / 256).toLong))
+              val ty = math.max(fy0, math.min(fy1, math.floor((py + 0.5) / 256).toLong))
               floor.get((tx, ty)).foreach { t =>
                 bufWindow(i) = math.min(-1.0, Relief.bilinear(t, 256, px - tx * 256, py - ty * 256)).toFloat
               }

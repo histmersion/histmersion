@@ -167,6 +167,22 @@ object MapOptions:
           onClick --> { _ => close() }))
     )
 
+  /** Where the panel goes: under its button, its right edge at the button's — moved left or right to stay
+    * inside the window. Pure. */
+  def placement(buttonLeft: Double, buttonRight: Double, buttonBottom: Double, width: Double, windowWidth: Double): (Double, Double) =
+    val x = math.max(8.0, math.min(windowWidth - width - 8, buttonRight - width))
+    (if buttonLeft < 0 then 8.0 else x, buttonBottom + 4)
+
+  private def place(): Unit =
+    for
+      b <- Option(dom.document.getElementById("map-options-button"))
+      p <- Option(dom.document.getElementById("map-options")).map(_.asInstanceOf[dom.HTMLElement])
+    do
+      val r = b.getBoundingClientRect()
+      val (x, y) = placement(r.left, r.right, r.bottom, math.min(300.0, dom.window.innerWidth * 0.92), dom.window.innerWidth)
+      p.style.setProperty("--map-options-x", s"${x}px")
+      p.style.setProperty("--map-options-y", s"${y}px")
+
   private def close(): Unit =
     open.set(false)
     Option(dom.document.getElementById("map-options-button")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
@@ -189,6 +205,8 @@ object MapOptions:
         if open.now() && t != null && t.closest(".map-options-anchor") == null then open.set(false)
       },
       open.signal.changes.filter(identity) --> { _ =>
+        place()
         dom.window.setTimeout(() => Option(dom.document.querySelector("#map-options select")).foreach(_.asInstanceOf[dom.HTMLElement].focus()), 0)
-      }
+      },
+      windowEvents(_.onResize) --> { _ => if open.now() then place() }
     )

@@ -214,10 +214,24 @@ object Basemap:
     parsed.collectFirst { case Left(e) => e }.toLeft(parsed.collect { case Right(kv) => kv }
       .groupMapReduce(_._1)(_._2)((a, b) => if a.isEmpty || b.isEmpty then Set.empty else a ++ b))
 
-  /** The query value for a subset ([[parseSubset]]'s inverse), sorted so a page asks one URL. Pure. */
-  def subsetParam(m: Map[String, Set[Int]]): String =
+  /** The query value for a subset ([[parseSubset]]'s inverse), sorted so a page asks one URL; a layer
+    * of `fromZoom` is asked for only from that tile zoom on (`landuse:a@8`, [[subsetAt]]). Pure. */
+  def subsetParam(m: Map[String, Set[Int]], fromZoom: Map[String, Int] = Map.empty): String =
     m.toList.sortBy(_._1).map { (l, gs) =>
-      if gs.isEmpty then l else l + ":" + gs.toList.sorted.map { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }.mkString
+      val base = if gs.isEmpty then l else l + ":" + gs.toList.sorted.map { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }.mkString
+      fromZoom.get(l).filter(_ > 0).fold(base)(z => s"$base@$z")
+    }.mkString(",")
+
+  /** A subset as it applies to a tile of zoom `z`: the entries of a deeper zoom (`landuse@8` at 7)
+    * left out, the others without their zoom — so a page never downloads or decodes a layer its style
+    * draws only closer in. Pure. */
+  def subsetAt(s: String, z: Int): String =
+    s.split(",").toList.map(_.trim).filter(_.nonEmpty).flatMap { e =>
+      e.split("@", 2).toList match
+        case l :: n :: Nil => n.trim.toIntOption match
+          case Some(from) => Option.when(z >= from)(l)
+          case None       => Some(e)   // left for parseSubset to refuse
+        case _ => Some(e)
     }.mkString(",")
 
   /** What an extract kept, said in a line (`basemap status`): from its metadata — `keepAll`, the drop
