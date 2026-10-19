@@ -8,7 +8,8 @@ install/build side — the relink kit, JVM mode, `histmersion plugin …`, the l
 optional signing (phases 3–5) — is built: §18. Phase 6's first part (media collections and event
 catalogues as plugins, the plugin list in the web About window) is built: §19. Decisions D4 (one plugin
 per open-access index) and D5 (the local build is the default) are built: §20. §18's follow-ups — CI
-kits, the TCC check, GPG verification at each start — are built: §21. The
+kits, the TCC check, GPG verification at each start — are built: §21. AI providers as plugins: the
+design is §22, what was built §23. The
 spike code is in `spike/plugins/`, a standalone sbt build that
 the root build does not aggregate. Measurements were taken on this machine: Apple M4 Pro, 14 cores,
 48 GB RAM, macOS 26.7, GraalVM CE 25.0.1 (the `.sdkmanrc` pin), sbt 2.0.7. Statements I could not
@@ -2036,3 +2037,161 @@ and on-but-unsignable. `relink-test.sh` (+6, fake gpg): the launcher accepts a r
 with provenance keeps it verifiable; a rollback to the never-signed stock binary refused, then allowed after
 `sign-binary`; `--jvm` with and without provenance. `smoke.sh` runs the REAL native binary's `--self-check`
 through the launcher (a copy of `bin/`, a temporary GNUPGHOME) and sees a changed binary refused with 78.
+
+## 22. AI providers as plugins (design, 2026-10-19)
+
+The user asked to "consider making AI provider a plugin as well." This section inventories what the
+providers are today, where provider-specific code sits, proposes an `aiProviders` registry, and says
+which parts are worth building. §23 is what was built from it.
+
+### 22.1 Inventory: the six providers today
+
+A `provider:model` reference (`core/Agents.ModelRef`) names one of six providers, a CLOSED enum
+(`Agents.ProviderKind`). The engine sees only `agents/LlmClient` (`run(LlmCall[Out]): AgentResult`); the
+factory `LlmClient.factory(rt)` matches on the enum.
+
+| provider | how a step runs | tool use | typed answer | tokens | plan / quota | login check | definitions |
+|---|---|---|---|---|---|---|---|
+| `anthropic` | sttp-ai `ClaudeAgent`, the HOST's tool loop (one HTTP call per turn) | the host's `Toolbox` tools in process | sttp-ai's response schema; host validators | each response's usage (interceptors per call) | metered: `agents.prices`, allowances | `ANTHROPIC_API_KEY` present (doctor: `GET /v1/models`) | — |
+| `openai` | sttp-ai `OpenAIAgent`, host loop | as above (`strict-tools`) | as above | as above | metered | `OPENAI_API_KEY` | — |
+| `local` | sttp-ai `OpenAIAgent` on any OpenAI-compatible URL, host loop | as above | as above | as above | metered (price `0/0`) | none needed | — |
+| `claude-code` | ONE `claude -p` process per step attempt (`ClaudeCodeClient`, `CliProcess`): the CLI runs the loop | the agent MCP endpoint `/mcp/agent`, reached with a per-step RUN TOKEN bound to the role's tools (`RunTokens`) | `--json-schema`; host validators | `stream-json` `modelUsage`; first-call probe from the stream | Claude plan pool (`PlanPools`): `rate_limit_event` readings, floors, the quota-guard mod, the one-turn probe refresh, `ModelLimitReached` cool-down | `claude --version`, `claude auth status` (method and plan only); loopback rule | the generated headless plugin + role settings (`AgentGenerator`/`AgentTrees`) |
+| `codex` | `codex exec --json -p <role>` per attempt (`CodexExecClient`) | the agent MCP endpoint via the generated profile | `--output-schema` (OpenAI strict form, `StrictJsonSchema`) | `turn.completed.usage` | ChatGPT plan pool: `codex app-server` → `account/rateLimits/read` (throttled) | `CODEX_HOME/auth.json` EXISTS (never read); loopback rule | the generated `CODEX_HOME` profiles |
+| `opencode` | `opencode run --agent <role> --format json` (`OpencodeRunClient`) | generated agent, MCP header with the run token | schema in the message, text parsed | `step_finish.tokens` | ChatGPT plan when `chatgpt-login` and `openai/…`, else metered | none | generated `XDG_CONFIG_HOME`/`OPENCODE_CONFIG_DIR` |
+
+There is no sttp-ai-style catalogue: model ids are free text in `agents.roles.*`; the doctor compares
+them with the provider's free `…/models` listing.
+
+### 22.2 Where provider-specific code leaks out of `LlmClient`
+
+| place | what it knows |
+|---|---|
+| `core/Agents.ProviderKind` | the six names, `isCli`; `ModelRef.parse` and `ModelChains.Target.parse` refuse any other name |
+| `core/Agents.Prices.metered` | a sentence per CLI provider explaining why it is metered |
+| `core/PlanQuota.poolOf/paid/Logins` | which provider draws on which plan (`claude-code`, `codex`, `opencode:openai/…`); `PoolId` is a closed enum |
+| `core/AgentsConfig.providers` | one typed block per provider (`agents.providers.<name>.*`), `provider(kind)` |
+| `agents/LlmClient.factory/fromConfig` | the match, the key messages |
+| `agents/AgentDoctor` | a check list per provider (HTTP listing; claude/codex/opencode executables, login, loopback) |
+| `agents/PlanPools` | `loginGates`, the Codex app-server read, the Claude probe, `claudeEnv` |
+| `agents/ModelPicker` | the cool-down length from `claude-code.limit-cooldown-minutes`; the "counts what claude -p reported" note |
+| `agents/AgentsHandlers.covers` | which provider targets a plan pool covers |
+| `agents/AgentGenerator`, `AgentTrees`, `CliRuntime` | the three runtimes' file formats and homes |
+
+The engine (`Engine`), the pipelines, the managers, approvals, budgets, allowances, the review panel and
+the toolbox do NOT branch on the provider: they see `LlmClient`, `Billing` and `PoolId`. That is the
+seam a registry can take over without touching them.
+
+### 22.3 The proposal: an `aiProviders` registry
+
+One more registry on `PluginContext` (compatible: a default that refuses, `Spi.Version` stays 1), keyed
+by the PROVIDER NAME — the part before the colon of `provider:model`:
+
+```scala
+trait AiProvider:
+  def title: String
+  def description: String = ""
+  def capabilities: AiCapabilities = AiCapabilities()        // tools, structured output (flags)
+  def spendsPersonalPlan: Boolean = false                    // refused beyond loopback, like claude-code
+  def check(model: String): Either[String, Unit] = Right(()) // can a client for `model` be built now (a key, a URL)
+  def models(http: AiHttp): Either[String, List[String]] = Right(Nil) // a FREE listing, for the doctor
+  def doctor(online: Boolean, http: AiHttp): List[AiCheck] = Nil      // spends nothing
+  def turn(request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn] // ONE model call
+```
+
+- **A turn, not a step.** The provider answers ONE model call: the system prompt, the conversation so
+  far (user, assistant text and tool calls, tool results), the tools offered (name, description, JSON
+  Schema), the answer's JSON Schema, `max-tokens`, and the iteration. It returns text, tool calls, a
+  stop reason, usage and the model that served. The HOST runs the loop — sttp-ai's, through a custom
+  `AgentBackend` — so the tools stay the host's in-process `Toolbox` (allowlist per step, result caps,
+  the read-only `query` role), every interceptor (trace, run budget, `max-llm-calls-in-flight`, the
+  first-call probe, the allowance guard) sees each call, and the typed answer is decoded and validated
+  by the host as for `anthropic`/`openai`. A plugin cannot loosen a budget, a tool allowlist or a
+  validator, because it never holds them.
+- **Failures are values.** `AiFailure.Error(message)` is a provider error (the run pauses with
+  `provider`, as an HTTP failure does today); `AiFailure.LimitReached(message, until)` is the plan's own
+  limit — the host raises `ModelLimitReached`, so the chain's next model takes over and the cool-down
+  applies. An exception is an error.
+- **Credentials are `Secret`s** in the plugin's own block (`api-key = "env:GEMINI_API_KEY"`, a vault
+  reference), resolved by the host before `register` (§3.7). The provider never reads a credential file
+  or another tool's login; the host never reads one either (the rule of the CLI providers holds).
+- **HTTP.** `AiHttp` is a host client for model calls: `post`/`get` with a per-call timeout, HTTP/1.1,
+  the host's User-Agent, never logging a header or a body (a key travels in a header). The acquisition
+  client (`PluginHttp`) is the wrong one: its retry and back-off policy is for polite scraping, and a model
+  call may run minutes.
+- **Billing.** A plugin provider's models are METERED: priced in `agents.prices` (`0/0` for a free local
+  server) and governed by allowances (`<provider>:*` or one model) and the USD budgets, which already
+  work for any provider target. Plan pools stay the host's two (below).
+- **What stays host-side:** prompt construction (the definitions, includes, the writing guide), budgets,
+  allowances, plan pools and floors, approvals, schema validation and retries, the tool loop and tool
+  sandboxing, the trace, the pick before every call, dry runs, the loopback rule.
+
+**Built-ins.** Today's six become built-in plugins, `ai-anthropic`, `ai-openai`, `ai-local`,
+`ai-claude-code`, `ai-codex`, `ai-opencode`, each enabled by default and switched off with
+`histmersion.plugins.ai-<name>.enabled = false` (env `HISTMERSION_PLUGIN_AI_<NAME>_ENABLED`). Their
+registry entries are `HostAiProvider`s, recognised by the host and run with today's code — exactly as the
+media collections and event catalogues are (§19): **config keys are layered, not mapped**, so every
+`agents.providers.*` key and env variable keeps its meaning and stays hot (read at each call).
+
+**Resolution.** The server's factory looks the provider name up in `deps.plugins.registries.aiProviders`
+— the generation the run is pinned to. A `HostAiProvider` → today's client; a plugin's → the adapter over
+`turn`; a built-in that is switched off → "the codex provider is switched off
+(histmersion.plugins.ai-codex.enabled = false)"; anything else → unknown provider, as today.
+`ModelRef.parse` and `Target.parse` take the registered plugin providers' names as an extra argument (a
+pure function still; the default is none), so `agent models set extractor gemini:…` and an allowance on
+`gemini:*` are accepted only while such a provider is registered, and every message for a typo stays
+as it is.
+
+### 22.4 Hot reload
+
+Adding, switching off or reconfiguring a provider is a change of a `histmersion.plugins.<id>` block:
+`config reload` (or the watcher) rebuilds that plugin alone into a new generation (§17). A run carries
+its pin for its whole life, so a run that started on a provider keeps that generation's provider (and
+its decoded config and resolved secrets) to its last step; the next run sees the new one. The built-in
+entries read nothing at registration, so like the media/events built-ins they are carried across a change
+of a host key. `agents.providers.*` changes need no plugin rebuild: they are read at each call, as today.
+
+### 22.5 Native image
+
+Nothing new: a third-party provider is a plugin jar, linked by a relink (§18), and carries its own
+reachability metadata; the six built-ins are in every image. The adapter uses sttp-ai's public
+`AgentBuilder.apply(config => AgentBackend)` and no reflection. The six defaults resources are recorded by
+the tracing agent during a `--self-check`.
+
+### 22.6 Migration: zero behaviour change
+
+- No config key is renamed; no env variable changes. The six plugin blocks are new and default to
+  enabled. Nothing reads `LegacyPlugins` because nothing was split.
+- A deployment that never writes `histmersion.plugins.ai-*` resolves every `provider:model` exactly as
+  before (same clients, same messages, same billing). The only visible change is six more rows in
+  `--self-check`, `/api/about`, `histmersion about` and the web About window, each "registered
+  (ai-provider:<name>)".
+- No migration (V097 is not needed: nothing stored changes; model wires are text).
+
+### 22.7 Recommendation
+
+**Worth it, in part.**
+
+1. **Build: the registry, the turn-level SPI and the adapter.** Small (one file in plugin-api, one adapter),
+   and it opens the one gap a user can feel: a provider sttp-ai does not ship (Gemini, Mistral, Bedrock,
+   a corporate gateway with its own auth, a local server with a non-OpenAI API) needs only a `turn`, and
+   it inherits every guard the host already has because the host keeps the loop.
+2. **Build: the six as built-in, switchable plugins** with `HostAiProvider` entries. Cheap, and it gives
+   the About/self-check listing, one switch per provider, and resolution through the pinned generation —
+   the same shape §19 gave media and events.
+3. **Do not build: moving the built-ins' code into plugin-api-only modules.** The HTTP ones are thin
+   wrappers over sttp-ai (which plugin-api must not depend on: it is sconfig + kindlings only, D1); the
+   CLI ones are mostly HOST machinery — run tokens bound to an agent definition, the agent MCP endpoint,
+   the generated trees, the plan pools and their readers, the quota-guard mod. Moving them would mean
+   lending all of that through the SPI and renaming every `agents.providers.*` key and env variable for
+   no behaviour gain (the reasoning of §16 for the fetchers).
+4. **Do not build now: a provider-run-loop ("runtime") SPI for third-party CLIs.** A runtime that runs
+   its own loop needs, from the host, a run token, the agent MCP URL, and — to be useful — generated
+   agent definitions in its own file format, a reading of its plan, and a legal review of its terms (the
+   `claude -p` analysis of docs/research-model-providers.md was needed for one vendor). The shape is known
+   (`AiRuntime.generate(definitions): Map[path, text]` + `step(request, McpAccess(url, token))`), but it
+   should wait for a concrete runtime to ask for it; the host-loop SPI covers HTTP APIs, which is where
+   the new providers are.
+5. **Do not build now: plugin plan pools.** `PoolId` is closed, its floors are `agents.quota.<pool>` keys,
+   its readers are per vendor and the UI draws each pool. Opening it is a config, schema (`plan_quota_*`
+   rows keyed by pool) and UI change whose only user would be a subscription runtime — item 4. A plugin
+   provider is metered, and allowances (tokens/USD per rolling window on `<provider>:*`) already cap it.
