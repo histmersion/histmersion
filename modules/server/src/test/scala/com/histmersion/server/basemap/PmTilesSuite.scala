@@ -88,3 +88,17 @@ class PmTilesSuite extends munit.FunSuite:
       val (z, x, y) = PmTiles.zxy(ids(5) + 1)
       assertEquals(r.tile(z, x, y), Right(None))
     finally r.close()
+
+  test("a read interrupted mid-way (a cancelled tile request) does not break the archive for the other requests"):
+    val dir = java.nio.file.Files.createTempDirectory("pmtiles-int")
+    val p   = BasemapFixtures.vectorArchive(dir.resolve("v.pmtiles"), maxZoom = 3)
+    val f   = PmTilesFile.open(p).fold(fail(_), identity)
+    try
+      val before = f.tile(2, 1, 1).fold(fail(_), identity).get
+      // an interrupted thread reading: the JDK closes the shared channel
+      val t = Thread.ofVirtual().unstarted(() => { Thread.currentThread().interrupt(); scala.util.Try(f.tile(3, 2, 2)) })
+      t.start(); t.join()
+      assertEquals(f.tile(2, 1, 1).map(_.map(_.toList)), Right(Some(before.toList)), "read again on a reopened channel")
+      assert(f.size > 0)
+    finally f.close()
+    intercept[java.nio.channels.ClosedChannelException](f.tile(2, 1, 1))

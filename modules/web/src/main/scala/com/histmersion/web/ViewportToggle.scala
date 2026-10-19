@@ -37,14 +37,20 @@ object ViewportToggle:
   def viewBox: Option[BBox] =
     Option(MapView.leafletMap).flatMap(m => scala.util.Try(bboxOf(m)).toOption).flatMap(BBox.parse)
 
-  /** The base maps, the terrain map once per named style the server serves ([[TerrainMap]]). */
+  /** The base maps, the terrain map once per named style the server serves ([[TerrainMap]]). The
+    * terrain entries are kept by style id (`split`): the status and styles are asked again each time
+    * the map is drawn, and replacing the chosen `<option>` would make the menu show another one. */
   private def baseMapSelect: HtmlElement =
-    val terrainOptions = TerrainMap.styles.signal.combineWith(TerrainMap.status.signal).map { (ss, st) =>
-      val tip = if st.forall(_.available) then TerrainMap.PastNotice else TerrainMap.missingNotice(st)
-      ss.map(_.styles).filter(_.nonEmpty) match
-        case None => List(option(value := BaseMap.Terrain.wire, TerrainMap.optionLabel(st), title := tip))
-        case Some(styles) => styles.map(t => option(value := TerrainMap.optionValue(t.id), TerrainMap.optionLabel(st, Some(t)),
-          title := (if t.description.nonEmpty && st.forall(_.available) then s"${t.description}. $tip" else tip)))
+    val entries = TerrainMap.styles.signal.map(_.map(_.styles).filter(_.nonEmpty).fold(List(Option.empty[TerrainStyle]))(_.map(Some(_))))
+    val terrainOptions = entries.split(_.fold("")(_.id)) { (key, _, entry) =>
+      val withStatus = entry.combineWith(TerrainMap.status.signal)
+      option(
+        value := (if key.isEmpty then BaseMap.Terrain.wire else TerrainMap.optionValue(key)),
+        child.text <-- withStatus.map((t, st) => TerrainMap.optionLabel(st, t)),
+        title <-- withStatus.map { (t, st) =>
+          val tip = if st.forall(_.available) then TerrainMap.PastNotice else TerrainMap.missingNotice(st)
+          t.filter(_.description.nonEmpty && st.forall(_.available)).fold(tip)(t => s"${t.description}. $tip")
+        })
     }
     select(
       cls := "field map-style-select",
@@ -52,8 +58,9 @@ object ViewportToggle:
       BaseMap.values.toList.filter(_ != BaseMap.Terrain).map(b => option(value := b.wire, b.label)),
       children <-- terrainOptions,
       controlled(
+        // a tick late: when the styles arrive, their options must be in the menu before it can show one
         value <-- UiState.baseMap.signal.combineWith(UiState.terrainStyle.signal, TerrainMap.styles.signal)
-          .map(TerrainMap.selectValue.tupled),
+          .map(TerrainMap.selectValue.tupled).composeChanges(_.delay(0)),
         onChange.mapToValue --> { v =>
           TerrainMap.parseOption(v).foreach { (b, style) =>
             if b == BaseMap.Terrain then UiState.set(UiState.baseMap := b, UiState.terrainStyle := style)()
