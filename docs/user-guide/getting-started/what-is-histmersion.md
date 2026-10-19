@@ -87,9 +87,10 @@ by you, by your AI assistant, or by Histmersion's built-in agents if you switch 
 - **People who work with an AI assistant** and want it to answer from their own sources, with
   citations, instead of from memory.
 
-It runs on one computer (macOS on Apple Silicon, or Linux) and keeps everything there. Nothing is
-sent anywhere unless you ask for it: downloading a paper, importing a public dataset, or calling an
-AI model you configured.
+It runs on one computer (macOS on Apple Silicon, or Linux) and keeps everything there. It goes
+online for what you ask of it — downloading a paper, looking up citations, importing a public
+dataset, calling an AI model you configured — and for the background map, whose tiles come from
+OpenStreetMap unless you point it at your own tile server.
 
 ## What it is not
 
