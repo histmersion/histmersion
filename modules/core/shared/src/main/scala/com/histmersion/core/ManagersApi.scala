@@ -92,6 +92,14 @@ object ManagersApi:
     endpoint.post.in("api" / "agents" / "autopilot").errorOut(errors).in(jsonBody[Autopilot.AutopilotSet])
       .out(jsonBody[Autopilot.AutopilotStatus])
 
+  /** `POST /api/agents/autopilot/repair-acquire {dryRun}` — the one-shot repair: the open acquisition
+    * items a watcher's sweep created for a legal open-access work move into that watcher's ingest backlog
+    * (and leave the list); the ones already in the corpus leave it; nothing a person added is touched.
+    * `dryRun` lists what it would do. */
+  val repairAcquire: PublicEndpoint[RepairAcquire.RepairRequest, ApiError, RepairAcquire.RepairResult, Any] =
+    endpoint.post.in("api" / "agents" / "autopilot" / "repair-acquire").errorOut(errors)
+      .in(jsonBody[RepairAcquire.RepairRequest]).out(jsonBody[RepairAcquire.RepairResult])
+
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
-    removeHint, events, action, enqueue, autopilot, setAutopilot)
+    removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire)
