@@ -13,16 +13,20 @@ object BasemapFixtures:
   private val square = Vector(9, 0, 0, 26, 8192, 0, 0, 8192, 8191, 0, 15)
   private val line   = Vector(9, 100, 100, 10, 400, 400)
 
-  /** A vector tile with what a Protomaps tile holds: land, the sea, a river and a canal, natural and farmed
-    * land cover, modern land use, a road and a town. */
+  /** A vector tile with what a Protomaps tile holds: land, the sea (and its name), a river and a canal,
+    * natural and farmed land cover, land use, a peak and a restaurant, a road, a town, and a layer an older
+    * build has (`physical_point`). */
   def vectorTile(z: Int, x: Long, y: Long): Array[Byte] =
     Mvt.tile(List(
       Mvt.layer("earth", List((3, square, Map("kind" -> "earth")))),
-      Mvt.layer("water", List((3, square, Map("kind" -> "ocean")), (2, line, Map("kind" -> "river")), (2, line, Map("kind" -> "canal")))),
+      Mvt.layer("water", List((3, square, Map("kind" -> "ocean")), (2, line, Map("kind" -> "river")), (2, line, Map("kind" -> "canal")),
+        (1, Vector(9, 40, 40), Map("kind" -> "sea", "name" -> "Aegean Sea", "name:en" -> "Aegean Sea")))),
       Mvt.layer("landcover", List((3, square, Map("kind" -> "forest")), (3, square, Map("kind" -> "farmland")))),
       Mvt.layer("landuse", List((3, square, Map("kind" -> "residential")))),
+      Mvt.layer("pois", List((1, Vector(9, 60, 60), Map("kind" -> "peak", "name" -> "Olympus")), (1, Vector(9, 70, 70), Map("kind" -> "restaurant")))),
       Mvt.layer("roads", List((2, line, Map("kind" -> "highway", "name" -> s"A$z-$x-$y")))),
-      Mvt.layer("places", List((1, Vector(9, 50, 50), Map("kind" -> "locality", "name" -> "Zzville"))))))
+      Mvt.layer("places", List((1, Vector(9, 50, 50), Map("kind" -> "locality", "name" -> "Zzville")))),
+      Mvt.layer("physical_point", List((1, Vector(9, 80, 80), Map("kind" -> "mountain_range", "name" -> "Pindus"))))))
 
   private def header(t: PmTiles.TileType, c: PmTiles.Compression, maxZoom: Int) =
     PmTiles.Header(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, PmTiles.Compression.Gzip, c, t, 0, maxZoom,

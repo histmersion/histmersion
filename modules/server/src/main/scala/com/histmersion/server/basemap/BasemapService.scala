@@ -34,6 +34,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
   private def attribution(l: BasemapLayer): String = l match
     case BasemapLayer.Vector  => cfg.vector.attribution
     case BasemapLayer.Terrain => cfg.terrain.attribution
+    case BasemapLayer.Labels  => cfg.labels.attribution
 
   // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
@@ -79,14 +80,19 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           bbox = Some(s"${h.minLon},${h.minLat},${h.maxLon},${h.maxLat}"), tiles = Some(h.addressedTiles),
           tileType = Some(h.tileType.mime),
           source = mine.get[String]("build").toOption.orElse(mine.get[String]("source").toOption),
-          fetchedAt = mine.get[String]("fetchedAt").toOption, version = stamp(p))
+          fetchedAt = mine.get[String]("fetchedAt").toOption, version = stamp(p),
+          kept = Option.when(l == BasemapLayer.Vector)(Basemap.keptLine(mine.get[Boolean]("keepAll").getOrElse(false),
+            mine.get[String]("drop").toOption)))
 
   def status: BasemapStatus =
     val layers = BasemapLayer.values.toList.map(info)
+    def ok(l: BasemapLayer) = layers.exists(i => i.layer == l.wire && i.present && i.error.isEmpty)
     BasemapStatus(
-      available = layers.exists(i => i.layer == BasemapLayer.Vector.wire && i.present && i.error.isEmpty),
+      available = ok(BasemapLayer.Vector),
       dir = dir.toString, bbox = cfg.bbox, layers = layers, fetchCommand = Basemap.FetchCommand,
-      freeBytes = freeSpace(BasemapService.existing(dir)), running = slot.current)
+      freeBytes = freeSpace(BasemapService.existing(dir)), running = slot.current,
+      hints = BasemapService.hints(ok(BasemapLayer.Vector), ok(BasemapLayer.Labels),
+        layers.exists(i => i.layer == BasemapLayer.Vector.wire && i.present && i.error.isEmpty && i.kept.exists(_.contains("before the drop list")))))
 
   /** One tile, as stored, with its content type and encoding: 204 where the extract has none. */
   def tile(layer: String, z: Int, x: Long, y: Long): Either[ApiError, (Array[Byte], String, Option[String], String, StatusCode)] =
@@ -124,7 +130,8 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
 
   /** What the next fetch of these options will do, decided before the job starts: refused here when
     * an option is out of range, so the person learns it at once. */
-  private final case class Ask(layers: List[BasemapLayer], bbox: BBox, vectorZoom: Int, terrainZoom: Int, dryRun: Boolean)
+  private final case class Ask(layers: List[BasemapLayer], bbox: BBox, vectorZoom: Int, terrainZoom: Int, dryRun: Boolean,
+      keepAll: Boolean)
 
   private def ask(q: BasemapFetchQuery): Either[String, Ask] =
     def zoom(z: Int, what: String) =
@@ -134,8 +141,8 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       b  <- Basemap.validBBox(q.bbox.map(_.trim).filter(_.nonEmpty).getOrElse(cfg.bbox))
       vz <- zoom(q.maxZoom.getOrElse(cfg.vector.maxZoom), "--max-zoom")
       tz <- zoom(q.terrainMaxZoom.getOrElse(cfg.terrain.maxZoom), "--terrain-max-zoom")
-      _  <- Basemap.parseLayers(cfg.vector.layers)
-    yield Ask(ls, b, vz, tz, q.dryRun)
+      _  <- Basemap.parseDrop(cfg.vector.drop)
+    yield Ask(ls, b, vz, tz, q.dryRun, q.keepAll)
 
   def fetch(q: BasemapFetchQuery): Either[ApiError, JobInfo] =
     deps.maintenance.guard("basemap/fetch"):
@@ -161,6 +168,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     * terrain URL. */
   private def source(l: BasemapLayer, a: Ask, extra: String): Either[String, BasemapFetch.Source] = l match
     case BasemapLayer.Terrain => Right(BasemapFetch.Source(cfg.terrain.url, cfg.terrain.url))
+    case BasemapLayer.Labels  => Left("the physical names are not read with range requests") // `labels` fetches them
     case BasemapLayer.Vector =>
       val pinned = cfg.vector.build.trim
       resumable(l, a, extra) match
@@ -189,21 +197,26 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
   private def zoomOf(l: BasemapLayer, a: Ask): Int = l match
     case BasemapLayer.Vector  => a.vectorZoom
     case BasemapLayer.Terrain => a.terrainZoom
+    case BasemapLayer.Labels  => cfg.labels.maxZoom
 
   private def one(a: Ask, l: BasemapLayer, note: String => Unit): Either[String, String] =
-    val rules = Basemap.parseLayers(cfg.vector.layers).toOption.getOrElse(Nil)
-    val extra = if l == BasemapLayer.Vector then cfg.vector.layers else ""
+    if l == BasemapLayer.Labels then labels(a, note) else ranged(a, l, note)
+
+  /** A PMTiles layer (vector, terrain): planned, checked against the free disk, downloaded, assembled. */
+  private def ranged(a: Ask, l: BasemapLayer, note: String => Unit): Either[String, String] =
+    val rules = if a.keepAll then Nil else Basemap.parseDrop(cfg.vector.drop).toOption.getOrElse(Nil)
+    val extra = if l != BasemapLayer.Vector then "" else if a.keepAll then "keep-all" else s"drop: ${cfg.vector.drop}"
     val h     = http()
     for
       src  <- source(l, a, extra)
       _     = note(s"reading ${src.label}")
       plan <- BasemapFetch.plan(h, src, a.bbox, zoomOf(l, a), pace, note)
       out  <- if a.dryRun then Right(BasemapService.describe(l, plan, dryRun = true))
-              else download(l, plan, rules, extra, h, note)
+              else download(l, plan, rules, extra, h, note, a.keepAll)
     yield out
 
-  private def download(l: BasemapLayer, plan: BasemapFetch.Plan, rules: List[Basemap.LayerRule], extra: String,
-      h: RangeHttp, note: String => Unit): Either[String, String] =
+  private def download(l: BasemapLayer, plan: BasemapFetch.Plan, rules: List[Basemap.DropRule], extra: String,
+      h: RangeHttp, note: String => Unit, keepAll: Boolean): Either[String, String] =
     Files.createDirectories(dir)
     val work  = this.work(l)
     val state = BasemapFetch.stateOf(plan, extra).deepMerge(io.circe.Json.obj("label" -> io.circe.Json.fromString(plan.source.label)))
@@ -224,19 +237,78 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       _ <- room(pendingBytes)
       _  = if had > 0 then note(s"resuming: ${had} of ${plan.requests.size} parts are here already")
       _ <- BasemapFetch.download(h, plan, work, pace, note, room)
-      keep = rules.map(r => r.layer -> Mvt.Rule(r.keep, r.drop)).toMap
+      rulesOf = BasemapService.mvtRules(rules)
       transform = l match
-        case BasemapLayer.Vector => (b: Array[Byte]) => BasemapService.thin(b, plan.header.tileCompression, keep)
-        case BasemapLayer.Terrain => (b: Array[Byte]) => Right(Some(b))
-      meta = BasemapFetch.localMetadata(plan, Option.when(l == BasemapLayer.Vector)(keep.keySet), attribution(l),
-        Instant.now().toString, l)
+        case BasemapLayer.Vector if !keepAll => (b: Array[Byte]) => BasemapService.thin(b, plan.header.tileCompression, rulesOf)
+        case _ => (b: Array[Byte]) => Right(Some(b))
+      meta = BasemapFetch.localMetadata(plan, rules.filter(_.whole).map(_.layer).toSet, attribution(l),
+        Instant.now().toString, l, Option.when(l == BasemapLayer.Vector)((keepAll, cfg.vector.drop)))
       done <- BasemapFetch.assemble(plan, work, path(l), transform, BasemapFetch.localHeader(plan), meta, note)
     yield
       val _ = BasemapService.deleteTree(work)
       val _ = reader(l)
       s"${BasemapService.describe(l, plan, dryRun = false)}; stored ${done._2} tiles in ${Backup.humanBytes(done._1)} at ${path(l)}"
 
+  /** The physical names: Natural Earth's label files read whole (a few MB each), cut to the region and
+    * written as `labels.pmtiles` (about 1 MB) — no range requests, nothing to resume. */
+  private def labels(a: Ask, note: String => Unit): Either[String, String] =
+    val lc    = cfg.labels
+    val files = lc.files.map(f => f -> lc.url.replace("{file}", f))
+    if a.dryRun then
+      Right(s"labels (Natural Earth, zoom 0–${lc.maxZoom}): would download ${files.size} files — ${lc.files.mkString(", ")} — " +
+        "about 20 MB, of which about 1 MB is kept")
+    else
+      val free = freeSpace(BasemapService.existing(dir))
+      val need = 64L * 1024 * 1024
+      if free - need < minFree then
+        Left(s"refused: the physical names need about ${Backup.humanBytes(need)} on $dir (${Backup.humanBytes(free)} free), " +
+          s"which would leave less than ${Backup.humanBytes(minFree)} (basemap.min-free-gb)")
+      else
+        val h = http()
+        val read = files.foldLeft[Either[String, List[BasemapLabels.Label]]](Right(Nil)) { case (acc, (f, url)) =>
+          acc.flatMap { got =>
+            note(s"reading $f")
+            if got.nonEmpty then pace.sleep(pace.gapMs)
+            h.text(url).flatMap(t => io.circe.parser.parse(t).left.map(e => s"$url is not JSON: ${e.getMessage}"))
+              .flatMap(BasemapLabels.parse(f, _)).map(got ++ _)
+          }
+        }
+        read.map { all =>
+          val kept  = all.filter(BasemapLabels.within(_, a.bbox))
+          note(s"${kept.size} of ${all.size} names are in the region; writing")
+          Files.createDirectories(dir)
+          val (tiles, bytes) = BasemapLabels.write(path(BasemapLayer.Labels), kept, a.bbox, lc.maxZoom,
+            BasemapService.labelsMetadata(lc, a.bbox, kept.size, Instant.now().toString))
+          val _ = reader(BasemapLayer.Labels)
+          s"labels (Natural Earth): ${kept.size} names in $tiles tiles, ${Backup.humanBytes(bytes)} at ${path(BasemapLayer.Labels)}"
+        }
+
 object BasemapService:
+
+  /** What a fetch would add: the physical names to an extract that has the map but not them. Pure. */
+  def hints(vector: Boolean, labels: Boolean, narrow: Boolean = false): List[String] =
+    Option.when(narrow)(s"The vector layer was fetched before the base map kept land use and natural points: a style " +
+      s"can draw only coast, water and land cover from it. One `${Basemap.FetchCommand} --layer vector` stores the broader " +
+      "extract (or `" + Basemap.FetchCommand + "` for everything); restyling never needs a download after that.").toList ++
+    Option.when(vector && !labels)(s"The physical names (mountain ranges, deserts, peninsulas, lakes, major rivers, peaks) " +
+      s"are not downloaded: `${Basemap.FetchCommand} --layer labels` adds them (about 20 MB read, about 1 MB kept).").toList
+
+  /** The names archive's metadata: its layers, credit, and where and when it came from. Pure. */
+  def labelsMetadata(lc: BasemapLabelsConfig, b: BBox, names: Int, fetchedAt: String): io.circe.Json =
+    import io.circe.Json
+    val build = "/(v\\d+\\.\\d+(\\.\\d+)?)/".r.findFirstMatchIn(lc.url).map(m => s"Natural Earth ${m.group(1)}").getOrElse("Natural Earth")
+    Json.obj(
+      "name" -> Json.fromString("histmersion physical names"),
+      "vector_layers" -> Json.arr(Json.obj("id" -> Json.fromString("physical")), Json.obj("id" -> Json.fromString("rivers"))),
+      "attribution" -> Json.fromString(lc.attribution),
+      "histmersion" -> Json.obj(
+        "layer" -> Json.fromString(BasemapLayer.Labels.wire),
+        "source" -> Json.fromString(lc.url),
+        "build" -> Json.fromString(build),
+        "bbox" -> Json.fromString(s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}"),
+        "maxZoom" -> Json.fromInt(lc.maxZoom),
+        "names" -> Json.fromInt(names),
+        "fetchedAt" -> Json.fromString(fetchedAt)))
 
   val JobKind = "basemap-fetch"
 
@@ -268,11 +340,15 @@ object BasemapService:
       }.sortBy(_._1))
     }
 
-  /** A vector tile thinned to the kept layers and kinds: stored again gzip-compressed (as the source
-    * stores it), or dropped when nothing is left. Pure. */
-  def thin(stored: Array[Byte], c: PmTiles.Compression, keep: Map[String, Mvt.Rule]): Either[String, Option[Array[Byte]]] =
+  /** The drop list as the MVT filter's rules: a layer dropped whole, only some kinds, or all but some. Pure. */
+  def mvtRules(rules: List[Basemap.DropRule]): Map[String, Mvt.Rule] =
+    rules.map(r => r.layer -> (if r.whole then Mvt.Rule(none = true) else Mvt.Rule(keep = r.spare, drop = r.drop))).toMap
+
+  /** A vector tile without the dropped layers and kinds (every other layer kept as it is): stored
+    * again gzip-compressed (as the source stores it), or dropped when nothing is left. Pure. */
+  def thin(stored: Array[Byte], c: PmTiles.Compression, rules: Map[String, Mvt.Rule]): Either[String, Option[Array[Byte]]] =
     val raw = if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(stored) else Right(stored)
-    raw.flatMap(Mvt.filter(_, keep)).map { t =>
+    raw.flatMap(Mvt.filter(_, rules, others = true)).map { t =>
       Option.when(t.nonEmpty)(if c == PmTiles.Compression.Gzip then PmTiles.gzip(t) else t)
     }
 
