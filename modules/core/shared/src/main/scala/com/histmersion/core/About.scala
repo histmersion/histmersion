@@ -108,7 +108,10 @@ final case class About(
     /** The agent lease's holder (None: no server has claimed it — agents off everywhere). */
     agentLease: Option[AgentLeaseInfo] = None,
     /** The plugins in this binary and what became of each (secrets as references, never values). */
-    plugins: PluginsReport = PluginsReport()
+    plugins: PluginsReport = PluginsReport(),
+    /** Where the data is on disk and how big each part is (measured in the background, see
+      * [[StorageReport]]); empty from an older server. */
+    storage: StorageReport = StorageReport()
 ) derives KindlingsCodecAsObject
 object About:
   given Schema[About] = KindlingsSchema.derived[About].schema
@@ -174,5 +177,6 @@ object AboutMarkdown:
       s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
         s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
       s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period")} · ${Plural.count(c.presets, "preset")}"
-    )) ++ (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))
+    )) ++ StorageMarkdown.render(a.storage) ++
+      (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))
     lines.mkString("\n")
