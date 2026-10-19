@@ -55,7 +55,11 @@ object ReviewLedger:
 
   /** One finding in the ledger. `claimed`: the fixer lists it as applied, and its reviewer has not
     * checked it yet. `notFixed`: the last check's word that it is not (or the rejection it was raised
-    * again after). `reopened`: how often a fixed finding came back. */
+    * again after); `notFixedCount`: how often it was found not fixed — by its reviewer, or because the
+    * fixer left it unanswered or claimed it without the change code checks for (§6.9). `reopened`: how
+    * often a fixed finding came back. `deferred`: the run whose FINAL pass raised it (or raised it to
+    * MAJOR) as a new finding — it does not make that run's verdict MAJOR, stays open, and is the next
+    * run's work (§6.9). */
   final case class Entry(
       finding: Finding,
       run: String,
@@ -64,12 +68,16 @@ object ReviewLedger:
       claimed: Boolean = false,
       notFixed: Option[String] = None,
       reopened: Int = 0,
-      closed: Option[Closure] = None
+      closed: Option[Closure] = None,
+      notFixedCount: Int = 0,
+      deferred: Option[String] = None
   ) derives KindlingsCodecAsObject:
     def id: String       = finding.id
     def open: Boolean    = status == Status.Open
     def major: Boolean   = finding.major
     def reviewer: Reviewer = finding.reviewer
+    /** Deferred by `run`'s final pass: not part of that run's verdict. */
+    def deferredIn(run: String): Boolean = open && deferred.contains(run)
 
   final case class Lesson(text: String, source: LessonSource, run: String, round: Int) derives KindlingsCodecAsObject
 
@@ -163,7 +171,8 @@ object ReviewLedger:
         update(led, c.id) { e =>
           if c.fixed then e.copy(status = Status.Fixed, claimed = false, notFixed = None,
             closed = Some(Closure(r.wire, round, run, c.note, c.quote)))
-          else e.copy(claimed = false, notFixed = Some(Option(c.note).filter(_.nonEmpty).getOrElse("not fixed")))
+          else e.copy(claimed = false, notFixed = Some(Option(c.note).filter(_.nonEmpty).getOrElse("not fixed")),
+            notFixedCount = e.notFixedCount + 1)
         }
       }
     }
@@ -190,9 +199,13 @@ object ReviewLedger:
     * code verified closes the finding with the record's sentence (and teaches a lesson), a declined
     * minor is closed as won't fix. */
   def applyFix(l: Ledger, f: Fix, run: String, round: Int): Ledger =
-    val claimed = f.applied.foldLeft(l)((led, id) => led.entry(id).filter(_.open).fold(led)(_ =>
+    // what the fixer applied, and what code's pairing repair answered (§6.9): both re-checked by the reviewer
+    val claimed = (f.applied ++ f.repaired).distinct.foldLeft(l)((led, id) => led.entry(id).filter(_.open).fold(led)(_ =>
       update(led, id)(_.copy(claimed = true))))
-    val rejected = f.rejected.foldLeft(claimed)((led, r) => led.entry(r.id).filter(_.open).fold(led)(_ =>
+    // what the fixer neither applied nor rejected, or claimed without the change: not fixed, with why
+    val unanswered = f.notFixed.foldLeft(claimed)((led, w) => led.entry(w.id).filter(e => e.open && !e.claimed).fold(led)(_ =>
+      update(led, w.id)(e => e.copy(notFixed = Some(s"pass $round: ${w.reason}".take(300)), notFixedCount = e.notFixedCount + 1))))
+    val rejected = f.rejected.foldLeft(unanswered)((led, r) => led.entry(r.id).filter(_.open).fold(led)(_ =>
       update(led, r.id)(_.copy(status = Status.Rejected, claimed = false,
         closed = Some(Closure("fixer", round, run, r.reason, r.quote, Some(r.citekey)))))))
     val declined = f.wontFix.foldLeft(rejected)((led, w) => led.entry(w.id).filter(e => e.open && !e.major).fold(led)(_ =>
@@ -224,14 +237,18 @@ object ReviewLedger:
     * mechanical ones first, then rules, cold reader, skeptic, each by id. `explainBack`, `emptySlots`
     * and `proposals` are the pass's own. */
   def merged(l: Ledger, round: Int, explainBack: Option[String] = None, emptySlots: List[String] = Nil,
-      proposals: List[AgentProposals.Proposal] = Nil): Merged =
+      proposals: List[AgentProposals.Proposal] = Nil, run: Option[String] = None): Merged =
     val fs = l.open.map(_.finding).sortBy(f => (f.reviewer.ordinal, f.id.drop(f.reviewer.prefix.length).toIntOption.getOrElse(0)))
-    Merged(round, Verdict.of(fs), fs, explainBack, emptySlots, proposals)
+    // a MAJOR the run's final pass deferred is the next run's: it counts as minor in this verdict
+    val deferred = run.toList.flatMap(r => l.open.filter(e => e.major && e.deferredIn(r)).map(_.id))
+    val counted  = fs.map(f => if deferred.contains(f.id) then f.copy(severity = Severity.Minor) else f)
+    Merged(round, Verdict.of(counted), fs, explainBack, emptySlots, proposals, deferred)
 
   /** The notes the fixer reads under an open finding: a fix claimed before that its reviewer found
     * wanting, a regression, a rejection it was raised again after. */
   def notes(l: Ledger): Map[String, String] =
-    l.open.flatMap(e => e.notFixed.map(n => e.id -> s"not fixed yet — $n")).toMap
+    l.open.flatMap(e => e.notFixed.map(n =>
+      e.id -> s"not fixed yet${if e.notFixedCount > 1 then s" (${e.notFixedCount} times)" else ""} — $n")).toMap
 
   /** One line of a closed finding. */
   def closedLine(e: Entry): String =
@@ -322,6 +339,55 @@ object ReviewLedger:
       }
     Edited(runs.map(r => Passage(headingOf(r.head), r.map(b(_)).mkString("\n\n"))), a.indices.filterNot(keptA).map(a(_)).toList)
 
+  // ── convergence (docs/research-review-convergence.md §6.9) ──────────────────────────────────────
+
+  /** THE FINAL PASS VERIFIES, IT DOES NOT DISCOVER. After the run's confirming panel (`after`, absorbed
+    * from `before`): every open MAJOR that is NEW in it — an entry `before` did not have, or an open
+    * minor it raised to MAJOR — is deferred to the next run (`deferred = run`), unless `regression`
+    * says the run itself broke it (a pair it had addressed is open again; a factual error in text it
+    * wrote). A fixed finding raised again (reopened), a rejected or set-aside one raised again, and an
+    * open MAJOR raised again are not new: they stand. Deferred entries stay open and MAJOR — logged, in
+    * the backlog item, and the next run's pass 1 hands them to the fixer — but this run's verdict
+    * ([[merged]] with the run) counts them as minor. Returns the ledger and the deferred ids. */
+  def deferFinal(before: Ledger, after: Ledger, run: String, regression: Finding => Boolean): (Ledger, List[String]) =
+    val fresh = after.open.filter(e => e.major && before.entry(e.id).forall(b => b.open && !b.major))
+      .filterNot(e => regression(e.finding))
+    val ids = fresh.map(_.id)
+    (after.copy(entries = after.entries.map(e => if ids.contains(e.id) then e.copy(deferred = Some(run)) else e)), ids)
+
+  /** One closed finding a revision would reopen, and why. */
+  final case class Regression(id: String, why: String) derives KindlingsCodecAsObject:
+    def line: String = s"$id (closed): $why"
+
+  /** THE REGRESSION GUARD: what a revision (`before` → `after`) does to the findings the ledger has
+    * closed as fixed — checked by code, before any reviewer reads it:
+    *   - a finding with a critique pair (a missing critique) whose pair was answered in `before`
+    *     (both cited in one paragraph, or a stored reason: `answered`) and is not in `after`;
+    *   - a finding whose problem text (its quote, ≥ 12 characters) was gone from `before` and is back
+    *     in `after`;
+    *   - a citation the fix rests on (a `[[citekey]]` of the reviewer's quote of the fixed text) cited
+    *     in `before` and nowhere in `after`.
+    * `cites(body, ck)`: does the body cite the source `ck` (aliases resolved). */
+  def guard(l: Ledger, before: String, after: String, answered: (String, CritiqueRef) => Boolean,
+      cites: (String, String) => Boolean, minRatio: Double): List[Regression] =
+    def in(q: String, body: String) = AgentVerify.findQuote(q, body, minRatio).accepted
+    l.entries.filter(_.status == Status.Fixed).flatMap { e =>
+      val pair = e.finding.pair.filter(r => answered(before, r) && !answered(after, r)).map(r =>
+        Regression(e.id, s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"))
+      val q = Option(e.finding.quote).map(_.trim).getOrElse("")
+      val back = Option.when(q.length >= 12 && !in(q, before) && in(q, after))(
+        Regression(e.id, s"the text it fixed is back: \"${q.take(100)}\""))
+      val lost = e.closed.toList.flatMap(c => AgentVerify.wikilinks(c.quote)).distinct
+        .filter(ck => cites(before, ck) && !cites(after, ck)).map(ck =>
+          Regression(e.id, s"[[$ck]], which its fix cites, is cited nowhere any more"))
+      (pair.toList ++ back.toList ++ lost).take(1)
+    }
+
+  /** Open missing-critique findings found not fixed at least `times` times whose pair is still open:
+    * the ones that get code's pairing repair, else a precise instruction (§6.9). */
+  def stubborn(l: Ledger, times: Int = 2): List[Entry] =
+    l.open.filter(e => e.finding.pair.isDefined && e.notFixedCount >= times)
+
   // ── the backlog item (#934) ────────────────────────────────────────────────────────────────────
 
   /** The article's one backlog item while a MAJOR is open: how many, and each one's line. */
@@ -329,7 +395,8 @@ object ReviewLedger:
     val majors = l.openMajors
     Option.when(majors.nonEmpty) {
       val lines = majors.map { e =>
-        val esc = if e.finding.escalated then " [raised again after a rejection]" else ""
+        val esc = (if e.finding.escalated then " [raised again after a rejection]" else "") +
+          (if e.deferredIn(runId) then " [new in the final pass: deferred to the next run]" else "")
         val at  = Option(e.finding.where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
         s"${e.id}$at: ${e.finding.problem.trim.take(160)}$esc"
       }

@@ -1,0 +1,174 @@
+{
+ "slug": "achilles_origins",
+ "entries": [
+  {
+   "run": "b89539d0-85f5-452c-b192-f323d4f19194",
+   "round": 3,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S3",
+    "fix": "In Disagreement 3, next to [[lord1960_singer]], add a sentence on Ballesteros's comparison of literate Babylonian performance poetry with Homeric traditional diction. Do not present it as support for West's single-poet model.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "lord1960_singer",
+     "src": "ballesteros2024_naming"
+    },
+    "quote": "In 1968 he argued that it is exposure to fixed printed texts, not literacy as such, that turns an oral singer into \"a reproducer rather than an oral poet\"",
+    "where": "Disagreements, item 3",
+    "problem": "The composition debate presents Lord's oral-formulaic case but never cites Ballesteros (2024). Ballesteros directly challenges the step from traditional diction to illiterate composition, using literate Old Babylonian poetry as his evidence.",
+    "evidence": [
+     {
+      "quote": "That ‘traditionality’ here implies the illiterate oral composition of the Homeric epics, a conclusion at which Parry and Lord arrived through the South-Slavic analogy, has not been demonstrated (Lord 1960).[16]",
+      "ratio": 1.0,
+      "offset": 13369,
+      "citekey": "ballesteros2024_naming"
+     },
+     {
+      "quote": "Fully developed literacy in the urban Old Babylonian context is not a deterrent for high degrees of traditionality meant for performance.",
+      "ratio": 1.0,
+      "offset": 74820,
+      "citekey": "ballesteros2024_naming"
+     }
+    ],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": "The article still does not cite Ballesteros (2024). Disagreement 3 still leaves out his Babylonian evidence against inferring illiterate composition from traditional diction.",
+   "reopened": 0
+  },
+  {
+   "run": "c2ae6e67-6d45-4181-983c-9c5425911088",
+   "round": 1,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "R8",
+    "fix": "Add Ballesteros's comparison of literate Babylonian performance poetry with Homeric traditional diction, without presenting it as proof of single authorship.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "lord1960_singer",
+     "src": "ballesteros2024_naming"
+    },
+    "quote": "In 1968 he argued that it is exposure to fixed printed texts, not literacy as such, that turns an oral singer into \"a reproducer rather than an oral poet\"",
+    "where": "Disagreements, item 3",
+    "problem": "The composition debate still omits Ballesteros (2024), whose edge challenges Lord (1960) with Babylonian evidence on literate traditional poetry.",
+    "evidence": [],
+    "reviewer": "rules",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": "Ballesteros (2024) still not cited.",
+   "reopened": 0
+  },
+  {
+   "run": "c2ae6e67-6d45-4181-983c-9c5425911088",
+   "round": 1,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "C12",
+    "fix": "add the evidence",
+    "kind": "assertion",
+    "pair": null,
+    "quote": "In 1968 he argued that it is exposure to fixed printed texts, not literacy as such, that turns an oral singer into \"a reproducer rather than an oral poet\"",
+    "where": "Disagreements",
+    "problem": "The composition debate omits Ballesteros (2024), who challenges the inference from traditional diction to illiterate composition with Babylonian evidence; the open ledger item S3 remains unaddressed.",
+    "evidence": [],
+    "reviewer": "cold-reader",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": "Ballesteros (2024) is still absent from the composition debate, so the assertion stands unsupported by the cited counter-evidence.",
+   "reopened": 0
+  },
+  {
+   "run": "c2ae6e67-6d45-4181-983c-9c5425911088",
+   "round": 1,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S4",
+    "fix": "Cite [[latacz2004_troy]] in this paragraph, or in Disagreement 4, beside the Latacz claim about Mycenaean political geography.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "latacz2004_troy",
+     "src": "bachvarova2016_hittite"
+    },
+    "quote": "Bachvarova (2016) directly challenges Latacz’s reconstruction of the poem’s political geography.",
+    "where": "Bachvarova (2016) directly challenges Latacz’s reconstruction",
+    "problem": "The prose names Bachvarova's challenge to Latacz but cites only [[bachvarova2016_hittite]]. Disagreement 4 also leaves out [[latacz2004_troy]], so the critique is never cited next to the Latacz claim it answers.",
+    "evidence": [],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": "Neither this paragraph nor Disagreement 4 cites [[latacz2004_troy]], so the critique still does not appear next to the claim it answers.",
+   "reopened": 0
+  },
+  {
+   "run": "c2ae6e67-6d45-4181-983c-9c5425911088",
+   "round": 1,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S5",
+    "fix": "Cite [[west2011_making]] in this paragraph where West's Ur-Iliad proposal is named.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "west2011_making",
+     "src": "fantuzzi2015_greek"
+    },
+    "quote": "Kullmann (2015) challenges a different part of West’s reconstruction: his proposed *Ur-Iliad*, an earlier version extending to Achilles’ death",
+    "where": "Kullmann (2015) challenges a different part of West’s",
+    "problem": "The paragraph describes Kullmann's critique but cites only [[fantuzzi2015_greek]]. The West (2011) work it disputes is not cited in the same paragraph.",
+    "evidence": [],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": "The paragraph still cites only [[fantuzzi2015_greek]]; [[west2011_making]] is not cited in it.",
+   "reopened": 0
+  },
+  {
+   "run": "c2ae6e67-6d45-4181-983c-9c5425911088",
+   "round": 1,
+   "closed": null,
+   "status": "open",
+   "claimed": false,
+   "finding": {
+    "id": "S6",
+    "fix": "Cite [[bachvarova2016_hittite]] in this paragraph.",
+    "kind": "missing-critique",
+    "pair": {
+     "dst": "bachvarova2016_hittite",
+     "src": "kelly2021_gods"
+    },
+    "quote": "Amir Gilan, in Kelly and Metcalf’s edited volume (2021), calls many of Bachvarova’s proposed cultic settings conjectural",
+    "where": "The performance premise itself needs qualification.",
+    "problem": "The paragraph reports Gilan's criticism of Bachvarova but cites only [[kelly2021_gods]]. The critique is not cited next to the Bachvarova claims it answers.",
+    "evidence": [],
+    "reviewer": "skeptic",
+    "severity": "major",
+    "escalated": false
+   },
+   "notFixed": "The paragraph still cites only [[kelly2021_gods]]; [[bachvarova2016_hittite]] is not cited in it.",
+   "reopened": 0
+  }
+ ],
+ "lessons": [
+  {
+   "run": "b89539d0-85f5-452c-b192-f323d4f19194",
+   "text": "Replace reading-process disclosures with specific unresolved evidence, including in adjacent bullets.",
+   "round": 2,
+   "source": "recheck"
+  }
+ ],
+ "task": null
+}
