@@ -114,6 +114,12 @@ The settings of backups and portable bundles are listed with them, in
 | `converter.max-image-px` | `HISTMERSION_CONVERTER_MAX_IMAGE_PX` | `2000` | longest side of a stored figure; larger ones are downscaled |
 | `converter.spool-dir` | `HISTMERSION_SPOOL_DIR` | `/var/tmp/histmersion-uploads` | server-side copy of each upload, keyed by sha256 — what makes `reocr` work without a re-upload (the bundle: `<data>/uploads`) |
 | `corpus.dir` | `HISTMERSION_CORPUS_DIR` | *(empty)* | **server-side** path `seed` reads when given no directory. `just install` passes it to the service (default: `./corpus` in the repo). |
+| `storage.ttl-seconds` | `HISTMERSION_STORAGE_TTL_SECONDS` | `60` | About's Storage part: a measurement of the directories is reused this long, then measured again in the background (About never walks a disk itself) |
+| `storage.wait-millis` | `HISTMERSION_STORAGE_WAIT_MILLIS` | `1500` | the first About after a start waits this long for the first measurement, then answers *measuring…* |
+| `storage.max-millis` | `HISTMERSION_STORAGE_MAX_MILLIS` | `5000` | one measurement stops walking after this long; what it did not finish is shown as *at least* |
+| `storage.max-entries` | `HISTMERSION_STORAGE_MAX_ENTRIES` | `500000` | …or after this many files and directories |
+| `storage.top-tables` | `HISTMERSION_STORAGE_TOP_TABLES` | `5` | the database's largest tables listed (0 = none) |
+| `storage.low-free-gb` | `HISTMERSION_STORAGE_LOW_FREE_GB` | `10` | below this much free space on a disk, About names the biggest locations on it and how to shrink each |
 | `limits.search` | — | `20` | default search page size |
 | `limits.findings` | — | `4000` | max map points per request |
 | `limits.snippet-chars` | — | `240` | |
