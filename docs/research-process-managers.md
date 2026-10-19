@@ -211,7 +211,9 @@ Branch `managers-phase3`. No migration: everything new lives in the V087 columns
   legal file** (refused before anything is stored). An ingested work is linked to the goal and recorded as an
   `ingested` event; everything else — closed picks, failures, picks past the cap, and every pick with
   auto-ingest off — goes to the acquisition list as before. The currency check is unchanged (its outside papers
-  are queued; it does not ingest).
+  are queued; it does not ingest). **Replaced 2026-10-19** (see "As built: the ingest backlog"): with auto-ingest
+  on, an open-access pick past the cap waits in the watcher's ingest backlog; only closed picks and works with no
+  legal file reach the acquisition list.
 - **What a sweep found**: when a sweep item is evaluated (done), a `swept` event carries the run's worklog line
   (candidates, picked, ingested with citekeys, queued, left out) and the works it picked (title, DOI, open
   access); the item's outcome is the same line. The next cron firing re-opens it.
@@ -343,7 +345,8 @@ article-filter `auto` mode, and every stop rule.
   review follows as a chained item. `agents.managers.review.extend-min-new` ships 0 (off); the autopilot sets
   the review manager's `extendMinNew` to `agents.autopilot.extend-min-new` (3) when it has none.
 - **Shared caps.** A watcher's sweep ingests at most min(its own allowance, `agents.autopilot.ingest-per-day`
-  minus every watcher's `ingested` events today) while the autopilot is on. Model spend stays bounded by what
+  minus every watcher's `ingested` events today) while the autopilot is on. (What overflowed it went to the
+  acquisition list — fixed by the ingest backlog, below.) Model spend stays bounded by what
   already existed: `max-concurrent-runs`, the budgets, plan floors, `dailyUsd`, `maxRuns` per manager.
 - **Dispatch guard narrowed for goals.** A goal's plan, proposal and sweeps used to wait for any unsettled run
   on the goal — a plan waiting days for a person stopped the goal's watcher. Now (`ManagerPolicy.blocks`) a
@@ -367,3 +370,78 @@ article-filter `auto` mode, and every stop rule.
   wins; sub-goals and the depth limit; off/on and a person's pause; a reviewed goal's watcher; the article-plan
   cap and a rejected thin filter; the shared ingest cap; extend and its cooldown; lint housekeeping),
   `ManagersViewSuite`, and a browser test of the toggle.
+
+## As built: the ingest backlog (2026-10-19)
+
+Branch `oa-overflow`. No migration (V097 not needed: everything lives in `manager_items` and its `state` jsonb);
+V092 and V095 stay unused.
+
+**The bug.** With the autopilot on, the watchers' sweeps added 182 items to the person's `acquire` list in six
+hours; 96 were legal open-access works. The shared allowance (`agents.autopilot.ingest-per-day` 20) was spent, a
+sweep was dispatched with `autoIngest = None`, and the phase-3 rule "past the cap → the acquisition list" sent every
+open-access pick there. The acquisition list is the person's buy/borrow list; an open-access work belongs to the
+agent.
+
+- **The backlog is manager items.** New item kind `oa-ingest` of the watcher that found the work (target: the
+  DOI; `ItemState.oa` = `OaWork{doi, title, year, authors, venue, goals, why, foundBy, acquireText}`). So it shows
+  in the Managers window, is deduplicated by `UNIQUE (manager_id, kind, target)`, has a priority, can be held,
+  skipped, re-prioritised by its DOI like any item, and survives restarts. It is never dispatched as a run
+  (`dispatchAll` leaves the kind out; it has no pipeline, and `ManagerSupervisor.roles` ignores it).
+- **One entry per DOI across watchers** (`OaBacklog.add`, pure `IngestBacklog.place`): a pick the corpus has is
+  linked to the goal as a source; one an acquisition item names (open or done, looked up again just before
+  adding) is linked to that item; one another watcher holds an open entry for adds this goal to that entry's
+  `goals`; one this watcher settled before (a person skipped it) is left alone; else a new entry. A sweep's
+  candidates leave out the backlog DOIs this goal found already — a DOI only another goal found is still offered,
+  so the second goal can join the entry.
+- **The sweep** (`RunParams.oaBacklog = Some(true)`, set at dispatch whenever the watcher's auto-ingest is on, even
+  with 0 left; a run dispatched before keeps its old steps): discover · rank · [ingest] · **backlog** · queue · close.
+  The ingest step takes the open-access picks within today's allowance (`Scheduling.ingestOa`: the same order and
+  cap as `ingestPicks`, and it keeps the failures); the backlog step parks the open-access picks not ingested
+  (past the cap, or failed for another reason than a missing legal file); the queue step gets only the closed
+  picks and the ones the legal chain has no file for (`IngestBacklog.NoLegalCopy`, the prefix
+  `AcquireHandlers.ingestLegal` answers with).
+- **The backlog first.** At dispatch a sweep's allowance is `IngestBacklog.sweepAllowance(own, shared, ownBacklog,
+  allBacklog)`: what is left of its own cap after its own pending entries, and of the shared cap after every
+  pending entry of a watcher that drains; so new finds wait behind the backlog. The `started` event says how many
+  wait first.
+- **The drain** (`OaBacklog.drain`, every managers' tick after the evaluations and holds, before the dispatch):
+  the due pending entries of ACTIVE watchers with auto-ingest on, priority then the oldest
+  (`IngestBacklog.drain`), within each watcher's own allowance today and the shared one, at most
+  `agents.managers.watch.drain-per-tick` (3: each ingest fetches a file, so a tick takes a few; the daily caps
+  bound the day). Each is ingested through the legal chain only, linked to every goal that found it, and recorded
+  as an `ingested` event of its watcher (what both caps count); one the corpus has meanwhile is settled without an
+  ingest; one with no legal file goes to the acquisition list (in the sweep's wording, `(open access)`, linked to
+  its goals) and the entry is `stopped`; any other failure is tried again after the managers' backoff, the
+  acquisition list after `max-failures` (`IngestBacklog.onFailure`). One worklog line per tick that did something.
+  A paused watcher's entries wait; turning the autopilot off pauses the watchers, so nothing drains.
+- **Status.** `ManagerInfo.backlog` / `backlogDays` (a watcher) and `AutopilotStatus.backlog` / `backlogDays`:
+  pending + held entries, and the UTC days they take at the current allowance (`IngestBacklog.daysToDrain`, a
+  day-by-day estimate over each watcher's own cap and the shared one; 0 = today, None = never — auto-ingest off, a
+  cap of 0, the watcher paused). Shown by `agent autopilot`, `agent managers`, `agent manager <id> status`, the MCP
+  `manager` tool, and the Managers window (the autopilot panel, each watcher's row, the manager's head). A
+  watcher's backlog does not count in its goal's pace (`ManagerRepo.pace`): it drains by the caps, not by runs.
+- **The one-shot repair** — `histmersion agent autopilot repair-acquire [--dry-run] [--json]`, `POST
+  /api/agents/autopilot/repair-acquire {dryRun}`, the MCP `manager` action `repair-acquire` (still 68 tools).
+  A watcher-created item is found by STRUCTURE, not wording (`ManagerRepo.sweepAcquireItems`): an
+  `acquisition-sweep` run dispatched by a watcher (`jobs.manager_id`) ranked the DOI (its `rank` step's checked
+  answer, which also says whether it is open access), the item was created while that run's `queue` step ran
+  (±2 s), and the run linked it to its goal by that DOI (`goal_links` kind `queue-item`, note = the DOI). A
+  person's item, a plan-goal's and a currency check's match none of the three; the text pattern
+  "(open access)" and the topic "goal <slug>" were rejected as signals (a plan writes the same topic; a person can
+  write anything). Per item (`IngestBacklog.repairAction`): ranked open access and its watcher auto-ingests → into
+  the backlog (`move`; the acquisition item is deleted and its goal links with it, its wording kept in
+  `OaWork.acquireText`); in the corpus already → the item is deleted (`remove`); closed, or its watcher gone or not
+  auto-ingesting → `keep`. Every other open acquisition item is reported as `untouched`. Each move is a manager
+  event; the whole a worklog line. Deleting (not ticking off) keeps the list honest: `done` means acquired.
+- Live on 2026-10-19 (read-only look): 145 open acquire items match the structure, 96 ranked open access (96
+  DOIs, 35 watchers, none in the corpus yet), 49 closed; 43 other open items (a person's, plans', currency
+  checks') are untouched. At 20 a day in all and 5 per watcher, the 96 drain in about 5 days.
+- Tests: `IngestBacklogSuite` (allowance after the backlog, drain order and caps, placement, failures, days to
+  drain, the repair's decision, the wire state and Markdown), `SchedulingSuite` (`ingestOa`), `ManagerPolicySuite`
+  (the item kind), `ManagerCmdSuite` (the CLI against a stand-in server), `IngestBacklogDbSuite` (DB, scripted
+  model, fixture upstream: 30 open-access works at an allowance of 20 → 20 ingested, 10 in the backlog, 0 on the
+  list, nothing the same day, drained the next day oldest first; one entry across two watchers linked to both
+  goals, a work with no legal file to the list on its day; the shared cap across watchers and a paused watcher;
+  the repair — a sweep's open-access item moved, one in the corpus removed, a closed one and a person's kept, dry
+  run changes nothing, idempotent, the moved work drains), `ManagerPhase3Suite` (updated: the open pick past the
+  cap is in the backlog, not on the list).
