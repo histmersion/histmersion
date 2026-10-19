@@ -179,6 +179,23 @@ cli-docs:
 api-docs:
     {{sbt}} "coreJVM/runMain com.histmersion.core.generateApiIndex {{justfile_directory()}}"
 
+# ── documentation ────────────────────────────────────────────────────────────────────────────
+
+# Create docs/.venv with the pinned Zensical (docs/requirements.txt)
+[group('docs')]
+docs-venv:
+    just -f docs/Justfile venv
+
+# Build the documentation site into docs/site; any broken link fails the build
+[group('docs')]
+docs-build:
+    just -f docs/Justfile build
+
+# Serve the documentation with live reload (http://localhost:$HISTMERSION_DOCS_PORT, default 8001)
+[group('docs')]
+docs-serve:
+    just -f docs/Justfile serve
+
 # Remove build output (sbt targets, native images, dist/)
 [group('dev')]
 clean:

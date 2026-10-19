@@ -1,0 +1,28 @@
+# Histmersion
+
+> Histmersion is a local, geo-temporal research corpus: books and papers are OCR'd once and stored in PostgreSQL/PostGIS as full text plus findings (claims with a place and a signed-year date range), typed citation edges and statuses, and shown on a map crossed with a timeline. Articles compiled across sources live in the same database and cite sources as [[citekey]].
+
+An AI assistant reaches Histmersion through MCP at `<public-url>/mcp` (default `http://localhost:8000/mcp`, 72 tools, every one answering in Markdown) or through the `histmersion` CLI, a pure HTTP client of the same server (most commands take `--json`). The database is the single source of truth: read sources with `get_source`/`passages`, never answer from memory, never infer a date from prose, write with `patch_source`/`patch_article` (`put_*` replaces a whole record), run `facets` before guessing a tag, and treat an empty `neighbors` result as "nothing recorded", not as agreement. Years are signed integers, BCE negative (1200 BCE is -1200). Summaries, findings and articles written by models can be wrong; every claim must be checked against its cited source.
+
+## Documentation
+
+- [What Histmersion is](getting-started/what-is-histmersion/): the problem, the main ideas (source, finding, status, edge, place, period, event, article), who it is for
+- [Responsible use](responsible-use/): legal acquisition only, LLM errors, articles as entry points, absence is not evidence, citing what you read
+- [Installing](getting-started/install/): the native bundle, local link vs `--prebuilt` vs `--jvm`, paths, first-run data
+- [Do I need AI?](getting-started/ai-optional/): what works without a model, what the built-in agents add, providers and cost controls
+- [Using your AI assistant](ai-assistant/): connecting MCP clients, what the tools cover, good practice, the Claude Code plugin and skills, the CLI
+- [Searching and filtering](exploring/searching/): websearch syntax, filters, facets, histograms, read-only SQL
+- [Articles](articles/): reading coverage (Not used, the Method note), writing by hand, compiling and reviewing with agents
+- [How-to guides](how-to/credentials/): secrets and vaults, open-access papers, Calibre, open data, AI providers, backups and bundles
+
+## Reference
+
+- [Command line](reference/cli/): every `histmersion` command with its flags (generated from `--help`)
+- [MCP tools](reference/mcp-tools/): every tool and when to use it
+- [REST API](reference/rest-api/): the endpoints and the generated index of every path
+- [Configuration](reference/configuration/): every setting, its environment variable and default
+
+## Optional
+
+- [Plugins](plugins/installing/): installing and developing plugins (SPI, native-image metadata, packaging)
+- [Contributing](contributing/): build, tests, architecture and the design notes

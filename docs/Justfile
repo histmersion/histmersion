@@ -1,0 +1,30 @@
+# The documentation site (Zensical, reading mkdocs.yml). From the repository root: `just docs-build`,
+# `just docs-serve`. Here: `just -f docs/Justfile <recipe>`.
+
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+venv := justfile_directory() / ".venv"
+port := env("HISTMERSION_DOCS_PORT", "8001")
+
+# Create the project-local venv with the pinned Zensical (once; again after requirements.txt changes)
+venv:
+    uv venv --python 3.12 --allow-existing "{{venv}}"
+    uv pip install --python "{{venv}}/bin/python" -r "{{justfile_directory()}}/requirements.txt"
+
+# Build the site into docs/site, failing on any broken link or other warning
+build: (_ensure)
+    cd "{{justfile_directory()}}" && "{{venv}}/bin/zensical" build --strict --clean
+
+# Serve the site with live reload on http://localhost:{{port}} (not 8000: that is Histmersion's own port)
+serve: (_ensure)
+    cd "{{justfile_directory()}}" && "{{venv}}/bin/zensical" serve --dev-addr "localhost:{{port}}"
+
+# The same in a container, for a machine without uv
+docker-build:
+    docker build "{{justfile_directory()}}" -t zensical-histmersion-docs
+
+docker-serve: docker-build
+    docker run --rm -it -p {{port}}:8000 -v "{{justfile_directory()}}/..:/repo" zensical-histmersion-docs
+
+_ensure:
+    @[ -x "{{venv}}/bin/zensical" ] || just -f "{{justfile_directory()}}/Justfile" venv

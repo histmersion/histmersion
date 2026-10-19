@@ -1,0 +1,143 @@
+site_name: "Histmersion documentation"
+site_description: "A map-and-timeline research library for books and papers about the past."
+repo_url: https://github.com/histmersion/histmersion
+edit_uri: edit/master/docs/user-guide/
+docs_dir: "user-guide"
+strict: true # ensures that all links are valid
+validation:
+  links:
+    not_found: warn
+    anchors: warn
+theme:
+  name: material
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: brown
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+  features:
+    - content.action.edit
+    - content.code.copy
+    - content.code.select
+    - content.tooltips
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.path
+    - navigation.sections
+    - navigation.tracking
+    - search.highlight
+    - search.suggest
+
+  font:
+    code: Fira Code
+  icon:
+    repo: fontawesome/brands/github
+  logo: assets/images/logo.svg
+  favicon: assets/images/logo.svg
+nav:
+  - "Welcome": "index.md"
+  - "Responsible use": "responsible-use.md"
+  - "Getting started":
+      - "What Histmersion is": "getting-started/what-is-histmersion.md"
+      - "Installing": "getting-started/install.md"
+      - "First steps": "getting-started/first-steps.md"
+      - "Do I need AI?": "getting-started/ai-optional.md"
+      - "Glossary": "getting-started/glossary.md"
+  - "Exploring the collection":
+      - "The web page": "exploring/web-ui.md"
+      - "Searching and filtering": "exploring/searching.md"
+      - "Reading a source": "exploring/reading-sources.md"
+      - "Places, periods and the map": "exploring/places-and-periods.md"
+      - "Events": "exploring/events.md"
+      - "Pictures": "exploring/media.md"
+      - "Citations and statuses": "exploring/citations-and-statuses.md"
+  - "Articles":
+      - "articles/index.md"
+      - "Writing an article yourself": "articles/writing-by-hand.md"
+      - "Research goals": "articles/goals.md"
+      - "Compiling and reviewing with agents": "articles/compile-and-review.md"
+      - "Approvals": "articles/approvals.md"
+      - "Process managers and the autopilot": "articles/autopilot.md"
+  - "Using your AI assistant": "ai-assistant.md"
+  - "How-to guides":
+      - "Credentials and secrets": "how-to/credentials.md"
+      - "Open-access papers": "how-to/open-access-papers.md"
+      - "Books and Calibre": "how-to/books-and-calibre.md"
+      - "Open data: places, periods, events, pictures": "how-to/open-data.md"
+      - "AI providers, budgets and quotas": "how-to/ai-providers.md"
+      - "Backups, exports and moving a collection": "how-to/backup-and-bundles.md"
+  - "Plugins":
+      - "Installing plugins": "plugins/installing.md"
+      - "Developing plugins": "plugins/developing.md"
+  - "Reference":
+      - "Configuration": "reference/configuration.md"
+      - "Command line (CLI)": "reference/cli.md"
+      - "MCP tools": "reference/mcp-tools.md"
+      - "REST API": "reference/rest-api.md"
+      - "Skills": "reference/skills.md"
+      - "Formatting lint": "reference/formatting-lint.md"
+      - "Troubleshooting": "reference/troubleshooting.md"
+  - "Contributing":
+      - "contributing/index.md"
+      - "Architecture": "contributing/architecture.md"
+      - "Native image": "contributing/native-image.md"
+      - "Working on these docs": "contributing/docs.md"
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      clickable_checkbox: true
+      custom_checkbox: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+      use_pygments: true
+plugins:
+  - macros
+  - search
+copyright: |
+  <div style="color: var(--md-footer-fg-color--lighter)">
+  Histmersion — a geo-temporal research corpus. Licence: to be decided.<br />
+  Documentation made with <a href="https://zensical.org" target="_blank" rel="noopener">Zensical</a>.
+  </div>
+extra:
+  generator: false
+  repo_blob: "https://github.com/histmersion/histmersion/blob/master/"
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/histmersion/histmersion

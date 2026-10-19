@@ -1,0 +1,95 @@
+# Architecture
+
+## The pieces
+
+```
+  host                                      histmersion-server and its child processes
+┌──────────────────┐                  ┌──────────────────────────────────────────────────┐
+│ histmersion (CLI)│                  │  server            (GraalVM native image, 78 MB)  │
+│ native binary    │───── HTTP ──────►│    /mcp     MCP tools (Chimp)      ─┐              │
+│ pure HTTP client │   (127.0.0.1)    │    /api     REST (Tapir)           ─┼─► Handlers   │
+└──────────────────┘                  │    /source/ + /article/ pages      ─┘     │        │
+                                      │    /        web UI: map × timeline        │        │
+┌──────────────────┐                  │                                           │        │
+│ agent (MCP)      │───── HTTP ──────►│                            Magnum (JDBC) ─┤        │
+│ Claude Code /    │                  └──────────────────┬───────────────────────┬┴────────┘
+│ OpenCode         │                                     ▼                       ▼
+└──────────────────┘                          ┌────────────────────┐   ┌────────────────────┐
+                                              │ postgres (child)   │   │ converter (child)  │
+┌──────────────────┐                          │ PostGIS · int8range│   │ docling /          │
+│ browser → web UI │───── HTTP ──────────────►│ GiST · Flyway      │   │ pymupdf4llm  (OCR) │
+└──────────────────┘                          └────────────────────┘   └────────────────────┘
+
+corpus dir (HISTMERSION_CORPUS_DIR) ──read by──► server   (`seed` with no argument)
+```
+
+The **server** is the only program that touches the database. It supervises the bundled PostgreSQL
+and the OCR converter as child processes, and serves four surfaces from one set of handlers: the MCP
+tools (`/mcp`), the REST API (`/api`), the server-rendered source and article pages, and the web page
+(`/`).
+
+## Modules
+
+| module | what | depends on | binary |
+|---|---|---|---|
+| `core` | **the contract**: domain model · wire DTOs · `Filter` · Tapir endpoint definitions · Markdown rendering · config model · frontmatter parsing. No database code, no side effects. | — | — |
+| `db` | **the store**: Magnum repos over Postgres/PostGIS · Flyway migrations · the seed importer | `core` | — |
+| `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db`, `plugin-api`, `plugin-vaults` | native image |
+| `cli` | **a pure HTTP client** of the server — sttp client derived from `core`'s endpoints. No pgjdbc, no DB credentials on the host. | `core` **only** | native image |
+| `web` | the web page (Scala.js, Laminar, Leaflet) | `core` (Scala.js) | served by the server |
+| `plugin-api` | the plugin SPI: `Plugin`, `PluginContext`, the registries, `Secret` | sconfig, kindlings only | — |
+| `plugin-vaults` | the built-in secret vaults (KeePassXC, 1Password, Bitwarden), compiled as a third-party plugin would be | `plugin-api` only | — |
+| `plugin-fixtures/hello`, `hello-ai` | test plugins, packaged as their own jars; never on the server's class path | `plugin-api` only | — |
+
+Because `core` defines each endpoint once and `server` implements it once in `Handlers`, the REST
+route, the MCP tool and the CLI command are the *same* operation with the *same* Markdown output.
+They agree by construction, not by discipline.
+
+Adding an operation therefore touches, in order: `core/Dto.scala` (input and output types),
+`core/Api.scala` (the endpoint, added to `Api.all`), `core/Markdown.scala` (how it renders), the
+repo in `db` if it needs the database, `server/Handlers.scala` (the one implementation),
+`server/HttpApi.scala` **and** `server/McpTools.scala` (both wired), then `cli/Client.scala` and
+`cli/Main.scala`. Details in {{ repo_file("AGENTS.md") }}.
+
+```mermaid
+flowchart LR
+    subgraph clients
+      CLI["histmersion CLI"]
+      AS["AI assistant (MCP)"]
+      WEB["web page"]
+    end
+    CLI -- HTTP --> API["/api (REST)"]
+    AS -- HTTP --> MCP["/mcp"]
+    WEB -- HTTP --> API
+    API --> H["Handlers<br/>(one implementation per operation)"]
+    MCP --> H
+    H --> DB[("PostgreSQL + PostGIS")]
+    H --> CV["OCR converter"]
+    H --> PL["plugins: fetchers, media,<br/>events, vaults, AI providers"]
+```
+
+## Design notes
+
+The design records in `docs/` say why things are as they are. Each *research* note ends with
+**as-built** sections that record what was implemented and where it differs from the proposal; read
+those first.
+
+| note | about |
+|---|---|
+| {{ repo_file("docs/design.md") }} | the overall design: what is built, the stack |
+| {{ repo_file("docs/plan.md") }} | the product plan and its waves |
+| {{ repo_file("docs/writing-guide.md") }} | the rules for prose compiled from the collection (also bundled into the agents) |
+| {{ repo_file("docs/visualization-guide.md") }} | rules for the map and timeline: honest uncertainty, every dot traceable |
+| {{ repo_file("docs/map-layers.md") }} | the map's point layers and how they share one implementation |
+| {{ repo_file("docs/media-providers.md") }} | each picture provider: what it is asked, licence and match rules |
+| {{ repo_file("docs/research-embedded-agents.md") }} | the built-in agents: engine, pipelines, budgets, tracing (P0–P3 as built) |
+| {{ repo_file("docs/research-agent-runtimes.md") }} | one set of agent definitions for Claude Code, Codex and opencode; the generator; run tokens |
+| {{ repo_file("docs/research-model-providers.md") }} | which model providers may be used and on what terms; local models |
+| {{ repo_file("docs/research-plan-quotas.md") }} | governing agents on a subscription: plan pools, floors, readings |
+| {{ repo_file("docs/research-process-managers.md") }} | the process managers, the autopilot and the ingest backlog |
+| {{ repo_file("docs/research-review-convergence.md") }} | why reviews did not converge, and the review ledger built from it |
+| {{ repo_file("docs/research-plugins.md") }} | the plugin SPI, configuration, secrets, relink kit, signing, AI providers as plugins |
+| {{ repo_file("docs/research-merge-import.md") }} | portable bundles and merging two collections |
+| {{ repo_file("docs/research-interactive-performance.md") }} | server-side speed of every interactive path |
+| {{ repo_file("docs/research-web-perf.md") }} | the web page's speed, memory and leaks in the browser |
+| {{ repo_file("docs/research-web-ui-mobile-sources-upload.md") }} | the phone layout, the sources toggle, uploads from the acquisition list |
