@@ -1972,3 +1972,25 @@ test('base-map families: the online maps when online; a preset the download cann
     await page.waitForFunction(() => /different in the past/.test(document.querySelector('.terrain-notice')?.textContent ?? ''));
   }, { source: 'online' });
 });
+
+test('the past-landscape notice never lies under the credits or the map key, wide or narrow', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    await withPage(viewport, async page => {
+      await page.evaluate(() => { localStorage.setItem('histmersion.ui.baseMap', '["terrain"]'); localStorage.setItem('histmersion.ui.terrainStyle', '["natural"]'); });
+      await page.reload();
+      await page.waitForFunction(() => window.__testMap);
+      await page.locator('.terrain-notice').waitFor();
+      await page.waitForTimeout(800);
+      const hits = await page.evaluate(() => {
+        const n = document.querySelector('.terrain-notice').getBoundingClientRect();
+        return [...document.querySelectorAll('.leaflet-bottom.leaflet-right > *')].map(e => e.getBoundingClientRect())
+          .filter(r => r.width > 0 && n.left < r.right && r.left < n.right && n.top < r.bottom && r.top < n.bottom).length;
+      });
+      assert.equal(hits, 0, `${viewport.width} px: the notice overlaps the right-hand controls`);
+      const text = await page.locator('.terrain-notice').evaluate(e => e.scrollHeight <= e.clientHeight + 1);
+      assert.ok(text, 'the notice shows all its text');
+    });
+  }
+});

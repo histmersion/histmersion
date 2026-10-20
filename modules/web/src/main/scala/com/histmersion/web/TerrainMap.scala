@@ -315,6 +315,8 @@ object TerrainMap:
     notice.foreach(_.remove())
     notice = js.undefined
     map.off("resize", fitHandler)
+    fitObserver.foreach(_.disconnect())
+    fitObserver = None
     map.getContainer().asInstanceOf[dom.HTMLElement].style.setProperty("--terrain-notice-lift", "")
     map.getContainer().classList.remove("terrain-missing")
     map.getContainer().classList.remove("terrain-on")
@@ -444,27 +446,39 @@ object TerrainMap:
     }: js.Function1[js.Dynamic, dom.Element]
     ctrl.addTo(map.asInstanceOf[js.Any])
     notice = ctrl
-    // the notice and the credits share the map's foot: where they would meet (a narrow map, long credits)
-    // the notice's corner rises above the credits' line — measured now and whenever the map resizes
+    // the notice shares the map's foot with the right-hand corner (the credits, the map's key): where they
+    // would meet (a narrow map, long credits, an open key) the notice's corner rises above that corner —
+    // measured now, and again whenever the map or that corner changes size
+    fitObserver.foreach(_.disconnect())
     dom.window.requestAnimationFrame((_: Double) => fitNotice(map))
     map.off("resize", fitHandler)
     fitHandler = (_: LeafletEvent) => fitNotice(map)
     map.on("resize", fitHandler)
+    val ro = js.Dynamic.global.ResizeObserver
+    if !js.isUndefined(ro) then
+      val o = js.Dynamic.newInstance(ro)(((_: js.Any) => fitNotice(map)): js.Function1[js.Any, Unit])
+      Option(map.getContainer().querySelector(".leaflet-bottom.leaflet-right")).foreach(e => o.observe(e))
+      fitObserver = Some(o)
 
-  // the resize handler of the notice shown (one at a time), to take off when it goes
+  // the notice's watchers (one notice at a time), to take off when it goes
   private var fitHandler: js.Function1[LeafletEvent, Unit] = (_: LeafletEvent) => ()
+  private var fitObserver: Option[js.Dynamic] = None
 
-  /** How far the notice's corner rises so it clears the credits: their height and a gap when the two
-    * would overlap side by side, else nothing. Pure. */
+  /** How far the notice's corner rises so it clears the right-hand corner's controls: their height and a
+    * gap when the two would overlap side by side, else nothing. Pure. */
   def noticeLift(noticeLeft: Double, noticeRight: Double, creditsLeft: Double, creditsRight: Double, creditsHeight: Double): Double =
     if noticeRight > creditsLeft && creditsRight > noticeLeft then creditsHeight + 4 else 0
 
   private def fitNotice(map: LeafletMap): Unit =
     val c = map.getContainer().asInstanceOf[dom.HTMLElement]
-    c.style.setProperty("--terrain-notice-lift", "0px")
     for
       n <- Option(c.querySelector(".terrain-notice"))
-      a <- Option(c.querySelector(".leaflet-control-attribution"))
+      corner <- Option(c.querySelector(".leaflet-bottom.leaflet-right"))
     do
-      val nr = n.getBoundingClientRect(); val ar = a.getBoundingClientRect()
-      c.style.setProperty("--terrain-notice-lift", s"${noticeLift(nr.left, nr.right, ar.left, ar.right, ar.height)}px")
+      // the right corner's controls, each by its own box (the corner itself spans to the map's left)
+      val boxes = corner.children.toList.map(_.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0)
+      val nr = n.getBoundingClientRect()
+      val lift = if boxes.isEmpty then 0.0
+        else noticeLift(nr.left, nr.right, boxes.map(_.left).min, boxes.map(_.right).max,
+          boxes.map(_.bottom).max - boxes.map(_.top).min)
+      c.style.setProperty("--terrain-notice-lift", s"${lift}px")

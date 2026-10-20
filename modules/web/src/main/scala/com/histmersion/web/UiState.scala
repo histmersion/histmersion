@@ -465,6 +465,9 @@ object UiState:
   /** The pre-UiState layer memory (`{overlay, media, sites}` under one key): migrated once, removed. */
   private val LegacyLayersKey = "histmersion.layers"
 
+  /** Whether this browser keeps a value of the [[Persist.Local]] field `f` (a choice once made). */
+  private[web] def stored(f: Field[?]): Boolean = store.get(LocalPrefix + f.key).isDefined
+
   /** Load the [[Persist.Local]] fields from the store. */
   private[web] def restoreLocal(): Unit =
     localFields.foreach { f =>

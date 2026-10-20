@@ -383,7 +383,8 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .terrain-on.leaflet-container { background:var(--terrain-bg, var(--bg)); }
 /* the local map's credits are long (OpenStreetMap, Natural Earth, Protomaps, Mapterhorn): one line that
    starts with © OpenStreetMap, so it never covers the markers along the map's foot; all of it on hover */
-.terrain-on .leaflet-control-attribution { max-width:min(60%, 520px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.terrain-on .leaflet-control-attribution { max-width:min(60vw, 520px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+[data-layout="narrow"] .terrain-on .leaflet-control-attribution { max-width:calc(100vw - 16px); }
 /* whole on hover, wrapping UPWARD within the same width: it never grows sideways into the notice */
 .terrain-on .leaflet-control-attribution:hover,
 .terrain-on .leaflet-control-attribution:focus-within { white-space:normal; overflow:visible; }
