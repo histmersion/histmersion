@@ -202,6 +202,10 @@ and **GPU** (`--use-angle=metal`).
 | *Readable* in Leaflet + 300 DOM markers | 960 ms | **148** / 210 ms | 44.3 % | 164 ms | 202 ms | 58.6 % | 85 ms | 11.8 MB |
 | *Readable*, native + 300 points | 960 ms | **104** / 127 ms | 73.1 % | 0 | 79.5 ms | 44.0 % | 0 | 8.2 MB |
 
+*Physical* re-measured after its sea was reworked (depth tints at every zoom, §4.2), 3 runs: GPU pan p95
+31.2 ms, zoom 33.0 ms, 0.6 % / 0 % dropped, drawn 169 ms — unchanged; software pan 162 ms, zoom 198 ms,
+19 % / 69 % dropped — a little worse than before, as expected with one more full-screen layer.
+
 The app's budgets for comparison: input p95 ≤ 100 ms, dropped frames ≤ 15 %, longest task ≤ 150 ms, heap ≤ 60
 MB. ¹ *Natural*: from the view being set to every tile and name answered (perf-paths.mjs); MapLibre: from the
 map's creation to its first `idle` (every tile drawn) — MapLibre's module load (~1.1 MB, cached) not counted.
