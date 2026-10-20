@@ -129,7 +129,9 @@ if (opt.mode === 'leaflet') {
 } else {
   // `z` is a zoom of the 256-pixel raster grid (Leaflet's, OSM Carto's): MapLibre's zoom is one less for the same scale
   map = new maplibregl.Map({ container: 'map', style, center: [opt.lon, opt.lat], zoom: opt.z - 1, hash: false,
-    attributionControl: { compact: true }, fadeDuration: 150, maxPitch: 0, dragRotate: false });
+    attributionControl: { compact: true }, fadeDuration: 150, maxPitch: 0, dragRotate: false,
+    // &strictgpu=1: refuse a software WebGL context (the app would then fall back to the raster map)
+    ...(q.get('strictgpu') ? { canvasContextAttributes: { failIfMajorPerformanceCaveat: true } } : {}) });
   map.touchZoomRotate.disableRotation();
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
 }
