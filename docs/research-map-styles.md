@@ -98,7 +98,7 @@ Contrast of names in the styles (WCAG relative luminance):
 | CARTO Voyager country | 4.0 |
 | current *Natural*: ocean names on sea | 4.0; land 0 m tint vs sea **1.2** |
 | prototype *Readable*: water names `#2c5880` on water | 4.7 |
-| prototype *Physical*: places on lowland | 8.5; physical names on 800 m tint 6.9; water names on the shelf 4.9, on 1 000 m depth 4.1 |
+| prototype *Physical*: places on lowland | 8.5; physical names on 800 m tint 6.9; water names `#123552` on the shelf 9.6, on 1 000 m depth 5.2, on their halo over the 6 000 m colour ≥ 8.5 |
 
 ### 1.4 Why the current presets fail (against those rules)
 
@@ -107,9 +107,9 @@ Contrast of names in the styles (WCAG relative luminance):
   forest/grass patchwork reads as blotches (aegean-z7-natural below); green lowland contradicts R7.
 - **R1/R2 — rivers.** Natural Earth's rivers are drawn `#76aed2` at 2 px down to zoom 3–9, a hard blue line
   across lowland green that does not join the sea's colour — "cheap".
-- **R12 — contrast.** The sea `#a9cfe4` and the 0 m tint `#cfe2b4` are 1.2:1 in luminance *and* close in hue
-  after the shore glow — the coast dissolves; the dark sea-floor basins (`#3f75a6`) are the darkest thing on
-  the map, pulling the eye off the land.
+- **R12 — contrast.** The sea's shore `#a9cfe4` and the 0 m land tint `#cfe2b4` are 1.2:1 in luminance and
+  close in hue under the pale shore glow — the coast dissolves into a double band. (*Natural*'s depth ramp
+  itself — pale shelf, clearly darker basins — is what the user liked; *Physical* now keeps it, see §4.2.)
 - **R9/R10 — fonts.** The terrain presets set Noto Serif 600 in letter-spaced capitals (2.5 px) for ranges
   and regions and serif italic for water; the local street presets use the browser's `sans-serif` (Helvetica on
   macOS, DejaVu on Linux — not ours, so not the same everywhere) for places and Georgia italic for seas. Drawn
@@ -278,9 +278,19 @@ Carto reference). Run: `npm ci --prefix spike/map-styles`, a test server with an
 - Land cover as veils, not patches (R4): forest a faint green (≤ 0.22 opacity), cultivated land and
   grassland a fainter yellow-green to zoom 10 (so the Nile delta and the plains read against the desert, as on
   Patterson's Natural Earth physical map), deserts a pale sand, glaciers white.
-- The sea: the vector ocean (an exact coast) under ETOPO1 depth tints from the sea-floor layer — shelf pale
-  `#c6deef`, abyss a muted `#7ca5c7` (no navy) — faded out by zoom 9, where its 1.8 km cells would spill over
-  the coast; a thin coastline `#7ea8c6` at 70 %.
+- The sea by depth at every zoom (revised 2026-10-20 after the user found the first version's depths "almost
+  non-existent" and *Natural*'s sea better): ETOPO1 depth tints (`color-relief` on the sea-floor layer) in
+  Patterson's / Esri Ocean Base's order — the shelf palest `#cde4f3`, a visible step at the shelf edge (~200 m:
+  `#b4d3ea` → `#a1c5e2`), then clearly darker to `#5a8bb6` at 3 000 m and `#3f6f9b` at 6 000 m, close to
+  *Natural*'s ramp and a little less saturated — so the North Aegean Trough, the Cretan Sea and the Ionian and
+  Levantine abysses read at once; the submarine relief shaded softly (`igor`, 0.3 → 0.12 by zoom). The depth
+  layer lies *under* the land: the vector earth drawn over it is the coast, exact at any zoom, so the 1.8 km
+  depth cells never spill onto land and need no fade-out (they stay readable at z9–12, softer: 0.92 → 0.85);
+  the land's elevation tint is transparent at sea level so the depths show through. A coastline `#5f8db5` at
+  85 %, 0.45 → 1.1 px.
+- Water names `#123552` with a 1.6 px pale halo `rgba(214,233,246,.85)`: 9.6:1 on the shelf, 5.2:1 at
+  1 000 m, and ≥ 8.5:1 against the halo over the deepest colour (the text alone on 3 000 m water would be
+  3.5:1 — the halo carries it there).
 - Rivers **darker** than the sea (`#6f9fc4`) so they read on tinted land (R1 for tinted maps).
 - Contours from zoom 11 where a focus region holds the 30 m relief (maplibre-contour; 100/50/20 m, brown,
   index lines labelled) (R8).
@@ -356,13 +366,18 @@ What the comparison shows:
   is dominated by the dark sea floor and by blotchy forest/grass patches over a green lowland; the coast is
   carried only by the pale shore glow. *Readable* keeps Carto's figure-ground (warm land, clear blue sea) with
   one level of names and none of the boundary clutter; *Physical* shows the mountains first (Pindus, the
-  Taurus edge) and the Aegean's shelf and basins in a muted blue that stays behind the land.
+  Taurus edge) and the sea floor at a glance: the pale shelves, the North Aegean Trough, the Cretan Sea and
+  the Ionian deep in clearly darker blues.
 - **Argolid, z12 (Mycenae).** Carto shows roads, admin lines and land use but nothing of the terrain — the
   citadel's hill between two hills is invisible. *Natural* shows the terrain but with heavy contours, dark
   shading, saturated green patches and serif labels that break up. *Readable* shows the hills with a light
   relief under Carto-like colours, towns in English where OSM has an English name; *Physical* adds the 30 m
   focus relief with brown contours (100/50 m) and labels; the edge of the focus region (west of Mykines,
   where the relief falls back to the z8 extract) is visible as a softer relief.
+- **Argolic Gulf, z11 (*Physical* only, a check of the sea close in):** the depth tint is still there, softer,
+  under a crisp vector coast.
+
+  ![Argolic Gulf z11 Physical](research-assets/map-styles/argolic-gulf-z11-physical.jpg)
 - **Levant, z9.** *Natural*'s sea is a dark, saturated blue gradient and the pale glow band along the coast
   is about as wide as the coastal plain itself, so the coast reads twice. *Physical* keeps the coastal plain, the Lebanon/Anti-Lebanon ridges
   and the Jordan rift readable with the names of the towns; *Readable* is the closest to Carto.

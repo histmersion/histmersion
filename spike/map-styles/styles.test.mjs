@@ -55,6 +55,18 @@ test('both styles: every layer names a source that exists, ids are unique, the f
   }
 });
 
+test('Physical: the sea by depth at every zoom, under the land; the land tint transparent at sea level', () => {
+  const st = physical(status), ids = st.layers.map(l => l.id);
+  const sea = st.layers.find(l => l.id === 'sea-depth');
+  assert.equal(sea.maxzoom, undefined, 'no fade-out zoom');
+  assert.ok(ids.indexOf('sea-depth') < ids.indexOf('earth') && ids.indexOf('sea-shade') < ids.indexOf('earth'));
+  const tint = st.layers.find(l => l.id === 'tint')['color-relief-color'] ?? st.layers.find(l => l.id === 'tint').paint['color-relief-color'];
+  assert.deepEqual(tint.slice(3, 5), [0, 'rgba(224, 231, 204, 0)']);
+  // darker with depth: each deeper stop has a lower luminance
+  const L = h => parseInt(h.slice(1, 3), 16) + parseInt(h.slice(3, 5), 16) + parseInt(h.slice(5, 7), 16);
+  for (let i = 1; i < PHYSICAL.depth.length; i++) assert.ok(L(PHYSICAL.depth[i - 1][1]) < L(PHYSICAL.depth[i][1]));
+});
+
 test('Physical draws no roads and no borders; Readable draws both', () => {
   const ids = st => st.layers.map(l => l['source-layer']);
   assert.ok(!ids(physical(status)).includes('roads') && !ids(physical(status)).includes('boundaries'));
@@ -83,4 +95,8 @@ test('the colours the study measured', () => {
   assert.ok(cr(READABLE.country, READABLE.land) >= 4.5);
   assert.ok(cr(PHYSICAL.place, '#e0e7cc') >= 4.5);
   assert.ok(cr(PHYSICAL.waterText, PHYSICAL.water) >= 4.5);
+  // Physical's water names on the 1 000 m tint, and on their halo over the deep basins
+  const depth = m => PHYSICAL.depth.find(([d]) => d === m)[1];
+  assert.ok(cr(PHYSICAL.waterText, depth(-1000)) >= 4.5);
+  assert.ok(cr(PHYSICAL.waterText, '#d6e9f6') >= 4.5);
 });

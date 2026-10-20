@@ -248,15 +248,22 @@ export function readable(status, { lang = 'en', origin = '' } = {}) {
 export const PHYSICAL = {
   // elevation (m) → colour: lowland a pale sage-khaki (Patterson's arid/temperate cross-blend for the
   // Mediterranean), warming to tan, then lighter grey-white above 2 500 m — all lightness ≥ 78 %
-  tint: [[-450, '#dfe6cc'], [0, '#e0e7cc'], [150, '#e7ead0'], [400, '#eeead0'], [800, '#ede1c4'], [1300, '#e4d3bb'],
+  // (0 m and below transparent: the sea pixels of the land relief let the depth tints through; land at or
+  // below sea level shows the earth fill, the same lowland colour)
+  tint: [[0, 'rgba(224, 231, 204, 0)'], [1, '#e0e7cc'], [150, '#e7ead0'], [400, '#eeead0'], [800, '#ede1c4'], [1300, '#e4d3bb'],
     [1900, '#ddd0c2'], [2600, '#e6e0d9'], [3500, '#f2efeb'], [5000, '#fbfaf8']],
-  // depth (m) → colour: the shelf pale, the abyss a muted mid blue (no saturated navy)
-  depth: [[-5000, '#7ca5c7'], [-3000, '#89afcf'], [-2000, '#95b9d6'], [-1000, '#a3c5de'], [-200, '#b3d1e7'], [-50, '#bfd9ec'], [-1, '#c6deef']],
-  water: '#bad6ea',
+  // depth (m) → colour, Patterson's and Esri Ocean Base's ordering: the shelf palest, a visible step at its
+  // edge (~200 m), then clearly darker with depth to a mid-dark blue in the basins (North Aegean Trough,
+  // Cretan Sea, the Ionian and Levantine abysses) — close to the rejected Natural's ramp, which the user
+  // found right, a little less saturated
+  depth: [[-6000, '#3f6f9b'], [-4000, '#4c7daa'], [-3000, '#5a8bb6'], [-2000, '#6b99c1'], [-1000, '#80aacd'],
+    [-400, '#93badb'], [-210, '#a1c5e2'], [-190, '#b4d3ea'], [-50, '#c3ddf0'], [-1, '#cde4f3']],
+  water: '#cde4f3',         // lakes, and the sea where the coarse depth grid has no cell
   river: '#6f9fc4',
-  coast: '#7ea8c6',
+  coast: '#5f8db5',
   forest: '#5e8a4e',
-  waterText: '#2c5880',     // 4.1:1 on the sea at 1 000 m depth, 4.9:1 on the shelf
+  waterText: '#123552',     // 9.6:1 on the shelf, 5.2:1 at 1 000 m, 4.2:1 at 2 000 m; deeper it reads on its halo
+  waterHalo: 'rgba(214, 233, 246, 0.85)',   // ≥ 8.5:1 behind the names even over the 6 000 m colour
   place: '#3d3d3d',         // 8.5:1 on the lowland tint
   physical: '#5a4632',      // 6.9:1 on the 800 m tint
   halo: 'rgba(245, 243, 234, 0.85)',
@@ -268,6 +275,15 @@ export function physical(status, { lang = 'en', origin = '', places = true, cont
   const ramp = stops => ['interpolate', ['linear'], ['elevation'], ...stops.flat()];
   const layers = [
     { id: 'background', type: 'background', paint: { 'background-color': c.water } },
+    // the sea by its depth (ETOPO1 via the sea-floor layer), at every zoom, under the land — the vector
+    // earth drawn over it is the coast, exact at any zoom, so the 1.8 km depth cells never spill onto land;
+    // the submarine relief shaded softly, softer closer in
+    has('sea') && { id: 'sea-depth', type: 'color-relief', source: 'sea',
+      paint: { 'color-relief-color': ['interpolate', ['linear'], ['elevation'], ...c.depth.flat(), 0, c.water],
+        'color-relief-opacity': z(5, 1, 10, 0.92, 13, 0.85) } },
+    has('sea') && { id: 'sea-shade', type: 'hillshade', source: 'sea',
+      paint: { 'hillshade-method': 'igor', 'hillshade-shadow-color': 'rgba(30, 60, 95, 0.55)', 'hillshade-highlight-color': 'rgba(0,0,0,0)',
+        'hillshade-exaggeration': z(3, 0.3, 7, 0.25, 10, 0.18, 13, 0.12) } },
     // the land: its mask from the vector earth (crisp coast), then the tint by elevation over it
     has('osm') && { id: 'earth', type: 'fill', source: 'osm', 'source-layer': 'earth', filter: ['==', ['geometry-type'], 'Polygon'],
       paint: { 'fill-color': c.tint[1][1] } },
@@ -294,22 +310,13 @@ export function physical(status, { lang = 'en', origin = '', places = true, cont
       'hillshade-illumination-direction': ['literal', [315, 270, 0, 225]],
       'hillshade-illumination-altitude': ['literal', [40, 35, 35, 30]],
       'hillshade-exaggeration': z(0, 0.5, 6, 0.5, 10, 0.45, 13, 0.4) } })),
-    // the sea: the vector ocean (exact coast), then its depth over it (ETOPO1 via the sea-floor layer: land in
-    // it transparent), faded out by zoom 9 as its 1.8 km cells start to spill across the coast; then lakes
-    has('osm') && { id: 'ocean', type: 'fill', source: 'osm', 'source-layer': 'water',
-      filter: ['all', ['==', ['geometry-type'], 'Polygon'], kinds('ocean')], paint: { 'fill-color': c.water } },
-    has('sea') && { id: 'sea-depth', type: 'color-relief', source: 'sea', maxzoom: 9,
-      paint: { 'color-relief-color': ['interpolate', ['linear'], ['elevation'], ...c.depth.flat(), 0, 'rgba(0,0,0,0)'],
-        'color-relief-opacity': z(5, 1, 7, 0.9, 8.5, 0) } },
-    has('sea') && { id: 'sea-shade', type: 'hillshade', source: 'sea', maxzoom: 9,
-      paint: { 'hillshade-method': 'igor', 'hillshade-shadow-color': 'rgba(40, 70, 100, 0.6)', 'hillshade-highlight-color': 'rgba(0,0,0,0)',
-        'hillshade-exaggeration': z(3, 0.2, 7, 0.15, 8.5, 0) } },
+    // lakes (the sea is the depth layer under the land)
     has('osm') && { id: 'water', type: 'fill', source: 'osm', 'source-layer': 'water',
       filter: ['all', ['==', ['geometry-type'], 'Polygon'], ['!', kinds('ocean', 'swimming_pool', 'fountain')]],
       paint: { 'fill-color': c.water } },
     has('osm') && { id: 'coast', type: 'line', source: 'osm', 'source-layer': 'water',
       filter: ['all', ['==', ['geometry-type'], 'Polygon'], kinds('ocean', 'water', 'lake')],
-      paint: { 'line-color': c.coast, 'line-width': z(4, 0.4, 10, 0.7, 14, 1), 'line-opacity': 0.7 } },
+      paint: { 'line-color': c.coast, 'line-width': z(4, 0.45, 10, 0.8, 14, 1.1), 'line-opacity': 0.85 } },
     // rivers darker than the sea (they must read on tinted land, Esri Physical / Patterson), tapering by zoom
     has('ne') && { id: 'rivers-ne', type: 'line', source: 'ne', 'source-layer': 'rivers', maxzoom: 9.5,
       layout: { 'line-cap': 'round', 'line-join': 'round' },
@@ -326,7 +333,7 @@ export function physical(status, { lang = 'en', origin = '', places = true, cont
       filter: ['all', ['==', ['geometry-type'], 'Point'], kinds('ocean', 'sea')],
       layout: { 'text-field': N, 'text-font': [FONT.italic], 'text-size': z(3, 11, 6, 13.5, 9, 16),
         'text-letter-spacing': 0.1, 'text-max-width': 8 },
-      paint: { 'text-color': c.waterText, 'text-halo-color': 'rgba(200, 222, 236, 0.7)', 'text-halo-width': 1 } },
+      paint: { 'text-color': c.waterText, 'text-halo-color': c.waterHalo, 'text-halo-width': 1.6 } },
     has('ne') && { id: 'ranges', type: 'symbol', source: 'ne', 'source-layer': 'physical',
       filter: kinds('range', 'desert', 'plateau', 'peninsula', 'plain', 'delta', 'basin', 'valley', 'region'),
       layout: { 'text-field': N, 'text-font': [FONT.medium], 'text-transform': 'uppercase',
@@ -340,7 +347,7 @@ export function physical(status, { lang = 'en', origin = '', places = true, cont
     has('osm') && { id: 'gulf-names', type: 'symbol', source: 'osm', 'source-layer': 'water', minzoom: 6,
       filter: ['all', ['==', ['geometry-type'], 'Point'], kinds('bay', 'strait', 'lake')],
       layout: { 'text-field': N, 'text-font': [FONT.italic], 'text-size': z(6, 10.5, 10, 12), 'text-max-width': 7 },
-      paint: { 'text-color': c.waterText, 'text-halo-color': 'rgba(200, 222, 236, 0.7)', 'text-halo-width': 1 } },
+      paint: { 'text-color': c.waterText, 'text-halo-color': c.waterHalo, 'text-halo-width': 1.6 } },
     has('ne') && { id: 'river-names', type: 'symbol', source: 'ne', 'source-layer': 'rivers', minzoom: 5,
       layout: { 'text-field': N, 'text-font': [FONT.italic], 'text-size': 11, 'symbol-placement': 'line',
         'text-letter-spacing': 0.06, 'symbol-spacing': 350 },
