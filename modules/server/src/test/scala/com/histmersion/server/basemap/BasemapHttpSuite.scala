@@ -24,10 +24,11 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
     val r = http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
     (r.statusCode, r.body)
 
-  private def withServer(dir: Path)(body: String => Unit): Unit =
+  private def withServer(dir: Path, onDemand: Boolean = true)(body: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg  = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = "k3y"),
-      basemap = base.basemap.copy(dir = dir.toString))
+      basemap = base.basemap.copy(dir = dir.toString,
+        terrain = base.basemap.terrain.copy(onDemand = base.basemap.terrain.onDemand.copy(enabled = onDemand && base.basemap.terrain.onDemand.enabled))))
     supervised {
       val b = Main.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}/api/basemap")
@@ -103,4 +104,41 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       val fs = Mvt.features(PmTiles.gunzip(t.body).toOption.get).fold(fail(_), identity)
       assert(fs.nonEmpty && fs.forall((l, g, p) => l == "water" && g == 1 && p.get("kind").contains("sea") && p.keySet.subsetOf(Set("kind", "name"))),
         fs.toString)
+    }
+
+  test("the relief deeper than any archive holds: cut from its nearest ancestor, resampled in metres, a terrarium PNG"):
+    // the browser fixture's relief: the extract to zoom 6, the Argolid focus region at 9–11; nothing on demand
+    val fixture = Iterator.iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent).takeWhile(_ != null)
+      .map(_.resolve("modules/web/test/fixtures/basemap")).find(d => Files.isRegularFile(d.resolve("terrain.pmtiles")))
+      .getOrElse(fail("the browser fixture is not in the repository"))
+    val dir = Files.createTempDirectory("basemap-http")
+    Files.copy(fixture.resolve("terrain.pmtiles"), dir.resolve("terrain.pmtiles"))
+    Files.createDirectories(dir.resolve("terrain-focus"))
+    Files.copy(fixture.resolve("terrain-focus/argolid.pmtiles"), dir.resolve("terrain-focus/argolid.pmtiles"))
+    withServer(dir, onDemand = false) { url =>
+      val st = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val t = st.layers.find(_.layer == "terrain").get
+      assertEquals((t.maxZoom, t.deepest), (Some(6), Some(11)))
+      def tile(z: Int, lon: Double, lat: Double) = get(s"$url/terrain/$z/${Basemap.tileX(lon, z)}/${Basemap.tileY(lat, z)}")
+      def heights(r: HttpResponse[Array[Byte]]) =
+        TerrainResample.decode(r.body).fold(e => fail(e), i => { assertEquals((i.width, i.height), (512, 512)); i.pixels.map(TerrainResample.metres) })
+      // zoom 8 over Naxos (no focus region there): from the extract's zoom-6 tile, a PNG
+      val naxos = tile(8, 25.45, 37.05)
+      assertEquals(naxos.statusCode, 200)
+      assertEquals(naxos.headers.firstValue("content-type").orElse(""), "image/png")
+      val hs = heights(naxos)
+      assert(hs.max > 300 && hs.min < 5, s"the island and its sea: ${hs.min} … ${hs.max}")
+      // zoom 10 inside the Argolid: the focus region's own tile, as stored
+      val mycenae = tile(10, 22.756, 37.73)
+      assertEquals((mycenae.statusCode, mycenae.headers.firstValue("content-type").orElse("")), (200, "image/webp"))
+      // zoom 11 at the Argolid's edge outside it (Nafplio's gulf, south of the region): cut from the extract
+      assertEquals(tile(11, 22.80, 37.50).headers.firstValue("content-type").orElse(""), "image/png")
+      // deeper than every archive: none (the map draws its deepest tile larger)
+      assertEquals(tile(12, 25.45, 37.05).statusCode, 204)
+      // outside every region: none
+      assertEquals(tile(9, -40.0, 10.0).statusCode, 204)
+      // the tiles' URLs change with the focus regions: a resampled tile is never kept past a new region
+      Files.delete(dir.resolve("terrain-focus/argolid.pmtiles"))
+      val after = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+      assertNotEquals(after.layers.find(_.layer == "terrain").get.version, t.version)
     }
