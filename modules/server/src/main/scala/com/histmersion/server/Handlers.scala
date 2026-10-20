@@ -69,6 +69,19 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
+  /** The Storage part of About: measured in the background, at most once per `storage.ttl-seconds`
+    * ([[StorageCache]]), so `about` itself never walks a disk. */
+  private val storage = StorageCache(
+    prepare = () => {
+      val c   = cfg
+      val env = (k: String) => sys.env.get(k)
+      val places = StorageProbe.places(c, env, System.getProperty("os.name", ""), Supervisor.currentExecutable)
+      val run = deps.pins.carry(StorageProbe.measure(places, env, Some(ds),
+        backups.list.left.map(_.message), DirSize.Budget.of(c.storage.maxEntries.toLong, c.storage.maxMillis.toLong)))
+      () => run.run()
+    },
+    ttlMillis = () => cfg.storage.ttlSeconds * 1000L)
+
   /** `POST /api/config/reload` (MCP `config`, `histmersion config reload`): the config file read again
     * and the server switched to it in place — docs/research-plugins.md §3.5. */
   def configReload(): ReloadReport = deps.reloader()
@@ -102,7 +115,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       problems = List(jobs, counts, listed).flatMap(_.left.toOption) ++ basemapStyles.warnings,
       configFile = deps.configFile,
       agentLease = agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)),
-      plugins = deps.plugins.report)
+      plugins = deps.plugins.report,
+      storage = storageNow(now))
+
+  /** The last storage measurement, with its age as of `now`. */
+  private def storageNow(now: Instant): StorageReport =
+    val r = storage.get(cfg.storage.waitMillis.toLong)
+    r.copy(ageSeconds = r.measuredAt.flatMap(t => scala.util.Try(Instant.parse(t)).toOption)
+      .map(t => math.max(0L, now.getEpochSecond - t.getEpochSecond)))
 
   /** `GET /api/ui/counters` — the toolbar's counts and "something new" marks ([[UiNotices]]). */
   def uiCounters: UiNotices.Counters = com.histmersion.db.UiRepo.counters(ds)

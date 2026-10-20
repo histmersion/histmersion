@@ -22,7 +22,7 @@ hand.
 |---|---|
 | `histmersion version` | Print the CLI and server versions |
 | `histmersion health` | Server health (db, schema version) |
-| `histmersion about [--json]` | Server build (version, commit), health, job queue, last backup and store counts |
+| `histmersion about [--json]` | Server build (version, commit), health, job queue, last backup, store counts and storage on disk |
 | `histmersion seed [--force] [<dir>]` | Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
 | `histmersion reindex` | Rebuild the full-text chunk index for every source |
 | `histmersion search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--json] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |

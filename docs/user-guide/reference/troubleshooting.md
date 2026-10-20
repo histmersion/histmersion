@@ -4,13 +4,40 @@
 
 ```bash
 histmersion health            # is the server up? database and schema version
-histmersion about             # version, job queue, last backup, plugins, problems
+histmersion about             # version, job queue, last backup, storage on disk, plugins, problems
 just logs                     # the server log (also: just logs postgres, just logs converter)
 just restart
 ```
 
 The logs are in the data folder's `logs/` (`server.log`, `postgres.log`, `converter.log`, and
 `relink.log` for plugin rebuilds).
+
+## Where the disk space goes
+
+`histmersion about` (and the About window of the web page) ends with a **Storage** section: every
+place Histmersion keeps data, its path and its size, and the free space on each disk.
+
+| location | what it is | how to make it smaller |
+|---|---|---|
+| database (Postgres) | the corpus: sources and their text, findings, figures, articles; the largest tables are named | `histmersion maintenance vacuum`; `agents.keep-messages-days` trims the agents' message traces |
+| database files (bundled Postgres) | the same database as files, `<data>/pg` — the database is part of it | as above |
+| backups | `backups.dir`: one full dump per backup | lower `backups.keep`; the next backup deletes the older archives |
+| stored originals (uploads) | `converter.spool-dir`: every uploaded or fetched PDF/EPUB, by checksum | — (deleting a source deletes its original) |
+| bundle scratch · acquisition scratch | `bundles.dir`, `acquire.spool-dir` | safe to empty while no bundle export/import or acquisition runs |
+| gazetteer extracts (cache) · gazetteer folder | the pinned place extracts (`~/.cache/histmersion/gazetteer`) and the LPF drop folder (`<data>/gazetteer`) | the cached extracts can be deleted; `histmersion places load` fetches them again |
+| terrain base map (cache) | `basemap.dir`: the vector, relief and names files, one by one | `histmersion basemap rm` (one layer: `--layer`) |
+| cache: … | any other folder in `~/.cache/histmersion` | a cache: safe to delete |
+| install · OCR converter · plugin relink kit | the bundle itself (binaries, Postgres, the converter's Python and models) | — |
+| GraalVM toolchain | `<data>/toolchain`, only after `histmersion-toolchain install` | `histmersion-toolchain remove` (needed again only to relink plugins) |
+| plugins · agent definitions · logs | `<data>/plugins`, the generated agent trees, `<data>/logs` | delete old log files |
+| originals folder (this machine) | `cli.calibre.originals-dir`, shown by the CLI when the server runs on the same machine | — |
+
+The sizes are measured in the background at most once a minute (`storage.ttl-seconds`) and the
+answer says how long ago; the first About after a start may say *measuring…* for a moment (the web
+window asks again by itself). A very large folder is measured up to a limit (`storage.max-millis`,
+`storage.max-entries`) and then shown as *at least* that much. Links inside a folder are not
+followed, so nothing is counted twice. When a disk has less than `storage.low-free-gb` (10 GB) free,
+About says so and names the biggest locations on it that can be made smaller, with how.
 
 ## Known problems
 

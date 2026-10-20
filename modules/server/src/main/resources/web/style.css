@@ -1139,6 +1139,11 @@ a.chip:hover { border-color:var(--accent); }
 .about-rows dt { color:var(--muted); }
 .about-rows dd { margin:0; min-width:0; overflow-wrap:anywhere; }
 .about-detail { display:block; font-size:11.5px; }
+/* a storage location inside the one above it (the backups inside the data folder, the database in its cluster) */
+.about-rows dt.about-nested::before { content:"↳ "; }
+.about-rows dt.depth-1 { padding-left:12px; }
+.about-rows dt.depth-2 { padding-left:24px; }
+.about-rows dt.depth-3 { padding-left:36px; }
 .about-state { font-weight:600; }
 .about-state::before { content:""; display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;
   background:var(--health-unknown); vertical-align:1px; }

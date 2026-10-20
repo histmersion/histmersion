@@ -242,6 +242,16 @@ cli_err="$data/cli.err"
 "$b/bin/histmersion" about | grep -qF "config file: $data/histmersion.conf (read; ignored unknown key: histmersion.smoke-typo)" \
   || fail "histmersion about does not report the config file it read"
 grep -q "unknown setting 'histmersion.smoke-typo'" "$data/server.out" || fail "no warning for an unknown config key"
+# the Storage part: measured in the background, so the first answer may still say "measuring…"
+storage=""
+for _ in $(seq 1 15); do
+  a="$("$b/bin/histmersion" about)"
+  if echo "$a" | grep -q "^- database files (bundled Postgres): " && echo "$a" | grep -q "^  - database (Postgres): "; then storage=1; break; fi
+  sleep 1
+done
+[ -n "$storage" ] || fail "histmersion about has no Storage section with the bundled database: $(echo "$a" | sed -n '/## Storage/,$p')"
+echo "$a" | grep -q "^- free space: " || fail "histmersion about reports no free space"
+echo "$a" | grep -qF "$data/backups" || fail "histmersion about does not list the backups directory"
 # pre-3.8 lazy vals left unpatched (Sloth did not run) print JDK 25's warning on every CLI call
 if grep -q "sun.misc.Unsafe" "$cli_err" "$data/server.out"; then
   fail "a binary prints the sun.misc.Unsafe warning: the native image was built without Sloth (SLOTH_JAR)"

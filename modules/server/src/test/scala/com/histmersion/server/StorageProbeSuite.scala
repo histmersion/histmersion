@@ -1,0 +1,147 @@
+package com.histmersion.server
+
+import com.histmersion.core.*
+
+import java.nio.file.{Files, Path}
+import java.util.Comparator
+import java.util.concurrent.atomic.AtomicInteger
+
+/** The Storage part of About: the locations come from the config (the same resolvers the writers
+  * use), are measured within the caps, and the cache measures once per TTL, in the background. All
+  * of it in a temp directory: no live data directory, cache or database is read. */
+class StorageProbeSuite extends munit.FunSuite:
+
+  private val tmp = FunFixture[Path](
+    _ => Files.createTempDirectory("histmersion-storage"),
+    d => { val s = Files.walk(d); try s.sorted(Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) }) finally s.close() })
+
+  private def file(p: Path, bytes: Int): Path =
+    Files.createDirectories(p.getParent)
+    Files.write(p, Array.fill[Byte](bytes)(1))
+
+  /** A config whose every directory is under `d` (the defaults left empty resolve under `d` too). */
+  private def config(d: Path, bundled: Boolean = false): AppConfig =
+    val base = AppConfig.load()
+    base.copy(
+      runtime = base.runtime.copy(enabled = bundled, home = d.resolve("install").toString, dataDir = d.resolve("data").toString),
+      backups = base.backups.copy(dir = d.resolve("data/backups").toString, keep = 3),
+      converter = base.converter.copy(spoolDir = d.resolve("data/uploads").toString),
+      bundles = base.bundles.copy(dir = d.resolve("data/bundles").toString),
+      acquire = base.acquire.copy(spoolDir = ""),
+      corpus = base.corpus.copy(dir = ""),
+      basemap = base.basemap.copy(dir = ""),
+      places = base.places.copy(sources = base.places.sources.copy(dir = "", lpfDir = "")),
+      agents = base.agents.copy(runtimes = base.agents.runtimes.copy(dir = "")))
+
+  private def env(d: Path): String => Option[String] =
+    Map("HOME" -> d.resolve("home").toString, "XDG_CACHE_HOME" -> d.resolve("cache").toString).get
+
+  tmp.test("every location comes from the config: data dir, cache dir, backups, originals, bundle"): d =>
+    val cfg = config(d, bundled = true)
+    val p   = StorageProbe.places(cfg, env(d), "Mac OS X", None)
+    assertEquals(p.home, Some(d.resolve("install").toAbsolutePath.normalize))
+    val locs = StorageProbe.locations(p, env(d)).map(l => l.key -> l.shown.map(x => d.relativize(x).toString)).toMap
+    assertEquals(locs("database-cluster"), Some("data/pg"))
+    assertEquals(locs("backups"), Some("data/backups"))
+    assertEquals(locs("originals"), Some("data/uploads"))
+    assertEquals(locs("bundles"), Some("data/bundles"))
+    assertEquals(locs("gazetteer"), Some("cache/histmersion/gazetteer"))      // XDG cache (#1403)
+    assertEquals(locs("gazetteer-data"), Some("data/gazetteer"))
+    assertEquals(locs("gazetteer-lpf"), Some("data/gazetteer/lpf"))
+    assertEquals(locs("basemap"), Some("cache/histmersion/basemap"))
+    assertEquals(locs("install"), Some("install"))
+    assertEquals(locs("converter"), Some("install/converter"))
+    assertEquals(locs("relink-kit"), Some("install/kit"))
+    assertEquals(locs("toolchain"), Some("data/toolchain"))
+    assertEquals(locs("plugins"), Some("data/plugins"))
+    assertEquals(locs("agents"), Some("data/agents"))
+    assertEquals(locs("logs"), Some("data/logs"))
+    assert(!locs.contains("acquire-spool") && !locs.contains("corpus"), locs)   // not configured: nothing of ours
+    // not bundled: no cluster, no install
+    val dev = StorageProbe.locations(StorageProbe.places(config(d), env(d), "Linux", None), env(d)).map(_.key)
+    assert(!dev.contains("database-cluster") && !dev.contains("install") && !dev.contains("relink-kit"), dev)
+
+  tmp.test("the leftovers: other cache folders are listed one by one, the rest of the data dir together"): d =>
+    file(d.resolve("cache/histmersion/thumbs/a.png"), 10)
+    file(d.resolve("cache/histmersion/basemap/vector.pmtiles"), 10)
+    file(d.resolve("data/signing/gpg-key"), 5)
+    file(d.resolve("data/relink.conf"), 5)
+    file(d.resolve("data/logs/server.log"), 5)
+    val locs = StorageProbe.locations(StorageProbe.places(config(d), env(d), "Linux", None), env(d))
+    assertEquals(locs.filter(_.key.startsWith("cache:")).map(_.key), List("cache:thumbs"))
+    val rest = locs.find(_.key == "data-other").getOrElse(fail(s"no data-other: $locs"))
+    assertEquals(rest.paths.map(_.getFileName.toString), List("relink.conf", "signing"))
+    assertEquals(rest.shown, None)
+
+  tmp.test("measure: sizes, nesting, base-map files, backups usage, advice, volumes — and no database without one"): d =>
+    file(d.resolve("data/backups/histmersion-20261001T100000Z.dump"), 3000)
+    file(d.resolve("data/backups/histmersion-20261002T100000Z.dump"), 4000)
+    file(d.resolve("data/pg/base/1/123"), 7000)
+    file(d.resolve("install/kit/lib/a.jar"), 500)
+    file(d.resolve("install/bin/histmersion-server"), 1500)
+    file(d.resolve("cache/histmersion/basemap/vector.pmtiles"), 2_000_000)
+    file(d.resolve("cache/histmersion/basemap/.terrain.part/0001"), 1000)
+    val cfg = config(d, bundled = true)
+    val p   = StorageProbe.places(cfg, env(d), "Linux", None)
+    val bs  = BackupService(cfg)
+    val r   = StorageProbe.measure(p, env(d), None, bs.list.left.map(_.message), DirSize.Budget.unlimited)
+    def entry(k: String) = r.entries.find(_.key == k).getOrElse(fail(s"no $k: ${r.entries.map(_.key)}"))
+    assertEquals(entry("backups").bytes, Some(7000L))
+    assertEquals(entry("backups").shrink, StorageAdvice.shrink("backups", 3))
+    assertEquals(r.backups, Some(BackupsUsage(2, 7000L, Some("histmersion-20261002T100000Z.dump"), 3)))
+    assertEquals(entry("database-cluster").bytes, Some(7000L))
+    assertEquals(entry("install").bytes, Some(2000L))
+    assertEquals(entry("relink-kit").within, Some("install"))
+    assertEquals(entry("toolchain").exists, false)
+    assertEquals(entry("basemap").bytes, Some(2_001_000L))
+    assertEquals(entry("basemap").detail, Some("vector 2.0 MB · terrain download unfinished 1.0 kB"))
+    assert(!r.entries.exists(_.key == "database"), r.entries)
+    assert(r.volumes.nonEmpty && r.entries.filter(_.exists).forall(_.volume.isDefined), r)
+    assertEquals(Storage.total(r.entries), 7000L + 7000L + 2000L + 2_001_000L)
+    assert(r.measuredAt.isDefined && r.tookMillis.isDefined)
+    assertEquals(r.problems, Nil)
+
+  tmp.test("measure: a budget that runs out says so, and marks what it stopped"): d =>
+    (1 to 30).foreach(i => file(d.resolve(s"data/logs/l$i.log"), 10))
+    val cfg = config(d)
+    val r = StorageProbe.measure(StorageProbe.places(cfg, env(d), "Linux", None), env(d), None, Right(Nil),
+      DirSize.Budget(5, Long.MaxValue))
+    assert(r.entries.exists(_.partial), r.entries)
+    assert(r.problems.exists(_.contains("storage.max-entries")), r.problems)
+
+  // ── the cache ────────────────────────────────────────────────────────────────────────────────
+
+  private def report(n: Int) = StorageReport(measuredAt = Some(s"m$n"))
+
+  test("the cache: the first request waits for the first measurement; then it is reused until the TTL"):
+    val runs = AtomicInteger(0)
+    var now  = 0L
+    val c = StorageCache(() => () => report(runs.incrementAndGet()), () => 60000L, () => now, r => r())
+    assertEquals(c.get(1000).measuredAt, Some("m1"))
+    now = 59999
+    assertEquals(c.get(1000).measuredAt, Some("m1"))
+    assertEquals(runs.get, 1)
+    // stale: answered at once, marked measuring, while the next runs (inline here, so it is done after)
+    now = 60001
+    val stale = c.get(1000)
+    assertEquals((stale.measuredAt, stale.measuring), (Some("m1"), true))
+    assertEquals(c.get(1000).measuredAt, Some("m2"))
+
+  test("the cache: a request that cannot wait says measuring; many requests start ONE measurement"):
+    val runs    = AtomicInteger(0)
+    val pending = scala.collection.mutable.ListBuffer.empty[() => Unit]
+    val c = StorageCache(() => () => report(runs.incrementAndGet()), () => 60000L, () => 0L, r => pending += r)
+    assertEquals(c.get(0), StorageReport(measuring = true))
+    assertEquals(c.get(5), StorageReport(measuring = true))
+    assertEquals(pending.size, 1)
+    pending.head()
+    assertEquals(c.get(0).measuredAt, Some("m1"))
+    assertEquals(runs.get, 1)
+
+  test("the cache: a failed measurement is a problem, and the next request tries again"):
+    var fail = true
+    val c = StorageCache(() => () => if fail then throw RuntimeException("disk gone") else report(1), () => 60000L,
+      () => 0L, r => r())
+    assertEquals(c.get(100).problems, List("storage: disk gone"))
+    fail = false
+    assertEquals(c.get(100).measuredAt, Some("m1"))

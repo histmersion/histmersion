@@ -167,6 +167,39 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       b.stop()
     }
 
+  test("about: the Storage part — the database's size and largest tables, the configured directories, measured once"):
+    val base = AppConfig.load()
+    val d    = java.nio.file.Files.createTempDirectory("about-storage")
+    java.nio.file.Files.createDirectories(d.resolve("backups"))
+    java.nio.file.Files.write(d.resolve("backups/histmersion-20261001T100000Z.dump"), Array.fill[Byte](2048)(1))
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get),
+      runtime = base.runtime.copy(dataDir = d.resolve("data").toString),
+      backups = base.backups.copy(dir = d.resolve("backups").toString),
+      converter = base.converter.copy(spoolDir = d.resolve("uploads").toString),
+      bundles = base.bundles.copy(dir = d.resolve("bundles").toString),
+      basemap = base.basemap.copy(dir = d.resolve("basemap").toString),
+      places = base.places.copy(sources = base.places.sources.copy(dir = d.resolve("gazetteer").toString)),
+      storage = base.storage.copy(waitMillis = 30000))
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      val (as, ab) = get(s"$url/api/about")
+      assertEquals(as, 200, ab)
+      val st = io.circe.parser.decode[About](ab).fold(e => fail(s"$e: $ab"), identity).storage
+      assert(!st.measuring, ab)
+      val db = st.entries.find(_.key == "database").getOrElse(fail(s"no database entry: $ab"))
+      assert(db.bytes.exists(_ > 0) && db.detail.exists(_.endsWith("_test")), db)
+      assert(st.tables.nonEmpty && st.tables.size <= cfg.storage.topTables, st.tables)
+      val bk = st.entries.find(_.key == "backups").getOrElse(fail(ab))
+      assertEquals(bk.bytes, Some(2048L))
+      assertEquals(st.backups.map(_.count), Some(1))
+      assert(st.volumes.nonEmpty, ab)
+      // the second About within the TTL answers the same measurement
+      val again = io.circe.parser.decode[About](get(s"$url/api/about")._2).fold(e => fail(e.toString), identity).storage
+      assertEquals(again.measuredAt, st.measuredAt)
+      b.stop()
+    }
+
   /** #987: a name added by hand and a place of one's own, over REST and MCP (`zzn_*`). */
   test("names added by hand and hand-added places: REST and MCP agree"):
     val base = AppConfig.load()

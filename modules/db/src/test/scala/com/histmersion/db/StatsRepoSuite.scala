@@ -35,3 +35,14 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
     val after  = count("jobs")
     val total  = JobState.values.toList.map(j.of).sum
     assert(total >= before - 1 && total <= after + 1, s"$j vs $before..$after")
+
+  test("storage: the database's size and its largest tables, largest first, at most n"):
+    val (name, bytes) = StatsRepo.databaseSize(ds)
+    assert(name.endsWith("_test"), name)
+    assert(bytes > 0, bytes)
+    val top = StatsRepo.largestTables(ds, 5)
+    assert(top.nonEmpty && top.size <= 5, top)
+    assertEquals(top.map(_.bytes), top.map(_.bytes).sorted.reverse)
+    assert(top.forall(t => t.bytes <= bytes), top)
+    assert(!top.exists(_.name.startsWith("pg_")), top)
+    assertEquals(StatsRepo.largestTables(ds, 0), Nil)
