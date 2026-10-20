@@ -32,7 +32,7 @@ lists the data layers each style draws, and `histmersion basemap status` which o
 on the server lacks. They have no dots for towns: the dots on the map are your corpus's.
 
 <figure markdown>
-  ![The Aegean in the Natural style at zoom 7: the land green to tan by height and shaded, the shallow shelf light and the deep basins of the Aegean and the Cretan Sea darker, the seas' names in italics](../assets/screenshots/terrain-natural.png){ loading=lazy }
+  ![The Aegean in the Natural style at zoom 8: the land green to tan by height and shaded, the shallow shelf light and the deep basins of the Aegean and the Cretan Sea darker, the seas' names in italics](../assets/screenshots/terrain-natural.png){ loading=lazy }
 </figure>
 
 <figure markdown>
