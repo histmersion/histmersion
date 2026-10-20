@@ -33,17 +33,18 @@ object BasemapFixtures:
       -180, -85.05, 180, 85.05, 0, 0, 0)
 
   /** A world archive of zooms 0…`maxZoom`, every tile from `tile` (stored with `compression`). */
-  def archive(out: Path, maxZoom: Int, t: PmTiles.TileType, c: PmTiles.Compression)(tile: (Int, Long, Long) => Array[Byte]): Path =
+  def archive(out: Path, maxZoom: Int, t: PmTiles.TileType, c: PmTiles.Compression, extra: Json = Json.obj())(tile: (Int, Long, Long) => Array[Byte]): Path =
     val w = PmTilesWriter(out)
     val all = for z <- 0 to maxZoom; x <- 0L until (1L << z); y <- 0L until (1L << z) yield (PmTiles.tileId(z, x, y), (z, x, y))
     all.sortBy(_._1).foreach { case (id, (z, x, y)) => w.add(id, PmTiles.compress(tile(z, x, y), c)) }
     val meta = Json.obj("name" -> Json.fromString("fixture"),
       "vector_layers" -> Json.arr(List("earth", "water", "landcover", "landuse", "roads", "places").map(l => Json.obj("id" -> Json.fromString(l)))*))
-    w.finish(header(t, c, maxZoom), meta)
+    w.finish(header(t, c, maxZoom), meta.deepMerge(extra))
     out
 
-  def vectorArchive(out: Path, maxZoom: Int = 4): Path =
-    archive(out, maxZoom, PmTiles.TileType.Mvt, PmTiles.Compression.Gzip)(vectorTile)
+  /** `extra`: metadata merged in — `{"histmersion": {"keepAll": true}}` makes it a `--keep-all` extract. */
+  def vectorArchive(out: Path, maxZoom: Int = 4, extra: Json = Json.obj()): Path =
+    archive(out, maxZoom, PmTiles.TileType.Mvt, PmTiles.Compression.Gzip, extra)(vectorTile)
 
   /** A terrain archive whose tiles are just their own name (a fetch never decodes them). */
   def terrainArchive(out: Path, maxZoom: Int = 4): Path =

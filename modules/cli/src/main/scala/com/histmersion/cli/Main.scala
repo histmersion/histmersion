@@ -26,8 +26,14 @@ object Main:
       h.warnings.map(w => s"warning: $w")).mkString("\n"))))
   }
 
-  private val about = Opts.subcommand("about", "Server build (version, commit), health, job queue, last backup and store counts") {
-    Output.jsonFlag.map(json => (c: Client) => c.about.map(a => Output.emit(json, a)(AboutMarkdown.render)))
+  private val about = Opts.subcommand("about",
+      "Server build (version, commit), health, job queue, last backup, store counts and storage on disk") {
+    Output.jsonFlag.map(json => (c: Client) => c.about.map { a =>
+      val exe = scala.util.Try(ProcessHandle.current().info().command().orElse(null)).toOption.flatMap(Option(_)).map(java.nio.file.Path.of(_))
+      val withLocal = LocalStorage.add(a, c.serverUrl, Settings.app, k => Option(java.lang.System.getenv(k)),
+        java.lang.System.getProperty("os.name", ""), exe)
+      Output.emit(json, withLocal)(AboutMarkdown.render)
+    })
   }
 
   private def report(r: SeedResult): Unit =

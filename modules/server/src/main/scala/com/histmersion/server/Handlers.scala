@@ -53,7 +53,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The terrain base map (docs/research-terrain-basemap.md): its extracts, their fetch job and the
     * tiles the web page draws — same arrangement. */
   val basemap: com.histmersion.server.basemap.BasemapService = com.histmersion.server.basemap.BasemapService(deps,
-    () => com.histmersion.server.basemap.JavaRangeHttp(deps.cfg.basemap.timeoutSeconds, deps.cfg.basemap.retries))
+    () => com.histmersion.server.basemap.JavaRangeHttp(deps.cfg.basemap.timeoutSeconds, deps.cfg.basemap.retries),
+    styles = () => basemapStyles.current.styles)
 
   /** The terrain map's named styles: the built-in ones and the user's style file, read again when it
     * changes (docs/user-guide/how-to/terrain-styles.md) — same arrangement. */
@@ -67,6 +68,19 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   val agents: com.histmersion.server.agents.AgentsHandlers = com.histmersion.server.agents.AgentsHandlers(deps, this)
 
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
+
+  /** The Storage part of About: measured in the background, at most once per `storage.ttl-seconds`
+    * ([[StorageCache]]), so `about` itself never walks a disk. */
+  private val storage = StorageCache(
+    prepare = () => {
+      val c   = cfg
+      val env = (k: String) => sys.env.get(k)
+      val places = StorageProbe.places(c, env, System.getProperty("os.name", ""), Supervisor.currentExecutable)
+      val run = deps.pins.carry(StorageProbe.measure(places, env, Some(ds),
+        backups.list.left.map(_.message), DirSize.Budget.of(c.storage.maxEntries.toLong, c.storage.maxMillis.toLong)))
+      () => run.run()
+    },
+    ttlMillis = () => cfg.storage.ttlSeconds * 1000L)
 
   /** `POST /api/config/reload` (MCP `config`, `histmersion config reload`): the config file read again
     * and the server switched to it in place — docs/research-plugins.md §3.5. */
@@ -101,7 +115,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       problems = List(jobs, counts, listed).flatMap(_.left.toOption) ++ basemapStyles.warnings,
       configFile = deps.configFile,
       agentLease = agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)),
-      plugins = deps.plugins.report)
+      plugins = deps.plugins.report,
+      storage = storageNow(now))
+
+  /** The last storage measurement, with its age as of `now`. */
+  private def storageNow(now: Instant): StorageReport =
+    val r = storage.get(cfg.storage.waitMillis.toLong)
+    r.copy(ageSeconds = r.measuredAt.flatMap(t => scala.util.Try(Instant.parse(t)).toOption)
+      .map(t => math.max(0L, now.getEpochSecond - t.getEpochSecond)))
 
   /** `GET /api/ui/counters` — the toolbar's counts and "something new" marks ([[UiNotices]]). */
   def uiCounters: UiNotices.Counters = com.histmersion.db.UiRepo.counters(ds)
@@ -127,7 +148,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The `ui` config block, plus whether writes need a key — never the key itself — and the plugins
     * (their settings with secrets as references, never values). */
   def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty, agentsEnabled = cfg.agents.enabled,
-    plugins = deps.plugins.report)
+    plugins = deps.plugins.report, baseMapSource = baseMapSource)
+
+  /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract
+    * can draw the default local style whole — a `stat` and a cached header read. */
+  def baseMapSource: String =
+    cfg.ui.baseMapSource.trim.toLowerCase(java.util.Locale.ROOT) match
+      case s @ (BaseMapSource.Local | BaseMapSource.Online) => s
+      case _ => BaseMapSource.resolve(cfg.ui.baseMapSource, basemap.status, Some(basemapStyles.current.default))
 
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered
     * search and dropping the evidence, so there is ONE query path (FTS ranking and snippets

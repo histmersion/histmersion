@@ -17,14 +17,14 @@ class TerrainMapSuite extends munit.FunSuite:
       Basemap.FetchCommand)
 
   test("the option is chosen and kept like the other base maps; its labels name it and say when it is missing"):
-    assertEquals(BaseMap.fromWire("terrain"), Some(BaseMap.Terrain))
-    assertEquals(summon[FieldCodec[BaseMap]].decode(List("terrain")), Some(BaseMap.Terrain))
-    assertEquals(BaseMap.tone(BaseMap.Terrain, MapTone.Light), MapTone.Dark)
-    assert(!BaseMap.darkened(BaseMap.Terrain, MapTone.Light), "its own colours are dark already")
-    assertEquals(BaseMap.Terrain.url, None)
-    assertEquals(TerrainMap.optionLabel(None), "Terrain (no modern features)")
-    assertEquals(TerrainMap.optionLabel(Some(status(true, false))), "Terrain (no modern features)")
-    assertEquals(TerrainMap.optionLabel(Some(status(false, false))), "Terrain (no modern features) — not downloaded")
+    assertEquals(BaseMap.fromWire("terrain"), Some(BaseMap.Local))
+    assertEquals(summon[FieldCodec[BaseMap]].decode(List("terrain")), Some(BaseMap.Local))
+    assertEquals(BaseMap.tone(BaseMap.Local, MapTone.Light), MapTone.Dark)
+    assert(!BaseMap.darkened(BaseMap.Local, MapTone.Light), "its own colours are dark already")
+    assertEquals(BaseMap.Local.url, None)
+    assertEquals(TerrainMap.optionLabel(None), "Local map")
+    assertEquals(TerrainMap.optionLabel(Some(status(true, false))), "Local map")
+    assertEquals(TerrainMap.optionLabel(Some(status(false, false))), "Local map — not downloaded")
 
   test("the notices: the past was different; when missing, what to run"):
     assert(TerrainMap.PastNotice.contains("Coastlines, rivers, lakes and vegetation were different in the past"))
@@ -48,19 +48,41 @@ class TerrainMapSuite extends munit.FunSuite:
 
   test("the menu: one entry per named style, its value names it; the map and style it stands for; the tone"):
     assertEquals(TerrainMap.optionValue("parchment"), "terrain:parchment")
-    assertEquals(TerrainMap.parseOption("terrain:parchment"), Some((BaseMap.Terrain, Some("parchment"))))
-    assertEquals(TerrainMap.parseOption("terrain"), Some((BaseMap.Terrain, None)))
+    assertEquals(TerrainMap.parseOption("terrain:parchment"), Some((BaseMap.Local, Some("parchment"))))
+    assertEquals(TerrainMap.parseOption("terrain"), Some((BaseMap.Local, None)))
     assertEquals(TerrainMap.parseOption("dark"), Some((BaseMap.Dark, None)))
     assertEquals(TerrainMap.parseOption("dark:x"), None)
-    assertEquals(TerrainMap.selectValue(BaseMap.Terrain, None, Some(styles)), "terrain:terrain", "the default")
-    assertEquals(TerrainMap.selectValue(BaseMap.Terrain, Some("parchment"), Some(styles)), "terrain:parchment")
-    assertEquals(TerrainMap.selectValue(BaseMap.Terrain, Some("gone"), Some(styles)), "terrain:terrain", "a style no longer served")
-    assertEquals(TerrainMap.selectValue(BaseMap.Terrain, None, None), "terrain")
+    assertEquals(TerrainMap.selectValue(BaseMap.Local, None, Some(styles)), "terrain:terrain", "the default")
+    assertEquals(TerrainMap.selectValue(BaseMap.Local, Some("parchment"), Some(styles)), "terrain:parchment")
+    assertEquals(TerrainMap.selectValue(BaseMap.Local, Some("gone"), Some(styles)), "terrain:terrain", "a style no longer served")
+    assertEquals(TerrainMap.selectValue(BaseMap.Local, None, None), "terrain")
     assertEquals(TerrainMap.selectValue(BaseMap.Muted, Some("parchment"), Some(styles)), "muted")
     assertEquals(TerrainMap.optionLabel(Some(status(true, false)), styles.find("parchment")), "Parchment (no modern features)")
     assertEquals(TerrainMap.optionLabel(Some(status(false, false)), styles.find("parchment")), "Parchment (no modern features) — not downloaded")
-    assertEquals(BaseMap.tone(BaseMap.Terrain, MapTone.Dark, MapTone.Light), MapTone.Light)
+    assertEquals(BaseMap.tone(BaseMap.Local, MapTone.Dark, MapTone.Light), MapTone.Light)
     assertEquals(TerrainMap.sources(status(true, true)), Set("vector"), "no names archive in this status")
+
+  test("the two families: online maps offered unless the page is local; a kept online choice drawn locally there"):
+    assertEquals(TerrainMap.onlineMaps(local = false), List(BaseMap.Standard, BaseMap.Muted, BaseMap.Dark))
+    assertEquals(TerrainMap.onlineMaps(local = true), Nil, "a local page offers nothing from another host")
+    assertEquals(BaseMap.Standard.label, "Standard (online)")
+    assertEquals(TerrainMap.effective(BaseMap.Standard, None, local = false), (BaseMap.Standard, None))
+    assertEquals(TerrainMap.effective(BaseMap.Dark, Some("parchment"), local = true), (BaseMap.Local, Some("dark")))
+    assertEquals(TerrainMap.effective(BaseMap.Local, Some("parchment"), local = true), (BaseMap.Local, Some("parchment")))
+    val street = styles.copy(styles = TerrainStyle("standard", "Standard", tone = "light", background = "#aad", modern = true) :: styles.styles)
+    assertEquals(TerrainMap.selectValue(BaseMap.Standard, None, Some(street), local = true), "terrain:standard")
+    assertEquals(TerrainMap.selectValue(BaseMap.Muted, None, Some(street), local = true), "terrain:terrain", "no local Muted: the default")
+    assertEquals(TerrainMap.selectValue(BaseMap.Standard, None, Some(street), local = false), "standard")
+
+  test("a street map's label has no 'no modern features'; one whose layers the download left out says so, and its notice what to run"):
+    val std = TerrainStyle("standard", "Standard", background = "#aad", modern = true)
+    val lacking = status(true, false).copy(styles = List(BasemapStyleState("standard", "Standard", List("places", "roads"))))
+    assertEquals(TerrainMap.optionLabel(Some(status(true, false)), Some(std)), "Standard")
+    assertEquals(TerrainMap.optionLabel(Some(lacking), Some(std)), "Standard — needs the full download")
+    assertEquals(TerrainMap.optionLabel(Some(status(false, false)), Some(std)), "Standard — not downloaded")
+    assert(TerrainMap.lackingNotice(List("places", "roads")).contains("places, roads"))
+    assert(TerrainMap.lackingNotice(List("roads")).contains("`histmersion basemap fetch --layer vector --keep-all`"))
+    assert(TerrainMap.missingNotice(Some(status(false, false)), modern = true).contains("`histmersion basemap fetch --keep-all`"))
 
   test("compiled selectors: geometry, kinds, not-kinds, details, and a label's own min_zoom"):
     val sea = TerrainRules.selector(styles.styles.head.layers(1))
@@ -91,10 +113,25 @@ class TerrainMapSuite extends munit.FunSuite:
       StyleLayer("seas", "label", dataLayers = List("water", "earth"), geometry = Some("point"), color = Some("#fff")),
       StyleLayer("rivers", "line", dataLayers = List("water"), geometry = Some("line"), color = Some("#00f")),
       StyleLayer("ranges", "label", source = "labels", dataLayers = List("physical"), color = Some("#fff"))))
-    assertEquals(reads, Map("vector" -> Map("earth" -> Set(3, 1), "water" -> Set(1, 2)), "labels" -> Map("physical" -> Set.empty[Int])))
+    import Basemap.Read
+    assertEquals(reads, Map("vector" -> Map("earth" -> Read(Set(3, 1)), "water" -> Read(Set(1, 2))), "labels" -> Map("physical" -> Read())))
     assertEquals(Basemap.subsetParam(reads("vector")), "earth:pa,water:pl")
-    assertEquals(TerrainMap.withSubset("/api/basemap/vector/{z}/{x}/{y}?v=1", Map("water" -> Set(1))),
+    assertEquals(TerrainMap.withSubset("/api/basemap/vector/{z}/{x}/{y}?v=1", Map("water" -> Read(Set(1)))),
       "/api/basemap/vector/{z}/{x}/{y}?v=1&layers=water%3Ap")
+    assertEquals(TerrainMap.withSubset("/api/basemap/vector/{z}/{x}/{y}?v=1", Map("water" -> Read(Set(1))), List("kind", "name:en", "kind")),
+      "/api/basemap/vector/{z}/{x}/{y}?v=1&layers=water%3Ap&keys=kind%2Cname%3Aen")
+    // kinds: read only those a layer's rules name — unless one draws all of it, or all but some
+    val roads = TerrainRules.subsets(List(
+      StyleLayer("motorway", "line", dataLayers = List("roads"), geometry = Some("line"), kinds = List("highway"), color = Some("#f00")),
+      StyleLayer("major", "line", dataLayers = List("roads"), geometry = Some("line"), kinds = List("major_road"), color = Some("#fa0")),
+      StyleLayer("towns", "label", dataLayers = List("places"), kinds = List("locality"), color = Some("#000")),
+      StyleLayer("cities", "label", dataLayers = List("places"), color = Some("#000")),
+      StyleLayer("water", "fill", dataLayers = List("water"), notKinds = List("fountain"), fill = Some("#00f"))))
+    assertEquals(roads("vector"), Map("roads" -> Read(Set(2), Set("highway", "major_road")), "places" -> Read(), "water" -> Read()))
+    assertEquals(TerrainRules.labelKeys("de"), List("kind", "kind_detail", "min_zoom", "population_rank", "name:de", "name:en", "name"))
+    assert(TerrainRules.order(3, 1, 5, 9) < 0, "the lower min_zoom first")
+    assert(TerrainRules.order(5, 9, 5, 2) < 0 && TerrainRules.order(5, 2, 5, 9) > 0, "then the larger place")
+    assert(TerrainRules.order(Double.NaN, 9, 5, 1) > 0, "no min_zoom: after one")
     assertEquals(TerrainRules.language(styles.styles.head, styles), "en")
 
   test("terrarium elevations and ground resolution"):

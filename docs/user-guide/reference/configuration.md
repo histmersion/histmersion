@@ -114,6 +114,12 @@ The settings of backups and portable bundles are listed with them, in
 | `converter.max-image-px` | `HISTMERSION_CONVERTER_MAX_IMAGE_PX` | `2000` | longest side of a stored figure; larger ones are downscaled |
 | `converter.spool-dir` | `HISTMERSION_SPOOL_DIR` | `/var/tmp/histmersion-uploads` | server-side copy of each upload, keyed by sha256 — what makes `reocr` work without a re-upload (the bundle: `<data>/uploads`) |
 | `corpus.dir` | `HISTMERSION_CORPUS_DIR` | *(empty)* | **server-side** path `seed` reads when given no directory. `just install` passes it to the service (default: `./corpus` in the repo). |
+| `storage.ttl-seconds` | `HISTMERSION_STORAGE_TTL_SECONDS` | `60` | About's Storage part: a measurement of the directories is reused this long, then measured again in the background (About never walks a disk itself) |
+| `storage.wait-millis` | `HISTMERSION_STORAGE_WAIT_MILLIS` | `1500` | the first About after a start waits this long for the first measurement, then answers *measuring…* |
+| `storage.max-millis` | `HISTMERSION_STORAGE_MAX_MILLIS` | `5000` | one measurement stops walking after this long; what it did not finish is shown as *at least* |
+| `storage.max-entries` | `HISTMERSION_STORAGE_MAX_ENTRIES` | `500000` | …or after this many files and directories |
+| `storage.top-tables` | `HISTMERSION_STORAGE_TOP_TABLES` | `5` | the database's largest tables listed (0 = none) |
+| `storage.low-free-gb` | `HISTMERSION_STORAGE_LOW_FREE_GB` | `10` | below this much free space on a disk, About names the biggest locations on it and how to shrink each |
 | `limits.search` | — | `20` | default search page size |
 | `limits.findings` | — | `4000` | max map points per request |
 | `limits.snippet-chars` | — | `240` | |
@@ -121,7 +127,8 @@ The settings of backups and portable bundles are listed with them, in
 | `limits.inline-bytes` | `HISTMERSION_INLINE_BYTES` | `33554432` | largest inline (base64) payload the MCP `ingest` tool accepts (32 MB) |
 | `limits.asset-bytes` | `HISTMERSION_ASSET_BYTES` | `16777216` | largest single stored figure (16 MB) |
 | `limits.coverage-sources` | `HISTMERSION_COVERAGE_SOURCES` | `1000` | the most sources of an article's filter its coverage reads (citekey order) to list under the generated Not used; the counts stay exact |
-| `ui.tiles` | `HISTMERSION_TILES` | OSM tile URL | map tiles; point at a local tile server to run offline |
+| `ui.base-map-source` | `HISTMERSION_UI_BASE_MAP_SOURCE` | `auto` | which base maps the web page offers ([Working offline](../how-to/offline.md)): `local` — only the maps drawn from this server's own download, and the page asks no other host for anything; `online` — also the online maps below (`ui.tiles`, its Muted and Dark variants), the online Standard first; `auto` — `local` once the download can draw the default preset (`natural`; the style file's `default`) whole, else `online`. `/api/config` answers it resolved |
+| `ui.tiles` | `HISTMERSION_TILES` | OSM tile URL | the online Standard map's tiles (and its Dark variant's); offered only when `ui.base-map-source` is online — the local maps need no tile server at all |
 | `ui.tiles-max-zoom` | — | `12` | |
 | `ui.tiles-tone` | `HISTMERSION_TILES_TONE` | `light` | `dark` when `ui.tiles` is a dark map: the map's place names switch to light text on a dark halo |
 | `ui.tree-depth` | `HISTMERSION_TREE_DEPTH` | `2` | default nesting of `/api/aggregate?by=…` and the web UI's "by time" / "by region" tabs (max 3) |
@@ -287,7 +294,7 @@ The settings of backups and portable bundles are listed with them, in
 | `agents.infer-filter.min-hits` · `.max-hits` · `.min-cited-share` · `.sample` | file only | `3` · `300` · `0.6` · `5` | an inferred filter must return between min and max sources and at least this share of the sources the article cites; `sample` uncited hits are shown with it |
 | `agents.seed.max-articles` · `.min-sources` · `.max-overlap` | file only | `6` · `5` · `0.5` | propose-articles: articles per plan; each one's filter returns at least min-sources and shares less than max-overlap of them with any article of the area (a seeding manager's `minSources`/`maxArticles` config wins) |
 | `agents.prompts-dir` | `HISTMERSION_AGENTS_PROMPTS_DIR` | *(empty)* | a directory overriding the bundled agent definitions file by file, mirroring the bundled `agents/` tree (`article-skeptic.md`, `_shared/review-fixer.md`, `skills/<name>/SKILL.md`, …) — iterate on a prompt without a rebuild (`histmersion agent generate` carries it into the CLI runtimes' trees) |
-| `basemap.dir` | `HISTMERSION_BASEMAP_DIR` | *(empty)* = `$XDG_CACHE_HOME/histmersion/basemap`, else `~/.cache/histmersion/basemap` | where `histmersion basemap fetch` stores the terrain map's files (`vector.pmtiles`, `terrain.pmtiles`, `labels.pmtiles`, `bathymetry.pmtiles`, the focus regions in `terrain-focus/`, the on-demand relief in `terrain-cache/`) and its unfinished downloads; a cache — they can be fetched again |
+| `basemap.dir` | `HISTMERSION_BASEMAP_DIR` | *(empty)* = `$XDG_CACHE_HOME/histmersion/basemap`, else `~/.cache/histmersion/basemap` | where `histmersion basemap fetch` stores the local map's files (`vector.pmtiles`, `terrain.pmtiles`, `labels.pmtiles`, `bathymetry.pmtiles`, the focus regions in `terrain-focus/`, the on-demand relief in `terrain-cache/`) and its unfinished downloads; a cache — they can be fetched again |
 | `basemap.bbox` | `HISTMERSION_BASEMAP_BBOX` | `-12,20,90,62` | the region a fetch downloads (`minLon,minLat,maxLon,maxLat`); `--bbox` overrides it once |
 | `basemap.min-free-gb` | `HISTMERSION_BASEMAP_MIN_FREE_GB` | `5` | a fetch is refused when it would leave less free disk than this where the files go |
 | `basemap.request-gap-ms` | `HISTMERSION_BASEMAP_REQUEST_GAP_MS` | `250` | the pause between two range requests to a provider |

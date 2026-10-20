@@ -27,3 +27,22 @@ object StatsRepo:
     connect(ds):
       JobCounts.of(sql"SELECT status, count(*)::int FROM jobs GROUP BY status"
         .query[(String, Int)].run().toList)
+
+  /** The database's name and its size on disk (`pg_database_size`: tables, indexes, TOAST — what a
+    * dump would read back, plus the free space inside the files). For the Storage part of About. */
+  def databaseSize(ds: DataSource): (String, Long) =
+    connect(ds):
+      sql"SELECT current_database()::text, pg_database_size(current_database())"
+        .query[(String, Long)].run().head
+
+  /** The `n` largest tables of the database by `pg_total_relation_size` (indexes and TOAST
+    * included), largest first — `sources` (the OCR'd bodies), `assets` (the figures), … */
+  def largestTables(ds: DataSource, n: Int): List[TableSize] =
+    if n <= 0 then Nil
+    else connect(ds):
+      sql"""SELECT c.relname::text, pg_total_relation_size(c.oid)
+              FROM pg_class c JOIN pg_namespace ns ON ns.oid = c.relnamespace
+             WHERE c.relkind IN ('r', 'm') AND ns.nspname NOT IN ('pg_catalog', 'information_schema')
+               AND ns.nspname NOT LIKE 'pg_toast%'
+             ORDER BY 2 DESC, 1 LIMIT $n"""
+        .query[(String, Long)].run().toList.map(TableSize(_, _))

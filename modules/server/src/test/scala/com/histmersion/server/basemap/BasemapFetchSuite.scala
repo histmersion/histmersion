@@ -56,6 +56,33 @@ class BasemapFetchSuite extends munit.FunSuite:
     val roadsOnly = Mvt.tile(List(Mvt.layer("roads", List((2, Vector(9, 0, 0, 10, 5, 5), Map("kind" -> "highway"))))))
     assertEquals(BasemapService.thin(roadsOnly, PmTiles.Compression.None, keep), Right(None))
 
+  test("a served cut: only the kinds and properties the page reads, geometry byte for byte, the tables rebuilt"):
+    val pt = Mvt.pointGeometry(10, 20)
+    val line = Mvt.lineGeometry(List(List((0, 0), (5, 5), (9, 2))))
+    val tile = Mvt.tile(List(
+      Mvt.typedLayer("places", List(
+        (1, pt, List("kind" -> "locality", "kind_detail" -> "city", "name" -> "Αθήνα", "name:en" -> "Athens", "name:de" -> "Athen",
+          "name:fr" -> "Athènes", "min_zoom" -> 4L, "wikidata" -> "Q1524")),
+        (1, pt, List("kind" -> "country", "name" -> "Ελλάδα", "name:en" -> "Greece", "min_zoom" -> 2L)))),
+      Mvt.layer("roads", List((2, line, Map("kind" -> "highway", "ref" -> "A1")), (2, line, Map("kind" -> "minor_road")),
+        (2, line, Map("kind" -> "rail")))),
+      Mvt.layer("landuse", List((3, Vector(9, 0, 0, 18, 4, 0, 0, 4, 15), Map("kind" -> "wood"))))))
+    val rules = Basemap.parseSubset("places:p,roads:l~highway|rail").fold(fail(_), identity)
+    val cut = BasemapService.subset(PmTiles.gzip(tile), PmTiles.Compression.Gzip, rules,
+      Some(Set("kind", "kind_detail", "min_zoom", "name:de", "name:en", "name"))).fold(fail(_), identity)
+    val got = Mvt.features(PmTiles.gunzip(cut).fold(fail(_), identity)).fold(fail(_), identity)
+    assertEquals(got.map(_._1), List("places", "places", "roads", "roads"), "no land use; the minor road gone")
+    assertEquals(got.head._3, Map("kind" -> "locality", "kind_detail" -> "city", "name" -> "Αθήνα", "name:en" -> "Athens",
+      "name:de" -> "Athen", "min_zoom" -> "4"), "French and the Wikidata id dropped; a number stays a number")
+    assertEquals(got(1)._3, Map("kind" -> "country", "name" -> "Ελλάδα", "name:en" -> "Greece", "min_zoom" -> "2"))
+    assertEquals(got.drop(2).map(_._3), List(Map("kind" -> "highway"), Map("kind" -> "rail")))
+    assertEquals(got.map(_._2), List(1, 1, 2, 2))
+    // the geometry is untouched: the same bytes as a cut that keeps every property
+    val whole = BasemapService.subset(PmTiles.gzip(tile), PmTiles.Compression.Gzip, rules).fold(fail(_), identity)
+    assert(cut.length < whole.length, s"${cut.length} < ${whole.length}")
+    assertEquals(Mvt.features(PmTiles.gunzip(whole).toOption.get).toOption.get.map(_._2), got.map(_._2))
+    assertEquals(Mvt.features(PmTiles.gunzip(whole).toOption.get).toOption.get.head._3("name:fr"), "Athènes")
+
   test("Content-Range is checked: a 200 to a range request is refused, a short answer named"):
     assertEquals(RangeHttp.contentRange("bytes 0-99/1000"), Some((0L, 99L, Some(1000L))))
     assertEquals(RangeHttp.check("u", 206, Some("bytes 10-19/1000"), 10, 10), Right(1000L))

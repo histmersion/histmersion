@@ -52,6 +52,9 @@ final case class BasemapLayerInfo(
     attribution: String = "",
     /** What the extract kept ([[Basemap.keptLine]]): the vector layer's filter. */
     kept: Option[String] = None,
+    /** The vector layer's data layers the download left out whole ([[Basemap.droppedLayers]]): a style
+      * drawing one of them lacks it. */
+    dropped: List[String] = Nil,
     /** Why the file is there but cannot be read. */
     error: Option[String] = None,
     /** The relief only: the deeper zooms read from the provider as a page needs them, and their cache. */
@@ -97,14 +100,27 @@ final case class BasemapStatus(
     freeBytes: Long = 0,
     /** A fetch job running now. */
     running: Option[String] = None,
-    /** What a fetch would add (the physical names to an extract made before they existed). */
+    /** What a fetch would add (the physical names to an extract made before they existed; the layers
+      * the street maps need). */
     hints: List[String] = Nil,
+    /** Each named style of the base-map menu and the vector data layers it draws that the stored
+      * extract lacks (none: it can be drawn whole). */
+    styles: List[BasemapStyleState] = Nil,
     /** How far the page zooms in on the terrain map (`basemap.map-max-zoom`). */
     mapMaxZoom: Int = 16
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject:
+  /** The style `id`'s missing layers: empty when it can be drawn whole or is not known. */
+  def missing(id: String): List[String] = styles.find(_.id == id).fold(Nil)(_.missing)
 
 object BasemapStatus:
   given Schema[BasemapStatus] = KindlingsSchema.derived[BasemapStatus].schema
+
+/** One named style against the stored extract: the vector data layers it draws that the download
+  * left out (`basemap.vector.drop`). */
+final case class BasemapStyleState(id: String, name: String, missing: List[String] = Nil) derives KindlingsCodecAsObject
+
+object BasemapStyleState:
+  given Schema[BasemapStyleState] = KindlingsSchema.derived[BasemapStyleState].schema
 
 /** `DELETE /api/basemap?layer=`: what was removed. */
 final case class BasemapRemoved(removed: List[String], bytes: Long) derives KindlingsCodecAsObject
@@ -200,28 +216,47 @@ object Basemap:
     else if mixed.nonEmpty then Left(s"basemap.vector.drop: ${mixed.mkString(", ")} both drops kinds and spares kinds (+kind) — one or the other")
     else Right(rules)
 
-  /** A served tile's subset (`?layers=earth,water:pl,pois:p`): the layers a page draws and, per layer,
-    * the geometries (`p` points, `l` lines, `a` areas; all when none is given) — so a page never decodes
-    * what its style does not draw. Pure. */
-  def parseSubset(s: String): Either[String, Map[String, Set[Int]]] =
+  /** What a page reads of one data layer: its geometries (`1` points, `2` lines, `3` areas; empty: all)
+    * and the features' kinds (empty: all). */
+  final case class Read(geoms: Set[Int] = Set.empty, kinds: Set[String] = Set.empty):
+    /** Both reads at once: the union, where "all" wins. */
+    def merge(o: Read): Read =
+      Read(if geoms.isEmpty || o.geoms.isEmpty then Set.empty else geoms ++ o.geoms,
+        if kinds.isEmpty || o.kinds.isEmpty then Set.empty else kinds ++ o.kinds)
+
+  private val KindName = "[A-Za-z0-9_:.-]+".r
+
+  /** A served tile's subset (`?layers=earth,water:pl,landuse:a~forest|wood`): the layers a page draws
+    * and, per layer, the geometries (`p` points, `l` lines, `a` areas; all when none is given) and the
+    * kinds after `~` (all when none) — so a page never decodes what its style does not draw. Pure. */
+  def parseSubset(s: String): Either[String, Map[String, Read]] =
     val parts = s.split(",").toList.map(_.trim).filter(_.nonEmpty)
     val parsed = parts.map { p =>
-      p.split(":", 2).toList match
+      val (head, kindPart) = p.split("~", 2).toList match
+        case h :: k :: Nil => (h, Some(k))
+        case h :: _        => (h, None)
+        case Nil           => ("", None)
+      val kinds = kindPart.map(_.split("\\|").toList.map(_.trim).filter(_.nonEmpty))
+      val kindsOk = kinds.forall(ks => ks.nonEmpty && ks.forall(KindName.matches))
+      head.split(":", 2).toList match
+        case _ if !kindsOk => Left(s"'$p': kinds are `~kind|kind`")
         case l :: g :: Nil =>
           val codes = g.toList.map { case 'p' => 1; case 'l' => 2; case 'a' => 3; case _ => 0 }
-          Either.cond(l.nonEmpty && codes.nonEmpty && !codes.contains(0), l -> codes.toSet, s"'$p': geometries are p, l and a")
-        case l :: Nil => Right(l -> Set.empty[Int])
-        case _        => Left(s"'$p' is not layer[:geometries]")
+          Either.cond(l.nonEmpty && codes.nonEmpty && !codes.contains(0), l -> Read(codes.toSet, kinds.fold(Set.empty)(_.toSet)),
+            s"'$p': geometries are p, l and a")
+        case l :: Nil if l.nonEmpty => Right(l -> Read(Set.empty, kinds.fold(Set.empty)(_.toSet)))
+        case _ => Left(s"'$p' is not layer[:geometries][~kind|kind]")
     }
     parsed.collectFirst { case Left(e) => e }.toLeft(parsed.collect { case Right(kv) => kv }
-      .groupMapReduce(_._1)(_._2)((a, b) => if a.isEmpty || b.isEmpty then Set.empty else a ++ b))
+      .groupMapReduce(_._1)(_._2)(_.merge(_)))
 
   /** The query value for a subset ([[parseSubset]]'s inverse), sorted so a page asks one URL; a layer
-    * of `fromZoom` is asked for only from that tile zoom on (`landuse:a@8`, [[subsetAt]]). Pure. */
-  def subsetParam(m: Map[String, Set[Int]], fromZoom: Map[String, Int] = Map.empty): String =
-    m.toList.sortBy(_._1).map { (l, gs) =>
-      val base = if gs.isEmpty then l else l + ":" + gs.toList.sorted.map { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }.mkString
-      fromZoom.get(l).filter(_ > 0).fold(base)(z => s"$base@$z")
+    * of `fromZoom` is asked for only from that tile zoom on (`landuse:a~forest@8`, [[subsetAt]]). Pure. */
+  def subsetParam(m: Map[String, Read], fromZoom: Map[String, Int] = Map.empty): String =
+    m.toList.sortBy(_._1).map { (l, r) =>
+      val g = if r.geoms.isEmpty then "" else ":" + r.geoms.toList.sorted.map { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }.mkString
+      val k = if r.kinds.isEmpty then "" else "~" + r.kinds.toList.sorted.mkString("|")
+      l + g + k + fromZoom.get(l).filter(_ > 0).fold("")(z => s"@$z")
     }.mkString(",")
 
   /** A subset as it applies to a tile of zoom `z`: the entries of a deeper zoom (`landuse@8` at 7)
@@ -236,6 +271,24 @@ object Basemap:
         case _ => Some(e)
     }.mkString(",")
 
+  /** The vector data layers an extract made before the drop list lacks: it kept only `earth`, `water`
+    * and `landcover`. */
+  val LegacyLacks: List[String] = List("boundaries", "buildings", "landuse", "places", "pois", "roads", "transit")
+
+  /** The data layers an extract left out whole, from its metadata: none when `keepAll`; the layers its
+    * drop list drops whole; [[LegacyLacks]] for an extract without that record. Pure. */
+  def droppedLayers(keepAll: Boolean, drop: Option[String]): List[String] =
+    if keepAll then Nil
+    else drop match
+      case Some(d) => parseDrop(d).toOption.getOrElse(Nil).filter(_.whole).map(_.layer).distinct.sorted
+      case None    => LegacyLacks
+
+  /** What a style that draws `needs` lacks in an extract without `dropped`. Pure. */
+  def missingFor(needs: List[String], dropped: List[String]): List[String] = needs.filter(dropped.contains).distinct.sorted
+
+  /** The command that stores the vector layer whole — what a style lacking layers needs. */
+  val KeepAllCommand = s"$FetchCommand --layer vector --keep-all"
+
   /** What an extract kept, said in a line (`basemap status`): from its metadata — `keepAll`, the drop
     * list it was thinned with, or neither (an extract made before the drop list, which kept only coast,
     * water and land cover). Pure. */
@@ -245,3 +298,29 @@ object Basemap:
       case Some(d) if d.trim.isEmpty => "everything (nothing dropped)"
       case Some(d)                   => s"all but: $d"
       case None                      => "earth, water and land cover only (fetched before the drop list)"
+
+/** `ui.base-map-source`: which base maps the web page offers (docs/user-guide/how-to/offline.md).
+  *
+  *  - `local`: only the maps drawn from the server's own extracts — the page then asks no other host for
+  *    anything; the default is the style document's default;
+  *  - `online`: those AND the online raster maps (`ui.tiles` and its Muted and Dark variants), the
+  *    online Standard the default;
+  *  - `auto` (the default setting): `local` once the stored extract can draw the style document's
+  *    default style whole (a `--keep-all` download for Standard), else `online`.
+  *
+  * `/api/config` answers the resolved value (`local` or `online`), never `auto`. */
+object BaseMapSource:
+  val Auto   = "auto"
+  val Local  = "local"
+  val Online = "online"
+  val All: List[String] = List(Auto, Local, Online)
+
+  /** The setting as the page uses it: `local` or `online` (`auto` decided from the extract; anything
+    * else is `auto`). Pure. */
+  def resolve(setting: String, status: BasemapStatus, defaultStyle: Option[String]): String =
+    setting.trim.toLowerCase(java.util.Locale.ROOT) match
+      case Local  => Local
+      case Online => Online
+      case _ =>
+        val whole = defaultStyle.exists(id => status.styles.exists(_.id == id) && status.missing(id).isEmpty)
+        if status.available && whole then Local else Online

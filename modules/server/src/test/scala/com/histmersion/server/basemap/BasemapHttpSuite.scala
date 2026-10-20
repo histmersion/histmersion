@@ -80,3 +80,26 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(get(s"$url/terrain/0/0/0").statusCode, 404)
       assertEquals(get(s"$url/vector/0/0/0").statusCode, 200)
     }
+
+  test("ui.base-map-source auto: online until the extract can draw the default style whole, then local; a cut's properties"):
+    val dir = Files.createTempDirectory("basemap-http")
+    withServer(dir) { url =>
+      val config = url.stripSuffix("/basemap") + "/config"
+      def source() = io.circe.parser.decode[UiConfig](String(get(config).body)).fold(e => fail(e.toString), _.baseMapSource)
+      assertEquals(source(), "online", "nothing downloaded")
+      BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = 3,
+        io.circe.Json.obj("histmersion" -> io.circe.Json.obj("drop" -> io.circe.Json.fromString("roads; places; boundaries"))))
+      val st = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+      assertEquals(st.missing("standard"), List("boundaries", "places", "roads"))
+      assertEquals(source(), "online", "the default local style lacks roads, places and borders")
+      Thread.sleep(5)   // a new stamp: the archive is opened again
+      BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = 3,
+        io.circe.Json.obj("histmersion" -> io.circe.Json.obj("keepAll" -> io.circe.Json.True)))
+      assertEquals(source(), "local", "a --keep-all extract: the page asks no other host")
+      // the page's cut: only the kinds and properties it reads
+      val t = get(s"$url/vector/3/4/3?layers=water:p~sea&keys=kind,name")
+      assertEquals(t.statusCode, 200)
+      val fs = Mvt.features(PmTiles.gunzip(t.body).toOption.get).fold(fail(_), identity)
+      assert(fs.nonEmpty && fs.forall((l, g, p) => l == "water" && g == 1 && p.get("kind").contains("sea") && p.keySet.subsetOf(Set("kind", "name"))),
+        fs.toString)
+    }

@@ -55,7 +55,7 @@ class BasemapStylesHttpSuite extends com.histmersion.db.DbSuite:
       val url = s"http://127.0.0.1:${b.port}"
       try
         val s0 = styles(url)
-        assertEquals(s0.styles.map(_.id), List("natural", "contour", "terrain", "terrain-vegetation", "relief", "parchment"))
+        assertEquals(s0.styles.map(_.id), List("natural", "contour", "standard", "muted", "dark", "terrain", "terrain-vegetation", "relief", "parchment"))
         assertEquals((s0.source, s0.file, s0.warnings), (TerrainStyles.BuiltIn, Some(styleF.toString), Nil))
 
         // a file put in place: the next read serves it
@@ -67,7 +67,7 @@ class BasemapStylesHttpSuite extends com.histmersion.db.DbSuite:
         // broken: the built-in styles, and the reason in health and about
         write(styleF, """styles = [ { id = "dusk", extends = "terrain", name = "Dusk", background = "#0b1018", relief { azimuth = 400 } } ]""", 2)
         val s2 = styles(url)
-        assertEquals((s2.source, s2.styles.size), (TerrainStyles.BuiltIn, 6))
+        assertEquals((s2.source, s2.styles.size), (TerrainStyles.BuiltIn, 9))
         assert(s2.warnings.exists(_.contains("styles[0].relief.azimuth: 400.0 is outside 0…360")), s2.warnings.toString)
         val (hc, hb) = get(s"$url/api/health")
         assertEquals(hc, 200, hb)

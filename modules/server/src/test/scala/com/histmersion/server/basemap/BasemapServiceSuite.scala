@@ -22,7 +22,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
 
   /** A service over `dir`, its provider serving `vector`/`terrain` fixture archives from `src`. */
-  private def service(dir: Path, free: Long = Long.MaxValue / 4): (BasemapService, BasemapFixtures.LocalRange, BasemapFixtures.LocalRange) =
+  private def service(dir: Path, free: Long = Long.MaxValue / 4, styles: List[TerrainStyle] = Nil): (BasemapService, BasemapFixtures.LocalRange, BasemapFixtures.LocalRange) =
     val src = Files.createTempDirectory("basemap-src")
     val v = BasemapFixtures.LocalRange(BasemapFixtures.vectorArchive(src.resolve("v.pmtiles"), 5),
       builds = """[{"key":"20261018.pmtiles","size":1},{"key":"20261019.pmtiles","size":-1}]""")
@@ -48,7 +48,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
         url match
           case Sea(z, x, y) => BasemapServiceSuite.seaGets.incrementAndGet(); Right(Option.when(x != "0")(s"PNG$z/$x/$y".getBytes))
           case _            => Left(s"$url: unexpected")
-    (BasemapService(Deps(cfg, ds), () => router, _ => free), v, t)
+    (BasemapService(Deps(cfg, ds), () => router, _ => free, () => styles), v, t)
 
   test("a dry run reads directories only and reports the sizes; nothing is written"):
     val dir = Files.createTempDirectory("basemap")
@@ -130,6 +130,31 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assert(!st.hints.exists(_.contains("--layer vector")), st.hints.toString)
     val (bytes, _, _, _, _) = svc.tile("vector", 4, 9, 6).fold(e => fail(e.message), identity)
     assert(Mvt.layerNames(PmTiles.gunzip(bytes).toOption.get).toOption.get.contains("roads"))
+
+  test("the street maps need roads, places and boundaries: the default download lacks them, the status says so and what to run; --keep-all has them"):
+    val builtIn = TerrainStyleFile.combine(TerrainStyleFile.builtInText(), None).fold(e => fail(e.mkString), _.styles)
+    val dir = Files.createTempDirectory("basemap")
+    val (svc, _, _) = service(dir, styles = builtIn)
+    assertEquals(svc.status.styles.flatMap(_.missing), Nil, "nothing downloaded: nothing said to be missing (the whole map is)")
+    assert(await(svc.fetch(BasemapFetchQuery(layer = "vector")).fold(e => fail(e.message), _.id)).succeeded)
+    val st = svc.status
+    assertEquals(st.layers.head.dropped, List("boundaries", "buildings", "places", "roads", "transit"))
+    assertEquals(st.missing("standard"), List("boundaries", "places", "roads"))
+    assertEquals(st.missing("dark"), List("boundaries", "places", "roads"))
+    assertEquals(List("terrain", "terrain-vegetation", "relief", "parchment").flatMap(st.missing), Nil,
+      "the terrain styles are whole with the default download")
+    val hint = st.hints.find(_.contains("--keep-all")).getOrElse(fail(st.hints.toString))
+    assert(hint.startsWith("Standard, Muted and Dark need boundaries, places and roads"), hint)
+    assert(hint.contains("histmersion basemap fetch --layer vector --keep-all"), hint)
+    assertEquals(BaseMapSource.resolve("auto", st, Some("standard")), "online", "auto: the default style cannot be drawn whole")
+    assertEquals(BaseMapSource.resolve("local", st, Some("standard")), "local")
+    assert(BasemapMarkdown.status(st).contains("Standard (lacks boundaries, places, roads)"), BasemapMarkdown.status(st))
+    assert(await(svc.fetch(BasemapFetchQuery(layer = "vector", keepAll = true)).fold(e => fail(e.message), _.id)).succeeded)
+    val all = svc.status
+    assertEquals((all.layers.head.dropped, all.styles.flatMap(_.missing)), (Nil, Nil))
+    assert(!all.hints.exists(_.contains("--keep-all")), all.hints.toString)
+    assertEquals(BaseMapSource.resolve("auto", all, Some("standard")), "local")
+    assertEquals(BaseMapSource.resolve("online", all, Some("standard")), "online")
 
   test("refused when the disk would be left with less than basemap.min-free-gb"):
     val dir = Files.createTempDirectory("basemap")

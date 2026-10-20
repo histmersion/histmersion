@@ -11,8 +11,10 @@ object AboutView:
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
-  /** One line of the panel. `state` marks a health check with its badge. */
-  final case class Row(label: String, value: String, state: Option[ServiceState] = None, detail: Option[String] = None)
+  /** One line of the panel. `state` marks a health check with its badge; `depth` > 0 is a location
+    * inside the one above it (the Storage section). */
+  final case class Row(label: String, value: String, state: Option[ServiceState] = None, detail: Option[String] = None,
+      depth: Int = 0)
   final case class Section(title: String, rows: List[Row])
 
   /** A health text as a row: its state, and the text itself as the detail unless it only says "ok". */
@@ -53,7 +55,34 @@ object AboutView:
       Row("period presets", c.presets.toString))))
     val problems = Option.when(a.problems.nonEmpty)(
       Section(if a.problems.size == 1 then "Problem" else "Problems", a.problems.map(p => Row("", p))))
-    List(build, health, jobs, backup) ++ store ++ plugins(a.plugins).toList ++ problems.toList
+    List(build, health, jobs, backup) ++ store ++ storage(a.storage) ++ plugins(a.plugins).toList ++ problems.toList
+
+  /** Storage (where the data is on disk, how big each part is) and Disk space (the free space of each
+    * volume, and what to delete when it runs low). Nothing from an older server; "measuring…" while
+    * the first measurement runs (the window asks again). */
+  private[web] def storage(r: StorageReport): List[Section] =
+    if r.entries.isEmpty && !r.measuring && r.problems.isEmpty then Nil
+    else
+      val when = (r.ageSeconds.map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
+        Option.when(r.measuring)("measuring…")).mkString(" · ")
+      val total = Option.when(r.entries.nonEmpty)(Row("in all", Backup.humanBytes(Storage.total(r.entries)),
+        detail = Option.when(when.nonEmpty)(when)))
+      val rows = Storage.shown(r.entries).map { (e, depth) =>
+        Row(if e.host == "server" then e.label else s"${e.label} (this machine)", Storage.size(e),
+          state = Option.when(e.partial)(ServiceState.Busy),
+          detail = Option(Storage.details(r, e) ++ e.path.toList).filter(_.nonEmpty).map(_.mkString(" · ")),
+          depth = depth)
+      }
+      val waiting = Option.when(r.entries.isEmpty && r.measuring)(Row("", "measuring…"))
+      val disks = r.volumes.map { v =>
+        val low = v.freeBytes < r.lowFreeBytes
+        Row(v.id, s"${Backup.humanBytes(v.freeBytes)} free",
+          state = Some(if low then ServiceState.Down else ServiceState.Ok),
+          detail = Some(s"of ${Backup.humanBytes(v.totalBytes)}"))
+      }
+      val notes = r.hints.map(h => Row("", h)) ++ r.problems.map(p => Row("", p))
+      List(Section("Storage", total.toList ++ waiting.toList ++ rows)) ++
+        Option.when(disks.nonEmpty || notes.nonEmpty)(Section("Disk space", disks ++ notes)).toList
 
   /** The plugins in this binary (#2018): one row each — its id, what became of it (a badge: registered
     * ok, disabled grey, failed or refused down), its version, what it registered and its settings. A
@@ -80,15 +109,33 @@ object AboutView:
   private val about   = Var(Option.empty[About])
   private val failure = Var(Option.empty[String])
 
+  /** Asks again while the server is still measuring storage (a few times, never forever). Mutable:
+    * the window's one poll counter, reset by an explicit refresh. */
+  private var polls = 0
+  private val MaxPolls = 20
+  private val PollMs   = 1500.0
+
   private def refresh(): Unit =
+    polls = 0
+    load()
+
+  private def load(): Unit =
     ApiClient.about().onComplete(_.fold(
       e => failure.set(Some(e.getMessage)),
-      a => { failure.set(None); about.set(Some(a)) }))
+      a => {
+        failure.set(None); about.set(Some(a))
+        if a.storage.measuring && polls < MaxPolls then
+          polls += 1
+          val _ = scala.scalajs.js.timers.setTimeout(PollMs)(if mounted then load())
+      }))
+
+  /** The window is open (no polling into a closed one). Mutable for the same reason. */
+  private var mounted = false
 
   def pane: HtmlElement =
     div(
       cls := "tool-pane about-pane",
-      onMountCallback(_ => refresh()),
+      onMountUnmountCallback(_ => { mounted = true; refresh() }, _ => mounted = false),
       div(cls := "pane-bar",
         button(typ := "button", cls := "btn", "refresh", onClick --> (_ => refresh()))),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", s"Could not reach the server: $m"))),
@@ -104,7 +151,7 @@ object AboutView:
       h3(cls := "about-title", s.title),
       dl(cls := "about-rows", s.rows.flatMap { r =>
         List(
-          dt(r.label),
+          dt(cls := (if r.depth > 0 then s"about-nested depth-${math.min(r.depth, 3)}" else ""), r.label),
           dd(
             r.state.fold(span(r.value))(st => span(cls := s"about-state state-${st.label}", r.value)),
             r.detail.map(d => span(cls := "about-detail muted", d))))

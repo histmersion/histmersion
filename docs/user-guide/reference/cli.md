@@ -22,7 +22,7 @@ hand.
 |---|---|
 | `histmersion version` | Print the CLI and server versions |
 | `histmersion health` | Server health (db, schema version) |
-| `histmersion about [--json]` | Server build (version, commit), health, job queue, last backup and store counts |
+| `histmersion about [--json]` | Server build (version, commit), health, job queue, last backup, store counts and storage on disk |
 | `histmersion seed [--force] [<dir>]` | Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir) |
 | `histmersion reindex` | Rebuild the full-text chunk index for every source |
 | `histmersion search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--json] [<query>]` | Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched |
@@ -201,10 +201,10 @@ hand.
 | `histmersion jobs [--status <string>] [--limit <integer>] [--before <string>] [<id>]` | Recent OCR jobs, or one job by id |
 | `histmersion config path` | Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about |
 | `histmersion config reload [--json]` | Make the server read its config file again and apply it in place, no restart (restart-only settings are listed, not applied) |
-| `histmersion basemap status [--json]` | What is downloaded, where, and the free space there |
-| `histmersion basemap styles [--example] [--check <path>] [--json]` | The terrain map's named styles — the built-in ones and your style file over them — and what was refused |
-| `histmersion basemap fetch [--layer <string>] [--max-zoom <integer>] [--terrain-max-zoom <integer>] [--bbox <string>] [--focus <string>] [--dry-run] [--keep-all] [--no-wait]` | Download the terrain base map (coast, water, rivers, land cover; relief; physical names; sea floor) as a server job — resumable; refused when the disk would be left with less than basemap.min-free-gb |
-| `histmersion basemap rm [--layer <string>] [--focus <string>] [--cache]` | Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache |
+| `histmersion basemap status [--json]` | What is downloaded, where, the free space there, and which styles lack data |
+| `histmersion basemap styles [--example] [--check <path>] [--json]` | The local map's named styles — the built-in ones and your style file over them, what each draws — and what was refused |
+| `histmersion basemap fetch [--layer <string>] [--max-zoom <integer>] [--terrain-max-zoom <integer>] [--bbox <string>] [--dry-run] [--keep-all] [--no-wait]` | Download the local base map (coast, water, rivers, land cover; relief; physical names; with --keep-all roads, places and borders) as a server job — resumable; refused when the disk would be left with less than basemap.min-free-gb |
+| `histmersion basemap rm [--layer <string>]` | Remove the downloaded base-map files (and an unfinished download) |
 | `histmersion plugin add [--yes] [--rebuild] [--verify] [--unsigned] [--sha256 <string>] <path|url|group:artifact:version>` | Install a plugin jar on this machine: a local path (copied), an https URL (downloaded, SHA-256 shown) or group:artifact:version from Maven (group::artifact:version = a Scala 3 artifact); shows its id, version, SPI and access first |
 | `histmersion plugin rm [--rebuild] <id|file>` | Remove an installed plugin (by id or jar file name) from this machine's plugins directory |
 | `histmersion plugin list` | The plugin jars in this machine's plugins directory, and whether the installed binary was linked with each |

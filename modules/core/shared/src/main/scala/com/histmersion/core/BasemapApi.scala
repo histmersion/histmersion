@@ -38,14 +38,16 @@ object BasemapApi:
         .and(query[Option[String]]("focus")).and(query[Boolean]("cache").default(false)).mapTo[BasemapRemoveQuery])
       .errorOut(fetchErrors).out(jsonBody[BasemapRemoved])
 
-  /** `GET /api/basemap/{layer}/{z}/{x}/{y}[?layers=]` — one stored tile, as stored: a vector tile
+  /** `GET /api/basemap/{layer}/{z}/{x}/{y}[?layers=][&keys=]` — one stored tile, as stored: a vector tile
     * gzip-encoded (`Content-Encoding: gzip`), a terrain tile as its image. 204 (empty) where the extract
     * has no tile — outside its region or deeper than it goes — so the page draws nothing there. With
     * `layers` ([[Basemap.parseSubset]]) a vector tile holds only those layers and geometries: the page
-    * asks for what its style draws, and the extract on disk keeps the rest. */
-  val tile: PublicEndpoint[(String, Int, Long, Long, Option[String]), ApiError, (Array[Byte], String, Option[String], String, StatusCode), Any] =
+    * asks for what its style draws, and the extract on disk keeps the rest. With `keys` (comma-separated
+    * property names, with `layers` only) its features keep only those properties — the names in the one
+    * language shown, not in a hundred. */
+  val tile: PublicEndpoint[(String, Int, Long, Long, Option[String], Option[String]), ApiError, (Array[Byte], String, Option[String], String, StatusCode), Any] =
     endpoint.get.in("api" / "basemap" / path[String]("layer") / path[Int]("z") / path[Long]("x") / path[Long]("y"))
-      .in(query[Option[String]]("layers"))
+      .in(query[Option[String]]("layers")).in(query[Option[String]]("keys"))
       .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
       .out(byteArrayBody)
       .out(header[String](HeaderNames.ContentType))
