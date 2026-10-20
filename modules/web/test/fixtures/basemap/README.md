@@ -7,7 +7,7 @@ budgets and the documentation screenshots — a test server started with
 | file | what | region, zooms | size |
 |---|---|---|---|
 | `vector.pmtiles` | everything, unfiltered (a `--keep-all` extract): earth, water with its names, land cover, land use, natural points, and the roads, places and boundaries the local street maps draw | 22.5,35,28.5,40.5 · 0–9 | 5.6 MB |
-| `terrain.pmtiles` | terrarium-encoded elevation, 512-pixel WebP | 23,36,27,40 · 0–6 | 1.1 MB |
+| `terrain.pmtiles` | terrarium-encoded elevation, 512-pixel WebP — the vector layer's whole region (re-cut 2026-10-20: `BasemapExtractTool relief 22.5,35,28.5,40.5 0 6`) | 22.5,35,28.5,40.5 · 0–6 | 1.4 MB |
 | `labels.pmtiles` | the physical names (Natural Earth: ranges, peninsulas, island groups, lakes, rivers, peaks) | 20,34,30,42 · 0–8 | 0.06 MB |
 | `bathymetry.pmtiles` | the sea floor: terrarium PNG tiles whose sea is ETOPO1's depth | 22.5,35,28.5,40.5 · 0–7 | 1.7 MB |
 | `terrain-focus/argolid.pmtiles` | a focus region: the relief around Mycenae deeper than the extract (the Natural style's contours, the close-up screenshots) | 22.48,37.61,23.03,37.85 · 9–11 | 2.3 MB |

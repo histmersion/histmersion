@@ -93,3 +93,7 @@ class TerrainViewSuite extends munit.FunSuite:
       StyleLayer("d", "fill", dataLayers = List("water"), minZoom = Some(6), fill = Some("red")),
       StyleLayer("e", "fill", dataLayers = List("water"), fill = Some("red")))
     assertEquals(TerrainRules.subsetZooms(ls), Map("vector" -> Map("landuse" -> 8)))
+
+  test("the notice rises above the credits only where the two would meet"):
+    assertEquals(TerrainMap.noticeLift(10, 230, 156, 390, 18), 22.0, "a narrow map: side by side they overlap")
+    assertEquals(TerrainMap.noticeLift(10, 310, 560, 1080, 18), 0.0, "a wide one: apart")
