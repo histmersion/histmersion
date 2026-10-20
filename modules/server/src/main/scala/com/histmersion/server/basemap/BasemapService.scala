@@ -84,7 +84,10 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           bbox = Some(s"${h.minLon},${h.minLat},${h.maxLon},${h.maxLat}"), tiles = Some(h.addressedTiles),
           tileType = Some(h.tileType.mime),
           source = mine.get[String]("build").toOption.orElse(mine.get[String]("source").toOption),
-          fetchedAt = mine.get[String]("fetchedAt").toOption, version = stamp(p),
+          fetchedAt = mine.get[String]("fetchedAt").toOption,
+          // the relief's tiles also come from the focus regions (and, deeper, from both): their URLs change
+          // when a region is added or replaced, so a browser never keeps a tile resampled before
+          version = if l == BasemapLayer.Terrain then stamp(p).map(_ + focusStamp) else stamp(p),
           kept = Option.when(l == BasemapLayer.Vector)(Basemap.keptLine(mine.get[Boolean]("keepAll").getOrElse(false),
             mine.get[String]("drop").toOption)),
           onDemand = Option.when(l == BasemapLayer.Terrain)(onDemand.status),
@@ -125,6 +128,11 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     }
   }
 
+  /** The focus regions' files as they are now, in a few characters ("" with none). */
+  private def focusStamp: String =
+    val all = focusFiles.flatMap((n, p) => stamp(p).map(n + _))
+    if all.isEmpty then "" else "-" + Integer.toHexString(all.mkString("|").hashCode)
+
   // the on-demand relief of the directory configured now (`basemap.dir` may change with a reload)
   @volatile private var demand: Option[TerrainOnDemand] = None
 
@@ -148,6 +156,52 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       case Some(b) => Right(Some(b))
       case None    => if onDemand.serves(z, extractMax) then onDemand.tile(z, x, y) else Right(None)
 
+  /** A relief tile no archive has, from the relief it holds (docs/research-map-styles.md §4.4): the
+    * nearest ancestor that exists — a focus region's, else the extract's — cut and resampled in metres
+    * ([[TerrainResample]]) as a terrarium PNG; `None` where no ancestor exists (outside every region). */
+  private def fromAncestor(z: Int, x: Long, y: Long, extract: PmTilesFile): Option[Array[Byte]] =
+    val key = s"${stamp(path(BasemapLayer.Terrain)).getOrElse("")}$focusStamp|$z/$x/$y"
+    Option(resampled.get(key)).orElse {
+      val focus = focusFiles.flatMap(f => readerAt(f._2).toOption.flatten.map(f._2 -> _))
+      def at(az: Int, ax: Long, ay: Long): Option[(String, Array[Byte])] =
+        focus.iterator.filter((_, f) => az >= f.header.minZoom && az <= f.header.maxZoom)
+          .flatMap((p, f) => f.tile(az, ax, ay).toOption.flatten.map(b => (s"$p|${stamp(p).getOrElse("")}|$az/$ax/$ay", b)))
+          .nextOption()
+          .orElse(Option.when(az <= extract.header.maxZoom)(()).flatMap(_ =>
+            extract.tile(az, ax, ay).toOption.flatten.map(b => (s"extract|$az/$ax/$ay", b))))
+      // at most AncestorDepth zooms up: a tile far from every region is not drawn from the world's few
+      val found = (z - 1 to math.max(0, z - BasemapService.AncestorDepth) by -1).iterator.flatMap { az =>
+        val d = z - az
+        at(az, x >> d, y >> d).map(t => (az, t))
+      }.nextOption()
+      found.flatMap { case (az, (k, bytes)) =>
+        val img = Option(decoded.get(k)).map(Right(_)).getOrElse(TerrainResample.decode(bytes).map { i => decoded.put(k, i); i })
+        img match
+          case Left(e) =>
+            scribe.warn(s"relief tile $az (for $z/$x/$y) cannot be read: $e")
+            None
+          case Right(i) if i.width != i.height =>
+            None
+          case Right(i) =>
+            val png = Png.encodeRgb(i.width, i.height, TerrainResample.resample(i.pixels, i.width, z - az, x, y))
+            resampled.put(key, png)
+            Some(png)
+      }
+    }
+
+  /** The deepest relief zoom anything here holds — the extract, a focus region, the on-demand relief:
+    * what the page's elevation source asks for at most, and where the cutting from ancestors stops. */
+  private def deepestRelief(extractMax: Int): Int =
+    val od = cfg.terrain.onDemand
+    (extractMax :: (if od.enabled then List(od.maxZoom) else Nil) ++
+      focusFiles.flatMap(f => readerAt(f._2).toOption.flatten.map(_.header.maxZoom))).max
+
+  /** Relief tiles resampled lately, and the ancestors they were cut from (a view asks for neighbours). */
+  private val resampled = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap[String, Array[Byte]](64, 0.75f, true):
+    override def removeEldestEntry(e: java.util.Map.Entry[String, Array[Byte]]): Boolean = size() > 96)
+  private val decoded = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap[String, Vp8l.Image](16, 0.75f, true):
+    override def removeEldestEntry(e: java.util.Map.Entry[String, Vp8l.Image]): Boolean = size() > 8)
+
   /** Subset tiles cut lately, by (file stamp, layer, tile, subset): a pan asks for the same few again. */
   private val cut = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap[String, Array[Byte]](256, 0.75f, true):
     override def removeEldestEntry(e: java.util.Map.Entry[String, Array[Byte]]): Boolean = size() > 512)
@@ -170,8 +224,13 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       // not cached by the browser, when it cannot be read now — offline)
       deeper = Option.when(stored.isEmpty && l == BasemapLayer.Terrain && z > f.header.maxZoom)(deeperRelief(z, x, y, f.header.maxZoom))
       found  = stored.orElse(deeper.flatMap(_.toOption.flatten))
+      // none of them has it: cut from the nearest ancestor (offline, the on-demand relief failing: not kept
+      // by the browser, so the provider's own tile replaces it once it can be read)
+      fallback = Option.when(found.isEmpty && deeper.isDefined && z <= deepestRelief(f.header.maxZoom))(fromAncestor(z, x, y, f)).flatten
       mime   = f.header.tileType.mime
       out   <- (found, rules.filter(_ => f.header.tileType == PmTiles.TileType.Mvt)) match
+                 case (None, _) if fallback.isDefined =>
+                   Right((fallback.get, "image/png", None, if deeper.exists(_.isLeft) then "no-store" else cache, StatusCode.Ok))
                  case (None, _) if deeper.exists(_.isLeft) => Right((Array.emptyByteArray, mime, None, "no-store", StatusCode.NoContent))
                  case (None, _) => Right((Array.emptyByteArray, mime, None, cache, StatusCode.NoContent))
                  case (Some(b), None) =>
@@ -480,6 +539,10 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
         }
 
 object BasemapService:
+
+  /** How many zooms up a relief tile is looked for to cut a missing one from: the extract's deepest
+    * (8) to a focus region's (12) is 4; more is a tile of the whole world stretched over a valley. */
+  val AncestorDepth = 6
 
   /** The focus region a fetch asks for: `--focus <name>` (one of `basemap.terrain.focus-regions`, or a
     * new name with `--bbox`), or — the relief alone, with a region and deeper than the extract — one
