@@ -124,6 +124,10 @@ export const READABLE = {
   halo: 'rgba(242, 239, 233, 0.85)',
 };
 
+// the trunk network: motorways, trunk and primary roads (and their links)
+const TRUNK = ['any', ['==', ['get', 'kind'], 'highway'], ['all', ['==', ['get', 'kind'], 'major_road'],
+  ['in', ['get', 'kind_detail'], ['literal', ['trunk', 'primary', 'trunk_link', 'primary_link']]]]];
+
 export function readable(status, { lang = 'en', origin = '' } = {}) {
   const c = READABLE, srcs = sources(status, { origin }), N = name(lang);
   const has = k => !!srcs[k];
@@ -168,13 +172,12 @@ export function readable(status, { lang = 'en', origin = '' } = {}) {
       paint: { 'line-color': c.water, 'line-width': z(12, 0.8, 14, 2) } },
     // the trunk network, faint and thin, from zoom 8 (orientation; the corpus's own lines stay on top)
     has('osm') && { id: 'roads-casing', type: 'line', source: 'osm', 'source-layer': 'roads', minzoom: 9,
-      filter: ['in', ['get', 'kind'], ['literal', ['highway', 'major_road']]],
+      filter: TRUNK,
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': c.roadCasing, 'line-opacity': 0.5,
         'line-width': z(9, ['match', ['get', 'kind'], 'highway', 1.6, 1.0], 12, ['match', ['get', 'kind'], 'highway', 3.2, 2.4]) } },
     has('osm') && { id: 'roads', type: 'line', source: 'osm', 'source-layer': 'roads', minzoom: 8,
-      filter: ['any', ['==', ['get', 'kind'], 'highway'], ['all', ['==', ['get', 'kind'], 'major_road'],
-        ['in', ['get', 'kind_detail'], ['literal', ['trunk', 'primary']]]]],
+      filter: TRUNK,
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': c.road, 'line-opacity': z(8, 0.45, 10, 0.7),
         'line-width': z(8, ['match', ['get', 'kind'], 'highway', 0.6, 0.4], 12, ['match', ['get', 'kind'], 'highway', 2, 1.4]) } },
@@ -275,8 +278,12 @@ export function physical(status, { lang = 'en', origin = '', places = true, cont
       filter: kinds('forest'), paint: { 'fill-color': c.forest, 'fill-opacity': z(0, 0.12, 8, 0.15, 9, 0) } },
     has('osm') && { id: 'forest', type: 'fill', source: 'osm', 'source-layer': 'landuse', minzoom: 8.5,
       filter: kinds('forest', 'wood'), paint: { 'fill-color': c.forest, 'fill-opacity': z(8.5, 0, 9.5, 0.2, 13, 0.22) } },
+    // deserts against green cultivation (Natural Earth II's "natural colours": the Nile must read in Egypt):
+    // the satellite classes, faint
     has('osm') && { id: 'sand', type: 'fill', source: 'lc', 'source-layer': 'landcover',
-      filter: kinds('barren'), paint: { 'fill-color': '#e9dcb6', 'fill-opacity': 0.35 } },
+      filter: kinds('barren'), paint: { 'fill-color': '#ead9ae', 'fill-opacity': 0.55 } },
+    has('osm') && { id: 'green-lc', type: 'fill', source: 'lc', 'source-layer': 'landcover', maxzoom: 11,
+      filter: kinds('farmland', 'grassland'), paint: { 'fill-color': '#b8cc94', 'fill-opacity': z(0, 0.22, 10, 0.18, 11, 0) } },
     has('osm') && { id: 'glacier', type: 'fill', source: 'lc', 'source-layer': 'landcover',
       filter: kinds('glacier'), paint: { 'fill-color': '#ffffff', 'fill-opacity': 0.8 } },
     // the relief: multidirectional (every slope reads, Jenny/Imhof), warm shadows, no highlight on flats

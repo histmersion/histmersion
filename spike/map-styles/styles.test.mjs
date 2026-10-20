@@ -61,6 +61,12 @@ test('Physical draws no roads and no borders; Readable draws both', () => {
   assert.ok(ids(readable(status)).includes('roads') && ids(readable(status)).includes('boundaries'));
 });
 
+test('Readable: only the trunk network, its casing exactly under it', () => {
+  const st = readable(status), f = id => st.layers.find(l => l.id === id).filter;
+  assert.deepEqual(f('roads'), f('roads-casing'));
+  assert.ok(!JSON.stringify(f('roads')).includes('secondary'));
+});
+
 test('names in the chosen language, then English, then the local name; local = the local name', () => {
   const field = st => st.layers.find(l => l.id === 'sea-names').layout['text-field'];
   assert.deepEqual(field(readable(status, { lang: 'de' })), ['coalesce', ['get', 'name:de'], ['get', 'name:en'], ['get', 'name']]);

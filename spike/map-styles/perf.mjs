@@ -16,8 +16,8 @@ const gpu = args.includes('--gpu');
 const runs = args.includes('--runs') ? +args[args.indexOf('--runs') + 1] : 3;
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1].split(',') : null;
 const VIEW = [37.9, 25.4, 7];   // the app's terrain budget view (perf-paths.mjs terrainMap)
-const browser = await chromium.launch({ headless: true,
-  args: gpu ? ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader=false'] : [] });
+const launch = () => chromium.launch({ headless: true,
+  args: gpu ? ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] : [] });
 
 async function gestures(page, sel) {
   const box = await page.locator(sel).boundingBox();
@@ -37,6 +37,11 @@ async function gestures(page, sel) {
 }
 
 async function one(kind) {
+  const browser = await launch();   // a browser per run: a crashed GPU process never spoils the next run
+  try { return await run(browser, kind); } finally { await browser.close(); }
+}
+
+async function run(browser, kind) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await ctx.newPage();
   await page.addInitScript(probe);
@@ -89,7 +94,10 @@ const kinds = only ?? ['app-natural', 'gl-readable', 'gl-physical', 'gl-leaflet'
 const med = xs => pct(xs, 50);
 for (const k of kinds) {
   const rs = [];
-  for (let i = 0; i < runs; i++) rs.push(await one(k));
+  for (let i = 0, tries = 0; rs.length < runs && tries < runs + 3; tries++) {
+    try { rs.push(await one(k)); } catch (e) { console.error(`${k}: a run failed (${e.message.split('\n')[0]}); retrying`); }
+  }
+  if (!rs.length) { console.log(JSON.stringify({ kind: k, gpu, failed: true })); continue; }
   const f = path => med(rs.map(r => path.split('.').reduce((v, p) => v[p], r)));
   console.log(JSON.stringify({ kind: k, gpu, runs, renderer: rs[0].renderer,
     drawnMs: f('drawnMs'), heapMB: f('heapMB'),
@@ -97,4 +105,3 @@ for (const k of kinds) {
     zoom: { inputP95: f('zoom.inputP95'), droppedPct: f('zoom.droppedPct'), longTaskMax: f('zoom.longTaskMax'), frameP95: f('zoom.frameP95') },
     errors: rs.map(r => r.errors) }));
 }
-await browser.close();
