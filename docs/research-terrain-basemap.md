@@ -254,3 +254,17 @@ Sizes, measured on one complete zoom-10 `--keep-all` download of the default reg
 1.54 GB downloaded in 6 min): stored z0–8 210 MB, z0–9 614 MB, z0–10 **1.52 GB**; the same tiles with
 the default drop list 184 MB, 535 MB, **1.30 GB** — the street maps cost 0.22 GB (z10 per layer, gzip,
 each alone: land use 681 MB, water 80, roads 66, places 54, boundaries 25, earth 7, pois 2).
+
+On the native test server with the Aegean fixture (its vector layer now a `--keep-all` cut, 5.6 MB),
+`perf.test.mjs`, the local maps over Athens at zoom 9 (data zoom 8, roads and names on): Standard
+drawn 814 ms, no long task, pan input p95 30.6 ms, 0 % dropped, wheel zooms p95 32.7 ms, 0 %
+dropped, heap 51.9 MB; Muted 812 ms, 31.6 / 47.5 ms, 0 %, 49.8 MB; Dark 815 ms, 30.0 / 32.0 ms, 0 %,
+51.9 MB (budgets: drawn 3 000 ms, input 100 ms, 15 % dropped, heap 60 MB). The terrain map on the
+same run: 844 ms, 32.8 ms, 0 %, 37 MB — unchanged by the broader fixture. The app's own budgets are
+measured over the online base map, as they were set (`withPerfPage` tells the page `online`).
+
+**Not done.** Road labels (the build has no road names below zoom 11, and the extract stops at 10);
+buildings and transit (not in the build at these zooms); a compact credits button (the credits are
+one line that expands on hover). The base-map control's shape is left to the planned two-step
+family/options control: it reads `TerrainMap.localOnly`, `TerrainMap.onlineMaps`,
+`TerrainMap.effective`, `TerrainMap.shown`, `TerrainMap.optionLabel` and `BasemapStatus.missing`.
