@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reference raster (study)</title>
+<link rel="stylesheet" href="/node_modules/leaflet/dist/leaflet.css">
+<style>html, body, #map { margin: 0; height: 100%; background: #aad3df; }</style>
+</head>
+<body>
+<div id="map"></div>
+<script src="/node_modules/leaflet/dist/leaflet-src.js"></script>
+<script>
+// The study's reference: OSM Carto, the public tiles — a handful of screenshots for an internal comparison
+// only (https://operations.osmfoundation.org/policies/tiles/). ?lat= &lon= &z=
+const q = new URLSearchParams(location.search);
+const map = L.map('map', { zoomControl: false }).setView([+q.get('lat'), +q.get('lon')], +q.get('z'));
+const t = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
+t.on('load', () => { window.__idle = true; });
+</script>
+</body>
+</html>

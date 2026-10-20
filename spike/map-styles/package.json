@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Map-style study prototype (docs/research-map-styles.md): MapLibre GL styles over the server's own base-map tiles. Not shipped.",
+  "scripts": { "serve": "node serve.mjs" },
+  "dependencies": {
+    "maplibre-gl": "6.12.0",
+    "@maplibre/maplibre-gl-leaflet": "0.1.4",
+    "maplibre-contour": "0.1.1",
+    "@fontsource/noto-sans": "5.3.0",
+    "leaflet": "1.9.4"
+  }
+}

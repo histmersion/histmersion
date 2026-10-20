@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map styles (study)</title>
+<link rel="stylesheet" href="/node_modules/maplibre-gl/dist/maplibre-gl.css">
+<link rel="stylesheet" href="/node_modules/leaflet/dist/leaflet.css">
+<style>
+  :root { --bg: #f2efe9; --fg: #222; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 13px/1.4 system-ui, sans-serif; }
+  #map { position: absolute; inset: 0; }
+  #bar { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(255,255,255,.9);
+    padding: 4px 8px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+  body.shot #bar { display: none; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="bar">
+  <select id="style"><option value="readable">Readable</option><option value="physical">Physical</option></select>
+  <select id="lang"><option value="en">English</option><option value="local">Local</option><option value="de">Deutsch</option><option value="el">Ελληνικά</option></select>
+</div>
+<script type="module">
+// The map-style study's prototype page (docs/research-map-styles.md). Not shipped.
+//   ?style=readable|physical &lat= &lon= &z= (Leaflet's zoom) &lang= &mode=native|leaflet &shot=1 &markers=N &contours=0
+import * as maplibregl from '/node_modules/maplibre-gl/dist/maplibre-gl.mjs';
+import { readable, physical } from '/styles.mjs';
+
+const q = new URLSearchParams(location.search);
+const opt = { style: q.get('style') || 'readable', lang: q.get('lang') || 'en', mode: q.get('mode') || 'native',
+  lat: +(q.get('lat') ?? 38), lon: +(q.get('lon') ?? 24.5), z: +(q.get('z') ?? 7), markers: +(q.get('markers') ?? 0) };
+if (q.get('shot')) document.body.classList.add('shot');
+document.getElementById('style').value = opt.style;
+document.getElementById('lang').value = opt.lang;
+for (const id of ['style', 'lang']) document.getElementById(id).onchange = e => { q.set(id, e.target.value); location.search = q; };
+
+// ── elevation tiles, deepest-available: the extract to its zoom, a focus region deeper; elsewhere a deeper
+// tile is cut from its nearest ancestor and resampled bilinearly IN METRES (resampling terrarium's bytes
+// would mix the high and low byte), then encoded back to terrarium PNG ─────────────────────────────────
+const decode = (d, i) => d[i] * 256 + d[i + 1] + d[i + 2] / 256 - 32768;
+async function demTile(z, x, y, version, signal) {
+  const r = await fetch(`/api/basemap/terrain/${z}/${x}/${y}?v=${version}`, { signal });
+  if (r.status === 200) return await createImageBitmap(await r.blob());
+  return null;
+}
+maplibregl.addProtocol('hmdem', async (params, abort) => {
+  const [, , extractMax, version, z, x, y] = params.url.split('/');
+  const zz = +z, xx = +x, yy = +y;
+  const own = zz > +extractMax ? await demTile(zz, xx, yy, version, abort.signal) : null;
+  if (zz <= +extractMax) {
+    const r = await fetch(`/api/basemap/terrain/${zz}/${xx}/${yy}?v=${version}`, { signal: abort.signal });
+    if (r.status !== 200) throw new Error(`no elevation tile ${zz}/${xx}/${yy}`);
+    return { data: await r.arrayBuffer() };
+  }
+  if (own) { const c = new OffscreenCanvas(own.width, own.height); c.getContext('2d').drawImage(own, 0, 0);
+    return { data: await (await c.convertToBlob({ type: 'image/png' })).arrayBuffer() }; }
+  // the nearest ancestor that exists (a focus region's coarser zoom, else the extract)
+  let az = zz - 1, img = null;
+  for (; az >= 0; az--) {
+    const s = 2 ** (zz - az);
+    img = az <= +extractMax
+      ? await createImageBitmap(await (await fetch(`/api/basemap/terrain/${az}/${Math.floor(xx / s)}/${Math.floor(yy / s)}?v=${version}`, { signal: abort.signal })).blob())
+      : await demTile(az, Math.floor(xx / s), Math.floor(yy / s), version, abort.signal);
+    if (img) break;
+  }
+  const s = 2 ** (zz - az), n = img.width;
+  const src = new OffscreenCanvas(n, n).getContext('2d', { willReadFrequently: true });
+  src.drawImage(img, 0, 0);
+  const d = src.getImageData(0, 0, n, n).data;
+  const out = new OffscreenCanvas(n, n), octx = out.getContext('2d');
+  const od = octx.createImageData(n, n);
+  const ox = (xx % s) * n / s, oy = (yy % s) * n / s, step = 1 / s;
+  for (let j = 0; j < n; j++) {
+    const fy = Math.min(n - 1.001, Math.max(0, oy + (j + 0.5) * step - 0.5)), y0 = Math.floor(fy), ty = fy - y0;
+    for (let i = 0; i < n; i++) {
+      const fx = Math.min(n - 1.001, Math.max(0, ox + (i + 0.5) * step - 0.5)), x0 = Math.floor(fx), tx = fx - x0;
+      const p = (yy2, xx2) => decode(d, (yy2 * n + xx2) * 4);
+      const e = (p(y0, x0) * (1 - tx) + p(y0, x0 + 1) * tx) * (1 - ty) + (p(y0 + 1, x0) * (1 - tx) + p(y0 + 1, x0 + 1) * tx) * ty;
+      const v = e + 32768, k = (j * n + i) * 4;
+      od.data[k] = Math.floor(v / 256); od.data[k + 1] = Math.floor(v) % 256; od.data[k + 2] = Math.floor((v % 1) * 256); od.data[k + 3] = 255;
+    }
+  }
+  octx.putImageData(od, 0, 0);
+  return { data: await (await out.convertToBlob({ type: 'image/png' })).arrayBuffer() };
+});
+
+const status = await (await fetch('/api/basemap')).json();
+const style = (opt.style === 'physical' ? physical : readable)(status, { lang: opt.lang, origin: location.origin, contours: q.get('contours') !== '0' });
+const wantContours = style.contours; delete style.contours;
+
+// contours (physical, from zoom 11) — maplibre-contour isolines from the same elevation tiles, where a focus
+// region holds them (outside one the extract's coarse relief would draw blobs, not contours)
+if (wantContours && status.layers.find(l => l.layer === 'terrain')?.focus?.length) {
+  const mlc = (await import('/node_modules/maplibre-contour/dist/index.mjs')).default;
+  const t = status.layers.find(l => l.layer === 'terrain');
+  const focusMax = Math.max(...t.focus.map(f => f.maxZoom));
+  const dem = new mlc.DemSource({ url: `${location.origin}/api/basemap/terrain/{z}/{x}/{y}?v=${t.version}`, encoding: 'terrarium',
+    maxzoom: focusMax, worker: true });
+  dem.setupMaplibre(maplibregl);
+  style.sources.contours = { type: 'vector', tiles: [dem.contourProtocolUrl({ multiplier: 1,
+    thresholds: { 10: [100, 500], 11: [50, 250], 12: [20, 100], 13: [10, 50] }, elevationKey: 'ele', levelKey: 'level', contourLayer: 'contours' })],
+    minzoom: 10, maxzoom: 14 };   // MapLibre zooms (the raster grid's 11–15)
+  const before = style.layers.findIndex(l => l.id === 'water');
+  style.layers.splice(before, 0,
+    { id: 'contours', type: 'line', source: 'contours', 'source-layer': 'contours', minzoom: 10,
+      paint: { 'line-color': 'rgba(120, 88, 56, 1)', 'line-opacity': ['match', ['get', 'level'], 1, 0.45, 0.2],
+        'line-width': ['match', ['get', 'level'], 1, 1, 0.5] } },
+    { id: 'contour-labels', type: 'symbol', source: 'contours', 'source-layer': 'contours', minzoom: 11, filter: ['>', ['get', 'level'], 0],
+      layout: { 'symbol-placement': 'line', 'text-field': ['concat', ['to-string', ['get', 'ele']], ' m'], 'text-font': ['Noto Sans Regular'],
+        'text-size': 9.5, 'symbol-spacing': 300 },
+      paint: { 'text-color': '#7a5a3a', 'text-halo-color': 'rgba(240, 236, 224, 0.9)', 'text-halo-width': 1.2 } });
+}
+
+window.__style = style;
+let map;
+window.__t0 = performance.now();
+if (opt.mode === 'leaflet') {
+  // the same style as a base layer of a Leaflet map (maplibre-gl-leaflet), the app's overlays on top
+  const script = src => new Promise((ok, ko) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = ko; document.head.append(s); });
+  window.maplibregl = maplibregl;
+  await script('/node_modules/leaflet/dist/leaflet-src.js');
+  await script('/node_modules/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js');
+  const L = window.L;
+  const lm = L.map('map', { zoomSnap: 1, preferCanvas: false }).setView([opt.lat, opt.lon], opt.z);
+  const gl = L.maplibreGL({ style, attributionControl: false }).addTo(lm);
+  window.__testMap = lm;
+  map = gl.getMaplibreMap();
+} else {
+  // `z` is a zoom of the 256-pixel raster grid (Leaflet's, OSM Carto's): MapLibre's zoom is one less for the same scale
+  map = new maplibregl.Map({ container: 'map', style, center: [opt.lon, opt.lat], zoom: opt.z - 1, hash: false,
+    attributionControl: { compact: true }, fadeDuration: 150, maxPitch: 0, dragRotate: false });
+  map.touchZoomRotate.disableRotation();
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+}
+window.__map = map;
+// overlays like the app's: N points around the view — Leaflet DOM markers over the GL base map, or (native)
+// a GeoJSON circle layer drawn by MapLibre itself
+if (opt.markers > 0) {
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pts = Array.from({ length: opt.markers }, () => [opt.lon + (rnd() - 0.5) * 8, opt.lat + (rnd() - 0.5) * 5]);
+  if (opt.mode === 'leaflet') {
+    const icon = window.L.divIcon({ className: 'pt', html: '<span style="display:block;width:10px;height:10px;border-radius:50%;background:#2a6f97;border:1.5px solid #fff"></span>', iconSize: [13, 13] });
+    for (const [x, y] of pts) window.L.marker([y, x], { icon }).addTo(window.__testMap);
+  } else {
+    const add = () => {
+      map.addSource('pts', { type: 'geojson', data: { type: 'FeatureCollection', features: pts.map(c => ({ type: 'Feature', geometry: { type: 'Point', coordinates: c }, properties: {} })) } });
+      map.addLayer({ id: 'pts', type: 'circle', source: 'pts', paint: { 'circle-radius': 5, 'circle-color': '#2a6f97', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 } });
+    };
+    if (map.isStyleLoaded()) add(); else map.once('load', add);
+  }
+}
+map.on('error', e => console.error('map error', e.error?.message || e));
+map.once('idle', () => { window.__idleAt = performance.now(); window.__idle = true; });
+</script>
+</body>
+</html>
