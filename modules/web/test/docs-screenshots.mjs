@@ -140,8 +140,8 @@ async function marker(page, re) {
   return hit;
 }
 
-/** A terrain-style shot: the notice up, the Aegean at zoom 7, the tiles and names drawn. */
-async function terrainShot(page, shoot, [lat, lon, zoom] = [37.75, 25.5, 7]) {   // inside the fixture's region (22.5–28.5°E, 35–40.5°N)
+/** A terrain-style shot: the notice up, the Aegean at zoom 8 (the fixture's region fills the map), the tiles and names drawn. */
+async function terrainShot(page, shoot, [lat, lon, zoom] = [37.75, 25.5, 8]) {   // filled by the fixture's region (22.5–28.5°E, 35–40.5°N)
   await page.locator('.terrain-notice').waitFor();
   await view(page, lat, lon, zoom);
   // the relief, shaded once its elevation tiles arrived (Relief only, Parchment and Terrain all have one)
@@ -174,7 +174,7 @@ const shots = {
   'home-terrain': { local: { layers: '["events"]', baseMap: '["terrain"]', terrainStyle: '["terrain"]' }, hash: 'from=-1700&to=-1000',
     run: async (page, shoot) => {
       await page.locator('.terrain-notice').waitFor();
-      await view(page, 37.8, 25.4, 8);
+      await view(page, 37.75, 25.5, 8);
       await settle(page, 1500);
       await shoot();
     } },
