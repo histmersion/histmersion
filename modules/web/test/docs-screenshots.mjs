@@ -141,7 +141,7 @@ async function marker(page, re) {
 }
 
 /** A terrain-style shot: the notice up, the Aegean at zoom 7, the tiles and names drawn. */
-async function terrainShot(page, shoot, [lat, lon, zoom] = [38.0, 25.2, 7]) {
+async function terrainShot(page, shoot, [lat, lon, zoom] = [37.75, 25.5, 7]) {   // inside the fixture's region (22.5–28.5°E, 35–40.5°N)
   await page.locator('.terrain-notice').waitFor();
   await view(page, lat, lon, zoom);
   // the relief, shaded once its elevation tiles arrived (Relief only, Parchment and Terrain all have one)

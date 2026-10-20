@@ -314,6 +314,8 @@ object TerrainMap:
     drawn = Nil
     notice.foreach(_.remove())
     notice = js.undefined
+    map.off("resize", fitHandler)
+    map.getContainer().asInstanceOf[dom.HTMLElement].style.setProperty("--terrain-notice-lift", "")
     map.getContainer().classList.remove("terrain-missing")
     map.getContainer().classList.remove("terrain-on")
     map.getContainer().asInstanceOf[dom.HTMLElement].style.setProperty("--terrain-bg", "")   // empty: the declaration goes
@@ -442,3 +444,27 @@ object TerrainMap:
     }: js.Function1[js.Dynamic, dom.Element]
     ctrl.addTo(map.asInstanceOf[js.Any])
     notice = ctrl
+    // the notice and the credits share the map's foot: where they would meet (a narrow map, long credits)
+    // the notice's corner rises above the credits' line — measured now and whenever the map resizes
+    dom.window.requestAnimationFrame((_: Double) => fitNotice(map))
+    map.off("resize", fitHandler)
+    fitHandler = (_: LeafletEvent) => fitNotice(map)
+    map.on("resize", fitHandler)
+
+  // the resize handler of the notice shown (one at a time), to take off when it goes
+  private var fitHandler: js.Function1[LeafletEvent, Unit] = (_: LeafletEvent) => ()
+
+  /** How far the notice's corner rises so it clears the credits: their height and a gap when the two
+    * would overlap side by side, else nothing. Pure. */
+  def noticeLift(noticeLeft: Double, noticeRight: Double, creditsLeft: Double, creditsRight: Double, creditsHeight: Double): Double =
+    if noticeRight > creditsLeft && creditsRight > noticeLeft then creditsHeight + 4 else 0
+
+  private def fitNotice(map: LeafletMap): Unit =
+    val c = map.getContainer().asInstanceOf[dom.HTMLElement]
+    c.style.setProperty("--terrain-notice-lift", "0px")
+    for
+      n <- Option(c.querySelector(".terrain-notice"))
+      a <- Option(c.querySelector(".leaflet-control-attribution"))
+    do
+      val nr = n.getBoundingClientRect(); val ar = a.getBoundingClientRect()
+      c.style.setProperty("--terrain-notice-lift", s"${noticeLift(nr.left, nr.right, ar.left, ar.right, ar.height)}px")

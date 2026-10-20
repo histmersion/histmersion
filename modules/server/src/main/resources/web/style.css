@@ -384,8 +384,11 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* the local map's credits are long (OpenStreetMap, Natural Earth, Protomaps, Mapterhorn): one line that
    starts with © OpenStreetMap, so it never covers the markers along the map's foot; all of it on hover */
 .terrain-on .leaflet-control-attribution { max-width:min(60%, 520px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* whole on hover, wrapping UPWARD within the same width: it never grows sideways into the notice */
 .terrain-on .leaflet-control-attribution:hover,
-.terrain-on .leaflet-control-attribution:focus-within { max-width:none; white-space:normal; }
+.terrain-on .leaflet-control-attribution:focus-within { white-space:normal; overflow:visible; }
+/* the notice's corner rises above the credits where the two would meet (TerrainMap.fitNotice) */
+.terrain-on .leaflet-bottom.leaflet-left { margin-bottom:var(--terrain-notice-lift, 0px); }
 .terrain-notice { background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px; color:var(--ink);
   font-size:var(--fs-sm); line-height:1.35; padding:var(--space-3) var(--space-4); max-width:300px; }
 .terrain-notice a { color:var(--accent); white-space:nowrap; }
