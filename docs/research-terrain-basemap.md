@@ -288,7 +288,8 @@ cover, sea floor, contours and interval, reset — stored per viewer and per pre
 (`terrainView`). The drawn style is the preset with the options applied (pure); a change of the names
 alone redraws only the names' layer.
 
-**Measured** (headless Chromium, the JVM test server, Aegean fixture, perf.test.mjs "terrain base
-map"): drawn 887 ms after the view is set, no long task; pan input p95 51 ms, 4.6 % dropped; wheel zooms
-input p95 46 ms, 1.3 % dropped; map options input p95 77 ms (≤ 100), longest task 72 ms; heap 34.9 MB
-(budget 60).
+**Measured** (headless Chromium, the native test server, Aegean fixture, perf.test.mjs "terrain base
+map", Natural the default): drawn 849 ms after the view is set, no long task; pan input p95 48 ms, 4.5 %
+dropped; wheel zooms input p95 49 ms, 6.8 % dropped; map options (six changes) input p95 42 ms, no long
+task, 0 % dropped; heap 33.6 MB (budget 60). The raster map's pan on the same run: p95 36 ms, 0 %
+dropped. Before the zoom-scoped subsets the terrain heap was 65 MB (OSM land use decoded from zoom 6).
