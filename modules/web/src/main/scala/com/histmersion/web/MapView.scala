@@ -205,6 +205,9 @@ object MapView:
     radius = ui.markerRadius
     localOnly = ui.baseMapSource == BaseMapSource.Local
     TerrainMap.localOnly.set(localOnly)
+    // a page with only the local maps, never told otherwise by this browser: the Histmersion map on its
+    // default preset (Natural) — a kept online choice still shows as the local style of its name
+    if localOnly && !UiState.stored(UiState.baseMap) then UiState.baseMap.set(BaseMap.Local)
     // the span the page opens on (UiState is restored before this mounts): the overlays switched on
     // from the browser's storage load at once, and loaded the placeholder span (0, 1) — a wasted request
     // and a wrong first drawing — until the first findings arrived
