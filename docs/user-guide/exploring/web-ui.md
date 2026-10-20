@@ -30,10 +30,15 @@ click also filters the lists by that place.
 The base map is chosen in two steps, at the end of the layer buttons. The first menu picks the
 **family**:
 
-- **Histmersion map** — [the terrain map](#the-terrain-map), drawn in your browser from data your own
-  server keeps, with no modern features, and adjustable;
-- **Online map** — OpenStreetMap's tiles, today's map with roads, towns and borders, in three looks
-  (*Standard*, *Muted*, *Dark*, the second menu). They need the internet (or the server's `ui.tiles`).
+- **Histmersion map** — drawn in your browser from a download your own server keeps, so it works
+  without the internet: [the terrain map](#the-terrain-map) with no modern features (*Natural*, the
+  default, and the other terrain styles) and the street maps **Standard**, **Muted** and **Dark** —
+  today's map with roads, towns, borders and place names;
+- **Online map** — the same kind of street map as tiles from OpenStreetMap's servers (or the ones
+  `ui.tiles` names): *Standard (online)*, *Muted (online)*, *Dark (online)*, in the second menu. They need
+  the internet, and are offered only while the server cannot draw its own map yet, or when
+  `ui.base-map-source = "online"`. Once the download is complete, the page asks no other computer for
+  anything: [Working offline](../how-to/offline.md).
 
 For the Histmersion map, the button beside the menu opens the **map options**: the style (the
 *preset*) and what you change of it for yourself. They stay open while you change things (Escape, or
@@ -42,8 +47,8 @@ browser, per preset, until **Reset to preset**:
 
 | option | what it does |
 |---|---|
-| **Style** | the preset: *Natural* (the default), *Contour map*, *Terrain*, *Terrain + vegetation*, *Relief only*, *Parchment*, and any your [style file](../how-to/terrain-styles.md) adds |
-| **Names** · **Language** | the physical names on or off; *English*, *Local* (each name in its own language and script) or another language — a name missing in it falls back to English, then to the local name |
+| **Style** | the preset: *Natural* (the default), *Contour map*, *Standard*, *Muted*, *Dark*, *Terrain*, *Terrain + vegetation*, *Relief only*, *Parchment*, and any your [style file](../how-to/terrain-styles.md) adds |
+| **Names** · **Language** | the names on or off; *English*, *Local* (each name in its own language and script) or another language — a name missing in it falls back to English, then to the local name |
 | **Relief** | how strongly the slopes are shaded (none … twice the preset's) |
 | **Colours by height** | the ground coloured by its elevation (lowland green, upland tan, mountain grey-brown, snow) |
 | **Land cover** | forest, grass, scrub, farmland, bare rock, sand, wetland and ice |
@@ -51,10 +56,15 @@ browser, per preset, until **Reset to preset**:
 | **Contour lines** · **Interval** | lines of equal height from zoom 11 (*Contour map*: 9), every 200, 100, 50 or 20 m as you zoom in — or a fixed interval |
 
 An option a preset cannot offer, or whose data the server has not downloaded, is shown disabled with
-a line saying why — and, for missing data, the command that fetches it.
+a line saying why — and, for missing data, the command that fetches it. A street map the download
+cannot draw whole is marked "needs the full download" and drawn with what is there.
 
 <figure markdown>
   ![The map options over the Aegean: the style, names and language, relief, colours by height, land cover, sea floor, contours](../assets/screenshots/map-options.png){ loading=lazy }
+</figure>
+
+<figure markdown>
+  ![Attica on the local Standard map: land use, roads by class, borders and the names of towns, drawn by the server](../assets/screenshots/local-standard.png){ loading=lazy }
 </figure>
 
 ### The terrain map
@@ -95,9 +105,11 @@ Atlantic Europe to the Indus). They are not there until someone downloads them o
 histmersion basemap fetch      # see Open data → The terrain base map
 ```
 
-Until then the menu says "not downloaded", and choosing it shows the standard tiles, dimmed, with a
-note on how to fetch it. Outside the downloaded region the terrain map is blank; beyond the downloaded
-zooms of the relief (8 by default), it is read from the provider as you look, when the server is online.
+Until then the menu says "not downloaded", and choosing it shows the online standard tiles, dimmed
+(nothing, on a page that has only the local maps), with a note on how to fetch it. Outside the
+downloaded region the map is blank; beyond the downloaded zooms of the relief (8 by default), it is read
+from the provider as you look, when the server is online — also on a page that has only the local maps:
+the server reads it, not the page, and offline the map shows the coarser relief.
 
 ## The timeline
 
@@ -167,7 +179,7 @@ The toolbar opens the others:
 | jobs | text-recognition and import jobs, with progress |
 | worklog | the `log` list, by date |
 | API key | enter the key writes need (shown only when the server asks for one) |
-| about | version, health, the job queue, the last backup, counts, plugins |
+| about | version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
 
 <figure markdown="span">
   ![The About window: server version and commit, schema version, the config file; health of the server, database and converter, all green; the job queue; the last backup; the counts of sources, findings, articles, events, places and periods; the first plugins](../assets/screenshots/about.png){ loading=lazy }

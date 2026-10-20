@@ -10,17 +10,26 @@ a few seconds.
 ## The named styles
 
 Every style is a **preset** of the map options' *Style* menu (the button beside the base-map menu, with
-the *Histmersion map* chosen — see [The base map](../exploring/web-ui.md#the-base-map)). Six come with
-Histmersion:
+the *Histmersion map* chosen — see [The base map](../exploring/web-ui.md#the-base-map)). Nine come with
+Histmersion — two drawn for reading the land, three street maps and four more terrain styles:
 
 | style | what it shows |
 |---|---|
 | **Natural** (the default) | a light, natural map: the ground coloured by its height, the land cover in its own colours, the relief shaded from several directions, the sea coloured by its depth and lighter along the shore, contour lines from zoom 11; names in Noto Serif — italic for water, letter-spaced capitals for ranges and regions |
 | **Contour map** | Natural as a topographic map: contour lines from zoom 9 (every 200 m, then 100, 50, 20, 10 as you zoom in), depth lines under the sea, pale colours, faint shading |
+| **Standard** | today's map: land cover and land use, water, roads by class, country and province borders, and the names of countries, cities, towns and villages (more of them the further you zoom in) and of the seas |
+| **Muted** | the same in pale, quiet colours, so your markers stand out |
+| **Dark** | the same in dark colours |
 | **Terrain** | today's terrain, dark and muted so your markers, names and boundaries stay on top: land, seas, lakes and rivers, a light tint for forest, grassland, scrub, bare ground and ice, the shaded relief, and the physical names |
 | **Terrain + vegetation** | the same with the land cover drawn strongly, and OpenStreetMap's own woods, scrub and wetlands where they are mapped |
 | **Relief only** | land, water and the relief — no land cover, no names |
 | **Parchment** | a light, old-atlas look: pale land and sea, sepia relief, brown names in a serif type |
+
+The street maps draw roads, places and borders, which the download leaves out unless it is made
+with `--keep-all` ([Working offline](offline.md#the-one-time-download)); until then the menu marks
+them "needs the full download" and draws them with what is there. `histmersion basemap styles`
+lists the data layers each style draws, and `histmersion basemap status` which of them the download
+on the server lacks. They have no dots for towns: the dots on the map are your corpus's.
 
 <figure markdown>
   ![The Aegean in the Natural style at zoom 7: the land green to tan by height and shaded, the shallow shelf light and the deep basins of the Aegean and the Cretan Sea darker, the seas' names in italics](../assets/screenshots/terrain-natural.png){ loading=lazy }
@@ -165,7 +174,8 @@ styles = [
 ### The format
 
 **A style:** `id` (letters, digits, `-`, `_`), `name` (the menu's text), `description`, `extends`
-(another style's id), `hidden`, `tone` (`dark` or `light` — the map's own names follow it),
+(another style's id), `hidden`, `modern` (`true` for a map of today's world — no "(no modern
+features)" in the menu, no notice about the past landscape), `tone` (`dark` or `light` — the map's own names follow it),
 `background` (a colour), `labels` (`true`/`false`: whether its label layers are drawn), `language`,
 `relief` and `layers`.
 
@@ -204,8 +214,8 @@ styles = [
 |---|---|
 | `id` | its name, by which a style that extends this one changes it |
 | `type` | `fill` (areas), `line`, or `label` (names) |
-| `source` | `vector` (the default: coast, water, land cover and use, natural points) or `labels` (Natural Earth's names) |
-| `layer` | the data layer(s) it draws, one or a list: `earth`, `water`, `landcover`, `landuse`, `pois` — or `physical` and `rivers` for `source = "labels"` |
+| `source` | `vector` (the default: coast, water, land cover and use, natural points; roads, places and borders after a `--keep-all` download) or `labels` (Natural Earth's names) |
+| `layer` | the data layer(s) it draws, one or a list: `earth`, `water`, `landcover`, `landuse`, `pois`, `roads`, `places`, `boundaries` — or `physical` and `rivers` for `source = "labels"`. A style needs every vector layer it draws: one the download left out makes it "need the full download" |
 | `geometry` | `point`, `line` or `polygon` (all when left out) |
 | `kinds`, `not-kinds` | the features' `kind`s drawn, or not drawn (`forest`, `river`, `sea`, `range`, `peak`, …) |
 | `details` | their `kind_detail` (a lake is a `water` of detail `lake`) |
@@ -221,7 +231,8 @@ styles = [
 | `padding`, `line-height` | a name's free space all round, in pixels (3), and the distance of its lines, × its size (1.2) |
 | `remove`, `before` | in a style that extends another: drop this layer; put a new one before that id |
 
-Names are placed in layer order: where two would overlap, the earlier one wins. A name's room is its
+Names are placed in layer order: where two would overlap, the earlier one wins; within a layer, the
+one whose own `min_zoom` is lower first, then the larger place (`population_rank`). A name's room is its
 whole block — every line of it, its halo and its `padding` — so two names never touch.
 
 **Values to share:** a top-level `fonts { … }` holds values the styles refer to with HOCON's

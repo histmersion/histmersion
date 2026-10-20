@@ -19,19 +19,27 @@ import org.scalajs.dom
 object MapOptions:
 
   /** The family of a base map. Pure. */
-  def family(b: BaseMap): String = if b == BaseMap.Terrain then "histmersion" else "raster"
+  def family(b: BaseMap): String = if b == BaseMap.Local then "histmersion" else "raster"
 
   /** The raster map shown last, to come back to when the family is switched back. */
   private val lastRaster: Var[BaseMap] = Var(BaseMap.Standard)
 
   private val open: Var[Boolean] = Var(false)
 
-  /** The style shown now (the preset), if the styles are known. */
+  /** The preset shown now (as [[TerrainMap.effective]] maps the kept choice: on a `local` page an online
+    * choice is the local style of its name), if the styles are known. */
+  private def presetOf(b: BaseMap, id: Option[String], ss: Option[TerrainStyles], local: Boolean): Option[TerrainStyle] =
+    ss.flatMap(_.pick(TerrainMap.effective(b, id, local)._2))
+
   private val preset: Signal[Option[TerrainStyle]] =
-    UiState.terrainStyle.signal.combineWith(TerrainMap.styles.signal).map((id, ss) => ss.flatMap(_.pick(id)))
+    UiState.baseMap.signal.combineWith(UiState.terrainStyle.signal, TerrainMap.styles.signal, TerrainMap.localOnly.signal)
+      .map(presetOf.tupled)
+
+  /** Is the Histmersion map (a local style) what is drawn? */
+  private val onLocal: Signal[Boolean] = TerrainMap.shown.signal.map(_ == BaseMap.Local)
 
   private def setOptions(f: (TerrainStyle, ViewOptions) => ViewOptions): Unit =
-    TerrainMap.styles.now().flatMap(_.pick(UiState.terrainStyle.now())).foreach { s =>
+    presetOf(UiState.baseMap.now(), UiState.terrainStyle.now(), TerrainMap.styles.now(), TerrainMap.localOnly.now()).foreach { s =>
       val prefs = UiState.terrainView.now()
       UiState.set(UiState.terrainView := prefs.set(s.id, TerrainView.normalise(s, f(s, prefs.of(s.id)))))()
     }
@@ -43,12 +51,13 @@ object MapOptions:
       title := "The Histmersion map is drawn from this server's own data (no modern features) and can be customised; " +
         "the online maps are OpenStreetMap's tiles",
       option(value := "histmersion", child.text <-- TerrainMap.status.signal.map(st => TerrainMap.familyLabel(st))),
-      option(value := "raster", "Online map"),
+      // a `local` page offers no online map: it asks no other host for anything
+      child.maybe <-- TerrainMap.localOnly.signal.map(l => Option.unless(l)(option(value := "raster", "Online map"))),
       controlled(
-        value <-- UiState.baseMap.signal.map(family),
+        value <-- TerrainMap.shown.signal.map(family).composeChanges(_.delay(0)),
         onChange.mapToValue --> { v =>
-          if v == "histmersion" then UiState.set(UiState.baseMap := BaseMap.Terrain)()
-          else UiState.set(UiState.baseMap := lastRaster.now())()
+          if v == "histmersion" then UiState.set(UiState.baseMap := BaseMap.Local)()
+          else if !TerrainMap.localOnly.now() then UiState.set(UiState.baseMap := lastRaster.now())()
         }
       ),
       onMountCallback(_ => { val _ = TerrainMap.refresh() })
@@ -58,10 +67,11 @@ object MapOptions:
     select(
       cls := "field map-style-select",
       aria.label := "online map",
-      cls("is-hidden") <-- UiState.baseMap.signal.map(_ == BaseMap.Terrain),
-      BaseMap.values.toList.filter(_ != BaseMap.Terrain).map(b => option(value := b.wire, b.label)),
+      cls("is-hidden") <-- onLocal,
+      children <-- TerrainMap.localOnly.signal.map(l => TerrainMap.onlineMaps(l).map(b => option(value := b.wire, b.label,
+        title := "Tiles from the internet"))),
       controlled(
-        value <-- UiState.baseMap.signal.map(b => if b == BaseMap.Terrain then lastRaster.now().wire else b.wire),
+        value <-- UiState.baseMap.signal.map(b => if b == BaseMap.Local then lastRaster.now().wire else b.wire).composeChanges(_.delay(0)),
         onChange.mapToValue --> { v =>
           BaseMap.fromWire(v).foreach { b => lastRaster.set(b); UiState.set(UiState.baseMap := b)() }
         }
@@ -78,8 +88,8 @@ object MapOptions:
       htmlAttr("aria-haspopup", com.raquo.laminar.codecs.StringAsIsCodec) := "dialog",
       aria.controls := "map-options",
       aria.expanded <-- open.signal,
-      disabled <-- UiState.baseMap.signal.map(_ != BaseMap.Terrain),
-      title <-- UiState.baseMap.signal.map(b => if b == BaseMap.Terrain then "Map options: style, names, relief, colours, sea floor, contours"
+      disabled <-- onLocal.map(!_),
+      title <-- onLocal.map(b => if b then "Map options: style, names, relief, colours, sea floor, contours"
         else "Map options — for the Histmersion map"),
       Icon(Icon.MapContours),
       onClick --> { _ => open.update(!_) }
@@ -113,15 +123,19 @@ object MapOptions:
       cls := "map-options",
       role := "dialog",
       aria.label := "map options",
-      cls("is-hidden") <-- open.signal.combineWith(UiState.baseMap.signal).map((o, b) => !o || b != BaseMap.Terrain),
+      cls("is-hidden") <-- open.signal.combineWith(onLocal).map((o, l) => !o || !l),
       div(cls := "map-option map-option-row",
         label_(span("Style"),
           select(cls := "field terrain-style-select", aria.label := "map style",
-            children <-- styleOptions.split(_.id)((id, _, s) => option(value := id, child.text <-- s.map(_.name),
-              title <-- s.map(_.description))),
+            children <-- styleOptions.split(_.id)((id, _, s) =>
+              val st = s.combineWith(TerrainMap.status.signal)
+              option(value := id,
+                // a style whose layers the download left out says so (the street maps without --keep-all)
+                child.text <-- st.map((t, status) => if status.exists(_.missing(t.id).nonEmpty) then s"${t.name} — needs the full download" else t.name),
+                title <-- st.map((t, status) => status.map(_.missing(t.id)).filter(_.nonEmpty).fold(t.description)(TerrainMap.lackingNotice)))),
             controlled(
               value <-- preset.map(_.fold("")(_.id)).composeChanges(_.delay(0)),
-              onChange.mapToValue --> (v => UiState.set(UiState.terrainStyle := Some(v))())
+              onChange.mapToValue --> (v => UiState.set(UiState.baseMap := BaseMap.Local, UiState.terrainStyle := Some(v))())
             )))),
       check("names", "Names", _.names, (v, b) => v.copy(names = Some(b)), missing, shownS),
       div(cls := "map-option map-option-row",
@@ -196,7 +210,8 @@ object MapOptions:
       familySelect,
       rasterSelect,
       div(cls := "map-options-anchor", optionsButton, panel),
-      UiState.baseMap.signal --> { b => if b != BaseMap.Terrain then { lastRaster.set(b); open.set(false) } },
+      UiState.baseMap.signal --> { b => if b != BaseMap.Local then lastRaster.set(b) },
+      onLocal --> { l => if !l then open.set(false) },
       // the panel's own keyboard and pointer: Escape closes it (focus back on its button), a click
       // outside it closes it; it stays open while its options change
       documentEvents(_.onKeyDown) --> { e => if e.key == "Escape" && open.now() then close() },

@@ -11,12 +11,14 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits.*
 
-/** The terrain base map ([[BaseMap.Terrain]], docs/research-terrain-basemap.md): MODERN terrain only,
+/** The local base map ([[BaseMap.Local]], docs/research-terrain-basemap.md, its "Local street maps" section),
   * drawn in the page from the extracts the server holds (`GET /api/basemap/{layer}/{z}/{x}/{y}`) with
-  * one of the named styles it serves (`GET /api/basemap/styles`, [[TerrainRules]]):
+  * one of the named styles it serves (`GET /api/basemap/styles`, [[TerrainRules]]) — the terrain styles
+  * (MODERN terrain only) and the street maps (`modern`: Standard, Muted, Dark):
   *
-  *  - the coast, water, rivers and land cover — vector tiles, drawn on canvas by protomaps-leaflet
-  *    (loaded on first use) with the style's fills and lines; no roads, places, borders or buildings;
+  *  - the coast, water, rivers and land cover — and for a street map the roads, borders and land use —
+  *    vector tiles, drawn on canvas by protomaps-leaflet (loaded on first use) with the style's fills
+  *    and lines;
   *  - the relief — elevation tiles shaded here ([[Hillshade]]) into a translucent layer above them;
   *  - the physical names — seas, ranges, deserts, lakes, rivers — the style's labels, in a layer of their
   *    own above the relief and below every marker of the map.
@@ -24,8 +26,10 @@ import scala.scalajs.js.Thenable.Implicits.*
   * While it is shown, the page asks every `checkSeconds` whether the styles changed (the server reads
   * the style file again when it changes) and draws the map again when they did.
   *
-  * Always with a notice that this is TODAY's landscape. When the server has not downloaded it, the
-  * standard tiles stay, dimmed, and the notice says how to fetch it. */
+  * A terrain style always with a notice that this is TODAY's landscape. When the server has not
+  * downloaded the extract, the standard tiles stay, dimmed (none when the page is `local`: then only
+  * the style's background), and the notice says how to fetch it; a style whose layers the download
+  * left out is drawn with what is there and a notice says what to run. */
 object TerrainMap:
 
   /** What the server reports (`GET /api/basemap`); `None` until asked. */
@@ -36,6 +40,24 @@ object TerrainMap:
 
   /** The tone of the style shown: the map's own names follow it ([[MapLabels]]). */
   val tone: Var[MapTone] = Var(MapTone.Dark)
+
+  /** Whether the page has only the local maps (`ui.base-map-source` resolved to `local`, set once by
+    * [[MapView.init]]): any base-map control reads it — no online map is offered, none is drawn. */
+  val localOnly: Var[Boolean] = Var(false)
+
+  /** The base map drawn — the choice as [[effective]] maps it: what the names' tone and the names
+    * toggle follow. */
+  val shown: Var[BaseMap] = Var(BaseMap.Standard)
+
+  /** The base map drawn for the kept choice `b` (and style): when the page is `local` an online map is
+    * the local style of the same name (`standard`, `muted`, `dark` — [[TerrainStyles.pick]] falls back
+    * to the default when there is none), so a browser's earlier choice never reaches another host. Pure. */
+  def effective(b: BaseMap, style: Option[String], local: Boolean): (BaseMap, Option[String]) =
+    if !local || b == BaseMap.Local then (b, style) else (BaseMap.Local, Some(b.wire))
+
+  /** The base maps the menu offers besides the local styles: the online ones unless the page is
+    * `local`. Pure. */
+  def onlineMaps(local: Boolean): List[BaseMap] = if local then Nil else BaseMap.values.toList.filter(_ != BaseMap.Local)
 
   /** Ask the server again (on start, and each time the terrain map is chosen). */
   def refresh(): Future[BasemapStatus] =
@@ -50,19 +72,20 @@ object TerrainMap:
     f
 
   /** The base-map menu's value for a terrain style. */
-  def optionValue(id: String): String = s"${BaseMap.Terrain.wire}:$id"
+  def optionValue(id: String): String = s"${BaseMap.Local.wire}:$id"
 
   /** A menu value → the base map and, for the terrain map, the style it names. Pure. */
   def parseOption(v: String): Option[(BaseMap, Option[String])] =
     v.split(":", 2).toList match
-      case b :: id :: Nil => BaseMap.fromWire(b).filter(_ == BaseMap.Terrain).map(_ -> Some(id).filter(_.nonEmpty))
+      case b :: id :: Nil => BaseMap.fromWire(b).filter(_ == BaseMap.Local).map(_ -> Some(id).filter(_.nonEmpty))
       case b :: Nil       => BaseMap.fromWire(b).map(_ -> None)
       case _              => None
 
-  /** The menu's value for the map shown. Pure. */
-  def selectValue(b: BaseMap, style: Option[String], ss: Option[TerrainStyles]): String =
-    if b != BaseMap.Terrain then b.wire
-    else ss.flatMap(_.pick(style)).fold(b.wire)(s => optionValue(s.id))
+  /** The menu's value for the map shown (`local`: an online choice as [[effective]] maps it). Pure. */
+  def selectValue(b: BaseMap, style: Option[String], ss: Option[TerrainStyles], local: Boolean = false): String =
+    val (eb, es) = effective(b, style, local)
+    if eb != BaseMap.Local then eb.wire
+    else ss.flatMap(_.pick(es)).fold(eb.wire)(s => optionValue(s.id))
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -71,20 +94,33 @@ object TerrainMap:
     "Today's terrain. Coastlines, rivers, lakes and vegetation were different in the past."
 
   /** The docs section the notice links to, under `ui.docs-url`. */
-  def docsLink(docsUrl: String): String =
+  def docsLink(docsUrl: String, page: String = "exploring/web-ui.md#the-terrain-map"): String =
     val base = if docsUrl.isEmpty || docsUrl.endsWith("/") then docsUrl else docsUrl + "/"
-    s"${base}exploring/web-ui.md#the-terrain-map"
+    s"$base$page"
+
+  /** The docs section on downloading the full extract (the street maps' layers). */
+  val OfflinePage = "how-to/offline.md#the-one-time-download"
 
   /** The notice when the extracts are not on the server: what to run. */
-  def missingNotice(s: Option[BasemapStatus]): String =
-    s"The terrain map is not downloaded on this server. Run `${s.map(_.fetchCommand).getOrElse(Basemap.FetchCommand)}` " +
-      "on the machine that runs it (a few hundred MB to a few GB), then choose Terrain again."
+  def missingNotice(s: Option[BasemapStatus], modern: Boolean = false): String =
+    val cmd = s.map(_.fetchCommand).getOrElse(Basemap.FetchCommand) + (if modern then " --keep-all" else "")
+    val what = if modern then "This map" else "The terrain map"
+    s"$what is not downloaded on this server. Run `$cmd` on the machine that runs it (a few hundred MB to a few GB), " +
+      "then choose it again."
 
-  /** The base-map menu's label for a terrain style (`None`: before the styles are known): it says
-    * when the data is missing. */
+  /** The base-map menu's label for a local style (`None`: before the styles are known): a terrain
+    * style says it has no modern features; the label says when the data is missing, or when the
+    * download left out layers the style draws. */
   def optionLabel(s: Option[BasemapStatus], style: Option[TerrainStyle] = None): String =
-    val name = style.fold(BaseMap.Terrain.label)(t => s"${t.name} (no modern features)")
-    if s.forall(_.available) then name else s"$name — not downloaded"
+    val name = style.fold(BaseMap.Local.label)(t => if t.modern then t.name else s"${t.name} (no modern features)")
+    if !s.forall(_.available) then s"$name — not downloaded"
+    else if style.exists(t => s.exists(_.missing(t.id).nonEmpty)) then s"$name — needs the full download"
+    else name
+
+  /** The notice over a style drawn without some of its layers: which, and what to run. Pure. */
+  def lackingNotice(missing: List[String]): String =
+    s"This map also draws ${missing.mkString(", ")}, which the download on this server left out. Run " +
+      s"`${Basemap.KeepAllCommand}` on the machine that runs it, then choose the map again."
 
   /** The sources the server has (`vector`, `labels`), as the style's layers name them. */
   def sources(s: BasemapStatus): Set[String] =
@@ -116,12 +152,12 @@ object TerrainMap:
 
   // `var`s: what this module put on the map, and which request is the latest (a quick switch away
   // and back must not leave two copies)
-  private var shown: List[Layer]          = Nil
+  private var drawn: List[Layer]          = Nil
   private var notice: js.UndefOr[js.Dynamic] = js.undefined
   private var generation                  = 0
   private var poll: Int                   = 0
   // what `enter` was called with, for a redraw when the styles change
-  private var entered: Option[(LeafletMap, String, Boolean => Unit)] = None
+  private var entered: Option[(LeafletMap, String, Boolean => Unit, Option[String])] = None
 
   private val ScriptSrc = "/web/vendor/protomaps-leaflet/protomaps-leaflet.js"
   private val FontsHref = "/web/vendor/noto-fonts/noto-fonts.css"
@@ -163,25 +199,26 @@ object TerrainMap:
       dom.document.head.appendChild(s)
       p.future
 
-  /** Show the terrain map on `map`. `raster(on)` puts the ordinary tiles back (on) or away (off). */
-  def enter(map: LeafletMap, docsUrl: String, raster: Boolean => Unit): Unit =
+  /** Show the local map in style `styleId` (`None`: the default) on `map`. `raster(on)` puts the
+    * ordinary tiles back (on) or away (off) — a no-op for a `local` page. */
+  def enter(map: LeafletMap, docsUrl: String, raster: Boolean => Unit, styleId: Option[String]): Unit =
     generation += 1
     val mine = generation
     clear(map)
     // the server's answer (else what it said last), then the renderer — only when there is a map to draw
-    entered = Some((map, docsUrl, raster))
+    entered = Some((map, docsUrl, raster, styleId))
     val known = refresh().map(Option(_)).recover { case _ => status.now() }
     val ss    = refreshStyles().map(Option(_)).recover { case _ => styles.now() }
     known.zip(ss).flatMap { (s, t) =>
       if !s.exists(_.available) then Future.successful((s, t))
       else
-        val fonts = s.zip(t).flatMap((st, all) => all.pick(UiState.terrainStyle.now()).map(p => (effective(p, st), all)))
+        val fonts = s.zip(t).flatMap((st, all) => all.pick(styleId).map(p => (withView(p, st), all)))
           .fold(Future.unit)((st, all) => if st.labels then fontsReady(st, TerrainRules.language(st, all)) else Future.unit)
         renderer.zip(fonts).map(_ => (s, t))
     }.onComplete { r =>
       if mine == generation then
         val s = r.toOption.flatMap(_._1)
-        val style = r.toOption.flatMap(_._2).flatMap(_.pick(UiState.terrainStyle.now()))
+        val style = r.toOption.flatMap(_._2).flatMap(_.pick(styleId))
         s.flatMap(st => template(st, BasemapLayer.Vector).map(st -> _)).zip(style.zip(r.toOption.flatMap(_._2))) match
           case Some(((st, vector), (style, all))) =>
             raster(false)
@@ -189,12 +226,14 @@ object TerrainMap:
             if rasterMaxZoom.isEmpty then rasterMaxZoom = Some(map.asInstanceOf[js.Dynamic].getMaxZoom().asInstanceOf[Double])
             map.asInstanceOf[js.Dynamic].setMaxZoom(st.mapMaxZoom)
             tone.set(if style.tone == "light" then MapTone.Light else MapTone.Dark)
-            draw(map, st, vector, effective(style, st), all)
-            setNotice(map, PastNotice, docsUrl, missing = false)
+            draw(map, st, vector, withView(style, st), all)
+            val lacking = st.missing(style.id)
+            if lacking.nonEmpty then setNotice(map, lackingNotice(lacking), docsUrl, missing = false, lacking = true)
+            else if !style.modern then setNotice(map, PastNotice, docsUrl, missing = false)
             watch(mine, all.checkSeconds)
           case None =>
             raster(true)
-            setNotice(map, r.failed.toOption.fold(missingNotice(s))(e => s"The terrain map could not be drawn: ${e.getMessage}."),
+            setNotice(map, r.failed.toOption.fold(missingNotice(s, style.exists(_.modern)))(e => s"The local map could not be drawn: ${e.getMessage}."),
               docsUrl, missing = true)
     }
 
@@ -206,19 +245,19 @@ object TerrainMap:
     if s.forall(_.available) then "Histmersion map" else "Histmersion map — not downloaded"
 
   /** The preset `p` with this viewer's options over it. */
-  private def effective(p: TerrainStyle, s: BasemapStatus): TerrainStyle =
+  private def withView(p: TerrainStyle, s: BasemapStatus): TerrainStyle =
     val prefs = UiState.terrainView.now()
     TerrainView(p, prefs.of(p.id), prefs.language, layersHad(s))
 
   // what is drawn now — to tell an options change that touches only the names (their layer alone is drawn
   // again) from one that touches the map
-  private var drawn: Option[(LeafletMap, BasemapStatus, String, TerrainStyle, TerrainStyles)] = None
+  private var current: Option[(LeafletMap, BasemapStatus, String, TerrainStyle, TerrainStyles)] = None
   private var namesLayer: Option[Layer] = None
 
   /** The viewer changed the map's options: draw again — only the names' layer when only the names changed. */
-  def viewChanged(): Unit = drawn.foreach { (map, st, vector, was, all) =>
-    all.pick(UiState.terrainStyle.now()).foreach { p =>
-      val now = effective(p, st)
+  def viewChanged(): Unit = current.foreach { (map, st, vector, was, all) =>
+    all.pick(entered.flatMap(_._4)).foreach { p =>
+      val now = withView(p, st)
       if now != was then
         val mine = generation
         val ready = if now.labels then fontsReady(now, TerrainRules.language(now, all)) else Future.unit
@@ -226,16 +265,16 @@ object TerrainMap:
           ready.foreach { _ =>
             if mine == generation then
               namesLayer.foreach(l => map.removeLayer(l))
-              shown = shown.filterNot(l => namesLayer.exists(_ eq l))
+              drawn = drawn.filterNot(l => namesLayer.exists(_ eq l))
               namesLayer = drawNames(map, st, now, all)
-              shown = shown ++ namesLayer.toList
-              drawn = Some((map, st, vector, now, all))
+              drawn = drawn ++ namesLayer.toList
+              current = Some((map, st, vector, now, all))
           }
         else
           ready.foreach { _ =>
             if mine == generation then
-              shown.foreach(l => map.removeLayer(l))
-              shown = Nil
+              drawn.foreach(l => map.removeLayer(l))
+              drawn = Nil
               ReliefLayer.reset()
               draw(map, st, vector, now, all)
           }
@@ -256,7 +295,7 @@ object TerrainMap:
         if mine == generation && !dom.document.hidden then
           val was = styles.now().map(_.version)
           refreshStyles().foreach { s =>
-            if mine == generation && !was.contains(s.version) then entered.foreach((m, d, r) => enter(m, d, r))
+            if mine == generation && !was.contains(s.version) then entered.foreach((m, d, r, id) => enter(m, d, r, id))
           }
       , seconds * 1000.0)
 
@@ -268,11 +307,11 @@ object TerrainMap:
     rasterMaxZoom.foreach(z => map.asInstanceOf[js.Dynamic].setMaxZoom(z))
     rasterMaxZoom = None
     ReliefLayer.reset()
-    drawn = None
+    current = None
     namesLayer = None
     tone.set(MapTone.Dark)
-    shown.foreach(l => map.removeLayer(l))
-    shown = Nil
+    drawn.foreach(l => map.removeLayer(l))
+    drawn = Nil
     notice.foreach(_.remove())
     notice = js.undefined
     map.getContainer().classList.remove("terrain-missing")
@@ -281,16 +320,25 @@ object TerrainMap:
 
   private def lookup(token: String): String = ThemeTokens(token)
 
-  /** A tile URL template asking only for `reads` (the layers and geometries the rules draw). Pure. */
-  def withSubset(url: String, reads: Map[String, Set[Int]], fromZoom: Map[String, Int] = Map.empty): String =
-    if reads.isEmpty then url else s"$url&layers=${scala.scalajs.js.URIUtils.encodeURIComponent(Basemap.subsetParam(reads, fromZoom))}"
+  /** A tile URL template asking only for `reads` (the layers, geometries and kinds the rules draw), their
+    * features' `keys` (the properties the rules read; none: all), and a layer drawn only closer in from
+    * that tile zoom on (`fromZoom`). Pure. */
+  def withSubset(url: String, reads: Map[String, Basemap.Read], keys: List[String] = Nil, fromZoom: Map[String, Int] = Map.empty): String =
+    def enc(v: String) = scala.scalajs.js.URIUtils.encodeURIComponent(v)
+    if reads.isEmpty then url
+    else s"$url&layers=${enc(Basemap.subsetParam(reads, fromZoom))}" + (if keys.isEmpty then "" else s"&keys=${enc(keys.distinct.mkString(","))}")
 
-  private def sourcesOf(s: BasemapStatus, reads: Map[String, Map[String, Set[Int]]], zooms: Map[String, Map[String, Int]]): js.Object =
+  /** What one protomaps layer asks the server for: per source the data layers read, from which zoom,
+    * and the properties. */
+  private final case class Reads(layers: Map[String, Map[String, Basemap.Read]], zooms: Map[String, Map[String, Int]], keys: List[String])
+
+  private def sourcesOf(s: BasemapStatus, r: Reads): js.Object =
+    val reads = r.layers
     val o = js.Dynamic.literal()
     reads.foreach { (src, layers) =>
       BasemapLayer.parse(src).foreach { l =>
         template(s, l).foreach { url =>
-          o.updateDynamic(src)(js.Dynamic.literal(url = withSubset(url, layers, zooms.getOrElse(src, Map.empty)),
+          o.updateDynamic(src)(js.Dynamic.literal(url = withSubset(url, layers, r.keys, r.zooms.getOrElse(src, Map.empty)),
             maxDataZoom = s.layers.find(_.layer == l.wire).flatMap(_.maxZoom).getOrElse(10)))
         }
       }
@@ -300,7 +348,7 @@ object TerrainMap:
   private def draw(map: LeafletMap, s: BasemapStatus, vector: String, style: TerrainStyle, all: TerrainStyles): Unit =
     val have   = sources(s)
     val rules  = TerrainRules.compile(style, TerrainRules.language(style, all), have, style.labels, lookup)
-    def layer(paint: js.Array[js.Object], labels: js.Array[js.Object], reads: (Map[String, Map[String, Set[Int]]], Map[String, Map[String, Int]]),
+    def layer(paint: js.Array[js.Object], labels: js.Array[js.Object], reads: Reads,
         z: Int, cls: String, background: Boolean): Layer = vectorLayer(map, s, style, paint, labels, reads, z, cls, background)
     map.getContainer().classList.add("terrain-on")
     map.getContainer().asInstanceOf[dom.HTMLElement].style.setProperty("--terrain-bg", TerrainRules.colour(style.background, lookup))
@@ -316,25 +364,25 @@ object TerrainMap:
     val reliefs = setup.toList.flatMap((su, info) => ReliefLayer.layers(su, reliefBounds(info), tintZ = 1, shadeZ = 3))
     // with a tint: the ground (the land's fill, the open sea's) under it, the rest of the vector layer over it
     val base =
-      if !tinted then List(layer(rules.paint, js.Array(), (rules.paintReads, rules.paintZooms), 2, "terrain-base", background = true))
+      if !tinted then List(layer(rules.paint, js.Array(), Reads(rules.paintReads, rules.paintZooms, rules.paintKeys), 2, "terrain-base", background = true))
       else
         val ground = TerrainRules.compile(style, "en", have, false, lookup, TerrainRules.isGround)
         val cover  = TerrainRules.compile(style, "en", have, false, lookup, l => !TerrainRules.isGround(l))
-        List(layer(ground.paint, js.Array(), (ground.paintReads, ground.paintZooms), 0, "terrain-ground", background = true),
-          layer(cover.paint, js.Array(), (cover.paintReads, cover.paintZooms), 2, "terrain-base", background = false))
+        List(layer(ground.paint, js.Array(), Reads(ground.paintReads, ground.paintZooms, ground.paintKeys), 0, "terrain-ground", background = true),
+          layer(cover.paint, js.Array(), Reads(cover.paintReads, cover.paintZooms, cover.paintKeys), 2, "terrain-base", background = false))
     reliefs.foreach(_.addTo(map))
     // the names in a layer of their own: above the relief (never shaded), below every marker
-    val names = Option.when(rules.labels.nonEmpty)(layer(js.Array(), rules.labels, (rules.labelReads, rules.labelZooms), 4, "terrain-labels", background = false))
+    val names = Option.when(rules.labels.nonEmpty)(layer(js.Array(), rules.labels, Reads(rules.labelReads, rules.labelZooms, rules.labelKeys), 4, "terrain-labels", background = false))
     names.foreach(exposeLabels)
     namesLayer = names
-    drawn = Some((map, s, "", style, all))
-    shown = base ++ reliefs ++ names.toList
+    current = Some((map, s, "", style, all))
+    drawn = base ++ reliefs ++ names.toList
 
   /** A protomaps-leaflet layer of the vector sources (the extract, the names). */
   private def vectorLayer(map: LeafletMap, s: BasemapStatus, style: TerrainStyle, paint: js.Array[js.Object],
-      labels: js.Array[js.Object], reads: (Map[String, Map[String, Set[Int]]], Map[String, Map[String, Int]]), z: Int, cls: String,
+      labels: js.Array[js.Object], reads: Reads, z: Int, cls: String,
       background: Boolean): Layer =
-    val o = js.Dynamic.literal(sources = sourcesOf(s, reads._1, reads._2), paintRules = paint, labelRules = labels,
+    val o = js.Dynamic.literal(sources = sourcesOf(s, reads), paintRules = paint, labelRules = labels,
       attribution = attribution(s), zIndex = z, className = cls)
     if background then o.backgroundColor = TerrainRules.colour(style.background, lookup)
     s.layers.find(_.layer == BasemapLayer.Vector.wire).flatMap(bounds).foreach(b => o.bounds = b)
@@ -345,7 +393,7 @@ object TerrainMap:
   /** The names' layer alone (another language, names on again): the style's label rules compiled again. */
   private def drawNames(map: LeafletMap, s: BasemapStatus, style: TerrainStyle, all: TerrainStyles): Option[Layer] =
     val rules = TerrainRules.compile(style, TerrainRules.language(style, all), sources(s), style.labels, lookup)
-    val names = Option.when(rules.labels.nonEmpty)(vectorLayer(map, s, style, js.Array(), rules.labels, (rules.labelReads, rules.labelZooms), 4,
+    val names = Option.when(rules.labels.nonEmpty)(vectorLayer(map, s, style, js.Array(), rules.labels, Reads(rules.labelReads, rules.labelZooms, rules.labelKeys), 4,
       "terrain-labels", background = false))
     names.foreach(exposeLabels)
     names
@@ -372,20 +420,20 @@ object TerrainMap:
       out
     dom.window.asInstanceOf[js.Dynamic].__terrainLabelBoxes = fn
 
-  private def setNotice(map: LeafletMap, text: String, docsUrl: String, missing: Boolean): Unit =
+  private def setNotice(map: LeafletMap, text: String, docsUrl: String, missing: Boolean, lacking: Boolean = false): Unit =
     notice.foreach(_.remove())
     map.getContainer().classList.toggle("terrain-missing", missing)
     val ctrl = L.control(js.Dynamic.literal(position = "bottomleft").asInstanceOf[js.Object]).asInstanceOf[js.Dynamic]
     ctrl.onAdd = { (_: js.Dynamic) =>
-      val el = DomUtil.create("div", if missing then "terrain-notice is-missing" else "terrain-notice")
+      val el = DomUtil.create("div", if missing || lacking then "terrain-notice is-missing" else "terrain-notice")
       el.setAttribute("role", "note")
       val p = dom.document.createElement("span")
       p.textContent = text
       val a = dom.document.createElement("a").asInstanceOf[dom.HTMLAnchorElement]
-      a.href = docsLink(docsUrl)
+      a.href = if lacking then docsLink(docsUrl, OfflinePage) else docsLink(docsUrl)
       a.target = "_blank"
       a.rel = "noopener"
-      a.textContent = if missing then "How to download it" else "Why?"
+      a.textContent = if missing || lacking then "How to download it" else "Why?"
       el.appendChild(p)
       el.appendChild(dom.document.createTextNode(" "))
       el.appendChild(a)

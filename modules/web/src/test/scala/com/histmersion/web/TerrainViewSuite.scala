@@ -65,7 +65,7 @@ class TerrainViewSuite extends munit.FunSuite:
     assertEquals(codec.encode(ViewPrefs()), Nil)
     assertEquals(codec.decode(List("{oops")), Some(ViewPrefs()))
     assertEquals(p.set("natural", ViewOptions()).styles, Map.empty[String, ViewOptions], "an empty change is dropped")
-    assertEquals(MapOptions.family(BaseMap.Terrain), "histmersion")
+    assertEquals(MapOptions.family(BaseMap.Local), "histmersion")
     assertEquals(MapOptions.family(BaseMap.Dark), "raster")
     assertEquals(TerrainMap.familyLabel(None), "Histmersion map")
 

@@ -53,8 +53,9 @@ export function probe() {
 }
 
 /** A page with the probe and the map handle the browser regressions use; third-party requests (tiles)
-  * are refused, so only the app is measured. */
-export async function newPerfPage(browser, origin, viewport = { width: 1440, height: 900 }) {
+  * are refused, so only the app is measured. `source`: the base-map family the page is told it has
+  * (`local` or `online`, `/api/config`'s resolved `ui.base-map-source`); by default the server's. */
+export async function newPerfPage(browser, origin, viewport = { width: 1440, height: 900 }, { source } = {}) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
   await page.addInitScript(probe);
@@ -85,6 +86,10 @@ export async function newPerfPage(browser, origin, viewport = { width: 1440, hei
     if (req.method() !== 'GET' && req.method() !== 'HEAD') { blocked.push(`${req.method()} ${u.pathname}`); return route.abort(); }
     if (bundle && u.pathname === '/web/app.bundle.js') return route.fulfill({ body: bundle, contentType: 'text/javascript' });
     return route.continue();
+  });
+  if (source) await page.route('**/api/config', async route => {
+    const res = await route.fetch();
+    await route.fulfill({ response: res, json: { ...(await res.json()), baseMapSource: source } });
   });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));

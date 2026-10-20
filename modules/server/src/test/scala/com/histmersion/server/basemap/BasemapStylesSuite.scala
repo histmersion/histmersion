@@ -43,7 +43,7 @@ class BasemapStylesSuite extends munit.FunSuite:
   test("no file: the built-in styles; a file appears, changes, breaks and goes — each picked up at the next read"):
     val f = Fixture(Files.createTempDirectory("styles-hot"))
     val s0 = f.styles.current
-    assertEquals(s0.styles.map(_.id), List("natural", "contour", "terrain", "terrain-vegetation", "relief", "parchment"))
+    assertEquals(s0.styles.map(_.id), List("natural", "contour", "standard", "muted", "dark", "terrain", "terrain-vegetation", "relief", "parchment"))
     assertEquals((s0.source, s0.default, s0.language, s0.warnings), (TerrainStyles.BuiltIn, "natural", "en", Nil))
     assertEquals(s0.file, Some(f.file.toString))
     assertEquals(s0.checkSeconds, f.cfg.basemap.styleCheckSeconds)
@@ -96,7 +96,7 @@ class BasemapStylesSuite extends munit.FunSuite:
     val ok = f.styles.check("""styles = [ { id = "x", extends = "terrain", name = "X", glow = 1 } ]""")
     assert(ok.ok, ok.toString)
     assertEquals(ok.styles.last, "x")
-    assertEquals(ok.warnings, List("styles[0].glow: unknown key, ignored (known: background, description, extends, hidden, id, labels, language, layers, name, relief, tone)"))
+    assertEquals(ok.warnings, List("styles[0].glow: unknown key, ignored (known: background, description, extends, hidden, id, labels, language, layers, modern, name, relief, tone)"))
     val bad = f.styles.check("""styles = [ { id = "x", extends = "terrain", name = "X", background = 7 } ]""")
     assert(!bad.ok)
     assertEquals(bad.errors.size, 1, bad.errors.toString)

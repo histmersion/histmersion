@@ -171,7 +171,7 @@ const shots = {
 
   // The terrain base map (no modern features), drawn from the server's own extract — here the small
   // Aegean fixture (modules/web/test/fixtures/basemap) — with its notice about the past landscape.
-  'home-terrain': { local: { layers: '["events"]', baseMap: '["terrain"]' }, hash: 'from=-1700&to=-1000',
+  'home-terrain': { local: { layers: '["events"]', baseMap: '["terrain"]', terrainStyle: '["terrain"]' }, hash: 'from=-1700&to=-1000',
     run: async (page, shoot) => {
       await page.locator('.terrain-notice').waitFor();
       await view(page, 37.8, 25.4, 8);
@@ -206,6 +206,19 @@ const shots = {
       const b = await page.locator('.map-options').boundingBox();
       await shoot({ x: Math.max(0, b.x - 360), y: Math.max(0, b.y - 60), width: b.width + 520, height: b.height + 160 });
     } },
+
+  // The local street maps (how-to/offline.md): Standard, Muted and Dark drawn by the page from the
+  // server's own extract (the Aegean fixture, a --keep-all extract) — Attica at zoom 9, the corpus's
+  // markers on top; no other host asked for anything.
+  ...Object.fromEntries(['standard', 'muted', 'dark'].map(id => [`local-${id}`, {
+    local: { layers: '["events"]', baseMap: '["terrain"]', terrainStyle: `["${id}"]` }, hash: 'from=-1700&to=-1000',
+    run: async (page, shoot) => {
+      await view(page, 37.85, 23.75, 9);
+      await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2 &&
+        document.querySelector('.terrain-labels canvas'), null, { timeout: 30000 });
+      await settle(page, 2500);
+      await shoot();
+    } }])),
 
   // The phone layout: the map first, the controls on buttons, the list as a sheet.
   'phone': { viewport: phone, local: { layers: '["events","media"]', sheet: '["half"]' }, hash: 'from=-1700&to=-1000',

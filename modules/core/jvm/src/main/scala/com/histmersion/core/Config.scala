@@ -74,6 +74,16 @@ final case class MaintenanceConfig(vacuumTables: String) derives ConfigReader:
   * export is left there for its download before the next export clears it. */
 final case class BundlesConfig(dir: String, staleMinutes: Int) derives ConfigReader
 
+/** The Storage part of About (`histmersion about`, `/api/about`, the web About window): how often the
+  * server measures its directories (`ttl-seconds`; About answers the last measurement in between),
+  * how long a request waits for a measurement under way before it answers "measuring…"
+  * (`wait-millis`), the caps of one measurement (`max-millis`, `max-entries` — a walk they stop
+  * reports "at least"), how many of the largest tables it lists (`top-tables`) and the free space
+  * below which it says what to delete (`low-free-gb`). */
+final case class StorageConfig(ttlSeconds: Int, waitMillis: Int, maxMillis: Int, maxEntries: Int, topTables: Int,
+    lowFreeGb: Double) derives ConfigReader:
+  def lowFreeBytes: Long = (lowFreeGb * 1e9).toLong
+
 /** The source matcher of `merge plan` (docs/research-merge-import.md §5.2): Fellegi–Sunter-style
   * log-weights with hand-set values, and the two thresholds that split a score into auto-merge,
   * needs-decision and new. Tuned here, not in code. */
@@ -468,6 +478,7 @@ final case class AppConfig(
     backups: BackupsConfig,
     maintenance: MaintenanceConfig,
     bundles: BundlesConfig,
+    storage: StorageConfig,
     merge: MergeConfig,
     limits: Limits,
     ui: UiConfig,

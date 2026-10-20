@@ -215,7 +215,10 @@ export async function eventLayer(page, baseURL, from, to, { atLeast = 1 } = {}) 
   * names on when the server has them: from the reload to the notice and every tile drawn, then a pan and wheel zooms — the vector tiles drawn on canvas and the relief shaded in
   * the page, all of it inside the pan's budget. */
 export async function terrainMap(page, baseURL, { names = false } = {}) {
-  await page.evaluate(() => localStorage.setItem('histmersion.ui.baseMap', '["terrain"]'));
+  await page.evaluate(() => {
+    localStorage.setItem('histmersion.ui.baseMap', '["terrain"]');
+    localStorage.setItem('histmersion.ui.terrainStyle', '["terrain"]');   // the local default is Standard
+  });
   await page.goto(new URL('/', baseURL).href);
   await page.reload();
   await ready(page);
@@ -244,6 +247,30 @@ export async function terrainMap(page, baseURL, { names = false } = {}) {
   });
   await page.keyboard.press('Escape');
   return { drawnMs, longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom, options };
+}
+
+/** A local street map (Standard, Muted, Dark: roads by class, borders, land use, place names) over
+  * Athens at zoom 9 — data zoom 8, where the roads are heaviest for what the map shows — from the
+  * view set to every tile and name drawn, then a pan there and wheel zooms out to 8 and in again. */
+export async function localMap(page, baseURL, style, { lat = 37.95, lon = 23.7, zoom = 9 } = {}) {
+  await page.evaluate(s => {
+    localStorage.setItem('histmersion.ui.baseMap', '["terrain"]');
+    localStorage.setItem('histmersion.ui.terrainStyle', `["${s}"]`);
+  }, style);
+  await page.goto(new URL('/', baseURL).href);
+  await page.reload();
+  await ready(page);
+  await settled(page);
+  const t0 = await page.evaluate(() => performance.now());
+  await page.evaluate(([la, lo, z]) => window.__testMap.setView([la, lo], z, { animate: false }), [lat, lon, zoom]);
+  await valueOf(page, () => document.querySelectorAll('.terrain-base canvas').length > 2 && document.querySelector('.terrain-labels canvas'));
+  await quiet(page);
+  const drawnMs = Math.round(await page.evaluate(() => performance.now()) - t0);
+  const lt = (await page.evaluate(() => window.__perf.longTasks)).filter(t => t.start >= t0);
+  const pan = await mapPan(page);
+  await page.evaluate(([la, lo, z]) => window.__testMap.setView([la, lo], z - 1, { animate: false }), [lat, lon, zoom]);
+  const zoomed = await mapZoom(page);
+  return { drawnMs, longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom: zoomed };
 }
 
 export { memory };
