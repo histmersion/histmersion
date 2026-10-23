@@ -67,7 +67,7 @@ object AwmcImporter extends GazetteerImporter:
     case _                               => PlaceKind.Region
 
   private def str(o: JsonObject, keys: String*): Option[String] =
-    keys.iterator.flatMap(k => o(k).flatMap(_.asString).filter(_.nonEmpty)).nextOption
+    keys.iterator.flatMap(k => o(k).flatMap(_.asString).filter(_.nonEmpty)).nextOption()
 
   private def slugify(name: String): String =
     name.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_|_$", "")

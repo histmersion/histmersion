@@ -184,7 +184,7 @@ The relink also runs **Sloth** over plugin jars, which rewrites lazy vals compil
 - **Shade in every dependency the server does not ship** (with your build tool's assembly or shading
   plugin): `histmersion plugin add` installs exactly one jar and resolves nothing else. Do not bundle
   `histmersion-plugin-api` itself, sconfig or kindlings — the server provides them.
-- Build with a Scala 3 version no newer than the server's (3.8.0 in this release), against the
+- Build with a Scala 3 version no newer than the server's (3.8.4 in this release), against the
   same `Spi.Version`.
 - Publish it as a file, an `https` URL, or Maven coordinates; users then run
   `histmersion plugin add <path|url|group:artifact:version>`. To support GPG verification, publish a
