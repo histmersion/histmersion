@@ -137,7 +137,8 @@ test('budgets: the boundaries over a whole range (1 600 shapes) load and drag wi
 
 test('budgets: the events layer draws 2 400 markers, pans and zooms smoothly', async () => {
   await withPerfPage(async ({ page, cdp }) => {
-    const measured = await paths.eventLayer(page, baseURL, -3500, 1500, { atLeast: 2000 });
+    // every figure is the median of three runs (#2130): one run under load measured a 2 540 ms draw
+    const measured = await paths.eventLayer(page, baseURL, -3500, 1500, { atLeast: 2000, runs: 3 });
     const software = await page.evaluate(() => window.histmersionMap.capabilities().software);
     within(software ? 'eventLayerSoftware' : 'eventLayer', measured);
     within('memoryEventLayer', await memory(page, cdp));
