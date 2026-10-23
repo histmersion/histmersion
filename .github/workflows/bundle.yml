@@ -54,8 +54,25 @@ jobs:
     permissions: { contents: write }   # the release upload on tags
     steps:
       - uses: actions/checkout@v4
-      - uses: graalvm/setup-graalvm@v1
-        with: { java-version: '25', distribution: 'graalvm-community', cache: 'sbt' }
+      # the PINNED GraalVM CE (scripts/bundle/graalvm-pins.txt: version, URL, SHA-256), provisioned by the
+      # same script the installers use — setup-graalvm cannot name an innovation release (25.4's assets are
+      # `graalvm-community-jdk-25i4-…` under the tag graal-25.4.4.1.1)
+      - name: GraalVM CE (the pin)
+        run: |
+          export HISTMERSION_DATA_DIR="$RUNNER_TEMP/histmersion-toolchain" HISTMERSION_HOME=
+          bash scripts/bundle/toolchain.sh install
+          home="$(bash scripts/bundle/toolchain.sh path)"
+          { echo "JAVA_HOME=$home"; echo "GRAALVM_HOME=$home"; } >> "$GITHUB_ENV"
+          echo "$home/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/coursier
+            ~/Library/Caches/Coursier
+            ~/.sbt
+            ~/.ivy2/cache
+          key: sbt-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('build.sbt', 'project/**') }}
+          restore-keys: sbt-${{ runner.os }}-${{ runner.arch }}-
       - uses: sbt/setup-sbt@v1
       - uses: astral-sh/setup-uv@v6
         with: { enable-cache: true, cache-dependency-glob: converter/uv.lock }

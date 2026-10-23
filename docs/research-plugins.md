@@ -650,7 +650,7 @@ Plugin config changes alone (`enabled = false`) need only a config reload — no
 | need | macOS | Linux |
 |---|---|---|
 | C toolchain | Xcode Command Line Tools (`xcode-select --install`); GraalVM states "Native Image requires the Xcode command line tools", macOS 13+ and Xcode 14+ | `build-essential zlib1g-dev` (Debian/Ubuntu); `gcc glibc-devel zlib-devel libstdc++-static` (dnf); glibc ≥ 2.17, zlib ≥ 1.2.3, GCC ≥ 10.3 (GraalVM *Getting started on Linux*) |
-| GraalVM | CE 25.0.1, the `.sdkmanrc` pin: a tarball from `graalvm/graalvm-ce-builds` with a pinned sha256, fetched by `curl` (no quarantine) into `~/Applications/Histmersion/graalvm` | same, `~/.local/share/histmersion/graalvm` |
+| GraalVM | CE at the pin (25.0.1 when this was written; GraalVM CE 25.4, JDK 25.0.4.1.1, since 2026-10-23 — `scripts/bundle/graalvm-pins.txt`): a tarball from `graalvm/graalvm-ce-builds` with a pinned sha256, fetched by `curl` (no quarantine) into `~/Applications/Histmersion/graalvm` | same, `~/.local/share/histmersion/graalvm` |
 | Sloth | only for the **from-source** build; the relink kit ships patched jars | same |
 | sbt / Scala | only for the from-source build | same |
 
@@ -732,7 +732,7 @@ whichever launcher is active.
 
 ### 8.6 Reproducibility and updates
 
-- **Inputs are pinned:** GraalVM 25.0.1 (sha256), the kit's jars (sha256 in the kit manifest), the
+- **Inputs are pinned:** GraalVM (version and sha256, `scripts/bundle/graalvm-pins.txt`), the kit's jars (sha256 in the kit manifest), the
   plugin jars (the plugin-set digest), and the native-image arguments. Output bytes will differ
   between machines and CPUs: native-image prints "Enable more CPU features with '-march=native'",
   and a local build may opt into that. What we can reproduce is the **inputs**, and those are
@@ -1415,7 +1415,7 @@ links — 133 jars, all jars (sbt 2 exports the modules as jars; a class directo
 fail the task) — with its order (`kit/classpath`), the native-image flags (`kit/native-image.args`,
 `--no-fallback` + `serverNativeOpts`, now ONE list in build.sbt for both), the main class, and Sloth with
 its verifier (`kit/tools/`). `scripts/bundle/server.sh` copies it into the bundle, adds
-`kit/graalvm-version` (the `.sdkmanrc` pin) and runs `PluginTool kit-manifest`: `kit/kit.json` (format,
+`kit/graalvm-version` (the pinned version: `.sdkmanrc` until 2026-10-23, `scripts/bundle/graalvm-pins.txt` since) and runs `PluginTool kit-manifest`: `kit/kit.json` (format,
 version, commit, GraalVM version, plugin SPI, main class, every file's SHA-256) and `kit/SHA256SUMS` (the
 same sums in the format `shasum -c` reads, which is what the relink checks — never with the kit's own
 code). The server's reachability metadata is inside its jar, as every module's is. Beside the binary:
@@ -1508,10 +1508,12 @@ provisions (a full JDK), or any JDK of the pinned major via `HISTMERSION_JAVA_HO
 **Local build at setup (§8, phase 4).** *(The default and the fallback changed with D5: §20.1.)*
 `scripts/bundle/install-build.sh`, sourced by both installers:
 `--local-build` / `--jvm` / `HISTMERSION_BUILD=prebuilt|local|jvm`; **prebuilt stays the default** (D5
-unanswered). `local` runs `histmersion-toolchain install` (GraalVM CE 25.0.1 from
-`graalvm/graalvm-ce-builds`'s release, the SHA-256 pinned in `scripts/bundle/graalvm-pins.txt` for
-macOS aarch64/x64 and Linux x64/aarch64 — the release's own `.sha256` files and GitHub's asset digests
-agree, checked 2026-10-18 — unpacked into `<data>/toolchain/graalvm-ce-25.0.1`), `histmersion-toolchain
+unanswered). `local` runs `histmersion-toolchain install` (the pinned GraalVM CE from
+`graalvm/graalvm-ce-builds`'s release, the SHA-256 pinned in `scripts/bundle/graalvm-pins.txt` — the
+release's own `.sha256` files and GitHub's asset digests agree — unpacked into
+`<data>/toolchain/graalvm-ce-<version>`; 25.0.1 for macOS aarch64/x64 and Linux x64/aarch64, checked
+2026-10-18; since 2026-10-23 GraalVM CE 25.4, JDK 25.0.4.1.1, for macOS aarch64 and Linux x64/aarch64 —
+25.4 has no macOS x64 build — checked 2026-10-23), `histmersion-toolchain
 check`, then `histmersion-relink --no-restart` before the service starts; any failure falls back to JVM
 mode, and failing that keeps the prebuilt binary. **Deviation:** §8.1 put GraalVM under
 `~/Applications/Histmersion/graalvm`; an install replaces that directory wholesale, so it lives in the

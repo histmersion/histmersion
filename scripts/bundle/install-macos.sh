@@ -13,7 +13,7 @@
 # --move renames the bundle into place instead of copying it (a developer build, short on disk).
 # The server binary (install-build.sh; HISTMERSION_BUILD=local|prebuilt|jvm) is LINKED ON THIS MAC by
 # default, from the bundle's kit with the plugins of the data directory's plugins/: GraalVM CE downloaded
-# once at its pinned version and checksum into the data directory (~325 MB), Xcode command line tools,
+# once at its pinned version and checksum into the data directory (~340 MB), Xcode command line tools,
 # ~16 GB of memory, about 2 minutes. When this Mac cannot (memory, toolchain, download, native-image, the
 # self-check), the install FALLS BACK to the bundle's prebuilt binary and says so — it still succeeds.
 # Nothing is linked when it would repeat a binary already linked here from the same kit and plugins.

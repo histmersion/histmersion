@@ -1,12 +1,17 @@
 # Native image
 
-Both binaries are GraalVM `native-image` builds (~50 s for the CLI, ~100 s for the server, peaking
-near 12 GB; the CLI binary is 87 MB, the server binary 210 MB — measured in
+Both binaries are GraalVM `native-image` builds (~50 s for the CLI, ~95 s for the server, peaking
+near 12 GB; the CLI binary is 69 MB, the server binary 168 MB — measured in
 {{ repo_file("docs/research-build-speed.md") }}). The lessons that keep them working — the full list is in
 [`AGENTS.md`](https://github.com/histmersion/histmersion/blob/master/AGENTS.md):
 
-- **The JDK is pinned to GraalVM CE 25.0.1** (`.sdkmanrc` and CI together; `scripts/bundle/server.sh`
-  refuses any other major).
+- **The JDK is pinned to GraalVM CE 25.4** (JDK 25.0.4.1.1), in `scripts/bundle/graalvm-pins.txt`: the
+  official download and its SHA-256 per platform. `just toolchain install` provisions it, CI provisions it
+  with the same script, and `scripts/bundle/server.sh` refuses any other version. It is an *innovation*
+  release, which gets no fixes once the next one is out, so the pin moves with each new one. Its
+  builder refuses a `java.*` class on the class path, so build.sbt excludes `scala-java-time-tzdb_3`
+  (a Scala.js time-zone database that scribe pulls onto the JVM); the binaries use the JDK's own
+  time zones, which `histmersion-server --self-check` checks.
   It was 22.0.2 until tapir 1.13.31: the older `tapir-netty-server-sync` pulled ox 0.5.x, whose
   `DoNothingScope extends StructuredTaskScope`, and JEP 505 made that an interface in JDK 25. ox 1.0.x
   uses its own `ThreadHerd` over virtual threads instead, so the preview API is gone from the stack.
