@@ -102,6 +102,14 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals((c.agents.managers.watch.cron, c.agents.managers.watch.autoIngestPerDay, c.agents.managers.watch.maxRuns),
       ("@weekly", 5, 1))
 
+  test("the autopilot's focus: defaults, the environment and the file"):
+    val a = AppConfig.load(env()).agents.autopilot
+    assertEquals((a.maxActiveGoals, a.focusRatio, a.maxOpenSubGoals, a.focusQueueShown), (8, 3, 5, 10))
+    assertEquals(AppConfig.load(env("HISTMERSION_AGENTS_AUTOPILOT_MAX_ACTIVE_GOALS" -> "3")).agents.autopilot.maxActiveGoals, 3)
+    val f = confFile("histmersion { agents { autopilot { max-active-goals = 0, focus-ratio = 1 } } }")
+    val c = loaded(env(), f).config.agents.autopilot
+    assertEquals((c.maxActiveGoals, c.focusRatio, c.ingestPerDay), (0, 1, 20))
+
   test("user file: env-style strings and plain numbers are accepted where the readers accept them"):
     val f = confFile("""histmersion.server.port = "8125"
                        |histmersion.agents.enabled = "true"

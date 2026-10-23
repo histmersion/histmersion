@@ -322,10 +322,16 @@ final case class AgentManagersConfig(enabled: Boolean, tickSeconds: Int, keepEve
   *   the same minute); `finishedWatchCron`: a reviewed goal's watcher;
   * - `extendMinNew`: what the review manager's `extendMinNew` is set to (when it has none);
   * - `backupHours`, `lintHours`: a backup (pg_dump, the configured pruning) and the safe `lint --fix`
-  *   repairs every so many hours (0 = never), never while a backup, a vacuum or a restore runs. */
+  *   repairs every so many hours (0 = never), never while a backup, a vacuum or a restore runs;
+  * - the FOCUS (docs/research-process-managers.md "As built: the focus"): `maxActiveGoals` goals at most are
+  *   active for model work at a time (0 = no cap; a person's override in the database wins); the enrich and
+  *   review managers start `focusRatio` items of active goals to one of any other; a goal plan is approved
+  *   by code only while its goal is active and its unfinished sub-goals plus the plan's new ones stay within
+  *   `maxOpenSubGoals`; the status lists the next `focusQueueShown` waiting goals. */
 final case class AgentAutopilotConfig(ensureMinutes: Int = 5, ingestPerDay: Int = 20, watchIngestPerDay: Int = 5,
     watchCron: String = "@weekly", seedCron: String = "@weekly", finishedWatchCron: String = "@monthly",
-    extendMinNew: Int = 3, backupHours: Int = 24, lintHours: Int = 24) derives ConfigReader
+    extendMinNew: Int = 3, backupHours: Int = 24, lintHours: Int = 24, maxActiveGoals: Int = 8, focusRatio: Int = 3,
+    maxOpenSubGoals: Int = 5, focusQueueShown: Int = 10) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,
