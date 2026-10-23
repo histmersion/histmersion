@@ -67,7 +67,9 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     val st = svc.status
     assert(st.available, st.toString)
     assertEquals(st.layers.map(l => (l.layer, l.maxZoom)), List(("vector", Some(4)), ("terrain", Some(3)), ("labels", Some(6)), ("bathymetry", Some(3))))
-    assertEquals(st.hints, Nil)
+    // the default download draws Physical whole; Readable's roads, places and borders need --keep-all, and the status says so
+    assertEquals(st.hints.size, 1, st.hints.toString)
+    assert(st.hints.head.startsWith("Readable needs boundaries, places and roads") && st.hints.head.contains("--keep-all"), st.hints.toString)
     assert(st.layers.head.kept.exists(_.startsWith("all but: roads; transit; buildings")), st.layers.head.kept.toString)
     val names = st.layers.find(_.layer == "labels").get
     assertEquals((names.source, names.tileType), (Some("Natural Earth"), Some("application/vnd.mapbox-vector-tile")))
@@ -103,8 +105,11 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     val (svc, v, _) = service(dir)
     assert(await(svc.fetch(BasemapFetchQuery(layer = "vector")).fold(e => fail(e.message), _.id)).succeeded)
     val before = svc.status
-    assertEquals(before.hints.size, 1)
-    assert(before.hints.head.contains("histmersion basemap fetch --layer labels"), before.hints.toString)
+    // the names' hint, beside Readable's (the default download leaves its roads, places and borders out)
+    assertEquals(before.hints.size, 2, before.hints.toString)
+    assert(before.hints.exists(_.contains("histmersion basemap fetch --layer labels")), before.hints.toString)
+    val readable = before.hints.filter(_.startsWith("Readable needs"))
+    assertEquals(readable.size, 1, before.hints.toString)
     val downloads = v.downloads.get
     val dry = await(svc.fetch(BasemapFetchQuery(layer = "labels", dryRun = true)).fold(e => fail(e.message), _.id))
     assert(dry.progress.exists(_.contains("would download 2 files")), dry.progress.toString)
@@ -113,7 +118,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assert(j.succeeded, j.toString)
     assert(j.progress.exists(_.contains("labels (Natural Earth): 2 names in")), j.progress.toString)
     assertEquals(v.downloads.get, downloads, "the vector extract is not downloaded again")
-    assertEquals(svc.status.hints, Nil)
+    assertEquals(svc.status.hints, readable)
 
   test("--keep-all stores the vector layer unfiltered; an extract from before the drop list is said, with the one fetch that broadens it"):
     val dir = Files.createTempDirectory("basemap")
