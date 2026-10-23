@@ -54,6 +54,22 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
   gl.addControl(NavigationControl(js.Dynamic.literal(showCompass = false).asInstanceOf[js.Object]), "top-left")
   private val credits = AttributionControl(js.Dynamic.literal(compact = true).asInstanceOf[js.Object])
   gl.addControl(credits, "bottom-right")
+  // the credits start folded behind their ⓘ button: MapLibre unfolds a compact attribution when it first
+  // fills it; folded here until the reader opens it (a click on the button), never over the map's corner
+  // `var`: whether the reader has opened or closed the credits themselves
+  private var creditsTouched = false
+  el.addEventListener("click", (e: dom.MouseEvent) =>
+    if e.target.isInstanceOf[dom.Element] && e.target.asInstanceOf[dom.Element].closest(".maplibregl-ctrl-attrib-button") != null then
+      creditsTouched = true)
+  // MapLibre unfolds them once, when they first become compact; folded once, nothing more to watch
+  private var creditsFolded = false
+  gl.on("data", (_: GlEvent) =>
+    if !creditsTouched && !creditsFolded then
+      Option(el.querySelector(".maplibregl-ctrl-attrib.maplibregl-compact-show")).foreach { c =>
+        c.classList.remove("maplibregl-compact-show")
+        c.removeAttribute("open")
+        creditsFolded = true
+      })
   gl.on("style.load", (_: GlEvent) => shapeSets.values.foreach(_.restore()))
   // a tile that could not be read (offline, refused, outside the extract) is not an error of the page:
   // the map draws without it (MapLibre would otherwise print every one to the console)
@@ -107,6 +123,15 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
         val key = if lang == "local" then "name" else s"name:$lang"
         gl.queryRenderedFeatures(js.undefined.asInstanceOf[js.Array[Double]], js.Dynamic.literal(layers = symbols).asInstanceOf[js.Object]).toSeq
           .flatMap(f => f.properties.get(key).orElse(f.properties.get("name:en")).orElse(f.properties.get("name")).map(_.toString)).distinct
+  def baseMapAreasAt(p: ScreenPt): Seq[String] =
+    val style = gl.getStyle()
+    if style == null || js.isUndefined(style) then Nil
+    else
+      val fills = style.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => l.`type`.toString == "fill" &&
+        !shapeSets.values.exists(_.layerIds.contains(l.id.toString))).map(_.id.toString)
+      if fills.isEmpty then Nil
+      else gl.queryRenderedFeatures(js.Array(p.x, p.y), js.Dynamic.literal(layers = fills).asInstanceOf[js.Object]).toSeq
+        .map(f => s"${f.layer.id}:${f.properties.get("kind").fold("")(_.toString)}").distinct
   def destroy(): Unit = gl.remove()
 
   // ── events ───────────────────────────────────────────────────────────────────────────────────

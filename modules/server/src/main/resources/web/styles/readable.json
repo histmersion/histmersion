@@ -66,7 +66,6 @@
       "type": "fill",
       "source": "lc",
       "source-layer": "landcover",
-      "maxzoom": 9,
       "filter": [
         "in",
         [
@@ -144,8 +143,21 @@
             0.5,
             0.45
           ],
-          9,
-          0
+          9.5,
+          [
+            "match",
+            [
+              "get",
+              "kind"
+            ],
+            "barren",
+            0.5,
+            "farmland",
+            0.45,
+            "urban_area",
+            0,
+            0.3
+          ]
         ]
       }
     },
@@ -168,10 +180,17 @@
             "wood",
             "grassland",
             "meadow",
+            "grass",
             "scrub",
             "heath",
+            "farmland",
+            "orchard",
+            "vineyard",
+            "bare_rock",
+            "scree",
             "sand",
             "beach",
+            "wetland",
             "glacier",
             "residential",
             "industrial",
@@ -193,7 +212,8 @@
           "#add19e",
           [
             "grassland",
-            "meadow"
+            "meadow",
+            "grass"
           ],
           "#cdebb0",
           [
@@ -201,11 +221,25 @@
             "heath"
           ],
           "#c8d7ab",
+          "farmland",
+          "#eef0d5",
+          [
+            "orchard",
+            "vineyard"
+          ],
+          "#d5e6c3",
+          [
+            "bare_rock",
+            "scree"
+          ],
+          "#eee5dc",
           [
             "sand",
             "beach"
           ],
           "#f5e9c6",
+          "wetland",
+          "#d9e8d6",
           "glacier",
           "#ddecec",
           "#e0dfdf"

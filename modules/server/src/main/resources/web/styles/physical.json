@@ -202,7 +202,6 @@
       "type": "fill",
       "source": "lc",
       "source-layer": "landcover",
-      "maxzoom": 8,
       "filter": [
         "in",
         [
@@ -230,8 +229,8 @@
           0.12,
           7,
           0.15,
-          8,
-          0
+          9,
+          0.08
         ]
       }
     },
@@ -268,9 +267,9 @@
           7.5,
           0,
           8.5,
-          0.2,
+          0.16,
           12,
-          0.22
+          0.18
         ]
       }
     },
@@ -294,7 +293,23 @@
       ],
       "paint": {
         "fill-color": "#ead9ae",
-        "fill-opacity": 0.55
+        "fill-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          -1,
+          0.55,
+          7,
+          0.5,
+          9,
+          0.22,
+          11,
+          0.16
+        ]
       }
     },
     {
@@ -302,7 +317,6 @@
       "type": "fill",
       "source": "lc",
       "source-layer": "landcover",
-      "maxzoom": 10,
       "filter": [
         "in",
         [
@@ -313,7 +327,8 @@
           "literal",
           [
             "farmland",
-            "grassland"
+            "grassland",
+            "scrub"
           ]
         ]
       ],
@@ -329,10 +344,10 @@
           ],
           -1,
           0.22,
-          9,
+          8,
           0.18,
           10,
-          0
+          0.1
         ]
       }
     },
@@ -357,6 +372,113 @@
       "paint": {
         "fill-color": "#ffffff",
         "fill-opacity": 0.8
+      }
+    },
+    {
+      "id": "landuse-veil",
+      "type": "fill",
+      "source": "osm",
+      "source-layer": "landuse",
+      "minzoom": 7.5,
+      "filter": [
+        "in",
+        [
+          "get",
+          "kind"
+        ],
+        [
+          "literal",
+          [
+            "farmland",
+            "orchard",
+            "vineyard",
+            "grassland",
+            "meadow",
+            "grass",
+            "scrub",
+            "heath",
+            "bare_rock",
+            "scree",
+            "sand",
+            "beach",
+            "wetland"
+          ]
+        ]
+      ],
+      "paint": {
+        "fill-color": [
+          "match",
+          [
+            "get",
+            "kind"
+          ],
+          [
+            "farmland",
+            "orchard",
+            "vineyard",
+            "grassland",
+            "meadow",
+            "grass"
+          ],
+          "#b8cc94",
+          [
+            "scrub",
+            "heath"
+          ],
+          "#a9b98a",
+          [
+            "bare_rock",
+            "scree"
+          ],
+          "#c9c2b5",
+          [
+            "sand",
+            "beach"
+          ],
+          "#ead9ae",
+          "wetland",
+          "#8fb8a8",
+          "#b8cc94"
+        ],
+        "fill-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          7.5,
+          0,
+          8.5,
+          [
+            "match",
+            [
+              "get",
+              "kind"
+            ],
+            [
+              "sand",
+              "beach"
+            ],
+            0.4,
+            0.14
+          ],
+          12,
+          [
+            "match",
+            [
+              "get",
+              "kind"
+            ],
+            [
+              "sand",
+              "beach"
+            ],
+            0.45,
+            0.18
+          ]
+        ]
       }
     },
     {

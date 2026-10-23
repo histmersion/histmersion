@@ -1671,6 +1671,16 @@ test('the base map: Readable and Physical drawn from the server\'s extract (the 
     assert.match(st.notice, /Coastlines, rivers, lakes and vegetation were different in the past/);
     assert.match(await page.locator('.terrain-notice a').getAttribute('href'), /exploring\/web-ui\.md#the-base-map$/);
     for (const c of [/OpenStreetMap/, /Natural Earth/, /Protomaps/, /Mapterhorn/]) assert.match(st.credits, c);
+    // the credits start folded behind their button; it opens them, and closes them again
+    const credits = page.locator('.maplibregl-ctrl-attrib');
+    const folded = () => page.evaluate(() => { const c = document.querySelector('.maplibregl-ctrl-attrib');
+      return c.classList.contains('maplibregl-compact') && !c.classList.contains('maplibregl-compact-show')
+        && getComputedStyle(c.querySelector('.maplibregl-ctrl-attrib-inner')).display === 'none'; });
+    assert.ok(await folded(), 'the credits start folded');
+    await credits.locator('.maplibregl-ctrl-attrib-button').click();
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('.maplibregl-ctrl-attrib-inner')).display !== 'none');
+    await credits.locator('.maplibregl-ctrl-attrib-button').click();
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('.maplibregl-ctrl-attrib-inner')).display === 'none');
     assert.ok(await mapColours(page) > 20, 'Readable is drawn');
     await chooseBaseMap(page, 'physical');
     st = await page.evaluate(baseMapState);
@@ -1689,6 +1699,66 @@ test('the base map: Readable and Physical drawn from the server\'s extract (the 
     await page.locator('.map-base-select').selectOption('standard');
     await page.waitForFunction(() => /OpenStreetMap/.test(document.querySelector('.maplibregl-ctrl-attrib')?.textContent ?? ''));
   }, { source: 'online' });
+});
+
+/** A style's fill opacity for a feature of `kind` at MapLibre zoom `z`: the two forms the styles use — a number,
+  * or `interpolate linear zoom` over stops that are numbers or `match get kind`. */
+function fillOpacity(layer, kind, z) {
+  const value = v => {
+    if (typeof v === 'number') return v;
+    if (Array.isArray(v) && v[0] === 'match') {
+      for (let i = 2; i + 1 < v.length; i += 2) if ([].concat(v[i]).includes(kind)) return v[i + 1];
+      return v[v.length - 1];
+    }
+    throw new Error(`an opacity form this check does not read: ${JSON.stringify(v)}`);
+  };
+  const o = layer.paint?.['fill-opacity'] ?? 1;
+  if (!Array.isArray(o) || o[0] !== 'interpolate') return value(o);
+  const stops = o.slice(3);
+  if (z <= stops[0]) return value(stops[1]);
+  for (let i = 0; i + 2 < stops.length; i += 2)
+    if (z <= stops[i + 2]) { const t = (z - stops[i]) / (stops[i + 2] - stops[i]); return value(stops[i + 1]) + t * (value(stops[i + 3]) - value(stops[i + 1])); }
+  return value(stops[stops.length - 1]);
+}
+
+test('land cover is drawn at every zoom, in both base maps: the satellite classes overzoomed under OSM\'s land use', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  // the layers that draw land cover in each style, and the kinds that are vegetation, rock, sand, wetland or ice
+  const cover = {
+    readable: { layers: ['landcover', 'landuse'], kinds: new Set(['forest', 'wood', 'grassland', 'meadow', 'grass', 'scrub', 'heath', 'farmland',
+      'orchard', 'vineyard', 'barren', 'bare_rock', 'scree', 'sand', 'beach', 'wetland', 'glacier']) },
+    physical: { layers: ['forest-lc', 'forest', 'sand', 'green-lc', 'glacier', 'landuse-veil'], kinds: null },
+  };
+  await withPage({ width: 1280, height: 800 }, async page => {
+    for (const style of ['readable', 'physical']) {
+      const doc = await (await fetch(new URL(`/web/styles/${style}.json`, baseURL))).json();
+      const byId = Object.fromEntries(doc.layers.map(l => [l.id, l]));
+      await chooseBaseMap(page, style);
+      // the Argolid around Mycenae: forest, scrub, farmland and bare rock, at zooms 7, 9, 11 and 13 (the app's)
+      for (const zoom of [7, 9, 11, 13]) {
+        await page.evaluate(z => window.__testMap.setView([37.73, 22.756], z), zoom);
+        await page.waitForFunction(() => window.__testMap.isDrawn(), null, { timeout: 20000 });
+        const samples = await page.evaluate(() => {
+          const m = window.__testMap, b = m.getBounds(), out = [];
+          for (let i = 1; i < 12; i++) for (let j = 1; j < 8; j++) {
+            const at = [b.south + (b.north - b.south) * j / 8, b.west + (b.east - b.west) * i / 12];
+            out.push(m.areasAt(at));
+          }
+          return out;
+        });
+        const land = samples.filter(a => a.some(x => x.startsWith('earth:')));
+        const covered = land.filter(a => a.some(x => {
+          const [id, kind] = x.split(':');
+          return cover[style].layers.includes(id) && (!cover[style].kinds || cover[style].kinds.has(kind))
+            && fillOpacity(byId[id], kind, zoom - 1) >= 0.05;
+        }));
+        assert.ok(land.length >= 10, `${style} z${zoom}: the view is mostly land (${land.length} of ${samples.length} points)`);
+        assert.ok(covered.length >= land.length * 0.3,
+          `${style} z${zoom}: land cover drawn under ${covered.length} of ${land.length} land points (${JSON.stringify(land.slice(0, 6))})`);
+      }
+    }
+  }, { source: 'local' });
 });
 
 test('map options: names off and on, their language, contours only where Physical has the detailed relief; kept across a reload', async t => {

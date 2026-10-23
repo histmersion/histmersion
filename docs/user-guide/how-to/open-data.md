@@ -185,7 +185,7 @@ the Sahel to southern Scandinavia), measured on one complete zoom-10 download of
 | **10** (default) | **1.54 GB** | **1.30 GB** | **1.52 GB** |
 
 Nine tenths of it is OpenStreetMap's land use (woods, fields, towns, mapped in fine detail where
-people mapped it), which the base maps draw only faintly, from zoom 9. To keep the download
+people mapped it), which the base maps draw over the coarser satellite land cover wherever it is mapped. To keep the download
 small, drop it:
 `basemap.vector.drop = "roads; transit; buildings; boundaries; places; landuse; pois +peak +volcano"`
 (then close to 16, 56 and 138 MB, as before 2026-10-19). The web page asks the server only for the layers its style draws,
