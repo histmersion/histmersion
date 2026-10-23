@@ -54,21 +54,47 @@ object ManagerCmd:
         "activity and pace, and the watchers' ingest backlog; on — every goal gets an active seeding manager and watcher and " +
         "moves from planned to reviewed by itself (within every cap, budget and plan floor); off — the seeding managers and " +
         "watchers it runs are paused; repair-acquire [--dry-run] — move the acquisition items a watcher's sweep created for " +
-        "legal open-access works into the watchers' ingest backlog (a person's items are never touched)") {
-    (Opts.argument[String]("status|on|off|repair-acquire").withDefault("status"),
+        "legal open-access works into the watchers' ingest backlog (a person's items are never touched); focus " +
+        "[list|pin <goal>|unpin <goal>|priority <goal> <n>|max <n|default>] — at most max-active-goals goals are active for " +
+        "model work (finish-first: articles to review, then to compile, then enough sources; depth-first within a tree; a " +
+        "person's pins and priority; then the oldest), the others' model-using items wait; ingestion is not capped") {
+    (Opts.argument[String]("status|on|off|repair-acquire|focus").withDefault("status"),
+      Opts.arguments[String]("focus: list|pin|unpin|priority|max [goal] [n]").orEmpty,
       Opts.flag("dry-run", "repair-acquire: list what it would do, change nothing").orFalse, Output.jsonFlag).mapN {
-      (verb, dry, json) => (c: Client) =>
+      (verb, rest, dry, json) => (c: Client) =>
         def status(call: Either[CliError, Autopilot.AutopilotStatus]) = call.map(s => Output.emit(json, s)(AutopilotMarkdown.status))
         verb.trim.toLowerCase match
+          case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
+            Left(CliError(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})", exitCode = ExitCode.Usage))
           case "status" => status(c.call(ManagersApi.autopilot)(()))
           case "on"     => status(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = true, Some("cli"))))
           case "off"    => status(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = false, Some("cli"))))
           case "repair-acquire" =>
             c.call(ManagersApi.repairAcquire)(RepairAcquire.RepairRequest(dry, Some("cli")))
               .map(r => Output.emit(json, r)(RepairAcquire.markdown))
-          case other => Left(CliError(s"unknown autopilot verb '$other' (status, on, off, repair-acquire)", exitCode = ExitCode.Usage))
+          case "focus" =>
+            focusRequest(rest).flatMap {
+              case None    => c.call(ManagersApi.focus)(())
+              case Some(r) => c.call(ManagersApi.setFocus)(r)
+            }.map(f => Output.emit(json, f)(AutopilotMarkdown.focus))
+          case other => Left(CliError(s"unknown autopilot verb '$other' (status, on, off, repair-acquire, focus)", exitCode = ExitCode.Usage))
     }
   }
+
+  /** `focus` [list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>] → the request
+    * (None: just show it); a malformed one is a usage error before anything is sent. */
+  def focusRequest(args: List[String]): Either[CliError, Option[Autopilot.FocusSet]] =
+    def usage(m: String) = Left(CliError(m, exitCode = ExitCode.Usage))
+    def num(s: String) = s.trim.toIntOption.toRight(CliError(s"'$s' is not a whole number", exitCode = ExitCode.Usage))
+    args.map(_.trim) match
+      case Nil | List("list")                   => Right(None)
+      case List(v @ ("pin" | "unpin"), g)        => Right(Some(Autopilot.FocusSet(v, Some(g), by = Some("cli"))))
+      case List("priority", g, n)                => num(n).map(p => Some(Autopilot.FocusSet("priority", Some(g), Some(p), Some("cli"))))
+      case List("max", "default")                => Right(Some(Autopilot.FocusSet("max", by = Some("cli"))))
+      case List("max", n)                        =>
+        num(n).flatMap(m => if m < 0 then usage("focus max takes 0 (no cap) or more, or `default`")
+          else Right(Some(Autopilot.FocusSet("max", value = Some(m), by = Some("cli")))))
+      case other => usage(s"focus ${other.mkString(" ")}: use focus [list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>]")
 
   /** The verbs of one manager; each takes the manager's id first. */
   private def verb(name: String, help: String)(rest: Opts[(Client, String) => Either[CliError, Unit]]) =
