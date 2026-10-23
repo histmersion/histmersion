@@ -1648,7 +1648,7 @@ test('autopilot focus: the active goals, the queue and a pin in the managers win
     const pin = panel.locator('.focus-queue li').filter({ hasText: 'zz-pw-q1' }).locator('button', { hasText: 'pin' });
     await pin.click();
     await page.waitForFunction(() => /zz-pw-q1 pinned/.test(document.querySelector('.autopilot-focus').innerText));
-    assert.deepEqual(posted, [{ action: 'pin', goal: 'zz-pw-q1', by: 'web' }]);
+    assert.deepEqual(posted, [{ action: 'pin', goal: 'zz-pw-q1', value: null, by: 'web' }]);
     assert.match(await page.locator('.autopilot-focus').innerText(), /pinned by a person/);
   });
 });
