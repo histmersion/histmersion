@@ -362,10 +362,16 @@ private[maplibre] final class GlShapes(gl: GlMap, val id: String, val look: Shap
 
   def ids: Seq[String] = drawn.keys.toSeq
 
+  // `var`: how many times the outlines were sent (diagnostics)
+  private var sent = 0
+  override def uploads: Int = sent
+  override def styleOf(k: String): Option[(String, Double)] = drawn.get(k).map(d => (d.colour, d.alpha))
+
   /** The shapes under map point `at` (screen point `p`), topmost (last drawn) first: an area that holds
     * it, a point within its circle. */
   def under(at: LatLon, p: ScreenPt, s: MapSurface): Seq[String] =
-    drawn.toSeq.reverseIterator.filter { (_, d) =>
+    // a shape faded out (playback's states before and after their years) answers nothing
+    drawn.toSeq.reverseIterator.filter((_, d) => d.alpha > 0.05).filter { (_, d) =>
       ShapeHits.point(d.geometry.asInstanceOf[js.Dynamic]) match
         case Some(q) =>
           val sp = s.project(q)
@@ -390,6 +396,7 @@ private[maplibre] final class GlShapes(gl: GlMap, val id: String, val look: Shap
       }
       gl.getSource(id).toOption match
         case Some(src) =>
+          sent += 1
           src.setData(collection)
           stated.filterInPlace(drawn.contains)
           stated.foreach(k => state(drawn(k)))

@@ -123,7 +123,7 @@ object TimelinePlayback:
   private def stop(): Unit =
     playing.set(false)
     playheadPos.set(None)
-    frames.drop()
+    feed.reset()
     dom.window.cancelAnimationFrame(frameId)
     MapView.setPlaybackMode(false)
     EventLayer.stop()
@@ -148,19 +148,57 @@ object TimelinePlayback:
         playhead.set(next)
         playheadPos.set(Some(next))
         EventLayer.frame(next, yearsPerSecond)
-        updateMapFilter()
+        feed.frame(next, yearsPerSecond)
         frameId = dom.window.requestAnimationFrame((t: Double) => tick(t))
 
-  /** The map follows the playhead with ONE findings request in flight, the newest frame's next: it
-    * asked once per animation frame (~60/s), and every answer — in whatever order they came back —
-    * re-rendered the map. A frame whose answer arrives after playback stopped is not drawn. */
-  private val frames = LatestOnly[Long]((ph, done) => {
-    val wh = windowHalf.now()
-    val f = UiState.toFilter().copy(period = Some(Period(ph - wh, ph + wh)))
-    ApiClient.findings(Api.FindingsQuery.of(f)).onComplete { r =>
-      r.foreach(points => if playheadPos.now().isDefined then MapView.render(points, (ph - wh, ph + wh)))
-      done()
-    }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
-  })
+  /** The map follows the playhead from findings fetched ahead ([[PlaybackFeed]], #3764): it asked for
+    * each frame's window (~60 requests a second) and re-drew the map whenever an answer came, so the map
+    * changed at the rate answers arrived. Now one request covers [[Layout.playbackFetchSeconds]] of
+    * playback, and every frame draws its window from what is held — the first frames wait for the
+    * first answer. A frame's answer that arrives after playback stopped is not kept. */
+  private object feed:
+    import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+    // `var`s: what is held and up to which year it covers; whether a request is out (and, after a
+    // failure, not before when); the filter it was asked with; the generation (a stopped playback's
+    // answers are dropped)
+    private var held = Vector.empty[GeoHit]
+    private var coveredTo: Option[Long] = None
+    private var asking = false
+    private var retryAt = 0.0
+    private var filter: Option[Filter] = None
+    private var generation = 0
 
-  private def updateMapFilter(): Unit = frames(playhead.now())
+    def reset(): Unit =
+      generation += 1
+      held = Vector.empty
+      coveredTo = None
+      asking = false
+      filter = None
+
+    def frame(ph: Long, yearsPerSecond: Double): Unit =
+      val wh = windowHalf.now()
+      val f = UiState.toFilter()
+      // the filter changed while it played: what is held was asked with the old one
+      if !filter.contains(f) then { reset(); filter = Some(f) }
+      val chunk = PlaybackFeed.chunkYears(wh, yearsPerSecond, Layout.playbackFetchSeconds)
+      if !asking && dom.window.performance.now() >= retryAt then
+        PlaybackFeed.next(coveredTo, ph, wh, chunk, spanTo).foreach(ask(f, _))
+      if coveredTo.exists(_ >= ph + wh) then
+        MapView.playFrame(PlaybackFeed.inWindow(held, ph - wh, ph + wh), (ph - wh, ph + wh), ph, yearsPerSecond)
+
+    private def ask(f: Filter, period: (Long, Long)): Unit =
+      asking = true
+      val mine = generation
+      val q = Api.FindingsQuery.of(f.copy(period = Some(Period(period._1, period._2)), limit = Layout.playbackFetchLimit))
+      ApiClient.findings(q).onComplete { r =>
+        if mine == generation then
+          asking = false
+          r match
+            case scala.util.Success(points) =>
+              val lo = playhead.now() - windowHalf.now()
+              val known = held.toSet
+              held = PlaybackFeed.keep(held, lo).toVector ++ points.filterNot(known.contains)
+              coveredTo = Some(PlaybackFeed.covered(period, points, Layout.playbackFetchLimit))
+            case scala.util.Failure(_) =>
+              retryAt = dom.window.performance.now() + 1000
+      }

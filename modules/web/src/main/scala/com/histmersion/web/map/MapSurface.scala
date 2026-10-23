@@ -183,6 +183,10 @@ trait ShapeSet:
   def clear(): Unit = set(Nil)
   /** The ids drawn now. */
   def ids: Seq[String]
+  /** How many times the shapes' outlines were sent to the map (a restyle sends none; diagnostics). */
+  def uploads: Int = 0
+  /** A drawn shape's colour and visibility (diagnostics). */
+  def styleOf(id: String): Option[(String, Double)] = None
 
 /** A shape under the pointer: its set and its id. */
 final case class ShapeHit(set: String, id: String)

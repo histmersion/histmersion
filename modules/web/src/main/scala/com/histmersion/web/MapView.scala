@@ -34,7 +34,8 @@ object MapView:
     surface = () => TheMap.surface, key = _.key, at = _.at,
     radius = () => clusterRadius(maxDotRadius, PointKinds.all.map(_.box)).toDouble,
     single = (d, fadeIn) => d.layer.render(d, fadeIn), bubble = ds => bubbleMarker(ds),
-    animateMax = Layout.clusterAnimateMax, exitMs = Layout.exitAnimMs, fadeOut = FadingLayer.fadeOut.value)
+    animateMax = Layout.clusterAnimateMax, exitMs = Layout.exitAnimMs, fadeOut = FadingLayer.fadeOut.value,
+    repaint = (m, ds) => repaintBubble(m, ds))
 
   /** The boundaries layer's shapes, drawn by the map: a polity's colour is the middle of its dates on the
     * period ramp; a place the time view shows only through findings dated then is dashed and fainter. */
@@ -73,7 +74,68 @@ object MapView:
   def popup(lat: Double, lon: Double, html: String): Unit =
     if TheMap.isUp then { val _ = TheMap.surface.popup(LatLon(lat, lon), s"""<div class="hd-popup-content">$html</div>""") }
 
-  def setPlaybackMode(on: Boolean): Unit = playbackMode = on
+  /** Playback starts or stops. Its states are drawn from every state fetched while it plays (#3764,
+    * [[PlaybackAreas]]); stopped, the boundaries are drawn for the span shown, as before. */
+  def setPlaybackMode(on: Boolean): Unit =
+    val was = playbackMode
+    playbackMode = on
+    if was && !on then
+      playAreas.clear()
+      if overlayOn && TheMap.isUp then loadOverlay(currentSpan)
+
+  // ── playback (#3764): every frame draws from what is held; nothing is fetched or re-made per frame ──
+
+  /** A playback state as drawn: its outline (kept here: the names' placement drops the feature's), its
+    * years, its look and the place it is. */
+  private final case class PlayArea(feature: js.Dynamic, geometry: js.Any, start: Double, end: Double, dashed: Boolean)
+  private val playAreas = scala.collection.mutable.LinkedHashMap.empty[String, PlayArea]
+  // `var`s: how far ahead of the playhead the states are fetched, and how long one fades (years); the playhead
+  private var playLead: Long = 0L
+  private var playFade: Double = 0.0
+  private var playhead: Double = 0.0
+
+  /** One playback frame: the findings of the window `span` and the states at playhead `ph`, played at
+    * `yearsPerSecond`. The findings are diffed (only the colour of a kept one changes); the states are
+    * recoloured and faded in place. */
+  def playFrame(points: List[GeoHit], span: (Long, Long), ph: Long, yearsPerSecond: Double): Unit =
+    playLead = (yearsPerSecond * Layout.playbackLeadSeconds).toLong
+    playFade = math.max(1.0, yearsPerSecond * Layout.playbackAreaFadeSeconds)
+    playhead = ph.toDouble
+    render(points, span)
+    if TheMap.isUp && overlayOn then restylePlayAreas(span)
+
+  private def restylePlayAreas(span: (Long, Long)): Unit =
+    playAreas.foreach { (k, a) =>
+      val alpha = PlaybackAreas.step(PlaybackAreas.alpha(playhead, a.start, a.end, playFade))
+      polities.restyle(k, viridisAt((a.start + a.end) / 2, span), if a.dashed then alpha * 0.6 else alpha)
+    }
+
+  /** A year's states fetched in playback: added to those held (the ones over for longer than a fade let
+    * go), the shapes sent to the map only when that changed what is held. */
+  private def addPlayAreas(features: js.Array[js.Dynamic], span: (Long, Long), keyOf: js.Dynamic => String): Unit =
+    def byFindings(f: js.Dynamic) = dynStr(f.properties.basis).flatMap(PlaceTimeBasis.parse).contains(PlaceTimeBasis.Findings)
+    val before = playAreas.keySet.toSet
+    playAreas.filterInPlace { (k, a) =>
+      val keep = PlaybackAreas.live(playhead, a.end, playFade)
+      if !keep then polityPlaces.remove(k)
+      keep
+    }
+    features.foreach { f =>
+      val g = f.geometry
+      val isArea = !js.isUndefined(g) && g != null && g.selectDynamic("type").toString != "Point" && g.selectDynamic("type").toString != "MultiPoint"
+      dynPeriod(f.properties).foreach { (a, b) =>
+        val k = PlaybackAreas.key(keyOf(f), Some(a), Some(b))
+        if isArea && !playAreas.contains(k) && PlaybackAreas.live(playhead, b, playFade) then
+          playAreas(k) = PlayArea(f, g, a, b, byFindings(f))
+          dynStr(f.properties.id).foreach(id =>
+            polityPlaces(k) = (id, dynStr(f.properties.label).getOrElse("unnamed"), dynStr(f.properties.kind).getOrElse("polity")))
+      }
+    }
+    if playAreas.keySet != before then
+      polities.set(playAreas.toSeq.map { (k, a) =>
+        val alpha = PlaybackAreas.step(PlaybackAreas.alpha(playhead, a.start, a.end, playFade))
+        ShapeFeature(k, a.geometry, viridisAt((a.start + a.end) / 2, span), dashed = a.dashed, alpha = if a.dashed then alpha * 0.6 else alpha)
+      })
 
   private[web] def midOf(pt: GeoHit): Option[Double] =
     for a <- pt.periodStart; b <- pt.periodEnd yield (a + b).toDouble / 2
@@ -181,6 +243,15 @@ object MapView:
         e.stopPropagation()
         open(ds)
     m
+
+  /** A drawn bubble's colours set again in place (its members' colours moved with the span). */
+  private def repaintBubble(m: DomMarker, ds: Seq[Dot]): Unit =
+    val held = DotCluster.contents(ds)
+    val (a, b) = rampEnds(held.mids, currentSpan, held.certainty)
+    Option(m.el.querySelector(".hd-cluster")).map(_.asInstanceOf[dom.html.Element]).foreach { c =>
+      c.style.setProperty("--g0", a)
+      c.style.setProperty("--g1", b)
+    }
 
   /** A bubble chosen: its list, or (too many to list) the map zoomed in on it. */
   private def open(ds: Seq[Dot]): Unit =
@@ -423,35 +494,57 @@ object MapView:
     val mid = (span._1 + span._2) / 2
     overlayReqId += 1
     val myId = overlayReqId
-    val time = areaTime(span, UiState.areaPick.now(), playbackMode)
+    val time0 = areaTime(span, UiState.areaPick.now(), playbackMode)
+    // in playback the year ahead of the playhead (the states it reaches next are held before it does)
+    val time = time0 match
+      case GeoTime.At(y) if playbackMode && playAreas.nonEmpty => GeoTime.At(y + playLead)
+      case t => t
+    val playing = playbackMode
     placesGeoCached("polity", time, overlayLimit(time)).foreach { geojson =>
-      if myId == overlayReqId && overlayOn && TheMap.isUp then
+      if myId == overlayReqId && overlayOn && TheMap.isUp && playing == playbackMode then
         val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
-        // largest first, so small polities sit on top and stay hoverable
-        val sorted = features.toList.sortBy(f => dynPeriod(f.properties).map((a, b) => a - b).getOrElse(99999.0))
-        def keyOf(f: js.Dynamic) = dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")
-        def colorOf(f: js.Dynamic): String =
-          viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
-        def byFindings(f: js.Dynamic) = dynStr(f.properties.basis).flatMap(PlaceTimeBasis.parse).contains(PlaceTimeBasis.Findings)
-        def isPoint(f: js.Dynamic) =
-          val g = f.geometry
-          !js.isUndefined(g) && g != null && (g.selectDynamic("type").toString == "Point" || g.selectDynamic("type").toString == "MultiPoint")
-        val (points, areas) = sorted.partition(isPoint)
-        polityPlaces.clear()
-        sorted.foreach(f => dynStr(f.properties.id).foreach(id =>
-          polityPlaces(keyOf(f)) = (id, dynStr(f.properties.label).getOrElse("unnamed"), dynStr(f.properties.kind).getOrElse("polity"))))
-        polities.set(areas.map(f => ShapeFeature(keyOf(f), f.geometry, colorOf(f), dashed = byFindings(f), alpha = if byFindings(f) then 0.6 else 1.0)))
-        syncPointLabels(points, keyOf)
-        // every area is named inside itself (MapLabels), in playback and out of it
-        MapLabels.attach()
-        MapLabels.syncAreas(areas,
-          key = keyOf,
-          label = f => dynStr(f.properties.label).getOrElse("unnamed"),
-          wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)),
-          place = f => polityPlaces.get(keyOf(f)),
-          asOf = () => spanMid(),
-          // once its name is placed nothing here reads the outline: the map holds its own copy
-          release = dropGeometry)
+        if playing then
+          def keyOf(f: js.Dynamic) = dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")
+          addPlayAreas(features, currentSpan, keyOf)
+          val shown = playAreas.toSeq.filter((_, a) => PlaybackAreas.alpha(playhead, a.start, a.end, playFade) > 0).map(_._2.feature)
+          val (points, _) = features.toList.partition { f =>
+            val g = f.geometry
+            !js.isUndefined(g) && g != null && (g.selectDynamic("type").toString == "Point" || g.selectDynamic("type").toString == "MultiPoint")
+          }
+          syncPointLabels(points, keyOf)
+          MapLabels.attach()
+          MapLabels.syncAreas(shown,
+            key = f => PlaybackAreas.key(keyOf(f), dynPeriod(f.properties).map(_._1), dynPeriod(f.properties).map(_._2)),
+            label = f => dynStr(f.properties.label).getOrElse("unnamed"),
+            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)),
+            place = f => polityPlaces.get(PlaybackAreas.key(keyOf(f), dynPeriod(f.properties).map(_._1), dynPeriod(f.properties).map(_._2))),
+            asOf = () => spanMid())
+        else
+          // largest first, so small polities sit on top and stay hoverable
+          val sorted = features.toList.sortBy(f => dynPeriod(f.properties).map((a, b) => a - b).getOrElse(99999.0))
+          def keyOf(f: js.Dynamic) = dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")
+          def colorOf(f: js.Dynamic): String =
+            viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
+          def byFindings(f: js.Dynamic) = dynStr(f.properties.basis).flatMap(PlaceTimeBasis.parse).contains(PlaceTimeBasis.Findings)
+          def isPoint(f: js.Dynamic) =
+            val g = f.geometry
+            !js.isUndefined(g) && g != null && (g.selectDynamic("type").toString == "Point" || g.selectDynamic("type").toString == "MultiPoint")
+          val (points, areas) = sorted.partition(isPoint)
+          polityPlaces.clear()
+          sorted.foreach(f => dynStr(f.properties.id).foreach(id =>
+            polityPlaces(keyOf(f)) = (id, dynStr(f.properties.label).getOrElse("unnamed"), dynStr(f.properties.kind).getOrElse("polity"))))
+          polities.set(areas.map(f => ShapeFeature(keyOf(f), f.geometry, colorOf(f), dashed = byFindings(f), alpha = if byFindings(f) then 0.6 else 1.0)))
+          syncPointLabels(points, keyOf)
+          // every area is named inside itself (MapLabels), in playback and out of it
+          MapLabels.attach()
+          MapLabels.syncAreas(areas,
+            key = keyOf,
+            label = f => dynStr(f.properties.label).getOrElse("unnamed"),
+            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)),
+            place = f => polityPlaces.get(keyOf(f)),
+            asOf = () => spanMid(),
+            // once its name is placed nothing here reads the outline: the map holds its own copy
+            release = dropGeometry)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   /** A polity or region with only a point has no boundary yet: its NAME, never a pin or a dot. */

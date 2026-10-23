@@ -43,6 +43,11 @@ object MapHandle:
         sub = s.on(kind)(_ => { sub.cancel(); fn() })): js.Function2[String, js.Function0[Unit], Unit],
       /** The ids of the shapes a set draws now (`polities`, `event-outlines`, `place-pick`, …). */
       shapes = ((set: String) => s.shapeSet(set).fold(js.Array[String]())(_.ids.toJSArray)): js.Function1[String, js.Array[String]],
+      /** How many times a shape set's outlines were sent to the map (a restyle sends none). */
+      shapeUploads = ((set: String) => s.shapeSet(set).fold(0)(_.uploads)): js.Function1[String, Int],
+      /** A drawn shape's `{colour, alpha}`, `null` when it is not drawn. */
+      shapeStyle = ((set: String, id: String) => s.shapeSet(set).flatMap(_.styleOf(id))
+        .fold(null: js.Dynamic)((c, a) => js.Dynamic.literal(colour = c, alpha = a))): js.Function2[String, String, js.Dynamic],
       /** The interactive shapes under a map point, topmost first: `set:id`. */
       shapesAt = ((at: js.Array[Double]) => s.shapesAt(s.project(ll(at))).map(h => s"${h.set}:${h.id}").toJSArray)
         : js.Function1[js.Array[Double], js.Array[String]],

@@ -1044,6 +1044,79 @@ test('a cluster of events is a square; among thousands of points a zoom does not
   });
 });
 
+// #3764: a zoom that regroups a few points animates as markercluster did — a bubble that splits slides its
+// points out from where it stood, points that merge fly into the new bubble as it appears — over ~250 ms; the
+// reader's "reduce motion" draws the new groups at once.
+test('a zoom slides the points of a split bubble out and flies merging points in; reduced motion draws at once', async () => {
+  const at = (i) => ({ lat: 37.5 + (i % 3) * 0.05, lon: 32 + i * 0.03 });
+  const findings = [0, 1, 2].map(i => ({ citekey: `zz_m${i}`, title: `Zz m${i}`, claim: 'c', regionName: null, ...at(i),
+    periodStart: -1300, periodEnd: -1250, confidence: 'high', sourceKind: 'paper' }));
+  // every frame from the zoom's end for 450 ms: each drawn point's or bubble's centre, and whether it is
+  // leaving (a ghost flying into a bubble)
+  const trace = (page, z) => page.evaluate((zoom) => new Promise(resolve => {
+    const map = window.__testMap, frames = [], animations = map.clusterAnimations();
+    const centre = e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+    map.once('zoomend', () => {
+      const t0 = performance.now();
+      const f = () => {
+        frames.push([...document.querySelectorAll('.hd-marker:not(.is-offscreen)')]
+          .filter(e => e.querySelector('.hd-find, .hd-cluster'))
+          .map(e => ({ bubble: !!e.querySelector('.hd-cluster'), ghost: e.classList.contains('hd-cluster-ghost'), at: centre(e) })));
+        if (performance.now() - t0 < 450) requestAnimationFrame(f);
+        else resolve({ frames, animated: map.clusterAnimations() > animations });
+      };
+      requestAnimationFrame(f);
+    });
+    map.setZoom(zoom);
+  }), z);
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  for (const reduced of [false, true]) {
+    await withPage({ width: 1440, height: 900 }, async page => {
+      if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
+      await page.route('**/api/places/geo**', route => route.fulfill({ json: { type: 'FeatureCollection', features: [] } }));
+      await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+      await page.waitForFunction(() => window.__testMap);
+      await page.evaluate(() => window.__testMap.setView([37.55, 32.03], 7, { animate: false }));
+      await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3', null, { timeout: 15000 });
+      await idleMarker(page, '.hd-marker .hd-cluster');
+      // the split: three points out of one bubble
+      const split = await trace(page, 10);
+      const ends = split.frames.at(-1).filter(m => !m.bubble).map(m => m.at);
+      assert.equal(ends.length, 3, `three points stand alone after the split: ${JSON.stringify(split.frames.at(-1))}`);
+      const firstOnes = split.frames[0].filter(m => !m.bubble).map(m => m.at);
+      // how many frames each point was drawn somewhere else than where it ends
+      const moving = ends.map((e, i) => split.frames.filter(fr => { const p = fr.filter(m => !m.bubble)[i]; return p && dist(p.at, e) > 1; }).length);
+      if (reduced) {
+        assert.equal(split.animated, false, 'reduced motion: the zoom is not animated');
+        assert.deepEqual(moving, [0, 0, 0], 'reduced motion: each point is drawn where it ends from the first frame');
+      } else {
+        assert.equal(split.animated, true);
+        // (the one nearest the bubble's middle may hardly move)
+        assert.ok(moving.filter(n => n >= 3).length >= 2, `the points slide out over several frames: ${moving}`);
+        // they start together (where the bubble stood) and end apart
+        const spread = pts => Math.max(...pts.flatMap(a => pts.map(b => dist(a, b))));
+        assert.ok(spread(firstOnes) < spread(ends) / 2, `they start near one another: ${JSON.stringify(firstOnes)} → ${JSON.stringify(ends)}`);
+      }
+      await idleMarker(page, '.hd-marker .hd-find');
+      // the merge: three points into one bubble
+      const merge = await trace(page, 7);
+      const bubble = merge.frames.at(-1).find(m => m.bubble);
+      assert.ok(bubble, `a bubble after the merge: ${JSON.stringify(merge.frames.at(-1))}`);
+      const ghostFrames = merge.frames.filter(fr => fr.some(m => m.ghost));
+      if (reduced) {
+        assert.equal(ghostFrames.length, 0, 'reduced motion: nothing flies');
+        assert.equal(merge.animated, false);
+      } else {
+        assert.ok(ghostFrames.length >= 3, `the points fly into the bubble over several frames: ${ghostFrames.length}`);
+        const far = fr => Math.max(...fr.filter(m => m.ghost).map(m => dist(m.at, bubble.at)));
+        assert.ok(far(ghostFrames.at(-1)) < far(ghostFrames[0]), `they come nearer the bubble: ${far(ghostFrames[0])} → ${far(ghostFrames.at(-1))}`);
+        assert.equal(merge.frames.at(-1).filter(m => m.ghost).length, 0, 'and are gone once it is done');
+      }
+    });
+  }
+});
+
 // The user's "the circles that group sources should group every kind of dot": findings, sites, events and
 // pictures join ONE cluster group; a bubble counts only what is shown (a layer switched off, the year window
 // moved), says what it holds, splits on zoom-in, and its list shows every kind with its icon.

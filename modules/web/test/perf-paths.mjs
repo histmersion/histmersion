@@ -269,3 +269,45 @@ export async function vectorMap(page, baseURL, style, { lat = 37.9, lon = 25.4, 
 }
 
 export { memory };
+
+/** The timeline's playback over [`from`, `to`] for `seconds` (#3764): its frames, what it asks the server
+  * for and how often the map's states change look. A smooth playback draws every frame from what it holds
+  * (no findings request and no outline upload per frame) and restyles the states on most frames — the
+  * states were redrawn at the rate their answers came (~5 a second) and the findings at ~60 requests a
+  * second. `stillFramesPct`: the frames on which no state's colour or fade changed. */
+export async function playback(page, baseURL, from, to, seconds = 4) {
+  await page.goto(new URL(`/#from=${from}&to=${to}`, baseURL).href);
+  await ready(page);
+  await settled(page);
+  const asked = { findings: 0, places: 0 };
+  const onRequest = r => {
+    const p = new URL(r.url()).pathname;
+    if (p === '/api/findings') asked.findings++;
+    if (p === '/api/places/geo') asked.places++;
+  };
+  page.on('request', onRequest);
+  const looks = page.evaluate(ms => new Promise(res => {
+    const map = window.__testMap, out = { frames: 0, changed: 0, uploads0: map.shapeUploads('polities') };
+    let prev = null; const t0 = performance.now();
+    const f = () => {
+      const look = map.shapes('polities').map(id => { const s = map.shapeStyle('polities', id); return s ? `${s.colour}/${s.alpha}` : ''; }).join('|');
+      if (prev !== null) { out.frames++; if (look !== prev) out.changed++; }
+      prev = look;
+      if (performance.now() - t0 < ms) requestAnimationFrame(f);
+      else res({ ...out, uploads: map.shapeUploads('polities') - out.uploads0 });
+    };
+    requestAnimationFrame(f);
+  }), seconds * 1000);
+  const m = await measure(page, async () => {
+    await page.locator('.tl-playback button[title="play"]').click();
+    await page.waitForTimeout(seconds * 1000);
+  });
+  const l = await looks;
+  await page.locator('.tl-playback button[title="pause"]').click();
+  page.off('request', onRequest);
+  const per = n => Math.round(10 * n / seconds) / 10;
+  return { ...m, states: l.frames ? (await page.evaluate(() => window.__testMap.shapes('polities').length)) : 0,
+    stillFramesPct: l.frames ? Math.round(1000 * (l.frames - l.changed) / l.frames) / 10 : 100,
+    findingsRequestsPerSecond: per(asked.findings), placesRequestsPerSecond: per(asked.places),
+    outlineUploadsPerSecond: per(l.uploads) };
+}

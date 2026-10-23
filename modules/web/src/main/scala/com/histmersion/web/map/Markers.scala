@@ -83,6 +83,15 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
       if m.el.parentNode == el then { val _ = el.removeChild(m.el) }
       m.removed()
 
+  /** Take `m` off the pane now (it no longer follows the map, answers the pointer or counts), but leave its
+    * element drawn for `ms` more — a marker merging into a bubble flies into it first. */
+  def retire(m: DomMarker, ms: Int): Unit =
+    if markers.contains(m) then
+      markers.remove(m)
+      m.el.classList.add("hd-cluster-ghost")
+      m.removed()
+      dom.window.setTimeout(() => if m.el.parentNode == el then { val _ = el.removeChild(m.el) }, ms)
+
   def has(m: DomMarker): Boolean = markers.contains(m)
 
   def size: Int = markers.size

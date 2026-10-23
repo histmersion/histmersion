@@ -194,3 +194,35 @@ task ≤ 150 ms, zoom dropped ≤ 8 %, and the page's DOM nodes ≤ 12 000 and l
 form fails these last two: 15 400–18 600 nodes, 2 200–2 700 listeners). A browser test holds the
 switch itself: three points animate a zoom, 1 203 do not, and three again do; and the bubble's outline.
 The soak (100 rounds) is unchanged: heap +1.2 MB, DOM nodes +0, listeners +0, Leaflet layers +0.
+
+## Map regressions since MapLibre: cluster motion and playback (#3764, 2026-10-24)
+
+**Clusters.** The DOM cluster layer (`web.map.PointSet`) still slid a split bubble's points out at the
+zoom's end, but a merge drew the new bubble in one step: the points vanished and the bubble appeared
+(it then slid a few pixels from its first point's place). Traced per frame (Chromium, three points,
+zoom 10 → 7): before, the bubble appeared on the first frame after `zoomend`; now the three points fly
+into it over 250 ms (`.hd-cluster-ghost`, taken off their pane at once so nothing else counts or moves
+them) while it fades in (`.hd-cluster-arrive`). `ClusterMotion` decides it: a new marker whose points
+all stood at one place comes out of it (a split); one whose points came from several places stays and
+appears (a merge). `prefers-reduced-motion: reduce` turns both off in code (the group is drawn at
+once, the zoom not counted as animated), not only in the stylesheet.
+
+**Playback.** Measured over −3000…−1000 with the boundaries on (the perf fixtures, GPU Chromium,
+5 s): the frame loop itself never dropped a frame (0 %, frame p95 16.7 ms), but what it drew was choppy —
+
+| | before | after |
+|---|---|---|
+| findings requests a second | 60 (one per frame, each answer re-drawn as it came) | 0.5 (four seconds of playback ahead, cut to the window locally: `PlaybackFeed`) |
+| boundaries | the year's states replaced five times a second (the throttled answers): states and their colours stepped every ~13 years | every state fetched so far held (`PlaybackAreas`, keyed by place and years), faded in and out by the playhead and recoloured in place (feature state) every frame; outlines sent 0.5 times a second, only when new states arrive |
+| frames on which no state changed look | ~80 % (5 changes a second) | 18 % |
+| bubbles | every bubble re-made on each answer (span changed → `refresh`) | recoloured in place (`PointSet.recolour`: `--g0`/`--g1`) unless their content changed |
+
+MapLibre's `global-state` expressions were considered for the fade: a data-driven paint property that
+reads global state is evaluated when tiles are laid out, so changing it every frame re-lays the source
+out — as costly as `setData`. Feature state (what `GlShapes.restyle` already used) updates paint arrays on
+the main thread without re-tiling, and is set only for the states whose step (1/20) or colour changed.
+
+Budgets (`perf.test.mjs`, "playback"): longest task ≤ 150 ms, dropped frames ≤ 15 %, findings requests
+≤ 1 a second, outline uploads ≤ 6 a second, frames without a state change ≤ 60 % (measured 0 ms, 0 %,
+0.5, 0.5 and 18 %; before: 60 findings requests a second). A browser test traces the split and the
+merge frame by frame, and both with reduced motion.
