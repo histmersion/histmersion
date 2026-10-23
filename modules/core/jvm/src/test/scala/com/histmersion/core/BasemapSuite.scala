@@ -72,30 +72,24 @@ class BasemapSuite extends munit.FunSuite:
     assertEquals(Basemap.droppedLayers(keepAll = false, None), Basemap.LegacyLacks, "made before the drop list: earth, water, land cover only")
     assertEquals(Basemap.missingFor(List("earth", "roads", "places", "water"), List("places", "roads", "transit")), List("places", "roads"))
     assertEquals(Basemap.missingFor(List("earth"), List("roads")), Nil)
-    val style = TerrainStyle("s", "S", background = "#fff", layers = List(
-      StyleLayer("a", "fill", dataLayers = List("earth"), fill = Some("#000")),
-      StyleLayer("b", "line", dataLayers = List("roads", "earth"), color = Some("#000")),
-      StyleLayer("c", "label", source = "labels", dataLayers = List("physical"), color = Some("#000"))))
-    assertEquals(style.needs, List("earth", "roads"), "the vector layers only, once each")
+    // the vector styles: what each needs of the extract
+    assertEquals(BaseStyles.states(Some(List("boundaries", "places", "roads"))).map(st => st.id -> st.missing),
+      List("readable" -> List("boundaries", "places", "roads"), "physical" -> Nil))
+    assertEquals(BaseStyles.states(None).map(_.missing), List(Nil, Nil))
 
-  test("the base-map source: local and online as set; auto is local only when the default style can be drawn whole"):
-    def st(available: Boolean, missing: List[String]) = BasemapStatus(available, "/c", "x", Nil, Basemap.FetchCommand,
-      styles = List(BasemapStyleState("standard", "Standard", missing), BasemapStyleState("terrain", "Terrain")))
-    assertEquals(BaseMapSource.resolve("local", st(false, Nil), Some("standard")), "local")
-    assertEquals(BaseMapSource.resolve(" Online ", st(true, Nil), Some("standard")), "online")
-    assertEquals(BaseMapSource.resolve("auto", st(true, Nil), Some("standard")), "local")
-    assertEquals(BaseMapSource.resolve("auto", st(true, List("roads")), Some("standard")), "online", "the street map lacks roads")
-    assertEquals(BaseMapSource.resolve("auto", st(true, List("roads")), Some("terrain")), "local", "a terrain default is whole")
-    assertEquals(BaseMapSource.resolve("auto", st(false, Nil), Some("standard")), "online", "nothing downloaded")
-    assertEquals(BaseMapSource.resolve("auto", st(true, Nil), Some("gone")), "online", "a default that is no style")
-    assertEquals(BaseMapSource.resolve("whatever", st(true, Nil), Some("standard")), "local", "anything else is auto")
+  test("the base-map source: local and online as set; auto is local once a vector style can be drawn whole"):
+    def st(available: Boolean, readable: List[String], physical: List[String] = Nil) = BasemapStatus(available, "/c", "x", Nil,
+      Basemap.FetchCommand, styles = List(BasemapStyleState("readable", "Readable", readable), BasemapStyleState("physical", "Physical", physical)))
+    assertEquals(BaseMapSource.resolve("local", st(false, Nil)), "local")
+    assertEquals(BaseMapSource.resolve(" Online ", st(true, Nil)), "online")
+    assertEquals(BaseMapSource.resolve("auto", st(true, Nil)), "local")
+    assertEquals(BaseMapSource.resolve("auto", st(true, List("roads"))), "local", "Physical is whole without the roads")
+    assertEquals(BaseMapSource.resolve("auto", st(true, List("roads"), List("landuse"))), "online", "neither is whole")
+    assertEquals(BaseMapSource.resolve("auto", st(false, Nil)), "online", "nothing downloaded")
+    assertEquals(BaseMapSource.resolve("whatever", st(true, Nil)), "local", "anything else is auto")
 
-  test("the status says which styles lack layers; the styles list what each draws"):
+  test("the status says which styles lack layers"):
     val v = BasemapLayerInfo("vector", present = true, file = "/c/vector.pmtiles", dropped = List("places", "roads"))
     val md = BasemapMarkdown.status(BasemapStatus(available = true, "/c", "x", List(v), Basemap.FetchCommand,
-      styles = List(BasemapStyleState("standard", "Standard", List("places", "roads")), BasemapStyleState("terrain", "Terrain"))))
-    assert(md.contains("Styles: Standard (lacks places, roads), Terrain."), md)
-    val styles = TerrainStyles(List(TerrainStyle("standard", "Standard", background = "#fff", modern = true,
-      layers = List(StyleLayer("r", "line", dataLayers = List("roads"), color = Some("#000"))))), "standard", "en", "built-in")
-    val list = BasemapMarkdown.styles(styles)
-    assert(list.contains("| `standard` | Standard | roads | default, modern, no names |"), list)
+      styles = List(BasemapStyleState("readable", "Readable", List("places", "roads")), BasemapStyleState("physical", "Physical"))))
+    assert(md.contains("Styles: Readable (lacks places, roads), Physical."), md)

@@ -268,7 +268,7 @@ object Preview:
         // (a click on the map is the map's to judge: it may land on another place, [[PlaceHover]])
         val inside = e.target match
           case n: dom.Node => pinned.exists(p => p.box.contains(n) || p.owner.exists(_.contains(n))) ||
-            n.isInstanceOf[dom.Element] && n.asInstanceOf[dom.Element].closest(".leaflet-container") != null
+            n.isInstanceOf[dom.Element] && n.asInstanceOf[dom.Element].closest(".map-container") != null
           case _ => false
         if !inside then unpin(restoreFocus = false)
 

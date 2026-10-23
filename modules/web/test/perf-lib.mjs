@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 // Browser-side speed and memory measurement for the web UI (#1949): what the page does between an
 // input and the next paint, the long tasks and dropped frames of a gesture, and what the page holds
-// (JS heap, DOM nodes, event listeners, Leaflet layers, the app's caches). Shared by the budgets and
+// (JS heap, DOM nodes, event listeners, the map's markers, the app's caches). Shared by the budgets and
 // soak tests (perf.test.mjs) and the live baseline (perf-baseline.mjs). Everything here only reads.
 
 // ── the in-page probe ───────────────────────────────────────────────────────────────────────────
@@ -59,21 +59,9 @@ export async function newPerfPage(browser, origin, viewport = { width: 1440, hei
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
   await page.addInitScript(probe);
+  // the map's own handle (web MapHandle), as the browser regressions use it
   await page.addInitScript(() => {
-    let leaflet;
-    Object.defineProperty(window, 'L', {
-      configurable: true,
-      get: () => leaflet,
-      set: value => {
-        leaflet = value;
-        let factory = value.map;
-        Object.defineProperty(value, 'map', {
-          configurable: true, enumerable: true,
-          set: fn => { factory = fn; },
-          get: () => function (...args) { const map = factory.apply(value, args); window.__testMap = map; return map; },
-        });
-      },
-    });
+    Object.defineProperty(window, '__testMap', { configurable: true, get: () => window.histmersionMap });
   });
   // READ-ONLY: a request that is not a GET (a write) is refused and counted, whatever is clicked;
   // other origins (tiles) are refused. HISTMERSION_PERF_BUNDLE serves a locally built app bundle in
@@ -178,7 +166,7 @@ export async function inputToUpdate(page, selector, trigger, ready = null, timeo
 // ── memory ─────────────────────────────────────────────────────────────────────────────────────
 
 /** What the page holds, after two full garbage collections: the JS heap, the DOM (nodes, documents,
-  * layout objects), the event listeners; the Leaflet map's layers; the app's own caches. */
+  * layout objects), the event listeners; the map's markers and the points it clusters; the app's own caches. */
 export async function memory(page, cdp) {
   for (let i = 0; i < 2; i++) await cdp.send('HeapProfiler.collectGarbage');
   const { metrics } = await cdp.send('Performance.getMetrics');
@@ -186,14 +174,9 @@ export async function memory(page, cdp) {
   const counters = await cdp.send('Memory.getDOMCounters');
   const page_ = await page.evaluate(() => {
     const map = window.__testMap;
-    let layers = 0, clustered = 0, paths = 0;
-    if (map) {
-      map.eachLayer(() => { layers++; });
-      map.eachLayer(l => { if (typeof l.getLayers === 'function' && l._featureGroup) clustered = Math.max(clustered, l.getLayers().length); });
-      paths = document.querySelectorAll('.leaflet-pane path').length;
-    }
     const app = typeof window.histmersionDiagnostics === 'function' ? window.histmersionDiagnostics() : null;
-    return { layers, clustered, paths, markers: document.querySelectorAll('.leaflet-marker-icon').length,
+    return { layers: app?.map?.markers ?? 0, clustered: map ? map.points() : 0,
+      shapes: map ? map.shapes('polities').length : 0, markers: document.querySelectorAll('.hd-marker').length,
       app: app ? JSON.parse(JSON.stringify(app)) : null };
   });
   return {
@@ -201,7 +184,7 @@ export async function memory(page, cdp) {
     heapTotalMB: r1(m.JSHeapTotalSize / 1048576),
     nodes: counters.nodes, documents: counters.documents, listeners: counters.jsEventListeners,
     layoutObjects: m.LayoutObjects,
-    leafletLayers: page_.layers, clustered: page_.clustered, paths: page_.paths, markerIcons: page_.markers,
+    mapMarkers: page_.layers, clustered: page_.clustered, shapes: page_.shapes, markerIcons: page_.markers,
     caches: page_.app?.caches ?? null,
   };
 }

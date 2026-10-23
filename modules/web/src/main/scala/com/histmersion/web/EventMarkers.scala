@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.core.*
-import com.histmersion.web.leaflet.*
+import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -52,13 +52,12 @@ object EventMarkers:
 
   /** Load the events of `span` in the view (the layer must be attached). */
   def load(span: (Long, Long), limit: Int): Unit =
-    val map = MapView.leafletMap
-    if map != null && layer.isAttached then
-      val b = map.getBounds()
+    if TheMap.isUp && layer.isAttached then
+      val b = TheMap.surface.bounds
       val (lo, hi) = (span._1.min(span._2), span._1.max(span._2))
       val q = Api.EventQuery(UiState.toFilter().copy(period = Some(Period(lo, hi)), limit = limit),
         kind = UiState.eventKind.now(), tier = UiState.eventTier.now(), context = Some(true),
-        area = Some(EventMarker.area(b.getWest(), b.getSouth(), b.getEast(), b.getNorth())))
+        area = Some(EventMarker.area(b.west, b.south, b.east, b.north)))
       latest.onCurrent(ApiClient.eventsGeo(q))(_.foreach { list =>
         if layer.isAttached then layer.show(list.events, span)
       })(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)

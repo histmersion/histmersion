@@ -14,8 +14,7 @@ object Diagnostics:
   /** Every cache and its figures, by name. */
   def caches: List[(String, BoundedCache.Stats)] =
     List("places.geo" -> MapView.geoCacheStats, "ident" -> IdentLink.cacheStats,
-      "places.labels" -> PlacesInput.cacheStats, "relief.dem" -> ReliefLayer.stats,
-      "relief.sea" -> ReliefLayer.seaStats) ++ Preview.cacheStats ++ MapLabels.stats ++
+      "places.labels" -> PlacesInput.cacheStats) ++ Preview.cacheStats ++ MapLabels.stats ++
       List("findings.kept" -> BoundedCache.Stats(App.keptFindings, 0, 0L, 0L))
 
   /** Pure: the figures as a plain object (one per cache: entries, maxEntries, weight, maxWeight). */
@@ -28,4 +27,10 @@ object Diagnostics:
     js.Dynamic.literal(caches = o).asInstanceOf[js.Object]
 
   def install(): Unit =
-    dom.window.asInstanceOf[js.Dynamic].histmersionDiagnostics = (() => toJs(caches)): js.Function0[js.Object]
+    dom.window.asInstanceOf[js.Dynamic].histmersionDiagnostics = (() =>
+      val o = toJs(caches).asInstanceOf[js.Dynamic]
+      // the map: the points its cluster layer holds, the DOM markers drawn, the shapes drawn
+      if com.histmersion.web.map.TheMap.isUp then
+        o.map = js.Dynamic.literal(points = MapView.dots.size, markers = com.histmersion.web.map.TheMap.markerCount,
+          animations = MapView.dots.animations)
+      o.asInstanceOf[js.Object]): js.Function0[js.Object]

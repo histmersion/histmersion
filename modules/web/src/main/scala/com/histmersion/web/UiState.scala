@@ -158,17 +158,18 @@ object Sheet:
   def nearest(fraction: Double, peek: Double, full: Double): Sheet =
     List(Peek -> peek, Half -> 0.5, Full -> full).minBy((_, f) => math.abs(f - fraction))._1
 
-/** The base map. `Standard`, `Muted` and `Dark` are the ONLINE raster maps — `Standard` the configured
-  * tile URL (`ui.tiles`), `Dark` the same tiles drawn dark by the stylesheet (`.map-tiles-dark`), so no
-  * other tile server is contacted — offered only when `ui.base-map-source` is online. `Local` is drawn
-  * in the page from the server's own extracts with one of its named styles ([[TerrainMap]]): the local
-  * Standard, Muted and Dark, and the terrain styles; it has no tile URL. Its wire stays "terrain" (the
-  * choice a browser kept before the local street maps existed). */
-enum BaseMap(val wire: String, val label: String, val url: Option[String]):
-  case Standard extends BaseMap("standard", "Standard (online)", None)
-  case Muted    extends BaseMap("muted", "Muted (online)", Some("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"))
-  case Dark     extends BaseMap("dark", "Dark (online)", None)
-  case Local    extends BaseMap("terrain", "Local map", None)
+/** The base map (docs/user-guide/exploring/web-ui.md, "The base map"). `Readable` and `Physical` are
+  * the two vector styles drawn from the server's own extracts ([[BaseMaps]]); `Standard`, `Muted` and
+  * `Dark` the ONLINE raster maps — `Standard` the configured tile URL (`ui.tiles`), `Dark` the same tiles
+  * drawn dark (no other tile server is contacted) — offered only when `ui.base-map-source` is online. */
+enum BaseMap(val wire: String, val label: String, val vector: Option[com.histmersion.web.map.VectorStyle], val url: Option[String]):
+  case Readable extends BaseMap("readable", "Readable", Some(com.histmersion.web.map.VectorStyle.Readable), None)
+  case Physical extends BaseMap("physical", "Physical", Some(com.histmersion.web.map.VectorStyle.Physical), None)
+  case Standard extends BaseMap("standard", "Standard (online)", None, None)
+  case Muted    extends BaseMap("muted", "Muted (online)", None, Some("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"))
+  case Dark     extends BaseMap("dark", "Dark (online)", None, None)
+
+  def online: Boolean = vector.isEmpty
 
 /** Whether the base map under the names is light or dark — what the map's label colours follow
   * (`.map-tone-light` / `.map-tone-dark`: dark text on a light halo, or the inverse). */
@@ -181,18 +182,35 @@ object MapTone:
   def parse(s: String): MapTone = if s.trim.equalsIgnoreCase("dark") then Dark else Light
 
 object BaseMap:
-  def fromWire(s: String): Option[BaseMap] = values.find(_.wire == s.trim.toLowerCase)
+  /** A kept choice; `terrain` is what a browser kept for the local map before the two styles: Readable. */
+  def fromWire(s: String): Option[BaseMap] =
+    val w = s.trim.toLowerCase
+    if w == "terrain" then Some(Readable) else values.find(_.wire == w)
 
-  /** Pure: the tone of base map `b`, when the configured tiles (`ui.tiles`) are `configured` and the
-    * terrain style shown is `terrain` (its own `tone`). */
-  def tone(b: BaseMap, configured: MapTone, terrain: MapTone = MapTone.Dark): MapTone = b match
+  val online: List[BaseMap] = values.toList.filter(_.online)
+  val vectors: List[BaseMap] = values.toList.filterNot(_.online)
+
+  /** Pure: the tone of base map `b`, when the configured tiles (`ui.tiles`) are `configured`. */
+  def tone(b: BaseMap, configured: MapTone): MapTone = b match
     case Standard => configured
-    case Muted    => MapTone.Light
     case Dark     => MapTone.Dark
-    case Local    => terrain
+    case _        => MapTone.Light
 
   /** Pure: is base map `b` drawn by darkening light tiles? Not when the configured tiles already are dark. */
   def darkened(b: BaseMap, configured: MapTone): Boolean = b == Dark && configured == MapTone.Light
+
+/** A viewer's options over the vector styles ([[BaseMaps]]): names on or off, their language, the
+  * contours (Physical). `None`: the default (names on, English — or `basemap.labels.language` — and
+  * contours on). */
+final case class MapPrefs(names: Option[Boolean] = None, language: Option[String] = None, contours: Option[Boolean] = None)
+    derives hearth.kindlings.circederivation.KindlingsCodecAsObject
+
+object MapPrefs:
+  /** Kept as one JSON value; anything unreadable is no options at all. */
+  given FieldCodec[MapPrefs]:
+    def encode(a: MapPrefs) = if a == MapPrefs() then Nil else List(io.circe.syntax.EncoderOps(a).asJson.noSpaces)
+    def decode(vs: List[String]) =
+      Some(vs.headOption.flatMap(v => io.circe.parser.decode[MapPrefs](v).toOption).getOrElse(MapPrefs()))
 
 object UiState:
 
@@ -229,12 +247,8 @@ object UiState:
     * restore it without the markers. A key of its own that is absent until first toggled keeps them on. */
   val sources  = Field[Boolean]("sources", "sources", true, Persist.Local, Role.View)
   val baseMap  = Field[BaseMap]("baseMap", "baseMap", BaseMap.Standard, Persist.Local, Role.View)
-  /** Which named terrain style ([[TerrainMap]]) the terrain base map is drawn with: `None` = the
-    * server's default. Per device. */
-  val terrainStyle  = Field[Option[String]]("terrainStyle", "terrainStyle", None, Persist.Local, Role.View)
-  /** The map options a viewer set over the Histmersion map's presets ([[MapOptions]]): the names' language
-    * and each preset's changes. Per device. */
-  val terrainView = Field[ViewPrefs]("terrainView", "terrainView", ViewPrefs(), Persist.Local, Role.View)
+  /** The viewer's options over the vector styles ([[BaseMaps]]): names, their language, contours. Per device. */
+  val mapOptions = Field[MapPrefs]("mapOptions", "mapOptions", MapPrefs(), Persist.Local, Role.View)
   /** The media layer's provider and licence filters (#1446): `None` = every one. Per device. */
   val mediaProvider = Field[Option[String]]("mediaProvider", "mediaProvider", None, Persist.Local, Role.View)
   val mediaLicense  = Field[Option[String]]("mediaLicense", "mediaLicense", None, Persist.Local, Role.View)
@@ -268,7 +282,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, terrainStyle, terrainView, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
+      inView, open, tab, layers, sources, baseMap, mapOptions, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
       mergeBundle, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)

@@ -56,18 +56,8 @@
   --bubble-coin:rgba(255,255,255,.92); --bubble-line:#000000;
   /* a filter menu option's badge fill: mid-grey, 3.5:1 against the panel, white on it 4.8:1 */
   --opt-badge-fill:#6b7385;
-  /* the terrain base map's built-in "Terrain" style (basemap/styles.conf names these): muted and dark
-     so the dots, names and boundaries stay on top — land, water and rivers; land cover as translucent
-     tints over the land; the relief's shadow and highlight colours (their opacity is the style's); the
-     physical names on land and on water, and their halo */
-  --terrain-land:#31343a; --terrain-water:#141b24; --terrain-river:#3a6488;
-  --terrain-forest:rgba(76,116,78,.24); --terrain-scrub:rgba(118,124,84,.14); --terrain-wetland:rgba(72,112,112,.2);
-  --terrain-barren:rgba(150,128,98,.14); --terrain-sand:rgba(176,154,108,.18); --terrain-ice:rgba(214,226,238,.3);
-  --terrain-shadow:#000000; --terrain-highlight:#ffffff;
-  --terrain-label:#c9bc9c; --terrain-label-water:#7fa3c0; --terrain-label-halo:rgba(16,19,26,.82);
-  /* the relief's contour lines (a style's own colours override them) */
-  --terrain-contour:rgba(128,92,52,.38); --terrain-contour-index:rgba(116,80,42,.72);
-  --terrain-contour-label:#6b4a2a; --terrain-contour-halo:rgba(250,248,238,.9); --terrain-isobath:rgba(40,90,140,.45);
+  /* the chosen place's and the previewed place's outlines are --place-pick / --place-preview; an event's
+     outline in playback the accent: the map reads them (ThemeTokens) for the shapes it draws */
 }
 /* ── the control tokens: ONE scale for every button, toggle, field and bar ───────────────────────────
    Every control is built from the shared classes below, never styled one widget at a time:
@@ -142,8 +132,6 @@ html, body { margin:0; height:100%; font:14px/1.45 system-ui,-apple-system,Segoe
 .hit .ck { color:var(--accent); font-weight:600; font-size:12px; }
 .hit .claim { font-size:12.5px; margin-top:2px; }
 .hit .meta { color:var(--muted); font-size:11px; margin-top:3px; }
-.leaflet-popup-content { font:12px system-ui; }
-.leaflet-popup-content b { color:#1a3; }
 [hidden] { display:none !important; }
 /* article modal */
 .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.62); display:flex; justify-content:center; align-items:flex-start; padding:40px 16px; z-index:1000; overflow:auto; }
@@ -183,8 +171,7 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-dot.hd-cluster    { position:relative; background:none; box-shadow:none; overflow:visible; }
 .hd-cluster > .hd-bubble { position:absolute; left:calc(-1 * var(--ring)); top:calc(-1 * var(--ring));
   width:calc(var(--d) + 2 * var(--ring)); height:calc(var(--d) + 2 * var(--ring)); overflow:visible; pointer-events:none;
-  z-index:0; }   /* Leaflet lifts every svg in the map to z-index 200 (`.leaflet-map-pane svg`): this one stays
-                    under its count, so the selector outweighs Leaflet's */
+  z-index:0; }   /* under its count */
 .hd-bubble-g0 { stop-color:var(--g0); }
 .hd-bubble-g1 { stop-color:var(--g1); }
 .hd-bubble-line { fill:none; stroke:var(--bubble-line); stroke-width:1; }
@@ -212,13 +199,18 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 @keyframes layer-fade-out { from { opacity:1; } to { opacity:0; } }
 .hd-fade-in  { animation:layer-fade-in .4s ease-out; }
 .hd-fade-out { animation:layer-fade-out .35s ease-in forwards; pointer-events:none; }
-path.hd-polity { transition:stroke .4s, fill .4s; }
 @media (prefers-reduced-motion: reduce) {
   .hd-fade-in, .hd-fade-out { animation-duration:1ms; }
-  path.hd-polity { transition:none; }
 }
-/* markercluster's default chrome is unused — we draw our own single dot with the count. */
-.marker-cluster, .marker-cluster div { background:none !important; border-radius:50%; }
+/* the map's markers (web.map.DomMarker): each at its point (`--tx`/`--ty`, written as the map moves), a
+   box centred on it when it has one; far outside the view it is hidden, not moved. A zoom that regroups a
+   few points moves them out of (or into) their bubbles (`.hd-cluster-move`, web.map.PointSet). */
+.hd-marker { position:absolute; left:0; top:0; transform:translate(var(--tx, -9999px), var(--ty, -9999px));
+  z-index:var(--z, 0); pointer-events:auto; }
+.hd-marker.has-box { width:var(--mw); height:var(--mh); margin-left:calc(var(--mw) / -2); margin-top:calc(var(--mh) / -2); }
+.hd-marker.is-offscreen { visibility:hidden; }
+.hd-marker.hd-cluster-move { transition:transform .25s cubic-bezier(0, 0, .25, 1); }
+@media (prefers-reduced-motion: reduce) { .hd-marker.hd-cluster-move { transition:none; } }
 /* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */
 .pick-head { padding:10px 14px; border-bottom:1px solid var(--line); background:#161a23; }
 .pick-head .back { color:var(--accent); font-size:12px; text-decoration:none; }
@@ -349,11 +341,16 @@ header { flex-wrap:wrap; align-items:flex-start; }
    an area's name — so a dot inside a region takes the click and the region takes it everywhere else.
    A pane's SVG renderer covers the whole map; only its shapes may catch the pointer, never the SVG
    itself, or the sites' SVG would blanket the regions under it. */
-.leaflet-hd-areas-pane { z-index:410; }
-.leaflet-hd-area-points-pane { z-index:430; }
-.leaflet-hd-labels-pane { z-index:450; pointer-events:none; }
-.leaflet-hd-sites-pane { z-index:520; }
-.leaflet-hd-areas-pane > svg, .leaflet-hd-sites-pane > svg { pointer-events:none; }
+.hd-pane { position:absolute; inset:0; pointer-events:none; overflow:visible; }
+.hd-pane--area-points { z-index:430; }
+.hd-pane--labels { z-index:450; }
+.hd-pane--labels .hd-marker { pointer-events:none; }
+.hd-pane--sites { z-index:520; }
+.hd-pane--markers { z-index:600; }
+.hd-pane--events { z-index:640; }
+/* the map: the canvas under the panes; over a place's shape the pointer says it answers */
+.map-container { background:var(--bg); }
+.map-container.over-place .maplibregl-canvas-container.maplibregl-interactive { cursor:pointer; }
 .hd-map-label-wrap { background:transparent; border:none; }
 .hd-map-label, .hd-area-point { color:var(--map-label-ink); -webkit-text-stroke:3px var(--map-label-halo);
   paint-order:stroke fill; stroke-linejoin:round; }
@@ -372,24 +369,18 @@ header { flex-wrap:wrap; align-items:flex-start; }
   .hd-area-point { transition:opacity .22s, visibility .22s; }
   .hd-area-point.is-culled { scale:1; }
 }
-/* `Dark` base map: the configured (light) tiles, inverted — no second tile server */
-.map-tiles-dark .leaflet-tile-pane { filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
-.map-tiles-dark.leaflet-container { background:var(--bg); }
-/* `Terrain` base map (TerrainMap): outside the downloaded region there is no tile — the page's own
-   background; while it is not downloaded, the standard tiles stand in, dimmed like `Dark` */
-.terrain-missing .leaflet-tile-pane { filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
-.terrain-missing.leaflet-container { background:var(--bg); }
-/* the terrain style's own background (its sea) beyond the extract, set by TerrainMap as --terrain-bg */
-.terrain-on.leaflet-container { background:var(--terrain-bg, var(--bg)); }
-/* the local map's credits are long (OpenStreetMap, Natural Earth, Protomaps, Mapterhorn): one line that
-   starts with © OpenStreetMap, so it never covers the markers along the map's foot; all of it on hover */
-.terrain-on .leaflet-control-attribution { max-width:min(60vw, 520px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-[data-layout="narrow"] .terrain-on .leaflet-control-attribution { max-width:calc(100vw - 16px); }
-/* whole on hover, wrapping UPWARD within the same width: it never grows sideways into the notice */
-.terrain-on .leaflet-control-attribution:hover,
-.terrain-on .leaflet-control-attribution:focus-within { white-space:normal; overflow:visible; }
-/* the notice's corner rises above the credits where the two would meet (TerrainMap.fitNotice) */
-.terrain-on .leaflet-bottom.leaflet-left { margin-bottom:var(--terrain-notice-lift, 0px); }
+/* the map's controls (web.map Corner): the credits compact — one line that starts with © OpenStreetMap,
+   all of it on a tap or hover — and the notice's corner rising above the right-hand corner where they would
+   meet (BaseMaps.fitNotice) */
+.hd-map-control { pointer-events:auto; clear:both; }
+.maplibregl-ctrl-bottom-left { margin-bottom:var(--terrain-notice-lift, 0px); }
+.maplibregl-ctrl-bottom-left .terrain-notice { margin:0 0 10px 10px; float:left; }
+.maplibregl-ctrl-attrib { font-size:11px; }
+.maplibregl-ctrl-attrib.maplibregl-compact { max-width:min(60vw, 520px); }
+[data-layout="narrow"] .maplibregl-ctrl-attrib.maplibregl-compact { max-width:calc(100vw - 16px); }
+.maplibregl-ctrl-group { background:var(--panel); border:1px solid var(--line); }
+.maplibregl-ctrl-group button + button { border-top:1px solid var(--line); }
+.maplibregl-ctrl button .maplibregl-ctrl-icon { filter:invert(1) brightness(.9); }
 .terrain-notice { background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px; color:var(--ink);
   font-size:var(--fs-sm); line-height:1.35; padding:var(--space-3) var(--space-4); max-width:300px; }
 .terrain-notice a { color:var(--accent); white-space:nowrap; }
@@ -397,7 +388,7 @@ header { flex-wrap:wrap; align-items:flex-start; }
 [data-layout="narrow"] .terrain-notice { max-width:220px; font-size:var(--fs-xs); }
 /* the base map's options (MapOptions): a compact popover under its button, open while options change */
 .map-options-anchor { position:relative; display:inline-flex; }
-/* placed under its button by MapOptions (--map-options-x/-y), kept inside the window */
+/* placed under its button by BaseMaps (--map-options-x/-y), kept inside the window */
 .map-options { position:fixed; left:var(--map-options-x, 8px); top:var(--map-options-y, 8px); z-index:1100; width:min(300px, 92vw);
   max-height:calc(100vh - var(--map-options-y, 8px) - 8px); overflow-y:auto;
   background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg); box-shadow:0 4px 16px rgba(0,0,0,.5);
@@ -422,8 +413,6 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .map-far .hd-area-point { display:none; }
 /* an undated place shown at this time only because findings dated then are attached to it
    (`basis: findings`, PlaceTimeBasis): dashed and lighter, never mistaken for a place known to exist then */
-path.hd-by-findings { stroke-dasharray:3 3; fill-opacity:.35; }
-path.hd-polity.hd-by-findings { fill-opacity:.04; }
 .hd-by-findings .hd-area-point { opacity:.7; text-decoration:underline dashed; }
 
 /* ── sidebar tabs + the articles pane (plan §5.2 stream 2.7) ─────────────────────────────────── */
@@ -554,7 +543,7 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
 .tempty a.tlist { color:var(--accent); text-decoration:underline; font-style:normal; }
 
 /* ── the map's colour ramp, finally labelled (items 11, 27) ─────────────────────────────────── */
-.hd-legend { background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px;
+.hd-legend { float:right; margin:0 10px 10px 0; width:max-content; max-width:calc(100% - 20px); background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px;
              padding:5px 7px; color:var(--muted); font:11px system-ui,-apple-system,sans-serif;
              box-shadow:0 2px 10px rgba(0,0,0,.4); }
 .hd-ramp { display:flex; width:132px; height:8px; border-radius:2px; overflow:hidden; }
@@ -573,14 +562,17 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
 .hd-conf { font-size:11px; color:var(--muted); font-style:italic; }
 
 /* ── Leaflet popups follow the page's theme, not Leaflet's white default (item 26) ──────────── */
-.leaflet-popup-content-wrapper, .leaflet-popup-tip { background:var(--panel); color:var(--ink);
-  box-shadow:0 6px 22px rgba(0,0,0,.55); }
-.leaflet-popup-content-wrapper { border:1px solid var(--line); }
-.leaflet-popup-content { color:var(--ink); }
-.leaflet-popup-content b { color:var(--accent); }
-.leaflet-popup-content a { color:var(--accent); }
-.leaflet-container a.leaflet-popup-close-button { color:var(--muted); }
-.leaflet-container a.leaflet-popup-close-button:hover { color:var(--ink); }
+/* the map's popups (a finding's, a picture's): the panel's colours, over every pane */
+.hd-popup { z-index:700; font:12px system-ui; }
+.hd-popup .maplibregl-popup-content { background:var(--panel); color:var(--ink); border:1px solid var(--line);
+  border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,.45); padding:10px 22px 10px 12px; }
+.hd-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color:var(--panel); }
+.hd-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color:var(--panel); }
+.hd-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color:var(--panel); }
+.hd-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color:var(--panel); }
+.hd-popup .maplibregl-popup-content b, .hd-popup .maplibregl-popup-content a { color:var(--accent); }
+.hd-popup .maplibregl-popup-close-button { color:var(--muted); font-size:16px; }
+.hd-popup .maplibregl-popup-close-button:hover { color:var(--ink); background:none; }
 
 /* ── modal chrome: history buttons, title, dialog focus (items 6, 13) ───────────────────────── */
 .modal:focus { outline:none; }
@@ -945,8 +937,6 @@ a.chip:hover { border-color:var(--accent); }
             background:rgba(0,0,0,.82); cursor:zoom-out; padding:2rem; }
 .lightbox img { max-width:100%; max-height:100%; box-shadow:0 2px 24px rgba(0,0,0,.6); }
 /* a place picked in the filter (and one previewed from a site): outline and a faint fill */
-.hd-place-pick    { stroke:var(--place-pick); fill:var(--place-pick); }
-.hd-place-preview { stroke:var(--place-preview); fill:var(--place-preview); }
 
 /* ═══ the narrow (phone) layout ════════════════════════════════════════════════════════════════════
    Viewport.scala sets <html data-layout="narrow"> on a thin screen, or a short touch screen (a phone held
@@ -1016,8 +1006,8 @@ a.chip:hover { border-color:var(--accent); }
 /* ── the map ────────────────────────────────────────────────────────────────────────────────────── */
 /* its panes and controls (z-index up to 1000) stay inside it, under the sheet, the bar and the drawers */
 [data-layout="narrow"] #map { grid-row:3; position:relative; z-index:0; }
-[data-layout="narrow"] .leaflet-bottom { bottom:var(--sheet-peek); }
-[data-layout="narrow"] .leaflet-bar a, [data-layout="narrow"] .leaflet-touch .leaflet-bar a { width:var(--tap); height:var(--tap); line-height:var(--tap); }
+[data-layout="narrow"] .maplibregl-ctrl-bottom-left, [data-layout="narrow"] .maplibregl-ctrl-bottom-right { bottom:var(--sheet-peek); }
+[data-layout="narrow"] .maplibregl-ctrl-group button { width:var(--tap); height:var(--tap); }
 [data-layout="narrow"] .hd-legend { font-size:var(--fs-small); }
 [data-layout="narrow"] .hd-ramp { width:min(40vw, 160px); }
 [data-layout="narrow"] .hd-legend-confidence { display:none; }
@@ -1153,7 +1143,7 @@ a.chip:hover { border-color:var(--accent); }
 [data-layout="narrow"] .map-place-chips .chip { background:var(--panel); border:1px solid var(--place-pick);
   min-height:calc(var(--tap) * .8); display:inline-flex; align-items:center; box-shadow:0 2px 10px rgba(0,0,0,.4); }
 [data-layout="narrow"] .map-place-chips .chip-x { min-width:calc(var(--tap) * .7); min-height:calc(var(--tap) * .7); }
-.leaflet-interactive:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.hd-marker:focus-visible, .hd-marker :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 
 /* ── the About window ──────────────────────────────────────────────────────────────────────────── */
 .about-sections { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px 24px; }
@@ -1232,8 +1222,6 @@ a.chip:hover { border-color:var(--accent); }
 .merge-editor { width:100%; min-height:160px; font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace; resize:vertical; }
 .merge-place { margin-top:8px; }
 .merge-map { height:220px; border:1px solid var(--line); border-radius:6px; }
-.merge-geom.merge-left { stroke:var(--merge-left); fill:var(--merge-left); }
-.merge-geom.merge-right { stroke:var(--merge-right); fill:var(--merge-right); }
 .merge-legend { font-size:12px; color:var(--muted); margin:4px 0; }
 .merge-swatch { display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:-1px; }
 .merge-swatch.merge-left, .merge-span-bar.merge-left { background:var(--merge-left); }
@@ -1286,13 +1274,12 @@ a.chip:hover { border-color:var(--accent); }
 /* ── events in playback (#1440, EventLayer): the point-only region label (.hd-area-point, PlaceGlyph)
    inside an .hd-event wrapper; `--a` is the event's visibility (1 in its span, fading after it).
    LOCAL: a dot at the site, its name beside it. REGIONAL: the name centred on the region, in bold spaced
-   small capitals, over a faint dashed outline of the region (path.hd-event-outline). The label's colours
+   small capitals, over a faint dashed outline of the region (drawn by the map: EventLayer). The label's colours
    are the area label's halo text (ink, halo and their swap on dark tiles), and the dot's ring is the halo,
    so a theme or tone change there reaches the events too. An event's name joins the map's collision pass
    (MapLabels) above every area name; a culled name (.is-culled) hides, its dot stays. */
-/* the events' own pane: above the finding markers (600), below Leaflet's tooltips (650) */
-.leaflet-hd-events-pane { z-index:640; pointer-events:none; }
-.hd-event-wrap { background:transparent; border:none; pointer-events:none; }
+.hd-event-wrap { background:transparent; border:none; }
+.hd-marker.hd-event-wrap { pointer-events:none; }
 .hd-event { display:block; position:relative; opacity:var(--a, 1); transition:opacity .15s linear; }
 /* `--i`: the label's slot among the events shown at the same point — the name moves down, the dot stays. The step
    is a two-line label (~24 px) plus the collision pass's padding (LabelPlacement.PadPx), so a stack is never culled */
@@ -1304,9 +1291,7 @@ a.chip:hover { border-color:var(--accent); }
   font-style:normal; font-weight:600; }
 .hd-event--regional .hd-area-point { font-style:normal; font-weight:700; font-variant:small-caps; letter-spacing:.08em;
   font-size:13px; }
-path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray:4 4; fill:var(--accent);
-  stroke-opacity:calc(var(--a, 1) * .55); fill-opacity:calc(var(--a, 1) * .06); transition:stroke-opacity .15s linear, fill-opacity .15s linear; }
-@media (prefers-reduced-motion: reduce) { .hd-event, path.hd-event-outline { transition:none; } }
+@media (prefers-reduced-motion: reduce) { .hd-event { transition:none; } }
 
 /* ── icons on the map (#1449): ONE registry (web.Glyphs, Lucide), monochrome, drawn in currentColor ──── */
 .glyph { width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round;
@@ -1357,7 +1342,6 @@ path.hd-event-outline { stroke:var(--accent); stroke-width:1.5; stroke-dasharray
   text-shadow:0 0 2px var(--glyph-halo), 0 0 1px var(--glyph-halo); }
 /* an event: the TIER is the fill — attested filled, catalogue-only paler, dashed and lighter (a lead, not
    evidence); its kind (natural or human) is the icon's to say */
-.leaflet-hd-events-pane .hd-point-wrap { pointer-events:auto; }
 .hd-ev--catalogue { background:color-mix(in srgb, var(--c, var(--accent)) 45%, var(--glyph-backdrop));
   border:1.5px dashed var(--glyph-edge); opacity:.85; }
 /* an APPROXIMATELY dated event (± 50–500 years, core.EventPrecision): faded, its edge dotted — an uncertain

@@ -109,8 +109,8 @@ object TimelinePlayback:
     if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, true)
     MapView.setPlaybackMode(true)
     // the filter's events over the span played, fetched once; each frame then draws them locally
-    if eventsConfig != null && MapView.leafletMap != null then
-      EventLayer.start(MapView.leafletMap, eventsConfig,
+    if eventsConfig != null then
+      EventLayer.start(eventsConfig,
         Api.EventQuery(UiState.toFilter().copy(period = Some(Period(sf, st)))))
     playing.set(true)
     lastTs = 0.0

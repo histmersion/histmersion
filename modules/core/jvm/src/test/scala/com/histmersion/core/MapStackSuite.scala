@@ -16,11 +16,8 @@ class MapStackSuite extends munit.FunSuite:
     assert(MapStack.pointsAboveAreas(Nil))
     assert(MapStack.pointsAboveAreas(List(Pane.Areas, Pane.Labels)))
 
-  test("the class Leaflet gives each pane"):
-    assertEquals(Pane.Areas.cssClass, "leaflet-hd-areas-pane")
-    assertEquals(Pane.AreaPoints.cssClass, "leaflet-hd-area-points-pane")
-    assertEquals(Pane.Markers.cssClass, "leaflet-marker-pane")
-    assertEquals(MapStack.order.filter(_.builtIn), List(Pane.Markers))
-
-  test("only the panes Leaflet draws paths in are vector panes"):
-    assertEquals(MapStack.order.filter(_.vector), List(Pane.Areas, Pane.Sites))
+  test("each DOM pane's class; the areas are the canvas, under every pane"):
+    assertEquals(Pane.AreaPoints.cssClass, "hd-pane--area-points")
+    assertEquals(Pane.Markers.cssClass, "hd-pane--markers")
+    assertEquals(MapStack.order.filter(_.canvas), List(Pane.Areas))
+    assertEquals(MapStack.domPanes.headOption, Some(Pane.AreaPoints))

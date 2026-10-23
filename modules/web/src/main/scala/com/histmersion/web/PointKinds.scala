@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.core.*
-import com.histmersion.web.leaflet.*
+import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
@@ -77,19 +77,14 @@ object PointKinds:
     def action(s: Spot): String = if s.items.size == 1 then "open this finding" else "list them"
     override def title(s: Spot): Option[String] = MapView.markerTitle(s.items)
     def target(s: Spot, asOf: Option[Long]): Option[Preview.Target] = MapView.hoverSource(s.items).map(Preview.Target.Source(_))
-    /** One finding: its popup, following its content; several: none (a click lists them). */
-    override def decorate(m: Marker, s: Spot): Unit =
-      val d = m.asInstanceOf[js.Dynamic]
-      s.items match
-        case List(one) =>
-          if js.isUndefined(d.getPopup()) || d.getPopup() == null then m.bindPopup(MapView.popupHtml(one))
-          else d.setPopupContent(MapView.popupHtml(one))
-        case _ => if !js.isUndefined(d.getPopup()) && d.getPopup() != null then d.unbindPopup()
-    def activate(m: Marker, s: Spot, how: Activation): Unit =
+    /** One finding: its popup; several: their list. */
+    def activate(s: Spot, how: Activation): Unit =
       Preview.unpin(restoreFocus = false)
-      if s.items.size == 1 then { if how.keyboard then m.openPopup() }   // a click opens it by itself
-      else ResultsList.pick(s.items, s"${s.items.size} findings at ${s.lat}, ${s.lon}", None)
-    def open(m: Marker, s: Spot, row: dom.Element): Unit = MapView.reveal(m, () => { val _ = m.openPopup() })
+      s.items match
+        case List(one) => MapView.popup(s.lat, s.lon, MapView.popupHtml(one))
+        case _         => ResultsList.pick(s.items, s"${s.items.size} findings at ${s.lat}, ${s.lon}", None)
+    def open(key: String, s: Spot, row: dom.Element): Unit =
+      MapView.reveal(key, () => s.items.headOption.foreach(one => MapView.popup(s.lat, s.lon, MapView.popupHtml(one))))
 
   /** A site: a CIRCLE with its type's icon (the exclamation mark when unknown); its hover shows the
     * place's card; a click chooses it as the place filter and pins its card. The site-type menu keeps
@@ -101,7 +96,7 @@ object PointKinds:
     val layerLabel = "sites"
     val meaning = "a site"
     def box   = (Layout.siteIconSize.value, Layout.siteIconSize.value)
-    override def pane = Some(MapPanes.Sites)   // above every region: a site inside one still takes the click
+    override def pane = com.histmersion.core.MapStack.Pane.Sites   // above every region: a site inside one still takes the click
     def key(p: SitePoint): String = p.id.getOrElse(s"${p.lat}|${p.lon}")
     def at(p: SitePoint): (Double, Double) = (p.lat, p.lon)
     def inner(p: SitePoint): String = Glyphs.badge(CardIcons.siteMarker(p.known.map(_.id)))
@@ -118,9 +113,9 @@ object PointKinds:
     def label(p: SitePoint): String = s"${p.name} · ${p.known.fold("site")(_.label)}"
     def action(p: SitePoint): String = "show only this place and pin its card"
     def target(p: SitePoint, asOf: Option[Long]): Option[Preview.Target] = p.id.map(Preview.Target.Place(_, asOf))
-    def activate(m: Marker, p: SitePoint, how: Activation): Unit =
+    def activate(p: SitePoint, how: Activation): Unit =
       p.id.foreach(id => PlaceHover.activatePlace(id, p.name, p.kind, () => MapView.spanMid(), how))
-    def open(m: Marker, p: SitePoint, row: dom.Element): Unit =
+    def open(key: String, p: SitePoint, row: dom.Element): Unit =
       p.id.foreach(id => DotCluster.pinUnder(Preview.Target.Place(id, MapView.spanMid()), row))
     override def keep(p: SitePoint): Boolean = keeps(p, UiState.siteType.now())
     /** Pure: does the site-type menu's choice keep it? "all" keeps every site. */
@@ -135,7 +130,7 @@ object PointKinds:
     val layerLabel = "events"
     val meaning = "an event"
     def box   = (Layout.eventMarkerSize.value, Layout.eventMarkerSize.value)
-    override def pane = Some(MapPanes.Events)
+    override def pane = com.histmersion.core.MapStack.Pane.Events
     def key(e: EventGeo): String = e.id
     def at(e: EventGeo): (Double, Double) = (e.lat, e.lon)
     def inner(e: EventGeo): String = Glyphs.badge(CardIcons.event(e.kind))
@@ -156,13 +151,13 @@ object PointKinds:
     override def keep(e: EventGeo): Boolean = EventPrecision.mapped(e.precision)
     // the corpus's events above the catalogue's
     override def zIndex(e: EventGeo): Int = if e.tier == EventTier.Catalogue then 0 else 500
-    def activate(m: Marker, e: EventGeo, how: Activation): Unit =
+    def activate(e: EventGeo, how: Activation): Unit =
       val el = how.element
       Preview.pin(Preview.Target.Event(e.id), () => el.filter(_.isConnected).map { x =>
         val r = x.getBoundingClientRect()
         Preview.Anchor.Under(r.left, r.top, r.bottom, r.width)
       }, owner = el.filter(_ => how.keyboard), keyboard = how.keyboard)
-    def open(m: Marker, e: EventGeo, row: dom.Element): Unit = DotCluster.pinUnder(Preview.Target.Event(e.id), row)
+    def open(key: String, e: EventGeo, row: dom.Element): Unit = DotCluster.pinUnder(Preview.Target.Event(e.id), row)
 
   /** A picture: a landscape PHOTO PRINT with the picture icon, in its date's colour (an undated one in
     * its kind's); a source's figure previews its source; a click opens its popup. */
@@ -188,14 +183,12 @@ object PointKinds:
     def label(h: MediaGeoHit): String = s"${h.assetName} · ${note(h)}"
     def action(h: MediaGeoHit): String = "open this picture"
     def target(h: MediaGeoHit, asOf: Option[Long]): Option[Preview.Target] = h.citekey.map(Preview.Target.Source(_))
-    override def decorate(m: Marker, h: MediaGeoHit): Unit =
-      val d = m.asInstanceOf[js.Dynamic]
-      if js.isUndefined(d.getPopup()) || d.getPopup() == null then
-        val period = Fmt.periodStr(h.periodStart, h.periodEnd)
-        val caption = h.caption.map(c => s"<br><i>${Fmt.esc(c)}</i>").getOrElse("")
-        m.bindPopup(MediaPopup.html(h, period, caption))
-    def activate(m: Marker, h: MediaGeoHit, how: Activation): Unit = if how.keyboard then m.openPopup()
-    def open(m: Marker, h: MediaGeoHit, row: dom.Element): Unit = MapView.reveal(m, () => { val _ = m.openPopup() })
+    private def popup(h: MediaGeoHit): Unit =
+      val period = Fmt.periodStr(h.periodStart, h.periodEnd)
+      val caption = h.caption.map(c => s"<br><i>${Fmt.esc(c)}</i>").getOrElse("")
+      MapView.popup(h.lat, h.lon, MediaPopup.html(h, period, caption))
+    def activate(h: MediaGeoHit, how: Activation): Unit = popup(h)
+    def open(key: String, h: MediaGeoHit, row: dom.Element): Unit = MapView.reveal(key, () => popup(h))
 
   /** Every kind, in the order the toolbar, the key and a bubble's list name them. */
   val all: List[PointKind[?]] = List(Findings, Sites, Events, Media)

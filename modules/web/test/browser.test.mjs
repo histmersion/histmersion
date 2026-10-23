@@ -11,6 +11,7 @@ before(async () => {
   browser = await chromium.launch({
     headless: true,
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
+    args: gpuArgs(),
   });
 });
 after(async () => { await browser?.close(); });
@@ -18,32 +19,22 @@ after(async () => { await browser?.close(); });
 /** `source`: the base-map family the page is told it has (`/api/config`'s resolved `ui.base-map-source`),
   * `local` or `online`; by default what the server says. `outside`: every request to another host is
   * recorded there (and refused, as always). */
+/** The map is drawn by WebGL: on a GPU (macOS: Metal) unless HISTMERSION_TEST_GPU=0, which leaves Chromium's
+  * software rasteriser — the condition the map's no-GPU fallback is for (its own test below). */
+function gpuArgs() {
+  const want = process.env.HISTMERSION_TEST_GPU ?? (process.platform === 'darwin' ? '1' : '0');
+  return want === '0' ? [] : ['--enable-gpu', '--ignore-gpu-blocklist', ...(process.platform === 'darwin' ? ['--use-angle=metal'] : [])];
+}
+
 async function withPage(viewport, run, { source, outside } = {}) {
   const context = await browser.newContext({ viewport, isMobile: viewport.width < 760, hasTouch: true });
   try {
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    // Retain the real Leaflet instance, without replacing any of its behavior or application code.
+    // the map's own handle (web MapHandle): its view in the app's zooms, whatever library draws it
     await page.addInitScript(() => {
-      let leaflet;
-      Object.defineProperty(window, 'L', {
-        configurable: true,
-        get: () => leaflet,
-        set: value => {
-          leaflet = value;
-          let factory = value.map;
-          Object.defineProperty(value, 'map', {
-            configurable: true, enumerable: true,
-            set: fn => { factory = fn; },
-            get: () => function (...args) {
-              const map = factory.apply(value, args);
-              window.__testMap = map;
-              return map;
-            },
-          });
-        },
-      });
+      Object.defineProperty(window, '__testMap', { configurable: true, get: () => window.histmersionMap });
     });
     await page.route('**/*', route => {
       if (new URL(route.request().url()).origin === origin) return route.continue();
@@ -69,7 +60,7 @@ async function settledAt(page, selector, lat, lon) {
   await page.waitForFunction(([sel, la, lo]) => {
     const el = document.querySelector(sel);
     if (!el) return false;
-    const icon = el.closest('.leaflet-marker-icon') || el;
+    const icon = el.closest('.hd-marker') || el;
     const r = icon.getBoundingClientRect(), m = document.getElementById('map').getBoundingClientRect();
     const p = window.__testMap.latLngToContainerPoint([la, lo]);
     return Math.abs(r.left + r.width / 2 - (m.left + p.x)) < 2 && Math.abs(r.top + r.height / 2 - (m.top + p.y)) < 2;
@@ -79,8 +70,9 @@ async function settledAt(page, selector, lat, lon) {
 async function synchronizedSize(page) {
   await page.waitForFunction(() => {
     const element = document.getElementById('map');
-    const size = window.__testMap.getSize();
-    return size.x === element.clientWidth && size.y === element.clientHeight;
+    const size = window.__testMap.getSize(), canvas = element.querySelector('canvas');
+    return size.x === element.clientWidth && size.y === element.clientHeight && canvas &&
+      Math.abs(canvas.getBoundingClientRect().height - element.clientHeight) < 1;
   });
   return page.evaluate(() => {
     const size = window.__testMap.getSize();
@@ -89,7 +81,7 @@ async function synchronizedSize(page) {
 }
 
 const phone = { width: 390, height: 844 };
-test('Leaflet follows the phone timeline, its detail strip, and closing the timeline', async () => {
+test('the map follows the phone timeline, its detail strip, and closing the timeline', async () => {
   await withPage(phone, async page => {
     const initial = await synchronizedSize(page);
     await page.locator('.mb-timeline').click();
@@ -103,7 +95,7 @@ test('Leaflet follows the phone timeline, its detail strip, and closing the time
   });
 });
 
-test('Leaflet follows a desktop sidebar resize without a window resize', async () => {
+test('the map follows a desktop sidebar resize without a window resize', async () => {
   await withPage({ width: 1440, height: 900 }, async page => {
     const initial = await synchronizedSize(page);
     const handle = await page.locator('.sidebar-resize').boundingBox();
@@ -261,7 +253,7 @@ test('#1440: playback draws local and regional events, fades the local one, and 
     await page.locator('.tl-playback button').first().click();
     await page.waitForSelector('.hd-event--local .hd-event-dot');
     await page.waitForSelector('.hd-event--regional');
-    await page.waitForSelector('path.hd-event-outline');
+    await page.waitForFunction(() => window.__testMap.shapes('event-outlines').length === 1);
     assert.equal(asked, 1, 'the feed is fetched once per playback, not per frame');
     assert.match(await page.locator('.hd-event--local .hd-area-point-name').textContent(), /Zz battle/);
     // after its year the local event fades (its --a drops below 1), then goes
@@ -272,7 +264,7 @@ test('#1440: playback draws local and regional events, fades the local one, and 
     await page.waitForFunction(() => !document.querySelector('.hd-event--local'), null, { timeout: 15000 });
     assert.ok(await page.locator('.hd-event--regional').count() === 1, 'the era is still on');
     await page.locator('.tl-playback button[aria-label="stop and reset"]').click();
-    await page.waitForFunction(() => !document.querySelector('.hd-event') && !document.querySelector('path.hd-event-outline'));
+    await page.waitForFunction(() => !document.querySelector('.hd-event') && window.__testMap.shapes('event-outlines').length === 0);
   });
 });
 
@@ -386,7 +378,7 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
-    await page.waitForSelector('path.hd-polity');
+    await page.waitForFunction(() => window.__testMap.shapes('polities').includes('zz_realm'));
     await page.waitForSelector('.hd-site-marker');
     await page.waitForSelector('.hd-find');
     const map = await page.locator('#map').boundingBox();
@@ -394,19 +386,23 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
       const p = await page.evaluate(([la, lo]) => window.__testMap.latLngToContainerPoint([la, lo]), [lat, lon]);
       return { x: map.x + p.x, y: map.y + p.y };
     };
+    // what the pointer meets there: a marker (its class), else the map's canvas and the shapes under it
     const hit = async (lat, lon) => {
       const { x, y } = await at(lat, lon);
-      return page.evaluate(([x, y]) => {
+      return page.evaluate(([x, y, la, lo]) => {
         const el = document.elementFromPoint(x, y);
-        return el ? (el.closest('.hd-point-wrap--diamond') ? 'finding' : el.getAttribute('class') || el.tagName) : 'nothing';
-      }, [x, y]);
+        if (!el) return 'nothing';
+        if (el.closest('.hd-point-wrap--diamond')) return 'finding';
+        if (el.closest('.hd-marker')) return el.getAttribute('class') || el.tagName;
+        return el.tagName === 'CANVAS' ? `canvas ${window.__testMap.shapesAt([la, lo]).join(' ')}` : el.getAttribute('class') || el.tagName;
+      }, [x, y, lat, lon]);
     };
     const placeInHash = () => new URLSearchParams(new URL(page.url()).hash.slice(1)).getAll('placeId');
     const check = async () => {
       // the pointer's target at each spot: the site's dot, the finding's marker, the region elsewhere
       assert.match(await hit(37.5, 32), /hd-site-marker/, 'the site dot is on top');
       assert.equal(await hit(37, 31), 'finding', 'the finding marker is on top');
-      assert.match(await hit(38.5, 33.5), /hd-polity/, 'the region answers where no dot is');
+      assert.match(await hit(38.5, 33.5), /^canvas polities:zz_realm/, 'the region answers where no dot is');
     };
     await check();
     // a click on the site chooses the SITE as the place filter, not the realm around it
@@ -419,16 +415,16 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
     // a click on the finding opens ITS popup
     p = await at(37, 31);
     await page.mouse.click(p.x, p.y);
-    await page.waitForSelector('.leaflet-popup-content');
-    assert.match(await page.locator('.leaflet-popup-content').innerText(), /a claim inside the realm/);
+    await page.waitForSelector('.hd-popup-content');
+    assert.match(await page.locator('.hd-popup-content').innerText(), /a claim inside the realm/);
     assert.deepEqual(placeInHash(), [], 'the realm was not chosen');
     await page.evaluate(() => window.__testMap.closePopup());
-    await page.waitForFunction(() => !document.querySelector('.leaflet-popup'));   // it fades out first
+    await page.waitForFunction(() => !document.querySelector('.hd-popup'));   // it fades out first
     // the boundaries switched off and on: every shape is added again, after the dots
     await page.locator('.viewport-toggle button[title="boundaries"]').click();
-    await page.waitForFunction(() => !document.querySelector('path.hd-polity'));
+    await page.waitForFunction(() => window.__testMap.shapes('polities').length === 0);
     await page.locator('.viewport-toggle button[title="boundaries"]').click();
-    await page.waitForSelector('path.hd-polity');
+    await page.waitForFunction(() => window.__testMap.shapes('polities').includes('zz_realm'));
     await check();
     // the region is still a target of its own
     p = await at(38.5, 33.5);
@@ -734,12 +730,12 @@ test('hovering a finding dot shows its source card, not the citekey', async () =
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
-    await page.waitForFunction(() => document.querySelectorAll('.leaflet-marker-icon.hd-point-wrap--diamond').length >= 2);
+    await page.waitForFunction(() => document.querySelectorAll('.hd-marker.hd-point-wrap--diamond').length >= 2);
     await page.waitForTimeout(800);   // the dots grow in (hd-entering) before they can be hit
     const markerAt = (lat, lon) => page.evaluate(([la, lo]) => {
       const p = window.__testMap.latLngToContainerPoint([la, lo]);
       const m = document.getElementById('map').getBoundingClientRect();
-      const el = document.elementFromPoint(m.left + p.x, m.top + p.y)?.closest('.leaflet-marker-icon');
+      const el = document.elementFromPoint(m.left + p.x, m.top + p.y)?.closest('.hd-marker');
       return el ? { x: m.left + p.x, y: m.top + p.y, title: el.getAttribute('title'), aria: el.getAttribute('aria-label') } : null;
     }, [lat, lon]);
     const single = await markerAt(37, 31);
@@ -777,8 +773,8 @@ test('hovering a finding dot shows its source card, not the citekey', async () =
     assert.equal(asked, 1, 'the card is cached');
     // a click still opens the finding's popup, and the hover card makes way for it
     await page.mouse.click(single.x, single.y);
-    await page.waitForSelector('.leaflet-popup-content');
-    assert.match(await page.locator('.leaflet-popup-content').innerText(), /a claim at the dot/);
+    await page.waitForSelector('.hd-popup-content');
+    assert.match(await page.locator('.hd-popup-content').innerText(), /a claim at the dot/);
     assert.equal(await page.locator('.cite-tooltip:not(.is-pinned)').count(), 0, 'the hover card is gone');
     // the coincident dot shows no source card on a rest
     await page.evaluate(() => window.__testMap.closePopup());
@@ -915,7 +911,7 @@ test('every card kind leads with its icon: source, site, region, event, picture'
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.4, 32.3], 7, { animate: false }));
-    await page.waitForSelector('path.hd-polity');
+    await page.waitForFunction(() => window.__testMap.shapes('polities').includes('zz_realm'));
     const iconOf = async (lat, lon, sel) => {
       await settledAt(page, sel, lat, lon);
       await page.mouse.move(5, 5);
@@ -956,7 +952,7 @@ test('every card kind leads with its icon: source, site, region, event, picture'
     await settledAt(page, '.hd-media-dot', 36.5, 33.3);
     const pic = await pagePoint(page, 36.5, 33.3);
     await page.mouse.click(pic.x, pic.y);
-    await page.waitForSelector('.leaflet-popup-content .media-popup-title .cite-tip-icon svg.glyph');
+    await page.waitForSelector('.hd-popup-content .media-popup-title .cite-tip-icon svg.glyph');
   });
 });
 
@@ -979,52 +975,31 @@ test('a cluster of events is a square; among thousands of points a zoom does not
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
-    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '3');
+    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
     const shape = await page.evaluate(() => {
-      const b = document.querySelector('.leaflet-marker-icon .hd-cluster');
+      const b = document.querySelector('.hd-marker .hd-cluster');
       return { events: b.classList.contains('hd-cluster--events'), says: b.getAttribute('aria-label'),
         rects: b.querySelectorAll('svg rect').length, circles: b.querySelectorAll('svg circle').length };
     });
     assert.deepEqual(shape, { events: true, says: '3 events', rects: 4, circles: 0 });
-    // does the next zoom animate the bubbles? Counted where markercluster starts one: its animated
-    // `_animationStart` (the plugin's own method set, mixed into the group — wrapped here once)
-    await page.evaluate(() => {
-      let g;
-      window.__testMap.eachLayer(l => { if (l._featureGroup) g = l; });
-      const orig = g._withAnimation._animationStart;
-      const spy = function () { window.__clusterAnims = (window.__clusterAnims || 0) + 1; return orig.apply(this, arguments); };
-      g._withAnimation._animationStart = spy;
-      if (g._animationStart === orig) g._animationStart = spy;
-    });
+    // does the next zoom animate the bubbles? The cluster layer counts the zooms it animated
     const zoomAnimates = (z) => page.evaluate((zoom) => new Promise(resolve => {
-      const map = window.__testMap, before = window.__clusterAnims || 0;
-      map.once('zoomend', () => setTimeout(() => resolve((window.__clusterAnims || 0) > before), 600));
+      const map = window.__testMap, before = map.clusterAnimations();
+      map.once('zoomend', () => setTimeout(() => resolve(map.clusterAnimations() > before), 600));
       map.setZoom(zoom);
     }), z);
-    const held = () => page.evaluate(() => {
-      let n = 0;
-      window.__testMap.eachLayer(l => { if (l._featureGroup) n = Math.max(n, l.getLayers().length); });
-      return n;
-    });
+    const held = () => page.evaluate(() => window.__testMap.points());
     assert.equal(await zoomAnimates(8), true, 'three points: the zoom animates');
     // a thousand and more: the next zoom does not
     feed = { unplaced: 0, events: few.concat(many) };
     await page.evaluate(() => window.__testMap.setView([30, 5], 4, { animate: false }));
-    await page.waitForFunction(() => {
-      let n = 0;
-      window.__testMap.eachLayer(l => { if (l._featureGroup) n = Math.max(n, l.getLayers().length); });
-      return n === 1203;
-    }, null, { timeout: 15000 });
+    await page.waitForFunction(() => window.__testMap.points() === 1203, null, { timeout: 15000 });
     assert.equal(await zoomAnimates(5), false, '1 203 points: the zoom does not animate');
     assert.equal(await zoomAnimates(4), false);
     // back to a few: animated again
     feed = { unplaced: 0, events: few };
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
-    await page.waitForFunction(() => {
-      let n = 0;
-      window.__testMap.eachLayer(l => { if (l._featureGroup) n = Math.max(n, l.getLayers().length); });
-      return n === 3;
-    }, null, { timeout: 15000 });
+    await page.waitForFunction(() => window.__testMap.points() === 3, null, { timeout: 15000 });
     assert.equal(await held(), 3);
     assert.equal(await zoomAnimates(8), true, 'a few points again: the zoom animates again');
   });
@@ -1061,33 +1036,33 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
     const bubble = () => page.evaluate(() => {
-      const b = document.querySelector('.leaflet-marker-icon .hd-cluster');
+      const b = document.querySelector('.hd-marker .hd-cluster');
       return b ? { n: Number(b.textContent), says: b.getAttribute('aria-label'), mixed: b.classList.contains('hd-cluster--mixed'),
         // events among the others: the round bubble with the event's square tab (#1647)
         withEvents: b.classList.contains('hd-cluster--with-events') && !!b.querySelector('.hd-bubble-tab') } : null;
     });
-    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '5');
+    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
     assert.deepEqual(await bubble(), { n: 5, says: '2 findings · 2 sites · 1 event', mixed: true, withEvents: true });
     // a layer switched off leaves the bubble at once; back on, it returns
     await page.locator('.viewport-toggle button[title="sites"]').click();
-    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '3');
+    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
     assert.equal((await bubble()).says, '2 findings · 1 event');
     await page.locator('.viewport-toggle button[title="sites"]').click();
-    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '5');
+    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
     await page.locator('.viewport-toggle button[title="sources"]').click();
-    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '3');
+    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
     assert.equal((await bubble()).says, '2 sites · 1 event');
     await page.locator('.viewport-toggle button[title="sources"]').click();
-    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '5');
+    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
     // the year window moves past the findings: they leave the bubble
     await page.goto(new URL('/#from=-1200&to=-1100', baseURL).href);
-    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '3', null, { timeout: 10000 });
+    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3', null, { timeout: 10000 });
     assert.equal((await bubble()).says, '2 sites · 1 event');
     await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
-    await page.waitForFunction(() => document.querySelector('.leaflet-marker-icon .hd-cluster')?.textContent === '5', null, { timeout: 10000 });
+    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5', null, { timeout: 10000 });
     // a click lists every kind, each row with its icon; a site's row pins its card
-    await page.waitForFunction(() => document.querySelectorAll('.leaflet-marker-icon .hd-cluster').length === 1);
-    const b = await page.locator('.leaflet-marker-icon .hd-cluster').boundingBox();
+    await page.waitForFunction(() => document.querySelectorAll('.hd-marker .hd-cluster').length === 1);
+    const b = await page.locator('.hd-marker .hd-cluster').boundingBox();
     await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
     await page.waitForSelector('.pick-title');
     assert.match(await page.locator('.pick-title').innerText(), /2 findings · 2 sites · 1 event in this cluster/);
@@ -1101,11 +1076,11 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
     await page.keyboard.press('Escape');
     // zoomed in, the bubble splits into the points themselves
     await page.evaluate(() => window.__testMap.setView([37.52, 32.01], 12, { animate: false }));
-    await page.waitForFunction(() => !document.querySelector('.leaflet-marker-icon .hd-cluster') &&
-      document.querySelectorAll('.leaflet-marker-icon .hd-point').length === 5, null, { timeout: 10000 });
+    await page.waitForFunction(() => !document.querySelector('.hd-marker .hd-cluster') &&
+      document.querySelectorAll('.hd-marker .hd-point').length === 5, null, { timeout: 10000 });
     assert.equal(await page.locator('.hd-find').count(), 2);
     assert.equal(await page.locator('.hd-site-marker').count(), 2);
-    assert.equal(await page.locator('.leaflet-marker-icon .hd-ev').count(), 1);
+    assert.equal(await page.locator('.hd-marker .hd-ev').count(), 1);
   });
 });
 
@@ -1302,7 +1277,7 @@ test('markers: four silhouettes by outline, legible glyphs, a readable key, conc
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37, 32], 7, { animate: false }));
-    await page.waitForFunction(() => document.querySelectorAll('.leaflet-marker-icon .hd-cluster').length === 3 &&
+    await page.waitForFunction(() => document.querySelectorAll('.hd-marker .hd-cluster').length === 3 &&
       document.querySelector('.hd-ev[data-id="zz_e"]') && document.querySelector('.hd-badge--photo.hd-point') &&
       document.querySelector('.hd-site-marker') && document.querySelector('.hd-find:not(.hd-coincident)'), null, { timeout: 10000 });
     const shapes = await page.evaluate(() => {
@@ -1337,14 +1312,14 @@ test('markers: four silhouettes by outline, legible glyphs, a readable key, conc
       const r = b.getBoundingClientRect(); return Math.min(r.width, r.height); }));
     assert.ok(key.length >= 6 && key.every(w => w >= 18), JSON.stringify(key));
     // the bubbles: 1, 2 and 3 digits; every circle about the disc's own centre, the disc exactly the bubble's box
-    const bubbles = await page.evaluate(() => [...document.querySelectorAll('.leaflet-marker-icon .hd-cluster')].map(b => {
+    const bubbles = await page.evaluate(() => [...document.querySelectorAll('.hd-marker .hd-cluster')].map(b => {
       const box = b.getBoundingClientRect();
       const cx = box.left + box.width / 2, cy = box.top + box.height / 2;
       const cs = [...b.querySelectorAll('.hd-bubble circle')].map(c => { const r = c.getBoundingClientRect();
         return { dx: r.left + r.width / 2 - cx, dy: r.top + r.height / 2 - cy, w: r.width }; });
       const t = b.querySelector('.hd-dot-count').getBoundingClientRect();
       return { n: b.textContent, d: box.width, cs, count: { dx: t.left + t.width / 2 - cx, dy: t.top + t.height / 2 - cy },
-        // Leaflet lifts every svg in the map to z-index 200: the bubble's must stay under its count
+        // the bubble's svg stays under its count
         onTop: Number(getComputedStyle(b.querySelector('.hd-dot-count')).zIndex) > Number(getComputedStyle(b.querySelector('.hd-bubble')).zIndex) };
     }));
     assert.deepEqual(bubbles.map(b => b.n.length).sort(), [1, 2, 3], JSON.stringify(bubbles));
@@ -1394,11 +1369,11 @@ test('#1946: a finding with no confidence is drawn unstated, not high, and the l
     assert.equal(pip.edge, 'dashed');
     // its popup says the confidence is not stated
     await page.evaluate(() => {
-      const el = document.querySelector('.hd-find.hd-unstated').closest('.leaflet-marker-icon');
+      const el = document.querySelector('.hd-find.hd-unstated').closest('.hd-marker');
       el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    await page.waitForSelector('.leaflet-popup-content');
-    assert.match(await page.locator('.leaflet-popup-content').innerText(), /confidence not stated/);
+    await page.waitForSelector('.hd-popup-content');
+    assert.match(await page.locator('.hd-popup-content').innerText(), /confidence not stated/);
   });
 });
 
@@ -1604,350 +1579,192 @@ test('autopilot: the switch and the goals\' stages in the managers window', asyn
   });
 });
 
-/** Choose the Histmersion map and a preset: the family menu, then the preset in the map-options panel. */
-async function histmersionMap(page, style) {
-  await page.locator('.map-family-select').selectOption('histmersion');
-  await page.locator('.terrain-notice').waitFor();
-  if (style) {
-    await openOptions(page);
-    await page.locator('.terrain-style-select').selectOption(style);
-    await page.waitForFunction(s => document.querySelector('.terrain-style-select')?.value === s, style);
-  }
+/** The base map now: its menu's value, the notice, the credits, how often a base map was drawn whole. */
+const baseMapState = () => ({
+  value: document.querySelector('.map-base-select')?.value,
+  options: [...document.querySelectorAll('.map-base-select option')].map(o => o.value),
+  notice: document.querySelector('.terrain-notice')?.textContent ?? null,
+  credits: document.querySelector('.maplibregl-ctrl-attrib')?.textContent ?? '',
+  drawn: window.__testMap.baseMapsDrawn(),
+  vector: document.getElementById('map').classList.contains('basemap-vector'),
+});
+
+/** Choose a base map in the menu and wait until it is drawn whole. */
+async function chooseBaseMap(page, value) {
+  const before = await page.evaluate(() => window.__testMap.baseMapsDrawn());
+  await page.locator('.map-base-select').selectOption(value);
+  await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n, before, { timeout: 20000 });
 }
 
-async function openOptions(page) {
-  if (await page.locator('.map-options').isHidden()) await page.locator('.map-options-btn').click();
-  await page.locator('.map-options').waitFor();
+/** How many distinct colours a screenshot of the map holds (a drawn map has many; an empty one one). */
+async function mapColours(page) {
+  const png = await page.locator('#map').screenshot();
+  return page.evaluate(async b64 => {
+    const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data, seen = new Set();
+    for (let i = 0; i < d.length; i += 4 * 97) seen.add((d[i] >> 3) << 10 | (d[i + 1] >> 3) << 5 | (d[i + 2] >> 3));
+    return seen.size;
+  }, png.toString('base64'));
 }
 
-/** The share of a layer's canvases' pixels that are drawn (alpha > 0), the best tile's. */
-const drawnShare = sel => {
-  const share = c => {
-    if (!c.width) return 0;
-    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-    let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
-    return n / (d.length / 4);
-  };
-  return Math.max(0, ...[...document.querySelectorAll(sel)].map(share));
-};
-
-/** The colour at the map's centre, from the topmost canvas of `sel` under it. */
-const centrePixel = sel => {
-  const map = document.getElementById('map').getBoundingClientRect();
-  const x = map.left + map.width / 2, y = map.top + map.height / 2;
-  for (const c of document.querySelectorAll(sel)) {
-    const r = c.getBoundingClientRect();
-    if (x >= r.left && x < r.right && y >= r.top && y < r.bottom && c.width) {
-      const d = c.getContext('2d').getImageData(Math.floor((x - r.left) * c.width / r.width), Math.floor((y - r.top) * c.height / r.height), 1, 1).data;
-      return [d[0], d[1], d[2], d[3]];
-    }
-  }
-  return null;
-};
-
-/** A digest of what the relief's canvases hold now: changes when they are drawn again differently. */
-const reliefDigest = () => {
-  let h = 0;
-  for (const c of document.querySelectorAll('.terrain-relief canvas, .terrain-tint canvas')) {
-    if (!c.width) continue;
-    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-    for (let i = 0; i < d.length; i += 4093) h = (h * 31 + d[i]) | 0;
-  }
-  return h;
-};
-
-test('the base map in two steps: the Histmersion map (drawn from the server\'s extract, the notice, credits) and the online maps', async t => {
+test('the base map: Readable and Physical drawn from the server\'s extract (the notice, their credits), and the online maps', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   await withPage({ width: 1280, height: 800 }, async page => {
-    assert.equal(await page.locator('.map-family-select option[value="histmersion"]').textContent(), 'Histmersion map');
+    assert.deepEqual((await page.evaluate(baseMapState)).options, ['readable', 'physical', 'standard', 'muted', 'dark']);
     assert.ok(await page.locator('.map-options-btn').isDisabled(), 'no options on an online map');
-    await histmersionMap(page);
-    const notice = page.locator('.terrain-notice');
-    assert.match(await notice.textContent(), /Coastlines, rivers, lakes and vegetation were different in the past/);
-    assert.match(await notice.locator('a').getAttribute('href'), /exploring\/web-ui\.md#the-terrain-map$/);
-    assert.ok(await page.locator('.map-style-select').isHidden(), 'the online maps\' menu is away');
-    await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 7, { animate: false }));
-    await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane canvas').length > 4 &&
-      document.querySelectorAll('.terrain-relief canvas').length > 0);
-    assert.equal(await page.locator('.leaflet-tile-pane img.leaflet-tile').count(), 0);
-    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('terrain-on')));
-    const credit = await page.locator('.leaflet-control-attribution').textContent();
-    for (const c of [/OpenStreetMap/, /Mapterhorn/, /ETOPO1/]) assert.match(credit, c);
-    // the shading: some pixels drawn, some not; the colours by height: every land pixel
-    const drawn = await (await page.waitForFunction(`(${drawnShare})('.terrain-relief canvas') > 0.05 && (${drawnShare})('.terrain-relief canvas')`)).jsonValue();
-    assert.ok(drawn < 1, `share of shaded pixels ${drawn}`);
-    await page.waitForFunction(`(${drawnShare})('.terrain-tint canvas') > 0.9`);
-    // kept like the other base maps
+    await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 8));
+    await chooseBaseMap(page, 'readable');
+    let st = await page.evaluate(baseMapState);
+    assert.ok(st.vector);
+    assert.match(st.notice, /Coastlines, rivers, lakes and vegetation were different in the past/);
+    assert.match(await page.locator('.terrain-notice a').getAttribute('href'), /exploring\/web-ui\.md#the-base-map$/);
+    for (const c of [/OpenStreetMap/, /Natural Earth/, /Protomaps/, /Mapterhorn/]) assert.match(st.credits, c);
+    assert.ok(await mapColours(page) > 20, 'Readable is drawn');
+    await chooseBaseMap(page, 'physical');
+    st = await page.evaluate(baseMapState);
+    assert.match(st.credits, /ETOPO1/, 'the sea floor is credited where it is drawn');
+    assert.ok(await mapColours(page) > 20, 'Physical is drawn');
+    // kept like every choice
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.locator('.terrain-notice').waitFor();
-    assert.equal(await page.locator('.map-family-select').inputValue(), 'histmersion');
-    // and back to an online map: the notice and the canvases go, the tiles return; the choice among them stays
-    await page.locator('.map-family-select').selectOption('raster');
-    await page.waitForFunction(() => !document.querySelector('.terrain-notice') &&
-      !document.querySelector('.terrain-relief') && !document.getElementById('map').classList.contains('terrain-on'));
-    await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-pane img.leaflet-tile').length > 0);
-    await page.locator('.map-style-select').selectOption('dark');
+    assert.equal(await page.locator('.map-base-select').inputValue(), 'physical');
+    // an online map: no notice, its own credit, no options
+    await page.locator('.map-base-select').selectOption('dark');
+    await page.waitForFunction(() => !document.querySelector('.terrain-notice') && !document.getElementById('map').classList.contains('basemap-vector'));
     assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-dark')));
-    await histmersionMap(page);
-    await page.locator('.map-family-select').selectOption('raster');
-    assert.equal(await page.locator('.map-style-select').inputValue(), 'dark');
-    await page.locator('.map-style-select').selectOption('standard');
+    assert.ok(await page.locator('.map-options-btn').isDisabled());
+    await page.locator('.map-base-select').selectOption('standard');
+    await page.waitForFunction(() => /OpenStreetMap/.test(document.querySelector('.maplibregl-ctrl-attrib')?.textContent ?? ''));
   }, { source: 'online' });
 });
 
-test('map options: each preset, light and dark; names on their own layer, on and off; reset; kept across a reload', async t => {
+test('map options: names off and on, their language, contours only where Physical has the detailed relief; kept across a reload', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  const styles = await (await fetch(new URL('/api/basemap/styles', baseURL))).json();
-  const hasNames = status.layers.some(l => l.layer === 'labels' && l.present);
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   await withPage({ width: 1280, height: 800 }, async page => {
-    await histmersionMap(page);
-    await openOptions(page);
-    assert.deepEqual(await page.locator('.terrain-style-select option').evaluateAll(os => os.map(o => o.value)), styles.styles.map(s => s.id));
-    assert.equal(await page.locator('.terrain-style-select').inputValue(), styles.default, 'the server\'s default preset');
-    await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 8, { animate: false }));
-    await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
-    // Natural: light — the land green to tan; the panel stays open while options change
-    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-light'));
-    if (hasNames) {
-      await page.waitForFunction(`(${drawnShare})('.terrain-labels canvas') > 0.001`, null, { timeout: 15000 });
-      const z = await page.evaluate(() => [getComputedStyle(document.querySelector('.leaflet-tile-pane')).zIndex,
-        getComputedStyle(document.querySelector('.leaflet-marker-pane')).zIndex].map(Number));
-      assert.ok(z[0] < z[1], `tiles ${z[0]} under markers ${z[1]}`);
-      const names = page.locator('.map-option-names');
-      assert.ok(await names.isChecked());
-      await names.uncheck();
-      await page.waitForFunction(() => !document.querySelector('.terrain-labels'));
-      assert.ok(await page.locator('.map-options').isVisible(), 'still open');
-      assert.ok(await page.locator('.map-options-reset').isEnabled());
-      await page.locator('.map-options-reset').click();
-      await page.waitForFunction(() => document.querySelector('.terrain-labels'));
-      assert.ok(await names.isChecked());
-      assert.ok(await page.locator('.map-options-reset').isDisabled(), 'nothing to reset');
-    }
-    // the dark Terrain and the light Parchment
-    await page.locator('.terrain-style-select').selectOption('terrain');
-    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-dark'));
-    await page.waitForTimeout(800);
-    const dark = await page.evaluate(centrePixel, '.terrain-base canvas');
-    assert.ok(dark && dark[0] + dark[1] + dark[2] < 300, `Terrain is dark: ${dark}`);
-    await page.locator('.terrain-style-select').selectOption('parchment');
-    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-light'));
-    await page.waitForTimeout(800);
-    const light = await page.evaluate(centrePixel, '.terrain-base canvas');
-    assert.ok(light && light[0] + light[1] + light[2] > 450, `Parchment is light: ${light}`);
-    await page.locator('.terrain-style-select').selectOption('relief');
-    await page.waitForFunction(() => !document.querySelector('.terrain-labels'));
-    assert.ok(!(await page.locator('.map-option-names').isChecked()), 'Relief only shows no names…');
-    assert.ok(await page.locator('.map-option-contours').isEnabled() && !(await page.locator('.map-option-contours').isChecked()));
-    await page.locator('.map-option-names').check();
-    await page.waitForFunction(() => document.querySelector('.terrain-labels'));   // …but a viewer may switch them on
+    await page.evaluate(() => window.__testMap.setView([37.6, 25.0], 7));
+    await chooseBaseMap(page, 'readable');
+    await page.waitForFunction(() => window.__testMap.names().length > 3, null, { timeout: 15000 });
+    assert.ok(!(await page.evaluate(() => window.__testMap.names())).some(n => /[Ͱ-Ͽ]/.test(n)), 'English by default');
+    await page.locator('.map-options-btn').click();
+    await page.locator('.map-options').waitFor();
+    // the names in their own script: the Greek ones in Greek
+    let before = await page.evaluate(() => window.__testMap.baseMapsDrawn());
+    await page.locator('.map-language-select').selectOption('local');
+    await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n && window.__testMap.names().some(x => /[Ͱ-Ͽ]/.test(x)), before, { timeout: 15000 });
+    // names off: none placed; the panel stays open while options change
+    before = await page.evaluate(() => window.__testMap.baseMapsDrawn());
+    await page.locator('.map-option-names').uncheck();
+    await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n && window.__testMap.names().length === 0, before, { timeout: 15000 });
+    assert.ok(await page.locator('.map-options').isVisible(), 'still open');
+    assert.ok(await page.locator('.map-language-select').isDisabled());
+    // contours: Readable draws none
+    assert.ok(await page.locator('.map-option-contours').isDisabled());
+    assert.match(await page.locator('.map-option-why').innerText(), /Physical draws contours/);
+    // kept: across a reload; reset brings the names back in English
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('.map-options-btn').click();
+    assert.ok(!(await page.locator('.map-option-names').isChecked()));
     await page.locator('.map-options-reset').click();
-    await page.waitForFunction(() => !document.querySelector('.terrain-labels'));
-    // Escape closes the panel, the focus back on its button
+    assert.ok(await page.locator('.map-option-names').isChecked());
+    assert.equal(await page.locator('.map-language-select').inputValue(), 'en');
+    // Physical over the Argolid's focus region: contours on, and a choice of the viewer's
     await page.keyboard.press('Escape');
     await page.locator('.map-options').waitFor({ state: 'hidden' });
     assert.equal(await page.evaluate(() => document.activeElement?.id), 'map-options-button');
-    // kept: the preset and a changed option, across a reload
-    await openOptions(page);
-    await page.locator('.terrain-style-select').selectOption('natural');
-    await page.locator('.map-option-contours').uncheck();
-    await page.reload();
-    await page.waitForFunction(() => window.__testMap);
-    await page.locator('.terrain-notice').waitFor();
-    await openOptions(page);
-    assert.equal(await page.locator('.terrain-style-select').inputValue(), 'natural');
-    assert.ok(!(await page.locator('.map-option-contours').isChecked()), 'the viewer\'s change is kept');
-    await page.locator('.map-options-reset').click();
-    assert.ok(await page.locator('.map-option-contours').isChecked());
-  });
-});
-
-test('map options: every option draws the map again (relief, colours by height, land cover, sea floor, contours and their interval)', async t => {
-  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  await withPage({ width: 1280, height: 800 }, async page => {
-    await histmersionMap(page, 'natural');
-    // the Argolid: its focus region holds the relief to zoom 11 — contours from 11 on
-    await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 12, { animate: false }));
-    await page.waitForFunction(`(${drawnShare})('.terrain-relief canvas') > 0.3`, null, { timeout: 20000 });
-    await page.waitForTimeout(500);
-    const changes = async (act, why) => {
-      const before = await page.evaluate(reliefDigest);
-      const t0 = Date.now();
-      await act();
-      await page.waitForFunction(b => {
-        const d = (() => { let h = 0; for (const c of document.querySelectorAll('.terrain-relief canvas, .terrain-tint canvas')) {
-          if (!c.width) continue; const x = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-          for (let i = 0; i < x.length; i += 4093) h = (h * 31 + x[i]) | 0; } return h; })();
-        return d !== b;
-      }, before, { timeout: 15000 });
-      return Date.now() - t0;
-    };
-    await changes(() => page.locator('.map-option-relief').fill('0.3'), 'relief');
-    await changes(() => page.locator('.map-option-contours').uncheck(), 'contours off');
-    assert.ok(await page.locator('.terrain-interval-select').isDisabled());
-    await changes(() => page.locator('.map-option-contours').check(), 'contours on');
-    await changes(() => page.locator('.terrain-interval-select').selectOption('20'), 'interval');
-    await changes(() => page.locator('.map-option-heights').uncheck(), 'colours by height');
-    // without them the ground is the land's own fill (the tint layer has gone or holds only the sea)
-    await page.locator('.map-option-landCover').uncheck();
-    await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 0);
-    // the sea floor, over the Aegean
-    await page.evaluate(() => window.__testMap.setView([37.2, 25.2], 7, { animate: false }));
-    await page.waitForFunction(`(${drawnShare})('.terrain-tint canvas') > 0.3`, null, { timeout: 20000 });
-    const deep = await page.evaluate(centrePixel, '.terrain-tint canvas');
-    assert.ok(deep && deep[3] > 200 && deep[2] > deep[0], `the sea coloured by depth: ${deep}`);
-    await changes(() => page.locator('.map-option-seaFloor').uncheck(), 'sea floor');
-    await page.locator('.map-options-reset').click();
-  });
+    await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 12));
+    await chooseBaseMap(page, 'physical');
+    await page.locator('.map-options-btn').click();
+    const focus = status.layers.find(l => l.layer === 'terrain')?.focus?.length > 0;
+    if (focus) {
+      assert.ok(await page.locator('.map-option-contours').isEnabled() && await page.locator('.map-option-contours').isChecked());
+      before = await page.evaluate(() => window.__testMap.baseMapsDrawn());
+      await page.locator('.map-option-contours').uncheck();
+      await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n, before, { timeout: 15000 });
+    }
+  }, { source: 'online' });
 });
 
 test('map options: an option whose data is not downloaded is disabled, its line saying what to fetch', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   await withPage({ width: 1280, height: 800 }, async page => {
-    // the server as if it had no sea floor and no relief
+    // the server as if it had no relief and no sea floor
     await page.route('**/api/basemap', async route => {
       const res = await route.fetch();
       const s = await res.json();
       s.layers = s.layers.map(l => (l.layer === 'bathymetry' || l.layer === 'terrain') ? { ...l, present: false } : l);
       await route.fulfill({ response: res, json: s });
     });
-    await histmersionMap(page, 'natural');
-    await openOptions(page);
-    for (const k of ['seaFloor', 'heights', 'contours']) assert.ok(await page.locator(`.map-option-${k}`).isDisabled(), k);
-    assert.ok(await page.locator('.map-option-relief').isDisabled());
-    const why = await page.locator('.map-option-why').allTextContents();
-    assert.ok(why.some(w => w.includes('histmersion basemap fetch --layer terrain')), why.join(' | '));
-    assert.ok(await page.locator('.map-option-names').isEnabled(), 'the names need no relief');
-    assert.equal(await page.locator('.terrain-relief').count(), 0);
-  });
-});
-
-test('the names: no two placed names overlap (z5–8 over the Aegean, every line, halo and margin); local names in their own script', async t => {
-  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-  if (!status.available || !status.layers.some(l => l.layer === 'labels' && l.present)) { t.skip('the test server has no terrain names'); return; }
-  await withPage({ width: 1280, height: 800 }, async page => {
-    await histmersionMap(page, 'natural');
-    const placed = z => page.evaluate(z => {
-      const all = window.__terrainLabelBoxes?.()[String(z)] || [];
-      const hits = [];
-      for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
-        const a = all[i], b = all[j];
-        if (a[4] !== b[4] && a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3]) hits.push([a[5], b[5]]);
-      }
-      return { n: all.length, hits, texts: all.map(b => b[5]).filter(Boolean) };
-    }, z);
-    for (const z of [5, 6, 7, 8]) {
-      await page.evaluate(z => window.__testMap.setView([37.8, 25.3], z, { animate: false }), z);
-      await page.waitForFunction(z => (window.__terrainLabelBoxes?.()[String(z)] || []).length > 0, z, { timeout: 15000 });
-      await page.waitForTimeout(600);
-      const r = await placed(z);
-      assert.deepEqual(r.hits, [], `zoom ${z}: overlapping names`);
-    }
-    // a multi-line name's box holds every line: taller than one line of its font
-    const tall = await page.evaluate(() => Object.values(window.__terrainLabelBoxes()).flat().some(b => b[3] - b[1] > 30));
-    assert.ok(tall, 'a wrapped name\'s box spans its lines');
-    // Local: the Greek names in Greek; then English again
-    await openOptions(page);
-    const t0 = Date.now();
-    await page.locator('.terrain-language-select').selectOption('local');
-    await page.waitForFunction(() => Object.values(window.__terrainLabelBoxes?.() || {}).flat().some(b => /[Ͱ-Ͽ]/.test(b[5] || '')),
-      null, { timeout: 15000 });
-    assert.ok(await page.locator('.terrain-relief canvas').count() > 0, 'only the names were drawn again');
-    await page.locator('.terrain-language-select').selectOption('en');
-    await page.waitForFunction(() => { const t = Object.values(window.__terrainLabelBoxes?.() || {}).flat().map(b => b[5] || '');
-      return t.some(x => /Aegean|Myrtoan|Cyclades|Saronic/.test(x)) && !t.some(x => /[Ͱ-Ͽ]/.test(x)); }, null, { timeout: 15000 });
-    assert.ok(Date.now() - t0 < 15000);
-  });
-});
-
-test('a changed style file is picked up by the server and the open map redraws, with no reload', async t => {
-  const file = process.env.HISTMERSION_TEST_STYLE_FILE;
-  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-  if (!file || !status.available) { t.skip('start the test server with HISTMERSION_BASEMAP_STYLE=<file> and set HISTMERSION_TEST_STYLE_FILE to it'); return; }
-  const fs = await import('node:fs');
-  fs.writeFileSync(file, 'styles = [ { id = "terrain", extends = "terrain", name = "Before" } ]\n');
-  try {
-    await withPage({ width: 1280, height: 800 }, async page => {
-      await histmersionMap(page);
-      await openOptions(page);
-      await page.waitForFunction(() => [...document.querySelectorAll('.terrain-style-select option')].some(o => o.textContent.startsWith('Before')));
-      await page.locator('.terrain-style-select').selectOption('terrain');
-      await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 8, { animate: false }));
-      await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
-      fs.writeFileSync(file, 'styles = [ { id = "terrain", extends = "terrain", name = "After", background = "#ff0000", layers = [ { id = "land", fill = "#00ff00" }, { id = "water", fill = "#ff0000" } ] } ]\n');
-      const t1 = Date.now();
-      await page.waitForFunction(() => [...document.querySelectorAll('.terrain-style-select option')].some(o => o.textContent.startsWith('After')),
-        null, { timeout: 30000 });
-      await page.waitForFunction(() => {
-        const map = document.getElementById('map').getBoundingClientRect();
-        const x = map.left + map.width / 2, y = map.top + map.height / 2;
-        return [...document.querySelectorAll('.terrain-base canvas')].some(c => {
-          const r = c.getBoundingClientRect();
-          if (!(x >= r.left && x < r.right && y >= r.top && y < r.bottom && c.width)) return false;
-          const d = c.getContext('2d').getImageData(Math.floor((x - r.left) * c.width / r.width), Math.floor((y - r.top) * c.height / r.height), 1, 1).data;
-          return (d[1] > 200 && d[0] < 80) || (d[0] > 200 && d[1] < 80);   // the new land or the new sea
-        });
-      }, null, { timeout: 30000 });
-      assert.ok(Date.now() - t1 < 30000);
-    });
-  } finally { fs.writeFileSync(file, ''); }
-});
-
-test('offline: with the local maps only, the page asks no other host — Natural first, the street maps and the terrain from the server alone', async t => {
-  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  // the server's own answer: an extract that draws the default preset whole makes `auto` local
-  const config = await (await fetch(new URL('/api/config', baseURL))).json();
-  if (status.styles.find(s => s.id === 'natural')?.missing.length === 0) assert.equal(config.baseMapSource, 'local')
-  const outside = [];
-  await withPage({ width: 1280, height: 800 }, async page => {
-    // no online family; the Histmersion map shown without anyone choosing it, on its default preset
-    await page.locator('.map-family-select option[value="histmersion"]').waitFor({ state: 'attached' });
-    assert.deepEqual(await page.locator('.map-family-select option').evaluateAll(os => os.map(o => o.value)), ['histmersion']);
-    assert.equal(await page.locator('.map-family-select').inputValue(), 'histmersion');
-    await openOptions(page);
-    assert.equal(await page.locator('.terrain-style-select').inputValue(), 'natural');
-    const presets = await page.locator('.terrain-style-select option').evaluateAll(os => os.map(o => o.value));
-    for (const id of ['standard', 'muted', 'dark']) assert.ok(presets.includes(id), `the local street maps are presets: ${presets}`);
-    await page.evaluate(() => window.__testMap.setView([37.95, 23.7], 9, { animate: false }));
-    await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
-    await page.waitForFunction(`(${drawnShare})('.terrain-labels canvas') > 0.001`, null, { timeout: 15000 });
-    assert.equal(await page.locator('.leaflet-tile-pane img.leaflet-tile').count(), 0, 'no raster tile');
-    // the street map Standard: light, no past-landscape notice
-    await page.locator('.terrain-style-select').selectOption('standard');
-    await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2 && !document.querySelector('.terrain-notice'));
-    await page.waitForTimeout(600);
-    const px = await page.evaluate(centrePixel, '.terrain-base canvas');
-    assert.ok(px && px[0] + px[1] + px[2] > 450, `Standard is a light map: ${px}`);
-    assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-light')));
-    // every local map, a pan and a zoom: still nothing from outside
-    for (const id of ['muted', 'dark', 'terrain', 'contour', 'parchment']) {
-      await page.locator('.terrain-style-select').selectOption(id);
-      await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2);
-      await page.waitForTimeout(400);
-    }
-    await page.locator('.terrain-style-select').selectOption('dark');
-    await page.waitForFunction(() => document.getElementById('map').classList.contains('map-tone-dark'));
-    await page.evaluate(() => { window.__testMap.panBy([300, 120], { animate: false }); window.__testMap.setZoom(12, { animate: false }); });
-    await page.waitForTimeout(1500);
-    // an online choice kept by this browser is drawn locally, as the local style of its name
-    await page.evaluate(() => localStorage.setItem('histmersion.ui.baseMap', '["muted"]'));
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
-    await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 0);
-    await openOptions(page);
-    assert.equal(await page.locator('.terrain-style-select').inputValue(), 'muted');
+    await chooseBaseMap(page, 'physical');
+    await page.locator('.map-options-btn').click();
+    assert.ok(await page.locator('.map-option-contours').isDisabled());
+    assert.match(await page.locator('.map-option-why').innerText(), /histmersion basemap fetch --layer terrain --focus/);
+    assert.ok(await page.locator('.map-option-names').isEnabled(), 'the names need no relief');
+    assert.ok(await mapColours(page) > 10, 'drawn without the relief');
+  }, { source: 'online' });
+});
+
+test('the names are placed across the whole view: a wide window, after pans, still places the seas and ranges whole', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract'); return; }
+  await withPage({ width: 2560, height: 1440 }, async page => {
+    await page.evaluate(() => window.__testMap.setView([37.8, 25.3], 8));
+    await chooseBaseMap(page, 'readable');
+    const box = await page.locator('#map').boundingBox();
+    for (const dx of [300, -500, 200]) {
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 2 + dx, box.y + box.height / 2, { steps: 10 });
+      await page.mouse.up();
+      await page.waitForTimeout(400);
+    }
+    await page.waitForFunction(() => !window.__testMap.isMoving());
+    await page.waitForTimeout(800);
+    const names = await page.evaluate(() => window.__testMap.names());
+    assert.ok(names.length > 5, names.join(', '));
+    // the regression of the canvas map (names cut at tile edges, "REECE") cannot happen: the map places
+    // each name once for the whole view; here: the names placed are the whole names of their features
+    assert.ok(names.every(n => n.trim().length > 1), names.join(', '));
+  }, { source: 'online' });
+});
+
+test('offline: with the local maps only, the page asks no other host — the two styles from the server alone', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  // the server's own answer: an extract that draws a vector style whole makes `auto` local
+  const config = await (await fetch(new URL('/api/config', baseURL))).json();
+  if (status.styles.some(s => s.missing.length === 0)) assert.equal(config.baseMapSource, 'local');
+  const outside = [];
+  await withPage({ width: 1280, height: 800 }, async page => {
+    await page.waitForFunction(() => document.querySelectorAll('.map-base-select option').length > 0);
+    let st = await page.evaluate(baseMapState);
+    assert.deepEqual(st.options, ['readable', 'physical'], 'no online map');
+    assert.equal(st.value, status.styles.find(s => s.id === 'readable')?.missing.length === 0 ? 'readable' : 'physical');
+    await page.evaluate(() => window.__testMap.setView([37.95, 23.7], 9));
+    await page.waitForFunction(() => window.__testMap.names().length > 0, null, { timeout: 15000 });
+    for (const id of ['physical', 'readable']) await chooseBaseMap(page, id);
+    await page.evaluate(() => { window.__testMap.panBy([300, 120]); window.__testMap.setZoom(12, { animate: false }); });
+    await page.waitForTimeout(1500);
+    // an online choice kept by this browser is drawn as a local style
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.baseMap', '["muted"]'));
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap && window.__testMap.baseMapsDrawn() > 0, null, { timeout: 20000 });
+    st = await page.evaluate(baseMapState);
+    assert.ok(['readable', 'physical'].includes(st.value) && st.vector, JSON.stringify(st));
     await page.waitForTimeout(1000);
     assert.deepEqual(outside, [], 'requests to other hosts');
   }, { source: 'local', outside });
 });
 
-test('base-map families: the online maps when online; a preset the download cannot draw whole is marked and says what to run', async t => {
+test('base-map choices: a style the download cannot draw whole is marked and says what to run', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   await withPage({ width: 1280, height: 800 }, async page => {
@@ -1955,20 +1772,18 @@ test('base-map families: the online maps when online; a preset the download cann
     await page.route('**/api/basemap', async route => {
       const res = await route.fetch();
       const s = await res.json();
-      s.styles = s.styles.map(st => ['standard', 'muted', 'dark'].includes(st.id) ? { ...st, missing: ['boundaries', 'places', 'roads'] } : st);
+      s.styles = s.styles.map(st => st.id === 'readable' ? { ...st, missing: ['boundaries', 'places', 'roads'] } : st);
       await route.fulfill({ response: res, json: s });
     });
-    await page.locator('.map-family-select').selectOption('raster');
-    assert.deepEqual(await page.locator('.map-style-select option').evaluateAll(os => os.map(o => o.textContent)),
-      ['Standard (online)', 'Muted (online)', 'Dark (online)']);
-    await histmersionMap(page, 'standard');
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.waitForFunction(() => [...document.querySelectorAll('.map-base-select option')].some(o => o.textContent === 'Readable — needs the full download'));
+    await chooseBaseMap(page, 'readable');
     const notice = page.locator('.terrain-notice');
-    await notice.waitFor();
-    await page.waitForFunction(() => [...document.querySelectorAll('.terrain-style-select option')].some(o => o.textContent === 'Standard — needs the full download'));
     assert.match(await notice.textContent(), /boundaries, places, roads/);
     assert.match(await notice.textContent(), /histmersion basemap fetch --layer vector --keep-all/);
     assert.match(await notice.locator('a').getAttribute('href'), /how-to\/offline\.md/);
-    await page.locator('.terrain-style-select').selectOption('terrain');
+    await chooseBaseMap(page, 'physical');
     await page.waitForFunction(() => /different in the past/.test(document.querySelector('.terrain-notice')?.textContent ?? ''));
   }, { source: 'online' });
 });
@@ -1978,14 +1793,14 @@ test('the past-landscape notice never lies under the credits or the map key, wid
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
     await withPage(viewport, async page => {
-      await page.evaluate(() => { localStorage.setItem('histmersion.ui.baseMap', '["terrain"]'); localStorage.setItem('histmersion.ui.terrainStyle', '["natural"]'); });
+      await page.evaluate(() => localStorage.setItem('histmersion.ui.baseMap', '["physical"]'));
       await page.reload();
       await page.waitForFunction(() => window.__testMap);
       await page.locator('.terrain-notice').waitFor();
       await page.waitForTimeout(800);
       const hits = await page.evaluate(() => {
         const n = document.querySelector('.terrain-notice').getBoundingClientRect();
-        return [...document.querySelectorAll('.leaflet-bottom.leaflet-right > *')].map(e => e.getBoundingClientRect())
+        return [...document.querySelectorAll('.maplibregl-ctrl-bottom-right > *')].map(e => e.getBoundingClientRect())
           .filter(r => r.width > 0 && n.left < r.right && r.left < n.right && n.top < r.bottom && r.top < n.bottom).length;
       });
       assert.equal(hits, 0, `${viewport.width} px: the notice overlaps the right-hand controls`);
@@ -1993,4 +1808,28 @@ test('the past-landscape notice never lies under the credits or the map key, wid
       assert.ok(text, 'the notice shows all its text');
     });
   }
+});
+
+test('without a GPU the map says so and draws its cheapest form; the app still works', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract'); return; }
+  // a browser of its own, with Chromium's software rasteriser (no GPU flags)
+  const soft = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined });
+  try {
+    const context = await soft.newContext({ viewport: { width: 1280, height: 800 } });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.route('**/*', r => new URL(r.request().url()).origin === origin ? r.continue() : r.abort());
+    await page.goto(baseURL);
+    await page.waitForFunction(() => window.histmersionMap);
+    const caps = await page.evaluate(() => window.histmersionMap.capabilities());
+    if (!caps.software) { t.skip(`this machine's headless Chromium draws WebGL on a GPU (${caps.renderer})`); return; }
+    await page.locator('.map-base-select').selectOption('physical');
+    await page.locator('.terrain-notice').waitFor();
+    assert.match(await page.locator('.terrain-notice').textContent(), /without a GPU/);
+    await page.locator('.map-options-btn').click();
+    assert.ok(await page.locator('.map-option-contours').isDisabled());
+    assert.deepEqual(errors, []);
+  } finally { await soft.close(); }
 });

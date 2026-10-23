@@ -26,7 +26,7 @@ export async function firstRender(page, url, { markers = true } = {}) {
   const at = (fn, arg) => valueOf(page, fn, arg);
   const mapMs = await at(() => window.__testMap && performance.now());
   const markersMs = markers
-    ? await at(() => document.querySelector('.leaflet-marker-icon') && performance.now()) : null;
+    ? await at(() => document.querySelector('.hd-marker') && performance.now()) : null;
   const listMs = await at(() => document.querySelector('#list .hit, #list .empty') && performance.now());
   const fcp = await page.evaluate(() => performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? null);
   const lt = await page.evaluate(() => window.__perf.longTasks);
@@ -92,7 +92,7 @@ export async function rangeAreas(page, baseURL, from, to) {
   // drawn once nothing is on its way and the count of shapes has stopped moving
   await quiet(page);
   const drawn = await valueOf(page, () => {
-    const n = document.querySelectorAll('path.hd-polity').length;
+    const n = window.__testMap.shapes('polities').length;
     const P = window.__perf;
     if (n > 0 && n === P._lastN) { P._same = (P._same || 0) + 1; } else { P._same = 0; P._lastN = n; P._at = performance.now(); }
     return P._same >= 10 && { n, at: P._at };
@@ -198,8 +198,7 @@ export async function eventLayer(page, baseURL, from, to, { atLeast = 1 } = {}) 
   await page.evaluate(() => window.__testMap.setView([30, 20], 3, { animate: false }));
   await quiet(page);
   const drawn = await valueOf(page, min => {
-    let n = 0;
-    window.__testMap.eachLayer(l => { if (l._featureGroup) n = Math.max(n, l.getLayers().length); });
+    const n = window.__testMap.points();
     const P = window.__perf;
     if (n >= min && n === P._lastE) { P._sameE = (P._sameE || 0) + 1; } else { P._sameE = 0; P._lastE = n; P._atE = performance.now(); }
     return P._sameE >= 10 && { n, at: P._atE };
@@ -211,66 +210,40 @@ export async function eventLayer(page, baseURL, from, to, { atLeast = 1 } = {}) 
   return { markers: drawn.n, drawnMs: Math.round(drawn.at - t0), longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom };
 }
 
-/** The terrain base map over the Aegean (the fixture extract), in its default style — the physical
-  * names on when the server has them: from the reload to the notice and every tile drawn, then a pan and wheel zooms — the vector tiles drawn on canvas and the relief shaded in
-  * the page, all of it inside the pan's budget. */
-export async function terrainMap(page, baseURL, { names = false } = {}) {
-  await page.evaluate(() => {
-    localStorage.setItem('histmersion.ui.baseMap', '["terrain"]');
-    localStorage.setItem('histmersion.ui.terrainStyle', '["terrain"]');   // the local default is Standard
-  });
-  await page.goto(new URL('/', baseURL).href);
+/** A vector base map (Readable or Physical) over the Aegean (the fixture extract) with the full overlay
+  * load — the boundaries of a whole range, the 2 400 events, the 500 findings — from the view set to the
+  * base map drawn whole (every tile and name), then a pan and wheel zooms there; then the options
+  * panel's changes, each answered within the input budget (the map draws again after, off the input). */
+export async function vectorMap(page, baseURL, style, { lat = 37.9, lon = 25.4, zoom = 7, overlays = true } = {}) {
+  await page.evaluate(([s, o]) => {
+    localStorage.setItem('histmersion.ui.baseMap', `["${s}"]`);
+    if (o) { localStorage.setItem('histmersion.ui.layers', '["boundaries","events"]'); localStorage.setItem('histmersion.ui.areaPick', '["latest"]'); }
+  }, [style, overlays]);
+  await page.goto(new URL('/#from=-3000&to=1500', baseURL).href);
   await page.reload();
   await ready(page);
-  await settled(page);   // the app's own start (the findings, the list) is firstRender's, not the terrain's
+  await settled(page);   // the app's own start (the findings, the list) is firstRender's
+  const drawn0 = await page.evaluate(() => window.__testMap.baseMapsDrawn());
   const t0 = await page.evaluate(() => performance.now());
-  await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 7, { animate: false }));
-  await valueOf(page, () => document.querySelector('.terrain-notice') && document.querySelector('.terrain-relief canvas'));
-  // with the names (the server has labels.pmtiles): their own layer is drawn too, inside the same budget
-  if (names) await valueOf(page, () => document.querySelector('.terrain-labels canvas'));
+  await page.evaluate(([la, lo, z]) => window.__testMap.setView([la, lo], z), [lat, lon, zoom]);
+  await valueOf(page, n => window.__testMap.baseMapsDrawn() > n || (!window.__testMap.isMoving() && window.__testMap.names().length > 0), drawn0);
   await quiet(page);
   const drawnMs = Math.round(await page.evaluate(() => performance.now()) - t0);
-  // the terrain's own work: what ran after the view was set (the app's start is firstRender's)
   const lt = (await page.evaluate(() => window.__perf.longTasks)).filter(t => t.start >= t0);
+  const load = await page.evaluate(() => ({ points: window.__testMap.points(), shapes: window.__testMap.shapes('polities').length }));
   const pan = await mapPan(page);
-  await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 6, { animate: false }));
-  const zoom = await mapZoom(page);
-  // the map options: each change answers within the input budget (the map redraws after, off the input)
+  await page.evaluate(([la, lo, z]) => window.__testMap.setView([la, lo], z - 1), [lat, lon, zoom]);
+  const zoomed = await mapZoom(page);
   await page.locator('.map-options-btn').click();
   await page.locator('.map-options').waitFor();
   const options = await measure(page, async () => {
-    for (const act of [() => page.locator('.map-option-contours').uncheck(), () => page.locator('.map-option-contours').check(),
-      () => page.locator('.map-option-landCover').uncheck(), () => page.locator('.map-option-landCover').check(),
-      () => page.locator('.terrain-language-select').selectOption('local'), () => page.locator('.terrain-language-select').selectOption('en')]) {
+    for (const act of [() => page.locator('.map-option-names').uncheck(), () => page.locator('.map-option-names').check(),
+      () => page.locator('.map-language-select').selectOption('local'), () => page.locator('.map-language-select').selectOption('en')]) {
       await act(); await page.waitForTimeout(500);
     }
   });
   await page.keyboard.press('Escape');
-  return { drawnMs, longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom, options };
-}
-
-/** A local street map (Standard, Muted, Dark: roads by class, borders, land use, place names) over
-  * Athens at zoom 9 — data zoom 8, where the roads are heaviest for what the map shows — from the
-  * view set to every tile and name drawn, then a pan there and wheel zooms out to 8 and in again. */
-export async function localMap(page, baseURL, style, { lat = 37.95, lon = 23.7, zoom = 9 } = {}) {
-  await page.evaluate(s => {
-    localStorage.setItem('histmersion.ui.baseMap', '["terrain"]');
-    localStorage.setItem('histmersion.ui.terrainStyle', `["${s}"]`);
-  }, style);
-  await page.goto(new URL('/', baseURL).href);
-  await page.reload();
-  await ready(page);
-  await settled(page);
-  const t0 = await page.evaluate(() => performance.now());
-  await page.evaluate(([la, lo, z]) => window.__testMap.setView([la, lo], z, { animate: false }), [lat, lon, zoom]);
-  await valueOf(page, () => document.querySelectorAll('.terrain-base canvas').length > 2 && document.querySelector('.terrain-labels canvas'));
-  await quiet(page);
-  const drawnMs = Math.round(await page.evaluate(() => performance.now()) - t0);
-  const lt = (await page.evaluate(() => window.__perf.longTasks)).filter(t => t.start >= t0);
-  const pan = await mapPan(page);
-  await page.evaluate(([la, lo, z]) => window.__testMap.setView([la, lo], z - 1, { animate: false }), [lat, lon, zoom]);
-  const zoomed = await mapZoom(page);
-  return { drawnMs, longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom: zoomed };
+  return { drawnMs, longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), ...load, pan, zoom: zoomed, options };
 }
 
 export { memory };

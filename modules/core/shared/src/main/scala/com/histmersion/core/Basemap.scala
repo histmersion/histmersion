@@ -299,14 +299,32 @@ object Basemap:
       case Some(d)                   => s"all but: $d"
       case None                      => "earth, water and land cover only (fetched before the drop list)"
 
+/** The web map's two vector styles (docs/research-map-styles.md; the style documents are the web
+  * page's): what each draws of the vector extract. `needs`: the data layers without which it is not
+  * itself — a style drawn from an extract that left one out says so, and what to run. Physical's towns
+  * come from `places` when the extract has them; it is whole without them. */
+object BaseStyles:
+  final case class Style(id: String, name: String, needs: List[String])
+
+  val Readable: Style = Style("readable", "Readable", List("boundaries", "earth", "landcover", "landuse", "places", "roads", "water"))
+  val Physical: Style = Style("physical", "Physical", List("earth", "landcover", "landuse", "water"))
+
+  /** In the order the menu shows them; the first is the default. */
+  val all: List[Style] = List(Readable, Physical)
+
+  /** Each style against an extract without `dropped` (`None`: no extract — nothing is said to be
+    * missing, the whole map is). Pure. */
+  def states(dropped: Option[List[String]]): List[BasemapStyleState] =
+    all.map(s => BasemapStyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d))))
+
 /** `ui.base-map-source`: which base maps the web page offers (docs/user-guide/how-to/offline.md).
   *
-  *  - `local`: only the maps drawn from the server's own extracts — the page then asks no other host for
-  *    anything; the default is the style document's default;
+  *  - `local`: only the maps drawn from the server's own extracts (Readable and Physical) — the page then
+  *    asks no other host for anything;
   *  - `online`: those AND the online raster maps (`ui.tiles` and its Muted and Dark variants), the
   *    online Standard the default;
-  *  - `auto` (the default setting): `local` once the stored extract can draw the style document's
-  *    default style whole (a `--keep-all` download for Standard), else `online`.
+  *  - `auto` (the default setting): `local` once the stored extract can draw one of the vector styles
+  *    whole (Physical from any download; Readable from a `--keep-all` one), else `online`.
   *
   * `/api/config` answers the resolved value (`local` or `online`), never `auto`. */
 object BaseMapSource:
@@ -317,10 +335,10 @@ object BaseMapSource:
 
   /** The setting as the page uses it: `local` or `online` (`auto` decided from the extract; anything
     * else is `auto`). Pure. */
-  def resolve(setting: String, status: BasemapStatus, defaultStyle: Option[String]): String =
+  def resolve(setting: String, status: BasemapStatus): String =
     setting.trim.toLowerCase(java.util.Locale.ROOT) match
       case Local  => Local
       case Online => Online
       case _ =>
-        val whole = defaultStyle.exists(id => status.styles.exists(_.id == id) && status.missing(id).isEmpty)
+        val whole = status.styles.exists(s => BaseStyles.all.exists(_.id == s.id) && s.missing.isEmpty)
         if status.available && whole then Local else Online

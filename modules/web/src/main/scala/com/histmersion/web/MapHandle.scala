@@ -1,0 +1,57 @@
+package com.histmersion.web
+
+import com.histmersion.web.map.*
+import org.scalajs.dom
+
+import scala.scalajs.js
+import scala.scalajs.js.JSConverters.*
+
+/** `window.histmersionMap`: the map from the browser's console and the browser regressions
+  * (modules/web/test), in the app's own terms — whatever library draws it. Read-mostly: the view can be
+  * set; nothing here writes data. Zooms are the raster grid's, as everywhere in the app. */
+object MapHandle:
+
+  private def ll(a: js.Array[Double]): LatLon = LatLon(a(0), a(1))
+
+  // `var`: how many times a base map was drawn whole (the regressions wait for the next one)
+  private var drawn = 0
+
+  def install(s: MapSurface): Unit =
+    s.on(MapEventKind.BaseMapReady)(_ => drawn += 1)
+    val h = js.Dynamic.literal(
+      setView = ((at: js.Array[Double], z: Double, opts: js.UndefOr[js.Dynamic]) =>
+        s.setView(ll(at), z, animate = opts.exists(o => !js.isUndefined(o.animate) && o.animate.asInstanceOf[Boolean]))): js.Function3[js.Array[Double], Double, js.UndefOr[js.Dynamic], Unit],
+      setZoom = ((z: Double, opts: js.UndefOr[js.Dynamic]) =>
+        s.setZoom(z, animate = !opts.exists(o => !js.isUndefined(o.animate) && !o.animate.asInstanceOf[Boolean]))): js.Function2[Double, js.UndefOr[js.Dynamic], Unit],
+      getZoom = (() => s.zoom): js.Function0[Double],
+      getMaxZoom = (() => s.maxZoom): js.Function0[Double],
+      getCenter = (() => { val c = s.center; js.Dynamic.literal(lat = c.lat, lng = c.lon) }): js.Function0[js.Dynamic],
+      getBounds = (() => { val b = s.bounds; js.Dynamic.literal(south = b.south, west = b.west, north = b.north, east = b.east) }): js.Function0[js.Dynamic],
+      panBy = ((d: js.Array[Double]) => s.panBy(d(0), d(1))): js.Function1[js.Array[Double], Unit],
+      latLngToContainerPoint = ((at: js.Array[Double]) => { val p = s.project(ll(at)); js.Dynamic.literal(x = p.x, y = p.y) })
+        : js.Function1[js.Array[Double], js.Dynamic],
+      getSize = (() => { val (w, h) = s.size; js.Dynamic.literal(x = w, y = h) }): js.Function0[js.Dynamic],
+      closePopup = (() => s.closePopups()): js.Function0[Unit],
+      isMoving = (() => s.isMoving): js.Function0[Boolean],
+      /** `fn` once at the next `zoomend` / `moveend`. */
+      once = ((event: String, fn: js.Function0[Unit]) =>
+        val kind = if event == "zoomend" then MapEventKind.ZoomEnd else MapEventKind.MoveEnd
+        // `var`: the subscription, taken off when it fires
+        var sub: Subscription = null
+        sub = s.on(kind)(_ => { sub.cancel(); fn() })): js.Function2[String, js.Function0[Unit], Unit],
+      /** The ids of the shapes a set draws now (`polities`, `event-outlines`, `place-pick`, …). */
+      shapes = ((set: String) => s.shapeSet(set).fold(js.Array[String]())(_.ids.toJSArray)): js.Function1[String, js.Array[String]],
+      /** The interactive shapes under a map point, topmost first: `set:id`. */
+      shapesAt = ((at: js.Array[Double]) => s.shapesAt(s.project(ll(at))).map(h => s"${h.set}:${h.id}").toJSArray)
+        : js.Function1[js.Array[Double], js.Array[String]],
+      /** The base map's names placed in the view now. */
+      names = (() => s.drawnNames.toJSArray): js.Function0[js.Array[String]],
+      /** How many points the cluster layer holds, and how many zooms animated its bubbles. */
+      points = (() => MapView.dots.size): js.Function0[Int],
+      clusterAnimations = (() => MapView.dots.animations): js.Function0[Int],
+      /** How many times a base map was drawn whole (every tile of the view). */
+      baseMapsDrawn = (() => drawn): js.Function0[Int],
+      capabilities = (() => { val c = s.capabilities; js.Dynamic.literal(webgl = c.webgl, software = c.software, renderer = c.renderer) })
+        : js.Function0[js.Dynamic],
+      container = s.container)
+    dom.window.asInstanceOf[js.Dynamic].histmersionMap = h

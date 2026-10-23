@@ -5,7 +5,7 @@ import scala.collection.mutable
 /** Where a region's or polity's NAME goes on the map, and which names are shown — all pure, so the
   * placement is a unit test and the map only applies the answer ([[MapLabels]]).
   *
-  * Coordinates are Web-Mercator pixels at zoom 0 (a 256 px world, `y` down), the plane Leaflet draws
+  * Coordinates are Web-Mercator pixels at zoom 0 (a 256 px world, `y` down), the plane the map draws
   * on: a distance there times `2^zoom` is screen pixels, so whatever does not depend on the viewport
   * (the anchor, the size, the thinned outline, the hull) is computed ONCE per shape ([[shape]]) and
   * every zoom and pan after that is arithmetic plus, near the screen edge, one small clip.

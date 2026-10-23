@@ -16,8 +16,7 @@ import scala.util.Using
   * The extracts are a CACHE — fetched again at will — so they live in the XDG cache directory
   * (`basemap.dir` moves them), never in the data directory with the corpus. `http` and `freeSpace`
   * are the seams a test substitutes for the network and the disk. */
-final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path => Long = BasemapService.usable,
-    styles: () => List[TerrainStyle] = () => Nil):
+final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path => Long = BasemapService.usable):
 
   private def cfg = deps.cfg.basemap
   private val slot = BackgroundJob.Slot()
@@ -99,7 +98,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     val layers = BasemapLayer.values.toList.map(info)
     def ok(l: BasemapLayer) = layers.exists(i => i.layer == l.wire && i.present && i.error.isEmpty)
     val vector = layers.find(i => i.layer == BasemapLayer.Vector.wire && i.present && i.error.isEmpty)
-    val states = BasemapService.styleStates(scala.util.Try(styles()).getOrElse(Nil), vector.map(_.dropped))
+    val states = BaseStyles.states(vector.map(_.dropped))
     BasemapStatus(
       available = ok(BasemapLayer.Vector),
       dir = dir.toString, bbox = cfg.bbox, layers = layers, fetchCommand = Basemap.FetchCommand,
@@ -566,11 +565,6 @@ object BasemapService:
       "extract (or `" + Basemap.FetchCommand + "` for everything); restyling never needs a download after that.").toList ++
     Option.when(vector && !labels)(s"The physical names (mountain ranges, deserts, peninsulas, lakes, major rivers, peaks) " +
       s"are not downloaded: `${Basemap.FetchCommand} --layer labels` adds them (about 20 MB read, about 1.4 MB kept).").toList
-
-  /** Each style against the stored vector extract's left-out layers (`None`: no extract — nothing is
-    * said to be missing, the whole map is). Pure. */
-  def styleStates(styles: List[TerrainStyle], dropped: Option[List[String]]): List[BasemapStyleState] =
-    styles.map(s => BasemapStyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d))))
 
   /** What to run when some styles lack layers the download left out. Pure. */
   def lackingHint(states: List[BasemapStyleState]): List[String] =

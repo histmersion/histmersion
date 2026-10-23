@@ -13,20 +13,20 @@ class WebAssetsSuite extends munit.FunSuite:
   test("the page mounts the Scala.js app into #app and loads the bundle"):
     val html = asset("index.html")
     assert(html.contains("<div id=\"app\"></div>"), html)
-    assert(html.contains("src=\"/web/app.bundle.js"), html)
+    assert(html.contains("app.src = \"/web/app.bundle.js"), html)
 
   test("each bookkeeping list's address, and the merge screen's, serve the app, which opens that window"):
     assertEquals(HttpApi.appPaths, Set(List("acquire"), List("tasks"), List("log"), List("merge")))
 
   test("the bundle is a classic script, never type=module (its top-level `this` must be the window)"):
-    val tag = "<script[^>]*app\\.bundle\\.js[^>]*>".r.findFirstIn(asset("index.html")).getOrElse("")
-    assert(tag.nonEmpty)
-    assert(!tag.contains("module"), tag)
-
-  test("Leaflet and the cluster plugin load before the bundle that uses them"):
     val html = asset("index.html")
-    val bundle = html.indexOf("app.bundle.js")
-    assert(html.indexOf("leaflet.js") < bundle && html.indexOf("leaflet.markercluster.js") < bundle, html)
+    assert(!"<script[^>]*src=\"[^\"]*app\\.bundle\\.js".r.findFirstIn(html).exists(_.contains("module")), html)
+    assert(html.contains("document.createElement(\"script\")"), "the bundle is added as a classic script element")
+
+  test("the map library (an ES module) is on window before the bundle that uses it is added"):
+    val html = asset("index.html")
+    val lib = html.indexOf("window.maplibregl = maplibregl")
+    assert(lib > 0 && lib < html.indexOf("app.src ="), html)
 
   test("the bundle is on the classpath with a source map next to it"):
     val js = asset("app.bundle.js")
@@ -39,13 +39,14 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(!asset("index.html").contains("onclick="))
     assert(!asset("app.bundle.js").contains("onclick="))
 
-  test("no animation on a Leaflet-positioned element touches transform (it would unpin it)"):
-    // Leaflet places markers and tooltips with an inline translate3d transform; a keyframe that sets
-    // `transform` overrides it for the animation's duration and the element jumps to the pane origin.
+  test("no animation on a map-positioned element touches transform (it would unpin it)"):
+    // the map places its markers with a transform (`.hd-marker`, --tx/--ty); a keyframe that sets
+    // `transform` on the marker overrides it for the animation's duration and the element jumps to the
+    // pane's origin.
     val css = asset("style.css")
     val keyframes = "@keyframes\\s+([\\w-]+)\\s*\\{((?:[^{}]*\\{[^{}]*\\})*[^{}]*)\\}".r
       .findAllMatchIn(css).map(m => m.group(1) -> m.group(2)).toMap
-    val leafletPositioned = List("hd-map-label-wrap", "hd-area-point-wrap", "hd-dot-wrap")
+    val leafletPositioned = List("hd-marker", "hd-map-label-wrap", "hd-area-point-wrap", "hd-dot-wrap", "hd-point-wrap", "hd-event-wrap")
     for cls <- leafletPositioned do
       val rule = s"\\.$cls[^{]*\\{([^}]*)\\}".r.findAllMatchIn(css).map(_.group(1)).mkString
       val anims = "animation:\\s*([\\w-]+)".r.findAllMatchIn(rule).map(_.group(1)).toList
@@ -156,8 +157,6 @@ class WebAssetsSuite extends munit.FunSuite:
   // the time rule (2026-10-09): an undated place a time view shows only by the findings dated then is
   // drawn apart from a dated one — the map's class for it is styled, and the bundle uses that class
   test("a place dated by its findings is drawn dashed and lighter"):
-    val site = ruleOf("path.hd-by-findings")
-    assert(site.contains("stroke-dasharray") && site.contains("fill-opacity"), site)
-    assert(ruleOf("path.hd-polity.hd-by-findings").contains("fill-opacity"))
+    // its shape is drawn by the map dashed and fainter (MapView's polities); its name, in the stylesheet
     assert(ruleOf(".hd-by-findings .hd-area-point").contains("dashed"))
     assert(asset("app.bundle.js").contains("hd-by-findings"), "the map no longer marks a place dated by its findings")

@@ -4,7 +4,7 @@
 // live-sized synthetic feeds (perf-fixtures.mjs: 500 findings, 2 400 events, 1 600 polities over a
 // range), and held to a budget: what the person feels (input → next paint, hover → card, keystroke →
 // suggestions), what blocks the page (long tasks), what a gesture drops (frames), and what the page
-// holds (JS heap, DOM nodes, listeners, Leaflet layers, the app's caches). Each budget is the number
+// holds (JS heap, DOM nodes, listeners, the map's markers, the app's caches). Each budget is the number
 // measured on the test server (docs/research-web-perf.md, "Budgets") with headroom, so a regression
 // fails and a busy machine does not; HISTMERSION_PERF_REPORT=1 prints what was measured.
 //
@@ -47,31 +47,32 @@ const BUDGETS = {
   eventLayer: { drawnMs: 2500, longTaskMax: 200, 'pan.inputP95': 200, 'pan.longTaskMax': 250, 'pan.droppedPct': 12,
     'zoom.longTaskMax': 150, 'zoom.droppedPct': 8 },
   memoryEventLayer: { heapMB: 75, nodes: 12000, listeners: 2000 },
-  // the terrain base map (the Aegean fixture): vector tiles on canvas, the relief shaded in the page
-  terrainMap: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
+  // the two vector base maps over the Aegean fixture, drawn by the GPU with the full overlay load (a whole
+  // range's boundaries, 2 400 events, 500 findings): the map's own drawing, the overlays' markers and
+  // labels, the pan and the wheel zooms within the same budgets as the rest of the app
+  readableMap: { drawnMs: 4000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
     'zoom.longTaskMax': 150, 'zoom.droppedPct': 15, 'options.inputP95': INPUT, 'options.longTaskMax': 150 },
-  memoryTerrainMap: { heapMB: 60 },
-  // the local street maps over Athens at zoom 9 (roads by class, borders, land use, place names), the page
-  // asking for the kinds and properties its rules read; each style its own budget (they share Standard's
-  // layers, so their cost is the same — a regression in one shows in all three)
-  localStandard: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
-    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15 },
-  memoryLocalStandard: { heapMB: 60 },
-  localMuted: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
-    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15 },
-  memoryLocalMuted: { heapMB: 60 },
-  localDark: { drawnMs: 3000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
-    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15 },
-  memoryLocalDark: { heapMB: 60 },
+  memoryReadableMap: { heapMB: 110 },
+  physicalMap: { drawnMs: 4000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
+    'zoom.longTaskMax': 150, 'zoom.droppedPct': 15, 'options.inputP95': INPUT, 'options.longTaskMax': 150 },
+  memoryPhysicalMap: { heapMB: 110 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
-  soak: { heapMB: 6, nodes: 150, listeners: 20, leafletLayers: 0 },
+  soak: { heapMB: 6, nodes: 150, listeners: 20, mapMarkers: 0 },
 };
 
 let browser;
 before(async () => {
-  browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined });
+  browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined, args: gpuArgs() });
 });
 after(async () => { await browser?.close(); });
+
+/** The map is drawn by WebGL: the budgets are measured on a GPU (macOS: Metal) unless HISTMERSION_TEST_GPU=0
+  * (Chromium's software rasteriser — the map then takes its no-GPU path; HISTMERSION_PERF_REPORT=1 prints its
+  * figures, docs/research-map-styles.md "As built"). */
+function gpuArgs() {
+  const want = process.env.HISTMERSION_TEST_GPU ?? (process.platform === 'darwin' ? '1' : '0');
+  return want === '0' ? [] : ['--enable-gpu', '--ignore-gpu-blocklist', ...(process.platform === 'darwin' ? ['--use-angle=metal'] : [])];
+}
 
 const get = (o, path) => path.split('.').reduce((v, k) => v?.[k], o);
 
@@ -133,27 +134,15 @@ test('budgets: the events layer draws 2 400 markers, pans and zooms smoothly', a
   });
 });
 
-test('budgets: the terrain base map draws (with its names), pans and zooms within the pan\'s budget', async t => {
-  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-  if (!status.available) { t.skip('the test server has no terrain extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  await withPerfPage(async ({ page, cdp }) => {
-    const names = status.layers.some(l => l.layer === 'labels' && l.present);
-    within('terrainMap', await paths.terrainMap(page, baseURL, { names }));
-    within('memoryTerrainMap', await memory(page, cdp));
-  });
-});
-
-for (const [style, name] of [['standard', 'Standard'], ['muted', 'Muted'], ['dark', 'Dark']]) {
-  test(`budgets: the local ${name} map (roads, borders, land use, names) draws, pans and zooms within the pan's budget`, async t => {
+for (const [style, name] of [['readable', 'Readable'], ['physical', 'Physical']]) {
+  test(`budgets: ${name} with the full overlay load draws, pans and zooms within the pan's budget`, async t => {
     const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
-    const st = status.styles?.find(s => s.id === style);
-    if (!status.available || !st || st.missing.length) {
-      t.skip('the test server has no extract that draws it whole (the fixture: HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return;
-    }
-    const key = `local${name}`;
+    if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
     await withPerfPage(async ({ page, cdp }) => {
-      within(key, await paths.localMap(page, baseURL, style));
-      within(`memory${name === 'Standard' ? 'LocalStandard' : `Local${name}`}`, await memory(page, cdp));
+      const m = await paths.vectorMap(page, baseURL, style);
+      assert.ok(m.points >= 2000 && m.shapes >= 1000, `the full load: ${m.points} points, ${m.shapes} shapes`);
+      within(`${style}Map`, m);
+      within(`memory${name}Map`, await memory(page, cdp));
     }, undefined, { source: 'local' });
   });
 }
