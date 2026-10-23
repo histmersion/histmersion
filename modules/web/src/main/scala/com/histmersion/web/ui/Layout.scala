@@ -55,6 +55,14 @@ object Layout:
   val siteIconSize: Px       = Px(26)
   val playbackWindowHalf: Long = 50L
   val playbackDuration: Double = 30.0
+  /** Playback's findings are fetched this many seconds of playback ahead, at most
+    * [[playbackFetchLimit]] a request, and cut to each frame's window locally (#3764). */
+  val playbackFetchSeconds: Double = 4.0
+  val playbackFetchLimit: Int = 2000
+  /** Playback's states are fetched this many seconds of playback ahead of the playhead, and each fades in
+    * and out over this many seconds of playback at its first and last year (#3764). */
+  val playbackLeadSeconds: Double = 0.5
+  val playbackAreaFadeSeconds: Double = 0.3
   val exitAnimMs: Int        = 350
   /** Minimum gap between overlay-layer (regions, sites, media) refetches while the span moves. */
   val layerReloadMs: Int     = 200

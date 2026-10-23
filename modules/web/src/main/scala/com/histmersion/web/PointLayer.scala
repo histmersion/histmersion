@@ -120,8 +120,10 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       val gone = live.keys.filterNot(next.contains).toList
       gone.foreach(live.remove)
       set().remove(gone)
-      // `var`: whether any kept point was recoloured (the bubbles it is in are drawn again)
+      // `var`s: whether any kept point was restyled, and whether one changed more than its colour (the bubbles
+      // it is in are then drawn again; a colour alone is set in place)
       var restyled = false
+      var reshaped = false
       val fresh = scala.collection.mutable.ListBuffer.empty[Dot]
       next.foreach { (k, a) =>
         live.get(k) match
@@ -133,17 +135,21 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
             val was = d.item.asInstanceOf[A]
             if !(d.span == span && was == a) then
               val sameLook = PointMarker.signature(kind, was) == PointMarker.signature(kind, a)
+              val member = kind.member(a)
+              if member != d.member then reshaped = true
               d.item = a
               d.span = span
-              d.member = kind.member(a)
+              d.member = member
               restyled = true
               if sameLook then
                 set().drawnAlone(k).foreach(m => Option(m.el.querySelector(".hd-point")).foreach(
                   _.asInstanceOf[dom.html.Element].style.setProperty("--c", kind.fill(a, span))))
-              else set().replace(d)
+              else
+                reshaped = true
+                set().replace(d)
       }
       set().add(fresh)
-      if restyled then set().refresh()
+      if reshaped then set().refresh() else if restyled then set().recolour()
 
   /** A point's marker, as the cluster layer draws it alone. */
   def render(d: Dot, fadeIn: Boolean): DomMarker =

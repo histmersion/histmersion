@@ -66,6 +66,12 @@ const BUDGETS = {
     'zoom.longTaskMax': 150, 'options.inputP95': INPUT, 'options.longTaskMax': 150 },
   physicalMapSoftware: { drawnMs: 4000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150,
     'zoom.longTaskMax': 150, 'options.inputP95': INPUT, 'options.longTaskMax': 150 },
+  // #3764: the timeline's playback over 2 000 years with the boundaries on — every frame drawn from what is
+  // held: the findings fetched four seconds ahead (it asked 60 times a second), the states' outlines sent
+  // only when new ones arrive (the boundaries' answers, five a second), their colour and fade restyled on
+  // most frames (they changed only when an answer came: 80 % of frames still)
+  playback: { longTaskMax: 150, droppedPct: 15, findingsRequestsPerSecond: 1, outlineUploadsPerSecond: 6,
+    stillFramesPct: 60 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
   soak: { heapMB: 6, nodes: 150, listeners: 20, mapMarkers: 0 },
 };
@@ -160,6 +166,15 @@ for (const [style, name] of [['readable', 'Readable'], ['physical', 'Physical']]
     }, undefined, { source: 'local' });
   });
 }
+
+test('budgets: playback draws every frame from what it holds, the states restyled in place', async () => {
+  await withPerfPage(async ({ page }) => {
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["boundaries"]'));
+    const m = await paths.playback(page, baseURL, -3000, -1000);
+    assert.ok(m.states > 0, `states are drawn in playback: ${JSON.stringify(m)}`);
+    within('playback', m);
+  });
+});
 
 test('every cache the page keeps is bounded', async () => {
   await withPerfPage(async ({ page }) => {

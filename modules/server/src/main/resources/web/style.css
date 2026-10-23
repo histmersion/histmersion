@@ -210,7 +210,16 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-marker.has-box { width:var(--mw); height:var(--mh); margin-left:calc(var(--mw) / -2); margin-top:calc(var(--mh) / -2); }
 .hd-marker.is-offscreen { visibility:hidden; }
 .hd-marker.hd-cluster-move { transition:transform .25s cubic-bezier(0, 0, .25, 1); }
-@media (prefers-reduced-motion: reduce) { .hd-marker.hd-cluster-move { transition:none; } }
+/* a merge (web.map.ClusterMotion): the markers that join a bubble fly into it and go; the bubble appears as
+   they arrive */
+.hd-marker.hd-cluster-ghost { pointer-events:none; }
+.hd-marker.hd-cluster-ghost.hd-cluster-move { transition:transform .25s cubic-bezier(.4, 0, 1, 1), opacity .25s ease-in; opacity:.35; }
+@keyframes cluster-arrive { 0%, 55% { opacity:0; } 100% { opacity:1; } }
+.hd-marker.hd-cluster-arrive { animation:cluster-arrive .25s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .hd-marker.hd-cluster-move, .hd-marker.hd-cluster-ghost.hd-cluster-move { transition:none; }
+  .hd-marker.hd-cluster-arrive { animation:none; }
+}
 /* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */
 .pick-head { padding:10px 14px; border-bottom:1px solid var(--line); background:#161a23; }
 .pick-head .back { color:var(--accent); font-size:12px; text-decoration:none; }
