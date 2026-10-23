@@ -49,6 +49,7 @@ final class FakeSurface(w: Double = 1000, h: Double = 600, caps: Capabilities = 
     LatLon(lat, lon)
   def resize(): Unit = fire(MapEventKind.Resize)
   def isMoving: Boolean = false
+  def isDrawn: Boolean = true
   def on(kind: MapEventKind)(f: MapEvent => Unit): Subscription =
     val hs = handlers.getOrElseUpdate(kind, mutable.ListBuffer.empty)
     hs += f

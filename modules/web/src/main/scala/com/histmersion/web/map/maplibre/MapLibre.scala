@@ -80,6 +80,7 @@ class GlMap(options: js.Object) extends js.Object:
   def isStyleLoaded(): Boolean                 = js.native
   def loaded(): Boolean                        = js.native
   def isMoving(): Boolean                      = js.native
+  def areTilesLoaded(): Boolean                = js.native
   def setStyle(style: js.Any, options: js.UndefOr[js.Object] = js.undefined): this.type = js.native
   def getStyle(): js.Dynamic                   = js.native
   def addSource(id: String, source: js.Object): this.type = js.native

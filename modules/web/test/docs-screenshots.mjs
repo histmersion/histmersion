@@ -36,22 +36,9 @@ async function open(browser, { viewport = wide, hash = '', local = {}, path = ''
   await context.addInitScript(l => {
     try { localStorage.clear(); for (const [k, v] of Object.entries(l)) localStorage.setItem(k, v); } catch { /* none */ }
   }, Object.fromEntries(Object.entries(local).map(([k, v]) => [`histmersion.ui.${k}`, v])));
-  // keep a handle on the Leaflet map (as browser.test.mjs does), and switch off its fades: Leaflet
-  // fades a tile in by the clock, and the clock is fixed, so a faded tile would stay transparent
+  // the map's own handle (web MapHandle), as browser.test.mjs uses it
   await context.addInitScript(() => {
-    let leaflet;
-    Object.defineProperty(window, 'L', {
-      configurable: true, get: () => leaflet,
-      set: value => {
-        leaflet = value;
-        value.Map?.mergeOptions?.({ fadeAnimation: false, zoomAnimation: false, markerZoomAnimation: false });
-        let factory = value.map;
-        Object.defineProperty(value, 'map', {
-          configurable: true, enumerable: true, set: fn => { factory = fn; },
-          get: () => function (...args) { const map = factory.apply(value, args); window.__docsMap = map; return map; },
-        });
-      },
-    });
+    Object.defineProperty(window, '__docsMap', { configurable: true, get: () => window.histmersionMap });
   });
   await context.route('**/*', route => {
     const url = new URL(route.request().url());
@@ -76,21 +63,19 @@ async function open(browser, { viewport = wide, hash = '', local = {}, path = ''
   return { page, context, errors };
 }
 
-/** Wait until nothing is loading: requests, map tiles, fonts, images, window content. */
+/** Wait until nothing is loading: requests, the map's tiles (drawn), fonts, images, window content. */
 async function settle(page, extra = 400) {
   await page.waitForLoadState('networkidle');
   await page.waitForFunction(() => {
-    const tiles = [...document.querySelectorAll('.leaflet-tile-container img')];
     const imgs = [...document.querySelectorAll('img')].filter(i => i.offsetParent !== null);
-    return tiles.every(t => t.classList.contains('leaflet-tile-loaded') || t.complete) &&
-      imgs.every(i => i.complete) && document.fonts.status === 'loaded';
+    return (!window.__docsMap || window.__docsMap.isDrawn()) && imgs.every(i => i.complete) && document.fonts.status === 'loaded';
   }, null, { timeout: 30000 });
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(extra);
 }
 
 async function view(page, lat, lon, zoom) {
-  await page.evaluate(([la, lo, z]) => window.__docsMap.setView([la, lo], z, { animate: false }), [lat, lon, zoom]);
+  await page.evaluate(([la, lo, z]) => window.__docsMap.setView([la, lo], z), [lat, lon, zoom]);
   await settle(page, 800);
 }
 
@@ -130,7 +115,7 @@ async function scrollWindowTo(page, text, { offset = 12 } = {}) {
 
 /** The visible marker whose label or title matches `re`: its centre. */
 async function marker(page, re) {
-  const all = await page.evaluate(() => [...document.querySelectorAll('.leaflet-marker-pane > *')].map(e => {
+  const all = await page.evaluate(() => [...document.querySelectorAll('.hd-pane .hd-marker')].map(e => {
     const r = e.getBoundingClientRect();
     const s = e.querySelector('[aria-label],[title]') || e;
     return { x: r.x + r.width / 2, y: r.y + r.height / 2, label: s.getAttribute('aria-label') || s.getAttribute('title') || '' };
@@ -140,18 +125,12 @@ async function marker(page, re) {
   return hit;
 }
 
-/** A terrain-style shot: the notice up, the Aegean at zoom 8 (the fixture's region fills the map), the tiles and names drawn. */
-async function terrainShot(page, shoot, [lat, lon, zoom] = [37.75, 25.5, 8]) {   // filled by the fixture's region (22.5–28.5°E, 35–40.5°N)
+/** A base-map shot: the notice up, the view set, the base map drawn whole. */
+async function baseMapShot(page, shoot, [lat, lon, zoom] = [37.75, 25.5, 8]) {   // filled by the fixture's region (22.5–28.5°E, 35–40.5°N)
   await page.locator('.terrain-notice').waitFor();
   await view(page, lat, lon, zoom);
-  // the relief, shaded once its elevation tiles arrived (Relief only, Parchment and Terrain all have one)
-  await page.waitForFunction(() => [...document.querySelectorAll('.terrain-relief canvas')].some(c => {
-    if (!c.width) return false;
-    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-    let n = 0; for (let i = 3; i < d.length; i += 16) if (d[i] > 0) n++;
-    return n > d.length / 16 * 0.05;
-  }), null, { timeout: 30000 });
-  await settle(page, 2500);
+  await page.waitForFunction(() => window.__docsMap.isDrawn() && window.__docsMap.baseMapsDrawn() > 0, null, { timeout: 30000 });
+  await settle(page, 1500);
   await shoot();
 }
 
@@ -169,56 +148,26 @@ const shots = {
   'home-muted': { local: { layers: allLayers, baseMap: '["muted"]' }, hash: 'from=-1700&to=-1000',
     run: async (page, shoot) => { await view(page, 36.6, 29.5, 5); await shoot(); } },
 
-  // The terrain base map (no modern features), drawn from the server's own extract — here the small
-  // Aegean fixture (modules/web/test/fixtures/basemap) — with its notice about the past landscape.
-  'home-terrain': { local: { layers: '["events"]', baseMap: '["terrain"]', terrainStyle: '["terrain"]' }, hash: 'from=-1700&to=-1000',
-    run: async (page, shoot) => {
-      await page.locator('.terrain-notice').waitFor();
-      await view(page, 37.75, 25.5, 8);
-      await settle(page, 1500);
-      await shoot();
-    } },
-
-  // Customising the terrain map (how-to/terrain-styles.md): three named styles over the same view, the
-  // physical names on — the Aegean fixture with its labels.pmtiles, nothing of the corpus on top.
-  'terrain-labels': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["terrain"]' },
-    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
-  'terrain-parchment': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["parchment"]' },
-    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
-  'terrain-relief': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["relief"]' },
-    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
-  // the Natural style (the default): the Aegean at zoom 7 — colours by height, land cover, the sea floor
-  // (the shelf light, the North Aegean Trough and the Cretan Sea dark), names in Noto Serif
-  'terrain-natural': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["natural"]' },
-    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot) },
-  // close in: the Argolid around Mycenae at zoom 12 (the fixture's focus region), contours every 50 m
-  'terrain-mycenae': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["natural"]' },
-    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot, [37.73, 22.756, 12]) },
-  'terrain-contour': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["contour"]' },
-    hash: 'from=-1700&to=-1000', run: async (page, shoot) => terrainShot(page, shoot, [37.73, 22.756, 12]) },
+  // The two base maps drawn from the server's own extract — here the small Aegean fixture
+  // (modules/web/test/fixtures/basemap) — with the notice about the past landscape: Readable with the
+  // events on top, Physical with nothing of the corpus on top, and Physical close in over Mycenae (the
+  // fixture's focus region: the detailed relief and its contours).
+  'basemap-readable': { local: { layers: '["events"]', baseMap: '["readable"]' }, hash: 'from=-1700&to=-1000',
+    run: async (page, shoot) => baseMapShot(page, shoot) },
+  'basemap-physical': { local: { layers: '[]', sources: '["false"]', baseMap: '["physical"]' }, hash: 'from=-1700&to=-1000',
+    run: async (page, shoot) => baseMapShot(page, shoot) },
+  'physical-mycenae': { local: { layers: '[]', sources: '["false"]', baseMap: '["physical"]' }, hash: 'from=-1700&to=-1000',
+    run: async (page, shoot) => baseMapShot(page, shoot, [37.73, 22.756, 12]) },
   // the map options, open over the Aegean
-  'map-options': { local: { layers: '[]', sources: '["false"]', baseMap: '["terrain"]', terrainStyle: '["natural"]' },
+  'map-options': { local: { layers: '[]', sources: '["false"]', baseMap: '["physical"]' },
     hash: 'from=-1700&to=-1000', run: async (page, shoot) => {
-      await terrainShot(page, async () => {}, [37.6, 24.2, 8]);
+      await baseMapShot(page, async () => {}, [37.6, 24.2, 8]);
       await page.locator('.map-options-btn').click();
       await page.locator('.map-options').waitFor();
       await settle(page, 300);
       const b = await page.locator('.map-options').boundingBox();
       await shoot({ x: Math.max(0, b.x - 360), y: Math.max(0, b.y - 60), width: b.width + 520, height: b.height + 160 });
     } },
-
-  // The local street maps (how-to/offline.md): Standard, Muted and Dark drawn by the page from the
-  // server's own extract (the Aegean fixture, a --keep-all extract) — Attica at zoom 9, the corpus's
-  // markers on top; no other host asked for anything.
-  ...Object.fromEntries(['standard', 'muted', 'dark'].map(id => [`local-${id}`, {
-    local: { layers: '["events"]', baseMap: '["terrain"]', terrainStyle: `["${id}"]` }, hash: 'from=-1700&to=-1000',
-    run: async (page, shoot) => {
-      await view(page, 37.85, 23.75, 9);
-      await page.waitForFunction(() => document.querySelectorAll('.terrain-base canvas').length > 2 &&
-        document.querySelector('.terrain-labels canvas'), null, { timeout: 30000 });
-      await settle(page, 2500);
-      await shoot();
-    } }])),
 
   // The phone layout: the map first, the controls on buttons, the list as a sheet.
   'phone': { viewport: phone, local: { layers: '["events","media"]', sheet: '["half"]' }, hash: 'from=-1700&to=-1000',
@@ -397,7 +346,9 @@ const shots = {
     } },
 };
 
-const browser = await chromium.launch({ headless: true,
+// the map is WebGL: drawn by the GPU where there is one (macOS: Metal), as the app is used
+const gpu = process.platform === 'darwin' ? ['--enable-gpu', '--ignore-gpu-blocklist', '--use-angle=metal'] : [];
+const browser = await chromium.launch({ headless: true, args: gpu,
   executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined });
 await mkdir(outDir, { recursive: true });
 const failed = [];

@@ -33,6 +33,8 @@ object MapHandle:
       getSize = (() => { val (w, h) = s.size; js.Dynamic.literal(x = w, y = h) }): js.Function0[js.Dynamic],
       closePopup = (() => s.closePopups()): js.Function0[Unit],
       isMoving = (() => s.isMoving): js.Function0[Boolean],
+      /** Still, and every tile of the view drawn. */
+      isDrawn = (() => s.isDrawn): js.Function0[Boolean],
       /** `fn` once at the next `zoomend` / `moveend`. */
       once = ((event: String, fn: js.Function0[Unit]) =>
         val kind = if event == "zoomend" then MapEventKind.ZoomEnd else MapEventKind.MoveEnd
