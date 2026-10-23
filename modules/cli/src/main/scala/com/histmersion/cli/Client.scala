@@ -247,9 +247,9 @@ final class Client(val serverUrl: String, token: Option[String] = None):
   def basemapStatus(): Either[CliError, BasemapStatus]                      = call(BasemapApi.status)(())
   def basemapFetch(q: BasemapFetchQuery): Either[CliError, JobInfo]         = call(BasemapApi.fetch)(q)
   def basemapRemove(q: BasemapRemoveQuery): Either[CliError, BasemapRemoved] = call(BasemapApi.remove)(q)
-  def jobs(status: Option[String], limit: Option[Int], before: Option[String] = None)
+  def jobs(f: ListFilters.JobFilter, limit: Option[Int], before: Option[String] = None)
       : Either[CliError, (List[JobInfo], Paging.Page)] =
-    call(Api.jobs)((status, limit, before, None))
+    call(Api.jobs)((f, limit, before, None))
   def assets(ck: String): Either[CliError, List[AssetInfo]]                 = call(Api.assets)(ck)
   def putAssets(ck: String, in: List[AssetInput]): Either[CliError, AssetsStored] =
     call(Api.putAssets)((ck, in))

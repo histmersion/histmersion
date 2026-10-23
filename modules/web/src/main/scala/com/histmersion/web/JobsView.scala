@@ -38,6 +38,17 @@ object JobsView:
   def visible(jobs: List[JobInfo], filter: Option[JobState]): List[JobInfo] =
     filter.fold(jobs)(s => jobs.filter(_.state == s))
 
+  /** The jobs a whole filter shows, from the rows already loaded — the states and the kinds; the
+    * dates and the text are left to the server's page. */
+  def visible(jobs: List[JobInfo], f: ListFilters.JobFilter): List[JobInfo] =
+    val n = f.normalized
+    jobs.filter(j => (n.status.isEmpty || n.status.contains(j.status)) && (n.kind.isEmpty || n.kind.contains(j.kind)))
+
+  /** The query the window sends, from its filter fields. Pure. */
+  def filterOf(status: Option[JobState], kinds: List[String], since: Option[String], until: Option[String],
+      subject: Option[String]): ListFilters.JobFilter =
+    ListFilters.JobFilter(status.toList.map(_.wire), kinds, since, until, subject)
+
   /** Did a job that ticks off an acquisition item finish since `before`? Then that list changed. */
   def ticksOff(before: List[JobInfo], after: List[JobInfo]): Boolean =
     val doneBefore = before.filter(_.succeeded).map(_.id).toSet
@@ -91,8 +102,19 @@ object JobsView:
 
   /** The rows, the poll and "Show older" ([[PolledList]]); an OCR job that ticks its acquisition item
     * off, seen by a poll, reloads an open "to acquire" window. */
+  /** The window's filter fields (they live in the URL hash). */
+  private val filterFields: List[Field[?]] =
+    List(UiState.jobStatus, UiState.jobKinds, UiState.jobSince, UiState.jobUntil, UiState.jobSubject)
+
+  private def currentFilter(): ListFilters.JobFilter =
+    filterOf(UiState.jobStatus.now(), UiState.jobKinds.now(), UiState.jobSince.now(), UiState.jobUntil.now(),
+      UiState.jobSubject.now())
+
+  /** The filter, as a signal, so a change restarts the list from the newest page. */
+  private val filterSignal: Signal[ListFilters.JobFilter] = UiState.signal.map(_ => currentFilter()).distinct
+
   private val list = PolledList[JobInfo](
-    fetch = (upTo, before) => ApiClient.jobs(UiState.jobStatus.now(), Some(Limit), upTo = upTo, before = before),
+    fetch = (upTo, before) => ApiClient.jobs(currentFilter(), Some(Limit), upTo = upTo, before = before),
     id = _.id,
     live = live,
     after = (cur, rows) => if ticksOff(cur.rows, rows) then QueueView.changed.emit(Queue.Kind.Acquire))
@@ -112,25 +134,33 @@ object JobsView:
       cls := "tool-pane jobs-pane",
       list.lifecycle,
       onUnmountCallback(_ => started.set(None)),
-      UiState.jobStatus.signal.changes --> (_ => list.restart()),
+      filterSignal.changes --> (_ => list.restart()),
       div(
         cls := "pane-bar",
         filterButtons,
         button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart()))
       ),
+      div(cls := "toolbar list-filters",
+        ListFilterBar.chips("kind", listing.signal.map(_.page.facet("kind")), UiState.jobKinds, kindLabel),
+        div(cls := "btn-group",
+          ListFilterBar.text("subject: a citekey, a target, an id", UiState.jobSubject),
+          ListFilterBar.day("started on or after", UiState.jobSince),
+          ListFilterBar.day("started on or before", UiState.jobUntil),
+          ListFilterBar.clearButton(filterFields))),
       list.errorLine("Could not list jobs"),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         Option.when(isLoaded && l.rows.nonEmpty)(
-          p(cls := "muted list-heading", ListPaging.heading(l, "job", filter.map(_.wire), _.status)))
+          p(cls := "muted list-heading", ListPaging.heading(l, "job", filter.map(_.wire), _.status, currentFilter().qualifier)))
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
         else Option.when(l.rows.isEmpty)(
-          p(cls := "muted", filter.fold("No background jobs yet.")(s => s"No ${stateLabel(s)} jobs.")))
+          p(cls := "muted", if ListFilterBar.anySet(filterFields.drop(1)) then "No jobs match the filter."
+            else filter.fold("No background jobs yet.")(s => s"No ${stateLabel(s)} jobs.")))
       },
       // keyed by the row itself: a row that did not change keeps its element, so new rows arriving on
       // top do not rebuild (or move the reader off) the ones below
-      ul(cls := "job-list",
+      ul(cls := "job-list", aria.busy <-- list.loading,
         children <-- shownSignal.combineWith(started.signal).map((l, _, mine) => l.rows.map(j => (j, mine.contains(j.id))))
           .split(identity)((key, _, _) => row(key._1, key._2))),
       list.olderButton
@@ -139,7 +169,7 @@ object JobsView:
   /** The listing with the rows the filter shows — at once, from the rows loaded, when the filter
     * changes; the server's page replaces them a moment later. */
   private def shownSignal: Signal[(ListPaging.Listing[JobInfo], Option[JobState])] =
-    listing.signal.combineWith(UiState.jobStatus.signal).map((l, f) => (l.copy(rows = visible(l.rows, f)), f))
+    listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), UiState.jobStatus.now()))
 
   private def filterButtons: HtmlElement =
     def btn(label: String, value: Option[JobState], count: Signal[Int]) =

@@ -42,19 +42,21 @@ object AgentsTools:
           "Embedded agent runs: with `id`, one run's steps, tokens, cost, warnings (and its trace with " +
             "`messages: true`); with `compare` (two or more run ids of one pipeline on one target), the runs side " +
             "by side — per step the model (configured → reported), tokens, cost or plan pool, time, attempts, then " +
-            "the outputs; without either, the newest runs (optionally one `status`: " +
-            s"${Agents.RunState.values.map(_.wire).mkString(", ")} — `waiting` = for an approval; or one `goal`'s; or " +
-            "the runs one process `manager` dispatched).")
+            "the outputs; without either, the newest runs, filtered on the server by `status` (" +
+            s"${Agents.RunState.values.map(_.wire).mkString(", ")} — `waiting` = for an approval), `pipeline`, `origin`, " +
+            "the process `manager` that dispatched them, one `goal`, the `model` or `provider` a step used, `since` / " +
+            "`until` (2026-10-01, an ISO instant, or 7d / 12h ago) and `subject` (text in the target); each listing ends with " +
+            "the counts per pipeline, origin, manager, provider and model.")
         .input[RunsInput]
         .handle { in =>
           in.id.map(_.trim).filter(_.nonEmpty) match
             case _ if in.compare.nonEmpty => ToolResult.text(a.compare(in.compare).fold(McpOut.refusal, AgentsMarkdown.compare))
             case Some(id) => ToolResult.text(a.run(id).fold(McpOut.refusal, AgentsMarkdown.run(_, in.messages)))
-            case None if in.manager.exists(_.trim.nonEmpty) =>
-              ToolResult.text(AgentsMarkdown.runs(a.managing.runs(in.manager.get, in.status, in.limit)))
-            case None     => ToolResult.text(a.runsPage(in.status, in.limit, in.goal, in.before).fold(McpOut.refusal,
-              (rs, page) => AgentsMarkdown.runs(rs, page, in.status.map(_.trim).filter(_.nonEmpty),
-                Paging.olderLine(page, c => s"call `run_status` again with `before: \"$c\"`"))))
+            case None =>
+              val f = in.filter
+              ToolResult.text(a.runsPage(f, in.limit, in.before, None).fold(McpOut.refusal,
+                (rs, page) => AgentsMarkdown.runs(rs, page, f.qualifier,
+                  Paging.olderLine(page, c => s"call `run_status` again with the same filters and `before: \"$c\"`"))))
         }
 
     val approvals =
@@ -63,12 +65,16 @@ object AgentsTools:
           "Changes embedded agent runs PROPOSED and a person decides: a source's status, or a disagreement " +
             "edge (challenges, refutes, updates, superseded_by), each with the evidence and the verified " +
             "quote it rests on; a goal's plan (sub-goals, queries, works) or an article a run compiled, " +
-            "which the run WAITS for. Default: the open ones; `state` = open, approved, rejected, failed or all.")
+            "which the run WAITS for. Default: the open ones; `state` = open, approved, rejected, failed or all; " +
+            s"`kind` = any of ${Agents.ApprovalKind.values.map(_.wire).mkString(", ")}; `subject` = text in what it is " +
+            "about (a slug, a manager, a citekey); `goal` = one goal's; `decidedBy` = person, autopilot or auto. The " +
+            "listing heads with the counts per kind and per decider.")
         .input[ApprovalsInput]
         .handle { in =>
-          ToolResult.text(a.approvalsPage(in.state, in.limit, in.before).fold(McpOut.refusal, (as, page) =>
-            AgentsMarkdown.approvals(as, page, Some(in.state.map(_.trim).filter(_.nonEmpty).getOrElse("open")).filter(_ != "all"),
-              Paging.olderLine(page, c => s"call `list_approvals` again with `before: \"$c\"`"))))
+          val f = in.filter
+          ToolResult.text(a.approvalsPage(f, in.limit, in.before, None).fold(McpOut.refusal, (as, page) =>
+            AgentsMarkdown.approvals(as, page, f.qualifier,
+              Paging.olderLine(page, c => s"call `list_approvals` again with the same filters and `before: \"$c\"`"))))
         }
 
     val decide =
@@ -315,12 +321,24 @@ object AgentsTools:
 
   final case class RunsInput(id: Option[String] = None, status: Option[String] = None, limit: Option[Int] = None,
       messages: Boolean = false, goal: Option[String] = None, compare: List[String] = Nil,
-      before: Option[String] = None, manager: Option[String] = None) derives KindlingsCodecAsObject
+      before: Option[String] = None, manager: Option[String] = None, pipeline: List[String] = Nil,
+      origin: List[String] = Nil, model: List[String] = Nil, provider: List[String] = Nil,
+      since: Option[String] = None, until: Option[String] = None, subject: Option[String] = None) derives KindlingsCodecAsObject:
+    /** The listing's filter ([[ListFilters.RunFilter]]): `status` and `manager` may be comma-separated. */
+    def filter: ListFilters.RunFilter =
+      ListFilters.RunFilter(status.toList, pipeline, manager.toList, goal, model, provider, origin, since, until, subject)
   object RunsInput:
     given Schema[RunsInput] = KindlingsSchema.derived[RunsInput].schema
-      .modify(_.manager)(_.description("List only the runs this process manager dispatched (e.g. review)"))
+      .modify(_.manager)(_.description("List only the runs these process managers dispatched (e.g. review, seed:<goal>; comma-separated)"))
       .modify(_.id)(_.description("One run's id; omit to list runs"))
-      .modify(_.status)(_.description("List only runs in this state"))
+      .modify(_.status)(_.description("List only runs in these states (comma-separated)"))
+      .modify(_.pipeline)(_.description(s"List only runs of these pipelines (${Agents.Pipeline.values.map(_.wire).mkString(", ")})"))
+      .modify(_.origin)(_.description(s"List only runs started by these (${Agents.Origin.values.map(_.wire).mkString(", ")})"))
+      .modify(_.model)(_.description("List only runs a step of which used one of these provider:model"))
+      .modify(_.provider)(_.description("List only runs a step of which used one of these providers (codex, claude-code, …)"))
+      .modify(_.since)(_.description("Started at or after: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago"))
+      .modify(_.until)(_.description("Started before the end of: 2026-10-01, or an ISO instant"))
+      .modify(_.subject)(_.description("Text in the run's target (a citekey, an article or goal slug)"))
       .modify(_.messages)(_.description("With id: include the traced messages and tool calls"))
       .modify(_.goal)(_.description("List only the runs for this goal"))
       .modify(_.compare)(_.description("Two or more run ids to compare side by side (one pipeline, one target)"))
@@ -348,10 +366,16 @@ object AgentsTools:
       .modify(_.remove)(_.description("Delete the schedule"))
 
   final case class ApprovalsInput(state: Option[String] = None, limit: Option[Int] = None,
-      before: Option[String] = None) derives KindlingsCodecAsObject
+      before: Option[String] = None, kind: List[String] = Nil, subject: Option[String] = None,
+      goal: Option[String] = None, decidedBy: List[String] = Nil) derives KindlingsCodecAsObject:
+    def filter: ListFilters.ApprovalFilter = ListFilters.ApprovalFilter(state, kind, subject, goal, decidedBy)
   object ApprovalsInput:
     given Schema[ApprovalsInput] = KindlingsSchema.derived[ApprovalsInput].schema
       .modify(_.state)(_.description("open (default), approved, rejected, failed, or all"))
+      .modify(_.kind)(_.description(s"Only these kinds: ${Agents.ApprovalKind.values.map(_.wire).mkString(", ")}"))
+      .modify(_.subject)(_.description("Text in what it is about: a goal or article slug, a manager, a citekey, the proposing run's goal"))
+      .modify(_.goal)(_.description("Only one goal's: its plan, or proposed by a run for it"))
+      .modify(_.decidedBy)(_.description("Only those decided by: person, autopilot (its checks) or auto (applied when proposed)"))
       .modify(_.before)(_.description("The next older page — the id of the last approval shown"))
 
   final case class DecideInput(id: Long, decision: String, note: Option[String] = None) derives KindlingsCodecAsObject

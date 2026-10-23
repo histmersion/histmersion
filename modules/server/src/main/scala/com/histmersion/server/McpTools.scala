@@ -284,8 +284,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     tool("job_status")
       .description(
         "Where an OCR job got to: queued|running|done|failed, with its progress line or the reason " +
-          "it failed. Give `id` for one job, or omit it (optionally with `status`) to list the " +
-          "recent ones. A job that says 'interrupted' was killed by a server restart — re-run the " +
+          "it failed. Give `id` for one job, or omit it to list the recent ones — filtered on the server by " +
+          "`status`, `kind` (ingest, reocr, agent, media-import, …), `since` / `until` (2026-10-01, an ISO instant, or " +
+          "7d / 12h ago) and `subject` (text in what it is about); the listing heads with the counts per kind. A job that says 'interrupted' was killed by a server restart — re-run the " +
           "same ingest, it is idempotent.")
       .input[JobStatusInput]
       .handle { in =>
@@ -295,9 +296,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               case Right(j) => ToolResult.text(IngestMarkdown.job(j))
               case Left(e)  => McpOut.error(e)
           case None =>
-            ToolResult.text(h.ingest.jobsPage(in.status, in.limit, in.before).fold(McpOut.refusal, (js, page) =>
-              IngestMarkdown.jobs(js.toVector, page, in.status.map(_.trim).filter(_.nonEmpty),
-                Paging.olderLine(page, c => s"call `job_status` again with `before: \"$c\"`"))))
+            val f = in.filter
+            ToolResult.text(h.ingest.jobsPage(f, in.limit, in.before, None).fold(McpOut.refusal, (js, page) =>
+              IngestMarkdown.jobs(js.toVector, page, f.qualifier,
+                Paging.olderLine(page, c => s"call `job_status` again with the same filters and `before: \"$c\"`"))))
       }
 
   private val assets =
@@ -1381,12 +1383,21 @@ object McpTools:
       id: Option[String] = None,
       status: Option[String] = None,
       limit: Option[Int] = None,
-      before: Option[String] = None
-  ) derives KindlingsCodecAsObject
+      before: Option[String] = None,
+      kind: List[String] = Nil,
+      since: Option[String] = None,
+      until: Option[String] = None,
+      subject: Option[String] = None
+  ) derives KindlingsCodecAsObject:
+    def filter: ListFilters.JobFilter = ListFilters.JobFilter(status.toList, kind, since, until, subject)
   object JobStatusInput:
     given Schema[JobStatusInput] = KindlingsSchema.derived[JobStatusInput].schema
       .modify(_.id)(_.description("Job id to check (omit for a listing)"))
-      .modify(_.status)(_.description("Filter listing: queued|running|done|failed"))
+      .modify(_.status)(_.description("Filter listing: queued|running|done|failed (comma-separated for several)"))
+      .modify(_.kind)(_.description("Filter listing: these job kinds (ingest, reocr, agent, media-import, events-import, init, …)"))
+      .modify(_.since)(_.description("Filter listing: started at or after 2026-10-01, an ISO instant, or 7d / 12h / 30m ago"))
+      .modify(_.until)(_.description("Filter listing: started before the end of 2026-10-01, or an ISO instant"))
+      .modify(_.subject)(_.description("Filter listing: text in what the job is about (citekey, target, detail) or the start of its id"))
       .modify(_.before)(_.description("Listing: the next older page — the id of the last job shown"))
 
   final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject

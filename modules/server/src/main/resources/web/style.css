@@ -821,6 +821,17 @@ a.chip:hover { border-color:var(--accent); }
 /* a paged list (jobs, runs, approvals): what is shown, and "Show older" under the rows */
 .list-heading { margin:0 0 6px; }
 .list-more { display:flex; justify-content:center; margin-top:10px; }
+/* its filters (ListFilterBar): facet chips with the server's counts, pickers, a text box, dates */
+.list-filters { margin-bottom:var(--space-5); }
+.list-facet-label { font-size:var(--fs-control); margin-right:var(--space-2); }
+.wm-content .list-filters .field { display:inline-block; width:auto; margin-top:0; }
+.wm-content .list-filters .list-text { flex:0 1 220px; min-width:140px; }
+.wm-content .list-filters .list-select { max-width:200px; }
+[data-layout="narrow"] .wm-content .list-filters .list-text { flex:1 1 100%; }
+/* rows of the previous filter, shown until the new page lands */
+.job-list[aria-busy="true"] { opacity:.6; }
+.approvals-bulk { margin:0 0 var(--space-4); }
+.approval-pick { flex:none; margin-top:4px; }
 .job-row { display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:6px; }
 .job-row:hover { background:var(--panel); }
 .job-row.job-mine { box-shadow:inset 3px 0 0 var(--accent); background:#6ea8fe10; }

@@ -162,6 +162,25 @@ The toolbar opens the others:
   stored.</figcaption>
 </figure>
 
+### The list windows: approvals, agent runs, jobs
+
+These three windows list what can run to thousands of rows, a page at a time, newest first, and are
+**filtered on the server**:
+
+| window | filters |
+|---|---|
+| approvals | the state (`open` by default); the **kind**; who decided it (a person, the autopilot's checks, or applied at once); text in what it is about |
+| agent runs | the state; the **pipeline**; who started it; the manager, the provider and the model; a goal; text in its target; the start dates |
+| jobs | the state; the **kind** of job; text in what it is about; the start dates |
+
+A facet is a row of **chips**, each with its count — `goal-plan 64 · article-publish 30 · edge 3` —
+and you may pick several. The counts are the server's, taken over every other filter: picking one kind
+leaves the others' counts as they were, so you see what each would add. The rows a chip leaves out
+disappear at once, and the server's page replaces them a moment later; a text box asks only once you
+pause typing. The filters are part of the page's address, so a reload or a link keeps them; **clear
+filters** resets them. In the approvals window you can tick open approvals and decide them together
+([Approvals](../articles/approvals.md#finding-the-ones-you-want)).
+
 ## Reading and writing
 
 Reading needs nothing. Changing anything (editing a source, uploading, deciding an approval) works at
