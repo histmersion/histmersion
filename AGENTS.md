@@ -181,9 +181,16 @@ adjusted with media queries and swapped as a theme without touching Scala.
   :55432 from the bundled runtime; `just test-it` runs everything against it and removes it.
 - HTTP smoke tests start the server on **port 0** and hit real endpoints.
 
+- The DB-backed modules (db, server) run their suites in **forked groups, each on a database of its
+  own** (build.sbt `dbTestGroups`); inside a group, one suite at a time. A suite that creates a scratch
+  database gives it a name of its own — groups share the cluster.
+- **sbt 2's disk cache is per checkout** (`target/sbt-cache`), so worktrees never replay each other's
+  results; do not disable it with `cacheStores := Seq.empty`.
+
 ```bash
 sbt test                                                        # pure
-just test-it                                                    # pure + DB suites, on a throwaway DB
+just test-quick                                                 # what changed since master + dependents (iterating)
+just test-it                                                    # pure + DB suites, on a throwaway DB (the gate)
 sbt "testOnly *"                                                # bypass sbt 2's result cache
 ```
 
@@ -255,7 +262,7 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 | gotcha | consequence | do this |
 |---|---|---|
 | The thin client shares one server between invocations and **drops the caller's environment** | `HISTMERSION_TEST_DB_URL` silently missing; stale settings | `sbt --server -batch <task>` |
-| Test results are **cached** | "tests pass" when they never ran | `sbt "testOnly *"` |
+| Test results are **cached** | "tests pass" when they never ran | `sbt "testOnly *"` (`test-it`, `test-quick`) |
 | Settings are keyed by **source position** | `key := value` inside a shared `def` makes the last caller win **for every project** | set it per-project inline — see `Compile / mainClass` in `build.sbt` |
 | Classpath entries are **virtual file refs** | `.data` is not a `java.io.File` | `fileConverter.value.toPath(a.data).toFile` |
 | Module output layout changed | it is **not** `modules/<m>/target/` | `target/out/jvm/<scalaVersion>/<name>/` — locate the artefact, never hardcode the path |

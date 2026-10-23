@@ -38,6 +38,8 @@ jobs:
           HISTMERSION_TEST_DB_URL: "jdbc:postgresql://127.0.0.1:55432/histmersion_test"
           # the backup/restore suite runs the SAME pg_dump/pg_restore the bundle ships
           HISTMERSION_PG_BIN_DIR: ${{ github.workspace }}/runtime/postgres/.pixi/envs/default/bin
+          # the DB suites' forked groups (build.sbt `dbTestGroups`): 4 vCPU / 16 GB runner — 3 JVMs at once
+          HISTMERSION_TEST_FORKS: "3"
         run: sbt --server -batch 'testOnly *'
       - name: converter tests
         working-directory: converter

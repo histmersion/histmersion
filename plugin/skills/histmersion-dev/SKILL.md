@@ -29,7 +29,8 @@ preview API.
 ```bash
 just                 # list every recipe
 just test            # sbt test — pure suites
-just test-it         # every suite, DB-backed ones on a throwaway Postgres (removed afterwards)
+just test-it         # every suite, DB-backed ones on a throwaway Postgres (removed afterwards) — the gate
+just test-quick      # while iterating: modules changed since master + their dependents (or: just test-quick db cli)
 just native          # both native images, built with the pinned JDK (scripts/bundle/server.sh)
 just install         # build the native bundle and install it (LaunchAgent, ~/Applications/Histmersion)
 just restart · just logs [server|postgres|converter] · just health
@@ -55,6 +56,29 @@ HISTMERSION_TEST_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test sbt -
 just test-db-down
 ```
 
+**Iterate with `just test-quick`, gate with `just test-it`.** `test-quick` asks
+`scripts/dev/affected.py` which modules the branch touched (committed, staged, unstaged, untracked)
+and tests them and their dependents (core → db, cli, web, server; db → server; plugin-api → vaults,
+server); a change to build.sbt or project/ tests everything. `--explain` shows why:
+`python3 scripts/dev/affected.py --explain`. Pass a test DB port when :55432 is taken:
+`just test_db_port=55561 test-quick`.
+
+**Parallel DB suites.** db and server fork their suites into groups (2 and 5; longest first by project/test-weights.tsv — refresh it with `scripts/dev/test-weights.py <test-it log>`), each group a JVM on a
+database of its own (`histmersion_<module>_<n>_test`, created by `TestDb` on first use beside the
+`HISTMERSION_TEST_DB_URL` one); in a group the suites run one at a time. `HISTMERSION_TEST_FORKS`
+(default 6) caps the JVMs at once — lower it when memory is short. A new suite that creates a scratch
+database must give it a name of its own (as `BundleSuite`, `MergeSuite` do): groups share the cluster.
+
+**The cache is per checkout.** sbt 2's disk cache is `target/sbt-cache` in each checkout (build.sbt
+and project/plugins.sbt), not the machine-wide `~/Library/Caches/sbt/v2` — never set
+`Global / cacheStores := Seq.empty` (it only forces full recompiles, Scala.js linking included).
+`just cache-check` proves two worktrees stay apart.
+
+```bash
+just test-quick                     # what the branch changed, and what depends on it
+just test-quick server              # one module (and nothing else)
+```
+
 Every pure function needs a test. `Filter → SQL`, markdown rendering, the frontmatter parser, the
 time parser, bbox splitting — all pure, all testable without a database.
 
@@ -63,7 +87,7 @@ time parser, bbox splitting — all pure, all testable without a database.
 | gotcha | consequence | do this |
 |---|---|---|
 | The thin client shares one server across invocations and **drops the caller's environment** | `HISTMERSION_TEST_DB_URL` silently missing; stale settings | `sbt --server -batch <task>` |
-| Test results are **cached** | "tests pass" when they were never run | `sbt "testOnly *"` to force |
+| Test results are **cached** | "tests pass" when they were never run | `sbt "testOnly *"` to force (`test-it`/`test-quick` do) |
 | Settings are keyed by **source position** | `key := value` inside a shared `def` makes the last caller win **for every project** | set per-project inline (see `Compile / mainClass` in `build.sbt`) |
 | Classpath entries are **virtual file refs** | `.data` is not a `File` | convert via `fileConverter.value.toPath(...)` |
 | Module output moved | it is **not** `modules/<m>/target/` | `target/out/jvm/<scalaVersion>/<name>/` — find the binary, don't hardcode the path |
