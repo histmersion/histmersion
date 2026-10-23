@@ -7,7 +7,9 @@
     "preview": "vite preview",
     "test:browser": "node --test test/browser.test.mjs test/perf.test.mjs",
     "test:perf": "node --test test/perf.test.mjs",
-    "perf:baseline": "node test/perf-baseline.mjs"
+    "perf:baseline": "node test/perf-baseline.mjs",
+    "test:browser:firefox": "HISTMERSION_TEST_BROWSER=firefox node --test test/browser.test.mjs test/perf.test.mjs",
+    "test:browser:all": "npm run test:browser && npm run test:browser:firefox"
   },
   "devDependencies": {
     "@scala-js/vite-plugin-scalajs": "1.1.0",

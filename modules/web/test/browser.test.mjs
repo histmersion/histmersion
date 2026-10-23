@@ -1,37 +1,33 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { chromium } from 'playwright';
+import { appendFileSync } from 'node:fs';
+import { engineName, isChromium, isFirefox, launch, launchSoftwareChromium, wantsGpu } from './engine.mjs';
 
 // Use a separately started test server; these tests only GET data and change browser-local state.
 const baseURL = process.env.HISTMERSION_SERVER_URL;
 assert.ok(baseURL, 'Set HISTMERSION_SERVER_URL to the test server');
 const origin = new URL(baseURL).origin;
+const consoleLog = process.env.HISTMERSION_TEST_CONSOLE_LOG;
 let browser;
 before(async () => {
-  browser = await chromium.launch({
-    headless: true,
-    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
-    args: gpuArgs(),
-  });
+  browser = await launch();
 });
 after(async () => { await browser?.close(); });
 
 /** `source`: the base-map family the page is told it has (`/api/config`'s resolved `ui.base-map-source`),
   * `local` or `online`; by default what the server says. `outside`: every request to another host is
   * recorded there (and refused, as always). */
-/** The map is drawn by WebGL: on a GPU (macOS: Metal) unless HISTMERSION_TEST_GPU=0, which leaves Chromium's
-  * software rasteriser — the condition the map's no-GPU fallback is for (its own test below). */
-function gpuArgs() {
-  const want = process.env.HISTMERSION_TEST_GPU ?? (process.platform === 'darwin' ? '1' : '0');
-  return want === '0' ? [] : ['--enable-gpu', '--ignore-gpu-blocklist', ...(process.platform === 'darwin' ? ['--use-angle=metal'] : [])];
-}
 
 async function withPage(viewport, run, { source, outside } = {}) {
-  const context = await browser.newContext({ viewport, isMobile: viewport.width < 760, hasTouch: true });
+  // Firefox has no mobile emulation: a narrow viewport with touch is its phone (the layout follows the width)
+  const context = await browser.newContext({ viewport, isMobile: isChromium && viewport.width < 760, hasTouch: true });
   try {
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
+    // HISTMERSION_TEST_CONSOLE_LOG: every warning and error the page prints, with the test, to that file
+    if (consoleLog) page.on('console', m => { if (m.type() === 'warning' || m.type() === 'error')
+      appendFileSync(consoleLog, `${engineName}\t${m.type()}\t${m.text().replace(/\s+/g, ' ').slice(0, 400)}\n`); });
     // the map's own handle (web MapHandle): its view in the app's zooms, whatever library draws it
     await page.addInitScript(() => {
       Object.defineProperty(window, '__testMap', { configurable: true, get: () => window.histmersionMap });
@@ -123,16 +119,25 @@ test('a year-slider drag changes the filter without dismissing the drawer', asyn
     assert.ok(box);
     const before = await page.locator('.fbar .yr-label').last().textContent();
     const x = box.x + box.width / 2, y = box.y + box.height / 2;
-    // Touch events exercise pointer capture, touch-action and bubbling, not just synthetic swipes.
-    const cdp = await page.context().newCDPSession(page);
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
-    for (let step = 1; step <= 8; step++) {
-      await cdp.send('Input.dispatchTouchEvent', {
-        type: 'touchMove', touchPoints: [{ x: x - step * 8, y }],
-      });
+    if (isChromium) {
+      // Touch events exercise pointer capture, touch-action and bubbling, not just synthetic swipes.
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+      for (let step = 1; step <= 8; step++) {
+        await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchMove', touchPoints: [{ x: x - step * 8, y }],
+        });
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await cdp.detach();
+    } else {
+      // no touch driver outside Chromium (CDP): the same drag with the real mouse — real pointer events
+      // (pointer capture needs a pointer the browser knows), the drawer's swipe handling seeing them too
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      for (let step = 1; step <= 8; step++) await page.mouse.move(x - step * 8, y);
+      await page.mouse.up();
     }
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await cdp.detach();
     assert.notEqual(await page.locator('.fbar .yr-label').last().textContent(), before);
     assert.ok(await page.locator('.histmersion-app').evaluate(el => el.classList.contains('drawer-filters')));
   });
@@ -1035,12 +1040,13 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
-    const bubble = () => page.evaluate(() => {
+    // the bubble as drawn: waited for, since a regroup replaces its element between two reads
+    const bubble = () => page.waitForFunction(() => {
       const b = document.querySelector('.hd-marker .hd-cluster');
       return b ? { n: Number(b.textContent), says: b.getAttribute('aria-label'), mixed: b.classList.contains('hd-cluster--mixed'),
         // events among the others: the round bubble with the event's square tab (#1647)
         withEvents: b.classList.contains('hd-cluster--with-events') && !!b.querySelector('.hd-bubble-tab') } : null;
-    });
+    }).then(h => h.jsonValue());
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
     assert.deepEqual(await bubble(), { n: 5, says: '2 findings · 2 sites · 1 event', mixed: true, withEvents: true });
     // a layer switched off leaves the bubble at once; back on, it returns
@@ -1944,6 +1950,97 @@ test('land cover is drawn at every zoom, in both base maps: the satellite classe
   }, { source: 'local' });
 });
 
+/** WCAG contrast of two sRGB colours. */
+function contrast(a, b) {
+  const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const L = ([r, g, bl]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(bl);
+  const x = L(a), y = L(b);
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+const rgba = c => c.startsWith('#') ? [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)).concat(1)
+  : (m => [m[0], m[1], m[2], m[3] ?? 1])(c.match(/[\d.]+/g).map(Number));
+
+test('the base maps\' names read at 4.5:1 against what lies under them, through their halo, in both styles', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  await withPage({ width: 1280, height: 800 }, async page => {
+    for (const style of ['readable', 'physical']) {
+      const doc = await (await fetch(new URL(`/web/styles/${style}.json`, baseURL))).json();
+      const paint = Object.fromEntries(doc.layers.filter(l => l.type === 'symbol' && typeof l.paint?.['text-color'] === 'string')
+        .map(l => [l.id, { text: rgba(l.paint['text-color']), halo: rgba(l.paint['text-halo-color'] ?? 'rgba(0,0,0,0)') }]));
+      await chooseBaseMap(page, style);
+      for (const [at, zoom] of [[[38.2, 25.0], 7], [[37.8, 25.2], 8], [[37.6, 24.6], 9]]) {
+        await page.evaluate(([a, z]) => window.__testMap.setView(a, z), [at, zoom]);
+        await page.waitForFunction(() => window.__testMap.isDrawn(), null, { timeout: 20000 });
+        const labels = await page.evaluate(() => window.__testMap.labels());
+        assert.ok(labels.length >= 3, `${style} z${zoom}: names are placed (${labels.length})`);
+        // the background: the same view drawn without names
+        let n = await page.evaluate(() => window.__testMap.baseMapsDrawn());
+        await page.locator('.map-options-btn').click();
+        await page.locator('.map-option-names').uncheck();
+        await page.waitForFunction(k => window.__testMap.baseMapsDrawn() > k && window.__testMap.isDrawn(), n, { timeout: 20000 });
+        await page.locator('.map-options-close').click();
+        const box = await page.locator('#map').boundingBox();
+        const png = (await page.locator('#map').screenshot()).toString('base64');
+        const under = await page.evaluate(async ([b64, labels, w, h]) => {
+          const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
+          const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+          const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+          const sx = img.width / w, sy = img.height / h;
+          return labels.map(l => {
+            const tw = Math.min(260, Math.max(24, l.text.length * 6.5)), th = 14;
+            const x0 = Math.round((l.x - tw / 2) * sx), y0 = Math.round((l.y - th / 2) * sy);
+            if (x0 < 0 || y0 < 0 || x0 + tw * sx > img.width || y0 + th * sy > img.height) return null;
+            const d = g.getImageData(x0, y0, Math.round(tw * sx), Math.round(th * sy)).data, px = [];
+            for (let i = 0; i < d.length; i += 12) px.push([d[i], d[i + 1], d[i + 2]]);
+            return px;
+          });
+        }, [png, labels, box.width, box.height]);
+        for (const [i, l] of labels.entries()) {
+          const p = paint[l.layer];
+          if (!p || !under[i]) continue;
+          // each name's text against its halo laid over every pixel under it: the 10th percentile
+          const [hr, hg, hb, ha] = p.halo;
+          const ratios = under[i].map(([r, g, b]) => contrast(p.text, [hr * ha + r * (1 - ha), hg * ha + g * (1 - ha), hb * ha + b * (1 - ha)]))
+            .sort((x, y) => x - y);
+          const r10 = ratios[Math.floor(ratios.length * 0.1)];
+          assert.ok(r10 >= 4.5, `${style} z${zoom}: "${l.text}" (${l.layer}) reads at ${r10.toFixed(1)}:1`);
+        }
+        n = await page.evaluate(() => window.__testMap.baseMapsDrawn());
+        await page.locator('.map-options-btn').click();
+        await page.locator('.map-option-names').check();
+        await page.waitForFunction(k => window.__testMap.baseMapsDrawn() > k, n, { timeout: 20000 });
+        await page.locator('.map-options-close').click();
+      }
+    }
+  }, { source: 'local' });
+});
+
+test('the page prints no warning of its own while the map is used (WebGL probing, scrolling, the base maps)', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract'); return; }
+  await withPage({ width: 1280, height: 800 }, async page => {
+    const said = [];
+    page.on('console', m => { if (m.type() === 'warning' || m.type() === 'error') said.push(m.text()); });
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    for (const style of ['readable', 'physical']) {
+      await chooseBaseMap(page, style);
+      await page.evaluate(() => window.__testMap.panBy([200, 80]));
+      await page.waitForFunction(() => window.__testMap.isDrawn(), null, { timeout: 20000 });
+    }
+    // the side list scrolled, a card pinned while it scrolls
+    await page.locator('#list').evaluate(el => { el.scrollTop = 400; });
+    await page.waitForTimeout(300);
+    await page.locator('#list').evaluate(el => { el.scrollTop = 0; });
+    await page.waitForTimeout(300);
+    // what the page itself caused: its scripts, an empty-id lookup, a scroll-linked effect, a lost context;
+    // refused tiles of the online maps (the test refuses other hosts) are not the page's
+    const ours = said.filter(x => /app\.bundle|getElementById|scroll-linked|WebGL|WEBGL|base map could not/i.test(x));
+    assert.deepEqual(ours, []);
+  }, { source: 'local' });
+});
+
 test('map options: names off and on, their language, contours only where Physical has the detailed relief; kept across a reload', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
@@ -2115,8 +2212,9 @@ test('the past-landscape notice never lies under the credits or the map key, wid
 test('without a GPU the map says so and draws its cheapest form; the app still works', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract'); return; }
-  // a browser of its own, with Chromium's software rasteriser (no GPU flags)
-  const soft = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined });
+  // a browser of its own, with Chromium's software rasteriser (no GPU flags): a Chromium condition
+  if (!isChromium) { t.skip('Chromium\'s software rasteriser: run with HISTMERSION_TEST_BROWSER=chromium'); return; }
+  const soft = await launchSoftwareChromium();
   try {
     const context = await soft.newContext({ viewport: { width: 1280, height: 800 } });
     const page = await context.newPage();

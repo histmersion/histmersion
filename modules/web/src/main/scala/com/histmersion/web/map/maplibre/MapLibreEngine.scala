@@ -18,19 +18,25 @@ object MapLibreEngine extends MapEngine:
   /** MapLibre's zoom is the raster grid's minus one for the same scale (its tiles are 512 pixels). */
   val ZoomShift = 1.0
 
-  def probe(): Capabilities =
+  /** Read once per page: a probe makes a WebGL context of its own (the page's map makes another). */
+  def probe(): Capabilities = probed
+
+  private lazy val probed: Capabilities =
     scala.util.Try {
       val c = dom.document.createElement("canvas").asInstanceOf[dom.HTMLCanvasElement]
       val gl = Option(c.getContext("webgl2")).orElse(Option(c.getContext("webgl"))).map(_.asInstanceOf[js.Dynamic])
       gl match
         case None => Capabilities(webgl = false, software = true, renderer = "")
         case Some(g) =>
-          val ext = g.getExtension("WEBGL_debug_renderer_info")
+          // RENDERER names the GPU in Firefox (which warns that the debug extension is going away); Chromium
+          // answers a generic name there and the GPU only through the extension
+          val plain = g.getParameter(g.RENDERER).toString
           val renderer =
-            if ext != null && !js.isUndefined(ext) then g.getParameter(ext.UNMASKED_RENDERER_WEBGL).toString
-            else g.getParameter(g.RENDERER).toString
-          val lose = g.getExtension("WEBGL_lose_context")
-          if lose != null && !js.isUndefined(lose) then lose.loseContext()
+            if !Capabilities.genericRenderer(plain) then plain
+            else
+              val ext = g.getExtension("WEBGL_debug_renderer_info")
+              if ext != null && !js.isUndefined(ext) then g.getParameter(ext.UNMASKED_RENDERER_WEBGL).toString else plain
+          // the probe's context is left to the garbage collector: losing it on purpose makes Firefox warn
           Capabilities(webgl = true, software = Capabilities.isSoftware(renderer), renderer = renderer)
     }.getOrElse(Capabilities(webgl = false, software = true, renderer = ""))
 
@@ -123,6 +129,30 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
         val key = if lang == "local" then "name" else s"name:$lang"
         gl.queryRenderedFeatures(js.undefined.asInstanceOf[js.Array[Double]], js.Dynamic.literal(layers = symbols).asInstanceOf[js.Object]).toSeq
           .flatMap(f => f.properties.get(key).orElse(f.properties.get("name:en")).orElse(f.properties.get("name")).map(_.toString)).distinct
+  def baseMapLabels: Seq[(String, String, ScreenPt)] =
+    val style = gl.getStyle()
+    if style == null || js.isUndefined(style) then Nil
+    else
+      val symbols = style.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => l.`type`.toString == "symbol" &&
+        !shapeSets.values.exists(_.layerIds.contains(l.id.toString))).map(_.id.toString)
+      if symbols.isEmpty then Nil
+      else
+        val key = if lang == "local" then "name" else s"name:$lang"
+        gl.queryRenderedFeatures(js.undefined.asInstanceOf[js.Array[Double]], js.Dynamic.literal(layers = symbols).asInstanceOf[js.Object]).toSeq
+          .flatMap { f =>
+            val text = f.properties.get(key).orElse(f.properties.get("name:en")).orElse(f.properties.get("name")).map(_.toString)
+            val g = f.asInstanceOf[js.Dynamic].geometry
+            val at: Option[LatLon] = g.`type`.toString match
+              case "Point" => ShapeHits.point(g)
+              case "LineString" =>
+                val cs = g.coordinates.asInstanceOf[js.Array[js.Array[Double]]]
+                cs.lift(cs.length / 2).map(c => LatLon(c(1), c(0)))
+              case "MultiLineString" =>
+                val cs = g.coordinates.asInstanceOf[js.Array[js.Array[js.Array[Double]]]].flatMap(identity)
+                cs.lift(cs.length / 2).map(c => LatLon(c(1), c(0)))
+              case _ => None
+            for t <- text; a <- at yield (f.layer.id.toString, t, project(a))
+          }.distinctBy((l, t, _) => (l, t))
   def baseMapAreasAt(p: ScreenPt): Seq[String] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
@@ -182,6 +212,11 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
   // `var`: the newest base map asked for (a slow style answer must not replace a newer one)
   private var generation = 0
 
+  // `var`: the page is being left (its fetches are being cut off)
+  private var leaving = false
+  dom.window.addEventListener("pagehide", (_: dom.Event) => leaving = true)
+  dom.window.addEventListener("pageshow", (_: dom.Event) => leaving = false)
+
   def setBaseMap(b: BaseMapSpec): Unit =
     generation += 1
     b match
@@ -193,7 +228,10 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
         if mine == generation then
           val _ = gl.setStyle(style, js.Dynamic.literal(diff = false).asInstanceOf[js.Object])
           gl.once("idle", (_: GlEvent) => if mine == generation then ready.toList.foreach(_(MapEvent())))
-      case scala.util.Failure(e) => dom.console.error(s"the base map could not be made: ${e.getMessage}")
+      case scala.util.Failure(e) =>
+        // a fetch cut short by leaving the page (Firefox: AbortError, NetworkError) or by a newer choice is no failure
+        if mine == generation && !leaving && !e.getMessage.contains("AbortError") then
+          dom.console.error(s"the base map could not be made: ${e.getMessage}")
     }
 
   // ── shapes ───────────────────────────────────────────────────────────────────────────────────

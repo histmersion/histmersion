@@ -142,6 +142,12 @@ final case class Capabilities(webgl: Boolean, software: Boolean, renderer: Strin
 
 object Capabilities:
   /** Pure: a WebGL renderer string that names a software rasteriser. */
+  /** A renderer name that hides the GPU (Chromium's and Safari's answer to `RENDERER`): ask the debug
+    * extension instead. Pure. */
+  def genericRenderer(renderer: String): Boolean =
+    val r = renderer.trim.toLowerCase
+    r.isEmpty || r == "webkit webgl" || r == "webgl" || r.startsWith("mozilla")
+
   def isSoftware(renderer: String): Boolean =
     val r = renderer.toLowerCase
     List("swiftshader", "llvmpipe", "softpipe", "software", "basic render", "mesa offscreen", "lavapipe").exists(r.contains)
@@ -220,6 +226,9 @@ trait MapSurface:
   def drawnNames: Seq[String]
   /** The base map's areas drawn under a point, as `layer:kind` (the regressions check the land cover). */
   def baseMapAreasAt(p: ScreenPt): Seq[String]
+  /** The base map's names placed now: their layer, text and anchor on the screen (a line's middle) — the
+    * regressions measure their contrast against what lies under them. */
+  def baseMapLabels: Seq[(String, String, ScreenPt)]
   /** The browser's own capabilities, as the surface found them. */
   def capabilities: Capabilities
   /** Take the map away (its element stays). */
