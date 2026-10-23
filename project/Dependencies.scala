@@ -5,9 +5,8 @@ import sbt.*
   * Kindlings derivation, Ox, Magnum (sync JDBC) + PostGIS, Flyway. Native-image via a custom task. */
 object Dependencies {
   object V {
-    val tapir     = "1.13.33"  // 1.14.x, sttp 4.1.x, sttp-ai 0.12.x, sconfig 2.1.x and scala-java-time 2.8.x
-                               // are built with Scala 3.9 (scala3-library 3.9.0): they wait for the 3.9 move
-    val sttp      = "4.0.27"   // sttp client4 (CLI → server HTTP client); matches tapir 1.13.33
+    val tapir     = "1.14.0"   // built with Scala 3.9: needs the 3.10 compiler the build uses
+    val sttp      = "4.1.0"    // sttp client4 (CLI → server HTTP client); matches tapir 1.14.0
     val chimp     = "0.6.0"
     val circe     = "0.14.17"
     val kindlings = "0.3.3"    // com.kubuszok — Hearth-based circe / tapir-schema / sconfig derivation
@@ -23,7 +22,7 @@ object Dependencies {
     val flexmark  = "0.64.8"   // com.vladsch — Markdown → HTML rendering
     val scribe    = "3.19.0"   // com.outr — native-image-first Scala logging (+ scribe-slf4j bridge)
     val laminar       = "17.2.1"  // com.raquo — reactive UI for Scala.js
-    val sttpAi        = "0.11.4"  // com.softwaremill.sttp.ai — LLM provider clients + agent loop (embedded
+    val sttpAi        = "0.12.0"  // com.softwaremill.sttp.ai — LLM provider clients + agent loop (embedded
                                  // agents, docs/research-embedded-agents.md); same tapir/sttp as above
     val munit         = "1.3.6"
     val scalaJavaTime = "2.7.0"  // io.github.cquiroz — java.time for Scala.js (Queue, Backup)
