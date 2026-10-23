@@ -85,3 +85,47 @@ class PolitenessSuite extends munit.FunSuite:
     val (p, _) = FakeMediaHttp.polite(http)
     assertEquals(p.file("https://u/x.png", "image/jpeg").map(_._2), Right("image/png"))
     assertEquals(p.file("https://u/x", "image/jpeg").map(_._2), Right("image/jpeg"))
+
+  // ── a refusal taken as rate limiting (#2561: the Met's firewall after ~2 000 requests) ──────────
+
+  private val metHost = "collectionapi.metmuseum.org"
+  private def metUrl(i: Int) = s"https://$metHost/public/collection/v1/objects/$i"
+
+  test("a 403 after answers waits each backoff step and asks again; the host's pace then halves per refusal"):
+    // `var`: the answers the fake host gives, in turn
+    var answers = List(200, 403, 403, 200, 200)
+    val http = FakeMediaHttp { _ =>
+      val code = answers.head; answers = answers.tail
+      FakeMediaHttp.json("{}", code = code)
+    }
+    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.copy(requestIntervalMs = 250), List(60000L, 300000L))
+    assert(p.get(metUrl(1)).isRight)
+    assert(p.get(metUrl(2)).isRight, "the third answer, after two waits")
+    assert(p.get(metUrl(3)).isRight)
+    // the pace before the second request, the two waits, then four times the pace: two refusals halved it twice
+    assertEquals(slept.toList, List(250L, 60000L, 300000L, 1000L))
+    assertEquals(p.intervalMs(metHost), 1000L)
+    assertEquals(http.requests.size, 5)
+
+  test("when the backoff steps run out the 403 stands, saying how long it waited; without steps it is final at once"):
+    val always = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
+    val (p, slept) = FakeMediaHttp.polite(always, FakeMediaHttp.cfg, List(60000L, 300000L))
+    assertEquals(p.get(metUrl(1)).left.toOption, Some(s"$metHost: HTTP 403 (still, after waiting 360 s)"))
+    assertEquals((always.requests.size, slept.toList), (3, List(60000L, 300000L)))
+    val once = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
+    val (q, none) = FakeMediaHttp.polite(once)
+    assertEquals(q.get(metUrl(1)).left.toOption, Some(s"$metHost: HTTP 403"))
+    assertEquals((once.requests.size, none.toList), (1, Nil))
+
+  test("the slow-down stops at 16 times the pace; another host keeps its own"):
+    val http = FakeMediaHttp(u => FakeMediaHttp.json("{}", code = if u.contains(metHost) then 403 else 200))
+    val (p, _) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.copy(requestIntervalMs = 100), List.fill(6)(1L))
+    assert(p.get(metUrl(1)).isLeft)
+    assertEquals(p.intervalMs(metHost), 1600L)
+    assertEquals(p.intervalMs("images.metmuseum.org"), 100L)
+
+  test("the Met's backoff is configured; the other collections keep a 403 final"):
+    val m = com.histmersion.core.AppConfig.load().media
+    assertEquals(m.met.refusalBackoffMs, List(60000L, 300000L))
+    assertEquals(m.met.requestIntervalMs, 250, "4 requests a second, under the documented 80")
+    assertEquals((m.cleveland.refusalBackoffMs, m.aic.refusalBackoffMs, m.loc.refusalBackoffMs), (Nil, Nil, Nil))

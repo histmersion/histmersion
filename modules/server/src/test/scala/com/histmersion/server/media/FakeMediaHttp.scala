@@ -24,8 +24,8 @@ object FakeMediaHttp:
     AppConfig.load(org.ekrich.config.ConfigFactory.empty).media.copy(requestIntervalMs = 0)
 
   /** A [[Polite]] over `http` whose sleeps are recorded, not slept, on a clock that sleeping advances. */
-  def polite(http: MediaHttp, c: MediaConfig = cfg): (Polite, scala.collection.mutable.ListBuffer[Long]) =
+  def polite(http: MediaHttp, c: MediaConfig = cfg, refusalBackoffMs: List[Long] = Nil): (Polite, scala.collection.mutable.ListBuffer[Long]) =
     val slept = scala.collection.mutable.ListBuffer.empty[Long]
     // `var`: the fake clock, advanced by every recorded sleep
     var now = 1_000_000L
-    (Polite(http, c, ms => { slept += ms; now += ms }, () => now), slept)
+    (Polite(http, c, ms => { slept += ms; now += ms }, () => now, refusalBackoffMs), slept)
