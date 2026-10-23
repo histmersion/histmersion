@@ -106,11 +106,44 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
         fs.toString)
     }
 
-  test("the relief deeper than any archive holds: cut from its nearest ancestor, resampled in metres, a terrarium PNG"):
-    // the browser fixture's relief: the extract to zoom 6, the Argolid focus region at 9–11; nothing on demand
-    val fixture = Iterator.iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent).takeWhile(_ != null)
+  /** The browser fixture's base map (modules/web/test/fixtures/basemap). */
+  private def fixture: Path =
+    Iterator.iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent).takeWhile(_ != null)
       .map(_.resolve("modules/web/test/fixtures/basemap")).find(d => Files.isRegularFile(d.resolve("terrain.pmtiles")))
       .getOrElse(fail("the browser fixture is not in the repository"))
+
+  test("the status names the relief deeper than the extract on the wire: each focus region and the on-demand relief"):
+    // the page decides the contours from these keys (layers[terrain].focus, .onDemand): a status without them
+    // keeps the contours off everywhere
+    val dir = Files.createTempDirectory("basemap-http")
+    Files.copy(fixture.resolve("terrain.pmtiles"), dir.resolve("terrain.pmtiles"))
+    Files.createDirectories(dir.resolve("terrain-focus"))
+    Files.copy(fixture.resolve("terrain-focus/argolid.pmtiles"), dir.resolve("terrain-focus/argolid.pmtiles"))
+    def terrain(url: String): io.circe.ACursor =
+      val json = io.circe.parser.parse(String(get(url).body)).fold(e => fail(e.toString), identity)
+      val layers = json.hcursor.downField("layers").values.getOrElse(fail(json.noSpaces))
+      layers.find(_.hcursor.get[String]("layer").contains("terrain")).getOrElse(fail(json.noSpaces)).hcursor
+    for onDemand <- List(true, false) do
+      withServer(dir, onDemand) { url =>
+        val t = terrain(url)
+        val focus = t.downField("focus").downArray
+        assertEquals(focus.get[String]("name"), Right("argolid"))
+        assertEquals(focus.get[String]("bbox").map(b => BBox.parse(b).isDefined), Right(true))
+        assertEquals((focus.get[Int]("minZoom"), focus.get[Int]("maxZoom")), (Right(9), Right(11)))
+        assert(focus.get[Long]("bytes").exists(_ > 0), focus.focus.toString)
+        val od = t.downField("onDemand")
+        assertEquals(od.get[Boolean]("enabled"), Right(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled))
+        assertEquals(od.get[Int]("maxZoom"), Right(AppConfig.load().basemap.terrain.onDemand.maxZoom))
+        assert(od.get[Long]("maxBytes").isRight && od.get[String]("dir").isRight, od.focus.toString)
+        // and the typed status a page decodes says the same
+        val st = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+        val info = st.layers.find(_.layer == "terrain").get
+        assertEquals(info.focus.map(_.name), List("argolid"))
+        assertEquals(info.onDemand.map(_.enabled), Some(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled))
+      }
+
+  test("the relief deeper than any archive holds: cut from its nearest ancestor, resampled in metres, a terrarium PNG"):
+    // the browser fixture's relief: the extract to zoom 6, the Argolid focus region at 9–11; nothing on demand
     val dir = Files.createTempDirectory("basemap-http")
     Files.copy(fixture.resolve("terrain.pmtiles"), dir.resolve("terrain.pmtiles"))
     Files.createDirectories(dir.resolve("terrain-focus"))
