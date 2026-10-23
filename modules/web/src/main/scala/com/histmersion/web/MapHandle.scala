@@ -53,6 +53,10 @@ object MapHandle:
         : js.Function0[js.Array[js.Dynamic]],
       /** The base map's areas drawn at a map point: `layer:kind` (land cover, land use, water…). */
       areasAt = ((at: js.Array[Double]) => s.baseMapAreasAt(s.project(ll(at))).toJSArray): js.Function1[js.Array[Double], js.Array[String]],
+      /** A base-map layer's visibility (`visible`, `none`), `null` when the style has no such layer. */
+      layerVisibility = ((id: String) => s.baseMapLayer(id).orNull): js.Function1[String, String],
+      /** How many of a base-map layer's features (`contours`, …) are drawn in the view now. */
+      layerDrawn = ((id: String) => s.baseMapDrawn(id)): js.Function1[String, Int],
       /** How many points the cluster layer holds, and how many zooms animated its bubbles. */
       points = (() => MapView.dots.size): js.Function0[Int],
       clusterAnimations = (() => MapView.dots.animations): js.Function0[Int],

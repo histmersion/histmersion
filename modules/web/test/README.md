@@ -52,7 +52,9 @@ GPU budgets; elsewhere, or with `HISTMERSION_TEST_GPU=0`, Chromium draws WebGL i
 (SwiftShader), the page takes its no-GPU path (no relief, the notice's extra line) and the vector maps'
 budgets are their `…Software` ones (`perf.test.mjs`: input and stalls as on a GPU, the frame rate measured but not budgeted). `HISTMERSION_TEST_GPU=1` asks for the GPU on any
 platform. The tests reach the map through `window.histmersionMap` (`web/MapHandle.scala`): the view,
-the shape sets and the shapes under a point, the cluster layer's counts, the drawn base-map names.
+the shape sets and the shapes under a point, the cluster layer's counts, the drawn base-map names, a
+base-map layer's visibility and how many of its features are drawn (`layerVisibility`, `layerDrawn`: the
+contours inside the Argolid focus region).
 `test:browser` runs both files; the budgets and the soak test take ~3 minutes of it (100 soak rounds).
 `npm --prefix modules/web run test:perf` runs them alone; `HISTMERSION_SOAK_ROUNDS=20` shortens the
 soak, `HISTMERSION_PERF_REPORT=1` prints every measured figure. `perf-baseline.mjs` measures the

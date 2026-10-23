@@ -9,11 +9,14 @@ class BaseMapsSuite extends munit.FunSuite:
   private val ui = UiConfig("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 12, 5, 250, 20, 12, 2, 3, 40,
     DebounceConfig(150, 250, 400, 120), TimeConfig(-5000, 2000, -3500, -500), 760, 500, EventsUiConfig(1.5, 3, 5000, 0.05))
 
-  private def status(available: Boolean, readableMissing: List[String] = Nil, focus: Boolean = false) =
+  private def status(available: Boolean, readableMissing: List[String] = Nil, focus: Boolean = false, onDemand: Boolean = false,
+      sea: Boolean = true) =
     BasemapStatus(available, "/x", "-12,20,90,62", List(
       BasemapLayerInfo("vector", available, "/x/vector.pmtiles", maxZoom = Some(10), version = Some("v1")),
       BasemapLayerInfo("terrain", available, "/x/terrain.pmtiles", maxZoom = Some(8), version = Some("t1"),
-        focus = if focus then List(BasemapFocus("argolid", "/x/f.pmtiles", 1, "22,37,23,38", 9, 12, 10)) else Nil)),
+        onDemand = Some(BasemapOnDemand(onDemand, 12, "/x/terrain-cache", 0, 0, 1000)),
+        focus = if focus then List(BasemapFocus("argolid", "/x/f.pmtiles", 1, "22,37,23,38", 9, 12, 10)) else Nil),
+      BasemapLayerInfo("bathymetry", available && sea, "/x/bathymetry.pmtiles", maxZoom = Some(7), version = Some("b1"))),
       Basemap.FetchCommand, styles = List(BasemapStyleState("readable", "Readable", readableMissing), BasemapStyleState("physical", "Physical")),
       mapMaxZoom = 16)
 
@@ -70,11 +73,27 @@ class BaseMapsSuite extends munit.FunSuite:
     assert(!BaseMaps.raster(BaseMap.Dark, ui.copy(tilesTone = "dark")).dark, "dark tiles already")
     assertEquals(BaseMaps.plan(BaseMap.Muted, None, MapPrefs(), ui, local = false, soft = false)._2, None, "no notice online")
 
-  test("contours: Physical only, with a GPU, where a focus region holds the relief"):
+  test("contours: Physical only, with a GPU, from a focus region or the on-demand relief"):
     assertEquals(BaseMaps.contoursWhy(BaseMap.Physical, Some(status(true, focus = true)), soft = false), None)
+    assertEquals(BaseMaps.contoursWhy(BaseMap.Physical, Some(status(true, onDemand = true)), soft = false), None, "on demand alone")
     assert(BaseMaps.contoursWhy(BaseMap.Readable, Some(status(true, focus = true)), soft = false).isDefined)
-    assert(BaseMaps.contoursWhy(BaseMap.Physical, Some(status(true)), soft = false).exists(_.contains("--focus")))
+    assert(BaseMaps.contoursWhy(BaseMap.Physical, Some(status(true)), soft = false)
+      .exists(w => w.contains("--focus") && w.contains("on-demand relief is off")))
     assert(BaseMaps.contoursWhy(BaseMap.Physical, Some(status(true, focus = true)), soft = true).isDefined)
+    assert(BaseMaps.contoursWhy(BaseMap.Physical, Some(status(false)), soft = false).exists(_.contains("--layer terrain`")), "no relief")
+    assert(BaseMaps.contoursWhy(BaseMap.Physical, None, soft = false).isDefined, "not asked yet")
+
+  test("contours in this view: zoom in below zoom 11; outside every focus region only when nothing is read on demand"):
+    val argolid = GeoBounds(37.6, 22.6, 37.8, 22.9)
+    val naxos   = GeoBounds(36.9, 25.3, 37.2, 25.6)
+    assertEquals(BaseMaps.contoursNote(Some(status(true, focus = true)), 12, argolid), None)
+    assert(BaseMaps.contoursNote(Some(status(true, focus = true)), 10.5, argolid).exists(_.startsWith("zoom in")))
+    assert(BaseMaps.contoursNote(Some(status(true, focus = true)), 12, naxos)
+      .exists(n => n.contains("outside the detailed relief (argolid)") && n.contains("on-demand relief is off")))
+    assertEquals(BaseMaps.contoursNote(Some(status(true, focus = true, onDemand = true)), 12, naxos), None, "read on demand there")
+    assertEquals(BaseMaps.contoursNote(Some(status(true, onDemand = true)), 11, naxos), None)
+    assert(BaseMaps.meets(GeoBounds(37.0, 21.0, 37.5, 22.1), BBox(22, 37, 23, 38)), "touching at the corner")
+    assert(!BaseMaps.meets(GeoBounds(38.1, 22.0, 39.0, 23.0), BBox(22, 37, 23, 38)))
 
   test("a map of the fake engine is told the base map, and the notice rises only where it meets the credits"):
     val s = FakeSurface()

@@ -127,9 +127,9 @@ enum BaseMapSpec:
   /** Nothing yet: the page's own background. */
   case Blank
   /** One of the vector styles over the server's extracts (`status`, what it has), names in `lang`
-    * (`local`: each in its own script; `names = false`: none), contours where a focus region holds
-    * the relief (Physical). `reduced`: the cheapest drawing of it (no relief) for a browser without
-    * a GPU. */
+    * (`local`: each in its own script; `names = false`: none), contours where the relief is deeper than
+    * the extract — a focus region or the on-demand relief (Physical). `reduced`: the cheapest drawing of it
+    * (no relief) for a browser without a GPU. */
   case Vector(style: VectorStyle, status: BasemapStatus, lang: String, names: Boolean, contours: Boolean, reduced: Boolean = false)
   /** An online raster map: its tile URL template (`{s}` for its subdomains), its deepest zoom, its
     * credits (HTML), drawn inverted (`dark`: the light tiles as a dark map) at `opacity`. */
@@ -229,6 +229,11 @@ trait MapSurface:
   /** The base map's names placed now: their layer, text and anchor on the screen (a line's middle) — the
     * regressions measure their contrast against what lies under them. */
   def baseMapLabels: Seq[(String, String, ScreenPt)]
+  /** A layer of the base map's style: its visibility (`visible`, `none`), `None` when the style has no
+    * such layer (the regressions check what an option turns on and off). */
+  def baseMapLayer(id: String): Option[String]
+  /** How many of a base-map layer's features are drawn in the view now (0 for none, or no such layer). */
+  def baseMapDrawn(id: String): Int
   /** The browser's own capabilities, as the surface found them. */
   def capabilities: Capabilities
   /** Take the map away (its element stays). */
