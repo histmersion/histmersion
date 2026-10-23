@@ -71,6 +71,7 @@ object StorageProbe:
       p.data.map(d => Location.at("toolchain", "GraalVM toolchain", "install", d.resolve("toolchain"))),
       p.data.map(d => Location.at("plugins", "plugins", "install", d.resolve("plugins"))),
       AgentTrees.root(cfg, env).map(Location.at("agents", "agent definitions", "install", _)),
+      AgentTrees.codexHome(cfg, env).map(Location.at("codex-home", "Codex home of the agent runs (transcripts, state)", "other", _)),
       p.data.map(d => Location.at("logs", "logs", "logs", d.resolve("logs")))
     ).flatten
     val shown = named.flatMap(_.shown)

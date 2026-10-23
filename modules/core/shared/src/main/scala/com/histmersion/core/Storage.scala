@@ -96,6 +96,9 @@ object StorageAdvice:
     case "logs"             => Some("delete old log files (the server reopens them)")
     case "bundles"          => Some("scratch: safe to empty while no bundle export or import is running")
     case "acquire-spool"    => Some("scratch: safe to empty while no acquisition is running")
+    case "codex-home"       =>
+      Some("lower agents.providers.codex.keep-sessions-days — older run transcripts are deleted and its SQLite " +
+        "files vacuumed while no Codex run uses it (every retention-every-hours); never delete auth.json, its login")
     case k if k.startsWith("cache:") => Some("a cache: safe to delete, it is fetched or rebuilt again")
     case _                  => None
 

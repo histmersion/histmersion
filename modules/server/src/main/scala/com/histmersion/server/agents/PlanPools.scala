@@ -228,7 +228,7 @@ final class PlanPools(ds: DataSource, cfg: => AgentsConfig, codexHome: () => Opt
     else codexHome() match
       case None => Some("no CODEX_HOME to read")
       case Some(home) =>
-        seams.readCodex(cfg.providers.codex.command, home, math.max(5, cfg.doctorTimeoutSeconds)) match
+        CodexHome.using(home)(seams.readCodex(cfg.providers.codex.command, home, math.max(5, cfg.doctorTimeoutSeconds))) match
           case Left(why) =>
             scribe.info(s"codex app-server rate-limit read failed: $why")
             Some(why)

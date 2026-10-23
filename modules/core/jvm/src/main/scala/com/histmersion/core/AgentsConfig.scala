@@ -60,7 +60,15 @@ final case class ClaudeCodeConfig(command: String, configDir: String, extraArgs:
   *   built-in one (~21k characters of collaboration, PR, skills and plugin guidance, re-sent on every
   *   request); `builtin` keeps Codex's. */
 final case class CodexConfig(command: String, home: String, useApiKey: Boolean, timeoutSeconds: Int,
-    appServer: Boolean, toolOutputTokens: Int = 0, baseInstructions: String = "lean") derives ConfigReader:
+    appServer: Boolean, toolOutputTokens: Int = 0, baseInstructions: String = "lean",
+    /** Run transcripts older than this many days are deleted from the home (#2582); 0 keeps all. */
+    keepSessionsDays: Int = 14,
+    /** Vacuum the home's SQLite files (with [[sqlite]]) in the same pass. */
+    vacuum: Boolean = true,
+    /** At most one pass this often, after a step, while no run uses the home; 0 = never by itself. */
+    retentionEveryHours: Int = 24,
+    /** The `sqlite3` executable the vacuum runs. */
+    sqlite: String = "sqlite3") derives ConfigReader:
   /** `builtin` (any case) keeps Codex's own base prompt; anything else is `lean`. */
   def leanBase: Boolean = !baseInstructions.trim.equalsIgnoreCase("builtin")
 
