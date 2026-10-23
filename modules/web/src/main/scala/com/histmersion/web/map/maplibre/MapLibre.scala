@@ -91,6 +91,7 @@ class GlMap(options: js.Object) extends js.Object:
   def removeLayer(id: String): this.type       = js.native
   def setPaintProperty(layer: String, name: String, value: js.Any): this.type  = js.native
   def setLayoutProperty(layer: String, name: String, value: js.Any): this.type = js.native
+  def getLayoutProperty(layer: String, name: String): js.Any = js.native
   def setFilter(layer: String, filter: js.Any): this.type = js.native
   def setFeatureState(feature: js.Object, state: js.Object): this.type = js.native
   def queryRenderedFeatures(point: js.Array[Double], options: js.UndefOr[js.Object] = js.undefined): js.Array[RenderedFeature] = js.native

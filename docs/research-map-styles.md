@@ -297,8 +297,11 @@ Carto reference). Run: `npm ci --prefix spike/map-styles`, a test server with an
   1 000 m, and ≥ 8.5:1 against the halo over the deepest colour (the text alone on 3 000 m water would be
   3.5:1 — the halo carries it there).
 - Rivers **darker** than the sea (`#6f9fc4`) so they read on tinted land (R1 for tinted maps).
-- Contours from zoom 11 where a focus region holds the 30 m relief (maplibre-contour; 100/50/20 m, brown,
-  index lines labelled) (R8).
+- Contours from zoom 11 where the relief is deeper than the extract — a focus region's 30 m relief, or the
+  on-demand relief (maplibre-contour; 100/50/20 m, brown, index lines labelled) (R8). Until 2026-10-23 the
+  page asked for a focus region alone, so with only the on-demand relief (the default) the option stayed
+  disabled; the options panel now also says why none are drawn in the view (zoomed out, or outside every
+  focus region with the on-demand relief off).
 - Names: physical first (seas, ranges, lakes, rivers along their lines, islands, peaks), towns small
   `#3d3d3d`; no roads, no borders.
 

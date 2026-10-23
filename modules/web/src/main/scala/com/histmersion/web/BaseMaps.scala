@@ -30,6 +30,9 @@ object BaseMaps:
   /** The browser draws its WebGL in software: the cheapest drawing of every map. */
   val software: Var[Boolean] = Var(false)
 
+  /** The map's view, once it is still (its zoom and region): what the contours' line follows. */
+  val view: Var[Option[(Double, GeoBounds)]] = Var(None)
+
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The local style an extract draws best: Readable when it can draw it whole, else Physical. Pure. */
@@ -141,6 +144,8 @@ object BaseMaps:
     surface = m
     ui = config
     software.set(m.capabilities.software)
+    view.set(Some((m.zoom, m.bounds)))
+    val _ = m.on(MapEventKind.MoveEnd)(_ => view.set(Some((m.zoom, m.bounds))))
     refresh()
     // a page with only the local maps, never told otherwise by this browser: its best local style
     status.signal.foreach { s =>
@@ -254,17 +259,51 @@ object BaseMaps:
 
   private def setPrefs(f: MapPrefs => MapPrefs): Unit = UiState.set(UiState.mapOptions := f(UiState.mapOptions.now()))()
 
-  /** Why the contours cannot be drawn, if they cannot: only Physical draws them, where a focus region
-    * holds the 30 m relief. Pure. */
+  /** The relief as the server has it, when it can be drawn. */
+  private def relief(s: Option[BasemapStatus]): Option[BasemapLayerInfo] =
+    s.flatMap(_.layers.find(l => l.layer == BasemapLayer.Terrain.wire && l.present && l.error.isEmpty))
+
+  /** Relief deeper than the extract: a focus region downloaded, or the on-demand relief on. Pure. */
+  def deeperRelief(i: BasemapLayerInfo): Boolean = i.focus.nonEmpty || i.onDemand.exists(_.enabled)
+
+  /** The app zoom from which Physical draws its contours (its style's `contours` layer: MapLibre zoom 10). */
+  val ContoursFromZoom: Double = 11.0
+
+  /** Why the contours cannot be drawn anywhere, if they cannot: only Physical draws them, with a GPU, from
+    * relief deeper than the extract — a focus region (`basemap fetch --layer terrain --focus`) or the
+    * on-demand relief (`basemap.terrain.on-demand`). Pure. */
   def contoursWhy(b: BaseMap, s: Option[BasemapStatus], soft: Boolean): Option[String] =
     if b != BaseMap.Physical then Some("Physical draws contours")
     else if soft then Some("not drawn without a GPU")
-    else if !s.exists(_.layers.exists(l => l.layer == BasemapLayer.Terrain.wire && l.present && l.focus.nonEmpty)) then
-      Some(s"no detailed relief downloaded — `${Basemap.FetchCommand} --layer terrain --focus <region>`")
-    else None
+    else relief(s) match
+      case None => Some(s"no relief downloaded — `${Basemap.FetchCommand} --layer terrain`")
+      case Some(i) if !deeperRelief(i) =>
+        Some(s"no detailed relief: no focus region downloaded and on-demand relief is off — " +
+          s"`${Basemap.FetchCommand} --layer terrain --focus <region>`")
+      case _ => None
+
+  /** Do a region of the view and a focus region's box meet? Pure. */
+  def meets(v: GeoBounds, b: BBox): Boolean =
+    v.south <= b.maxLat && v.north >= b.minLat && v.west <= b.maxLon && v.east >= b.minLon
+
+  /** Why the contours, possible on this map, are not drawn in this view (zoom `z`, region `v`): zoomed out
+    * too far, or outside every focus region with the on-demand relief off (the contours there follow the
+    * extract's coarse relief). `None`: they are drawn. Pure. */
+  def contoursNote(s: Option[BasemapStatus], z: Double, v: GeoBounds): Option[String] =
+    relief(s).flatMap { i =>
+      val inFocus = i.focus.exists(f => BBox.parse(f.bbox).exists(meets(v, _)))
+      if z < ContoursFromZoom then Some(f"zoom in to see contours (from zoom ${ContoursFromZoom.toInt}%d)")
+      else if !inFocus && !i.onDemand.exists(_.enabled) then
+        Some(s"outside the detailed relief (${i.focus.map(_.name).mkString(", ")}) and on-demand relief is off: " +
+          "contours here follow the coarse relief")
+      else None
+    }
 
   private def panel: HtmlElement =
     val why = shown.signal.combineWith(status.signal, software.signal).map(contoursWhy.tupled)
+    val note = why.combineWith(status.signal, view.signal).map { (w, s, v) =>
+      if w.isDefined then None else v.flatMap((z, b) => contoursNote(s, z, b))
+    }
     div(
       idAttr := "map-options",
       cls := "map-options",
@@ -292,7 +331,8 @@ object BaseMaps:
             checked <-- UiState.mapOptions.signal.combineWith(why).map((p, w) => w.isEmpty && p.contours.getOrElse(true)),
             onInput.mapToChecked --> (on => setPrefs(_.copy(contours = Option.when(!on)(false))))),
           span("Contour lines")),
-        child.maybe <-- why.map(_.map(w => div(cls := "map-option-why", w)))),
+        child.maybe <-- why.combineWith(note).map((w, n) => w.orElse(n).map(t => div(cls := "map-option-why map-option-contours-why", t)))),
+
       div(cls := "map-option map-option-row",
         button(typ := "button", cls := "btn btn--ghost btn--sm map-options-reset", "Reset",
           disabled <-- UiState.mapOptions.signal.map(_ == MapPrefs()),

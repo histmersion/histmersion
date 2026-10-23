@@ -2063,7 +2063,7 @@ test('map options: names off and on, their language, contours only where Physica
     assert.ok(await page.locator('.map-language-select').isDisabled());
     // contours: Readable draws none
     assert.ok(await page.locator('.map-option-contours').isDisabled());
-    assert.match(await page.locator('.map-option-why').innerText(), /Physical draws contours/);
+    assert.match(await page.locator('.map-option-contours-why').innerText(), /Physical draws contours/);
     // kept: across a reload; reset brings the names back in English
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
@@ -2079,14 +2079,64 @@ test('map options: names off and on, their language, contours only where Physica
     await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 12));
     await chooseBaseMap(page, 'physical');
     await page.locator('.map-options-btn').click();
-    const focus = status.layers.find(l => l.layer === 'terrain')?.focus?.length > 0;
-    if (focus) {
-      assert.ok(await page.locator('.map-option-contours').isEnabled() && await page.locator('.map-option-contours').isChecked());
-      before = await page.evaluate(() => window.__testMap.baseMapsDrawn());
-      await page.locator('.map-option-contours').uncheck();
-      await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n, before, { timeout: 15000 });
-    }
+    assert.ok(status.layers.find(l => l.layer === 'terrain')?.focus?.length > 0, 'the fixture has the Argolid focus region');
+    assert.ok(await page.locator('.map-option-contours').isEnabled() && await page.locator('.map-option-contours').isChecked());
+    assert.equal(await page.locator('.map-option-contours-why').count(), 0, 'drawn here: no line');
+    // drawn: the contour lines traced from the focus region's relief are on the map
+    await page.waitForFunction(() => window.__testMap.layerDrawn('contours') > 0, null, { timeout: 20000 });
+    before = await page.evaluate(() => window.__testMap.baseMapsDrawn());
+    await page.locator('.map-option-contours').uncheck();
+    await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n, before, { timeout: 15000 });
+    assert.equal(await page.evaluate(() => window.__testMap.layerVisibility('contours')), null, 'off: the layer is gone');
   }, { source: 'online' });
+});
+
+test('contours: a line saying why none are drawn here (zoomed out, outside the detailed relief), and the on-demand relief alone enables them', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  const why = page => page.locator('.map-option-contours-why');
+  await withPage({ width: 1280, height: 800 }, async page => {
+    // inside the Argolid but zoomed out: enabled, none yet
+    await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 9));
+    await chooseBaseMap(page, 'physical');
+    await page.locator('.map-options-btn').click();
+    assert.ok(await page.locator('.map-option-contours').isEnabled());
+    assert.match(await why(page).innerText(), /zoom in to see contours \(from zoom 11\)/);
+    // closer in: drawn, and the line goes
+    await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 11.5));
+    await page.waitForFunction(() => !document.querySelector('.map-option-contours-why'), null, { timeout: 10000 });
+    await page.waitForFunction(() => window.__testMap.layerDrawn('contours') > 0, null, { timeout: 20000 });
+    // over Naxos, outside every focus region, the test server reading nothing on demand
+    await page.evaluate(() => window.__testMap.setView([37.05, 25.45], 11.5));
+    await page.waitForFunction(() => /outside the detailed relief \(argolid\) and on-demand relief is off/
+      .test(document.querySelector('.map-option-contours-why')?.textContent ?? ''), null, { timeout: 10000 });
+    assert.ok(await page.locator('.map-option-contours').isEnabled());
+  }, { source: 'local' });
+  // a server with no focus region: the on-demand relief alone enables the contours; without it they are disabled
+  for (const onDemand of [true, false]) {
+    await withPage({ width: 1280, height: 800 }, async page => {
+      await page.route('**/api/basemap', async route => {
+        const res = await route.fetch();
+        const s = await res.json();
+        s.layers = s.layers.map(l => l.layer === 'terrain' ? { ...l, focus: [], onDemand: { ...l.onDemand, enabled: onDemand } } : l);
+        await route.fulfill({ response: res, json: s });
+      });
+      await page.reload();
+      await page.waitForFunction(() => window.__testMap);
+      await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 12));
+      await chooseBaseMap(page, 'physical');
+      await page.locator('.map-options-btn').click();
+      if (onDemand) {
+        assert.ok(await page.locator('.map-option-contours').isEnabled() && await page.locator('.map-option-contours').isChecked());
+        assert.equal(await why(page).count(), 0);
+        await page.waitForFunction(() => window.__testMap.layerVisibility('contours') === 'visible', null, { timeout: 15000 });
+      } else {
+        assert.ok(await page.locator('.map-option-contours').isDisabled());
+        assert.match(await why(page).innerText(), /no focus region downloaded and on-demand relief is off — `histmersion basemap fetch --layer terrain --focus <region>`/);
+        assert.equal(await page.evaluate(() => window.__testMap.layerVisibility('contours')), null);
+      }
+    }, { source: 'local' });
+  }
 });
 
 test('map options: an option whose data is not downloaded is disabled, its line saying what to fetch', async t => {
@@ -2105,7 +2155,7 @@ test('map options: an option whose data is not downloaded is disabled, its line 
     await chooseBaseMap(page, 'physical');
     await page.locator('.map-options-btn').click();
     assert.ok(await page.locator('.map-option-contours').isDisabled());
-    assert.match(await page.locator('.map-option-why').innerText(), /histmersion basemap fetch --layer terrain --focus/);
+    assert.match(await page.locator('.map-option-contours-why').innerText(), /no relief downloaded — `histmersion basemap fetch --layer terrain`/);
     assert.ok(await page.locator('.map-option-names').isEnabled(), 'the names need no relief');
     assert.ok(await mapColours(page) > 10, 'drawn without the relief');
   }, { source: 'online' });

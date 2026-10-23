@@ -162,6 +162,11 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
       if fills.isEmpty then Nil
       else gl.queryRenderedFeatures(js.Array(p.x, p.y), js.Dynamic.literal(layers = fills).asInstanceOf[js.Object]).toSeq
         .map(f => s"${f.layer.id}:${f.properties.get("kind").fold("")(_.toString)}").distinct
+  def baseMapLayer(id: String): Option[String] =
+    gl.getLayer(id).toOption.map(_ => Option(gl.getLayoutProperty(id, "visibility")).filterNot(js.isUndefined).fold("visible")(_.toString))
+  def baseMapDrawn(id: String): Int =
+    if gl.getLayer(id).isEmpty then 0
+    else gl.queryRenderedFeatures(js.undefined.asInstanceOf[js.Array[Double]], js.Dynamic.literal(layers = js.Array(id)).asInstanceOf[js.Object]).length
   def destroy(): Unit = gl.remove()
 
   // ── events ───────────────────────────────────────────────────────────────────────────────────
@@ -447,7 +452,7 @@ object MapLibreStyles:
     case BaseMapSpec.Blank => Future.successful(blank())
     case r: BaseMapSpec.Raster => Future.successful(raster(r))
     case v: BaseMapSpec.Vector =>
-      val withContours = v.contours && !v.reduced && v.style == VectorStyle.Physical && focusRelief(v.status).isDefined
+      val withContours = v.contours && !v.reduced && v.style == VectorStyle.Physical && deeperRelief(v.status).isDefined
       doc(v.style).flatMap { d =>
         val s = resolve(copy(d), v.status, v.lang, v.names, v.reduced, origin)
         if withContours then Future.delegate(contours(s, v.status, origin)).map(_ => s: js.Any).recover { case _ => drop(s, "contours"); s }
@@ -476,8 +481,10 @@ object MapLibreStyles:
   private def info(s: BasemapStatus, layer: String): Option[BasemapLayerInfo] =
     s.layers.find(i => i.layer == layer && i.present && i.error.isEmpty)
 
-  /** The relief's focus regions, when there are any (the contours are drawn only inside them). */
-  private def focusRelief(s: BasemapStatus): Option[BasemapLayerInfo] = info(s, "terrain").filter(_.focus.nonEmpty)
+  /** The relief, when it reaches deeper than the extract — a focus region, or the on-demand relief: what the
+    * contours are traced from (the extract's relief alone is too coarse for them). */
+  private def deeperRelief(s: BasemapStatus): Option[BasemapLayerInfo] =
+    info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled))
 
   /** Take source `id` and every layer drawing it out of style `s`. */
   def drop(s: js.Dynamic, id: String): Unit =
@@ -550,14 +557,14 @@ object MapLibreStyles:
       dom.document.head.appendChild(sc)
       p.future
 
-  // one contour source per relief version (the library registers a page protocol for it)
+  // one contour source per relief version and depth (the library registers a page protocol for it)
   private val demSources = mutable.HashMap.empty[String, js.Dynamic]
 
   private def contours(s: js.Dynamic, status: BasemapStatus, origin: String): Future[Unit] =
     contourLib.map { lib =>
-      val t = focusRelief(status).get
-      val deepest = t.focus.map(_.maxZoom).max
-      val dem = demSources.getOrElseUpdate(t.version.getOrElse("0"), {
+      val t = deeperRelief(status).get
+      val deepest = t.deepest.getOrElse(t.maxZoom.getOrElse(8))
+      val dem = demSources.getOrElseUpdate(s"${t.version.getOrElse("0")}@$deepest", {
         val d = js.Dynamic.newInstance(lib.DemSource)(js.Dynamic.literal(
           url = s"$origin/api/basemap/terrain/{z}/{x}/{y}?v=${t.version.getOrElse("0")}", encoding = "terrarium",
           maxzoom = deepest, worker = true))
