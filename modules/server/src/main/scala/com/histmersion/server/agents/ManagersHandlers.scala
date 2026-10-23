@@ -318,6 +318,10 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
                  _ <- Either.cond(ManagerRepo.hold(ds, i.id, h), (), conflict(s"item #${i.id} is ${i.status}; only a pending or held item can be held"))
                yield ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Held, s"${i.target}: held" +
                  h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") + s" — ${h.reason}")
+             case "release" if i.hold.exists(_.focus.isDefined) && agents.focus.inForce =>
+               val g = i.hold.flatMap(_.focus).getOrElse("")
+               Left(conflict(s"item #${i.id} is held by the autopilot's focus: goal $g is not one of the active goals. Pin " +
+                 s"it to run it now (histmersion agent autopilot focus pin $g), or raise the cap (focus max <n>)"))
              case "release" =>
                Either.cond(ManagerRepo.release(ds, i.id), (), conflict(s"item #${i.id} is ${i.status}, not held"))
                  .map(_ => ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person"))
@@ -541,6 +545,12 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
     * ([[OaBacklog.repair]]); readable and runnable with agents off (nothing is ingested until they are on). */
   def repairAcquire(in: RepairAcquire.RepairRequest): Either[ApiError, RepairAcquire.RepairResult] =
     Right(agents.oaBacklog.repair(in))
+
+  /** `GET /api/agents/autopilot/focus` — readable with agents off (what it would focus on). */
+  def focus: Autopilot.FocusInfo = agents.focus.info()
+
+  /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — pin, unpin, priority, max. */
+  def setFocus(in: Autopilot.FocusSet): Either[ApiError, Autopilot.FocusInfo] = agents.focus.set(in)
 
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
   def setAutopilot(in: Autopilot.AutopilotSet): Either[ApiError, Autopilot.AutopilotStatus] =

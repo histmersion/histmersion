@@ -80,6 +80,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The autopilot: one switch that lets the managers carry every goal from planned to reviewed. */
   val autopilot: AutopilotService = AutopilotService(ds, cfg, h, this)
 
+  /** The autopilot's focus: at most `agents.autopilot.max-active-goals` goals active for model work. */
+  val focus: GoalFocusService = GoalFocusService(ds, cfg, h, this)
+
   /** One agent server per database: the engine and the managers start only in the server that holds it
     * (ttl 3 × the managers' tick). */
   val lease: AgentLease = AgentLease(ds, 3 * math.max(5, cfg.managers.tickSeconds))
