@@ -90,7 +90,7 @@ object CliopatriaImporter extends GazetteerImporter:
       }
 
   private def str(o: JsonObject, keys: String*): Option[String] =
-    keys.iterator.flatMap(k => o(k).flatMap(_.asString).filter(_.nonEmpty)).nextOption
+    keys.iterator.flatMap(k => o(k).flatMap(_.asString).filter(_.nonEmpty)).nextOption()
 
   private def numYear(o: JsonObject, key: String): Option[Long] =
     o(key).flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.toLongOption)))

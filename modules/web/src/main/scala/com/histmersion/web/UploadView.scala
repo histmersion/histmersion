@@ -98,7 +98,7 @@ object UploadView:
 
   /** The picker's label for an item: its id and the first line of its text, shortened. */
   def itemLabel(item: Queue.QueueItem, max: Int = 110): String =
-    val line = item.text.linesIterator.nextOption.getOrElse("").replace("**", "").trim
+    val line = item.text.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line)
 
   /** The item a picker entry names (`#42 …`), among the items offered. */

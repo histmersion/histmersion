@@ -31,7 +31,7 @@ object QueueItemRef:
 
   /** Pure: the parts of an item's first line, as far as they can be told. */
   def parse(text: String): Ref =
-    val line = text.linesIterator.nextOption.getOrElse("").replace("**", "").trim
+    val line = text.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     line match
       case AuthorYear(who, year, title, venue) =>
         Ref(authorsOf(who.split(""",\s+""").toList)._1, clean(title), year.toIntOption, firstDoi(venue))
@@ -129,4 +129,4 @@ object QueueItemRef:
     val r = parse(item.text)
     r.title.map(_.split("""[:.]""").head.trim).filter(_.nonEmpty)
       .orElse(r.authors.headOption)
-      .getOrElse(item.text.linesIterator.nextOption.getOrElse("").take(60).trim)
+      .getOrElse(item.text.linesIterator.nextOption().getOrElse("").take(60).trim)
