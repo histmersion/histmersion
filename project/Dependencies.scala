@@ -18,7 +18,7 @@ object Dependencies {
     val hikari    = "7.1.0"    // com.zaxxer — JDBC connection pool (native-image-safe, no reflection)
     val flyway    = "13.11.1"  // schema versioning (SQL migrations under db/migration); 11.20+ knows PostgreSQL 18
     val snakeyaml = "2.7"      // frontmatter parsing for the seed importer
-    val sconfig   = "2.0.0"    // org.ekrich — HOCON config (Typesafe Config port, native-friendly)
+    val sconfig   = "2.1.0"    // org.ekrich — HOCON config (Typesafe Config port, native-friendly)
     val flexmark  = "0.64.8"   // com.vladsch — Markdown → HTML rendering
     val scribe    = "3.19.0"   // com.outr — native-image-first Scala logging (+ scribe-slf4j bridge)
     val laminar       = "17.2.1"  // com.raquo — reactive UI for Scala.js
