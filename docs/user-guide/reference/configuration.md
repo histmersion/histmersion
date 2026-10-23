@@ -63,7 +63,7 @@ mistyped value changes **nothing**, and says why.
   chain and TLS roots, quotas, the API key, the converter's URL — is read per request or per unit of
   work, and applies at once.
 - **Restart-only**, kept at the running value and listed in the report: `server.host`, `server.port`,
-  `server.request-timeout-seconds` (the listener is bound once — a second listener would buy little for
+  `server.request-timeout-seconds` and `server.shutdown-grace-seconds` (the listener is bound once — a second listener would buy little for
   a setting the LaunchAgent and `.mcp.json` also name), `runtime.*` (the bundled Postgres and converter
   are started once), `agents.enabled`, `agents.max-concurrent-runs`, `agents.max-llm-calls-in-flight` and
   `converter.parallelism` (pool sizes).
@@ -104,6 +104,7 @@ The settings of backups and portable bundles are listed with them, in
 | `server.port` | `HISTMERSION_PORT` | `8000` | listen port |
 | `server.public-url` | `HISTMERSION_PUBLIC_URL` | `http://localhost:8000` | how clients reach the server; used for absolute URLs and to generate `.mcp.json` |
 | `server.request-timeout-seconds` | `HISTMERSION_REQUEST_TIMEOUT` | `1800` | one HTTP request end to end; must cover a `pg_dump`/`pg_restore` (netty's own default, 20 s, is not enough for a backup of the live corpus) |
+| `server.shutdown-grace-seconds` | `HISTMERSION_SHUTDOWN_GRACE` | `10` | on stop, how long open connections may stay before they are closed — an idle keep-alive connection counts as open; `0` closes them at once (the test suites do) |
 | `db.url` | `HISTMERSION_DB_URL` | `jdbc:postgresql://localhost:5432/histmersion` | JDBC URL. The bundle replaces host and port with its own Postgres (`127.0.0.1:<runtime.pg-port>`) and keeps the database name |
 | `db.user` | `HISTMERSION_DB_USER` | `histmersion` | |
 | `db.password` | `HISTMERSION_DB_PASS` | `histmersion` | |
