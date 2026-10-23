@@ -1,26 +1,28 @@
 #!/usr/bin/env bash
 # Create a local code-signing identity for Histmersion's binaries — free, no Apple Developer account:
 #
-#   scripts/bundle/codesign-identity-macos.sh [--no-trust] [name]     (default name: "Histmersion Local")
+#   scripts/bundle/codesign-identity-macos.sh [--trust|--no-trust] [name]   (default name: "Histmersion Local")
 #   (in a bundle: libexec/codesign-identity-macos.sh, run by `histmersion-signing setup-macos`)
 #
 # Why: the native binaries are otherwise signed ad hoc, and macOS privacy permissions (e.g. access to
 # ~/Documents) are tied to an ad-hoc binary's exact hash — every rebuild looks like a new app and the
 # permission is lost. Signed with one stable identity, a permission granted once survives every update.
-# The identity is trusted for code signing on THIS Mac only; it does not satisfy Gatekeeper for
-# copies downloaded elsewhere (that would need Apple's paid program and notarisation).
+# It serves THIS Mac only; it does not satisfy Gatekeeper for copies downloaded elsewhere (that would
+# need Apple's paid program and notarisation).
 #
-# Idempotent: does nothing if the identity already exists. Creating the trust setting asks for your
-# login password once (a macOS dialog). install-macos.sh then signs with it automatically.
+# Idempotent: does nothing if the identity already exists. install-macos.sh then signs with it
+# automatically.
 #
-# --no-trust skips that step: codesign signs with an UNTRUSTED identity just as well, and its designated
-# requirement is as stable (docs/research-plugins.md §9.2). Whether macOS privacy grants (TCC) persist
-# for an untrusted identity is unverified, so trusting stays the default.
+# The identity is left UNTRUSTED by default (#3647): codesign signs with it just as well, its designated
+# requirement is as stable, and the TCC check (scripts/bundle/tcc-check.sh, 2026-10-23) showed a privacy
+# grant to a binary it signed survives a relink (docs/research-plugins.md §21.2) — so no trust setting
+# of your login keychain is changed. --trust also trusts it for code signing (asks for your login
+# password once, a macOS dialog); --no-trust, the default, is still accepted.
 # HISTMERSION_KEYCHAIN puts the identity into another keychain than the login one — the tests use a
 # temporary keychain they delete; they never touch the login keychain.
 set -euo pipefail
-trust=1
-if [ "${1:-}" = "--no-trust" ]; then trust=""; shift; fi
+trust=""
+case "${1:-}" in --trust) trust=1; shift ;; --no-trust) shift ;; esac
 name="${1:-Histmersion Local}"
 keychain="${HISTMERSION_KEYCHAIN:-$HOME/Library/Keychains/login.keychain-db}"
 openssl=/usr/bin/openssl   # the system LibreSSL writes a PKCS#12 that `security import` reads

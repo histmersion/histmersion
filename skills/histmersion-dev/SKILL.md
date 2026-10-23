@@ -225,7 +225,7 @@ histmersion plugin rollback ; histmersion plugin rm <id>
 - Installers link the server on the machine by default (D5); `--prebuilt` takes the bundle's binary,
   `--jvm` JVM mode; a machine that cannot link falls back to the prebuilt binary. Each platform's kit is
   also published by CI (`…-kit.tar.zst`).
-- Signing is optional: `bin/histmersion-signing setup-macos [--no-trust]` (a stable code-signing identity,
+- Signing is optional: `bin/histmersion-signing setup-macos [--trust]` (a stable code-signing identity, untrusted by default,
   so macOS permissions survive relinks), `use-gpg <key>` (GPG provenance: signed plugin manifest, signed
   binary checksums, and the service starts through `libexec/histmersion-server-verified`, which refuses an
   unsigned or changed binary), `off-gpg`, `status`.

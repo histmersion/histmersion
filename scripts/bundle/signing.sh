@@ -3,8 +3,10 @@
 # Nothing here is needed: without it binaries are ad-hoc signed and nothing is verified, as before.
 #
 #   histmersion-signing status
-#   histmersion-signing setup-macos [--name N] [--no-trust]   create a self-signed code-signing identity
-#                                                             in YOUR LOGIN KEYCHAIN (asks first; macOS)
+#   histmersion-signing setup-macos [--name N] [--trust]      create a self-signed code-signing identity
+#                                                             in YOUR LOGIN KEYCHAIN (asks first; macOS),
+#                                                             untrusted unless --trust (#3647: privacy
+#                                                             grants survive relinks without trusting it)
 #   histmersion-signing use-gpg <key id> [--no-restart]       sign Histmersion's provenance with an
 #                                                             existing GPG key (its fingerprint is kept);
 #                                                             signs the installed server binary and points
@@ -115,19 +117,20 @@ case "$cmd" in
 
   setup-macos)
     [ "$(hk_os)" = macos ] || hk_die 1 "setup-macos is for macOS; on Linux use GPG provenance"
-    name="Histmersion Local" trust=1
+    name="Histmersion Local" trust=""
     while [ $# -gt 0 ]; do
-      case "$1" in --name) name="$2"; shift ;; --no-trust) trust="" ;; *) hk_die 1 "unknown argument '$1'" ;; esac
+      case "$1" in --name) name="$2"; shift ;; --trust) trust=1 ;; --no-trust) trust="" ;; *) hk_die 1 "unknown argument '$1'" ;; esac
       shift
     done
     script="$here/codesign-identity-macos.sh"
     [ -x "$script" ] || script="$here/../libexec/codesign-identity-macos.sh"
     echo "This creates a self-signed code-signing certificate \"$name\" in your LOGIN keychain"
-    [ -n "$trust" ] && echo "and trusts it for code signing (macOS asks for your login password)."
+    if [ -n "$trust" ]; then echo "and trusts it for code signing (macOS asks for your login password)."
+    else echo "(left untrusted: your keychain's trust settings are not changed; privacy permissions still survive relinks)"; fi
     printf 'Go on? [y/N] '
     read -r yn
     case "$yn" in y|Y|yes) ;; *) echo "nothing changed"; exit 0 ;; esac
-    if [ -n "$trust" ]; then "$script" "$name"; else "$script" --no-trust "$name"; fi
+    if [ -n "$trust" ]; then "$script" --trust "$name"; else "$script" --no-trust "$name"; fi
     ;;
 
   use-gpg)

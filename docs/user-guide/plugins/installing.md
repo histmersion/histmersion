@@ -104,7 +104,10 @@ histmersion plugin rebuild
 Signing is optional. Without it binaries are ad-hoc signed, as before. `histmersion-signing
 setup-macos` creates a self-signed code-signing identity in your login keychain (only when you run it,
 after asking): relinked binaries then keep one designated requirement, so macOS privacy permissions
-survive relinks. `histmersion-signing use-gpg <key id>` (or `generate-gpg`) turns on GPG provenance:
+survive relinks. The identity is left untrusted, so your keychain's trust settings are not changed: a
+check with a real privacy prompt (2026-10-23) showed a permission granted to a binary it signed survives
+a relink all the same. `setup-macos --trust` also trusts it for code signing (macOS asks for your login
+password). `histmersion-signing use-gpg <key id>` (or `generate-gpg`) turns on GPG provenance:
 `plugin add` requires a valid signature (`<jar>.asc`; the signer's key is pinned per plugin id on first
 use), the plugins directory's manifest is signed and verified before every relink and every JVM-mode
 start (a jar dropped in afterwards is refused until you `plugin add` it), and each relinked binary's
@@ -122,10 +125,9 @@ binary. Without GPG provenance the service starts the binary directly, exactly a
 the same choice; if they cannot sign (no secret key, pinentry cancelled) they start the binary unverified
 and say so.
 
-Whether a privacy permission granted to a binary signed by an **untrusted** self-signed identity
-(`setup-macos --no-trust`) survives a relink needs a real macOS prompt to find out:
-`scripts/bundle/tcc-check.sh` runs that check once (`start`, click Allow, `relink`, `control`, `cleanup`)
-with a throw-away probe and LaunchAgent, never the server's.
+`scripts/bundle/tcc-check.sh` is the check that settled it (`start`, click Allow, `relink`, `control`,
+`cleanup`), with a throw-away probe and LaunchAgent, never the server's; run it again to confirm on
+another macOS version.
 
 
 ## Plugins and secrets
