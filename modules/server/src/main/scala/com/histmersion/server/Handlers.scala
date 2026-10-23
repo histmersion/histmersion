@@ -689,6 +689,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         Left(ApiError(s"scale '$v' is not ${(EventScale.all :+ EventScale.Auto).mkString(" | ")}", Some(Write.CodeInvalid)))
       case _ => Right(())
 
+  /** An event's geometry is a GeoJSON geometry PostGIS reads (#2554): WKT, a Feature or bad
+    * coordinates are a 400 naming the problem, not a failed statement. Blank passes (none / clear). */
+  private def validGeometry(g: Option[String]): Either[ApiError, Unit] =
+    g.map(_.trim).filter(_.nonEmpty) match
+      case None => Right(())
+      case Some(v) =>
+        EventGeometry.check(v)
+          .flatMap(gj => EventRepo.geometryError(ds, gj).map(m => s"geometry is not a valid GeoJSON geometry: $m").toLeft(()))
+          .left.map(m => ApiError(m, Some(Write.CodeInvalid)))
+
   /** An old event id (V053) answers as the event it was renamed to. */
   def getEvent(id: String): Either[ApiError, EventDetail] =
     EventRepo.get(ds, current(AliasKind.Event, id)).map(catalog.context)
@@ -699,7 +709,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def putEvent(id: String, in: EventPut): Either[ApiError, EventDetail] =
     maintenance.guard("put_event"):
       val now = current(AliasKind.Event, id)
-      validScale(in.scale).flatMap { _ =>
+      validScale(in.scale).flatMap(_ => validGeometry(in.geometry)).flatMap { _ =>
         EventRepo.put(ds, now, in)
         getEvent(now)
       }
@@ -714,7 +724,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def patchEvent(id: String, p: EventPatch): Either[ApiError, EventDetail] =
     maintenance.guard("patch_event"):
       val now = current(AliasKind.Event, id)
-      validScale(p.scale).flatMap(_ => validWikidata(p.wikidata))
+      validScale(p.scale).flatMap(_ => validWikidata(p.wikidata)).flatMap(_ => validGeometry(p.geometry))
         .flatMap(_ => EventRepo.patch(ds, now, p).flatMap(_ => getEvent(now)))
 
   def deleteEvent(id: String): Either[ApiError, EventDeleted] =

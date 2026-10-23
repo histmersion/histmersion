@@ -199,11 +199,28 @@ object EventRepo:
         fields.foreach((f, v) => up.get(f).foreach(u => CorrectionRepo.record(CorrectionTarget.Event, id, f, v, u, Some(provider))))
       }
 
+  /** Why PostGIS cannot read `geojson` as a geometry, in its own words — `None` when it can (#2554).
+    * Asked before a write, so a bad geometry is a 400 rather than a failed statement. */
+  def geometryError(ds: DataSource, geojson: String): Option[String] =
+    val c = ds.getConnection
+    try
+      val st = c.prepareStatement("SELECT ST_IsEmpty(ST_GeomFromGeoJSON(?))")
+      try
+        st.setString(1, geojson)
+        st.executeQuery().close()
+        None
+      finally st.close()
+    catch
+      case e: java.sql.SQLException =>
+        Some(Option(e.getMessage).map(_.linesIterator.next().trim).filter(_.nonEmpty)
+          .getOrElse(e.getClass.getSimpleName))
+    finally c.close()
+
   /** Create or replace one event. On an event an import created, the fields that differ from its
     * catalogue's are recorded as corrections ([[recordCorrections]]) — they survive a re-import. */
   def put(ds: DataSource, id: String, in: EventPut): Unit =
     transact(ds):
-      val geom = in.geometry
+      val geom = in.geometry.map(_.trim).filter(_.nonEmpty)
       val scale = in.scale.flatMap(v => EventScale.parse(v).flatten)
       sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after,
                                 historicity, geom, place_id, parent_id, description, citekey, scale)
@@ -276,7 +293,9 @@ object EventRepo:
           val v = Option(q).filter(_.nonEmpty)
           sql"UPDATE events SET wikidata = $v WHERE id = $id".update.run()
         }
-        p.geometry.foreach { g =>
+        // `""` clears the geometry; anything else [[Handlers]] checked with [[geometryError]]
+        p.geometry.map(_.trim).foreach { raw =>
+          val g = Option(raw).filter(_.nonEmpty)
           sql"""UPDATE events SET geom = CASE WHEN ${g}::text IS NULL THEN NULL
                 ELSE ST_SetSRID(ST_GeomFromGeoJSON(${g}::text), 4326) END WHERE id = $id""".update.run()
         }

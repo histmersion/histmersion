@@ -320,6 +320,32 @@ object EventGeometry:
       case (None, None, None)                             => Right(None)
       case _                                              => Left("lat and lon go together")
 
+  /** The GeoJSON geometry types (RFC 7946 §3.1) — a Feature is not one. */
+  val GeometryTypes: Set[String] =
+    Set("Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection")
+
+  private val WktShape =
+    "(?is)^(SRID=\\d+;\\s*)?(POINT|MULTIPOINT|LINESTRING|MULTILINESTRING|POLYGON|MULTIPOLYGON|GEOMETRYCOLLECTION)\\b.*".r
+
+  private val Example = """{"type":"Point","coordinates":[<lon>,<lat>]}"""
+
+  /** Pure (#2554): `g`, trimmed, when it has the shape of a GeoJSON geometry — the form an event's
+    * geometry is written and read back in — or why not. WKT is named as such, with the GeoJSON to
+    * write instead. Whether the coordinates make a geometry is PostGIS's to say. */
+  def check(g: String): Either[String, String] =
+    val t = g.trim
+    if WktShape.matches(t) then Left(s"geometry is GeoJSON, not WKT: write $Example (or give lat/lon)")
+    else
+      io.circe.parser.parse(t) match
+        case Left(_) => Left(s"geometry is not GeoJSON: expected an object such as $Example")
+        case Right(j) =>
+          j.asObject.flatMap(_("type")).flatMap(_.asString) match
+            case Some(tp) if GeometryTypes(tp) => Right(t)
+            case Some(tp @ ("Feature" | "FeatureCollection")) =>
+              Left(s"geometry is a GeoJSON geometry, not a $tp: give its \"geometry\" member")
+            case Some(tp) => Left(s"geometry type '$tp' is not one of ${GeometryTypes.toList.sorted.mkString(", ")}")
+            case None     => Left(s"geometry has no \"type\": expected an object such as $Example")
+
   // a plain decimal, never `1.0E-4`, and never with a locale's comma
   private def fmt(d: Double): String = BigDecimal(d).bigDecimal.stripTrailingZeros.toPlainString
 
