@@ -1362,7 +1362,7 @@ reads the key per request) apply at once. The acquisition chain and its TLS trus
 `acquisition` node.
 
 **Restart-only** (`ConfigReload.RestartOnly`; kept at the running value, listed in the report):
-`server.host`, `server.port`, `server.request-timeout-seconds`, `runtime.*`, `agents.enabled`,
+`server.host`, `server.port`, `server.request-timeout-seconds`, `server.shutdown-grace-seconds`, `runtime.*`, `agents.enabled`,
 `agents.max-concurrent-runs`, `agents.max-llm-calls-in-flight`, `converter.parallelism`. **The listening
 port stays restart-only** rather than a second listener started before the old one stops: the port is
 also in the LaunchAgent, `.mcp.json` and the public URL, which a reload cannot change, a second netty

@@ -23,6 +23,7 @@ object ConfigReload:
     "histmersion.server.host"                    -> "the listener is bound once",
     "histmersion.server.port"                    -> "the listener is bound once",
     "histmersion.server.request-timeout-seconds" -> "the listener's request timeout is set when it is bound",
+    "histmersion.server.shutdown-grace-seconds"  -> "the listener's shutdown grace is set when it is bound",
     "histmersion.runtime"                        -> "the bundled PostgreSQL and converter are started once",
     "histmersion.agents.enabled"                 -> "the agent pool is started (or not) at startup",
     "histmersion.agents.max-concurrent-runs"     -> "the size of the agent pool, started once",

@@ -77,6 +77,9 @@ object Main:
       .host(host)
       .port(port)
       .modifyConfig(_.requestTimeout(cfg.server.requestTimeoutSeconds.seconds))   // netty default 20 s is shorter than a pg_dump
+      // tapir waits this long on stop for the open connections — idle keep-alive ones included
+      .modifyConfig(nc => if cfg.server.shutdownGraceSeconds > 0 then nc.withGracefulShutdownTimeout(cfg.server.shutdownGraceSeconds.seconds)
+                          else nc.noGracefulShutdown)
       .addEndpoint(mcp.endpoint)
       .addEndpoints(com.histmersion.server.agents.AgentsTools.agentEndpoints(h.agents))  // one per agent definition, behind run tokens
       .addEndpoints(HttpApi(deps, h, acq).endpoints)
