@@ -160,6 +160,14 @@ object AcquireRepo:
       sql"""SELECT citekey, sha256 FROM sources WHERE citekey = ANY($citekeys::text[]) AND sha256 IS NOT NULL"""
         .query[(String, String)].run().toMap
 
+  /** The licence a fetched copy came with (#2560: a plugin's `FetchedFile.licence`), recorded as the
+    * source's when it has none — one set by hand or an earlier copy is kept. `true` when it was written. */
+  def recordLicense(ds: DataSource, citekey: String, license: String): Boolean =
+    val v = license.trim
+    v.nonEmpty && transact(ds):
+      sql"""UPDATE sources SET license = $v, updated_at = now()
+            WHERE citekey = $citekey AND (license IS NULL OR btrim(license) = '')""".update.run() > 0
+
   /** Write the Calibre id back after a host-side push, so the source stops showing up as a gap. */
   def setCalibreId(ds: DataSource, citekey: String, calibreId: String): Either[ApiError, Unit] =
     transact(ds):

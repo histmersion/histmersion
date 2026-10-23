@@ -1172,7 +1172,7 @@ The record types, in `SourceFetcher.scala`:
 |---|---|
 | `WorkKey` | `doi`, `arxiv`, `pmid`, `pmcid`, `archive` (an archive.org identifier), `isbn`, `title`, `authors`, `year`, and `format` (the file format the caller prefers when a work has several) |
 | `Access` | `Open` · `Subscription` · `Unauthorised` — generic; no provider is named anywhere |
-| `FetchedFile` | `source` (the provenance it is stored with), `url`, `bytes`, `extension`. The server's `acquire.FetchedFile` is an alias of it, so a plugin's copy is the one ingest stores |
+| `FetchedFile` | `source` (the provenance it is stored with), `url`, `bytes`, `extension`, and the optional `licence` (an SPDX id, `public-domain` or the licence's URL; ingest records it as the source's `license` when that has none, #2560 — added within SPI 1: the four-field `apply` and constructor remain, so older plugins build and link unchanged). The server's `acquire.FetchedFile` is an alias of it, so a plugin's copy is the one ingest stores |
 | `Fetch` | `Found(file)` · `Miss(why)` · `Refused(why)` |
 | `SourceFetcher` | `access`, `fetch(work, ctx): Fetch` — stateless across works; failures are values, an exception is read as a miss |
 | `FetchContext` | `memo(key)(compute)` (one per fetch of one work, shared by every fetcher) and `log` |

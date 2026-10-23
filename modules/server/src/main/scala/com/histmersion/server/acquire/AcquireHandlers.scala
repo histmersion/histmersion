@@ -331,6 +331,7 @@ final class AcquireHandlers(
         case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes" +
           AcquireHandlers.hostOf(f.url).fold("")(h => s" from $h") +
           (if f.extension == "xml" then " (JATS full text — no PDF is published)" else "") +
+          f.licence.map(_.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
           original.fold("")(h => s" (replacing $h: --refetch)"))
         case Left(e)  => steps += IngestStep("fetch", skip.isDefined, e)
 
@@ -364,6 +365,10 @@ final class AcquireHandlers(
 
         jobs.enqueue(spooled, citekey, meta).left.map(err).map { outcome =>
           steps += IngestStep("store", true, outcome.detail)
+          // the copy's licence, when its fetcher knew it, becomes the source's if it has none (#2560)
+          fetched.toOption.flatMap(_.licence).foreach { l =>
+            if AcquireRepo.recordLicense(ds, citekey, l) then steps += IngestStep("licence", true, s"recorded ${l.trim}")
+          }
           steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
 
           // assess last: the source now exists, so the verdict can be recorded against it. The status is

@@ -109,7 +109,10 @@ The fetcher contract (`SourceFetcher.scala`):
 - `fetch(work: WorkKey, ctx: FetchContext): Fetch` gets every identifier the caller has (DOI, arXiv,
   PubMed, PMC, archive.org, ISBN, title, authors, year, preferred format) and answers
   `Fetch.Found(FetchedFile(…))`, `Fetch.Miss(why)` or `Fetch.Refused(why)` (a copy exists but may not
-  be taken).
+  be taken). A `FetchedFile` may carry the copy's `licence` (`licence = Some("CC-BY-4.0")`: an SPDX id,
+  `public-domain` or the licence's URL); ingest records it as the source's licence when it has none.
+- A bot-protection page (Cloudflare's challenge, Anubis's proof-of-work check) is a `Fetch.Refused`:
+  never solve or work around it.
 - `access` is `Access.Open`, `Access.Subscription` or `Access.Unauthorised`. The host alone decides
   from it whether the fetcher may run ([Installing plugins](installing.md)).
 - A fetcher is called from several threads at once: keep no per-work state in it; share a lookup
