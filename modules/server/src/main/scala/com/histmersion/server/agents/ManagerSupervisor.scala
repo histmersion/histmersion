@@ -29,6 +29,10 @@ import javax.sql.DataSource
   *     is open, never when a role's chain is starved or a day's or month's spend reached its cap;
   *  5. the status line, and an event for every change.
   *
+  * Between 3 and 4 the autopilot's FOCUS ([[GoalFocusService.tick]]) decides which goals are active and
+  * holds the model-using items of the others; the enrich and review managers start the active goals' items
+  * first.
+  *
   * Between 2 and 3 the watchers' INGEST BACKLOG drains ([[OaBacklog.drain]]): a few of the legal
   * open-access works that waited for a day's allowance are ingested — before any new sweep, which gets only
   * what the backlog leaves of the allowance.
@@ -130,6 +134,9 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
         val fired = guarded(m.id, out)(fireCron(m, now, out))
         guarded(m.id, out)(refill(m, now, out, force = fired))
       }
+      // the autopilot's focus: which goals are active; the others' model-using items are held (after the
+      // refill and the crons, so what they just queued waits too)
+      out ++= guarded("focus", out)(agents.focus.tick(now))
       dispatchAll(live, now, out)
       if now.toEpochMilli - lastPrune.get() > 3600000L then
         lastPrune.set(now.toEpochMilli)
@@ -600,8 +607,9 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       val s       = settings(m)
       // the ingest backlog is not dispatched as runs: the drain ingests it
       val pending = ManagerRepo.pending(ds, m.id).filterNot(_.kind == OaIngest)
-      val due     = ManagerPolicy.order(pending.map(i => Candidate(i.id, i.target, i.priority,
-        i.notBefore.flatMap(ManagerPolicy.parseInstant)))).filter(ManagerPolicy.due(_, now))
+      // the enrich and review managers: the focus's active goals first (focus-ratio to one)
+      val due     = agents.focus.fair(m, ManagerPolicy.order(pending.map(i => Candidate(i.id, i.target, i.priority,
+        i.notBefore.flatMap(ManagerPolicy.parseInstant)))).filter(ManagerPolicy.due(_, now)), pending)
       val needs   = due.flatMap(c => pending.find(_.id == c.id)).map(i => ManagerSupervisor.pipelineOf(i.kind)).distinct
       // the global caps first, then the manager's own daily cap (its metered spend today)
       val block   = budget.orElse(ManagerPolicy.dailyBlock(ManagerPolicy.dailyCap(m.config, mcfg), BigDecimal(m.spentTodayUsd)))

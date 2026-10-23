@@ -244,13 +244,19 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
     val open = a.approvalsList(None, None).toOption.get.filter(_.subject.contains(Goal))
     assertEquals(open.map(a => (a.kind, a.state)), List(("goal-plan", "open")))
     assertEquals(AgentRepo.get(ds, plan.id).get.status, "waiting")
-    assertEquals(item(seedId(Goal), ProposeArticles, Goal).status, "pending", "the proposal waits for the plan")
+    // the proposal waits for the plan, which waits for a person: the goal frees its focus slot and the
+    // proposal is held for the focus until the plan is decided
+    val waits = item(seedId(Goal), ProposeArticles, Goal)
+    assertEquals((waits.status, waits.hold.flatMap(_.focus)), ("held", Some(Goal)), "the proposal waits for the plan")
+    assert(a.focus.info().waiting.exists(w => w.slug == Goal && w.code == GoalFocus.Code.Person), a.focus.info().waiting)
     assert(!a.approvalsList(Some("all"), None).toOption.get.exists(_.note.exists(_.startsWith("autopilot:"))))
     assertEquals(a.managing.autopilot.goals.find(_.slug == Goal).map(_.openApprovals), Some(1))
     assert(a.managing.autopilot.approvals.forall(_.mode == "person"), a.managing.autopilot.approvals)
     // a manager's own autoApprove wins over the defaults
     val sm = ManagerRepo.get(ds, seedId(Goal)).get
     ManagerRepo.setConfig(ds, sm.id, sm.config.copy(autoApprove = Some(true)), sm.cron, sm.nextTickAt.flatMap(ManagerPolicy.parseInstant))
+    // the plan is code's to decide now: the goal is active again at the end of this tick, its plan decided at the next
+    clock.tick(a)
     clock.tick(a)
     assertEquals(a.approvalsList(Some("all"), None).toOption.get.find(_.kind == "goal-plan").map(_.state), Some("approved"))
 

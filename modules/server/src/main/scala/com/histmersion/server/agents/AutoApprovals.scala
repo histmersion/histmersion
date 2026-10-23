@@ -39,7 +39,15 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
 
   /** Decide what can be decided now; one line per decision (for the tick's log). */
   def sweep(now: Instant): List[String] =
-    AgentRepo.openOfKinds(ds, Kinds, PerTick).flatMap { a =>
+    // the focus's active goals first: a daily cap is spent on the goals being finished
+    val open = AgentRepo.openOfKinds(ds, Kinds, PerTick)
+    val ordered = agents.focus.activeGoals match
+      case None => open
+      case Some(active) =>
+        val linked = com.histmersion.db.FocusRepo.goalsOf(ds, GoalPlans.LinkKind.Article.wire, open.flatMap(_.subject).distinct)
+        def mine(a: ApprovalInfo) = a.subject.exists(s => active(s) || linked.getOrElse(s, Nil).exists(active))
+        open.filter(mine) ++ open.filterNot(mine)
+    ordered.flatMap { a =>
       val run = runOf(a)
       val mgr = run.flatMap(_.managerId).flatMap(ManagerRepo.get(ds, _))
       if !checked(a, mgr) then Nil
@@ -118,7 +126,10 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
             val goal = a.subject.getOrElse(p.goal)
             val depth = AutopilotPolicy.depth(goal, s => GoalRepo.get(ds, s).flatMap(_.parentSlug))
             AutopilotPolicy.goalPlan(GoalPlanFacts(goal, p.subGoals.size, p.queries.size, p.works.size, depth), caps.maxGoalDepth,
-              AgentRepo.autoApprovedSince(ds, ApprovalKind.GoalPlan, day).size, caps.goalPlansPerDay)
+              AgentRepo.autoApprovedSince(ds, ApprovalKind.GoalPlan, day).size, caps.goalPlansPerDay) match
+              // the focus: decided by code only for an active goal with few sub-goals open
+              case v @ Verdict.Approve(_) => agents.focus.goalPlanBlock(goal, p.subGoals.size).fold(v)(Verdict.Leave(_))
+              case v                      => v
       case _ => Verdict.Leave("not a kind the autopilot decides")
 
   private def checkpoint[A: io.circe.Decoder](run: String, step: String): Option[A] =

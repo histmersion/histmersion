@@ -187,7 +187,7 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       val arts = articles.getOrElse(g.slug, Nil)
       val seed = seedId(g.slug)
       val compileOpen = ManagerRepo.openOf(ds, seed, List(ArticleCompile), List("pending", "held", "active")) > 0 ||
-        ManagerRepo.openOf(ds, seed, List(ProposeArticles, PlanGoalItem), List("held", "active")) > 0
+        ManagerRepo.openOf(ds, seed, List(ProposeArticles, PlanGoalItem), List("held", "active"), focusHeld = false) > 0
       val kids = goals.filter(_.parentSlug.contains(g.slug)).map(c => status.getOrElse(c.slug, c.status))
       val facts = GoalFacts(g.slug, status(g.slug), managed, arts.size, compileOpen, arts.forall(passed), kids)
       AutopilotPolicy.advance(facts).flatMap { (to, why) =>
@@ -296,4 +296,4 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)), if row.enabled then acfg.ingestPerDay else 0,
       cfg.maxConcurrentRuns, row.lastBackupAt, row.lastLintAt,
       managers.filter(m => m.id == ReviewId || m.id == EnrichId).map(brief), progress,
-      backlog = backlog.total, backlogDays = backlog.totalDays)
+      backlog = backlog.total, backlogDays = backlog.totalDays, focus = Some(agents.focus.info(now)))

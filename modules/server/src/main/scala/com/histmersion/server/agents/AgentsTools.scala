@@ -198,7 +198,12 @@ object AgentsTools:
             "backlog; `on: true|false` turns the autopilot on — every goal gets its seeding manager and watcher and moves " +
             "from planned to reviewed by itself — or off), `repair-acquire` (the acquisition items a watcher's sweep created " +
             "for legal open-access works move into the watchers' ingest backlog, to be ingested within the daily caps; a " +
-            "person's items are never touched; `dryRun: true` lists what it would do). Change only what the user asked for.")
+            "person's items are never touched; `dryRun: true` lists what it would do), `focus` (the autopilot's focus: at most " +
+            "max-active-goals goals are active for model work, chosen finish-first — articles to review, then to compile, then " +
+            "enough sources, depth-first within a tree, then a person's priority, then the oldest; the others' model-using " +
+            "items are held, ingestion is not. No `focus`: the active goals with why and what each waits for, the queue, the " +
+            "goals that cannot use a slot; `focus: pin|unpin` with `goal`, `focus: priority` with `goal` and `value`, " +
+            "`focus: max` with `value` (0 = no cap; no value: back to the config)). Change only what the user asked for.")
         .input[ManagerInput]
         .handle { in =>
           val m  = a.managing
@@ -226,8 +231,11 @@ object AgentsTools:
                                   case None    => Right(AutopilotMarkdown.status(m.autopilot))
                                   case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some("mcp"))).map(AutopilotMarkdown.status)
             case "repair-acquire" => m.repairAcquire(RepairAcquire.RepairRequest(in.dryRun, Some("mcp"))).map(RepairAcquire.markdown)
+            case "focus" => in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
+                              case None    => Right(AutopilotMarkdown.focus(m.focus))
+                              case Some(v) => m.setFocus(Autopilot.FocusSet(v, in.goal, in.value, Some("mcp"))).map(AutopilotMarkdown.focus)
             case other => Left(ApiError(s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, " +
-                            "repair-acquire)"))
+                            "repair-acquire, focus)"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -358,17 +366,19 @@ object AgentsTools:
       priority: Option[Int] = None, until: Option[String] = None, untilSource: Option[String] = None,
       kind: Option[String] = None, goal: Option[String] = None, cron: Option[String] = None,
       effect: Option[Managers.HintEffect] = None, suggest: Boolean = false, on: Option[Boolean] = None,
-      dryRun: Boolean = false)
+      dryRun: Boolean = false, focus: Option[String] = None, value: Option[Int] = None)
       derives KindlingsCodecAsObject
   object ManagerInput:
     given Schema[ManagerInput] = KindlingsSchema.derived[ManagerInput].schema
-      .modify(_.action)(_.description("list | show | create | pause | resume | enqueue | hold | hint | autopilot | repair-acquire"))
+      .modify(_.action)(_.description("list | show | create | pause | resume | enqueue | hold | hint | autopilot | repair-acquire | focus"))
+      .modify(_.focus)(_.description("focus: list (default) | pin | unpin | priority | max"))
+      .modify(_.value)(_.description("focus priority: the goal's priority (higher first); focus max: the cap (0 = none; absent: the config's)"))
       .modify(_.on)(_.description("autopilot: true turns it on, false off; absent: its status"))
       .modify(_.dryRun)(_.description("repair-acquire: list what it would do, change nothing"))
       .modify(_.id)(_.description("The manager (default: review; enqueue without it routes by kind)"))
       .modify(_.target)(_.description("enqueue, hold: an article slug, a citekey or a goal (by kind)"))
       .modify(_.kind)(_.description("create: review | enrich | seed | watch; enqueue: review | extend | enrich | seed (with id: the item kind)"))
-      .modify(_.goal)(_.description("create seed, watch: the research area"))
+      .modify(_.goal)(_.description("create seed, watch: the research area; focus pin, unpin, priority: the goal"))
       .modify(_.cron)(_.description("create: when it fires, five fields in UTC or @daily/@weekly/@monthly (watch: default @weekly)"))
       .modify(_.text)(_.description("hint: the note its runs read; hold: why"))
       .modify(_.item)(_.description("hint: scope it to this target (or item id)"))
