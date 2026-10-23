@@ -24,9 +24,12 @@ object MapLibreEngine extends MapEngine:
   private lazy val probed: Capabilities =
     scala.util.Try {
       val c = dom.document.createElement("canvas").asInstanceOf[dom.HTMLCanvasElement]
-      val gl = Option(c.getContext("webgl2")).orElse(Option(c.getContext("webgl"))).map(_.asInstanceOf[js.Dynamic])
+      val gl2 = Option(c.getContext("webgl2"))
+      // a canvas gives one kind of context: WebGL 1 is asked of another canvas
+      val gl = gl2.orElse(Option(dom.document.createElement("canvas").asInstanceOf[dom.HTMLCanvasElement].getContext("webgl")))
+        .map(_.asInstanceOf[js.Dynamic])
       gl match
-        case None => Capabilities(webgl = false, software = true, renderer = "")
+        case None => Capabilities(webgl = false, software = true, renderer = "", webgl2 = false)
         case Some(g) =>
           // RENDERER names the GPU in Firefox (which warns that the debug extension is going away); Chromium
           // answers a generic name there and the GPU only through the extension
@@ -37,8 +40,11 @@ object MapLibreEngine extends MapEngine:
               val ext = g.getExtension("WEBGL_debug_renderer_info")
               if ext != null && !js.isUndefined(ext) then g.getParameter(ext.UNMASKED_RENDERER_WEBGL).toString else plain
           // the probe's context is left to the garbage collector: losing it on purpose makes Firefox warn
-          Capabilities(webgl = true, software = Capabilities.isSoftware(renderer), renderer = renderer)
-    }.getOrElse(Capabilities(webgl = false, software = true, renderer = ""))
+          Capabilities(webgl = true, software = Capabilities.isSoftware(renderer), renderer = renderer, webgl2 = gl2.isDefined)
+    }.getOrElse(Capabilities(webgl = false, software = true, renderer = "", webgl2 = false))
+
+  /** MapLibre GL JS 6 draws every map — vector and raster — with WebGL 2 only. */
+  override def unsupported(c: Capabilities): Option[String] = Capabilities.withoutWebgl2(c)
 
   def create(el: dom.HTMLElement, maxZoom: Double, pixelRatio: Option[Double]): MapSurface =
     MapLibreSurface(el, maxZoom, pixelRatio, probe())

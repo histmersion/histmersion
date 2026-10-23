@@ -30,3 +30,9 @@ export function launch(extra = {}) {
 export function launchSoftwareChromium() {
   return chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined });
 }
+
+/** Chromium launched with these switches taken off (`--disable-webgl2`, `--disable-webgl`): the map's
+  * no-WebGL path. */
+export function launchChromiumWithout(...switches) {
+  return chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined, args: switches });
+}

@@ -62,7 +62,7 @@ object MapHandle:
       clusterAnimations = (() => MapView.dots.animations): js.Function0[Int],
       /** How many times a base map was drawn whole (every tile of the view). */
       baseMapsDrawn = (() => drawn): js.Function0[Int],
-      capabilities = (() => { val c = s.capabilities; js.Dynamic.literal(webgl = c.webgl, software = c.software, renderer = c.renderer) })
+      capabilities = (() => { val c = s.capabilities; js.Dynamic.literal(webgl = c.webgl, software = c.software, renderer = c.renderer, webgl2 = c.webgl2) })
         : js.Function0[js.Dynamic],
       container = s.container)
     dom.window.asInstanceOf[js.Dynamic].histmersionMap = h

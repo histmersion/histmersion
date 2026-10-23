@@ -140,9 +140,15 @@ enum BaseMapSpec:
 /** What the browser can draw: `software` when its WebGL is rasterised on the CPU (SwiftShader,
   * llvmpipe…) — the GL map then breaks the interaction budgets (docs/research-map-styles.md §3.2) and
   * the app draws its cheapest map. `renderer` is the string it was told. */
-final case class Capabilities(webgl: Boolean, software: Boolean, renderer: String)
+final case class Capabilities(webgl: Boolean, software: Boolean, renderer: String, webgl2: Boolean = true)
 
 object Capabilities:
+  /** Pure: why an engine that needs WebGL 2 cannot draw in a browser with `c`, or None when it can. */
+  def withoutWebgl2(c: Capabilities): Option[String] =
+    if !c.webgl then Some("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)")
+    else if !c.webgl2 then Some("this browser draws WebGL 1 only, not WebGL 2")
+    else None
+
   /** Pure: a WebGL renderer string that names a software rasteriser. */
   /** A renderer name that hides the GPU (Chromium's and Safari's answer to `RENDERER`): ask the debug
     * extension instead. Pure. */
@@ -245,5 +251,7 @@ trait MapSurface:
 trait MapEngine:
   /** What the browser can draw, before any map is made. */
   def probe(): Capabilities
+  /** Why this engine cannot draw in a browser with `c` (None: it can). */
+  def unsupported(c: Capabilities): Option[String] = None
   /** A surface in `el`, its zoom limits and pixel ratio (`None`: the screen's). */
   def create(el: dom.HTMLElement, maxZoom: Double, pixelRatio: Option[Double]): MapSurface

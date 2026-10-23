@@ -65,6 +65,7 @@ About says so and names the biggest locations on it that can be made smaller, wi
 | `sbt test` "passes" without running | sbt 2 caches test results. `sbt "testOnly *"`. |
 | An env var is ignored by sbt | the sbt 2 thin client shares a server and drops the environment. `sbt --server -batch <task>`. |
 | Map tiles do not load | offline or firewalled, on an online base map. Download the local maps once (`histmersion basemap fetch --keep-all`) and choose Readable instead of Standard (online), or set `ui.base-map-source = "local"`: [Working offline](../how-to/offline.md). The map library itself is vendored, so the rest of the page works. |
+| The map's place says "The map cannot be drawn here" | the browser has no WebGL 2 (WebGL off, or WebGL 1 only), which every base map needs. Switch hardware acceleration on, or use a current Chrome, Edge, Firefox or Safari; the list, timeline and articles work meanwhile |
 | The map is blank, or says it draws without a GPU | the browser has no WebGL, or draws it in software (a virtual machine, a remote desktop, hardware acceleration off). Switch hardware acceleration on in the browser's settings; without it Readable and Physical are drawn without their relief: [Base maps](../how-to/base-maps.md#fonts-credits-and-computers-without-a-graphics-card) |
 | Server exits 3 at startup | a Flyway migration failed, or the database is unreachable. `just logs`; the message names the migration. |
 | `git status` shows `agent-pid*/` | a forked `sbt run` was killed mid-write. Safe to delete; they are gitignored. |
