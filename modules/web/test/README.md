@@ -41,7 +41,7 @@ keeps the server from reading deeper relief from the provider when a test zooms 
 `--enable-gpu --ignore-gpu-blocklist --use-angle=metal`, so the map is drawn by the GPU and held to the
 GPU budgets; elsewhere, or with `HISTMERSION_TEST_GPU=0`, Chromium draws WebGL in software
 (SwiftShader), the page takes its no-GPU path (no relief, the notice's extra line) and the vector maps'
-budgets are their `…Software` ones (`perf.test.mjs`). `HISTMERSION_TEST_GPU=1` asks for the GPU on any
+budgets are their `…Software` ones (`perf.test.mjs`: input and stalls as on a GPU, the frame rate measured but not budgeted). `HISTMERSION_TEST_GPU=1` asks for the GPU on any
 platform. The tests reach the map through `window.histmersionMap` (`web/MapHandle.scala`): the view,
 the shape sets and the shapes under a point, the cluster layer's counts, the drawn base-map names.
 `test:browser` runs both files; the budgets and the soak test take ~3 minutes of it (100 soak rounds).
