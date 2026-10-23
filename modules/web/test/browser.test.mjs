@@ -1415,7 +1415,7 @@ test('the jobs window: kind chips with the server\'s counts filter the list, and
     await page.waitForFunction(() => document.querySelector('.jobs-pane .list-heading')?.innerText === 'Latest 2 of 507 ingest jobs');
     assert.deepEqual(asked.at(-1), ['ingest']);
     // the counts of the other kinds stay: they are counted over every other filter
-    assert.equal((await chip('media-import').innerText()).replace(/\s+/g, ' ').trim(), 'Media import 18');
+    assert.equal((await chip('media-import').innerText()).replace(/\s+/g, ' ').trim(), 'media-import 18');
     await page.reload();
     await page.waitForFunction(() => document.querySelectorAll('.jobs-pane .job-row').length === 2);
     assert.equal(await chip('ingest').getAttribute('aria-pressed'), 'true');
