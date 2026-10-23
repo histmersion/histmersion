@@ -406,8 +406,13 @@ final case class MediaDepictsConfig(perEvent: Int, searchLimit: Int, depictedBy:
   * under. `image-url` is the IIIF server where a collection has one; `max-year` the public-domain
   * boundary for maps. */
 final case class MediaCollectionConfig(enabled: Boolean, apiUrl: String, imageUrl: String, candidates: Int,
-    perPlace: Int, requestIntervalMs: Int, displayPx: Int, maxYear: Int, licences: String) derives ConfigReader:
+    perPlace: Int, requestIntervalMs: Int, displayPx: Int, maxYear: Int, licences: String,
+    /** Seconds to wait, one step per 403 of a request, before asking again (#2561); "" = a 403 is final. */
+    refusalBackoffSeconds: String = "") derives ConfigReader:
   def allowed: Set[String] = MediaLicence.allowList(licences)
+  /** [[refusalBackoffSeconds]] as milliseconds; an entry that is not a positive number is dropped. */
+  def refusalBackoffMs: List[Long] =
+    Option(refusalBackoffSeconds).toList.flatMap(_.split(",")).map(_.trim).flatMap(_.toLongOption).filter(_ > 0).map(_ * 1000)
 
 /** The media collections PLUGINS register (`media.collections`, docs/research-plugins.md §6): the licence
   * families their pictures may be stored under. The host judges each record's stated licence against

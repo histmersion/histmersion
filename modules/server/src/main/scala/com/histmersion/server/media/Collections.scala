@@ -149,8 +149,14 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
                 failed += s"${MediaProvider.title(col.provider)} refused the request; the rest of this batch was not asked"
               None
             case Right(rs) =>
-              rs.collect { case Left(e) => e }.foreach(e => failed += s"${t.id}: $e")
-              Some((t, f, rs.collect { case Right(r) => r }))
+              val errors = rs.collect { case Left(e) => e }
+              errors.foreach(e => failed += s"${t.id}: $e")
+              // a refusal of one of its records ends the batch too (#2561): the rest would be refused alike
+              if errors.exists(e => e.contains("HTTP 401") || e.contains("HTTP 403")) then
+                refused = true
+                failed += s"${MediaProvider.title(col.provider)} refused the request; the rest of this batch was not asked"
+                None
+              else Some((t, f, rs.collect { case Right(r) => r }))
     }
 
     // 2. what the records' places name on the map

@@ -115,8 +115,9 @@ object MediaImporter:
         MediaRepo.collectionTargets(ds, check, places = true, place, event, limit, refresh, since)
       def pending(since: Option[Long]) = MediaRepo.collectionPending(ds, check, places = true, since)
       def start() =
-        // the collection's own pace, one host at a time
-        val fetch = Polite(http, cfg.copy(requestIntervalMs = col.conf.requestIntervalMs))
+        // the collection's own pace, one host at a time, and its own patience with a refusal (#2561)
+        val fetch = Polite(http, cfg.copy(requestIntervalMs = col.conf.requestIntervalMs),
+          refusalBackoffMs = col.conf.refusalBackoffMs)
         val imp   = CollectionImport(col, fetch, cfg, converter)
         new Run:
           def run(ts: List[Target], dryRun: Boolean, refresh: Boolean) = imp.run(ts, dryRun, refresh, store)

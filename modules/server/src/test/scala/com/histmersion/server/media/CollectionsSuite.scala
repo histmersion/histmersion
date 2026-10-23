@@ -93,6 +93,19 @@ class CollectionsSuite extends munit.FunSuite:
     assert(http.requests.forall(_._2.get("User-Agent").exists(ua => !ua.contains("@"))), "no personal data")
     assertEquals(http.requests.size, 6, "one search, five objects")
 
+  test("Met: an object refused (403) ends the batch — the next place is not asked, neither place recorded as asked (#2561)"):
+    val http = FakeMediaHttp { url =>
+      if url.contains("/v1.1/search?") then FakeMediaHttp.json(fx("met-search.json"))
+      else if url.endsWith("/v1/objects/248284") then Right(HttpAnswer(403, Map.empty, "Forbidden".getBytes("UTF-8")))
+      else if url.contains("/v1/objects/") then metObject(252448)
+      else Left(s"unexpected $url")
+    }
+    val store = CollStore(facts, named)
+    val r = run(MetCollection(cfg.met), http, List(target(mycenae), target(greece)), dryRun = false, store)
+    assert(r.failed.exists(_.contains("refused the request; the rest of this batch was not asked")), r.failed.toString)
+    assertEquals(http.requests.count(_._1.contains("/v1.1/search?")), 1, "Greece was not searched")
+    assert(store.checks.isEmpty && store.saved.isEmpty, "nothing recorded: the next run asks both again")
+
   test("Met real run: the object stored with its CC0 licence, credit, page and original; a thumbnail made here; the link keeps the reason"):
     val store = CollStore(facts, named)
     val conv  = ThumbConverter()
