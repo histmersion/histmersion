@@ -85,3 +85,40 @@ class EventScaleHttpSuite extends munit.FunSuite:
         delete(s"$url/api/events/$Id")
         b.stop()
     }
+
+  test("a geometry that is not GeoJSON is a 400 naming the problem, never a 500 (#2554)"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val geoId = "zqes_http_geometry"
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        delete(s"$url/api/events/$geoId")
+        val (ws, wb) = put(s"$url/api/events/$geoId", """{"label":"Zqes WKT","geometry":"POINT(36.5 34.55)"}""")
+        assertEquals(ws, 400, wb)
+        assert(wb.contains("not WKT"), wb)
+        assertEquals(get(s"$url/api/events/$geoId")._1, 404, "a refused PUT creates nothing")
+
+        // the shape is right but PostGIS cannot read the coordinates: its words, still a 400
+        val (cs, cb) = put(s"$url/api/events/$geoId",
+          """{"label":"Zqes bad","geometry":"{\"type\":\"Point\",\"coordinates\":\"x\"}"}""")
+        assertEquals(cs, 400, cb)
+        assert(cb.contains("not a valid GeoJSON geometry"), cb)
+
+        val (ok, okb) = put(s"$url/api/events/$geoId",
+          """{"label":"Zqes ok","geometry":"{\"type\":\"Point\",\"coordinates\":[36.5,34.55]}"}""")
+        assertEquals(ok, 200, okb)
+        val (ps, pb) = patch(s"$url/api/events/$geoId", """{"geometry":"POLYGON((0 0,1 0,1 1,0 0))"}""")
+        assertEquals(ps, 400, pb)
+        assert(decode[EventDetail](get(s"$url/api/events/$geoId")._2).toOption.flatMap(_.geometry).exists(_.contains("36.5")),
+          "a refused PATCH changes nothing")
+
+        // "" clears it
+        val (cl, clb) = patch(s"$url/api/events/$geoId", """{"geometry":""}""")
+        assertEquals(cl, 200, clb)
+        assertEquals(decode[EventDetail](clb).map(_.geometry), Right(None))
+      finally
+        delete(s"$url/api/events/$geoId")
+        b.stop()
+    }

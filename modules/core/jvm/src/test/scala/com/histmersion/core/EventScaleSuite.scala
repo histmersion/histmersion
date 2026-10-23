@@ -62,6 +62,19 @@ class EventScaleSuite extends munit.FunSuite:
     assert(EventGeometry.of(None, Some(1), None).isLeft)
     assertEquals(EventGeometry.of(None, Some(1), Some(2)), Right(Some("""{"type":"Point","coordinates":[2,1]}""")))
 
+  test("EventGeometry.check: GeoJSON geometries pass; WKT, Features and non-JSON are refused (#2554)"):
+    val pt = """{"type":"Point","coordinates":[36.5,34.55]}"""
+    assertEquals(EventGeometry.check(s"  $pt\n"), Right(pt))
+    assert(EventGeometry.check("""{"type":"MultiPolygon","coordinates":[]}""").isRight)
+    val wkt = EventGeometry.check("POINT(36.5 34.55)")
+    assert(wkt.left.exists(_.contains("not WKT")), wkt.toString)
+    assert(EventGeometry.check("srid=4326;polygon((0 0,1 0,1 1,0 0))").left.exists(_.contains("not WKT")))
+    assert(EventGeometry.check("""{"type":"Feature","geometry":null}""").left.exists(_.contains("not a Feature")))
+    assert(EventGeometry.check("""{"type":"Circle"}""").left.exists(_.contains("'Circle'")))
+    assert(EventGeometry.check("""{"coordinates":[1,2]}""").left.exists(_.contains("no \"type\"")))
+    assert(EventGeometry.check("[1,2]").isLeft)
+    assert(EventGeometry.check("near Kadesh").left.exists(_.contains("not GeoJSON")))
+
   test("EventGeo.outer: the outer span, one known end alone, nothing when undated"):
     assertEquals(EventGeo.outer(TimeSpan(Some(-1300), Some(-1290), Some(-1260), Some(-1250))), Some((-1300L, -1250L)))
     assertEquals(EventGeo.outer(TimeSpan(beginBy = Some(-1290), endFrom = Some(-1260))), Some((-1290L, -1260L)))
