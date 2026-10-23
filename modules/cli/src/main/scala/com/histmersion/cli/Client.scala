@@ -250,9 +250,9 @@ final class Client(val serverUrl: String, token: Option[String] = None):
   def basemapStyles(): Either[CliError, TerrainStyles]                      = call(BasemapApi.styles)(())
   def basemapStylesExample(): Either[CliError, String]                      = call(BasemapApi.stylesExample)(())
   def basemapStylesCheck(text: String): Either[CliError, TerrainStyleCheck] = call(BasemapApi.stylesCheck)(text)
-  def jobs(status: Option[String], limit: Option[Int], before: Option[String] = None)
+  def jobs(f: ListFilters.JobFilter, limit: Option[Int], before: Option[String] = None)
       : Either[CliError, (List[JobInfo], Paging.Page)] =
-    call(Api.jobs)((status, limit, before, None))
+    call(Api.jobs)((f, limit, before, None))
   def assets(ck: String): Either[CliError, List[AssetInfo]]                 = call(Api.assets)(ck)
   def putAssets(ck: String, in: List[AssetInput]): Either[CliError, AssetsStored] =
     call(Api.putAssets)((ck, in))

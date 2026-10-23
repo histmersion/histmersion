@@ -50,18 +50,30 @@ class RunsViewSuite extends munit.FunSuite:
     assertEquals(ApprovalsView.describe(status), "status of a2020_b: current → contested")
     assertEquals(ApprovalsView.describe(edge), "a2020_b superseded by c2024_d")
     assert(ApprovalsView.isOpen(status) && !ApprovalsView.isOpen(edge))
-    assertEquals(ApprovalsView.stateQuery(all = true), Some("all"))
-    assertEquals(ApprovalsView.stateQuery(all = false), None)
+    // the open ones are the default state (nothing in the URL); every other button names its state
+    assertEquals(ApprovalsView.stateValue("open"), None)
+    assertEquals(ApprovalsView.stateValue("all"), Some("all"))
+    assertEquals(ApprovalsView.shownState(None), "open")
+    assertEquals(ApprovalsView.shownState(Some("rejected")), "rejected")
 
-  test("the runs filter and the approvals toggle live in the URL hash"):
-    UiState.set(UiState.runStatus := Some(RunState.Paused), UiState.approvalsAll := true)()
+  test("the runs, approvals and jobs filters live in the URL hash"):
+    UiState.set(UiState.runStatus := Some(RunState.Paused), UiState.approvalState := Some("all"),
+      UiState.approvalKinds := List("goal-plan", "edge"), UiState.runPipelines := List("review-article"),
+      UiState.runManager := Some("seed:tin"), UiState.runSince := Some("2026-10-01"),
+      UiState.jobKinds := List("ingest"), UiState.jobSubject := Some("a2020"))()
     val hash = UiState.hashString
-    assert(hash.contains("runs=paused") && hash.contains("apprAll=true"), hash)
+    assert(hash.contains("runs=paused") && hash.contains("apprState=all") && hash.contains("apprKind=goal-plan") &&
+      hash.contains("apprKind=edge") && hash.contains("runPipeline=review-article") && hash.contains("runSince=2026-10-01") &&
+      hash.contains("jobKind=ingest") && hash.contains("jobSubject=a2020"), hash)
     UiState.loadHash("")
     assertEquals(UiState.runStatus.now(), None)
+    assertEquals(UiState.approvalKinds.now(), Nil)
     UiState.loadHash(hash)
     assertEquals(UiState.runStatus.now(), Some(RunState.Paused))
-    assert(UiState.approvalsAll.now())
+    assertEquals(UiState.approvalState.now(), Some("all"))
+    assertEquals(UiState.approvalKinds.now(), List("goal-plan", "edge"))
+    assertEquals(UiState.runManager.now(), Some("seed:tin"))
+    assertEquals(UiState.jobKinds.now(), List("ingest"))
     UiState.loadHash("runs=bogus")
     assertEquals(UiState.runStatus.now(), None)
 

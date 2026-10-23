@@ -231,10 +231,20 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient,
   /** `GET /api/jobs` — one page, newest first ([[Paging]]), with the per-state counts of every job. */
   def jobsPage(status: Option[String], limit: Option[Int], before: Option[String] = None,
       upTo: Option[String] = None): Either[ApiError, (List[JobInfo], Paging.Page)] =
-    val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
-    JobRepo.page(ds, st, cfg.limits.page(limit, cfg.limits.search), clean(before), clean(upTo))
-      .left.map(ApiError(_, Some(Write.CodeNotFound)))
-      .map((rows, more) => (rows.toList, Paging.Page.of(JobRepo.stateCounts(ds), st, Option.when(more)(rows.last.id))))
+    jobsPage(ListFilters.JobFilter(status = status.toList), limit, before, upTo)
+
+  /** `GET /api/jobs` filtered ([[ListFilters.JobFilter]]): one page, newest first, with the per-state
+    * and the kind counts under the same filter. */
+  def jobsPage(f: ListFilters.JobFilter, limit: Option[Int], before: Option[String], upTo: Option[String])
+      : Either[ApiError, (List[JobInfo], Paging.Page)] =
+    for
+      q    <- ListQueries.jobs(f, java.time.Instant.now())
+      page <- JobRepo.page(ds, q, cfg.limits.page(limit, cfg.limits.search), clean(before), clean(upTo))
+                .left.map(ApiError(_, Some(Write.CodeNotFound)))
+    yield
+      val (rows, more) = page
+      val (counts, facets) = JobRepo.facets(ds, q)
+      (rows.toList, Paging.Page.filtered(counts, q.status, Option.when(more)(rows.last.id), facets))
 
   private def clean(cursor: Option[String]): Option[String] = cursor.map(_.trim).filter(_.nonEmpty)
 

@@ -112,18 +112,18 @@ object ApiClient:
   /** The literature search for `q`, works not in the corpus yet (an event card's lead, #1449). */
   def discover(q: String, limit: Int): Future[DiscoverResult] = call(AcquireApi.discover)((q, None, None, Some(limit), true))
 
-  /** One page of jobs ([[Paging]]): `before` = older than that job, `upTo` = down to it. */
-  def jobs(status: Option[JobState], limit: Option[Int], before: Option[String] = None,
+  /** One page of the jobs that match `f` ([[Paging]]): `before` = older than that job, `upTo` = down to it. */
+  def jobs(f: ListFilters.JobFilter, limit: Option[Int], before: Option[String] = None,
       upTo: Option[String] = None): Future[(List[JobInfo], Paging.Page)] =
-    call(Api.jobs)((status.map(_.wire), limit, before, upTo))
+    call(Api.jobs)((f, limit, before, upTo))
 
   def patchSource(ck: String, p: SourcePatch): Future[SourceWithFindings] = call(Api.patchSource)((ck, p, false))
 
   // ── embedded agents ──────────────────────────────────────────────────────────────────────────────
 
-  def agentRuns(status: Option[Agents.RunState], limit: Option[Int], goal: Option[String] = None,
-      before: Option[String] = None, upTo: Option[String] = None): Future[(List[Agents.RunInfo], Paging.Page)] =
-    call(AgentsApi.runs)((status.map(_.wire), limit, goal, before, upTo))
+  def agentRuns(f: ListFilters.RunFilter, limit: Option[Int], before: Option[String] = None,
+      upTo: Option[String] = None): Future[(List[Agents.RunInfo], Paging.Page)] =
+    call(AgentsApi.runs)((f, limit, before, upTo))
   def startRun(req: Agents.RunRequest): Future[Agents.RunInfo] = call(AgentsApi.startRun)(req)
   def agentRun(id: String): Future[Agents.RunDetail] = call(AgentsApi.run)(id)
   /** pause | resume | cancel; a resume may raise the run's cost cap (the way out of a budget pause). */
@@ -139,9 +139,9 @@ object ApiClient:
   def agentQuota: Future[PlanQuota.QuotaInfo] = call(AgentsApi.quota)(())
   def setPool(pool: String, in: PlanQuota.PoolSet): Future[PlanQuota.PoolStatus] = call(AgentsApi.setPool)((pool, in))
   def refreshQuota(pool: String): Future[PlanQuota.QuotaRefreshed] = call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(Some(pool)))
-  def approvals(state: Option[String], limit: Option[Int], before: Option[String] = None,
+  def approvals(f: ListFilters.ApprovalFilter, limit: Option[Int], before: Option[String] = None,
       upTo: Option[String] = None): Future[(List[Agents.ApprovalInfo], Paging.Page)] =
-    call(AgentsApi.approvals)((state, limit, before, upTo))
+    call(AgentsApi.approvals)((f, limit, before, upTo))
   def decide(id: Long, d: Agents.Decision, note: Option[String]): Future[Agents.ApprovalInfo] =
     call(AgentsApi.decide)((id, d.wire, Agents.DecisionRequest(note)))
 

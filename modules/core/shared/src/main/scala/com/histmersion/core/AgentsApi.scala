@@ -57,13 +57,14 @@ object AgentsApi:
   val startRun: PublicEndpoint[RunRequest, ApiError, RunInfo, Any] =
     writeBase.post.in("runs").in(jsonBody[RunRequest]).out(jsonBody[RunInfo])
 
-  /** `GET /api/agents/runs[?status=…&limit=…&goal=…&before=…&upTo=…]` — newest first; `goal` = the
-    * runs for one goal; paged by keyset like the jobs ([[Paging]]: cursors are run ids, the total, next
-    * cursor and per-state counts are headers). */
-  val runs: PublicEndpoint[(Option[String], Option[Int], Option[String], Option[String], Option[String]), ApiError,
+  /** `GET /api/agents/runs[?status=…&pipeline=…&manager=…&goal=…&model=…&provider=…&origin=…&since=…&until=…&q=…&limit=…&before=…&upTo=…]`
+    * — newest first, filtered on the server ([[ListFilters.RunFilter]]: a list field matches any of its
+    * values, given repeated or comma-separated); paged by keyset like the jobs ([[Paging]]: cursors are
+    * run ids; the total, next cursor, per-state counts and the pipeline / origin / manager / model /
+    * provider facet counts are headers). */
+  val runs: PublicEndpoint[(ListFilters.RunFilter, Option[Int], Option[String], Option[String]), ApiError,
       (List[RunInfo], Paging.Page), Any] =
-    base.get.in("runs").in(query[Option[String]]("status")).in(query[Option[Int]]("limit"))
-      .in(query[Option[String]]("goal"))
+    base.get.in("runs").in(ListFilters.runQuery).in(query[Option[Int]]("limit"))
       .in(query[Option[String]]("before")).in(query[Option[String]]("upTo"))
       .out(jsonBody[List[RunInfo]]).out(Paging.headers)
 
@@ -88,12 +89,13 @@ object AgentsApi:
   /** The verbs of [[control]]. */
   val Actions: List[String] = List("pause", "resume", "cancel")
 
-  /** `GET /api/agents/approvals[?state=open|approved|rejected|failed|all&limit=…&before=…&upTo=…]` —
-    * newest first; the default is the open ones; paged by keyset ([[Paging]]: cursors are approval
-    * ids, the total, next cursor and per-state counts are headers). */
-  val approvals: PublicEndpoint[(Option[String], Option[Int], Option[String], Option[String]), ApiError,
+  /** `GET /api/agents/approvals[?state=open|approved|rejected|failed|all&kind=…&subject=…&goal=…&decidedBy=…&limit=…&before=…&upTo=…]`
+    * — newest first; the default is the open ones; filtered on the server ([[ListFilters.ApprovalFilter]]);
+    * paged by keyset ([[Paging]]: cursors are approval ids; the total, next cursor, per-state counts and
+    * the kind / decidedBy facet counts are headers). */
+  val approvals: PublicEndpoint[(ListFilters.ApprovalFilter, Option[Int], Option[String], Option[String]), ApiError,
       (List[ApprovalInfo], Paging.Page), Any] =
-    endpoint.get.in("api" / "agents" / "approvals").in(query[Option[String]]("state")).in(query[Option[Int]]("limit"))
+    endpoint.get.in("api" / "agents" / "approvals").in(ListFilters.approvalQuery).in(query[Option[Int]]("limit"))
       .in(query[Option[String]]("before")).in(query[Option[String]]("upTo"))
       .errorOut(agentErrors).out(jsonBody[List[ApprovalInfo]]).out(Paging.headers)
 
