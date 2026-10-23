@@ -90,6 +90,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
     sizeV = (el.clientWidth.toDouble, el.clientHeight.toDouble)
     val _ = gl.resize()
   def isMoving: Boolean = gl.isMoving()
+  def isDrawn: Boolean = !gl.isMoving() && gl.loaded() && gl.areTilesLoaded()
   def capabilities: Capabilities = caps
 
   // the names' language of the base map drawn now

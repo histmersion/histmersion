@@ -197,6 +197,8 @@ trait MapSurface:
   /** The container changed size without a window resize. */
   def resize(): Unit
   def isMoving: Boolean
+  /** Still, and every tile of the view drawn. */
+  def isDrawn: Boolean
   // ── events ─────────────────────────────────────────────────────────────────────────────────
   def on(kind: MapEventKind)(f: MapEvent => Unit): Subscription
   // ── the DOM ────────────────────────────────────────────────────────────────────────────────
