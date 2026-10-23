@@ -50,10 +50,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   private object NoPdf extends OaFetcher:
     def fetch(doi: Option[String], arxiv: Option[String]) = Left("no legal open-access PDF found")
 
-  private class SomePdf(source: String = "unpaywall") extends OaFetcher:
+  private class SomePdf(source: String = "unpaywall", licence: Option[String] = None) extends OaFetcher:
     def fetch(doi: Option[String], arxiv: Option[String]) =
       Right(FetchedFile(source, Some("https://example.org/x.pdf"),
-        ("%PDF-1.4\n" + "x" * 2000).getBytes("UTF-8"), "pdf"))
+        ("%PDF-1.4\n" + "x" * 2000).getBytes("UTF-8"), "pdf", licence))
 
   private object NoWiki extends WikiClient:
     def refs(url: String) = Left("not used here")
@@ -269,6 +269,23 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     // a freshly created source takes the verdict as its status
     assertEquals(stored.status, SourceStatus.Current)
     wipe("zzacq_ingested", "zzacq_ref")
+
+  test("a fetched copy's licence becomes the source's, never over one already recorded (#2560)"):
+    import com.augustnagro.magnum.*
+    def license = transact(ds)(sql"SELECT license FROM sources WHERE citekey = 'zzacq_ingested'".query[Option[String]].run().headOption.flatten)
+    wipe("zzacq_ingested")
+    val r = handlers(oa = SomePdf("oabooks", Some(" CC-BY-4.0 "))).ingest(IngestRequest("10.1038/zztest001"))
+      .fold(e => fail(e.message), identity)
+    assert(r.steps.exists(s => s.step == "fetch" && s.detail.contains("licence CC-BY-4.0")), r.steps.toString)
+    assert(r.steps.exists(s => s.step == "licence" && s.ok), r.steps.toString)
+    assertEquals(license, Some("CC-BY-4.0"))
+    // a re-fetch with another licence keeps the one recorded; a copy without one changes nothing
+    val again = handlers(oa = SomePdf("oabooks", Some("CC-BY-NC-4.0")))
+      .ingest(IngestRequest("10.1038/zztest001", refetch = true)).fold(e => fail(e.message), identity)
+    assert(!again.steps.exists(_.step == "licence"), again.steps.toString)
+    assertEquals(license, Some("CC-BY-4.0"))
+    assert(!AcquireRepo.recordLicense(ds, "zzacq_ingested", "  "), "a blank licence is never written")
+    wipe("zzacq_ingested")
 
   test("no open-access copy: the source is still created and the manual drop-in is explained"):
     wipe("zzacq_ingested")

@@ -49,8 +49,21 @@ enum Access:
   * @param source    the channel it came from, recorded as the source's provenance (`arxiv`, `pmc`, …)
   * @param url       where it was downloaded from
   * @param bytes     the file
-  * @param extension `pdf`, `epub`, `xml` (a JATS full text), … — the host refuses a `pdf` that is not one */
-final case class FetchedFile(source: String, url: Option[String], bytes: Array[Byte], extension: String)
+  * @param extension `pdf`, `epub`, `xml` (a JATS full text), … — the host refuses a `pdf` that is not one
+  * @param licence   the licence the copy is published under, when the fetcher knows it — an SPDX id
+  *                  (`CC-BY-4.0`) or `public-domain`, else the licence's URL; the host records it as the
+  *                  source's licence when that has none (added in SPI 1 without a version change: optional,
+  *                  and the four-argument form still builds and links) */
+final case class FetchedFile(source: String, url: Option[String], bytes: Array[Byte], extension: String,
+    licence: Option[String] = None):
+  /** The four-field constructor of the first SPI 1 release, for plugins compiled against it. */
+  def this(source: String, url: Option[String], bytes: Array[Byte], extension: String) =
+    this(source, url, bytes, extension, None)
+
+object FetchedFile:
+  /** The four-field factory of the first SPI 1 release, for plugins compiled against it. */
+  def apply(source: String, url: Option[String], bytes: Array[Byte], extension: String): FetchedFile =
+    new FetchedFile(source, url, bytes, extension, None)
 
 /** One fetcher's answer for one work. */
 enum Fetch:
