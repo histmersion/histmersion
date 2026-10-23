@@ -84,3 +84,5 @@ by this browser, and apply at once:
   virtual machine, a remote desktop, a browser with hardware acceleration switched off), the page
   draws Readable and Physical without their relief and contours, which keeps them quick, and a line of
   the notice says so. Switching hardware acceleration on in the browser's settings brings them back.
+  Every base map, the online raster ones included, needs WebGL 2: a browser without it (WebGL off,
+  or WebGL 1 only) shows a message in the map's place instead of a map, and the rest of the page works.

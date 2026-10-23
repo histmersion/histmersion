@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { appendFileSync } from 'node:fs';
-import { engineName, isChromium, isFirefox, launch, launchSoftwareChromium, wantsGpu } from './engine.mjs';
+import { engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
 
 // Use a separately started test server; these tests only GET data and change browser-local state.
 const baseURL = process.env.HISTMERSION_SERVER_URL;
@@ -2365,4 +2365,40 @@ test('without a GPU the map says so and draws its cheapest form; the app still w
     assert.ok(await page.locator('.map-option-contours').isDisabled());
     assert.deepEqual(errors, []);
   } finally { await soft.close(); }
+});
+
+// Without WebGL 2 (or with WebGL off) MapLibre draws no map at all, online or local: the map's place says
+// why and what to do, nothing on the page fails, and the list still loads (#map-without-webgl2).
+test('no WebGL 2: the map says why and what to do, and the rest of the page works', async t => {
+  if (!isChromium) { t.skip('the switches are Chromium\'s'); return; }
+  for (const [flag, why] of [['--disable-webgl2', /WebGL 1 only/], ['--disable-webgl', /draws no WebGL/]]) {
+    const b = await launchChromiumWithout(flag);
+    try {
+      const page = await (await b.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.message));
+      await page.route('**/*', r => new URL(r.request().url()).origin === origin ? r.continue() : r.abort());
+      await page.goto(baseURL);
+      const note = page.locator('#map .map-unavailable');
+      await note.waitFor();
+      const text = await note.innerText();
+      assert.match(text, why, flag);
+      assert.match(text, /WebGL 2/);
+      assert.match(text, /hardware/);
+      assert.equal(await page.locator('#map canvas').count(), 0, `${flag}: no map canvas`);
+      await page.waitForFunction(() => window.histmersionMap);
+      const caps = await page.evaluate(() => window.histmersionMap.capabilities());
+      assert.equal(caps.webgl2, false, JSON.stringify(caps));
+      // the rest of the page: the list loads, a layer can be switched on, the span dragged — nothing throws
+      await page.locator('#list .hit, #list .empty').first().waitFor();
+      await page.evaluate(() => { localStorage.setItem('histmersion.ui.layers', '["events","boundaries"]'); });
+      await page.reload();
+      await note.waitFor();
+      await page.locator('#list .hit, #list .empty').first().waitFor();
+      await page.waitForTimeout(1000);
+      assert.deepEqual(errors, [], `${flag}: application JavaScript errors`);
+    } finally {
+      await b.close();
+    }
+  }
 });

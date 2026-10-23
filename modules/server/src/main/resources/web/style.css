@@ -350,6 +350,12 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .hd-pane--events { z-index:640; }
 /* the map: the canvas under the panes; over a place's shape the pointer says it answers */
 .map-container { background:var(--bg); }
+/* no WebGL 2 (web.map NoMapSurface): the map's place says why and what to do */
+.map-unavailable-host { display:flex; align-items:center; justify-content:center; }
+.map-unavailable { max-width:520px; margin:16px; padding:14px 18px; border:1px solid var(--format-warning);
+  border-radius:6px; color:var(--ink); background:var(--bg); line-height:1.45; }
+.map-unavailable p { margin:0 0 6px; }
+.map-unavailable-title { font-weight:600; }
 .map-container.over-place .maplibregl-canvas-container.maplibregl-interactive { cursor:pointer; }
 .hd-map-label-wrap { background:transparent; border:none; }
 .hd-map-label, .hd-area-point { color:var(--map-label-ink); -webkit-text-stroke:3px var(--map-label-halo);

@@ -204,10 +204,9 @@ object MapView:
       idAttr := "map",
       cls := "map-container",
       onMountCallback { ctx =>
-        val engine = Engines.default
-        val caps = engine.probe()
-        // without a GPU the map is drawn at one pixel per CSS pixel: a quarter of the work on a 2× screen
-        val surface = engine.create(ctx.thisNode.ref, ui.tilesMaxZoom.toDouble, Option.when(caps.software)(1.0))
+        // without a GPU the map is drawn at one pixel per CSS pixel: a quarter of the work on a 2× screen;
+        // without WebGL 2 it is not drawn at all, and its place says why (NoMapSurface)
+        val surface = Engines.surface(ctx.thisNode.ref, ui.tilesMaxZoom.toDouble, caps => Option.when(caps.software)(1.0))
         TheMap.install(surface)
         surface.setView(LatLon(37.0, 30.0), 5)
         PlaceHover.shapes("polities", PlaceHover.Places(polityPlaces.get, spanMid))
