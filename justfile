@@ -128,6 +128,7 @@ test-scripts:
     python3 -m unittest scripts/agents/tests/test_claude_overhead.py
     python3 -m unittest scripts/perf/tests/test_bench.py
     python3 -m unittest scripts/dev/tests/test_affected.py
+    python3 -m unittest scripts/dev/tests/test_test_weights.py
     scripts/bundle/tests/launchagent-env-test.sh
     scripts/bundle/tests/user-config-test.sh
     scripts/bundle/tests/relink-test.sh
