@@ -65,5 +65,5 @@ class ListPagingSuite extends munit.FunSuite:
     val run = Agents.RunInfo("r1", "enrich-source", "a2020_b", "done")
     assert(RunsView.anyLive(List(run), page(2, None, "done" -> 1, "queued" -> 1)))
     assert(!RunsView.anyLive(List(run), page(1, None, "done" -> 1)))
-    assertEquals(ApprovalsView.qualifier(all = false), Some("open"))
-    assertEquals(ApprovalsView.qualifier(all = true), None)
+    assertEquals(ApprovalsView.qualifier(com.histmersion.core.ListFilters.ApprovalFilter()), Some("open"))
+    assertEquals(ApprovalsView.qualifier(com.histmersion.core.ListFilters.ApprovalFilter(state = Some("all"))), None)

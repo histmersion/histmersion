@@ -159,31 +159,40 @@ object AgentCmd:
   }
 
   private val approvals = Opts.subcommand("approvals",
-      "Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish); the open ones by default") {
-    (Opts.option[String]("state", s"Only approvals in this state: ${(ApprovalState.values.map(_.wire) :+ "all").mkString("|")}").orNone,
-      Opts.option[Int]("limit", "How many").orNone, beforeOpt("approval")).mapN { (state, limit, before) => (c: Client) =>
-        c.call(AgentsApi.approvals)((state, limit, before, None)).map { (as, page) =>
-          println(AgentsMarkdown.approvals(as, page, Some(state.map(_.trim).filter(_.nonEmpty).getOrElse("open")).filter(_ != "all"),
-            PageCmd.older(page, "agent approvals", List("state" -> state, "limit" -> limit.map(_.toString)))))
+      "Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish, …), filtered on the server; the open ones by default") {
+    (ListOpts.approvals, Opts.option[Int]("limit", "How many").orNone, beforeOpt("approval"), Output.jsonFlag)
+      .mapN { (f, limit, before, json) => (c: Client) =>
+        c.call(AgentsApi.approvals)((f, limit, before, None)).map { (as, page) =>
+          Output.emit(json, as)(as => AgentsMarkdown.approvals(as, page, f.qualifier,
+            PageCmd.older(page, "agent approvals", f.options ++ List("limit" -> limit.map(_.toString)))))
         }
       }
   }
 
+  /** One decision per id, in the order given, each through the same endpoint (and checks) as a single
+    * one; a refused id does not stop the rest, and makes the command fail at the end. */
   private def decide(d: Decision, help: String) = Opts.subcommand(d.wire, help) {
-    (Opts.argument[Long]("id"), Opts.option[String]("note", "Why — kept with the decision").orNone).mapN { (id, note) =>
-      (c: Client) => c.call(AgentsApi.decide)((id, d.wire, DecisionRequest(note))).map(a => println(AgentsMarkdown.approvalLine(a)))
+    (Opts.arguments[Long]("id"), Opts.option[String]("note", "Why — kept with the decision (with every id)").orNone).mapN { (ids, note) =>
+      (c: Client) =>
+        val failed = ids.toList.flatMap { id =>
+          c.call(AgentsApi.decide)((id, d.wire, DecisionRequest(note))) match
+            case Right(a) => println(AgentsMarkdown.approvalLine(a)); None
+            case Left(e)  => Console.err.println(s"#$id: ${e.message}"); Some(e)
+        }
+        failed match
+          case Nil             => Right(())
+          case List(one)       => Left(one)
+          case first :: _      => Left(first.copy(message = s"${failed.size} of ${ids.size} not decided — ${first.message}"))
     }
   }
 
-  private val runs = Opts.subcommand("runs", "Agent runs, newest first") {
-    (Opts.option[String]("status", s"Only runs in this state: ${RunState.values.map(_.wire).mkString("|")} (waiting = for an approval)").orNone,
-      Opts.option[Int]("limit", "How many").orNone,
-      Opts.option[String]("goal", "Only the runs for this goal").orNone, beforeOpt("run")).mapN { (status, limit, goal, before) =>
-        (c: Client) =>
-          c.call(AgentsApi.runs)((status, limit, goal, before, None)).map { (rs, page) =>
-            println(AgentsMarkdown.runs(rs, page, status.map(_.trim).filter(_.nonEmpty),
-              PageCmd.older(page, "agent runs", List("status" -> status, "limit" -> limit.map(_.toString), "goal" -> goal))))
-          }
+  private val runs = Opts.subcommand("runs", "Agent runs, newest first, filtered on the server") {
+    (ListOpts.runs, Opts.option[Int]("limit", "How many").orNone, beforeOpt("run"), Output.jsonFlag)
+      .mapN { (f, limit, before, json) => (c: Client) =>
+        c.call(AgentsApi.runs)((f, limit, before, None)).map { (rs, page) =>
+          Output.emit(json, rs)(rs => AgentsMarkdown.runs(rs, page, f.qualifier,
+            PageCmd.older(page, "agent runs", f.options ++ List("limit" -> limit.map(_.toString)))))
+        }
       }
   }
 
@@ -225,7 +234,7 @@ object AgentCmd:
         control("pause", "Pause a run before its next step") orElse
         control("resume", "Resume a paused run (finished steps are replayed, not re-run)") orElse
         control("cancel", "Cancel a run") orElse approvals orElse
-        decide(Decision.Approve, "Approve a proposed change: a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it") orElse
-        decide(Decision.Reject, "Reject a proposed change (it stays on record)") orElse
+        decide(Decision.Approve, "Approve proposed changes (one or more ids): a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it") orElse
+        decide(Decision.Reject, "Reject proposed changes (one or more ids; they stay on record)") orElse
         ManagerCmd.managers orElse ManagerCmd.manager orElse ManagerCmd.enqueue orElse ManagerCmd.autopilot
     }

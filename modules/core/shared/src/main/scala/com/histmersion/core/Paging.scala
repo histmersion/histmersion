@@ -24,11 +24,14 @@ object Paging:
 
   /** Where a page sits in its list. `next` = the cursor for the next older page (None: nothing older);
     * `counts` = how many rows each state holds (states with none are left out). */
-  final case class Page(total: Int, next: Option[String], counts: List[(String, Int)]):
+  final case class Page(total: Int, next: Option[String], counts: List[(String, Int)],
+      facets: List[(String, List[(String, Int)])] = Nil):
     def hasMore: Boolean          = next.isDefined
     def count(state: String): Int = counts.collectFirst { case (s, n) if s == state => n }.getOrElse(0)
     /** Every row of the list, whatever its state. */
     def all: Int = counts.map(_._2).sum
+    /** One facet's counts ([[ListFilters]]: over every other filter), largest first; Nil when not sent. */
+    def facet(name: String): List[(String, Int)] = facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)
 
   object Page:
     val empty: Page = Page(0, None, Nil)
@@ -36,8 +39,13 @@ object Paging:
     /** A page from the per-state `counts`, the `state` filter it was read under (None: every state)
       * and the id of its last row when more lie beyond it. */
     def of(counts: List[(String, Int)], state: Option[String], last: Option[String]): Page =
-      val total = state.fold(counts.map(_._2).sum)(s => counts.collectFirst { case (k, n) if k == s => n }.getOrElse(0))
-      Page(total, last, counts)
+      filtered(counts, state.toList, last)
+
+    /** [[of]] for a filter on ANY of `states` (none: every state), with the [[ListFilters]] facets. */
+    def filtered(counts: List[(String, Int)], states: List[String], last: Option[String],
+        facets: List[(String, List[(String, Int)])] = Nil): Page =
+      val total = if states.isEmpty then counts.map(_._2).sum else counts.collect { case (k, n) if states.contains(k) => n }.sum
+      Page(total, last, counts, facets.filter(_._2.nonEmpty))
 
   /** `done=12,failed=3` — state names are plain words, never holding `,` or `=`. */
   def encodeCounts(counts: List[(String, Int)]): String =
@@ -51,14 +59,18 @@ object Paging:
         case _           => None
     }
 
-  /** The three headers as one output. A server that predates them (no headers) reads as "the page is
-    * the whole list": total 0, no next page, no counts — [[heading]] then counts the rows shown. */
+  /** The headers as one output (with [[ListFilters.FacetsHeader]], the facet counts). A server that
+    * predates them (no headers) reads as "the page is the whole list": total 0, no next page, no
+    * counts — [[heading]] then counts the rows shown. */
   val headers: EndpointIO[Page] =
     header[Option[Int]](TotalHeader)
       .and(header[Option[String]](NextHeader))
       .and(header[Option[String]](CountsHeader))
-      .map((t, n, c) => Page(t.getOrElse(0), n.map(_.trim).filter(_.nonEmpty), c.fold(Nil)(decodeCounts)))(p =>
-        (Some(p.total), p.next, Some(encodeCounts(p.counts)).filter(_.nonEmpty)))
+      .and(header[Option[String]](ListFilters.FacetsHeader))
+      .map((t, n, c, f) => Page(t.getOrElse(0), n.map(_.trim).filter(_.nonEmpty), c.fold(Nil)(decodeCounts),
+          f.fold(Nil)(ListFilters.decodeFacets)))(p =>
+        (Some(p.total), p.next, Some(encodeCounts(p.counts)).filter(_.nonEmpty),
+          Some(ListFilters.encodeFacets(p.facets)).filter(_.nonEmpty)))
 
   /** `2,431` — grouped by hand, never through a locale (JDK 25's `en_PL` groups with a space). */
   def grouped(n: Long): String =

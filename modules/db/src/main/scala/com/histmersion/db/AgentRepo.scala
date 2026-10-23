@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.core.Agents.*
-import com.histmersion.core.{AgentProposals, ArticlePlans, EdgeKind, GoalPlans, SourceStatus}
+import com.histmersion.core.{AgentProposals, ArticlePlans, EdgeKind, GoalPlans, ListFilters, SourceStatus}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -103,12 +103,73 @@ object AgentRepo:
     * [[list]]; `before` / `upTo` are run ids. Left: a cursor that names no job. */
   def page(ds: DataSource, status: Option[String], limit: Int, goal: Option[String] = None,
       before: Option[String] = None, upTo: Option[String] = None): Either[String, (Vector[RunInfo], Boolean)] =
+    page(ds, RunQuery(status = status.map(_.trim.toLowerCase).filter(_.nonEmpty).toList, goal = goal.map(_.trim).filter(_.nonEmpty)),
+      limit, before, upTo)
+
+  /** What the runs list is filtered by (core `ListFilters.RunFilter`, validated): the lists match any
+    * of their values; `since` / `until` bound `created_at` (until exclusive); `q` = text in the target. */
+  final case class RunQuery(
+      status: List[String] = Nil,
+      pipelines: List[String] = Nil,
+      managers: List[String] = Nil,
+      goal: Option[String] = None,
+      models: List[String] = Nil,
+      providers: List[String] = Nil,
+      origins: List[String] = Nil,
+      since: Option[java.time.Instant] = None,
+      until: Option[java.time.Instant] = None,
+      q: Option[String] = None)
+
+  /** A run that predates `jobs.origin` was started by a person. */
+  private val originExpr = s"coalesce(j.origin, '${Origin.Person.wire}')"
+
+  /** ` AND (j.model is one of them OR a step of the run used one of them)` — `expr` maps a model to
+    * what is matched (itself, or its provider). */
+  private def usedModel(vs: List[String], expr: String => String): Sql =
+    if vs.isEmpty then Sql.empty
+    else Sql.of(s" AND (${expr("j.model")} = ANY(?::text[]) OR EXISTS (SELECT 1 FROM agent_steps ms " +
+      s"WHERE ms.job_id = j.id AND ${expr("ms.model")} = ANY(?::text[])))", Param.A(vs), Param.A(vs))
+
+  private def provider(col: String): String = s"split_part($col, ':', 1)"
+
+  private def runConds(q: RunQuery): ListSql.Conds = ListSql.Conds(List(
+    "status"   -> ListSql.anyOf("j.status", q.status),
+    "pipeline" -> ListSql.anyOf("j.pipeline", q.pipelines),
+    "manager"  -> ListSql.anyOf("j.manager_id", q.managers),
+    "goal"     -> ListSql.equal("j.goal_slug", q.goal),
+    "model"    -> usedModel(q.models, identity),
+    "provider" -> usedModel(q.providers, provider),
+    "origin"   -> ListSql.anyOf(originExpr, q.origins),
+    "time"     -> ListSql.between("j.created_at", q.since, q.until),
+    "q"        -> q.q.fold(Sql.empty)(t => Sql.of(" AND j.target_id ILIKE ?", Param.S(ListSql.contains(t))))))
+
+  /** One page of the runs that match `q`, newest first. Left: a cursor that names no job. */
+  def page(ds: DataSource, q: RunQuery, limit: Int, before: Option[String], upTo: Option[String])
+      : Either[String, (Vector[RunInfo], Boolean)] =
     (before.toList ++ upTo.toList).find(c => !Keyset.exists(ds, "jobs", Param.S(c))) match
       case Some(c) => Left(s"No agent run '$c' to page from")
       case None =>
-        val (rows, more) = Keyset.page[RunRow](ds, runFrom, Sql.raw(runsOnly) ++ runStatus(status) ++ runGoal(goal),
+        val (rows, more) = Keyset.page[RunRow](ds, runFrom, Sql.raw(runsOnly) ++ runConds(q).all,
           "j.", "jobs", math.max(1, limit), before.map(Param.S(_)), upTo.map(Param.S(_)), r => Param.S(r.id))
         Right((rows.map(toInfo), more))
+
+  /** The counts that go with a filtered page of runs: per state, and the pipeline, origin, manager,
+    * model and provider facets — each under every filter but its own. A run's models are the one it
+    * was started with and every one its steps reported; the provider is a model's `provider:` part. */
+  def runFacets(ds: DataSource, q: RunQuery): (List[(String, Int)], List[(String, List[(String, Int)])]) =
+    val c = runConds(q)
+    def from(except: String) = Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ c.except(except)
+    def used(except: String): Sql =
+      Sql.raw(" FROM (SELECT DISTINCT j.id, x.m FROM jobs j CROSS JOIN LATERAL (SELECT j.model AS m UNION " +
+        "SELECT s.model FROM agent_steps s WHERE s.job_id = j.id) x") ++ Sql.raw(runsOnly) ++ c.except(except) ++
+        Sql.raw(" AND x.m IS NOT NULL) u WHERE true")
+    (Keyset.counts(ds, from("status"), "j.status"),
+      List(
+        "pipeline" -> ListSql.facet(ds, from("pipeline"), "j.pipeline"),
+        "origin"   -> ListSql.facet(ds, from("origin"), originExpr),
+        "manager"  -> ListSql.facet(ds, from("manager"), "j.manager_id"),
+        "model"    -> ListSql.facet(ds, used("model"), "u.m"),
+        "provider" -> ListSql.facet(ds, used("provider"), provider("u.m"), "count(DISTINCT u.id)")))
 
   /** How many runs are in each state — of one goal, when given. */
   def stateCounts(ds: DataSource, goal: Option[String] = None): List[(String, Int)] =
@@ -403,6 +464,45 @@ object AgentRepo:
     * [[approvals]]; `before` / `upTo` are approval ids. Left: a cursor that is not one. */
   def approvalPage(ds: DataSource, state: Option[ApprovalState], limit: Int, before: Option[String] = None,
       upTo: Option[String] = None): Either[String, (List[ApprovalInfo], Boolean)] =
+    approvalPage(ds, ApprovalQuery(state), limit, before, upTo)
+
+  /** What the approvals list is filtered by (core `ListFilters.ApprovalFilter`, validated): `state`
+    * None = every state; the lists match any of their values. */
+  final case class ApprovalQuery(
+      state: Option[ApprovalState] = None,
+      kinds: List[ApprovalKind] = Nil,
+      subject: Option[String] = None,
+      goal: Option[String] = None,
+      decidedBy: List[ListFilters.DecidedBy] = Nil)
+
+  /** Who decided an approval, in SQL — `ListFilters.DecidedBy.of`, the same rules. The two prefixes are
+    * the code's own constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are
+    * written in, not bound: the expression is used both to filter and to count. */
+  private val decidedByExpr: String =
+    import ListFilters.DecidedBy
+    s"""(CASE WHEN state = '${ApprovalState.Open.wire}' THEN NULL
+              WHEN note LIKE '${DecidedBy.AutopilotNote}%' THEN '${DecidedBy.Autopilot.wire}'
+              WHEN note IS NULL AND result LIKE '${DecidedBy.AutoResult}%' THEN '${DecidedBy.Auto.wire}'
+              ELSE '${DecidedBy.Person.wire}' END)"""
+
+  private def approvalConds(q: ApprovalQuery): ListSql.Conds =
+    val subject = q.subject.fold(Sql.empty) { t =>
+      val p = Param.S(ListSql.contains(t))
+      Sql.of(" AND (subject ILIKE ? OR citekey ILIKE ? OR target ILIKE ? OR EXISTS (SELECT 1 FROM jobs sj " +
+        "WHERE sj.id = approvals.job_id AND (sj.goal_slug ILIKE ? OR sj.manager_id ILIKE ?)))", p, p, p, p, p)
+    }
+    val goal = q.goal.fold(Sql.empty)(g => Sql.of(" AND (subject = ? OR EXISTS (SELECT 1 FROM jobs gj " +
+      "WHERE gj.id = approvals.job_id AND gj.goal_slug = ?))", Param.S(g), Param.S(g)))
+    ListSql.Conds(List(
+      "state"     -> q.state.fold(Sql.empty)(s => Sql.of(" AND state = ?", Param.S(s.wire))),
+      "kind"      -> ListSql.anyOf("kind", q.kinds.map(_.wire)),
+      "subject"   -> subject,
+      "goal"      -> goal,
+      "decidedBy" -> ListSql.anyOf(decidedByExpr, q.decidedBy.map(_.wire))))
+
+  /** One page of the approvals that match `q`, newest first ([[com.histmersion.core.Paging]]). */
+  def approvalPage(ds: DataSource, q: ApprovalQuery, limit: Int, before: Option[String],
+      upTo: Option[String]): Either[String, (List[ApprovalInfo], Boolean)] =
     def cursor(c: String): Either[String, Param] =
       c.trim.toLongOption.map(Param.L(_)).filter(Keyset.exists(ds, "approvals", _))
         .toRight(s"No approval '$c' to page from")
@@ -410,10 +510,19 @@ object AgentRepo:
       b <- before.fold(Right(None))(cursor(_).map(Some(_)))
       u <- upTo.fold(Right(None))(cursor(_).map(Some(_)))
     yield
-      val where = state.fold(Sql.raw(" WHERE true"))(s => Sql.of(" WHERE state = ?", Param.S(s.wire)))
+      val where = Sql.raw(" WHERE true") ++ approvalConds(q).all
       val (rows, more) = Keyset.page[ApprovalRow](ds, approvalSelect, where, "", "approvals", math.max(1, limit),
         b, u, r => Param.L(r.id))
       (rows.toList.map(toApproval), more)
+
+  /** The counts that go with a filtered page: per state (under every filter but the state) and the
+    * `kind` and `decidedBy` facets (each under every filter but its own). */
+  def approvalFacets(ds: DataSource, q: ApprovalQuery): (List[(String, Int)], List[(String, List[(String, Int)])]) =
+    val c = approvalConds(q)
+    def from(except: String) = Sql.raw(" FROM approvals WHERE true") ++ c.except(except)
+    (Keyset.counts(ds, from("state"), "state"),
+      List("kind" -> ListSql.facet(ds, from("kind"), "kind"),
+        "decidedBy" -> ListSql.facet(ds, from("decidedBy"), decidedByExpr)))
 
   /** How many approvals are in each state. */
   def approvalCounts(ds: DataSource): List[(String, Int)] = Keyset.counts(ds, Sql.raw(" FROM approvals"), "state")

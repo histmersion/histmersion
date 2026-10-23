@@ -40,7 +40,7 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
         apply(p) match
           case Left(m) => Outcome.Failed(s"${p.describe}: $m")
           case Right(w) =>
-            val _ = AgentRepo.propose(ds, runId, p, now, ApprovalState.Approved, Some(s"applied automatically: $w"))
+            val _ = AgentRepo.propose(ds, runId, p, now, ApprovalState.Approved, Some(s"${ListFilters.DecidedBy.AutoResult}: $w"))
             Outcome.Applied(w)
       case Route.Ask =>
         AgentRepo.propose(ds, runId, p, now) match
@@ -50,15 +50,17 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
   def list(state: Option[String], limit: Option[Int], page: Int): Either[ApiError, List[ApprovalInfo]] =
     filter(state).map(st => AgentRepo.approvals(ds, st, page))
 
-  /** One page of the approvals ([[Paging]]) in `state` (as [[list]]), with every state's count. */
-  def page(state: Option[String], limit: Int, before: Option[String], upTo: Option[String])
+  /** One page of the approvals ([[Paging]]) that match `f` ([[ListFilters.ApprovalFilter]]: no state =
+    * the open ones), with the per-state and the kind / decidedBy counts under the same filter. */
+  def page(f: ListFilters.ApprovalFilter, limit: Int, before: Option[String], upTo: Option[String])
       : Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
     for
-      st   <- filter(state)
-      page <- AgentRepo.approvalPage(ds, st, limit, before, upTo).left.map(ApiError(_, Some(Write.CodeNotFound)))
+      q    <- com.histmersion.server.ListQueries.approvals(f)
+      page <- AgentRepo.approvalPage(ds, q, limit, before, upTo).left.map(ApiError(_, Some(Write.CodeNotFound)))
     yield
       val (rows, more) = page
-      (rows, Paging.Page.of(AgentRepo.approvalCounts(ds), st.map(_.wire), Option.when(more)(rows.last.id.toString)))
+      val (counts, facets) = AgentRepo.approvalFacets(ds, q)
+      (rows, Paging.Page.filtered(counts, q.state.map(_.wire).toList, Option.when(more)(rows.last.id.toString), facets))
 
   /** The `state` query: none = the open ones, `all` = every state (None), else one state. */
   private def filter(state: Option[String]): Either[ApiError, Option[ApprovalState]] =

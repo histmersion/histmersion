@@ -316,8 +316,10 @@ object IngestMarkdown:
       val rows = js.map(j =>
         s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
           s"${j.progress.getOrElse("")}${j.error.map(e => s" — $e").getOrElse("")} |")
-      (List(s"### ${Paging.heading(js.size, page.total, "job", qualifier = status)}", "",
-        "| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o => List("", o)))
+      val kinds = ListFilters.facetLine("By kind", page.facet("kind"))
+      (List(s"### ${Paging.heading(js.size, page.total, "job", qualifier = status)}", "") ++
+        Option.when(kinds.nonEmpty)(List(kinds, "")).toList.flatten ++
+        List("| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o => List("", o)))
         .mkString("\n")
 
   def assets(citekey: String, as: Vector[AssetInfo]): String =

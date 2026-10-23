@@ -43,6 +43,9 @@ final class PolledList[A](
   val loaded: Var[Boolean]                = Var(false)
   val older: Var[Boolean]                 = Var(false)
   val failure: Var[Option[String]]        = Var(None)
+  /** A restart (a filter changed) is on its way: the rows shown are the previous filter's until it lands. */
+  private val restarting: Var[Boolean]    = Var(false)
+  def loading: Signal[Boolean]            = restarting.signal
   private val latest = Latest()
   // `var`s: the one pending poll, its delay, and whether the window is there to be refreshed
   private var timer: Int         = 0
@@ -53,7 +56,7 @@ final class PolledList[A](
   def open(): Unit = { mounted = true; loaded.set(false); restart() }
 
   /** The window closed: no poll, and an answer still on its way is dropped. */
-  def close(): Unit = { mounted = false; cancel(timer); delay = None; latest.cancel() }
+  def close(): Unit = { mounted = false; cancel(timer); delay = None; latest.cancel(); restarting.set(false) }
 
   /** The two lifecycle hooks, for the window's root element. */
   def lifecycle: Modifier[HtmlElement] = List(onMountCallback(_ => open()), onUnmountCallback(_ => close()))
@@ -70,25 +73,28 @@ final class PolledList[A](
       val cur  = listing.now()
       val upTo = if reset then None else ListPaging.pollUpTo(cur, id)
       older.set(false)
+      if reset then restarting.set(true)
       val ticket = latest.start()
       fetch(upTo, None).onComplete(r => if mounted && latest.isCurrent(ticket) then answered(r, cur, upTo, reset, changed))
 
   private[web] def answered(r: Try[(List[A], Paging.Page)], cur: ListPaging.Listing[A], upTo: Option[String],
-      reset: Boolean, changed: Boolean): Unit = r match
-    // the last row shown is gone (the server cannot page from there): start over
-    case Failure(_) if upTo.isDefined => restart()
-    case Failure(e) =>
-      failure.set(Some(e.getMessage))
-      // keep trying while the window is open, at the slowest pace
-      schedule(Some(Poll.MaxMs))
-    case Success((rows, page)) =>
-      val next  = if upTo.isEmpty then ListPaging.first(rows, page) else ListPaging.polled(cur, rows, page)
-      val moved = changed || next != cur
-      if !reset && loaded.now() then after(cur, rows)
-      failure.set(None)
-      listing.set(next)
-      loaded.set(true)
-      schedule(Poll.next(delay, live(rows, page), moved))
+      reset: Boolean, changed: Boolean): Unit =
+    restarting.set(false)
+    r match
+      // the last row shown is gone (the server cannot page from there): start over
+      case Failure(_) if upTo.isDefined => restart()
+      case Failure(e) =>
+        failure.set(Some(e.getMessage))
+        // keep trying while the window is open, at the slowest pace
+        schedule(Some(Poll.MaxMs))
+      case Success((rows, page)) =>
+        val next  = if upTo.isEmpty then ListPaging.first(rows, page) else ListPaging.polled(cur, rows, page)
+        val moved = changed || next != cur
+        if !reset && loaded.now() then after(cur, rows)
+        failure.set(None)
+        listing.set(next)
+        loaded.set(true)
+        schedule(Poll.next(delay, live(rows, page), moved))
 
   /** "Show older": the next page, appended. A poll on its way is superseded (and rescheduled here). */
   def showOlder(): Unit =

@@ -195,12 +195,26 @@ object AgentsMarkdown:
   def runs(rs: List[RunInfo], page: Paging.Page = Paging.Page.empty, status: Option[String] = None,
       older: Option[String] = None): String =
     if rs.isEmpty then status.fold("_No agent runs._")(s => s"_No $s agent runs._")
-    else "# Agent runs\n\n" + pageLine(rs.size, page, "run", status) +
+    else "# Agent runs\n\n" + pageLine(rs.size, page, "run", status) + facetLines(page, RunFacets) +
       rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o")
 
   /** `Latest 20 of 312 runs.` and a blank line — nothing when the page is the whole list. */
   private def pageLine(shown: Int, page: Paging.Page, singular: String, qualifier: Option[String]): String =
     if page.total <= shown then "" else s"${Paging.heading(shown, page.total, singular, qualifier = qualifier)}.\n\n"
+
+  /** The facets a runs listing names, with how they read ([[ListFilters]]). */
+  val RunFacets: List[(String, String)] =
+    List("pipeline" -> "By pipeline", "origin" -> "By origin", "manager" -> "By manager", "provider" -> "By provider",
+      "model" -> "By model")
+
+  /** The facets an approvals listing names. */
+  val ApprovalFacets: List[(String, String)] = List("kind" -> "By kind", "decidedBy" -> "Decided by")
+
+  /** One line per facet the page carries (`By kind: goal-plan 64 · edge 3`), then a blank line; nothing
+    * when it carries none (a server that predates them). */
+  def facetLines(page: Paging.Page, facets: List[(String, String)]): String =
+    val lines = facets.map((name, label) => ListFilters.facetLine(label, page.facet(name))).filter(_.nonEmpty)
+    if lines.isEmpty then "" else lines.mkString("  \n") + "\n\n"
 
   def run(d: RunDetail, withMessages: Boolean): String =
     val r = d.run
@@ -271,7 +285,7 @@ object AgentsMarkdown:
   def approvals(as: List[ApprovalInfo], page: Paging.Page = Paging.Page.empty, state: Option[String] = None,
       older: Option[String] = None): String =
     if as.isEmpty then "_No approvals._"
-    else "# Approvals\n\n" + pageLine(as.size, page, "approval", state) + as.map { a =>
+    else "# Approvals\n\n" + pageLine(as.size, page, "approval", state) + facetLines(page, ApprovalFacets) + as.map { a =>
       val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
       val note  = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
       val detail = a.plan.map(planBlock).orElse(a.article.map(draftBlock(_, 1500)))

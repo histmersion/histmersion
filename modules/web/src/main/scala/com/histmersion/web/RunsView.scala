@@ -46,6 +46,21 @@ object RunsView:
   def visible(runs: List[RunInfo], filter: Option[RunState]): List[RunInfo] =
     filter.fold(runs)(s => runs.filter(_.status == s.wire))
 
+  /** The runs a whole filter shows, from the rows already loaded — the state, the pipelines, the
+    * origins and the manager; the rest (model, dates, text) is left to the server's page. */
+  def visible(runs: List[RunInfo], f: ListFilters.RunFilter): List[RunInfo] =
+    val n = f.normalized
+    runs.filter(r => (n.status.isEmpty || n.status.contains(r.status)) && (n.pipeline.isEmpty || n.pipeline.contains(r.pipeline)) &&
+      (n.origin.isEmpty || n.origin.contains(r.origin.getOrElse(Agents.Origin.Person.wire))) &&
+      (n.manager.isEmpty || r.managerId.exists(n.manager.contains)))
+
+  /** The query the window sends, from its filter fields. Pure. */
+  def filterOf(status: Option[RunState], pipelines: List[String], origins: List[String], manager: Option[String],
+      provider: Option[String], model: Option[String], goal: Option[String], since: Option[String], until: Option[String],
+      subject: Option[String]): ListFilters.RunFilter =
+    ListFilters.RunFilter(status.toList.map(_.wire), pipelines, manager.toList, goal, model.toList, provider.toList, origins,
+      since, until, subject)
+
   def counts(runs: List[RunInfo]): Map[String, Int] = runs.groupMapReduce(_.status)(_ => 1)(_ + _)
 
   /** Is any run still queued or running — anywhere (the server's counts), not just among the rows a
@@ -105,41 +120,74 @@ object RunsView:
 
   // ── the runs window ─────────────────────────────────────────────────────────────────────────────
 
+  /** The window's filter fields (they live in the URL hash). */
+  private val filterFields: List[Field[?]] =
+    List(UiState.runStatus, UiState.runPipelines, UiState.runOrigins, UiState.runManager, UiState.runProvider,
+      UiState.runModel, UiState.runGoal, UiState.runSince, UiState.runUntil, UiState.runSubject)
+
+  private def currentFilter(): ListFilters.RunFilter =
+    filterOf(UiState.runStatus.now(), UiState.runPipelines.now(), UiState.runOrigins.now(), UiState.runManager.now(),
+      UiState.runProvider.now(), UiState.runModel.now(), UiState.runGoal.now(), UiState.runSince.now(),
+      UiState.runUntil.now(), UiState.runSubject.now())
+
+  /** The filter, as a signal (every field but the state is its own), so a change restarts the list. */
+  private val filterSignal: Signal[ListFilters.RunFilter] =
+    UiState.signal.map(_ => currentFilter()).distinct
+
   /** The rows, the poll and "Show older" ([[PolledList]]). */
   private val list = PolledList[RunInfo](
-    fetch = (upTo, before) => ApiClient.agentRuns(UiState.runStatus.now(), Some(Limit), upTo = upTo, before = before),
+    fetch = (upTo, before) => ApiClient.agentRuns(currentFilter(), Some(Limit), upTo = upTo, before = before),
     id = _.id,
     live = anyLive)
   private def listing = list.listing
+
+  private def facet(name: String): Signal[List[(String, Int)]] = listing.signal.map(_.page.facet(name))
 
   def pane: HtmlElement =
     div(
       cls := "tool-pane runs-pane",
       list.lifecycle,
-      UiState.runStatus.signal.changes --> (_ => list.restart()),
+      filterSignal.changes --> (_ => list.restart()),
       child.maybe <-- enabled.signal.map(on => Option.when(!on)(p(cls := "muted",
         "Embedded agents are off on this server (agents.enabled). Earlier runs are still listed."))),
       div(cls := "pane-bar", filterButtons,
         button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart())),
         button(typ := "button", cls := "btn", title := "each role's model chain, the allowances, the provider check",
           "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models)))),
+      div(cls := "toolbar list-filters",
+        ListFilterBar.chips("pipeline", facet("pipeline"), UiState.runPipelines),
+        ListFilterBar.chips("origin", facet("origin"), UiState.runOrigins),
+        div(cls := "btn-group",
+          ListFilterBar.picker("manager", facet("manager"), UiState.runManager),
+          ListFilterBar.picker("provider", facet("provider"), UiState.runProvider),
+          ListFilterBar.picker("model", facet("model"), UiState.runModel)),
+        div(cls := "btn-group",
+          ListFilterBar.text("goal", UiState.runGoal),
+          ListFilterBar.text("target: a citekey or slug", UiState.runSubject),
+          ListFilterBar.day("started on or after", UiState.runSince),
+          ListFilterBar.day("started on or before", UiState.runUntil),
+          ListFilterBar.clearButton(filterFields))),
       list.errorLine("Could not list runs"),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
-        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "run", filter.map(_.wire), _.status)))
+        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading",
+          ListPaging.heading(l, "run", filter.map(_.wire), _.status, currentFilter().qualifier)))
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
-        else Option.when(l.rows.isEmpty)(p(cls := "muted", filter.fold("No agent runs yet.")(s => s"No runs ${stateLabel(s)}.")))
+        else Option.when(l.rows.isEmpty)(p(cls := "muted",
+          if ListFilterBar.anySet(filterFields.drop(1)) then "No runs match the filter."
+          else filter.fold("No agent runs yet.")(s => s"No runs ${stateLabel(s)}.")))
       },
       // keyed by the row itself: an unchanged row keeps its element while new ones arrive on top
-      ul(cls := "job-list run-list", children <-- shownSignal.map(_._1.rows).split(identity)((r, _, _) => row(r))),
+      ul(cls := "job-list run-list", aria.busy <-- list.loading,
+        children <-- shownSignal.map(_._1.rows).split(identity)((r, _, _) => row(r))),
       list.olderButton
     )
 
   /** The listing with the rows the filter shows — at once, from the rows loaded, when the filter
     * changes; the server's page replaces them a moment later. */
   private def shownSignal: Signal[(ListPaging.Listing[RunInfo], Option[RunState])] =
-    listing.signal.combineWith(UiState.runStatus.signal).map((l, f) => (l.copy(rows = visible(l.rows, f)), f))
+    listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), UiState.runStatus.now()))
 
   private def filterButtons: HtmlElement =
     def btn(label: String, value: Option[RunState], count: Signal[Int]) =
