@@ -127,7 +127,7 @@ test:
 test-scripts:
     python3 -m unittest scripts/agents/tests/test_claude_overhead.py
     python3 -m unittest scripts/perf/tests/test_bench.py
-    python3 -m unittest scripts/dev/tests/test_test_weights.py
+    python3 -m unittest scripts/dev/tests/test_affected.py
     scripts/bundle/tests/launchagent-env-test.sh
     scripts/bundle/tests/user-config-test.sh
     scripts/bundle/tests/relink-test.sh
@@ -143,6 +143,25 @@ test-it: test-db
     set -uo pipefail
     HISTMERSION_TEST_DB_URL={{test_db_url}} HISTMERSION_PG_BIN_DIR={{pg}} {{sbt}} 'testOnly *'; rc=$?
     just test-db-down
+    exit $rc
+
+# Test what changed — the modules touched since master (or the ones named: `just test-quick db cli`) and their dependents, DB suites on a throwaway Postgres; for iterating, `test-it` is the gate
+[group('dev')]
+test-quick *modules:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    mods="{{modules}}"
+    [ -n "$mods" ] || mods="$(python3 scripts/dev/affected.py --explain)"
+    [ -n "$mods" ] || { echo "no Scala module affected since master — nothing to test (just test-it runs everything)"; exit 0; }
+    cmd=""; db=""
+    for m in $mods; do cmd="$cmd; $m/testOnly *"; case "$m" in db|server) db=1 ;; esac; done
+    echo "testing: $mods"
+    if [ -n "$db" ]; then
+      just test_db_port={{test_db_port}} test-db >/dev/null || exit 1
+      export HISTMERSION_TEST_DB_URL={{test_db_url}} HISTMERSION_PG_BIN_DIR={{pg}}
+    fi
+    {{sbt}} "${cmd#; }"; rc=$?
+    [ -z "$db" ] || just test_db_port={{test_db_port}} test-db-down
     exit $rc
 
 # Prove that two checkouts never replay each other's sbt cache entries (two temp worktrees, ~5 min)
