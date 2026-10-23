@@ -86,8 +86,15 @@ ThisBuild / slothJar := {
   * classpath as type hierarchy so stack-map frames resolve). A copy is re-patched only when the
   * original's CONTENT changed — its SHA-256 is kept beside the copy. (Timestamps were the signal
   * once, and a rebuilt jar of our own went unnoticed: the native binaries shipped stale code.)
-  * Returns the classpath to hand to native-image. */
-def slothPatch(log: sbt.util.Logger, sloth: Option[File], entries: Seq[File], outDir: File): Seq[File] =
+  * Returns the classpath to hand to native-image.
+  *
+  * Speed (docs/research-build-speed.md §4): our own jars (`histmersion-*`, compiled by Scala 3.8 — no
+  * Unsafe lazy vals) are copied, not patched; the Sloth runs go side by side (one JVM per jar, at most
+  * half the cores), reading the ORIGINAL jars as hierarchy (patching changes method bodies, never a
+  * type) so no run reads a jar another is rewriting; and a patched, verified jar is kept in `store`
+  * (the checkout's target/sloth-store, keyed by the original's and Sloth's SHA-256) so the CLI reuses
+  * what the server's image patched instead of patching the same 30 jars again. */
+def slothPatch(log: sbt.util.Logger, sloth: Option[File], entries: Seq[File], outDir: File, store: File): Seq[File] =
   sloth match {
     case None =>
       log.warn("sloth: no Sloth jar found (SLOTH_JAR) — native image keeps pre-3.8 lazy vals (sun.misc.Unsafe warning)")
@@ -103,31 +110,54 @@ def slothPatch(log: sbt.util.Logger, sloth: Option[File], entries: Seq[File], ou
       }
       def marker(dst: File): File = new File(dst.getPath + ".src-sha256")
       val hashes = copies.map { case (src, _) => src -> sha(src) }.toMap
+      val slothSha = sha(jar)
       val stale  = copies.filter { case (src, dst) =>
         !dst.isFile || !marker(dst).isFile || IO.read(marker(dst)).trim != hashes(src) }
-      stale.foreach { case (src, dst) => IO.delete(marker(dst)); IO.copyFile(src, dst) }
+      def stored(src: File): File = store / s"${hashes(src).take(32)}-${slothSha.take(16)}" / src.getName
+      val (own, others)     = stale.partition { case (src, _) => src.getName.startsWith("histmersion-") }
+      val (reused, toPatch) = others.partition { case (src, _) => stored(src).isFile }
+      stale.foreach { case (src, dst) => IO.delete(marker(dst)) }
+      own.foreach { case (src, dst) => IO.copyFile(src, dst) }
+      reused.foreach { case (src, dst) => IO.copyFile(stored(src), dst) }
+      toPatch.foreach { case (src, dst) => IO.copyFile(src, dst) }
       val hierarchy = (copies.map(_._2) ++ dirs).mkString(java.io.File.pathSeparator)
+      val originals = (jars ++ dirs).mkString(java.io.File.pathSeparator)
       val javaBin = sys.env.get("JAVA_HOME").map(_ + "/bin/java").getOrElse("java")
-      stale.foreach { case (_, dst) =>
-        val rc = scala.sys.process.Process(Seq(javaBin, "-jar", jar.getAbsolutePath, dst.getAbsolutePath, "--hierarchy-classpath", hierarchy)).!(
-          scala.sys.process.ProcessLogger(_ => (), e => if (e.contains("Error")) log.error(s"sloth: $e")))
-        if (rc != 0) sys.error(s"sloth failed on ${dst.getName} (exit $rc)")
-      }
+      val par  = math.max(1, math.min(8, java.lang.Runtime.getRuntime.availableProcessors / 2))
+      val pool = java.util.concurrent.Executors.newFixedThreadPool(par)
+      val runs = try {
+        val fs = toPatch.map { case (_, dst) =>
+          pool.submit(new java.util.concurrent.Callable[(File, Int)] {
+            def call(): (File, Int) = dst -> scala.sys.process.Process(Seq(javaBin, "-jar", jar.getAbsolutePath, dst.getAbsolutePath, "--hierarchy-classpath", originals)).!(
+              scala.sys.process.ProcessLogger(_ => (), e => if (e.contains("Error")) log.error(s"sloth: $e")))
+          })
+        }
+        fs.map(_.get())
+      } finally pool.shutdown()
+      runs.collectFirst { case (dst, rc) if rc != 0 => sys.error(s"sloth failed on ${dst.getName} (exit $rc)") }
       // Sloth has emitted classes the JVM rejects (sttp's SafeGZIPInputStream: every gzip-encoded
       // upstream response failed). The JVM's verifier checks every class it changed; a rejected one
       // gets its original bytes back. See scripts/bundle/SlothVerify.java.
-      if (stale.nonEmpty) {
+      if (toPatch.nonEmpty) {
         val verifier = (file("scripts") / "bundle" / "SlothVerify.java").getAbsolutePath
-        val pairs    = stale.flatMap { case (src, dst) => Seq(src.getAbsolutePath, dst.getAbsolutePath) }
+        val pairs    = toPatch.flatMap { case (src, dst) => Seq(src.getAbsolutePath, dst.getAbsolutePath) }
         val out      = new StringBuilder
         val rc = scala.sys.process.Process(Seq(javaBin, verifier, hierarchy) ++ pairs).!(
           scala.sys.process.ProcessLogger(l => out.append(l).append('\n'), e => out.append(e).append('\n')))
         out.toString.linesIterator.filter(_.nonEmpty).foreach(l => log.warn(s"sloth verify: $l"))
         if (rc != 0) sys.error("sloth verify: a class stays unverifiable after restoring its original bytes")
       }
-      // only a copy that was patched AND verified is marked current
+      // only a copy that was patched AND verified is marked current — and kept for the next module
+      toPatch.foreach { case (src, dst) =>
+        val keep = stored(src)
+        val tmp  = new File(keep.getPath + s".tmp-${java.util.UUID.randomUUID()}")
+        IO.copyFile(dst, tmp)
+        java.nio.file.Files.move(tmp.toPath, keep.toPath, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+          java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+      }
       stale.foreach { case (src, dst) => IO.write(marker(dst), hashes(src)) }
-      log.info(s"sloth: ${stale.size} jar(s) patched and verified, ${copies.size - stale.size} up to date → $outDir")
+      log.info(s"sloth: ${toPatch.size} jar(s) patched and verified ($par at a time), ${reused.size} reused, " +
+        s"${own.size} of ours copied, ${copies.size - stale.size} up to date → $outDir")
       copies.map(_._2) ++ dirs
   }
 
@@ -209,7 +239,8 @@ def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String]
       val log  = streams.value.log
       val conv = fileConverter.value // sbt 2.0: classpath entries are virtual file refs
       val entries = (Compile / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
-      val cp  = slothPatch(log, (ThisBuild / slothJar).value, entries, target.value / "sloth").mkString(java.io.File.pathSeparator)
+      val cp  = slothPatch(log, (ThisBuild / slothJar).value, entries, target.value / "sloth",
+        (ThisBuild / baseDirectory).value / "target" / "sloth-store").mkString(java.io.File.pathSeparator)
       val out = target.value / outName
       // a killed agent run leaves agent-pid*/ scratch dirs in the merge dir; never let them in
       IO.delete(((Compile / resourceDirectory).value / "META-INF" / "native-image" * "agent-pid*").get())
@@ -421,7 +452,8 @@ lazy val server = project
       val log     = streams.value.log
       val conv    = fileConverter.value
       val entries = (Compile / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
-      val cp      = slothPatch(log, (ThisBuild / slothJar).value, entries, target.value / "sloth")
+      val cp      = slothPatch(log, (ThisBuild / slothJar).value, entries, target.value / "sloth",
+        (ThisBuild / baseDirectory).value / "target" / "sloth-store")
       val dirs    = cp.filterNot(_.getName.endsWith(".jar"))
       if (dirs.nonEmpty) sys.error(s"relink kit: a class directory on the class path (${dirs.mkString(", ")}) — the kit holds jars only")
       val names = cp.map(_.getName)
