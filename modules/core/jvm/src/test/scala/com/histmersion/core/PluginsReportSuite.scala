@@ -63,6 +63,13 @@ class PluginsReportSuite extends munit.FunSuite:
     val bad = PluginsMarkdown.selfCheck(ConfigFileInfo(), PluginsReport(1, List(broken), List("w")))
     assert(bad.contains("- warning: w"), bad)
     assert(bad.endsWith("self-check FAILED"), bad)
+    // the binary's own checks (the time zones) are listed, and one that fails fails the verdict
+    val zones = PluginsMarkdown.selfCheck(ConfigFileInfo(), PluginsReport(1, List(vault)), List(true -> "time zones: ok"))
+    assert(zones.contains("- plugin-set digest: " + PluginSet.EmptyDigest + "\n- time zones: ok\n\n- "), zones)
+    assert(zones.endsWith("self-check passed"), zones)
+    val noZones = PluginsMarkdown.selfCheck(ConfigFileInfo(), PluginsReport(1, List(vault)), List(false -> "time zones: BROKEN"))
+    assert(noZones.contains("- time zones: BROKEN"), noZones)
+    assert(noZones.endsWith("self-check FAILED"), noZones)
 
   test("the report crosses the wire; an About or UiConfig from a server without plugins still decodes"):
     val r = PluginsReport(1, List(vault, broken), List("w"))

@@ -193,8 +193,9 @@ object Main:
     val loaded = loadedConfig.config
     mode match
       case ServerMode.SelfCheck =>
-        System.out.println(PluginsMarkdown.selfCheck(loadedConfig.file.info, generation.report))
-        sys.exit(if generation.report.ok then 0 else 2)
+        val zones = TimeZoneCheck.jdk()
+        System.out.println(PluginsMarkdown.selfCheck(loadedConfig.file.info, generation.report, List(zones)))
+        sys.exit(if generation.report.ok && zones._1 then 0 else 2)
       case _ => ()
     val reread = () => AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path)
     // the native bundle: run the bundled Postgres + converter as children and point the config at them;

@@ -71,6 +71,14 @@ grep -qF "1password 1.0.0 — disabled" "$data/self-check.out" || fail "--self-c
 grep -qF "session = keepassxc:Smoke/bw#password" "$data/self-check.out" || fail "--self-check: the secret reference is not shown"
 if grep -qE "smoke-master|session-from" "$data/self-check.out"; then fail "--self-check printed a secret value"; fi
 grep -q "self-check passed" "$data/self-check.out" || fail "--self-check gave no verdict"
+# time zones: the JDK's own tzdb is in the binary (build.sbt excludes scala-java-time-tzdb), every probe
+# resolves to its offset, and a TZ the process is given becomes the default zone (pgjdbc sends it)
+grep -qE "^- time zones: [0-9]+ from the JDK's tzdb 20[0-9]{2}[a-z] · default .* · [0-9]+ offsets checked$" "$data/self-check.out" \
+  || fail "--self-check: the time zones are not the JDK's: $(grep 'time zones' "$data/self-check.out")"
+rc=0; TZ=Australia/Lord_Howe "$b/bin/histmersion-server" --self-check > "$data/tz.out" 2>&1 || rc=$?
+[ "$rc" = 0 ] && grep -q "^- time zones: .* · default Australia/Lord_Howe · " "$data/tz.out" \
+  || fail "--self-check under TZ=Australia/Lord_Howe (exit $rc): $(grep 'time zones' "$data/tz.out")"
+echo "  $(grep '^- time zones' "$data/tz.out")"
 # the built-in acquisition plugins: in the binary, enabled by default, their fetchers registered
 for line in "archive-org 1.0.0 — registered (source-fetcher:archive-org)" \
     "arxiv 1.0.0 — registered (source-fetcher:arxiv)" \

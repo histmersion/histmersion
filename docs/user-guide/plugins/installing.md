@@ -185,8 +185,8 @@ resolved when the plugin is registered and never stored, logged or returned:
 (with why) or refused (a plugin built for another SPI version, a duplicate id) — and its effective
 settings with each secret as its reference. A plugin that fails contributes nothing and the server
 still starts. `histmersion-server --self-check` loads the config and the plugins, resolves their
-secrets, prints that report and exits — 0 all good, 2 a plugin failed or was refused, 3 the config is
-broken — without opening a database connection or a port; any other argument is an error (exit 1)
+secrets, checks the time zones, prints that report and exits — 0 all good, 2 a plugin failed or was
+refused or the time zones are missing, 3 the config is broken — without opening a database connection or a port; any other argument is an error (exit 1)
 before anything is opened.
 
 <figure markdown="span">

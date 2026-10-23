@@ -256,6 +256,13 @@ def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String]
 
 lazy val commonDeps = Seq(
   libraryDependencies += "org.scalameta" %% "munit" % V.munit % Test,
+  // scala-java-time-tzdb is a time-zone database for Scala.js. scribe's perfolation (1.3.0) depends on its
+  // JVM artifact too, where it is dead weight (java.base's own java.time always wins) — and it holds a
+  // `java.time.zone.TzdbZoneRulesProvider`, a JDK class name GraalVM 25.4's builder refuses on the image
+  // class path. Excluded by its JVM name (`_3`) from every JVM class path — server, CLI, the relink kit,
+  // the plugins; Scala.js's `_sjs1_3` is a different module and stays. The binaries' zones are the JDK's
+  // own tzdb, checked by `histmersion-server --self-check` (TimeZoneCheck, TimeZoneCheckSuite).
+  excludeDependencies += ExclusionRule("io.github.cquiroz", "scala-java-time-tzdb_3"),
   testFrameworks += new TestFramework("munit.Framework"),
   Test / fork := false,
   Test / extraTestDigests += sbt.util.Digest.sha256Hash(s"test-db=${(ThisBuild / testDbOn).value}".getBytes("UTF-8"))
