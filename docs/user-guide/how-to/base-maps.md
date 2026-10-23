@@ -8,7 +8,7 @@ from the internet.
 | base map | drawn from | what it shows |
 |---|---|---|
 | **Readable** (the default) | this server's download | a general-purpose map in the colours of OpenStreetMap's standard map: land and water, pale land cover, a light relief, rivers, faint main roads and dashed country borders, towns and villages by size, and the names of countries, seas, gulfs, islands, mountain ranges, rivers and peaks |
-| **Physical** | this server's download | the land's form first: the relief shaded from several directions, the ground coloured lightly by its height, the sea coloured by its depth, forest, sand and ice as faint veils, rivers darker than the sea; physical names (seas, ranges, lakes, rivers, islands, peaks) and small town names; no roads or borders. Close in, contour lines where the detailed relief is downloaded |
+| **Physical** | this server's download | the land's form first: the relief shaded from several directions, the ground coloured lightly by its height, the sea coloured by its depth, forest, fields, scrub, rock, sand and ice as faint veils at every zoom, rivers darker than the sea; physical names (seas, ranges, lakes, rivers, islands, peaks) and small town names; no roads or borders. Close in, contour lines where the detailed relief is downloaded |
 | **Standard (online)** | OpenStreetMap's tile servers (or `ui.tiles`) | today's standard OpenStreetMap |
 | **Muted (online)** | OpenStreetMap France's Humanitarian style | the same in quieter colours |
 | **Dark (online)** | the Standard tiles, inverted | a dark map |
@@ -23,6 +23,10 @@ from the background.
 
 <figure markdown>
   ![The Aegean on the Physical map: shaded mountains, the land coloured by height, the sea darker over its deep basins, the names of seas and ranges](../assets/screenshots/basemap-physical.png){ loading=lazy }
+</figure>
+
+<figure markdown>
+  ![The Argolid around Mycenae at zoom 12 on the Readable map: woods, scrub and fields in pale colours over a light relief, a main road](../assets/screenshots/readable-mycenae.png){ loading=lazy }
 </figure>
 
 <figure markdown>

@@ -1840,7 +1840,7 @@ async function mapColours(page) {
   return page.evaluate(async b64 => {
     const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
     const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-    const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
     const d = g.getImageData(0, 0, c.width, c.height).data, seen = new Set();
     for (let i = 0; i < d.length; i += 4 * 97) seen.add((d[i] >> 3) << 10 | (d[i + 1] >> 3) << 5 | (d[i + 2] >> 3));
     return seen.size;
@@ -1985,7 +1985,7 @@ test('the base maps\' names read at 4.5:1 against what lies under them, through 
         const under = await page.evaluate(async ([b64, labels, w, h]) => {
           const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
           const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-          const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+          const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
           const sx = img.width / w, sy = img.height / h;
           return labels.map(l => {
             const tw = Math.min(260, Math.max(24, l.text.length * 6.5)), th = 14;
