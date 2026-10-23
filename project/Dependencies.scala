@@ -25,6 +25,6 @@ object Dependencies {
     val sttpAi        = "0.12.0"  // com.softwaremill.sttp.ai — LLM provider clients + agent loop (embedded
                                  // agents, docs/research-embedded-agents.md); same tapir/sttp as above
     val munit         = "1.3.6"
-    val scalaJavaTime = "2.7.0"  // io.github.cquiroz — java.time for Scala.js (Queue, Backup)
+    val scalaJavaTime = "2.8.0"  // io.github.cquiroz — java.time for Scala.js (Queue, Backup)
   }
 }
