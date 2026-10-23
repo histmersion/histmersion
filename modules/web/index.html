@@ -5,17 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Histmersion</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="/web/vendor/leaflet/leaflet.css" />
-  <link rel="stylesheet" href="/web/vendor/leaflet.markercluster/MarkerCluster.css" />
-  <link rel="stylesheet" href="/web/vendor/leaflet.markercluster/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="/web/vendor/maplibre-gl/maplibre-gl.css" />
   <link rel="stylesheet" href="/web/style.css" />
 </head>
 <body>
   <div id="app"></div>
-  <!-- Leaflet loaded globally (the facade reads L from window) -->
-  <script src="/web/vendor/leaflet/leaflet.js"></script>
-  <script src="/web/vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
-  <!-- Scala.js entry (resolved by @scala-js/vite-plugin-scalajs) -->
+  <!-- MapLibre GL JS (ES modules only) on window.maplibregl, before the app (module scripts run in order) -->
+  <script type="module">import * as maplibregl from "/web/vendor/maplibre-gl/maplibre-gl.js"; window.maplibregl = maplibregl;</script>
   <script type="module" src="./src/main/js/main.js"></script>
 </body>
 </html>

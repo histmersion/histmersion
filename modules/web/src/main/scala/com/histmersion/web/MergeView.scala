@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.core.*
-import com.histmersion.web.leaflet.{L, LeafletMap}
+import com.histmersion.web.map.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
@@ -489,33 +489,28 @@ object MergeView:
 
   private def miniMap(left: Option[String], right: Option[String]): HtmlElement =
     // a `var`: the map lives as long as the element; created on mount, removed on unmount
-    var map: Option[LeafletMap] = None
+    var map: Option[MapSurface] = None
     div(
       cls := "merge-map",
       onMountUnmountCallback(
         mount = ctx =>
-          val m = L.map(ctx.thisNode.ref, js.Dynamic.literal(attributionControl = false).asInstanceOf[js.Object])
-          tiles.foreach((url, z) => L.tileLayer(url, js.Dynamic.literal(maxZoom = z, opacity = 0.8).asInstanceOf[js.Object]).addTo(m))
-          val layers = List("left" -> left, "right" -> right).collect { case (who, Some(g)) =>
-            val feature = js.Dynamic.literal(`type` = "Feature", properties = js.Dynamic.literal(), geometry = js.JSON.parse(g))
-            L.geoJSON(feature, js.Dynamic.literal(
-              style = { (_: js.Dynamic) => js.Dynamic.literal(className = s"merge-geom merge-$who", weight = 2, fillOpacity = 0.15) }
-                : js.Function1[js.Dynamic, js.Dynamic],
-              pointToLayer = { (_: js.Dynamic, at: js.Dynamic) =>
-                L.circleMarker(js.Array(at.lat.asInstanceOf[Double], at.lng.asInstanceOf[Double]),
-                  js.Dynamic.literal(radius = 7, className = s"merge-geom merge-$who").asInstanceOf[js.Object])
-              }: js.Function2[js.Dynamic, js.Dynamic, js.Any]
-            ).asInstanceOf[js.Object]).addTo(m)
-          }
-          val bounds = layers.map(_.getBounds()).filter(_.isValid())
-          bounds.reduceOption((a, b) => a.extend(b)) match
-            case Some(b) => m.fitBounds(b, js.Dynamic.literal(padding = js.Array(24, 24), maxZoom = 9).asInstanceOf[js.Object])
-            case None    => m.setView(js.Array(37.0, 30.0), 4)
+          val m = Engines.default.create(ctx.thisNode.ref, tiles.fold(12.0)(_._2.toDouble), None)
+          m.setBaseMap(BaseMaps.current)
+          val geoms = List("left" -> left, "right" -> right).collect { case (who, Some(g)) =>
+            val geo = js.JSON.parse(g)
+            m.shapes(s"merge-$who", ShapeStyle(fillOpacity = 0.15, lineWidth = 2, lineOpacity = 0.9,
+              colour = Some(com.histmersion.web.ui.ThemeTokens(s"--merge-$who")), circleRadius = 7))
+              .set(List(ShapeFeature(who, geo)))
+            GeoBounds.ofGeometry(geo)
+          }.flatten
+          geoms.reduceOption(_.extend(_)) match
+            case Some(b) => m.fitBounds(b, 24, 9, animate = false)
+            case None    => m.setView(LatLon(37.0, 30.0), 4)
           map = Some(m)
-          dom.window.setTimeout(() => map.foreach(_.invalidateSize()), 50)
+          dom.window.setTimeout(() => map.foreach(_.resize()), 50)
         ,
         unmount = _ =>
-          map.foreach(_.asInstanceOf[js.Dynamic].remove())
+          map.foreach(_.destroy())
           map = None
       )
     )

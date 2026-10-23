@@ -79,7 +79,7 @@ export async function soak(page, cdp, rounds, { warmup = 5 } = {}) {
       heapMB: Math.round((after.heapMB - before.heapMB) * 10) / 10,
       nodes: after.nodes - before.nodes,
       listeners: after.listeners - before.listeners,
-      leafletLayers: after.leafletLayers - before.leafletLayers,
+      mapMarkers: after.mapMarkers - before.mapMarkers,
     },
   };
 }

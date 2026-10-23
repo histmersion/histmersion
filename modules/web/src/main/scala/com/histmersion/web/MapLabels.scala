@@ -3,7 +3,8 @@ package com.histmersion.web
 import com.histmersion.core.UiConfig
 import com.histmersion.web.LabelMotion.Motion
 import com.histmersion.web.LabelPlacement.{Pt, Rect}
-import com.histmersion.web.leaflet.*
+import com.histmersion.core.MapStack
+import com.histmersion.web.map.*
 import com.raquo.laminar.api.L.Owner
 import org.scalajs.dom
 
@@ -13,7 +14,7 @@ import scala.util.Try
 
 /** The NAMES on the map: every region and polity on the boundaries layer is named, and the names that
   * would collide are thinned out, events first, then larger shapes ([[LabelPlacement]] decides where
-  * and which, [[LabelMotion]] how they move; this object applies both to Leaflet).
+  * and which, [[LabelMotion]] how they move; this object applies both to the map).
   *
   *   - an area's name sits at its home (the pole of inaccessibility of its main part, or of an
   *     archipelago's hull), computed once per shape (cached by its id and outline). When that is off
@@ -37,27 +38,31 @@ import scala.util.Try
   *     goes. Only its name is culled, never its dot. Point and event names fade and grow through a CSS
   *     transition on `.is-culled`;
   *   - the names' colours follow the base map's tone ([[MapTone]]): `.map-tone-light` /
-  *     `.map-tone-dark` on the map container, halo text either way (`style.css`). */
+  *     `.map-tone-dark` on the map container, halo text either way (`style.css`);
+  *   - an area's name is the keyboard's way to the area (its shape is on the map's canvas): a button
+  *     that shows the place's card and chooses it ([[PlaceHover.bindName]]). */
 object MapLabels:
 
-  /** The Leaflet pane the area names are drawn in: above the shapes, below the markers, and never a
-    * pointer target (the shape under a name answers the pointer). */
-  val Pane = MapPanes.Labels
+  /** The pane the area names are drawn in: above the shapes, below the markers, and never a pointer
+    * target (the shape under a name answers the pointer). */
+  private def pane = TheMap.pane(MapStack.Pane.Labels)
 
   // `var`s: the one map, and the frames queued for it
-  private var map: LeafletMap = null
+  private var map: MapSurface = null
   private var queued = false
   private var looping = false
 
-  private val areaLayer = FadingLayer()
+  // the area names on the map, by key, and whether the boundaries layer (theirs) is on
+  private val areaMarkers = mutable.LinkedHashMap.empty[String, DomMarker]
+  private var areasOn = false
 
   /** A name the pass places: its anchor, its rank (an area's zoom-0 size; a point label ranks below
-    * every area, an event above), the shape it names (areas only), its element once Leaflet has drawn
+    * every area, an event above), the shape it names (areas only), its element once it is drawn
     * it, and (events) its marker's element, whose corner IS the anchor — an event's name is beside its
     * dot, stacked under another event's, so the pass measures where it actually is. */
-  private final class Entry(val latlng: LatLng, val rank: Double, val shape: Option[LabelPlacement.Shape],
+  private final class Entry(val latlng: LatLon, val rank: Double, val shape: Option[LabelPlacement.Shape],
       val el: () => Option[dom.HTMLElement], val anchorEl: Option[() => Option[dom.HTMLElement]] = None,
-      val marker: Option[Marker] = None)
+      val marker: Option[DomMarker] = None)
 
   private val entries = mutable.LinkedHashMap.empty[String, Entry]
 
@@ -98,34 +103,32 @@ object MapLabels:
   private var settledZoom = 0.0
   private var settled = false
   private var moving = false
-  private var flight: Option[(LabelMotion.ZoomFlight, Double)] = None
   private var lastFrame = 0.0
 
-  def install(m: LeafletMap, ui: UiConfig)(using Owner): Unit =
+  def install(m: MapSurface, ui: UiConfig)(using Owner): Unit =
     map = m
-    MapPanes.ensure(m)
-    // a pan or a zoom: the frames ease the names along; its END places them exactly (the pass)
-    m.on("movestart", (_: LeafletEvent) => { moving = true; settled = false; loop() })
-    m.on("zoomstart", (_: LeafletEvent) => { moving = true; settled = false; loop() })
-    m.on("zoomanim", (e: LeafletEvent) => startFlight(e))
-    m.on("zoomend", (_: LeafletEvent) => flight = None)
-    m.on("moveend", (_: LeafletEvent) => { moving = false; flight = None; schedule() })
+    // a pan or a zoom: the frames ease the names along (every frame reads the map's own view); its END
+    // places them exactly (the pass)
+    m.on(MapEventKind.MoveStart)(_ => { moving = true; settled = false; loop() })
+    m.on(MapEventKind.ZoomStart)(_ => { moving = true; settled = false; loop() })
+    m.on(MapEventKind.MoveEnd)(_ => { moving = false; schedule() })
     val configured = MapTone.parse(ui.tilesTone)
-    TerrainMap.shown.signal.combineWith(TerrainMap.tone.signal).foreach { (b, terrain) =>
-      val c = m.getContainer().classList
-      val dark = BaseMap.tone(b, configured, terrain) == MapTone.Dark
+    BaseMaps.shown.signal.foreach { b =>
+      val c = m.container.classList
+      val dark = BaseMap.tone(b, configured) == MapTone.Dark
       c.toggle("map-tone-dark", dark)
       c.toggle("map-tone-light", !dark)
-      c.toggle("map-tiles-dark", BaseMap.darkened(b, configured))
     }
 
   /** The area names follow the boundaries layer: shown with it, gone with it. */
-  def attach(): Unit = if map != null then areaLayer.attach(map)
+  def attach(): Unit = areasOn = true
 
   def detach(): Unit =
     generation += 1   // the slices still placing names stop
+    areasOn = false
     if map != null then
-      areaLayer.detach(map)
+      areaMarkers.values.foreach(pane.remove)
+      areaMarkers.clear()
       entries.filterInPlace((k, _) => !k.startsWith(AreaKey))
       state.filterInPlace((k, _) => !k.startsWith(AreaKey))
 
@@ -142,9 +145,10 @@ object MapLabels:
     * once all are placed (#1949): a whole range's 1 600 new shapes took one ~300 ms task, during which no
     * input was answered. A newer call (or the layer switched off) stops the slices of an older one. */
   def syncAreas(features: Seq[js.Dynamic], key: js.Dynamic => String, label: js.Dynamic => String,
-      wrapClass: js.Dynamic => String, release: js.Dynamic => Unit = _ => ()): Unit =
+      wrapClass: js.Dynamic => String, place: js.Dynamic => Option[(String, String, String)],
+      asOf: () => Option[Long], release: js.Dynamic => Unit = _ => ()): Unit =
     generation += 1
-    if map == null || !areaLayer.isAttached then features.foreach(release)
+    if map == null || !areasOn then features.foreach(release)
     else
       val mine = generation
       val known = mutable.LinkedHashMap.empty[js.Dynamic, LabelPlacement.Shape]
@@ -155,7 +159,7 @@ object MapLabels:
           case None    => todo += f
       }
       def name(): Unit =
-        applyAreas(features.flatMap(f => known.get(f).map(f -> _)), key, label, wrapClass)
+        applyAreas(features.flatMap(f => known.get(f).map(f -> _)), key, label, wrapClass, place, asOf)
       name()
       def slice(): Unit =
         if mine != generation then { todo.foreach(release); todo.clear() }
@@ -177,54 +181,72 @@ object MapLabels:
   // `var`: the newest [[syncAreas]] call; an older one's slices stop
   private var generation = 0
 
-  /** The names of `named` (the areas whose place is known), the others' names gone. */
+  /** The names of `named` (the areas whose place is known), the others' names gone (fading out). */
   private def applyAreas(named: Seq[(js.Dynamic, LabelPlacement.Shape)], key: js.Dynamic => String,
-      label: js.Dynamic => String, wrapClass: js.Dynamic => String): Unit =
-    if map != null && areaLayer.isAttached then
+      label: js.Dynamic => String, wrapClass: js.Dynamic => String, place: js.Dynamic => Option[(String, String, String)],
+      asOf: () => Option[Long]): Unit =
+    if map != null && areasOn then
       val keep = named.map((f, _) => AreaKey + key(f)).toSet
       entries.filterInPlace((k, _) => !k.startsWith(AreaKey) || keep(k))
       state.filterInPlace((k, _) => !k.startsWith(AreaKey) || keep(k))
-      areaLayer.sync[(js.Dynamic, LabelPlacement.Shape)](
-        named,
-        key = (f, _) => AreaKey + key(f),
-        create = (f, s) =>
-          val k = AreaKey + key(f)
-          val m = areaMarker(s, label(f), wrapClass(f))
-          state.remove(k)   // a new element: it fades in from nothing
-          register(k, m, s)
-          m,
-        update = (lyr, fs) =>
-          val (f, s) = fs
-          val k = AreaKey + key(f)
-          val m = lyr.asInstanceOf[Marker]
-          val at = m.getLatLng()
-          // a new outline moves the home; the name stays where it is drawn and glides from there
-          if at.lat != s.lat || at.lng != s.lon then
-            m.setLatLng(js.Array(s.lat, s.lon))
-            state.get(k).foreach(st => inner(m).foreach(el => render(st, el, s, math.pow(2, zoomNow()))))
-          register(k, m, s)
-      )
+      areaMarkers.filterInPlace { (k, m) =>
+        val stays = keep(k)
+        if !stays then
+          m.el.classList.add(FadingLayer.fadeOut.value)
+          dom.window.setTimeout(() => pane.remove(m), com.histmersion.web.ui.Layout.exitAnimMs)
+        stays
+      }
+      // the names new to the map are made a slice at a time (a whole range's 1 600 at once was one long
+      // task); the ones on the map already are moved at once
+      val fresh = scala.collection.mutable.Queue.empty[(js.Dynamic, LabelPlacement.Shape)]
+      val mine = generation
+      named.foreach { (f, s) =>
+        val k = AreaKey + key(f)
+        areaMarkers.get(k) match
+          case Some(m) =>
+            // a new outline moves the home; the name stays where it is drawn and glides from there
+            if m.lat != s.lat || m.lon != s.lon then
+              m.setLatLng(s.lat, s.lon)
+              state.get(k).foreach(st => inner(m).foreach(el => render(st, el, s, math.pow(2, zoomNow()))))
+            register(k, m, s)
+          case None => fresh += ((f, s))
+      }
+      def make(): Unit =
+        if mine == generation && areasOn then
+          val t0 = now()
+          while fresh.nonEmpty && now() - t0 < SliceMs do
+            val (f, s) = fresh.dequeue()
+            val k = AreaKey + key(f)
+            if !areaMarkers.contains(k) then
+              val m = areaMarker(s, label(f), wrapClass(f))
+              place(f).foreach((id, l, kind) => PlaceHover.bindName(m, id, l, kind, asOf))
+              state.remove(k)   // a new element: it fades in from nothing
+              areaMarkers(k) = m
+              pane.add(m)
+              register(k, m, s)
+          schedule()
+          if fresh.nonEmpty then { val _ = dom.window.setTimeout(() => make(), 0) }
+      make()
       schedule()
 
   /** A point-only label ([[PlaceGlyph.labelMarker]]) takes part in the pass while it is on the map. */
-  def trackPoint(marker: Marker, key: String): Unit =
+  def trackPoint(marker: DomMarker, key: String): Unit =
     val k = PointKey + key
-    marker.on("add", (_: LeafletEvent) =>
-      entries(k) = Entry(marker.getLatLng(), -1.0, None, () => inner(marker))
+    marker.onAdded(() =>
+      entries(k) = Entry(marker.at, -1.0, None, () => inner(marker))
       state.remove(k)
       schedule())
-    marker.on("remove", (_: LeafletEvent) =>
-      // a FadingLayer removes the old marker after the new one of the same key was added
-      entries.get(k).foreach(e => if e.latlng eq marker.getLatLng() then { entries.remove(k); state.remove(k) })
-      ())
+    marker.onRemoved(() =>
+      // a newer marker of the same key may have taken its place already
+      entries.get(k).foreach(e => if e.el().forall(el => !el.isConnected) then { entries.remove(k); state.remove(k) }))
 
   /** An event's name ([[EventLayer]]) takes part in the pass while it is shown: `label` is its name
     * element (what a cull hides), `marker` its marker. Added hidden (`is-culled`, so it never flashes
     * over another name); without a map pass it is simply shown. */
-  def trackEvent(key: String, marker: Marker, rank: Double, label: () => Option[dom.HTMLElement]): Unit =
+  def trackEvent(key: String, marker: DomMarker, rank: Double, label: () => Option[dom.HTMLElement]): Unit =
     if map == null then label().foreach(_.classList.remove(Culled))
     else
-      entries(EventKey + key) = Entry(marker.getLatLng(), rank, None, label, Some(() => element(marker)))
+      entries(EventKey + key) = Entry(marker.at, rank, None, label, Some(() => Some(marker.el)))
       state.remove(EventKey + key)
       schedule()
 
@@ -240,28 +262,15 @@ object MapLabels:
     state.filterInPlace((k, _) => !k.startsWith(EventKey))
     if entries.size != before then schedule()
 
-  private def register(k: String, m: Marker, s: LabelPlacement.Shape): Unit =
-    entries(k) = Entry(m.getLatLng(), s.size0, Some(s), () => inner(m), marker = Some(m))
+  private def register(k: String, m: DomMarker, s: LabelPlacement.Shape): Unit =
+    entries(k) = Entry(m.at, s.size0, Some(s), () => inner(m), marker = Some(m))
 
-  private def inner(m: Marker): Option[dom.HTMLElement] =
-    element(m).flatMap(el => Option(el.firstElementChild)).map(_.asInstanceOf[dom.HTMLElement])
+  private def inner(m: DomMarker): Option[dom.HTMLElement] =
+    Option(m.el.firstElementChild).map(_.asInstanceOf[dom.HTMLElement])
 
-  private def element(m: Marker): Option[dom.HTMLElement] =
-    val el = m.asInstanceOf[js.Dynamic].getElement()
-    if js.isUndefined(el) || el == null then None else Some(el.asInstanceOf[dom.HTMLElement])
-
-  private def areaMarker(s: LabelPlacement.Shape, label: String, wrapClass: String): Marker =
-    L.marker(js.Array(s.lat, s.lon), js.Dynamic.literal(
-      pane = Pane,
-      interactive = false,
-      keyboard = false,
-      icon = L.divIcon(js.Dynamic.literal(
-        className = wrapClass,
-        iconSize = null,
-        // hidden until the first pass has sized and placed it; it then fades and grows in
-        html = s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label)}</span>"""
-      ).asInstanceOf[js.Object])
-    ).asInstanceOf[js.Object])
+  private def areaMarker(s: LabelPlacement.Shape, label: String, wrapClass: String): DomMarker =
+    // hidden until the first pass has sized and placed it; it then fades and grows in
+    DomMarker(s.lat, s.lon, DomMarker.element(wrapClass, s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label)}</span>"""))
 
   // ── shapes ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -327,8 +336,8 @@ object MapLabels:
   private val Culled = "is-culled"
   private val TierClasses = LabelPlacement.Tier.values.map(_.css)
 
-  /** The map's zoom now — fractional in a pinch. */
-  private def zoomNow(): Double = map.zoomLevel()
+  /** The map's zoom now (the raster grid's) — fractional in a zoom. */
+  private def zoomNow(): Double = map.zoom
 
   private def reducedMotion(): Boolean =
     Try(dom.window.matchMedia("(prefers-reduced-motion: reduce)").matches).getOrElse(false)
@@ -336,8 +345,10 @@ object MapLabels:
   /** The settled viewport in the zoom-0 plane. */
   private def viewNow(zoom: Double): Rect =
     val scale = math.pow(2, zoom)
-    val pb = map.getPixelBounds()
-    Rect(pb.min.x / scale, pb.min.y / scale, pb.max.x / scale, pb.max.y / scale)
+    val c = map.center
+    val p = LabelPlacement.project(c.lat, c.lon)
+    val (w, h) = map.size
+    Rect(p.x - w / 2 / scale, p.y - h / 2 / scale, p.x + w / 2 / scale, p.y + h / 2 / scale)
 
   /** Size every name for the zoom (writes), measure them (one layout), place the area names exactly in
     * the settled viewport (pure), then draw the first frame of the result. */
@@ -411,21 +422,8 @@ object MapLabels:
     val t = now()
     val busy = frame(t, reducedMotion())
     timed("hd-label-frame", t)
-    if busy || moving || flight.isDefined then dom.window.requestAnimationFrame(tick)
+    if busy || moving then dom.window.requestAnimationFrame(tick)
     else looping = false
-
-  /** A zoom animation starts: the frames follow Leaflet's own easing to the target view. */
-  private def startFlight(e: LeafletEvent): Unit =
-    val d = e.asInstanceOf[js.Dynamic]
-    val c = d.center.asInstanceOf[LatLng]
-    val z1 = d.zoom.asInstanceOf[Double]
-    val z0 = zoomNow()
-    val size = map.asInstanceOf[js.Dynamic].getSize()
-    flight = Some((LabelMotion.ZoomFlight(viewNow(z0), z0, LabelPlacement.project(c.lat, c.lng), z1,
-      size.x.asInstanceOf[Double], size.y.asInstanceOf[Double]), now()))
-    moving = true
-    settled = false
-    loop()
 
   /** One frame: every name's target (cheap), the cull, the easing, and the writes of what changed.
     * `true` while some name is still on its way. */
@@ -434,9 +432,8 @@ object MapLabels:
     else
       val dt = math.max(0.0, math.min(0.1, (t - lastFrame) / 1000.0))
       lastFrame = t
-      val (view, z) = flight match
-        case Some((f, t0)) => f.at(LabelMotion.zoomEase((t - t0) / 1000.0 / LabelMotion.ZoomSec))
-        case None          => val z = zoomNow(); (viewNow(z), z)
+      val z = zoomNow()
+      val view = viewNow(z)
       val scale = math.pow(2, z)
       val far = PlaceGlyph.far(math.round(z).toInt)
       val zs = LabelMotion.zoomScale(z, settledZoom, reduced)
@@ -455,7 +452,7 @@ object MapLabels:
             case None =>
               if far && e.anchorEl.isEmpty then None
               else
-                val p = LabelPlacement.project(e.latlng.lat, e.latlng.lng)
+                val p = LabelPlacement.project(e.latlng.lat, e.latlng.lon)
                 Some(LabelPlacement.Box(k, p.x * scale + st.ox, p.y * scale + st.oy, st.w, st.h, e.rank))
       }
       // 2. which are shown (a shown name keeps its slot until the overlap is clear)

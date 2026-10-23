@@ -1,10 +1,9 @@
 package com.histmersion.web
 
 import com.histmersion.core.PlaceShape
-import com.histmersion.web.leaflet.*
+import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 
-import scala.scalajs.js
 
 /** How a gazetteer place is drawn on the map, from its kind and its geometry:
   *   - [[Area]]: a polygon — its outline, as before;
@@ -47,24 +46,15 @@ object PlaceGlyph:
   /** Pure: is the map zoomed out too far for point-only region labels? */
   def far(zoom: Int): Boolean = zoom < Layout.areaLabelMinZoom
 
-  /** The label marker of a point-only region at (`lat`, `lon`). Its look is `.hd-area-point`. */
+  /** The label marker of a point-only region at (`lat`, `lon`). Its look is `.hd-area-point`; it is
+    * drawn in the area-points pane (a region's name: above the shapes, below every dot). */
   def labelMarker(lat: Double, lon: Double, label: String, kind: String = com.histmersion.core.PlaceKind.Region,
-      wrapClass: String = "hd-area-point-wrap", hidden: Boolean = false): Marker =
-    L.marker(js.Array(lat, lon), js.Dynamic.literal(
-      icon = L.divIcon(js.Dynamic.literal(
-        className = wrapClass,
-        iconSize = null,
-        html = labelHtml(label, kind, hidden)
-      ).asInstanceOf[js.Object]),
-      pane = MapPanes.AreaPoints,   // a region's name: above the shapes, below every dot
-      keyboard = false
-    ).asInstanceOf[js.Object])
+      wrapClass: String = "hd-area-point-wrap", hidden: Boolean = false): DomMarker =
+    DomMarker(lat, lon, DomMarker.element(wrapClass, labelHtml(label, kind, hidden)))
 
   /** Keep the map container's `map-far` class equal to [[far]] of its zoom (the stylesheet hides
     * point-only region labels under it). */
-  def followZoom(map: LeafletMap): Unit =
-    def sync(): Unit =
-      val c = map.getContainer()
-      if far(map.getZoom()) then c.classList.add("map-far") else c.classList.remove("map-far")
+  def followZoom(map: MapSurface): Unit =
+    def sync(): Unit = map.container.classList.toggle("map-far", far(math.round(map.zoom).toInt))
     sync()
-    map.on("zoomend", (_: LeafletEvent) => sync())
+    val _ = map.on(MapEventKind.ZoomEnd)(_ => sync())

@@ -7,7 +7,7 @@ import sttp.model.{Header, HeaderNames, StatusCode}
 /** The terrain base map's endpoints ([[Basemap]]). Kept next to [[Api]] (which appends
   * `BasemapApi.all`), like [[UiApi]]. Definitions only.
   *
-  * REST and the CLI (`histmersion basemap status|styles|fetch|rm`), no MCP tool — deliberately, like
+  * REST and the CLI (`histmersion basemap status|fetch|rm`), no MCP tool — deliberately, like
   * `GET /api/config`: the base map is display data for the web page on this machine, of no use to
   * an agent reading the corpus. */
 object BasemapApi:
@@ -55,21 +55,6 @@ object BasemapApi:
       .out(header[String](HeaderNames.CacheControl))
       .out(statusCode)
 
-  /** `GET /api/basemap/styles` — the terrain map's named styles (the built-in ones, with the user's
-    * style file over them when it is valid), checked and resolved; what was refused is in `warnings`. */
-  val styles: PublicEndpoint[Unit, ApiError, TerrainStyles, Any] =
-    endpoint.get.in("api" / "basemap" / "styles").errorOut(jsonBody[ApiError]).out(jsonBody[TerrainStyles])
-
-  /** `GET /api/basemap/styles/example` — the built-in style document, commented: a start for one's own. */
-  val stylesExample: PublicEndpoint[Unit, ApiError, String, Any] =
-    endpoint.get.in("api" / "basemap" / "styles" / "example").errorOut(jsonBody[ApiError]).out(stringBody)
-
-  /** `POST /api/basemap/styles/check` — a style document (HOCON or JSON, the body) checked over the
-    * built-in styles, NOT used: what it would show, or its errors. */
-  val stylesCheck: PublicEndpoint[String, ApiError, TerrainStyleCheck, Any] =
-    endpoint.post.in("api" / "basemap" / "styles" / "check").in(stringBody)
-      .errorOut(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError])).out(jsonBody[TerrainStyleCheck])
-
   /** 503 while a restore holds the maintenance lock, 409 when a fetch runs already, 400 otherwise. */
   private def fetchErrors =
     oneOf[ApiError](
@@ -85,4 +70,4 @@ object BasemapApi:
   def tileTemplate(layer: BasemapLayer, version: String): String =
     s"/api/basemap/${layer.wire}/{z}/{x}/{y}?v=$version"
 
-  val all: List[AnyEndpoint] = List(status, styles, stylesExample, stylesCheck, fetch, remove, tile)
+  val all: List[AnyEndpoint] = List(status, fetch, remove, tile)

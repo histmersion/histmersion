@@ -1,7 +1,8 @@
 package com.histmersion.web
 
 import com.histmersion.core.*
-import com.histmersion.web.leaflet.*
+import com.histmersion.core.MapStack
+import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.collection.mutable
@@ -81,33 +82,38 @@ object EventPlayback:
 object EventLayer:
 
   // `var`s: a shown event's visibility and stacking slot change frame by frame, in place
-  private final case class Shown(marker: Marker, outline: Option[Layer], var alpha: Double, var slot: Int)
+  private final case class Shown(marker: DomMarker, outline: Boolean, var alpha: Double, var slot: Int)
 
-  /** The Leaflet pane the labels go in: above the finding markers, so a cluster never hides an event. */
-  private val Pane = MapPanes.Events
+  /** The pane the labels go in: above the finding markers, so a bubble never hides an event. */
+  private def pane = TheMap.pane(MapStack.Pane.Events)
 
-  private var map: LeafletMap         = null
-  private var group: LayerGroup       = null
+  /** The regional events' outlines, drawn by the map (`ShapeSet` "event-outlines"). */
+  val OutlineSet = "event-outlines"
+  private def outlines: Option[ShapeSet] = Option.when(TheMap.isUp)(TheMap.surface.shapes(OutlineSet,
+    // `.hd-event-outline`'s look: the accent, dashed, faint — its strength the event's visibility
+    ShapeStyle(fillOpacity = 0.06, lineWidth = 1.5, lineOpacity = 0.55, colour = Some(com.histmersion.web.ui.ThemeTokens("--accent")),
+      dash = List(2.7, 2.7))))
+
+  private var running = false
   private var config: EventsUiConfig  = null
   private var items: Vector[(EventGeo, (Long, Long))] = Vector.empty
   // the events at each anchor, by start: who stacks over whom
   private var anchors: Map[String, Vector[String]] = Map.empty
   private val shown = mutable.HashMap.empty[String, Shown]
+  // the outlines drawn now, by event id, with their geometry
+  private val outlined = mutable.LinkedHashMap.empty[String, js.Any]
   // the events request a late answer must belong to: `stop` supersedes it
   private val latest = Latest()
   // the last frame drawn, so the events that arrive after it are drawn at once
   private var lastFrame: Option[(Long, Double)] = None
 
   /** Start: fetch the events of `query` and draw them at the next frame. */
-  def start(m: LeafletMap, cfg: EventsUiConfig, query: Api.EventQuery): Unit =
+  def start(cfg: EventsUiConfig, query: Api.EventQuery): Unit =
     stop()
-    map = m
+    running = true
     config = cfg
-    MapPanes.ensure(map)
-    group = L.layerGroup()
-    group.addTo(map)
     latest.onCurrent(ApiClient.eventsGeo(query))(_.foreach { list =>
-      if group != null then
+      if running then
         items = EventPlayback.playable(list.events)
         anchors = items.sortBy(_._2._1).groupMap((e, _) => EventPlayback.anchorKey(e))((e, _) => e.id)
         lastFrame.foreach((ph, yps) => frame(ph, yps))
@@ -116,26 +122,31 @@ object EventLayer:
   /** One frame: the playhead at `playhead`, playing `yearsPerSecond`. */
   def frame(playhead: Long, yearsPerSecond: Double): Unit =
     lastFrame = Some((playhead, yearsPerSecond))
-    if group != null && config != null then
+    if running && config != null && TheMap.isUp then
       val localFade    = EventPlayback.fadeYears(config.localFadeSeconds, yearsPerSecond)
       val regionalFade = EventPlayback.fadeYears(config.regionalFadeSeconds, yearsPerSecond)
       val moved = mutable.Set.empty[String]
+      var outlinesChanged = false
       items.foreach { (e, span) =>
         val fade = if e.scale == EventScale.Regional then regionalFade else localFade
         val a = EventPlayback.step(EventPlayback.alpha(span, playhead, fade))
         shown.get(e.id) match
           case None if a > 0 =>
-            shown(e.id) = add(e, span._1, a)
+            val s = add(e, span._1, a)
+            shown(e.id) = s
+            if s.outline then outlinesChanged = true
             moved += EventPlayback.anchorKey(e)
           case Some(s) if a <= 0 =>
             remove(e.id, s)
             shown.remove(e.id)
+            if s.outline then outlinesChanged = true
             moved += EventPlayback.anchorKey(e)
           case Some(s) if s.alpha != a =>
             s.alpha = a
-            setAlpha(s, a)
+            setAlpha(e.id, s, a)
           case _ => ()
       }
+      if outlinesChanged then drawOutlines()
       // only where an event came or went: the labels at that point are restacked
       moved.foreach { key =>
         EventPlayback.slots(anchors.getOrElse(key, Vector.empty), shown.contains).foreach { (id, slot) =>
@@ -151,64 +162,54 @@ object EventLayer:
   /** Stop: every event off the map. */
   def stop(): Unit =
     latest.cancel()
-    if group != null && map != null then map.removeLayer(group)
+    running = false
+    if TheMap.isUp then shown.values.foreach(s => pane.remove(s.marker))
     MapLabels.untrackEvents()
-    group = null
     items = Vector.empty
     anchors = Map.empty
     shown.clear()
+    outlined.clear()
+    outlines.foreach(_.clear())
     lastFrame = None
 
+  private def drawOutlines(): Unit =
+    outlines.foreach(_.set(outlined.toSeq.map((id, g) => ShapeFeature(id, g, dashed = true, alpha = shown.get(id).fold(0.0)(_.alpha)))))
+
   private def add(e: EventGeo, start: Long, a: Double): Shown =
-    val outline = e.outline.filter(_ => e.scale == EventScale.Regional).map { geometry =>
-      val layer = L.geoJSON(js.JSON.parse(geometry), js.Dynamic.literal(
-        pane = MapPanes.Areas,
-        // its look is `path.hd-event-outline`; the visibility crosses as `--a`
-        style = { (_: js.Dynamic) => js.Dynamic.literal(className = "hd-event-outline", interactive = false) }
-          : js.Function1[js.Dynamic, js.Dynamic],
-        interactive = false
-      ).asInstanceOf[js.Object])
-      group.addLayer(layer)
-      layer
-    }
-    val marker = L.marker(js.Array(e.lat, e.lon), js.Dynamic.literal(
-      icon = L.divIcon(js.Dynamic.literal(
-        className = "hd-event-wrap", iconSize = null, html = EventPlayback.html(e, a)).asInstanceOf[js.Object]),
-      keyboard = false,
-      interactive = false,
-      pane = Pane,
-      // a regional label under the local ones: the battle stays readable inside its war
-      zIndexOffset = if e.scale == EventScale.Regional then -1000 else 1000
-    ).asInstanceOf[js.Object])
-    group.addLayer(marker)
+    val outline = e.outline.filter(_ => e.scale == EventScale.Regional).flatMap { geometry =>
+      scala.util.Try(js.JSON.parse(geometry)).toOption.map { g =>
+        // a Feature or a bare geometry
+        val geom = if !js.isUndefined(g.geometry) then g.geometry else g
+        outlined(e.id) = geom
+        true
+      }
+    }.getOrElse(false)
+    val el = DomMarker.element("hd-event-wrap", EventPlayback.html(e, a))
+    val marker = DomMarker(e.lat, e.lon, el)
+    // a regional label under the local ones: the battle stays readable inside its war
+    marker.setZ(if e.scale == EventScale.Regional then 1 else 2)
+    pane.add(marker)
     val s = Shown(marker, outline, a, 0)
     MapLabels.trackEvent(e.id, marker, EventPlayback.rank(e, start), () => nameOf(s))
     s
 
   private def remove(id: String, s: Shown): Unit =
     MapLabels.untrackEvent(id)
-    group.removeLayer(s.marker)
-    s.outline.foreach(group.removeLayer)
+    pane.remove(s.marker)
+    outlined.remove(id)
 
-  /** The label's element (`.hd-event`), once Leaflet has drawn it. */
+  /** The label's element (`.hd-event`). */
   private def labelOf(s: Shown): Option[dom.html.Element] =
-    val m = s.marker.asInstanceOf[js.Dynamic].getElement()
-    if js.isUndefined(m) || m == null then None
-    else Option(m.asInstanceOf[dom.Element].querySelector(".hd-event")).map(_.asInstanceOf[dom.html.Element])
+    Option(s.marker.el.querySelector(".hd-event")).map(_.asInstanceOf[dom.html.Element])
 
   /** The label's name (`.hd-area-point`): what the collision pass hides, leaving the dot. */
   private def nameOf(s: Shown): Option[dom.HTMLElement] =
     labelOf(s).flatMap(l => Option(l.querySelector(".hd-area-point"))).map(_.asInstanceOf[dom.HTMLElement])
 
-  /** The visibility, as `--a`, on the label and on the outline's paths. */
-  private def setAlpha(s: Shown, a: Double): Unit =
+  /** The visibility, as `--a` on the label and the outline's own. */
+  private def setAlpha(id: String, s: Shown, a: Double): Unit =
     labelOf(s).foreach(_.style.setProperty("--a", a.toString))
-    s.outline.foreach { o =>
-      o.asInstanceOf[GeoJSONLayer].getLayers().foreach { l =>
-        val el = l.asInstanceOf[js.Dynamic].getElement()
-        if !js.isUndefined(el) && el != null then el.asInstanceOf[dom.html.Element].style.setProperty("--a", a.toString)
-      }
-    }
+    if s.outline then outlines.foreach(_.restyle(id, "", a))
 
   /** The stacking slot, as `--i`, on the label. */
   private def setSlot(s: Shown, slot: Int): Unit =

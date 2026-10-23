@@ -2,7 +2,8 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.core.*
-import com.histmersion.web.leaflet.*
+import com.histmersion.core.MapStack
+import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -17,7 +18,7 @@ import com.raquo.laminar.codecs.StringAsIsCodec
   *
   * Two kinds of chips: gazetteer ids (`UiState.placeIds`) and free-text names (`UiState.places`).
   * Suggestions come from `ApiClient.places(q, asOf, limit)`. Selected places draw polygons on the
-  * map via `L.geoJSON` on a `LayerGroup`. */
+  * map as shapes ([[ShapeSet]] "place-pick"). */
 object PlacesInput:
 
   /** Cached label/kind/contested for gazetteer ids. */
@@ -69,8 +70,13 @@ object PlacesInput:
       gazChips ++ textChips
     }
 
-  private var layer: LayerGroup    = null
-  private var previewLayer: LayerGroup = null
+  // the chosen places' and the previewed place's drawing: shapes on the map, a point-only region's name
+  // as a marker; `layer` is whether the map is up for them
+  private var layer: Boolean       = false
+  private val pickNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
+  private val previewNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
+  private val drawnPlaces = scala.collection.mutable.HashMap.empty[String, (String, String, String)]
+  private var previewShown = false
   private var previewId: String    = null
   private var drawn: String        = ""
   private var uiConfig: UiConfig   = null
@@ -165,73 +171,62 @@ object PlacesInput:
 
   // ── polygon overlay ────────────────────────────────────────────────────────
 
+  /** The chosen places' shapes (`.hd-place-pick`'s colour; a disputed extent dashed and fainter), and
+    * the hovered suggestion's (`.hd-place-preview`, dotted). A point is drawn as a site's dot. */
+  private def pickSet: ShapeSet = TheMap.surface.shapes("place-pick", ShapeStyle(fillOpacity = 0.06, lineWidth = 2, lineOpacity = 0.9,
+    colour = Some(com.histmersion.web.ui.ThemeTokens("--place-pick")), dash = List(4, 3), dashedLineOpacity = Some(0.7),
+    circleRadius = uiConfig.markerRadius.toDouble, interactive = true))
+  private def previewSet: ShapeSet = TheMap.surface.shapes("place-preview", ShapeStyle(fillOpacity = 0.05, lineWidth = 2, lineOpacity = 0.9,
+    colour = Some(com.histmersion.web.ui.ThemeTokens("--place-preview")), dash = List(1, 2),
+    circleRadius = uiConfig.markerRadius.toDouble, interactive = true))
+
+  /** A place's geometry on the map: its shape (a point-only region or a people: its name instead). */
+  private def drawPlace(id: String, d: PlaceDetail, geo: js.Dynamic, names: scala.collection.mutable.ListBuffer[DomMarker],
+      at: () => Option[Long]): Option[ShapeFeature] =
+    drawnPlaces(id) = (id, d.place.label, d.place.kind)
+    val t = if js.isUndefined(geo.selectDynamic("type")) then "" else geo.selectDynamic("type").toString
+    if (t == "Point" || t == "MultiPoint") && PlaceGlyph.of(d.place.kind, "Point") == PlaceGlyph.Label then
+      val c = if t == "Point" then geo.coordinates else geo.coordinates.selectDynamic("0")
+      val m = PlaceGlyph.labelMarker(c.selectDynamic("1").asInstanceOf[Double], c.selectDynamic("0").asInstanceOf[Double], d.place.label, d.place.kind)
+      PlaceHover.bind(m, id, d.place.label, d.place.kind, at)
+      TheMap.pane(MapStack.Pane.AreaPoints).add(m)
+      names += m
+      None
+    else Some(ShapeFeature(id, geo, dashed = d.contested))
+
+  private def clearNames(names: scala.collection.mutable.ListBuffer[DomMarker]): Unit =
+    names.foreach(m => TheMap.pane(MapStack.Pane.AreaPoints).remove(m))
+    names.clear()
+
   /** Draw every selected place's shape. Re-fetched when the selection or span changed. */
   private def draw(fit: Boolean): Unit =
-    if layer == null then ()
+    if !layer then ()
     else
       val key = js.JSON.stringify(js.Array(ids().toJSArray, asOf().map(_.toDouble).getOrElse(0.0): js.Any))
       if key == drawn then ()
       else
         drawn = key
-        layer.clearLayers()
         val currentIds = ids()
         val pending: List[Future[Option[(String, PlaceDetail)]]] = currentIds.map { id =>
           ApiClient.place(id, asOf()).map(detail => Some((id, detail))).recover { case _ => None }
         }
         Future.sequence(pending).foreach { results =>
-          val bounds = scala.collection.mutable.ListBuffer.empty[LatLngBounds]
-          results.flatten.foreach { pair =>
-            val (id, d) = pair
-            learn(id, KnownPlace(d.place.label, d.place.kind, d.contested))
-            d.geometry.foreach { geoStr =>
-              val geo = js.JSON.parse(geoStr)
-              val uncertain = d.contested
-              val style = js.Dynamic.literal(
-                className = "hd-place-pick",   // its colour: `.hd-place-pick` in the stylesheet
-                weight = (if uncertain then 1.5 else 2.0),
-                opacity = (if uncertain then 0.7 else 0.9),
-                fill = true,
-                fillOpacity = (if uncertain then 0.03 else 0.06),
-                dashArray = (if uncertain then "8 6" else null)
-              )
-              val opts = js.Dynamic.literal(
-                pane = MapPanes.Areas,   // the chosen region's outline never covers a dot inside it
-                style = style,
-                pointToLayer = pointLayer(d.place.kind, d.place.label, "hd-place-pick")
-              )
-              val g = L.geoJSON(geo, opts.asInstanceOf[js.Object])
-              // the chosen place answers like any place on the map: its card on hover, a click unchooses it
-              g.getLayers().foreach(l => PlaceHover.bind(l, id, d.place.label, d.place.kind, () => asOf()))
-              g.addTo(layer)
-              bounds += g.getBounds()
+          if drawn == key then
+            clearNames(pickNames)
+            val bounds = scala.collection.mutable.ListBuffer.empty[GeoBounds]
+            val shapes = results.flatten.flatMap { (id, d) =>
+              learn(id, KnownPlace(d.place.label, d.place.kind, d.contested))
+              d.geometry.flatMap { geoStr =>
+                val geo = js.JSON.parse(geoStr)
+                GeoBounds.ofGeometry(geo).foreach(bounds += _)
+                drawPlace(id, d, geo, pickNames, () => asOf())
+              }
             }
-          }
-          if fit && bounds.nonEmpty then
-            val all = bounds.reduceLeft((a, b) => a.extend(b))
-            if all.isValid() then
-              MapView.leafletMap.fitBounds(
-                all,
-                js.Dynamic.literal(padding = js.Array(20, 20), maxZoom = 9).asInstanceOf[js.Object]
-              )
+            pickSet.set(shapes)
+            if fit && bounds.nonEmpty then
+              val all = bounds.reduceLeft(_.extend(_))
+              if all.valid then TheMap.surface.fitBounds(all, 20, 9)
         }
-
-  /** A chosen (or previewed) place that is a POINT: a site, city or landmark — any source, a GeoNames
-    * or Wikidata one included — draws as a site-style dot; a region or polity with only a point has
-    * no boundary yet and draws as its name ([[PlaceGlyph]]). `cls` gives the colour. */
-  private def pointLayer(kind: String, label: String, cls: String): js.Function2[js.Any, js.Dynamic, Layer] =
-    (_: js.Any, latlng: js.Dynamic) =>
-      val (lat, lon) = (latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double])
-      PlaceGlyph.of(kind, "Point") match
-        case PlaceGlyph.Label => PlaceGlyph.labelMarker(lat, lon, label, kind)
-        case _ =>
-          L.circleMarker(js.Array(lat, lon), js.Dynamic.literal(
-            pane = MapPanes.Sites,
-            radius = uiConfig.markerRadius,
-            className = s"hd-site-marker $cls",   // the site layer's dot, in the pick's colour
-            weight = 2,
-            fill = true,
-            fillOpacity = 0.9
-          ).asInstanceOf[js.Object])
 
   // ── public API ─────────────────────────────────────────────────────────────
 
@@ -375,7 +370,10 @@ object PlacesInput:
       ),
       // Wire to state changes: redraw when ids/places change
       onMountCallback { _ =>
-        layer = L.layerGroup().addTo(MapView.leafletMap)
+        layer = TheMap.isUp
+        if layer then
+          PlaceHover.shapes("place-pick", PlaceHover.Places(drawnPlaces.get, () => asOf()))
+          PlaceHover.shapes("place-preview", PlaceHover.Places(drawnPlaces.get, () => asOf()))
         draw(fit = true)
 
         // Subscribe to UiState changes
@@ -400,43 +398,26 @@ object PlacesInput:
   /** Draw ONE place's shape as a TRANSIENT overlay and fit the map to it. Toggle behavior: same id
     * clears it. */
   def preview(id: String, asOfYear: Option[Long]): Unit =
-    if layer == null then ()
+    if !layer then ()
     else
-      if previewLayer == null then previewLayer = L.layerGroup().addTo(MapView.leafletMap)
-      val wasShowing = previewId == id && previewLayer.getLayers().length > 0
-      previewLayer.clearLayers()
+      val wasShowing = previewId == id && previewShown
+      previewSet.clear()
+      clearNames(previewNames)
+      previewShown = false
       if wasShowing then
         previewId = null
       else
         previewId = id
         val effectiveAsOf = asOfYear.orElse(asOf())
         ApiClient.place(id, effectiveAsOf).foreach { d =>
-          learn(id, KnownPlace(d.place.label, d.place.kind, d.contested))
-          d.geometry.foreach { geoStr =>
-            val geo = js.JSON.parse(geoStr)
-            val style = js.Dynamic.literal(
-              className = "hd-place-preview",   // its colour: `.hd-place-preview` in the stylesheet
-              weight = 2,
-              opacity = 0.9,
-              fill = true,
-              fillOpacity = 0.05,
-              dashArray = (if d.contested then "6 4" else "2 4")
-            )
-            val opts = js.Dynamic.literal(
-              pane = MapPanes.Areas,
-              style = style,
-              pointToLayer = pointLayer(d.place.kind, d.place.label, "hd-place-preview")
-            )
-            val g = L.geoJSON(geo, opts.asInstanceOf[js.Object])
-            g.getLayers().foreach(l => PlaceHover.bind(l, id, d.place.label, d.place.kind, () => effectiveAsOf))
-            g.addTo(previewLayer)
-            val bb = g.getBounds()
-            if bb.isValid() then
-              MapView.leafletMap.fitBounds(
-                bb,
-                js.Dynamic.literal(padding = js.Array(20, 20), maxZoom = 9).asInstanceOf[js.Object]
-              )
-          }
+          if previewId == id then
+            learn(id, KnownPlace(d.place.label, d.place.kind, d.contested))
+            d.geometry.foreach { geoStr =>
+              val geo = js.JSON.parse(geoStr)
+              previewSet.set(drawPlace(id, d, geo, previewNames, () => effectiveAsOf).map(_.copy(dashed = true)).toList)
+              previewShown = true
+              GeoBounds.ofGeometry(geo).filter(_.valid).foreach(bb => TheMap.surface.fitBounds(bb, 20, 9))
+            }
         }
 
   // `var`: the next redraw follows a place chosen on the map, so it must not fit the map to it

@@ -1,44 +1,41 @@
 package com.histmersion.core
 
-/** The map's stacking order, as data: every layer the web map draws goes into one of these Leaflet
-  * PANES, never into the shared default `overlayPane`, so what is on top does not depend on which
-  * request came back last. Inside one pane Leaflet stacks by insertion order — a region re-added on a
-  * period change used to land on top of the site dots drawn before it, in the same SVG, and take their
-  * clicks. Across panes the stylesheet's `z-index` decides, once.
+/** The map's stacking order, as data. The map draws its AREAS itself (region and polity shapes, the
+  * chosen place's outline, an event's outline: shapes on its canvas, under everything); every other
+  * thing it shows is a DOM marker in one of these PANES over the canvas, so what is on top does not
+  * depend on which request came back last.
   *
-  * The rule the order encodes: a POINT (a site dot, a finding marker or cluster, a media dot, an
-  * event) is always above an AREA (a region or polity shape, the chosen place's outline, an event's
-  * outline, the names of areas), so a dot inside a region answers the pointer and the region answers
-  * it everywhere else. Each pane's `z-index` is in `web/style.css` (`.leaflet-<name>-pane`; the marker
-  * pane's is Leaflet's own), checked against this order by `CssTokensSuite`. A pane that holds an SVG
-  * renderer lets the pointer through its empty area (`> svg { pointer-events:none }`): only its
-  * shapes are targets, so the SVG of the sites above never blankets the regions below. */
+  * The rule the order encodes: a POINT (a site, a finding marker or bubble, a picture, an event) is
+  * always above an AREA (a shape on the canvas, a region's name), so a dot inside a region answers the
+  * pointer and the region answers it everywhere else. Each pane's `z-index` is in `web/style.css`
+  * (`.hd-pane--<name>`), checked against this order by `CssTokensSuite`; a pane itself never catches
+  * the pointer (`pointer-events:none`), only its markers do. */
 object MapStack:
 
-  /** A pane, bottom to top. `point`: it holds point features (always above every area pane);
-    * `vector`: Leaflet draws SVG paths in it (its own renderer, whose root must not catch the pointer). */
-  enum Pane(val name: String, val point: Boolean, val vector: Boolean):
-    /** Region and polity shapes, the chosen or previewed place's outline, an event's outline. */
-    case Areas      extends Pane("hd-areas", point = false, vector = true)
+  /** A layer of the map, bottom to top. `point`: it holds point features (always above every area);
+    * `canvas`: drawn by the map on its canvas, not a DOM pane. */
+  enum Pane(val name: String, val point: Boolean, val canvas: Boolean):
+    /** Region and polity shapes, the chosen or previewed place's outline, an event's outline: the canvas. */
+    case Areas      extends Pane("areas", point = false, canvas = true)
     /** The name of a region, polity or people known only by a point (an interactive label). */
-    case AreaPoints extends Pane("hd-area-points", point = false, vector = false)
-    /** The names of areas (the web map's label pass) — never a pointer target. */
-    case Labels     extends Pane("hd-labels", point = false, vector = false)
+    case AreaPoints extends Pane("area-points", point = false, canvas = false)
+    /** The names of areas (the web map's label pass). */
+    case Labels     extends Pane("labels", point = false, canvas = false)
     /** Site dots (and a chosen place that is a point). */
-    case Sites      extends Pane("hd-sites", point = true, vector = true)
-    /** Leaflet's own marker pane: finding markers, clusters, media dots. */
-    case Markers    extends Pane("markerPane", point = true, vector = false)
-    /** Playback's event labels and dots — never a pointer target. */
-    case Events     extends Pane("hd-events", point = true, vector = false)
+    case Sites      extends Pane("sites", point = true, canvas = false)
+    /** Finding markers, bubbles, pictures. */
+    case Markers    extends Pane("markers", point = true, canvas = false)
+    /** The events: their markers, and playback's labels. */
+    case Events     extends Pane("events", point = true, canvas = false)
 
-    /** The class Leaflet gives the pane's element (`createPane`: `leaflet-<name without "Pane">-pane`). */
-    def cssClass: String = s"leaflet-${name.replace("Pane", "")}-pane"
-
-    /** Leaflet creates its own panes; the others the map creates once. */
-    def builtIn: Boolean = this == Markers
+    /** The pane element's class. */
+    def cssClass: String = s"hd-pane--$name"
 
   /** Bottom to top. */
   val order: List[Pane] = Pane.values.toList
+
+  /** The DOM panes, bottom to top. */
+  val domPanes: List[Pane] = order.filterNot(_.canvas)
 
   /** Pure: is the order sound — every point pane above every area pane? */
   def pointsAboveAreas(order: List[Pane]): Boolean =

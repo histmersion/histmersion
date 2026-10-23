@@ -82,7 +82,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(get(s"$url/vector/0/0/0").statusCode, 200)
     }
 
-  test("ui.base-map-source auto: online until the extract can draw the default preset whole, then local; a cut's properties"):
+  test("ui.base-map-source auto: online until the extract can draw a vector style whole, then local; a cut's properties"):
     val dir = Files.createTempDirectory("basemap-http")
     withServer(dir) { url =>
       val config = url.stripSuffix("/basemap") + "/config"
@@ -91,9 +91,9 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = 3,
         io.circe.Json.obj("histmersion" -> io.circe.Json.obj("drop" -> io.circe.Json.fromString("roads; places; boundaries"))))
       val st = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
-      assertEquals(st.missing("standard"), List("boundaries", "places", "roads"))
-      assertEquals(st.missing("natural"), Nil)
-      assertEquals(source(), "local", "the default preset (Natural) draws nothing the default drop list leaves out")
+      assertEquals(st.missing("readable"), List("boundaries", "places", "roads"))
+      assertEquals(st.missing("physical"), Nil)
+      assertEquals(source(), "local", "Physical draws nothing the default drop list leaves out")
       Thread.sleep(5)   // a new stamp: the archive is opened again
       BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = 3,
         io.circe.Json.obj("histmersion" -> io.circe.Json.obj("keepAll" -> io.circe.Json.True)))

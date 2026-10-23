@@ -152,7 +152,7 @@ object SourceLink:
       }
     )
 
-  /** The same anchor as an HTML string, for Leaflet popups (which take markup, not elements). */
+  /** The same anchor as an HTML string, for map popups (which take markup, not elements). */
   def html(citekey: String, doi: Option[String], label: String): String =
     HtmlAtoms.sourceLink(citekey, doi, label)
 
@@ -251,5 +251,5 @@ object ConfidenceBadge:
       span(cls := "conf-text", c.toString.toLowerCase)
     )
 
-  /** As an HTML string, for Leaflet popups — the server's markup, from [[HtmlAtoms]]. */
+  /** As an HTML string, for map popups — the server's markup, from [[HtmlAtoms]]. */
   def html(c: Confidence): String = HtmlAtoms.confidenceBadge(c)

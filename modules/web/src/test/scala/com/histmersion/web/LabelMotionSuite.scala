@@ -59,33 +59,3 @@ class LabelMotionSuite extends munit.FunSuite:
     // 80 px wide in the small class, 100 px in the next: drawn at 0.8 so the width is unchanged
     assertEqualsDouble(rebase(1.0, 80, 100, reduced = false) * 100, 80.0, 1e-9)
     assertEquals(rebase(1.0, 80, 100, reduced = true), 1.0)
-
-  test("zoom flight: starts at the old view, ends at the new one, scaling about one fixed point"):
-    // a 1280 × 768 map at zoom 5 is 40 × 24 zoom-0 units; zooming in about a point off its centre
-    val from = Rect(84, 91, 124, 115)
-    val f = ZoomFlight(from, 5, Pt(100, 100), 6, 1280, 768)
-    val (v0, z0) = f.at(0)
-    assertEqualsDouble(v0.minX, from.minX, 1e-9)
-    assertEqualsDouble(z0, 5.0, 1e-9)
-    val (v1, z1) = f.at(1)
-    assertEqualsDouble(v1.minX, f.to.minX, 1e-9)
-    assertEqualsDouble(v1.maxY, f.to.maxY, 1e-9)
-    assertEqualsDouble(z1, 6.0, 1e-9)
-    // one point stays put on screen all the way: the one Leaflet scales about
-    val fx = (2 * f.to.minX - from.minX) / (2 - 1)
-    for i <- 0 to 10 do
-      val (v, z) = f.at(i / 10.0)
-      assertEqualsDouble((fx - v.minX) * math.pow(2, z), (fx - from.minX) * 32, 1e-6)
-    // the view shrinks monotonically and the zoom rises
-    val zs = (0 to 10).map(i => f.at(i / 10.0)._2)
-    assertEquals(zs, zs.sorted)
-    // a pure move slides
-    val g = ZoomFlight(from, 5, Pt(114, 103), 5, 1280, 768)
-    assertEqualsDouble(g.at(0.5)._1.minX, 89.0, 1e-9)
-
-  test("zoom easing: Leaflet's curve, 0 → 1, monotonic, front-loaded"):
-    assertEqualsDouble(zoomEase(0), 0.0, 1e-6)
-    assertEqualsDouble(zoomEase(1), 1.0, 1e-6)
-    val ys = (0 to 20).map(i => zoomEase(i / 20.0))
-    assertEquals(ys, ys.sorted)
-    assert(zoomEase(0.5) > 0.75, zoomEase(0.5).toString)

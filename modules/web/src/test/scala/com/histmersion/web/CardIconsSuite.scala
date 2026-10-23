@@ -170,15 +170,6 @@ class CardIconsSuite extends munit.FunSuite:
     val round = DotCluster.bubbleHtml(4, 24, ("red", "blue"), "r", "", None)
     assert(!round.contains("<rect") && round.startsWith("""<span class="hd-dot hd-cluster" """), round)
 
-  test("the cluster group animates its zooms up to a number of points, and never without CSS transitions"):
-    assert(ClusterMotion.animates(500, 1000, transitions = true))
-    assert(ClusterMotion.animates(1000, 1000, transitions = true))
-    assert(!ClusterMotion.animates(1001, 1000, transitions = true))
-    assert(!ClusterMotion.animates(10, 1000, transitions = false))
-    // the findings of a span stay animated; the events layer's thousands do not
-    assert(ClusterMotion.animates(500, com.histmersion.web.ui.Layout.clusterAnimateMax, transitions = true))
-    assert(!ClusterMotion.animates(2400, com.histmersion.web.ui.Layout.clusterAnimateMax, transitions = true))
-
   test("a bubble's colours: the ramp's ends of its dates, the same twice when they agree or none is dated"):
     val span = (-2000L, 0L)
     def at(x: Double) = Fmt.desaturate(Fmt.color(x), Confidence.High)

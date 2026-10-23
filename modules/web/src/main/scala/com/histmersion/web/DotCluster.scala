@@ -1,7 +1,6 @@
 package com.histmersion.web
 
 import com.histmersion.core.*
-import com.histmersion.web.leaflet.*
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -121,18 +120,14 @@ object DotCluster:
   def mid(start: Option[Long], end: Option[Long]): Option[Double] =
     for a <- start; b <- end yield (a + b).toDouble / 2
 
-  // ── the members, as the map holds them (set by PointLayer) ────────────────────────────────────
+  // ── the members, as the map's cluster layer holds them ──────────────────────────────────────
 
-  def memberOf(m: js.Dynamic): Option[Member] =
-    if js.isUndefined(m.hdMember) then None else Some(m.hdMember.asInstanceOf[Member])
-
-  /** What the markers of a bubble hold. */
-  def contents(markers: js.Array[js.Dynamic]): Contents = Contents(markers.toList.flatMap(memberOf))
+  /** What the points of a bubble hold. */
+  def contents(dots: Seq[Dot]): Contents = Contents(dots.toList.map(_.member))
 
   /** The rows of a bubble's list that are not findings, each with how it opens. */
-  def others(markers: js.Array[js.Dynamic]): List[(DotEntry, dom.Element => Unit)] =
-    markers.toList.flatMap(m => memberOf(m).flatMap(_.entry).map(e =>
-      e -> m.hdOpen.asInstanceOf[js.Function1[dom.Element, Unit]].apply))
+  def others(dots: Seq[Dot]): List[(DotEntry, dom.Element => Unit)] =
+    dots.toList.flatMap(d => d.member.entry.map(e => e -> ((row: dom.Element) => d.layer.open(d, row))))
 
   /** Pure: the order of a bubble's list — by kind, then by name. */
   def ordered(others: List[(DotEntry, dom.Element => Unit)]): List[(DotEntry, dom.Element => Unit)] =
@@ -145,37 +140,3 @@ object DotCluster:
       val r = row.getBoundingClientRect()
       Preview.Anchor.Under(r.left, r.top, r.bottom, r.width)
     }, owner = Some(row), keyboard = keyboard)
-
-/** The cluster group's zoom animation, switched by how many points it holds (#1647). Leaflet.markercluster
-  * animates every bubble splitting and merging on a zoom — a forced layout and the icons in view drawn
-  * twice, 40–60 ms tasks among ~3 000 points (docs/research-web-perf.md) — and fixes that choice when the
-  * group is made. Both of its method sets (`_withAnimation`, `_noAnimation`) are the plugin's own, mixed
-  * in at construction; [[follow]] mixes in the other one as a zoom starts — before the group's `zoomend`
-  * handler runs either. An animation still queued then ends as it began: its closing step (`_animationEnd`,
-  * which both sets share) is already in the group's queue, and the next zoom flushes that queue first.
-  * (The plugin leaves that step queued until the next zoom, so "wait until it is idle" would wait for a
-  * zoom that animates.) */
-object ClusterMotion:
-  /** Pure: does a group of `n` points animate its zooms? Up to `max`, and only where the browser has CSS
-    * transitions (the plugin's own condition). */
-  def animates(n: Int, max: Int, transitions: Boolean): Boolean = transitions && n <= max
-
-  private def transitions: Boolean =
-    val t = js.Dynamic.global.L.DomUtil.TRANSITION
-    // Leaflet's name of the transition property, or `false` without one
-    js.typeOf(t) == "string" && t.asInstanceOf[String].nonEmpty
-
-  /** Whether `group` animates its zooms now. */
-  def animating(group: MarkerClusterGroup): Boolean =
-    val g = group.asInstanceOf[js.Dynamic]
-    if js.isUndefined(g.hdAnimates) then transitions && g.options.animate.asInstanceOf[Boolean]
-    else g.hdAnimates.asInstanceOf[Boolean]
-
-  /** As a zoom starts: the animation for the points `group` holds now. */
-  def follow(group: MarkerClusterGroup, max: Int): Unit =
-    val g = group.asInstanceOf[js.Dynamic]
-    if !js.isUndefined(g._noAnimation) && !js.isUndefined(g._withAnimation) then
-      val on = animates(group.getLayers().length, max, transitions)
-      if on != animating(group) then
-        val _ = js.Dynamic.global.L.extend(g, if on then g._withAnimation else g._noAnimation)
-        g.hdAnimates = on

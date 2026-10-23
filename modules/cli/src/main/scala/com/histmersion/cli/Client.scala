@@ -247,9 +247,6 @@ final class Client(val serverUrl: String, token: Option[String] = None):
   def basemapStatus(): Either[CliError, BasemapStatus]                      = call(BasemapApi.status)(())
   def basemapFetch(q: BasemapFetchQuery): Either[CliError, JobInfo]         = call(BasemapApi.fetch)(q)
   def basemapRemove(q: BasemapRemoveQuery): Either[CliError, BasemapRemoved] = call(BasemapApi.remove)(q)
-  def basemapStyles(): Either[CliError, TerrainStyles]                      = call(BasemapApi.styles)(())
-  def basemapStylesExample(): Either[CliError, String]                      = call(BasemapApi.stylesExample)(())
-  def basemapStylesCheck(text: String): Either[CliError, TerrainStyleCheck] = call(BasemapApi.stylesCheck)(text)
   def jobs(status: Option[String], limit: Option[Int], before: Option[String] = None)
       : Either[CliError, (List[JobInfo], Paging.Page)] =
     call(Api.jobs)((status, limit, before, None))

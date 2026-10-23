@@ -290,8 +290,8 @@ final case class AuthConfig(apiKey: String) derives ConfigReader
 /** The terrain base map (docs/research-terrain-basemap.md): where its two PMTiles extracts live
   * (empty = the XDG cache directory, [[UserPaths.cacheDir]]), the region fetched, the free disk a
   * fetch must leave, how politely the range requests go, the sources (the Protomaps vector build,
-  * Mapterhorn's elevation, Natural Earth's physical names), and the style file the map is drawn with
-  * (`style`: empty = `basemap-style.conf` beside the config file, [[TerrainStyleFile]]). */
+  * Mapterhorn's elevation, Natural Earth's physical names, ETOPO1's sea floor), and how far the map
+  * zooms in on its two vector styles (`mapMaxZoom`). */
 final case class BasemapConfig(
     dir: String,
     bbox: String,
@@ -306,8 +306,6 @@ final case class BasemapConfig(
     terrain: BasemapTerrainConfig,
     labels: BasemapLabelsConfig,
     bathymetry: BasemapBathymetryConfig,
-    style: String,
-    styleCheckSeconds: Int,
     mapMaxZoom: Int
 ) derives ConfigReader
 

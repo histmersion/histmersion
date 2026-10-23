@@ -2,7 +2,7 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.core.*
-import com.histmersion.web.leaflet.*
+import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
@@ -12,91 +12,66 @@ import scala.scalajs.js.JSConverters.*
 
 object MapView:
 
-  private var map: LeafletMap               = uninitialized
-  private var cluster: MarkerClusterGroup   = uninitialized
   private var radius: Int                   = Layout.markerRadiusDefault
   private val pickerMax                     = Layout.pickerMax
   private val fitMaxZoom                    = Layout.fitMaxZoom
   private var currentSpan: (Long, Long)     = (0L, 1L)
-  private var legendEl: dom.Element         = uninitialized
-  private val overlayLayer                  = FadingLayer()
+  private var legendEl: dom.HTMLElement         = uninitialized
   private var overlayReqId: Int             = 0
   // the four kinds of point (docs/map-layers.md): ONE layer implementation, four descriptors, one
-  // cluster group; the events' layer is EventMarkers'
+  // cluster layer; the events' layer is EventMarkers'
   private val findingsLayer                 = PointLayer(PointKinds.Findings, () => dots, () => spanMid())
   private val mediaLayer                    = PointLayer(PointKinds.Media, () => dots, () => spanMid())
   private var mediaReqId: Int               = 0
   private val sitesLayer                    = PointLayer(PointKinds.Sites, () => dots, () => spanMid())
   private var sitesReqId: Int               = 0
-  private var tileLayerRef: TileLayer        = uninitialized
-  private var tileUrl: String               = ""
-  private var tileMaxZoom: Int              = 12
   private var playbackMode: Boolean         = false
-  // `ui.base-map-source` as the server resolved it: `local` = the online tiles are never put on the map
-  private var localOnly: Boolean            = false
 
-  def leafletMap: LeafletMap = map
-
-  /** The map's ONE cluster group, for every kind of point ([[PointLayer]]): what is near on screen is one
+  /** The map's ONE cluster layer, for every kind of point ([[PointLayer]]): what is near on screen is one
     * bubble, whatever it is. Regions never join. */
-  val dots: FadingLayer.Sink = new FadingLayer.Sink:
-    def add(layers: js.Array[Layer]): Unit    = if cluster != null && layers.nonEmpty then { val _ = cluster.addLayers(layers) }
-    def remove(layers: js.Array[Layer]): Unit = if cluster != null && layers.nonEmpty then { val _ = cluster.removeLayers(layers) }
-    def refresh(): Unit                       = if cluster != null then { val _ = cluster.refreshClusters() }
+  lazy val dots: PointSet[Dot] = PointSet[Dot](
+    paneOf = d => TheMap.pane(d.layer.kind.pane), pane = () => TheMap.pane(MapStack.Pane.Markers),
+    surface = () => TheMap.surface, key = _.key, at = _.at,
+    radius = () => clusterRadius(maxDotRadius, PointKinds.all.map(_.box)).toDouble,
+    single = (d, fadeIn) => d.layer.render(d, fadeIn), bubble = ds => bubbleMarker(ds),
+    animateMax = Layout.clusterAnimateMax, exitMs = Layout.exitAnimMs, fadeOut = FadingLayer.fadeOut.value)
+
+  /** The boundaries layer's shapes, drawn by the map: a polity's colour is the middle of its dates on the
+    * period ramp; a place the time view shows only through findings dated then is dashed and fainter. */
+  private lazy val polities: ShapeSet = TheMap.surface.shapes("polities",
+    ShapeStyle(fillOpacity = 0.1, lineWidth = 1.5, lineOpacity = 0.8, dash = List(3, 2), dashedLineOpacity = Some(0.6), interactive = true))
+  // what each drawn polity is (the shape under the pointer answers as this place) and its point labels
+  private val polityPlaces = scala.collection.mutable.HashMap.empty[String, (String, String, String)]
+  private val pointLabels = scala.collection.mutable.LinkedHashMap.empty[String, DomMarker]
+  private var overlayOn = false
 
   /** An overlay's switch: how it goes on and off the map, and how it loads the span. */
-  private final case class Slot(attach: LeafletMap => Unit, detach: LeafletMap => Unit, load: ((Long, Long)) => Unit)
+  private final case class Slot(attach: () => Unit, detach: () => Unit, load: ((Long, Long)) => Unit)
 
   private def slot(l: MapLayer): Slot = l match
-    case MapLayer.Boundaries => Slot(overlayLayer.attach, overlayLayer.detach, loadOverlay)
+    case MapLayer.Boundaries => Slot(() => overlayOn = true, () => clearOverlay(), loadOverlay)
     case MapLayer.Sites      => Slot(sitesLayer.attach, sitesLayer.detach, loadSites)
     case MapLayer.Media      => Slot(mediaLayer.attach, mediaLayer.detach, loadMedia)
     case MapLayer.Events     => Slot(EventMarkers.layer.attach, EventMarkers.layer.detach, loadEvents)
 
-  /** The overlays on the Leaflet map, reconciled with `UiState.layers` — the map FOLLOWS the state
-    * (it never keeps a copy of its own), and replaying a state never toggles anything twice. */
+  /** The overlays on the map, reconciled with `UiState.layers` — the map FOLLOWS the state (it never
+    * keeps a copy of its own), and replaying a state never toggles anything twice. */
   private val layerSync = LayerSync(
-    attach = l => { val sl = slot(l); sl.attach(map); sl.load(currentSpan) },
-    detach = l => { slot(l).detach(map); if l == MapLayer.Boundaries then MapLabels.detach() })
+    attach = l => { val sl = slot(l); sl.attach(); sl.load(currentSpan) },
+    detach = l => { slot(l).detach(); if l == MapLayer.Boundaries then MapLabels.detach() })
 
-  /** Credit line for a tile source: OSM data always; the HOT style also credits its makers. */
-  private[web] def attributionFor(url: String): String =
-    val osm = "© OpenStreetMap contributors"
-    if url.contains("openstreetmap.fr/hot") then s"$osm · tiles © Humanitarian OSM Team, OSM France"
-    else osm
+  private def clearOverlay(): Unit =
+    overlayOn = false
+    overlayReqId += 1
+    if TheMap.isUp then
+      polities.clear()
+      pointLabels.values.foreach(m => TheMap.pane(MapStack.Pane.AreaPoints).remove(m))
+    pointLabels.clear()
+    polityPlaces.clear()
 
-  /** Idempotent: the base map's signal replays its current value on mount. */
-  def setTileUrl(url: String, maxZoom: Int): Unit =
-    if map != null && tileLayerRef != null && url != tileUrl then
-      tileUrl = url
-      val was = map.hasLayer(tileLayerRef)
-      map.removeLayer(tileLayerRef)
-      tileLayerRef = L.tileLayer(url, js.Dynamic.literal(
-        attribution = attributionFor(url),
-        maxZoom = maxZoom,
-        opacity = 0.85
-      ).asInstanceOf[js.Object])
-      if was then tileLayerRef.addTo(map)
-
-  /** The raster tiles on the map, or away (the local map draws its own). Never on for a `local` page:
-    * it asks no other host for anything. Idempotent. */
-  private def raster(on: Boolean): Unit =
-    if map != null && tileLayerRef != null then
-      if on && !localOnly && !map.hasLayer(tileLayerRef) then tileLayerRef.addTo(map)
-      else if (!on || localOnly) && map.hasLayer(tileLayerRef) then map.removeLayer(tileLayerRef)
-
-  /** The base map `b` (with `style` for the local one, as [[TerrainMap.effective]] maps the choice):
-    * raster tiles from its URL (or the configured ones), or the local map. */
-  private def setBaseMap(b: BaseMap, style: Option[String], ui: UiConfig): Unit =
-    val (shown, id) = TerrainMap.effective(b, style, localOnly)
-    TerrainMap.shown.set(shown)
-    if shown == BaseMap.Local then
-      setTileUrl(ui.tiles, ui.tilesMaxZoom)   // what shows while the local map is missing (an online page only)
-      TerrainMap.enter(map, ui.docsUrl, raster, id)
-    else
-      TerrainMap.leave(map)
-      setTileUrl(shown.url.getOrElse(ui.tiles), ui.tilesMaxZoom)
-      raster(true)
+  /** A popup at a map point (a finding's, a picture's). */
+  def popup(lat: Double, lon: Double, html: String): Unit =
+    if TheMap.isUp then { val _ = TheMap.surface.popup(LatLon(lat, lon), s"""<div class="hd-popup-content">$html</div>""") }
 
   def setPlaybackMode(on: Boolean): Unit = playbackMode = on
 
@@ -170,19 +145,6 @@ object MapView:
   // `var`: the next bubble's gradient id (unique on the page)
   private var bubbleSeq = 0
 
-  /** A cluster bubble ([[DotCluster.bubbleHtml]]): its count, its colours, what it holds. Its box is the
-    * disc; the rings reach [[DotCluster.Ring]] px outside it, as the anchor stays the centre. */
-  private def bubbleIcon(n: Int, ends: (String, String), extraClass: String, says: Option[String],
-      form: BubbleForm): DivIcon =
-    val d = 2 * radiusFor(n)
-    bubbleSeq += 1
-    L.divIcon(js.Dynamic.literal(
-      className = "hd-dot-wrap",
-      iconSize = js.Array(d, d),
-      iconAnchor = js.Array(d / 2, d / 2),
-      html = DotCluster.bubbleHtml(n, d, ends, s"hdb$bubbleSeq", extraClass, says, form)
-    ).asInstanceOf[js.Object])
-
   /** Pure: the period-span ring width (0–4) of a single finding spanning `spanYears`. */
   private[web] def ringOf(n: Int, spanYears: Option[Long]): Int =
     if n == 1 && spanYears.exists(_ > 0) then
@@ -201,13 +163,39 @@ object MapView:
       s"""<br><i>$period</i><br>${Fmt.esc(pt.claim)}$conf<br>""" +
       s"""<a href="${Fmt.esc(SourceLink.href(pt.citekey))}" target="_blank">new tab ↗</a>"""
 
+  /** A bubble's marker: its count, colours and outline, what it holds; a click lists them (or zooms in). */
+  private def bubbleMarker(ds: Seq[Dot]): DomMarker =
+    val held = DotCluster.contents(ds)
+    val n = held.total
+    val d = 2 * radiusFor(n)
+    bubbleSeq += 1
+    val extra = List(if DotCluster.mixed(held) then "hd-cluster--mixed" else "", Certainty.markerClass(held.certainty))
+      .filter(_.nonEmpty).mkString(" ")
+    val el = DomMarker.element("hd-dot-wrap", DotCluster.bubbleHtml(n, d, rampEnds(held.mids, currentSpan, held.certainty),
+      s"hdb$bubbleSeq", extra, Some(DotCluster.summary(held)), DotCluster.form(held)))
+    val lat = ds.map(_.at.lat).sum / ds.size
+    val lon = ds.map(_.at.lon).sum / ds.size
+    val m = DomMarker(lat, lon, el, Some((d, d)))
+    m.handlers = new MarkerHandlers:
+      override def click(e: dom.MouseEvent): Unit =
+        e.stopPropagation()
+        open(ds)
+    m
+
+  /** A bubble chosen: its list, or (too many to list) the map zoomed in on it. */
+  private def open(ds: Seq[Dot]): Unit =
+      val all = DotCluster.contents(ds)
+      val pts = ds.map(_.at)
+      val b = GeoBounds(pts.map(_.lat).min, pts.map(_.lon).min, pts.map(_.lat).max, pts.map(_.lon).max)
+      def zoomIn(): Unit = TheMap.surface.fitBounds(b, 40, fitMaxZoom)
+      // too many to list: zoom in, unless the map cannot (dots at one point stay one bubble)
+      if all.total > pickerMax && TheMap.surface.zoom < TheMap.surface.maxZoom - 0.01 then zoomIn()
+      else ResultsList.pick(all.findings, s"${DotCluster.summary(all)} in this cluster", Some(() => zoomIn()),
+        DotCluster.ordered(DotCluster.others(ds)))
+
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius
-    localOnly = ui.baseMapSource == BaseMapSource.Local
-    TerrainMap.localOnly.set(localOnly)
-    // a page with only the local maps, never told otherwise by this browser: the Histmersion map on its
-    // default preset (Natural) — a kept online choice still shows as the local style of its name
-    if localOnly && !UiState.stored(UiState.baseMap) then UiState.baseMap.set(BaseMap.Local)
+    BaseMaps.configure(ui)
     // the span the page opens on (UiState is restored before this mounts): the overlays switched on
     // from the browser's storage load at once, and loaded the placeholder span (0, 1) — a wasted request
     // and a wrong first drawing — until the first findings arrived
@@ -216,57 +204,19 @@ object MapView:
       idAttr := "map",
       cls := "map-container",
       onMountCallback { ctx =>
-        // the map's own zoom limit: the online tiles' (the cluster group needs one before any tile layer is on,
-        // and a local page never puts one on)
-        map = L.map("map", js.Dynamic.literal(worldCopyJump = true, maxZoom = ui.tilesMaxZoom).asInstanceOf[js.Object])
-        // every layer goes into its own pane: a dot stays above a region, whichever came last
-        MapPanes.ensure(map)
-        map.setView(js.Array(37.0, 30.0), 5)
-        tileUrl = ui.tiles
-        tileMaxZoom = ui.tilesMaxZoom
-        // made, not shown: the base map's signal below puts it on the map when an online map is chosen
-        tileLayerRef = L.tileLayer(ui.tiles, js.Dynamic.literal(
-          attribution = attributionFor(ui.tiles),
-          maxZoom = ui.tilesMaxZoom,
-          opacity = 0.85
-        ).asInstanceOf[js.Object])
-
-        cluster = L.markerClusterGroup(js.Dynamic.literal(
-          maxClusterRadius = clusterRadius(maxDotRadius, PointKinds.all.map(_.box)),
-          spiderfyOnMaxZoom = false,
-          zoomToBoundsOnClick = false,
-          showCoverageOnHover = false,
-          // a bubble counts every dot in it (a finding's dot counts its findings) — only what is drawn:
-          // a layer switched off or filtered leaves the group — and is coloured by all their dates
-          iconCreateFunction = { (c: js.Dynamic) =>
-            val held = DotCluster.contents(c.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]])
-            val cls = List(if DotCluster.mixed(held) then "hd-cluster--mixed" else "",
-              Certainty.markerClass(held.certainty)).filter(_.nonEmpty).mkString(" ")
-            bubbleIcon(held.total, rampEnds(held.mids, currentSpan, held.certainty), cls,
-              says = Some(DotCluster.summary(held)), DotCluster.form(held))
-          }: js.Function1[js.Dynamic, DivIcon]
-        ).asInstanceOf[js.Object])
-        cluster.addTo(map)
-        // among thousands of points (the events layer) a zoom does not animate the bubbles (#1647)
-        map.on("zoomstart", { (_: LeafletEvent) => ClusterMotion.follow(cluster, Layout.clusterAnimateMax) })
-
-        cluster.on("clusterclick", { (e: LeafletEvent) =>
-          val members = e.layer.getAllChildMarkers().asInstanceOf[js.Array[js.Dynamic]]
-          val held = DotCluster.contents(members)
-          val bounds = e.layer.getBounds().asInstanceOf[LatLngBounds]
-          def zoomIn(): Unit = map.fitBounds(bounds, js.Dynamic.literal(
-            padding = js.Array(40, 40), maxZoom = fitMaxZoom).asInstanceOf[js.Object])
-          // too many to list: zoom in, unless the map cannot (dots at one point stay one bubble)
-          if held.total > pickerMax && map.getZoom() < map.getMaxZoom() then zoomIn()
-          else
-            ResultsList.pick(held.findings, s"${DotCluster.summary(held)} in this cluster", Some(() => zoomIn()),
-              DotCluster.ordered(DotCluster.others(members)))
-        })
-
-        addLegend()
-        PlaceHover.install(map)
-        PlaceGlyph.followZoom(map)
-        MapLabels.install(map, ui)(using ctx.owner)
+        val engine = Engines.default
+        val caps = engine.probe()
+        // without a GPU the map is drawn at one pixel per CSS pixel: a quarter of the work on a 2× screen
+        val surface = engine.create(ctx.thisNode.ref, ui.tilesMaxZoom.toDouble, Option.when(caps.software)(1.0))
+        TheMap.install(surface)
+        surface.setView(LatLon(37.0, 30.0), 5)
+        PlaceHover.shapes("polities", PlaceHover.Places(polityPlaces.get, spanMid))
+        addLegend(surface)
+        PlaceHover.install(surface)
+        PlaceGlyph.followZoom(surface)
+        MapLabels.install(surface, ui)(using ctx.owner)
+        BaseMaps.install(surface, ui)(using ctx.owner)
+        MapHandle.install(surface)
         // the overlays and the base map follow UiState (restored from the browser's storage by
         // UiState.init, before this mounts) — there is no other copy of that state to disagree with
         UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)
@@ -283,18 +233,12 @@ object MapView:
           if layerSync.attached(MapLayer.Boundaries) then loadOverlay(currentSpan)
           if layerSync.attached(MapLayer.Sites) then loadSites(currentSpan)
         }(using ctx.owner)
-        map.on("moveend", { (_: LeafletEvent) => if layerSync.attached(MapLayer.Events) then reloadEvents(currentSpan) })
+        surface.on(MapEventKind.MoveEnd)(_ => if layerSync.attached(MapLayer.Events) then reloadEvents(currentSpan))
         UiState.layers.signal.foreach(ls => updateKey(ls(MapLayer.Events), ls(MapLayer.Sites)))(using ctx.owner)
-        // the finding markers follow their switch the same way; `render` keeps the cluster's content
-        // current while it is off, so switching it back on shows the current span at once
+        // the finding markers follow their switch the same way; `render` keeps their content current
+        // while they are off, so switching them back on shows the current span at once
         UiState.sources.signal.foreach(showSources)(using ctx.owner)
-        // the base map, and for the terrain map its style and its names: each change draws it again
-        UiState.baseMap.signal.combineWith(UiState.terrainStyle.signal)
-          .foreach((b, style) => setBaseMap(b, style, ui))(using ctx.owner)
-        // the viewer's map options over the preset: drawn again at once (only the names when only they changed)
-        UiState.terrainView.signal.changes.foreach(_ => TerrainMap.viewChanged())(using ctx.owner)
-
-        map.getContainer().addEventListener("click", { (e: dom.MouseEvent) =>
+        surface.container.addEventListener("click", { (e: dom.MouseEvent) =>
           val target = e.target.asInstanceOf[dom.Element]
           Option(target.closest("[data-ck]")).foreach { el =>
             if !e.metaKey && !e.ctrlKey && !e.shiftKey then
@@ -305,12 +249,11 @@ object MapView:
       },
       onMountUnmountCallbackWithState(
         mount = ctx =>
-          // A folded timeline or resized sidebar changes this element without a window resize.
-          // Leaflet caches its size, so observe the container rather than any one layout toggle.
-          val mountedMap = map
+          // A folded timeline or resized sidebar changes this element without a window resize: the
+          // map caches its size, so observe the container rather than any one layout toggle.
           if js.typeOf(js.Dynamic.global.ResizeObserver) == "undefined" then None
           else
-            val resize: js.Function1[js.Any, Unit] = _ => { val _ = mountedMap.invalidateSize() }
+            val resize: js.Function1[js.Any, Unit] = _ => if TheMap.isUp then TheMap.surface.resize()
             val observer = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(resize)
             observer.observe(ctx.thisNode.ref)
             Some(observer),
@@ -321,32 +264,29 @@ object MapView:
   /** The findings' switch, as every point layer's: their points join or leave the cluster group, which
     * the other kinds share (so it stays on the map); `render` keeps them current while they are out. */
   private def showSources(on: Boolean): Unit =
-    if on then findingsLayer.attach(map) else findingsLayer.detach(map)
+    if on then findingsLayer.attach() else findingsLayer.detach()
 
-  private def addLegend(): Unit =
-    val ctrl = L.control(js.Dynamic.literal(position = "bottomright").asInstanceOf[js.Object])
-    ctrl.asInstanceOf[js.Dynamic].onAdd = { (_: js.Dynamic) =>
-      legendEl = DomUtil.create("div", "hd-legend")
-      val ramp = (0 until 10).map(i => s"""<i style="--c:${Fmt.color(i.toDouble / 9)}"></i>""").mkString
-      val confPips = Confidence.values.map(c =>
-        val wire = c.toString.toLowerCase
-        s"""<i style="--c:var(${Palette.confidence(wire)})" title="$wire"></i>""").mkString
-      // a finding with no confidence: its own pip, apart from the scale (it is not a level of it)
-      val unstated = Certainty.UnstatedLabel
-      val unstatedPip =
-        s"""<i class="is-unstated" style="--c:var(--conf-unstated)" title="$unstated"></i>""" +
-          s"""<span class="hd-conf-range">$unstated</span>"""
-      legendEl.innerHTML =
-        s"""<div class="hd-ramp">$ramp</div>""" +
-        """<div class="hd-ramp-labels"><span class="lo"></span>""" +
-        """<span class="mid">older ← → newer</span><span class="hi"></span></div>""" +
-        s"""<div class="hd-legend-confidence"><span class="hd-conf-label">certainty</span>$confPips""" +
-        """<span class="hd-conf-range">high → contested</span>""" +
-        s"""$unstatedPip</div><div class="hd-key-slot"></div>"""
-      DomEvent.disableClickPropagation(legendEl)
-      legendEl
-    }: js.Function1[js.Dynamic, dom.Element]
-    ctrl.addTo(map)
+  private def addLegend(surface: MapSurface): Unit =
+    legendEl = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+    legendEl.className = "hd-legend hd-map-control"
+    val ramp = (0 until 10).map(i => s"""<i style="--c:${Fmt.color(i.toDouble / 9)}"></i>""").mkString
+    val confPips = Confidence.values.map(c =>
+      val wire = c.toString.toLowerCase
+      s"""<i style="--c:var(${Palette.confidence(wire)})" title="$wire"></i>""").mkString
+    // a finding with no confidence: its own pip, apart from the scale (it is not a level of it)
+    val unstated = Certainty.UnstatedLabel
+    val unstatedPip =
+      s"""<i class="is-unstated" style="--c:var(--conf-unstated)" title="$unstated"></i>""" +
+        s"""<span class="hd-conf-range">$unstated</span>"""
+    legendEl.innerHTML =
+      s"""<div class="hd-ramp">$ramp</div>""" +
+      """<div class="hd-ramp-labels"><span class="lo"></span>""" +
+      """<span class="mid">older ← → newer</span><span class="hi"></span></div>""" +
+      s"""<div class="hd-legend-confidence"><span class="hd-conf-label">certainty</span>$confPips""" +
+      """<span class="hd-conf-range">high → contested</span>""" +
+      s"""$unstatedPip</div><div class="hd-key-slot"></div>"""
+    val corner = surface.corner(Corner.BottomRight)
+    corner.insertBefore(legendEl, corner.firstChild)
 
   /** The legend's key to the icons (#1449), for the layers that draw them. */
   private def updateKey(events: Boolean, sites: Boolean): Unit =
@@ -386,15 +326,15 @@ object MapView:
   /** The findings of `span` (the filter's, a playback frame's): their points, as every kind's. */
   def render(points: List[GeoHit], span: (Long, Long)): Unit =
     currentSpan = span
-    if cluster != null then
+    if TheMap.isUp then
       updateLegend(span)
       findingsLayer.show(Spot.of(points), span)
       reloadLayers(span)
       if layerSync.attached.exists(waitsForQuiet(_, UiState.areaPick.now(), playbackMode)) then reloadRangeAreas(span)
 
-  /** Bring `m` out of its bubble (zooming in as far as it takes), then `andThen`. */
-  private[web] def reveal(m: Marker, andThen: () => Unit): Unit =
-    if cluster != null then cluster.zoomToShowLayer(m, () => andThen())
+  /** Bring the point `key` out of its bubble (zooming in as far as it takes), then `andThen`. */
+  private[web] def reveal(key: String, andThen: () => Unit): Unit =
+    if TheMap.isUp then dots.zoomToShow(key, andThen)
 
   /** Overlay layers follow the map at most once per `Layout.layerReloadMs`, so a timeline drag
     * (which renders on every pointer move) does not fire a request burst — except the one that waits
@@ -486,33 +426,60 @@ object MapView:
     val myId = overlayReqId
     val time = areaTime(span, UiState.areaPick.now(), playbackMode)
     placesGeoCached("polity", time, overlayLimit(time)).foreach { geojson =>
-      if myId == overlayReqId then
+      if myId == overlayReqId && overlayOn && TheMap.isUp then
         val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
         // largest first, so small polities sit on top and stay hoverable
         val sorted = features.toList.sortBy(f => dynPeriod(f.properties).map((a, b) => a - b).getOrElse(99999.0))
+        def keyOf(f: js.Dynamic) = dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")
         def colorOf(f: js.Dynamic): String =
           viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
-        overlayLayer.sync[js.Dynamic](
-          sorted,
-          key = f => dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?"),
-          create = f => polityLayer(f, colorOf(f)),
-          update = (lyr, f) =>
-            val c = colorOf(f)
-            lyr.asInstanceOf[js.Dynamic].setStyle(js.Dynamic.literal(color = c, fillColor = c))
-        )
+        def byFindings(f: js.Dynamic) = dynStr(f.properties.basis).flatMap(PlaceTimeBasis.parse).contains(PlaceTimeBasis.Findings)
+        def isPoint(f: js.Dynamic) =
+          val g = f.geometry
+          !js.isUndefined(g) && g != null && (g.selectDynamic("type").toString == "Point" || g.selectDynamic("type").toString == "MultiPoint")
+        val (points, areas) = sorted.partition(isPoint)
+        polityPlaces.clear()
+        sorted.foreach(f => dynStr(f.properties.id).foreach(id =>
+          polityPlaces(keyOf(f)) = (id, dynStr(f.properties.label).getOrElse("unnamed"), dynStr(f.properties.kind).getOrElse("polity"))))
+        polities.set(areas.map(f => ShapeFeature(keyOf(f), f.geometry, colorOf(f), dashed = byFindings(f), alpha = if byFindings(f) then 0.6 else 1.0)))
+        syncPointLabels(points, keyOf)
         // every area is named inside itself (MapLabels), in playback and out of it
-        if overlayLayer.isAttached then
-          MapLabels.attach()
-          MapLabels.syncAreas(sorted,
-            key = f => dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?"),
-            label = f => dynStr(f.properties.label).getOrElse("unnamed"),
-            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)),
-            // once its name is placed: Leaflet keeps each feature on its layer, and with it the parsed
-            // outline — a second copy of every vertex beside the layer's own (#1949: ~440 000 over a
-            // whole range). Nothing reads it after that; the next answer is parsed afresh.
-            release = dropGeometry)
-        else features.foreach(dropGeometry)
+        MapLabels.attach()
+        MapLabels.syncAreas(areas,
+          key = keyOf,
+          label = f => dynStr(f.properties.label).getOrElse("unnamed"),
+          wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)),
+          place = f => polityPlaces.get(keyOf(f)),
+          asOf = () => spanMid(),
+          // once its name is placed nothing here reads the outline: the map holds its own copy
+          release = dropGeometry)
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+
+  /** A polity or region with only a point has no boundary yet: its NAME, never a pin or a dot. */
+  private def syncPointLabels(points: List[js.Dynamic], keyOf: js.Dynamic => String): Unit =
+    val pane = TheMap.pane(MapStack.Pane.AreaPoints)
+    val want = points.map(f => keyOf(f) -> f).toMap
+    pointLabels.filterInPlace { (k, m) =>
+      val keep = want.contains(k)
+      if !keep then pane.remove(m)
+      keep
+    }
+    points.foreach { f =>
+      val k = keyOf(f)
+      if !pointLabels.contains(k) then
+        val c = f.geometry.coordinates
+        val (lon, lat) =
+          if f.geometry.selectDynamic("type").toString == "Point" then (c.selectDynamic("0").asInstanceOf[Double], c.selectDynamic("1").asInstanceOf[Double])
+          else (c.selectDynamic("0").selectDynamic("0").asInstanceOf[Double], c.selectDynamic("0").selectDynamic("1").asInstanceOf[Double])
+        val p = f.properties
+        val label = dynStr(p.label).getOrElse("unnamed")
+        val kind = dynStr(p.kind).getOrElse("polity")
+        val m = PlaceGlyph.labelMarker(lat, lon, label, kind, placeClasses("hd-area-point-wrap", dynStr(p.basis)), hidden = true)
+        dynStr(p.id).foreach(id => PlaceHover.bind(m, id, label, kind, spanMid))
+        MapLabels.trackPoint(m, dynStr(p.id).getOrElse(label))   // thinned with the area names
+        pointLabels(k) = m
+        pane.add(m)
+    }
 
   /** Forget a drawn feature's outline (its layer has its own copy); its point is kept (a label's). */
   private def dropGeometry(f: js.Dynamic): Unit =
@@ -527,33 +494,6 @@ object MapView:
     if basis.flatMap(PlaceTimeBasis.parse).contains(PlaceTimeBasis.Findings) then s"$base $ByFindingsClass" else base
 
   val ByFindingsClass = "hd-by-findings"
-
-  private def polityLayer(feature: js.Dynamic, color: String): Layer =
-    val props = feature.properties
-    val label = dynStr(props.label).getOrElse("unnamed")
-    val kind  = dynStr(props.kind).getOrElse("polity")
-    L.geoJSON(js.Dynamic.literal(`type` = "FeatureCollection", features = js.Array(feature)), js.Dynamic.literal(
-      pane = MapPanes.Areas,   // under every dot, however late it is drawn
-      // a polity or region with only a point has no boundary yet: its NAME, never a pin or a dot
-      pointToLayer = { (_: js.Any, latlng: js.Dynamic) =>
-        val m = PlaceGlyph.labelMarker(latlng.lat.asInstanceOf[Double], latlng.lng.asInstanceOf[Double], label, kind,
-          placeClasses("hd-area-point-wrap", dynStr(props.basis)), hidden = true)   // the pass fades it in
-        MapLabels.trackPoint(m, dynStr(props.id).getOrElse(label))   // thinned with the area names
-        m
-      }: js.Function2[js.Any, js.Dynamic, Layer],
-      style = { (_: js.Dynamic) =>
-        js.Dynamic.literal(
-          color = color, weight = 1.5, opacity = 0.8,
-          fillColor = color, fillOpacity = 0.1, className = placeClasses("hd-polity", dynStr(props.basis))
-        )
-      }: js.Function1[js.Dynamic, js.Dynamic],
-      onEachFeature = { (_: js.Dynamic, leafLayer: js.Dynamic) =>
-        // the shape answers like a place: its card on hover, a click chooses it as the place filter
-        // and pins the card (PlaceHover); its name is drawn by MapLabels
-        dynStr(props.id).foreach(id =>
-          PlaceHover.bind(leafLayer.asInstanceOf[Layer], id, label, dynStr(props.kind).getOrElse("polity"), spanMid))
-      }: js.Function2[js.Dynamic, js.Dynamic, Unit]
-    ).asInstanceOf[js.Object])
 
   /** The year a place's card reads the gazetteer at: the middle of the span the map shows. */
   private[web] def spanMid(): Option[Long] = Some((currentSpan._1 + currentSpan._2) / 2)

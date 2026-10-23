@@ -53,12 +53,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The terrain base map (docs/research-terrain-basemap.md): its extracts, their fetch job and the
     * tiles the web page draws — same arrangement. */
   val basemap: com.histmersion.server.basemap.BasemapService = com.histmersion.server.basemap.BasemapService(deps,
-    () => com.histmersion.server.basemap.JavaRangeHttp(deps.cfg.basemap.timeoutSeconds, deps.cfg.basemap.retries),
-    styles = () => basemapStyles.current.styles)
-
-  /** The terrain map's named styles: the built-in ones and the user's style file, read again when it
-    * changes (docs/user-guide/how-to/terrain-styles.md) — same arrangement. */
-  val basemapStyles: com.histmersion.server.basemap.BasemapStyles = com.histmersion.server.basemap.BasemapStyles(deps)
+    () => com.histmersion.server.basemap.JavaRangeHttp(deps.cfg.basemap.timeoutSeconds, deps.cfg.basemap.retries))
 
   /** The portable bundle — instance identity, export, verify, import (docs/research-merge-import.md). */
   val bundles: BundleHandlers = BundleHandlers(deps, () => backups.create(Instant.now()).map(_.file))
@@ -89,8 +84,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def health: Health =
     val conv = ingest.converterHealth
     scala.util.Try(Migrate.current(ds)) match
-      case scala.util.Success(v) => Health(if conv.healthy then "ok" else "degraded", "ok", v, Some(conv.render), basemapStyles.warnings)
-      case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv.render), basemapStyles.warnings)
+      case scala.util.Success(v) => Health(if conv.healthy then "ok" else "degraded", "ok", v, Some(conv.render))
+      case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv.render))
 
   /** `GET /api/about` — the build, the health report, the job queue, the newest backup and the store's
     * counts. Each part that cannot be read becomes a `problems` line, never a failed request: this is
@@ -112,7 +107,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       counts = counts.toOption,
       lastBackup = last,
       lastBackupAgeSeconds = age,
-      problems = List(jobs, counts, listed).flatMap(_.left.toOption) ++ basemapStyles.warnings,
+      problems = List(jobs, counts, listed).flatMap(_.left.toOption),
       configFile = deps.configFile,
       agentLease = agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)),
       plugins = deps.plugins.report,
@@ -151,11 +146,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     plugins = deps.plugins.report, baseMapSource = baseMapSource)
 
   /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract
-    * can draw the default local style whole — a `stat` and a cached header read. */
+    * can draw one of the vector styles whole — a `stat` and a cached header read. */
   def baseMapSource: String =
     cfg.ui.baseMapSource.trim.toLowerCase(java.util.Locale.ROOT) match
       case s @ (BaseMapSource.Local | BaseMapSource.Online) => s
-      case _ => BaseMapSource.resolve(cfg.ui.baseMapSource, basemap.status, Some(basemapStyles.current.default))
+      case _ => BaseMapSource.resolve(cfg.ui.baseMapSource, basemap.status)
 
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered
     * search and dropping the evidence, so there is ONE query path (FTS ranking and snippets

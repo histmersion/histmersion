@@ -79,7 +79,6 @@ object ApiClient:
     call(Api.place)((id, asOf, Option.when(counts)(true)))
   def about(): Future[About]                                            = call(Api.about)(())
   def basemap(): Future[BasemapStatus]                                  = call(BasemapApi.status)(())
-  def basemapStyles(): Future[TerrainStyles]                            = call(BasemapApi.styles)(())
   def uiCounters(): Future[UiNotices.Counters]                          = call(UiApi.counters)(())
   def markSeen(board: String, at: String): Future[UiNotices.Counters]  =
     call(UiApi.markSeen)((board, UiNotices.SeenMark(Some(at))))
