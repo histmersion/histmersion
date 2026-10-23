@@ -82,6 +82,13 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
     val home = rt.trees.codexHome.getOrElse(throw java.io.IOException("codex: no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home"))
     if !Files.isRegularFile(home.resolve(s"${agent.name}.config.toml")) then
       throw java.io.IOException(s"codex: no profile for ${agent.name} in $home — run `histmersion agent generate`")
+    // the home's shared lock for the whole step (a retention pass never runs under it, #2582); a pass
+    // may follow once the step is done
+    try CodexHome.using(home)(runIn(call, agent, home))
+    finally CodexHome.maybeRetain(home, cfg)
+
+  private def runIn[Out](call: LlmCall[Out], agent: AgentDef, home: java.nio.file.Path)
+      : AgentResult[Either[AgentFailure, Out]] =
     CliProcess.withDir("histmersion-codex-") { dir =>
       val grant = rt.grant(call, Some(agent), cfg.timeoutSeconds)
       try

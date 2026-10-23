@@ -24,9 +24,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions):
   def root: Option[Path] = AgentTrees.root(app, sys.env.get)
 
   /** The CODEX_HOME of the runs: `agents.providers.codex.home`, else the generated one. */
-  def codexHome: Option[Path] =
-    Option(cfg.providers.codex.home).map(_.trim).filter(_.nonEmpty).map(h => Path.of(AgentTrees.expand(h)))
-      .orElse(root.map(_.resolve("codex").resolve("home")))
+  def codexHome: Option[Path] = AgentTrees.codexHome(app, sys.env.get)
 
   def claudePlugin: Option[Path] = root.map(_.resolve("claude-code").resolve("headless"))
   def claudeRole(name: String): Option[Path] = root.map(_.resolve("claude-code").resolve("roles").resolve(name).resolve("settings.json"))
@@ -74,6 +72,11 @@ object AgentTrees:
       .orElse {
         UserPaths.dataDir(app.runtime.dataDir, env, System.getProperty("os.name", "")).map(_.resolve("agents"))
       }.map(_.toAbsolutePath.normalize)
+
+  /** The CODEX_HOME of the runs: `agents.providers.codex.home`, else `<runtimes dir>/codex/home`. */
+  def codexHome(app: AppConfig, env: String => Option[String]): Option[Path] =
+    Option(app.agents.providers.codex.home).map(_.trim).filter(_.nonEmpty).map(h => Path.of(expand(h)))
+      .orElse(root(app, env).map(_.resolve("codex").resolve("home")))
 
   /** The definitions' fingerprint: what the trees were generated from. */
   def sha(d: AgentGenerator.Defs): String =
