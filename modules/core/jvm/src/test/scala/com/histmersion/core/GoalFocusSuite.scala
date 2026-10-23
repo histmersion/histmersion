@@ -47,7 +47,7 @@ class GoalFocusSuite extends munit.FunSuite:
     // a1 has an unfinished sub-goal: it is not a candidate (its own articles wait); a1x is the oldest leaf
     val p = select(goals, s3)
     assertEquals(active(p), List("b1", "b2", "a1x"), p.active.map(_.why))
-    assert(p.active(1).why.contains("next to b1 (active)"), p.active(1).why)
+    assert(p.active(1).why.contains("a sibling of b1 (active)"), p.active(1).why)
     assert(p.waiting.exists((s, c, _) => s == "a1" && c == Code.Children), p.waiting)
     assert(p.waiting.exists((s, c, _) => s == "root-a" && c == Code.Children), p.waiting)
     assertEquals(p.queue.map(_.slug), List("a2"))
@@ -58,7 +58,14 @@ class GoalFocusSuite extends munit.FunSuite:
       g("y1", Some("y"), created = "2026-01-01T00:00:00Z"))
     val p = select(goals, s3.copy(max = 2))
     assertEquals(active(p), List("x1", "x2"))
-    assert(p.active(1).why.contains("next to x1 (active)"), p.active(1).why)
+    assert(p.active(1).why.contains("a sibling of x1 (active)"), p.active(1).why)
+
+  test("a sub-goal of an active parent (planning) before a goal elsewhere"):
+    val goals = List(g("p", work = List(w(1, PlanGoalItem)), active = true), g("k", Some("p"), created = "2026-10-22T00:00:00Z"),
+      g("other", created = "2026-01-01T00:00:00Z"))
+    val p = select(goals, s3.copy(max = 2))
+    assertEquals(active(p), List("p", "k"))
+    assert(p.active(1).why.contains("a sub-goal of p (active)"), p.active(1).why)
 
   test("a person's priority, then more sources, then the oldest, then the slug"):
     val goals = List(g("old", created = "2026-01-01T00:00:00Z"), g("prio", priority = 5),

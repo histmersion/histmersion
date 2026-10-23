@@ -195,7 +195,8 @@ object GoalFocus:
 
   private def pickWhy(f: Facts, st: Stage, k: (Int, Option[String]), minSources: Int): String =
     val near = k match
-      case (0, Some(s)) => List(s"next to $s (active): its sub-goals are finished first")
+      case (0, Some(s)) if f.parent.contains(s) => List(s"a sub-goal of $s (active)")
+      case (0, Some(s)) => List(s"a sibling of $s (active): one parent's sub-goals are finished before another's")
       case (1, Some(s)) => List(s"in the same tree as $s (active)")
       case _            => Nil
     (List(s"${st.wire}: ${stageWhy(f, st, minSources)}") ++ near ++

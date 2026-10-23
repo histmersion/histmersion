@@ -55,10 +55,12 @@ class GoalFocusDbSuite extends com.histmersion.db.DbSuite:
   private def clean(): Unit =
     Migrate.run(ds)
     connect(ds):
+      // the focus looks at EVERY goal, and the dispatch counts EVERY queued run against max-concurrent-runs:
+      // what other suites left (their goals, their runs, open goal plans) must not take the 3 slots or the room
       sql"DELETE FROM agent_managers".update.run()
-      sql"DELETE FROM jobs WHERE kind = 'agent' AND (manager_id IS NOT NULL OR target_id LIKE 'zzfocus%')".update.run()
-      sql"DELETE FROM approvals WHERE subject LIKE 'zzfocus%'".update.run()
-      sql"DELETE FROM goals WHERE slug LIKE 'zzfocus%'".update.run()
+      sql"DELETE FROM jobs WHERE kind = 'agent'".update.run()
+      sql"DELETE FROM approvals WHERE subject LIKE 'zzfocus%' OR kind = 'goal-plan'".update.run()
+      sql"DELETE FROM goals".update.run()
       sql"DELETE FROM articles WHERE slug LIKE 'zzfocus%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzfocus%'".update.run()
       sql"DELETE FROM queue_items WHERE text LIKE '%zzfocus%' OR text LIKE 'autopilot%'".update.run()
@@ -140,6 +142,8 @@ class GoalFocusDbSuite extends com.histmersion.db.DbSuite:
     assertEquals((held.status, held.hold.flatMap(_.focus)), ("held", Some(g(2))))
     assert(held.hold.exists(_.reason.startsWith(GoalFocus.HoldPrefix)), held.hold)
     assertEquals(item(watchId(g(7)), AcquisitionSweep, g(7)).status, "held")
+    assert(ManagerRepo.get(ds, seedId(g(2))).flatMap(_.statusNote).exists(_.startsWith("focus: its goal waits for a slot")))
+    assert(!ManagerRepo.get(ds, seedId(g(5))).flatMap(_.statusNote).exists(_.startsWith("focus:")))
     assertEquals(ManagerRepo.focusHeldCount(ds), 17 * 2, "a proposal and a sweep for each of the 17 waiting goals")
     // a person cannot release it by hand while the focus is in force: pin the goal instead
     a.managing.patchItem(seedId(g(2)), g(2), ItemPatch("release")) match
