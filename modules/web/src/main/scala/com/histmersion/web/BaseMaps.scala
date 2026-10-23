@@ -107,7 +107,7 @@ object BaseMaps:
       case Some(v) =>
         s.filter(_.available) match
           case Some(st) =>
-            val lang = prefs.language.getOrElse("en")
+            val lang = prefs.language.getOrElse(ui.mapLanguage)
             val spec = BaseMapSpec.Vector(v, st, lang, prefs.names.getOrElse(true), prefs.contours.getOrElse(true), reduced = soft)
             val lacking = st.missing(b.wire)
             val notice = if lacking.nonEmpty then (lackingNotice(lacking), true) else (PastNotice, false)
@@ -243,6 +243,13 @@ object BaseMaps:
       onClick --> { _ => open.update(!_) }
     )
 
+  /** The names' language unless the viewer chose one: `basemap.labels.language`, as the server reports it. */
+  private def defaultLanguage: String = if ui == null || ui.mapLanguage.isEmpty then "en" else ui.mapLanguage
+
+  /** The languages the menu offers: [[Languages]], and the configured default when it is not among them. Pure. */
+  def languageChoices(default: String): List[(String, String)] =
+    if Languages.exists(_._1 == default) then Languages else Languages :+ (default -> default)
+
   private def label_(mods: Modifier[HtmlElement]*): HtmlElement = htmlTag("label")(mods*)
 
   private def setPrefs(f: MapPrefs => MapPrefs): Unit = UiState.set(UiState.mapOptions := f(UiState.mapOptions.now()))()
@@ -274,10 +281,10 @@ object BaseMaps:
         label_(span("Language"),
           select(cls := "field map-language-select", aria.label := "names' language",
             disabled <-- UiState.mapOptions.signal.map(_.names.contains(false)),
-            Languages.map((code, name) => option(value := code, name)),
+            languageChoices(defaultLanguage).map((code, name) => option(value := code, name)),
             controlled(
-              value <-- UiState.mapOptions.signal.map(_.language.getOrElse("en")),
-              onChange.mapToValue --> (v => setPrefs(_.copy(language = Option.when(v != "en")(v)))))))),
+              value <-- UiState.mapOptions.signal.map(_.language.getOrElse(defaultLanguage)),
+              onChange.mapToValue --> (v => setPrefs(_.copy(language = Option.when(v != defaultLanguage)(v)))))))),
       div(cls := "map-option",
         cls("is-disabled") <-- why.map(_.isDefined),
         label_(

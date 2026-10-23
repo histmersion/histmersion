@@ -106,7 +106,7 @@ final case class BasemapStatus(
     /** Each named style of the base-map menu and the vector data layers it draws that the stored
       * extract lacks (none: it can be drawn whole). */
     styles: List[BasemapStyleState] = Nil,
-    /** How far the page zooms in on the terrain map (`basemap.map-max-zoom`). */
+    /** How far the page zooms in on Readable and Physical (`basemap.map-max-zoom`). */
     mapMaxZoom: Int = 16
 ) derives KindlingsCodecAsObject:
   /** The style `id`'s missing layers: empty when it can be drawn whole or is not known. */

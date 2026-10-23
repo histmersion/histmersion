@@ -22,7 +22,7 @@ class MapEngineBoundarySuite extends munit.FunSuite:
   private val forbidden = List(
     "web.map.maplibre", "maplibregl", "maplibre-gl", "GlMap", "GlPopup", "GlEvent", "RenderedFeature",
     "queryRenderedFeatures", "setFeatureState", "addLayer(", "addSource(", "\"raster-dem\"", "leaflet", "Leaflet",
-    "protomaps", "markerClusterGroup")
+    "protomaps", "markerClusterGroup", "mlcontour")
 
   test("no map library type or name outside the adapter package"):
     assert(Files.isDirectory(adapter), s"the adapter is at $adapter")

@@ -6,7 +6,7 @@ import io.circe.Json
 
 import scala.collection.mutable
 
-/** The terrain map's physical names (docs/research-terrain-basemap.md, "Labels"): Natural Earth's
+/** The base maps' physical names (docs/research-terrain-basemap.md, "Labels"): Natural Earth's
   * label layers — public domain — read from their GeoJSON, cut to the region, and written as a small
   * vector archive the page labels from (`labels.pmtiles`, layers `physical` and `rivers`).
   *

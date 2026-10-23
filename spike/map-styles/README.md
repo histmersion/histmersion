@@ -1,4 +1,9 @@
-# Map-style study prototype (not shipped)
+# Map-style study prototype
+
+The study's prototype, kept as it was measured. The shipped styles are
+`modules/server/src/main/resources/web/styles/{readable,physical}.json`, generated once from `styles.mjs`
+and edited there since (docs/research-map-styles.md, "As built"); the `mode=leaflet` path and
+`diag-labels.mjs` describe the Leaflet page that no longer exists.
 
 The two prototype base-map styles of `docs/research-map-styles.md` — *Readable* and *Physical* — as MapLibre
 GL JS 6 style documents over a Histmersion server's own base-map tiles, and the tools that measured them.

@@ -143,7 +143,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The `ui` config block, plus whether writes need a key — never the key itself — and the plugins
     * (their settings with secrets as references, never values). */
   def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty, agentsEnabled = cfg.agents.enabled,
-    plugins = deps.plugins.report, baseMapSource = baseMapSource)
+    plugins = deps.plugins.report, baseMapSource = baseMapSource,
+    mapLanguage = cfg.basemap.labels.language)
 
   /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract
     * can draw one of the vector styles whole — a `stat` and a cached header read. */

@@ -56,9 +56,9 @@ enum Icon(val paths: List[String]):
   /** A solid square beside a dashed one: the events' tier (attested, catalogue only). */
   case TierPair     extends Icon(List("M3 7.5h7.5v9H3z", "M14 7.5h1.5", "M18 7.5h1.5", "M21 9.5v1.5", "M21 13v1.5",
                                       "M19.5 16.5h-1.5", "M15.5 16.5h-1.5", "M13.5 14.5v-1.5", "M13.5 11v-1.5"))
-  /** A mountain with a name line under it: the terrain map's physical names. */
+  /** A mountain with a name line under it: the base maps' physical names. */
   case MapNames     extends Icon(List("M3 15l5-8 3.5 5 2-3 4.5 6z", "M5 19.5h14"))
-  /** Three nested contour rings: the terrain map's contour lines. */
+  /** Three nested contour rings: Physical's contour lines. */
   case MapContours  extends Icon(List("M12 3.5c5 0 9 3.6 9 8.3S17 20.5 12 20.5 3 16.5 3 11.8 7 3.5 12 3.5z",
                                       "M12 7c3 0 5.5 2.1 5.5 4.8S15 16.8 12 16.8 6.5 14.5 6.5 11.8 9 7 12 7z",
                                       "M12 10.3c1.3 0 2.3.7 2.3 1.6s-1 1.6-2.3 1.6-2.3-.7-2.3-1.6 1-1.6 2.3-1.6z"))

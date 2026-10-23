@@ -36,7 +36,7 @@ tools (`/mcp`), the REST API (`/api`), the server-rendered source and article pa
 | `db` | **the store**: Magnum repos over Postgres/PostGIS · Flyway migrations · the seed importer | `core` | — |
 | `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db`, `plugin-api`, `plugin-vaults` | native image |
 | `cli` | **a pure HTTP client** of the server — sttp client derived from `core`'s endpoints. No pgjdbc, no DB credentials on the host. | `core` **only** | native image |
-| `web` | the web page (Scala.js, Laminar, Leaflet) | `core` (Scala.js) | served by the server |
+| `web` | the web page (Scala.js, Laminar; the map drawn by MapLibre GL JS behind its own interface) | `core` (Scala.js) | served by the server |
 | `plugin-api` | the plugin SPI: `Plugin`, `PluginContext`, the registries, `Secret` | sconfig, kindlings only | — |
 | `plugin-vaults` | the built-in secret vaults (KeePassXC, 1Password, Bitwarden), compiled as a third-party plugin would be | `plugin-api` only | — |
 | `plugin-fixtures/hello`, `hello-ai` | test plugins, packaged as their own jars; never on the server's class path | `plugin-api` only | — |
@@ -68,6 +68,27 @@ flowchart LR
     H --> PL["plugins: fetchers, media,<br/>events, vaults, AI providers"]
 ```
 
+## The map
+
+The page's map is drawn by [MapLibre GL JS](https://maplibre.org) (vendored, pinned, BSD-3), but no
+code of the page talks to MapLibre. Everything goes through a small interface of the app's own, in
+`modules/web/.../web/map/`, so that a change of map library touches one package:
+
+| part | what |
+|---|---|
+| `MapSurface` · `MapEngine` | one map: the view (centre, zoom, bounds, project/unproject), events (`MapEventKind`: move, zoom, click, hover, base map drawn), the base map (`BaseMapSpec`: blank, a vector style, a raster template), shape sets, popups, the corners for controls, the drawn base-map names, `Capabilities` (WebGL, software rendering by the renderer's name). `Engines.default` names the one real engine |
+| `LatLon` · `ScreenPt` · `GeoBounds` · `Corner` · `VectorStyle` | value types; zooms are always the 256-pixel raster grid's, whatever the library counts |
+| `ShapeSet` · `ShapeFeature` · `ShapeStyle` · `ShapeHits` | GeoJSON shapes (states, event outlines, a place's area) with per-feature colour and alpha changed in place — `set` diffs by id, `restyle` touches one feature — and hit testing by geometry, not by what the library happened to render |
+| `MarkerPane` · `DomMarker` · `PointSet` · `Clustering` | the HTML markers (the corpus's dots, events, labels) in named panes, positioned by CSS custom properties with one delegated listener per pane; the cluster layer (a pure greedy grid) with its animations |
+| `map.maplibre` | **the only adapter**: the Scala.js facade over MapLibre's ESM build (`MapLibre.scala`), `MapLibreEngine` (the `MapSurface`), the two style documents' loading (`web/styles/readable.json`, `physical.json`: placeholders for the server's tile versions and the names' language), the contours (maplibre-contour) |
+
+The tests use a fake surface (`FakeSurface` in the web tests) that records what the layers asked for,
+so the overlays' behaviour is tested without a browser. `MapEngineBoundarySuite` (core's JVM tests)
+fails the build when a MapLibre name — the facade's types, `maplibregl`, `mlcontour` — appears in a
+web source outside `web/map/maplibre/` (and `Engines.scala`, which picks it). The browser regressions
+reach the map through `window.histmersionMap` (`MapHandle`), in the same terms. Why this shape, and
+what it cost: {{ repo_file("docs/research-map-styles.md") }}, "As built".
+
 ## Design notes
 
 The design records in `docs/` say why things are as they are. Each *research* note ends with
@@ -81,6 +102,7 @@ those first.
 | {{ repo_file("docs/writing-guide.md") }} | the rules for prose compiled from the collection (also bundled into the agents) |
 | {{ repo_file("docs/visualization-guide.md") }} | rules for the map and timeline: honest uncertainty, every dot traceable |
 | {{ repo_file("docs/map-layers.md") }} | the map's point layers and how they share one implementation |
+| {{ repo_file("docs/research-map-styles.md") }} | the two base maps (Readable, Physical), MapLibre as the map, the map interface |
 | {{ repo_file("docs/media-providers.md") }} | each picture provider: what it is asked, licence and match rules |
 | {{ repo_file("docs/research-embedded-agents.md") }} | the built-in agents: engine, pipelines, budgets, tracing (P0–P3 as built) |
 | {{ repo_file("docs/research-agent-runtimes.md") }} | one set of agent definitions for Claude Code, Codex and opencode; the generator; run tokens |

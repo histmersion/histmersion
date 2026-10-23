@@ -561,7 +561,7 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
                                       border:1px dashed var(--glyph-edge); }
 .hd-conf { font-size:11px; color:var(--muted); font-style:italic; }
 
-/* ── Leaflet popups follow the page's theme, not Leaflet's white default (item 26) ──────────── */
+/* ── the map's popups follow the page's theme, not the library's white default (item 26) ───────── */
 /* the map's popups (a finding's, a picture's): the panel's colours, over every pane */
 .hd-popup { z-index:700; font:12px system-ui; }
 .hd-popup .maplibregl-popup-content { background:var(--panel); color:var(--ink); border:1px solid var(--line);

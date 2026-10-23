@@ -9,8 +9,9 @@ collection on a train, in an archive without a network, or behind a firewall.
 - **Everything you look at**: the map and the timeline, the lists, the filters and the search, the
   sources with their full text and figures, the articles, the events and places, the backlog and the
   worklog, the jobs window.
-- **The map itself**, once it is downloaded (below): the street maps (Standard, Muted, Dark) and the
-  terrain styles, the relief and the names — all drawn by your browser from files your server keeps.
+- **The map itself**, once it is downloaded (below): the two local [base maps](base-maps.md),
+  Readable and Physical, with their relief, names and font — drawn by your browser from files your
+  server keeps.
 - **Pictures** that were imported: their thumbnails and the stored copies are served by your server.
 - **Writing**: adding notes, findings and articles, editing sources, the queues, backups and exports —
   from the web page, the `histmersion` command or an agent's tools.
@@ -27,14 +28,14 @@ else is affected.
 | `refs`, `followups`, `assess` | citation data and retraction notices come from Crossref, OpenAlex and the Retraction Watch list |
 | `places fetch`, `periods fetch`, `events import`, `media import` | gazetteers, period definitions, event catalogues and picture collections are downloaded from their publishers |
 | `histmersion basemap fetch` | the one-time download of the map, below |
-| the online maps (Standard (online), …) | their tiles come from OpenStreetMap's servers (or the ones `ui.tiles` names) |
+| the online maps (Standard, Muted and Dark (online)) | their tiles come from OpenStreetMap's servers (or the ones `ui.tiles` names) |
 | a DOI link, a link to a source's publisher, "Why?" and "How to download it" on the map | they open another site; the guide's links follow `ui.docs-url`, which you can point at a copy of this guide (`just docs-serve`) |
 
 ## The one-time download
 
-The map is three files the server downloads once (see [Open data → The terrain base
-map](open-data.md#the-terrain-base-map) for what they hold, the sources and their licences). For the
-street maps the vector layer must keep roads, places and borders, which the default download leaves
+The map is a few files the server downloads once (see [Open data → The base map's
+data](open-data.md#the-base-maps-data) for what they hold, the sources and their licences). For
+**Readable** the vector layer must keep roads, places and borders, which the default download leaves
 out to save space, so download it with `--keep-all`:
 
 ```bash
@@ -51,12 +52,12 @@ Measured for the default region (`basemap.bbox`, Atlantic Europe to the Indus) o
 | `labels.pmtiles` (physical names) | about 20 MB | 1.4 MB |
 | **all** | **about 2.05 GB** | **about 2.0 GB** |
 
-Without `--keep-all` the vector layer keeps 1.30 GB: the terrain styles are whole, and the street maps
-are marked "needs the full download". A download made that way is completed with the vector layer
+Without `--keep-all` the vector layer keeps 1.30 GB: Physical is whole, and Readable is marked "needs
+the full download". A download made that way is completed with the vector layer
 alone — the relief and the names stay:
 
 ```bash
-histmersion basemap status                              # which styles lack something, and what to run
+histmersion basemap status                              # which base map lacks something, and what to run
 histmersion basemap fetch --layer vector --keep-all     # about 1.5 GB, replaces the vector layer
 ```
 
@@ -65,15 +66,7 @@ and less sharp, from zoom 10 on. A fetch is refused before it starts when it wou
 `basemap.min-free-gb` (5 GB) free.
 
 <figure markdown>
-  ![Attica on the local Standard map: land use, roads by class, borders, the names of towns and of the gulf](../assets/screenshots/local-standard.png){ loading=lazy }
-</figure>
-
-<figure markdown>
-  ![The same view on the local Muted map: pale land and roads, grey names](../assets/screenshots/local-muted.png){ loading=lazy }
-</figure>
-
-<figure markdown>
-  ![The same view on the local Dark map: dark land and sea, dim roads, light names](../assets/screenshots/local-dark.png){ loading=lazy }
+  ![The Aegean on the Readable map, drawn from the server's download: land and sea, towns, faint main roads and borders, the names of seas and islands](../assets/screenshots/basemap-readable.png){ loading=lazy }
 </figure>
 
 ## Choosing the maps the page offers
@@ -83,9 +76,9 @@ and less sharp, from zoom 10 on. A fetch is refused before it starts when it wou
 
 | value | the menu | the page |
 |---|---|---|
-| `auto` (the default) | `local` once the download can draw the default preset (Natural) whole, else `online` | |
-| `local` | only the Histmersion map (no "Online map" family); Natural first, the local Standard, Muted and Dark among the presets | asks no other computer for anything — a map you chose online before is drawn as the local one of the same name |
-| `online` | the "Online map" family too: the online Standard, Muted and Dark | the online maps load tiles from the internet when chosen |
+| `auto` (the default) | `local` once the download can draw Readable or Physical whole, else `online` | |
+| `local` | only Readable and Physical | asks no other computer for anything — an online map chosen before is drawn as Readable (Physical when the download cannot draw Readable whole) |
+| `online` | Readable, Physical and the online Standard, Muted and Dark | the online maps load tiles from the internet when chosen |
 
 ```hocon
 # ~/.config/histmersion/histmersion.conf
@@ -99,7 +92,10 @@ downloaded yet, the map shows its background and a note saying what to run.
 Mapterhorn when someone looks that closely (`basemap.terrain.on-demand`), and kept: so it stays on with
 `local` — the page still asks no other host. Without the internet the map shows the coarser relief there;
 `basemap.terrain.on-demand.enabled = false` stops the server asking, and `histmersion basemap fetch
---layer terrain --focus <region>` keeps a region's detail beforehand ([Open data](open-data.md#the-terrain-base-map)).
+--layer terrain --focus <region>` keeps a region's detail beforehand ([Open data](open-data.md#the-base-maps-data)).
+Where a deeper relief tile is missing (outside a focus region, and not read on demand), the server
+cuts it from the nearest coarser tile it holds, so the relief never disappears as you zoom in — it
+only gets softer.
 
 The online maps are only ever loaded as you look at them, tile by tile, never in advance or in bulk
 (OpenStreetMap's tile usage policy forbids that); the local maps are drawn from Protomaps' build of

@@ -66,12 +66,15 @@ final case class UiConfig(
     /** The server's plugins (`histmersion.plugins`), filled in by the server like `writeKeyRequired` —
       * NOT a configuration key of its own. Secret settings show their reference, never the value. */
     plugins: PluginsReport = PluginsReport(),
-    /** The user guide's root URL (`ui.docs-url`): the page links into it (the terrain map's notice). */
+    /** The user guide's root URL (`ui.docs-url`): the page links into it (the base map's notice). */
     docsUrl: String = "",
     /** Which base maps the page offers (`ui.base-map-source`, [[BaseMapSource]]): `local` (only those
       * drawn from the server's extracts — no request to any other host), `online` (the online raster
       * maps too), or `auto`. The server answers it resolved: `local` or `online`. */
-    baseMapSource: String = "auto"
+    baseMapSource: String = "auto",
+    /** The language of the base map's names unless a viewer chooses another (`basemap.labels.language`):
+      * filled in by the server like `writeKeyRequired` — NOT a `ui` key of its own. */
+    mapLanguage: String = "en"
 ) derives KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema

@@ -6,6 +6,12 @@ server downloads once. There is no reliable worldwide source of how coastlines, 
 vegetation looked in a given century, so the map is today's landscape with a notice saying so
 whenever it is shown (user guide: exploring/web-ui.md, "The terrain map").
 
+> **Superseded in part (2026-10-23).** The renderer and the styles below are gone: the page draws two
+> base maps, *Readable* and *Physical*, with MapLibre GL JS (docs/research-map-styles.md, "As built").
+> The data side — the extracts, focus regions, on-demand relief, sea floor, physical names, the
+> `?layers=` cuts — is unchanged and still described here; the relief's resampling deeper than any
+> archive moved from the page into the server's tile endpoint.
+
 ## The renderer: protomaps-leaflet, and the relief shaded in the page
 
 Measured in headless Chromium (the browser suite's conditions: software rendering) on the same

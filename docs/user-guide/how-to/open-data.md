@@ -1,4 +1,4 @@
-# Open data: places, periods, events, pictures, the terrain map
+# Open data: places, periods, events, pictures, the base maps
 
 Besides your sources, Histmersion can import public datasets: places for the map, named periods for
 the timeline, events, and pictures. Each comes with **its own licence and terms** — some ask to be
@@ -133,18 +133,17 @@ The rules every provider follows:
 Details of each provider, and those not included and why: {{ repo_file("docs/media-providers.md") }}.
 How to reuse a picture: [Pictures](../exploring/media.md#reusing-a-picture).
 
-## The terrain base map
+## The base map's data
 
-The web page's [terrain map](../exploring/web-ui.md#the-terrain-map) — relief, coast, water,
-rivers, land cover, the sea floor and the physical names, without modern roads, towns or borders — and
-its local **Standard, Muted and Dark** maps (today's roads, towns and borders) are drawn from files the
-server downloads once and then serves itself, so the map works without the internet
-([Working offline](offline.md)). Nothing is downloaded until you ask:
+The web page's two local [base maps](base-maps.md), **Readable** and **Physical** — relief, coast,
+water, rivers, land cover, the sea floor and the physical names, and for Readable also today's towns,
+main roads and borders — are drawn from files the server downloads once and then serves itself, so the
+map works without the internet ([Working offline](offline.md)). Nothing is downloaded until you ask:
 
 ```bash
 histmersion basemap fetch --dry-run     # reads only the providers' indexes; prints the sizes
 histmersion basemap fetch               # the download, as a job (it can be stopped and resumed)
-histmersion basemap fetch --keep-all    # the same, keeping roads, places and borders: the street maps too
+histmersion basemap fetch --keep-all    # the same, keeping roads, places and borders: what Readable draws
 histmersion basemap status              # what is there, where, and how much space is left
 histmersion basemap rm                  # remove it again (--layer vector|terrain|labels|bathymetry, --focus, --cache)
 histmersion basemap fetch --layer labels   # only the physical names (about 20 MB read, 1.4 MB kept)
@@ -156,12 +155,13 @@ histmersion basemap fetch --layer terrain --focus aegean   # the Aegean's relief
 |---|---|---|---|
 | `vector` | coastlines, seas, lakes, rivers and streams with their names; land cover and land use; natural points (peaks, springs); with `--keep-all` also roads, places and borders | a [Protomaps](https://protomaps.com) daily build of OpenStreetMap and Natural Earth | © OpenStreetMap contributors, [ODbL](https://www.openstreetmap.org/copyright); Natural Earth public domain |
 | `labels` | the names of mountain ranges, deserts, plateaus, peninsulas, island groups, large lakes, major rivers and peaks | [Natural Earth](https://www.naturalearthdata.com) 5.1.2's label layers | public domain (credited on the map all the same) |
-| `terrain` | elevation, shaded into relief by the page | [Mapterhorn](https://mapterhorn.com), mostly the Copernicus GLO-30 elevation model | © Mapterhorn; Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA; further open sources are listed on [Mapterhorn's attribution page](https://mapterhorn.com/attribution) |
+| `terrain` | elevation, shaded into relief by the page; deeper than any downloaded file, the server cuts a tile from the nearest coarser one | [Mapterhorn](https://mapterhorn.com), mostly the Copernicus GLO-30 elevation model | © Mapterhorn; Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA; further open sources are listed on [Mapterhorn's attribution page](https://mapterhorn.com/attribution) |
 | `bathymetry` | the sea floor's depth, coloured and shaded by the page (Mapterhorn's sea is flat at 0) | [Mapzen's terrain tiles](https://registry.opendata.aws/terrain-tiles/) on AWS Open Data, whose sea is NOAA's [ETOPO1](https://www.ncei.noaa.gov/products/etopo-global-relief-model) (1 arc-minute, about 1.8 km) | ETOPO1: U.S. Government work, public domain, *not to be used for navigation*; credited as "ETOPO1 (NOAA) via Mapzen Terrain Tiles" ([attribution](https://github.com/tilezen/joerd/blob/master/docs/attribution.md)) |
 
-The map's label fonts — Noto Serif, Noto Serif Armenian, Georgian and Hebrew, Noto Naskh Arabic — are
-part of Histmersion itself (SIL Open Font License 1.1, its text beside the files in
-`web/vendor/noto-fonts/`), so the names show in their own scripts with no font service.
+The map's label font, Noto Sans — Latin, Greek and Cyrillic, with Noto Sans Arabic, Armenian, Georgian
+and Hebrew for local names in those scripts — is part of Histmersion itself (SIL Open Font License 1.1,
+its text beside the files in `web/vendor/noto-sans/`), so the names show in their own scripts with no
+font service.
 
 The credits are shown on the map whenever it is on. Both providers publish one large file for the
 whole world (139 GB and 356 GB) and document downloading **a region of it** with HTTP range requests,
@@ -169,10 +169,9 @@ which is what the fetch does: it reads their index, then only the tiles of your 
 dozen large requests a quarter of a second apart. Roads, transit, buildings, place names, borders and
 modern points of interest are dropped before it is stored (`basemap.vector.drop`); **everything else
 is kept** — land use, every water feature and its names in every language, natural points — and the
-[style](terrain-styles.md) decides what is drawn, so changing the look never needs another download.
-`--keep-all` stores the vector layer unfiltered: the roads, places and borders the local **Standard,
-Muted and Dark** maps draw (about 0.2 GB more). `histmersion basemap status` says what the stored
-extract kept, which styles lack something in it and the command that adds it, and recommends one
+base map decides what is drawn. `--keep-all` stores the vector layer unfiltered: the roads, places and
+borders **Readable** draws (about 0.2 GB more). `histmersion basemap status` says what the stored
+extract kept, which base map lacks something in it and the command that adds it, and recommends one
 more fetch for one made before 2026-10-19 (which kept only coast, water and land cover).
 
 **Sizes** for the default region (`basemap.bbox`, `-12,20,90,62`: Atlantic Europe to the Indus,
@@ -186,11 +185,12 @@ the Sahel to southern Scandinavia), measured on one complete zoom-10 download of
 | **10** (default) | **1.54 GB** | **1.30 GB** | **1.52 GB** |
 
 Nine tenths of it is OpenStreetMap's land use (woods, fields, towns, mapped in fine detail where
-people mapped it), which only *Terrain + vegetation* and the street maps draw. To keep the download
+people mapped it), which the base maps draw only faintly, from zoom 9. To keep the download
 small, drop it:
 `basemap.vector.drop = "roads; transit; buildings; boundaries; places; landuse; pois +peak +volcano"`
 (then close to 16, 56 and 138 MB, as before 2026-10-19). The web page asks the server only for the layers its style draws,
-so a large extract costs the page nothing it does not show.
+so a large extract costs the page nothing it does not show. (Readable then lacks its roads, towns
+and borders.)
 
 | `--terrain-max-zoom` (512-pixel tiles) | downloaded = stored |
 |---|---|
