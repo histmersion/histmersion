@@ -56,6 +56,13 @@ const BUDGETS = {
   physicalMap: { drawnMs: 4000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 15,
     'zoom.longTaskMax': 150, 'zoom.droppedPct': 15, 'options.inputP95': INPUT, 'options.longTaskMax': 150 },
   memoryPhysicalMap: { heapMB: 110 },
+  // the same without a GPU (Chromium's software rasteriser: the map's cheapest drawing, no relief): input
+  // within the same INPUT rule, frames allowed to drop more — measured 2026-10-23 on SwiftShader (M4 Pro):
+  // pan p95 66 ms, 8–12 % dropped; zoom 16–18 % dropped. The GPU budgets above are not relaxed by this.
+  readableMapSoftware: { drawnMs: 4000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 20,
+    'zoom.longTaskMax': 150, 'zoom.droppedPct': 25, 'options.inputP95': INPUT, 'options.longTaskMax': 150 },
+  physicalMapSoftware: { drawnMs: 4000, longTaskMax: 200, 'pan.inputP95': INPUT, 'pan.longTaskMax': 150, 'pan.droppedPct': 20,
+    'zoom.longTaskMax': 150, 'zoom.droppedPct': 25, 'options.inputP95': INPUT, 'options.longTaskMax': 150 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
   soak: { heapMB: 6, nodes: 150, listeners: 20, mapMarkers: 0 },
 };
@@ -141,7 +148,10 @@ for (const [style, name] of [['readable', 'Readable'], ['physical', 'Physical']]
     await withPerfPage(async ({ page, cdp }) => {
       const m = await paths.vectorMap(page, baseURL, style);
       assert.ok(m.points >= 2000 && m.shapes >= 1000, `the full load: ${m.points} points, ${m.shapes} shapes`);
-      within(`${style}Map`, m);
+      // the GPU budgets on a GPU; the software path (HISTMERSION_TEST_GPU=0) has its own, named apart
+      const software = await page.evaluate(() => window.histmersionMap.capabilities().software);
+      assert.equal(software, gpuArgs().length === 0, `the map took the ${software ? 'software' : 'GPU'} path`);
+      within(software ? `${style}MapSoftware` : `${style}Map`, m);
       within(`memory${name}Map`, await memory(page, cdp));
     }, undefined, { source: 'local' });
   });

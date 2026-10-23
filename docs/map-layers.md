@@ -152,3 +152,25 @@ shape is `--glyph-size`, the stroke widths `--glyph-ink-w` / `--glyph-halo-w`. A
 
 `PointKindsSuite` runs the same assertions over all four descriptors (shape, glyph, aria, title, the
 filter predicate, the cluster count), so the kinds cannot drift apart again.
+
+## On the map interface (2026-10-23)
+
+Leaflet is gone; the layers above now draw through the app's own map interface (`web/map/`,
+docs/user-guide/contributing/architecture.md "The map"), and MapLibre GL JS draws it. What that changed
+for the layers, and what stayed:
+
+- **Points** stay HTML markers — the shapes, glyphs, tier classes, hover and focus cards and the
+  keyboard button are unchanged — but are `DomMarker`s in named `MarkerPane`s (`hd-pane--<name>`),
+  positioned by CSS custom properties (`--tx`, `--ty`) and served by one delegated listener per pane
+  instead of one per marker. The ONE cluster group is `PointSet` over a pure greedy grid
+  (`Clustering`): the bubbles, their counts and the period-ramp mix are as before; above `animateMax`
+  points a regroup is not animated and the markers are made in slices across frames (#1647's rule).
+- **Areas** (states, a regional event's outline, the place picker's areas) are `ShapeSet`s: one GeoJSON
+  source with fill and line layers per set, colour and alpha as per-feature state (`restyle` touches
+  one feature), and hover and click hit-tested against the geometry (`ShapeHits`), so a state under
+  a marker still answers.
+- **Popups** are the interface's `Popup` (`.hd-popup`, the content in `.hd-popup-content`); the
+  legend, the base-map menu and the options sit in the surface's corners.
+- The base map's names (Readable, Physical) are drawn and collision-checked by MapLibre over the whole
+  view, so they are never cut at a tile's edge (docs/research-map-styles.md §2); the corpus's own
+  labels stay HTML above them.

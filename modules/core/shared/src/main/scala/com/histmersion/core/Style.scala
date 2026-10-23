@@ -57,7 +57,7 @@ object ConfidenceStyle:
   def label(c: Confidence): String = s"${c.toString.toLowerCase} confidence"
 
 /** The HTML atoms both front ends emit as STRINGS — the server's pages (`server.HtmlRender`) and the
-  * web UI's Leaflet popups — so a source link or a confidence mark is one markup, byte for byte,
+  * web UI's map popups — so a source link or a confidence mark is one markup, byte for byte,
   * wherever it is drawn. Cross-platform (no JVM `URLEncoder`), pure. */
 object HtmlAtoms:
 

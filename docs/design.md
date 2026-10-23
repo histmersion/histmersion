@@ -40,7 +40,7 @@ export mirror is faithful and the reading experience is identical to files, only
  │  CLI       │ ─────────────────────►│    /mcp     MCP tools (Chimp)   ─┐               │
  │  (decline, │                       │    /api     REST (Tapir)        ─┼─► Handlers    │
  │   native)  │                       │    /source/ article pages       ─┘      │        │
- │            │                       │    /        web UI (Leaflet + timeline) │        │
+ │            │                       │    /        web UI (MapLibre + timeline)│        │
  │  no DB     │                       │    Magnum ──► postgres · HTTP ──► converter      │
  └────────────┘                       └────┬──────────────────────┬──────────────────────┘
                                            ▼                      ▼

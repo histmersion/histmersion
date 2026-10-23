@@ -27,89 +27,64 @@ click also filters the lists by that place.
 
 ### The base map
 
-The base map is chosen in two steps, at the end of the layer buttons. The first menu picks the
-**family**:
+The menu at the end of the layer buttons picks the map under your data — one of five
+[base maps](../how-to/base-maps.md):
 
-- **Histmersion map** — drawn in your browser from a download your own server keeps, so it works
-  without the internet: [the terrain map](#the-terrain-map) with no modern features (*Natural*, the
-  default, and the other terrain styles) and the street maps **Standard**, **Muted** and **Dark** —
-  today's map with roads, towns, borders and place names;
-- **Online map** — the same kind of street map as tiles from OpenStreetMap's servers (or the ones
-  `ui.tiles` names): *Standard (online)*, *Muted (online)*, *Dark (online)*, in the second menu. They need
-  the internet, and are offered only while the server cannot draw its own map yet, or when
-  `ui.base-map-source = "online"`. Once the download is complete, the page asks no other computer for
-  anything: [Working offline](../how-to/offline.md).
+- **Readable** (the default) and **Physical** — drawn in your browser from a download your own server
+  keeps, so they work without the internet. Readable is a general-purpose map in OpenStreetMap's
+  colours with towns, faint main roads and borders; Physical shows the land's form — relief, height,
+  the sea by its depth — and the physical names, without roads or borders;
+- **Standard (online)**, **Muted (online)** and **Dark (online)** — OpenStreetMap's tiles from the
+  internet (or the ones `ui.tiles` names). They are offered only while the server cannot draw its own
+  map yet, or when `ui.base-map-source = "online"`. Once the download is complete, the page asks no
+  other computer for anything: [Working offline](../how-to/offline.md).
 
-For the Histmersion map, the button beside the menu opens the **map options**: the style (the
-*preset*) and what you change of it for yourself. They stay open while you change things (Escape, or
-a click elsewhere, closes them), each change shows at once, and your changes are remembered by this
-browser, per preset, until **Reset to preset**:
-
-| option | what it does |
-|---|---|
-| **Style** | the preset: *Natural* (the default), *Contour map*, *Standard*, *Muted*, *Dark*, *Terrain*, *Terrain + vegetation*, *Relief only*, *Parchment*, and any your [style file](../how-to/terrain-styles.md) adds |
-| **Names** · **Language** | the names on or off; *English*, *Local* (each name in its own language and script) or another language — a name missing in it falls back to English, then to the local name |
-| **Relief** | how strongly the slopes are shaded (none … twice the preset's) |
-| **Colours by height** | the ground coloured by its elevation (lowland green, upland tan, mountain grey-brown, snow) |
-| **Land cover** | forest, grass, scrub, farmland, bare rock, sand, wetland and ice |
-| **Sea floor by depth** | the sea coloured and shaded by its depth: the shallow shelf light, the deep basins dark |
-| **Contour lines** · **Interval** | lines of equal height from zoom 11 (*Contour map*: 9), every 200, 100, 50 or 20 m as you zoom in — or a fixed interval |
-
-An option a preset cannot offer, or whose data the server has not downloaded, is shown disabled with
-a line saying why — and, for missing data, the command that fetches it. A street map the download
-cannot draw whole is marked "needs the full download" and drawn with what is there.
+The button beside the menu opens the **map options** for Readable and Physical: the names on or off,
+their language (*English*, *Local* — each name in its own language and script — or another), and in
+Physical the contour lines. They stay open while you change things (Escape, or *Close*, closes them),
+each change shows at once, and they are remembered by this browser until **Reset**. An option the map
+cannot offer, or whose data the server has not downloaded, is disabled with a line saying why — and,
+for missing data, the command that fetches it. A base map the download cannot draw whole is marked
+"needs the full download" and drawn with what is there.
 
 <figure markdown>
-  ![The map options over the Aegean: the style, names and language, relief, colours by height, land cover, sea floor, contours](../assets/screenshots/map-options.png){ loading=lazy }
+  ![The Aegean on the Readable map with the corpus's events: land and sea in OpenStreetMap's colours, the names of seas, islands and towns, the notice in the corner](../assets/screenshots/basemap-readable.png){ loading=lazy }
 </figure>
 
 <figure markdown>
-  ![Attica on the local Standard map: land use, roads by class, borders and the names of towns, drawn by the server](../assets/screenshots/local-standard.png){ loading=lazy }
-</figure>
-
-### The terrain map
-
-The **Histmersion map** shows the land itself — relief, coastlines, seas and the sea floor, lakes,
-rivers and the land cover, with the names of the seas, mountain ranges, deserts, lakes and rivers — and
-nothing people built: no roads, towns, place names, borders or buildings. The markers, names and state
-outlines of your own corpus are then the only human geography on the map.
-
-Its default style, **Natural**, is a light map that tells the lie of the land at a glance: the ground
-coloured by its height, forests, grass, bare rock, sand and ice in their own colours, the slopes shaded
-from several directions, the sea a soft blue lighter along the shore and darker over its deep basins,
-and — close in — contour lines with their heights, so a citadel on a small hill between two others
-reads as just that. Zoomed close, the relief goes to about 30 m detail (the server reads the tiles you
-look at once and keeps them). You can change the styles or add your own without restarting anything:
-[Customising the terrain map](../how-to/terrain-styles.md).
-
-<figure markdown>
-  ![The Argolid around Mycenae at zoom 12 in the Natural style: the plain, the hills coloured and shaded, contour lines every 50 m with their heights](../assets/screenshots/terrain-mycenae.png){ loading=lazy }
+  ![The Argolid around Mycenae at zoom 12 on the Physical map: the plain and the hills shaded, a river, contour lines every 20 m](../assets/screenshots/physical-mycenae.png){ loading=lazy }
 </figure>
 
 <figure markdown>
-  ![The Aegean on the terrain map: shaded mountains, the sea and the islands, no modern roads or towns, the notice in the corner](../assets/screenshots/home-terrain.png){ loading=lazy }
+  ![The map options over the Physical map: names, their language, contour lines](../assets/screenshots/map-options.png){ loading=lazy }
 </figure>
 
 !!! warning "Today's landscape, not the past's"
-    The terrain map is drawn from **present-day** data. Coastlines have moved (silted harbours such as
-    Ephesus and Troy, the Nile and Mesopotamian deltas, the Black Sea's shores), rivers have changed
-    course, lakes have grown, shrunk or been dammed, and the vegetation is today's. No reliable,
-    worldwide map of how these looked in a given century exists, so the map does not pretend to
-    show one: a notice in its corner says so whenever it is on. Read a site's setting from your
-    sources, not from the background.
+    Readable and Physical are drawn from **present-day** data. Coastlines have moved (silted harbours
+    such as Ephesus and Troy, the Nile and Mesopotamian deltas, the Black Sea's shores), rivers have
+    changed course, lakes have grown, shrunk or been dammed, and the vegetation is today's. No
+    reliable, worldwide map of how these looked in a given century exists, so the map does not pretend
+    to show one: a notice in its corner says so whenever one of them is on. Read a site's setting from
+    your sources, not from the background.
 
-The map is drawn in your browser from files your server keeps (about 2 GB for the default region,
+Readable and Physical are drawn from files your server keeps (about 2 GB for the default region,
 Atlantic Europe to the Indus). They are not there until someone downloads them once:
 
 ```bash
-histmersion basemap fetch      # see Open data → The terrain base map
+histmersion basemap fetch --keep-all      # see Open data → The base map's data
 ```
 
-Until then the menu says "not downloaded", and choosing it shows the online standard tiles, dimmed
+Until then the menu says "not downloaded", and choosing one shows the online Standard tiles instead
 (nothing, on a page that has only the local maps), with a note on how to fetch it. Outside the
-downloaded region the map is blank; beyond the downloaded zooms of the relief (8 by default), it is read
-from the provider as you look, when the server is online — also on a page that has only the local maps:
-the server reads it, not the page, and offline the map shows the coarser relief.
+downloaded region the map is blank; beyond the downloaded zooms of the relief (8 by default), it is
+read from the provider as you look, when the server is online — also on a page that has only the local
+maps: the server reads it, not the page. Offline, the server cuts the deeper relief from the coarser
+tiles it has.
+
+The map is drawn with WebGL. On a computer whose browser cannot use a graphics card (a virtual
+machine, a remote desktop, hardware acceleration switched off), Readable and Physical are drawn
+without their relief, which keeps them quick, and a line of the notice says so. The credits of the
+base map drawn are behind the ⓘ in its lower right corner.
 
 ## The timeline
 

@@ -1,6 +1,6 @@
 # Browser regressions
 
-These tests cover interactions that pure Scala.js tests cannot observe: Leaflet container resizing,
+These tests cover interactions that pure Scala.js tests cannot observe: the map's container resizing,
 touch-slider versus drawer gestures, cancelled pointer sequences, and controlled search inputs —
 and (`perf.test.mjs`) the web UI's speed and memory budgets and a soak test that fails on a leak
 (docs/research-web-perf.md).
@@ -23,7 +23,6 @@ HISTMERSION_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test \
 HISTMERSION_PORT=18080 HISTMERSION_PUBLIC_URL=http://127.0.0.1:18080 \
 HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap \
 HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false \
-HISTMERSION_BASEMAP_STYLE=/tmp/histmersion-test-style.conf \
 dist/histmersion/bin/histmersion-server
 ```
 
@@ -33,12 +32,18 @@ Then run:
 HISTMERSION_SERVER_URL=http://127.0.0.1:18080 npm --prefix modules/web run test:browser
 ```
 
-`HISTMERSION_BASEMAP_DIR` points the server at a small Aegean extract of the terrain base map
+`HISTMERSION_BASEMAP_DIR` points the server at a small Aegean extract of the base maps' data
 (`fixtures/basemap`, 10.5 MB with its physical names, sea floor and an Argolid focus region, its licences
-in its README); without it the terrain tests are skipped. `HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false`
-keeps the server from reading deeper relief from the provider when a test zooms in (no network). The style hot-reload test also needs the server started with
-`HISTMERSION_BASEMAP_STYLE=<a file>` and the tests run with `HISTMERSION_TEST_STYLE_FILE=<the same
-file>` (it writes the file, and empties it afterwards).
+in its README); without it the Readable/Physical tests are skipped. `HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false`
+keeps the server from reading deeper relief from the provider when a test zooms in (no network).
+
+**The GPU.** The map is drawn with WebGL (MapLibre GL JS). On macOS the tests launch Chromium with
+`--enable-gpu --ignore-gpu-blocklist --use-angle=metal`, so the map is drawn by the GPU and held to the
+GPU budgets; elsewhere, or with `HISTMERSION_TEST_GPU=0`, Chromium draws WebGL in software
+(SwiftShader), the page takes its no-GPU path (no relief, the notice's extra line) and the vector maps'
+budgets are their `…Software` ones (`perf.test.mjs`). `HISTMERSION_TEST_GPU=1` asks for the GPU on any
+platform. The tests reach the map through `window.histmersionMap` (`web/MapHandle.scala`): the view,
+the shape sets and the shapes under a point, the cluster layer's counts, the drawn base-map names.
 `test:browser` runs both files; the budgets and the soak test take ~3 minutes of it (100 soak rounds).
 `npm --prefix modules/web run test:perf` runs them alone; `HISTMERSION_SOAK_ROUNDS=20` shortens the
 soak, `HISTMERSION_PERF_REPORT=1` prints every measured figure. `perf-baseline.mjs` measures the

@@ -51,6 +51,12 @@ class BaseMapsSuite extends munit.FunSuite:
     val (s2, n2, _) = BaseMaps.plan(BaseMap.Readable, Some(status(true, List("roads"))), MapPrefs(), ui, local = false, soft = true)
     assert(s2.asInstanceOf[BaseMapSpec.Vector].reduced)
     assert(n2.exists((t, warn) => warn && t.contains("roads")))
+    // the configured language (`basemap.labels.language`) unless the viewer chose one; offered in the menu
+    BaseMaps.plan(BaseMap.Readable, Some(status(true)), MapPrefs(), ui.copy(mapLanguage = "de"), local = false, soft = false)._1 match
+      case BaseMapSpec.Vector(_, _, "de", _, _, _) => ()
+      case other => fail(other.toString)
+    assertEquals(BaseMaps.languageChoices("de"), BaseMaps.Languages)
+    assertEquals(BaseMaps.languageChoices("pl").last, "pl" -> "pl")
     // not downloaded: the online Standard stands in — none on a local page
     assert(BaseMaps.plan(BaseMap.Readable, Some(status(false)), MapPrefs(), ui, local = false, soft = false)._1.isInstanceOf[BaseMapSpec.Raster])
     assertEquals(BaseMaps.plan(BaseMap.Readable, Some(status(false)), MapPrefs(), ui, local = true, soft = false)._1, BaseMapSpec.Blank)

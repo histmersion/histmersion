@@ -1,6 +1,7 @@
 # Map styles: a study of readable base maps, and a prototype (2026-10-20)
 
-**Status: study and prototype — nothing here is shipped.** The user's verdict on the self-drawn base map
+**Status: built (2026-10-23) as option C — see "As built" at the end; §1–§6 are the study as it was
+written.** The user's verdict on the self-drawn base map
 (docs/research-terrain-basemap.md), on 2026-10-20:
 
 > Country names often miss letters ("REECE", "MACEDONI"). Virtually all our terrain styles are bad to look
@@ -445,6 +446,74 @@ What the comparison shows:
   (rarely used) — or keep it, pointing at a MapLibre style JSON.
 - **Land cover only to zoom 7** in the Protomaps build: drawn overzoomed through its own source; beyond z9
   OSM land use is mapped unevenly (the 2026-10-19 note) — *Physical* uses only forest from it, faintly.
+
+---
+
+## As built (2026-10-23)
+
+The user chose **option C** on 2026-10-20: MapLibre GL JS is the map, the overlays moved into it, Leaflet
+removed; the base maps are exactly *Readable* and *Physical* (vector, local data) plus the online rasters
+(OSM Standard, Muted/HOT, Dark) as MapLibre raster sources; the nine presets and their tooling deleted.
+
+### ADR: the map behind an interface of the app's own
+
+**Context.** Leaflet had leaked into ~20 files of the page (layers, markers, popups, events, panes); this
+switch rewrote all of them. A later change of map library should not.
+**Decision.** One package, `web/map/`, defines what the page needs of a map — `MapSurface` / `MapEngine`
+(view, events, base map as `BaseMapSpec`, shape sets with per-feature state and id-keyed diffs, popups,
+corners, drawn names, `Capabilities`), the HTML markers (`MarkerPane`, `DomMarker`, `PointSet`,
+`Clustering`) and value types. The only real engine is the adapter `web/map/maplibre/` (facade +
+`MapLibreEngine`); `Engines.default` picks it. A fake surface (`FakeSurface`) tests the overlays in
+Scala.js; `MapEngineBoundarySuite` fails when a MapLibre name appears outside the adapter.
+**Consequences.** The overlays are library-independent (only the CSS styles MapLibre's popup and control
+classes). The interface is thin — it has what the page uses, nothing speculative; a feature the next
+library lacks (feature state, `font-faces`) would be emulated in its adapter. Markers stay HTML (cards,
+keyboard, tiers, tests keep their DOM contracts) rather than WebGL symbols; that costs DOM nodes at
+thousands of points, which the cluster layer bounds. Zooms are the raster grid's everywhere
+(MapLibre's + 1, converted only in the adapter), so every stored view, budget and test kept its numbers.
+
+### What moved where
+
+| before | now |
+|---|---|
+| `TerrainMap`, `TerrainView`, `MapOptions` (preset menu, nine presets × eight options) | `BaseMaps` (one menu of five maps; options: names, language, Physical's contours), `MapHandle` (`window.histmersionMap` for the console and the tests) |
+| `TerrainRules`, `TerrainLabels`, `Relief`, `ReliefLayer`, `Hillshade`, `Contours`, protomaps-leaflet, Noto Serif | `web/styles/readable.json`, `physical.json` (generated once from `spike/map-styles/styles.mjs`; `{version}` and `name:{lang}` resolved at load), MapLibre's hillshade/color-relief, maplibre-contour 0.1 (vendored, BSD-3) for the contours, Noto Sans by `font-faces` |
+| the page resampling relief deeper than the archive (`Relief`, bicubic) | the server: `BasemapService.fromAncestor` cuts a missing terrain tile (≤ 6 zooms, ≤ the deepest archive) from its nearest stored ancestor, bilinear **in metres**, re-encoded as terrarium PNG; a pure lossless-WebP (VP8L) decoder (`Vp8l`), PNG codec and resampler (`TerrainResample`), LRU caches; the terrain version carries the focus regions' stamp |
+| Leaflet + markercluster: markers, cluster group, polygons, popups, panes | `PointSet` + `Clustering` (greedy grid, `js.Map` keyed by doubles), `MarkerPane`/`DomMarker` (CSS custom properties, delegated listeners, sliced creation above `animateMax`), `ShapeSet` on GeoJSON sources with feature state, geometry hit tests (`ShapeHits`), `Popup` |
+| `core/TerrainStyle`, `TerrainStyleFile`, `styles.conf`, `server/BasemapStyles`, `basemap.style*`, `/api/basemap/styles*`, `histmersion basemap styles`, how-to/terrain-styles.md | deleted; `core/BaseStyles` names the two styles and the vector layers each needs whole (`basemap status`, `ui.base-map-source = auto`); how-to/base-maps.md |
+
+**No GPU.** `Capabilities.isSoftware` reads the WebGL renderer string (SwiftShader, llvmpipe, softpipe,
+lavapipe, "software", "basic render"); the map then draws at pixel ratio 1, the vector styles `reduced`
+(no hillshade, no color-relief, no contours), and the notice gets one line. Not the raster fallback §6
+proposed: the reduced vector map measured within the input budget (below) and keeps the page offline.
+
+**The cut-off names** (§2) are gone with protomaps-leaflet: MapLibre places the base map's names over the
+whole view; a browser test at 2560 × 1440 checks no name is clipped.
+
+### Budgets (perf.test.mjs, Aegean fixture, 1280 × 800)
+
+GPU (Metal, Apple M4 Pro, `--use-angle=metal`), the app's existing budgets all pass; the two new ones
+put the vector maps under the full overlay load (1 600 state shapes, 2 900 points):
+
+| path | GPU | software (SwiftShader, `HISTMERSION_TEST_GPU=0`) |
+|---|---|---|
+| mapPan input p95 | 33 ms | 39 ms |
+| eventLayer pan p95 / zoom dropped | 39 ms / 7.4 % (budget 8 %) | 54 ms / 7.9 % |
+| rangeAreas load longest task | 86 ms | 144 ms |
+| Readable: drawn · pan p95 · pan dropped · zoom dropped | 531–634 ms · 51–54 ms · ≤ 3 % · 0.6–7 % | 609 ms · 66 ms · 8.2 % · 18.3 % |
+| Physical: same | similar | 558 ms · 66 ms · 11.7 % · 15.8 % |
+| soak, 100 rounds: heap · nodes · listeners · markers growth | 2.7 MB · 0 · 0 · 0 | 2.9 MB · 0 · 0 · 0 |
+
+In software every input stays within the 100 ms rule, but a wheel zoom drops 16–18 % of frames (30 fps):
+the vector maps there have their own `…Software` budgets (pan 20 %, zoom 25 % dropped); the GPU budgets
+are not relaxed. The tightest GPU margin is the events layer's zoom (7.4 % against 8 %).
+
+### Risks left
+
+- MapLibre 6 is young (6.0 in July 2026; `font-faces` new) — pinned at 6.12.0 and vendored.
+- The software path is measured on SwiftShader on a fast CPU; a slow VM may drop more frames.
+- maplibre-contour is a 0.x library; a failure to load it drops the contours, nothing else.
+- The bundle: MapLibre is 597 KB + 517 KB (shared chunk) minified, ~300 KB gzip, loaded with the page.
 
 ---
 
