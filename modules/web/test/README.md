@@ -37,6 +37,15 @@ HISTMERSION_SERVER_URL=http://127.0.0.1:18080 npm --prefix modules/web run test:
 in its README); without it the Readable/Physical tests are skipped. `HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false`
 keeps the server from reading deeper relief from the provider when a test zooms in (no network).
 
+**Two engines.** `HISTMERSION_TEST_BROWSER=chromium` (the default) or `firefox` picks the browser
+(`test/engine.mjs`); `npm --prefix modules/web run test:browser:firefox` runs both files in Firefox and
+`test:browser:all` in both (install Firefox once: `npm --prefix modules/web exec -- playwright install
+firefox`). Firefox has no CDP: the heap, the listener count and the layout objects are reported as not
+measurable there (every other figure is held to the same budget), long tasks are measured by a 10 ms timer
+arriving late (no Long Tasks API), a touch drag is a mouse drag, and the no-GPU test is Chromium's own.
+Frames are counted dropped against 60 Hz in both (Firefox paints headless at 120 Hz).
+`HISTMERSION_TEST_CONSOLE_LOG=<file>` appends every warning and error a page prints to that file.
+
 **The GPU.** The map is drawn with WebGL (MapLibre GL JS). On macOS the tests launch Chromium with
 `--enable-gpu --ignore-gpu-blocklist --use-angle=metal`, so the map is drawn by the GPU and held to the
 GPU budgets; elsewhere, or with `HISTMERSION_TEST_GPU=0`, Chromium draws WebGL in software

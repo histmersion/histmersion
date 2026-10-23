@@ -212,6 +212,8 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
   // `var`: the newest base map asked for (a slow style answer must not replace a newer one)
   private var generation = 0
 
+  // `var`: the base map last asked for (an option change of the same style is applied as a diff)
+  private var lastSpec: Option[BaseMapSpec] = None
   // `var`: the page is being left (its fetches are being cut off)
   private var leaving = false
   dom.window.addEventListener("pagehide", (_: dom.Event) => leaving = true)
@@ -223,16 +225,34 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
       case v: BaseMapSpec.Vector => lang = v.lang
       case _                     => ()
     val mine = generation
-    MapLibreStyles.style(b, dom.window.location.origin).onComplete {
-      case scala.util.Success(style) =>
-        if mine == generation then
-          val _ = gl.setStyle(style, js.Dynamic.literal(diff = false).asInstanceOf[js.Object])
-          gl.once("idle", (_: GlEvent) => if mine == generation then ready.toList.foreach(_(MapEvent())))
-      case scala.util.Failure(e) =>
-        // a fetch cut short by leaving the page (Firefox: AbortError, NetworkError) or by a newer choice is no failure
-        if mine == generation && !leaving && !e.getMessage.contains("AbortError") then
-          dom.console.error(s"the base map could not be made: ${e.getMessage}")
-    }
+    // the same style with other options (names, their language, contours): MapLibre's diff changes only the
+    // layers that differ, where a whole new style would load every tile again
+    val sameStyle = (lastSpec, b) match
+      case (Some(p: BaseMapSpec.Vector), v: BaseMapSpec.Vector) => p.style == v.style && p.status == v.status && p.reduced == v.reduced
+      case _ => false
+    lastSpec = Some(b)
+    def make(retry: Boolean): Unit =
+      MapLibreStyles.style(b, dom.window.location.origin).onComplete {
+        case scala.util.Success(style) =>
+          // applied after the next paint: the input that asked for it (a checkbox, a menu) shows first, and the
+          // style's work runs off that input
+          if mine == generation then
+            // two frames: the second's callbacks run after the first was painted, in every engine
+            val _ = dom.window.requestAnimationFrame(_ =>
+              val _ = dom.window.requestAnimationFrame(_ =>
+                val _ = dom.window.setTimeout(() =>
+                  if mine == generation then
+                    val _ = gl.setStyle(style, js.Dynamic.literal(diff = sameStyle).asInstanceOf[js.Object])
+                    gl.once("idle", (_: GlEvent) => if mine == generation then ready.toList.foreach(_(MapEvent())))
+                , 0)))
+        case scala.util.Failure(e) =>
+          // a fetch cut short by leaving the page (Firefox answers NetworkError before `pagehide`) or by a
+          // newer choice is no failure: asked once more a moment later, it is reported only when that fails too
+          if mine == generation && !leaving && !e.getMessage.contains("AbortError") then
+            if retry then { val _ = dom.window.setTimeout(() => if mine == generation && !leaving then make(retry = false), 1000) }
+            else dom.console.error(s"the base map could not be made: ${e.getMessage}")
+      }
+    make(retry = true)
 
   // ── shapes ───────────────────────────────────────────────────────────────────────────────────
 
@@ -406,7 +426,10 @@ object MapLibreStyles:
   private def doc(s: VectorStyle): Future[js.Dynamic] =
     docs.getOrElseUpdate(s.id, {
       import scala.scalajs.js.Thenable.Implicits.*
-      dom.fetch(s"/web/styles/${s.id}.json").toFuture.flatMap(r => r.json().toFuture).map(_.asInstanceOf[js.Dynamic])
+      val f = dom.fetch(s"/web/styles/${s.id}.json").toFuture.flatMap(r => r.json().toFuture).map(_.asInstanceOf[js.Dynamic])
+      // a failed fetch is not kept: the next ask fetches again
+      f.failed.foreach(_ => docs.remove(s.id))
+      f
     })
 
   /** A copy of a JSON value. */
