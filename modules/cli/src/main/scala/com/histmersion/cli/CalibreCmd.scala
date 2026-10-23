@@ -322,59 +322,73 @@ object CalibreCmd:
     }
   }
 
+  /** The server's gap listing, each with where its original is and whether it counts
+    * ([[Calibre.classify]]): a record with no fetched file anywhere is not a Calibre gap. */
+  private def classifiedGaps(c: Client, limit: Option[Int], originals: Option[String]): Either[CliError, List[Calibre.GapEntry]] =
+    AcquireClient(c).calibreGaps(limit).map(g => Calibre.classify(g.gaps, Calibre.originalFor(originals, _)))
+
   private val sync = Opts.subcommand("sync",
-    "Push every source that is not in Calibre yet (dry run unless --apply)") {
+    "Push every source with a fetched file that is not in Calibre yet (dry run unless --apply)") {
     (
       Opts.flag("apply", "Actually add them (Calibre GUI must be closed)").orFalse,
       Opts.option[Int]("limit", "Only consider this many gaps").orNone,
       Output.jsonFlag
-    ).mapN { (apply, limit, json) => (c: Client) =>
-      val cfg = Settings.app.cli.calibre
-      AcquireClient(c).calibreGaps(limit).flatMap { gaps =>
-        if json && !apply then Right(Output.emit(json, gaps)(AcquireMarkdown.calibreGaps))
-        else
-          // a gap we cannot push is not a failure — neither the server nor this host has its file
-          val (ready, missing) = Calibre.pushable(gaps.gaps, Calibre.originalFor(cfg.originals, _))
-          println(AcquireMarkdown.calibreGaps(gaps))
-          if missing.nonEmpty then
-            println(s"\n${missing.size} of ${gaps.count} have no stored original on the server and no file on this host " +
-              s"(cli.calibre.originals-dir = ${cfg.originals.getOrElse("<unset>")}) — skipped: " +
-              s"${missing.map(_.citekey).mkString(", ")}. Push one with `histmersion calibre push <citekey> --file <path>`.")
-          if !apply then
-            println(s"\nDry run: ${ready.size} source(s) would be pushed. Re-run with --apply.")
-            Right(())
-          else
-            val results = ready.map(g => g.citekey -> pushOne(c, g.citekey, None))
-            results.foreach {
-              case (ck, Right((id, _))) => println(s"  + $ck → Calibre id $id")
-              case (ck, Left(e))        => Console.err.println(s"  ! $ck: ${e.message}")
-            }
-            val failed = results.count(_._2.isLeft)
-            println(s"pushed ${results.size - failed} source(s), ${failed} failed, ${missing.size} skipped")
-            if failed == 0 then Right(())
-            else Left(fail(s"$failed of ${results.size} push(es) failed"))
-      }
-    }
+    ).mapN { (apply, limit, json) => (c: Client) => syncGaps(c, apply, limit, json) }
   }
 
-  private val gaps = Opts.subcommand("gaps",
-    "List sources missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook)") {
-    (Opts.flag("quiet", "One line, exit 1 when gaps exist").orFalse,
-     Opts.option[Int]("limit", "Max gaps to list").orNone,
-     Output.jsonFlag).mapN { (quiet, limit, json) => (c: Client) =>
-      AcquireClient(c).calibreGaps(limit).flatMap { g =>
-        if json then Right(Output.emit(json, g)(AcquireMarkdown.calibreGaps))
-        else if !quiet then Right(println(AcquireMarkdown.calibreGaps(g)))
-        else if g.count == 0 then Right(())
+  /** `calibre sync`: push the COUNTED gaps (an original on this host or on the server); the records
+    * with no fetched file are not gaps, so they are neither pushed nor reported as skipped — one
+    * summary line says how many there are. */
+  private[cli] def syncGaps(c: Client, apply: Boolean, limit: Option[Int], json: Boolean,
+      calibre: Calibre = Calibre(Settings.app.cli.calibre),
+      originals: Option[String] = Settings.app.cli.calibre.originals): Either[CliError, Unit] =
+    classifiedGaps(c, limit, originals).flatMap { entries =>
+      if json && !apply then Right(Output.emit(json, CalibreJson.Gaps.of(entries))(_ => Calibre.markdownGaps(entries)))
+      else
+        val ready   = entries.filter(_.counted)
+        val missing = entries.count(_.original == Calibre.GapOriginal.Missing)
+        val note    = if missing == 0 then "" else " · " + Calibre.uncountedLine(missing)
+        if ready.nonEmpty then println(Calibre.markdownGaps(ready) + "\n")
+        if !apply then
+          println(s"Dry run: ${ready.size} source(s) would be pushed$note" +
+            (if ready.nonEmpty then " Re-run with --apply." else ""))
+          Right(())
         else
-          // exit 1 with ONE line: this is what the Stop/PostToolUse reminder hook reads
-          Left(CliError(
-            s"${g.count} source(s) are not in Calibre yet (${g.gaps.take(3).map(_.citekey).mkString(", ")}" +
-              (if g.count > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`",
-            exitCode = ExitCode.Usage))
-      }
+          val results = ready.map(e => e.gap.citekey -> pushOne(c, e.gap.citekey, None, calibre, originals))
+          results.foreach {
+            case (ck, Right((id, _))) => println(s"  + $ck → Calibre id $id")
+            case (ck, Left(e))        => Console.err.println(s"  ! $ck: ${e.message}")
+          }
+          val failed = results.count(_._2.isLeft)
+          println(s"pushed ${results.size - failed} source(s), $failed failed$note")
+          if failed == 0 then Right(())
+          else Left(fail(s"$failed of ${results.size} push(es) failed"))
     }
+
+  private val gaps = Opts.subcommand("gaps",
+    "List sources with a fetched file that are missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook)") {
+    (Opts.flag("quiet", "One line, exit 1 when gaps exist (records with no fetched file never count)").orFalse,
+     Opts.option[Int]("limit", "Max gaps to list").orNone,
+     Output.jsonFlag).mapN { (quiet, limit, json) => (c: Client) => listGaps(c, quiet, limit, json) }
   }
+
+  /** `calibre gaps`: only a source with an original to push counts — the table, the `--quiet` line
+    * and its exit 1. A record with no fetched file is one informational line in the full report and
+    * a `counted: false` row in `--json`, never a gap. */
+  private[cli] def listGaps(c: Client, quiet: Boolean, limit: Option[Int], json: Boolean,
+      originals: Option[String] = Settings.app.cli.calibre.originals): Either[CliError, Unit] =
+    classifiedGaps(c, limit, originals).flatMap { entries =>
+      val counted = entries.filter(_.counted)
+      if json then Right(Output.emit(json, CalibreJson.Gaps.of(entries))(_ => Calibre.markdownGaps(entries)))
+      else if !quiet then Right(println(Calibre.markdownGaps(entries)))
+      else if counted.isEmpty then Right(())
+      else
+        // exit 1 with ONE line: this is what the Stop/PostToolUse reminder hook reads
+        Left(CliError(
+          s"${counted.size} source(s) are not in Calibre yet (${counted.take(3).map(_.gap.citekey).mkString(", ")}" +
+            (if counted.size > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`",
+          exitCode = ExitCode.Usage))
+    }
 
   val all: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("calibre", "The local Calibre library: search, import, link, push, update, set, audit, sync, gaps") {
