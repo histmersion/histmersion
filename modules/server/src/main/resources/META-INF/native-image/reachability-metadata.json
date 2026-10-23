@@ -12207,6 +12207,506 @@
           "java.sql.Connection"
         ]
       }
+    },
+    {
+      "type": "com.histmersion.core.Autopilot$AutopilotStatus$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_AutopilotStatus$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Autopilot$FocusGoal$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_FocusGoal$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Autopilot$FocusInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_FocusInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Autopilot$FocusSet$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_FocusSet$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Autopilot$FocusWaiting$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_FocusWaiting$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ContourStyle$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_ContourStyle$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GoalFocus$Plan",
+      "fields": [
+        {
+          "name": "activeSet$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ReliefStyle$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_ReliefStyle$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.RepairAcquire$RepairRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_RepairRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.RepairAcquire$RepairResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_RepairResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.RepairAcquire$RepairRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_RepairRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.StyleFont$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_StyleFont$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.StyleGlow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_StyleGlow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.StyleLayer$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_StyleLayer$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.TerrainStyle$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_TerrainStyle$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.TerrainStyleCheck$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_TerrainStyleCheck$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.TerrainStyles$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_TerrainStyles$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.TintStop$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_TintStop$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ZoomStop$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_ZoomStop$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ZoomValue$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_ZoomValue$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.db.FocusRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_GoalRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_WorkRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.db.PointAreaRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_Row$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugin.PluginConfig$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Boolean$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Double$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Int$lzy1"
+        },
+        {
+          "name": "given_ConfigReader_Long$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.vaults.BitwardenConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.vaults.KeePassXcConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.vaults.YubiKey$Setting$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_Setting$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.basemap.BasemapStyles",
+      "fields": [
+        {
+          "name": "builtIn$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "io.netty.util.internal.shaded.org.jctools.queues.varhandle.BaseMpscLinkedVarHandleArrayQueueColdProducerFields",
+      "fields": [
+        {
+          "name": "producerLimit"
+        }
+      ]
+    },
+    {
+      "type": "io.netty.util.internal.shaded.org.jctools.queues.varhandle.BaseMpscLinkedVarHandleArrayQueueConsumerFields",
+      "fields": [
+        {
+          "name": "consumerIndex"
+        }
+      ]
+    },
+    {
+      "type": "io.netty.util.internal.shaded.org.jctools.queues.varhandle.BaseMpscLinkedVarHandleArrayQueueProducerFields",
+      "fields": [
+        {
+          "name": "producerIndex"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Object"
+    },
+    {
+      "type": "org.flywaydb.core.api.migration.baseline.BaselineMigrationConfigurationExtension",
+      "fields": [
+        {
+          "name": "baselineMigrationPrefix"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getBaselineMigrationPrefix",
+          "parameterTypes": []
+        },
+        {
+          "name": "setBaselineMigrationPrefix",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.AwsSecretsManagerSupportStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.CheckCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.CherryPickConfigurationExtensionStub",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.CherryPickSupportStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DryRunConfigurationExtensionStub",
+      "fields": [
+        {
+          "name": "cachedOutputStream"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.DryRunSupportStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.ErrorOverrideInitializerStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.ErrorOverridesSupportStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.InitCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.LicenseSupportStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.OfflinePermitConfigurationExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.ShouldExecuteEvaluatorStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.proprietaryStubs.UndoCommandExtensionStub"
+    },
+    {
+      "type": "org.flywaydb.core.internal.scanner.classpath.ClasspathLocationHandlerImpl"
+    },
+    {
+      "type": "org.flywaydb.core.internal.scanner.filesystem.FilesystemLocationHandler"
+    },
+    {
+      "type": "org.flywaydb.database.cockroachdb.authentication.CockroachDBExternalAuthSupportStub"
+    },
+    {
+      "type": "org.flywaydb.database.postgresql.PostgreSQLConfigurationExtension",
+      "fields": [
+        {
+          "name": "transactional"
+        }
+      ],
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "getTransactional",
+          "parameterTypes": []
+        },
+        {
+          "name": "isTransactionalLock",
+          "parameterTypes": []
+        },
+        {
+          "name": "setTransactional",
+          "parameterTypes": [
+            "org.flywaydb.database.postgresql.TransactionalModel"
+          ]
+        },
+        {
+          "name": "setTransactionalLock",
+          "parameterTypes": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.flywaydb.database.postgresql.authentication.PostgreSQLExternalAuthSupportStub"
+    },
+    {
+      "type": "scribe.format.Formatter$",
+      "fields": [
+        {
+          "name": "advanced$lzy1"
+        },
+        {
+          "name": "advancedTabbed$lzy1"
+        },
+        {
+          "name": "classic$lzy1"
+        },
+        {
+          "name": "colored$lzy1"
+        },
+        {
+          "name": "compact$lzy1"
+        },
+        {
+          "name": "enhanced$lzy1"
+        },
+        {
+          "name": "simple$lzy1"
+        },
+        {
+          "name": "strict$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "sttp.tapir.server.netty.internal.RequestBodyCompletionTracker"
+    },
+    {
+      "type": "tools.jackson.databind.ObjectMapper"
     }
   ],
   "resources": [
@@ -12912,6 +13412,132 @@
     },
     {
       "bundle": "org.postgresql.translation.messages"
+    },
+    {
+      "glob": "basemap/styles.conf"
+    },
+    {
+      "glob": "web/vendor/leaflet.markercluster/LICENSE.txt"
+    },
+    {
+      "glob": "web/vendor/leaflet.markercluster/MarkerCluster.Default.css"
+    },
+    {
+      "glob": "web/vendor/leaflet.markercluster/MarkerCluster.css"
+    },
+    {
+      "glob": "web/vendor/leaflet.markercluster/leaflet.markercluster.js"
+    },
+    {
+      "glob": "web/vendor/leaflet/LICENSE.txt"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/layers-2x.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/layers.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/marker-icon-2x.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/marker-icon.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/images/marker-shadow.png"
+    },
+    {
+      "glob": "web/vendor/leaflet/leaflet.css"
+    },
+    {
+      "glob": "web/vendor/leaflet/leaflet.js"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/OFL.txt"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-fonts.css"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-naskh-arabic-arabic-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-armenian-armenian-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-ext-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-ext-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-ext-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-georgian-georgian-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-ext-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-ext-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-greek-ext-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-hebrew-hebrew-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-ext-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-ext-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-latin-ext-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-vietnamese-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-vietnamese-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-fonts/noto-serif-vietnamese-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/protomaps-leaflet/LICENSE.txt"
+    },
+    {
+      "glob": "web/vendor/protomaps-leaflet/protomaps-leaflet.js"
     }
   ]
 }

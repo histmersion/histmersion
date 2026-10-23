@@ -51,3 +51,23 @@ object CalibreJson:
   object AuditRow:
     def of(f: AuditFinding): AuditRow =
       AuditRow(f.calibreId, f.citekeys, f.issues.map(_.toString), Option.when(f.fixable)(f.record.citekey))
+
+  /** `calibre gaps --json` / `calibre sync --json`: EVERY source the server lists, each with where its
+    * original is (`local` | `stored` | `none` | `unknown`) and whether it `counted` as a gap. `count`
+    * is the counted ones (what `--quiet` reminds about), `uncounted` the rest, `total` both. The
+    * server's own fields keep their names, so a script reading `gaps[].citekey` is unchanged. */
+  final case class GapRow(citekey: String, title: String, authors: List[String], doi: Option[String],
+      year: Option[Int], venue: Option[String], summary: Option[String], topics: List[String],
+      provenance: Option[String], calibreId: Option[String], isbn: Option[String],
+      storedOriginal: Option[Boolean], original: String, counted: Boolean) derives KindlingsCodecAsObject
+  object GapRow:
+    def of(e: Calibre.GapEntry): GapRow =
+      val g = e.gap
+      GapRow(g.citekey, g.title, g.authors, g.doi, g.year, g.venue, g.summary, g.topics, g.provenance,
+        g.calibreId, g.isbn, g.storedOriginal, e.original.label, e.counted)
+
+  final case class Gaps(count: Int, uncounted: Int, total: Int, gaps: List[GapRow]) derives KindlingsCodecAsObject
+  object Gaps:
+    def of(entries: List[Calibre.GapEntry]): Gaps =
+      val n = entries.count(_.counted)
+      Gaps(n, entries.size - n, entries.size, entries.map(GapRow.of))

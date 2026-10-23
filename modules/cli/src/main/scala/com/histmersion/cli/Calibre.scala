@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.core.{Acquire, CalibreCliConfig, CalibreGap}
+import com.histmersion.core.{Acquire, CalibreCliConfig, CalibreGap, Plural, Provenance}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -582,10 +582,64 @@ object Calibre:
   def pushFile(explicit: Option[Path], local: => Option[Path]): PushFile =
     explicit.map(PushFile.Given(_)).orElse(local.map(PushFile.Local(_))).getOrElse(PushFile.Server)
 
-  /** `calibre sync`: which gaps it can push — those with a host-side original, or one the server
-    * stores (or does not say about: an older server, the push then tries) — and which it skips. */
-  def pushable(gaps: List[CalibreGap], local: String => Option[Path]): (List[CalibreGap], List[CalibreGap]) =
-    gaps.partition(g => local(g.citekey).isDefined || !g.storedOriginal.contains(false))
+  /** Where the file a push would add comes from, as `calibre gaps`/`sync` report it (`original`). */
+  enum GapOriginal(val label: String):
+    /** `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host. */
+    case Local extends GapOriginal("local")
+    /** The original the server stores (`GET /api/sources/{ck}/original`). */
+    case Stored extends GapOriginal("stored")
+    /** The server did not say (an older server): counted, and the push tries. */
+    case Unknown extends GapOriginal("unknown")
+    /** No file anywhere — a metadata-only record (a citation-graph stub, a record with an abstract
+      * and no fetched file). Nothing to push, so not a Calibre gap: it belongs on the acquire list. */
+    case Missing extends GapOriginal("none")
+
+  /** One source the server lists as not in Calibre, with where its original is and whether it
+    * COUNTS as a gap — the `calibre gaps --quiet` reminder and `calibre sync` count only these. */
+  final case class GapEntry(gap: CalibreGap, original: GapOriginal, counted: Boolean)
+
+  /** Pure: a gap counts when there is an original to push (on this host, or stored on the server)
+    * and the source is not already canonical in Calibre (provenance `calibre`, or a Calibre id — the
+    * server leaves both out; an older or differently-cased row is caught here too). A record with no
+    * original anywhere is listed, never counted. */
+  def classify(gaps: List[CalibreGap], local: String => Option[Path]): List[GapEntry] =
+    gaps.map { g =>
+      val original =
+        if local(g.citekey).isDefined then GapOriginal.Local
+        else g.storedOriginal match
+          case Some(true)  => GapOriginal.Stored
+          case Some(false) => GapOriginal.Missing
+          case None        => GapOriginal.Unknown
+      val inCalibre = g.calibreId.exists(_.trim.nonEmpty) ||
+        g.provenance.exists(p => Provenance.canonical(p).trim.toLowerCase(java.util.Locale.ROOT) == "calibre")
+      GapEntry(g, original, counted = original != GapOriginal.Missing && !inCalibre)
+    }
+
+  /** The informational line for the records with no fetched file — never a gap. */
+  def uncountedLine(n: Int): String =
+    s"$n ${Plural.noun(n, "record")} without a fetched file — not counted; see the acquire list " +
+      "(`histmersion queue acquire`); `--json` lists them."
+
+  /** `calibre gaps` as Markdown: the counted gaps as a table, then one line for the records with no
+    * fetched file (never rows of the table: they are not gaps). */
+  def markdownGaps(entries: List[GapEntry]): String =
+    def esc(s: String) = s.replace("|", "\\|").replace("\n", " ").trim
+    val counted = entries.filter(_.counted)
+    val missing = entries.count(_.original == GapOriginal.Missing)
+    val head =
+      if counted.isEmpty then "_Every source with a fetched file is in Calibre._"
+      else
+        val rows = counted.map { e =>
+          val g = e.gap
+          s"| `${g.citekey}` | ${esc(g.title).take(70)} | ${g.year.fold("—")(_.toString)} " +
+            s"| ${esc(g.authors.take(2).mkString(", "))} | ${esc(g.provenance.getOrElse("—"))} | ${e.original.label} |"
+        }
+        (List(s"### ${counted.size} source(s) not in Calibre", "",
+            "| citekey | title | year | authors | provenance | original |", "|---|---|---|---|---|---|")
+          ++ rows ++ List("", "_Push them with `histmersion calibre sync --apply`: the file is " +
+            "`<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server " +
+            "stored (`stored`)._")).mkString("\n")
+    if missing == 0 then head else s"$head\n\n${uncountedLine(missing)}"
 
   /** `calibre search --unlinked` (#967): the entries no source links (`sources.calibre_id`), newest
     * first — Calibre ids grow as books are added, so the highest id is the latest addition. */
