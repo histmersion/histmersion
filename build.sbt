@@ -9,6 +9,11 @@ import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 ThisBuild / scalaVersion := "3.10.0"
 ThisBuild / organization := "com.kubuszok"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
+// tapir 1.14 and sttp-ai 0.12 bring sttp-apispec 0.12; Chimp 0.6.0 (the newest) was built against 0.11.10.
+// Chimp only builds its tools' input schemas with it, and every MCP suite (tools/list, tools/call over HTTP)
+// passes on 0.12 — so 0.12 may evict 0.11 here. Drop this when a Chimp built on 0.12 is out.
+ThisBuild / libraryDependencySchemes ++= Seq("jsonschema-circe", "apispec-model")
+  .map(m => "com.softwaremill.sttp.apispec" %% m % VersionScheme.Always)
 
 ThisBuild / scalacOptions ++= Seq(
   "-deprecation",
