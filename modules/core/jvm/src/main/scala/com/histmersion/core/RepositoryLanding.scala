@@ -14,14 +14,22 @@ import io.circe.{ACursor, Json}
   *    repository platform's `generator` tag) and never on a publisher's site ([[Rules.denied]], which
   *    wins over every other signal; the PDF's own host is held to it too).
   *
+  * An OPEN-ACCESS PUBLISHER's page (#2550) is the one exception to "never a publisher's page": a host
+  * on `acquire.landing.oa-publisher-hosts` — publishers whose robots.txt and terms permit a script to
+  * download their open-access PDFs, checked one by one — is read when an OA index names the location
+  * as OPEN ([[Candidate.open]]), and gives its `citation_pdf_url`s and its OJS PDF galleys
+  * ([[galleyPdfUrls]]), on its own hosts only.
+  *
   * A page behind bot protection or a 403 is no copy: the HTTP layer reports it as a failure, and the
   * work goes to the acquisition queue as before. Everything here is pure and total. */
 object RepositoryLanding:
 
   /** A landing page to resolve; `repository` = an OA index (OpenAlex `source.type`, Unpaywall
     * `host_type`) says the location is a repository, `publisher` = it says a journal's or a publisher's
-    * (such a page is never read). */
-  final case class Candidate(url: String, repository: Boolean, publisher: Boolean = false)
+    * (such a page is never read, unless it is an open-access publisher's — [[oaPublisherPage]]);
+    * `open` = the index says the location is open access (OpenAlex `is_oa`; every Unpaywall
+    * `oa_location` is). */
+  final case class Candidate(url: String, repository: Boolean, publisher: Boolean = false, open: Boolean = false)
 
   /** OpenAlex `source.type`s that are a publisher's, not a repository's. */
   val PublisherSourceTypes: Set[String] = Set("journal", "conference", "ebook platform", "book series")
@@ -32,8 +40,11 @@ object RepositoryLanding:
   /** The hosts and platforms the decision reads (`acquire.landing.*`, comma-separated in config).
     * A host entry matches the host itself or any subdomain of it. */
   final case class Rules(allowHosts: List[String], denyHosts: List[String], academicHostWords: List[String],
-      generators: List[String], denyGenerators: List[String] = Nil, denyHostWords: List[String] = Nil):
+      generators: List[String], denyGenerators: List[String] = Nil, denyHostWords: List[String] = Nil,
+      oaPublisherHosts: List[String] = Nil):
     def allowed(host: String): Boolean = allowHosts.exists(d => matchesHost(host, d))
+    /** An open-access publisher whose open locations may be read (`oa-publisher-hosts`, #2550). */
+    def oaPublisher(host: String): Boolean = oaPublisherHosts.exists(d => matchesHost(host, d))
     /** A publisher's host: a denied host or its subdomain, or — unless the host is allowed — a label
       * that is or starts with a denied word (`press.…`, `journals.…`: a university press on a `.edu`). */
     def denied(host: String): Boolean =
@@ -89,7 +100,8 @@ object RepositoryLanding:
       val kind = str(h, "source", "type").map(_.toLowerCase)
       val repo = kind.contains("repository")
       val pub  = kind.exists(PublisherSourceTypes)
-      (str(h, "pdf_url").filter(notPdfPath).toList ++ str(h, "landing_page_url").toList).map(Candidate(_, repo, pub))
+      val open = h.downField("is_oa").as[Boolean].contains(true)
+      (str(h, "pdf_url").filter(notPdfPath).toList ++ str(h, "landing_page_url").toList).map(Candidate(_, repo, pub, open))
     })
 
   /** Pure: the landing pages of Unpaywall's OA locations (`host_type: repository` marked). */
@@ -100,20 +112,32 @@ object RepositoryLanding:
       val h    = l.hcursor
       val repo = str(h, "host_type").contains("repository")
       val pub  = str(h, "host_type").contains("publisher")
-      (str(h, "url_for_pdf").filter(notPdfPath).toList ++ str(h, "url_for_landing_page").toList).map(Candidate(_, repo, pub))
+      (str(h, "url_for_pdf").filter(notPdfPath).toList ++ str(h, "url_for_landing_page").toList).map(Candidate(_, repo, pub, open = true))
     })
 
   /** Pure: where a DataCite DOI resolves (`data.attributes.url` of `api.datacite.org/dois/<doi>`). */
   def dataciteUrl(json: Json): Option[String] = str(json.hcursor, "data", "attributes", "url")
 
   /** Candidates by URL, the first of each kept; repository if any index says so, publisher only if
-    * one says so and none says repository. */
+    * one says so and none says repository, open if any says so. */
   def distinct(cs: List[Candidate]): List[Candidate] =
     cs.filter(c => host(c.url).isDefined).groupBy(_.url).toList
       .map { (u, xs) =>
         val repo = xs.exists(_.repository)
-        (cs.indexWhere(_.url == u), Candidate(u, repo, !repo && xs.exists(_.publisher)))
+        (cs.indexWhere(_.url == u), Candidate(u, repo, !repo && xs.exists(_.publisher), xs.exists(_.open)))
       }.sortBy(_._1).map(_._2)
+
+  /** Pure: is this an open-access publisher's OPEN location (#2550) — read although it is a
+    * publisher's: an index says it is open, and its host is on `oa-publisher-hosts`. */
+  def oaPublisherPage(c: Candidate, rules: Rules): Boolean = c.open && host(c.url).exists(rules.oaPublisher)
+
+  /** Pure: where the DOI handle API (`doi.org/api/handles/<doi>?type=URL`) says a DOI resolves — its
+    * first URL value. Read only for an open location on an OA publisher, so a `doi.org` link is still
+    * never followed blind. */
+  def handleUrl(json: Json): Option[String] =
+    arr(json.hcursor, "values").iterator.map(_.hcursor)
+      .filter(v => str(v, "type").contains("URL"))
+      .flatMap(v => str(v, "data", "value")).nextOption()
 
   // ── Zenodo ─────────────────────────────────────────────────────────────────────────────────
 
@@ -200,10 +224,41 @@ object RepositoryLanding:
     }
 
   /** Pure: the PDFs to try from a repository page — its `citation_pdf_url`s, none on a denied host;
-    * nothing at all when the page is not a repository's. */
-  def pdfsOf(pageUrl: String, indexSaysRepository: Boolean, html: String, rules: Rules): List[String] =
-    if !isRepository(pageUrl, indexSaysRepository, html, rules) then Nil
+    * nothing at all when the page is not a repository's. An open-access publisher's open page
+    * (`oaPublisher`, [[oaPublisherPage]]) gives its `citation_pdf_url`s and its OJS PDF galleys, an
+    * OJS viewer link turned into its download, on the page's own host or another OA publisher's only. */
+  def pdfsOf(pageUrl: String, indexSaysRepository: Boolean, html: String, rules: Rules,
+      oaPublisher: Boolean = false): List[String] =
+    if oaPublisher then
+      val own = host(pageUrl)
+      (citationPdfUrls(html, pageUrl) ++ galleyPdfUrls(html, pageUrl)).map(ojsDownload).distinct
+        .filter(u => host(u).exists(h => own.contains(h) || rules.oaPublisher(h)))
+    else if !isRepository(pageUrl, indexSaysRepository, html, rules) then Nil
     else citationPdfUrls(html, pageUrl).filterNot(u => host(u).exists(rules.denied))
+
+  private val GalleyLink = "(?is)<a\\s+([^>]*)>".r
+  private val GalleyJson = "(?is)\"label\"\\s*:\\s*\"PDF\"\\s*,\\s*\"href\"\\s*:\\s*\"([^\"]+)\"".r
+  private val OjsView    = "(?i)/article/view/(\\d+)/(\\d+)(?=$|[?#])".r
+
+  /** Pure: an Open Journal Systems page's PDF galleys — its `<a class="obj_galley_link pdf">` links,
+    * and the galleys an OJS 3.5+ theme lists as JSON (`{"label":"PDF","href":…}`, escaped inside an
+    * attribute) — made absolute against `pageUrl`, http(s) only. */
+  def galleyPdfUrls(html: String, pageUrl: String): List[String] =
+    val page = html.take(MaxHead)
+    val links = GalleyLink.findAllMatchIn(page).flatMap { m =>
+      val attrs = Attr.findAllMatchIn(m.group(1)).map { a =>
+        a.group(1).toLowerCase -> Option(a.group(2)).orElse(Option(a.group(3))).orElse(Option(a.group(4))).getOrElse("")
+      }.toMap
+      val cls = attrs.getOrElse("class", "").toLowerCase.split("\\s+").toSet
+      attrs.get("href").filter(_ => cls("obj_galley_link") && cls("pdf")).map(decode)
+    }.toList
+    val unescaped = page.replace("\\u0022", "\"").replace("&quot;", "\"").replace("\\\\/", "/").replace("\\/", "/")
+    val listed = GalleyJson.findAllMatchIn(unescaped).map(_.group(1)).toList
+    (links ++ listed).flatMap(absolute(_, pageUrl)).filter(u => "(?i)^https?://".r.findPrefixOf(u).isDefined).distinct
+
+  /** Pure: an OJS galley's viewer URL (`…/article/view/<article>/<galley>`, an HTML page around the
+    * PDF) as its download (`…/article/download/<article>/<galley>`); any other URL as it is. */
+  def ojsDownload(url: String): String = OjsView.replaceFirstIn(url, "/article/download/$1/$2")
 
   /** Pure: does a non-PDF answer look like an HTML page (worth reading for its tags)? */
   def looksLikeHtml(b: Array[Byte]): Boolean =

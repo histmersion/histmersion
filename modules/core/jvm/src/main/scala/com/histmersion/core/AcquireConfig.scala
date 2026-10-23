@@ -35,13 +35,15 @@ final case class LandingConfig(
     academicHostWords: String,
     generators: String,
     denyGenerators: String,
-    denyHostWords: String
+    denyHostWords: String,
+    /** Open-access publishers whose open locations are read (#2550, [[RepositoryLanding.oaPublisherPage]]). */
+    oaPublisherHosts: String
 ) derives ConfigReader:
   def rules: RepositoryLanding.Rules =
     RepositoryLanding.Rules(LandingConfig.split(allowHosts),
       (LandingConfig.split(denyHosts) ++ LandingConfig.split(denyHostsExtra)).distinct,
       LandingConfig.split(academicHostWords), LandingConfig.split(generators), LandingConfig.split(denyGenerators),
-      LandingConfig.split(denyHostWords))
+      LandingConfig.split(denyHostWords), LandingConfig.split(oaPublisherHosts))
 
 object LandingConfig:
   private[core] def split(s: String): List[String] =
@@ -88,6 +90,7 @@ final case class AcquireConfig(
     publicUserAgent: String,
     zenodo: ServiceConfig,
     datacite: ServiceConfig,
+    doiHandles: ServiceConfig,
     landing: LandingConfig,
     arxiv: ServiceConfig,
     archiveOrg: ServiceConfig,
