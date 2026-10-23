@@ -122,6 +122,16 @@ echo "signing"
 signing="$install/bin/histmersion-signing"
 out="$("$signing" status)"
 check "status with nothing set up: GPG off" 'echo "$out" | grep -q "GPG provenance: off"'
+if [ "$(uname -s)" = Darwin ]; then
+  # #3647: untrusted by default; declining the question changes nothing either way
+  sm="$(printf 'n\n' | "$signing" setup-macos 2>&1)"
+  smt="$(printf 'n\n' | "$signing" setup-macos --trust 2>&1)"
+  smn="$(printf 'n\n' | "$signing" setup-macos --no-trust 2>&1)"
+  check "setup-macos leaves the identity untrusted by default (and 'n' changes nothing)" \
+    'echo "$sm" | grep -q "left untrusted" && echo "$sm" | grep -q "nothing changed"'
+  check "setup-macos --trust says it would trust it; --no-trust is still accepted" \
+    'echo "$smt" | grep -q "trusts it for code signing" && echo "$smn" | grep -q "left untrusted"'
+fi
 if command -v gpg >/dev/null 2>&1; then
   export GNUPGHOME="$tmp/gnupg"; mkdir -m 700 "$GNUPGHOME"
   gpg --batch --pinentry-mode loopback --passphrase '' --quick-generate-key "Histmersion Test <test@localhost>" ed25519 sign 1d >/dev/null 2>&1
@@ -368,7 +378,7 @@ if [ "${HISTMERSION_TEST_KEYCHAIN:-}" = 1 ] && [ "$(uname -s)" = Darwin ]; then
     security delete-keychain "$kc" 2>/dev/null || true
   }
   trap 'restore; cleanup' EXIT
-  HISTMERSION_KEYCHAIN="$kc" "$src/codesign-identity-macos.sh" --no-trust "Histmersion Test Identity" > "$tmp/k.out"
+  HISTMERSION_KEYCHAIN="$kc" "$src/codesign-identity-macos.sh" "Histmersion Test Identity" > "$tmp/k.out"
   security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$kpw" "$kc" >/dev/null 2>&1
   printf '%s\n' "$saved" "$kc" | tr '\n' '\0' | xargs -0 security list-keychains -d user -s
   cp /usr/bin/true "$tmp/b1"; cp /usr/bin/false "$tmp/b2"
@@ -379,7 +389,7 @@ if [ "${HISTMERSION_TEST_KEYCHAIN:-}" = 1 ] && [ "$(uname -s)" = Darwin ]; then
   dr() { codesign -d -r- "$1" 2>&1 | sed -n 's/^\(# \)\{0,1\}designated => //p'; }
   cdhash() { codesign -dvvv "$1" 2>&1 | sed -n 's/^CDHash=//p'; }
   dr1="$(dr "$tmp/b1")"; dr2="$(dr "$tmp/b2")"
-  check "signed with the untrusted identity (created with --no-trust: no trust setting)" \
+  check "signed with the untrusted identity (the default since #3647: no trust setting)" \
     'grep -q "signed as \"Histmersion Test Identity\"" "$tmp/b1.out" && ! grep -q "trusting it" "$tmp/k.out"'
   check "two different binaries (two cdhashes)" '[ -n "$(cdhash "$tmp/b1")" ] && [ "$(cdhash "$tmp/b1")" != "$(cdhash "$tmp/b2")" ]'
   check "the designated requirement is the same for both (the identifier and the certificate, not a cdhash)" \

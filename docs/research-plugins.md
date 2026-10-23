@@ -784,10 +784,9 @@ comes from an X.509 code-signing identity in a keychain.
 - **Consequence:** setup does not need `security add-trusted-cert`, which is the step in today's
   `codesign-identity-macos.sh` that changes the user's trust settings and asks for the login
   password.
-- **(unverified)** Whether TCC honours a grant for an untrusted self-signed DR as it does for a
-  trusted one. TCC matches the stored requirement, which here is a certificate hash, so it should,
-  but confirming it needs a real TCC prompt. Phase 5 of §13 includes that check. Until then, keep
-  the trust step as today's script has it.
+- **(verified 2026-10-23, §21.2)** TCC honours a grant for an untrusted self-signed DR as it does for
+  a trusted one: it matches the stored requirement, a certificate hash. The trust step is therefore
+  opt-in (`setup-macos --trust`, #3647).
 
 ### 9.3 Recommendation
 
@@ -970,7 +969,7 @@ This is why §7.4 adds `--self-check`.
   available; plan for the eventual move to a later CE line or Leyden-style AOT caches **(unverified)**.
 - **Local builds diverge.** Every user's binary is different, which complicates bug reports.
   `/api/about` must report kit version + plugin digest + GraalVM version.
-- **TCC with an untrusted self-signed identity** (§9.2): unverified. Keep the trust step until it is
+- **TCC with an untrusted self-signed identity** (§9.2): verified on 2026-10-23 (§21.2); the trust step is opt-in. Was: keep the trust step until it is
   checked.
 
 ## 13. Phased implementation plan
@@ -1004,7 +1003,7 @@ This is why §7.4 adds `--self-check`.
 5. **Phase 5, signing.**
    - Setup creates the macOS identity and, opt-in, a GPG key or uses an existing one.
    - Sign and verify the plugin-set and binary manifests.
-   - Verify TCC persistence with an untrusted identity, and drop `add-trusted-cert` if it holds.
+   - Verify TCC persistence with an untrusted identity, and drop `add-trusted-cert` if it holds. (Done: it holds — §21.2; `--trust` is opt-in, #3647.)
 6. **Phase 6, more kinds.** `MediaCollection` (from `media/Collection`), then `EventCatalogue`.
    Then the new OA repositories of §5.3 (row 4), one plugin per provider, each citing its terms.
 
@@ -1523,10 +1522,11 @@ data directory, versioned by its pin. An install also relinks by itself when `<d
 
 **Signing (§9, phase 5, optional — D6).** `bin/histmersion-signing`:
 
-- `setup-macos [--name N] [--no-trust]` creates the self-signed identity in the login keychain — only
-  when the user runs it, after a y/N question (`codesign-identity-macos.sh`, now with `--no-trust` and a
-  keychain override for tests). Trusting stays the default: TCC with an untrusted identity is still
-  unverified (§9.2). **Found here:** `codesign --sign "<name>"` looks among VALID identities only and
+- `setup-macos [--name N] [--trust]` creates the self-signed identity in the login keychain — only
+  when the user runs it, after a y/N question (`codesign-identity-macos.sh`, with `--trust`/`--no-trust`
+  and a keychain override for tests). Untrusted by default since #3647: the TCC check (§21.2) showed a
+  grant survives a relink with an untrusted identity, so the trust step (`add-trusted-cert`, the login
+  password) is opt-in. **Found here:** `codesign --sign "<name>"` looks among VALID identities only and
   answers "no identity found" for an untrusted one; the script signs with the identity's SHA-1 hash
   (as the spike did), and then an untrusted identity works. The relink and the installers sign through
   it (`codesign <file> <identifier>`); no identity → ad hoc, said once; `HISTMERSION_CODESIGN_IDENTITY=-`
@@ -1987,8 +1987,10 @@ a later access the binary at that path must satisfy that requirement. So the que
   (`~/Library/Caches/com.histmersion.tcc-check`). The grant itself stays in System Settings › Privacy &
   Security › Files and Folders as `histmersion-tcc-probe` — `tccutil reset` takes only a bundle id, and
   without one it would reset every app's Documents grant. Tested against a launchd stand-in (always) and
-  with a real temporary keychain (opt-in). **Not yet run with a real prompt**; until it is, `setup-macos`
-  keeps trusting the identity by default (§18).
+  with a real temporary keychain (opt-in). **Run with a real prompt on 2026-10-23: the grant persisted**
+  — after `relink` the new binary (another cdhash, the same untrusted identity) read `~/Documents` with
+  no prompt, and the ad-hoc `control` was asked again. So `setup-macos` leaves the identity untrusted by
+  default (#3647); `--trust` keeps the old behaviour for whoever wants it.
 
 ### 21.3 GPG verification of the server binary at each start
 
