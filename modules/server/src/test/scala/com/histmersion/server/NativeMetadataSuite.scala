@@ -14,6 +14,11 @@ class NativeMetadataSuite extends munit.FunSuite:
   private def onClasspath(name: String): List[String] =
     getClass.getClassLoader.getResources(s"META-INF/native-image/$name").asScala.map(_.toString).toList
 
+  /** This module's copy: its classes directory in sbt's own JVM, its jar (`histmersion-server_3-….jar`)
+    * in a forked test JVM — never a dependency's. */
+  private def own(name: String): List[String] =
+    onClasspath(name).filter(u => !u.contains(".jar!") || u.contains("/histmersion-server_"))
+
   test("reachability-metadata.json is present"):
     assert(onClasspath("reachability-metadata.json").nonEmpty)
 
@@ -29,7 +34,7 @@ class NativeMetadataSuite extends munit.FunSuite:
     val index  = scala.io.Source.fromInputStream(loader.getResourceAsStream("db/migration/index.txt"), "UTF-8")
     val migrations = try index.getLines().map(_.trim).filter(_.endsWith(".sql")).toList finally index.close()
     assert(migrations.nonEmpty, "db/migration/index.txt lists no migrations")
-    val ours = onClasspath("reachability-metadata.json").filterNot(_.contains(".jar!"))
+    val ours = own("reachability-metadata.json")
     assertEquals(ours.size, 1, s"expected this module's own metadata file, found: $ours")
     val metadata = scala.io.Source.fromURL(ours.head, "UTF-8").mkString
     val globs    = "\"glob\"\\s*:\\s*\"([^\"]+)\"".r.findAllMatchIn(metadata).map(_.group(1)).toSet
@@ -41,7 +46,7 @@ class NativeMetadataSuite extends munit.FunSuite:
   /** The same rule for the embedded agents' prompt files: a prompt the metadata does not name is
     * missing from the native image, and the step that needs it fails at run time. */
   test("every bundled agent prompt is a resource in the native-image metadata"):
-    val ours     = onClasspath("reachability-metadata.json").filterNot(_.contains(".jar!"))
+    val ours     = own("reachability-metadata.json")
     val metadata = scala.io.Source.fromURL(ours.head, "UTF-8").mkString
     val globs    = "\"glob\"\\s*:\\s*\"([^\"]+)\"".r.findAllMatchIn(metadata).map(_.group(1)).toSet
     val bundled = com.histmersion.server.agents.Prompts.bundled

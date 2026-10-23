@@ -127,6 +127,7 @@ test:
 test-scripts:
     python3 -m unittest scripts/agents/tests/test_claude_overhead.py
     python3 -m unittest scripts/perf/tests/test_bench.py
+    python3 -m unittest scripts/dev/tests/test_test_weights.py
     scripts/bundle/tests/launchagent-env-test.sh
     scripts/bundle/tests/user-config-test.sh
     scripts/bundle/tests/relink-test.sh
@@ -149,7 +150,7 @@ test-it: test-db
 cache-check *args:
     scripts/dev/cache-isolation-check.sh {{args}}
 
-# Start a throwaway Postgres (histmersion_test on :55432) from the bundled runtime — never the live corpus
+# Start a throwaway Postgres (histmersion_test on :55432; the forked test groups add histmersion_<group>_test beside it) from the bundled runtime — never the live corpus
 [group('dev')]
 test-db:
     (cd runtime/postgres && pixi install >/dev/null)
@@ -157,7 +158,7 @@ test-db:
     rm -rf "{{test_db_dir}}" && mkdir -p "$(dirname "{{test_db_dir}}")"
     "{{pg}}/initdb" -D "{{test_db_dir}}" -U histmersion --auth=trust -E UTF8 --locale=C >/dev/null
     "{{pg}}/pg_ctl" -D "{{test_db_dir}}" -l "{{test_db_dir}}.log" -w \
-      -o "-p {{test_db_port}} -c listen_addresses=127.0.0.1 -c unix_socket_directories=''" start >/dev/null
+      -o "-p {{test_db_port}} -c listen_addresses=127.0.0.1 -c unix_socket_directories='' -c max_connections=300" start >/dev/null
     "{{pg}}/createdb" -h 127.0.0.1 -p {{test_db_port}} -U histmersion histmersion_test
     @echo "HISTMERSION_TEST_DB_URL={{test_db_url}}"
 

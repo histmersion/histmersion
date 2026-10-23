@@ -34,14 +34,29 @@ ThisBuild / scalacOptions ++= Seq(
 // in project/plugins.sbt.
 Global / localCacheDirectory := appConfiguration.value.baseDirectory.getCanonicalFile / "target" / "sbt-cache"
 
-// One module's tests at a time. `Test / parallelExecution := false` (db, server) serializes the suites
-// INSIDE a module, but sbt still ran the db and server test tasks side by side on the one test
-// database, so a server suite could rewrite what a db suite was asserting on — MediaSourcesSuite's
-// import job asks about the first pending places/events of the whole database (a db suite's
-// fixtures among them), and a finding-places rebuild empties the table a db suite filled by hand
-// (#1567). A test task now runs alone (`Tags.limit(Tags.Test, 1)` did not stop the overlap under
-// sbt 2: two suites sleeping in db and server still ran at once); the pure suites take seconds.
-Global / concurrentRestrictions += Tags.exclusive(Tags.Test)
+// ── tests in parallel, within memory ─────────────────────────────────────────────────────────────
+// The DB-backed modules (db, server) fork their suites into groups, each group in a JVM of its own on
+// a DATABASE of its own (`dbTestGroups` below), so groups never see each other's fixtures; inside a
+// group the suites run one at a time, as they always have (several rewrite whole tables). The pure
+// modules run in sbt's JVM. At most `HISTMERSION_TEST_FORKS` test JVMs (default 6) run at once.
+// (It was one test task at a time — `Tags.exclusive(Tags.Test)`, #1567 — because db and server shared
+// ONE database: a server suite rewrote what a db suite was asserting on.)
+val testForks = TestGroups.forks(sys.env.get("HISTMERSION_TEST_FORKS"), 6)
+// each DB suite's seconds in a measured run, so the groups end together (scripts/dev/test-weights.py)
+val testWeights: Map[String, Double] = {
+  val f = new File("project/test-weights.tsv")
+  if (f.isFile) TestGroups.weights(IO.readLines(f)) else Map.empty
+}
+Global / concurrentRestrictions := Seq(
+  Tags.limitAll(java.lang.Runtime.getRuntime.availableProcessors),
+  Tags.limit(Tags.ForkedTestGroup, testForks),
+  Tags.exclusiveGroup(Tags.Clean))
+
+/** A suite's result is cached by sbt 2 (`test`, not `testOnly *`) under its classes' digest. Whether the
+  * DB suites ran is part of the result — without the database they skip and "pass" — so the cache key
+  * carries it: a pass without the database is never replayed as a pass with it. */
+val testDbOn = settingKey[Boolean]("HISTMERSION_TEST_DB_URL is set: the DB-backed suites run")
+ThisBuild / testDbOn := sys.env.get("HISTMERSION_TEST_DB_URL").exists(_.nonEmpty)
 
 // ── native-image (custom task; no sbt-2.0 plugin available yet) ─────────────────────────────────
 // Shells out to GraalVM `native-image` over the module's full classpath. Reachability metadata
@@ -211,7 +226,37 @@ def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String]
 lazy val commonDeps = Seq(
   libraryDependencies += "org.scalameta" %% "munit" % V.munit % Test,
   testFrameworks += new TestFramework("munit.Framework"),
-  Test / fork := false
+  Test / fork := false,
+  Test / extraTestDigests += sbt.util.Digest.sha256Hash(s"test-db=${(ThisBuild / testDbOn).value}".getBytes("UTF-8"))
+)
+
+/** The suites of a DB-backed module in `groups` forked JVMs, each on its own database: the
+  * `HISTMERSION_TEST_DB_URL` database with the group's name spliced in (`histmersion_server_2_test`),
+  * which TestDb creates on first use from a connection to the base one. Suites are dealt longest first
+  * by `weights` (seconds, from a measured run; unknown = 1) so the groups end together. In a group the
+  * suites run one at a time (`testForkedParallel := false`); the groups run side by side
+  * (`parallelExecution := true` folds them in parallel, `testForks` caps them). The fork runs in the
+  * build root, as the in-process suites did (they read docs/, skills/, db/ by relative path), and
+  * gets `HISTMERSION_SHUTDOWN_GRACE=0`: a test server stops at once instead of waiting 10 s for the
+  * test client's idle keep-alive connections. */
+def dbTestGroups(module: String, groups: Int, heap: String, weights: Map[String, Double] = testWeights): Seq[Setting[?]] = Seq(
+  Test / fork := true,
+  Test / parallelExecution := true,
+  Test / testForkedParallel := false,
+  Test / javaOptions ++= Seq(s"-Xmx$heap", "-XX:+UseParallelGC", "-Xss4m"),
+  Test / testGrouping := Def.uncached {
+    val tests = (Test / definedTests).value
+    val opts  = (Test / forkOptions).value
+    val root  = (ThisBuild / baseDirectory).value
+    val base  = sys.env.get("HISTMERSION_TEST_DB_URL").filter(_.nonEmpty)
+    val n     = TestGroups.forks(sys.env.get(s"HISTMERSION_TEST_GROUPS_${module.toUpperCase}"), groups)
+    TestGroups.split(tests, n)(_.name, s => weights.getOrElse(s.split('.').last, 1.0)).zipWithIndex.map { case (ts, i) =>
+      val db = base.toSeq.flatMap(b => Seq("HISTMERSION_TEST_DB_URL" -> TestGroups.groupDbUrl(b, s"$module-$i"),
+        "HISTMERSION_TEST_DB_BASE_URL" -> b))
+      val env = opts.envVars ++ db ++ Seq("HISTMERSION_SHUTDOWN_GRACE" -> "0")
+      Tests.Group(s"$module-$i", ts, Tests.SubProcess(opts.withWorkingDirectory(root).withEnvVars(env)))
+    }
+  }
 )
 
 // ── core: the CONTRACT — domain model, wire DTOs, Filter, Tapir endpoint defs, codecs, Markdown.
@@ -234,6 +279,8 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
     )
   )
   .jvmSettings(
+    // the build's pure helper is tested with the other suites (BuildTestGroupsSuite)
+    Test / unmanagedSources += (ThisBuild / baseDirectory).value / "project" / "TestGroups.scala",
     libraryDependencies ++= Seq(
       // HOCON config modelled as case classes via Kindlings sconfig derivation.
       "com.kubuszok"  %% "kindlings-sconfig-derivation" % V.kindlings,
@@ -295,14 +342,14 @@ lazy val pluginHelloAi = project
 lazy val db = project
   .in(file("modules/db"))
   .dependsOn(coreJVM)
-  .settings(name := "histmersion-db",
-    // Serialized on purpose, for the same reason the server suites are. The suites share ONE
-    // Postgres and several rewrite source_chunks/finding_places under each other; and since the
-    // DataSource is pooled (`db.pool.max`), a parallel run could park every pooled connection in a
-    // transaction blocked on a table lock `PlaceRepo.rebuildFindingPlaces` holds, while the
-    // transaction holding it is still queueing FOR a connection.
-    Test / parallelExecution := false)
+  .settings(name := "histmersion-db")
   .settings(commonDeps)
+  // Inside a group the suites run one at a time on purpose: several rewrite source_chunks/finding_places
+  // under each other; and since the DataSource is pooled (`db.pool.max`), suites side by side could park
+  // every pooled connection in a transaction blocked on a table lock `PlaceRepo.rebuildFindingPlaces`
+  // holds, while the transaction holding it is still queueing FOR a connection. Groups have separate
+  // databases, so they cannot.
+  .settings(dbTestGroups("db", groups = 2, heap = "1g"))
   .settings(
     // db/migration/index.txt = the list of migration files. Flyway reads it through a ResourceProvider
     // instead of scanning the classpath, which is what makes migrations work inside a native image.
@@ -354,13 +401,14 @@ def buildMetaSource(base: File): String = {
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(coreJVM, db % "compile->compile;test->test", pluginApi, pluginVaults)
-  .settings(name := "histmersion-server", Compile / mainClass := Some("com.histmersion.server.Main"),
-    // Serialized on purpose, for two reasons: the backup/restore suite creates+restores a scratch
-    // database (parallel suites saw "connection refused" mid-restore), and server startup RECONCILES
-    // the OCR job queue (§1.8) — `running`/`queued` rows become `failed: interrupted`, which is right
-    // for the one-server deployment but lets two suites booting at once cancel each other's jobs.
-    Test / parallelExecution := false)
+  .settings(name := "histmersion-server", Compile / mainClass := Some("com.histmersion.server.Main"))
   .settings(commonDeps)
+  // Inside a group the suites run one at a time on purpose, for two reasons: the backup/restore suite
+  // creates+restores a scratch database (parallel suites saw "connection refused" mid-restore), and
+  // server startup RECONCILES the OCR job queue (§1.8) — `running`/`queued` rows become `failed:
+  // interrupted`, which is right for the one-server deployment but lets two suites booting at once
+  // cancel each other's jobs. Groups have separate databases, so neither reaches across them.
+  .settings(dbTestGroups("server", groups = 5, heap = "2g"))
   .settings(writeClasspathSetting).settings(agentRunSettings)
   .settings(nativeImageSettings("com.histmersion.server.Main", "histmersion-server", serverNativeOpts))
   .settings(
