@@ -16,7 +16,7 @@ object Dependencies {
     val magnum    = "1.3.0"    // sync JDBC
     val postgres  = "42.7.4"
     val hikari    = "5.1.0"    // com.zaxxer — JDBC connection pool (native-image-safe, no reflection)
-    val flyway    = "11.8.2"   // schema versioning (SQL migrations under db/migration)
+    val flyway    = "13.11.1"  // schema versioning (SQL migrations under db/migration); 11.20+ knows PostgreSQL 18
     val snakeyaml = "2.3"      // frontmatter parsing for the seed importer
     val sconfig   = "2.0.0"    // org.ekrich — HOCON config (Typesafe Config port, native-friendly)
     val flexmark  = "0.64.8"   // com.vladsch — Markdown → HTML rendering
