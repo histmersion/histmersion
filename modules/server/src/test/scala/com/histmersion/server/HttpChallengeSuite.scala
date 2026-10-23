@@ -32,12 +32,26 @@ class HttpChallengeSuite extends munit.FunSuite:
         case "/challenge-403" => reply(ex, 403, Challenge)
         case "/challenge-503" => reply(ex, 503, "<html>wait</html>", "cf-mitigated" -> "challenge")
         case "/busy"          => reply(ex, 503, "busy")
+        case "/anubis-200"    => reply(ex, 200, Anubis)
+        case "/anubis-403"    => reply(ex, 403, Anubis)
         case _                => reply(ex, 200, "ok"))
     server.start()
     try body(s"http://127.0.0.1:${server.getAddress.getPort}", seen)
     finally server.stop(0)
 
   private val cfg = AppConfig.load().acquire.copy(contactEmail = "someone@example.org")
+
+  /** Anubis's proof-of-work page (#2560), synthetic: the markers its open-source template emits. */
+  private val Anubis =
+    String(getClass.getResourceAsStream("/acquire/landing/challenge_anubis_synthetic.html").readAllBytes(), "UTF-8")
+
+  test("an Anubis page is no copy, asked once, whether it answers 200 or 403 (#2560)"):
+    withServer { (base, seen) =>
+      for path <- List("/anubis-200", "/anubis-403") do
+        val r = SttpHttp(cfg, tries = 3).bytes(s"$base$path")
+        assert(r.left.exists(_.contains("bot-protection challenge")), s"$path: $r")
+      assertEquals(seen.size, 2)
+    }
 
   test("a 403 challenge page is no copy, asked once"):
     withServer { (base, seen) =>
@@ -79,6 +93,13 @@ class HttpChallengeSuite extends munit.FunSuite:
     assert(!Http.isChallenge(200, Map.empty, page)) // a 200 is judged by looksLikePdf, not here
     assert(!Http.isChallenge(403, Map.empty, "<html><title>Forbidden</title></html>".getBytes("UTF-8")))
     assert(!Http.isChallenge(503, Map.empty, "busy".getBytes("UTF-8")))
+    // Anubis: its challenge at any status; its markers inside a PDF, or a page merely naming it, are not one
+    val anubis = Anubis.getBytes("UTF-8")
+    assert(Http.isChallenge(200, Map.empty, anubis))
+    assert(Http.isChallenge(401, Map.empty, anubis))
+    assert(Http.isChallenge(403, Map.empty, anubis))
+    assert(!Http.isChallenge(200, Map.empty, ("%PDF-1.7\n" + Anubis).getBytes("ISO-8859-1")))
+    assert(!Http.isChallenge(200, Map.empty, "<html><p>Anubis, the jackal-headed god</p></html>".getBytes("UTF-8")))
 
   test("every acquisition request is pinned to HTTP/1.1, keeping its URI and headers"):
     val r = java.net.http.HttpRequest.newBuilder(java.net.URI.create("https://example.org/x"))
