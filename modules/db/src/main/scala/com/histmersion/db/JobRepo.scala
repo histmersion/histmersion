@@ -71,18 +71,49 @@ object JobRepo:
     * Returns the page and whether older jobs exist. */
   def page(ds: DataSource, status: Option[String], limit: Int, before: Option[String] = None,
       upTo: Option[String] = None): Either[String, (Vector[JobInfo], Boolean)] =
-    val where = status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
-      case Some(s) => Sql.of(" WHERE status = ?", Param.S(s))
-      case None    => Sql.raw(" WHERE true")
-    (before.toList ++ upTo.toList).find(c => !Keyset.exists(ds, "jobs", Param.S(c))) match
-      case Some(c) => Left(s"No job '$c' to page from")
-      case None =>
-        val (rows, more) = Keyset.page[JobRow](ds, select, where, "", "jobs", math.max(1, limit),
-          before.map(Param.S(_)), upTo.map(Param.S(_)), r => Param.S(r.id))
-        Right((rows.map(toInfo), more))
+    page(ds, JobQuery(status = status.map(_.trim.toLowerCase).filter(_.nonEmpty).toList), limit, before, upTo)
 
   /** How many jobs are in each state — the whole table (one `GROUP BY` over the status index). */
   def stateCounts(ds: DataSource): List[(String, Int)] = Keyset.counts(ds, Sql.raw(" FROM jobs"), "status")
+
+  /** What the jobs list is filtered by (core `ListFilters.JobFilter`, validated): any of these states
+    * and kinds; `since` / `until` bound `created_at` (until exclusive); `q` = text in what the job is
+    * about — its citekey, an agent run's target or pipeline, its stored detail — or the start of its id. */
+  final case class JobQuery(
+      status: List[String] = Nil,
+      kinds: List[String] = Nil,
+      since: Option[java.time.Instant] = None,
+      until: Option[java.time.Instant] = None,
+      q: Option[String] = None)
+
+  private def conds(q: JobQuery): ListSql.Conds =
+    val text = q.q.fold(Sql.empty) { t =>
+      val p = Param.S(ListSql.contains(t))
+      Sql.of(" AND (citekey ILIKE ? OR target_id ILIKE ? OR pipeline ILIKE ? OR detail::text ILIKE ? OR id LIKE ?)",
+        p, p, p, p, Param.S(ListSql.contains(t).drop(1)))
+    }
+    ListSql.Conds(List(
+      "status" -> ListSql.anyOf("status", q.status),
+      "kind"   -> ListSql.anyOf("kind", q.kinds),
+      "time"   -> ListSql.between("created_at", q.since, q.until),
+      "q"      -> text))
+
+  /** One page of the jobs that match `q`, newest first. Left: a cursor that names no job. */
+  def page(ds: DataSource, q: JobQuery, limit: Int, before: Option[String], upTo: Option[String])
+      : Either[String, (Vector[JobInfo], Boolean)] =
+    (before.toList ++ upTo.toList).find(c => !Keyset.exists(ds, "jobs", Param.S(c))) match
+      case Some(c) => Left(s"No job '$c' to page from")
+      case None =>
+        val (rows, more) = Keyset.page[JobRow](ds, select, Sql.raw(" WHERE true") ++ conds(q).all, "", "jobs",
+          math.max(1, limit), before.map(Param.S(_)), upTo.map(Param.S(_)), r => Param.S(r.id))
+        Right((rows.map(toInfo), more))
+
+  /** The counts that go with a filtered page: per state, and the `kind` facet — each under every
+    * filter but its own. */
+  def facets(ds: DataSource, q: JobQuery): (List[(String, Int)], List[(String, List[(String, Int)])]) =
+    val c = conds(q)
+    def from(except: String) = Sql.raw(" FROM jobs WHERE true") ++ c.except(except)
+    (Keyset.counts(ds, from("status"), "status"), List("kind" -> ListSql.facet(ds, from("kind"), "kind")))
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */
   def progress(ds: DataSource, id: String, text: String): Unit =

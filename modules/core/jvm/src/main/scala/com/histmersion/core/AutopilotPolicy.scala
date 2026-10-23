@@ -93,7 +93,7 @@ object AutopilotPolicy:
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps
     * count). */
-  val NotePrefix = "autopilot:"
+  val NotePrefix: String = ListFilters.DecidedBy.AutopilotNote
   def note(v: Verdict): Option[String] = v match
     case Verdict.Approve(r) => Some(s"$NotePrefix approved — $r")
     case Verdict.Reject(r)  => Some(s"$NotePrefix rejected — $r")

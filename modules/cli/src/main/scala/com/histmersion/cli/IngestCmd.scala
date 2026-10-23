@@ -75,18 +75,18 @@ object IngestCmd:
         c.assets(ck).map(rows => println(IngestMarkdown.assets(ck, rows.toVector))))
     }
 
-  private val jobs = Opts.subcommand("jobs", "Recent OCR jobs, or one job by id") {
-    (Opts.argument[String]("id").orNone,
-      Opts.option[String]("status", "queued|running|done|failed").orNone,
+  private val jobs = Opts.subcommand("jobs", "Recent background jobs (OCR, imports, agent runs, …), filtered on the server, or one job by id") {
+    (Opts.argument[String]("id").orNone, ListOpts.jobs,
       Opts.option[Int]("limit", "Max rows").orNone,
-      Opts.option[String]("before", "The next older page: the id of the last job shown (the listing prints the command)").orNone)
-      .mapN { (id, status, limit, before) => (c: Client) =>
+      Opts.option[String]("before", "The next older page: the id of the last job shown (the listing prints the command)").orNone,
+      Output.jsonFlag)
+      .mapN { (id, f, limit, before, json) => (c: Client) =>
         id match
-          case Some(i) => c.job(i).map(j => println(IngestMarkdown.job(j)))
+          case Some(i) => c.job(i).map(j => Output.emit(json, j)(IngestMarkdown.job))
           case None    =>
-            c.jobs(status, limit, before).map { (js, page) =>
-              println(IngestMarkdown.jobs(js.toVector, page, status.map(_.trim).filter(_.nonEmpty),
-                PageCmd.older(page, "jobs", List("status" -> status, "limit" -> limit.map(_.toString)))))
+            c.jobs(f, limit, before).map { (js, page) =>
+              Output.emit(json, js)(js => IngestMarkdown.jobs(js.toVector, page, f.qualifier,
+                PageCmd.older(page, "jobs", f.options ++ List("limit" -> limit.map(_.toString)))))
             }
       }
   }

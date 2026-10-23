@@ -249,12 +249,32 @@ object UiState:
   val areaPick  = Field[GeoPick]("areaPick", "areaPick", GeoPick.Mid, Persist.Local, Role.View)
   /** The sidebar's bottom sheet in the narrow layout (a per-device preference, never in a link). */
   val sheet    = Field[Sheet]("sheet", "sheet", Sheet.Peek, Persist.Local, Role.View)
-  /** The jobs window's status filter (`None` = every job). */
-  val jobStatus = Field[Option[JobState]]("jobStatus", "jobs", None, Persist.Hash, Role.View)
-  /** The agent runs window's status filter (`None` = every run). */
-  val runStatus = Field[Option[Agents.RunState]]("runStatus", "runs", None, Persist.Hash, Role.View)
-  /** The approvals window also lists the decided ones. */
-  val approvalsAll = Field[Boolean]("approvalsAll", "apprAll", false, Persist.Hash, Role.View)
+  /** The jobs window's filters (core `ListFilters.JobFilter`): the state (`None` = every job), the
+    * kinds (any of), the start dates and the subject text. */
+  val jobStatus  = Field[Option[JobState]]("jobStatus", "jobs", None, Persist.Hash, Role.View)
+  val jobKinds   = Field[List[String]]("jobKinds", "jobKind", Nil, Persist.Hash, Role.View)
+  val jobSince   = Field[Option[String]]("jobSince", "jobSince", None, Persist.Hash, Role.View)
+  val jobUntil   = Field[Option[String]]("jobUntil", "jobUntil", None, Persist.Hash, Role.View)
+  val jobSubject = Field[Option[String]]("jobSubject", "jobSubject", None, Persist.Hash, Role.View)
+  /** The agent runs window's filters (`ListFilters.RunFilter`): the state (`None` = every run), the
+    * pipelines and origins (any of), one manager, provider, model and goal, the start dates, the
+    * target text. */
+  val runStatus    = Field[Option[Agents.RunState]]("runStatus", "runs", None, Persist.Hash, Role.View)
+  val runPipelines = Field[List[String]]("runPipelines", "runPipeline", Nil, Persist.Hash, Role.View)
+  val runOrigins   = Field[List[String]]("runOrigins", "runOrigin", Nil, Persist.Hash, Role.View)
+  val runManager   = Field[Option[String]]("runManager", "runManager", None, Persist.Hash, Role.View)
+  val runProvider  = Field[Option[String]]("runProvider", "runProvider", None, Persist.Hash, Role.View)
+  val runModel     = Field[Option[String]]("runModel", "runModel", None, Persist.Hash, Role.View)
+  val runGoal      = Field[Option[String]]("runGoal", "runGoal", None, Persist.Hash, Role.View)
+  val runSince     = Field[Option[String]]("runSince", "runSince", None, Persist.Hash, Role.View)
+  val runUntil     = Field[Option[String]]("runUntil", "runUntil", None, Persist.Hash, Role.View)
+  val runSubject   = Field[Option[String]]("runSubject", "runSubject", None, Persist.Hash, Role.View)
+  /** The approvals window's filters (`ListFilters.ApprovalFilter`): the state (`None` = the open
+    * ones, `all` = every one), the kinds and deciders (any of), the subject text. */
+  val approvalState   = Field[Option[String]]("approvalState", "apprState", None, Persist.Hash, Role.View)
+  val approvalKinds   = Field[List[String]]("approvalKinds", "apprKind", Nil, Persist.Hash, Role.View)
+  val approvalBy      = Field[List[String]]("approvalBy", "apprBy", Nil, Persist.Hash, Role.View)
+  val approvalSubject = Field[Option[String]]("approvalSubject", "apprSubject", None, Persist.Hash, Role.View)
   /** The acquisition window also lists the items already done. */
   val acquireDone = Field[Boolean]("acquireDone", "acqDone", false, Persist.Hash, Role.View)
   /** The backlog window also lists the tasks already done. */
@@ -268,7 +288,9 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, terrainStyle, terrainView, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, runStatus, approvalsAll, acquireDone, tasksDone,
+      inView, open, tab, layers, sources, baseMap, terrainStyle, terrainView, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, jobKinds, jobSince, jobUntil, jobSubject,
+      runStatus, runPipelines, runOrigins, runManager, runProvider, runModel, runGoal, runSince, runUntil, runSubject,
+      approvalState, approvalKinds, approvalBy, approvalSubject, acquireDone, tasksDone,
       mergeBundle, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)
@@ -490,6 +512,7 @@ object UiState:
 
   def init(config: UiConfig): Unit =
     previewMs = config.debounce.previewMs
+    ListFilterBar.typingMs = config.debounce.searchMs
     from.withDefault(Some(config.time.defaultFrom))
     to.withDefault(Some(config.time.defaultTo))
     restoreLocal()

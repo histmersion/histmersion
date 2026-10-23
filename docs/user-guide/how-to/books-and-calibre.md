@@ -32,10 +32,24 @@ too, with their title, authors, DOI and tags:
 
 ```bash
 histmersion calibre gaps                 # sources not in Calibre yet
+histmersion calibre gaps --quiet         # one line and exit 1 when there are any (for a reminder hook)
 histmersion calibre push <citekey>       # add one
 histmersion calibre sync                 # what sync would add (a dry run)
 histmersion calibre sync --apply         # add all of them
 ```
+
+A source counts as missing from Calibre only when there is a file to add: the original the server
+stored (`original: stored`), or a file under `cli.calibre.originals-dir/<citekey>/` on your computer
+(`original: local`). Sources whose provenance is `calibre`, or that already have a Calibre id, never
+count.
+
+A record with no fetched file is not counted: a citation-graph stub, or a record with only metadata
+and an abstract. `gaps` and `sync` give their number on one line ("N records without a fetched
+file — not counted; see the acquire list"), and `--quiet` ignores them, so it exits 0 when only
+those are left. To add one of them, get the file first: `histmersion ingest <path> --citekey <k>`,
+or `histmersion calibre push <citekey> --file <path>`. `--json` still lists every record, with
+`original` (`stored`, `local`, `none`) and `counted` (`true` or `false`); `count` is the number
+counted, `uncounted` the rest, and `total` the sum of both.
 
 **Close the Calibre program first** for every command that writes to the library (`push`, `sync
 --apply`, `update`, `set`): Calibre does not allow two writers.
