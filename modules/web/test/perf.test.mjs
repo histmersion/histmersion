@@ -16,7 +16,7 @@
 
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { chromium } from 'playwright';
+import { engineName, isChromium, launch, wantsGpu } from './engine.mjs';
 import { memory, newPerfPage, quiet } from './perf-lib.mjs';
 import * as paths from './perf-paths.mjs';
 import { routeFixtures } from './perf-fixtures.mjs';
@@ -72,17 +72,14 @@ const BUDGETS = {
 
 let browser;
 before(async () => {
-  browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined, args: gpuArgs() });
+  browser = await launch();
 });
 after(async () => { await browser?.close(); });
 
-/** The map is drawn by WebGL: the budgets are measured on a GPU (macOS: Metal) unless HISTMERSION_TEST_GPU=0
-  * (Chromium's software rasteriser — the map then takes its no-GPU path; HISTMERSION_PERF_REPORT=1 prints its
-  * figures, docs/research-map-styles.md "As built"). */
-function gpuArgs() {
-  const want = process.env.HISTMERSION_TEST_GPU ?? (process.platform === 'darwin' ? '1' : '0');
-  return want === '0' ? [] : ['--enable-gpu', '--ignore-gpu-blocklist', ...(process.platform === 'darwin' ? ['--use-angle=metal'] : [])];
-}
+/** The figures an engine cannot measure from a page (engine.mjs): Firefox has no CDP, so no heap, no
+  * listener count and no layout-object count. Only these are skipped, only there; any other missing figure
+  * fails, and in Chromium every figure is required. */
+const UNMEASURABLE = isChromium ? new Set() : new Set(['heapMB', 'heapTotalMB', 'listeners', 'layoutObjects']);
 
 const get = (o, path) => path.split('.').reduce((v, k) => v?.[k], o);
 
@@ -91,6 +88,7 @@ function within(name, measured, budget = BUDGETS[name]) {
   if (report) console.log(`# ${name} ${JSON.stringify(measured)}`);
   for (const [k, max] of Object.entries(budget)) {
     const v = get(measured, k);
+    if (v === null && UNMEASURABLE.has(k.split('.').at(-1))) { if (report) console.log(`# ${name}.${k}: not measurable in ${engineName}`); continue; }
     assert.equal(typeof v, 'number', `${name}.${k} was measured (${JSON.stringify(measured)})`);
     assert.ok(v <= max, `${name}.${k} = ${v}, over its budget of ${max} (${JSON.stringify(measured)})`);
   }
@@ -155,7 +153,7 @@ for (const [style, name] of [['readable', 'Readable'], ['physical', 'Physical']]
       assert.ok(m.points >= 2000 && m.shapes >= 1000, `the full load: ${m.points} points, ${m.shapes} shapes`);
       // the GPU budgets on a GPU; the software path (HISTMERSION_TEST_GPU=0) has its own, named apart
       const software = await page.evaluate(() => window.histmersionMap.capabilities().software);
-      assert.equal(software, gpuArgs().length === 0, `the map took the ${software ? 'software' : 'GPU'} path`);
+      assert.equal(software, !wantsGpu(), `the map took the ${software ? 'software' : 'GPU'} path`);
       within(software ? `${style}MapSoftware` : `${style}Map`, m);
       within(`memory${name}Map`, await memory(page, cdp));
     }, undefined, { source: 'local' });
@@ -198,9 +196,11 @@ test('a closed window stops polling, and its page reloaded in place keeps one se
     for (let i = 0; i < 6; i++) {
       await win.locator('a.zz-self').click();
       await quiet(page);
-      counts.push((await cdp.send('Memory.getDOMCounters')).jsEventListeners);
+      if (cdp) counts.push((await cdp.send('Memory.getDOMCounters')).jsEventListeners);
     }
-    assert.ok(counts.at(-1) - counts[1] <= 2, `listeners grow with each in-place reload: ${counts}`);
+    // the listener count is Chromium's (CDP); in Firefox the one-fetch-per-click check below still catches
+    // handlers piling up
+    if (cdp) assert.ok(counts.at(-1) - counts[1] <= 2, `listeners grow with each in-place reload: ${counts}`);
     // and one click asks for the page once, not once per reload so far
     let fetched = 0;
     page.on('request', r => { if (new URL(r.url()).pathname.startsWith('/source/')) fetched++; });

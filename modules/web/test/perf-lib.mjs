@@ -15,10 +15,20 @@ export function probe() {
     longTasks: [], inputs: [], frames: [], recording: false,
     reset() { this.longTasks = []; this.inputs = []; this.frames = []; },
   };
-  try {
+  if ((PerformanceObserver.supportedEntryTypes || []).includes('longtask')) {
     new PerformanceObserver(list => { for (const e of list.getEntries()) P.longTasks.push({ start: e.startTime, duration: e.duration }); })
       .observe({ type: 'longtask', buffered: true });
-  } catch (_) { /* no long-task timing: counted as none */ }
+  } else {
+    // no Long Tasks API (Firefox): a 10 ms timer that arrives more than 50 ms late was held up by a task
+    // at least that long — the same threshold, measured from outside the task
+    P.longTaskSource = 'timer';
+    let last = performance.now();
+    setInterval(() => {
+      const now = performance.now(), late = now - last - 10;
+      if (late > 50) P.longTasks.push({ start: last + 10, duration: late });
+      last = now;
+    }, 10);
+  }
   // after the current task: a frame, then a message posted from it runs once that frame was painted
   const nextPaint = cb => requestAnimationFrame(() => { const ch = new MessageChannel(); ch.port1.onmessage = () => cb(performance.now()); ch.port2.postMessage(0); });
   P.nextPaint = () => new Promise(res => nextPaint(res));
@@ -82,8 +92,9 @@ export async function newPerfPage(browser, origin, viewport = { width: 1440, hei
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   trackRequests(page);
-  const cdp = await context.newCDPSession(page);
-  await cdp.send('Performance.enable');
+  // CDP (heap, DOM counters, forced garbage collection) is Chromium's; elsewhere `cdp` is null
+  const cdp = browser.browserType().name() === 'chromium' ? await context.newCDPSession(page) : null;
+  if (cdp) await cdp.send('Performance.enable');
   return { context, page, cdp, errors, blocked };
 }
 
@@ -127,7 +138,8 @@ export function pct(xs, p) {
 const r1 = x => Math.round(x * 10) / 10;
 
 /** Run `gesture` while the probe records: its wall time, every input's latency to the next paint, the
-  * long tasks, and the frames (a frame is "dropped" when its interval is over 1.5 refresh periods). */
+  * long tasks, and the frames (a frame is "dropped" when its interval is over 1.5 refresh periods, the period at
+  * least 60 Hz's). */
 export async function measure(page, gesture) {
   await page.evaluate(() => { window.__perf.reset(); window.__perf.recording = true; });
   const t0 = Date.now();
@@ -139,7 +151,9 @@ export async function measure(page, gesture) {
     return { inputs: P.inputs, longTasks: P.longTasks, frames: P.frames }; });
   const lat = raw.inputs.map(i => i.latency);
   const gaps = raw.frames.slice(1).map((t, i) => t - raw.frames[i]);
-  const period = pct(gaps, 25) || 16.7;
+  // the refresh period, never shorter than 60 Hz's: the budgets are set for 60 frames a second, and a browser
+  // that paints headless at 120 Hz (Firefox) would otherwise count a 60 Hz frame as dropped
+  const period = Math.max(pct(gaps, 25) || 16.7, 16.7);
   return {
     wallMs: wall,
     inputs: lat.length,
@@ -168,6 +182,7 @@ export async function inputToUpdate(page, selector, trigger, ready = null, timeo
 /** What the page holds, after two full garbage collections: the JS heap, the DOM (nodes, documents,
   * layout objects), the event listeners; the map's markers and the points it clusters; the app's own caches. */
 export async function memory(page, cdp) {
+  if (!cdp) return memoryWithoutCdp(page);
   for (let i = 0; i < 2; i++) await cdp.send('HeapProfiler.collectGarbage');
   const { metrics } = await cdp.send('Performance.getMetrics');
   const m = Object.fromEntries(metrics.map(x => [x.name, x.value]));
@@ -186,5 +201,28 @@ export async function memory(page, cdp) {
     layoutObjects: m.LayoutObjects,
     mapMarkers: page_.layers, clustered: page_.clustered, shapes: page_.shapes, markerIcons: page_.markers,
     caches: page_.app?.caches ?? null,
+  };
+}
+
+/** [[memory]] where there is no CDP (Firefox): the DOM nodes the document holds (elements and text, counted
+  * by walking it — live nodes only, where Chromium's counter also holds detached ones not yet collected), the
+  * documents, the map's markers and the caches; the heap, the listeners and the layout objects cannot be
+  * read from a page there, so they are `null` — and the budgets say which figures an engine lacks. */
+async function memoryWithoutCdp(page) {
+  const m = await page.evaluate(() => {
+    let nodes = 0;
+    const count = doc => { const w = doc.createTreeWalker(doc, NodeFilter.SHOW_ALL); while (w.nextNode()) nodes++; nodes++; };
+    count(document);
+    let documents = 1;
+    for (const f of document.querySelectorAll('iframe')) { try { if (f.contentDocument) { count(f.contentDocument); documents++; } } catch (_) { /* another origin */ } }
+    const map = window.__testMap;
+    const app = typeof window.histmersionDiagnostics === 'function' ? window.histmersionDiagnostics() : null;
+    return { nodes, documents, layers: app?.map?.markers ?? 0, clustered: map ? map.points() : 0,
+      shapes: map ? map.shapes('polities').length : 0, markers: document.querySelectorAll('.hd-marker').length,
+      app: app ? JSON.parse(JSON.stringify(app)) : null };
+  });
+  return {
+    heapMB: null, heapTotalMB: null, nodes: m.nodes, documents: m.documents, listeners: null, layoutObjects: null,
+    mapMarkers: m.layers, clustered: m.clustered, shapes: m.shapes, markerIcons: m.markers, caches: m.app?.caches ?? null,
   };
 }

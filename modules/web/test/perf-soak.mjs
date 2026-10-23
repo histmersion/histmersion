@@ -76,9 +76,9 @@ export async function soak(page, cdp, rounds, { warmup = 5 } = {}) {
   return {
     rounds, seconds: Math.round((Date.now() - t0) / 1000), before, after,
     growth: {
-      heapMB: Math.round((after.heapMB - before.heapMB) * 10) / 10,
+      heapMB: after.heapMB === null ? null : Math.round((after.heapMB - before.heapMB) * 10) / 10,
       nodes: after.nodes - before.nodes,
-      listeners: after.listeners - before.listeners,
+      listeners: after.listeners === null ? null : after.listeners - before.listeners,
       mapMarkers: after.mapMarkers - before.mapMarkers,
     },
   };

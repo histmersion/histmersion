@@ -295,7 +295,9 @@ object Preview:
       // pointer events, so a TOUCH can be told apart: a tap follows the link, it does not float a card
       document.addEventListener("pointerover", (e: dom.PointerEvent) => if e.pointerType != "touch" then onOver(e))
       document.addEventListener("pointerout", (e: dom.PointerEvent) => onOut(e))
-      document.addEventListener("scroll", (_: dom.Event) => { hide(); reposition() }, useCapture = true)
+      // a scroll moves a pinned card with its anchor in the next frame, not inside the scroll event: a
+      // position written there is a scroll-linked effect (Firefox warns, and it lags behind async scrolling)
+      document.addEventListener("scroll", (_: dom.Event) => { hide(); repositionSoon() }, useCapture = true)
       window.addEventListener("resize", (_: dom.Event) => reposition())
       // the pinned card takes Escape first (the window manager's Escape runs after, on `window`)
       document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
@@ -570,6 +572,13 @@ object Preview:
     p.size = naturalSize(p.box)
 
   /** Keep the pinned card at its anchor — after a pan or zoom of the map, a scroll, a resize. */
+  // `var`: a reposition is asked for the next frame (one per frame however many scroll events)
+  private var repositionAsked = false
+  private def repositionSoon(): Unit =
+    if pinned.isDefined && !repositionAsked then
+      repositionAsked = true
+      val _ = window.requestAnimationFrame(_ => { repositionAsked = false; reposition() })
+
   def reposition(): Unit =
     pinned.foreach { p =>
       p.anchor() match

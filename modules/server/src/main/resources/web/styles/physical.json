@@ -1118,7 +1118,9 @@
         "text-size": 11,
         "symbol-placement": "line",
         "text-letter-spacing": 0.06,
-        "symbol-spacing": 350
+        "symbol-spacing": 300,
+        "text-max-angle": 35,
+        "text-keep-upright": true
       },
       "paint": {
         "text-color": "#123552",
@@ -1164,7 +1166,19 @@
         "text-font": [
           "Noto Sans Italic"
         ],
-        "text-size": 11,
+        "text-size": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          4,
+          11,
+          8,
+          12
+        ],
         "text-max-width": 7
       },
       "paint": {
@@ -1212,7 +1226,19 @@
         "text-font": [
           "Noto Sans Italic"
         ],
-        "text-size": 10.5,
+        "text-size": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          10.5,
+          10,
+          12
+        ],
         "text-max-width": 8
       },
       "paint": {
@@ -1278,9 +1304,9 @@
             "zoom"
           ],
           8,
-          10,
+          10.5,
           11,
-          11.5
+          12.5
         ],
         "text-max-width": 7
       },

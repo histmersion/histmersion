@@ -62,6 +62,9 @@ class MapLayerSuite extends munit.FunSuite:
       assert(Capabilities.isSoftware(r), r)
     for r <- List("ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)", "Mali-G78", "NVIDIA GeForce RTX 3060") do
       assert(!Capabilities.isSoftware(r), r)
+    // Firefox names the GPU in RENDERER; Chromium and Safari answer a generic name there
+    assert(!Capabilities.genericRenderer("Apple M1, or similar"))
+    for r <- List("WebKit WebGL", "", "Mozilla") do assert(Capabilities.genericRenderer(r), r)
 
   test("the fake engine's shapes: a restyle keeps the set, a new member sends it again"):
     val s = FakeSurface()
