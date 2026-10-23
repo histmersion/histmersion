@@ -1604,6 +1604,55 @@ test('autopilot: the switch and the goals\' stages in the managers window', asyn
   });
 });
 
+// The autopilot's focus, against fixed answers (nothing is written): the managers window shows the active
+// goals with why each was chosen, what it waits for and its pace, the queue in order, and why the others cannot
+// use a slot; pinning a queued goal posts the request and shows the server's answer.
+test('autopilot focus: the active goals, the queue and a pin in the managers window', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/config', async route => {
+      const res = await route.fetch();
+      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true, writeKeyRequired: false } });
+    });
+    const focus = { on: true, max: 2, maxFrom: 'config', held: 6, queued: 3, changes: [],
+      active: [
+        { slug: 'zz-pw-f1', title: 'Zz PW one', status: 'compiled', stage: 'reviewing', why: 'reviewing: 1 of 2 articles still to pass review',
+          pinned: false, priority: 0, doing: 'running review-article zz-pw-art', open: 2, doneLast7: 7, etaDays: 2 },
+        { slug: 'zz-pw-f2', title: 'Zz PW two', status: 'seeding', stage: 'ready', why: 'ready: 5 sources (at least 3), no article yet',
+          pinned: false, priority: 0, doing: 'next propose-articles zz-pw-f2', open: 1, doneLast7: 0 }],
+      queue: [{ slug: 'zz-pw-q1', title: '', status: 'seeding', stage: 'gathering', why: 'gathering: 1 source; in the same tree as zz-pw-f2',
+        pinned: false, priority: 0, open: 2, doneLast7: 0 }],
+      waiting: [{ slug: 'zz-pw-w1', code: 'person', why: 'waits for a person: approval #9' },
+        { slug: 'zz-pw-w2', code: 'person', why: 'waits for a person: approval #10' }, { slug: 'zz-pw-w3', code: 'idle', why: 'idle' }] };
+    const status = { on: true, agentsEnabled: true, managersEnabled: true, approvals: [], ingestedToday: 3, ingestCap: 60,
+      maxConcurrentRuns: 4, library: [], goals: [], changes: [], focus };
+    const posted = [];
+    await page.route('**/api/agents/managers', route => route.fulfill({ json: [] }));
+    await page.route('**/api/agents/autopilot', route => route.fulfill({ json: status }));
+    await page.route('**/api/agents/autopilot/focus', route => {
+      posted.push(JSON.parse(route.request().postData()));
+      return route.fulfill({ json: { ...focus, changes: ['zz-pw-q1 pinned: it is active from the next tick (by web)'],
+        active: [{ ...focus.queue[0], pinned: true, why: 'pinned by a person; gathering: 1 source' }, focus.active[0]] } });
+    });
+    await page.goto(new URL('/#open=managers', baseURL).href);
+    await page.reload();
+    const panel = page.locator('.autopilot-focus');
+    await panel.locator('.focus-active li').first().waitFor();
+    const text = await panel.innerText();
+    assert.match(text, /Focus: at most 2 active goals · 6 items held/);
+    assert.match(text, /reviewing: 1 of 2 articles still to pass review/);
+    assert.match(text, /now: running review-article zz-pw-art/);
+    assert.match(text, /7 done in 7 days, 2 open \(~2 d\)/);
+    assert.match(text, /next \(3 waiting for a slot\):/);
+    assert.match(text, /in the same tree as zz-pw-f2/);
+    assert.match(text, /cannot use a slot now: 2 person · 1 idle/);
+    const pin = panel.locator('.focus-queue li').filter({ hasText: 'zz-pw-q1' }).locator('button', { hasText: 'pin' });
+    await pin.click();
+    await page.waitForFunction(() => /zz-pw-q1 pinned/.test(document.querySelector('.autopilot-focus').innerText));
+    assert.deepEqual(posted, [{ action: 'pin', goal: 'zz-pw-q1', by: 'web' }]);
+    assert.match(await page.locator('.autopilot-focus').innerText(), /pinned by a person/);
+  });
+});
+
 /** Choose the Histmersion map and a preset: the family menu, then the preset in the map-options panel. */
 async function histmersionMap(page, style) {
   await page.locator('.map-family-select').selectOption('histmersion');

@@ -32,6 +32,11 @@ object ManagersView:
     else if note == "idle" then "idle"
     else "active"
 
+  /** What a person can do to this item: by its status — but an item the autopilot's focus holds is not
+    * released by hand (pin its goal instead). */
+  def itemActionsFor(i: ManagerItem): List[String] =
+    if i.hold.exists(_.focus.isDefined) then itemActions(i.status).filterNot(_ == "release") else itemActions(i.status)
+
   /** What a person can do to an item in this status. */
   def itemActions(status: String): List[String] = ItemStatus.parse(status) match
     case Some(ItemStatus.Pending) => List("hold", "priority", "skip")
@@ -195,6 +200,65 @@ object ManagersView:
       (if g.openApprovals > 0 then s" · ${Plural.count(g.openApprovals, "open approval")}" else "") +
       s" · ${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)")
 
+  /** An active or queued goal's pace, in a line. */
+  def focusPace(g: Autopilot.FocusGoal): String =
+    s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)")
+
+  /** The goals that cannot use a focus slot now, by why, the commonest first. */
+  def waitingSummary(ws: List[Autopilot.FocusWaiting]): String =
+    ws.groupBy(_.code).toList.sortBy((c, xs) => (-xs.size, c)).map((c, xs) => s"${xs.size} $c").mkString(" · ")
+
+  /** The focus's heading: the cap and where it comes from, or why it is not in force. */
+  def focusHead(f: Autopilot.FocusInfo): String =
+    (if f.on then s"Focus: at most ${f.max} active goals" else "Focus: not in force") +
+      (if f.maxFrom == "person" then " (cap set by a person)" else "") +
+      (if f.held > 0 then s" · ${Plural.count(f.held, "item")} held" else "")
+
+  /** The focus: the active goals (why each was chosen, what it does or waits for, its pace), the queue in
+    * the order the next become active, and why the others cannot use a slot; pin / unpin a goal and set
+    * the cap (each behind the write gate). */
+  private def focusPanel(f: Autopilot.FocusInfo, changed: Autopilot.FocusInfo => Unit, failure: Var[Option[String]]): HtmlElement =
+    val cap = Var(f.max.toString)
+    def go(what: String)(call: => scala.concurrent.Future[Autopilot.FocusInfo]): Unit =
+      if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
+      else call.onComplete(_.fold(e => failure.set(Some(s"focus $what: ${e.getMessage}")), x => { failure.set(None); changed(x) }))
+    def pinButton(g: Autopilot.FocusGoal) =
+      val (verb, tip) = if g.pinned then ("unpin", "let the focus choose again") else ("pin", "keep this goal active (it takes a slot now)")
+      button(typ := "button", cls := "btn btn--sm", verb, title := tip, onClick --> (_ => go(s"$verb ${g.slug}")(ApiClient.setFocus(verb, Some(g.slug)))))
+    def goalLink(slug: String) = button(typ := "button", cls := "link-btn", slug, onClick --> (_ => WindowManager.open(WindowKey.Goal(slug))))
+    div(cls := "autopilot-focus",
+      div(cls := "toolbar",
+        div(cls := "btn-group", span(cls := "autopilot-state", focusHead(f))),
+        div(cls := "btn-group",
+          input(typ := "number", cls := "field manager-prio", aria.label := "the cap of active goals", minAttr := "0",
+            controlled(value <-- cap.signal, onInput.mapToValue --> cap.writer)),
+          button(typ := "button", cls := "btn btn--sm", "set cap", title := "at most this many goals active for model work (0 = no cap)",
+            onClick --> (_ => int(cap.now()).foreach(n => go("cap")(ApiClient.setFocus("max", value = Some(n)))))),
+          Option.when(f.maxFrom == "person")(button(typ := "button", cls := "btn btn--sm", "default",
+            title := "back to agents.autopilot.max-active-goals", onClick --> (_ => go("cap")(ApiClient.setFocus("max"))))))),
+      f.note.map(n => div(cls := "muted", n)),
+      Option.when(f.changes.nonEmpty)(div(cls := "form-ok", f.changes.mkString("; ").take(400))),
+      ul(cls := "job-list focus-active", f.active.map(g =>
+        li(cls := "job-row",
+          span(cls := s"job-state state-${g.status}", g.stage),
+          div(cls := "job-main",
+            div(cls := "job-subject", goalLink(g.slug), Option.when(g.pinned)(span(cls := "muted", " · pinned")),
+              span(cls := "muted", s" · ${g.title}")),
+            div(cls := "job-progress", g.why),
+            g.doing.map(d => div(cls := "muted", s"now: $d")),
+            div(cls := "job-meta muted", focusPace(g)),
+            child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g)))))))),
+      Option.when(f.queue.nonEmpty)(div(
+        div(cls := "muted", s"next (${f.queued} waiting for a slot):"),
+        ol(cls := "job-list focus-queue", f.queue.map(g =>
+          li(cls := "job-row",
+            span(cls := s"job-state state-${g.status}", g.stage),
+            div(cls := "job-main",
+              div(cls := "job-subject", goalLink(g.slug)),
+              div(cls := "muted", g.why),
+              child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g)))))))))),
+      Option.when(f.waiting.nonEmpty)(div(cls := "muted", s"cannot use a slot now: ${waitingSummary(f.waiting)}")))
+
   /** The goals by stage, in the order a goal moves through them: how many in each. */
   def stages(gs: List[Autopilot.GoalProgress]): String =
     GoalStatus.all.map(st => st -> gs.count(_.status == st)).filter(_._2 > 0).map((st, n) => s"$n $st").mkString(" · ")
@@ -233,6 +297,7 @@ object ManagersView:
           div(cls := "muted", "approvals: " + s.approvals.map(r => s"${r.kind} ${r.mode}").mkString(" · ")),
           Option.when(!s.cronsEnabled)(p(cls := "form-error", role := "alert", Autopilot.AutopilotStatus.CronsOff)),
           Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
+          s.focus.map(f => focusPanel(f, x => st.update(_.map(_.copy(focus = Some(x)))), failure)),
           ul(cls := "job-list autopilot-goals", s.goals.map(g =>
             li(cls := "job-row",
               span(cls := s"job-state state-${g.status}", g.status),
@@ -468,12 +533,13 @@ object ManagersView:
           button(typ := "button", cls := "link-btn", s"run ${r.id.take(8)} ${r.status}", onClick --> (_ => WindowManager.open(WindowKey.Run(r.id)))),
           r.progress.filter(_.nonEmpty).map(p => span(cls := "muted", s" · $p")))),
         i.hold.map(h => div(cls := "muted", "held" + h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") +
+          h.focus.fold("")(g => s" for the focus (goal $g; pin it in the managers window to run it now)") +
           Option(h.reason).filter(_.nonEmpty).fold("")(r => s" — $r"))),
         i.notBefore.map(t => div(cls := "muted", s"not before $t")),
         i.outcome.filter(_.nonEmpty).map(o => div(cls := "muted", o)),
-        child.maybe <-- Auth.writable.map(w => Option.when(w && itemActions(i.status).nonEmpty)(
+        child.maybe <-- Auth.writable.map(w => Option.when(w && itemActionsFor(i).nonEmpty)(
           div(cls := "form-row manager-item-actions",
-            itemActions(i.status).map {
+            itemActionsFor(i).map {
               case "hold" => span(
                 input(typ := "text", cls := "field", aria.label := "hold until", placeholder := "until 2026-11-01 or a DOI",
                   controlled(value <-- until.signal, onInput.mapToValue --> until.writer)),

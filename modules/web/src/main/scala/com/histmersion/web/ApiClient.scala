@@ -224,6 +224,9 @@ object ApiClient:
   def autopilot: Future[Autopilot.AutopilotStatus] = call(ManagersApi.autopilot)(())
   def setAutopilot(on: Boolean): Future[Autopilot.AutopilotStatus] =
     call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on, Some("web")))
+  /** The autopilot's focus: pin/unpin/priority a goal, or the cap (`max`; no value: the config's). */
+  def setFocus(action: String, goal: Option[String] = None, value: Option[Int] = None): Future[Autopilot.FocusInfo] =
+    call(ManagersApi.setFocus)(Autopilot.FocusSet(action, goal, value, Some("web")))
   def manager(id: String): Future[Managers.ManagerDetail] = call(ManagersApi.get)(id)
   def managerUpdate(id: String, in: Managers.ManagerUpdate): Future[Managers.ManagerInfo] = call(ManagersApi.update)((id, in))
   /** pause | resume | stop; `runs` = a pause takes its runs in flight with it. */
