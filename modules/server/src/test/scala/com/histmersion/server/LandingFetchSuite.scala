@@ -130,6 +130,65 @@ class LandingFetchSuite extends munit.FunSuite:
       http.asked.contains("https://sa.example-uni.edu/index.php/sa/article/view/12"), http.asked.mkString("\n"))
     assert(!http.asked.exists(u => u.contains("/pdf/") || u.contains("/download/")), http.asked.mkString("\n"))
 
+  // ── open-access publishers (#2550): pages and records captured 2026-10-23, trimmed ─────────────
+
+  test("Open Research Europe (OJS 3.6): its doi.org location is resolved by the handle API, its PDF galley downloaded"):
+    val c = cfg
+    val doi  = "10.12688/openreseurope.20351.3"
+    val page = "https://ore.eu/ore/article/view/1056/version/1810"
+    val pdf  = "https://ore.eu/ore/article/download/1056/3617"
+    val http = FakeUpstream {
+      case u if u.startsWith(openalexOf(c, doi))                         => bytes(fixture("openalex_10_12688_openreseurope.20351.3.json"))
+      case u if u == s"${c.doiHandles.url}/$doi?type=URL"                => bytes(fixture("doi_handle_10_12688_openreseurope.20351.3.json"))
+      case `page`                                                         => bytes(fixture("ore_article.html"))
+      case `pdf`                                                          => Right(Pdf)
+    }
+    val got = fetch(c, http, doi).fold(fail2(http), identity)
+    assertEquals((got.source, got.url), ("publisher", Some(pdf)))
+    // the viewer page (article/view/1056/3617) is never asked: the galley's download is
+    assert(!http.asked.contains("https://ore.eu/ore/article/view/1056/3617"), http.asked.mkString("\n"))
+
+  test("ejournals.eu: an open journal location's article page gives its citation_pdf_url"):
+    val c = cfg
+    val doi  = "10.4467/20844077sr.17.018.8459"
+    val page = "https://ejournals.eu/czasopismo/studia-religiologica/artykul/descents-to-the-underworld-from-gilgamesh-to-christian-late-antiquity"
+    val pdf  = "https://ejournals.eu/pliki_artykulu_czasopisma/pelny_tekst/172279c9-e459-4289-b666-c8a869752e67/pobierz"
+    val http = FakeUpstream {
+      case u if u.startsWith(openalexOf(c, doi))                         => bytes(fixture("openalex_10_4467_20844077sr.17.018.8459.json"))
+      case u if u == s"${c.doiHandles.url}/$doi?type=URL"                => bytes(fixture("doi_handle_10_4467_20844077sr.17.018.8459.json"))
+      case `page`                                                         => bytes(fixture("ejournals_article.html"))
+      case `pdf`                                                          => Right(Pdf)
+      // the index's old pdf_url no longer answers here (the direct step's miss)
+    }
+    val got = fetch(c, http, doi).fold(fail2(http), identity)
+    assertEquals((got.source, got.url), ("publisher", Some(pdf)))
+
+  test("an OA publisher's location is read only when open, and a host off the list never, open or not"):
+    val c = cfg
+    val doi = "10.9999/zz-oa-pub"
+    def run(isOa: Boolean, landing: String) =
+      val work = s"""{"id":"https://openalex.org/W2","doi":"https://doi.org/$doi","locations":[
+        {"is_oa":$isOa,"landing_page_url":"$landing","pdf_url":null,"source":{"type":"journal"}}]}"""
+      val http = FakeUpstream {
+        case u if u.startsWith(openalexOf(c, doi)) => bytes(work)
+        case u if u.startsWith("https://ejournals.eu/") || u.startsWith("https://brill.com/") =>
+          bytes(fixture("ejournals_article.html"))
+      }
+      (fetch(c, http, doi), http.asked)
+    val (closed, askedClosed) = run(isOa = false, "https://ejournals.eu/czasopismo/x/artykul/y")
+    assert(closed.isLeft && !askedClosed.exists(_.startsWith("https://ejournals.eu/")), askedClosed.mkString("\n"))
+    val (offList, askedOff) = run(isOa = true, "https://brill.com/view/journals/x/1/1/article-p1_1.xml")
+    assert(offList.isLeft && !askedOff.exists(_.startsWith("https://brill.com/")), askedOff.mkString("\n"))
+    // and a DOI-only open location whose handle points off the list is not followed
+    val handleOff = FakeUpstream {
+      case u if u.startsWith(openalexOf(c, doi)) => bytes(
+        s"""{"id":"https://openalex.org/W2","locations":[{"is_oa":true,"landing_page_url":"https://doi.org/$doi","pdf_url":null,"source":{"type":"journal"}}]}""")
+      case u if u.startsWith(c.doiHandles.url) =>
+        bytes(s"""{"responseCode":1,"values":[{"type":"URL","data":{"value":"https://www.mdpi.com/2077-1444/10/4/258"}}]}""")
+    }
+    assert(fetch(c, handleOff, doi).isLeft)
+    assert(!handleOff.asked.exists(_.contains("mdpi.com")), handleOff.asked.mkString("\n"))
+
   test("bot protection is no copy: a challenged page is given up, nothing behind it is tried"):
     val c = cfg
     val page = "https://www.repository.cam.ac.uk/handle/1810/265228"

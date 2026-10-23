@@ -39,6 +39,9 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
     lazy val openalex: Option[Json] = openalexClient().raw(doi).toOption
     /** Where DataCite says the DOI resolves — `None` for a DOI it does not register (a Crossref one). */
     lazy val datacite: Option[String] = dataciteUrl(doi)
+    /** Where the DOI handle API says it resolves (any registration agency) — asked only for an open
+      * location on an OA publisher (#2550). */
+    lazy val handle: Option[String] = handleUrl(doi)
 
   private def records(ctx: FetchContext, doi: String): OaRecords =
     ctx.memo(s"oa:records:$doi")(OaRecords(doi))
@@ -85,6 +88,12 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
 
   // ── repository landing pages (#1580) ────────────────────────────────────────────────────────
 
+  private def handleUrl(doi: String): Option[String] =
+    http().json(Url(cfg.doiHandles.url, s"/$doi", "type" -> "URL")) match
+      case Right(j) => RepositoryLanding.handleUrl(j)
+      case Left(e) =>
+        scribe.info(s"acquire: doi handles: no URL for $doi ($e)"); None
+
   private def dataciteUrl(doi: String): Option[String] =
     http().json(Url(cfg.datacite.url, s"/dois/$doi")) match
       case Right(j) => RepositoryLanding.dataciteUrl(j)
@@ -95,7 +104,9 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
     * Zenodo record of a Zenodo DOI, the OA indexes' repository and landing locations, then the page a
     * DataCite DOI resolves to. A `doi.org` link is never followed blind (it may land on a publisher):
     * a Zenodo DOI goes to Zenodo's API, any other is replaced by where DataCite says it resolves, and
-    * a DOI DataCite does not know is skipped. `unpaywall` is Unpaywall's record (`None` when its plugin
+    * a DOI DataCite does not know is skipped — unless the location is OPEN and the DOI handle API says it
+    * resolves to an open-access publisher's page (`oa-publisher-hosts`, #2550), which is read like a
+    * repository's. `unpaywall` is Unpaywall's record (`None` when its plugin
     * is off); `openalex` says whether OpenAlex's record may be read (its plugin on). */
   private def landingPdf(r: OaRecords, unpaywall: => Option[Json], openalex: Boolean): Option[FetchedFile] =
     if !cfg.landing.enabled then None
@@ -111,8 +122,11 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
         if !isDoi || RepositoryLanding.zenodoRecordId(c.url).isDefined then LazyList(c)
         else
           val d = c.url.replaceFirst("(?i)^https?://(dx\\.)?doi\\.org/", "")
-          LazyList.from((if d.equalsIgnoreCase(r.doi) then r.datacite else dataciteUrl(d))
-            .map(RepositoryLanding.Candidate(_, c.repository, c.publisher)))
+          val own = d.equalsIgnoreCase(r.doi)
+          def viaHandle = Option.when(c.open)(if own then r.handle else handleUrl(d)).flatten
+            .filter(u => RepositoryLanding.host(u).exists(rules.oaPublisher))
+          LazyList.from((if own then r.datacite else dataciteUrl(d)).orElse(viaHandle)
+            .map(RepositoryLanding.Candidate(_, c.repository, c.publisher, c.open)))
       // the DOI's own DataCite landing page last, unless a location already named it
       val pages = (LazyList.from(indexed).flatMap(viaDoi) ++
         LazyList(()).flatMap(_ => LazyList.from(r.datacite.map(RepositoryLanding.Candidate(_, false)))))
@@ -124,34 +138,41 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
         .take(math.max(0, cfg.landing.maxPages))
       pages.map(resolvePage(_, rules)).collectFirst { case Some(f) => f }
 
-  /** An OA index calls it a publisher's location, or its host is denied (`acquire.landing.deny-*`). */
+  /** An OA index calls it a publisher's location, or its host is denied (`acquire.landing.deny-*`) —
+    * and it is not an open-access publisher's open location (`oa-publisher-hosts`, #2550). */
   private def publisherPage(c: RepositoryLanding.Candidate, rules: RepositoryLanding.Rules): Boolean =
-    val no = c.publisher || RepositoryLanding.host(c.url).exists(rules.denied)
+    val no = !RepositoryLanding.oaPublisherPage(c, rules) &&
+      (c.publisher || RepositoryLanding.host(c.url).exists(rules.denied))
     if no then scribe.info(s"acquire: landing: ${c.url} is a publisher's page — not read")
     no
 
   /** One landing page, one step: a Zenodo record by its API; anything else is read, and a repository's
-    * page gives its `citation_pdf_url`s (a page that turns out to be the PDF is taken as it is). */
+    * page gives its `citation_pdf_url`s (a page that turns out to be the PDF is taken as it is); an
+    * open-access publisher's open page its `citation_pdf_url`s and OJS PDF galleys (provenance
+    * `publisher`). */
   private def resolvePage(c: RepositoryLanding.Candidate, rules: RepositoryLanding.Rules): Option[FetchedFile] =
     RepositoryLanding.zenodoRecordId(c.url) match
       case Some(id) => zenodo(id)
       case None if publisherPage(c, rules) => None
       case None =>
+        val oaPub  = RepositoryLanding.oaPublisherPage(c, rules)
+        val source = if oaPub then "publisher" else "repository"
         http().bytes(c.url) match
           case Left(e) =>
             scribe.info(s"acquire: landing: ${c.url} failed ($e)"); None
           case Right(b) if com.histmersion.server.acquire.FetchChain.looksLikePdf(b) =>
-            Some(FetchedFile("repository", Some(c.url), b, "pdf"))
+            Some(FetchedFile(source, Some(c.url), b, "pdf"))
           case Right(b) if !RepositoryLanding.looksLikeHtml(b) =>
             scribe.info(s"acquire: landing: ${c.url} is neither a PDF nor a page — skipping"); None
           case Right(b) =>
             val html = new String(b, "UTF-8")
-            val pdfs = RepositoryLanding.pdfsOf(c.url, c.repository, html, rules)
+            val pdfs = RepositoryLanding.pdfsOf(c.url, c.repository, html, rules, oaPub)
             if pdfs.isEmpty then
-              val why = if RepositoryLanding.isRepository(c.url, c.repository, html, rules) then "names no citation_pdf_url"
+              val why = if oaPub then "names no PDF on its own hosts"
+                        else if RepositoryLanding.isRepository(c.url, c.repository, html, rules) then "names no citation_pdf_url"
                         else "is not a repository's page"
               scribe.info(s"acquire: landing: ${c.url} $why — skipping")
-            pdfs.iterator.map(u => tryUrl(http(), "repository", u)).collectFirst { case Some(f) => f }
+            pdfs.iterator.map(u => tryUrl(http(), source, u)).collectFirst { case Some(f) => f }
 
   /** An open Zenodo record's PDF, by its REST API, checked against the record's MD5. */
   private def zenodo(id: String): Option[FetchedFile] =

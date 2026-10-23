@@ -76,12 +76,52 @@ class RepositoryLandingSuite extends munit.FunSuite:
       Candidate("https://doi.org/10.5281/zenodo.3695551", true), Candidate("https://publisher.example.com/a", false, publisher = true)))
     val u = parse("""{"best_oa_location":{"url_for_pdf":null,"url_for_landing_page":"https://eprints.x.ac.uk/1/","host_type":"repository"},
       "oa_locations":[{"url_for_pdf":"https://eprints.x.ac.uk/1/1/a.pdf","url_for_landing_page":"https://eprints.x.ac.uk/1/","host_type":"repository"}]}""").toOption.get
-    assertEquals(unpaywallCandidates(u), List(Candidate("https://eprints.x.ac.uk/1/", true)))
+    assertEquals(unpaywallCandidates(u), List(Candidate("https://eprints.x.ac.uk/1/", true, open = true)))
     val p = parse("""{"oa_locations":[{"url_for_landing_page":"https://pub.example.com/a","host_type":"publisher"}]}""").toOption.get
-    assertEquals(unpaywallCandidates(p), List(Candidate("https://pub.example.com/a", false, publisher = true)))
+    assertEquals(unpaywallCandidates(p), List(Candidate("https://pub.example.com/a", false, publisher = true, open = true)))
     // one index's "repository" outweighs another's "publisher" for the same URL
     assertEquals(distinct(List(Candidate("https://x.org/1", false, true), Candidate("https://x.org/1", true))),
       List(Candidate("https://x.org/1", true, false)))
+
+  test("open locations (#2550): OpenAlex's is_oa, every Unpaywall oa_location; any index's word makes it open"):
+    val j = parse("""{"locations":[{"is_oa":true,"landing_page_url":"https://ejournals.eu/a","source":{"type":"journal"}},
+      {"is_oa":false,"landing_page_url":"https://ejournals.eu/b","source":{"type":"journal"}},
+      {"landing_page_url":"https://ejournals.eu/c","source":{"type":"journal"}}]}""").toOption.get
+    assertEquals(openalexCandidates(j).map(c => c.url.takeRight(1) -> c.open), List("a" -> true, "b" -> false, "c" -> false))
+    assertEquals(distinct(List(Candidate("https://x.org/1", false, true), Candidate("https://x.org/1", false, true, open = true))),
+      List(Candidate("https://x.org/1", false, true, open = true)))
+
+  test("an OA publisher's page: read only when open and on the list; its own PDFs only"):
+    assert(rules.oaPublisher("ejournals.eu") && rules.oaPublisher("www.ejournals.eu") && rules.oaPublisher("ore.eu"))
+    assert(!rules.oaPublisher("brill.com") && !rules.oaPublisher("mdpi.com") && !rules.oaPublisher("ore.eu.example.com"))
+    assert(oaPublisherPage(Candidate("https://ejournals.eu/a", false, publisher = true, open = true), rules))
+    assert(!oaPublisherPage(Candidate("https://ejournals.eu/a", false, publisher = true), rules), "not said to be open")
+    assert(!oaPublisherPage(Candidate("https://brill.com/a", false, publisher = true, open = true), rules), "not on the list")
+    val page = "https://ejournals.eu/czasopismo/x/artykul/y"
+    val html = """<meta name="citation_pdf_url" content="https://ejournals.eu/pliki_artykulu_czasopisma/pelny_tekst/u/pobierz">
+      |<meta name="citation_pdf_url" content="https://cdn.elsewhere.example/u.pdf">""".stripMargin
+    assertEquals(pdfsOf(page, false, html, rules, oaPublisher = true),
+      List("https://ejournals.eu/pliki_artykulu_czasopisma/pelny_tekst/u/pobierz"), "another host's PDF is not taken")
+    assertEquals(pdfsOf(page, false, html, rules), Nil, "without the OA publisher's word it is no repository")
+
+  test("OJS PDF galleys: the classic galley link and an OJS 3.6 theme's escaped JSON; a viewer link becomes its download"):
+    val classic = """<ul class="galleys_links"><li><a class="obj_galley_link pdf" href="https://j.example.org/index.php/j/article/view/12/34">PDF</a></li>
+      |<li><a class="obj_galley_link file" href="https://j.example.org/index.php/j/article/view/12/35">XML</a></li></ul>""".stripMargin
+    assertEquals(galleyPdfUrls(classic, "https://j.example.org/index.php/j/article/view/12"),
+      List("https://j.example.org/index.php/j/article/view/12/34"))
+    val ore = """<pkp-dropdown-menu :items="JSON.parse('[{\u0022name\u0022:\u0022galley-3617\u0022,\u0022label\u0022:\u0022PDF\u0022,\u0022href\u0022:\u0022https:\\\/\\\/ore.eu\\\/ore\\\/article\\\/view\\\/1056\\\/3617\u0022},{\u0022name\u0022:\u0022galley-3618\u0022,\u0022label\u0022:\u0022HTML\u0022,\u0022href\u0022:\u0022https:\\\/\\\/ore.eu\\\/ore\\\/article\\\/view\\\/1056\\\/3618\u0022}]')">"""
+    assertEquals(galleyPdfUrls(ore, "https://ore.eu/ore/article/view/1056/version/1810"), List("https://ore.eu/ore/article/view/1056/3617"))
+    assertEquals(ojsDownload("https://ore.eu/ore/article/view/1056/3617"), "https://ore.eu/ore/article/download/1056/3617")
+    assertEquals(ojsDownload("https://ore.eu/ore/article/view/1056/version/1810"), "https://ore.eu/ore/article/view/1056/version/1810",
+      "an article's own page is not a galley")
+    assertEquals(pdfsOf("https://ore.eu/ore/article/view/1056/version/1810", false, ore, rules, oaPublisher = true),
+      List("https://ore.eu/ore/article/download/1056/3617"))
+
+  test("the DOI handle API: the first URL value"):
+    assertEquals(handleUrl(parse("""{"responseCode":1,"values":[{"type":"HS_ADMIN","data":{}},
+      {"type":"URL","data":{"format":"string","value":"https://ore.eu/ore/article/view/1056/version/1810"}}]}""").toOption.get),
+      Some("https://ore.eu/ore/article/view/1056/version/1810"))
+    assertEquals(handleUrl(parse("""{"responseCode":100,"values":[]}""").toOption.get), None)
 
   test("Zenodo: a record id from a record URL or a Zenodo DOI; an open record's PDFs with their MD5"):
     assertEquals(zenodoRecordId("https://zenodo.org/record/3695551"), Some("3695551"))
