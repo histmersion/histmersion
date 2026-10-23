@@ -1,7 +1,8 @@
 # Native image
 
-Both binaries are GraalVM `native-image` builds (~40–60 s each; the CLI binary is 50 MB, the server
-binary 78 MB). The lessons that keep them working — the full list is in
+Both binaries are GraalVM `native-image` builds (~50 s for the CLI, ~100 s for the server, peaking
+near 12 GB; the CLI binary is 87 MB, the server binary 210 MB — measured in
+{{ repo_file("docs/research-build-speed.md") }}). The lessons that keep them working — the full list is in
 [`AGENTS.md`](https://github.com/histmersion/histmersion/blob/master/AGENTS.md):
 
 - **The JDK is pinned to GraalVM CE 25.0.1** (`.sdkmanrc` and CI together; `scripts/bundle/server.sh`

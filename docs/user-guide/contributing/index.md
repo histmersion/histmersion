@@ -36,7 +36,9 @@ bundle's Postgres and converter. **Never point a development server or a test at
 | recipe | runs | needs |
 |---|---|---|
 | `just test` | the pure suites (`sbt test`) | nothing |
-| `just test-it` | **every** suite; the database-backed ones on a throwaway Postgres (`just test-db`) that is removed afterwards | the pixi Postgres |
+| `just test-it` | **every** suite; the database-backed ones on a throwaway Postgres (`just test-db`) that is removed afterwards — the gate before a merge | the pixi Postgres |
+| `just test-quick [module…]` | while iterating: the modules changed since `master` (or the ones named) and every module that depends on them; the DB suites on a throwaway Postgres when db or server is among them | the pixi Postgres, when db or server is tested |
+| `just cache-check` | that two checkouts never replay each other's sbt cache entries (two temporary worktrees) | ~2 GB, ~5 minutes |
 | `just test-scripts` | the scripts' own tests: the LaunchAgent environment merge, the user config, the relink and kit scripts, provenance, the gazetteer and places builders | Python 3, bash |
 | `scripts/bundle/smoke.sh dist/histmersion` | a built bundle end to end, in isolation: first start, health, the CLI, a real offline OCR, a clean stop, and a real relink with the test plugin | a built bundle; ~16 GB of memory for the relink |
 | `npm --prefix modules/web run test:browser` | the web page in Chromium: interactions, speed and memory budgets, a soak test | Node, Playwright, a test server — see `modules/web/test/README.md` |
@@ -46,8 +48,17 @@ Rules:
 - **The database suites run only against a database named `*_test`.** They write fixtures; the
   helper refuses any other name. `just test-db` starts one on port 55432; pick another with
   `just test_db_port=55561 test-it` when that port is taken.
-- **sbt 2 caches test results.** Use `sbt "testOnly *"` (what `test-it` runs) to be sure tests ran;
-  for one module, `sbt -batch "set Global / cacheStores := Seq.empty; cli/clean; cli/testOnly *"`.
+- **sbt 2 caches test results.** Use `sbt "testOnly *"` (what `test-it` and `test-quick` run) to be
+  sure tests ran; for one module, `sbt --server -batch "cli/testOnly *"`. A result cached without the
+  test database is never replayed as a result with it (the cache key carries whether
+  `HISTMERSION_TEST_DB_URL` was set).
+- **Each checkout has its own sbt cache**, in `target/sbt-cache` (build.sbt; the machine-wide
+  `~/Library/Caches/sbt/v2` is not used). Worktrees are safe side by side; there is no need to turn the
+  cache off (`cacheStores := Seq.empty` only forces full recompiles). `rm -rf target` empties it.
+- **The DB-backed suites run in parallel forked groups** — db in 2, server in 5 JVMs, each on a database
+  of its own (`histmersion_server_2_test`, created beside `histmersion_test`), at most
+  `HISTMERSION_TEST_FORKS` (default 6) at once. Fewer for a machine short of memory:
+  `HISTMERSION_TEST_FORKS=2 just test-it`; `HISTMERSION_TEST_GROUPS_SERVER=…` / `…_DB` change the split.
 - **The sbt thin client drops your environment.** Use `sbt --server -batch …` (the recipes do).
 - Every pure function gets a unit test; DB and HTTP suites skip with a visible reason when
   `HISTMERSION_TEST_DB_URL` is unset.
@@ -69,7 +80,7 @@ skills exists.
 ## Before you call it done
 
 ```bash
-sbt "testOnly *"                                   # not the cached result
+just test-it                                       # every suite, not the cached result
 sbt cli/nativeImage server/nativeImage             # both binaries still build
 just bundle && scripts/bundle/smoke.sh dist/histmersion
 just docs-build                                    # the documentation still builds, links checked
