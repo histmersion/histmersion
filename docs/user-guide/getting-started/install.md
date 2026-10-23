@@ -5,7 +5,7 @@ the `histmersion` command, its own database (PostgreSQL 18 with PostGIS 3.6, for
 text-recognition program. Nothing is installed system-wide, nothing runs in a virtual machine, and
 you need no administrator rights.
 
-It runs on **macOS on Apple Silicon** and **Linux (x64 or arm64)**.
+It runs on **macOS 13.3 (Ventura) or later on Apple Silicon** and **Linux (x64 or arm64)**: the bundled PostgreSQL 18.6 is built for macOS 13.3.
 
 ## What goes where
 
