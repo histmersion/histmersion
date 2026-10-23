@@ -63,6 +63,43 @@ async function settledAt(page, selector, lat, lon) {
   }, [selector, lat, lon]);
 }
 
+// A marker stands still: the same element at the same place for `ms`, the map not moving and the list not
+// loading. Hovering before that races the first draw (#2705): the hover card waits 180 ms of rest
+// (HoverIntent), and a marker that moves out from under the pointer in that time (a late camera or layout
+// change while a cold server answers the first requests — the base map's style, the list) or is drawn
+// anew (the events feed is asked again for each view) drops its pending card, and a pointer that does not
+// move sends no second `mouseover`, so the card never comes.
+async function idleMarker(page, selector, ms = 400) {
+  await page.waitForFunction(([sel, ms]) => {
+    const el = document.querySelector(sel);
+    const S = (window.__idleMarker ??= {});
+    const r = el?.getBoundingClientRect();
+    const at = r ? `${Math.round(r.left)},${Math.round(r.top)}` : null;
+    const busy = !el || window.__testMap.isMoving() || !!document.querySelector('#count.is-loading');
+    if (busy || S.sel !== sel || S.el !== el || S.at !== at) {
+      Object.assign(S, { sel, el, at, since: performance.now() });
+      return false;
+    }
+    return performance.now() - S.since >= ms;
+  }, [selector, ms], { polling: 50 });
+}
+
+// Hover the marker `selector` once it stands still, until `card` shows (a marker re-drawn after the hover
+// takes its pending card with it: the pointer is moved off and back, at most three times).
+async function hoverForCard(page, selector, card) {
+  for (let attempt = 1; ; attempt++) {
+    await idleMarker(page, selector);
+    await page.locator(selector).hover();
+    try {
+      await page.locator(card).first().waitFor({ timeout: 5000 });
+      return;
+    } catch (e) {
+      if (attempt >= 3) throw e;
+      await page.mouse.move(5, 5);
+    }
+  }
+}
+
 async function synchronizedSize(page) {
   await page.waitForFunction(() => {
     const element = document.getElementById('map');
@@ -587,13 +624,11 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
     assert.notEqual(styles[0].bg, styles[1].bg);
     assert.ok(asked.some(u => u.searchParams.get('context') === 'true' && u.searchParams.get('area')), 'the feed is narrowed to the view');
     // the attested event's card lists its source (a source link) and the article citing it
-    await battle.hover();
-    await page.waitForSelector('.cite-tooltip .section-sources a[data-ck="zz_src2020"]');
+    await hoverForCard(page, '.hd-ev[data-id="zz_battle"]', '.cite-tooltip .section-sources a[data-ck="zz_src2020"]');
     assert.match(await page.locator('.cite-tooltip').innerText(), /Zz article/);
     // the catalogue event's card names the catalogue and its lead, and is marked as such
     await page.mouse.move(5, 5);
-    await erup.hover();
-    await page.waitForSelector('.cite-tooltip .section-leads');
+    await hoverForCard(page, '.hd-ev[data-id="zz_eruption"]', '.cite-tooltip .section-leads');
     const card = await page.locator('.cite-tooltip').innerText();
     assert.match(card, /catalogue only/);
     assert.match(card, /No source in the corpus discusses this VEI 6 eruption/);
@@ -651,8 +686,7 @@ test('P0: approximate events are faded, imprecise ones are not drawn, the card s
     }));
     assert.ok(look[1].opacity < look[0].opacity, `faded: ${JSON.stringify(look)}`);
     assert.equal(look[1].border, 'dotted');
-    await approx.hover();
-    await page.waitForSelector('.cite-tooltip');
+    await hoverForCard(page, '.hd-ev[data-id="zz_approx"]', '.cite-tooltip .cite-tip-title');
     const card = await page.locator('.cite-tooltip').innerText();
     assert.match(card, /250 CE ± 2500 \(tephrochronology\)/);
     assert.match(card, /imprecise date — listed, not drawn on the map at a year/);

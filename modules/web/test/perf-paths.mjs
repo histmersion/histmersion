@@ -187,27 +187,49 @@ export async function mapZoom(page) {
   });
 }
 
+/** The middle value of `xs` (the upper middle of an even count). */
+export const median = xs => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+
+/** Measurements of the same gesture, figure by figure: each numeric figure's median (the first run's
+  * value for anything else). */
+export const medianOf = runs => Object.fromEntries(Object.keys(runs[0]).map(k =>
+  [k, runs.every(r => typeof r[k] === 'number') ? median(runs.map(r => r[k])) : runs[0][k]]));
+
 /** The events layer at a whole-world view: from the reload to every marker drawn, then a pan, then
-  * wheel zooms from the same view. */
-export async function eventLayer(page, baseURL, from, to, { atLeast = 1 } = {}) {
+  * wheel zooms from the same view. With `runs` > 1 the draw, the pan and the zooms are each measured
+  * that many times (a reload per draw) and every figure is the MEDIAN of its runs (#2130): one run
+  * follows whatever else the machine is doing (a build, another agent's tests) — a draw of 2 540 ms
+  * against 2 500, a zoom dropping 8.1 % of frames against 8 — and one slow run is noise, not a
+  * regression; a regression slows every run. `drawnRuns` keeps each draw's time for the report. */
+export async function eventLayer(page, baseURL, from, to, { atLeast = 1, runs = 1 } = {}) {
   await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
   await page.goto(new URL(`/#from=${from}&to=${to}`, baseURL).href);
-  await page.reload();
-  await ready(page);
-  const t0 = await page.evaluate(() => performance.now());
-  await page.evaluate(() => window.__testMap.setView([30, 20], 3, { animate: false }));
-  await quiet(page);
-  const drawn = await valueOf(page, min => {
-    const n = window.__testMap.points();
-    const P = window.__perf;
-    if (n >= min && n === P._lastE) { P._sameE = (P._sameE || 0) + 1; } else { P._sameE = 0; P._lastE = n; P._atE = performance.now(); }
-    return P._sameE >= 10 && { n, at: P._atE };
-  }, atLeast, { polling: 50 });
-  const lt = await page.evaluate(() => window.__perf.longTasks);
-  const pan = await mapPan(page);
-  await page.evaluate(() => window.__testMap.setView([30, 20], 3, { animate: false }));
-  const zoom = await mapZoom(page);
-  return { markers: drawn.n, drawnMs: Math.round(drawn.at - t0), longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))), pan, zoom };
+  const draws = [];
+  for (let i = 0; i < runs; i++) {
+    await page.reload();
+    await ready(page);
+    const t0 = await page.evaluate(() => performance.now());
+    await page.evaluate(() => window.__testMap.setView([30, 20], 3, { animate: false }));
+    await quiet(page);
+    const drawn = await valueOf(page, min => {
+      const n = window.__testMap.points();
+      const P = window.__perf;
+      if (n >= min && n === P._lastE) { P._sameE = (P._sameE || 0) + 1; } else { P._sameE = 0; P._lastE = n; P._atE = performance.now(); }
+      return P._sameE >= 10 && { n, at: P._atE };
+    }, atLeast, { polling: 50 });
+    const lt = await page.evaluate(() => window.__perf.longTasks);
+    draws.push({ n: drawn.n, ms: Math.round(drawn.at - t0), longTaskMax: Math.round(Math.max(0, ...lt.map(t => t.duration))) });
+  }
+  const pans = [], zooms = [];
+  for (let i = 0; i < runs; i++) {
+    await page.evaluate(() => window.__testMap.setView([30, 20], 3, { animate: false }));
+    pans.push(await mapPan(page));
+    await page.evaluate(() => window.__testMap.setView([30, 20], 3, { animate: false }));
+    zooms.push(await mapZoom(page));
+  }
+  const pan = medianOf(pans), zoom = medianOf(zooms);
+  return { markers: Math.min(...draws.map(d => d.n)), drawnMs: median(draws.map(d => d.ms)),
+    drawnRuns: draws.map(d => d.ms), longTaskMax: median(draws.map(d => d.longTaskMax)), pan, zoom };
 }
 
 /** A vector base map (Readable or Physical) over the Aegean (the fixture extract) with the full overlay

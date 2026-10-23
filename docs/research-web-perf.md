@@ -118,6 +118,10 @@ bundle, fixtures), with the budget after the slash:
 | events layer (2 400 + 500 findings) | drawn 581 / 2 500 · longest task 59 / 200 · pan input p95 32–124 / 300 · pan longest task 54–87 / 250 · dropped 6 % / 25 · heap 46 MB / 75 — tightened by #1647, below |
 | soak (100 rounds, 132 s) | heap +0.9 MB / 6 · DOM nodes +0 / 150 · listeners +0 / 20 · Leaflet layers +0 / 0 · every cache inside its ceiling |
 
+The events layer's figures are the median of three runs of each step — the draw (a reload each), the
+pan, the zooms (#2130, 2026-10-23): single runs under load had drawn in 2 540 ms against 2 500 and
+dropped 8.1 % of a zoom's frames against 8, while a regression slows every run.
+
 Two more tests: every cache `histmersionDiagnostics()` reports has a ceiling and is inside it; a
 closed Jobs window makes no further request, and a window's page followed to itself six times keeps
 one set of handlers and fetches once per click (this one fails on master, finding 1). The range test
