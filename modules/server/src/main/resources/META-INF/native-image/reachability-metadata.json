@@ -985,6 +985,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy44"
+        },
+        {
+          "name": "derived$ConfigReader$lzy47"
         }
       ]
     },
@@ -1514,6 +1517,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy21"
+        },
+        {
+          "name": "derived$ConfigReader$lzy22"
         }
       ]
     },
@@ -1650,10 +1656,43 @@
       ]
     },
     {
+      "type": "com.histmersion.core.BackupsUsage$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_BackupsUsage$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BasemapBathymetryConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy28"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.BasemapConfig$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy22"
+        },
+        {
+          "name": "derived$ConfigReader$lzy23"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BasemapFocus$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_BasemapFocus$lzy1"
         }
       ]
     },
@@ -1662,6 +1701,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy25"
+        },
+        {
+          "name": "derived$ConfigReader$lzy27"
         }
       ]
     },
@@ -1677,10 +1719,32 @@
       ]
     },
     {
+      "type": "com.histmersion.core.BasemapOnDemand$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_BasemapOnDemand$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BasemapOnDemandConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy26"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.BasemapRemoved$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
         },
         {
           "name": "given_Schema_BasemapRemoved$lzy1"
@@ -1694,7 +1758,21 @@
           "name": "derived$KindlingsCodecAsObject$lzy2"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
           "name": "given_Schema_BasemapStatus$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BasemapStyleState$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_BasemapStyleState$lzy1"
         }
       ]
     },
@@ -1703,6 +1781,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy24"
+        },
+        {
+          "name": "derived$ConfigReader$lzy25"
         }
       ]
     },
@@ -1711,6 +1792,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy23"
+        },
+        {
+          "name": "derived$ConfigReader$lzy24"
         }
       ]
     },
@@ -2041,6 +2125,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy15"
+        },
+        {
+          "name": "derived$ConfigReader$lzy16"
         }
       ]
     },
@@ -2049,6 +2136,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy16"
+        },
+        {
+          "name": "derived$ConfigReader$lzy17"
         }
       ]
     },
@@ -2209,6 +2299,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy26"
+        },
+        {
+          "name": "derived$ConfigReader$lzy29"
         }
       ]
     },
@@ -3167,6 +3260,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy37"
+        },
+        {
+          "name": "derived$ConfigReader$lzy40"
         }
       ]
     },
@@ -3193,6 +3289,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy38"
+        },
+        {
+          "name": "derived$ConfigReader$lzy41"
         }
       ]
     },
@@ -3219,6 +3318,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy42"
+        },
+        {
+          "name": "derived$ConfigReader$lzy45"
         }
       ]
     },
@@ -3245,6 +3347,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy41"
+        },
+        {
+          "name": "derived$ConfigReader$lzy44"
         }
       ]
     },
@@ -3271,6 +3376,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy39"
+        },
+        {
+          "name": "derived$ConfigReader$lzy42"
         }
       ]
     },
@@ -3308,6 +3416,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy40"
+        },
+        {
+          "name": "derived$ConfigReader$lzy43"
         }
       ]
     },
@@ -3603,6 +3714,20 @@
         },
         {
           "name": "given_Schema_GeoHitPage$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.GeoPick$",
+      "fields": [
+        {
+          "name": "given_Decoder_GeoPick$lzy1"
+        },
+        {
+          "name": "given_Encoder_GeoPick$lzy1"
+        },
+        {
+          "name": "given_Schema_GeoPick$lzy1"
         }
       ]
     },
@@ -3970,6 +4095,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy20"
+        },
+        {
+          "name": "derived$ConfigReader$lzy21"
         }
       ]
     },
@@ -4229,6 +4357,9 @@
           "name": "derived$ConfigReader$lzy11"
         },
         {
+          "name": "derived$ConfigReader$lzy12"
+        },
+        {
           "name": "derived$ConfigReader$lzy6"
         },
         {
@@ -4300,6 +4431,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy14"
+        },
+        {
+          "name": "derived$ConfigReader$lzy15"
         },
         {
           "name": "derived$ConfigReader$lzy9"
@@ -4758,6 +4892,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy33"
+        },
+        {
+          "name": "derived$ConfigReader$lzy36"
         }
       ]
     },
@@ -4781,6 +4918,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy31"
+        },
+        {
+          "name": "derived$ConfigReader$lzy34"
         }
       ]
     },
@@ -4804,6 +4944,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy29"
+        },
+        {
+          "name": "derived$ConfigReader$lzy32"
         }
       ]
     },
@@ -4841,6 +4984,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy35"
+        },
+        {
+          "name": "derived$ConfigReader$lzy38"
         }
       ]
     },
@@ -4895,6 +5041,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy32"
+        },
+        {
+          "name": "derived$ConfigReader$lzy35"
         }
       ]
     },
@@ -4955,6 +5104,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy36"
+        },
+        {
+          "name": "derived$ConfigReader$lzy39"
         }
       ]
     },
@@ -5025,6 +5177,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy34"
+        },
+        {
+          "name": "derived$ConfigReader$lzy37"
         }
       ]
     },
@@ -5112,6 +5267,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy30"
+        },
+        {
+          "name": "derived$ConfigReader$lzy33"
         }
       ]
     },
@@ -5151,6 +5309,9 @@
     {
       "type": "com.histmersion.core.MergeConfig$",
       "fields": [
+        {
+          "name": "derived$ConfigReader$lzy10"
+        },
         {
           "name": "derived$ConfigReader$lzy8"
         },
@@ -5347,6 +5508,9 @@
           "name": "derived$ConfigReader$lzy10"
         },
         {
+          "name": "derived$ConfigReader$lzy11"
+        },
+        {
           "name": "derived$ConfigReader$lzy9"
         }
       ]
@@ -5536,6 +5700,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy12"
+        },
+        {
+          "name": "derived$ConfigReader$lzy13"
         }
       ]
     },
@@ -5631,6 +5798,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy19"
+        },
+        {
+          "name": "derived$ConfigReader$lzy20"
         }
       ]
     },
@@ -5654,6 +5824,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy28"
+        },
+        {
+          "name": "derived$ConfigReader$lzy31"
         }
       ]
     },
@@ -5913,6 +6086,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy18"
+        },
+        {
+          "name": "derived$ConfigReader$lzy19"
         }
       ]
     },
@@ -6001,6 +6177,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy17"
+        },
+        {
+          "name": "derived$ConfigReader$lzy18"
         }
       ]
     },
@@ -6370,6 +6549,9 @@
           "name": "derived$ConfigReader$lzy13"
         },
         {
+          "name": "derived$ConfigReader$lzy14"
+        },
+        {
           "name": "derived$ConfigReader$lzy8"
         },
         {
@@ -6507,17 +6689,6 @@
         },
         {
           "name": "given_Schema_ReindexResult$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.core.ReliefStyle$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy5"
-        },
-        {
-          "name": "given_Schema_ReliefStyle$lzy1"
         }
       ]
     },
@@ -7003,6 +7174,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy27"
+        },
+        {
+          "name": "derived$ConfigReader$lzy30"
         }
       ]
     },
@@ -7142,6 +7316,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy43"
+        },
+        {
+          "name": "derived$ConfigReader$lzy46"
         }
       ]
     },
@@ -7340,57 +7517,54 @@
       ]
     },
     {
-      "type": "com.histmersion.core.StyleFont$",
+      "type": "com.histmersion.core.StorageConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy9"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.StorageEntry$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_StorageEntry$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.StorageReport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_StorageReport$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.StorageVolume$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy3"
         },
         {
-          "name": "given_Schema_StyleFont$lzy1"
+          "name": "given_Schema_StorageVolume$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.core.StyleLayer$",
+      "type": "com.histmersion.core.TableSize$",
       "fields": [
         {
-          "name": "derived$KindlingsCodecAsObject$lzy4"
+          "name": "derived$KindlingsCodecAsObject$lzy2"
         },
         {
-          "name": "given_Schema_StyleLayer$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.core.TerrainStyle$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy6"
-        },
-        {
-          "name": "given_Schema_TerrainStyle$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.core.TerrainStyleCheck$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy8"
-        },
-        {
-          "name": "given_Schema_TerrainStyleCheck$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.core.TerrainStyles$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy7"
-        },
-        {
-          "name": "given_Schema_TerrainStyles$lzy1"
+          "name": "given_Schema_TableSize$lzy1"
         }
       ]
     },
@@ -7637,28 +7811,6 @@
       ]
     },
     {
-      "type": "com.histmersion.core.ZoomStop$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy1"
-        },
-        {
-          "name": "given_Schema_ZoomStop$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.core.ZoomValue$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy2"
-        },
-        {
-          "name": "given_Schema_ZoomValue$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.db.AcquireRepo$",
       "fields": [
         {
@@ -7683,6 +7835,9 @@
         },
         {
           "name": "given_DbCodec_MessageInfo$lzy1"
+        },
+        {
+          "name": "given_DbCodec_RunParams$lzy1"
         },
         {
           "name": "given_DbCodec_RunRow$lzy1"
@@ -7740,6 +7895,14 @@
         },
         {
           "name": "given_DbCodec_AssetInfoRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.db.AutopilotRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_Row$lzy1"
         }
       ]
     },
@@ -7866,10 +8029,16 @@
           "name": "given_DbCodec_ItemRow$lzy1"
         },
         {
+          "name": "given_DbCodec_Light$lzy1"
+        },
+        {
           "name": "given_DbCodec_ManagerEvent$lzy1"
         },
         {
           "name": "given_DbCodec_ManagerRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_SweepAcquireItem$lzy1"
         },
         {
           "name": "holdCodec$lzy1"
@@ -9361,12 +9530,15 @@
       ]
     },
     {
-      "type": "com.histmersion.server.basemap.BasemapStyles",
+      "type": "com.histmersion.server.basemap.TerrainOnDemand",
       "fields": [
         {
-          "name": "builtIn$lzy1"
+          "name": "gate$lzy1"
         }
       ]
+    },
+    {
+      "type": "com.histmersion.server.basemap.Vp8l$Group[]"
     },
     {
       "type": "com.histmersion.server.events.EventCatalogTools$EventCorrectionsInput$",
@@ -9778,6 +9950,12 @@
     },
     {
       "type": "com.zaxxer.hikari.util.ConcurrentBag$IConcurrentBagEntry[]"
+    },
+    {
+      "type": "int[]"
+    },
+    {
+      "type": "int[][]"
     },
     {
       "type": "io.circe.Decoder$",
@@ -12282,9 +12460,6 @@
       "glob": "agents/skills/update-topic/SKILL.md"
     },
     {
-      "glob": "basemap/styles.conf"
-    },
-    {
       "glob": "com/vladsch/flexmark/util/sequence/entities.properties"
     },
     {
@@ -12585,130 +12760,124 @@
       "glob": "web/style.css"
     },
     {
-      "glob": "web/vendor/leaflet.markercluster/LICENSE.txt"
+      "glob": "web/styles/physical.json"
     },
     {
-      "glob": "web/vendor/leaflet.markercluster/MarkerCluster.Default.css"
-    },
-    {
-      "glob": "web/vendor/leaflet.markercluster/MarkerCluster.css"
-    },
-    {
-      "glob": "web/vendor/leaflet.markercluster/leaflet.markercluster.js"
-    },
-    {
-      "glob": "web/vendor/leaflet/LICENSE.txt"
-    },
-    {
-      "glob": "web/vendor/leaflet/images/layers-2x.png"
-    },
-    {
-      "glob": "web/vendor/leaflet/images/layers.png"
-    },
-    {
-      "glob": "web/vendor/leaflet/images/marker-icon-2x.png"
-    },
-    {
-      "glob": "web/vendor/leaflet/images/marker-icon.png"
-    },
-    {
-      "glob": "web/vendor/leaflet/images/marker-shadow.png"
-    },
-    {
-      "glob": "web/vendor/leaflet/leaflet.css"
-    },
-    {
-      "glob": "web/vendor/leaflet/leaflet.js"
+      "glob": "web/styles/readable.json"
     },
     {
       "glob": "web/vendor/lucide/LICENSE.txt"
     },
     {
-      "glob": "web/vendor/noto-fonts/OFL.txt"
+      "glob": "web/vendor/maplibre-contour/LICENSE.txt"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-fonts.css"
+      "glob": "web/vendor/maplibre-contour/maplibre-contour.js"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-naskh-arabic-arabic-400-normal.woff2"
+      "glob": "web/vendor/maplibre-gl/LICENSE.txt"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-armenian-armenian-400-normal.woff2"
+      "glob": "web/vendor/maplibre-gl/README.md"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-400-italic.woff2"
+      "glob": "web/vendor/maplibre-gl/maplibre-gl-shared.js"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-400-normal.woff2"
+      "glob": "web/vendor/maplibre-gl/maplibre-gl-worker.js"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-600-normal.woff2"
+      "glob": "web/vendor/maplibre-gl/maplibre-gl.css"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-ext-400-italic.woff2"
+      "glob": "web/vendor/maplibre-gl/maplibre-gl.js"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-ext-400-normal.woff2"
+      "glob": "web/vendor/noto-sans/OFL.txt"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-cyrillic-ext-600-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-arabic-arabic-400-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-georgian-georgian-400-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-armenian-armenian-400-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-greek-400-italic.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-cyrillic-400-italic.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-greek-400-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-cyrillic-400-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-greek-600-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-cyrillic-500-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-greek-ext-400-italic.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-cyrillic-600-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-greek-ext-400-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-cyrillic-ext-400-italic.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-greek-ext-600-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-cyrillic-ext-400-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-hebrew-hebrew-400-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-cyrillic-ext-500-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-latin-400-italic.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-cyrillic-ext-600-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-latin-400-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-georgian-georgian-400-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-latin-600-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-greek-400-italic.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-latin-ext-400-italic.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-greek-400-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-latin-ext-400-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-greek-500-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-latin-ext-600-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-greek-600-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-vietnamese-400-italic.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-greek-ext-400-italic.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-vietnamese-400-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-greek-ext-400-normal.woff2"
     },
     {
-      "glob": "web/vendor/noto-fonts/noto-serif-vietnamese-600-normal.woff2"
+      "glob": "web/vendor/noto-sans/noto-sans-greek-ext-500-normal.woff2"
     },
     {
-      "glob": "web/vendor/protomaps-leaflet/LICENSE.txt"
+      "glob": "web/vendor/noto-sans/noto-sans-greek-ext-600-normal.woff2"
     },
     {
-      "glob": "web/vendor/protomaps-leaflet/protomaps-leaflet.js"
+      "glob": "web/vendor/noto-sans/noto-sans-hebrew-hebrew-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-sans/noto-sans-latin-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-sans/noto-sans-latin-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-sans/noto-sans-latin-500-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-sans/noto-sans-latin-600-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-sans/noto-sans-latin-ext-400-italic.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-sans/noto-sans-latin-ext-400-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-sans/noto-sans-latin-ext-500-normal.woff2"
+    },
+    {
+      "glob": "web/vendor/noto-sans/noto-sans-latin-ext-600-normal.woff2"
     },
     {
       "module": "java.base",
