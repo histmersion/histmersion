@@ -33,9 +33,18 @@ object Http:
   def isChallenge(code: Int, headers: Map[String, String], body: Array[Byte]): Boolean =
     val mitigated = headers.exists((k, v) => k.equalsIgnoreCase("cf-mitigated") && v.toLowerCase.contains("challenge"))
     val page = new String(body.take(4096), "ISO-8859-1").toLowerCase
-    mitigated || ((code == 403 || code == 429 || code == 503) &&
+    mitigated || isAnubis(body) || ((code == 403 || code == 429 || code == 503) &&
       (page.contains("<title>just a moment") || page.contains("challenge-platform") ||
         page.contains("<title>attention required")))
+
+  /** An Anubis page (#2560: OAPEN's file server): its proof-of-work challenge or its refusal, whatever
+    * the status (200 by default, 401/403 as configured). Its markers are its own — the challenge's
+    * `anubis_challenge` script, its assets under `/.within.website/x/` — and a file never starts with
+    * them, so any status counts; a PDF is never read as one. */
+  private def isAnubis(body: Array[Byte]): Boolean =
+    val head = new String(body.take(32768), "ISO-8859-1").toLowerCase
+    !head.startsWith("%pdf") &&
+      (head.contains("id=\"anubis_challenge\"") || (head.contains("/.within.website/x/") && head.contains("anubis")))
 
 /** URL assembly that keeps query values escaped. `Uri`'s interpolator would try to parse the value as
   * a URI; building the query from pairs is what makes `q=sea peoples & co` safe. */
