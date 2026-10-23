@@ -12,6 +12,7 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(ManagersView.badge(ManagerInfo("review", "review", statusNote = Some("starved: skeptic chain below its plan floor"))), "starved")
     assertEquals(ManagersView.badge(ManagerInfo("review", "review", statusNote = Some("at capacity (2 runs in flight, 3 pending)"))), "at capacity")
     assertEquals(ManagersView.badge(ManagerInfo("review", "review", statusNote = Some("idle"))), "idle")
+    assertEquals(ManagersView.badge(ManagerInfo("seed:g", "seed", statusNote = Some("focus: its goal waits for a slot — idle"))), "queued")
     assertEquals(ManagersView.badge(ManagerInfo("review", "review", statusNote = Some("3 pending"))), "active")
 
   test("item actions by status"):
@@ -20,6 +21,19 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(ManagersView.itemActions("active"), List("priority", "skip"))
     assertEquals(ManagersView.itemActions("stopped"), List("reopen"))
     assertEquals(ManagersView.itemActions("nonsense"), Nil)
+
+  test("an item the focus holds is not released by hand; a person's hold is"):
+    val focus = ManagerItem(1, "seed:g", ProposeArticles, "g", "held", hold = Some(Hold(reason = "focus: waits", focus = Some("g"))))
+    assertEquals(ManagersView.itemActionsFor(focus), List("priority", "skip"))
+    assertEquals(ManagersView.itemActionsFor(focus.copy(hold = Some(Hold(reason = "held by a person")))), List("release", "priority", "skip"))
+
+  test("the focus: its heading, an active goal's pace, the goals that cannot use a slot by why"):
+    import com.histmersion.core.Autopilot.*
+    assertEquals(ManagersView.focusHead(FocusInfo(on = true, max = 8, held = 3)), "Focus: at most 8 active goals · 3 items held")
+    assertEquals(ManagersView.focusHead(FocusInfo(on = false, max = 0, maxFrom = "person")), "Focus: not in force (cap set by a person)")
+    assertEquals(ManagersView.focusPace(FocusGoal("g", open = 4, doneLast7 = 7, etaDays = Some(4))), "7 done in 7 days, 4 open (~4 d)")
+    assertEquals(ManagersView.waitingSummary(List(FocusWaiting("a", "person"), FocusWaiting("b", "idle"), FocusWaiting("c", "person"))),
+      "2 person · 1 idle")
 
   test("settings form: blank is the default; it reads back what it shows; a bad number is refused"):
     val c = ManagerConfig(maxRuns = Some(3), includeTags = Some(List("a", "b")),

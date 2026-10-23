@@ -67,6 +67,49 @@ While it is on, it:
 - looks for articles whose filter now finds new sources, and extends them;
 - takes a backup and runs the safe lint repairs every 24 hours.
 
+### The focus: a few goals at a time, finished
+
+With many goals, model work spread over all of them finishes none. So the autopilot keeps only a few
+goals **active** at a time — 8 by default (`agents.autopilot.max-active-goals`). The plans, article
+proposals, compiles, reviews and acquisition sweeps of the active goals run; those of every other
+goal **wait**, held with the reason `focus`. Nothing is cancelled, and a run already going finishes.
+
+Ingestion is not part of this: the legal open-access backlog keeps draining for every goal within the
+ingest caps, and the currency checks (no model) keep running for all. Enriching new sources goes on
+for the whole library, the active goals' sources first (three of theirs to one of any other).
+
+Which goals are active is decided **finish-first**, in this order:
+
+1. a goal you **pinned** (always active);
+2. the goal closest to done: articles written but not yet through review, then approved articles still
+   to be written, then enough sources for an article, then the rest;
+3. **depth-first**: a sibling of an active goal, then a goal in the same tree, before a goal elsewhere;
+   a parent becomes active again only to write its own synthesis once its sub-goals are done;
+4. a **priority** you gave it (higher first);
+5. more sources, then the oldest.
+
+An active goal keeps its place until it is `reviewed`. It gives up its place earlier when it cannot
+use it: everything left waits for **you** (a plan only a person approves), its last item was stopped
+(a task says why), or it has nothing to do until its weekly schedule or new sources. The next goal in
+line takes the place at once. A goal still gathering sources also gives its place to one that has
+articles to write or review.
+
+```bash
+histmersion agent autopilot focus                  # the active goals (why, what each waits for, pace), the queue, the rest
+histmersion agent autopilot focus pin <goal>       # keep this goal active now
+histmersion agent autopilot focus unpin <goal>
+histmersion agent autopilot focus priority <goal> 5
+histmersion agent autopilot focus max 4            # at most 4 active goals (0 = no limit; `default` = the setting)
+```
+
+The managers window shows the same: the active goals with why each was chosen, what it is doing or
+waiting for, and how fast it moves; the next goals in line; and how many cannot use a place now and why.
+An item held for the focus cannot be released by hand: pin its goal instead.
+
+When goal plans are approved automatically (`agents.approvals.goal-plan = auto`), a new plan is
+approved only for an **active** goal, and only while its unfinished sub-goals plus the new ones stay
+within 5 (`agents.autopilot.max-open-sub-goals`). Otherwise it waits for you.
+
 **What it never does:** it never lifts a cap, a budget or a plan floor. With the shipped settings
 (`manual`) every plan and every article still waits for your approval; the autopilot decides them by
 code only where you set the approval mode to `checked` or `auto`
@@ -79,7 +122,9 @@ setting you chose.
 - the budgets — per run, per day, per month ([AI providers, budgets and quotas](../how-to/ai-providers.md));
 - each manager's `max-runs` and `daily-usd`;
 - the plan floors of a subscription;
-- the ingest caps: 5 a day per watcher, 20 a day for all watchers together while the autopilot is on.
+- the ingest caps: 5 a day per watcher, 20 a day for all watchers together while the autopilot is on;
+- the focus: at most 8 goals active for model work at a time (it decides **what** runs; the limits
+  above decide how much).
 
 !!! warning "More automation, more to check"
     The autopilot can write many articles while you are away. Every one of them needs the reading

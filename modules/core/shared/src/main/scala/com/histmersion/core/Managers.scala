@@ -363,9 +363,10 @@ object Managers:
 
   /** Why an item is held and until when: a date, a source (DOI or citekey) entering the corpus, or a
     * person deciding approval `untilApproval` (the proposal its run left: the item is then settled with
-    * the decision, not run again). */
+    * the decision, not run again) — or, `focus` (the goal it belongs to), until that goal is one of the
+    * autopilot's active goals (the focus releases it; a person pins the goal to run it now). */
   final case class Hold(until: Option[String] = None, untilSource: Option[String] = None, reason: String = "",
-      hint: Option[Long] = None, untilApproval: Option[Long] = None) derives KindlingsCodecAsObject
+      hint: Option[Long] = None, untilApproval: Option[Long] = None, focus: Option[String] = None) derives KindlingsCodecAsObject
   object Hold:
     given Schema[Hold] = KindlingsSchema.derived[Hold].schema
 

@@ -37,6 +37,42 @@ object Autopilot:
   object ApprovalRule:
     given Schema[ApprovalRule] = KindlingsSchema.derived[ApprovalRule].schema
 
+  /** One goal of the focus (docs/research-process-managers.md "As built: the focus"): active — why it was
+    * chosen, what it is doing or waiting for, its pace (items settled in 7 days, open, days at that pace) — or
+    * queued — why it stands where it does. `stage` = reviewing | compiling | ready | gathering. */
+  final case class FocusGoal(slug: String, title: String = "", status: String = "", stage: String = "", why: String = "",
+      pinned: Boolean = false, priority: Int = 0, since: Option[String] = None, doing: Option[String] = None,
+      open: Int = 0, doneLast7: Int = 0, etaDays: Option[Int] = None) derives KindlingsCodecAsObject
+  object FocusGoal:
+    given Schema[FocusGoal] = KindlingsSchema.derived[FocusGoal].schema
+
+  /** A goal that cannot use a slot now: `code` = children (its sub-goals first) | person (an approval only a
+    * person decides) | held (a person's hold) | stuck (its items stopped) | idle (nothing to do until its
+    * cron or new sources) | plans (enough goal plans wait for a person already). */
+  final case class FocusWaiting(slug: String, code: String, why: String = "", pinned: Boolean = false)
+      derives KindlingsCodecAsObject
+  object FocusWaiting:
+    given Schema[FocusWaiting] = KindlingsSchema.derived[FocusWaiting].schema
+
+  /** `GET /api/agents/autopilot/focus`: whether the focus is in force (the autopilot on and a cap above 0),
+    * the cap and where it comes from (`config` = agents.autopilot.max-active-goals, `person` = set with
+    * `focus max`), the active goals, the next `queue` of the `queued` candidates (in the order they become
+    * active), the goals that cannot use a slot now, how many items it holds, and what the last change did. */
+  final case class FocusInfo(on: Boolean, max: Int = 0, maxFrom: String = "config", active: List[FocusGoal] = Nil,
+      queue: List[FocusGoal] = Nil, queued: Int = 0, waiting: List[FocusWaiting] = Nil, held: Int = 0,
+      note: Option[String] = None, changes: List[String] = Nil) derives KindlingsCodecAsObject
+  object FocusInfo:
+    given Schema[FocusInfo] = KindlingsSchema.derived[FocusInfo].schema
+
+  /** `POST /api/agents/autopilot/focus`: `pin` / `unpin` a goal (a pinned goal is always active), its
+    * `priority` (`value`; higher first, after the stage and the tree), or `max` (`value`: the cap, 0 = none;
+    * absent: back to agents.autopilot.max-active-goals). `by` = who. */
+  final case class FocusSet(action: String, goal: Option[String] = None, value: Option[Int] = None, by: Option[String] = None)
+      derives KindlingsCodecAsObject
+  object FocusSet:
+    given Schema[FocusSet] = KindlingsSchema.derived[FocusSet].schema
+    val Actions = List("pin", "unpin", "priority", "max")
+
   /** `GET /api/agents/autopilot`. `since`/`by` = when and by whom it was last switched; `changes` = what
     * the switch just did (an on/off answer only); `ingestedToday` / `ingestCap` = the legal open-access
     * ingests of all watchers today and their shared cap (0 = none); `backlog` / `backlogDays` = the legal
@@ -46,7 +82,8 @@ object Autopilot:
       agentsEnabled: Boolean = false, managersEnabled: Boolean = false, cronsEnabled: Boolean = true, approvals: List[ApprovalRule] = Nil,
       ingestedToday: Int = 0, ingestCap: Int = 0, maxConcurrentRuns: Int = 0, lastBackup: Option[String] = None,
       lastLint: Option[String] = None, library: List[ManagerBrief] = Nil, goals: List[GoalProgress] = Nil,
-      changes: List[String] = Nil, backlog: Int = 0, backlogDays: Option[Int] = None) derives KindlingsCodecAsObject
+      changes: List[String] = Nil, backlog: Int = 0, backlogDays: Option[Int] = None, focus: Option[FocusInfo] = None)
+      derives KindlingsCodecAsObject
   object AutopilotStatus:
     given Schema[AutopilotStatus] = KindlingsSchema.derived[AutopilotStatus].schema
     /** What the status says while `agents.scheduler.enabled` is false. */
@@ -115,6 +152,34 @@ object AutopilotMarkdown:
       s"${Plural.count(g.articles, "article")}" + (if g.openApprovals > 0 then s", ${Plural.count(g.openApprovals, "open approval")}" else "") +
       s" · $mgrs · $pace" + g.lastActivity.fold("")(t => s" · last activity $t")
 
+  private def pace(g: FocusGoal): String =
+    s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
+
+  /** The focus: the active goals with why and what each is doing, the queue, the goals that wait. */
+  def focus(f: FocusInfo): String =
+    val head = s"## Focus: ${if f.on then s"at most ${f.max} active goals" else "not in force"}" +
+      (if f.maxFrom == "person" then " (set by a person)" else " (agents.autopilot.max-active-goals)")
+    val lines = List(
+      f.note.map(n => s"_${n}_"),
+      Option.when(f.held > 0)(s"${Plural.count(f.held, "model-using item")} held for the focus (nothing cancelled; runs in flight finish)"),
+      Option.when(f.changes.nonEmpty)(s"Just now: ${f.changes.mkString("; ")}")).flatten
+    val active =
+      if f.active.isEmpty then "_No goal is active._"
+      else f.active.zipWithIndex.map { (g, i) =>
+        s"${i + 1}. **${g.slug}** _(${g.status}, ${g.stage})_${if g.pinned then " (pinned)" else ""} — ${g.why}" +
+          g.doing.fold("")(d => s"\n   - now: $d") + s"\n   - ${pace(g)}"
+      }.mkString("\n")
+    val queue =
+      if f.queue.isEmpty then "_Nothing waits for a slot._"
+      else f.queue.zipWithIndex.map((g, i) => s"${i + 1}. ${g.slug} _(${g.stage})_ — ${g.why}").mkString("\n") +
+        (if f.queued > f.queue.size then s"\n\n…and ${f.queued - f.queue.size} more" else "")
+    val waits = f.waiting.groupBy(_.code).toList.sortBy(-_._2.size).map { (c, ws) =>
+      s"- ${Plural.count(ws.size, "goal")} $c: " + ws.take(5).map(w => s"${w.slug}${if w.pinned then " (pinned)" else ""}").mkString(", ") +
+        (if ws.size > 5 then ", …" else "") + ws.headOption.fold("")(w => s" — e.g. ${w.why.take(200)}")
+    }
+    (List(head, "") ++ lines.flatMap(l => List(l, "")) ++ List("### Active", "", active, "", s"### Queue (${f.queued})", "", queue) ++
+      (if waits.isEmpty then Nil else List("", "### Cannot use a slot now", "") ++ waits)).mkString("\n")
+
   def status(s: AutopilotStatus): String =
     val head = s"# Autopilot: ${if s.on then "ON" else "off"}" +
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
@@ -133,4 +198,5 @@ object AutopilotMarkdown:
       s"- library: ${if s.library.isEmpty then "no review or enrich manager" else s.library.map(brief).mkString("; ")}")
     val changes = if s.changes.isEmpty then "" else "\n\n## Just now\n\n" + s.changes.map(c => s"- $c").mkString("\n")
     val goals = if s.goals.isEmpty then "_No research goals._" else s.goals.map(g => s"- ${goal(g)}").mkString("\n")
-    (List(head, "") ++ warn ++ facts).mkString("\n") + changes + s"\n\n## Goals (${s.goals.size})\n\n" + goals
+    (List(head, "") ++ warn ++ facts).mkString("\n") + changes + s.focus.fold("")(f => "\n\n" + focus(f)) +
+      s"\n\n## Goals (${s.goals.size})\n\n" + goals

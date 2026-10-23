@@ -100,6 +100,20 @@ object ManagersApi:
     endpoint.post.in("api" / "agents" / "autopilot" / "repair-acquire").errorOut(errors)
       .in(jsonBody[RepairAcquire.RepairRequest]).out(jsonBody[RepairAcquire.RepairResult])
 
+  /** `GET /api/agents/autopilot/focus` — the focus (docs/research-process-managers.md "As built: the
+    * focus"): the active goals (why each was chosen, what it does or waits for, its pace), the queue in the
+    * order the next become active, and the goals that cannot use a slot now. Readable with the autopilot
+    * off (what it would focus on). */
+  val focus: PublicEndpoint[Unit, ApiError, Autopilot.FocusInfo, Any] =
+    endpoint.get.in("api" / "agents" / "autopilot" / "focus").errorOut(errors).out(jsonBody[Autopilot.FocusInfo])
+
+  /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — `pin` / `unpin` a goal, its `priority`,
+    * or the cap (`max`; no value: back to agents.autopilot.max-active-goals). Answers the focus as it is
+    * then (the next managers' tick applies it). */
+  val setFocus: PublicEndpoint[Autopilot.FocusSet, ApiError, Autopilot.FocusInfo, Any] =
+    endpoint.post.in("api" / "agents" / "autopilot" / "focus").errorOut(errors).in(jsonBody[Autopilot.FocusSet])
+      .out(jsonBody[Autopilot.FocusInfo])
+
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
-    removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire)
+    removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire, focus, setFocus)
