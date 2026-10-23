@@ -445,3 +445,85 @@ agent.
   the repair — a sweep's open-access item moved, one in the corpus removed, a closed one and a person's kept, dry
   run changes nothing, idempotent, the moved work drains), `ManagerPhase3Suite` (updated: the open pick past the
   cap is in the backlog, not on the list).
+
+## As built: the focus (2026-10-23)
+
+Branch `goal-focus`. **V098** `goal_focus` (one row per goal the focus touched or a person pinned: `active`,
+`since`/`why` it was chosen, `left_at`/`left_why`, `pinned`, `priority`) and `agent_autopilot.max_active_goals`
+(a person's cap; NULL = the config's). V092 and V095 stay unused.
+
+**The problem.** With goal-plan auto-approval the goals grew from 63 to 156 in three days (128 `seeding`, 22
+`reviewed`, 6 `compiled`). Every seeding goal had an active seeding manager and watcher, so the model work —
+sweeps with a ranking model, plans, proposals, compiles, reviews, enrichment — was spread over all of them
+within the same `max-concurrent-runs`, and almost nothing finished.
+
+- **What is capped.** While the autopilot is on and the cap is above 0, at most `agents.autopilot.max-active-goals`
+  (8) goals are ACTIVE for model work. The model-using items (`GoalFocus.usesModel`: every kind but
+  `currency-check` and `oa-ingest`) of every other unfinished goal are HELD with a `Hold(focus = goal, reason =
+  "focus: …")` — pending items only; nothing is cancelled, runs in flight finish. A goal's items are its seeding
+  manager's, its watcher's sweep, and the review manager's on the articles linked to it (an article of several
+  goals runs when one of them is active; one of no unfinished goal is library work and runs). A person's own
+  item (`origin = person`) is never held. The focus decides WHAT runs; `max-concurrent-runs`, the budgets, plan
+  floors, `dailyUsd` and the daily caps still decide how much.
+- **What is not capped.** The ingest backlog drains for every goal within the ingest caps; OCR and conversion
+  likewise; the currency checks (no model) run for all. The enrich manager is library-wide: `GoalFocus.fairOrder`
+  starts `focus-ratio` (3) items of the active goals' sources (and a person's) to one of any other, counting on
+  from its last starts (`FocusRepo.recentTargets`); the review manager does the same for its library articles.
+  Finished goals' monthly sweeps are library work too (not held).
+- **Selection** (`GoalFocus.select`, pure, deterministic). A goal is a candidate unless it is finished, or cannot
+  use a slot (`Fit.Waits`): `children` (a parent with unfinished sub-goals — it takes a slot only for its
+  plan-goal item; its own proposals wait), `person` (every model item, or what it waits for — a proposal behind
+  its plan, a review behind its infer-filter, `GoalFocus.blockers` — waits for an approval only a person decides:
+  `agents.approvals.*` manual, or the manager's `autoApprove = false`), `held` (a person's hold or a paused
+  manager), `stuck` (no open model item and its newest settled one stopped or failed — the stop rule's task says
+  why), `idle` (none open: until its cron or new sources), `plans` (its next step is one more goal plan while goal
+  plans are a person's and `max` of them already wait). An approval the autopilot's checks decide (a daily cap
+  included) keeps the goal a candidate. Order: (1) a person's pins (always active, even past the cap); (2) the
+  stage — `reviewing` (linked articles not passed review), `compiling` (approved articles not compiled),
+  `ready` (sources ≥ `agents.seed.min-sources`), `gathering`; (3) depth-first — a sibling or sub-goal of an
+  already chosen goal, then one in the same tree, then elsewhere (each pick changes who is near the next);
+  (4) a person's priority; (5) more sources, the oldest, the slug. **Sticky:** the goals active before keep
+  their slots while they are candidates (a lowered cap or a pin sends the worst back first), free slots are
+  filled one at a time, then a `reviewing`/`compiling` candidate takes the slot of an active goal still
+  `gathering` (never a pinned one). A goal leaves when it is reviewed/done or cannot use its slot; the next
+  takes it in the same tick. Every pick carries a why (stage with its numbers, kinship, priority, age).
+- **The pass** (`GoalFocusService.tick`) runs every managers' tick after the evaluations, holds, the backlog
+  drain, the crons and the refill — so what they just queued waits too — and right before the dispatch. It
+  records who joined and left (`goal_focus`, an `autopilot` event on the goal's seeding manager, else its
+  watcher, one worklog line `autopilot focus: +g (stage); -h (why)`), places and releases the holds
+  (`GoalFocus.holds`; one `held` event per manager), and keeps the active set for the dispatch's fair order
+  and the auto approvals. Not in force (autopilot off, cap 0): every focus hold is released and no goal is
+  recorded active. Facts come from a few aggregate queries for all goals at once (`FocusRepo.goals/work/
+  compileOpen/lastStops/sourceCounts/openGoalPlans`, `GoalLinkRepo.articlesByGoal`, `ManagerRepo.passedReview`).
+  A focus-held proposal no longer counts as "a plan/proposal held" in the goal-status advance.
+- **Goal plans.** With `goal-plan = auto|checked` (or a manager's `autoApprove`), a plan whose verdict is
+  Approve is left for a person unless its goal is active and its unfinished descendants plus the plan's new
+  sub-goals stay within `max-open-sub-goals` (5) (`AutopilotPolicy.goalPlanFocus`). With it manual nothing
+  changes. The auto approvals also look at the active goals' approvals first (articles linked to them
+  included), so a daily cap is spent on the goals being finished.
+- **Surfaces.** `GET|POST /api/agents/autopilot/focus` (`FocusInfo`, `FocusSet{action pin|unpin|priority|max,
+  goal?, value?}`); `AutopilotStatus.focus`; CLI `histmersion agent autopilot focus [list|pin <g>|unpin
+  <g>|priority <g> <n>|max <n|default>] [--json]`; the MCP `manager` tool's `focus` action (still 68 tools); the
+  Managers window's focus panel (active goals with why, now, pace and pin/unpin; the queue in order; why the
+  others cannot use a slot; the cap). A person's `release` of a focus-held item is refused (409) while the focus
+  is in force — pin the goal instead; the items window offers no release for it.
+- **Config** (`agents.autopilot`, hot-reloadable): `max-active-goals` 8 (`HISTMERSION_AGENTS_AUTOPILOT_MAX_ACTIVE_GOALS`),
+  `focus-ratio` 3, `max-open-sub-goals` 5, `focus-queue-shown` 10.
+- **Live on 2026-10-23** (read-only facts through `histmersion query`, the pure policy run offline over them; cap
+  8, min-sources 5, goal plans manual with 64 open): 22 goals finished; 64 cannot use a slot because their plan
+  waits for a person, 23 are parents waiting for sub-goals, 21 idle; 18 candidates, all but one `compiling`.
+  Active: ancient-dna-inference (5 sources, the most), its siblings demic-diffusion-social-mechanisms and
+  steppe-expansion-synthesis, proto-armenian-language-and-ethnogenesis (same tree), then
+  gilgamesh-death-and-netherworld, its siblings ugaritic-baal-myth-and-cult and mesopotamian-creation-and-flood,
+  and greek-divine-worship (same tree) — each waiting for an article-publish draft the autopilot's checks decide
+  (10 a day; their drafts first now). The first pass holds 76 items (67 proposals, 8 compiles, 1 extension).
+- Tests: `GoalFocusSuite` (the order — stage, depth-first, sub-goal, priority and ties, determinism; pins past the
+  cap; no cap; sticky slots; preemption; reviewed, stuck, idle and person-waiting free a slot, the autopilot's
+  checks keep it; a proposal behind a person's plan; the parent rule; the plans gate; a lowered cap; the holds;
+  the fair order; build; doing; the goal-plan check; Markdown), `ConfigSuite`, `ManagerCmdSuite`,
+  `ManagersViewSuite`, `GoalFocusDbSuite` (DB, scripted models: 20 goals and a cap of 3 → only the 3 chosen
+  goals' model runs, 34 items held, the currency checks and the backlog for all 20, a refused release; one
+  reviewed → the next active in the same tick with its proposal dispatched, the reviewed goal's run in flight
+  kept; a pin, a person's cap, cap 0 and autopilot off release every hold; goal plans under the focus),
+  `ManagerAutopilotSuite` (updated: the proposal behind a plan waiting for a person is held for the focus; a
+  plan code may decide again is decided one tick later), and a browser test of the focus panel.

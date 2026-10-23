@@ -51,6 +51,9 @@ article is about.
 **finding** — one claim of a source, with a place (and a point on the map) and a range of years, and
 a confidence: `high`, `medium`, `low` or `contested`.
 
+**focus** — the autopilot's rule that only a few research goals (8 by default) are worked on by the AI at a
+time, the ones closest to done first; the others wait their turn. See [the autopilot](../articles/autopilot.md#the-focus-a-few-goals-at-a-time-finished).
+
 **gazetteer** — the list of places: names, shapes, the years each existed, and what each lies inside.
 
 **historicity** — for an event: how well it is known to have happened — `attested`, `inferred`, `contested`, `legendary` or `mythic`.
