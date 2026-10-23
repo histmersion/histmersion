@@ -12718,6 +12718,9 @@
       "glob": "db/migration/V097__neutral_provenance.sql"
     },
     {
+      "glob": "db/migration/V098__goal_focus.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

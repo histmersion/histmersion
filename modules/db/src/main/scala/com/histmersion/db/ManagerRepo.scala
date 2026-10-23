@@ -238,6 +238,35 @@ object ManagerRepo:
       sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
             WHERE id = $itemId AND status = 'held'""".update.run() > 0
 
+  // ── the focus's holds (docs/research-process-managers.md "As built: the focus") ─────────────────
+
+  /** Hold a PENDING item for the focus (`h.focus` = its goal); false = it was not pending any more. */
+  def focusHold(ds: DataSource, itemId: Long, h: Hold): Boolean =
+    val hold = Option(h)
+    transact(ds):
+      sql"""UPDATE manager_items SET status = 'held', hold = $hold::jsonb, updated_at = now()
+            WHERE id = $itemId AND status = 'pending'""".update.run() > 0
+
+  /** Release the focus holds among `ids` (a person's or an approval's hold is never touched); how many. */
+  def focusRelease(ds: DataSource, ids: List[Long]): Int =
+    if ids.isEmpty then 0
+    else
+      val arr = ids.map(_.toString)
+      transact(ds):
+        sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
+              WHERE id = ANY($arr::bigint[]) AND status = 'held' AND hold->>'focus' IS NOT NULL""".update.run()
+
+  /** Release every focus hold (the focus is not in force any more); how many. */
+  def focusReleaseAll(ds: DataSource): Int =
+    transact(ds):
+      sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
+            WHERE status = 'held' AND hold->>'focus' IS NOT NULL""".update.run()
+
+  /** The items the focus holds now. */
+  def focusHeldCount(ds: DataSource): Int =
+    connect(ds)(sql"""SELECT count(*)::int FROM manager_items WHERE status = 'held' AND hold->>'focus' IS NOT NULL"""
+      .query[Int].run().head)
+
   def setPriority(ds: DataSource, itemId: Long, priority: Int): Boolean =
     transact(ds)(sql"UPDATE manager_items SET priority = $priority, updated_at = now() WHERE id = $itemId".update.run() > 0)
 
@@ -405,9 +434,11 @@ object ManagerRepo:
                  FROM agent_managers m""", Param.S(OaIngest), Param.S(OaIngest), Param.S(t))
         .frag.query[(String, Int, Int, Option[String])].run().toList.map((id, o, d, l) => id -> (o, d, l)).toMap
 
-  /** Open items of `kind` in manager `id` (pending, held or active) — e.g. a goal's compiles. */
-  def openOf(ds: DataSource, managerId: String, kinds: List[String], statuses: List[String]): Int =
-    connect(ds)(Sql.of("SELECT count(*)::int FROM manager_items WHERE manager_id = ? AND kind = ANY(?::text[]) AND status = ANY(?::text[])",
+  /** Open items of `kind` in manager `id` (pending, held or active) — e.g. a goal's compiles. `focusHeld` =
+    * an item the focus holds counts as held (false: as the pending item it really is). */
+  def openOf(ds: DataSource, managerId: String, kinds: List[String], statuses: List[String], focusHeld: Boolean = true): Int =
+    connect(ds)(Sql.of("SELECT count(*)::int FROM manager_items WHERE manager_id = ? AND kind = ANY(?::text[]) AND status = ANY(?::text[])" +
+      (if focusHeld then "" else " AND NOT (status = 'held' AND hold->>'focus' IS NOT NULL)"),
       Param.S(managerId), Param.A(kinds), Param.A(statuses)).frag.query[Int].run().head)
 
   /** The articles that passed their review: a review ledger with no open MAJOR, and no open item of
