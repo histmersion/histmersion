@@ -370,6 +370,18 @@ final class AcquireHandlers(
             if AcquireRepo.recordLicense(ds, citekey, l) then steps += IngestStep("licence", true, s"recorded ${l.trim}")
           }
           steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
+          // an open-access work no script may download goes to the acquisition list once, as a download
+          // in the browser (#1581) — a person's ingest only: a watcher's legal path queues its own
+          if fetched.isLeft && skip.isEmpty && !legalOnly then
+            for
+              d    <- doi
+              w    <- work
+              text <- Acquire.browserDownloadText(w, d, citekey)
+            do
+              // an item already naming the DOI was reported just above
+              if QueueRepo.acquireNaming(ds, d).isEmpty then
+                val i = QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text, topic = Some(Acquire.BrowserDownloadTopic)))
+                steps += IngestStep("acquire", true, s"open access, but no script may download it — acquisition item #${i.id}: download it in the browser")
 
           // assess last: the source now exists, so the verdict can be recorded against it. The status is
           // written for a source we JUST created, and for a retraction whatever the source's age — a

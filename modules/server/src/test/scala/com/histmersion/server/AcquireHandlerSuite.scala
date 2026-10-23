@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.*
-import com.histmersion.db.{AcquireRepo, Db, Migrate, SourceRepo}
+import com.histmersion.db.{AcquireRepo, Db, Migrate, QueueRepo, SourceRepo}
 import com.histmersion.server.acquire.*
 
 import java.nio.file.Path
@@ -286,6 +286,27 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(license, Some("CC-BY-4.0"))
     assert(!AcquireRepo.recordLicense(ds, "zzacq_ingested", "  "), "a blank licence is never written")
     wipe("zzacq_ingested")
+
+  test("an open-access work no script may fetch goes to the acquisition list once, as a browser download (#1581)"):
+    import com.augustnagro.magnum.*
+    def items = QueueRepo.acquireNaming(ds, "10.1038/zztest001").filter(_.status == "open")
+    def dropItems(): Unit = transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
+    wipe("zzacq_ingested"); dropItems()
+    val gold = FakeDiscovery(target.copy(isOa = true, oaStatus = Some("gold"), oaUrl = Some("https://press.example.org/a/1")))
+    val r = handlers(gold, oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    assertEquals(items.size, 1, items.toString)
+    assertEquals(items.head.topic, Some(Acquire.BrowserDownloadTopic))
+    assert(items.head.text.contains("download it in the browser") && items.head.text.contains("--citekey zzacq_ingested"), items.head.text)
+    assert(r.steps.exists(s => s.step == "acquire" && s.detail.contains(s"#${items.head.id}")), r.steps.toString)
+    // again: the item that names it is reported, no second one
+    val _ = handlers(gold, oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    assertEquals(items.size, 1)
+    // a closed work, or a watcher's legal-only ingest, adds none
+    dropItems(); wipe("zzacq_ingested")
+    val _ = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001"))
+    val _ = handlers(gold, oa = NoPdf).ingestLegal(IngestRequest("10.1038/zztest001"))
+    assertEquals(items.size, 0)
+    dropItems(); wipe("zzacq_ingested")
 
   test("no open-access copy: the source is still created and the manual drop-in is explained"):
     wipe("zzacq_ingested")
