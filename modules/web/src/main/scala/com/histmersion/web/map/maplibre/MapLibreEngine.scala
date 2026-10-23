@@ -454,7 +454,7 @@ object MapLibreStyles:
     case v: BaseMapSpec.Vector =>
       val withContours = v.contours && !v.reduced && v.style == VectorStyle.Physical && deeperRelief(v.status).isDefined
       doc(v.style).flatMap { d =>
-        val s = resolve(copy(d), v.status, v.lang, v.names, v.reduced, origin)
+        val s = resolve(copy(d), v.status, v.lang, v.names, v.reduced, origin, v.seaDepth)
         if withContours then Future.delegate(contours(s, v.status, origin)).map(_ => s: js.Any).recover { case _ => drop(s, "contours"); s }
         else { drop(s, "contours"); Future.successful(s) }
       }
@@ -496,8 +496,11 @@ object MapLibreStyles:
     * never a stale cached tile, its credits, its depth — the relief to the deepest zoom any archive holds,
     * the server cutting the rest from their ancestors), a source the server lacks taken out with every
     * layer that draws it; the names in `lang` (`local`: each place's own), none without `names`;
-    * `reduced`: the relief left out (the cheapest drawing, for a browser without a GPU). */
-  def resolve(s: js.Dynamic, status: BasemapStatus, lang: String, names: Boolean, reduced: Boolean, origin: String): js.Dynamic =
+    * `reduced`: the relief left out (the cheapest drawing, for a browser without a GPU); without `seaDepth`
+    * the layers drawing the sea floor are hidden (`visibility: none`: their tiles are not asked for, and
+    * turning them on again is a diff of their layout). */
+  def resolve(s: js.Dynamic, status: BasemapStatus, lang: String, names: Boolean, reduced: Boolean, origin: String,
+      seaDepth: Boolean = true): js.Dynamic =
     val meta = s.metadata.selectDynamic("histmersion:sources").asInstanceOf[js.Dictionary[String]]
     js.Object.keys(s.sources.asInstanceOf[js.Object]).foreach { id =>
       val src = s.sources.selectDynamic(id)
@@ -526,6 +529,12 @@ object MapLibreStyles:
       List("dem", "sea").foreach(id => if !js.isUndefined(s.sources.selectDynamic(id)) then drop(s, id))
     if !names then
       s.layers = s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => l.`type`.toString != "symbol")
+    val seaSources = js.Object.keys(s.sources.asInstanceOf[js.Object]).filter(id => meta.get(id).contains("bathymetry")).toSet
+    s.layers.asInstanceOf[js.Array[js.Dynamic]].foreach { l =>
+      if !js.isUndefined(l.source) && seaSources.contains(l.source.toString) then
+        if js.isUndefined(l.layout) then l.layout = js.Dynamic.literal()
+        l.layout.visibility = if seaDepth then "visible" else "none"
+    }
     // the names' language: `name:{lang}` in every text field
     val key = if lang == "local" then "name" else s"name:$lang"
     s.layers.asInstanceOf[js.Array[js.Dynamic]].foreach { l =>

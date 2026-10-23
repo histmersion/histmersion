@@ -47,7 +47,7 @@ class BaseMapsSuite extends munit.FunSuite:
     val (spec, notice, z) = BaseMaps.plan(BaseMap.Physical, Some(status(true)), MapPrefs(language = Some("el"), contours = Some(false)), ui,
       local = false, soft = false)
     spec match
-      case BaseMapSpec.Vector(VectorStyle.Physical, _, "el", true, false, false) => ()
+      case BaseMapSpec.Vector(VectorStyle.Physical, _, "el", true, false, true, false) => ()
       case other => fail(other.toString)
     assertEquals((notice.map(_._1), z), (Some(BaseMaps.PastNotice), 16))
     // a lacking download says so; without a GPU the cheapest drawing
@@ -56,7 +56,7 @@ class BaseMapsSuite extends munit.FunSuite:
     assert(n2.exists((t, warn) => warn && t.contains("roads")))
     // the configured language (`basemap.labels.language`) unless the viewer chose one; offered in the menu
     BaseMaps.plan(BaseMap.Readable, Some(status(true)), MapPrefs(), ui.copy(mapLanguage = "de"), local = false, soft = false)._1 match
-      case BaseMapSpec.Vector(_, _, "de", _, _, _) => ()
+      case BaseMapSpec.Vector(_, _, "de", _, _, false, _) => ()
       case other => fail(other.toString)
     assertEquals(BaseMaps.languageChoices("de"), BaseMaps.Languages)
     assertEquals(BaseMaps.languageChoices("pl").last, "pl" -> "pl")
@@ -95,6 +95,22 @@ class BaseMapsSuite extends munit.FunSuite:
     assert(BaseMaps.meets(GeoBounds(37.0, 21.0, 37.5, 22.1), BBox(22, 37, 23, 38)), "touching at the corner")
     assert(!BaseMaps.meets(GeoBounds(38.1, 22.0, 39.0, 23.0), BBox(22, 37, 23, 38)))
 
+  test("the sea's depth: on in Physical and off in Readable by default, the viewer's choice per style; needs the sea floor and a GPU"):
+    assert(MapPrefs().seaDepth(VectorStyle.Physical))
+    assert(!MapPrefs().seaDepth(VectorStyle.Readable))
+    val r = MapPrefs().withSeaDepth(VectorStyle.Readable, on = true)
+    assertEquals(r, MapPrefs(depthReadable = Some(true)))
+    assert(r.seaDepth(VectorStyle.Readable) && r.seaDepth(VectorStyle.Physical))
+    assertEquals(r.withSeaDepth(VectorStyle.Readable, on = false), MapPrefs(), "the default again is no choice")
+    assertEquals(MapPrefs().withSeaDepth(VectorStyle.Physical, on = false), MapPrefs(depthPhysical = Some(false)))
+    BaseMaps.plan(BaseMap.Readable, Some(status(true)), r, ui, local = false, soft = false)._1 match
+      case v: BaseMapSpec.Vector => assert(v.seaDepth)
+      case other => fail(other.toString)
+    assertEquals(BaseMaps.seaDepthWhy(BaseMap.Readable, Some(status(true)), soft = false), None)
+    assert(BaseMaps.seaDepthWhy(BaseMap.Physical, Some(status(true, sea = false)), soft = false).exists(_.contains("--layer bathymetry")))
+    assert(BaseMaps.seaDepthWhy(BaseMap.Physical, Some(status(true)), soft = true).isDefined)
+    assert(BaseMaps.seaDepthWhy(BaseMap.Standard, Some(status(true)), soft = false).isDefined)
+
   test("a map of the fake engine is told the base map, and the notice rises only where it meets the credits"):
     val s = FakeSurface()
     s.setBaseMap(BaseMaps.plan(BaseMap.Physical, Some(status(true)), MapPrefs(), ui, local = true, soft = false)._1)
@@ -108,3 +124,5 @@ class BaseMapsSuite extends munit.FunSuite:
     assertEquals(c.encode(MapPrefs()), Nil)
     assertEquals(c.decode(c.encode(MapPrefs(names = Some(false), language = Some("local")))), Some(MapPrefs(Some(false), Some("local"))))
     assertEquals(c.decode(List("{oops")), Some(MapPrefs()))
+    assertEquals(c.decode(c.encode(MapPrefs(depthReadable = Some(true)))), Some(MapPrefs(depthReadable = Some(true))))
+    assertEquals(c.decode(List("""{"names":false}""")), Some(MapPrefs(names = Some(false))), "kept before the depth existed")

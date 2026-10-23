@@ -60,7 +60,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#cde4f3"
+        "background-color": "#d3e8f6"
       }
     },
     {
@@ -77,27 +77,29 @@
             "elevation"
           ],
           -6000,
-          "#3f6f9b",
+          "#2c5585",
           -4000,
-          "#4c7daa",
+          "#35639a",
           -3000,
-          "#5a8bb6",
+          "#3f70a8",
           -2000,
-          "#6b99c1",
+          "#4f82b8",
           -1000,
-          "#80aacd",
-          -400,
-          "#93badb",
-          -210,
-          "#a1c5e2",
-          -190,
-          "#b4d3ea",
-          -50,
-          "#c3ddf0",
+          "#6597c7",
+          -500,
+          "#7aa9d4",
+          -201,
+          "#93bce0",
+          -199,
+          "#b3d3ec",
+          -100,
+          "#c0dbf0",
+          -30,
+          "#cbe3f4",
           -1,
-          "#cde4f3",
+          "#d3e8f6",
           0,
-          "#cde4f3"
+          "#d3e8f6"
         ],
         "color-relief-opacity": [
           "interpolate",
@@ -110,9 +112,9 @@
           4,
           1,
           9,
-          0.92,
+          0.95,
           12,
-          0.85
+          0.9
         ]
       }
     },

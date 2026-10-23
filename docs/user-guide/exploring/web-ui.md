@@ -40,8 +40,8 @@ The menu at the end of the layer buttons picks the map under your data — one o
   other computer for anything: [Working offline](../how-to/offline.md).
 
 The button beside the menu opens the **map options** for Readable and Physical: the names on or off,
-their language (*English*, *Local* — each name in its own language and script — or another), and in
-Physical the contour lines. They stay open while you change things (Escape, or *Close*, closes them),
+their language (*English*, *Local* — each name in its own language and script — or another), the sea
+coloured by its depth (on in Physical, off in Readable), and in Physical the contour lines. They stay open while you change things (Escape, or *Close*, closes them),
 each change shows at once, and they are remembered by this browser until **Reset**. An option the map
 cannot offer, or whose data the server has not downloaded, is disabled with a line saying why — and,
 for missing data, the command that fetches it. A base map the download cannot draw whole is marked
