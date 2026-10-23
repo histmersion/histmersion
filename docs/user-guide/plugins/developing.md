@@ -207,8 +207,8 @@ against a fake host HTTP client.
   version, SPI version, what it registers and the access its fetchers declare — before it installs
   anything, and it refuses a jar built for another SPI version.
 - **Check the settings without serving:** `histmersion-server --self-check` loads the config and every
-  plugin, resolves secrets, prints a report and exits (0 all good, 2 a plugin failed or was refused,
-  3 the config is broken).
+  plugin, resolves secrets, checks the time zones, prints a report and exits (0 all good, 2 a plugin
+  failed or was refused or the time zones are missing, 3 the config is broken).
 - **Pre-flight a relink:** `histmersion plugin rebuild --check`.
 - In this repository, the plugin suites install, describe and relink the `hello` jar, and the
   AI-provider suites run pipelines through `hello-ai`; `scripts/bundle/smoke.sh` relinks a real

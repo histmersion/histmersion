@@ -84,12 +84,13 @@ object PluginsMarkdown:
       r.warnings.map(w => s"  - warning: $w"))
 
   /** The server's `--self-check` report: the config file, every plugin with its effective settings
-    * (secrets as references), and the verdict on the last line. */
-  def selfCheck(file: ConfigFileInfo, r: PluginsReport): String =
+    * (secrets as references), the binary's own `checks` (ok, line — the time zones), and the verdict on
+    * the last line: passed only when every plugin and every check is. */
+  def selfCheck(file: ConfigFileInfo, r: PluginsReport, checks: List[(Boolean, String)] = Nil): String =
     val plugins = r.plugins.flatMap { p =>
       s"- ${line(p)}" :: (p.settings.map(s => s"    ${s.key} = ${s.value}") ++ p.warnings.map(w => s"    warning: $w"))
     }
-    val verdict = if r.ok then "self-check passed" else "self-check FAILED"
+    val verdict = if r.ok && checks.forall(_._1) then "self-check passed" else "self-check FAILED"
     (List(
       "# Histmersion self-check",
       "",
@@ -97,6 +98,5 @@ object PluginsMarkdown:
       s"- plugin SPI: ${r.spiVersion}",
       s"- plugins: ${Plural.count(r.plugins.size, "plugin")} · ${r.plugins.count(_.enabled)} enabled",
       s"- plugin set: ${PluginSet.describe(r.set)}",
-      s"- plugin-set digest: ${r.set.fold(PluginSet.EmptyDigest)(_.digest)}",
-      ""
-    ) ++ plugins ++ r.warnings.map(w => s"- warning: $w") ++ List("", verdict)).mkString("\n")
+      s"- plugin-set digest: ${r.set.fold(PluginSet.EmptyDigest)(_.digest)}"
+    ) ++ checks.map((_, l) => s"- $l") ++ List("") ++ plugins ++ r.warnings.map(w => s"- warning: $w") ++ List("", verdict)).mkString("\n")

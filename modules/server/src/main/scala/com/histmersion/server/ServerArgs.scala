@@ -18,8 +18,9 @@ object ServerArgs:
     """usage: histmersion-server [--self-check | --help]
       |
       |  (no arguments)  run the server: config from reference.conf < histmersion.conf < the environment
-      |  --self-check    load the config and the plugins, resolve their secrets, print a report and exit
-      |                  (0 = all good, 2 = a plugin failed or was refused, 3 = the config is broken);
+      |  --self-check    load the config and the plugins, resolve their secrets, check the time zones,
+      |                  print a report and exit (0 = all good, 2 = a plugin failed or was refused or the
+      |                  time zones are missing, 3 = the config is broken);
       |                  opens no database connection and no port
       |  --help, -h      this text""".stripMargin
 
