@@ -22,7 +22,7 @@ export JAVA_HOME="$home" GRAALVM_HOME="$home" PATH="$home/bin:$PATH"
 bins() { find "$root/target/out" -type f \( -name histmersion-server -o -name histmersion-cli \) -perm -u+x 2>/dev/null || true; }
 # stale binaries must never be mistaken for a fresh build
 bins | xargs rm -f
-(cd "$root" && sbt --client shutdown >/dev/null 2>&1 || true; sbt --server -batch "server/nativeImage; cli/nativeImage; server/relinkKit; pluginHello/package")
+(cd "$root" && sbt --client shutdown >/dev/null 2>&1 || true; sbt --server -batch -Dsbt.global.localcache="$root/target/sbt-cache" "server/nativeImage; cli/nativeImage; server/relinkKit; pluginHello/package")
 server_bin="$(bins | grep '/histmersion-server$' | head -1)"; cli_bin="$(bins | grep '/histmersion-cli$' | head -1)"
 [ -n "$server_bin" ] && [ -n "$cli_bin" ] || { echo "native-image produced no binaries (server: '${server_bin}', cli: '${cli_bin}')" >&2; exit 1; }
 mkdir -p "$out"

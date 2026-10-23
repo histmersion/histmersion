@@ -14,8 +14,11 @@ label       := "com.histmersion.server"
 unit        := "histmersion.service"
 
 # sbt 2's thin client shares one server and drops the caller's environment; `--server -batch`
-# forces a dedicated, env-carrying, non-interactive one per invocation.
-sbt := "sbt --server -batch"
+# forces a dedicated, env-carrying, non-interactive one per invocation. The disk cache is this
+# checkout's own (build.sbt sets it for the build and project/plugins.sbt for the meta-build; the flag
+# also covers sbt's own empty global-plugins project, loaded before either).
+sbt_cache := justfile_directory() / "target/sbt-cache"
+sbt := "sbt --server -batch -Dsbt.global.localcache=" + sbt_cache
 
 # The portable PostgreSQL (runtime/postgres, the one the bundle ships) — also the test database.
 pg           := justfile_directory() / "runtime/postgres/.pixi/envs/default/bin"
@@ -140,6 +143,11 @@ test-it: test-db
     HISTMERSION_TEST_DB_URL={{test_db_url}} HISTMERSION_PG_BIN_DIR={{pg}} {{sbt}} 'testOnly *'; rc=$?
     just test-db-down
     exit $rc
+
+# Prove that two checkouts never replay each other's sbt cache entries (two temp worktrees, ~5 min)
+[group('dev')]
+cache-check *args:
+    scripts/dev/cache-isolation-check.sh {{args}}
 
 # Start a throwaway Postgres (histmersion_test on :55432) from the bundled runtime — never the live corpus
 [group('dev')]

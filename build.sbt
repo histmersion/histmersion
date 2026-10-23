@@ -22,6 +22,18 @@ ThisBuild / scalacOptions ++= Seq(
 
 // Dependency versions live in project/Dependencies.scala (imported above as `V`).
 
+// ── sbt 2's disk cache: one per checkout, never the machine-wide one (docs/research-build-speed.md §2) ──
+// sbt 2 keeps every cached task result in an action cache (ac/) whose entries point into a
+// content-addressed store (cas/), and RESTORES outputs as symlinks into that store. The default store is
+// ~/Library/Caches/sbt/v2, shared by every checkout and every sbt process on the machine — so each
+// worktree's target/ linked into blobs that other processes wrote, pruned or were writing at that
+// moment (no write is atomic), and an action entry whose blob was gone still counted as a hit: the
+// checkout got the entry's value without its classes, and the compile failure that followed downstream
+// was itself cached and replayed. Here each checkout has its own store, in target/sbt-cache; `rm -rf
+// target` (or `sbt cleanFull`) empties it for this checkout alone. The meta-build gets the same line
+// in project/plugins.sbt.
+Global / localCacheDirectory := appConfiguration.value.baseDirectory.getCanonicalFile / "target" / "sbt-cache"
+
 // One module's tests at a time. `Test / parallelExecution := false` (db, server) serializes the suites
 // INSIDE a module, but sbt still ran the db and server test tasks side by side on the one test
 // database, so a server suite could rewrite what a db suite was asserting on — MediaSourcesSuite's
