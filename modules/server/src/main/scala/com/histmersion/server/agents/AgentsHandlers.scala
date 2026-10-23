@@ -502,14 +502,20 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     * runs (of `goal`, when given). */
   def runsPage(status: Option[String], limit: Option[Int], goal: Option[String] = None, before: Option[String] = None,
       upTo: Option[String] = None): Either[ApiError, (List[RunInfo], Paging.Page)] =
-    status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
-      case Some(st) if RunState.parse(st).isEmpty =>
-        Left(ApiError(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})"))
-      case st =>
-        AgentRepo.page(ds, st, deps.cfg.limits.page(limit, deps.cfg.limits.search), goal, cursor(before), cursor(upTo))
-          .left.map(ApiError(_, Some(Write.CodeNotFound)))
-          .map((rows, more) =>
-            (rows.toList, Paging.Page.of(AgentRepo.stateCounts(ds, goal), st, Option.when(more)(rows.last.id))))
+    runsPage(ListFilters.RunFilter(status = status.toList, goal = goal), limit, before, upTo)
+
+  /** `GET /api/agents/runs` filtered ([[ListFilters.RunFilter]]): one page, newest first, with the
+    * per-state counts and the facet counts under the same filter. */
+  def runsPage(f: ListFilters.RunFilter, limit: Option[Int], before: Option[String], upTo: Option[String])
+      : Either[ApiError, (List[RunInfo], Paging.Page)] =
+    for
+      q    <- com.histmersion.server.ListQueries.runs(f, java.time.Instant.now())
+      page <- AgentRepo.page(ds, q, deps.cfg.limits.page(limit, deps.cfg.limits.search), cursor(before), cursor(upTo))
+                .left.map(ApiError(_, Some(Write.CodeNotFound)))
+    yield
+      val (rows, more) = page
+      val (counts, facets) = AgentRepo.runFacets(ds, q)
+      (rows.toList, Paging.Page.filtered(counts, q.status, Option.when(more)(rows.last.id), facets))
 
   private def cursor(c: Option[String]): Option[String] = c.map(_.trim).filter(_.nonEmpty)
 
@@ -552,7 +558,13 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** One page of [[approvalsList]] ([[Paging]]), with the per-state counts of every approval. */
   def approvalsPage(state: Option[String], limit: Option[Int], before: Option[String] = None,
       upTo: Option[String] = None): Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
-    approvals.page(state, deps.cfg.limits.page(limit, deps.cfg.limits.search), cursor(before), cursor(upTo))
+    approvalsPage(ListFilters.ApprovalFilter(state = state), limit, before, upTo)
+
+  /** `GET /api/agents/approvals` filtered ([[ListFilters.ApprovalFilter]]): one page, with the
+    * per-state and facet counts under the same filter. */
+  def approvalsPage(f: ListFilters.ApprovalFilter, limit: Option[Int], before: Option[String], upTo: Option[String])
+      : Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
+    approvals.page(f, deps.cfg.limits.page(limit, deps.cfg.limits.search), cursor(before), cursor(upTo))
 
   /** `POST /api/agents/approvals/{id}/{approve|reject}`. Deciding works with agents off too: it only
     * applies a change a person accepts, through the ordinary patch. */

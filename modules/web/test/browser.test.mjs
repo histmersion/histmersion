@@ -1215,6 +1215,189 @@ test('the jobs window says latest N of M, counts every state, and loads an older
   });
 });
 
+// The list windows filter on the server (core ListFilters): a facet chip sends its value, the chips
+// count what the server counted (over every other filter), the rows the chip leaves out go at once —
+// within 100 ms, before the server's page lands — and the filter is in the URL. Fixed answers; the
+// only "writes" (a bulk approval) are answered by the test, never sent to the server.
+const facetHeader = facets => Object.entries(facets)
+  .flatMap(([f, vs]) => vs.map(([v, n]) => `${f}=${encodeURIComponent(v).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase())}=${n}`))
+  .join(',');
+
+/** Click `selector` and report, one frame later, how long it took and how many `rows` are shown. */
+async function clickTimed(page, selector, rows) {
+  return page.evaluate(([sel, rs]) => new Promise(resolve => {
+    const t0 = performance.now();
+    document.querySelector(sel).click();
+    requestAnimationFrame(() => resolve({ ms: performance.now() - t0, rows: document.querySelectorAll(rs).length }));
+  }), [selector, rows]);
+}
+
+test('the approvals window: kind chips with the server\'s counts, a picked kind narrows at once, a bulk approval asks first', async () => {
+  const appr = (id, kind, state = 'open') => ({ id, runId: null, kind, citekey: kind === 'edge' ? 'zz_a2020' : '',
+    subject: kind === 'edge' ? null : `zz-pw-goal-${id}`, state, createdAt: '2026-10-01T00:00:00Z', evidence: '' });
+  const all = [appr(9, 'goal-plan'), appr(8, 'article-publish'), appr(7, 'goal-plan'), appr(6, 'edge')];
+  const kinds = { kind: [['goal-plan', 64], ['article-publish', 30], ['edge', 3]] };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/config', async route => {
+      const res = await route.fetch();
+      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true, writeKeyRequired: false } });
+    });
+    const asked = [], decided = [];
+    await page.route(/\/api\/agents\/approvals(\?|$)/, async route => {
+      const q = new URL(route.request().url()).searchParams;
+      asked.push({ kind: q.getAll('kind'), state: q.get('state'), subject: q.get('subject') });
+      const picked = q.getAll('kind');
+      // answered a little late, so the window's own narrowing is what the person sees first
+      await new Promise(r => setTimeout(r, 300));
+      const rows = all.filter(a => picked.length === 0 || picked.includes(a.kind));
+      const total = picked.length === 0 ? 97 : picked.reduce((n, k) => n + kinds.kind.find(([v]) => v === k)[1], 0);
+      return route.fulfill({ json: rows, headers: { 'X-Total-Count': String(total), 'X-State-Counts': `open=${total},approved=12`,
+        'X-Facet-Counts': facetHeader(kinds), 'X-Next-Before': '1' } });
+    });
+    await page.route(/\/api\/agents\/approvals\/\d+\/(approve|reject)$/, route => {
+      const [, id, d] = new URL(route.request().url()).pathname.match(/approvals\/(\d+)\/(\w+)$/);
+      decided.push([Number(id), d]);
+      return route.fulfill({ json: { ...appr(Number(id), 'goal-plan'), state: 'approved' } });
+    });
+    await page.goto(new URL('/#open=approvals', baseURL).href);
+    await page.reload();
+    const pane = page.locator('.approvals-pane');
+    const heading = pane.locator('.list-heading');
+    await page.waitForFunction(() => document.querySelectorAll('.approvals-pane .approval-row').length === 4);
+    assert.equal(await heading.innerText(), 'Latest 4 of 97 open approvals');
+    const chip = v => pane.locator(`.list-facet button[data-value="${v}"]`);
+    const chipText = async v => (await chip(v).innerText()).replace(/\s+/g, ' ').trim();
+    assert.equal(await chipText('goal-plan'), 'goal-plan 64');
+    assert.equal(await chipText('article-publish'), 'article-publish 30');
+    assert.equal(await chipText('edge'), 'edge 3');
+    assert.equal(await pane.locator('.approvals-state button[data-state="open"]').innerText().then(t => t.replace(/\s+/g, ' ').trim()), 'open 97');
+    // a kind: the rows of other kinds leave in the same frame; the request carries the kind
+    const t = await clickTimed(page, '.approvals-pane .list-facet button[data-value="goal-plan"]', '.approvals-pane .approval-row');
+    assert.equal(t.rows, 2, 'the other kinds are gone at once');
+    assert.ok(t.ms < 100, `a chip answers within 100 ms (${t.ms.toFixed(1)} ms)`);
+    assert.equal(await chip('goal-plan').getAttribute('aria-pressed'), 'true');
+    await page.waitForFunction(() => document.querySelector('.approvals-pane .list-heading')?.innerText === 'Latest 2 of 64 open goal-plan approvals');
+    assert.deepEqual(asked.at(-1).kind, ['goal-plan']);
+    assert.ok(page.url().includes('apprKind=goal-plan'), page.url());
+    // multi-select: a second kind widens to both
+    await chip('edge').click();
+    await page.waitForFunction(() => document.querySelector('.approvals-pane .list-heading')?.innerText === 'Latest 3 of 67 open goal-plan/edge approvals');
+    assert.deepEqual(asked.at(-1).kind, ['goal-plan', 'edge']);
+    await chip('edge').click();
+    await page.waitForFunction(() => document.querySelectorAll('.approvals-pane .approval-row').length === 2);
+    // the subject box asks once, after the typing pause — not once per key
+    const before = asked.length;
+    await pane.locator('.list-text').pressSequentially('zz-pw', { delay: 20 });
+    await page.waitForTimeout(900);
+    const typed = asked.slice(before).filter(a => a.subject);
+    assert.equal(typed.length, 1, JSON.stringify(asked.slice(before)));
+    assert.equal(typed[0].subject, 'zz-pw');
+    await pane.locator('.list-text').fill('');
+    await pane.locator('.list-text').press('Enter');
+    // bulk: tick every row shown, approve them — after a confirmation that names what is approved
+    await pane.locator('.approvals-bulk button', { hasText: 'select all 2 shown' }).click();
+    const dialogs = [];
+    page.on('dialog', d => { dialogs.push(d.message()); d.accept(); });
+    await pane.locator('.approvals-bulk button[data-bulk="approve"]').click();
+    await page.waitForFunction(() => !document.querySelector('.approvals-bulk button[data-bulk="approve"]')?.textContent.includes('(2)'));
+    await page.waitForTimeout(300);
+    assert.equal(dialogs.length, 1);
+    assert.match(dialogs[0], /^Approve 2 approvals \(2 goal-plan\)\?/);
+    assert.deepEqual(decided.sort(), [[7, 'approve'], [9, 'approve']]);
+    // "clear filters" empties every filter and the URL
+    await pane.locator('.list-clear').click();
+    await page.waitForFunction(() => document.querySelectorAll('.approvals-pane .approval-row').length === 4);
+    assert.ok(!page.url().includes('apprKind'), page.url());
+  });
+});
+
+test('the agent runs window: pipeline chips and the manager picker filter on the server, with their counts', async () => {
+  const run = (id, pipeline, status, managerId = null) => ({ id, pipeline, target: 'zz_a2020', status,
+    createdAt: '2026-10-01T00:00:00Z', updatedAt: '2026-10-01T00:00:00Z', managerId });
+  const all = [run('zz-r4', 'review-article', 'done', 'review'), run('zz-r3', 'enrich-source', 'failed', 'enrich'),
+    run('zz-r2', 'review-article', 'failed', 'review'), run('zz-r1', 'plan-goal', 'done')];
+  const facets = { pipeline: [['review-article', 211], ['enrich-source', 176], ['plan-goal', 8]], origin: [['manager', 380], ['person', 15]],
+    manager: [['review', 223], ['enrich', 176]], provider: [['codex', 1148], ['claude-code', 214]], model: [['codex:gpt-6.1-sol', 752]] };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/config', async route => {
+      const res = await route.fetch();
+      return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true } });
+    });
+    const asked = [];
+    await page.route(/\/api\/agents\/runs(\?|$)/, async route => {
+      const q = new URL(route.request().url()).searchParams;
+      asked.push({ pipeline: q.getAll('pipeline'), manager: q.getAll('manager'), status: q.getAll('status') });
+      await new Promise(r => setTimeout(r, 200));
+      const rows = all.filter(r => (q.getAll('pipeline').length === 0 || q.getAll('pipeline').includes(r.pipeline)) &&
+        (q.getAll('manager').length === 0 || q.getAll('manager').includes(r.managerId)));
+      const total = q.getAll('pipeline').includes('review-article') ? 211 : 395;
+      return route.fulfill({ json: rows, headers: { 'X-Total-Count': String(total), 'X-State-Counts': `done=${total - 18},failed=18`,
+        'X-Facet-Counts': facetHeader(facets) } });
+    });
+    await page.goto(new URL('/#open=runs', baseURL).href);
+    await page.reload();
+    const pane = page.locator('.runs-pane');
+    await page.waitForFunction(() => document.querySelectorAll('.runs-pane .run-row').length === 4);
+    const chip = v => pane.locator(`.list-facet button[data-value="${v}"]`);
+    assert.equal((await chip('review-article').innerText()).replace(/\s+/g, ' ').trim(), 'review-article 211');
+    assert.equal((await chip('manager').innerText()).replace(/\s+/g, ' ').trim(), 'manager 380');
+    const t = await clickTimed(page, '.runs-pane .list-facet button[data-value="review-article"]', '.runs-pane .run-row');
+    assert.equal(t.rows, 2);
+    assert.ok(t.ms < 100, `a chip answers within 100 ms (${t.ms.toFixed(1)} ms)`);
+    await page.waitForFunction(() => document.querySelector('.runs-pane .list-heading')?.innerText === 'Latest 2 of 211 review-article runs');
+    assert.deepEqual(asked.at(-1).pipeline, ['review-article']);
+    assert.ok(page.url().includes('runPipeline=review-article'), page.url());
+    // the manager picker lists the counted managers, and picking one sends it
+    const picker = pane.locator('select.list-select[data-facet="manager"]');
+    assert.deepEqual(await picker.locator('option').allInnerTexts(), ['any manager', 'review (223)', 'enrich (176)']);
+    await picker.selectOption('review');
+    await page.waitForFunction(() => document.querySelectorAll('.runs-pane .run-row').length === 2);
+    await page.waitForFunction(() => location.hash.includes('runManager=review'));
+    assert.deepEqual(asked.at(-1).manager, ['review']);
+    assert.deepEqual(asked.at(-1).pipeline, ['review-article'], 'filters add up');
+    // a state button on top of the filters: the request carries all three
+    await pane.locator('.jobs-filter button', { hasText: /^failed/ }).click();
+    await page.waitForFunction(() => document.querySelectorAll('.runs-pane .run-row').length === 1);
+    assert.deepEqual(asked.at(-1).status, ['failed']);
+  });
+});
+
+test('the jobs window: kind chips with the server\'s counts filter the list, and survive a reload', async () => {
+  const job = (id, kind, status = 'done') => ({ id, kind, status, citekey: null, createdAt: '2026-10-01T00:00:00Z', updatedAt: '2026-10-01T00:00:00Z' });
+  const all = [job('zz-j4', 'ingest'), job('zz-j3', 'media-import', 'failed'), job('zz-j2', 'ingest', 'failed'), job('zz-j1', 'agent')];
+  const facets = { kind: [['agent', 1520], ['ingest', 507], ['media-import', 18]] };
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const asked = [];
+    await page.route(/\/api\/jobs(\?|$)/, async route => {
+      const q = new URL(route.request().url()).searchParams;
+      asked.push(q.getAll('kind'));
+      await new Promise(r => setTimeout(r, 200));
+      const kinds = q.getAll('kind');
+      const rows = all.filter(j => kinds.length === 0 || kinds.includes(j.kind));
+      const total = kinds.length === 0 ? 2045 : kinds.reduce((n, k) => n + facets.kind.find(([v]) => v === k)[1], 0);
+      return route.fulfill({ json: rows, headers: { 'X-Total-Count': String(total), 'X-State-Counts': `done=${total - 2},failed=2`,
+        'X-Facet-Counts': facetHeader(facets) } });
+    });
+    await page.goto(new URL('/#open=jobs', baseURL).href);
+    await page.reload();
+    const pane = page.locator('.jobs-pane');
+    await page.waitForFunction(() => document.querySelectorAll('.jobs-pane .job-row').length === 4);
+    const chip = v => pane.locator(`.list-facet button[data-value="${v}"]`);
+    assert.equal((await chip('ingest').innerText()).replace(/\s+/g, ' ').trim(), 'OCR of an upload 507');
+    const t = await clickTimed(page, '.jobs-pane .list-facet button[data-value="ingest"]', '.jobs-pane .job-row');
+    assert.equal(t.rows, 2);
+    assert.ok(t.ms < 100, `a chip answers within 100 ms (${t.ms.toFixed(1)} ms)`);
+    await page.waitForFunction(() => document.querySelector('.jobs-pane .list-heading')?.innerText === 'Latest 2 of 507 ingest jobs');
+    assert.deepEqual(asked.at(-1), ['ingest']);
+    // the counts of the other kinds stay: they are counted over every other filter
+    assert.equal((await chip('media-import').innerText()).replace(/\s+/g, ' ').trim(), 'media-import 18');
+    await page.reload();
+    await page.waitForFunction(() => document.querySelectorAll('.jobs-pane .job-row').length === 2);
+    assert.equal(await chip('ingest').getAttribute('aria-pressed'), 'true');
+    assert.deepEqual(asked.at(-1), ['ingest'], 'the filter came back from the URL');
+  });
+});
+
 // #1798 item 5: the Articles tab reaches the rows past its first fetch (the "show more" button used to
 // vanish at 200 although the total was known), and a failed Events load says why instead of staying on
 // "Loading…". Fixed answers; nothing is written.

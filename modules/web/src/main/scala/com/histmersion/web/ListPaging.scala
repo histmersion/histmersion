@@ -55,8 +55,9 @@ object ListPaging:
   /** The window's heading: `37 jobs`, `Latest 100 of 2,431 jobs`, `Latest 100 of 412 failed jobs`.
     * `l` holds the rows the `state` filter shows, and the total is that state's [[count]] — so the
     * moment a filter changes, before its own page arrives, the heading is already right. */
-  def heading[A](l: Listing[A], singular: String, state: Option[String], stateOf: A => String): String =
-    Paging.heading(l.rows.size, count(l, state, stateOf), singular, qualifier = state)
+  def heading[A](l: Listing[A], singular: String, state: Option[String], stateOf: A => String,
+      qualifier: Option[String] = None): String =
+    Paging.heading(l.rows.size, count(l, state, stateOf), singular, qualifier = qualifier.orElse(state))
 
   /** A filter button's count: the server's count of that state over the whole list (`None` = every
     * state); the loaded rows' when the server sent none. */

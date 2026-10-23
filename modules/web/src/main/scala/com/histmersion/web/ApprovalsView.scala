@@ -3,6 +3,7 @@ package com.histmersion.web
 import com.histmersion.core.*
 import com.histmersion.core.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
 import com.raquo.laminar.api.L.*
+import com.histmersion.core.ListFilters
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -52,11 +53,46 @@ object ApprovalsView:
   def evidenceLine(a: ApprovalInfo): Option[String] =
     Option(a.evidence).filter(_.nonEmpty).filterNot(e => a.plan.exists(_.rationale == e))
 
-  /** The `state` query for the toggle: the open ones, or every one. */
-  def stateQuery(all: Boolean): Option[String] = if all then Some("all") else None
+  /** The states the filter buttons offer, in order; `all` = every state. */
+  val States: List[String] = ApprovalState.values.toList.map(_.wire) :+ "all"
 
-  /** The heading's word for what the toggle shows: `open` approvals, or every approval. */
-  def qualifier(all: Boolean): Option[String] = Option.when(!all)(ApprovalState.Open.wire)
+  /** The state a button stands for as the URL keeps it: the open ones are the default (`None`). */
+  def stateValue(button: String): Option[String] = Option.when(button != ApprovalState.Open.wire)(button)
+
+  /** The state the list shows: the open ones unless another was picked. */
+  def shownState(field: Option[String]): String = field.getOrElse(ApprovalState.Open.wire)
+
+  /** The query the window sends, from its filter fields. Pure. */
+  def filterOf(state: Option[String], kinds: List[String], by: List[String], subject: Option[String]): ListFilters.ApprovalFilter =
+    ListFilters.ApprovalFilter(state = state, kind = kinds, subject = subject, decidedBy = by)
+
+  /** The filter in the window's fields now. */
+  def currentFilter(): ListFilters.ApprovalFilter =
+    filterOf(UiState.approvalState.now(), UiState.approvalKinds.now(), UiState.approvalBy.now(), UiState.approvalSubject.now())
+
+  /** The rows a filter shows, from the rows already loaded — what the list shows the moment a state or
+    * a kind is picked, before the server's page replaces it. (The text and the decider are left to the
+    * server.) */
+  def visible(as: List[ApprovalInfo], f: ListFilters.ApprovalFilter): List[ApprovalInfo] =
+    val n = f.normalized
+    val state = shownState(n.state)
+    as.filter(a => (state == "all" || a.state == state) && (n.kind.isEmpty || n.kind.contains(a.kind)))
+
+  /** The heading's words before the noun: `open` (or the state picked) and the kinds picked. */
+  def qualifier(f: ListFilters.ApprovalFilter): Option[String] = f.qualifier
+
+  /** The approvals a bulk decision would apply to: those selected that are still shown and open. */
+  def bulkTargets(selected: Set[Long], shown: List[ApprovalInfo]): List[ApprovalInfo] =
+    shown.filter(a => selected(a.id) && isOpen(a))
+
+  /** What the confirmation of a bulk decision asks. */
+  def confirmText(d: Decision, as: List[ApprovalInfo]): String =
+    val kinds = as.groupMapReduce(_.kind)(_ => 1)(_ + _).toList.sortBy(-_._2).map((k, n) => s"$n $k").mkString(", ")
+    s"${if d == Decision.Approve then "Approve" else "Reject"} ${Plural.count(as.size, "approval")} ($kinds)? " +
+      "Each is decided as if its own button were pressed, one after another, with the same checks."
+
+  /** Who decided an approval, as its row says it (nothing while it is open). */
+  def decidedLine(a: ApprovalInfo): Option[String] = ListFilters.DecidedBy.of(a.state, a.note, a.result).map(_.describe)
 
   /** The self-check line of a draft. */
   def selfCheck(d: GoalPlans.ArticleDraft): String =
@@ -93,14 +129,26 @@ object ApprovalsView:
 
   // ── state and view ──────────────────────────────────────────────────────────────────────────────
 
+  /** The window's filter fields (they live in the URL hash). */
+  private val filterFields: List[Field[?]] =
+    List(UiState.approvalState, UiState.approvalKinds, UiState.approvalBy, UiState.approvalSubject)
+
+  /** The filter, as a signal: a change restarts the list from the newest page. */
+  private val filterSignal: Signal[ListFilters.ApprovalFilter] =
+    UiState.approvalState.signal.combineWith(UiState.approvalKinds.signal, UiState.approvalBy.signal,
+      UiState.approvalSubject.signal).map(filterOf).distinct
+
   /** The rows and "Show older" ([[PolledList]]): nothing is polled — a decision, a settled run
-    * ([[changed]]) or the toggle reloads — but the window gets the same restart when the last row shown
+    * ([[changed]]) or a filter reloads — but the window gets the same restart when the last row shown
     * is gone, and drops an answer that lands after it closed. */
   private val list = PolledList[ApprovalInfo](
-    fetch = (upTo, before) => ApiClient.approvals(stateQuery(UiState.approvalsAll.now()), Some(Limit), upTo = upTo, before = before),
+    fetch = (upTo, before) => ApiClient.approvals(currentFilter(), Some(Limit), upTo = upTo, before = before),
     id = key,
     live = (_, _) => false)
-  private val busy    = Var(Set.empty[Long])
+  private val busy     = Var(Set.empty[Long])
+  /** The open approvals ticked for a bulk decision. */
+  private val selected = Var(Set.empty[Long])
+  private val bulkBusy = Var(false)
 
   private def key(a: ApprovalInfo): String = a.id.toString
 
@@ -117,38 +165,122 @@ object ApprovalsView:
       Notices.ownWrite(com.histmersion.core.UiNotices.Board.Approvals)
     }
 
+  /** A bulk decision, after the person confirmed it: one request per approval, ONE AFTER ANOTHER,
+    * each through the very endpoint (and checks) of its own button — an approval decided meanwhile
+    * is refused (409) and the rest go on; the refusals are reported together. */
+  private def decideAll(as: List[ApprovalInfo], d: Decision): Unit =
+    bulkBusy.set(true)
+    busy.update(_ ++ as.map(_.id))
+    val done = as.foldLeft(scala.concurrent.Future.successful(List.empty[String])) { (acc, a) =>
+      acc.flatMap(errs => ApiClient.decide(a.id, d, None).transform(r =>
+        scala.util.Success(r.failed.toOption.fold(errs)(e => errs :+ s"#${a.id}: ${e.getMessage}"))))
+    }
+    done.foreach { errs =>
+      bulkBusy.set(false)
+      busy.update(_ -- as.map(_.id))
+      selected.set(Set.empty)
+      list.failure.set(Option.when(errs.nonEmpty)(s"${Plural.count(errs.size, "approval")} not decided: ${errs.mkString("; ")}"))
+      refresh()
+      Notices.ownWrite(com.histmersion.core.UiNotices.Board.Approvals)
+    }
+
+  /** The listing with the rows the filter shows — at once, from the rows loaded; the server's page
+    * replaces them a moment later. */
+  private def shownSignal: Signal[(ListPaging.Listing[ApprovalInfo], ListFilters.ApprovalFilter)] =
+    list.listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), f))
+
+  private def stateButtons: HtmlElement =
+    def count(l: ListPaging.Listing[ApprovalInfo], s: String) =
+      ListPaging.count(l, Option.when(s != "all")(s), _.state)
+    div(
+      cls := "btn-group jobs-filter approvals-state",
+      States.map { s =>
+        button(
+          typ := "button",
+          cls := "btn btn--toggle",
+          dataAttr("state") := s,
+          aria.pressed <-- UiState.approvalState.signal.map(v => (shownState(v) == s).toString),
+          span(s),
+          child.text <-- list.listing.signal.map(l => { val n = count(l, s); if n > 0 then s" ${Paging.grouped(n)}" else "" }),
+          onClick --> (_ => UiState.set(UiState.approvalState := stateValue(s))())
+        )
+      }
+    )
+
+  private def bulkBar: HtmlElement =
+    val targets = selected.signal.combineWith(shownSignal).map((sel, l, _) => bulkTargets(sel, l.rows))
+    val openShown = shownSignal.map(_._1.rows.filter(isOpen))
+    div(
+      cls := "btn-group approvals-bulk",
+      cls("is-hidden") <-- openShown.combineWith(Auth.writable).map((o, w) => o.isEmpty || !w),
+      button(typ := "button", cls := "btn btn--sm", disabled <-- bulkBusy.signal,
+        child.text <-- openShown.map(o => s"select all ${o.size} shown"),
+        onClick(_.sample(openShown)) --> (o => selected.set(o.map(_.id).toSet))),
+      button(typ := "button", cls := "btn btn--sm btn--ghost", disabled <-- targets.map(_.isEmpty), "unselect",
+        onClick --> (_ => selected.set(Set.empty))),
+      List(Decision.Approve, Decision.Reject).map { d =>
+        button(typ := "button", cls := (if d == Decision.Approve then "btn btn--sm btn--primary" else "btn btn--sm"),
+          dataAttr("bulk") := d.wire,
+          disabled <-- targets.combineWith(bulkBusy.signal).map((t, b) => t.isEmpty || b),
+          child.text <-- targets.map(t => s"${d.wire} selected (${t.size})"),
+          onClick(_.sample(targets)) --> { t =>
+            if t.nonEmpty && org.scalajs.dom.window.confirm(confirmText(d, t)) then decideAll(t, d)
+          })
+      }
+    )
+
   def pane: HtmlElement =
     div(
       cls := "tool-pane approvals-pane",
       list.lifecycle,
       changed.events --> (_ => refresh()),
-      UiState.approvalsAll.signal.changes --> (_ => list.restart()),
+      filterSignal.changes --> (_ => { selected.set(Set.empty); list.restart() }),
+      // a tick outlives its row: once the row is gone or decided it is not a bulk target
+      list.listing.signal.map(_.rows.filter(isOpen).map(_.id).toSet) --> (ids => selected.update(_.intersect(ids))),
       div(cls := "pane-bar",
-        LayerToggle(Icon.Approvals, "decided too", UiState.approvalsAll.signal,
-          on => UiState.set(UiState.approvalsAll := on)()),
+        stateButtons,
         button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart()))),
-      p(cls := "muted", "Changes agent runs proposed. Approving applies the change to the source; " +
+      div(cls := "toolbar list-filters",
+        ListFilterBar.chips("kind", list.listing.signal.map(_.page.facet("kind")), UiState.approvalKinds),
+        ListFilterBar.chips("decided by", list.listing.signal.map(_.page.facet("decidedBy")), UiState.approvalBy),
+        div(cls := "btn-group",
+          ListFilterBar.text("subject: a goal, article, manager or citekey", UiState.approvalSubject),
+          ListFilterBar.clearButton(filterFields))),
+      p(cls := "muted", "Changes agent runs proposed. Approving applies the change; " +
         "rejecting keeps it on record and changes nothing."),
       ErrorLine(list.failure.signal),
-      child.maybe <-- list.listing.signal.combineWith(UiState.approvalsAll.signal, list.loaded.signal).map { (l, all, isLoaded) =>
-        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading", ListPaging.heading(l, "approval", qualifier(all), _.state)))
+      bulkBar,
+      child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
+        val st = shownState(f.normalized.state)
+        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading",
+          ListPaging.heading(l, "approval", Option.when(st != "all")(st), _.state, qualifier(f))))
       },
-      child.maybe <-- list.listing.signal.combineWith(UiState.approvalsAll.signal, list.loaded.signal).map { (l, all, isLoaded) =>
+      child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
-        else Option.when(l.rows.isEmpty)(p(cls := "muted", if all then "No approvals yet." else "Nothing waits for a decision."))
+        else Option.when(l.rows.isEmpty)(p(cls := "muted",
+          if f.normalized != ListFilters.ApprovalFilter() then "No approvals match the filter."
+          else "Nothing waits for a decision."))
       },
       // keyed by the row itself: an unchanged row keeps its element (and the note being typed in it)
-      ul(cls := "job-list approval-list", children <-- list.listing.signal.map(_.rows).split(identity)((a, _, _) => row(a))),
+      ul(cls := "job-list approval-list", aria.busy <-- list.loading,
+        children <-- shownSignal.map(_._1.rows).split(identity)((a, _, _) =>
+          row(a, Option.when(isOpen(a))(Pick(selected.signal.map(_(a.id)), on => selected.update(s => if on then s + a.id else s - a.id)))))),
       list.olderButton
     )
 
+  /** A row's tick box for a bulk decision: whether it is ticked, and what a click does. */
+  private[web] final case class Pick(on: Signal[Boolean], set: Boolean => Unit)
+
   /** One approval: what it would change, the evidence, and approve / reject. Shared with the goal
     * window, which shows the open plan of its goal. */
-  private[web] def row(a: ApprovalInfo): HtmlElement =
+  private[web] def row(a: ApprovalInfo, pick: Option[Pick] = None): HtmlElement =
     // the note being typed is this row's own until a decision sends it
     val note = Var("")
     li(
       cls := s"job-row approval-row approval-${a.state}",
+      dataAttr("kind") := a.kind,
+      pick.map(pk => child.maybe <-- Auth.writable.map(w => Option.when(w)(input(typ := "checkbox", cls := "approval-pick",
+        aria.label := s"select approval ${a.id}", checked <-- pk.on, onClick.mapToChecked --> (c => pk.set(c)))))),
       span(cls := s"job-state state-${a.state}", a.state),
       div(
         cls := "job-main",
@@ -183,7 +315,9 @@ object ApprovalsView:
           span(s"#${a.id}"),
           a.runId.map(id => span(" · ", button(typ := "button", cls := "link-btn", s"run ${id.take(8)}",
             onClick --> (_ => WindowManager.open(WindowKey.Run(id)))))),
-          span(s" · proposed ${a.createdAt}")),
+          span(s" · ${a.kind}"),
+          span(s" · proposed ${a.createdAt}"),
+          decidedLine(a).map(d => span(cls := "approval-decided", s" · $d"))),
         Option.when(isOpen(a))(div(
           cls := "approval-actions",
           child <-- Auth.writable.map { w =>

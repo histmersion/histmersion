@@ -201,8 +201,10 @@ object GoalsView:
     def refresh(): Unit =
       ApiClient.goalView(slug).onComplete(_.fold(e => failure.set(Some(e.getMessage)), v => { failure.set(None); view.set(Some(v)) }))
       if RunsView.enabled.now() then
-        ApiClient.agentRuns(None, Some(RunLimit), Some(slug)).foreach(r => runs.set(r._1))
-      ApiClient.approvals(None, Some(ApprovalsView.Limit)).foreach(a => approvals.set(a._1))
+        ApiClient.agentRuns(ListFilters.RunFilter(goal = Some(slug)), Some(RunLimit)).foreach(r => runs.set(r._1))
+      // the goal's own open plan, filtered on the server (it used to be looked for among the newest 100 open approvals)
+      ApiClient.approvals(ListFilters.ApprovalFilter(kind = List(ApprovalKind.GoalPlan.wire), goal = Some(slug)),
+        Some(ApprovalsView.Limit)).foreach(a => approvals.set(a._1))
 
     def write[A](what: String)(f: => scala.concurrent.Future[A]): Unit =
       busy.set(true)

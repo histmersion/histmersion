@@ -116,6 +116,12 @@ code only where you set the approval mode to `checked` or `auto`
 ([Approvals](approvals.md)). It never resumes a manager **you** paused, and never overwrites a
 setting you chose.
 
+To audit what it decided, list the approvals it decided — in the approvals window pick the `all` state
+and the **decided by: autopilot** chip, or run
+`histmersion agent approvals --state all --decided-by autopilot` (each note says why). The runs its
+managers started are `histmersion agent runs --origin manager`, or one manager's with
+`--manager seed:<goal>`.
+
 ## The limits that hold everything
 
 - `agents.max-concurrent-runs` (4) — runs at once, across every manager;

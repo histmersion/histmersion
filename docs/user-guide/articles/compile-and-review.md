@@ -75,6 +75,8 @@ the `tasks` list for that article.
 
 ```bash
 histmersion agent runs                     # newest first
+histmersion agent runs --pipeline review-article --status failed --since 7d
+histmersion agent runs --manager seed:bronze-age-tin --provider codex
 histmersion agent show <run-id> --messages # every step, its tokens and cost, and the full trace
 histmersion agent pause <run-id>           # before its next step
 histmersion agent resume <run-id> --budget-usd 3.0   # finished steps are replayed, not re-run
@@ -86,7 +88,18 @@ Useful flags of `agent run`: `--dry-run` (every read and model step, but nothing
 is recorded on its step instead), `--budget-usd` / `--budget-tokens` (this run's cap), `--model` and
 `--model-for role=provider:model` (a different model for this run).
 
-The web page shows the same under **agent runs**.
+`agent runs` narrows the list on the server: `--status`, `--pipeline`, `--origin` (who started the
+run: `person`, `manager`, `run`, `ingest`, `scheduler`) and `--manager` take one value or several
+(repeat the option, or comma-separate); `--model` / `--provider` find the runs a step of which used
+that model or provider; `--goal`, `--subject` (text in the target), `--since` / `--until`
+(`2026-10-01`, or `7d` / `12h` ago) and `--json` (the raw list) complete it. The listing ends with how
+many runs each pipeline, origin, manager, provider and model has under the other filters.
+
+The web page shows the same under **agent runs**: the state buttons, a chip per pipeline and per
+origin with its count, pickers for the manager, the provider and the model, and boxes for a goal, the
+target and the dates. The **jobs** window lists every background job the same way — a chip per kind
+(text recognition, imports, agent runs, …), the state, a text box and the dates — and
+`histmersion jobs --kind ingest --status failed --since 2026-10-01` does it on the command line.
 
 ## The same with your own assistant
 

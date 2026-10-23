@@ -328,7 +328,7 @@ const shots = {
       const win = await placeWindow(page, { x: 250, y: 20, w: 820, h: 700 });
       await shoot(await win.boundingBox());
     } },
-  'approvals': { hash: 'open=approvals&apprAll=true&from=-1700&to=-1000',
+  'approvals': { hash: 'open=approvals&apprState=all&from=-1700&to=-1000',
     run: async (page, shoot) => {
       const win = await placeWindow(page, { x: 250, y: 20, w: 820, h: 760 });
       await shoot(await win.boundingBox());
