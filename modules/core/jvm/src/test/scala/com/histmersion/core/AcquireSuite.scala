@@ -181,3 +181,16 @@ class AcquireSuite extends munit.FunSuite:
     assertEquals(Csv.parse("a,b\n1,\"he said \"\"hi\"\"\"")(1), List("1", """he said "hi""""))
     assertEquals(Csv.parse("a\n\n\nb"), List(List("a"), List("b"))) // blank lines dropped
     assertEquals(Csv.parse(""), Nil)
+
+  test("browserDownloadText: an open-access work no script may fetch, as a download in the browser (#1581)"):
+    val w = WorkRef(title = Some("Archaeology and Religion in Late Bronze Age Canaan"), year = Some(2019),
+      authors = List("Aaron Greener"), isOa = true, oaStatus = Some("gold"), oaUrl = Some("https://www.mdpi.com/2077-1444/10/4/258/pdf"))
+    assertEquals(Acquire.browserDownloadText(w, "10.3390/rel10040258", "greener2019_archaeology"), Some(
+      "Aaron Greener (2019). Archaeology and Religion in Late Bronze Age Canaan. https://doi.org/10.3390/rel10040258 — " +
+        "gold open access at https://www.mdpi.com/2077-1444/10/4/258/pdf, but no script may download it: download it in the " +
+        "browser, then histmersion ingest <file> --citekey greener2019_archaeology"))
+    // the DOI link is not repeated as the location; no status says just "open access"; a closed work gets none
+    val doiOnly = w.copy(oaStatus = None, oaUrl = Some("https://doi.org/10.3390/rel10040258"), authors = List("A", "B"))
+    assert(Acquire.browserDownloadText(doiOnly, "10.3390/REL10040258", "k").exists(t =>
+      t.startsWith("A et al. (2019).") && t.contains("— open access, but") && !t.contains(" at https://doi.org")))
+    assertEquals(Acquire.browserDownloadText(w.copy(isOa = false), "10.3390/rel10040258", "k"), None)
