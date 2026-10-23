@@ -10,7 +10,7 @@ build/test/run workflow.
 
 ## Toolchain
 
-Pinned in `.sdkmanrc`: **GraalVM CE 25.0.1**, sbt 2.0.7, Scala 3.8.
+Pinned in `.sdkmanrc`: **GraalVM CE 25.0.1**, sbt 2.0.11, Scala 3.8.
 
 ```bash
 sdk env install   # once

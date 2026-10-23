@@ -22,7 +22,12 @@ histmersion calibre gaps --limit 20
 histmersion calibre sync                 # dry run: exactly what --apply would push
 ```
 
-A source is a gap when it has a stored original and `provenance != calibre` and no `calibreId` yet.
+A source is a gap when it has an original to push — stored on the server (`original: stored`) or
+under `cli.calibre.originals-dir/<citekey>/` on this host (`local`) — and `provenance != calibre`
+and no `calibreId` yet. A record with no fetched file (`none`: a citation-graph stub, a
+metadata-and-abstract record) is not a gap: it is one line ("N records without a fetched file — not
+counted; see the acquire list"), `--quiet` ignores it, and `--json` lists it with `counted: false`.
+Getting its file is an acquisition, not a Calibre sync.
 
 ## 2. Push them (Calibre GUI MUST be closed)
 
@@ -34,8 +39,9 @@ histmersion calibre push <citekey>                   # just one
 
 Each push adds the file to Calibre with title/authors/DOI/tags from the database and records the
 `calibreId` back on the source. The file is the original the server stored, downloaded for the push
-(the `original` column of `gaps`); a gap whose original the server does not hold is skipped, and
-goes in with `histmersion calibre push <citekey> --file <path>`. If the GUI is open the command refuses — ask the user to close it,
+(the `original` column of `gaps`), or the host file under `cli.calibre.originals-dir`. A record with
+no file anywhere is not pushed and not reported as skipped; once you have its file it goes in with
+`histmersion calibre push <citekey> --file <path>`. If the GUI is open the command refuses — ask the user to close it,
 then re-run. Do not work around it.
 
 When a record that is already in Calibre changes its title or authors (a chapter split out of a

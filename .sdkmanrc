@@ -1,5 +1,5 @@
 # Reproducible toolchain — `sdk env install` then `sdk env` (auto-switches if sdkman_auto_env=true).
 # GraalVM CE ships native-image, which both binaries are built with.
 java=25.0.1-graalce   # tapir 1.13.x pulls ox 1.0.x, which no longer extends StructuredTaskScope (JEP 505) — JDK 25 is fine
-sbt=2.0.7
-scala=3.8.0
+sbt=2.0.11
+scala=3.8.4
