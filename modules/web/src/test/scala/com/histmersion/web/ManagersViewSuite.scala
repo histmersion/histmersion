@@ -12,6 +12,7 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(ManagersView.badge(ManagerInfo("review", "review", statusNote = Some("starved: skeptic chain below its plan floor"))), "starved")
     assertEquals(ManagersView.badge(ManagerInfo("review", "review", statusNote = Some("at capacity (2 runs in flight, 3 pending)"))), "at capacity")
     assertEquals(ManagersView.badge(ManagerInfo("review", "review", statusNote = Some("idle"))), "idle")
+    assertEquals(ManagersView.badge(ManagerInfo("seed:g", "seed", statusNote = Some("focus: its goal waits for a slot — idle"))), "queued")
     assertEquals(ManagersView.badge(ManagerInfo("review", "review", statusNote = Some("3 pending"))), "active")
 
   test("item actions by status"):

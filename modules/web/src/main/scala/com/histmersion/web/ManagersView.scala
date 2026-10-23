@@ -30,6 +30,7 @@ object ManagersView:
     else if note.startsWith("budget") then "budget"
     else if note.startsWith("at capacity") then "at capacity"
     else if note == "idle" then "idle"
+    else if note.startsWith("focus:") then "queued"
     else "active"
 
   /** What a person can do to this item: by its status — but an item the autopilot's focus holds is not

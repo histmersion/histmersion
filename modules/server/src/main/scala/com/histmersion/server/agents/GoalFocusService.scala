@@ -45,6 +45,13 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
   /** The active goals now, as the last pass decided them (None: not in force). */
   def activeGoals: Option[Set[String]] = current
 
+  /** The unfinished goals the last pass did NOT make active (their model items wait). */
+  @volatile private var queued: Set[String] = Set.empty
+
+  /** The status line of a seeding manager or watcher whose goal waits for a focus slot (else `note`). */
+  def statusNote(goal: Option[String], note: String): String =
+    goal.filter(g => current.isDefined && queued(g)).fold(note)(_ => s"focus: its goal waits for a slot — $note")
+
   // ── the facts ──────────────────────────────────────────────────────────────────────────────────
 
   /** Does only a person decide an approval of `kind` opened by a run of a manager whose `autoApprove` is
@@ -79,6 +86,7 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
   def tick(now: Instant): List[String] =
     if !inForce then
       current = None
+      queued = Set.empty
       val released = ManagerRepo.focusReleaseAll(ds)
       val cleared  = FocusRepo.clearActive(ds, notInForce, now)
       if released + cleared == 0 then Nil
@@ -91,6 +99,7 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       val r    = read()
       val plan = GoalFocus.select(r.facts, settings(r, cap._1))
       current = Some(plan.activeSet)
+      queued = r.facts.filter(f => !GoalFocus.finished(f.status) && !plan.activeSet(f.slug)).map(_.slug).toSet
       val changes = record(plan, r, now) ++ applyHolds(plan, r)
       if changes.nonEmpty then log(s"autopilot focus: ${changes.mkString("; ")}".take(1000))
       changes

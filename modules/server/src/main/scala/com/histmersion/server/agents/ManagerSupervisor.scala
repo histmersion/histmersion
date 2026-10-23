@@ -645,8 +645,8 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
     val started = go(plans.map((m, s, pending, due, _, _, cap) => (m, s, pending, cap, due)), room, Nil)
     plans.foreach { (m, _, pending, due, starved, blocked, cap) =>
       val mine = started.count(_ == m.id)
-      val note = ManagerPolicy.statusNote(State.Active, starved, math.max(0, cap - mine), pending.size - mine,
-        due.size - mine, ManagerRepo.inFlight(ds, m.id), blocked)
+      val note = agents.focus.statusNote(m.goal, ManagerPolicy.statusNote(State.Active, starved, math.max(0, cap - mine),
+        pending.size - mine, due.size - mine, ManagerRepo.inFlight(ds, m.id), blocked))
       ManagerRepo.setStatusNote(ds, m.id, note)
       // a starved (or budget-blocked) manager says so once per change, not every tick
       val block = blocked.orElse(starved.map(s => s"starved: $s"))
