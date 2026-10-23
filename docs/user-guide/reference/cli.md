@@ -132,15 +132,15 @@ hand.
 | `histmersion agent doctor [--offline]` | Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login |
 | `histmersion agent probe [--model <string>] <citekey>` | One live model call with one read-only tool (get_source) and a typed answer, checked against the record |
 | `histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--fix] [--rounds <integer>] [--acquire-item <integer>] [--title <string>] [--kind <string>] [--query <string>] [--topic <string>]... [--tag <string>]... [--goal <string>] [--dry-run] [--model-for <string>]... [--follow] <pipeline> <target>` | Start a pipeline on a target (enrich-source &lt;source&gt;, review-article &lt;article&gt;, plan-goal &lt;goal&gt;, compile-article &lt;article&gt;, currency-check &lt;goal&gt;, acquisition-sweep &lt;goal&gt;, infer-filter &lt;article&gt;, hint-effect &lt;manager&gt;, propose-articles &lt;goal&gt;) |
-| `histmersion agent runs [--status <string>] [--limit <integer>] [--goal <string>] [--before <string>]` | Agent runs, newest first |
+| `histmersion agent runs [--status <string>]... [--pipeline <string>]... [--manager <string>]... [--goal <string>] [--model <string>]... [--provider <string>]... [--origin <string>]... [--since <string>] [--until <string>] [--subject <string>] [--limit <integer>] [--before <string>] [--json]` | Agent runs, newest first, filtered on the server |
 | `histmersion agent show [--messages] [--follow] <id>` | One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace) |
 | `histmersion agent compare [--json] <run-id>...` | Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, the first call's input and the turns, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share) |
 | `histmersion agent pause <id>` | Pause a run before its next step |
 | `histmersion agent resume [--budget-usd <floating-point>] [--budget-tokens <integer>] <id>` | Resume a paused run (finished steps are replayed, not re-run) |
 | `histmersion agent cancel <id>` | Cancel a run |
-| `histmersion agent approvals [--state <string>] [--limit <integer>] [--before <string>]` | Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish); the open ones by default |
-| `histmersion agent approve [--note <string>] <id>` | Approve a proposed change: a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it |
-| `histmersion agent reject [--note <string>] <id>` | Reject a proposed change (it stays on record) |
+| `histmersion agent approvals [--state <string>] [--kind <string>]... [--subject <string>] [--goal <string>] [--decided-by <string>]... [--limit <integer>] [--before <string>] [--json]` | Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish, …), filtered on the server; the open ones by default |
+| `histmersion agent approve [--note <string>] <id>...` | Approve proposed changes (one or more ids): a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it |
+| `histmersion agent reject [--note <string>] <id>...` | Reject proposed changes (one or more ids; they stay on record) |
 | `histmersion agent managers [--json]` | The process managers: each one's state, items, runs in flight, status line and last event |
 | `histmersion agent manager new [--goal <string>] [--config <string>]... [--cron <string>] [--active] [--json] <review|enrich|seed|watch>` | Create a manager: review (library-wide, id 'review'), enrich (library-wide, id 'enrich'), seed --goal g (id 'seed:g'; starts by proposing the area's articles), watch --goal g (id 'watch:g'; an acquisition sweep and a currency check on its cron, weekly by default; auto-ingest of legal open access only with --config auto-ingest=on); created paused |
 | `histmersion agent manager status [--json]` | The manager: items in flight with their runs, hints, newest events |
@@ -198,7 +198,7 @@ hand.
 | `histmersion calibre gaps [--quiet] [--limit <integer>] [--json]` | List sources missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook) |
 | `histmersion reocr [--quality] [--no-wait] <citekey>` | Convert a source's stored original again (e.g. under the slow, accurate OCR path) |
 | `histmersion assets <citekey>` | The figures stored with a source, and the URLs they are served at |
-| `histmersion jobs [--status <string>] [--limit <integer>] [--before <string>] [<id>]` | Recent OCR jobs, or one job by id |
+| `histmersion jobs [--status <string>]... [--kind <string>]... [--since <string>] [--until <string>] [--subject <string>] [--limit <integer>] [--before <string>] [--json] [<id>]` | Recent background jobs (OCR, imports, agent runs, …), filtered on the server, or one job by id |
 | `histmersion config path` | Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about |
 | `histmersion config reload [--json]` | Make the server read its config file again and apply it in place, no restart (restart-only settings are listed, not applied) |
 | `histmersion basemap status [--json]` | What is downloaded, where, the free space there, and which styles lack data |
