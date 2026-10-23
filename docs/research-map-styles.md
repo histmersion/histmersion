@@ -444,7 +444,7 @@ What the comparison shows:
   at the edge of the budget; keep B short.
 - **Styles in JSON** instead of the checked HOCON document: lose the hot-reload of a user style file
   (rarely used) — or keep it, pointing at a MapLibre style JSON.
-- **Land cover only to zoom 7** in the Protomaps build: drawn overzoomed through its own source; beyond z9
+- **Land cover only to zoom 7** in the Protomaps build: drawn overzoomed through its own source (as built: at every zoom, see above); beyond z9
   OSM land use is mapped unevenly (the 2026-10-19 note) — *Physical* uses only forest from it, faintly.
 
 ---
@@ -511,6 +511,22 @@ budgets of their own (`eventLayerSoftware`, `readableMapSoftware`, `physicalMapS
 tasks, drawing time; frame rate measured but not budgeted); the GPU budgets are unchanged. Against
 Leaflet's canvas map, which ran these budgets in software, the events layer's zoom is the one
 measurable loss there (11 % dropped against 8 %). The tightest GPU margin is the same path (5.9–7.4 %).
+
+### Land cover at every zoom (2026-10-23, after the user's review)
+
+The user found no land cover close in ("not displayed on zoom"): the styles faded Protomaps' `landcover`
+(satellite classes, only to MapLibre zoom 7) out by zoom 8–10, and OSM's `landuse` drew only forests,
+grass, scrub and sand where people mapped them. Now in both styles the `lc` source (`maxzoom` 7) is
+**overzoomed at every zoom** as the base, and OSM's polygons lie over it once they exist — forest and wood,
+scrub and heath, grassland, meadow and grass, farmland, orchard and vineyard, bare rock and scree, sand and
+beach, wetland, glacier. Readable keeps Carto's pale colours (satellite classes 0.3–0.5 past zoom 9.5,
+built-up faded out where OSM's own land use takes over); Physical keeps veils (OSM ≤ 0.18, satellite
+classes 0.08–0.22 past zoom 9, because their coarse polygons are not cut at the coast and would otherwise
+show as a band over the sea). Checked at Mycenae (app zoom 12), Naxos (10), Euboea (9) and the Nile delta
+(8–10, from a 1.2 MB scratch extract, deleted after): the delta's farmland reads against the desert in
+both. A browser test samples 77 points of the Argolid at app zooms 7, 9, 11 and 13 in both styles and
+asks that a land-cover fill with opacity ≥ 0.05 lies under at least 30 % of the land points (now 100 %;
+the earlier styles had 12–17 % in Readable and 0 % in Physical at zoom 13).
 
 ### Risks left
 

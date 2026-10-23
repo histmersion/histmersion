@@ -69,6 +69,7 @@ final class FakeSurface(w: Double = 1000, h: Double = 600, caps: Capabilities = 
   def closePopups(): Unit = ()
   def capabilities: Capabilities = caps
   def drawnNames: Seq[String] = Nil
+  def baseMapAreasAt(p: ScreenPt): Seq[String] = Nil
   def destroy(): Unit = ()
 
 /** The shapes of a [[FakeSurface]]: what is drawn, and how often the geometry was sent again. */

@@ -218,6 +218,8 @@ trait MapSurface:
   def closePopups(): Unit
   /** The base map's names placed in the view now, their text as drawn (the regressions read it). */
   def drawnNames: Seq[String]
+  /** The base map's areas drawn under a point, as `layer:kind` (the regressions check the land cover). */
+  def baseMapAreasAt(p: ScreenPt): Seq[String]
   /** The browser's own capabilities, as the surface found them. */
   def capabilities: Capabilities
   /** Take the map away (its element stays). */

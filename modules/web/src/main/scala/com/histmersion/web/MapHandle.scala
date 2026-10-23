@@ -48,6 +48,8 @@ object MapHandle:
         : js.Function1[js.Array[Double], js.Array[String]],
       /** The base map's names placed in the view now. */
       names = (() => s.drawnNames.toJSArray): js.Function0[js.Array[String]],
+      /** The base map's areas drawn at a map point: `layer:kind` (land cover, land use, water…). */
+      areasAt = ((at: js.Array[Double]) => s.baseMapAreasAt(s.project(ll(at))).toJSArray): js.Function1[js.Array[Double], js.Array[String]],
       /** How many points the cluster layer holds, and how many zooms animated its bubbles. */
       points = (() => MapView.dots.size): js.Function0[Int],
       clusterAnimations = (() => MapView.dots.animations): js.Function0[Int],
