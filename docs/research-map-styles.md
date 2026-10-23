@@ -293,6 +293,16 @@ Carto reference). Run: `npm ci --prefix spike/map-styles`, a test server with an
   depth cells never spill onto land and need no fade-out (they stay readable at z9–12, softer: 0.92 → 0.85);
   the land's elevation tint is transparent at sea level so the depths show through. A coastline `#5f8db5` at
   85 %, 0.45 → 1.1 px.
+  Revised again 2026-10-23, when the user still saw "hardly any depth" in the Aegean: its depths are mostly
+  0–2 500 m, and that range spanned only `#cde4f3` → `#6b99c1`, pale blues a few steps apart. The ramp now
+  spends its range where the Mediterranean's depths are: the shelf `#d3e8f6` → `#b3d3ec` (the background
+  the same pale), a clear step at the shelf edge to `#93bce0`, then `#7aa9d4` (500 m), `#6597c7` (1 000 m),
+  `#4f82b8` (2 000 m), `#3f70a8` (3 000 m) and `#2c5585` (6 000 m), at 1 → 0.9 opacity by zoom. The water
+  names keep their pale halo, and the names' contrast regression (≥ 4.5:1 through the halo) passes
+  unchanged. A **Sea depth** option (both styles) turns the depth layers on and off (`visibility`, so their
+  tiles are not even asked for when off): on in Physical; off in Readable, where it adds a light shading
+  (`#b9dde8` over the shelf → `#88b6ca` at 5 000 m) under Carto's flat `#aad3df` — Readable's water fill
+  therefore leaves the `ocean` polygons to the background, the same colour.
 - Water names `#123552` with a 1.6 px pale halo `rgba(214,233,246,.85)`: 9.6:1 on the shelf, 5.2:1 at
   1 000 m, and ≥ 8.5:1 against the halo over the deepest colour (the text alone on 3 000 m water would be
   3.5:1 — the halo carries it there).

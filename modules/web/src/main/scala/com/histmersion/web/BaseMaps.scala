@@ -13,7 +13,7 @@ import org.scalajs.dom
   *    `local` (`ui.base-map-source`): then it asks no other host for anything.
   *
   * One menu chooses among them; a small options panel (names on or off, their language, contours in
-  * Physical) lies over the vector styles, per viewer ([[UiState.mapOptions]]). The map surface draws
+  * Physical, the sea's depth) lies over the vector styles, per viewer ([[UiState.mapOptions]]). The map surface draws
   * the choice ([[BaseMapSpec]]); without a GPU ([[Capabilities.software]]) the vector styles are drawn
   * without their relief — the cheapest drawing — and a line of the notice says so. */
 object BaseMaps:
@@ -111,7 +111,8 @@ object BaseMaps:
         s.filter(_.available) match
           case Some(st) =>
             val lang = prefs.language.getOrElse(ui.mapLanguage)
-            val spec = BaseMapSpec.Vector(v, st, lang, prefs.names.getOrElse(true), prefs.contours.getOrElse(true), reduced = soft)
+            val spec = BaseMapSpec.Vector(v, st, lang, prefs.names.getOrElse(true), prefs.contours.getOrElse(true),
+              prefs.seaDepth(v), reduced = soft)
             val lacking = st.missing(b.wire)
             val notice = if lacking.nonEmpty then (lackingNotice(lacking), true) else (PastNotice, false)
             (spec, Some(notice), st.mapMaxZoom)
@@ -243,7 +244,7 @@ object BaseMaps:
       aria.controls := "map-options",
       aria.expanded <-- open.signal,
       disabled <-- onVector.map(!_),
-      title <-- onVector.map(b => if b then "Map options: names, their language, contours" else "Map options — for Readable and Physical"),
+      title <-- onVector.map(b => if b then "Map options: names, their language, contours, the sea's depth" else "Map options — for Readable and Physical"),
       Icon(Icon.MapContours),
       onClick --> { _ => open.update(!_) }
     )
@@ -299,11 +300,21 @@ object BaseMaps:
       else None
     }
 
+  /** Why the sea cannot be coloured by its depth, if it cannot: with a GPU, from the sea floor
+    * (`basemap fetch --layer bathymetry`). Pure. */
+  def seaDepthWhy(b: BaseMap, s: Option[BasemapStatus], soft: Boolean): Option[String] =
+    if b.vector.isEmpty then Some("Readable and Physical draw the sea's depth")
+    else if soft then Some("not drawn without a GPU")
+    else if !s.exists(_.layers.exists(l => l.layer == BasemapLayer.Bathymetry.wire && l.present && l.error.isEmpty)) then
+      Some(s"no sea floor downloaded — `${Basemap.FetchCommand} --layer bathymetry`")
+    else None
+
   private def panel: HtmlElement =
     val why = shown.signal.combineWith(status.signal, software.signal).map(contoursWhy.tupled)
     val note = why.combineWith(status.signal, view.signal).map { (w, s, v) =>
       if w.isDefined then None else v.flatMap((z, b) => contoursNote(s, z, b))
     }
+    val depthWhy = shown.signal.combineWith(status.signal, software.signal).map(seaDepthWhy.tupled)
     div(
       idAttr := "map-options",
       cls := "map-options",
@@ -332,7 +343,15 @@ object BaseMaps:
             onInput.mapToChecked --> (on => setPrefs(_.copy(contours = Option.when(!on)(false))))),
           span("Contour lines")),
         child.maybe <-- why.combineWith(note).map((w, n) => w.orElse(n).map(t => div(cls := "map-option-why map-option-contours-why", t)))),
-
+      div(cls := "map-option",
+        cls("is-disabled") <-- depthWhy.map(_.isDefined),
+        label_(
+          input(typ := "checkbox", cls := "map-option-depth", disabled <-- depthWhy.map(_.isDefined),
+            checked <-- UiState.mapOptions.signal.combineWith(shown.signal, depthWhy).map((p, b, w) =>
+              w.isEmpty && b.vector.exists(p.seaDepth)),
+            onInput.mapToChecked --> (on => shown.now().vector.foreach(v => setPrefs(_.withSeaDepth(v, on))))),
+          span("Sea depth")),
+        child.maybe <-- depthWhy.map(_.map(w => div(cls := "map-option-why map-option-depth-why", w)))),
       div(cls := "map-option map-option-row",
         button(typ := "button", cls := "btn btn--ghost btn--sm map-options-reset", "Reset",
           disabled <-- UiState.mapOptions.signal.map(_ == MapPrefs()),

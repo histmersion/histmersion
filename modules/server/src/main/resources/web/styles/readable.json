@@ -35,6 +35,16 @@
       ],
       "minzoom": 0,
       "maxzoom": 8
+    },
+    "sea": {
+      "type": "raster-dem",
+      "encoding": "terrarium",
+      "tileSize": 256,
+      "tiles": [
+        "/api/basemap/bathymetry/{z}/{x}/{y}?v={version}"
+      ],
+      "minzoom": 0,
+      "maxzoom": 7
     }
   },
   "layers": [
@@ -43,6 +53,40 @@
       "type": "background",
       "paint": {
         "background-color": "#aad3df"
+      }
+    },
+    {
+      "id": "sea-depth",
+      "type": "color-relief",
+      "source": "sea",
+      "layout": {
+        "visibility": "none"
+      },
+      "paint": {
+        "color-relief-color": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "elevation"
+          ],
+          -5000,
+          "#88b6ca",
+          -2500,
+          "#92c0d2",
+          -1000,
+          "#9cc8d9",
+          -201,
+          "#a5cfdd",
+          -199,
+          "#b0d7e3",
+          -1,
+          "#b9dde8",
+          0,
+          "#b9dde8"
+        ],
+        "color-relief-opacity": 1
       }
     },
     {
@@ -316,6 +360,7 @@
             [
               "literal",
               [
+                "ocean",
                 "swimming_pool",
                 "fountain"
               ]
@@ -1818,7 +1863,8 @@
       "osm": "vector",
       "lc": "vector",
       "ne": "labels",
-      "dem": "terrain"
+      "dem": "terrain",
+      "sea": "bathymetry"
     }
   }
 }

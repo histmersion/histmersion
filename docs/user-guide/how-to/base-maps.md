@@ -7,8 +7,8 @@ from the internet.
 
 | base map | drawn from | what it shows |
 |---|---|---|
-| **Readable** (the default) | this server's download | a general-purpose map in the colours of OpenStreetMap's standard map: land and water, pale land cover, a light relief, rivers, faint main roads and dashed country borders, towns and villages by size, and the names of countries, seas, gulfs, islands, mountain ranges, rivers and peaks |
-| **Physical** | this server's download | the land's form first: the relief shaded from several directions, the ground coloured lightly by its height, the sea coloured by its depth, forest, fields, scrub, rock, sand and ice as faint veils at every zoom, rivers darker than the sea; physical names (seas, ranges, lakes, rivers, islands, peaks) and small town names; no roads or borders. Close in, contour lines where the relief is detailed enough (a focus region, or the on-demand relief) |
+| **Readable** (the default) | this server's download | a general-purpose map in the colours of OpenStreetMap's standard map: land and water, pale land cover, a light relief, rivers, faint main roads and dashed country borders, towns and villages by size, and the names of countries, seas, gulfs, islands, mountain ranges, rivers and peaks; the sea flat, or lightly shaded by its depth when you turn on *Sea depth* |
+| **Physical** | this server's download | the land's form first: the relief shaded from several directions, the ground coloured lightly by its height, the sea coloured by its depth (pale over the shallow shelves, darker blues over the deep basins), forest, fields, scrub, rock, sand and ice as faint veils at every zoom, rivers darker than the sea; physical names (seas, ranges, lakes, rivers, islands, peaks) and small town names; no roads or borders. Close in, contour lines where the relief is detailed enough (a focus region, or the on-demand relief) |
 | **Standard (online)** | OpenStreetMap's tile servers (or `ui.tiles`) | today's standard OpenStreetMap |
 | **Muted (online)** | OpenStreetMap France's Humanitarian style | the same in quieter colours |
 | **Dark (online)** | the Standard tiles, inverted | a dark map |
@@ -42,10 +42,11 @@ Both are drawn from the download described in [Open data → The base map's data
 | Readable | the vector layer **with** roads, places and borders (`histmersion basemap fetch --keep-all`) | the relief, the physical names |
 | Physical | the vector layer (the default download is enough) | the relief, the sea floor, the physical names |
 | Physical's contours | relief deeper than the extract: the **on-demand relief** (`basemap.terrain.on-demand.enabled`, on by default), or a **focus region** (`histmersion basemap fetch --layer terrain --focus aegean`) | — |
+| the sea's depth | the sea floor (`histmersion basemap fetch --layer bathymetry`, part of the default download) | — |
 
 A base map whose vector layer lacks something is marked "needs the full download" in the menu and drawn
 with what is there. With neither a focus region nor the on-demand relief the contour option is disabled,
-its line saying what to run.
+its line saying what to run; without the sea floor the *Sea depth* option is.
 
 `histmersion basemap status` says what the download holds, which base map lacks something in it, and
 the command that adds it. With `ui.base-map-source = "auto"` (the default) the page offers only the
@@ -62,6 +63,7 @@ by this browser, and apply at once:
 | **Names** | the base map's names on or off (your corpus's names stay) |
 | **Language** | *English*, *Local* (each name in its own language and script) or another language; a name missing in it falls back to English, then to the local name. The default for everyone is `basemap.labels.language` |
 | **Contour lines** | Physical only: lines of equal height from zoom 11, every 100 m, then 50, 20 and 10 m as you zoom in, traced from the focus regions' relief and, elsewhere, from the on-demand relief. When none are drawn in the view, a line under the option says why: zoomed out too far ("zoom in to see contours"), or outside every focus region with the on-demand relief off (the lines there follow the coarse relief) |
+| **Sea depth** | the sea coloured by its depth, from NOAA's ETOPO1 sea floor: on by default in Physical (graded blues, the shelves palest), off in Readable, where turning it on adds a light shading to its flat water. Remembered for each of the two maps |
 
 **Reset** returns to the defaults. The online maps have no options.
 

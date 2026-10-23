@@ -2139,6 +2139,53 @@ test('contours: a line saying why none are drawn here (zoomed out, outside the d
   }
 });
 
+test('the sea\'s depth: an option of both styles, on in Physical and off in Readable by default, changing the drawn style; kept across a reload', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available || !status.layers.find(l => l.layer === 'bathymetry')?.present) {
+    t.skip('the test server has no sea floor (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return;
+  }
+  const depth = page => page.locator('.map-option-depth');
+  const seaDepth = page => page.evaluate(() => window.__testMap.layerVisibility('sea-depth'));
+  const toggle = async (page, on) => {
+    const before = await page.evaluate(() => window.__testMap.baseMapsDrawn());
+    if (on) await depth(page).check(); else await depth(page).uncheck();
+    await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n, before, { timeout: 15000 });
+  };
+  await withPage({ width: 1280, height: 800 }, async page => {
+    await page.evaluate(() => window.__testMap.setView([37.6, 25.0], 7));
+    // Physical: on by default, the depth layer drawn; off and on again
+    await chooseBaseMap(page, 'physical');
+    await page.locator('.map-options-btn').click();
+    assert.ok(await depth(page).isEnabled() && await depth(page).isChecked());
+    assert.equal(await seaDepth(page), 'visible');
+    await toggle(page, false);
+    assert.equal(await seaDepth(page), 'none');
+    assert.ok(await page.locator('.map-options').isVisible(), 'the panel stays open');
+    await toggle(page, true);
+    assert.equal(await seaDepth(page), 'visible');
+    // Readable: off by default (Carto's flat water), on when asked
+    await page.keyboard.press('Escape');
+    await chooseBaseMap(page, 'readable');
+    await page.locator('.map-options-btn').click();
+    assert.ok(await depth(page).isEnabled() && !(await depth(page).isChecked()));
+    assert.equal(await seaDepth(page), 'none');
+    const flat = await mapColours(page);
+    await toggle(page, true);
+    assert.equal(await seaDepth(page), 'visible');
+    assert.ok(await mapColours(page) > flat, 'the depth adds its shades of blue');
+    // kept per style across a reload: Readable's choice, Physical's default untouched
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('.terrain-notice').waitFor();
+    assert.equal(await page.locator('.map-base-select').inputValue(), 'readable');
+    await page.waitForFunction(() => window.__testMap.layerVisibility('sea-depth') === 'visible', null, { timeout: 15000 });
+    await page.locator('.map-options-btn').click();
+    assert.ok(await depth(page).isChecked());
+    await page.locator('.map-options-reset').click();
+    await page.waitForFunction(() => window.__testMap.layerVisibility('sea-depth') === 'none', null, { timeout: 15000 });
+  }, { source: 'local' });
+});
+
 test('map options: an option whose data is not downloaded is disabled, its line saying what to fetch', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
@@ -2156,6 +2203,8 @@ test('map options: an option whose data is not downloaded is disabled, its line 
     await page.locator('.map-options-btn').click();
     assert.ok(await page.locator('.map-option-contours').isDisabled());
     assert.match(await page.locator('.map-option-contours-why').innerText(), /no relief downloaded — `histmersion basemap fetch --layer terrain`/);
+    assert.ok(await page.locator('.map-option-depth').isDisabled());
+    assert.match(await page.locator('.map-option-depth-why').innerText(), /no sea floor downloaded — `histmersion basemap fetch --layer bathymetry`/);
     assert.ok(await page.locator('.map-option-names').isEnabled(), 'the names need no relief');
     assert.ok(await mapColours(page) > 10, 'drawn without the relief');
   }, { source: 'online' });
