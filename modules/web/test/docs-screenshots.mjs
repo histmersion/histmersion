@@ -158,6 +158,8 @@ const shots = {
     run: async (page, shoot) => baseMapShot(page, shoot) },
   'physical-mycenae': { local: { layers: '[]', sources: '["false"]', baseMap: '["physical"]' }, hash: 'from=-1700&to=-1000',
     run: async (page, shoot) => baseMapShot(page, shoot, [37.73, 22.756, 12]) },
+  'readable-mycenae': { local: { layers: '[]', sources: '["false"]', baseMap: '["readable"]' }, hash: 'from=-1700&to=-1000',
+    run: async (page, shoot) => baseMapShot(page, shoot, [37.73, 22.756, 12]) },
   // the map options, open over the Aegean
   'map-options': { local: { layers: '[]', sources: '["false"]', baseMap: '["physical"]' },
     hash: 'from=-1700&to=-1000', run: async (page, shoot) => {

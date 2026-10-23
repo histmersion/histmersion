@@ -528,6 +528,56 @@ both. A browser test samples 77 points of the Argolid at app zooms 7, 9, 11 and 
 asks that a land-cover fill with opacity ≥ 0.05 lies under at least 30 % of the land points (now 100 %;
 the earlier styles had 12–17 % in Readable and 0 % in Physical at zoom 13).
 
+### The names' legibility (2026-10-23, after the user's review)
+
+The user found the old map's names of mountains, seas and rivers unpleasant to read. Each name the two
+styles place was measured against what lies under it: the view drawn again without names, the text colour
+against its halo laid over every pixel of the name's box (WCAG contrast, the 10th percentile), at the
+Aegean (app zooms 7–9, the fixture), the Taurus (7, 8), the Zagros (7) and the Nile (8, 9) — the last
+three from a 24 MB scratch extract, deleted after — in Chromium and Firefox (identical figures).
+
+| style | names (lowest contrast with halo) |
+|---|---|
+| Readable | towns 10.5 · ranges 5.9 · seas 6.0 · gulfs 7.1 · islands 7.3 · peaks 5.7 · countries 7.1 · rivers 6.4 |
+| Physical | towns 7.4 · ranges 7.3 · seas 7.7 · gulfs 9.7 · islands 8.4–8.6 · peaks 6.1 · lakes 10.3 · rivers 11.1 |
+
+Changed for it: Readable's sea and gulf names were 3.3:1 where an island's relief lies under them (Carto's
+blue `#2c5880`, a 1 px halo) — now `#183c5c` with a 1.5 px halo of the sea's colour (6.0:1); peaks and islands
+grow to 12–13 px close in (they stayed at 10 px); names along rivers bend only where the line bends gently
+(`text-max-angle` 35°, spacing 300 px), so no letter steps round a meander. Kept: water names italic, ranges
+and regions in spaced capitals (0.25–0.3 em), halos of the ground's own colour. A browser test holds every
+placed name of both styles at 4.5:1 over the Aegean at zooms 7, 8 and 9.
+
+### Firefox (2026-10-23, the user browses with Zen)
+
+The browser suite and the budgets run in Firefox too (`HISTMERSION_TEST_BROWSER=firefox`, `test/engine.mjs`):
+51 tests, 50 pass and the no-GPU test is Chromium's own. WebGL in headless Firefox on macOS is the GPU
+("Apple M1, or similar"). Against the native server (Aegean fixture, 1280 × 800 / 1440 × 900):
+
+| path | Chromium | Firefox |
+|---|---|---|
+| first render: map · markers · longest task | 252 · 343 · 67 ms | 534 · 629 · 135 ms |
+| mapPan input p95 · dropped | 34 ms · 0 % | 27 ms · 1.1 % |
+| rangeAreas drawn · load's longest task | 1 181 · 54 ms | 1 695 · 115 ms |
+| eventLayer pan p95 · pan dropped · zoom dropped | 39 ms · 0.5 % · 6 % | 24 ms · 0.5 % · 2.5 % |
+| Readable drawn · pan p95 · zoom dropped · options p95 | 521 ms · 52 ms · 0 % · 16 ms | 613 ms · 30 ms · 2.4 % · 40 ms |
+| Physical, same | 536 ms · 53 ms · 0 % · 16 ms | 590 ms · 25 ms · 2.5 % · 31 ms |
+| soak growth: nodes · markers (heap, listeners) | 0 · 0 (2.9 MB, 0) | 0 · 0 (not measurable) |
+
+Firefox has no CDP: heap, listeners and layout objects are not measurable from the page and are named so
+in the report; long tasks are measured by a late 10 ms timer (no Long Tasks API); frames count as dropped
+against 60 Hz in both engines (Firefox paints headless at 120 Hz, which first showed as 20 % "dropped").
+Fixed for Firefox: the WebGL probe read `WEBGL_debug_renderer_info` (deprecated there) and lost its context
+on purpose (a warning per page) — it reads `RENDERER` first and is made once; a pinned card followed a
+scroll inside the scroll event (Firefox's "scroll-linked positioning effect") — now in the next frame;
+a style fetch cut off by leaving the page was reported as an error. Found in both: the map options rebuilt
+the whole style inside the input (options p95 70–90 ms; Firefox 166 ms once) — now a style diff after the
+next paint (16 ms Chromium, 31–40 ms Firefox). "Empty string passed to getElementById()" did not occur on
+this build (every `href="#"` link prevents its default; it belonged to the old Leaflet page). A test holds
+the page to no warning of its own while the map is used, in both engines. Once, with other agents' builds
+running, headless Firefox could not create a WebGL2 context at all (MapLibre: "WebGL2 is required"): the
+whole suite timed out; a rerun passed.
+
 ### Risks left
 
 - MapLibre 6 is young (6.0 in July 2026; `font-faces` new) — pinned at 6.12.0 and vendored.
