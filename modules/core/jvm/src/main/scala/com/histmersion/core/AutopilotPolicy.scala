@@ -79,6 +79,16 @@ object AutopilotPolicy:
       Verdict.Approve(s"${Plural.count(p.subGoals, "sub-goal")}, ${Plural.count(p.queries, "query", "queries")}, ${Plural.count(p.works, "work")}" +
         s" (depth ${p.depth} of $maxDepth); ${approvedToday + 1} of $cap today")
 
+  /** A goal plan while the focus is on (docs/research-process-managers.md "As built: the focus"): decided by
+    * code only when its goal is one of the active goals and its unfinished sub-goals (`openSubGoals`, every
+    * level below it) plus the `proposed` new ones stay within `limit`; else why it waits for a person. */
+  def goalPlanFocus(goal: String, active: Boolean, openSubGoals: Int, proposed: Int, limit: Int): Option[String] =
+    if !active then Some(s"focus: goal $goal is not one of the active goals; its plan waits for a person or its turn")
+    else if proposed > 0 && openSubGoals + proposed > math.max(0, limit) then
+      Some(s"focus: goal $goal has ${Plural.count(openSubGoals, "unfinished sub-goal")} and the plan adds $proposed; at most " +
+        s"$limit (agents.autopilot.max-open-sub-goals) are opened by code")
+    else None
+
   private def depthText(d: Int): String = if d == 0 then "at the root" else s"$d level(s) below a root"
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps
