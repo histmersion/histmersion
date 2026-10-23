@@ -95,6 +95,24 @@ class PortalsSuite extends munit.FunSuite:
     assertEquals(http.requests.size, 1, "one search answers the records; no item is read for a dry run")
     assert(http.requests.forall(_._2.get("User-Agent").exists(ua => !ua.contains("@"))), "no personal data")
 
+  test("Open Context, real Domuztepe records (#2571): tied by the site its context names, though a place 'I' and the province are on the map"):
+    // the map as it was when the full run stored 0: a place called "I" (the records' operation "I"),
+    // Kahramanmaraş carrying the province's GeoNames id the records give
+    val dom   = PlaceFacts("wikidata_q4165990", "Domuztepe", Set("domuztepe"), Some((-6500L, -5400L)), Some("Q4165990"), Some(37.33), Some(36.87))
+    val placeI = PlaceFacts("wikidata_q103776406", "I", Set("i"), None, Some("Q103776406"), Some(50.0), Some(10.0))
+    val kahr  = PlaceFacts("ne_city_1159127453", "Kahramanmaraş", Set("kahramanmaras"), None, None, Some(37.58), Some(36.93))
+    val turkey = PlaceFacts("ne_country_tur", "Turkey", Set("turkey"), None, Some("Q43"), Some(39.0), Some(35.0))
+    val store = PortalStore(Map(dom.id -> dom), Map("domuztepe" -> List(dom), "i" -> List(placeI), "turkey" -> List(turkey),
+      "kahramanmaras" -> List(kahr)), Map(("geonames", "310858") -> List(kahr)))
+    val http = FakeMediaHttp { url =>
+      if url.startsWith("https://opencontext.org/query/.json?") then FakeMediaHttp.json(fx("oc-search-domuztepe.json"))
+      else Left(s"unexpected $url")
+    }
+    val r = runOc(http, dom, dryRun = true, store)
+    assertEquals(r.samples.map(_.basis).distinct, List("context = Domuztepe; 6500–5500 BCE within 6500–5400 BCE"), r.rejected.toString)
+    assertEquals(r.samples.size, 3)
+    assertEquals(r.rejected.map(_.key), List("human remains (Open Context flags them; not shown)"))
+
   test("Open Context: a record from Petra is not filed under the country its context path names"):
     val r = runOc(openContext(), jordan, dryRun = true, PortalStore(facts, named, byId))
     assert(r.samples.isEmpty, r.samples.toString)

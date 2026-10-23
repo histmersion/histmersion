@@ -54,8 +54,8 @@ class MediaPortalsSuite extends munit.FunSuite:
     assertEquals(bowls.key, "f589a368-62ed-43df-5738-4c84d2f5f765")
     assertEquals(bowls.period, Some((-200L, 360L)))
     assertEquals(bowls.ids, List("pleiades" -> "697725"))
-    assertEquals(bowls.geography.take(3), List("context" -> "Pottery 248", "context" -> "Locus none provided",
-      "context" -> "Trench 94"))
+    // the excavation units (Pottery 248, Locus none provided, Trench 94) name no place (#2571)
+    assertEquals(bowls.geography.take(2), List("context" -> "Upper Temenos", "context" -> "Petra Great Temple"))
     assertEquals(bowls.geography.filter(_._1 != "context"), List("region" -> "Jordan", "region" -> "Asia",
       "dc-terms:spatial" -> "al-Wuʿaira"), "Open Context's label for Pleiades 697725 (Petra): the id, not the label, is the key")
     assert(bowls.geography.contains("context" -> "Petra Great Temple"))
@@ -132,6 +132,46 @@ class MediaPortalsSuite extends munit.FunSuite:
       Right("context = Petra; 200 BCE–360 CE within 300 BCE–400 CE"))
     assertEquals(MediaMatch.withIds(rec(Nil, geo, None), petra, idsOnMap, withPetra, Set("context")),
       Left("no dates on the record"))
+
+  // ── #2571: real Domuztepe records (Open Context, 2026-10-23) ─────────────────────────────────
+
+  test("Open Context: excavation units and items are not places; a site's named parts are"):
+    for u <- List("I", "IV", "Lot 666", "2631.1", "DT# 347", "Trench 94", "Locus none provided", "Seq. 42112", "A",
+        "Survey", "Stray", "Stray Finds", "Area", "Pottery 248") do assert(OpenContext.unitSegment(u), u)
+    for p <- List("Domuztepe", "Petra Great Temple", "Upper Temenos", "Lower Town", "Ishtar Gate") do
+      assert(!OpenContext.unitSegment(p), p)
+    val recs = OpenContext.records(fixture("oc-search-domuztepe.json")).fold(fail(_), identity).map(_.fold(fail(_), identity))
+    assertEquals(recs.map(_.geography.filter(_._1 == OpenContext.Context)), List.fill(4)(List("context" -> "Domuztepe")))
+    assertEquals(recs.head.ids, List("geonames" -> "310858", "geonames" -> "6269133"), "a province and the Middle East")
+    assertEquals(recs.map(_.withheld.isDefined), List(false, false, false, true), "the crania are withheld")
+
+  private val domuztepe = MediaMatch.PlaceInfo("wikidata_q4165990", "Domuztepe", Set("domuztepe"), Some((-6500L, -5400L)))
+  // the live map (2026-10-23) has a place called "I" and Kahramanmaraş; the record's ids name the province
+  private val domNames: MediaMatch.Resolve = Map("domuztepe" -> Set("wikidata_q4165990"), "i" -> Set("wikidata_q103776406"),
+    "turkey" -> Set("ne_country_tur"), "asia" -> Set("asia")).withDefaultValue(Set.empty)
+  private val domIds: MediaMatch.ResolveId =
+    Map(("geonames", "310858") -> Set("ne_city_1159127453")).withDefaultValue(Set.empty)
+
+  test("a context naming the site ties the record although its ids name only its province (#2571)"):
+    val recs = OpenContext.records(fixture("oc-search-domuztepe.json")).fold(fail(_), identity).map(_.fold(fail(_), identity))
+    assertEquals(recs.map(MediaMatch.withIds(_, domuztepe, domIds, domNames, Set(OpenContext.Context))).distinct,
+      List(Right("context = Domuztepe; 6500–5500 BCE within 6500–5400 BCE")))
+    // the province's own place is not given the site's finds: the finer context names another place
+    val kahramanmaras = MediaMatch.PlaceInfo("ne_city_1159127453", "Kahramanmaraş", Set("kahramanmaras"), Some((-8000L, 2000L)))
+    assertEquals(MediaMatch.withIds(recs.head, kahramanmaras, domIds, domNames, Set(OpenContext.Context)),
+      Left("its context names another place on the map"))
+    // the unit "I" kept as a context field (as before #2571) refused it: the map's "I" is another place
+    val before = recs.head.copy(geography = ("context" -> "I") :: recs.head.geography)
+    assertEquals(MediaMatch.withIds(before, domuztepe, domIds, domNames, Set(OpenContext.Context)),
+      Left("its context names another place on the map"))
+
+  test("a context name shared by two places is settled by an id naming the target alone, else ambiguous"):
+    val twoNames: MediaMatch.Resolve = k => if k == "petra great temple" then Set("pleiades_697725", "other") else namesOnMap(k)
+    val geo = List("context" -> "Petra Great Temple", "region" -> "Jordan")
+    assertEquals(MediaMatch.withIds(rec(List("pleiades" -> "697725"), geo), petra, idsOnMap, twoNames, Set("context")),
+      Right("pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–400 CE"))
+    assertEquals(MediaMatch.withIds(rec(Nil, geo), petra, idsOnMap, twoNames, Set("context")),
+      Left("its context name is ambiguous on the map"))
 
   // ── Pleiades ─────────────────────────────────────────────────────────────────────────────────
 

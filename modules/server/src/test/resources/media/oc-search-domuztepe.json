@@ -1,0 +1,211 @@
+{
+ "totalResults": 4,
+ "startIndex": 0,
+ "itemsPerPage": 4,
+ "oc-api:has-results": [
+  {
+   "label": "Photo(3) DT# 347",
+   "uri": "http://opencontext.org/media/fbed3f1d-a2ae-8b95-c028-3ce92356459b",
+   "href": "https://opencontext.org/media/fbed3f1d-a2ae-8b95-c028-3ce92356459b",
+   "citation uri": "https://n2t.net/ark:/28722/k2xp7448v",
+   "project label": "Domuztepe Excavations",
+   "project href": "https://opencontext.org/projects/e6fb0f7c-6f69-6ca8-683b-8c6d5e98a099",
+   "context label": "Asia/Turkey/Domuztepe/I/Lot 666/DT# 347",
+   "context href": "https://opencontext.org/subjects/1e3861da-2a53-0cfe-d3cf-f79324f1bac3",
+   "latitude": 37.322559,
+   "longitude": 37.034902,
+   "early bce/ce": -6500.0,
+   "late bce/ce": -5500.0,
+   "item category": "Image media",
+   "icon": "https://opencontext.org/static/oc/icons-v2/noun-image-file-1453705.svg",
+   "snippet": " Photo(3) DT# 347 from Asia/Turkey/<mark>Domuztepe</mark>/I/Lot 666/DT# 347   <mark>Domuztepe</mark> Excavations",
+   "thumbnail": "https://storage.googleapis.com/opencontext-media/internet-archive/ia-thumbnails/1-photo3-dt-347.jpg",
+   "published": "2006-03-01T00:00:00Z",
+   "updated": "2025-04-05T23:17:58Z",
+   "Creator": [
+    "Elizabeth Carter",
+    "Stuart Campbell"
+   ],
+   "Creator [URI]": [
+    "http://opencontext.org/persons/3208923d-69d0-70e9-9cc1-23ad97770aec",
+    "http://opencontext.org/persons/90e4ecac-e85a-e918-9c20-75af4cc25eec"
+   ],
+   "Spatial Coverage": [
+    "Kahramanmaras",
+    "Middle East"
+   ],
+   "Spatial Coverage [URI]": [
+    "https://www.geonames.org/310858",
+    "https://www.geonames.org/6269133"
+   ],
+   "Subject": [
+    "Archaeology",
+    "Excavations (Archaeology)",
+    "Hamlets (villages)"
+   ],
+   "Subject [URI]": [
+    "https://id.loc.gov/authorities/subjects/sh85006507",
+    "https://id.loc.gov/authorities/subjects/sh85046105",
+    "https://id.loc.gov/authorities/subjects/sh85143356"
+   ],
+   "License": [
+    "Attribution 4.0 International (CC BY 4.0)"
+   ],
+   "License [URI]": [
+    "https://creativecommons.org/licenses/by/4.0"
+   ]
+  },
+  {
+   "label": "Photo(1) DT# 2133",
+   "uri": "http://opencontext.org/media/f24575f6-f780-6832-c52e-840e30761903",
+   "href": "https://opencontext.org/media/f24575f6-f780-6832-c52e-840e30761903",
+   "citation uri": "https://n2t.net/ark:/28722/k2z03795s",
+   "project label": "Domuztepe Excavations",
+   "project href": "https://opencontext.org/projects/e6fb0f7c-6f69-6ca8-683b-8c6d5e98a099",
+   "context label": "Asia/Turkey/Domuztepe/Survey/Lot 499/DT# 2133",
+   "context href": "https://opencontext.org/subjects/6b3809f6-c283-1e3a-8ada-366e44a01b2f",
+   "latitude": 37.322559,
+   "longitude": 37.034902,
+   "early bce/ce": -6500.0,
+   "late bce/ce": -5500.0,
+   "item category": "Image media",
+   "icon": "https://opencontext.org/static/oc/icons-v2/noun-image-file-1453705.svg",
+   "snippet": " Photo(1) DT# 2133 from Asia/Turkey/<mark>Domuztepe</mark>/Survey/Lot 499/DT# 2133   <mark>Domuztepe</mark> Excavations",
+   "thumbnail": "https://storage.googleapis.com/opencontext-media/internet-archive/ia-thumbnails/1-photo1-dt-2133.jpg",
+   "published": "2006-03-01T00:00:00Z",
+   "updated": "2025-04-05T23:15:08Z",
+   "Creator": [
+    "Elizabeth Carter",
+    "Stuart Campbell"
+   ],
+   "Creator [URI]": [
+    "http://opencontext.org/persons/3208923d-69d0-70e9-9cc1-23ad97770aec",
+    "http://opencontext.org/persons/90e4ecac-e85a-e918-9c20-75af4cc25eec"
+   ],
+   "Spatial Coverage": [
+    "Kahramanmaras",
+    "Middle East"
+   ],
+   "Spatial Coverage [URI]": [
+    "https://www.geonames.org/310858",
+    "https://www.geonames.org/6269133"
+   ],
+   "Subject": [
+    "Archaeology",
+    "Excavations (Archaeology)",
+    "Hamlets (villages)"
+   ],
+   "Subject [URI]": [
+    "https://id.loc.gov/authorities/subjects/sh85006507",
+    "https://id.loc.gov/authorities/subjects/sh85046105",
+    "https://id.loc.gov/authorities/subjects/sh85143356"
+   ],
+   "License": [
+    "Attribution 4.0 International (CC BY 4.0)"
+   ],
+   "License [URI]": [
+    "https://creativecommons.org/licenses/by/4.0"
+   ]
+  },
+  {
+   "label": "Draw DT# 911",
+   "uri": "http://opencontext.org/media/8351f134-7580-cff4-8320-04ddfd089336",
+   "href": "https://opencontext.org/media/8351f134-7580-cff4-8320-04ddfd089336",
+   "citation uri": "https://n2t.net/ark:/28722/k2rr1zp0z",
+   "project label": "Domuztepe Excavations",
+   "project href": "https://opencontext.org/projects/e6fb0f7c-6f69-6ca8-683b-8c6d5e98a099",
+   "context label": "Asia/Turkey/Domuztepe/Stray/Stray Finds/DT# 911",
+   "context href": "https://opencontext.org/subjects/db66e104-9281-32ff-ee63-a7b7afd2d104",
+   "latitude": 37.322559,
+   "longitude": 37.034902,
+   "early bce/ce": -6500.0,
+   "late bce/ce": -5500.0,
+   "item category": "Image media",
+   "icon": "https://opencontext.org/static/oc/icons-v2/noun-image-file-1453705.svg",
+   "snippet": " Draw DT# 911 from Asia/Turkey/<mark>Domuztepe</mark>/Stray/Stray Finds/DT# 911   <mark>Domuztepe</mark> Excavations",
+   "thumbnail": "https://storage.googleapis.com/opencontext-media/internet-archive/ia-thumbnails/1-draw-dt-911.jpg",
+   "published": "2006-03-01T00:00:00Z",
+   "updated": "2025-04-05T23:09:03Z",
+   "Creator": [
+    "Elizabeth Carter",
+    "Stuart Campbell"
+   ],
+   "Creator [URI]": [
+    "http://opencontext.org/persons/3208923d-69d0-70e9-9cc1-23ad97770aec",
+    "http://opencontext.org/persons/90e4ecac-e85a-e918-9c20-75af4cc25eec"
+   ],
+   "Spatial Coverage": [
+    "Kahramanmaras",
+    "Middle East"
+   ],
+   "Spatial Coverage [URI]": [
+    "https://www.geonames.org/310858",
+    "https://www.geonames.org/6269133"
+   ],
+   "Subject": [
+    "Archaeology",
+    "Excavations (Archaeology)",
+    "Hamlets (villages)"
+   ],
+   "Subject [URI]": [
+    "https://id.loc.gov/authorities/subjects/sh85006507",
+    "https://id.loc.gov/authorities/subjects/sh85046105",
+    "https://id.loc.gov/authorities/subjects/sh85143356"
+   ],
+   "License": [
+    "Attribution 4.0 International (CC BY 4.0)"
+   ],
+   "License [URI]": [
+    "https://creativecommons.org/licenses/by/4.0"
+   ]
+  },
+  {
+   "label": "2631-1 cran cm 1.jpg",
+   "uri": "http://opencontext.org/media/084e8977-9fcc-4a01-dc36-3c69d707086c",
+   "href": "https://opencontext.org/media/084e8977-9fcc-4a01-dc36-3c69d707086c",
+   "citation uri": "https://n2t.net/ark:/28722/k2h70j282",
+   "project label": "Domuztepe Excavations",
+   "project href": "https://opencontext.org/projects/e6fb0f7c-6f69-6ca8-683b-8c6d5e98a099",
+   "context label": "Asia/Turkey/Domuztepe/I/Lot 2631/2631.1",
+   "context href": "https://opencontext.org/subjects/97ee6f0d-99e2-dd5a-fa6f-e6c41f39e67e",
+   "latitude": 37.322559,
+   "longitude": 37.034902,
+   "early bce/ce": -6500.0,
+   "late bce/ce": -5500.0,
+   "item category": "Image media",
+   "icon": "https://opencontext.org/static/oc/icons-v2/noun-image-file-1453705.svg",
+   "snippet": " 2631-1 cran cm 1.jpg from Asia/Turkey/<mark>Domuztepe</mark>/I/Lot 2631/2631.1   <mark>Domuztepe</mark> Excavations",
+   "thumbnail": "https://storage.googleapis.com/opencontext-media/internet-archive/thumbs/opencontext-1-2631-1-cran-cm-1jpg-1-2631-1-cran-cm-1jpg.jpg",
+   "published": "2010-08-08T00:00:00Z",
+   "updated": "2025-04-05T23:00:28Z",
+   "Subject": [
+    "Human remains (Archaeology)"
+   ],
+   "Subject [URI]": [
+    "https://id.loc.gov/authorities/subjects/sh92003545"
+   ],
+   "Creator": [
+    "Elizabeth Carter",
+    "Stuart Campbell"
+   ],
+   "Creator [URI]": [
+    "http://opencontext.org/persons/3208923d-69d0-70e9-9cc1-23ad97770aec",
+    "http://opencontext.org/persons/90e4ecac-e85a-e918-9c20-75af4cc25eec"
+   ],
+   "Spatial Coverage": [
+    "Kahramanmaras",
+    "Middle East"
+   ],
+   "Spatial Coverage [URI]": [
+    "https://www.geonames.org/310858",
+    "https://www.geonames.org/6269133"
+   ],
+   "License": [
+    "Attribution 4.0 International (CC BY 4.0)"
+   ],
+   "License [URI]": [
+    "https://creativecommons.org/licenses/by/4.0"
+   ]
+  }
+ ]
+}

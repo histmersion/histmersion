@@ -178,15 +178,21 @@ URIs, its context path (`Asia/Jordan/Petra Great Temple/Upper Temenos/Trench 94/
    (`https://creativecommons.org/licenses/by/4.0` → `CC-BY-4.0`); a missing or unreadable one refuses
    it; the allowlist is `media.open-context.licences` (`cc0,public-domain,cc-by,cc-by-sa`; NC only if
    added);
-3. **the place, by id first**: a spatial-coverage URI naming Pleiades, GeoNames or Wikidata
-   (`https://pleiades.stoa.org/places/697725`) that a place on the map carries — as its own id or an
-   exact link — ties the record to that place alone (equivalents within `same-site-km` count as one);
-   it is refused when the id names only other places ("its place id names another place on the map":
-   a find from Petra is not filed under Jordan), or names this place among others (ambiguous), or when
-   a part of its context path below the country (the site, a trench) names another place on the map.
-   Without an id naming a place on the map, the context path decides by the museum rule — most specific
-   segment first, the gazetteer's name key, whole value against whole name, uncertain values ignored,
-   the first segment naming any place on the map must name this one alone;
+3. **the place, finest evidence first** (#2571): the context path below the country names the site and
+   its parts; its excavation units and items (`I`, `Lot 666`, `Trench 94`, `Locus none provided`,
+   `Survey`, `2631.1`) name no place and are left out — the map has a place called "I", and Domuztepe's
+   operation "I" once refused all its finds. The most specific remaining segment that names a place on
+   the map decides: naming this place alone ties the record ("context = Domuztepe"), whatever its ids;
+   naming only another place refuses it ("its context names another place on the map": a trench of a
+   site on the map is that site's); naming this place among others is settled by an id naming it alone,
+   else ambiguous. With no such segment the spatial-coverage URIs decide — a Pleiades, GeoNames or
+   Wikidata id (`https://pleiades.stoa.org/places/697725`) that a place on the map carries, as its own id
+   or an exact link, ties the record to that place alone (equivalents within `same-site-km` count as
+   one); one naming only other places refuses it ("its place id names another place on the map": a find
+   from Petra is not filed under Jordan), one naming this place among others is ambiguous. Open
+   Context's ids are often coarser than the site (Domuztepe's records name the province of Kahramanmaraş
+   and the Middle East), which is why the path comes first. Without either, the museum rule's names
+   decide (the gazetteer's name key, whole value against whole name, uncertain values ignored);
 4. **dates**: the record's range must overlap the place's period, as for the museums.
 
 Only a record that is kept costs a second request: its media item (`/media/{uuid}.json`), for the files

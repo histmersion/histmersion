@@ -151,28 +151,36 @@ object MediaMatch:
     * site counted once — the caller's lookup. */
   type ResolveId = ((String, String)) => Set[String]
 
-  /** Pure: the rule for a record that may carry gazetteer ids (Open Context). Its ids decide first:
-    *  - one naming the target alone (the record's own place id) ties it — unless one of its fields in
-    *    `deeper` (finer than what an id names: Open Context's context path below its country) names
-    *    ANOTHER place on the map: a find from a trench of a site on the map is that site's;
-    *  - one naming the target among others is ambiguous; one naming only other places refuses it
-    *    (an object from Petra is not also filed under Jordan by its context's country).
-    * With no id naming a place on the map, the museum rule's names decide. Either way the dates must
-    * overlap; the basis names the id or the field, and the dates. */
+  /** Pure: the rule for a record that may carry gazetteer ids (Open Context). The FINEST evidence
+    * decides (#2571): its fields in `deeper` (Open Context's context path below its country — the site,
+    * then the parts of it; excavation units are not among them, [[OpenContext.unitSegment]]) are finer
+    * than its ids, which Open Context often gives for a province or a region (Domuztepe's records name
+    * Kahramanmaraş and the Middle East). So:
+    *  - the most specific `deeper` field naming a place on the map names the target alone: tied by it,
+    *    whatever the ids say; names only another place: refused (a find from a trench of a site on the
+    *    map is that site's); names the target among others: an id naming the target alone settles it,
+    *    else it is ambiguous;
+    *  - with no `deeper` field on the map, the ids decide — one naming the target alone ties it, one
+    *    naming it among others is ambiguous, one naming only other places refuses it (an object from
+    *    Petra is not also filed under Jordan) — and with no id on the map, the museum rule's names.
+    * Either way the dates must overlap; the basis names the id or the field, and the dates. */
   def withIds(rec: MediaRecord, target: PlaceInfo, resolveId: ResolveId, resolve: Resolve,
       deeper: Set[String]): Either[String, String] =
     val byId = rec.ids.map(id => id -> resolveId(id)).filter(_._2.nonEmpty)
-    val geo = byId.find(_._2 == Set(target.id)) match
-      case Some((id, _)) =>
-        val finer = rec.geography.filter((f, _) => deeper(f))
-          .flatMap((f, v) => Option(keyOf(v)).filter(_.nonEmpty).map(k => (f, v.trim, resolve(k))))
-          .find(_._3.nonEmpty)
-        finer match
-          case Some((f, _, ids)) if ids != Set(target.id) => Left(s"its $f names another place on the map")
-          case _ => Right(s"${ExternalIds.show(id)} (the record's place id)")
-      case None if byId.exists(_._2.contains(target.id)) => Left("its place id is ambiguous on the map")
-      case None if byId.nonEmpty => Left("its place id names another place on the map")
-      case None => geography(rec, target, resolve, specific = true)
+    val idAlone = byId.find(_._2 == Set(target.id)).map((id, _) => s"${ExternalIds.show(id)} (the record's place id)")
+    val finer = rec.geography.filter((f, _) => deeper(f))
+      .flatMap((f, v) => Option(keyOf(v)).filter(_.nonEmpty).map(k => (f, v.trim, resolve(k))))
+      .find(_._3.nonEmpty)
+    val geo = finer match
+      case Some((f, v, ids)) if ids == Set(target.id) => Right(s"$f = $v")
+      case Some((f, _, ids)) if !ids.contains(target.id) => Left(s"its $f names another place on the map")
+      case Some((f, _, _)) => idAlone.toRight(s"its $f name is ambiguous on the map")
+      case None =>
+        idAlone match
+          case Some(basis) => Right(basis)
+          case None if byId.exists(_._2.contains(target.id)) => Left("its place id is ambiguous on the map")
+          case None if byId.nonEmpty => Left("its place id names another place on the map")
+          case None => geography(rec, target, resolve, specific = true)
     geo.flatMap { g =>
       (rec.period, target.period) match
         case (None, _) => Left("no dates on the record")
@@ -510,7 +518,8 @@ object OpenContext:
             credit(title, context, creators, year, project, cite, shortLicence(licLabel, lic.id))))
       val segs = context.split("/").toList.map(_.trim).filter(_.nonEmpty)
       val (regions, deeper) = segs.splitAt(2)
-      val geo = deeper.reverse.map(Context -> _) ++ regions.reverse.map(Region -> _) ++
+      // the site and its named parts; excavation units (`I`, `Lot 2631`, `Trench 94`, `2631.1`) name no place
+      val geo = deeper.filterNot(unitSegment).reverse.map(Context -> _) ++ regions.reverse.map(Region -> _) ++
         Read.strs(c, "Spatial Coverage").map(Spatial -> _)
       val ids = Read.strs(c, "Spatial Coverage [URI]").flatMap(ExternalIds.of).distinct
       val image = Read.str(c, "item category").forall(_.equalsIgnoreCase("Image media"))
@@ -521,6 +530,20 @@ object OpenContext:
       // the search names only the thumbnail; the stored rendition is the item's preview ([[item]])
       MediaRecord(uuid, title, page, thumb, thumb, None, rights, geo, period, ids, withheld)
     }
+
+  private val UnitWords = Set("trench", "locus", "loci", "area", "square", "unit", "lot", "feature", "seq", "sequence",
+    "operation", "op", "context", "room", "level", "phase", "stratum", "basket", "bag", "field", "sector", "zone",
+    "quadrant", "sondage", "grid", "pit", "test", "find", "object", "sample", "layer", "pottery", "coin", "bone",
+    "survey", "surface", "stray")
+  private val Roman = "^[IVXLCDM]+$".r
+
+  /** Pure (#2571): is a context-path segment an excavation unit or an item, not a place — a numbered or
+    * coded one (`2631.1`, `Trench 42`, `A`, `I`: the live map has a place called "I"), or one named by a
+    * unit word (`Locus none provided`, `Area`, `Survey`, `Stray Finds`)? */
+  def unitSegment(seg: String): Boolean =
+    val s = seg.trim
+    val first = s.split("\\s+").headOption.getOrElse("").toLowerCase(Locale.ROOT).stripSuffix(".")
+    s.exists(_.isDigit) || s.length <= 2 || Roman.matches(s) || UnitWords(first)
 
   private def num(c: io.circe.ACursor, k: String): Option[Long] =
     c.downField(k).focus.flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
