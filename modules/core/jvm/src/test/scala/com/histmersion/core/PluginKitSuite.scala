@@ -114,7 +114,7 @@ class PluginKitSuite extends munit.FunSuite:
     assertEquals(verifyKit(files, Map("lib/b.jar" -> "b" * 64, "classpath" -> "c" * 64)), Nil)
     assertEquals(verifyKit(files, Map("lib/b.jar" -> "d" * 64, "lib/x.jar" -> "e" * 64)),
       List("missing: classpath", "changed: lib/b.jar", "not in the manifest: lib/x.jar"))
-    val k = KitManifest(KitFormat, "0.1.0", Some("abc"), "25.0.1", 1, "com.histmersion.server.Main", files)
+    val k = KitManifest(KitFormat, "0.1.0", Some("abc"), "25.0.4.1.1", 1, "com.histmersion.server.Main", files)
     assertEquals(parseKit(renderKit(k)), Right(k))
     assert(parseKit(renderKit(k.copy(format = KitFormat + 1))).isLeft, "a newer kit format is refused")
     assertEquals(k.label, "0.1.0 (abc)")

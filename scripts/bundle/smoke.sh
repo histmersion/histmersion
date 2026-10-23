@@ -6,12 +6,13 @@
 # linked from the kit holds the plugin, says so in --self-check, and JVM mode finds it too.
 #
 #   scripts/bundle/smoke.sh <bundle-dir>
-# The relink needs GraalVM CE of the kit's version (GRAALVM_HOME, HISTMERSION_GRAALVM_HOME or sdkman's
-# pin) and ~16 GB of memory; without them, or with HISTMERSION_SMOKE_RELINK=0, it is skipped and says so.
+# The relink needs GraalVM CE of the kit's version (HISTMERSION_GRAALVM_HOME, GRAALVM_HOME, or the one
+# `histmersion-toolchain install` provisioned) and ~16 GB of memory; without them, or with HISTMERSION_SMOKE_RELINK=0, it is skipped and says so.
 # Ports are offset (18000/15433/18100) so it can run next to an installed Histmersion.
 set -euo pipefail
 b="$(cd "${1:?usage: $0 <bundle-dir>}" && pwd)"
 data="$(mktemp -d)"
+smoke_caller_data_dir="${HISTMERSION_DATA_DIR:-}"
 export HISTMERSION_DATA_DIR="$data" HISTMERSION_PORT=18000 HISTMERSION_PUBLIC_URL=http://127.0.0.1:18000 \
        HISTMERSION_PG_PORT=15433 HISTMERSION_CONVERTER_PORT=18100 HISTMERSION_SERVER_URL=http://127.0.0.1:18000 \
        HF_HUB_OFFLINE=1
@@ -173,7 +174,9 @@ echo "→ relink: the hello test plugin into a COPY of the bundle (bin/, kit/, l
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 gv_version="$(cat "$b/kit/graalvm-version" 2>/dev/null || true)"
 gv=""
-for h in "${HISTMERSION_GRAALVM_HOME:-}" "${GRAALVM_HOME:-}" "${SDKMAN_DIR:-$HOME/.sdkman}/candidates/java/$gv_version-graalce"; do
+# the toolchain path is looked up in the data directory the caller had, not this run's empty one
+for h in "${HISTMERSION_GRAALVM_HOME:-}" "${GRAALVM_HOME:-}" \
+         "$(HISTMERSION_DATA_DIR="${smoke_caller_data_dir:-}" "$b/bin/histmersion-toolchain" path 2>/dev/null || true)"; do
   [ -n "$h" ] && [ -x "$h/bin/native-image" ] && grep -q "JAVA_VERSION=\"$gv_version\"" "$h/release" 2>/dev/null && { gv="$h"; break; }
 done
 hello="$(find "$root/target/out" -name 'histmersion-plugin-hello_3-*.jar' 2>/dev/null | head -1)"

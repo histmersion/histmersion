@@ -8,8 +8,8 @@
 #   scripts/docs/screenshots.sh --serve    load the demo and keep the server up (Ctrl-C stops it)
 #   scripts/docs/screenshots.sh --only home,source   capture some (the names are in docs-screenshots.mjs)
 #
-# Needs: the pinned GraalVM JDK 25 (.sdkmanrc; HISTMERSION_JAVA_HOME / GRAALVM_HOME / JAVA_HOME, or
-# sdkman's 25.0.1-graalce), sbt, pixi (the bundled Postgres), node + `npm ci --prefix modules/web`
+# Needs: a JDK 25 — the pinned GraalVM (scripts/bundle/graalvm-pins.txt) or any other: HISTMERSION_JAVA_HOME /
+# GRAALVM_HOME / the one `scripts/bundle/toolchain.sh install` provisioned / JAVA_HOME — sbt, pixi (the bundled Postgres), node + `npm ci --prefix modules/web`
 # and Playwright's Chromium (`npm --prefix modules/web exec -- playwright install chromium`, or
 # PLAYWRIGHT_CHROMIUM_EXECUTABLE). The map's background tiles come from OpenStreetMap, so it needs
 # the internet; HISTMERSION_SCREENSHOTS_OFFLINE=1 blocks them (a blank background). pngquant and
@@ -43,7 +43,7 @@ url="http://127.0.0.1:$port"
 
 # ── the JDK: the pinned major only ─────────────────────────────────────────────────────────────
 jh=""
-for c in "${HISTMERSION_JAVA_HOME:-}" "${GRAALVM_HOME:-}" "$HOME/.sdkman/candidates/java/25.0.1-graalce" "${JAVA_HOME:-}"; do
+for c in "${HISTMERSION_JAVA_HOME:-}" "${GRAALVM_HOME:-}" "$(bash "$(dirname "$0")/../bundle/toolchain.sh" path 2>/dev/null || true)" "${JAVA_HOME:-}"; do
   if [ -n "$c" ] && [ -x "$c/bin/java" ] && "$c/bin/java" -version 2>&1 | grep -q 'version "25'; then jh="$c"; break; fi
 done
 [ -n "$jh" ] || { echo "no JDK 25 found (set HISTMERSION_JAVA_HOME)" >&2; exit 3; }

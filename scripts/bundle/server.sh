@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
-# Build the native server and CLI with the PINNED GraalVM (.sdkmanrc) and put them in <out>/bin;
-# the seed data the server imports on its first start goes to <out>/db; the RELINK KIT (the server's
-# Sloth-patched jars, its native-image arguments, kit.json + SHA256SUMS, Sloth itself) to <out>/kit,
-# and the scripts that use it to <out>/bin and <out>/libexec (docs/research-plugins.md §7.4, §8).
-# The JDK matters: a binary built by another JDK's native-image fails at startup (see AGENTS.md).
+# Build the native server and CLI with the PINNED GraalVM (scripts/bundle/graalvm-pins.txt) and put them
+# in <out>/bin; the seed data the server imports on its first start goes to <out>/db; the RELINK KIT (the
+# server's Sloth-patched jars, its native-image arguments, kit.json + SHA256SUMS, Sloth itself) to
+# <out>/kit, and the scripts that use it to <out>/bin and <out>/libexec (docs/research-plugins.md §7.4, §8).
+# The JDK matters: a binary built by another JDK's native-image fails at startup (see AGENTS.md), and the
+# kit records the version a relink must use — so it is the EXACT pinned version, not just its major.
 set -euo pipefail
 out="$(mkdir -p "${1:?usage: $0 <out-dir>}" && cd "$1" && pwd)/bin"
 root="$(cd "$(dirname "$0")/../.." && pwd)"
-jdk="$(sed -n 's/^java=\([^ ]*\).*/\1/p' "$root/.sdkmanrc")"
-major="${jdk%%.*}"
-# CI (setup-graalvm) provides GRAALVM_HOME; locally sdkman does. Either way it must be the pinned major.
-if [ -n "${GRAALVM_HOME:-}" ] && [ -x "$GRAALVM_HOME/bin/native-image" ]; then
-  home="$GRAALVM_HOME"
-else
-  home="${SDKMAN_DIR:-$HOME/.sdkman}/candidates/java/$jdk"
-fi
-[ -x "$home/bin/native-image" ] || { echo "GraalVM $jdk not found at $home — run 'sdk env install' in $root" >&2; exit 1; }
-have="$("$home/bin/java" -version 2>&1 | sed -n 's/.*version "\([0-9]*\).*/\1/p' | head -1)"
-[ "$have" = "$major" ] || { echo "GraalVM at $home is JDK $have, the pin is $jdk (.sdkmanrc)" >&2; exit 1; }
+# shellcheck source=kit-common.sh
+. "$root/scripts/bundle/kit-common.sh"
+jdk="$(hk_pinned_version "$root/scripts/bundle/graalvm-pins.txt")"
+[ -n "$jdk" ] || { echo "no GraalVM version in $root/scripts/bundle/graalvm-pins.txt" >&2; exit 1; }
+# HISTMERSION_GRAALVM_HOME, the one `scripts/bundle/toolchain.sh install` provisioned into the data
+# directory, GRAALVM_HOME (CI), JAVA_HOME — the first that IS GraalVM CE $jdk with native-image
+home="$(hk_find_graalvm "$jdk")" || {
+  echo "GraalVM CE $jdk with native-image not found — provision it with 'scripts/bundle/toolchain.sh install'" \
+    "(pinned download and SHA-256, into $(hk_data_dir)/toolchain), or point HISTMERSION_GRAALVM_HOME at one" >&2
+  exit 1
+}
+echo "  GraalVM CE $jdk: $home"
 export JAVA_HOME="$home" GRAALVM_HOME="$home" PATH="$home/bin:$PATH"
 bins() { find "$root/target/out" -type f \( -name histmersion-server -o -name histmersion-cli \) -perm -u+x 2>/dev/null || true; }
 # stale binaries must never be mistaken for a fresh build
@@ -34,7 +36,7 @@ bundle="$(dirname "$out")"
 kit_src="$(find "$root/target/out" -type d -path '*histmersion-server/kit' | head -1)"
 [ -n "$kit_src" ] && [ -f "$kit_src/classpath" ] || { echo "server/relinkKit wrote no kit" >&2; exit 1; }
 rm -rf "$bundle/kit" && cp -R "$kit_src" "$bundle/kit"
-printf '%s\n' "$jdk" | sed 's/-graalce$//' > "$bundle/kit/graalvm-version"
+printf '%s\n' "$jdk" > "$bundle/kit/graalvm-version"
 [ -f "$bundle/kit/tools/sloth.jar" ] || echo "  note: no Sloth jar (SLOTH_JAR) — a relink will link plugin jars unpatched"
 version="$(sed -n 's/.*version *:= *"\([^"]*\)".*/\1/p' "$root/build.sbt" | head -1)"
 commit="$(git -C "$root" rev-parse --short=12 HEAD 2>/dev/null || echo -)"
@@ -46,8 +48,6 @@ printf '{\n  "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b
 # the build record (kit-common.sh): linked HERE, from this kit, with no plugin jars — an install on this
 # same machine (`just install`) keeps this binary instead of linking the same one again; on any other
 # machine (a CI bundle) the machine differs and the install links its own
-# shellcheck source=kit-common.sh
-. "$root/scripts/bundle/kit-common.sh"
 hk_write_build_record "$out/histmersion-server.build" native "$bundle/kit" "$bundle/.no-plugins" bundle
 # the scripts around the kit
 mkdir -p "$bundle/libexec"

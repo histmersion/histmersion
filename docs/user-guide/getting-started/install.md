@@ -34,12 +34,14 @@ scripts/bundle/install-linux.sh <bundle-dir>      # Linux
 
 ## Option B: build it from the source code
 
-You need [sdkman](https://sdkman.io) (it installs the pinned Java toolchain, GraalVM CE 25.0.1),
-[uv](https://docs.astral.sh/uv/) and [pixi](https://pixi.sh), and [just](https://just.systems) to
-run the recipes. Then, in a checkout of the repository:
+You need [sdkman](https://sdkman.io) (it installs sbt), [uv](https://docs.astral.sh/uv/) and
+[pixi](https://pixi.sh), and [just](https://just.systems) to run the recipes. Then, in a checkout of
+the repository:
 
 ```bash
-sdk env install        # the pinned GraalVM and sbt (.sdkmanrc)
+sdk env install        # sbt (.sdkmanrc)
+just toolchain install # the pinned Java toolchain, GraalVM CE 25.4: downloaded once (~340 MB),
+                       # checked against its pinned SHA-256, unpacked into the data folder's toolchain/
 just install           # builds dist/histmersion (~3.3 GB, of which the OCR models are ~1.3 GB),
                        # installs it, starts it
 ```
@@ -57,9 +59,10 @@ To do that the installer:
 
 1. checks for a C toolchain (macOS: `xcode-select --install`; Linux: `build-essential zlib1g-dev`),
    enough memory (`HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12; about 16 GB in practice) and disk;
-2. downloads GraalVM CE 25.0.1 **once** from its official release (~325 MB on macOS, ~340 MB on
+2. downloads GraalVM CE 25.4 **once** from its official release (~340 MB on macOS, ~350 MB on
    Linux), checks it against a pinned SHA-256 checksum, and unpacks it into the data folder's
-   `toolchain/` (~680 MB);
+   `toolchain/` (~640 MB) — the same copy a build from source uses. GraalVM CE 25.4 has no build
+   for Intel Macs: there the installer falls back to the bundle's ready-made server;
 3. links the server — about 2 minutes and ~13.5 GB of memory on a recent laptop.
 
 You do not have to let it:

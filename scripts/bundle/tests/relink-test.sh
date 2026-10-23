@@ -25,7 +25,7 @@ check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }  # <what> <shell test
 
 # ── a fake GraalVM ────────────────────────────────────────────────────────────────────────────────
 graal="$tmp/graalvm"; mkdir -p "$graal/bin"
-echo 'JAVA_VERSION="25.0.1"' > "$graal/release"
+echo 'JAVA_VERSION="25.0.4.1.1"' > "$graal/release"
 cat > "$graal/bin/java" <<'SH'
 #!/bin/bash
 # PluginTool <cmd> …, Main --self-check, -jar sloth.jar, SlothVerify.java — told apart by the arguments
@@ -131,9 +131,9 @@ new_install() {
   echo a.jar > "$INSTALL/kit/classpath"
   echo "--no-fallback" > "$INSTALL/kit/native-image.args"
   echo com.histmersion.server.Main > "$INSTALL/kit/main-class"
-  echo 25.0.1 > "$INSTALL/kit/graalvm-version"
+  echo 25.0.4.1.1 > "$INSTALL/kit/graalvm-version"
   echo sloth > "$INSTALL/kit/tools/sloth.jar"; echo verify > "$INSTALL/kit/tools/SlothVerify.java"
-  echo '{"format":1,"version":"0.1.0","graalvm":"25.0.1","spiVersion":1}' > "$INSTALL/kit/kit.json"
+  echo '{"format":1,"version":"0.1.0","graalvm":"25.0.4.1.1","spiVersion":1}' > "$INSTALL/kit/kit.json"
   (cd "$INSTALL/kit" && find . -type f ! -name kit.json ! -name SHA256SUMS | sed 's|^\./||' | sort \
     | while read -r f; do printf '%s  %s\n' "$(shasum -a 256 "$f" | awk '{print $1}')" "$f"; done > SHA256SUMS)
   export HISTMERSION_DATA_DIR="$tmp/data"

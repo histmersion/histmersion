@@ -124,9 +124,9 @@ class PluginToolSuite extends munit.FunSuite:
     val kit = kitWith(d, Map("a.jar" -> Map("a/A.class" -> Array[Byte](1))))
     Files.writeString(kit.resolve("main-class"), "com.histmersion.server.Main\n")
     Files.writeString(kit.resolve("kit.json"), "{}")
-    val m = PluginTool.kitManifest(kit, "0.1.0", Some("abc"), "25.0.1")
+    val m = PluginTool.kitManifest(kit, "0.1.0", Some("abc"), "25.0.4.1.1")
     assertEquals(m.files.map(_.file), List("classpath", "lib/a.jar", "main-class"))
     assertEquals(m.files.find(_.file == "lib/a.jar").map(_.sha256), Some(PluginTool.sha256(kit.resolve("lib/a.jar"))))
-    assertEquals((m.mainClass, m.graalvm, m.spiVersion), ("com.histmersion.server.Main", "25.0.1", Spi.Version))
+    assertEquals((m.mainClass, m.graalvm, m.spiVersion), ("com.histmersion.server.Main", "25.0.4.1.1", Spi.Version))
     val actual = m.files.map(f => f.file -> PluginTool.sha256(kit.resolve(f.file))).toMap
     assertEquals(PluginKit.verifyKit(m.files, actual), Nil)

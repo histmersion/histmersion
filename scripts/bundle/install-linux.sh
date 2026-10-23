@@ -12,7 +12,7 @@
 #
 # --move renames the bundle into place instead of copying it. The server binary (install-build.sh;
 # HISTMERSION_BUILD=local|prebuilt|jvm) is LINKED HERE by default, from the bundle's kit with the plugins
-# of the data directory: GraalVM CE downloaded once at its pinned version and checksum (~340 MB), gcc +
+# of the data directory: GraalVM CE downloaded once at its pinned version and checksum (~350 MB), gcc +
 # zlib headers, ~16 GB of available memory, about 2 minutes. When this machine cannot, the install FALLS
 # BACK to the bundle's prebuilt binary and says so — it still succeeds. Nothing is linked when it would
 # repeat a binary already linked here from the same kit and plugins. --prebuilt takes the bundle's binary

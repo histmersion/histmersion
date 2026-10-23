@@ -7,7 +7,7 @@
 #                                    (what an install asks before downloading it)
 #   histmersion-toolchain install    download GraalVM CE at the kit's pinned version from its official
 #                                    GitHub release, check its pinned SHA-256, unpack it into
-#                                    <data>/toolchain/graalvm-ce-<version> (~680 MB)
+#                                    <data>/toolchain/graalvm-ce-<version> (~640 MB)
 #   histmersion-toolchain path       the GraalVM home a relink would use
 #   histmersion-toolchain remove     delete the provisioned GraalVM
 #
@@ -26,7 +26,7 @@ pins="${HISTMERSION_GRAALVM_PINS:-$here/../libexec/graalvm-pins.txt}"
 [ -f "$pins" ] || pins="$here/graalvm-pins.txt"
 version() {
   if [ -f "$install/kit/graalvm-version" ]; then cat "$install/kit/graalvm-version"
-  else sed -n 's/^java=\([0-9][0-9.]*\)-graalce.*/\1/p' "$here/../../.sdkmanrc" 2>/dev/null | head -1; fi
+  else hk_pinned_version "$pins"; fi
 }
 platform() {
   if [ -n "${HISTMERSION_TOOLCHAIN_PLATFORM:-}" ]; then echo "$HISTMERSION_TOOLCHAIN_PLATFORM"; return; fi
@@ -35,7 +35,7 @@ platform() {
   echo "$(hk_os)-$arch"
 }
 v="$(version)"
-[ -n "$v" ] || hk_die 2 "no GraalVM version: neither $install/kit/graalvm-version nor .sdkmanrc"
+[ -n "$v" ] || hk_die 2 "no GraalVM version: neither $install/kit/graalvm-version nor $pins"
 dest="$(hk_data_dir)/toolchain/graalvm-ce-$v"
 
 cmd="${1:-check}"
@@ -45,7 +45,7 @@ case "$cmd" in
     ;;
 
   check|preflight)
-    # preflight: everything but GraalVM — what an installer asks BEFORE downloading ~325 MB of it
+    # preflight: everything but GraalVM — what an installer asks BEFORE downloading ~340 MB of it
     ok=1
     if [ "$cmd" = check ]; then
       if gv="$(hk_find_graalvm "$v")"; then echo "- GraalVM CE $v: $gv"
@@ -75,7 +75,7 @@ case "$cmd" in
     fi
     p="$(platform)"
     line="$(awk -v v="$v" -v p="$p" '$1 == v && $2 == p {print; exit}' "$pins")"
-    [ -n "$line" ] || hk_die 2 "no pinned GraalVM CE $v for $p in $pins"
+    [ -n "$line" ] || hk_die 2 "no pinned GraalVM CE $v for $p in $pins (the release ships none for this platform: point HISTMERSION_GRAALVM_HOME at a GraalVM CE $v, or use JVM mode, histmersion-relink --jvm)"
     sha="$(echo "$line" | awk '{print $3}')" url="$(echo "$line" | awk '{print $4}')"
     lock="$(hk_data_dir)/toolchain/.lock"
     hk_lock "$lock" || hk_die 2 "another toolchain install holds $lock"

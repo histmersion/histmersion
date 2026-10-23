@@ -4,7 +4,7 @@
 (`Global / cacheStores := Seq.empty`) because the machine-wide cache had replayed results across git
 worktrees. This note measures where the time went, fixes the cache properly, and records what changed
 and what each change bought. All figures are from one machine (Apple M-series, 14 cores, 48 GB,
-shared with other agents' builds — single runs, so ±10 % is noise), GraalVM CE 25.0.1, sbt 2.0.11.
+shared with other agents' builds — single runs, so ±10 % is noise), GraalVM CE 25.0.1 (the pin then; §5 moved it to 25.4), sbt 2.0.11.
 
 ## 1. Where the time went (before)
 
@@ -135,12 +135,21 @@ of 5 warm runs of `histmersion-server --self-check` and `histmersion --help`.
 
 | GraalVM CE | server build | server peak RSS | server size | server startup | CLI build | CLI peak | CLI size | CLI startup |
 |---|---|---|---|---|---|---|---|---|
-| 25.0.1 (pinned) | 103 s / 95 s | 11.2 / 12.4 GB | 210 MB | 46 ms | 49 s | 8.7 GB | 87 MB | 10 ms |
+| 25.0.1 (pinned until 2026-10-23) | 103 s / 95 s | 11.2 / 12.4 GB | 210 MB | 46 ms | 49 s | 8.7 GB | 87 MB | 10 ms |
 | 25.0.2 | 92 s / 94 s | 13.1 / 12.0 GB | 210 MB | 46 ms | 50 s | 8.6 GB | 87 MB | 10 ms |
 | 25.4 (25i4, JDK 25.0.4.1.1, "innovation") | refuses the class path¹; with the flag: 94 s / 103 s | 13.4 / 11.4 GB | **168 MB** | 43 ms | 53 s | 8.5 GB | **68 MB** | 9 ms |
+| 25.4, adopted: tzdb jar excluded, no flag (`just bundle`, 2026-10-23) | 93 s | 11.7 GB | **168 MB** | 36 ms² | 48 s | 8.0 GB | **69 MB** | 8 ms² |
 
 ¹ `scala-java-time-tzdb_3-2.6.0.jar` (a transitive dependency) contains `java.time.zone.TzdbZoneRulesProvider`,
 which 25.4's builder refuses on the class path unless `-H:+AllowDeprecatedBuilderClassesOnImageClasspath`.
+It is not needed on the JVM at all: scribe's perfolation 1.3.0 depends on it (a Scala.js time-zone database),
+and on the JVM java.base's own `java.time` always wins. build.sbt now excludes `scala-java-time-tzdb_3` from
+every JVM class path; the binaries use the JDK's tzdb (604 zones, tzdb 2026b), which `histmersion-server
+--self-check` checks (`TimeZoneCheck`, and `scripts/bundle/smoke.sh` under `TZ=Australia/Lord_Howe`).
+
+² The adopted row is one run inside `just bundle` (288 s wall for the whole bundle, peak RSS 12.6 GB),
+sizes as `ls -l` bytes / 2²⁰ (176 688 608 and 72 040 864 bytes); startup is the median of 5 runs after a
+warm-up, timed around `subprocess.run` — not necessarily the same harness as the rows above.
 
 Options on 25.0.1 (server unless noted):
 
@@ -152,11 +161,19 @@ Options on 25.0.1 (server unless noted):
 | `-Ob` (quick build) | 122 s | 12.3 GB | 222 MB | not faster here (CLI: 51 s, 93 MB); bigger, slightly slower binary |
 | `--exact-reachability-metadata` | — | — | — | a strictness switch (missing metadata fails at run time), no build-time effect; not adopted |
 
-**Decision: keep GraalVM CE 25.0.1.** 25.0.2 builds the server 0–10 % faster with the same binary —
-inside the run-to-run noise of a shared machine (25.0.1's own two runs differ by 8 %) and not worth a
-pin move with its metadata re-record. 25.4 makes 20 % smaller binaries at the same build time, but it
-is the short-lived innovation line and needs the tzdb jar excluded or the deprecated-classes flag; worth
-revisiting with the next LTS-line release. No native-image option sped the build.
+**Decision (2026-10-23): adopted GraalVM CE 25.4** (JDK 25.0.4.1.1), pinned with its SHA-256 in
+`scripts/bundle/graalvm-pins.txt`. Why: the binaries are 20 % smaller (server 210 → 168 MB, CLI 87 → 69 MB)
+— less to download, install and relink — at the same build time and memory, and start slightly faster.
+The class-path obstacle was fixed at its cause (the tzdb jar excluded), not with the deprecated-classes
+flag. **The caveat:** 25.4 is the *innovation* line, which gets no fixes once the next innovation release is
+out, so the pin moves with each new one as it lands (pins, docs and a re-checked metadata run in one
+commit — AGENTS.md, "The JDK pin"); and it ships no macOS x64 build, so an Intel Mac falls back to the
+prebuilt binary or JVM mode. sdkman has no download of it (`.sdkmanrc` names no JDK now;
+`just toolchain install` provisions it). Earlier: 25.0.2 built the server 0–10 % faster with the same
+binary — inside the run-to-run noise of a shared machine (25.0.1's own two runs differ by 8 %) — and was
+not worth a pin move on its own. 25.4's builder also warns that `--no-fallback` has no effect any more and
+that `--enable-url-protocols` should become reachability metadata; both are left as they are for now.
+No native-image option sped the build.
 
 ## 6. Before and after
 

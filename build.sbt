@@ -1,6 +1,6 @@
 // Histmersion — native Scala MCP server + host CLI over a Postgres/PostGIS store.
 // Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), Circe (+Kindlings),
-// Ox, Magnum (sync JDBC). Toolchain pinned in .sdkmanrc (GraalVM CE 25.0.1 + native-image, sbt 2.0.11)
+// Ox, Magnum (sync JDBC). Toolchain: GraalVM CE 25.4 + native-image (scripts/bundle/graalvm-pins.txt), sbt 2.0.11 (.sdkmanrc)
 // and project/build.properties.
 
 import Dependencies.*
@@ -179,7 +179,7 @@ def writeClasspathSetting: Seq[Setting[?]] = Seq(
 // Runs the app (forked `run`/`runMain`) under the GraalVM native-image tracing agent, MERGING the
 // captured reflection/resource/JNI metadata into src/main/resources/META-INF/native-image. So simply
 // exercising the app via sbt keeps the native-image metadata current — no separate command to run.
-// (Requires the GraalVM JDK from .sdkmanrc, which ships the agent.)
+// (Requires the pinned GraalVM JDK — scripts/bundle/graalvm-pins.txt — which ships the agent.)
 //
 // On JDK 25 the agent writes ONE `reachability-metadata.json` per module; the legacy split files
 // (reflect-config.json, resource-config.json, …) are gone and must not be reintroduced beside it —
@@ -210,7 +210,7 @@ def checkNoLegacyNativeConfigs(dir: File): Unit = {
   if (found.nonEmpty)
     sys.error(
       s"legacy native-image metadata beside reachability-metadata.json: ${found.map(_.getName).mkString(", ")} in $dir\n" +
-        "  these come from a tracing-agent run under a JDK other than the one pinned in .sdkmanrc.\n" +
+        "  these come from a tracing-agent run under a JDK other than the one pinned in scripts/bundle/graalvm-pins.txt.\n" +
         "  Delete them, then regenerate with the pinned JDK (CLAUDE.md, 'The tracing-agent rule').")
 }
 

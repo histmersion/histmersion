@@ -228,7 +228,8 @@ and you silently lose every resource.
 each module's `NativeMetadataSuite` fails on one — do not `.gitignore` them: native-image would
 still read them from the working tree.
 
-Regenerate metadata **only with the pinned JDK**. Agents disagree across JDK versions: the JDK-24
+Regenerate metadata **only with the pinned JDK** (`JAVA_HOME="$(just toolchain path)" sbt server/run`; the
+justfile's sbt recipes use it already). Agents disagree across JDK versions: the JDK-24
 agent rejects the `jniAccessible` attributes the 25 agent writes, and the 22 agent writes the legacy
 format back.
 
@@ -241,10 +242,25 @@ task, but check `git status` after a hard interrupt.
 
 ## The JDK pin
 
-`.sdkmanrc` pins **GraalVM CE 25.0.1**, CI (`.github/workflows/ci.yml`, `bundle.yml`) matches it,
-and `scripts/bundle/server.sh` refuses to build with any other major. Moving it is a single
-coordinated change — `.sdkmanrc` + the workflows + the regenerated tracing-agent metadata, in one
-commit.
+`scripts/bundle/graalvm-pins.txt` pins **GraalVM CE 25.4** ("25 Innovation 4", JDK **25.0.4.1.1** — the
+version its `release` file declares, which is the string every script compares): one line per platform
+with the official release URL and its SHA-256. It is the ONE pin: `scripts/bundle/server.sh` builds only
+with exactly that version and writes it into the relink kit (`kit/graalvm-version`); `histmersion-toolchain
+install` (in the repo: `just toolchain install`) downloads it, checks the SHA-256 and unpacks it into
+`<data>/toolchain/graalvm-ce-25.0.4.1.1`, where server.sh, the relink and the justfile's sbt recipes find
+it; CI (`.github/workflows/ci.yml`, `bundle.yml`) provisions it with the same script. `.sdkmanrc` names
+no JDK: sdkman offers no download of this build, and its id is longer than the 15 characters `sdk install`
+accepts for a local one. Elsewhere set `HISTMERSION_GRAALVM_HOME`. Moving the pin is a single coordinated
+change — the pins (version, URLs, SHA-256 checked against the release's `.sha256` AND GitHub's asset
+digest), the docs that name it, and the re-checked tracing-agent metadata, in one commit.
+
+25.4 is an **innovation** release: it gets no fixes once the next one is out, so the pin moves with each
+new one (docs/research-build-speed.md §5 has why it was adopted: 20 % smaller binaries at the same build
+time). It ships no macOS x64 build. Its builder refuses a `java.*` class on the image class path, which
+is why build.sbt excludes `scala-java-time-tzdb_3` (a Scala.js time-zone database scribe's perfolation
+pulls onto the JVM, holding its own `java.time.zone.TzdbZoneRulesProvider`); the binaries use the JDK's
+tzdb, and `histmersion-server --self-check` checks it (`TimeZoneCheck`). Never pass
+`-H:+AllowDeprecatedBuilderClassesOnImageClasspath` instead.
 
 It sat at 22.0.2 for the whole of waves 1–2 because of one transitive dependency: `tapir-netty-server-sync`
 1.11.x pulled **ox 0.5.x**, whose `DoNothingScope extends StructuredTaskScope`. JEP 505 turned

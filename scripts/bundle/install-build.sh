@@ -3,7 +3,7 @@
 #
 #   local (the default)  link the server on THIS machine from the bundle's kit, with the plugins of the
 #                        data directory: GraalVM CE provisioned at its pinned version and checksum
-#                        (histmersion-toolchain install, ~325 MB download, ~680 MB unpacked, once), then
+#                        (histmersion-toolchain install, ~340 MB download, ~640 MB unpacked, once), then
 #                        histmersion-relink (~2 minutes, ~13.5 GB of memory)
 #   prebuilt             the bundle's own binary as shipped — nothing built, no toolchain
 #                        (--prebuilt, HISTMERSION_BUILD=prebuilt)
@@ -111,7 +111,7 @@ ib_build() { # <dest> <mode> [<previous install>]
       rc=0; "$b/histmersion-toolchain" preflight || rc=$?
       if [ "$rc" != 0 ]; then ib_fallback "$b" "this machine cannot link the server now (above)" "$jars"; return $?; fi
       if ! "$b/histmersion-toolchain" path >/dev/null 2>&1; then
-        echo "  GraalVM CE is downloaded once (~325 MB, ~680 MB unpacked) into $(hk_data_dir)/toolchain"
+        echo "  GraalVM CE is downloaded once (~340 MB, ~640 MB unpacked) into $(hk_data_dir)/toolchain"
         rc=0; "$b/histmersion-toolchain" install || rc=$?
         if [ "$rc" != 0 ]; then ib_fallback "$b" "GraalVM CE could not be provisioned (download or checksum, above)" "$jars"; return $?; fi
       fi
