@@ -6,4 +6,4 @@
 # recipes find it (or set HISTMERSION_GRAALVM_HOME). tapir 1.13.x pulls ox 1.0.x, which no longer extends
 # StructuredTaskScope (JEP 505) — JDK 25 is fine.
 sbt=2.0.11
-scala=3.8.4
+scala=3.10.0

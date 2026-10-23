@@ -6,7 +6,7 @@
 import Dependencies.*
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
-ThisBuild / scalaVersion := "3.8.4"
+ThisBuild / scalaVersion := "3.10.0"
 ThisBuild / organization := "com.kubuszok"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 

@@ -11,7 +11,7 @@ build/test/run workflow.
 ## Toolchain
 
 Pinned: **GraalVM CE 25.4** (JDK 25.0.4.1.1) in `scripts/bundle/graalvm-pins.txt` (URL + SHA-256 per
-platform); sbt 2.0.11 and Scala 3.8 in `.sdkmanrc`.
+platform); sbt 2.0.11 and Scala 3.10 in `.sdkmanrc`.
 
 ```bash
 just toolchain install   # once: the pinned GraalVM, SHA-256 checked, into <data>/toolchain/graalvm-ce-25.0.4.1.1

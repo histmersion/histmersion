@@ -16,7 +16,7 @@ boundaries, code style, the configuration and native-image rules, commit convent
 | [pixi](https://pixi.sh) | the bundled PostgreSQL 18 + PostGIS (`runtime/postgres`), also for test databases |
 | Node.js | only for the web page's browser tests |
 
-The code is Scala 3.8 in direct style: Tapir on netty for HTTP, Chimp for MCP, Magnum for SQL,
+The code is Scala 3.10 in direct style: Tapir on netty for HTTP, Chimp for MCP, Magnum for SQL,
 Flyway for the schema, Laminar (Scala.js) for the web page, GraalVM native-image for both binaries.
 
 ## Build and run
