@@ -34,6 +34,25 @@ class ManagerCmdSuite extends munit.FunSuite:
     val agent = Command("histmersion", "test")(AgentCmd.command)
     assert(agent.parse(List("agent", "enqueue", "review", "x"), Map.empty).isRight)
 
+  test("autopilot focus: list, pin, unpin, priority, max parse into the request; a malformed one is a usage error"):
+    import com.histmersion.core.Autopilot.FocusSet
+    assertEquals(ManagerCmd.focusRequest(Nil), Right(None))
+    assertEquals(ManagerCmd.focusRequest(List("list")), Right(None))
+    assertEquals(ManagerCmd.focusRequest(List("pin", "bronze-age")), Right(Some(FocusSet("pin", Some("bronze-age"), by = Some("cli")))))
+    assertEquals(ManagerCmd.focusRequest(List("unpin", "x")).map(_.map(_.action)), Right(Some("unpin")))
+    assertEquals(ManagerCmd.focusRequest(List("priority", "x", "4")), Right(Some(FocusSet("priority", Some("x"), Some(4), Some("cli")))))
+    assertEquals(ManagerCmd.focusRequest(List("max", "3")), Right(Some(FocusSet("max", value = Some(3), by = Some("cli")))))
+    assertEquals(ManagerCmd.focusRequest(List("max", "default")), Right(Some(FocusSet("max", by = Some("cli")))))
+    List(List("pin"), List("max", "-1"), List("max", "many"), List("priority", "x"), List("bogus")).foreach { a =>
+      assert(ManagerCmd.focusRequest(a).left.exists(_.exitCode == ExitCode.Usage), a)
+    }
+    val cmd = Command("t", "test")(ManagerCmd.autopilot)
+    assert(cmd.parse(List("autopilot", "focus", "pin", "x", "--json"), Map.empty).isRight)
+    assert(cmd.parse(List("autopilot", "focus"), Map.empty).isRight)
+    assert(cmd.parse(List("autopilot"), Map.empty).isRight)
+    val extra = cmd.parse(List("autopilot", "on", "x"), Map.empty).fold(h => fail(h.toString), identity)
+    assert(extra(Client("http://127.0.0.1:1")).left.exists(_.exitCode == ExitCode.Usage), "on takes no further argument")
+
   test("autopilot repair-acquire [--dry-run] posts the request and prints what it did; an unknown verb is a usage error"):
     val seen = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val answer = RepairAcquire.RepairResult(dryRun = true, moved = 1, untouched = 3,
