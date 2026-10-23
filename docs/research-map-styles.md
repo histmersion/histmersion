@@ -490,23 +490,27 @@ proposed: the reduced vector map measured within the input budget (below) and ke
 **The cut-off names** (§2) are gone with protomaps-leaflet: MapLibre places the base map's names over the
 whole view; a browser test at 2560 × 1440 checks no name is clipped.
 
-### Budgets (perf.test.mjs, Aegean fixture, 1280 × 800)
+### Budgets (perf.test.mjs, Aegean fixture, 1280 × 800, against the native server)
 
-GPU (Metal, Apple M4 Pro, `--use-angle=metal`), the app's existing budgets all pass; the two new ones
-put the vector maps under the full overlay load (1 600 state shapes, 2 900 points):
+GPU (Metal, Apple M4 Pro, `--use-angle=metal`): every existing budget passes, and the two new ones put
+the vector maps under the full overlay load (1 600 state shapes, 2 900 points). Software: Chromium's
+SwiftShader (`HISTMERSION_TEST_GPU=0`), the page on its no-GPU path; two runs, the range is both.
 
-| path | GPU | software (SwiftShader, `HISTMERSION_TEST_GPU=0`) |
+| path | GPU | software |
 |---|---|---|
-| mapPan input p95 | 33 ms | 39 ms |
-| eventLayer pan p95 / zoom dropped | 39 ms / 7.4 % (budget 8 %) | 54 ms / 7.9 % |
-| rangeAreas load longest task | 86 ms | 144 ms |
-| Readable: drawn · pan p95 · pan dropped · zoom dropped | 531–634 ms · 51–54 ms · ≤ 3 % · 0.6–7 % | 609 ms · 66 ms · 8.2 % · 18.3 % |
-| Physical: same | similar | 558 ms · 66 ms · 11.7 % · 15.8 % |
-| soak, 100 rounds: heap · nodes · listeners · markers growth | 2.7 MB · 0 · 0 · 0 | 2.9 MB · 0 · 0 · 0 |
+| mapPan input p95 | 37 ms | 37–39 ms |
+| eventLayer pan p95 · zoom dropped (GPU budget 8 %) | 39 ms · 5.9–7.4 % | 53–54 ms · 7.9–11 % |
+| rangeAreas load, longest task | 54 ms | 144 ms |
+| Readable: drawn · pan p95 · pan dropped · zoom dropped | 524 ms · 51 ms · 0 % · 0–0.6 % | 566–609 ms · 66–75 ms · 8–20 % · 17–18 % |
+| Physical: same | 537 ms · 53 ms · 0 % · 0.6 % | 548–584 ms · 66–81 ms · 12–42 % · 16–29 % |
+| soak, 100 rounds: heap · nodes · listeners · markers growth | 2.9 MB · 0 · 0 · 0 | 2.9 MB · 0 · 0 · 0 |
 
-In software every input stays within the 100 ms rule, but a wheel zoom drops 16–18 % of frames (30 fps):
-the vector maps there have their own `…Software` budgets (pan 20 %, zoom 25 % dropped); the GPU budgets
-are not relaxed. The tightest GPU margin is the events layer's zoom (7.4 % against 8 %).
+In software every input stays within the 100 ms rule and no task stalls, but the map runs at 20–30
+frames a second and its dropped frames vary widely between runs. The software paths therefore have
+budgets of their own (`eventLayerSoftware`, `readableMapSoftware`, `physicalMapSoftware`: input, long
+tasks, drawing time; frame rate measured but not budgeted); the GPU budgets are unchanged. Against
+Leaflet's canvas map, which ran these budgets in software, the events layer's zoom is the one
+measurable loss there (11 % dropped against 8 %). The tightest GPU margin is the same path (5.9–7.4 %).
 
 ### Risks left
 
