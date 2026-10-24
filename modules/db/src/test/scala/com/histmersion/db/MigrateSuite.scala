@@ -32,3 +32,17 @@ class MigrateSuite extends munit.FunSuite:
     calls = 0
     intercept[java.sql.SQLException](Migrate.retrying(2) { calls += 1; throw java.sql.SQLException("x", "40P01") })
     assertEquals(calls, 2)
+
+  test("each replaced migration's new checksum is Flyway's for the text it has now"):
+    Migrate.Replaced.foreach { m =>
+      val name = Migrate.migrationNames.find(_.startsWith(s"V${m.version}__")).getOrElse(fail(s"no V${m.version}"))
+      val resource = new org.flywaydb.core.api.resource.LoadableResource:
+        def read(): java.io.Reader =
+          java.io.InputStreamReader(getClass.getClassLoader.getResourceAsStream(s"db/migration/$name"), "UTF-8")
+        def getAbsolutePath: String       = s"db/migration/$name"
+        def getAbsolutePathOnDisk: String = getAbsolutePath
+        def getFilename: String           = name
+        def getRelativePath: String       = name
+      assertEquals(org.flywaydb.core.internal.resolver.ChecksumCalculator.calculate(resource), m.now, name)
+      assertNotEquals(m.ranWith, m.now, name)
+    }

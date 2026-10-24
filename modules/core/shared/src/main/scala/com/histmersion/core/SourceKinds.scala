@@ -18,7 +18,7 @@ object SourceKinds:
   private val DataDoiPrefixes = List("10.5061/", "10.6084/", "10.17632/", "10.7910/")
 
   /** Acquisitions that bring in whole books (a Calibre entry, an archive.org download, a file the user
-    * brought in from elsewhere — [[Provenance.ExternalFile]]; a retired value is read as its successor). */
+    * brought in from elsewhere — [[Provenance.ExternalFile]]). */
   private val BookProvenance = Set("calibre", Provenance.ExternalFile, "archive", "archive_org")
 
   /** Pure: what a source is — from its own words (a tag or topic naming a thesis or a dataset, a venue
@@ -37,7 +37,7 @@ object SourceKinds:
       case Some(chapter) => if chapter then Chapter else Book
       case None if id.isDefined => Paper
       case None =>
-        if hasCover || provenance.map(p => Provenance.canonical(p).trim.toLowerCase(java.util.Locale.ROOT)).exists(BookProvenance.contains) then Book
+        if hasCover || provenance.map(_.trim.toLowerCase(java.util.Locale.ROOT)).exists(BookProvenance.contains) then Book
         else Unknown
 
   /** Pure: a DOI that is a book's ISBN (`10.1007/978-3-030-12345-6`, `10.1017/CBO9780511607066`) —
