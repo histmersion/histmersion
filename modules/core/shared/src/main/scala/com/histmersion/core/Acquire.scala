@@ -168,18 +168,21 @@ object Acquire:
   /** The acquisition item for an OPEN-ACCESS work no script may download (#1581: a publisher that
     * answers scripts with a 403, an empty file or a challenge, or is not on `oa-publisher-hosts`): a
     * download in the browser, where the person reads it under its licence, then `histmersion ingest
-    * <file> --citekey <citekey>`. `None` for a work no index calls open access. Pure. */
+    * <file> --citekey <citekey>`. `refusals` = what the fetchers that refused it said (`oapen: an openly
+    * licensed copy exists but could not be downloaded: <handle> (<item page>), licence …`): where to download
+    * it, and under which licence. `None` for a work no index calls open access. Pure. */
   val BrowserDownloadTopic = "browser download"
 
-  def browserDownloadText(work: WorkRef, doi: String, citekey: String): Option[String] =
+  def browserDownloadText(work: WorkRef, doi: String, citekey: String, refusals: List[String] = Nil): Option[String] =
     Option.when(work.isOa) {
       val who   = work.authors.headOption.map(a => if work.authors.size > 1 then s"$a et al." else a)
       val head  = List(who, work.year.map(y => s"($y)")).flatten.mkString(" ")
       val title = work.title.map(_.trim).filter(_.nonEmpty).getOrElse(doi)
       val oa    = work.oaStatus.map(_.trim.toLowerCase).filter(_.nonEmpty).fold("open access")(s => s"$s open access")
       val at    = work.oaUrl.map(_.trim).filter(u => u.nonEmpty && !u.toLowerCase.contains(doi.toLowerCase)).fold("")(u => s" at $u")
+      val said  = refusals.map(_.trim).filter(_.nonEmpty).distinct.mkString("; ")
       s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
-        s"it: download it in the browser, then histmersion ingest <file> --citekey $citekey"
+        s"it: download it in the browser${if said.isEmpty then "" else s" ($said)"}, then histmersion ingest <file> --citekey $citekey"
     }
 
   /** True when a human should look before relying on the paper. */

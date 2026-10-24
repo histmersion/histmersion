@@ -194,3 +194,11 @@ class AcquireSuite extends munit.FunSuite:
     assert(Acquire.browserDownloadText(doiOnly, "10.3390/REL10040258", "k").exists(t =>
       t.startsWith("A et al. (2019).") && t.contains("— open access, but") && !t.contains(" at https://doi.org")))
     assertEquals(Acquire.browserDownloadText(w.copy(isOa = false), "10.3390/rel10040258", "k"), None)
+
+  test("browserDownloadText: a fetcher's refusal says where to download it and under which licence"):
+    val w = WorkRef(title = Some("Gods of the Bronze Age"), year = Some(2020), authors = List("A"), isOa = true, oaStatus = Some("gold"))
+    val refusal = "oapen: an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
+      "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
+    val text = Acquire.browserDownloadText(w, "10.1515/zz", "k", List(refusal, refusal, " ")).getOrElse(fail("an item"))
+    assert(text.contains(s"download it in the browser ($refusal), then histmersion ingest <file> --citekey k"), text)
+    assertEquals(text.sliding(refusal.length).count(_ == refusal), 1, "each refusal once")
