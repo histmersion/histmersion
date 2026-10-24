@@ -19,7 +19,7 @@ export JAVA_HOME="$home" PATH="$home/bin:$PATH"
 bins() { find "$root/target/out" -type f \( -name histmersion-server -o -name histmersion-cli \) -perm -u+x 2>/dev/null || true; }
 # stale binaries must never be mistaken for a fresh build
 bins | xargs rm -f
-(cd "$root" && sbt --client shutdown >/dev/null 2>&1 || true; sbt --server -batch -Dsbt.global.localcache="$root/target/sbt-cache" "server/nativeImage; cli/nativeImage; server/relinkKit; pluginHello/package")
+(cd "$root" && sbt --client shutdown >/dev/null 2>&1 || true; sbt --server -batch -Dsbt.global.localcache="$root/target/sbt-cache" "server/nativeImage; cli/nativeImage; server/relinkKit; pluginHello/package; pluginApi/package; pluginApi/packageSrc")
 server_bin="$(bins | grep '/histmersion-server$' | head -1)"; cli_bin="$(bins | grep '/histmersion-cli$' | head -1)"
 [ -n "$server_bin" ] && [ -n "$cli_bin" ] || { echo "native-image produced no binaries (server: '${server_bin}', cli: '${cli_bin}')" >&2; exit 1; }
 mkdir -p "$out"
@@ -44,6 +44,16 @@ printf '{\n  "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b
 # same machine (`just install`) keeps this binary instead of linking the same one again; on any other
 # machine (a CI bundle) the machine differs and the install links its own
 hk_write_build_record "$out/histmersion-server.build" native "$bundle/kit" "$bundle/.no-plugins" bundle
+# the plugin API a plugin author compiles against (`histmersion plugin api-jar`, `plugin new`): its jar and
+# its sources jar, under names that stay the same across versions so a plugin project's path to them
+# survives an upgrade; the version is in the jar's manifest (Implementation-Version)
+api_dir="$(find "$root/target/out" -type d -path '*/histmersion-plugin-api' | head -1)"
+api_jar="$(find "$api_dir" -maxdepth 1 -name 'histmersion-plugin-api_3-*.jar' ! -name '*-sources.jar' | head -1)"
+api_src="$(find "$api_dir" -maxdepth 1 -name 'histmersion-plugin-api_3-*-sources.jar' | head -1)"
+[ -n "$api_jar" ] && [ -n "$api_src" ] || { echo "pluginApi/package wrote no plugin API jar or sources jar in '$api_dir'" >&2; exit 1; }
+rm -rf "$bundle/plugin-api" && mkdir -p "$bundle/plugin-api"
+install -m 0644 "$api_jar" "$bundle/plugin-api/histmersion-plugin-api.jar"
+install -m 0644 "$api_src" "$bundle/plugin-api/histmersion-plugin-api-sources.jar"
 # the scripts around the kit
 mkdir -p "$bundle/libexec"
 install -m 0755 "$root/scripts/bundle/relink.sh"      "$out/histmersion-relink"
