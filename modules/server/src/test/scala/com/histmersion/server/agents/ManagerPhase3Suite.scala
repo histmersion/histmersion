@@ -116,7 +116,8 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite:
     val out = a.managers.tick(now)
     val sweep = item(m.id, AcquisitionSweep)
     assertEquals(sweep.status, "active", out.mkString("\n"))
-    assertEquals(item(m.id, CurrencyCheck).status, "pending", "the currency check waits: the sweep works on the same goal")
+    assertEquals(item(m.id, CurrencyCheck).status, "active",
+      "the currency check starts beside it: another pipeline on the goal, and no per-manager cap since the central scheduler")
     val run = AgentRepo.get(ds, sweep.runId.get).get
     assertEquals((run.pipeline, run.origin, run.params.autoIngest, run.params.oaBacklog), ("acquisition-sweep", Some("manager"), Some(2), Some(true)))
     assert(events(m.id, Feed.Started).exists(_.text.contains("2 works left today")), events(m.id, Feed.Started))

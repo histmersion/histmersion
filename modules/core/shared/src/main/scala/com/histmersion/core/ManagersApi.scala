@@ -114,6 +114,26 @@ object ManagersApi:
     endpoint.post.in("api" / "agents" / "autopilot" / "focus").errorOut(errors).in(jsonBody[Autopilot.FocusSet])
       .out(jsonBody[Autopilot.FocusInfo])
 
+  private val sched = endpoint.in("api" / "agents" / "scheduler").errorOut(errors)
+
+  /** `GET /api/agents/scheduler[?limit=]` — the central scheduler (docs/research-goal-advancement.md "As
+    * built"): the strategy, the resources, the last pass's starts and the queue — the first `limit` waiting
+    * items (default 50), each with why it waits and what it waits behind. Readable with agents off (what a
+    * pass would do now). */
+  val scheduler: PublicEndpoint[Option[Int], ApiError, AgentScheduler.SchedulerStatus, Any] =
+    sched.get.in(query[Option[Int]]("limit")).out(jsonBody[AgentScheduler.SchedulerStatus])
+
+  /** `POST /api/agents/scheduler {strategy}` — switch the strategy live (kept in the database; `default`
+    * goes back to agents.scheduler.strategy). Answers the status as the next pass will decide it. */
+  val setScheduler: PublicEndpoint[AgentScheduler.SchedulerSet, ApiError, AgentScheduler.SchedulerStatus, Any] =
+    sched.post.in(jsonBody[AgentScheduler.SchedulerSet]).out(jsonBody[AgentScheduler.SchedulerStatus])
+
+  /** `GET /api/agents/scheduler/why/{item}` — why one manager item (its id, or a target among the open
+    * items) is where it is: waiting (behind what), running, waiting for a person, held, settled. */
+  val schedulerWhy: PublicEndpoint[String, ApiError, AgentScheduler.WhyInfo, Any] =
+    sched.get.in("why" / path[String]("item")).out(jsonBody[AgentScheduler.WhyInfo])
+
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
-    removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire, focus, setFocus)
+    removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire, focus, setFocus, scheduler, setScheduler,
+    schedulerWhy)

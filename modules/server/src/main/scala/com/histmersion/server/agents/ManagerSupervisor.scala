@@ -23,15 +23,17 @@ import javax.sql.DataSource
   *     manager's next proposal) and refill an active review manager below its low water (the selection,
   *     with an infer-filter item before the review of an article that records no filter, and the stale
   *     articles last);
-  *  4. dispatch by capacity — the global `agents.max-concurrent-runs` (every queued or running run
-  *     counts, a person's too), the manager's `maxRuns`/`maxOpen`, its pools' calls in flight — never on
-  *     a target another unsettled run is writing, never an article's review while its infer-filter item
-  *     is open, never when a role's chain is starved or a day's or month's spend reached its cap;
+  *  4. the CENTRAL SCHEDULER's pass ([[SchedulerService]], #3933): every manager's due items are
+  *     candidates of one decision across every job type, by goal priority, job type, aging and the strategy
+  *     (`agents.scheduler.strategy`), within the global `agents.max-concurrent-runs` (every queued or
+  *     running run counts, a person's too — a run waiting for a person never does), the plan pools' calls in
+  *     flight, the budgets and daily caps, a manager's own saved `maxRuns` — never on a target another
+  *     unsettled run is writing, never an article's review while its infer-filter item is open, never when a
+  *     role's chain is starved;
   *  5. the status line, and an event for every change.
   *
-  * Between 3 and 4 the autopilot's FOCUS ([[GoalFocusService.tick]]) decides which goals are active and
-  * holds the model-using items of the others; the enrich and review managers start the active goals' items
-  * first.
+  * Between 3 and 4 the autopilot's FOCUS ([[GoalFocusService.tick]]) runs only to release the holds it set
+  * before the central scheduler existed: it no longer holds anything.
   *
   * Between 2 and 3 the watchers' INGEST BACKLOG drains ([[OaBacklog.drain]]): a few of the legal
   * open-access works that waited for a day's allowance are ingested — before any new sweep, which gets only
@@ -569,94 +571,44 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
 
   // ── 4. dispatch ────────────────────────────────────────────────────────────────────────────────
 
-  /** Why nothing may start for any manager now (a spend cap reached), if so. */
-  private def budgetBlock(): Option[String] =
-    val (day, month) = AgentRepo.spendDayMonth(ds)
-    if day >= BigDecimal(cfg.budgets.dailyUsd) then Some(s"budget: today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})")
-    else if month >= BigDecimal(cfg.budgets.monthlyUsd) then Some(s"budget: this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})")
-    else None
-
-  /** Whether every role the given pipelines use has a usable model NOW (picked without spending: no
-    * plan reading is taken), and the calls the pools of the picked models take at once. Left = why not. */
-  def pools(m: ManagerInfo, now: Instant, pipelines: List[Pipeline] = List(Pipeline.ReviewArticle)): Either[String, Option[Int]] =
-    val over = m.config.models.getOrElse(Nil)
-    val roles = pipelines.flatMap(_.roles).distinct
-    val picks = roles.map { r =>
-      val ref = over.find(o => Role.parse(o.role).contains(r)).map(_.model)
-      r -> agents.picker.pick(r, ref, now.toEpochMilli, refresh = None)
-    }
-    picks.collectFirst { case (r, Left(f)) => (r, f) } match
-      case Some((r, PickFailure.Exhausted(_, at, why))) =>
-        Left(s"${r.wire} chain ${if why == PauseReason.PlanQuota then "below its plan floor" else "out of allowance"}" +
-          at.fold("")(t => s"; frees ~$t"))
-      case Some((r, PickFailure.Unavailable(msg))) => Left(s"${r.wire}: ${msg.take(200)}")
-      case _ =>
-        val plans = picks.collect { case (_, Right(p)) => p.billing }
-        val pools = plans.collect { case Billing.Plan(p) => p }.distinct
-        if pools.nonEmpty && plans.forall(_.isInstanceOf[Billing.Plan]) then
-          Right(Some(pools.map {
-            case PlanQuota.PoolId.ClaudePlan  => cfg.quota.claudePlan.maxCallsInFlight
-            case PlanQuota.PoolId.ChatgptPlan => cfg.quota.chatgptPlan.maxCallsInFlight
-          }.sum))
-        else Right(None)
-
+  /** The central scheduler's pass ([[SchedulerService]]): every active manager's due items are candidates,
+    * one decision admits them across every job type within the AI allowance (the runs at once, the plan
+    * pools, the budgets and daily caps, a manager's own saved `maxRuns`), starting each through [[dispatch]]
+    * — one that cannot start now (another run writes its target) gives way to the next. Then each manager's
+    * status line, with the scheduler's reason when its items wait, and a `starved`/budget event once per
+    * change. */
   private def dispatchAll(ms: List[ManagerInfo], now: Instant, out: collection.mutable.Builder[String, List[String]]): Unit =
-    val budget = budgetBlock()
-    val room   = math.max(0, cfg.maxConcurrentRuns - AgentRepo.active(ds))
-    val plans = ms.map { m =>
-      val s       = settings(m)
-      // the ingest backlog is not dispatched as runs: the drain ingests it
-      val pending = ManagerRepo.pending(ds, m.id).filterNot(_.kind == OaIngest)
-      // the enrich and review managers: the focus's active goals first (focus-ratio to one)
-      val due     = agents.focus.fair(m, ManagerPolicy.order(pending.map(i => Candidate(i.id, i.target, i.priority,
-        i.notBefore.flatMap(ManagerPolicy.parseInstant)))).filter(ManagerPolicy.due(_, now)), pending)
-      val needs   = due.flatMap(c => pending.find(_.id == c.id)).map(i => ManagerSupervisor.pipelineOf(i.kind)).distinct
-      // the global caps first, then the manager's own daily cap (its metered spend today)
-      val block   = budget.orElse(ManagerPolicy.dailyBlock(ManagerPolicy.dailyCap(m.config, mcfg), BigDecimal(m.spentTodayUsd)))
-      val starved = if due.isEmpty || block.isDefined then Right(None) else pools(m, now, needs)
-      val cap = starved match
-        case Left(_) => 0
-        case Right(poolCap) =>
-          ManagerPolicy.capacity(cfg.maxConcurrentRuns, AgentRepo.active(ds), s.maxRuns, ManagerRepo.running(ds, m.id),
-            s.maxOpen, ManagerRepo.inFlight(ds, m.id), poolCap)
-      (m, s, pending, due, starved.left.toOption, block, if block.isDefined then 0 else cap)
+    val byId = ms.map(m => m.id -> m).toMap
+    val decision = agents.scheduler.pass(ms, now, None) { (m, item) =>
+      if ManagerSupervisor.blocks(item.kind, AgentRepo.unsettledOn(ds, item.target)) then Left("another run is writing its target")
+      else guardedOpt(m.id, out)(dispatch(m, settings(m), item, now, out)) match
+        case Some(_) => Right(())
+        case None =>
+          if ManagerRepo.item(ds, item.id).exists(_.status == ItemStatus.Pending.wire) then
+            Left("it could not start now (its manager's events say why)")
+          else Left("settled without a run")
     }
-    // round-robin over the managers, one start each per turn; an item that cannot start now (another
-    // run writes its target, its infer-filter comes first) gives way to the next one of the same manager
-    def tryStart(m: ManagerInfo, s: ReviewSettings, pending: List[ManagerItem], cs: List[Candidate]): (Boolean, List[Candidate]) =
-      cs match
-        case Nil => (false, Nil)
-        case c :: rest =>
-          pending.find(_.id == c.id).flatMap(i => guardedOpt(m.id, out)(dispatch(m, s, i, now, out))) match
-            case Some(_) => (true, rest)
-            case None    => tryStart(m, s, pending, rest)
-    @annotation.tailrec
-    def go(qs: List[(ManagerInfo, ReviewSettings, List[ManagerItem], Int, List[Candidate])], left: Int, acc: List[String]): List[String] =
-      if left <= 0 || !qs.exists((_, _, _, cap, cs) => cap > 0 && cs.nonEmpty) then acc
-      else
-        val (next, used, st) = qs.foldLeft((Vector.empty[(ManagerInfo, ReviewSettings, List[ManagerItem], Int, List[Candidate])], 0, acc)) {
-          case ((nq, used, st), q @ (m, s, pend, cap, cs)) =>
-            if cap <= 0 || cs.isEmpty || used >= left then (nq :+ q, used, st)
-            else tryStart(m, s, pend, cs) match
-              case (true, rest) => (nq :+ (m, s, pend, cap - 1, rest), used + 1, st :+ m.id)
-              case (false, _)   => (nq :+ (m, s, pend, cap, Nil), used, st)
-        }
-        go(next.toList, left - used, st)
-    val started = go(plans.map((m, s, pending, due, _, _, cap) => (m, s, pending, cap, due)), room, Nil)
-    plans.foreach { (m, _, pending, due, starved, blocked, cap) =>
-      val mine = started.count(_ == m.id)
-      val note = agents.focus.statusNote(m.goal, ManagerPolicy.statusNote(State.Active, starved, math.max(0, cap - mine),
-        pending.size - mine, due.size - mine, ManagerRepo.inFlight(ds, m.id), blocked))
+    ms.foreach { m =>
+      val waits   = decision.waiting.filter(_._1.c.managerId == m.id).map(_._2).filterNot(_.why == "settled without a run")
+      val blocked = waits.find(w => w.code == SchedulerPolicy.Code.Blocked && w.why.startsWith("budget")).map(_.why)
+        .orElse(waits.find(_.code == "budget").map(_.why))
+      val starved = waits.find(w => w.code == SchedulerPolicy.Code.Blocked && w.why.startsWith("starved: ")).map(_.why.stripPrefix("starved: "))
+      val full    = waits.exists(w => List(SchedulerPolicy.Code.Capacity, SchedulerPolicy.Code.Pool, SchedulerPolicy.Code.Manager).contains(w.code))
+      val pending = math.max(0, ManagerRepo.counts(ds, m.id).pending)
+      val base    = ManagerPolicy.statusNote(State.Active, starved, if full then 0 else 1, pending, waits.size,
+        ManagerRepo.running(ds, m.id), blocked)
+      val note = waits.headOption.filter(_ => blocked.isEmpty && starved.isEmpty) match
+        case Some(w) => s"$base; the scheduler: ${w.code} — ${w.why.take(200)}"
+        case None    => base
       ManagerRepo.setStatusNote(ds, m.id, note)
       // a starved (or budget-blocked) manager says so once per change, not every tick
-      val block = blocked.orElse(starved.map(s => s"starved: $s"))
-      block.foreach { b =>
+      blocked.orElse(starved.map(x => s"starved: $x")).foreach { b =>
         if !ManagerRepo.lastEventOf(ds, m.id, Feed.Starved).exists(_.text == b) then
           ManagerRepo.event(ds, m.id, None, None, Feed.Starved, b)
       }
     }
     // paused/stopped managers show it too
-    ManagerRepo.list(ds).filterNot(m => ms.exists(_.id == m.id)).foreach { m =>
+    ManagerRepo.list(ds).filterNot(m => byId.contains(m.id)).foreach { m =>
       State.parse(m.state).foreach(st => ManagerRepo.setStatusNote(ds, m.id,
         ManagerPolicy.statusNote(st, None, 0, m.counts.pending, 0, m.inFlight, None)))
     }

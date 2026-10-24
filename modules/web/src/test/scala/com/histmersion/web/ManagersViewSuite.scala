@@ -147,3 +147,23 @@ class ManagersViewSuite extends munit.FunSuite:
       GoalProgress("b", "B", "planned"), GoalProgress("c", "C", "seeding"))
     assertEquals(ManagersView.goalLine(gs.head), "3 sources · 1 article · 2 open approvals · 7 done in 7 days, 4 open (~4 d)")
     assertEquals(ManagersView.stages(gs), "1 planned · 2 seeding")
+
+/** The scheduler panel's pure parts: the queue's filters and facets, and its heading. */
+class SchedulerPanelSuite extends munit.FunSuite:
+  import com.histmersion.core.AgentScheduler.*
+
+  private def w(id: Long, t: String, code: String, target: String = "", goal: Option[String] = None) =
+    Waiting(id, "m", "k", t, if target.isEmpty then s"t$id" else target, goal, code = code)
+  private val ws = List(w(1, "review", "capacity", goal = Some("tin")), w(2, "sweep", "pool"), w(3, "review", "blocked", "copper"))
+
+  test("the queue's filters: any of the types, any of the reasons, the text in the target, goal or manager"):
+    assertEquals(ManagersView.visibleWaiting(ws, Nil, Nil, None).map(_.item), List(1L, 2L, 3L))
+    assertEquals(ManagersView.visibleWaiting(ws, List("review"), Nil, None).map(_.item), List(1L, 3L))
+    assertEquals(ManagersView.visibleWaiting(ws, List("review"), List("blocked"), None).map(_.item), List(3L))
+    assertEquals(ManagersView.visibleWaiting(ws, Nil, Nil, Some(" TIN ")).map(_.item), List(1L))
+
+  test("facets count the queue, the most first; the heading says the strategy and the room"):
+    assertEquals(ManagersView.facet(ws, _.jobType), List("review" -> 2, "sweep" -> 1))
+    val s = SchedulerStatus("goal-first", "person", maxRuns = 4, occupied = 3, pools = List(PoolUse("chatgpt-plan", 1, 2)), forPerson = 2)
+    assertEquals(ManagersView.schedulerHead(s),
+      "Scheduler: goal-first (set by a person) · 3 of 4 runs at once · chatgpt-plan 1/2 · 2 items wait for a person (no place held)")

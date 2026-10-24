@@ -1,0 +1,191 @@
+package com.histmersion.server.agents
+
+import com.augustnagro.magnum.*
+import com.histmersion.core.*
+import com.histmersion.core.Agents.*
+import com.histmersion.core.Autopilot.{AutopilotSet, FocusSet}
+import com.histmersion.core.GoalPlans.*
+import com.histmersion.core.Managers.*
+import com.histmersion.db.{AgentRepo, FocusRepo, GoalLinkRepo, ManagerRepo, Migrate}
+import com.histmersion.server.{Deps, Handlers}
+import io.circe.syntax.*
+
+import java.time.Instant
+
+/** The central scheduler against a `*_test` database (docs/research-goal-advancement.md "As built"): 20
+  * goals under the autopilot — `goal-first` with 3 runs at once gives every place to the best goal (a pin, then
+  * a person's priority, then the oldest), the queue says why each item waits and behind what; switched live to
+  * `type-balanced` with more room the starts spread over the job types; the focus holds nothing any more (its
+  * pins and priorities are the goals' priorities); the ingest backlog drains for every goal; goal plans are
+  * decided by policy whatever the focus. Models are scripted and never called (the runs are dispatched, not
+  * executed); the acquisition upstream is a fixture. Skipped without HISTMERSION_TEST_DB_URL. */
+class SchedulerDbSuite extends com.histmersion.db.DbSuite:
+  private val testDb                = com.histmersion.db.TestDb.url
+  override def munitIgnore: Boolean = testDb.isEmpty
+  override val munitTimeout         = scala.concurrent.duration.Duration(180, "s")
+
+  private val Model = ModelRef(ProviderKind.Local, "scripted")
+  private val goals = (1 to 20).toList.map(i => f"zzfocus-g$i%02d")
+  private def g(i: Int) = goals(i - 1)
+  private val Art = "zzfocus_art"
+
+  /** 3 runs at once, goal-first, the crons off (nothing fires by itself), the backlog drained whole. */
+  private lazy val cfg =
+    val b = AppConfig.load()
+    val m = Model.wire
+    b.copy(db = b.db.copy(url = testDb.get),
+      agents = b.agents.copy(enabled = true, prices = "scripted=1/2", maxConcurrentRuns = 3,
+        roles = b.agents.roles.copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m),
+        scheduler = b.agents.scheduler.copy(enabled = false, strategy = "goal-first", minShare = 0),
+        seed = b.agents.seed.copy(minSources = 2),
+        managers = b.agents.managers.copy(watch = b.agents.managers.watch.copy(drainPerTick = 50)),
+        autopilot = b.agents.autopilot.copy(backupHours = 0, lintHours = 0, ingestPerDay = 100, maxActiveGoals = 3)))
+
+  private lazy val ds = testPool(cfg.db)
+
+  private def handlers(c: AppConfig = cfg): (AgentsHandlers, Handlers, StubUpstream) =
+    val deps = Deps(c, ds)
+    val h    = Handlers(deps)
+    val a    = AgentsHandlers(deps, h, (_, _) => Right(ScriptedClient(Model)))
+    val up   = StubUpstream()
+    a.attach(up)
+    (a, h, up)
+
+  private def clean(): Unit =
+    Migrate.run(ds)
+    connect(ds):
+      // the focus looks at EVERY goal, and the dispatch counts EVERY queued run against max-concurrent-runs:
+      // what other suites left (their goals, their runs, open goal plans) must not take the 3 slots or the room
+      sql"DELETE FROM agent_managers".update.run()
+      sql"DELETE FROM jobs WHERE kind = 'agent'".update.run()
+      sql"DELETE FROM approvals WHERE subject LIKE 'zzfocus%' OR kind = 'goal-plan'".update.run()
+      sql"DELETE FROM goals".update.run()
+      sql"DELETE FROM articles WHERE slug LIKE 'zzfocus%'".update.run()
+      sql"DELETE FROM sources WHERE citekey LIKE 'zzfocus%'".update.run()
+      sql"DELETE FROM queue_items WHERE text LIKE '%zzfocus%' OR text LIKE 'autopilot%'".update.run()
+      sql"""UPDATE agent_autopilot SET enabled = false, paused = '{}', changed_by = '', last_ensure_at = NULL,
+                                       max_active_goals = NULL, scheduler_strategy = NULL""".update.run()
+      sql"DELETE FROM goal_focus".update.run()
+
+  override def beforeEach(context: BeforeEach): Unit = clean()
+  override def afterEach(context: AfterEach): Unit   = clean()
+
+  private def doi(slug: String) = s"10.5555/$slug"
+  private def ck(d: String) = "zzfocus" + d.replaceAll("[^a-z0-9]", "")
+
+  /** 20 goals with a query each (no plan needed): g05 has an article to review, g10 enough sources. */
+  private def seed(a: AgentsHandlers, h: Handlers, up: StubUpstream): Unit =
+    goals.foreach { s =>
+      assert(h.putGoal(s, GoalPut(s"Zz $s")).isRight)
+      assert(a.addGoalLink(s, LinkAdd(LinkKind.Query, s"zzfocus query $s")).isRight)
+    }
+    List("zzfocus_s1", "zzfocus_s2").foreach { c =>
+      assert(h.putSource(c, SourcePut(title = s"Zz $c", year = Some(2020), topics = List("zzfocus_t"), body = Some("Tin."))).isRight)
+      assert(GoalLinkRepo.link(ds, g(10), LinkKind.Source, c, None))
+    }
+    assert(h.putArticle(Art, ArticlePut("Zz art", "concept", "Tin came by sea [[zzfocus_s1]].",
+      filter = Some(ArticleFilter(topics = List("zzfocus_t"))))).isRight)
+    assert(GoalLinkRepo.link(ds, g(5), LinkKind.Article, Art, None))
+    up.onIngest = d =>
+      assert(h.putSource(ck(d), SourcePut(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
+      Right(IngestReport(ck(d), Some(d), Some(s"Ingested $d"), created = true,
+        Some(PdfInfo("unpaywall", Some(s"https://example.invalid/$d.pdf"), 2048, None)), 0, None, Nil))
+
+  private def on(a: AgentsHandlers): Unit =
+    a.managers.ensureDefaults()
+    // the review manager's own selection narrowed to these goals' article (other suites' articles stay out)
+    a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeGoal = Some(g(5)))))).fold(e => fail(e.message), identity)
+    a.managing.setAutopilot(AutopilotSet(on = true, Some("test"))).fold(e => fail(e.message), identity)
+
+  private def item(mid: String, kind: String, target: String): ManagerItem =
+    ManagerRepo.itemFor(ds, mid, kind, target).getOrElse(fail(s"no $kind item for $target in $mid"))
+
+  /** The runs the managers dispatched on these goals (and the article), by pipeline. */
+  private def runs(): Vector[RunInfo] =
+    AgentRepo.list(ds, None, 1000).filter(r => r.managerId.isDefined && r.target.startsWith("zzfocus"))
+
+
+  private final class Clock(var now: Instant = Instant.now()): // a var: the test's own moving time
+    def tick(a: AgentsHandlers, minutes: Int = 6): List[String] =
+      now = now.plusSeconds(minutes.toLong * 60L)
+      a.managers.tick(now)
+
+  test("goal-first, 3 runs at once: the pinned goal, then a person's priority, then the oldest; the queue says why; nothing is held"):
+    val (a, h, up) = handlers(); seed(a, h, up)
+    on(a)
+    a.focus.set(FocusSet("pin", Some(g(20)), by = Some("test"))).fold(e => fail(e.message), identity)
+    a.focus.set(FocusSet("priority", Some(g(15)), Some(5))).fold(e => fail(e.message), identity)
+    goals.foreach(s => a.oaBacklog.add(watchId(s), s, OaWork(doi(s), s"Work of $s")))
+    val clock = Clock()
+    clock.tick(a)
+
+    // every place to the pinned goal: its proposal, its sweep and its currency check (finish-first inside it)
+    assertEquals(runs().map(r => (r.pipeline, r.target)).toSet,
+      Set(("propose-articles", g(20)), ("acquisition-sweep", g(20)), ("currency-check", g(20))))
+    // the focus holds nothing: the others are pending, in the scheduler's queue
+    assertEquals(ManagerRepo.focusHeldCount(ds), 0)
+    assertEquals(item(seedId(g(2)), ProposeArticles, g(2)).status, "pending")
+    val st = a.scheduler.status(Some(500))
+    assertEquals((st.strategy, st.strategyFrom, st.dry), ("goal-first", "config", false))
+    assertEquals((st.maxRuns, st.started.size), (3, 3))
+    assert(st.started.head.why.contains("gathering share") || st.started.head.why.contains("goal-first"), st.started.head.why)
+    val first = st.waiting.head
+    assertEquals((first.goal, first.position, first.code), (Some(g(15)), 1, "capacity"))
+    assert(first.why.contains("goal-first") && first.why.contains("no place free"), first.why)
+    assert(first.behind.nonEmpty, first)
+    // then the oldest goals, by age and slug (they were made in the same second)
+    assertEquals(st.waiting.map(_.goal).distinct.take(4), List(Some(g(15)), Some(g(1)), Some(g(2)), Some(g(3))))
+    // why, for one item: by id and by target
+    val w = a.scheduler.why(item(seedId(g(15)), ProposeArticles, g(15)).id.toString).fold(e => fail(e.message), identity)
+    assertEquals((w.code, w.position), ("capacity", 1))
+    val running = a.scheduler.why(g(20)).fold(e => fail(e.message), identity)
+    assertEquals(running.code, AgentScheduler.Code.Running)
+    assert(a.scheduler.why("zzfocus-nope").isLeft)
+    // the status as Markdown names the strategy and the queue
+    val md = AgentSchedulerMarkdown.status(st)
+    assert(md.startsWith("# Scheduler: goal-first") && md.contains(s"1. #${first.item}"), md.take(600))
+    // the ingest backlog drains for every goal (no AI allowance)
+    assertEquals(goals.count(s => item(watchId(s), OaIngest, doi(s)).status == "done"), 20)
+    // the manager whose items wait says why in its status line
+    assert(ManagerRepo.get(ds, seedId(g(2))).flatMap(_.statusNote).exists(_.contains("the scheduler: capacity")),
+      ManagerRepo.get(ds, seedId(g(2))).flatMap(_.statusNote))
+
+    // switched live to type-balanced, with three more places: the starts spread over the job types
+    val sw = a.scheduler.set(AgentScheduler.SchedulerSet("type-balanced", Some("test"))).fold(e => fail(e.message), identity)
+    assertEquals((sw.strategy, sw.strategyFrom), ("type-balanced", "person"))
+    assert(QueueRepoLog.has(ds, "agent scheduler: strategy type-balanced"), "a worklog line")
+    val (b, _, _) = handlers(cfg.copy(agents = cfg.agents.copy(maxConcurrentRuns = 6)))
+    clock.tick(b)
+    val next = runs().map(r => (r.pipeline, r.target)).toSet -- Set(("propose-articles", g(20)), ("acquisition-sweep", g(20)),
+      ("currency-check", g(20)))
+    assertEquals(next, Set(("review-article", Art), ("propose-articles", g(15)), ("acquisition-sweep", g(15))))
+    assertEquals(b.scheduler.status().strategy, "type-balanced")
+    // back to the config's
+    assertEquals(b.scheduler.set(AgentScheduler.SchedulerSet("default")).map(_.strategy), Right("goal-first"))
+    assert(b.scheduler.set(AgentScheduler.SchedulerSet("fastest")).isLeft)
+
+  test("with agents idle the status is a dry pass: what one would start, nothing started"):
+    val (a, h, up) = handlers(); seed(a, h, up)
+    on(a)
+    a.autopilot.ensureNow(Instant.now())
+    val st = a.scheduler.status()
+    assert(st.dry, st)
+    assertEquals(st.started.size, 3)
+    assertEquals(runs(), Vector.empty, "a dry pass starts nothing")
+
+  test("goal plans are decided by code whatever the focus"):
+    val auto = cfg.copy(agents = cfg.agents.copy(approvals = cfg.agents.approvals.copy(goalPlan = "auto")))
+    val (a, h, up) = handlers(auto); seed(a, h, up)
+    on(a)
+    Clock().tick(a)
+    def plan(goal: String, kids: Int) = AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, goal,
+      Plan(goal, "r", (1 to kids).toList.map(i => PlannedGoal(s"$goal-k$i", s"Zz k$i")), List("q")).asJson.noSpaces)
+    val now = Instant.now()
+    def judged(p: ApprovalInfo) = a.autoApprovals.judge(AgentRepo.approval(ds, p.id).get, None, None, now)
+    assert(judged(plan(g(7), 0)).isInstanceOf[AutopilotPolicy.Verdict.Approve], "not active in any focus: decided all the same")
+    assert(judged(plan(g(1), 3)).isInstanceOf[AutopilotPolicy.Verdict.Approve])
+
+/** The worklog, read for an assertion. */
+private object QueueRepoLog:
+  def has(ds: javax.sql.DataSource, prefix: String): Boolean =
+    com.histmersion.db.QueueRepo.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith(prefix))

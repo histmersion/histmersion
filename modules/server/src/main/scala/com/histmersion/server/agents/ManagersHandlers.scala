@@ -549,6 +549,15 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
   /** `GET /api/agents/autopilot/focus` — readable with agents off (what it would focus on). */
   def focus: Autopilot.FocusInfo = agents.focus.info()
 
+  /** `GET /api/agents/scheduler[?limit=]` — readable with agents off (a dry pass). */
+  def scheduler(limit: Option[Int]): AgentScheduler.SchedulerStatus = agents.scheduler.status(limit)
+
+  /** `POST /api/agents/scheduler {strategy}` — switch the strategy live. */
+  def setScheduler(in: AgentScheduler.SchedulerSet): Either[ApiError, AgentScheduler.SchedulerStatus] = agents.scheduler.set(in)
+
+  /** `GET /api/agents/scheduler/why/{item}`. */
+  def schedulerWhy(item: String): Either[ApiError, AgentScheduler.WhyInfo] = agents.scheduler.why(item)
+
   /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — pin, unpin, priority, max. */
   def setFocus(in: Autopilot.FocusSet): Either[ApiError, Autopilot.FocusInfo] = agents.focus.set(in)
 

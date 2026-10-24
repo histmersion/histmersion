@@ -81,6 +81,38 @@ object ManagerCmd:
     }
   }
 
+  /** `histmersion agent scheduler [status|queue|why <item>|strategy <name|default>]` — the central scheduler
+    * (docs/research-goal-advancement.md "As built"). */
+  val scheduler: Opts[Client => Either[CliError, Unit]] = Opts.subcommand("scheduler",
+      "The central scheduler that admits the managers' work across every job type: status (default) — the strategy, " +
+        "the runs at once and plan pools, the job types' shares, what the last pass started and the queue with why each " +
+        "item waits; queue — only the waiting items, in the order they would start; why <item> — one item (its id, or the " +
+        "target of an open item): waiting behind what, running, waiting for a person, held, settled; strategy " +
+        "<type-balanced|goal-first|default> — switch it live (default: back to agents.scheduler.strategy)") {
+    (Opts.argument[String]("status|queue|why|strategy").withDefault("status"),
+      Opts.arguments[String]("why: <item>; strategy: <name|default>").orEmpty,
+      Opts.option[Int]("limit", "How many waiting items to show (status: 50, queue: 200)").orNone, Output.jsonFlag).mapN {
+      (verb, rest, limit, json) => (c: Client) =>
+        def usage(m: String) = Left(CliError(m, exitCode = ExitCode.Usage))
+        (verb.trim.toLowerCase, rest.map(_.trim).filter(_.nonEmpty)) match
+          case ("status", Nil) =>
+            c.call(ManagersApi.scheduler)(limit).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
+          case ("queue", Nil) =>
+            c.call(ManagersApi.scheduler)(limit.orElse(Some(200))).map(s => Output.emit(json, s.waiting)(ws =>
+              if ws.isEmpty then "_Nothing waits._"
+              else (s"# Waiting (${s.waitingTotal}, strategy ${s.strategy})" :: "" :: ws.map(AgentSchedulerMarkdown.waiting)).mkString("\n")))
+          case ("why", List(item)) =>
+            c.call(ManagersApi.schedulerWhy)(item).map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
+          case ("strategy", List(name)) =>
+            c.call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(name, Some("cli")))
+              .map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
+          case ("why", _)      => usage("scheduler why takes one item: its id, or the target of an open item")
+          case ("strategy", _) => usage("scheduler strategy takes one name: type-balanced, goal-first or default")
+          case (v, _) if Set("status", "queue")(v) => usage(s"scheduler $v takes no further arguments")
+          case (other, _) => usage(s"unknown scheduler verb '$other' (status, queue, why, strategy)")
+    }
+  }
+
   /** `focus` [list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>] → the request
     * (None: just show it); a malformed one is a usage error before anything is sent. */
   def focusRequest(args: List[String]): Either[CliError, Option[Autopilot.FocusSet]] =

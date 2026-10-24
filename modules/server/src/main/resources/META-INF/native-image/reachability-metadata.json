@@ -13583,6 +13583,9 @@
       "glob": "db/migration/V099__source_candidates.sql"
     },
     {
+      "glob": "db/migration/V100__agent_scheduler.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

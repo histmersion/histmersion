@@ -35,8 +35,13 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
   def cap: (Int, String) =
     FocusRepo.maxOverride(ds).fold((math.max(0, acfg.maxActiveGoals), "config"))(n => (math.max(0, n), "person"))
 
-  /** The focus is in force: the autopilot on and a cap above 0. */
-  def inForce: Boolean = agents.autopilot.on && cap._1 > 0
+  /** The focus is in force — never since the central scheduler (#3933, [[SchedulerService]]) admits the
+    * managers' work: the focus holds nothing; it ranks the goals (what [[info]] shows), and its pins and
+    * priorities are the goals' priorities in the scheduler. */
+  def inForce: Boolean = false
+
+  /** Every goal's facts as the focus reads them (the scheduler's goal priorities, ages and stages). */
+  def facts(): List[Facts] = read().facts
 
   /** The active goals of the last pass (None: the focus is not in force). Read by the dispatch, written by
     * [[tick]]; a `var` because the supervisor's dispatch reads what the pass just before it decided. */
@@ -104,8 +109,7 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       if changes.nonEmpty then log(s"autopilot focus: ${changes.mkString("; ")}".take(1000))
       changes
 
-  private def notInForce: String =
-    if !agents.autopilot.on then "the autopilot is off" else s"the cap is 0 (${if cap._2 == "person" then "set by a person" else "agents.autopilot.max-active-goals"})"
+  private def notInForce: String = "the central scheduler admits the work (agents.scheduler.strategy)"
 
   /** The goal's manager an event about it goes to: its seeding manager, else its watcher. */
   private def managerOf(goal: String): Option[String] =
@@ -197,6 +201,8 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
     val shown = math.max(0, acfg.focusQueueShown)
     val note =
       if !agents.autopilot.on then Some("the autopilot is off: nothing is held; this is what it would focus on")
+      else if !inForce then Some("the central scheduler admits the work (histmersion agent scheduler): the focus holds " +
+        "nothing; this is how it ranks the goals, and its pins and priorities are the goals' priorities in the scheduler")
       else if max <= 0 then Some(s"no cap (max 0${if from == "person" then ", set by a person" else ""}): every goal is active; " +
         s"the order shown is the one a cap of ${acfg.maxActiveGoals} would use")
       else None

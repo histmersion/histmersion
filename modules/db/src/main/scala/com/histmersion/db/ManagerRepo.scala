@@ -106,19 +106,44 @@ object ManagerRepo:
     connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind AND manager_id = $id
                       AND status IN ('queued', 'running', 'paused', 'waiting')""".query[Int].run().head)
 
-  /** Its runs that run, or will run again without a person (what `maxRuns` counts): queued, running,
-    * waiting for an approval, and paused for a reason that resumes by itself — a restart's
-    * `interrupted` and a `stalled` pause (both carry `resume_at`), an `allowance` or `plan-quota` pause.
-    * Counting only `queued`/`running` let a restart overshoot (#1803): boot pauses the runs it
-    * interrupted, the first tick saw no run and started `maxRuns` new ones, and a minute later the
-    * engine resumed the interrupted ones beside them. Only a pause a person must lift (`requested`,
-    * `budget`, `provider`) frees its place — resuming it is that person's call. */
+  /** Its runs that run, or will run again without a person (what a manager's own `maxRuns` counts): queued,
+    * running, and paused for a reason that resumes by itself — a restart's `interrupted` and a `stalled`
+    * pause (both carry `resume_at`), an `allowance` or `plan-quota` pause. Counting only `queued`/`running`
+    * let a restart overshoot (#1803): boot pauses the runs it interrupted, the first tick saw no run and
+    * started `maxRuns` new ones, and a minute later the engine resumed the interrupted ones beside them.
+    * A pause a person must lift (`requested`, `budget`, `provider`) frees its place — resuming it is that
+    * person's call — and so does a run WAITING for a person's approval (#3762 proposal 1: one unanswered
+    * approval used to stop a whole manager). */
   def running(ds: DataSource, id: String): Int =
-    val (allowance, quota) = (s"${PauseReason.Allowance.wire}:%", s"${PauseReason.PlanQuota.wire}:%")
-    connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind AND manager_id = $id
-                      AND (status IN ('queued', 'running', 'waiting')
-                           OR (status = 'paused' AND (resume_at IS NOT NULL OR error LIKE $allowance OR error LIKE $quota)))"""
-      .query[Int].run().head)
+    connect(ds)((Sql.of("SELECT count(*)::int FROM jobs WHERE kind = ? AND manager_id = ? AND ", Param.S(JobKind), Param.S(id)) ++
+      occupyingOn("jobs")).frag.query[Int].run().head)
+
+  /** Every agent run that occupies a place ([[running]]'s rule, a person's runs too): its pipeline, and the
+    * goal of the manager that started it (None: a person's, or a library-wide manager's). */
+  def occupyingRuns(ds: DataSource): List[(String, Option[String])] =
+    connect(ds)((Sql.of("SELECT j.pipeline, m.goal_slug FROM jobs j LEFT JOIN agent_managers m ON m.id = j.manager_id " +
+      "WHERE j.kind = ? AND ", Param.S(JobKind)) ++ occupyingOn("j")).frag.query[(String, Option[String])].run().toList)
+
+  /** The runs that occupy a place ([[running]]'s rule), as a predicate on table (alias) `t` of `jobs`. */
+  private def occupyingOn(t: String): Sql =
+    Sql.of(s"($t.status IN ('queued', 'running') OR ($t.status = 'paused' AND ($t.resume_at IS NOT NULL OR $t.error LIKE ? " +
+      s"OR $t.error LIKE ?)))", Param.S(s"${PauseReason.Allowance.wire}:%"), Param.S(s"${PauseReason.PlanQuota.wire}:%"))
+
+  /** The item kinds of the last `n` runs the managers started, newest first (what the scheduler's shares
+    * count). */
+  def recentKinds(ds: DataSource, n: Int): List[String] =
+    connect(ds):
+      sql"""SELECT i.kind FROM jobs j JOIN manager_items i ON i.id = j.manager_item
+            WHERE j.kind = $JobKind ORDER BY j.created_at DESC, j.id DESC LIMIT ${math.max(0, n)}""".query[String].run().toList
+
+  /** Items that wait for a person and hold no place: held (not by the focus: for an approval, or by a person),
+    * or active with their run waiting for an approval — of managers that are not stopped. */
+  def forPerson(ds: DataSource): Int =
+    connect(ds):
+      sql"""SELECT count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+            LEFT JOIN jobs j ON j.id = i.run_id
+            WHERE m.state <> 'stopped' AND ((i.status = 'held' AND i.hold->>'focus' IS NULL)
+              OR (i.status = 'active' AND j.status = 'waiting'))""".query[Int].run().head
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -143,6 +168,11 @@ object ManagerRepo:
   def itemFor(ds: DataSource, managerId: String, kind: String, target: String): Option[ManagerItem] =
     connect(ds)((itemSelect ++ Sql.of(" WHERE manager_id = ? AND kind = ? AND target = ?", Param.S(managerId), Param.S(kind),
       Param.S(target))).frag.query[ItemRow].run().headOption.map(toItem))
+
+  /** The open items (pending, held, active) of any manager whose target is `target`, the newest first. */
+  def openFor(ds: DataSource, target: String): List[ManagerItem] =
+    connect(ds)((itemSelect ++ Sql.of(" WHERE target = ? AND status IN ('pending', 'held', 'active') ORDER BY id DESC",
+      Param.S(target))).frag.query[ItemRow].run().toList.map(toItem))
 
   /** A page of a manager's items: by `status` (none = all), the most urgent first. */
   def items(ds: DataSource, managerId: String, status: Option[ItemStatus], offset: Int, limit: Int): (List[ManagerItem], Int) =

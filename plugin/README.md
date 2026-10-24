@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **73 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **74 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -161,6 +161,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `agent_models` | each role's model chain, the allowances (used, left, when a window frees); `doctor: true` checks every provider without spending anything |
 | `set_agent_models` | change a role's chain or an allowance (tokens/USD per rolling window, a reserve), saved over the server's config |
 | `manager` | the persistent process managers: list, show, pause (with its runs), resume, enqueue an article for review, hold one, or leave a hint its runs read |
+| `scheduler` | the central agent scheduler: status and queue (why each item waits, behind what), why one item waits, switch the strategy live (type-balanced, goal-first) |
 
 The CLI is the twin of all of it — `histmersion <command>`, same handlers, same Markdown. Every command
 and every tool name used in the skills is verified by `./tools/check_skills.sh`.

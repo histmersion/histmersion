@@ -365,16 +365,18 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite:
     b.managers.tick(t0)
     assertEquals(live, 2)
     assertEquals(List("zzagent_r3", "zzagent_r4").map(item(_).status), List("pending", "pending"))
-    // a run waiting for an approval goes on when it is decided: it holds its place too
+    // a run waiting for a person's approval frees its place (#3762 proposal 1): the next item starts
     connect(ds)(sql"UPDATE jobs SET status = 'waiting' WHERE id = $run1".update.run())
     b.managers.tick(t0)
-    assertEquals(item("zzagent_r3").status, "pending")
+    assertEquals(List("zzagent_r3", "zzagent_r4").map(item(_).status), List("active", "pending"))
+    assertEquals(ManagerRepo.running(ds, ReviewId), 2, "run2 and run3: the waiting run1 holds no place")
+    // decided, run1 goes on beside them (the cap overshoots until runs settle); nothing new starts meanwhile
     connect(ds)(sql"UPDATE jobs SET status = 'queued' WHERE id = $run1".update.run())
-    // a run settles: exactly one place frees
+    b.managers.tick(t0)
+    assertEquals(item("zzagent_r4").status, "pending")
     settle(run2, "zzagent_r2", Nil)
     b.managers.tick(t0)
-    assertEquals(live, 2)
-    assertEquals(List("zzagent_r3", "zzagent_r4").map(item(_).status), List("active", "pending"))
+    assertEquals(item("zzagent_r4").status, "pending", "run1 and run3 hold the two places")
     // a pause only a person lifts frees its place: resuming it is their call
     val run3 = item("zzagent_r3").runId.get
     assert(AgentRepo.transition(ds, run3, RunState.Queued, RunState.Paused, error = Some("requested: paused on request")).isDefined)

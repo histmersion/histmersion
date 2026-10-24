@@ -311,6 +311,92 @@ object ManagersView:
       })
     )
 
+  // ── the central scheduler ───────────────────────────────────────────────────────────────────────
+
+  /** The waiting items a person's filters leave: any of the job types, any of the reasons, the target text. */
+  def visibleWaiting(ws: List[AgentScheduler.Waiting], types: List[String], codes: List[String],
+      subject: Option[String]): List[AgentScheduler.Waiting] =
+    ws.filter(w => (types.isEmpty || types.contains(w.jobType)) && (codes.isEmpty || codes.contains(w.code)) &&
+      subject.forall(t => (w.target + " " + w.goal.getOrElse("") + " " + w.manager).toLowerCase.contains(t.trim.toLowerCase)))
+
+  /** A facet of the queue as the filter chips count it: each value with its items, the most first. */
+  def facet(ws: List[AgentScheduler.Waiting], of: AgentScheduler.Waiting => String): List[(String, Int)] =
+    ws.groupMapReduce(of)(_ => 1)(_ + _).toList.sortBy((v, n) => (-n, v))
+
+  /** The scheduler's heading: the strategy (and who chose it), the runs at once, the pools, what waits for a person. */
+  def schedulerHead(s: AgentScheduler.SchedulerStatus): String =
+    s"Scheduler: ${s.strategy}" + (if s.strategyFrom == "person" then " (set by a person)" else "") +
+      s" · ${s.occupied} of ${s.maxRuns} runs at once" +
+      (if s.pools.isEmpty then "" else " · " + s.pools.map(p => s"${p.pool} ${p.used}/${p.cap}").mkString(", ")) +
+      (if s.forPerson > 0 then s" · ${Plural.count(s.forPerson, "item")} wait for a person (no place held)" else "")
+
+  /** The central scheduler: the strategy switch (behind the write gate), the resources, what the last pass
+    * started (each opening its manager's runs in the runs window), and the queue — filtered by job type,
+    * reason and text like the runs, jobs and approvals windows — with why each item waits and behind what. */
+  def schedulerSection: HtmlElement =
+    val st      = Var(Option.empty[AgentScheduler.SchedulerStatus])
+    val failure = Var(Option.empty[String])
+    def load(): Unit = ApiClient.scheduler(Some(300)).onComplete(_.fold(e => failure.set(Some(e.getMessage)),
+      s => { failure.set(None); st.set(Some(s)) }))
+    def switch(name: String): Unit =
+      if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
+      else ApiClient.setScheduler(name).onComplete(_.fold(e => failure.set(Some(s"scheduler: ${e.getMessage}")),
+        s => { failure.set(None); st.set(Some(s)) }))
+    val filters = List(UiState.schedTypes, UiState.schedCodes, UiState.schedSubject)
+    val waiting = st.signal.map(_.fold(List.empty[AgentScheduler.Waiting])(_.waiting))
+    def openRuns(manager: String): Unit =
+      UiState.set(UiState.runManager := Some(manager), UiState.runStatus := None)()
+      WindowManager.open(WindowKey.Runs)
+    div(cls := "scheduler",
+      onMountCallback(_ => load()),
+      div(cls := "toolbar",
+        div(cls := "btn-group", span(cls := "autopilot-state", child.text <-- st.signal.map(_.fold("Scheduler")(schedulerHead)))),
+        div(cls := "btn-group", role := "group", aria.label := "strategy",
+          children <-- st.signal.map(_.toList.flatMap(s => s.strategies.map(x =>
+            button(typ := "button", cls := "btn btn--toggle btn--sm", x.name, title := x.describe,
+              aria.pressed := (x.name == s.strategy).toString, onClick --> (_ => switch(x.name))))))),
+        div(cls := "btn-group",
+          button(typ := "button", cls := "btn btn--sm", "refresh", onClick --> (_ => load())),
+          button(typ := "button", cls := "btn btn--sm", "approvals", title := "what waits for a person (the approvals window)",
+            onClick --> (_ => { UiState.set(UiState.approvalState := None)(); WindowManager.open(WindowKey.Approvals) })))),
+      ErrorLine(failure.signal),
+      child.maybe <-- st.signal.map(_.map { s =>
+        div(
+          s.stop.map(x => p(cls := "form-error", role := "alert", s"nothing starts: $x")),
+          div(cls := "muted", (if s.dry then "what a pass would do now (nothing started) · " else s.at.fold("")(t => s"last pass $t · ")) +
+            s.types.filter(t => t.waiting > 0 || t.recent > 0).map(t => s"${t.jobType} ${t.recent} recent, ${t.waiting} waiting").mkString(" · ")),
+          Option.when(s.started.nonEmpty)(ul(cls := "job-list scheduler-started", s.started.map(x =>
+            li(cls := "job-row",
+              span(cls := "job-state state-running", x.jobType),
+              div(cls := "job-main",
+                div(cls := "job-subject", button(typ := "button", cls := "link-btn", x.target, title := "its manager's runs",
+                  onClick --> (_ => openRuns(x.manager))), span(cls := "muted", s" · ${x.manager}")),
+                div(cls := "muted", x.why))))))
+        )
+      }),
+      div(cls := "list-filters",
+        ListFilterBar.chips("type", waiting.map(facet(_, _.jobType)), UiState.schedTypes),
+        ListFilterBar.chips("why", waiting.map(facet(_, _.code)), UiState.schedCodes),
+        div(cls := "toolbar",
+          ListFilterBar.text("target, goal or manager", UiState.schedSubject),
+          ListFilterBar.clearButton(filters))),
+      child <-- waiting.combineWith(UiState.schedTypes.signal, UiState.schedCodes.signal, UiState.schedSubject.signal)
+        .map { (ws, ty, co, su) =>
+          val shown = visibleWaiting(ws, ty, co, su)
+          if ws.isEmpty then p(cls := "muted", "Nothing waits.")
+          else ol(cls := "job-list scheduler-queue", shown.map(w =>
+            li(cls := "job-row",
+              span(cls := s"job-state state-${w.code}", w.code),
+              div(cls := "job-main",
+                div(cls := "job-subject",
+                  button(typ := "button", cls := "link-btn", w.target, onClick --> (_ => WindowManager.open(WindowKey.Manager(w.manager)))),
+                  span(cls := "muted", s" · ${w.jobType} · ${w.manager}" + w.goal.fold("")(g => s" · goal $g") +
+                    (if w.position > 0 then s" · #${w.position} in line" else ""))),
+                div(cls := "job-progress", w.why),
+                Option.when(w.behind.nonEmpty)(div(cls := "muted", s"behind ${w.behind.mkString(", ")}")),
+                div(cls := "job-meta muted", s"priority ${w.priority} · waited ${AgentSchedulerMarkdown.minutes(w.waitedMinutes)}")))))
+        })
+
   // ── the managers window ─────────────────────────────────────────────────────────────────────────
 
   private def stateBadge(m: ManagerInfo): HtmlElement =
@@ -330,6 +416,7 @@ object ManagersView:
       child.maybe <-- RunsView.enabled.signal.map(on => Option.when(!on)(p(cls := "muted",
         "Embedded agents are off on this server (agents.enabled): no manager starts a run."))),
       autopilotSection,
+      schedulerSection,
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child <-- ms.signal.combineWith(loaded.signal).map { (xs, isLoaded) =>
         if !isLoaded then p(cls := "muted", "Loading…")

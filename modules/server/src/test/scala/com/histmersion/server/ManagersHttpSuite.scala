@@ -37,6 +37,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM articles WHERE slug LIKE 'zqmgr%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zqmgr%'".update.run()
       sql"DELETE FROM goals WHERE slug LIKE 'zqmgr%'".update.run()
+      sql"UPDATE agent_autopilot SET scheduler_strategy = NULL".update.run()
 
   test("create seed, enqueue every kind, refusals; the manager tool over MCP"):
     val base = AppConfig.load()
@@ -87,6 +88,24 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         val (_, listed) = mcp(url,
           """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"manager","arguments":{"action":"list"}}}""")
         assert(listed.contains(s"seed:$Goal") && listed.contains("(seed · goal"), listed)
+
+        // the central scheduler: its status (a dry pass with agents off), why one item waits, the live switch
+        val (ss, sb) = get(s"$url/api/agents/scheduler?limit=5")
+        assertEquals(ss, 200, sb)
+        val st = decode[com.histmersion.core.AgentScheduler.SchedulerStatus](sb).fold(e => fail(s"$e: $sb"), identity)
+        assertEquals((st.strategy, st.strategyFrom), (cfg.agents.scheduler.strategy, "config"))
+        assert(st.strategies.map(_.name).contains("goal-first"), st.strategies)
+        val (ws, wb) = get(s"$url/api/agents/scheduler/why/zqmgr2019_tin")
+        assertEquals(ws, 200, wb)
+        assert(wb.contains("\"manager\":\"enrich\""), wb)
+        assertEquals(get(s"$url/api/agents/scheduler/why/zqmgr-nothing")._1, 404)
+        val (xs, xb) = post(s"$url/api/agents/scheduler", """{"strategy":"goal-first","by":"test"}""")
+        assertEquals(xs, 200, xb)
+        assert(xb.contains("\"strategyFrom\":\"person\""), xb)
+        assertEquals(post(s"$url/api/agents/scheduler", """{"strategy":"nope"}""")._1, 400)
+        val (_, viaMcp) = mcp(url,
+          """{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"scheduler","arguments":{"action":"strategy","strategy":"default"}}}""")
+        assert(viaMcp.contains("# Scheduler: ") && viaMcp.contains("strategy back to agents.scheduler.strategy"), viaMcp)
       finally
         b.stop()
         clean(cfg)

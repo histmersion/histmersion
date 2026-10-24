@@ -226,6 +226,11 @@ object ApiClient:
   /** The autopilot's focus: pin/unpin/priority a goal, or the cap (`max`; no value: the config's). */
   def setFocus(action: String, goal: Option[String] = None, value: Option[Int] = None): Future[Autopilot.FocusInfo] =
     call(ManagersApi.setFocus)(Autopilot.FocusSet(action, goal, value, Some("web")))
+  /** The central scheduler: its status and queue (`limit` waiting items), a live strategy switch, one item's why. */
+  def scheduler(limit: Option[Int] = None): Future[AgentScheduler.SchedulerStatus] = call(ManagersApi.scheduler)(limit)
+  def setScheduler(strategy: String): Future[AgentScheduler.SchedulerStatus] =
+    call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(strategy, Some("web")))
+  def schedulerWhy(item: String): Future[AgentScheduler.WhyInfo] = call(ManagersApi.schedulerWhy)(item)
   def manager(id: String): Future[Managers.ManagerDetail] = call(ManagersApi.get)(id)
   def managerUpdate(id: String, in: Managers.ManagerUpdate): Future[Managers.ManagerInfo] = call(ManagersApi.update)((id, in))
   /** pause | resume | stop; `runs` = a pause takes its runs in flight with it. */
