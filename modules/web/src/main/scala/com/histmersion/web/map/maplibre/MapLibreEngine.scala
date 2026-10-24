@@ -530,15 +530,15 @@ object MapLibreStyles:
             case Some(i) =>
               val v = i.version.getOrElse("0")
               src.tiles = src.tiles.asInstanceOf[js.Array[String]].map(t => origin + t.replace("{version}", v))
+              // the deepest the server serves: the extract, a focus region, the tiles read on demand (#3760)
               val depth = (id, layer) match
                 case ("lc", _)       => Some(math.min(7, i.maxZoom.getOrElse(7)))
-                case (_, "terrain")  => i.deepest
-                case _               => i.maxZoom
+                case _               => i.deepest
               depth.foreach(z => src.maxzoom = z)
               if i.attribution.nonEmpty && id != "lc" then src.attribution = i.attribution
-              // where the server has tiles: the map asks for none outside (the relief, when nothing deeper
-              // than the extract is outside it either)
-              i.bbox.flatMap(com.histmersion.core.BBox.parse).filter(_ => layer != "terrain" || (i.focus.isEmpty && !i.onDemand.exists(_.enabled)))
+              // where the server has tiles: the map asks for none outside — unless the server reads the layer on
+              // demand there (#3760), or (the relief) a focus region lies outside it
+              i.bbox.flatMap(com.histmersion.core.BBox.parse).filter(_ => i.focus.isEmpty && !i.onDemand.exists(_.enabled))
                 .foreach(b => src.bounds = js.Array(b.minLon, b.minLat, b.maxLon, b.maxLat))
         case None => drop(s, id)
     }

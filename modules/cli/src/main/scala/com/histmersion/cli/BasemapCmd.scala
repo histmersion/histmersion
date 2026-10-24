@@ -19,7 +19,7 @@ object BasemapCmd:
     (Opts.option[String]("layer", "vector, terrain, labels, bathymetry or all (default all)").withDefault("all"),
       Opts.option[Int]("max-zoom", "Deepest zoom of the vector layer (default basemap.vector.max-zoom; with --layer terrain alone, of the relief)").orNone,
       Opts.option[Int]("terrain-max-zoom", "Deepest zoom of the relief, 512-pixel tiles (default basemap.terrain.max-zoom)").orNone,
-      Opts.option[String]("bbox", "Region as minLon,minLat,maxLon,maxLat (default basemap.bbox)").orNone,
+      Opts.option[String]("bbox", "Region as minLon,minLat,maxLon,maxLat, or world (default basemap.bbox); --dry-run says the size zoom by zoom").orNone,
       Opts.option[String]("focus", "Keep the relief of a region deeper than the extract, to basemap.terrain.on-demand.max-zoom: " +
         "a name of basemap.terrain.focus-regions (aegean, anatolia, levant, mesopotamia, nile-delta, argolid) or a new one with --bbox").orNone,
       Opts.flag("dry-run", "Read only the directories and report what the download would take").orFalse,
@@ -38,7 +38,7 @@ object BasemapCmd:
     (Opts.option[String]("layer", "vector, terrain, labels, bathymetry or all — all includes the focus regions and the relief cache " +
         "(default all; none when only --focus or --cache is given)").orNone,
       Opts.option[String]("focus", "A focus region's relief, by name, or all").orNone,
-      Opts.flag("cache", "The on-demand relief cache").orFalse).mapN { (layer, focus, cache) => (c: Client) =>
+      Opts.flag("cache", "The caches of tiles read on demand (the deeper relief, the map and the sea floor outside the region)").orFalse).mapN { (layer, focus, cache) => (c: Client) =>
       val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
       c.basemapRemove(BasemapRemoveQuery(l, focus, cache)).map(r => println(BasemapMarkdown.removed(r)))
     }

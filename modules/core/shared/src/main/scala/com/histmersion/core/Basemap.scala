@@ -187,9 +187,13 @@ object Basemap:
       (x1 - x0 + 1) * (y1 - y0 + 1)
     }.sum
 
-  /** A bbox a fetch accepts: four numbers, west < east, south < north, inside the world. */
+  /** The whole world, as far as web maps go (Web Mercator's ±85.05°): `--bbox world` (#3760). */
+  val World: BBox = BBox(-180, -85.05, 180, 85.05)
+
+  /** A bbox a fetch accepts: four numbers, west < east, south < north, inside the world; or `world`. */
   def validBBox(s: String): Either[String, BBox] =
-    BBox.parse(s).toRight(s"'$s' is not minLon,minLat,maxLon,maxLat").flatMap { b =>
+    if s.trim.equalsIgnoreCase("world") then Right(World)
+    else BBox.parse(s).toRight(s"'$s' is not minLon,minLat,maxLon,maxLat").flatMap { b =>
       if b.minLon >= b.maxLon || b.minLat >= b.maxLat then Left(s"'$s': west must be < east and south < north")
       else if b.minLon < -180 || b.maxLon > 180 || b.minLat < -90 || b.maxLat > 90 then Left(s"'$s' is outside the world")
       else Right(b)

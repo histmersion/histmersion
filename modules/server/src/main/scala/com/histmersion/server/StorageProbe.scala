@@ -94,7 +94,12 @@ object StorageProbe:
         Option.when(Files.isDirectory(dir.resolve(s".${l.wire}.part")))(
           s"${l.wire} download unfinished ${Backup.humanBytes(DirSize.measure(dir.resolve(s".${l.wire}.part"), budget).bytes)}")
     }
-    Option.when(parts.nonEmpty)(parts.mkString(" · "))
+    // the tiles read on demand (#3760): the relief deeper, the map and the sea floor outside the region
+    val caches = List("terrain-cache" -> "relief cache", "vector-cache" -> "map cache", "sea-cache" -> "sea-floor cache").flatMap { (d, label) =>
+      val p = dir.resolve(d)
+      Option.when(Files.isDirectory(p))(s"$label ${Backup.humanBytes(DirSize.measure(p, budget).bytes)}")
+    }
+    Option.when(parts.nonEmpty || caches.nonEmpty)((parts ++ caches).mkString(" · "))
 
   /** Measure every location within `budget`; the database through `ds` when there is one. */
   def measure(p: Places, env: String => Option[String], ds: Option[DataSource], backups: => Either[String, List[BackupInfo]],
