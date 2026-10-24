@@ -134,6 +134,7 @@ test-scripts:
     python3 -m unittest scripts/perf/tests/test_bench.py
     python3 -m unittest scripts/dev/tests/test_affected.py
     python3 -m unittest scripts/dev/tests/test_test_weights.py
+    scripts/dev/tests/seed-cache-test.sh
     scripts/bundle/tests/launchagent-env-test.sh
     scripts/bundle/tests/user-config-test.sh
     scripts/bundle/tests/relink-test.sh
@@ -169,6 +170,11 @@ test-quick *modules:
     {{sbt}} "${cmd#; }"; rc=$?
     [ -z "$db" ] || just test_db_port={{test_db_port}} test-db-down
     exit $rc
+
+# Seed a NEW worktree's sbt cache with a copy of another checkout's (default: the main worktree's): its first build replays instead of compiling cold; `--verify` checks afterwards that every output links inside it
+[group('dev')]
+cache-seed *args:
+    scripts/dev/seed-cache.sh {{args}}
 
 # Prove that two checkouts never replay each other's sbt cache entries (two temp worktrees, ~5 min)
 [group('dev')]
