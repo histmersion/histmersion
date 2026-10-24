@@ -10,7 +10,7 @@ import sttp.model.StatusCode
 object EventsApi:
 
   /** The shared filter plus an event's own narrowing, as `GET /api/events` takes them. */
-  private val eventQuery: EndpointInput[Api.EventQuery] =
+  private lazy val eventQuery: EndpointInput[Api.EventQuery] =
     Api.filterQuery
       .and(query[Option[String]]("text"))
       .and(query[Option[String]]("kind"))
@@ -24,54 +24,54 @@ object EventsApi:
   /** `POST /api/events/import` — read a catalogue, as a JOB (`histmersion jobs` follows it). A dry run
     * stores nothing and leaves its report on the job; a real one merges what it reads with the events
     * there, part by part, so a stopped import resumes after the last part. */
-  val importEvents: PublicEndpoint[EventImportRequest, ApiError, JobInfo, Any] =
+  lazy val importEvents: PublicEndpoint[EventImportRequest, ApiError, JobInfo, Any] =
     endpoint.post.in("api" / "events" / "import").in(jsonBody[EventImportRequest])
       .errorOut(Api.writeErrors).out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
 
   /** `POST /api/events/rederive` — compute the stored catalogue records' dating again from the records
     * as read (no network) and refresh the events the catalogues created, as a JOB. */
-  val rederive: PublicEndpoint[EventRederiveRequest, ApiError, JobInfo, Any] =
+  lazy val rederive: PublicEndpoint[EventRederiveRequest, ApiError, JobInfo, Any] =
     endpoint.post.in("api" / "events" / "rederive").in(jsonBody[EventRederiveRequest])
       .errorOut(Api.writeErrors).out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
 
   /** `GET /api/events/corrections` — the fields of catalogue events a person corrected by hand
     * ([[Corrections]]): `status` active | agreed | conflict (default: all but the retired `agreed`),
     * `event` one event's. */
-  val corrections: PublicEndpoint[(Option[String], Option[String], Option[Int], Option[Int]), ApiError, CorrectionList, Any] =
+  lazy val corrections: PublicEndpoint[(Option[String], Option[String], Option[Int], Option[Int]), ApiError, CorrectionList, Any] =
     endpoint.get.in("api" / "events" / "corrections")
       .in(query[Option[String]]("status")).in(query[Option[String]]("event"))
       .in(query[Option[Int]]("limit")).in(query[Option[Int]]("offset"))
       .errorOut(Api.writeErrors).out(jsonBody[CorrectionList])
 
   /** `GET /api/events/catalogues` — the catalogues, their licences and the citations they ask for. */
-  val catalogues: PublicEndpoint[Unit, ApiError, List[CatalogProviderInfo], Any] =
+  lazy val catalogues: PublicEndpoint[Unit, ApiError, List[CatalogProviderInfo], Any] =
     endpoint.get.in("api" / "events" / "catalogues").errorOut(jsonBody[ApiError]).out(jsonBody[List[CatalogProviderInfo]])
 
   /** `GET /api/events/leads` — the questions the selected events raise (catalogue events no source
     * discusses, with the corpus's findings around them), the largest first. */
-  val leads: PublicEndpoint[Api.EventQuery, ApiError, EventLeadList, Any] =
+  lazy val leads: PublicEndpoint[Api.EventQuery, ApiError, EventLeadList, Any] =
     endpoint.get.in("api" / "events" / "leads").in(eventQuery).errorOut(jsonBody[ApiError]).out(jsonBody[EventLeadList])
 
   /** `POST /api/events/candidates` — compute the proposed links of many events, as a job. */
-  val candidatesJob: PublicEndpoint[EventCandidatesRequest, ApiError, JobInfo, Any] =
+  lazy val candidatesJob: PublicEndpoint[EventCandidatesRequest, ApiError, JobInfo, Any] =
     endpoint.post.in("api" / "events" / "candidates").in(jsonBody[EventCandidatesRequest])
       .errorOut(Api.writeErrors).out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
 
   /** `GET /api/events/{id}/links` — the sources that possibly discuss an event (computed on first ask). */
-  val links: PublicEndpoint[String, ApiError, EventLinkList, Any] =
+  lazy val links: PublicEndpoint[String, ApiError, EventLinkList, Any] =
     endpoint.get.in("api" / "events" / path[String]("id") / "links").errorOut(Api.writeErrors).out(jsonBody[EventLinkList])
 
   /** `POST /api/events/{id}/links` — recompute, confirm (an attestation from a passage that names it)
     * or reject proposed sources. */
-  val applyLinks: PublicEndpoint[(String, EventLinksRequest), ApiError, EventLinksResult, Any] =
+  lazy val applyLinks: PublicEndpoint[(String, EventLinksRequest), ApiError, EventLinksResult, Any] =
     endpoint.post.in("api" / "events" / path[String]("id") / "links").in(jsonBody[EventLinksRequest])
       .errorOut(Api.writeErrors).out(jsonBody[EventLinksResult])
 
   /** `POST /api/site-types/refine` — refine the type of the Wikidata sites on the map from their items'
     * classes, as a job (`dryRun` counts what it would ask about). */
-  val refineSiteTypes: PublicEndpoint[SiteTypesRequest, ApiError, JobInfo, Any] =
+  lazy val refineSiteTypes: PublicEndpoint[SiteTypesRequest, ApiError, JobInfo, Any] =
     endpoint.post.in("api" / "site-types" / "refine").in(jsonBody[SiteTypesRequest])
       .errorOut(Api.writeErrors).out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
 
-  val all: List[AnyEndpoint] = List(importEvents, rederive, corrections, catalogues, leads, candidatesJob, links, applyLinks,
+  lazy val all: List[AnyEndpoint] = List(importEvents, rederive, corrections, catalogues, leads, candidatesJob, links, applyLinks,
     refineSiteTypes)

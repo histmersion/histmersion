@@ -12,10 +12,10 @@ import sttp.model.{Header, HeaderNames, StatusCode}
   * an agent reading the corpus. */
 object BasemapApi:
 
-  private val base = endpoint.in("api" / "basemap").errorOut(jsonBody[ApiError])
+  private lazy val base = endpoint.in("api" / "basemap").errorOut(jsonBody[ApiError])
 
   /** `GET /api/basemap` — what is downloaded, where, and the command that downloads it. */
-  val status: PublicEndpoint[Unit, ApiError, BasemapStatus, Any] =
+  lazy val status: PublicEndpoint[Unit, ApiError, BasemapStatus, Any] =
     base.get.out(jsonBody[BasemapStatus])
 
   /** `POST /api/basemap/fetch?layer=&maxZoom=&terrainMaxZoom=&bbox=&dryRun=&keepAll=&focus=` — download the extracts
@@ -23,7 +23,7 @@ object BasemapApi:
     * region — `basemap.terrain.focus-regions`, or `bbox` — from the extract's depth to the on-demand depth, kept apart)
     * as a background JOB (poll `GET /api/jobs/{id}`); resumable, refused when the disk would be left
     * with less than `basemap.min-free-gb`. A dry run reads only the directories and reports sizes. */
-  val fetch: PublicEndpoint[BasemapFetchQuery, ApiError, JobInfo, Any] =
+  lazy val fetch: PublicEndpoint[BasemapFetchQuery, ApiError, JobInfo, Any] =
     endpoint.post.in("api" / "basemap" / "fetch")
       .in(query[String]("layer").default("all").and(query[Option[Int]]("maxZoom")).and(query[Option[Int]]("terrainMaxZoom"))
         .and(query[Option[String]]("bbox")).and(query[Boolean]("dryRun").default(false))
@@ -33,7 +33,7 @@ object BasemapApi:
   /** `DELETE /api/basemap?layer=vector|terrain|labels|all|none&focus=<name>|all&cache=true` — remove the
     * downloaded files (and an unfinished download's parts), a focus region's relief, the on-demand relief
     * cache (`all` removes the focus regions and the cache too). */
-  val remove: PublicEndpoint[BasemapRemoveQuery, ApiError, BasemapRemoved, Any] =
+  lazy val remove: PublicEndpoint[BasemapRemoveQuery, ApiError, BasemapRemoved, Any] =
     endpoint.delete.in("api" / "basemap").in(query[String]("layer").default("all")
         .and(query[Option[String]]("focus")).and(query[Boolean]("cache").default(false)).mapTo[BasemapRemoveQuery])
       .errorOut(fetchErrors).out(jsonBody[BasemapRemoved])
@@ -45,7 +45,7 @@ object BasemapApi:
     * asks for what its style draws, and the extract on disk keeps the rest. With `keys` (comma-separated
     * property names, with `layers` only) its features keep only those properties — the names in the one
     * language shown, not in a hundred. */
-  val tile: PublicEndpoint[(String, Int, Long, Long, Option[String], Option[String]), ApiError, (Array[Byte], String, Option[String], String, StatusCode), Any] =
+  lazy val tile: PublicEndpoint[(String, Int, Long, Long, Option[String], Option[String]), ApiError, (Array[Byte], String, Option[String], String, StatusCode), Any] =
     endpoint.get.in("api" / "basemap" / path[String]("layer") / path[Int]("z") / path[Long]("x") / path[Long]("y"))
       .in(query[Option[String]]("layers")).in(query[Option[String]]("keys"))
       .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
@@ -70,4 +70,4 @@ object BasemapApi:
   def tileTemplate(layer: BasemapLayer, version: String): String =
     s"/api/basemap/${layer.wire}/{z}/{x}/{y}?v=$version"
 
-  val all: List[AnyEndpoint] = List(status, fetch, remove, tile)
+  lazy val all: List[AnyEndpoint] = List(status, fetch, remove, tile)

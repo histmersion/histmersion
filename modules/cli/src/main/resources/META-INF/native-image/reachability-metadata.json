@@ -46,6 +46,71 @@
       ]
     },
     {
+      "type": "com.histmersion.core.AcquireApi$",
+      "fields": [
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "archiveImport$lzy1"
+        },
+        {
+          "name": "archiveInfo$lzy1"
+        },
+        {
+          "name": "archiveSearch$lzy1"
+        },
+        {
+          "name": "assess$lzy1"
+        },
+        {
+          "name": "base$lzy1"
+        },
+        {
+          "name": "calibreGaps$lzy1"
+        },
+        {
+          "name": "calibreMeta$lzy1"
+        },
+        {
+          "name": "calibrePushed$lzy1"
+        },
+        {
+          "name": "candidates$lzy1"
+        },
+        {
+          "name": "discover$lzy1"
+        },
+        {
+          "name": "followups$lzy1"
+        },
+        {
+          "name": "ingest$lzy1"
+        },
+        {
+          "name": "markCandidates$lzy1"
+        },
+        {
+          "name": "meta$lzy1"
+        },
+        {
+          "name": "refs$lzy1"
+        },
+        {
+          "name": "retractionsStatus$lzy1"
+        },
+        {
+          "name": "sweepCandidates$lzy1"
+        },
+        {
+          "name": "updateRetractions$lzy1"
+        },
+        {
+          "name": "wikirefs$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.AcquireConfig$",
       "fields": [
         {
@@ -786,6 +851,104 @@
       ]
     },
     {
+      "type": "com.histmersion.core.AgentsApi$",
+      "fields": [
+        {
+          "name": "addGoalLink$lzy1"
+        },
+        {
+          "name": "agentErrors$lzy1"
+        },
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "approvals$lzy1"
+        },
+        {
+          "name": "base$lzy1"
+        },
+        {
+          "name": "claudeGuard$lzy1"
+        },
+        {
+          "name": "compare$lzy1"
+        },
+        {
+          "name": "control$lzy1"
+        },
+        {
+          "name": "decide$lzy1"
+        },
+        {
+          "name": "doctor$lzy1"
+        },
+        {
+          "name": "generate$lzy1"
+        },
+        {
+          "name": "goalBase$lzy1"
+        },
+        {
+          "name": "goalView$lzy1"
+        },
+        {
+          "name": "models$lzy1"
+        },
+        {
+          "name": "probe$lzy1"
+        },
+        {
+          "name": "quota$lzy1"
+        },
+        {
+          "name": "refreshQuota$lzy1"
+        },
+        {
+          "name": "removeAllowance$lzy1"
+        },
+        {
+          "name": "removeGoalLink$lzy1"
+        },
+        {
+          "name": "removeSchedule$lzy1"
+        },
+        {
+          "name": "resetChain$lzy1"
+        },
+        {
+          "name": "run$lzy1"
+        },
+        {
+          "name": "runs$lzy1"
+        },
+        {
+          "name": "schedules$lzy1"
+        },
+        {
+          "name": "setAllowance$lzy1"
+        },
+        {
+          "name": "setChain$lzy1"
+        },
+        {
+          "name": "setFallthrough$lzy1"
+        },
+        {
+          "name": "setPool$lzy1"
+        },
+        {
+          "name": "setSchedule$lzy1"
+        },
+        {
+          "name": "startRun$lzy1"
+        },
+        {
+          "name": "writeBase$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.AgentsConfig$",
       "fields": [
         {
@@ -815,7 +978,460 @@
       "type": "com.histmersion.core.Api$",
       "fields": [
         {
+          "name": "about$lzy1"
+        },
+        {
+          "name": "addPlace$lzy1"
+        },
+        {
+          "name": "addPlaceName$lzy1"
+        },
+        {
+          "name": "agentStateDelete$lzy1"
+        },
+        {
+          "name": "agentStateGet$lzy1"
+        },
+        {
+          "name": "agentStateList$lzy1"
+        },
+        {
+          "name": "agentStateSet$lzy1"
+        },
+        {
+          "name": "aggregate$lzy1"
+        },
+        {
           "name": "all$lzy1"
+        },
+        {
+          "name": "articleCoverage$lzy1"
+        },
+        {
+          "name": "articleSlugs$lzy1"
+        },
+        {
+          "name": "articleVersion$lzy1"
+        },
+        {
+          "name": "articleVersions$lzy1"
+        },
+        {
+          "name": "articles$lzy1"
+        },
+        {
+          "name": "asset$lzy1"
+        },
+        {
+          "name": "assetDetail$lzy1"
+        },
+        {
+          "name": "assetLinks$lzy1"
+        },
+        {
+          "name": "assets$lzy1"
+        },
+        {
+          "name": "attestations$lzy1"
+        },
+        {
+          "name": "backup$lzy1"
+        },
+        {
+          "name": "backupStatus$lzy1"
+        },
+        {
+          "name": "backups$lzy1"
+        },
+        {
+          "name": "base$lzy1"
+        },
+        {
+          "name": "buildHierarchy$lzy1"
+        },
+        {
+          "name": "checkArticle$lzy1"
+        },
+        {
+          "name": "citekeys$lzy1"
+        },
+        {
+          "name": "config$lzy1"
+        },
+        {
+          "name": "configReload$lzy1"
+        },
+        {
+          "name": "contradictions$lzy1"
+        },
+        {
+          "name": "createAssetLink$lzy1"
+        },
+        {
+          "name": "createAttestation$lzy1"
+        },
+        {
+          "name": "deleteArticle$lzy1"
+        },
+        {
+          "name": "deleteAssetLink$lzy1"
+        },
+        {
+          "name": "deleteAttestation$lzy1"
+        },
+        {
+          "name": "deleteEvent$lzy1"
+        },
+        {
+          "name": "deleteGoal$lzy1"
+        },
+        {
+          "name": "deleteSource$lzy1"
+        },
+        {
+          "name": "downloadBackup$lzy1"
+        },
+        {
+          "name": "events$lzy1"
+        },
+        {
+          "name": "eventsGeo$lzy1"
+        },
+        {
+          "name": "exportArticle$lzy1"
+        },
+        {
+          "name": "exportBundle$lzy1"
+        },
+        {
+          "name": "exportSource$lzy1"
+        },
+        {
+          "name": "facets$lzy1"
+        },
+        {
+          "name": "fetchExternalPlaces$lzy1"
+        },
+        {
+          "name": "fetchPeriods$lzy1"
+        },
+        {
+          "name": "fillFigureLicences$lzy1"
+        },
+        {
+          "name": "filterQuery$lzy1"
+        },
+        {
+          "name": "findings$lzy1"
+        },
+        {
+          "name": "findingsPage$lzy1"
+        },
+        {
+          "name": "fixArticleFormat$lzy1"
+        },
+        {
+          "name": "fixSourceFormat$lzy1"
+        },
+        {
+          "name": "getArticle$lzy1"
+        },
+        {
+          "name": "getAttestation$lzy1"
+        },
+        {
+          "name": "getEvent$lzy1"
+        },
+        {
+          "name": "getGoal$lzy1"
+        },
+        {
+          "name": "getSource$lzy1"
+        },
+        {
+          "name": "goals$lzy1"
+        },
+        {
+          "name": "graph$lzy1"
+        },
+        {
+          "name": "health$lzy1"
+        },
+        {
+          "name": "iiifImage$lzy1"
+        },
+        {
+          "name": "iiifInfo$lzy1"
+        },
+        {
+          "name": "importArticle$lzy1"
+        },
+        {
+          "name": "importBundle$lzy1"
+        },
+        {
+          "name": "importNote$lzy1"
+        },
+        {
+          "name": "importPeriods$lzy1"
+        },
+        {
+          "name": "importPlaces$lzy1"
+        },
+        {
+          "name": "ingest$lzy1"
+        },
+        {
+          "name": "ingestErrors$lzy1"
+        },
+        {
+          "name": "ingestParams$lzy1"
+        },
+        {
+          "name": "init$lzy1"
+        },
+        {
+          "name": "instance$lzy1"
+        },
+        {
+          "name": "job$lzy1"
+        },
+        {
+          "name": "jobs$lzy1"
+        },
+        {
+          "name": "lintArticle$lzy1"
+        },
+        {
+          "name": "lintSource$lzy1"
+        },
+        {
+          "name": "loadPlaces$lzy1"
+        },
+        {
+          "name": "maintenanceVacuum$lzy1"
+        },
+        {
+          "name": "mediaCovers$lzy1"
+        },
+        {
+          "name": "mediaCoversJob$lzy1"
+        },
+        {
+          "name": "mediaFacets$lzy1"
+        },
+        {
+          "name": "mediaFile$lzy1"
+        },
+        {
+          "name": "mediaGeo$lzy1"
+        },
+        {
+          "name": "mediaImport$lzy1"
+        },
+        {
+          "name": "mediaImportJob$lzy1"
+        },
+        {
+          "name": "mediaList$lzy1"
+        },
+        {
+          "name": "mediaProviders$lzy1"
+        },
+        {
+          "name": "mediaShow$lzy1"
+        },
+        {
+          "name": "mediaThumb$lzy1"
+        },
+        {
+          "name": "mergeApply$lzy1"
+        },
+        {
+          "name": "mergeApplyStatus$lzy1"
+        },
+        {
+          "name": "mergeDetail$lzy1"
+        },
+        {
+          "name": "mergeImport$lzy1"
+        },
+        {
+          "name": "mergeLedger$lzy1"
+        },
+        {
+          "name": "mergePlace$lzy1"
+        },
+        {
+          "name": "mergePlan$lzy1"
+        },
+        {
+          "name": "mergeSession$lzy1"
+        },
+        {
+          "name": "merges$lzy1"
+        },
+        {
+          "name": "neighbors$lzy1"
+        },
+        {
+          "name": "original$lzy1"
+        },
+        {
+          "name": "parseResolutions$lzy1"
+        },
+        {
+          "name": "passages$lzy1"
+        },
+        {
+          "name": "patchArticle$lzy1"
+        },
+        {
+          "name": "patchAsset$lzy1"
+        },
+        {
+          "name": "patchAttestation$lzy1"
+        },
+        {
+          "name": "patchEvent$lzy1"
+        },
+        {
+          "name": "patchGoal$lzy1"
+        },
+        {
+          "name": "patchSource$lzy1"
+        },
+        {
+          "name": "period$lzy1"
+        },
+        {
+          "name": "periods$lzy1"
+        },
+        {
+          "name": "place$lzy1"
+        },
+        {
+          "name": "placeChildren$lzy1"
+        },
+        {
+          "name": "placeFootprints$lzy1"
+        },
+        {
+          "name": "placeLinks$lzy1"
+        },
+        {
+          "name": "placeNames$lzy1"
+        },
+        {
+          "name": "placeOverrides$lzy1"
+        },
+        {
+          "name": "placeSources$lzy1"
+        },
+        {
+          "name": "placeTree$lzy1"
+        },
+        {
+          "name": "places$lzy1"
+        },
+        {
+          "name": "placesGeo$lzy1"
+        },
+        {
+          "name": "putArticle$lzy1"
+        },
+        {
+          "name": "putAssets$lzy1"
+        },
+        {
+          "name": "putEvent$lzy1"
+        },
+        {
+          "name": "putGoal$lzy1"
+        },
+        {
+          "name": "putMergeSession$lzy1"
+        },
+        {
+          "name": "putSource$lzy1"
+        },
+        {
+          "name": "putSourceCover$lzy1"
+        },
+        {
+          "name": "rebuildPlaces$lzy1"
+        },
+        {
+          "name": "reindex$lzy1"
+        },
+        {
+          "name": "removePlace$lzy1"
+        },
+        {
+          "name": "removePlaceName$lzy1"
+        },
+        {
+          "name": "renameArticle$lzy1"
+        },
+        {
+          "name": "renameEvent$lzy1"
+        },
+        {
+          "name": "renameGoal$lzy1"
+        },
+        {
+          "name": "renamePlace$lzy1"
+        },
+        {
+          "name": "renameSource$lzy1"
+        },
+        {
+          "name": "reocr$lzy1"
+        },
+        {
+          "name": "resolveEdges$lzy1"
+        },
+        {
+          "name": "resolveId$lzy1"
+        },
+        {
+          "name": "restore$lzy1"
+        },
+        {
+          "name": "search$lzy1"
+        },
+        {
+          "name": "seed$lzy1"
+        },
+        {
+          "name": "seedPeriods$lzy1"
+        },
+        {
+          "name": "setInstance$lzy1"
+        },
+        {
+          "name": "setPlaceOverride$lzy1"
+        },
+        {
+          "name": "sourceAliases$lzy1"
+        },
+        {
+          "name": "sourceArticles$lzy1"
+        },
+        {
+          "name": "sourceView$lzy1"
+        },
+        {
+          "name": "sources$lzy1"
+        },
+        {
+          "name": "uploadBundle$lzy1"
+        },
+        {
+          "name": "verifyBundle$lzy1"
+        },
+        {
+          "name": "version$lzy1"
         }
       ]
     },
@@ -1675,6 +2291,29 @@
         },
         {
           "name": "given_Schema_BackupsUsage$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BasemapApi$",
+      "fields": [
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "base$lzy1"
+        },
+        {
+          "name": "fetch$lzy1"
+        },
+        {
+          "name": "remove$lzy1"
+        },
+        {
+          "name": "status$lzy1"
+        },
+        {
+          "name": "tile$lzy1"
         }
       ]
     },
@@ -3050,6 +3689,44 @@
       ]
     },
     {
+      "type": "com.histmersion.core.EventsApi$",
+      "fields": [
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "applyLinks$lzy1"
+        },
+        {
+          "name": "candidatesJob$lzy1"
+        },
+        {
+          "name": "catalogues$lzy1"
+        },
+        {
+          "name": "corrections$lzy1"
+        },
+        {
+          "name": "eventQuery$lzy1"
+        },
+        {
+          "name": "importEvents$lzy1"
+        },
+        {
+          "name": "leads$lzy1"
+        },
+        {
+          "name": "links$lzy1"
+        },
+        {
+          "name": "rederive$lzy1"
+        },
+        {
+          "name": "refineSiteTypes$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.EventsConfig$",
       "fields": [
         {
@@ -4353,6 +5030,104 @@
       ]
     },
     {
+      "type": "com.histmersion.core.ManagersApi$",
+      "fields": [
+        {
+          "name": "action$lzy1"
+        },
+        {
+          "name": "addHint$lzy1"
+        },
+        {
+          "name": "addItem$lzy1"
+        },
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "autopilot$lzy1"
+        },
+        {
+          "name": "base$lzy1"
+        },
+        {
+          "name": "create$lzy1"
+        },
+        {
+          "name": "decideAll$lzy1"
+        },
+        {
+          "name": "delete$lzy1"
+        },
+        {
+          "name": "digest$lzy1"
+        },
+        {
+          "name": "drain$lzy1"
+        },
+        {
+          "name": "enqueue$lzy1"
+        },
+        {
+          "name": "errors$lzy1"
+        },
+        {
+          "name": "events$lzy1"
+        },
+        {
+          "name": "focus$lzy1"
+        },
+        {
+          "name": "get$lzy1"
+        },
+        {
+          "name": "hints$lzy1"
+        },
+        {
+          "name": "items$lzy1"
+        },
+        {
+          "name": "list$lzy1"
+        },
+        {
+          "name": "one$lzy1"
+        },
+        {
+          "name": "patchItem$lzy1"
+        },
+        {
+          "name": "removeHint$lzy1"
+        },
+        {
+          "name": "repairAcquire$lzy1"
+        },
+        {
+          "name": "sched$lzy1"
+        },
+        {
+          "name": "scheduler$lzy1"
+        },
+        {
+          "name": "schedulerWhy$lzy1"
+        },
+        {
+          "name": "setAutopilot$lzy1"
+        },
+        {
+          "name": "setFocus$lzy1"
+        },
+        {
+          "name": "setScheduler$lzy1"
+        },
+        {
+          "name": "stalls$lzy1"
+        },
+        {
+          "name": "update$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.ManualPlaceName$",
       "fields": [
         {
@@ -5060,6 +5835,56 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy4"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.OpsApi$",
+      "fields": [
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "base$lzy1"
+        },
+        {
+          "name": "goalsExport$lzy1"
+        },
+        {
+          "name": "lint$lzy1"
+        },
+        {
+          "name": "lintFix$lzy1"
+        },
+        {
+          "name": "lintMarkdown$lzy1"
+        },
+        {
+          "name": "opsErrors$lzy1"
+        },
+        {
+          "name": "query$lzy1"
+        },
+        {
+          "name": "queueAdd$lzy1"
+        },
+        {
+          "name": "queueDelete$lzy1"
+        },
+        {
+          "name": "queueExport$lzy1"
+        },
+        {
+          "name": "queueImport$lzy1"
+        },
+        {
+          "name": "queueList$lzy1"
+        },
+        {
+          "name": "queuePatch$lzy1"
+        },
+        {
+          "name": "schemaTables$lzy1"
         }
       ]
     },
@@ -6762,6 +7587,20 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy5"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.UiApi$",
+      "fields": [
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "counters$lzy1"
+        },
+        {
+          "name": "markSeen$lzy1"
         }
       ]
     },

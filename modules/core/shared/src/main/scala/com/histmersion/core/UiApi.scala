@@ -16,14 +16,14 @@ object UiApi:
 
   /** `GET /api/ui/counters` — every watched window's count, newest change, last-seen mark and whether
     * something is new: ONE request, one round trip to the store, for the page to poll. */
-  val counters: PublicEndpoint[Unit, ApiError, Counters, Any] =
+  lazy val counters: PublicEndpoint[Unit, ApiError, Counters, Any] =
     endpoint.get.in("api" / "ui" / "counters").errorOut(jsonBody[ApiError]).out(jsonBody[Counters])
 
   /** `POST /api/ui/seen/{board}` `{"at": latest}` — the reader opened that window; answers the
     * counters as they are now. An unknown board or a malformed instant is a 400. Exempt from the API
     * key (it changes nothing but this mark — see `AuthHandler`), so a reader without the key still
     * clears what they have read. */
-  val markSeen: PublicEndpoint[(String, SeenMark), ApiError, Counters, Any] =
+  lazy val markSeen: PublicEndpoint[(String, SeenMark), ApiError, Counters, Any] =
     endpoint.post.in("api" / "ui" / "seen" / path[String]("board")).in(jsonBody[SeenMark])
       .errorOut(seenErrors).out(jsonBody[Counters])
 
@@ -37,4 +37,4 @@ object UiApi:
   /** The path prefix of [[markSeen]], for the write gate's exemption. */
   val SeenPathPrefix = "/api/ui/seen/"
 
-  val all: List[AnyEndpoint] = List(counters, markSeen)
+  lazy val all: List[AnyEndpoint] = List(counters, markSeen)

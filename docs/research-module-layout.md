@@ -172,10 +172,34 @@ classes regenerates both modules' reachability metadata with the tracing agent i
 Total for C: about 21–27 working days, of which step 7 is the bulk and can be spread over the areas'
 ordinary changes (*Coding practices*: existing code is brought in line when it is changed).
 
+## Step 2 as built (#4036, 2026-10-24)
+
+Every endpoint, endpoint input, error mapping and `all` list in the eight `*Api` objects is a `lazy val`
+(the string and list constants stay strict). A `lazy val` is an accessor method that Scala.js's optimiser
+drops when nothing calls it, so the web bundle links the endpoints the page calls and the codecs those
+name, and nothing else. `def`s would have worked for the linker too, but would build a new endpoint value
+on every call on the server and in the CLI; per-endpoint objects would have changed every call site.
+`ApiSurfaceSuite` fails when an endpoint is held in a strict field again. The endpoint definitions are
+unchanged: `showDetail`, info, inputs, outputs and errors of every endpoint in `Api.all`, and the REST
+index, are byte-identical before and after.
+
+| | before | after | change |
+|---|---|---|---|
+| `app.bundle.js` raw | 20 843 533 B | 15 702 058 B | −24.7 % |
+| gzip −6 (what the server sends) | 2 174 865 B | 1 772 038 B | −18.5 % |
+| core's share (source map) | 8.50 MB | 5.47 MB | −3.03 MB |
+| first render: map · first markers · list (ms) | 528 · 601 · 604 | 423 · 495 · 498 | −105 ms |
+| first render: longest task · all long tasks (ms) | 150 · 212 | 105 · 168 | |
+| JS heap after first render | 53.5 MB | 44.7 MB | −8.8 MB |
+
+First render: headless Chromium 1248 on the GPU (Metal), a throwaway JVM server with the perf fixtures
+(`perf-fixtures.mjs`), the two bundles served alternately through `HISTMERSION_PERF_BUNDLE`, median of 9
+runs after one warm-up each. What core still contributes comes from areas the web UI does call — merge
+(465 kB), managers (547 kB), agents (480 kB), events, places, goals — and shrinks further only when those
+views stop needing the records, not by any linking change.
+
 ## Unresolved
 
-- How much step 2 saves is a measurement, not an estimate: Kindlings derives one codec per record, and
-  how many records the 82 web endpoints reach is known only after linking.
 - Whether `Filter` (used by web 28 times, db 52, server 55) is a wire record or a domain value with an
   SQL rendering decides whether it lands in `api` or `domain`; db's `Filter → SQL` code suggests the
   latter, with a wire `FilterView`.

@@ -6,7 +6,11 @@ import sttp.model.StatusCode
 
 /** The REST contract, as Tapir endpoint DEFINITIONS (no logic). The server interprets them
   * (netty-sync) and the CLI derives an sttp client from the very same values, so both sides agree by
-  * construction. MCP tools wrap the same server handlers. */
+  * construction. MCP tools wrap the same server handlers.
+  *
+  * Every endpoint here and in the other `*Api` objects is a `lazy val`: initialising an object runs
+  * all of its strict vals, so Scala.js would link every endpoint and every codec it names into the
+  * web bundle as soon as the page used one of them. */
 object Api:
 
   /** Input of `GET /api/findings` (the map feed) and MCP `geo_when`: the SHARED [[Filter]] plus the
@@ -20,7 +24,7 @@ object Api:
   object FindingsQuery:
     def of(filter: Filter): FindingsQuery = FindingsQuery(filter, None)
 
-  private val base = endpoint.in("api").errorOut(jsonBody[ApiError])
+  private lazy val base = endpoint.in("api").errorOut(jsonBody[ApiError])
 
   /** `base` for every MUTATING endpoint: same path prefix, but the richer error mapping below, so a
     * write refused by the restore maintenance lock answers 503 wherever it arrives (plan §1.10).
@@ -33,7 +37,7 @@ object Api:
     * `offset`, `title` (`*` = repeatable). Mapped BOTH ways, so the sttp client can encode a
     * `Filter` back into a request. `title` narrows by the LISTED item's own title: a source's on
     * `/api/sources`, an article's on `/api/articles`, an event's label on `/api/events`. */
-  val filterQuery: EndpointInput[Filter] =
+  lazy val filterQuery: EndpointInput[Filter] =
     import FilterDocs as D
     // each parameter's name and description come from FilterDocs, which the MCP inputs and the CLI flags read too
     def q[A](p: FilterDocs.Param)(using Codec[List[String], A, CodecFormat.TextPlain]) = query[A](p.rest).description(p.doc)
@@ -58,30 +62,30 @@ object Api:
       .mapTo[FilterQuery]
       .map(_.toFilter)(FilterQuery.from)
 
-  val version: PublicEndpoint[Unit, ApiError, VersionInfo, Any] =
+  lazy val version: PublicEndpoint[Unit, ApiError, VersionInfo, Any] =
     base.get.in("version").out(jsonBody[VersionInfo])
 
-  val health: PublicEndpoint[Unit, ApiError, Health, Any] =
+  lazy val health: PublicEndpoint[Unit, ApiError, Health, Any] =
     base.get.in("health").out(jsonBody[Health])
 
   /** `GET /api/about` — build (version, commit), health, job queue, last backup and store counts. */
-  val about: PublicEndpoint[Unit, ApiError, About, Any] =
+  lazy val about: PublicEndpoint[Unit, ApiError, About, Any] =
     base.get.in("about").out(jsonBody[About])
 
-  val config: PublicEndpoint[Unit, ApiError, UiConfig, Any] =
+  lazy val config: PublicEndpoint[Unit, ApiError, UiConfig, Any] =
     base.get.in("config").out(jsonBody[UiConfig])
 
-  val search: PublicEndpoint[(Option[String], Option[Int]), ApiError, List[SearchHit], Any] =
+  lazy val search: PublicEndpoint[(Option[String], Option[Int]), ApiError, List[SearchHit], Any] =
     base.get.in("search").in(query[Option[String]]("q")).in(query[Option[Int]]("limit"))
       .out(jsonBody[List[SearchHit]])
 
   /** `?body=false` leaves `ocrMarkdown` out — a link preview wants the metadata, not a megabyte of
     * OCR text on every hover. */
   /** What a bare identifier names — see [[ResolvedId]]. */
-  val resolveId: PublicEndpoint[String, ApiError, ResolvedId, Any] =
+  lazy val resolveId: PublicEndpoint[String, ApiError, ResolvedId, Any] =
     base.get.in("resolve" / path[String]("id")).out(jsonBody[ResolvedId])
 
-  val getSource: PublicEndpoint[(String, Boolean), ApiError, SourceWithFindings, Any] =
+  lazy val getSource: PublicEndpoint[(String, Boolean), ApiError, SourceWithFindings, Any] =
     base.get.in("sources" / path[String]("citekey")).in(query[Boolean]("body").default(true))
       .out(jsonBody[SourceWithFindings])
       .errorOut(statusCode(StatusCode.NotFound))
@@ -93,7 +97,7 @@ object Api:
     * sources, never from a source back up to what the corpus has written about it. Kept as its own
     * route rather than a field on [[SourceWithFindings]] so the (much hotter) `get_source` read does
     * not grow a join it usually does not need. */
-  val sourceArticles: PublicEndpoint[String, ApiError, List[Backlink], Any] =
+  lazy val sourceArticles: PublicEndpoint[String, ApiError, List[Backlink], Any] =
     base.get.in("sources" / path[String]("citekey") / "articles").out(jsonBody[List[Backlink]])
       .errorOut(statusCode(StatusCode.NotFound))
 
@@ -109,7 +113,7 @@ object Api:
       chars: Option[Int] = None
   )
 
-  val sourceView: PublicEndpoint[SourceViewQuery, ApiError, String, Any] =
+  lazy val sourceView: PublicEndpoint[SourceViewQuery, ApiError, String, Any] =
     endpoint.get.in("api" / "sources" / path[String]("citekey") / "view")
       .in(query[Boolean]("fullText").default(false))
       .in(query[Option[String]]("section"))
@@ -133,7 +137,7 @@ object Api:
       context: Option[Int] = None
   )
 
-  val passages: PublicEndpoint[PassagesQuery, ApiError, PassageResult, Any] =
+  lazy val passages: PublicEndpoint[PassagesQuery, ApiError, PassageResult, Any] =
     endpoint.get.in("api" / "sources" / path[String]("citekey") / "passages")
       .in(query[String]("q").description("the text to find (literal, case- and accent-insensitive), or a regex with regex=true"))
       .in(query[Boolean]("regex").default(false))
@@ -147,7 +151,7 @@ object Api:
     * when IT satisfies the finding-level criteria (deep-time overlap, viewport, place, tags) and its
     * source satisfies the source-level ones (`q`, authors, status, publication years, topics).
     * `limit` (from the shared filter) defaults to the configured `limits.findings`. */
-  val findings: PublicEndpoint[FindingsQuery, ApiError, List[GeoHit], Any] =
+  lazy val findings: PublicEndpoint[FindingsQuery, ApiError, List[GeoHit], Any] =
     base.get.in("findings")
       .in(filterQuery)
       .in(query[Option[String]]("region"))
@@ -157,7 +161,7 @@ object Api:
   /** `GET /api/findings/page?<filter>[&region=…]` — one page of the same findings with the paging
     * fields ([[GeoHitPage]], [[OffsetPage]]: total, offset, next): what `geo_when` and `geo-when`
     * print. The map reads the plain array of [[findings]]. */
-  val findingsPage: PublicEndpoint[FindingsQuery, ApiError, GeoHitPage, Any] =
+  lazy val findingsPage: PublicEndpoint[FindingsQuery, ApiError, GeoHitPage, Any] =
     base.get.in("findings" / "page")
       .in(filterQuery)
       .in(query[Option[String]]("region"))
@@ -208,7 +212,7 @@ object Api:
     * each time bucket / gazetteer node of the current filter. One aggregation, so the strip, the
     * "by time" tab, the CLI `--group` output and the MCP `groupBy` answer can never disagree.
     * Filtered by exactly the same parameters as `/api/sources` and `/api/findings`. */
-  val aggregate: PublicEndpoint[AggregateQuery, ApiError, TimeHistogram, Any] =
+  lazy val aggregate: PublicEndpoint[AggregateQuery, ApiError, TimeHistogram, Any] =
     base.get.in("aggregate")
       .in(query[Option[String]]("by"))
       .in(query[Option[String]]("unit"))
@@ -220,12 +224,12 @@ object Api:
       .mapInTo[AggregateQuery]
       .out(jsonBody[TimeHistogram])
 
-  val neighbors: PublicEndpoint[(String, List[String]), ApiError, List[NeighborRow], Any] =
+  lazy val neighbors: PublicEndpoint[(String, List[String]), ApiError, List[NeighborRow], Any] =
     base.get.in("neighbors" / path[String]("citekey"))
       .in(query[List[String]]("kind"))
       .out(jsonBody[List[NeighborRow]])
 
-  val graph: PublicEndpoint[(String, Option[Int]), ApiError, SourceGraph, Any] =
+  lazy val graph: PublicEndpoint[(String, Option[Int]), ApiError, SourceGraph, Any] =
     base.get.in("graph" / path[String]("citekey"))
       .in(query[Option[Int]]("depth"))
       .out(jsonBody[SourceGraph])
@@ -233,7 +237,7 @@ object Api:
   /** `GET /api/contradictions?citekey=&since=` — disagreement edges and contested statuses.
     * With a citekey: its challenges/refutes/updates/superseded_by edges in both directions.
     * Without: corpus-wide sources that have such an edge OR status in contested|superseded|debunked|retracted. */
-  val contradictions: PublicEndpoint[(Option[String], Option[Long]), ApiError, ContradictionsResult, Any] =
+  lazy val contradictions: PublicEndpoint[(Option[String], Option[Long]), ApiError, ContradictionsResult, Any] =
     base.get.in("contradictions")
       .in(query[Option[String]]("citekey"))
       .in(query[Option[Long]]("since"))
@@ -241,24 +245,24 @@ object Api:
 
   /** Seed from a server-side directory (bind-mounted corpus; `dir` empty → config `corpus.dir`).
     * Skips any file older than its stored row unless `force` — see [[SeedResult.skipped]]. */
-  val seed: PublicEndpoint[SeedRequest, ApiError, SeedResult, Any] =
+  lazy val seed: PublicEndpoint[SeedRequest, ApiError, SeedResult, Any] =
     writeBase.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
   /** Rebuild the FTS chunk index (plan §1.4) — needed once after V004, and after any bulk change to
     * `ocr_markdown` that bypassed `upsert`. Resumable: one call does a bounded amount of work from the
     * `after` cursor (see [[ReindexResult]]); `limit` caps the sources per call. */
-  val reindex: PublicEndpoint[(Option[String], Option[Int]), ApiError, ReindexResult, Any] =
+  lazy val reindex: PublicEndpoint[(Option[String], Option[Int]), ApiError, ReindexResult, Any] =
     writeBase.post.in("reindex").in(query[Option[String]]("after")).in(query[Option[Int]]("limit"))
       .out(jsonBody[ReindexResult])
 
   /** `GET /api/sources?<filter>` — the primary discovery endpoint (plan §1.0/§1.3). The SOURCE is the
     * unit of the result; every hit carries the findings that made it match and why. */
-  val sources: PublicEndpoint[Filter, ApiError, SearchResult, Any] =
+  lazy val sources: PublicEndpoint[Filter, ApiError, SearchResult, Any] =
     base.get.in("sources").in(filterQuery).out(jsonBody[SearchResult])
 
   /** `GET /api/facets?field=…&prefix=…&<filter>` — the vocabulary of a dimension inside the current
     * filter, counted as DISTINCT sources (so a chip shows how many sources it would leave). */
-  val facets: PublicEndpoint[(String, Option[String], Filter), ApiError, List[Facet], Any] =
+  lazy val facets: PublicEndpoint[(String, Option[String], Filter), ApiError, List[Facet], Any] =
     base.get.in("facets")
       .in(query[String]("field"))
       .in(query[Option[String]]("prefix"))
@@ -284,22 +288,22 @@ object Api:
     .description("refuse the write when its Markdown has a formatting error (default: report only)")
 
   /** Idempotent create/replace of EVERYTHING under one citekey. */
-  val putSource: PublicEndpoint[(String, SourcePut, Boolean), ApiError, SourceWithFindings, Any] =
+  lazy val putSource: PublicEndpoint[(String, SourcePut, Boolean), ApiError, SourceWithFindings, Any] =
     endpoint.put.in("api" / "sources" / path[String]("citekey")).in(jsonBody[SourcePut]).in(strictQuery)
       .errorOut(writeErrors).out(jsonBody[SourceWithFindings])
 
   /** Selective enrichment: only the parts present in the body are replaced. */
-  val patchSource: PublicEndpoint[(String, SourcePatch, Boolean), ApiError, SourceWithFindings, Any] =
+  lazy val patchSource: PublicEndpoint[(String, SourcePatch, Boolean), ApiError, SourceWithFindings, Any] =
     endpoint.patch.in("api" / "sources" / path[String]("citekey")).in(jsonBody[SourcePatch]).in(strictQuery)
       .errorOut(writeErrors).out(jsonBody[SourceWithFindings])
 
   /** `GET /api/sources/{citekey}/lint` — the formatting problems of a source's summary and notes. */
-  val lintSource: PublicEndpoint[String, ApiError, FormatReport, Any] =
+  lazy val lintSource: PublicEndpoint[String, ApiError, FormatReport, Any] =
     endpoint.get.in("api" / "sources" / path[String]("citekey") / "lint")
       .errorOut(writeErrors).out(jsonBody[FormatReport])
 
   /** `POST /api/sources/{citekey}/lint/fix` — apply the wording-safe repairs, report what is left. */
-  val fixSourceFormat: PublicEndpoint[String, ApiError, FormatReport, Any] =
+  lazy val fixSourceFormat: PublicEndpoint[String, ApiError, FormatReport, Any] =
     endpoint.post.in("api" / "sources" / path[String]("citekey") / "lint" / "fix")
       .errorOut(writeErrors).out(jsonBody[FormatReport])
 
@@ -307,7 +311,7 @@ object Api:
     * transaction: every table, finding id and `[[link]]` follows, and the old citekey stays an ALIAS
     * that every read (`/api/sources/{old}`, `/source/{old}`, neighbors, graph, export, wikilinks)
     * still resolves. A write: gated by the API key like every POST. */
-  val renameSource: PublicEndpoint[(String, RenameRequest), ApiError, SourceRenamed, Any] =
+  lazy val renameSource: PublicEndpoint[(String, RenameRequest), ApiError, SourceRenamed, Any] =
     writeBase.post.in("sources" / path[String]("citekey") / "rename").in(jsonBody[RenameRequest])
       .out(jsonBody[SourceRenamed])
 
@@ -317,32 +321,32 @@ object Api:
     * transaction; edges of other sources to it are parked, the row leaves a tombstone, the log queue
     * records it, and the stored original is removed after the commit. Calibre is never touched. Not an
     * MCP tool: deleting a source is a person's decision ([[SourceDeleteRequest]]). */
-  val deleteSource: PublicEndpoint[(String, SourceDeleteRequest), ApiError, SourceDeletion, Any] =
+  lazy val deleteSource: PublicEndpoint[(String, SourceDeleteRequest), ApiError, SourceDeletion, Any] =
     writeBase.post.in("sources" / path[String]("citekey") / "delete").in(jsonBody[SourceDeleteRequest])
       .out(jsonBody[SourceDeletion])
 
   /** Every old citekey and the source it names now — what `histmersion export` uses to remove the
     * mirror files of renamed sources. */
-  val sourceAliases: PublicEndpoint[Unit, ApiError, List[SourceAlias], Any] =
+  lazy val sourceAliases: PublicEndpoint[Unit, ApiError, List[SourceAlias], Any] =
     base.get.in("source-aliases").out(jsonBody[List[SourceAlias]])
 
   /** Seed ONE note from raw text — the host-side path of `histmersion seed`, since the CLI has no DB and
     * the server has no host filesystem. Same guard as [[seed]]. */
-  val importNote: PublicEndpoint[NoteImport, ApiError, SeedResult, Any] =
+  lazy val importNote: PublicEndpoint[NoteImport, ApiError, SeedResult, Any] =
     writeBase.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
 
   /** The note as it would live on disk: frontmatter YAML + the `notes` body. */
-  val exportSource: PublicEndpoint[String, ApiError, String, Any] =
+  lazy val exportSource: PublicEndpoint[String, ApiError, String, Any] =
     endpoint.get.in("api" / "sources" / path[String]("citekey") / "export")
       .errorOut(writeErrors).out(stringBody)
 
   /** Every citekey, sorted — so `histmersion export <dir>` can walk the whole corpus. */
-  val citekeys: PublicEndpoint[Unit, ApiError, List[String], Any] =
+  lazy val citekeys: PublicEndpoint[Unit, ApiError, List[String], Any] =
     base.get.in("citekeys").out(jsonBody[List[String]])
 
   /** Promote unresolved edges whose target now resolves (exactly or by unique short form) to a
     * stored source; run once after a client-driven seed. */
-  val resolveEdges: PublicEndpoint[Unit, ApiError, EdgesResolved, Any] =
+  lazy val resolveEdges: PublicEndpoint[Unit, ApiError, EdgesResolved, Any] =
     writeBase.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
 
   // ── backup / restore (plan §1.10) ────────────────────────────────────────────────────────────
@@ -353,36 +357,36 @@ object Api:
     * place (docs/research-plugins.md §3.5, §3.6): what changed is rebuilt beside the running
     * components and swapped in when all of it built; restart-only settings are reported, not applied.
     * A failed reload is still a 200 — its report says why nothing changed. */
-  val configReload: PublicEndpoint[Unit, ApiError, ReloadReport, Any] =
+  lazy val configReload: PublicEndpoint[Unit, ApiError, ReloadReport, Any] =
     writeBase.post.in("config" / "reload").out(jsonBody[ReloadReport])
 
-  val backup: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
+  lazy val backup: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
     writeBase.post.in("backup").out(jsonBody[BackupStatus])
 
   /** `POST /api/maintenance/vacuum` `{"analyze": true, "tables": ["place_names"]}` — `VACUUM` (with
     * `analyze`, `VACUUM (ANALYZE)`) as a JOB (kind `vacuum`): it runs outside any transaction, one
     * table at a time, and answers at once with the job; `GET /api/jobs/{id}` follows it. No tables =
     * `maintenance.vacuum-tables`. One at a time; refused while a restore holds the maintenance lock. */
-  val maintenanceVacuum: PublicEndpoint[VacuumRequest, ApiError, JobInfo, Any] =
+  lazy val maintenanceVacuum: PublicEndpoint[VacuumRequest, ApiError, JobInfo, Any] =
     writeBase.post.in("maintenance" / "vacuum").in(jsonBody[VacuumRequest]).out(jsonBody[JobInfo])
 
   /** `GET /api/backup/status` — the running backup job, or the last one; 404 before the first. */
-  val backupStatus: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
+  lazy val backupStatus: PublicEndpoint[Unit, ApiError, BackupStatus, Any] =
     endpoint.get.in("api" / "backup" / "status").errorOut(writeErrors).out(jsonBody[BackupStatus])
 
   /** `GET /api/backups` — the archives in `backups.dir`, newest first. */
-  val backups: PublicEndpoint[Unit, ApiError, List[BackupInfo], Any] =
+  lazy val backups: PublicEndpoint[Unit, ApiError, List[BackupInfo], Any] =
     base.get.in("backups").out(jsonBody[List[BackupInfo]])
 
   /** `GET /api/backups/{file}` — streams one archive, so the host can copy it off the server/volume
     * (`histmersion backup --download <dir>`). `file` is validated against the listing: no path components. */
-  val downloadBackup: PublicEndpoint[String, ApiError, TapirFile, Any] =
+  lazy val downloadBackup: PublicEndpoint[String, ApiError, TapirFile, Any] =
     endpoint.get.in("api" / "backups" / path[String]("file")).errorOut(writeErrors).out(fileBody)
 
   /** `POST /api/restore` — `pg_restore --clean --if-exists` under the maintenance lock (other writes
     * get 503 meanwhile), then Flyway validate. Refuses a database that still holds sources unless
     * `force`. Deliberately NOT an MCP tool: it destroys data. */
-  val restore: PublicEndpoint[RestoreRequest, ApiError, RestoreResult, Any] =
+  lazy val restore: PublicEndpoint[RestoreRequest, ApiError, RestoreResult, Any] =
     writeBase.post.in("restore").in(jsonBody[RestoreRequest]).out(jsonBody[RestoreResult])
 
   // ── portable bundles (docs/research-merge-import.md, milestones M0–M2) ─────────────────────
@@ -390,18 +394,18 @@ object Api:
   /** `GET /api/instance` — this collection's identity: the id every row it creates carries as its
     * `origin`, and the label a bundle names it by. Not an MCP tool, like the bundle operations it
     * serves: none of them is an agent's to run. */
-  val instance: PublicEndpoint[Unit, ApiError, InstanceInfo, Any] =
+  lazy val instance: PublicEndpoint[Unit, ApiError, InstanceInfo, Any] =
     base.get.in("instance").out(jsonBody[InstanceInfo])
 
   /** `PUT /api/instance` `{"label": "work"}` — name this collection (blank clears the name). */
-  val setInstance: PublicEndpoint[InstanceLabel, ApiError, InstanceInfo, Any] =
+  lazy val setInstance: PublicEndpoint[InstanceLabel, ApiError, InstanceInfo, Any] =
     writeBase.put.in("instance").in(jsonBody[InstanceLabel]).out(jsonBody[InstanceInfo])
 
   /** `GET /api/bundle?since=` — the whole database (or, with `since`, what changed after that
     * moment, deletions included) as a `.hmx` bundle, streamed. Deterministic: an unchanged database
     * gives the same bytes. The manifest's `asOf` is the `since` of the next incremental export. Not
     * an MCP tool: it is a binary download for the host, like a backup. */
-  val exportBundle: PublicEndpoint[Option[String], ApiError, (TapirFile, String), Any] =
+  lazy val exportBundle: PublicEndpoint[Option[String], ApiError, (TapirFile, String), Any] =
     endpoint.get.in("api" / "bundle").in(query[Option[String]]("since"))
       .errorOut(writeErrors)
       .out(fileBody)
@@ -411,14 +415,14 @@ object Api:
     * every checksum, every record's rev, every blob, and (for a full bundle) every reference. Writes
     * nothing; every problem is listed. Not an MCP tool: its input is a file upload, which an MCP call
     * cannot carry (a server-side path would let a model point the server at any file). */
-  val verifyBundle: PublicEndpoint[TapirFile, ApiError, BundleVerifyResult, Any] =
+  lazy val verifyBundle: PublicEndpoint[TapirFile, ApiError, BundleVerifyResult, Any] =
     writeBase.post.in("bundle" / "verify").in(fileBody).out(jsonBody[BundleVerifyResult])
 
   /** `POST /api/bundle/import?dryRun=` — the body is a `.hmx` file, imported WITHOUT matching: into an
     * empty instance, or back into the one it came from (rows the same uid names; see
     * [[BundleImportResult]]). One transaction; any blocking problem and nothing is written. Not an
     * MCP tool: like `restore`, a human's call. */
-  val importBundle: PublicEndpoint[(Boolean, TapirFile), ApiError, BundleImportResult, Any] =
+  lazy val importBundle: PublicEndpoint[(Boolean, TapirFile), ApiError, BundleImportResult, Any] =
     writeBase.post.in("bundle" / "import").in(query[Boolean]("dryRun").default(false)).in(fileBody)
       .out(jsonBody[BundleImportResult])
 
@@ -427,62 +431,62 @@ object Api:
   /** `POST /api/bundle/upload` — the body is a `.hmx` file, kept on the server under its sha256 (for
     * `bundles.stale-minutes` after its last use) so `merge plan` and `merge import` can name it: a
     * resolution set is JSON, and a request carries one body. */
-  val uploadBundle: PublicEndpoint[TapirFile, ApiError, BundleUpload, Any] =
+  lazy val uploadBundle: PublicEndpoint[TapirFile, ApiError, BundleUpload, Any] =
     writeBase.post.in("bundle" / "upload").in(fileBody).out(jsonBody[BundleUpload])
 
   /** `POST /api/merge/plan` — what importing an uploaded bundle would do, and EVERY issue, in one run
     * ([[MergePlan]]): pure, deterministic, writes nothing. Also the MCP tool `merge_plan`. */
-  val mergePlan: PublicEndpoint[MergePlanRequest, ApiError, MergePlan, Any] =
+  lazy val mergePlan: PublicEndpoint[MergePlanRequest, ApiError, MergePlan, Any] =
     writeBase.post.in("merge" / "plan").in(jsonBody[MergePlanRequest]).out(jsonBody[MergePlan])
 
   /** `POST /api/merge/import` — import an uploaded bundle, taking the resolutions into account; refused
     * (nothing written) while an issue is open or a decision needs `merge apply`. Not an MCP tool. */
-  val mergeImport: PublicEndpoint[MergeImportRequest, ApiError, BundleImportResult, Any] =
+  lazy val mergeImport: PublicEndpoint[MergeImportRequest, ApiError, BundleImportResult, Any] =
     writeBase.post.in("merge" / "import").in(jsonBody[MergeImportRequest]).out(jsonBody[BundleImportResult])
 
   /** `POST /api/merge/apply` — carry out the plan of an uploaded bundle, folds of matched records
     * included (milestone M5): refused while anything is open or when the plan's hash is not the one
     * reviewed; otherwise a backup, then ONE transaction. Not an MCP tool: applying a merge is a
     * person's call, like a restore (docs/research-merge-import.md §7.4). */
-  val mergeApply: PublicEndpoint[MergeApplyRequest, ApiError, MergeApplyJob, Any] =
+  lazy val mergeApply: PublicEndpoint[MergeApplyRequest, ApiError, MergeApplyJob, Any] =
     writeBase.post.in("merge" / "apply").in(jsonBody[MergeApplyRequest]).out(jsonBody[MergeApplyJob])
 
   /** `GET /api/merge/apply/{job}` — where an apply started by `POST /api/merge/apply` is: it runs in the
     * background (its backup can take minutes), and the POST answers `running` once
     * `merge.apply-wait-seconds` have passed. The jobs of this server's run only. */
-  val mergeApplyStatus: PublicEndpoint[String, ApiError, MergeApplyJob, Any] =
+  lazy val mergeApplyStatus: PublicEndpoint[String, ApiError, MergeApplyJob, Any] =
     writeBase.get.in("merge" / "apply" / path[String]("job")).out(jsonBody[MergeApplyJob])
 
   /** `GET /api/merge/sessions/{bundle}` — the decisions made so far on the web review screen for an
     * uploaded bundle (empty when none). Not an MCP tool: it is the screen's draft, and an agent
     * presents a plan rather than deciding it (§7.4). */
-  val mergeSession: PublicEndpoint[String, ApiError, MergeSession, Any] =
+  lazy val mergeSession: PublicEndpoint[String, ApiError, MergeSession, Any] =
     writeBase.get.in("merge" / "sessions" / path[String]("bundle")).out(jsonBody[MergeSession])
 
   /** `PUT /api/merge/sessions/{bundle}` — keep the review screen's decisions (the whole set). */
-  val putMergeSession: PublicEndpoint[(String, MergeResolutions), ApiError, MergeSession, Any] =
+  lazy val putMergeSession: PublicEndpoint[(String, MergeResolutions), ApiError, MergeSession, Any] =
     writeBase.put.in("merge" / "sessions" / path[String]("bundle")).in(jsonBody[MergeResolutions])
       .out(jsonBody[MergeSession])
 
   /** `POST /api/merge/resolutions` — read a resolution file (YAML, the body) into resolutions: what the
     * web review screen's upload does with a file the CLI wrote. Pure; writes nothing. */
-  val parseResolutions: PublicEndpoint[String, ApiError, MergeResolutions, Any] =
+  lazy val parseResolutions: PublicEndpoint[String, ApiError, MergeResolutions, Any] =
     writeBase.post.in("merge" / "resolutions").in(stringBody).out(jsonBody[MergeResolutions])
 
   /** `GET /api/merges?limit=` — the merges this collection took in (imports and applies), newest
     * first. Also the MCP tool `merges` (read-only). */
-  val merges: PublicEndpoint[Option[Int], ApiError, List[MergeInfo], Any] =
+  lazy val merges: PublicEndpoint[Option[Int], ApiError, List[MergeInfo], Any] =
     base.get.in("merges").in(query[Option[Int]]("limit")).out(jsonBody[List[MergeInfo]])
 
   /** `GET /api/merges/ledger?uid=&merge=&limit=` — the merge ledger: of one record (`uid`: a uid
     * here or merged away, or a citekey), of one merge, or the latest rows. */
-  val mergeLedger: PublicEndpoint[(Option[String], Option[String], Option[Int]), ApiError, MergeLedger, Any] =
+  lazy val mergeLedger: PublicEndpoint[(Option[String], Option[String], Option[Int]), ApiError, MergeLedger, Any] =
     writeBase.get.in("merges" / "ledger").in(query[Option[String]]("uid")).in(query[Option[String]]("merge"))
       .in(query[Option[Int]]("limit")).out(jsonBody[MergeLedger])
 
   /** `GET /api/merges/{id}` — one merge: its report, resolutions and the decisions it remembers. An id
     * prefix (the 8 characters `merge list` prints) is enough when it names one merge. */
-  val mergeDetail: PublicEndpoint[String, ApiError, MergeDetail, Any] =
+  lazy val mergeDetail: PublicEndpoint[String, ApiError, MergeDetail, Any] =
     writeBase.get.in("merges" / path[String]("id")).out(jsonBody[MergeDetail])
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
@@ -507,7 +511,7 @@ object Api:
   )
 
   /** `GET /api/articles?<filter>&kind&text` — the compiled articles citing the filter's sources. */
-  val articles: PublicEndpoint[ArticleQuery, ApiError, ArticleList, Any] =
+  lazy val articles: PublicEndpoint[ArticleQuery, ApiError, ArticleList, Any] =
     base.get.in("articles")
       .in(filterQuery)
       .in(query[Option[String]]("kind"))
@@ -517,38 +521,38 @@ object Api:
 
   /** `POST /api/articles/{slug}/rename` `{"to": …}` — a new slug: the old one keeps resolving (an
     * alias), and every `[[old]]` in other articles is rewritten. */
-  val renameArticle: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+  lazy val renameArticle: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
     writeBase.post.in("articles" / path[String]("slug") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
   /** One article with both directions of its wikilink graph resolved. `brief=true` leaves out what is
     * computed per read — the formatting lint and the coverage (`formatting` empty, no `coverage`) — for
     * a caller that shows only the title and summary: the web UI's link preview. */
-  val getArticle: PublicEndpoint[(String, Boolean), ApiError, ArticleView, Any] =
+  lazy val getArticle: PublicEndpoint[(String, Boolean), ApiError, ArticleView, Any] =
     endpoint.get.in("api" / "articles" / path[String]("slug"))
       .in(query[Boolean]("brief").default(false)
         .description("leave out the formatting lint and the coverage (a hover card's read)"))
       .errorOut(writeErrors).out(jsonBody[ArticleView])
 
   /** Idempotent create/replace of one article. */
-  val putArticle: PublicEndpoint[(String, ArticlePut, Boolean), ApiError, ArticleView, Any] =
+  lazy val putArticle: PublicEndpoint[(String, ArticlePut, Boolean), ApiError, ArticleView, Any] =
     endpoint.put.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePut]).in(strictQuery)
       .errorOut(writeErrors).out(jsonBody[ArticleView])
 
   /** Selective enrichment: only the parts present in the body are replaced. */
-  val patchArticle: PublicEndpoint[(String, ArticlePatch, Boolean), ApiError, ArticleView, Any] =
+  lazy val patchArticle: PublicEndpoint[(String, ArticlePatch, Boolean), ApiError, ArticleView, Any] =
     endpoint.patch.in("api" / "articles" / path[String]("slug")).in(jsonBody[ArticlePatch]).in(strictQuery)
       .errorOut(writeErrors).out(jsonBody[ArticleView])
 
   /** `GET /api/articles/{slug}/lint` — the formatting problems of an article's body and summary:
     * what the page will not display as the writer meant (a table shown as pipes, literal `**`, a link
     * that is not one), with line, column, excerpt and — when safe — the repair. */
-  val lintArticle: PublicEndpoint[String, ApiError, FormatReport, Any] =
+  lazy val lintArticle: PublicEndpoint[String, ApiError, FormatReport, Any] =
     endpoint.get.in("api" / "articles" / path[String]("slug") / "lint")
       .errorOut(writeErrors).out(jsonBody[FormatReport])
 
   /** `POST /api/articles/{slug}/lint/fix` — apply the repairs that never touch wording (a blank line
     * before a table, an unescaped `\[\[`, a pasted frontmatter block removed), as one guarded patch. */
-  val fixArticleFormat: PublicEndpoint[String, ApiError, FormatReport, Any] =
+  lazy val fixArticleFormat: PublicEndpoint[String, ApiError, FormatReport, Any] =
     endpoint.post.in("api" / "articles" / path[String]("slug") / "lint" / "fix")
       .errorOut(writeErrors).out(jsonBody[FormatReport])
 
@@ -556,7 +560,7 @@ object Api:
     * (applied in order, each anchored on text it must find exactly once), or a whole body, checked as
     * `review-article` checks its fixer's answer — each edit's fate, the result's problems, and whether
     * one of them is fatal. */
-  val checkArticle: PublicEndpoint[(String, ArticleEdits.ArticleCheckRequest), ApiError, ArticleEdits.ArticleCheck, Any] =
+  lazy val checkArticle: PublicEndpoint[(String, ArticleEdits.ArticleCheckRequest), ApiError, ArticleEdits.ArticleCheck, Any] =
     endpoint.post.in("api" / "articles" / path[String]("slug") / "check").in(jsonBody[ArticleEdits.ArticleCheckRequest])
       .errorOut(writeErrors).out(jsonBody[ArticleEdits.ArticleCheck])
 
@@ -565,35 +569,35 @@ object Api:
     * the status breakdown, the disagreement edges touching the cited sources, the writer's further
     * searches, and the drift (a source neither cited nor given a reason, a stale reason). 404 when the
     * article records no filter. */
-  val articleCoverage: PublicEndpoint[String, ApiError, Coverage, Any] =
+  lazy val articleCoverage: PublicEndpoint[String, ApiError, Coverage, Any] =
     endpoint.get.in("api" / "articles" / path[String]("slug") / "coverage")
       .errorOut(writeErrors).out(jsonBody[Coverage])
 
-  val deleteArticle: PublicEndpoint[String, ApiError, ArticleDeleted, Any] =
+  lazy val deleteArticle: PublicEndpoint[String, ApiError, ArticleDeleted, Any] =
     endpoint.delete.in("api" / "articles" / path[String]("slug"))
       .errorOut(writeErrors).out(jsonBody[ArticleDeleted])
 
   /** The article as it would live on disk: `wiki/<kind>/<slug>.md` (frontmatter + body). */
-  val exportArticle: PublicEndpoint[String, ApiError, String, Any] =
+  lazy val exportArticle: PublicEndpoint[String, ApiError, String, Any] =
     endpoint.get.in("api" / "articles" / path[String]("slug") / "export")
       .errorOut(writeErrors).out(stringBody)
 
   /** Import ONE article note from raw text — the host-side path of `histmersion seed`, since the CLI has
     * no DB and the server cannot see the host's `wiki/`. Same "newer in DB" guard as [[seed]]. */
-  val importArticle: PublicEndpoint[ArticleImport, ApiError, SeedResult, Any] =
+  lazy val importArticle: PublicEndpoint[ArticleImport, ApiError, SeedResult, Any] =
     base.post.in("articles" / "import").in(jsonBody[ArticleImport]).out(jsonBody[SeedResult])
 
   /** `GET /api/articles/{slug}/versions` — the edit history of one article (newest first). */
-  val articleVersions: PublicEndpoint[String, ApiError, List[ArticleVersion], Any] =
+  lazy val articleVersions: PublicEndpoint[String, ApiError, List[ArticleVersion], Any] =
     base.get.in("articles" / path[String]("slug") / "versions").out(jsonBody[List[ArticleVersion]])
 
   /** `GET /api/articles/{slug}/versions/{id}` — one historical version's full body. */
-  val articleVersion: PublicEndpoint[(String, Long), ApiError, ArticleVersionFull, Any] =
+  lazy val articleVersion: PublicEndpoint[(String, Long), ApiError, ArticleVersionFull, Any] =
     base.get.in("articles" / path[String]("slug") / "versions" / path[Long]("versionId"))
       .out(jsonBody[ArticleVersionFull])
 
   /** Every slug, sorted — so `histmersion article export <dir>` can walk the whole wiki. */
-  val articleSlugs: PublicEndpoint[Unit, ApiError, List[String], Any] =
+  lazy val articleSlugs: PublicEndpoint[Unit, ApiError, List[String], Any] =
     base.get.in("article-slugs").out(jsonBody[List[String]])
 
   /** The whole REST surface: this file's endpoints plus the stream-2.8 operations (lint · queue ·
@@ -645,7 +649,7 @@ object Api:
     * signed year; omitted = every row whatever its validity). The `id` of a hit is what `place=` on
     * every other endpoint wants: an id matches through the materialised `finding_places` **and the
     * hierarchy as of the filter's period**, where a bare name only matches text. */
-  val places: PublicEndpoint[(Option[String], Option[Long], Option[Int]), ApiError, List[PlaceHit], Any] =
+  lazy val places: PublicEndpoint[(Option[String], Option[Long], Option[Int]), ApiError, List[PlaceHit], Any] =
     base.get.in("places")
       .in(query[Option[String]]("q")).in(query[Option[Long]]("asOf")).in(query[Option[Int]]("limit"))
       .out(jsonBody[List[PlaceHit]])
@@ -657,7 +661,7 @@ object Api:
 
   /** `GET /api/places/geo?kind=&asOf=&limit=&from=&to=&pick=` — GeoJSON FeatureCollection for places
     * with geometry, filtered by kind and time ([[GeoPick.resolve]]); an unknown `pick` is a 400. */
-  val placesGeo: PublicEndpoint[PlacesGeoQuery, ApiError, String, Any] =
+  lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, ApiError, String, Any] =
     base.get.in("places" / "geo")
       .in(query[Option[String]]("kind").and(query[Option[Long]]("asOf")).and(query[Option[Int]]("limit"))
         .and(query[Option[Long]]("from")).and(query[Option[Long]]("to")).and(query[Option[String]]("pick"))
@@ -665,35 +669,35 @@ object Api:
       .out(stringBody)
 
   /** Children of one place, as of `asOf` — only edges whose OWN period covers it. */
-  val placeChildren: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceSummary], Any] =
+  lazy val placeChildren: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceSummary], Any] =
     base.get.in("places" / path[String]("id") / "children").in(query[Option[Long]]("asOf"))
       .out(jsonBody[List[PlaceSummary]]).errorOut(statusCode(StatusCode.NotFound))
 
   /** The subtree under one place as a depth-tagged pre-order walk (the indented list MCP prints). */
-  val placeTree: PublicEndpoint[(String, Option[Long], Option[Int]), ApiError, List[PlaceTreeRow], Any] =
+  lazy val placeTree: PublicEndpoint[(String, Option[Long], Option[Int]), ApiError, List[PlaceTreeRow], Any] =
     base.get.in("places" / path[String]("id") / "tree")
       .in(query[Option[Long]]("asOf")).in(query[Option[Int]]("depth"))
       .out(jsonBody[List[PlaceTreeRow]]).errorOut(statusCode(StatusCode.NotFound))
 
   /** One place: the row, its geometry as GeoJSON text, and its parents/children as of `asOf`.
     * `counts=true` adds what the corpus holds for it ([[PlaceCounts]]) — the map's hover card. */
-  val place: PublicEndpoint[(String, Option[Long], Option[Boolean]), ApiError, PlaceDetail, Any] =
+  lazy val place: PublicEndpoint[(String, Option[Long], Option[Boolean]), ApiError, PlaceDetail, Any] =
     base.get.in("places" / path[String]("id")).in(query[Option[Long]]("asOf"))
       .in(query[Option[Boolean]]("counts"))
       .out(jsonBody[PlaceDetail]).errorOut(statusCode(StatusCode.NotFound))
 
   /** Dated geometries for a place — the `place_footprints` table (V016). */
-  val placeFootprints: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceFootprint], Any] =
+  lazy val placeFootprints: PublicEndpoint[(String, Option[Long]), ApiError, List[PlaceFootprint], Any] =
     base.get.in("places" / path[String]("id") / "footprints").in(query[Option[Long]]("asOf"))
       .out(jsonBody[List[PlaceFootprint]]).errorOut(statusCode(StatusCode.NotFound))
 
   /** External cross-references for a place — Pleiades, Wikidata, TGN etc. */
-  val placeLinks: PublicEndpoint[String, ApiError, List[PlaceLink], Any] =
+  lazy val placeLinks: PublicEndpoint[String, ApiError, List[PlaceLink], Any] =
     base.get.in("places" / path[String]("id") / "links")
       .out(jsonBody[List[PlaceLink]]).errorOut(statusCode(StatusCode.NotFound))
 
   /** Named historical periods (PeriodO-shaped). `q` searches label, `region` narrows by scope. */
-  val periods: PublicEndpoint[(Option[String], Option[String], Option[Long], Option[Long]), ApiError,
+  lazy val periods: PublicEndpoint[(Option[String], Option[String], Option[Long], Option[Long]), ApiError,
       List[HistoricalPeriod], Any] =
     base.get.in("periods")
       .in(query[Option[String]]("q")).in(query[Option[String]]("region"))
@@ -701,7 +705,7 @@ object Api:
       .out(jsonBody[List[HistoricalPeriod]])
 
   /** `GET /api/periods/{id}` — one period, its parent and its children (#719). */
-  val period: PublicEndpoint[String, ApiError, PeriodDetail, Any] =
+  lazy val period: PublicEndpoint[String, ApiError, PeriodDetail, Any] =
     base.get.in("periods" / path[String]("id"))
       .out(jsonBody[PeriodDetail]).errorOut(statusCode(StatusCode.NotFound))
 
@@ -709,7 +713,7 @@ object Api:
     * (`db/periods/periodo-seed.json`, a curated PeriodO subset). Idempotent; re-running restores the
     * curated tree and makes the seed's presets the only ones. `replace` also deletes the seed rows
     * (`dataset = seed`, fetched ones included) that the bundled seed no longer has. */
-  val seedPeriods: PublicEndpoint[Boolean, ApiError, PeriodImportResult, Any] =
+  lazy val seedPeriods: PublicEndpoint[Boolean, ApiError, PeriodImportResult, Any] =
     writeBase.post.in("periods" / "seed").in(query[Boolean]("replace").default(false))
       .out(jsonBody[PeriodImportResult])
 
@@ -717,7 +721,7 @@ object Api:
     * subset of one like the seed); `collection` (repeatable) keeps only those authorities. `dataset`
     * is `local` (the default: this collection's own periods, carried in a bundle) or `seed`.
     * Idempotent. */
-  val importPeriods: PublicEndpoint[(List[String], Option[String], String), ApiError, PeriodImportResult, Any] =
+  lazy val importPeriods: PublicEndpoint[(List[String], Option[String], String), ApiError, PeriodImportResult, Any] =
     writeBase.post.in("periods" / "import").in(query[List[String]]("collection"))
       .in(query[Option[String]]("dataset")).in(stringBody)
       .out(jsonBody[PeriodImportResult])
@@ -725,14 +729,14 @@ object Api:
   /** `POST /api/periods/fetch?source=periodo&collection=…` — download the PeriodO dump and upsert the
     * named collections (default: config `periods.periodo-collections`), each under one authority
     * node. Re-runnable: a period that already has a parent keeps it. */
-  val fetchPeriods: PublicEndpoint[(String, List[String]), ApiError, PeriodImportResult, Any] =
+  lazy val fetchPeriods: PublicEndpoint[(String, List[String]), ApiError, PeriodImportResult, Any] =
     writeBase.post.in("periods" / "fetch").in(query[String]("source"))
       .in(query[List[String]]("collection")).out(jsonBody[PeriodImportResult])
 
   /** `POST /api/init?fetch=` — first-run data (#720): import the bundled gazetteer and period presets
     * (and, with `fetch`, download the network gazetteers and PeriodO) as a background JOB; poll it
     * with `GET /api/jobs/{id}`. The server starts the same job by itself on a first start. */
-  val init: PublicEndpoint[Boolean, ApiError, JobInfo, Any] =
+  lazy val init: PublicEndpoint[Boolean, ApiError, JobInfo, Any] =
     writeBase.post.in("init").in(query[Boolean]("fetch").default(false)).out(jsonBody[JobInfo])
 
   /** `POST /api/places/import?kind=&dataset=` — the body is a Linked Places Format document or a
@@ -740,7 +744,7 @@ object Api:
     * that do not declare one; `dataset` is `local` (the default: this collection's own places,
     * carried in a bundle) or `seed` (`histmersion places seed`). Upsert: re-importing a file is
     * idempotent, and marks its places with the dataset given. Send big files in batches. */
-  val importPlaces: PublicEndpoint[(Option[String], Option[String], String), ApiError, PlaceImportResult, Any] =
+  lazy val importPlaces: PublicEndpoint[(Option[String], Option[String], String), ApiError, PlaceImportResult, Any] =
     // `writeBase`, not `base`: an import IS a write, and the maintenance lock answers 503 — a code
     // the plain error mapping cannot express.
     writeBase.post.in("places" / "import").in(query[Option[String]]("kind")).in(query[Option[String]]("dataset"))
@@ -748,77 +752,77 @@ object Api:
 
   /** `POST /api/places/rebuild` — re-materialise `finding_places` from the geometry, the periods and
     * the `region_name` fallback. Run it after an import or after the corpus changed. */
-  val rebuildPlaces: PublicEndpoint[Unit, ApiError, PlaceRebuildResult, Any] =
+  lazy val rebuildPlaces: PublicEndpoint[Unit, ApiError, PlaceRebuildResult, Any] =
     writeBase.post.in("places" / "rebuild").out(jsonBody[PlaceRebuildResult])
 
   /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external
     * gazetteer. Idempotent. */
-  val fetchExternalPlaces: PublicEndpoint[(String, Boolean), ApiError, PlaceImportResult, Any] =
+  lazy val fetchExternalPlaces: PublicEndpoint[(String, Boolean), ApiError, PlaceImportResult, Any] =
     writeBase.post.in("places" / "fetch").in(query[String]("source"))
       .in(query[Boolean]("dryRun")).out(jsonBody[PlaceImportResult])
 
   /** `GET /api/places/sources` — the gazetteer's external sources (#1064): the pinned GeoNames and
     * Wikidata extracts, the LPF files in the drop folder, whether each file is there, and what was
     * last imported from each (version, counts, licence, citation). Declared before `places/{id}`. */
-  val placeSources: PublicEndpoint[Unit, ApiError, List[GazetteerSourceInfo], Any] =
+  lazy val placeSources: PublicEndpoint[Unit, ApiError, List[GazetteerSourceInfo], Any] =
     base.get.in("places" / "sources").out(jsonBody[List[GazetteerSourceInfo]])
 
   /** `POST /api/places/load?source=geonames|wikidata|tgn|lpf&apply=` — import one external source as an
     * init JOB (poll `GET /api/jobs/{id}`): a DRY RUN by default, which joins and counts everything and
     * keeps nothing; with `apply`, the import. The pinned extract's checksum is verified first. */
-  val loadPlaces: PublicEndpoint[(String, Boolean), ApiError, JobInfo, Any] =
+  lazy val loadPlaces: PublicEndpoint[(String, Boolean), ApiError, JobInfo, Any] =
     writeBase.post.in("places" / "load").in(query[String]("source"))
       .in(query[Boolean]("apply").default(false)).out(jsonBody[JobInfo])
 
   /** `GET /api/places/names?place=` — the names people added by hand (#987, `manual`, V068): every
     * place's, or one place's. Declared before `places/{id}` so `names` is never read as an id. */
-  val placeNames: PublicEndpoint[Option[String], ApiError, List[ManualPlaceName], Any] =
+  lazy val placeNames: PublicEndpoint[Option[String], ApiError, List[ManualPlaceName], Any] =
     base.get.in("places" / "names").in(query[Option[String]]("place")).out(jsonBody[List[ManualPlaceName]])
 
   /** `POST /api/places/{id}/names` `{"name": …, "lang": …}` — give a place a further name, stored as
     * MANUAL: an import replaces a place's names but never deletes these, so a re-seed keeps them. */
-  val addPlaceName: PublicEndpoint[(String, PlaceNameAdd), ApiError, PlaceNameChanged, Any] =
+  lazy val addPlaceName: PublicEndpoint[(String, PlaceNameAdd), ApiError, PlaceNameChanged, Any] =
     writeBase.post.in("places" / path[String]("id") / "names").in(jsonBody[PlaceNameAdd]).out(jsonBody[PlaceNameChanged])
 
   /** `POST /api/places/{id}/names/remove` `{"name": …, "lang": …}` — drop a name a person added; an
     * imported name is refused (the next seed would bring it back). */
-  val removePlaceName: PublicEndpoint[(String, PlaceNameRemove), ApiError, PlaceNameChanged, Any] =
+  lazy val removePlaceName: PublicEndpoint[(String, PlaceNameRemove), ApiError, PlaceNameChanged, Any] =
     writeBase.post.in("places" / path[String]("id") / "names" / "remove").in(jsonBody[PlaceNameRemove])
       .out(jsonBody[PlaceNameChanged])
 
   /** `GET /api/places/overrides?place=` — the kinds and periods people set by hand (V080): every
     * place's, or one place's, each with what its source says. Declared before `places/{id}`. */
-  val placeOverrides: PublicEndpoint[Option[String], ApiError, List[PlaceOverride], Any] =
+  lazy val placeOverrides: PublicEndpoint[Option[String], ApiError, List[PlaceOverride], Any] =
     base.get.in("places" / "overrides").in(query[Option[String]]("place")).out(jsonBody[List[PlaceOverride]])
 
   /** `POST /api/places/{id}/override` `{"kind": …, "periodStart": …, "periodEnd": …, "reason": …}` — set
     * what a place IS over what its source says; every re-import keeps it. `{"reset": true}` drops it and
     * restores the source's. The place's findings are matched again at once. */
-  val setPlaceOverride: PublicEndpoint[(String, PlaceOverrideSet), ApiError, PlaceOverrideChanged, Any] =
+  lazy val setPlaceOverride: PublicEndpoint[(String, PlaceOverrideSet), ApiError, PlaceOverrideChanged, Any] =
     writeBase.post.in("places" / path[String]("id") / "override").in(jsonBody[PlaceOverrideSet])
       .out(jsonBody[PlaceOverrideChanged])
 
   /** `POST /api/places/{id}/merge` `{"into": …, "reason": …}` — the place is the same as `into`: its
     * findings, links, children and references move there, it is deleted, and its id resolves to `into`
     * from then on (no re-seed brings it back). */
-  val mergePlace: PublicEndpoint[(String, PlaceMergeIn), ApiError, PlaceGone, Any] =
+  lazy val mergePlace: PublicEndpoint[(String, PlaceMergeIn), ApiError, PlaceGone, Any] =
     writeBase.post.in("places" / path[String]("id") / "merge").in(jsonBody[PlaceMergeIn]).out(jsonBody[PlaceGone])
 
   /** `POST /api/places/{id}/remove` `{"reason": …}` — delete a place nothing refers to; refused while an
     * event, attestation, asset link, child, hand-added name or a finding with no other place does. No
     * re-seed brings it back. */
-  val removePlace: PublicEndpoint[(String, PlaceRemoveIn), ApiError, PlaceGone, Any] =
+  lazy val removePlace: PublicEndpoint[(String, PlaceRemoveIn), ApiError, PlaceGone, Any] =
     writeBase.post.in("places" / path[String]("id") / "remove").in(jsonBody[PlaceRemoveIn]).out(jsonBody[PlaceGone])
 
   /** `POST /api/places` — a point place of a person's own: `dataset = local` (carried in a bundle), an
     * id no seed uses (default `local_<label>`), and a required `source` for its coordinates. Refused
     * when the id is taken. */
-  val addPlace: PublicEndpoint[PlaceAdd, ApiError, PlaceSummary, Any] =
+  lazy val addPlace: PublicEndpoint[PlaceAdd, ApiError, PlaceSummary, Any] =
     writeBase.post.in("places").in(jsonBody[PlaceAdd]).out(jsonBody[PlaceSummary])
 
   /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment
     * (point inside polygon). Idempotent. Run after imports. */
-  val buildHierarchy: PublicEndpoint[Unit, ApiError, SpatialHierarchyResult, Any] =
+  lazy val buildHierarchy: PublicEndpoint[Unit, ApiError, SpatialHierarchyResult, Any] =
     writeBase.post.in("places" / "build-hierarchy").out(jsonBody[SpatialHierarchyResult])
 
   // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────────
@@ -852,7 +856,7 @@ object Api:
       area: Option[String] = None
   )
 
-  val events: PublicEndpoint[EventQuery, ApiError, EventList, Any] =
+  lazy val events: PublicEndpoint[EventQuery, ApiError, EventList, Any] =
     base.get.in("events")
       .in(filterQuery)
       .in(query[Option[String]]("text"))
@@ -870,7 +874,7 @@ object Api:
     * area's simplified outline; the events without a position are counted, not listed. A web map feed
     * like `/api/places/geo`, so neither an MCP tool nor a CLI command: `events search`/`show` and the
     * `events` tool carry the scale and the place. */
-  val eventsGeo: PublicEndpoint[EventQuery, ApiError, EventGeoList, Any] =
+  lazy val eventsGeo: PublicEndpoint[EventQuery, ApiError, EventGeoList, Any] =
     base.get.in("events" / "geo")
       .in(filterQuery)
       .in(query[Option[String]]("text"))
@@ -885,25 +889,25 @@ object Api:
 
   /** `POST /api/events/{id}/rename` `{"to": …}` — a new id; attestations and asset links follow, the
     * old id keeps resolving (an alias). */
-  val renameEvent: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+  lazy val renameEvent: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
     writeBase.post.in("events" / path[String]("id") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
-  val getEvent: PublicEndpoint[String, ApiError, EventDetail, Any] =
+  lazy val getEvent: PublicEndpoint[String, ApiError, EventDetail, Any] =
     endpoint.get.in("api" / "events" / path[String]("id"))
       .errorOut(writeErrors).out(jsonBody[EventDetail])
 
-  val putEvent: PublicEndpoint[(String, EventPut), ApiError, EventDetail, Any] =
+  lazy val putEvent: PublicEndpoint[(String, EventPut), ApiError, EventDetail, Any] =
     endpoint.put.in("api" / "events" / path[String]("id")).in(jsonBody[EventPut])
       .errorOut(writeErrors).out(jsonBody[EventDetail])
 
   /** `PATCH /api/events/{id}` — change the fields given. On an event a catalogue import created, each
     * changed field is kept as a correction by hand across re-imports of that catalogue (V088,
     * [[Corrections]]; `GET /api/events/corrections` lists them). */
-  val patchEvent: PublicEndpoint[(String, EventPatch), ApiError, EventDetail, Any] =
+  lazy val patchEvent: PublicEndpoint[(String, EventPatch), ApiError, EventDetail, Any] =
     endpoint.patch.in("api" / "events" / path[String]("id")).in(jsonBody[EventPatch])
       .errorOut(writeErrors).out(jsonBody[EventDetail])
 
-  val deleteEvent: PublicEndpoint[String, ApiError, EventDeleted, Any] =
+  lazy val deleteEvent: PublicEndpoint[String, ApiError, EventDeleted, Any] =
     endpoint.delete.in("api" / "events" / path[String]("id"))
       .errorOut(writeErrors).out(jsonBody[EventDeleted])
 
@@ -917,7 +921,7 @@ object Api:
       offset: Option[Int] = None
   )
 
-  val attestations: PublicEndpoint[AttestationQuery, ApiError, AttestationList, Any] =
+  lazy val attestations: PublicEndpoint[AttestationQuery, ApiError, AttestationList, Any] =
     base.get.in("attestations")
       .in(query[Option[String]]("citekey"))
       .in(query[Option[String]]("targetType"))
@@ -927,19 +931,19 @@ object Api:
       .mapInTo[AttestationQuery]
       .out(jsonBody[AttestationList])
 
-  val getAttestation: PublicEndpoint[Long, ApiError, Attestation, Any] =
+  lazy val getAttestation: PublicEndpoint[Long, ApiError, Attestation, Any] =
     endpoint.get.in("api" / "attestations" / path[Long]("id"))
       .errorOut(writeErrors).out(jsonBody[Attestation])
 
-  val createAttestation: PublicEndpoint[AttestationPut, ApiError, Attestation, Any] =
+  lazy val createAttestation: PublicEndpoint[AttestationPut, ApiError, Attestation, Any] =
     endpoint.post.in("api" / "attestations").in(jsonBody[AttestationPut])
       .errorOut(writeErrors).out(jsonBody[Attestation])
 
-  val patchAttestation: PublicEndpoint[(Long, AttestationPatch), ApiError, Attestation, Any] =
+  lazy val patchAttestation: PublicEndpoint[(Long, AttestationPatch), ApiError, Attestation, Any] =
     endpoint.patch.in("api" / "attestations" / path[Long]("id")).in(jsonBody[AttestationPatch])
       .errorOut(writeErrors).out(jsonBody[Attestation])
 
-  val deleteAttestation: PublicEndpoint[Long, ApiError, AttestationDeleted, Any] =
+  lazy val deleteAttestation: PublicEndpoint[Long, ApiError, AttestationDeleted, Any] =
     endpoint.delete.in("api" / "attestations" / path[Long]("id"))
       .errorOut(writeErrors).out(jsonBody[AttestationDeleted])
 
@@ -951,7 +955,7 @@ object Api:
       offset: Option[Int] = None
   )
 
-  val goals: PublicEndpoint[GoalQuery, ApiError, GoalList, Any] =
+  lazy val goals: PublicEndpoint[GoalQuery, ApiError, GoalList, Any] =
     base.get.in("goals")
       .in(query[Option[String]]("status"))
       .in(query[Option[Int]]("limit"))
@@ -961,45 +965,45 @@ object Api:
 
   /** `POST /api/goals/{slug}/rename` `{"to": …}` — a new slug; sub-goals, links and schedules follow,
     * the old slug keeps resolving (an alias). */
-  val renameGoal: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+  lazy val renameGoal: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
     writeBase.post.in("goals" / path[String]("slug") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
   /** `POST /api/places/{id}/rename` `{"to": …}` — a new gazetteer id (V055); names, parents,
     * footprints, events and finding assignments follow by key, attestations and asset links are
     * moved, and the old id keeps resolving (`GET /api/places/{old}`, a `place=<old>` filter). */
-  val renamePlace: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
+  lazy val renamePlace: PublicEndpoint[(String, LabelRename), ApiError, LabelRenamed, Any] =
     writeBase.post.in("places" / path[String]("id") / "rename").in(jsonBody[LabelRename]).out(jsonBody[LabelRenamed])
 
-  val getGoal: PublicEndpoint[String, ApiError, Goal, Any] =
+  lazy val getGoal: PublicEndpoint[String, ApiError, Goal, Any] =
     endpoint.get.in("api" / "goals" / path[String]("slug"))
       .errorOut(writeErrors).out(jsonBody[Goal])
 
-  val putGoal: PublicEndpoint[(String, GoalPut), ApiError, Goal, Any] =
+  lazy val putGoal: PublicEndpoint[(String, GoalPut), ApiError, Goal, Any] =
     endpoint.put.in("api" / "goals" / path[String]("slug")).in(jsonBody[GoalPut])
       .errorOut(writeErrors).out(jsonBody[Goal])
 
-  val patchGoal: PublicEndpoint[(String, GoalPatch), ApiError, Goal, Any] =
+  lazy val patchGoal: PublicEndpoint[(String, GoalPatch), ApiError, Goal, Any] =
     endpoint.patch.in("api" / "goals" / path[String]("slug")).in(jsonBody[GoalPatch])
       .errorOut(writeErrors).out(jsonBody[Goal])
 
-  val deleteGoal: PublicEndpoint[String, ApiError, GoalDeleted, Any] =
+  lazy val deleteGoal: PublicEndpoint[String, ApiError, GoalDeleted, Any] =
     endpoint.delete.in("api" / "goals" / path[String]("slug"))
       .errorOut(writeErrors).out(jsonBody[GoalDeleted])
 
   // ── agent state (plan §1.5) ──────────────────────────────────────────────────────────────────
 
-  val agentStateList: PublicEndpoint[Unit, ApiError, List[AgentStateEntry], Any] =
+  lazy val agentStateList: PublicEndpoint[Unit, ApiError, List[AgentStateEntry], Any] =
     base.get.in("agent-state").out(jsonBody[List[AgentStateEntry]])
 
-  val agentStateGet: PublicEndpoint[String, ApiError, AgentStateEntry, Any] =
+  lazy val agentStateGet: PublicEndpoint[String, ApiError, AgentStateEntry, Any] =
     endpoint.get.in("api" / "agent-state" / path[String]("key"))
       .errorOut(writeErrors).out(jsonBody[AgentStateEntry])
 
-  val agentStateSet: PublicEndpoint[(String, AgentStatePut), ApiError, AgentStateEntry, Any] =
+  lazy val agentStateSet: PublicEndpoint[(String, AgentStatePut), ApiError, AgentStateEntry, Any] =
     endpoint.put.in("api" / "agent-state" / path[String]("key")).in(jsonBody[AgentStatePut])
       .errorOut(writeErrors).out(jsonBody[AgentStateEntry])
 
-  val agentStateDelete: PublicEndpoint[String, ApiError, AgentStateDeleted, Any] =
+  lazy val agentStateDelete: PublicEndpoint[String, ApiError, AgentStateDeleted, Any] =
     endpoint.delete.in("api" / "agent-state" / path[String]("key"))
       .errorOut(writeErrors).out(jsonBody[AgentStateDeleted])
 
@@ -1007,7 +1011,7 @@ object Api:
 
   /** Errors of the ingest surface: a duplicate upload is 409 (with the citekey that already holds
     * it), an unknown citekey is 404, anything else a readable 400. */
-  private val ingestErrors =
+  private lazy val ingestErrors =
     oneOf[ApiError](
       oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError])(ApiError.hasCode(Ingest.CodeConflict)),
       oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
@@ -1018,7 +1022,7 @@ object Api:
     * no multipart request-body support (`RawBodyType.MultipartBody` throws
     * `UnsupportedOperationException`), so the document travels as the raw body and everything else
     * as typed parameters — which the sttp client derives from this very definition. */
-  val ingestParams: EndpointInput[IngestParams] =
+  lazy val ingestParams: EndpointInput[IngestParams] =
     query[String]("citekey")
       .and(query[Option[String]]("filename"))
       .and(query[Boolean]("quality").default(false))
@@ -1034,13 +1038,13 @@ object Api:
 
   /** `POST /api/ingest` — store the upload, enqueue an OCR job, answer 202 with its id. OCR of a
     * long scan takes tens of minutes, so this NEVER waits for the conversion: poll [[job]]. */
-  val ingest: PublicEndpoint[(IngestParams, TapirFile), ApiError, IngestAccepted, Any] =
+  lazy val ingest: PublicEndpoint[(IngestParams, TapirFile), ApiError, IngestAccepted, Any] =
     endpoint.post.in("api" / "ingest").in(ingestParams).in(fileBody)
       .errorOut(ingestErrors)
       .out(statusCode(StatusCode.Accepted)).out(jsonBody[IngestAccepted])
 
   /** Re-run the conversion of a source from the original the server spooled at ingest time. */
-  val reocr: PublicEndpoint[(String, Boolean), ApiError, IngestAccepted, Any] =
+  lazy val reocr: PublicEndpoint[(String, Boolean), ApiError, IngestAccepted, Any] =
     endpoint.post.in("api" / "sources" / path[String]("citekey") / "reocr")
       .in(query[Boolean]("quality").default(false))
       .errorOut(ingestErrors)
@@ -1050,13 +1054,13 @@ object Api:
     * content-addressed by `sources.sha256`), named by [[Ingest.originalDisposition]]. The host-side
     * `histmersion calibre push --replace` puts it into the linked Calibre entry. Not an MCP tool: it is a
     * binary download for the host, and an agent reads the converted body with `get_source`. */
-  val original: PublicEndpoint[String, ApiError, (TapirFile, String), Any] =
+  lazy val original: PublicEndpoint[String, ApiError, (TapirFile, String), Any] =
     endpoint.get.in("api" / "sources" / path[String]("citekey") / "original")
       .errorOut(ingestErrors)
       .out(fileBody)
       .out(header[String](sttp.model.HeaderNames.ContentDisposition))
 
-  val job: PublicEndpoint[String, ApiError, JobInfo, Any] =
+  lazy val job: PublicEndpoint[String, ApiError, JobInfo, Any] =
     base.get.in("jobs" / path[String]("id")).out(jsonBody[JobInfo])
       .errorOut(statusCode(StatusCode.NotFound))
 
@@ -1064,25 +1068,25 @@ object Api:
     * filtered on the server ([[ListFilters.JobFilter]]), paged by keyset ([[Paging]]): `before` = the
     * next older page after that job, `upTo` = down to and including it. The total, the next cursor, the
     * per-state counts and the kind facet counts come back as headers. */
-  val jobs: PublicEndpoint[(ListFilters.JobFilter, Option[Int], Option[String], Option[String]), ApiError,
+  lazy val jobs: PublicEndpoint[(ListFilters.JobFilter, Option[Int], Option[String], Option[String]), ApiError,
       (List[JobInfo], Paging.Page), Any] =
     base.get.in("jobs").in(ListFilters.jobQuery).in(query[Option[Int]]("limit"))
       .in(query[Option[String]]("before")).in(query[Option[String]]("upTo"))
       .out(jsonBody[List[JobInfo]]).out(Paging.headers)
 
   /** The figures stored with a source, without their bytes. */
-  val assets: PublicEndpoint[String, ApiError, List[AssetInfo], Any] =
+  lazy val assets: PublicEndpoint[String, ApiError, List[AssetInfo], Any] =
     base.get.in("sources" / path[String]("citekey") / "assets").out(jsonBody[List[AssetInfo]])
 
   /** Add figures to an existing source — the host-side path of `histmersion seed`, which can see
     * `md/<citekey>/figures/…` that the server cannot. Sent in bounded batches. */
-  val putAssets: PublicEndpoint[(String, List[AssetInput]), ApiError, AssetsStored, Any] =
+  lazy val putAssets: PublicEndpoint[(String, List[AssetInput]), ApiError, AssetsStored, Any] =
     endpoint.post.in("api" / "sources" / path[String]("citekey") / "assets").in(jsonBody[List[AssetInput]])
       .errorOut(ingestErrors).out(jsonBody[AssetsStored])
 
   /** `GET /source/{citekey}/assets/{name}` — the bytes, with their own `Content-Type`. Immutable:
     * an asset name is only ever rewritten by a re-conversion, which replaces the body too. */
-  val asset: PublicEndpoint[(String, String), ApiError, (Array[Byte], String), Any] =
+  lazy val asset: PublicEndpoint[(String, String), ApiError, (Array[Byte], String), Any] =
     endpoint.get.in("source" / path[String]("citekey") / "assets" / path[String]("name"))
       .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
       .out(byteArrayBody)
@@ -1092,12 +1096,12 @@ object Api:
   // ── media associations (plan §1.6) ────────────────────────────────────────────────────────────
 
   /** `GET /api/sources/{ck}/assets/{name}/detail` — asset metadata including spatial/temporal. */
-  val assetDetail: PublicEndpoint[(String, String), ApiError, AssetDetail, Any] =
+  lazy val assetDetail: PublicEndpoint[(String, String), ApiError, AssetDetail, Any] =
     base.get.in("sources" / path[String]("citekey") / "assets" / path[String]("name") / "detail")
       .out(jsonBody[AssetDetail])
 
   /** `PATCH /api/sources/{ck}/assets/{name}` — update asset metadata. */
-  val patchAsset: PublicEndpoint[(String, String, AssetPatch), ApiError, AssetDetail, Any] =
+  lazy val patchAsset: PublicEndpoint[(String, String, AssetPatch), ApiError, AssetDetail, Any] =
     base.patch.in("sources" / path[String]("citekey") / "assets" / path[String]("name"))
       .in(jsonBody[AssetPatch]).out(jsonBody[AssetDetail])
 
@@ -1108,7 +1112,7 @@ object Api:
 
   /** `GET /api/media-geo?kind=&from=&to=&limit=&provider=&license=` — geolocated assets for the media
     * clustering map. */
-  val mediaGeo: PublicEndpoint[MediaGeoQuery, ApiError, List[MediaGeoHit], Any] =
+  lazy val mediaGeo: PublicEndpoint[MediaGeoQuery, ApiError, List[MediaGeoHit], Any] =
     base.get.in("media-geo")
       .in(query[Option[String]]("kind").and(query[Option[Long]]("from")).and(query[Option[Long]]("to"))
         .and(query[Option[Int]]("limit")).and(query[Option[String]]("provider")).and(query[Option[String]]("license"))
@@ -1124,7 +1128,7 @@ object Api:
       limit: Option[Int] = None, offset: Option[Int] = None)
 
   /** `GET /api/media?provider=&license=&place=&event=&q=&limit=&offset=` — stored pictures, newest first. */
-  val mediaList: PublicEndpoint[MediaQuery, ApiError, MediaList, Any] =
+  lazy val mediaList: PublicEndpoint[MediaQuery, ApiError, MediaList, Any] =
     base.get.in("media")
       .in(query[Option[String]]("provider").and(query[Option[String]]("license")).and(query[Option[String]]("place"))
         .and(query[Option[String]]("event")).and(query[Option[String]]("q")).and(query[Option[Int]]("limit"))
@@ -1133,16 +1137,16 @@ object Api:
       .out(jsonBody[MediaList])
 
   /** `GET /api/media/facets` — pictures per provider and per licence (the media layer's filters). */
-  val mediaFacets: PublicEndpoint[Unit, ApiError, MediaFacets, Any] =
+  lazy val mediaFacets: PublicEndpoint[Unit, ApiError, MediaFacets, Any] =
     base.get.in("media" / "facets").out(jsonBody[MediaFacets])
 
   /** `GET /api/media/providers` — the providers `media import` can run: the media collections the
     * plugins of this server registered (built-in and third-party), in the order they are listed. */
-  val mediaProviders: PublicEndpoint[Unit, ApiError, List[MediaProviderInfo], Any] =
+  lazy val mediaProviders: PublicEndpoint[Unit, ApiError, List[MediaProviderInfo], Any] =
     base.get.in("media" / "providers").out(jsonBody[List[MediaProviderInfo]])
 
   /** `GET /api/media/{uid}` — one picture: its origin, licence, credit and links. */
-  val mediaShow: PublicEndpoint[String, ApiError, MediaItem, Any] =
+  lazy val mediaShow: PublicEndpoint[String, ApiError, MediaItem, Any] =
     base.get.in("media" / path[String]("uid")).out(jsonBody[MediaItem])
       .errorOut(statusCode(StatusCode.NotFound))
 
@@ -1150,31 +1154,31 @@ object Api:
     * `pleiades`, `opencontext`, or a plugin's collection: [[mediaProviders]]) about places and events;
     * a dry run (the default) reports the counts per licence, and a collection's matches with their reasons, and stores nothing. A real run here takes ONE `place` or `event`;
     * over many it is refused — that is [[mediaImportJob]] (#1491: a 500-place run outlived the request). */
-  val mediaImport: PublicEndpoint[MediaImportRequest, ApiError, MediaImportReport, Any] =
+  lazy val mediaImport: PublicEndpoint[MediaImportRequest, ApiError, MediaImportReport, Any] =
     base.post.in("media" / "import").in(jsonBody[MediaImportRequest]).out(jsonBody[MediaImportReport])
 
   /** `POST /api/media/import/job` — the same import as a JOB (`histmersion jobs` follows it): the
     * places and events not asked yet, most-cited sites first, `media.import-batch` Wikidata items at a
     * time, each batch recorded before the next — a stopped job resumes where it was. `limit` caps the
     * targets of the whole job (none = every one not asked yet). Answers at once with the job. */
-  val mediaImportJob: PublicEndpoint[MediaImportRequest, ApiError, JobInfo, Any] =
+  lazy val mediaImportJob: PublicEndpoint[MediaImportRequest, ApiError, JobInfo, Any] =
     base.post.in("media" / "import" / "job").in(jsonBody[MediaImportRequest])
       .out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
 
   /** `POST /api/media/covers` — the sources' pictures: Open Library covers by ISBN/OCLC and each
     * paper's illustration (one of its own figures). A dry run (the default) says what would be linked,
     * from the database alone; otherwise it runs at once for one `citekey` (a whole run is a job). */
-  val mediaCovers: PublicEndpoint[MediaCoversRequest, ApiError, MediaCoversReport, Any] =
+  lazy val mediaCovers: PublicEndpoint[MediaCoversRequest, ApiError, MediaCoversReport, Any] =
     base.post.in("media" / "covers").in(jsonBody[MediaCoversRequest]).out(jsonBody[MediaCoversReport])
 
   /** `POST /api/media/covers/job` — the same over every source, as a job. */
-  val mediaCoversJob: PublicEndpoint[MediaCoversRequest, ApiError, JobInfo, Any] =
+  lazy val mediaCoversJob: PublicEndpoint[MediaCoversRequest, ApiError, JobInfo, Any] =
     base.post.in("media" / "covers" / "job").in(jsonBody[MediaCoversRequest])
       .out(statusCode(StatusCode.Accepted)).out(jsonBody[JobInfo])
 
   /** `PUT /api/media/sources/{citekey}/cover?provider=calibre&key=<id>&mime=` — store the body (an
     * image the CLI read from the local Calibre library) as the source's cover. */
-  val putSourceCover: PublicEndpoint[(SourceCoverParams, Array[Byte]), ApiError, MediaItem, Any] =
+  lazy val putSourceCover: PublicEndpoint[(SourceCoverParams, Array[Byte]), ApiError, MediaItem, Any] =
     writeBase.put.in("media" / "sources" / path[String]("citekey") / "cover")
       .in(query[String]("provider").default(MediaProvider.Calibre))
       .in(query[String]("key"))
@@ -1185,14 +1189,14 @@ object Api:
 
   /** `POST /api/media/fill-licences?apply=` — a source's figures take the licence the source records
     * (only where the figure has none); without `apply`, the count alone. */
-  val fillFigureLicences: PublicEndpoint[Boolean, ApiError, FigureLicenceFill, Any] =
+  lazy val fillFigureLicences: PublicEndpoint[Boolean, ApiError, FigureLicenceFill, Any] =
     base.post.in("media" / "fill-licences").in(query[Boolean]("apply").default(false))
       .out(jsonBody[FigureLicenceFill])
 
   /** `GET /media/{uid}/thumb` — a stored picture's thumbnail, served from the database: a card's
     * hover never reaches the provider. A re-import may replace the bytes under the same uid, so it is
     * cached for a day ([[Ingest.MediaCacheControl]]), not forever. */
-  val mediaThumb: PublicEndpoint[String, ApiError, (Array[Byte], String), Any] =
+  lazy val mediaThumb: PublicEndpoint[String, ApiError, (Array[Byte], String), Any] =
     endpoint.get.in("media" / path[String]("uid") / "thumb")
       .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
       .out(byteArrayBody)
@@ -1200,7 +1204,7 @@ object Api:
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.MediaCacheControl)))
 
   /** `GET /media/{uid}/file` — the stored rendition (a provider's picture) or the figure itself. */
-  val mediaFile: PublicEndpoint[String, ApiError, (Array[Byte], String), Any] =
+  lazy val mediaFile: PublicEndpoint[String, ApiError, (Array[Byte], String), Any] =
     endpoint.get.in("media" / path[String]("uid") / "file")
       .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
       .out(byteArrayBody)
@@ -1208,25 +1212,25 @@ object Api:
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.MediaCacheControl)))
 
   /** `GET /api/asset-links?citekey=&asset=&target_type=&target_id=` — list asset links. */
-  val assetLinks: PublicEndpoint[(Option[String], Option[String], Option[String], Option[String]), ApiError, AssetLinkList, Any] =
+  lazy val assetLinks: PublicEndpoint[(Option[String], Option[String], Option[String], Option[String]), ApiError, AssetLinkList, Any] =
     base.get.in("asset-links")
       .in(query[Option[String]]("citekey")).in(query[Option[String]]("asset"))
       .in(query[Option[String]]("target_type")).in(query[Option[String]]("target_id"))
       .out(jsonBody[AssetLinkList])
 
   /** `POST /api/asset-links` — create an asset link. */
-  val createAssetLink: PublicEndpoint[AssetLinkPut, ApiError, AssetLink, Any] =
+  lazy val createAssetLink: PublicEndpoint[AssetLinkPut, ApiError, AssetLink, Any] =
     base.post.in("asset-links").in(jsonBody[AssetLinkPut]).out(jsonBody[AssetLink])
 
   /** `DELETE /api/asset-links/{id}` — remove an asset link. */
-  val deleteAssetLink: PublicEndpoint[Long, ApiError, AssetLinkDeleted, Any] =
+  lazy val deleteAssetLink: PublicEndpoint[Long, ApiError, AssetLinkDeleted, Any] =
     base.delete.in("asset-links" / path[Long]("id")).out(jsonBody[AssetLinkDeleted])
 
   // ── IIIF Image API Level 1 (plan §4.3) ─────────────────────────────────────────────────────
 
   /** `GET /iiif/{citekey}/{name}/info.json` — the IIIF Image Information document.
     * Registered before the image endpoint so Tapir matches it first. */
-  val iiifInfo: PublicEndpoint[(String, String), ApiError, io.circe.Json, Any] =
+  lazy val iiifInfo: PublicEndpoint[(String, String), ApiError, io.circe.Json, Any] =
     endpoint.get
       .in("iiif" / path[String]("citekey") / path[String]("name") / "info.json")
       .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
@@ -1236,7 +1240,7 @@ object Api:
   /** `GET /iiif/{citekey}/{name}/{region}/{size}/{rotation}/default.{format}` — the IIIF image
     * request. Level 1 compliance: region `full|x,y,w,h`, size `max|^max|w,|,h|w,h|!w,h`,
     * rotation `0` only, quality `default`, format `jpg|png`. */
-  val iiifImage: PublicEndpoint[(String, String, String, String, String, String), ApiError, (Array[Byte], String), Any] =
+  lazy val iiifImage: PublicEndpoint[(String, String, String, String, String, String), ApiError, (Array[Byte], String), Any] =
     endpoint.get
       .in("iiif" / path[String]("citekey") / path[String]("name") /
         path[String]("region") / path[String]("size") / path[String]("rotation") /
