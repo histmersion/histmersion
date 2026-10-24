@@ -168,19 +168,19 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
 
   // ── goal plans ─────────────────────────────────────────────────────────────────────────────────
 
-  /** Why a goal plan proposing `proposed` sub-goals for `goal` is not decided by code under the focus, if
-    * it is not ([[AutopilotPolicy.goalPlanFocus]]); None when the focus is not in force. */
+  /** Why a goal plan proposing `proposed` sub-goals for `goal` is not decided by code, if it is not: its
+    * unfinished sub-goals (every level below it) plus the new ones would pass `max-open-sub-goals`
+    * ([[AutopilotPolicy.goalPlanSubGoals]]). Whether the goal is "active" no longer matters (#3762 proposal 2:
+    * the focus and the plan approvals waited for each other — a goal waiting for its plan was never active,
+    * so code never decided its plan). */
   def goalPlanBlock(goal: String, proposed: Int): Option[String] =
-    if !inForce then None
-    else
-      val goals = FocusRepo.goals(ds)
-      val active = current.map(_(goal)).getOrElse(goals.exists(g => g.slug == goal && g.active))
-      val kids = goals.filter(_.parent.isDefined).groupMap(_.parent.get)(identity)
-      def open(s: String, seen: Set[String]): Int =
-        kids.getOrElse(s, Nil).filterNot(k => seen(k.slug)).map { k =>
-          (if GoalFocus.finished(k.status) then 0 else 1) + open(k.slug, seen + k.slug)
-        }.sum
-      AutopilotPolicy.goalPlanFocus(goal, active, open(goal, Set(goal)), proposed, acfg.maxOpenSubGoals)
+    val goals = FocusRepo.goals(ds)
+    val kids = goals.filter(_.parent.isDefined).groupMap(_.parent.get)(identity)
+    def open(s: String, seen: Set[String]): Int =
+      kids.getOrElse(s, Nil).filterNot(k => seen(k.slug)).map { k =>
+        (if GoalFocus.finished(k.status) then 0 else 1) + open(k.slug, seen + k.slug)
+      }.sum
+    AutopilotPolicy.goalPlanSubGoals(goal, open(goal, Set(goal)), proposed, acfg.maxOpenSubGoals)
 
   // ── what it shows ──────────────────────────────────────────────────────────────────────────────
 

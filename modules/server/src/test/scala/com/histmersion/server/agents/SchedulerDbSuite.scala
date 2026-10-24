@@ -173,7 +173,43 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     assertEquals(st.started.size, 3)
     assertEquals(runs(), Vector.empty, "a dry pass starts nothing")
 
-  test("goal plans are decided by code whatever the focus"):
+  test("goal-plan manual: the plan's run waits for a person and holds no place; the next goal's work takes it"):
+    val one = cfg.copy(agents = cfg.agents.copy(maxConcurrentRuns = 1))
+    val (a, h, up) = handlers(one); seed(a, h, up)
+    val planned = "zzfocus-plan"
+    assert(h.putGoal(planned, GoalPut("Zz a goal with no plan")).isRight)
+    on(a)
+    a.focus.set(FocusSet("pin", Some(planned))).fold(e => fail(e.message), identity)
+    val clock = Clock()
+    clock.tick(a)
+    val planItem = item(seedId(planned), PlanGoalItem, planned)
+    assertEquals(planItem.status, "active", "the pinned goal's plan takes the one place")
+    assertEquals(runs().size, 1)
+    // its run now waits for a person to decide the plan (goal-plan = manual): the place frees
+    val run = planItem.runId.get
+    connect(ds)(sql"UPDATE jobs SET status = 'waiting' WHERE id = $run".update.run())
+    clock.tick(a)
+    assertEquals(runs().count(r => r.status == "queued"), 1, "another goal's item started in the freed place")
+    assertEquals(a.scheduler.why(planItem.id.toString).map(_.code), Right(AgentScheduler.Code.Person))
+    // its proposal waits for the plan without holding anything; the status counts what waits for a person
+    val prop = a.scheduler.why(item(seedId(planned), ProposeArticles, planned).id.toString).fold(e => fail(e.message), identity)
+    assert(prop.code == "blocked" && prop.why.contains("plan comes first"), prop)
+    assert(a.scheduler.status().forPerson >= 1)
+
+  test("gathering goals keep their place: a goal still gathering sources starts beside the pinned goal under review"):
+    val two = cfg.copy(agents = cfg.agents.copy(maxConcurrentRuns = 2))
+    val (a, h, up) = handlers(two); seed(a, h, up)
+    on(a)
+    a.focus.set(FocusSet("pin", Some(g(5)))).fold(e => fail(e.message), identity)
+    Clock().tick(a)
+    val started = runs().map(r => (r.pipeline, r.target)).toSet
+    assert(started.contains(("review-article", Art)), started)
+    assertEquals(started.size, 2)
+    val other = (started - (("review-article", Art))).head
+    assert(other._2 != g(5) && other._2 != g(10), s"a gathering goal's item, not $other")
+    assert(a.scheduler.status().started.exists(_.why.contains("gathering share")), a.scheduler.status().started)
+
+  test("goal plans are decided by code whatever the focus, within the open sub-goals"):
     val auto = cfg.copy(agents = cfg.agents.copy(approvals = cfg.agents.approvals.copy(goalPlan = "auto")))
     val (a, h, up) = handlers(auto); seed(a, h, up)
     on(a)
@@ -184,6 +220,9 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     def judged(p: ApprovalInfo) = a.autoApprovals.judge(AgentRepo.approval(ds, p.id).get, None, None, now)
     assert(judged(plan(g(7), 0)).isInstanceOf[AutopilotPolicy.Verdict.Approve], "not active in any focus: decided all the same")
     assert(judged(plan(g(1), 3)).isInstanceOf[AutopilotPolicy.Verdict.Approve])
+    judged(plan(g(1), 6)) match
+      case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("max-open-sub-goals"), w)
+      case v => fail(v.toString)
 
 /** The worklog, read for an assertion. */
 private object QueueRepoLog:
