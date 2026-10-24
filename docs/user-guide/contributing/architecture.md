@@ -32,21 +32,24 @@ tools (`/mcp`), the REST API (`/api`), the server-rendered source and article pa
 
 | module | what | depends on | binary |
 |---|---|---|---|
-| `core` | **the contract**: domain model · wire DTOs · `Filter` · Tapir endpoint definitions · Markdown rendering · config model · frontmatter parsing. No database code, no side effects. | — | — |
-| `db` | **the store**: Magnum repos over Postgres/PostGIS · Flyway migrations · the seed importer | `core` | — |
-| `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db`, `plugin-api`, `plugin-vaults` | native image |
-| `cli` | **a pure HTTP client** of the server — sttp client derived from `core`'s endpoints. No pgjdbc, no DB credentials on the host. | `core` **only** | native image |
-| `web` | the web page (Scala.js, Laminar; the map drawn by MapLibre GL JS behind its own interface) | `core` (Scala.js) | served by the server |
+| `values` | the newtypes every layer speaks of: `Citekey`, `Year`, `Period`, `Doi`, `WikidataId`, `LatLon` (JVM and Scala.js) | Iron only | — |
+| `api` | **the contract on the wire**: wire records · `Filter` · Tapir endpoint definitions · their codecs and schemas · Markdown rendering (JVM and Scala.js). No database code, no side effects. | `values` | — |
+| `config` | the config model: `AppConfig`, its readers, `reference.conf` | `values`, `api` | — |
+| `core` | **the domain**: the logic the server and the store run on · frontmatter parsing · export. No database code, no side effects. | `values`, `api`, `config` | — |
+| `db` | **the store**: Magnum repos over Postgres/PostGIS · Flyway migrations · the seed importer | `config`, `core` | — |
+| `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db`, `plugin-api`, `plugin-host`, `plugin-vaults` | native image |
+| `cli` | **a pure HTTP client** of the server — sttp client derived from `api`'s endpoints. No pgjdbc, no DB credentials on the host. | `config`, `core` — **never** `db` | native image |
+| `web` | the web page (Scala.js, Laminar; the map drawn by MapLibre GL JS behind its own interface) | `api` (Scala.js) **only** | served by the server |
 | `plugin-api` | the plugin SPI: `Plugin`, `PluginContext`, the registries, `Secret` | sconfig, kindlings only | — |
 | `plugin-vaults` | the built-in secret vaults (KeePassXC, 1Password, Bitwarden), compiled as a third-party plugin would be | `plugin-api` only | — |
 | `plugin-fixtures/hello`, `hello-ai` | test plugins, packaged as their own jars; never on the server's class path | `plugin-api` only | — |
 
-Because `core` defines each endpoint once and `server` implements it once in `Handlers`, the REST
+Because `api` defines each endpoint once and `server` implements it once in `Handlers`, the REST
 route, the MCP tool and the CLI command are the *same* operation with the *same* Markdown output.
 They agree by construction, not by discipline.
 
-Adding an operation therefore touches, in order: `core/Dto.scala` (input and output types),
-`core/Api.scala` (the endpoint, added to `Api.all`), `core/Markdown.scala` (how it renders), the
+Adding an operation therefore touches, in order: `api/Dto.scala` (input and output types),
+`api/Api.scala` (the endpoint, added to `Api.all`), `api/Markdown.scala` (how it renders), the
 repo in `db` if it needs the database, `server/Handlers.scala` (the one implementation),
 `server/HttpApi.scala` **and** `server/McpTools.scala` (both wired), then `cli/Client.scala` and
 `cli/Main.scala`. Details in {{ repo_file("AGENTS.md") }}.
