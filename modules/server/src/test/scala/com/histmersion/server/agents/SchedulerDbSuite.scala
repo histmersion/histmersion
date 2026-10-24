@@ -7,7 +7,7 @@ import com.histmersion.core.Autopilot.{AutopilotSet, FocusSet}
 import com.histmersion.core.Autopilot
 import com.histmersion.core.GoalPlans.*
 import com.histmersion.core.Managers.*
-import com.histmersion.db.{AgentRepo, FocusRepo, GoalLinkRepo, ManagerRepo, Migrate}
+import com.histmersion.db.{AgentRepo, FocusRepo, GoalLinkRepo, ManagerRepo, Migrate, ReviewLedgerRepo}
 import com.histmersion.server.{Deps, Handlers}
 import io.circe.syntax.*
 
@@ -62,6 +62,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM approvals WHERE subject LIKE 'zzfocus%' OR kind = 'goal-plan'".update.run()
       sql"DELETE FROM goals".update.run()
       sql"DELETE FROM articles WHERE slug LIKE 'zzfocus%'".update.run()
+      sql"DELETE FROM review_ledgers WHERE slug LIKE 'zzfocus%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzfocus%'".update.run()
       sql"DELETE FROM queue_items WHERE text LIKE '%zzfocus%' OR text LIKE 'autopilot%' OR text LIKE 'approval%'".update.run()
       sql"""UPDATE agent_autopilot SET enabled = false, paused = '{}', changed_by = '', last_ensure_at = NULL,
@@ -334,6 +335,34 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     a.drain.set(Autopilot.DrainSet(on = true))
     clock.tick(a)
     assertEquals(seeded.size, 4)
+
+  test("#3763: no proposal while a goal's articles are in progress; once they are done, the next one is proposed"):
+    val (a, h, up) = handlers(); seed(a, h, up)
+    on(a)
+    val clock = Clock()
+    clock.tick(a)
+    // g05's article has not passed review: its proposal is kept back
+    val prop = item(seedId(g(5)), ProposeArticles, g(5))
+    val why = a.scheduler.why(prop.id.toString).fold(e => fail(e.message), identity)
+    assert(why.code == "blocked" && why.why.contains("articles in progress come first (1 to pass review)"), why)
+    assertEquals(a.autopilot.nextArticles(clock.now), Nil)
+    // the article passes its review (a clean ledger, no review item open), and the proposal had settled days ago
+    ReviewLedgerRepo.put(ds, ReviewLedger.Ledger(Art))
+    ManagerRepo.itemFor(ds, ReviewId, ArticleReview, Art).foreach(i =>
+      ManagerRepo.settle(ds, i.id, ItemStatus.Done, "converged", List(ItemStatus.Pending, ItemStatus.Active, ItemStatus.Held)))
+    ManagerRepo.settle(ds, prop.id, ItemStatus.Done, "approval #1 approved", List(ItemStatus.Pending))
+    connect(ds)(sql"UPDATE manager_items SET updated_at = now() - interval '2 days' WHERE id = ${prop.id}".update.run())
+    assertEquals(a.autopilot.nextArticles(clock.now), List(s"goal ${g(5)}: next article proposed"))
+    assertEquals(item(seedId(g(5)), ProposeArticles, g(5)).status, "pending")
+    assert(ManagerRepo.events(ds, seedId(g(5)), None, 50).exists(_.text.contains("its next article is proposed")))
+    clock.tick(a)
+    assertNotEquals(a.scheduler.why(prop.id.toString).map(_.code), Right("blocked"), "no longer kept back")
+    // open again: not proposed twice; an approved article to compile keeps the next one back
+    assertEquals(a.autopilot.nextArticles(clock.now), Nil)
+    ManagerRepo.upsert(ds, seedId(g(5)), ArticleCompile, "zzfocus_next", ItemOrigin.Chain, 0, reopen = false)
+    clock.tick(a)
+    val back = a.scheduler.why(prop.id.toString).fold(e => fail(e.message), identity)
+    assert(back.code == "blocked" && back.why.contains("1 to compile"), back)
 
 /** The worklog, read for an assertion. */
 private object QueueRepoLog:

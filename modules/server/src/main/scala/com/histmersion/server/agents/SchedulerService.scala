@@ -37,12 +37,13 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
 
   /** One goal as the scheduler sees it: its priority (a pin added), when it was created, whether it is still
     * gathering its sources. */
-  private final case class GoalInfo(priority: Int, created: Option[Instant], gathering: Boolean)
+  private final case class GoalInfo(priority: Int, created: Option[Instant], gathering: Boolean, inProgress: Option[String])
 
   private def goals(): Map[String, GoalInfo] =
     agents.focus.facts().map(f => f.slug -> GoalInfo(f.priority + (if f.pinned then PinBoost else 0),
       ManagerPolicy.parseInstant(f.createdAt),
-      !GoalFocus.finished(f.status) && GoalFocus.stage(f, cfg.seed.minSources) == GoalFocus.Stage.Gathering)).toMap
+      !GoalFocus.finished(f.status) && GoalFocus.stage(f, cfg.seed.minSources) == GoalFocus.Stage.Gathering,
+      AutopilotPolicy.articlesInProgress(f.unreviewed, f.compileOpen))).toMap
 
   /** The inputs of one pass: the candidates (with their manager and item), the resources. */
   final case class Inputs(cands: List[Candidate], items: Map[Long, (ManagerInfo, ManagerItem)], res: Resources)
@@ -113,6 +114,9 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
           .orElse(Option.when(ManagerPolicy.waitsFor(i.kind, i.target, open))(Block("waits-for",
             if i.kind == ProposeArticles then "its goal's plan comes first (the plan-goal item is open)"
             else "its article's coverage filter is inferred first (the infer-filter item is open)")))
+          // #3763: no new proposal while the goal's articles are in progress (a person's enqueue goes all the same)
+          .orElse(Option.when(i.kind == ProposeArticles && i.origin != ItemOrigin.Person.wire)(
+            goalOf(m, i).flatMap(gs.get).flatMap(_.inProgress)).flatten.map(Block("articles-in-progress", _)))
         val goal = goalOf(m, i)
         val info = goal.flatMap(gs.get)
         val since = List(ManagerPolicy.parseInstant(i.updatedAt), i.notBefore.flatMap(ManagerPolicy.parseInstant)).flatten.maxOption

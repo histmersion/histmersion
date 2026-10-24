@@ -217,3 +217,29 @@ class ScaledCapSuite extends munit.FunSuite:
   test("the status text"):
     assertEquals(capText(5, 64, 0, 50), "5 a day")
     assertEquals(capText(5, 64, 0.34, 50), "5 a day, 22 today for a backlog of 64 (at most 50)")
+
+/** #3763: new articles only once the current ones are done. */
+class NextArticleSuite extends munit.FunSuite:
+  import AutopilotPolicy.{NextFacts, articlesInProgress, nextArticle}
+  import com.histmersion.core.Managers.{ItemStatus, State}
+
+  private val now = java.time.Instant.parse("2026-10-24T12:00:00Z")
+  private val done = NextFacts("g", GoalStatus.Reviewed, articles = 2, unreviewed = 0, compileOpen = 0,
+    seedState = Some(State.Active.wire), proposeStatus = Some(ItemStatus.Done.wire), proposeSettled = Some(now.minusSeconds(2 * 86400)))
+
+  test("in progress: an article to compile or to pass review keeps a new proposal back"):
+    assertEquals(articlesInProgress(0, 0), None)
+    assert(articlesInProgress(1, 0).exists(_.contains("1 to pass review")))
+    assert(articlesInProgress(0, 2).exists(_.contains("2 to compile")))
+
+  test("the next article: every article done, the seeding manager active, no proposal open, the cooldown over"):
+    assert(nextArticle(done, now, 24).exists(_.contains("2 articles are compiled and passed review")))
+    assertEquals(nextArticle(done.copy(unreviewed = 1), now, 24), None, "an article to review")
+    assertEquals(nextArticle(done.copy(compileOpen = 1), now, 24), None, "an article to compile")
+    assertEquals(nextArticle(done.copy(articles = 0), now, 24), None, "no article yet: the first proposal is the plan's")
+    assertEquals(nextArticle(done.copy(proposeStatus = Some(ItemStatus.Pending.wire)), now, 24), None, "a proposal open")
+    assertEquals(nextArticle(done.copy(proposeSettled = Some(now.minusSeconds(3600))), now, 24), None, "the cooldown")
+    assertEquals(nextArticle(done.copy(seedState = Some(State.Paused.wire)), now, 24), None, "a paused manager")
+    assertEquals(nextArticle(done.copy(status = GoalStatus.Done), now, 24), None, "a person's done")
+    assertEquals(nextArticle(done, now, 0), None, "off")
+    assert(nextArticle(done.copy(proposeStatus = None, proposeSettled = None), now, 24).isDefined, "never proposed")
