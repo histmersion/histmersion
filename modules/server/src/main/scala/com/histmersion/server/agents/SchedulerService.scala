@@ -101,6 +101,7 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
         linked.filter(gs.contains).minByOption(g => (-gs(g).priority, gs(g).created.fold(Long.MaxValue)(_.toEpochMilli), g))
           .orElse(linked.headOption)
       }
+    val plansWait = if perManager.exists(_._2.exists(_.kind == PlanGoalItem)) then agents.focus.goalPlansWait() else None
     val cands = perManager.flatMap { (m, items) =>
       val daily = ManagerPolicy.dailyBlock(ManagerPolicy.dailyCap(m.config, cfg.managers), BigDecimal(m.spentTodayUsd))
       val open  = if items.exists(i => i.kind == ArticleReview || i.kind == ProposeArticles) then ManagerRepo.openKeys(ds, m.id) else Nil
@@ -117,6 +118,9 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
           // #3763: no new proposal while the goal's articles are in progress (a person's enqueue goes all the same)
           .orElse(Option.when(i.kind == ProposeArticles && i.origin != ItemOrigin.Person.wire)(
             goalOf(m, i).flatMap(gs.get).flatMap(_.inProgress)).flatten.map(Block("articles-in-progress", _)))
+          // no new goal plan while too many planned goals are unfinished (a person's enqueue goes all the same)
+          .orElse(Option.when(i.kind == PlanGoalItem && i.origin != ItemOrigin.Person.wire)(plansWait).flatten
+            .map(Block("unfinished-goals", _)))
         val goal = goalOf(m, i)
         val info = goal.flatMap(gs.get)
         val since = List(ManagerPolicy.parseInstant(i.updatedAt), i.notBefore.flatMap(ManagerPolicy.parseInstant)).flatten.maxOption

@@ -256,3 +256,9 @@ class GoalFocusSuite extends munit.FunSuite:
     assert(md.contains("### Queue (4)") && md.contains("1. c _(ready)_ — ready: 5 sources") && md.contains("…and 3 more"), md)
     assert(md.contains("- 2 goals person: d, e — e.g. waits for a person: approval #1"), md)
     assert(AutopilotMarkdown.focus(f.copy(on = false, maxFrom = "person", note = Some("the autopilot is off"))).contains("not in force (set by a person)"))
+
+  test("the autopilot status says plainly when goal plans wait for the unfinished goals"):
+    val why = "goal plans wait until the unfinished goals drop to 10: 60 goals with an approved plan are not reviewed yet"
+    val st = Autopilot.AutopilotStatus(on = true, agentsEnabled = true, managersEnabled = true, goalPlansWait = Some(why))
+    assert(AutopilotMarkdown.status(st).contains(s"- **$why; a person may still approve a plan**"), AutopilotMarkdown.status(st))
+    assert(!AutopilotMarkdown.status(st.copy(goalPlansWait = None)).contains("goal plans wait"))

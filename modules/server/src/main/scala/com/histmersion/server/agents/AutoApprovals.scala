@@ -42,7 +42,9 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
     // the goals the scheduler puts first, first: a daily cap is spent on the highest-priority goals (a pin, a
     // person's priority), then the oldest goals; approvals about no known goal last, oldest first
     // the window is taken among the approvals code decides: those a person decides never crowd it out
-    val open = AgentRepo.openOfKinds(ds, Kinds, Int.MaxValue).flatMap { a =>
+    // while goal plans wait (too many unfinished goals), an open one is left alone: not decided, no event
+    val kinds = if agents.focus.goalPlansWait().isDefined then Kinds.filterNot(_ == ApprovalKind.GoalPlan) else Kinds
+    val open = AgentRepo.openOfKinds(ds, kinds, Int.MaxValue).flatMap { a =>
       val run = runOf(a)
       val mgr = run.flatMap(_.managerId).flatMap(ManagerRepo.get(ds, _))
       Option.when(checked(a, mgr))(Candidate(a, run, mgr))
@@ -136,9 +138,10 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
           case (None, _) => Verdict.Leave("the approval carries no readable draft")
           case (_, None) => Verdict.Leave("the run that drafted it is gone")
       case Some(ApprovalKind.GoalPlan) =>
-        a.plan match
-          case None => Verdict.Leave("the approval carries no readable plan")
-          case Some(p) =>
+        (a.plan, agents.focus.goalPlansWait()) match
+          case (_, Some(wait)) => Verdict.Leave(wait)
+          case (None, _) => Verdict.Leave("the approval carries no readable plan")
+          case (Some(p), _) =>
             val goal = a.subject.getOrElse(p.goal)
             val depth = AutopilotPolicy.depth(goal, s => GoalRepo.get(ds, s).flatMap(_.parentSlug))
             AutopilotPolicy.goalPlan(GoalPlanFacts(goal, p.subGoals.size, p.queries.size, p.works.size, depth), caps.maxGoalDepth,

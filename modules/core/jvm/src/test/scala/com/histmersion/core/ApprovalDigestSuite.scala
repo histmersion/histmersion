@@ -36,3 +36,14 @@ class ApprovalDigestSuite extends munit.FunSuite:
     assert(ApprovalDigestMarkdown.bulk(BulkResult("reject", false, 3, List(1, 2), List(BulkFailed(3, "decided already")), 2))
       .startsWith("# 3 open approvals matched: rejected 2"))
     assert(ApprovalDigestMarkdown.bulk(BulkResult("approve", true, 1, List(1), Nil, 5)).contains("would approve 1 (dry run"))
+
+  test("goal plans that wait: the group says nobody needs to decide them, the line and the Markdown say why"):
+    val why = "goal plans wait until the unfinished goals drop to 10: 60 goals with an approved plan are not reviewed yet"
+    val gs = group(open, _ => true, Set("goal-plan"))
+    assertEquals(gs.map(g => g.kind -> g.decidedBy).toMap.get("goal-plan"), Some(Waits))
+    assertEquals(gs.map(g => g.kind -> g.decidedBy).toMap.get("article-publish"), Some("checked"))
+    val d = Digest("2026-10-24T07:05:00Z", 5, gs, goalPlansWait = Some(why))
+    val l = line(d)
+    assert(l.contains("goal-plan 3 (oldest 2026-10-20), waiting: nobody needs to decide them now") && l.contains(s"; $why"), l)
+    val md = ApprovalDigestMarkdown.digest(d)
+    assert(md.contains(s"- **$why**; a person may still approve one") && md.contains("- decided by: nobody now"), md)

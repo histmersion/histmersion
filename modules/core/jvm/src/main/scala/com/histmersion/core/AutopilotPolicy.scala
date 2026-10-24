@@ -98,6 +98,19 @@ object AutopilotPolicy:
       s"goal $goal has ${Plural.count(openSubGoals, "unfinished sub-goal")} and the plan adds $proposed; at most " +
         s"$limit (agents.autopilot.max-open-sub-goals) are opened by code")
 
+  /** The goals with an approved plan that are not finished yet (neither reviewed nor done): what a new goal
+    * plan would add to. `goals` = every goal's slug and status. */
+  def unfinishedPlanned(goals: List[(String, String)], planned: Set[String]): Int =
+    goals.count((slug, status) => planned(slug) && !finished(status))
+
+  /** Why goal plans are not offered now, if they are not: more goals with an approved plan are unfinished
+    * than `limit` (0 = no limit). While so, no plan-goal run starts for an unplanned goal and code decides
+    * no open goal plan; a person still may. */
+  def goalPlansWait(unfinished: Int, limit: Int): Option[String] =
+    Option.when(limit > 0 && unfinished > limit)(
+      s"goal plans wait until the unfinished goals drop to $limit: ${Plural.count(unfinished, "goal")} with an approved " +
+        s"plan ${if unfinished == 1 then "is" else "are"} not reviewed yet (agents.autopilot.max-unfinished-goals)")
+
   /** A daily cap scaled to the backlog (#3762 proposal 3): `share` ≤ 0 keeps `base`; else
     * `max(base, ⌈backlog × share⌉)`, never above `ceiling` (when it is above 0) — and never below 0. */
   def scaledCap(base: Int, backlog: Int, share: Double, ceiling: Int): Int =
