@@ -13,11 +13,11 @@ private[cli] object KindSources:
     case PluginKind.SecretVault     => SecretVaultMain
 
   def test(kind: PluginKind): String = TestImports + (kind match
-    case PluginKind.SourceFetcher   => SourceFetcherTest
-    case PluginKind.MediaCollection => MediaCollectionTest
-    case PluginKind.EventCatalogue  => EventCatalogueTest
+    case PluginKind.SourceFetcher   => SourceFetcherTest + SourceFetcherLive
+    case PluginKind.MediaCollection => MediaCollectionTest + MediaCollectionLive
+    case PluginKind.EventCatalogue  => EventCatalogueTest + EventCatalogueLive
     case PluginKind.AiProvider      => AiProviderTest
-    case PluginKind.SecretVault     => SecretVaultTest) + fakeContext(kind)
+    case PluginKind.SecretVault     => SecretVaultTest)
 
   def defaults(kind: PluginKind): String = kind match
     case PluginKind.SourceFetcher   => SourceFetcherDefaults
@@ -41,41 +41,19 @@ private[cli] object KindSources:
 
   private val TestImports =
     """import com.histmersion.plugin.*
+      |import com.histmersion.plugin.testkit.*
+      |
+      |import java.nio.file.Path
       |
       |""".stripMargin
 
-  /** A test context: the registry of this kind records what the plugin adds; every other refuses. */
-  private def fakeContext(kind: PluginKind): String =
-    val (field, registry, tpe) = kind match
-      case PluginKind.SourceFetcher   => ("fetchers", "sourceFetchers", "SourceFetcher")
-      case PluginKind.MediaCollection => ("collections", "mediaCollections", "MediaCollection")
-      case PluginKind.EventCatalogue  => ("catalogues", "eventCatalogues", "EventCatalogue")
-      case PluginKind.AiProvider      => ("providers", "aiProviders", "AiProvider")
-      case PluginKind.SecretVault     => ("vaults", "secretVaults", "SecretVault")
-    val vaults =
-      if kind == PluginKind.SecretVault then ""
-      else "  def secretVaults: Registry[SecretVault] = Registry.refusing(\"no vaults in this test\")\n"
-    val overrides = if kind == PluginKind.SecretVault then "" else "override "
-    s"""
-       |/** The host as a test sees it: no network, no secrets, a silent log; the $tpe registry keeps
-       |  * what the plugin adds. */
-       |final class TestContext(pages: Map[String, Array[Byte]] = Map.empty) extends PluginContext:
-       |  val $field = collection.mutable.Map.empty[String, $tpe]
-       |  def http: PluginHttp = TestHttp(pages)
-       |  def log: PluginLog = SilentLog
-       |  def env(name: String): Option[String] = None
-       |  def secret(s: Secret): Either[String, String] = Left("no secrets in this test")
-       |$vaults  ${overrides}def $registry: Registry[$tpe] = new Registry[$tpe]:
-       |    def add(id: String, a: $tpe): Either[String, Unit] = Right($field.update(id, a))
-       |
-       |final class TestHttp(pages: Map[String, Array[Byte]]) extends PluginHttp:
-       |  def get(url: String, headers: Map[String, String]): Either[String, Array[Byte]] =
-       |    pages.get(url).toRight(s"HTTP 404: $$url")
-       |
-       |object SilentLog extends PluginLog:
-       |  def info(message: String): Unit = ()
-       |  def warn(message: String): Unit = ()
-       |""".stripMargin
+  /** How a live suite starts: the mode from the environment (a replay of the case's recordings, the
+    * real site when asked, else skipped with the reason) and the plugin loaded as the server loads it. */
+  private val LiveStart =
+    """    val mode = HttpMode.fromEnv(Path.of("recordings", "@case@"))
+      |    assume(mode.isRight, mode.left.getOrElse(""))
+      |    val harness = PluginHarness.load("@id@", config, http = mode.toOption.get).fold(e => fail(e), identity)
+      |""".stripMargin
 
   // ── source-fetcher ────────────────────────────────────────────────────────────────────────────
 
@@ -105,29 +83,55 @@ private[cli] object KindSources:
       |""".stripMargin
 
   private val SourceFetcherTest =
-    """class @Name@Suite extends munit.FunSuite:
-      |  private val pdf  = "%PDF-1.7".getBytes
+    """/** The plugin loaded and run as the server runs it (the Histmersion plugin testkit), offline: each
+      |  * request is answered by a stub. */
+      |class @Name@Suite extends munit.FunSuite:
+      |  /** A body the server takes for a PDF: `%PDF` in its first KiB, and more than a KiB of it. */
+      |  private val pdf  = ("%PDF-1.7\n" + " " * 2048 + "\n%%EOF\n").getBytes
       |  private val page = "https://mirror.example/10.1234/abc.pdf"
       |
-      |  private object OneFetch extends FetchContext:
-      |    def memo[A](key: String)(compute: => A): A = compute
-      |    def log: PluginLog = SilentLog
+      |  private def harness(pages: (String, StubAnswer)*): PluginHarness =
+      |    PluginHarness.load("@id@", "base-url = \"https://mirror.example/\"", http = HttpMode.Stub(pages.toMap))
+      |      .fold(e => fail(e), identity)
+      |
+      |  test("the server registers the fetcher under the plugin's id"):
+      |    assertEquals(harness().contributions.sourceFetchers, List("@id@"))
       |
       |  test("a work the mirror has is found"):
-      |    val fetcher = @Contribution@("https://mirror.example/", TestHttp(Map(page -> pdf)))
-      |    fetcher.fetch(WorkKey(doi = Some("10.1234/abc")), OneFetch) match
-      |      case Fetch.Found(file) => assertEquals((file.url, file.extension), (Some(page), "pdf"))
-      |      case other             => fail(s"expected a copy, got $other")
+      |    harness(page -> StubAnswer.ok(pdf, "application/pdf")).fetch(WorkKey(doi = Some("10.1234/abc"))).outcome match
+      |      case FetchOutcome.Found(fetcher, file, _) => assertEquals((fetcher, file.url, file.extension), ("@id@", Some(page), "pdf"))
+      |      case other                               => fail(s"expected a copy, got $other")
+      |
+      |  test("a page that is not a PDF is no copy: the server checks every PDF"):
+      |    val report = harness(page -> StubAnswer.text("<html>Sign in</html>", "text/html")).fetch(WorkKey(doi = Some("10.1234/abc")))
+      |    assertEquals(report.outcome, FetchOutcome.Miss("@id@: not a PDF"))
       |
       |  test("a work the mirror lacks, or one without a DOI, is a miss"):
-      |    val fetcher = @Contribution@("https://mirror.example", TestHttp(Map.empty))
-      |    assert(fetcher.fetch(WorkKey(doi = Some("10.1234/xyz")), OneFetch).isInstanceOf[Fetch.Miss])
-      |    assertEquals(fetcher.fetch(WorkKey(title = Some("A title")), OneFetch), Fetch.Miss("no DOI"))
+      |    assert(harness().fetch(WorkKey(doi = Some("10.1234/xyz"))).outcome.isInstanceOf[FetchOutcome.Miss])
+      |    assertEquals(harness().fetch(WorkKey(title = Some("A title"))).outcome, FetchOutcome.Miss("@id@: no DOI"))
+      |""".stripMargin
+
+  /** The live check: settings and a work in, a copy (and its file) out. */
+  private val SourceFetcherLive =
+    """
+      |/** Against the real source: does the plugin, set up as below, find and download a copy of a work the
+      |  * source has? Replays `recordings/known-work` offline when it holds a recording; otherwise runs only with
+      |  * HISTMERSION_PLUGIN_LIVE=1 (HISTMERSION_PLUGIN_HTTP=record keeps the answers for the replay). README.md. */
+      |class @Name@LiveSuite extends munit.FunSuite:
+      |  override val munitTimeout = scala.concurrent.duration.Duration(5, "min")
       |
-      |  test("register adds the fetcher under the plugin's id"):
-      |    val ctx = TestContext()
-      |    assertEquals(@Plugin@().register(@Name@Config("https://mirror.example"), ctx), Right(()))
-      |    assertEquals(ctx.fetchers.keySet.toSet, Set("@id@"))
+      |  /** The settings, as under `histmersion.plugins.@id@` in histmersion.conf. */
+      |  private val config = "base-url = \"https://mirror.example\""
+      |  /** A work the source has: replace with a real one. */
+      |  private val doi = "10.1234/abc"
+      |
+      |  test("finds and downloads a copy of a known work"):
+""".stripMargin + LiveStart.replace("@case@", "known-work") +
+    """      |    // the work as an ingest asks for it: its title, authors and year looked up by the DOI
+      |    val work   = WorkKey.fromDoi(doi, harness).getOrElse(WorkKey(doi = Some(doi)))
+      |    val report = harness.fetch(work, saveTo = Some(Path.of("target", "fetched")))
+      |    assert(report.outcome.isInstanceOf[FetchOutcome.Found],
+      |      (report.requests ++ report.log.map(_.toString) :+ s"=> ${report.outcome}").mkString("\n"))
       |""".stripMargin
 
   private val SourceFetcherDefaults =
@@ -171,21 +175,45 @@ private[cli] object KindSources:
       |""".stripMargin
 
   private val MediaCollectionTest =
-    """class @Name@Suite extends munit.FunSuite:
-      |  private val troy = ListedPicture("troy-1", "The walls of Troy", "Troy", "https://pictures.example/troy-1",
-      |    "https://pictures.example/troy-1.jpg", "CC-BY-4.0", "A. Photographer")
+    """/** The plugin loaded and run as the server runs it (the Histmersion plugin testkit), offline. */
+      |class @Name@Suite extends munit.FunSuite:
+      |  private def picture(licence: String) =
+      |    "pictures = [{ key = troy-1, title = \"The walls of Troy\", place = Troy, page-url = \"https://pictures.example/troy-1\", " +
+      |      s"image-url = \"https://pictures.example/troy-1.jpg\", licence = \"$licence\", credit = \"A. Photographer\" }]"
       |
-      |  test("a place's pictures are found by its name"):
-      |    val found = @Contribution@(List(troy)).search(MediaPlace("pleiades_550595", "Troy"), TestHttp(Map.empty))
-      |    assertEquals(found.map(_.map(_.map(_.key))), Right(List(Right("troy-1"))))
+      |  private def harness(licence: String = "CC-BY-4.0"): PluginHarness =
+      |    PluginHarness.load("@id@", picture(licence)).fold(e => fail(e), identity)
+      |
+      |  test("the server registers the collection under the plugin's id"):
+      |    assertEquals(harness().contributions.mediaCollections, List("@id@"))
+      |
+      |  test("a place's pictures are found by its name, and the server would keep them"):
+      |    val report = harness().searchMedia("@id@", MediaPlace("pleiades_550595", "Troy"))
+      |    assertEquals(report.kept.map(v => (v.key, v.licence)), List(("troy-1", Some("CC-BY-4.0"))))
       |
       |  test("another place has none"):
-      |    assertEquals(@Contribution@(List(troy)).search(MediaPlace("pleiades_570491", "Hattusa"), TestHttp(Map.empty)), Right(Nil))
+      |    assertEquals(harness().searchMedia("@id@", MediaPlace("pleiades_570491", "Hattusa")).verdicts, Nil)
       |
-      |  test("register adds the collection under the plugin's id"):
-      |    val ctx = TestContext()
-      |    assertEquals(@Plugin@().register(@Name@Config(List(troy)), ctx), Right(()))
-      |    assertEquals(ctx.collections.keySet.toSet, Set("@id@"))
+      |  test("a licence the server does not allow is refused, whatever the plugin says"):
+      |    val report = harness("CC BY-NC 4.0").searchMedia("@id@", MediaPlace("pleiades_550595", "Troy"))
+      |    assert(report.kept.isEmpty && report.verdicts.forall(_.refused.isDefined), report.toString)
+      |""".stripMargin
+
+  private val MediaCollectionLive =
+    """
+      |/** Against the real collection: what one search answers and what the server would keep. Replays
+      |  * `recordings/known-place` offline when it holds a recording; otherwise runs only with
+      |  * HISTMERSION_PLUGIN_LIVE=1 (HISTMERSION_PLUGIN_HTTP=record keeps the answers). See README.md. */
+      |class @Name@LiveSuite extends munit.FunSuite:
+      |  /** The settings, as under `histmersion.plugins.@id@` in histmersion.conf. */
+      |  private val config = ""
+      |  /** A place the collection has pictures of. */
+      |  private val place = MediaPlace("pleiades_550595", "Troy")
+      |
+      |  test("a search for a known place answers pictures the server would keep"):
+""".stripMargin + LiveStart.replace("@case@", "known-place") +
+    """      |    val report = harness.searchMedia("@id@", place)
+      |    assert(report.kept.nonEmpty, (report.requests ++ report.log.map(_.toString) ++ report.verdicts.map(_.toString)).mkString("\n"))
       |""".stripMargin
 
   private val MediaCollectionDefaults =
@@ -233,17 +261,38 @@ private[cli] object KindSources:
       |""".stripMargin
 
   private val EventCatalogueTest =
-    """class @Name@Suite extends munit.FunSuite:
-      |  private val thera = ListedEvent("thera", "Eruption of Thera", "eruption", -1600, 36.4, 25.4)
+    """/** The plugin loaded and run as the server runs it (the Histmersion plugin testkit), offline. */
+      |class @Name@Suite extends munit.FunSuite:
+      |  private val thera =
+      |    "source = \"my notes\", events = [{ id = thera, label = \"Eruption of Thera\", kind = eruption, year = -1600, lat = 36.4, lon = 25.4 }]"
       |
-      |  test("every listed event is read, dated to its year"):
-      |    val page = @Contribution@("my notes", List(thera)).read("all", CatalogueQuery(None, 2025), TestHttp(Map.empty))
-      |    assertEquals(page.map(_.events.map(e => (e.id, e.notBefore, e.notAfter))), Right(List(("thera", Some(-1600L), Some(-1600L)))))
+      |  private val harness = PluginHarness.load("@id@", thera).fold(e => fail(e), identity)
       |
-      |  test("register adds the catalogue under the plugin's id"):
-      |    val ctx = TestContext()
-      |    assertEquals(@Plugin@().register(@Name@Config("my notes", List(thera)), ctx), Right(()))
-      |    assertEquals(ctx.catalogues.keySet.toSet, Set("@id@"))
+      |  test("the server registers the catalogue under the plugin's id"):
+      |    assertEquals(harness.contributions.eventCatalogues, List("@id@"))
+      |
+      |  test("every listed event is read, and stored dated to its year"):
+      |    val report = harness.readCatalogue("@id@", CatalogueQuery(None, 2025))
+      |    assertEquals(report.accepted.map(e => (e.event.id, e.notBefore, e.notAfter)), List(("thera", Some(-1600L), Some(-1600L))))
+      |    assertEquals(report.refused, Nil)
+      |""".stripMargin
+
+  private val EventCatalogueLive =
+    """
+      |/** Against the real catalogue: what one import reads and what the server would store. Replays
+      |  * `recordings/an-import` offline when it holds a recording; otherwise runs only with
+      |  * HISTMERSION_PLUGIN_LIVE=1 (HISTMERSION_PLUGIN_HTTP=record keeps the answers). See README.md. */
+      |class @Name@LiveSuite extends munit.FunSuite:
+      |  /** The settings, as under `histmersion.plugins.@id@` in histmersion.conf. */
+      |  private val config = ""
+      |  /** The years an import asks for. */
+      |  private val query = CatalogueQuery(Some(-2000L), 2025)
+      |
+      |  test("an import reads events the server would store"):
+""".stripMargin + LiveStart.replace("@case@", "an-import") +
+    """      |    val report = harness.readCatalogue("@id@", query)
+      |    assert(report.failure.isEmpty && report.accepted.nonEmpty,
+      |      (report.requests ++ report.log.map(_.toString) ++ report.refused :+ report.pages.toString).mkString("\n"))
       |""".stripMargin
 
   private val EventCatalogueDefaults =
@@ -284,17 +333,22 @@ private[cli] object KindSources:
       |""".stripMargin
 
   private val AiProviderTest =
-    """class @Name@Suite extends munit.FunSuite:
+    """/** The plugin loaded and called as the server calls it (the Histmersion plugin testkit). Its requests
+      |  * go through a ScriptedAiHttp: answer them with `ScriptedAiHttp(Right(AiHttpResponse(200, "…")))`
+      |  * and assert on what it sent (`requests`, keys masked). */
+      |class @Name@Suite extends munit.FunSuite:
       |  private val request = AiTurnRequest("fixed", "You are a test.", List(AiMessage.User("Hello")), Nil, None,
       |    maxTokens = 100, iteration = 1, maxIterations = 1)
       |
-      |  test("every call is answered with the reply"):
-      |    assertEquals(@Contribution@("{}").turn(request, AiHttp.Offline).map(_.text), Right("{}"))
+      |  private val harness = PluginHarness.load("@id@", "reply = \"{}\"").fold(e => fail(e), identity)
       |
-      |  test("register adds the provider under the plugin's id"):
-      |    val ctx = TestContext()
-      |    assertEquals(@Plugin@().register(@Name@Config("{}"), ctx), Right(()))
-      |    assertEquals(ctx.providers.keySet.toSet, Set("@id@"))
+      |  test("the server registers the provider under the plugin's id"):
+      |    assertEquals(harness.contributions.aiProviders, List("@id@"))
+      |
+      |  test("every call is answered with the reply"):
+      |    val report = harness.aiTurn("@id@", request)
+      |    assertEquals(report.check, Right(()))
+      |    assertEquals(report.turn.map(_.map(_.text)), Some(Right("{}")))
       |""".stripMargin
 
   private val AiProviderDefaults =
@@ -331,7 +385,9 @@ private[cli] object KindSources:
       |""".stripMargin
 
   private val SecretVaultTest =
-    """class @Name@Suite extends munit.FunSuite:
+    """/** The plugin loaded as the server loads it, and asked as the server asks it (the Histmersion plugin
+      |  * testkit). */
+      |class @Name@Suite extends munit.FunSuite:
       |  private val directory = FunFixture[java.nio.file.Path](
       |    _ =>
       |      val d = java.nio.file.Files.createTempDirectory("@id@")
@@ -341,17 +397,18 @@ private[cli] object KindSources:
       |    d => java.nio.file.Files.walk(d).sorted(java.util.Comparator.reverseOrder()).forEach(p => java.nio.file.Files.delete(p))
       |  )
       |
+      |  private def harness(d: Path): PluginHarness =
+      |    PluginHarness.load("@id@", s"directory = \"$d\"").fold(e => fail(e), identity)
+      |
+      |  directory.test("the server registers the vault under the plugin's id"): d =>
+      |    assertEquals(harness(d).contributions.secretVaults, List("@id@"))
+      |
       |  directory.test("a secret is the content of its file"): d =>
-      |    assertEquals(@Contribution@(d).resolve("portal-token"), Right("s3cret"))
+      |    assertEquals(harness(d).resolveSecret("@id@", "portal-token"), Right("s3cret"))
       |
       |  directory.test("a name outside the directory is refused"): d =>
-      |    assert(@Contribution@(d).resolve("../portal-token").isLeft)
-      |    assert(@Contribution@(d).resolve("missing").isLeft)
-      |
-      |  test("register adds the vault under the plugin's id"):
-      |    val ctx = TestContext()
-      |    assertEquals(@Plugin@().register(@Name@Config("/nonexistent"), ctx), Right(()))
-      |    assertEquals(ctx.vaults.keySet.toSet, Set("@id@"))
+      |    assert(harness(d).resolveSecret("@id@", "../portal-token").isLeft)
+      |    assert(harness(d).resolveSecret("@id@", "missing").isLeft)
       |""".stripMargin
 
   private val SecretVaultDefaults =

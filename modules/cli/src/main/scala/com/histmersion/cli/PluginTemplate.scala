@@ -59,6 +59,8 @@ object PluginRepository:
 object PluginArtifacts:
   val Api      = "histmersion-plugin-api"
   val Platform = "histmersion-plugin-platform"
+  /** What a plugin's tests load and run it with, as the server does. */
+  val Testkit  = "histmersion-plugin-testkit"
 
   /** `group::name:version`, as scala-cli and `histmersion plugin add` write a Scala 3 artifact. */
   def coordinates(name: String): String = s"${PluginBuildVersions.organization}::$name:${PluginBuildVersions.histmersion}"
@@ -101,7 +103,8 @@ object PluginTemplate:
     val core = List(
       TemplateFile(s"$name.scala", fill(r, directives(r) + "\n" + header(r) + KindSources.main(r.kind))),
       TemplateFile(s"$name.test.scala", fill(r, testDirectives + "\n" + header(r) + KindSources.test(r.kind) + packagingSuite)),
-      TemplateFile(".gitignore", s"/$PublishDir/\n/*.jar\n.scala-build/\n.bsp/\n"),
+      TemplateFile("README.md", fill(r, readme)),
+      TemplateFile(".gitignore", s"/$PublishDir/\n/*.jar\n.scala-build/\n.bsp/\n/target/\n"),
       TemplateFile(ServicesPath, s"${r.pkg.value}.${pluginClass(r.id)}\n"),
       TemplateFile(defaultsPath(r.id), fill(r, KindSources.defaults(r.kind))),
       TemplateFile(nativeMetadataPath(r.id), nativeMetadata(r))
@@ -124,12 +127,14 @@ object PluginTemplate:
       s"//> using publish.name ${r.id.value}",
       s"//> using publish.version $FirstVersion").mkString("", "\n", "\n")
 
-  /** The tests run the plugin, so they need at run time what the server provides it with. */
+  /** The tests run the plugin, so they need at run time what the server provides it with; the testkit
+    * loads and runs it as the server does. */
   private def testDirectives: String =
     List(
       s"//> using test.dep org.scalameta::munit:${PluginBuildVersions.munit}",
       s"//> using test.dep ${PluginArtifacts.coordinates(PluginArtifacts.Api)}",
-      s"//> using test.dep ${PluginArtifacts.coordinates(PluginArtifacts.Platform)}").mkString("", "\n", "\n")
+      s"//> using test.dep ${PluginArtifacts.coordinates(PluginArtifacts.Platform)}",
+      s"//> using test.dep ${PluginArtifacts.coordinates(PluginArtifacts.Testkit)}").mkString("", "\n", "\n")
 
   private def header(r: Request): String = s"package ${r.pkg.value}\n\n"
 
@@ -146,6 +151,7 @@ object PluginTemplate:
       "@repository@"   -> r.repository.url,
       "@api@"          -> PluginArtifacts.coordinates(PluginArtifacts.Api),
       "@platform@"     -> PluginArtifacts.coordinates(PluginArtifacts.Platform),
+      "@testkit@"      -> PluginArtifacts.coordinates(PluginArtifacts.Testkit),
       "@apiSources@"   -> PluginArtifacts.path(PluginArtifacts.Api, "-sources.jar"),
       "@coordinates@"  -> s"${r.pkg.value}::${r.id.value}:$FirstVersion",
       "@publishDir@"   -> PublishDir
@@ -211,6 +217,91 @@ object PluginTemplate:
       |      .map(_.getName).filter(_.matches(".*\\$lzy\\d+")).map(f => s"$n#$f")).toSet
       |""".stripMargin
 
+  /** How to build and test the plugin: unit tests, the live check, recording and replaying. */
+  private val readme: String =
+    """# @Name@
+      |
+      |A Histmersion plugin: a @kind@ (`@provides@:@id@`), built with scala-cli against the plugin API in
+      |the Maven repository of a Histmersion install (`@repository@`).
+      |
+      |```bash
+      |scala-cli test .                                                  # unit tests, offline
+      |HISTMERSION_PLUGIN_LIVE=1 scala-cli test .                        # also against the real site
+      |scala-cli --power publish . --publish-repository ./@publishDir@
+      |histmersion plugin add @coordinates@ --repo ./@publishDir@
+      |```
+      |
+      |## Testing without a server
+      |
+      |The tests use the Histmersion plugin testkit (`@testkit@`). `PluginHarness.load("@id@", config)`
+      |loads the plugin from the test class path exactly as the server does: it finds it through
+      |`META-INF/services`, layers the config over `resources/META-INF/histmersion/plugins/@id@.conf`,
+      |type-checks it, resolves its secrets and calls `register`. A setting the server would refuse is
+      |refused here with the server's own message. The harness then runs what the plugin registered as the
+      |server runs it (`fetch`, `searchMedia`, `readCatalogue`, `aiTurn`, `resolveSecret`) and reports what
+      |the server would make of the answers: a "PDF" that is not one is no copy, a licence the server does
+      |not allow is refused, a record whose dating runs backwards is not stored.
+      |
+      |Every request goes through the server's own HTTP client: its User-Agent, timeouts and TLS trust, its
+      |handling of `Retry-After`, a bot challenge ending the request. Where it then goes is the `HttpMode`:
+      |
+      || mode | the wire |
+      ||---|---|
+      || `HttpMode.Stub(Map(url -> StubAnswer…))` | canned answers (the unit tests); any other URL is a 404 |
+      || `HttpMode.Live` | the real site |
+      || `HttpMode.Record(dir)` | the real site, and every exchange written to `dir` |
+      || `HttpMode.Replay(dir)` | no network: the answers recorded in `dir`; a request with no recording fails the test, naming its URL |
+      |
+      |## The live check, recorded and replayed
+      |
+      |The `…LiveSuite` (where the kind has one) gives the plugin real settings and real search data, and
+      |checks that it finds (and, for a fetcher, downloads into `target/fetched/`) what it should. Edit its
+      |`config` and its case to one the real site has. It picks its mode with `HttpMode.fromEnv`:
+      |
+      |1. `HISTMERSION_PLUGIN_HTTP=live|record|replay`, when set, decides;
+      |2. otherwise, if `recordings/<case>/` holds a recording, it is replayed, offline (in CI too);
+      |3. otherwise it runs against the real site only with `HISTMERSION_PLUGIN_LIVE=1`, and is skipped
+      |   (with the reason) without it.
+      |
+      |So: run it live until it passes, then record it once and commit the recording:
+      |
+      |```bash
+      |HISTMERSION_PLUGIN_LIVE=1 scala-cli test .              # against the site
+      |HISTMERSION_PLUGIN_HTTP=record scala-cli test .         # the same, keeping the answers in recordings/
+      |scala-cli test .                                        # from now on: replayed, offline
+      |```
+      |
+      |Be polite while recording: a site's terms and `robots.txt` may ask for a pause between requests,
+      |and the plugin should keep to it (a replay skips the waits the server's client makes, but not the
+      |plugin's own).
+      |
+      |A recording is plain files: `NNN-<host>.http` per exchange (method, URL, status and the headers that
+      |matter: content type, redirects, `Retry-After`, a challenge marker) and its body beside it. They are
+      |meant to be read in a diff. What is never written: `Authorization`, cookies and every other header,
+      |the value of a secret the test knows (`{secret}` stands in for it, in URLs and text bodies alike),
+      |and the contact e-mail of a `histmersion.conf` (the testkit never sends it).
+      |
+      |**Trim before committing.** A body is a file you may edit: cut a long search answer down to the
+      |records the test reads, and never commit a copyrighted file (a book, an article, a picture). For a
+      |PDF the server only checks that `%PDF` is in its first KiB and that it is longer than a KiB, so
+      |
+      |```bash
+      |head -c 2048 recordings/known-work/004-files.example.pdf > /tmp/t && mv /tmp/t recordings/known-work/004-files.example.pdf
+      |```
+      |
+      |keeps the replay passing. Lines starting with `#` in a `.http` file are notes (say what you trimmed).
+      |
+      |## Secrets
+      |
+      |A credential in the settings is a reference (`env:PORTAL_TOKEN`, `keepassxc:Portal/token`). In a test
+      |give its value through `PluginHarness.load(…, secrets = Map("keepassxc:Portal/token" -> "…"))` or the
+      |environment; no real vault or keychain is ever asked.
+      |
+      |## Licence
+      |
+      |Histmersion and its plugin API are licensed under the AGPL-3.0, and so is a plugin built on the API.
+      |""".stripMargin
+
   private def agentNotes(r: Request): String =
     """# @Name@: a Histmersion plugin
       |
@@ -220,7 +311,10 @@ object PluginTemplate:
       |## Files
       |
       |- `@Name@.scala`: the build directives (`//> using …`) and the plugin.
-      |- `@Name@.test.scala`: its tests (munit), including the packaging checks.
+      |- `@Name@.test.scala`: its tests (munit, with the Histmersion plugin testkit, which loads and runs the
+      |  plugin as the server does), including the packaging checks and, for a kind that talks to a site, a
+      |  live check that records and replays (README.md).
+      |- `recordings/`: the live checks' recorded answers, replayed offline.
       |- `resources/META-INF/services/com.histmersion.plugin.Plugin`: names the plugin class, so that Java's
       |  ServiceLoader finds it. Rename the class and you must rename it here too (a test checks it).
       |- `resources/META-INF/histmersion/plugins/@id@.conf`: the plugin's settings and their defaults (HOCON,
@@ -272,7 +366,7 @@ object PluginTemplate:
       |
       |```bash
       |scala-cli compile .
-      |scala-cli test .
+      |scala-cli test .                       # offline; HISTMERSION_PLUGIN_LIVE=1 also runs the live checks
       |scala-cli --power publish . --publish-repository ./@publishDir@   # the jar and its POM, in Maven layout
       |histmersion plugin add @coordinates@ --repo ./@publishDir@         # shows what it provides and needs, then installs it
       |histmersion plugin rebuild             # relink the server with it (or: plugin rebuild --jvm)

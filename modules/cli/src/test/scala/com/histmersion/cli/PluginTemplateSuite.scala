@@ -15,6 +15,7 @@ class PluginTemplateSuite extends munit.FunSuite:
 
   private val api      = s"${PluginBuildVersions.organization}::histmersion-plugin-api:${PluginBuildVersions.histmersion}"
   private val platform = s"${PluginBuildVersions.organization}::histmersion-plugin-platform:${PluginBuildVersions.histmersion}"
+  private val testkit  = s"${PluginBuildVersions.organization}::histmersion-plugin-testkit:${PluginBuildVersions.histmersion}"
 
   private def file(files: List[TemplateFile], path: String): String =
     files.find(_.path == path).map(_.content).getOrElse(fail(s"no $path among ${files.map(_.path)}"))
@@ -38,10 +39,11 @@ class PluginTemplateSuite extends munit.FunSuite:
     assertEquals(PluginTemplate.pluginClass(PluginId.parse("mirror").toOption.get), "MirrorPlugin")
     assertEquals(PluginTemplate.pluginClass(PluginId.parse("my-plugin").toOption.get), "MyPlugin")
 
-  test("the project is two Scala files, a .gitignore and the resources a plugin jar carries"):
+  test("the project is two Scala files, a README, a .gitignore and the resources a plugin jar carries"):
     assertEquals(PluginTemplate.files(request("mirror")).map(_.path), List(
       "Mirror.scala",
       "Mirror.test.scala",
+      "README.md",
       ".gitignore",
       "resources/META-INF/services/com.histmersion.plugin.Plugin",
       "resources/META-INF/histmersion/plugins/mirror.conf",
@@ -70,12 +72,25 @@ class PluginTemplateSuite extends munit.FunSuite:
     assert(!main.contains("//> using jar") && !main.contains("//> using dep "), "no jar paths, no bundled library")
     assert(main.contains("package mirror\n"), main)
 
-  test("the test file brings munit, the API and the platform at run time, and checks the packaging"):
+  test("the test file brings munit, the API, the platform and the testkit, and checks the packaging"):
     val tests = file(PluginTemplate.files(request("mirror")), "Mirror.test.scala")
     assert(tests.startsWith(s"//> using test.dep org.scalameta::munit:${PluginBuildVersions.munit}\n"), tests)
-    assert(tests.contains(s"//> using test.dep $api\n//> using test.dep $platform\n"), tests)
+    assert(tests.contains(s"//> using test.dep $api\n//> using test.dep $platform\n//> using test.dep $testkit\n"), tests)
     assert(tests.contains("class MirrorSuite extends munit.FunSuite"), tests)
     assert(tests.contains("class MirrorPackagingSuite extends munit.FunSuite"), tests)
+    assert(tests.contains("PluginHarness.load(\"mirror\""), "the tests load the plugin as the server does")
+    assert(!tests.contains("extends PluginContext") && !tests.contains("extends PluginHttp"), "no hand-made host in the tests")
+
+  test("a fetcher's live check is gated and replays its recordings; the README says how to record them"):
+    val files = PluginTemplate.files(request("mirror"))
+    val tests = file(files, "Mirror.test.scala")
+    assert(tests.contains("class MirrorLiveSuite extends munit.FunSuite"), tests)
+    assert(tests.contains("HttpMode.fromEnv(Path.of(\"recordings\", \"known-work\"))") && tests.contains("assume(mode.isRight"), tests)
+    assert(tests.contains("harness.fetch(work, saveTo = Some(Path.of(\"target\", \"fetched\")))"), tests)
+    val readme = file(files, "README.md")
+    assert(readme.contains("HISTMERSION_PLUGIN_HTTP=record scala-cli test .") && readme.contains("Trim before committing"), readme)
+    assert(readme.contains(testkit), readme)
+    assert(!file(PluginTemplate.files(request("keys", PluginKind.SecretVault)), "Keys.test.scala").contains("LiveSuite"))
 
   test("the services file names the plugin class in its package"):
     val files = PluginTemplate.files(request("my-mirror").copy(pkg = ScalaPackage.parse("org.example").toOption.get))
