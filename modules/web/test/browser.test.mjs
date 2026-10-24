@@ -2395,6 +2395,46 @@ test('base-map choices: a style the download cannot draw whole is marked and say
   }, { source: 'online' });
 });
 
+// #3844: the legend and the map's foot (the notice, the credits) draw over every marker and the base map's
+// names, and under a popup the map opens
+test('the legend and the notice box stay over the markers and under a popup', async () => {
+  let feed = [];
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route('**/api/findings**', route => route.fulfill({ json: feed }));
+    await page.route('**/api/places/geo**', route => route.fulfill({ json: { type: 'FeatureCollection', features: [] } }));
+    await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+    await page.waitForFunction(() => window.__testMap && document.querySelector('.hd-legend') && document.querySelector('.map-foot'));
+    // a marker under the centre of each: the legend and the credits box
+    const spots = await page.evaluate(() => ['.hd-legend', '.map-foot'].map(sel => {
+      const m = document.getElementById('map').getBoundingClientRect(), r = document.querySelector(sel).getBoundingClientRect();
+      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      return { sel, x, y, at: window.__testMap.containerPointToLatLng([x - m.left, y - m.top]) };
+    }));
+    feed = spots.map((s, i) => ({ citekey: `zz_z${i}`, title: `Zz ${i}`, claim: 'c', regionName: null, lat: s.at.lat, lon: s.at.lng,
+      periodStart: -1300, periodEnd: -1250, confidence: 'high', sourceKind: 'paper' }));
+    await page.goto(new URL('/#from=-1340&to=-1200', baseURL).href);
+    for (const s of spots) {
+      // the marker is drawn right under the control's centre…
+      await page.waitForFunction(([x, y]) => [...document.querySelectorAll('.hd-marker')].some(e => {
+        const r = e.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; }), [s.x, s.y], { timeout: 15000 });
+      // …and the control is what the pointer finds there
+      const top = await page.evaluate(([x, y, sel]) => !!document.elementFromPoint(x, y)?.closest(sel), [s.x, s.y, s.sel]);
+      assert.ok(top, `${s.sel} is over the marker under it`);
+    }
+    // a popup opened over the legend is over it
+    const l = spots[0];
+    await page.evaluate(([at]) => window.__testMap.openPopup([at.lat, at.lng], 'Zz popup '.repeat(40)), [l.at]);
+    await page.locator('.zz-test-popup').waitFor();
+    const over = await page.evaluate(() => {
+      const r = document.querySelector('.zz-test-popup').getBoundingClientRect();
+      return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.hd-popup') != null &&
+        [...document.querySelectorAll('.hd-legend')].some(g => { const q = g.getBoundingClientRect();
+          return q.left < r.right && r.left < q.right && q.top < r.bottom && r.top < q.bottom; });
+    });
+    assert.ok(over, 'the popup overlaps the legend and is on top of it');
+  });
+});
+
 test('the past-landscape notice never lies under the credits or the map key, wide or narrow', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }

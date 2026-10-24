@@ -73,8 +73,10 @@ class CssTokensSuite extends munit.FunSuite:
   private def rules(cls: String): List[String] =
     s"""(?s)\\.${java.util.regex.Pattern.quote(cls)}\\s*\\{([^}]*)\\}""".r.findAllMatchIn(css).toList.map(_.group(1))
 
+  /** A rule's z-index: a number, or a `var(--token)` of the scale on `:root`. */
   private def zIndex(cls: String): Option[Int] =
-    rules(cls).flatMap(r => """z-index\s*:\s*(\d+)""".r.findFirstMatchIn(r).map(_.group(1).toInt)).lastOption
+    rules(cls).flatMap(r => """z-index\s*:\s*(\d+|var\((--[\w-]+)\))""".r.findFirstMatchIn(r).map(m =>
+      Option(m.group(2)).fold(m.group(1).toInt)(t => rootTokens(t).trim.toInt))).lastOption
 
   test("the map's panes stack in MapStack's order, every point above every area"):
     assert(MapStack.pointsAboveAreas(MapStack.order), MapStack.order.toString)
@@ -83,8 +85,15 @@ class CssTokensSuite extends munit.FunSuite:
       case List((a, za), (b, zb)) => assert(za < zb, s"${a.name} ($za) must be under ${b.name} ($zb)")
       case _ => ()
     }
-    // and under the popups and the controls, which open over everything
-    assert(z.last._2 < zIndex("hd-popup").getOrElse(fail("no z-index for .hd-popup")))
+    // then the controls in the map's corners (#3844: the legend and the notice drew under the markers),
+    // then the popups, which open over everything on the map
+    val controls = rootTokens("--z-map-controls").trim.toInt
+    val popups = zIndex("hd-popup").getOrElse(fail("no z-index for .hd-popup"))
+    assert(z.last._2 < controls, s"the top pane (${z.last._2}) must be under the corners ($controls)")
+    assert(controls < popups, s"the corners ($controls) must be under the popups ($popups)")
+    assert(popups < 1000, "the map's popups stay under the page's windows and modals")
+    assert("""\.map-container \.hd-map-corner\s*\{[^}]*z-index:var\(--z-map-controls\)""".r.findFirstIn(css).isDefined,
+      "the corners take the controls' z-index")
 
   test("a pane lets the pointer through everywhere but its markers"):
     val pane = """(?s)\.hd-pane\s*\{([^}]*)\}""".r.findFirstMatchIn(css).map(_.group(1)).getOrElse(fail("no .hd-pane rule"))
