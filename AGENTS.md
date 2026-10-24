@@ -24,6 +24,8 @@ plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
 plugin-fixtures/hello ─ a TEST plugin jar (relink tests, smoke.sh); never on the server's class path
 plugin-fixtures/hello-ai ─ a TEST AI-provider plugin jar (scripted, no network; the AI-provider suites)
+chimney-iron ── a Chimney macro extension (newtype → newtype); compile-time only, consumed `% Provided`
+chimney-iron-tests ─ its proof suites, compiled as a consumer compiles them
 ```
 
 A plugin — first-party or not — compiles against `plugin-api` alone and never sees `core`, `db` or
@@ -95,8 +97,9 @@ unless there is a written reason.
 
 These rules bind new and changed code. Existing code that breaks them is brought in line when it is
 changed for another reason, not in a sweep. Iron (`io.github.iltotore::iron`) and Chimney
-(`io.scalaland::chimney`) are not dependencies yet: the first change that needs one adds it, with its
-native-image metadata. The examples were compiled against Iron 3.4.1 and Chimney 2.1.0.
+(`io.scalaland::chimney`) are dependencies of `chimney-iron` only so far: the first model module that
+needs one adds it, with its native-image metadata. The examples were compiled against Iron 3.4.1 and
+Chimney 2.1.0.
 
 ### 1. No primitives in the model
 
@@ -159,19 +162,33 @@ given DbCodec[Citekey] = DbCodec[String].biMap(Citekey.applyUnsafe, _.value)
 
 Iron's newtypes make crossing a layer free. `.value` exposes a newtype's refined type (`String :|
 CitekeyRule`), and another newtype's `apply` accepts that refined type without checking it again. A
-raw `String` does not compile there, so the check cannot be skipped by accident. Two layers' newtypes
-over the same constraint therefore convert with no runtime check. `iron-chimney` derives newtype ↔ raw
-but not newtype ↔ newtype, so write one `Transformer` per pair, through `apply`. Chimney then derives
-the case classes built from them. Never `assume` between layers: it accepts any value, including one
-under a different constraint.
+raw `String` does not compile there, so the check cannot be skipped by accident. Never `assume` between
+layers: it accepts any value, including one under a different constraint.
+
+Chimney derives newtype → newtype through the `chimney-iron` macro extension: a module that uses
+Chimney depends on it `% Provided`. It only runs inside the compiler, and the code it generates never
+refers to it, so it stays off `Runtime / fullClasspath`. `Compile / fullClasspath` still lists it, and
+the native-image tasks read that one today: the first module that ships a binary and depends on
+`chimney-iron` moves them to `Runtime / fullClasspath`. It builds with the build's Scala and needs 3.10
+or newer: Chimney 2 and Iron 3.4 are compiled by Scala 3.9, which no older compiler can read, and a
+Scala 3.9.0 compiler bug, fixed in 3.10.0, stops the extension's own compilation with a cyclic
+reference. It converts `From` into `To` as `To(from.value)`, with no check, when
+
+- both are `type X = X.T` over an `object X extends RefinedType[Base, Constraint]` (rule 1's shape),
+- the two companions have the same name (`domain.Citekey` → `api.Citekey`), and
+- their base types and constraints are the same types.
+
+Same-named newtypes with different constraints fail to compile, naming both. Differently named ones
+are not converted even over the same constraint (`Year` and `PageSize` are both `Int :| Pure`). A
+`Transformer` or `PartialTransformer` given for a pair always wins over the extension: write one to opt
+a pair out, for a conversion that must check, or between differently named newtypes.
 
 ```scala
 package com.histmersion.api
 type Citekey = Citekey.T
-object Citekey extends RefinedType[String, CitekeyRule]:
-  given Transformer[domain.Citekey, Citekey] = citekey => Citekey(citekey.value)
+object Citekey extends RefinedType[String, CitekeyRule]       // same name, same constraint as domain's
 
-source.transformInto[SourceView]              // field by field, no constraint re-checked
+source.transformInto[SourceView]              // field by field, no constraint re-checked, no givens
 ```
 
 ### 5. Self-explanatory code

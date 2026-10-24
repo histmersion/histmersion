@@ -405,6 +405,39 @@ lazy val pluginHelloAi = project
   .settings(name := "histmersion-plugin-hello-ai", publish / skip := true)
   .settings(commonDeps)
 
+// ── chimney-iron: a Chimney macro extension, found by ServiceLoader while Chimney's macros expand. It
+//    converts an Iron newtype into the same-named newtype of another layer over the same constraint as
+//    `To(from.value)`, with no check (AGENTS.md, Coding practices 4). Compile-time only: a consumer
+//    depends on it `% Provided`, and Chimney and Iron are Provided here, so neither the extension nor
+//    anything it pulls in is on a consumer's `Runtime / fullClasspath`. (`Compile / fullClasspath`
+//    includes Provided jars: the native-image tasks must read the Runtime one before a module that
+//    ships a binary depends on this.) It needs Scala 3.10+: Chimney 2
+//    and Iron 3.4 are compiled by 3.9 (unreadable to 3.8), and a Scala 3.9.0 compiler bug, fixed in 3.10.0,
+//    stops this module's compilation with a cyclic reference.
+lazy val chimneyIron = project
+  .in(file("modules/chimney-iron"))
+  .settings(name := "histmersion-chimney-iron")
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      "io.scalaland"       %% "chimney" % V.chimney % Provided,
+      "io.github.iltotore" %% "iron"    % V.iron    % Provided
+    )
+  )
+
+// ── chimney-iron-tests: chimney-iron used the way a layer of Histmersion uses it, `% Provided`. ────
+lazy val chimneyIronTests = project
+  .in(file("modules/chimney-iron-tests"))
+  .dependsOn(chimneyIron % Provided)
+  .settings(name := "histmersion-chimney-iron-tests", publish / skip := true)
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      "io.scalaland"       %% "chimney" % V.chimney,
+      "io.github.iltotore" %% "iron"    % V.iron
+    )
+  )
+
 // ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
 lazy val db = project
   .in(file("modules/db"))
@@ -631,5 +664,6 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, pluginHello, pluginHelloAi, db, server, cli, web)
+  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, pluginHello, pluginHelloAi, chimneyIron, chimneyIronTests,
+    db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)
