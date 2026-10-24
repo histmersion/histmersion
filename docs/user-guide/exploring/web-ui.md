@@ -87,7 +87,7 @@ without their relief, which keeps them quick, and a line of the notice says so. 
 WebGL 2 at all (WebGL off, or only the older WebGL 1) draws no map — neither the online maps nor the
 local ones: the map's place then says why and what to do, and the list, the timeline and the articles
 work as usual. The credits of the
-base map drawn are behind the ⓘ in its lower right corner.
+base map drawn are in the box at its lower left corner, under the note on today's terrain.
 
 ## The timeline
 

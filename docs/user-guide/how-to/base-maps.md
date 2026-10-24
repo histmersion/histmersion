@@ -76,7 +76,7 @@ by this browser, and apply at once:
 - **The names** are drawn in Noto Sans — Latin, Greek and Cyrillic, with its Arabic, Armenian,
   Georgian and Hebrew companions (SIL Open Font License 1.1) — served by Histmersion itself from
   `web/vendor/noto-sans/`, only the parts a name needs; no font service is asked.
-- **The credits** of each base map are behind the ⓘ button in the map's lower right corner (folded until you open it): © OpenStreetMap contributors (ODbL) and Protomaps for the vector layer, Natural
+- **The credits** of each base map are in the box at the map's lower left corner, under the note on today's terrain (the only thing in it on an online map): © OpenStreetMap contributors (ODbL) and Protomaps for the vector layer, Natural
   Earth for the physical names, © Mapterhorn with the Copernicus elevation model for the relief, and
   ETOPO1 (NOAA) via Mapzen's terrain tiles for the sea floor; for the online maps, OpenStreetMap and
   the tile server.

@@ -389,18 +389,19 @@ header { flex-wrap:wrap; align-items:flex-start; }
    meet (BaseMaps.fitNotice) */
 .hd-map-control { pointer-events:auto; clear:both; }
 .maplibregl-ctrl-bottom-left { margin-bottom:var(--terrain-notice-lift, 0px); }
-.maplibregl-ctrl-bottom-left .terrain-notice { margin:0 0 10px 10px; float:left; }
-.maplibregl-ctrl-attrib { font-size:11px; }
-.maplibregl-ctrl-attrib.maplibregl-compact { max-width:min(60vw, 520px); }
-[data-layout="narrow"] .maplibregl-ctrl-attrib.maplibregl-compact { max-width:calc(100vw - 16px); }
+/* the map's foot (BaseMaps): the notice and, under it, the base map's credits, one box */
+.maplibregl-ctrl-bottom-left .map-foot { margin:0 0 10px 10px; float:left; }
 .maplibregl-ctrl-group { background:var(--panel); border:1px solid var(--line); }
 .maplibregl-ctrl-group button + button { border-top:1px solid var(--line); }
 .maplibregl-ctrl button .maplibregl-ctrl-icon { filter:invert(1) brightness(.9); }
-.terrain-notice { background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px; color:var(--ink);
+.map-foot { background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px; color:var(--ink);
   font-size:var(--fs-sm); line-height:1.35; padding:var(--space-3) var(--space-4); max-width:300px; }
 .terrain-notice a { color:var(--accent); white-space:nowrap; }
-.terrain-notice.is-missing { border-color:var(--format-error); }
-[data-layout="narrow"] .terrain-notice { max-width:220px; font-size:var(--fs-xs); }
+.map-foot.is-missing { border-color:var(--format-error); }
+.map-credits { color:var(--muted); font-size:var(--fs-xs); }
+.terrain-notice + .map-credits { margin-top:var(--space-2); }
+.map-credits a { color:var(--muted); }
+[data-layout="narrow"] .map-foot { max-width:220px; font-size:var(--fs-xs); }
 /* the base map's options (MapOptions): a compact popover under its button, open while options change */
 .map-options-anchor { position:relative; display:inline-flex; }
 /* placed under its button by BaseMaps (--map-options-x/-y), kept inside the window */

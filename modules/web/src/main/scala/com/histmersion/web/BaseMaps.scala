@@ -83,6 +83,9 @@ object BaseMaps:
     s"This map also draws ${missing.mkString(", ")}, which the download on this server left out. Run " +
       s"`${Basemap.KeepAllCommand}` on the machine that runs it, then choose the map again."
 
+  /** Pure: the credits line — each source's credit once, in order, separated by a middle dot. */
+  def creditsHtml(credits: Seq[String]): String = credits.map(_.trim).filter(_.nonEmpty).distinct.mkString(" · ")
+
   /** How far the notice's corner rises so it clears the right-hand corner's controls: their height and a
     * gap when the two would overlap side by side, else nothing. Pure. */
   def noticeLift(noticeLeft: Double, noticeRight: Double, creditsLeft: Double, creditsRight: Double, creditsHeight: Double): Double =
@@ -147,6 +150,8 @@ object BaseMaps:
     software.set(m.capabilities.software)
     view.set(Some((m.zoom, m.bounds)))
     val _ = m.on(MapEventKind.MoveEnd)(_ => view.set(Some((m.zoom, m.bounds))))
+    // a base map drawn: its credits are known (they follow its sources and the layers drawn)
+    val _ = m.on(MapEventKind.BaseMapReady)(_ => if m.credits != drawnCredits then drawFoot())
     refresh()
     // a page with only the local maps, never told otherwise by this browser: its best local style
     status.signal.foreach { s =>
@@ -165,28 +170,53 @@ object BaseMaps:
       m.container.classList.toggle("basemap-vector", eb.vector.isDefined && spec.isInstanceOf[BaseMapSpec.Vector])
     }
 
+  /** The map's foot, bottom left (#3759): the notice over a vector style (or what to run), and under it the
+    * base map's credits — one box, where MapLibre's ⓘ button and its folded credits used to sit in the
+    * right-hand corner under the legend. Without a notice (an online map) the box holds the credits alone;
+    * without either it is gone. */
   private def setNotice(n: Option[(String, Boolean)], lacking: Boolean): Unit =
+    notice = n.map((t, w) => (t, w, lacking))
+    drawFoot()
+
+  // `var`s: the notice drawn now (its text, whether it warns, whether it is the lacking-layers one), and the
+  // credits drawn with it
+  private var notice: Option[(String, Boolean, Boolean)] = None
+  private var drawnCredits: Seq[String] = Nil
+
+  private def drawFoot(): Unit =
     noticeEl.foreach(_.remove())
     noticeEl = None
-    n.foreach { (text, warn) =>
-      val el = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
-      el.className = if warn then "terrain-notice is-missing hd-map-control" else "terrain-notice hd-map-control"
-      el.setAttribute("role", "note")
-      val p = dom.document.createElement("span")
-      p.textContent = text
-      val a = dom.document.createElement("a").asInstanceOf[dom.HTMLAnchorElement]
-      a.href = if lacking then docsLink(ui.docsUrl, OfflinePage) else if warn then docsLink(ui.docsUrl, "how-to/offline.md") else docsLink(ui.docsUrl)
-      a.target = "_blank"
-      a.rel = "noopener"
-      a.textContent = if warn then "How to download it" else "Why?"
-      el.appendChild(p)
-      el.appendChild(dom.document.createTextNode(" "))
-      el.appendChild(a)
-      surface.corner(Corner.BottomLeft).appendChild(el)
-      noticeEl = Some(el)
+    val credits = surface.credits
+    drawnCredits = credits
+    if notice.nonEmpty || credits.nonEmpty then
+      val box = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+      box.className = if notice.exists(_._2) then "map-foot is-missing hd-map-control" else "map-foot hd-map-control"
+      notice.foreach { (text, warn, lacking) =>
+        val el = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+        el.className = "terrain-notice"
+        el.setAttribute("role", "note")
+        val p = dom.document.createElement("span")
+        p.textContent = text
+        val a = dom.document.createElement("a").asInstanceOf[dom.HTMLAnchorElement]
+        a.href = if lacking then docsLink(ui.docsUrl, OfflinePage) else if warn then docsLink(ui.docsUrl, "how-to/offline.md") else docsLink(ui.docsUrl)
+        a.target = "_blank"
+        a.rel = "noopener"
+        a.textContent = if warn then "How to download it" else "Why?"
+        el.appendChild(p)
+        el.appendChild(dom.document.createTextNode(" "))
+        el.appendChild(a)
+        box.appendChild(el)
+      }
+      if credits.nonEmpty then
+        val c = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+        c.className = "map-credits"
+        // the sources' own credit lines (their links included), as the map library showed them
+        c.innerHTML = creditsHtml(credits)
+        box.appendChild(c)
+      surface.corner(Corner.BottomLeft).appendChild(box)
+      noticeEl = Some(box)
       dom.window.requestAnimationFrame((_: Double) => fitNotice())
-    }
-    if n.isEmpty then surface.container.style.setProperty("--terrain-notice-lift", "0px")
+    else surface.container.style.setProperty("--terrain-notice-lift", "0px")
 
   // the notice's watcher of the right-hand corner (the credits, the legend), made once
   private lazy val cornerWatch: Unit =
