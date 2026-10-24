@@ -110,7 +110,7 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
         val pipeline = ManagerSupervisor.pipelineOf(i.kind)
         val pools = if daily.isDefined then Right(Nil) else memo.getOrElseUpdate(pipeline, poolIds(over, now, List(pipeline)))
         val block = daily.map(Block("budget", _))
-          .orElse(pools.left.toOption.map(why => Block("quota", s"starved: $why")))
+          .orElse(pools.left.toOption.map(why => Block(QuotaBlock, s"starved: $why")))
           .orElse(Option.when(ManagerPolicy.waitsFor(i.kind, i.target, open))(Block("waits-for",
             if i.kind == ProposeArticles then "its goal's plan comes first (the plan-goal item is open)"
             else "its article's coverage filter is inferred first (the infer-filter item is open)")))
@@ -148,6 +148,27 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
     val d  = SchedulerPolicy.run(in.cands, in.res, s, now)(c => in.items.get(c.id).fold(Left("the item is gone"))(start(_, _)))
     last = Some(Snapshot(now, dry = false, in, s, d))
     d
+
+  /** Read the plan pools on their schedules (`agents.quota.*.refresh-every-minutes`): while the autopilot is
+    * on and the last pass left work waiting on a pool, so the next passes decide on current numbers. Nothing
+    * while draining. One line per reading taken. */
+  def refreshPlans(now: Instant): List[String] =
+    val wanted = if agents.drain.draining then Set.empty[String] else wantedPools()
+    val autopilotOn = agents.autopilot.on
+    PlanQuota.PoolId.values.toList.flatMap { p =>
+      agents.pools.refreshOnSchedule(p, autopilotOn, wanted.contains(p.wire), now).toOption
+        .map(r => s"plan refresh ${p.wire} (${PlanQuota.RefreshTrigger.Schedule.wire}): ${r.text}")
+    }
+
+  private def wantedPools(): Set[String] =
+    last.fold(Set.empty[String])(snap => SchedulerPolicy.poolsWanted(snap.d.waiting.map(_._1.c), chainPools(snap.in, _)))
+
+  /** The pools every model of `c`'s role chains draws on, whether or not it is usable now. */
+  private def chainPools(in: Inputs, c: Candidate): List[String] =
+    val over = in.items.get(c.id).flatMap(_._1.config.models).getOrElse(Nil)
+    ManagerSupervisor.pipelineOf(c.kind).roles.flatMap { r =>
+      agents.picker.chainFor(r, over.find(o => Role.parse(o.role).contains(r)).map(_.model)).getOrElse(Nil)
+    }.flatMap(agents.pools.poolOf).map(_.wire).distinct
 
   /** The managers that may start runs (active, of a kind the supervisor runs). */
   def live(): List[ManagerInfo] =

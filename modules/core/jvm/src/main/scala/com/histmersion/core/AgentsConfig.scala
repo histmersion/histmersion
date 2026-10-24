@@ -88,17 +88,23 @@ final case class AgentProvidersConfig(anthropic: AgentProviderConfig, openai: Ag
 final case class AgentRuntimesConfig(dir: String, generate: Boolean, claudeMod: Boolean, interactiveMod: Boolean)
     derives ConfigReader
 
+given ConfigReader[PlanQuota.ScheduledRefresh] = summon[ConfigReader[Int]].emap(PlanQuota.ScheduledRefresh.fromMinutes)
+
 /** One plan pool: a floor (% that must stay LEFT) per window kind (`five_hour=25, seven_day=25`;
-  * Codex windows by length, `300m`, `10080m`), and how many LLM calls may draw on it at once. */
-final case class PlanPoolConfig(floors: String, maxCallsInFlight: Int) derives ConfigReader
+  * Codex windows by length, `300m`, `10080m`), how many LLM calls may draw on it at once, and how often it
+  * is read while the autopilot has queued work for it. */
+final case class PlanPoolConfig(floors: String, maxCallsInFlight: Int,
+    refreshEveryMinutes: PlanQuota.ScheduledRefresh = PlanQuota.ScheduledRefresh.Off) derives ConfigReader
 
 /** The Claude plan pool: [[PlanPoolConfig]]'s two, and how it takes a fresh reading when a run wants
   * the pool and its last one is too old to decide on (docs/research-plan-quotas.md §8). `refresh` is
   * `auto` (a zero-cost read if the CLI has one — 2.1.289 has none — else the probe), `probe`, or `off`
   * (wait for a run's own reading, as before); the probe is one `claude -p` turn on `probeModel` with
-  * at most `probeMaxTokens` output tokens, given up after `probeTimeoutSeconds`. */
+  * at most `probeMaxTokens` output tokens, given up after `probeTimeoutSeconds`. `refreshEveryMinutes` also
+  * reads it on a schedule while the autopilot has queued work for it. */
 final case class ClaudePlanConfig(floors: String, maxCallsInFlight: Int, refresh: String, probeModel: String,
-    probeMaxTokens: Int, probeTimeoutSeconds: Int) derives ConfigReader
+    probeMaxTokens: Int, probeTimeoutSeconds: Int,
+    refreshEveryMinutes: PlanQuota.ScheduledRefresh = PlanQuota.ScheduledRefresh.Off) derives ConfigReader
 
 /** Subscription pools (docs/research-plan-quotas.md §5): a snapshot older than `staleMinutes` is
   * unknown; a window with no floor of its own has `defaultFloor`; a stale reading lets a run go on only

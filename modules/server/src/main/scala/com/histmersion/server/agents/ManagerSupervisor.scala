@@ -144,6 +144,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       // refill and the crons, so what they just queued waits too)
       out ++= guarded("focus", out)(agents.focus.tick(now))
       dispatchAll(live, now, out)
+      out ++= guarded("plan-refresh", out)(agents.scheduler.refreshPlans(now))
       out ++= guarded("drain", out)(agents.drain.tick(now))
       if now.toEpochMilli - lastPrune.get() > 3600000L then
         lastPrune.set(now.toEpochMilli)
