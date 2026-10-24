@@ -26,7 +26,7 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
   /** The kinds decided here. */
   val Kinds: List[ApprovalKind] = List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish)
 
-  /** At most this many open approvals looked at in one tick (the rest the next). */
+  /** At most this many approvals decided by code looked at in one tick (the rest the next). */
   private val PerTick = 50
 
   /** The run that opened an approval, and the manager that dispatched that run. */
@@ -41,26 +41,29 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
   def sweep(now: Instant): List[String] =
     // the goals the scheduler puts first, first: a daily cap is spent on the highest-priority goals (a pin, a
     // person's priority), then the oldest goals; approvals about no known goal last, oldest first
-    val open = AgentRepo.openOfKinds(ds, Kinds, PerTick)
-    val goals = com.histmersion.db.FocusRepo.goals(ds).map(g => g.slug -> g).toMap
-    val linked = com.histmersion.db.FocusRepo.goalsOf(ds, GoalPlans.LinkKind.Article.wire, open.flatMap(_.subject).distinct)
-    def goalOf(a: ApprovalInfo) = a.subject.flatMap(s => goals.get(s).orElse(linked.getOrElse(s, Nil).flatMap(goals.get).headOption))
-    val ordered = open.sortBy { a =>
-      val g = goalOf(a)
-      (g.fold(0)(x => -(x.priority + (if x.pinned then SchedulerPolicy.PinBoost else 0))), g.fold("\uffff")(_.createdAt), a.id)
-    }
-    ordered.flatMap { a =>
+    // the window is taken among the approvals code decides: those a person decides never crowd it out
+    val open = AgentRepo.openOfKinds(ds, Kinds, Int.MaxValue).flatMap { a =>
       val run = runOf(a)
       val mgr = run.flatMap(_.managerId).flatMap(ManagerRepo.get(ds, _))
-      if !checked(a, mgr) then Nil
-      else
-        try decide(a, run, mgr, now)
-        catch
-          case e: InterruptedException => throw e
-          case e: Exception =>
-            scribe.warn(s"autopilot: approval #${a.id} not checked: ${e.getMessage}", e)
-            Nil
+      Option.when(checked(a, mgr))(Candidate(a, run, mgr))
     }
+    val goals = com.histmersion.db.FocusRepo.goals(ds).map(g => g.slug -> g).toMap
+    val linked = com.histmersion.db.FocusRepo.goalsOf(ds, GoalPlans.LinkKind.Article.wire, open.flatMap(_.approval.subject).distinct)
+    def goalOf(a: ApprovalInfo) = a.subject.flatMap(s => goals.get(s).orElse(linked.getOrElse(s, Nil).flatMap(goals.get).headOption))
+    val ordered = open.sortBy { c =>
+      val g = goalOf(c.approval)
+      (g.fold(0)(x => -(x.priority + (if x.pinned then SchedulerPolicy.PinBoost else 0))), g.fold("\uffff")(_.createdAt), c.approval.id)
+    }
+    ordered.take(PerTick).flatMap { c =>
+      try decide(c.approval, c.run, c.manager, now)
+      catch
+        case e: InterruptedException => throw e
+        case e: Exception =>
+          scribe.warn(s"autopilot: approval #${c.approval.id} not checked: ${e.getMessage}", e)
+          Nil
+    }
+
+  private final case class Candidate(approval: ApprovalInfo, run: Option[RunInfo], manager: Option[Managers.ManagerInfo])
 
   private def decide(a: ApprovalInfo, run: Option[RunInfo], mgr: Option[Managers.ManagerInfo], now: Instant): List[String] =
     val verdict = judge(a, run, mgr, now)
