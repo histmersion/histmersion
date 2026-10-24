@@ -18,6 +18,13 @@ class PluginToolSuite extends munit.FunSuite:
     val line = String(in.readAllBytes(), UTF_8).linesIterator.find(_.startsWith("hello=")).get
     Path.of(line.stripPrefix("hello="))
 
+  /** The hello-deps fixture (its POM lists hello-lib) and hello-lib's jar, from the fixture repository. */
+  private lazy val (helloDeps: Path, helloLib: Path) =
+    val in   = getClass.getClassLoader.getResourceAsStream("plugin-fixtures.txt")
+    val repo = Path.of(String(in.readAllBytes(), UTF_8).linesIterator.find(_.startsWith("repo=")).get.stripPrefix("repo="))
+    def jar(a: String) = repo.resolve(s"com/kubuszok/$a/0.1.0/$a-0.1.0.jar")
+    (jar("histmersion-plugin-hello-deps_3"), jar("histmersion-plugin-hello-lib_3"))
+
   private val tmp = FunFixture[Path](_ => Files.createTempDirectory("plugin-tool"), d =>
     Files.walk(d).sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) }))
 
@@ -81,22 +88,22 @@ class PluginToolSuite extends munit.FunSuite:
 
   tmp.test("check: the hello plugin passes against a kit that does not have its classes"): d =>
     val kit = kitWith(d, Map("other.jar" -> Map("x/X.class" -> Array[Byte](1))))
-    val (lines, problems) = PluginTool.check(kit, List(hello), loader)
+    val (lines, problems) = PluginTool.check(kit, List(hello), Nil, loader)
     assertEquals(problems, Nil)
     assertEquals(lines, List(s"plugin: hello 0.1.0 (SPI ${Spi.Version}) in ${hello.getFileName} · access open · provides source-fetcher:hello"))
 
   tmp.test("check: refuses a class twice, a foreign SPI, the same id twice, an id the binary has"): d =>
     val cls = "com/histmersion/fixtures/hello/HelloFetcher.class"
     val kit = kitWith(d, Map("shaded-elsewhere.jar" -> Map(cls -> Array[Byte](1))))
-    val (_, dup) = PluginTool.check(kit, List(hello), loader)
+    val (_, dup) = PluginTool.check(kit, List(hello), Nil, loader)
     assert(dup.exists(p => p.contains("duplicates classes") && p.contains("the kit") &&
       p.contains("com.histmersion.fixtures.hello.HelloFetcher")), dup)
     val clean   = kitWith(Files.createDirectories(d.resolve("k2")), Map.empty)
     val foreign = variant(hello, d.resolve("foreign.jar"), Some("com.histmersion.fixtures.hello.ForeignSpiPlugin\n"))
-    val (_, spi) = PluginTool.check(clean, List(foreign), loader)
+    val (_, spi) = PluginTool.check(clean, List(foreign), Nil, loader)
     assert(spi.exists(_.contains(s"built for plugin SPI ${Spi.Version + 98}")), spi)
     val twin = variant(hello, d.resolve("hello-copy.jar"), Some("com.histmersion.fixtures.hello.HelloPlugin\n"))
-    val (_, twice) = PluginTool.check(clean, List(hello, twin), loader)
+    val (_, twice) = PluginTool.check(clean, List(hello, twin), Nil, loader)
     assert(twice.exists(_.contains(s"plugin id 'hello' is already provided by ${hello.getFileName}")), twice)
     assert(twice.exists(_.startsWith("hello-copy.jar duplicates classes")), twice)
     assertEquals(PluginTool.hostIds(loader).get("archive-org"), Some("this Histmersion (a first-party plugin)"))
@@ -104,6 +111,24 @@ class PluginToolSuite extends munit.FunSuite:
     // the open-access indexes (D4), and the former id their settings are still read under
     assert(Set("oa-unpaywall", "oa-core", "oa-openalex", "oa-landing").subsetOf(PluginTool.hostIds(loader).keySet))
     assert(PluginTool.hostIds(loader).get("oa-index").exists(_.contains("former first-party plugin")), PluginTool.hostIds(loader))
+
+  tmp.test("describe: a plugin is loaded with its dependencies from lib/; without them, the missing class is named"): d =>
+    val lib = Files.createDirectories(d.resolve("lib"))
+    Files.copy(helloLib, lib.resolve("com.kubuszok-hello-lib.jar"))
+    Files.writeString(lib.resolve("classpath"), "com.kubuszok-hello-lib.jar\n")
+    assertEquals(PluginTool.dependencyJars(lib), List(lib.resolve("com.kubuszok-hello-lib.jar")))
+    val withDeps = PluginTool.describe(helloDeps, URLClassLoader(PluginTool.dependencyJars(lib).map(_.toUri.toURL).toArray, loader))
+    assertEquals(withDeps.plugins.map(p => (p.id, p.provides, p.error)), List(("hello-deps", List("source-fetcher:hello-deps"), None)))
+    val without = PluginTool.describe(helloDeps, loader).plugins.head
+    assert(without.error.exists(e => e.contains("class com.histmersion.fixtures.hellolib.Shout") && e.contains("is missing") &&
+      e.contains("histmersion plugin add")), without.error)
+    assertEquals(PluginTool.dependencyJars(d.resolve("no-lib")), Nil)
+
+  tmp.test("check: a dependency jar that holds a class the kit already has is refused"): d =>
+    val kit = kitWith(d, Map("lib-elsewhere.jar" -> Map("com/histmersion/fixtures/hellolib/Shout.class" -> Array[Byte](1))))
+    val (_, problems) = PluginTool.check(kit, List(helloDeps), List(helloLib), loader)
+    assert(problems.exists(p => p.startsWith(helloLib.getFileName.toString + " duplicates classes") &&
+      p.contains("com.histmersion.fixtures.hellolib.Shout") && p.contains("depend on the library")), problems)
 
   tmp.test("plugin-set jar: written, found on a class path, the digest over the jars' names and checksums"): d =>
     val set = PluginKit.pluginSet(List(PluginTool.describe(hello, loader)), Spi.Version, "native", Some("0.1.0 (abc)"), None)

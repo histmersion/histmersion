@@ -64,6 +64,13 @@ final class ThrowingPlugin extends Plugin:
   override def defaultsResource = "META-INF/histmersion/plugins/maker.conf"
   def register(c: MakerConfig, ctx: PluginContext) = throw new RuntimeException("bang")
 
+/** Uses a library that is not on the class path: what a plugin installed without its dependencies does. */
+final class MissingLibraryPlugin extends Plugin:
+  type Config = MakerConfig
+  val info = PluginInfo("needs-lib", "0", Spi.Version)
+  override def defaultsResource = "META-INF/histmersion/plugins/maker.conf"
+  def register(c: MakerConfig, ctx: PluginContext) = throw new NoClassDefFoundError("org/example/xml/Elem")
+
 class PluginHostSuite extends munit.FunSuite:
   private def conf(s: String): Config = ConfigFactory.parseString(s)
   private def env(kv: (String, String)*): Config = ConfigFactory.parseMap(kv.toMap.asJava)
@@ -284,6 +291,20 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(statusOf(g, "maker").provides, Nil)
     assertEquals(statusOf(g, "thrower").error, Some("histmersion.plugins.thrower: register threw RuntimeException: bang"))
     assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+
+  test("a plugin whose library is missing fails alone, naming the class and what to do; the others load"):
+    val (g, _) = build(List(MissingLibraryPlugin(), EchoPlugin()),
+      """histmersion.plugins { needs-lib.enabled = true, echo.enabled = true }""")
+    val st = statusOf(g, "needs-lib")
+    assertEquals(st.state, PluginState.Failed.wire)
+    assert(st.error.exists(e => e.contains("class org.example.xml.Elem is missing") && e.contains("histmersion plugin add")), st.error)
+    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+
+  test("missingClass: a NoClassDefFoundError or ClassNotFoundException, also as the cause; nothing else"):
+    assertEquals(PluginHost.missingClass(NoClassDefFoundError("a/b/C")), Some("a.b.C"))
+    assertEquals(PluginHost.missingClass(RuntimeException("x", ClassNotFoundException("a.b.D"))), Some("a.b.D"))
+    assertEquals(PluginHost.missingClass(RuntimeException("x")), None)
+    assertEquals(PluginHost.failure(RuntimeException("bang")), "RuntimeException: bang")
 
   test("a registry refuses a second vault of the same name, a reserved or mismatched name, and adds after register"):
     val escaped = scala.collection.mutable.Buffer.empty[PluginContext]
