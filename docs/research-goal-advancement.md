@@ -106,3 +106,104 @@ SELECT g.status, EXISTS (SELECT 1 FROM goal_links l WHERE l.goal_slug = g.slug A
 SELECT f.slug, g.status, left(f.why, 70) FROM goal_focus f JOIN goals g ON g.slug = f.slug WHERE f.active;
 SELECT config FROM agent_managers WHERE id = 'review';
 ```
+
+## As built (2026-10-24, branch `goals`)
+
+Proposals 1–5 and #3763, under one **central scheduler** (#3933). Proposal 6 (#3761) was already on the
+branch; proposal 7 (refreshing the Claude plan's reading on a schedule) is not done.
+
+### The central scheduler (#3933; proposal 1)
+
+The managers no longer start their own runs: every managers' tick, each active manager's due pending
+items are CANDIDATES of one decision (`SchedulerPolicy.run`, pure, in `core/jvm`; `SchedulerService` reads
+the facts and keeps the last pass for the explanations; `ManagerSupervisor.dispatchAll` starts each
+admitted item through the old `dispatch`). It replaces the per-manager slot caps — a `maxRuns` a person
+saved on a manager still caps it — and the focus's slots: the focus holds nothing any more, it ranks the
+goals, and its pins and priorities are the goals' priorities here.
+
+- **Resources.** `agents.max-concurrent-runs` against every run queued or running (a person's too); each
+  plan pool's `max-calls-in-flight × agents.scheduler.pool-overcommit` against the runs drawing on it; a
+  chain below its floor or out of allowance, the budgets and a manager's daily cap block an item outright.
+  Only a run that runs or is queued — or paused to resume by itself (#1803) — occupies a place: a run
+  **waiting for a person** never does (`ManagerRepo.running`), which is proposal 1.
+- **Priority.** The goal's (`goal_focus.priority`, a pin +1000), the job type's
+  (`agents.scheduler.type-priorities`: review 9 … currency 1, finish-first), and **aging**: one level per
+  `aging-hours` (24) waited. Library work (no goal) goes after every goal of the same priority.
+- **Anti-starvation**, before the strategy is asked: an item that waited `max-wait-hours` (72) goes next,
+  the longest first; a job type with work that had no start among the last ⌈1/`min-share`⌉ (20) starts
+  goes next; goals still gathering sources keep `gathering-slots` (1) places (proposal 2's guaranteed share).
+- **Strategies** (`SchedulerPolicy.Strategy`: `next(pool, state, settings)` and `behindWhy`; a third is one
+  more object in `Strategies.all`): `type-balanced` — stride scheduling over the job types by
+  `type-weights`, inside a type the best goal first; `goal-first` — the best goal (effective priority, then
+  the oldest) takes what it can use, then the next. `agents.scheduler.strategy`, switched live with
+  `histmersion agent scheduler strategy <name|default>` (V100 keeps a person's choice).
+- **Explained.** Every waiting item has a code (capacity, pool, manager-cap, blocked, busy, drain), a
+  sentence, the items it waits behind and its place: `histmersion agent scheduler [status|queue|why
+  <item>]`, the MCP `scheduler` tool, `GET /api/agents/scheduler`, `/why/{item}`, and the Managers
+  window's Scheduler panel (the queue filtered by type, reason and text; a start opens its manager's runs
+  in the runs window, the approvals button the approvals window). With no pass yet it shows a dry pass.
+
+**The default is `type-balanced`.** The figures above say the allowance is not what limits the goals (the
+ChatGPT plan at 0 % of its week, the runs-at-once cap mostly idle); what stalled them was one stage holding
+the others — reviews behind waiting extends, compiles behind publishes, 117 seeding goals behind a
+depth-first focus of 8. Breadth keeps every job type moving at no cost in quota, while the anti-starvation
+rules still finish what is closest to done first inside each type. `goal-first` is the one to switch to
+when the allowance becomes the limit (a fallback onto the Claude plan, a week near its floor): finishing
+fewer goals completely is then worth more than advancing all.
+
+### Proposal 2 — goal plans by policy
+
+`AutoApprovals` decides a goal plan by its checks whatever the focus; only the sub-goals it would open stay
+bounded (`AutopilotPolicy.goalPlanSubGoals`, `max-open-sub-goals`). The daily caps are spent in the
+scheduler's goal order. With `goal-plan = manual` the plan's run waits for a person holding no place, and
+the goal's proposal is kept back (blocked, holding nothing).
+
+### Proposal 3 — caps scaled to the backlog, one digest
+
+`AutopilotPolicy.scaledCap`: `max(cap, ⌈open × share⌉)`, at most a ceiling —
+`agents.approvals.auto.{goal-plans,publish}-backlog-share` / `-ceiling` and
+`agents.autopilot.ingest-backlog-share` / `-ingest-ceiling` (shares 0 by default: fixed caps). The digest
+(`ApprovalDigest`): the open approvals by kind (count, oldest, who decides, subjects, ids) and the items
+held for a person — `histmersion agent digest`, `list_approvals digest:true`, `GET
+/api/agents/approvals/digest`, the Approvals window's digest bar — and one worklog line a UTC day after
+`agents.autopilot.digest-hour` (V101). A group is decided at once: `histmersion agent decide-all
+<approve|reject> --kind/--subject/--id [--dry-run]`, `decide_approval` without `id`, `POST
+/api/agents/approvals/decide` — each through the single decision.
+
+### Proposal 4 — drain and the stall report
+
+`histmersion agent autopilot drain` (REST `POST /api/agents/autopilot/drain`, the MCP `manager` tool's
+`drain`, a button): the scheduler admits nothing, the tick decides no approval by code and drains no
+ingest backlog; the first tick with no run queued or running records it DRAINED (V102, a worklog line).
+`undrain`, or turning the autopilot on, lifts it; `off` is unchanged. **For a deploy:** drain; wait until
+`histmersion agent autopilot` says DRAINED (or `GET /api/agents/autopilot` has `drain.drained = true`); stop,
+install and start the server; `undrain`. The drain survives the restart, so the new server starts nothing
+until it is lifted; runs that waited or were paused are checkpointed and go on.
+
+The stall report (`Stalls.classify`): every unfinished goal with no progress in N days
+(`agents.autopilot.stall-days`, 3 — a run of its managers started or settled, an ingest, a sweep, a source
+linked, or its creation) with one reason — drain, person, held, paused, budget, quota, queue, blocked,
+running, failed, no-candidates, idle — and the command that unblocks it: `histmersion agent stalls
+[--days n]`, the MCP `scheduler` tool's `stalls`, `GET /api/agents/stalls`, the Scheduler panel.
+
+### Proposal 5 — seed before the plan
+
+`SeedService`: each tick (the autopilot on, not draining) up to `agents.scheduler.seed-goals-per-tick` (2)
+unfinished goals with no source, in the scheduler's goal order, each at most once per `seed-every-hours`
+(24), run the deterministic candidate search (#3761; their queries, else their title) and put up to
+`seed-ingest-per-goal` (5) new legal open-access candidates in their watcher's ingest backlog, which the same
+tick drains within the ingest caps through the legal chain only. No model, no place in the scheduler.
+
+### #3763 — the next article once the current ones are done
+
+The scheduler keeps a goal's `propose-articles` item back while the goal has an approved article to
+compile or a linked article that has not passed review (a person's enqueue goes all the same; the weekly
+seeding cron is kept back too). Once every article is compiled and reviewed, the autopilot re-opens the
+proposal (`AutopilotPolicy.nextArticle`, at most once per `agents.autopilot.next-article-hours` after the
+last one settled); the plan goes through `article-plan` like any other.
+
+### What did not change
+
+The ingest backlog is not a scheduler candidate: it uses no AI allowance and keeps its own daily caps (the
+status lists it). The focus's `max-active-goals` and `focus-ratio` admit nothing any more; `focus` still
+shows how the goals rank. Migrations V100 (the strategy), V101 (the digest's day), V102 (the drain).

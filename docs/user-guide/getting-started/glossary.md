@@ -51,8 +51,8 @@ article is about.
 **finding** — one claim of a source, with a place (and a point on the map) and a range of years, and
 a confidence: `high`, `medium`, `low` or `contested`.
 
-**focus** — the autopilot's rule that only a few research goals (8 by default) are worked on by the AI at a
-time, the ones closest to done first; the others wait their turn. See [the autopilot](../articles/autopilot.md#the-focus-a-few-goals-at-a-time-finished).
+**focus** — how the autopilot ranks the research goals: a goal you pin, then the priority you gave it. The
+scheduler uses that ranking to decide which goal's work runs first. See [the scheduler](../articles/autopilot.md#the-scheduler-what-runs-next).
 
 **gazetteer** — the list of places: names, shapes, the years each existed, and what each lies inside.
 
@@ -88,6 +88,10 @@ collection, an event catalogue, a password vault, an AI provider.
 
 **process manager** — a long-running helper inside the server that keeps one kind of agent work
 going (reviewing articles, enriching sources, seeding or watching a research goal).
+
+**scheduler** — the part of the server that decides which waiting piece of AI work runs next — across every
+goal and every kind of work — within what your AI plans and settings allow; work waiting for you takes no
+place. See [the scheduler](../articles/autopilot.md#the-scheduler-what-runs-next).
 
 **secret reference** — a way to name a password without writing it down: `env:NAME`,
 `keepassxc:Entry#password`, `1password:op://…`, `bitwarden:item`.

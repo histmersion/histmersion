@@ -67,48 +67,99 @@ While it is on, it:
 - looks for articles whose filter now finds new sources, and extends them;
 - takes a backup and runs the safe lint repairs every 24 hours.
 
-### The focus: a few goals at a time, finished
+### The scheduler: what runs next
 
-With many goals, model work spread over all of them finishes none. So the autopilot keeps only a few
-goals **active** at a time — 8 by default (`agents.autopilot.max-active-goals`). The plans, article
-proposals, compiles, reviews and acquisition sweeps of the active goals run; those of every other
-goal **wait**, held with the reason `focus`. Nothing is cancelled, and a run already going finishes.
+Every manager only **proposes** work. One **scheduler** in the server decides, a few times a minute,
+which of all those waiting items gets to run now — a goal's plan, an article proposal, a search for new
+sources, an enrichment, a compile, a review — within what your AI plans and settings allow.
 
-Ingestion is not part of this: the legal open-access backlog keeps draining for every goal within the
-ingest caps, and the currency checks (no model) keep running for all. Enriching new sources goes on
-for the whole library, the active goals' sources first (three of theirs to one of any other).
+- **What counts as busy.** Only a run that is running or about to run takes a place
+  (`agents.max-concurrent-runs`, 4 by default, and each subscription plan's own limit). A run that is
+  **waiting for you** — a plan or an article to approve — takes no place, so one unanswered approval
+  never stops the rest.
+- **Who goes first.** A goal you **pinned**, then a goal with a higher **priority**, then the older goal.
+  Inside a goal, finishing comes first: a review before a compile before a new proposal.
+- **Nobody waits forever.** The longer an item waits, the higher it climbs; after 72 hours
+  (`agents.scheduler.max-wait-hours`) it goes next. Every kind of work gets some turns
+  (`agents.scheduler.min-share`), and goals still gathering their sources always keep one place
+  (`agents.scheduler.gathering-slots`).
 
-Which goals are active is decided **finish-first**, in this order:
+You choose **how** it shares the work:
 
-1. a goal you **pinned** (always active);
-2. the goal closest to done: articles written but not yet through review, then approved articles still
-   to be written, then enough sources for an article, then the rest;
-3. **depth-first**: a sibling of an active goal, then a goal in the same tree, before a goal elsewhere;
-   a parent becomes active again only to write its own synthesis once its sub-goals are done;
-4. a **priority** you gave it (higher first);
-5. more sources, then the oldest.
-
-An active goal keeps its place until it is `reviewed`. It gives up its place earlier when it cannot
-use it: everything left waits for **you** (a plan only a person approves), its last item was stopped
-(a task says why), or it has nothing to do until its weekly schedule or new sources. The next goal in
-line takes the place at once. A goal still gathering sources also gives its place to one that has
-articles to write or review.
+| strategy | what it does | use it when |
+|---|---|---|
+| `type-balanced` (the default) | spreads the turns over the kinds of work — reviews, compiles, enrichment, proposals, plans, searches — by weight; inside each kind the best goals first | your AI allowance is not the limit: every goal keeps moving, and no stage of the pipeline stalls behind another |
+| `goal-first` | gives the turns to the most important goals, oldest first; a newer goal of the same priority waits until the older ones have nothing to run | the allowance is short: finish a few goals completely rather than start many |
 
 ```bash
-histmersion agent autopilot focus                  # the active goals (why, what each waits for, pace), the queue, the rest
-histmersion agent autopilot focus pin <goal>       # keep this goal active now
-histmersion agent autopilot focus unpin <goal>
+histmersion agent scheduler                        # the strategy, what is running, the queue and why each item waits
+histmersion agent scheduler queue                  # just the queue, in the order it will run
+histmersion agent scheduler why steppe-hypothesis  # why one item waits (by its id, or what it works on)
+histmersion agent scheduler strategy goal-first    # switch now (`default` = back to the setting)
+histmersion agent autopilot focus pin <goal>       # this goal first, always
 histmersion agent autopilot focus priority <goal> 5
-histmersion agent autopilot focus max 4            # at most 4 active goals (0 = no limit; `default` = the setting)
 ```
 
-The managers window shows the same: the active goals with why each was chosen, what it is doing or
-waiting for, and how fast it moves; the next goals in line; and how many cannot use a place now and why.
-An item held for the focus cannot be released by hand: pin its goal instead.
+The managers window has a **Scheduler** panel with the same: the strategy buttons, what the last round
+started, and the queue — filter it by kind of work, by why it waits, or by name.
 
-When goal plans are approved automatically (`agents.approvals.goal-plan = auto`), a new plan is
-approved only for an **active** goal, and only while its unfinished sub-goals plus the new ones stay
-within 5 (`agents.autopilot.max-open-sub-goals`). Otherwise it waits for you.
+### New articles once the current ones are done
+
+A goal does not start new articles while one of its articles is still being written or reviewed. Once
+every article of the goal is published and has passed its review, the autopilot proposes the goal's
+**next** article (at most once a day, `agents.autopilot.next-article-hours`). The proposal is approved
+the way your approval settings say ([Approvals](approvals.md)).
+
+### Goals with no sources start gathering at once
+
+A goal that has no source yet does not wait for its plan to be approved: the autopilot searches the
+scholarly indexes for it (by its saved queries, or its title — no AI is used) and fetches what is
+**legally open access**, within the daily ingest limits. Two goals a few minutes at a time, each at
+most once a day (`agents.scheduler.seed-goals-per-tick`, `.seed-every-hours`).
+
+### What waits for you: one digest a day
+
+Instead of a hundred single approvals, look at them together:
+
+```bash
+histmersion agent digest                                   # everything waiting for you, by kind
+histmersion agent decide-all approve --kind goal-plan --dry-run
+histmersion agent decide-all approve --kind goal-plan      # all of them at once (or reject; --subject <goal>)
+```
+
+Once a day (after 07:00 UTC, `agents.autopilot.digest-hour`) the same summary goes to the worklog. In
+the approvals window the digest bar at the top picks one kind, and the bulk buttons decide them all.
+
+When goal plans are approved automatically (`agents.approvals.goal-plan = auto`), a plan is approved
+whatever goal it belongs to, as long as its unfinished sub-goals plus the new ones stay within 5
+(`agents.autopilot.max-open-sub-goals`). The daily limits of automatic approvals can grow with what is
+waiting (`agents.approvals.auto.goal-plans-backlog-share`) up to a ceiling.
+
+### What is stuck, and why
+
+```bash
+histmersion agent stalls              # goals with no progress for 3 days: the one reason each, and what to do
+histmersion agent stalls --days 7
+```
+
+Each stalled goal gets one reason — waiting for you, paused, quota, a budget, in the queue, an item that
+failed, nothing found, idle — and the command that moves it on. The scheduler panel's **stalls** button
+shows the same.
+
+### Before an update: drain
+
+To update the server, do not turn the autopilot off — that pauses every manager. **Drain** instead:
+nothing new starts, and what is running finishes.
+
+```bash
+histmersion agent autopilot drain     # nothing new starts
+histmersion agent autopilot           # says DRAINING …, then DRAINED: safe to stop the server
+#   … update and restart …
+histmersion agent autopilot undrain   # back to work (turning the autopilot on also lifts it)
+```
+
+Whatever waits — for you, for a quota — is saved and goes on after the restart. The managers window
+has the same **drain** button.
 
 **What it never does:** it never lifts a cap, a budget or a plan floor. With the shipped settings
 (`manual`) every plan and every article still waits for your approval; the autopilot decides them by
@@ -126,11 +177,10 @@ managers started are `histmersion agent runs --origin manager`, or one manager's
 
 - `agents.max-concurrent-runs` (4) — runs at once, across every manager;
 - the budgets — per run, per day, per month ([AI providers, budgets and quotas](../how-to/ai-providers.md));
-- each manager's `max-runs` and `daily-usd`;
-- the plan floors of a subscription;
+- each subscription plan's runs at once (its `max-calls-in-flight`) and its floors;
+- each manager's `daily-usd`, and a `max-runs` you set on a manager yourself;
 - the ingest caps: 5 a day per watcher, 20 a day for all watchers together while the autopilot is on;
-- the focus: at most 8 goals active for model work at a time (it decides **what** runs; the limits
-  above decide how much).
+- the scheduler decides **what** runs next within them (it holds no place for work that waits for you).
 
 !!! warning "More automation, more to check"
     The autopilot can write many articles while you are away. Every one of them needs the reading
