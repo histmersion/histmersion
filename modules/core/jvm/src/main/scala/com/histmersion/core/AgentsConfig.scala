@@ -232,7 +232,12 @@ final case class AgentApprovalsConfig(statusChange: String, edges: String, artic
   * sources; a goal plan may propose sub-goals only for a goal less than `maxGoalDepth` levels below a
   * root goal (0 = a root). */
 final case class AutoApprovalsConfig(articlesPerGoalPerDay: Int = 6, publishPerDay: Int = 10, goalPlansPerDay: Int = 5,
-    publishMinSources: Int = 3, maxGoalDepth: Int = 2) derives ConfigReader
+    publishMinSources: Int = 3, maxGoalDepth: Int = 2,
+    /** The daily caps scaled to the backlog (#3762 proposal 3): with a share above 0 a day's cap is
+      * `max(cap, ⌈open approvals of the kind × share⌉)`, at most the ceiling ([[AutopilotPolicy.scaledCap]]);
+      * 0 keeps the fixed cap. */
+    goalPlansBacklogShare: Double = 0, goalPlansCeiling: Int = 50, publishBacklogShare: Double = 0,
+    publishCeiling: Int = 50) derives ConfigReader
 
 object AgentApprovalsConfig:
   /** `auto` or `checked`, in any case. */
@@ -350,7 +355,11 @@ final case class AgentManagersConfig(enabled: Boolean, tickSeconds: Int, keepEve
 final case class AgentAutopilotConfig(ensureMinutes: Int = 5, ingestPerDay: Int = 20, watchIngestPerDay: Int = 5,
     watchCron: String = "@weekly", seedCron: String = "@weekly", finishedWatchCron: String = "@monthly",
     extendMinNew: Int = 3, backupHours: Int = 24, lintHours: Int = 24, maxActiveGoals: Int = 8, focusRatio: Int = 3,
-    maxOpenSubGoals: Int = 5, focusQueueShown: Int = 10) derives ConfigReader
+    maxOpenSubGoals: Int = 5, focusQueueShown: Int = 10,
+    /** `ingestPerDay` scaled to the ingest backlog ([[AutopilotPolicy.scaledCap]]; 0 = fixed), at most the ceiling. */
+    ingestBacklogShare: Double = 0, ingestCeiling: Int = 100,
+    /** The UTC hour after which the day's approval digest is written to the worklog (-1 = never). */
+    digestHour: Int = 7) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,

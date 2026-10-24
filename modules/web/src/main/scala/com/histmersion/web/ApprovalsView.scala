@@ -229,9 +229,33 @@ object ApprovalsView:
       }
     )
 
+  /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
+  def digestLine(g: com.histmersion.core.ApprovalDigest.KindGroup): String =
+    s"${g.kind} ${Paging.grouped(g.count)}" + g.oldest.fold("")(o => s" (oldest $o)") +
+      (if g.decidedBy == "checked" then " · the autopilot's checks decide them within the day's cap" else " · a person decides")
+
+  /** The digest (#3762 proposal 3): everything waiting for a person, by kind — a click shows one kind in the
+    * list below (its kind filter), where the bulk bar decides them all at once. */
+  private def digestBar: HtmlElement =
+    val d = Var(Option.empty[com.histmersion.core.ApprovalDigest.Digest])
+    def load(): Unit = ApiClient.approvalDigest.onComplete(_.toOption.foreach(x => d.set(Some(x))))
+    div(cls := "approvals-digest",
+      onMountCallback(_ => load()),
+      changed.events --> (_ => load()),
+      child.maybe <-- d.signal.map(_.filter(x => x.total > 0 || x.heldForPerson > 0).map { x =>
+        div(
+          p(cls := "muted", s"Waiting for a person: ${Plural.count(x.total, "approval")}" +
+            (if x.heldForPerson > 0 then s", ${Plural.count(x.heldForPerson, "manager item")} held for a person" else "") +
+            " — pick a kind, then decide the shown ones at once."),
+          div(cls := "btn-group", x.kinds.map(g =>
+            button(typ := "button", cls := "btn btn--sm", digestLine(g), title := g.subjects.map(s => s"${s.subject} (${s.count})").mkString(", "),
+              onClick --> (_ => UiState.set(UiState.approvalKinds := List(g.kind), UiState.approvalState := None)())))))
+      }))
+
   def pane: HtmlElement =
     div(
       cls := "tool-pane approvals-pane",
+      digestBar,
       list.lifecycle,
       changed.events --> (_ => refresh()),
       filterSignal.changes --> (_ => { selected.set(Set.empty); list.restart() }),

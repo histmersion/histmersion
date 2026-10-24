@@ -90,6 +90,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The central scheduler: which of the managers' pending items start a run, across every job type. */
   val scheduler: SchedulerService = SchedulerService(ds, cfg, h, this)
 
+  /** The approval digest: everything waiting for a person, a daily worklog line, a group decided at once. */
+  val digest: ApprovalDigestService = ApprovalDigestService(ds, cfg, h, this)
+
   /** One agent server per database: the engine and the managers start only in the server that holds it
     * (ttl 3 × the managers' tick). */
   val lease: AgentLease = AgentLease(ds, 3 * math.max(5, cfg.managers.tickSeconds))

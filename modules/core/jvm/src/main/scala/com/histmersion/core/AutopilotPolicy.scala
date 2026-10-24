@@ -98,6 +98,21 @@ object AutopilotPolicy:
       s"goal $goal has ${Plural.count(openSubGoals, "unfinished sub-goal")} and the plan adds $proposed; at most " +
         s"$limit (agents.autopilot.max-open-sub-goals) are opened by code")
 
+  /** A daily cap scaled to the backlog (#3762 proposal 3): `share` ≤ 0 keeps `base`; else
+    * `max(base, ⌈backlog × share⌉)`, never above `ceiling` (when it is above 0) — and never below 0. */
+  def scaledCap(base: Int, backlog: Int, share: Double, ceiling: Int): Int =
+    val b = math.max(0, base)
+    if share <= 0 then b
+    else
+      val scaled = math.max(b, math.ceil(math.max(0, backlog) * share).toInt)
+      if ceiling > 0 then math.min(scaled, math.max(b, ceiling)) else scaled
+
+  /** The cap as the status shows it: `5 a day`, or `5 a day, 22 today for a backlog of 64 (at most 50)`. */
+  def capText(base: Int, backlog: Int, share: Double, ceiling: Int): String =
+    val n = scaledCap(base, backlog, share, ceiling)
+    if share <= 0 then s"$base a day"
+    else s"$base a day, $n today for a backlog of $backlog" + (if ceiling > 0 then s" (at most $ceiling)" else "")
+
   private def depthText(d: Int): String = if d == 0 then "at the root" else s"$d level(s) below a root"
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps

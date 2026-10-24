@@ -555,6 +555,12 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
   /** `POST /api/agents/scheduler {strategy}` — switch the strategy live. */
   def setScheduler(in: AgentScheduler.SchedulerSet): Either[ApiError, AgentScheduler.SchedulerStatus] = agents.scheduler.set(in)
 
+  /** `GET /api/agents/approvals/digest`. */
+  def digest: ApprovalDigest.Digest = agents.digest.digest()
+
+  /** `POST /api/agents/approvals/decide` — a whole group at once. */
+  def decideAll(in: ApprovalDigest.BulkDecide): Either[ApiError, ApprovalDigest.BulkResult] = agents.digest.decideAll(in)
+
   /** `GET /api/agents/scheduler/why/{item}`. */
   def schedulerWhy(item: String): Either[ApiError, AgentScheduler.WhyInfo] = agents.scheduler.why(item)
 

@@ -68,11 +68,14 @@ object AgentsTools:
             "which the run WAITS for. Default: the open ones; `state` = open, approved, rejected, failed or all; " +
             s"`kind` = any of ${Agents.ApprovalKind.values.map(_.wire).mkString(", ")}; `subject` = text in what it is " +
             "about (a slug, a manager, a citekey); `goal` = one goal's; `decidedBy` = person, autopilot or auto. The " +
-            "listing heads with the counts per kind and per decider.")
+            "listing heads with the counts per kind and per decider. `digest: true` = the digest instead: everything waiting " +
+            "for a person by kind (how many, the oldest, who decides them now, the subjects, the ids) and the manager items " +
+            "held for a person.")
         .input[ApprovalsInput]
         .handle { in =>
           val f = in.filter
-          ToolResult.text(a.approvalsPage(f, in.limit, in.before, None).fold(McpOut.refusal, (as, page) =>
+          if in.digest then ToolResult.text(ApprovalDigestMarkdown.digest(a.managing.digest))
+          else ToolResult.text(a.approvalsPage(f, in.limit, in.before, None).fold(McpOut.refusal, (as, page) =>
             AgentsMarkdown.approvals(as, page, f.qualifier,
               Paging.olderLine(page, c => s"call `list_approvals` again with the same filters and `before: \"$c\"`"))))
         }
@@ -80,14 +83,20 @@ object AgentsTools:
     val decide =
       tool("decide_approval")
         .description(
-          "Approve or reject one open approval by id. Approving APPLIES the change through the ordinary " +
+          "Approve or reject one open approval by `id`. Approving APPLIES the change through the ordinary " +
             "source patch (status or edge), or lets the waiting run apply its plan or write its article; " +
-            "rejecting keeps it on record. Decide only what the user asked you to, or what you have " +
-            "verified against the record yourself.")
+            "rejecting keeps it on record. Without `id`, a whole group at once: every open approval of `kind`, about " +
+            "`subject`, or in `ids` (they narrow together), the oldest first, at most `limit`; `dryRun: true` lists " +
+            "what it would decide. Decide only what the user asked you to, or what you have verified against the " +
+            "record yourself.")
         .input[DecideInput]
         .handle { in =>
-          ToolResult.text(a.decide(in.id, in.decision, DecisionRequest(in.note))
-            .fold(McpOut.refusal, x => AgentsMarkdown.approvalLine(x)))
+          in.id match
+            case Some(id) =>
+              ToolResult.text(a.decide(id, in.decision, DecisionRequest(in.note)).fold(McpOut.refusal, x => AgentsMarkdown.approvalLine(x)))
+            case None =>
+              ToolResult.text(a.managing.decideAll(ApprovalDigest.BulkDecide(in.decision, in.kind, in.subject, in.ids, in.note,
+                in.dryRun, in.limit, Some("mcp"))).fold(McpOut.refusal, ApprovalDigestMarkdown.bulk))
         }
 
     val links =
@@ -397,7 +406,7 @@ object AgentsTools:
 
   final case class ApprovalsInput(state: Option[String] = None, limit: Option[Int] = None,
       before: Option[String] = None, kind: List[String] = Nil, subject: Option[String] = None,
-      goal: Option[String] = None, decidedBy: List[String] = Nil) derives KindlingsCodecAsObject:
+      goal: Option[String] = None, decidedBy: List[String] = Nil, digest: Boolean = false) derives KindlingsCodecAsObject:
     def filter: ListFilters.ApprovalFilter = ListFilters.ApprovalFilter(state, kind, subject, goal, decidedBy)
   object ApprovalsInput:
     given Schema[ApprovalsInput] = KindlingsSchema.derived[ApprovalsInput].schema
@@ -407,13 +416,21 @@ object AgentsTools:
       .modify(_.goal)(_.description("Only one goal's: its plan, or proposed by a run for it"))
       .modify(_.decidedBy)(_.description("Only those decided by: person, autopilot (its checks) or auto (applied when proposed)"))
       .modify(_.before)(_.description("The next older page — the id of the last approval shown"))
+      .modify(_.digest)(_.description("true: the digest of everything waiting for a person, by kind, instead of the listing"))
 
-  final case class DecideInput(id: Long, decision: String, note: Option[String] = None) derives KindlingsCodecAsObject
+  final case class DecideInput(id: Option[Long] = None, decision: String, note: Option[String] = None,
+      kind: Option[String] = None, subject: Option[String] = None, ids: List[Long] = Nil, dryRun: Boolean = false,
+      limit: Option[Int] = None) derives KindlingsCodecAsObject
   object DecideInput:
     given Schema[DecideInput] = KindlingsSchema.derived[DecideInput].schema
-      .modify(_.id)(_.description("The approval's id (from list_approvals)"))
+      .modify(_.id)(_.description("The approval's id (from list_approvals); without it, a group at once (kind, subject, ids)"))
       .modify(_.decision)(_.description("approve or reject"))
       .modify(_.note)(_.description("Why, kept with the decision"))
+      .modify(_.kind)(_.description("A group: every open approval of this kind"))
+      .modify(_.subject)(_.description("A group: every open approval about this goal or article"))
+      .modify(_.ids)(_.description("A group: these approvals"))
+      .modify(_.dryRun)(_.description("A group: list what it would decide, decide nothing"))
+      .modify(_.limit)(_.description("A group: at most this many, the oldest first"))
 
   final case class SchedulerInput(action: String = "status", item: Option[String] = None, strategy: Option[String] = None,
       limit: Option[Int] = None) derives KindlingsCodecAsObject

@@ -62,9 +62,9 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM goals".update.run()
       sql"DELETE FROM articles WHERE slug LIKE 'zzfocus%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzfocus%'".update.run()
-      sql"DELETE FROM queue_items WHERE text LIKE '%zzfocus%' OR text LIKE 'autopilot%'".update.run()
+      sql"DELETE FROM queue_items WHERE text LIKE '%zzfocus%' OR text LIKE 'autopilot%' OR text LIKE 'approval%'".update.run()
       sql"""UPDATE agent_autopilot SET enabled = false, paused = '{}', changed_by = '', last_ensure_at = NULL,
-                                       max_active_goals = NULL, scheduler_strategy = NULL""".update.run()
+                                       max_active_goals = NULL, scheduler_strategy = NULL, last_digest_at = NULL""".update.run()
       sql"DELETE FROM goal_focus".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = clean()
@@ -223,6 +223,45 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     judged(plan(g(1), 6)) match
       case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("max-open-sub-goals"), w)
       case v => fail(v.toString)
+
+  test("the digest: open approvals by kind; one worklog line a UTC day after digest-hour; a kind decided at once"):
+    val (a, h, up) = handlers(); seed(a, h, up)
+    def plan(goal: String) = AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, goal,
+      Plan(goal, "r", Nil, List("q")).asJson.noSpaces)
+    val ps = List(g(1), g(2), g(3)).map(plan)
+    val d = a.digest.digest()
+    val plans = d.kinds.find(_.kind == "goal-plan").getOrElse(fail(d.toString))
+    assertEquals((plans.count, plans.decidedBy), (3, "person"))
+    assertEquals(plans.ids, ps.map(_.id).sorted)
+    // once a day, after the hour (7 UTC by default)
+    val morning = Instant.parse("2031-03-03T06:59:00Z")
+    assertEquals(a.digest.tick(morning), Nil, "before the hour")
+    assertEquals(a.digest.tick(morning.plusSeconds(120)), List("approval digest written"))
+    assertEquals(a.digest.tick(morning.plusSeconds(3600)), Nil, "once a day")
+    assertEquals(a.digest.tick(morning.plusSeconds(86400 + 120)), List("approval digest written"), "the next day, after the hour")
+    assert(QueueRepoLog.has(ds, "approval digest: "), "the worklog line")
+    // a whole kind at once: a dry run lists, then the decision
+    assert(a.digest.decideAll(ApprovalDigest.BulkDecide("approve")).isLeft, "never every open approval")
+    assert(a.digest.decideAll(ApprovalDigest.BulkDecide("approve", kind = Some("nope"))).isLeft)
+    val dry = a.digest.decideAll(ApprovalDigest.BulkDecide("reject", kind = Some("goal-plan"), dryRun = true)).fold(e => fail(e.message), identity)
+    assertEquals((dry.matched, dry.decided.size, dry.dryRun), (3, 3, true))
+    assert(ps.forall(p => AgentRepo.approval(ds, p.id).exists(_.state == "open")), "a dry run decides nothing")
+    val done = a.digest.decideAll(ApprovalDigest.BulkDecide("reject", kind = Some("goal-plan"), subject = Some(g(2)), by = Some("test")))
+      .fold(e => fail(e.message), identity)
+    assertEquals((done.matched, done.decided, done.failed), (1, List(ps(1).id), Nil))
+    assertEquals(AgentRepo.approval(ds, ps(1).id).map(x => (x.state, x.note.exists(_.contains("in bulk by test")))), Some(("rejected", true)))
+    assert(QueueRepoLog.has(ds, "approvals rejected in bulk by test"), "a worklog line")
+
+  test("the daily caps scale with the backlog, up to the ceiling"):
+    val scaled = cfg.copy(agents = cfg.agents.copy(approvals = cfg.agents.approvals.copy(goalPlan = "auto",
+      auto = cfg.agents.approvals.auto.copy(goalPlansPerDay = 1, goalPlansBacklogShare = 0.5, goalPlansCeiling = 3))))
+    val (a, h, up) = handlers(scaled); seed(a, h, up)
+    (1 to 6).foreach(i => AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, g(i), Plan(g(i), "r", Nil, List("q")).asJson.noSpaces))
+    assertEquals(a.autoApprovals.goalPlanCap, 3, "max(1, ceil(6 x 0.5)) = 3, at most 3")
+    assert(a.managing.autopilot.approvals.exists(r => r.kind == "goal-plan" && r.cap.contains("3 today for a backlog of 6")),
+      a.managing.autopilot.approvals)
+    val (b, _, _) = handlers()
+    assertEquals(b.autoApprovals.goalPlanCap, cfg.agents.approvals.auto.goalPlansPerDay, "share 0: the fixed cap")
 
 /** The worklog, read for an assertion. */
 private object QueueRepoLog:

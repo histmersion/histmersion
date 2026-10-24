@@ -4,6 +4,7 @@ import com.histmersion.core.Agents.*
 import com.histmersion.core.{AgentProposals, ArticlePlans, EdgeKind, GoalPlans, ListFilters, SourceStatus}
 
 import com.augustnagro.magnum.*
+import com.histmersion.core.ApprovalDigest
 import javax.sql.DataSource
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind
@@ -571,6 +572,17 @@ object AgentRepo:
     connect(ds):
       (approvalSelect ++ Sql.of(" WHERE state = 'open' AND kind = ANY(?::text[]) ORDER BY id LIMIT ?",
         Param.A(kinds.map(_.wire)), Param.I(math.max(1, limit)))).frag.query[ApprovalRow].run().toList.map(toApproval)
+
+  /** Every OPEN approval, light (id, kind, subject, created), oldest first — what the digest groups. */
+  def openLight(ds: DataSource): List[ApprovalDigest.Open] =
+    connect(ds):
+      sql"""SELECT id, kind, subject, to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            FROM approvals WHERE state = 'open' ORDER BY id""".query[(Long, String, Option[String], String)].run().toList
+        .map((i, k, s, c) => ApprovalDigest.Open(i, k, s, c))
+
+  /** How many approvals of `kind` are open (the backlog a scaled daily cap reads). */
+  def openCount(ds: DataSource, kind: ApprovalKind): Int =
+    connect(ds)(sql"SELECT count(*)::int FROM approvals WHERE state = 'open' AND kind = ${kind.wire}".query[Int].run().head)
 
   /** Open approvals per subject (a goal or an article slug). */
   def openBySubject(ds: DataSource): Map[String, Int] =

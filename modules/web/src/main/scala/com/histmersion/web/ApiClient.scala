@@ -231,6 +231,8 @@ object ApiClient:
   def setScheduler(strategy: String): Future[AgentScheduler.SchedulerStatus] =
     call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(strategy, Some("web")))
   def schedulerWhy(item: String): Future[AgentScheduler.WhyInfo] = call(ManagersApi.schedulerWhy)(item)
+  /** Everything waiting for a person, by kind. */
+  def approvalDigest: Future[ApprovalDigest.Digest] = call(ManagersApi.digest)(())
   def manager(id: String): Future[Managers.ManagerDetail] = call(ManagersApi.get)(id)
   def managerUpdate(id: String, in: Managers.ManagerUpdate): Future[Managers.ManagerInfo] = call(ManagersApi.update)((id, in))
   /** pause | resume | stop; `runs` = a pause takes its runs in flight with it. */
