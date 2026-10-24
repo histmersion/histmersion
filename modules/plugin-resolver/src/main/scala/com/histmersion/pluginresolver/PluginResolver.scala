@@ -12,8 +12,9 @@ import scala.util.control.NonFatal
   * @param kit             the relink kit: its `modules` and `excludes` are what the server provides
   * @param lib             the plugins directory's `lib/`, written unless `check`
   * @param histmersionRepo the install's Maven repository (the plugin API and platform), looked up first
-  * @param repositories    the repositories named for this run; none = the ones `lib/repositories` keeps
-  *                        from the last run that named some, else Maven Central
+  * @param repositories    the repositories named for this run, looked up before the ones `lib/repositories`
+  *                        keeps from earlier runs (and kept with them); none named and none kept = Maven
+  *                        Central
   * @param check           resolve and report only: `lib/` is left as it is
   * @param cache           coursier's cache, when not its default */
 final case class ResolveRequest(kit: Path, lib: Path, histmersionRepo: Option[Path], repositories: List[RepositoryUrl],
@@ -127,7 +128,7 @@ object PluginResolver:
     outcome match
       case Left(e) => err(e); 3
       case Right((server, stored)) =>
-        val named   = if r.repositories.nonEmpty then r.repositories else stored
+        val named   = (r.repositories ++ stored).distinct
         val remote  = if named.nonEmpty then named else List(Coursier.central)
         val plugins = r.jars.map(j => PluginArtifact(j, Pom.of(j)))
         val scratch = Files.createTempDirectory("histmersion-plugin-resolve")
@@ -140,7 +141,7 @@ object PluginResolver:
               resolveRoots(roots, server, coursier, out, err) match
                 case Left(rc) => rc
                 case Right(deps) =>
-                  if !r.check then LibDirectory.write(r.lib, deps, inputs(r.jars), r.repositories)
+                  if !r.check then LibDirectory.write(r.lib, deps, inputs(r.jars), (r.repositories ++ stored).distinct)
                   0
         finally deleteTree(scratch)
 
@@ -159,7 +160,7 @@ object PluginResolver:
       case Right(perPlugin) =>
         perPlugin.flatMap((p, modules) => Resolution.conflicts(p, modules, server, Coursier.order)) match
           case conflicts if conflicts.nonEmpty =>
-            conflicts.foreach(c => out(s"refused: ${c.message}"))
+            conflicts.foreach(c => err(s"refused: ${c.message}"))
             Left(2)
           case _ =>
             coursier.resolve(roots.map(_._2), server.shipped.keySet ++ server.excluded) match

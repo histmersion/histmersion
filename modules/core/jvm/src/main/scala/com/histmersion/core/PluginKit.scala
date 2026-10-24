@@ -100,6 +100,7 @@ object PluginKit:
   final case class Coordinates(group: String, artifact: String, version: String):
     def path: String = s"${group.replace('.', '/')}/$artifact/$version/$artifact-$version"
     def jarUrl(repo: String): String = s"${repo.stripSuffix("/")}/$path.jar"
+    def pomUrl(repo: String): String = s"${repo.stripSuffix("/")}/$path.pom"
     override def toString: String = s"$group:$artifact:$version"
 
   private val Part = "[A-Za-z0-9_.\\-+]+"

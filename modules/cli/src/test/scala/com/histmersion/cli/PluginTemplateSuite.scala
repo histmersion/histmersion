@@ -7,12 +7,14 @@ import java.nio.file.{Files, Path}
   * runs it. */
 class PluginTemplateSuite extends munit.FunSuite:
 
-  private val api = ApiJars(Path.of("/opt/Histmersion App/plugin-api/histmersion-plugin-api.jar"),
-    Some(Path.of("/opt/Histmersion App/plugin-api/histmersion-plugin-api-sources.jar")))
+  private val repo = PluginRepository.parse("file:///opt/Histmersion%20App/maven/", _ => false).toOption.get
 
   private def request(id: String, kind: PluginKind = PluginKind.SourceFetcher, agentNotes: Boolean = false) =
     val pid = PluginId.parse(id).toOption.get
-    PluginTemplate.Request(pid, kind, ScalaPackage.parse(pid.packageName).toOption.get, api, agentNotes)
+    PluginTemplate.Request(pid, kind, ScalaPackage.parse(pid.packageName).toOption.get, repo, agentNotes)
+
+  private val api      = s"${PluginBuildVersions.organization}::histmersion-plugin-api:${PluginBuildVersions.histmersion}"
+  private val platform = s"${PluginBuildVersions.organization}::histmersion-plugin-platform:${PluginBuildVersions.histmersion}"
 
   private def file(files: List[TemplateFile], path: String): String =
     files.find(_.path == path).map(_.content).getOrElse(fail(s"no $path among ${files.map(_.path)}"))
@@ -36,10 +38,11 @@ class PluginTemplateSuite extends munit.FunSuite:
     assertEquals(PluginTemplate.pluginClass(PluginId.parse("mirror").toOption.get), "MirrorPlugin")
     assertEquals(PluginTemplate.pluginClass(PluginId.parse("my-plugin").toOption.get), "MyPlugin")
 
-  test("the project is two Scala files and the resources a plugin jar carries"):
+  test("the project is two Scala files, a .gitignore and the resources a plugin jar carries"):
     assertEquals(PluginTemplate.files(request("mirror")).map(_.path), List(
       "Mirror.scala",
       "Mirror.test.scala",
+      ".gitignore",
       "resources/META-INF/services/com.histmersion.plugin.Plugin",
       "resources/META-INF/histmersion/plugins/mirror.conf",
       "resources/META-INF/native-image/histmersion-plugin/mirror/reachability-metadata.json"))
@@ -48,27 +51,29 @@ class PluginTemplateSuite extends munit.FunSuite:
     val paths = PluginTemplate.files(request("mirror", agentNotes = true)).map(_.path)
     assert(paths.contains("AGENTS.md") && paths.contains("CLAUDE.md"), paths)
     val notes = file(PluginTemplate.files(request("mirror", agentNotes = true)), "AGENTS.md")
-    assert(notes.contains("/opt/Histmersion App/plugin-api/histmersion-plugin-api-sources.jar"), notes)
+    assert(notes.contains("file:///opt/Histmersion%20App/maven/"), notes)
+    assert(notes.contains(s"histmersion-plugin-api_3-${PluginBuildVersions.histmersion}-sources.jar"), notes)
+    assert(notes.contains("histmersion plugin add mirror::mirror:0.1.0 --repo ./repo"), notes)
     assert(notes.contains("histmersion.plugins.mirror { enabled = true }"), notes)
+    assert(!notes.contains("shade"), "plugins no longer shade their dependencies")
     assert(notes.contains("AGPL-3.0"), notes)
     assert(!notes.contains("@"), "a placeholder is left in AGENTS.md")
 
-  test("the directives name the server's Scala, the API jars (quoted: the path has a space) and the resources"):
+  test("the directives: the server's Scala, the repository, the API and platform compile-only, the resources, the publication"):
     val main = file(PluginTemplate.files(request("mirror")), "Mirror.scala")
     assert(main.startsWith(s"//> using scala ${PluginBuildVersions.scala}\n"), main)
-    assert(main.contains("//> using jar \"/opt/Histmersion App/plugin-api/histmersion-plugin-api.jar\"\n"), main)
-    assert(main.contains("//> using sourceJar \"/opt/Histmersion App/plugin-api/histmersion-plugin-api-sources.jar\"\n"), main)
-    assert(main.contains(s"//> using dep com.kubuszok::kindlings-sconfig-derivation:${PluginBuildVersions.kindlings}\n"), main)
+    assert(main.contains("//> using repository file:///opt/Histmersion%20App/maven/\n"), main)
+    assert(main.contains(s"//> using compileOnly.dep $api\n"), main)
+    assert(main.contains(s"//> using compileOnly.dep $platform\n"), main)
     assert(main.contains("//> using resourceDir resources\n"), main)
+    assert(main.contains("//> using publish.organization mirror\n//> using publish.name mirror\n//> using publish.version 0.1.0\n"), main)
+    assert(!main.contains("//> using jar") && !main.contains("//> using dep "), "no jar paths, no bundled library")
     assert(main.contains("package mirror\n"), main)
 
-  test("without a sources jar there is no sourceJar directive"):
-    val main = file(PluginTemplate.files(request("mirror").copy(api = api.copy(sources = None))), "Mirror.scala")
-    assert(!main.contains("sourceJar"), main)
-
-  test("the test file brings munit and checks the packaging"):
+  test("the test file brings munit, the API and the platform at run time, and checks the packaging"):
     val tests = file(PluginTemplate.files(request("mirror")), "Mirror.test.scala")
     assert(tests.startsWith(s"//> using test.dep org.scalameta::munit:${PluginBuildVersions.munit}\n"), tests)
+    assert(tests.contains(s"//> using test.dep $api\n//> using test.dep $platform\n"), tests)
     assert(tests.contains("class MirrorSuite extends munit.FunSuite"), tests)
     assert(tests.contains("class MirrorPackagingSuite extends munit.FunSuite"), tests)
 
@@ -110,23 +115,32 @@ class PluginTemplateSuite extends munit.FunSuite:
       assert(PluginAuthoring.write(root.resolve("mirror"), files).left.exists(_.message.contains("not empty")))
     finally Files.walk(root).sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) })
 
-  test("--api-jar takes the sources jar beside it; a missing jar is a usage error"):
-    val root = Files.createTempDirectory("plugin-api")
+  test("a repository: a URL as given, a directory as its file: URL, a missing directory refused"):
+    assertEquals(PluginRepository.parse("https://repo.example.org/m2", _ => false).map(_.url), Right("https://repo.example.org/m2"))
+    val root = Files.createTempDirectory("plugin-repo")
     try
-      val jar = Files.writeString(root.resolve("histmersion-plugin-api-1.0.0.jar"), "jar")
-      val noInstall = Left(CliError("no install"))
-      assertEquals(PluginAuthoring.apiJars(Some(jar), noInstall), Right(ApiJars(jar, None)))
-      val src = Files.writeString(root.resolve("histmersion-plugin-api-1.0.0-sources.jar"), "src")
-      assertEquals(PluginAuthoring.apiJars(Some(jar), noInstall), Right(ApiJars(jar, Some(src))))
-      assert(PluginAuthoring.apiJars(Some(root.resolve("nope.jar")), noInstall).left.exists(_.exitCode == ExitCode.Usage))
+      assertEquals(PluginRepository.parse(root.toString, Files.isDirectory(_)).map(_.url), Right(root.toUri.toString))
+      assert(PluginRepository.parse(root.resolve("nope").toString, Files.isDirectory(_)).left.exists(_.contains("no such directory")))
     finally Files.walk(root).sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) })
 
-  test("without --api-jar the install's plugin-api/ is used, and an older install says where to get one"):
+  test("without --repo the install's maven/ is used, and an older install says where to get one"):
     val root = Files.createTempDirectory("plugin-install")
     try
       val install = LocalInstall(root, root.resolve("data"))
-      assert(PluginAuthoring.apiJars(None, Right(install)).left.exists(_.message.contains("predates plugin-api/")))
-      Files.createDirectories(install.apiJar.getParent)
-      Files.writeString(install.apiJar, "jar"); Files.writeString(install.apiSources, "src")
-      assertEquals(PluginAuthoring.apiJars(None, Right(install)), Right(ApiJars(install.apiJar, Some(install.apiSources))))
+      val old = PluginAuthoring.repository(None, Right(install))
+      assert(old.left.exists(e => e.message.contains("predates plugin dependencies") && e.exitCode == ExitCode.Usage), old)
+      Files.createDirectories(install.apiPom.getParent)
+      Files.writeString(install.apiPom, "<project/>"); Files.writeString(install.apiJar, "jar"); Files.writeString(install.apiSources, "src")
+      assertEquals(PluginAuthoring.repository(None, Right(install)).map(_.url), Right(install.mavenRepo.toUri.toString))
+      assertEquals(PluginAuthoring.repository(Some("https://example.org/m2"), Left(CliError("no install"))).map(_.url),
+        Right("https://example.org/m2"))
+      assertEquals(PluginAuthoring.apiJars(Right(install)), Right((install.apiJar, install.apiSources)))
+      assert(install.apiJar.toString.endsWith(s"maven/com/kubuszok/histmersion-plugin-api_3/${PluginBuildVersions.histmersion}/" +
+        s"histmersion-plugin-api_3-${PluginBuildVersions.histmersion}.jar"), install.apiJar)
     finally Files.walk(root).sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) })
+
+  test("next steps: test, publish with the POM, add by coordinates from the publish repository"):
+    val id    = PluginId.parse("my-mirror").toOption.get
+    val steps = PluginAuthoring.nextSteps(Path.of("/w/my-mirror"), id, ScalaPackage.parse("org.example").toOption.get, Nil)
+    assert(steps.contains("  scala-cli --power publish . --publish-repository ./repo   # the jar and its POM, which lists its dependencies"), steps)
+    assert(steps.contains("  histmersion plugin add org.example::my-mirror:0.1.0 --repo ./repo"), steps)

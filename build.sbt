@@ -796,8 +796,6 @@ lazy val cli = project
            |  val scala: String        = "${scalaVersion.value}"
            |  val organization: String = "${organization.value}"
            |  val histmersion: String  = "${version.value}"
-           |  val sconfig: String      = "${V.sconfig}"
-           |  val kindlings: String    = "${V.kindlings}"
            |  val munit: String        = "${V.munit}"
            |""".stripMargin
       if (!out.exists() || IO.read(out) != src) IO.write(out, src)

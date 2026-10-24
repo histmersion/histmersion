@@ -24,9 +24,13 @@ final case class LocalInstall(home: Path, data: Path):
   def index: Path         = plugins.resolve("index.json")
   def staging: Path       = plugins.resolve(".staging")
   def signingOn: Boolean  = scala.util.Try(Files.size(data.resolve("signing").resolve("gpg-key")) > 0).getOrElse(false)
-  /** The plugin API a plugin compiles against, as the bundle ships it (`plugin-api/`). */
-  def apiJar: Path        = home.resolve("plugin-api").resolve("histmersion-plugin-api.jar")
-  def apiSources: Path    = home.resolve("plugin-api").resolve("histmersion-plugin-api-sources.jar")
+  /** The Maven repository a plugin compiles against: the plugin API and the plugin platform (`maven/`). */
+  def mavenRepo: Path     = home.resolve("maven")
+  def apiJar: Path        = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.Api, ".jar"))
+  def apiSources: Path    = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.Api, "-sources.jar"))
+  def apiPom: Path        = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.Api, ".pom"))
+  /** The plugins' own dependencies, which `histmersion-relink --resolve` installs. */
+  def lib: Path           = plugins.resolve("lib")
   /** What the scripts need to act on THIS install and data directory, whatever the caller's environment. */
   def env: Map[String, String] = Map("HISTMERSION_HOME" -> home.toString, "HISTMERSION_DATA_DIR" -> data.toString)
 
@@ -79,9 +83,10 @@ object Runner:
         pb.start().waitFor()
       }.getOrElse(127)
 
-/** What `plugin add` is told. */
+/** What `plugin add` is told. `repos`: repositories named for this install (`--repo`), as URLs, looked
+  * up before the configured ones — for the plugin itself and for its dependencies. */
 final case class AddOptions(yes: Boolean = false, unsigned: Boolean = false, verify: Boolean = false,
-    sha256: Option[String] = None)
+    sha256: Option[String] = None, repos: List[String] = Nil)
 
 /** `histmersion plugin …` — the plugins of the LOCAL install (docs/research-plugins.md §7). These
   * commands manage files in the data directory and run the bundle's `histmersion-relink`; they never
@@ -133,8 +138,10 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
 
   // ── describe (the kit's PluginTool on a JVM, through histmersion-relink) ───────────────────────
 
-  def describe(jar: Path): Either[CliError, PluginJar] =
-    run.capture(List(install.relink.toString, "--describe", jar.toString), install.env) match
+  /** What `jar` provides, loaded with the dependency jars of `lib` (`lib/classpath`). */
+  def describe(jar: Path, lib: Option[Path] = None): Either[CliError, PluginJar] =
+    val withLib = lib.toList.flatMap(l => List("--lib", l.toString))
+    run.capture(install.relink.toString :: "--describe" :: withLib ::: List(jar.toString), install.env) match
       case Left((_, e)) => Left(err(s"could not describe ${jar.getFileName}: $e"))
       case Right(json) =>
         PluginKit.parseJars(json).left.map(err(_)).flatMap(_.headOption.toRight(err(s"${jar.getFileName}: nothing described")))
@@ -147,8 +154,12 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
       case Left((22, _))  => Left(s"$url: not found (HTTP error)")
       case Left((rc, e))  => Left(s"$url: curl exited $rc ${e.linesIterator.toList.lastOption.getOrElse("")}".trim)
 
-  /** The jar at `to`, and its signature beside it when there is one (`<to>.asc`). */
-  private def fetch(origin: Origin, to: Path, wantAsc: Boolean): Either[CliError, String] = origin match
+  /** The POM beside a jar, as the plugin keeps it: `x-1.0.jar` → `x-1.0.pom`. */
+  private def pomOf(jar: Path): Path = jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom")
+
+  /** The jar at `to`, its signature beside it when there is one (`<to>.asc`), and the POM published with
+    * it (`<to minus .jar>.pom`, which lists the plugin's dependencies) when there is one. */
+  private def fetch(origin: Origin, to: Path, wantAsc: Boolean, repos: List[String]): Either[CliError, String] = origin match
     case Origin.File(path) =>
       val p = Path.of(path)
       if !Files.isRegularFile(p) then Left(err(s"no such file: $path", ExitCode.Usage))
@@ -156,25 +167,28 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
         Files.copy(p, to, StandardCopyOption.REPLACE_EXISTING)
         val asc = Path.of(path + ".asc")
         if Files.isRegularFile(asc) then Files.copy(asc, Path.of(to.toString + ".asc"), StandardCopyOption.REPLACE_EXISTING)
+        if Files.isRegularFile(pomOf(p)) then Files.copy(pomOf(p), pomOf(to), StandardCopyOption.REPLACE_EXISTING)
         Right(p.toAbsolutePath.normalize.toString)
     case Origin.Url(url) =>
       curl(url, to).left.map(err(_)).map { _ =>
         if wantAsc then curl(url + ".asc", Path.of(to.toString + ".asc")).left.foreach(_ => ())
+        if url.endsWith(".jar") then curl(url.stripSuffix(".jar") + ".pom", pomOf(to)).left.foreach(_ => ())
         url
       }
-    case Origin.Maven(c) => maven(c, to, wantAsc)
+    case Origin.Maven(c) => maven(c, to, wantAsc, repos)
 
-  /** A minimal Maven resolver: a plugin jar shades what the host does not ship (§7.1), so the one
-    * artifact is all there is to resolve — no POM walk, no transitive dependencies, no coursier. Each
-    * repository in turn; the jar is checked against the checksum the repository publishes beside it
-    * (SHA-256 when there is one, else SHA-1, which Maven Central always has). */
-  private def maven(c: Coordinates, to: Path, wantAsc: Boolean): Either[CliError, String] =
-    val repos = cfg.repos
+  /** A plugin from a Maven repository: its jar and its POM, each in turn from the repositories, each
+    * checked against the checksum the repository publishes beside it (SHA-256 when there is one, else
+    * SHA-1, which Maven Central always has). The dependencies the POM lists are the resolver's
+    * (`histmersion-relink --resolve`). */
+  private def maven(c: Coordinates, to: Path, wantAsc: Boolean, repos: List[String]): Either[CliError, String] =
     def one(repo: String): Either[String, String] =
       val url = c.jarUrl(repo)
       for
         _ <- curl(url, to)
         _ <- checksum(url, to)
+        _ <- curl(c.pomUrl(repo), pomOf(to))
+        _ <- checksum(c.pomUrl(repo), pomOf(to))
       yield
         if wantAsc then curl(url + ".asc", Path.of(to.toString + ".asc")).left.foreach(_ => ())
         url
@@ -197,23 +211,52 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
 
   // ── commands ──────────────────────────────────────────────────────────────────────────────────
 
-  /** `plugin add`: fetch into a staging file, verify, describe, refuse what cannot be linked, show
-    * what it is, install it under `<id>-<version>.jar` (replacing an older version of the same plugin). */
+  /** The repositories an `add` looks in: the ones named for it first, then the configured ones. */
+  private def repositories(o: AddOptions): List[String] = (o.repos ++ cfg.repos).distinct
+
+  private def repoArgs(repos: List[String]): List[String] = repos.flatMap(r => List("--repo", r))
+
+  /** The dependencies `jar`'s POM lists, resolved against what the server ships into `lib`: the lines
+    * the resolver reports, or why the plugin is refused (a library the server ships at an older
+    * version than the plugin needs) or could not be resolved. */
+  private def dependencies(jar: Path, lib: Path, repos: List[String]): Either[CliError, List[String]] =
+    run.capture(install.relink.toString :: "--resolve" :: "--lib" :: lib.toString :: repoArgs(repos) ::: List(jar.toString),
+        install.env) match
+      case Right(report) => Right(report.linesIterator.map(_.trim).filter(_.nonEmpty).toList)
+      case Left((2, e))  =>
+        Left(err(s"refused:\n${e.linesIterator.map(_.trim).filter(_.nonEmpty).map("  - " + _.stripPrefix("refused: ")).mkString("\n")}"))
+      case Left((_, e))  => Left(err(s"the plugin's dependencies could not be resolved: $e"))
+
+  /** Resolve the dependencies of every installed plugin into `lib/` again, after the set changed. The
+    * relink does it too, so a failure here (no network) only warns. */
+  private def resolveInstalled(repos: List[String]): Unit =
+    run.capture(install.relink.toString :: "--resolve" :: repoArgs(repos), install.env) match
+      case Right(_)     => ()
+      case Left((_, e)) => out(s"warning: the plugins' dependencies were not resolved now ($e) — `histmersion plugin rebuild` resolves them")
+
+  /** `plugin add`: fetch into a staging file (with its POM), verify, resolve its dependencies, describe
+    * it with them, refuse what cannot be linked, show what it is and needs, install it under
+    * `<id>-<version>.jar` (replacing an older version of the same plugin), its POM beside it and its
+    * dependencies in `lib/`. */
   def add(arg: String, o: AddOptions): Either[CliError, PluginJar] =
     Files.createDirectories(install.staging)
-    val stage = install.staging.resolve(s"add-${ProcessHandle.current().pid()}.jar")
+    val pid   = ProcessHandle.current().pid()
+    val stage = install.staging.resolve(s"add-$pid.jar")
     val asc   = Path.of(stage.toString + ".asc")
+    val lib   = install.staging.resolve(s"lib-$pid")
+    val repos = repositories(o)
     val verifying = install.signingOn || o.verify
     try
       for
         origin <- PluginKit.origin(arg, a => Files.isRegularFile(Path.of(a))).left.map(err(_, ExitCode.Usage))
-        source <- fetch(origin, stage, wantAsc = verifying)
+        source <- fetch(origin, stage, wantAsc = verifying, repos)
         sha     = sha256(stage)
         _ <- o.sha256.map(_.trim.toLowerCase).filter(_ != sha)
                .map(w => err(s"SHA-256 mismatch: expected $w, got $sha — not installed")).toLeft(())
         signer <- signature(stage, asc, verifying, o.unsigned)
         spi    <- spiVersion
-        jar    <- describe(stage)
+        deps   <- dependencies(stage, lib, repos)
+        jar    <- describe(stage, Some(lib))
         idx     = index
         name    = PluginKit.jarName(jar.plugins, Path.of(source).getFileName.toString)
         ids     = jar.plugins.map(_.id).toSet
@@ -225,20 +268,35 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
                case Nil      => Right(())
                case problems => Left(err(s"refused:\n${problems.map("  - " + _).mkString("\n")}"))
         _ <- signer.fold(Right(()))(fpr => PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(err(_)))
-        _  = show(jar.copy(file = name), sha, source, signer, replaced)
+        _  = show(jar.copy(file = name), sha, source, signer, replaced, deps)
         _ <- Either.cond(o.yes || confirm(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?"),
                (), err("not installed (answer y, or pass --yes when there is no terminal)", ExitCode.Usage))
       yield
-        replaced.filterNot(_ == name).foreach(f => Files.deleteIfExists(install.plugins.resolve(f)))
-        Files.move(stage, install.plugins.resolve(name), StandardCopyOption.REPLACE_EXISTING)
+        replaced.filterNot(_ == name).foreach { f =>
+          Files.deleteIfExists(install.plugins.resolve(f))
+          Files.deleteIfExists(pomOf(install.plugins.resolve(f)))
+        }
+        val target = install.plugins.resolve(name)
+        Files.move(stage, target, StandardCopyOption.REPLACE_EXISTING)
+        if Files.isRegularFile(pomOf(stage)) then Files.move(pomOf(stage), pomOf(target), StandardCopyOption.REPLACE_EXISTING)
+        else Files.deleteIfExists(pomOf(target))
         val now = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString
         writeIndex(replaced.foldLeft(idx)(_.drop(_)).put(Installed(name, sha, source, now, jar.plugins, signer)))
+        resolveInstalled(repos)
         resign()
-        out(s"installed ${install.plugins.resolve(name)}")
+        out(s"installed $target")
         jar.copy(file = name)
     finally
       val _ = Files.deleteIfExists(stage)
       val _ = Files.deleteIfExists(asc)
+      val _ = Files.deleteIfExists(pomOf(stage))
+      deleteTree(lib)
+
+  private def deleteTree(dir: Path): Unit =
+    if Files.isDirectory(dir) then
+      val s = Files.walk(dir)
+      try s.iterator().asScala.toList.reverse.foreach(Files.deleteIfExists)
+      finally s.close()
 
   /** The signer's fingerprint when the jar was verified; refused when verification is required and fails. */
   private def signature(jar: Path, asc: Path, verifying: Boolean, unsigned: Boolean): Either[CliError, Option[String]] =
@@ -253,7 +311,8 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
         case Left((_, e)) if unsigned => out(s"warning: signature not verified ($e) — installed anyway (--unsigned)"); Right(None)
         case Left((_, e)) => Left(err(s"signature not verified: $e"))
 
-  private def show(jar: PluginJar, sha: String, source: String, signer: Option[String], replaced: List[String]): Unit =
+  private def show(jar: PluginJar, sha: String, source: String, signer: Option[String], replaced: List[String],
+      dependencies: List[String]): Unit =
     jar.plugins.foreach { p =>
       out(s"plugin ${p.id} ${p.version} · SPI ${p.spiVersion} · access: ${if p.access.isEmpty then "none declared" else p.access.mkString(", ")}" +
         (if p.provides.isEmpty then "" else s" · provides ${p.provides.mkString(", ")}"))
@@ -263,6 +322,8 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
     }
     out(s"file ${jar.file} · SHA-256 $sha")
     out(s"from $source")
+    if dependencies.isEmpty then out("dependencies: none of its own (no POM lists any)")
+    else dependencies.foreach(out)
     out(signer.fold("signature: not checked")(f => s"signature: good, key $f"))
     replaced.filterNot(_ == jar.file).foreach(f => out(s"replaces $f"))
 
@@ -279,8 +340,12 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
     val hits = jars.map(_.getFileName.toString).filter(f => f == what || PluginKit.idsOf(f, idx).contains(what))
     if hits.isEmpty then Left(err(s"no installed plugin '$what' (histmersion plugin list)", ExitCode.Usage))
     else
-      hits.foreach(f => Files.deleteIfExists(install.plugins.resolve(f)))
+      hits.foreach { f =>
+        Files.deleteIfExists(install.plugins.resolve(f))
+        Files.deleteIfExists(pomOf(install.plugins.resolve(f)))
+      }
       writeIndex(hits.foldLeft(idx)(_.drop(_)))
+      resolveInstalled(Nil)
       resign()
       hits.foreach(f => out(s"removed $f"))
       Right(hits)
@@ -304,7 +369,9 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
     }
     val gone = linked.keys.filterNot(f => jars.exists(_.getFileName.toString == f)).toList.sorted
       .map(f => s"- $f — removed from the directory, still in the binary")
-    val header = s"# Plugins of ${install.home}\n\n- directory: ${install.plugins}"
+    val deps = scala.util.Try(Files.readAllLines(install.lib.resolve("classpath")).asScala.count(_.trim.nonEmpty)).getOrElse(0)
+    val header = s"# Plugins of ${install.home}\n\n- directory: ${install.plugins}" +
+      (if deps == 0 then "" else s"\n- dependencies: $deps jar(s) in ${install.lib}")
     val firstParty = running.toList.flatMap(r =>
       val user = r.set.toList.flatMap(_.jars.flatMap(_.plugins.map(_.id))).toSet
       r.plugins.filterNot(p => user(p.id)).map(p => s"- (first-party) ${PluginsMarkdown.line(p)}"))
@@ -335,24 +402,31 @@ object PluginOps:
       a == "y" || a == "yes"
     }
 
-/** `plugin api-jar` and `plugin new`: what a plugin author needs from the install on this machine. They
-  * read files only, and need no server. */
+/** `plugin repo`, `plugin api-jar` and `plugin new`: what a plugin author needs from the install on this
+  * machine. They read files only, and need no server. */
 object PluginAuthoring:
 
-  /** The API jar `--api-jar` names, with the sources jar beside it when there is one
-    * (`x.jar` → `x-sources.jar`); else the install's. */
-  def apiJars(named: Option[Path], install: => Either[CliError, LocalInstall]): Either[CliError, ApiJars] =
+  /** The install's Maven repository, when it has one (an install older than plugin dependencies has
+    * `plugin-api/` instead). */
+  def localRepository(install: Either[CliError, LocalInstall]): Either[CliError, LocalInstall] =
+    install.flatMap { i =>
+      Either.cond(Files.isRegularFile(i.apiPom), i,
+        CliError(s"the install at ${i.home} has no plugin Maven repository (${i.mavenRepo}): it predates plugin dependencies — " +
+          s"download histmersion-maven-<version>.zip from the release, unzip it and pass its maven/ directory with --repo",
+          exitCode = ExitCode.Usage))
+    }
+
+  /** The repository a new project resolves the plugin API and platform from: the one named with
+    * `--repo` (a directory or a URL), else the install's. */
+  def repository(named: Option[String], install: => Either[CliError, LocalInstall]): Either[CliError, PluginRepository] =
     named match
-      case Some(jar) =>
-        val sources = jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + "-sources.jar")
-        Either.cond(Files.isRegularFile(jar), ApiJars(jar, Some(sources).filter(Files.isRegularFile(_))),
-          CliError(s"no plugin API jar at $jar", exitCode = ExitCode.Usage))
-      case None =>
-        install.flatMap { i =>
-          Either.cond(Files.isRegularFile(i.apiJar), ApiJars(i.apiJar, Some(i.apiSources).filter(Files.isRegularFile(_))),
-            CliError(s"the install at ${i.home} has no plugin API jar (${i.apiJar}): it predates plugin-api/ — " +
-              "download histmersion-plugin-api-<version>.jar from the release and pass --api-jar", exitCode = ExitCode.Usage))
-        }
+      case Some(raw) => PluginRepository.parse(raw, Files.isDirectory(_)).left.map(CliError(_, exitCode = ExitCode.Usage))
+      case None      => localRepository(install).flatMap(i =>
+        PluginRepository.parse(i.mavenRepo.toString, Files.isDirectory(_)).left.map(CliError(_, exitCode = ExitCode.Usage)))
+
+  /** The plugin API jar in the install's repository, and its sources jar beside it. */
+  def apiJars(install: Either[CliError, LocalInstall]): Either[CliError, (Path, Path)] =
+    localRepository(install).map(i => (i.apiJar, i.apiSources))
 
   /** Write a new project into `dir`, which must not exist or be empty; the paths written. */
   def write(dir: Path, files: List[TemplateFile]): Either[CliError, List[Path]] =
@@ -368,16 +442,20 @@ object PluginAuthoring:
     })
 
   /** What to do next, for the person who ran `plugin new`. */
-  def nextSteps(dir: Path, id: PluginId, written: List[Path]): List[String] =
+  def nextSteps(dir: Path, id: PluginId, pkg: ScalaPackage, written: List[Path]): List[String] =
+    val publishDir = PluginTemplate.PublishDir
     (s"wrote a scala-cli project in $dir:" :: written.map(p => s"  ${dir.relativize(p)}")) ++ List(
       "",
       "next:",
       s"  cd \"$dir\"",
       "  scala-cli test .          # compile it and run its tests",
       "  scala-cli setup-ide .     # then open the directory in VS Code with Metals, or in IntelliJ",
-      s"  scala-cli --power package --library . -o ${id.value}.jar -f",
-      s"  histmersion plugin add ./${id.value}.jar",
-      s"  histmersion plugin rebuild   # and in histmersion.conf: histmersion.plugins.${id.value} { enabled = true }")
+      s"  scala-cli --power publish . --publish-repository ./$publishDir   # the jar and its POM, which lists its dependencies",
+      s"  histmersion plugin add ${pkg.value}::${id.value}:${PluginTemplate.FirstVersion} --repo ./$publishDir",
+      s"  histmersion plugin rebuild   # and in histmersion.conf: histmersion.plugins.${id.value} { enabled = true }",
+      "",
+      "a library of its own: //> using dep group::artifact:version — plugin add installs it beside the plugin;",
+      "the plugin API and the libraries Histmersion provides come from the platform (compile-only, never bundled)")
 
 object PluginCmd:
 
@@ -400,17 +478,20 @@ object PluginCmd:
     c.about.fold(_ => (None, false), a => (Some(a.plugins), true))
 
   private val add = Opts.subcommand("add",
-      "Install a plugin jar on this machine: a local path (copied), an https URL (downloaded, SHA-256 shown) or group:artifact:version from Maven (group::artifact:version = a Scala 3 artifact); shows its id, version, SPI and access first") {
+      "Install a plugin on this machine: a local path (copied, with the .pom beside it), an https URL (downloaded, SHA-256 shown) or group:artifact:version from Maven (group::artifact:version = a Scala 3 artifact); the dependencies its POM lists are installed with it, except what Histmersion ships; shows its id, version, SPI, access and dependencies first") {
     (
       Opts.argument[String]("path|url|group:artifact:version"),
       Opts.flag("yes", "Install without asking (needed when there is no terminal)", "y").orFalse,
       Opts.flag("rebuild", "Relink right after installing (histmersion plugin rebuild)").orFalse,
       Opts.flag("verify", "Require a valid GPG signature (<jar>.asc) even when GPG provenance is not set up").orFalse,
       Opts.flag("unsigned", "Install even when the signature is missing or does not verify").orFalse,
-      Opts.option[String]("sha256", "The SHA-256 the jar must have (refused otherwise)").orNone
-    ).mapN { (arg, yes, rebuild, verify, unsigned, sha) => (c: Client) =>
-      local(c).flatMap { ops =>
-        ops.add(arg, AddOptions(yes, unsigned, verify, sha)).flatMap { _ =>
+      Opts.option[String]("sha256", "The SHA-256 the jar must have (refused otherwise)").orNone,
+      Opts.options[String]("repo", "A Maven repository (a directory or a URL) to look in first, for the plugin and its dependencies; repeatable").orEmpty
+    ).mapN { (arg, yes, rebuild, verify, unsigned, sha, repoArgs) => (c: Client) =>
+      val repos = repoArgs.traverse(r => PluginRepository.parse(r, Files.isDirectory(_)).map(_.url))
+        .left.map(CliError(_, exitCode = ExitCode.Usage))
+      repos.flatMap(rs => local(c).map(_ -> rs)).flatMap { (ops, rs) =>
+        ops.add(arg, AddOptions(yes, unsigned, verify, sha, rs)).flatMap { _ =>
           if rebuild then ops.rebuild(Nil)
           else Right(println("the running binary does not have it yet: histmersion plugin rebuild (or plugin status)"))
         }
@@ -458,12 +539,19 @@ object PluginCmd:
     }
   }
 
+  private val repo = Opts.subcommand("repo",
+      "The Maven repository of this machine's install that a plugin compiles against: the plugin API and histmersion-plugin-platform (the libraries Histmersion provides, at the versions it ships); --url: as a file: URL, for //> using repository or a build's resolvers") {
+    Opts.flag("url", "Print it as a file: URL").orFalse.map { asUrl => (_: Client) =>
+      PluginAuthoring.localRepository(install).map(i => println(if asUrl then i.mavenRepo.toUri.toString else i.mavenRepo.toString))
+    }
+  }
+
   private val apiJar = Opts.subcommand("api-jar",
-      "The path of the plugin API jar a plugin compiles against (in this machine's install); --sources: of its sources jar, with the Scaladoc") {
+      "The path of the plugin API jar in this machine's install's Maven repository; --sources: of its sources jar, with the Scaladoc") {
     Opts.flag("sources", "The sources jar instead of the jar").orFalse.map { sources => (_: Client) =>
-      PluginAuthoring.apiJars(None, install).flatMap { jars =>
-        if !sources then Right(println(jars.jar))
-        else jars.sources.toRight(CliError(s"no sources jar beside ${jars.jar}", exitCode = ExitCode.Refused)).map(println)
+      PluginAuthoring.apiJars(install).flatMap { (jar, src) =>
+        if !sources then Right(println(jar))
+        else Either.cond(Files.isRegularFile(src), println(src), CliError(s"no sources jar beside $jar", exitCode = ExitCode.Refused))
       }
     }
   }
@@ -476,9 +564,9 @@ object PluginCmd:
         .withDefault(PluginKind.SourceFetcher.name),
       Opts.option[String]("dir", "Where to write it (default ./<id>; must not exist or be empty)").orNone,
       Opts.option[String]("package", "The Scala package (default: the id without dashes)").orNone,
-      Opts.option[String]("api-jar", "The plugin API jar to compile against (default: this machine's install; its -sources.jar beside it is used too)").orNone,
+      Opts.option[String]("repo", "The Maven repository with the plugin API and platform to compile against, a directory or a URL (default: this machine's install, histmersion plugin repo)").orNone,
       Opts.flag("with-agent-notes", "Also write AGENTS.md (and CLAUDE.md pointing at it) for coding agents").orFalse
-    ).mapN { (rawId, rawKind, dir, rawPackage, api, agentNotes) => (_: Client) =>
+    ).mapN { (rawId, rawKind, dir, rawPackage, repoArg, agentNotes) => (_: Client) =>
       val result = for
         id   <- PluginId.parse(rawId)
         kind <- PluginKind.parse(rawKind)
@@ -487,14 +575,14 @@ object PluginCmd:
       result.left.map(CliError(_, exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
         val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
         for
-          jars    <- PluginAuthoring.apiJars(api.map(Path.of(_)), install)
-          written <- PluginAuthoring.write(target, PluginTemplate.files(PluginTemplate.Request(id, kind, pkg, jars, agentNotes)))
-        yield PluginAuthoring.nextSteps(target, id, written).foreach(println)
+          repo    <- PluginAuthoring.repository(repoArg, install)
+          written <- PluginAuthoring.write(target, PluginTemplate.files(PluginTemplate.Request(id, kind, pkg, repo, agentNotes)))
+        yield PluginAuthoring.nextSteps(target, id, pkg, written).foreach(println)
       }
     }
   }
 
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("plugin", "Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine); new and api-jar for writing one") {
-      add orElse rm orElse list orElse status orElse rebuild orElse rollback orElse create orElse apiJar
+    Opts.subcommand("plugin", "Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine); new, repo and api-jar for writing one") {
+      add orElse rm orElse list orElse status orElse rebuild orElse rollback orElse create orElse repo orElse apiJar
     }
