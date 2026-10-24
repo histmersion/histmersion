@@ -79,7 +79,9 @@ database must give it a name of its own (as `BundleSuite`, `MergeSuite` do): gro
 **The cache is per checkout.** sbt 2's disk cache is `target/sbt-cache` in each checkout (build.sbt
 and project/plugins.sbt), not the machine-wide `~/Library/Caches/sbt/v2` — never set
 `Global / cacheStores := Seq.empty` (it only forces full recompiles, Scala.js linking included).
-`just cache-check` proves two worktrees stay apart.
+`just cache-check` proves two worktrees stay apart. A NEW worktree can start from a copy of another
+checkout's cache: `just cache-seed <worktree>` (from the main worktree; never shares a store, never copies
+`target/out`), then `just cache-seed --verify <worktree>` after its first build.
 
 ```bash
 just test-quick                     # what the branch changed, and what depends on it

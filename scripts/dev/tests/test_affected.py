@@ -14,8 +14,10 @@ A = affected
 
 class AffectedTest(unittest.TestCase):
     def test_a_leaf_module_tests_itself_only(self):
+        # (and core's lint suites, which read every module's main Scala — not core's dependents)
         self.assertEqual(A.affected(["modules/cli/src/main/scala/com/histmersion/cli/Main.scala"]),
-                         (["cli"], False, ["modules/cli/src/main/scala/com/histmersion/cli/Main.scala → cli"]))
+                         (["coreJVM", "cli"], False, ["modules/cli/src/main/scala/com/histmersion/cli/Main.scala → cli",
+                          "coreJVM: its lint suites read modules/cli/src/main/scala/com/histmersion/cli/Main.scala"]))
 
     def test_core_shared_reaches_every_dependent(self):
         tests, db, _ = A.affected(["modules/core/shared/src/main/scala/X.scala"])
@@ -27,8 +29,15 @@ class AffectedTest(unittest.TestCase):
 
     def test_web_change_does_not_rerun_the_server(self):
         tests, db, _ = A.affected(["modules/web/src/main/scala/com/histmersion/web/Main.scala"])
-        self.assertEqual(tests, ["web"])
+        # core's lint suites read the web sources (StyleLintSuite, MapEngineBoundarySuite)
+        self.assertEqual(tests, ["coreJVM", "web"])
         self.assertFalse(db)
+
+    def test_main_sources_are_read_by_cores_lints(self):
+        self.assertIn("coreJVM", A.affected(["modules/cli/src/main/scala/com/histmersion/cli/Main.scala"])[0])
+        self.assertIn("coreJVM", A.affected(["modules/server/src/main/scala/com/histmersion/server/Main.scala"])[0])
+        # a test of its own, or a resource, is not
+        self.assertEqual(A.affected(["modules/cli/src/test/scala/X.scala"])[0], ["cli"])
 
     def test_db_reaches_server(self):
         self.assertEqual(A.affected(["modules/db/src/main/resources/db/migration/V099__x.sql"])[0],
@@ -36,9 +45,9 @@ class AffectedTest(unittest.TestCase):
 
     def test_plugin_api_reaches_vaults_and_server_but_fixtures_have_no_tests(self):
         tests, _, _ = A.affected(["modules/plugin-api/src/main/scala/P.scala"])
-        self.assertEqual(tests, ["pluginApi", "pluginVaults", "server"])
-        self.assertEqual(A.affected(["modules/plugin-fixtures/hello/src/main/scala/H.scala"])[0], ["server"])
-        self.assertEqual(A.affected(["modules/plugin-fixtures/hello-ai/src/main/scala/H.scala"])[0], ["server"])
+        self.assertEqual(tests, ["coreJVM", "pluginApi", "pluginVaults", "server"])
+        self.assertEqual(A.affected(["modules/plugin-fixtures/hello/src/main/scala/H.scala"])[0], ["coreJVM", "server"])
+        self.assertEqual(A.affected(["modules/plugin-fixtures/hello-ai/src/main/resources/x.conf"])[0], ["server"])
 
     def test_build_definition_means_everything(self):
         for p in ["build.sbt", "project/Dependencies.scala", ".sdkmanrc", ".jvmopts"]:

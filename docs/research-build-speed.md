@@ -1,4 +1,4 @@
-# Build and test speed (#3585, #3710, 2026-10-23)
+# Build and test speed (#3585, #3710, 2026-10-23; round 2 #3765, 2026-10-24)
 
 `just test-it` took ~25 minutes and `just bundle` 7–9; every agent also turned sbt 2's cache off
 (`Global / cacheStores := Seq.empty`) because the machine-wide cache had replayed results across git
@@ -196,6 +196,34 @@ Why `test-it`'s build phase (~170–190 s) is longer than `Test/fullClasspath` a
 compiles each module's tests when its test task starts, so compiles and the first suites interleave
 less well. The tests themselves are now under three minutes; the cold compile is the largest part of a
 fresh checkout's first run.
+
+## 7. Round 2 (#3765, 2026-10-24)
+
+Measured first: each forked suite's own time (munit's `Test run … finished … N s`) in a `just test-it` on
+this machine (M4 Pro, 14 cores, JVM 25.0.1). The db and server suites summed **618 s** over 7 groups; the
+server's twelve slowest each started a test server per test. Timestamps showed why that hurt: a start
+took ~0.15 s, the **stop ~4 s** — with `server.shutdown-grace-seconds = 0` already set in the forks.
+
+| idea (in order of payoff) | finding | outcome |
+|---|---|---|
+| one test server per suite instead of per test | the cost was the stop, not the start: tapir shuts its event loops and then its own executor down with netty's defaults, a 2 s quiet period each, whatever the grace. With grace 0, `Main.closeAtOnce` gives the listener event loops of the server's scope, shut down with no quiet period (stop 4 040 → 1 ms; the server's own grace path is unchanged). A shared server per suite (tried on HardeningHttpSuite: 45 → 20 s before the fix) then saves ~0.15 s a test | **done** as the stop fix; the per-suite server was not kept (≈7 s over 51 call sites, for tests that would no longer start clean) |
+| data-isolated DB suites, parallel within a group | after the stop fix the groups end within ~25–35 s of each other inside a ~60 s run; the rest is sbt's own work and the pure suites beside them. Making ~180 suites free of whole-table rewrites and counts is weeks of audit for at most those seconds | not done — the scratch-database suites were sped up instead (below); a third db group measured 60 s vs 61 s (noise), so the groups stay 2 + 5 |
+| the bundle and merge suites' scratch databases | each test made databases by running all 98 migrations. Now `DbSuite.ScratchDatabases` migrates one template per suite and copies it (`CREATE DATABASE … TEMPLATE`), then gives each copy its own instance id, `origin` and row uids, as a fresh migration would | **done**: BundleSuite + MergeSuite + MergeExtrasDbSuite 78.1 → 61.1 s (run alone, same DB) |
+| the weakest hash/KDF cost in tests | nothing to lower: the code hashes only content (SHA-256, no cost parameter); the vaults run external tools that the tests fake with scripts; the scripts' GPG test keys are ed25519 with no passphrase (no S2K cost). VaultsSuite's 13 s is bash subprocesses and three 1 s timeout cases | nothing to change |
+| seed a NEW worktree's `target/sbt-cache` by copy | the action entries are keyed by content with paths relative to the checkout, and the store holds no symbolic link — only `target/out` links (absolutely) into it. So a copy of `target/sbt-cache` alone, never `target/out`, restores into the new checkout's own copy: `scripts/dev/seed-cache.sh` (`just cache-seed`) refuses a source holding a link, refuses a checkout with a cache of its own, clones on APFS (`cp -c`, 0.8 s for 1 398 entries / 456 MB), and `--verify` checks after the build that every output links inside the checkout | **done**: a new worktree's `Test/fullClasspath` 96 s → 35 s (sbt 84 → 24 s, cache 39 → 98 %); `--verify`: 13 815 restored outputs, all inside it. The main worktree must have built once (its checkout had no cache on 2026-10-24) |
+| a warm sbt server per worktree for `test-quick` | a cold `sbt --server -batch` invocation costs 5–6 s here (a two-second test task: 4.8–6.2 s wall). Solving the thin client's dropped environment (the test DB URL is read as a SETTING at load, `testDbOn`) for that is not worth the risk of a server running with a stale database URL | not done |
+
+Also found: `just test-quick` did not run core's lint suites when only the web page changed —
+`MapEngineBoundarySuite` and `StyleLintSuite` read the web sources and `PluralSuite` every module's
+main Scala, so a change passed `test-quick` and failed `test-it`. `scripts/dev/affected.py` now adds
+coreJVM (without its dependents) for such a change.
+
+| | before | after |
+|---|---|---|
+| `just test-it`, warm checkout (same cache state) | 163 s (sbt 146 s) | 75 s (sbt 59 s) with the stop fix; 66 s (sbt 52 s) with the scratch-database templates too |
+| db + server suites, summed | 618 s | 223 s |
+| one server stop (grace 0) | 4 040 ms | 1 ms |
+| a new worktree's first `Test/fullClasspath` | 96 s | 35 s, seeded (`just cache-seed`) |
 
 ## How it was measured
 

@@ -84,6 +84,15 @@ INERT_TOP = {"README.md", "AGENTS.md", "CLAUDE.md", ".gitignore", ".env.example"
              "justfile"}
 
 
+# core's lint suites read the other modules' main sources: StyleLintSuite and MapEngineBoundarySuite the
+# web page's, PluralSuite every module's Scala (#3765: a web change passed test-quick and failed test-it)
+def read_by_core(path):
+    """Is `path` a file core's lint suites read (the web page's sources, any module's main Scala)?"""
+    p = path.removeprefix("./")
+    return p.startswith("modules/web/src/main/") or (
+        p.startswith("modules/") and not p.startswith("modules/core/") and "/src/main/" in p and p.endswith(".scala"))
+
+
 def modules_for(path):
     """The modules a changed path touches directly; [ALL] for anything unknown (be safe)."""
     p = path.removeprefix("./")
@@ -122,6 +131,11 @@ def affected(paths):
     closure = dependents(direct)
     for m in sorted(closure - direct, key=ORDER.index):
         why.append(f"{m}: depends on a changed module")
+    # a suite that only READS a changed file: its module is tested, its dependents are not
+    readers = [p for p in paths if read_by_core(p)]
+    if readers and "coreJVM" not in closure:
+        closure.add("coreJVM")
+        why.append(f"coreJVM: its lint suites read {readers[0]}")
     tests = [m for m in ORDER if m in closure and m not in NO_TESTS]
     return tests, any(m in NEEDS_DB for m in tests), why
 
