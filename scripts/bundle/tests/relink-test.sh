@@ -28,15 +28,27 @@ graal="$tmp/graalvm"; mkdir -p "$graal/bin"
 echo 'JAVA_VERSION="25.0.4.1.1"' > "$graal/release"
 cat > "$graal/bin/java" <<'SH'
 #!/bin/bash
-# PluginTool <cmd> …, Main --self-check, -jar sloth.jar, SlothVerify.java — told apart by the arguments
+# PluginTool <cmd> …, PluginResolver resolve …, Main --self-check, -jar sloth.jar, SlothVerify.java — told
+# apart by the arguments. The resolver's answer is $STATE/resolve.out and .rc; with $STATE/resolve.dep it
+# also installs that one dependency jar into the --lib directory, as the real one would.
 echo "java $*" >> "$STATE/java.calls"
 args=" $* "
 digest="$(cat "$STATE/digest" 2>/dev/null || echo d1)"
 case "$args" in
   *"PluginTool check "*) cat "$STATE/check.out" 2>/dev/null || echo "plugin: hello 0.1.0 (SPI 1) in hello-0.1.0.jar · access open"
                           exit "$(cat "$STATE/check.rc" 2>/dev/null || echo 0)" ;;
+  *"PluginResolver resolve "*)
+    set -- "$@"; while [ "$1" != --lib ]; do shift; done; lib="$2"
+    cat "$STATE/resolve.out" 2>/dev/null
+    rc="$(cat "$STATE/resolve.rc" 2>/dev/null || echo 0)"
+    if [ "$rc" = 0 ] && [ "${args#* --check }" = "$args" ]; then
+      mkdir -p "$lib"; : > "$lib/classpath"
+      if [ -f "$STATE/resolve.dep" ]; then n="$(cat "$STATE/resolve.dep")"; echo dep > "$lib/$n"; echo "$n" > "$lib/classpath"; fi
+    fi
+    exit "$rc" ;;
   *"PluginTool plugin-set "*)
     set -- "$@"; while [ "$1" != plugin-set ]; do shift; done
+    [ "$2" = --lib ] && shift 2
     out="$2" record="$3" mode="$4"
     echo "set-jar" > "$out"
     printf '{"digest":"%s","spiVersion":1,"jars":[],"mode":"%s"}\n' "$digest" "$mode" > "$record"
@@ -119,7 +131,7 @@ export PATH="$fakes:$PATH" HISTMERSION_GPG="$fakes/gpg"
 new_install() {
   rm -rf "$tmp/install" "$tmp/data" "$state" && mkdir -p "$state"
   export INSTALL="$tmp/install"
-  mkdir -p "$INSTALL/bin" "$INSTALL/libexec" "$INSTALL/kit/lib" "$INSTALL/kit/tools"
+  mkdir -p "$INSTALL/bin" "$INSTALL/libexec" "$INSTALL/kit/lib" "$INSTALL/kit/tools/resolver"
   install -m 0755 "$src/relink.sh" "$INSTALL/bin/histmersion-relink"
   install -m 0755 "$src/signing.sh" "$INSTALL/bin/histmersion-signing"
   install -m 0755 "$src/server-jvm.sh" "$INSTALL/bin/histmersion-server-jvm"
@@ -133,6 +145,7 @@ new_install() {
   echo com.histmersion.server.Main > "$INSTALL/kit/main-class"
   echo 25.0.4.1.1 > "$INSTALL/kit/graalvm-version"
   echo sloth > "$INSTALL/kit/tools/sloth.jar"; echo verify > "$INSTALL/kit/tools/SlothVerify.java"
+  echo resolver > "$INSTALL/kit/tools/resolver/histmersion-plugin-resolver.jar"
   echo '{"format":1,"version":"0.1.0","graalvm":"25.0.4.1.1","spiVersion":1}' > "$INSTALL/kit/kit.json"
   (cd "$INSTALL/kit" && find . -type f ! -name kit.json ! -name SHA256SUMS | sed 's|^\./||' | sort \
     | while read -r f; do printf '%s  %s\n' "$(shasum -a 256 "$f" | awk '{print $1}')" "$f"; done > SHA256SUMS)
@@ -302,6 +315,39 @@ mkdir -p "$HISTMERSION_DATA_DIR/signing"; echo FAKEKEY > "$HISTMERSION_DATA_DIR/
 rc="$(relink --jvm --no-restart)"
 check "--jvm with provenance: the launcher put in bin/ has its SHA-256 signed, so the service's verified start accepts it" \
   '[ "$rc" = 0 ] && hk_verify_binary "$INSTALL/bin/histmersion-server" "$INSTALL/bin/histmersion-server.sha256" "$INSTALL/bin/histmersion-server.sha256.asc" FAKEKEY >/dev/null'
+
+# ── the plugins' dependencies ─────────────────────────────────────────────────────────────────────
+new_install
+echo "pom" > "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.pom"
+echo "org.example-xml_3-2.4.0.jar" > "$state/resolve.dep"
+echo "dependency: org.example:xml_3:2.4.0 (for hello-0.1.0.jar)" > "$state/resolve.out"
+rc="$(relink)"
+lib="$HISTMERSION_DATA_DIR/plugins/lib"
+check "deps: the pre-flight resolves the plugins' dependencies into plugins/lib first, with the install's repository"   '[ "$rc" = 0 ] && grep -q "PluginResolver resolve --kit $INSTALL/kit --lib $lib --histmersion-repo $INSTALL/maven $HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$state/java.calls" && grep -q "dependency: org.example:xml_3:2.4.0" "$tmp/out"'
+check "deps: the check and the plugin set are made with lib/" 'grep -q "PluginTool check --lib $lib $INSTALL/kit" "$state/java.calls" && grep -q "PluginTool plugin-set --lib $lib" "$state/java.calls"'
+check "deps: the dependency is Sloth-patched and linked beside the plugin"   'grep -q "sloth.jar $INSTALL/.relink/plugins/org.example-xml_3-2.4.0.jar" "$state/java.calls" && grep -q -- "-cp $INSTALL/kit/lib/a.jar:$INSTALL/.relink/plugin-set.jar:$INSTALL/.relink/plugins/hello-0.1.0.jar:$INSTALL/.relink/plugins/org.example-xml_3-2.4.0.jar " "$state/ni.calls"'
+check "deps: the JVM self-check has it on the class path" 'grep -- "--self-check" "$state/java.calls" | grep -q "$lib/org.example-xml_3-2.4.0.jar"'
+check "deps: the build record changes with the POM"   'hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$HISTMERSION_DATA_DIR/plugins" >/dev/null && echo changed >> "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.pom" && ! hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$HISTMERSION_DATA_DIR/plugins" >/dev/null'
+
+new_install
+echo "refused: hello-0.1.0.jar needs io.circe:circe-core_3 0.14.20, but this Histmersion ships 0.14.17" > "$state/resolve.out"; echo 2 > "$state/resolve.rc"
+rc="$(relink)"
+check "deps: a plugin that needs a newer version of a shipped library: refused (exit 2), nothing built, both versions shown"   '[ "$rc" = 2 ] && [ ! -e "$state/ni.calls" ] && binary_has "digest=e3b0" && grep -q "0.14.20, but this Histmersion ships 0.14.17" "$tmp/out"'
+
+new_install
+rc="$(relink --resolve --lib "$tmp/staged-lib" --repo https://repo.example.org/m2 --check "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar")"
+check "--resolve passes its options and jars to the resolver, with the install's repository"   '[ "$rc" = 0 ] && grep -q "PluginResolver resolve --kit $INSTALL/kit --lib $tmp/staged-lib --histmersion-repo $INSTALL/maven --repo https://repo.example.org/m2 --check $HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$state/java.calls"'
+echo 2 > "$state/resolve.rc"
+rc="$(relink --resolve)"
+check "--resolve without jars: the plugins directory's; the resolver's exit code"   '[ "$rc" = 2 ] && grep -q "PluginResolver resolve --kit $INSTALL/kit --lib $HISTMERSION_DATA_DIR/plugins/lib --histmersion-repo $INSTALL/maven $HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$state/java.calls"'
+
+new_install
+echo "org.example-xml_3-2.4.0.jar" > "$state/resolve.dep"
+jrc=0; HISTMERSION_JAVA_HOME="$graal" "$INSTALL/bin/histmersion-server-jvm" --self-check > "$tmp/jvm.out" 2>&1 || jrc=$?
+check "JVM mode: lib/ not resolved from these jars yet: resolved at start, the dependency on the class path"   '[ "$jrc" = 0 ] && [ "$(grep -c "PluginResolver resolve" "$state/java.calls")" = 1 ] && grep -- "--self-check" "$state/java.calls" | grep -q "$HISTMERSION_DATA_DIR/plugins/lib/org.example-xml_3-2.4.0.jar"'
+hk_plugin_inputs "$HISTMERSION_DATA_DIR/plugins" > "$HISTMERSION_DATA_DIR/plugins/lib/inputs"
+jrc=0; HISTMERSION_JAVA_HOME="$graal" "$INSTALL/bin/histmersion-server-jvm" --self-check > "$tmp/jvm.out" 2>&1 || jrc=$?
+check "JVM mode: lib/ current (its inputs are the directory's): not resolved again"   '[ "$jrc" = 0 ] && [ "$(grep -c "PluginResolver resolve" "$state/java.calls")" = 1 ]'
 
 rc="$(relink --describe "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar")"
 check "--describe prints the kit tool's JSON" '[ "$rc" = 0 ] && grep -q "\"plugins\":\[\]" "$tmp/out"'

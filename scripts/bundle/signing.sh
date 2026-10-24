@@ -86,11 +86,15 @@ binary_triples() {
   printf '%s\n' "$server|$server.sha256|$server.sha256.asc" "$server.prev|$server.sha256.prev|$server.sha256.asc.prev"
 }
 
-# The manifest of the plugins directory: `<sha256>  <file>` per jar, sorted (SHA256SUMS format).
+# The manifest of the plugins directory: `<sha256>  <file>` per jar, sorted (SHA256SUMS format); then
+# the POMs beside them and the dependency jars of lib/ (as `lib/<file>`), which are linked with them.
 plugins_manifest() {
   local j
-  hk_plugin_jars "$plugins" | while IFS= read -r j; do
+  { hk_plugin_jars "$plugins"; hk_plugin_poms "$plugins"; } | while IFS= read -r j; do
     printf '%s  %s\n' "$(hk_sha256 "$j")" "$(basename "$j")"
+  done
+  hk_plugin_deps "$plugins" | while IFS= read -r j; do
+    printf '%s  lib/%s\n' "$(hk_sha256 "$j")" "$(basename "$j")"
   done
 }
 
@@ -238,7 +242,7 @@ case "$cmd" in
     plugins_manifest > "$plugins/plugins.manifest"
     rm -f "$plugins/plugins.manifest.asc"
     "$gpg_bin" --batch --yes --armor --local-user "$key" --detach-sign --output "$plugins/plugins.manifest.asc" "$plugins/plugins.manifest"
-    echo "plugins manifest signed with $key ($(grep -c . "$plugins/plugins.manifest" || true) jar(s))"
+    echo "plugins manifest signed with $key ($(grep -c . "$plugins/plugins.manifest" || true) file(s))"
     ;;
 
   verify-plugins)

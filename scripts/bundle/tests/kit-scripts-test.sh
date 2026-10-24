@@ -41,7 +41,7 @@ skip() { skipped=$((skipped + 1)); echo "  skip $1"; }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }  # <what> <shell test>
 
 install="$tmp/install"
-mkdir -p "$install/bin" "$install/libexec" "$install/kit/lib"
+mkdir -p "$install/bin" "$install/libexec" "$install/kit/lib" "$install/kit/tools/resolver"
 for s in server-jvm:histmersion-server-jvm toolchain:histmersion-toolchain signing:histmersion-signing; do
   install -m 0755 "$src/${s%%:*}.sh" "$install/bin/${s#*:}"
 done
@@ -57,7 +57,12 @@ cat > "$jdk/bin/java" <<'SH'
 #!/bin/bash
 case " $* " in
   *"PluginTool plugin-set "*) set -- "$@"; while [ "$1" != plugin-set ]; do shift; done
+                              [ "$2" = --lib ] && shift 2
                               echo jar > "$2"; echo '{"digest":"dd","mode":"jvm"}' > "$3"; echo dd; exit 0 ;;
+  # the resolver: one dependency, x-dep-1.0.jar, for any plugin set
+  *"PluginResolver resolve "*) set -- "$@"; while [ "$1" != --lib ]; do shift; done
+                               mkdir -p "$2"; echo dep > "$2/x-dep-1.0.jar"; echo x-dep-1.0.jar > "$2/classpath"
+                               echo resolved >> "$OUT.resolver"; exit 0 ;;
 esac
 { echo "HOME_ENV=$HISTMERSION_HOME"; echo "RUNTIME=$HISTMERSION_RUNTIME"; printf 'arg=%s\n' "$@"; } > "$OUT"
 SH
@@ -70,8 +75,9 @@ check "the bundle's runtime is found from HISTMERSION_HOME (the process is java)
   'grep -qx "HOME_ENV=$install" "$OUT" && grep -qx "RUNTIME=true" "$OUT"'
 mkdir -p "$HISTMERSION_DATA_DIR/plugins"; echo p > "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar"
 HISTMERSION_JAVA_HOME="$jdk" HISTMERSION_JVM_OPTS="-Xmx1g" "$install/bin/histmersion-server-jvm"
-check "with plugins: the plugin-set jar, then each plugin jar, after the kit; JVM options first" \
-  'grep -qx "arg=$install/kit/lib/b.jar:$install/kit/lib/a.jar:$HISTMERSION_DATA_DIR/plugins/.jvm/plugin-set.jar:$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$OUT" && grep -qx "arg=-Xmx1g" "$OUT"'
+check "with plugins: the plugin-set jar, then each plugin jar, then their dependencies, after the kit; JVM options first" \
+  'grep -qx "arg=$install/kit/lib/b.jar:$install/kit/lib/a.jar:$HISTMERSION_DATA_DIR/plugins/.jvm/plugin-set.jar:$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar:$HISTMERSION_DATA_DIR/plugins/lib/x-dep-1.0.jar" "$OUT" && grep -qx "arg=-Xmx1g" "$OUT"'
+check "with plugins and no record of what lib/ was resolved from: resolved before the start" '[ "$(grep -c resolved "$OUT.resolver")" = 1 ]'
 check "the plugin-set record of this start is written" 'grep -q "\"mode\":\"jvm\"" "$HISTMERSION_DATA_DIR/plugins/.jvm/plugin-set.json"'
 rc=0; HISTMERSION_JAVA_HOME="$tmp/none" "$install/bin/histmersion-server-jvm" > "$tmp/e.out" 2>&1 || rc=$?
 check "no JDK of the pinned major: exit 3, toolchain install named" '[ "$rc" = 3 ] && grep -q "histmersion-toolchain install" "$tmp/e.out"'

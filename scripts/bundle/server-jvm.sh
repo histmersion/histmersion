@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # bin/histmersion-server-jvm — the server in JVM mode (docs/research-plugins.md §8.5): the same kit the
-# native binary is linked from, plus the plugins directory's jars, on a JDK. Plugins are found at each
-# start, so adding one needs a restart, not a relink. The cost is the JVM's start-up and heap.
+# native binary is linked from, plus the plugins directory's jars and their dependencies (plugins/lib/),
+# on a JDK. Plugins are found at each start, so adding one needs a restart, not a relink. The cost is the
+# JVM's start-up and heap. When the plugin jars or their POMs changed since lib/ was resolved (a jar
+# dropped in by hand), the dependencies are resolved again first.
 #
 #   histmersion-server-jvm [--self-check | --help]       the server's own arguments, passed through
 #
@@ -36,13 +38,18 @@ while IFS= read -r n; do [ -n "$n" ] && cp="$cp${cp:+:}$kit/lib/$n"; done < "$ki
 jars=()
 while IFS= read -r j; do jars+=("$j"); done < <(hk_plugin_jars "$plugins")
 if [ "${#jars[@]}" -gt 0 ]; then
+  if ! hk_plugin_deps_current "$plugins"; then
+    hk_resolve "$jh" "$install" "$plugins/lib" "${jars[@]}" >&2 \
+      || hk_die 3 "the plugins' dependencies could not be resolved (above) — histmersion plugin rebuild --jvm says why"
+  fi
   # the plugin set this start runs with, reported by /api/about and --self-check as a relinked binary's is
   mkdir -p "$plugins/.jvm"
-  "$jh/bin/java" -cp "$kit/lib/*" com.histmersion.server.plugins.PluginTool plugin-set \
+  "$jh/bin/java" -cp "$kit/lib/*" com.histmersion.server.plugins.PluginTool plugin-set --lib "$plugins/lib" \
     "$plugins/.jvm/plugin-set.jar" "$plugins/.jvm/plugin-set.json" jvm "$kit" "${jars[@]}" >/dev/null \
     || hk_die 3 "could not describe the plugins in $plugins"
   cp="$cp:$plugins/.jvm/plugin-set.jar"
   for j in "${jars[@]}"; do cp="$cp:$j"; done
+  while IFS= read -r d; do cp="$cp:$d"; done < <(hk_plugin_deps "$plugins")
 fi
 
 # the bundle's runtime (Postgres, converter) is found from HISTMERSION_HOME: the process is `java`, not
