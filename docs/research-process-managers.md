@@ -448,6 +448,10 @@ agent.
 
 ## As built: the focus (2026-10-23)
 
+> **Superseded (2026-10-24):** the central scheduler (docs/research-goal-advancement.md "As built") admits
+> the managers' work now; the focus holds nothing, its pins and priorities are the goals' priorities in
+> the scheduler, and `max-active-goals` / `focus-ratio` admit nothing. What follows is the history.
+
 Branch `goal-focus`. **V098** `goal_focus` (one row per goal the focus touched or a person pinned: `active`,
 `since`/`why` it was chosen, `left_at`/`left_why`, `pinned`, `priority`) and `agent_autopilot.max_active_goals`
 (a person's cap; NULL = the config's). V092 and V095 stay unused.
