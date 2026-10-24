@@ -96,6 +96,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** Drain mode: nothing new starts while the runs in flight finish (a deploy). */
   val drain: DrainService = DrainService(ds, cfg, h, this)
 
+  /** Seed before the plan: goals with no source gather candidates (no model) before their plan is approved. */
+  val seeding: SeedService = SeedService(ds, cfg, h, this)
+
   /** One agent server per database: the engine and the managers start only in the server that holds it
     * (ttl 3 × the managers' tick). */
   val lease: AgentLease = AgentLease(ds, 3 * math.max(5, cfg.managers.tickSeconds))

@@ -31,6 +31,19 @@ final class StubUpstream extends AgentUpstream:
   /** A watcher's legal ingest: what `onIngest` answers (nothing connected by default). */
   @volatile var onIngest: String => Either[String, IngestReport] = _ => Left("not stubbed")
   override def ingestLegal(doi: String) = { calls.add(s"ingest $doi"); onIngest(doi) }
+  /** The deterministic candidate search: what each goal's sweep finds (not connected unless set). */
+  @volatile var sweepFinds: Map[String, List[SourceCandidate]] = Map.empty
+  private val marked = java.util.concurrent.ConcurrentHashMap[Long, String]()
+  override def sweepCandidates(goal: String, dryRun: Boolean) =
+    calls.add(s"sweep $goal")
+    sweepFinds.get(goal).toRight("the candidate search is not connected").map(cs =>
+      CandidateSweep(goal, Nil, cs.size, cs.size, 0, Map.empty, cs.count(c => !marked.containsKey(c.id)), dryRun))
+  override def candidates(goal: String, state: String, limit: Int) =
+    Right(sweepFinds.getOrElse(goal, Nil).map(c => c.copy(state = Option(marked.get(c.id)).getOrElse(c.state)))
+      .filter(_.state == state).take(limit))
+  override def markCandidates(ids: List[Long], state: String) =
+    ids.foreach(i => marked.put(i, state))
+    Right(ids.size)
 
 /** The P3 pipelines that WAIT for a person, end to end against a `*_test` database with a scripted
   * model: plan-goal (nothing is created before the plan is approved; approval re-queues the run, which
