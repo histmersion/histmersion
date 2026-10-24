@@ -18,9 +18,13 @@ The product plan and its waves: `docs/plan.md`. What it is: `README.md`; the doc
 core  ── the CONTRACT: domain model, wire DTOs, Filter, Tapir endpoint defs, Markdown, config,
          frontmatter parsing.            NO database code, NO side effects.
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on core
-server─ MCP + REST + web UI; the ONLY database client.        depends on core, db, plugin-api (+ plugin-vaults)
+server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults)
 cli   ── a PURE HTTP CLIENT of the server.                                   depends on core ONLY
 plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
+plugin-host ── the host side of the SPI without server or DB: discovery, config, registration, the
+              acquisition client, the chain, how plugin media/catalogues/AI are read.   core + plugin-api
+plugin-testkit ─ a plugin's TEST dependency: load and run it as the server does (plugin-host), with
+              live/record/replay HTTP; shipped in the install's maven/, its API a contract.  plugin-host
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
 plugin-fixtures/hello ─ a TEST plugin jar (relink tests, smoke.sh); never on the server's class path
 plugin-fixtures/hello-ai ─ a TEST AI-provider plugin jar (scripted, no network; the AI-provider suites)
@@ -31,7 +35,7 @@ chimney-iron-tests ─ its proof suites, compiled as a consumer compiles them
 ```
 
 A plugin — first-party or not — compiles against `plugin-api` alone and never sees `core`, `db` or
-`server`; the server discovers it through ServiceLoader (`server/plugins/PluginHost`). See
+`server`; the server discovers it through ServiceLoader (`PluginHost`, in `plugin-host`, which the testkit runs too). See
 `docs/research-plugins.md` (§15: as built). The one exception is the built-in acquisition plugins
 (`server/acquire/fetchers`: `archive-org`, `oa-unpaywall`, `oa-core`, `oa-openalex`, `oa-landing`, `pmc`,
 `arxiv`; the former `oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`): they are host code

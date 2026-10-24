@@ -21,7 +21,7 @@ class AffectedTest(unittest.TestCase):
 
     def test_core_shared_reaches_every_dependent(self):
         tests, db, _ = A.affected(["modules/core/shared/src/main/scala/X.scala"])
-        self.assertEqual(tests, ["coreJVM", "coreJS", "db", "cli", "web", "server"])
+        self.assertEqual(tests, ["coreJVM", "coreJS", "pluginHost", "pluginTestkit", "db", "cli", "web", "server"])
         self.assertTrue(db)
 
     def test_core_js_reaches_web_not_server(self):
@@ -45,7 +45,7 @@ class AffectedTest(unittest.TestCase):
 
     def test_plugin_api_reaches_vaults_and_server_but_fixtures_have_no_tests(self):
         tests, _, _ = A.affected(["modules/plugin-api/src/main/scala/P.scala"])
-        self.assertEqual(tests, ["coreJVM", "pluginApi", "pluginVaults", "pluginResolver", "server"])
+        self.assertEqual(tests, ["coreJVM", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginResolver", "server"])
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello/src/main/scala/H.scala"])[0], ["coreJVM", "server"])
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello-ai/src/main/resources/x.conf"])[0], ["server"])
         # the fixture with a dependency is read by the resolver's suites and the server's
@@ -69,7 +69,7 @@ class AffectedTest(unittest.TestCase):
             self.assertEqual(A.affected([p])[0], [], p)
 
     def test_files_the_suites_read(self):
-        self.assertEqual(A.affected(["skills/histmersion-dev/SKILL.md"])[0], ["coreJVM", "db", "cli", "server"])
+        self.assertEqual(A.affected(["skills/histmersion-dev/SKILL.md"])[0], ["coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "server"])
         self.assertEqual(A.affected(["docs/writing-guide.md"])[0], ["server"])
         self.assertEqual(A.affected(["docs/user-guide/reference/cli.md"])[0][0], "coreJVM")
         self.assertEqual(A.affected(["modules/web/test/fixtures/basemap/terrain.pmtiles"])[0], ["server"])
@@ -81,7 +81,7 @@ class AffectedTest(unittest.TestCase):
 
     def test_dependents_closure_is_transitive(self):
         self.assertEqual(A.dependents({"pluginApi"}),
-                         {"pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps", "pluginResolver",
+                         {"pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps", "pluginResolver",
                           "server"})
         self.assertEqual(A.dependents(set()), set())
 
