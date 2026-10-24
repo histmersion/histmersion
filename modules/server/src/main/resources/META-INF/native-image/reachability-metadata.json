@@ -2112,6 +2112,91 @@
       ]
     },
     {
+      "type": "com.histmersion.core.CandidateCount$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_CandidateCount$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateList$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_CandidateList$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateMark$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_CandidateMark$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateMarked$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_CandidateMarked$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateSweep$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_CandidateSweep$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateSweepRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_CandidateSweepRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateWatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_CandidateWatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidatesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy6"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.CatalogProviderInfo$",
       "fields": [
         {
@@ -7614,6 +7699,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.SourceCandidate$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_SourceCandidate$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.SourceDeleteRequest$",
       "fields": [
         {
@@ -8280,6 +8376,17 @@
       "fields": [
         {
           "name": "given_DbCodec_Row$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.db.CandidateRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_Row$lzy1"
+        },
+        {
+          "name": "given_DbCodec_WatchRow$lzy1"
         }
       ]
     },
@@ -9637,6 +9744,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy6"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
           "name": "given_Schema_ArchiveInput$lzy1"
         }
       ]
@@ -9648,7 +9758,21 @@
           "name": "derived$KindlingsCodecAsObject$lzy3"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
           "name": "given_Schema_AssessInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.acquire.AcquireMcp$CandidatesInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_CandidatesInput$lzy1"
         }
       ]
     },
@@ -9670,6 +9794,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy4"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
           "name": "given_Schema_FollowupsInput$lzy1"
         }
       ]
@@ -9681,6 +9808,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy5"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
           "name": "given_Schema_IngestInput$lzy1"
         }
       ]
@@ -9690,6 +9820,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
         },
         {
           "name": "given_Schema_RefsInput$lzy1"
