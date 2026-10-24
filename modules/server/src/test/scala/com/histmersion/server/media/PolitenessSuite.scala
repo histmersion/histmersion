@@ -47,7 +47,7 @@ class PolitenessSuite extends munit.FunSuite:
     val (p, _) = FakeMediaHttp.polite(http)
     p.json("https://www.wikidata.org/w/api.php?x=1")
     val (_, headers) = http.requests.head
-    assertEquals(headers, Map("User-Agent" -> "Histmersion (+https://github.com/MateuszKubuszok/histmersion)"))
+    assertEquals(headers, Map("User-Agent" -> "Histmersion (+https://github.com/histmersion/histmersion)"))
 
   test("requests to one host are spaced by request-interval-ms; another host is not held up"):
     val http = FakeMediaHttp(_ => FakeMediaHttp.json("{}"))
