@@ -26,15 +26,17 @@ DEPS = {
     "pluginVaults": ["pluginApi"],
     "pluginHello": ["pluginApi"],
     "pluginHelloAi": ["pluginApi"],
+    "chimneyIron": [],
+    "chimneyIronTests": ["chimneyIron"],
     "db": ["coreJVM"],
     "cli": ["coreJVM"],
     "web": ["coreJS"],
     "server": ["coreJVM", "db", "pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi"],
 }
 ORDER = ["coreJVM", "coreJS", "pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi",
-         "db", "cli", "web", "server"]
+         "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
-NO_TESTS = {"pluginHello", "pluginHelloAi"}
+NO_TESTS = {"pluginHello", "pluginHelloAi", "chimneyIron"}
 # modules whose suites need the throwaway Postgres (HISTMERSION_TEST_DB_URL)
 NEEDS_DB = {"db", "server"}
 ALL = "*"
@@ -60,6 +62,8 @@ RULES = [
     ("modules/plugin-vaults/", ["pluginVaults"]),
     ("modules/plugin-fixtures/hello-ai/", ["pluginHelloAi"]),
     ("modules/plugin-fixtures/hello/", ["pluginHello"]),
+    ("modules/chimney-iron-tests/", ["chimneyIronTests"]),
+    ("modules/chimney-iron/", ["chimneyIron"]),
     # repository files the suites read: agents and skills (server resources, AgentsSuite), the
     # reference pages (ApiSurfaceSuite, OpsHttpSuite), the seed data (PeriodsSuite, place seeds)
     ("agents/", ["coreJVM", "server"]),
