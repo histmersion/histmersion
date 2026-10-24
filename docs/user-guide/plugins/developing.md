@@ -202,6 +202,7 @@ libraryDependencies ++= Seq(
   "org.scalameta" %% "munit"                      % "1.3.6" % Test
 )
 publishTo := Some(MavenCache("local-plugin-repo", baseDirectory.value / "repo"))
+publishConfiguration := publishConfiguration.value.withOverwrite(true)   // publish the same version again while developing
 ```
 
 The resources go in `src/main/resources/` (the same three files `plugin new` writes under `resources/`),
