@@ -1,7 +1,9 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.core.{AppConfig, PassageFinder, PassageResult}
+import com.histmersion.config.AppConfig
+import com.histmersion.domain.PassageFinder
+import com.histmersion.api.PassageResult
 import com.histmersion.db.{Db, Migrate, SourceRepo}
 import com.augustnagro.magnum.*
 import java.net.{URI, URLEncoder}

@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.Queue.QueueAdd
+import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.server.Handlers
 import io.circe.syntax.*
 

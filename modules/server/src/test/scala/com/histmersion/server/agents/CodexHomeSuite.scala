@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 
 import java.nio.file.{Files, Path}
 import java.nio.file.attribute.FileTime

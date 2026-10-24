@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
@@ -96,7 +96,7 @@ object PointKinds:
     val layerLabel = "sites"
     val meaning = "a site"
     def box   = (Layout.siteIconSize.value, Layout.siteIconSize.value)
-    override def pane = com.histmersion.core.MapStack.Pane.Sites   // above every region: a site inside one still takes the click
+    override def pane = com.histmersion.api.MapStack.Pane.Sites   // above every region: a site inside one still takes the click
     def key(p: SitePoint): String = p.id.getOrElse(s"${p.lat}|${p.lon}")
     def at(p: SitePoint): (Double, Double) = (p.lat, p.lon)
     def inner(p: SitePoint): String = Glyphs.badge(CardIcons.siteMarker(p.known.map(_.id)))
@@ -130,7 +130,7 @@ object PointKinds:
     val layerLabel = "events"
     val meaning = "an event"
     def box   = (Layout.eventMarkerSize.value, Layout.eventMarkerSize.value)
-    override def pane = com.histmersion.core.MapStack.Pane.Events
+    override def pane = com.histmersion.api.MapStack.Pane.Events
     def key(e: EventGeo): String = e.id
     def at(e: EventGeo): (Double, Double) = (e.lat, e.lon)
     def inner(e: EventGeo): String = Glyphs.badge(CardIcons.event(e.kind))

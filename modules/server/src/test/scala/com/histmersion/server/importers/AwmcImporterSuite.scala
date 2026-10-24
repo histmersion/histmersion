@@ -1,6 +1,8 @@
 package com.histmersion.server.importers
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 class AwmcImporterSuite extends munit.FunSuite:
 

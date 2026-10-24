@@ -1,7 +1,9 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.GoalPlans.{LinkKind, ScheduleKind}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.GoalPlans.{LinkKind, ScheduleKind}
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
@@ -159,9 +161,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("goals (phase 3): a watcher's sweeps travel as the goal's schedules (cron, budget); its state stays home"):
     val (work, sw) = (fresh("ww"), spool("ww"))
     GoalRepo.put(work, "zz_goal", GoalPut("A watched goal"))
-    assert(ManagerRepo.create(work, "watch:zz_goal", com.histmersion.core.Managers.Kind.Watch, Some("zz_goal"),
-      com.histmersion.core.Managers.State.Paused,
-      com.histmersion.core.Managers.ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)), Some("@weekly"), None))
+    assert(ManagerRepo.create(work, "watch:zz_goal", com.histmersion.api.Managers.Kind.Watch, Some("zz_goal"),
+      com.histmersion.api.Managers.State.Paused,
+      com.histmersion.api.Managers.ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)), Some("@weekly"), None))
     val g = entitiesOf(exportOf(work, sw)).goals.find(_.slug == "zz_goal").getOrElse(fail("no goal"))
     assertEquals(g.schedules.map(_.map(x => (x.kind, x.cron, x.enabled, x.budgetUsd))),
       Some(List(("acquisition", "@weekly", true, Some(0.3)))))

@@ -2,7 +2,7 @@ package com.histmersion.web
 
 import com.histmersion.values.Citekey
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 

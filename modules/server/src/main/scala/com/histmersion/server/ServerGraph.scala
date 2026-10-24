@@ -2,7 +2,8 @@ package com.histmersion.server
 
 import com.histmersion.pluginhost.Generation
 
-import com.histmersion.core.{AppConfig, ConfigReload, LoadedConfig, ReloadReport, UserConfigFile}
+import com.histmersion.config.{AppConfig, ConfigReload, LoadedConfig, UserConfigFile}
+import com.histmersion.api.ReloadReport
 import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.hot.{Hot, HotDataSource, HotGraph}
 import com.histmersion.server.plugins.Plugins

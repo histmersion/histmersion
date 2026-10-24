@@ -1,6 +1,6 @@
 package com.histmersion.web.map
 
-import com.histmersion.core.MapStack
+import com.histmersion.api.MapStack
 import org.scalajs.dom
 
 import scala.collection.mutable

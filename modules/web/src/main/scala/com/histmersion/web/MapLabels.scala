@@ -1,9 +1,9 @@
 package com.histmersion.web
 
-import com.histmersion.core.UiConfig
+import com.histmersion.api.UiConfig
 import com.histmersion.web.LabelMotion.Motion
 import com.histmersion.web.LabelPlacement.{Pt, Rect}
-import com.histmersion.core.MapStack
+import com.histmersion.api.MapStack
 import com.histmersion.web.map.*
 import com.raquo.laminar.api.L.Owner
 import org.scalajs.dom

@@ -2,7 +2,9 @@ package com.histmersion.server.acquire
 
 import com.histmersion.values.Citekey
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{AcquireRepo, SourceRepo}
 
 import java.nio.file.{Files, Path, StandardOpenOption}

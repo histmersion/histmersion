@@ -1,10 +1,11 @@
 package com.histmersion.db
 
-import com.histmersion.core.Agents.*
-import com.histmersion.core.{AgentProposals, ArticlePlans, EdgeKind, GoalPlans, ListFilters, SourceStatus}
+import com.histmersion.api.Agents.*
+import com.histmersion.domain.AgentProposals
+import com.histmersion.api.{ArticlePlans, EdgeKind, GoalPlans, ListFilters, SourceStatus}
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.ApprovalDigest
+import com.histmersion.api.ApprovalDigest
 import javax.sql.DataSource
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind
@@ -100,7 +101,7 @@ object AgentRepo:
       (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ Sql.of(" LIMIT ?", Param.I(math.max(1, limit))))
         .frag.query[RunRow].run().map(toInfo)
 
-  /** One page of the newest-first runs ([[com.histmersion.core.Paging]]), `status` and `goal` as in
+  /** One page of the newest-first runs ([[com.histmersion.api.Paging]]), `status` and `goal` as in
     * [[list]]; `before` / `upTo` are run ids. Left: a cursor that names no job. */
   def page(ds: DataSource, status: Option[String], limit: Int, goal: Option[String] = None,
       before: Option[String] = None, upTo: Option[String] = None): Either[String, (Vector[RunInfo], Boolean)] =
@@ -414,7 +415,7 @@ object AgentRepo:
         val p = Jsonb.read[ArticlePlans.ArticlePlan](r.proposal)
         base.copy(articles = p, evidence = p.map(_.rationale).getOrElse(""))
       case Some(ApprovalKind.HintEffect) =>
-        val p = Jsonb.read[com.histmersion.core.Managers.HintProposal](r.proposal)
+        val p = Jsonb.read[com.histmersion.api.Managers.HintProposal](r.proposal)
         base.copy(hintEffect = p, evidence = p.map(x => Option(x.why).filter(_.nonEmpty).getOrElse(x.text)).getOrElse(""))
       case _ =>
         val p = Jsonb.read[AgentProposals.Proposal](r.proposal)
@@ -461,7 +462,7 @@ object AgentRepo:
       (approvalSelect ++ where ++ Sql.of(" ORDER BY created_at DESC, id DESC LIMIT ?", Param.I(math.max(1, limit))))
         .frag.query[ApprovalRow].run().toList.map(toApproval)
 
-  /** One page of the newest-first approvals ([[com.histmersion.core.Paging]]), `state` as in
+  /** One page of the newest-first approvals ([[com.histmersion.api.Paging]]), `state` as in
     * [[approvals]]; `before` / `upTo` are approval ids. Left: a cursor that is not one. */
   def approvalPage(ds: DataSource, state: Option[ApprovalState], limit: Int, before: Option[String] = None,
       upTo: Option[String] = None): Either[String, (List[ApprovalInfo], Boolean)] =
@@ -501,7 +502,7 @@ object AgentRepo:
       "goal"      -> goal,
       "decidedBy" -> ListSql.anyOf(decidedByExpr, q.decidedBy.map(_.wire))))
 
-  /** One page of the approvals that match `q`, newest first ([[com.histmersion.core.Paging]]). */
+  /** One page of the approvals that match `q`, newest first ([[com.histmersion.api.Paging]]). */
   def approvalPage(ds: DataSource, q: ApprovalQuery, limit: Int, before: Option[String],
       upTo: Option[String]): Either[String, (List[ApprovalInfo], Boolean)] =
     def cursor(c: String): Either[String, Param] =

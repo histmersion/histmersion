@@ -1,11 +1,13 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.ApprovalKind
-import com.histmersion.core.Autopilot.*
-import com.histmersion.core.GoalFocus.{Facts, Plan, Work}
-import com.histmersion.core.Managers.*
-import com.histmersion.core.Queue.QueueAdd
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.ApprovalKind
+import com.histmersion.api.Autopilot.*
+import com.histmersion.domain.GoalFocus.{Facts, Plan, Work}
+import com.histmersion.api.Managers.*
+import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.db.{FocusRepo, GoalLinkRepo, ManagerRepo}
 
 import java.time.Instant

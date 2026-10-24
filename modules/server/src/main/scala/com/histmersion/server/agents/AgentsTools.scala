@@ -4,8 +4,10 @@ import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{DecisionRequest, RunRequest}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{DecisionRequest, RunRequest}
 import com.histmersion.server.McpOut
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server

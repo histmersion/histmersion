@@ -3,7 +3,7 @@ package com.histmersion.server
 import com.histmersion.pluginhost.{PluginHost, Generation, HostServices}
 
 import ox.supervised
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 import com.histmersion.plugin.PluginHttp
 import com.histmersion.server.plugins.*
 import org.ekrich.config.ConfigFactory

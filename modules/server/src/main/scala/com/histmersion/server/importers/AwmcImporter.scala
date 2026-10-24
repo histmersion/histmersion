@@ -1,6 +1,8 @@
 package com.histmersion.server.importers
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import io.circe.{Json, JsonObject}
 
 /** Imports classical-world geographic features from the Ancient World Mapping Center (AWMC).

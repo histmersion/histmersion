@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 import ox.supervised
 
 /** The HTML pages are the only place this service emits markup, and both places it interpolated a

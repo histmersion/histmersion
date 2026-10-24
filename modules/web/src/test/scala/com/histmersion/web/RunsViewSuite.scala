@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.Agents.*
+import com.histmersion.api.Agents.*
 
 /** The pure parts of the agent runs and approvals windows: what is live, the poll schedule, the
   * filter, the actions a state allows, why a run paused, the typed budget, an approval in words, and
@@ -87,13 +87,13 @@ class RunsViewSuite extends munit.FunSuite:
 
   test("a goal plan and an article to publish, in words"):
     val plan = ApprovalInfo(3, Some("r"), "goal-plan", "", subject = Some("bronze-age"),
-      plan = Some(com.histmersion.core.GoalPlans.Plan("bronze-age", queries = List("tin"),
-        subGoals = List(com.histmersion.core.GoalPlans.PlannedGoal("tin", "Tin")))))
+      plan = Some(com.histmersion.api.GoalPlans.Plan("bronze-age", queries = List("tin"),
+        subGoals = List(com.histmersion.api.GoalPlans.PlannedGoal("tin", "Tin")))))
     assertEquals(ApprovalsView.describe(plan), "plan for goal bronze-age: 1 sub-goal, 1 query, 0 works")
-    val draft = com.histmersion.core.GoalPlans.ArticleDraft("tin", com.histmersion.core.GoalPlans.DraftMode.Create, "Tin", "concept", "x")
+    val draft = com.histmersion.api.GoalPlans.ArticleDraft("tin", com.histmersion.api.GoalPlans.DraftMode.Create, "Tin", "concept", "x")
     val pub = ApprovalInfo(4, Some("r"), "article-publish", "", subject = Some("tin"), article = Some(draft))
     assertEquals(ApprovalsView.describe(pub), "publish the new article tin: Tin")
-    assertEquals(ApprovalsView.describe(pub.copy(article = Some(draft.copy(mode = com.histmersion.core.GoalPlans.DraftMode.Extend)))),
+    assertEquals(ApprovalsView.describe(pub.copy(article = Some(draft.copy(mode = com.histmersion.api.GoalPlans.DraftMode.Extend)))),
       "append a section to the article tin")
     assertEquals(ApprovalsView.selfCheck(draft), "The code self-check found nothing.")
     assertEquals(ApprovalsView.selfCheck(draft.copy(problems = List("a", "b"))),

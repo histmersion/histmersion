@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 
 /** The pure halves of the shared controls: the toolbar's three groups and their order, the playback
   * speed menu, and the period-preset menu's grouping by region. */

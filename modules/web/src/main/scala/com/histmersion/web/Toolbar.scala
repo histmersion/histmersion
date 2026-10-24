@@ -63,11 +63,11 @@ object Toolbar:
 
   /** A watched window's button ([[Notices]]): bold while its window has something new, with the
     * count of what waits on someone (open approvals, things to acquire, the open backlog). */
-  private def notice(board: com.histmersion.core.UiNotices.Board): Modifier[HtmlElement] =
+  private def notice(board: com.histmersion.api.UiNotices.Board): Modifier[HtmlElement] =
     val c = Notices.counter(board)
     List(
       cls("has-news") <-- c.map(_.exists(_.fresh)),
-      child.maybe <-- c.map(_.flatMap(x => com.histmersion.core.UiNotices.badge(x.count))).distinct
+      child.maybe <-- c.map(_.flatMap(x => com.histmersion.api.UiNotices.badge(x.count))).distinct
         .map(_.map(n => span(cls := "btn-count", aria.hidden := true, n))),
       child.maybe <-- c.map(Notices.spoken).distinct.map(s => Option.when(s.nonEmpty)(span(cls := "sr-only", s", $s"))))
 

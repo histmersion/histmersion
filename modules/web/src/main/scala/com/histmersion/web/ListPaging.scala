@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.Paging
+import com.histmersion.api.Paging
 import com.raquo.laminar.api.L.*
 
 /** The rows a newest-first list window (jobs, agent runs, approvals) shows, page by page

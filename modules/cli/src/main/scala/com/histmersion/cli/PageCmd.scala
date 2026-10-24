@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.core.Paging
+import com.histmersion.api.Paging
 
 /** The "next page" line of a paged listing (`jobs`, `agent runs`, `agent approvals`): the same
   * command with the same options, plus `--before <the last row's id>`. Pure. */

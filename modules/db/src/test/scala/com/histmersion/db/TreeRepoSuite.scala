@@ -1,7 +1,9 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.Tree.TreeRow
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Tree.TreeRow
 
 /** [[TreeRepo]] against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

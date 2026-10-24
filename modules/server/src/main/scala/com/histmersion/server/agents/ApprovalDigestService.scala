@@ -1,9 +1,11 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{ApprovalKind, Decision, DecisionRequest}
-import com.histmersion.core.ApprovalDigest.*
-import com.histmersion.core.Queue.QueueAdd
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{ApprovalKind, Decision, DecisionRequest}
+import com.histmersion.api.ApprovalDigest.*
+import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.db.{AgentRepo, AutopilotRepo, ManagerRepo}
 
 import java.time.Instant

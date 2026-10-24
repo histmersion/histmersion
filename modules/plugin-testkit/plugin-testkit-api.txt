@@ -481,7 +481,7 @@ com.histmersion.plugin.testkit.PluginHarness id(): java.lang.String
 com.histmersion.plugin.testkit.PluginHarness liveAiHttp(): com.histmersion.plugin.AiHttp
 com.histmersion.plugin.testkit.PluginHarness load(java.lang.String, java.lang.Comparable, com.histmersion.plugin.testkit.HttpMode, scala.collection.immutable.Map, scala.collection.immutable.Map, scala.Option): scala.util.Either
 com.histmersion.plugin.testkit.PluginHarness log(): scala.collection.immutable.List
-com.histmersion.plugin.testkit.PluginHarness new(java.lang.String, com.histmersion.plugin.Plugin, com.histmersion.pluginhost.Registries, com.histmersion.core.AppConfig, org.ekrich.config.Config, com.histmersion.plugin.testkit.HttpMode, com.histmersion.plugin.testkit.internal.Wire, com.histmersion.plugin.testkit.internal.Lines, com.histmersion.pluginhost.PolicyHttp, scala.collection.immutable.List)
+com.histmersion.plugin.testkit.PluginHarness new(java.lang.String, com.histmersion.plugin.Plugin, com.histmersion.pluginhost.Registries, com.histmersion.config.AppConfig, org.ekrich.config.Config, com.histmersion.plugin.testkit.HttpMode, com.histmersion.plugin.testkit.internal.Wire, com.histmersion.plugin.testkit.internal.Lines, com.histmersion.pluginhost.PolicyHttp, scala.collection.immutable.List)
 com.histmersion.plugin.testkit.PluginHarness plugin(): com.histmersion.plugin.Plugin
 com.histmersion.plugin.testkit.PluginHarness readCatalogue(java.lang.String, com.histmersion.plugin.CatalogueQuery): com.histmersion.plugin.testkit.CatalogueReport
 com.histmersion.plugin.testkit.PluginHarness requests(): scala.collection.immutable.List

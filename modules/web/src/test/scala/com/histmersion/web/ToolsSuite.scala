@@ -2,7 +2,7 @@ package com.histmersion.web
 
 import com.histmersion.values.Citekey
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 import sttp.model.Method
 
 /** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form,

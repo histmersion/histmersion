@@ -1,8 +1,8 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.core.*
-import com.histmersion.core.MapStack
+import com.histmersion.api.*
+import com.histmersion.api.MapStack
 import com.histmersion.web.map.*
 import org.scalajs.dom
 

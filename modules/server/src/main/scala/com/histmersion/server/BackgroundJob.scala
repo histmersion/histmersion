@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.JobRepo
 
 import java.util.concurrent.atomic.AtomicReference

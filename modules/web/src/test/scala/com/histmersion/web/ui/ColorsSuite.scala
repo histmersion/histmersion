@@ -1,6 +1,6 @@
 package com.histmersion.web.ui
 
-import com.histmersion.core.Palette
+import com.histmersion.api.Palette
 import com.histmersion.web.{Fmt, TestTokens}
 
 /** The palettes are the stylesheet's; the code holds their names and reads their values. */

@@ -2,7 +2,7 @@ package com.histmersion.server.media
 
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite}
 
-import com.histmersion.core.{AppConfig, MediaConfig}
+import com.histmersion.config.{AppConfig, MediaConfig}
 
 /** A provider that never opens a socket (#1446): answers come from `route`, every request is
   * recorded with its headers, and the waits a polite client would sleep are recorded instead. */

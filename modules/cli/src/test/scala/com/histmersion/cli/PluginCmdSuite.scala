@@ -1,6 +1,8 @@
 package com.histmersion.cli
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.sun.net.httpserver.HttpServer
 
 import java.net.InetSocketAddress

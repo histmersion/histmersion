@@ -1,7 +1,7 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{AgentsConfig, AppConfig, UserPaths}
-import com.histmersion.core.Agents.GenerateResult
+import com.histmersion.config.{AgentsConfig, AppConfig, UserPaths}
+import com.histmersion.api.Agents.GenerateResult
 import io.circe.Json
 import io.circe.syntax.*
 

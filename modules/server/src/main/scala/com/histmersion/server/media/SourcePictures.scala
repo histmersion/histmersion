@@ -2,7 +2,9 @@ package com.histmersion.server.media
 
 import com.histmersion.pluginhost.{HttpTransport, Polite}
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.server.ConverterClient
 

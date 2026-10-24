@@ -2,7 +2,9 @@ package com.histmersion.server.events
 
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport, Polite, PluginEvents}
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{AttestationRepo, CorrectionRepo, EventCatalogRepo, EventRepo, JobRepo, PlaceScope, SourceRepo}
 import com.histmersion.server.{BackgroundJob, Deps}
 
@@ -336,7 +338,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
 
   /** The passages of `citekey`'s body that name the event — a whole-word, case- and accent-insensitive
     * match of each name. */
-  private def passagesIn(citekey: String, names: List[String], body: => List[com.histmersion.core.Chunk]): List[EventPassage] =
+  private def passagesIn(citekey: String, names: List[String], body: => List[com.histmersion.domain.Chunk]): List[EventPassage] =
     lazy val chunks = body
     names.flatMap { n =>
       val words = n.split("\\s+").filter(_.nonEmpty).map(w => java.util.regex.Pattern.quote(w))

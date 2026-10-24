@@ -1,6 +1,7 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.core.{EnvOverrides, PluginSetting, PluginState, PluginStatus, PluginsReport}
+import com.histmersion.config.EnvOverrides
+import com.histmersion.api.{PluginSetting, PluginState, PluginStatus, PluginsReport}
 import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigDecodingError
 import org.ekrich.config.{Config, ConfigException, ConfigFactory, ConfigList, ConfigObject, ConfigParseOptions,
@@ -139,7 +140,7 @@ object PluginHost:
   /** Pure: one digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent. What
     * a relink records in the image and `histmersion plugin status` recomputes over the plugins
     * directory (docs/research-plugins.md §7.3; the one implementation is core's `PluginKit.digest`). */
-  def digest(entries: List[(String, String)]): String = com.histmersion.core.PluginKit.digest(entries)
+  def digest(entries: List[(String, String)]): String = com.histmersion.domain.PluginKit.digest(entries)
 
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
   def configuredOrder(user: Config, env: Config): Either[String, List[String]] =

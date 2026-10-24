@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.Queue
+import com.histmersion.api.Queue
 
 /** What a window shows — the typed form of an entry of [[UiState.open]]. The wire spelling
   * (`source:ck`, `jobs`, …) is what the URL hash carries, so a reload or a shared link reopens the
@@ -102,7 +102,7 @@ enum WindowKey:
   /** The standalone page this window mirrors, for "open in a new tab". */
   def pageHref: Option[String] = this match
     case Source(ck)    => Some(SourceLink.href(ck))
-    case Article(slug) => Some(s"/article/${com.histmersion.core.HtmlAtoms.segment(slug)}")
+    case Article(slug) => Some(s"/article/${com.histmersion.api.HtmlAtoms.segment(slug)}")
     case _             => None
 
 object WindowKey:

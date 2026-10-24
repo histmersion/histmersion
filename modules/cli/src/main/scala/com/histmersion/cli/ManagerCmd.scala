@@ -2,8 +2,10 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.core.*
-import com.histmersion.core.Managers.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Managers.*
 
 /** `histmersion agent managers` and `histmersion agent manager <id> …` — the persistent process managers
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP. */

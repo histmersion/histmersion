@@ -1,8 +1,10 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Autopilot.{AutopilotStatus, DrainInfo, DrainSet}
-import com.histmersion.core.Queue.QueueAdd
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Autopilot.{AutopilotStatus, DrainInfo, DrainSet}
+import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.db.{AgentRepo, AutopilotRepo}
 
 import java.time.Instant

@@ -5,7 +5,8 @@ import com.histmersion.pluginhost.{Generation, OutboundTls, FetchChain}
 import sttp.tapir.server.netty.sync.{NettySyncServer, NettySyncServerOptions}
 import sttp.tapir.server.netty.NettyConfig
 import scala.concurrent.duration.*
-import com.histmersion.core.{AppConfig, ConfigFileInfo, LoadedConfig, PluginsMarkdown, UserConfigFile}
+import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
+import com.histmersion.api.{ConfigFileInfo, PluginsMarkdown}
 import com.histmersion.server.acquire.*
 import com.histmersion.server.hot.{Hot, PinRequests}
 import com.histmersion.server.plugins.Plugins

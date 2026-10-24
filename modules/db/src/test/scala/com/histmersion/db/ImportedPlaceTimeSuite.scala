@@ -1,7 +1,9 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.Geocode.KindHint
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Geocode.KindHint
 
 import com.augustnagro.magnum.*
 

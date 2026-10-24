@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import chimp.server.{NoStructuredOutput, ToolResult}
-import com.histmersion.core.ApiError
+import com.histmersion.api.ApiError
 
 /** The one way an MCP tool answers (#1946): Markdown, and a refusal (a value the handler returned as
   * `Left`) as its message in italics — `_No source 'x'…_`. Every tool used to spell the refusal

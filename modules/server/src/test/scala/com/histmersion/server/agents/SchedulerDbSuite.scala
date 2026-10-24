@@ -1,12 +1,14 @@
 package com.histmersion.server.agents
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
-import com.histmersion.core.Agents.*
-import com.histmersion.core.Autopilot.{AutopilotSet, FocusSet}
-import com.histmersion.core.Autopilot
-import com.histmersion.core.GoalPlans.*
-import com.histmersion.core.Managers.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
+import com.histmersion.api.Autopilot.{AutopilotSet, FocusSet}
+import com.histmersion.api.Autopilot
+import com.histmersion.api.GoalPlans.*
+import com.histmersion.api.Managers.*
 import com.histmersion.db.{AgentRepo, FocusRepo, GoalLinkRepo, ManagerRepo, Migrate, ReviewLedgerRepo}
 import com.histmersion.server.{Deps, Handlers}
 import io.circe.syntax.*

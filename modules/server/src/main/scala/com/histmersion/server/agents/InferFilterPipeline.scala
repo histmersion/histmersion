@@ -1,9 +1,11 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{ApprovalKind, ApprovalMode, ApprovalState, Pipeline}
-import com.histmersion.core.ArticlePlans.FilterProposal
-import com.histmersion.core.FilterInference.{FilterAnswer, Inferred}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode, ApprovalState, Pipeline}
+import com.histmersion.api.ArticlePlans.FilterProposal
+import com.histmersion.domain.FilterInference.{FilterAnswer, Inferred}
 import com.histmersion.db.AgentRepo
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

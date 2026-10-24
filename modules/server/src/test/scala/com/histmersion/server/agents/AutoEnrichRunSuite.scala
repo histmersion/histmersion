@@ -1,8 +1,10 @@
 package com.histmersion.server.agents
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
-import com.histmersion.core.Agents.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
 import com.histmersion.db.{AgentRepo, Db, Migrate}
 import com.histmersion.server.{ConverterClient, Deps, Handlers}
 
@@ -95,8 +97,8 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite:
     withHandlers(on) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil, "the manager starts it, not the ingest")
-      val item = com.histmersion.db.ManagerRepo.itemFor(ds, com.histmersion.core.Managers.EnrichId,
-        com.histmersion.core.Managers.SourceEnrich, Ck).getOrElse(fail("no item"))
+      val item = com.histmersion.db.ManagerRepo.itemFor(ds, com.histmersion.api.Managers.EnrichId,
+        com.histmersion.api.Managers.SourceEnrich, Ck).getOrElse(fail("no item"))
       assertEquals((item.origin, item.status), ("ingest", "pending"))
       assert(job.progress.exists(p => p.contains(s"enrichment queued: item #${item.id} of the enrich manager") && p.contains("paused")),
         job.progress)

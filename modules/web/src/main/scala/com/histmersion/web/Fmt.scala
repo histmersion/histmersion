@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.{Confidence, ConfidenceStyle, YearFmt, Years, Label}
+import com.histmersion.api.{Confidence, ConfidenceStyle, YearFmt, Years, Label}
 import com.histmersion.web.ui.ThemeTokens
 import scala.math.*
 

@@ -1,7 +1,9 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.PointAreas.Dating
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.domain.PointAreas.Dating
 
 import com.augustnagro.magnum.*
 

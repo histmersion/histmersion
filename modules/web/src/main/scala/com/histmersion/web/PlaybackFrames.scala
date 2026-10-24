@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.GeoHit
+import com.histmersion.api.GeoHit
 
 /** The findings of a playback, fetched ahead in long stretches and cut to each frame's window locally
   * (#3764). Playback asked the server for the window's findings once per animation frame (~60 requests

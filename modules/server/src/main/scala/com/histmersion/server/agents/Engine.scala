@@ -1,7 +1,9 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
 import com.histmersion.db.{AgentRepo, QueueRepo}
 import io.circe.{Decoder, Encoder}
 import io.circe.parser.decode
@@ -694,7 +696,7 @@ final class Engine(val ds: DataSource, cfgNow: => AgentsConfig, val agents: Agen
         val text =
           if scheduled then s"scheduled ${run.pipeline}${run.goal.fold("")(g => s" for goal $g")} (agent run ${run.id.take(8)}) $w"
           else s"${run.pipeline} of [[${run.target}]] queued by its import (agent run ${run.id.take(8)}) $w"
-        val _ = QueueRepo.add(ds, com.histmersion.core.Queue.Kind.Tasks, com.histmersion.core.Queue.QueueAdd(
+        val _ = QueueRepo.add(ds, com.histmersion.api.Queue.Kind.Tasks, com.histmersion.api.Queue.QueueAdd(
           text, topic = Some(if scheduled then "agent schedules" else "auto-enrich")))
       }
 

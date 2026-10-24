@@ -1,6 +1,7 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{AcquireMarkdown, AgentToolsConfig, ArticleMarkdown, Filter, FilterDocs, Markdown, Query}
+import com.histmersion.api.{AcquireMarkdown, ArticleMarkdown, Filter, FilterDocs, Markdown, Query}
+import com.histmersion.config.AgentToolsConfig
 import com.histmersion.server.Handlers
 import com.histmersion.server.McpTools
 import com.histmersion.server.McpTools.{ArticleCoverageInput, CheckEditsInput, FacetsInput, GetArticleInput, NeighborsInput, PassagesInput}

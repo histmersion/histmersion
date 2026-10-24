@@ -1,7 +1,7 @@
 package com.histmersion.server
 
-import com.histmersion.core.Agents.{ApprovalKind, ApprovalState}
-import com.histmersion.core.ListFilters.{ApprovalFilter, DecidedBy, JobFilter, RunFilter}
+import com.histmersion.api.Agents.{ApprovalKind, ApprovalState}
+import com.histmersion.api.ListFilters.{ApprovalFilter, DecidedBy, JobFilter, RunFilter}
 
 import java.time.Instant
 

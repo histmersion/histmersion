@@ -1,8 +1,10 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.*
-import com.histmersion.core.AgentProposals.{Proposal, Route}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
+import com.histmersion.domain.AgentProposals.{Proposal, Route}
 import com.histmersion.db.AgentRepo
 import com.histmersion.server.Handlers
 
@@ -157,4 +159,4 @@ object Approvals:
       case AlreadyOpen(w) => s"already waiting for a person: $w"
       case Skipped(w)     => s"nothing to do: $w"
       case Failed(w)      => s"not applied: $w"
-      case NotProposed(w) => s"${com.histmersion.core.AgentsMarkdown.DryRunNote}: $w"
+      case NotProposed(w) => s"${com.histmersion.api.AgentsMarkdown.DryRunNote}: $w"

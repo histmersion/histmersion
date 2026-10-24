@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 
 /** The About window's Storage and Disk space sections, in their pure part. */
 class AboutStorageSuite extends munit.FunSuite:

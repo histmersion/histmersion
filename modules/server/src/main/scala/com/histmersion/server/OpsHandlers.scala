@@ -1,10 +1,12 @@
 package com.histmersion.server
 
-import com.histmersion.core.*
-import com.histmersion.core.Lint.*
-import com.histmersion.core.Query.*
-import com.histmersion.core.Queue.*
-import com.histmersion.core.GoalPlans.{GoalView, LinkKind, Plan}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Lint.*
+import com.histmersion.api.Query.*
+import com.histmersion.api.Queue.*
+import com.histmersion.api.GoalPlans.{GoalView, LinkKind, Plan}
 import com.histmersion.db.{ArticleRepo, Geocoder, GoalLinkRepo, GoalRepo, LintRepo, PlaceReviewRepo, PointAreaRepo, QueryRepo, QueueRepo, SourceRepo}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the

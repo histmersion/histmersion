@@ -1,11 +1,13 @@
 package com.histmersion.server.agents
 
 import com.augustnagro.magnum.transact
-import com.histmersion.core.*
-import com.histmersion.core.Agents.*
-import com.histmersion.core.ManagerPolicy.{Candidate, Next, ReviewFacts, ReviewSettings, StepFacts}
-import com.histmersion.core.Managers.*
-import com.histmersion.core.Queue.{QueueAdd, QueuePatch}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
+import com.histmersion.domain.ManagerPolicy.{Candidate, Next, ReviewFacts, ReviewSettings, StepFacts}
+import com.histmersion.api.Managers.*
+import com.histmersion.api.Queue.{QueueAdd, QueuePatch}
 import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo, QueueRepo, ReviewLedgerRepo}
 
 import java.time.Instant

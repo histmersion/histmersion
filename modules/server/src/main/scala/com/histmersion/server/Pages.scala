@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 // explicit: pins `Article` to the page helpers in HttpApi.scala over `core.Article` (see ArticlesApi)
 import com.histmersion.server.Article
 import com.vladsch.flexmark.parser.Parser

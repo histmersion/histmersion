@@ -2,7 +2,9 @@ package com.histmersion.server
 
 import com.histmersion.pluginhost.Challenge
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.server.acquire.*
 import io.circe.Json
 

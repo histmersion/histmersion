@@ -1,7 +1,9 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource

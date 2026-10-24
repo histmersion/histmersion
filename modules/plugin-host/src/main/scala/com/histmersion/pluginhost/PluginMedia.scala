@@ -1,6 +1,7 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.core.{MediaConfig, MediaLicence, MediaRecord, MediaRights as CoreRights}
+import com.histmersion.config.MediaConfig
+import com.histmersion.domain.{MediaLicence, MediaRecord, MediaRights as CoreRights}
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal

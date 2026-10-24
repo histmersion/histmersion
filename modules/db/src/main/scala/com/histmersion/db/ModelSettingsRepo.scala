@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.ModelChains.{LimitSpec, Spend}
+import com.histmersion.api.ModelChains.{LimitSpec, Spend}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource

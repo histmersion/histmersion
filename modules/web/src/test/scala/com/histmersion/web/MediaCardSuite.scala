@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 
 /** Pictures on the cards and the media layer (#1446): the place and event cards carry their first
   * picture with its credit and licence, an event element previews an event, the layer's filter menus
@@ -77,7 +77,7 @@ class MediaCardSuite extends munit.FunSuite:
     // the source is the app's source link (its card on hover), not a bare bold citekey
     val f = MediaPopup.html(fig, "1200 BCE", "")
     assert(f.startsWith(s"""<div class="cite-tip-title media-popup-title">${CardIcons.html("image")}""" +
-      com.histmersion.core.HtmlAtoms.sourceLink("cline2014_year", None, "cline2014_year") + " / fig1.png</div>"), f)
+      com.histmersion.api.HtmlAtoms.sourceLink("cline2014_year", None, "cline2014_year") + " / fig1.png</div>"), f)
     val pic = MediaGeoHit(None, "Lions-Gate-Mycenae.jpg", Some("photo"), 37.0, 22.0, None, None, None, thumb.uid,
       Some(MediaProvider.Commons), Some("CC-BY-SA-2.5"), Some("A <b>&</b> B"), Some(thumb.url))
     val h = MediaPopup.html(pic, "", "")

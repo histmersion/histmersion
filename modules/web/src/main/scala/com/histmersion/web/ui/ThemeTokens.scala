@@ -1,6 +1,6 @@
 package com.histmersion.web.ui
 
-import com.histmersion.core.Palette
+import com.histmersion.api.Palette
 import org.scalajs.dom
 
 import scala.util.Try

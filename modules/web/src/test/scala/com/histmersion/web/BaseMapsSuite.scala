@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 import com.histmersion.web.map.*
 
 /** The base map's choices and what each draws, on the fake engine's terms (no browser). */

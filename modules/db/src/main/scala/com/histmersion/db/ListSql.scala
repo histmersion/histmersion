@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.ListFilters
+import com.histmersion.api.ListFilters
 import javax.sql.DataSource
 
 import java.time.Instant

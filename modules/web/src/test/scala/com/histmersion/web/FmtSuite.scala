@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.Confidence
+import com.histmersion.api.Confidence
 
 class FmtSuite extends munit.FunSuite:
 

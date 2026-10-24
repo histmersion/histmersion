@@ -1,8 +1,7 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{CompileArticle, EnrichSource, FilterInference, HintProposals, PlanArticles, PlanGoal, ReviewArticle,
-  Scheduling}
-import com.histmersion.core.Agents.ProbeAnswer
+import com.histmersion.domain.{CompileArticle, EnrichSource, FilterInference, HintProposals, PlanArticles, PlanGoal, ReviewArticle, Scheduling}
+import com.histmersion.api.Agents.ProbeAnswer
 import sttp.ai.core.agent.ResponseSchema
 
 /** The typed answer of every LLM step the server runs, one value each. A pipeline names its step's

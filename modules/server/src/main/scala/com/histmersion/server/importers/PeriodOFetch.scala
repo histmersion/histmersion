@@ -1,7 +1,7 @@
 package com.histmersion.server.importers
 
 /** The PeriodO dump (https://perio.do, CC0) as a network source for `histmersion periods fetch
-  * periodo` and `histmersion init --fetch`. The parsing is [[com.histmersion.core.PeriodO]] (pure);
+  * periodo` and `histmersion init --fetch`. The parsing is [[com.histmersion.api.PeriodO]] (pure);
   * this is only the download, through the same client the gazetteer importers use. */
 object PeriodOFetch:
 

@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.Query.QueryResult
+import com.histmersion.api.Query.QueryResult
 
 /** What one agent tool call may return (`agents.tools`): a cut is at a line and says how to read on,
   * a source record keeps its findings whole by shortening its notes first, UI chip links lose their
@@ -68,5 +68,5 @@ class ToolResultCapSuite extends munit.FunSuite:
     val capped = QueryResult(List("c"), (1 to 500).toList.map(i => List(Some(s"r$i"))), 500, true, 3)
     assert(ToolResultCap.queryResult(capped, 50, 100000).contains("450+ more rows"), "the server's row cap hid more")
     val few = r.copy(rows = r.rows.take(3), rowCount = 3)
-    assertEquals(ToolResultCap.queryResult(few, 50, 100000), com.histmersion.core.Query.markdown(few))
+    assertEquals(ToolResultCap.queryResult(few, 50, 100000), com.histmersion.api.Query.markdown(few))
     assert(ToolResultCap.queryResult(r, 0, 600).length <= 600, "no row cap: the character cap still holds")

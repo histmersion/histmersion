@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.Agents.ProbeAnswer
+import com.histmersion.api.Agents.ProbeAnswer
 import com.histmersion.server.McpTools.GetSourceInput
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -23,7 +23,7 @@ class AgentSchemaSuite extends munit.FunSuite:
     assert(js.contains("source's citekey"), js) // the MCP description travels with it
 
   test("the review panel's answers render as response schemas, with the field descriptions the prompts rely on"):
-    import com.histmersion.core.ReviewArticle.*
+    import com.histmersion.domain.ReviewArticle.*
     def js[A](s: ResponseSchema[A]) = sttp.apispec.circe.encoderSchema(s.schema).noSpaces
     val skeptic = js(ResponseSchema.derived[SkepticAnswer]())
     assert(skeptic.contains("\"proposals\"") && skeptic.contains("superseded_by"), skeptic)
@@ -40,7 +40,7 @@ class AgentSchemaSuite extends munit.FunSuite:
 
   test("#981: the findings answer carries placeKind, with the kinds the geocoder understands"):
     val js = sttp.apispec.circe.encoderSchema(
-      ResponseSchema.derived[com.histmersion.core.EnrichSource.Findings]().schema).noSpaces
+      ResponseSchema.derived[com.histmersion.domain.EnrichSource.Findings]().schema).noSpaces
     assert(js.contains("\"placeKind\""), js)
     assert(List("site (", "region (", "polity (", "water (").forall(js.contains), js)
 
@@ -56,9 +56,9 @@ class AgentSchemaSuite extends munit.FunSuite:
 
   test("#958: the fixer and the compile writer answer coverage reasons; article_coverage takes a slug"):
     def js[A](s: ResponseSchema[A]) = sttp.apispec.circe.encoderSchema(s.schema).noSpaces
-    val fixer = js(ResponseSchema.derived[com.histmersion.core.ReviewArticle.FixerAnswer]())
+    val fixer = js(ResponseSchema.derived[com.histmersion.domain.ReviewArticle.FixerAnswer]())
     assert(fixer.contains("\"reasons\"") && fixer.contains("\"citekey\"") && fixer.contains("an empty reason removes one"), fixer)
-    val draft = js(ResponseSchema.derived[com.histmersion.core.CompileArticle.DraftAnswer]())
+    val draft = js(ResponseSchema.derived[com.histmersion.domain.CompileArticle.DraftAnswer]())
     assert(draft.contains("\"reasons\"") && draft.contains("you do NOT cite"), draft)
     val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.ArticleCoverage)
     assertEquals(t.name, "article_coverage")

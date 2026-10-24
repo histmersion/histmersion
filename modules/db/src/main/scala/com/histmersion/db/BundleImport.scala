@@ -1,8 +1,10 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.BundlePlan.{Decision, Ledger, Local}
-import com.histmersion.core.BundleEntities.BlobUse
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.domain.BundlePlan.{Decision, Ledger, Local}
+import com.histmersion.domain.BundleEntities.BlobUse
 
 import com.augustnagro.magnum.*
 import io.circe.syntax.*
@@ -599,7 +601,7 @@ object BundleImport:
               VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
                 ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
                 ${e.placeId.map(placeHere)}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
-                ${e.scale.flatMap(com.histmersion.core.EventScale.parse(_).flatten)},
+                ${e.scale.flatMap(com.histmersion.api.EventScale.parse(_).flatten)},
                 ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod})
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
                 kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,

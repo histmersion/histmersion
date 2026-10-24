@@ -1,6 +1,8 @@
 package com.histmersion.cli
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import io.circe.parser.decode
 import java.nio.file.{Files, Path}

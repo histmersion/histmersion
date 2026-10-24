@@ -2,7 +2,9 @@ package com.histmersion.server.plugins
 
 import com.histmersion.pluginhost.{PluginHost, HostServices}
 
-import com.histmersion.core.{AppConfig, PluginDescription, PluginJar, PluginKit, PluginState}
+import com.histmersion.config.AppConfig
+import com.histmersion.api.{PluginDescription, PluginJar, PluginState}
+import com.histmersion.domain.PluginKit
 import com.histmersion.plugin.{Plugin, PluginHttp, Spi}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 

@@ -1,7 +1,9 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{CodexConfig, CodexRetention, Plural}
-import com.histmersion.core.CodexRetention.FileInfo
+import com.histmersion.config.CodexConfig
+import com.histmersion.domain.CodexRetention
+import com.histmersion.api.Plural
+import com.histmersion.domain.CodexRetention.FileInfo
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
@@ -34,8 +36,8 @@ object CodexHome:
   final case class Report(skipped: Option[String] = None, deleted: Int = 0, freedBytes: Long = 0,
       vacuumed: List[(String, Long, Long)] = Nil, problems: List[String] = Nil):
     def summary: String = skipped.getOrElse {
-      val v = vacuumed.map((n, b, a) => s"$n ${com.histmersion.core.Backup.humanBytes(b)} → ${com.histmersion.core.Backup.humanBytes(a)}")
-      (List(s"${Plural.count(deleted, "transcript")} deleted (${com.histmersion.core.Backup.humanBytes(freedBytes)})") ++
+      val v = vacuumed.map((n, b, a) => s"$n ${com.histmersion.api.Backup.humanBytes(b)} → ${com.histmersion.api.Backup.humanBytes(a)}")
+      (List(s"${Plural.count(deleted, "transcript")} deleted (${com.histmersion.api.Backup.humanBytes(freedBytes)})") ++
         Option.when(v.nonEmpty)(s"vacuumed ${v.mkString(", ")}") ++ problems).mkString("; ")
     }
 

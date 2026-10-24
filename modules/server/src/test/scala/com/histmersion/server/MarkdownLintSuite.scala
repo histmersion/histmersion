@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import MarkdownLint.Context
 
 /** The formatting lint, pure: real-looking article and note Markdown in, findings out — and, for each

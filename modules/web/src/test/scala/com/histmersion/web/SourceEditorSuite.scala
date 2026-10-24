@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 import SourceEditor.{Draft, Field}
 
 /** The metadata editor's pure half: the form ↔ patch mapping (only what changed, with the

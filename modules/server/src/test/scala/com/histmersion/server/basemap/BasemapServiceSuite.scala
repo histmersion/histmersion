@@ -1,6 +1,8 @@
 package com.histmersion.server.basemap
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{JobRepo, Migrate}
 import com.histmersion.server.Deps
 

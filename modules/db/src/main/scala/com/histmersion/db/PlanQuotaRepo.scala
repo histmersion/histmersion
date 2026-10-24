@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
+import com.histmersion.api.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource

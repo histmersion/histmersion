@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 
 /** Boots the whole server on an ephemeral port against a real Postgres (HISTMERSION_TEST_DB_URL) and
   * hits every surface. Skipped when no test DB is configured. */

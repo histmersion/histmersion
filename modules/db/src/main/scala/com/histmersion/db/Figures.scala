@@ -1,6 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -11,7 +13,7 @@ import scala.jdk.CollectionConverters.*
   * `md_path` frontmatter key points at the former. Those figures are on disk for much of the corpus,
   * so the seed importer picks them up rather than making everyone re-OCR: the files become `assets`
   * rows and the body's `figures/<name>` links are normalised to the canonical `assets/<name>` by
-  * [[com.histmersion.core.AssetLinks.fromFigures]].
+  * [[com.histmersion.api.AssetLinks.fromFigures]].
   *
   * Pure except for the directory read; the path arithmetic is a separate, testable function. */
 object Figures:
@@ -23,7 +25,7 @@ object Figures:
     MdPath.findFirstMatchIn(noteText.take(8192)).map(_.group(1).trim).filter(_.nonEmpty)
 
   /** Where a note's figures live. `wiki/sources/<ck>.md` is three levels below the corpus root, the
-    * same arithmetic [[com.histmersion.core.Frontmatter]] uses to resolve `md_path`; the figures sit next to
+    * same arithmetic [[com.histmersion.domain.Frontmatter]] uses to resolve `md_path`; the figures sit next to
     * the converted body. Falls back to the `md/<citekey>/figures` convention when the note carries
     * no `md_path`. */
   def dirFor(notePath: Path, noteText: String, citekey: String): Option[Path] =

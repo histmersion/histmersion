@@ -1,6 +1,6 @@
 package com.histmersion.server.events
 
-import com.histmersion.core.EventsApi
+import com.histmersion.api.EventsApi
 import com.histmersion.server.Handlers
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint

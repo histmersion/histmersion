@@ -5,9 +5,11 @@ import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.json.circe.*
 import sttp.shared.Identity
 import sttp.model.{Header, MediaType}
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 // EXPLICIT, and deliberately so: `com.histmersion.server.Article` (the page helpers in HttpApi.scala) and
-// `com.histmersion.core.Article` (the article model) share a name, and a wildcard import outranks a package
+// `com.histmersion.api.Article` (the article model) share a name, and a wildcard import outranks a package
 // member declared in another file. This import pins `Article` to the page helpers; the model is
 // never named here — the handlers hand back `ArticleView`.
 import com.histmersion.server.Article

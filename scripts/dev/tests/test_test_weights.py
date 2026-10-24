@@ -19,7 +19,7 @@ class WeightsTest(unittest.TestCase):
             "Test run \x1b[36mcom.histmersion.db.BundleSuite\x1b[0m finished: 0 failed, 0 ignored, 4 total 34.2s",
             "Test run com.histmersion.server.basemap.BasemapHttpSuite finished: 0 failed, 0 ignored, 3 total 13.2s",
             "Test run com.histmersion.server.CssTokensSuite finished: 0 failed, 0 ignored, 3 total 0.2s",
-            "Test run com.histmersion.core.ConfigSuite finished: 0 failed, 0 ignored, 3 total 9.0s",
+            "Test run com.histmersion.config.ConfigSuite finished: 0 failed, 0 ignored, 3 total 9.0s",
         ]
         self.assertEqual(tw.weights(log), {"HardeningHttpSuite": 44, "BundleSuite": 34, "BasemapHttpSuite": 13})
 

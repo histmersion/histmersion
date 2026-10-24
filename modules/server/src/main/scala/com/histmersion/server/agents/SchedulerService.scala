@@ -1,11 +1,13 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{ApprovalState, Billing, Pipeline, PauseReason, Role, RunState}
-import com.histmersion.core.Managers.*
-import com.histmersion.core.Queue.QueueAdd
-import com.histmersion.core.SchedulerPolicy.*
-import com.histmersion.core.AgentScheduler.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{ApprovalState, Billing, Pipeline, PauseReason, Role, RunState}
+import com.histmersion.api.Managers.*
+import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.domain.SchedulerPolicy.*
+import com.histmersion.api.AgentScheduler.*
 import com.histmersion.db.{AgentRepo, AutopilotRepo, FocusRepo, GoalLinkRepo, ManagerRepo}
 
 import java.time.Instant

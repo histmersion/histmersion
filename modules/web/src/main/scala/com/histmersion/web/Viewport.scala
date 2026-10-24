@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.UiConfig
+import com.histmersion.api.UiConfig
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 

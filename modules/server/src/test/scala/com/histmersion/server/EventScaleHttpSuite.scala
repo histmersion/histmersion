@@ -1,7 +1,8 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.core.{AppConfig, EventDetail, EventGeoList}
+import com.histmersion.config.AppConfig
+import com.histmersion.api.{EventDetail, EventGeoList}
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}

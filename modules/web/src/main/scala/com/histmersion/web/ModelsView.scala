@@ -1,8 +1,8 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{CheckLevel, DoctorReport, ModelsInfo}
-import com.histmersion.core.ModelChains.*
+import com.histmersion.api.*
+import com.histmersion.api.Agents.{CheckLevel, DoctorReport, ModelsInfo}
+import com.histmersion.api.ModelChains.*
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future

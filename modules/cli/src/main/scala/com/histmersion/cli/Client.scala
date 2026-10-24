@@ -5,7 +5,9 @@ import sttp.client4.httpclient.HttpClientSyncBackend
 import sttp.tapir.client.sttp4.{SttpClientInterpreter, SttpClientOptions}
 import sttp.tapir.PublicEndpoint
 import sttp.model.Uri
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the
   * server interprets, so request/response shapes cannot drift. Sync (java.net.http), native-safe.

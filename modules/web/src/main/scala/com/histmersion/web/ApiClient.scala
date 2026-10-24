@@ -14,7 +14,7 @@ import sttp.model.Method
 import sttp.tapir.{DecodeResult, PublicEndpoint}
 import sttp.tapir.client.sttp4.SttpClientInterpreter
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 
 /** A request the server answered with an error status: the status and the server's own message.
   * `unauthorized` is a write refused by the API-key gate; `conflict` a stale `ifUpdatedAt`. */

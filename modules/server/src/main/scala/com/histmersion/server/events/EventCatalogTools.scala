@@ -4,7 +4,9 @@ import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.server.{Handlers, McpOut, McpTools}
 
 /** The MCP half of #1449: `event_links` — the sources that may discuss an event, their confirmation

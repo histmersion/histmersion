@@ -131,7 +131,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
       val p = js.hcursor.downField("properties").downField("emptySlots")
       val items = p.downField("items").success.orElse(p.downField("anyOf").downN(0).downField("items").success)
       assertEquals(items.flatMap(_.downField("enum").as[List[String]].toOption),
-        Some(com.histmersion.core.ReviewArticle.ExplainSlots), js.noSpaces)
+        Some(com.histmersion.domain.ReviewArticle.ExplainSlots), js.noSpaces)
 
   test("the strict form is idempotent"):
     for (name, s) <- AnswerSchemas.all do assertEquals(StrictJsonSchema(strict(s)), strict(s), name)

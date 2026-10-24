@@ -4,8 +4,10 @@ import com.histmersion.values.Citekey
 
 import com.histmersion.pluginhost.{FetchChain, OaFetcher, WorkLookup}
 
-import com.histmersion.core.*
-import com.histmersion.core.Acquire.Ident
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Acquire.Ident
 import com.histmersion.db.{AcquireRepo, AssetRepo, CandidateRepo, QueueRepo, SourceRepo}
 import com.histmersion.server.Deps
 

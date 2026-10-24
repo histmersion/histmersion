@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.Agents.Role
+import com.histmersion.api.Agents.Role
 import org.yaml.snakeyaml.{LoaderOptions, Yaml}
 import org.yaml.snakeyaml.constructor.SafeConstructor
 

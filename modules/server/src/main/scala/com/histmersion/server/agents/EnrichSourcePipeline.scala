@@ -1,8 +1,10 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{ApprovalKind, Pipeline, Role}
-import com.histmersion.core.EnrichSource.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{ApprovalKind, Pipeline, Role}
+import com.histmersion.domain.EnrichSource.*
 import com.histmersion.db.{AgentRepo, QueueRepo}
 import com.histmersion.server.Handlers
 import io.circe.syntax.*

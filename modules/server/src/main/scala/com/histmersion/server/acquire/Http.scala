@@ -1,6 +1,7 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.core.{AcquireConfig, HttpPolicy}
+import com.histmersion.config.AcquireConfig
+import com.histmersion.domain.HttpPolicy
 
 import com.histmersion.pluginhost.{PolicyHttp, SttpTransport}
 import io.circe.Json

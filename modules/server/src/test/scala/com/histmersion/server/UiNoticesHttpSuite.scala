@@ -1,8 +1,8 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.core.AppConfig
-import com.histmersion.core.UiNotices.Counters
+import com.histmersion.config.AppConfig
+import com.histmersion.api.UiNotices.Counters
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
@@ -68,7 +68,7 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
         assertEquals(post(s"$url/queue/tasks", """{"text":"zz notice task"}""")._1, 401)
         val (as, ab) = post(s"$url/queue/tasks", """{"text":"zz notice task"}""", Some("s3cret"))
         assertEquals(as, 200, ab)
-        added = io.circe.parser.decode[com.histmersion.core.Queue.QueueItem](ab).toOption.map(_.id)
+        added = io.circe.parser.decode[com.histmersion.api.Queue.QueueItem](ab).toOption.map(_.id)
         val after = decode(get(s"$url/ui/counters")._2).boards.find(_.key == "tasks").get
         assertEquals(after.count, tasks0.count.map(_ + 1))
         assert(after.fresh, after.toString)

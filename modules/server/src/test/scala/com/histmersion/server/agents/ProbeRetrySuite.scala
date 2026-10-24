@@ -1,8 +1,10 @@
 package com.histmersion.server.agents
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
-import com.histmersion.core.Agents.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
 import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*

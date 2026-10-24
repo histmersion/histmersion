@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
-import com.histmersion.core.OpsApi
+import com.histmersion.api.OpsApi
 
 /** REST wiring for stream 2.8 — every route delegates to the one [[OpsHandlers]] implementation that
   * MCP calls too. Appended to [[HttpApi]]'s list; the `queue/items/{id}` routes come first so `items`

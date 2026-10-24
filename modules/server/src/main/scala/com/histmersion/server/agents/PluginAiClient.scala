@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.Agents.ModelRef
+import com.histmersion.api.Agents.ModelRef
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginAi
 import io.circe.syntax.*

@@ -2,8 +2,9 @@ package com.histmersion.server.agents
 
 import com.histmersion.pluginhost.{PluginHost, Generation}
 
-import com.histmersion.core.{AppConfig, PlanQuota}
-import com.histmersion.core.Agents.*
+import com.histmersion.config.AppConfig
+import com.histmersion.api.PlanQuota
+import com.histmersion.api.Agents.*
 import com.histmersion.plugin.*
 import com.histmersion.server.plugins.Plugins
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

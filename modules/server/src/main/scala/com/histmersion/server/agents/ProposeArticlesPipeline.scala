@@ -1,10 +1,12 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{ApprovalKind, Pipeline}
-import com.histmersion.core.ArticlePlans.ArticlePlan
-import com.histmersion.core.GoalPlans.LinkKind
-import com.histmersion.core.PlanArticles.ArticlesAnswer
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{ApprovalKind, Pipeline}
+import com.histmersion.api.ArticlePlans.ArticlePlan
+import com.histmersion.api.GoalPlans.LinkKind
+import com.histmersion.domain.PlanArticles.ArticlesAnswer
 import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ManagerRepo}
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

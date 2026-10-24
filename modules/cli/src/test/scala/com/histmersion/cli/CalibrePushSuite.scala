@@ -1,6 +1,7 @@
 package com.histmersion.cli
 
-import com.histmersion.core.{CalibreCliConfig, CalibreGap, CalibreGaps, CalibrePushRequest}
+import com.histmersion.config.CalibreCliConfig
+import com.histmersion.api.{CalibreGap, CalibreGaps, CalibrePushRequest}
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.syntax.*
 

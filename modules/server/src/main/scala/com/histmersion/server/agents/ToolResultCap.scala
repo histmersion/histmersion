@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.Query
+import com.histmersion.api.Query
 
 /** What one tool call of an agent step may return (`agents.tools`).
   * Every later turn of a step re-sends every earlier result, so a step that reads ten records pays for

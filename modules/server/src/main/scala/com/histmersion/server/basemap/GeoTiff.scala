@@ -1,6 +1,6 @@
 package com.histmersion.server.basemap
 
-import com.histmersion.core.BBox
+import com.histmersion.api.BBox
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.numeric.{GreaterEqual, Positive}
 

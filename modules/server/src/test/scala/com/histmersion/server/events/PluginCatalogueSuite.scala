@@ -3,7 +3,9 @@ package com.histmersion.server.events
 import com.histmersion.pluginhost.{PluginHost, Generation}
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{EventCatalogRepo, EventRepo, Migrate, TestDb}
 import com.histmersion.plugin as spi
 import com.histmersion.server.Deps

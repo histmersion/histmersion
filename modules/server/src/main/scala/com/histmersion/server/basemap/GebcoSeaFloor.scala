@@ -1,6 +1,7 @@
 package com.histmersion.server.basemap
 
-import com.histmersion.core.{Backup, Basemap, BasemapGebcoConfig, BBox, Plural}
+import com.histmersion.api.{Backup, Basemap, BBox, Plural}
+import com.histmersion.config.BasemapGebcoConfig
 
 import java.nio.channels.FileChannel
 import java.nio.file.{Files, Path, StandardOpenOption}

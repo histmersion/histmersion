@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.Query.*
+import com.histmersion.api.Query.*
 
 import java.sql.{Connection, ResultSet, SQLException}
 import javax.sql.DataSource
@@ -8,9 +8,9 @@ import javax.sql.DataSource
 /** The read-only SQL escape hatch (`POST /api/query`, `histmersion query`, MCP `query`; plan §5.2 2.8),
   * plus the live `information_schema` shape the tool description is generated from.
   *
-  * **Three layers, none of which is sufficient alone** (the full argument is on [[com.histmersion.core.Query]]):
+  * **Three layers, none of which is sufficient alone** (the full argument is on [[com.histmersion.api.Query]]):
   *
-  *  1. [[com.histmersion.core.Query.check]] — ONE top-level statement, and not a session/transaction-control
+  *  1. [[com.histmersion.api.Query.check]] — ONE top-level statement, and not a session/transaction-control
   *     one. Without it, pgjdbc runs a `;`-batch and `SET TRANSACTION READ WRITE; DELETE …` beat the
   *     guard below by turning it off first.
   *  2. `ds` is the DataSource of the dedicated **`histmersion_query`** role (migration V011) — SELECT and
@@ -29,7 +29,7 @@ object QueryRepo:
     * exception: a bad query is an expected outcome of handing SQL to a model. */
   def run(ds: DataSource, statement: String, timeoutMs: Int, maxRows: Int, maxCellChars: Int)
       : Either[String, QueryResult] =
-    com.histmersion.core.Query.check(statement).flatMap(text => exec(ds, text, timeoutMs, maxRows, maxCellChars))
+    com.histmersion.api.Query.check(statement).flatMap(text => exec(ds, text, timeoutMs, maxRows, maxCellChars))
 
   private def exec(ds: DataSource, text: String, timeoutMs: Int, maxRows: Int, maxCellChars: Int)
       : Either[String, QueryResult] =

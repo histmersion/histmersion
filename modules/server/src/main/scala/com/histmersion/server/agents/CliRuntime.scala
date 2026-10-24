@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}

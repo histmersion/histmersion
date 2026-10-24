@@ -1,6 +1,7 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.core.{MediaLicence, WorkRef}
+import com.histmersion.domain.MediaLicence
+import com.histmersion.api.WorkRef
 import com.histmersion.plugin.*
 
 /** The parts of the host the server and the plugin testkit share: what a work is asked for, the media

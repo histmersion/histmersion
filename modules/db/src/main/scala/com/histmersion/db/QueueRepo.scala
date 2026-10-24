@@ -1,14 +1,16 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.Queue.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Queue.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 /** The store behind `histmersion queue` (migration `V009__queue.sql`, plan §5.2 stream 2.8).
   *
-  * Deliberately thin: all the shape lives in the pure [[com.histmersion.core.Queue]] parser/renderer, and this
+  * Deliberately thin: all the shape lives in the pure [[com.histmersion.api.Queue]] parser/renderer, and this
   * only does CRUD plus the two bulk paths (`replaceAll` for an import, `all` for an export).
   * Timestamps go out as the same UTC ISO-8601 strings the rest of the wire uses.
   */

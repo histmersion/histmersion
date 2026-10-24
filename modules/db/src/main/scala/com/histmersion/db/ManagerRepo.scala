@@ -1,7 +1,7 @@
 package com.histmersion.db
 
-import com.histmersion.core.Agents.{JobKind, PauseReason, RunState}
-import com.histmersion.core.Managers.*
+import com.histmersion.api.Agents.{JobKind, PauseReason, RunState}
+import com.histmersion.api.Managers.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -361,7 +361,7 @@ object ManagerRepo:
                                      state = state - 'history', updated_at = now()
             WHERE id = $itemId AND status = 'done'""".update.run() > 0
 
-  /** A manager's open items (pending, held, active) as (kind, target) — what [[com.histmersion.core.ManagerPolicy.waitsFor]] reads. */
+  /** A manager's open items (pending, held, active) as (kind, target) — what [[com.histmersion.domain.ManagerPolicy.waitsFor]] reads. */
   def openKeys(ds: DataSource, managerId: String): List[(String, String)] =
     connect(ds):
       sql"""SELECT kind, target FROM manager_items WHERE manager_id = $managerId
@@ -486,7 +486,7 @@ object ManagerRepo:
 
   /** Per manager: its open items (pending, held, active), the items it settled since `since`, and when
     * it last recorded an event. A watcher's ingest backlog is not counted: it drains by the day's ingest
-    * caps, not at the pace of its runs (it has its own estimate, [[com.histmersion.core.IngestBacklog.daysToDrain]]). */
+    * caps, not at the pace of its runs (it has its own estimate, [[com.histmersion.domain.IngestBacklog.daysToDrain]]). */
   def pace(ds: DataSource, since: java.time.Instant): Map[String, (Int, Int, Option[String])] =
     val t = since.toString
     connect(ds):

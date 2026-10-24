@@ -322,7 +322,7 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre(cfg(), quiet).replaceFormat(1, tmpFile("mobi")).isLeft)
     assertEquals(quiet.commands, Nil)
 
-  private def cfg() = com.histmersion.core.CalibreCliConfig(lib, "calibredb", "sqlite3", "")
+  private def cfg() = com.histmersion.config.CalibreCliConfig(lib, "calibredb", "sqlite3", "")
 
   /** A [[Shell]] that records instead of executing. */
   private class RecordingShell(running: Boolean = false) extends Shell:

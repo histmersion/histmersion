@@ -1,6 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** The map layer draws each state ONCE (`PlaceRepo.geoJson`): pure checks of the query, and — against
   * a disposable Postgres (`TestDb`) — the de-duplication on real shapes. Fixtures sit around 150–171°E,

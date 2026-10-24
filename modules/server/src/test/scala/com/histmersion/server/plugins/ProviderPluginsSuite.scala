@@ -2,7 +2,7 @@ package com.histmersion.server.plugins
 
 import com.histmersion.pluginhost.{PluginHost, Generation, PluginEvents, PluginMedia}
 
-import com.histmersion.core.{MediaLicence, MediaRecord}
+import com.histmersion.domain.{MediaLicence, MediaRecord}
 import com.histmersion.plugin.*
 import com.histmersion.server.events.{BuiltinCatalogues, HostEventCatalogue}
 import com.histmersion.server.media.{BuiltinMedia, MediaImporters, PluginCollection}
@@ -62,7 +62,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(g.registries.sourceFetchers.isEmpty, "offline: no fetcher")
 
   test("the full built-in set: the fetchers, the collections and the catalogues; no plugin needs a setting"):
-    val all = Plugins.builtins(com.histmersion.core.AppConfig.load(), () => fail("no HTTP at registration"))
+    val all = Plugins.builtins(com.histmersion.config.AppConfig.load(), () => fail("no HTTP at registration"))
     val g   = build(all)
     assert(g.report.ok, g.report.toString)
     assertEquals(g.report.plugins.size, 7 + 8 + 3 + 6) // fetchers (four open-access indexes, D4), collections, catalogues, AI providers
@@ -107,12 +107,12 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(MediaImporters.lookup("ZQ-Portal", c).map(_._1), Right("zq-portal"))
     val infos = MediaImporters.infos(c, n => if n == "zq-portal" then "zq-plugin" else "?", _ => "cc0,cc-by")
     assertEquals(infos.map(_.name).take(2), List("wikidata", "depicts"))
-    assertEquals(infos.last, com.histmersion.core.MediaProviderInfo("zq-portal", "Zq portal objects", "places", "",
+    assertEquals(infos.last, com.histmersion.api.MediaProviderInfo("zq-portal", "Zq portal objects", "places", "",
       "zq-plugin", builtin = false, "cc0,cc-by"))
     assert(infos.find(_.name == "met").exists(i => i.builtin && i.plugin == "media-met"), infos.toString)
     val cats = BuiltinCatalogues.infos(g.registries.eventCatalogues)
     assertEquals(cats.map(_.id), List("gvp", "noaa", "wikidata", "zq-quakes"))
-    assertEquals(cats.last, com.histmersion.core.CatalogProviderInfo("zq-quakes", "Zq quakes", "CC0-1.0", "Zq (2026)", "https://zq.example"))
+    assertEquals(cats.last, com.histmersion.api.CatalogProviderInfo("zq-quakes", "Zq quakes", "CC0-1.0", "Zq (2026)", "https://zq.example"))
     assertEquals(BuiltinCatalogues.resolve("zq-quakes", g.registries.eventCatalogues), Right("zq-quakes"))
 
   test("a plugin may not take a name of the host's providers, nor a role the host does not store"):
@@ -204,7 +204,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       lat = Some(38.0), lon = Some(23.0), magnitude = Some(6.5), wikidata = Some("q42"), names = List("Zq Earthquake", "Zq quake"))
     val r = PluginEvents.record("zq-quakes", ok).fold(fail(_), identity)
     assertEquals((r.provider, r.providerId, r.kind, r.wikidata, r.names), ("zq-quakes", "q-1", "earthquake", Some("Q42"), List("Zq quake")))
-    assertEquals(r.timeSpan, com.histmersion.core.TimeSpan(Some(-1200L), None, None, Some(-1200L)))
+    assertEquals(r.timeSpan, com.histmersion.api.TimeSpan(Some(-1200L), None, None, Some(-1200L)))
     assertEquals(PluginEvents.record("x", ok.copy(wikidata = Some("not-an-item"))).map(_.wikidata), Right(None))
     assertEquals(PluginEvents.record("x", ok.copy(id = " ")), Left("a record without an id"))
     assertEquals(PluginEvents.record("x", ok.copy(label = "")), Left("q-1: no label"))
@@ -215,7 +215,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(PluginEvents.record("x", ok.copy(lon = None)), Left("q-1: a position needs both latitude and longitude"))
 
   test("a plugin catalogue's record is dated as the host dates its own: a stated year ± when no span, held inside the limits"):
-    import com.histmersion.core.{CatalogDating, TimeSpan}
+    import com.histmersion.api.{CatalogDating, TimeSpan}
     val base = PluginEvents.record("zq", CatalogueEvent("e", "u", "Zq Flood", "flood", None, None, lat = Some(38.0),
       lon = Some(23.0), central = Some(-1000L), plusMinus = Some(50L))).fold(fail(_), identity)
     val now = CatalogDating.Limits(2026)
@@ -253,7 +253,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       override def floorYear = throw IllegalStateException("boom")
       def parts(q: CatalogueQuery) = Nil
       def read(p: String, q: CatalogueQuery, h: PluginHttp) = Left("no")
-    import com.histmersion.core.CatalogDating.Limits
+    import com.histmersion.api.CatalogDating.Limits
     assertEquals(PluginEvents.limits(Some(floored), 2026), Limits(2026, Some(-9700L)))
     assertEquals(PluginEvents.limits(Some(throws), 2026), Limits(2026, None))
     assertEquals(PluginEvents.limits(None, 2026), Limits(2026, None))

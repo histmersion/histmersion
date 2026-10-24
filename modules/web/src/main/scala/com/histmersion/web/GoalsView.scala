@@ -1,8 +1,8 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Pipeline, RunInfo, RunRequest}
-import com.histmersion.core.GoalPlans.*
+import com.histmersion.api.*
+import com.histmersion.api.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Pipeline, RunInfo, RunRequest}
+import com.histmersion.api.GoalPlans.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

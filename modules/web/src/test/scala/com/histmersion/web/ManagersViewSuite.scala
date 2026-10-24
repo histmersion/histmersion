@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.core.Managers.*
-import com.histmersion.core.ManagersMarkdown
+import com.histmersion.api.Managers.*
+import com.histmersion.api.ManagersMarkdown
 
 /** The managers window's pure parts: the badge, the item actions per status, the settings form, the
   * hint box, the pager and the window keys. */
@@ -28,7 +28,7 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(ManagersView.itemActionsFor(focus.copy(hold = Some(Hold(reason = "held by a person")))), List("release", "priority", "skip"))
 
   test("the focus: its heading, an active goal's pace, the goals that cannot use a slot by why"):
-    import com.histmersion.core.Autopilot.*
+    import com.histmersion.api.Autopilot.*
     assertEquals(ManagersView.focusHead(FocusInfo(on = true, max = 8, held = 3)), "Focus: at most 8 active goals · 3 items held")
     assertEquals(ManagersView.focusHead(FocusInfo(on = false, max = 0, maxFrom = "person")), "Focus: not in force (cap set by a person)")
     assertEquals(ManagersView.focusPace(FocusGoal("g", open = 4, doneLast7 = 7, etaDays = Some(4))), "7 done in 7 days, 4 open (~4 d)")
@@ -37,7 +37,7 @@ class ManagersViewSuite extends munit.FunSuite:
 
   test("settings form: blank is the default; it reads back what it shows; a bad number is refused"):
     val c = ManagerConfig(maxRuns = Some(3), includeTags = Some(List("a", "b")),
-      models = Some(List(com.histmersion.core.Agents.ModelOverride("fixer", "claude-code:opus"))))
+      models = Some(List(com.histmersion.api.Agents.ModelOverride("fixer", "claude-code:opus"))))
     assertEquals(ManagersView.config(ManagersView.fields(c)), Right(c))
     assertEquals(ManagersView.config(Map.empty), Right(ManagerConfig()))
     assert(ManagersView.config(Map("rounds" -> "x")).isLeft)
@@ -142,7 +142,7 @@ class ManagersViewSuite extends munit.FunSuite:
     assert(!ManagersView.settingsFor("watch").map(_._1).contains("extendMinNew"))
 
   test("autopilot status: a goal's line and the stages count"):
-    import com.histmersion.core.Autopilot.GoalProgress
+    import com.histmersion.api.Autopilot.GoalProgress
     val gs = List(GoalProgress("a", "A", "seeding", sources = 3, articles = 1, openApprovals = 2, doneLast7 = 7, open = 4, etaDays = Some(4)),
       GoalProgress("b", "B", "planned"), GoalProgress("c", "C", "seeding"))
     assertEquals(ManagersView.goalLine(gs.head), "3 sources · 1 article · 2 open approvals · 7 done in 7 days, 4 open (~4 d)")
@@ -150,7 +150,7 @@ class ManagersViewSuite extends munit.FunSuite:
 
 /** The scheduler panel's pure parts: the queue's filters and facets, and its heading. */
 class SchedulerPanelSuite extends munit.FunSuite:
-  import com.histmersion.core.AgentScheduler.*
+  import com.histmersion.api.AgentScheduler.*
 
   private def w(id: Long, t: String, code: String, target: String = "", goal: Option[String] = None) =
     Waiting(id, "m", "k", t, if target.isEmpty then s"t$id" else target, goal, code = code)
@@ -171,7 +171,7 @@ class SchedulerPanelSuite extends munit.FunSuite:
 
 /** The approvals window's digest line. */
 class ApprovalDigestLineSuite extends munit.FunSuite:
-  import com.histmersion.core.ApprovalDigest.KindGroup
+  import com.histmersion.api.ApprovalDigest.KindGroup
   test("a kind: how many, the oldest, who decides"):
     assertEquals(ApprovalsView.digestLine(KindGroup("goal-plan", 64, Some("2026-10-21"))), "goal-plan 64 (oldest 2026-10-21) · a person decides")
     assertEquals(ApprovalsView.digestLine(KindGroup("article-publish", 2, None, "checked")),
@@ -180,7 +180,7 @@ class ApprovalDigestLineSuite extends munit.FunSuite:
 
 /** The autopilot section's drain line. */
 class DrainLineSuite extends munit.FunSuite:
-  import com.histmersion.core.Autopilot.DrainInfo
+  import com.histmersion.api.Autopilot.DrainInfo
   test("draining with runs in flight, then drained"):
     assertEquals(ManagersView.drainLine(DrainInfo("2026-10-24T10:00:00Z", "cli", inFlight = 2)),
       "DRAINING since 2026-10-24T10:00:00Z (by cli): nothing new starts; 2 runs in flight still finishing")

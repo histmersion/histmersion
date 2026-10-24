@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
 import java.nio.file.Files

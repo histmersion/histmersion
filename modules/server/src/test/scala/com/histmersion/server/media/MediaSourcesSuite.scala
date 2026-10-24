@@ -4,7 +4,9 @@ import com.histmersion.pluginhost.HttpAnswer
 
 import ox.supervised
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{AssetRepo, Db, JobRepo, MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.server.{ConverterClient, Deps, Main}
 import io.circe.parser.decode

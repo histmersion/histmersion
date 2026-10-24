@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.{GeoHit, Confidence}
+import com.histmersion.api.{GeoHit, Confidence}
 
 class MapViewSuite extends munit.FunSuite:
 
@@ -133,7 +133,7 @@ class MapViewSuite extends munit.FunSuite:
   test("the finding popup links the source by DOI (else citekey) and shows a confidence badge") {
     val withDoi = hit(-1200, -1190, Confidence.Medium).copy(doi = Some("10.1/x"))
     val html    = MapView.popupHtml(withDoi)
-    assert(html.contains(com.histmersion.core.HtmlAtoms.sourceLink("test", Some("10.1/x"), "10.1/x")), html)
+    assert(html.contains(com.histmersion.api.HtmlAtoms.sourceLink("test", Some("10.1/x"), "10.1/x")), html)
     assert(html.contains("conf-badge conf-medium"), html)
     assert(!html.contains("(medium)"), "the bare parenthesised word is gone: " + html)
     assert(MapView.popupHtml(hit(-1200, -1190)).contains(">test</a>"))
@@ -178,7 +178,7 @@ class MapViewSuite extends munit.FunSuite:
   // ── the "States shown" menu (GeoPick) ──────────────────────────────────────────
 
   test("the boundaries follow the menu over the span; playback always draws the playhead's one year"):
-    import com.histmersion.core.{GeoPick, GeoTime}
+    import com.histmersion.api.{GeoPick, GeoTime}
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Mid, playback = false), GeoTime.At(-1500))
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Start, playback = false), GeoTime.At(-2000))
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.End, playback = false), GeoTime.At(-1000))
@@ -186,21 +186,21 @@ class MapViewSuite extends munit.FunSuite:
     GeoPick.values.foreach(p => assertEquals(MapView.areaTime((-1210L, -1190L), p, playback = true), GeoTime.At(-1200)))
 
   test("the areas of a whole range are all asked for; a year keeps the year's limit"):
-    import com.histmersion.core.GeoTime
+    import com.histmersion.api.GeoTime
     import com.histmersion.web.ui.Layout
     assertEquals(MapView.overlayLimit(GeoTime.Within(-3000, 2000, latest = false)), Layout.overlayRangeFetchLimit)
     assertEquals(MapView.overlayLimit(GeoTime.At(1500)), Layout.overlayFetchLimit)
     assert(Layout.overlayRangeFetchLimit > Layout.overlayFetchLimit)
 
   test("the sites take a snapshot's year, and the middle for a whole-range pick or in playback"):
-    import com.histmersion.core.GeoPick
+    import com.histmersion.api.GeoPick
     assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.Start, playback = false), 1000L)
     assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.End, playback = false), 1500L)
     assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.Earliest, playback = false), 1250L)
     assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.End, playback = true), 1250L)
 
   test("the query carries a snapshot as asOf and a whole range as from/to/pick"):
-    import com.histmersion.core.{Api, GeoTime}
+    import com.histmersion.api.{Api, GeoTime}
     assertEquals(MapView.geoQuery("polity", GeoTime.At(-1200), 400),
       Api.PlacesGeoQuery(kind = Some("polity"), asOf = Some(-1200L), limit = Some(400)))
     assertEquals(MapView.geoQuery("polity", GeoTime.Within(-2000, -1000, latest = false), 400),
@@ -213,7 +213,7 @@ class MapViewSuite extends munit.FunSuite:
   // ── waitsForQuiet (#1949) ───────────────────────────────────────────────────────
 
   test("waitsForQuiet: only the boundaries over a whole range wait for the span to settle") {
-    import com.histmersion.core.GeoPick
+    import com.histmersion.api.GeoPick
     assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Latest, playback = false))
     assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Earliest, playback = false))
     for p <- List(GeoPick.Mid, GeoPick.Start, GeoPick.End) do

@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.Agents.Role
+import com.histmersion.api.Agents.Role
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -169,7 +169,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(!builtin.contains("codex/home/base-instructions.md"))
 
   test("agents.providers.codex.base-instructions: lean by default, builtin by config"):
-    val c = com.histmersion.core.AppConfig.load().agents.providers.codex
+    val c = com.histmersion.config.AppConfig.load().agents.providers.codex
     assertEquals((c.baseInstructions, c.leanBase), ("lean", true))
     assert(!c.copy(baseInstructions = " Builtin ").leanBase && c.copy(baseInstructions = "lean").leanBase)
 

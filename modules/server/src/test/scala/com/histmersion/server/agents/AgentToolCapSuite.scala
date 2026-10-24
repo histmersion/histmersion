@@ -1,7 +1,9 @@
 package com.histmersion.server.agents
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{Db, Migrate, SourceRepo}
 import com.histmersion.server.{ConverterClient, Deps, Handlers}
 import io.circe.Json

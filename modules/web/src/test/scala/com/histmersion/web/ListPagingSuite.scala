@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 import com.histmersion.web.ListPaging.Listing
 
 /** The paged list windows (jobs, runs, approvals): the heading's wording, when "Show older" is
@@ -65,5 +65,5 @@ class ListPagingSuite extends munit.FunSuite:
     val run = Agents.RunInfo("r1", "enrich-source", "a2020_b", "done")
     assert(RunsView.anyLive(List(run), page(2, None, "done" -> 1, "queued" -> 1)))
     assert(!RunsView.anyLive(List(run), page(1, None, "done" -> 1)))
-    assertEquals(ApprovalsView.qualifier(com.histmersion.core.ListFilters.ApprovalFilter()), Some("open"))
-    assertEquals(ApprovalsView.qualifier(com.histmersion.core.ListFilters.ApprovalFilter(state = Some("all"))), None)
+    assertEquals(ApprovalsView.qualifier(com.histmersion.api.ListFilters.ApprovalFilter()), Some("open"))
+    assertEquals(ApprovalsView.qualifier(com.histmersion.api.ListFilters.ApprovalFilter(state = Some("all"))), None)

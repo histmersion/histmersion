@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
-import com.histmersion.core.AgentsApi
+import com.histmersion.api.AgentsApi
 
 /** REST wiring of the embedded agents — every route delegates to [[AgentsHandlers]]. */
 object AgentsRoutes:

@@ -1,7 +1,9 @@
 package com.histmersion.server
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import ox.supervised
 
 import java.net.URI

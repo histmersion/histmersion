@@ -1,6 +1,7 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.core.{AppConfig, HttpPolicy}
+import com.histmersion.config.AppConfig
+import com.histmersion.domain.HttpPolicy
 import com.histmersion.plugin.PluginHttp
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend

@@ -2,8 +2,10 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.core.*
-import com.histmersion.core.PluginKit.{Coordinates, Index, Installed, Origin}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.domain.PluginKit.{Coordinates, Index, Installed, Origin}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}

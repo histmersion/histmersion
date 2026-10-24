@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.core.{JobInfo, JobState, ListFilters}
-import com.histmersion.core.Agents.{ApprovalInfo, Decision, RunInfo, RunState}
+import com.histmersion.api.{JobInfo, JobState, ListFilters}
+import com.histmersion.api.Agents.{ApprovalInfo, Decision, RunInfo, RunState}
 
 /** The pure halves of the list windows' filters (ListFilterBar, and the approvals, runs and jobs
   * windows): the chips, a typed or picked value, the query each window sends, the rows a filter shows

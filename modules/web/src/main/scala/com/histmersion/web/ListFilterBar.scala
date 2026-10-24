@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.Paging
+import com.histmersion.api.Paging
 import com.raquo.laminar.api.L.*
 
 /** The filter controls of the three list windows — approvals, agent runs, jobs (core `ListFilters`):

@@ -1,12 +1,14 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 /** Deleting a source (#969) — the database half of `POST /api/sources/{ck}/delete`. The rules are
-  * [[com.histmersion.core.SourceDelete]]'s; this reads what a delete would touch ([[plan]]) and does it
+  * [[com.histmersion.api.SourceDelete]]'s; this reads what a delete would touch ([[plan]]) and does it
   * in ONE transaction ([[apply]]).
   *
   * What goes by `ON DELETE CASCADE` with the `sources` row (findings and their place assignments,

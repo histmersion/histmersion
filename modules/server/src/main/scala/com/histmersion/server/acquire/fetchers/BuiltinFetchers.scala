@@ -2,7 +2,7 @@ package com.histmersion.server.acquire.fetchers
 
 import com.histmersion.pluginhost.FetchChain
 
-import com.histmersion.core.AcquireConfig
+import com.histmersion.config.AcquireConfig
 import com.histmersion.plugin.*
 import com.histmersion.server.acquire.{ArchiveClient, FetchedFile, Http, OpenAlexCrossref}
 

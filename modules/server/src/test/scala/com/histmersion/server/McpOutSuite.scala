@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.ApiError
+import com.histmersion.api.ApiError
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

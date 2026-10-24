@@ -1,7 +1,7 @@
 package com.histmersion.db
 
-import com.histmersion.core.UiNotices
-import com.histmersion.core.UiNotices.{Board, Counters}
+import com.histmersion.api.UiNotices
+import com.histmersion.api.UiNotices.{Board, Counters}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
