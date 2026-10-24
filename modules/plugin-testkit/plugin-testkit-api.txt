@@ -1,0 +1,541 @@
+# The plugin testkit's public API (TestkitApiSuite): one line per class, constructor and method.
+# A changed line is a changed contract, to be named in the release notes.
+com.histmersion.plugin.testkit.AcceptedEvent _1(): com.histmersion.plugin.CatalogueEvent
+com.histmersion.plugin.testkit.AcceptedEvent _2(): java.lang.String
+com.histmersion.plugin.testkit.AcceptedEvent _3(): scala.Option
+com.histmersion.plugin.testkit.AcceptedEvent _4(): scala.Option
+com.histmersion.plugin.testkit.AcceptedEvent _5(): scala.Option
+com.histmersion.plugin.testkit.AcceptedEvent _6(): scala.Option
+com.histmersion.plugin.testkit.AcceptedEvent apply(com.histmersion.plugin.CatalogueEvent, java.lang.String, scala.Option, scala.Option, scala.Option, scala.Option): com.histmersion.plugin.testkit.AcceptedEvent
+com.histmersion.plugin.testkit.AcceptedEvent beginBy(): scala.Option
+com.histmersion.plugin.testkit.AcceptedEvent canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.AcceptedEvent class
+com.histmersion.plugin.testkit.AcceptedEvent copy(com.histmersion.plugin.CatalogueEvent, java.lang.String, scala.Option, scala.Option, scala.Option, scala.Option): com.histmersion.plugin.testkit.AcceptedEvent
+com.histmersion.plugin.testkit.AcceptedEvent endFrom(): scala.Option
+com.histmersion.plugin.testkit.AcceptedEvent equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.AcceptedEvent event(): com.histmersion.plugin.CatalogueEvent
+com.histmersion.plugin.testkit.AcceptedEvent fromProduct(scala.Product): com.histmersion.plugin.testkit.AcceptedEvent
+com.histmersion.plugin.testkit.AcceptedEvent hashCode(): int
+com.histmersion.plugin.testkit.AcceptedEvent kind(): java.lang.String
+com.histmersion.plugin.testkit.AcceptedEvent new(com.histmersion.plugin.CatalogueEvent, java.lang.String, scala.Option, scala.Option, scala.Option, scala.Option)
+com.histmersion.plugin.testkit.AcceptedEvent notAfter(): scala.Option
+com.histmersion.plugin.testkit.AcceptedEvent notBefore(): scala.Option
+com.histmersion.plugin.testkit.AcceptedEvent productArity(): int
+com.histmersion.plugin.testkit.AcceptedEvent productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.AcceptedEvent productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.AcceptedEvent productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.AcceptedEvent productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.AcceptedEvent productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.AcceptedEvent toString(): java.lang.String
+com.histmersion.plugin.testkit.AcceptedEvent unapply(com.histmersion.plugin.testkit.AcceptedEvent): com.histmersion.plugin.testkit.AcceptedEvent
+com.histmersion.plugin.testkit.AcceptedEvent$ apply(com.histmersion.plugin.CatalogueEvent, java.lang.String, scala.Option, scala.Option, scala.Option, scala.Option): com.histmersion.plugin.testkit.AcceptedEvent
+com.histmersion.plugin.testkit.AcceptedEvent$ class
+com.histmersion.plugin.testkit.AcceptedEvent$ fromProduct(scala.Product): com.histmersion.plugin.testkit.AcceptedEvent
+com.histmersion.plugin.testkit.AcceptedEvent$ toString(): java.lang.String
+com.histmersion.plugin.testkit.AcceptedEvent$ unapply(com.histmersion.plugin.testkit.AcceptedEvent): com.histmersion.plugin.testkit.AcceptedEvent
+com.histmersion.plugin.testkit.AiHttpRequest _1(): java.lang.String
+com.histmersion.plugin.testkit.AiHttpRequest _2(): java.lang.String
+com.histmersion.plugin.testkit.AiHttpRequest _3(): scala.collection.immutable.Map
+com.histmersion.plugin.testkit.AiHttpRequest _4(): scala.Option
+com.histmersion.plugin.testkit.AiHttpRequest apply(java.lang.String, java.lang.String, scala.collection.immutable.Map, scala.Option): com.histmersion.plugin.testkit.AiHttpRequest
+com.histmersion.plugin.testkit.AiHttpRequest body(): scala.Option
+com.histmersion.plugin.testkit.AiHttpRequest canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.AiHttpRequest class
+com.histmersion.plugin.testkit.AiHttpRequest copy(java.lang.String, java.lang.String, scala.collection.immutable.Map, scala.Option): com.histmersion.plugin.testkit.AiHttpRequest
+com.histmersion.plugin.testkit.AiHttpRequest equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.AiHttpRequest fromProduct(scala.Product): com.histmersion.plugin.testkit.AiHttpRequest
+com.histmersion.plugin.testkit.AiHttpRequest hashCode(): int
+com.histmersion.plugin.testkit.AiHttpRequest headers(): scala.collection.immutable.Map
+com.histmersion.plugin.testkit.AiHttpRequest method(): java.lang.String
+com.histmersion.plugin.testkit.AiHttpRequest new(java.lang.String, java.lang.String, scala.collection.immutable.Map, scala.Option)
+com.histmersion.plugin.testkit.AiHttpRequest productArity(): int
+com.histmersion.plugin.testkit.AiHttpRequest productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.AiHttpRequest productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.AiHttpRequest productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.AiHttpRequest productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.AiHttpRequest productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.AiHttpRequest toString(): java.lang.String
+com.histmersion.plugin.testkit.AiHttpRequest unapply(com.histmersion.plugin.testkit.AiHttpRequest): com.histmersion.plugin.testkit.AiHttpRequest
+com.histmersion.plugin.testkit.AiHttpRequest url(): java.lang.String
+com.histmersion.plugin.testkit.AiHttpRequest$ apply(java.lang.String, java.lang.String, scala.collection.immutable.Map, scala.Option): com.histmersion.plugin.testkit.AiHttpRequest
+com.histmersion.plugin.testkit.AiHttpRequest$ class
+com.histmersion.plugin.testkit.AiHttpRequest$ fromProduct(scala.Product): com.histmersion.plugin.testkit.AiHttpRequest
+com.histmersion.plugin.testkit.AiHttpRequest$ toString(): java.lang.String
+com.histmersion.plugin.testkit.AiHttpRequest$ unapply(com.histmersion.plugin.testkit.AiHttpRequest): com.histmersion.plugin.testkit.AiHttpRequest
+com.histmersion.plugin.testkit.AiReport _1(): scala.util.Either
+com.histmersion.plugin.testkit.AiReport _2(): scala.Option
+com.histmersion.plugin.testkit.AiReport _3(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.AiReport apply(scala.util.Either, scala.Option, scala.collection.immutable.List): com.histmersion.plugin.testkit.AiReport
+com.histmersion.plugin.testkit.AiReport canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.AiReport check(): scala.util.Either
+com.histmersion.plugin.testkit.AiReport class
+com.histmersion.plugin.testkit.AiReport copy(scala.util.Either, scala.Option, scala.collection.immutable.List): com.histmersion.plugin.testkit.AiReport
+com.histmersion.plugin.testkit.AiReport equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.AiReport fromProduct(scala.Product): com.histmersion.plugin.testkit.AiReport
+com.histmersion.plugin.testkit.AiReport hashCode(): int
+com.histmersion.plugin.testkit.AiReport log(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.AiReport new(scala.util.Either, scala.Option, scala.collection.immutable.List)
+com.histmersion.plugin.testkit.AiReport productArity(): int
+com.histmersion.plugin.testkit.AiReport productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.AiReport productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.AiReport productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.AiReport productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.AiReport productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.AiReport toString(): java.lang.String
+com.histmersion.plugin.testkit.AiReport turn(): scala.Option
+com.histmersion.plugin.testkit.AiReport unapply(com.histmersion.plugin.testkit.AiReport): com.histmersion.plugin.testkit.AiReport
+com.histmersion.plugin.testkit.AiReport$ apply(scala.util.Either, scala.Option, scala.collection.immutable.List): com.histmersion.plugin.testkit.AiReport
+com.histmersion.plugin.testkit.AiReport$ class
+com.histmersion.plugin.testkit.AiReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.AiReport
+com.histmersion.plugin.testkit.AiReport$ toString(): java.lang.String
+com.histmersion.plugin.testkit.AiReport$ unapply(com.histmersion.plugin.testkit.AiReport): com.histmersion.plugin.testkit.AiReport
+com.histmersion.plugin.testkit.CatalogueReport _1(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport _2(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport _3(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport _4(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport _5(): scala.Option
+com.histmersion.plugin.testkit.CatalogueReport _6(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport _7(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport accepted(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.CatalogueReport canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.CatalogueReport class
+com.histmersion.plugin.testkit.CatalogueReport copy(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.CatalogueReport equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.CatalogueReport failure(): scala.Option
+com.histmersion.plugin.testkit.CatalogueReport fromProduct(scala.Product): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.CatalogueReport hashCode(): int
+com.histmersion.plugin.testkit.CatalogueReport log(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport new(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List)
+com.histmersion.plugin.testkit.CatalogueReport pages(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport parts(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport productArity(): int
+com.histmersion.plugin.testkit.CatalogueReport productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.CatalogueReport productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.CatalogueReport productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.CatalogueReport productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.CatalogueReport productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.CatalogueReport refused(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport requests(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.CatalogueReport toString(): java.lang.String
+com.histmersion.plugin.testkit.CatalogueReport unapply(com.histmersion.plugin.testkit.CatalogueReport): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.CatalogueReport$ apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.CatalogueReport$ class
+com.histmersion.plugin.testkit.CatalogueReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.CatalogueReport$ toString(): java.lang.String
+com.histmersion.plugin.testkit.CatalogueReport$ unapply(com.histmersion.plugin.testkit.CatalogueReport): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.Contributions _1(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions _2(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions _3(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions _4(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions _5(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions aiProviders(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.Contributions
+com.histmersion.plugin.testkit.Contributions canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.Contributions class
+com.histmersion.plugin.testkit.Contributions copy(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.Contributions
+com.histmersion.plugin.testkit.Contributions equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.Contributions eventCatalogues(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions fromProduct(scala.Product): com.histmersion.plugin.testkit.Contributions
+com.histmersion.plugin.testkit.Contributions hashCode(): int
+com.histmersion.plugin.testkit.Contributions mediaCollections(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions new(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List)
+com.histmersion.plugin.testkit.Contributions productArity(): int
+com.histmersion.plugin.testkit.Contributions productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.Contributions productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.Contributions productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.Contributions productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.Contributions productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.Contributions provides(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions secretVaults(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions sourceFetchers(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.Contributions toString(): java.lang.String
+com.histmersion.plugin.testkit.Contributions unapply(com.histmersion.plugin.testkit.Contributions): com.histmersion.plugin.testkit.Contributions
+com.histmersion.plugin.testkit.Contributions$ apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.Contributions
+com.histmersion.plugin.testkit.Contributions$ class
+com.histmersion.plugin.testkit.Contributions$ fromProduct(scala.Product): com.histmersion.plugin.testkit.Contributions
+com.histmersion.plugin.testkit.Contributions$ toString(): java.lang.String
+com.histmersion.plugin.testkit.Contributions$ unapply(com.histmersion.plugin.testkit.Contributions): com.histmersion.plugin.testkit.Contributions
+com.histmersion.plugin.testkit.FetchOutcome class
+com.histmersion.plugin.testkit.FetchOutcome fromOrdinal(int): com.histmersion.plugin.testkit.FetchOutcome
+com.histmersion.plugin.testkit.FetchOutcome new()
+com.histmersion.plugin.testkit.FetchOutcome productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.FetchOutcome productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.FetchOutcome productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$ class
+com.histmersion.plugin.testkit.FetchOutcome$ fromOrdinal(int): com.histmersion.plugin.testkit.FetchOutcome
+com.histmersion.plugin.testkit.FetchOutcome$ ordinal(com.histmersion.plugin.testkit.FetchOutcome): int
+com.histmersion.plugin.testkit.FetchOutcome$Found _1(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Found _2(): com.histmersion.plugin.FetchedFile
+com.histmersion.plugin.testkit.FetchOutcome$Found _3(): scala.Option
+com.histmersion.plugin.testkit.FetchOutcome$Found apply(java.lang.String, com.histmersion.plugin.FetchedFile, scala.Option): com.histmersion.plugin.testkit.FetchOutcome$Found
+com.histmersion.plugin.testkit.FetchOutcome$Found canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetchOutcome$Found class
+com.histmersion.plugin.testkit.FetchOutcome$Found copy(java.lang.String, com.histmersion.plugin.FetchedFile, scala.Option): com.histmersion.plugin.testkit.FetchOutcome$Found
+com.histmersion.plugin.testkit.FetchOutcome$Found equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetchOutcome$Found fetcher(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Found file(): com.histmersion.plugin.FetchedFile
+com.histmersion.plugin.testkit.FetchOutcome$Found fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Found
+com.histmersion.plugin.testkit.FetchOutcome$Found hashCode(): int
+com.histmersion.plugin.testkit.FetchOutcome$Found new(java.lang.String, com.histmersion.plugin.FetchedFile, scala.Option)
+com.histmersion.plugin.testkit.FetchOutcome$Found ordinal(): int
+com.histmersion.plugin.testkit.FetchOutcome$Found productArity(): int
+com.histmersion.plugin.testkit.FetchOutcome$Found productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.FetchOutcome$Found productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Found productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Found savedTo(): scala.Option
+com.histmersion.plugin.testkit.FetchOutcome$Found toString(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Found unapply(com.histmersion.plugin.testkit.FetchOutcome$Found): com.histmersion.plugin.testkit.FetchOutcome$Found
+com.histmersion.plugin.testkit.FetchOutcome$Found$ apply(java.lang.String, com.histmersion.plugin.FetchedFile, scala.Option): com.histmersion.plugin.testkit.FetchOutcome$Found
+com.histmersion.plugin.testkit.FetchOutcome$Found$ class
+com.histmersion.plugin.testkit.FetchOutcome$Found$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Found
+com.histmersion.plugin.testkit.FetchOutcome$Found$ new()
+com.histmersion.plugin.testkit.FetchOutcome$Found$ toString(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Found$ unapply(com.histmersion.plugin.testkit.FetchOutcome$Found): com.histmersion.plugin.testkit.FetchOutcome$Found
+com.histmersion.plugin.testkit.FetchOutcome$Miss _1(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Miss apply(java.lang.String): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Miss canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetchOutcome$Miss class
+com.histmersion.plugin.testkit.FetchOutcome$Miss copy(java.lang.String): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Miss equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetchOutcome$Miss fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Miss hashCode(): int
+com.histmersion.plugin.testkit.FetchOutcome$Miss new(java.lang.String)
+com.histmersion.plugin.testkit.FetchOutcome$Miss ordinal(): int
+com.histmersion.plugin.testkit.FetchOutcome$Miss productArity(): int
+com.histmersion.plugin.testkit.FetchOutcome$Miss productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.FetchOutcome$Miss productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Miss productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Miss toString(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Miss unapply(com.histmersion.plugin.testkit.FetchOutcome$Miss): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Miss why(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Miss$ apply(java.lang.String): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Miss$ class
+com.histmersion.plugin.testkit.FetchOutcome$Miss$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Miss$ new()
+com.histmersion.plugin.testkit.FetchOutcome$Miss$ toString(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Miss$ unapply(com.histmersion.plugin.testkit.FetchOutcome$Miss): com.histmersion.plugin.testkit.FetchOutcome$Miss
+com.histmersion.plugin.testkit.FetchOutcome$Refused _1(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Refused apply(java.lang.String): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchOutcome$Refused canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetchOutcome$Refused class
+com.histmersion.plugin.testkit.FetchOutcome$Refused copy(java.lang.String): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchOutcome$Refused equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetchOutcome$Refused fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchOutcome$Refused hashCode(): int
+com.histmersion.plugin.testkit.FetchOutcome$Refused new(java.lang.String)
+com.histmersion.plugin.testkit.FetchOutcome$Refused ordinal(): int
+com.histmersion.plugin.testkit.FetchOutcome$Refused productArity(): int
+com.histmersion.plugin.testkit.FetchOutcome$Refused productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.FetchOutcome$Refused productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Refused productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Refused toString(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Refused unapply(com.histmersion.plugin.testkit.FetchOutcome$Refused): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchOutcome$Refused why(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Refused$ apply(java.lang.String): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchOutcome$Refused$ class
+com.histmersion.plugin.testkit.FetchOutcome$Refused$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchOutcome$Refused$ new()
+com.histmersion.plugin.testkit.FetchOutcome$Refused$ toString(): java.lang.String
+com.histmersion.plugin.testkit.FetchOutcome$Refused$ unapply(com.histmersion.plugin.testkit.FetchOutcome$Refused): com.histmersion.plugin.testkit.FetchOutcome$Refused
+com.histmersion.plugin.testkit.FetchReport _1(): com.histmersion.plugin.testkit.FetchOutcome
+com.histmersion.plugin.testkit.FetchReport _2(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.FetchReport _3(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.FetchReport _4(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.FetchReport answers(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.FetchReport apply(com.histmersion.plugin.testkit.FetchOutcome, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.FetchReport
+com.histmersion.plugin.testkit.FetchReport canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetchReport class
+com.histmersion.plugin.testkit.FetchReport copy(com.histmersion.plugin.testkit.FetchOutcome, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.FetchReport
+com.histmersion.plugin.testkit.FetchReport equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetchReport file(): scala.Option
+com.histmersion.plugin.testkit.FetchReport fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchReport
+com.histmersion.plugin.testkit.FetchReport hashCode(): int
+com.histmersion.plugin.testkit.FetchReport licence(): scala.Option
+com.histmersion.plugin.testkit.FetchReport log(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.FetchReport new(com.histmersion.plugin.testkit.FetchOutcome, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List)
+com.histmersion.plugin.testkit.FetchReport outcome(): com.histmersion.plugin.testkit.FetchOutcome
+com.histmersion.plugin.testkit.FetchReport productArity(): int
+com.histmersion.plugin.testkit.FetchReport productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.FetchReport productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.FetchReport productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.FetchReport productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.FetchReport productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.FetchReport requests(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.FetchReport toString(): java.lang.String
+com.histmersion.plugin.testkit.FetchReport unapply(com.histmersion.plugin.testkit.FetchReport): com.histmersion.plugin.testkit.FetchReport
+com.histmersion.plugin.testkit.FetchReport$ apply(com.histmersion.plugin.testkit.FetchOutcome, scala.collection.immutable.List, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.FetchReport
+com.histmersion.plugin.testkit.FetchReport$ class
+com.histmersion.plugin.testkit.FetchReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetchReport
+com.histmersion.plugin.testkit.FetchReport$ toString(): java.lang.String
+com.histmersion.plugin.testkit.FetchReport$ unapply(com.histmersion.plugin.testkit.FetchReport): com.histmersion.plugin.testkit.FetchReport
+com.histmersion.plugin.testkit.FetcherAnswer _1(): java.lang.String
+com.histmersion.plugin.testkit.FetcherAnswer _2(): boolean
+com.histmersion.plugin.testkit.FetcherAnswer _3(): java.lang.String
+com.histmersion.plugin.testkit.FetcherAnswer apply(java.lang.String, boolean, java.lang.String): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.FetcherAnswer canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetcherAnswer class
+com.histmersion.plugin.testkit.FetcherAnswer copy(java.lang.String, boolean, java.lang.String): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.FetcherAnswer equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.FetcherAnswer fetcher(): java.lang.String
+com.histmersion.plugin.testkit.FetcherAnswer fromProduct(scala.Product): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.FetcherAnswer hashCode(): int
+com.histmersion.plugin.testkit.FetcherAnswer new(java.lang.String, boolean, java.lang.String)
+com.histmersion.plugin.testkit.FetcherAnswer productArity(): int
+com.histmersion.plugin.testkit.FetcherAnswer productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.FetcherAnswer productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.FetcherAnswer productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.FetcherAnswer productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.FetcherAnswer productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.FetcherAnswer refused(): boolean
+com.histmersion.plugin.testkit.FetcherAnswer toString(): java.lang.String
+com.histmersion.plugin.testkit.FetcherAnswer unapply(com.histmersion.plugin.testkit.FetcherAnswer): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.FetcherAnswer why(): java.lang.String
+com.histmersion.plugin.testkit.FetcherAnswer$ apply(java.lang.String, boolean, java.lang.String): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.FetcherAnswer$ class
+com.histmersion.plugin.testkit.FetcherAnswer$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.FetcherAnswer$ toString(): java.lang.String
+com.histmersion.plugin.testkit.FetcherAnswer$ unapply(com.histmersion.plugin.testkit.FetcherAnswer): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.HttpMode LiveVariable(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode ModeVariable(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode Offline(): com.histmersion.plugin.testkit.HttpMode
+com.histmersion.plugin.testkit.HttpMode class
+com.histmersion.plugin.testkit.HttpMode fromEnv(java.nio.file.Path, scala.collection.immutable.Map): scala.util.Either
+com.histmersion.plugin.testkit.HttpMode fromOrdinal(int): com.histmersion.plugin.testkit.HttpMode
+com.histmersion.plugin.testkit.HttpMode live(): boolean
+com.histmersion.plugin.testkit.HttpMode new()
+com.histmersion.plugin.testkit.HttpMode productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.HttpMode productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.HttpMode productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.HttpMode productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$ LiveVariable(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$ ModeVariable(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$ Offline(): com.histmersion.plugin.testkit.HttpMode
+com.histmersion.plugin.testkit.HttpMode$ class
+com.histmersion.plugin.testkit.HttpMode$ fromEnv(java.nio.file.Path, scala.collection.immutable.Map): scala.util.Either
+com.histmersion.plugin.testkit.HttpMode$ fromOrdinal(int): com.histmersion.plugin.testkit.HttpMode
+com.histmersion.plugin.testkit.HttpMode$ ordinal(com.histmersion.plugin.testkit.HttpMode): int
+com.histmersion.plugin.testkit.HttpMode$Record _1(): java.nio.file.Path
+com.histmersion.plugin.testkit.HttpMode$Record apply(java.nio.file.Path): com.histmersion.plugin.testkit.HttpMode$Record
+com.histmersion.plugin.testkit.HttpMode$Record canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.HttpMode$Record class
+com.histmersion.plugin.testkit.HttpMode$Record copy(java.nio.file.Path): com.histmersion.plugin.testkit.HttpMode$Record
+com.histmersion.plugin.testkit.HttpMode$Record dir(): java.nio.file.Path
+com.histmersion.plugin.testkit.HttpMode$Record equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.HttpMode$Record fromProduct(scala.Product): com.histmersion.plugin.testkit.HttpMode$Record
+com.histmersion.plugin.testkit.HttpMode$Record hashCode(): int
+com.histmersion.plugin.testkit.HttpMode$Record new(java.nio.file.Path)
+com.histmersion.plugin.testkit.HttpMode$Record ordinal(): int
+com.histmersion.plugin.testkit.HttpMode$Record productArity(): int
+com.histmersion.plugin.testkit.HttpMode$Record productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.HttpMode$Record productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Record productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Record toString(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Record unapply(com.histmersion.plugin.testkit.HttpMode$Record): com.histmersion.plugin.testkit.HttpMode$Record
+com.histmersion.plugin.testkit.HttpMode$Record$ apply(java.nio.file.Path): com.histmersion.plugin.testkit.HttpMode$Record
+com.histmersion.plugin.testkit.HttpMode$Record$ class
+com.histmersion.plugin.testkit.HttpMode$Record$ fromProduct(scala.Product): com.histmersion.plugin.testkit.HttpMode$Record
+com.histmersion.plugin.testkit.HttpMode$Record$ new()
+com.histmersion.plugin.testkit.HttpMode$Record$ toString(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Record$ unapply(com.histmersion.plugin.testkit.HttpMode$Record): com.histmersion.plugin.testkit.HttpMode$Record
+com.histmersion.plugin.testkit.HttpMode$Replay _1(): java.nio.file.Path
+com.histmersion.plugin.testkit.HttpMode$Replay apply(java.nio.file.Path): com.histmersion.plugin.testkit.HttpMode$Replay
+com.histmersion.plugin.testkit.HttpMode$Replay canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.HttpMode$Replay class
+com.histmersion.plugin.testkit.HttpMode$Replay copy(java.nio.file.Path): com.histmersion.plugin.testkit.HttpMode$Replay
+com.histmersion.plugin.testkit.HttpMode$Replay dir(): java.nio.file.Path
+com.histmersion.plugin.testkit.HttpMode$Replay equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.HttpMode$Replay fromProduct(scala.Product): com.histmersion.plugin.testkit.HttpMode$Replay
+com.histmersion.plugin.testkit.HttpMode$Replay hashCode(): int
+com.histmersion.plugin.testkit.HttpMode$Replay new(java.nio.file.Path)
+com.histmersion.plugin.testkit.HttpMode$Replay ordinal(): int
+com.histmersion.plugin.testkit.HttpMode$Replay productArity(): int
+com.histmersion.plugin.testkit.HttpMode$Replay productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.HttpMode$Replay productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Replay productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Replay toString(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Replay unapply(com.histmersion.plugin.testkit.HttpMode$Replay): com.histmersion.plugin.testkit.HttpMode$Replay
+com.histmersion.plugin.testkit.HttpMode$Replay$ apply(java.nio.file.Path): com.histmersion.plugin.testkit.HttpMode$Replay
+com.histmersion.plugin.testkit.HttpMode$Replay$ class
+com.histmersion.plugin.testkit.HttpMode$Replay$ fromProduct(scala.Product): com.histmersion.plugin.testkit.HttpMode$Replay
+com.histmersion.plugin.testkit.HttpMode$Replay$ new()
+com.histmersion.plugin.testkit.HttpMode$Replay$ toString(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Replay$ unapply(com.histmersion.plugin.testkit.HttpMode$Replay): com.histmersion.plugin.testkit.HttpMode$Replay
+com.histmersion.plugin.testkit.HttpMode$Stub _1(): scala.collection.immutable.Map
+com.histmersion.plugin.testkit.HttpMode$Stub answers(): scala.collection.immutable.Map
+com.histmersion.plugin.testkit.HttpMode$Stub apply(scala.collection.immutable.Map): com.histmersion.plugin.testkit.HttpMode$Stub
+com.histmersion.plugin.testkit.HttpMode$Stub canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.HttpMode$Stub class
+com.histmersion.plugin.testkit.HttpMode$Stub copy(scala.collection.immutable.Map): com.histmersion.plugin.testkit.HttpMode$Stub
+com.histmersion.plugin.testkit.HttpMode$Stub equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.HttpMode$Stub fromProduct(scala.Product): com.histmersion.plugin.testkit.HttpMode$Stub
+com.histmersion.plugin.testkit.HttpMode$Stub hashCode(): int
+com.histmersion.plugin.testkit.HttpMode$Stub new(scala.collection.immutable.Map)
+com.histmersion.plugin.testkit.HttpMode$Stub ordinal(): int
+com.histmersion.plugin.testkit.HttpMode$Stub productArity(): int
+com.histmersion.plugin.testkit.HttpMode$Stub productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.HttpMode$Stub productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Stub productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Stub toString(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Stub unapply(com.histmersion.plugin.testkit.HttpMode$Stub): com.histmersion.plugin.testkit.HttpMode$Stub
+com.histmersion.plugin.testkit.HttpMode$Stub$ apply(scala.collection.immutable.Map): com.histmersion.plugin.testkit.HttpMode$Stub
+com.histmersion.plugin.testkit.HttpMode$Stub$ class
+com.histmersion.plugin.testkit.HttpMode$Stub$ fromProduct(scala.Product): com.histmersion.plugin.testkit.HttpMode$Stub
+com.histmersion.plugin.testkit.HttpMode$Stub$ new()
+com.histmersion.plugin.testkit.HttpMode$Stub$ toString(): java.lang.String
+com.histmersion.plugin.testkit.HttpMode$Stub$ unapply(com.histmersion.plugin.testkit.HttpMode$Stub): com.histmersion.plugin.testkit.HttpMode$Stub
+com.histmersion.plugin.testkit.LogLine _1(): java.lang.String
+com.histmersion.plugin.testkit.LogLine _2(): boolean
+com.histmersion.plugin.testkit.LogLine _3(): java.lang.String
+com.histmersion.plugin.testkit.LogLine apply(java.lang.String, boolean, java.lang.String): com.histmersion.plugin.testkit.LogLine
+com.histmersion.plugin.testkit.LogLine canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.LogLine class
+com.histmersion.plugin.testkit.LogLine copy(java.lang.String, boolean, java.lang.String): com.histmersion.plugin.testkit.LogLine
+com.histmersion.plugin.testkit.LogLine equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.LogLine fromProduct(scala.Product): com.histmersion.plugin.testkit.LogLine
+com.histmersion.plugin.testkit.LogLine hashCode(): int
+com.histmersion.plugin.testkit.LogLine message(): java.lang.String
+com.histmersion.plugin.testkit.LogLine new(java.lang.String, boolean, java.lang.String)
+com.histmersion.plugin.testkit.LogLine productArity(): int
+com.histmersion.plugin.testkit.LogLine productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.LogLine productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.LogLine productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.LogLine productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.LogLine productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.LogLine source(): java.lang.String
+com.histmersion.plugin.testkit.LogLine toString(): java.lang.String
+com.histmersion.plugin.testkit.LogLine unapply(com.histmersion.plugin.testkit.LogLine): com.histmersion.plugin.testkit.LogLine
+com.histmersion.plugin.testkit.LogLine warn(): boolean
+com.histmersion.plugin.testkit.LogLine$ apply(java.lang.String, boolean, java.lang.String): com.histmersion.plugin.testkit.LogLine
+com.histmersion.plugin.testkit.LogLine$ class
+com.histmersion.plugin.testkit.LogLine$ fromProduct(scala.Product): com.histmersion.plugin.testkit.LogLine
+com.histmersion.plugin.testkit.LogLine$ toString(): java.lang.String
+com.histmersion.plugin.testkit.LogLine$ unapply(com.histmersion.plugin.testkit.LogLine): com.histmersion.plugin.testkit.LogLine
+com.histmersion.plugin.testkit.MediaReport _1(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.MediaReport _2(): scala.Option
+com.histmersion.plugin.testkit.MediaReport _3(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.MediaReport _4(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.MediaReport apply(scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.MediaReport
+com.histmersion.plugin.testkit.MediaReport canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.MediaReport class
+com.histmersion.plugin.testkit.MediaReport copy(scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.MediaReport
+com.histmersion.plugin.testkit.MediaReport equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.MediaReport failure(): scala.Option
+com.histmersion.plugin.testkit.MediaReport fromProduct(scala.Product): com.histmersion.plugin.testkit.MediaReport
+com.histmersion.plugin.testkit.MediaReport hashCode(): int
+com.histmersion.plugin.testkit.MediaReport kept(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.MediaReport log(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.MediaReport new(scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List)
+com.histmersion.plugin.testkit.MediaReport productArity(): int
+com.histmersion.plugin.testkit.MediaReport productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.MediaReport productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.MediaReport productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.MediaReport productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.MediaReport productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.MediaReport requests(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.MediaReport toString(): java.lang.String
+com.histmersion.plugin.testkit.MediaReport unapply(com.histmersion.plugin.testkit.MediaReport): com.histmersion.plugin.testkit.MediaReport
+com.histmersion.plugin.testkit.MediaReport verdicts(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.MediaReport$ apply(scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.MediaReport
+com.histmersion.plugin.testkit.MediaReport$ class
+com.histmersion.plugin.testkit.MediaReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.MediaReport
+com.histmersion.plugin.testkit.MediaReport$ toString(): java.lang.String
+com.histmersion.plugin.testkit.MediaReport$ unapply(com.histmersion.plugin.testkit.MediaReport): com.histmersion.plugin.testkit.MediaReport
+com.histmersion.plugin.testkit.MediaVerdict _1(): java.lang.String
+com.histmersion.plugin.testkit.MediaVerdict _2(): scala.Option
+com.histmersion.plugin.testkit.MediaVerdict _3(): scala.Option
+com.histmersion.plugin.testkit.MediaVerdict _4(): scala.Option
+com.histmersion.plugin.testkit.MediaVerdict apply(java.lang.String, scala.Option, scala.Option, scala.Option): com.histmersion.plugin.testkit.MediaVerdict
+com.histmersion.plugin.testkit.MediaVerdict canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.MediaVerdict class
+com.histmersion.plugin.testkit.MediaVerdict copy(java.lang.String, scala.Option, scala.Option, scala.Option): com.histmersion.plugin.testkit.MediaVerdict
+com.histmersion.plugin.testkit.MediaVerdict equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.MediaVerdict fromProduct(scala.Product): com.histmersion.plugin.testkit.MediaVerdict
+com.histmersion.plugin.testkit.MediaVerdict hashCode(): int
+com.histmersion.plugin.testkit.MediaVerdict item(): scala.Option
+com.histmersion.plugin.testkit.MediaVerdict key(): java.lang.String
+com.histmersion.plugin.testkit.MediaVerdict licence(): scala.Option
+com.histmersion.plugin.testkit.MediaVerdict new(java.lang.String, scala.Option, scala.Option, scala.Option)
+com.histmersion.plugin.testkit.MediaVerdict productArity(): int
+com.histmersion.plugin.testkit.MediaVerdict productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.MediaVerdict productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.MediaVerdict productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.MediaVerdict productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.MediaVerdict productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.MediaVerdict refused(): scala.Option
+com.histmersion.plugin.testkit.MediaVerdict toString(): java.lang.String
+com.histmersion.plugin.testkit.MediaVerdict unapply(com.histmersion.plugin.testkit.MediaVerdict): com.histmersion.plugin.testkit.MediaVerdict
+com.histmersion.plugin.testkit.MediaVerdict$ apply(java.lang.String, scala.Option, scala.Option, scala.Option): com.histmersion.plugin.testkit.MediaVerdict
+com.histmersion.plugin.testkit.MediaVerdict$ class
+com.histmersion.plugin.testkit.MediaVerdict$ fromProduct(scala.Product): com.histmersion.plugin.testkit.MediaVerdict
+com.histmersion.plugin.testkit.MediaVerdict$ toString(): java.lang.String
+com.histmersion.plugin.testkit.MediaVerdict$ unapply(com.histmersion.plugin.testkit.MediaVerdict): com.histmersion.plugin.testkit.MediaVerdict
+com.histmersion.plugin.testkit.PluginHarness TestVaultsId(): java.lang.String
+com.histmersion.plugin.testkit.PluginHarness aiTurn(java.lang.String, com.histmersion.plugin.AiTurnRequest, com.histmersion.plugin.AiHttp): com.histmersion.plugin.testkit.AiReport
+com.histmersion.plugin.testkit.PluginHarness class
+com.histmersion.plugin.testkit.PluginHarness contributions(): com.histmersion.plugin.testkit.Contributions
+com.histmersion.plugin.testkit.PluginHarness fetch(com.histmersion.plugin.WorkKey, scala.Option, boolean, boolean): com.histmersion.plugin.testkit.FetchReport
+com.histmersion.plugin.testkit.PluginHarness http(): com.histmersion.plugin.testkit.HttpMode
+com.histmersion.plugin.testkit.PluginHarness id(): java.lang.String
+com.histmersion.plugin.testkit.PluginHarness liveAiHttp(): com.histmersion.plugin.AiHttp
+com.histmersion.plugin.testkit.PluginHarness load(java.lang.String, java.lang.Comparable, com.histmersion.plugin.testkit.HttpMode, scala.collection.immutable.Map, scala.collection.immutable.Map, scala.Option): scala.util.Either
+com.histmersion.plugin.testkit.PluginHarness log(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.PluginHarness new(java.lang.String, com.histmersion.plugin.Plugin, com.histmersion.pluginhost.Registries, com.histmersion.core.AppConfig, org.ekrich.config.Config, com.histmersion.plugin.testkit.HttpMode, com.histmersion.plugin.testkit.internal.Wire, com.histmersion.plugin.testkit.internal.Lines, com.histmersion.pluginhost.PolicyHttp, scala.collection.immutable.List)
+com.histmersion.plugin.testkit.PluginHarness plugin(): com.histmersion.plugin.Plugin
+com.histmersion.plugin.testkit.PluginHarness readCatalogue(java.lang.String, com.histmersion.plugin.CatalogueQuery): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.PluginHarness requests(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.PluginHarness resolveSecret(java.lang.String, java.lang.String): scala.util.Either
+com.histmersion.plugin.testkit.PluginHarness searchMedia(java.lang.String, com.histmersion.plugin.MediaPlace): com.histmersion.plugin.testkit.MediaReport
+com.histmersion.plugin.testkit.PluginHarness warnings(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.PluginHarness workFromDoi(java.lang.String): scala.util.Either
+com.histmersion.plugin.testkit.PluginHarness$ TestVaultsId(): java.lang.String
+com.histmersion.plugin.testkit.PluginHarness$ class
+com.histmersion.plugin.testkit.PluginHarness$ liveAiHttp(): com.histmersion.plugin.AiHttp
+com.histmersion.plugin.testkit.PluginHarness$ load(java.lang.String, java.lang.Comparable, com.histmersion.plugin.testkit.HttpMode, scala.collection.immutable.Map, scala.collection.immutable.Map, scala.Option): scala.util.Either
+com.histmersion.plugin.testkit.Recordings class
+com.histmersion.plugin.testkit.Recordings exist(java.nio.file.Path): boolean
+com.histmersion.plugin.testkit.Recordings$ class
+com.histmersion.plugin.testkit.Recordings$ exist(java.nio.file.Path): boolean
+com.histmersion.plugin.testkit.ScriptedAiHttp class
+com.histmersion.plugin.testkit.ScriptedAiHttp get(java.lang.String, scala.collection.immutable.Map, int): scala.util.Either
+com.histmersion.plugin.testkit.ScriptedAiHttp new(scala.collection.immutable.Seq)
+com.histmersion.plugin.testkit.ScriptedAiHttp post(java.lang.String, scala.collection.immutable.Map, java.lang.String, int): scala.util.Either
+com.histmersion.plugin.testkit.ScriptedAiHttp requests(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.ScriptedAiHttp$ class
+com.histmersion.plugin.testkit.ScriptedAiHttp$package class
+com.histmersion.plugin.testkit.ScriptedAiHttp$package fromDoi(com.histmersion.plugin.WorkKey$, java.lang.String, com.histmersion.plugin.testkit.PluginHarness): scala.util.Either
+com.histmersion.plugin.testkit.ScriptedAiHttp$package$ class
+com.histmersion.plugin.testkit.ScriptedAiHttp$package$ fromDoi(com.histmersion.plugin.WorkKey$, java.lang.String, com.histmersion.plugin.testkit.PluginHarness): scala.util.Either
+com.histmersion.plugin.testkit.StubAnswer _1(): int
+com.histmersion.plugin.testkit.StubAnswer _2(): byte[]
+com.histmersion.plugin.testkit.StubAnswer _3(): scala.collection.immutable.Map
+com.histmersion.plugin.testkit.StubAnswer apply(int, byte[], scala.collection.immutable.Map): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer body(): byte[]
+com.histmersion.plugin.testkit.StubAnswer canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.StubAnswer class
+com.histmersion.plugin.testkit.StubAnswer copy(int, byte[], scala.collection.immutable.Map): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.StubAnswer fromProduct(scala.Product): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer hashCode(): int
+com.histmersion.plugin.testkit.StubAnswer headers(): scala.collection.immutable.Map
+com.histmersion.plugin.testkit.StubAnswer new(int, byte[], scala.collection.immutable.Map)
+com.histmersion.plugin.testkit.StubAnswer ok(byte[], java.lang.String): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer productArity(): int
+com.histmersion.plugin.testkit.StubAnswer productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.StubAnswer productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.StubAnswer productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.StubAnswer productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.StubAnswer productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.StubAnswer status(): int
+com.histmersion.plugin.testkit.StubAnswer text(java.lang.String, java.lang.String): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer toString(): java.lang.String
+com.histmersion.plugin.testkit.StubAnswer unapply(com.histmersion.plugin.testkit.StubAnswer): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer$ apply(int, byte[], scala.collection.immutable.Map): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer$ class
+com.histmersion.plugin.testkit.StubAnswer$ fromProduct(scala.Product): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer$ ok(byte[], java.lang.String): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer$ text(java.lang.String, java.lang.String): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.StubAnswer$ unapply(com.histmersion.plugin.testkit.StubAnswer): com.histmersion.plugin.testkit.StubAnswer
+com.histmersion.plugin.testkit.UnrecordedRequest class
+com.histmersion.plugin.testkit.UnrecordedRequest new(scala.collection.immutable.List, java.nio.file.Path)

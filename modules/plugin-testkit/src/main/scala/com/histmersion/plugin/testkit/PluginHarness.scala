@@ -4,8 +4,9 @@ import com.histmersion.core.{AppConfig, PluginState}
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.{FetchChain, HostLog, HostServices, JavaHttpTransport, PluginAi, PluginEvents, PluginHost,
   PluginMedia, PolicyHttp, Registries, WorkLookup}
-import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{Config, ConfigFactory, ConfigValueFactory}
+
+import com.histmersion.plugin.testkit.internal.{Lines, Scrubber, TestVaults, Wire}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -46,7 +47,7 @@ final class PluginHarness private (
     env: Config,
     mode: HttpMode,
     wire: Wire,
-    lines: PluginHarness.Lines,
+    lines: Lines,
     acquisition: PolicyHttp,
     /** What the server would have warned about while loading the plugin (a secret written into the config). */
     val warnings: List[String]):
@@ -283,7 +284,7 @@ object PluginHarness:
       case None =>
         val byVault = refs.collect { case Right((SecretRef.Vault(vault, ref), v)) => (vault, ref, v) }
           .groupBy(_._1).view.mapValues(_.map(t => t._2 -> t._3).toMap).toMap
-        Right(Option.when(byVault.nonEmpty)(TestVaults(byVault)))
+        Right(Option.when(byVault.nonEmpty)(TestVaults(TestVaultsId, byVault)))
 
   private def userConfig(id: String, text: String, withVaults: Boolean): Either[String, Config] =
     val path = s"${PluginHost.Root}.$id"
@@ -333,35 +334,9 @@ object PluginHarness:
         Left(st.error.getOrElse(st.state) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)"))
 
   /** Where a found copy is written: `<dir>/<fetcher>-<identifier>.<extension>`. */
-  private[testkit] def save(dir: Path, fetcher: String, work: WorkKey, file: FetchedFile): Path =
+  private def save(dir: Path, fetcher: String, work: WorkKey, file: FetchedFile): Path =
     val ident = List(work.doi, work.isbn, work.arxiv, work.pmcid, work.pmid, work.archive).flatten.headOption.getOrElse("work")
     val ext   = Option(file.extension).map(_.replaceAll("[^A-Za-z0-9]", "")).filter(_.nonEmpty).getOrElse("bin")
     Files.createDirectories(dir)
     val out = dir.resolve(s"$fetcher-${ident.replaceAll("[^A-Za-z0-9._-]", "_")}.$ext")
     Files.write(out, file.bytes)
-
-  /** Every line logged while a harness ran: the plugin's own (through `PluginContext.log`), and the
-    * host's (the acquisition chain, the polite clients). Guarded by `this`: a fetcher may log from
-    * several threads. */
-  private[testkit] final class Lines:
-    private val buffer = List.newBuilder[LogLine]
-    def all: List[LogLine] = synchronized(buffer.result())
-    private def add(l: LogLine): Unit = synchronized { buffer += l }
-    val plugin: (String, Boolean, String) => Unit = (id, warn, message) =>
-      add(LogLine(if id.isEmpty then "plugins" else id, warn, message))
-    val host: HostLog = new HostLog:
-      def info(line: String) = add(LogLine("host", false, line))
-      def warn(line: String) = add(LogLine("host", true, line))
-
-  /** The stand-in vaults of a test's `secrets`: `vault → (ref → value)`. */
-  private final class TestVaults(values: Map[String, Map[String, String]]) extends Plugin:
-    type Config = Unit
-    val info = PluginInfo(TestVaultsId, "0", Spi.Version)
-    override given configReader: ConfigReader[Unit] = new ConfigReader[Unit]:
-      def from(v: org.ekrich.config.ConfigValue) = Right(())
-    def register(config: Unit, ctx: PluginContext): Either[String, Unit] =
-      values.toList.foldLeft[Either[String, Unit]](Right(())) { case (acc, (vault, refs)) =>
-        acc.flatMap(_ => ctx.secretVaults.add(vault, new SecretVault:
-          val name = vault
-          def resolve(ref: String) = refs.get(ref).toRight(s"the test gives no secret $vault:$ref")))
-      }

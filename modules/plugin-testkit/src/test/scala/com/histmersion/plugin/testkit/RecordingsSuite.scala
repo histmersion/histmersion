@@ -1,5 +1,7 @@
 package com.histmersion.plugin.testkit
 
+import com.histmersion.plugin.testkit.internal.{RecordedExchange, Scrubber}
+
 import java.nio.file.{Files, Path}
 
 /** The recording format and how a test's mode is chosen. Pure but for a temporary directory. */
