@@ -72,12 +72,12 @@ unless there is a written reason.
 
 ## Scala style
 
-- **Scala 3 syntax**, `-source:future`. Significant indentation, `given`/`using`, `enum`,
-  `opaque type` for validated identifiers.
+- **Scala 3 syntax**, `-source:future`. Significant indentation, `given`/`using`, `enum`; model
+  values are Iron newtypes (*Coding practices* below).
 - **Direct style.** Ox for structured concurrency where handlers genuinely need it. No cats-effect,
   no ZIO, no `IO[_]`.
-- **Immutability by default.** `final case class`, `val`, persistent collections. A `var` needs a
-  comment explaining why.
+- **Immutability by default.** `final case class`, `val`, persistent collections. A `var` stays
+  local to the one method that needs it.
 - **Pure functions wherever the work is a transformation.** `Markdown`, `Frontmatter`, `Filter → SQL`,
   the chunker, bbox maths — all pure, all unit-testable with no database.
 - **`Either[…, A]` for expected failures.** 404, a bad citekey, a malformed filter, an unreachable
@@ -88,8 +88,116 @@ unless there is a written reason.
 - **No side effects in object initialisers.** `Main` is the composition root: it builds
   config → `DataSource` → migrate → `Deps` → `Handlers` → endpoints → bind, in that order, explicitly.
   A `private val ds = Db.fromConfig()` at the top of an `object` is exactly the pattern this replaced.
-- **Smart constructors where invariants exist** — `Period(start ≤ end)`, `BBox`, `Citekey`. Validate
-  once, at the boundary, then pass the validated type around.
+
+## Coding practices
+
+These rules bind new and changed code. Existing code that breaks them is brought in line when it is
+changed for another reason, not in a sweep. Iron (`io.github.iltotore::iron`) and Chimney
+(`io.scalaland::chimney`) are not dependencies yet: the first change that needs one adds it, with its
+native-image metadata. The examples were compiled against Iron 3.4.1 and Chimney 2.1.0.
+
+### 1. No primitives in the model
+
+Every value in the model has a type that says what it means: an Iron newtype, not a raw
+`String`/`Int`/`Long`, and not a bare refined type (`String :| Match[…]`) passed around as such. A
+constraint is optional (`Pure` accepts every value of the base type). A smart constructor exists only
+where the data must be checked. Use `RefinedType` (opaque), not `RefinedSubtype`: a `Citekey` is not
+silently a `String`; `.value` says where the raw value is taken out.
+
+```scala
+type Year = Year.T
+object Year extends RefinedType[Int, Pure]                    // Year(-3300): BCE negative
+
+type CitekeyRule = Match["[a-z][a-z0-9_-]*"]
+type Citekey = Citekey.T
+object Citekey extends RefinedType[String, CitekeyRule]       // Citekey.either(raw) at the boundary
+
+def neighbours(citekey: Citekey, depth: Int): List[Citekey]   // not (citekey: String, depth: Int)
+```
+
+### 2. Parse, don't validate
+
+A type that needs checking can only be constructed valid: `final case class Foo private (…)`, with a
+smart constructor on the companion that returns `Either`. Scala 3 makes `apply` and `copy` private with
+the constructor, so all code goes through it, and nothing downstream checks again. A case class built
+from already-valid typed parts with no invariant of its own keeps its plain public constructor and gets
+no smart constructor.
+
+```scala
+final case class Period private (start: Year, end: Year)
+object Period:
+  def from(start: Year, end: Year): Either[PeriodError, Period] =
+    Either.cond(start.value <= end.value, new Period(start, end), PeriodError.EndsBeforeStart(start, end))
+
+final case class Person(name: PersonName, born: Year)        // no invariant: public constructor
+```
+
+### 3. Separate models per layer
+
+API, database and domain may each have their own package and model, in the representation that is
+natural there and works with the library that serves it (Kindlings derivation for codecs and schemas,
+Magnum's `DbCodec`). Chimney converts between them. The domain model knows nothing of the database
+layout or the API shape, so each can change on its own. Type-class instances for domain types (codecs,
+schemas, `DbCodec`s) are defined in the API or DB module that needs them, never on the domain companion.
+An API or DB model may reuse a domain value as long as that gets in nothing's way; split a
+representation only when there is an actual reason to.
+
+```scala
+package com.histmersion.domain                // no codecs, no SQL
+final case class Source(citekey: Citekey, title: Title, period: Period)
+
+package com.histmersion.api                   // the wire shape; reuses domain values
+final case class SourceView(citekey: Citekey, title: Title, start: Year, end: Year) derives KindlingsCodecAsObject
+
+package com.histmersion.db                    // the instances the DB layer needs, in the DB layer
+given DbCodec[Citekey] = DbCodec[String].biMap(Citekey.applyUnsafe, _.value)
+```
+
+### 4. Cheap conversions between layers
+
+Iron's newtypes make crossing a layer free. `.value` exposes a newtype's refined type (`String :|
+CitekeyRule`), and another newtype's `apply` accepts that refined type without checking it again. A
+raw `String` does not compile there, so the check cannot be skipped by accident. Two layers' newtypes
+over the same constraint therefore convert with no runtime check. `iron-chimney` derives newtype ↔ raw
+but not newtype ↔ newtype, so write one `Transformer` per pair, through `apply`. Chimney then derives
+the case classes built from them. Never `assume` between layers: it accepts any value, including one
+under a different constraint.
+
+```scala
+package com.histmersion.api
+type Citekey = Citekey.T
+object Citekey extends RefinedType[String, CitekeyRule]:
+  given Transformer[domain.Citekey, Citekey] = citekey => Citekey(citekey.value)
+
+source.transformInto[SourceView]              // field by field, no constraint re-checked
+```
+
+### 5. Self-explanatory code
+
+What code does must be unambiguous from the names of its types (including their packages), methods,
+parameters and variables. A comment that describes how a piece of code works is, more often than not,
+a failure to meet this rule: rename, extract a method or introduce a type instead.
+
+```scala
+// no: def run(xs: List[String], n: Int) = xs.take(n) // n = page size
+def firstPage(citekeys: List[Citekey], pageSize: PageSize): List[Citekey] = citekeys.take(pageSize.value)
+```
+
+### 6. Comments go in two places only
+
+- **Scaladoc on the public API plugins see** (`plugin-api`). Plugin authors read it through cellar and
+  similar tools, without the code.
+- **Where behaviour answers something outside the code**: an external decision, an external blocker,
+  or a factor that cannot be expressed in code without over-engineering or absurdly long names.
+
+Either way a comment stands on its own. It never points at Histmersion's internal docs, tickets or
+queue ids, GitHub issues or "§x.y" sections: what the reader needs goes in the comment, and history
+goes in the commit message.
+
+```scala
+// GraalVM 25.4's builder refuses a java.* class on the image class path; this jar holds one.
+excludeDependencies += ExclusionRule("io.github.cquiroz", "scala-java-time-tzdb_3")
+```
 
 ## Kindlings: codecs, schemas and config are derived, not written
 
@@ -99,11 +207,14 @@ object SearchHit:
   given Schema[SearchHit] = KindlingsSchema.derived[SearchHit].schema
 ```
 
-Circe codec and Tapir schema come from the **same** case class, so the JSON on the wire and the
-OpenAPI/MCP schema advertised to clients cannot drift. Config is the same idea:
+Circe codec and Tapir schema come from the **same** API case class, so the JSON on the wire and the
+OpenAPI/MCP schema advertised to clients cannot drift. A domain type's instances live in the API or DB
+module that needs them, never on its companion (*Coding practices* 3); a newtype's instance maps its
+base type's. Config is the same idea:
 `derives ConfigReader` (kindlings-sconfig-derivation) over `reference.conf`.
 
-Do not hand-write a `Codec`, a `Schema`, or a config parser. If derivation fails, fix the model.
+Do not hand-write a `Codec` or `Schema` for a case class or enum, nor a config parser. If derivation
+fails, fix the model.
 
 ## Configuration: no constants in code
 
@@ -315,7 +426,8 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 
 - One logical change per commit. Imperative subject under ~72 chars, no trailing period:
   `Add facets endpoint + MCP tool`, `Fix int8range upper-bound off-by-one`.
-- Explain **why** in the body when it is not obvious — the ox/JDK pin comment is the model.
+- Explain **why** in the body when it is not obvious. The body is where history, ticket ids and
+  links to docs belong; code comments carry none of them (*Coding practices* 6).
 - A commit that changes behaviour carries its tests. A commit that adds a dependency carries the
   regenerated native-image metadata.
 - Do not commit generated binaries, `.env`, `.mcp.json` (generated), or anything under `target/`.
