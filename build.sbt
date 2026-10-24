@@ -365,6 +365,18 @@ def dbTestGroups(module: String, groups: Int, heap: String, weights: Map[String,
   }
 )
 
+// ── values: the newtypes every layer speaks of (citekeys, years, periods, DOIs, Wikidata ids,
+//    coordinates) — Iron only, JVM and JS. Opaque, so they erase to their base types.
+lazy val values = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
+  .in(file("modules/values"))
+  .settings(name := "histmersion-values")
+  .settings(commonDeps)
+  .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
+
+lazy val valuesJVM = values.jvm
+lazy val valuesJS  = values.js
+
 // ── core: the CONTRACT — domain model, wire DTOs, Filter, Tapir endpoint defs, codecs, Markdown.
 //    `shared` compiles for JVM and JS (the Scala.js frontend derives its API client from the same
 //    endpoints); `jvm` adds config model (sconfig), frontmatter (snakeyaml), export and ArticleNote.
@@ -372,6 +384,7 @@ def dbTestGroups(module: String, groups: Int, heap: String, weights: Map[String,
 lazy val core = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Full)
   .in(file("modules/core"))
+  .dependsOn(values)
   .settings(name := "histmersion-core")
   .settings(commonDeps)
   .settings(
@@ -692,7 +705,7 @@ lazy val server = project
         Seq("" -> conv.toPath((pluginApi / Compile / packageBin).value).toFile,
           "sources" -> conv.toPath((pluginApi / Compile / packageSrc).value).toFile))
       // the testkit a plugin's tests depend on, with what it needs of Histmersion's own modules: the plugin
-      // host it runs and core, whose settings (reference.conf) give it the server's User-Agent, timeouts
+      // host it runs, values, and core, whose settings (reference.conf) give it the server's User-Agent, timeouts
       // and TLS trust. Their other dependencies are ordinary Maven Central libraries their POMs name.
       def module(id: ModuleID, pom: File, jar: File, sources: File): Unit =
         writeMavenArtifact(repo, id, scalaBinaryVersion.value, pom, Seq("" -> jar, "sources" -> sources))
@@ -702,6 +715,8 @@ lazy val server = project
         conv.toPath((pluginHost / Compile / packageBin).value).toFile, conv.toPath((pluginHost / Compile / packageSrc).value).toFile)
       module((coreJVM / projectID).value, conv.toPath((coreJVM / makePom).value).toFile,
         conv.toPath((coreJVM / Compile / packageBin).value).toFile, conv.toPath((coreJVM / Compile / packageSrc).value).toFile)
+      module((valuesJVM / projectID).value, conv.toPath((valuesJVM / makePom).value).toFile,
+        conv.toPath((valuesJVM / Compile / packageBin).value).toFile, conv.toPath((valuesJVM / Compile / packageSrc).value).toFile)
       val platformName = s"histmersion-plugin-platform_${scalaBinaryVersion.value}"
       val pom = PluginRepo.platformPom(api.organization, platformName, api.revision,
         "The libraries Histmersion provides to plugins, at the versions it ships: depend on it compile-only",
@@ -863,7 +878,7 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, pluginApi, pluginHost, pluginTestkit, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
+  .aggregate(valuesJVM, valuesJS, coreJVM, coreJS, pluginApi, pluginHost, pluginTestkit, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
     pluginResolver, chimneyIron, chimneyIronTests,
     db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)

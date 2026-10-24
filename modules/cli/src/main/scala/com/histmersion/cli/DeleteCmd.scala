@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.values.Citekey
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*

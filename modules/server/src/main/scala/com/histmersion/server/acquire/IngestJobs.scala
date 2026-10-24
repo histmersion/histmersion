@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.values.Citekey
+
 import com.histmersion.core.*
 import com.histmersion.db.{AcquireRepo, SourceRepo}
 

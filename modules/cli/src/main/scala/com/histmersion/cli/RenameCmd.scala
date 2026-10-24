@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.values.Citekey
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.core.*
@@ -20,7 +22,7 @@ object RenameCmd:
       Output.jsonFlag
     ).mapN(Args.apply).mapValidated(a =>
       Rename.validate(a.oldCitekey, a.newCitekey).leftMap(_.message).toValidatedNel.map(ck =>
-        a.copy(oldCitekey = a.oldCitekey.trim, newCitekey = ck)))
+        a.copy(oldCitekey = a.oldCitekey.trim, newCitekey = ck.value)))
 
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand("rename",

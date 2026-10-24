@@ -411,7 +411,7 @@ object SourceRepo:
     *  - Parked edges that named `new` (or a short form now unique to it) become real edges.
     *  - `old` becomes an alias of `new`, so it keeps resolving. */
   def rename(ds: DataSource, oldCk: String, newRaw: String): Either[ApiError, RenameCounts] =
-    Rename.validate(oldCk, newRaw).flatMap(validated => transact(ds)(renameIn(oldCk, validated)))
+    Rename.validate(oldCk, newRaw).flatMap(validated => transact(ds)(renameIn(oldCk, validated.value)))
 
   /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle
     * import does when a source was renamed on the other side (`BundleImport`). */

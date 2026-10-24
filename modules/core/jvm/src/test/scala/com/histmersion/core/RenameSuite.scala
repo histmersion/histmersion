@@ -6,9 +6,9 @@ package com.histmersion.core
 class RenameSuite extends munit.FunSuite:
 
   test("validate: a valid, link-shaped, different key passes (trimmed)"):
-    assertEquals(Rename.validate("page2024_history", " page1959_history ").map(ck => ck: String),
+    assertEquals(Rename.validate("page2024_history", " page1959_history ").map(ck => ck.value: String),
       Right("page1959_history"))
-    assertEquals(Rename.validate("x2020_a", "knapp2016").map(ck => ck: String), Right("knapp2016"))
+    assertEquals(Rename.validate("x2020_a", "knapp2016").map(ck => ck.value: String), Right("knapp2016"))
 
   test("validate: the same key, an invalid key and a key the link resolver would not take are refused"):
     def refused(to: String, says: String) =
