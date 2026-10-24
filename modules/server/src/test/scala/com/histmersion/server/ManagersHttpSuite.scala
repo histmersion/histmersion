@@ -37,7 +37,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM articles WHERE slug LIKE 'zqmgr%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zqmgr%'".update.run()
       sql"DELETE FROM goals WHERE slug LIKE 'zqmgr%'".update.run()
-      sql"UPDATE agent_autopilot SET scheduler_strategy = NULL".update.run()
+      sql"UPDATE agent_autopilot SET scheduler_strategy = NULL, drain_since = NULL, drained_at = NULL".update.run()
 
   test("create seed, enqueue every kind, refusals; the manager tool over MCP"):
     val base = AppConfig.load()
@@ -117,6 +117,15 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         val (_, dg) = mcp(url,
           """{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"list_approvals","arguments":{"digest":true}}}""")
         assert(dg.contains("# Waiting for a person"), dg)
+
+        // the stall report and drain mode
+        val (ss2, sb2) = get(s"$url/api/agents/stalls?days=0")
+        assertEquals(ss2, 200, sb2)
+        assert(decode[com.histmersion.core.Stalls.StallReport](sb2).exists(_.stalled.exists(_.slug == Goal)), sb2)
+        val (dr, drb) = post(s"$url/api/agents/autopilot/drain", """{"on":true,"by":"test"}""")
+        assertEquals(dr, 200, drb)
+        assert(drb.contains("\"drain\""), drb)
+        assertEquals(post(s"$url/api/agents/autopilot/drain", """{"on":false}""")._1, 200)
       finally
         b.stop()
         clean(cfg)

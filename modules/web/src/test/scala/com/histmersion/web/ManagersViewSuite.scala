@@ -176,3 +176,12 @@ class ApprovalDigestLineSuite extends munit.FunSuite:
     assertEquals(ApprovalsView.digestLine(KindGroup("goal-plan", 64, Some("2026-10-21"))), "goal-plan 64 (oldest 2026-10-21) · a person decides")
     assertEquals(ApprovalsView.digestLine(KindGroup("article-publish", 2, None, "checked")),
       "article-publish 2 · the autopilot's checks decide them within the day's cap")
+
+
+/** The autopilot section's drain line. */
+class DrainLineSuite extends munit.FunSuite:
+  import com.histmersion.core.Autopilot.DrainInfo
+  test("draining with runs in flight, then drained"):
+    assertEquals(ManagersView.drainLine(DrainInfo("2026-10-24T10:00:00Z", "cli", inFlight = 2)),
+      "DRAINING since 2026-10-24T10:00:00Z (by cli): nothing new starts; 2 runs in flight still finishing")
+    assert(ManagersView.drainLine(DrainInfo("t", drained = true, drainedAt = Some("t2"))).startsWith("DRAINED since t2"))

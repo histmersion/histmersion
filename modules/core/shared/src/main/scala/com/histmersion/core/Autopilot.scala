@@ -73,6 +73,20 @@ object Autopilot:
     given Schema[FocusSet] = KindlingsSchema.derived[FocusSet].schema
     val Actions = List("pin", "unpin", "priority", "max")
 
+  /** Drain mode (#3762 proposal 4): since when and by whom; `drained` = no agent run is queued or running
+    * (safe to stop the server: what waits is checkpointed), since `drainedAt`; `inFlight` = runs queued or
+    * running now. */
+  final case class DrainInfo(since: String, by: String = "", drained: Boolean = false, drainedAt: Option[String] = None,
+      inFlight: Int = 0) derives KindlingsCodecAsObject
+  object DrainInfo:
+    given Schema[DrainInfo] = KindlingsSchema.derived[DrainInfo].schema
+
+  /** `POST /api/agents/autopilot/drain {on}`: start draining (nothing new starts; the runs in flight finish)
+    * or lift it. */
+  final case class DrainSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject
+  object DrainSet:
+    given Schema[DrainSet] = KindlingsSchema.derived[DrainSet].schema
+
   /** `GET /api/agents/autopilot`. `since`/`by` = when and by whom it was last switched; `changes` = what
     * the switch just did (an on/off answer only); `ingestedToday` / `ingestCap` = the legal open-access
     * ingests of all watchers today and their shared cap (0 = none); `backlog` / `backlogDays` = the legal
@@ -82,7 +96,8 @@ object Autopilot:
       agentsEnabled: Boolean = false, managersEnabled: Boolean = false, cronsEnabled: Boolean = true, approvals: List[ApprovalRule] = Nil,
       ingestedToday: Int = 0, ingestCap: Int = 0, maxConcurrentRuns: Int = 0, lastBackup: Option[String] = None,
       lastLint: Option[String] = None, library: List[ManagerBrief] = Nil, goals: List[GoalProgress] = Nil,
-      changes: List[String] = Nil, backlog: Int = 0, backlogDays: Option[Int] = None, focus: Option[FocusInfo] = None)
+      changes: List[String] = Nil, backlog: Int = 0, backlogDays: Option[Int] = None, focus: Option[FocusInfo] = None,
+      drain: Option[DrainInfo] = None)
       derives KindlingsCodecAsObject
   object AutopilotStatus:
     given Schema[AutopilotStatus] = KindlingsSchema.derived[AutopilotStatus].schema
@@ -184,6 +199,11 @@ object AutopilotMarkdown:
     val head = s"# Autopilot: ${if s.on then "ON" else "off"}" +
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
     val warn = List(
+      s.drain.map(d => if d.drained then s"DRAINED since ${d.drainedAt.getOrElse(d.since)} (draining since ${d.since}" +
+          s"${if d.by.nonEmpty then s" by ${d.by}" else ""}): nothing runs and nothing new starts — safe to stop the server; " +
+          "`histmersion agent autopilot undrain` lifts it"
+        else s"DRAINING since ${d.since}${if d.by.nonEmpty then s" by ${d.by}" else ""}: nothing new starts; " +
+          s"${Plural.count(d.inFlight, "run")} in flight still finishing"),
       Option.when(!s.agentsEnabled)("agents are disabled on this server (agents.enabled = false): nothing runs"),
       Option.when(s.agentsEnabled && !s.managersEnabled)("the managers are disabled (agents.managers.enabled = false): nothing runs"),
       Option.when(!s.cronsEnabled)(AutopilotStatus.CronsOff)

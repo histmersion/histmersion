@@ -57,8 +57,10 @@ object ManagerCmd:
         "legal open-access works into the watchers' ingest backlog (a person's items are never touched); focus " +
         "[list|pin <goal>|unpin <goal>|priority <goal> <n>|max <n|default>] — at most max-active-goals goals are active for " +
         "model work (finish-first: articles to review, then to compile, then enough sources; depth-first within a tree; a " +
-        "person's pins and priority; then the oldest), the others' model-using items wait; ingestion is not capped") {
-    (Opts.argument[String]("status|on|off|repair-acquire|focus").withDefault("status"),
+        "person's pins and priority; then the oldest), the others' model-using items wait; ingestion is not capped; " +
+        "drain — nothing new starts while the runs in flight finish (the status says DRAINED once none is queued or " +
+        "running: safe to stop the server for a deploy); undrain — lift it (turning it on lifts it too)") {
+    (Opts.argument[String]("status|on|off|drain|undrain|repair-acquire|focus").withDefault("status"),
       Opts.arguments[String]("focus: list|pin|unpin|priority|max [goal] [n]").orEmpty,
       Opts.flag("dry-run", "repair-acquire: list what it would do, change nothing").orFalse, Output.jsonFlag).mapN {
       (verb, rest, dry, json) => (c: Client) =>
@@ -69,6 +71,8 @@ object ManagerCmd:
           case "status" => status(c.call(ManagersApi.autopilot)(()))
           case "on"     => status(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = true, Some("cli"))))
           case "off"    => status(c.call(ManagersApi.setAutopilot)(Autopilot.AutopilotSet(on = false, Some("cli"))))
+          case "drain"   => status(c.call(ManagersApi.drain)(Autopilot.DrainSet(on = true, Some("cli"))))
+          case "undrain" => status(c.call(ManagersApi.drain)(Autopilot.DrainSet(on = false, Some("cli"))))
           case "repair-acquire" =>
             c.call(ManagersApi.repairAcquire)(RepairAcquire.RepairRequest(dry, Some("cli")))
               .map(r => Output.emit(json, r)(RepairAcquire.markdown))
@@ -77,7 +81,7 @@ object ManagerCmd:
               case None    => c.call(ManagersApi.focus)(())
               case Some(r) => c.call(ManagersApi.setFocus)(r)
             }.map(f => Output.emit(json, f)(AutopilotMarkdown.focus))
-          case other => Left(CliError(s"unknown autopilot verb '$other' (status, on, off, repair-acquire, focus)", exitCode = ExitCode.Usage))
+          case other => Left(CliError(s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus)", exitCode = ExitCode.Usage))
     }
   }
 
@@ -110,6 +114,16 @@ object ManagerCmd:
           case ("strategy", _) => usage("scheduler strategy takes one name: type-balanced, goal-first or default")
           case (v, _) if Set("status", "queue")(v) => usage(s"scheduler $v takes no further arguments")
           case (other, _) => usage(s"unknown scheduler verb '$other' (status, queue, why, strategy)")
+    }
+  }
+
+  /** `histmersion agent stalls [--days n]` — the goals with no progress, why, and what unblocks them. */
+  val stalls: Opts[Client => Either[CliError, Unit]] = Opts.subcommand("stalls",
+      "The unfinished research goals with no progress in N days (default agents.autopilot.stall-days), each with the " +
+        "one reason it stands still — draining, waiting for a person, held, paused, a budget, quota, the scheduler's " +
+        "queue, a block, a failed item, no candidates, idle — and the command that unblocks it") {
+    (Opts.option[Int]("days", "No progress in this many days").orNone, Output.jsonFlag).mapN { (days, json) => (c: Client) =>
+      c.call(ManagersApi.stalls)(days).map(r => Output.emit(json, r)(StallsMarkdown.report))
     }
   }
 

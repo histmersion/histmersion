@@ -231,6 +231,10 @@ object ApiClient:
   def setScheduler(strategy: String): Future[AgentScheduler.SchedulerStatus] =
     call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(strategy, Some("web")))
   def schedulerWhy(item: String): Future[AgentScheduler.WhyInfo] = call(ManagersApi.schedulerWhy)(item)
+  /** Drain (nothing new starts while the runs in flight finish) or lift it. */
+  def drain(on: Boolean): Future[Autopilot.AutopilotStatus] = call(ManagersApi.drain)(Autopilot.DrainSet(on, Some("web")))
+  /** The goals with no progress in `days` days, why, and what unblocks them. */
+  def stalls(days: Option[Int] = None): Future[Stalls.StallReport] = call(ManagersApi.stalls)(days)
   /** Everything waiting for a person, by kind. */
   def approvalDigest: Future[ApprovalDigest.Digest] = call(ManagersApi.digest)(())
   def manager(id: String): Future[Managers.ManagerDetail] = call(ManagersApi.get)(id)

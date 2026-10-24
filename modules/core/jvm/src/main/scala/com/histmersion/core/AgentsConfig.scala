@@ -359,7 +359,9 @@ final case class AgentAutopilotConfig(ensureMinutes: Int = 5, ingestPerDay: Int 
     /** `ingestPerDay` scaled to the ingest backlog ([[AutopilotPolicy.scaledCap]]; 0 = fixed), at most the ceiling. */
     ingestBacklogShare: Double = 0, ingestCeiling: Int = 100,
     /** The UTC hour after which the day's approval digest is written to the worklog (-1 = never). */
-    digestHour: Int = 7) derives ConfigReader
+    digestHour: Int = 7,
+    /** The stall report's default: a goal with no progress in this many days is stalled. */
+    stallDays: Int = 3) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,

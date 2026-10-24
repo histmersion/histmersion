@@ -121,7 +121,8 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       // the autopilot first (its new managers are dispatched in this tick), then the approvals its checks
       // decide (a decided plan settles its held item below)
       out ++= guarded("autopilot", out)(agents.autopilot.tick(now))
-      out ++= guarded("auto-approvals", out)(agents.autoApprovals.sweep(now))
+      // draining: no approval decided by code (a decision wakes a waiting run: new work)
+      if !agents.drain.draining then out ++= guarded("auto-approvals", out)(agents.autoApprovals.sweep(now))
       out ++= guarded("digest", out)(agents.digest.tick(now))
       val managers = ManagerRepo.list(ds).filter(m => State.parse(m.state).exists(_ != State.Stopped))
       managers.foreach { m =>
@@ -129,7 +130,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
         guarded(m.id, out)(releaseHolds(m, now, out))
       }
       // the watchers' ingest backlog, before any sweep is dispatched (a sweep gets what it leaves)
-      out ++= guarded("ingest-backlog", out)(agents.oaBacklog.drain(now))
+      if !agents.drain.draining then out ++= guarded("ingest-backlog", out)(agents.oaBacklog.drain(now))
       // the ones that may start runs, refilled, then dispatched round-robin over the global room
       val live = ManagerRepo.list(ds).filter(m => State.parse(m.state).contains(State.Active) &&
         Kind.parse(m.kind).exists(Running))
@@ -141,6 +142,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       // refill and the crons, so what they just queued waits too)
       out ++= guarded("focus", out)(agents.focus.tick(now))
       dispatchAll(live, now, out)
+      out ++= guarded("drain", out)(agents.drain.tick(now))
       if now.toEpochMilli - lastPrune.get() > 3600000L then
         lastPrune.set(now.toEpochMilli)
         val _ = ManagerRepo.pruneEvents(ds, mcfg.keepEventsDays)
@@ -580,7 +582,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
     * change. */
   private def dispatchAll(ms: List[ManagerInfo], now: Instant, out: collection.mutable.Builder[String, List[String]]): Unit =
     val byId = ms.map(m => m.id -> m).toMap
-    val decision = agents.scheduler.pass(ms, now, None) { (m, item) =>
+    val decision = agents.scheduler.pass(ms, now, agents.drain.block) { (m, item) =>
       if ManagerSupervisor.blocks(item.kind, AgentRepo.unsettledOn(ds, item.target)) then Left("another run is writing its target")
       else guardedOpt(m.id, out)(dispatch(m, settings(m), item, now, out)) match
         case Some(_) => Right(())

@@ -6,7 +6,7 @@ import com.histmersion.core.Managers.*
 import com.histmersion.core.Queue.QueueAdd
 import com.histmersion.core.SchedulerPolicy.*
 import com.histmersion.core.AgentScheduler.*
-import com.histmersion.db.{AgentRepo, AutopilotRepo, FocusRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, AutopilotRepo, FocusRepo, GoalLinkRepo, ManagerRepo}
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -152,7 +152,7 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
 
   /** A pass that starts nothing: what one would do now. */
   private def dry(now: Instant): Snapshot =
-    val in = inputs(live(), now, None)
+    val in = inputs(live(), now, agents.drain.block)
     val s  = settings
     Snapshot(now, dry = true, in, s, SchedulerPolicy.run(in.cands, in.res, s, now)(_ => Right(())))
 
@@ -232,6 +232,40 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
             case None => base.copy(code = AgentScheduler.Code.Running, why = "its run is being evaluated")
         case _ => base.copy(code = AgentScheduler.Code.Settled, why = s"settled: ${i.outcome.getOrElse(i.status)}")
     }
+
+  // ── the stall report ───────────────────────────────────────────────────────────────────────────
+
+  /** Every unfinished goal with no progress in `days` days (default `agents.autopilot.stall-days`; a goal's
+    * creation counts as progress), the one reason it stands still and what unblocks it ([[Stalls.classify]]):
+    * waiting for a person, draining, paused, a budget, quota, the scheduler's queue, a block, a failed item,
+    * no candidates, idle. */
+  def stalls(days: Option[Int] = None, now: Instant = Instant.now()): Stalls.StallReport =
+    val n        = math.max(0, days.getOrElse(cfg.autopilot.stallDays))
+    val goals    = FocusRepo.goals(ds).filterNot(g => GoalFocus.finished(g.status))
+    val progress = ManagerRepo.lastProgress(ds)
+    val articles = GoalLinkRepo.articlesByGoal(ds)
+    val bySubj   = AgentRepo.openLight(ds).groupBy(_.subject)
+    val held     = ManagerRepo.personHeldByGoal(ds)
+    val paused   = ManagerRepo.light(ds).filter(_.state == State.Paused.wire).flatMap(m => m.goal.map(_ -> m.id)).groupMap(_._1)(_._2)
+    val snap     = last.getOrElse(dry(now))
+    val waits    = snap.d.waiting.groupMap(_._1.c.goal)(x => Stalls.SchedWait(x._2.code, x._2.why, x._2.position))
+    val stops    = FocusRepo.lastStops(ds)
+    val sources  = FocusRepo.sourceCounts(ds)
+    val sweeps   = ManagerRepo.sweepOutcomes(ds)
+    val pace     = ManagerRepo.pace(ds, now.minusSeconds(7L * 86400L))
+    val running  = ManagerRepo.runningByGoal(ds)
+    val draining = agents.drain.draining
+    val facts = goals.map { g =>
+      val last = (progress.get(g.slug).toList :+ g.createdAt).flatMap(ManagerPolicy.parseInstant).maxOption
+      val idle = last.map(t => java.time.Duration.between(t, now).toDays.toInt)
+      val aps  = (bySubj.getOrElse(Some(g.slug), Nil) ++ articles.getOrElse(g.slug, Nil).flatMap(a => bySubj.getOrElse(Some(a), Nil)))
+        .map(o => o.id -> o.kind).distinct
+      Stalls.Facts(g.slug, g.title, g.status, last.map(_.toString), idle, aps, held.getOrElse(g.slug, 0), paused.getOrElse(g.slug, Nil),
+        draining, waits.getOrElse(Some(g.slug), Nil), stops.get(g.slug), sources.getOrElse(g.slug, 0),
+        sweeps.get(g.slug).exists(_.contains("no new candidates")),
+        List(seedId(g.slug), watchId(g.slug)).flatMap(pace.get).map(_._1).sum, running.getOrElse(g.slug, 0))
+    }
+    Stalls.report(facts, n, now.toString)
 
   // ── a person's switch ──────────────────────────────────────────────────────────────────────────
 
