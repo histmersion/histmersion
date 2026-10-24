@@ -37,6 +37,16 @@ object Main:
         HotConfig(cfg, LoadedConfig(cfg, UserConfigFile(configFile.path.map(java.nio.file.Path.of(_)), configFile.loaded,
           configFile.unknownKeys)))
 
+  /** The listener with no shutdown grace (`server.shutdown-grace-seconds = 0`, the test suites' setting) also
+    * stops its event loops at once. Left to tapir, a stop shuts its loops and then its own executor down with
+    * netty's defaults — a quiet period of 2 s each, so every stop took 4 s whatever the grace, and the server
+    * suites stopped 73 servers (#3765). Here the loops are this scope's, shut down with no quiet period when
+    * it ends; tapir's executor is never started unless a stop of its own needs it. */
+  private def closeAtOnce(nc: NettyConfig)(using Ox): NettyConfig =
+    val loops = nc.eventLoopConfig.initEventLoopGroup()
+    releaseAfterScope { val _ = loops.shutdownGracefully(0, 5, java.util.concurrent.TimeUnit.SECONDS).syncUninterruptibly() }
+    nc.noGracefulShutdown.eventLoopConfig(nc.eventLoopConfig.copy(initEventLoopGroup = () => loops)).withDontShutdownEventLoopGroupOnClose
+
   /** The composition root proper: the hot component graph first, then the handlers over it, then the
     * listener. `converter` `None` = the sidecar client from the config, read at each call (a reload
     * may move it). */
@@ -79,7 +89,7 @@ object Main:
       .modifyConfig(_.requestTimeout(cfg.server.requestTimeoutSeconds.seconds))   // netty default 20 s is shorter than a pg_dump
       // tapir waits this long on stop for the open connections — idle keep-alive ones included
       .modifyConfig(nc => if cfg.server.shutdownGraceSeconds > 0 then nc.withGracefulShutdownTimeout(cfg.server.shutdownGraceSeconds.seconds)
-                          else nc.noGracefulShutdown)
+                          else closeAtOnce(nc))
       .addEndpoint(mcp.endpoint)
       .addEndpoints(com.histmersion.server.agents.AgentsTools.agentEndpoints(h.agents))  // one per agent definition, behind run tokens
       .addEndpoints(HttpApi(deps, h, acq).endpoints)
