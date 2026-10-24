@@ -18,8 +18,8 @@ This inverts the research wiki's original rule. The authority is now the databas
 |---|---|---|
 | **Originals** (PDF/EPUB) | **Calibre** (canonical, unchanged) | Calibre's own library backup |
 | **OCR'd text + metadata + enrichment** (geo/time/findings/tags/edges) | **Postgres** | `pg_dump` + the data volume |
-| **LLM- and Obsidian-facing Markdown** | *generated from the database* | one-way export → `wiki/sources/*.md` (git/Nextcloud) |
-| **Compiled wiki** (concepts/myths/reports) | Markdown files today; moving into `articles` in wave 2.7 | git/Nextcloud |
+| **LLM- and Obsidian-facing Markdown** | *generated from the database* | one-way export → `wiki/sources/*.md` (git or a synced folder) |
+| **Compiled wiki** (concepts/myths/reports) | Markdown files today; moving into `articles` in wave 2.7 | git or a synced folder |
 
 Three independent backup axes, one authority. Enrichment goes through MCP/CLI → database → export.
 

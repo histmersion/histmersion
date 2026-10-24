@@ -194,7 +194,7 @@ class MediaProvidersSuite extends munit.FunSuite:
 
   test("media config: an honest User-Agent with no e-mail, the default allowlist without NC, P15/P3311 roles"):
     val m = AppConfig.load(org.ekrich.config.ConfigFactory.empty).media
-    assertEquals(m.userAgent, "Histmersion (+https://github.com/MateuszKubuszok/histmersion)")
+    assertEquals(m.userAgent, "Histmersion (+https://github.com/histmersion/histmersion)")
     assert(!m.userAgent.contains("@") && !m.userAgent.toLowerCase.contains("mailto"))
     assertEquals(m.commons.allowed, Set(Cc0, PublicDomain, CcBy, CcBySa))
     assertEquals(m.wikidata.placeRoles.toMap.get("P3311"), Some(MediaRole.Plan))

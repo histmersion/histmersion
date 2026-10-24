@@ -356,7 +356,7 @@ article-filter `auto` mode, and every stop rule.
   a backup every `backup-hours` (24; `backups.keep` prunes as usual) and the safe `lint --fix` repairs every
   `lint-hours` (24), each recorded when started and logged when done. **Not built: the markdown export.**
   `histmersion export wiki` and `queue export meta` are CLI operations that write into the caller's working
-  tree (the research repo's `wiki/`/`meta/` symlinks into Nextcloud); the server has no configured path there
+  tree (the research repo's `wiki/`/`meta/` symlinks into a synced folder); the server has no configured path there
   and the export logic lives in the CLI, so it stays a host job (a launchd/cron entry running those two commands
   from the research repo).
 - **Status** (`AutopilotStatus`, a few aggregate queries for every goal: `ManagerRepo.light/pace`,
