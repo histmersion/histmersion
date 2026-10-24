@@ -125,6 +125,7 @@ test-scripts:
     python3 -m unittest scripts/perf/tests/test_bench.py
     python3 -m unittest scripts/dev/tests/test_affected.py
     python3 -m unittest scripts/dev/tests/test_test_weights.py
+    python3 -m unittest scripts/dev/tests/test_third_party_licences.py
     scripts/dev/tests/seed-cache-test.sh
     scripts/dev/tests/pinned-jdk-test.sh
     scripts/bundle/tests/launchagent-env-test.sh
@@ -134,6 +135,17 @@ test-scripts:
     scripts/bundle/tests/provenance-test.sh
     python3 -m unittest db/gazetteer/test_build.py
     python3 -m unittest db/places/test_build.py
+
+# Regenerate THIRD-PARTY.md: the licence of every library the build and the bundle ship (sbt class paths, the converter's uv.lock via PyPI, the PostgreSQL pixi.lock, npm), each classed against the AGPL
+[group('dev')]
+licences:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p target
+    {{sbt}} "export server/Runtime/fullClasspath" "export cli/Runtime/fullClasspath" \
+      "export pluginApi/Runtime/fullClasspath" "export pluginVaults/Runtime/fullClasspath" \
+      "export web/Compile/fullClasspath" > target/licences-classpaths.log
+    python3 scripts/dev/third_party_licences.py --classpaths target/licences-classpaths.log
 
 # Every suite, DB-backed ones on a throwaway Postgres that is removed afterwards
 [group('dev')]

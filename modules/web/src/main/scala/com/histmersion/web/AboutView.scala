@@ -12,9 +12,9 @@ object AboutView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** One line of the panel. `state` marks a health check with its badge; `depth` > 0 is a location
-    * inside the one above it (the Storage section). */
+    * inside the one above it (the Storage section); `href` makes the value a link. */
   final case class Row(label: String, value: String, state: Option[ServiceState] = None, detail: Option[String] = None,
-      depth: Int = 0)
+      depth: Int = 0, href: Option[String] = None)
   final case class Section(title: String, rows: List[Row])
 
   /** A health text as a row: its state, and the text itself as the detail unless it only says "ok". */
@@ -29,6 +29,8 @@ object AboutView:
       Row("version", s"${a.name} ${b.version}"),
       Row("commit", b.gitCommit.fold("unknown")(c => if b.dirty then s"$c (with uncommitted changes)" else c)),
       Row("commit date", b.commitDate.getOrElse("unknown")),
+      Row("licence", b.licence.getOrElse("unknown")),
+      Row("source", b.sourceUrl.fold("unknown")(_ => "the code of this version"), href = b.sourceUrl, detail = b.sourceUrl),
       Row("schema version", a.health.schemaVersion.getOrElse("unknown")),
       Row("config file", a.configFile.path.fold("none")(_ => if a.configFile.loaded then "read" else "not found"),
         detail = a.configFile.path.map(p =>
@@ -153,7 +155,8 @@ object AboutView:
         List(
           dt(cls := (if r.depth > 0 then s"about-nested depth-${math.min(r.depth, 3)}" else ""), r.label),
           dd(
-            r.state.fold(span(r.value))(st => span(cls := s"about-state state-${st.label}", r.value)),
+            r.href.fold(r.state.fold(span(r.value))(st => span(cls := s"about-state state-${st.label}", r.value)))(url =>
+              a(href := url, target := "_blank", rel := "noopener", r.value)),
             r.detail.map(d => span(cls := "about-detail muted", d))))
       })
     )

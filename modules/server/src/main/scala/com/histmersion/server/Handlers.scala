@@ -101,7 +101,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       .map(t => math.max(0L, now.getEpochSecond - t.getEpochSecond))
     About(
       name = Version.name,
-      build = BuildStamp(Version.version, BuildMeta.gitCommit, BuildMeta.commitDate, BuildMeta.dirty),
+      build = BuildStamp(Version.version, BuildMeta.gitCommit, BuildMeta.commitDate, BuildMeta.dirty,
+        licence = Some(Version.licence),
+        sourceUrl = Some(CorrespondingSource.url(cfg.server.sourceUrl, BuildMeta.gitCommit))),
       health = health,
       jobs = jobs.getOrElse(JobCounts()),
       counts = counts.toOption,

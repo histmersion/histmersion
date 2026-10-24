@@ -54,6 +54,8 @@ install -m 0644 "$root/scripts/bundle/kit-common.sh"  "$bundle/libexec/kit-commo
 install -m 0755 "$root/scripts/bundle/server-verified.sh" "$bundle/libexec/histmersion-server-verified"
 install -m 0644 "$root/scripts/bundle/graalvm-pins.txt" "$bundle/libexec/graalvm-pins.txt"
 install -m 0755 "$root/scripts/bundle/codesign-identity-macos.sh" "$bundle/libexec/codesign-identity-macos.sh"
+# a copy of the program carries its licence and the notices of the work by others it ships
+install -m 0644 "$root/LICENSE" "$root/NOTICE" "$root/THIRD-PARTY.md" "$bundle/"
 du -sh "$bundle/kit" | sed 's/^/  kit: /'
 ls -la "$out" | sed 's/^/  /'
 

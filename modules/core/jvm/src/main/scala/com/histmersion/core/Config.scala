@@ -26,8 +26,9 @@ given ConfigReader[Boolean] = lenient("boolean", ConfigReader.booleanReader, _.t
   * a large file) need this to be at least `backups.timeout-seconds`. `shutdownGraceSeconds` is how long a
   * stop waits for the open connections to close — netty counts an idle keep-alive connection as open,
   * so every stop with a client still connected waited the whole time; the test suites set it to 0. */
+/** `sourceUrl`: the repository the About window and `histmersion about` link as this program's source. */
 final case class ServerConfig(host: String, port: Int, publicUrl: String, requestTimeoutSeconds: Int,
-    shutdownGraceSeconds: Int)
+    shutdownGraceSeconds: Int, sourceUrl: String)
     derives ConfigReader
 /** `pool.max` sizes the HikariCP pool behind every [[com.histmersion.db.Db]] DataSource. Pooling is not a
   * micro-optimisation here: without it every repo call opened a fresh TCP connection and did the

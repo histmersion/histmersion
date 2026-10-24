@@ -123,6 +123,7 @@ The settings of backups and portable bundles are listed with them, in
 | `server.public-url` | `HISTMERSION_PUBLIC_URL` | `http://localhost:8000` | how clients reach the server; used for absolute URLs and to generate `.mcp.json` |
 | `server.request-timeout-seconds` | `HISTMERSION_REQUEST_TIMEOUT` | `1800` | one HTTP request end to end; must cover a `pg_dump`/`pg_restore` (netty's own default, 20 s, is not enough for a backup of the live corpus) |
 | `server.shutdown-grace-seconds` | `HISTMERSION_SHUTDOWN_GRACE` | `10` | on stop, how long open connections may stay before they are closed — an idle keep-alive connection counts as open; `0` closes them at once (the test suites do) |
+| `server.source-url` | `HISTMERSION_SOURCE_URL` | `https://github.com/histmersion/histmersion` | the repository of the program's source code; the About window and `histmersion about` link it at the commit the server was built from. If you run a changed version for other people, point it at the repository that holds your changes — the licence asks you to offer them that source ([Legal notice](../legal.md)) |
 | `db.url` | `HISTMERSION_DB_URL` | `jdbc:postgresql://localhost:5432/histmersion` | JDBC URL. The bundle replaces host and port with its own Postgres (`127.0.0.1:<runtime.pg-port>`) and keeps the database name |
 | `db.user` | `HISTMERSION_DB_USER` | `histmersion` | |
 | `db.password` | `HISTMERSION_DB_PASS` | `histmersion` | |

@@ -448,7 +448,10 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 - Explain **why** in the body when it is not obvious. The body is where history, ticket ids and
   links to docs belong; code comments carry none of them (*Coding practices* 6).
 - A commit that changes behaviour carries its tests. A commit that adds a dependency carries the
-  regenerated native-image metadata.
+  regenerated native-image metadata and `THIRD-PARTY.md` (`just licences`); a dependency whose
+  licence it marks `INCOMPATIBLE` with the AGPL does not go in.
+- Histmersion is AGPL-3.0-or-later (`LICENSE`, `NOTICE`, `ThisBuild / licenses`). Source files carry
+  no licence header.
 - Do not commit generated binaries, `.env`, `.mcp.json` (generated), or anything under `target/`.
 - Stream branches are integrated on `master`; do not push from a worktree unless asked.
 

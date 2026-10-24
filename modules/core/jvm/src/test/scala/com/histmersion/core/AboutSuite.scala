@@ -56,6 +56,22 @@ class AboutSuite extends munit.FunSuite:
     assert(bare.contains("- last backup: none"), bare)
     assert(!bare.contains("corpus:") && !bare.contains("Problems"), bare)
 
+  test("the source link points at the running commit, or at the repository when the commit is unknown"):
+    val repo = "https://github.com/histmersion/histmersion"
+    assertEquals(CorrespondingSource.url(repo, Some("abc123def456")), s"$repo/tree/abc123def456")
+    assertEquals(CorrespondingSource.url(s"$repo/", Some(" abc123 ")), s"$repo/tree/abc123")
+    assertEquals(CorrespondingSource.url(s"$repo.git", Some("abc123")), s"$repo/tree/abc123")
+    assertEquals(CorrespondingSource.url(repo, None), repo)
+    assertEquals(CorrespondingSource.url(repo, Some("")), repo)
+
+  test("histmersion about names the licence and links the source; an older server says unknown"):
+    val src = about.copy(build = about.build.copy(licence = Some("AGPL-3.0-or-later"),
+      sourceUrl = Some("https://example.org/h/tree/abc123def456")))
+    val md = AboutMarkdown.render(src)
+    assert(md.contains("- licence: AGPL-3.0-or-later\n- source: https://example.org/h/tree/abc123def456"), md)
+    val old = AboutMarkdown.render(about)
+    assert(old.contains("- licence: unknown\n- source: unknown"), old)
+
   test("histmersion about says which config file the server read"):
     val read = AboutMarkdown.render(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
     assert(read.contains("- config file: /c/histmersion.conf (read)"), read)
