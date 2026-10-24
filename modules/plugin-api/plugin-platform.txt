@@ -1,0 +1,25 @@
+# The plugin platform: the libraries Histmersion provides to plugins, at the versions it ships.
+#
+# A plugin compiles against them through the `histmersion-plugin-platform` POM in the install's Maven
+# repository (`histmersion plugin repo`), as compile-only dependencies, and bundles none of them: the
+# server's copy is the one that runs. They are part of the plugin compatibility contract, as the SPI is.
+#
+# The build takes the list from this file and the versions from the server's resolved class path. When
+# a dependency upgrade changes one of them, `PluginPlatformSuite` fails until this file is updated: a
+# changed line here is a changed contract, to be named in the release notes, because a plugin built
+# against the old version may stop linking.
+#
+# group:artifact:version
+org.scala-lang:scala3-library_3:3.10.0
+org.ekrich:sconfig_3:2.1.0
+com.kubuszok:kindlings-sconfig-derivation_3:0.3.3
+io.circe:circe-core_3:0.14.17
+io.circe:circe-parser_3:0.14.17
+com.kubuszok:kindlings-circe-derivation_3:0.3.3
+org.typelevel:cats-core_3:2.13.0
+com.softwaremill.sttp.client4:core_3:4.1.0
+com.softwaremill.sttp.tapir:tapir-core_3:1.14.0
+com.softwaremill.sttp.tapir:tapir-json-circe_3:1.14.0
+com.kubuszok:kindlings-tapir-schema-derivation_3:0.3.3
+com.softwaremill.ox:core_3:1.0.2
+io.github.iltotore:iron_3:3.4.1

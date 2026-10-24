@@ -144,6 +144,7 @@ licences:
     mkdir -p target
     {{sbt}} "export server/Runtime/fullClasspath" "export cli/Runtime/fullClasspath" \
       "export pluginApi/Runtime/fullClasspath" "export pluginVaults/Runtime/fullClasspath" \
+      "export pluginResolver/Runtime/fullClasspath" \
       "export web/Compile/fullClasspath" > target/licences-classpaths.log
     python3 scripts/dev/third_party_licences.py --classpaths target/licences-classpaths.log
 
