@@ -143,9 +143,10 @@ Every point on the map — findings, sites, events, pictures — is drawn by ONE
   and years, a spider's legs do not. At a high zoom the bubbles have split and each event stands alone.
 - **Among thousands of points a zoom is not animated** (#1647, `ClusterMotion`): Leaflet.markercluster
   animates every bubble splitting and merging, which forces a layout and draws the icons in view twice —
-  40–90 ms tasks and 10–13 % dropped frames per wheel step with the events layer on. Above
-  `Layout.clusterAnimateMax` (1 000) points the group redraws at once (the map's own zoom still
-  animates); a span's ~500 findings keep the animation.
+  40–90 ms tasks and 10–13 % dropped frames per wheel step with the events layer on. With more than
+  `Layout.clusterAnimateMax` (1 000) markers drawn the group redraws at once (the map's own zoom still
+  animates). Since #4291 the limit counts the markers on screen, not the points held: a desktop window's
+  view holds ~2 000 events and findings and draws a few hundred markers, and keeps the animation.
 - **The same icons everywhere**: the toolbar's layer switches are the shapes (outlined), the legend's key
   shows them with their meaning and every glyph with its name, the filter menus show each option's badge
   (key and menus alike: the map's shape at ≥ 22 px, a 14 px glyph, on a neutral grey fill that stands off

@@ -116,6 +116,7 @@ bundle, fixtures), with the budget after the slash:
 | article open | window 10 / 100 · content 53 / 300 |
 | range boundaries (1 600 × 120 vertices) | drawn 906 / 3 000 · load longest task 82 / 200 · drag input p95 17 / 100 · dropped 2 % / 15 · heap 64.5 MB / 110 · the GeoJSON cache inside its ceilings |
 | events layer (2 400 + 500 findings) | drawn 581 / 2 500 · longest task 59 / 200 · pan input p95 32–124 / 300 · pan longest task 54–87 / 250 · dropped 6 % / 25 · heap 46 MB / 75 — tightened by #1647, below |
+| cluster zoom, 1920×1080 (events by view: ~1 150 held, ~330 drawn) | every zoom animated (0 not / 0) · longest task 0 / 50 · dropped 0.8 % / 15 — #4291, below |
 | soak (100 rounds, 132 s) | heap +0.9 MB / 6 · DOM nodes +0 / 150 · listeners +0 / 20 · Leaflet layers +0 / 0 · every cache inside its ceiling |
 
 The events layer's figures are the median of three runs of each step — the draw (a reload each), the
@@ -226,3 +227,79 @@ Budgets (`perf.test.mjs`, "playback"): longest task ≤ 150 ms, dropped frames �
 ≤ 1 a second, outline uploads ≤ 6 a second, frames without a state change ≤ 60 % (measured 0 ms, 0 %,
 0.5, 0.5 and 18 %; before: 60 findings requests a second). A browser test traces the split and the
 merge frame by frame, and both with reduced motion.
+
+## Desktop zooms: the animation counted on screen (#4291, 2026-10-25)
+
+The reader's report: after #3764 the map's animations looked right on a phone and still clunky on a desktop.
+Measured in Chromium (GPU) and Firefox on the test server (JVM server, full-linked bundle) with live-sized
+feeds that answer as the server does — 500 findings, 2 500 events (three quarters over Europe and the Near
+East) sent **for the view's bounding box** — at 1920×1080, 1440×900 and 390×844, the view at 40° N 22° E,
+zooms 4.4 ↔ 4.8 (each crosses a clustering level), per frame.
+
+**Three causes, all growing with the window.**
+
+1. **The animation was gated by the points held, not the markers drawn.** `PointSet` animated a zoom only
+   while it held ≤ `Layout.clusterAnimateMax` (1 000) points, and the events are fetched for the view: a
+   1920×1080 window held 1 939 points and drew 217–465 markers, a phone held 910–1 159 and drew 114–206. So
+   the desktop never animated (0 of 4 level-crossing zooms, both windows) and the phone did whenever it held
+   fewer than 1 000 (2 of 4) — "fixed on mobile". Above the limit the new markers were also made in 6 ms slices
+   from the centre out, so a desktop zoom ended with the bubbles appearing over several frames.
+2. **Once animated, every moving marker laid the page out.** `ClusterMotion.slide` wrote a marker's start,
+   read `offsetWidth` and wrote its end — one forced layout of the whole page per marker (35 ms of script at
+   1920×1080). With the gate alone fixed, a level-crossing zoom held a frame for 71–93 ms at 1920×1080,
+   67–75 at 1440×900, 56 at 390×844.
+3. **Every frame of a zoom or pan restyled every marker's whole subtree.** A marker is placed by `--tx`/`--ty`;
+   an unregistered custom property is inherited, so writing it restyles every element inside the marker (the
+   bubble's SVG, a point's glyph). The main thread's work per frame of the map's own zoom ease, median:
+
+| window | markers | before (style recalc) | after (style recalc) |
+|---|---|---|---|
+| 1920×1080, zoom out | ~470 → 217 | **18.0 ms** (11.9) | 6.9 ms (2.2) |
+| 1920×1080, zoom in | 217 → ~470 | 8.0 ms (5.0) | 4.0 ms (1.3) |
+| 1440×900, zoom out | ~390 → 167 | **16.3 ms** (9.9) | 6.8 ms (2.1) |
+| 390×844, zoom out | ~210 → 115 | 8.1 ms (4.9) | 4.3 ms (1.3) |
+
+   Over 16.7 ms a frame is late: the desktop's zoom itself stuttered, the phone's did not.
+
+**What changed.**
+
+- The limit counts **markers drawn** before and after the zoom (`ClusterMotion.within`, in view and the
+  draw's margin; `Layout.clusterAnimateMax` = 1 000 markers), not the points held.
+- The moves are a CSS **animation of the `translate` property** from (or to) an offset (`--move-x`/`--move-y`,
+  `.hd-cluster-move`, `@keyframes cluster-move`/`cluster-fly`) on top of the transform that follows the map:
+  nothing is read back, and a marker keeps following the map while it moves.
+- On a zoom that animates, the markers **on screen** are made first, hidden (`.hd-cluster-pending`), a 6 ms
+  slice a frame, and every move starts once they are all made (one to three frames after the zoom's end);
+  those in the margin follow in slices. A layout for changed points (the view's events reloaded on the zoom's
+  end — they answered within those frames in Firefox and took the moves away) waits until the moves have
+  started; the move's end that follows the zoom's, at the same view, leaves them be. Ghosts that would merge
+  off screen into a bubble off screen go at once.
+- `--tx`, `--ty`, `--move-x`, `--move-y` are **registered** (`@property`, `inherits:false`): a marker's new place
+  restyles the marker alone. This also helps every pan.
+
+**Measured** (Chromium, GPU; level-crossing zooms, 2 runs × 2; long tasks = Long Tasks API):
+
+| window | points held · markers drawn | animated, before → after | longest frame after | long tasks after |
+|---|---|---|---|---|
+| 1920×1080 | 1 939 · 217–465 | 0 / 4 → 4 / 4 | 33 ms | none |
+| 1440×900 | 1 565–1 939 · 163–375 | 0 / 4 → 4 / 4 | 33 ms | none |
+| 390×844 | 910–1 159 · 114–206 | 2 / 4 → 4 / 4 | 33 ms | none |
+
+Firefox at 1920×1080: 0 of 2 animated before, 4 of 4 after; its late-timer long tasks (65–68 ms on a zoom
+out) are of the same size as before the change (52–58 ms with nothing animated). The events-layer budget path
+(the perf fixture's 2 400 events at a world view, 1440×900, wheel zooms, interleaved A/B on the same server):
+zoom dropped frames 7.3–8.0 % before (no animation) and 1.8–2.6 % after (animated) — 1.2–1.3 % for the old
+script with the registered properties alone.
+
+**Playback** was measured the same way (−2000…−1000, 5 s, the events layer on): 0–1 % dropped frames, frame
+p95 16.7 ms and no long task in every window, before and after — the per-frame work #3764 removed did not
+come back with a wider window, and no difference between desktop and phone was found there. What changed
+for it is that a layout's new markers are now always made in time slices (the slicing no longer depends on
+the points held), and the registered properties.
+
+**Budget** (`perf.test.mjs`, "in a 1920×1080 window a zoom animates the bubbles"): the perf fixture's events
+sent by view (`eventsIn`), four zooms across whole levels (`perf-paths.mjs` `clusterZoom`): held > 1 000 and
+drawn < 1 000, every zoom animated (`notAnimated` 0; master: 1 of 4 not, the ones at zoom 4–5), longest
+task ≤ 50 ms (measured 0), dropped ≤ 15 % (0.8 %). The browser test "a zoom animates by the markers drawn,
+not the points held" (1920×1080) holds the rule itself: 1 203 points drawn as a few dozen markers animate
+(master: not), 2 556 points drawn as over a thousand markers do not.

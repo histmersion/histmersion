@@ -1071,13 +1071,20 @@ test('every card kind leads with its icon: source, site, region, event, picture'
 // thousands of points (the events layer) a zoom redraws the bubbles at once instead of animating them —
 // markercluster's animation forced a layout and drew every icon twice (40–60 ms tasks) — and a few points
 // animate again.
-test('a cluster of events is a square; among thousands of points a zoom does not animate the bubbles', async () => {
+// #4291: whether a zoom animates is decided by the markers DRAWN (in view and its margin), not by the points
+// the layer holds — a wide window's view holds a couple of thousand events and draws a few hundred markers,
+// and it stopped animating while a phone's narrower view (fewer events fetched) still did.
+test('a cluster of events is a square; a zoom animates by the markers drawn, not the points held', async () => {
   const near = (i) => ({ lat: 37.5 + (i % 3) * 0.02, lon: 32 + Math.floor(i / 3) * 0.02 });
   const few = [0, 1, 2].map(i => evGeo(`zz_c${i}`, `Zz event ${i}`, 'battle', near(i).lat, near(i).lon));
+  // 1 200 points 0.5° apart: a few dozen bubbles at zoom 4–5
   const many = Array.from({ length: 1200 }, (_, i) =>
     evGeo(`zz_m${i}`, `Zz many ${i}`, 'earthquake', 20 + (i % 40) * 0.5, -10 + Math.floor(i / 40) * 0.5));
+  // 2 556 points 1° apart: each drawn alone at zoom 6 (1° is ~45 px there, a bubble's reach 36 px)
+  const grid = Array.from({ length: 71 * 36 }, (_, i) =>
+    evGeo(`zz_g${i}`, `Zz grid ${i}`, 'earthquake', 20 + Math.floor(i / 71), -10 + (i % 71)));
   let feed = { unplaced: 0, events: few };
-  await withPage({ width: 1440, height: 900 }, async page => {
+  await withPage({ width: 1920, height: 1080 }, async page => {
     await page.route('**/api/findings**', route => route.fulfill({ json: [] }));
     await page.route('**/api/places/geo**', route => route.fulfill({ json: { type: 'FeatureCollection', features: [] } }));
     await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
@@ -1099,19 +1106,33 @@ test('a cluster of events is a square; among thousands of points a zoom does not
       map.once('zoomend', () => setTimeout(() => resolve(map.clusterAnimations() > before), 600));
       map.setZoom(zoom);
     }), z);
-    const held = () => page.evaluate(() => window.__testMap.points());
+    // the markers drawn, once they stop changing (a large drawing is made a slice at a time)
+    const drawn = () => page.evaluate(() => new Promise(resolve => {
+      let last = -1, same = 0;
+      const tick = () => {
+        const n = document.querySelectorAll('#map .hd-pane--events .hd-marker, #map .hd-pane--markers .hd-marker').length;
+        if (n === last) same++; else { same = 0; last = n; }
+        if (same >= 10) resolve(n); else requestAnimationFrame(tick);
+      };
+      tick();
+    }));
+    const showing = async (events, n, at, zoom) => {
+      feed = { unplaced: 0, events };
+      await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, zoom]);
+      await page.waitForFunction(k => window.__testMap.points() === k, n, { timeout: 15000 });
+      return drawn();
+    };
     assert.equal(await zoomAnimates(8), true, 'three points: the zoom animates');
-    // a thousand and more: the next zoom does not
-    feed = { unplaced: 0, events: few.concat(many) };
-    await page.evaluate(() => window.__testMap.setView([30, 5], 4, { animate: false }));
-    await page.waitForFunction(() => window.__testMap.points() === 1203, null, { timeout: 15000 });
-    assert.equal(await zoomAnimates(5), false, '1 203 points: the zoom does not animate');
-    assert.equal(await zoomAnimates(4), false);
+    // 1 203 points held, a few dozen markers drawn: animated (it was not, counted by the points held)
+    const fewDrawn = await showing(few.concat(many), 1203, [30, 5], 4);
+    assert.ok(fewDrawn < 200, `a few dozen markers for 1 203 points: ${fewDrawn}`);
+    assert.equal(await zoomAnimates(5), true, '1 203 points, a few dozen markers: the zoom animates');
+    // over a thousand markers drawn: drawn at once
+    const manyDrawn = await showing(grid, grid.length, [38, 25], 6);
+    assert.ok(manyDrawn > 1000, `over a thousand markers drawn: ${manyDrawn}`);
+    assert.equal(await zoomAnimates(7), false, `${manyDrawn} markers: the zoom does not animate`);
     // back to a few: animated again
-    feed = { unplaced: 0, events: few };
-    await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
-    await page.waitForFunction(() => window.__testMap.points() === 3, null, { timeout: 15000 });
-    assert.equal(await held(), 3);
+    await showing(few, 3, [37.5, 32], 7);
     assert.equal(await zoomAnimates(8), true, 'a few points again: the zoom animates again');
   });
 });
