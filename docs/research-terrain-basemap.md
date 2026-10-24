@@ -386,3 +386,112 @@ style's sources were bounded to the extract). Now:
   region; there is no planet archive to read them from by range. `fetch --layer labels --bbox world` keeps
   them for the whole world (a few MB). A page to pick regions to download ahead (rather than the CLI) is
   not built either.
+
+## Map follow-ups: the relief off the main thread, GEBCO, WorldCover (#2719, 2026-10-24)
+
+### The relief and the main thread (measured; no change needed)
+
+The item dates from the protomaps-leaflet map, whose relief was shaded by our own code on the main thread
+(`web/Hillshade`, 2–8 ms a tile). Since the move to MapLibre GL (#2727) none of that code exists: the
+relief is MapLibre's own `hillshade` and `color-relief` layers over a `raster-dem` source, whose tiles
+MapLibre decodes in its Web Workers and shades on the GPU, and the contour lines come from
+maplibre-contour created with `worker: true`, which traces them in a worker of its own. Measured to be
+sure: headless Chromium 1248 on the GPU (Metal), a throwaway JVM server with the browser tests' fixture
+(Argolid focus region), Physical at zoom 11 over Mycenae, a 40-step drag and four wheel zooms with the
+CPU profiler on the page's main thread (CDP `Profiler`, 200 µs sampling), median of 3 runs:
+
+| condition | main thread busy during the 3.1 s gesture | input → paint p95 / max | dropped frames | long tasks |
+|---|---|---|---|---|
+| relief and contours | 382 ms | 31.9 / 33.7 ms | 0 % | 0 |
+| relief, contours off | 365 ms | 31.5 / 33.4 ms | 0 % | 0 |
+| no relief (the terrain tiles refused) | 391 ms | 31.8 / 32.3 ms | 0 % | 0 |
+
+The three are the same within run-to-run noise; the main-thread profile holds MapLibre's render loop
+(`_render`, `draw`, `_calcMatrices`, placement) and no function of maplibre-contour or of DEM decoding.
+What the relief costs the main thread is its share of the GL draw calls, and those must stay where the
+WebGL context is. Without a GPU the page leaves the relief out altogether (`reduced`). So nothing was
+moved: the item's premise ended with #2727.
+
+### GEBCO as the sea floor (as built)
+
+`basemap.bathymetry.source = gebco` (`HISTMERSION_BASEMAP_BATHYMETRY_SOURCE`; default `etopo1`, today's)
+makes `histmersion basemap fetch --layer bathymetry` build the sea floor's extract from the **GEBCO_2026
+Grid**: 15 arc-seconds (~460 m) against ETOPO1's 1 arc-minute (~1.8 km), zooms 0–8
+(`basemap.bathymetry.gebco.max-zoom`) against 0–7.
+
+- **The data.** GEBCO publishes the grid as one 4 GB zip or as eight 90° GeoTIFFs at CEDA
+  (`dap.ceda.ac.uk/bodc/gebco/global/gebco_2026/ice_surface_elevation/geotiff/`), 890 MB each:
+  21 600 × 21 600 signed 16-bit samples, **uncompressed, one row a strip**, a GeoTIFF tie point and pixel
+  scale, no-data −32768 (read from the files' own headers, 2026-10-24). CEDA answers range requests
+  (206). So the fetch reads only the rows a region needs.
+- **The reader** (`server/basemap/GeoTiff`, pure): a little-endian classic TIFF, one band of
+  uncompressed signed 16-bit samples in strips, georeferenced by `ModelTiepoint` + `ModelPixelScale`
+  (pixel-is-point shifted to the area), GDAL's no-data tag. Anything else — BigTIFF, compression, tiles,
+  other sample types — is refused with what it is (WorldCover's COGs would need DEFLATE and tiles, below).
+  It gives the window of a box and the range requests of its rows: rows that follow one another in the
+  file share a request of at most `basemap.max-request-mb`.
+- **The job** (`server/basemap/GebcoSeaFloor`): the headers of the GeoTIFFs that meet the region
+  (256 KB each), the plan, then the rows into `.bathymetry.part/` (a file a request; an interrupted fetch
+  resumes), then every tile of zooms 0…max over the region: each pixel the mean of the grid's samples under
+  four points spread over it, written as a Terrarium PNG (`TerrariumPng`, our own encoder: RGB, the Sub
+  filter, `java.util.zip`; no AWT/ImageIO in the server). A tile reaching past the region takes its
+  outside from ETOPO1's tile of the same place (one GET, decoded by the same codec), so the low zooms are
+  as whole as the ETOPO1 extract's. Outside the region, and on demand, the sea floor stays ETOPO1's.
+- **Dry run** (`--dry-run`), the default region −12,20,90,62: *would read 871.0 MB of 2 GeoTIFFs in 14
+  range requests, and write 4373 tiles (about 358.2 MB; zoom 0: 1 · … · zoom 7: 836 · zoom 8: 3182), 468 of
+  them completed from ETOPO1 outside the region* — against ETOPO1's ~100 MB at zoom 7. Reading whole rows
+  wastes the columns outside the region (−12…0 is 13 % of its GeoTIFF's width); reading row by row would
+  read 10× less but take ~10 000 requests at the providers' pace.
+- **Checked on the real grid**: the Argolid (22.5,37.4,23.2,37.9) read 5.2 MB of rows into 10 tiles (1.1
+  MB); at zoom 8 the Argolic Gulf is −175 m, Nafplio's bay −20 m, Mycenae +196 m, the Argos plain +13 m.
+- **Licence and credit.** The grid is in the public domain and free of charge; using it accepts GEBCO's
+  terms of use and disclaimer (not for navigation). GEBCO asks for the citation "GEBCO Bathymetric
+  Compilation Group 2026 (2026). The GEBCO_2026 Grid — a continuous terrain model for oceans and land at 15
+  arc-second intervals. doi:10.5285/4f68d5c7-45eb-f999-e063-7086abc036fa", which is the extract's
+  `attribution` (`basemap.bathymetry.gebco.attribution`); the map's credits name it, and ETOPO1 as well
+  when the sea outside the extract is read on demand.
+- **Left:** GEBCO on demand (outside the region) is not built: it would read rows of a 890 MB file per
+  tile row, which the per-tile on-demand machinery is not shaped for. A new grid each year means a new
+  `gebco.url`.
+
+### ESA WorldCover land cover: a design note (not built)
+
+**What it is.** ESA WorldCover 10 m, v200 (2021; v100 is 2020): 11 land-cover classes from Sentinel-1
+and -2. **Licence** CC BY 4.0 (the creator credited; ESA's suggested line "© ESA WorldCover project 2021 /
+Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium", DOI
+10.5281/zenodo.7254221 — the attribution wording to be checked against the product page, which refused
+connections on 2026-10-24). **Distribution:** 2 651 Cloud-Optimised GeoTIFFs of 3° × 3° on AWS Open Data
+(`s3://esa-worldcover`, `https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_<N36E021>_Map.tif`,
+range requests answered) and as 18 macro-tile zips on Zenodo (124 GB with the quality layers; the
+Mediterranean–Asia macro-tiles N30E000 and N30E060 alone are 13.7 and 17.5 GB). One tile, read
+2026-10-24: 36 000 × 36 000 8-bit paletted pixels, DEFLATE, 1 024-pixel internal tiles, internal overviews,
+~66 MB. The default region holds roughly 300 land tiles: **15–25 GB at full resolution**.
+
+**A pre-built tile source.** None in PMTiles or vector form was found. The AWS registry lists a STAC
+catalogue at Terrascope (VITO, `services.terrascope.be/stac/`) and online viewers; whether Terrascope's
+WMTS may be used as a tile source, and on what terms, is unchecked (the service did not answer on
+2026-10-24). Raster tiles of
+a palette are also the wrong shape for MapLibre styling: the Physical style wants areas it can colour,
+blend with the relief and query (`areasAt`).
+
+**Pipeline (if built).**
+1. *Read by range, at the zoom the map needs, not at 10 m.* A COG's overviews are separate images in the
+   same file: the overview at 1/8 (~80 m) is enough for map zooms ≤ 11, at ~1/64 of the bytes (the
+   default region: roughly 0.3 GB, against 15–25 GB). The reader needs, beyond the GEBCO one: `TileWidth`
+   / `TileOffsets` (tiled TIFFs), DEFLATE (`java.util.zip.Inflater`) with the horizontal predictor, 8-bit
+   samples, and the overview IFD chain. Same seam (`RangeHttp`), same resumable work directory.
+2. *Classes to polygons.* Per output tile (zoom 6–11): majority-filter the class raster (mode over 3×3,
+   removing single-pixel speckle), trace each class's regions into polygons (marching squares over the
+   class mask), simplify (Douglas–Peucker at half a pixel), clip to the tile with a buffer — then MVT
+   (`server/basemap/Mvt` already writes MVT) in a `landcover-wc` layer with `class`.
+3. *Store and style.* A `worldcover.pmtiles` extract beside the others, a new `BasemapLayer`, its credit in
+   the style's source; Physical draws it in place of (or under) Protomaps' coarser `landcover`, whose
+   classes it maps onto (tree cover → forest, shrubland, grassland, cropland, built-up, bare/sparse,
+   snow/ice, water, wetland, mangroves, moss/lichen).
+4. *Size and time:* the 80 m overview of the default region ~0.3 GB read; polygons for zooms 6–11
+   estimated at 0.2–0.5 GB stored (untested: polygon counts over farmland are the risk); CPU minutes, not
+   hours, on one core.
+
+**Not now because** the Protomaps land cover (from OSM and Natural Earth) already gives forest, scrub,
+farmland and sand at the scales the app uses, and the polygonising step is the real work and risk. The
+GEBCO reader is the first half of step 1.

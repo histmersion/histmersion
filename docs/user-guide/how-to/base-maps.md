@@ -78,7 +78,8 @@ by this browser, and apply at once:
   `web/vendor/noto-sans/`, only the parts a name needs; no font service is asked.
 - **The credits** of each base map are in the box at the map's lower left corner, under the note on today's terrain (the only thing in it on an online map): © OpenStreetMap contributors (ODbL) and Protomaps for the vector layer, Natural
   Earth for the physical names, © Mapterhorn with the Copernicus elevation model for the relief, and
-  ETOPO1 (NOAA) via Mapzen's terrain tiles for the sea floor; for the online maps, OpenStreetMap and
+  ETOPO1 (NOAA) via Mapzen's terrain tiles for the sea floor — or the GEBCO_2026 Grid, when the sea floor
+  was fetched from GEBCO (`basemap.bathymetry.source = gebco`); for the online maps, OpenStreetMap and
   the tile server.
 - **The map is drawn with WebGL.** On a computer whose browser has no graphics card to draw with (a
   virtual machine, a remote desktop, a browser with hardware acceleration switched off), the page

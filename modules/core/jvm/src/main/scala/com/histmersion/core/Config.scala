@@ -335,10 +335,20 @@ final case class BasemapOnDemandConfig(enabled: Boolean, maxZoom: Int, cacheGb: 
 final case class BasemapLabelsConfig(url: String, files: List[String], maxZoom: Int, language: String,
     attribution: String) derives ConfigReader
 
+given ConfigReader[SeaFloorSource] = ConfigReader.stringReader.emap(SeaFloorSource.parse)
+
 /** The sea floor: terrarium tiles at `url` (`{z}/{x}/{y}`), zooms 0…`maxZoom` of the region, one GET a
-  * tile, `requestGapMs` apart; `onDemand`: the tiles outside the region, read as a page needs them (#3760). */
+  * tile, `requestGapMs` apart; `onDemand`: the tiles outside the region, read as a page needs them (#3760).
+  * `source` picks what the extract is made from: those tiles (ETOPO1), or the GEBCO grid (`gebco`). */
 final case class BasemapBathymetryConfig(url: String, maxZoom: Int, requestGapMs: Int, attribution: String,
-    onDemand: BasemapOnDemandConfig) derives ConfigReader
+    onDemand: BasemapOnDemandConfig, source: SeaFloorSource, gebco: BasemapGebcoConfig) derives ConfigReader:
+  def extractMaxZoom: Int = source match
+    case SeaFloorSource.Etopo1 => maxZoom
+    case SeaFloorSource.Gebco  => gebco.maxZoom
+
+/** The GEBCO grid as a sea-floor source: `url`, one GeoTIFF of the grid's tiling (`tileDegrees` square) with
+  * `{north}`, `{south}`, `{west}`, `{east}`; the extract's zooms 0…`maxZoom`; its credit line. */
+final case class BasemapGebcoConfig(url: String, tileDegrees: Int, maxZoom: Int, attribution: String) derives ConfigReader
 
 final case class ConfigReloadConfig(watch: Boolean, watchDebounceMs: Int, drainSeconds: Int) derives ConfigReader
 
