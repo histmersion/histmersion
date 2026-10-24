@@ -31,7 +31,8 @@ the six AI providers. Each is switched on or off with `histmersion.plugins.<id>.
 
 These manage files **on this computer** and never touch the database.
 
-A third-party plugin is a jar compiled against `modules/plugin-api` alone, with its provider in
+A third-party plugin is a jar compiled against the plugin API alone (`histmersion plugin api-jar`;
+writing one: [Developing plugins](developing.md), which starts from `histmersion plugin new`), with its provider in
 `META-INF/services/com.histmersion.plugin.Plugin`, its defaults in `META-INF/histmersion/plugins/<id>.conf`,
 its own `META-INF/native-image/<group>/<artifact>/reachability-metadata.json` (from the tracing agent in
 its own build) and every dependency the server does not ship shaded in. `modules/plugin-fixtures/hello`
