@@ -93,7 +93,7 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       val last = row.lastEnsureAt.flatMap(ManagerPolicy.parseInstant)
       val ensured =
         if last.forall(t => !t.plusSeconds(math.max(1, acfg.ensureMinutes).toLong * 60L).isAfter(now)) then
-          val out = ensureNow(now) ++ advance(now)
+          val out = ensureNow(now) ++ advance(now) ++ (if agents.drain.draining then Nil else nextArticles(now))
           if out.nonEmpty then log(s"autopilot: ${out.mkString("; ")}".take(1000))
           out
         else Nil
@@ -214,6 +214,27 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
             Some(line)
       }
     }
+
+  // ── the next article (#3763) ───────────────────────────────────────────────────────────────────
+
+  /** Every goal whose articles are all compiled and passed review gets its next proposal
+    * ([[AutopilotPolicy.nextArticle]]): its seeding manager's propose-articles item re-opened (the scheduler
+    * starts it; the plan goes through the article-plan approvals). One line per goal. */
+  def nextArticles(now: Instant): List[String] =
+    if acfg.nextArticleHours <= 0 then Nil
+    else
+      val seeds = ManagerRepo.light(ds).filter(_.kind == Kind.Seed.wire).flatMap(m => m.goal.map(_ -> m)).toMap
+      agents.focus.facts().filter(f => f.articles > 0 && seeds.contains(f.slug)).flatMap { f =>
+        val sid  = seedId(f.slug)
+        val item = ManagerRepo.itemFor(ds, sid, ProposeArticles, f.slug)
+        val facts = AutopilotPolicy.NextFacts(f.slug, f.status, f.articles, f.unreviewed, f.compileOpen,
+          seeds.get(f.slug).map(_.state), item.map(_.status), item.flatMap(i => ManagerPolicy.parseInstant(i.updatedAt)))
+        AutopilotPolicy.nextArticle(facts, now, acfg.nextArticleHours).map { why =>
+          val (id, _) = ManagerRepo.upsert(ds, sid, ProposeArticles, f.slug, ItemOrigin.Selection, 0, reopen = true)
+          ManagerRepo.event(ds, sid, Some(id), None, Feed.Autopilot, s"${f.slug}: $why".take(2000))
+          s"goal ${f.slug}: next article proposed"
+        }
+      }
 
   // ── housekeeping ───────────────────────────────────────────────────────────────────────────────
 

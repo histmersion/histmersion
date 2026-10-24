@@ -365,7 +365,10 @@ final case class AgentAutopilotConfig(ensureMinutes: Int = 5, ingestPerDay: Int 
     /** The UTC hour after which the day's approval digest is written to the worklog (-1 = never). */
     digestHour: Int = 7,
     /** The stall report's default: a goal with no progress in this many days is stalled. */
-    stallDays: Int = 3) derives ConfigReader
+    stallDays: Int = 3,
+    /** #3763: once a goal's articles are all compiled and reviewed, its next article is proposed — at most once
+      * per this many hours after its last proposal settled (0 = never by itself; the seeding cron still fires). */
+    nextArticleHours: Int = 24) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,

@@ -113,6 +113,34 @@ object AutopilotPolicy:
     if share <= 0 then s"$base a day"
     else s"$base a day, $n today for a backlog of $backlog" + (if ceiling > 0 then s" (at most $ceiling)" else "")
 
+  // ── the next article (#3763) ───────────────────────────────────────────────────────────────────
+
+  /** What decides whether a goal's next article is proposed: its status, its linked articles and how many of
+    * them have not passed review, its approved articles not compiled yet, its seeding manager's state, and its
+    * proposal item's status and when it settled. */
+  final case class NextFacts(goal: String, status: String, articles: Int, unreviewed: Int, compileOpen: Int,
+      seedState: Option[String], proposeStatus: Option[String], proposeSettled: Option[java.time.Instant])
+
+  /** Why a goal's articles are still in progress — what keeps a new proposal back (#3763: no new work while
+    * the goal still has unfinished articles); None when they are all done (or it has none). */
+  def articlesInProgress(unreviewed: Int, compileOpen: Int): Option[String] =
+    Option.when(unreviewed > 0 || compileOpen > 0)(
+      "its articles in progress come first (" + List(Option.when(compileOpen > 0)(s"$compileOpen to compile"),
+        Option.when(unreviewed > 0)(s"$unreviewed to pass review")).flatten.mkString(", ") +
+        "): a new proposal waits until they are published and reviewed")
+
+  /** Whether to propose a goal's NEXT article now (#3763), and why: the goal has articles, every one of them
+    * compiled and past its review, its seeding manager is active, its proposal item is not open, and that
+    * proposal settled at least `cooldownHours` ago (0 = never). A person's goal status `done` ends it. The
+    * proposal then goes through the approvals policy like any other (`article-plan`). */
+  def nextArticle(f: NextFacts, now: java.time.Instant, cooldownHours: Int): Option[String] =
+    val open = f.proposeStatus.exists(st => ItemStatus.parse(st).exists(!_.isFinal))
+    val cooled = f.proposeSettled.forall(t => !t.plusSeconds(math.max(0, cooldownHours).toLong * 3600L).isAfter(now))
+    Option.when(cooldownHours > 0 && f.status != GoalStatus.Done && f.articles > 0 &&
+        articlesInProgress(f.unreviewed, f.compileOpen).isEmpty && f.seedState.contains(State.Active.wire) && !open && cooled)(
+      s"its ${Plural.count(f.articles, "article")} are compiled and passed review: its next article is proposed " +
+        "(the plan goes through the article-plan approvals)")
+
   private def depthText(d: Int): String = if d == 0 then "at the root" else s"$d level(s) below a root"
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps
