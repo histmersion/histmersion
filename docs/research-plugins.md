@@ -1199,7 +1199,11 @@ ingest now calls with the DOI, arXiv id, title, authors and year), and owns:
   plugin with two steps gets the same tool; the host only scopes the values to one fetch. Keys are
   `<plugin id>:<what>:<identifier>`; the values are untyped, so a key reused with another type fails;
 - **refusals** are logged and not asked again; when nothing is found the message is today's
-  ("no legal open-access PDF found"), with each refusal appended (`(archive-org: … lending-only …)`).
+  ("no legal open-access PDF found"), with each refusal appended (`(archive-org: … lending-only …)`);
+- **misses** are logged too, at INFO, one line per fetcher that ran (`acquire: oapen: no copy — OAPEN
+  Library: no record of this work (doi, title searched)`), so the log says which steps ran and why each
+  found nothing. An ingest that found no copy adds a `chain` step listing every fetcher's answer
+  (`FetchChain.Outcome`, through `OaFetcher.fetchWorkExplained`).
 
 **The built-in plugins (`server/acquire/fetchers`).** *(D4 split `oa-index` into one plugin per index:
 §20.2.)* Today's steps, each a plugin with its own

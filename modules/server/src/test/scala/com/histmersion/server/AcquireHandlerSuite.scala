@@ -338,6 +338,20 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(items.size, 0)
     dropItems(); wipe("zzacq_ingested")
 
+  test("no copy: the ingest report lists what each fetcher of the chain answered"):
+    wipe("zzacq_ingested")
+    import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
+    def answering(a: Fetch): SourceFetcher = new SourceFetcher:
+      val access = Access.Open
+      def fetch(w: WorkKey, c: FetchContext) = a
+    val chain = FetchChain(List("unpaywall" -> answering(Fetch.Miss("no open-access location")),
+      "oapen" -> answering(Fetch.Refused("20.500.12657/23223: bot challenge"))))
+    val r = handlers(oa = chain).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    assertEquals(r.steps.find(_.step == "chain").map(_.detail),
+      Some("unpaywall: no copy — no open-access location; oapen: refused — 20.500.12657/23223: bot challenge"))
+    assert(r.steps.exists(s => s.step == "fetch" && s.detail.contains("oapen: 20.500.12657/23223")), r.steps.toString)
+    wipe("zzacq_ingested")
+
   test("no open-access copy: the source is still created and the manual drop-in is explained"):
     wipe("zzacq_ingested")
     val r = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001"))

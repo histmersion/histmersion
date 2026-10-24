@@ -87,6 +87,18 @@ class FetchChainSuite extends munit.FunSuite:
     assertEquals(r, Left(s"${FetchChain.NoCopy} (no: lending-only)"))
     assertEquals(no.calls.get, 1)
 
+  test("no copy: each fetcher that ran gives its answer, in chain order; a copy needs none"):
+    val no   = Fake(Access.Open, (_, _) => Fetch.Refused("bot challenge"))
+    val boom = Fake(Access.Open, (_, _) => throw new IllegalStateException("bang"))
+    val off  = Fake(Access.Unauthorised, (_, _) => Fetch.Miss("never asked"))
+    val got  = FetchChain(List("a" -> Fake(Access.Open, (_, _) => Fetch.Miss("no record")), "no" -> no, "boom" -> boom,
+      "u" -> off)).fetchWorkExplained(doi, legalOnly = false)
+    assertEquals(got.file, Left(s"${FetchChain.NoCopy} (no: bot challenge)"))
+    assertEquals(got.answers.map(_.line), List("a: no copy — no record", "no: refused — bot challenge",
+      "boom: no copy — boom failed: IllegalStateException: bang"))
+    val hit = FetchChain(List("a" -> miss(), "b" -> found("b"))).fetchWorkExplained(doi, legalOnly = false)
+    assertEquals((hit.file.map(_.source), hit.answers), (Right("b"), Nil))
+
   test("an unauthorised fetcher stays off unless allowed, and never runs on the legal path"):
     def unauthorised = Fake(Access.Unauthorised, (_, _) => Fetch.Found(FetchedFile("u", None, Pdf, "pdf")))
     val off = unauthorised
