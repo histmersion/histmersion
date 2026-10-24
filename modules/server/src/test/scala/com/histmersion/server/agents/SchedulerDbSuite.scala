@@ -308,6 +308,33 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     a.drain.set(Autopilot.DrainSet(on = true))
     assert(a.scheduler.stalls(Some(0)).stalled.forall(_.code == Stalls.Code.Drain))
 
+  test("seed before the plan: sourceless goals sweep their candidates (no model) and ingest legal open access within the caps"):
+    val (a, h, up) = handlers(); seed(a, h, up)
+    def cand(id: Long, goal: String, oa: Boolean) = SourceCandidate(id, goal, s"10.5555/zzseed.$id", s"Zz seed $id", isOa = oa)
+    up.sweepFinds = Map(g(1) -> List(cand(1, g(1), oa = true), cand(2, g(1), oa = false)), g(2) -> List(cand(3, g(2), oa = true)),
+      g(3) -> Nil, g(4) -> Nil)
+    on(a)
+    val clock = Clock()
+    clock.tick(a)
+    import scala.jdk.CollectionConverters.*
+    // the two first sourceless goals (g01, g02: oldest, then slug) were seeded; g10 has sources and is not
+    def seeded = goals.filter(x => ManagerRepo.events(ds, watchId(x), None, 100).exists(_.text.startsWith("seed before the plan")))
+    assertEquals(seeded, List(g(1), g(2)))
+    // their legal open-access finds went through the ingest backlog and were ingested in the same tick
+    assertEquals(up.calls.asScala.toList.filter(_.startsWith("ingest 10.5555/zzseed")),
+      List("ingest 10.5555/zzseed.1", "ingest 10.5555/zzseed.3"))
+    assert(GoalLinkRepo.links(ds, g(1)).exists(l => l.kind == LinkKind.Source && l.ref == ck("10.5555/zzseed.1")),
+      GoalLinkRepo.links(ds, g(1)))
+    assert(QueueRepoLog.has(ds, "seed before the plan: "), "a worklog line")
+    // the next tick seeds the next two; a goal seeded today is not seeded again
+    clock.tick(a)
+    assertEquals(seeded, List(g(1), g(2), g(3), g(4)))
+    assertEquals(ManagerRepo.events(ds, watchId(g(1)), None, 100).count(_.text.startsWith("seed before the plan")), 1)
+    // draining: no seeding
+    a.drain.set(Autopilot.DrainSet(on = true))
+    clock.tick(a)
+    assertEquals(seeded.size, 4)
+
 /** The worklog, read for an assertion. */
 private object QueueRepoLog:
   def has(ds: javax.sql.DataSource, prefix: String): Boolean =

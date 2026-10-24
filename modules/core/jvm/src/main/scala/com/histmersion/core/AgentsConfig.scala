@@ -292,7 +292,11 @@ final case class AgentSchedulerConfig(enabled: Boolean, minIntervalMinutes: Int,
       * the shares are counted over (`shareWindow`). */
     strategy: String = "type-balanced", agingHours: Int = 24, maxWaitHours: Int = 72, minShare: Double = 0.05,
     typeWeights: String = SchedulerPolicy.DefaultWeights, typePriorities: String = SchedulerPolicy.DefaultPriorities,
-    poolOvercommit: Int = 2, gatheringSlots: Int = 1, shareWindow: Int = 100) derives ConfigReader
+    poolOvercommit: Int = 2, gatheringSlots: Int = 1, shareWindow: Int = 100,
+    /** Seed before the plan (#3762 proposal 5): goals with no source run the deterministic candidate search
+      * and queue legal open-access ingests before their plan is approved — at most `seedGoalsPerTick` goals a
+      * tick (0 = off), each at most once per `seedEveryHours`, at most `seedIngestPerGoal` works each. */
+    seedGoalsPerTick: Int = 2, seedEveryHours: Int = 24, seedIngestPerGoal: Int = 5) derives ConfigReader
 
 /** The stall watchdog (docs/research-process-managers.md §3.3). `stallMinutes` 0 = the longest
   * provider timeout plus 5 minutes ([[stallMinutesFor]]). */

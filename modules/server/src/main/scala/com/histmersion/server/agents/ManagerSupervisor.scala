@@ -130,6 +130,8 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
         guarded(m.id, out)(releaseHolds(m, now, out))
       }
       // the watchers' ingest backlog, before any sweep is dispatched (a sweep gets what it leaves)
+      // seed before the plan: sourceless goals queue legal open-access candidates (no model), then the drain
+      out ++= guarded("seed", out)(agents.seeding.tick(now))
       if !agents.drain.draining then out ++= guarded("ingest-backlog", out)(agents.oaBacklog.drain(now))
       // the ones that may start runs, refilled, then dispatched round-robin over the global room
       val live = ManagerRepo.list(ds).filter(m => State.parse(m.state).contains(State.Active) &&
