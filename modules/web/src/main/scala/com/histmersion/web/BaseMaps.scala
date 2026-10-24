@@ -87,9 +87,12 @@ object BaseMaps:
   def creditsHtml(credits: Seq[String]): String = credits.map(_.trim).filter(_.nonEmpty).distinct.mkString(" · ")
 
   /** How far the notice's corner rises so it clears the right-hand corner's controls: their height and a
-    * gap when the two would overlap side by side, else nothing. Pure. */
-  def noticeLift(noticeLeft: Double, noticeRight: Double, creditsLeft: Double, creditsRight: Double, creditsHeight: Double): Double =
-    if noticeRight > creditsLeft && creditsRight > noticeLeft then creditsHeight + 4 else 0
+    * gap when the two would overlap side by side, else nothing — and nothing when that would take it past
+    * the `room` above it in the map (an opened legend as tall as the map lies over it instead). Pure. */
+  def noticeLift(noticeLeft: Double, noticeRight: Double, creditsLeft: Double, creditsRight: Double, creditsHeight: Double,
+      room: Double = Double.MaxValue): Double =
+    val lift = if noticeRight > creditsLeft && creditsRight > noticeLeft then creditsHeight + 4 else 0
+    if lift > room then 0 else lift
 
   /** The languages offered for the names: English, each place's own, and those both the map's data and
     * Natural Earth's names carry. */
@@ -182,6 +185,10 @@ object BaseMaps:
   // credits drawn with it
   private var notice: Option[(String, Boolean, Boolean)] = None
   private var drawnCredits: Seq[String] = Nil
+  // whether the reader opened the folded foot (the narrow layout): kept when it is drawn again; how far the
+  // foot's corner is lifted now
+  private var footOpen: Option[Boolean] = None
+  private var noticeLifted = 0.0
 
   private def drawFoot(): Unit =
     noticeEl.foreach(_.remove())
@@ -191,6 +198,17 @@ object BaseMaps:
     if notice.nonEmpty || credits.nonEmpty then
       val box = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
       box.className = if notice.exists(_._2) then "map-foot is-missing hd-map-control" else "map-foot hd-map-control"
+      // folded to its button in the narrow layout (MapFold) as the reader last left it — open, until then,
+      // when it says the map is not (wholly) downloaded
+      val open = footOpen.getOrElse(notice.exists(_._2))
+      box.innerHTML = MapFold.toggleHtml("btn--icon map-foot-toggle", "map-foot-body",
+        if notice.nonEmpty then "about this map: its terrain and credits" else "map credits", Icon.html(Icon.Info), open)
+      MapFold.set(box, open)
+      MapFold.wire(box, o => { footOpen = Some(o); fitNotice() })
+      val body = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+      body.className = "map-foot-body"
+      body.id = "map-foot-body"
+      box.appendChild(body)
       notice.foreach { (text, warn, lacking) =>
         val el = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
         el.className = "terrain-notice"
@@ -205,18 +223,20 @@ object BaseMaps:
         el.appendChild(p)
         el.appendChild(dom.document.createTextNode(" "))
         el.appendChild(a)
-        box.appendChild(el)
+        body.appendChild(el)
       }
       if credits.nonEmpty then
         val c = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
         c.className = "map-credits"
         // the sources' own credit lines (their links included), as the map library showed them
         c.innerHTML = creditsHtml(credits)
-        box.appendChild(c)
+        body.appendChild(c)
       surface.corner(Corner.BottomLeft).appendChild(box)
       noticeEl = Some(box)
       dom.window.requestAnimationFrame((_: Double) => fitNotice())
-    else surface.container.style.setProperty("--terrain-notice-lift", "0px")
+    else
+      noticeLifted = 0.0
+      surface.container.style.setProperty("--terrain-notice-lift", "0px")
 
   // the notice's watcher of the right-hand corner (the credits, the legend), made once
   private lazy val cornerWatch: Unit =
@@ -233,8 +253,14 @@ object BaseMaps:
     noticeEl.foreach { n =>
       val boxes = surface.corner(Corner.BottomRight).children.toList.map(_.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0)
       val nr = n.getBoundingClientRect()
+      // the room above the notice as it would stand unlifted, to the map's top or the controls in its corner
+      val above = surface.corner(Corner.TopLeft).children.toList.map(_.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0)
+        .map(_.bottom).maxOption.getOrElse(surface.container.getBoundingClientRect().top)
+      val room = nr.top + noticeLifted - above - 4
       val lift = if boxes.isEmpty then 0.0
-        else noticeLift(nr.left, nr.right, boxes.map(_.left).min, boxes.map(_.right).max, boxes.map(_.bottom).max - boxes.map(_.top).min)
+        else noticeLift(nr.left, nr.right, boxes.map(_.left).min, boxes.map(_.right).max, boxes.map(_.bottom).max - boxes.map(_.top).min,
+          room)
+      noticeLifted = lift
       surface.container.style.setProperty("--terrain-notice-lift", s"${lift}px")
     }
 

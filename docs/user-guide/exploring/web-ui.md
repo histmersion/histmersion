@@ -194,7 +194,10 @@ for it before the first change and keeps it in the browser.
 
 At 760 pixels wide or less, the page switches to a phone layout: the map first, the filters,
 timeline, layers and tools on buttons (or a swipe in from the edge), the list as a sheet that slides
-up, and windows full screen.
+up, and windows full screen. The map's legend and its notice with the credits are small buttons at its
+bottom corners — **legend** on the right, **ⓘ** on the left: tap one to open it and the same button to
+close it (or press Escape). The opened legend fits the screen and scrolls inside itself; its **key**
+opens the list of every shape and icon.
 
 <figure markdown="span">
   ![The phone layout, 390 pixels wide: a bar with the menu, the search field, the time span and the layers button; the map; and the list as a sheet pulled half way up](../assets/screenshots/phone.png){ width="300" loading=lazy }

@@ -3,7 +3,7 @@
    the areas), the marker panes (.hd-pane--*, 430–640: core MapStack), the controls in its corners (the
    legend, the notice and credits, the zoom buttons), its popups. All of it is inside #map's own stacking
    context, so the windows, cards and modals of the page open over the whole map. */
-:root { --z-map-controls:680; --z-map-popups:700; }
+:root { --z-map-controls:680; --z-map-popups:700; --map-gutter:16px; }
 /* ── the theme's colour tokens ──────────────────────────────────────────────────────────────────────
    Every colour the UI codes a category with. Scala names these (ui/Colors.scala `Palette`), never the
    values: markup writes var(--…); the ramp and the graph's canvas read them (ui/ThemeTokens). A theme is
@@ -575,7 +575,7 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
 .tempty a.tlist { color:var(--accent); text-decoration:underline; font-style:normal; }
 
 /* ── the map's colour ramp, finally labelled (items 11, 27) ─────────────────────────────────── */
-.hd-legend { float:right; margin:0 10px 10px 0; width:max-content; max-width:calc(100% - 20px); background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px;
+.hd-legend { float:right; margin:0 10px 10px 0; width:max-content; max-width:calc(var(--map-w, 100vw) - 2 * var(--map-gutter)); background:rgba(27,30,39,.92); border:1px solid var(--line); border-radius:6px;
              padding:5px 7px; color:var(--muted); font:11px system-ui,-apple-system,sans-serif;
              box-shadow:0 2px 10px rgba(0,0,0,.4); }
 .hd-ramp { display:flex; width:132px; height:8px; border-radius:2px; overflow:hidden; }
@@ -583,6 +583,15 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
 .hd-ramp-labels { display:flex; justify-content:space-between; gap:6px; margin-top:3px;
                   font-variant-numeric:tabular-nums; }
 .hd-ramp-labels .mid { opacity:.75; }
+/* the legend and the map's foot fold to a button in the narrow layout (web.MapFold, below); here they are
+   always open and the button is not shown. Opened anywhere, the legend fits the map (`--map-w`/`--map-h`)
+   less its gutters, and what does not fit scrolls inside it */
+.hd-legend-toggle, .map-foot-toggle { display:none; }
+/* open, the key is long (shapes, source kinds, event kinds, site types): the legend scrolls, the key's own
+   line (its close) held at the top */
+.hd-legend-body { max-height:min(calc(min(50vh, 420px) + 60px), calc(var(--map-h, 100vh) - 2 * var(--map-gutter)));
+  overflow-y:auto; }
+.hd-ramp--mini { width:36px; height:6px; }
 .hd-legend-confidence { display:flex; align-items:center; gap:4px; margin-top:6px; }
 .hd-legend-confidence i { display:block; width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 .5px rgba(0,0,0,.5);
                           background:var(--c); }
@@ -1061,8 +1070,26 @@ a.chip:hover { border-color:var(--accent); }
 [data-layout="narrow"] .maplibregl-ctrl-bottom-left, [data-layout="narrow"] .maplibregl-ctrl-bottom-right { bottom:var(--sheet-peek); }
 [data-layout="narrow"] .maplibregl-ctrl-group button { width:var(--tap); height:var(--tap); }
 [data-layout="narrow"] .hd-legend { font-size:var(--fs-small); }
-[data-layout="narrow"] .hd-ramp { width:min(40vw, 160px); }
+[data-layout="narrow"] .hd-legend-body .hd-ramp { width:min(40vw, 160px); }
 [data-layout="narrow"] .hd-legend-confidence { display:none; }
+/* folded (web.MapFold): the past-landscape notice with the credits, and the legend with its key, are each a
+   button at a bottom corner of the map, a gutter from its edge; opened, the overlay stands over its button,
+   which stays where it was tapped and closes it */
+[data-layout="narrow"] .hd-legend { margin:0 var(--map-gutter) var(--space-3) 0; }
+[data-layout="narrow"] .maplibregl-ctrl-bottom-left .map-foot { margin:0 0 var(--space-3) var(--map-gutter); }
+[data-layout="narrow"] .hd-legend-toggle, [data-layout="narrow"] .map-foot-toggle { display:inline-flex; }
+[data-layout="narrow"] .hd-legend:not(.is-open), [data-layout="narrow"] .map-foot:not(.is-open) {
+  background:none; border-color:transparent; box-shadow:none; padding:0; }
+[data-layout="narrow"] .hd-legend:not(.is-open) > .hd-legend-body,
+[data-layout="narrow"] .map-foot:not(.is-open) > .map-foot-body { display:none; }
+[data-layout="narrow"] .hd-legend.is-open, [data-layout="narrow"] .map-foot.is-open {
+  display:flex; flex-direction:column-reverse; gap:var(--space-3); }
+[data-layout="narrow"] .hd-legend.is-open { align-items:flex-end; }
+[data-layout="narrow"] .map-foot.is-open { align-items:flex-start; max-width:min(300px, calc(var(--map-w, 100vw) - 2 * var(--map-gutter))); }
+/* the map shown above the list's peek, less the gutter above, the margin below and the button */
+[data-layout="narrow"] .hd-legend-body, [data-layout="narrow"] .map-foot-body {
+  max-height:calc(var(--map-h, 100dvh) - var(--sheet-peek) - var(--map-gutter) - var(--space-3) * 2 - var(--control-h-sm));
+  overflow-y:auto; }
 [data-layout="narrow"] #status { top:calc(var(--bar-h) + 4px); bottom:auto; right:var(--pad); left:auto; }
 
 /* the strips along the map's edges that catch a swipe in (so the map does not pan instead) */
@@ -1415,9 +1442,8 @@ a.chip:hover { border-color:var(--accent); }
 .hd-event--local:has(.hd-event-dot .glyph) .hd-area-point { left:14px; }
 /* the legend's key to the icons */
 .hd-key { margin-top:var(--space-3); }
-/* open, the key is long (shapes, source kinds, event kinds, site types): it scrolls inside the map */
-.hd-key[open] { max-height:min(50vh, 420px); overflow-y:auto; }
 .hd-key summary { cursor:pointer; color:var(--muted); }
+.hd-key[open] > summary { position:sticky; top:0; z-index:1; background:var(--panel); }
 .hd-key-group { margin-top:var(--space-2); }
 .hd-key-title { color:var(--muted); font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:.06em; }
 .hd-key-list { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr));
