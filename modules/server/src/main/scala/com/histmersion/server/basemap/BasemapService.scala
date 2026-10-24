@@ -108,7 +108,9 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       freeBytes = freeSpace(BasemapService.existing(dir)), running = slot.current, mapMaxZoom = cfg.mapMaxZoom,
       hints = BasemapService.hints(ok(BasemapLayer.Vector), ok(BasemapLayer.Labels),
         vector.exists(_.kept.exists(_.contains("before the drop list")))) ++ BasemapService.lackingHint(states),
-      styles = states)
+      styles = states,
+      regions = cfg.terrain.focusRegions.flatMap(r => Basemap.focusRegion(r).toOption)
+        .map((name, b) => BasemapRegion(name, s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}")))
 
   // ── the relief deeper than the extract: focus regions and on demand ────────────────────────────
 

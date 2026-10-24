@@ -212,6 +212,78 @@ test('phone and desktop search preserve multiword input and share the draft', as
   });
 });
 
+test('#4037: About › Map regions — a named region checked zoom by zoom, downloaded and followed; a region removed', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  await withPage({ width: 1440, height: 900 }, async page => {
+    // the fetch, the job and the removal are answered here: the test server's extract is never changed
+    const fetches = [], removals = [];
+    const polls = {};
+    const job = (id, st, progress, about) => ({ id, kind: 'basemap-fetch', status: st, citekey: null, progress, error: null, sha256: null,
+      createdAt: '2026-10-24T10:00:00Z', updatedAt: '2026-10-24T10:00:01Z', acquireItem: null,
+      detail: { init: null, skippedPeriods: [], skippedPeriodCount: 0, planHash: null, vacuum: null, media: null, events: null,
+        eventImport: null, eventRederive: null, about } });
+    const sized = "focus 'argolid': terrain (planet.pmtiles, zoom 9–12): 120 tiles, would download 10.0 MB in 3 requests (+2 for the directories); " +
+      'by zoom — zoom 9: 4 tiles, 1.0 MB · zoom 10: 12 tiles, 2.0 MB · zoom 11: 30 tiles, 3.0 MB · zoom 12: 74 tiles, 4.0 MB';
+    await page.route('**/api/basemap/fetch**', route => {
+      const u = new URL(route.request().url());
+      assert.equal(route.request().method(), 'POST');
+      fetches.push(Object.fromEntries(u.searchParams));
+      const dry = u.searchParams.get('dryRun') === 'true';
+      const id = dry ? 'zz-dry' : 'zz-download';
+      return route.fulfill({ json: job(id, 'queued', null, `${dry ? 'dry run: ' : ''}terrain base map — the relief of focus region 'argolid'`) });
+    });
+    await page.route('**/api/jobs/zz-*', route => {
+      const id = new URL(route.request().url()).pathname.split('/').pop();
+      const n = polls[id] = (polls[id] ?? 0) + 1;
+      const about = `${id === 'zz-dry' ? 'dry run: ' : ''}terrain base map — the relief of focus region 'argolid'`;
+      if (n === 1) return route.fulfill({ json: job(id, 'running', 'reading planet.pmtiles', about) });
+      return route.fulfill({ json: job(id, 'done', id === 'zz-dry' ? sized : "focus 'argolid': stored 120 tiles", about) });
+    });
+    await page.route(u => u.pathname === '/api/basemap' && u.search.length > 0, route => {
+      if (route.request().method() !== 'DELETE') return route.continue();
+      removals.push(Object.fromEntries(new URL(route.request().url()).searchParams));
+      return route.fulfill({ json: { removed: ['/zz/terrain-focus/argolid.pmtiles'], bytes: 1 } });
+    });
+
+    await page.locator('.tool-btns button[title="about"]:visible').click();
+    const panel = page.locator('.about-pane .map-regions');
+    await panel.waitFor();
+    assert.ok((await panel.innerText()).includes('the map'), 'what is downloaded is listed');
+    // a named region fills in its box; the download waits for the size to be checked
+    await page.locator('.map-region-pick').selectOption('argolid');
+    assert.equal(await page.locator('.map-region-bbox').inputValue(), '22.5,37.4,23.2,37.9');
+    await page.locator('.map-region-content').selectOption('Relief');
+    assert.ok(await page.locator('.map-region-download').isDisabled(), 'not before its size was seen');
+    await page.locator('.map-region-check').click();
+    // followed: running, then the sizes zoom by zoom
+    await page.locator('.map-region-zooms li').first().waitFor({ timeout: 10000 });
+    assert.deepEqual(await page.locator('.map-region-zooms li').allInnerTexts(),
+      ['zoom 9: 4 tiles, 1.0 MB', 'zoom 10: 12 tiles, 2.0 MB', 'zoom 11: 30 tiles, 3.0 MB', 'zoom 12: 74 tiles, 4.0 MB']);
+    assert.match(await page.locator('.map-region-job').innerText(), /size check: done/);
+    assert.deepEqual(fetches[0], { layer: 'terrain', bbox: '22.5,37.4,23.2,37.9', dryRun: 'true', keepAll: 'false', focus: 'argolid' });
+    // the same fetch for real, followed to its end
+    await page.locator('.map-region-download:not([disabled])').click();
+    await page.waitForFunction(() => /download: done/.test(document.querySelector('.map-region-job')?.textContent ?? ''), null, { timeout: 10000 });
+    assert.equal(fetches.length, 2);
+    assert.equal(fetches[1].dryRun, 'false');
+    assert.equal(fetches[1].focus, 'argolid');
+    assert.ok(polls['zz-download'] >= 2, 'the download was followed while it ran');
+    // another box is checked again before it is downloaded
+    await page.locator('.map-region-bbox').fill('22,37,23,38');
+    assert.ok(await page.locator('.map-region-download').isDisabled());
+    assert.equal(await page.locator('.map-region-pick').inputValue(), 'own');
+    // a detailed-relief region of the fixture is removed with its button
+    const focus = status.layers.find(l => l.layer === 'terrain')?.focus ?? [];
+    if (focus.length > 0) {
+      await page.locator(`.map-region-remove[data-region="${focus[0].name}"]`).click();
+      for (let i = 0; i < 50 && removals.length === 0; i++) await page.waitForTimeout(100);
+      assert.deepEqual(removals, [{ layer: 'none', focus: focus[0].name, cache: 'false' }]);
+    }
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  });
+});
+
 test('#718: the About button opens the server report — build, health states, job queue, store, plugins', async () => {
   for (const viewport of [{ width: 1440, height: 900 }, phone]) {
     await withPage(viewport, async page => {

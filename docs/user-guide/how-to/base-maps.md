@@ -53,6 +53,25 @@ the command that adds it. With `ui.base-map-source = "auto"` (the default) the p
 local maps — and asks no other computer for anything — as soon as one of the two can be drawn whole;
 `local` and `online` fix the choice ([Working offline](offline.md#choosing-the-maps-the-page-offers)).
 
+## Downloading regions from the page
+
+**About › Map regions** does what `histmersion basemap fetch` does, without the command line:
+
+1. Pick a **region** — the configured one, a named one (the focus regions: `aegean`, `argolid`, …), the
+   whole world — or type a box of your own (west, south, east, north, in degrees).
+2. Choose what to **download**: *the map, every layer* (it takes the place of the region downloaded now)
+   or *the detailed relief* (zooms 9–12, kept beside the map until you remove it). The *deepest zoom* is
+   optional; blank keeps the configured one.
+3. **Check the size.** The server works out what the download would hold, without downloading it, and
+   the window lists it layer by layer and zoom by zoom, so you can choose a shallower zoom first.
+4. **Download.** The button works only for what was just checked; the window follows the job until it
+   ends (the Jobs window shows it too).
+
+Above the form, the window lists what is downloaded — the map's region and each detailed-relief region,
+with their sizes — and removes a region with its **remove** button (*remove everything* asks once more
+before it deletes the whole download). Downloading and removing need the API key when the server asks
+for one.
+
 ## Map options
 
 The button beside the menu opens the options for Readable and Physical. They are your own, remembered

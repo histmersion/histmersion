@@ -385,7 +385,8 @@ style's sources were bounded to the extract). Now:
 - **Left:** the physical names (Natural Earth, built locally from whole GeoJSON files) are still cut to the
   region; there is no planet archive to read them from by range. `fetch --layer labels --bbox world` keeps
   them for the whole world (a few MB). A page to pick regions to download ahead (rather than the CLI) is
-  not built either.
+  not built either (built since: About › Map regions, #4037 — a named region or a box, its dry run zoom by zoom, the
+  download followed as a job, a region removed; over the same REST and jobs).
 
 ## Map follow-ups: the relief off the main thread, GEBCO, WorldCover (#2719, 2026-10-24)
 
