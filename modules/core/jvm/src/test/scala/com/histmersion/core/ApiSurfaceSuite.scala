@@ -29,6 +29,13 @@ class ApiSurfaceSuite extends munit.FunSuite:
     assert(missing.isEmpty, s"add them to Api.all (or the module's own `all`):\n${missing.distinct.mkString("\n")}")
     assertEquals(all.diff(all.distinct), Nil, "an endpoint listed twice")
 
+  test("no API object holds an endpoint in a strict val, so the web bundle links only the endpoints it calls"):
+    def endpointLike(t: Class[?]): Boolean =
+      classOf[sttp.tapir.Endpoint[?, ?, ?, ?, ?]].isAssignableFrom(t) || classOf[sttp.tapir.EndpointTransput[?]].isAssignableFrom(t)
+    val strict = modules.flatMap((o, m) =>
+      m.getClass.getDeclaredFields.toList.collect { case f if endpointLike(f.getType) || f.getName == "all" => s"$o.${f.getName}" })
+    assert(strict.isEmpty, s"make these `lazy val`s:\n${strict.mkString("\n")}")
+
   test("the docs' endpoint index is Api.all (`just api-docs` regenerates it)"):
     val root   = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
     val readme = Files.readString(root.resolve(ApiIndex.Page))
