@@ -89,12 +89,29 @@ object PluginHost:
     // ServiceLoader's iterator is lazy and may throw per provider: walk it by hand, keeping going
     @annotation.tailrec
     def loop(acc: List[Plugin], errs: List[String]): (List[Plugin], List[String]) =
-      val step = Try(if it.hasNext then Some(it.next()) else None)
+      val step =
+        try Right(if it.hasNext then Some(it.next()) else None)
+        catch
+          case e: LinkageError => Left(e)
+          case NonFatal(e)     => Left(e)
       step match
-        case scala.util.Success(Some(p)) => loop(p :: acc, errs)
-        case scala.util.Success(None)    => (acc.reverse, errs.reverse)
-        case scala.util.Failure(e)       => loop(acc, s"a plugin provider could not be loaded: ${e.getMessage}" :: errs)
+        case Right(Some(p)) => loop(p :: acc, errs)
+        case Right(None)    => (acc.reverse, errs.reverse)
+        case Left(e)        => loop(acc, s"a plugin provider could not be loaded: ${failure(e)}" :: errs)
     loop(Nil, Nil)
+
+  /** The class a plugin needs that no jar on the class path has, when that is why `e` was thrown: the
+    * library it belongs to was neither shipped with Histmersion nor installed with the plugin. */
+  def missingClass(e: Throwable): Option[String] = e match
+    case e: NoClassDefFoundError   => Some(Option(e.getMessage).getOrElse("?").replace('/', '.'))
+    case e: ClassNotFoundException => Some(Option(e.getMessage).getOrElse("?"))
+    case e                         => Option(e.getCause).filter(_ ne e).flatMap(missingClass)
+
+  /** Why plugin code threw, in words that say what to do when a class is missing. */
+  def failure(e: Throwable): String =
+    missingClass(e).fold(s"${e.getClass.getSimpleName}: ${e.getMessage}")(name =>
+      s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
+        "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies")
 
   // ── pure parts of the config contract ───────────────────────────────────────────────────────
 
@@ -207,7 +224,9 @@ object PluginHost:
     * value tied to the plugin that will receive it, with no cast. */
   def decode(p: Plugin, conf: Config): Either[String, p.Config] =
     try p.configReader.from(conf.withoutPath("enabled").root).left.map(describe(p.info.id, _))
-    catch case NonFatal(e) => Left(s"$Root.${p.info.id}: ${e.getMessage}")
+    catch
+      case e: LinkageError => Left(s"$Root.${p.info.id}: ${failure(e)}")
+      case NonFatal(e)     => Left(s"$Root.${p.info.id}: ${e.getMessage}")
 
   /** Pure: every [[Secret]] inside a decoded config — case classes, options, collections and maps are
     * walked through `productIterator` (generated code, no reflection), in order, without repeats. */
@@ -463,7 +482,9 @@ object PluginHost:
           override def aiProviders = ai
         val outcome =
           try pr.call(ctx)
-          catch case NonFatal(e) => Left(s"register threw ${e.getClass.getSimpleName}: ${e.getMessage}")
+          catch
+            case e: LinkageError => Left(s"register threw ${failure(e)}")
+            case NonFatal(e)     => Left(s"register threw ${failure(e)}")
         val added = Registries(staged.close(), fetchers.close(), media.close(), events.close(), ai.close())
         outcome match
           case Left(e) => fail(e)

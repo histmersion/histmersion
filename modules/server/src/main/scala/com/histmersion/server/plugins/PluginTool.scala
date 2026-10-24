@@ -12,7 +12,7 @@ import java.time.temporal.ChronoUnit
 import java.util.ServiceLoader
 import java.util.zip.ZipFile
 import scala.jdk.CollectionConverters.*
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 import scala.util.control.NonFatal
 
 /** The JVM-side tool of the relink kit (docs/research-plugins.md §7.4): run by `bin/histmersion-relink`
@@ -20,14 +20,18 @@ import scala.util.control.NonFatal
   * image (nothing in `Main` reaches it).
   *
   * {{{
-  *   describe <jar>…                         the plugins in each jar, as JSON (PluginJar)
-  *   check <kit dir> <jar>…                  refuse what cannot be linked: no plugin, a foreign SPI, an id
-  *                                           taken, a class the kit or another plugin already has
-  *   plugin-set <out.jar> <record.json> <mode> <kit dir> <jar>…
+  *   describe [--lib <dir>] <jar>…           the plugins in each jar, as JSON (PluginJar)
+  *   check [--lib <dir>] <kit dir> <jar>…    refuse what cannot be linked: no plugin, a foreign SPI, an id
+  *                                           taken, a class the kit, a dependency or another plugin
+  *                                           already has
+  *   plugin-set [--lib <dir>] <out.jar> <record.json> <mode> <kit dir> <jar>…
   *                                           the plugin-set jar for the image class path, and its record
   *   kit-manifest <kit dir> <version> <commit|-> <graalvm>
   *                                           kit.json and SHA256SUMS over every file of the kit
   * }}}
+  *
+  * `--lib` names the plugins directory's `lib/`: the plugins' own dependencies (its `classpath` file
+  * lists them), which the plugins are loaded with.
   *
   * Exit codes: 0 done, 1 usage, 2 refused (`check`), 3 failed. Describing a jar INSTANTIATES its
   * providers and registers each with its defaults (enabled, nothing else set; no HTTP — the host's
@@ -36,9 +40,9 @@ import scala.util.control.NonFatal
 object PluginTool:
 
   private val Usage =
-    """usage: PluginTool describe <jar>…
-      |       PluginTool check <kit dir> <jar>…
-      |       PluginTool plugin-set <out.jar> <record.json> <native|jvm> <kit dir> <jar>…
+    """usage: PluginTool describe [--lib <dir>] <jar>…
+      |       PluginTool check [--lib <dir>] <kit dir> <jar>…
+      |       PluginTool plugin-set [--lib <dir>] <out.jar> <record.json> <native|jvm> <kit dir> <jar>…
       |       PluginTool kit-manifest <kit dir> <version> <commit|-> <graalvm version>""".stripMargin
 
   def main(args: Array[String]): Unit =
@@ -51,32 +55,50 @@ object PluginTool:
     sys.exit(rc)
 
   private def run(args: List[String]): Int = args match
-    case "describe" :: jars if jars.nonEmpty =>
-      System.out.println(PluginKit.renderJars(jars.map(j => describe(Path.of(j), getClass.getClassLoader))))
-      0
-    case "check" :: kit :: jars =>
-      val (lines, problems) = check(Path.of(kit), jars.map(Path.of(_)), getClass.getClassLoader)
-      lines.foreach(l => System.out.println(l))
-      problems.foreach(p => System.out.println(s"refused: $p"))
-      if problems.isEmpty then 0 else 2
-    case "plugin-set" :: out :: record :: mode :: kit :: jars if Set("native", "jvm")(mode) =>
-      val described = jars.map(j => describe(Path.of(j), getClass.getClassLoader))
-      val label     = kitLabel(Path.of(kit))
-      val set = PluginKit.pluginSet(described, Spi.Version, mode, label,
-        Some(Instant.now().truncatedTo(ChronoUnit.SECONDS).toString))
-      PluginSetResource.writeJar(Path.of(out), set)
-      val _ = Files.writeString(Path.of(record), PluginKit.renderSet(set) + "\n")
-      System.out.println(set.digest)
-      0
-    case "kit-manifest" :: kit :: version :: commit :: graalvm :: Nil =>
-      val m = kitManifest(Path.of(kit), version, Option(commit).filter(c => c != "-" && c.nonEmpty), graalvm)
-      val _ = Files.writeString(Path.of(kit).resolve("kit.json"), PluginKit.renderKit(m) + "\n")
-      val _ = Files.writeString(Path.of(kit).resolve("SHA256SUMS"), PluginKit.sha256sums(m.files))
-      System.out.println(s"kit ${m.label}: ${m.files.size} files, GraalVM ${m.graalvm}, plugin SPI ${m.spiVersion}")
-      0
-    case _ =>
-      System.err.println(Usage)
-      1
+    case cmd :: "--lib" :: lib :: rest => run(cmd, rest, dependencyJars(Path.of(lib)))
+    case cmd :: rest                   => run(cmd, rest, Nil)
+    case Nil                           => System.err.println(Usage); 1
+
+  private def run(cmd: String, args: List[String], deps: List[Path]): Int =
+    val loader = withDependencies(deps, getClass.getClassLoader)
+    (cmd, args) match
+      case ("describe", jars) if jars.nonEmpty =>
+        System.out.println(PluginKit.renderJars(jars.map(j => describe(Path.of(j), loader))))
+        0
+      case ("check", kit :: jars) =>
+        val (lines, problems) = check(Path.of(kit), jars.map(Path.of(_)), deps, loader)
+        lines.foreach(l => System.out.println(l))
+        problems.foreach(p => System.out.println(s"refused: $p"))
+        if problems.isEmpty then 0 else 2
+      case ("plugin-set", out :: record :: mode :: kit :: jars) if Set("native", "jvm")(mode) =>
+        val described = jars.map(j => describe(Path.of(j), loader))
+        val label     = kitLabel(Path.of(kit))
+        val set = PluginKit.pluginSet(described, Spi.Version, mode, label,
+          Some(Instant.now().truncatedTo(ChronoUnit.SECONDS).toString))
+        PluginSetResource.writeJar(Path.of(out), set)
+        val _ = Files.writeString(Path.of(record), PluginKit.renderSet(set) + "\n")
+        System.out.println(set.digest)
+        0
+      case ("kit-manifest", kit :: version :: commit :: graalvm :: Nil) =>
+        val m = kitManifest(Path.of(kit), version, Option(commit).filter(c => c != "-" && c.nonEmpty), graalvm)
+        val _ = Files.writeString(Path.of(kit).resolve("kit.json"), PluginKit.renderKit(m) + "\n")
+        val _ = Files.writeString(Path.of(kit).resolve("SHA256SUMS"), PluginKit.sha256sums(m.files))
+        System.out.println(s"kit ${m.label}: ${m.files.size} files, GraalVM ${m.graalvm}, plugin SPI ${m.spiVersion}")
+        0
+      case _ =>
+        System.err.println(Usage)
+        1
+
+  // ── the plugins' dependencies ─────────────────────────────────────────────────────────────────
+
+  /** The jars `lib/classpath` lists, in its order; none when there is no such file. */
+  def dependencyJars(lib: Path): List[Path] =
+    val listing = lib.resolve("classpath")
+    if !Files.isRegularFile(listing) then Nil
+    else Files.readAllLines(listing, UTF_8).asScala.toList.map(_.trim).filter(_.nonEmpty).map(lib.resolve)
+
+  private def withDependencies(deps: List[Path], parent: ClassLoader): ClassLoader =
+    if deps.isEmpty then parent else URLClassLoader(deps.map(_.toAbsolutePath.toUri.toURL).toArray, parent)
 
   // ── describe ──────────────────────────────────────────────────────────────────────────────────
 
@@ -98,12 +120,18 @@ object PluginTool:
         ServiceLoader.load(classOf[Plugin], loader).stream().iterator().asScala.toList
           .filter(p => fromJar(p.`type`(), abs))
           .map { prov =>
-            Try(prov.get()) match
-              case Success(p) => dryRun(p)
-              case Failure(e) => PluginDescription("", "", 0,
-                  error = Some(s"${prov.`type`().getName}: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+            val instance =
+              try Right(prov.get())
+              catch
+                case e: LinkageError => Left(e)
+                case NonFatal(e)     => Left(e)
+            instance match
+              case Right(p) => dryRun(p)
+              case Left(e)  => PluginDescription("", "", 0, error = Some(s"${prov.`type`().getName}: ${PluginHost.failure(e)}"))
           }
-      catch case e: java.util.ServiceConfigurationError => List(PluginDescription("", "", 0, error = Some(e.getMessage)))
+      catch
+        case e: java.util.ServiceConfigurationError => List(PluginDescription("", "", 0, error = Some(PluginHost.failure(e))))
+        case e: LinkageError                         => List(PluginDescription("", "", 0, error = Some(PluginHost.failure(e))))
     PluginJar(abs.getFileName.toString, sha256(abs), plugins)
 
   private def fromJar(c: Class[?], jar: Path): Boolean =
@@ -144,12 +172,14 @@ object PluginTool:
           s"${cs.size} with $o (${cs.take(3).map(_.stripSuffix(".class").replace('/', '.')).mkString(", ")}" +
             (if cs.size > 3 then ", …)" else ")")
         }
-        List(s"$name duplicates classes already on the class path: ${by.mkString("; ")} — shade its dependencies")
+        List(s"$name duplicates classes already on the class path: ${by.mkString("; ")} — one class loader holds one copy " +
+          "of a class: depend on the library in the plugin's POM instead of copying its classes into the jar")
       (seen ++ classes.map(_ -> name), acc ++ msg)
     }._2
 
-  /** Everything that refuses linking these plugin jars into this kit, and a line per plugin found. */
-  def check(kit: Path, jars: List[Path], loader: ClassLoader): (List[String], List[String]) =
+  /** Everything that refuses linking these plugin jars, with their dependency jars `deps`, into this
+    * kit, and a line per plugin found. */
+  def check(kit: Path, jars: List[Path], deps: List[Path], loader: ClassLoader): (List[String], List[String]) =
     val described = jars.map(j => describe(j, loader))
     val taken     = hostIds(loader)
     // an id provided twice among the plugin jars, or already in the binary
@@ -158,7 +188,7 @@ object PluginTool:
     }
     val kitJars    = kitClassPath(kit)
     val kitClasses = kitJars.flatMap(classesOf).toSet
-    val dups       = duplicates(kitClasses, jars.map(j => j.getFileName.toString -> classesOf(j)))
+    val dups       = duplicates(kitClasses, (deps ++ jars).map(j => j.getFileName.toString -> classesOf(j)))
     val lines = described.flatMap(j => j.plugins.map(p =>
       s"plugin: ${p.id} ${p.version} (SPI ${p.spiVersion}) in ${j.file} · access ${if p.access.isEmpty then "none declared" else p.access.mkString(", ")}" +
         (if p.provides.isEmpty then "" else s" · provides ${p.provides.mkString(", ")}") +
