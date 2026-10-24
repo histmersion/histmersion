@@ -192,13 +192,28 @@ a public class with a no-argument constructor):
   `secretVaults`, `sourceFetchers`, `mediaCollections`, `eventCatalogues` (`Registry.add(id, impl)`; staged
   — a `Left` discards all this plugin added). Outbound HTTP only through `ctx.http`; logs through `ctx.log`.
 
-**Writing one: copy `modules/plugin-fixtures/hello`** (build.sbt `pluginHello`: `dependsOn(pluginApi)` only,
-packaged as its own jar). It shows the provider, a derived `Config`, the defaults resource, one
+**Writing one outside this repo: `histmersion plugin new <id> [--kind source-fetcher|media-collection|
+event-catalogue|ai-provider|secret-vault] [--with-agent-notes]`** (no checkout needed; the plugin API is not
+on Maven — Histmersion is an app). It writes a scala-cli project: `<Name>.scala` (the `//> using` lines name
+the server's Scala, the install's `plugin-api/histmersion-plugin-api.jar` + `-sources.jar`, sconfig and
+kindlings; then a working plugin of that kind), `<Name>.test.scala` (munit: the plugin, plus packaging
+checks — the services file names the class, the defaults decode, every `$lzy<n>` field is in the native
+metadata) and `resources/` (services file, defaults, `reachability-metadata.json`). Loop:
+`scala-cli test .` → `scala-cli --power package --library . -o <id>.jar -f` (a thin jar: the server
+provides Scala, the API, sconfig, kindlings) → `histmersion plugin add ./<id>.jar` → `plugin rebuild`.
+`histmersion plugin api-jar [--sources]` prints the API jar's path (`--api-jar <path>` on `new` for a
+release asset `histmersion-plugin-api-<tag>.jar`). Editors: `scala-cli setup-ide .`, then Metals.
+sbt alternative: the API jar in `lib/`, sconfig/kindlings `% Provided`, sbt-assembly for shading.
+Code and generator: `cli/PluginTemplate.scala`, `cli/PluginTemplateKinds.scala`; the user docs page is
+`docs/user-guide/plugins/developing.md`.
+
+**Inside this repo: `modules/plugin-fixtures/hello`** (build.sbt `pluginHello`: `dependsOn(pluginApi)` only,
+packaged as its own jar) is the test fixture. It shows the provider, a derived `Config`, the defaults resource, one
 `SourceFetcher`, and — because its greeter is chosen by name — its OWN
 `META-INF/native-image/<group>/<artifact>/reachability-metadata.json`. A plugin jar must carry that
-metadata (record it with the tracing agent in the plugin's build) and shade every dependency the server
-does not ship; a relink fails at the new binary's self-check otherwise. Built-in plugins
-(`modules/plugin-vaults`, the `oa-*`/`media-*`/`events-*` ones) follow the same SPI.
+metadata (Scala 3 lazy val fields included; record the rest with the tracing agent in the plugin's build)
+and shade every dependency the server does not ship; a relink fails at the new binary's self-check
+otherwise. Built-in plugins (`modules/plugin-vaults`, the `oa-*`/`media-*`/`events-*` ones) follow the same SPI.
 
 **Config and secrets.** Plugin settings live in `histmersion.conf` under `histmersion.plugins.<id>`. A
 settings change (`enabled` included) needs no restart: `histmersion config reload` (or `config.watch`)
