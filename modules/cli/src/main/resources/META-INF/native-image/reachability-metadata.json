@@ -53,6 +53,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy7"
+        },
+        {
+          "name": "derived$ConfigReader$lzy8"
         }
       ]
     },
@@ -64,6 +67,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy6"
+        },
+        {
+          "name": "derived$ConfigReader$lzy7"
         }
       ]
     },
@@ -1724,6 +1730,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy8"
+        },
+        {
+          "name": "derived$ConfigReader$lzy9"
         }
       ]
     },
@@ -1768,6 +1777,91 @@
         },
         {
           "name": "given_Schema_CalibrePushResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateCount$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_CandidateCount$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateList$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_CandidateList$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateMark$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_CandidateMark$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateMarked$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_CandidateMarked$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateSweep$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_CandidateSweep$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateSweepRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_CandidateSweepRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidateWatch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_CandidateWatch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.CandidatesConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy6"
         }
       ]
     },
@@ -5832,6 +5926,17 @@
         },
         {
           "name": "given_Schema_SourceAlias$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.SourceCandidate$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_SourceCandidate$lzy1"
         }
       ]
     },
