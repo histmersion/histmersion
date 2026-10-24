@@ -1,8 +1,10 @@
 package com.histmersion.server.acquire.fetchers
 
+import com.histmersion.pluginhost.{FetchChain, Url}
+
 import com.histmersion.core.{AcquireConfig, AcquireParse, RepositoryLanding}
 import com.histmersion.plugin.{Fetch, FetchContext, SourceFetcher, WorkKey}
-import com.histmersion.server.acquire.{FetchedFile, Http, OaFetch, OpenAlexCrossref, Url}
+import com.histmersion.server.acquire.{FetchedFile, Http, OaFetch, OpenAlexCrossref}
 
 import io.circe.Json
 
@@ -160,7 +162,7 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
         http().bytes(c.url) match
           case Left(e) =>
             scribe.info(s"acquire: landing: ${c.url} failed ($e)"); None
-          case Right(b) if com.histmersion.server.acquire.FetchChain.looksLikePdf(b) =>
+          case Right(b) if FetchChain.looksLikePdf(b) =>
             Some(FetchedFile(source, Some(c.url), b, "pdf"))
           case Right(b) if !RepositoryLanding.looksLikeHtml(b) =>
             scribe.info(s"acquire: landing: ${c.url} is neither a PDF nor a page — skipping"); None

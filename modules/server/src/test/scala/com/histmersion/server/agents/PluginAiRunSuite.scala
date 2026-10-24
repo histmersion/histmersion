@@ -1,11 +1,13 @@
 package com.histmersion.server.agents
 
+import com.histmersion.pluginhost.{PluginHost, Generation}
+
 import com.augustnagro.magnum.*
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
 import com.histmersion.db.{AgentRepo, Migrate}
 import com.histmersion.server.{Deps, Handlers}
-import com.histmersion.server.plugins.{Generation, PluginHost, Plugins}
+import com.histmersion.server.plugins.Plugins
 import org.ekrich.config.ConfigFactory
 
 import java.net.URLClassLoader

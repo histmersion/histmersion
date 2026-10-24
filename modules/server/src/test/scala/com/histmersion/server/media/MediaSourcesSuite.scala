@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.HttpAnswer
+
 import ox.supervised
 import com.augustnagro.magnum.*
 import com.histmersion.core.*

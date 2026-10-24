@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.pluginhost.{FetchChain, OaFetcher, WorkLookup}
+
 import com.histmersion.core.*
 import com.histmersion.core.Acquire.Ident
 import com.histmersion.db.{AcquireRepo, AssetRepo, CandidateRepo, QueueRepo, SourceRepo}
@@ -356,8 +358,7 @@ final class AcquireHandlers(
 
       // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal
       //    ones alone for a watcher's auto-ingest) ──
-      val key = com.histmersion.plugin.WorkKey(doi = doi, arxiv = arxiv.orElse(work.flatMap(_.arxivId)),
-        title = work.flatMap(_.title), authors = work.map(_.authors).getOrElse(Nil), year = work.flatMap(_.year))
+      val key = WorkLookup.key(doi, arxiv, work)
       val chain = skip match
         case Some(have) => FetchChain.Outcome(Left(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again"), Nil)
         case None       => oa.fetchWorkExplained(key, legalOnly)

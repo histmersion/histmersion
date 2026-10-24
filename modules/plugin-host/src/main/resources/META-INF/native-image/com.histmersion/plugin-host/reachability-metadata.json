@@ -1,0 +1,12 @@
+{
+  "reflection": [
+    {
+      "type": "com.histmersion.pluginhost.PluginHost$RegistrationContext",
+      "fields": [
+        {
+          "name": "http$lzy1"
+        }
+      ]
+    }
+  ]
+}

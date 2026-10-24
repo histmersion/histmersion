@@ -419,6 +419,23 @@ lazy val pluginApi = project
     )
   )
 
+// ── plugin-host: the host side of the plugin SPI that does not need the server — discovery, the config
+//    contract, secret resolution and staged registration (PluginHost), the acquisition client and its
+//    transports, the acquisition chain, and how the host reads a plugin's media collection, event
+//    catalogue and AI provider. The server runs it; the plugin testkit runs the SAME code, so a plugin's
+//    test sees what the server would. No database, no listener: core and plugin-api only.
+lazy val pluginHost = project
+  .in(file("modules/plugin-host"))
+  .dependsOn(coreJVM, pluginApi)
+  .settings(name := "histmersion-plugin-host")
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.softwaremill.sttp.client4" %% "core"   % V.sttp,
+      "com.outr"                      %% "scribe" % V.scribe
+    )
+  )
+
 // ── plugin-vaults: the first-party secret vaults (KeePassXC, 1Password, Bitwarden) as built-in
 //    plugins, DISABLED by default (§3.7, D2). Compiled against plugin-api ONLY, as a third-party plugin
 //    would be; the server puts them on its classpath, so they are in every native image.
@@ -598,7 +615,7 @@ def buildMetaSource(base: File): String = {
 // ── server: MCP (Chimp) + REST (Tapir/netty-sync) + web UI; the only DB client. Native image. ───
 lazy val server = project
   .in(file("modules/server"))
-  .dependsOn(coreJVM, db % "compile->compile;test->test", pluginApi, pluginVaults)
+  .dependsOn(coreJVM, db % "compile->compile;test->test", pluginApi, pluginHost, pluginVaults)
   .settings(name := "histmersion-server", Compile / mainClass := Some("com.histmersion.server.Main"))
   .settings(commonDeps)
   // Inside a group the suites run one at a time on purpose, for two reasons: the backup/restore suite
@@ -825,7 +842,7 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
+  .aggregate(coreJVM, coreJS, pluginApi, pluginHost, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
     pluginResolver, chimneyIron, chimneyIronTests,
     db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)

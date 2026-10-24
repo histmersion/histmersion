@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.{HttpAnswer, Politeness}
+
 import java.time.Instant
 
 /** The polite client (#1446): its User-Agent, its pace, and what it does with 429/503 and MediaWiki's

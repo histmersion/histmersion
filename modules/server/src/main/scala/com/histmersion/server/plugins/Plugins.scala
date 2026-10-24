@@ -1,10 +1,12 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.pluginhost.{Generation, HostServices, PluginHost, PolicyHttp, Registries}
+
 import com.histmersion.core.{AppConfig, HotPlan, LoadedConfig, PluginState, PluginStatus}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.{Plugin, PluginHttp}
-import com.histmersion.server.acquire.{ArchiveOrg, Http, HttpPlugin, OpenAlexCrossref, OutboundTls, SttpHttp}
+import com.histmersion.server.acquire.{ArchiveOrg, Http, HttpPlugin, OpenAlexCrossref, SttpHttp}
 import com.histmersion.server.acquire.fetchers.BuiltinFetchers
 import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.BuiltinMedia
@@ -107,8 +109,7 @@ object Plugins:
 
   /** The acquisition client (`acquire.tls` included) under the one outbound policy. */
   private def acquisitionHttp(cfg: AppConfig): SttpHttp =
-    val tls = OutboundTls.configure(cfg.acquire.tls)
-    SttpHttp(cfg.acquire, maxRetryAfterSeconds = cfg.media.maxRetryAfterSeconds, tls = tls.map(_._1))
+    new SttpHttp(PolicyHttp.acquisition(cfg, PolicyHttp.acquisitionTransport(cfg)))
 
   private def log(id: String, warn: Boolean, message: String): Unit =
     val line = if id.isEmpty then s"plugins: $message" else s"plugin $id: $message"

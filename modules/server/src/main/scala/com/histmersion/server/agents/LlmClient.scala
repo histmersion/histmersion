@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.pluginhost.HostAiHttp
+
 import com.histmersion.core.{AgentsConfig, Agents}
 import com.histmersion.core.Agents.{ModelRef, ProviderKind}
 import sttp.ai.claude.ClaudeClient

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.pluginhost.HostAiHttp
+
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
 import com.histmersion.core.GoalPlans.*

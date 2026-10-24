@@ -1,9 +1,34 @@
-package com.histmersion.server.acquire
+package com.histmersion.pluginhost
 
-import com.histmersion.plugin.{Access, Fetch, FetchContext, PluginLog, SourceFetcher, WorkKey}
+import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, PluginLog, SourceFetcher, WorkKey}
 
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
+
+/** Resolve a legal copy of a work: the acquisition chain ([[FetchChain]]) — the source fetchers the
+  * plugins registered, in `acquire.chain` order. Built in: archive.org, Unpaywall → CORE → OpenAlex
+  * OA locations → Europe PMC / PMC → arXiv → repository landing pages resolved one step (Zenodo's API,
+  * an institutional repository's `citation_pdf_url`) → PMC's JATS full text (when there is no PDF
+  * anywhere). */
+trait OaFetcher:
+  def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile]
+
+  /** [[fetch]] through the LEGAL sources only — never an `Access.Unauthorised` fetcher, whatever
+    * `acquire.allow-unauthorised` says (a watcher's auto-ingest). An implementation that can run one
+    * must override it; one that cannot (a test's fixture) is legal as it is. */
+  def fetchLegal(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] = fetch(doi, arxiv)
+
+  /** A work by every identifier the caller has ([[WorkKey]]). An implementation that reads only a DOI
+    * and an arXiv id (a test's fixture) has no copy of anything else. */
+  def fetchWork(work: WorkKey, legalOnly: Boolean): Either[String, FetchedFile] =
+    if work.doi.isEmpty && work.arxiv.isEmpty then Left(FetchChain.NoCopy)
+    else if legalOnly then fetchLegal(work.doi, work.arxiv)
+    else fetch(work.doi, work.arxiv)
+
+  /** [[fetchWork]], with what each fetcher that ran answered when none had a copy (the ingest report
+    * shows it). An implementation that is no chain (a test's fixture) has no answers to give. */
+  def fetchWorkExplained(work: WorkKey, legalOnly: Boolean): FetchChain.Outcome =
+    FetchChain.Outcome(fetchWork(work, legalOnly), Nil)
 
 /** The host side of source fetching (docs/research-plugins.md §5.1): the [[SourceFetcher]]s the
   * plugins registered, run as ONE chain until one finds a copy. The fetchers know how to ask their
@@ -20,7 +45,8 @@ import scala.util.control.NonFatal
   *    as `acquire: <id>: no copy — <why>`), so a fetch that found nothing says which steps ran and
   *    why each missed; a refusal is not asked again; an exception is a miss.
   */
-final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean) extends OaFetcher:
+final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean, log: HostLog = HostLog.scribe)
+    extends OaFetcher:
 
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
   def plan: List[(String, Access)] = steps.map(s => s.id -> s.fetcher.access)
@@ -39,8 +65,8 @@ final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean)
     val tried = LazyList.from(steps)
       .filter(s => FetchChain.runs(s.fetcher.access, legalOnly, allowUnauthorised))
       .map(s => s.id -> attempt(s, work, memo))
-    tried.collectFirst { case (_, Fetch.Found(f)) => f } match
-      case Some(f) => FetchChain.Outcome(Right(f), Nil)
+    tried.collectFirst { case (id, Fetch.Found(f)) => id -> f } match
+      case Some((id, f)) => FetchChain.Outcome(Right(f), Nil, Some(id))
       case None =>
         val refused = tried.collect { case (id, Fetch.Refused(why)) => s"$id: $why" }.toList
         FetchChain.Outcome(
@@ -54,25 +80,25 @@ final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean)
     * read as no copy. */
   private def attempt(s: FetchChain.Step, work: WorkKey, shared: FetchChain.Memo): Fetch =
     if s.fetcher.access == Access.Unauthorised then
-      scribe.warn(s"acquire: ${s.id} obtains copies WITHOUT the rights holder's authorisation; asked for " +
+      log.warn(s"acquire: ${s.id} obtains copies WITHOUT the rights holder's authorisation; asked for " +
         s"${FetchChain.describe(work)} only because acquire.allow-unauthorised = true")
     val ctx = new FetchContext:
       def memo[A](key: String)(compute: => A): A = shared.get(key)(compute)
       val log: PluginLog = new PluginLog:
-        def info(message: String) = scribe.info(s"acquire: ${s.id}: $message")
-        def warn(message: String) = scribe.warn(s"acquire: ${s.id}: $message")
+        def info(message: String) = FetchChain.this.log.info(s"acquire: ${s.id}: $message")
+        def warn(message: String) = FetchChain.this.log.warn(s"acquire: ${s.id}: $message")
     val answer =
       try s.fetcher.fetch(work, ctx)
       catch case NonFatal(e) => Fetch.Miss(s"${s.id} failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
     answer match
       case Fetch.Found(f) if f.extension.equalsIgnoreCase("pdf") && !FetchChain.looksLikePdf(f.bytes) =>
-        scribe.info(s"acquire: ${s.id}: ${f.url.getOrElse("its copy")} is ${f.bytes.length} bytes that are not a PDF — no copy")
+        log.info(s"acquire: ${s.id}: ${f.url.getOrElse("its copy")} is ${f.bytes.length} bytes that are not a PDF — no copy")
         Fetch.Miss("not a PDF")
       case Fetch.Refused(why) =>
-        scribe.info(s"acquire: ${s.id} refused ${FetchChain.describe(work)}: $why")
+        log.info(s"acquire: ${s.id} refused ${FetchChain.describe(work)}: $why")
         answer
       case Fetch.Miss(why) =>
-        scribe.info(s"acquire: ${s.id}: no copy — $why")
+        log.info(s"acquire: ${s.id}: no copy — $why")
         answer
       case other => other
 
@@ -94,23 +120,24 @@ object FetchChain:
       case Refused extends Kind("refused")
 
   /** A fetch of one work: the copy, or the message every failed fetch gives; and, when there is no
-    * copy, the answer of each fetcher that ran, in chain order. */
-  final case class Outcome(file: Either[String, FetchedFile], answers: List[Answer])
+    * copy, the answer of each fetcher that ran, in chain order; the fetcher that found the copy. */
+  final case class Outcome(file: Either[String, FetchedFile], answers: List[Answer], foundBy: Option[String] = None)
 
   /** A chain over these fetchers, in this order. */
-  def apply(steps: List[(String, SourceFetcher)], allowUnauthorised: Boolean = false): FetchChain =
-    new FetchChain(steps.map(Step(_, _)), allowUnauthorised)
+  def apply(steps: List[(String, SourceFetcher)], allowUnauthorised: Boolean = false, log: HostLog = HostLog.scribe)
+      : FetchChain =
+    new FetchChain(steps.map(Step(_, _)), allowUnauthorised, log)
 
   /** The chain over a generation's registered fetchers, in `acquire.chain` order — with the log lines
     * saying what will run (a chain entry no enabled plugin registered, an unauthorised fetcher that
     * stays off). */
-  def of(registered: ListMap[String, SourceFetcher], chain: List[String], allowUnauthorised: Boolean)
-      : (FetchChain, List[String]) =
+  def of(registered: ListMap[String, SourceFetcher], chain: List[String], allowUnauthorised: Boolean,
+      log: HostLog = HostLog.scribe): (FetchChain, List[String]) =
     val (ids, unknown) = order(registered.keys.toList, chain)
     val off = ids.filter(id => registered(id).access == Access.Unauthorised && !allowUnauthorised)
       .map(id => s"acquire: $id obtains copies without the rights holder's authorisation and stays off " +
         "(acquire.allow-unauthorised = false)")
-    (FetchChain(ids.map(id => id -> registered(id)), allowUnauthorised), unknown ++ off)
+    (FetchChain(ids.map(id => id -> registered(id)), allowUnauthorised, log), unknown ++ off)
 
   /** Pure: the run order — the ids `acquire.chain` names that are registered, as listed, then the
     * other registered ids in registration order; with a note naming the listed ids nothing registered

@@ -1,12 +1,14 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.{PluginHost, Generation, HttpTransport}
+
 import ox.supervised
 import com.augustnagro.magnum.*
 import com.histmersion.core.*
 import com.histmersion.db.{MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.plugin as spi
 import com.histmersion.server.{Deps, Main}
-import com.histmersion.server.plugins.{Generation, PluginHost, Plugins}
+import com.histmersion.server.plugins.Plugins
 import io.circe.parser.decode
 import org.ekrich.config.ConfigFactory
 
@@ -100,7 +102,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         ()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  private def handlers(cfg: AppConfig, http: MediaHttp) = MediaHandlers(Deps(cfg, ds, ds, plugins = generation), http)
+  private def handlers(cfg: AppConfig, http: HttpTransport) = MediaHandlers(Deps(cfg, ds, ds, plugins = generation), http)
 
   test("dry run: the plugin's records judged by the host — a stated NC licence refused under the default allowlist"):
     val http = fake

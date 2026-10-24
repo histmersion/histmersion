@@ -1,12 +1,14 @@
 package com.histmersion.server
 
+import com.histmersion.pluginhost.{Generation, OutboundTls, FetchChain}
+
 import sttp.tapir.server.netty.sync.{NettySyncServer, NettySyncServerOptions}
 import sttp.tapir.server.netty.NettyConfig
 import scala.concurrent.duration.*
 import com.histmersion.core.{AppConfig, ConfigFileInfo, LoadedConfig, PluginsMarkdown, UserConfigFile}
 import com.histmersion.server.acquire.*
 import com.histmersion.server.hot.{Hot, PinRequests}
-import com.histmersion.server.plugins.{Generation, Plugins}
+import com.histmersion.server.plugins.Plugins
 import ox.{Ox, never, releaseAfterScope, supervised}
 
 /** Histmersion server — direct-style (Netty sync). Composition root: config → the hot component graph

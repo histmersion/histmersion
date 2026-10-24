@@ -1,9 +1,11 @@
 package com.histmersion.server.agents
 
+import com.histmersion.pluginhost.{PluginHost, Generation}
+
 import com.histmersion.core.{AppConfig, PlanQuota}
 import com.histmersion.core.Agents.*
 import com.histmersion.plugin.*
-import com.histmersion.server.plugins.{Generation, PluginHost, Plugins}
+import com.histmersion.server.plugins.Plugins
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import org.ekrich.config.ConfigFactory

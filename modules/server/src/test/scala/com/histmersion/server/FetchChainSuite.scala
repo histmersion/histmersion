@@ -1,7 +1,8 @@
 package com.histmersion.server
 
+import com.histmersion.pluginhost.FetchChain
+
 import com.histmersion.plugin.*
-import com.histmersion.server.acquire.FetchChain
 
 import scala.collection.immutable.ListMap
 

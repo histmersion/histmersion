@@ -151,7 +151,7 @@ private[core] object ConfigLayers:
     * string, or null — is left to the reader. */
   val OpenBlocks: List[List[String]] = List(List("histmersion", "agents", "providers", "claude-code", "env"),
     // each plugin's block is checked by the plugin host against THAT plugin's defaults resource
-    // (com.histmersion.server.plugins.PluginHost.typeCheck), so `order` and every `<id> { … }` are open here
+    // (com.histmersion.pluginhost.PluginHost.typeCheck), so `order` and every `<id> { … }` are open here
     List("histmersion", "plugins"),
     // one allowlist per media collection a plugin registers, by the collection's id
     List("histmersion", "media", "collections", "per-collection"))

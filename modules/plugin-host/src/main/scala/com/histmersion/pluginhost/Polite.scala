@@ -1,4 +1,4 @@
-package com.histmersion.server.media
+package com.histmersion.pluginhost
 
 import com.histmersion.core.{HttpPolicy, MediaConfig}
 
@@ -16,15 +16,16 @@ final case class HttpAnswer(code: Int, headers: Map[String, String], body: Array
   def header(name: String): Option[String] = headers.get(name.toLowerCase(Locale.ROOT))
   def text: String                         = new String(body, UTF_8)
 
-/** The ONE seam between the media providers and the network: a test supplies a fake that answers
-  * from fixtures and never opens a socket. Failures to talk at all are `Left`; any HTTP answer, a 429
-  * included, is a `Right` — [[Polite]] decides what it means. */
-trait MediaHttp:
+/** One GET on the wire: the seam between the host's HTTP policies ([[Polite]], [[PolicyHttp]]) and the
+  * network. A test supplies one that answers from fixtures or recordings and never opens a socket.
+  * Failures to talk at all are `Left`; any HTTP answer, a 429 included, is a `Right` — the policy
+  * decides what it means. */
+trait HttpTransport:
   def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer]
 
 /** The real client: `java.net.http`, following redirects, the URL used exactly as built (the provider
   * URLs are already percent-encoded). */
-final class JavaMediaHttp(timeoutSeconds: => Int) extends MediaHttp: // by name: read per request
+final class JavaHttpTransport(timeoutSeconds: => Int) extends HttpTransport: // by name: read per request
   private val client = HttpClient.newBuilder()
     .followRedirects(HttpClient.Redirect.NORMAL)
     .connectTimeout(Duration.ofSeconds(timeoutSeconds.toLong.max(1)))
@@ -72,8 +73,8 @@ object Politeness:
   * asked again, and from the first refusal the host is asked at half the pace (each further refusal
   * halves it again, down to [[MaxSlowdown]] times slower) for the rest of the run. When the steps run
   * out the 403 stands: the caller stops. Empty (the default): a 403 is final at once. */
-final class Polite(http: MediaHttp, cfg: MediaConfig, sleep: Long => Unit = ms => Thread.sleep(ms),
-    clock: () => Long = () => System.currentTimeMillis(), refusalBackoffMs: List[Long] = Nil):
+final class Polite(http: HttpTransport, cfg: MediaConfig, sleep: Long => Unit = ms => Thread.sleep(ms),
+    clock: () => Long = () => System.currentTimeMillis(), refusalBackoffMs: List[Long] = Nil, log: HostLog = HostLog.scribe):
 
   // `var`/mutable: the time of the last request per host, each host's slow-down after refusals, and the
   // request count — a run's own state
@@ -109,13 +110,13 @@ final class Polite(http: MediaHttp, cfg: MediaConfig, sleep: Long => Unit = ms =
         Politeness.decide(a, n, cfg.maxRetries, cfg.maxRetryAfterSeconds, Instant.ofEpochMilli(clock())) match
           case Politeness.Step.Accept => Right(a)
           case Politeness.Step.Wait(ms, why) =>
-            scribe.info(s"media: $why from $h — waiting ${ms} ms")
+            log.info(s"media: $why from $h — waiting ${ms} ms")
             sleep(ms)
             attempt(n + 1, refusals)
           case Politeness.Step.GiveUp(why) if a.code == 403 && refusals < refusalBackoffMs.size =>
             val ms = refusalBackoffMs(refusals)
             slowdown(h) = (slowdown.getOrElse(h, 1) * 2).min(Polite.MaxSlowdown)
-            scribe.warn(s"media: $why from $h — taken as rate limiting: waiting ${ms} ms, then asking at " +
+            log.warn(s"media: $why from $h — taken as rate limiting: waiting ${ms} ms, then asking at " +
               s"${intervalMs(h)} ms between requests")
             sleep(ms)
             attempt(n, refusals + 1)

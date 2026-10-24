@@ -1,12 +1,14 @@
 package com.histmersion.server.events
 
+import com.histmersion.pluginhost.{PluginHost, Generation}
+
 import com.augustnagro.magnum.*
 import com.histmersion.core.*
 import com.histmersion.db.{EventCatalogRepo, EventRepo, Migrate, TestDb}
 import com.histmersion.plugin as spi
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
-import com.histmersion.server.plugins.{Generation, PluginHost, Plugins}
+import com.histmersion.server.plugins.Plugins
 import org.ekrich.config.ConfigFactory
 
 /** A THIRD-PARTY plugin's event catalogue (docs/research-plugins.md §6) read by `events import` through

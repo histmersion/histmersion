@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.{HttpTransport, Polite}
+
 import com.histmersion.core.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.Target
@@ -40,7 +42,7 @@ object MediaImporter:
     def requests: Int
 
   /** The importer `name` names, or why it cannot run (a collection switched off in the config). */
-  def of(name: String, deps: Deps, http: MediaHttp, converter: ConverterClient): Either[String, MediaImporter] =
+  def of(name: String, deps: Deps, http: HttpTransport, converter: ConverterClient): Either[String, MediaImporter] =
     val ds  = deps.ds
     val cfg = deps.cfg.media
     val store = DbMediaStore(ds)
@@ -104,7 +106,7 @@ object MediaImporter:
   /** The import of one [[Collection]] (a built-in one, or a plugin's through [[PluginCollection]]): the
     * places not asked yet, at the collection's own pace. */
   private[media] def collection(col: Collection, what: String, key: String, ds: javax.sql.DataSource, cfg: MediaConfig,
-      http: MediaHttp, converter: ConverterClient, store: MediaStore): Either[String, MediaImporter] =
+      http: HttpTransport, converter: ConverterClient, store: MediaStore): Either[String, MediaImporter] =
     if !col.conf.enabled then Left(s"${MediaProvider.title(col.provider)} is switched off ($key.enabled = false)")
     else Right(new MediaImporter:
       val check = col.provider

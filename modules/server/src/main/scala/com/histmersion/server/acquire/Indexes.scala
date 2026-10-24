@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.pluginhost.Url
+
 import com.histmersion.core.*
 
 import java.time.LocalDate

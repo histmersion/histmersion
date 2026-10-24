@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.{Polite, PluginMedia}
+
 import com.histmersion.core.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.{PlaceFacts, ProviderAsset, Rights, Target}
@@ -172,12 +174,8 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
       val resolve = Collection.resolveFor(f, named, cfg.sameSiteKm)
       val resolveId = Collection.resolveIdFor(f, own.getOrElse(t.id, Set.empty), byId, cfg.sameSiteKm)
       recs.distinctBy(_.key).map { rec =>
-        val d = rec.rights match
-          case _ if rec.withheld.isDefined => Left(rec.withheld.get)
-          case Left(why) => Left(why)
-          case Right(r) if !MediaLicence.allowed(r.licence, allow) => Left(s"licence ${r.licence.family} not allowed for ${col.provider}")
-          case Right(_) if rec.imageUrl.isEmpty => Left("no image")
-          case Right(_) => col.matchesWithIds(rec, info, resolve, resolveId)
+        val d = PluginMedia.refusal(rec, allow, col.provider).toLeft(())
+          .flatMap(_ => col.matchesWithIds(rec, info, resolve, resolveId))
         Judged(t, rec, d)
       }
     }

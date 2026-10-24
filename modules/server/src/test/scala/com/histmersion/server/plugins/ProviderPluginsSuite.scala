@@ -1,8 +1,10 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.pluginhost.{PluginHost, Generation, PluginEvents, PluginMedia}
+
 import com.histmersion.core.{MediaLicence, MediaRecord}
 import com.histmersion.plugin.*
-import com.histmersion.server.events.{BuiltinCatalogues, HostEventCatalogue, PluginEvents}
+import com.histmersion.server.events.{BuiltinCatalogues, HostEventCatalogue}
 import com.histmersion.server.media.{BuiltinMedia, MediaImporters, PluginCollection}
 import com.histmersion.server.agents.BuiltinAi
 import org.ekrich.config.ConfigFactory
@@ -164,7 +166,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
   // ── the host's reading of a plugin's records ──────────────────────────────────────────────────
 
   private def rights(licence: String, url: Option[String] = None, credit: String = "Zq, CC") =
-    PluginCollection.rights(com.histmersion.plugin.MediaRights(licence, url, Some("A. Author"), credit))
+    PluginMedia.rights(com.histmersion.plugin.MediaRights(licence, url, Some("A. Author"), credit))
 
   test("a stated licence is read by the host: ids, short names and Creative Commons URLs; unknown is never guessed"):
     assertEquals(rights("CC BY-NC 4.0").map(_.licence), Right(MediaLicence.Licence("CC-BY-NC-4.0", MediaLicence.CcByNc)))
@@ -186,16 +188,16 @@ class ProviderPluginsSuite extends munit.FunSuite:
     val it = MediaItem(" k1 ", "  Bowl ", "https://zq.example/k1", Some(" https://zq.example/k1.jpg "),
       Right(com.histmersion.plugin.MediaRights("CC0", credit = "Zq")), geography = List("find-spot" -> "Zqenai"),
       period = Some((-1300L, -1400L)), ids = List("pleiades" -> "1"))
-    val r: MediaRecord = PluginCollection.record(it)
+    val r: MediaRecord = PluginMedia.record(it)
     assertEquals((r.key, r.title, r.imageUrl, r.period), ("k1", "Bowl", Some("https://zq.example/k1.jpg"), Some((-1400L, -1300L))))
     assertEquals(r.rights.map(_.licence.family), Right(MediaLicence.Cc0))
     assertEquals(r.ids, List("pleiades" -> "1"))
-    assertEquals(PluginCollection.record(it.copy(rights = Left("not open access"))).rights, Left("not open access"))
+    assertEquals(PluginMedia.record(it.copy(rights = Left("not open access"))).rights, Left("not open access"))
 
   test("a plugin's failure is a value, never an exception through the import"):
-    assertEquals(PluginCollection.guard[Int](throw IllegalStateException("boom")),
+    assertEquals(PluginMedia.guard[Int](throw IllegalStateException("boom")),
       Left("the plugin failed: IllegalStateException: boom"))
-    assertEquals(PluginCollection.guard[Int](null), Left("the plugin answered nothing"))
+    assertEquals(PluginMedia.guard[Int](null), Left("the plugin answered nothing"))
 
   test("a catalogue's record is checked by the host before it is stored"):
     val ok = CatalogueEvent("q-1", "https://zq.example/q-1", "Zq Earthquake", "Earthquake", Some(-1200L), Some(-1200L),

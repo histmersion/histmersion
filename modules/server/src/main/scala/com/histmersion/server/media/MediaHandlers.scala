@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
+
 import com.histmersion.core.*
 import com.histmersion.db.{JobRepo, MediaRepo}
 import com.histmersion.server.{ConverterClient, Deps}
@@ -15,14 +17,14 @@ import java.util.concurrent.atomic.AtomicReference
   * party, and a picture is for the reader of the web UI — an agent compiling prose has no use for
   * either (its `places`/`events` tools say nothing new with a thumbnail URL). `lint --rule
   * media-licence` is how an agent sees the media's state. */
-final class MediaHandlers(deps: Deps, http: MediaHttp, converter: ConverterClient):
+final class MediaHandlers(deps: Deps, http: HttpTransport, converter: ConverterClient):
 
   private val ds  = deps.ds
   private def cfg = deps.cfg
 
-  def this(deps: Deps, http: MediaHttp) = this(deps, http, MediaHandlers.NoThumbnails)
+  def this(deps: Deps, http: HttpTransport) = this(deps, http, MediaHandlers.NoThumbnails)
   def this(deps: Deps, converter: ConverterClient) =
-    this(deps, JavaMediaHttp(deps.cfg.media.timeoutSeconds), converter)
+    this(deps, JavaHttpTransport(deps.cfg.media.timeoutSeconds), converter)
   def this(deps: Deps) = this(deps, MediaHandlers.NoThumbnails)
 
   val pictures: SourcePictures = SourcePictures(ds, cfg.media, http, converter)
