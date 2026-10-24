@@ -441,6 +441,94 @@
       ]
     },
     {
+      "type": "com.histmersion.core.AgentScheduler$PoolUse$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_PoolUse$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentScheduler$SchedulerSet$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "given_Schema_SchedulerSet$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentScheduler$SchedulerStatus$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_SchedulerStatus$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentScheduler$Started$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_Started$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentScheduler$StrategyLine$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_StrategyLine$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentScheduler$TypeLine$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_TypeLine$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentScheduler$Waiting$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_Waiting$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.AgentScheduler$WhyInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "given_Schema_WhyInfo$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.AgentSchedulerConfig$",
       "fields": [
         {
@@ -988,6 +1076,72 @@
         },
         {
           "name": "derived$ConfigReader$lzy47"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ApprovalDigest$BulkDecide$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "given_Schema_BulkDecide$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ApprovalDigest$BulkFailed$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_BulkFailed$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ApprovalDigest$BulkResult$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "given_Schema_BulkResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ApprovalDigest$Digest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_Digest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ApprovalDigest$KindGroup$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_KindGroup$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.ApprovalDigest$SubjectCount$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_SubjectCount$lzy1"
         }
       ]
     },
@@ -1557,6 +1711,9 @@
       "type": "com.histmersion.core.Autopilot$AutopilotStatus$",
       "fields": [
         {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy5"
         },
         {
@@ -1564,6 +1721,28 @@
         },
         {
           "name": "given_Schema_AutopilotStatus$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Autopilot$DrainInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_DrainInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Autopilot$DrainSet$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
+          "name": "given_Schema_DrainSet$lzy1"
         }
       ]
     },
@@ -6960,6 +7139,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy10"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy6"
         },
         {
@@ -6974,6 +7156,9 @@
           "name": "derived$KindlingsCodecAsObject$lzy12"
         },
         {
+          "name": "derived$KindlingsCodecAsObject$lzy14"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy8"
         },
         {
@@ -6986,6 +7171,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy11"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy13"
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy7"
@@ -7845,6 +8033,39 @@
         },
         {
           "name": "given_Schema_SpatialHierarchyResult$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Stalls$ReasonCount$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_ReasonCount$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Stalls$Stall$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_Stall$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.Stalls$StallReport$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "given_Schema_StallReport$lzy1"
         }
       ]
     },
@@ -9995,6 +10216,9 @@
       "type": "com.histmersion.server.agents.AgentsTools$ManagerInput$",
       "fields": [
         {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        },
+        {
           "name": "derived$KindlingsCodecAsObject$lzy9"
         },
         {
@@ -10052,6 +10276,17 @@
         },
         {
           "name": "given_Schema_ScheduleInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.agents.AgentsTools$SchedulerInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "given_Schema_SchedulerInput$lzy1"
         }
       ]
     },
@@ -10157,6 +10392,30 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.agents.ProposeArticlesPipeline$Existing$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.agents.ProposeArticlesPipeline$Loaded$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.agents.RunCtx",
+      "fields": [
+        {
+          "name": "Served$lzy1"
         }
       ]
     },
