@@ -93,6 +93,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The approval digest: everything waiting for a person, a daily worklog line, a group decided at once. */
   val digest: ApprovalDigestService = ApprovalDigestService(ds, cfg, h, this)
 
+  /** Drain mode: nothing new starts while the runs in flight finish (a deploy). */
+  val drain: DrainService = DrainService(ds, cfg, h, this)
+
   /** One agent server per database: the engine and the managers start only in the server that holds it
     * (ttl 3 × the managers' tick). */
   val lease: AgentLease = AgentLease(ds, 3 * math.max(5, cfg.managers.tickSeconds))

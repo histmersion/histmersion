@@ -4,6 +4,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
 import com.histmersion.core.Autopilot.{AutopilotSet, FocusSet}
+import com.histmersion.core.Autopilot
 import com.histmersion.core.GoalPlans.*
 import com.histmersion.core.Managers.*
 import com.histmersion.db.{AgentRepo, FocusRepo, GoalLinkRepo, ManagerRepo, Migrate}
@@ -64,7 +65,8 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM sources WHERE citekey LIKE 'zzfocus%'".update.run()
       sql"DELETE FROM queue_items WHERE text LIKE '%zzfocus%' OR text LIKE 'autopilot%' OR text LIKE 'approval%'".update.run()
       sql"""UPDATE agent_autopilot SET enabled = false, paused = '{}', changed_by = '', last_ensure_at = NULL,
-                                       max_active_goals = NULL, scheduler_strategy = NULL, last_digest_at = NULL""".update.run()
+                                       max_active_goals = NULL, scheduler_strategy = NULL, last_digest_at = NULL,
+                                       drain_since = NULL, drain_by = NULL, drained_at = NULL""".update.run()
       sql"DELETE FROM goal_focus".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = clean()
@@ -262,6 +264,49 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
       a.managing.autopilot.approvals)
     val (b, _, _) = handlers()
     assertEquals(b.autoApprovals.goalPlanCap, cfg.agents.approvals.auto.goalPlansPerDay, "share 0: the fixed cap")
+
+  test("drain: nothing new starts, the runs in flight finish, drained once none runs; undrain and on lift it"):
+    val (a, h, up) = handlers(); seed(a, h, up)
+    on(a)
+    val drained = a.drain.set(Autopilot.DrainSet(on = true, Some("test")))
+    assert(drained.drain.exists(_.drained), drained.drain)
+    val clock = Clock()
+    clock.tick(a)
+    assertEquals(runs(), Vector.empty, "nothing starts while draining")
+    assert(a.scheduler.status().waiting.forall(_.code == "drain"), a.scheduler.status().waiting.map(_.code).distinct)
+    assert(AutopilotMarkdown.status(a.managing.autopilot).contains("DRAINED since"))
+    assert(QueueRepoLog.has(ds, "autopilot: drained"), "a worklog line")
+    // lifted: work starts; drained again while runs are in flight: draining, not drained, nothing new
+    a.drain.set(Autopilot.DrainSet(on = false, Some("test")))
+    clock.tick(a)
+    assertEquals(runs().size, 3)
+    a.drain.set(Autopilot.DrainSet(on = true, Some("test")))
+    clock.tick(a)
+    val d = a.managing.autopilot.drain.getOrElse(fail("draining"))
+    assertEquals((d.drained, d.inFlight), (false, 3))
+    assert(AutopilotMarkdown.status(a.managing.autopilot).contains("DRAINING since"))
+    // the runs in flight finish (here: cancelled): drained
+    runs().foreach(r => a.engine.cancel(r.id))
+    clock.tick(a)
+    assert(a.managing.autopilot.drain.exists(_.drained))
+    assertEquals(runs().count(r => r.status == "queued"), 0, "still nothing new")
+    // turning the autopilot on lifts it
+    val st = a.managing.setAutopilot(AutopilotSet(on = true, Some("test"))).fold(e => fail(e.message), identity)
+    assert(st.changes.exists(_.contains("drain lifted")) && st.drain.isEmpty, st.changes)
+
+  test("stalls: every unfinished goal with no progress, the reason and the action"):
+    val (a, h, up) = handlers(); seed(a, h, up)
+    on(a)
+    AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, g(4), Plan(g(4), "r", Nil, List("q")).asJson.noSpaces)
+    Clock().tick(a)
+    val r = a.scheduler.stalls(Some(0))
+    assertEquals(r.goals, 20)
+    assertEquals(r.stalled.size, 20, "days 0: every goal counts")
+    assertEquals(r.stalled.find(_.slug == g(4)).map(_.code), Some(Stalls.Code.Person))
+    assert(r.stalled.exists(_.code == Stalls.Code.Queue), r.byReason)
+    assertEquals(a.scheduler.stalls(Some(3)).stalled, Nil, "they all started today")
+    a.drain.set(Autopilot.DrainSet(on = true))
+    assert(a.scheduler.stalls(Some(0)).stalled.forall(_.code == Stalls.Code.Drain))
 
 /** The worklog, read for an assertion. */
 private object QueueRepoLog:

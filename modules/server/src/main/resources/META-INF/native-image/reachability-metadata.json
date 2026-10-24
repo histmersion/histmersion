@@ -13589,6 +13589,9 @@
       "glob": "db/migration/V101__approval_digest.sql"
     },
     {
+      "glob": "db/migration/V102__agent_drain.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

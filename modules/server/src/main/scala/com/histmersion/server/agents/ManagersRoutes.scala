@@ -32,5 +32,7 @@ object ManagersRoutes:
     ManagersApi.setScheduler.serverLogic[Identity](in => m.setScheduler(in)),
     ManagersApi.schedulerWhy.serverLogic[Identity](item => m.schedulerWhy(item)),
     ManagersApi.digest.serverLogicSuccess[Identity](_ => m.digest),
-    ManagersApi.decideAll.serverLogic[Identity](in => m.decideAll(in))
+    ManagersApi.decideAll.serverLogic[Identity](in => m.decideAll(in)),
+    ManagersApi.drain.serverLogic[Identity](in => m.drain(in)),
+    ManagersApi.stalls.serverLogicSuccess[Identity](days => m.stalls(days))
   )

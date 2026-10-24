@@ -76,3 +76,25 @@ object AutopilotRepo:
   def digested(ds: DataSource, now: java.time.Instant): Unit =
     val t = now.toString
     val _ = transact(ds)(sql"UPDATE agent_autopilot SET last_digest_at = $t::timestamptz WHERE id".update.run())
+
+  /** Draining (V102): since when, by whom, and when it was first seen drained; None = not draining. */
+  def drain(ds: DataSource): Option[(String, String, Option[String])] =
+    val _ = get(ds)
+    connect(ds):
+      Sql.raw(s"""SELECT ${at("drain_since")}, coalesce(drain_by, ''), ${at("drained_at")}
+                  FROM agent_autopilot WHERE id AND drain_since IS NOT NULL""")
+        .frag.query[(String, String, Option[String])].run().headOption
+
+  /** Start draining (true; a drain under way keeps its start) or stop (false). True = it changed. */
+  def setDrain(ds: DataSource, on: Boolean, by: String): Boolean =
+    val _ = get(ds)
+    transact(ds):
+      if on then sql"""UPDATE agent_autopilot SET drain_since = now(), drain_by = $by, drained_at = NULL
+                       WHERE id AND drain_since IS NULL""".update.run() > 0
+      else sql"""UPDATE agent_autopilot SET drain_since = NULL, drain_by = NULL, drained_at = NULL
+                  WHERE id AND drain_since IS NOT NULL""".update.run() > 0
+
+  /** The drain was first seen drained at `now` (kept until it is lifted or work runs again: `None`). */
+  def drained(ds: DataSource, at: Option[java.time.Instant]): Unit =
+    val t = at.map(_.toString)
+    val _ = transact(ds)(sql"UPDATE agent_autopilot SET drained_at = $t::timestamptz WHERE id AND drain_since IS NOT NULL".update.run())

@@ -136,6 +136,41 @@ object ManagerRepo:
       sql"""SELECT i.kind FROM jobs j JOIN manager_items i ON i.id = j.manager_item
             WHERE j.kind = $JobKind ORDER BY j.created_at DESC, j.id DESC LIMIT ${math.max(0, n)}""".query[String].run().toList
 
+  /** Per goal: when it last progressed — a run of one of its managers started, settled or was evaluated, a
+    * work was ingested or swept for it, or a source was linked to it — as an ISO instant (UTC). */
+  def lastProgress(ds: DataSource): Map[String, String] =
+    val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
+    connect(ds):
+      Sql.of(s"""SELECT goal, to_char(max(at) AT TIME ZONE 'UTC', $ts) FROM (
+                   SELECT m.goal_slug AS goal, max(e.at) AS at FROM manager_events e JOIN agent_managers m ON m.id = e.manager_id
+                   WHERE m.goal_slug IS NOT NULL AND e.kind IN (?, ?, ?, ?, ?) GROUP BY m.goal_slug
+                   UNION ALL
+                   SELECT goal_slug, max(created_at) FROM goal_links WHERE kind = 'source' GROUP BY goal_slug) t
+                 GROUP BY goal""", Param.S(Feed.Started), Param.S(Feed.Settled), Param.S(Feed.Evaluated), Param.S(Feed.Ingested),
+        Param.S(Feed.Swept)).frag.query[(String, String)].run().toMap
+
+  /** Per goal: its items a person holds (held, not for an approval and not by the focus). */
+  def personHeldByGoal(ds: DataSource): Map[String, Int] =
+    connect(ds):
+      sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+            WHERE m.goal_slug IS NOT NULL AND i.status = 'held' AND i.hold->>'focus' IS NULL AND i.hold->>'untilApproval' IS NULL
+            GROUP BY m.goal_slug""".query[(String, Int)].run().toMap
+
+  /** Per goal: its items whose run is queued or running. */
+  def runningByGoal(ds: DataSource): Map[String, Int] =
+    connect(ds):
+      sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+            JOIN jobs j ON j.id = i.run_id
+            WHERE m.goal_slug IS NOT NULL AND i.status = 'active' AND j.status IN ('queued', 'running')
+            GROUP BY m.goal_slug""".query[(String, Int)].run().toMap
+
+  /** Per goal: the outcome of its watcher's acquisition sweep when it is settled. */
+  def sweepOutcomes(ds: DataSource): Map[String, String] =
+    connect(ds):
+      sql"""SELECT m.goal_slug, coalesce(i.outcome, '') FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+            WHERE m.goal_slug IS NOT NULL AND i.kind = $AcquisitionSweep AND i.status IN ('done', 'stopped', 'failed')"""
+        .query[(String, String)].run().toMap
+
   /** Items that wait for a person and hold no place: held (not by the focus: for an approval, or by a person),
     * or active with their run waiting for an approval — of managers that are not stopped. */
   def forPerson(ds: DataSource): Int =

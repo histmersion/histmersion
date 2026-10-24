@@ -66,7 +66,9 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
     val changes =
       if in.on then
         val turned = AutopilotRepo.set(ds, enabled = true, by, row.paused)
-        (if turned then List(s"turned on by $by") else List("already on")) ++ ensureNow(now) ++ advance(now)
+        // turning it on lifts a drain: the person wants it running
+        val undrained = Option.when(AutopilotRepo.setDrain(ds, on = false, by))(s"drain lifted by $by")
+        (if turned then List(s"turned on by $by") else List("already on")) ++ undrained ++ ensureNow(now) ++ advance(now)
       else if !row.enabled then List("already off")
       else
         val ids = AutopilotPolicy.toPause(rows())
@@ -308,4 +310,4 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)), if row.enabled then ingestCap else 0,
       cfg.maxConcurrentRuns, row.lastBackupAt, row.lastLintAt,
       managers.filter(m => m.id == ReviewId || m.id == EnrichId).map(brief), progress,
-      backlog = backlog.total, backlogDays = backlog.totalDays, focus = Some(agents.focus.info(now)))
+      backlog = backlog.total, backlogDays = backlog.totalDays, focus = Some(agents.focus.info(now)), drain = agents.drain.info())

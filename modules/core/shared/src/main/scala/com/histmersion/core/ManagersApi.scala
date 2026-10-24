@@ -144,7 +144,18 @@ object ManagersApi:
     endpoint.post.in("api" / "agents" / "approvals" / "decide").errorOut(errors).in(jsonBody[ApprovalDigest.BulkDecide])
       .out(jsonBody[ApprovalDigest.BulkResult])
 
+  /** `POST /api/agents/autopilot/drain {on}` — drain: nothing new starts while the runs in flight finish (the
+    * status says when it is drained: safe to stop the server); `on: false` lifts it. */
+  val drain: PublicEndpoint[Autopilot.DrainSet, ApiError, Autopilot.AutopilotStatus, Any] =
+    endpoint.post.in("api" / "agents" / "autopilot" / "drain").errorOut(errors).in(jsonBody[Autopilot.DrainSet])
+      .out(jsonBody[Autopilot.AutopilotStatus])
+
+  /** `GET /api/agents/stalls[?days=]` — the unfinished goals with no progress in `days` days (default
+    * agents.autopilot.stall-days), each with the reason it stands still and the action that unblocks it. */
+  val stalls: PublicEndpoint[Option[Int], ApiError, Stalls.StallReport, Any] =
+    endpoint.get.in("api" / "agents" / "stalls").errorOut(errors).in(query[Option[Int]]("days")).out(jsonBody[Stalls.StallReport])
+
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
     removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire, focus, setFocus, scheduler, setScheduler,
-    schedulerWhy, digest, decideAll)
+    schedulerWhy, digest, decideAll, drain, stalls)

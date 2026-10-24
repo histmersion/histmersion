@@ -921,6 +921,7 @@ a.chip:hover { border-color:var(--accent); }
 .scheduler-queue { max-height:40vh; overflow:auto; padding-left:0; list-style-position:inside; }
 .scheduler-started { max-height:20vh; overflow:auto; }
 .approvals-digest { margin-bottom:var(--gap-group); }
+.scheduler-stalls { max-height:40vh; overflow:auto; margin-bottom:var(--gap-group); }
 .run-waiting { color:var(--accent); }
 .approval-plan h5, .approval-draft h5, .goal-section h5 { margin:8px 0 2px; font-size:12px; color:var(--muted); text-transform:capitalize; }
 .approval-plan ul, .approval-draft ul { margin:2px 0 6px; padding-left:18px; font-size:12.5px; }

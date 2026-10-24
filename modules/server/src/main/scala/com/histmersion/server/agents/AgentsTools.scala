@@ -211,7 +211,9 @@ object AgentsTools:
             "`suggest: true` asks the server's model to propose one), `autopilot` (no `on`: the status — per research goal " +
             "its stage, managers, sources, articles, open approvals, last activity and pace, and the watchers' ingest " +
             "backlog; `on: true|false` turns the autopilot on — every goal gets its seeding manager and watcher and moves " +
-            "from planned to reviewed by itself — or off), `repair-acquire` (the acquisition items a watcher's sweep created " +
+            "from planned to reviewed by itself — or off), `drain` (nothing new starts while the runs in flight finish — the " +
+            "autopilot's status says DRAINED once none is queued or running, safe for a deploy; `on: false` lifts it), " +
+            "`repair-acquire` (the acquisition items a watcher's sweep created " +
             "for legal open-access works move into the watchers' ingest backlog, to be ingested within the daily caps; a " +
             "person's items are never touched; `dryRun: true` lists what it would do), `focus` (the autopilot's focus: at most " +
             "max-active-goals goals are active for model work, chosen finish-first — articles to review, then to compile, then " +
@@ -246,11 +248,12 @@ object AgentsTools:
                                   case None    => Right(AutopilotMarkdown.status(m.autopilot))
                                   case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some("mcp"))).map(AutopilotMarkdown.status)
             case "repair-acquire" => m.repairAcquire(RepairAcquire.RepairRequest(in.dryRun, Some("mcp"))).map(RepairAcquire.markdown)
+            case "drain" => m.drain(Autopilot.DrainSet(in.on.getOrElse(true), Some("mcp"))).map(AutopilotMarkdown.status)
             case "focus" => in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
                               case None    => Right(AutopilotMarkdown.focus(m.focus))
                               case Some(v) => m.setFocus(Autopilot.FocusSet(v, in.goal, in.value, Some("mcp"))).map(AutopilotMarkdown.focus)
             case other => Left(ApiError(s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, " +
-                            "repair-acquire, focus)"))
+                            "drain, repair-acquire, focus)"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -266,7 +269,9 @@ object AgentsTools:
             "(default: the strategy, resources, the last pass's starts and the queue with why each item waits and what it " +
             "waits behind; `limit` = waiting items shown), `queue` (only the waiting items, in order), `why` (`item`: one " +
             "manager item's id or the target of an open item — why it is where it is), `strategy` (`strategy`: " +
-            "type-balanced | goal-first | default — switches it live; change it only when the user asked).")
+            "type-balanced | goal-first | default — switches it live; change it only when the user asked), `stalls` (the " +
+            "unfinished goals with no progress in `days` days, each with the reason it stands still and the command that " +
+            "unblocks it).")
         .input[SchedulerInput]
         .handle { in =>
           val m = a.managing
@@ -280,7 +285,8 @@ object AgentsTools:
                             .flatMap(m.schedulerWhy).map(AgentSchedulerMarkdown.why)
             case "strategy" => in.strategy.map(_.trim).filter(_.nonEmpty).toRight(ApiError("`strategy` needs `strategy`"))
                                  .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(n, Some("mcp")))).map(AgentSchedulerMarkdown.status)
-            case other => Left(ApiError(s"unknown action '$other' (status, queue, why, strategy)"))
+            case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days)))
+            case other => Left(ApiError(s"unknown action '$other' (status, queue, why, strategy, stalls)"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -433,10 +439,11 @@ object AgentsTools:
       .modify(_.limit)(_.description("A group: at most this many, the oldest first"))
 
   final case class SchedulerInput(action: String = "status", item: Option[String] = None, strategy: Option[String] = None,
-      limit: Option[Int] = None) derives KindlingsCodecAsObject
+      limit: Option[Int] = None, days: Option[Int] = None) derives KindlingsCodecAsObject
   object SchedulerInput:
     given Schema[SchedulerInput] = KindlingsSchema.derived[SchedulerInput].schema
-      .modify(_.action)(_.description("status (default) | queue | why | strategy"))
+      .modify(_.action)(_.description("status (default) | queue | why | strategy | stalls"))
+      .modify(_.days)(_.description("stalls: no progress in this many days (default agents.autopilot.stall-days)"))
       .modify(_.item)(_.description("why: a manager item's id, or the target (slug, citekey, goal) of an open item"))
       .modify(_.strategy)(_.description("strategy: type-balanced | goal-first | default (back to agents.scheduler.strategy)"))
       .modify(_.limit)(_.description("status, queue: how many waiting items to show (default 50; queue 200)"))
@@ -450,10 +457,10 @@ object AgentsTools:
       derives KindlingsCodecAsObject
   object ManagerInput:
     given Schema[ManagerInput] = KindlingsSchema.derived[ManagerInput].schema
-      .modify(_.action)(_.description("list | show | create | pause | resume | enqueue | hold | hint | autopilot | repair-acquire | focus"))
+      .modify(_.action)(_.description("list | show | create | pause | resume | enqueue | hold | hint | autopilot | drain | repair-acquire | focus"))
       .modify(_.focus)(_.description("focus: list (default) | pin | unpin | priority | max"))
       .modify(_.value)(_.description("focus priority: the goal's priority (higher first); focus max: the cap (0 = none; absent: the config's)"))
-      .modify(_.on)(_.description("autopilot: true turns it on, false off; absent: its status"))
+      .modify(_.on)(_.description("autopilot: true turns it on, false off; absent: its status. drain: false lifts the drain"))
       .modify(_.dryRun)(_.description("repair-acquire: list what it would do, change nothing"))
       .modify(_.id)(_.description("The manager (default: review; enqueue without it routes by kind)"))
       .modify(_.target)(_.description("enqueue, hold: an article slug, a citekey or a goal (by kind)"))

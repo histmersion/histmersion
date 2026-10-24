@@ -260,6 +260,12 @@ object ManagersView:
               child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g)))))))))),
       Option.when(f.waiting.nonEmpty)(div(cls := "muted", s"cannot use a slot now: ${waitingSummary(f.waiting)}")))
 
+  /** The drain in a line: draining (runs still finishing) or drained (safe to stop the server). */
+  def drainLine(d: Autopilot.DrainInfo): String =
+    if d.drained then s"DRAINED since ${d.drainedAt.getOrElse(d.since)}: nothing runs, nothing new starts — safe to stop the server"
+    else s"DRAINING since ${d.since}${if d.by.nonEmpty then s" (by ${d.by})" else ""}: nothing new starts; " +
+      s"${Plural.count(d.inFlight, "run")} in flight still finishing"
+
   /** The goals by stage, in the order a goal moves through them: how many in each. */
   def stages(gs: List[Autopilot.GoalProgress]): String =
     GoalStatus.all.map(st => st -> gs.count(_.status == st)).filter(_._2 > 0).map((st, n) => s"$n $st").mkString(" · ")
@@ -271,6 +277,8 @@ object ManagersView:
     val pending = Var(Option.empty[Boolean])
     val failure = Var(Option.empty[String])
     def load(): Unit = ApiClient.autopilot.onComplete(_.fold(e => failure.set(Some(e.getMessage)), s => { failure.set(None); st.set(Some(s)) }))
+    def drain(on: Boolean): Unit =
+      ApiClient.drain(on).onComplete(_.fold(e => failure.set(Some(s"drain: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) }))
     def flip(on: Boolean): Unit =
       pending.set(Some(on))
       ApiClient.setAutopilot(on).onComplete { r =>
@@ -287,7 +295,14 @@ object ManagersView:
           child <-- shownOn.map(on =>
             if on then WriteButton(Icon.Managers, "turn off", "pause the seeding managers and watchers the autopilot runs", () => flip(false))
             else WriteButton(Icon.Managers, "turn on",
-              "every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself", () => flip(true))))),
+              "every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself", () => flip(true)))),
+        div(cls := "btn-group",
+          child <-- st.signal.map(_.flatMap(_.drain)).map {
+            case Some(_) => WriteButton(Icon.Managers, "undrain", "the scheduler admits work again", () => drain(false))
+            case None    => WriteButton(Icon.Managers, "drain",
+              "before a deploy: nothing new starts while the runs in flight finish (no manager is paused)", () => drain(true))
+          })),
+      child.maybe <-- st.signal.map(_.flatMap(_.drain).map(d => div(cls := "form-ok", drainLine(d)))),
       ErrorLine(failure.signal),
       child.maybe <-- st.signal.map(_.map { s =>
         div(cls := "autopilot-status",
@@ -343,6 +358,7 @@ object ManagersView:
       else ApiClient.setScheduler(name).onComplete(_.fold(e => failure.set(Some(s"scheduler: ${e.getMessage}")),
         s => { failure.set(None); st.set(Some(s)) }))
     val filters = List(UiState.schedTypes, UiState.schedCodes, UiState.schedSubject)
+    val stalls  = Var(Option.empty[Stalls.StallReport])
     val waiting = st.signal.map(_.fold(List.empty[AgentScheduler.Waiting])(_.waiting))
     def openRuns(manager: String): Unit =
       UiState.set(UiState.runManager := Some(manager), UiState.runStatus := None)()
@@ -357,9 +373,24 @@ object ManagersView:
               aria.pressed := (x.name == s.strategy).toString, onClick --> (_ => switch(x.name))))))),
         div(cls := "btn-group",
           button(typ := "button", cls := "btn btn--sm", "refresh", onClick --> (_ => load())),
+          button(typ := "button", cls := "btn btn--sm", "stalls", title := "the goals with no progress, why, and what unblocks them",
+            onClick --> (_ => ApiClient.stalls().onComplete(_.fold(e => failure.set(Some(s"stalls: ${e.getMessage}")), r => stalls.set(Some(r)))))),
           button(typ := "button", cls := "btn btn--sm", "approvals", title := "what waits for a person (the approvals window)",
             onClick --> (_ => { UiState.set(UiState.approvalState := None)(); WindowManager.open(WindowKey.Approvals) })))),
       ErrorLine(failure.signal),
+      child.maybe <-- stalls.signal.map(_.map { r =>
+        div(cls := "scheduler-stalls",
+          div(cls := "muted", s"${r.stalled.size} of ${r.goals} unfinished goals with no progress in ${r.days} day(s)" +
+            (if r.byReason.isEmpty then "" else ": " + r.byReason.map(x => s"${x.code} ${x.count}").mkString(" · "))),
+          ul(cls := "job-list", r.stalled.take(100).map(x =>
+            li(cls := "job-row",
+              span(cls := s"job-state state-${x.code}", x.code),
+              div(cls := "job-main",
+                div(cls := "job-subject", button(typ := "button", cls := "link-btn", x.slug, onClick --> (_ => WindowManager.open(WindowKey.Goal(x.slug)))),
+                  span(cls := "muted", x.idleDays.fold(" · never progressed")(d => s" · idle $d d"))),
+                div(cls := "job-progress", x.why),
+                div(cls := "muted", s"unblock: ${x.action}"))))))
+      }),
       child.maybe <-- st.signal.map(_.map { s =>
         div(
           s.stop.map(x => p(cls := "form-error", role := "alert", s"nothing starts: $x")),

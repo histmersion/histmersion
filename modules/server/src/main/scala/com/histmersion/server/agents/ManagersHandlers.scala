@@ -555,6 +555,12 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
   /** `POST /api/agents/scheduler {strategy}` — switch the strategy live. */
   def setScheduler(in: AgentScheduler.SchedulerSet): Either[ApiError, AgentScheduler.SchedulerStatus] = agents.scheduler.set(in)
 
+  /** `POST /api/agents/autopilot/drain {on}`. */
+  def drain(in: Autopilot.DrainSet): Either[ApiError, Autopilot.AutopilotStatus] = Right(agents.drain.set(in))
+
+  /** `GET /api/agents/stalls[?days=]` — readable with agents off. */
+  def stalls(days: Option[Int]): Stalls.StallReport = agents.scheduler.stalls(days)
+
   /** `GET /api/agents/approvals/digest`. */
   def digest: ApprovalDigest.Digest = agents.digest.digest()
 
