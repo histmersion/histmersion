@@ -303,7 +303,7 @@ refresh both MCP tool tables.
 
 ### Adding a lint rule
 
-Rules are a catalog in `modules/core/src/main/scala/com/histmersion/core/Lint.scala` (`Rule(name,
+Rules are a catalog in `modules/api/shared/src/main/scala/com/histmersion/api/Lint.scala` (`Rule(name,
 description)`, wire spelling `--rule dangling-edges`) with the SQL in
 `modules/db/src/main/scala/com/histmersion/db/LintRepo.scala`. Adding one means: the catalog entry, the
 query, a `LintRepoSuite` case, and the count in every description that says "13 rules" — the CLI

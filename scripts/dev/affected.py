@@ -22,8 +22,9 @@ import sys
 DEPS = {
     "valuesJVM": [],
     "valuesJS": [],
-    "coreJVM": ["valuesJVM"],
-    "coreJS": ["valuesJS"],
+    "apiJVM": ["valuesJVM"],
+    "apiJS": ["valuesJS"],
+    "coreJVM": ["valuesJVM", "apiJVM"],
     "pluginApi": [],
     "pluginVaults": ["pluginApi"],
     "pluginHost": ["coreJVM", "pluginApi"],
@@ -37,10 +38,10 @@ DEPS = {
     "chimneyIronTests": ["chimneyIron"],
     "db": ["coreJVM"],
     "cli": ["coreJVM"],
-    "web": ["coreJS"],
+    "web": ["apiJS"],
     "server": ["coreJVM", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
 }
-ORDER = ["valuesJVM", "valuesJS", "coreJVM", "coreJS", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+ORDER = ["valuesJVM", "valuesJS", "apiJVM", "apiJS", "coreJVM", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
@@ -55,9 +56,10 @@ RULES = [
     (".sdkmanrc", [ALL]),
     (".jvmopts", [ALL]),
     ("modules/values/", ["valuesJVM", "valuesJS"]),
-    ("modules/core/shared/", ["coreJVM", "coreJS"]),
-    ("modules/core/jvm/", ["coreJVM"]),
-    ("modules/core/js/", ["coreJS"]),
+    ("modules/api/shared/", ["apiJVM", "apiJS"]),
+    ("modules/api/jvm/", ["apiJVM"]),
+    ("modules/api/js/", ["apiJS"]),
+    ("modules/core/", ["coreJVM"]),
     ("modules/db/", ["db"]),
     ("modules/server/", ["server"]),
     ("modules/cli/", ["cli"]),
@@ -101,13 +103,16 @@ INERT_TOP = {"README.md", "AGENTS.md", "CLAUDE.md", ".gitignore", ".env.example"
              "justfile"}
 
 
-# core's lint suites read the other modules' main sources: StyleLintSuite and MapEngineBoundarySuite the
-# web page's, PluralSuite every module's Scala (#3765: a web change passed test-quick and failed test-it)
-def read_by_core(path):
-    """Is `path` a file core's lint suites read (the web page's sources, any module's main Scala)?"""
+# the lint suites read the other modules' main sources: api's StyleLintSuite the web page's and api's own,
+# PluralSuite every module's Scala; core's MapEngineBoundarySuite the web page's, ConfigSuite every module's
+# Scala (#3765: a web change passed test-quick and failed test-it)
+LINT_READERS = ["apiJVM", "coreJVM"]
+
+
+def read_by_lints(path):
+    """Is `path` a file the lint suites read (the web page's sources, any module's main Scala)?"""
     p = path.removeprefix("./")
-    return p.startswith("modules/web/src/main/") or (
-        p.startswith("modules/") and not p.startswith("modules/core/") and "/src/main/" in p and p.endswith(".scala"))
+    return p.startswith("modules/web/src/main/") or (p.startswith("modules/") and "/src/main/" in p and p.endswith(".scala"))
 
 
 def modules_for(path):
@@ -149,10 +154,11 @@ def affected(paths):
     for m in sorted(closure - direct, key=ORDER.index):
         why.append(f"{m}: depends on a changed module")
     # a suite that only READS a changed file: its module is tested, its dependents are not
-    readers = [p for p in paths if read_by_core(p)]
-    if readers and "coreJVM" not in closure:
-        closure.add("coreJVM")
-        why.append(f"coreJVM: its lint suites read {readers[0]}")
+    readers = [p for p in paths if read_by_lints(p)]
+    for m in LINT_READERS:
+        if readers and m not in closure:
+            closure.add(m)
+            why.append(f"{m}: its lint suites read {readers[0]}")
     tests = [m for m in ORDER if m in closure and m not in NO_TESTS]
     return tests, any(m in NEEDS_DB for m in tests), why
 

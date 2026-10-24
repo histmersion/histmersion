@@ -16,12 +16,14 @@ The product plan and its waves: `docs/plan.md`. What it is: `README.md`; the doc
 
 ```
 values ── the newtypes every layer speaks of: Citekey, Year, Period, Doi, WikidataId, LatLon.   Iron ONLY
-core  ── the CONTRACT, in three packages: `api` (wire records, Tapir endpoint defs, codecs, Markdown and
-         the helpers they need), `config` (AppConfig and its readers; sees api) and `domain` (the logic
-         server and db run on; sees api and config).  NO database code, NO side effects.   depends on values
+api   ── the CONTRACT on the wire (JVM + JS): wire records, Tapir endpoint defs, circe codecs + schemas,
+         Markdown, and the helpers they need.   NO database code, NO side effects.   depends on values ONLY
+core  ── two packages: `config` (AppConfig and its readers; sees api) and `domain` (the logic server and db
+         run on; sees api and config). JVM only.   NO database code, NO side effects.   depends on values, api
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults)
 cli   ── a PURE HTTP CLIENT of the server.                                   depends on core ONLY
+web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
 plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
 plugin-host ── the host side of the SPI without server or DB: discovery, config, registration, the
               acquisition client, the chain, how plugin media/catalogues/AI are read.   core + plugin-api
@@ -63,9 +65,10 @@ credentials on the host. Every CLI command — reads and writes both — goes ov
 client derived from the same Tapir endpoint the server interprets. If a command seems to need the
 database, it needs a new endpoint instead.
 
-If `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a `println` in `core`.
-`core` still mixes domain, wire records, endpoints and config; `docs/research-module-layout.md` measures
-that and proposes the split *Coding practices* 3 points to.
+If `api` or `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a `println` in
+either, and for `api` importing `com.histmersion.domain` or `com.histmersion.config`. `core`'s domain still
+works on api's wire records, and its config reads into a few of them (recorded, temporary edges);
+`docs/research-module-layout.md` has the target layout and the steps that remain.
 
 ## One implementation per operation
 
@@ -75,10 +78,10 @@ Every operation is implemented **once**, in `Handlers`. REST routes (`HttpApi`) 
 
 Adding an operation:
 
-1. `core/Dto.scala` — the input and output case classes, `derives KindlingsCodecAsObject` plus a
+1. `api/Dto.scala` — the input and output case classes, `derives KindlingsCodecAsObject` plus a
    `given Schema` from `KindlingsSchema.derived`.
-2. `core/Api.scala` — the Tapir endpoint definition, added to `Api.all`.
-3. `core/Markdown.scala` — how the output renders as Markdown. Every surface returns Markdown.
+2. `api/Api.scala` — the Tapir endpoint definition, added to `Api.all`.
+3. `api/Markdown.scala` — how the output renders as Markdown. Every surface returns Markdown.
 4. `db/…` — the repo function, if it touches the database.
 5. `server/Handlers.scala` — the single implementation.
 6. `server/HttpApi.scala` + `server/McpTools.scala` — wire the same handler into both.
@@ -272,7 +275,7 @@ adjusted with media queries and swapped as a theme without touching Scala.
   size, a colour computed from a period — crosses as a **CSS custom property** (`--sidebar-w:360px`,
   `style="--d:12px"`, `el.style.setProperty("--tip-x", …)`), and a stylesheet rule uses it.
 - No colour literals in Scala. Every colour is a token on `:root` (`--ramp-*`, `--edge-*`,
-  `--status-*`, `--media-*`, `--conf-*`, …); code names it (`core/Palette`) — `var(--status-current)`
+  `--status-*`, `--media-*`, `--conf-*`, …); code names it (`api/Palette`) — `var(--status-current)`
   in markup, or `ThemeTokens` where it must compute with the value (the period ramp, the graph's
   canvas). A theme is a block that redefines the tokens.
 
@@ -284,7 +287,7 @@ adjusted with media queries and swapped as a theme without touching Scala.
   composes these classes; a widget rule may place a control (margin, width), never restyle it.
   Plain CSS custom properties, no preprocessor: the stylesheet is served as-is from the classpath.
 
-`StyleLintSuite` (core) fails the build on anything else, with a short list of named exceptions;
+`StyleLintSuite` (api) fails the build on anything else, with a short list of named exceptions;
 `CssTokensSuite` (server) fails it when a token the code names is missing from the stylesheet.
 
 ## Magnum / SQL conventions
