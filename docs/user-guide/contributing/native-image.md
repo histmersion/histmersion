@@ -6,8 +6,9 @@ near 12 GB; the CLI binary is 69 MB, the server binary 168 MB — measured in
 [`AGENTS.md`](https://github.com/histmersion/histmersion/blob/master/AGENTS.md):
 
 - **The JDK is pinned to GraalVM CE 25.4** (JDK 25.0.4.1.1), in `scripts/bundle/graalvm-pins.txt`: the
-  official download and its SHA-256 per platform. `just toolchain install` provisions it, CI provisions it
-  with the same script, and `scripts/bundle/server.sh` refuses any other version. It is an *innovation*
+  official download and its SHA-256 per platform. In a checkout `.sdkmanrc` names it, so
+  `sdk env install && sdk env` activates it; the build and `scripts/bundle/server.sh` refuse any other
+  active JDK. CI and the relink kit provision it from the pins file. It is an *innovation*
   release, which gets no fixes once the next one is out, so the pin moves with each new one. Its
   builder refuses a `java.*` class on the class path, so build.sbt excludes `scala-java-time-tzdb_3`
   (a Scala.js time-zone database that scribe pulls onto the JVM); the binaries use the JDK's own

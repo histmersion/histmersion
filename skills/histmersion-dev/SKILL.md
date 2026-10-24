@@ -11,18 +11,18 @@ build/test/run workflow.
 ## Toolchain
 
 Pinned: **GraalVM CE 25.4** (JDK 25.0.4.1.1) in `scripts/bundle/graalvm-pins.txt` (URL + SHA-256 per
-platform); sbt 2.0.11 and Scala 3.10 in `.sdkmanrc`.
+platform); `.sdkmanrc` names the same build (`java=25.4.4.1+1-graalce`), sbt 2.0.11 and Scala 3.10.
 
 ```bash
-just toolchain install   # once: the pinned GraalVM, SHA-256 checked, into <data>/toolchain/graalvm-ce-25.0.4.1.1
-just toolchain path      # the home server.sh, the relink and the justfile's sbt recipes use
-sdk env install          # sbt (sdkman has no download of GraalVM CE 25.4)
+sdk env install && sdk env   # once per checkout, then `sdk env` per shell (or sdkman_auto_env=true)
 ```
 
-`HISTMERSION_GRAALVM_HOME` overrides where it is looked for (a build in a temp data dir: also set
-`HISTMERSION_DATA_DIR`). 25.4 is an innovation release — no fixes after the next one — so the pin moves
+Everything uses the active JDK and refuses any other version, naming `sdk env install`: `nativeImage`
+and the tracing-agent run (build.sbt), the justfile's sbt recipes (`scripts/dev/sbt.sh`) and
+`scripts/bundle/server.sh`. `histmersion-toolchain` (`scripts/bundle/toolchain.sh`) is for the relink kit
+and CI only, on machines without sdkman. 25.4 is an innovation release — no fixes after the next one — so the pin moves
 with each new one: the pins file (version, URLs, SHA-256 against the release's `.sha256` and GitHub's
-digest), the docs naming it, and the tracing-agent metadata re-checked, in one commit
+digest), the `java=` line of `.sdkmanrc`, the docs naming it, and the tracing-agent metadata re-checked, in one commit
 (`scripts/bundle/server.sh` refuses any other version). Its builder refuses `java.*` classes on the class
 path: build.sbt excludes `scala-java-time-tzdb_3` (scribe → perfolation); never pass
 `-H:+AllowDeprecatedBuilderClassesOnImageClasspath`. It sat at 22.0.2 through waves 1–2 because `tapir-netty-server-sync`
@@ -126,7 +126,7 @@ current**.
   legacy split files (`reflect-config.json`, `resource-config.json`, …) were deleted with the JDK bump
   and must not come back beside it: the JDK-25 agent EMPTIES a legacy `resource-config.json` it finds
   in the merge dir, which silently drops every resource.
-- Regenerate metadata **only with the pinned JDK** (GraalVM CE 25.4: `JAVA_HOME="$(just toolchain path)"`). Agents disagree across JDKs — the JDK-24 one
+- Regenerate metadata **only with the pinned JDK** (GraalVM CE 25.4, active after `sdk env`). Agents disagree across JDKs — the JDK-24 one
   rejects `jniAccessible`, the JDK-22 one writes the legacy format back.
 - `resources` are recorded file by file, as requested. Exercising one page is not enough: hit every
   asset under `web/`, and boot once against an EMPTY database so Flyway reads every migration.

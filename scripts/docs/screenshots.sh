@@ -8,8 +8,7 @@
 #   scripts/docs/screenshots.sh --serve    load the demo and keep the server up (Ctrl-C stops it)
 #   scripts/docs/screenshots.sh --only home,source   capture some (the names are in docs-screenshots.mjs)
 #
-# Needs: a JDK 25 — the pinned GraalVM (scripts/bundle/graalvm-pins.txt) or any other: HISTMERSION_JAVA_HOME /
-# GRAALVM_HOME / the one `scripts/bundle/toolchain.sh install` provisioned / JAVA_HOME — sbt, pixi (the bundled Postgres), node + `npm ci --prefix modules/web`
+# Needs: the active JDK 25 (`sdk env`: the pinned GraalVM, though any JDK 25 does) — sbt, pixi (the bundled Postgres), node + `npm ci --prefix modules/web`
 # and Playwright's Chromium (`npm --prefix modules/web exec -- playwright install chromium`, or
 # PLAYWRIGHT_CHROMIUM_EXECUTABLE). The map's background tiles come from OpenStreetMap, so it needs
 # the internet; HISTMERSION_SCREENSHOTS_OFFLINE=1 blocks them (a blank background). pngquant and
@@ -41,12 +40,11 @@ port="${HISTMERSION_DOCS_SERVER_PORT:-$(free_port)}"
 stub_port="$(free_port)"
 url="http://127.0.0.1:$port"
 
-# ── the JDK: the pinned major only ─────────────────────────────────────────────────────────────
-jh=""
-for c in "${HISTMERSION_JAVA_HOME:-}" "${GRAALVM_HOME:-}" "$(bash "$(dirname "$0")/../bundle/toolchain.sh" path 2>/dev/null || true)" "${JAVA_HOME:-}"; do
-  if [ -n "$c" ] && [ -x "$c/bin/java" ] && "$c/bin/java" -version 2>&1 | grep -q 'version "25'; then jh="$c"; break; fi
-done
-[ -n "$jh" ] || { echo "no JDK 25 found (set HISTMERSION_JAVA_HOME)" >&2; exit 3; }
+# ── the JDK: the active one, of the pinned major ──────────────────────────────────────────────
+jh="${JAVA_HOME:-}"
+[ -n "$jh" ] || jh="$(java -XshowSettings:properties -version 2>&1 | sed -n 's/^ *java\.home = //p' | head -1 || true)"
+{ [ -n "$jh" ] && [ -x "$jh/bin/java" ] && "$jh/bin/java" -version 2>&1 | grep -q 'version "25'; } \
+  || { echo "no JDK 25 active — run 'sdk env install && sdk env' in the checkout" >&2; exit 3; }
 
 # ── what runs, and what stops it ───────────────────────────────────────────────────────────────
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/histmersion-docs.XXXXXX")"

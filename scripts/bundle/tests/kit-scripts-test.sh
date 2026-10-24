@@ -115,7 +115,10 @@ check "the repo's pins: one version, the three CI platforms, each a 64-hex SHA-2
    && [ "$(grep -cE "^$pinned (macos-aarch64|linux-x64|linux-aarch64) " "$src/graalvm-pins.txt")" = 3 ]'
 rc=0; HISTMERSION_HOME="$tmp/no-kit" HISTMERSION_RELINK_MEMORY_BYTES=$((8 * 1073741824)) bash "$src/toolchain.sh" check > "$tmp/t.out" 2>&1 || rc=$?
 check "without a kit, the toolchain's version is the pins' (the one pin)" 'grep -q "GraalVM CE $pinned" "$tmp/t.out"'
-check ".sdkmanrc names no JDK of its own" '! grep -q "^java=" "$src/../../.sdkmanrc"'
+# sdkman names a GraalVM CE build by its release (25.4.4.1+1-graalce), the pins' URLs by its tag (graal-25.4.4.1.1)
+sdk_java="$(sed -n 's/^java=\(.*\)-graalce$/\1/p' "$src/../../.sdkmanrc" | tr '+' '.')"
+check ".sdkmanrc names the pinned GraalVM CE release" \
+  '[ -n "$sdk_java" ] && [ "$(grep -cvE "^#|^$|/releases/download/graal-$sdk_java/" "$src/graalvm-pins.txt")" = 0 ]'
 
 # ── histmersion-signing ───────────────────────────────────────────────────────────────────────────
 echo "signing"

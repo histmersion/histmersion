@@ -13,17 +13,8 @@ platform    := if os() == "macos" { "macos" } else { "linux" }
 label       := "com.histmersion.server"
 unit        := "histmersion.service"
 
-# sbt 2's thin client shares one server and drops the caller's environment; `--server -batch`
-# forces a dedicated, env-carrying, non-interactive one per invocation. The disk cache is this
-# checkout's own (build.sbt sets it for the build and project/plugins.sbt for the meta-build; the flag
-# also covers sbt's own empty global-plugins project, loaded before either).
-sbt_cache := justfile_directory() / "target/sbt-cache"
-# sbt runs on the PINNED GraalVM (scripts/bundle/graalvm-pins.txt) when one is found —
-# HISTMERSION_GRAALVM_HOME, the data directory's toolchain/ (`just toolchain install`), GRAALVM_HOME,
-# JAVA_HOME — so the tests and the tracing agent see the JDK the binaries are built with; else on the
-# shell's JDK (the suites pass on any JDK 25; native images and agent metadata need the pin).
-graalvm := `HISTMERSION_HOME= bash scripts/bundle/toolchain.sh path 2>/dev/null || true`
-sbt := (if graalvm == "" { "" } else { "JAVA_HOME=" + quote(graalvm) + " " }) + "sbt --server -batch -Dsbt.global.localcache=" + sbt_cache
+# sbt on the active JDK, which must be the pinned GraalVM CE (`sdk env install && sdk env`)
+sbt := quote(justfile_directory() / "scripts/dev/sbt.sh")
 
 # The portable PostgreSQL (runtime/postgres, the one the bundle ships) — also the test database.
 pg           := justfile_directory() / "runtime/postgres/.pixi/envs/default/bin"
@@ -135,6 +126,7 @@ test-scripts:
     python3 -m unittest scripts/dev/tests/test_affected.py
     python3 -m unittest scripts/dev/tests/test_test_weights.py
     scripts/dev/tests/seed-cache-test.sh
+    scripts/dev/tests/pinned-jdk-test.sh
     scripts/bundle/tests/launchagent-env-test.sh
     scripts/bundle/tests/user-config-test.sh
     scripts/bundle/tests/relink-test.sh
@@ -199,12 +191,7 @@ test-db-down:
     -"{{pg}}/pg_ctl" -D "{{test_db_dir}}" -m fast -w stop >/dev/null 2>&1
     rm -rf "{{test_db_dir}}" "{{test_db_dir}}.log"
 
-# The pinned GraalVM CE (scripts/bundle/graalvm-pins.txt): `install` downloads it once, checks its SHA-256 and unpacks it into the data directory's toolchain/; `path`, `check`, `remove`
-[group('dev')]
-toolchain *args="check":
-    HISTMERSION_HOME= bash scripts/bundle/toolchain.sh {{args}}
-
-# Build both GraalVM native images with the pinned JDK (into target/)
+# Build both GraalVM native images with the active JDK, which must be the pinned one (into target/)
 [group('dev')]
 native:
     scripts/bundle/server.sh target/native

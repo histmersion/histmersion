@@ -62,7 +62,7 @@ jobs:
           export HISTMERSION_DATA_DIR="$RUNNER_TEMP/histmersion-toolchain" HISTMERSION_HOME=
           bash scripts/bundle/toolchain.sh install
           home="$(bash scripts/bundle/toolchain.sh path)"
-          { echo "JAVA_HOME=$home"; echo "GRAALVM_HOME=$home"; } >> "$GITHUB_ENV"
+          echo "JAVA_HOME=$home" >> "$GITHUB_ENV"
           echo "$home/bin" >> "$GITHUB_PATH"
       - uses: actions/cache@v4
         with:

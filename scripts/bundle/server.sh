@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build the native server and CLI with the PINNED GraalVM (scripts/bundle/graalvm-pins.txt) and put them
+# Build the native server and CLI with the active JDK, which must be the PINNED GraalVM CE
+# (scripts/bundle/graalvm-pins.txt; `sdk env install && sdk env` activates it), and put them
 # in <out>/bin; the seed data the server imports on its first start goes to <out>/db; the RELINK KIT (the
 # server's Sloth-patched jars, its native-image arguments, kit.json + SHA256SUMS, Sloth itself) to
 # <out>/kit, and the scripts that use it to <out>/bin and <out>/libexec (docs/research-plugins.md §7.4, §8).
@@ -12,15 +13,9 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 . "$root/scripts/bundle/kit-common.sh"
 jdk="$(hk_pinned_version "$root/scripts/bundle/graalvm-pins.txt")"
 [ -n "$jdk" ] || { echo "no GraalVM version in $root/scripts/bundle/graalvm-pins.txt" >&2; exit 1; }
-# HISTMERSION_GRAALVM_HOME, the one `scripts/bundle/toolchain.sh install` provisioned into the data
-# directory, GRAALVM_HOME (CI), JAVA_HOME — the first that IS GraalVM CE $jdk with native-image
-home="$(hk_find_graalvm "$jdk")" || {
-  echo "GraalVM CE $jdk with native-image not found — provision it with 'scripts/bundle/toolchain.sh install'" \
-    "(pinned download and SHA-256, into $(hk_data_dir)/toolchain), or point HISTMERSION_GRAALVM_HOME at one" >&2
-  exit 1
-}
+home="$("$root/scripts/dev/pinned-jdk.sh")" || exit 1
 echo "  GraalVM CE $jdk: $home"
-export JAVA_HOME="$home" GRAALVM_HOME="$home" PATH="$home/bin:$PATH"
+export JAVA_HOME="$home" PATH="$home/bin:$PATH"
 bins() { find "$root/target/out" -type f \( -name histmersion-server -o -name histmersion-cli \) -perm -u+x 2>/dev/null || true; }
 # stale binaries must never be mistaken for a fresh build
 bins | xargs rm -f

@@ -1,9 +1,3 @@
-# Reproducible toolchain — `sdk env install` then `sdk env` (auto-switches if sdkman_auto_env=true).
-# No `java=` line: the JDK is GraalVM CE 25.4 (JDK 25.0.4.1.1), pinned with its SHA-256 in
-# scripts/bundle/graalvm-pins.txt. sdkman offers no download of it, and its id is longer than the 15
-# characters `sdk install java <id> <dir>` accepts, so `scripts/bundle/toolchain.sh install` provisions it
-# into <data>/toolchain/graalvm-ce-25.0.4.1.1 — where scripts/bundle/server.sh and the justfile's sbt
-# recipes find it (or set HISTMERSION_GRAALVM_HOME). tapir 1.13.x pulls ox 1.0.x, which no longer extends
-# StructuredTaskScope (JEP 505) — JDK 25 is fine.
+java=25.4.4.1+1-graalce
 sbt=2.0.11
 scala=3.10.0

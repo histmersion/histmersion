@@ -9,8 +9,7 @@ boundaries, code style, the configuration and native-image rules, commit convent
 
 | tool | for |
 |---|---|
-| [sdkman](https://sdkman.io) | sbt 2.0.11 (`.sdkmanrc`; run `sdk env install`) |
-| the pinned JDK, **GraalVM CE 25.4** (JDK 25.0.4.1.1) | `just toolchain install` downloads it once from its official release, checks its SHA-256 (`scripts/bundle/graalvm-pins.txt`) and unpacks it into the data directory |
+| [sdkman](https://sdkman.io) | the pinned JDK, **GraalVM CE 25.4** (JDK 25.0.4.1.1), and sbt 2.0.11: `.sdkmanrc`; run `sdk env install && sdk env` in the checkout |
 | [just](https://just.systems) | the recipes below (`just` lists them) |
 | [uv](https://docs.astral.sh/uv/) | the OCR converter's Python environment |
 | [pixi](https://pixi.sh) | the bundled PostgreSQL 18 + PostGIS (`runtime/postgres`), also for test databases |
