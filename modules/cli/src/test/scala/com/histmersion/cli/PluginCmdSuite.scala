@@ -200,19 +200,18 @@ class PluginCmdSuite extends munit.FunSuite:
     assertEquals(e.ops.add(src.toString, AddOptions(yes = true)).map(_.file), Right("oabooks-0.1.0.jar"))
     assertEquals(Files.readString(e.plugins.resolve("oabooks-0.1.0.pom")), "<project>deps</project>")
     val List(staged, all) = e.resolveCalls: @unchecked
-    assert(staged.matches("--resolve --lib .*/\\.staging/lib-[0-9]+ .*/\\.staging/add-[0-9]+\\.jar"), staged)
+    assert(staged.matches("--resolve --lib .*/\\.staging/add-[0-9]+/lib .*/\\.staging/add-[0-9]+/oabooks_3-0\\.1\\.0\\.jar"), staged)
     assertEquals(all, "--resolve", "then every installed plugin's, into plugins/lib")
-    assert(Files.readString(e.home.resolve("describe.args")).matches("--describe --lib .*/\\.staging/lib-[0-9]+ .*\\n"), "described with its dependencies")
+    assert(Files.readString(e.home.resolve("describe.args")).matches("--describe --lib .*/\\.staging/add-[0-9]+/lib .*\\n"), "described with its dependencies")
     assert(e.out.contains("dependency: org.scala-lang.modules:scala-xml_3:2.4.0 (for add.jar)"), e.out)
     assert(e.out.contains("provided by Histmersion: 1 module(s) (org.ekrich:sconfig_3)"), e.out)
     assertEquals(Files.list(e.plugins.resolve(".staging")).count(), 0L, "the staged jar, POM and lib are gone")
 
   env.test("add: a plugin that needs a newer version of a library Histmersion ships is refused, both versions named"): e =>
     e.describe("oabooks", "0.1.0")
-    e.resolver(refusals = "refused: add.jar needs io.circe:circe-core_3 0.14.20, but this Histmersion ships 0.14.17 — build against 0.14.17\n", rc = 2)
+    e.resolver(refusals = "WARNING: a JVM warning\nrefused: p.jar needs io.circe:circe-core_3 0.14.20, but this Histmersion ships 0.14.17 — build against 0.14.17\n", rc = 2)
     val r = e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = true))
-    assert(r.left.exists(x => x.message.startsWith("refused:\n  - add.jar needs io.circe:circe-core_3 0.14.20") &&
-      x.message.contains("ships 0.14.17")), r)
+    assertEquals(r.left.map(_.message), Left("refused:\n  - p.jar needs io.circe:circe-core_3 0.14.20, but this Histmersion ships 0.14.17 — build against 0.14.17"))
     assertEquals(e.installed, Nil)
     e.resolver(refusals = "could not resolve the plugins' dependencies: not found: org.example:gone_3:1.0", rc = 3)
     val failed = e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = true))
