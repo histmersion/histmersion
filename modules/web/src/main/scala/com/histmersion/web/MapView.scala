@@ -349,12 +349,17 @@ object MapView:
       s"""<i class="is-unstated" style="--c:var(--conf-unstated)" title="$unstated"></i>""" +
         s"""<span class="hd-conf-range">$unstated</span>"""
     legendEl.innerHTML =
+      MapFold.toggleHtml("hd-legend-toggle", "hd-legend-body", "map legend",
+        s"""<span class="hd-ramp hd-ramp--mini" aria-hidden="true">$ramp</span><span>legend</span>""", open = false) +
+      """<div class="hd-legend-body" id="hd-legend-body">""" +
       s"""<div class="hd-ramp">$ramp</div>""" +
       """<div class="hd-ramp-labels"><span class="lo"></span>""" +
       """<span class="mid">older ← → newer</span><span class="hi"></span></div>""" +
       s"""<div class="hd-legend-confidence"><span class="hd-conf-label">certainty</span>$confPips""" +
       """<span class="hd-conf-range">high → contested</span>""" +
-      s"""$unstatedPip</div><div class="hd-key-slot"></div>"""
+      s"""$unstatedPip</div><div class="hd-key-slot"></div></div>"""
+    MapFold.wire(legendEl)
+    MapFold.followSize(surface)
     val corner = surface.corner(Corner.BottomRight)
     corner.insertBefore(legendEl, corner.firstChild)
 

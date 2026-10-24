@@ -119,6 +119,20 @@ class BaseMapsSuite extends munit.FunSuite:
     assertEquals(BaseMaps.noticeLift(10, 300, 200, 400, 40), 44.0)
     assertEquals(BaseMaps.placement(900, 1000, 40, 300, 1100), (700.0, 44.0))
 
+  test("the notice rises over an opened legend only while the map has room for it above; else the legend lies over it"):
+    assertEquals(BaseMaps.noticeLift(16, 300, 16, 374, 200, room = 500), 204.0)
+    assertEquals(BaseMaps.noticeLift(16, 300, 16, 374, 600, room = 500), 0.0)
+    assertEquals(BaseMaps.noticeLift(16, 300, 320, 374, 600, room = 10), 0.0)
+
+  test("a folding overlay's button names what it opens and says whether it is open"):
+    val closed = MapFold.toggleHtml("hd-legend-toggle", "hd-legend-body", "map legend", "<span>legend</span>", open = false)
+    assert(closed.startsWith("""<button type="button" class="btn btn--sm hd-legend-toggle" """), closed)
+    assert(closed.contains("""aria-controls="hd-legend-body""""), closed)
+    assert(closed.contains("""aria-expanded="false""""), closed)
+    assert(closed.contains("""aria-label="map legend""""), closed)
+    assert(closed.endsWith("<span>legend</span></button>"), closed)
+    assert(MapFold.toggleHtml("x", "y", "a \"b\" & c", "", open = true).contains("""aria-expanded="true" aria-label="a &quot;b&quot; &amp; c""""))
+
   test("map options: kept as one JSON value; anything unreadable is no options"):
     val c = summon[FieldCodec[MapPrefs]]
     assertEquals(c.encode(MapPrefs()), Nil)

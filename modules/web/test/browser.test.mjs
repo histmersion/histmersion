@@ -2536,16 +2536,125 @@ test('the past-landscape notice never lies under the credits or the map key, wid
       await page.evaluate(() => localStorage.setItem('histmersion.ui.baseMap', '["physical"]'));
       await page.reload();
       await page.waitForFunction(() => window.__testMap);
-      await page.locator('.terrain-notice').waitFor();
-      await page.waitForTimeout(800);
-      const hits = await page.evaluate(() => {
-        const n = document.querySelector('.map-foot').getBoundingClientRect();
-        return [...document.querySelectorAll('.maplibregl-ctrl-bottom-right > *')].map(e => e.getBoundingClientRect())
-          .filter(r => r.width > 0 && n.left < r.right && r.left < n.right && n.top < r.bottom && r.top < n.bottom).length;
-      });
-      assert.equal(hits, 0, `${viewport.width} px: the notice overlaps the right-hand controls`);
+      await page.locator('.terrain-notice').waitFor({ state: 'attached' });
+      // on a phone it is folded to its button (#4292): the button, then the notice opened
+      const folded = await page.locator('.map-foot-toggle').isVisible();
+      for (const open of folded ? [false, true] : [true]) {
+        if (open && folded) await page.locator('.map-foot-toggle').click();
+        await page.waitForTimeout(800);
+        const hits = await page.evaluate(() => {
+          const n = document.querySelector('.map-foot').getBoundingClientRect();
+          return [...document.querySelectorAll('.maplibregl-ctrl-bottom-right > *')].map(e => e.getBoundingClientRect())
+            .filter(r => r.width > 0 && n.left < r.right && r.left < n.right && n.top < r.bottom && r.top < n.bottom).length;
+        });
+        assert.equal(hits, 0, `${viewport.width} px${open ? '' : ', folded'}: the notice overlaps the right-hand controls`);
+      }
+      assert.ok(await page.locator('.terrain-notice').isVisible(), 'the notice is shown');
       const text = await page.locator('.map-foot').evaluate(e => e.scrollHeight <= e.clientHeight + 1);
       assert.ok(text, 'the notice shows all its text');
+    });
+  }
+});
+
+// #4292: on a phone the map's legend and its foot (the past-landscape notice with the credits) took a third of
+// the map, and the key, opened, was wider than the screen with its close control off it. In the narrow layout
+// each is folded to a button; opened, the legend fits the screen less its 16 px gutters and the map, scrolls
+// inside itself and its close stays where it can be tapped; nothing scrolls the page sideways. A tablet (the
+// wide layout, a small map) keeps the legend open, inside the map.
+test('on a phone the legend and the notice fold to buttons; the opened key fits the screen and closes', async () => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  const G = 16;
+  for (const viewport of [{ width: 360, height: 740 }, { width: 390, height: 844 }, { width: 430, height: 932 },
+    { width: 844, height: 390 }, { width: 768, height: 1024 }]) {
+    const at = `${viewport.width}×${viewport.height}`;
+    await withPage(viewport, async page => {
+      // the longest key (the events' kinds), over a vector style that shows the notice
+      await page.evaluate(s => {
+        localStorage.setItem('histmersion.ui.layers', '["events"]');
+        if (s) localStorage.setItem('histmersion.ui.baseMap', '["physical"]');
+      }, status.available);
+      await page.reload();
+      await page.waitForFunction(() => window.__testMap && document.querySelector('.hd-legend .hd-key'));
+      if (status.available) await page.locator('.map-foot .terrain-notice').waitFor({ state: 'attached' });
+      const box = sel => page.evaluate(s => {
+        const e = document.querySelector(s);
+        if (!e) return null;
+        const r = e.getBoundingClientRect(), st = getComputedStyle(e);
+        return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height,
+          shown: r.width > 0 && r.height > 0 && st.display !== 'none' && st.visibility !== 'hidden' };
+      }, sel);
+      const sideways = () => page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      // the centre of `sel` is on screen and a tap there reaches it
+      const tappable = sel => page.evaluate(s => {
+        const r = document.querySelector(s).getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+        return x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight && !!document.elementFromPoint(x, y)?.closest(s);
+      }, sel);
+      const narrow = await page.evaluate(() => document.documentElement.dataset.layout === 'narrow');
+      assert.equal(narrow, viewport.width !== 768, `${at}: the phone layout on a phone, the wide one on a tablet`);
+      assert.equal(await sideways(), 0, `${at}: no sideways scroll`);
+      const map = await box('#map');
+      if (narrow) {
+        // folded: a button each, the overlays' content hidden
+        const lg = await box('.hd-legend');
+        assert.equal((await box('.hd-legend-body')).shown, false, `${at}: the legend starts folded`);
+        assert.ok(lg.h <= 64 && lg.w <= viewport.width / 2 && lg.r <= viewport.width - G + 1, `${at}: a small button: ${JSON.stringify(lg)}`);
+        if (status.available) {
+          const ft = await box('.map-foot');
+          assert.equal((await box('.map-foot-body')).shown, false, `${at}: the notice starts folded`);
+          assert.ok(ft.h <= 64 && ft.w <= 64 && ft.l >= G - 1, `${at}: the notice's button: ${JSON.stringify(ft)}`);
+        }
+        await page.locator('.hd-legend-toggle').click();
+        assert.equal(await page.locator('.hd-legend-toggle').getAttribute('aria-expanded'), 'true');
+      }
+      // the key opened: inside the screen less its gutters, and inside the map
+      await page.locator('.hd-key summary').click();
+      await page.waitForFunction(() => document.querySelector('.hd-key').open);
+      const o = await box('.hd-legend');
+      assert.ok(o.l >= map.l + G / 2 - 1 && o.r <= Math.min(map.r, viewport.width) - (narrow ? G : G / 2) + 1,
+        `${at}: the opened key within the map's width less its gutters: ${JSON.stringify(o)} in ${JSON.stringify(map)}`);
+      assert.ok(o.t >= map.t && o.b <= Math.min(map.b, viewport.height), `${at}: and its height: ${JSON.stringify(o)}`);
+      assert.equal(await sideways(), 0, `${at}: the opened key scrolls nothing sideways`);
+      // scrolled to its end inside itself: the key's own line, and the button that folds the legend, can be tapped
+      await page.evaluate(() => { const b = document.querySelector('.hd-legend-body'); b.scrollTop = b.scrollHeight; });
+      assert.ok(await page.evaluate(() => { const b = document.querySelector('.hd-legend-body'); return b.scrollHeight <= b.clientHeight || b.scrollTop > 0; }),
+        `${at}: what does not fit scrolls inside the legend`);
+      assert.ok(await tappable('.hd-key summary'), `${at}: the key's line stays on screen`);
+      if (narrow) {
+        assert.ok(await tappable('.hd-legend-toggle'), `${at}: the legend's button stays on screen`);
+        // over the markers and under a popup (#3844)
+        const p = await page.evaluate(() => {
+          const r = document.querySelector('.hd-legend').getBoundingClientRect(), m = document.getElementById('map').getBoundingClientRect();
+          return window.__testMap.containerPointToLatLng([r.left + r.width / 2 - m.left, r.top + r.height / 2 - m.top]);
+        });
+        await page.evaluate(([la, lo]) => window.__testMap.openPopup([la, lo], 'Zz popup'), [p.lat, p.lng]);
+        await page.locator('.zz-test-popup').waitFor();
+        assert.ok(await page.evaluate(() => {
+          const r = document.querySelector('.zz-test-popup').getBoundingClientRect();
+          return !!document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.hd-popup');
+        }), `${at}: a popup opens over the legend`);
+        await page.evaluate(() => window.__testMap.closePopup());
+        // folded by its button, and by Escape
+        await page.locator('.hd-legend-toggle').click();
+        assert.equal((await box('.hd-legend-body')).shown, false, `${at}: the button folds the legend`);
+        assert.equal(await page.locator('.hd-legend-toggle').getAttribute('aria-expanded'), 'false');
+        await page.locator('.hd-legend-toggle').click();
+        await page.keyboard.press('Escape');
+        assert.equal((await box('.hd-legend-body')).shown, false, `${at}: Escape folds the legend`);
+        if (status.available) {
+          // the notice opened: all of it, inside the gutters, clear of the legend's button
+          await page.locator('.map-foot-toggle').click();
+          await page.locator('.map-foot .terrain-notice').waitFor();
+          await page.waitForTimeout(100);
+          const ft = await box('.map-foot'), lb = await box('.hd-legend');
+          assert.ok(ft.l >= G - 1 && ft.r <= viewport.width - G + 1 && ft.t >= map.t && ft.b <= viewport.height,
+            `${at}: the notice within the gutters: ${JSON.stringify(ft)}`);
+          assert.ok(!(ft.l < lb.r && lb.l < ft.r && ft.t < lb.b && lb.t < ft.b), `${at}: clear of the legend's button`);
+          assert.ok(await page.locator('.map-foot-body').evaluate(e => e.scrollHeight <= e.clientHeight + 1), `${at}: all of its text`);
+          assert.equal(await sideways(), 0);
+          await page.locator('.map-foot-toggle').click();
+          assert.equal((await box('.map-foot-body')).shown, false, `${at}: its button folds it`);
+        }
+      }
     });
   }
 });
