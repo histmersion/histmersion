@@ -1,7 +1,7 @@
 # Contributing
 
 This section is for people who change Histmersion itself. The rules every change follows — module
-boundaries, code style, the configuration and native-image rules, commit conventions — are in
+boundaries, code style and coding practices, the configuration and native-image rules, commit conventions — are in
 {{ repo_file("AGENTS.md") }}; the mechanical build, test and native workflow is the
 `histmersion-dev` skill ({{ repo_file("skills/histmersion-dev/SKILL.md") }}).
 
