@@ -278,3 +278,12 @@ class ConfigSuite extends munit.FunSuite:
       .filter(p => Files.readString(p).matches("""(?s).*(\b(8000|8100|5432)\b|unpkg\.com|localhost:\d+).*"""))
       .map(root.relativize).toList
     assertEquals(offenders, Nil, "move these constants to reference.conf")
+
+  test("plan pools' scheduled reads: the defaults, 0 as off from the environment, a negative value refused"):
+    val q = AppConfig.load(env()).agents.quota
+    assertEquals(PlanQuotaSuite.minutes(q.claudePlan.refreshEveryMinutes), Some(180))
+    assertEquals(PlanQuotaSuite.minutes(q.chatgptPlan.refreshEveryMinutes), Some(30))
+    val off = AppConfig.load(env("HISTMERSION_AGENTS_CLAUDE_PLAN_REFRESH_EVERY_MINUTES" -> "0")).agents.quota.claudePlan
+    assertEquals(off.refreshEveryMinutes, PlanQuota.ScheduledRefresh.Off)
+    val e = intercept[RuntimeException](AppConfig.load(env("HISTMERSION_AGENTS_CHATGPT_PLAN_REFRESH_EVERY_MINUTES" -> "-1")))
+    assert(e.getMessage.contains("-1 is not 0 (off) or a positive number of minutes"), e.getMessage)

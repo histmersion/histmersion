@@ -2,7 +2,11 @@ package com.histmersion.core
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import io.github.iltotore.iron.*
+import io.github.iltotore.iron.constraint.numeric.Positive
 import sttp.tapir.Schema
+
+import java.time.{Duration, Instant}
 
 /** Subscription pools (docs/research-plan-quotas.md §5, docs/research-agent-runtimes.md §2.5): a
   * Claude or ChatGPT plan is spent by every client of the account — the person's own sessions, other
@@ -181,6 +185,43 @@ object PlanQuota:
     case Paused  extends RefreshTrigger("paused-run")
     /** A person: `agent quota refresh`. */
     case Command extends RefreshTrigger("command")
+    /** The schedule: the autopilot is on and queued work wants the pool ([[scheduledRead]]). */
+    case Schedule extends RefreshTrigger("schedule")
+
+  type RefreshIntervalMinutes = RefreshIntervalMinutes.T
+  object RefreshIntervalMinutes extends RefinedType[Int, Positive]
+
+  /** How often a pool is read while the autopilot is on and queued work wants it, besides the reading a
+    * run's own pick takes. */
+  enum ScheduledRefresh:
+    case Off
+    case Every(interval: RefreshIntervalMinutes)
+
+  object ScheduledRefresh:
+    /** The configured minutes: 0 = off. */
+    def fromMinutes(minutes: Int): Either[String, ScheduledRefresh] =
+      if minutes == 0 then Right(Off)
+      else RefreshIntervalMinutes.either(minutes).map(Every(_)).left.map(_ => s"$minutes is not 0 (off) or a positive number of minutes")
+
+  enum ScheduledRead:
+    case Due
+    case NotDue(why: String)
+
+  /** Whether the schedule takes a fresh reading of a pool now: its schedule is on, the autopilot is on,
+    * queued work wants the pool, and neither its newest reading (whoever took it) nor the last attempt to
+    * take one is younger than the interval. */
+  def scheduledRead(schedule: ScheduledRefresh, autopilotOn: Boolean, wanted: Boolean, newestReading: Option[Instant],
+      lastAttempt: Option[Instant], now: Instant): ScheduledRead =
+    schedule match
+      case ScheduledRefresh.Off => ScheduledRead.NotDue("the schedule is off")
+      case ScheduledRefresh.Every(interval) =>
+        val latest = List(newestReading, lastAttempt).flatten.maxOption
+        val age = latest.map(Duration.between(_, now))
+        if !autopilotOn then ScheduledRead.NotDue("the autopilot is off")
+        else if !wanted then ScheduledRead.NotDue("no queued work wants the pool")
+        else age.filter(_.toMinutes < interval.value) match
+          case Some(a) => ScheduledRead.NotDue(s"read ${a.toMinutes} min ago (every ${interval.value} min)")
+          case None    => ScheduledRead.Due
 
   /** Whether `p`'s verdict should wait for a fresh reading: it has none at all, or every window that
     * blocks it is blocked ONLY by its age (fresh, with the same values, it would pass). A hold or a

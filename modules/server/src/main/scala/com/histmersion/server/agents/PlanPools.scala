@@ -175,8 +175,28 @@ final class PlanPools(ds: DataSource, cfg: => AgentsConfig, codexHome: () => Opt
   /** How `p` takes a fresh reading, for `agent quota`; None = it takes none. */
   def refreshMode(p: PoolId): Option[String] = p match
     case PoolId.ClaudePlan => claudeMode.toOption.filter(_ != RefreshMode.Off).map(m =>
-      s"${m.wire}: one claude -p turn on ${cfg.quota.claudePlan.probeModel}, at most once per ${cfg.quota.staleMinutes} min while a run waits")
-    case PoolId.ChatgptPlan => Option.when(cfg.providers.codex.appServer)("app-server: account/rateLimits/read, spends nothing")
+      s"${m.wire}: one claude -p turn on ${cfg.quota.claudePlan.probeModel}, at most once per ${cfg.quota.staleMinutes} min while a run waits" +
+        PlanPools.scheduleText(schedule(p)))
+    case PoolId.ChatgptPlan => Option.when(cfg.providers.codex.appServer)(
+      "app-server: account/rateLimits/read, spends nothing" + PlanPools.scheduleText(schedule(p)))
+
+  def schedule(p: PoolId): ScheduledRefresh = p match
+    case PoolId.ClaudePlan  => cfg.quota.claudePlan.refreshEveryMinutes
+    case PoolId.ChatgptPlan => cfg.quota.chatgptPlan.refreshEveryMinutes
+
+  /** Take a fresh reading of `p` on its schedule ([[PlanQuota.scheduledRead]]), inside the pool's gate: a
+    * pick that took one meanwhile makes this one not due. Never without a login or a way to read. Left =
+    * not taken, and why. */
+  def refreshOnSchedule(p: PoolId, autopilotOn: Boolean, wanted: Boolean, now: java.time.Instant): Either[String, Refreshed] =
+    val at = now.toEpochMilli
+    gate.exclusive(p, at) { last =>
+      val newest = lastObserved(p).map(java.time.Instant.ofEpochMilli)
+      PlanQuota.scheduledRead(schedule(p), autopilotOn, wanted, newest, last.map(java.time.Instant.ofEpochMilli), now) match
+        case ScheduledRead.NotDue(why) => Left(why)
+        case ScheduledRead.Due =>
+          PlanQuota.refreshDecision(None, login(p, at), seams.refreshes && refreshMode(p).isDefined, last, staleMs, at, force = true)
+            .map(_ => takeAndLog(p, RefreshTrigger.Schedule, RefreshTrigger.Schedule.wire, at))
+    }
 
   /** Take a fresh reading of `p` now — when the decision table says so ([[PlanQuota.refreshDecision]]):
     * single flight, throttled per `stale-minutes`, never without a login. `force` (a person asked)
@@ -188,15 +208,16 @@ final class PlanPools(ds: DataSource, cfg: => AgentsConfig, codexHome: () => Opt
       // asked again inside the gate: a caller that waited sees the reading the one before it took
       val needNow = need(p, model, now)
       PlanQuota.refreshDecision(needNow, login(p, now, force), seams.refreshes && refreshMode(p).isDefined, last, staleMs, now, force)
-        .map { n =>
-          val r = take(p, now)
-          val why = n.fold(trigger.wire)(x => s"${trigger.wire}, ${x.text}")
-          val line = s"plan refresh ${p.wire} ($why) ${r.text}"
-          if r.ok then scribe.info(line) else scribe.warn(line)
-          PlanQuotaRepo.logRefresh(ds, p, r.mode, trigger.wire, r.ok, r.detail)
-          r
-        }
+        .map(n => takeAndLog(p, trigger, n.fold(trigger.wire)(x => s"${trigger.wire}, ${x.text}"), now))
     }
+
+  /** One reading of `p`, logged (server log and the pool's refresh log) with why it was taken. */
+  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: String, now: Long): Refreshed =
+    val r = take(p, now)
+    val line = s"plan refresh ${p.wire} ($why) ${r.text}"
+    if r.ok then scribe.info(line) else scribe.warn(line)
+    PlanQuotaRepo.logRefresh(ds, p, r.mode, trigger.wire, r.ok, r.detail)
+    r
 
   /** One reading of `p`, recorded: the Claude probe or the ChatGPT app-server read. */
   private def take(p: PoolId, now: Long): Refreshed = p match
@@ -280,6 +301,11 @@ final class PlanPools(ds: DataSource, cfg: => AgentsConfig, codexHome: () => Opt
     }
 
 object PlanPools:
+
+  /** The schedule as `agent quota` names it after a pool's refresh mode. */
+  def scheduleText(schedule: ScheduledRefresh): String = schedule match
+    case ScheduledRefresh.Off             => ""
+    case ScheduledRefresh.Every(interval) => s", and every ${interval.value} min while the autopilot has queued work for it"
 
   /** How the pools are read on purpose and their logins checked: the CLIs for real, a stand-in in a
     * test (which must never start a real `claude -p`). */

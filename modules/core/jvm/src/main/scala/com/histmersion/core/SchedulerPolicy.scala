@@ -87,6 +87,20 @@ object SchedulerPolicy:
   /** Why an item cannot start now whatever the order: a code and a sentence. */
   final case class Block(code: String, why: String)
 
+  /** The [[Block]] code of an item whose role chains are all below their plans' floors. */
+  val QuotaBlock = "quota"
+
+  /** The plan pools waiting work wants a current reading of: a waiting candidate's own pools, and for one
+    * starved below its plans' floors, the pools its role chains draw on (`chainPools`), since a fresh
+    * reading may show the window has reset. A candidate blocked for any other reason wants none. */
+  def poolsWanted(waiting: List[Candidate], chainPools: Candidate => List[String]): Set[String] =
+    waiting.flatMap { c =>
+      c.block match
+        case None                            => c.pools
+        case Some(b) if b.code == QuotaBlock => chainPools(c)
+        case Some(_)                         => Nil
+    }.toSet
+
   /** What is free now: `maxRuns` (`agents.max-concurrent-runs`) and `occupied` (every queued or running
     * agent run, a person's too), each pool's cap in runs and the runs drawing on it, each manager's own cap
     * and its runs, the gathering goals' runs, why nothing may start at all (`stop`: draining, a budget),

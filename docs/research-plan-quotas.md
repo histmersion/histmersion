@@ -498,3 +498,26 @@ finds a run waiting on it, or at once with `histmersion agent quota refresh clau
 
 **Not done.** A refresh for the human's own spending while no run waits (the status-line tap of §5.2)
 is still not built. The refresh log is not pruned: at most about 300 rows a day.
+
+## 9. As built: a scheduled reading while the autopilot has work (2026-10-24, #4035)
+
+§8 reads a pool only when a run's pick wants it and its reading is stale, so with no run picking (the
+pool below its floor, or the scheduler holding its items back) the reading the scheduler decides on
+can be days old: the last Claude reading on the live server was from 2026-10-17. Each pool now also
+has a schedule, `agents.quota.<pool>.refresh-every-minutes`, checked after every managers' tick:
+
+- the autopilot is on, nothing is draining, and the last scheduler pass left work **waiting** on the
+  pool — an item whose roles draw on it, or one starved because its role chains are below their plans'
+  floors (the pools of every model in those chains: a fresh reading may show the window has reset);
+- neither the pool's newest reading (whoever took it: a run, the probe, a mod) nor the last attempt to
+  take one is younger than the interval — a failed attempt waits the interval too;
+- the pool has a login and a way to read (`claude-plan.refresh` not `off`; Codex's `app-server` on).
+
+It takes the same reading as §8.1 (the Claude probe, the ChatGPT app-server read) inside the pool's
+single-flight gate, and logs it with trigger `schedule`. Defaults: the Claude plan every 180 minutes
+(at most eight haiku turns a day, and only while work waits on it), the ChatGPT plan every 30 (its
+read spends nothing). `0` turns a schedule off. `agent quota`'s refresh line names the schedule.
+
+**Config**: `agents.quota.claude-plan.refresh-every-minutes = 180`
+(`HISTMERSION_AGENTS_CLAUDE_PLAN_REFRESH_EVERY_MINUTES`), `agents.quota.chatgpt-plan.refresh-every-minutes = 30`
+(`HISTMERSION_AGENTS_CHATGPT_PLAN_REFRESH_EVERY_MINUTES`). No migration.

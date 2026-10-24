@@ -4,7 +4,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.core.*
 import com.histmersion.core.Agents.*
 import com.histmersion.core.PlanQuota.*
-import com.histmersion.db.{AgentRepo, Db, Migrate, PlanQuotaRepo}
+import com.histmersion.db.{AgentRepo, AutopilotRepo, Db, Migrate, PlanQuotaRepo}
 import com.histmersion.server.{Deps, Handlers, Main}
 import io.circe.parser
 import sttp.ai.core.agent.*
@@ -208,6 +208,49 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite:
     assertEquals(b.picker.pick(Role.Extractor, None).map(_.client.model), Right(Plan))
     assertEquals(reads2.probes.get(), 0)
     assertEquals(b.quota.plans.find(_.pool == "claude-plan").get.refresh, None)
+
+  test("#4035: on its schedule a pool is read while the autopilot is on and work wants it, once per interval; a run's reading counts"):
+    val reads = Reads(); reads.probeOut = List(event(20, 30), Result)
+    val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), reads)
+    val at = java.time.Instant.now()
+    def onSchedule(autopilotOn: Boolean = true, wanted: Boolean = true, when: java.time.Instant = at) =
+      a.pools.refreshOnSchedule(PoolId.ClaudePlan, autopilotOn, wanted, when)
+    assertEquals(onSchedule(autopilotOn = false), Left("the autopilot is off"))
+    assertEquals(onSchedule(wanted = false), Left("no queued work wants the pool"))
+    assertEquals(reads.probes.get(), 0)
+    assertEquals(onSchedule().map(_.ok), Right(true))
+    assertEquals(reads.probes.get(), 1)
+    assert(reads.probeArgs.containsSlice(List("--model", "haiku")), reads.probeArgs)
+    val pool = a.quota.plans.find(_.pool == "claude-plan").get
+    assertEquals(pool.lastRefresh.map(r => (r.trigger, r.mode, r.ok)), Some(("schedule", "probe", true)))
+    assert(pool.refresh.exists(_.contains("every 180 min while the autopilot has queued work for it")), pool.refresh)
+    assert(onSchedule(when = at.plusSeconds(179 * 60)).left.exists(_.startsWith("read 179 min ago")))
+    assertEquals(onSchedule(when = at.plusSeconds(181 * 60)).map(_.ok), Right(true))
+    assertEquals(reads.probes.get(), 2)
+    // a reading a run recorded since counts like the schedule's own
+    PlanQuotaRepo.record(ds, PoolId.ClaudePlan, List(Reading("claude", "five_hour", 40, Some(now() + 3600000L), rejected = false,
+      at.plusSeconds(300 * 60).toEpochMilli, PlanQuota.Source.Run)))
+    assert(onSchedule(when = at.plusSeconds(330 * 60)).left.exists(_.startsWith("read 30 min ago")))
+    assertEquals(reads.probes.get(), 2)
+
+  test("#4035: no scheduled read without a login, with the schedule off, or before the scheduler has left work waiting"):
+    val reads = Reads(); reads.probeOut = List(event(20, 30), Result)
+    reads.auth = """{"loggedIn":false}"""
+    val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), reads)
+    assert(a.pools.refreshOnSchedule(PoolId.ClaudePlan, autopilotOn = true, wanted = true, java.time.Instant.now())
+      .left.exists(_.startsWith("no login")))
+    val off = baseCfg.copy(agents = baseCfg.agents.copy(quota = baseCfg.agents.quota.copy(
+      claudePlan = baseCfg.agents.quota.claudePlan.copy(refreshEveryMinutes = ScheduledRefresh.Off))))
+    val (b, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), Reads(), off)
+    assertEquals(b.pools.refreshOnSchedule(PoolId.ClaudePlan, autopilotOn = true, wanted = true, java.time.Instant.now()),
+      Left("the schedule is off"))
+    val reads3 = Reads(); reads3.probeOut = List(event(20, 30), Result)
+    val (c, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), reads3)
+    try
+      assert(AutopilotRepo.set(ds, enabled = true, "zzrefresh", Nil) || AutopilotRepo.get(ds).enabled)
+      assertEquals(c.scheduler.refreshPlans(java.time.Instant.now()), Nil, "no pass yet: no work waits on a pool")
+      assertEquals(reads.probes.get() + reads3.probes.get(), 0)
+    finally { val _ = AutopilotRepo.set(ds, enabled = false, "zzrefresh", Nil) }
 
   test("#1827: a model parked after its plan's limit comes back once a reading taken SINCE says the pool is usable"):
     val reads = Reads(); reads.probeOut = List(event(0, 0), Result)

@@ -174,3 +174,14 @@ class SchedulerPolicySuite extends munit.FunSuite:
     assertEquals(parseTypeMap("review=3, bogus=2, enrich = x, sweep=1"), Map(JobType.Review -> 3, JobType.Sweep -> 1))
     assertEquals(hours(95), "1 h 35 min")
     assertEquals(hours(42), "42 min")
+
+  test("pools wanted: a waiting item's own pools, a quota-starved item's chain pools, none for another block"):
+    val chains: Candidate => List[String] = x => if x.id == 3 then List("claude-plan", "chatgpt-plan") else List("never")
+    val waiting = List(
+      c(1, pools = List("chatgpt-plan")),
+      c(2),
+      c(3, block = Some(Block(QuotaBlock, "starved: extractor chain below its plan floor"))),
+      c(4, pools = List("claude-plan"), block = Some(Block("budget", "budget: today's agent spend reached"))))
+    assertEquals(poolsWanted(waiting, chains), Set("chatgpt-plan", "claude-plan"))
+    assertEquals(poolsWanted(waiting.take(2), chains), Set("chatgpt-plan"))
+    assertEquals(poolsWanted(Nil, chains), Set.empty[String])
