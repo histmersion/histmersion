@@ -22,18 +22,20 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
 
   /** A service over `dir`, its provider serving `vector`/`terrain` fixture archives from `src`. */
-  private def service(dir: Path, free: Long = Long.MaxValue / 4): (BasemapService, BasemapFixtures.LocalRange, BasemapFixtures.LocalRange) =
+  private def service(dir: Path, free: Long = Long.MaxValue / 4, seaAndMap: Boolean = true): (BasemapService, BasemapFixtures.LocalRange, BasemapFixtures.LocalRange) =
     val src = Files.createTempDirectory("basemap-src")
     val v = BasemapFixtures.LocalRange(BasemapFixtures.vectorArchive(src.resolve("v.pmtiles"), 5),
       builds = """[{"key":"20261018.pmtiles","size":1},{"key":"20261019.pmtiles","size":-1}]""")
     val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), 5))
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get), basemap = base.basemap.copy(dir = dir.toString, requestGapMs = 0,
-      bbox = "22,35,29,41", vector = base.basemap.vector.copy(url = "fake://v/{build}", maxZoom = 4),
+      bbox = "22,35,29,41", vector = base.basemap.vector.copy(url = "fake://v/{build}", maxZoom = 4,
+        onDemand = base.basemap.vector.onDemand.copy(enabled = seaAndMap, maxZoom = 5, requestsPerSecond = 1000)),
       terrain = base.basemap.terrain.copy(url = "fake://t", maxZoom = 3,
         onDemand = base.basemap.terrain.onDemand.copy(maxZoom = 5, requestsPerSecond = 1000), focusRegions = List("crete 23,34.8,26.5,35.7")),
       labels = base.basemap.labels.copy(url = "fake://ne/{file}.geojson", files = List("ranges", "rivers"), maxZoom = 6),
-      bathymetry = base.basemap.bathymetry.copy(url = "fake://sea/{z}/{x}/{y}.png", maxZoom = 3, requestGapMs = 0)))
+      bathymetry = base.basemap.bathymetry.copy(url = "fake://sea/{z}/{x}/{y}.png", maxZoom = 3, requestGapMs = 0,
+        onDemand = base.basemap.bathymetry.onDemand.copy(enabled = seaAndMap, maxZoom = 3, requestsPerSecond = 1000))))
     val router = new RangeHttp:
       private def pick(url: String) = if url.startsWith("fake://v") then v else t
       def text(url: String) =
@@ -56,6 +58,8 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     val j = await(svc.fetch(BasemapFetchQuery(dryRun = true)).fold(e => fail(e.message), _.id))
     assert(j.succeeded, j.toString)
     assert(j.progress.exists(p => p.contains("would download") && p.contains("20261019.pmtiles")), j.progress.toString)
+    // the size of each zoom (#3760): a download ahead can stop at a cheaper zoom
+    assert(j.progress.exists(p => p.contains("by zoom — zoom 0: 1 tile, ") && p.contains(" · zoom 4: ")), j.progress.toString)
     assertEquals(v.downloads.get, 0)
     assert(!Files.exists(dir.resolve("vector.pmtiles")))
 
@@ -85,7 +89,8 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assertEquals((mime, enc, code.code), ("application/vnd.mapbox-vector-tile", Some("gzip"), 200))
     val layers = Mvt.layerNames(PmTiles.gunzip(bytes).toOption.get).toOption.get
     assert(!layers.contains("roads") && !layers.contains("places"), layers.toString)
-    assertEquals(svc.tile("vector", 4, 0, 0).map(_._5.code), Right(204))
+    // outside the region: read on demand (#3760; switched off it is a 204 — the on-demand test)
+    assertEquals(svc.tile("vector", 4, 0, 0).map(_._5.code), Right(200))
     // a subset: only the layers and geometries a style draws — the sea's name without the polygons
     val (sb, _, senc, _, scode) = svc.tile("vector", 4, 9, 6, Some("water:p,earth")).fold(e => fail(e.message), identity)
     assertEquals((scode.code, senc), (200, Some("gzip")))
@@ -97,7 +102,9 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assert(svc.tile("vector", 4, 9, 6, Some("water:q")).isLeft)
     assertEquals(svc.tile("terrain", 3, 4, 3, Some("water")).map(_._3), Right(None), "an image is never cut")
     val gone = svc.remove(BasemapRemoveQuery()).fold(e => fail(e.message), identity)
-    assertEquals(gone.removed.size, 4)
+    // the four layers, and the map cache the tile outside the region filled
+    assertEquals(gone.removed.map(Path.of(_).getFileName.toString).sorted,
+      List("bathymetry.pmtiles", "labels.pmtiles", "terrain.pmtiles", "vector-cache", "vector.pmtiles"))
     assert(!svc.status.available)
 
   test("an extract without the names: the status says a fetch of the labels adds them, and that fetch adds only them"):
@@ -220,6 +227,56 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assertEquals((code.code, mime, String(b)), (200, "image/png", "PNG3/4/3"))
     assertEquals(svc.tile("bathymetry", 0, 0, 0).map(_._5.code), Right(204), "the bucket had none")
     assert(!Files.exists(dir.resolve(".bathymetry.part")), "the parts are removed once written")
+
+  test("#3760: the map and the sea floor outside the region (or deeper) are read on demand, thinned and cached; off, none"):
+    val dir = Files.createTempDirectory("basemap")
+    val (svc, v, _) = service(dir)
+    assert(await(svc.fetch(BasemapFetchQuery(layer = "vector")).fold(e => fail(e.message), _.id)).succeeded)
+    assert(await(svc.fetch(BasemapFetchQuery(layer = "bathymetry")).fold(e => fail(e.message), _.id)).succeeded)
+    val vec = svc.status.layers.find(_.layer == "vector").get
+    assertEquals((vec.maxZoom, vec.deepest, vec.onDemand.map(o => (o.enabled, o.tiles))), (Some(4), Some(5), Some((true, 0L))))
+    // a tile far outside the region (x 0 at zoom 3 is the Pacific): from the build the extract came from, thinned
+    val asked = v.requests.get
+    val (b, mime, enc, _, code) = svc.tile("vector", 3, 0, 0).fold(e => fail(e.message), identity)
+    assertEquals((code.code, mime, enc), (200, "application/vnd.mapbox-vector-tile", Some("gzip")))
+    val text = String(PmTiles.gunzip(b).fold(fail(_), identity), "ISO-8859-1")
+    assert(text.contains("earth") && !text.contains("highway"), "thinned as the download is: the roads dropped")
+    assert(v.requests.get > asked, "read from the provider")
+    // again: from the cache, nothing asked; deeper than the extract inside the region too
+    val again = v.requests.get
+    assertEquals(svc.tile("vector", 3, 0, 0).map(_._5.code), Right(200))
+    assertEquals(v.requests.get, again)
+    assertEquals(svc.tile("vector", 5, Basemap.tileX(24.5, 5), Basemap.tileY(37.5, 5)).map(_._5.code), Right(200))
+    assertEquals(svc.status.layers.find(_.layer == "vector").get.onDemand.map(_.tiles), Some(2L))
+    // inside the region at its zooms: the extract's own tile, the provider not asked
+    val inside = v.requests.get
+    assertEquals(svc.tile("vector", 4, Basemap.tileX(24.5, 4), Basemap.tileY(37.5, 4)).map(_._5.code), Right(200))
+    assertEquals(v.requests.get, inside)
+    // the sea floor outside the region: one GET, then cached
+    val gets = BasemapServiceSuite.seaGets.get
+    val (sb, smime, _, _, scode) = svc.tile("bathymetry", 3, 1, 1).fold(e => fail(e.message), identity)
+    assertEquals((scode.code, smime, String(sb)), (200, "image/png", "PNG3/1/1"))
+    assertEquals(svc.tile("bathymetry", 3, 1, 1).map(_._5.code), Right(200))
+    assertEquals(BasemapServiceSuite.seaGets.get - gets, 1)
+    // the caches are removed with the others
+    val c = svc.remove(BasemapRemoveQuery("none", cache = true)).fold(e => fail(e.message), identity)
+    assertEquals(c.removed.map(Path.of(_).getFileName.toString).sorted, List("sea-cache", "vector-cache"))
+    // switched off: nothing outside the region
+    val dir2 = Files.createTempDirectory("basemap")
+    val (off, v2, _) = service(dir2, seaAndMap = false)
+    assert(await(off.fetch(BasemapFetchQuery(layer = "vector")).fold(e => fail(e.message), _.id)).succeeded)
+    val n = v2.requests.get
+    assertEquals(off.tile("vector", 3, 0, 0).map(_._5.code), Right(204))
+    assertEquals(v2.requests.get, n)
+
+  test("#3760: --bbox world plans the whole world, its size given zoom by zoom"):
+    val dir = Files.createTempDirectory("basemap")
+    val (svc, _, _) = service(dir)
+    val j = await(svc.fetch(BasemapFetchQuery(layer = "vector", bbox = Some("world"), maxZoom = Some(2), dryRun = true))
+      .fold(e => fail(e.message), _.id))
+    assert(j.succeeded, j.toString)
+    // zooms 0–2 of the world: 1 + 4 + 16 tiles
+    assert(j.progress.exists(p => p.contains("21 tiles") && p.contains("zoom 1: 4 tiles") && p.contains("zoom 2: 16 tiles")), j.progress.toString)
 
   test("bad options are refused before a job starts"):
     val (svc, _, _) = service(Files.createTempDirectory("basemap"))

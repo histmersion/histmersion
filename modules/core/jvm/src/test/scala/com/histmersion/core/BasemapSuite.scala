@@ -93,3 +93,15 @@ class BasemapSuite extends munit.FunSuite:
     val md = BasemapMarkdown.status(BasemapStatus(available = true, "/c", "x", List(v), Basemap.FetchCommand,
       styles = List(BasemapStyleState("readable", "Readable", List("places", "roads")), BasemapStyleState("physical", "Physical"))))
     assert(md.contains("Styles: Readable (lacks places, roads), Physical."), md)
+
+  test("#3760: `world` is a region a fetch accepts — Web Mercator's whole map"):
+    assertEquals(Basemap.validBBox("world"), Right(BBox(-180, -85.05, 180, 85.05)))
+    assertEquals(Basemap.validBBox(" World "), Right(Basemap.World))
+    assert(Basemap.validBBox("worlds").isLeft)
+
+  test("#3760: the map and the sea floor read outside the region, in a line each"):
+    val on = BasemapMarkdown.outside("The map", "vector", BasemapOnDemand(true, 12, "/c/vector-cache", 3, 3000, 2_000_000_000L, None))
+    assert(on.startsWith("The map outside the downloaded region (and deeper than it): read when a page shows it, to zoom 12; cached 3 tiles"), on)
+    assert(on.contains("`/c/vector-cache`"), on)
+    assertEquals(BasemapMarkdown.outside("The sea floor", "bathymetry", BasemapOnDemand(false, 7, "/c", 0, 0, 0, None)),
+      "The sea floor outside the downloaded region: off (basemap.bathymetry.on-demand.enabled).")

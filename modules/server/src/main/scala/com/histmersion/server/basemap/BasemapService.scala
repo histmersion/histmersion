@@ -89,7 +89,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           version = if l == BasemapLayer.Terrain then stamp(p).map(_ + focusStamp) else stamp(p),
           kept = Option.when(l == BasemapLayer.Vector)(Basemap.keptLine(mine.get[Boolean]("keepAll").getOrElse(false),
             mine.get[String]("drop").toOption)),
-          onDemand = Option.when(l == BasemapLayer.Terrain)(onDemand.status),
+          onDemand = onDemandOf(l).map(_.status),
           focus = if l == BasemapLayer.Terrain then focusInfo else Nil,
           dropped = if l != BasemapLayer.Vector then Nil
                     else Basemap.droppedLayers(mine.get[Boolean]("keepAll").getOrElse(false), mine.get[String]("drop").toOption))
@@ -132,19 +132,66 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     val all = focusFiles.flatMap((n, p) => stamp(p).map(n + _))
     if all.isEmpty then "" else "-" + Integer.toHexString(all.mkString("|").hashCode)
 
-  // the on-demand relief of the directory configured now (`basemap.dir` may change with a reload)
-  @volatile private var demand: Option[TerrainOnDemand] = None
+  // the on-demand layers of the directory configured now (`basemap.dir` may change with a reload)
+  @volatile private var demands = Map.empty[BasemapLayer, OnDemandTiles]
 
-  /** The on-demand relief and its cache (`terrain-cache/` beside the extract). */
-  def onDemand: TerrainOnDemand =
-    val at = dir.resolve("terrain-cache")
-    demand.filter(_.dir == at).getOrElse(synchronized {
-      demand.filter(_.dir == at).getOrElse {
-        val d = TerrainOnDemand(at, () => cfg.terrain.onDemand, () => cfg.terrain.url, http)
-        demand = Some(d)
+  private def demandAt(l: BasemapLayer, name: String)(make: Path => OnDemandTiles): OnDemandTiles =
+    val at = dir.resolve(name)
+    demands.get(l).filter(_.dir == at).getOrElse(synchronized {
+      demands.get(l).filter(_.dir == at).getOrElse {
+        val d = make(at)
+        demands = demands.updated(l, d)
         d
       }
     })
+
+  /** The on-demand relief and its cache (`terrain-cache/` beside the extract). */
+  def onDemand: OnDemandTiles =
+    demandAt(BasemapLayer.Terrain, "terrain-cache")(at =>
+      OnDemandTiles(at, () => cfg.terrain.onDemand, OnDemandTiles.Source.Planet(() => cfg.terrain.url), http))
+
+  /** The map outside the extract, or deeper (#3760): read from the planet build the extract came from,
+    * thinned as the extract was, cached in `vector-cache/`. */
+  def vectorOnDemand: OnDemandTiles =
+    demandAt(BasemapLayer.Vector, "vector-cache")(at =>
+      OnDemandTiles(at, () => cfg.vector.onDemand, OnDemandTiles.Source.Planet(() => vectorPlanet()), http, ext = "mvt",
+        transform = b => BasemapService.thin(b, if PmTiles.isGzip(b) then PmTiles.Compression.Gzip else PmTiles.Compression.None,
+          vectorRules())))
+
+  /** The sea floor outside the extract (#3760): one GET a tile, cached in `sea-cache/`. */
+  def seaOnDemand: OnDemandTiles =
+    demandAt(BasemapLayer.Bathymetry, "sea-cache")(at =>
+      OnDemandTiles(at, () => cfg.bathymetry.onDemand, OnDemandTiles.Source.Template(() => cfg.bathymetry.url), http, ext = "png"))
+
+  /** A layer's on-demand tiles (none for the names). */
+  def onDemandOf(l: BasemapLayer): Option[OnDemandTiles] = l match
+    case BasemapLayer.Terrain    => Some(onDemand)
+    case BasemapLayer.Vector     => Some(vectorOnDemand)
+    case BasemapLayer.Bathymetry => Some(seaOnDemand)
+    case BasemapLayer.Labels     => None
+
+  /** What the vector extract was thinned with — so a tile read on demand matches it: its own drop list, or
+    * none when it was kept whole; without an extract, the configured list. */
+  private def vectorRules(): Map[String, Mvt.Rule] =
+    val meta = reader(BasemapLayer.Vector).toOption.flatten.map(_.metadata.hcursor.downField("histmersion"))
+    val keepAll = meta.flatMap(_.get[Boolean]("keepAll").toOption).getOrElse(false)
+    val drop = meta.flatMap(_.get[String]("drop").toOption).getOrElse(cfg.vector.drop)
+    if keepAll then Map.empty else BasemapService.mvtRules(Basemap.parseDrop(drop).toOption.getOrElse(Nil))
+
+  // `var`: the newest build's key, asked of the provider once (when neither the extract nor the config names one)
+  @volatile private var latestBuild: Option[String] = None
+
+  /** The planet the vector tiles are read from: the build the extract came from, else the configured one,
+    * else the provider's newest. "" when none can be named (the read then fails, as offline). */
+  private def vectorPlanet(): String =
+    val fromExtract = reader(BasemapLayer.Vector).toOption.flatten
+      .flatMap(_.metadata.hcursor.downField("histmersion").get[String]("build").toOption).filter(_.endsWith(".pmtiles"))
+    val pinned = Option(cfg.vector.build.trim).filter(b => b.nonEmpty && !b.equalsIgnoreCase("latest"))
+    fromExtract.orElse(pinned).orElse(latestBuild).orElse {
+      val got = http().text(cfg.vector.buildsUrl).flatMap(BasemapService.builds).toOption.flatMap(_.lastOption.map(_._1))
+      latestBuild = got
+      got
+    }.fold("")(b => cfg.vector.url.replace("{build}", b))
 
   /** A relief tile deeper than the extract (or outside it): a focus region's, else the on-demand one. */
   private def deeperRelief(z: Int, x: Long, y: Long, extractMax: Int): Either[String, Option[Array[Byte]]] =
@@ -222,6 +269,10 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       // the relief deeper than the extract: a focus region's, or read now from the provider (no tile, and
       // not cached by the browser, when it cannot be read now — offline)
       deeper = Option.when(stored.isEmpty && l == BasemapLayer.Terrain && z > f.header.maxZoom)(deeperRelief(z, x, y, f.header.maxZoom))
+        // the map and the sea floor outside the extract, or deeper: read now from the provider (#3760)
+        .orElse(Option.when(stored.isEmpty && (l == BasemapLayer.Vector || l == BasemapLayer.Bathymetry) &&
+          (z > f.header.maxZoom || !BasemapService.inside(f.header, z, x, y)))(onDemandOf(l)).flatten
+          .filter(_.servesAt(z)).map(_.tile(z, x, y)))
       found  = stored.orElse(deeper.flatMap(_.toOption.flatten))
       // none of them has it: cut from the nearest ancestor (offline, the on-demand relief failing: not kept
       // by the browser, so the provider's own tile replaces it once it can be read)
@@ -233,12 +284,13 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
                  case (None, _) if deeper.exists(_.isLeft) => Right((Array.emptyByteArray, mime, None, "no-store", StatusCode.NoContent))
                  case (None, _) => Right((Array.emptyByteArray, mime, None, cache, StatusCode.NoContent))
                  case (Some(b), None) =>
-                   val enc = Option.when(f.header.tileCompression == PmTiles.Compression.Gzip && PmTiles.isGzip(b))("gzip")
+                   // a tile read on demand is stored as its provider sends it (a vector one gzipped)
+                   val enc = Option.when((f.header.tileCompression == PmTiles.Compression.Gzip || stored.isEmpty) && PmTiles.isGzip(b))("gzip")
                    Right((b, mime, enc, cache, StatusCode.Ok))
                  case (Some(b), Some(rs)) =>
                    val key = s"$layer|${stamp(path(l)).getOrElse("")}|$z/$x/$y|${sub.getOrElse("")}|${props.fold("")(_.toList.sorted.mkString(","))}"
                    Option(cut.get(key)).map(Right(_))
-                     .getOrElse(BasemapService.subset(b, f.header.tileCompression, rs, props).left.map(ApiError(_)).map { t => cut.put(key, t); t })
+                     .getOrElse(BasemapService.subset(b, if PmTiles.isGzip(b) then PmTiles.Compression.Gzip else f.header.tileCompression, rs, props).left.map(ApiError(_)).map { t => cut.put(key, t); t })
                      .map(t => if t.isEmpty then (t, mime, None, cache, StatusCode.NoContent) else (t, mime, Some("gzip"), cache, StatusCode.Ok))
     yield out
 
@@ -265,10 +317,12 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           file.toList ++ parts.toList
         val files  = ls.flatMap(l => gone(path(l), work(l))) ++ fs.flatMap(n => gone(focusDir.resolve(s"$n.pmtiles"), focusWork(n)))
         val cached = Option.when(q.cache || all) {
-          val c = onDemand.dir
-          Option.when(Files.exists(c))((c.toString, onDemand.cache.clear() + BasemapService.deleteTree(c).getOrElse(0L)))
-        }.flatten
-        val out = files ++ cached.toList
+          BasemapLayer.values.toList.flatMap(onDemandOf).flatMap { od =>
+            val c = od.dir
+            Option.when(Files.exists(c))((c.toString, od.cache.clear() + BasemapService.deleteTree(c).getOrElse(0L)))
+          }
+        }.toList.flatten
+        val out = files ++ cached
         Right(BasemapRemoved(out.map(_._1), out.map(_._2).sum))
     }
 
@@ -618,6 +672,12 @@ object BasemapService:
   def existing(p: Path): Path =
     Iterator.iterate(p.toAbsolutePath)(_.getParent).takeWhile(_ != null).find(Files.exists(_)).getOrElse(p)
 
+  /** Whether tile `z/x/y` lies in an archive's bounds (any part of it). Pure. */
+  def inside(h: PmTiles.Header, z: Int, x: Long, y: Long): Boolean =
+    val b = BBox(h.minLon, h.minLat, h.maxLon, h.maxLat)
+    val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
+    x >= x0 && x <= x1 && y >= y0 && y <= y1
+
   /** Two regions the same to within rounding. Pure. */
   def near(a: BBox, b: BBox): Boolean =
     List(a.minLon - b.minLon, a.minLat - b.minLat, a.maxLon - b.maxLon, a.maxLat - b.maxLat).forall(d => math.abs(d) < 1e-6)
@@ -654,7 +714,9 @@ object BasemapService:
   def describe(l: BasemapLayer, p: BasemapFetch.Plan, dryRun: Boolean): String =
     val verb = if dryRun then "would download" else "downloaded"
     s"${l.wire} (${p.source.label}, zoom ${p.header.minZoom}–${p.maxZoom}): ${p.tiles.size} tiles, $verb " +
-      s"${Backup.humanBytes(p.requestBytes)} in ${p.requests.size} requests (+${p.directoryRequests} for the directories)"
+      s"${Backup.humanBytes(p.requestBytes)} in ${p.requests.size} requests (+${p.directoryRequests} for the directories)" +
+      // a download ahead says what each zoom costs, so a smaller --max-zoom can be chosen (#3760)
+      (if dryRun then s"; by zoom — ${BasemapFetch.perZoomLine(BasemapFetch.perZoom(p))}" else "")
 
   /** Delete a directory tree; answers the bytes it held (`None` when there was none). */
   def deleteTree(p: Path): Option[Long] =

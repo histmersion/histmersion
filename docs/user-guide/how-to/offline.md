@@ -97,6 +97,16 @@ Where a deeper relief tile is missing (outside a focus region, and not read on d
 cuts it from the nearest coarser tile it holds, so the relief never disappears as you zoom in — it
 only gets softer.
 
+**The map and the sea floor outside the download** are read the same way: when a page shows an area
+outside `basemap.bbox` (or the map deeper than its zoom), the server reads just those tiles — the map from
+the same Protomaps build, the sea floor from Mapzen's tiles — and keeps them (`vector-cache/`,
+`sea-cache/`, each with a size ceiling). Offline, what was seen once is still drawn; the rest stays empty.
+`basemap.vector.on-demand.enabled = false` and `basemap.bathymetry.on-demand.enabled = false` stop the
+server asking. To have a region ready before going offline, download it ahead: `histmersion basemap fetch
+--bbox <minLon,minLat,maxLon,maxLat>` (or `--bbox world`), with `--dry-run` first — it says the size zoom by
+zoom, so you can choose a smaller `--max-zoom`. About › Storage shows the caches' sizes, and `histmersion
+basemap rm --cache` empties them.
+
 The online maps are only ever loaded as you look at them, tile by tile, never in advance or in bulk
 (OpenStreetMap's tile usage policy forbids that); the local maps are drawn from Protomaps' build of
 the same OpenStreetMap data, © OpenStreetMap contributors (ODbL), credited on the map.

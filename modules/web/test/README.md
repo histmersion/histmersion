@@ -22,7 +22,8 @@ HISTMERSION_RUNTIME=false \
 HISTMERSION_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test \
 HISTMERSION_PORT=18080 HISTMERSION_PUBLIC_URL=http://127.0.0.1:18080 \
 HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap \
-HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false \
+HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false HISTMERSION_BASEMAP_VECTOR_ON_DEMAND=false \
+HISTMERSION_BASEMAP_BATHYMETRY_ON_DEMAND=false \
 dist/histmersion/bin/histmersion-server
 ```
 
@@ -35,7 +36,8 @@ HISTMERSION_SERVER_URL=http://127.0.0.1:18080 npm --prefix modules/web run test:
 `HISTMERSION_BASEMAP_DIR` points the server at a small Aegean extract of the base maps' data
 (`fixtures/basemap`, 10.5 MB with its physical names, sea floor and an Argolid focus region, its licences
 in its README); without it the Readable/Physical tests are skipped. `HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false`
-keeps the server from reading deeper relief from the provider when a test zooms in (no network).
+keeps the server from reading deeper relief from the provider when a test zooms in, and the `VECTOR_` and
+`BATHYMETRY_` ones from reading the map and the sea floor outside the extract (no network).
 
 **Two engines.** `HISTMERSION_TEST_BROWSER=chromium` (the default) or `firefox` picks the browser
 (`test/engine.mjs`); `npm --prefix modules/web run test:browser:firefox` runs both files in Firefox and

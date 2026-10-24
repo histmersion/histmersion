@@ -10061,7 +10061,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.basemap.TerrainOnDemand",
+      "type": "com.histmersion.server.basemap.OnDemandTiles",
       "fields": [
         {
           "name": "gate$lzy1"

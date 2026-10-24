@@ -25,6 +25,8 @@ object BasemapMarkdown:
     val notes = List(
       kept.map(k => s"The vector layer keeps $k."),
       terrain.flatMap(_.onDemand).map(onDemand),
+      s.layers.find(_.layer == BasemapLayer.Vector.wire).flatMap(_.onDemand).map(outside("The map", "vector", _)),
+      s.layers.find(_.layer == BasemapLayer.Bathymetry.wire).flatMap(_.onDemand).map(outside("The sea floor", "bathymetry", _)),
       Option.when(focus.nonEmpty)(("Relief kept deeper for:" :: focus).mkString("\n")),
       Option.when(s.available && s.styles.nonEmpty)("Styles: " + s.styles.map { st =>
         if st.missing.isEmpty then st.name else s"${st.name} (lacks ${st.missing.mkString(", ")})"
@@ -40,6 +42,13 @@ object BasemapMarkdown:
   def onDemand(o: BasemapOnDemand): String =
     if !o.enabled then "Relief deeper than the extract: off (basemap.terrain.on-demand.enabled)."
     else s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
+      s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
+      o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
+
+  /** A layer read outside the extract (#3760) in a line: to what zoom, its cache, whether it is reachable. Pure. */
+  def outside(what: String, key: String, o: BasemapOnDemand): String =
+    if !o.enabled then s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled)."
+    else s"$what outside the downloaded region (and deeper than it): read when a page shows it, to zoom ${o.maxZoom}; cached " +
       s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
       o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 

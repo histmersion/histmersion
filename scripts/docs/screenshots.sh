@@ -90,7 +90,8 @@ node docs/demo/converter-stub.mjs "$stub_port" & stub_pid=$!
   export HISTMERSION_SPOOL_DIR="$tmp/spool" HISTMERSION_BACKUPS_DIR="$tmp/backups" HISTMERSION_BUNDLES_DIR="$tmp/bundles"
   export HISTMERSION_PG_BIN_DIR="$pg" HISTMERSION_INIT_DATA_DIR="$repo/db"
   # the terrain base map: the small Aegean extract the browser tests use (no download)
-  export HISTMERSION_BASEMAP_DIR="$repo/modules/web/test/fixtures/basemap" HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false
+  export HISTMERSION_BASEMAP_DIR="$repo/modules/web/test/fixtures/basemap" HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false \
+    HISTMERSION_BASEMAP_VECTOR_ON_DEMAND=false HISTMERSION_BASEMAP_BATHYMETRY_ON_DEMAND=false
   # the online base maps stay the home shots' background (the fixture covers only the Aegean); the
   # local maps are in the menu all the same, and their own shots choose them
   export HISTMERSION_UI_BASE_MAP_SOURCE=online

@@ -28,7 +28,10 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg  = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = "k3y"),
       basemap = base.basemap.copy(dir = dir.toString,
-        terrain = base.basemap.terrain.copy(onDemand = base.basemap.terrain.onDemand.copy(enabled = onDemand && base.basemap.terrain.onDemand.enabled))))
+        terrain = base.basemap.terrain.copy(onDemand = base.basemap.terrain.onDemand.copy(enabled = onDemand && base.basemap.terrain.onDemand.enabled)),
+        // the map and the sea floor outside the extract are read from the network: never in this suite (#3760)
+        vector = base.basemap.vector.copy(onDemand = base.basemap.vector.onDemand.copy(enabled = false)),
+        bathymetry = base.basemap.bathymetry.copy(onDemand = base.basemap.bathymetry.onDemand.copy(enabled = false))))
     supervised {
       val b = Main.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}/api/basemap")

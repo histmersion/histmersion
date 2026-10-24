@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /** The on-demand relief: the bounded tile cache (eviction by last use, kept across a restart) and the
   * reads from a fake provider — once per tile, a missing tile remembered, nothing asked while offline,
   * a replaced planet file read again, the request rate kept. No network, no database. */
-class TerrainOnDemandSuite extends munit.FunSuite:
+class OnDemandTilesSuite extends munit.FunSuite:
 
   private def cfg(enabled: Boolean = true, maxZoom: Int = 5, cacheBytes: Long = 1_000_000_000L, rps: Double = 1000) =
     BasemapOnDemandConfig(enabled, maxZoom, cacheBytes / 1e9, concurrency = 2, requestsPerSecond = rps, retryAfterSeconds = 30)
@@ -51,7 +51,7 @@ class TerrainOnDemandSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("ondemand")
     val clock = AtomicInteger(1000)
     val slept = AtomicInteger(0)
-    val od = TerrainOnDemand(dir, () => c, () => "fake://planet", () => p, () => clock.get.toLong, ms => { slept.addAndGet(ms.toInt); () })
+    val od = OnDemandTiles(dir, () => c, OnDemandTiles.Source.Planet(() => "fake://planet"), () => p, () => clock.get.toLong, ms => { slept.addAndGet(ms.toInt); () })
     (od, p, dir, clock, slept)
 
   test("a tile is read once from the provider and then from the cache — also by a new instance (offline)"):
@@ -64,7 +64,7 @@ class TerrainOnDemandSuite extends munit.FunSuite:
     assertEquals(od.tile(5, 18, 13).map(_.map(String(_))), Right(Some("RIFF5/18/13")))
     assertEquals(p.local.requests.get, first + 1, "the planet's directory is read once: one request a tile")
     p.fail = true
-    val restarted = TerrainOnDemand(dir, () => cfg(), () => "fake://planet", () => p)
+    val restarted = OnDemandTiles(dir, () => cfg(), OnDemandTiles.Source.Planet(() => "fake://planet"), () => p)
     assertEquals(restarted.tile(5, 18, 12).map(_.map(String(_))), Right(Some("RIFF5/18/12")), "an area seen once, offline")
     assertEquals(restarted.status.tiles, 2L)
 
@@ -120,3 +120,23 @@ class TerrainOnDemandSuite extends munit.FunSuite:
     assertEquals(BasemapService.focusOf(None, Some(box), false, Some(12), t), Right(None), "with other layers: the extract")
     assertEquals(Basemap.focusRegion("nile-delta 29,30,32.5,31.7"), Right(("nile-delta", BBox(29, 30, 32.5, 31.7))))
     assert(Basemap.focusRegion("x").isLeft && Basemap.focusRegion("x 1,2,3").isLeft)
+
+  test("#3760: a tile URL source — one GET a tile, a 404 kept as none, each transformed before it is kept"):
+    val dir = Files.createTempDirectory("ondemand-get")
+    val gets = AtomicInteger(0)
+    val http = new RangeHttp:
+      def text(url: String) = Left("no")
+      def bytes(url: String, o: Long, l: Long) = Left("no range requests here")
+      def download(url: String, o: Long, l: Long, to: Path) = Left("no")
+      override def file(url: String) =
+        gets.incrementAndGet()
+        Right(Option.when(!url.endsWith("/0/0.png"))(url.getBytes))
+    val od = OnDemandTiles(dir, () => cfg(), OnDemandTiles.Source.Template(() => "fake://sea/{z}/{x}/{y}.png"), () => http,
+      ext = "png", transform = b => Right(Some(("T:" + String(b)).getBytes)))
+    assertEquals(od.tile(2, 1, 3).map(_.map(String(_))), Right(Some("T:fake://sea/2/1/3.png")))
+    assertEquals(od.tile(2, 1, 3).map(_.map(String(_))), Right(Some("T:fake://sea/2/1/3.png")))
+    assertEquals(od.tile(1, 0, 0), Right(None))
+    assertEquals(od.tile(1, 0, 0), Right(None))
+    assertEquals(gets.get, 2, "each tile asked once")
+    assert(Files.isRegularFile(dir.resolve("tiles/2/1/3.png")) && Files.isRegularFile(dir.resolve("tiles/1/0/0.none")))
+    assert(od.servesAt(3) && !od.servesAt(cfg().maxZoom + 1))

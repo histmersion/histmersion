@@ -58,6 +58,18 @@ object BasemapFetch:
 
   // ── pure ───────────────────────────────────────────────────────────────────────────────────────
 
+  /** What a plan downloads at each zoom: its tiles and their distinct bytes, shallowest first — a download
+    * ahead's size estimate per zoom (#3760). Pure. */
+  def perZoom(p: Plan): List[(Int, Int, Long)] =
+    p.tiles.groupBy(t => PmTiles.zxy(t.id)._1).toList.sortBy(_._1).map { (z, ts) =>
+      (z, ts.size, ts.map(t => (t.offset, t.length)).distinct.map(_._2.toLong).sum)
+    }
+
+  /** [[perZoom]] in a line: `zoom 0: 1 tile, 12 KB · …`, the deepest zooms' running total last. Pure. */
+  def perZoomLine(rows: List[(Int, Int, Long)]): String =
+    rows.map((z, n, b) => s"zoom $z: ${com.histmersion.core.Plural.count(n, "tile")}, ${com.histmersion.core.Backup.humanBytes(b)}")
+      .mkString(" · ")
+
   /** Every tile id of zooms `minZoom`…`maxZoom` over `b`, sorted. Pure. */
   def wantedIds(b: BBox, minZoom: Int, maxZoom: Int): Array[Long] =
     val out = mutable.ArrayBuilder.make[Long]

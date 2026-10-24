@@ -9,13 +9,13 @@ import java.nio.file.attribute.FileTime
 import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, TimeUnit}
 import scala.util.Using
 
-/** A directory of tiles bounded in bytes, least recently used dropped first — the on-demand relief's
-  * cache. A tile is a file `<z>/<x>/<y>.webp`; a tile the provider does not have is an empty
+/** A directory of tiles bounded in bytes, least recently used dropped first — an on-demand layer's
+  * cache. A tile is a file `<z>/<x>/<y>.<ext>`; a tile the provider does not have is an empty
   * `<z>/<x>/<y>.none`, so it is not asked for again. Use is the file's modification time (set on each
   * read), so the order survives a restart; the index is read from the disk on first use.
   *
   * Thread-safe: every operation holds the instance's lock (they are file operations of a few KB). */
-final class DiskLru(val root: Path, maxBytes: () => Long):
+final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
 
   // the index (access-ordered: the eldest is the least recently used) and its byte total, loaded once;
   // `var`s under the instance lock
@@ -23,7 +23,7 @@ final class DiskLru(val root: Path, maxBytes: () => Long):
   private var total = 0L
   private var loaded = false
 
-  private def file(key: String, absent: Boolean): Path = root.resolve(key + (if absent then ".none" else ".webp"))
+  private def file(key: String, absent: Boolean): Path = root.resolve(key + (if absent then ".none" else s".$ext"))
 
   private def load(): Unit = if !loaded then
     loaded = true
@@ -31,7 +31,7 @@ final class DiskLru(val root: Path, maxBytes: () => Long):
       val found = Using.resource(Files.walk(root)) { s =>
         s.filter(Files.isRegularFile(_)).toArray.toList.map(_.asInstanceOf[Path]).flatMap { p =>
           val rel = root.relativize(p).toString.replace('\\', '/')
-          val key = rel.stripSuffix(".webp").stripSuffix(".none")
+          val key = rel.stripSuffix(s".$ext").stripSuffix(".none")
           Option.when(key != rel && !rel.endsWith(".tmp"))((key, Files.size(p), Files.getLastModifiedTime(p).toMillis))
         }
       }
@@ -85,24 +85,30 @@ final class DiskLru(val root: Path, maxBytes: () => Long):
     was
   }
 
-/** The relief DEEPER than the downloaded extract (docs/research-terrain-basemap.md, "On-demand relief"):
-  * when a page shows an area at a zoom the extract does not reach, the server reads just those tiles
-  * from the provider's planet archive with HTTP range requests — the access its documentation shows for
-  * extracts — and keeps them in a bounded cache ([[DiskLru]]) next to the extract, so an area seen once
-  * shows again offline.
+/** A layer's tiles read when a page shows them, beyond what was downloaded (docs/research-terrain-basemap.md,
+  * "On-demand relief"; #3760 for the map and the sea floor): the server reads just those tiles from the
+  * provider — by HTTP range requests from its planet archive ([[OnDemandTiles.Source.Planet]], the access
+  * its documentation shows for extracts), or one GET a tile from a tile URL ([[OnDemandTiles.Source.Template]])
+  * — `transform`s each (the vector layer drops what the download drops) and keeps it in a bounded cache
+  * ([[DiskLru]], files `.<ext>`) next to the extract, so an area seen once shows again offline.
   *
-  * The archive's header, root and the leaf directories read (11 KB each, 4 096 tiles) are kept on the disk
+  * A planet's header, root and the leaf directories read (11 KB each, 4 096 tiles) are kept on the disk
   * too, under `remote/`, with the file's size and ETag: when the provider replaces the file (another
-  * ETag), they are read again; the tiles kept stay (the elevation does not change between builds).
+  * ETag), they are read again; the tiles kept stay.
   *
   * Politeness: at most `concurrency` requests at a time and `requestsPerSecond` begun each second; one
   * request per tile (two when its leaf directory is new); a tile asked for twice at once is read once.
-  * After a failed request (offline) none is made for `retryAfterSeconds` — the page gets no relief there,
+  * After a failed request (offline) none is made for `retryAfterSeconds` — the page gets no tile there,
   * quickly, and asks again later. `http`, `now` and `sleep` are the seams a test substitutes. */
-final class TerrainOnDemand(val dir: Path, cfg: () => BasemapOnDemandConfig, url: () => String, http: () => RangeHttp,
-    now: () => Long = () => System.currentTimeMillis(), sleep: Long => Unit = ms => Thread.sleep(ms)):
+final class OnDemandTiles(val dir: Path, cfg: () => BasemapOnDemandConfig, source: OnDemandTiles.Source, http: () => RangeHttp,
+    now: () => Long = () => System.currentTimeMillis(), sleep: Long => Unit = ms => Thread.sleep(ms), ext: String = "webp",
+    transform: Array[Byte] => Either[String, Option[Array[Byte]]] = b => Right(Some(b))):
 
-  val cache: DiskLru = DiskLru(dir.resolve("tiles"), () => (cfg().cacheGb * 1e9).toLong)
+  private def url(): String = source match
+    case OnDemandTiles.Source.Planet(u)   => u()
+    case OnDemandTiles.Source.Template(u) => u()
+
+  val cache: DiskLru = DiskLru(dir.resolve("tiles"), () => (cfg().cacheGb * 1e9).toLong, ext)
   private val remoteDir = dir.resolve("remote")
 
   /** What the planet file is: its header and root, the leaves read, its size and ETag. */
@@ -124,9 +130,12 @@ final class TerrainOnDemand(val dir: Path, cfg: () => BasemapOnDemandConfig, url
   /** Whether `z` is one this serves (deeper than the extract's `extractMax`, to the configured depth). */
   def serves(z: Int, extractMax: Int): Boolean = cfg().enabled && z > extractMax && z <= cfg().maxZoom
 
+  /** Whether it serves tile `z` at all (on, and not deeper than its configured depth) — outside the extract. */
+  def servesAt(z: Int): Boolean = cfg().enabled && z >= 0 && z <= cfg().maxZoom
+
   /** One request to the provider: within the concurrency and the rate. */
   private def request[A](f: => Either[String, A]): Either[String, A] =
-    if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left("too many relief requests waiting")
+    if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left("too many tile requests waiting")
     else
       try
         val wait = synchronized {
@@ -190,7 +199,7 @@ final class TerrainOnDemand(val dir: Path, cfg: () => BasemapOnDemandConfig, url
       val raw =
         if Files.isRegularFile(f) && Files.size(f) == e.length then Right(Files.readAllBytes(f))
         else request(http().bytes(r.url, r.header.leafOffset + e.offset, e.length)).flatMap { (b, got) =>
-          if got.etag != r.file.etag || got.size != r.file.size then Left(TerrainOnDemand.Changed)
+          if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
           else
             Files.createDirectories(remoteDir)
             Files.write(f, b)
@@ -215,18 +224,25 @@ final class TerrainOnDemand(val dir: Path, cfg: () => BasemapOnDemandConfig, url
     if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
 
   private def read(z: Int, x: Long, y: Long): Either[String, Option[Array[Byte]]] =
+    val raw = source match
+      case OnDemandTiles.Source.Planet(_)   => readPlanet(z, x, y)
+      case OnDemandTiles.Source.Template(u) =>
+        request(http().file(u().replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)))
+    raw.flatMap(_.fold(Right(None))(transform))
+
+  private def readPlanet(z: Int, x: Long, y: Long): Either[String, Option[Array[Byte]]] =
     def once(): Either[String, Option[Array[Byte]]] =
       for
         r <- described()
         e <- entry(r, z, x, y)
         b <- e.fold(Right(None)) { e =>
                request(http().bytes(r.url, r.header.dataOffset + e.offset, e.length)).flatMap { (b, got) =>
-                 if got.etag != r.file.etag || got.size != r.file.size then Left(TerrainOnDemand.Changed) else Right(Some(b))
+                 if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed) else Right(Some(b))
                }
              }
       yield b
     once() match
-      case Left(TerrainOnDemand.Changed) => forget(); once()
+      case Left(OnDemandTiles.Changed) => forget(); once()
       case other                         => other
 
   /** The tile `z/x/y`: from the cache, else from the provider (then cached). `Right(None)`: there is none
@@ -238,12 +254,12 @@ final class TerrainOnDemand(val dir: Path, cfg: () => BasemapOnDemandConfig, url
       val key = s"$z/$x/$y"
       cache.get(key) match
         case Some(hit) => Right(hit)
-        case None if offlineUntil > now() => Left("the relief provider was unreachable a moment ago; not asked again yet")
+        case None if offlineUntil > now() => Left("the provider was unreachable a moment ago; not asked again yet")
         case None =>
           val mine = CompletableFuture[Either[String, Option[Array[Byte]]]]()
           Option(inflight.putIfAbsent(key, mine)) match
             case Some(other) =>
-              scala.util.Try(other.get(120, TimeUnit.SECONDS)).toEither.left.map(e => s"relief tile $key: ${e.getMessage}").flatten
+              scala.util.Try(other.get(120, TimeUnit.SECONDS)).toEither.left.map(e => s"tile $key: ${e.getMessage}").flatten
             case None =>
               try
                 val r = read(z, x, y)
@@ -251,15 +267,21 @@ final class TerrainOnDemand(val dir: Path, cfg: () => BasemapOnDemandConfig, url
                   case Right(b) => cache.put(key, b)
                   case Left(e) =>
                     offlineUntil = now() + c.retryAfterSeconds * 1000L
-                    scribe.warn(s"basemap: relief tile $key not read: $e")
+                    scribe.warn(s"basemap: on-demand tile $key (${dir.getFileName}) not read: $e")
                 mine.complete(r)
                 r
               catch
                 case e: Throwable =>
-                  mine.complete(Left(s"relief tile $key: ${e.getClass.getSimpleName}"))
+                  mine.complete(Left(s"tile $key: ${e.getClass.getSimpleName}"))
                   throw e
               finally { val _ = inflight.remove(key, mine) }
 
-object TerrainOnDemand:
+object OnDemandTiles:
   /** The provider's file changed under a read (another ETag or size). */
-  val Changed = "the relief provider's file changed"
+  val Changed = "the provider's file changed"
+
+  /** Where tiles are read from: a PMTiles planet archive (range requests), or a tile URL with `{z}/{x}/{y}`
+    * (one GET a tile; a 404 is "none"). */
+  enum Source:
+    case Planet(url: () => String)
+    case Template(url: () => String)

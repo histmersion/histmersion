@@ -313,16 +313,18 @@ final case class BasemapConfig(
 ) derives ConfigReader
 
 /** `drop`: the vector layers (or their kinds) never stored — [[Basemap.parseDrop]]; everything else is
-  * kept and the style decides what is drawn. */
+  * kept and the style decides what is drawn. `onDemand`: the map outside the extract (or deeper), read as a
+  * page needs it (#3760). */
 final case class BasemapVectorConfig(buildsUrl: String, url: String, build: String, maxZoom: Int,
-    drop: String, attribution: String) derives ConfigReader
+    drop: String, attribution: String, onDemand: BasemapOnDemandConfig) derives ConfigReader
 
 /** `onDemand`: the deeper relief read from `url` as a page needs it ([[BasemapOnDemandConfig]]);
   * `focusRegions`: "name minLon,minLat,maxLon,maxLat" — the regions `fetch --focus <name>` keeps to that depth. */
 final case class BasemapTerrainConfig(url: String, maxZoom: Int, attribution: String, onDemand: BasemapOnDemandConfig,
     focusRegions: List[String]) derives ConfigReader
 
-/** The relief deeper than the extract, read tile by tile when a page shows an area, cached to `cacheGb`. */
+/** A layer read tile by tile when a page shows an area the download does not hold (the relief deeper than
+  * the extract; the map and the sea floor outside it, #3760), cached to `cacheGb`. */
 final case class BasemapOnDemandConfig(enabled: Boolean, maxZoom: Int, cacheGb: Double, concurrency: Int,
     requestsPerSecond: Double, retryAfterSeconds: Int) derives ConfigReader
 
@@ -333,8 +335,9 @@ final case class BasemapLabelsConfig(url: String, files: List[String], maxZoom: 
     attribution: String) derives ConfigReader
 
 /** The sea floor: terrarium tiles at `url` (`{z}/{x}/{y}`), zooms 0…`maxZoom` of the region, one GET a
-  * tile, `requestGapMs` apart. */
-final case class BasemapBathymetryConfig(url: String, maxZoom: Int, requestGapMs: Int, attribution: String) derives ConfigReader
+  * tile, `requestGapMs` apart; `onDemand`: the tiles outside the region, read as a page needs them (#3760). */
+final case class BasemapBathymetryConfig(url: String, maxZoom: Int, requestGapMs: Int, attribution: String,
+    onDemand: BasemapOnDemandConfig) derives ConfigReader
 
 final case class ConfigReloadConfig(watch: Boolean, watchDebounceMs: Int, drainSeconds: Int) derives ConfigReader
 

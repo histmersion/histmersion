@@ -284,7 +284,7 @@ overlapping (two lines of one name over each other), a better font, the sea floo
 language switch, and a base-map control in two steps.
 
 **The relief to zoom 12, without downloading it all.** The extract stops at zoom 8 (0.5 GB); zoom 12 for
-the default region would be ~170 GB. So (`server/basemap/TerrainOnDemand`):
+the default region would be ~170 GB. So (`server/basemap/OnDemandTiles`):
 
 - *On demand*: a terrain tile deeper than the extract is read, when a page asks for it, from Mapterhorn's
   planet file by range request — its header and root once, the 11 KB leaf directory of 4 096 tiles once,
@@ -359,3 +359,30 @@ map", Natural the default): drawn 849 ms after the view is set, no long task; pa
 dropped; wheel zooms input p95 49 ms, 6.8 % dropped; map options (six changes) input p95 42 ms, no long
 task, 0 % dropped; heap 33.6 MB (budget 60). The raster map's pan on the same run: p95 36 ms, 0 %
 dropped. Before the zoom-scoped subsets the terrain heap was 65 MB (OSM land use decoded from zoom 6).
+
+## The map and the sea floor beyond the downloaded region (#3760, 2026-10-24)
+
+Every layer was fetched only for `basemap.bbox` (−12,20,90,62): outside it the page drew nothing (the
+style's sources were bounded to the extract). Now:
+
+- **On demand (as built).** The on-demand relief's machinery is now `OnDemandTiles`, one class for every
+  layer read as a page needs it — the same politeness (concurrency, requests a second, a quiet period after
+  a failure), one read for a tile asked twice at once, and a `DiskLru` cache with a ceiling — over a
+  **source**: a PMTiles planet read by range (the relief; the vector map, from the build the extract came
+  from, else the configured or newest one) or a tile URL read with one GET a tile (the sea floor). A
+  `transform` runs before a tile is kept: the vector map is thinned with the extract's own drop list, so a
+  tile from outside matches one from inside. The server serves a vector or sea-floor tile on demand when
+  the extract has none there and the tile lies outside the extract's bounds or deeper than its zoom
+  (`BasemapService.inside`); the page no longer bounds a source the server reads on demand, and asks to
+  the deepest zoom served. Caches: `terrain-cache/`, `vector-cache/` (2 GB), `sea-cache/` (0.5 GB); `basemap
+  rm --cache` empties all three; About › Storage lists their sizes; offline, what was seen stays drawn.
+  Settings: `basemap.vector.on-demand.*`, `basemap.bathymetry.on-demand.*`. Tests read only local fixture
+  archives and fake clients (`BasemapServiceSuite`, `OnDemandTilesSuite`); the browser and HTTP suites turn
+  all three off.
+- **Ahead (as built).** `histmersion basemap fetch --bbox world` (or any box) downloads a larger region,
+  and `--dry-run` reports the download zoom by zoom (`zoom 0: 1 tile, 40 KB · …`), so a cheaper
+  `--max-zoom` can be chosen before anything is stored.
+- **Left:** the physical names (Natural Earth, built locally from whole GeoJSON files) are still cut to the
+  region; there is no planet archive to read them from by range. `fetch --layer labels --bbox world` keeps
+  them for the whole world (a few MB). A page to pick regions to download ahead (rather than the CLI) is
+  not built either.
