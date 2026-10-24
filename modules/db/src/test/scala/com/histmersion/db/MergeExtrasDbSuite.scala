@@ -17,7 +17,6 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg              = AppConfig.load()
   private lazy val admin            = testPool(cfg.db.copy(url = testDb.get))
-  private val created               = scala.collection.mutable.ListBuffer.empty[String]
   private val tmp                   = Files.createTempDirectory("histmersion-merge-extras")
 
   private def exec(ds: DataSource, stmt: String): Unit =
@@ -26,16 +25,14 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     finally c.close()
 
   private def fresh(n: String): DataSource =
-    val name = s"histmersion_mx_${n}_test"
-    exec(admin, s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
-    exec(admin, s"CREATE DATABASE $name")
-    created += name
-    val ds = testPool(cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
-    Migrate.run(ds)
+    val ds = scratch(n)
     ds
 
+  // every database a test makes: a copy of one migrated once (#3765)
+  private lazy val scratch = ScratchDatabases("histmersion_mx", cfg.db.copy(url = testDb.get))
+
   override def afterSuite(): Unit =
-    if testDb.isDefined then created.foreach(n => exec(admin, s"DROP DATABASE IF EXISTS $n WITH (FORCE)"))
+    if testDb.isDefined then scratch.dropAll()
 
   private def spool(n: String): Path = Files.createDirectories(tmp.resolve(n))
 
