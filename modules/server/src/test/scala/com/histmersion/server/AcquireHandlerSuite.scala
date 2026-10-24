@@ -310,6 +310,25 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(items.size, 0)
     dropItems(); wipe("zzacq_ingested")
 
+  test("a fetcher's refusal goes into the browser-download item: where to download it, under which licence"):
+    import com.augustnagro.magnum.*
+    import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
+    def items = QueueRepo.acquireNaming(ds, "10.1038/zztest001").filter(_.status == "open")
+    def dropItems(): Unit = transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
+    wipe("zzacq_ingested"); dropItems()
+    def answering(a: Fetch): SourceFetcher = new SourceFetcher:
+      val access = Access.Open
+      def fetch(w: WorkKey, c: FetchContext) = a
+    val why = "an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
+      "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
+    val chain = FetchChain(List("unpaywall" -> answering(Fetch.Miss("no open-access location")), "oapen" -> answering(Fetch.Refused(why))))
+    val open = FakeDiscovery(target.copy(isOa = true, oaStatus = Some("gold"), oaUrl = Some("https://press.example.org/a/1")))
+    val _ = handlers(open, oa = chain).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    assertEquals(items.size, 1, items.toString)
+    assert(items.head.text.contains(s"download it in the browser (oapen: $why), then histmersion ingest"), items.head.text)
+    assert(!items.head.text.contains("unpaywall"), "a miss says nothing about where to download it")
+    dropItems(); wipe("zzacq_ingested")
+
   test("#1581: a gold open-access work on a publisher that refuses scripts goes to the acquisition list, from a watcher's legal path too"):
     import com.augustnagro.magnum.*
     def items = QueueRepo.acquireNaming(ds, "10.1038/zztest001")

@@ -423,7 +423,8 @@ final class AcquireHandlers(
             for
               d    <- doi
               w    <- work
-              text <- Acquire.browserDownloadText(w, d, citekey)
+              text <- Acquire.browserDownloadText(w, d, citekey,
+                        chain.answers.filter(_.kind == FetchChain.Answer.Kind.Refused).map(a => s"${a.fetcher}: ${a.why}"))
             do
               // an item already naming the DOI was reported just above
               if QueueRepo.acquireNaming(ds, d).isEmpty then
