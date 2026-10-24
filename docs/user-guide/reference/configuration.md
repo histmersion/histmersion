@@ -111,6 +111,14 @@ download in the browser (topic `browser download`); download it there and bring 
 `histmersion ingest <file> --citekey <citekey>`. Add a host to the list only after checking its
 robots.txt and terms the same way.
 
+The publishers that refuse scripts are listed in `acquire.landing.browser-download-hosts` (De Gruyter
+and De Gruyter Brill, MDPI, Stockholm University Press, Brill, doiserbia). Nothing is fetched from them
+in any other way. When no copy of a **gold** (or diamond) open-access work was found and one of its
+open-access locations is on one of these hosts, every ingest — yours, and a watcher's legal-only
+ingest — adds one acquisition item, unless an item already names the DOI: the citation, the DOI, the
+licence the index gives, the page to download it from, and the `histmersion ingest` command with the
+citekey to use.
+
 ## Every setting
 
 The settings of backups and portable bundles are listed with them, in
@@ -214,6 +222,7 @@ The settings of backups and portable bundles are listed with them, in
 | `acquire.zenodo.url` · `acquire.datacite.url` | `HISTMERSION_ACQUIRE_ZENODO_URL` · `..._DATACITE_URL` | `https://zenodo.org` · `https://api.datacite.org` | the landing-page step (#1580): Zenodo's `/api/records/<id>` names an open record's PDF files (MD5-checked); DataCite's `/dois/<doi>` says where a DataCite DOI (a repository's thesis, report or chapter) resolves — a `doi.org` link is never followed blind |
 | `acquire.landing.enabled` · `.max-pages` | `HISTMERSION_ACQUIRE_LANDING_ENABLED` · `_MAX_PAGES` | `true` · `4` | resolve repository landing pages one step, reading at most this many per work: a Zenodo record by its API, any other page for its `citation_pdf_url` meta tag — only on a repository, never on a publisher. Bot protection or a 403 is no copy (the work goes to the acquire queue) |
 | `acquire.landing.allow-hosts` · `.deny-hosts` · `.deny-host-words` · `.academic-host-words` · `.generators` · `.deny-generators` | `HISTMERSION_ACQUIRE_LANDING_*` | see `reference.conf` | what is a repository's page: an OA index says so (OpenAlex `source.type`, Unpaywall `host_type`), an allowed host, an academic host (`.edu`, `.ac.<cc>`, a label such as `repository`, `eprints`, `pure`, `uni-…`) or a repository platform's `generator` tag (DSpace, EPrints, Pure, Invenio, …). A denied host (publishers, academia.edu, ResearchGate), a label such as `press` or `journals` (unless allowed) or a journal platform's generator (Open Journal Systems) is never read, whatever else says so; a host entry matches its subdomains |
+| `acquire.landing.browser-download-hosts` | `HISTMERSION_ACQUIRE_LANDING_BROWSER_DOWNLOAD_HOSTS` | `degruyter.com,degruyterbrill.com,mdpi.com,stockholmuniversitypress.se,brill.com,doiserbia.nb.rs` | publishers that refuse scripts: a gold open-access work with no copy found and an open location on one of these hosts goes to the acquisition list as a download in the browser (topic `browser download`), once per DOI. `""` = none. See *Open-access publishers* above |
 | `acquire.landing.oa-publisher-hosts` | `HISTMERSION_ACQUIRE_LANDING_OA_PUBLISHER_HOSTS` | `ejournals.eu,ore.eu,open-research-europe.ec.europa.eu` | open-access publishers whose open locations are read although they are publishers' (over `deny-*`): their `citation_pdf_url` and OJS PDF galleys, on these hosts only (#2550). See *Open-access publishers* above |
 | `acquire.doi-handles.url` | `HISTMERSION_ACQUIRE_DOI_HANDLES_URL` | `https://doi.org/api/handles` | where any DOI resolves, read without following it: asked only for an open location on an open-access publisher that an index names by its `doi.org` link |
 | `acquire.landing.deny-hosts-extra` | `HISTMERSION_ACQUIRE_LANDING_DENY_HOSTS_EXTRA` | *(empty)* | more hosts to deny, **added** to `deny-hosts` (comma-separated, each matching its subdomains). Use this to block further sites: setting `deny-hosts` itself replaces the whole shipped list, publishers included. See *Blocking more hosts* below |

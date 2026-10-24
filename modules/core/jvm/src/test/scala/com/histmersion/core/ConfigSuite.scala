@@ -287,3 +287,11 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(off.refreshEveryMinutes, PlanQuota.ScheduledRefresh.Off)
     val e = intercept[RuntimeException](AppConfig.load(env("HISTMERSION_AGENTS_CHATGPT_PLAN_REFRESH_EVERY_MINUTES" -> "-1")))
     assert(e.getMessage.contains("-1 is not 0 (off) or a positive number of minutes"), e.getMessage)
+
+  test("publishers that refuse scripts: the shipped hosts, replaced from the environment, none when empty"):
+    val shipped = AppConfig.load(env()).acquire.landing.refusingHosts
+    assert(List("degruyter.com", "degruyterbrill.com", "mdpi.com", "stockholmuniversitypress.se").forall(shipped.contains), shipped)
+    assertEquals(AppConfig.load(env("HISTMERSION_ACQUIRE_LANDING_BROWSER_DOWNLOAD_HOSTS" -> "Example.org, b.example ")).acquire.landing.refusingHosts,
+      List("example.org", "b.example"))
+    assertEquals(AppConfig.load(env("HISTMERSION_ACQUIRE_LANDING_BROWSER_DOWNLOAD_HOSTS" -> "")).acquire.landing.refusingHosts, Nil)
+

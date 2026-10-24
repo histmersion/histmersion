@@ -308,6 +308,36 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(items.size, 0)
     dropItems(); wipe("zzacq_ingested")
 
+  test("#1581: a gold open-access work on a publisher that refuses scripts goes to the acquisition list, from a watcher's legal path too"):
+    import com.augustnagro.magnum.*
+    def items = QueueRepo.acquireNaming(ds, "10.1038/zztest001")
+    def dropItems(): Unit = transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
+    wipe("zzacq_ingested"); dropItems()
+    val gold = target.copy(isOa = true, oaStatus = Some("gold"), oaLicence = Some("cc-by"),
+      oaUrl = Some("https://www.mdpi.com/zz/1/pdf"), oaLocations = List("https://www.mdpi.com/zz/1"))
+    // the watcher's legal-only path: no source, but the item, with the location, the DOI, the licence and the command
+    val legal = handlers(FakeDiscovery(gold), oa = NoPdf).ingestLegal(IngestRequest("10.1038/zztest001"))
+    assert(legal.left.exists(e => IngestBacklog.isNoLegalCopy(e.message)), legal.toString)
+    assertEquals(items.map(_.topic), Vector(Some(Acquire.BrowserDownloadTopic)))
+    val text = items.head.text
+    assert(List("https://doi.org/10.1038/zztest001", "gold open access, licence cc-by", "at https://www.mdpi.com/zz/1",
+      "mdpi.com refuses downloads by scripts", "histmersion ingest <file> --citekey zzacq_ingested").forall(text.contains), text)
+    assert(SourceRepo.load(ds, "zzacq_ingested").isEmpty, "the legal path creates no metadata-only source")
+    // a person's ingest of the same work: the item is reported, not doubled
+    val r = handlers(FakeDiscovery(gold), oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    assertEquals(items.size, 1)
+    assert(r.steps.exists(s => s.step == "acquire" && s.detail.contains(s"#${items.head.id} (already listed)")), r.steps.toString)
+    // hybrid on the same host, or gold on a host that does not refuse scripts: the watcher adds nothing
+    dropItems(); wipe("zzacq_ingested")
+    val _ = handlers(FakeDiscovery(gold.copy(oaStatus = Some("hybrid"))), oa = NoPdf).ingestLegal(IngestRequest("10.1038/zztest001"))
+    val _ = handlers(FakeDiscovery(gold.copy(oaUrl = Some("https://zenodo.org/records/1"), oaLocations = Nil)), oa = NoPdf)
+      .ingestLegal(IngestRequest("10.1038/zztest001"))
+    assertEquals(items.size, 0)
+    // a copy found: nothing to download by hand
+    val _ = handlers(FakeDiscovery(gold), oa = SomePdf()).ingest(IngestRequest("10.1038/zztest001"))
+    assertEquals(items.size, 0)
+    dropItems(); wipe("zzacq_ingested")
+
   test("no open-access copy: the source is still created and the manual drop-in is explained"):
     wipe("zzacq_ingested")
     val r = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001"))

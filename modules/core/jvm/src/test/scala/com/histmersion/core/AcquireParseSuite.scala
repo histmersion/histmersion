@@ -28,6 +28,21 @@ class AcquireParseSuite extends munit.FunSuite:
     // the arXiv preprint is the OA location of this paywalled Nature paper
     assertEquals(w.arxivId, Some("1502.02783"))
 
+  test("OpenAlex: the open locations (best first) and the licence of a gold work"):
+    val json = parse("""{"doi":"https://doi.org/10.3390/rel10040258","display_name":"A","open_access":{"is_oa":true,
+      |"oa_status":"gold","oa_url":"https://www.mdpi.com/2077-1444/10/4/258/pdf"},
+      |"best_oa_location":{"landing_page_url":"https://www.mdpi.com/2077-1444/10/4/258","pdf_url":"https://www.mdpi.com/2077-1444/10/4/258/pdf","license":"cc-by"},
+      |"locations":[{"is_oa":true,"landing_page_url":"https://www.mdpi.com/2077-1444/10/4/258","pdf_url":null,"license":"cc-by"},
+      |{"is_oa":true,"landing_page_url":"https://doaj.org/article/x","license":null},
+      |{"is_oa":false,"landing_page_url":"https://closed.example/x"}]}""".stripMargin).fold(throw _, identity)
+    val w = AcquireParse.openalexWork(json)
+    assertEquals(w.oaLocations, List("https://www.mdpi.com/2077-1444/10/4/258", "https://www.mdpi.com/2077-1444/10/4/258/pdf",
+      "https://doaj.org/article/x"))
+    assertEquals(w.oaLicence, Some("cc-by"))
+    val green = AcquireParse.openalexWork(fixture("openalex_work.json"))
+    assertEquals(green.oaLocations, List("http://arxiv.org/abs/1502.02783", "https://arxiv.org/pdf/1502.02783"))
+    assertEquals(green.oaLicence, None)
+
   test("OpenAlex inverted-index abstracts are put back in word order"):
     val w = AcquireParse.openalexWork(fixture("openalex_work.json"))
     assert(w.abstractText.exists(_.startsWith("‘The collapse c. 1200 BC’")), w.abstractText)

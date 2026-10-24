@@ -331,6 +331,12 @@ final class AcquireHandlers(
         Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.toString, steps, req.refetch, legalOnly))
     }
 
+  /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
+  private def acquireOnce(doi: String, text: String): (Int, Boolean) =
+    QueueRepo.acquireNaming(ds, doi).headOption match
+      case Some(existing) => (existing.id, false)
+      case None => (QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text, topic = Some(Acquire.BrowserDownloadTopic))).id, true)
+
   /** The rest of an ingest, once we know what the source will be CALLED. */
   private def ingestWith(
       doi: Option[String],
@@ -362,6 +368,16 @@ final class AcquireHandlers(
           f.licence.map(_.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
           original.fold("")(h => s" (replacing $h: --refetch)"))
         case Left(e)  => steps += IngestStep("fetch", skip.isDefined, e)
+
+      // a gold open-access work from a publisher that refuses scripts: a download in the browser, on every path
+      val browserOnly = Option.when(fetched.isLeft && skip.isEmpty)(work).flatten
+        .flatMap(w => Citekey.parse(citekey).toOption.flatMap(BrowserDownload.of(w, _, acq.landing.refusingHosts)))
+      browserOnly.foreach { b =>
+        val (id, added) = acquireOnce(b.doi.value, b.text)
+        if added then scribe.info(s"acquire: ${b.doi.value} is gold open access on ${b.publisher.value}, which refuses scripts: acquisition item #$id")
+        steps += IngestStep("acquire", true, s"gold open access on ${b.publisher.value}, which refuses scripts — " +
+          s"acquisition item #$id${if added then "" else " (already listed)"}: download it in the browser")
+      }
 
       // a watcher's auto-ingest brings a work in only WITH its legal file: no metadata-only source
       if legalOnly && fetched.isLeft then
@@ -400,7 +416,7 @@ final class AcquireHandlers(
           steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
           // an open-access work no script may download goes to the acquisition list once, as a download
           // in the browser (#1581) — a person's ingest only: a watcher's legal path queues its own
-          if fetched.isLeft && skip.isEmpty && !legalOnly then
+          if fetched.isLeft && skip.isEmpty && !legalOnly && browserOnly.isEmpty then
             for
               d    <- doi
               w    <- work
@@ -408,8 +424,8 @@ final class AcquireHandlers(
             do
               // an item already naming the DOI was reported just above
               if QueueRepo.acquireNaming(ds, d).isEmpty then
-                val i = QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text, topic = Some(Acquire.BrowserDownloadTopic)))
-                steps += IngestStep("acquire", true, s"open access, but no script may download it — acquisition item #${i.id}: download it in the browser")
+                val (id, _) = acquireOnce(d, text)
+                steps += IngestStep("acquire", true, s"open access, but no script may download it — acquisition item #$id: download it in the browser")
 
           // assess last: the source now exists, so the verdict can be recorded against it. The status is
           // written for a source we JUST created, and for a retraction whatever the source's age — a

@@ -72,7 +72,8 @@ object RepositoryLanding:
     w.nonEmpty && (label == w || (w.endsWith("-") && label.startsWith(w)) ||
       (label.startsWith(w) && label.length > w.length && { val c = label.charAt(w.length); c == '-' || c.isDigit }))
 
-  private def matchesHost(host: String, entry: String): Boolean =
+  /** A host entry matches the host itself or any subdomain of it. */
+  def matchesHost(host: String, entry: String): Boolean =
     val e = entry.trim.toLowerCase.stripPrefix(".")
     e.nonEmpty && (host == e || host.endsWith("." + e))
 
