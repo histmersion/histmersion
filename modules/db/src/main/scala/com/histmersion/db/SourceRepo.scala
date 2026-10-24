@@ -105,7 +105,7 @@ object SourceRepo:
             (${s.citekey}, ${s.title}, ${s.authors}::text[], ${s.year}, ${s.venue}, $status,
              ${s.topics}::text[], ${s.regions}::text[], ${s.tags}::text[],
              ${periodLit}::int8range, ${s.summary}, ${s.ocrMarkdown}, ${s.notes},
-             ${Provenance.canonical(s.provenance)}, ${s.calibreId}, ${s.doi},
+             ${s.provenance}, ${s.calibreId}, ${s.doi},
              ${s.citedByCount}, ${s.influentialCitations})
           ON CONFLICT (citekey) DO UPDATE SET
             title=EXCLUDED.title, authors=EXCLUDED.authors, year=EXCLUDED.year, venue=EXCLUDED.venue,

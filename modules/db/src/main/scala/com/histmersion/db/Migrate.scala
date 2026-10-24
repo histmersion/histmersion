@@ -38,7 +38,7 @@ object Migrate:
       all.filter(r => r.getFilename.startsWith(prefix) && suffixes.exists(r.getFilename.endsWith))
         .map(r => r: LoadableResource).asJavaCollection
 
-  private def flyway(ds: DataSource): Flyway =
+  private[db] def flyway(ds: DataSource): Flyway =
     Flyway.configure()
       .dataSource(ds)
       .locations(s"classpath:$Base")
@@ -59,8 +59,35 @@ object Migrate:
     * rolls the failed migration back, so a retry starts from where the last success left off. */
   def run(ds: DataSource): String =
     ensureRole(ds, QueryRole)
+    val _ = acceptReplacedChecksums(ds)
     retrying(MigrateAttempts)(flyway(ds).migrate())
     current(ds).getOrElse("?")
+
+  /** A migration whose text was replaced after it had run: the checksum Flyway recorded for the text
+    * it ran with, and the one it computes for the text it has now. */
+  private[db] final case class ReplacedMigration(version: String, ranWith: Int, now: Int)
+
+  /** V097's text was replaced by a no-op after it had run: what it rewrote stays rewritten, and the
+    * text it ran with named a value this repository does not carry. */
+  private[db] val Replaced: List[ReplacedMigration] = List(ReplacedMigration("097", 579586107, -983827574))
+
+  /** Move each history row that still carries a [[Replaced]] migration's old checksum to the new one,
+    * so that Flyway validates the replaced text instead of refusing to start. Touches those rows only
+    * (no other repair Flyway would make); does nothing before the history table exists or once the
+    * rows are moved. Returns how many rows it moved. */
+  private[db] def acceptReplacedChecksums(ds: DataSource): Int =
+    val c = ds.getConnection
+    try
+      if !historyExists(c) then 0
+      else
+        val st = c.prepareStatement("UPDATE flyway_schema_history SET checksum = ? WHERE version = ? AND checksum = ?")
+        try
+          Replaced.map { m =>
+            st.setInt(1, m.now); st.setString(2, m.version); st.setInt(3, m.ranWith)
+            st.executeUpdate()
+          }.sum
+        finally st.close()
+    finally c.close()
 
   /** The read-only login role migration V011 creates (and `Db.provisionQueryRole` configures). */
   val QueryRole = "histmersion_query"
@@ -121,6 +148,7 @@ object Migrate:
   /** Flyway `validate` — run after a restore (plan §1.10) to prove the dump we just loaded carries
     * the schema this build expects. Right = the current version, Left = why validation failed. */
   def validate(ds: DataSource): Either[String, String] =
+    val _ = acceptReplacedChecksums(ds)
     val r = flyway(ds).validateWithResult()
     if r.validationSuccessful then Right(current(ds).getOrElse("?"))
     else Left(Option(r.getAllErrorMessages).map(_.trim).filter(_.nonEmpty).getOrElse("schema validation failed"))
@@ -135,9 +163,7 @@ object Migrate:
   def current(ds: DataSource): Option[String] =
     val c = ds.getConnection
     try
-      val exists = c.prepareStatement("SELECT to_regclass('flyway_schema_history') IS NOT NULL")
-      val known  = try { val rs = exists.executeQuery(); rs.next() && rs.getBoolean(1) } finally exists.close()
-      if !known then None
+      if !historyExists(c) then None
       else
         // versions are dotted numbers (`050`, `1`): compared as int arrays, not as text
         val st = c.prepareStatement(
@@ -148,3 +174,7 @@ object Migrate:
           Option.when(rs.next())(rs.getString(1))
         finally st.close()
     finally c.close()
+
+  private def historyExists(c: java.sql.Connection): Boolean =
+    val st = c.prepareStatement("SELECT to_regclass('flyway_schema_history') IS NOT NULL")
+    try { val rs = st.executeQuery(); rs.next() && rs.getBoolean(1) } finally st.close()

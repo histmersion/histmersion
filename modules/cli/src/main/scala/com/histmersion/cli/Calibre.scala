@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.core.{Acquire, CalibreCliConfig, CalibreGap, Plural, Provenance}
+import com.histmersion.core.{Acquire, CalibreCliConfig, CalibreGap, Plural}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -611,7 +611,7 @@ object Calibre:
           case Some(false) => GapOriginal.Missing
           case None        => GapOriginal.Unknown
       val inCalibre = g.calibreId.exists(_.trim.nonEmpty) ||
-        g.provenance.exists(p => Provenance.canonical(p).trim.toLowerCase(java.util.Locale.ROOT) == "calibre")
+        g.provenance.exists(_.trim.toLowerCase(java.util.Locale.ROOT) == "calibre")
       GapEntry(g, original, counted = original != GapOriginal.Missing && !inCalibre)
     }
 

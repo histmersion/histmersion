@@ -358,7 +358,7 @@ object BundleImport:
                   ${s.year}, ${s.venue}, ${s.status.wire}, ${s.topics}::text[], ${s.regions}::text[],
                   ${s.tags}::text[],
                   ${rLit(s.period)}::int8range,
-                  ${s.summary}, ${s.notes}, ${Provenance.canonical(s.provenance)}, ${s.citedByCount}, ${s.influentialCitations},
+                  ${s.summary}, ${s.notes}, ${s.provenance}, ${s.citedByCount}, ${s.influentialCitations},
                   ${s.addedDate}::date, ${s.originalSha256}, ${s.updatedAt}::timestamptz)""".update.run()
         else
           val before = local.sources.find(_.uid == s.uid)
@@ -371,7 +371,7 @@ object BundleImport:
                   doi = ${s.doi}, year = ${s.year}, venue = ${s.venue}, status = ${s.status.wire},
                   topics = ${s.topics}::text[], regions = ${s.regions}::text[], tags = ${s.tags}::text[],
                   period = ${rLit(s.period)}::int8range,
-                  summary = ${s.summary}, notes = ${s.notes}, source = ${Provenance.canonical(s.provenance)},
+                  summary = ${s.summary}, notes = ${s.notes}, source = ${s.provenance},
                   cited_by_count = ${s.citedByCount}, influential_citations = ${s.influentialCitations},
                   added_date = ${s.addedDate}::date, sha256 = ${s.originalSha256},
                   updated_at = ${s.updatedAt}::timestamptz
