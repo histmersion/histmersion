@@ -79,7 +79,10 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       case Right(Some(f)) =>
         val h    = f.header
         val mine = f.metadata.hcursor.downField("histmersion")
-        base.copy(present = true, bytes = f.size, minZoom = Some(h.minZoom), maxZoom = Some(h.maxZoom),
+        val credit = if l != BasemapLayer.Bathymetry then base.attribution
+                     else BasemapService.seaCredit(f.metadata.hcursor.get[String]("attribution").toOption, cfg.bathymetry.attribution,
+                       cfg.bathymetry.onDemand.enabled)
+        base.copy(present = true, attribution = credit, bytes = f.size, minZoom = Some(h.minZoom), maxZoom = Some(h.maxZoom),
           bbox = Some(s"${h.minLon},${h.minLat},${h.maxLon},${h.maxLat}"), tiles = Some(h.addressedTiles),
           tileType = Some(h.tileType.mime),
           source = mine.get[String]("build").toOption.orElse(mine.get[String]("source").toOption),
@@ -366,7 +369,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
               s"bbox ${q.bbox.getOrElse(cfg.bbox)}, zoom ≤ " + a.layers.collect {
                 case BasemapLayer.Vector     => s"${a.vectorZoom} (vector)"
                 case BasemapLayer.Terrain    => s"${a.terrainZoom} (terrain)"
-                case BasemapLayer.Bathymetry => s"${cfg.bathymetry.maxZoom} (sea floor)"
+                case BasemapLayer.Bathymetry => s"${cfg.bathymetry.extractMaxZoom} (sea floor, ${cfg.bathymetry.source.wire})"
               }.mkString(" / ")
         BackgroundJob.start(deps.ds, BasemapService.JobKind, Some(JobDetail(about = Some(what))), slot, "a base-map fetch",
           Some(BasemapApi.Busy), deps.pins)((_, note) => BackgroundJob.Outcome.of(run(a, note)))
@@ -437,12 +440,14 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     case BasemapLayer.Vector  => a.vectorZoom
     case BasemapLayer.Terrain => a.terrainZoom
     case BasemapLayer.Labels  => cfg.labels.maxZoom
-    case BasemapLayer.Bathymetry => cfg.bathymetry.maxZoom
+    case BasemapLayer.Bathymetry => cfg.bathymetry.extractMaxZoom
 
   private def one(a: Ask, l: BasemapLayer, note: String => Unit): Either[String, String] =
     l match
       case BasemapLayer.Labels     => labels(a, note)
-      case BasemapLayer.Bathymetry => bathymetry(a, note)
+      case BasemapLayer.Bathymetry => cfg.bathymetry.source match
+        case SeaFloorSource.Etopo1 => bathymetry(a, note)
+        case SeaFloorSource.Gebco  => gebco(a, note)
       case _                       => ranged(a, l, note)
 
   /** A PMTiles layer (vector, terrain): planned, checked against the free disk, downloaded, assembled. */
@@ -557,6 +562,45 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           s"bathymetry (zoom 0–${bc.maxZoom}): $stored tiles, ${Backup.humanBytes(bytes)} at $out"
         }
 
+  /** The sea floor from the GEBCO grid ([[GebcoSeaFloor]]): the GeoTIFF rows the region needs read by range
+    * into the work directory (resumed when interrupted), then made into the tiles of zooms
+    * 0…`bathymetry.gebco.max-zoom`, written as `bathymetry.pmtiles`. */
+  private def gebco(a: Ask, note: String => Unit): Either[String, String] =
+    val bc   = cfg.bathymetry
+    val sea  = GebcoSeaFloor(bc.gebco, bc.url, http(), cfg.maxRequestMb.toLong * 1024 * 1024)
+    note("reading the GEBCO GeoTIFFs' headers")
+    sea.plan(a.bbox, bc.gebco.maxZoom).flatMap { plan =>
+      if a.dryRun then Right(sea.describe(plan))
+      else
+        val free = freeSpace(BasemapService.existing(dir))
+        if free - sea.needs(plan) < minFree then
+          Left(s"refused: the GEBCO sea floor needs about ${Backup.humanBytes(sea.needs(plan))} on $dir " +
+            s"(${Backup.humanBytes(free)} free), which would leave less than ${Backup.humanBytes(minFree)} (basemap.min-free-gb). " +
+            "Fetch a smaller region (--bbox), or the ETOPO1 sea floor (basemap.bathymetry.source = etopo1).")
+        else
+          val work = this.work(BasemapLayer.Bathymetry)
+          for
+            _ <- sea.download(plan, work, cfg.requestGapMs.toLong, note)
+            out = path(BasemapLayer.Bathymetry)
+            w   = PmTilesWriter(out)
+            n  <- sea.build(plan, work, w.add, note)
+          yield
+            val header = PmTiles.Header(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, PmTiles.Compression.Gzip, PmTiles.Compression.None,
+              PmTiles.TileType.Png, 0, bc.gebco.maxZoom, a.bbox.minLon, a.bbox.minLat, a.bbox.maxLon, a.bbox.maxLat,
+              math.min(bc.gebco.maxZoom, 5), (a.bbox.minLon + a.bbox.maxLon) / 2, (a.bbox.minLat + a.bbox.maxLat) / 2)
+            val meta = io.circe.Json.obj("name" -> io.circe.Json.fromString("histmersion sea floor"),
+              "attribution" -> io.circe.Json.fromString(bc.gebco.attribution),
+              "histmersion" -> io.circe.Json.obj("layer" -> io.circe.Json.fromString(BasemapLayer.Bathymetry.wire),
+                "source" -> io.circe.Json.fromString(bc.gebco.url), "build" -> io.circe.Json.fromString("GEBCO grid"),
+                "bbox" -> io.circe.Json.fromString(s"${a.bbox.minLon},${a.bbox.minLat},${a.bbox.maxLon},${a.bbox.maxLat}"),
+                "maxZoom" -> io.circe.Json.fromInt(bc.gebco.maxZoom), "fetchedAt" -> io.circe.Json.fromString(Instant.now().toString)))
+            val bytes = w.finish(header, meta)
+            val _ = BasemapService.deleteTree(work)
+            val _ = reader(BasemapLayer.Bathymetry)
+            s"bathymetry from GEBCO (zoom 0–${bc.gebco.maxZoom}): $n tiles from ${Backup.humanBytes(plan.readBytes)} of the grid, " +
+              s"${Backup.humanBytes(bytes)} at $out"
+    }
+
   /** The physical names: Natural Earth's label files read whole (a few MB each), cut to the region and
     * written as `labels.pmtiles` (about 1.4 MB for the default region) — no range requests, nothing to resume. */
   private def labels(a: Ask, note: String => Unit): Either[String, String] =
@@ -592,6 +636,14 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
         }
 
 object BasemapService:
+
+  /** The sea floor's credit line: the extract's own (GEBCO or ETOPO1), and ETOPO1's as well when the sea
+    * outside the extract is read from it on demand and the extract is another's. */
+  def seaCredit(extract: Option[String], etopo1: String, onDemand: Boolean): String =
+    extract.filter(_.trim.nonEmpty) match
+      case Some(e) if e != etopo1 && onDemand => s"$e; outside it, $etopo1"
+      case Some(e)                            => e
+      case None                               => etopo1
 
   /** How many zooms up a relief tile is looked for to cut a missing one from: the extract's deepest
     * (8) to a focus region's (12) is 4; more is a tile of the whole world stretched over a valley. */

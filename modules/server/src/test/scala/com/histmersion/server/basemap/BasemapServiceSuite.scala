@@ -228,6 +228,51 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     assertEquals(svc.tile("bathymetry", 0, 0, 0).map(_._5.code), Right(204), "the bucket had none")
     assert(!Files.exists(dir.resolve(".bathymetry.part")), "the parts are removed once written")
 
+  test("#2719: the sea floor from GEBCO — its GeoTIFF rows read by range, made into tiles; ETOPO1 outside the region; GEBCO credited"):
+    val dir = Files.createTempDirectory("basemap")
+    // the grid's 90° tile north-east of 0,0 at a coarse 0.25° (360 × 360): its depth falls 1 m a row southwards
+    val tif = Files.createTempDirectory("gebco").resolve("n90_s0_w0_e90.tif")
+    Files.write(tif, GeoTiffSuite.tiff(360, 360, west = 0, north = 90, step = 0.25, value = (r, _) => (-r).toShort))
+    val grid = BasemapFixtures.LocalRange(tif)
+    val etopoAsked = java.util.concurrent.atomic.AtomicInteger(0)
+    val outside = TerrariumPng.encode(Array.fill(256 * 256)(-42f), 256)
+    val router = new RangeHttp:
+      private def mine(url: String) = Either.cond(url == "fake://gebco/n90.0_s0.0_w0.0_e90.0.tif", grid, s"$url: unexpected")
+      def text(url: String) = Left("unexpected")
+      def bytes(url: String, o: Long, l: Long) = mine(url).flatMap(_.bytes(url, o, l))
+      def download(url: String, o: Long, l: Long, to: Path) = mine(url).flatMap(_.download(url, o, l, to))
+      override def file(url: String) = { etopoAsked.incrementAndGet(); Right(Some(outside)) }
+    val base = AppConfig.load()
+    val cfg = base.copy(db = base.db.copy(url = testDb.get), basemap = base.basemap.copy(dir = dir.toString, requestGapMs = 0,
+      bbox = "22,35,29,41", maxRequestMb = 1,
+      bathymetry = base.basemap.bathymetry.copy(url = "fake://sea/{z}/{x}/{y}.png", source = SeaFloorSource.Gebco,
+        gebco = base.basemap.bathymetry.gebco.copy(url = "fake://gebco/n{north}_s{south}_w{west}_e{east}.tif", maxZoom = 3))))
+    val svc = BasemapService(Deps(cfg, ds), () => router)
+    val dry = await(svc.fetch(BasemapFetchQuery(layer = "bathymetry", dryRun = true)).fold(e => fail(e.message), _.id))
+    assert(dry.succeeded, dry.toString)
+    // rows 196–219 (latitudes 41–35) of 720 bytes, in requests of at most 1 MB: one
+    assert(dry.progress.exists(p => p.contains("bathymetry from GEBCO (zoom 0–3): would read 17.3 kB of 1 GeoTIFF in 1 range request, and write 5 tiles")
+      && p.contains("zoom 0: 1 · zoom 1: 1")), dry.progress.toString)
+    assertEquals(grid.downloads.get, 0)
+    val j = await(svc.fetch(BasemapFetchQuery(layer = "bathymetry")).fold(e => fail(e.message), _.id))
+    assert(j.succeeded, j.toString)
+    assertEquals(grid.downloads.get, 1)
+    val sea = svc.status.layers.find(_.layer == "bathymetry").get
+    assertEquals((sea.present, sea.maxZoom, sea.source), (true, Some(3), Some("GEBCO grid")))
+    assert(sea.attribution.contains("GEBCO_2026 Grid") && sea.attribution.contains("outside it") && sea.attribution.contains("ETOPO1"),
+      sea.attribution)
+    def elevation(z: Int, x: Int, y: Int, px: Int, py: Int): Float =
+      val (b, mime, _, _, code) = svc.tile("bathymetry", z, x, y).fold(e => fail(e.message), identity)
+      assertEquals((code.code, mime), (200, "image/png"))
+      val (m, w) = TerrariumPng.decode(b).fold(e => fail(e), identity)
+      m(py * w + px)
+    // zoom 3, tile 4/3 holds 0–45°E, 0–41°N: pixel (142, 22) is about 25°E 38°N, inside the region (the grid's
+    // row 208); pixel (2, 254), near 0°N 0°E, far outside it (ETOPO1's tile)
+    assertEqualsDouble(elevation(3, 4, 3, 142, 22).toDouble, -208.0, 1.5)
+    assertEqualsDouble(elevation(3, 4, 3, 2, 254).toDouble, -42.0, 0.01)
+    assert(etopoAsked.get > 0 && etopoAsked.get <= Basemap.tileCount(BBox(22, 35, 29, 41), 0, 3))
+    assert(!Files.exists(dir.resolve(".bathymetry.part")), "the rows read are removed once the tiles are written")
+
   test("#3760: the map and the sea floor outside the region (or deeper) are read on demand, thinned and cached; off, none"):
     val dir = Files.createTempDirectory("basemap")
     val (svc, v, _) = service(dir)

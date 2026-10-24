@@ -17,11 +17,23 @@ enum BasemapLayer(val wire: String, val title: String):
   /** The physical names — ranges, deserts, peninsulas, lakes, major rivers, peaks — from Natural
     * Earth, a small vector archive built by the fetch (seas and gulfs come with the vector layer). */
   case Labels  extends BasemapLayer("labels", "physical names")
-  /** The sea floor: terrarium-encoded elevation tiles whose sea is its depth (ETOPO1's bathymetry, NOAA,
-    * public domain), read tile by tile — the relief's own tiles have the sea flat at 0. */
+  /** The sea floor: terrarium-encoded elevation tiles whose sea is its depth (ETOPO1's bathymetry, NOAA, read
+    * tile by tile; or the GEBCO grid's, [[SeaFloorSource]]) — the relief's own tiles have the sea flat at 0. */
   case Bathymetry extends BasemapLayer("bathymetry", "sea floor")
 
   def file: String = s"$wire.pmtiles"
+
+/** Where the sea floor's extract comes from. */
+enum SeaFloorSource(val wire: String):
+  /** NOAA's ETOPO1 (1 arc-minute, ~1.8 km) through Mapzen's terrain tiles: one GET a tile. */
+  case Etopo1 extends SeaFloorSource("etopo1")
+  /** The GEBCO grid (15 arc-seconds, ~460 m): its GeoTIFFs read by range and made into tiles by the fetch. */
+  case Gebco extends SeaFloorSource("gebco")
+
+object SeaFloorSource:
+  def parse(s: String): Either[String, SeaFloorSource] =
+    values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+      .toRight(s"'$s' is not a sea-floor source (${values.map(_.wire).mkString(", ")})")
 
 object BasemapLayer:
   def parse(s: String): Option[BasemapLayer] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
