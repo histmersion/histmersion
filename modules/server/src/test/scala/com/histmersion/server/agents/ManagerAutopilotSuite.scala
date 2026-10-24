@@ -336,6 +336,17 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
     val m = ManagerInfo("seed:x", "seed", config = ManagerConfig(autoApprove = Some(false)))
     assert(!a.autoApprovals.checked(AgentRepo.approval(ds, p2.id).get, Some(m)))
 
+  test("older approvals a person decides never crowd the code-decided ones out of a tick"):
+    val personPlans = autoCfg.copy(agents = autoCfg.agents.copy(approvals = autoCfg.agents.approvals.copy(goalPlan = "manual")))
+    val (a, h) = handlers(ScriptedClient(Model), personPlans); seed(h)
+    import io.circe.syntax.*
+    val waiting = (1 to 60).map(i => AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, s"zzagent-crowd-$i", "{}"))
+    val plan = AgentRepo.openSubject(ds, None, ApprovalKind.ArticlePlan, Goal, ArticlePlans.ArticlePlan(Goal, "r",
+      List(ArticlePlans.ProposedArticle("zzagent_crowded", "Zz crowded", "concept", ArticleFilter(topics = List("zzagent_tin"))))).asJson.noSpaces)
+    a.autoApprovals.sweep(Instant.now())
+    assertEquals(AgentRepo.approval(ds, plan.id).map(_.state), Some("approved"))
+    assert(waiting.forall(w => AgentRepo.approval(ds, w.id).exists(_.state == "open")))
+
   test("shared ingest cap: every watcher's ingests today count; at the cap a sweep ingests nothing"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
