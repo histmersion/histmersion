@@ -82,8 +82,18 @@ object AcquireParse:
       workType = str(c, "type"),
       abstractText = c.downField("abstract_inverted_index").focus.flatMap(openalexAbstract),
       referencedWorks = strings(c, "referenced_works").map(tail),
-      citekey = Some(Acquire.citekey(authors, year, title))
+      citekey = Some(Acquire.citekey(authors, year, title)),
+      oaLocations = openalexOaLocations(c),
+      oaLicence = str(c.downField("best_oa_location"), "license").orElse(
+        arr(c, "locations").filter(l => bool(l.hcursor, "is_oa")).flatMap(l => str(l.hcursor, "license")).headOption)
     )
+
+  /** The open locations' landing pages and PDFs, the best location first. */
+  private def openalexOaLocations(c: ACursor): List[String] =
+    val best = c.downField("best_oa_location")
+    val open = arr(c, "locations").filter(l => bool(l.hcursor, "is_oa"))
+    (List(str(best, "landing_page_url"), str(best, "pdf_url")).flatten ++
+      open.flatMap(l => List(str(l.hcursor, "landing_page_url"), str(l.hcursor, "pdf_url")).flatten)).distinct
 
   /** An OpenAlex `/works` search page. */
   def openalexWorks(json: Json): List[WorkRef] =

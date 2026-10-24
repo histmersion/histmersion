@@ -37,8 +37,13 @@ final case class LandingConfig(
     denyGenerators: String,
     denyHostWords: String,
     /** Open-access publishers whose open locations are read (#2550, [[RepositoryLanding.oaPublisherPage]]). */
-    oaPublisherHosts: String
+    oaPublisherHosts: String,
+    /** Publishers that refuse scripts: their gold open-access works go to the acquisition list as a download
+      * in the browser ([[BrowserDownload]]). */
+    browserDownloadHosts: String = ""
 ) derives ConfigReader:
+  def refusingHosts: List[String] = LandingConfig.split(browserDownloadHosts)
+
   def rules: RepositoryLanding.Rules =
     RepositoryLanding.Rules(LandingConfig.split(allowHosts),
       (LandingConfig.split(denyHosts) ++ LandingConfig.split(denyHostsExtra)).distinct,

@@ -37,7 +37,9 @@ final case class WorkRef(
     abstractText: Option[String] = None,
     referencedWorks: List[String] = Nil,
     citekey: Option[String] = None,
-    inDb: Boolean = false
+    inDb: Boolean = false,
+    oaLocations: List[String] = Nil,
+    oaLicence: Option[String] = None
 ) derives KindlingsCodecAsObject
 object WorkRef:
   given Schema[WorkRef] = KindlingsSchema.derived[WorkRef].schema
