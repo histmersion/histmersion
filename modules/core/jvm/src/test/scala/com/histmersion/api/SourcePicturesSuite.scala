@@ -5,6 +5,7 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
+
 import io.circe.parser.parse
 
 /** The pure half of a source's picture (#1446): which figure illustrates a paper ([[FigurePick]]) —

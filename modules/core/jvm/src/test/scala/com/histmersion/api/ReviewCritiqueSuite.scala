@@ -5,6 +5,7 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
+
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.api.Agents.ApprovalKind
 import com.histmersion.domain.ReviewArticle.*
