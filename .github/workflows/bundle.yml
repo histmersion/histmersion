@@ -14,10 +14,11 @@ name: bundle
 # attaches the three to the release next to the bundle; a manual run (workflow_dispatch) uploads them as
 # a workflow artifact kept 7 days; push and pull-request runs upload nothing (storage, as above).
 #
-# The PLUGIN API (the jar a plugin compiles against, and its sources jar for the IDE and the Scaladoc) is
-# the same on every platform, so one job (linux-x64) attaches it to a tagged release as
+# The PLUGIN REPOSITORY (the Maven repository a plugin compiles against: the plugin API with its sources,
+# and the plugin platform's POM) is the same on every platform, so one job (linux-x64) attaches it to a
+# tagged release as histmersion-maven-<tag>.zip, with the API's two jars beside it as
 # histmersion-plugin-api-<tag>.jar and histmersion-plugin-api-<tag>-sources.jar; every bundle carries the
-# same two files in plugin-api/.
+# same repository in maven/.
 on:
   push:
     tags: ['v*']
@@ -145,17 +146,21 @@ jobs:
           retention-days: 7
           compression-level: 0   # zstd already
           if-no-files-found: error
-      - name: package the plugin API
+      - name: package the plugin repository
         run: |
-          api="histmersion-plugin-api-${GITHUB_REF_NAME//\//-}"
-          cp dist/histmersion/plugin-api/histmersion-plugin-api.jar "$api.jar"
-          cp dist/histmersion/plugin-api/histmersion-plugin-api-sources.jar "$api-sources.jar"
+          tag="${GITHUB_REF_NAME//\//-}"
+          api="histmersion-plugin-api-$tag"
+          cp "$(find dist/histmersion/maven -name 'histmersion-plugin-api_3-*.jar' ! -name '*-sources.jar' | head -1)" "$api.jar"
+          cp "$(find dist/histmersion/maven -name 'histmersion-plugin-api_3-*-sources.jar' | head -1)" "$api-sources.jar"
+          (cd dist/histmersion && zip -qr "$GITHUB_WORKSPACE/histmersion-maven-$tag.zip" maven)
           echo "API=$api" >> "$GITHUB_ENV"
-      - name: attach the plugin API to the release
+          echo "MAVEN=histmersion-maven-$tag.zip" >> "$GITHUB_ENV"
+      - name: attach the plugin repository to the release
         if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'linux-x64'
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            ${{ env.MAVEN }}
             ${{ env.API }}.jar
             ${{ env.API }}-sources.jar
       - name: attach to the release

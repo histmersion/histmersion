@@ -35,6 +35,48 @@ hk_plugin_jars() { # <plugins dir>
   return 0
 }
 
+# The POM published beside each plugin jar (<name>.jar → <name>.pom), one path per line, in the jars'
+# order; a jar without one has no dependencies of its own.
+hk_plugin_poms() { # <plugins dir>
+  local j
+  hk_plugin_jars "$1" | while IFS= read -r j; do
+    if [ -f "${j%.jar}.pom" ]; then printf '%s\n' "${j%.jar}.pom"; fi
+  done
+  return 0
+}
+
+# The plugins' dependency jars (<plugins dir>/lib, as its classpath file lists them), one path per line.
+hk_plugin_deps() { # <plugins dir>
+  local n
+  [ -f "$1/lib/classpath" ] || return 0
+  while IFS= read -r n; do if [ -n "$n" ]; then printf '%s\n' "$1/lib/$n"; fi; done < "$1/lib/classpath"
+  return 0
+}
+
+# `<sha256>  <file>` of every plugin jar and its POM, sorted by name: what lib/ was resolved from
+# (the resolver writes the same lines to lib/inputs).
+hk_plugin_inputs() { # <plugins dir>
+  local f
+  { hk_plugin_jars "$1"; hk_plugin_poms "$1"; } | while IFS= read -r f; do
+    printf '%s  %s\n' "$(hk_sha256 "$f")" "$(basename "$f")"
+  done | LC_ALL=C sort -k2
+}
+
+# 0 when <plugins dir>/lib was resolved from exactly the plugin jars and POMs there now.
+hk_plugin_deps_current() { # <plugins dir>
+  [ -f "$1/lib/inputs" ] && [ "$(hk_plugin_inputs "$1")" = "$(cat "$1/lib/inputs")" ]
+}
+
+# Resolve the plugins' dependencies into <lib> with the kit's plugin resolver (kit/tools/resolver, run
+# beside kit/lib): what the server ships is not installed again, a plugin that needs a newer version of
+# it is refused (exit 2). <args>: --repo <url|dir>…, --check, then the plugin jars.
+hk_resolve() { # <java home> <install> <lib dir> <args…>
+  local jh="$1" install="$2" lib="$3"; shift 3
+  [ -d "$install/kit/tools/resolver" ] || { echo "the kit has no plugin resolver (kit/tools/resolver) — reinstall the bundle" >&2; return 3; }
+  "$jh/bin/java" -cp "$install/kit/lib/*:$install/kit/tools/resolver/*" com.histmersion.pluginresolver.PluginResolver resolve \
+    --kit "$install/kit" --lib "$lib" --histmersion-repo "$install/maven" "$@"
+}
+
 hk_sha256() { # <file> → hex
   if command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | awk '{print $1}'
   else sha256sum "$1" | awk '{print $1}'; fi
@@ -182,11 +224,12 @@ hk_kit_fingerprint() { # <kit dir> → the SHA-256 of its SHA256SUMS (every kit 
   return 0
 }
 
-# The plugin jars of <plugins dir> as one hash: "<sha256>  <file name>" per jar, sorted by name.
-# No jars (or no directory) → the empty text's hash.
+# The plugin jars of <plugins dir> as one hash: "<sha256>  <file name>" per jar, sorted by name, then
+# the same for the POMs beside them (which name the plugins' dependencies). No jars (or no directory)
+# → the empty text's hash.
 hk_plugins_fingerprint() { # <plugins dir>
   local j
-  hk_plugin_jars "$1" | while IFS= read -r j; do printf '%s  %s\n' "$(hk_sha256 "$j")" "$(basename "$j")"; done \
+  { hk_plugin_jars "$1"; hk_plugin_poms "$1"; } | while IFS= read -r j; do printf '%s  %s\n' "$(hk_sha256 "$j")" "$(basename "$j")"; done \
     | hk_sha256_text
 }
 

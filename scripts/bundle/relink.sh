@@ -5,12 +5,15 @@
 #   histmersion-relink --check                                         the pre-flight alone (seconds)
 #   histmersion-relink --jvm [--no-restart]                            switch to JVM mode instead (no build)
 #   histmersion-relink --rollback [--no-restart]                       back to the previous binary
-#   histmersion-relink --describe <jar>…                               what a jar provides, as JSON
+#   histmersion-relink --describe [--lib <dir>] <jar>…                 what a jar provides, as JSON
+#   histmersion-relink --resolve [--lib <dir>] [--repo <url|dir>]… [--check] [<jar>…]
+#                                                                      the plugins' dependencies into lib/
 #
 # A relink re-runs GraalVM native-image over the KIT this bundle ships (kit/: the server's Sloth-
 # patched jars in class-path order, its native-image arguments, kit.json + SHA256SUMS) plus the jars of
-# the plugins directory (<data>/plugins/*.jar). No sbt, no Scala compile. Every step can stop it, and
-# nothing changes in bin/ until the new binary passed its own --self-check:
+# the plugins directory (<data>/plugins/*.jar) and their dependencies (<data>/plugins/lib/, resolved from
+# the POMs beside the jars). No sbt, no Scala compile. Every step can stop it, and nothing changes in bin/
+# until the new binary passed its own --self-check:
 #
 #   1. lock          <data>/plugins/.relink.lock — one relink at a time
 #   2. kit           every kit file matches SHA256SUMS
@@ -18,9 +21,11 @@
 #                    (Xcode CLT / cc), memory (HISTMERSION_RELINK_MIN_MEMORY_GB, default 16) and disk
 #   4. provenance    with a GPG key set up (histmersion-signing use-gpg): the plugins directory matches
 #                    its signed manifest — else refused unless --unsigned
-#   5. pre-flight    on the JVM: a provider in every jar, its SPI, no id or class twice; then the
-#                    server's own --self-check with the plugins on the class path (the user's config)
-#   6. Sloth         the plugin jars only (the kit's are patched already)
+#   5. pre-flight    on the JVM: the plugins' dependencies resolved into lib/ (a plugin that needs a
+#                    newer version of a library than the server ships is refused); a provider in every
+#                    jar, its SPI, no id or class twice; then the server's own --self-check with the
+#                    plugins and their dependencies on the class path (the user's config)
+#   6. Sloth         the plugin jars and their dependencies (the kit's are patched already)
 #   7. native-image  → .relink/histmersion-server.new  (log: <data>/logs/relink.log)
 #   8. self-check    the NEW binary's --self-check: config and plugins load, the plugin-set digest is
 #                    the directory's, no new plugin failed — never started as a server
@@ -52,7 +57,7 @@ data="$(hk_data_dir)"
 plugins="$(hk_plugins_dir)"
 signing="$here/histmersion-signing"; [ -x "$signing" ] || signing="$here/signing.sh"
 mode=relink restart=1 unsigned="" ignore_memory=""
-describe=()
+describe=() resolve=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --no-restart) restart="" ;;
@@ -62,7 +67,8 @@ while [ $# -gt 0 ]; do
     --jvm) mode=jvm ;;
     --rollback) mode=rollback ;;
     --describe) mode=describe; shift; describe=("$@"); break ;;
-    -h|--help) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --resolve) mode=resolve; shift; resolve=("$@"); break ;;
+    -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "histmersion-relink: unknown argument '$1' (--help)" >&2; exit 1 ;;
   esac
   shift
@@ -93,6 +99,25 @@ if [ "$mode" = describe ]; then
   need_java
   tool describe "${describe[@]}"
   exit $?
+fi
+
+# --resolve: into <data>/plugins/lib unless --lib names another directory, for the plugins directory's
+# jars unless jars are named
+if [ "$mode" = resolve ]; then
+  need_java
+  lib="$plugins/lib" opts=() named=()
+  while [ "${#resolve[@]}" -gt 0 ]; do
+    case "${resolve[0]}" in
+      --lib) lib="${resolve[1]:?--lib needs a directory}"; resolve=("${resolve[@]:2}") ;;
+      --repo) opts+=(--repo "${resolve[1]:?--repo needs a repository}"); resolve=("${resolve[@]:2}") ;;
+      --check) opts+=(--check); resolve=("${resolve[@]:1}") ;;
+      -*) hk_die 1 "--resolve: unknown option ${resolve[0]}" ;;
+      *) named+=("${resolve[0]}"); resolve=("${resolve[@]:1}") ;;
+    esac
+  done
+  [ "${#named[@]}" -gt 0 ] || named=(${jars[@]+"${jars[@]}"})
+  rc=0; hk_resolve "$jh" "$install" "$lib" ${opts[@]+"${opts[@]}"} ${named[@]+"${named[@]}"} || rc=$?
+  exit "$rc"
 fi
 
 mkdir -p "$plugins" "$data/logs"
@@ -218,15 +243,24 @@ fi
 # ── 5. pre-flight on the JVM ──────────────────────────────────────────────────────────────────────
 step "pre-flight: ${#jars[@]} plugin jar(s) in $plugins"
 if [ "${#jars[@]}" -gt 0 ]; then
-  out="$(tool check "$kit" "${jars[@]}" 2>&1)" && rc=0 || rc=$?
+  deps_out="$(hk_resolve "$jh" "$install" "$plugins/lib" "${jars[@]}" 2>&1)" && rc=0 || rc=$?
+  printf '%s\n' "$deps_out" | sed '/^$/d; s/^/  /'
+  [ "$rc" = 0 ] || hk_die 2 "pre-flight: the plugins' dependencies could not be resolved (above); nothing was built"
+elif [ -d "$plugins/lib" ]; then
+  rm -rf "$plugins/lib"
+fi
+deps=()
+while IFS= read -r d; do deps+=("$d"); done < <(hk_plugin_deps "$plugins")
+if [ "${#jars[@]}" -gt 0 ]; then
+  out="$(tool check --lib "$plugins/lib" "$kit" "${jars[@]}" 2>&1)" && rc=0 || rc=$?
   printf '%s\n' "$out" | sed 's/^/  /'
   [ "$rc" = 0 ] || hk_die 2 "pre-flight refused the plugin set (above); nothing was built"
 fi
 new_ids="$(printf '%s\n' "${out:-}" | sed -n 's/^plugin: \([^ ]*\) .*/\1/p')"
 set_mode=native; [ "$mode" = jvm ] && set_mode=jvm
-expected_digest="$(tool plugin-set "$work/plugin-set.jar" "$work/plugin-set.json" "$set_mode" "$kit" ${jars[@]+"${jars[@]}"})"
+expected_digest="$(tool plugin-set --lib "$plugins/lib" "$work/plugin-set.jar" "$work/plugin-set.json" "$set_mode" "$kit" ${jars[@]+"${jars[@]}"})"
 cp_plugins="$work/plugin-set.jar"
-for j in ${jars[@]+"${jars[@]}"}; do cp_plugins="$cp_plugins:$j"; done
+for j in ${jars[@]+"${jars[@]}"} ${deps[@]+"${deps[@]}"}; do cp_plugins="$cp_plugins:$j"; done
 # the server itself, on the JVM, with the user's config: decode errors stop here, not after the build
 check_report() { # <report file> <exit code> → 0 when the config loaded and no NEW plugin failed
   [ "$2" = 3 ] && { echo "  the config does not load (above)" >&2; return 1; }
@@ -256,25 +290,26 @@ if [ "$mode" = jvm ]; then
   exit 0
 fi
 
-# ── 6. Sloth over the plugin jars ─────────────────────────────────────────────────────────────────
+# ── 6. Sloth over the plugin jars and their dependencies ──────────────────────────────────────────
 patched="$work/plugin-set.jar"
-if [ "${#jars[@]}" -gt 0 ]; then
-  step "Sloth: ${#jars[@]} plugin jar(s)"
+linked=(${jars[@]+"${jars[@]}"} ${deps[@]+"${deps[@]}"})
+if [ "${#linked[@]}" -gt 0 ]; then
+  step "Sloth: ${#jars[@]} plugin jar(s), ${#deps[@]} dependency jar(s)"
   hierarchy="$(kit_cp)"
-  for j in "${jars[@]}"; do cp "$j" "$work/plugins/"; hierarchy="$hierarchy:$work/plugins/$(basename "$j")"; done
+  for j in "${linked[@]}"; do cp "$j" "$work/plugins/"; hierarchy="$hierarchy:$work/plugins/$(basename "$j")"; done
   if [ -f "$kit/tools/sloth.jar" ]; then
-    for j in "${jars[@]}"; do
+    for j in "${linked[@]}"; do
       "$jh/bin/java" -jar "$kit/tools/sloth.jar" "$work/plugins/$(basename "$j")" --hierarchy-classpath "$hierarchy" >> "$log" 2>&1 \
         || hk_die 3 "Sloth failed on $(basename "$j") — see $log"
     done
     pairs=()
-    for j in "${jars[@]}"; do pairs+=("$j" "$work/plugins/$(basename "$j")"); done
+    for j in "${linked[@]}"; do pairs+=("$j" "$work/plugins/$(basename "$j")"); done
     "$jh/bin/java" "$kit/tools/SlothVerify.java" "$hierarchy" "${pairs[@]}" >> "$log" 2>&1 \
       || hk_die 3 "Sloth verify: a plugin class stays unverifiable — see $log"
   else
     echo "  warning: the kit has no Sloth (kit/tools/sloth.jar): plugin jars are linked as they are"
   fi
-  for j in "${jars[@]}"; do patched="$patched:$work/plugins/$(basename "$j")"; done
+  for j in "${linked[@]}"; do patched="$patched:$work/plugins/$(basename "$j")"; done
 fi
 
 # ── 7. native-image ───────────────────────────────────────────────────────────────────────────────

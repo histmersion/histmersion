@@ -137,14 +137,18 @@ object PluginResolver:
             case Right(roots) =>
               val local    = (Some(scratch) ++ r.histmersionRepo).map(d => RepositoryUrl.applyUnsafe(d.toUri.toString)).toList
               val coursier = Coursier(local ++ remote, r.cache)
-              resolveRoots(r, roots, server, coursier, out, err) match
+              resolveRoots(roots, server, coursier, out, err) match
                 case Left(rc) => rc
                 case Right(deps) =>
                   if !r.check then LibDirectory.write(r.lib, deps, inputs(r.jars), r.repositories)
                   0
         finally deleteTree(scratch)
 
-  private def resolveRoots(r: ResolveRequest, roots: List[(PluginArtifact, ModuleCoordinates)], server: ServerModules,
+  private def resolveRoots(roots: List[(PluginArtifact, ModuleCoordinates)], server: ServerModules,
+      coursier: Coursier, out: String => Unit, err: String => Unit): Either[Int, List[Dependency]] =
+    if roots.isEmpty then Right(Nil) else resolveSome(roots, server, coursier, out, err)
+
+  private def resolveSome(roots: List[(PluginArtifact, ModuleCoordinates)], server: ServerModules,
       coursier: Coursier, out: String => Unit, err: String => Unit): Either[Int, List[Dependency]] =
     val pluginKeys = roots.map(_._2.key).toSet
     val alone = traverse(roots) { (plugin, c) =>
