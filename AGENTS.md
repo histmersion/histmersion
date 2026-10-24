@@ -49,6 +49,8 @@ client derived from the same Tapir endpoint the server interprets. If a command 
 database, it needs a new endpoint instead.
 
 If `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a `println` in `core`.
+`core` still mixes domain, wire records, endpoints and config; `docs/research-module-layout.md` measures
+that and proposes the split *Coding practices* 3 points to.
 
 ## One implementation per operation
 
