@@ -232,6 +232,12 @@ class GoalFocusSuite extends munit.FunSuite:
     assert(AutopilotPolicy.goalPlanFocus("g", active = true, 3, 3, 5).exists(_.contains("has 3 unfinished sub-goals and the plan adds 3")))
     assertEquals(AutopilotPolicy.goalPlanFocus("g", active = true, 9, 0, 5), None, "queries and works only: no new sub-goal")
 
+  test("goal plans by policy whatever the focus (#3762 proposal 2): only the sub-goals they open are bounded"):
+    assertEquals(AutopilotPolicy.goalPlanSubGoals("g", 0, 0, 5), None)
+    assertEquals(AutopilotPolicy.goalPlanSubGoals("g", 2, 3, 5), None)
+    assert(AutopilotPolicy.goalPlanSubGoals("g", 3, 3, 5).exists(_.contains("has 3 unfinished sub-goals and the plan adds 3")))
+    assertEquals(AutopilotPolicy.goalPlanSubGoals("g", 9, 0, 5), None, "queries and works only")
+
   test("usesModel: only the currency check and the ingest backlog run without a model"):
     assertEquals(List(PlanGoalItem, ProposeArticles, ArticleCompile, AcquisitionSweep, CurrencyCheck, OaIngest, ArticleReview,
       InferFilter, ArticleExtend, SourceEnrich).filterNot(usesModel), List(CurrencyCheck, OaIngest))

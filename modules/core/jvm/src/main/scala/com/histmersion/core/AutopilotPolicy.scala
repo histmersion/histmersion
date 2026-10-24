@@ -89,6 +89,15 @@ object AutopilotPolicy:
         s"$limit (agents.autopilot.max-open-sub-goals) are opened by code")
     else None
 
+  /** A goal plan decided by code whatever the focus (#3762 proposal 2): only its sub-goals are bounded — its
+    * unfinished sub-goals (`openSubGoals`, every level below it) plus the `proposed` new ones stay within
+    * `limit` (`agents.autopilot.max-open-sub-goals`); else why it waits for a person. Queries and works alone
+    * are always within it. */
+  def goalPlanSubGoals(goal: String, openSubGoals: Int, proposed: Int, limit: Int): Option[String] =
+    Option.when(proposed > 0 && openSubGoals + proposed > math.max(0, limit))(
+      s"goal $goal has ${Plural.count(openSubGoals, "unfinished sub-goal")} and the plan adds $proposed; at most " +
+        s"$limit (agents.autopilot.max-open-sub-goals) are opened by code")
+
   private def depthText(d: Int): String = if d == 0 then "at the root" else s"$d level(s) below a root"
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps

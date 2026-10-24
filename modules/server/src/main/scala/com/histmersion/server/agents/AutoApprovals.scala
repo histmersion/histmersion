@@ -39,14 +39,16 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
 
   /** Decide what can be decided now; one line per decision (for the tick's log). */
   def sweep(now: Instant): List[String] =
-    // the focus's active goals first: a daily cap is spent on the goals being finished
+    // the goals the scheduler puts first, first: a daily cap is spent on the highest-priority goals (a pin, a
+    // person's priority), then the oldest goals; approvals about no known goal last, oldest first
     val open = AgentRepo.openOfKinds(ds, Kinds, PerTick)
-    val ordered = agents.focus.activeGoals match
-      case None => open
-      case Some(active) =>
-        val linked = com.histmersion.db.FocusRepo.goalsOf(ds, GoalPlans.LinkKind.Article.wire, open.flatMap(_.subject).distinct)
-        def mine(a: ApprovalInfo) = a.subject.exists(s => active(s) || linked.getOrElse(s, Nil).exists(active))
-        open.filter(mine) ++ open.filterNot(mine)
+    val goals = com.histmersion.db.FocusRepo.goals(ds).map(g => g.slug -> g).toMap
+    val linked = com.histmersion.db.FocusRepo.goalsOf(ds, GoalPlans.LinkKind.Article.wire, open.flatMap(_.subject).distinct)
+    def goalOf(a: ApprovalInfo) = a.subject.flatMap(s => goals.get(s).orElse(linked.getOrElse(s, Nil).flatMap(goals.get).headOption))
+    val ordered = open.sortBy { a =>
+      val g = goalOf(a)
+      (g.fold(0)(x => -(x.priority + (if x.pinned then SchedulerPolicy.PinBoost else 0))), g.fold("\uffff")(_.createdAt), a.id)
+    }
     ordered.flatMap { a =>
       val run = runOf(a)
       val mgr = run.flatMap(_.managerId).flatMap(ManagerRepo.get(ds, _))
@@ -127,7 +129,7 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
             val depth = AutopilotPolicy.depth(goal, s => GoalRepo.get(ds, s).flatMap(_.parentSlug))
             AutopilotPolicy.goalPlan(GoalPlanFacts(goal, p.subGoals.size, p.queries.size, p.works.size, depth), caps.maxGoalDepth,
               AgentRepo.autoApprovedSince(ds, ApprovalKind.GoalPlan, day).size, caps.goalPlansPerDay) match
-              // the focus: decided by code only for an active goal with few sub-goals open
+              // decided by code whatever the focus: only the sub-goals it would open are bounded
               case v @ Verdict.Approve(_) => agents.focus.goalPlanBlock(goal, p.subGoals.size).fold(v)(Verdict.Leave(_))
               case v                      => v
       case _ => Verdict.Leave("not a kind the autopilot decides")
