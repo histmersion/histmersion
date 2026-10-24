@@ -24,6 +24,9 @@ final case class LocalInstall(home: Path, data: Path):
   def index: Path         = plugins.resolve("index.json")
   def staging: Path       = plugins.resolve(".staging")
   def signingOn: Boolean  = scala.util.Try(Files.size(data.resolve("signing").resolve("gpg-key")) > 0).getOrElse(false)
+  /** The plugin API a plugin compiles against, as the bundle ships it (`plugin-api/`). */
+  def apiJar: Path        = home.resolve("plugin-api").resolve("histmersion-plugin-api.jar")
+  def apiSources: Path    = home.resolve("plugin-api").resolve("histmersion-plugin-api-sources.jar")
   /** What the scripts need to act on THIS install and data directory, whatever the caller's environment. */
   def env: Map[String, String] = Map("HISTMERSION_HOME" -> home.toString, "HISTMERSION_DATA_DIR" -> data.toString)
 
@@ -332,19 +335,65 @@ object PluginOps:
       a == "y" || a == "yes"
     }
 
+/** `plugin api-jar` and `plugin new`: what a plugin author needs from the install on this machine. They
+  * read files only, and need no server. */
+object PluginAuthoring:
+
+  /** The API jar `--api-jar` names, with the sources jar beside it when there is one
+    * (`x.jar` → `x-sources.jar`); else the install's. */
+  def apiJars(named: Option[Path], install: => Either[CliError, LocalInstall]): Either[CliError, ApiJars] =
+    named match
+      case Some(jar) =>
+        val sources = jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + "-sources.jar")
+        Either.cond(Files.isRegularFile(jar), ApiJars(jar, Some(sources).filter(Files.isRegularFile(_))),
+          CliError(s"no plugin API jar at $jar", exitCode = ExitCode.Usage))
+      case None =>
+        install.flatMap { i =>
+          Either.cond(Files.isRegularFile(i.apiJar), ApiJars(i.apiJar, Some(i.apiSources).filter(Files.isRegularFile(_))),
+            CliError(s"the install at ${i.home} has no plugin API jar (${i.apiJar}): it predates plugin-api/ — " +
+              "download histmersion-plugin-api-<version>.jar from the release and pass --api-jar", exitCode = ExitCode.Usage))
+        }
+
+  /** Write a new project into `dir`, which must not exist or be empty; the paths written. */
+  def write(dir: Path, files: List[TemplateFile]): Either[CliError, List[Path]] =
+    val occupied = Files.exists(dir) && (!Files.isDirectory(dir) || {
+      val s = Files.list(dir)
+      try s.findAny().isPresent finally s.close()
+    })
+    if occupied then Left(CliError(s"$dir exists and is not empty — choose another --dir", exitCode = ExitCode.Usage))
+    else Right(files.map { f =>
+      val target = dir.resolve(f.path)
+      Files.createDirectories(target.getParent)
+      Files.writeString(target, f.content, UTF_8)
+    })
+
+  /** What to do next, for the person who ran `plugin new`. */
+  def nextSteps(dir: Path, id: PluginId, written: List[Path]): List[String] =
+    (s"wrote a scala-cli project in $dir:" :: written.map(p => s"  ${dir.relativize(p)}")) ++ List(
+      "",
+      "next:",
+      s"  cd \"$dir\"",
+      "  scala-cli test .          # compile it and run its tests",
+      "  scala-cli setup-ide .     # then open the directory in VS Code with Metals, or in IntelliJ",
+      s"  scala-cli --power package --library . -o ${id.value}.jar -f",
+      s"  histmersion plugin add ./${id.value}.jar",
+      s"  histmersion plugin rebuild   # and in histmersion.conf: histmersion.plugins.${id.value} { enabled = true }")
+
 object PluginCmd:
+
+  /** The install on this machine, wherever the CLI is pointed. */
+  private[cli] def install: Either[CliError, LocalInstall] =
+    val env = (k: String) => Option(java.lang.System.getenv(k))
+    val exe = scala.util.Try(ProcessHandle.current().info().command().orElse(null)).toOption.flatMap(Option(_)).map(Path.of(_))
+    val cfg = Settings.app
+    LocalInstall.locate(cfg.cli.plugins, cfg.runtime.dataDir, env, java.lang.System.getProperty("os.name", ""), exe)
+      .left.map(e => CliError(e, exitCode = ExitCode.Usage))
 
   private[cli] def local(c: Client): Either[CliError, PluginOps] =
     if !PluginKit.isLoopback(c.serverUrl) then
       Left(CliError(s"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
         "run the command on the machine the server runs on", exitCode = ExitCode.Usage))
-    else
-      val env = (k: String) => Option(java.lang.System.getenv(k))
-      val exe = scala.util.Try(ProcessHandle.current().info().command().orElse(null)).toOption.flatMap(Option(_)).map(Path.of(_))
-      val cfg = Settings.app
-      LocalInstall.locate(cfg.cli.plugins, cfg.runtime.dataDir, env, java.lang.System.getProperty("os.name", ""), exe)
-        .left.map(e => CliError(e, exitCode = ExitCode.Usage))
-        .map(i => PluginOps(i, cfg.cli.plugins))
+    else install.map(i => PluginOps(i, Settings.app.cli.plugins))
 
   /** The running server's plugins, when it answers. */
   private def running(c: Client): (Option[PluginsReport], Boolean) =
@@ -409,7 +458,43 @@ object PluginCmd:
     }
   }
 
+  private val apiJar = Opts.subcommand("api-jar",
+      "The path of the plugin API jar a plugin compiles against (in this machine's install); --sources: of its sources jar, with the Scaladoc") {
+    Opts.flag("sources", "The sources jar instead of the jar").orFalse.map { sources => (_: Client) =>
+      PluginAuthoring.apiJars(None, install).flatMap { jars =>
+        if !sources then Right(println(jars.jar))
+        else jars.sources.toRight(CliError(s"no sources jar beside ${jars.jar}", exitCode = ExitCode.Refused)).map(println)
+      }
+    }
+  }
+
+  private val create = Opts.subcommand("new",
+      "Write a new plugin project for scala-cli: <Name>.scala (the plugin), <Name>.test.scala (its tests) and resources/ (its services file, defaults, native-image metadata)") {
+    (
+      Opts.argument[String]("id"),
+      Opts.option[String]("kind", s"What it adds: ${PluginKind.names} (default ${PluginKind.SourceFetcher.name})")
+        .withDefault(PluginKind.SourceFetcher.name),
+      Opts.option[String]("dir", "Where to write it (default ./<id>; must not exist or be empty)").orNone,
+      Opts.option[String]("package", "The Scala package (default: the id without dashes)").orNone,
+      Opts.option[String]("api-jar", "The plugin API jar to compile against (default: this machine's install; its -sources.jar beside it is used too)").orNone,
+      Opts.flag("with-agent-notes", "Also write AGENTS.md (and CLAUDE.md pointing at it) for coding agents").orFalse
+    ).mapN { (rawId, rawKind, dir, rawPackage, api, agentNotes) => (_: Client) =>
+      val result = for
+        id   <- PluginId.parse(rawId)
+        kind <- PluginKind.parse(rawKind)
+        pkg  <- ScalaPackage.parse(rawPackage.getOrElse(id.packageName))
+      yield (id, kind, pkg)
+      result.left.map(CliError(_, exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
+        val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
+        for
+          jars    <- PluginAuthoring.apiJars(api.map(Path.of(_)), install)
+          written <- PluginAuthoring.write(target, PluginTemplate.files(PluginTemplate.Request(id, kind, pkg, jars, agentNotes)))
+        yield PluginAuthoring.nextSteps(target, id, written).foreach(println)
+      }
+    }
+  }
+
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("plugin", "Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine)") {
-      add orElse rm orElse list orElse status orElse rebuild orElse rollback
+    Opts.subcommand("plugin", "Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine); new and api-jar for writing one") {
+      add orElse rm orElse list orElse status orElse rebuild orElse rollback orElse create orElse apiJar
     }

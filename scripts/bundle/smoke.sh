@@ -170,6 +170,18 @@ else
   echo "  skipped: no gpg"
 fi
 
+echo "→ the plugin API for plugin authors: plugin-api/, plugin api-jar, plugin new"
+[ -f "$b/plugin-api/histmersion-plugin-api.jar" ] && [ -f "$b/plugin-api/histmersion-plugin-api-sources.jar" ] \
+  || fail "the bundle has no plugin-api/histmersion-plugin-api.jar and -sources.jar"
+api="$(HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin api-jar 2>&1)" || fail "plugin api-jar: $api"
+[ "$api" = "$b/plugin-api/histmersion-plugin-api.jar" ] || fail "plugin api-jar printed '$api'"
+HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin new smoke-new --dir "$data/smoke-new" > "$data/new.out" 2>&1 \
+  || fail "plugin new: $(cat "$data/new.out")"
+grep -qF "//> using jar \"$b/plugin-api/histmersion-plugin-api.jar\"" "$data/smoke-new/SmokeNew.scala" \
+  && grep -qx "smokenew.SmokeNewPlugin" "$data/smoke-new/resources/META-INF/services/com.histmersion.plugin.Plugin" \
+  || fail "plugin new wrote an unexpected project: $(cat "$data/new.out")"
+echo "  $api"
+
 echo "→ relink: the hello test plugin into a COPY of the bundle (bin/, kit/, libexec/), with the CLI"
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 gv_version="$(cat "$b/kit/graalvm-version" 2>/dev/null || true)"
