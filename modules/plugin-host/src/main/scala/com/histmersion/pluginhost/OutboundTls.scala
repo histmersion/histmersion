@@ -1,4 +1,4 @@
-package com.histmersion.server.acquire
+package com.histmersion.pluginhost
 
 import com.histmersion.core.{HttpPolicy, TlsConfig}
 

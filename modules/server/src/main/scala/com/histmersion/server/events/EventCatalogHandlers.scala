@@ -1,19 +1,21 @@
 package com.histmersion.server.events
 
+import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport, Polite, PluginEvents}
+
 import com.histmersion.core.*
 import com.histmersion.db.{AttestationRepo, CorrectionRepo, EventCatalogRepo, EventRepo, JobRepo, PlaceScope, SourceRepo}
 import com.histmersion.server.{BackgroundJob, Deps}
-import com.histmersion.server.media.{JavaMediaHttp, MediaHttp, Polite}
+
 
 
 /** Events from catalogues (#1449): the import (a job, dry run or not), the proposed links of an event
   * to the corpus and their confirmation, the leads, an event's context for its card, an article's
   * catalogue leads, and the refinement of Wikidata sites' types. Reached through `Handlers.catalog`,
   * so REST, MCP and the CLI share this one implementation. */
-final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () => Long):
+final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: () => Long):
 
-  def this(deps: Deps, http: MediaHttp) = this(deps, http, () => java.time.Year.now(java.time.ZoneOffset.UTC).getValue.toLong)
-  def this(deps: Deps) = this(deps, JavaMediaHttp(deps.cfg.events.timeoutSeconds))
+  def this(deps: Deps, http: HttpTransport) = this(deps, http, () => java.time.Year.now(java.time.ZoneOffset.UTC).getValue.toLong)
+  def this(deps: Deps) = this(deps, JavaHttpTransport(deps.cfg.events.timeoutSeconds))
 
   private val ds  = deps.ds
   private def cfg = deps.cfg
@@ -31,8 +33,7 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
   /** A polite client at `intervalMs` between requests to one host; the media politeness otherwise
     * (User-Agent, retries) — and up to two minutes' Retry-After, which the query service asks for. */
   private def polite(intervalMs: Int): Polite =
-    Polite(http, cfg.media.copy(requestIntervalMs = intervalMs,
-      maxRetryAfterSeconds = cfg.media.maxRetryAfterSeconds.max(120)))
+    PluginEvents.polite(http, cfg.media, intervalMs)
 
   /** Start `body` as a [[BackgroundJob]] of `kind`. `write` jobs take the maintenance guard; a dry run
     * does not. `body` answers the summary, or why the run failed. */
@@ -206,16 +207,12 @@ final class EventCatalogHandlers(deps: Deps, http: MediaHttp, presentYear: () =>
         case Left(why) => report = report.copy(failed = report.failed :+ s"parts: $why")
         case Right(parts) =>
           parts.distinct.foreach { first =>
-            // `var`: the next page of a paged part
-            var next = Option(first).filter(p => !done(p))
-            while next.isDefined && !full do
-              val part = next.get
-              val got  = PluginEvents.guard(cat.read(part, q, h))
+            PluginEvents.readPart(cat, first, q, h, done, full) { (part, got) =>
               val recs = got.map(_.events.map(PluginEvents.record(provider, _)))
               recs.foreach(rs => if rs.exists(_.isLeft) then
                 report = report.copy(failed = report.failed ++ rs.collect { case Left(w) => s"$part: $w" }.take(20)))
               handle(part, recs.map(_.collect { case Right(r) => r }))
-              next = got.toOption.flatMap(_.next).filterNot(p => done(p) || p == part)
+            }
           }
 
     catalogue match

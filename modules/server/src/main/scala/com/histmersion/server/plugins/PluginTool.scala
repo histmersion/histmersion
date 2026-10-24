@@ -1,5 +1,7 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.pluginhost.{PluginHost, HostServices}
+
 import com.histmersion.core.{AppConfig, PluginDescription, PluginJar, PluginKit, PluginState}
 import com.histmersion.plugin.{Plugin, PluginHttp, Spi}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}

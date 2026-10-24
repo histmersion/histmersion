@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.pluginhost.{FetchChain, OaFetcher, PluginHost, Url, WorkLookup}
+
 import com.histmersion.core.*
 
 import io.circe.Json
@@ -32,32 +34,6 @@ trait CitationsClient:
 type FetchedFile = com.histmersion.plugin.FetchedFile
 val FetchedFile = com.histmersion.plugin.FetchedFile
 
-/** Resolve a legal copy of a work: the acquisition chain ([[FetchChain]]) — the source fetchers the
-  * plugins registered, in `acquire.chain` order. Built in: archive.org, Unpaywall → CORE → OpenAlex
-  * OA locations → Europe PMC / PMC → arXiv → repository landing pages resolved one step (Zenodo's API,
-  * an institutional repository's `citation_pdf_url`; #1580) → PMC's JATS full text (when there is no
-  * PDF anywhere). */
-trait OaFetcher:
-  def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile]
-
-  /** [[fetch]] through the LEGAL sources only — never an `Access.Unauthorised` fetcher, whatever
-    * `acquire.allow-unauthorised` says (a watcher's auto-ingest, docs/research-process-managers.md
-    * §4 (c)). An implementation that can run one must override it; one that cannot (a test's fixture)
-    * is legal as it is. */
-  def fetchLegal(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] = fetch(doi, arxiv)
-
-  /** A work by every identifier the caller has ([[com.histmersion.plugin.WorkKey]]). An implementation
-    * that reads only a DOI and an arXiv id (a test's fixture) has no copy of anything else. */
-  def fetchWork(work: com.histmersion.plugin.WorkKey, legalOnly: Boolean): Either[String, FetchedFile] =
-    if work.doi.isEmpty && work.arxiv.isEmpty then Left(FetchChain.NoCopy)
-    else if legalOnly then fetchLegal(work.doi, work.arxiv)
-    else fetch(work.doi, work.arxiv)
-
-  /** [[fetchWork]], with what each fetcher that ran answered when none had a copy (the ingest report
-    * shows it). An implementation that is no chain (a test's fixture) has no answers to give. */
-  def fetchWorkExplained(work: com.histmersion.plugin.WorkKey, legalOnly: Boolean): FetchChain.Outcome =
-    FetchChain.Outcome(fetchWork(work, legalOnly), Nil)
-
 trait WikiClient:
   def refs(articleUrl: String): Either[String, WikirefsResult]
 
@@ -73,14 +49,9 @@ trait RetractionWatchClient:
 
 private object Clients:
 
-  /** The OpenAlex `select` list — asking for only these fields keeps a search page small. */
-  val WorkFields =
-    "id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
-      "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works"
+  val WorkFields: String = WorkLookup.WorkFields
 
-  /** OpenAlex resolves a DOI as a path segment: `/works/https://doi.org/10.1234/x`. */
-  def workUrl(cfg: AcquireConfig, doi: String) =
-    s"${cfg.openalex.url}/works/https://doi.org/$doi"
+  def workUrl(cfg: AcquireConfig, doi: String): String = WorkLookup.workUrl(cfg, doi)
 
 final class OpenAlexCrossref(cfg: AcquireConfig, http: Http) extends DiscoveryClient:
   import Clients.*
@@ -120,28 +91,10 @@ final class OpenAlexCrossref(cfg: AcquireConfig, http: Http) extends DiscoveryCl
       "select" -> "DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract",
       mailto) ++ bySort)*)).map(AcquireParse.crossrefWorks)
 
-  /** OpenAlex first (richer, keyless), Crossref as the fallback — the order `discover.py meta` used. */
-  def meta(doi: String): Either[String, WorkRef] =
-    http.json(Url(workUrl(cfg, doi), "", "select" -> WorkFields, mailto))
-      .map(AcquireParse.openalexWork)
-      .left.flatMap { why =>
-        // a miss (404) and a refusal (429/503) both land here; the reason says which
-        scribe.info(s"acquire: OpenAlex did not answer for $doi ($why) — falling back to Crossref")
-        crossrefWork(doi).map(AcquireParse.crossrefWork).map(withUnpaywall(doi, _))
-      }
+  /** OpenAlex first (richer, keyless), Crossref as the fallback — [[WorkLookup.meta]]. */
+  def meta(doi: String): Either[String, WorkRef] = WorkLookup.meta(cfg, http.json(_))(doi)
 
-  /** Crossref records no open-access status at all, so a work that came back through the Crossref
-    * fallback (OpenAlex down, rate-limited or missing the DOI) used to read "no OA copy known" even
-    * for a gold-OA article (#599). Ask Unpaywall — where OpenAlex's own OA data comes from — and
-    * leave the status unknown (`oaStatus = None`) when it cannot answer: Unpaywall refuses a request
-    * without a contact e-mail. */
-  private def withUnpaywall(doi: String, w: WorkRef): WorkRef =
-    cfg.contact.flatMap(email => http.json(Url(cfg.unpaywall.url, s"/$doi", "email" -> email)).toOption)
-      .map(AcquireParse.unpaywallAccess)
-      .fold(w)(a => w.copy(isOa = a.isOa, oaStatus = a.status, oaUrl = a.url))
-
-  private def crossrefWork(doi: String): Either[String, Json] =
-    http.json(Url(cfg.crossref.url, s"/works/$doi", mailto))
+  private def crossrefWork(doi: String): Either[String, Json] = http.json(WorkLookup.crossrefUrl(cfg, doi))
 
   def references(doi: String): Either[String, (String, List[RefRow])] =
     crossrefWork(doi).map(AcquireParse.crossrefReferences) match
@@ -229,7 +182,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http, openalex: OpenAlexCr
   * the server runs the chain of its own plugin generation, which may hold more fetchers or fewer. */
 object OaFetch:
   def apply(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref): FetchChain =
-    val generation = com.histmersion.server.plugins.PluginHost.build(
+    val generation = PluginHost.build(
       fetchers.BuiltinFetchers.plugins(cfg, () => http, () => openalex, () => ArchiveOrg(cfg, http)),
       org.ekrich.config.ConfigFactory.empty, org.ekrich.config.ConfigFactory.empty,
       com.histmersion.server.plugins.Plugins.services(() => HttpPlugin(http), org.ekrich.config.ConfigFactory.empty))

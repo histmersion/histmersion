@@ -1,4 +1,4 @@
-package com.histmersion.server.plugins
+package com.histmersion.pluginhost
 
 import com.histmersion.core.{EnvOverrides, PluginSetting, PluginState, PluginStatus, PluginsReport}
 import com.histmersion.plugin.*
@@ -312,6 +312,23 @@ object PluginHost:
       open = false
       added
 
+  /** The context one plugin's `register` is called with: the host's services, its secrets, and the
+    * staged registries. The HTTP client is built on the first request. */
+  private final class RegistrationContext(id: String, services: HostServices, resolved: Secret => Either[String, String],
+      vaults: Staged[SecretVault], fetchers: Staged[SourceFetcher], media: Staged[MediaCollection],
+      events: Staged[EventCatalogue], ai: Staged[AiProvider]) extends PluginContext:
+    lazy val http: PluginHttp = services.http()
+    val log: PluginLog = new PluginLog:
+      def info(message: String) = services.log(id, false, message)
+      def warn(message: String) = services.log(id, true, message)
+    def env(name: String) = Option(services.env.root.get(name)).flatMap(v => Option(v.unwrapped)).map(_.toString)
+    def secret(s: Secret) = resolved(s)
+    def secretVaults = vaults
+    override def sourceFetchers = fetchers
+    override def mediaCollections = media
+    override def eventCatalogues = events
+    override def aiProviders = ai
+
   private def validFetcher(id: String, f: SourceFetcher): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': a source fetcher id is $IdPattern")
     else if f == null then Some(s"source fetcher '$id' is null")
@@ -323,8 +340,8 @@ object PluginHost:
   private def validCollection(id: String, c: MediaCollection): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': a media collection id is $IdPattern")
     else if c == null then Some(s"media collection '$id' is null")
-    else if c.isInstanceOf[com.histmersion.server.media.HostMediaCollection] then None
-    else if com.histmersion.server.media.BuiltinMedia.reserved(id) then
+    else if c.isInstanceOf[HostOwned] then None
+    else if ReservedNames.mediaCollections(id) then
       Some(s"'$id' is the name of one of Histmersion's own media providers")
     else if !MediaCollection.Roles(c.role) then
       Some(s"media collection '$id': role '${c.role}' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}")
@@ -334,8 +351,8 @@ object PluginHost:
   private def validCatalogue(id: String, c: EventCatalogue): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': an event catalogue id is $IdPattern")
     else if c == null then Some(s"event catalogue '$id' is null")
-    else if c.isInstanceOf[com.histmersion.server.events.HostEventCatalogue] then None
-    else if com.histmersion.server.events.BuiltinCatalogues.reserved(id) then
+    else if c.isInstanceOf[HostOwned] then None
+    else if ReservedNames.eventCatalogues(id) then
       Some(s"'$id' is the name of one of Histmersion's own event catalogues")
     else None
 
@@ -344,8 +361,8 @@ object PluginHost:
   private def validAiProvider(id: String, a: AiProvider): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': an AI provider name is $IdPattern")
     else if a == null then Some(s"AI provider '$id' is null")
-    else if a.isInstanceOf[com.histmersion.server.agents.HostAiProvider] then None
-    else if com.histmersion.server.agents.BuiltinAi.reserved(id) then
+    else if a.isInstanceOf[HostOwned] then None
+    else if ReservedNames.aiProviders(id) then
       Some(s"'$id' is the name of one of Histmersion's own AI providers")
     else None
 
@@ -468,18 +485,7 @@ object PluginHost:
         val media    = Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection)
         val events   = Staged[EventCatalogue](Registries.EventCatalogue, regs.eventCatalogues, validCatalogue)
         val ai       = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider)
-        val ctx = new PluginContext:
-          lazy val http: PluginHttp = services.http()
-          val log: PluginLog = new PluginLog:
-            def info(message: String) = services.log(id, false, message)
-            def warn(message: String) = services.log(id, true, message)
-          def env(name: String) = Option(services.env.root.get(name)).flatMap(v => Option(v.unwrapped)).map(_.toString)
-          def secret(s: Secret) = resolved(s)
-          def secretVaults = staged
-          override def sourceFetchers = fetchers
-          override def mediaCollections = media
-          override def eventCatalogues = events
-          override def aiProviders = ai
+        val ctx = RegistrationContext(id, services, resolved, staged, fetchers, media, events, ai)
         val outcome =
           try pr.call(ctx)
           catch

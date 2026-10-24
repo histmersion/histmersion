@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.{HttpTransport, Polite}
+
 import com.histmersion.core.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.server.ConverterClient
@@ -14,7 +16,7 @@ import javax.sql.DataSource
   * Thumbnails come from the OCR sidecar ([[ConverterClient.thumbnail]]): the native server has no
   * image codec that works (ImageIO hangs under native-image on macOS). Without one, the card shows
   * the picture's own bytes. */
-final class SourcePictures(ds: DataSource, cfg: => MediaConfig, http: MediaHttp, converter: ConverterClient):
+final class SourcePictures(ds: DataSource, cfg: => MediaConfig, http: HttpTransport, converter: ConverterClient):
 
   private def rules = cfg.illustrations.rules
 

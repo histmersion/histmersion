@@ -1,8 +1,10 @@
 package com.histmersion.server.acquire.fetchers
 
+import com.histmersion.pluginhost.FetchChain
+
 import com.histmersion.core.AcquireConfig
 import com.histmersion.plugin.*
-import com.histmersion.server.acquire.{ArchiveClient, FetchChain, FetchedFile, Http, OpenAlexCrossref}
+import com.histmersion.server.acquire.{ArchiveClient, FetchedFile, Http, OpenAlexCrossref}
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.plugin.PluginConfig.given

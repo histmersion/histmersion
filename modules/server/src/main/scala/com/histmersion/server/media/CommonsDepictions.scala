@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.Polite
+
 import com.histmersion.core.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.Target

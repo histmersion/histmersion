@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.pluginhost.Challenge
+
 import com.histmersion.core.*
 import com.histmersion.server.acquire.*
 import io.circe.Json
@@ -198,7 +200,7 @@ class LandingFetchSuite extends munit.FunSuite:
     }
     assertEquals(fetch(c, http, "10.17863/CAM.11325"), Left("no legal open-access PDF found"))
     assert(!http.asked.exists(_.contains("/bitstreams/")), http.asked.mkString("\n"))
-    assert(Http.isChallenge(403, Map.empty, fixture("challenge_synthetic.html").getBytes("UTF-8")), "the fixture is what the layer refuses")
+    assert(Challenge.isChallenge(403, Map.empty, fixture("challenge_synthetic.html").getBytes("UTF-8")), "the fixture is what the layer refuses")
 
   test("at most max-pages landing pages are read, and none when the step is switched off"):
     val c = cfg

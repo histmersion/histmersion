@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.pluginhost.{PluginHost, Generation, HostServices}
+
 import ox.supervised
 import com.histmersion.core.AppConfig
 import com.histmersion.plugin.PluginHttp

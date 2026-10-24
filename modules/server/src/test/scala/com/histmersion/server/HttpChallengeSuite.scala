@@ -1,6 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.core.AppConfig
+import com.histmersion.pluginhost.{Challenge, SttpTransport}
 import com.histmersion.server.acquire.*
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 
@@ -13,7 +14,7 @@ import scala.jdk.CollectionConverters.*
   * User-Agent (the PMC hosts get the project's public one) replaces the polite-pool identity. */
 class HttpChallengeSuite extends munit.FunSuite:
 
-  private val Challenge =
+  private val JustAMoment =
     """<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title></head><body></body></html>"""
 
   /** One request log per test; the server answers by path. */
@@ -29,7 +30,7 @@ class HttpChallengeSuite extends munit.FunSuite:
     server.createContext("/", (ex: HttpExchange) =>
       seen.add(ex.getRequestURI.getPath -> Option(ex.getRequestHeaders.getFirst("User-Agent")).getOrElse(""))
       ex.getRequestURI.getPath match
-        case "/challenge-403" => reply(ex, 403, Challenge)
+        case "/challenge-403" => reply(ex, 403, JustAMoment)
         case "/challenge-503" => reply(ex, 503, "<html>wait</html>", "cf-mitigated" -> "challenge")
         case "/busy"          => reply(ex, 503, "busy")
         case "/anubis-200"    => reply(ex, 200, Anubis)
@@ -86,25 +87,25 @@ class HttpChallengeSuite extends munit.FunSuite:
     }
 
   test("challenge detection: the interstitials, not ordinary refusals or pages"):
-    val page = Challenge.getBytes("UTF-8")
-    assert(Http.isChallenge(403, Map.empty, page))
-    assert(Http.isChallenge(503, Map.empty, page))
-    assert(Http.isChallenge(200, Map("CF-Mitigated" -> "challenge"), Array.emptyByteArray))
-    assert(!Http.isChallenge(200, Map.empty, page)) // a 200 is judged by looksLikePdf, not here
-    assert(!Http.isChallenge(403, Map.empty, "<html><title>Forbidden</title></html>".getBytes("UTF-8")))
-    assert(!Http.isChallenge(503, Map.empty, "busy".getBytes("UTF-8")))
+    val page = JustAMoment.getBytes("UTF-8")
+    assert(Challenge.isChallenge(403, Map.empty, page))
+    assert(Challenge.isChallenge(503, Map.empty, page))
+    assert(Challenge.isChallenge(200, Map("CF-Mitigated" -> "challenge"), Array.emptyByteArray))
+    assert(!Challenge.isChallenge(200, Map.empty, page)) // a 200 is judged by looksLikePdf, not here
+    assert(!Challenge.isChallenge(403, Map.empty, "<html><title>Forbidden</title></html>".getBytes("UTF-8")))
+    assert(!Challenge.isChallenge(503, Map.empty, "busy".getBytes("UTF-8")))
     // Anubis: its challenge at any status; its markers inside a PDF, or a page merely naming it, are not one
     val anubis = Anubis.getBytes("UTF-8")
-    assert(Http.isChallenge(200, Map.empty, anubis))
-    assert(Http.isChallenge(401, Map.empty, anubis))
-    assert(Http.isChallenge(403, Map.empty, anubis))
-    assert(!Http.isChallenge(200, Map.empty, ("%PDF-1.7\n" + Anubis).getBytes("ISO-8859-1")))
-    assert(!Http.isChallenge(200, Map.empty, "<html><p>Anubis, the jackal-headed god</p></html>".getBytes("UTF-8")))
+    assert(Challenge.isChallenge(200, Map.empty, anubis))
+    assert(Challenge.isChallenge(401, Map.empty, anubis))
+    assert(Challenge.isChallenge(403, Map.empty, anubis))
+    assert(!Challenge.isChallenge(200, Map.empty, ("%PDF-1.7\n" + Anubis).getBytes("ISO-8859-1")))
+    assert(!Challenge.isChallenge(200, Map.empty, "<html><p>Anubis, the jackal-headed god</p></html>".getBytes("UTF-8")))
 
   test("every acquisition request is pinned to HTTP/1.1, keeping its URI and headers"):
     val r = java.net.http.HttpRequest.newBuilder(java.net.URI.create("https://example.org/x"))
       .header("User-Agent", "ua").GET().build()
-    val out = SttpHttp.http11(r)
+    val out = SttpTransport.http11(r)
     assertEquals(out.version(), java.util.Optional.of(java.net.http.HttpClient.Version.HTTP_1_1))
     assertEquals(out.uri(), r.uri())
     assertEquals(out.headers().firstValue("User-Agent"), java.util.Optional.of("ua"))

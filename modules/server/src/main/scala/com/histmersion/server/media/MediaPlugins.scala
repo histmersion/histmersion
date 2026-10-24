@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.{HostOwned, HttpTransport, Polite, PluginMedia}
+
 import com.histmersion.core.{MediaCollectionConfig, MediaLicence, MediaMatch, MediaProvider, MediaProviderInfo,
   MediaRecord, MediaRights as CoreRights}
 import com.histmersion.db.MediaRepo.PlaceFacts
@@ -14,13 +16,13 @@ import scala.util.control.NonFatal
   * (docs/research-plugins.md §6, D2) but run by the host's own import: the Wikidata/Commons runs and
   * the museum, map and excavation collections with their `media.<provider>.*` settings, unchanged.
   * The SPI's search is never called for it. */
-trait HostMediaCollection extends MediaCollection:
+trait HostMediaCollection extends MediaCollection, HostOwned:
   /** The name `media import` is asked for (`met`). */
   def name: String
   /** What it asks about: `places`, `events`, `places and events`. */
   def over: String
   /** The import, built over this server's config — or why it cannot run (`media.<provider>.enabled`). */
-  def importer(deps: Deps, http: MediaHttp, converter: ConverterClient): Either[String, MediaImporter]
+  def importer(deps: Deps, http: HttpTransport, converter: ConverterClient): Either[String, MediaImporter]
   def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
     Left(s"$name is Histmersion's own import; it is run by the host, not searched through the SPI")
 
@@ -34,7 +36,7 @@ object BuiltinMedia:
   final case class Entry(plugin: String, name: String, title: String, over: String, role: String,
       override val description: String)
       extends HostMediaCollection:
-    def importer(deps: Deps, http: MediaHttp, converter: ConverterClient) = MediaImporter.of(name, deps, http, converter)
+    def importer(deps: Deps, http: HttpTransport, converter: ConverterClient) = MediaImporter.of(name, deps, http, converter)
 
   private val museum = " — Open Access objects only (as the record itself says), tied to a place on the map " +
     "when the object's most specific place field names it (and no other) and its dates overlap the place's; " +
@@ -118,14 +120,14 @@ object MediaImporters:
   /** The import `asked` names, or why there is none: unknown, its plugin switched off, or (a built-in)
     * its own `media.<provider>.enabled` off. A plugin's collection is run by [[PluginCollection]] under
     * the host's allowlist for it (`media.collections`). */
-  def resolve(asked: String, collections: ListMap[String, MediaCollection], deps: Deps, http: MediaHttp,
+  def resolve(asked: String, collections: ListMap[String, MediaCollection], deps: Deps, http: HttpTransport,
       converter: ConverterClient): Either[String, MediaImporter] =
     lookup(asked, collections).flatMap {
       case (_, h: HostMediaCollection) => h.importer(deps, http, converter)
       case (name, c) =>
         val cfg = deps.cfg.media
-        PluginCollection.guard(Right(PluginCollection(name, c, cfg.collections.licencesFor(name)))).flatMap(col =>
-          MediaImporter.collection(col, PluginCollection.guard(Right(c.title)).getOrElse(name), s"plugin collection $name",
+        PluginMedia.guard(Right(PluginCollection(name, c, cfg.collections.licencesFor(name)))).flatMap(col =>
+          MediaImporter.collection(col, PluginMedia.guard(Right(c.title)).getOrElse(name), s"plugin collection $name",
             deps.ds, cfg, http, converter, DbMediaStore(deps.ds)))
     }
 
@@ -148,7 +150,7 @@ object MediaImporters:
     catch case NonFatal(_) => None
 
 /** A PLUGIN's collection run by the host's own collection import ([[CollectionImport]]): the plugin
-  * searches and describes; the host reads each stated licence ([[PluginCollection.rights]]) and judges
+  * searches and describes; the host reads each stated licence ([[PluginMedia.rights]]) and judges
   * it against `allowed` — `media.collections` for this collection, never anything the plugin says —,
   * ties records to places by [[MediaMatch]] under the rule the collection chose, downloads, thumbnails
   * and stores. One per import (it keeps the run's items for [[complete]]). */
@@ -163,9 +165,9 @@ final class PluginCollection(val provider: String, col: MediaCollection, allowed
   private val items = scala.collection.concurrent.TrieMap.empty[String, MediaItem]
 
   def search(fetch: Polite, place: PlaceFacts): Either[String, List[Either[String, MediaRecord]]] =
-    PluginCollection.guard(col.search(PluginCollection.place(place), PluginCollection.http(fetch))).map(_.map(_.map { it =>
+    PluginMedia.guard(col.search(PluginCollection.place(place), PluginMedia.http(fetch))).map(_.map(_.map { it =>
       items.update(it.key, it)
-      PluginCollection.record(it)
+      PluginMedia.record(it)
     }))
 
   override def matches(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve) =
@@ -184,7 +186,7 @@ final class PluginCollection(val provider: String, col: MediaCollection, allowed
   override def complete(fetch: Polite, rec: MediaRecord): Either[String, MediaRecord] =
     items.get(rec.key) match
       case None     => Right(rec)
-      case Some(it) => PluginCollection.guard(col.complete(it, PluginCollection.http(fetch))).map(PluginCollection.record)
+      case Some(it) => PluginMedia.guard(col.complete(it, PluginMedia.http(fetch))).map(PluginMedia.record)
 
 object PluginCollection:
 
@@ -194,39 +196,3 @@ object PluginCollection:
 
   /** The place as a plugin sees it. Pure. */
   def place(p: PlaceFacts): MediaPlace = MediaPlace(p.id, p.label, p.qid, p.lat, p.lon, p.period)
-
-  /** The run's polite client as the plugin's HTTP: its pace, its User-Agent, Retry-After honoured, a
-    * challenge the end of the request. */
-  def http(fetch: Polite): PluginHttp = new PluginHttp:
-    def get(url: String, headers: Map[String, String]) = fetch.get(url, headers).map(_.body)
-
-  /** A plugin's answer, or what it threw as a failure of that call. */
-  def guard[A](a: => Either[String, A]): Either[String, A] =
-    try Option(a).getOrElse(Left("the plugin answered nothing"))
-    catch
-      case e: InterruptedException => throw e
-      case NonFatal(e)             => Left(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
-
-  /** Pure: the record a plugin's item becomes; its rights read by the HOST ([[rights]]). */
-  def record(it: MediaItem): MediaRecord =
-    MediaRecord(it.key.trim, it.title.trim, it.pageUrl.trim, it.imageUrl.map(_.trim).filter(_.nonEmpty),
-      it.thumbUrl.map(_.trim).filter(_.nonEmpty), it.originalUrl.map(_.trim).filter(_.nonEmpty),
-      Option(it.rights).getOrElse(Left("no rights statement")).flatMap(rights), it.geography,
-      it.period.map((a, b) => (a.min(b), a.max(b))), it.ids, it.withheld)
-
-  /** Pure: what a provider's licence statement means, read by the host as every built-in collection's
-    * is ([[MediaLicence]]): the statement as an id or short name, or as a Creative Commons URL; the
-    * licence URL when the statement says nothing known. A statement it cannot read is `unknown` — never
-    * stored, whatever an allowlist says. A record must carry a credit line. The family decided here is
-    * what the allowlist is checked against: the plugin states, the host judges. */
-  def rights(r: com.histmersion.plugin.MediaRights): Either[String, CoreRights] =
-    val stated = Option(r.licence).getOrElse("").trim
-    val byStatement =
-      if stated.toLowerCase(java.util.Locale.ROOT).matches("^https?://.*") then MediaLicence.ofUrl(stated)
-      else MediaLicence.classify(stated)
-    val licence =
-      if byStatement.family != MediaLicence.Unknown then byStatement
-      else r.licenceUrl.map(MediaLicence.ofUrl).filter(_.family != MediaLicence.Unknown).getOrElse(byStatement)
-    val credit = Option(r.credit).getOrElse("").trim
-    if credit.isEmpty then Left("no credit line")
-    else Right(CoreRights(licence, r.licenceUrl.map(_.trim).filter(_.nonEmpty), r.author.map(_.trim).filter(_.nonEmpty), credit))

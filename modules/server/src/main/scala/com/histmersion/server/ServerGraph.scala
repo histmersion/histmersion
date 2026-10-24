@@ -1,9 +1,11 @@
 package com.histmersion.server
 
+import com.histmersion.pluginhost.Generation
+
 import com.histmersion.core.{AppConfig, ConfigReload, LoadedConfig, ReloadReport, UserConfigFile}
 import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.hot.{Hot, HotDataSource, HotGraph}
-import com.histmersion.server.plugins.{Generation, Plugins}
+import com.histmersion.server.plugins.Plugins
 import com.zaxxer.hikari.HikariDataSource
 import ox.{forkDiscard, useInScope}
 

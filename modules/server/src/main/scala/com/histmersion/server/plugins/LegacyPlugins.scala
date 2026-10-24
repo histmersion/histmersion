@@ -1,5 +1,7 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.pluginhost.PluginHost
+
 import org.ekrich.config.{Config, ConfigValueFactory}
 
 import scala.jdk.CollectionConverters.*

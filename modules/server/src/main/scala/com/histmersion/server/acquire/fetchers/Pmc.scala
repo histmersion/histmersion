@@ -1,8 +1,10 @@
 package com.histmersion.server.acquire.fetchers
 
+import com.histmersion.pluginhost.{FetchChain, Url}
+
 import com.histmersion.core.{AcquireConfig, AcquireParse, EuropePmcHit, Jats, PmcObject, PmcRecord}
 import com.histmersion.plugin.{Fetch, FetchContext, SourceFetcher, WorkKey}
-import com.histmersion.server.acquire.{FetchChain, FetchedFile, Http, OaFetch, Url}
+import com.histmersion.server.acquire.{FetchedFile, Http, OaFetch}
 
 /** The `pmc` plugin's two fetchers, by DOI (#1523): `pmc`, the PDF — Europe PMC's free links, else the
   * one NCBI's PMC Article Datasets publish — and `pmc-text`, the record's JATS full text when there is

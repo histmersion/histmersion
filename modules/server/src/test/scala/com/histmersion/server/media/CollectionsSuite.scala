@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.pluginhost.HttpAnswer
+
 import com.histmersion.core.*
 import com.histmersion.db.MediaRepo.{Known, PlaceFacts, ProviderAsset, Rights, Target}
 import com.histmersion.server.ConverterClient
