@@ -9,6 +9,18 @@ import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 ThisBuild / scalaVersion := "3.10.0"
 ThisBuild / organization := "com.kubuszok"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
+
+// Every module is AGPL-3.0-or-later, plugin-api and the first-party plugins included (LICENSE, NOTICE).
+ThisBuild / licenses     := List(License("AGPL-3.0-or-later", uri("https://www.gnu.org/licenses/agpl-3.0.html")))
+ThisBuild / homepage     := Some(uri("https://github.com/histmersion/histmersion"))
+ThisBuild / scmInfo      := Some(ScmInfo(
+  uri("https://github.com/histmersion/histmersion"),
+  "scm:git:https://github.com/histmersion/histmersion.git",
+  Some("scm:git:git@github.com:histmersion/histmersion.git")))
+// name and GitHub handle only: the POM's email field is left empty on purpose
+ThisBuild / developers   := List(
+  Developer("MateuszKubuszok", "Mateusz Kubuszok", "", uri("https://github.com/MateuszKubuszok")))
+ThisBuild / startYear    := Some(2026)
 // tapir 1.14 and sttp-ai 0.12 bring sttp-apispec 0.12; Chimp 0.6.0 (the newest) was built against 0.11.10.
 // Chimp only builds its tools' input schemas with it, and every MCP suite (tools/list, tools/call over HTTP)
 // passes on 0.12 — so 0.12 may evict 0.11 here. Drop this when a Chimp built on 0.12 is out.

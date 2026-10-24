@@ -158,6 +158,9 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(as, 200, ab)
       val about = io.circe.parser.decode[About](ab).fold(e => fail(s"$e: $ab"), identity)
       assertEquals(about.build.version, Version.version)
+      // the AGPL's network clause: everyone using the server is offered the source of what is running
+      assertEquals(about.build.licence, Some("AGPL-3.0-or-later"))
+      assertEquals(about.build.sourceUrl, Some(CorrespondingSource.url(cfg.server.sourceUrl, BuildMeta.gitCommit)))
       assertEquals(about.health.db, "ok")
       assert(about.health.schemaVersion.isDefined, ab)
       val counts = about.counts.getOrElse(fail(s"no counts: $ab"))

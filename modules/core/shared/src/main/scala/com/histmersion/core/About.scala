@@ -9,15 +9,27 @@ import sttp.tapir.Schema
 
 /** The running server's build. `gitCommit`/`commitDate` are stamped at compile time from the checkout
   * it was built from (`None` when it was built outside a git checkout); `dirty` = built with
-  * uncommitted changes, so the commit alone does not say what is running. */
+  * uncommitted changes, so the commit alone does not say what is running. `licence` is the SPDX id
+  * the program is distributed under and `sourceUrl` where its source can be had (`None`: an older
+  * server). */
 final case class BuildStamp(
     version: String,
     gitCommit: Option[String] = None,
     commitDate: Option[String] = None,
-    dirty: Boolean = false
+    dirty: Boolean = false,
+    licence: Option[String] = None,
+    sourceUrl: Option[String] = None
 ) derives KindlingsCodecAsObject
 object BuildStamp:
   given Schema[BuildStamp] = KindlingsSchema.derived[BuildStamp].schema
+
+/** The AGPL (section 13) has a server offer everyone who uses it over a network the source of the very
+  * version that is running: the repository at the commit it was built from, or the repository itself
+  * when the commit is unknown. The `/tree/<commit>` form is the one GitHub, GitLab and Forgejo share. */
+object CorrespondingSource:
+  def url(repository: String, commit: Option[String]): String =
+    val repo = repository.trim.stripSuffix("/").stripSuffix(".git")
+    commit.map(_.trim).filter(_.nonEmpty).fold(repo)(c => s"$repo/tree/$c")
 
 /** The OCR job queue, one count per [[JobState]]. */
 final case class JobCounts(queued: Int = 0, running: Int = 0, done: Int = 0, failed: Int = 0)
@@ -165,6 +177,8 @@ object AboutMarkdown:
       "",
       s"- commit: $commit",
       s"- commit date: ${b.commitDate.getOrElse("unknown")}",
+      s"- licence: ${b.licence.getOrElse("unknown")}",
+      s"- source: ${b.sourceUrl.getOrElse("unknown")}",
       s"- schema version: ${a.health.schemaVersion.getOrElse("unknown")}",
       s"- status: ${a.health.status}",
       s"- database: ${a.health.db}",

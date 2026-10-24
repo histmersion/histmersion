@@ -10,6 +10,10 @@ A plugin compiles against **one** module, `modules/plugin-api` (artifact `histme
 package `com.histmersion.plugin`). It never sees the server, the database or the domain model. The
 module's only dependencies are sconfig and kindlings' sconfig derivation.
 
+`plugin-api`, like the rest of Histmersion, is licensed under the AGPL-3.0-or-later. A plugin is
+linked into the server's binary and runs inside it, so a plugin you give to other people must be
+under a licence compatible with the AGPL ([Legal notice](../legal.md)).
+
 - **One service type: `Plugin`.** A plugin is found through Java's `ServiceLoader`: the jar lists its
   provider class in `META-INF/services/com.histmersion.plugin.Plugin`. The provider is a public
   class with a no-argument constructor (not a Scala `object`), and constructing it does nothing —

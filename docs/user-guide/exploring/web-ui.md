@@ -157,7 +157,7 @@ The toolbar opens the others:
 | jobs | text-recognition and import jobs, with progress |
 | worklog | the `log` list, by date |
 | API key | enter the key writes need (shown only when the server asks for one) |
-| about | version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
+| about | version, the licence and a link to the source code of the running version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
 
 <figure markdown="span">
   ![The About window: server version and commit, schema version, the config file; health of the server, database and converter, all green; the job queue; the last backup; the counts of sources, findings, articles, events, places and periods; the first plugins](../assets/screenshots/about.png){ loading=lazy }

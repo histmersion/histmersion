@@ -7,15 +7,28 @@
 
 ## The software's licence
 
-Histmersion's licence **has not been decided yet**. The GNU Affero General Public License,
-version 3 (AGPL-3.0) is being considered. This page describes what that licence would mean, so it
-is ready when the decision is made; until then, no licence has been granted.
+Histmersion is free software, licensed under the **GNU Affero General Public License, version 3 or
+(at your option) any later version** (SPDX: `AGPL-3.0-or-later`). The full text is in the
+{{ repo_file("LICENSE") }} file of the source code; {{ repo_file("NOTICE") }} lists the material by
+others that Histmersion ships, each under its own licence. Every part of the program is covered,
+the plugin interface (`plugin-api`) and the plugins that come with Histmersion included.
 
-Under the AGPL, you may use, study, change and share the software. If you **change** Histmersion
-and let other people use your changed version **over a network** (for example, colleagues opening
-your instance in their browser), you must offer those people the source code of your changed
-version. Running an unchanged copy, for yourself or for others, does not add any obligation beyond
-keeping the licence notices.
+Under the AGPL you may use, study, change and share the software, for any purpose. In short:
+
+- **Running it** — for yourself or for others — needs nothing beyond keeping the licence notices.
+- **Sharing a copy** (the program or a changed version of it) means passing it on under the same
+  licence, together with its source code.
+- **Changing it and letting other people use your changed version over a network** (for example,
+  colleagues opening your instance in their browser) means offering those people the source code of
+  your changed version. Every Histmersion server shows a **source** link in its About window, and
+  `histmersion about` prints it: it points at the code of the exact version that is running. If you
+  run a changed version, set `server.source-url` (see [Configuration](reference/configuration.md))
+  to the repository that holds your changes, so the link stays true.
+- **Plugins** run inside the program, so a plugin you share with others has to be under a licence
+  compatible with the AGPL.
+
+Copyright (C) 2026 Mateusz Kubuszok. The software comes with no warranty, to the extent permitted by
+law; the licence text has the details.
 
 ## Your content is not covered by the software's licence
 
@@ -57,7 +70,8 @@ terms under which you got them**. In practice:
   you show them.
 
 The software's licence does not conflict with any of this: the AGPL governs how the program may be
-shared, while each source's own terms govern who may read the source.
+shared, while each source's own terms govern who may read the source. The source link a shared
+instance offers leads to the program's code only — never to the sources, texts or files stored in it.
 
 ## See also
 

@@ -73,7 +73,20 @@ Read [Responsible use](docs/user-guide/responsible-use.md) before you start. In 
 
 ## Licence
 
-Not decided yet; the GNU Affero General Public License v3 (AGPL-3.0) is being considered. Whatever the
-software's licence, it does not apply to what you store or write with it: your articles and notes stay
+Copyright (C) 2026 Mateusz Kubuszok.
+
+Histmersion is free software: you can redistribute it and/or modify it under the terms of the
+[GNU Affero General Public License](LICENSE) as published by the Free Software Foundation, either
+version 3 of the License, or (at your option) any later version (`AGPL-3.0-or-later`). It is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the licence for more details.
+
+Every module is covered, the plugin interface (`plugin-api`) and the bundled plugins included. If
+you run a changed version for other people over a network, offer them its source: the About window
+of every server links the code of the running version (`server.source-url`). Material by others
+that Histmersion ships — fonts, icons, map libraries, place and period data, libraries — keeps its
+own licence; see [NOTICE](NOTICE).
+
+The licence covers the program, not what you store or write with it: your articles and notes stay
 yours, and every source keeps its own copyright and licence. See the
 [legal notice](docs/user-guide/legal.md).
