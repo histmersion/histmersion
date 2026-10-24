@@ -32,7 +32,7 @@ END="<!-- END CLI REFERENCE -->"
 # sbt 2 puts module output under target/out/jvm/<scalaVersion>/<name>/, not modules/<m>/target/.
 find_cli() { find target modules -type f -name histmersion-cli -perm -u+x -print 2>/dev/null | head -n 1; }
 # a source of the CLI's commands newer than the binary: the binary's help is not this tree's
-stale() { [ -n "$(find modules/cli/src/main modules/core -type f -name '*.scala' -newer "$1" -print 2>/dev/null | head -n 1)" ]; }
+stale() { [ -n "$(find modules/cli/src/main modules/api modules/config modules/core -type f -name '*.scala' -newer "$1" -print 2>/dev/null | head -n 1)" ]; }
 
 CLI_CMD=()
 native="$(find_cli || true)"

@@ -1,9 +1,7 @@
 package com.histmersion.config
 
 import com.histmersion.api.*
-import com.histmersion.domain.*
 import com.histmersion.api.given
-import com.histmersion.domain.given
 
 import com.histmersion.api.Agents.Usage
 

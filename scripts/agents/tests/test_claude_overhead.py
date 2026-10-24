@@ -62,7 +62,7 @@ class FirstCallTest(unittest.TestCase):
 
 class DefaultsTest(unittest.TestCase):
     def test_reads_the_claude_code_env_block_of_reference_conf(self):
-        with open(os.path.join(REPO, "modules/core/jvm/src/main/resources/reference.conf"), encoding="utf-8") as f:
+        with open(os.path.join(REPO, "modules/config/src/main/resources/reference.conf"), encoding="utf-8") as f:
             d = co.defaults(f.read())
         names = [k for k, _ in d]
         self.assertIn("CLAUDE_CODE_DISABLE_ARTIFACT", names)

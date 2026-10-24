@@ -28,7 +28,7 @@ on:
       - runtime/**
       - converter/**
       - modules/server/src/main/scala/com/histmersion/server/Supervisor.scala
-      - modules/core/jvm/src/main/resources/reference.conf
+      - modules/config/src/main/resources/reference.conf
       - .sdkmanrc
       - .github/workflows/bundle.yml
   pull_request:
@@ -37,7 +37,7 @@ on:
       - runtime/**
       - converter/**
       - modules/server/src/main/scala/com/histmersion/server/Supervisor.scala
-      - modules/core/jvm/src/main/resources/reference.conf
+      - modules/config/src/main/resources/reference.conf
       - .sdkmanrc
       - .github/workflows/bundle.yml
   workflow_dispatch: {}

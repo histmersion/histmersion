@@ -407,14 +407,29 @@ lazy val api = crossProject(JVMPlatform, JSPlatform)
 lazy val apiJVM = api.jvm
 lazy val apiJS  = api.js
 
-// ── core: package `domain` — the logic server and db run on — and package `config` — AppConfig and its
-//    readers (sconfig) — plus frontmatter (snakeyaml), export and ArticleNote. JVM only. It depends on api
-//    for now (a recorded, temporary edge: domain logic works on wire records; config reads into a few).
-//    NO database code.
+// ── config: AppConfig and its readers — HOCON modelled as case classes (Kindlings sconfig derivation) over
+//    reference.conf, the user's file and the environment. JVM only. It depends on api for now (a recorded,
+//    temporary edge: it reads into a few wire records — the page's UiConfig, the approval kinds).
+lazy val config = project
+  .in(file("modules/config"))
+  .dependsOn(valuesJVM, apiJVM % "compile->compile;test->test")
+  .settings(name := "histmersion-config")
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.kubuszok" %% "kindlings-sconfig-derivation" % V.kindlings,
+      "org.ekrich"   %% "sconfig"                      % V.sconfig
+    )
+  )
+
+// ── core: package `domain` — the logic server and db run on — plus frontmatter (snakeyaml), export and
+//    ArticleNote. JVM only. It depends on api and config for now (recorded, temporary edges: the domain
+//    works on wire records and takes config records as its settings). NO database code.
 lazy val core = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("modules/core"))
   .dependsOn(values, api % "compile->compile;test->test")
+  .jvmConfigure(_.dependsOn(config % "compile->compile;test->test"))
   .settings(name := "histmersion-core")
   .settings(commonDeps)
   .settings(
@@ -424,9 +439,6 @@ lazy val core = crossProject(JVMPlatform)
       "com.kubuszok"                %% "kindlings-circe-derivation"        % V.kindlings,
       "com.kubuszok"                %% "kindlings-tapir-schema-derivation" % V.kindlings,
       "io.github.iltotore"          %% "iron"                             % V.iron,
-      // HOCON config modelled as case classes via Kindlings sconfig derivation.
-      "com.kubuszok"                %% "kindlings-sconfig-derivation"      % V.kindlings,
-      "org.ekrich"                  %% "sconfig"                          % V.sconfig,
       "org.yaml"                     % "snakeyaml"                        % V.snakeyaml
     )
   )
@@ -598,7 +610,7 @@ lazy val chimneyIronTests = project
 // ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
 lazy val db = project
   .in(file("modules/db"))
-  .dependsOn(coreJVM)
+  .dependsOn(config, coreJVM)
   .settings(name := "histmersion-db")
   .settings(commonDeps)
   // Inside a group the suites run one at a time on purpose: several rewrite source_chunks/finding_places
@@ -724,7 +736,7 @@ lazy val server = project
         Seq("" -> conv.toPath((pluginApi / Compile / packageBin).value).toFile,
           "sources" -> conv.toPath((pluginApi / Compile / packageSrc).value).toFile))
       // the testkit a plugin's tests depend on, with what it needs of Histmersion's own modules: the plugin
-      // host it runs, values, api, and core, whose settings (reference.conf) give it the server's User-Agent, timeouts
+      // host it runs, values, api, core, and config, whose settings (reference.conf) give it the server's User-Agent, timeouts
       // and TLS trust. Their other dependencies are ordinary Maven Central libraries their POMs name.
       def module(id: ModuleID, pom: File, jar: File, sources: File): Unit =
         writeMavenArtifact(repo, id, scalaBinaryVersion.value, pom, Seq("" -> jar, "sources" -> sources))
@@ -734,6 +746,8 @@ lazy val server = project
         conv.toPath((pluginHost / Compile / packageBin).value).toFile, conv.toPath((pluginHost / Compile / packageSrc).value).toFile)
       module((coreJVM / projectID).value, conv.toPath((coreJVM / makePom).value).toFile,
         conv.toPath((coreJVM / Compile / packageBin).value).toFile, conv.toPath((coreJVM / Compile / packageSrc).value).toFile)
+      module((config / projectID).value, conv.toPath((config / makePom).value).toFile,
+        conv.toPath((config / Compile / packageBin).value).toFile, conv.toPath((config / Compile / packageSrc).value).toFile)
       module((apiJVM / projectID).value, conv.toPath((apiJVM / makePom).value).toFile,
         conv.toPath((apiJVM / Compile / packageBin).value).toFile, conv.toPath((apiJVM / Compile / packageSrc).value).toFile)
       module((valuesJVM / projectID).value, conv.toPath((valuesJVM / makePom).value).toFile,
@@ -844,7 +858,7 @@ lazy val server = project
 // ── cli: host-run, PURE HTTP CLIENT of the server (sttp client derived from core's endpoints). ───
 lazy val cli = project
   .in(file("modules/cli"))
-  .dependsOn(coreJVM)
+  .dependsOn(config, coreJVM)
   .settings(name := "histmersion-cli", Compile / mainClass := Some("com.histmersion.cli.Main"))
   .settings(commonDeps)
   .settings(writeClasspathSetting)
@@ -899,7 +913,7 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(valuesJVM, valuesJS, apiJVM, apiJS, coreJVM, pluginApi, pluginHost, pluginTestkit, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
+  .aggregate(valuesJVM, valuesJS, apiJVM, apiJS, config, coreJVM, pluginApi, pluginHost, pluginTestkit, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
     pluginResolver, chimneyIron, chimneyIronTests,
     db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)
