@@ -129,7 +129,7 @@ new_install() {
   echo '{"digest":"e3b0","spiVersion":1,"jars":[],"mode":"native"}' > "$INSTALL/bin/histmersion-server.plugin-set.json"
   echo "kit jar" > "$INSTALL/kit/lib/a.jar"
   echo a.jar > "$INSTALL/kit/classpath"
-  echo "--no-fallback" > "$INSTALL/kit/native-image.args"
+  echo "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter" > "$INSTALL/kit/native-image.args"
   echo com.histmersion.server.Main > "$INSTALL/kit/main-class"
   echo 25.0.4.1.1 > "$INSTALL/kit/graalvm-version"
   echo sloth > "$INSTALL/kit/tools/sloth.jar"; echo verify > "$INSTALL/kit/tools/SlothVerify.java"

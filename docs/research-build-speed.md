@@ -171,8 +171,9 @@ commit — AGENTS.md, "The JDK pin"); and it ships no macOS x64 build, so an Int
 prebuilt binary or JVM mode. sdkman has no download of it (`.sdkmanrc` names no JDK now;
 `just toolchain install` provisions it). Earlier: 25.0.2 built the server 0–10 % faster with the same
 binary — inside the run-to-run noise of a shared machine (25.0.1's own two runs differ by 8 %) — and was
-not worth a pin move on its own. 25.4's builder also warns that `--no-fallback` has no effect any more and
-that `--enable-url-protocols` should become reachability metadata; both are left as they are for now.
+not worth a pin move on its own. 25.4's builder also warned that `--no-fallback` has no effect any more (it sets the deprecated
+`FallbackThreshold`) and that `--enable-url-protocols` should become reachability metadata; both were removed
+on 2026-10-24 (#3752) — the `https` handler's constructor is in the server's reachability metadata already.
 No native-image option sped the build.
 
 ## 6. Before and after
