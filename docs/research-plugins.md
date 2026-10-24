@@ -2416,3 +2416,61 @@ repository.
 POMs or `lib/`: a changed POM beside an unchanged jar shows no REBUILD NEEDED (the build record does
 notice it). A plugin's dependencies are not isolated from each other's versions beyond coursier's
 newest-wins choice across plugins.
+
+## 25. As built (the plugin testkit, 2026-10-24)
+
+A plugin's own tests run it the way the server does, without the server, the database or Postgres.
+
+**Modules.** The host side of the SPI that needs neither moved out of `server` into
+`modules/plugin-host` (`com.histmersion.pluginhost`, depends on core and plugin-api): `PluginHost`
+(discovery, config layering and type checks, secrets, staged registration; the built-in providers'
+reserved names in `ReservedNames`, which `ReservedNamesSuite` holds equal to the server's registries;
+host-owned contributions marked `HostOwned`), the acquisition client `PolicyHttp` (User-Agent,
+`Retry-After`, `Challenge`) over an `HttpTransport` (`SttpTransport` for acquisition, `JavaHttpTransport`
+for media and catalogues), `OutboundTls`, `Polite`, `FetchChain` + `OaFetcher` (the outcome now names the
+fetcher that found), `WorkLookup` (a DOI's metadata and the `WorkKey` an ingest asks for), and how the host
+reads a plugin's collection (`PluginMedia`, incl. the licence judgement `refusal`), catalogue
+(`PluginEvents`, incl. the paging loop `readPart`) and AI provider (`PluginAi`). The server keeps thin
+wrappers (`SttpHttp`, `PluginCollection`, `PluginAiClient`). Host code logs through `HostLog` (scribe by
+default) so a test captures the lines.
+
+`modules/plugin-testkit` (`com.kubuszok::histmersion-plugin-testkit`, package
+`com.histmersion.plugin.testkit`) depends on plugin-host only. `server/pluginRepo` writes it into the
+install's `maven/` with `histmersion-plugin-host` and `histmersion-core` (jar, sources, POM each);
+everything else comes from Maven Central through their POMs. A plugin uses it as `//> using test.dep`
+(`plugin new` writes the line).
+
+**API.** `PluginHarness.load(id, config: String | Path, http, secrets, env, histmersionConf)` →
+`Either[String, PluginHarness]` (Left = the server's own message: no services file, no defaults resource,
+an unknown or mistyped setting, a failed `register`, disabled). Runners: `fetch(work, saveTo, legalOnly,
+allowUnauthorised): FetchReport` (`FetchOutcome.Found/Miss/Refused`, per-fetcher answers, licence, log,
+requests), `searchMedia(collection, place): MediaReport`, `readCatalogue(catalogue, query):
+CatalogueReport`, `aiTurn(provider, request, http): AiReport`, `resolveSecret(vault, ref)`,
+`workFromDoi(doi)` / `WorkKey.fromDoi(doi, harness)`. `ScriptedAiHttp` answers an AI provider and keeps
+its requests (credential headers masked); `PluginHarness.liveAiHttp` is the server's own client.
+
+**HTTP modes.** `HttpMode.Live | Record(dir) | Replay(dir) | Stub(answers)`; whatever the mode, the
+request first goes through the server's client, so only the wire differs. A recording is
+`NNN-<host>.http` (method, URL, status, an allowlist of headers, `body: <file>` or `error: …`) plus the
+body file; never written: `Authorization`, cookies, unlisted headers, any secret value the harness knows
+(test secrets, values of `env:`/`value:` references in the config), and the contact e-mail (the testkit
+blanks `acquire.contact-email`: requests are anonymous, so a recording replays on any machine). Replay
+serves exchanges per URL in recorded order, skips every wait, and fails the runner with
+`UnrecordedRequest` naming the URLs. `HttpMode.fromEnv(dir)`: `HISTMERSION_PLUGIN_HTTP`, else replay when
+`dir` holds recordings, else live with `HISTMERSION_PLUGIN_LIVE`, else `Left` (skip).
+
+**Depth per kind.** Fetch: the whole chain (legal gate, exception → miss, PDF check, memo, log). Media:
+search through the collection's polite client, the host's licence reading and allowlist, `complete` and
+the second judgement; place matching (needs the map) is not run. Catalogues: parts, paging, record checks,
+the server's dating. AI: check then one guarded call (the tool loop belongs to sttp-ai on the server).
+Vaults: the host's `resolve`. There is no download size limit on the acquisition path to mirror (media
+renditions have `media.max-bytes`, applied at download, which the testkit does not do).
+
+**Contract.** The testkit's public surface (everything outside `testkit.internal`) is listed in
+`modules/plugin-testkit/plugin-testkit-api.txt`; `TestkitApiSuite` fails when it changes
+(`HISTMERSION_UPDATE_TESTKIT_API=1` rewrites it), as `PluginPlatformSuite` does for the platform.
+
+**Not built: `histmersion plugin try`.** The CLI is a native binary that must stay a pure HTTP client of
+core; running a plugin jar needs a JVM with the testkit on its class path. A test written with the
+harness does the same job from the plugin's own project, so the command was left out.
+

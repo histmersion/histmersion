@@ -65,7 +65,7 @@ just test-db-down
 
 **Iterate with `just test-quick`, gate with `just test-it`.** `test-quick` asks
 `scripts/dev/affected.py` which modules the branch touched (committed, staged, unstaged, untracked)
-and tests them and their dependents (core → db, cli, web, server; db → server; plugin-api → vaults,
+and tests them and their dependents (core → db, cli, web, server; db → server; plugin-host → testkit, server; plugin-api → vaults,
 server); a change to build.sbt or project/ tests everything. `--explain` shows why:
 `python3 scripts/dev/affected.py --explain`. Pass a test DB port when :55432 is taken:
 `just test_db_port=55561 test-quick`.
@@ -201,9 +201,11 @@ server provides to plugins at the versions it ships (sconfig, kindlings, circe, 
 ox, iron; the contract is `modules/plugin-api/plugin-platform.txt`, checked by `PluginPlatformSuite`). `new`
 writes a scala-cli project: `<Name>.scala` (`//> using repository <the install's maven/>`, the API and the
 platform as `compileOnly.dep`, `resourceDir`, `publish.organization/name/version`; then a working plugin of
-that kind), `<Name>.test.scala` (munit and the two as `test.dep`: the plugin, plus packaging checks — the
-services file names the class, the defaults decode, every `$lzy<n>` field is in the native metadata) and
-`resources/` (services file, defaults, `reachability-metadata.json`). A library of its own is a plain
+that kind), `<Name>.test.scala` (munit, the two and the **testkit** as `test.dep`: unit tests through
+`PluginHarness` on `HttpMode.Stub`, a gated `<Name>LiveSuite` for fetchers/collections/catalogues, plus
+packaging checks — the services file names the class, the defaults decode, every `$lzy<n>` field is in the
+native metadata), `README.md` (record → replay) and `resources/` (services file, defaults,
+`reachability-metadata.json`). A library of its own is a plain
 `//> using dep`: never shade. Loop: `scala-cli test .` → `scala-cli --power publish . --publish-repository
 ./repo` (the jar and a POM listing its own libraries, not the compile-only ones) → `histmersion plugin add
 <org>::<id>:0.1.0 --repo ./repo` → `plugin rebuild`. `--repo <dir|url>` on `new` for a repository unzipped
@@ -212,6 +214,18 @@ jar's path in the repository. Editors: `scala-cli setup-ide .`, then Metals (sou
 repository). sbt alternative: `resolvers += "histmersion" at <plugin repo --url>`, the API and platform
 `% Provided`, own libraries as usual, `publishTo` a directory. Code and generator: `cli/PluginTemplate.scala`,
 `cli/PluginTemplateKinds.scala`; the user docs page is `docs/user-guide/plugins/developing.md`.
+
+**Testing a plugin without a server: `com.kubuszok::histmersion-plugin-testkit`** (`modules/plugin-testkit`,
+shipped in `maven/` with `histmersion-plugin-host` and `histmersion-core`). `PluginHarness.load(id, config)`
+runs the server's own `PluginHost` (moved to `modules/plugin-host` for this; the server and the testkit
+share it, and the acquisition client, `FetchChain`, `WorkLookup`, `PluginMedia`/`PluginEvents`/`PluginAi`)
+→ `fetch`/`searchMedia`/`readCatalogue`/`aiTurn`/`resolveSecret`, `WorkKey.fromDoi`. HTTP is the server's
+client over `HttpMode.Live|Record(dir)|Replay(dir)|Stub`; `HttpMode.fromEnv(dir)` reads
+`HISTMERSION_PLUGIN_HTTP` (live/record/replay), else replays recordings, else live with
+`HISTMERSION_PLUGIN_LIVE=1`, else skip. Recordings: `NNN-<host>.http` + body file; no secrets, cookies or
+contact e-mail. Its public API is listed in `modules/plugin-testkit/plugin-testkit-api.txt`
+(`TestkitApiSuite`; `HISTMERSION_UPDATE_TESTKIT_API=1` rewrites it). User docs: developing.md "Testing";
+design: `docs/research-plugins.md` §25.
 
 **Dependencies at install.** `plugin add` fetches the plugin's POM with its jar (beside a path or URL, or
 from the Maven repository) and runs `histmersion-relink --resolve`, the relink kit's plugin resolver

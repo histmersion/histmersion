@@ -24,6 +24,8 @@ DEPS = {
     "coreJS": [],
     "pluginApi": [],
     "pluginVaults": ["pluginApi"],
+    "pluginHost": ["coreJVM", "pluginApi"],
+    "pluginTestkit": ["pluginHost"],
     "pluginHello": ["pluginApi"],
     "pluginHelloAi": ["pluginApi"],
     "pluginHelloLib": [],
@@ -34,9 +36,9 @@ DEPS = {
     "db": ["coreJVM"],
     "cli": ["coreJVM"],
     "web": ["coreJS"],
-    "server": ["coreJVM", "db", "pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
+    "server": ["coreJVM", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
 }
-ORDER = ["coreJVM", "coreJS", "pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+ORDER = ["coreJVM", "coreJS", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
@@ -62,6 +64,8 @@ RULES = [
     ("modules/web/test/", []),
     ("modules/web/", ["web"]),
     ("modules/plugin-api/", ["pluginApi"]),
+    ("modules/plugin-host/", ["pluginHost"]),
+    ("modules/plugin-testkit/", ["pluginTestkit"]),
     ("modules/plugin-vaults/", ["pluginVaults"]),
     ("modules/plugin-fixtures/hello-ai/", ["pluginHelloAi"]),
     ("modules/plugin-fixtures/hello-deps/", ["pluginHelloDeps"]),

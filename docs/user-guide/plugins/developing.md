@@ -73,7 +73,8 @@ What it writes, for `doi-mirror`:
 | file | what it is |
 |---|---|
 | `DoiMirror.scala` | the plugin: its settings, the `Plugin` class and the source fetcher it adds |
-| `DoiMirror.test.scala` | its tests, and checks of what the jar must carry |
+| `DoiMirror.test.scala` | its tests, a live check against the real site (skipped until you ask for it), and checks of what the jar must carry |
+| `README.md` | how to test it: offline, live, and recorded then replayed (see [Testing](#testing)) |
 | `.gitignore` | keeps the build's output and the published `repo/` out of version control |
 | `resources/META-INF/services/com.histmersion.plugin.Plugin` | names the plugin class, so the server can find it (Java's ServiceLoader reads it). Rename the class and you must rename it here too; a test checks it |
 | `resources/META-INF/histmersion/plugins/doi-mirror.conf` | the plugin's settings and their defaults |
@@ -93,8 +94,9 @@ The two Scala files are the ones you edit. The top of `DoiMirror.scala` is the b
 ```
 
 The Scala version and the two Histmersion artifacts are the ones your Histmersion runs; keep them when
-you edit. The test file adds munit, and the same two artifacts as test dependencies, since the tests
-run the plugin. The `publish` lines name the plugin when you publish it: change the organization to
+you edit. The test file adds munit, the same two artifacts as test dependencies, since the tests
+run the plugin, and the **plugin testkit** (`com.kubuszok::histmersion-plugin-testkit`), which loads and
+runs the plugin as the server does (see [Testing](#testing)). The `publish` lines name the plugin when you publish it: change the organization to
 your own (a reversed domain name, say) and keep the version equal to the one in `PluginInfo`.
 
 The loop:
@@ -199,6 +201,7 @@ libraryDependencies ++= Seq(
   "com.kubuszok" %% "histmersion-plugin-api"      % "0.1.0-SNAPSHOT" % Provided,
   "com.kubuszok" %% "histmersion-plugin-platform" % "0.1.0-SNAPSHOT" % Provided,
   "org.scala-lang.modules" %% "scala-xml"         % "2.4.0",
+  "com.kubuszok" %% "histmersion-plugin-testkit"  % "0.1.0-SNAPSHOT" % Test,   // see Testing
   "org.scalameta" %% "munit"                      % "1.3.6" % Test
 )
 publishTo := Some(MavenCache("local-plugin-repo", baseDirectory.value / "repo"))
@@ -446,14 +449,81 @@ lists the `hello-lib` fixture) to a test Maven repository.
 plugin built outside this one with sbt: an open-access source fetcher for openly licensed books in the
 OAPEN Library and DOAB. It compiles against the plugin API and platform from the install's repository
 (`Provided`), depends on scala-xml as an ordinary library, publishes its jar with a POM to a directory
-repository, carries its defaults and native-image metadata, and tests its fetcher against a fake host
-HTTP client.
+repository, carries its defaults and native-image metadata, and tests itself with the plugin testkit:
+unit tests on trimmed copies of OAPEN's answers, and a recorded live case (a book whose file OAPEN's
+bot check keeps from scripts, so the expected answer is "refused") replayed offline.
 
 ## Testing
 
-- **Unit-test `register` with a fake `PluginContext`.** Every registry but `secretVaults` has a
-  default that refuses additions, so a test context needs only the parts you use. The tests
-  `plugin new` writes have one (`TestContext`) to start from.
+### Without a server: the plugin testkit
+
+Every install's Maven repository carries `com.kubuszok::histmersion-plugin-testkit`, a test dependency
+(`//> using test.dep …`, or `% Test` in sbt). It runs your plugin the way the server does, using the
+server's own code, but needs no server, no database and no Postgres:
+
+```scala
+import com.histmersion.plugin.*
+import com.histmersion.plugin.testkit.*
+import java.nio.file.Path
+
+class DoiMirrorLiveSuite extends munit.FunSuite:
+  test("finds and downloads a copy of a known work"):
+    val mode = HttpMode.fromEnv(Path.of("recordings", "known-work"))
+    assume(mode.isRight, mode.left.getOrElse(""))                    // skipped, with the reason
+    val harness = PluginHarness.load("doi-mirror", "base-url = \"https://mirror.example.org\"",
+      http = mode.toOption.get).fold(e => fail(e), identity)        // or the server's refusal
+    val work   = WorkKey.fromDoi("10.1234/abc", harness).getOrElse(WorkKey(doi = Some("10.1234/abc")))
+    val report = harness.fetch(work, saveTo = Some(Path.of("target", "fetched")))
+    assert(report.outcome.isInstanceOf[FetchOutcome.Found], report.toString)
+```
+
+- **`PluginHarness.load(id, config)`** finds the plugin through ServiceLoader on the test class path,
+  checks that `META-INF/services/…` and `META-INF/histmersion/plugins/<id>.conf` are there and parse,
+  layers your config (the block's keys, or the whole `histmersion.plugins.<id> { … }` as in
+  `histmersion.conf`, or a file) over the defaults, type-checks it, resolves its secrets and calls
+  `register`. What fails here fails in the server, with the server's message.
+- **The runners** do what the server does with what the plugin registered, and report what the server
+  would make of the answer: `fetch(work)` (the acquisition chain: an exception is a miss, a "PDF" that is
+  not one is no copy; `Found`, `Miss` or `Refused`, each fetcher's answer, the licence, the log lines;
+  `saveTo` writes the file), `searchMedia(collection, place)` (each record's licence read and judged
+  against `media.collections` as the import does; tying it to a place needs the map and is not run),
+  `readCatalogue(catalogue, query)` (parts and pages, each record checked and dated as stored),
+  `aiTurn(provider, request, http)` (the provider's check, then one call; `ScriptedAiHttp` answers it and
+  keeps what it sent) and `resolveSecret(vault, ref)`. `WorkKey.fromDoi(doi, harness)` fills in a work's
+  title, authors and year from OpenAlex (else Crossref), as an ingest does.
+- **Secrets** come from the test: `secrets = Map("keepassxc:Portal/token" -> "…")` (served by a stand-in
+  vault) or the environment (`env:NAME`). No real vault or keychain is asked.
+- **HTTP is the server's client** — its User-Agent, timeouts, TLS trust, `Retry-After`, bot challenges —
+  and the `HttpMode` says where it goes: `Stub(Map(url -> StubAnswer…))` (canned answers, for unit
+  tests), `Live`, `Record(dir)` (live, every exchange written to `dir`) or `Replay(dir)` (offline, from
+  `dir`; a request with no recording fails the test and names the URL).
+
+### Record once, replay offline
+
+`HttpMode.fromEnv(dir)` lets one test serve all three uses: `HISTMERSION_PLUGIN_HTTP=live|record|replay`
+decides when set; otherwise recordings in `dir` are replayed (offline, in CI too); otherwise the test runs
+against the real site only with `HISTMERSION_PLUGIN_LIVE=1`, and is skipped without it.
+
+```bash
+HISTMERSION_PLUGIN_LIVE=1 scala-cli test .          # against the real site, until it passes
+HISTMERSION_PLUGIN_HTTP=record scala-cli test .     # once more, keeping the answers
+scala-cli test .                                    # from now on: replayed
+```
+
+A recording is a directory of plain files meant to be read in a diff: `001-<host>.http` per exchange
+(method, URL, status, and only the headers that matter — content type, redirects, `Retry-After`,
+a challenge marker) and its body in a file beside it. Never written: `Authorization`, cookies or any
+other header, the value of a secret the test knows (`{secret}` stands in for it), and the contact
+e-mail of a `histmersion.conf` (a test never sends it). A replay skips the waits of the server's client;
+a plugin's own pacing still runs, so turn it down in replay (`mode.live` says which).
+
+**Trim before you commit.** Bodies are files you may edit: cut a long answer to what the test reads,
+and never commit a copyrighted file. The server's PDF check only looks for `%PDF` in the first KiB of
+a file longer than a KiB, so `head -c 2048` of a PDF replays the same. Lines starting with `#` in a
+`.http` file are notes — say what you trimmed.
+
+### With a server
+
 - **Load it the way the server does.** `histmersion plugin add` shows the id, version, SPI version,
   what it registers, the access its fetchers declare and the dependencies it installs — before it
   installs anything, and it refuses a jar built for another SPI version or one that needs a newer
@@ -465,4 +535,5 @@ HTTP client.
 - In this repository, the plugin suites install, describe and relink the `hello` jar, the resolver's
   suites resolve `hello-deps` and its dependency offline, and the AI-provider suites run pipelines
   through `hello-ai`; `scripts/bundle/smoke.sh` relinks a real bundle with `hello` and `hello-deps` in
-  it. See [Contributing](../contributing/index.md).
+  it. The testkit's own suites (`modules/plugin-testkit`) load test plugins of every kind. See
+  [Contributing](../contributing/index.md).
