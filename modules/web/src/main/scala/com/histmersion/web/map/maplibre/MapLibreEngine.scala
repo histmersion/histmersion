@@ -65,7 +65,9 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
   gl.keyboard.disableRotation()
   gl.addControl(NavigationControl(js.Dynamic.literal(showCompass = false).asInstanceOf[js.Object]), "top-left")
   // the credits are the app's to show (MapSurface.credits: BaseMaps writes them under the notice, #3759),
-  // not MapLibre's corner control and its ⓘ button
+  // not MapLibre's corner control and its ⓘ button; every corner stacks over the marker panes (#3844)
+  List("top-left", "top-right", "bottom-left", "bottom-right").foreach(c =>
+    Option(el.querySelector(s".maplibregl-ctrl-$c")).foreach(_.classList.add("hd-map-corner")))
   gl.on("style.load", (_: GlEvent) => shapeSets.values.foreach(_.restore()))
   // a tile that could not be read (offline, refused, outside the extract) is not an error of the page:
   // the map draws without it (MapLibre would otherwise print every one to the console)

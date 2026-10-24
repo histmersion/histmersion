@@ -1,4 +1,9 @@
 :root { --bg:#12141a; --panel:#1b1e27; --ink:#e6e8ee; --muted:#9aa3b2; --accent:#6ea8fe; --line:#2a2f3a; }
+/* the map's stacking scale, bottom to top (#3844; web.map Corner): its canvas (the base map, its names and
+   the areas), the marker panes (.hd-pane--*, 430–640: core MapStack), the controls in its corners (the
+   legend, the notice and credits, the zoom buttons), its popups. All of it is inside #map's own stacking
+   context, so the windows, cards and modals of the page open over the whole map. */
+:root { --z-map-controls:680; --z-map-popups:700; }
 /* ── the theme's colour tokens ──────────────────────────────────────────────────────────────────────
    Every colour the UI codes a category with. Scala names these (ui/Colors.scala `Palette`), never the
    values: markup writes var(--…); the ramp and the graph's canvas read them (ui/ThemeTokens). A theme is
@@ -388,6 +393,8 @@ header { flex-wrap:wrap; align-items:flex-start; }
    all of it on a tap or hover — and the notice's corner rising above the right-hand corner where they would
    meet (BaseMaps.fitNotice) */
 .hd-map-control { pointer-events:auto; clear:both; }
+/* every corner over the marker panes, under the popups (the scale on :root) */
+.map-container .hd-map-corner { z-index:var(--z-map-controls); }
 .maplibregl-ctrl-bottom-left { margin-bottom:var(--terrain-notice-lift, 0px); }
 /* the map's foot (BaseMaps): the notice and, under it, the base map's credits, one box */
 .maplibregl-ctrl-bottom-left .map-foot { margin:0 0 10px 10px; float:left; }
@@ -579,7 +586,7 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
 
 /* ── the map's popups follow the page's theme, not the library's white default (item 26) ───────── */
 /* the map's popups (a finding's, a picture's): the panel's colours, over every pane */
-.hd-popup { z-index:700; font:12px system-ui; }
+.hd-popup { z-index:var(--z-map-popups); font:12px system-ui; }
 .hd-popup .maplibregl-popup-content { background:var(--panel); color:var(--ink); border:1px solid var(--line);
   border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,.45); padding:10px 22px 10px 12px; }
 .hd-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color:var(--panel); }

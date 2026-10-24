@@ -30,6 +30,12 @@ object MapHandle:
       panBy = ((d: js.Array[Double]) => s.panBy(d(0), d(1))): js.Function1[js.Array[Double], Unit],
       latLngToContainerPoint = ((at: js.Array[Double]) => { val p = s.project(ll(at)); js.Dynamic.literal(x = p.x, y = p.y) })
         : js.Function1[js.Array[Double], js.Dynamic],
+      /** The map point at a container point `[x, y]`: `{lat, lng}`. */
+      containerPointToLatLng = ((p: js.Array[Double]) => { val ll = s.unproject(ScreenPt(p(0), p(1))); js.Dynamic.literal(lat = ll.lat, lng = ll.lon) })
+        : js.Function1[js.Array[Double], js.Dynamic],
+      /** A popup at `[lat, lon]` with this text (what a finding's click opens). */
+      openPopup = ((at: js.Array[Double], text: String) => { val _ = s.popup(ll(at), s"""<div class="hd-popup-content zz-test-popup">${Fmt.esc(text)}</div>""", "") })
+        : js.Function2[js.Array[Double], String, Unit],
       getSize = (() => { val (w, h) = s.size; js.Dynamic.literal(x = w, y = h) }): js.Function0[js.Dynamic],
       closePopup = (() => s.closePopups()): js.Function0[Unit],
       isMoving = (() => s.isMoving): js.Function0[Boolean],

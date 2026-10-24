@@ -110,7 +110,11 @@ final case class MapEvent(point: Option[ScreenPt] = None, at: Option[LatLon] = N
 trait Subscription:
   def cancel(): Unit
 
-/** A corner of the map, where controls (the legend, the notice and the credits, the zoom buttons) go. */
+/** A corner of the map, where controls (the legend, the notice and the credits, the zoom buttons) go. Every
+  * corner stacks above the marker panes and below the popups (#3844): the map's z-index scale is the
+  * stylesheet's `--z-map-*` tokens — the canvas, then the panes (core MapStack), then the corners
+  * (`.hd-map-corner`, `--z-map-controls`), then the popups (`--z-map-popups`); windows and modals open over
+  * the whole map. */
 enum Corner:
   case TopLeft, TopRight, BottomLeft, BottomRight
 
