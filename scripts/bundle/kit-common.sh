@@ -58,7 +58,8 @@ hk_pinned_version() { # <pins file>
 }
 
 # The GraalVM homes worth trying, best first: the explicit one, the one `histmersion-toolchain install`
-# provisioned, GRAALVM_HOME / JAVA_HOME, sdkman's candidate of that version (named <version>-graalce).
+# provisioned, GRAALVM_HOME / JAVA_HOME, then sdkman's GraalVM CE candidates (named by GraalVM's release,
+# 25.4.4.1+1-graalce for JDK 25.0.4.1.1, so the caller matches each one's `release` file).
 hk_graalvm_candidates() { # <version>
   local v="$1" d
   [ -n "${HISTMERSION_GRAALVM_HOME:-}" ] && printf '%s\n' "$HISTMERSION_GRAALVM_HOME"
@@ -66,7 +67,7 @@ hk_graalvm_candidates() { # <version>
   printf '%s\n' "$d/Contents/Home" "$d"
   [ -n "${GRAALVM_HOME:-}" ] && printf '%s\n' "$GRAALVM_HOME"
   [ -n "${JAVA_HOME:-}" ] && printf '%s\n' "$JAVA_HOME"
-  printf '%s\n' "${SDKMAN_DIR:-$HOME/.sdkman}/candidates/java/$v-graalce"
+  for d in "${SDKMAN_DIR:-$HOME/.sdkman}"/candidates/java/*-graalce; do [ -d "$d" ] && printf '%s\n' "$d"; done
 }
 
 # A GraalVM home of exactly <version> with native-image, else nothing (exit 1).

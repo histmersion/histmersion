@@ -6,8 +6,8 @@
 # linked from the kit holds the plugin, says so in --self-check, and JVM mode finds it too.
 #
 #   scripts/bundle/smoke.sh <bundle-dir>
-# The relink needs GraalVM CE of the kit's version (HISTMERSION_GRAALVM_HOME, GRAALVM_HOME, or the one
-# `histmersion-toolchain install` provisioned) and ~16 GB of memory; without them, or with HISTMERSION_SMOKE_RELINK=0, it is skipped and says so.
+# The relink needs GraalVM CE of the kit's version (the active JDK, or one `histmersion-toolchain path`
+# finds) and ~16 GB of memory; without them, or with HISTMERSION_SMOKE_RELINK=0, it is skipped and says so.
 # Ports are offset (18000/15433/18100) so it can run next to an installed Histmersion.
 set -euo pipefail
 b="$(cd "${1:?usage: $0 <bundle-dir>}" && pwd)"
@@ -175,14 +175,14 @@ root="$(cd "$(dirname "$0")/../.." && pwd)"
 gv_version="$(cat "$b/kit/graalvm-version" 2>/dev/null || true)"
 gv=""
 # the toolchain path is looked up in the data directory the caller had, not this run's empty one
-for h in "${HISTMERSION_GRAALVM_HOME:-}" "${GRAALVM_HOME:-}" \
+for h in "${JAVA_HOME:-}" \
          "$(HISTMERSION_DATA_DIR="${smoke_caller_data_dir:-}" "$b/bin/histmersion-toolchain" path 2>/dev/null || true)"; do
   [ -n "$h" ] && [ -x "$h/bin/native-image" ] && grep -q "JAVA_VERSION=\"$gv_version\"" "$h/release" 2>/dev/null && { gv="$h"; break; }
 done
 hello="$(find "$root/target/out" -name 'histmersion-plugin-hello_3-*.jar' 2>/dev/null | head -1)"
 if [ "${HISTMERSION_SMOKE_RELINK:-1}" = 0 ]; then echo "  skipped (HISTMERSION_SMOKE_RELINK=0)"
 elif [ ! -f "$b/kit/kit.json" ]; then fail "the bundle has no relink kit (kit/kit.json)"
-elif [ -z "$gv" ]; then echo "  skipped: no GraalVM CE $gv_version with native-image (GRAALVM_HOME / HISTMERSION_GRAALVM_HOME)"
+elif [ -z "$gv" ]; then echo "  skipped: no GraalVM CE $gv_version with native-image (the active JDK, or histmersion-toolchain path)"
 elif [ -z "$hello" ]; then fail "no hello test plugin jar under target/out (sbt pluginHello/package; scripts/bundle/server.sh builds it)"
 else
   ri="$data/relink-install"; rd="$data/relink-data"

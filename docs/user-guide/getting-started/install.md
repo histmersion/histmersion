@@ -34,14 +34,13 @@ scripts/bundle/install-linux.sh <bundle-dir>      # Linux
 
 ## Option B: build it from the source code
 
-You need [sdkman](https://sdkman.io) (it installs sbt), [uv](https://docs.astral.sh/uv/) and
+You need [sdkman](https://sdkman.io) (it installs the Java toolchain and sbt), [uv](https://docs.astral.sh/uv/) and
 [pixi](https://pixi.sh), and [just](https://just.systems) to run the recipes. Then, in a checkout of
 the repository:
 
 ```bash
-sdk env install        # sbt (.sdkmanrc)
-just toolchain install # the pinned Java toolchain, GraalVM CE 25.4: downloaded once (~340 MB),
-                       # checked against its pinned SHA-256, unpacked into the data folder's toolchain/
+sdk env install        # the pinned Java toolchain (GraalVM CE 25.4, ~340 MB once) and sbt (.sdkmanrc)
+sdk env                # use them in this shell
 just install           # builds dist/histmersion (~3.3 GB, of which the OCR models are ~1.3 GB),
                        # installs it, starts it
 ```

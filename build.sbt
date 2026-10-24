@@ -1,7 +1,7 @@
 // Histmersion — native Scala MCP server + host CLI over a Postgres/PostGIS store.
 // Direct-style SoftwareMill stack: Tapir + tapir-netty-server-sync, Chimp (MCP), Circe (+Kindlings),
-// Ox, Magnum (sync JDBC). Toolchain: GraalVM CE 25.4 + native-image (scripts/bundle/graalvm-pins.txt), sbt 2.0.11 (.sdkmanrc)
-// and project/build.properties.
+// Ox, Magnum (sync JDBC). Toolchain (.sdkmanrc, `sdk env install && sdk env`): GraalVM CE 25.4 + native-image,
+// pinned in scripts/bundle/graalvm-pins.txt; sbt 2.0.11, also in project/build.properties.
 
 import Dependencies.*
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
@@ -184,7 +184,7 @@ def writeClasspathSetting: Seq[Setting[?]] = Seq(
 // Runs the app (forked `run`/`runMain`) under the GraalVM native-image tracing agent, MERGING the
 // captured reflection/resource/JNI metadata into src/main/resources/META-INF/native-image. So simply
 // exercising the app via sbt keeps the native-image metadata current — no separate command to run.
-// (Requires the pinned GraalVM JDK — scripts/bundle/graalvm-pins.txt — which ships the agent.)
+// Requires sbt to run on the pinned GraalVM (`pinnedGraalVmHome`): agents of other JDKs write other formats.
 //
 // On JDK 25 the agent writes ONE `reachability-metadata.json` per module; the legacy split files
 // (reflect-config.json, resource-config.json, …) are gone and must not be reintroduced beside it —
@@ -192,6 +192,7 @@ def writeClasspathSetting: Seq[Setting[?]] = Seq(
 // as they are requested, so exercise every web asset and boot once against an empty database.
 def agentRunSettings: Seq[Setting[?]] = {
   def agentOpt(resourceDir: File): String =
+    pinnedGraalVmHome()
     val dir = resourceDir / "META-INF" / "native-image"
     IO.createDirectory(dir)
     s"-agentlib:native-image-agent=config-merge-dir=${dir.getAbsolutePath}"
@@ -201,6 +202,26 @@ def agentRunSettings: Seq[Setting[?]] = {
     Compile / run / javaOptions += agentOpt((Compile / resourceDirectory).value),
     Compile / runMain / javaOptions += agentOpt((Compile / resourceDirectory).value)
   )
+}
+
+// The GraalVM CE version scripts/bundle/graalvm-pins.txt pins: the JAVA_VERSION its `release` file declares.
+lazy val pinnedGraalVm: String =
+  IO.readLines(file("scripts") / "bundle" / "graalvm-pins.txt").map(_.trim)
+    .find(line => line.nonEmpty && !line.startsWith("#")).map(_.split("\\s+").head)
+    .getOrElse(sys.error("scripts/bundle/graalvm-pins.txt pins no GraalVM version"))
+
+// The JDK sbt runs on, which must be the pinned GraalVM CE with native-image — the one .sdkmanrc activates.
+def pinnedGraalVmHome(): File = {
+  val home    = file(sys.props("java.home"))
+  val release = home / "release"
+  val version =
+    if (release.exists) IO.readLines(release).collectFirst { case s"""JAVA_VERSION="$v"""" => v }.getOrElse("unknown")
+    else "unknown"
+  if (version != pinnedGraalVm || !(home / "bin" / "native-image").exists)
+    sys.error(
+      s"sbt runs on JDK $version ($home), not GraalVM CE $pinnedGraalVm with native-image (scripts/bundle/graalvm-pins.txt).\n" +
+        "  In the checkout run `sdk env install && sdk env`, then start sbt again.")
+  home
 }
 
 // The pre-JDK-25 split metadata files. The pinned agent never writes them; finding one beside
@@ -253,7 +274,7 @@ def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String]
       // a killed agent run leaves agent-pid*/ scratch dirs in the merge dir; never let them in
       IO.delete(((Compile / resourceDirectory).value / "META-INF" / "native-image" * "agent-pid*").get())
       checkNoLegacyNativeConfigs((Compile / resourceDirectory).value / "META-INF" / "native-image")
-      val ni  = sys.env.get("GRAALVM_HOME").map(_ + "/bin/native-image").getOrElse("native-image")
+      val ni  = (pinnedGraalVmHome() / "bin" / "native-image").getAbsolutePath
       log.info(s"native-image → $out")
       val cmd = Seq(ni) ++ extraOpts ++ Seq("-cp", cp, mainCls, out.getAbsolutePath)
       val rc  = scala.sys.process.Process(cmd).!
