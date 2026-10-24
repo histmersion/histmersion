@@ -173,6 +173,9 @@ fi
 echo "→ the plugin API for plugin authors: plugin-api/, plugin api-jar, plugin new"
 [ -f "$b/plugin-api/histmersion-plugin-api.jar" ] && [ -f "$b/plugin-api/histmersion-plugin-api-sources.jar" ] \
   || fail "the bundle has no plugin-api/histmersion-plugin-api.jar and -sources.jar"
+api_classes="$(unzip -Z1 "$b/plugin-api/histmersion-plugin-api.jar")" || fail "plugin-api/histmersion-plugin-api.jar is not a jar"
+grep -qx 'com/histmersion/plugin/Plugin.class' <<<"$api_classes" && ! grep -q 'Suite\.class$' <<<"$api_classes" \
+  || fail "plugin-api/histmersion-plugin-api.jar is not the plugin API (no Plugin.class, or test suites in it)"
 api="$(HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin api-jar 2>&1)" || fail "plugin api-jar: $api"
 [ "$api" = "$b/plugin-api/histmersion-plugin-api.jar" ] || fail "plugin api-jar printed '$api'"
 HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin new smoke-new --dir "$data/smoke-new" > "$data/new.out" 2>&1 \
