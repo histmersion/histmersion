@@ -327,6 +327,8 @@ check "deps: the pre-flight resolves the plugins' dependencies into plugins/lib 
 check "deps: the check and the plugin set are made with lib/" 'grep -q "PluginTool check --lib $lib $INSTALL/kit" "$state/java.calls" && grep -q "PluginTool plugin-set --lib $lib" "$state/java.calls"'
 check "deps: the dependency is Sloth-patched and linked beside the plugin"   'grep -q "sloth.jar $INSTALL/.relink/plugins/org.example-xml_3-2.4.0.jar" "$state/java.calls" && grep -q -- "-cp $INSTALL/kit/lib/a.jar:$INSTALL/.relink/plugin-set.jar:$INSTALL/.relink/plugins/hello-0.1.0.jar:$INSTALL/.relink/plugins/org.example-xml_3-2.4.0.jar " "$state/ni.calls"'
 check "deps: the JVM self-check has it on the class path" 'grep -- "--self-check" "$state/java.calls" | grep -q "$lib/org.example-xml_3-2.4.0.jar"'
+check "deps: the build record changes with a dependency jar of lib/" \
+  'hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$HISTMERSION_DATA_DIR/plugins" >/dev/null && echo other > "$lib/org.example-xml_3-2.4.0.jar" && ! hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$HISTMERSION_DATA_DIR/plugins" >/dev/null && echo dep > "$lib/org.example-xml_3-2.4.0.jar"'
 check "deps: the build record changes with the POM"   'hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$HISTMERSION_DATA_DIR/plugins" >/dev/null && echo changed >> "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.pom" && ! hk_build_current "$INSTALL/bin/histmersion-server" "$INSTALL/kit" "$HISTMERSION_DATA_DIR/plugins" >/dev/null'
 
 new_install

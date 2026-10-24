@@ -46,7 +46,7 @@ histmersion plugin add org.example::portal-plugin:1.2.0 --repo ~/src/portal/repo
 histmersion plugin add ~/Downloads/portal-plugin-1.2.0.jar        # a local jar, copied in (with portal-plugin-1.2.0.pom beside it)
 histmersion plugin add https://example.org/portal-plugin-1.2.0.jar # downloaded, with the .pom beside it; its SHA-256 is shown (--sha256 <hex> to pin it)
 histmersion plugin list                                            # what is in plugins/, and whether the binary has it
-histmersion plugin status                                          # rebuild needed? (the directory's digest vs the binary's and the running server's)
+histmersion plugin status                                          # rebuild needed? (the jars, POMs and lib/ vs what the binary was linked with; the running server)
 histmersion plugin rebuild                                         # relink, swap, restart, check health
 histmersion plugin rollback                                        # the binary before the last relink
 histmersion plugin rm portal-plugin

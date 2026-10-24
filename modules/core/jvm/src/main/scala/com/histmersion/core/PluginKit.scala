@@ -27,10 +27,11 @@ object PluginKit:
   def digest(entries: List[(String, String)]): String =
     sha256Hex(entries.sortBy(_._1).map((n, h) => s"$n $h\n").mkString.getBytes(UTF_8))
 
-  /** The set for these jars. */
+  /** The set for these jars, linked with these POMs and `lib/` jars (`(file, sha256)`). */
   def pluginSet(jars: List[PluginJar], spiVersion: Int, mode: String, kit: Option[String],
-      linkedAt: Option[String]): PluginSet =
-    PluginSet(digest(jars.map(j => j.file -> j.sha256)), spiVersion, jars.sortBy(_.file), mode, kit, linkedAt)
+      linkedAt: Option[String], dependencies: List[(String, String)] = Nil): PluginSet =
+    PluginSet(digest(jars.map(j => j.file -> j.sha256)), spiVersion, jars.sortBy(_.file), mode, kit, linkedAt,
+      Some(dependencies.sortBy(_._1).map(PluginFile.apply)))
 
   def parseSet(text: String): Either[String, PluginSet] =
     parser.decode[PluginSet](text).left.map(e => s"plugin-set.json: ${e.getMessage}")
@@ -56,24 +57,31 @@ object PluginKit:
 
   /** @param dir       the plugins directory now: `(file, sha256)` of every jar
     * @param installed the set recorded beside the installed binary (`bin/histmersion-server.plugin-set.json`)
-    * @param running   the set the running server reports (`/api/about`), when it answered */
+    * @param running   the set the running server reports (`/api/about`), when it answered
+    * @param added     the jars, POMs and `lib/` jars in the directory and not in the binary (`removed`: the
+    *                  other way round; `changed`: in both, with another SHA-256) */
   final case class SetStatus(dirDigest: String, installed: Option[PluginSet], running: Option[PluginSet],
       added: List[String], removed: List[String], changed: List[String], verdict: Verdict)
 
   /** Pure: compare the directory with the installed binary's set, and that with the running one's. A
-    * running server that reports no set runs a first-party-only binary (the empty set). */
+    * running server that reports no set runs a first-party-only binary (the empty set). `dependencies` =
+    * the directory's POMs and `lib/` jars now (`(file, sha256)`, a `lib/` jar as `lib/<name>`): a binary
+    * whose record lists the ones it was linked with is out of date when they differ, though its jars are
+    * the same. */
   def status(dir: List[(String, String)], installed: Option[PluginSet], running: Option[PluginSet],
-      serverAnswered: Boolean): SetStatus =
+      serverAnswered: Boolean, dependencies: List[(String, String)] = Nil): SetStatus =
     val dirDigest = digest(dir)
-    val linked    = installed.map(_.jars.map(j => j.file -> j.sha256).toMap).getOrElse(Map.empty)
-    val now       = dir.toMap
+    val linkedDeps = installed.flatMap(_.dependencies).map(_.map(f => f.file -> f.sha256).toMap)
+    val linked    = installed.map(_.jars.map(j => j.file -> j.sha256).toMap).getOrElse(Map.empty) ++ linkedDeps.getOrElse(Map.empty)
+    val now       = dir.toMap ++ (if linkedDeps.isDefined then dependencies.toMap else Map.empty)
     val added     = now.keys.filterNot(linked.contains).toList.sorted
     val removed   = linked.keys.filterNot(now.contains).toList.sorted
     val changed   = now.collect { case (f, h) if linked.get(f).exists(_ != h) => f }.toList.sorted
+    val depsMoved = linkedDeps.exists(_ != dependencies.toMap)
     val runningDigest = if serverAnswered then Some(running.fold(PluginSet.EmptyDigest)(_.digest)) else None
     val verdict = installed match
       case None                              => Verdict.Unknown
-      case Some(i) if i.digest != dirDigest  => Verdict.RelinkNeeded
+      case Some(i) if i.digest != dirDigest || depsMoved => Verdict.RelinkNeeded
       case Some(i) if runningDigest.exists(_ != i.digest) => Verdict.RestartNeeded
       case Some(_)                           => Verdict.UpToDate
     SetStatus(dirDigest, installed, running, added, removed, changed, verdict)
@@ -83,7 +91,7 @@ object PluginKit:
     def short(d: String) = d.take(12) + "…"
     val verdict = s.verdict match
       case Verdict.UpToDate      => "up to date: the binary holds exactly the plugins in the directory"
-      case Verdict.RelinkNeeded  => "REBUILD NEEDED: the plugins directory changed since the binary was linked — run `histmersion plugin rebuild`"
+      case Verdict.RelinkNeeded  => "REBUILD NEEDED: the plugins directory (its jars, POMs or lib/) changed since the binary was linked — run `histmersion plugin rebuild`"
       case Verdict.RestartNeeded => "RESTART NEEDED: the installed binary is not the one running — restart the service"
       case Verdict.Unknown       => "UNKNOWN: no record of what the installed binary was linked with — run `histmersion plugin rebuild`"
     List(

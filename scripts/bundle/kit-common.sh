@@ -228,12 +228,15 @@ hk_kit_fingerprint() { # <kit dir> → the SHA-256 of its SHA256SUMS (every kit 
 }
 
 # The plugin jars of <plugins dir> as one hash: "<sha256>  <file name>" per jar, sorted by name, then
-# the same for the POMs beside them (which name the plugins' dependencies). No jars (or no directory)
-# → the empty text's hash.
+# the same for the POMs beside them (which name the plugins' dependencies), then for the dependency jars
+# of lib/ ("lib/<name>"): everything a relink links. No jars (or no directory) → the empty text's hash.
+# `histmersion plugin status` compares the same files with the binary's plugin-set record.
 hk_plugins_fingerprint() { # <plugins dir>
   local j
-  { hk_plugin_jars "$1"; hk_plugin_poms "$1"; } | while IFS= read -r j; do printf '%s  %s\n' "$(hk_sha256 "$j")" "$(basename "$j")"; done \
-    | hk_sha256_text
+  { { hk_plugin_jars "$1"; hk_plugin_poms "$1"; } | while IFS= read -r j; do printf '%s  %s\n' "$(hk_sha256 "$j")" "$(basename "$j")"; done
+    hk_plugin_deps "$1" | while IFS= read -r j; do
+      if [ -f "$j" ]; then printf '%s  lib/%s\n' "$(hk_sha256 "$j")" "$(basename "$j")"; fi
+    done; } | hk_sha256_text
 }
 
 # This machine, as a hash: the hardware UUID on macOS, the machine-id on Linux (HISTMERSION_MACHINE_ID
