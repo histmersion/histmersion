@@ -122,6 +122,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       // decide (a decided plan settles its held item below)
       out ++= guarded("autopilot", out)(agents.autopilot.tick(now))
       out ++= guarded("auto-approvals", out)(agents.autoApprovals.sweep(now))
+      out ++= guarded("digest", out)(agents.digest.tick(now))
       val managers = ManagerRepo.list(ds).filter(m => State.parse(m.state).exists(_ != State.Stopped))
       managers.foreach { m =>
         guarded(m.id, out)(evaluate(m, now, out))

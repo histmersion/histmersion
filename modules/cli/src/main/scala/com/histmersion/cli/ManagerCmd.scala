@@ -113,6 +113,30 @@ object ManagerCmd:
     }
   }
 
+  /** `histmersion agent digest` — everything waiting for a person, by kind (#3762 proposal 3). */
+  val digest: Opts[Client => Either[CliError, Unit]] = Opts.subcommand("digest",
+      "Everything waiting for a person in one view: the open approvals by kind (how many, the oldest, who decides them " +
+        "now, the subjects with the most, the ids) and the manager items held for a person; once a day it is also " +
+        "written to the worklog (agents.autopilot.digest-hour)") {
+    Output.jsonFlag.map(json => (c: Client) => c.call(ManagersApi.digest)(()).map(d => Output.emit(json, d)(ApprovalDigestMarkdown.digest)))
+  }
+
+  /** `histmersion agent decide-all <approve|reject> --kind k | --subject s | --id n…` — a group at once. */
+  val decideAll: Opts[Client => Either[CliError, Unit]] = Opts.subcommand("decide-all",
+      "Approve or reject every OPEN approval that matches at once — of a kind, about a subject, or the ids given (they " +
+        "narrow together; one is needed), the oldest first, each through the same decision a single one takes") {
+    (Opts.argument[String]("approve|reject"), Opts.option[String]("kind", "Only this kind (goal-plan, article-publish, …)").orNone,
+      Opts.option[String]("subject", "Only approvals about this goal or article").orNone,
+      Opts.options[Long]("id", "Only these approvals (repeatable)").orEmpty,
+      Opts.option[String]("note", "Why — kept with every decision").orNone,
+      Opts.option[Int]("limit", "At most this many (the oldest first)").orNone,
+      Opts.flag("dry-run", "List what it would decide; decide nothing").orFalse, Output.jsonFlag).mapN {
+      (d, kind, subject, ids, note, limit, dry, json) => (c: Client) =>
+        c.call(ManagersApi.decideAll)(ApprovalDigest.BulkDecide(d, kind, subject, ids, note, dry, limit, Some("cli")))
+          .map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
+    }
+  }
+
   /** `focus` [list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>] → the request
     * (None: just show it); a malformed one is a usage error before anything is sent. */
   def focusRequest(args: List[String]): Either[CliError, Option[Autopilot.FocusSet]] =

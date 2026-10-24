@@ -92,6 +92,17 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
             scribe.info(s"autopilot: $text")
             List(s"$what: ${decision.wire}")
 
+  /** Today's cap of automatic goal-plan approvals: `goal-plans-per-day`, scaled to the open plans when
+    * `goal-plans-backlog-share` is above 0 (at most `goal-plans-ceiling`). */
+  def goalPlanCap: Int =
+    val c = cfg.approvals.auto
+    AutopilotPolicy.scaledCap(c.goalPlansPerDay, AgentRepo.openCount(ds, ApprovalKind.GoalPlan), c.goalPlansBacklogShare, c.goalPlansCeiling)
+
+  /** Today's cap of automatic publishes, scaled the same way to the open drafts. */
+  def publishCap: Int =
+    val c = cfg.approvals.auto
+    AutopilotPolicy.scaledCap(c.publishPerDay, AgentRepo.openCount(ds, ApprovalKind.ArticlePublish), c.publishBacklogShare, c.publishCeiling)
+
   /** The checks of one approval as the corpus is now. */
   def judge(a: ApprovalInfo, run: Option[RunInfo], mgr: Option[Managers.ManagerInfo], now: Instant): Verdict =
     val day = ManagerPolicy.dayStart(now)
@@ -118,7 +129,7 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
             val facts = DraftFacts(d.slug, d.mode == DraftMode.Create, snap.exists(_.filter.isDefined), found.map(_.total),
               d.problems, d.cited.distinct.size, !AgentRepo.slugExists(ds, d.slug))
             AutopilotPolicy.articlePublish(facts, caps.publishMinSources,
-              AgentRepo.autoApprovedSince(ds, ApprovalKind.ArticlePublish, day).size, caps.publishPerDay)
+              AgentRepo.autoApprovedSince(ds, ApprovalKind.ArticlePublish, day).size, publishCap)
           case (None, _) => Verdict.Leave("the approval carries no readable draft")
           case (_, None) => Verdict.Leave("the run that drafted it is gone")
       case Some(ApprovalKind.GoalPlan) =>
@@ -128,7 +139,7 @@ final class AutoApprovals(ds: DataSource, cfg: => AgentsConfig, h: com.histmersi
             val goal = a.subject.getOrElse(p.goal)
             val depth = AutopilotPolicy.depth(goal, s => GoalRepo.get(ds, s).flatMap(_.parentSlug))
             AutopilotPolicy.goalPlan(GoalPlanFacts(goal, p.subGoals.size, p.queries.size, p.works.size, depth), caps.maxGoalDepth,
-              AgentRepo.autoApprovedSince(ds, ApprovalKind.GoalPlan, day).size, caps.goalPlansPerDay) match
+              AgentRepo.autoApprovedSince(ds, ApprovalKind.GoalPlan, day).size, goalPlanCap) match
               // decided by code whatever the focus: only the sub-goals it would open are bounded
               case v @ Verdict.Approve(_) => agents.focus.goalPlanBlock(goal, p.subGoals.size).fold(v)(Verdict.Leave(_))
               case v                      => v

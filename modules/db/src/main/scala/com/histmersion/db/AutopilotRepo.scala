@@ -66,3 +66,13 @@ object AutopilotRepo:
     val _ = get(ds)
     val _ = transact(ds):
       sql"""UPDATE agent_autopilot SET scheduler_strategy = $name, scheduler_by = $by, scheduler_at = now() WHERE id""".update.run()
+
+  /** When the daily approval digest was last written (V101), if ever. */
+  def lastDigest(ds: DataSource): Option[String] =
+    val _ = get(ds)
+    connect(ds)(Sql.raw(s"SELECT ${at("last_digest_at")} FROM agent_autopilot WHERE id").frag.query[Option[String]].run().head)
+
+  /** The digest was written at `now`. */
+  def digested(ds: DataSource, now: java.time.Instant): Unit =
+    val t = now.toString
+    val _ = transact(ds)(sql"UPDATE agent_autopilot SET last_digest_at = $t::timestamptz WHERE id".update.run())

@@ -167,3 +167,12 @@ class SchedulerPanelSuite extends munit.FunSuite:
     val s = SchedulerStatus("goal-first", "person", maxRuns = 4, occupied = 3, pools = List(PoolUse("chatgpt-plan", 1, 2)), forPerson = 2)
     assertEquals(ManagersView.schedulerHead(s),
       "Scheduler: goal-first (set by a person) · 3 of 4 runs at once · chatgpt-plan 1/2 · 2 items wait for a person (no place held)")
+
+
+/** The approvals window's digest line. */
+class ApprovalDigestLineSuite extends munit.FunSuite:
+  import com.histmersion.core.ApprovalDigest.KindGroup
+  test("a kind: how many, the oldest, who decides"):
+    assertEquals(ApprovalsView.digestLine(KindGroup("goal-plan", 64, Some("2026-10-21"))), "goal-plan 64 (oldest 2026-10-21) · a person decides")
+    assertEquals(ApprovalsView.digestLine(KindGroup("article-publish", 2, None, "checked")),
+      "article-publish 2 · the autopilot's checks decide them within the day's cap")

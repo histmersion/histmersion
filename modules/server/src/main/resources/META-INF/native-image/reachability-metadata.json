@@ -13586,6 +13586,9 @@
       "glob": "db/migration/V100__agent_scheduler.sql"
     },
     {
+      "glob": "db/migration/V101__approval_digest.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

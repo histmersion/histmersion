@@ -94,7 +94,7 @@ final class OaBacklog(ds: DataSource, cfg: => AgentsConfig, h: com.histmersion.s
       val left   = ownLeft(now)
       val light  = ManagerRepo.light(ds).map(m => m.id -> m).toMap
       val shared = agents.autopilot.sharedIngestLeft(now)
-      val sharedCap = Option.when(shared.isDefined)(cfg.autopilot.ingestPerDay).filter(_ > 0)
+      val sharedCap = Option.when(shared.isDefined)(agents.autopilot.ingestCap).filter(_ > 0)
       // a held item drains once released: counted in the backlog, not in the days (it waits for a person)
       def lane(id: String, pending: Int): Lane =
         val perDay = light.get(id).filter(_ => left.contains(id))

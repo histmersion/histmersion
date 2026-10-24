@@ -133,7 +133,18 @@ object ManagersApi:
   val schedulerWhy: PublicEndpoint[String, ApiError, AgentScheduler.WhyInfo, Any] =
     sched.get.in("why" / path[String]("item")).out(jsonBody[AgentScheduler.WhyInfo])
 
+  /** `GET /api/agents/approvals/digest` — everything waiting for a person: the open approvals by kind (how
+    * many, the oldest, who decides them now, the subjects, the ids) and the items held for a person. */
+  val digest: PublicEndpoint[Unit, ApiError, ApprovalDigest.Digest, Any] =
+    endpoint.get.in("api" / "agents" / "approvals" / "digest").errorOut(errors).out(jsonBody[ApprovalDigest.Digest])
+
+  /** `POST /api/agents/approvals/decide {decision, kind?, subject?, ids?, note?, dryRun?, limit?}` — decide every
+    * open approval that matches at once, each through the single decision (a refused one does not stop the rest). */
+  val decideAll: PublicEndpoint[ApprovalDigest.BulkDecide, ApiError, ApprovalDigest.BulkResult, Any] =
+    endpoint.post.in("api" / "agents" / "approvals" / "decide").errorOut(errors).in(jsonBody[ApprovalDigest.BulkDecide])
+      .out(jsonBody[ApprovalDigest.BulkResult])
+
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
     removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire, focus, setFocus, scheduler, setScheduler,
-    schedulerWhy)
+    schedulerWhy, digest, decideAll)

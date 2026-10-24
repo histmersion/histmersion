@@ -106,6 +106,17 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         val (_, viaMcp) = mcp(url,
           """{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"scheduler","arguments":{"action":"strategy","strategy":"default"}}}""")
         assert(viaMcp.contains("# Scheduler: ") && viaMcp.contains("strategy back to agents.scheduler.strategy"), viaMcp)
+
+        // the approval digest and a group decision
+        val (ds_, db_) = get(s"$url/api/agents/approvals/digest")
+        assertEquals(ds_, 200, db_)
+        assert(decode[com.histmersion.core.ApprovalDigest.Digest](db_).isRight, db_)
+        assertEquals(post(s"$url/api/agents/approvals/decide", """{"decision":"approve"}""")._1, 400, "never every open approval")
+        val (bs, bb) = post(s"$url/api/agents/approvals/decide", """{"decision":"reject","kind":"goal-plan","dryRun":true}""")
+        assertEquals(bs, 200, bb)
+        val (_, dg) = mcp(url,
+          """{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"list_approvals","arguments":{"digest":true}}}""")
+        assert(dg.contains("# Waiting for a person"), dg)
       finally
         b.stop()
         clean(cfg)

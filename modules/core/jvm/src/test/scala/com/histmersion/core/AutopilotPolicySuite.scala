@@ -200,3 +200,20 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals((c.autoApprove, c.extendMinNew), (Some(true), Some(4)))
     assertEquals(ManagerConfig().merge(c).autoApprove, Some(true))
     assert(ManagersMarkdown.configLine(c).contains("autoApprove=true, extendMinNew=4"))
+
+/** The daily caps scaled to the backlog (#3762 proposal 3). */
+class ScaledCapSuite extends munit.FunSuite:
+  import AutopilotPolicy.{capText, scaledCap}
+
+  test("share 0 keeps the fixed cap; a share scales it up to the ceiling, never below the base"):
+    assertEquals(scaledCap(5, 64, 0, 50), 5)
+    assertEquals(scaledCap(5, 64, 0.34, 50), 22)
+    assertEquals(scaledCap(5, 6, 0.34, 50), 5, "a small backlog: the base")
+    assertEquals(scaledCap(5, 640, 0.34, 50), 50, "the ceiling")
+    assertEquals(scaledCap(5, 640, 0.34, 0), 218, "no ceiling")
+    assertEquals(scaledCap(10, 640, 0.34, 4), 10, "a ceiling below the base keeps the base")
+    assertEquals(scaledCap(-1, -5, 0.5, 10), 0)
+
+  test("the status text"):
+    assertEquals(capText(5, 64, 0, 50), "5 a day")
+    assertEquals(capText(5, 64, 0.34, 50), "5 a day, 22 today for a backlog of 64 (at most 50)")

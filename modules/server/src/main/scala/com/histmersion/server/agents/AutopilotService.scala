@@ -38,10 +38,19 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
   /** Whether it is on (one row read). */
   def on: Boolean = AutopilotRepo.get(ds).enabled
 
+  /** Today's shared ingest cap: `ingest-per-day` (0 = none), scaled to the watchers' ingest backlog when
+    * `ingest-backlog-share` is above 0 (at most `ingest-ceiling`). */
+  def ingestCap: Int =
+    if acfg.ingestPerDay <= 0 then 0
+    else AutopilotPolicy.scaledCap(acfg.ingestPerDay, backlogPending, acfg.ingestBacklogShare, acfg.ingestCeiling)
+
+  private def backlogPending: Int =
+    if acfg.ingestBacklogShare <= 0 then 0 else ManagerRepo.backlogCounts(ds).values.map(_._1).sum
+
   /** What is left today of the legal open-access ingests all watchers share (None: off, or no shared cap). */
   def sharedIngestLeft(now: Instant): Option[Int] =
     if !on then None
-    else AutopilotPolicy.sharedIngestLeft(acfg.ingestPerDay,
+    else AutopilotPolicy.sharedIngestLeft(ingestCap,
       ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)))
 
   /** Make sure of the goals' managers at the next tick (a plan created sub-goals). */
@@ -289,11 +298,14 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
     AutopilotStatus(row.enabled, Some(row.changedAt), Option(row.changedBy).filter(_.nonEmpty), cfg.enabled, cfg.managers.enabled,
       cfg.scheduler.enabled,
       List(
-        rule(Agents.ApprovalKind.GoalPlan, s"${caps.goalPlansPerDay} a day, sub-goals above depth ${caps.maxGoalDepth}"),
+        rule(Agents.ApprovalKind.GoalPlan, AutopilotPolicy.capText(caps.goalPlansPerDay,
+          AgentRepo.openCount(ds, Agents.ApprovalKind.GoalPlan), caps.goalPlansBacklogShare, caps.goalPlansCeiling) +
+          s", sub-goals above depth ${caps.maxGoalDepth}"),
         rule(Agents.ApprovalKind.ArticlePlan, s"${caps.articlesPerGoalPerDay} articles per goal a day"),
         rule(Agents.ApprovalKind.ArticlePublish,
-          s"${caps.publishPerDay} a day, filter at least ${caps.publishMinSources} sources")),
-      ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)), if row.enabled then acfg.ingestPerDay else 0,
+          AutopilotPolicy.capText(caps.publishPerDay, AgentRepo.openCount(ds, Agents.ApprovalKind.ArticlePublish),
+            caps.publishBacklogShare, caps.publishCeiling) + s", filter at least ${caps.publishMinSources} sources")),
+      ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)), if row.enabled then ingestCap else 0,
       cfg.maxConcurrentRuns, row.lastBackupAt, row.lastLintAt,
       managers.filter(m => m.id == ReviewId || m.id == EnrichId).map(brief), progress,
       backlog = backlog.total, backlogDays = backlog.totalDays, focus = Some(agents.focus.info(now)))
