@@ -110,7 +110,7 @@ final case class MapEvent(point: Option[ScreenPt] = None, at: Option[LatLon] = N
 trait Subscription:
   def cancel(): Unit
 
-/** A corner of the map, where controls (the legend, the notice, the credits, the zoom buttons) go. */
+/** A corner of the map, where controls (the legend, the notice and the credits, the zoom buttons) go. */
 enum Corner:
   case TopLeft, TopRight, BottomLeft, BottomRight
 
@@ -227,6 +227,9 @@ trait MapSurface:
   def corner(c: Corner): dom.HTMLElement
   // ── what is drawn ──────────────────────────────────────────────────────────────────────────
   def setBaseMap(b: BaseMapSpec): Unit
+  /** The credits (HTML, one per source) of the base map drawn now — known once it is drawn
+    * ([[MapEventKind.BaseMapReady]]); the app shows them ([[com.histmersion.web.BaseMaps]]). */
+  def credits: Seq[String] = Nil
   def shapes(id: String, style: ShapeStyle): ShapeSet
   /** A set made already, if it was. */
   def shapeSet(id: String): Option[ShapeSet]

@@ -64,24 +64,8 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
   gl.touchZoomRotate.disableRotation()
   gl.keyboard.disableRotation()
   gl.addControl(NavigationControl(js.Dynamic.literal(showCompass = false).asInstanceOf[js.Object]), "top-left")
-  private val credits = AttributionControl(js.Dynamic.literal(compact = true).asInstanceOf[js.Object])
-  gl.addControl(credits, "bottom-right")
-  // the credits start folded behind their ⓘ button: MapLibre unfolds a compact attribution when it first
-  // fills it; folded here until the reader opens it (a click on the button), never over the map's corner
-  // `var`: whether the reader has opened or closed the credits themselves
-  private var creditsTouched = false
-  el.addEventListener("click", (e: dom.MouseEvent) =>
-    if e.target.isInstanceOf[dom.Element] && e.target.asInstanceOf[dom.Element].closest(".maplibregl-ctrl-attrib-button") != null then
-      creditsTouched = true)
-  // MapLibre unfolds them once, when they first become compact; folded once, nothing more to watch
-  private var creditsFolded = false
-  gl.on("data", (_: GlEvent) =>
-    if !creditsTouched && !creditsFolded then
-      Option(el.querySelector(".maplibregl-ctrl-attrib.maplibregl-compact-show")).foreach { c =>
-        c.classList.remove("maplibregl-compact-show")
-        c.removeAttribute("open")
-        creditsFolded = true
-      })
+  // the credits are the app's to show (MapSurface.credits: BaseMaps writes them under the notice, #3759),
+  // not MapLibre's corner control and its ⓘ button
   gl.on("style.load", (_: GlEvent) => shapeSets.values.foreach(_.restore()))
   // a tile that could not be read (offline, refused, outside the extract) is not an error of the page:
   // the map draws without it (MapLibre would otherwise print every one to the console)
@@ -230,6 +214,10 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
   dom.window.addEventListener("pagehide", (_: dom.Event) => leaving = true)
   dom.window.addEventListener("pageshow", (_: dom.Event) => leaving = false)
 
+  // `var`: the credits of the style set last
+  private var creditsV: Seq[String] = Nil
+  override def credits: Seq[String] = creditsV
+
   def setBaseMap(b: BaseMapSpec): Unit =
     generation += 1
     b match
@@ -253,6 +241,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
               val _ = dom.window.requestAnimationFrame(_ =>
                 val _ = dom.window.setTimeout(() =>
                   if mine == generation then
+                    creditsV = MapLibreStyles.credits(style.asInstanceOf[js.Dynamic])
                     val _ = gl.setStyle(style, js.Dynamic.literal(diff = sameStyle).asInstanceOf[js.Object])
                     gl.once("idle", (_: GlEvent) => if mine == generation then ready.toList.foreach(_(MapEvent())))
                 , 0)))
@@ -471,6 +460,20 @@ object MapLibreStyles:
         if withContours then Future.delegate(contours(s, v.status, origin)).map(_ => s: js.Any).recover { case _ => drop(s, "contours"); s }
         else { drop(s, "contours"); Future.successful(s) }
       }
+
+  /** The credits a style owes: each source's `attribution` that a layer drawn (not `visibility: none`)
+    * reads, once each, in the style's order. Pure over the JSON. */
+  def credits(s: js.Dynamic): Seq[String] =
+    if js.isUndefined(s) || s == null || js.isUndefined(s.sources) || js.isUndefined(s.layers) then Nil
+    else
+      val drawn = s.layers.asInstanceOf[js.Array[js.Dynamic]].toSeq.filter(l => !js.isUndefined(l.source) &&
+        (js.isUndefined(l.layout) || js.isUndefined(l.layout.visibility) || l.layout.visibility.toString != "none"))
+        .map(_.source.toString).distinct
+      drawn.flatMap { id =>
+        val src = s.sources.selectDynamic(id)
+        if js.isUndefined(src) || src == null || js.isUndefined(src.attribution) || src.attribution == null then None
+        else Some(src.attribution.toString).filter(_.trim.nonEmpty)
+      }.distinct
 
   /** `{s}` → the subdomains a, b, c. Pure. */
   def expand(template: String): js.Array[String] =

@@ -117,7 +117,3 @@ class GlPopup(options: js.Object) extends js.Object:
 @js.native
 @JSGlobal("maplibregl.NavigationControl")
 class NavigationControl(options: js.Object) extends js.Object
-
-@js.native
-@JSGlobal("maplibregl.AttributionControl")
-class AttributionControl(options: js.Object) extends js.Object

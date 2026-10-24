@@ -1929,7 +1929,7 @@ const baseMapState = () => ({
   value: document.querySelector('.map-base-select')?.value,
   options: [...document.querySelectorAll('.map-base-select option')].map(o => o.value),
   notice: document.querySelector('.terrain-notice')?.textContent ?? null,
-  credits: document.querySelector('.maplibregl-ctrl-attrib')?.textContent ?? '',
+  credits: document.querySelector('.map-foot .map-credits')?.textContent ?? '',
   drawn: window.__testMap.baseMapsDrawn(),
   vector: document.getElementById('map').classList.contains('basemap-vector'),
 });
@@ -1967,16 +1967,16 @@ test('the base map: Readable and Physical drawn from the server\'s extract (the 
     assert.match(st.notice, /Coastlines, rivers, lakes and vegetation were different in the past/);
     assert.match(await page.locator('.terrain-notice a').getAttribute('href'), /exploring\/web-ui\.md#the-base-map$/);
     for (const c of [/OpenStreetMap/, /Natural Earth/, /Protomaps/, /Mapterhorn/]) assert.match(st.credits, c);
-    // the credits start folded behind their button; it opens them, and closes them again
-    const credits = page.locator('.maplibregl-ctrl-attrib');
-    const folded = () => page.evaluate(() => { const c = document.querySelector('.maplibregl-ctrl-attrib');
-      return c.classList.contains('maplibregl-compact') && !c.classList.contains('maplibregl-compact-show')
-        && getComputedStyle(c.querySelector('.maplibregl-ctrl-attrib-inner')).display === 'none'; });
-    assert.ok(await folded(), 'the credits start folded');
-    await credits.locator('.maplibregl-ctrl-attrib-button').click();
-    await page.waitForFunction(() => getComputedStyle(document.querySelector('.maplibregl-ctrl-attrib-inner')).display !== 'none');
-    await credits.locator('.maplibregl-ctrl-attrib-button').click();
-    await page.waitForFunction(() => getComputedStyle(document.querySelector('.maplibregl-ctrl-attrib-inner')).display === 'none');
+    // #3759: the credits sit in the notice's box, bottom left — no ⓘ button, and the legend at the map's foot
+    assert.equal(await page.locator('.maplibregl-ctrl-attrib').count(), 0, 'no corner credits control');
+    assert.equal(await page.locator('.map-foot .terrain-notice + .map-credits').count(), 1, 'the credits under the notice');
+    const foot = await page.evaluate(() => {
+      const m = document.getElementById('map').getBoundingClientRect(), l = document.querySelector('.hd-legend').getBoundingClientRect();
+      const f = document.querySelector('.map-foot').getBoundingClientRect();
+      return { legendGap: Math.round(m.bottom - l.bottom), footLeft: f.left - m.left < m.width / 2 };
+    });
+    assert.ok(foot.legendGap <= 12, `the legend sits at the map's foot (${foot.legendGap} px above it)`);
+    assert.ok(foot.footLeft, 'the notice and credits are bottom left');
     assert.ok(await mapColours(page) > 20, 'Readable is drawn');
     await chooseBaseMap(page, 'physical');
     st = await page.evaluate(baseMapState);
@@ -1993,7 +1993,9 @@ test('the base map: Readable and Physical drawn from the server\'s extract (the 
     assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-dark')));
     assert.ok(await page.locator('.map-options-btn').isDisabled());
     await page.locator('.map-base-select').selectOption('standard');
-    await page.waitForFunction(() => /OpenStreetMap/.test(document.querySelector('.maplibregl-ctrl-attrib')?.textContent ?? ''));
+    // an online map's credits: the box holds them alone
+    await page.waitForFunction(() => /OpenStreetMap/.test(document.querySelector('.map-foot .map-credits')?.textContent ?? '') &&
+      !document.querySelector('.terrain-notice'));
   }, { source: 'online' });
 });
 
@@ -2404,12 +2406,12 @@ test('the past-landscape notice never lies under the credits or the map key, wid
       await page.locator('.terrain-notice').waitFor();
       await page.waitForTimeout(800);
       const hits = await page.evaluate(() => {
-        const n = document.querySelector('.terrain-notice').getBoundingClientRect();
+        const n = document.querySelector('.map-foot').getBoundingClientRect();
         return [...document.querySelectorAll('.maplibregl-ctrl-bottom-right > *')].map(e => e.getBoundingClientRect())
           .filter(r => r.width > 0 && n.left < r.right && r.left < n.right && n.top < r.bottom && r.top < n.bottom).length;
       });
       assert.equal(hits, 0, `${viewport.width} px: the notice overlaps the right-hand controls`);
-      const text = await page.locator('.terrain-notice').evaluate(e => e.scrollHeight <= e.clientHeight + 1);
+      const text = await page.locator('.map-foot').evaluate(e => e.scrollHeight <= e.clientHeight + 1);
       assert.ok(text, 'the notice shows all its text');
     });
   }
