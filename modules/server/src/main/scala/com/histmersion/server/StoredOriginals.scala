@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.Citekey
+import com.histmersion.values.Citekey
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

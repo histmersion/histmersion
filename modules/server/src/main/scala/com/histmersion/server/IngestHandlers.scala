@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.values.Citekey
+
 import com.histmersion.core.*
 import com.histmersion.db.{AssetRepo, JobRepo, QueueRepo, SourceRepo}
 
@@ -109,7 +111,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient,
   private def ingestNow(p: IngestParams, upload: java.io.File): Either[ApiError, IngestAccepted] =
     // VALIDATED, not merely non-empty: the citekey becomes a spool FILE NAME below.
     Citekey.of(p.citekey).flatMap { validated =>
-      val citekey = validated.toString
+      val citekey: String = validated.value
       val size = upload.length()
       if size <= 0 then Left(ApiError("the upload is empty"))
       else if size > cfg.limits.uploadBytes then

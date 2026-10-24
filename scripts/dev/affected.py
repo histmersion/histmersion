@@ -20,8 +20,10 @@ import sys
 # TEST resources (the hello / hello-ai plugin jars, the hello-deps fixture repository). web → server (the bundle) is a BUILD
 # edge only: no server suite tests the Scala.js code, so a web change does not re-run the server.
 DEPS = {
-    "coreJVM": [],
-    "coreJS": [],
+    "valuesJVM": [],
+    "valuesJS": [],
+    "coreJVM": ["valuesJVM"],
+    "coreJS": ["valuesJS"],
     "pluginApi": [],
     "pluginVaults": ["pluginApi"],
     "pluginHost": ["coreJVM", "pluginApi"],
@@ -38,7 +40,7 @@ DEPS = {
     "web": ["coreJS"],
     "server": ["coreJVM", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
 }
-ORDER = ["coreJVM", "coreJS", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+ORDER = ["valuesJVM", "valuesJS", "coreJVM", "coreJS", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
@@ -52,6 +54,7 @@ RULES = [
     ("project/", [ALL]),
     (".sdkmanrc", [ALL]),
     (".jvmopts", [ALL]),
+    ("modules/values/", ["valuesJVM", "valuesJS"]),
     ("modules/core/shared/", ["coreJVM", "coreJS"]),
     ("modules/core/jvm/", ["coreJVM"]),
     ("modules/core/js/", ["coreJS"]),

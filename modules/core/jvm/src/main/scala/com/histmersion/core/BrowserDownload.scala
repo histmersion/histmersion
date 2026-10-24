@@ -1,5 +1,7 @@
 package com.histmersion.core
 
+import com.histmersion.values.{Citekey, Doi}
+
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Not
 import io.github.iltotore.iron.constraint.string.{Blank, Match}
@@ -7,7 +9,7 @@ import io.github.iltotore.iron.constraint.string.{Blank, Match}
 /** A gold open-access work whose publisher refuses scripts (`acquire.landing.browser-download-hosts`): the
   * acquisition list carries it as a download in the browser, where the person reads it under its licence,
   * and then an ingest of the downloaded file. */
-final case class BrowserDownload(doi: BrowserDownload.Doi, citekey: Citekey, landing: BrowserDownload.LandingUrl,
+final case class BrowserDownload(doi: Doi, citekey: Citekey, landing: BrowserDownload.LandingUrl,
     publisher: BrowserDownload.PublisherHost, oaStatus: BrowserDownload.OaStatus, licence: Option[BrowserDownload.Licence],
     citation: BrowserDownload.Citation):
 
@@ -16,12 +18,9 @@ final case class BrowserDownload(doi: BrowserDownload.Doi, citekey: Citekey, lan
     s"${citation.value} https://doi.org/${doi.value} — ${oaStatus.value} open access" +
       licence.fold("")(l => s", licence ${l.value}") +
       s", at ${landing.value}; ${publisher.value} refuses downloads by scripts: download it in the browser, then " +
-      s"histmersion ingest <file> --citekey $citekey"
+      s"histmersion ingest <file> --citekey ${citekey.value}"
 
 object BrowserDownload:
-  type Doi = Doi.T
-  object Doi extends RefinedType[String, Match["10\\.[0-9]+/\\S+"]]
-
   type LandingUrl = LandingUrl.T
   object LandingUrl extends RefinedType[String, Match["(?i)https?://\\S+"]]
 

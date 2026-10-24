@@ -1,5 +1,7 @@
 package com.histmersion.core
 
+import com.histmersion.values.Citekey
+
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -61,8 +63,8 @@ object Rename:
     * article link, and every citation of the source would go dead. */
   def validate(oldCk: String, newRaw: String): Either[ApiError, Citekey] =
     Citekey.of(newRaw).flatMap { ck =>
-      if ck == oldCk.trim then Left(ApiError(s"'$ck' is already the citekey of that source", Some(Write.CodeInvalid)))
-      else if !ArticleLinks.isCitekeyShaped(ck) then
+      if ck.value == oldCk.trim then Left(ApiError(s"'$ck' is already the citekey of that source", Some(Write.CodeInvalid)))
+      else if !ArticleLinks.isCitekeyShaped(ck.value) then
         Left(ApiError(s"'$ck' is a valid citekey but not a LINK-shaped one — `[[$ck]]` would resolve to an " +
           "article, not the source. Use lower-case letters, digits and '_' with a four-digit year or an " +
           "underscore (e.g. page1959_history)", Some(Write.CodeInvalid)))

@@ -1,5 +1,7 @@
 package com.histmersion.core
 
+import com.histmersion.values.Citekey
+
 /** A gold open-access work whose publisher refuses scripts, as an acquisition item: which works qualify and
   * what the item says. */
 class BrowserDownloadSuite extends munit.FunSuite:

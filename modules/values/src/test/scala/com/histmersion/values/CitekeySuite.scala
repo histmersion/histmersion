@@ -1,4 +1,4 @@
-package com.histmersion.core
+package com.histmersion.values
 
 /** A citekey is a path segment on the server's disk (the ingest spool, the acquisition spool) and a
   * URL segment. Nothing validated one before, which is how `../../../../tmp/x` became a directory. */
@@ -26,7 +26,7 @@ class CitekeySuite extends munit.FunSuite:
     assert(Citekey.parse("a" * 121).isRight)
 
   test("surrounding whitespace is trimmed, not rejected"):
-    assertEquals(Citekey.parse("  cline2014_collapse  ").map(_.toString),
+    assertEquals(Citekey.parse("  cline2014_collapse  ").map(c => c.value: String),
       Right("cline2014_collapse"))
 
   test("the message says what a citekey looks like"):
@@ -36,3 +36,8 @@ class CitekeySuite extends munit.FunSuite:
 
   test("the traversal guard has its own message"):
     assert(Citekey.parse("../x").swap.toOption.get.contains("'..'"))
+
+  test("valid classifies without a message; a literal is checked by the compiler"):
+    assert(Citekey.valid("anthony2007_horse") && !Citekey.valid("x/../y"))
+    assertEquals(Citekey("anthony2007_horse").value: String, "anthony2007_horse")
+    assert(compileErrors("""Citekey("Not A Key")""").nonEmpty)

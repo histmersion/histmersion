@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.values.Citekey
+
 import com.histmersion.pluginhost.{FetchChain, OaFetcher, WorkLookup}
 
 import com.histmersion.core.*
@@ -330,7 +332,7 @@ final class AcquireHandlers(
       else
         // the citekey becomes a spool directory name, and it can come from the CALLER (--citekey)
         // or from an upstream record's title — neither is trustworthy as a path segment.
-        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.toString, steps, req.refetch, legalOnly))
+        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.value, steps, req.refetch, legalOnly))
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
@@ -507,7 +509,7 @@ final class AcquireHandlers(
               .getOrElse(stored(Acquire.citekey(item.creator, item.year, item.title),
                 item.creator, item.year, item.title))
             Citekey.of(rawCitekey).flatMap { validCk =>
-            val citekey = validCk.toString
+            val citekey: String = validCk.value
             steps += IngestStep("metadata", true,
               s"${item.title.getOrElse(item.identifier)} (${item.year.map(_.toString).getOrElse("?")})")
             // the download is the chain's `archive-org` fetcher (the legal chain: a public item only)
