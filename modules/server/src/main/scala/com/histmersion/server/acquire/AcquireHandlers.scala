@@ -2,7 +2,7 @@ package com.histmersion.server.acquire
 
 import com.histmersion.core.*
 import com.histmersion.core.Acquire.Ident
-import com.histmersion.db.{AcquireRepo, AssetRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{AcquireRepo, AssetRepo, CandidateRepo, QueueRepo, SourceRepo}
 import com.histmersion.server.Deps
 
 import io.circe.Json
@@ -26,7 +26,9 @@ final class AcquireHandlers(
     wiki: => WikiClient,
     archive: => ArchiveClient,
     retractionWatch: => RetractionWatchClient,
-    jobs: IngestJobs
+    jobs: IngestJobs,
+    indexes: => List[ScholarlyIndex] = Nil,
+    alerts: => CitationAlerts = NoAlerts
 ):
   private val ds  = deps.ds
   private def cfg = deps.cfg
@@ -46,6 +48,32 @@ final class AcquireHandlers(
   private val rwError   = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
 
   private def err(msg: String): ApiError = ApiError(msg)
+
+  // ── deterministic new-source search (#3761) ──────────────────────────────────────────────────
+
+  private val search = CandidateSearch(ds, deps.cfg.acquire.candidates, indexes, alerts)
+
+  /** A goal's (or every goal's) candidates in one state (`new` by default), with the counts per state. */
+  def candidates(goal: Option[String], state: Option[String], limit: Option[Int], offset: Option[Int]): Either[ApiError, CandidateList] =
+    val st = state.map(_.trim).filter(_.nonEmpty).getOrElse(Candidates.State.New.wire)
+    Candidates.State.parse(st).toRight(ApiError(s"unknown state '$st' (${Candidates.State.values.map(_.wire).mkString(", ")})",
+        Some(Write.CodeInvalid))).map { s =>
+      val g     = goal.map(_.trim).filter(_.nonEmpty)
+      val n     = cfg.limits.page(limit, cfg.limits.search)
+      val from  = offset.getOrElse(0).max(0)
+      val page  = CandidateRepo.list(ds, g, s.wire, n + 1, from)
+      CandidateList(g, s.wire, page.take(n), CandidateRepo.counts(ds, g), from, Option.when(page.size > n)(from + n))
+    }
+
+  /** Read a goal's watches from their watermarks and store what is new (no model). */
+  def sweepCandidates(r: CandidateSweepRequest): Either[ApiError, CandidateSweep] =
+    if r.dryRun then search.sweep(r.goal.trim, dryRun = true)
+    else maintenance.guard("candidates/sweep")(search.sweep(r.goal.trim, dryRun = false))
+
+  def markCandidates(m: CandidateMark): Either[ApiError, CandidateMarked] =
+    maintenance.guard("candidates/mark"):
+      Candidates.State.parse(m.state).toRight(ApiError(s"unknown state '${m.state}' (${Candidates.State.values.map(_.wire).mkString(", ")})",
+          Some(Write.CodeInvalid))).map(s => CandidateMarked(s.wire, CandidateRepo.mark(ds, m.ids.distinct, s.wire)))
 
   // ── discover ────────────────────────────────────────────────────────────────────────────────
 

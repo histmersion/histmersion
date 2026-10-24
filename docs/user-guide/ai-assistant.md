@@ -13,7 +13,7 @@ agents](articles/compile-and-review.md)):
 |---|---|---|
 | where it runs | in your assistant program, in a conversation with you | inside the Histmersion server, in the background |
 | who steers it | you, turn by turn | pipelines, managers and the autopilot |
-| what it can reach | every MCP tool (72), or the `histmersion` command | only the read-only tools its step allows; the pipeline writes the checked result |
+| what it can reach | every MCP tool (73), or the `histmersion` command | only the read-only tools its step allows; the pipeline writes the checked result |
 | needs `agents.enabled` | no | yes |
 | pays for the model | your assistant's own account | the provider you configure for Histmersion |
 
@@ -86,7 +86,7 @@ Keep the key in an environment variable, never in a file you share.
 
 ## 2. What the MCP tools cover
 
-The server offers **72 tools**. The full list, with when to use each, is in
+The server offers **73 tools**. The full list, with when to use each, is in
 [MCP tools](reference/mcp-tools.md); the server's own `tools/list` is the authority.
 
 | group | tools (examples) |

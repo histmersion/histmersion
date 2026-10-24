@@ -13447,6 +13447,9 @@
       "glob": "db/migration/V098__goal_focus.sql"
     },
     {
+      "glob": "db/migration/V099__source_candidates.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

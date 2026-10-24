@@ -106,6 +106,9 @@ hand.
 | `histmersion attestations show <id>` | One attestation by id |
 | `histmersion attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>]` | Create an attestation linking an entity to a source passage |
 | `histmersion attestations rm <id>` | Delete an attestation by id |
+| `histmersion candidates sweep [--dry-run] <goal>` | Read a goal's saved queries, citation and author alerts from their watermarks now (no model) |
+| `histmersion candidates mark [--as <string>] <id>...` | Record a decision on candidates by id: seen, queued, dismissed (or new again) |
+| `histmersion candidates [--goal <string>] [--state <string>] [--limit <integer>] [--offset <integer>]` | New sources found for the research goals without a model: list, sweep, mark |
 | `histmersion goals list [--status <string>] [--limit <integer>] [--offset <integer>] [--json]` | List research goals |
 | `histmersion goals get [--json] <slug>` | Show one goal: sub-goals, links, schedules, approved plan |
 | `histmersion goals update [--title <string>] [--status <string>] [--notes <string>] [--budget-usd <floating-point>] [--from <integer>] [--to <integer>] <slug>` | Update goal fields (patch) |

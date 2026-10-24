@@ -24,6 +24,14 @@ trait AgentUpstream:
     * fetcher, whatever `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not
     * connected by default: a fixture that does not answer it ingests nothing. */
   def ingestLegal(doi: String): Either[String, IngestReport] = Left("the acquisition toolset is not connected")
+  /** The deterministic new-source search of a goal (#3761): its watches read from their watermarks, the new
+    * candidates stored (a dry run stores nothing). Not connected by default: a fixture that does not answer
+    * it keeps the sweep's live search. */
+  def sweepCandidates(goal: String, dryRun: Boolean): Either[String, CandidateSweep] = Left("the candidate search is not connected")
+  /** A goal's candidates in one state (`new`: the unseen), oldest first. */
+  def candidates(goal: String, state: String, limit: Int): Either[String, List[SourceCandidate]] = Left("the candidate search is not connected")
+  /** Record a decision on candidates by id. */
+  def markCandidates(ids: List[Long], state: String): Either[String, Int] = Left("the candidate search is not connected")
 
 object AgentUpstream:
 
@@ -48,3 +56,9 @@ object AgentUpstream:
     def discover(query: String, limit: Int) =
       a.discover(query, None, None, Some(limit), notInDb = false).left.map(_.message)
     override def ingestLegal(doi: String) = a.ingestLegal(IngestRequest(doi)).left.map(_.message)
+    override def sweepCandidates(goal: String, dryRun: Boolean) =
+      a.sweepCandidates(CandidateSweepRequest(goal, dryRun)).left.map(_.message)
+    override def candidates(goal: String, state: String, limit: Int) =
+      a.candidates(Some(goal), Some(state), Some(limit), None).map(_.candidates).left.map(_.message)
+    override def markCandidates(ids: List[Long], state: String) =
+      a.markCandidates(CandidateMark(ids, state)).map(_.updated).left.map(_.message)

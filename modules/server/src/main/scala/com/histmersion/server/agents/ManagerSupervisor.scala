@@ -756,24 +756,32 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
         h.getGoal(item.target) match
           case Left(_) => settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
           case Right(g) =>
-            val sweep   = item.kind == AcquisitionSweep
-            val autoOn  = sweep && m.config.autoIngest.contains(true)
-            val own     = if sweep then ManagerPolicy.ingestAllowance(m.config, mcfg,
-                            ManagerRepo.countEvents(ds, m.id, Feed.Ingested, ManagerPolicy.dayStart(now))) else 0
-            // the autopilot's cap shared by every watcher (none while it is off)
-            val shared  = if autoOn then agents.autopilot.sharedIngestLeft(now) else None
-            // the ingest backlog drains first: a sweep's new finds get what it leaves of the allowance
-            val (mine, all) = if autoOn then agents.oaBacklog.reserved(m.id) else (0, 0)
-            val allowed = if autoOn then IngestBacklog.sweepAllowance(own, shared, mine, all) else 0
-            val auto    = if !sweep then "" else if autoOn then
-                            s"; auto-ingest of legal open access: ${Plural.count(allowed, "work")} left today" +
-                              shared.fold("")(n => s" (all watchers: $n left)") +
-                              (if all > 0 then s"; ${Plural.count(all, "work")} wait in the ingest backlog first" +
-                                (if mine > 0 then s" ($mine of them its own)" else "") else "") +
-                              "; the open-access picks past it wait in the backlog" else "; auto-ingest off"
-            start(m, item, RunRequest(ManagerSupervisor.pipelineOf(item.kind).wire, g.slug, budgetUsd = m.config.budgetUsd),
-              p => if autoOn then p.copy(autoIngest = Option.when(allowed > 0)(allowed), oaBacklog = Some(true)) else p,
-              item.state, s"${item.kind}$auto", out)
+            // the deterministic search first (#3761, no model): no new candidate, no agent run — the schedule
+            // stops spending model quota on sweeps that change nothing
+            val swept = Option.when(item.kind == AcquisitionSweep)(agents.acquisition.sweepCandidates(g.slug, dryRun = false))
+            swept.filter(ManagerSupervisor.nothingNew).flatMap(_.toOption) match
+              case Some(s) =>
+                settleNow(m, item, ItemStatus.Done, s"no new candidates from the goal's watches (${Plural.count(s.watches.size, "watch", "watches")} " +
+                  s"read, ${s.found} found, all known) — no agent run")
+              case None =>
+                val sweep   = item.kind == AcquisitionSweep
+                val autoOn  = sweep && m.config.autoIngest.contains(true)
+                val own     = if sweep then ManagerPolicy.ingestAllowance(m.config, mcfg,
+                                ManagerRepo.countEvents(ds, m.id, Feed.Ingested, ManagerPolicy.dayStart(now))) else 0
+                // the autopilot's cap shared by every watcher (none while it is off)
+                val shared  = if autoOn then agents.autopilot.sharedIngestLeft(now) else None
+                // the ingest backlog drains first: a sweep's new finds get what it leaves of the allowance
+                val (mine, all) = if autoOn then agents.oaBacklog.reserved(m.id) else (0, 0)
+                val allowed = if autoOn then IngestBacklog.sweepAllowance(own, shared, mine, all) else 0
+                val auto    = if !sweep then "" else if autoOn then
+                                s"; auto-ingest of legal open access: ${Plural.count(allowed, "work")} left today" +
+                                  shared.fold("")(n => s" (all watchers: $n left)") +
+                                  (if all > 0 then s"; ${Plural.count(all, "work")} wait in the ingest backlog first" +
+                                    (if mine > 0 then s" ($mine of them its own)" else "") else "") +
+                                  "; the open-access picks past it wait in the backlog" else "; auto-ingest off"
+                start(m, item, RunRequest(ManagerSupervisor.pipelineOf(item.kind).wire, g.slug, budgetUsd = m.config.budgetUsd),
+                  p => if autoOn then p.copy(autoIngest = Option.when(allowed > 0)(allowed), oaBacklog = Some(true)) else p,
+                  item.state, s"${item.kind}$auto", out)
       case other => settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
 
   /** Create, mark and submit one run: ONE transaction (the run row, the item's compare-and-set, the hints
@@ -830,6 +838,10 @@ private[agents] object Zero:
   given Zero[List[String]] = Zero(Nil)
 
 object ManagerSupervisor:
+
+  /** Pure: does a candidate sweep say there is nothing for a ranking (#3761)? Only an answered sweep with
+    * no unseen candidate does; a search that is not connected (or failed) lets the run start as before. */
+  def nothingNew(sweep: Either[String, CandidateSweep]): Boolean = sweep.exists(_.unseen == 0)
   /** The priority a prioritise hint gives when it names none (a person's enqueue is 10). */
   val HintPriority = 5
   /** A person's enqueue (the Review button, `agent manager … enqueue`). */

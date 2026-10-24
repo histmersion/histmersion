@@ -416,7 +416,7 @@ object Main:
           orElse RenameCmd.command orElse DeleteCmd.command orElse exportCmd
           orElse backup orElse backups orElse restore orElse maintenanceCmd orElse BundleCmd.command orElse MergeCmd.command orElse ArticleCli.command orElse PlacesCmd.command
           orElse PeriodsCmd.command orElse PeriodsCmd.init
-          orElse EventsCmd.command orElse AttestationsCmd.command
+          orElse EventsCmd.command orElse AttestationsCmd.command orElse CandidatesCmd.command
           orElse GoalsCmd.command orElse AgentStateCmd.command orElse AgentCmd.command
           orElse MediaCmd.command orElse AssetLinksCmd.command
           // stream 2.8 — lint · queue · read-only query

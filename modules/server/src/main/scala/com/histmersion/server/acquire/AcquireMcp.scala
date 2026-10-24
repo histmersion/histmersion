@@ -122,7 +122,28 @@ final class AcquireMcp(h: AcquireHandlers):
           case _              => ToolResult.text("_give a `query` to search, or an `id`_")
       }
 
-  val tools = List(discover, refs, assess, followups, ingestDoi, archive)
+  private val candidates =
+    tool("candidates")
+      .description(
+        "The NEW SOURCES found for the research goals by the deterministic search (no model): each goal's saved " +
+          "queries on OpenAlex, Crossref, Europe PMC, arXiv (and CORE with a key), the works citing its sources and " +
+          "its sources' authors' newer works, each read from the day it was last read, deduplicated by DOI against " +
+          "the corpus and the acquisition list. Default: the `new` (unseen) candidates of every goal, or of `goal`; " +
+          "`state` = new, seen, queued or dismissed. Filter them yourself: `mark` (candidate ids) with `as` = seen, " +
+          "queued or dismissed records your decision; `sweep: true` (with `goal`) reads the goal's watches now " +
+          "(`dryRun: true` stores nothing). Queue what is worth acquiring with the `queue` tool or `ingest_doi`.")
+      .input[CandidatesInput]
+      .handle { in =>
+        if in.sweep then
+          in.goal.map(_.trim).filter(_.nonEmpty) match
+            case Some(g) => render(h.sweepCandidates(CandidateSweepRequest(g, in.dryRun)))(CandidatesMarkdown.sweep)
+            case None    => ToolResult.text("_give `goal` to sweep_")
+        else if in.mark.nonEmpty then
+          render(h.markCandidates(CandidateMark(in.mark, in.as.getOrElse(Candidates.State.Seen.wire))))(CandidatesMarkdown.marked)
+        else render(h.candidates(in.goal, in.state, in.limit, in.offset))(CandidatesMarkdown.list)
+      }
+
+  val tools = List(discover, refs, assess, followups, ingestDoi, archive, candidates)
 
 object AcquireMcp:
   /** Honour Scala defaults when decoding tool arguments, as `McpTools` does — otherwise every
@@ -141,6 +162,19 @@ object AcquireMcp:
   ) derives KindlingsCodecAsObject
   object DiscoverInput:
     given Schema[DiscoverInput] = KindlingsSchema.derived[DiscoverInput].schema
+
+  final case class CandidatesInput(
+      goal: Option[String] = None,
+      state: Option[String] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None,
+      mark: List[Long] = Nil,
+      as: Option[String] = None,
+      sweep: Boolean = false,
+      dryRun: Boolean = false
+  ) derives KindlingsCodecAsObject
+  object CandidatesInput:
+    given Schema[CandidatesInput] = KindlingsSchema.derived[CandidatesInput].schema
 
   final case class RefsInput(id: String, apply: Boolean = false) derives KindlingsCodecAsObject
   object RefsInput:

@@ -40,6 +40,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
 
   def attach(u: AgentUpstream): Unit = upstream = u
 
+  /** The acquisition operations as attached now (the supervisor's candidate sweep, #3761). */
+  def acquisition: AgentUpstream = upstream
+
   val definitions: AgentDefinitions = cli.definitions
   val tokens: RunTokens = cli.tokens
   /** The subscription pools (also what the CLI clients report their readings to). */

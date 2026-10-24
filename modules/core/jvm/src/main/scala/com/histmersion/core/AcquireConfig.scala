@@ -65,6 +65,12 @@ final case class TlsConfig(systemTrust: Boolean, extraCaFile: String) derives Co
   def custom: Boolean = systemTrust || extraCa.isDefined
 
 /** Tunables that used to be `discover:` defaults and inline thresholds in `assess.py`. */
+/** Deterministic new-source search (#3761): the `indexes` a goal's queries are read from, how far back a
+  * watch reads the first time, how many results a watch reads, how many of the goal's sources (and of
+  * their authors) are watched, and arXiv's API. */
+final case class CandidatesConfig(indexes: List[String], lookbackDays: Int, perWatch: Int, sources: Int,
+    authorsPerSource: Int, arxivApiUrl: String) derives ConfigReader
+
 final case class AcquireDefaults(
     searchLimit: Int,      // discover search page size
     minYear: Int,          // discover: oldest publication year considered
@@ -102,7 +108,8 @@ final case class AcquireConfig(
     timeoutSeconds: Int,
     spoolDir: String,
     defaults: AcquireDefaults,
-    tls: TlsConfig
+    tls: TlsConfig,
+    candidates: CandidatesConfig
 ) derives ConfigReader:
 
   /** The contact e-mail, when one is configured. It is a per-install setting (never in the repo), so
