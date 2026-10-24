@@ -191,6 +191,33 @@ class WriteHttpSuite extends munit.FunSuite:
       finally b.stop()
     }
 
+  // #3770: put_attestation with an unknown target type (or a missing source) answered 500, the constraint's
+  test("an attestation with an unknown target type is a 400 naming the five, a missing source a 404 — over HTTP and MCP"):
+    val base = AppConfig.load()
+    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val k    = "zz_http_attest"
+    supervised {
+      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      try
+        assertEquals(put(s"$url/api/sources/$k", """{"title":"Attested"}""")._1, 200)
+        val (s1, b1) = post(s"$url/api/attestations", s"""{"citekey":"$k","targetType":"bogus","targetId":"x"}""")
+        assertEquals(s1, 400, b1)
+        assert(b1.contains("unknown target type 'bogus' (finding, event, event_dating, place, edge)"), b1)
+        val (s2, b2) = post(s"$url/api/attestations", """{"citekey":"zz_http_attest_none","targetType":"event","targetId":"x"}""")
+        assertEquals(s2, 404, b2)
+        val (m1s, m1) = mcp(url, "put_attestation", s"""{"citekey":"$k","targetType":"bogus","targetId":"x"}""")
+        assertEquals(m1s, 200, m1)
+        assert(m1.contains("unknown target type") && !m1.contains("Internal server error"), m1)
+        // a valid one, its type in any case, is written
+        val (s3, b3) = post(s"$url/api/attestations", s"""{"citekey":"$k","targetType":" Event ","targetId":"zz_e"}""")
+        assertEquals(s3, 200, b3)
+        assert(b3.contains("\"targetType\":\"event\""), b3)
+        val id = "\"id\":(\\d+)".r.findFirstMatchIn(b3).map(_.group(1)).getOrElse(fail(b3))
+        assertEquals(send(json(s"$url/api/attestations/$id").DELETE().build())._1, 200)
+      finally b.stop()
+    }
+
   // #766: put_source rewrote a foreign edge src to the citekey (the #698 pattern, fixed for patch only)
   test("put over HTTP: a foreign edge src is a 400; an omitted src or an old citekey of the source is accepted"):
     val base = AppConfig.load()
