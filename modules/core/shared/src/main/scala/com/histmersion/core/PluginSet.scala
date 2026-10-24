@@ -33,19 +33,28 @@ final case class PluginJar(file: String, sha256: String, plugins: List[PluginDes
 object PluginJar:
   given Schema[PluginJar] = KindlingsSchema.derived[PluginJar].schema
 
+/** A file a plugin set was linked with besides its jars: the POM beside a plugin jar (`x-1.0.pom`), or a
+  * dependency jar of the plugins directory's `lib/` (`lib/y-2.0.jar`); with its SHA-256. */
+final case class PluginFile(file: String, sha256: String) derives KindlingsCodecAsObject
+object PluginFile:
+  given Schema[PluginFile] = KindlingsSchema.derived[PluginFile].schema
+
 /** @param digest     SHA-256 over the sorted `<file> <sha256>` lines of the jars (order-independent); the
   *                   empty set's digest for a binary linked with first-party plugins only
   * @param spiVersion the plugin SPI the binary speaks
   * @param mode       `native` (linked into the image) or `jvm` (on the JVM launcher's class path)
   * @param kit        the kit (Histmersion version and commit) it was linked from
-  * @param linkedAt   when (ISO-8601) */
+  * @param linkedAt   when (ISO-8601)
+  * @param dependencies the POMs and `lib/` jars it was linked with; `None` in a record written before they
+  *                   were recorded */
 final case class PluginSet(
     digest: String,
     spiVersion: Int,
     jars: List[PluginJar] = Nil,
     mode: String = "native",
     kit: Option[String] = None,
-    linkedAt: Option[String] = None
+    linkedAt: Option[String] = None,
+    dependencies: Option[List[PluginFile]] = None
 ) derives KindlingsCodecAsObject
 object PluginSet:
   given Schema[PluginSet] = KindlingsSchema.derived[PluginSet].schema
@@ -58,7 +67,7 @@ object PluginSet:
 
   /** One line for a report: `<digest> · 2 jars: a-1.0.jar, b-0.1.jar`, or first-party only. */
   def describe(s: Option[PluginSet]): String = s match
-    case None | Some(PluginSet(_, _, Nil, _, _, _)) =>
+    case None | Some(PluginSet(_, _, Nil, _, _, _, _)) =>
       s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest).take(12)}…)"
     case Some(set) =>
       s"${set.digest.take(12)}… · ${Plural.count(set.jars.size, "jar")} (${set.mode}): " +

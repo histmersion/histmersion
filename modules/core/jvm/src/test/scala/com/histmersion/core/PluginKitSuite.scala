@@ -45,6 +45,19 @@ class PluginKitSuite extends munit.FunSuite:
     // a stock install: empty directory, empty record, a server reporting no set
     assertEquals(status(Nil, Some(set(Nil)), None, true).verdict, Verdict.UpToDate)
 
+  test("status: a changed POM or lib/ jar beside the same jars needs a rebuild; a record without them compares the jars"):
+    val deps = List("a.pom" -> "p1", "lib/x-1.0.jar" -> "x1")
+    val linked = pluginSet(a.map((f, h) => PluginJar(f, h)), 1, "native", None, None, deps)
+    assertEquals(status(a, Some(linked), Some(linked), true, deps).verdict, Verdict.UpToDate)
+    val pom = status(a, Some(linked), Some(linked), true, List("a.pom" -> "p2", "lib/x-1.0.jar" -> "x1"))
+    assertEquals((pom.verdict, pom.changed), (Verdict.RelinkNeeded, List("a.pom")))
+    val lib = status(a, Some(linked), Some(linked), true, List("a.pom" -> "p1", "lib/x-1.1.jar" -> "x2"))
+    assertEquals((lib.verdict, lib.added, lib.removed), (Verdict.RelinkNeeded, List("lib/x-1.1.jar"), List("lib/x-1.0.jar")))
+    assert(statusLines(lib, true).mkString("\n").contains("REBUILD NEEDED: the plugins directory (its jars, POMs or lib/)"))
+    // a record written before the POMs and lib/ were recorded: the jars alone decide, as they did
+    val old = linked.copy(dependencies = None)
+    assertEquals(status(a, Some(old), Some(old), true, List("a.pom" -> "p2")).verdict, Verdict.UpToDate)
+
   test("statusLines say what to do"):
     val st = status(a, Some(set(Nil)), None, true)
     val text = statusLines(st, true).mkString("\n")

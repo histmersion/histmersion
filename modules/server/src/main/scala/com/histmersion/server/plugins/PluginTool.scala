@@ -76,7 +76,7 @@ object PluginTool:
         val described = jars.map(j => describe(Path.of(j), loader))
         val label     = kitLabel(Path.of(kit))
         val set = PluginKit.pluginSet(described, Spi.Version, mode, label,
-          Some(Instant.now().truncatedTo(ChronoUnit.SECONDS).toString))
+          Some(Instant.now().truncatedTo(ChronoUnit.SECONDS).toString), linkedFiles(jars.map(Path.of(_)), deps))
         PluginSetResource.writeJar(Path.of(out), set)
         val _ = Files.writeString(Path.of(record), PluginKit.renderSet(set) + "\n")
         System.out.println(set.digest)
@@ -92,6 +92,13 @@ object PluginTool:
         1
 
   // ── the plugins' dependencies ─────────────────────────────────────────────────────────────────
+
+  /** The files a plugin set is linked with besides its jars, as `histmersion plugin status` reads them: the
+    * POM beside each jar (`x-1.0.jar` → `x-1.0.pom`, when there is one) and each dependency jar as
+    * `lib/<name>`, with their SHA-256. */
+  def linkedFiles(jars: List[Path], deps: List[Path]): List[(String, String)] =
+    val poms = jars.map(j => j.resolveSibling(j.getFileName.toString.stripSuffix(".jar") + ".pom")).filter(Files.isRegularFile(_))
+    poms.map(p => p.getFileName.toString -> sha256(p)) ++ deps.filter(Files.isRegularFile(_)).map(d => s"lib/${d.getFileName}" -> sha256(d))
 
   /** The jars `lib/classpath` lists, in its order; none when there is no such file. */
   def dependencyJars(lib: Path): List[Path] =

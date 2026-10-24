@@ -129,6 +129,14 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
 
   def dirEntries: List[(String, String)] = jars.map(j => j.getFileName.toString -> sha256(j))
 
+  /** The POMs beside the jars and the dependency jars `lib/classpath` lists (as `lib/<name>`), with their
+    * SHA-256: what a relink links besides the jars. */
+  def dependencyEntries: List[(String, String)] =
+    val poms = jars.map(pomOf).filter(Files.isRegularFile(_)).map(p => p.getFileName.toString -> sha256(p))
+    val listed = scala.util.Try(Files.readAllLines(install.lib.resolve("classpath")).asScala.toList).getOrElse(Nil)
+      .map(_.trim).filter(_.nonEmpty).map(install.lib.resolve).filter(Files.isRegularFile(_))
+    poms ++ listed.map(d => s"lib/${d.getFileName}" -> sha256(d))
+
   def installedSet: Option[PluginSet] =
     if Files.isRegularFile(install.record) then PluginKit.parseSet(Files.readString(install.record)).toOption else None
 
@@ -390,7 +398,7 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
 
   /** `plugin status`: the directory, the installed binary and the running server compared. */
   def status(running: Option[PluginsReport], serverAnswered: Boolean): (PluginKit.SetStatus, List[String]) =
-    val st = PluginKit.status(dirEntries, installedSet, running.flatMap(_.set), serverAnswered)
+    val st = PluginKit.status(dirEntries, installedSet, running.flatMap(_.set), serverAnswered, dependencyEntries)
     val kit = PluginKit.parseKit(scala.util.Try(Files.readString(install.kitJson)).getOrElse("")).toOption
     val signing = run.capture(List(install.signing.toString, "status"), install.env).toOption.toList
       .flatMap(_.linesIterator.filter(_.nonEmpty).toList)

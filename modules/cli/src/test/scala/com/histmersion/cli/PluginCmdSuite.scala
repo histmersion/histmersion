@@ -296,6 +296,18 @@ class PluginCmdSuite extends munit.FunSuite:
     assert(e.ops.list(None).mkString.contains("in the binary"))
     assertEquals(e.ops.status(Some(PluginsReport(1, set = Some(set))), true)._1.verdict, PluginKit.Verdict.UpToDate)
     assertEquals(e.ops.status(Some(PluginsReport(1)), true)._1.verdict, PluginKit.Verdict.RestartNeeded)
+    // linked with its POM and a lib/ jar: a changed POM or lib/ jar beside the same jar needs a rebuild
+    val pom = e.plugins.resolve("hello-0.1.0.pom"); Files.writeString(pom, "<project/>")
+    Files.createDirectories(e.plugins.resolve("lib"))
+    Files.writeString(e.plugins.resolve("lib/dep-1.0.jar"), "dep"); Files.writeString(e.plugins.resolve("lib/classpath"), "dep-1.0.jar\n")
+    val withDeps = PluginKit.pluginSet(List(PluginJar("hello-0.1.0.jar", sha)), 1, "native", None, None, e.ops.dependencyEntries)
+    Files.writeString(e.home.resolve("bin/histmersion-server.plugin-set.json"), PluginKit.renderSet(withDeps))
+    assertEquals(e.ops.status(Some(PluginsReport(1, set = Some(withDeps))), true)._1.verdict, PluginKit.Verdict.UpToDate)
+    Files.writeString(pom, "<project><dependencies/></project>")
+    val (pomChanged, _) = e.ops.status(Some(PluginsReport(1, set = Some(withDeps))), true)
+    assertEquals((pomChanged.verdict, pomChanged.changed), (PluginKit.Verdict.RelinkNeeded, List("hello-0.1.0.pom")))
+    Files.writeString(pom, "<project/>"); Files.writeString(e.plugins.resolve("lib/dep-1.0.jar"), "other")
+    assertEquals(e.ops.status(Some(PluginsReport(1, set = Some(withDeps))), true)._1.changed, List("lib/dep-1.0.jar"))
 
   env.test("rebuild and rollback run histmersion-relink with this install's directories"): e =>
     assertEquals(e.ops.rebuild(List("--no-restart")), Right(()))

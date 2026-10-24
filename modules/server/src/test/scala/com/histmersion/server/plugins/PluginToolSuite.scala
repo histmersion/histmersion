@@ -124,6 +124,13 @@ class PluginToolSuite extends munit.FunSuite:
       e.contains("histmersion plugin add")), without.error)
     assertEquals(PluginTool.dependencyJars(d.resolve("no-lib")), Nil)
 
+  tmp.test("linkedFiles: the POM beside each jar and the lib/ jars, with their checksums"): d =>
+    val jar = d.resolve("x-1.0.jar"); Files.write(jar, Array[Byte](1))
+    val pom = d.resolve("x-1.0.pom"); Files.writeString(pom, "<project/>")
+    val bare = d.resolve("y-1.0.jar"); Files.write(bare, Array[Byte](2))
+    assertEquals(PluginTool.linkedFiles(List(jar, bare), List(helloLib)),
+      List("x-1.0.pom" -> PluginTool.sha256(pom), s"lib/${helloLib.getFileName}" -> PluginTool.sha256(helloLib)))
+
   tmp.test("check: a dependency jar that holds a class the kit already has is refused"): d =>
     val kit = kitWith(d, Map("lib-elsewhere.jar" -> Map("com/histmersion/fixtures/hellolib/Shout.class" -> Array[Byte](1))))
     val (_, problems) = PluginTool.check(kit, List(helloDeps), List(helloLib), loader)
