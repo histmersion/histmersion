@@ -19,7 +19,7 @@ import { after, before, test } from 'node:test';
 import { engineName, isChromium, launch, wantsGpu } from './engine.mjs';
 import { memory, newPerfPage, quiet } from './perf-lib.mjs';
 import * as paths from './perf-paths.mjs';
-import { routeFixtures } from './perf-fixtures.mjs';
+import { eventsIn, routeFixtures } from './perf-fixtures.mjs';
 import { soak } from './perf-soak.mjs';
 
 const baseURL = process.env.HISTMERSION_SERVER_URL;
@@ -72,6 +72,11 @@ const BUDGETS = {
   // most frames (they changed only when an answer came: 80 % of frames still)
   playback: { longTaskMax: 150, droppedPct: 15, findingsRequestsPerSecond: 1, outlineUploadsPerSecond: 6,
     stillFramesPct: 60 },
+  // #4291: zooms across whole levels with the events layer on, in a desktop window (~1 600 points held for
+  // its view, a few hundred markers drawn): every one animates its bubbles (none did: the layer counted the
+  // points held, not the markers drawn), and the animation's start holds no frame long (making every marker
+  // at the zoom's end and one layout per moving marker took 70–90 ms; measured 0 now)
+  clusterZoom: { notAnimated: 0, longTaskMax: 50, droppedPct: 15 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
   soak: { heapMB: 6, nodes: 150, listeners: 20, mapMarkers: 0 },
 };
@@ -174,6 +179,16 @@ test('budgets: playback draws every frame from what it holds, the states restyle
     assert.ok(m.states > 0, `states are drawn in playback: ${JSON.stringify(m)}`);
     within('playback', m);
   });
+});
+
+// a full-HD window: the fixture's view at zoom 4 holds over a thousand points there (a 1440×900 one ~900)
+test('budgets: in a 1920×1080 window a zoom animates the bubbles without a long frame', async () => {
+  await withPerfPage(async ({ page }) => {
+    await page.route(/\/api\/events\/geo(\?|$)/, r => r.fulfill({ json: eventsIn(new URL(r.request().url()).searchParams.get('area')) }));
+    const m = await paths.clusterZoom(page, baseURL);
+    assert.ok(m.held > 1000 && m.drawn < 1000, `a wide window holds over a thousand points and draws fewer markers: ${JSON.stringify(m)}`);
+    within('clusterZoom', m);
+  }, { width: 1920, height: 1080 });
 });
 
 test('every cache the page keeps is bounded', async () => {

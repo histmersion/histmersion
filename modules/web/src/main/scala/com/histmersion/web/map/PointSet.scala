@@ -118,10 +118,12 @@ object Clustering:
   * ([[Clustering]]), the rest are drawn alone; only what is in view (and a margin) has an element. The
   * kinds' look is the caller's (and their pane: `paneOf` a point's, `pane` the bubbles'): `single` draws a point (its marker kept while the point stays), `bubble`
   * a group (`refresh` draws every bubble again). Points are added and removed in batches; the layout
-  * follows at the next frame, the zoom's at its end. A zoom that regroups up to `animateMax` points
-  * animates it, as markercluster did ([[ClusterMotion]]): a bubble that splits sends its points out from
-  * where it stood, and points (or bubbles) that merge fly into the new bubble, which appears as they
-  * arrive; above that, or when the reader asks for reduced motion, they are drawn at once. `repaint`
+  * follows at the next frame, the zoom's at its end. A zoom that regroups the points animates it, as
+  * markercluster did ([[ClusterMotion]]): a bubble that splits sends its points out from where it stood, and
+  * points (or bubbles) that merge fly into the new bubble, which appears as they arrive — while at most
+  * `animateMax` markers are drawn before and after it (the markers in view, not the points held: a wide
+  * window holds thousands of events and draws a few hundred); above that, or when the reader asks for
+  * reduced motion, they are drawn at once. `repaint`
   * recolours a drawn bubble in place (its members' colours moved with the span; nothing else changed). */
 final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface: () => MapSurface,
     key: D => String, at: D => LatLon, radius: () => Double,
@@ -142,7 +144,11 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
   private var drawGeneration = 0
   /** How long one slice of marker making may take before the page gets a frame. */
   private val SliceMs = 6.0
+  /** How far outside the view (px) a marker still counts as on screen: a box's half and a little more. */
+  private val OnScreenMargin = 40.0
   private var installed = false
+  // the view of a zoom whose markers on screen are being made, its moves not started yet
+  private var awaitingMoves: Option[(LatLon, Double)] = None
   /** How many zooms have animated (the browser regressions read it through the diagnostics). */
   var animations: Int = 0
 
@@ -220,12 +226,20 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
       m.el.classList.add(fadeOut)
       dom.window.setTimeout(() => p.remove(m), exitMs)
 
-  /** Lay out at the next frame: any number of changes before it, one layout. */
+  /** Lay out at the next frame: any number of changes before it, one layout — after a zoom's moves have
+    * started (a view's points reloaded on the zoom's end answer within its few frames of making markers,
+    * and drawing them then took the zoom's moves away). */
   def schedule(): Unit =
     install()
     if !queued then
       queued = true
-      dom.window.requestAnimationFrame(_ => { queued = false; layout(animate = false) })
+      dom.window.requestAnimationFrame(_ => scheduled())
+
+  private def scheduled(): Unit =
+    if awaitingMoves.isDefined then { val _ = dom.window.requestAnimationFrame(_ => scheduled()) }
+    else
+      queued = false
+      layout(animate = false)
 
   /** The groups at the map's zoom (again only when the zoom or the points changed), and the elements
     * of those in view. */
@@ -234,12 +248,18 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
     if s != null then
       val z = Clustering.level(s.zoom)
       val changed = z != level || groupOf.size != items.size || items.keysIterator.exists(k => !groupOf.contains(k))
-      val before =
-        if changed && animate && z != level && items.size <= animateMax && !ClusterMotion.reduced() then Some(drawnPlaces()) else None
+      val regrouped = changed && z != level
       val t0 = dom.window.performance.now()
       if changed then regroup(z)
       val t1 = dom.window.performance.now()
-      draw(before)
+      // a zoom's moves wait for its markers on screen to be made: the move's end that follows the zoom's,
+      // at the same view, leaves them to it
+      if changed || !awaitingMoves.contains((s.center, s.zoom)) then
+        val wanted = Clustering.drawn(groups, s)
+        val before =
+          if regrouped && animate && ClusterMotion.within(drawnMarkers, wanted._1.size + wanted._2.size, animateMax) && !ClusterMotion.reduced() then Some(drawnPlaces())
+          else None
+        draw(wanted, before)
       measure("hd-points-group", t0, t1)
       measure("hd-points-draw", t1, dom.window.performance.now())
 
@@ -249,6 +269,10 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
     if js.typeOf(p.measure) == "function" then
       p.clearMeasures(name)
       p.measure(name, js.Dynamic.literal(start = t0, end = t1))
+
+  /** How many markers (points alone and bubbles) are drawn now. */
+  private def drawnMarkers: Int =
+    singles.valuesIterator.count((m, p) => p.has(m)) + bubbles.valuesIterator.count((m, _) => pane().has(m))
 
   /** Where each point is drawn now (alone or in its bubble), screen pixels. */
   private def drawnPlaces(): Map[String, (Double, Double)] =
@@ -267,10 +291,10 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
       i += 1
     groupOf = m
 
-  private def draw(before: Option[Map[String, (Double, Double)]]): Unit =
+  private def draw(wanted: (Set[String], Map[String, Vector[String]]), before: Option[Map[String, (Double, Double)]]): Unit =
     val s = surface()
     val p = pane()
-    val (wantSingles, wantBubbles) = Clustering.drawn(groups, s)
+    val (wantSingles, wantBubbles) = wanted
     // what goes: at once, or (a zoom that animates) kept until it is known whether it merges into a bubble
     val gone = mutable.ListBuffer.empty[(DomMarker, MarkerPane, Seq[String])]
     def leave(m: DomMarker, mp: MarkerPane, ks: Seq[String]): Unit =
@@ -286,8 +310,10 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
       keep
     }
     val fresh = mutable.ListBuffer.empty[(DomMarker, Seq[String])]
-    // what comes: nearest the view's centre first; among more than `animateMax` points a slice at a time
-    // (a zoom over the events layer's thousands made a few hundred markers in one long task)
+    // what comes: a slice at a time, nearest the view's centre first (a zoom over the events layer's thousands
+    // made a few hundred markers in one long task). A zoom that animates makes the markers on screen first,
+    // hidden, and starts every move once they are all made, a few frames later (making them all in the zoom's
+    // last frame held that frame long in a wide window); those in the margin around the view follow
     val fadeIn = before.isEmpty && singles.nonEmpty
     val todo = (wantSingles.iterator.filterNot(singles.contains).map(k => (k, Vector(k), true)) ++
       wantBubbles.iterator.filterNot((id, _) => bubbles.contains(id)).map((id, ks) => (id, ks, false))).toVector
@@ -296,56 +322,100 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
     def dist(ks: Vector[String]): Double =
       val q = s.project(at(items(ks.head)))
       math.hypot(q.x - c.x, q.y - c.y)
-    val queue = mutable.Queue.from(if todo.size > 32 then todo.sortBy(t => dist(t._2)) else todo)
+    def onScreen(ks: Vector[String]): Boolean =
+      val pts = ks.flatMap(items.get).map(at)
+      pts.nonEmpty && Clustering.inView(s, LatLon(pts.map(_.lat).sum / pts.size, pts.map(_.lon).sum / pts.size), OnScreenMargin)
+    def nearestFirst(v: Vector[(String, Vector[String], Boolean)]) = if v.size > 32 then v.sortBy(t => dist(t._2)) else v
+    val (first, later) = if before.isDefined then todo.partition(t => onScreen(t._2)) else (Vector.empty, todo)
+    val queue = mutable.Queue.from(nearestFirst(first) ++ nearestFirst(later))
+    // `var`s: the markers on screen still to make before the moves start, and whether they have started
+    var firstLeft = first.size
+    var started = false
     def make(one: (String, Vector[String], Boolean)): Unit =
       val (id, ks, alone) = one
-      if alone then
-        if !singles.contains(id) && items.contains(id) then
-          val m = single(items(id), fadeIn)
-          val sp = paneOf(items(id))
-          singles(id) = (m, sp)
-          sp.add(m)
-          fresh += ((m, ks))
-      else if !bubbles.contains(id) && ks.forall(items.contains) then
-        val m = bubble(ks.map(items))
-        bubbles(id) = (m, ks)
-        p.add(m)
+      val made =
+        if alone then
+          if !singles.contains(id) && items.contains(id) then
+            val m = single(items(id), fadeIn)
+            val sp = paneOf(items(id))
+            singles(id) = (m, sp)
+            sp.add(m)
+            Some(m)
+          else None
+        else if !bubbles.contains(id) && ks.forall(items.contains) then
+          val m = bubble(ks.map(items))
+          bubbles(id) = (m, ks)
+          p.add(m)
+          Some(m)
+        else None
+      made.foreach { m =>
+        if !started then m.el.classList.add(ClusterMotion.Pending)
         fresh += ((m, ks))
-    val sliced = items.size > animateMax
+      }
+    val view = (s.center, s.zoom)
+    awaitingMoves = Option.when(before.isDefined)(view)
+    def start(): Unit =
+      started = true
+      awaitingMoves = None
+      fresh.foreach((m, _) => m.el.classList.remove(ClusterMotion.Pending))
+      before match
+        case Some(was) if s.center == view._1 && s.zoom == view._2 =>
+          val t0 = dom.window.performance.now()
+          animate(was, fresh.toList, gone.toList)
+          measure("hd-points-moves", t0, dom.window.performance.now())
+        case _ => gone.foreach((m, mp, _) => mp.remove(m))
     val mine = { drawGeneration += 1; drawGeneration }
     def slice(): Unit =
       if mine == drawGeneration then
         val t0 = dom.window.performance.now()
-        while queue.nonEmpty && (!sliced || dom.window.performance.now() - t0 < SliceMs) do make(queue.dequeue())
+        if !started && firstLeft == 0 then start()
+        while queue.nonEmpty && dom.window.performance.now() - t0 < SliceMs do
+          make(queue.dequeue())
+          if !started then
+            firstLeft -= 1
+            if firstLeft == 0 then start()
         if queue.nonEmpty then { val _ = dom.window.requestAnimationFrame(_ => slice()) }
+      else if !started then
+        // a newer drawing took over before the moves started: what was leaving goes, what was made shows
+        started = true
+        fresh.foreach((m, _) => m.el.classList.remove(ClusterMotion.Pending))
+        gone.foreach((m, mp, _) => mp.remove(m))
     slice()
-    // a zoom that regrouped a few points (ClusterMotion): a marker made of ONE former place comes out of it
-    // (a split); one made of several stays where it is and appears as the markers that merge into it arrive
-    before match
-      case None => gone.foreach((m, mp, _) => mp.remove(m))
-      case Some(was) =>
-        // a zoom that regrouped a few points animates (whether or not a point moved on screen)
-        animations += 1
-        val drawnOf = mutable.HashMap.empty[String, (DomMarker, Seq[String])]
-        singles.foreach((k, mp) => drawnOf(k) = (mp._1, Seq(k)))
-        bubbles.values.foreach((m, ks) => ks.foreach(k => drawnOf(k) = (m, ks)))
-        val arriving = mutable.LinkedHashSet.empty[DomMarker]
-        fresh.foreach { (m, ks) =>
-          ClusterMotion.origin(ks.flatMap(was.get)) match
-            case Some(from) if !from._1.isNaN && (from._1 != m.screen._1 || from._2 != m.screen._2) =>
-              ClusterMotion.slide(m, from, m.screen)
-            case Some(_) => ()
-            case None    => if ks.exists(was.contains) then arriving += m
-        }
-        gone.foreach { (m, mp, ks) =>
-          ks.headOption.flatMap(drawnOf.get) match
-            case Some((target, tks)) if ClusterMotion.merges(ks, tks) && !m.screen._1.isNaN =>
-              mp.retire(m, ClusterMotion.Ms)
-              ClusterMotion.slide(m, m.screen, target.screen)
-              if !fresh.exists(_._1 eq target) then arriving -= target
-            case _ => mp.remove(m)
-        }
-        arriving.foreach(ClusterMotion.arrive)
+
+  /** A zoom's moves ([[ClusterMotion]]), once its markers on screen are made: a marker made of ONE former
+    * place comes out of it (a split); one made of several stays where it is and appears as the markers that
+    * merge into it arrive. */
+  private def animate(was: Map[String, (Double, Double)], fresh: List[(DomMarker, Seq[String])],
+      gone: List[(DomMarker, MarkerPane, Seq[String])]): Unit =
+    animations += 1
+    val drawnOf = mutable.HashMap.empty[String, (DomMarker, Seq[String])]
+    singles.foreach((k, mp) => drawnOf(k) = (mp._1, Seq(k)))
+    bubbles.values.foreach((m, ks) => ks.foreach(k => drawnOf(k) = (m, ks)))
+    val made = js.Set[DomMarker]()
+    fresh.foreach((m, _) => made.add(m))
+    val arriving = mutable.LinkedHashSet.empty[DomMarker]
+    val slides = mutable.ListBuffer.empty[ClusterMotion.Slide]
+    fresh.foreach { (m, ks) =>
+      ClusterMotion.origin(ks.flatMap(was.get)) match
+        case Some(from) if !from._1.isNaN && (from._1 != m.screen._1 || from._2 != m.screen._2) =>
+          slides += ClusterMotion.Slide(m, from, m.screen)
+        case Some(_) => ()
+        case None    => if ks.exists(was.contains) then arriving += m
+    }
+    val (w, h) = surface().size
+    def seen(at: (Double, Double)): Boolean =
+      at._1 >= -OnScreenMargin && at._2 >= -OnScreenMargin && at._1 <= w + OnScreenMargin && at._2 <= h + OnScreenMargin
+    // a marker merging off screen into a bubble off screen goes at once: nobody sees it fly
+    gone.foreach { (m, mp, ks) =>
+      ks.headOption.flatMap(drawnOf.get) match
+        case Some((target, tks)) if ClusterMotion.merges(ks, tks) && !m.screen._1.isNaN && (seen(m.screen) || seen(target.screen)) =>
+          mp.retire(m, ClusterMotion.Ms)
+          slides += ClusterMotion.Slide(m, m.screen, target.screen)
+          if !made.contains(target) then arriving -= target
+        case _ => mp.remove(m)
+    }
+    ClusterMotion.slideAll(slides.toList)
+    arriving.foreach(ClusterMotion.arrive)
 
 /** How the cluster layer moves on a zoom that regroups it (#3764: the raster map's cluster plugin animated it, the
   * MapLibre release drew the new groups in one step). A split slides each new marker out from where its
@@ -353,8 +423,10 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
   * quarter of a second, the stylesheet's `.hd-cluster-move`/`.hd-cluster-arrive`. With
   * `prefers-reduced-motion: reduce` nothing moves: the new groups are drawn at once. */
 object ClusterMotion:
-  /** How long a move takes (the stylesheet's transition), ms. */
+  /** How long a move takes (the stylesheet's animation), ms. */
   val Ms = 250
+  /** A marker made for a zoom's moves before they start: drawn hidden until then. */
+  val Pending = "hd-cluster-pending"
 
   /** Pure: where a marker made of points last drawn at `places` comes from — the one place they all
     * stood at (a split, or the same group), or none when they came from several (a merge) or nowhere. */
@@ -373,13 +445,30 @@ object ClusterMotion:
     val mq = dom.window.asInstanceOf[js.Dynamic].matchMedia
     !js.isUndefined(mq) && dom.window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-  /** Move `m` from `from` to `to` over [[Ms]] (it is drawn at `from` first). */
-  def slide(m: DomMarker, from: (Double, Double), to: (Double, Double)): Unit =
-    m.moveTo(from._1, from._2)
-    val _ = m.el.offsetWidth   // the start is laid out before the move
-    m.el.classList.add("hd-cluster-move")
-    m.moveTo(to._1, to._2)
-    dom.window.setTimeout(() => m.el.classList.remove("hd-cluster-move"), Ms + 70)
+  /** A marker's move from one screen point to another. */
+  final case class Slide(marker: DomMarker, from: (Double, Double), to: (Double, Double))
+
+  /** Pure: does a zoom from `drawnBefore` markers to `drawnAfter` animate — at most `max` on either side?
+    * What an animation costs is the markers drawn and moved on screen, not the points the layer holds: a wide
+    * window's view holds thousands of events, of which a few hundred are drawn. */
+  def within(drawnBefore: Int, drawnAfter: Int, max: Int): Boolean =
+    drawnBefore <= max && drawnAfter <= max
+
+  /** Move every marker of `slides` from its `from` to its `to` over [[Ms]]: the stylesheet animates the offset
+    * between them (`--move-x`/`--move-y`) on top of the marker's place — a marker made at its new place comes out of
+    * the old one, a ghost (still at its old place) flies to the new one. Nothing is read back from the page: a
+    * transition needs each marker's start laid out before its move, and reading that layout between one
+    * marker's writes and the next's lays the whole page out once per marker. */
+  def slideAll(slides: List[Slide]): Unit =
+    slides.foreach { sl =>
+      val ghost = sl.marker.el.classList.contains("hd-cluster-ghost")
+      val (dx, dy) = if ghost then (sl.to._1 - sl.from._1, sl.to._2 - sl.from._2) else (sl.from._1 - sl.to._1, sl.from._2 - sl.to._2)
+      sl.marker.el.style.setProperty("--move-x", s"${dx}px")
+      sl.marker.el.style.setProperty("--move-y", s"${dy}px")
+      sl.marker.el.classList.add("hd-cluster-move")
+    }
+    if slides.nonEmpty then
+      dom.window.setTimeout(() => slides.foreach(_.marker.el.classList.remove("hd-cluster-move")), Ms + 70)
 
   /** `m` appears as what merges into it arrives. */
   def arrive(m: DomMarker): Unit =

@@ -147,8 +147,10 @@ look one block of `style.css` (the shape grammar, docs/visualization-guide.md §
 shape is `--glyph-size`, the stroke widths `--glyph-ink-w` / `--glyph-halo-w`. A cluster bubble is
 `DotCluster.bubbleHtml` — one SVG, its rings concentric by construction, its outline `DotCluster.form`
 (a rounded square for events only, a square tab for events among others, #1647) — and the cluster radius
-(`MapView.clusterRadius`) is the widest bubble or the largest marker box, whichever is wider. Above
-`Layout.clusterAnimateMax` points the group zooms without its split/merge animation (`ClusterMotion`).
+(`MapView.clusterRadius`) is the widest bubble or the largest marker box, whichever is wider. With more
+than `Layout.clusterAnimateMax` markers drawn (in view and its margin, before or after the zoom) the group
+zooms without its split/merge animation (`ClusterMotion`; counted by the points held until #4291, so a wide
+window, whose view fetches more events, lost the animation a phone kept).
 
 `PointKindsSuite` runs the same assertions over all four descriptors (shape, glyph, aria, title, the
 filter predicate, the cluster count), so the kinds cannot drift apart again.
@@ -164,7 +166,9 @@ for the layers, and what stayed:
   positioned by CSS custom properties (`--tx`, `--ty`) and served by one delegated listener per pane
   instead of one per marker. The ONE cluster group is `PointSet` over a pure greedy grid
   (`Clustering`): the bubbles, their counts and the period-ramp mix are as before; above `animateMax`
-  points a regroup is not animated and the markers are made in slices across frames (#1647's rule).
+  markers drawn a regroup is not animated (#1647's rule, counted on screen since #4291), and new markers
+  are made in slices across frames — on an animated zoom those on screen first, hidden, the moves
+  starting once they are all made.
 - **Areas** (states, a regional event's outline, the place picker's areas) are `ShapeSet`s: one GeoJSON
   source with fill and line layers per set, colour and alpha as per-feature state (`restyle` touches
   one feature), and hover and click hit-tested against the geometry (`ShapeHits`), so a state under

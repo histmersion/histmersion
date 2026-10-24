@@ -77,3 +77,10 @@ class PlaybackFramesSuite extends munit.FunSuite:
     assert(!ClusterMotion.merges(Seq("a", "b"), Seq("a", "b")))
     assert(!ClusterMotion.merges(Seq("a", "x"), Seq("a", "b", "c")))
   }
+
+  test("a zoom animates while at most the limit of markers is drawn before and after it, whatever is held") {
+    assert(ClusterMotion.within(drawnBefore = 465, drawnAfter = 217, max = 1000))
+    assert(ClusterMotion.within(drawnBefore = 1000, drawnAfter = 1000, max = 1000))
+    assert(!ClusterMotion.within(drawnBefore = 1001, drawnAfter = 10, max = 1000))
+    assert(!ClusterMotion.within(drawnBefore = 10, drawnAfter = 1001, max = 1000))
+  }

@@ -270,6 +270,35 @@ export async function vectorMap(page, baseURL, style, { lat = 37.9, lon = 25.4, 
 
 export { memory };
 
+/** Zooms across whole levels with the events layer on, at the page's window size (#4291): whether each one
+  * animates the bubbles (split and merge) and what the zooms cost. A wide window holds ~1 600 events and
+  * findings for its view and draws a few hundred markers of them; its zooms stopped animating while a
+  * phone's (fewer events fetched) still did, and once animated, making every marker at the zoom's end and
+  * laying the page out once per moving marker held a frame for 70–90 ms. `held`/`drawn`: the points held
+  * and the markers drawn at the start. */
+export async function clusterZoom(page, baseURL, { at = [40, 22], from = 4, zooms = [5, 6, 5, 4] } = {}) {
+  await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
+  await page.goto(new URL('/#from=-3500&to=1500', baseURL).href);
+  await page.reload();
+  await ready(page);
+  await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, from]);
+  await settled(page);
+  const start = await page.evaluate(() => ({ held: window.__testMap.points(),
+    drawn: document.querySelectorAll('#map .hd-pane--events .hd-marker, #map .hd-pane--markers .hd-marker').length }));
+  const animated = [];
+  const m = await measure(page, async () => {
+    for (const z of zooms) {
+      animated.push(await page.evaluate(zoom => new Promise(resolve => {
+        const map = window.__testMap, before = map.clusterAnimations();
+        map.once('zoomend', () => setTimeout(() => resolve(map.clusterAnimations() > before), 500));
+        map.setZoom(zoom);
+      }), z));
+      await quiet(page, 300);   // the view's events reloaded before the next zoom (a reload regroups at once)
+    }
+  });
+  return { ...m, ...start, zooms: zooms.length, notAnimated: animated.filter(a => !a).length };
+}
+
 /** The timeline's playback over [`from`, `to`] for `seconds` (#3764): its frames, what it asks the server
   * for and how often the map's states change look. A smooth playback draws every frame from what it holds
   * (no findings request and no outline upload per frame) and restyles the states on most frames — the

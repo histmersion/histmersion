@@ -208,22 +208,31 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
   .hd-fade-in, .hd-fade-out { animation-duration:1ms; }
 }
 /* the map's markers (web.map.DomMarker): each at its point (`--tx`/`--ty`, written as the map moves), a
-   box centred on it when it has one; far outside the view it is hidden, not moved. A zoom that regroups a
-   few points moves them out of (or into) their bubbles (`.hd-cluster-move`, web.map.PointSet). */
+   box centred on it when it has one; far outside the view it is hidden, not moved. A zoom that regroups the
+   markers moves them out of (or into) their bubbles (`.hd-cluster-move`, web.map.ClusterMotion): an
+   animation of the `translate` property from (or to) the offset `--move-x`/`--move-y`, on top of the transform
+   that follows the map — it starts without a layout of the page, and the marker keeps following the map. */
+/* registered, so not inherited: a marker's place, written every frame the map moves, restyles the marker alone
+   (an inherited custom property restyles every element inside it, for every marker on the map) */
+@property --tx { syntax:'<length>'; inherits:false; initial-value:-9999px; }
+@property --ty { syntax:'<length>'; inherits:false; initial-value:-9999px; }
+@property --move-x { syntax:'<length>'; inherits:false; initial-value:0px; }
+@property --move-y { syntax:'<length>'; inherits:false; initial-value:0px; }
 .hd-marker { position:absolute; left:0; top:0; transform:translate(var(--tx, -9999px), var(--ty, -9999px));
   z-index:var(--z, 0); pointer-events:auto; }
 .hd-marker.has-box { width:var(--mw); height:var(--mh); margin-left:calc(var(--mw) / -2); margin-top:calc(var(--mh) / -2); }
-.hd-marker.is-offscreen { visibility:hidden; }
-.hd-marker.hd-cluster-move { transition:transform .25s cubic-bezier(0, 0, .25, 1); }
+.hd-marker.is-offscreen, .hd-marker.hd-cluster-pending { visibility:hidden; }
+@keyframes cluster-move { from { translate:var(--move-x) var(--move-y); } to { translate:0 0; } }
+.hd-marker.hd-cluster-move { animation:cluster-move .25s cubic-bezier(0, 0, .25, 1); }
 /* a merge (web.map.ClusterMotion): the markers that join a bubble fly into it and go; the bubble appears as
    they arrive */
 .hd-marker.hd-cluster-ghost { pointer-events:none; }
-.hd-marker.hd-cluster-ghost.hd-cluster-move { transition:transform .25s cubic-bezier(.4, 0, 1, 1), opacity .25s ease-in; opacity:.35; }
+@keyframes cluster-fly { from { translate:0 0; opacity:1; } to { translate:var(--move-x) var(--move-y); opacity:.35; } }
+.hd-marker.hd-cluster-ghost.hd-cluster-move { animation:cluster-fly .25s cubic-bezier(.4, 0, 1, 1) forwards; }
 @keyframes cluster-arrive { 0%, 55% { opacity:0; } 100% { opacity:1; } }
 .hd-marker.hd-cluster-arrive { animation:cluster-arrive .25s ease-out; }
 @media (prefers-reduced-motion: reduce) {
-  .hd-marker.hd-cluster-move, .hd-marker.hd-cluster-ghost.hd-cluster-move { transition:none; }
-  .hd-marker.hd-cluster-arrive { animation:none; }
+  .hd-marker.hd-cluster-move, .hd-marker.hd-cluster-ghost.hd-cluster-move, .hd-marker.hd-cluster-arrive { animation:none; }
 }
 /* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */
 .pick-head { padding:10px 14px; border-bottom:1px solid var(--line); background:#161a23; }

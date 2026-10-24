@@ -91,6 +91,14 @@ export const sourceHtml = ck => `<article><h1>Zz ${ck}</h1><p><a class="zz-self"
 
 export const facets = prefix => Array.from({ length: 12 }, (_, i) => ({ value: `${prefix}zz_tag_${i}`, count: 12 - i }));
 
+/** The events in the view's `area` (`west,south,east,north`), as the server answers: a wider window is
+  * sent more of them (#4291). */
+export const eventsIn = area => {
+  const [w, s, e, n] = (area ?? '-180,-90,180,90').split(',').map(Number);
+  const inLon = lon => (w <= e ? lon >= w && lon <= e : lon >= w || lon <= e);
+  return { unplaced: 0, events: events.events.filter(x => x.lat >= s && x.lat <= n && inLon(x.lon)) };
+};
+
 /** Every fixture on its route. A real server answers the rest (config, aggregates, the page). */
 export async function routeFixtures(page) {
   const json = (route, body) => route.fulfill({ json: body });
