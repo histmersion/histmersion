@@ -1,0 +1,7 @@
+com.histmersion.plugin.testkit.kit.KitFetcherPlugin
+com.histmersion.plugin.testkit.kit.KitMediaPlugin
+com.histmersion.plugin.testkit.kit.KitEventsPlugin
+com.histmersion.plugin.testkit.kit.KitAiPlugin
+com.histmersion.plugin.testkit.kit.KitVaultPlugin
+com.histmersion.plugin.testkit.kit.KitBrokenPlugin
+com.histmersion.plugin.testkit.kit.KitNoDefaultsPlugin

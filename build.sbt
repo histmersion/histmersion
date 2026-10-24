@@ -436,6 +436,16 @@ lazy val pluginHost = project
     )
   )
 
+// ── plugin-testkit: what a plugin's own tests depend on (`//> using test.dep`), shipped in the install's
+//    Maven repository beside plugin-api: load the plugin as the server does and run its contributions as
+//    the server does (plugin-host's code), with the server's HTTP client live, recording or replaying.
+//    Its public API is part of the plugin compatibility contract (plugin-testkit-api.txt).
+lazy val pluginTestkit = project
+  .in(file("modules/plugin-testkit"))
+  .dependsOn(pluginHost)
+  .settings(name := "histmersion-plugin-testkit")
+  .settings(commonDeps)
+
 // ── plugin-vaults: the first-party secret vaults (KeePassXC, 1Password, Bitwarden) as built-in
 //    plugins, DISABLED by default (§3.7, D2). Compiled against plugin-api ONLY, as a third-party plugin
 //    would be; the server puts them on its classpath, so they are in every native image.
@@ -842,7 +852,7 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, pluginApi, pluginHost, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
+  .aggregate(coreJVM, coreJS, pluginApi, pluginHost, pluginTestkit, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
     pluginResolver, chimneyIron, chimneyIronTests,
     db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)

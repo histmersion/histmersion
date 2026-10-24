@@ -11,8 +11,9 @@ import scala.util.control.NonFatal
 object PluginMedia:
 
   /** A collection run's polite client: the collection's own pace, the media politeness otherwise. */
-  def polite(http: HttpTransport, media: MediaConfig, collection: MediaCollection, log: HostLog = HostLog.scribe): Polite =
-    Polite(http, media.copy(requestIntervalMs = collection.requestIntervalMs), log = log)
+  def polite(http: HttpTransport, media: MediaConfig, collection: MediaCollection, sleep: Long => Unit = ms => Thread.sleep(ms),
+      log: HostLog = HostLog.scribe): Polite =
+    Polite(http, media.copy(requestIntervalMs = collection.requestIntervalMs), sleep = sleep, log = log)
 
   /** Pure: why a record may not be kept whatever place it names — a withheld record, rights the host
     * cannot read, a licence family not in `allow` (the collection's allowlist), no image — or `None`. */
