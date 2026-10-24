@@ -99,6 +99,7 @@ those first.
 |---|---|
 | {{ repo_file("docs/design.md") }} | the overall design: what is built, the stack |
 | {{ repo_file("docs/plan.md") }} | the product plan and its waves |
+| {{ repo_file("docs/research-module-layout.md") }} | how the modules are split today and a proposed domain / API / store / plugin layout |
 | {{ repo_file("docs/writing-guide.md") }} | the rules for prose compiled from the collection (also bundled into the agents) |
 | {{ repo_file("docs/visualization-guide.md") }} | rules for the map and timeline: honest uncertainty, every dot traceable |
 | {{ repo_file("docs/map-layers.md") }} | the map's point layers and how they share one implementation |
