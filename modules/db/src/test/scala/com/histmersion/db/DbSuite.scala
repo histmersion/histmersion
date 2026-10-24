@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.{DbConfig, QueryConfig}
+import com.histmersion.config.{DbConfig, QueryConfig}
 import com.zaxxer.hikari.HikariDataSource
 
 import javax.sql.DataSource

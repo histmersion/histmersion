@@ -1,6 +1,6 @@
 package com.histmersion.web.map
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 
 import scala.scalajs.js
 

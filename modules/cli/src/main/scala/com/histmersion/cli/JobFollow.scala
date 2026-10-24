@@ -1,6 +1,8 @@
 package com.histmersion.cli
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** The CLI's exit codes (AGENTS.md), spelled once: `main` turns a `Left(CliError)` into one of these.
   * Success is 0. */

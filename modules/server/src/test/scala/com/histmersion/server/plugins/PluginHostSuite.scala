@@ -2,7 +2,7 @@ package com.histmersion.server.plugins
 
 import com.histmersion.pluginhost.{PluginHost, Generation, HostServices}
 
-import com.histmersion.core.{PluginSetting, PluginState, PluginStatus}
+import com.histmersion.api.{PluginSetting, PluginState, PluginStatus}
 import com.histmersion.plugin.*
 import com.histmersion.plugin.PluginConfig.given
 import hearth.kindlings.sconfigderivation.ConfigReader

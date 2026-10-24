@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}

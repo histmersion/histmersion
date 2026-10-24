@@ -1,6 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -66,7 +68,7 @@ object JobRepo:
     val q = select ++ where ++ Keyset.orderBy("") ++ Sql.of(" LIMIT ?", Param.I(math.max(1, limit)))
     connect(ds)(q.frag.query[JobRow].run().map(toInfo))
 
-  /** One page of the newest-first list ([[com.histmersion.core.Paging]]): `before` = only jobs older
+  /** One page of the newest-first list ([[com.histmersion.api.Paging]]): `before` = only jobs older
     * than that one, `upTo` = only jobs down to and including it. Left: a cursor that names no job.
     * Returns the page and whether older jobs exist. */
   def page(ds: DataSource, status: Option[String], limit: Int, before: Option[String] = None,

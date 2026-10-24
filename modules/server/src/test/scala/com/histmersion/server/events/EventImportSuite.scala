@@ -1,6 +1,8 @@
 package com.histmersion.server.events
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{Db, EventCatalogRepo, EventRepo, Migrate, SourceRepo, TestDb}
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp

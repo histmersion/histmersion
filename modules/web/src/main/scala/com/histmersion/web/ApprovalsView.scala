@@ -1,9 +1,9 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
+import com.histmersion.api.*
+import com.histmersion.api.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
 import com.raquo.laminar.api.L.*
-import com.histmersion.core.ListFilters
+import com.histmersion.api.ListFilters
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -162,7 +162,7 @@ object ApprovalsView:
       r.failed.foreach(e => list.failure.set(Some(e.getMessage)))
       refresh()
       // decided here or in a goal's window: the count drops, and the decision is not news to its maker
-      Notices.ownWrite(com.histmersion.core.UiNotices.Board.Approvals)
+      Notices.ownWrite(com.histmersion.api.UiNotices.Board.Approvals)
     }
 
   /** A bulk decision, after the person confirmed it: one request per approval, ONE AFTER ANOTHER,
@@ -181,7 +181,7 @@ object ApprovalsView:
       selected.set(Set.empty)
       list.failure.set(Option.when(errs.nonEmpty)(s"${Plural.count(errs.size, "approval")} not decided: ${errs.mkString("; ")}"))
       refresh()
-      Notices.ownWrite(com.histmersion.core.UiNotices.Board.Approvals)
+      Notices.ownWrite(com.histmersion.api.UiNotices.Board.Approvals)
     }
 
   /** The listing with the rows the filter shows — at once, from the rows loaded; the server's page
@@ -230,14 +230,14 @@ object ApprovalsView:
     )
 
   /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
-  def digestLine(g: com.histmersion.core.ApprovalDigest.KindGroup): String =
+  def digestLine(g: com.histmersion.api.ApprovalDigest.KindGroup): String =
     s"${g.kind} ${Paging.grouped(g.count)}" + g.oldest.fold("")(o => s" (oldest $o)") +
       (if g.decidedBy == "checked" then " · the autopilot's checks decide them within the day's cap" else " · a person decides")
 
   /** The digest (#3762 proposal 3): everything waiting for a person, by kind — a click shows one kind in the
     * list below (its kind filter), where the bulk bar decides them all at once. */
   private def digestBar: HtmlElement =
-    val d = Var(Option.empty[com.histmersion.core.ApprovalDigest.Digest])
+    val d = Var(Option.empty[com.histmersion.api.ApprovalDigest.Digest])
     def load(): Unit = ApiClient.approvalDigest.onComplete(_.toOption.foreach(x => d.set(Some(x))))
     div(cls := "approvals-digest",
       onMountCallback(_ => load()),

@@ -1,7 +1,9 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.Queue.{Kind, QueueAdd, QueuePatch}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Queue.{Kind, QueueAdd, QueuePatch}
 
 import com.augustnagro.magnum.*
 import java.nio.charset.StandardCharsets.UTF_8

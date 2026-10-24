@@ -1,6 +1,7 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.core.{HttpPolicy, MediaConfig}
+import com.histmersion.domain.HttpPolicy
+import com.histmersion.config.MediaConfig
 
 import io.circe.Json
 

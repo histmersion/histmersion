@@ -1,6 +1,7 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.core.{BBox, CatalogDating, CatalogRecord, EventTaxonomy, Historicity, MediaConfig, TimeSpan}
+import com.histmersion.api.{BBox, CatalogDating, CatalogRecord, EventTaxonomy, Historicity, TimeSpan}
+import com.histmersion.config.MediaConfig
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal

@@ -1,6 +1,8 @@
 package com.histmersion.plugin.testkit
 
-import com.histmersion.core.{AppConfig, PluginState}
+import com.histmersion.config.AppConfig
+import com.histmersion.api.PluginState
+import com.histmersion.domain.allowed
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.{FetchChain, HostLog, HostServices, JavaHttpTransport, PluginAi, PluginEvents, PluginHost,
   PluginMedia, PolicyHttp, Registries, WorkLookup}

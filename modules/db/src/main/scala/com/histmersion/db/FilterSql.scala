@@ -1,6 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that
@@ -348,7 +350,7 @@ object FilterSql:
         " ORDER BY f.citekey, f.id",
       citekeys.map(S(_)))
 
-  /** Columns of [[com.histmersion.core.GeoHit]] — one map-feed row (a finding plus its source's title). */
+  /** Columns of [[com.histmersion.api.GeoHit]] — one map-feed row (a finding plus its source's title). */
   private val geoCols =
     "f.citekey, s.title, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
       s" ${PeriodSql.cols("f.period")}, f.confidence, f.significance, s.doi," +

@@ -1,7 +1,9 @@
 package com.histmersion.server
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{CritiqueRepo, Db, Migrate}
 
 /** V091 — the critique checklist's stored reasons (docs/research-review-convergence.md §6.8) against a

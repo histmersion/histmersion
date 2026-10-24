@@ -2,7 +2,9 @@ package com.histmersion.server.media
 
 import ox.supervised
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{Db, MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.server.Main
 import com.sun.net.httpserver.{HttpExchange, HttpServer}

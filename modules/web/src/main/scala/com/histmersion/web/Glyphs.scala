@@ -2,8 +2,8 @@ package com.histmersion.web
 
 /** THE icon registry of the map (#1449): monochrome inline SVG, drawn with `currentColor`, so a marker
   * keeps the colour its dot has (the period ramp, the confidence desaturation) and only its SHAPE says
-  * what it is — an event's kind ([[com.histmersion.core.EventTaxonomy]]), a site's type
-  * ([[com.histmersion.core.SiteTypes]]). Inline, so a marker costs no request and a hover stays local.
+  * what it is — an event's kind ([[com.histmersion.api.EventTaxonomy]]), a site's type
+  * ([[com.histmersion.api.SiteTypes]]). Inline, so a marker costs no request and a hover stays local.
   *
   * The icons are Lucide's (https://lucide.dev, v0.460.0), vendored — only the ones used — under the ISC
   * licence (portions MIT, from Feather); the notice is `web/vendor/lucide/LICENSE.txt`. Generated from the

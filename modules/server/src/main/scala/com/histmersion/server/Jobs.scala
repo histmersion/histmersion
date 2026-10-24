@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.JobState
+import com.histmersion.api.JobState
 import com.histmersion.db.JobRepo
 
 import javax.sql.DataSource

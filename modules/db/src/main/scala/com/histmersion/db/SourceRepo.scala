@@ -1,6 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -824,7 +826,7 @@ object SourceRepo:
 
   /** The body as `passages` searches it (#954): the chunks in `ord` order with their headings, or —
     * for a source stored without chunks — the raw `ocr_markdown` as one headingless piece. Joined by
-    * [[com.histmersion.core.PassageFinder.body]] this is exactly [[bodyText]]. */
+    * [[com.histmersion.domain.PassageFinder.body]] this is exactly [[bodyText]]. */
   def bodyChunks(ds: DataSource, citekey: String): List[Chunk] =
     connect(ds):
       val chunks = sql"""SELECT ord, heading, body FROM source_chunks

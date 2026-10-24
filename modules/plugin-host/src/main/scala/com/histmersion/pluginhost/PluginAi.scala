@@ -1,6 +1,6 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.core.{HttpPolicy, Version}
+import com.histmersion.domain.{HttpPolicy, Version}
 import com.histmersion.plugin.*
 
 import java.nio.charset.StandardCharsets

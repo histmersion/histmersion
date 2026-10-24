@@ -2,7 +2,9 @@ package com.histmersion.server.media
 
 import com.histmersion.pluginhost.HttpAnswer
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo.Target
 
 /** Pictures that depict events (#1446) against a FAKE Wikidata and Commons: P1299 works' images

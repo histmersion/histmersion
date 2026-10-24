@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.ReviewLedger.Ledger
+import com.histmersion.domain.ReviewLedger.Ledger
 
 import com.augustnagro.magnum.*
 

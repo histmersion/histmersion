@@ -1,6 +1,8 @@
 package com.histmersion.server.importers
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** A repeatable importer that fetches external historical-geography data, transforms it to the
   * Histmersion place schema, and returns `PlaceInput` values ready for `PlaceRepo.upsertPlaces`.

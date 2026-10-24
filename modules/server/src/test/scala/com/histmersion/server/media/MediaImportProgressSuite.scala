@@ -1,6 +1,8 @@
 package com.histmersion.server.media
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** #1491: what a running media import job says — `n/total` asked — and which requests name ONE
   * place or event (the only real import the synchronous endpoint still runs). Pure. */

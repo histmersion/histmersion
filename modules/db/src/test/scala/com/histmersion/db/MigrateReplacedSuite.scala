@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource

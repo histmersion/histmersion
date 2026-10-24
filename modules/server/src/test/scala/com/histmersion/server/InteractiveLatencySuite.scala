@@ -1,7 +1,9 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** The interactive budgets (docs/research-interactive-performance.md) as a CI check: the requests a
   * hover, a keystroke and a filter change fire, against a server on the test database, each repeated

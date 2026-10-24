@@ -127,7 +127,7 @@ class PolitenessSuite extends munit.FunSuite:
     assertEquals(p.intervalMs("images.metmuseum.org"), 100L)
 
   test("the Met's backoff is configured; the other collections keep a 403 final"):
-    val m = com.histmersion.core.AppConfig.load().media
+    val m = com.histmersion.config.AppConfig.load().media
     assertEquals(m.met.refusalBackoffMs, List(60000L, 300000L))
     assertEquals(m.met.requestIntervalMs, 250, "4 requests a second, under the documented 80")
     assertEquals((m.cleveland.refusalBackoffMs, m.aic.refusalBackoffMs, m.loc.refusalBackoffMs), (Nil, Nil, Nil))

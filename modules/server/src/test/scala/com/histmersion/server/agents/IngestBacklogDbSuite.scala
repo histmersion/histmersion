@@ -1,13 +1,15 @@
 package com.histmersion.server.agents
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
-import com.histmersion.core.Agents.*
-import com.histmersion.core.Autopilot.AutopilotSet
-import com.histmersion.core.GoalPlans.*
-import com.histmersion.core.Managers.*
-import com.histmersion.core.Queue.QueueAdd
-import com.histmersion.core.RepairAcquire.RepairRequest
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
+import com.histmersion.api.Autopilot.AutopilotSet
+import com.histmersion.api.GoalPlans.*
+import com.histmersion.api.Managers.*
+import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.RepairAcquire.RepairRequest
 import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo, Migrate}
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*

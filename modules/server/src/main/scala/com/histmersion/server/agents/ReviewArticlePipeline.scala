@@ -1,12 +1,14 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{Pipeline, Role}
-import com.histmersion.core.Queue.QueueAdd
-import com.histmersion.core.ReviewArticle.*
-import com.histmersion.core.ReviewArticle.Finding
-import com.histmersion.core.Queue.QueuePatch
-import com.histmersion.core.ReviewLedger.Ledger
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{Pipeline, Role}
+import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.domain.ReviewArticle.*
+import com.histmersion.domain.ReviewArticle.Finding
+import com.histmersion.api.Queue.QueuePatch
+import com.histmersion.domain.ReviewLedger.Ledger
 import com.histmersion.db.{AgentRepo, QueueRepo, ReviewLedgerRepo}
 import com.histmersion.server.Handlers
 import io.circe.syntax.*

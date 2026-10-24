@@ -4,8 +4,10 @@ import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.core.*
-import com.histmersion.core.Queue.{QueueAdd, QueuePatch}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Queue.{QueueAdd, QueuePatch}
 
 /** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research
   * workspace's `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).

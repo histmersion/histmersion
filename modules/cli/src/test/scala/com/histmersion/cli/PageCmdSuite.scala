@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.core.Paging
+import com.histmersion.api.Paging
 
 /** The "next page" command a paged listing prints: the same options, plus `--before`. */
 class PageCmdSuite extends munit.FunSuite:

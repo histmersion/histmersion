@@ -1,8 +1,8 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{CodexConfig, OpencodeConfig}
-import com.histmersion.core.Agents.{ModelRef, ProviderKind}
-import com.histmersion.core.PlanQuota
+import com.histmersion.config.{CodexConfig, OpencodeConfig}
+import com.histmersion.api.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.PlanQuota
 import io.circe.{Json, parser}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*

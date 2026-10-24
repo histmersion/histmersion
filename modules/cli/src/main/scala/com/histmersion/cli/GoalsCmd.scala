@@ -2,9 +2,11 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.core.*
-import com.histmersion.core.Agents.RunRequest
-import com.histmersion.core.GoalPlans.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.RunRequest
+import com.histmersion.api.GoalPlans.*
 
 object GoalsCmd:
 

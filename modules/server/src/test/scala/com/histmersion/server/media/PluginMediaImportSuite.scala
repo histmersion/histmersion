@@ -4,7 +4,9 @@ import com.histmersion.pluginhost.{PluginHost, Generation, HttpTransport}
 
 import ox.supervised
 import com.augustnagro.magnum.*
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.plugin as spi
 import com.histmersion.server.{Deps, Main}

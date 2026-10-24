@@ -1,6 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -359,7 +361,7 @@ object PlaceRepo:
             AND ${SqlLiteral(inTimeSql("p", asOf))}
           ORDER BY p.label, p.id LIMIT ${limit.max(1)}""").query[PlaceSummary].run()
 
-  /** SQL twin of [[com.histmersion.core.Tree.rootEligible]]: a place that may head the hierarchy. Region,
+  /** SQL twin of [[com.histmersion.api.Tree.rootEligible]]: a place that may head the hierarchy. Region,
     * polity or continent; not a Pleiades `withdrawn` record (marked as a property in part of the
     * export and only in the label in the rest); not an uncertain identification (`Theren? (river)`)
     * or a reconstructed name (`*Granouas`). Applies ONLY to root selection — a river still appears

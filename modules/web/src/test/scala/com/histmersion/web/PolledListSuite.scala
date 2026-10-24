@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.RunState
+import com.histmersion.api.*
+import com.histmersion.api.Agents.RunState
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}

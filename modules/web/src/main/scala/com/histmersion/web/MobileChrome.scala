@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.UiConfig
+import com.histmersion.api.UiConfig
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
@@ -101,7 +101,7 @@ object MobileChrome:
         title := "map layers and tools",
         aria.expanded <-- drawer.signal.map(_.contains(Drawer.MapTools)),
         // the tools in that drawer: a window there has something new (Notices)
-        cls("has-news") <-- Notices.anyFresh(b => b != com.histmersion.core.UiNotices.Board.Approvals || RunsView.enabled.now()),
+        cls("has-news") <-- Notices.anyFresh(b => b != com.histmersion.api.UiNotices.Board.Approvals || RunsView.enabled.now()),
         Icon(Icon.Layers),
         onClick --> (_ => toggle(Drawer.MapTools)))
     )

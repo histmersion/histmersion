@@ -1,6 +1,6 @@
 package com.histmersion.web.map
 
-import com.histmersion.core.BasemapStatus
+import com.histmersion.api.BasemapStatus
 import org.scalajs.dom
 
 import scala.scalajs.js

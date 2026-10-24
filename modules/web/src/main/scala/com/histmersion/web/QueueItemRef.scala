@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 
 /** What an acquisition item names, read best-effort from its text so that "Upload…" and "Link
   * existing source…" start from a filled-in form rather than a blank one. Everything it returns is

@@ -1,8 +1,9 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.{AgentsConfig, PlanQuota}
-import com.histmersion.core.Agents.{ModelRef, ProviderKind}
-import com.histmersion.core.PlanQuota.*
+import com.histmersion.config.AgentsConfig
+import com.histmersion.api.PlanQuota
+import com.histmersion.api.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.PlanQuota.*
 import com.histmersion.db.PlanQuotaRepo
 import io.circe.{Json, parser}
 
@@ -342,7 +343,7 @@ object PlanPools:
     case _                                            => false
 
   /** The `claude` CLI's environment for `auth status`: no API key unless asked, its own config dir. */
-  def claudeEnv(cc: com.histmersion.core.ClaudeCodeConfig): Map[String, Option[String]] =
+  def claudeEnv(cc: com.histmersion.config.ClaudeCodeConfig): Map[String, Option[String]] =
     (if cc.useApiKey then Map.empty else Map("ANTHROPIC_API_KEY" -> None, "ANTHROPIC_AUTH_TOKEN" -> None)) ++
       Option(cc.configDir.trim).filter(_.nonEmpty).map(d => "CLAUDE_CONFIG_DIR" -> Some(AgentTrees.expand(d))).toMap
 

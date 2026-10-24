@@ -1,10 +1,12 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{Pipeline, Role}
-import com.histmersion.core.GoalPlans.LinkKind
-import com.histmersion.core.Queue.QueueAdd
-import com.histmersion.core.Scheduling.{Candidate, CurrencyAction, Ranking}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{Pipeline, Role}
+import com.histmersion.api.GoalPlans.LinkKind
+import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.domain.Scheduling.{Candidate, CurrencyAction, Ranking}
 import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo, QueueRepo}
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

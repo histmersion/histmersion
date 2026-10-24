@@ -1,8 +1,10 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.MergePlanner.{Input, Labels, LedgerEntry}
-import com.histmersion.core.MergeText.MinHash
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.domain.MergePlanner.{Input, Labels, LedgerEntry}
+import com.histmersion.domain.MergeText.MinHash
 
 import com.augustnagro.magnum.*
 import java.io.InputStream

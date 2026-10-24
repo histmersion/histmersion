@@ -2,8 +2,10 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.core.*
-import com.histmersion.core.Agents.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
 
 /** `histmersion agent …` — the embedded research agents (docs/research-embedded-agents.md). The server
   * runs them; this only starts, follows and steers runs over HTTP. Off unless the SERVER has

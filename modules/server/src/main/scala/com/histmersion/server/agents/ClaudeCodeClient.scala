@@ -1,7 +1,7 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.ClaudeCodeConfig
-import com.histmersion.core.Agents.{ModelRef, ProviderKind}
+import com.histmersion.config.ClaudeCodeConfig
+import com.histmersion.api.Agents.{ModelRef, ProviderKind}
 import io.circe.{Json, parser}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
@@ -86,11 +86,11 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
         }
         val o = out.get().getOrElse(throw IllegalStateException("claude-code: no outcome"))
         // every reading of the run is in the pool (also the ones the watch already recorded: newest wins)
-        pool.foreach(p => p.record(com.histmersion.core.PlanQuota.PoolId.ClaudePlan, o.readings))
+        pool.foreach(p => p.record(com.histmersion.api.PlanQuota.PoolId.ClaudePlan, o.readings))
         val guard = stopped.get().orElse(o.result.filter(ClaudeCode.abortedByGuard).map(_ => "the quota-guard mod ended the turn"))
         guard match
           case Some(why) =>
-            val until = pool.flatMap(_.blocked(com.histmersion.core.PlanQuota.PoolId.ClaudePlan, Some(model.model)))
+            val until = pool.flatMap(_.blocked(com.histmersion.api.PlanQuota.PoolId.ClaudePlan, Some(model.model)))
               .flatMap(_._2).map(java.time.Instant.ofEpochMilli)
             throw ModelLimitReached(model, until, s"claude -p stopped by the quota guard: $why")
           case None =>
@@ -194,9 +194,9 @@ object ClaudeCode:
     else parser.parse(line).toOption.filter(_.hcursor.downField("type").as[String].contains("rate_limit_event")).flatMap { j =>
       val now = System.currentTimeMillis()
       val rs = j.hcursor.downField("rate_limit_info").focus
-        .map(PlanPools.claudeReadings(_, com.histmersion.core.PlanQuota.Source.Run, now)).getOrElse(Nil)
-      pools.record(com.histmersion.core.PlanQuota.PoolId.ClaudePlan, rs)
-      pools.blocked(com.histmersion.core.PlanQuota.PoolId.ClaudePlan, None).map(_._1)
+        .map(PlanPools.claudeReadings(_, com.histmersion.api.PlanQuota.Source.Run, now)).getOrElse(Nil)
+      pools.record(com.histmersion.api.PlanQuota.PoolId.ClaudePlan, rs)
+      pools.blocked(com.histmersion.api.PlanQuota.PoolId.ClaudePlan, None).map(_._1)
     }
 
   /** A turn the quota-guard mod aborted: not an error result, but `terminal_reason:
@@ -217,7 +217,7 @@ object ClaudeCode:
     * `firstCall` the input of the run's FIRST model call ([[firstCallTokens]]). */
   final case class Outcome(entries: Vector[ConversationEntry], toolCalls: Vector[ToolCallRecord],
       result: Option[Result], usage: TokenUsage, modelId: Option[String], mcpProblem: Option[String],
-      readings: List[com.histmersion.core.PlanQuota.Reading] = Nil, served: List[(String, TokenUsage)] = Nil,
+      readings: List[com.histmersion.api.PlanQuota.Reading] = Nil, served: List[(String, TokenUsage)] = Nil,
       firstCall: Option[Long] = None)
 
   private def tokens(j: Json, keys: String*): Long =
@@ -258,7 +258,7 @@ object ClaudeCode:
     var served: List[(String, TokenUsage)] = Nil
     var mcpProblem: Option[String] = None
     var firstCall: Option[Long] = None
-    val readings = List.newBuilder[com.histmersion.core.PlanQuota.Reading]
+    val readings = List.newBuilder[com.histmersion.api.PlanQuota.Reading]
     val now = System.currentTimeMillis()
     def strip(n: String) = n.stripPrefix(s"mcp__${McpServer}__")
     events.foreach { e =>
@@ -296,7 +296,7 @@ object ClaudeCode:
             }
         case "rate_limit_event" =>
           c.downField("rate_limit_info").focus.foreach(i =>
-            readings ++= PlanPools.claudeReadings(i, com.histmersion.core.PlanQuota.Source.Run, now))
+            readings ++= PlanPools.claudeReadings(i, com.histmersion.api.PlanQuota.Source.Run, now))
         // a model that backgrounds a subagent makes TWO result events: the last one is the answer (§3a)
         case "result" =>
           val modelUsage = c.downField("modelUsage").focus.flatMap(_.asObject).toList.flatMap(_.toList)

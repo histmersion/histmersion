@@ -1,6 +1,8 @@
 package com.histmersion.server.media
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo.{Known, ProviderAsset, Rights, Target}
 
 /** The Wikidata → Commons provider (#1446) end to end against a FAKE provider (captured answers,

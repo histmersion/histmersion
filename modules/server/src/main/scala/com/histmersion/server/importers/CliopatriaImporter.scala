@@ -1,6 +1,8 @@
 package com.histmersion.server.importers
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import io.circe.{Json, JsonObject}
 
 /** Imports polity polygons from the Seshat Cliopatria dataset.

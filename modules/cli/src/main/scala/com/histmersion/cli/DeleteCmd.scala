@@ -4,7 +4,9 @@ import com.histmersion.values.Citekey
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 
 /** `histmersion delete <citekey> [--apply]` — delete a source (`POST /api/sources/{ck}/delete`, #969).

@@ -1,9 +1,11 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{ApprovalKind, Pipeline}
-import com.histmersion.core.HintProposals.{HintAnswer, Proposed}
-import com.histmersion.core.Managers.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{ApprovalKind, Pipeline}
+import com.histmersion.domain.HintProposals.{HintAnswer, Proposed}
+import com.histmersion.api.Managers.*
 import com.histmersion.db.{AgentRepo, ManagerRepo}
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

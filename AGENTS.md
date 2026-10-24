@@ -16,8 +16,9 @@ The product plan and its waves: `docs/plan.md`. What it is: `README.md`; the doc
 
 ```
 values ── the newtypes every layer speaks of: Citekey, Year, Period, Doi, WikidataId, LatLon.   Iron ONLY
-core  ── the CONTRACT: domain model, wire DTOs, Filter, Tapir endpoint defs, Markdown, config,
-         frontmatter parsing.            NO database code, NO side effects.   depends on values
+core  ── the CONTRACT, in three packages: `api` (wire records, Tapir endpoint defs, codecs, Markdown and
+         the helpers they need), `config` (AppConfig and its readers; sees api) and `domain` (the logic
+         server and db run on; sees api and config).  NO database code, NO side effects.   depends on values
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults)
 cli   ── a PURE HTTP CLIENT of the server.                                   depends on core ONLY

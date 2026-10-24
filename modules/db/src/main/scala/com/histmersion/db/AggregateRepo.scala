@@ -1,13 +1,15 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 given DbCodec[PeriodRow] = DbCodec.derived
 
-/** Period bounds of everything matching a filter — the raw input of [[com.histmersion.core.Aggregate]].
+/** Period bounds of everything matching a filter — the raw input of [[com.histmersion.api.Aggregate]].
   *
   * The DB only SELECTS periods; **bucketing happens in Scala** (pure, unit-tested) so the strip
   * (§1.7) and the wave-2 "by time" tree (§1.6) cannot drift apart, and so no SQL has to know about

@@ -1,7 +1,9 @@
 package com.histmersion.server
 
 import scala.util.chaining.*
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import java.io.File
 import java.nio.file.{Files, Path, StandardCopyOption}

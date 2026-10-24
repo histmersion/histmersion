@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.Vacuum
+import com.histmersion.api.Vacuum
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource

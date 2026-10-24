@@ -1,6 +1,6 @@
 package com.histmersion.server.hot
 
-import com.histmersion.core.{HotNode, HotPlan}
+import com.histmersion.api.{HotNode, HotPlan}
 import ox.{Ox, supervised}
 
 import java.util.concurrent.{CompletableFuture, CountDownLatch, TimeUnit}

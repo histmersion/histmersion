@@ -1,6 +1,7 @@
 package com.histmersion.server.basemap
 
-import com.histmersion.core.{BasemapOnDemand, BasemapOnDemandConfig}
+import com.histmersion.api.BasemapOnDemand
+import com.histmersion.config.BasemapOnDemandConfig
 
 import io.circe.Json
 

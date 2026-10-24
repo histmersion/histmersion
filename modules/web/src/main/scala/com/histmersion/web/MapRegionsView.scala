@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future

@@ -2,7 +2,8 @@ package com.histmersion.server
 
 import com.histmersion.pluginhost.Generation
 
-import com.histmersion.core.{AppConfig, ConfigFileInfo, ReloadReport}
+import com.histmersion.config.AppConfig
+import com.histmersion.api.{ConfigFileInfo, ReloadReport}
 import com.histmersion.server.hot.Pinning
 import com.histmersion.server.plugins.Plugins
 import javax.sql.DataSource

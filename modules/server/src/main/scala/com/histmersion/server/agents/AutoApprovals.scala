@@ -1,11 +1,13 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.*
-import com.histmersion.core.AutopilotPolicy.{DraftFacts, GoalPlanFacts, PlannedFacts, Verdict}
-import com.histmersion.core.GoalPlans.DraftMode
-import com.histmersion.core.Managers.Feed
-import com.histmersion.core.Queue.QueueAdd
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
+import com.histmersion.domain.AutopilotPolicy.{DraftFacts, GoalPlanFacts, PlannedFacts, Verdict}
+import com.histmersion.api.GoalPlans.DraftMode
+import com.histmersion.api.Managers.Feed
+import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.db.{AgentRepo, GoalRepo, ManagerRepo}
 
 import java.time.Instant

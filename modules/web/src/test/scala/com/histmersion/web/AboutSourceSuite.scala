@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 
 /** The About window offers everyone who uses the server the source of the running version (the AGPL's
   * network clause): the licence, and a link to the repository at the commit. */

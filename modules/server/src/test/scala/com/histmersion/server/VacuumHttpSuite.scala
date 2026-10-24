@@ -1,7 +1,9 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** `POST /api/maintenance/vacuum` and the MCP `vacuum` tool (#1445) over real HTTP: the request answers
   * at once with a `vacuum` job, the job runs VACUUM (ANALYZE) outside any transaction (inside one,

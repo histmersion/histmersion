@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.ConvertedDoc
+import com.histmersion.api.ConvertedDoc
 
 import java.nio.file.Path
 

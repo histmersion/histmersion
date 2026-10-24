@@ -1,6 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 
@@ -158,7 +160,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the generated tool description names the tables that exist"):
     // `Query` alone is ambiguous here — magnum exports one too
-    val d = com.histmersion.core.Query.toolDescription(com.histmersion.core.Query.SchemaTables(QueryRepo.tables(ds)))
+    val d = com.histmersion.api.Query.toolDescription(com.histmersion.api.Query.SchemaTables(QueryRepo.tables(ds)))
     assert(d.contains("sources("), d)
     assert(d.contains("queue_items("), d)
 

@@ -1,8 +1,10 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{ApprovalKind, ApprovalState, RunState}
-import com.histmersion.core.ListFilters.DecidedBy
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.{ApprovalKind, ApprovalState, RunState}
+import com.histmersion.api.ListFilters.DecidedBy
 
 import com.augustnagro.magnum.*
 

@@ -2,8 +2,9 @@ package com.histmersion.server.media
 
 import com.histmersion.pluginhost.{HostOwned, HttpTransport, Polite, PluginMedia}
 
-import com.histmersion.core.{MediaCollectionConfig, MediaLicence, MediaMatch, MediaProvider, MediaProviderInfo,
-  MediaRecord, MediaRights as CoreRights}
+import com.histmersion.config.MediaCollectionConfig
+import com.histmersion.domain.{MediaLicence, MediaMatch, MediaRecord, MediaRights as CoreRights}
+import com.histmersion.api.{MediaProvider, MediaProviderInfo}
 import com.histmersion.db.MediaRepo.PlaceFacts
 import com.histmersion.plugin.*
 import com.histmersion.server.{ConverterClient, Deps}

@@ -1,6 +1,8 @@
 package com.histmersion.server.basemap
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 import io.circe.Json
 import io.circe.syntax.*
@@ -67,7 +69,7 @@ object BasemapFetch:
 
   /** [[perZoom]] in a line: `zoom 0: 1 tile, 12 KB · …`, the deepest zooms' running total last. Pure. */
   def perZoomLine(rows: List[(Int, Int, Long)]): String =
-    rows.map((z, n, b) => s"zoom $z: ${com.histmersion.core.Plural.count(n, "tile")}, ${com.histmersion.core.Backup.humanBytes(b)}")
+    rows.map((z, n, b) => s"zoom $z: ${com.histmersion.api.Plural.count(n, "tile")}, ${com.histmersion.api.Backup.humanBytes(b)}")
       .mkString(" · ")
 
   /** Every tile id of zooms `minZoom`…`maxZoom` over `b`, sorted. Pure. */

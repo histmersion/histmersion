@@ -1,6 +1,8 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.server.acquire.AcquireHandlers
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference

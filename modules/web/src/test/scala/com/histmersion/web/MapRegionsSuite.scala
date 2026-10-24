@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 import com.histmersion.web.MapRegions.*
 
 /** The About window's map regions, as data: what may be picked, the fetch a choice asks for, the sizes. */

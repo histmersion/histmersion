@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{DbSuite, TestDb}
 import com.histmersion.server.plugins.Plugins
 import org.ekrich.config.ConfigFactory

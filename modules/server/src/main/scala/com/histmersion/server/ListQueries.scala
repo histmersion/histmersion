@@ -1,8 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.core.{ApiError, JobState, ListFilters}
-import com.histmersion.core.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
-import com.histmersion.core.ListFilters.{ApprovalFilter, DecidedBy, JobFilter, RunFilter}
+import com.histmersion.api.{ApiError, JobState, ListFilters}
+import com.histmersion.api.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
+import com.histmersion.api.ListFilters.{ApprovalFilter, DecidedBy, JobFilter, RunFilter}
 import com.histmersion.db.{AgentRepo, JobRepo}
 
 import java.time.Instant

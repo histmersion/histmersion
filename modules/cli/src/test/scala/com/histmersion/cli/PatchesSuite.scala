@@ -1,6 +1,8 @@
 package com.histmersion.cli
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed
   * must not turn into an empty list that wipes the stored value. */

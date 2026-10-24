@@ -5,7 +5,9 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.circe.Codec
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same [[Handlers]] as REST. */
 final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.AcquireHandlers):
@@ -975,7 +977,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
 object McpTools:
   /** Honour Scala default values when DECODING a tool's arguments — without it Kindlings requires
     * every non-Option field, so `get_source {"citekey":"x"}` was rejected for a missing `fullText`.
-    * (`com.histmersion.core` carries the same given for the wire DTOs.) */
+    * (`com.histmersion.api` carries the same given for the wire DTOs.) */
   given hearth.kindlings.circederivation.Configuration =
     hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
 
@@ -984,7 +986,7 @@ object McpTools:
   object PingInput:
     given Schema[PingInput] = KindlingsSchema.derived[PingInput].schema
 
-  /** The MCP spelling of [[com.histmersion.core.Filter]] — flat and all-optional, so a model can fill in only
+  /** The MCP spelling of [[com.histmersion.api.Filter]] — flat and all-optional, so a model can fill in only
     * what it knows. `Filter.of` is the single interpreter of this shape (REST and CLI share it). */
   final case class SearchInput(
       query: Option[String] = None,
@@ -1101,7 +1103,7 @@ object McpTools:
       .modify(_.limit)(_.description("Passages to show (default 10, max 50)"))
       .modify(_.context)(_.description("Characters of context around each match (default 600, max 3000)"))
 
-  /** The MCP spelling of [[com.histmersion.core.Filter]] for `geo_when` — now the FULL filter shape (A2),
+  /** The MCP spelling of [[com.histmersion.api.Filter]] for `geo_when` — now the FULL filter shape (A2),
     * so `tags`/`authors`/`status`/`topics` work. `region` is an alias for a `places` entry (A1).
     * `periodStart`/`periodEnd` are deprecated aliases for `from`/`to` — kept for one release. */
   final case class GeoWhenInput(
@@ -1189,7 +1191,7 @@ object McpTools:
   final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject
   object ExportSourceInput:
     given Schema[ExportSourceInput] = KindlingsSchema.derived[ExportSourceInput].schema
-  /** The MCP spelling of [[com.histmersion.core.Filter]] for `histogram` — now the FULL filter shape (A2).
+  /** The MCP spelling of [[com.histmersion.api.Filter]] for `histogram` — now the FULL filter shape (A2).
     * `periodStart`/`periodEnd` and `region` are deprecated aliases (A1). */
   final case class HistogramInput(
       query: Option[String] = None,

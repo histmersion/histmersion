@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 import com.histmersion.server.acquire.*
 import io.circe.Json
 
@@ -50,7 +50,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
         "url_for_pdf": "https://www.nature.com/articles/s41598-022-07284-3.pdf"}}""").toOption.get
 
   /** OpenAlex answers 503 (rate-limited); Crossref and Unpaywall answer. */
-  private final class OpenAlexBusy(c: com.histmersion.core.AcquireConfig) extends Http:
+  private final class OpenAlexBusy(c: com.histmersion.config.AcquireConfig) extends Http:
     var urls: List[String] = Nil // a test double is the one place a var is the simplest thing
     def json(url: String, headers: Map[String, String]): Either[String, Json] =
       urls = urls :+ url

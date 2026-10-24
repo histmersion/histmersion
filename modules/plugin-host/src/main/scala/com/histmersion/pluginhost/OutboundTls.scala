@@ -1,6 +1,7 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.core.{HttpPolicy, TlsConfig}
+import com.histmersion.domain.HttpPolicy
+import com.histmersion.config.TlsConfig
 
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets

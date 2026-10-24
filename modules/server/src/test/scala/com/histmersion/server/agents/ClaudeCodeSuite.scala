@@ -1,8 +1,8 @@
 package com.histmersion.server.agents
 
-import com.histmersion.core.ClaudeCodeConfig
-import com.histmersion.core.Agents.{ModelRef, ProbeAnswer, ProviderKind}
-import com.histmersion.core.PlanQuota.PoolId
+import com.histmersion.config.ClaudeCodeConfig
+import com.histmersion.api.Agents.{ModelRef, ProbeAnswer, ProviderKind}
+import com.histmersion.api.PlanQuota.PoolId
 import sttp.ai.core.agent.*
 import sttp.shared.Identity
 
@@ -47,7 +47,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assert(!a.contains("--system-prompt-file") && !a.contains("--bare"))
 
   /** The provider as reference.conf configures it. */
-  private val Ref = com.histmersion.core.AppConfig.load(org.ekrich.config.ConfigFactory.empty).agents.providers.claudeCode
+  private val Ref = com.histmersion.config.AppConfig.load(org.ekrich.config.ConfigFactory.empty).agents.providers.claudeCode
 
   test("argv: --disable-slash-commands by default (a role's skills are in its prompt), never --bare or the dynamic-sections flag"):
     val a = ClaudeCode.argv(Ref, "sonnet", 4, "{}", Launch, Some("/t/mcp.json"), List("get_source"), AllTools)

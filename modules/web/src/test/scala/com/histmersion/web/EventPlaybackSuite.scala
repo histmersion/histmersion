@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
+import com.histmersion.api.*
 
 /** The events in playback (#1440): when an event shows and how strongly — 0 before its span, 1 inside
   * it, a linear fade after it measured in seconds of PLAYBACK — and the label it is drawn with: the

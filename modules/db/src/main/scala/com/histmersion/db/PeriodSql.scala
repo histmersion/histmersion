@@ -1,6 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds
   * are read, how optional bounds are written, and how a PATCH that names one bound merges with the

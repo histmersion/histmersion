@@ -1,12 +1,14 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
-import com.histmersion.core.Tree.{RegionNode, TreeRow}
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Tree.{RegionNode, TreeRow}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** The ROWS behind the §1.6 aggregation tree. The database selects; [[com.histmersion.core.Tree]] (pure)
+/** The ROWS behind the §1.6 aggregation tree. The database selects; [[com.histmersion.api.Tree]] (pure)
   * buckets and nests — the same split as [[AggregateRepo]], and for the same reason: adaptive bucket
   * sizes, the as-of hierarchy walk and the non-additive counting are all unit-testable without
   * Postgres, and the strip, the CLI tree and the web UI tabs cannot drift apart.

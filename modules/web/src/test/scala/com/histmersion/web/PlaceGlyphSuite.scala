@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.core.PlaceKind
+import com.histmersion.api.PlaceKind
 
 /** How a place is drawn (2026-10-09): a region or polity is a SHAPE, so one known only by a point is
   * its name marked "no boundary yet" — never a dot like a site — hidden when zoomed far out; and a

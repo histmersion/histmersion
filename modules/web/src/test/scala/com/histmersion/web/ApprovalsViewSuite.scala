@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.core.Agents.ApprovalInfo
-import com.histmersion.core.GoalPlans.Plan
+import com.histmersion.api.Agents.ApprovalInfo
+import com.histmersion.api.GoalPlans.Plan
 
 /** The pure parts of the approvals window. */
 class ApprovalsViewSuite extends munit.FunSuite:
@@ -17,7 +17,7 @@ class ApprovalsViewSuite extends munit.FunSuite:
     assertEquals(ApprovalsView.evidenceLine(status.copy(evidence = "")), None)
 
   test("a model's hint action reads as what it does to which manager; the phase 2 kinds read as themselves"):
-    import com.histmersion.core.Managers.{HintEffect, HintProposal}
+    import com.histmersion.api.Managers.{HintEffect, HintProposal}
     val h = ApprovalInfo(3, None, "hint-effect", "", subject = Some("review"),
       hintEffect = Some(HintProposal("review", 7, "wait with tin", HintEffect("hold", List("tin"), until = Some("2026-12-01")), "mcp")))
     assertEquals(ApprovalsView.describe(h), "manager review: hold tin until 2026-12-01")

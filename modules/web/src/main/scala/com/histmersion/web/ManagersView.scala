@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
-import com.histmersion.core.Managers.*
+import com.histmersion.api.*
+import com.histmersion.api.Managers.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 

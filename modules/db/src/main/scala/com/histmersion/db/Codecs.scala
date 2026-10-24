@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.{Confidence, SourceStatus, EdgeKind, NeighborTarget, PlaceDating, PlaceTimeBasis, LocationPrecision}
+import com.histmersion.api.{Confidence, SourceStatus, EdgeKind, NeighborTarget, PlaceDating, PlaceTimeBasis, LocationPrecision}
 import com.augustnagro.magnum.*
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax.*

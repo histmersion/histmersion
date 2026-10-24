@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 
 /** The schema version without a Flyway instance (#880), against a real Postgres
   * (HISTMERSION_TEST_DB_URL); skipped otherwise. */

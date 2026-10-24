@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.core.CalibreEntryCheck
+import com.histmersion.api.CalibreEntryCheck
 import com.monovore.decline.Command
 
 /** `histmersion delete <citekey> [--apply] [--json]` (#969): a dry run unless `--apply`, no `--force`. */

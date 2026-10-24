@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.{BundleExport, BundleImport, BundleRepo, MergeRepo, MergeState, Migrate, Originals}
 
 import java.io.{File, InputStream}

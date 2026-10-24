@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.core.AppConfig
+import com.histmersion.config.AppConfig
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
@@ -174,7 +174,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
         val (es, eb) = get(s"$url/api/export/goals")
         assertEquals(es, 200, eb)
-        assert(eb.startsWith(com.histmersion.core.GoalsExport.Header), eb.take(200))
+        assert(eb.startsWith(com.histmersion.domain.GoalsExport.Header), eb.take(200))
         assert(eb.contains("Do not edit"), eb.take(400))
         val top = eb.indexOf("\n## ZZ top goal\n")
         val sub = eb.indexOf("\n### ZZ sub goal\n")
@@ -261,7 +261,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
         val edits = """{"edits":[{"op":"replace","anchor":"by sea.","text":"by sea [[zzhttp_ghost]]."},{"op":"delete","anchor":"nowhere"}]}"""
         val (s, r) = post(s"$url/api/articles/zzhttp_check/check", edits)
         assertEquals(s, 200, r)
-        val check = io.circe.parser.decode[com.histmersion.core.ArticleEdits.ArticleCheck](r).toOption.get
+        val check = io.circe.parser.decode[com.histmersion.api.ArticleEdits.ArticleCheck](r).toOption.get
         assertEquals(check.edits.map(_.applied), List(false, false))
         assert(check.problems.exists(_.contains("zzhttp_ghost")) && check.problems.exists(_.startsWith("edit 2 (delete")), check.problems)
         assertEquals(post(s"$url/api/articles/zzhttp_check/check", "{}")._1, 400)

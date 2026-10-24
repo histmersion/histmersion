@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.vladsch.flexmark.ast.{BulletList, Code, Emphasis, FencedCodeBlock, Heading, HtmlBlock, HtmlInline, Image,
   IndentedCodeBlock, Link, LinkRef, ListItem, OrderedList, OrderedListItem, Paragraph, StrongEmphasis, Text}
 import com.vladsch.flexmark.ext.tables.TableBlock

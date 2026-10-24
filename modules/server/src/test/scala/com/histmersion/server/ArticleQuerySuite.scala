@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.core.Highlight
+import com.histmersion.domain.Highlight
 
 /** The `?q=` article surface (plan §1.4): links keep the query, the match control appears only when
   * something matched, and highlighting survives the flexmark output (links included). */

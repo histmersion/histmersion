@@ -1,6 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 import com.histmersion.db.Param.*
 
 /** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text

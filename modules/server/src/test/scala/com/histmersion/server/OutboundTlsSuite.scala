@@ -2,7 +2,8 @@ package com.histmersion.server
 
 import com.histmersion.pluginhost.OutboundTls
 
-import com.histmersion.core.{AppConfig, HttpPolicy, TlsConfig}
+import com.histmersion.config.{AppConfig, TlsConfig}
+import com.histmersion.domain.HttpPolicy
 import com.histmersion.server.acquire.SttpHttp
 
 import java.nio.file.{Files, Path}

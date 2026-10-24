@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.augustnagro.magnum.*
-import com.histmersion.core.Paging
+import com.histmersion.api.Paging
 import javax.sql.DataSource
 
 /** Keyset paging of a newest-first list (`core.Paging`): rows ordered by `created_at DESC, id DESC`,

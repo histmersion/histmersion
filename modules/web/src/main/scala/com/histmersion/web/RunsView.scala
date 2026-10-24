@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.core.*
-import com.histmersion.core.Agents.{RunDetail, RunInfo, RunState, TargetKind}
+import com.histmersion.api.*
+import com.histmersion.api.Agents.{RunDetail, RunInfo, RunState, TargetKind}
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future

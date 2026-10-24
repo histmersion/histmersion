@@ -1,6 +1,6 @@
 package com.histmersion.server.basemap
 
-import com.histmersion.core.BBox
+import com.histmersion.api.BBox
 
 import java.nio.{ByteBuffer, ByteOrder}
 

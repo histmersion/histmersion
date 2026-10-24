@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.core.*
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
 
 /** The server's HTML pages, pure: the anchor/chip/badge atoms and the typed page models rendered
   * from them. No database — the link resolver is a Map. */
