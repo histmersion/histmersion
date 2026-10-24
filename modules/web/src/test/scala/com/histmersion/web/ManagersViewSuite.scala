@@ -174,6 +174,8 @@ class ApprovalDigestLineSuite extends munit.FunSuite:
   import com.histmersion.api.ApprovalDigest.KindGroup
   test("a kind: how many, the oldest, who decides"):
     assertEquals(ApprovalsView.digestLine(KindGroup("goal-plan", 64, Some("2026-10-21"))), "goal-plan 64 (oldest 2026-10-21) · a person decides")
+    assertEquals(ApprovalsView.digestLine(KindGroup("goal-plan", 64, Some("2026-10-21"), "waits")),
+      "goal-plan 64 (oldest 2026-10-21) · waiting: nobody needs to decide them now")
     assertEquals(ApprovalsView.digestLine(KindGroup("article-publish", 2, None, "checked")),
       "article-publish 2 · the autopilot's checks decide them within the day's cap")
 
