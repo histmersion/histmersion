@@ -276,7 +276,18 @@ final case class AgentSeedConfig(maxArticles: Int, minSources: Int, maxOverlap: 
   * `followupsPerSource` citing papers each; an acquisition sweep asks `discoverPerQuery` works per query
   * and offers at most `sweepCandidates` to the ranking model. */
 final case class AgentSchedulerConfig(enabled: Boolean, minIntervalMinutes: Int,
-    currencySources: Int, followupsPerSource: Int, discoverPerQuery: Int, sweepCandidates: Int) derives ConfigReader
+    currencySources: Int, followupsPerSource: Int, discoverPerQuery: Int, sweepCandidates: Int,
+    /** The central scheduler ([[SchedulerPolicy]]; docs/research-goal-advancement.md "As built"): which
+      * strategy admits the managers' work (`type-balanced` | `goal-first`; a person's choice saved in the
+      * database wins), one priority level per `agingHours` waited (0 = no aging), an item waiting
+      * `maxWaitHours` goes next (0 = never), every job type with work gets a start among the last
+      * ⌈1/`minShare`⌉ (0 = no minimum), the job types' weights (`type-balanced`) and priorities ("type=n, …"),
+      * the runs one plan pool takes at once per call it serves (`poolOvercommit` × its max-calls-in-flight),
+      * the places kept for goals still gathering their sources (`gatheringSlots`), and how many recent starts
+      * the shares are counted over (`shareWindow`). */
+    strategy: String = "type-balanced", agingHours: Int = 24, maxWaitHours: Int = 72, minShare: Double = 0.05,
+    typeWeights: String = SchedulerPolicy.DefaultWeights, typePriorities: String = SchedulerPolicy.DefaultPriorities,
+    poolOvercommit: Int = 2, gatheringSlots: Int = 1, shareWindow: Int = 100) derives ConfigReader
 
 /** The stall watchdog (docs/research-process-managers.md §3.3). `stallMinutes` 0 = the longest
   * provider timeout plus 5 minutes ([[stallMinutesFor]]). */

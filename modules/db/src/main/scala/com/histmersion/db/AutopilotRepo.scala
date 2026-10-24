@@ -52,3 +52,17 @@ object AutopilotRepo:
   /** A paused manager the autopilot resumed (it no longer counts as one it paused). */
   def unpaused(ds: DataSource, managerId: String): Unit =
     val _ = transact(ds)(sql"UPDATE agent_autopilot SET paused = array_remove(paused, $managerId) WHERE id".update.run())
+
+  /** The scheduler's strategy a person chose (V100): (name, by, at); None = agents.scheduler.strategy. */
+  def strategy(ds: DataSource): Option[(String, String, String)] =
+    val _ = get(ds)
+    connect(ds):
+      Sql.raw(s"""SELECT scheduler_strategy, coalesce(scheduler_by, ''), coalesce(${at("scheduler_at")}, '')
+                  FROM agent_autopilot WHERE id AND scheduler_strategy IS NOT NULL""")
+        .frag.query[(String, String, String)].run().headOption
+
+  /** Set (Some) or clear (None: back to the config's) the scheduler's strategy. */
+  def setStrategy(ds: DataSource, name: Option[String], by: String): Unit =
+    val _ = get(ds)
+    val _ = transact(ds):
+      sql"""UPDATE agent_autopilot SET scheduler_strategy = $name, scheduler_by = $by, scheduler_at = now() WHERE id""".update.run()

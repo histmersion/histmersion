@@ -308,6 +308,10 @@ object UiState:
   val approvalKinds   = Field[List[String]]("approvalKinds", "apprKind", Nil, Persist.Hash, Role.View)
   val approvalBy      = Field[List[String]]("approvalBy", "apprBy", Nil, Persist.Hash, Role.View)
   val approvalSubject = Field[Option[String]]("approvalSubject", "apprSubject", None, Persist.Hash, Role.View)
+  /** The scheduler panel's filters over its queue: the job types and the reasons (any of), the target text. */
+  val schedTypes   = Field[List[String]]("schedTypes", "schedType", Nil, Persist.Hash, Role.View)
+  val schedCodes   = Field[List[String]]("schedCodes", "schedWhy", Nil, Persist.Hash, Role.View)
+  val schedSubject = Field[Option[String]]("schedSubject", "schedSubject", None, Persist.Hash, Role.View)
   /** The acquisition window also lists the items already done. */
   val acquireDone = Field[Boolean]("acquireDone", "acqDone", false, Persist.Hash, Role.View)
   /** The backlog window also lists the tasks already done. */
@@ -323,7 +327,7 @@ object UiState:
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
       inView, open, tab, layers, sources, baseMap, mapOptions, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, jobKinds, jobSince, jobUntil, jobSubject,
       runStatus, runPipelines, runOrigins, runManager, runProvider, runModel, runGoal, runSince, runUntil, runSubject,
-      approvalState, approvalKinds, approvalBy, approvalSubject, acquireDone, tasksDone,
+      approvalState, approvalKinds, approvalBy, approvalSubject, schedTypes, schedCodes, schedSubject, acquireDone, tasksDone,
       mergeBundle, apiKey)
 
   private def hashFields  = fields.filter(_.persist == Persist.Hash)

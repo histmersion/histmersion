@@ -83,8 +83,12 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** The autopilot: one switch that lets the managers carry every goal from planned to reviewed. */
   val autopilot: AutopilotService = AutopilotService(ds, cfg, h, this)
 
-  /** The autopilot's focus: at most `agents.autopilot.max-active-goals` goals active for model work. */
+  /** The autopilot's focus: how the goals rank (its pins and priorities are the goals' priorities in the
+    * scheduler); it holds nothing since the central scheduler admits the work. */
   val focus: GoalFocusService = GoalFocusService(ds, cfg, h, this)
+
+  /** The central scheduler: which of the managers' pending items start a run, across every job type. */
+  val scheduler: SchedulerService = SchedulerService(ds, cfg, h, this)
 
   /** One agent server per database: the engine and the managers start only in the server that holds it
     * (ttl 3 × the managers' tick). */

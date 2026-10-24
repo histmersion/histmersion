@@ -245,7 +245,37 @@ object AgentsTools:
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
-    List(start, status, approvals, decide, links, schedule, models, setModels, manager)
+    val scheduler =
+      tool("scheduler")
+        .description(
+          "The server's central agent scheduler: ONE decision per managers' tick admits the managers' pending work across " +
+            "every job type (goal plans, article proposals, candidate sweeps and their ranking, currency checks, enrichment, " +
+            "compiles, extensions, coverage filters, reviews) within the AI allowance — the runs at once, each plan pool's " +
+            "calls in flight, the budgets and daily caps; a run waiting for a person's approval holds no place. Priorities: " +
+            "the goal's (the focus's pins and priorities), the job type's, plus aging; an item that waited max-wait-hours goes " +
+            "next, every job type gets a minimum share, goals still gathering sources keep a place. `action`: `status` " +
+            "(default: the strategy, resources, the last pass's starts and the queue with why each item waits and what it " +
+            "waits behind; `limit` = waiting items shown), `queue` (only the waiting items, in order), `why` (`item`: one " +
+            "manager item's id or the target of an open item — why it is where it is), `strategy` (`strategy`: " +
+            "type-balanced | goal-first | default — switches it live; change it only when the user asked).")
+        .input[SchedulerInput]
+        .handle { in =>
+          val m = a.managing
+          val out: Either[ApiError, String] = in.action.trim.toLowerCase match
+            case "status" | "" => Right(AgentSchedulerMarkdown.status(m.scheduler(in.limit)))
+            case "queue" =>
+              val st = m.scheduler(in.limit.orElse(Some(200)))
+              Right(if st.waiting.isEmpty then "_Nothing waits._"
+                else (s"# Waiting (${st.waitingTotal}, strategy ${st.strategy})" :: "" :: st.waiting.map(AgentSchedulerMarkdown.waiting)).mkString("\n"))
+            case "why" => in.item.map(_.trim).filter(_.nonEmpty).toRight(ApiError("`why` needs `item`"))
+                            .flatMap(m.schedulerWhy).map(AgentSchedulerMarkdown.why)
+            case "strategy" => in.strategy.map(_.trim).filter(_.nonEmpty).toRight(ApiError("`strategy` needs `strategy`"))
+                                 .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(n, Some("mcp")))).map(AgentSchedulerMarkdown.status)
+            case other => Left(ApiError(s"unknown action '$other' (status, queue, why, strategy)"))
+          ToolResult.text(out.fold(McpOut.refusal, identity))
+        }
+
+    List(start, status, approvals, decide, links, schedule, models, setModels, manager, scheduler)
 
   /** `/mcp/agent/<agent>` — one MCP server per agent definition, holding ONLY that definition's
     * read-only tools ([[Toolbox]]: `get_source`, `passages`, `search`, `facets`, `neighbors`, `query` on the
@@ -384,6 +414,15 @@ object AgentsTools:
       .modify(_.id)(_.description("The approval's id (from list_approvals)"))
       .modify(_.decision)(_.description("approve or reject"))
       .modify(_.note)(_.description("Why, kept with the decision"))
+
+  final case class SchedulerInput(action: String = "status", item: Option[String] = None, strategy: Option[String] = None,
+      limit: Option[Int] = None) derives KindlingsCodecAsObject
+  object SchedulerInput:
+    given Schema[SchedulerInput] = KindlingsSchema.derived[SchedulerInput].schema
+      .modify(_.action)(_.description("status (default) | queue | why | strategy"))
+      .modify(_.item)(_.description("why: a manager item's id, or the target (slug, citekey, goal) of an open item"))
+      .modify(_.strategy)(_.description("strategy: type-balanced | goal-first | default (back to agents.scheduler.strategy)"))
+      .modify(_.limit)(_.description("status, queue: how many waiting items to show (default 50; queue 200)"))
 
   final case class ManagerInput(action: String = "list", id: Option[String] = None, target: Option[String] = None,
       text: Option[String] = None, item: Option[String] = None, once: Boolean = false, runs: Boolean = false,

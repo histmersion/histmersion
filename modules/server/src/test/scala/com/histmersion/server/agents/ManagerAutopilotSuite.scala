@@ -244,10 +244,13 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
     val open = a.approvalsList(None, None).toOption.get.filter(_.subject.contains(Goal))
     assertEquals(open.map(a => (a.kind, a.state)), List(("goal-plan", "open")))
     assertEquals(AgentRepo.get(ds, plan.id).get.status, "waiting")
-    // the proposal waits for the plan, which waits for a person: the goal frees its focus slot and the
-    // proposal is held for the focus until the plan is decided
+    // the proposal waits for the plan, which waits for a person: nothing is held for a focus; the scheduler
+    // keeps the proposal back (its plan comes first), and the waiting plan run holds no place
     val waits = item(seedId(Goal), ProposeArticles, Goal)
-    assertEquals((waits.status, waits.hold.flatMap(_.focus)), ("held", Some(Goal)), "the proposal waits for the plan")
+    assertEquals((waits.status, waits.hold), ("pending", None), "the proposal waits for the plan")
+    val why = a.scheduler.why(waits.id.toString).fold(e => fail(e.message), identity)
+    assert(why.code == "blocked" && why.why.contains("plan comes first"), why)
+    assertEquals(a.scheduler.why(item(seedId(Goal), PlanGoalItem, Goal).id.toString).map(_.code), Right(AgentScheduler.Code.Person))
     assert(a.focus.info().waiting.exists(w => w.slug == Goal && w.code == GoalFocus.Code.Person), a.focus.info().waiting)
     assert(!a.approvalsList(Some("all"), None).toOption.get.exists(_.note.exists(_.startsWith("autopilot:"))))
     assertEquals(a.managing.autopilot.goals.find(_.slug == Goal).map(_.openApprovals), Some(1))
@@ -255,7 +258,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
     // a manager's own autoApprove wins over the defaults
     val sm = ManagerRepo.get(ds, seedId(Goal)).get
     ManagerRepo.setConfig(ds, sm.id, sm.config.copy(autoApprove = Some(true)), sm.cron, sm.nextTickAt.flatMap(ManagerPolicy.parseInstant))
-    // the plan is code's to decide now: the goal is active again at the end of this tick, its plan decided at the next
+    // the plan is code's to decide now
     clock.tick(a)
     clock.tick(a)
     assertEquals(a.approvalsList(Some("all"), None).toOption.get.find(_.kind == "goal-plan").map(_.state), Some("approved"))
