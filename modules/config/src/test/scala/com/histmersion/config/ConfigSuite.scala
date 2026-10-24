@@ -1,9 +1,7 @@
 package com.histmersion.config
 
 import com.histmersion.api.*
-import com.histmersion.domain.*
 import com.histmersion.api.given
-import com.histmersion.domain.given
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -63,16 +61,6 @@ class ConfigSuite extends munit.FunSuite:
   test("user file: substitutions in the file read the environment"):
     val f = confFile("histmersion.corpus.dir = ${?MY_CORPUS}")
     assertEquals(loaded(env("MY_CORPUS" -> "/srv/c"), f).config.corpus.dir, "/srv/c")
-
-  test("user file: deny-hosts-extra adds to the shipped deny-hosts instead of replacing them"):
-    val f = confFile("histmersion.acquire.landing.deny-hosts-extra = \"blocked.example, .Other.Example\"")
-    val rules = loaded(env(), f).config.acquire.landing.rules
-    assert(rules.denied("blocked.example") && rules.denied("www.other.example"), "the added hosts are denied")
-    assert(rules.denied("sciencedirect.com"), "a shipped host is still denied")
-    assertEquals(rules.denyHosts.size, AppConfig.load().acquire.landing.rules.denyHosts.size + 2)
-    assert(!AppConfig.load().acquire.landing.rules.denied("blocked.example"), "nothing is added by default")
-    val viaEnv = AppConfig.load(env("HISTMERSION_ACQUIRE_LANDING_DENY_HOSTS_EXTRA" -> "blocked.example"))
-    assert(viaEnv.acquire.landing.rules.denied("blocked.example"), "the env override works too")
 
   test("user file: a missing file means the defaults, and says so"):
     val missing = Files.createTempDirectory("histmersion-conf").resolve("histmersion.conf")

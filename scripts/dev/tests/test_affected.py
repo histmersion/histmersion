@@ -16,27 +16,28 @@ class AffectedTest(unittest.TestCase):
     def test_a_leaf_module_tests_itself_only(self):
         # (and the lint suites of api and core, which read every module's main Scala — not their dependents)
         self.assertEqual(A.affected(["modules/cli/src/main/scala/com/histmersion/cli/Main.scala"]),
-                         (["apiJVM", "coreJVM", "cli"], False, ["modules/cli/src/main/scala/com/histmersion/cli/Main.scala → cli",
+                         (["apiJVM", "config", "coreJVM", "cli"], False, ["modules/cli/src/main/scala/com/histmersion/cli/Main.scala → cli",
                           "apiJVM: its lint suites read modules/cli/src/main/scala/com/histmersion/cli/Main.scala",
+                          "config: its lint suites read modules/cli/src/main/scala/com/histmersion/cli/Main.scala",
                           "coreJVM: its lint suites read modules/cli/src/main/scala/com/histmersion/cli/Main.scala"]))
 
     def test_api_shared_reaches_every_dependent(self):
         tests, db, _ = A.affected(["modules/api/shared/src/main/scala/X.scala"])
-        self.assertEqual(tests, ["apiJVM", "apiJS", "coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "web", "server"])
+        self.assertEqual(tests, ["apiJVM", "apiJS", "config", "coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "web", "server"])
         self.assertTrue(db)
 
     def test_core_reaches_its_dependents_not_web(self):
         tests, _, _ = A.affected(["modules/core/shared/src/main/scala/X.scala"])
-        self.assertEqual(tests, ["apiJVM", "coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "server"])
+        self.assertEqual(tests, ["apiJVM", "config", "coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "server"])
 
     def test_api_js_reaches_web_not_server(self):
         # (and the lint suites, which read every module's main Scala)
-        self.assertEqual(A.affected(["modules/api/js/src/main/scala/Y.scala"])[0], ["apiJVM", "apiJS", "coreJVM", "web"])
+        self.assertEqual(A.affected(["modules/api/js/src/main/scala/Y.scala"])[0], ["apiJVM", "apiJS", "config", "coreJVM", "web"])
 
     def test_web_change_does_not_rerun_the_server(self):
         tests, db, _ = A.affected(["modules/web/src/main/scala/com/histmersion/web/Main.scala"])
         # the lint suites read the web sources (StyleLintSuite, MapEngineBoundarySuite)
-        self.assertEqual(tests, ["apiJVM", "coreJVM", "web"])
+        self.assertEqual(tests, ["apiJVM", "config", "coreJVM", "web"])
         self.assertFalse(db)
 
     def test_main_sources_are_read_by_cores_lints(self):
@@ -51,12 +52,12 @@ class AffectedTest(unittest.TestCase):
 
     def test_plugin_api_reaches_vaults_and_server_but_fixtures_have_no_tests(self):
         tests, _, _ = A.affected(["modules/plugin-api/src/main/scala/P.scala"])
-        self.assertEqual(tests, ["apiJVM", "coreJVM", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginResolver", "server"])
-        self.assertEqual(A.affected(["modules/plugin-fixtures/hello/src/main/scala/H.scala"])[0], ["apiJVM", "coreJVM", "server"])
+        self.assertEqual(tests, ["apiJVM", "config", "coreJVM", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginResolver", "server"])
+        self.assertEqual(A.affected(["modules/plugin-fixtures/hello/src/main/scala/H.scala"])[0], ["apiJVM", "config", "coreJVM", "server"])
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello-ai/src/main/resources/x.conf"])[0], ["server"])
         # the fixture with a dependency is read by the resolver's suites and the server's
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello-lib/src/main/scala/S.scala"])[0],
-                         ["apiJVM", "coreJVM", "pluginResolver", "server"])
+                         ["apiJVM", "config", "coreJVM", "pluginResolver", "server"])
 
     def test_build_definition_means_everything(self):
         for p in ["build.sbt", "project/Dependencies.scala", ".sdkmanrc", ".jvmopts"]:

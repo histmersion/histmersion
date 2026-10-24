@@ -2,7 +2,7 @@
 # install-linux.sh and scripts/bundle/tests/user-config-test.sh. Bash 3.2.
 #
 # The server reads reference.conf < this file < the environment (UserPaths.configFile in
-# modules/core); these functions put the commented template where the server will look, once.
+# modules/config); these functions put the commented template where the server will look, once.
 
 # Where the installed server will look for the file. <env dir> holds the service's variables, one
 # file per name (launchagent-env.sh's format; an empty or missing dir is none); <default dir> is

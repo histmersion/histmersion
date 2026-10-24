@@ -7,7 +7,7 @@
     service wins over the file.
 
 Everything runtime-tunable is in
-[`modules/core/src/main/resources/reference.conf`](https://github.com/histmersion/histmersion/blob/master/modules/core/jvm/src/main/resources/reference.conf).
+[`modules/config/src/main/resources/reference.conf`](https://github.com/histmersion/histmersion/blob/master/modules/config/src/main/resources/reference.conf).
 Nothing is hardcoded anywhere else — a test greps `src/main` for literal ports and fails the build if
 one reappears. Most keys take an env override (the table below).
 

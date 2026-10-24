@@ -18,11 +18,13 @@ The product plan and its waves: `docs/plan.md`. What it is: `README.md`; the doc
 values ── the newtypes every layer speaks of: Citekey, Year, Period, Doi, WikidataId, LatLon.   Iron ONLY
 api   ── the CONTRACT on the wire (JVM + JS): wire records, Tapir endpoint defs, circe codecs + schemas,
          Markdown, and the helpers they need.   NO database code, NO side effects.   depends on values ONLY
-core  ── two packages: `config` (AppConfig and its readers; sees api) and `domain` (the logic server and db
-         run on; sees api and config). JVM only.   NO database code, NO side effects.   depends on values, api
-db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on core
+config ── AppConfig and its readers (sconfig, Kindlings), reference.conf.   JVM only.   depends on values, api
+core  ── the DOMAIN (package `domain`): the logic server and db run on, frontmatter, export. JVM only.
+         NO database code, NO side effects.                       depends on values, api, config
+db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on config, core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults)
-cli   ── a PURE HTTP CLIENT of the server.                                   depends on core ONLY
+         (and through them on values, api and config)
+cli   ── a PURE HTTP CLIENT of the server.         depends on config and core (api through core) — never db
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
 plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
 plugin-host ── the host side of the SPI without server or DB: discovery, config, registration, the
@@ -65,10 +67,11 @@ credentials on the host. Every CLI command — reads and writes both — goes ov
 client derived from the same Tapir endpoint the server interprets. If a command seems to need the
 database, it needs a new endpoint instead.
 
-If `api` or `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a `println` in
-either, and for `api` importing `com.histmersion.domain` or `com.histmersion.config`. `core`'s domain still
-works on api's wire records, and its config reads into a few of them (recorded, temporary edges);
-`docs/research-module-layout.md` has the target layout and the steps that remain.
+If `api`, `config` or `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a
+`println` in any of them; the compiler keeps `api` free of `domain` and `config`, and `config` free of
+`domain`. The domain still works on api's wire records and takes config records as its settings, and config
+reads into a few wire records (recorded, temporary edges); `docs/research-module-layout.md` has the target
+layout and the steps that remain.
 
 ## One implementation per operation
 
@@ -253,9 +256,9 @@ fails, fix the model.
 
 ## Configuration: no constants in code
 
-**Every** port, URL, limit and UI default lives in `modules/core/src/main/resources/reference.conf`,
+**Every** port, URL, limit and UI default lives in `modules/config/src/main/resources/reference.conf`,
 kebab-case keys, each with a `${?HISTMERSION_*}` env override. A user's own settings go in the user
-config file (`histmersion.conf`, `core/UserConfig.scala`): environment > that file > `reference.conf`. A munit lint test greps `src/main` for
+config file (`histmersion.conf`, `config/UserConfig.scala`): environment > that file > `reference.conf`. A munit lint test greps `src/main` for
 `:8000|5432|8100|unpkg` and **fails the build** if a literal is reintroduced. That test is not
 negotiable; if you need a new tunable, add a config key.
 

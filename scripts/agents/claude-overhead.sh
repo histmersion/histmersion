@@ -31,7 +31,7 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"
 helper="$here/claude_overhead.py"
-reference="$repo/modules/core/jvm/src/main/resources/reference.conf"
+reference="$repo/modules/config/src/main/resources/reference.conf"
 
 role="article-skeptic"; model="claude-sonnet-4-5"; tree=""; each=0; keep=0; live=0
 envs=(); flags=(); custom=0; froms=()

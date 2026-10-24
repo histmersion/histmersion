@@ -24,7 +24,8 @@ DEPS = {
     "valuesJS": [],
     "apiJVM": ["valuesJVM"],
     "apiJS": ["valuesJS"],
-    "coreJVM": ["valuesJVM", "apiJVM"],
+    "config": ["valuesJVM", "apiJVM"],
+    "coreJVM": ["valuesJVM", "apiJVM", "config"],
     "pluginApi": [],
     "pluginVaults": ["pluginApi"],
     "pluginHost": ["coreJVM", "pluginApi"],
@@ -36,12 +37,12 @@ DEPS = {
     "pluginResolver": ["pluginHelloDeps"],
     "chimneyIron": [],
     "chimneyIronTests": ["chimneyIron"],
-    "db": ["coreJVM"],
-    "cli": ["coreJVM"],
+    "db": ["config", "coreJVM"],
+    "cli": ["config", "coreJVM"],
     "web": ["apiJS"],
     "server": ["coreJVM", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
 }
-ORDER = ["valuesJVM", "valuesJS", "apiJVM", "apiJS", "coreJVM", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+ORDER = ["valuesJVM", "valuesJS", "apiJVM", "apiJS", "config", "coreJVM", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
@@ -59,6 +60,7 @@ RULES = [
     ("modules/api/shared/", ["apiJVM", "apiJS"]),
     ("modules/api/jvm/", ["apiJVM"]),
     ("modules/api/js/", ["apiJS"]),
+    ("modules/config/", ["config"]),
     ("modules/core/", ["coreJVM"]),
     ("modules/db/", ["db"]),
     ("modules/server/", ["server"]),
@@ -88,7 +90,7 @@ RULES = [
     ("docs/writing-guide.md", ["server"]),
     ("docs/user-guide/reference/", ["coreJVM", "server"]),
     ("docs/", []),
-    ("db/", ["coreJVM", "db", "server"]),
+    ("db/", ["apiJVM", "db", "server"]),
     ("runtime/", ["server"]),
     ("scripts/", []),
     ("converter/", []),
@@ -104,9 +106,9 @@ INERT_TOP = {"README.md", "AGENTS.md", "CLAUDE.md", ".gitignore", ".env.example"
 
 
 # the lint suites read the other modules' main sources: api's StyleLintSuite the web page's and api's own,
-# PluralSuite every module's Scala; core's MapEngineBoundarySuite the web page's, ConfigSuite every module's
-# Scala (#3765: a web change passed test-quick and failed test-it)
-LINT_READERS = ["apiJVM", "coreJVM"]
+# PluralSuite every module's Scala; config's ConfigSuite every module's Scala; core's MapEngineBoundarySuite
+# the web page's (#3765: a web change passed test-quick and failed test-it)
+LINT_READERS = ["apiJVM", "config", "coreJVM"]
 
 
 def read_by_lints(path):
