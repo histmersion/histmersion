@@ -17,19 +17,19 @@ object ApprovalDigest:
   object SubjectCount:
     given Schema[SubjectCount] = KindlingsSchema.derived[SubjectCount].schema
 
-  /** One kind's open approvals: how many, the oldest's date, who decides them now (`person`, or `checked`:
-    * the autopilot's checks, within the day's cap), the subjects with the most, and the ids (oldest first,
-    * at most [[IdsShown]]). */
+  /** One kind's open approvals: how many, the oldest's date, who decides them now (`person`, `checked`:
+    * the autopilot's checks, within the day's cap, or `waits`: nobody is asked to, see [[Digest.goalPlansWait]]),
+    * the subjects with the most, and the ids (oldest first, at most [[IdsShown]]). */
   final case class KindGroup(kind: String, count: Int, oldest: Option[String] = None, decidedBy: String = "person",
       subjects: List[SubjectCount] = Nil, ids: List[Long] = Nil) derives KindlingsCodecAsObject
   object KindGroup:
     given Schema[KindGroup] = KindlingsSchema.derived[KindGroup].schema
 
   /** `GET /api/agents/approvals/digest`: when it was read, every open approval in all, the kinds (the most
-    * first), the manager items held for a person or whose run waits for one, and when the daily line was
-    * last written to the worklog. */
+    * first), the manager items held for a person or whose run waits for one, when the daily line was last
+    * written to the worklog, and why goal plans wait (too many unfinished goals), if they do. */
   final case class Digest(at: String, total: Int = 0, kinds: List[KindGroup] = Nil, heldForPerson: Int = 0,
-      lastWritten: Option[String] = None) derives KindlingsCodecAsObject
+      lastWritten: Option[String] = None, goalPlansWait: Option[String] = None) derives KindlingsCodecAsObject
   object Digest:
     given Schema[Digest] = KindlingsSchema.derived[Digest].schema
 
@@ -53,6 +53,9 @@ object ApprovalDigest:
   object BulkResult:
     given Schema[BulkResult] = KindlingsSchema.derived[BulkResult].schema
 
+  /** A group's `decidedBy` while nobody is asked to decide it. */
+  val Waits = "waits"
+
   /** The ids a group lists. */
   val IdsShown = 50
 
@@ -60,13 +63,14 @@ object ApprovalDigest:
   final case class Open(id: Long, kind: String, subject: Option[String], createdAt: String)
 
   /** The open approvals grouped by kind, the most first (then the kind); `checked` = the autopilot's checks
-    * decide that kind now. Pure. */
-  def group(open: List[Open], checked: String => Boolean): List[KindGroup] =
+    * decide that kind now; `waiting` = the kinds nobody is asked to decide now. Pure. */
+  def group(open: List[Open], checked: String => Boolean, waiting: Set[String] = Set.empty): List[KindGroup] =
     open.groupBy(_.kind).toList.map { (k, as) =>
       val sorted = as.sortBy(_.id)
       val subjects = as.flatMap(_.subject).groupMapReduce(identity)(_ => 1)(_ + _).toList.sortBy((s, n) => (-n, s))
         .take(10).map(SubjectCount.apply)
-      KindGroup(k, as.size, sorted.headOption.map(_.createdAt.take(10)), if checked(k) then "checked" else "person",
+      KindGroup(k, as.size, sorted.headOption.map(_.createdAt.take(10)),
+        if waiting(k) then Waits else if checked(k) then "checked" else "person",
         subjects, sorted.take(IdsShown).map(_.id))
     }.sortBy(g => (-g.count, g.kind))
 
@@ -80,22 +84,30 @@ object ApprovalDigest:
     if d.total == 0 && d.heldForPerson == 0 then "approval digest: nothing waits for a person"
     else s"approval digest: ${Plural.count(d.total, "approval")} wait for a person" +
       (if d.kinds.isEmpty then "" else " — " + d.kinds.map(g => s"${g.kind} ${g.count}" + g.oldest.fold("")(o => s" (oldest $o)") +
-        (if g.decidedBy == "checked" then ", the autopilot's checks decide them within the day's cap" else "")).mkString("; ")) +
+        (if g.decidedBy == "checked" then ", the autopilot's checks decide them within the day's cap"
+         else if g.decidedBy == Waits then ", waiting: nobody needs to decide them now" else "")).mkString("; ")) +
       (if d.heldForPerson > 0 then s"; ${Plural.count(d.heldForPerson, "manager item")} held for a person" else "") +
+      d.goalPlansWait.fold("")(w => s"; $w") +
       "; decide a whole kind at once: histmersion agent decide-all approve --kind <kind> (or the Approvals window)"
 
 /** The digest and a bulk decision as Markdown — every surface prints this. Pure. */
 object ApprovalDigestMarkdown:
   import ApprovalDigest.*
 
+  private def decider(decidedBy: String): String = decidedBy match
+    case "checked" => "the autopilot's checks (within the day's cap); a person may decide them first"
+    case Waits     => "nobody now: they wait (see above); a person may still decide one"
+    case _         => "a person"
+
   def digest(d: Digest): String =
     val head = s"# Waiting for a person (${d.at.take(16).replace('T', ' ')} UTC)\n\n" +
       s"- ${Plural.count(d.total, "open approval")}" +
       (if d.heldForPerson > 0 then s"\n- ${Plural.count(d.heldForPerson, "manager item")} held for a person, or with a run waiting for one" else "") +
-      d.lastWritten.fold("")(t => s"\n- the daily digest was last written to the worklog at $t")
+      d.lastWritten.fold("")(t => s"\n- the daily digest was last written to the worklog at $t") +
+      d.goalPlansWait.fold("")(w => s"\n- **$w**; a person may still approve one")
     val kinds = d.kinds.map { g =>
       s"## ${g.kind}: ${g.count}" + g.oldest.fold("")(o => s" (oldest $o)") + "\n\n" +
-        s"- decided by: ${if g.decidedBy == "checked" then "the autopilot's checks (within the day's cap); a person may decide them first" else "a person"}\n" +
+        s"- decided by: ${decider(g.decidedBy)}\n" +
         (if g.subjects.isEmpty then "" else s"- about: ${g.subjects.map(x => s"${x.subject} (${x.count})").mkString(", ")}\n") +
         s"- ids: ${g.ids.map(i => s"#$i").mkString(", ")}${if g.count > g.ids.size then ", …" else ""}\n" +
         s"- all at once: `histmersion agent decide-all approve --kind ${g.kind}` (or `reject`; `--dry-run` lists them)"

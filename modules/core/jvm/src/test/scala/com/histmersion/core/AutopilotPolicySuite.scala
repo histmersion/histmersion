@@ -243,3 +243,17 @@ class NextArticleSuite extends munit.FunSuite:
     assertEquals(nextArticle(done.copy(status = GoalStatus.Done), now, 24), None, "a person's done")
     assertEquals(nextArticle(done, now, 0), None, "off")
     assert(nextArticle(done.copy(proposeStatus = None, proposeSettled = None), now, 24).isDefined, "never proposed")
+
+  test("unfinished goals: the planned goals neither reviewed nor done"):
+    val goals = List("a" -> GoalStatus.Planned, "b" -> GoalStatus.Seeding, "c" -> GoalStatus.Compiled, "d" -> GoalStatus.Reviewed,
+      "e" -> GoalStatus.Done, "f" -> GoalStatus.Seeding)
+    assertEquals(unfinishedPlanned(goals, Set("a", "b", "c", "d", "e")), 3)
+    assertEquals(unfinishedPlanned(goals, Set.empty), 0, "a goal without an approved plan is not counted")
+
+  test("goal plans wait while the unfinished goals exceed the limit; 0 = no limit"):
+    assertEquals(goalPlansWait(10, 10), None, "at the limit: offered")
+    val w = goalPlansWait(60, 10).getOrElse(fail("waits"))
+    assert(w.contains("drop to 10") && w.contains("60 goals with an approved plan are not reviewed yet") &&
+      w.contains("agents.autopilot.max-unfinished-goals"), w)
+    assert(goalPlansWait(2, 1).exists(_.contains("2 goals")))
+    assertEquals(goalPlansWait(60, 0), None)

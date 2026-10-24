@@ -22,7 +22,9 @@ final class ApprovalDigestService(ds: DataSource, cfg: => AgentsConfig, h: com.h
   /** The digest as of `now`. */
   def digest(now: Instant = Instant.now()): Digest =
     val open = AgentRepo.openLight(ds)
-    Digest(now.toString, open.size, ApprovalDigest.group(open, checked), ManagerRepo.forPerson(ds), AutopilotRepo.lastDigest(ds))
+    val wait = agents.focus.goalPlansWait()
+    Digest(now.toString, open.size, ApprovalDigest.group(open, checked, wait.fold(Set.empty)(_ => Set(ApprovalKind.GoalPlan.wire))),
+      ManagerRepo.forPerson(ds), AutopilotRepo.lastDigest(ds), wait)
 
   /** From the managers' tick: once a UTC day, after `digest-hour`, the digest's line goes to the worklog. */
   def tick(now: Instant): List[String] =

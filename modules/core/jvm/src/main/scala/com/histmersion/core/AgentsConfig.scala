@@ -374,7 +374,10 @@ final case class AgentAutopilotConfig(ensureMinutes: Int = 5, ingestPerDay: Int 
     stallDays: Int = 3,
     /** #3763: once a goal's articles are all compiled and reviewed, its next article is proposed — at most once
       * per this many hours after its last proposal settled (0 = never by itself; the seeding cron still fires). */
-    nextArticleHours: Int = 24) derives ConfigReader
+    nextArticleHours: Int = 24,
+    /** Goal plans are offered (a plan-goal run started, an open goal plan decided by code) only while at most
+      * this many goals with an approved plan are unfinished (0 = no limit). */
+    maxUnfinishedGoals: Int = 10) derives ConfigReader
 
 final case class AgentsConfig(
     enabled: Boolean,

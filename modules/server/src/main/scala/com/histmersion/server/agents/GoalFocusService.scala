@@ -182,6 +182,15 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       }.sum
     AutopilotPolicy.goalPlanSubGoals(goal, open(goal, Set(goal)), proposed, acfg.maxOpenSubGoals)
 
+  /** How many goals with an approved plan are unfinished now. */
+  def unfinishedPlanned(): Int =
+    AutopilotPolicy.unfinishedPlanned(FocusRepo.goals(ds).map(g => g.slug -> g.status), GoalLinkRepo.planned(ds))
+
+  /** Why goal plans are not offered now, if they are not ([[AutopilotPolicy.goalPlansWait]]). */
+  def goalPlansWait(): Option[String] =
+    val limit = acfg.maxUnfinishedGoals
+    if limit <= 0 then None else AutopilotPolicy.goalPlansWait(unfinishedPlanned(), limit)
+
   // ── what it shows ──────────────────────────────────────────────────────────────────────────────
 
   /** The focus as the next pass would decide it (read-only: with the autopilot off, what it WOULD focus on). */

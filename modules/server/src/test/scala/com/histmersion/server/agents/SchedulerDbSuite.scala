@@ -227,6 +227,41 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
       case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("max-open-sub-goals"), w)
       case v => fail(v.toString)
 
+  test("goal plans wait while too many planned goals are unfinished: no plan-goal run, none decided by code, a person still may"):
+    val auto = cfg.copy(agents = cfg.agents.copy(approvals = cfg.agents.approvals.copy(goalPlan = "auto"),
+      autopilot = cfg.agents.autopilot.copy(maxUnfinishedGoals = 2)))
+    val (a, h, up) = handlers(auto); seed(a, h, up)
+    val unplanned = "zzfocus-plan"
+    assert(h.putGoal(unplanned, GoalPut("Zz a goal with no plan")).isRight)
+    // three goals with an approved plan, none reviewed: one more than the limit
+    List(g(1), g(2), g(3)).foreach(s => connect(ds)(sql"UPDATE goals SET plan = '{}'::jsonb WHERE slug = $s".update.run()))
+    on(a)
+    a.focus.set(FocusSet("pin", Some(unplanned))).fold(e => fail(e.message), identity)
+    Clock().tick(a)
+    val planItem = item(seedId(unplanned), PlanGoalItem, unplanned)
+    assertEquals(planItem.status, "pending", "no plan-goal run starts")
+    assert(!runs().exists(_.pipeline == Pipeline.PlanGoal.wire), runs())
+    val why = a.scheduler.why(planItem.id.toString).fold(e => fail(e.message), identity)
+    assert(why.code == "blocked" && why.why.contains("drop to 2") && why.why.contains("3 goals with an approved plan"), why)
+    // an open goal plan is neither decided by code nor reported to its manager; the digest and the status say why
+    val p = AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, g(4), Plan(g(4), "r", Nil, List("q")).asJson.noSpaces)
+    val _ = a.autoApprovals.sweep(Instant.now())
+    assertEquals(AgentRepo.approval(ds, p.id).map(_.state), Some("open"))
+    a.autoApprovals.judge(AgentRepo.approval(ds, p.id).get, None, None, Instant.now()) match
+      case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("max-unfinished-goals"), w)
+      case v => fail(v.toString)
+    val d = a.digest.digest()
+    assert(d.goalPlansWait.exists(_.contains("drop to 2")), d)
+    assertEquals(d.kinds.find(_.kind == "goal-plan").map(_.decidedBy), Some(ApprovalDigest.Waits))
+    assert(a.autopilot.status().goalPlansWait.exists(_.contains("3 goals")))
+    // a person decides it all the same
+    assertEquals(a.decide(p.id, "approve", DecisionRequest(Some("by hand"))).map(_.state), Right("approved"))
+    // one planned goal reviewed: at the limit, goal plans are offered again
+    assertEquals(a.focus.unfinishedPlanned(), 3)
+    connect(ds)(sql"UPDATE goals SET status = 'reviewed' WHERE slug = ${g(1)}".update.run())
+    assertEquals(a.focus.goalPlansWait(), None)
+    assertEquals(a.digest.digest().goalPlansWait, None)
+
   test("the digest: open approvals by kind; one worklog line a UTC day after digest-hour; a kind decided at once"):
     val (a, h, up) = handlers(); seed(a, h, up)
     def plan(goal: String) = AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, goal,

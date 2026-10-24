@@ -110,6 +110,14 @@ every article of the goal is published and has passed its review, the autopilot 
 **next** article (at most once a day, `agents.autopilot.next-article-hours`). The proposal is approved
 the way your approval settings say ([Approvals](approvals.md)).
 
+### No new goal plans while too many goals are unfinished
+
+A goal plan opens more work: sub-goals, searches, articles. While more than 10 goals with an approved
+plan are not reviewed yet (`agents.autopilot.max-unfinished-goals`), no new plan is offered: no goal
+gets its plan drafted, and plans already waiting are not approved automatically. `histmersion agent
+digest` and `histmersion agent autopilot status` say so, with the count. You can still approve a plan
+yourself; once enough goals are reviewed, plans are offered again.
+
 ### Goals with no sources start gathering at once
 
 A goal that has no source yet does not wait for its plan to be approved: the autopilot searches the

@@ -91,13 +91,14 @@ object Autopilot:
     * the switch just did (an on/off answer only); `ingestedToday` / `ingestCap` = the legal open-access
     * ingests of all watchers today and their shared cap (0 = none); `backlog` / `backlogDays` = the legal
     * open-access works waiting in the watchers' ingest backlogs and the days they take to drain at the
-    * current allowance (0 = today; None = they do not drain); the last housekeeping runs. */
+    * current allowance (0 = today; None = they do not drain); the last housekeeping runs; `goalPlansWait` =
+    * why no goal plan is offered now (too many unfinished goals), if none is. */
   final case class AutopilotStatus(on: Boolean, since: Option[String] = None, by: Option[String] = None,
       agentsEnabled: Boolean = false, managersEnabled: Boolean = false, cronsEnabled: Boolean = true, approvals: List[ApprovalRule] = Nil,
       ingestedToday: Int = 0, ingestCap: Int = 0, maxConcurrentRuns: Int = 0, lastBackup: Option[String] = None,
       lastLint: Option[String] = None, library: List[ManagerBrief] = Nil, goals: List[GoalProgress] = Nil,
       changes: List[String] = Nil, backlog: Int = 0, backlogDays: Option[Int] = None, focus: Option[FocusInfo] = None,
-      drain: Option[DrainInfo] = None)
+      drain: Option[DrainInfo] = None, goalPlansWait: Option[String] = None)
       derives KindlingsCodecAsObject
   object AutopilotStatus:
     given Schema[AutopilotStatus] = KindlingsSchema.derived[AutopilotStatus].schema
@@ -206,7 +207,8 @@ object AutopilotMarkdown:
           s"${Plural.count(d.inFlight, "run")} in flight still finishing"),
       Option.when(!s.agentsEnabled)("agents are disabled on this server (agents.enabled = false): nothing runs"),
       Option.when(s.agentsEnabled && !s.managersEnabled)("the managers are disabled (agents.managers.enabled = false): nothing runs"),
-      Option.when(!s.cronsEnabled)(AutopilotStatus.CronsOff)
+      Option.when(!s.cronsEnabled)(AutopilotStatus.CronsOff),
+      s.goalPlansWait.map(w => s"$w; a person may still approve a plan")
     ).flatten.map(w => s"- **$w**")
     val rules = s.approvals.map(r => s"${r.kind} ${r.mode}${if r.cap.nonEmpty then s" (${r.cap})" else ""}").mkString(", ")
     val facts = List(
