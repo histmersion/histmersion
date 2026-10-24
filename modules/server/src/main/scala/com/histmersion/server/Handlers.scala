@@ -774,10 +774,15 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def getAttestation(id: Long): Either[ApiError, Attestation] =
     AttestationRepo.get(ds, id).toRight(ApiError(s"No attestation $id", Some(Write.CodeNotFound)))
 
+  /** An unknown target type is a 400 and a missing source a 404 — checked first: the table's constraints
+    * answered both with a 500 (#3770). */
   def createAttestation(in: AttestationPut): Either[ApiError, Attestation] =
     maintenance.guard("create_attestation"):
-      Right(AttestationRepo.create(ds, in.copy(citekey = current(AliasKind.Source, in.citekey),
-        targetId = refId(in.targetType, in.targetId))))
+      val ck = current(AliasKind.Source, in.citekey)
+      for
+        t <- AttestationTarget.check(in.targetType).left.map(ApiError(_, Some(Write.CodeInvalid)))
+        _ <- Either.cond(AttestationRepo.sourceExists(ds, ck), (), Write.notFound(ck))
+      yield AttestationRepo.create(ds, in.copy(citekey = ck, targetType = t, targetId = refId(t, in.targetId)))
 
   def patchAttestation(id: Long, p: AttestationPatch): Either[ApiError, Attestation] =
     maintenance.guard("patch_attestation"):

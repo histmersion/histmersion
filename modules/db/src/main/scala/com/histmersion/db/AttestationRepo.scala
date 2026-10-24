@@ -43,6 +43,10 @@ object AttestationRepo:
 
   // ── writes ──────────────────────────────────────────────────────────────────────────────────
 
+  /** Whether the source an attestation would cite exists. */
+  def sourceExists(ds: DataSource, citekey: String): Boolean =
+    connect(ds)(sql"SELECT 1 FROM sources WHERE citekey = $citekey".query[Int].run().nonEmpty)
+
   def create(ds: DataSource, in: AttestationPut): Attestation =
     transact(ds):
       val id = sql"""INSERT INTO attestations (citekey, target_type, target_id,
