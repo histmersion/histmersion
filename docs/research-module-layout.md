@@ -198,10 +198,97 @@ runs after one warm-up each. What core still contributes comes from areas the we
 (465 kB), managers (547 kB), agents (480 kB), events, places, goals — and shrinks further only when those
 views stop needing the records, not by any linking change.
 
+## Steps 3–6 as built (2026-10-24)
+
+Done in the order 3, 4, 6, 5: a `config` module needs `api` (it reads into wire records, below) while the
+domain needs `config`, so with `api` still inside `core` the two would have formed a cycle.
+
+```
+values   JVM+JS   Citekey, Year, Period, Doi, WikidataId, LatLon            iron
+api      JVM+JS   com.histmersion.api: wire records, endpoints, codecs,      values, tapir-core, circe, kindlings
+                  Markdown, the helpers they need (98 files, 22.8k lines)
+config   JVM      com.histmersion.config: AppConfig, readers,                values, api (temporary)
+                  reference.conf (5 files, 1.5k lines)
+core     JVM      com.histmersion.domain (55 files, 13.1k lines)             values, api, config (temporary)
+db       JVM                                                                 config, core
+cli      JVM                                                                 config, core
+web      JS                                                                  api
+```
+
+**Step 3 — `values`.** Six files, Iron only, cross-built. `Citekey` moved here from core: an Iron
+`RefinedType` whose constraint is the shape and the no-`..` rule, where it was an `opaque type … <: String`
+with a hand parser; `parse` keeps the messages a person sees, `valid` classifies, and `Citekey.of` (the
+`ApiError` form) stays beside `ApiError` as an extension. A `Citekey` is no longer silently a `String`: the
+few places that hand one on take `.value`. `Doi` replaced `BrowserDownload`'s own. `Year` (over `Int`, as
+*Coding practices* 1 has it), `Period` (private constructor, `from`/`point`, `PeriodError`), `WikidataId`
+and `LatLon` (`Latitude`/`Longitude`) are defined and tested but carried by no record yet: the domain and
+wire records still hold `Long` years, `Double` coordinates and `String` ids. Adopting them is per area,
+with step 7. Their circe/tapir instances (`ValueCodecs`) are in api.
+
+**Step 4 — the packages.** Every file of `com.histmersion.core` went to one of three packages — named
+`com.histmersion.{api,config,domain}`, not `core.api`…, so the module steps moved files without renaming
+a single class again. The split was the closure of what the wire needs: every shared file with a codec,
+schema, endpoint or Markdown renderer, every file the web page uses, and everything those reference. Of
+the 105 shared files only 9 stayed out of it (`AcquireMatch`, `AcquireParse`, `AutoEnrich`, `Chunker`,
+`GoalsExport`, `Highlight`, `Jats`, `PointAreas`, `Version`). The imports enforced the layering already
+inside one module (api files import nothing of config or domain, config files nothing of domain, web
+files api only), so the compiler found every edge the module split would break:
+
+- **config → domain** was only conversions on config records: `LandingConfig.rules`,
+  `AcquireConfig.agent`, the media configs' `allowed`, the event providers' `datasetList`/`classList`,
+  `AgentPlanConfig.caps`, `AgentInferFilterConfig.limits`. They are extensions in the domain now, next
+  to the types they build, so no call site changed. The scheduler's default weights and priorities moved
+  to `AgentSchedulerConfig`.
+- **Package-level givens** reached every file of the one package: api's `Configuration` (Kindlings
+  decodes defaults) and config's lenient readers. Wildcard imports do not carry givens, so the domain
+  and config files import them (`import com.histmersion.api.given`); no codec or reader changed.
+- **Name precedence**: a name a nested wildcard import gave (`ReviewArticle.Finding`) used to beat a
+  member of the file's own package and now met a package wildcard (`api.Finding`); 7 files import it
+  explicitly.
+
+**Step 6 — `api`.** The package moved out whole: 97 shared files, `ApiIndex` on the JVM side. web
+depends on `apiJS` alone; `core` became JVM only (`crossProject(JVMPlatform)`, its `shared/` directory
+kept for the nine shared domain files). Of the api suites, 761 JVM and 17 Scala.js run in api; 17 that
+need config or domain fixtures stay in core in package `api`, and core's tests see api's (`test->test`)
+for the shared fixtures and resources.
+
+**Step 5 — `config`.** `AppConfig` and its records, the readers, the user file, the reload plan and
+`reference.conf`; 33 suites. cli and db depend on it directly.
+
+**Edges that remain (recorded, temporary).** domain → api (the domain works on wire records, as this
+note foresaw); domain → config (the domain takes config records as its settings: `ManagerPolicy` takes
+`AgentManagersConfig`, the media and event code their provider configs); config → api (config reads into
+four wire types: the page's `UiConfig` with its parts, the approval kinds and modes,
+`PlanQuota.ScheduledRefresh`, `SeaFloorSource`). cli and db still depend on core: the CLI runs domain
+code for its local commands (the plugin kit, bundle files, frontmatter, merge resolution files), db works
+on the domain records. Step 7 removes them per area, with a config-side record where config and wire
+must differ (`UiConfig`).
+
+**Plugin authors.** `plugin-api` did not change in these steps: no file under `modules/plugin-api`, and
+no dependency of it. The plugin testkit's contract changed in one line: `PluginHarness`'s (private)
+constructor names `com.histmersion.config.AppConfig`. The install's Maven repository ships
+`histmersion-values`, `-api` and `-config` beside `-core`, which the testkit's POM now reaches.
+
+**Measured.**
+
+| | before (step 4: one core module) | after |
+|---|---|---|
+| `app.bundle.js` raw · gzip −6 | 15 848 224 B · 1 789 378 B | 15 848 224 B · 1 789 378 B |
+| cold compile: core JVM · core JS | 48 s · 43 s | api JVM 37 s · api JS 40 s · config 4 s · core (domain) 9 s |
+| CLI metadata entries naming Histmersion's core types | 569 `core` | 477 `api`, 91 `config`, 2 `domain` |
+| server metadata entries naming them | 681 `core` (11 of them stale) | 514 `api`, 91 `config`, 66 `domain` |
+
+Cold compiles: an empty sbt cache, one command per module in dependency order, on the same machine
+minutes apart. The bundle is byte for byte the same: Scala.js linked only what the page reaches already,
+so moving the domain out of its class path dropped nothing it linked. The CLI's binary still carries the
+config readers (it loads `AppConfig` for its local commands); the domain is nearly gone from it. Before
+step 4 the metadata's names were rewritten mechanically (every type keeps every entry earlier agent runs
+recorded; 11 entries of map-style types deleted long ago were dropped) and a tracing-agent run of the JVM
+server and CLI added only what this branch's new code reached; after steps 5 and 6 a second run left
+both files unchanged.
+
 ## Unresolved
 
 - Whether `Filter` (used by web 28 times, db 52, server 55) is a wire record or a domain value with an
   SQL rendering decides whether it lands in `api` or `domain`; db's `Filter → SQL` code suggests the
-  latter, with a wire `FilterView`.
-- Compile times per module after the split were not measured; core alone compiles 150 sources in ~54 s
-  today (docs/research-build-speed.md §1).
+  latter, with a wire `FilterView`. Steps 4–6 left it in `api`, with everything the wire needs.

@@ -40,8 +40,8 @@ chimney-iron ── a Chimney macro extension (newtype → newtype); compile-tim
 chimney-iron-tests ─ its proof suites, compiled as a consumer compiles them
 ```
 
-A plugin — first-party or not — compiles against `plugin-api` alone and never sees `core`, `db` or
-`server`; the server discovers it through ServiceLoader (`PluginHost`, in `plugin-host`, which the testkit runs too). See
+A plugin — first-party or not — compiles against `plugin-api` alone and never sees `values`, `api`,
+`config`, `core`, `db` or `server`; the server discovers it through ServiceLoader (`PluginHost`, in `plugin-host`, which the testkit runs too). See
 `docs/research-plugins.md` (§15: as built). The one exception is the built-in acquisition plugins
 (`server/acquire/fetchers`: `archive-org`, `oa-unpaywall`, `oa-core`, `oa-openalex`, `oa-landing`, `pmc`,
 `arxiv`; the former `oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`): they are host code
@@ -115,9 +115,9 @@ unless there is a written reason.
 ## Coding practices
 
 These rules bind new and changed code. Existing code that breaks them is brought in line when it is
-changed for another reason, not in a sweep. Iron (`io.github.iltotore::iron`) and Chimney
-(`io.scalaland::chimney`) are dependencies of `chimney-iron` only so far: the first model module that
-needs one adds it, with its native-image metadata. The examples were compiled against Iron 3.4.1 and
+changed for another reason, not in a sweep. Iron (`io.github.iltotore::iron`) is a dependency of
+`values`, `api` and `core`; Chimney (`io.scalaland::chimney`) of `chimney-iron` only so far: the first
+model module that needs it adds it, with its native-image metadata. The examples were compiled against Iron 3.4.1 and
 Chimney 2.1.0.
 
 ### 1. No primitives in the model
