@@ -41,6 +41,7 @@ object App:
       RunsView.enabled.set(ui.agentsEnabled)
       Notices.install(ui)
       MergeView.configure(ui)
+      MapRegionsView.configure(ui)
 
       val appEl = div(
         cls := "histmersion-app",

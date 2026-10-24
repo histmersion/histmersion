@@ -1200,6 +1200,13 @@ a.chip:hover { border-color:var(--accent); }
 .about-rows dt.depth-1 { padding-left:12px; }
 .about-rows dt.depth-2 { padding-left:24px; }
 .about-rows dt.depth-3 { padding-left:36px; }
+/* About › Map regions (#4037): the download form, the dry run's sizes zoom by zoom */
+.map-regions { margin-top:16px; }
+.map-regions-form { display:grid; gap:8px; max-width:560px; margin-top:8px; }
+.map-regions-downloaded .btn { margin-left:8px; }
+.map-region-layer { margin:6px 0 0; overflow-wrap:anywhere; }
+.map-region-zooms { margin:2px 0 4px; padding-left:18px; font-size:11.5px; }
+.map-region-progress { overflow-wrap:anywhere; }
 .about-state { font-weight:600; }
 .about-state::before { content:""; display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;
   background:var(--health-unknown); vertical-align:1px; }

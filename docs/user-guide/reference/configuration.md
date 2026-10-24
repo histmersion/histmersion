@@ -379,6 +379,7 @@ The settings of backups and portable bundles are listed with them, in
 | `basemap.labels.language` | `HISTMERSION_BASEMAP_LANGUAGE` | `en` | the language of Readable's and Physical's names unless a viewer chooses another in the map options: `en`, `local` (each in its own language), or a code the data carries (`de`, `fr`, `el`, `tr`, …); a missing name falls back to English, then the local name |
 | `basemap.labels.attribution` | — | Natural Earth | the names' credit line |
 | `basemap.map-max-zoom` | `HISTMERSION_BASEMAP_MAP_MAX_ZOOM` | `16` | how far the map zooms in on Readable and Physical (their relief drawn larger beyond the deepest tile, contours to 10 m); the online maps keep `ui.tiles-max-zoom` |
+| `ui.job-poll-ms` | `HISTMERSION_UI_JOB_POLL_MS` | `1000` | how often a window following a background job (About › Map regions: a size check or a download) asks for its progress |
 | `ui.docs-url` | `HISTMERSION_UI_DOCS_URL` | this guide on GitHub | the user guide's root; the web page links into it (the base map's notice) |
 | `config.watch` | `HISTMERSION_CONFIG_WATCH` | `false` | reload the config by itself when the file changes (see [Reloading the config](#reloading-the-config-no-restart)) |
 | `config.watch-debounce-ms` | `HISTMERSION_CONFIG_WATCH_DEBOUNCE_MS` | `500` | …this long after its last change (an editor writes in steps) |

@@ -119,13 +119,21 @@ final case class BasemapStatus(
       * extract lacks (none: it can be drawn whole). */
     styles: List[BasemapStyleState] = Nil,
     /** How far the page zooms in on Readable and Physical (`basemap.map-max-zoom`). */
-    mapMaxZoom: Int = 16
+    mapMaxZoom: Int = 16,
+    /** The named regions a fetch knows (`basemap.terrain.focus-regions`), for a page to offer. */
+    regions: List[BasemapRegion] = Nil
 ) derives KindlingsCodecAsObject:
   /** The style `id`'s missing layers: empty when it can be drawn whole or is not known. */
   def missing(id: String): List[String] = styles.find(_.id == id).fold(Nil)(_.missing)
 
 object BasemapStatus:
   given Schema[BasemapStatus] = KindlingsSchema.derived[BasemapStatus].schema
+
+/** A named region: its name and `minLon,minLat,maxLon,maxLat`. */
+final case class BasemapRegion(name: String, bbox: String) derives KindlingsCodecAsObject
+
+object BasemapRegion:
+  given Schema[BasemapRegion] = KindlingsSchema.derived[BasemapRegion].schema
 
 /** One named style against the stored extract: the vector data layers it draws that the download
   * left out (`basemap.vector.drop`). */
