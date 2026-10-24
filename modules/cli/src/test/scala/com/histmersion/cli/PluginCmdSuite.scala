@@ -8,9 +8,11 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
+import scala.jdk.CollectionConverters.*
 
 /** `histmersion plugin …` against a TEMPORARY install and data directory: the kit's scripts are fakes
-  * (`histmersion-relink --describe` prints the JSON the test chose; `histmersion-signing` checks a fake
+  * (`histmersion-relink --describe` prints the JSON the test chose, `--resolve` records its arguments
+  * and answers what the test chose; `histmersion-signing` checks a fake
   * signature), downloads go through the real curl to a local HTTP server, Maven to a fake repository
   * it serves. Nothing touches ~/Applications/Histmersion or the user's data directory. */
 class PluginCmdSuite extends munit.FunSuite:
@@ -22,6 +24,13 @@ class PluginCmdSuite extends munit.FunSuite:
         s"""[{"file":"staged.jar","sha256":"x","plugins":[{"id":"$id","version":"$version","spiVersion":$spi,
            |"provides":["source-fetcher:$id"],"access":["$access"]}]}]""".stripMargin)
     def installed: List[String] = ops.jars.map(_.getFileName.toString)
+    /** What the resolver answers: its report, its refusals, its exit code. */
+    def resolver(report: String = "", refusals: String = "", rc: Int = 0): Unit =
+      Files.writeString(home.resolve("resolve.out"), report)
+      Files.writeString(home.resolve("resolve.err"), refusals)
+      Files.writeString(home.resolve("resolve.rc"), rc.toString)
+    def resolveCalls: List[String] =
+      if Files.isRegularFile(home.resolve("resolve.args")) then Files.readAllLines(home.resolve("resolve.args")).asScala.toList else Nil
 
   private def script(p: Path, body: String): Unit =
     Files.createDirectories(p.getParent)
@@ -34,7 +43,12 @@ class PluginCmdSuite extends munit.FunSuite:
       val home = Files.createDirectories(root.resolve("install"))
       val data = Files.createDirectories(root.resolve("data dir")) // a space, as in "Application Support"
       script(home.resolve("bin/histmersion-relink"),
-        """if [ "$1" = --describe ]; then cat "$HISTMERSION_HOME/describe.json"; exit 0; fi
+        """if [ "$1" = --describe ]; then echo "$@" > "$HISTMERSION_HOME/describe.args"; cat "$HISTMERSION_HOME/describe.json"; exit 0; fi
+          |if [ "$1" = --resolve ]; then
+          |  echo "$@" >> "$HISTMERSION_HOME/resolve.args"
+          |  cat "$HISTMERSION_HOME/resolve.out" 2>/dev/null; cat "$HISTMERSION_HOME/resolve.err" >&2 2>/dev/null
+          |  exit "$(cat "$HISTMERSION_HOME/resolve.rc" 2>/dev/null || echo 0)"
+          |fi
           |echo "$@" > "$HISTMERSION_HOME/relink.args"
           |exit "$(cat "$HISTMERSION_HOME/relink.rc" 2>/dev/null || echo 0)"
           |""".stripMargin)
@@ -160,11 +174,15 @@ class PluginCmdSuite extends munit.FunSuite:
       val bytes = "the plugin".getBytes(UTF_8)
       Files.write(dir.resolve("hello_3-0.1.0.jar"), bytes)
       Files.writeString(dir.resolve("hello_3-0.1.0.jar.sha1"), sha("SHA-1", bytes) + "\n")
+      val pom = "<project>the POM</project>".getBytes(UTF_8)
+      Files.write(dir.resolve("hello_3-0.1.0.pom"), pom)
+      Files.writeString(dir.resolve("hello_3-0.1.0.pom.sha1"), sha("SHA-1", pom) + "\n")
       e.describe("hello", "0.1.0")
       val r = e.ops.add("org.example::hello:0.1.0", AddOptions(yes = true))
       assertEquals(r.map(_.file), Right("hello-0.1.0.jar"))
       assert(e.ops.index.jars.head.source.endsWith("/maven2/org/example/hello_3/0.1.0/hello_3-0.1.0.jar"), e.ops.index)
       assertEquals(Files.readString(e.plugins.resolve("hello-0.1.0.jar")), "the plugin")
+      assertEquals(Files.readString(e.plugins.resolve("hello-0.1.0.pom")), "<project>the POM</project>", "its POM beside it")
       // a corrupted download (the published checksum does not match) is refused
       Files.writeString(dir.resolve("hello_3-0.1.0.jar.sha1"), "0" * 40)
       val bad = e.ops.add("org.example::hello:0.1.0", AddOptions(yes = true))
@@ -172,6 +190,58 @@ class PluginCmdSuite extends munit.FunSuite:
       val missing = e.ops.add("org.example:nothing:1.0", AddOptions(yes = true))
       assert(missing.left.exists(_.message.contains("not resolved from")), missing)
     }
+
+  env.test("add with a POM: its dependencies resolved first and described with them, shown, the POM kept beside the jar"): e =>
+    e.describe("oabooks", "0.1.0")
+    e.resolver(report = "dependency: org.scala-lang.modules:scala-xml_3:2.4.0 (for add.jar)\nprovided by Histmersion: 1 module(s) (org.ekrich:sconfig_3)\n")
+    val dl  = e.home.getParent.resolve("downloads")
+    val src = jarFile(dl, "oabooks_3-0.1.0.jar")
+    Files.writeString(dl.resolve("oabooks_3-0.1.0.pom"), "<project>deps</project>")
+    assertEquals(e.ops.add(src.toString, AddOptions(yes = true)).map(_.file), Right("oabooks-0.1.0.jar"))
+    assertEquals(Files.readString(e.plugins.resolve("oabooks-0.1.0.pom")), "<project>deps</project>")
+    val List(staged, all) = e.resolveCalls: @unchecked
+    assert(staged.matches("--resolve --lib .*/\\.staging/lib-[0-9]+ .*/\\.staging/add-[0-9]+\\.jar"), staged)
+    assertEquals(all, "--resolve", "then every installed plugin's, into plugins/lib")
+    assert(Files.readString(e.home.resolve("describe.args")).matches("--describe --lib .*/\\.staging/lib-[0-9]+ .*\\n"), "described with its dependencies")
+    assert(e.out.contains("dependency: org.scala-lang.modules:scala-xml_3:2.4.0 (for add.jar)"), e.out)
+    assert(e.out.contains("provided by Histmersion: 1 module(s) (org.ekrich:sconfig_3)"), e.out)
+    assertEquals(Files.list(e.plugins.resolve(".staging")).count(), 0L, "the staged jar, POM and lib are gone")
+
+  env.test("add: a plugin that needs a newer version of a library Histmersion ships is refused, both versions named"): e =>
+    e.describe("oabooks", "0.1.0")
+    e.resolver(refusals = "refused: add.jar needs io.circe:circe-core_3 0.14.20, but this Histmersion ships 0.14.17 — build against 0.14.17\n", rc = 2)
+    val r = e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = true))
+    assert(r.left.exists(x => x.message.startsWith("refused:\n  - add.jar needs io.circe:circe-core_3 0.14.20") &&
+      x.message.contains("ships 0.14.17")), r)
+    assertEquals(e.installed, Nil)
+    e.resolver(refusals = "could not resolve the plugins' dependencies: not found: org.example:gone_3:1.0", rc = 3)
+    val failed = e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = true))
+    assert(failed.left.exists(_.message.contains("dependencies could not be resolved: could not resolve")), failed)
+
+  env.test("add --repo: looked in first for the plugin, and passed on for its dependencies"): e =>
+    withMaven(e)(url => CliPluginsConfig("", s"$url/central", "curl")) { (e, repo, url) =>
+      val dir = Files.createDirectories(repo.resolve("mine/org/example/hello_3/0.1.0"))
+      List("jar" -> "the plugin", "pom" -> "<project/>").foreach { (ext, text) =>
+        Files.writeString(dir.resolve(s"hello_3-0.1.0.$ext"), text)
+        Files.writeString(dir.resolve(s"hello_3-0.1.0.$ext.sha1"), sha("SHA-1", text.getBytes(UTF_8)))
+      }
+      e.describe("hello", "0.1.0")
+      e.resolver()
+      assert(e.ops.add("org.example::hello:0.1.0", AddOptions(yes = true, repos = List(s"$url/mine"))).isRight)
+      assert(e.resolveCalls.forall(_.contains(s"--repo $url/mine --repo $url/central")), e.resolveCalls)
+    }
+
+  env.test("rm: the POM goes with the jar, and lib/ is resolved again; a failed resolution only warns"): e =>
+    e.describe("hello", "0.1.0")
+    val dl = e.home.getParent.resolve("d")
+    Files.writeString(Files.createDirectories(dl).resolve("h.pom"), "<project/>")
+    assert(e.ops.add(jarFile(dl, "h.jar").toString, AddOptions(yes = true)).isRight)
+    assert(Files.isRegularFile(e.plugins.resolve("hello-0.1.0.pom")))
+    e.resolver(refusals = "offline", rc = 3)
+    assertEquals(e.ops.rm("hello"), Right(List("hello-0.1.0.jar")))
+    assert(!Files.exists(e.plugins.resolve("hello-0.1.0.pom")))
+    assertEquals(e.resolveCalls.last, "--resolve")
+    assert(e.out.exists(_.startsWith("warning: the plugins' dependencies were not resolved now (offline)")), e.out)
 
   env.test("signatures: required when GPG provenance is set up; the signer pinned per plugin id"): e =>
     Files.writeString(Files.createDirectories(e.data.resolve("signing")).resolve("gpg-key"), "MYKEY\n")

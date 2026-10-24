@@ -2,8 +2,9 @@
 # Start a bundle in isolation and prove it works end to end — what CI runs on every platform:
 # first-run initdb, Postgres + converter as children, /api/health all ok, the CLI, a real OCR
 # conversion OFFLINE with the bundled models, a clean stop that leaves no process behind — and a REAL
-# relink of a copy of the bundle with a test plugin (docs/research-plugins.md §7.4): the native binary
-# linked from the kit holds the plugin, says so in --self-check, and JVM mode finds it too.
+# relink of a copy of the bundle with two test plugins (docs/research-plugins.md §7.4), one of them with a
+# dependency of its own that `plugin add` resolves from its POM: the native binary linked from the kit
+# holds both, says so in --self-check, and JVM mode finds them too.
 #
 #   scripts/bundle/smoke.sh <bundle-dir>
 # The relink needs GraalVM CE of the kit's version (the active JDK, or one `histmersion-toolchain path`
@@ -170,22 +171,30 @@ else
   echo "  skipped: no gpg"
 fi
 
-echo "→ the plugin API for plugin authors: plugin-api/, plugin api-jar, plugin new"
-[ -f "$b/plugin-api/histmersion-plugin-api.jar" ] && [ -f "$b/plugin-api/histmersion-plugin-api-sources.jar" ] \
-  || fail "the bundle has no plugin-api/histmersion-plugin-api.jar and -sources.jar"
-api_classes="$(unzip -Z1 "$b/plugin-api/histmersion-plugin-api.jar")" || fail "plugin-api/histmersion-plugin-api.jar is not a jar"
+echo "→ the plugin repository for plugin authors: maven/, plugin repo, plugin api-jar, plugin new"
+api_jar="$(find "$b/maven" -name 'histmersion-plugin-api_3-*.jar' ! -name '*-sources.jar' 2>/dev/null | head -1)"
+[ -n "$api_jar" ] && [ -f "${api_jar%.jar}-sources.jar" ] && [ -f "${api_jar%.jar}.pom" ] \
+  || fail "the bundle's maven/ has no plugin API jar with its sources jar and POM"
+[ -n "$(find "$b/maven" -name 'histmersion-plugin-platform_3-*.pom' | head -1)" ] || fail "the bundle's maven/ has no plugin platform POM"
+grep -q '<packaging>pom</packaging>' "$(find "$b/maven" -name 'histmersion-plugin-platform_3-*.pom' | head -1)" \
+  || fail "the plugin platform is not a POM-only artifact"
+api_classes="$(unzip -Z1 "$api_jar")" || fail "$api_jar is not a jar"
 grep -qx 'com/histmersion/plugin/Plugin.class' <<<"$api_classes" && ! grep -q 'Suite\.class$' <<<"$api_classes" \
-  || fail "plugin-api/histmersion-plugin-api.jar is not the plugin API (no Plugin.class, or test suites in it)"
+  || fail "$api_jar is not the plugin API (no Plugin.class, or test suites in it)"
+repo="$(HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin repo 2>&1)" || fail "plugin repo: $repo"
+[ "$repo" = "$b/maven" ] || fail "plugin repo printed '$repo'"
 api="$(HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin api-jar 2>&1)" || fail "plugin api-jar: $api"
-[ "$api" = "$b/plugin-api/histmersion-plugin-api.jar" ] || fail "plugin api-jar printed '$api'"
+[ "$api" = "$api_jar" ] || fail "plugin api-jar printed '$api', not $api_jar"
 HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin new smoke-new --dir "$data/smoke-new" > "$data/new.out" 2>&1 \
   || fail "plugin new: $(cat "$data/new.out")"
-grep -qF "//> using jar \"$b/plugin-api/histmersion-plugin-api.jar\"" "$data/smoke-new/SmokeNew.scala" \
+grep -q "^//> using repository file:.*/maven/\?$" "$data/smoke-new/SmokeNew.scala" \
+  && grep -q "^//> using compileOnly.dep com.kubuszok::histmersion-plugin-platform:" "$data/smoke-new/SmokeNew.scala" \
+  && ! grep -q "^//> using jar" "$data/smoke-new/SmokeNew.scala" \
   && grep -qx "smokenew.SmokeNewPlugin" "$data/smoke-new/resources/META-INF/services/com.histmersion.plugin.Plugin" \
-  || fail "plugin new wrote an unexpected project: $(cat "$data/new.out")"
-echo "  $api"
+  || fail "plugin new wrote an unexpected project: $(cat "$data/new.out"; head -12 "$data/smoke-new/SmokeNew.scala")"
+echo "  $repo"
 
-echo "→ relink: the hello test plugin into a COPY of the bundle (bin/, kit/, libexec/), with the CLI"
+echo "→ relink: the hello and hello-deps test plugins into a COPY of the bundle (bin/, kit/, libexec/, maven/), with the CLI"
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 gv_version="$(cat "$b/kit/graalvm-version" 2>/dev/null || true)"
 gv=""
@@ -195,15 +204,17 @@ for h in "${JAVA_HOME:-}" \
   [ -n "$h" ] && [ -x "$h/bin/native-image" ] && grep -q "JAVA_VERSION=\"$gv_version\"" "$h/release" 2>/dev/null && { gv="$h"; break; }
 done
 hello="$(find "$root/target/out" -name 'histmersion-plugin-hello_3-*.jar' 2>/dev/null | head -1)"
+fixtures="$(find "$root/target/out" -type d -name fixtures-repo -path '*histmersion-plugin-hello-deps*' 2>/dev/null | head -1)"
 if [ "${HISTMERSION_SMOKE_RELINK:-1}" = 0 ]; then echo "  skipped (HISTMERSION_SMOKE_RELINK=0)"
 elif [ ! -f "$b/kit/kit.json" ]; then fail "the bundle has no relink kit (kit/kit.json)"
 elif [ -z "$gv" ]; then echo "  skipped: no GraalVM CE $gv_version with native-image (the active JDK, or histmersion-toolchain path)"
 elif [ -z "$hello" ]; then fail "no hello test plugin jar under target/out (sbt pluginHello/package; scripts/bundle/server.sh builds it)"
+elif [ -z "$fixtures" ]; then fail "no hello-deps fixture repository under target/out (sbt pluginHelloDeps/fixturesRepo; scripts/bundle/server.sh writes it)"
 else
   ri="$data/relink-install"; rd="$data/relink-data"
   mkdir -p "$ri" "$rd"
-  cp -R "$b/bin" "$b/kit" "$b/libexec" "$ri/"
-  printf 'histmersion.plugins.hello { enabled = true, greeter = LoudGreeter, greeting = "relinked" }\n' > "$data/relink.conf"
+  cp -R "$b/bin" "$b/kit" "$b/libexec" "$b/maven" "$ri/"
+  printf 'histmersion.plugins {\n  hello { enabled = true, greeter = LoudGreeter, greeting = "relinked" }\n  hello-deps.enabled = true\n}\n' > "$data/relink.conf"
   # the CLI acts on this temporary install and data directory, never on ~/Applications/Histmersion;
   # nothing is restarted (no service), nothing signed with a keychain identity
   rel() { HISTMERSION_INSTALL_DIR="$ri" HISTMERSION_HOME="$ri" HISTMERSION_DATA_DIR="$rd" HISTMERSION_CONFIG="$data/relink.conf" \
@@ -212,6 +223,13 @@ else
   sed 's/^/  /' "$data/add.out"
   grep -q "plugin hello 0.1.0 · SPI 1 · access: open · provides source-fetcher:hello" "$data/add.out" || fail "plugin add did not describe the plugin"
   [ -f "$rd/plugins/hello-0.1.0.jar" ] || fail "plugin add did not install hello-0.1.0.jar"
+  # by its coordinates, from the fixture repository: its POM lists hello-lib, which is installed with it
+  rel "$ri/bin/histmersion" plugin add com.kubuszok::histmersion-plugin-hello-deps:0.1.0 --repo "$fixtures" --yes > "$data/add-deps.out" 2>&1 \
+    || fail "plugin add hello-deps: $(cat "$data/add-deps.out")"
+  sed 's/^/  /' "$data/add-deps.out"
+  grep -q "dependency: com.kubuszok:histmersion-plugin-hello-lib_3:0.1.0" "$data/add-deps.out" || fail "plugin add did not resolve hello-deps's dependency"
+  [ -f "$rd/plugins/hello-deps-0.1.0.jar" ] && [ -f "$rd/plugins/hello-deps-0.1.0.pom" ] || fail "plugin add did not install hello-deps-0.1.0.jar with its POM"
+  grep -qx "com.kubuszok-histmersion-plugin-hello-lib_3-0.1.0.jar" "$rd/plugins/lib/classpath" || fail "hello-lib is not in plugins/lib: $(cat "$rd/plugins/lib/classpath" 2>/dev/null)"
   rel "$ri/bin/histmersion" plugin status > "$data/status.out" 2>&1 || fail "plugin status: $(cat "$data/status.out")"
   grep -q "REBUILD NEEDED" "$data/status.out" || fail "plugin status does not ask for a rebuild: $(cat "$data/status.out")"
   start=$(date +%s)
@@ -227,7 +245,12 @@ else
   [ "$rc" = 0 ] || fail "the relinked binary's --self-check exited $rc: $(cat "$data/relinked.out")"
   # registered = its greeter (chosen by name) was found: the plugin jar's OWN reachability metadata is in the image
   grep -qF "hello 0.1.0 — registered (source-fetcher:hello)" "$data/relinked.out" || fail "the relinked binary does not have the hello plugin"
-  want="$(printf 'hello-0.1.0.jar %s\n' "$(shasum -a 256 "$rd/plugins/hello-0.1.0.jar" | awk '{print $1}')" | shasum -a 256 | awk '{print $1}')"
+  # registered = Shout, a class of hello-lib (the dependency, no part of the plugin jar), is in the image
+  grep -qF "hello-deps 0.1.0 — registered (source-fetcher:hello-deps)" "$data/relinked.out" \
+    || fail "the relinked binary does not have hello-deps with its dependency: $(grep hello-deps "$data/relinked.out")"
+  want="$( { printf 'hello-0.1.0.jar %s\n' "$(shasum -a 256 "$rd/plugins/hello-0.1.0.jar" | awk '{print $1}')"
+             printf 'hello-deps-0.1.0.jar %s\n' "$(shasum -a 256 "$rd/plugins/hello-deps-0.1.0.jar" | awk '{print $1}')"; } \
+           | shasum -a 256 | awk '{print $1}')"
   grep -q "^- plugin-set digest: $want" "$data/relinked.out" || fail "the relinked binary's plugin-set digest is not the directory's ($want)"
   [ -x "$ri/bin/histmersion-server.prev" ] || fail "the relink kept no previous binary"
   rel "$ri/bin/histmersion" plugin status > "$data/status.out" 2>&1 || true
@@ -237,9 +260,10 @@ else
   # JVM mode: the same kit and plugin on the JDK, found at start
   rc=0; rel env HISTMERSION_JAVA_HOME="$gv" "$ri/bin/histmersion-server-jvm" --self-check > "$data/jvm.out" 2>&1 || rc=$?
   [ "$rc" = 0 ] && grep -qF "hello 0.1.0 — registered (source-fetcher:hello)" "$data/jvm.out" \
+    && grep -qF "hello-deps 0.1.0 — registered (source-fetcher:hello-deps)" "$data/jvm.out" \
     && grep -q "^- plugin set: .*(jvm): hello-0.1.0.jar" "$data/jvm.out" && grep -q "^- plugin-set digest: $want" "$data/jvm.out" \
-    || fail "JVM mode does not find the plugin (exit $rc): $(cat "$data/jvm.out")"
-  echo "  JVM mode: hello registered, plugin set $want"
+    || fail "JVM mode does not find the plugins (exit $rc): $(cat "$data/jvm.out")"
+  echo "  JVM mode: hello and hello-deps registered, plugin set $want"
   # back to the stock binary
   rel "$ri/bin/histmersion" plugin rollback --no-restart > "$data/rollback.out" 2>&1 || fail "plugin rollback: $(cat "$data/rollback.out")"
   rel "$ri/bin/histmersion-server" --self-check | grep -q "^- plugin set: first-party plugins only" || fail "rollback did not bring the stock binary back"

@@ -63,9 +63,9 @@ class PluginResolverSuite extends munit.FunSuite:
 
   test("a plugin that needs a NEWER version than the server ships is refused, naming the library and both versions"):
     val s = setup(List("com.kubuszok:histmersion-plugin-hello-lib_3:0.0.9"))
-    val (rc, out, _) = run(s)
+    val (rc, _, err) = run(s)
     assertEquals(rc, 2)
-    assertEquals(out, List("refused: hello-deps-0.1.0.jar needs com.kubuszok:histmersion-plugin-hello-lib_3 0.1.0, but this Histmersion " +
+    assertEquals(err, List("refused: hello-deps-0.1.0.jar needs com.kubuszok:histmersion-plugin-hello-lib_3 0.1.0, but this Histmersion " +
       "ships 0.0.9 — build the plugin against 0.0.9 (the histmersion-plugin-platform POM), or install a Histmersion that ships 0.1.0"))
     assert(!Files.exists(s.lib), "nothing written on a refusal")
 
@@ -86,13 +86,16 @@ class PluginResolverSuite extends munit.FunSuite:
     assertEquals(Files.list(s.lib).iterator().asScala.count(_.getFileName.toString.endsWith(".jar")), 0)
     assertEquals(lines(s.lib.resolve(LibDirectory.Inputs)).map(_.split("  ").last), List("hello-deps-0.1.0.jar"))
 
-  test("the repositories of the last run that named some are used when none is named"):
+  test("the repositories of earlier runs are kept, and used when a run names none"):
     val s = setup(Nil)
     assertEquals(run(s)._1, 0)
     val again = PluginResolver.parse(List("--kit", s.kit.toString, "--lib", s.lib.toString,
       s.plugins.resolve("hello-deps-0.1.0.jar").toString)).fold(e => fail(e), identity)
     assertEquals(PluginResolver.resolve(again.copy(cache = Some(s.cache)), _ => (), _ => ()), 0)
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
+    val other = RepositoryUrl.fromArgument(s.kit.resolve("other-repo").toString).fold(e => fail(e), identity)
+    assertEquals(PluginResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)), _ => (), _ => ()), 0)
+    assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(other.value, fixtures.toUri.toString))
 
   test("a SNAPSHOT plugin version resolves as well"):
     val s   = setup(Nil)
