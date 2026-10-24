@@ -155,7 +155,7 @@ test-it: test-db
     #!/usr/bin/env bash
     set -uo pipefail
     HISTMERSION_TEST_DB_URL={{test_db_url}} HISTMERSION_PG_BIN_DIR={{pg}} {{sbt}} 'testOnly *'; rc=$?
-    just test-db-down
+    just test_db_port={{test_db_port}} test_db_dir={{quote(test_db_dir)}} test-db-down
     exit $rc
 
 # Test what changed — the modules touched since master (or the ones named: `just test-quick db cli`) and their dependents, DB suites on a throwaway Postgres; for iterating, `test-it` is the gate
@@ -170,11 +170,11 @@ test-quick *modules:
     for m in $mods; do cmd="$cmd; $m/testOnly *"; case "$m" in db|server) db=1 ;; esac; done
     echo "testing: $mods"
     if [ -n "$db" ]; then
-      just test_db_port={{test_db_port}} test-db >/dev/null || exit 1
+      just test_db_port={{test_db_port}} test_db_dir={{quote(test_db_dir)}} test-db >/dev/null || exit 1
       export HISTMERSION_TEST_DB_URL={{test_db_url}} HISTMERSION_PG_BIN_DIR={{pg}}
     fi
     {{sbt}} "${cmd#; }"; rc=$?
-    [ -z "$db" ] || just test_db_port={{test_db_port}} test-db-down
+    [ -z "$db" ] || just test_db_port={{test_db_port}} test_db_dir={{quote(test_db_dir)}} test-db-down
     exit $rc
 
 # Seed a NEW worktree's sbt cache with a copy of another checkout's (default: the main worktree's): its first build replays instead of compiling cold; `--verify` checks afterwards that every output links inside it
