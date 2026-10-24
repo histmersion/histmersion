@@ -107,6 +107,8 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 | io.github.cquiroz:scala-java-locales_sjs1_3 | 1.5.4 | BSD 3-Clause License | compatible |
 | io.github.cquiroz:scala-java-time_3 | 2.6.0 | BSD 3-Clause License | compatible |
 | io.github.cquiroz:scala-java-time_sjs1_3 | 2.8.0 | BSD 3-Clause License | compatible |
+| io.github.iltotore:iron_3 | 3.4.1 | Apache License 2.0 | compatible |
+| io.github.iltotore:iron_sjs1_3 | 3.4.1 | Apache License 2.0 | compatible |
 | io.netty:netty-all | 4.2.18.Final | Apache License, Version 2.0 | compatible |
 | io.netty:netty-buffer | 4.2.18.Final | Apache License, Version 2.0 | compatible |
 | io.netty:netty-codec | 4.2.18.Final | Apache License, Version 2.0 | compatible |
