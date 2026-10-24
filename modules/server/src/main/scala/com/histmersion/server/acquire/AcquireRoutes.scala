@@ -25,5 +25,8 @@ final class AcquireRoutes(h: AcquireHandlers):
     AcquireApi.archiveImport.serverLogic[Identity](req => h.archiveImport(req)),
     AcquireApi.calibreGaps.serverLogicSuccess[Identity](limit => h.calibreGaps(limit)),
     AcquireApi.calibreMeta.serverLogic[Identity](ck => h.calibreMeta(ck)),
-    AcquireApi.calibrePushed.serverLogic[Identity](req => h.calibrePushed(req))
+    AcquireApi.calibrePushed.serverLogic[Identity](req => h.calibrePushed(req)),
+    AcquireApi.candidates.serverLogic[Identity]((g, st, limit, offset) => h.candidates(g, st, limit, offset)),
+    AcquireApi.sweepCandidates.serverLogic[Identity](req => h.sweepCandidates(req)),
+    AcquireApi.markCandidates.serverLogic[Identity](req => h.markCandidates(req))
   )

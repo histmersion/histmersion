@@ -295,4 +295,14 @@ final case class AcquireClients(
     oa: OaFetcher,
     wiki: WikiClient,
     archive: ArchiveClient,
-    retractionWatch: RetractionWatchClient)
+    retractionWatch: RetractionWatchClient,
+    /** The indexes a goal's watches read, and the citation/author alerts (#3761). */
+    indexes: List[ScholarlyIndex] = Nil,
+    alerts: CitationAlerts = NoAlerts)
+
+/** No citation or author alerts (a test, or a server built without them). */
+object NoAlerts extends CitationAlerts:
+  private val off = Left("the citation alerts are not connected")
+  def citing(doi: String, since: java.time.LocalDate, limit: Int) = off
+  def authors(doi: String) = off
+  def byAuthor(authorId: String, since: java.time.LocalDate, limit: Int) = off

@@ -131,6 +131,47 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     assertEquals(again.status, "done", again.error)
     assertEquals(h.ops.queueList("acquire", all = true).toOption.get.items.count(_.text.contains("zzagent.a")), 1)
 
+  /** The candidate search (#3761) answered from memory: what the goal's watches stored, and the marks set. */
+  private final class CandidateUpstream extends AgentUpstream:
+    // `var`: the stored candidates, changed by the marks
+    @volatile var stored: List[SourceCandidate] = Nil
+    val sweeps = java.util.concurrent.atomic.AtomicInteger(0)
+    def meta(doi: String) = Left("not stubbed")
+    def refs(citekey: String, apply: Boolean) = Left("not stubbed")
+    def assess(citekey: String, apply: Boolean) = Left("not stubbed")
+    def followups(id: String, since: Option[Int], limit: Option[Int]) = Left("not stubbed")
+    def discover(query: String, limit: Int) = Left("the live search must not run when the candidate search is connected")
+    override def sweepCandidates(goal: String, dryRun: Boolean) =
+      sweeps.incrementAndGet()
+      Right(CandidateSweep(goal, List(CandidateWatch(goal, "query", "zzagent tin trade", "openalex")), stored.size, 0, stored.size,
+        Map.empty, stored.count(_.state == "new"), dryRun))
+    override def candidates(goal: String, state: String, limit: Int) = Right(stored.filter(_.state == state).take(limit))
+    override def markCandidates(ids: List[Long], state: String) =
+      stored = stored.map(c => if ids.contains(c.id) then c.copy(state = state) else c)
+      Right(ids.size)
+
+  test("#3761 acquisition-sweep over the stored candidates: the unseen ranked, the picks queued and the rest seen; none new, no model"):
+    val c = ScriptedClient(Model)
+    c.scripts += Seq(text("""{"picks":[{"doi":"10.5555/zzagent.a","why":"core study"}]}"""))
+    val (a, h, _) = handlers(c); seed(h)
+    val up = CandidateUpstream()
+    a.attach(up)
+    up.stored = List(
+      SourceCandidate(1, Goal, "10.5555/zzagent.a", "A", Some(2026), List("Zz"), foundBy = List("openalex query \"zzagent tin trade\"")),
+      SourceCandidate(2, Goal, "10.5555/zzagent.b", "B", Some(2026), List("Zz"), foundBy = List("crossref query \"zzagent tin trade\"")))
+    val run = start(a, RunRequest("acquisition-sweep", Goal))
+    assertEquals(run.status, "done", run.error)
+    assertEquals(c.steps.size, 1)
+    val offered = c.steps.head.head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get
+    assert(offered.contains("10.5555/zzagent.a") && offered.contains("found by \"crossref query"), offered)
+    assertEquals(up.stored.map(c => c.doi -> c.state).toMap, Map("10.5555/zzagent.a" -> "queued", "10.5555/zzagent.b" -> "seen"))
+    assert(h.ops.queueList("acquire", all = true).toOption.get.items.exists(_.text.contains("zzagent.a")))
+    // the next sweep: every candidate decided — no model is asked
+    val again = start(a, RunRequest("acquisition-sweep", Goal))
+    assertEquals(again.status, "done", again.error)
+    assertEquals(c.steps.size, 1, "no ranking without a new candidate")
+    assert(again.progress.exists(_.contains("nothing new")), again.progress)
+
   // ── goal schedules are watchers (phase 3) ────────────────────────────────────────────────────────
 
   private val Now = Instant.parse("2026-10-04T12:00:00Z")

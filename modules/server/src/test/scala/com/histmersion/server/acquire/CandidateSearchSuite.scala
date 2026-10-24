@@ -1,0 +1,114 @@
+package com.histmersion.server.acquire
+
+import com.histmersion.core.*
+import com.histmersion.core.GoalPlans.LinkKind
+import com.histmersion.db.{CandidateRepo, GoalLinkRepo, GoalRepo, Migrate, QueueRepo, SourceRepo}
+import com.histmersion.server.agents.ManagerSupervisor
+
+import java.time.LocalDate
+import java.util.concurrent.ConcurrentLinkedQueue
+
+/** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it
+  * keeps, deduplication across indexes and against the corpus and the acquisition list, a failed index,
+  * a dry run, marking — and the supervisor's rule that nothing new starts no agent run. No network. */
+class CandidateSearchSuite extends com.histmersion.db.DbSuite:
+  private val testDb = com.histmersion.db.TestDb.url
+  override def munitIgnore: Boolean = testDb.isEmpty
+
+  private lazy val cfg = { val b = AppConfig.load(); b.copy(db = b.db.copy(url = testDb.get)) }
+  private lazy val ds = { val d = testPool(cfg.db); Migrate.run(d); d }
+  private val Goal = "zzcand-goal"
+
+  /** An index answering `hits` for every query, recording the `since` it was asked. */
+  private final class FakeIndex(val name: String, hits: => Either[String, List[WorkRef]]) extends ScholarlyIndex:
+    val asked = ConcurrentLinkedQueue[(String, LocalDate)]()
+    def search(query: String, since: LocalDate, limit: Int) = { asked.add((query, since)); hits }
+
+  private final class FakeAlerts extends CitationAlerts:
+    val asked = ConcurrentLinkedQueue[String]()
+    def citing(doi: String, since: LocalDate, limit: Int) = { asked.add(s"citing $doi"); Right(List(work("10.5555/zzcand.citing"))) }
+    def authors(doi: String) = Right(List("A1", "A2", "A3"))
+    def byAuthor(authorId: String, since: LocalDate, limit: Int) = { asked.add(s"author $authorId"); Right(Nil) }
+
+  private def work(doi: String, title: String = "A work") = WorkRef(doi = Some(doi), title = Some(title), year = Some(2026))
+
+  private def fresh(): Unit =
+    import com.augustnagro.magnum.*
+    transact(ds):
+      sql"DELETE FROM goals WHERE slug = $Goal".update.run()
+      sql"DELETE FROM sources WHERE citekey LIKE 'zzcand%'".update.run()
+      sql"DELETE FROM queue_items WHERE text LIKE '%zzcand%'".update.run()
+    assert(GoalRepo.put(ds, Goal, GoalPut("Bronze Age collapse", status = "seeding")).isRight)
+    assert(GoalLinkRepo.link(ds, Goal, LinkKind.Query, "bronze age collapse", None))
+
+  private def search(idx: List[ScholarlyIndex], alerts: CitationAlerts, day: LocalDate) =
+    CandidateSearch(ds, cfg.acquire.candidates, idx, alerts, () => day)
+
+  test("a sweep stores what is new, deduplicated across indexes and against the corpus and the acquisition list"):
+    fresh()
+    SourceRepo.upsert(ds, Source("zzcand_have", "Have", Nil, Some("10.5555/zzcand.have"), Some(2020), None, SourceStatus.Current,
+      Nil, Nil, Nil, None, None, None, None, None, None), cfg.limits.chunkChars)
+    QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd("zzcand queued https://doi.org/10.5555/zzcand.queued"))
+    val oa = FakeIndex("openalex", Right(List(work("10.5555/zzcand.a"), work("10.5555/zzcand.have"), work("10.5555/zzcand.queued"))))
+    val cr = FakeIndex("crossref", Right(List(work("https://doi.org/10.5555/ZZCAND.A", "Same, other record"), work("10.5555/zzcand.b"))))
+    val day = LocalDate.of(2026, 10, 24)
+    val s = search(List(oa, cr), FakeAlerts(), day).sweep(Goal, dryRun = false).fold(e => fail(e.message), identity)
+    assertEquals((s.found, s.added, s.again, s.unseen), (5, 2, 0, 2))
+    assertEquals(s.skipped, Map("in the corpus or queued" -> 2))
+    // the first read looks back acquire.candidates.lookback-days; the watermark is today's after it
+    assertEquals(oa.asked.peek(), ("bronze age collapse", day.minusDays(cfg.acquire.candidates.lookbackDays.toLong)))
+    assertEquals(CandidateRepo.watches(ds, Goal).map(w => (w.index, w.watermark, w.lastFound)),
+      List(("crossref", Some("2026-10-24"), 2), ("openalex", Some("2026-10-24"), 3)))
+    val list = CandidateRepo.list(ds, Some(Goal), "new", 10, 0)
+    assertEquals(list.map(c => (c.doi, c.foundBy)), List(
+      "10.5555/zzcand.a" -> List("openalex query \"bronze age collapse\"", "crossref query \"bronze age collapse\""),
+      "10.5555/zzcand.b" -> List("crossref query \"bronze age collapse\"")))
+
+  test("the next sweep reads from the watermark; what it finds again is not new; a failed index keeps its watermark"):
+    fresh()
+    val oa = FakeIndex("openalex", Right(List(work("10.5555/zzcand.a"))))
+    // `var`: the second sweep finds Crossref down
+    var crFails = false
+    val cr = FakeIndex("crossref", if crFails then Left("HTTP 503") else Right(Nil))
+    val s1 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 1)).sweep(Goal, dryRun = false).toOption.get
+    assertEquals(s1.added, 1)
+    crFails = true
+    val s2 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
+    assertEquals((s2.added, s2.again, s2.unseen), (0, 1, 1))
+    assertEquals(oa.asked.toArray.toList.last, ("bronze age collapse", LocalDate.of(2026, 10, 1)))
+    val ws = CandidateRepo.watches(ds, Goal).map(w => w.index -> (w.watermark, w.lastError)).toMap
+    assertEquals(ws("openalex"), (Some("2026-10-24"), None))
+    assertEquals(ws("crossref"), (Some("2026-10-01"), Some("HTTP 503")), "a failed read skips nothing next time")
+    // the supervisor: unseen candidates → an agent run; none → no run; the search not connected → as before
+    assert(!ManagerSupervisor.nothingNew(Right(s2)))
+    assert(ManagerSupervisor.nothingNew(Right(s2.copy(unseen = 0))))
+    assert(!ManagerSupervisor.nothingNew(Left("not connected")))
+
+  test("a dry run reads but stores nothing; marking moves candidates out of the unseen"):
+    fresh()
+    val oa = FakeIndex("openalex", Right(List(work("10.5555/zzcand.a"), work("10.5555/zzcand.b"))))
+    val dry = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = true).toOption.get
+    assertEquals((dry.added, dry.unseen, dry.dryRun), (2, 0, true))
+    assertEquals(CandidateRepo.watches(ds, Goal), Nil)
+    val s = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
+    assertEquals(s.unseen, 2)
+    val ids = CandidateRepo.list(ds, Some(Goal), "new", 10, 0).map(_.id)
+    assertEquals(CandidateRepo.mark(ds, ids.take(1), "dismissed"), 1)
+    assertEquals(CandidateRepo.markDois(ds, Goal, List("10.5555/zzcand.b"), "queued"), 1)
+    assertEquals(CandidateRepo.counts(ds, Some(Goal)).map(c => c.state -> c.count).toMap, Map("queued" -> 1, "dismissed" -> 1))
+    // found again later: still decided, not new
+    val again = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 25)).sweep(Goal, dryRun = false).toOption.get
+    assertEquals((again.added, again.again, again.unseen), (0, 2, 0))
+
+  test("the goal's sources: the works citing them and their first and last authors' newer works"):
+    fresh()
+    SourceRepo.upsert(ds, Source("zzcand_src", "Source", Nil, Some("10.5555/zzcand.src"), Some(2010), None, SourceStatus.Current,
+      Nil, Nil, Nil, None, None, None, None, None, None), cfg.limits.chunkChars)
+    assert(GoalLinkRepo.link(ds, Goal, LinkKind.Source, "zzcand_src", None))
+    val alerts = FakeAlerts()
+    val s = search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
+    assertEquals(alerts.asked.toArray.toList, List("citing 10.5555/zzcand.src", "author A1", "author A3"))
+    assertEquals(s.watches.map(w => (w.kind, w.subject)), List(("citing", "10.5555/zzcand.src"), ("author", "A1"), ("author", "A3")))
+    assertEquals(CandidateRepo.list(ds, Some(Goal), "new", 10, 0).map(c => (c.doi, c.foundBy)),
+      List("10.5555/zzcand.citing" -> List("openalex citing 10.5555/zzcand.src")))
+    assert(search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep("zzcand-nowhere", dryRun = false).isLeft)

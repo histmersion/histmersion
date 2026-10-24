@@ -166,6 +166,8 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
                         AnswerSchemas.ranking)((r, last) =>
                         Scheduling.checkRanking(r, found.candidates, last).map((ps, ws) =>
                           Checked(ps.map((c, why) => Picked(c, why)), ws)))
+            // the stored candidates the ranking saw are SEEN, its picks QUEUED: a later sweep shows neither again
+            _      <- if found.stored.isEmpty then Right(0) else ctx.code[Int]("seen")(Right(markSeen(ctx, found, picks)))
             backed  = ctx.run.params.oaBacklog.contains(true) && ctx.run.managerId.isDefined
             line   <- if backed then withBacklog(ctx, goal, found, picks, allowed) else withoutBacklog(ctx, goal, found, picks, allowed)
           yield line
@@ -213,7 +215,38 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
     ManagerRepo.backlogOpen(ds).filter(i => i.state.oa.exists(_.goals.contains(goal)) || i.managerId == Managers.watchId(goal))
       .map(_.target).toSet
 
+  /** The candidates the deterministic search stored for the goal (#3761): its watches read now from their
+    * watermarks (no model), then the unseen ones; the live search below only when that search is not
+    * connected (a fixture). */
   private def discover(ctx: RunCtx, goal: String): Either[String, Found] =
+    upstream().sweepCandidates(goal, ctx.dryRun) match
+      case Left(_) => liveDiscover(ctx, goal)
+      case Right(sw) =>
+        sw.watches.filter(_.lastError.isDefined).foreach(w => ctx.warn(s"candidates: ${w.index} ${w.kind} '${w.subject}' not read — ${w.lastError.getOrElse("")}"))
+        for
+          g     <- h.getGoal(goal).left.map(_.message)
+          rows  <- upstream().candidates(goal, Candidates.State.New.wire, cfg.scheduler.sweepCandidates)
+        yield
+          val queued = queuedDois().keySet ++ backlogged(goal)
+          val (gone, open) = rows.partition(c => queued.contains(c.doi))
+          val cands = open.map(c => Candidate(c.doi, c.title, c.year, c.authors.take(4), c.venue, c.isOa,
+            c.foundBy.headOption.getOrElse("the candidate search"), c.abstractText.map(_.take(600))))
+          val queries = sw.watches.filter(_.kind == Candidates.WatchKind.Query.wire).map(_.subject).distinct
+          Found(g.title, g.notes, queries, cands,
+            sw.skipped ++ Option.when(gone.nonEmpty)("already queued" -> gone.size).toMap, stored = open.map(c => c.doi -> c.id).toMap)
+
+  /** The stored candidates shown to the ranking: the picks marked queued, the rest seen. */
+  private def markSeen(ctx: RunCtx, found: Found, picks: List[Picked]): Int =
+    val picked = picks.map(_.candidate.doi).toSet
+    val (q, s) = found.stored.toList.partition((doi, _) => picked.contains(doi))
+    ctx.write(s"candidates of goal ${ctx.run.target}: ${q.size} queued, ${s.size} seen", io.circe.Json.obj(
+        "queued" -> q.map(_._2).asJson, "seen" -> s.map(_._2).asJson))({
+      upstream().markCandidates(q.map(_._2), Candidates.State.Queued.wire).getOrElse(0) +
+        upstream().markCandidates(s.map(_._2), Candidates.State.Seen.wire).getOrElse(0)
+    })(q.size + s.size)
+
+  /** OpenAlex searched live with the goal's queries (the sweep as it was before the candidate search). */
+  private def liveDiscover(ctx: RunCtx, goal: String): Either[String, Found] =
     h.getGoal(goal).left.map(_.message).map { g =>
       val queries = Some(GoalLinkRepo.refs(ds, goal, LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(g.title))
       val found = queries.flatMap { q =>
@@ -295,8 +328,9 @@ final class AcquisitionSweepPipeline(protected val h: Handlers, protected val ds
     }
 
 object AcquisitionSweepPipeline:
+  /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
   final case class Found(title: String, notes: Option[String], queries: List[String], candidates: List[Candidate],
-      skipped: Map[String, Int]) derives KindlingsCodecAsObject
+      skipped: Map[String, Int], stored: Map[String, Long] = Map.empty) derives KindlingsCodecAsObject
   final case class Picked(candidate: Candidate, why: String) derives KindlingsCodecAsObject
   /** A pick the watcher's auto-ingest brought in (`citekey` the new source's). */
   final case class Ingested(doi: String, citekey: String) derives KindlingsCodecAsObject

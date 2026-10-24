@@ -89,5 +89,27 @@ object AcquireApi:
   val calibrePushed: PublicEndpoint[CalibrePushRequest, ApiError, CalibrePushResult, Any] =
     base.post.in("calibre" / "pushed").in(jsonBody[CalibrePushRequest]).out(jsonBody[CalibrePushResult])
 
+  // ── deterministic new-source search (#3761) ──────────────────────────────────────────────────
+
+  /** `GET /api/acquire/candidates?goal=&state=&limit=&offset=` — the works found for a goal (or every
+    * goal), by state (`new` by default: the unseen ones), with the counts per state. */
+  val candidates: PublicEndpoint[(Option[String], Option[String], Option[Int], Option[Int]), ApiError, CandidateList, Any] =
+    base.get.in("candidates")
+      .in(query[Option[String]]("goal"))
+      .in(query[Option[String]]("state"))
+      .in(query[Option[Int]]("limit"))
+      .in(query[Option[Int]]("offset"))
+      .out(jsonBody[CandidateList])
+
+  /** `POST /api/acquire/candidates/sweep` — read every watch of a goal from its watermark (no model):
+    * new candidates are stored, the watermarks moved (a dry run stores neither). */
+  val sweepCandidates: PublicEndpoint[CandidateSweepRequest, ApiError, CandidateSweep, Any] =
+    base.post.in("candidates" / "sweep").in(jsonBody[CandidateSweepRequest]).out(jsonBody[CandidateSweep])
+
+  /** `POST /api/acquire/candidates/mark` — set candidates' state (seen, queued, dismissed, new). */
+  val markCandidates: PublicEndpoint[CandidateMark, ApiError, CandidateMarked, Any] =
+    base.post.in("candidates" / "mark").in(jsonBody[CandidateMark]).out(jsonBody[CandidateMarked])
+
   val all = List(discover, meta, wikirefs, refs, assess, updateRetractions, followups, ingest,
-    archiveSearch, archiveInfo, archiveImport, calibreGaps, calibrePushed, retractionsStatus, calibreMeta)
+    archiveSearch, archiveInfo, archiveImport, calibreGaps, calibrePushed, retractionsStatus, calibreMeta,
+    candidates, sweepCandidates, markCandidates)

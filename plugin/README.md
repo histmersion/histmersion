@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **72 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **73 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -117,6 +117,7 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `job_status` | where an OCR job got to (`queued\|running\|done\|failed`) |
 | `assets` | the figures stored with a source and the URLs they are served at |
 | `archive` | Internet Archive: search, inspect, import **public** texts only |
+| `candidates` | new sources found for the goals without a model: list the unseen, mark decisions, sweep a goal's watches |
 | `refs` | the reference list a paper deposited with Crossref, resolved against the corpus |
 | `assess` | retraction / correction / impact verdict, from Retraction Watch + Crossref notices + metrics |
 | `followups` | the citation graph forward: citing papers with intents and a proposed edge kind |

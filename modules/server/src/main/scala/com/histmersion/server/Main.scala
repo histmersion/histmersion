@@ -146,7 +146,9 @@ object Main:
       wiki = clients.peek.wiki,
       archive = clients.peek.archive,
       retractionWatch = clients.peek.retractionWatch,
-      jobs = QueuedIngest(h.ingest, deps.ds, deps.cfg.limits.chunkChars, deps.cfg.places.pointToleranceKm))
+      jobs = QueuedIngest(h.ingest, deps.ds, deps.cfg.limits.chunkChars, deps.cfg.places.pointToleranceKm),
+      indexes = clients.peek.indexes,
+      alerts = clients.peek.alerts)
 
   /** The acquisition clients for one config and one plugin generation: one HTTP client (`acquire.tls`
     * included), the upstream clients built over it, and the chain of the generation's source fetchers
@@ -165,8 +167,9 @@ object Main:
     scribe.info(chain.plan match
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")
+    val (indexes, alerts) = Indexes.of(cfg, http)
     AcquireClients(openalex, SemanticScholar(cfg, http, openalex), chain, Wikipedia(cfg, http),
-      ArchiveOrg(cfg, http), RetractionWatch(cfg, http))
+      ArchiveOrg(cfg, http), RetractionWatch(cfg, http), indexes, alerts)
 
   def main(args: Array[String]): Unit =
     // the command line first: an argument the server does not know ends it HERE, before the config, the

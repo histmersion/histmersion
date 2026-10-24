@@ -4,7 +4,7 @@ The MCP endpoint is `<public-url>/mcp` (by default `http://localhost:8000/mcp`).
 assistant: [Using your AI assistant](../ai-assistant.md). Every tool runs the same handler as the
 matching REST endpoint and CLI command, and returns Markdown.
 
-**72 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**73 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -60,6 +60,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `job_status` | where an OCR job got to — `queued\|running\|done\|failed`, its progress line or the reason it failed. No `id` lists recent jobs, filtered on the server by `status`, `kind` (`ingest`, `reocr`, `agent`, `media-import`, …), `since` / `until` (`2026-10-01`, an ISO instant, or `7d` / `12h` ago) and `subject` (text in what a job is about), headed `Latest N of M` when there are more and with a `By kind:` line of counts; `before: <id of the last job shown>` lists the next older page (with the same filters). |
 | `assets` | the figures stored with a source: name, mime, pixel size, and the URL each is served at. |
 | `archive` | Internet Archive for out-of-print books: search, inspect, import. **Public items only** — a lending-only scan is refused. |
+| `candidates` | **new sources found for the research goals without a model** (#3761): each goal's saved queries on OpenAlex, Crossref, Europe PMC, arXiv (CORE with a key), the works citing its sources and its sources' authors' newer works, read from each watch's watermark and deduplicated by DOI against the corpus and the acquisition list. Lists the `new` candidates (of `goal`, or every goal; `state` for the others); `mark` + `as` records a decision (seen, queued, dismissed); `sweep: true` reads a goal's watches now (`dryRun`). |
 | `refs` | the reference list a paper deposited with Crossref, resolved against the corpus; `apply: true` writes them as `references` edges. |
 | `assess` | **before citing anything unchecked.** Retraction Watch + Crossref amendment notices + citation metrics → `retracted\|corrected\|current\|low-impact\|unassessed`; `apply: true` writes the verdict into `status`. `updateRetractions: true` refreshes the local mirror — **do that first, the mirror starts empty**. |
 | `followups` | what came AFTER a paper: citing works with Semantic Scholar intents, influence flags and citation contexts, each with a proposed edge kind. A live network call — seconds per source. |

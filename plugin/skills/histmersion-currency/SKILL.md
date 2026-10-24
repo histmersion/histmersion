@@ -117,6 +117,17 @@ honest state of most live debates. Do not skip it for `debunked`.
 
 ### 6. Find what the corpus is missing
 
+When the topic is a research goal, its watches have looked already (no model): the goal's saved queries on
+OpenAlex, Crossref, Europe PMC and arXiv, the works citing its sources and its sources' authors' newer
+works, each read from the day it was last read. Start with what they found and nobody has decided yet:
+
+```
+candidates {goal:"<goal>"}                       # the unseen; histmersion candidates --goal <goal>
+candidates {mark:[12, 15], as:"dismissed"}        # record each decision, so no sweep offers it again
+```
+
+Otherwise, or for more:
+
 ```
 discover {query:"<topic>", since:2023, notInDb:true, limit:20}
 ```
