@@ -295,7 +295,7 @@ val relinkKit = taskKey[File]("Write the relink kit: the Sloth-patched class pat
 // The plugin platform (modules/plugin-api/plugin-platform.txt): the libraries the server provides to plugins.
 val pluginPlatformContract = file("modules") / "plugin-api" / "plugin-platform.txt"
 val pluginPlatform = taskKey[Seq[PluginRepo.Library]]("The plugin platform's libraries at the versions the server resolves")
-val pluginRepo = taskKey[File]("Write the Maven repository an install ships for plugin authors: plugin-api and plugin-platform")
+val pluginRepo = taskKey[File]("Write the Maven repository an install ships for plugin authors: plugin-api, plugin-platform and plugin-testkit")
 
 // NOTE: `Compile / mainClass` is set inline in each project, NOT here — sbt 2 identifies settings by
 // source position, so a `:=` inside a shared def would make the last caller win for every project.
@@ -691,6 +691,17 @@ lazy val server = project
       writeMavenArtifact(repo, api, (pluginApi / scalaBinaryVersion).value, conv.toPath((pluginApi / makePom).value).toFile,
         Seq("" -> conv.toPath((pluginApi / Compile / packageBin).value).toFile,
           "sources" -> conv.toPath((pluginApi / Compile / packageSrc).value).toFile))
+      // the testkit a plugin's tests depend on, with what it needs of Histmersion's own modules: the plugin
+      // host it runs and core, whose settings (reference.conf) give it the server's User-Agent, timeouts
+      // and TLS trust. Their other dependencies are ordinary Maven Central libraries their POMs name.
+      def module(id: ModuleID, pom: File, jar: File, sources: File): Unit =
+        writeMavenArtifact(repo, id, scalaBinaryVersion.value, pom, Seq("" -> jar, "sources" -> sources))
+      module((pluginTestkit / projectID).value, conv.toPath((pluginTestkit / makePom).value).toFile,
+        conv.toPath((pluginTestkit / Compile / packageBin).value).toFile, conv.toPath((pluginTestkit / Compile / packageSrc).value).toFile)
+      module((pluginHost / projectID).value, conv.toPath((pluginHost / makePom).value).toFile,
+        conv.toPath((pluginHost / Compile / packageBin).value).toFile, conv.toPath((pluginHost / Compile / packageSrc).value).toFile)
+      module((coreJVM / projectID).value, conv.toPath((coreJVM / makePom).value).toFile,
+        conv.toPath((coreJVM / Compile / packageBin).value).toFile, conv.toPath((coreJVM / Compile / packageSrc).value).toFile)
       val platformName = s"histmersion-plugin-platform_${scalaBinaryVersion.value}"
       val pom = PluginRepo.platformPom(api.organization, platformName, api.revision,
         "The libraries Histmersion provides to plugins, at the versions it ships: depend on it compile-only",

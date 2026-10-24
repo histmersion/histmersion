@@ -1,4 +1,6 @@
-package com.histmersion.plugin.testkit
+package com.histmersion.plugin.testkit.internal
+
+import com.histmersion.plugin.testkit.{HttpMode, UnrecordedRequest}
 
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 

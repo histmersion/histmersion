@@ -1,5 +1,7 @@
 package com.histmersion.plugin.testkit
 
+import com.histmersion.plugin.testkit.internal.RecordedExchange
+
 import java.nio.file.{Files, Path}
 
 /** Where a [[PluginHarness]]'s requests go. Whatever the mode, every request passes through the
