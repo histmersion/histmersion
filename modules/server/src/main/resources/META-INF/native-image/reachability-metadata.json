@@ -1156,6 +1156,14 @@
       ]
     },
     {
+      "type": "com.histmersion.core.AgentsConfig$package$",
+      "fields": [
+        {
+          "name": "given_ConfigReader_ScheduledRefresh$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.Api$",
       "fields": [
         {
@@ -1692,6 +1700,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy47"
+        },
+        {
+          "name": "derived$ConfigReader$lzy48"
         }
       ]
     },
@@ -2562,6 +2573,14 @@
       ]
     },
     {
+      "type": "com.histmersion.core.BasemapGebcoConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy29"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.BasemapLabelsConfig$",
       "fields": [
         {
@@ -2603,6 +2622,17 @@
       ]
     },
     {
+      "type": "com.histmersion.core.BasemapRegion$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "given_Schema_BasemapRegion$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.BasemapRemoved$",
       "fields": [
         {
@@ -2610,6 +2640,9 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
         },
         {
           "name": "given_Schema_BasemapRemoved$lzy1"
@@ -2635,6 +2668,9 @@
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
         },
         {
           "name": "given_Schema_BasemapStyleState$lzy1"
@@ -2697,6 +2733,70 @@
       ]
     },
     {
+      "type": "com.histmersion.core.BundleAlias$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleArticle$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleArticleAlias$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy26"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleArticleVersion$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleAssessment$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleAsset$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy10"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleAssetLink$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy11"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleAttestation$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy12"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.BundleBlobs$",
       "fields": [
         {
@@ -2714,6 +2814,62 @@
       ]
     },
     {
+      "type": "com.histmersion.core.BundleCorrection$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy20"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleEdge$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleEvent$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy16"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleEventAlias$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy27"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleEventCandidate$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy18"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleEventCatalogue$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy17"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleEventCheck$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy19"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.BundleFileInfo$",
       "fields": [
         {
@@ -2727,6 +2883,30 @@
         },
         {
           "name": "given_Schema_BundleFileInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleFinding$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleGoal$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy24"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleGoalAlias$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy28"
         }
       ]
     },
@@ -2813,6 +2993,38 @@
       ]
     },
     {
+      "type": "com.histmersion.core.BundlePeriod$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy35"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundlePlace$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy34"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundlePlaceAlias$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy29"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleQueueItem$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy25"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.core.BundleReference$",
       "fields": [
         {
@@ -2826,6 +3038,38 @@
         },
         {
           "name": "given_Schema_BundleReference$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleSiteType$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy21"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleSource$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleTombstone$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy36"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.core.BundleUnresolvedEdge$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
         }
       ]
     },
@@ -3217,6 +3461,9 @@
           "name": "given_ConfigReader_Long$lzy1"
         },
         {
+          "name": "given_ConfigReader_SeaFloorSource$lzy1"
+        },
+        {
           "name": "given_ConfigReader_TimeConfig$lzy1"
         },
         {
@@ -3252,6 +3499,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy29"
+        },
+        {
+          "name": "derived$ConfigReader$lzy30"
         }
       ]
     },
@@ -4262,6 +4512,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy40"
+        },
+        {
+          "name": "derived$ConfigReader$lzy41"
         }
       ]
     },
@@ -4291,6 +4544,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy41"
+        },
+        {
+          "name": "derived$ConfigReader$lzy42"
         }
       ]
     },
@@ -4320,6 +4576,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy45"
+        },
+        {
+          "name": "derived$ConfigReader$lzy46"
         }
       ]
     },
@@ -4349,6 +4608,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy44"
+        },
+        {
+          "name": "derived$ConfigReader$lzy45"
         }
       ]
     },
@@ -4378,6 +4640,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy42"
+        },
+        {
+          "name": "derived$ConfigReader$lzy43"
         }
       ]
     },
@@ -4418,6 +4683,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy43"
+        },
+        {
+          "name": "derived$ConfigReader$lzy44"
         }
       ]
     },
@@ -6022,6 +6290,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy36"
+        },
+        {
+          "name": "derived$ConfigReader$lzy37"
         }
       ]
     },
@@ -6048,6 +6319,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy34"
+        },
+        {
+          "name": "derived$ConfigReader$lzy35"
         }
       ]
     },
@@ -6074,6 +6348,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy32"
+        },
+        {
+          "name": "derived$ConfigReader$lzy33"
         }
       ]
     },
@@ -6114,6 +6391,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy38"
+        },
+        {
+          "name": "derived$ConfigReader$lzy39"
         }
       ]
     },
@@ -6171,6 +6451,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy35"
+        },
+        {
+          "name": "derived$ConfigReader$lzy36"
         }
       ]
     },
@@ -6234,6 +6517,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy39"
+        },
+        {
+          "name": "derived$ConfigReader$lzy40"
         }
       ]
     },
@@ -6307,6 +6593,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy37"
+        },
+        {
+          "name": "derived$ConfigReader$lzy38"
         }
       ]
     },
@@ -6397,6 +6686,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy33"
+        },
+        {
+          "name": "derived$ConfigReader$lzy34"
         }
       ]
     },
@@ -7012,6 +7304,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy31"
+        },
+        {
+          "name": "derived$ConfigReader$lzy32"
         }
       ]
     },
@@ -8522,6 +8817,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy30"
+        },
+        {
+          "name": "derived$ConfigReader$lzy31"
         }
       ]
     },
@@ -8664,6 +8962,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy46"
+        },
+        {
+          "name": "derived$ConfigReader$lzy47"
         }
       ]
     },
@@ -9436,6 +9737,86 @@
       "fields": [
         {
           "name": "given_DbCodec_Row$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.db.BundleRepo$package$",
+      "fields": [
+        {
+          "name": "given_DbCodec_BArticleRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BAssessmentRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BAssetRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BAttestationFullRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BCandidateRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BCatalogueRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BDatingRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BEventEdgeRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BEventRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BFindingRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BGoalLinkRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BGoalRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BGoalScheduleRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BParticipantRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BPeriodRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BPlaceNameRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BPlaceRelRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BPlaceRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BPlaceTypeRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BQueueRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BSourceRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BTombstoneRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BVersionRow$lzy1"
+        },
+        {
+          "name": "given_DbCodec_BundleCorrection$lzy1"
+        },
+        {
+          "name": "given_DbCodec_InstanceInfo$lzy1"
         }
       ]
     },
