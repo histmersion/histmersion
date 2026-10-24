@@ -224,7 +224,9 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
         install.env) match
       case Right(report) => Right(report.linesIterator.map(_.trim).filter(_.nonEmpty).toList)
       case Left((2, e))  =>
-        Left(err(s"refused:\n${e.linesIterator.map(_.trim).filter(_.nonEmpty).map("  - " + _.stripPrefix("refused: ")).mkString("\n")}"))
+        val reasons = e.linesIterator.map(_.trim).filter(_.startsWith("refused:")).map(_.stripPrefix("refused:").trim).toList
+        val shown   = if reasons.nonEmpty then reasons else e.linesIterator.map(_.trim).filter(_.nonEmpty).toList
+        Left(err(s"refused:\n${shown.map("  - " + _).mkString("\n")}"))
       case Left((_, e))  => Left(err(s"the plugin's dependencies could not be resolved: $e"))
 
   /** Resolve the dependencies of every installed plugin into `lib/` again, after the set changed. The
@@ -239,16 +241,28 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
     * `<id>-<version>.jar` (replacing an older version of the same plugin), its POM beside it and its
     * dependencies in `lib/`. */
   def add(arg: String, o: AddOptions): Either[CliError, PluginJar] =
-    Files.createDirectories(install.staging)
-    val pid   = ProcessHandle.current().pid()
-    val stage = install.staging.resolve(s"add-$pid.jar")
+    PluginKit.origin(arg, a => Files.isRegularFile(Path.of(a))).left.map(err(_, ExitCode.Usage)).flatMap(addFrom(_, o))
+
+  /** The name the plugin is staged under: the one it is published with, which the resolver's report
+    * and refusals name. */
+  private def stagedName(origin: Origin): String =
+    val raw = origin match
+      case Origin.File(path) => Option(Path.of(path).getFileName).map(_.toString).getOrElse("plugin.jar")
+      case Origin.Url(url)   => url.split('/').lastOption.filter(_.endsWith(".jar")).getOrElse("plugin.jar")
+      case Origin.Maven(c)   => s"${c.artifact}-${c.version}.jar"
+    raw.replaceAll("[^A-Za-z0-9._+\\-]", "_")
+
+  private def addFrom(origin: Origin, o: AddOptions): Either[CliError, PluginJar] =
+    val work  = install.staging.resolve(s"add-${ProcessHandle.current().pid()}")
+    deleteTree(work)
+    Files.createDirectories(work)
+    val stage = work.resolve(stagedName(origin))
     val asc   = Path.of(stage.toString + ".asc")
-    val lib   = install.staging.resolve(s"lib-$pid")
+    val lib   = work.resolve("lib")
     val repos = repositories(o)
     val verifying = install.signingOn || o.verify
     try
       for
-        origin <- PluginKit.origin(arg, a => Files.isRegularFile(Path.of(a))).left.map(err(_, ExitCode.Usage))
         source <- fetch(origin, stage, wantAsc = verifying, repos)
         sha     = sha256(stage)
         _ <- o.sha256.map(_.trim.toLowerCase).filter(_ != sha)
@@ -286,11 +300,7 @@ final class PluginOps(install: LocalInstall, cfg: CliPluginsConfig, run: Runner 
         resign()
         out(s"installed $target")
         jar.copy(file = name)
-    finally
-      val _ = Files.deleteIfExists(stage)
-      val _ = Files.deleteIfExists(asc)
-      val _ = Files.deleteIfExists(pomOf(stage))
-      deleteTree(lib)
+    finally deleteTree(work)
 
   private def deleteTree(dir: Path): Unit =
     if Files.isDirectory(dir) then
