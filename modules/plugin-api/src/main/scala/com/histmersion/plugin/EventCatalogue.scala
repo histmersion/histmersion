@@ -1,6 +1,6 @@
 package com.histmersion.plugin
 
-/** Event catalogues, the third part of the app that plugins extend (docs/research-plugins.md §6): a
+/** Event catalogues, the third part of the app that plugins extend: a
   * catalogue of events — eruptions, earthquakes, battles, treaties — that `histmersion events import <id>`
   * reads into the map as RESEARCH LEADS (drawn lighter than the events a source in the corpus attests).
   * A plugin adds one or more [[EventCatalogue]]s to [[PluginContext.eventCatalogues]].
