@@ -582,7 +582,8 @@ Each plugin is one jar, `<id>-<version>.jar`, carrying:
 - its defaults in `META-INF/histmersion/plugins/<id>.conf`;
 - its metadata in `META-INF/native-image/<group>/<artifact>/reachability-metadata.json`.
 
-Dependencies beyond what the host ships are **shaded into the jar**. The image has one class loader
+Dependencies beyond what the host ships are **shaded into the jar** (superseded: since §24 a plugin
+declares them in its POM and they are installed beside it). The image has one class loader
 and no isolation, so a second circe on the classpath is a conflict, not a choice. The relink refuses
 a jar that duplicates a class already on the kit classpath. Config goes in `histmersion.conf` under
 `histmersion.plugins.<id>`.
@@ -1492,7 +1493,8 @@ provisions (a full JDK), or any JDK of the pinned major via `HISTMERSION_JAVA_HO
   terminal and no `--yes` = not installed) — and installs it as `<id>-<version>.jar` (§7.1's name),
   replacing another version of the same plugin. `<data>/plugins/index.json` records where each jar came
   from, when, what it holds and its signer; a dropped-in jar has no entry and is still part of the set.
-- **Maven (D8) without coursier.** §7.2 planned coursier's launcher on the bundled JDK. A plugin shades
+- **Maven (D8) without coursier** (superseded by §24, which resolves plugin POMs with coursier). §7.2
+  planned coursier's launcher on the bundled JDK. A plugin shades
   every dependency the host does not ship (§7.1), so there is exactly one artifact to resolve: `PluginOps`
   fetches `<repo>/<group path>/<artifact>/<version>/<artifact>-<version>.jar` from each repository of
   `cli.plugins.maven-repos` in turn (default Maven Central) with curl, and checks it against the
@@ -2330,3 +2332,83 @@ other built-ins (`ai-…` sort first).
 **Not done.** A provider-run loop for third-party CLIs, plugin plan pools and moving the built-ins out of
 the server (§22.7); a run that is mid-step during a reload is pinned by §17's mechanism (HotGraphSuite
 covers the pin; no agents-on test server exists, §17 "Not done"), not by a test of its own.
+
+## 24. As built (plugin dependencies without shading, 2026-10-24)
+
+Shading made every plugin author repeat the same work (an assembly build, relocations), could not be done
+with scala-cli at all, and shipped a second copy of any library the server also has under another
+package. The plugin's libraries are now ordinary Maven dependencies, resolved at install time together
+with what the server ships.
+
+**What a plugin compiles against.** The bundle carries a Maven repository, `maven/` (`server/pluginRepo`,
+copied by `scripts/bundle/server.sh`; `histmersion plugin repo [--url]`), with two artifacts at the build's
+version: `com.kubuszok::histmersion-plugin-api` (jar, sources, POM: sconfig and kindlings' sconfig
+derivation) and `com.kubuszok::histmersion-plugin-platform`, a POM-only artifact whose dependencies are the
+libraries the server provides to plugins, at the versions the server's runtime class path resolves
+(`Runtime / update`, not `V.*`: an eviction can raise one). Third-party jars still come from Maven
+Central; only Histmersion's own artifacts live in the local repository. A release attaches the repository
+as `histmersion-maven-<tag>.zip`. The template (`plugin new`) uses `//> using repository`, both artifacts
+as `compileOnly.dep` (and `test.dep`, since the tests run the plugin), and `publish.*` directives; the
+loop is `scala-cli --power publish . --publish-repository ./repo` → `plugin add <org>::<id>:<v> --repo
+./repo`. scala-cli resolves a POM-only dependency's dependencies transitively and leaves compile-only
+ones out of the published POM (checked with scala-cli 1.18). `--api-jar` became `--repo <dir|url>`.
+
+**The platform is a contract.** `modules/plugin-api/plugin-platform.txt` lists the libraries and
+versions (Scala library, sconfig, kindlings sconfig/circe/tapir-schema derivation, circe core/parser,
+cats, sttp client 4, tapir core/circe, ox, iron). The build takes the list from that file and the
+versions from the server's resolution; `PluginPlatformSuite` fails when they differ or a library is no
+longer shipped, so a dependency upgrade that changes what plugins compile against is acknowledged by
+editing the file (and named in the release notes).
+
+**Resolution (`modules/plugin-resolver`).** coursier's Java API (`io.get-coursier:interface`, one shaded
+jar, its slf4j-api left to the kit's), run on the JVM from `kit/tools/resolver/` beside `kit/lib`. It is
+not a dependency of the server: the jar carries legacy native-image configuration of its own, which the
+server's image must not read. The kit records `kit/modules` (every module of the server's runtime
+resolution, `group:artifact:version`) and `kit/excludes` (the build-wide exclusions). For a set of plugin
+jars, each with its POM (beside the jar, `x-1.0.pom`, or the single `META-INF/maven/**/pom.xml` inside it;
+none = no dependencies):
+
+1. the plugins are laid out as a scratch Maven repository at the coordinates their POMs state, so coursier
+   reads their POMs (parents, properties, dependency management) like any other;
+2. each plugin is resolved **alone**; a module the server ships at an OLDER version than the plugin's
+   resolution chose is a conflict, refused with the library and both versions (an older or equal version
+   is no conflict: resolved together, the server's would be chosen, as Maven chooses the newest);
+3. all plugins are resolved **together with the server's modules excluded** — the server's copy of each,
+   and everything it depends on, is on the class path already. Forcing the shipped versions instead was
+   tried first: it made coursier fetch the POM of every shipped module the plugin touched, network for
+   nothing;
+4. what remains (not a plugin, not shipped, with a jar) is written to `<data>/plugins/lib/` as
+   `<group>-<file>` (two groups publish `core_3-1.0.2.jar`), with `classpath` (the order), `inputs`
+   (`<sha256>  <file>` of each plugin jar and POM) and `repositories` (the ones named, merged with the ones
+   kept from earlier runs). Exit codes 0 / 1 usage / 2 refused / 3 failed.
+
+**Where it runs.** `histmersion-relink --resolve [--lib] [--repo]… [--check] [<jar>…]` (kit-common
+`hk_resolve`, with the install's `maven/` first). `plugin add` fetches the POM with the jar (Maven: required
+and checksum-checked; a path or URL: the `.pom` beside it when there is one), resolves the staged plugin
+into a staging `lib/`, describes it with that `lib/` on its class loader (PluginTool `describe --lib`),
+shows the dependency lines, and after installing (the POM beside the jar) resolves the whole directory into
+`plugins/lib`; `plugin rm` resolves again. The relink's pre-flight resolves first, then `check --lib`
+(duplicate classes across kit, dependencies and plugins), `plugin-set --lib`, the JVM self-check with
+`lib/` on the class path, Sloth over the dependency jars, and native-image with them after the plugin
+jars. `histmersion-server-jvm` resolves again only when `lib/inputs` differs from the directory. The
+build record's plugin fingerprint covers the POMs; the signed plugins manifest covers the POMs and
+`lib/`'s jars (both unchanged for a directory with neither).
+
+**A missing class.** A plugin class that needs a class no jar has threw `NoClassDefFoundError`, a
+`LinkageError` that `NonFatal` does not catch: discovery, config decoding and `register` let it escape.
+They catch it now, and the plugin fails alone with "class X is missing: the plugin uses a library that is
+neither part of Histmersion nor installed with it — install the plugin with `histmersion plugin add`
+from a jar published with its POM" (`PluginHost.failure`; PluginTool's describe uses it too).
+
+**Tests.** `pluginResolver` suites resolve offline from a fixture repository (`pluginHelloDeps/fixturesRepo`:
+`hello-deps`, whose POM lists `hello-lib` and plugin-api as `provided`); PluginToolSuite describes
+`hello-deps` with and without its `lib/`; PluginHostSuite fails a plugin on a `NoClassDefFoundError`;
+PluginCmdSuite covers `add` with a POM, the refusal, `--repo` and `rm`; relink-test and kit-scripts-test
+cover `--resolve`, the pre-flight, Sloth and native-image arguments and the JVM launcher's re-resolution;
+`smoke.sh` relinks a real bundle with `hello` and `hello-deps`, installed by coordinates from the fixture
+repository.
+
+**Not done.** The plugin-set digest (and so `plugin status`) still covers the plugin jars only, not their
+POMs or `lib/`: a changed POM beside an unchanged jar shows no REBUILD NEEDED (the build record does
+notice it). A plugin's dependencies are not isolated from each other's versions beyond coursier's
+newest-wins choice across plugins.

@@ -1,35 +1,56 @@
 # Developing plugins
 
-This page is for programmers. A plugin is a Scala 3 library, packaged as one jar, that the server
-discovers when it starts. You can write one without a copy of Histmersion's source code: the install
-on your computer has everything a plugin compiles against, and `histmersion plugin new` writes a
-working project to start from.
+This page is for programmers. A plugin is a Scala 3 library, published as a jar with a POM, that
+the server discovers when it starts. You can write one without a copy of Histmersion's source code: the install
+on your computer has everything a plugin compiles against, in a Maven repository of its own, and
+`histmersion plugin new` writes a working project to start from.
 
 ## Where the plugin API comes from
 
-Histmersion is an application, not a library, so its plugin API is **not published to a Maven
-repository**: there is no `libraryDependencies += …` line to copy. You compile against the API jar
-that comes with Histmersion instead.
+Histmersion is an application, not a library, so its plugin API is **not published to Maven
+Central**. Instead, every install carries a small **Maven repository** of its own, in `maven/`, and a
+plugin build reads from it as it reads from any other repository:
 
-- **From your install.** Every install carries the API and its sources (with the documentation of every
-  type) in `plugin-api/`:
+```bash
+histmersion plugin repo          # …/Histmersion/maven
+histmersion plugin repo --url    # file:///…/Histmersion/maven/ — for a build's repository list
+```
 
-    ```bash
-    histmersion plugin api-jar             # …/Histmersion/plugin-api/histmersion-plugin-api.jar
-    histmersion plugin api-jar --sources   # …/Histmersion/plugin-api/histmersion-plugin-api-sources.jar
-    ```
+It holds two artifacts, both at the version of your Histmersion:
 
-    The file names stay the same when you upgrade Histmersion, so a project that points at them
-    compiles against the new API after an upgrade. The jar's version is in its manifest
-    (`Implementation-Version`).
+- **`com.kubuszok::histmersion-plugin-api`**: the API a plugin compiles against, with its sources
+  (the documentation of every type) and a POM.
+- **`com.kubuszok::histmersion-plugin-platform`**: no code, only a POM. Its dependencies are the
+  libraries the server provides to plugins, at exactly the versions it ships (below).
 
-- **From a release.** Each tagged release on GitHub carries the same two files as
-  `histmersion-plugin-api-<version>.jar` and `histmersion-plugin-api-<version>-sources.jar`, for
-  building a plugin on a computer where Histmersion is not installed.
+A plugin depends on both **compile-only**: the server provides them at run time, so they are never
+packed into the plugin and never listed as its dependencies. Everything else comes from Maven Central
+as usual.
 
-Besides the API, a plugin needs the two libraries the API itself uses, which are on Maven Central:
-sconfig and kindlings' sconfig derivation. The server provides all three at run time, so they are
-never packed into your plugin's jar.
+On a computer where Histmersion is not installed, use the repository from a release: each tagged
+release on GitHub carries it as `histmersion-maven-<version>.zip` (unzip it and name its `maven/`
+directory wherever this page uses the install's), and the API jars on their own as
+`histmersion-plugin-api-<version>.jar` and `-sources.jar`.
+
+### The plugin platform
+
+The libraries the server provides to plugins, and so the ones a plugin may use without installing
+anything:
+
+| library | what for |
+|---|---|
+| Scala 3 standard library | the language |
+| sconfig, kindlings sconfig derivation | settings (the API is built on them) |
+| circe (core, parser), kindlings circe derivation | JSON |
+| cats | functional data types (circe uses it) |
+| sttp client 4 | HTTP models (for requests, still use `ctx.http`) |
+| tapir (core, circe JSON), kindlings tapir schema derivation | endpoint and schema descriptions |
+| ox | direct-style concurrency |
+| iron | refined types |
+
+The exact versions are in the platform's POM, and in {{ repo_file("modules/plugin-api/plugin-platform.txt") }}.
+The list is part of the plugin compatibility contract, like the SPI version: a release that changes
+one of these versions says so, because a plugin built against the old version may need rebuilding.
 
 ## Your first plugin, with scala-cli
 
@@ -44,8 +65,8 @@ histmersion plugin new my-events --kind event-catalogue   # or another kind
 
 The kinds are `source-fetcher` (the default), `media-collection`, `event-catalogue`, `ai-provider` and
 `secret-vault`. Each writes a small plugin of that kind that works as written. `--dir` chooses
-another directory, `--package` another Scala package, and `--api-jar <path>` a downloaded API jar
-instead of the install's (a `-sources.jar` beside it is used too).
+another directory, `--package` another Scala package, and `--repo <directory or URL>` another Maven
+repository with the plugin API and platform than the install's (one unzipped from a release).
 
 What it writes, for `doi-mirror`:
 
@@ -53,6 +74,7 @@ What it writes, for `doi-mirror`:
 |---|---|
 | `DoiMirror.scala` | the plugin: its settings, the `Plugin` class and the source fetcher it adds |
 | `DoiMirror.test.scala` | its tests, and checks of what the jar must carry |
+| `.gitignore` | keeps the build's output and the published `repo/` out of version control |
 | `resources/META-INF/services/com.histmersion.plugin.Plugin` | names the plugin class, so the server can find it (Java's ServiceLoader reads it). Rename the class and you must rename it here too; a test checks it |
 | `resources/META-INF/histmersion/plugins/doi-mirror.conf` | the plugin's settings and their defaults |
 | `resources/META-INF/native-image/…/reachability-metadata.json` | what the server's native binary must be told about the plugin (see [Native image](#native-image)) |
@@ -61,24 +83,28 @@ The two Scala files are the ones you edit. The top of `DoiMirror.scala` is the b
 
 ```scala
 //> using scala 3.10.0
-//> using jar "/Users/you/Applications/Histmersion/plugin-api/histmersion-plugin-api.jar"
-//> using sourceJar "/Users/you/Applications/Histmersion/plugin-api/histmersion-plugin-api-sources.jar"
-//> using dep org.ekrich::sconfig:2.1.0
-//> using dep com.kubuszok::kindlings-sconfig-derivation:0.3.3
+//> using repository file:///Users/you/Applications/Histmersion/maven/
+//> using compileOnly.dep com.kubuszok::histmersion-plugin-api:0.1.0-SNAPSHOT
+//> using compileOnly.dep com.kubuszok::histmersion-plugin-platform:0.1.0-SNAPSHOT
 //> using resourceDir resources
+//> using publish.organization doimirror
+//> using publish.name doi-mirror
+//> using publish.version 0.1.0
 ```
 
-The Scala version and the two libraries are the ones your Histmersion runs; keep them when you edit.
-The test file adds munit with `//> using test.dep org.scalameta::munit:…`.
+The Scala version and the two Histmersion artifacts are the ones your Histmersion runs; keep them when
+you edit. The test file adds munit, and the same two artifacts as test dependencies, since the tests
+run the plugin. The `publish` lines name the plugin when you publish it: change the organization to
+your own (a reversed domain name, say) and keep the version equal to the one in `PluginInfo`.
 
 The loop:
 
 ```bash
 cd doi-mirror
-scala-cli test .                                             # compile, run the tests
-scala-cli --power package --library . -o doi-mirror.jar -f   # the plugin jar
-histmersion plugin add ./doi-mirror.jar                      # shows what it adds, then installs it
-histmersion plugin rebuild                                   # link it into the server
+scala-cli test .                                                  # compile, run the tests
+scala-cli --power publish . --publish-repository ./repo          # the jar and its POM
+histmersion plugin add doimirror::doi-mirror:0.1.0 --repo ./repo  # shows what it adds and needs, then installs it
+histmersion plugin rebuild                                        # link it into the server
 ```
 
 Then turn it on in `histmersion.conf` and reload the settings:
@@ -92,16 +118,37 @@ histmersion config reload
 histmersion about          # doi-mirror 0.1.0 — registered (source-fetcher:doi-mirror)
 ```
 
-`package --library` makes a jar of your classes and resources only: no Scala library, no plugin API,
-no sconfig or kindlings. That is what the server expects, since it provides all of those.
+`publish` writes a Maven repository in `./repo`: the plugin jar (your classes and resources only), a
+sources jar, and a **POM**, the file that lists the plugin's dependencies. The compile-only Histmersion
+artifacts are not in it; your own libraries are. `plugin add` reads that POM.
 
 ### Libraries of your own
 
-The server provides the Scala library, the plugin API, sconfig and kindlings, and nothing else a plugin
-can rely on. `histmersion plugin add` installs exactly one jar, so any other library has to be
-**shaded** into it (copied in, under a package of its own). scala-cli cannot shade. Prefer the JDK's own
-classes (`java.net.URI`, `java.time`, `java.util.Base64`, …) and the host's HTTP client (`ctx.http`);
-when you need another library, build with sbt and its assembly plugin ([below](#with-sbt-instead)).
+Add a library as scala-cli adds any:
+
+```scala
+//> using dep org.scala-lang.modules::scala-xml:2.4.0
+```
+
+Nothing more is needed. The published POM lists it, and `histmersion plugin add` resolves the
+plugin's dependencies (with [coursier](https://get-coursier.io), from Maven Central and the
+repositories you name) and installs them beside the plugin, in the data directory's `plugins/lib/`.
+The relink links them into the server with the plugin; in JVM mode they are on the class path with
+it. Do not copy a library's classes into your jar: the server has one copy of each class, and refuses
+a plugin whose jar repeats a class it already has.
+
+What the server ships is never installed again: when your library depends on, say, cats, the server's
+cats is used. That works as long as the server's version is the same or newer than the one your
+dependencies ask for. When a plugin needs a **newer** version of a library the server ships, it cannot
+be installed (two versions of one library cannot be loaded side by side), and `plugin add` refuses it
+naming the library and both versions:
+
+```text
+refused:
+  - doi-mirror-0.1.0.jar needs io.circe:circe-core_3 0.14.20, but this Histmersion ships 0.14.17 — …
+```
+
+Build against the platform's version instead, or wait for a Histmersion that ships the newer one.
 
 ### In an editor: VS Code with Metals
 
@@ -112,7 +159,7 @@ scala-cli setup-ide .
 writes `.bsp/scala-cli.json`, which tells an editor how to build the project. Open the directory in
 VS Code with the **Metals** extension (or in IntelliJ IDEA with the Scala plugin) and import the build
 when it asks. You get completion, errors as you type, and go-to-definition into the plugin API's
-sources, with its documentation on hover: that is what the `sourceJar` directive is for. Run
+sources, with its documentation on hover: the editor fetches the sources jar from the repository. Run
 `setup-ide` again after you change a `//> using` line.
 
 ### With a coding agent
@@ -138,40 +185,44 @@ an older one stops with "TASTy signature has wrong version".
 
 ### With sbt instead
 
-sbt suits a plugin that needs its own libraries shaded in. Put the API jar in the project's `lib/`
-directory, which sbt puts on the class path by itself (an *unmanaged* jar), and depend on the API's
-own two libraries as `Provided`, so they stay out of the packaged jar:
-
-```bash
-mkdir -p lib && cp "$(histmersion plugin api-jar)" lib/
-```
+The same works with sbt: add the install's repository to the resolvers, depend on the plugin API and
+platform as `Provided` (compiled against, not packaged, not a dependency of the published plugin), and
+on your own libraries as usual:
 
 ```scala
 // build.sbt
 scalaVersion := "3.10.0"
+organization := "org.example"
+version      := "0.1.0"
+resolvers += "histmersion" at "file:///Users/you/Applications/Histmersion/maven/"   // histmersion plugin repo --url
 libraryDependencies ++= Seq(
-  "org.ekrich"   %% "sconfig"                      % "2.1.0" % Provided,
-  "com.kubuszok" %% "kindlings-sconfig-derivation" % "0.3.3" % Provided,
-  "org.scalameta" %% "munit"                       % "1.3.6" % Test
+  "com.kubuszok" %% "histmersion-plugin-api"      % "0.1.0-SNAPSHOT" % Provided,
+  "com.kubuszok" %% "histmersion-plugin-platform" % "0.1.0-SNAPSHOT" % Provided,
+  "org.scala-lang.modules" %% "scala-xml"         % "2.4.0",
+  "org.scalameta" %% "munit"                      % "1.3.6" % Test
 )
+publishTo := Some(MavenCache("local-plugin-repo", baseDirectory.value / "repo"))
 ```
 
 The resources go in `src/main/resources/` (the same three files `plugin new` writes under `resources/`),
-the sources in `src/main/scala/`. `sbt package` makes a jar without dependencies; with sbt-assembly,
-exclude the `lib/` jar and the `Provided` libraries from the assembly. Copy the API jar again after
-upgrading Histmersion. (A checkout of Histmersion can also publish the API to your local repository
-with `sbt pluginApi/publishLocal`; the copied jar needs no checkout.)
+the sources in `src/main/scala/`. `sbt publish` writes the jar and its POM to `./repo`; then
+`histmersion plugin add org.example::my-plugin:0.1.0 --repo ./repo`. No assembly or shading plugin is
+needed.
 
 ## Installing it
 
-`histmersion plugin add` takes a jar in any of four forms; [Installing plugins](installing.md) has
+`histmersion plugin add` takes a plugin in any of four forms; [Installing plugins](installing.md) has
 the details:
 
 ```bash
-histmersion plugin add ./doi-mirror.jar                      # a file on this computer
-histmersion plugin add https://example.org/doi-mirror.jar    # a URL
-histmersion plugin add org.example::doi-mirror:0.1.0         # Maven coordinates, if you publish it
+histmersion plugin add org.example::doi-mirror:0.1.0 --repo ./repo   # Maven coordinates, from a repository
+histmersion plugin add ./repo/org/example/doi-mirror_3/0.1.0/doi-mirror_3-0.1.0.jar   # a file (the .pom beside it is read)
+histmersion plugin add https://example.org/doi-mirror_3-0.1.0.jar    # a URL (and the .pom beside it)
 ```
+
+A plugin installed with its POM gets its dependencies installed with it. A bare jar without a POM is
+taken as having none: it still works when it uses only the API and the platform, and fails to
+register with "class … is missing" when it needs anything else.
 
 Copying the jar into the data directory's `plugins/` by hand works too. Either way, the server sees a
 changed set of plugins only after `histmersion plugin rebuild` (or a restart in JVM mode).
@@ -366,42 +417,51 @@ when it was linked. Two consequences:
    The `hello` fixture's `Class.forName` lookup works in a relinked binary only because its jar carries
    such a file.
 
-The relink also runs **Sloth** over plugin jars, which rewrites lazy vals compiled by Scala before
-3.8 into the form JDK 25 prefers; nothing for you to do.
+The same holds for your plugin's libraries: one that loads classes by name or reads resources may need
+metadata of its own (many libraries ship it in their jars). The relink's self-check of the new binary
+tells you when something is missing.
+
+The relink also runs **Sloth** over plugin jars and their dependencies, which rewrites lazy vals
+compiled by Scala before 3.8 into the form JDK 25 prefers; nothing for you to do.
 
 ## Packaging
 
-- One jar per plugin, with the services file, the defaults file and the native-image metadata.
-- **Shade in every dependency the server does not ship** (with your build tool's assembly or shading
-  plugin): `histmersion plugin add` installs exactly one jar and resolves nothing else. Do not bundle
-  `histmersion-plugin-api` itself, sconfig or kindlings — the server provides them.
+- One jar per plugin, with the services file, the defaults file and the native-image metadata, and
+  only your own classes in it.
+- **Publish it with its POM**, which lists the libraries it needs (scala-cli's `publish`, sbt's
+  `publish`, Maven's `deploy`). Depend on `histmersion-plugin-api` and `histmersion-plugin-platform`
+  compile-only (`compileOnly.dep`, `% Provided`), so neither is listed or packed.
 - Build with a Scala 3 version no newer than the server's (3.10.0 in this release), against the
-  same `Spi.Version`.
-- Publish it as a file, an `https` URL, or Maven coordinates; users then run
-  `histmersion plugin add <path|url|group:artifact:version>`. To support GPG verification, publish a
-  detached signature next to the jar (`<jar>.asc`).
+  same `Spi.Version`, and with the platform's versions of the libraries the server ships.
+- Users install it from a Maven repository by coordinates, or from a file or `https` URL with the POM
+  beside the jar (`x-1.0.jar` and `x-1.0.pom`): `histmersion plugin add <group::artifact:version|path|url>`.
+  To support GPG verification, publish a detached signature next to the jar (`<jar>.asc`).
 
 Inside this repository, `sbt pluginHello/package` and `sbt pluginHelloAi/package` build the two
-fixtures.
+fixtures without dependencies, and `sbt pluginHelloDeps/fixturesRepo` writes `hello-deps` (whose POM
+lists the `hello-lib` fixture) to a test Maven repository.
 
 **An example external plugin.** `histmersion-plugin-oabooks`, a separate repository, is a complete
 plugin built outside this one with sbt: an open-access source fetcher for openly licensed books in the
-OAPEN Library and DOAB. It builds against the plugin API (Provided), shades its own dependency into one
-jar with sbt-assembly, carries its defaults and native-image metadata, and tests its fetcher against a
-fake host HTTP client.
+OAPEN Library and DOAB. It compiles against the plugin API and platform from the install's repository
+(`Provided`), depends on scala-xml as an ordinary library, publishes its jar with a POM to a directory
+repository, carries its defaults and native-image metadata, and tests its fetcher against a fake host
+HTTP client.
 
 ## Testing
 
 - **Unit-test `register` with a fake `PluginContext`.** Every registry but `secretVaults` has a
   default that refuses additions, so a test context needs only the parts you use. The tests
   `plugin new` writes have one (`TestContext`) to start from.
-- **Load it the way the server does.** `histmersion plugin add ./my-plugin.jar` shows the id,
-  version, SPI version, what it registers and the access its fetchers declare — before it installs
-  anything, and it refuses a jar built for another SPI version.
+- **Load it the way the server does.** `histmersion plugin add` shows the id, version, SPI version,
+  what it registers, the access its fetchers declare and the dependencies it installs — before it
+  installs anything, and it refuses a jar built for another SPI version or one that needs a newer
+  library than the server ships.
 - **Check the settings without serving:** `histmersion-server --self-check` loads the config and every
   plugin, resolves secrets, checks the time zones, prints a report and exits (0 all good, 2 a plugin
   failed or was refused or the time zones are missing, 3 the config is broken).
 - **Pre-flight a relink:** `histmersion plugin rebuild --check`.
-- In this repository, the plugin suites install, describe and relink the `hello` jar, and the
-  AI-provider suites run pipelines through `hello-ai`; `scripts/bundle/smoke.sh` relinks a real
-  bundle with `hello` in it. See [Contributing](../contributing/index.md).
+- In this repository, the plugin suites install, describe and relink the `hello` jar, the resolver's
+  suites resolve `hello-deps` and its dependency offline, and the AI-provider suites run pipelines
+  through `hello-ai`; `scripts/bundle/smoke.sh` relinks a real bundle with `hello` and `hello-deps` in
+  it. See [Contributing](../contributing/index.md).

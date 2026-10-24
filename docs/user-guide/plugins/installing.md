@@ -31,17 +31,20 @@ the six AI providers. Each is switched on or off with `histmersion.plugins.<id>.
 
 These manage files **on this computer** and never touch the database.
 
-A third-party plugin is a jar compiled against the plugin API alone (`histmersion plugin api-jar`;
-writing one: [Developing plugins](developing.md), which starts from `histmersion plugin new`), with its provider in
-`META-INF/services/com.histmersion.plugin.Plugin`, its defaults in `META-INF/histmersion/plugins/<id>.conf`,
-its own `META-INF/native-image/<group>/<artifact>/reachability-metadata.json` (from the tracing agent in
-its own build) and every dependency the server does not ship shaded in. `modules/plugin-fixtures/hello`
-is a tiny one (a test fixture). Plugins live in the data directory's `plugins/`, one jar each:
+A third-party plugin is a jar compiled against the plugin API and the plugin platform (the libraries
+the server provides; writing one: [Developing plugins](developing.md), which starts from
+`histmersion plugin new`), with its provider in `META-INF/services/com.histmersion.plugin.Plugin`, its
+defaults in `META-INF/histmersion/plugins/<id>.conf` and its own
+`META-INF/native-image/<group>/<artifact>/reachability-metadata.json`. It is published with a **POM**
+that lists the libraries it needs beyond the platform. `modules/plugin-fixtures/hello` is a tiny one
+(a test fixture). Plugins live in the data directory's `plugins/`, one jar each with its POM beside it,
+and their dependencies in `plugins/lib/`:
 
 ```bash
-histmersion plugin add ~/Downloads/portal-plugin-1.2.0.jar        # a local jar, copied in
-histmersion plugin add https://example.org/portal-plugin-1.2.0.jar # downloaded; its SHA-256 is shown (--sha256 <hex> to pin it)
 histmersion plugin add org.example::portal-plugin:1.2.0            # Maven (group::artifact = the Scala 3 artifact _3)
+histmersion plugin add org.example::portal-plugin:1.2.0 --repo ~/src/portal/repo   # …from a repository of your own first
+histmersion plugin add ~/Downloads/portal-plugin-1.2.0.jar        # a local jar, copied in (with portal-plugin-1.2.0.pom beside it)
+histmersion plugin add https://example.org/portal-plugin-1.2.0.jar # downloaded, with the .pom beside it; its SHA-256 is shown (--sha256 <hex> to pin it)
 histmersion plugin list                                            # what is in plugins/, and whether the binary has it
 histmersion plugin status                                          # rebuild needed? (the directory's digest vs the binary's and the running server's)
 histmersion plugin rebuild                                         # relink, swap, restart, check health
@@ -50,11 +53,24 @@ histmersion plugin rm portal-plugin
 ```
 
 `add` shows what the jar is before installing it — the plugin's id, version, plugin SPI version, what it
-registers and the **access** its source fetchers declare (open, subscription, unauthorised) — and refuses
-one built for another SPI version; an older version of the same plugin is replaced. Dropping a jar into
-`plugins/` by hand works too. Maven coordinates are resolved by fetching the one jar from each repository
-of `cli.plugins.maven-repos` in turn, checked against the SHA-256/SHA-1 the repository publishes (a
-plugin shades its dependencies, so there is nothing else to resolve). These commands manage files on
+registers, the **access** its source fetchers declare (open, subscription, unauthorised) and the
+**dependencies** it installs — and refuses one built for another SPI version; an older version of the
+same plugin is replaced. Maven coordinates are fetched (the jar and its POM) from the repositories named
+with `--repo` (a directory or a URL; repeatable), then from each of `cli.plugins.maven-repos` in turn, each
+file checked against the SHA-256/SHA-1 the repository publishes.
+
+**Dependencies.** The libraries a plugin's POM lists are resolved with coursier, together with what the
+server itself ships: a library the server has is not installed again (its copy is used), every other one
+is downloaded from the same repositories and kept in `plugins/lib/`, and the relink links it in beside the
+plugin (JVM mode puts it on the class path). A plugin that needs a **newer** version of a library than the
+server ships is refused, naming the library and both versions: one process cannot load two versions of a
+library, and the server's would win. The list of what the server provides to plugins, and at which
+versions, is the plugin platform ([Developing plugins](developing.md#the-plugin-platform)). Downloads go
+through coursier's cache, so a later relink needs no network. A jar without a POM is installed as having
+no dependencies; if it does need a library, it fails to register with "class … is missing".
+
+Dropping a jar (and its POM) into `plugins/` by hand works too: the next relink, or the next start in
+JVM mode, resolves its dependencies. These commands manage files on
 **this** machine and run the bundle's scripts; they never touch the database, and they refuse when
 `histmersion` points at a server elsewhere. Describing a jar runs its code once in a short-lived JVM (no
 sandbox exists for a plugin: it runs in the server's process — install only what you trust).
@@ -67,9 +83,11 @@ config reload`. `bin/histmersion-relink` (what `plugin rebuild` runs) re-runs Gr
 the bundle's `kit/` — the server's Sloth-patched jars, their order and native-image flags, `kit.json` +
 `SHA256SUMS` — plus the plugin jars: no sbt, no compile. It locks, checks the kit's checksums, the
 toolchain (`histmersion-toolchain check`; `histmersion-toolchain install` provisions GraalVM CE), memory
-(`HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12) and disk; runs a **pre-flight on the JVM** (every jar has
-a provider of this SPI, no id or class twice, then the server's own `--self-check` with the plugins and
-your config) before spending ~13.5 GB; Sloth-patches the plugin jars; links; runs the **new binary's
+(`HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12) and disk; runs a **pre-flight on the JVM** (the plugins'
+dependencies resolved into `plugins/lib/`, every jar has a provider of this SPI, no id or class twice
+among the kit, the plugins and their dependencies, then the server's own `--self-check` with the plugins,
+their dependencies and your config) before spending ~13.5 GB; Sloth-patches the plugin jars and their
+dependencies; links; runs the **new binary's
 `--self-check`** (never as a server) and requires the directory's plugin-set digest and every new plugin
 registered; signs it; swaps it in keeping the old one as `bin/histmersion-server.prev`; restarts the
 service and waits for `/api/health` and the expected digest in `/api/about` — else the previous binary
@@ -81,8 +99,9 @@ the binary's **plugin set** (`plugin set: <digest> · 1 jar (native): …`, or f
 
 **JVM mode** (`histmersion plugin rebuild --jvm`) is the fallback when no native link is possible: the
 same kit and plugins on a JDK (`bin/histmersion-server-jvm`, `HISTMERSION_JVM_OPTS` for heap options),
-plugins found at every start — adding one then needs a restart, not a relink. `plugin rebuild` returns
-to a native binary.
+plugins found at every start — adding one then needs a restart, not a relink. Their dependencies come
+from `plugins/lib/`; when the plugin jars or POMs changed since it was resolved, it is resolved again
+before the start. `plugin rebuild` returns to a native binary.
 
 ### Repairing an install: relink kits
 
@@ -110,8 +129,9 @@ check with a real privacy prompt (2026-10-23) showed a permission granted to a b
 a relink all the same. `setup-macos --trust` also trusts it for code signing (macOS asks for your login
 password). `histmersion-signing use-gpg <key id>` (or `generate-gpg`) turns on GPG provenance:
 `plugin add` requires a valid signature (`<jar>.asc`; the signer's key is pinned per plugin id on first
-use), the plugins directory's manifest is signed and verified before every relink and every JVM-mode
-start (a jar dropped in afterwards is refused until you `plugin add` it), and each relinked binary's
+use), the plugins directory's manifest (the plugin jars, their POMs and the dependency jars in
+`plugins/lib/`) is signed and verified before every relink and every JVM-mode start (a jar dropped in
+afterwards is refused until you `plugin add` it), and each relinked binary's
 SHA-256 is signed. Passphrases stay with gpg-agent; only the key's fingerprint is stored
 (`<data>/signing/gpg-key`). `histmersion-signing status` shows what is set up.
 

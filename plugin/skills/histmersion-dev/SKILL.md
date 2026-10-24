@@ -194,26 +194,44 @@ a public class with a no-argument constructor):
 
 **Writing one outside this repo: `histmersion plugin new <id> [--kind source-fetcher|media-collection|
 event-catalogue|ai-provider|secret-vault] [--with-agent-notes]`** (no checkout needed; the plugin API is not
-on Maven — Histmersion is an app). It writes a scala-cli project: `<Name>.scala` (the `//> using` lines name
-the server's Scala, the install's `plugin-api/histmersion-plugin-api.jar` + `-sources.jar`, sconfig and
-kindlings; then a working plugin of that kind), `<Name>.test.scala` (munit: the plugin, plus packaging
-checks — the services file names the class, the defaults decode, every `$lzy<n>` field is in the native
-metadata) and `resources/` (services file, defaults, `reachability-metadata.json`). Loop:
-`scala-cli test .` → `scala-cli --power package --library . -o <id>.jar -f` (a thin jar: the server
-provides Scala, the API, sconfig, kindlings) → `histmersion plugin add ./<id>.jar` → `plugin rebuild`.
-`histmersion plugin api-jar [--sources]` prints the API jar's path (`--api-jar <path>` on `new` for a
-release asset `histmersion-plugin-api-<tag>.jar`). Editors: `scala-cli setup-ide .`, then Metals.
-sbt alternative: the API jar in `lib/`, sconfig/kindlings `% Provided`, sbt-assembly for shading.
-Code and generator: `cli/PluginTemplate.scala`, `cli/PluginTemplateKinds.scala`; the user docs page is
-`docs/user-guide/plugins/developing.md`.
+on Maven Central — Histmersion is an app — but every install carries a Maven repository of its own, `maven/`:
+`histmersion plugin repo [--url]`). It holds `com.kubuszok::histmersion-plugin-api` (jar, sources, POM) and
+`com.kubuszok::histmersion-plugin-platform`, a POM-only artifact whose dependencies are the libraries the
+server provides to plugins at the versions it ships (sconfig, kindlings, circe, cats, sttp client, tapir,
+ox, iron; the contract is `modules/plugin-api/plugin-platform.txt`, checked by `PluginPlatformSuite`). `new`
+writes a scala-cli project: `<Name>.scala` (`//> using repository <the install's maven/>`, the API and the
+platform as `compileOnly.dep`, `resourceDir`, `publish.organization/name/version`; then a working plugin of
+that kind), `<Name>.test.scala` (munit and the two as `test.dep`: the plugin, plus packaging checks — the
+services file names the class, the defaults decode, every `$lzy<n>` field is in the native metadata) and
+`resources/` (services file, defaults, `reachability-metadata.json`). A library of its own is a plain
+`//> using dep`: never shade. Loop: `scala-cli test .` → `scala-cli --power publish . --publish-repository
+./repo` (the jar and a POM listing its own libraries, not the compile-only ones) → `histmersion plugin add
+<org>::<id>:0.1.0 --repo ./repo` → `plugin rebuild`. `--repo <dir|url>` on `new` for a repository unzipped
+from a release (`histmersion-maven-<tag>.zip`); `histmersion plugin api-jar [--sources]` prints the API
+jar's path in the repository. Editors: `scala-cli setup-ide .`, then Metals (sources come from the
+repository). sbt alternative: `resolvers += "histmersion" at <plugin repo --url>`, the API and platform
+`% Provided`, own libraries as usual, `publishTo` a directory. Code and generator: `cli/PluginTemplate.scala`,
+`cli/PluginTemplateKinds.scala`; the user docs page is `docs/user-guide/plugins/developing.md`.
+
+**Dependencies at install.** `plugin add` fetches the plugin's POM with its jar (beside a path or URL, or
+from the Maven repository) and runs `histmersion-relink --resolve`, the relink kit's plugin resolver
+(`modules/plugin-resolver`, coursier's Java API, in `kit/tools/resolver/` — never on the server's class
+path). Each plugin is resolved alone against `kit/modules` (the server's resolved modules) and refused when
+it needs a NEWER version of a shipped module (library and both versions named); then all plugins together
+with the server's modules excluded; the rest goes to `<data>/plugins/lib/` (`classpath`, `inputs`,
+`repositories`). The relink resolves again in its pre-flight, links `lib/` (Sloth-patched) beside the
+plugins and checks duplicate classes across kit, plugins and `lib/`; JVM mode re-resolves when `lib/inputs`
+no longer matches. A bare jar without a POM has no dependencies; a missing class then fails that plugin with
+"class … is missing" (`PluginHost.failure`). Offline tests: the `hello-deps` fixture (POM lists `hello-lib`)
+in the repository `sbt pluginHelloDeps/fixturesRepo` writes.
 
 **Inside this repo: `modules/plugin-fixtures/hello`** (build.sbt `pluginHello`: `dependsOn(pluginApi)` only,
 packaged as its own jar) is the test fixture. It shows the provider, a derived `Config`, the defaults resource, one
 `SourceFetcher`, and — because its greeter is chosen by name — its OWN
 `META-INF/native-image/<group>/<artifact>/reachability-metadata.json`. A plugin jar must carry that
 metadata (Scala 3 lazy val fields included; record the rest with the tracing agent in the plugin's build)
-and shade every dependency the server does not ship; a relink fails at the new binary's self-check
-otherwise. Built-in plugins (`modules/plugin-vaults`, the `oa-*`/`media-*`/`events-*` ones) follow the same SPI.
+and declare every dependency the server does not ship in its POM; a relink fails at the new binary's
+self-check otherwise. Built-in plugins (`modules/plugin-vaults`, the `oa-*`/`media-*`/`events-*` ones) follow the same SPI.
 
 **Config and secrets.** Plugin settings live in `histmersion.conf` under `histmersion.plugins.<id>`. A
 settings change (`enabled` included) needs no restart: `histmersion config reload` (or `config.watch`)
@@ -228,7 +246,7 @@ order (`ykman list --serials`, when installed, limits it to the connected keys);
 the database):
 
 ```bash
-histmersion plugin add <jar | url | group::artifact:version> [--yes]   # describes it first; refuses a foreign SPI
+histmersion plugin add <group::artifact:version | jar | url> [--repo <dir|url>] [--yes]   # describes it and its dependencies first; refuses a foreign SPI or a newer library than the server ships
 histmersion plugin list ; histmersion plugin status          # REBUILD NEEDED / RESTART NEEDED / up to date
 histmersion plugin rebuild [--jvm] [--check] [--no-restart]   # bin/histmersion-relink over the bundle's kit/
 histmersion plugin rollback ; histmersion plugin rm <id>
