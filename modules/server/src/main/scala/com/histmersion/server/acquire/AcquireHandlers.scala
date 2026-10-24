@@ -358,9 +358,10 @@ final class AcquireHandlers(
       //    ones alone for a watcher's auto-ingest) ──
       val key = com.histmersion.plugin.WorkKey(doi = doi, arxiv = arxiv.orElse(work.flatMap(_.arxivId)),
         title = work.flatMap(_.title), authors = work.map(_.authors).getOrElse(Nil), year = work.flatMap(_.year))
-      val fetched = skip match
-        case Some(have) => Left(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again")
-        case None       => oa.fetchWork(key, legalOnly)
+      val chain = skip match
+        case Some(have) => FetchChain.Outcome(Left(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again"), Nil)
+        case None       => oa.fetchWorkExplained(key, legalOnly)
+      val fetched = chain.file
       fetched match
         case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes" +
           AcquireHandlers.hostOf(f.url).fold("")(h => s" from $h") +
@@ -368,6 +369,7 @@ final class AcquireHandlers(
           f.licence.map(_.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
           original.fold("")(h => s" (replacing $h: --refetch)"))
         case Left(e)  => steps += IngestStep("fetch", skip.isDefined, e)
+      if chain.answers.nonEmpty then steps += IngestStep("chain", false, chain.answers.map(_.line).mkString("; "))
 
       // a gold open-access work from a publisher that refuses scripts: a download in the browser, on every path
       val browserOnly = Option.when(fetched.isLeft && skip.isEmpty)(work).flatten

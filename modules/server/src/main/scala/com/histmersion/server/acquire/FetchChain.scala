@@ -16,7 +16,9 @@ import scala.util.control.NonFatal
   *    auto-ingest, an archive.org import), whatever that switch says;
   *  - **the PDF check** — a copy that calls itself a PDF and is not one is no copy;
   *  - **the memo** — one per fetch of one work, shared by every fetcher ([[FetchContext.memo]]);
-  *  - **the log** — a refusal is logged and not asked again; an exception is a miss.
+  *  - **the log** — every answer but a copy is logged with its reason, one line per fetcher (a miss
+  *    as `acquire: <id>: no copy — <why>`), so a fetch that found nothing says which steps ran and
+  *    why each missed; a refusal is not asked again; an exception is a miss.
   */
 final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean) extends OaFetcher:
 
@@ -30,15 +32,23 @@ final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean)
     fetchWork(WorkKey(doi = doi, arxiv = arxiv), legalOnly = true)
 
   override def fetchWork(work: WorkKey, legalOnly: Boolean): Either[String, FetchedFile] =
+    fetchWorkExplained(work, legalOnly).file
+
+  override def fetchWorkExplained(work: WorkKey, legalOnly: Boolean): FetchChain.Outcome =
     val memo  = FetchChain.Memo()
     val tried = LazyList.from(steps)
       .filter(s => FetchChain.runs(s.fetcher.access, legalOnly, allowUnauthorised))
       .map(s => s.id -> attempt(s, work, memo))
     tried.collectFirst { case (_, Fetch.Found(f)) => f } match
-      case Some(f) => Right(f)
+      case Some(f) => FetchChain.Outcome(Right(f), Nil)
       case None =>
         val refused = tried.collect { case (id, Fetch.Refused(why)) => s"$id: $why" }.toList
-        Left(FetchChain.NoCopy + (if refused.isEmpty then "" else refused.mkString(" (", "; ", ")")))
+        FetchChain.Outcome(
+          Left(FetchChain.NoCopy + (if refused.isEmpty then "" else refused.mkString(" (", "; ", ")"))),
+          tried.toList.collect {
+            case (id, Fetch.Miss(why))    => FetchChain.Answer(id, FetchChain.Answer.Kind.Miss, why)
+            case (id, Fetch.Refused(why)) => FetchChain.Answer(id, FetchChain.Answer.Kind.Refused, why)
+          })
 
   /** One fetcher, one work: its answer, with an exception read as a miss and a "PDF" that is not one
     * read as no copy. */
@@ -61,6 +71,9 @@ final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean)
       case Fetch.Refused(why) =>
         scribe.info(s"acquire: ${s.id} refused ${FetchChain.describe(work)}: $why")
         answer
+      case Fetch.Miss(why) =>
+        scribe.info(s"acquire: ${s.id}: no copy — $why")
+        answer
       case other => other
 
 object FetchChain:
@@ -70,6 +83,19 @@ object FetchChain:
 
   /** One registered fetcher under its id. */
   final case class Step(id: String, fetcher: SourceFetcher)
+
+  /** What one fetcher that ran answered, when it had no copy. */
+  final case class Answer(fetcher: String, kind: Answer.Kind, why: String):
+    /** As the ingest report shows it: `oapen: no copy — no record of this work`. */
+    def line: String = s"$fetcher: ${kind.label} — $why"
+  object Answer:
+    enum Kind(val label: String):
+      case Miss    extends Kind("no copy")
+      case Refused extends Kind("refused")
+
+  /** A fetch of one work: the copy, or the message every failed fetch gives; and, when there is no
+    * copy, the answer of each fetcher that ran, in chain order. */
+  final case class Outcome(file: Either[String, FetchedFile], answers: List[Answer])
 
   /** A chain over these fetchers, in this order. */
   def apply(steps: List[(String, SourceFetcher)], allowUnauthorised: Boolean = false): FetchChain =

@@ -53,6 +53,11 @@ trait OaFetcher:
     else if legalOnly then fetchLegal(work.doi, work.arxiv)
     else fetch(work.doi, work.arxiv)
 
+  /** [[fetchWork]], with what each fetcher that ran answered when none had a copy (the ingest report
+    * shows it). An implementation that is no chain (a test's fixture) has no answers to give. */
+  def fetchWorkExplained(work: com.histmersion.plugin.WorkKey, legalOnly: Boolean): FetchChain.Outcome =
+    FetchChain.Outcome(fetchWork(work, legalOnly), Nil)
+
 trait WikiClient:
   def refs(articleUrl: String): Either[String, WikirefsResult]
 
