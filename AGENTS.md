@@ -24,6 +24,8 @@ plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
 plugin-fixtures/hello ─ a TEST plugin jar (relink tests, smoke.sh); never on the server's class path
 plugin-fixtures/hello-ai ─ a TEST AI-provider plugin jar (scripted, no network; the AI-provider suites)
+plugin-fixtures/hello-lib + hello-deps ─ a TEST plugin with a dependency of its own, in a fixture Maven repo
+plugin-resolver ── resolves user plugins' dependencies (coursier): relink kit tools/, never on a class path
 chimney-iron ── a Chimney macro extension (newtype → newtype); compile-time only, consumed `% Provided`
 chimney-iron-tests ─ its proof suites, compiled as a consumer compiles them
 ```
@@ -41,7 +43,12 @@ event catalogues and AI providers (`server/agents/AiPlugins`: `ai-anthropic` …
 A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit
 (`server/relinkKit`: the Sloth-patched class path and `serverNativeOpts`, the ONE list of native-image
 flags) — or run on the JVM (`bin/histmersion-server-jvm`); `histmersion plugin …` manages them on the
-local machine and never touches the database (§18). With GPG provenance on, the service starts
+local machine and never touches the database (§18). A plugin compiles against the install's Maven
+repository (`maven/`, `server/pluginRepo`: plugin-api and the plugin-platform POM, whose libraries and
+versions are the contract in `modules/plugin-api/plugin-platform.txt`) and is published with a POM; its
+dependencies are resolved by `plugin-resolver` against the kit's `modules` (what the server ships is not
+installed again, a newer version of it is refused) into `<data>/plugins/lib`, and linked with it. Plugins
+never shade. With GPG provenance on, the service starts
 `libexec/histmersion-server-verified`, which checks the binary's signed SHA-256 first; off, it starts the
 binary directly — keep both paths working when touching the installers or the relink (§21.3).
 
