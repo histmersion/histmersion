@@ -27,6 +27,7 @@ object Dependencies {
     val chimney       = "2.1.0"  // io.scalaland — layer-to-layer model conversions (chimney-iron extends its macros)
     val iron          = "3.4.1"  // io.github.iltotore — refined newtypes
     val munit         = "1.3.6"
+    val coursierInterface = "1.0.30" // io.get-coursier — coursier's Java API, one shaded jar: the plugin resolver
     val scalaJavaTime = "2.8.0"  // io.github.cquiroz — java.time for Scala.js (Queue, Backup)
   }
 }

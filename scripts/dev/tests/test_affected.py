@@ -45,9 +45,12 @@ class AffectedTest(unittest.TestCase):
 
     def test_plugin_api_reaches_vaults_and_server_but_fixtures_have_no_tests(self):
         tests, _, _ = A.affected(["modules/plugin-api/src/main/scala/P.scala"])
-        self.assertEqual(tests, ["coreJVM", "pluginApi", "pluginVaults", "server"])
+        self.assertEqual(tests, ["coreJVM", "pluginApi", "pluginVaults", "pluginResolver", "server"])
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello/src/main/scala/H.scala"])[0], ["coreJVM", "server"])
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello-ai/src/main/resources/x.conf"])[0], ["server"])
+        # the fixture with a dependency is read by the resolver's suites and the server's
+        self.assertEqual(A.affected(["modules/plugin-fixtures/hello-lib/src/main/scala/S.scala"])[0],
+                         ["coreJVM", "pluginResolver", "server"])
 
     def test_build_definition_means_everything(self):
         for p in ["build.sbt", "project/Dependencies.scala", ".sdkmanrc", ".jvmopts"]:
@@ -78,7 +81,8 @@ class AffectedTest(unittest.TestCase):
 
     def test_dependents_closure_is_transitive(self):
         self.assertEqual(A.dependents({"pluginApi"}),
-                         {"pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi", "server"})
+                         {"pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps", "pluginResolver",
+                          "server"})
         self.assertEqual(A.dependents(set()), set())
 
     def test_reasons_name_the_dependents(self):

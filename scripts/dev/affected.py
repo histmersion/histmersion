@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 # the sbt project ids and what each depends on (compile or test) — build.sbt's dependsOn, plus the
-# server's TEST resources (the hello / hello-ai plugin jars). web → server (the bundle) is a BUILD
+# TEST resources (the hello / hello-ai plugin jars, the hello-deps fixture repository). web → server (the bundle) is a BUILD
 # edge only: no server suite tests the Scala.js code, so a web change does not re-run the server.
 DEPS = {
     "coreJVM": [],
@@ -26,17 +26,20 @@ DEPS = {
     "pluginVaults": ["pluginApi"],
     "pluginHello": ["pluginApi"],
     "pluginHelloAi": ["pluginApi"],
+    "pluginHelloLib": [],
+    "pluginHelloDeps": ["pluginApi", "pluginHelloLib"],
+    "pluginResolver": ["pluginHelloDeps"],
     "chimneyIron": [],
     "chimneyIronTests": ["chimneyIron"],
     "db": ["coreJVM"],
     "cli": ["coreJVM"],
     "web": ["coreJS"],
-    "server": ["coreJVM", "db", "pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi"],
+    "server": ["coreJVM", "db", "pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
 }
-ORDER = ["coreJVM", "coreJS", "pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi",
-         "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
+ORDER = ["coreJVM", "coreJS", "pluginApi", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+         "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
-NO_TESTS = {"pluginHello", "pluginHelloAi", "chimneyIron"}
+NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
 # modules whose suites need the throwaway Postgres (HISTMERSION_TEST_DB_URL)
 NEEDS_DB = {"db", "server"}
 ALL = "*"
@@ -61,6 +64,9 @@ RULES = [
     ("modules/plugin-api/", ["pluginApi"]),
     ("modules/plugin-vaults/", ["pluginVaults"]),
     ("modules/plugin-fixtures/hello-ai/", ["pluginHelloAi"]),
+    ("modules/plugin-fixtures/hello-deps/", ["pluginHelloDeps"]),
+    ("modules/plugin-fixtures/hello-lib/", ["pluginHelloLib"]),
+    ("modules/plugin-resolver/", ["pluginResolver"]),
     ("modules/plugin-fixtures/hello/", ["pluginHello"]),
     ("modules/chimney-iron-tests/", ["chimneyIronTests"]),
     ("modules/chimney-iron/", ["chimneyIron"]),

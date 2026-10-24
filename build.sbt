@@ -252,6 +252,28 @@ def checkNoLegacyNativeConfigs(dir: File): Unit = {
         "  Delete them, then regenerate with the pinned JDK (CLAUDE.md, 'The tracing-agent rule').")
 }
 
+/** One artifact into a Maven repository directory, as `publish` would lay it out: the POM and each
+  * `(classifier, file)` (`""` = the main jar) under `<group path>/<name>_<scala>/<version>/`, each with
+  * its .sha1/.md5/.sha256. A Scala module's name carries the Scala binary version, as everywhere. */
+def writeMavenArtifact(repo: File, module: ModuleID, scalaBinary: String, pom: File, files: Seq[(String, File)]): Unit = {
+  val artifact = s"${module.name}_$scalaBinary"
+  val dir      = repo / PluginRepo.versionDir(module.organization, artifact, module.revision)
+  val base     = s"$artifact-${module.revision}"
+  def put(name: String, bytes: Array[Byte]): Unit = {
+    IO.write(dir / name, bytes)
+    PluginRepo.checksums(bytes).foreach { case (ext, sum) => IO.write(dir / s"$name.$ext", sum) }
+  }
+  put(s"$base.pom", IO.readBytes(pom))
+  files.foreach { case (classifier, f) =>
+    put(if (classifier.isEmpty) s"$base.jar" else s"$base-$classifier.jar", IO.readBytes(f))
+  }
+}
+
+/** The modules the server resolves at run time, `group:artifact` → version (evicted ones left out). */
+def resolvedModules(report: UpdateReport): Map[String, String] =
+  report.configuration(ConfigRef("runtime")).toSeq.flatMap(_.modules).filterNot(_.evicted)
+    .map(m => s"${m.module.organization}:${m.module.name}" -> m.module.revision).toMap
+
 // The server's native-image flags — ONE list, used by `server/nativeImage` and written into the relink
 // kit (`relinkKit`), so a relinked binary is linked exactly as the bundled one.
 // Reachability metadata comes from the tracing agent (META-INF/native-image/reachability-metadata.json)
@@ -269,6 +291,11 @@ val serverNativeOpts = Seq(
   "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter")
 
 val relinkKit = taskKey[File]("Write the relink kit: the Sloth-patched class path, its order, the native-image arguments")
+
+// The plugin platform (modules/plugin-api/plugin-platform.txt): the libraries the server provides to plugins.
+val pluginPlatformContract = file("modules") / "plugin-api" / "plugin-platform.txt"
+val pluginPlatform = taskKey[Seq[PluginRepo.Library]]("The plugin platform's libraries at the versions the server resolves")
+val pluginRepo = taskKey[File]("Write the Maven repository an install ships for plugin authors: plugin-api and plugin-platform")
 
 // NOTE: `Compile / mainClass` is set inline in each project, NOT here — sbt 2 identifies settings by
 // source position, so a `:=` inside a shared def would make the last caller win for every project.
@@ -419,6 +446,63 @@ lazy val pluginHelloAi = project
   .settings(name := "histmersion-plugin-hello-ai", publish / skip := true)
   .settings(commonDeps)
 
+// ── plugin-fixtures/hello-lib + hello-deps: a TEST plugin with a dependency of its own. Both are written
+//    to a test Maven repository (`pluginHelloDeps/fixturesRepo`) with their POMs, as a plugin author
+//    publishes a plugin; hello-deps's POM lists hello-lib, and plugin-api as `provided`. Never on the
+//    server's class path: the resolution suites and scripts/bundle/smoke.sh install hello-deps from there.
+lazy val pluginHelloLib = project
+  .in(file("modules/plugin-fixtures/hello-lib"))
+  .settings(name := "histmersion-plugin-hello-lib", version := "0.1.0", publish / skip := true)
+  .settings(commonDeps)
+
+val fixturesRepo = taskKey[File]("Write the test Maven repository with hello-lib and hello-deps")
+
+lazy val pluginHelloDeps = project
+  .in(file("modules/plugin-fixtures/hello-deps"))
+  .dependsOn(pluginApi % Provided, pluginHelloLib)
+  .settings(name := "histmersion-plugin-hello-deps", version := "0.1.0", publish / skip := true)
+  .settings(commonDeps)
+  .settings(
+    // UNCACHED: its output is files, not the task's result
+    fixturesRepo := Def.uncached {
+      val conv = fileConverter.value
+      val repo = target.value / "fixtures-repo"
+      IO.delete(repo)
+      writeMavenArtifact(repo, (pluginHelloLib / projectID).value, (pluginHelloLib / scalaBinaryVersion).value,
+        conv.toPath((pluginHelloLib / makePom).value).toFile,
+        Seq("" -> conv.toPath((pluginHelloLib / Compile / packageBin).value).toFile))
+      writeMavenArtifact(repo, projectID.value, scalaBinaryVersion.value, conv.toPath(makePom.value).toFile,
+        Seq("" -> conv.toPath((Compile / packageBin).value).toFile))
+      repo
+    }
+  )
+
+// ── plugin-resolver: the dependencies of user plugins (`histmersion plugin add`, the relink, JVM mode),
+//    resolved with coursier together with the server's own modules (the relink kit's `modules`): what the
+//    server ships is not added again, a plugin that needs a NEWER version of it is refused, the rest is
+//    fetched into the plugins directory's `lib/`. Run on the JVM from the relink kit's `tools/resolver/`
+//    beside `kit/lib`; never on the server's class path (coursier's jar carries native-image settings of
+//    its own, which the server's image must not pick up).
+lazy val pluginResolver = project
+  .in(file("modules/plugin-resolver"))
+  .settings(name := "histmersion-plugin-resolver", publish / skip := true)
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      // the Java API of coursier, everything shaded into one jar; its slf4j-api 1.7 is left out, the
+      // kit's 2.x serves it
+      ("io.get-coursier"   % "interface" % V.coursierInterface).exclude("org.slf4j", "slf4j-api"),
+      "io.github.iltotore" %% "iron"     % V.iron
+    ),
+    // the fixture repository (hello-lib, hello-deps) the resolution suite installs from, offline
+    Test / resourceGenerators += Def.task {
+      val repo = (pluginHelloDeps / fixturesRepo).value
+      val out  = (Test / resourceManaged).value / "plugin-fixtures-repo.txt"
+      IO.write(out, s"repo=${repo.getAbsolutePath}\n")
+      Seq(out)
+    }.taskValue
+  )
+
 // ── chimney-iron: a Chimney macro extension, found by ServiceLoader while Chimney's macros expand. It
 //    converts an Iron newtype into the same-named newtype of another layer over the same constraint as
 //    `To(from.value)`, with no check (AGENTS.md, Coding practices 4). Compile-time only: a consumer
@@ -551,17 +635,61 @@ lazy val server = project
       // Sloth and its verifier, for the PLUGIN jars a relink links (these are patched already)
       (ThisBuild / slothJar).value.foreach(j => IO.copyFile(j, out / "tools" / "sloth.jar"))
       IO.copyFile(file("scripts") / "bundle" / "SlothVerify.java", out / "tools" / "SlothVerify.java")
+      // what the plugin resolver needs: the modules this class path holds (`group:artifact:version`, what a
+      // plugin's dependencies are resolved against), the modules the build excludes everywhere, and the
+      // resolver itself — its jar and coursier's, run beside lib/ and never part of the image
+      IO.writeLines(out / "modules", resolvedModules((Runtime / update).value).toSeq.sorted.map { case (k, v) => s"$k:$v" })
+      IO.writeLines(out / "excludes", excludeDependencies.value.map(r => s"${r.organization}:${r.name}").sorted)
+      val resolverOwn = (pluginResolver / Runtime / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
+        .filter(f => f.getName.startsWith("histmersion-plugin-resolver") || f.getName.startsWith("interface-"))
+      if (resolverOwn.size != 2) sys.error(s"relink kit: expected the resolver's jar and coursier's, found ${resolverOwn.mkString(", ")}")
+      resolverOwn.foreach(j => IO.copyFile(j, out / "tools" / "resolver" / j.getName))
       log.info(s"relink kit: ${cp.size} jar(s) → $out")
       out
     },
-    // the test plugin's jar (modules/plugin-fixtures/hello), for the suites that install, describe
-    // and check a third-party plugin — never on the server's own class path
+    // UNCACHED: a library list has no cache format, and it is read in milliseconds
+    pluginPlatform := Def.uncached {
+      val contract = PluginRepo.parseContract(IO.readLines(pluginPlatformContract)).fold(e => sys.error(s"$pluginPlatformContract: $e"), identity)
+      PluginRepo.shippedVersions(contract, resolvedModules((Runtime / update).value))
+        .fold(e => sys.error(s"$pluginPlatformContract: $e"), identity)
+    },
+    // the Maven repository of the bundle (`<install>/maven`): plugin-api with its sources and POM, and
+    // the platform POM, whose dependencies are the platform's libraries at the server's versions.
+    // UNCACHED: its output is files, not the task's result
+    pluginRepo := Def.uncached {
+      val conv = fileConverter.value
+      val repo = target.value / "plugin-repo"
+      IO.delete(repo)
+      val api = (pluginApi / projectID).value
+      writeMavenArtifact(repo, api, (pluginApi / scalaBinaryVersion).value, conv.toPath((pluginApi / makePom).value).toFile,
+        Seq("" -> conv.toPath((pluginApi / Compile / packageBin).value).toFile,
+          "sources" -> conv.toPath((pluginApi / Compile / packageSrc).value).toFile))
+      val platformName = s"histmersion-plugin-platform_${scalaBinaryVersion.value}"
+      val pom = PluginRepo.platformPom(api.organization, platformName, api.revision,
+        "The libraries Histmersion provides to plugins, at the versions it ships: depend on it compile-only",
+        licenses.value.headOption.map(l => l.spdxId -> l.uri.toString).getOrElse("AGPL-3.0-or-later" -> ""), pluginPlatform.value)
+      val pomFile = target.value / "plugin-platform.pom"
+      IO.write(pomFile, pom)
+      writeMavenArtifact(repo, api.withName("histmersion-plugin-platform"), scalaBinaryVersion.value, pomFile, Nil)
+      streams.value.log.info(s"plugin repository → $repo")
+      repo
+    },
+    // the test plugins' jars (modules/plugin-fixtures), for the suites that install, describe and check
+    // a third-party plugin — never on the server's own class path — and the plugin platform as the
+    // contract file has it and as the build resolves it (PluginPlatformSuite compares them)
     Test / resourceGenerators += Def.task {
-      val jar = fileConverter.value.toPath((pluginHello / Compile / packageBin).value).toFile
-      val ai  = fileConverter.value.toPath((pluginHelloAi / Compile / packageBin).value).toFile
-      val out = (Test / resourceManaged).value / "plugin-fixtures.txt"
-      IO.write(out, s"hello=${jar.getAbsolutePath}\nhello-ai=${ai.getAbsolutePath}\n")
-      Seq(out)
+      val jar  = fileConverter.value.toPath((pluginHello / Compile / packageBin).value).toFile
+      val ai   = fileConverter.value.toPath((pluginHelloAi / Compile / packageBin).value).toFile
+      val repo = (pluginHelloDeps / fixturesRepo).value
+      val out  = (Test / resourceManaged).value / "plugin-fixtures.txt"
+      IO.write(out, s"hello=${jar.getAbsolutePath}\nhello-ai=${ai.getAbsolutePath}\nrepo=${repo.getAbsolutePath}\n")
+      val contract = (Test / resourceManaged).value / "plugin-platform-contract.txt"
+      IO.copyFile(pluginPlatformContract, contract)
+      val built    = (Test / resourceManaged).value / "plugin-platform-build.txt"
+      val resolved = resolvedModules((Runtime / update).value)
+      val curated  = PluginRepo.parseContract(IO.readLines(pluginPlatformContract)).getOrElse(Nil)
+      IO.writeLines(built, curated.map(l => s"${l.key}:${resolved.getOrElse(l.key, "NOT-SHIPPED")}"))
+      Seq(out, contract, built)
     }.taskValue
   )
   .settings(
@@ -656,8 +784,8 @@ lazy val cli = project
     )
   )
   .settings(
-    // the versions a new plugin project (`histmersion plugin new`) builds with: the Scala and the plugin
-    // API's own dependencies this server runs, so the plugin compiles against what loads it
+    // the versions a new plugin project (`histmersion plugin new`) builds with: the Scala this server
+    // runs, and the version of the plugin API and platform in the install's Maven repository
     Compile / sourceGenerators += Def.task {
       val out = (Compile / sourceManaged).value / "com" / "histmersion" / "cli" / "PluginBuildVersions.scala"
       val src =
@@ -665,10 +793,12 @@ lazy val cli = project
            |
            |/** Generated by build.sbt — do not edit. */
            |object PluginBuildVersions:
-           |  val scala: String     = "${scalaVersion.value}"
-           |  val sconfig: String   = "${V.sconfig}"
-           |  val kindlings: String = "${V.kindlings}"
-           |  val munit: String     = "${V.munit}"
+           |  val scala: String        = "${scalaVersion.value}"
+           |  val organization: String = "${organization.value}"
+           |  val histmersion: String  = "${version.value}"
+           |  val sconfig: String      = "${V.sconfig}"
+           |  val kindlings: String    = "${V.kindlings}"
+           |  val munit: String        = "${V.munit}"
            |""".stripMargin
       if (!out.exists() || IO.read(out) != src) IO.write(out, src)
       Seq(out)
@@ -697,6 +827,7 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, pluginHello, pluginHelloAi, chimneyIron, chimneyIronTests,
+  .aggregate(coreJVM, coreJS, pluginApi, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
+    pluginResolver, chimneyIron, chimneyIronTests,
     db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)

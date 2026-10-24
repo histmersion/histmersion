@@ -1,0 +1,25 @@
+{
+  "reflection": [
+    {
+      "type": "com.histmersion.fixtures.hellodeps.HelloDepsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.fixtures.hellodeps.HelloDepsPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/histmersion/plugins/hello-deps.conf"
+    }
+  ]
+}

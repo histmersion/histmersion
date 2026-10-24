@@ -103,6 +103,7 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 | io.circe:circe-parser_3 | 0.14.17 | Apache-2.0 | compatible |
 | io.circe:circe-parser_sjs1_3 | 0.14.17 | Apache-2.0 | compatible |
 | io.circe:circe-scalajs_sjs1_3 | 0.14.17 | Apache-2.0 | compatible |
+| io.get-coursier:interface | 1.0.30 | Apache License 2.0 | compatible |
 | io.github.cquiroz:cldr-api_sjs1_3 | 4.5.0 | BSD 3-Clause License | compatible |
 | io.github.cquiroz:scala-java-locales_sjs1_3 | 1.5.4 | BSD 3-Clause License | compatible |
 | io.github.cquiroz:scala-java-time_3 | 2.6.0 | BSD 3-Clause License | compatible |
