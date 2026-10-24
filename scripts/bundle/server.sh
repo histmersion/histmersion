@@ -48,9 +48,14 @@ hk_write_build_record "$out/histmersion-server.build" native "$bundle/kit" "$bun
 # its sources jar, under names that stay the same across versions so a plugin project's path to them
 # survives an upgrade; the version is in the jar's manifest (Implementation-Version)
 api_dir="$(find "$root/target/out" -type d -path '*/histmersion-plugin-api' | head -1)"
-api_jar="$(find "$api_dir" -maxdepth 1 -name 'histmersion-plugin-api_3-*.jar' ! -name '*-sources.jar' | head -1)"
-api_src="$(find "$api_dir" -maxdepth 1 -name 'histmersion-plugin-api_3-*-sources.jar' | head -1)"
+# (a test run leaves histmersion-plugin-api_3-<v>-tests.jar beside them, which must never be shipped)
+api_jar="$(find "$api_dir" -maxdepth 1 -name 'histmersion-plugin-api_3-*.jar' ! -name '*-sources.jar' ! -name '*-tests.jar' ! -name '*-javadoc.jar' | head -1)"
+api_src="$(find "$api_dir" -maxdepth 1 -name 'histmersion-plugin-api_3-*-sources.jar' ! -name '*-tests-sources.jar' | head -1)"
 [ -n "$api_jar" ] && [ -n "$api_src" ] || { echo "pluginApi/package wrote no plugin API jar or sources jar in '$api_dir'" >&2; exit 1; }
+"$home/bin/jar" tf "$api_jar" | grep -qx 'com/histmersion/plugin/Plugin.class' \
+  || { echo "$api_jar holds no com/histmersion/plugin/Plugin.class: not the plugin API" >&2; exit 1; }
+"$home/bin/jar" tf "$api_src" | grep -qx 'com/histmersion/plugin/Plugin.scala' \
+  || { echo "$api_src holds no com/histmersion/plugin/Plugin.scala: not the plugin API's sources" >&2; exit 1; }
 rm -rf "$bundle/plugin-api" && mkdir -p "$bundle/plugin-api"
 install -m 0644 "$api_jar" "$bundle/plugin-api/histmersion-plugin-api.jar"
 install -m 0644 "$api_src" "$bundle/plugin-api/histmersion-plugin-api-sources.jar"
