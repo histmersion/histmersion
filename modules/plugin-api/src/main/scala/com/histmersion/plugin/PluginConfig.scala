@@ -2,7 +2,7 @@ package com.histmersion.plugin
 
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 
-/** The readers a plugin's config derivation must see (docs/research-plugins.md §3.3): an `${?ENV}`
+/** The readers a plugin's config derivation must see: an `${?ENV}`
   * override always arrives as a HOCON STRING, so a number or boolean setting has to accept a numeric
   * or boolean string too — the same givens `core/Config.scala` declares for Histmersion's own
   * settings. A plugin imports them where it derives (`import com.histmersion.plugin.PluginConfig.given`);

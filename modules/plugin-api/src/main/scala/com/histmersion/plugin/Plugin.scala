@@ -3,7 +3,7 @@ package com.histmersion.plugin
 import hearth.kindlings.sconfigderivation.ConfigReader
 import scala.compiletime.deferred
 
-/** The plugin SPI (docs/research-plugins.md §2.2): everything a plugin author compiles against, and
+/** The plugin SPI: everything a plugin author compiles against, and
   * nothing else — no domain model, no database, no server. The host (`com.histmersion.server.plugins`)
   * owns discovery, config layering, secret resolution and the registries' contents. */
 
@@ -85,13 +85,13 @@ trait PluginContext:
   /** Named secret backends: `<name>:<ref>` references are resolved by the vault registered as `name`. */
   def secretVaults: Registry[SecretVault]
 
-  /** The acquisition chain (docs/research-plugins.md §5): each fetcher under its own id, which is
+  /** The acquisition chain: each fetcher under its own id, which is
     * what `histmersion.acquire.chain` orders. A plugin may add several (one per step). A host that
     * has no acquisition chain refuses every addition — the default, so a context written for an
     * earlier extension point (a test's) still compiles. */
   def sourceFetchers: Registry[SourceFetcher] = Registry.refusing("this host has no acquisition chain")
 
-  /** The media collections `histmersion media import <id>` runs (docs/research-plugins.md §6): each under
+  /** The media collections `histmersion media import <id>` runs: each under
     * its own id — the name the import is asked for, and the provider its pictures are stored under. The
     * host judges every licence and every match itself ([[MediaCollection]]). */
   def mediaCollections: Registry[MediaCollection] = Registry.refusing("this host has no media import")
@@ -100,7 +100,7 @@ trait PluginContext:
     * name and the catalogue its records are stored under. */
   def eventCatalogues: Registry[EventCatalogue] = Registry.refusing("this host has no event catalogues")
 
-  /** The AI providers the embedded agents call (docs/research-plugins.md §22), each under its PROVIDER
+  /** The AI providers the embedded agents call, each under its PROVIDER
     * NAME — the part before the colon of a `provider:model` reference. The host runs the tool loop, the
     * tools, the validation and every budget; the provider answers one model call at a time. */
   def aiProviders: Registry[AiProvider] = Registry.refusing("this host has no AI providers")

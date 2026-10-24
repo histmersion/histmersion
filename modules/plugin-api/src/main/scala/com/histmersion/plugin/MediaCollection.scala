@@ -1,14 +1,14 @@
 package com.histmersion.plugin
 
-/** Media collections, the second part of the app that plugins extend (docs/research-plugins.md §6):
+/** Media collections, the second part of the app that plugins extend:
   * an open-access collection of pictures — a museum's objects, a library's maps, an excavation
   * archive's photographs — searched for the places on the map. A plugin adds one or more
   * [[MediaCollection]]s to [[PluginContext.mediaCollections]]; `histmersion media import <id>` then
   * runs it.
   *
   * The plugin only SEARCHES and DESCRIBES: it returns [[MediaItem]]s with the licence AS ITS PROVIDER
-  * STATES IT. Everything that decides what is stored is the host's and cannot be changed by a plugin
-  * (§11): the licence is read from the statement and judged against the host's allowlist
+  * STATES IT. Everything that decides what is stored is the host's and cannot be changed by a plugin:
+  * the licence is read from the statement and judged against the host's allowlist
   * (`histmersion.media.collections`, the user's to widen), an item is tied to a place only by the
   * host's match rules (names compared by the gazetteer's name key, values marked uncertain never used,
   * the dates must overlap the place's, the reason stored on the link), and the host downloads the

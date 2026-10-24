@@ -2,7 +2,7 @@ package com.histmersion.plugin
 
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 
-/** Where a secret's value comes from (docs/research-plugins.md §3.7). The config holds only this
+/** Where a secret's value comes from. The config holds only this
   * reference, never the value (except the discouraged `value:` form, which is masked wherever it is
   * shown). */
 enum SecretRef:
