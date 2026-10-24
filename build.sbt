@@ -227,10 +227,13 @@ def checkNoLegacyNativeConfigs(dir: File): Unit = {
 // logger adapter be created at build time. Netty classes that are build-time initialised keep an
 // SLF4J logger in a static field, which since #824 is a scribe adapter. It holds only its name and
 // looks the scribe configuration up on every call, so baking it into the image heap is safe.
+// No `--enable-url-protocols=https` (#3752): GraalVM 25.1+ deprecates it for reachability metadata — the
+// `https` (and `http`) handler's constructor registered for reflection, which the tracing agent records in
+// the server's reachability-metadata.json. No `--no-fallback` either: it has had no effect since 25.1 (the
+// fallback image is gone), and the builder warned that it sets the deprecated FallbackThreshold.
 val serverNativeOpts = Seq(
   "--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll",
-  "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter",
-  "--enable-url-protocols=https")
+  "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter")
 
 val relinkKit = taskKey[File]("Write the relink kit: the Sloth-patched class path, its order, the native-image arguments")
 
@@ -252,7 +255,7 @@ def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String]
       checkNoLegacyNativeConfigs((Compile / resourceDirectory).value / "META-INF" / "native-image")
       val ni  = sys.env.get("GRAALVM_HOME").map(_ + "/bin/native-image").getOrElse("native-image")
       log.info(s"native-image → $out")
-      val cmd = Seq(ni, "--no-fallback") ++ extraOpts ++ Seq("-cp", cp, mainCls, out.getAbsolutePath)
+      val cmd = Seq(ni) ++ extraOpts ++ Seq("-cp", cp, mainCls, out.getAbsolutePath)
       val rc  = scala.sys.process.Process(cmd).!
       if (rc != 0) sys.error(s"native-image failed (exit $rc)")
       log.info(s"native image built → $out")
@@ -475,7 +478,7 @@ lazy val server = project
       IO.delete(out)
       cp.foreach(j => IO.copyFile(j, out / "lib" / j.getName))
       IO.writeLines(out / "classpath", names)
-      IO.writeLines(out / "native-image.args", "--no-fallback" +: serverNativeOpts)
+      IO.writeLines(out / "native-image.args", serverNativeOpts)
       IO.write(out / "main-class", "com.histmersion.server.Main\n")
       // Sloth and its verifier, for the PLUGIN jars a relink links (these are patched already)
       (ThisBuild / slothJar).value.foreach(j => IO.copyFile(j, out / "tools" / "sloth.jar"))

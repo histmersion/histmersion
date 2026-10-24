@@ -86,7 +86,7 @@ The coordinator added an eighth: a signing key, so that every local build has th
 | Event catalogues | `core/EventProviders` (GVP, NOAA, Wikidata), `server/events/EventCatalogHandlers` | pure URL/parse objects; the handler switches on the catalogue | a plugin kind once the record type (`CatalogRecord`) is in the API |
 | Gazetteer | `server/importers/GazetteerLoad` (`geonames`, `wikidata`, `tgn` pinned extracts; `lpf` directory), Pleiades/Natural Earth seeds, Cliopatria, PeriodO, AWMC, ChronOntology importers | data pipelines; extracts are pinned by sha256 | the `lpf` directory is already a no-code extension point |
 | Config | `core/Config.scala`, `core/UserConfig.scala` (`ConfigLayers`) | sconfig + `derives ConfigReader` (Kindlings). Layers: env > `histmersion.conf` > `reference.conf`. Unknown keys warn. `typeCheck` names a mistyped key because "the derived readers do not say which key a wrong type is at". Lenient `Int/Long/Double/Boolean` givens accept numeric strings from env | the contract a plugin block must follow (§3); spike A hit both gotchas |
-| Native build | `build.sbt` `nativeImage` (custom task), `slothPatch`, `checkNoLegacyNativeConfigs`; `scripts/bundle/server.sh` | `native-image --no-fallback -cp <sloth-patched jars> Main`; per-module `reachability-metadata.json` from the tracing agent | plugin jars join `-cp`; their metadata travels inside the jar |
+| Native build | `build.sbt` `nativeImage` (custom task), `slothPatch`, `checkNoLegacyNativeConfigs`; `scripts/bundle/server.sh` | `native-image -cp <sloth-patched jars> Main`; per-module `reachability-metadata.json` from the tracing agent | plugin jars join `-cp`; their metadata travels inside the jar |
 | Install | `scripts/bundle/install-macos.sh`, `codesign-identity-macos.sh`, `.github/workflows/bundle.yml` | `just install` already **builds locally** (`just bundle` → `server.sh`). CI builds release bundles for macOS-arm64 and Linux x64/arm64. The installer strips quarantine and signs with "Histmersion Local" when that identity exists | §8.6 says what changes |
 
 ## 2. The SPI
@@ -627,7 +627,7 @@ plugins directory and compares the two. A first-party-only image has a fixed dig
    as any other dependency. The kit's own jars are already patched.
 5. **Memory check.** The real build peaked at 10.97 GB. With less than about 12 GB available, warn
    and offer JVM mode. Capping the heap with `-J-Xmx` trades memory for build time **(unverified)**.
-6. **Build.** `native-image --no-fallback @kit/native-image.args -cp kit/*:plugin-set.jar:plugins/* … → bin/histmersion-server.new`.
+6. **Build.** `native-image @kit/native-image.args -cp kit/*:plugin-set.jar:plugins/* … → bin/histmersion-server.new`.
 7. **Self-check.** Run `histmersion-server.new --self-check`, a **new** flag: load config, decode
    plugins, print `plugin-set.json`, exit, and never touch the database. The server has no such
    mode today. During this research, running `histmersion-server --help` started a real server
@@ -1412,7 +1412,7 @@ the local build is an installer option.
 **The kit (§7.4, §8.7).** `server/relinkKit` (build.sbt) writes the Sloth-patched class path `nativeImage`
 links — 133 jars, all jars (sbt 2 exports the modules as jars; a class directory or two jars of one name
 fail the task) — with its order (`kit/classpath`), the native-image flags (`kit/native-image.args`,
-`--no-fallback` + `serverNativeOpts`, now ONE list in build.sbt for both), the main class, and Sloth with
+`serverNativeOpts` (`--no-fallback` until #3752), now ONE list in build.sbt for both), the main class, and Sloth with
 its verifier (`kit/tools/`). `scripts/bundle/server.sh` copies it into the bundle, adds
 `kit/graalvm-version` (the pinned version: `.sdkmanrc` until 2026-10-23, `scripts/bundle/graalvm-pins.txt` since) and runs `PluginTool kit-manifest`: `kit/kit.json` (format,
 version, commit, GraalVM version, plugin SPI, main class, every file's SHA-256) and `kit/SHA256SUMS` (the
