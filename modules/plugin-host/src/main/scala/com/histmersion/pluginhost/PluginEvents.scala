@@ -34,9 +34,10 @@ object PluginEvents:
 
   /** A catalogue run's polite client at `intervalMs` between requests to one host; the media politeness
     * otherwise (User-Agent, retries) — and up to two minutes' Retry-After, which a query service asks for. */
-  def polite(http: HttpTransport, media: MediaConfig, intervalMs: Int, log: HostLog = HostLog.scribe): Polite =
+  def polite(http: HttpTransport, media: MediaConfig, intervalMs: Int, sleep: Long => Unit = ms => Thread.sleep(ms),
+      log: HostLog = HostLog.scribe): Polite =
     Polite(http, media.copy(requestIntervalMs = intervalMs, maxRetryAfterSeconds = media.maxRetryAfterSeconds.max(120)),
-      log = log)
+      sleep = sleep, log = log)
 
   /** One part as the host reads it: the part, then each `next` page it names, until a page names none,
     * names itself or a part `done`, or `full` says the run has what it asked for. `each` gets every

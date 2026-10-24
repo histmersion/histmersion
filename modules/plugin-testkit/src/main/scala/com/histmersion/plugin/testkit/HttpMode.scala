@@ -1,0 +1,97 @@
+package com.histmersion.plugin.testkit
+
+import java.nio.file.{Files, Path}
+
+/** Where a [[PluginHarness]]'s requests go. Whatever the mode, every request passes through the
+  * server's own HTTP policy first — its User-Agent, its timeouts and TLS trust, `Retry-After`, bot
+  * challenges ending the request — so a plugin sees exactly what the server would show it; only the
+  * last step, the wire, differs.
+  *
+  * {{{
+  * val mode = HttpMode.fromEnv(Path.of("src/test/recordings/known-book"))
+  * assume(mode.isRight, mode.left.getOrElse(""))   // munit: skipped, with the reason
+  * val harness = PluginHarness.load("my-plugin", config, http = mode.toOption.get)
+  * }}} */
+enum HttpMode:
+  /** The real network, nothing kept. */
+  case Live
+
+  /** The real network, and every exchange written to `dir` (replacing what a previous recording left
+    * there): one `NNN-<host>.http` file per exchange — method, URL, status and a safe subset of
+    * headers — and its body beside it in a file of its own. Never written: `Authorization`, cookies,
+    * any other header outside that subset, and the value of any secret the harness knows (in a URL,
+    * a header or a text body it reads `{secret}`). One harness per directory. */
+  case Record(dir: Path)
+
+  /** No network: each request is answered from what [[Record]] wrote to `dir`, in the order it was
+    * recorded (a request asked more often than recorded gets its last answer again). A request with
+    * no recording answers nothing to the plugin, and the runner that made it then fails the test with
+    * [[UnrecordedRequest]], naming the URL. Waits (a recorded `Retry-After`, a collection's pace) are
+    * skipped. */
+  case Replay(dir: Path)
+
+  /** No network: canned answers by exact URL, for unit tests; any other URL answers HTTP 404. */
+  case Stub(answers: Map[String, StubAnswer])
+
+  /** Whether requests reach the real network. */
+  def live: Boolean = this match
+    case Live | Record(_) => true
+    case _                => false
+
+object HttpMode:
+  /** `live`, `record` or `replay`: the mode [[fromEnv]] picks. */
+  val ModeVariable = "HISTMERSION_PLUGIN_HTTP"
+
+  /** Set (`1`, `true`, `yes`): a test with no recordings yet may go to the network. */
+  val LiveVariable = "HISTMERSION_PLUGIN_LIVE"
+
+  /** Every request answers HTTP 404: a test that must not touch the network. */
+  val Offline: HttpMode = Stub(Map.empty)
+
+  /** The mode a test of one recorded case runs in, from the environment:
+    *
+    *  - `HISTMERSION_PLUGIN_HTTP=live|record|replay` decides, when set;
+    *  - otherwise [[Replay]] when `dir` holds recordings — offline, in CI too;
+    *  - otherwise [[Live]] when `HISTMERSION_PLUGIN_LIVE` is set;
+    *  - otherwise `Left`, the reason to skip the test: there is nothing to replay, and going to the
+    *    network was not asked for. */
+  def fromEnv(dir: Path, env: Map[String, String] = sys.env): Either[String, HttpMode] =
+    env.get(ModeVariable).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
+      case Some("live")   => Right(Live)
+      case Some("record") => Right(Record(dir))
+      case Some("replay") => Right(Replay(dir))
+      case Some(other)    => Left(s"$ModeVariable=$other: one of live, record, replay")
+      case None if Recordings.exist(dir) => Right(Replay(dir))
+      case None if env.get(LiveVariable).exists(v => Set("1", "true", "yes")(v.trim.toLowerCase(java.util.Locale.ROOT))) =>
+        Right(Live)
+      case None =>
+        Left(s"no recordings in $dir: set $LiveVariable=1 to run against the real site " +
+          s"($ModeVariable=record to keep its answers for an offline replay)")
+
+/** A canned answer of [[HttpMode.Stub]]. */
+final case class StubAnswer(status: Int, body: Array[Byte], headers: Map[String, String] = Map.empty)
+
+object StubAnswer:
+  /** A 200 with this body. */
+  def ok(body: Array[Byte], contentType: String = "application/octet-stream"): StubAnswer =
+    StubAnswer(200, body, Map("content-type" -> contentType))
+
+  /** A 200 with this text, UTF-8. */
+  def text(body: String, contentType: String = "text/plain; charset=utf-8"): StubAnswer =
+    ok(body.getBytes(java.nio.charset.StandardCharsets.UTF_8), contentType)
+
+/** A request a [[HttpMode.Replay]] had no recording of: the test fails with it, naming the URLs. */
+final class UnrecordedRequest(urls: List[String], dir: Path)
+    extends AssertionError(
+      s"no recording in $dir of: ${urls.distinct.mkString(", ")} — record the case again " +
+        s"(${HttpMode.ModeVariable}=record), or the plugin now asks for something it did not ask for before")
+
+/** Paths of a test's recordings. */
+object Recordings:
+  /** Whether `dir` holds at least one recorded exchange. */
+  def exist(dir: Path): Boolean =
+    Files.isDirectory(dir) && {
+      val files = Files.list(dir)
+      try files.anyMatch(_.getFileName.toString.endsWith(RecordedExchange.Suffix))
+      finally files.close()
+    }
