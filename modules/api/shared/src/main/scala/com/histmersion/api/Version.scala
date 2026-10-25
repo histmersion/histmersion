@@ -1,9 +1,6 @@
-package com.histmersion.domain
+package com.histmersion.api
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
-/** Build identity, shared by the server and the CLI. */
+/** Build identity, shared by the server and the CLI: what `/api/version` ([[VersionInfo]]) reports. */
 object Version:
   val name: String    = "histmersion"
   val version: String = "0.1.0-SNAPSHOT"

@@ -1,6 +1,7 @@
 package com.histmersion.server.basemap
 
-import com.histmersion.domain.{HttpPolicy, Version}
+import com.histmersion.api.Version
+import com.histmersion.domain.HttpPolicy
 
 import java.io.InputStream
 import java.net.URI
