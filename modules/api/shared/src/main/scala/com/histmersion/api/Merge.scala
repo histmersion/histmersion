@@ -6,7 +6,7 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 import java.util.UUID
-import com.histmersion.values.{BundleKind, DecisionKind, EditionsPolicy, IssueKind, IssueSeverity, MatchOutcome, WireEnumValues}
+import com.histmersion.values.{BundleKind, DecidedBy, DecisionKind, EditionsPolicy, IssueKind, IssueSeverity, MatchMethod, MatchOutcome, WireEnumValues}
 
 /** `merge plan` (docs/research-merge-import.md §5–§6, milestone M3): what importing a bundle into this
   * collection would do, and every question it raises, in ONE run.
@@ -46,27 +46,6 @@ object MergeDecision:
   given Encoder[MergeDecision] = Encoder.encodeString.contramap(_.wire)
   given Decoder[MergeDecision] = Decoder.decodeString.emap(parse)
   given Schema[MergeDecision]  = Schema.string[MergeDecision]
-
-/** Who decided an issue. */
-enum DecidedBy:
-  /** A resolution (the file or `--resolve`). */
-  case Resolution
-  /** A policy (`--editions`). */
-  case Policy
-  /** The issue's default, nobody overrode it. */
-  case Default
-  /** The decision an earlier `merge apply` carried out for this very issue (the same records,
-    * unchanged): remembered, as git's rerere does, so a decision is never asked twice. */
-  case Remembered
-
-object DecidedBy:
-  given WireEnumValues[DecidedBy]:
-    def all: Array[DecidedBy]                  = DecidedBy.values
-    def wire(e: DecidedBy): String             = e.toString.toLowerCase(java.util.Locale.ROOT)
-    def fromWire(s: String): Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase(s.trim))
-  given Encoder[DecidedBy] = WireEnum.encoder
-  given Decoder[DecidedBy] = WireEnum.decoder
-  given Schema[DecidedBy]  = WireEnum.schema
 
 /** One side of an issue: the record's label, its uid, and a few lines describing it. */
 final case class IssueSide(label: String, uid: UUID, lines: List[String] = Nil) derives KindlingsCodecAsObject
@@ -146,28 +125,6 @@ final case class MergeIssue(
   def open: Boolean = severity == IssueSeverity.Blocking && condition.isEmpty && decision.isEmpty
 object MergeIssue:
   given Schema[MergeIssue] = KindlingsSchema.derived[MergeIssue].schema
-
-/** How a bundle's source was paired with one here. */
-enum MatchMethod:
-  /** The same uid. */
-  case Uid
-  /** A redirect (`uid_aliases`) or the ledger of an earlier merge. */
-  case Ledger
-  /** A strong key: the same DOI, original file (sha256) or ISBN. */
-  case StrongKey
-  /** The weighted score. */
-  case Score
-  /** Nothing here is that work. */
-  case Unmatched
-
-object MatchMethod:
-  given WireEnumValues[MatchMethod]:
-    def all: Array[MatchMethod]                  = MatchMethod.values
-    def wire(e: MatchMethod): String             = e.toString.toLowerCase(java.util.Locale.ROOT)
-    def fromWire(s: String): Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase(s.trim))
-  given Encoder[MatchMethod] = WireEnum.encoder
-  given Decoder[MatchMethod] = WireEnum.decoder
-  given Schema[MatchMethod]  = WireEnum.schema
 
 /** One source of the bundle and what it was paired with. Pairs `Same` by uid are counted, not listed. */
 final case class SourceMatch(

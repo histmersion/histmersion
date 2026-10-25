@@ -8,7 +8,7 @@ import com.histmersion.config.given
 import com.histmersion.api.Managers.*
 
 import java.time.{Duration, Instant}
-import com.histmersion.values.GoalStatus
+import com.histmersion.values.{ApprovalDecidedBy, GoalStatus, ItemStatus, ManagerKind, ManagerState}
 
 /** The pure half of the autopilot (docs/research-process-managers.md "As built: the autopilot"): the
   * code checks that decide an approval without a person, the rule that moves a research goal's status
@@ -156,7 +156,7 @@ object AutopilotPolicy:
     val open = f.proposeStatus.exists(st => ItemStatus.parse(st).exists(!_.isFinal))
     val cooled = f.proposeSettled.forall(t => !t.plusSeconds(math.max(0, cooldownHours).toLong * 3600L).isAfter(now))
     Option.when(cooldownHours > 0 && f.status != GoalStatus.Done && f.articles > 0 &&
-        articlesInProgress(f.unreviewed, f.compileOpen).isEmpty && f.seedState.contains(State.Active.wire) && !open && cooled)(
+        articlesInProgress(f.unreviewed, f.compileOpen).isEmpty && f.seedState.contains(ManagerState.Active.wire) && !open && cooled)(
       s"its ${Plural.count(f.articles, "article")} are compiled and passed review: its next article is proposed " +
         "(the plan goes through the article-plan approvals)")
 
@@ -164,7 +164,7 @@ object AutopilotPolicy:
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps
     * count). */
-  val NotePrefix: String = ListFilters.DecidedBy.AutopilotNote
+  val NotePrefix: String = ApprovalDecidedBy.AutopilotNote
   def note(v: Verdict): Option[String] = v match
     case Verdict.Approve(r) => Some(s"$NotePrefix approved — $r")
     case Verdict.Reject(r)  => Some(s"$NotePrefix rejected — $r")
@@ -259,7 +259,7 @@ object AutopilotPolicy:
     val byId = managers.map(m => m.id -> m).toMap
     val library = List(ReviewId, EnrichId).flatMap { id =>
       byId.get(id).toList.flatMap { m =>
-        Option.when(m.state == State.Paused.wire)(Step.Resume(id)).toList ++
+        Option.when(m.state == ManagerState.Paused.wire)(Step.Resume(id)).toList ++
           Option.when(id == ReviewId && m.extendMinNew.isEmpty && s.extendMinNew > 0)(Step.ExtendMinNew(id, s.extendMinNew)).toList
       }
     }
@@ -269,14 +269,14 @@ object AutopilotPolicy:
         case None if done => Nil
         case None         => List(Step.CreateSeed(g.slug, stagger(s.seedCron, seedId(g.slug)), g.needsPlan))
         case Some(m) =>
-          Option.when(pausedByAutopilot(m.id) && m.state == State.Paused.wire)(Step.Resume(m.id)).toList ++
+          Option.when(pausedByAutopilot(m.id) && m.state == ManagerState.Paused.wire)(Step.Resume(m.id)).toList ++
             Option.when(!done && m.cron.isEmpty)(Step.SetCron(m.id, stagger(s.seedCron, m.id))).toList ++
-            Option.when(!done && g.needsPlan && !m.planItem && m.state != State.Stopped.wire)(Step.AddPlanItem(m.id, g.slug)).toList
+            Option.when(!done && g.needsPlan && !m.planItem && m.state != ManagerState.Stopped.wire)(Step.AddPlanItem(m.id, g.slug)).toList
       val watchCron = if done then s.finishedWatchCron else s.watchCron
       val watch = byId.get(watchId(g.slug)) match
         case None => List(Step.CreateWatch(g.slug, stagger(watchCron, watchId(g.slug)), s.watchIngestPerDay))
         case Some(m) =>
-          Option.when(pausedByAutopilot(m.id) && m.state == State.Paused.wire)(Step.Resume(m.id)).toList ++
+          Option.when(pausedByAutopilot(m.id) && m.state == ManagerState.Paused.wire)(Step.Resume(m.id)).toList ++
             Option.when(m.cron.isEmpty)(Step.SetCron(m.id, stagger(watchCron, m.id))).toList ++
             Option.when(m.autoIngest.isEmpty)(Step.AutoIngestOn(m.id, s.watchIngestPerDay)).toList
       seed ++ watch
@@ -286,7 +286,7 @@ object AutopilotPolicy:
   /** The managers the autopilot pauses when it is turned off: the active seeding managers and watchers
     * (the library-wide ones and a person's paused ones are left as they are). */
   def toPause(managers: List[ManagerRow]): List[String] =
-    managers.filter(m => m.state == State.Active.wire && (m.kind == Kind.Seed.wire || m.kind == Kind.Watch.wire)).map(_.id)
+    managers.filter(m => m.state == ManagerState.Active.wire && (m.kind == ManagerKind.Seed.wire || m.kind == ManagerKind.Watch.wire)).map(_.id)
 
   // ── crons spread per goal ──────────────────────────────────────────────────────────────────────
 

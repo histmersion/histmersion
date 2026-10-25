@@ -3,8 +3,8 @@ package com.histmersion.domain
 import com.histmersion.api.*
 import com.histmersion.api.given
 
-import com.histmersion.api.GoalPlans.{GoalLink, GoalSchedule, GoalView, LinkKind}
-import com.histmersion.values.GoalStatus
+import com.histmersion.api.GoalPlans.{GoalLink, GoalSchedule, GoalView}
+import com.histmersion.values.{GoalLinkKind, GoalStatus}
 
 /** `meta/GOALS.md` — the research goals as a read-only Markdown projection, written next to the three
   * bookkeeping files by `histmersion queue export <dir>` and `histmersion export <dir>`.
@@ -94,17 +94,17 @@ object GoalsExport:
 
   /** One labelled list per link kind, in a fixed order; an empty kind is left out. */
   private def linkSections(links: List[GoalLink], itemStatus: Map[Int, String]): List[String] =
-    def section(kind: LinkKind, label: String, line: GoalLink => String, key: GoalLink => (Long, String)) =
+    def section(kind: GoalLinkKind, label: String, line: GoalLink => String, key: GoalLink => (Long, String)) =
       links.filter(_.kind == kind).sortBy(key) match
         case Nil => None
         case ls  => Some(s"**$label**\n" + ls.map(l => s"- ${line(l)}").mkString("\n"))
     val byRef   = (l: GoalLink) => (0L, l.ref)
     val byId    = (l: GoalLink) => (l.ref.toLongOption.getOrElse(Long.MaxValue), l.ref)
     List(
-      section(LinkKind.Article, "Articles", l => s"[[${l.ref}]]${titled(l)}${noted(l)}", byRef),
-      section(LinkKind.Source, "Sources", l => s"[[${l.ref}]]${titled(l)}${noted(l)}", byRef),
-      section(LinkKind.Query, "Searches", l => s"\"${oneLine(l.ref)}\"${noted(l)}", byRef),
-      section(LinkKind.QueueItem, "Queue items", l => queueLine(l, itemStatus), byId)
+      section(GoalLinkKind.Article, "Articles", l => s"[[${l.ref}]]${titled(l)}${noted(l)}", byRef),
+      section(GoalLinkKind.Source, "Sources", l => s"[[${l.ref}]]${titled(l)}${noted(l)}", byRef),
+      section(GoalLinkKind.Query, "Searches", l => s"\"${oneLine(l.ref)}\"${noted(l)}", byRef),
+      section(GoalLinkKind.QueueItem, "Queue items", l => queueLine(l, itemStatus), byId)
     ).flatten
 
   private def titled(l: GoalLink): String = l.title.fold(" — (not found)")(t => s" — ${oneLine(t)}")

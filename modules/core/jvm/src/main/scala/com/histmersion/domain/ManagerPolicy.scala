@@ -5,11 +5,11 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.Agents.RunState
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.ReviewLedger.Ledger
 
 import java.time.{Duration, Instant}
+import com.histmersion.values.{ApprovalState, ManagerKind, ManagerState, RunState}
 
 /** The pure half of the process managers (docs/research-process-managers.md §3.4): what to do with an
   * item after its run settled, the order items are dispatched in, how many runs a manager may start,
@@ -34,17 +34,17 @@ object ManagerPolicy:
         math.max(0, c.staleAfterDays.getOrElse(d.staleAfterDays)), c.inferFilter.getOrElse(d.inferFilter))
 
     /** The settings of a manager of kind `k`. */
-    def forKind(k: Kind, c: ManagerConfig, m: AgentManagersConfig): ReviewSettings = k match
-      case Kind.Review => of(c, m.review, m)
+    def forKind(k: ManagerKind, c: ManagerConfig, m: AgentManagersConfig): ReviewSettings = k match
+      case ManagerKind.Review => of(c, m.review, m)
       case other =>
         val maxRuns = math.max(0, c.maxRuns.getOrElse(simple(other, m).maxRuns))
         ReviewSettings(maxRuns, math.max(maxRuns, c.maxOpen.getOrElse(2 * maxRuns)), 1, 1, 1, 1,
           math.max(0, c.cooldownMinutes.getOrElse(0)), 0, 0, math.max(1, c.maxFailures.getOrElse(m.maxFailures)),
           math.max(1, m.backoffMinutes), math.max(1, m.maxBackoffMinutes))
 
-    private def simple(k: Kind, m: AgentManagersConfig): SimpleManagerConfig = k match
-      case Kind.Enrich => m.enrich
-      case Kind.Watch  => SimpleManagerConfig(m.watch.maxRuns)
+    private def simple(k: ManagerKind, m: AgentManagersConfig): SimpleManagerConfig = k match
+      case ManagerKind.Enrich => m.enrich
+      case ManagerKind.Watch  => SimpleManagerConfig(m.watch.maxRuns)
       case _           => m.seed
 
     /** The defaults as a config (what `effective` shows for an unset key). */
@@ -56,12 +56,12 @@ object ManagerPolicy:
         inferFilter = Some(d.inferFilter), dailyUsd = dailyCap(ManagerConfig(), m), extendMinNew = Some(d.extendMinNew))
 
     /** The defaults of a manager of kind `k`; a seeding manager's also show the plan's checks (`seed`). */
-    def defaultsFor(k: Kind, m: AgentManagersConfig, seed: AgentSeedConfig): ManagerConfig = k match
-      case Kind.Review => defaults(m.review, m)
-      case Kind.Seed =>
+    def defaultsFor(k: ManagerKind, m: AgentManagersConfig, seed: AgentSeedConfig): ManagerConfig = k match
+      case ManagerKind.Review => defaults(m.review, m)
+      case ManagerKind.Seed =>
         ManagerConfig(maxRuns = Some(m.seed.maxRuns), maxOpen = Some(2 * m.seed.maxRuns), maxFailures = Some(m.maxFailures),
           minSources = Some(seed.minSources), maxArticles = Some(seed.maxArticles), dailyUsd = dailyCap(ManagerConfig(), m))
-      case Kind.Watch =>
+      case ManagerKind.Watch =>
         ManagerConfig(maxRuns = Some(m.watch.maxRuns), maxOpen = Some(2 * m.watch.maxRuns), maxFailures = Some(m.maxFailures),
           sweeps = Some(Sweep.values.toList.map(_.wire)), autoIngest = Some(false), autoIngestPerDay = Some(m.watch.autoIngestPerDay),
           dailyUsd = dailyCap(ManagerConfig(), m))
@@ -267,7 +267,7 @@ object ManagerPolicy:
 
   /** How an approval a held item waits for was decided, as its outcome (None: still open). */
   def decided(state: String, result: Option[String]): Option[String] =
-    Agents.ApprovalState.parse(state).filter(_ != Agents.ApprovalState.Open).map { st =>
+    ApprovalState.parse(state).filter(_ != ApprovalState.Open).map { st =>
       st.wire + result.filter(_.nonEmpty).fold("")(r => s": ${r.take(300)}")
     }
 
@@ -379,10 +379,10 @@ object ManagerPolicy:
       .orElse(scala.util.Try(java.time.LocalDate.parse(t).atStartOfDay(java.time.ZoneOffset.UTC).toInstant).toOption)
 
   /** The status line a manager shows. */
-  def statusNote(state: State, starved: Option[String], capacity: Int, pending: Int, due: Int, inFlight: Int,
+  def statusNote(state: ManagerState, starved: Option[String], capacity: Int, pending: Int, due: Int, inFlight: Int,
       budget: Option[String]): String =
-    if state == State.Stopped then "stopped"
-    else if state == State.Paused then (if inFlight > 0 then s"paused (${Plural.count(inFlight, "run")} in flight)" else "paused")
+    if state == ManagerState.Stopped then "stopped"
+    else if state == ManagerState.Paused then (if inFlight > 0 then s"paused (${Plural.count(inFlight, "run")} in flight)" else "paused")
     else budget.orElse(starved.map(s => s"starved: $s")).getOrElse {
       if pending == 0 && inFlight == 0 then "idle"
       else if due > 0 && capacity == 0 then s"at capacity (${Plural.count(inFlight, "run")} in flight, $pending pending)"

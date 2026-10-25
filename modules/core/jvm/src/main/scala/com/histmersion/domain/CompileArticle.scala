@@ -9,8 +9,8 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.GoalPlans.{ArticleDraft, DraftMode}
-import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.api.GoalPlans.ArticleDraft
+import com.histmersion.values.{Confidence, DraftMode, SourceStatus}
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md
   * §4.5, §14; the five phases of `docs/writing-guide.md`): the claim table (one extraction per

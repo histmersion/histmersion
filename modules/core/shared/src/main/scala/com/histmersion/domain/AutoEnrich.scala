@@ -2,8 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.api.*
 import com.histmersion.api.given
-
-import com.histmersion.api.Agents.RunState
+import com.histmersion.values.RunState
 
 /** `agents.auto-enrich`: after an ingest job stores a source, an `enrich-source` run is queued for it
   * — unless agents are off, the switch is off, or the source is ALREADY ENRICHED. Pure: the server

@@ -1,7 +1,8 @@
 package com.histmersion.api
 
-import com.histmersion.values.{BundleKind, Confidence, DecisionKind, EdgeKind, EditionsPolicy, IssueKind, IssueSeverity,
-  LocationPrecision, MatchOutcome, SourceStatus}
+import com.histmersion.values.{ApprovalKind, BundleKind, Confidence, DecidedBy, DecisionKind, DraftMode, EdgeKind,
+  EditionsPolicy, GoalLinkKind, IssueKind, IssueSeverity, LocationPrecision, MatchMethod, MatchOutcome, ScheduleKind,
+  SourceStatus}
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
@@ -51,5 +52,29 @@ object VocabularyCodecs:
   given Encoder[BundleKind] = WireEnum.encoder
   given Decoder[BundleKind] = WireEnum.decoder
   given Schema[BundleKind]  = WireEnum.schema
+
+  given Encoder[DecidedBy] = WireEnum.encoder
+  given Decoder[DecidedBy] = WireEnum.decoder
+  given Schema[DecidedBy]  = WireEnum.schema
+
+  given Encoder[MatchMethod] = WireEnum.encoder
+  given Decoder[MatchMethod] = WireEnum.decoder
+  given Schema[MatchMethod]  = WireEnum.schema
+
+  given Encoder[ApprovalKind] = WireEnum.encoder
+  given Decoder[ApprovalKind] = WireEnum.decoder
+  given Schema[ApprovalKind]  = WireEnum.schema
+
+  given Encoder[DraftMode] = WireEnum.encoder
+  given Decoder[DraftMode] = WireEnum.decoder
+  given Schema[DraftMode]  = WireEnum.schema
+
+  given Encoder[GoalLinkKind] = WireEnum.encoder
+  given Decoder[GoalLinkKind] = WireEnum.decoder
+  given Schema[GoalLinkKind]  = WireEnum.schema
+
+  given Encoder[ScheduleKind] = WireEnum.encoder
+  given Decoder[ScheduleKind] = WireEnum.decoder
+  given Schema[ScheduleKind]  = WireEnum.schema
 
 export VocabularyCodecs.given

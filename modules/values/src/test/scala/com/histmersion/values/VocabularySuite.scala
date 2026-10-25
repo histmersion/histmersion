@@ -19,6 +19,25 @@ class VocabularySuite extends munit.FunSuite:
     roundTrips[MatchOutcome]
     roundTrips[EditionsPolicy]
     roundTrips[BundleKind]
+    roundTrips[DecidedBy]
+    roundTrips[MatchMethod]
+    roundTrips[ApprovalKind]
+    roundTrips[DraftMode]
+    roundTrips[GoalLinkKind]
+    roundTrips[ScheduleKind]
+
+  test("the agent and manager vocabularies parse what they spell"):
+    for r <- RunState.values do assertEquals(RunState.parse(r.wire.toUpperCase), Some(r))
+    for p <- Pipeline.values do assertEquals(Pipeline.parse(p.wire), Some(p))
+    for k <- ManagerKind.values do assertEquals(ManagerKind.parse(k.wire), Some(k))
+    assertEquals(ProviderKind.parse("claude-code"), Some(ProviderKind.ClaudeCode))
+    assertEquals(ProviderKind.parse("acme", known = Set("acme")), Some(ProviderKind.Plugin("acme")))
+    assertEquals(ProviderKind.parse("acme"), None)
+    assertEquals(ScheduleKind.Acquisition.pipeline, Pipeline.AcquisitionSweep)
+    assertEquals(RunState.next(RunState.Paused, RunState.Queued), Some(RunState.Queued))
+    assertEquals(RunState.next(RunState.Done, RunState.Queued), None)
+    assertEquals(ApprovalDecidedBy.of("open", None, None), None)
+    assertEquals(ApprovalDecidedBy.of("approved", Some("autopilot: ok"), None), Some(ApprovalDecidedBy.Autopilot))
 
   test("the wire spellings the store and the clients rely on"):
     assertEquals(EdgeKind.wireOf(EdgeKind.SupersededBy), "superseded_by")

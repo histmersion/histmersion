@@ -168,3 +168,39 @@ object EditionsPolicy:
     def all: Array[EditionsPolicy]                  = EditionsPolicy.values
     def wire(e: EditionsPolicy): String             = Ascii.lower(e.toString)
     def fromWire(s: String): Option[EditionsPolicy] = EditionsPolicy.values.find(_.toString.equalsIgnoreCase(s.trim))
+/** Who decided an issue. */
+enum DecidedBy:
+  /** A resolution (the file or `--resolve`). */
+  case Resolution
+  /** A policy (`--editions`). */
+  case Policy
+  /** The issue's default, nobody overrode it. */
+  case Default
+  /** The decision an earlier `merge apply` carried out for this very issue (the same records,
+    * unchanged): remembered, as git's rerere does, so a decision is never asked twice. */
+  case Remembered
+
+object DecidedBy:
+  given WireEnumValues[DecidedBy]:
+    def all: Array[DecidedBy]                  = DecidedBy.values
+    def wire(e: DecidedBy): String             = Ascii.lower(e.toString)
+    def fromWire(s: String): Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase(s.trim))
+
+/** How a bundle's source was paired with one here. */
+enum MatchMethod:
+  /** The same uid. */
+  case Uid
+  /** A redirect (`uid_aliases`) or the ledger of an earlier merge. */
+  case Ledger
+  /** A strong key: the same DOI, original file (sha256) or ISBN. */
+  case StrongKey
+  /** The weighted score. */
+  case Score
+  /** Nothing here is that work. */
+  case Unmatched
+
+object MatchMethod:
+  given WireEnumValues[MatchMethod]:
+    def all: Array[MatchMethod]                  = MatchMethod.values
+    def wire(e: MatchMethod): String             = Ascii.lower(e.toString)
+    def fromWire(s: String): Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase(s.trim))
