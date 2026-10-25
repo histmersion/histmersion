@@ -117,6 +117,7 @@ bundle, fixtures), with the budget after the slash:
 | range boundaries (1 600 × 120 vertices) | drawn 906 / 3 000 · load longest task 82 / 200 · drag input p95 17 / 100 · dropped 2 % / 15 · heap 64.5 MB / 110 · the GeoJSON cache inside its ceilings |
 | events layer (2 400 + 500 findings) | drawn 581 / 2 500 · longest task 59 / 200 · pan input p95 32–124 / 300 · pan longest task 54–87 / 250 · dropped 6 % / 25 · heap 46 MB / 75 — tightened by #1647, below |
 | cluster zoom, 1920×1080 (events by view: ~1 150 held, ~330 drawn) | every zoom animated (0 not / 0) · longest task 0 / 50 · dropped 0.8 % / 15 — #4291, below |
+| every layer on (#4718's full load), 1920×1080 · 390×844 | longest task 0 / 50 · dropped 1.1 / 15 % · 0 / 15 % (Chromium); Firefox: within 20 ms of the same zooms held still — below |
 | soak (100 rounds, 132 s) | heap +0.9 MB / 6 · DOM nodes +0 / 150 · listeners +0 / 20 · Leaflet layers +0 / 0 · every cache inside its ceiling |
 
 The events layer's figures are the median of three runs of each step — the draw (a reload each), the
@@ -303,3 +304,96 @@ drawn < 1 000, every zoom animated (`notAnimated` 0; master: 1 of 4 not, the one
 task ≤ 50 ms (measured 0), dropped ≤ 15 % (0.8 %). The browser test "a zoom animates by the markers drawn,
 not the points held" (1920×1080) holds the rule itself: 1 203 points drawn as a few dozen markers animate
 (master: not), 2 556 points drawn as over a thousand markers do not.
+
+## Map motion: an in-app setting (#4718, 2026-10-25)
+
+The reader saw no merge or split of the bubbles on a zoom. Measured on a restored copy of the live data
+(Chromium, every layer on, a period chosen), the cause was **not** the volume: at most **328 markers** were
+drawn, against the animation's limit of 1 000 (`Layout.clusterAnimateMax`, counted on screen since #4291).
+The Mac had **Reduce Motion** on, and the map honoured `prefers-reduced-motion` in four places, each on its
+own: `ClusterMotion.reduced()` skipped the regroup, `MapLabels.reducedMotion()` the names' easing, the
+stylesheet's map transitions their `@media` blocks, and MapLibre itself turned every eased zoom into a jump
+(515 ms → ~10 ms).
+
+**The decision** (the reader's): an in-app **Map motion** setting, kept per device — *follow the system*
+(the default: today's behaviour), *always animate*, *never animate*.
+
+**As built.**
+
+- **One answer**: `web.map.MotionPref.animate()` — the choice (`UiState.mapMotion`, a `Persist.Local` field
+  like the base map's options: `localStorage` `histmersion.ui.mapMotion`, every access in `Try`, anything
+  unreadable the default, never in a link) over the system's setting, which a `matchMedia` change listener
+  keeps live. `MapMotion` holds the pure rules (`animates`, `heldBySystem`, `mapLibreReduce`, `attribute`).
+- **The regroup**: `PointSet.layout` animates only when `MotionPref.animate()` (`ClusterMotion.reduced` is gone).
+- **The names**: `MapLabels.reducedMotion()` is `!MotionPref.animate()`.
+- **The stylesheet**: the five map `@media (prefers-reduced-motion: reduce)` blocks (the overlays' fades, the
+  cluster moves, the names' scale, the event labels' and the points' transitions) read
+  `:root[data-map-motion="still"]`, which `MotionPref` writes on the root element whenever its answer changes.
+- **MapLibre** (6.12.0): it reads `prefers-reduced-motion` itself (`browser.prefersReducedMotion`, from
+  `matchMedia`, in `easeTo`, `flyTo` and a drag's inertia) unless a camera call says `essential: true`, and its
+  only switch for its own gestures is the map option `reduceMotion`, applied when a map is made (a module-wide
+  value with no setter of its own). So: every camera move the app makes (`MapLibreSurface.setView`,
+  `fitBounds`, `panBy`) eases only when `MotionPref.animate()`, and then with `essential: true`; otherwise it
+  jumps (`jumpTo`, `animate: false`). The map is made with `reduceMotion` = `false` (always), `true` (never)
+  or unset (follow the system: MapLibre reads the system's setting itself, live). MapLibre's own **+**/**−**
+  buttons, a double click, the zoom keys and a drag's glide therefore take a *changed* choice at the next page
+  load; everything else switches at once. `matchMedia` is not patched.
+- **Elsewhere**: no other code reads the reduced-motion setting. The page's other transitions (the side
+  sheet, panels, the list's fade) never followed it and do not now; period playback does not check it (it is
+  an animation of time the reader starts, and its fades are the stylesheet's map transitions above, which do
+  follow the setting). The docs screenshots (`docs-screenshots.mjs`) emulate reduced motion and leave the
+  setting at its default, so they stay still.
+- **The control**: in the map options (the button beside the base-map menu), now available on every base
+  map — on an online map it holds the motion setting and a line saying the other options are Readable's and
+  Physical's. A labelled `<select>` (*Map motion*; `aria-label` "map motion"); on an online map it takes the
+  focus when the menu opens. Under it, while it follows the system and the system asks for reduced motion:
+  *Animations are off because your system asks for reduced motion* (`role="note"`, the select's
+  `aria-describedby`). It is inside the menu, so it never covers the map; on a phone the menu is in the map
+  tools' drawer (#4292's fold untouched).
+
+**The fixture** (`perf-fixtures.mjs` `fullLoad`, `routeFullLoad`): what the page holds with every layer on
+over a period — 500 findings, 200 sites, 200 pictures, 1 500 events (sent by the view's area, as the server
+does), 140 polities — dated inside −1600…−1100. Scattered evenly over Europe and the Near East, the same counts
+drew 400–670 markers at 1920×1080, twice the live page; placed around 80 centres (within 1.5° of one) they
+draw 206–345 over zooms 5–7 (105–112 at 390×844), as the live copy did.
+
+**Measured** (the browser test "map motion at …", JVM server, full-linked bundle; four app zooms 5→6→7→6→5
+over [40° N, 24° E] and one click on MapLibre's **+**, traced per frame: *motion frames* are frames after the
+zoom's end on which markers moved while the camera stood as on the frame before; *camera frames* those on
+which the camera moved; the longest frame interval over the whole trace):
+
+| browser · window | mode (system setting) | regroups animated | motion frames | markers moving at most | camera frames a zoom (app · +) | longest frame |
+|---|---|---|---|---|---|---|
+| Chromium 1920×1080 | follow (reduce) | 0 / 4 | 0 | 0 | 1 · 2 | 37 ms |
+| | always (reduce) | 4 / 4 | 55 | 220 | 32–33 · 32 | 35 ms |
+| | never | 0 / 4 | 0 | 0 | 1 · 2 | 29 ms |
+| | follow (no preference) | 4 / 4 | 54 | 220 | 32–33 · 32 | 48 ms |
+| Chromium 390×844 | follow (reduce) | 0 / 4 | 0 | 0 | 1 · 2 | 19 ms |
+| | always (reduce) | 4 / 4 | 56 | 70 | 32–33 · 32 | 20 ms |
+| | never | 0 / 4 | 0 | 0 | 1 · 2 | 19 ms |
+| | follow (no preference) | 4 / 4 | 56 | 70 | 32–33 · 32 | 29 ms |
+| Firefox 1920×1080 | follow (reduce) | 0 / 4 | 0 | 0 | 1 · 2 | 29 ms |
+| | always (reduce) | 4 / 4 | 49 | 232 | 32 · 32 | 53 ms |
+| | never | 0 / 4 | 0 | 0 | 1 · 2 | 40 ms |
+| | follow (no preference) | 4 / 4 | 47 | 238 | 32 · 32 | 60 ms |
+| Firefox 390×844 | follow (reduce) | 0 / 4 | 0 | 0 | 1 · 2 | 25 ms |
+| | always (reduce) | 4 / 4 | 55 | 72 | 32 · 31 | 35 ms |
+| | never | 0 / 4 | 0 | 0 | 1 · 2 | 30 ms |
+| | follow (no preference) | 4 / 4 | 56 | 72 | 31–33 · 32 | 41 ms |
+
+An eased zoom takes 510–530 ms from the ask to its end, a jump 4–27 ms.
+
+**Budget** (`perf.test.mjs`, "at 1920×1080 · 390×844 with every layer on, an animated zoom holds no long
+frame"): the four zooms animated (follow, no preference), longest task ≤ 50 ms, dropped ≤ 15 %. Chromium:
+0 ms and 1.1 % at 1920×1080, 0 ms and 0 % at 390×844. Firefox has no Long Tasks API (a 10 ms timer arriving
+late stands in), and the same zooms with the map held still (*never*) measure 52–83 ms there at 1920×1080
+(the zoom's redraw, not the motion; #4291 saw the same); its budget is therefore "within 50 ms or within
+20 ms of the same zooms held still": animated 55 ms against 83 still, dropped 3.1 %; 0 ms at 390×844.
+
+**Remaining.**
+
+- Firefox drops frames when ~500 markers merge in one zoom: with the evenly scattered fixture (670 drawn at
+  zoom 6 at 1920×1080), the zoom out to 5 sent 522 markers flying and dropped 20–33 % of that zoom's frames
+  (Chromium 1.5 %). The live page draws at most ~330; a merge of that size is beyond what it shows today.
+- MapLibre's own gestures take a changed setting at the next page load (above); a live switch would need
+  MapLibre to expose its reduced-motion value after a map is made.

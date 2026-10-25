@@ -4,7 +4,7 @@ import com.raquo.airstream.core.Transaction
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.*
-import com.histmersion.web.map.VectorStyle
+import com.histmersion.web.map.{MapMotion, MotionPref, VectorStyle}
 import com.histmersion.api.VocabularyCodecs.given
 import org.scalajs.dom
 import org.scalajs.dom.window
@@ -66,6 +66,10 @@ object FieldCodec:
   given baseMap: FieldCodec[BaseMap]:
     def encode(a: BaseMap)       = List(a.wire)
     def decode(vs: List[String])  = clean(vs).headOption.flatMap(BaseMap.fromWire)
+
+  given mapMotion: FieldCodec[MapMotion]:
+    def encode(a: MapMotion) = List(a.wire)
+    def decode(vs: List[String])  = clean(vs).headOption.flatMap(MapMotion.fromWire)
 
   given geoPick: FieldCodec[GeoPick]:
     def encode(a: GeoPick)       = List(a.wire)
@@ -281,6 +285,10 @@ object UiState:
     * start or end, or every state in it with its earliest or latest shape. Sites follow a snapshot's
     * year and the middle otherwise; playback always draws one year. Per device. */
   val areaPick  = Field[GeoPick]("areaPick", "areaPick", GeoPick.Mid, Persist.Local, Role.View)
+  /** The map's motion (#4718): follow the system's reduced-motion setting (the default), always animate, or
+    * never. Per device; [[MotionPref]] answers "does the map animate now?" from it. */
+  val mapMotion = Field[MapMotion]("mapMotion", "mapMotion", MapMotion.System,
+    Persist.Local, Role.View)
   /** The sidebar's bottom sheet in the narrow layout (a per-device preference, never in a link). */
   val sheet    = Field[Sheet]("sheet", "sheet", Sheet.Peek, Persist.Local, Role.View)
   /** The jobs window's filters (core `ListFilters.JobFilter`): the state (`None` = every job), the
@@ -326,7 +334,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, mapOptions, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, sheet, jobStatus, jobKinds, jobSince, jobUntil, jobSubject,
+      inView, open, tab, layers, sources, baseMap, mapOptions, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, mapMotion, sheet, jobStatus, jobKinds, jobSince, jobUntil, jobSubject,
       runStatus, runPipelines, runOrigins, runManager, runProvider, runModel, runGoal, runSince, runUntil, runSubject,
       approvalState, approvalKinds, approvalBy, approvalSubject, schedTypes, schedCodes, schedSubject, acquireDone, tasksDone,
       mergeBundle, apiKey)
@@ -554,6 +562,8 @@ object UiState:
     from.withDefault(Some(config.time.defaultFrom))
     to.withDefault(Some(config.time.defaultTo))
     restoreLocal()
+    // the map's motion follows the kept choice, now and whenever it changes
+    mapMotion.signal.foreach(MotionPref.choose)(using unsafeWindowOwner)
     loadHash(window.location.hash)
     // back/forward: the HASH fields follow the history entry; local preferences (layers, base map)
     // are not history and stay as they are

@@ -122,8 +122,8 @@ object Clustering:
   * markercluster did ([[ClusterMotion]]): a bubble that splits sends its points out from where it stood, and
   * points (or bubbles) that merge fly into the new bubble, which appears as they arrive — while at most
   * `animateMax` markers are drawn before and after it (the markers in view, not the points held: a wide
-  * window holds thousands of events and draws a few hundred); above that, or when the reader asks for
-  * reduced motion, they are drawn at once. `repaint`
+  * window holds thousands of events and draws a few hundred); above that, or when the map does not animate
+  * ([[MotionPref]]), they are drawn at once. `repaint`
   * recolours a drawn bubble in place (its members' colours moved with the span; nothing else changed). */
 final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface: () => MapSurface,
     key: D => String, at: D => LatLon, radius: () => Double,
@@ -257,7 +257,7 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
       if changed || !awaitingMoves.contains((s.center, s.zoom)) then
         val wanted = Clustering.drawn(groups, s)
         val before =
-          if regrouped && animate && ClusterMotion.within(drawnMarkers, wanted._1.size + wanted._2.size, animateMax) && !ClusterMotion.reduced() then Some(drawnPlaces())
+          if regrouped && animate && ClusterMotion.within(drawnMarkers, wanted._1.size + wanted._2.size, animateMax) && MotionPref.animate() then Some(drawnPlaces())
           else None
         draw(wanted, before)
       measure("hd-points-group", t0, t1)
@@ -420,8 +420,9 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
 /** How the cluster layer moves on a zoom that regroups it (#3764: the raster map's cluster plugin animated it, the
   * MapLibre release drew the new groups in one step). A split slides each new marker out from where its
   * bubble stood; a merge slides the markers that join a bubble into it while the bubble fades in — about a
-  * quarter of a second, the stylesheet's `.hd-cluster-move`/`.hd-cluster-arrive`. With
-  * `prefers-reduced-motion: reduce` nothing moves: the new groups are drawn at once. */
+  * quarter of a second, the stylesheet's `.hd-cluster-move`/`.hd-cluster-arrive`. When the map does not
+  * animate ([[MotionPref]]: the reader's "Map motion", by default the system's reduced-motion setting) nothing
+  * moves: the new groups are drawn at once. */
 object ClusterMotion:
   /** How long a move takes (the stylesheet's animation), ms. */
   val Ms = 250
@@ -439,11 +440,6 @@ object ClusterMotion:
     * than it did)? A split's old bubble does not: its points come out of it instead. */
   def merges(ks: Seq[String], target: Seq[String]): Boolean =
     target.size > ks.size && ks.forall(target.contains)
-
-  /** Does the reader ask for reduced motion? */
-  def reduced(): Boolean =
-    val mq = dom.window.asInstanceOf[js.Dynamic].matchMedia
-    !js.isUndefined(mq) && dom.window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
   /** A marker's move from one screen point to another. */
   final case class Slide(marker: DomMarker, from: (Double, Double), to: (Double, Double))

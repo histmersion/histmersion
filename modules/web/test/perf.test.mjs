@@ -19,7 +19,7 @@ import { after, before, test } from 'node:test';
 import { engineName, isChromium, launch, wantsGpu } from './engine.mjs';
 import { memory, newPerfPage, quiet } from './perf-lib.mjs';
 import * as paths from './perf-paths.mjs';
-import { eventsIn, routeFixtures } from './perf-fixtures.mjs';
+import { eventsIn, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
 import { soak } from './perf-soak.mjs';
 
 const baseURL = process.env.HISTMERSION_SERVER_URL;
@@ -77,6 +77,11 @@ const BUDGETS = {
   // points held, not the markers drawn), and the animation's start holds no frame long (making every marker
   // at the zoom's end and one layout per moving marker took 70–90 ms; measured 0 now)
   clusterZoom: { notAnimated: 0, longTaskMax: 50, droppedPct: 15 },
+  // #4718: the same with EVERY layer on over a period at what the page really holds (perf-fixtures `fullLoad`:
+  // 500 findings, 200 sites, 200 pictures, up to 1 500 events in view, 140 polities), the map animating (the
+  // reader's "Map motion" left to follow a system that does not ask for reduced motion): no long task, the
+  // frames within the zooms' budget, at a desktop's and a phone's size
+  fullLoadZoom: { longTaskMax: 50, droppedPct: 15 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
   soak: { heapMB: 6, nodes: 150, listeners: 20, mapMarkers: 0 },
 };
@@ -190,6 +195,29 @@ test('budgets: in a 1920×1080 window a zoom animates the bubbles without a long
     within('clusterZoom', m);
   }, { width: 1920, height: 1080 });
 });
+
+for (const viewport of [{ width: 1920, height: 1080 }, { width: 390, height: 844 }]) {
+  test(`budgets: at ${viewport.width}×${viewport.height} with every layer on, an animated zoom holds no long frame`, async () => {
+    await withPerfPage(async ({ page }) => {
+      await routeFullLoad(page);
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      const start = await paths.fullLoadView(page, baseURL);
+      const m = await paths.fullLoadZooms(page);
+      if (report) console.log(`# fullLoadZoom ${viewport.width}x${viewport.height} ${JSON.stringify(start)}`);
+      assert.ok(m.zooms - m.notAnimated >= 1 && m.motionFrames >= 3, `the zooms animate their regroup: ${JSON.stringify(m)}`);
+      if (isChromium) within('fullLoadZoom', m);
+      else {
+        // Firefox has no Long Tasks API: a 10 ms timer arriving late stands in (perf-lib), and these very zooms
+        // with the map still ("Map motion: never") measure 52–60 ms there at 1920×1080. What is held is that the
+        // animation adds no long task of its own: within 50 ms, or within 20 ms of the same zooms held still
+        await paths.fullLoadView(page, baseURL, { motion: 'never' });
+        const still = await paths.fullLoadZooms(page);
+        if (report) console.log(`# fullLoadZoom still ${JSON.stringify(still)}`);
+        within('fullLoadZoom', m, { ...BUDGETS.fullLoadZoom, longTaskMax: Math.max(BUDGETS.fullLoadZoom.longTaskMax, still.longTaskMax + 20) });
+      }
+    }, viewport);
+  });
+}
 
 test('every cache the page keeps is bounded', async () => {
   await withPerfPage(async ({ page }) => {
