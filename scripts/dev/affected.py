@@ -25,7 +25,8 @@ DEPS = {
     "apiJVM": ["valuesJVM"],
     "apiJS": ["valuesJS"],
     "config": ["valuesJVM", "apiJVM"],
-    "coreJVM": ["valuesJVM", "apiJVM", "config"],
+    "files": ["apiJVM"],
+    "coreJVM": ["valuesJVM", "apiJVM", "config", "files"],
     "pluginApi": [],
     "pluginVaults": ["pluginApi"],
     "pluginHost": ["coreJVM", "pluginApi"],
@@ -38,11 +39,11 @@ DEPS = {
     "chimneyIron": [],
     "chimneyIronTests": ["chimneyIron"],
     "db": ["config", "coreJVM"],
-    "cli": ["config", "coreJVM"],
+    "cli": ["apiJVM", "config", "files"],
     "web": ["apiJS"],
     "server": ["coreJVM", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
 }
-ORDER = ["valuesJVM", "valuesJS", "apiJVM", "apiJS", "config", "coreJVM", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+ORDER = ["valuesJVM", "valuesJS", "apiJVM", "apiJS", "config", "files", "coreJVM", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
@@ -61,6 +62,7 @@ RULES = [
     ("modules/api/jvm/", ["apiJVM"]),
     ("modules/api/js/", ["apiJS"]),
     ("modules/config/", ["config"]),
+    ("modules/files/", ["files"]),
     ("modules/core/", ["coreJVM"]),
     ("modules/db/", ["db"]),
     ("modules/server/", ["server"]),

@@ -2,7 +2,6 @@ package com.histmersion.cli
 
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 import sttp.client4.*
 import sttp.model.Uri
 import sttp.tapir.client.sttp4.SttpClientInterpreter

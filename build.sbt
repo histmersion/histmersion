@@ -423,14 +423,25 @@ lazy val config = project
     )
   )
 
-// ── core: package `domain` — the logic server and db run on — plus frontmatter (snakeyaml), export and
-//    ArticleNote. JVM only. It depends on api and config for now (recorded, temporary edges: the domain
+// ── files: the local files a client and the server exchange or keep — the `.hmx` bundle's container and
+//    canonical JSON, the merge resolution file, the article note of the Markdown mirror, the plugin set and
+//    relink kit's records, a directory's size, the gazetteer seed's file names, a book cover's source. JVM
+//    only. cli and core both take it, so the CLI's local commands need no domain. Depends on api only.
+lazy val files = project
+  .in(file("modules/files"))
+  .dependsOn(apiJVM % "compile->compile;test->test")
+  .settings(name := "histmersion-files")
+  .settings(commonDeps)
+  .settings(libraryDependencies += "org.yaml" % "snakeyaml" % V.snakeyaml)
+
+// ── core: package `domain` — the logic server and db run on — plus frontmatter (snakeyaml) and export.
+//    JVM only. It depends on files, and on api and config for now (recorded, temporary edges: the domain
 //    works on wire records and takes config records as its settings). NO database code.
 lazy val core = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("modules/core"))
   .dependsOn(values, api % "compile->compile;test->test")
-  .jvmConfigure(_.dependsOn(config % "compile->compile;test->test"))
+  .jvmConfigure(_.dependsOn(config % "compile->compile;test->test", files))
   .settings(name := "histmersion-core")
   .settings(commonDeps)
   .settings(
@@ -737,7 +748,7 @@ lazy val server = project
         Seq("" -> conv.toPath((pluginApi / Compile / packageBin).value).toFile,
           "sources" -> conv.toPath((pluginApi / Compile / packageSrc).value).toFile))
       // the testkit a plugin's tests depend on, with what it needs of Histmersion's own modules: the plugin
-      // host it runs, values, api, core, and config, whose settings (reference.conf) give it the server's User-Agent, timeouts
+      // host it runs, values, api, files, core, and config, whose settings (reference.conf) give it the server's User-Agent, timeouts
       // and TLS trust. Their other dependencies are ordinary Maven Central libraries their POMs name.
       def module(id: ModuleID, pom: File, jar: File, sources: File): Unit =
         writeMavenArtifact(repo, id, scalaBinaryVersion.value, pom, Seq("" -> jar, "sources" -> sources))
@@ -747,6 +758,8 @@ lazy val server = project
         conv.toPath((pluginHost / Compile / packageBin).value).toFile, conv.toPath((pluginHost / Compile / packageSrc).value).toFile)
       module((coreJVM / projectID).value, conv.toPath((coreJVM / makePom).value).toFile,
         conv.toPath((coreJVM / Compile / packageBin).value).toFile, conv.toPath((coreJVM / Compile / packageSrc).value).toFile)
+      module((files / projectID).value, conv.toPath((files / makePom).value).toFile,
+        conv.toPath((files / Compile / packageBin).value).toFile, conv.toPath((files / Compile / packageSrc).value).toFile)
       module((config / projectID).value, conv.toPath((config / makePom).value).toFile,
         conv.toPath((config / Compile / packageBin).value).toFile, conv.toPath((config / Compile / packageSrc).value).toFile)
       module((apiJVM / projectID).value, conv.toPath((apiJVM / makePom).value).toFile,
@@ -859,10 +872,10 @@ lazy val server = project
     )
   )
 
-// ── cli: host-run, PURE HTTP CLIENT of the server (sttp client derived from core's endpoints). ───
+// ── cli: host-run, PURE HTTP CLIENT of the server (sttp client derived from api's endpoints). ────
 lazy val cli = project
   .in(file("modules/cli"))
-  .dependsOn(config, coreJVM)
+  .dependsOn(apiJVM, config, files)
   .settings(name := "histmersion-cli", Compile / mainClass := Some("com.histmersion.cli.Main"))
   .settings(commonDeps)
   .settings(writeClasspathSetting)
@@ -917,7 +930,7 @@ lazy val web = project
 
 lazy val root = project
   .in(file("."))
-  .aggregate(valuesJVM, valuesJS, apiJVM, apiJS, config, coreJVM, pluginApi, pluginHost, pluginTestkit, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
+  .aggregate(valuesJVM, valuesJS, apiJVM, apiJS, config, files, coreJVM, pluginApi, pluginHost, pluginTestkit, pluginVaults, pluginHello, pluginHelloAi, pluginHelloLib, pluginHelloDeps,
     pluginResolver, chimneyIron, chimneyIronTests,
     db, server, cli, web)
   .settings(name := "histmersion", publish / skip := true)

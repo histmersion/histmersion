@@ -4,7 +4,6 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 import com.histmersion.api.Agents.RunRequest
 import com.histmersion.api.GoalPlans.*
 import com.histmersion.values.{BundleKind, GoalStatus}
