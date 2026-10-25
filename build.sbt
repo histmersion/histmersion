@@ -424,9 +424,10 @@ lazy val config = project
   )
 
 // ── files: the local files a client and the server exchange or keep — the `.hmx` bundle's container and
-//    canonical JSON, the merge resolution file, the article note of the Markdown mirror, the plugin set and
-//    relink kit's records, a directory's size, the gazetteer seed's file names, a book cover's source. JVM
-//    only. cli and core both take it, so the CLI's local commands need no domain. Depends on api only.
+//    canonical JSON, the merge resolution file, the source and article notes of the Markdown mirror
+//    (frontmatter, export), the plugin set and relink kit's records, a directory's size, the gazetteer
+//    seed's file names, a book cover's source. JVM only. cli and core both take it, so the CLI's local
+//    commands need no domain. Depends on api only.
 lazy val files = project
   .in(file("modules/files"))
   .dependsOn(apiJVM % "compile->compile;test->test")
@@ -434,9 +435,9 @@ lazy val files = project
   .settings(commonDeps)
   .settings(libraryDependencies += "org.yaml" % "snakeyaml" % V.snakeyaml)
 
-// ── core: package `domain` — the logic server and db run on — plus frontmatter (snakeyaml) and export.
-//    JVM only. It depends on files, and on api and config for now (recorded, temporary edges: the domain
-//    works on wire records and takes config records as its settings). NO database code.
+// ── core: package `domain` — the logic server and db run on. JVM only. It depends on files, and on
+//    api and config for now (recorded, temporary edges: the domain works on wire records and takes
+//    config records as its settings). NO database code.
 lazy val core = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("modules/core"))
@@ -450,8 +451,7 @@ lazy val core = crossProject(JVMPlatform)
       "io.circe"                    %% "circe-core"                       % V.circe,
       "com.kubuszok"                %% "kindlings-circe-derivation"        % V.kindlings,
       "com.kubuszok"                %% "kindlings-tapir-schema-derivation" % V.kindlings,
-      "io.github.iltotore"          %% "iron"                             % V.iron,
-      "org.yaml"                     % "snakeyaml"                        % V.snakeyaml
+      "io.github.iltotore"          %% "iron"                             % V.iron
     )
   )
   .jvmSettings(

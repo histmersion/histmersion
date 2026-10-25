@@ -20,9 +20,10 @@ api   ── the CONTRACT on the wire (JVM + JS): wire records, Tapir endpoint d
          Markdown, and the helpers they need.   NO database code, NO side effects.   depends on values ONLY
 config ── AppConfig and its readers (sconfig, Kindlings), reference.conf.   JVM only.   depends on values ONLY
 files ── the local files client and server exchange or keep (package `files`): the `.hmx` bundle's tar and
-         canonical JSON, the merge resolution file, the article note, the plugin set, a directory's size.
+         canonical JSON, the merge resolution file, the source and article notes of the Markdown mirror
+         (frontmatter, export), the plugin set, a directory's size.
          JVM only (snakeyaml).                                     depends on api ONLY
-core  ── the DOMAIN (package `domain`): the logic server and db run on, frontmatter, export. JVM only.
+core  ── the DOMAIN (package `domain`): the logic server and db run on. JVM only.
          NO database code, NO side effects.                       depends on values, api, config, files
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on config, core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults)
