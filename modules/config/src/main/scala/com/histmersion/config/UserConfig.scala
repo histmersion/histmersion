@@ -1,8 +1,5 @@
 package com.histmersion.config
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 import org.ekrich.config.{Config, ConfigException, ConfigFactory, ConfigObject, ConfigParseOptions,
   ConfigRenderOptions, ConfigUtil, ConfigValue, ConfigValueFactory, ConfigValueType}
 import hearth.kindlings.sconfigderivation.ConfigDecodingError
@@ -64,8 +61,6 @@ object UserPaths:
 /** The user config file's part in a load: where it was looked for, whether it was there, and the
   * keys of it that are no setting (a typo is said, never silently dropped). */
 final case class UserConfigFile(path: Option[Path], loaded: Boolean, unknownKeys: List[String] = Nil):
-  def info: ConfigFileInfo = ConfigFileInfo(path.map(_.toString), loaded, unknownKeys)
-
   /** One line per ignored key, for the log. */
   def warnings: List[String] =
     val where = path.fold("the config file")(_.toString)

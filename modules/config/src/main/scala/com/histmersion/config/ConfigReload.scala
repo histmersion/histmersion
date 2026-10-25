@@ -1,8 +1,5 @@
 package com.histmersion.config
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 import org.ekrich.config.{Config, ConfigFactory, ConfigRenderOptions}
 
 import scala.jdk.CollectionConverters.*

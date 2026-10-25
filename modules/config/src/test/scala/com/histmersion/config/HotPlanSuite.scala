@@ -1,10 +1,4 @@
-package com.histmersion.api
-
-import com.histmersion.config.*
-import com.histmersion.domain.*
-import com.histmersion.config.given
-import com.histmersion.domain.given
-
+package com.histmersion.config
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -101,12 +95,3 @@ class HotPlanSuite extends munit.FunSuite:
     assertEquals(cfg.db.pool.max, 3) // the environment still wins
     assertEquals(cfg.server.port, first.config.server.port)
     assertEquals(cfg.config.watch, false)
-
-  test("ReloadMarkdown: failed, unchanged and published reports"):
-    val failed = ReloadMarkdown.report(ReloadReport(false, 3, errors = List("pool: connection refused")))
-    assert(failed.contains("failed — generation 3 stays") && failed.contains("connection refused"), failed)
-    assert(ReloadMarkdown.report(ReloadReport(false, 3)).contains("Nothing in the config differs"))
-    val ok = ReloadMarkdown.report(ReloadReport(true, 4, applied = List("histmersion.db.url"),
-      restartOnly = List("histmersion.server.port"), rebuilt = List("pool", "migrations"), plugins = List("pmc")))
-    assert(ok.contains("generation 4") && ok.contains("- histmersion.db.url") && ok.contains("after a restart")
-      && ok.contains("- migrations") && ok.contains("- pmc"), ok)

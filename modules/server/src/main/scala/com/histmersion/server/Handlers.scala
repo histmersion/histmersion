@@ -148,8 +148,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** The `ui` config block, plus whether writes need a key — never the key itself — and the plugins
     * (their settings with secrets as references, never values). */
-  def uiConfig: UiConfig = cfg.ui.copy(writeKeyRequired = cfg.auth.apiKey.nonEmpty, agentsEnabled = cfg.agents.enabled,
-    plugins = deps.plugins.report, baseMapSource = baseMapSource,
+  def uiConfig: UiConfig = ConfigViews.page(cfg.ui, writeKeyRequired = cfg.auth.apiKey.nonEmpty,
+    agentsEnabled = cfg.agents.enabled, plugins = deps.plugins.report, baseMapSource = baseMapSource,
     mapLanguage = cfg.basemap.labels.language)
 
   /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract
@@ -283,7 +283,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** A caller's year, forced inside the configured span. `ui.time.min/max` is what the web UI can
     * draw and what the corpus covers; nothing outside it can have a non-empty answer anyway. */
-  private def clampToSpan(v: Long, t: TimeConfig): Long = math.max(t.min, math.min(t.max, v))
+  private def clampToSpan(v: Long, t: UiTimeSettings): Long = math.max(t.min, math.min(t.max, v))
 
   private def aggregateWindow(axes: List[String], unit: String, q: Api.AggregateQuery,
       from: Long, to: Long, size: Long): TimeHistogram =

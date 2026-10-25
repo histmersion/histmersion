@@ -1,8 +1,5 @@
 package com.histmersion.config
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
@@ -67,7 +64,6 @@ class ConfigSuite extends munit.FunSuite:
     val l = loaded(env(), missing)
     assertEquals(l.config, AppConfig.load(env()))
     assertEquals(l.file, UserConfigFile(Some(missing), loaded = false))
-    assertEquals(l.file.info.loaded, false)
 
   test("user file: one that does not parse stops the load with an error naming the file"):
     val f = confFile("histmersion { server { port = 8123 \n")
@@ -130,7 +126,6 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(w.size, 2)
     assert(w.head.contains(f.toString) && w.head.contains("histmersion.agents.step.max-token"), w.head)
     assert(w(1).contains("settings go under histmersion"), w(1))
-    assertEquals(l.file.info, ConfigFileInfo(Some(f.toString), loaded = true, l.file.unknownKeys))
 
   test("claude-code env: the defaults switch features off; nothing about thinking, structured outputs or web fetch"):
     val cc = AppConfig.load(env()).agents.providers.claudeCode
@@ -241,14 +236,6 @@ class ConfigSuite extends munit.FunSuite:
       Some(Path.of("/xd/histmersion")))
     assertEquals(UserPaths.dataDir("/own", e("HOME" -> "/home/u"), "Linux"), Some(Path.of("/own")))
 
-  test("About renders the config file line"):
-    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"), loaded = true)), "/c/h.conf (read)")
-    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"))),
-      "/c/h.conf (not found: defaults and environment only)")
-    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"), loaded = true, List("histmersion.x"))),
-      "/c/h.conf (read; ignored unknown key: histmersion.x)")
-    assertEquals(ConfigFileInfo.describe(ConfigFileInfo()), "none (no location: HOME is unset)")
-
   test("the map's geo feed has its own cap, above a listing page: a range draws every state in it"):
     val c = AppConfig.load()
     assertEquals(c.places.geoMaxLimit, 2000)
@@ -274,10 +261,10 @@ class ConfigSuite extends munit.FunSuite:
 
   test("plan pools' scheduled reads: the defaults, 0 as off from the environment, a negative value refused"):
     val q = AppConfig.load(env()).agents.quota
-    assertEquals(PlanQuotaSuite.minutes(q.claudePlan.refreshEveryMinutes), Some(180))
-    assertEquals(PlanQuotaSuite.minutes(q.chatgptPlan.refreshEveryMinutes), Some(30))
+    assertEquals(minutes(q.claudePlan.refreshEveryMinutes), Some(180))
+    assertEquals(minutes(q.chatgptPlan.refreshEveryMinutes), Some(30))
     val off = AppConfig.load(env("HISTMERSION_AGENTS_CLAUDE_PLAN_REFRESH_EVERY_MINUTES" -> "0")).agents.quota.claudePlan
-    assertEquals(off.refreshEveryMinutes, PlanQuota.ScheduledRefresh.Off)
+    assertEquals(off.refreshEveryMinutes, ScheduledRefresh.Off)
     val e = intercept[RuntimeException](AppConfig.load(env("HISTMERSION_AGENTS_CHATGPT_PLAN_REFRESH_EVERY_MINUTES" -> "-1")))
     assert(e.getMessage.contains("-1 is not 0 (off) or a positive number of minutes"), e.getMessage)
 
@@ -288,3 +275,11 @@ class ConfigSuite extends munit.FunSuite:
       List("example.org", "b.example"))
     assertEquals(AppConfig.load(env("HISTMERSION_ACQUIRE_LANDING_BROWSER_DOWNLOAD_HOSTS" -> "")).acquire.landing.refusingHosts, Nil)
 
+  test("the schedule from config minutes: 0 is off, a negative number is refused"):
+    assertEquals(ScheduledRefresh.fromMinutes(0), Right(ScheduledRefresh.Off))
+    assertEquals(ScheduledRefresh.fromMinutes(30).map(minutes), Right(Some(30)))
+    assert(ScheduledRefresh.fromMinutes(-5).left.exists(_.contains("-5")))
+
+  private def minutes(s: ScheduledRefresh): Option[Int] = s match
+    case ScheduledRefresh.Every(i) => Some(i.value)
+    case ScheduledRefresh.Off      => None

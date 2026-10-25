@@ -408,11 +408,11 @@ lazy val apiJVM = api.jvm
 lazy val apiJS  = api.js
 
 // ── config: AppConfig and its readers — HOCON modelled as case classes (Kindlings sconfig derivation) over
-//    reference.conf, the user's file and the environment. JVM only. It depends on api for now (a recorded,
-//    temporary edge: it reads into a few wire records — the page's UiConfig, the approval kinds).
+//    reference.conf, the user's file and the environment. JVM only. Depends on values only: the server
+//    converts what it hands to the wire (the page's `ui` block, the config file's line in /api/about).
 lazy val config = project
   .in(file("modules/config"))
-  .dependsOn(valuesJVM, apiJVM % "compile->compile;test->test")
+  .dependsOn(valuesJVM)
   .settings(name := "histmersion-config")
   .settings(commonDeps)
   .settings(
@@ -833,6 +833,9 @@ lazy val server = project
     },
     libraryDependencies ++= Seq(
       "com.softwaremill.chimp"      %% "chimp-server"            % V.chimp,
+      // the conversions between config, domain and wire records at the server's edges (AGENTS.md, Coding
+      // practices 3-4): derived by its macros, so the binary carries only the code they generate
+      "io.scalaland"                %% "chimney"                 % V.chimney,
       // exclude netty's JNI native transports → force the pure-Java NIO transport (native-image safe)
       ("com.softwaremill.sttp.tapir" %% "tapir-netty-server-sync" % V.tapir)
         .exclude("io.netty", "netty-transport-native-kqueue")

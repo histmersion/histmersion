@@ -1,6 +1,7 @@
 package com.histmersion.server.agents
 
-import com.histmersion.config.AgentsConfig
+import com.histmersion.config.{AgentsConfig, ScheduledRefresh}
+import com.histmersion.domain.{PlanReadSchedule, ScheduledRead, logins}
 import com.histmersion.api.PlanQuota
 import com.histmersion.api.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.PlanQuota.*
@@ -185,14 +186,14 @@ final class PlanPools(ds: DataSource, cfg: => AgentsConfig, codexHome: () => Opt
     case PoolId.ClaudePlan  => cfg.quota.claudePlan.refreshEveryMinutes
     case PoolId.ChatgptPlan => cfg.quota.chatgptPlan.refreshEveryMinutes
 
-  /** Take a fresh reading of `p` on its schedule ([[PlanQuota.scheduledRead]]), inside the pool's gate: a
+  /** Take a fresh reading of `p` on its schedule ([[PlanReadSchedule.scheduledRead]]), inside the pool's gate: a
     * pick that took one meanwhile makes this one not due. Never without a login or a way to read. Left =
     * not taken, and why. */
   def refreshOnSchedule(p: PoolId, autopilotOn: Boolean, wanted: Boolean, now: java.time.Instant): Either[String, Refreshed] =
     val at = now.toEpochMilli
     gate.exclusive(p, at) { last =>
       val newest = lastObserved(p).map(java.time.Instant.ofEpochMilli)
-      PlanQuota.scheduledRead(schedule(p), autopilotOn, wanted, newest, last.map(java.time.Instant.ofEpochMilli), now) match
+      PlanReadSchedule.scheduledRead(schedule(p), autopilotOn, wanted, newest, last.map(java.time.Instant.ofEpochMilli), now) match
         case ScheduledRead.NotDue(why) => Left(why)
         case ScheduledRead.Due =>
           PlanQuota.refreshDecision(None, login(p, at), seams.refreshes && refreshMode(p).isDefined, last, staleMs, at, force = true)
