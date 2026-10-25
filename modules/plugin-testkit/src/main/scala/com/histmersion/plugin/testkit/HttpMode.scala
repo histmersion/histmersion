@@ -1,6 +1,6 @@
 package com.histmersion.plugin.testkit
 
-import com.histmersion.plugin.testkit.internal.RecordedExchange
+import com.histmersion.plugin.testkit.internal.{ProjectPaths, RecordedExchange}
 
 import java.nio.file.{Files, Path}
 
@@ -10,8 +10,9 @@ import java.nio.file.{Files, Path}
   * last step, the wire, differs.
   *
   * {{{
-  * val mode = HttpMode.fromEnv(Path.of("src/test/recordings/known-book"))
-  * assume(mode.isRight, mode.left.getOrElse(""))   // munit: skipped, with the reason
+  * val mode = HttpMode.fromEnv(Path.of("recordings", "known-book"))
+  * mode.left.foreach(why => println(s"SKIPPED: $why"))   // munit reports a skip without its reason
+  * assume(mode.isRight, mode.left.getOrElse(""))
   * val harness = PluginHarness.load("my-plugin", config, http = mode.toOption.get)
   * }}} */
 enum HttpMode:
@@ -47,10 +48,18 @@ object HttpMode:
   /** Set (`1`, `true`, `yes`): a test with no recordings yet may go to the network. */
   val LiveVariable = "HISTMERSION_PLUGIN_LIVE"
 
+  /** The system property naming the plugin project's directory, against which [[fromEnv]] resolves a
+    * relative recordings directory: `//> using test.javaProp histmersion.plugin.project=${.}` in a
+    * scala-cli build, `-Dhistmersion.plugin.project=<base directory>` in a forked sbt test JVM. Unset,
+    * a relative directory is taken from the working directory. */
+  val ProjectProperty = "histmersion.plugin.project"
+
   /** Every request answers HTTP 404: a test that must not touch the network. */
   val Offline: HttpMode = Stub(Map.empty)
 
-  /** The mode a test of one recorded case runs in, from the environment:
+  /** The mode a test of one recorded case runs in, from the environment. A relative `dir` is resolved
+    * against the project directory [[ProjectProperty]] names (else the working directory), so a recorded
+    * case is found wherever the build was started; the modes and the reason to skip carry that path.
     *
     *  - `HISTMERSION_PLUGIN_HTTP=live|record|replay` decides, when set;
     *  - otherwise [[Replay]] when `dir` holds recordings — offline, in CI too;
@@ -58,6 +67,9 @@ object HttpMode:
     *  - otherwise `Left`, the reason to skip the test: there is nothing to replay, and going to the
     *    network was not asked for. */
   def fromEnv(dir: Path, env: Map[String, String] = sys.env): Either[String, HttpMode] =
+    choose(ProjectPaths.resolve(dir, sys.props.get(ProjectProperty)), env)
+
+  private def choose(dir: Path, env: Map[String, String]): Either[String, HttpMode] =
     env.get(ModeVariable).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
       case Some("live")   => Right(Live)
       case Some("record") => Right(Record(dir))

@@ -195,23 +195,31 @@ a public class with a no-argument constructor):
 **Writing one outside this repo: `histmersion plugin new <id> [--kind source-fetcher|media-collection|
 event-catalogue|ai-provider|secret-vault] [--with-agent-notes]`** (no checkout needed; the plugin API is not
 on Maven Central — Histmersion is an app — but every install carries a Maven repository of its own, `maven/`:
-`histmersion plugin repo [--url]`). It holds `com.kubuszok::histmersion-plugin-api` (jar, sources, POM) and
+`histmersion plugin repo [--url]`; `plugin repo --m2` copies it into `~/.m2/repository`, which the installers
+and `plugin new` do too, so a project names `m2Local`, never a path of this machine). It holds
+`com.kubuszok::histmersion-plugin-api` (jar, sources, POM), the testkit and
 `com.kubuszok::histmersion-plugin-platform`, a POM-only artifact whose dependencies are the libraries the
 server provides to plugins at the versions it ships (sconfig, kindlings, circe, cats, sttp client, tapir,
 ox, iron; the contract is `modules/plugin-api/plugin-platform.txt`, checked by `PluginPlatformSuite`). `new`
-writes a scala-cli project: `<Name>.scala` (`//> using repository <the install's maven/>`, the API and the
-platform as `compileOnly.dep`, `resourceDir`, `publish.organization/name/version`; then a working plugin of
-that kind), `<Name>.test.scala` (munit, the two and the **testkit** as `test.dep`: unit tests through
-`PluginHarness` on `HttpMode.Stub`, a gated `<Name>LiveSuite` for fetchers/collections/catalogues, plus
-packaging checks — the services file names the class, the defaults decode, every `$lzy<n>` field is in the
-native metadata), `README.md` (record → replay) and `resources/` (services file, defaults,
-`reachability-metadata.json`). A library of its own is a plain
+writes a scala-cli project: `project.scala`, the build with EVERY directive (`//> using repository m2Local`,
+the API and the platform as `compileOnly.dep`, `resourceDir`, `publish.organization/name/version`,
+`publish.doc false` — scaladoc warns on links into the compile-only API — then munit, the platform and the
+**testkit** as `test.dep` (the testkit brings the API; compile-only deps are not on the test class path, so
+the Histmersion version is on four lines: scala-cli has no variables), `test.resourceDir test-resources`
+and `test.javaProp histmersion.plugin.project=${.}`, against which `HttpMode.fromEnv` resolves a relative
+recordings dir); `<Name>.scala` (a working plugin of that kind, no directives); `<Name>.test.scala` (unit
+tests through `PluginHarness` on `HttpMode.Stub`, a gated `<Name>LiveSuite` for fetchers/collections/
+catalogues that prints `SKIPPED <suite>: <why>` before its munit `assume`, plus packaging checks — the
+services file names the class, the defaults decode, every `$lzy<n>` field is in the native metadata);
+`README.md` (build, install from source step by step, record → replay) and `resources/` (services file,
+defaults, `META-INF/native-image/<publish.organization>/<publish.name>/reachability-metadata.json`). More
+files keep their directives in `project.scala`. A library of its own is a plain
 `//> using dep`: never shade. Loop: `scala-cli test .` → `scala-cli --power publish . --publish-repository
 ./repo` (the jar and a POM listing its own libraries, not the compile-only ones) → `histmersion plugin add
 <org>::<id>:0.1.0 --repo ./repo` → `plugin rebuild`. `--repo <dir|url>` on `new` for a repository unzipped
 from a release (`histmersion-maven-<tag>.zip`); `histmersion plugin api-jar [--sources]` prints the API
 jar's path in the repository. Editors: `scala-cli setup-ide .`, then Metals (sources come from the
-repository). sbt alternative: `resolvers += "histmersion" at <plugin repo --url>`, the API and platform
+repository). sbt alternative: `resolvers += Resolver.mavenLocal`, the API and platform
 `% Provided`, own libraries as usual, `publishTo` a directory. Code and generator: `cli/PluginTemplate.scala`,
 `cli/PluginTemplateKinds.scala`; the user docs page is `docs/user-guide/plugins/developing.md`.
 

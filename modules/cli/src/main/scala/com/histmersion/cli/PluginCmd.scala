@@ -436,13 +436,41 @@ object PluginAuthoring:
           exitCode = ExitCode.Usage))
     }
 
-  /** The repository a new project resolves the plugin API and platform from: the one named with
-    * `--repo` (a directory or a URL), else the install's. */
-  def repository(named: Option[String], install: => Either[CliError, LocalInstall]): Either[CliError, PluginRepository] =
+  /** The local Maven repository, `$HOME/.m2/repository`: where Maven, Gradle, sbt (`Resolver.mavenLocal`)
+    * and scala-cli (`m2Local`) look for artifacts installed on this machine. */
+  def mavenLocal(env: String => Option[String]): Either[CliError, Path] =
+    env("HOME").map(_.trim).filter(_.nonEmpty).map(h => Path.of(h, ".m2", "repository"))
+      .toRight(CliError("HOME is unset: there is no local Maven repository (~/.m2/repository)", exitCode = ExitCode.Usage))
+
+  /** Copy the install's Maven repository into the local one, so that a build naming `m2Local` finds the
+    * plugin API, the platform and the testkit: every file that is missing there or differs (a SNAPSHOT
+    * rebuilt by a newer install), nothing else. The files copied, relative to the repository. */
+  def publishToMavenLocal(install: Either[CliError, LocalInstall], m2: Path): Either[CliError, List[Path]] =
+    localRepository(install).flatMap { i =>
+      scala.util.Try {
+        val walk = Files.walk(i.mavenRepo)
+        val sources = try walk.iterator.asScala.filter(Files.isRegularFile(_)).toList.sortBy(_.toString) finally walk.close()
+        sources.flatMap { from =>
+          val relative = i.mavenRepo.relativize(from)
+          val to       = m2.resolve(relative.toString)
+          if Files.isRegularFile(to) && Files.mismatch(from, to) == -1L then None
+          else
+            Files.createDirectories(to.getParent)
+            Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
+            Some(relative)
+        }
+      }.toEither.left.map(e => CliError(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}", exitCode = ExitCode.Refused))
+    }
+
+  /** The repository a new project resolves the plugin API, platform and testkit from: the one named with
+    * `--repo` (a directory or a URL), else the local Maven repository, into which the install's are
+    * copied first (the files copied). */
+  def repository(named: Option[String], install: => Either[CliError, LocalInstall],
+      m2: => Either[CliError, Path]): Either[CliError, (TemplateRepository, List[Path])] =
     named match
       case Some(raw) => PluginRepository.parse(raw, Files.isDirectory(_)).left.map(CliError(_, exitCode = ExitCode.Usage))
-      case None      => localRepository(install).flatMap(i =>
-        PluginRepository.parse(i.mavenRepo.toString, Files.isDirectory(_)).left.map(CliError(_, exitCode = ExitCode.Usage)))
+          .map(r => (TemplateRepository.Remote(r), Nil))
+      case None => m2.flatMap(dir => publishToMavenLocal(install, dir)).map(copied => (TemplateRepository.MavenLocal, copied))
 
   /** The plugin API jar in the install's repository, and its sources jar beside it. */
   def apiJars(install: Either[CliError, LocalInstall]): Either[CliError, (Path, Path)] =
@@ -474,6 +502,7 @@ object PluginAuthoring:
       s"  histmersion plugin add ${pkg.value}::${id.value}:${PluginTemplate.FirstVersion} --repo ./$publishDir",
       s"  histmersion plugin rebuild   # and in histmersion.conf: histmersion.plugins.${id.value} { enabled = true }",
       "",
+      s"the build is ${PluginTemplate.ProjectFile}: keep every //> using directive there, the test.* ones too, when you add files;",
       "a library of its own: //> using dep group::artifact:version — plugin add installs it beside the plugin;",
       "the plugin API and the libraries Histmersion provides come from the platform (compile-only, never bundled)")
 
@@ -560,9 +589,21 @@ object PluginCmd:
   }
 
   private val repo = Opts.subcommand("repo",
-      "The Maven repository of this machine's install that a plugin compiles against: the plugin API and histmersion-plugin-platform (the libraries Histmersion provides, at the versions it ships); --url: as a file: URL, for //> using repository or a build's resolvers") {
-    Opts.flag("url", "Print it as a file: URL").orFalse.map { asUrl => (_: Client) =>
-      PluginAuthoring.localRepository(install).map(i => println(if asUrl then i.mavenRepo.toUri.toString else i.mavenRepo.toString))
+      "The Maven repository of this machine's install that a plugin compiles against: the plugin API, histmersion-plugin-platform (the libraries Histmersion provides, at the versions it ships) and the plugin testkit; --url: as a file: URL; --m2: copy it into the local Maven repository (~/.m2/repository), which a build names as m2Local (scala-cli) or Resolver.mavenLocal (sbt)") {
+    (
+      Opts.flag("url", "Print it as a file: URL").orFalse,
+      Opts.flag("m2", "Copy the install's artifacts into ~/.m2/repository (the files missing or changed there) and print its path").orFalse
+    ).mapN { (asUrl, m2) => (_: Client) =>
+      if m2 then
+        for
+          dir    <- PluginAuthoring.mavenLocal(k => Option(java.lang.System.getenv(k)))
+          copied <- PluginAuthoring.publishToMavenLocal(install, dir)
+        yield
+          println(if asUrl then dir.toUri.toString else dir.toString)
+          java.lang.System.err.println(
+            if copied.isEmpty then s"Histmersion ${PluginBuildVersions.histmersion}'s plugin artifacts are up to date there"
+            else s"copied ${copied.size} file(s) of Histmersion ${PluginBuildVersions.histmersion}'s plugin artifacts there")
+      else PluginAuthoring.localRepository(install).map(i => println(if asUrl then i.mavenRepo.toUri.toString else i.mavenRepo.toString))
     }
   }
 
@@ -577,14 +618,14 @@ object PluginCmd:
   }
 
   private val create = Opts.subcommand("new",
-      "Write a new plugin project for scala-cli: <Name>.scala (the plugin), <Name>.test.scala (its tests) and resources/ (its services file, defaults, native-image metadata)") {
+      "Write a new plugin project for scala-cli: project.scala (the build), <Name>.scala (the plugin), <Name>.test.scala (its tests) and resources/ (its services file, defaults, native-image metadata)") {
     (
       Opts.argument[String]("id"),
       Opts.option[String]("kind", s"What it adds: ${PluginKind.names} (default ${PluginKind.SourceFetcher.name})")
         .withDefault(PluginKind.SourceFetcher.name),
       Opts.option[String]("dir", "Where to write it (default ./<id>; must not exist or be empty)").orNone,
       Opts.option[String]("package", "The Scala package (default: the id without dashes)").orNone,
-      Opts.option[String]("repo", "The Maven repository with the plugin API and platform to compile against, a directory or a URL (default: this machine's install, histmersion plugin repo)").orNone,
+      Opts.option[String]("repo", "The Maven repository with the plugin API, platform and testkit to compile against, a directory or a URL (default: m2Local, the local Maven repository, into which this machine's install's are copied first: histmersion plugin repo --m2)").orNone,
       Opts.flag("with-agent-notes", "Also write AGENTS.md (and CLAUDE.md pointing at it) for coding agents").orFalse
     ).mapN { (rawId, rawKind, dir, rawPackage, repoArg, agentNotes) => (_: Client) =>
       val result = for
@@ -595,9 +636,11 @@ object PluginCmd:
       result.left.map(CliError(_, exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
         val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
         for
-          repo    <- PluginAuthoring.repository(repoArg, install)
+          (repo, copied) <- PluginAuthoring.repository(repoArg, install, PluginAuthoring.mavenLocal(k => Option(java.lang.System.getenv(k))))
           written <- PluginAuthoring.write(target, PluginTemplate.files(PluginTemplate.Request(id, kind, pkg, repo, agentNotes)))
-        yield PluginAuthoring.nextSteps(target, id, pkg, written).foreach(println)
+        yield
+          if copied.nonEmpty then println(s"copied the install's plugin API, platform and testkit into the local Maven repository (${copied.size} file(s))")
+          PluginAuthoring.nextSteps(target, id, pkg, written).foreach(println)
       }
     }
   }

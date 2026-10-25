@@ -185,13 +185,16 @@ repo="$(HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin repo 2>&1)" || 
 [ "$repo" = "$b/maven" ] || fail "plugin repo printed '$repo'"
 api="$(HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin api-jar 2>&1)" || fail "plugin api-jar: $api"
 [ "$api" = "$api_jar" ] || fail "plugin api-jar printed '$api', not $api_jar"
-HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin new smoke-new --dir "$data/smoke-new" > "$data/new.out" 2>&1 \
+# a HOME of its own: plugin new copies the install's artifacts into ~/.m2/repository, never the caller's
+HOME="$data/home" HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin new smoke-new --dir "$data/smoke-new" > "$data/new.out" 2>&1 \
   || fail "plugin new: $(cat "$data/new.out")"
-grep -q "^//> using repository file:.*/maven/\?$" "$data/smoke-new/SmokeNew.scala" \
-  && grep -q "^//> using compileOnly.dep com.kubuszok::histmersion-plugin-platform:" "$data/smoke-new/SmokeNew.scala" \
-  && ! grep -q "^//> using jar" "$data/smoke-new/SmokeNew.scala" \
+grep -qx "//> using repository m2Local" "$data/smoke-new/project.scala" \
+  && grep -q "^//> using compileOnly.dep com.kubuszok::histmersion-plugin-platform:" "$data/smoke-new/project.scala" \
+  && ! grep -qE "^//> using (jar|repository file:)" "$data/smoke-new/project.scala" \
+  && ! grep -q "^//> using" "$data/smoke-new/SmokeNew.scala" \
   && grep -qx "smokenew.SmokeNewPlugin" "$data/smoke-new/resources/META-INF/services/com.histmersion.plugin.Plugin" \
-  || fail "plugin new wrote an unexpected project: $(cat "$data/new.out"; head -12 "$data/smoke-new/SmokeNew.scala")"
+  && [ -f "$data/home/.m2/repository/${api_jar#"$b/maven/"}" ] \
+  || fail "plugin new wrote an unexpected project: $(cat "$data/new.out"; cat "$data/smoke-new/project.scala")"
 echo "  $repo"
 
 echo "→ relink: the hello and hello-deps test plugins into a COPY of the bundle (bin/, kit/, libexec/, maven/), with the CLI"

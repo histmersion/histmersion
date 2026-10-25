@@ -39,8 +39,8 @@ object ScalaPackage:
   def parse(raw: String): Either[String, ScalaPackage] =
     Either.cond(raw.matches(Rule), ScalaPackage(raw), s"'$raw' is not a package name ($Rule)")
 
-/** The Maven repository a plugin project resolves the plugin API and the plugin platform from: the
-  * install's `maven/` as a `file:` URL, or another named with `--repo`. */
+/** A Maven repository named by URL: an `https://`, `http://` or `file:` URL, or a local directory as its
+  * `file:` URL. What `plugin add --repo` looks in, and what `plugin new --repo` writes into a project. */
 final case class PluginRepository private (url: String)
 
 object PluginRepository:
@@ -52,6 +52,19 @@ object PluginRepository:
     else
       val dir = Path.of(trimmed).toAbsolutePath.normalize
       Either.cond(isDirectory(dir), PluginRepository(dir.toUri.toString), s"no such directory: $dir")
+
+/** Where a new plugin project resolves the plugin API, the platform and the testkit from. */
+enum TemplateRepository:
+  /** The local Maven repository (`~/.m2/repository`), which `histmersion plugin repo --m2` fills from the
+    * install's `maven/`. scala-cli names it `m2Local`, so the project names no path of this machine. */
+  case MavenLocal
+  /** A repository named with `--repo`. */
+  case Remote(repository: PluginRepository)
+
+  /** As `//> using repository` takes it. */
+  def directive: String = this match
+    case MavenLocal   => "m2Local"
+    case Remote(repo) => repo.url
 
 /** Histmersion's own artifacts in that repository, at the version of the install this CLI belongs to:
   * the plugin API (a jar, its sources, its POM) and the plugin platform (a POM whose dependencies are
@@ -74,11 +87,12 @@ object PluginArtifacts:
 /** One file of a new project: its path relative to the project directory, and its content. */
 final case class TemplateFile(path: String, content: String)
 
-/** What `histmersion plugin new` writes: a scala-cli project whose two Scala files are the plugin and its
-  * tests, and the resources a plugin jar carries beside its classes. Pure: the caller writes the files. */
+/** What `histmersion plugin new` writes: a scala-cli project whose build is `project.scala`, whose two
+  * Scala files are the plugin and its tests, and the resources a plugin jar carries beside its classes.
+  * Pure: the caller writes the files. */
 object PluginTemplate:
 
-  final case class Request(id: PluginId, kind: PluginKind, pkg: ScalaPackage, repository: PluginRepository, agentNotes: Boolean)
+  final case class Request(id: PluginId, kind: PluginKind, pkg: ScalaPackage, repository: TemplateRepository, agentNotes: Boolean)
 
   /** The version a new plugin is published under, as its `PluginInfo` states it too. */
   val FirstVersion = "0.1.0"
@@ -86,12 +100,24 @@ object PluginTemplate:
   /** The repository `scala-cli publish` writes the plugin to, relative to the project. */
   val PublishDir = "repo"
 
+  /** The build: every `//> using` directive of the project, main and test. */
+  val ProjectFile = "project.scala"
+
+  /** Files only the tests read (fixtures): on the test class path, never in the jar. */
+  val TestResourceDir = "test-resources"
+
+  /** The system property the tests get the project's directory in: the testkit resolves a relative
+    * recordings directory against it, wherever `scala-cli test` was started. */
+  val ProjectProperty = "histmersion.plugin.project"
+
   val ServicesPath = "resources/META-INF/services/com.histmersion.plugin.Plugin"
 
   def defaultsPath(id: PluginId): String = s"resources/META-INF/histmersion/plugins/${id.value}.conf"
 
-  def nativeMetadataPath(id: PluginId): String =
-    s"resources/META-INF/native-image/histmersion-plugin/${id.value}/reachability-metadata.json"
+  /** GraalVM's convention, `META-INF/native-image/<group>/<artifact>/`: the published organization and
+    * name, so no two jars' metadata files share a path. */
+  def nativeMetadataPath(id: PluginId, pkg: ScalaPackage): String =
+    s"resources/META-INF/native-image/${pkg.value}/${id.value}/reachability-metadata.json"
 
   def pluginClass(id: PluginId): String =
     if id.typeName.endsWith("Plugin") then id.typeName else s"${id.typeName}Plugin"
@@ -101,40 +127,59 @@ object PluginTemplate:
   def files(r: Request): List[TemplateFile] =
     val name = r.id.typeName
     val core = List(
-      TemplateFile(s"$name.scala", fill(r, directives(r) + "\n" + header(r) + KindSources.main(r.kind))),
-      TemplateFile(s"$name.test.scala", fill(r, testDirectives + "\n" + header(r) + KindSources.test(r.kind) + packagingSuite)),
+      TemplateFile(ProjectFile, fill(r, directives(r))),
+      TemplateFile(s"$name.scala", fill(r, header(r) + KindSources.main(r.kind))),
+      TemplateFile(s"$name.test.scala", fill(r, header(r) + KindSources.test(r.kind) + packagingSuite)),
       TemplateFile("README.md", fill(r, readme)),
       TemplateFile(".gitignore", s"/$PublishDir/\n/*.jar\n.scala-build/\n.bsp/\n/target/\n"),
       TemplateFile(ServicesPath, s"${r.pkg.value}.${pluginClass(r.id)}\n"),
       TemplateFile(defaultsPath(r.id), fill(r, KindSources.defaults(r.kind))),
-      TemplateFile(nativeMetadataPath(r.id), nativeMetadata(r))
+      TemplateFile(nativeMetadataPath(r.id, r.pkg), nativeMetadata(r))
     )
     if r.agentNotes then core ++ List(TemplateFile("AGENTS.md", fill(r, agentNotes(r))), TemplateFile("CLAUDE.md", "@AGENTS.md\n"))
     else core
 
-  /** The build: the server's Scala; the plugin API and the platform from the repository, compile-only
-    * (the server provides them, so the plugin's POM does not list them and its jar holds none of them);
-    * the resources; what `scala-cli publish` names the plugin. A library of the plugin's own is a plain
-    * `//> using dep`: its POM lists it, and `histmersion plugin add` installs it beside the plugin. */
+  /** The build, in one file for every source: the server's Scala; the plugin API and the platform from
+    * the repository, compile-only (the server provides them, so the plugin's POM does not list them and
+    * its jar holds none of them); the resources; what `scala-cli publish` names the plugin. Then the
+    * tests: they run the plugin, so they need at run time what the server provides it with (a
+    * compile-only dependency is not on the test class path); the testkit loads and runs it as the server
+    * does, and brings the plugin API with it. A library of the plugin's own is a plain `//> using dep`:
+    * its POM lists it, and `histmersion plugin add` installs it beside the plugin. */
   private def directives(r: Request): String =
-    List(
-      s"//> using scala ${PluginBuildVersions.scala}",
-      s"//> using repository ${r.repository.url}",
-      s"//> using compileOnly.dep ${PluginArtifacts.coordinates(PluginArtifacts.Api)}",
-      s"//> using compileOnly.dep ${PluginArtifacts.coordinates(PluginArtifacts.Platform)}",
-      "//> using resourceDir resources",
-      s"//> using publish.organization ${r.pkg.value}",
-      s"//> using publish.name ${r.id.value}",
-      s"//> using publish.version $FirstVersion").mkString("", "\n", "\n")
+    s"""// The build of the @Name@ plugin: every //> using directive of the project, for the plugin and its
+       |// tests. Keep them all in this file when you add sources (scala-cli reads directives from any
+       |// file, but one place is one place to change them).
+       |//
+       |// ${repositoryNote(r.repository)}
+       |// Their version is the Histmersion version; scala-cli has no variables, so it is written on each
+       |// of their four lines below: change all four to build against another Histmersion.
+       |
+       |//> using scala ${PluginBuildVersions.scala}
+       |//> using repository ${r.repository.directive}
+       |//> using compileOnly.dep @api@
+       |//> using compileOnly.dep @platform@
+       |//> using resourceDir resources
+       |
+       |//> using publish.organization ${r.pkg.value}
+       |//> using publish.name ${r.id.value}
+       |//> using publish.version $FirstVersion
+       |// no doc jar: scaladoc cannot follow links into the compile-only API, and warns for each
+       |//> using publish.doc false
+       |
+       |//> using test.dep org.scalameta::munit:${PluginBuildVersions.munit}
+       |//> using test.dep @platform@
+       |//> using test.dep @testkit@
+       |//> using test.resourceDir $TestResourceDir
+       |//> using test.javaProp $ProjectProperty=$${.}
+       |""".stripMargin
 
-  /** The tests run the plugin, so they need at run time what the server provides it with; the testkit
-    * loads and runs it as the server does. */
-  private def testDirectives: String =
-    List(
-      s"//> using test.dep org.scalameta::munit:${PluginBuildVersions.munit}",
-      s"//> using test.dep ${PluginArtifacts.coordinates(PluginArtifacts.Api)}",
-      s"//> using test.dep ${PluginArtifacts.coordinates(PluginArtifacts.Platform)}",
-      s"//> using test.dep ${PluginArtifacts.coordinates(PluginArtifacts.Testkit)}").mkString("", "\n", "\n")
+  private def repositoryNote(repository: TemplateRepository): String = repository match
+    case TemplateRepository.MavenLocal =>
+      "The plugin API, the platform and the testkit come from the local Maven repository (m2Local), where\n" +
+        "// `histmersion plugin repo --m2` puts the install's."
+    case TemplateRepository.Remote(_) =>
+      "The plugin API, the platform and the testkit come from the Maven repository named below."
 
   private def header(r: Request): String = s"package ${r.pkg.value}\n\n"
 
@@ -147,14 +192,15 @@ object PluginTemplate:
       "@package@"      -> r.pkg.value,
       "@kind@"         -> r.kind.name,
       "@provides@"     -> r.kind.provides,
-      "@metadata@"     -> nativeMetadataPath(r.id).stripPrefix("resources/"),
-      "@repository@"   -> r.repository.url,
+      "@metadata@"     -> nativeMetadataPath(r.id, r.pkg).stripPrefix("resources/"),
+      "@repository@"   -> r.repository.directive,
       "@api@"          -> PluginArtifacts.coordinates(PluginArtifacts.Api),
       "@platform@"     -> PluginArtifacts.coordinates(PluginArtifacts.Platform),
       "@testkit@"      -> PluginArtifacts.coordinates(PluginArtifacts.Testkit),
       "@apiSources@"   -> PluginArtifacts.path(PluginArtifacts.Api, "-sources.jar"),
       "@coordinates@"  -> s"${r.pkg.value}::${r.id.value}:$FirstVersion",
-      "@publishDir@"   -> PublishDir
+      "@publishDir@"   -> PublishDir,
+      "@projectProperty@" -> ProjectProperty
     ).foldLeft(text) { case (t, (k, v)) => t.replace(k, v) }
 
   /** The fields Scala 3 lazy vals keep their value in (`<name>$lzy<n>`): a native image reaches them
@@ -221,15 +267,80 @@ object PluginTemplate:
   private val readme: String =
     """# @Name@
       |
-      |A Histmersion plugin: a @kind@ (`@provides@:@id@`), built with scala-cli against the plugin API in
-      |the Maven repository of a Histmersion install (`@repository@`).
+      |A Histmersion plugin: a @kind@ (`@provides@:@id@`), built with [scala-cli](https://scala-cli.virtuslab.org)
+      |against the plugin API of a Histmersion install.
       |
-      |```bash
-      |scala-cli test .                                                  # unit tests, offline
-      |HISTMERSION_PLUGIN_LIVE=1 scala-cli test .                        # also against the real site
-      |scala-cli --power publish . --publish-repository ./@publishDir@
-      |histmersion plugin add @coordinates@ --repo ./@publishDir@
-      |```
+      |## Build
+      |
+      |The build is `project.scala`: every `//> using` directive of the project, for the plugin and for its
+      |tests (the `test.*` ones). Keep them all there when you add source files. The plugin API, the plugin
+      |platform (the libraries the server provides, at its versions) and the plugin testkit come from
+      |`@repository@`; with `m2Local`, the local Maven repository (`~/.m2/repository`), which
+      |`histmersion plugin repo --m2` fills from the install, so the project names no path of your computer.
+      |All three are at the version of your Histmersion: to build against another one, change the version
+      |on their four lines.
+      |
+      || path | what it is |
+      ||---|---|
+      || `project.scala` | the build |
+      || `@Name@.scala` · `@Name@.test.scala` | the plugin · its tests |
+      || `resources/` | what the jar carries besides the classes: the services file, the defaults, the native-image metadata |
+      || `test-resources/` | files only the tests read (fixtures): on the test class path, never in the jar |
+      || `recordings/` | the live check's recorded answers, replayed offline |
+      |
+      |## Install it from this directory
+      |
+      |You need an installed Histmersion (its `histmersion` CLI and the server), scala-cli, and a JDK: use the one
+      |Histmersion is built with, GraalVM CE 25.4 (`sdk install java 25.4.4.1+1-graalce`, then point `JAVA_HOME`
+      |at it). The Histmersion source repository is not needed.
+      |
+      |1. **Build and test**, offline:
+      |
+      |   ```bash
+      |   scala-cli test .
+      |   ```
+      |
+      |2. **Publish** the jar, its sources and its POM (which lists the plugin's own libraries) into `./@publishDir@`,
+      |   a Maven repository on disk:
+      |
+      |   ```bash
+      |   scala-cli --power publish . --publish-repository ./@publishDir@
+      |   ```
+      |
+      |3. **Install it.** This shows the id, version, SPI, what it registers and its dependencies, then copies the
+      |   jar and its POM into the plugins directory and installs the POM's dependencies beside it (`--yes` skips
+      |   the question):
+      |
+      |   ```bash
+      |   histmersion plugin add @coordinates@ --repo ./@publishDir@
+      |   ```
+      |
+      |4. **Enable it** in `histmersion.conf` (once; the settings and their defaults are in
+      |   `resources/META-INF/histmersion/plugins/@id@.conf`):
+      |
+      |   ```hocon
+      |   histmersion.plugins.@id@.enabled = true
+      |   ```
+      |
+      |5. **Relink the server with it.** A native server runs only the plugins it was linked with, so it is linked
+      |   again with the plugins directory, checked and restarted; on failure the previous binary comes back. The
+      |   link peaks near 13.5 GB of memory. Let running jobs finish first:
+      |
+      |   ```bash
+      |   histmersion agent autopilot drain      # wait until `histmersion agent autopilot status` says DRAINED
+      |   histmersion plugin rebuild             # or: plugin rebuild --jvm — no relink, the server runs on the JVM
+      |   histmersion agent autopilot undrain
+      |   ```
+      |
+      |6. **Check** with `histmersion plugin status` (the running server lists the plugin's jar), and in the server
+      |   log, which names the plugin as it registers.
+      |
+      |**Updating.** Raise `publish.version` in `project.scala` and the version in `PluginInfo` together, then repeat
+      |steps 1–3 with that version, and step 5. `histmersion plugin status` says REBUILD NEEDED whenever the plugins
+      |directory differs from what the running server was linked with.
+      |
+      |**Removing.** `histmersion plugin rm @id@ --rebuild` takes it out of the plugins directory and relinks; set
+      |`enabled = false` too, or the server warns that the setting configures no plugin.
       |
       |## Testing without a server
       |
@@ -262,6 +373,11 @@ object PluginTemplate:
       |2. otherwise, if `recordings/<case>/` holds a recording, it is replayed, offline (in CI too);
       |3. otherwise it runs against the real site only with `HISTMERSION_PLUGIN_LIVE=1`, and is skipped
       |   (with the reason) without it.
+      |
+      |`recordings/<case>` is found in this directory wherever `scala-cli test` runs from: `project.scala` gives
+      |the tests the project's directory (`test.javaProp @projectProperty@`), and the testkit resolves the
+      |path against it. A skipped live check prints `SKIPPED …` with the reason and how to run it (munit
+      |itself only says "skipped", and the run still passes).
       |
       |So: run it live until it passes, then record it once and commit the recording:
       |
@@ -310,10 +426,13 @@ object PluginTemplate:
       |
       |## Files
       |
-      |- `@Name@.scala`: the build directives (`//> using …`) and the plugin.
+      |- `project.scala`: the build, every `//> using …` directive of the project, the tests' (`test.*`) too.
+      |  Put the directives of any file you add here, not in that file.
+      |- `@Name@.scala`: the plugin. More sources may sit beside it (`*.test.scala` for tests).
       |- `@Name@.test.scala`: its tests (munit, with the Histmersion plugin testkit, which loads and runs the
       |  plugin as the server does), including the packaging checks and, for a kind that talks to a site, a
       |  live check that records and replays (README.md).
+      |- `test-resources/`: fixtures the tests read from the class path; never in the jar.
       |- `recordings/`: the live checks' recorded answers, replayed offline.
       |- `resources/META-INF/services/com.histmersion.plugin.Plugin`: names the plugin class, so that Java's
       |  ServiceLoader finds it. Rename the class and you must rename it here too (a test checks it).
@@ -325,8 +444,9 @@ object PluginTemplate:
       |
       |## The plugin API and the platform
       |
-      |- Both come from the Maven repository of the Histmersion install, `@repository@`
-      |  (`histmersion plugin repo` prints its path), as compile-only dependencies:
+      |- Both come from `@repository@` (`m2Local` is `~/.m2/repository`, filled from the install by
+      |  `histmersion plugin repo --m2`; `histmersion plugin repo` prints the install's own), as compile-only
+      |  dependencies:
       |  - `@api@`: everything is in the package `com.histmersion.plugin`. Start at `Plugin` and
       |    `PluginContext`.
       |  - `@platform@`: a POM whose dependencies are the libraries the server provides to plugins, at the
@@ -372,7 +492,8 @@ object PluginTemplate:
       |histmersion plugin rebuild             # relink the server with it (or: plugin rebuild --jvm)
       |```
       |
-      |Bump `//> using publish.version` and the version in `PluginInfo` together for a new release.
+      |Bump `//> using publish.version` and the version in `PluginInfo` together for a new release. A native
+      |server needs `plugin rebuild` after every `plugin add` or `plugin rm` (README.md, "Install it").
       |
       |Turn it on in the user's `histmersion.conf`: `histmersion.plugins.@id@ { enabled = true }`. Check it
       |with `histmersion about` (the plugin is listed as registered).
