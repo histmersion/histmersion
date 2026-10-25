@@ -1,5 +1,6 @@
-package com.histmersion.api
+package com.histmersion.domain
 
+import com.histmersion.api.{Lpf, PlaceInput, PlaceKind}
 
 import java.nio.file.{Files, Path}
 

@@ -23,6 +23,8 @@ class PeriodSqlSuite extends com.histmersion.db.DbSuite:
     assertEquals(PeriodSql.always(Some(Period(-1200, -1000))), "[-1200,-999)")
     assertEquals(PeriodSql.literal(Some(Period(5, 5))), Some("[5,6)"))
     assertEquals(PeriodSql.literal(Option.empty[Period]), None)
+    assertEquals(PeriodSql.literalOf(DeepTime.span(-1200L, -1000L)), Some("[-1200,-999)"))
+    assertEquals(PeriodSql.literalOf(None), None)
 
   test("the SQL spellings: inclusive reads, a range of inclusive bounds, an inclusive overlap"):
     assertEquals(PeriodSql.cols("f.period"), "lower(f.period), upper(f.period) - 1")

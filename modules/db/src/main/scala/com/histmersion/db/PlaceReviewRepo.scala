@@ -3,7 +3,7 @@ package com.histmersion.db
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
+import com.histmersion.domain.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -56,7 +56,7 @@ object PlaceReviewRepo:
     rows.map { r =>
       val e = Evidence(r.id, r.label, r.kind, split(r.types), split(r.periods), r.start, r.end,
         items.getOrElse(r.id, Nil).map(i => LinkedItem(i.ref, i.itemClass,
-          for a <- i.from; b <- i.to if a <= b yield Period(a, b))),
+          for a <- i.from; b <- i.to if a <= b; p <- DeepTime.span(a, b) yield p)),
         descs.getOrElse(r.id, Nil))
       val cands = PlaceReview.duplicateOf(r.label).toList.flatMap { name =>
         // the name, or one of the alternatives a Pleiades title joins with '/' ("Peiros/Piros (river)")
@@ -87,7 +87,7 @@ object PlaceReviewRepo:
     else
       transact(ds):
         val re = todo.collect { case p: Proposal.Reclassify => p }.filter { p =>
-          val range = PeriodSql.literal(p.period)
+          val range = PeriodSql.literalOf(p.period)
           sql"""UPDATE places SET kind = ${p.to},
                   period = coalesce(${range}::int8range, period),
                   start_unknown = CASE WHEN ${range}::text IS NULL THEN start_unknown ELSE false END
