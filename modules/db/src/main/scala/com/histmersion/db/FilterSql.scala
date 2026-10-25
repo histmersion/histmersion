@@ -3,6 +3,7 @@ package com.histmersion.db
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.{MediaRole, SourceStatus}
 
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that

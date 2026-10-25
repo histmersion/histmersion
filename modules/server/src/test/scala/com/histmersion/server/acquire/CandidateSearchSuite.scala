@@ -9,6 +9,7 @@ import com.histmersion.server.agents.ManagerSupervisor
 
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentLinkedQueue
+import com.histmersion.values.SourceStatus
 
 /** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it
   * keeps, deduplication across indexes and against the corpus and the acquisition list, a failed index,

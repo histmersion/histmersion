@@ -5,6 +5,7 @@ import com.monovore.decline.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.{BundleKind, Historicity}
 
 object EventsCmd:
 

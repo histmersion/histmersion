@@ -8,6 +8,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Queue.{QueueAdd, QueuePatch}
+import com.histmersion.api.VocabularyCodecs.given
 
 /** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research
   * workspace's `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).

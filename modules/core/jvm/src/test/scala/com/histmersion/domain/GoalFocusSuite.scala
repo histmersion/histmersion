@@ -8,6 +8,7 @@ import com.histmersion.config.given
 import com.histmersion.api.Autopilot.{FocusGoal, FocusInfo, FocusWaiting}
 import com.histmersion.domain.GoalFocus.*
 import com.histmersion.api.Managers.*
+import com.histmersion.values.GoalStatus
 
 /** The autopilot's focus, pure (docs/research-process-managers.md "As built: the focus"): the selection
   * order (closest to done, depth-first, pins, a person's priority, ties), the sticky active set and what

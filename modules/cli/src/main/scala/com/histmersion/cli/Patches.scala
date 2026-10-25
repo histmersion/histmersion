@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 
 import io.circe.parser.decode
 import java.nio.file.{Files, Path}
+import com.histmersion.values.{EdgeKind, SourceStatus}
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
   *

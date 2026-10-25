@@ -8,6 +8,7 @@ import com.histmersion.api.given
 import BundlePlan.Decision
 import MergeFixture.*
 import io.circe.Json
+import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
 
 /** What the merge carries and decides beyond M4–M5 (docs/research-merge-import.md §7.8): places and
   * named periods of a collection's own, events matched across two ids, a goal's plan, links and

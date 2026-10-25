@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{AttestationRepo, CorrectionRepo, EventCatalogRepo, EventRepo, JobRepo, PlaceScope, SourceRepo}
 import com.histmersion.server.{BackgroundJob, Deps}
+import com.histmersion.values.EventLinkStatus
 
 
 

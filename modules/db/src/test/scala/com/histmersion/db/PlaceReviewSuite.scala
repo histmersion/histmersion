@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 import com.histmersion.domain.PlaceReview.Proposal
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{LocationPrecision, PlaceKind, SourceStatus}
 
 /** `lint --rule place-kind` and `--rule place-grid-point` (2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): the dry run lists people, polities, a settlement and

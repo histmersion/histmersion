@@ -1,6 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.*
+import com.histmersion.values.Confidence
 
 /** [[Certainty]] (#1946): a finding that states no confidence is drawn in its own neutral look — grey,
   * dashed, its own legend pip — never as high, and never lets a bubble look high. Pure. */

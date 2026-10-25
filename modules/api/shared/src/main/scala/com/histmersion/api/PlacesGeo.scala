@@ -1,6 +1,7 @@
 package com.histmersion.api
 
 import sttp.tapir.Schema
+import com.histmersion.values.WireEnumValues
 
 /** How the map's area layer reads a time RANGE (`GET /api/places/geo?from=&to=&pick=`): a snapshot at
   * one year of it — the middle (the default, what the map always did), the start or the end — or every

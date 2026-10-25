@@ -7,6 +7,7 @@ import com.histmersion.domain.*
 import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.values.{BundleKind, PlaceKind}
 
 /** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems
   * (and `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article

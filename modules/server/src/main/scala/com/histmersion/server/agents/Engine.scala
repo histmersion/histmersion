@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.db.{AgentRepo, QueueRepo}
+import com.histmersion.api.VocabularyCodecs.given
 import io.circe.{Decoder, Encoder}
 import io.circe.parser.decode
 import io.circe.syntax.*

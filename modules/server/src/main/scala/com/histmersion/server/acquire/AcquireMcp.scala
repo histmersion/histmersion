@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.server.McpOut
+import com.histmersion.api.VocabularyCodecs.given
 
 import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

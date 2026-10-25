@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.PlaceKind
+import com.histmersion.values.PlaceKind
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

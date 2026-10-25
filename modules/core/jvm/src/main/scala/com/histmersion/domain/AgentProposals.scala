@@ -10,6 +10,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode}
+import com.histmersion.values.{EdgeKind, SourceStatus}
 
 /** Changes an agent run PROPOSES to the corpus rather than makes — a source's status, a typed
   * disagreement edge — and the pure rules that decide whether code applies one at once or records it

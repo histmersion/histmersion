@@ -8,6 +8,7 @@ import com.histmersion.config.given
 
 import io.circe.Json
 import io.circe.parser.parse
+import com.histmersion.values.Historicity
 
 /** #1449, the pure half: the kind taxonomy, the datings (BCE, uncertainty, Wikidata precision), the
   * three catalogues' answers read from RECORDED fixtures (captured 2026-10-14, trimmed), the thresholds,

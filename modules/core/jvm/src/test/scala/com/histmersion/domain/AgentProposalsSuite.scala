@@ -7,6 +7,7 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.AgentProposals.*
 import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode}
+import com.histmersion.values.{EdgeKind, SourceStatus}
 
 class AgentProposalsSuite extends munit.FunSuite:
 

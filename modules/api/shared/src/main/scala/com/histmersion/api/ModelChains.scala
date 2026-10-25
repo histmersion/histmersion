@@ -3,6 +3,7 @@ package com.histmersion.api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.values.WireEnumValues
 
 /** Model chains and allowances (docs/research-model-providers.md §3, docs/research-embedded-agents.md
   * §15): per step role an ORDERED list of models, and per model (or per provider, `claude-code:*`) a

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.SourceStatus
+
 
 /** The pure write rules for articles (plan §5.2 stream 2.7): validation, full replace, and the
   * selective merge that makes `patch_article` safe to call without re-uploading the prose. */

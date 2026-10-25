@@ -5,6 +5,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.{MediaRole, PlaceKind}
 import com.histmersion.db.{Db, MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.db.given
 import com.histmersion.server.Main

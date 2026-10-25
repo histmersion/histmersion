@@ -1,9 +1,10 @@
 package com.histmersion.db
 
-import com.histmersion.api.{Confidence, SourceStatus, EdgeKind, NeighborTarget, PlaceDating, PlaceTimeBasis, LocationPrecision}
+import com.histmersion.api.{NeighborTarget, PlaceDating, PlaceTimeBasis}
 import com.augustnagro.magnum.*
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax.*
+import com.histmersion.values.{Confidence, EdgeKind, LocationPrecision, SourceStatus}
 
 /** Magnum DbCodec instances for the domain vocabularies. Each reads/writes the lowercase wire string
   * that Postgres stores. Placed here (db module) because core has no Magnum dependency.

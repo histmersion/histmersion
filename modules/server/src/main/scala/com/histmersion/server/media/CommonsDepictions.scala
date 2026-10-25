@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.Target
+import com.histmersion.values.MediaRole
 
 /** Pictures that DEPICT an event (#1446), from Wikimedia Commons: for each event with a Wikidata item,
   *  1. the works its item lists as `P1299 depicted by` (a painting, a relief) — each work's own image

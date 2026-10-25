@@ -7,6 +7,7 @@ import com.histmersion.config.given
 
 import BundlePlan.Decision
 import MergeFixture.*
+import com.histmersion.values.{BundleKind, DecisionKind, EditionsPolicy, IssueKind, IssueSeverity, MatchOutcome}
 
 /** `merge plan` as a pure function over the crafted fixture (docs/research-merge-import.md §8): the
   * whole issue list in one run, conditional issues, resolutions (stale, invalid, partial), the

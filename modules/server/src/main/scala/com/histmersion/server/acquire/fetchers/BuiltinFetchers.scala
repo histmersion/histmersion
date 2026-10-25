@@ -8,6 +8,7 @@ import com.histmersion.server.acquire.{ArchiveClient, FetchedFile, Http, OpenAle
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.api.VocabularyCodecs.given
 
 /** Today's acquisition steps as BUILT-IN plugins (docs/research-plugins.md §5.3, D2, D4): in every
   * binary, each one switched off by `histmersion.plugins.<id>.enabled = false`, all on by default.

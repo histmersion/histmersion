@@ -1,6 +1,7 @@
 package com.histmersion.cli
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.api.VocabularyCodecs.given
 
 /** What the host-side `calibre … --json` commands print (#1946). Calibre is read on THIS machine, so
   * these answers have no server DTO; they are still case classes with derived codecs, printed through

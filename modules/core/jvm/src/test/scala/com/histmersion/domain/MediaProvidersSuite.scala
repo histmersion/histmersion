@@ -6,6 +6,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import io.circe.parser.parse as json
+import com.histmersion.values.MediaRole
 
 /** The pure half of the media providers (#1446): licences, credit lines, and the Wikidata and
   * Commons answers — no network, no database. */

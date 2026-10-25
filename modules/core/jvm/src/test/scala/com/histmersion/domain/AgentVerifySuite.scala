@@ -6,6 +6,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.AgentVerify.*
+import com.histmersion.values.SourceStatus
 
 class AgentVerifySuite extends munit.FunSuite:
 

@@ -9,6 +9,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.{DecisionRequest, RunRequest}
 import com.histmersion.server.McpOut
+import com.histmersion.api.VocabularyCodecs.given
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server
   * with ONE call (`start_run` — e.g. the whole review panel of an article, instead of spawning four

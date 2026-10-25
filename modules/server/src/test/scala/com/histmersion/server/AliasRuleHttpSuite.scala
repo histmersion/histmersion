@@ -7,6 +7,7 @@ import com.histmersion.domain.*
 import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.values.PlaceKind
 
 /** The alias rule over real HTTP and MCP (#1799, #890): for every renamed kind — source, article,
   * event, goal, place — a put, a patch, a delete and a rename naming the OLD identifier go to the

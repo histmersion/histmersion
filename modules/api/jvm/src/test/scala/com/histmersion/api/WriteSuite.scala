@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.{Confidence, EdgeKind, SourceStatus}
+
 
 /** Pure tests for the patch-merge (plan §1.9a). No database: `applyPatch` is a total function of
   * (existing, patch), which is exactly why the merge rules live in `core`. */

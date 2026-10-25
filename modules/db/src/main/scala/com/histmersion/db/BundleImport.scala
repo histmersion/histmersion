@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
+import com.histmersion.values.{BundleKind, DecisionKind, IssueKind}
 
 /** `bundle import` WITHOUT matching (docs/research-merge-import.md §7.3, milestone M2): into an empty
   * instance, or back into the instance a bundle came from (or a fork of it). A foreign row is the

@@ -8,6 +8,7 @@ import com.histmersion.config.given
 import org.yaml.snakeyaml.{LoaderOptions, Yaml}
 import org.yaml.snakeyaml.constructor.SafeConstructor
 import scala.jdk.CollectionConverters.*
+import com.histmersion.values.EditionsPolicy
 
 /** The resolution file of `merge plan --resolutions` (docs/research-merge-import.md §6.3): read it,
   * and write the template `--write-template` starts one from. Pure.

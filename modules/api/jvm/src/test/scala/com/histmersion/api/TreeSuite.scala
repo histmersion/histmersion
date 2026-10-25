@@ -2,6 +2,7 @@ package com.histmersion.api
 
 
 import com.histmersion.api.Tree.{RegionNode, TreeRow}
+import com.histmersion.values.PlaceKind
 
 /** The §1.6 / §1.6a nesting, purely: adaptive time levels, the as-of hierarchy walk, non-additive
   * counts with their `overlap`, the `unlocated` leaf, samples and the depth clamp. No database. */

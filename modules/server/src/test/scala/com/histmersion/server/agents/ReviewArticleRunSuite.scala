@@ -14,6 +14,7 @@ import sttp.client4.testing.SyncBackendStub
 
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.values.EdgeKind
 
 /** A scripted model for steps that run IN PARALLEL: each call is routed by its system prompt to the
   * script queue of its reviewer, so the order the three panel calls arrive in does not matter. A

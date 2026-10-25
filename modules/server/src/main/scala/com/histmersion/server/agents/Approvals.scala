@@ -9,6 +9,7 @@ import com.histmersion.db.AgentRepo
 import com.histmersion.server.Handlers
 
 import javax.sql.DataSource
+import com.histmersion.values.SourceStatus
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status,
   * a disagreement edge — is applied by code only under the rules of [[AgentProposals.route]];

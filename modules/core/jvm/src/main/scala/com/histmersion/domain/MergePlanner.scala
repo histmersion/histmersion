@@ -13,6 +13,7 @@ import TextAnchor.Anchor
 
 import io.circe.{Decoder, Encoder, Json}
 import java.util.UUID
+import com.histmersion.values.{BundleKind, DecisionKind, EditionsPolicy, IssueKind, IssueSeverity, MatchOutcome, SourceStatus}
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the
   * bundle's entities, what this collection knows (its rows, labels, ledger, redirects, tombstones,

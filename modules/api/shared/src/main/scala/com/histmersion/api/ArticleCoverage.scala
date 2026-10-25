@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Codec, Decoder, Encoder}
 import sttp.tapir.Schema
+import com.histmersion.values.{SourceStatus, WireEnumValues}
 
 /** COVERAGE (#958) — the part of an article that says which sources it was compiled from, which of
   * them it cites, and why it leaves the others out: the "Not used" list, its counts, and the

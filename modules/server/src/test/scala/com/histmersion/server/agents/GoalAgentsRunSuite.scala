@@ -10,6 +10,7 @@ import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, GoalRepo, Migrate}
 import com.histmersion.server.{Deps, Handlers}
 import io.circe.Json
 import sttp.ai.core.agent.*
+import com.histmersion.values.SourceStatus
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:

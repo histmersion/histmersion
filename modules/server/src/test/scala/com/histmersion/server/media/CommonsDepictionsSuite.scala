@@ -6,6 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo.Target
+import com.histmersion.values.MediaRole
 
 /** Pictures that depict events (#1446) against a FAKE Wikidata and Commons: P1299 works' images
   * first, then the P180 search's files, capped per event, judged by the Commons licence like every

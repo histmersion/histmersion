@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.SourceStatus
 
 /** The read-only query path against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

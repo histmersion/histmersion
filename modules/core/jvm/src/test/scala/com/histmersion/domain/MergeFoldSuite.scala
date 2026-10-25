@@ -7,6 +7,7 @@ import com.histmersion.config.given
 
 import MergeFixture.{home, src, uid, work}
 import MergeFold.{ArticleOutcome, FindingMatch}
+import com.histmersion.values.{Confidence, DecisionKind, GoalStatus, IssueKind, SourceStatus}
 
 /** Folding two records that are one into one (docs/research-merge-import.md §5.3–§5.4): sources field
   * by field, findings, goals, queue items, events and articles. */

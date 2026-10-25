@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.{Configuration, KindlingsCodecAsObject}
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Codec, Decoder, DecodingFailure, Encoder, Json}
 import sttp.tapir.Schema
+import com.histmersion.values.{Confidence, EdgeKind, SourceStatus, WireEnumValues}
 
 /** Honour Scala default values when DECODING. Without this, Kindlings requires every non-Option field
   * in the JSON, so `{"tags":{"add":["sea-peoples"]}}` would be rejected for a missing `remove` — and

@@ -10,6 +10,7 @@ import com.histmersion.server.ConverterClient
 import io.scalaland.chimney.dsl.*
 
 import javax.sql.DataSource
+import com.histmersion.values.MediaRole
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own
   * (the CLI reads it host-side and uploads it, [[storeCover]]) or the Open Library Covers API's by

@@ -7,14 +7,6 @@ import io.circe.Codec
 
 /** Research goals and agent state (plan §1.5): server as single source of truth. */
 
-object GoalStatus:
-  val Planned  = "planned"
-  val Seeding  = "seeding"
-  val Compiled = "compiled"
-  val Reviewed = "reviewed"
-  val Done     = "done"
-  val all: List[String] = List(Planned, Seeding, Compiled, Reviewed, Done)
-
 final case class Goal(
     slug: String,
     title: String,

@@ -1,6 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.*
+import com.histmersion.values.{EdgeKind, SourceStatus}
 
 class GraphPanelSuite extends munit.FunSuite:
 

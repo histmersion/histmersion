@@ -1,6 +1,7 @@
 package com.histmersion.server.agents
 
 import io.circe.{Json, JsonObject}
+import com.histmersion.api.VocabularyCodecs.given
 
 /** A step's answer schema in OpenAI's STRICT structured-output form — the only form the Codex CLI's
   * `--output-schema` is accepted in. Codex sends the file as `text.format` with `strict: true`, and

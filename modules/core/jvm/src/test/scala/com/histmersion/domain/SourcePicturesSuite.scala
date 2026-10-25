@@ -7,6 +7,7 @@ import com.histmersion.config.given
 
 
 import io.circe.parser.parse
+import com.histmersion.values.MediaRole
 
 /** The pure half of a source's picture (#1446): which figure illustrates a paper ([[FigurePick]]) —
   * on the fixture the converter produced from a generated journal paper (converter/tests/test_figures.py)

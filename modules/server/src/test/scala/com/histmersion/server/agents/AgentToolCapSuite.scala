@@ -10,6 +10,7 @@ import io.circe.Json
 import io.circe.syntax.*
 
 import java.nio.file.Path
+import com.histmersion.values.SourceStatus
 
 /** The agent tools under `agents.tools` against a real Postgres (#token-diet, 2026-10-16): a record
   * keeps its findings and loses the notes' tail, a body read without `chars` is a short slice that

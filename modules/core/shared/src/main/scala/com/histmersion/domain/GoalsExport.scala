@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.api.given
 
 import com.histmersion.api.GoalPlans.{GoalLink, GoalSchedule, GoalView, LinkKind}
+import com.histmersion.values.GoalStatus
 
 /** `meta/GOALS.md` — the research goals as a read-only Markdown projection, written next to the three
   * bookkeeping files by `histmersion queue export <dir>` and `histmersion export <dir>`.

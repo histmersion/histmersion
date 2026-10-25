@@ -13,6 +13,8 @@ import sttp.client4.testing.SyncBackendStub
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
+import com.histmersion.values.SourceStatus
+import com.histmersion.api.VocabularyCodecs.given
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real
   * sttp-ai loop runs against it, the real tools execute in process. Records every request and counts

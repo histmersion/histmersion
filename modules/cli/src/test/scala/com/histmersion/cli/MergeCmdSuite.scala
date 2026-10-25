@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.monovore.decline.Command
 import java.nio.file.Files
+import com.histmersion.values.EditionsPolicy
 
 /** `histmersion merge plan` and the resolution flags of `bundle import`: they parse, and the file
   * plus the flags make one resolution set, flags winning, every bad line reported. No server. */

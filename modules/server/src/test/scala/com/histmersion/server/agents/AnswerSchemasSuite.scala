@@ -6,6 +6,7 @@ import sttp.ai.core.agent.*
 
 import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.VocabularyCodecs.given
 
 /** Every step's answer schema as Codex is sent it — OpenAI's strict structured-output form, which the
   * Responses API demands with `strict: true` and answers anything else with a 400 before the model

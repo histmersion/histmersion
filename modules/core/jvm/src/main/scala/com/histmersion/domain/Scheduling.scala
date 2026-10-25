@@ -9,6 +9,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 
 import com.histmersion.api.Agents.RunState
 import com.histmersion.domain.AgentProposals.Proposal
+import com.histmersion.values.EdgeKind
 
 /** The pure parts of a goal's schedules and of the two scheduled pipelines
   * (docs/research-embedded-agents.md §14): whether a due schedule may start a run now (the previous

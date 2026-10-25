@@ -6,6 +6,7 @@ import com.histmersion.api.GoalPlans.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.values.GoalStatus
 
 /** The research goals (docs/research-embedded-agents.md §14): the goals window (the goals as a tree)
   * and one window per goal — its sub-goals and links (sources, articles, search queries, queue

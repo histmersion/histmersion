@@ -2,6 +2,7 @@ package com.histmersion.api
 
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
+import com.histmersion.values.{PlaceKind, WireEnumValues}
 
 /** Place NAME → gazetteer point: the pure half of the geocoder (#981). `db.Geocoder` fetches the
   * candidate places for a name; everything that decides WHICH of them a person would mean lives here.

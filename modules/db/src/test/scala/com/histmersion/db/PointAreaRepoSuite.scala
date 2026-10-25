@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 import com.histmersion.domain.PointAreas.Dating
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{PlaceKind, SourceStatus}
 
 /** `lint --rule place-imported-point-area` (2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): the listing (counts, every finding holder, evidence

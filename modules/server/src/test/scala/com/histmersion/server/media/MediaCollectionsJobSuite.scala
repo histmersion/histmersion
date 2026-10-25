@@ -12,6 +12,7 @@ import io.circe.parser.decode
 import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.values.{MediaRole, PlaceKind}
 
 /** A collection import (#1446) through the real server and database (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the places on the map and their name keys and periods as the match reads them (V094),

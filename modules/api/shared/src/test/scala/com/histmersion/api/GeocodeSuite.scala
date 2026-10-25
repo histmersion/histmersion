@@ -2,6 +2,7 @@ package com.histmersion.api
 
 
 import com.histmersion.api.Geocode.*
+import com.histmersion.values.PlaceKind
 
 /** The geocoder's pure half (#981): the name key, the readings of a name, and the ranking — each
   * case mirrors a real failure of 2026-10-06. */

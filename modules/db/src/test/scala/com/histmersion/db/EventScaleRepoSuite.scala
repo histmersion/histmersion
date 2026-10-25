@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.PlaceKind
 
 /** An event's scale (V078, #1440) and the map's events feed against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): the column and its check, the scale derived from the

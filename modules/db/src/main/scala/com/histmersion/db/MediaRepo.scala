@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.values.MediaRole
 
 private[db] final case class MediaThumbRow(uid: String, role: String, credit: String, license: Option[String],
     licenseUrl: Option[String], sourceUrl: Option[String], width: Option[Int], height: Option[Int])

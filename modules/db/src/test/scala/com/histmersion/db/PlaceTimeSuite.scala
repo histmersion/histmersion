@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{PlaceKind, SourceStatus}
 
 /** The time rule of the place views (2026-10-09, [[PlaceTimeBasis]]) against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise), on every surface that reads places at a time: the

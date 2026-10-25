@@ -2,6 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.api.Agents.ProbeAnswer
 import com.histmersion.server.McpTools.GetSourceInput
+import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.ai.core.agent.{AgentTool, ResponseSchema}

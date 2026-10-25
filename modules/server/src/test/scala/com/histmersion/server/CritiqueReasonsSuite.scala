@@ -5,6 +5,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{CritiqueRepo, Db, Migrate}
+import com.histmersion.values.EdgeKind
 
 /** V091 — the critique checklist's stored reasons (docs/research-review-convergence.md §6.8) against a
   * `*_test` database: written and read through `patch_article`'s one path, refused without a

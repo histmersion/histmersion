@@ -3,6 +3,7 @@ package com.histmersion.server.importers
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.PlaceKind
 
 class CliopatriaImporterSuite extends munit.FunSuite:
 

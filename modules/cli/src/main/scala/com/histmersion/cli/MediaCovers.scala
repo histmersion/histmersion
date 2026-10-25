@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.values.MediaRole
 
 /** The host-side half of a source's cover (#1446): the cover the local Calibre library keeps beside
   * a linked book is READ here (the library is on the user's machine, like every `calibre` command)

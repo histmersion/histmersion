@@ -6,6 +6,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import java.util.UUID
+import com.histmersion.values.{Confidence, DecisionKind, GoalStatus, IssueKind, SourceStatus}
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.3–§5.4,
   * milestones M4–M5). The survivor is always THIS collection's row (left): it keeps its uid, and the

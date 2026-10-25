@@ -13,6 +13,8 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
 import javax.sql.DataSource
+import com.histmersion.values.GoalStatus
+import com.histmersion.api.VocabularyCodecs.given
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals,
   * search queries and candidate works for one goal, as a typed answer. Code checks the vocabulary

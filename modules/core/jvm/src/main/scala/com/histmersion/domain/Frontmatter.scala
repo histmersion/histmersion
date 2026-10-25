@@ -9,6 +9,7 @@ import org.yaml.snakeyaml.Yaml
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** Parse a `wiki/sources/<citekey>.md` note's YAML frontmatter into a [[Source]] with its findings. */
 object Frontmatter:

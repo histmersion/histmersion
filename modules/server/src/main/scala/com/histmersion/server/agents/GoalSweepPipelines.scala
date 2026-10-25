@@ -13,6 +13,8 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
 import javax.sql.DataSource
+import com.histmersion.values.EdgeKind
+import com.histmersion.api.VocabularyCodecs.given
 
 /** What both goal sweeps share: the goal's sources, the DOIs already in the acquisition queue, and
   * adding an item there at most once. */

@@ -4,6 +4,7 @@ import ox.supervised
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.PlaceKind
 
 /** The interactive budgets (docs/research-interactive-performance.md) as a CI check: the requests a
   * hover, a keystroke and a filter change fire, against a server on the test database, each repeated

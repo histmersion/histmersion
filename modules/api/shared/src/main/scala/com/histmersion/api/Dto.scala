@@ -3,6 +3,7 @@ package com.histmersion.api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** Wire DTOs — the contract between server, CLI and MCP. Circe codec AND tapir Schema are both
   * derived by Kindlings from the same case class, so JSON and OpenAPI/MCP schemas match by

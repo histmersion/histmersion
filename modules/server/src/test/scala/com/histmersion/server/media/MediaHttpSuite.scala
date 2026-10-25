@@ -10,6 +10,7 @@ import com.histmersion.server.{Deps, Main}
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.values.PlaceKind
 
 /** Media from outside providers (#1446) through the server: an import against a FAKE provider into the
   * test database (HISTMERSION_TEST_DB_URL; skipped otherwise), then what the web UI and the CLI read —

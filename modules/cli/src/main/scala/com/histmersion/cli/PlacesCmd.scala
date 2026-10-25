@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.values.{BundleKind, PlaceKind}
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared
   * `Main` only gains one line.

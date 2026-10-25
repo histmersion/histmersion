@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.Target
+import com.histmersion.values.MediaRole
 
 /** Pictures a Pleiades place record links (#1446). For each place on the map that carries a Pleiades
   * id, its place record (`/places/{id}/json`, no key) is read once; the Wikimedia Commons files its

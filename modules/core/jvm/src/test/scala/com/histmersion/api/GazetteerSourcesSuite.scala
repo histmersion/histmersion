@@ -7,6 +7,7 @@ import com.histmersion.domain.given
 
 
 import io.circe.parser.parse
+import com.histmersion.values.PlaceKind
 
 /** The external gazetteer sources' pure half (#1064), on the JVM (Lpf's year parser uses a look-behind
   * Scala.js cannot compile): identifiers, open time spans, the LPF and LP-TSV

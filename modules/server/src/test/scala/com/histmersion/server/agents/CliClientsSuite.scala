@@ -3,6 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.config.{CodexConfig, OpencodeConfig}
 import com.histmersion.api.Agents.{ModelRef, ProbeAnswer, ProviderKind}
 import com.histmersion.api.PlanQuota.PoolId
+import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.*
 
 import java.nio.file.{Files, Path}

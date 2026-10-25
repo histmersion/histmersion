@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Codec, Decoder, Encoder}
 import sttp.tapir.Schema
+import com.histmersion.values.WireEnumValues
 
 /** Deleting a source (#969): `POST /api/sources/{ck}/delete`, `histmersion delete <ck> [--apply]`.
   *

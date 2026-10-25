@@ -3,6 +3,7 @@ package com.histmersion.api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.values.WireEnumValues
 
 /** Embedded research agents (docs/research-embedded-agents.md): the pure vocabulary — providers,
   * roles, model references, prices and cost, run and step states, pipelines — and the wire DTOs of

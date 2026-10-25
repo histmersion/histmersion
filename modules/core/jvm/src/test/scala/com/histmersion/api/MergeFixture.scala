@@ -9,6 +9,7 @@ import com.histmersion.domain.given
 import MergePlanner.{Input, Labels, LedgerEntry}
 
 import java.util.UUID
+import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity, SourceStatus}
 
 /** A crafted pair of collections, in memory (docs/research-merge-import.md §8): "work" exported a
   * bundle, "home" plans it. One case per row of the scenario catalogue the pure planner can see.

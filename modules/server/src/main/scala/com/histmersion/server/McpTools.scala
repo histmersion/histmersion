@@ -8,6 +8,8 @@ import io.circe.Codec
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.{EditionsPolicy, PlaceKind}
+import com.histmersion.api.VocabularyCodecs.given
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same [[Handlers]] as REST. */
 final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.AcquireHandlers):

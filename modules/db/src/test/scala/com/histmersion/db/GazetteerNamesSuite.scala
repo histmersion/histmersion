@@ -7,6 +7,7 @@ import com.histmersion.api.Geocode.{Approximation, KindHint}
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
+import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 
 /** #987 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise), on the REAL bundled seed:
   * the places a finding names in plain English are read out of `db/places` itself (Natural Earth

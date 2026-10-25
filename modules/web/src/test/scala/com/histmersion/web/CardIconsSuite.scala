@@ -1,6 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.*
+import com.histmersion.values.{Confidence, MediaRole, PlaceKind, SourceStatus}
 
 /** Every card kind leads with an icon from the one registry (#1449): sources by what they are, places
   * by kind and site type, regions and polities a map, events their kind, articles and pictures theirs.

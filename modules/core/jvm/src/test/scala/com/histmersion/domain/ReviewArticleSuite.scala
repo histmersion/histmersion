@@ -8,6 +8,7 @@ import com.histmersion.config.given
 import com.histmersion.domain.AgentProposals.ProposalAnswer
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
+import com.histmersion.values.SourceStatus
 
 /** The pure half of `review-article`: mechanical checks, reviewer validation, the merge (dedupe,
   * worst verdict, escalation), the gate, the rounds, the fixer's validation, the bookkeeping lines. */

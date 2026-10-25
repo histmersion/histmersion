@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.SourceStatus
+
 /** The PURE rules of the acquisition & assessment toolset (plan §5.2 stream 2.6) — everything the
   * Python tools decided in code rather than asked an API: how a citekey is spelled, what counts as a
   * DOI or an arXiv id, when a paper is retracted / corrected / low-impact, and what an edge from a

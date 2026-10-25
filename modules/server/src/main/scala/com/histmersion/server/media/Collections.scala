@@ -8,6 +8,7 @@ import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.{PlaceFacts, ProviderAsset, Rights, Target}
 import com.histmersion.server.ConverterClient
+import com.histmersion.values.MediaRole
 
 /** An open-access collection (#1446): how to search it for a place, read its records, and tie one to
   * a place ([[MediaMatch]]). The import around it is [[CollectionImport]]. */

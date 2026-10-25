@@ -3,6 +3,7 @@ package com.histmersion.web
 import com.histmersion.api.*
 
 import java.util.UUID
+import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
 
 /** The pure parts of the merge review screen: grouping and counting the issues, the filter, keeping a
   * decision, the field table's result column, the diff3 editor's starting text, the span bars. */

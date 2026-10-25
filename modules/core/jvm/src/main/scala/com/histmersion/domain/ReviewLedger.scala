@@ -10,6 +10,7 @@ import io.circe.{Decoder, Encoder}
 
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
+import com.histmersion.values.WireEnumValues
 
 /** The review ledger of one article (docs/research-review-convergence.md §6): every finding the
   * `review-article` panel ever raised on it, under an id that never changes, with what became of it —

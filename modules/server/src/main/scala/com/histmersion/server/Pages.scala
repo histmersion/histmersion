@@ -9,6 +9,7 @@ import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.ext.tables.TablesExtension
 import com.vladsch.flexmark.util.data.{DataHolder, MutableDataSet}
+import com.histmersion.values.SourceStatus
 
 /** One entry of a source page's "Cites" / "Cited by" lists — edges AND article links, typed. */
 enum Citation:

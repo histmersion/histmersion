@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.Files
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** The write paths against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Covers the acceptance lines of plan §1.9a that need a database: put→get, patch semantics, id

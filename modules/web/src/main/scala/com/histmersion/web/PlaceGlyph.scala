@@ -4,7 +4,6 @@ import com.histmersion.api.PlaceShape
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 
-
 /** How a gazetteer place is drawn on the map, from its kind and its geometry:
   *   - [[Area]]: a polygon — its outline, as before;
   *   - [[Label]]: a REGION or POLITY known only by a point (no boundary yet: all Pleiades and curated
@@ -35,7 +34,7 @@ object PlaceGlyph:
 
   /** Pure: the label's markup (escaped) for a place of `kind`; `hidden` starts it culled, for a label
     * the map's name pass ([[MapLabels]]) shows — it then fades and grows in. */
-  def labelHtml(label: String, kind: String = com.histmersion.api.PlaceKind.Region, hidden: Boolean = false): String =
+  def labelHtml(label: String, kind: String = com.histmersion.values.PlaceKind.Region, hidden: Boolean = false): String =
     val (note, title) =
       if PlaceShape.isPeople(kind) then (People, PlaceShape.PeopleNote) else (NoBoundary, PlaceShape.NoBoundaryNote)
     val cls = if hidden then "hd-area-point is-culled" else "hd-area-point"
@@ -48,7 +47,7 @@ object PlaceGlyph:
 
   /** The label marker of a point-only region at (`lat`, `lon`). Its look is `.hd-area-point`; it is
     * drawn in the area-points pane (a region's name: above the shapes, below every dot). */
-  def labelMarker(lat: Double, lon: Double, label: String, kind: String = com.histmersion.api.PlaceKind.Region,
+  def labelMarker(lat: Double, lon: Double, label: String, kind: String = com.histmersion.values.PlaceKind.Region,
       wrapClass: String = "hd-area-point-wrap", hidden: Boolean = false): DomMarker =
     DomMarker(lat, lon, DomMarker.element(wrapClass, labelHtml(label, kind, hidden)))
 

@@ -8,6 +8,7 @@ import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.values.BundleKind
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *

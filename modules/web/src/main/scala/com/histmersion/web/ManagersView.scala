@@ -6,6 +6,7 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.values.GoalStatus
 
 /** The process managers (docs/research-process-managers.md §5): the managers window (each one's
   * state — with what the supervisor derived: starved, at capacity, idle — its items, runs in flight

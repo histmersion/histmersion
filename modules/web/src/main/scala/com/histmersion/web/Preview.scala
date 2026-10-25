@@ -10,6 +10,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
+import com.histmersion.values.{MediaRole, SourceStatus}
 
 /** THE link preview. One delegated hover handler on the document answers for every element that
   * carries `data-ck` (a source) or `data-slug` (an article) — server-rendered anchors in a window or

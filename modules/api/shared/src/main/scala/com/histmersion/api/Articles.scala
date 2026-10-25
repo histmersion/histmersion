@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.circe.Codec
+import com.histmersion.values.SourceStatus
 
 /** ARTICLES — the compiled wiki (plan §5.2 stream 2.7).
   *

@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
+import com.histmersion.values.BundleKind
 
 /** What an import does with each line of a bundle — milestone M2, WITHOUT matching
   * (docs/research-merge-import.md §7.3): a foreign row is the local row with the same uid, or no row.

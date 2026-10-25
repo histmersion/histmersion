@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.PlaceKind
+import com.histmersion.values.PlaceKind
 import com.histmersion.domain.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
 
 /** What a Pleiades "region" really is (2026-10-09) — the survey's own examples. */

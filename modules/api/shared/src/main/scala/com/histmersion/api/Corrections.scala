@@ -5,6 +5,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Json
 import io.circe.syntax.*
 import sttp.tapir.Schema
+import com.histmersion.values.Historicity
 
 /** CORRECTIONS BY HAND that survive a re-import (V088, the data-source assessment's §B.4): a person
   * changed one FIELD of something an importer wrote, and the next import must neither lose the change

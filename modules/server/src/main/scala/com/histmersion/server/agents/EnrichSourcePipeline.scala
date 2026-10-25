@@ -10,6 +10,7 @@ import com.histmersion.server.Handlers
 import io.circe.syntax.*
 
 import javax.sql.DataSource
+import com.histmersion.values.SourceStatus
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its
   * summary, classification, period, quoted findings and notes; CODE verifies every answer and writes

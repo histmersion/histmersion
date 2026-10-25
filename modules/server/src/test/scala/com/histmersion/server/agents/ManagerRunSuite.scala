@@ -14,6 +14,7 @@ import sttp.ai.core.agent.*
 
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
+import com.histmersion.values.EdgeKind
 
 /** The process managers against a `*_test` database (docs/research-process-managers.md §6): the
   * supervisor's tick with a fixed clock — selection, dispatch, evaluation and the stop rules over

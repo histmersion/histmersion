@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** Magnum codecs for the shared wire DTOs (defined in core, DB-agnostic).
   * Types whose fields changed from String to List[String] or Option[Confidence] use internal row
