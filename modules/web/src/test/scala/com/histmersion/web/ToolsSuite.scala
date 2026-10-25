@@ -104,6 +104,10 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(JobsView.kindLabel("some_kind"), "some kind")
     assertEquals(JobsView.kindLabel(Ingest.KindIngest), "ingest (fetch or upload, then OCR)")
     assertEquals(RunsView.originLabel("ingest"), "by an ingest (before the enrich manager)")
+    import com.histmersion.values.ApprovalKind
+    assert(ApprovalKind.values.forall(k => ApprovalsView.kindMeaning(k.wire).nonEmpty))
+    assert(ApprovalsView.kindMeaning("article-publish").exists(_.contains("review panel checks it afterwards")))
+    assert(com.histmersion.values.Pipeline.values.forall(p => RunsView.pipelineMeaning(p.wire).nonEmpty))
   }
 
   // #770: an init job showed as "Init" with no subject

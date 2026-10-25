@@ -46,7 +46,7 @@ object ListFilterBar:
 
   /** A facet as toggle chips: `label` then one chip per value with its count; hidden while it has none. */
   def chips(label: String, counts: Signal[List[(String, Int)]], field: Field[List[String]],
-      show: String => String = identity): HtmlElement =
+      show: String => String = identity, hint: String => Option[String] = _ => None): HtmlElement =
     val items = counts.combineWith(field.signal).map((c, sel) => chipItems(c, sel).map((v, n) => (v, n, sel.contains(v))))
     div(
       cls := "btn-group list-facet",
@@ -60,6 +60,7 @@ object ListFilterBar:
           typ := "button",
           cls := "btn btn--toggle btn--sm",
           dataAttr("value") := v,
+          hint(v).map(h => title := h),
           aria.pressed <-- item.map(_._3.toString),
           span(show(v)),
           span(cls := "btn-count", child.text <-- item.map(t => Paging.grouped(t._2))),

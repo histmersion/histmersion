@@ -23,6 +23,23 @@ object ApprovalsView:
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
+  /** What approving each kind does, and where it sits in a goal's life (goal-plan → article-plan →
+    * compile-article's article-publish → review); a tooltip on the kind wherever it is shown. */
+  def kindMeaning(kind: String): Option[String] = ApprovalKind.parse(kind).map {
+    case ApprovalKind.GoalPlan => "A research goal's plan: its sub-goals, search queries and works to read. " +
+        "Approving creates them; no article is written yet."
+    case ApprovalKind.ArticlePlan => "Which new articles a goal needs (propose-articles). " +
+        "Approving lets its seeding manager write drafts of them."
+    case ApprovalKind.ArticlePublish => "A draft an agent has written (compile-article). " +
+        "Approving stores it as the article, or appends its section; the review panel checks it afterwards."
+    case ApprovalKind.ArticleFilter => "An article's coverage filter: which sources it should account for. " +
+        "Approving records it on the article."
+    case ApprovalKind.StatusChange => "A source's status (current, contested, superseded…). Approving changes it."
+    case ApprovalKind.Edge => "A typed link between two sources (challenges, refutes, superseded by…). Approving adds it."
+    case ApprovalKind.HintEffect => "An action for a manager (hold, prioritise, skip, a setting) a model proposed " +
+        "from your hint. Applied only if you approve it."
+  }
+
   /** What an approval would change, in words. */
   def describe(a: ApprovalInfo): String =
     ApprovalKind.parse(a.kind) match
@@ -252,7 +269,8 @@ object ApprovalsView:
             " — pick a kind, then decide the shown ones at once."),
           x.goalPlansWait.map(w => p(cls := "muted", s"${w.capitalize}; a person may still approve one.")),
           div(cls := "btn-group", x.kinds.map(g =>
-            button(typ := "button", cls := "btn btn--sm", digestLine(g), title := g.subjects.map(s => s"${s.subject} (${s.count})").mkString(", "),
+            button(typ := "button", cls := "btn btn--sm", digestLine(g),
+              title := (kindMeaning(g.kind).toList :+ g.subjects.map(s => s"${s.subject} (${s.count})").mkString(", ")).mkString("\n"),
               onClick --> (_ => UiState.set(UiState.approvalKinds := List(g.kind), UiState.approvalState := None)())))))
       }))
 
@@ -269,7 +287,7 @@ object ApprovalsView:
         stateButtons,
         button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart()))),
       div(cls := "toolbar list-filters",
-        ListFilterBar.chips("kind", list.listing.signal.map(_.page.facet("kind")), UiState.approvalKinds),
+        ListFilterBar.chips("kind", list.listing.signal.map(_.page.facet("kind")), UiState.approvalKinds, hint = kindMeaning),
         ListFilterBar.chips("decided by", list.listing.signal.map(_.page.facet("decidedBy")), UiState.approvalBy),
         div(cls := "btn-group",
           ListFilterBar.text("subject: a goal, article, manager or citekey", UiState.approvalSubject),
@@ -343,7 +361,7 @@ object ApprovalsView:
           span(s"#${a.id}"),
           a.runId.map(id => span(" · ", button(typ := "button", cls := "link-btn", s"run ${id.take(8)}",
             onClick --> (_ => WindowManager.open(WindowKey.Run(id)))))),
-          span(s" · ${a.kind}"),
+          span(" · ", span(cls := "approval-kind", kindMeaning(a.kind).map(m => title := m), a.kind)),
           span(s" · proposed ${a.createdAt}"),
           decidedLine(a).map(d => span(cls := "approval-decided", s" · $d"))),
         Option.when(isOpen(a))(div(
