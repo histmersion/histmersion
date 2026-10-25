@@ -12,3 +12,6 @@ final case class ManagerRunDefaults(maxRuns: Int)
 final case class WatchManagerDefaults(maxRuns: Int, autoIngestPerDay: Int)
 
 final case class SeedPlanDefaults(maxArticles: Int, minSources: Int)
+
+final case class SchedulerDefaults(strategy: String, agingHours: Int, maxWaitHours: Int, minShare: Double,
+    builtInWeights: String, typeWeights: String, builtInPriorities: String, typePriorities: String, gatheringSlots: Int)

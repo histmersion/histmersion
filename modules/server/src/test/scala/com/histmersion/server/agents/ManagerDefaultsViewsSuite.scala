@@ -1,9 +1,9 @@
 package com.histmersion.server.agents
 
-import com.histmersion.config.{AgentManagersConfig, AgentSeedConfig, ReviewManagerConfig, SimpleManagerConfig,
-  WatchManagerConfig}
-import com.histmersion.domain.{ManagerDefaults, ManagerRunDefaults, ReviewManagerDefaults, SeedPlanDefaults,
-  WatchManagerDefaults}
+import com.histmersion.config.{AgentManagersConfig, AgentSchedulerConfig, AgentSeedConfig, ReviewManagerConfig,
+  SimpleManagerConfig, WatchManagerConfig}
+import com.histmersion.domain.{ManagerDefaults, ManagerRunDefaults, ReviewManagerDefaults, SchedulerDefaults,
+  SeedPlanDefaults, WatchManagerDefaults}
 
 class ManagerDefaultsViewsSuite extends munit.FunSuite:
 
@@ -32,3 +32,12 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
     val d      = ManagerDefaultsViews.defaults(agents.managers)
     assertEquals((d.maxFailures, d.review.maxRuns, d.watch.autoIngestPerDay),
       (agents.managers.maxFailures, agents.managers.review.maxRuns, agents.managers.watch.autoIngestPerDay))
+
+  test("the scheduler's configured settings reach the policy with the built-in weights and priorities beneath them"):
+    val c = AgentSchedulerConfig(enabled = true, minIntervalMinutes = 5, currencySources = 1, followupsPerSource = 2,
+      discoverPerQuery = 3, sweepCandidates = 4, strategy = "goal-first", agingHours = 12, maxWaitHours = 48,
+      minShare = 0.1, typeWeights = "review=5", typePriorities = "compile=9", gatheringSlots = 2)
+    assertEquals(ManagerDefaultsViews.scheduler(c),
+      SchedulerDefaults(strategy = "goal-first", agingHours = 12, maxWaitHours = 48, minShare = 0.1,
+        builtInWeights = AgentSchedulerConfig.DefaultWeights, typeWeights = "review=5",
+        builtInPriorities = AgentSchedulerConfig.DefaultPriorities, typePriorities = "compile=9", gatheringSlots = 2))
