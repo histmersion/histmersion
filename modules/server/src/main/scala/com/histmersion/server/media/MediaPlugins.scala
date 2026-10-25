@@ -1,6 +1,6 @@
 package com.histmersion.server.media
 
-import com.histmersion.pluginhost.{HostOwned, HttpTransport, Polite, PluginMedia}
+import com.histmersion.pluginhost.{HostOwned, HttpTransport, Polite, PluginMedia, SpiValues}
 
 import com.histmersion.config.MediaCollectionConfig
 import com.histmersion.domain.{MediaLicence, MediaMatch, MediaRecord, MediaRights as CoreRights}
@@ -173,7 +173,7 @@ final class PluginCollection(val provider: String, col: MediaCollection, allowed
 
   override def matches(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve) =
     col.matchRule match
-      case MediaMatchRule.Map(maxYear) => MediaMatch.map(rec, place, resolve, maxYear)
+      case MediaMatchRule.Map(maxYear) => MediaMatch.map(rec, place, resolve, maxYear.value)
       case _                           => MediaMatch.museum(rec, place, resolve)
 
   override def usesIds: Boolean = col.matchRule.isInstanceOf[MediaMatchRule.PlaceIds]
@@ -192,8 +192,10 @@ final class PluginCollection(val provider: String, col: MediaCollection, allowed
 object PluginCollection:
 
   def maxYear(rule: MediaMatchRule): Int = rule match
-    case MediaMatchRule.Map(y) => y
+    case MediaMatchRule.Map(y) => y.value
     case _                     => 0
 
-  /** The place as a plugin sees it. Pure. */
-  def place(p: PlaceFacts): MediaPlace = MediaPlace(p.id, p.label, p.qid, p.lat, p.lon, p.period)
+  /** The place as a plugin sees it: what the store holds, each value as its type (one that is not left out). Pure. */
+  def place(p: PlaceFacts): MediaPlace =
+    MediaPlace(p.id, p.label, p.qid.flatMap(SpiValues.wikidata), p.lat.flatMap(SpiValues.latitude),
+      p.lon.flatMap(SpiValues.longitude), p.period.flatMap((a, b) => SpiValues.period(a, b)))

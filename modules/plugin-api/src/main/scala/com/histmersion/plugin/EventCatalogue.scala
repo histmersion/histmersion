@@ -13,13 +13,14 @@ package com.histmersion.plugin
 
 /** What one import asks for.
   *
-  * @param from the earliest year asked for (signed; BCE negative), when the import is bounded
-  * @param to   the latest year asked for (signed)
+  * @param from the earliest year asked for, when the import is bounded
+  * @param to   the latest year asked for
   * @param area `(minLon, minLat, maxLon, maxLat)`, when the import is limited to an area — a filter the
   *             host applies anyway; a catalogue whose API can narrow by area may use it */
-final case class CatalogueQuery(from: Option[Long], to: Long, area: Option[(Double, Double, Double, Double)] = None)
+final case class CatalogueQuery(from: Option[Year], to: Year,
+    area: Option[(Longitude, Latitude, Longitude, Latitude)] = None)
 
-/** One event as a catalogue describes it. Its dating is a four-point span (signed years, inclusive):
+/** One event as a catalogue describes it. Its dating is a four-point span (years, inclusive):
   * the start lies in `[notBefore, beginBy]`, the end in `[endFrom, notAfter]`; an uncertainty widens
   * the outer bounds and never invents a certain core (leave `beginBy`/`endFrom` empty then).
   *
@@ -49,21 +50,21 @@ final case class CatalogueEvent(
     url: String,
     label: String,
     kind: String,
-    notBefore: Option[Long],
-    notAfter: Option[Long],
-    beginBy: Option[Long] = None,
-    endFrom: Option[Long] = None,
-    lat: Option[Double] = None,
-    lon: Option[Double] = None,
+    notBefore: Option[Year],
+    notAfter: Option[Year],
+    beginBy: Option[Year] = None,
+    endFrom: Option[Year] = None,
+    lat: Option[Latitude] = None,
+    lon: Option[Longitude] = None,
     historicity: String = "attested",
     vei: Option[Int] = None,
     magnitude: Option[Double] = None,
     deaths: Option[Long] = None,
-    wikidata: Option[String] = None,
+    wikidata: Option[WikidataId] = None,
     names: List[String] = Nil,
     description: Option[String] = None,
     group: Option[String] = None,
-    central: Option[Long] = None,
+    central: Option[Year] = None,
     plusMinus: Option[Long] = None,
     datingMethod: Option[String] = None,
     raw: Option[String] = None
@@ -79,7 +80,7 @@ trait EventCatalogue:
   /** What to call it: "Smithsonian Global Volcanism Program". */
   def title: String
   /** The terms its data comes under, as the provider states them. */
-  def licence: String
+  def licence: Licence
   /** How it asks to be cited. */
   def citation: String
   /** Its home page. */
@@ -88,10 +89,10 @@ trait EventCatalogue:
   /** The least time between two requests to one host, in milliseconds (the provider's own terms). */
   def requestIntervalMs: Int = 1000
 
-  /** The earliest year (signed) any of its events can be, when the catalogue covers a period that starts
+  /** The earliest year any of its events can be, when the catalogue covers a period that starts
     * there — as the Smithsonian's list is of HOLOCENE eruptions (`events.gvp.floor-year`). A dating whose
     * uncertainty reaches further back is held at it by the host. `None` (the default): no floor. */
-  def floorYear: Option[Long] = None
+  def floorYear: Option[Year] = None
 
   /** The parts of one import, in order (time windows, classes, datasets) — each a stable key, so a part
     * read and recorded is not asked again by the next import. */

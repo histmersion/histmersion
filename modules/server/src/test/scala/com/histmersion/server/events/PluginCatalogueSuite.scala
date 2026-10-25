@@ -36,17 +36,18 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
   @volatile private var p2Up = false
 
   private object ZqQuakes extends spi.EventCatalogue:
-    val title = "Zq battle catalogue"; val licence = "CC0-1.0"; val citation = "Zq et al. (2026)"; val home = "https://zq.example"
+    val title = "Zq battle catalogue"; val licence = spi.Licence("CC0-1.0"); val citation = "Zq et al. (2026)"; val home = "https://zq.example"
     override val requestIntervalMs = 0
     def parts(q: spi.CatalogueQuery) = List("p1", "p2")
-    private def ev(id: String, label: String, year: Long) =
-      spi.CatalogueEvent(id, s"https://zq.example/$id", label, "Battle", Some(year), Some(year), lat = Some(37.9), lon = Some(23.7),
+    private def ev(id: String, label: String, year: Int) =
+      spi.CatalogueEvent(id, s"https://zq.example/$id", label, "Battle", Some(spi.Year(year)), Some(spi.Year(year)),
+        lat = Some(spi.Latitude(37.9)), lon = Some(spi.Longitude(23.7)),
         names = List(s"$label (alt)"))
     def read(part: String, q: spi.CatalogueQuery, http: spi.PluginHttp) =
       http.get(s"https://zq.example/api/$part", Map.empty).flatMap { _ =>
         part match
           case "p1"  => Right(spi.CataloguePage(List(ev("b1", "Zq Battle One", -1200),
-                          ev("bad", "Zq Backwards", -1200).copy(notBefore = Some(-1000))), next = Some("p1b")))
+                          ev("bad", "Zq Backwards", -1200).copy(notBefore = Some(spi.Year(-1000)))), next = Some("p1b")))
           case "p1b" => Right(spi.CataloguePage(List(ev("b2", "Zq Battle Two", -1150))))
           case "p2"  => if p2Up then Right(spi.CataloguePage(List(ev("b3", "Zq Battle Three", -1100)))) else Left("upstream down")
           case other => Left(s"no part $other")
@@ -130,18 +131,19 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
   /** A catalogue of floods from 3000 BCE (its floor) whose records reach past both ends of what may be,
     * and one dated only by its stated year ±. */
   private object ZqFloods extends spi.EventCatalogue:
-    val title = "Zq flood catalogue"; val licence = "CC0-1.0"; val citation = "Zq (2026)"; val home = "https://zq.example"
+    val title = "Zq flood catalogue"; val licence = spi.Licence("CC0-1.0"); val citation = "Zq (2026)"; val home = "https://zq.example"
     override val requestIntervalMs = 0
-    override val floorYear = Some(-3000L)
+    override val floorYear = Some(spi.Year(-3000))
     def parts(q: spi.CatalogueQuery) = List("all")
-    private def ev(id: String, nb: Option[Long], na: Option[Long]) =
-      spi.CatalogueEvent(id, s"https://zq.example/$id", s"Zq Flood $id", "flood", nb, na, lat = Some(30.0), lon = Some(31.0))
+    private def ev(id: String, nb: Option[Int], na: Option[Int]) =
+      spi.CatalogueEvent(id, s"https://zq.example/$id", s"Zq Flood $id", "flood", nb.map(spi.Year(_)), na.map(spi.Year(_)),
+        lat = Some(spi.Latitude(30.0)), lon = Some(spi.Longitude(31.0)))
     def read(part: String, q: spi.CatalogueQuery, http: spi.PluginHttp) =
       http.get("https://zq.example/api/floods", Map.empty).map(_ => spi.CataloguePage(List(
-        ev("future", Some(2000L), Some(2500L)),                                   // past the present
-        ev("early", Some(-3500L), Some(-2900L)).copy(beginBy = Some(-3100L)),       // before the floor
-        ev("stated", None, None).copy(central = Some(-1000L), plusMinus = Some(50L)), // a year ± only
-        ev("plain", Some(-1200L), Some(-1200L)))))                                 // nothing to hold
+        ev("future", Some(2000), Some(2500)),                                            // past the present
+        ev("early", Some(-3500), Some(-2900)).copy(beginBy = Some(spi.Year(-3100))),       // before the floor
+        ev("stated", None, None).copy(central = Some(spi.Year(-1000)), plusMinus = Some(50L)), // a year ± only
+        ev("plain", Some(-1200), Some(-1200)))))                                          // nothing to hold
 
   private final class FloodsPlugin extends spi.Plugin:
     type Config = ZqCatalogueConfig

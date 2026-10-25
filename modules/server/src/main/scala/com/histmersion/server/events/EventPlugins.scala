@@ -1,6 +1,6 @@
 package com.histmersion.server.events
 
-import com.histmersion.pluginhost.{HostOwned, PluginEvents}
+import com.histmersion.pluginhost.{HostOwned, PluginEvents, SpiValues}
 
 import com.histmersion.api.{BBox, CatalogProviderInfo, CatalogRecord, EventTaxonomy, TimeSpan}
 import com.histmersion.domain.{CatalogDating, CatalogProvider}
@@ -17,7 +17,7 @@ import com.histmersion.values.Historicity
 final case class HostEventCatalogue(plugin: String, name: String) extends EventCatalogue, HostOwned:
   private def info: Option[CatalogProviderInfo] = CatalogProvider.info(name)
   def title: String    = info.fold(name)(_.title)
-  def licence: String  = info.fold("")(_.licence)
+  def licence: Licence = Licence(info.fold("")(_.licence))
   def citation: String = info.fold("")(_.citation)
   def home: String     = info.fold("")(_.home)
   def parts(query: CatalogueQuery): List[String] = Nil
@@ -68,7 +68,7 @@ object BuiltinCatalogues:
     catalogues.get(name) match
       case Some(_: HostEventCatalogue) | None => CatalogProvider.info(name)
       case Some(c) =>
-        PluginEvents.safe(CatalogProviderInfo(name, c.title, c.licence, c.citation, c.home))
+        PluginEvents.safe(CatalogProviderInfo(name, c.title, SpiValues.licenceOf(c.licence), c.citation, c.home))
 
   def infos(catalogues: ListMap[String, EventCatalogue]): List[CatalogProviderInfo] =
     ordered(catalogues.keys.toList).flatMap(info(_, catalogues))

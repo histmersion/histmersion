@@ -12,7 +12,7 @@ class ProviderSpiSuite extends munit.FunSuite:
       Right(List(Right(MediaItem("k", place.label, "https://portal.example/k", None, Left("not open access")))))
 
   private object Quakes extends EventCatalogue:
-    val title = "Quakes"; val licence = "CC0-1.0"; val citation = "Q"; val home = "https://q.example"
+    val title = "Quakes"; val licence = Licence("CC0-1.0"); val citation = "Q"; val home = "https://q.example"
     def parts(q: CatalogueQuery) = List(s"to:${q.to}")
     def read(part: String, q: CatalogueQuery, http: PluginHttp) = Right(CataloguePage(Nil))
 
@@ -27,8 +27,8 @@ class ProviderSpiSuite extends munit.FunSuite:
   test("a catalogue's defaults and its parts for a query"):
     assertEquals(Quakes.requestIntervalMs, 1000)
     assertEquals(Quakes.floorYear, None)
-    assertEquals(Quakes.parts(CatalogueQuery(Some(-3000), 2026)), List("to:2026"))
-    val e = CatalogueEvent("1", "u", "Quake", "earthquake", Some(-1200L), Some(-1200L))
+    assertEquals(Quakes.parts(CatalogueQuery(Some(Year(-3000)), Year(2026))), List("to:2026"))
+    val e = CatalogueEvent("1", "u", "Quake", "earthquake", Some(Year(-1200)), Some(Year(-1200)))
     assertEquals((e.historicity, e.beginBy, e.endFrom), ("attested", None, None))
 
   test("a context written before media and events existed still compiles and refuses both"):
@@ -40,4 +40,4 @@ class ProviderSpiSuite extends munit.FunSuite:
       def secretVaults = Registry.refusing("no vaults")
     assert(ctx.mediaCollections.add("portal", Portal).left.exists(_.contains("no media import")))
     assert(ctx.eventCatalogues.add("quakes", Quakes).left.exists(_.contains("no event catalogues")))
-    assertEquals(Spi.Version, 1)
+    assertEquals(Spi.Version, 2)

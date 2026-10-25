@@ -80,7 +80,7 @@ private[cli] object KindSources:
       |    work.doi match
       |      case None => Fetch.Miss("no DOI")
       |      case Some(doi) =>
-      |        val url = s"${baseUrl.stripSuffix("/")}/$doi.pdf"
+      |        val url = s"${baseUrl.stripSuffix("/")}/${doi.value}.pdf"
       |        http.get(url).fold(Fetch.Miss(_), bytes => Fetch.Found(FetchedFile("@id@", Some(url), bytes, "pdf")))
       |""".stripMargin
 
@@ -100,16 +100,16 @@ private[cli] object KindSources:
       |    assertEquals(harness().contributions.sourceFetchers, List("@id@"))
       |
       |  test("a work the mirror has is found"):
-      |    harness(page -> StubAnswer.ok(pdf, "application/pdf")).fetch(WorkKey(doi = Some("10.1234/abc"))).outcome match
+      |    harness(page -> StubAnswer.ok(pdf, "application/pdf")).fetch(WorkKey(doi = Some(Doi("10.1234/abc")))).outcome match
       |      case FetchOutcome.Found(fetcher, file, _) => assertEquals((fetcher, file.url, file.extension), ("@id@", Some(page), "pdf"))
       |      case other                               => fail(s"expected a copy, got $other")
       |
       |  test("a page that is not a PDF is no copy: the server checks every PDF"):
-      |    val report = harness(page -> StubAnswer.text("<html>Sign in</html>", "text/html")).fetch(WorkKey(doi = Some("10.1234/abc")))
+      |    val report = harness(page -> StubAnswer.text("<html>Sign in</html>", "text/html")).fetch(WorkKey(doi = Some(Doi("10.1234/abc"))))
       |    assertEquals(report.outcome, FetchOutcome.Miss("@id@: not a PDF"))
       |
       |  test("a work the mirror lacks, or one without a DOI, is a miss"):
-      |    assert(harness().fetch(WorkKey(doi = Some("10.1234/xyz"))).outcome.isInstanceOf[FetchOutcome.Miss])
+      |    assert(harness().fetch(WorkKey(doi = Some(Doi("10.1234/xyz")))).outcome.isInstanceOf[FetchOutcome.Miss])
       |    assertEquals(harness().fetch(WorkKey(title = Some("A title"))).outcome, FetchOutcome.Miss("@id@: no DOI"))
       |""".stripMargin
 
@@ -130,7 +130,7 @@ private[cli] object KindSources:
       |  test("finds and downloads a copy of a known work"):
 """.stripMargin + LiveStart.replace("@case@", "known-work") +
     """      |    // the work as an ingest asks for it: its title, authors and year looked up by the DOI
-      |    val work   = WorkKey.fromDoi(doi, harness).getOrElse(WorkKey(doi = Some(doi)))
+      |    val work   = WorkKey.fromDoi(doi, harness).getOrElse(WorkKey(doi = Doi.option(doi)))
       |    val report = harness.fetch(work, saveTo = Some(Path.of("target", "fetched")))
       |    assert(report.outcome.isInstanceOf[FetchOutcome.Found],
       |      (report.requests ++ report.log.map(_.toString) :+ s"=> ${report.outcome}").mkString("\n"))
@@ -172,7 +172,7 @@ private[cli] object KindSources:
       |
       |  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
       |    Right(pictures.filter(_.place.equalsIgnoreCase(place.label)).map(p =>
-      |      Right(MediaItem(p.key, p.title, p.pageUrl, Some(p.imageUrl), Right(MediaRights(p.licence, credit = p.credit)),
+      |      Right(MediaItem(p.key, p.title, p.pageUrl, Some(p.imageUrl), Right(MediaRights(Licence(p.licence), credit = p.credit)),
       |        geography = List("place" -> p.place)))))
       |""".stripMargin
 
@@ -232,8 +232,9 @@ private[cli] object KindSources:
     """/** One event of a hand-kept list.
       |  *
       |  * @param year the year it happened, signed (BCE negative: 1600 BCE is -1600)
-      |  * @param kind `eruption`, `earthquake`, `battle`, `treaty`, … */
-      |final case class ListedEvent(id: String, label: String, kind: String, year: Long, lat: Double, lon: Double)
+      |  * @param kind `eruption`, `earthquake`, `battle`, `treaty`, …
+      |  * @param lat  degrees north, with `lon` degrees east: where it happened */
+      |final case class ListedEvent(id: String, label: String, kind: String, year: Int, lat: Double, lon: Double)
       |    derives ConfigReader
       |
       |/** The settings under `histmersion.plugins.@id@`; their defaults are in `resources/META-INF/histmersion/plugins/@id@.conf`. */
@@ -250,16 +251,19 @@ private[cli] object KindSources:
       |  * years an import asks for and stores them as research leads. */
       |final class @Contribution@(source: String, events: List[ListedEvent]) extends EventCatalogue:
       |  val title    = "@Name@"
-      |  val licence  = "the user's own list"
+      |  val licence  = Licence("the user's own list")
       |  val citation = source
       |  val home     = "https://example.org/@id@"
       |
       |  def parts(query: CatalogueQuery): List[String] = List("all")
       |
       |  def read(part: String, query: CatalogueQuery, http: PluginHttp): Either[String, CataloguePage] =
-      |    Right(CataloguePage(events.map(e =>
-      |      CatalogueEvent(e.id, s"$home#${e.id}", e.label, e.kind, notBefore = Some(e.year), notAfter = Some(e.year),
-      |        lat = Some(e.lat), lon = Some(e.lon)))))
+      |    Right(CataloguePage(events.map { e =>
+      |      // a position off the globe is left out: the event is still read, without one
+      |      val position = for lat <- Latitude.option(e.lat); lon <- Longitude.option(e.lon) yield (lat, lon)
+      |      CatalogueEvent(e.id, s"$home#${e.id}", e.label, e.kind, notBefore = Some(Year(e.year)), notAfter = Some(Year(e.year)),
+      |        lat = position.map(_._1), lon = position.map(_._2))
+      |    }))
       |""".stripMargin
 
   private val EventCatalogueTest =
@@ -274,8 +278,8 @@ private[cli] object KindSources:
       |    assertEquals(harness.contributions.eventCatalogues, List("@id@"))
       |
       |  test("every listed event is read, and stored dated to its year"):
-      |    val report = harness.readCatalogue("@id@", CatalogueQuery(None, 2025))
-      |    assertEquals(report.accepted.map(e => (e.event.id, e.notBefore, e.notAfter)), List(("thera", Some(-1600L), Some(-1600L))))
+      |    val report = harness.readCatalogue("@id@", CatalogueQuery(None, Year(2025)))
+      |    assertEquals(report.accepted.map(e => (e.event.id, e.notBefore, e.notAfter)), List(("thera", Some(Year(-1600)), Some(Year(-1600)))))
       |    assertEquals(report.refused, Nil)
       |""".stripMargin
 
@@ -288,7 +292,7 @@ private[cli] object KindSources:
       |  /** The settings, as under `histmersion.plugins.@id@` in histmersion.conf. */
       |  private val config = ""
       |  /** The years an import asks for. */
-      |  private val query = CatalogueQuery(Some(-2000L), 2025)
+      |  private val query = CatalogueQuery(Some(Year(-2000)), Year(2025))
       |
       |  test("an import reads events the server would store"):
 """.stripMargin + LiveStart.replace("@case@", "an-import") +

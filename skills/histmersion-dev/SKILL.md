@@ -180,7 +180,12 @@ server). ONE ServiceLoader service, `Plugin` (listed in `META-INF/services/com.h
 a public class with a no-argument constructor):
 
 - `info = PluginInfo(id, version, Spi.Version)` — `id` is kebab-case and the config key
-  `histmersion.plugins.<id>`; another SPI version is refused.
+  `histmersion.plugins.<id>`; another SPI version is refused (SPI 2: `Spi.Version` is an `inline val`, so it
+  is compiled into the plugin; an SPI-1 jar fails to link on it and is told to rebuild).
+- The values the SPI exchanges are plugin-api's own Iron newtypes — `Year`, `Period`, `Latitude`,
+  `Longitude`, `Doi`, `WikidataId`, `Licence` (`Doi("10.1/x")` checked at compile time, `Doi.option(raw)`
+  at run time, `.value` out). The host converts them to `values`' in `pluginhost/SpiValues`, checking
+  each one a plugin hands over again (a newtype is erased).
 - `type Config` with `given configReader` — path-dependent: derive it (`final case class XConfig(…) derives
   ConfigReader`, with `import com.histmersion.plugin.PluginConfig.given` for env-friendly numbers and
   booleans); the host decodes the block with THIS plugin's reader and hands it to THIS plugin only.

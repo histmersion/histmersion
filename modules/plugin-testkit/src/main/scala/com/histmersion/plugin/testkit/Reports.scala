@@ -55,7 +55,7 @@ final case class FetchReport(outcome: FetchOutcome, answers: List[FetcherAnswer]
   /** The licence the copy is published under: what the fetcher stated on the file, else the first line
     * it logged about a licence (the server records the first and logs the second). */
   def licence: Option[String] =
-    file.flatMap(_.licence).orElse(log.collectFirst {
+    file.flatMap(_.licence).map(_.value).orElse(log.collectFirst {
       case l if !l.source.startsWith("acquire") && l.message.toLowerCase(java.util.Locale.ROOT).contains("licen") => l.message
     })
 
@@ -79,8 +79,8 @@ final case class MediaReport(verdicts: List[MediaVerdict], failure: Option[Strin
 /** One event as the server would store it: the catalogue's record, the kind in the server's spelling,
   * and its dating after the server derived it (a stated year and its ±, held inside the present and the
   * catalogue's floor). */
-final case class AcceptedEvent(event: CatalogueEvent, kind: String, notBefore: Option[Long], beginBy: Option[Long],
-    endFrom: Option[Long], notAfter: Option[Long])
+final case class AcceptedEvent(event: CatalogueEvent, kind: String, notBefore: Option[Year], beginBy: Option[Year],
+    endFrom: Option[Year], notAfter: Option[Year])
 
 /** One import of an event catalogue, read as the server reads it: its parts, each part page by page.
   *

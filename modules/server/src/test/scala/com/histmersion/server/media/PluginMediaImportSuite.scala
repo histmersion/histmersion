@@ -53,8 +53,8 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         .map { _ =>
           def item(key: String, licence: String, where: String) =
             Right(spi.MediaItem(key, s"Zq bowl $key", s"https://zq.example/objects/$key", Some(s"https://zq.example/img/$key.jpg"),
-              Right(spi.MediaRights(licence, author = Some("Zq Museum"), credit = s"Zq bowl $key, Zq Museum, $licence")),
-              geography = List("place_of_origin" -> where), period = Some((-1400L, -1300L))))
+              Right(spi.MediaRights(spi.Licence(licence), author = Some("Zq Museum"), credit = s"Zq bowl $key, Zq Museum, $licence")),
+              geography = List("place_of_origin" -> where), period = spi.Period.from(spi.Year(-1400), spi.Year(-1300)).toOption))
           List(item("by", "CC BY 4.0", "Zqplenai"), item("nc", "CC BY-NC 4.0", "Zqplenai"),
             item("arr", "All rights reserved", "Zqplenai"), item("far", "https://creativecommons.org/publicdomain/zero/1.0/", "Zqpl Nowhere"),
             Left("a record the API could not describe"))

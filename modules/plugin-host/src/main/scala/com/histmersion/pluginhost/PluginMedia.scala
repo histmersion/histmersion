@@ -1,7 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.MediaConfig
-import com.histmersion.domain.{DeepTime, MediaLicence, MediaRecord, MediaRights as CoreRights}
+import com.histmersion.domain.{MediaLicence, MediaRecord, MediaRights as CoreRights}
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
@@ -38,12 +38,19 @@ object PluginMedia:
       case e: InterruptedException => throw e
       case NonFatal(e)             => Left(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
 
-  /** Pure: the record a plugin's item becomes; its rights read by the HOST ([[rights]]). */
+  /** Pure: the record a plugin's item becomes; its rights read by the HOST ([[rights]]). A period its
+    * type would refuse makes the record unreadable (its rights a `Left` naming the value, so it is never
+    * kept), as does a record the host cannot read at all (a plugin built against another SPI). */
   def record(it: MediaItem): MediaRecord =
+    val period =
+      try SpiValues.optional(it.period)(SpiValues.periodOf)
+      catch case NonFatal(e) => Left(s"a period the host cannot read (${e.getClass.getSimpleName}) — is the plugin " +
+        s"built against plugin SPI ${Spi.Version}?")
+    val stated = Option(it.rights).getOrElse(Left("no rights statement"))
     MediaRecord(it.key.trim, it.title.trim, it.pageUrl.trim, it.imageUrl.map(_.trim).filter(_.nonEmpty),
       it.thumbUrl.map(_.trim).filter(_.nonEmpty), it.originalUrl.map(_.trim).filter(_.nonEmpty),
-      Option(it.rights).getOrElse(Left("no rights statement")).flatMap(rights), it.geography,
-      it.period.flatMap((a, b) => DeepTime.span(a, b)), it.ids, it.withheld)
+      period.left.map(why => s"${it.key.trim}: $why").flatMap(_ => stated.flatMap(rights)), it.geography,
+      period.toOption.flatten, it.ids, it.withheld)
 
   /** Pure: what a provider's licence statement means, read by the host as every built-in collection's
     * is ([[MediaLicence]]): the statement as an id or short name, or as a Creative Commons URL; the
@@ -51,7 +58,9 @@ object PluginMedia:
     * stored, whatever an allowlist says. A record must carry a credit line. The family decided here is
     * what the allowlist is checked against: the plugin states, the host judges. */
   def rights(r: com.histmersion.plugin.MediaRights): Either[String, CoreRights] =
-    val stated = Option(r.licence).getOrElse("").trim
+    val stated =
+      try Option(r.licence).map(SpiValues.licenceOf).getOrElse("").trim
+      catch case NonFatal(_) => ""
     val byStatement =
       if stated.toLowerCase(java.util.Locale.ROOT).matches("^https?://.*") then MediaLicence.ofUrl(stated)
       else MediaLicence.classify(stated)

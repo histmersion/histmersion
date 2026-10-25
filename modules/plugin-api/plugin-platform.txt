@@ -9,6 +9,9 @@
 # changed line here is a changed contract, to be named in the release notes, because a plugin built
 # against the old version may stop linking.
 #
+# sconfig, kindlings-sconfig-derivation and iron are also plugin-api's own dependencies (its POM lists them):
+# the SPI's signatures name their types (ConfigReader, and since SPI 2 the Iron newtypes Year, Doi, …).
+#
 # group:artifact:version
 org.scala-lang:scala3-library_3:3.10.0
 org.ekrich:sconfig_3:2.1.0

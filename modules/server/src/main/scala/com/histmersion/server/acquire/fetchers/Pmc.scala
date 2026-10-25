@@ -70,7 +70,7 @@ final class Pmc(cfg: AcquireConfig, http: () => Http):
 
   private def byDoi(step: String)(f: PmcLookup => Option[FetchedFile]): SourceFetcher =
     open((work: WorkKey, ctx: FetchContext) =>
-      work.doi.fold[Fetch](Fetch.Miss(s"$step needs a DOI"))(d => answer(f(lookup(ctx, d)), s"$step has no copy of $d")))
+      work.doi.map(_.value).fold[Fetch](Fetch.Miss(s"$step needs a DOI"))(d => answer(f(lookup(ctx, d)), s"$step has no copy of $d")))
 
   val pdf: SourceFetcher  = byDoi("pmc")(_.pdf)
   val text: SourceFetcher = byDoi("pmc-text")(_.fullText)

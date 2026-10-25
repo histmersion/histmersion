@@ -12,7 +12,7 @@ class FetchChainSuite extends munit.FunSuite:
 
   private val Pdf  = ("%PDF-1.4\n" + "x" * 2048).getBytes("ISO-8859-1")
   private val Html = ("<!DOCTYPE html><html>" + "x" * 2048 + "</html>").getBytes("UTF-8")
-  private val doi  = WorkKey(doi = Some("10.1234/x"))
+  private val doi  = WorkKey(doi = Some(Doi("10.1234/x")))
 
   /** A fake fetcher answering `answer`, counting its calls. */
   private final class Fake(val access: Access, answer: (WorkKey, FetchContext) => Fetch) extends SourceFetcher:
@@ -52,7 +52,7 @@ class FetchChainSuite extends munit.FunSuite:
     assert(!FetchChain.looksLikePdf(("x" * 2000 + "%PDF").getBytes("ISO-8859-1")), "not within the first KiB")
 
   test("describe names the identifiers, else the title"):
-    assertEquals(FetchChain.describe(WorkKey(doi = Some("10.1/x"), arxiv = Some("2101.1"))), "doi:10.1/x arxiv:2101.1")
+    assertEquals(FetchChain.describe(WorkKey(doi = Some(Doi("10.1/x")), arxiv = Some("2101.1"))), "doi:10.1/x arxiv:2101.1")
     assertEquals(FetchChain.describe(WorkKey(title = Some("T"))), "\"T\"")
     assertEquals(FetchChain.describe(WorkKey()), "a work with no identifier")
 
@@ -120,7 +120,7 @@ class FetchChainSuite extends munit.FunSuite:
     val chain = FetchChain(List("spy" -> spy))
     val _ = chain.fetch(Some("10.1/x"), Some("2101.00001"))
     val _ = chain.fetchWork(WorkKey(archive = Some("racesofeurope"), format = Some("pdf")), legalOnly = true)
-    assertEquals(seen.toList, List(WorkKey(doi = Some("10.1/x"), arxiv = Some("2101.00001")),
+    assertEquals(seen.toList, List(WorkKey(doi = Some(Doi("10.1/x")), arxiv = Some("2101.00001")),
       WorkKey(archive = Some("racesofeurope"), format = Some("pdf"))))
 
   test("the memo is shared by the fetchers of ONE fetch and computed once; the next fetch starts afresh"):

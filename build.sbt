@@ -466,16 +466,19 @@ lazy val core = crossProject(JVMPlatform)
 lazy val coreJVM = core.jvm
 
 // ── plugin-api: the SPI a plugin compiles against (docs/research-plugins.md §2, decision D1). ──
-//    Interfaces, the `Secret` reference type and the lenient config readers — nothing else: sconfig +
-//    kindlings-sconfig-derivation only, so no core/db/server class is ever on a plugin's classpath.
+//    Interfaces, the `Secret` reference type, the lenient config readers and the SPI's own newtypes
+//    (years, periods, coordinates, DOIs, Wikidata ids, licences) — nothing else: sconfig +
+//    kindlings-sconfig-derivation + iron only (all three in the plugin platform), so no
+//    values/api/core/db/server class is ever on a plugin's classpath.
 lazy val pluginApi = project
   .in(file("modules/plugin-api"))
   .settings(name := "histmersion-plugin-api")
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
-      "org.ekrich"   %% "sconfig"                      % V.sconfig,
-      "com.kubuszok" %% "kindlings-sconfig-derivation" % V.kindlings
+      "org.ekrich"         %% "sconfig"                      % V.sconfig,
+      "com.kubuszok"       %% "kindlings-sconfig-derivation" % V.kindlings,
+      "io.github.iltotore" %% "iron"                         % V.iron
     )
   )
 

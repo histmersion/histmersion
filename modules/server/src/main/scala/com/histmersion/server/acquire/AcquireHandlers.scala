@@ -371,7 +371,7 @@ final class AcquireHandlers(
         case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes" +
           AcquireHandlers.hostOf(f.url).fold("")(h => s" from $h") +
           (if f.extension == "xml" then " (JATS full text — no PDF is published)" else "") +
-          f.licence.map(_.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
+          f.licence.map(_.value.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
           original.fold("")(h => s" (replacing $h: --refetch)"))
         case Left(e)  => steps += IngestStep("fetch", skip.isDefined, e)
       if chain.answers.nonEmpty then steps += IngestStep("chain", false, chain.answers.map(_.line).mkString("; "))
@@ -417,7 +417,7 @@ final class AcquireHandlers(
         jobs.enqueue(spooled, citekey, meta).left.map(err).map { outcome =>
           steps += IngestStep("store", true, outcome.detail)
           // the copy's licence, when its fetcher knew it, becomes the source's if it has none (#2560)
-          fetched.toOption.flatMap(_.licence).foreach { l =>
+          fetched.toOption.flatMap(_.licence).map(_.value).foreach { l =>
             if AcquireRepo.recordLicense(ds, citekey, l) then steps += IngestStep("licence", true, s"recorded ${l.trim}")
           }
           steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
@@ -516,7 +516,7 @@ final class AcquireHandlers(
               s"${item.title.getOrElse(item.identifier)} (${item.year.map(_.toString).getOrElse("?")})")
             // the download is the chain's `archive-org` fetcher (the legal chain: a public item only)
             oa.fetchWork(com.histmersion.plugin.WorkKey(archive = Some(item.identifier), format = req.format,
-                title = item.title, authors = item.creator, year = item.year), legalOnly = true)
+                title = item.title, authors = item.creator, year = item.year.map(com.histmersion.plugin.Year(_))), legalOnly = true)
               .left.map(e => err(s"'${item.identifier}': $e")).flatMap { f =>
               steps += IngestStep("fetch", true, s"archive.org: ${f.bytes.length} bytes (${file.name})")
               val spooled = Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match

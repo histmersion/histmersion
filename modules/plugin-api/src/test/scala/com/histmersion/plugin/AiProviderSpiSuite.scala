@@ -37,4 +37,4 @@ class AiProviderSpiSuite extends munit.FunSuite:
       def secret(s: Secret) = Left("none")
       def secretVaults = Registry.refusing("no vaults")
     assert(ctx.aiProviders.add("echo", Echo).left.exists(_.contains("no AI providers")))
-    assertEquals(Spi.Version, 1)
+    assertEquals(Spi.Version, 2)

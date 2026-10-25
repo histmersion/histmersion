@@ -94,7 +94,7 @@ class BuiltinFetchersSuite extends munit.FunSuite:
       java.net.URLDecoder.decode(q.drop("email=".length), "UTF-8") }
 
   private def fetch(g: Generation, fetcher: String): Fetch =
-    g.registries.sourceFetchers(fetcher).fetch(WorkKey(doi = Some("10.1/x")), Ctx)
+    g.registries.sourceFetchers(fetcher).fetch(WorkKey(doi = Some(com.histmersion.plugin.Doi("10.1/x"))), Ctx)
 
   test("oa-unpaywall asks with its own contact-email, else Histmersion's acquire.contact-email, else not at all"):
     val host = cfg.copy(contactEmail = "host@example.org")
@@ -336,7 +336,7 @@ class BuiltinFetchersSuite extends munit.FunSuite:
 
   test("archive-org: no archive.org identifier is a miss, and nothing is asked"):
     val a = FakeArchive(ArchiveItem("x", files = files))
-    assert(ArchiveOrgFetcher(() => a).fetch(WorkKey(doi = Some("10.1/x")), Ctx).isInstanceOf[Fetch.Miss])
+    assert(ArchiveOrgFetcher(() => a).fetch(WorkKey(doi = Some(com.histmersion.plugin.Doi("10.1/x"))), Ctx).isInstanceOf[Fetch.Miss])
     assertEquals(a.downloaded, Nil)
 
   test("archive-org: a lending-only item is REFUSED and never downloaded"):
