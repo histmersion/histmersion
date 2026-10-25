@@ -22,8 +22,8 @@ trait OaFetcher:
     * and an arXiv id (a test's fixture) has no copy of anything else. */
   def fetchWork(work: WorkKey, legalOnly: Boolean): Either[String, FetchedFile] =
     if work.doi.isEmpty && work.arxiv.isEmpty then Left(FetchChain.NoCopy)
-    else if legalOnly then fetchLegal(work.doi, work.arxiv)
-    else fetch(work.doi, work.arxiv)
+    else if legalOnly then fetchLegal(work.doi.map(_.value), work.arxiv)
+    else fetch(work.doi.map(_.value), work.arxiv)
 
   /** [[fetchWork]], with what each fetcher that ran answered when none had a copy (the ingest report
     * shows it). An implementation that is no chain (a test's fixture) has no answers to give. */
@@ -52,10 +52,10 @@ final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean,
   def plan: List[(String, Access)] = steps.map(s => s.id -> s.fetcher.access)
 
   def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] =
-    fetchWork(WorkKey(doi = doi, arxiv = arxiv), legalOnly = false)
+    fetchWork(WorkKey(doi = doi.flatMap(SpiValues.doi), arxiv = arxiv), legalOnly = false)
 
   override def fetchLegal(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] =
-    fetchWork(WorkKey(doi = doi, arxiv = arxiv), legalOnly = true)
+    fetchWork(WorkKey(doi = doi.flatMap(SpiValues.doi), arxiv = arxiv), legalOnly = true)
 
   override def fetchWork(work: WorkKey, legalOnly: Boolean): Either[String, FetchedFile] =
     fetchWorkExplained(work, legalOnly).file
@@ -164,7 +164,7 @@ object FetchChain:
 
   /** Pure: the work as a log line names it. */
   def describe(w: WorkKey): String =
-    List("doi" -> w.doi, "arxiv" -> w.arxiv, "pmid" -> w.pmid, "pmcid" -> w.pmcid, "archive.org" -> w.archive,
+    List("doi" -> w.doi.map(_.value), "arxiv" -> w.arxiv, "pmid" -> w.pmid, "pmcid" -> w.pmcid, "archive.org" -> w.archive,
       "isbn" -> w.isbn).collect { case (k, Some(v)) => s"$k:$v" } match
       case Nil => w.title.fold("a work with no identifier")(t => s"\"$t\"")
       case ids => ids.mkString(" ")

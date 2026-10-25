@@ -12,13 +12,12 @@ import com.histmersion.values.Historicity
   * checked and turned into the host's [[CatalogRecord]]s. Pure but for [[http]]. */
 object PluginEvents:
 
-  private val Qid = "^Q[1-9][0-9]*$"
-
   /** The limits of a plugin catalogue's dating (pure but for asking the plugin) — the present, and the catalogue's own
     * [[EventCatalogue.floorYear]] (`None` when it states none, throws, or is not registered now: a
     * dating stored under a floor is already held at it, so a looser limit changes nothing). */
   def limits(catalogue: Option[EventCatalogue], present: Long): CatalogDating.Limits =
-    CatalogDating.Limits(present, catalogue.flatMap(c => safe(c.floorYear).flatten))
+    CatalogDating.Limits(present, catalogue.flatMap(c => safe(c.floorYear.flatMap(SpiValues.yearOf(_).toOption)).flatten)
+      .map(_.value.toLong))
 
   /** Pure: a plugin catalogue's record dated as the host dates its own: a record that gives no point of
     * its span but a stated year is `central ± plusMinus` ([[CatalogDating.year]], as the GVP's and NOAA's
@@ -32,8 +31,11 @@ object PluginEvents:
       r.copy(timeSpan = CatalogDating.span(Some(CatalogDating.year(c, r.plusMinus)), None)))
     CatalogDating.clamp(stated, limits)
 
+  /** The query a plugin catalogue is asked: the import's years (held at what a `Year` holds) and its
+    * area (left out when a corner is off the globe: the host applies the area itself anyway). */
   def query(from: Option[Long], to: Long, area: Option[BBox]): CatalogueQuery =
-    CatalogueQuery(from, to, area.map(b => (b.minLon, b.minLat, b.maxLon, b.maxLat)))
+    CatalogueQuery(from.map(SpiValues.yearBound), SpiValues.yearBound(to),
+      area.flatMap(b => SpiValues.area(b.minLon, b.minLat, b.maxLon, b.maxLat)))
 
   /** A catalogue run's polite client at `intervalMs` between requests to one host; the media politeness
     * otherwise (User-Agent, retries) — and up to two minutes' Retry-After, which a query service asks for. */
@@ -72,22 +74,41 @@ object PluginEvents:
 
   /** Pure: the record a plugin's event becomes under catalogue `provider`, or why it is refused: no id or
     * label, a historicity that is none of the host's, a dating that runs backwards, a position off the
-    * globe. Its kind is the host's spelling of it ([[EventTaxonomy.refine]]); a Wikidata item that is no
-    * item id is dropped (the event keeps its own record). */
+    * globe, a value its type would refuse (named with the catalogue and the value), or a record the host
+    * cannot read at all (a plugin built against another SPI). Its kind is the host's spelling of it
+    * ([[EventTaxonomy.refine]]). */
   def record(provider: String, e: CatalogueEvent): Either[String, CatalogRecord] =
+    try checked(provider, e)
+    catch case NonFatal(x) =>
+      Left(s"${safe(e.id).getOrElse("a record")}: catalogue '$provider' handed over a record the host cannot read " +
+        s"(${x.getClass.getSimpleName}: ${x.getMessage}) — is the plugin built against plugin SPI ${Spi.Version}?")
+
+  private def checked(provider: String, e: CatalogueEvent): Either[String, CatalogRecord] =
     val id    = Option(e.id).getOrElse("").trim
     val label = Option(e.label).getOrElse("").trim
-    val points = List(e.notBefore, e.beginBy, e.endFrom, e.notAfter).flatten
+    def stated[A, B](a: Option[A])(f: A => Either[String, B]): Either[String, Option[B]] =
+      SpiValues.optional(a)(f).left.map(why => s"$id: catalogue '$provider': $why")
     if id.isEmpty then Left("a record without an id")
     else if label.isEmpty then Left(s"$id: no label")
     else if !Historicity.all.contains(e.historicity) then
       Left(s"$id: historicity '${e.historicity}' is none of ${Historicity.all.mkString(", ")}")
-    else if points.zip(points.drop(1)).exists((a, b) => a > b) then Left(s"$id: its dating runs backwards")
-    else if e.lat.exists(l => l < -90 || l > 90) || e.lon.exists(l => l < -180 || l > 180) then
-      Left(s"$id: its position is not on the globe")
-    else if e.lat.isDefined != e.lon.isDefined then Left(s"$id: a position needs both latitude and longitude")
-    else Right(CatalogRecord(provider, id, Option(e.url).getOrElse("").trim, label, EventTaxonomy.refine(e.kind, label),
-      TimeSpan(e.notBefore, e.beginBy, e.endFrom, e.notAfter), e.lat, e.lon, e.historicity, e.vei, e.magnitude,
-      e.deaths, e.wikidata.map(_.trim.toUpperCase(java.util.Locale.ROOT)).filter(_.matches(Qid)),
-      e.names.map(_.trim).filter(n => n.nonEmpty && n != label).distinct, e.description.map(_.trim).filter(_.nonEmpty),
-      e.group.map(_.trim).filter(_.nonEmpty), e.central, e.plusMinus.filter(_ >= 0), e.datingMethod, e.raw))
+    else
+      for
+        notBefore <- stated(e.notBefore)(SpiValues.yearOf)
+        beginBy   <- stated(e.beginBy)(SpiValues.yearOf)
+        endFrom   <- stated(e.endFrom)(SpiValues.yearOf)
+        notAfter  <- stated(e.notAfter)(SpiValues.yearOf)
+        central   <- stated(e.central)(SpiValues.yearOf)
+        lat       <- stated(e.lat)(SpiValues.latitudeOf)
+        lon       <- stated(e.lon)(SpiValues.longitudeOf)
+        wikidata  <- stated(e.wikidata)(SpiValues.wikidataOf)
+        points     = List(notBefore, beginBy, endFrom, notAfter).flatten.map(_.value)
+        _         <- Either.cond(!points.zip(points.drop(1)).exists((a, b) => a > b), (), s"$id: its dating runs backwards")
+        _         <- Either.cond(lat.isDefined == lon.isDefined, (), s"$id: a position needs both latitude and longitude")
+      yield
+        def long(y: Option[com.histmersion.values.Year]) = y.map(_.value.toLong)
+        CatalogRecord(provider, id, Option(e.url).getOrElse("").trim, label, EventTaxonomy.refine(e.kind, label),
+          TimeSpan(long(notBefore), long(beginBy), long(endFrom), long(notAfter)), lat.map(_.value), lon.map(_.value),
+          e.historicity, e.vei, e.magnitude, e.deaths, wikidata.map(_.value),
+          e.names.map(_.trim).filter(n => n.nonEmpty && n != label).distinct, e.description.map(_.trim).filter(_.nonEmpty),
+          e.group.map(_.trim).filter(_.nonEmpty), long(central), e.plusMinus.filter(_ >= 0), e.datingMethod, e.raw)

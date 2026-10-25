@@ -16,8 +16,15 @@ final case class PluginInfo(id: String, version: String, spiVersion: Int)
 
 object Spi:
   /** Bumped on an incompatible change to anything in this package. A new extension point (a new
-    * registry on [[PluginContext]]) is compatible: existing plugins never call it. */
-  val Version: Int = 1
+    * registry on [[PluginContext]]) is compatible: existing plugins never call it.
+    *
+    * An `inline val`: the number is compiled INTO the plugin, so the host reads the generation the plugin
+    * was built against, not its own. (SPI 1 declared a plain `val`, read from the host at run time; an
+    * SPI-1 plugin fails to link against SPI 2 on exactly that read, which the host reports as such.)
+    *
+    * SPI 2 gave the values the SPI exchanges types of their own ([[Year]], [[Period]], [[Latitude]],
+    * [[Longitude]], [[Doi]], [[WikidataId]], [[Licence]]). */
+  inline val Version = 2
 
 /** The ONE ServiceLoader service (`META-INF/services/com.histmersion.plugin.Plugin`). A plugin may add
   * to several parts of the app at once; it does so in [[register]], through the context's registries.
@@ -65,7 +72,7 @@ trait Plugin:
   * (Five: [[secretVaults]], [[sourceFetchers]], [[mediaCollections]], [[eventCatalogues]] and
   * [[aiProviders]]. Each one
   * added after the first has a default that refuses every addition, so a context written for an
-  * earlier extension point — a test's — still compiles, and `Spi.Version` stayed 1.) */
+  * earlier extension point — a test's — still compiles, and adding them changed no `Spi.Version`.) */
 trait PluginContext:
   /** The host's outbound HTTP — the one policy (User-Agent without personal data, Retry-After,
     * bot challenges stop the request). A plugin never opens its own sockets. */

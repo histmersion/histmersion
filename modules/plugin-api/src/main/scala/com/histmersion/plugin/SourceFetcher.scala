@@ -20,7 +20,7 @@ package com.histmersion.plugin
   * @param year    its publication year (signed; BCE negative)
   * @param format  the file format the caller prefers (`pdf`, `epub`) when a work has several files */
 final case class WorkKey(
-    doi: Option[String] = None,
+    doi: Option[Doi] = None,
     arxiv: Option[String] = None,
     pmid: Option[String] = None,
     pmcid: Option[String] = None,
@@ -28,7 +28,7 @@ final case class WorkKey(
     isbn: Option[String] = None,
     title: Option[String] = None,
     authors: List[String] = Nil,
-    year: Option[Int] = None,
+    year: Option[Year] = None,
     format: Option[String] = None
 ):
   /** No identifier at all (title, authors, year and format alone identify nothing to fetch). */
@@ -52,18 +52,9 @@ enum Access:
   * @param extension `pdf`, `epub`, `xml` (a JATS full text), … — the host refuses a `pdf` that is not one
   * @param licence   the licence the copy is published under, when the fetcher knows it — an SPDX id
   *                  (`CC-BY-4.0`) or `public-domain`, else the licence's URL; the host records it as the
-  *                  source's licence when that has none (added in SPI 1 without a version change: optional,
-  *                  and the four-argument form still builds and links) */
+  *                  source's licence when that has none */
 final case class FetchedFile(source: String, url: Option[String], bytes: Array[Byte], extension: String,
-    licence: Option[String] = None):
-  /** The four-field constructor of the first SPI 1 release, for plugins compiled against it. */
-  def this(source: String, url: Option[String], bytes: Array[Byte], extension: String) =
-    this(source, url, bytes, extension, None)
-
-object FetchedFile:
-  /** The four-field factory of the first SPI 1 release, for plugins compiled against it. */
-  def apply(source: String, url: Option[String], bytes: Array[Byte], extension: String): FetchedFile =
-    new FetchedFile(source, url, bytes, extension, None)
+    licence: Option[Licence] = None)
 
 /** One fetcher's answer for one work. */
 enum Fetch:

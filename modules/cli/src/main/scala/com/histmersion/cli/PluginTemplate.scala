@@ -448,7 +448,10 @@ object PluginTemplate:
       |  `histmersion plugin repo --m2`; `histmersion plugin repo` prints the install's own), as compile-only
       |  dependencies:
       |  - `@api@`: everything is in the package `com.histmersion.plugin`. Start at `Plugin` and
-      |    `PluginContext`.
+      |    `PluginContext`. The values it exchanges have types of their own (`Year`, `Period`, `Latitude`,
+      |    `Longitude`, `Doi`, `WikidataId`, `Licence`; Iron newtypes): a literal is checked when it compiles
+      |    (`Doi("10.1234/abc")`, `Year(-1600)`), a value read at run time is parsed (`Doi.option(raw)`,
+      |    `Latitude.either(raw)`), and `.value` takes the plain value out.
       |  - `@platform@`: a POM whose dependencies are the libraries the server provides to plugins, at the
       |    versions it ships (sconfig and kindlings for settings, circe, cats, the sttp client, tapir, ox,
       |    iron). Use them freely: they are on the server's class path, so the plugin bundles none of them.

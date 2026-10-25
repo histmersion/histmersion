@@ -42,7 +42,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     def search(place: MediaPlace, http: PluginHttp) = Right(Nil)
 
   private object Catalogue extends EventCatalogue:
-    val title = "Zq quakes"; val licence = "CC0-1.0"; val citation = "Zq (2026)"; val home = "https://zq.example"
+    val title = "Zq quakes"; val licence = Licence("CC0-1.0"); val citation = "Zq (2026)"; val home = "https://zq.example"
     def parts(q: CatalogueQuery) = List("all")
     def read(part: String, q: CatalogueQuery, http: PluginHttp) = Right(CataloguePage(Nil))
 
@@ -142,7 +142,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       def secretVaults = Registry.refusing("x")
     assert(ctx.mediaCollections.add("x", Collection("object")).isLeft)
     assert(ctx.eventCatalogues.add("x", Catalogue).isLeft)
-    assertEquals(Spi.Version, 1)
+    assertEquals(Spi.Version, 2)
 
   // ── reloads ────────────────────────────────────────────────────────────────────────────────────
 
@@ -167,7 +167,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
   // ── the host's reading of a plugin's records ──────────────────────────────────────────────────
 
   private def rights(licence: String, url: Option[String] = None, credit: String = "Zq, CC") =
-    PluginMedia.rights(com.histmersion.plugin.MediaRights(licence, url, Some("A. Author"), credit))
+    PluginMedia.rights(com.histmersion.plugin.MediaRights(Licence(licence), url, Some("A. Author"), credit))
 
   test("a stated licence is read by the host: ids, short names and Creative Commons URLs; unknown is never guessed"):
     assertEquals(rights("CC BY-NC 4.0").map(_.licence), Right(MediaLicence.Licence("CC-BY-NC-4.0", MediaLicence.CcByNc)))
@@ -185,10 +185,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(!MediaLicence.allowed(rights("free to use!").toOption.get.licence, MediaLicence.Families.toSet))
     assert(!MediaLicence.allowed(rights("CC BY-NC 4.0").toOption.get.licence, MediaLicence.allowList("cc0,cc-by")))
 
-  test("a plugin's item becomes the host's record: trimmed, a reversed period put right, a refusal kept"):
+  test("a plugin's item becomes the host's record: trimmed, its period converted, a refusal kept"):
     val it = MediaItem(" k1 ", "  Bowl ", "https://zq.example/k1", Some(" https://zq.example/k1.jpg "),
-      Right(com.histmersion.plugin.MediaRights("CC0", credit = "Zq")), geography = List("find-spot" -> "Zqenai"),
-      period = Some((-1300L, -1400L)), ids = List("pleiades" -> "1"))
+      Right(com.histmersion.plugin.MediaRights(Licence("CC0"), credit = "Zq")), geography = List("find-spot" -> "Zqenai"),
+      period = Period.from(Year(-1400), Year(-1300)).toOption, ids = List("pleiades" -> "1"))
     val r: MediaRecord = PluginMedia.record(it)
     assertEquals((r.key, r.title, r.imageUrl, r.period), ("k1", "Bowl", Some("https://zq.example/k1.jpg"), com.histmersion.domain.DeepTime.span(-1400L, -1300L)))
     assertEquals(r.rights.map(_.licence.family), Right(MediaLicence.Cc0))
@@ -201,25 +201,28 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(PluginMedia.guard[Int](null), Left("the plugin answered nothing"))
 
   test("a catalogue's record is checked by the host before it is stored"):
-    val ok = CatalogueEvent("q-1", "https://zq.example/q-1", "Zq Earthquake", "Earthquake", Some(-1200L), Some(-1200L),
-      lat = Some(38.0), lon = Some(23.0), magnitude = Some(6.5), wikidata = Some("q42"), names = List("Zq Earthquake", "Zq quake"))
+    val ok = CatalogueEvent("q-1", "https://zq.example/q-1", "Zq Earthquake", "Earthquake", Some(Year(-1200)), Some(Year(-1200)),
+      lat = Some(Latitude(38.0)), lon = Some(Longitude(23.0)), magnitude = Some(6.5), wikidata = Some(WikidataId("Q42")),
+      names = List("Zq Earthquake", "Zq quake"))
     val r = PluginEvents.record("zq-quakes", ok).fold(fail(_), identity)
     assertEquals((r.provider, r.providerId, r.kind, r.wikidata, r.names), ("zq-quakes", "q-1", "earthquake", Some("Q42"), List("Zq quake")))
     assertEquals(r.timeSpan, com.histmersion.api.TimeSpan(Some(-1200L), None, None, Some(-1200L)))
-    assertEquals(PluginEvents.record("x", ok.copy(wikidata = Some("not-an-item"))).map(_.wikidata), Right(None))
+    assertEquals(PluginEvents.record("x", ok.copy(wikidata = Some(WikidataId.assume("not-an-item")))),
+      Left("q-1: catalogue 'x': Wikidata id 'not-an-item' is not a Wikidata item (Q and its number)"))
     assertEquals(PluginEvents.record("x", ok.copy(id = " ")), Left("a record without an id"))
     assertEquals(PluginEvents.record("x", ok.copy(label = "")), Left("q-1: no label"))
     assert(PluginEvents.record("x", ok.copy(historicity = "certain")).left.exists(_.contains("historicity 'certain'")))
-    assertEquals(PluginEvents.record("x", ok.copy(notBefore = Some(-1000L), notAfter = Some(-1200L))),
+    assertEquals(PluginEvents.record("x", ok.copy(notBefore = Some(Year(-1000)), notAfter = Some(Year(-1200)))),
       Left("q-1: its dating runs backwards"))
-    assertEquals(PluginEvents.record("x", ok.copy(lat = Some(95.0))), Left("q-1: its position is not on the globe"))
+    assertEquals(PluginEvents.record("x", ok.copy(lat = Some(Latitude.assume(95.0)))),
+      Left("q-1: catalogue 'x': latitude 95.0 is not between -90 and 90"))
     assertEquals(PluginEvents.record("x", ok.copy(lon = None)), Left("q-1: a position needs both latitude and longitude"))
 
   test("a plugin catalogue's record is dated as the host dates its own: a stated year ± when no span, held inside the limits"):
     import com.histmersion.api.TimeSpan
     import com.histmersion.domain.CatalogDating
-    val base = PluginEvents.record("zq", CatalogueEvent("e", "u", "Zq Flood", "flood", None, None, lat = Some(38.0),
-      lon = Some(23.0), central = Some(-1000L), plusMinus = Some(50L))).fold(fail(_), identity)
+    val base = PluginEvents.record("zq", CatalogueEvent("e", "u", "Zq Flood", "flood", None, None, lat = Some(Latitude(38.0)),
+      lon = Some(Longitude(23.0)), central = Some(Year(-1000)), plusMinus = Some(50L))).fold(fail(_), identity)
     val now = CatalogDating.Limits(2026)
     // the span the record does not give, from its stated year and ±; the statement itself kept
     val d = PluginEvents.derive(base, now)
@@ -246,12 +249,12 @@ class ProviderPluginsSuite extends munit.FunSuite:
 
   test("a plugin catalogue's limits: the present, and its own floor when it states one"):
     val floored = new EventCatalogue:
-      val title = "t"; val licence = "l"; val citation = "c"; val home = "h"
-      override def floorYear = Some(-9700L)
+      val title = "t"; val licence = Licence("l"); val citation = "c"; val home = "h"
+      override def floorYear = Some(Year(-9700))
       def parts(q: CatalogueQuery) = Nil
       def read(p: String, q: CatalogueQuery, h: PluginHttp) = Left("no")
     val throws = new EventCatalogue:
-      val title = "t"; val licence = "l"; val citation = "c"; val home = "h"
+      val title = "t"; val licence = Licence("l"); val citation = "c"; val home = "h"
       override def floorYear = throw IllegalStateException("boom")
       def parts(q: CatalogueQuery) = Nil
       def read(p: String, q: CatalogueQuery, h: PluginHttp) = Left("no")
@@ -263,8 +266,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
   test("the host's own catalogues and collections are never searched through the SPI"):
     val gvp = BuiltinCatalogues.entries.head
     assertEquals((gvp.plugin, gvp.name, gvp.title), ("events-gvp", "gvp", "Smithsonian Global Volcanism Program"))
-    assert(gvp.read("x", CatalogueQuery(None, 0), offline).isLeft)
-    assert(HostEventCatalogue("p", "nope").licence.isEmpty)
+    assert(gvp.read("x", CatalogueQuery(None, Year(0)), offline).isLeft)
+    assert(HostEventCatalogue("p", "nope").licence.value.isEmpty)
     val met = BuiltinMedia.entries.find(_.name == "met").get
     assert(met.search(MediaPlace("p", "P"), offline).isLeft)
     assertEquals(BuiltinMedia.reserved.intersect(BuiltinMedia.entries.map(_.name).toSet).size, 8)

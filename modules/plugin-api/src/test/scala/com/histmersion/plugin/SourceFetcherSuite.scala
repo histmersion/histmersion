@@ -5,9 +5,9 @@ class SourceFetcherSuite extends munit.FunSuite:
 
   test("a WorkKey with no identifier is empty; title, authors, year and format identify nothing"):
     assert(WorkKey().isEmpty)
-    assert(WorkKey(title = Some("Black Athena"), authors = List("Martin Bernal"), year = Some(1987),
+    assert(WorkKey(title = Some("Black Athena"), authors = List("Martin Bernal"), year = Some(Year(1987)),
       format = Some("pdf")).isEmpty)
-    assert(!WorkKey(doi = Some("10.1038/nature14317")).isEmpty)
+    assert(!WorkKey(doi = Some(Doi("10.1038/nature14317"))).isEmpty)
     assert(!WorkKey(archive = Some("racesofeurope")).isEmpty)
     assert(!WorkKey(pmcid = Some("PMC6091220")).isEmpty)
 
@@ -30,15 +30,10 @@ class SourceFetcherSuite extends munit.FunSuite:
       def fetch(work: WorkKey, ctx: FetchContext) = Fetch.Refused("no entitlement")
     assert(ctx.sourceFetchers.add("portal", f).left.exists(_.contains("no acquisition chain")))
 
-  test("a FetchedFile's licence is optional: the four-field forms still build it, without one (#2560)"):
+  test("a FetchedFile's licence is optional"):
     val pdf = "%PDF-1.7".getBytes("US-ASCII")
-    val old = FetchedFile("oabooks", Some("https://example.org/b.pdf"), pdf, "pdf")
-    val viaNew = new FetchedFile("oabooks", None, pdf, "pdf")
-    assertEquals((old.licence, viaNew.licence), (None, None))
-    val withIt = FetchedFile("oabooks", None, pdf, "pdf", Some("CC-BY-4.0"))
-    assertEquals(withIt.licence, Some("CC-BY-4.0"))
-    assertEquals(old.copy(licence = Some("public-domain")).licence, Some("public-domain"))
-    // the factory a plugin compiled against the first SPI 1 links to is still there
-    val fourArgs = FetchedFile.getClass.getMethods.exists(m => m.getName == "apply" && m.getParameterCount == 4)
-    val fourCtor = classOf[FetchedFile].getConstructors.exists(_.getParameterCount == 4)
-    assert(fourArgs && fourCtor, "the four-field apply and constructor")
+    val none = FetchedFile("oabooks", Some("https://example.org/b.pdf"), pdf, "pdf")
+    assertEquals(none.licence, None)
+    val withIt = FetchedFile("oabooks", None, pdf, "pdf", Some(Licence("CC-BY-4.0")))
+    assertEquals(withIt.licence.map(l => l.value: String), Some("CC-BY-4.0"))
+    assertEquals(none.copy(licence = Some(Licence("public-domain"))).licence.map(l => l.value: String), Some("public-domain"))

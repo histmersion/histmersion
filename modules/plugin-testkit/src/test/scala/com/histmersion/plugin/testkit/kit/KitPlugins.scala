@@ -30,7 +30,7 @@ final class KitFetcherPlugin extends Plugin:
                 case Left(why) => Fetch.Miss(why)
                 case Right(bytes) =>
                   fc.log.info(s"$doi: licence CC-BY-4.0")
-                  Fetch.Found(FetchedFile("kit-fetcher", Some(url), bytes, "pdf", Some("CC-BY-4.0")))
+                  Fetch.Found(FetchedFile("kit-fetcher", Some(url), bytes, "pdf", Some(Licence("CC-BY-4.0"))))
       )
     }
 
@@ -50,7 +50,7 @@ final class KitMediaPlugin extends Plugin:
           line.split("\\|", -1) match
             case Array(key, licence, image) =>
               Right(MediaItem(key, s"Picture $key", s"${c.baseUrl}/$key", Option(image).filter(_.nonEmpty),
-                Right(MediaRights(licence, credit = "A. Photographer"))))
+                Right(MediaRights(Licence(licence), credit = "A. Photographer"))))
             case _ => Left(s"unreadable record '$line'")
         }))
 
@@ -60,14 +60,14 @@ final class KitEventsPlugin extends Plugin:
   val info = PluginInfo("kit-events", "0.1.0", Spi.Version)
   def register(c: KitBaseConfig, ctx: PluginContext): Either[String, Unit] =
     ctx.eventCatalogues.add("kit-events", new EventCatalogue:
-      val title = "Kit events"; val licence = "CC0"; val citation = "Kit"; val home = c.baseUrl
+      val title = "Kit events"; val licence = Licence("CC0"); val citation = "Kit"; val home = c.baseUrl
       override def requestIntervalMs = 0
       def parts(q: CatalogueQuery) = List("p1")
       def read(part: String, q: CatalogueQuery, http: PluginHttp) =
         http.get(s"${c.baseUrl}/$part").map { b =>
           val events = new String(b, UTF_8).linesIterator.toList.map(_.split('|')).collect {
             case Array(id, label, from, to) =>
-              CatalogueEvent(id, s"${c.baseUrl}/$id", label, "eruption", Some(from.toLong), Some(to.toLong))
+              CatalogueEvent(id, s"${c.baseUrl}/$id", label, "eruption", Some(Year(from.toInt)), Some(Year(to.toInt)))
           }
           CataloguePage(events, Option.when(part == "p1")("p2"))
         })

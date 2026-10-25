@@ -4,7 +4,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.api.PluginState
 import com.histmersion.pluginhost.allowed
 import com.histmersion.plugin.*
-import com.histmersion.pluginhost.{FetchChain, HostLog, HostServices, JavaHttpTransport, PluginAi, PluginEvents, PluginHost,
+import com.histmersion.pluginhost.{FetchChain, HostLog, HostServices, JavaHttpTransport, PluginAi, PluginEvents, PluginHost, SpiValues,
   PluginMedia, PolicyHttp, Registries, WorkLookup}
 import org.ekrich.config.{Config, ConfigFactory, ConfigValueFactory}
 
@@ -180,8 +180,9 @@ final class PluginHarness private (
                       case Left(why) => refused += s"$part: $why"
                       case Right(r) =>
                         val d = PluginEvents.derive(r, limits)
-                        accepted += AcceptedEvent(e, d.kind, d.timeSpan.notBefore, d.timeSpan.beginBy, d.timeSpan.endFrom,
-                          d.timeSpan.notAfter))
+                        val ts = d.timeSpan
+                        accepted += AcceptedEvent(e, d.kind, ts.notBefore.flatMap(SpiValues.year), ts.beginBy.flatMap(SpiValues.year),
+                          ts.endFrom.flatMap(SpiValues.year), ts.notAfter.flatMap(SpiValues.year)))
                 }
               }
               (parts.distinct, None)
@@ -337,7 +338,7 @@ object PluginHarness:
 
   /** Where a found copy is written: `<dir>/<fetcher>-<identifier>.<extension>`. */
   private def save(dir: Path, fetcher: String, work: WorkKey, file: FetchedFile): Path =
-    val ident = List(work.doi, work.isbn, work.arxiv, work.pmcid, work.pmid, work.archive).flatten.headOption.getOrElse("work")
+    val ident = List(work.doi.map(_.value), work.isbn, work.arxiv, work.pmcid, work.pmid, work.archive).flatten.headOption.getOrElse("work")
     val ext   = Option(file.extension).map(_.replaceAll("[^A-Za-z0-9]", "")).filter(_.nonEmpty).getOrElse("bin")
     Files.createDirectories(dir)
     val out = dir.resolve(s"$fetcher-${ident.replaceAll("[^A-Za-z0-9._-]", "_")}.$ext")

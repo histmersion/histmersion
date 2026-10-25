@@ -58,7 +58,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   private class SomePdf(source: String = "unpaywall", licence: Option[String] = None) extends OaFetcher:
     def fetch(doi: Option[String], arxiv: Option[String]) =
       Right(FetchedFile(source, Some("https://example.org/x.pdf"),
-        ("%PDF-1.4\n" + "x" * 2000).getBytes("UTF-8"), "pdf", licence))
+        ("%PDF-1.4\n" + "x" * 2000).getBytes("UTF-8"), "pdf", licence.map(com.histmersion.plugin.Licence(_))))
 
   private object NoWiki extends WikiClient:
     def refs(url: String) = Left("not used here")

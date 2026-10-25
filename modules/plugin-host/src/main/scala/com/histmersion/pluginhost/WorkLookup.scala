@@ -3,7 +3,7 @@ package com.histmersion.pluginhost
 import com.histmersion.config.AcquireConfig
 import com.histmersion.pluginhost.AcquireParse
 import com.histmersion.api.WorkRef
-import com.histmersion.plugin.WorkKey
+import com.histmersion.plugin.{WorkKey, Year}
 import io.circe.Json
 import sttp.model.Uri
 
@@ -53,7 +53,7 @@ object WorkLookup:
       .fold(w)(a => w.copy(isOa = a.isOa, oaStatus = a.status, oaUrl = a.url))
 
   /** Pure: what the acquisition chain is asked for one work — its identifiers and what its metadata
-    * record says of it. */
+    * record says of it. A DOI that is none is not passed on. */
   def key(doi: Option[String], arxiv: Option[String], work: Option[WorkRef]): WorkKey =
-    WorkKey(doi = doi, arxiv = arxiv.orElse(work.flatMap(_.arxivId)), title = work.flatMap(_.title),
-      authors = work.map(_.authors).getOrElse(Nil), year = work.flatMap(_.year))
+    WorkKey(doi = doi.flatMap(SpiValues.doi), arxiv = arxiv.orElse(work.flatMap(_.arxivId)), title = work.flatMap(_.title),
+      authors = work.map(_.authors).getOrElse(Nil), year = work.flatMap(_.year).map(Year(_)))

@@ -12,12 +12,13 @@ class PluginHostPartsSuite extends munit.FunSuite:
     val ref = WorkRef(doi = Some("10.1/x"), arxivId = Some("2101.00001"), title = Some("A title"), year = Some(1999),
       authors = List("A. Author"))
     assertEquals(WorkLookup.key(Some("10.1/x"), None, Some(ref)),
-      WorkKey(doi = Some("10.1/x"), arxiv = Some("2101.00001"), title = Some("A title"), authors = List("A. Author"),
-        year = Some(1999)))
+      WorkKey(doi = Some(Doi("10.1/x")), arxiv = Some("2101.00001"), title = Some("A title"), authors = List("A. Author"),
+        year = Some(Year(1999))))
     assertEquals(WorkLookup.key(None, Some("hep-th/9901001"), None), WorkKey(arxiv = Some("hep-th/9901001")))
+    assertEquals(WorkLookup.key(Some("not a doi"), Some("2101.00001"), None), WorkKey(arxiv = Some("2101.00001")))
 
   private def item(licence: String, image: Option[String] = Some("https://x.example/1.jpg")) =
-    MediaItem("k1", "A picture", "https://x.example/1", image, Right(MediaRights(licence, credit = "A. Photographer")))
+    MediaItem("k1", "A picture", "https://x.example/1", image, Right(MediaRights(Licence(licence), credit = "A. Photographer")))
 
   test("a media record is kept only with a readable, allowed licence and an image"):
     val allow = MediaLicence.allowList("cc0,cc-by")
@@ -26,11 +27,11 @@ class PluginHostPartsSuite extends munit.FunSuite:
     assertEquals(PluginMedia.refusal(PluginMedia.record(item("CC0-1.0", image = None)), allow, "mine"), Some("no image"))
     assertEquals(PluginMedia.refusal(PluginMedia.record(item("CC0-1.0").copy(withheld = Some("human remains"))), allow, "mine"),
       Some("human remains"))
-    assertEquals(PluginMedia.refusal(PluginMedia.record(item("CC0-1.0").copy(rights = Right(MediaRights("CC0-1.0")))), allow,
+    assertEquals(PluginMedia.refusal(PluginMedia.record(item("CC0-1.0").copy(rights = Right(MediaRights(Licence("CC0-1.0"))))), allow,
       "mine"), Some("no credit line"))
 
   private final class Paged(pages: Map[String, Either[String, CataloguePage]]) extends EventCatalogue:
-    val title = "t"; val licence = "l"; val citation = "c"; val home = "h"
+    val title = "t"; val licence = Licence("l"); val citation = "c"; val home = "h"
     def parts(q: CatalogueQuery) = pages.keys.toList
     def read(part: String, q: CatalogueQuery, http: PluginHttp) = pages(part)
 
@@ -45,7 +46,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
       "c" -> Right(CataloguePage(Nil, Some("done")))))
     def read(first: String, done: String => Boolean = _ => false, full: => Boolean = false) =
       val seen = List.newBuilder[(String, Boolean)]
-      PluginEvents.readPart(cat, first, CatalogueQuery(None, 2025), offline, done, full)((p, got) => seen += p -> got.isRight)
+      PluginEvents.readPart(cat, first, CatalogueQuery(None, Year(2025)), offline, done, full)((p, got) => seen += p -> got.isRight)
       seen.result()
     assertEquals(read("a"), List("a" -> true, "a2" -> true))
     assertEquals(read("b"), List("b" -> false))
@@ -99,3 +100,33 @@ class PluginHostPartsSuite extends munit.FunSuite:
     assertEquals(PolicyHttp("ua", down, tries = 2, sleep = _ => (), log = quiet).bytes("https://x.example/c"), Left("x unreachable"))
     val missing = Scripted(answer(404, "no such work"))
     assertEquals(PolicyHttp("ua", missing, log = quiet).bytes("https://x.example/d"), Left("https://x.example/d: HTTP 404 no such work"))
+
+  // ── a plugin built against another SPI generation ─────────────────────────────────────────────
+
+  /** What linking an SPI-1 plugin against SPI 2 throws: its PluginInfo read `Spi.Version` at run time. */
+  private val spi1 = NoSuchMethodError("'int com.histmersion.plugin.Spi$.Version()'")
+
+  test("a plugin built against SPI 1 is recognised by the member it reads, and told to rebuild"):
+    assertEquals(PluginHost.foreignSpi(spi1), Some(Some(1)))
+    assertEquals(PluginHost.failure(spi1),
+      "it was built against plugin SPI 1; this Histmersion speaks SPI 2 — rebuild the plugin against SPI 2 " +
+        "(`histmersion plugin repo` has its API)")
+    val wrapped = java.util.ServiceConfigurationError(
+      "com.histmersion.plugin.Plugin: Provider com.example.OldPlugin could not be instantiated", spi1)
+    assertEquals(PluginHost.foreignSpi(wrapped), Some(Some(1)))
+    assertEquals(PluginHost.providerOf(wrapped), Some("com.example.OldPlugin"))
+
+  test("another SPI type a plugin links against differently is another SPI; other errors are not"):
+    val other = NoSuchMethodError("'scala.Option com.histmersion.plugin.WorkKey.year()'")
+    assertEquals(PluginHost.foreignSpi(other), Some(None))
+    assert(PluginHost.failure(other).startsWith("it was built against another plugin SPI; this Histmersion speaks SPI 2"))
+    assertEquals(PluginHost.foreignSpi(NoSuchMethodError("'void org.example.Lib.go()'")), None)
+    assert(PluginHost.failure(NoClassDefFoundError("org/example/Lib")).startsWith("class org.example.Lib is missing"))
+
+  test("a plugin whose info cannot be read is not loaded: the error, not an exception"):
+    val old = new Plugin:
+      type Config = Unit
+      def info = throw spi1
+      override given configReader: hearth.kindlings.sconfigderivation.ConfigReader[Unit] = null
+      def register(config: Unit, ctx: PluginContext) = Right(())
+    assert(PluginHost.described(old).left.exists(_ eq spi1))

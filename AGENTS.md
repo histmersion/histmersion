@@ -30,7 +30,8 @@ server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, p
          (and through them on values, api and config)
 cli   ── a PURE HTTP CLIENT of the server.         depends on api, config and files — never core, never db
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
-plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
+plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault) and its own newtypes (Year, Doi, …):
+              sconfig + kindlings + iron ONLY
 plugin-host ── the host side of the SPI without server or DB: discovery, config, registration, the
               acquisition client and its parsers of the upstreams' JSON, the chain, how plugin
               media/catalogues/AI are read.                       core, config + plugin-api
@@ -123,7 +124,7 @@ unless there is a written reason.
 
 These rules bind new and changed code. Existing code that breaks them is brought in line when it is
 changed for another reason, not in a sweep. Iron (`io.github.iltotore::iron`) is a dependency of
-`values`, `api` and `core`; Chimney (`io.scalaland::chimney`) of `server`, where the layers meet (and of
+`values`, `api`, `core` and `plugin-api`; Chimney (`io.scalaland::chimney`) of `server`, where the layers meet (and of
 `chimney-iron`): another module that needs it adds it, with its native-image metadata. The examples were compiled against Iron 3.4.1 and
 Chimney 2.1.0.
 

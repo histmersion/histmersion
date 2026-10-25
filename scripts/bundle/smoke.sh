@@ -235,7 +235,7 @@ else
     HISTMERSION_GRAALVM_HOME="$gv" HISTMERSION_SERVICE=none HISTMERSION_CODESIGN_IDENTITY=- "$@"; }
   rel "$ri/bin/histmersion" plugin add "$hello" --yes > "$data/add.out" 2>&1 || fail "plugin add: $(cat "$data/add.out")"
   sed 's/^/  /' "$data/add.out"
-  grep -q "plugin hello 0.1.0 · SPI 1 · access: open · provides source-fetcher:hello" "$data/add.out" || fail "plugin add did not describe the plugin"
+  grep -q "plugin hello 0.1.0 · SPI 2 · access: open · provides source-fetcher:hello" "$data/add.out" || fail "plugin add did not describe the plugin"
   [ -f "$rd/plugins/hello-0.1.0.jar" ] || fail "plugin add did not install hello-0.1.0.jar"
   # by its coordinates, from the fixture repository: its POM lists hello-lib, which is installed with it
   rel "$ri/bin/histmersion" plugin add com.kubuszok::histmersion-plugin-hello-deps:0.1.0 --repo "$fixtures" --yes > "$data/add-deps.out" 2>&1 \

@@ -70,7 +70,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       val keys  = loaded("kit-fetcher", s"base-url = \"$base\"", HttpMode.Live)
       val whole = loaded("kit-fetcher", s"histmersion.plugins.kit-fetcher { base-url = \"$base\" }", HttpMode.Live)
       for h <- List(keys, whole) do
-        assert(h.fetch(WorkKey(doi = Some("10.1/ok"))).file.isDefined)
+        assert(h.fetch(WorkKey(doi = Some(Doi("10.1/ok")))).file.isDefined)
     }
 
   test("secrets come from the test: a stand-in vault or the environment, never a real vault"):
@@ -90,7 +90,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       "https://books.example/10.1/ok.pdf"   -> StubAnswer.ok(Pdf, "application/pdf"),
       "https://books.example/10.1/tiny.pdf" -> StubAnswer.ok("%PDF-1.7".getBytes(UTF_8)),
       "https://books.example/10.1/cf.pdf"   -> StubAnswer(403, JustAMoment.getBytes(UTF_8)))))
-    val found = h.fetch(WorkKey(doi = Some("10.1/ok")), saveTo = Some(dir))
+    val found = h.fetch(WorkKey(doi = Some(Doi("10.1/ok"))), saveTo = Some(dir))
     found.outcome match
       case FetchOutcome.Found("kit-fetcher", file, Some(saved)) =>
         assertEquals(Files.readAllBytes(saved).toSeq, Pdf.toSeq)
@@ -98,18 +98,18 @@ class PluginHarnessSuite extends munit.FunSuite:
       case other => fail(s"expected a saved copy, got $other")
     assertEquals(found.licence, Some("CC-BY-4.0"))
     assertEquals(found.requests, List("GET https://books.example/10.1/ok.pdf"))
-    assertEquals(h.fetch(WorkKey(doi = Some("10.1/tiny"))).outcome, FetchOutcome.Miss("kit-fetcher: not a PDF"))
-    h.fetch(WorkKey(doi = Some("10.1/cf"))).outcome match
+    assertEquals(h.fetch(WorkKey(doi = Some(Doi("10.1/tiny")))).outcome, FetchOutcome.Miss("kit-fetcher: not a PDF"))
+    h.fetch(WorkKey(doi = Some(Doi("10.1/cf")))).outcome match
       case FetchOutcome.Refused(why) => assert(why.contains("bot-protection challenge"), why)
       case other                     => fail(s"expected a refusal, got $other")
-    assert(h.fetch(WorkKey(doi = Some("10.1/none"))).outcome.toString.contains("HTTP 404"))
+    assert(h.fetch(WorkKey(doi = Some(Doi("10.1/none")))).outcome.toString.contains("HTTP 404"))
     assertEquals(h.fetch(WorkKey(title = Some("No DOI"))).answers, List(FetcherAnswer("kit-fetcher", false, "no DOI")))
   }
 
   test("live: the server's User-Agent goes out"):
     withSite { (base, seen) =>
       val h = loaded("kit-fetcher", s"base-url = \"$base\"", HttpMode.Live, env = Map("HISTMERSION_ACQUIRE_USER_AGENT" -> "kit-agent/1"))
-      assert(h.fetch(WorkKey(doi = Some("10.1/ok"))).file.isDefined)
+      assert(h.fetch(WorkKey(doi = Some(Doi("10.1/ok")))).file.isDefined)
       assertEquals(seen.asScala.toList, List("/10.1/ok.pdf" -> "kit-agent/1"))
     }
 
@@ -118,17 +118,17 @@ class PluginHarnessSuite extends munit.FunSuite:
     val env    = Map("KIT_TOKEN" -> "tok-secret-42")
     withSite { (base, seen) =>
       val h = loaded("kit-fetcher", config + s"\nbase-url = \"$base\"", HttpMode.Record(dir), env = env)
-      assert(h.fetch(WorkKey(doi = Some("10.1/ok"))).file.isDefined)
-      assert(h.fetch(WorkKey(doi = Some("10.1/challenge"))).outcome.isInstanceOf[FetchOutcome.Refused])
+      assert(h.fetch(WorkKey(doi = Some(Doi("10.1/ok")))).file.isDefined)
+      assert(h.fetch(WorkKey(doi = Some(Doi("10.1/challenge")))).outcome.isInstanceOf[FetchOutcome.Refused])
       assert(seen.asScala.exists(_._1.contains("key=tok-secret-42")), "the live request carries the real key")
       // the replay must not reach the site
       val replayed = loaded("kit-fetcher", config + s"\nbase-url = \"$base\"", HttpMode.Replay(dir), env = env)
       seen.clear()
-      val ok = replayed.fetch(WorkKey(doi = Some("10.1/ok")))
+      val ok = replayed.fetch(WorkKey(doi = Some(Doi("10.1/ok"))))
       assertEquals(ok.file.map(_.bytes.toSeq), Some(Pdf.toSeq))
-      assert(replayed.fetch(WorkKey(doi = Some("10.1/challenge"))).outcome.isInstanceOf[FetchOutcome.Refused])
+      assert(replayed.fetch(WorkKey(doi = Some(Doi("10.1/challenge")))).outcome.isInstanceOf[FetchOutcome.Refused])
       assert(seen.isEmpty, seen.toString)
-      val unrecorded = intercept[UnrecordedRequest](replayed.fetch(WorkKey(doi = Some("10.1/other"))))
+      val unrecorded = intercept[UnrecordedRequest](replayed.fetch(WorkKey(doi = Some(Doi("10.1/other")))))
       assert(unrecorded.getMessage.contains("/10.1/other.pdf?key={secret}"), unrecorded.getMessage)
     }
     val files = Files.list(dir).iterator.asScala.toList.map(_.getFileName.toString).sorted
@@ -143,7 +143,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       val env = Map("HISTMERSION_ACQUIRE_OPENALEX_URL" -> base, "HISTMERSION_ACQUIRE_CONTACT_EMAIL" -> "someone@example.org")
       val live = loaded("kit-fetcher", s"base-url = \"$base\"", HttpMode.Record(dir), env = env)
       val work = WorkKey.fromDoi("https://doi.org/10.1/OK", live)
-      assertEquals(work, Right(WorkKey(doi = Some("10.1/ok"), title = Some("A Book"), authors = List("A. Author"), year = Some(2020))))
+      assertEquals(work, Right(WorkKey(doi = Some(Doi("10.1/ok")), title = Some("A Book"), authors = List("A. Author"), year = Some(Year(2020)))))
       assert(!live.requests.exists(_.contains("someone")), "no contact e-mail from a test")
       val replay = loaded("kit-fetcher", s"base-url = \"$base\"", HttpMode.Replay(dir), env = env)
       assertEquals(WorkKey.fromDoi("10.1/ok", replay), work)
@@ -166,10 +166,10 @@ class PluginHarnessSuite extends munit.FunSuite:
     val h = loaded("kit-events", "", HttpMode.Stub(Map(
       "https://events.example/p1" -> StubAnswer.text("thera|Eruption of Thera|-1620|-1600\nbad|Backwards|-1500|-1600"),
       "https://events.example/p2" -> StubAnswer.text("vesuvius|Vesuvius|79|79"))))
-    val r = h.readCatalogue("kit-events", CatalogueQuery(None, 2025))
+    val r = h.readCatalogue("kit-events", CatalogueQuery(None, Year(2025)))
     assertEquals(r.pages, List("p1" -> Right(2), "p2" -> Right(1)))
     assertEquals(r.accepted.map(e => (e.event.id, e.kind, e.notBefore, e.notAfter)),
-      List(("thera", "eruption", Some(-1620L), Some(-1600L)), ("vesuvius", "eruption", Some(79L), Some(79L))))
+      List(("thera", "eruption", Some(Year(-1620)), Some(Year(-1600))), ("vesuvius", "eruption", Some(Year(79)), Some(Year(79)))))
     assertEquals(r.refused, List("p1: bad: its dating runs backwards"))
 
   private val request = AiTurnRequest("m", "system", List(AiMessage.User("hi")), Nil, None, 100, 1, 1)

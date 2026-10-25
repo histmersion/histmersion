@@ -21,15 +21,14 @@ package com.histmersion.plugin
   * @param wikidata its Wikidata item (`Q5788`), when it has one
   * @param lat      its latitude, when it has a point
   * @param lon      its longitude, when it has a point
-  * @param period   its period, signed years (BCE negative), inclusive — the place's own, else the span
-  *                 of the findings it holds */
+  * @param period   its period — the place's own, else the span of the findings it holds */
 final case class MediaPlace(
     id: String,
     label: String,
-    wikidata: Option[String] = None,
-    lat: Option[Double] = None,
-    lon: Option[Double] = None,
-    period: Option[(Long, Long)] = None
+    wikidata: Option[WikidataId] = None,
+    lat: Option[Latitude] = None,
+    lon: Option[Longitude] = None,
+    period: Option[Period] = None
 )
 
 /** What a record says about reuse, as the provider states it — never judged by the plugin.
@@ -41,7 +40,7 @@ final case class MediaPlace(
   * @param author     the creator to name, when the record names one
   * @param credit     the credit line in the provider's own form (required: shown with every use) */
 final case class MediaRights(
-    licence: String,
+    licence: Licence,
     licenceUrl: Option[String] = None,
     author: Option[String] = None,
     credit: String = ""
@@ -58,7 +57,7 @@ final case class MediaRights(
   * @param rights      the licence as stated, or why the record is not reusable (`Left`, e.g. "not open access")
   * @param geography   the record's place fields (`find-spot`, `city`, `country` …) as (field, value),
   *                    MOST SPECIFIC FIRST; values are given as written (the host skips uncertain ones)
-  * @param period      the object's date range, signed years, when the record gives one
+  * @param period      the object's date range, when the record gives one
   * @param ids         gazetteer ids the record gives for where it is from, as (scheme, id):
   *                    `("pleiades", "697725")`, `("geonames", "310858")`, `("wikidata", "Q5788")`
   * @param withheld    why the record must not be shown whatever its licence (a human-remains flag) */
@@ -71,7 +70,7 @@ final case class MediaItem(
     thumbUrl: Option[String] = None,
     originalUrl: Option[String] = None,
     geography: List[(String, String)] = Nil,
-    period: Option[(Long, Long)] = None,
+    period: Option[Period] = None,
     ids: List[(String, String)] = Nil,
     withheld: Option[String] = None
 )
@@ -84,7 +83,7 @@ enum MediaMatchRule:
   case Museum
   /** A map: any of its locations naming this place alone ties it, and it must be dated no later than
     * `maxYear`. */
-  case Map(maxYear: Int)
+  case Map(maxYear: Year)
   /** A record that may carry gazetteer ids ([[MediaItem.ids]]): an id naming this place alone ties it
     * (unless one of its fields in `deeper` names another place on the map), else the museum rule;
     * the dates must overlap either way. */

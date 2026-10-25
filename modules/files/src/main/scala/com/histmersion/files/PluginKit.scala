@@ -193,7 +193,8 @@ object PluginKit:
       List(s"${jar.file} holds no plugin (no META-INF/services/com.histmersion.plugin.Plugin provider)") else Nil
     none ++ jar.plugins.flatMap { p =>
       val spi = if p.spiVersion != spiVersion then
-        List(s"${p.id} ${p.version} was built for plugin SPI ${p.spiVersion}; this Histmersion speaks SPI $spiVersion") else Nil
+        List(s"${p.id} ${p.version} was built for plugin SPI ${p.spiVersion}; this Histmersion speaks SPI $spiVersion — " +
+          s"rebuild it against SPI $spiVersion") else Nil
       val broken = if p.id.isEmpty then List(s"a provider in ${jar.file} could not be loaded: ${p.error.getOrElse("?")}") else Nil
       val clash  = taken.get(p.id).map(o => s"plugin id '${p.id}' is already provided by $o").toList
       spi ++ broken ++ clash

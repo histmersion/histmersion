@@ -290,7 +290,8 @@ describe what was built).
 
 A plugin compiles against **one** module, `modules/plugin-api` (artifact `histmersion-plugin-api`,
 package `com.histmersion.plugin`). It never sees the server, the database or the domain model. The
-module's only dependencies are sconfig and kindlings' sconfig derivation.
+module's only dependencies are sconfig, kindlings' sconfig derivation and Iron, all three part of the
+plugin platform.
 
 `plugin-api`, like the rest of Histmersion, is licensed under the AGPL-3.0-or-later. A plugin is
 linked into the server's binary and runs inside it, so a plugin you give to other people must be
@@ -301,8 +302,16 @@ under a licence compatible with the AGPL ([Legal notice](../legal.md)).
   class with a no-argument constructor (not a Scala `object`), and constructing it does nothing —
   real work starts in `register`, and only for an enabled plugin.
 - **`PluginInfo(id, version, spiVersion)`.** `id` is kebab-case (`[a-z0-9][a-z0-9-]*`) and is also
-  the settings key: `histmersion.plugins.<id> { … }`. `spiVersion` must be `Spi.Version` (now 1);
-  a plugin built for another one is refused.
+  the settings key: `histmersion.plugins.<id> { … }`. `spiVersion` must be `Spi.Version` (now 2),
+  which is compiled into your plugin; a plugin built for another one is refused, with a message to
+  rebuild it.
+- **Typed values.** What the SPI exchanges about works, places, events and pictures has a type of its
+  own: `Year`, `Period`, `Latitude`, `Longitude`, `Doi`, `WikidataId`, `Licence` (Iron newtypes, plain
+  `Int`s, `Double`s and `String`s at run time). A literal is checked when the plugin compiles:
+  `Year(-1600)`, `Doi("10.1234/abc")`. A value read at run time is parsed: `Doi.option(raw)`,
+  `Latitude.either(raw)` (a `Left` with the reason); `Period.from(start, end)` refuses one that ends
+  before it starts. `.value` takes the plain value out. The host checks every value you hand over
+  again and refuses that record, naming the value, if one fails.
 - **A path-dependent `Config`.** Each plugin declares `type Config` and a `given ConfigReader[Config]`
   — a `deferred` given, so `derives ConfigReader` on your case class fills it in. The host decodes
   *this* plugin's block with *this* reader and hands the value to *this* plugin's `register`: no cast,
@@ -337,6 +346,41 @@ flowchart LR
 
 The settings a plugin finally sees are layered: **environment overrides its defaults declare >
 the user's `plugins.<id>` block > its defaults**.
+
+## SPI 2: what changed
+
+SPI 2 gave the values the SPI exchanges types of their own. A plugin built against SPI 1 is refused
+when it is installed, linked or loaded — `it was built against plugin SPI 1; this Histmersion speaks
+SPI 2 — rebuild the plugin against SPI 2` — so rebuild it against this release's `histmersion-plugin-api`
+(`histmersion plugin repo --m2`, then `scala-cli test .` and publish), raise its version, and install the
+new jar with `histmersion plugin add`.
+
+| where | SPI 1 | SPI 2 |
+|---|---|---|
+| `WorkKey` | `doi: Option[String]`, `year: Option[Int]` | `doi: Option[Doi]`, `year: Option[Year]` |
+| `FetchedFile` | `licence: Option[String]`; a four-field `apply` and constructor | `licence: Option[Licence]`; the four-field forms are gone (`licence` still defaults to `None`) |
+| `MediaPlace` | `wikidata: Option[String]`, `lat`/`lon: Option[Double]`, `period: Option[(Long, Long)]` | `Option[WikidataId]`, `Option[Latitude]`/`Option[Longitude]`, `Option[Period]` |
+| `MediaItem` | `period: Option[(Long, Long)]`, ends in either order | `period: Option[Period]`, built with `Period.from(start, end)` |
+| `MediaRights` | `licence: String` | `licence: Licence` |
+| `MediaMatchRule.Map` | `maxYear: Int` | `maxYear: Year` |
+| `CatalogueQuery` | `from: Option[Long]`, `to: Long`, `area: Option[(Double, Double, Double, Double)]` | `Option[Year]`, `Year`, `Option[(Longitude, Latitude, Longitude, Latitude)]` |
+| `CatalogueEvent` | `notBefore`, `notAfter`, `beginBy`, `endFrom`, `central: Option[Long]`; `lat`/`lon: Option[Double]`; `wikidata: Option[String]` | `Option[Year]`; `Option[Latitude]`/`Option[Longitude]`; `Option[WikidataId]` |
+| `EventCatalogue` | `licence: String`, `floorYear: Option[Long]` | `licence: Licence`, `floorYear: Option[Year]` |
+| `Spi.Version` | `val Version: Int = 1`, read from the host at run time | `inline val Version = 2`, compiled into the plugin |
+| testkit `AcceptedEvent` | `notBefore` … `notAfter: Option[Long]` | `Option[Year]` |
+
+What to change in a plugin:
+
+- Wrap literals: `Year(-1600)`, `Licence("CC0-1.0")`, `Doi("10.1234/abc")`, `Latitude(36.4)`.
+- Parse what you read from a provider: `WikidataId.option(raw.trim.toUpperCase)`, `Doi.option(raw)`,
+  `Latitude.option(lat)`; `Year(raw.toInt)` for a year (every integer is one). SPI 1's host corrected a
+  Wikidata id written in lower case and dropped one that was none; now the type does, in your code.
+- Take values out with `.value` where you build text or URLs: `work.doi.map(_.value)`.
+- A tuple period becomes `Period.from(Year(a), Year(b))` (`Left` when it ends before it starts).
+- In munit, compare a value taken out with `.value` against a plain one through its base type
+  (`.map(d => d.value: String)`): munit compares only types it can tell are comparable.
+- Nothing changed in `PluginInfo`, `PluginContext`, the registries, `Secret`, the AI provider's types, the
+  settings, or how a plugin is packaged, installed and linked.
 
 ## Walkthrough 1: `hello`, a source fetcher
 
@@ -395,7 +439,8 @@ The fetcher contract (`SourceFetcher.scala`):
 - `fetch(work: WorkKey, ctx: FetchContext): Fetch` gets every identifier the caller has (DOI, arXiv,
   PubMed, PMC, archive.org, ISBN, title, authors, year, preferred format) and answers
   `Fetch.Found(FetchedFile(…))`, `Fetch.Miss(why)` or `Fetch.Refused(why)` (a copy exists but may not
-  be taken). A `FetchedFile` may carry the copy's `licence` (`licence = Some("CC-BY-4.0")`: an SPDX id,
+  be taken). `work.doi` is a `Doi` (`work.doi.map(_.value)` for the text), `work.year` a `Year`. A
+  `FetchedFile` may carry the copy's `licence` (`licence = Some(Licence("CC-BY-4.0"))`: an SPDX id,
   `public-domain` or the licence's URL); ingest records it as the source's licence when it has none.
 - A bot-protection page (Cloudflare's challenge, Anubis's proof-of-work check) is a `Fetch.Refused`:
   never solve or work around it.
@@ -526,7 +571,7 @@ class DoiMirrorLiveSuite extends munit.FunSuite:
     assume(mode.isRight, mode.left.getOrElse(""))                    // skipped
     val harness = PluginHarness.load("doi-mirror", "base-url = \"https://mirror.example.org\"",
       http = mode.toOption.get).fold(e => fail(e), identity)        // or the server's refusal
-    val work   = WorkKey.fromDoi("10.1234/abc", harness).getOrElse(WorkKey(doi = Some("10.1234/abc")))
+    val work   = WorkKey.fromDoi("10.1234/abc", harness).getOrElse(WorkKey(doi = Some(Doi("10.1234/abc"))))
     val report = harness.fetch(work, saveTo = Some(Path.of("target", "fetched")))
     assert(report.outcome.isInstanceOf[FetchOutcome.Found], report.toString)
 ```

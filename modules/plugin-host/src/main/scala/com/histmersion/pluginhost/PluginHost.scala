@@ -96,11 +96,51 @@ object PluginHost:
         catch
           case e: LinkageError => Left(e)
           case NonFatal(e)     => Left(e)
-      step match
-        case Right(Some(p)) => loop(p :: acc, errs)
-        case Right(None)    => (acc.reverse, errs.reverse)
-        case Left(e)        => loop(acc, s"a plugin provider could not be loaded: ${failure(e)}" :: errs)
+      val loaded: Either[(Option[String], Throwable), Option[Plugin]] = step.left.map(e => providerOf(e) -> e).flatMap {
+        case Some(p) => described(p).left.map(e => Some(p.getClass.getName) -> e).map(Some(_))
+        case None    => Right(None)
+      }
+      loaded match
+        case Right(Some(p))      => loop(p :: acc, errs)
+        case Right(None)         => (acc.reverse, errs.reverse)
+        case Left((provider, e)) =>
+          loop(acc, s"a plugin provider${provider.fold("")(c => s" ($c)")} could not be loaded: ${failure(e)}" :: errs)
     loop(Nil, Nil)
+
+  private val ProviderClass = "Provider ([\\w.$]+)".r.unanchored
+
+  /** The provider class ServiceLoader names in the error it threw for one it could not instantiate. */
+  def providerOf(e: Throwable): Option[String] = e match
+    case e: java.util.ServiceConfigurationError =>
+      Option(e.getMessage).collect { case ProviderClass(c) => c }
+    case _ => None
+
+  /** The plugin, once its [[Plugin.info]] could be read: a plugin built against an older SPI fails on it
+    * (SPI 1's `Spi.Version` was read at run time, and SPI 2 has no such member). */
+  def described(p: Plugin): Either[Throwable, Plugin] =
+    try
+      val _ = p.info.id
+      Right(p)
+    catch
+      case e: LinkageError => Left(e)
+      case NonFatal(e)     => Left(e)
+
+  /** The plugin SPI generation a plugin that failed to link was built against, when that is why `e` was
+    * thrown: a member of `com.histmersion.plugin` it calls is missing, or has another shape. SPI 1 is
+    * recognised by name (it read `Spi.Version`, which SPI 2 compiles into the plugin); `None` for another
+    * SPI type when the generation cannot be told. */
+  def foreignSpi(e: Throwable): Option[Option[Int]] = e match
+    case e: (NoSuchMethodError | NoSuchFieldError | AbstractMethodError | IncompatibleClassChangeError) =>
+      val message = Option(e.getMessage).getOrElse("").replace('/', '.')
+      if message.contains("com.histmersion.plugin.Spi$.Version()") then Some(Some(1))
+      else if message.contains("com.histmersion.plugin.") then Some(None)
+      else None
+    case e => Option(e.getCause).filter(_ ne e).flatMap(foreignSpi)
+
+  /** What to do about a plugin built against another SPI generation. */
+  def rebuild(built: Option[Int]): String =
+    s"it was built against ${built.fold("another plugin SPI")(v => s"plugin SPI $v")}; this Histmersion speaks " +
+      s"SPI ${Spi.Version} — rebuild the plugin against SPI ${Spi.Version} (`histmersion plugin repo` has its API)"
 
   /** The class a plugin needs that no jar on the class path has, when that is why `e` was thrown: the
     * library it belongs to was neither shipped with Histmersion nor installed with the plugin. */
@@ -111,9 +151,9 @@ object PluginHost:
 
   /** Why plugin code threw, in words that say what to do when a class is missing. */
   def failure(e: Throwable): String =
-    missingClass(e).fold(s"${e.getClass.getSimpleName}: ${e.getMessage}")(name =>
+    foreignSpi(e).map(rebuild).getOrElse(missingClass(e).fold(s"${e.getClass.getSimpleName}: ${e.getMessage}")(name =>
       s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
-        "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies")
+        "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies"))
 
   // ── pure parts of the config contract ───────────────────────────────────────────────────────
 
@@ -124,7 +164,7 @@ object PluginHost:
     val dup = infos.groupBy(_.id).collect { case (id, is) if is.size > 1 =>
       id -> s"plugin id '$id' is claimed by ${is.size} plugins" }
     val bad = infos.flatMap { i =>
-      if i.spiVersion != spi then Some(i.id -> s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi")
+      if i.spiVersion != spi then Some(i.id -> s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi — rebuild it against SPI $spi")
       else if !i.id.matches(IdPattern) then Some(i.id -> s"'${i.id}': a plugin id is kebab-case $IdPattern")
       else if Reserved(i.id) then Some(i.id -> s"'${i.id}' is a key of $Root, not a plugin id")
       else None

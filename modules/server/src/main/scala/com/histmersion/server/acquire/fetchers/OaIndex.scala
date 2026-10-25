@@ -59,7 +59,7 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
 
   private def byDoi(step: String)(f: (FetchContext, String) => Option[FetchedFile]): SourceFetcher =
     open((work: WorkKey, ctx: FetchContext) =>
-      work.doi.fold[Fetch](Fetch.Miss(s"$step needs a DOI"))(d => answer(f(ctx, d), s"$step has no copy of $d")))
+      work.doi.map(_.value).fold[Fetch](Fetch.Miss(s"$step needs a DOI"))(d => answer(f(ctx, d), s"$step has no copy of $d")))
 
   /** `unpaywall`, asking with `email` (the plugin's `contact-email`, else Histmersion's). */
   def unpaywall(email: Option[String]): SourceFetcher =

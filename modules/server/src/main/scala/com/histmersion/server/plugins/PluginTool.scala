@@ -137,7 +137,7 @@ object PluginTool:
               catch
                 case e: LinkageError => Left(e)
                 case NonFatal(e)     => Left(e)
-            instance match
+            instance.flatMap(PluginHost.described) match
               case Right(p) => dryRun(p)
               case Left(e)  => PluginDescription("", "", 0, error = Some(s"${prov.`type`().getName}: ${PluginHost.failure(e)}"))
           }
