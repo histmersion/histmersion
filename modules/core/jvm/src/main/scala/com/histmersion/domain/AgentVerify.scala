@@ -1,9 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.api.given
-import com.histmersion.config.given
+import com.histmersion.api.{Period, Years}
 
 import java.text.Normalizer
 import com.histmersion.values.{Confidence, SourceStatus}
