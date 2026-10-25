@@ -34,7 +34,7 @@ tools (`/mcp`), the REST API (`/api`), the server-rendered source and article pa
 |---|---|---|---|
 | `values` | the newtypes every layer speaks of: `Citekey`, `Year`, `Period`, `Doi`, `WikidataId`, `LatLon` (JVM and Scala.js) | Iron only | — |
 | `api` | **the contract on the wire**: wire records · `Filter` · Tapir endpoint definitions · their codecs and schemas · Markdown rendering (JVM and Scala.js). No database code, no side effects. | `values` | — |
-| `config` | the config model: `AppConfig`, its readers, `reference.conf` | `values`, `api` | — |
+| `config` | the config model: `AppConfig`, its readers, `reference.conf`, the reload plan | `values` | — |
 | `core` | **the domain**: the logic the server and the store run on · frontmatter parsing · export. No database code, no side effects. | `values`, `api`, `config` | — |
 | `db` | **the store**: Magnum repos over Postgres/PostGIS · Flyway migrations · the seed importer | `config`, `core` | — |
 | `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db`, `plugin-api`, `plugin-host`, `plugin-vaults` | native image |

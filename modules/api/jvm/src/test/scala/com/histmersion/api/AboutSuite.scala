@@ -91,3 +91,11 @@ class AboutSuite extends munit.FunSuite:
     assert(one.contains("- reference data: 1 place · 1 period · 1 preset"), one)
     assertEquals(Plural.count(2, "entry", "entries"), "2 entries")
     assertEquals(Plural.count(1, "entry", "entries"), "1 entry")
+
+  test("About renders the config file line"):
+    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"), loaded = true)), "/c/h.conf (read)")
+    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"))),
+      "/c/h.conf (not found: defaults and environment only)")
+    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"), loaded = true, List("histmersion.x"))),
+      "/c/h.conf (read; ignored unknown key: histmersion.x)")
+    assertEquals(ConfigFileInfo.describe(ConfigFileInfo()), "none (no location: HOME is unset)")

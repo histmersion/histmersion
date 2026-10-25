@@ -3,6 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.pluginhost.HostAiHttp
 
 import com.histmersion.config.AgentsConfig
+import com.histmersion.domain.provider
 import com.histmersion.api.Agents
 import com.histmersion.api.Agents.{ModelRef, ProviderKind}
 import sttp.ai.claude.ClaudeClient

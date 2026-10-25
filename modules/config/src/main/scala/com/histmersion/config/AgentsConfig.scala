@@ -1,8 +1,7 @@
 package com.histmersion.config
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.numeric.Positive
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Embedded research agents (docs/research-embedded-agents.md §5.3). OFF by default: with `enabled =
@@ -12,8 +11,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * the database, `/api/about`, a log line or a trace — [[AgentProviderConfig.toString]] redacts them.
   *
   * Several values are strings that a pure parser in [[Agents]] turns into types, because an env
-  * override can only ever be a string: `roles.*` are `provider:model` references ([[Agents.ModelRef]])
-  * and `prices` is a price table ([[Agents.Prices]]). */
+  * override can only ever be a string: `roles.*` are `provider:model` references (`Agents.ModelRef`)
+  * and `prices` is a price table (`Agents.Prices`). */
 final case class AgentProviderConfig(baseUrl: String, apiKey: String, strictTools: Boolean, timeoutSeconds: Int)
     derives ConfigReader:
   override def toString: String =
@@ -80,7 +79,7 @@ final case class CodexConfig(command: String, home: String, useApiKey: Boolean, 
   * plan pool as Codex (otherwise they are metered). */
 final case class OpencodeConfig(command: String, timeoutSeconds: Int, chatgptLogin: Boolean) derives ConfigReader
 
-/** One entry per [[Agents.ProviderKind]] — the provider half of a `provider:model` reference. */
+/** One entry per provider kind — the provider half of a `provider:model` reference. */
 final case class AgentProvidersConfig(anthropic: AgentProviderConfig, openai: AgentProviderConfig,
     local: AgentProviderConfig, claudeCode: ClaudeCodeConfig, codex: CodexConfig, opencode: OpencodeConfig)
     derives ConfigReader
@@ -91,13 +90,28 @@ final case class AgentProvidersConfig(anthropic: AgentProviderConfig, openai: Ag
 final case class AgentRuntimesConfig(dir: String, generate: Boolean, claudeMod: Boolean, interactiveMod: Boolean)
     derives ConfigReader
 
-given ConfigReader[PlanQuota.ScheduledRefresh] = summon[ConfigReader[Int]].emap(PlanQuota.ScheduledRefresh.fromMinutes)
+type RefreshIntervalMinutes = RefreshIntervalMinutes.T
+object RefreshIntervalMinutes extends RefinedType[Int, Positive]
+
+/** How often a plan pool is read while the autopilot is on and queued work wants it, besides the reading a
+  * run's own pick takes. */
+enum ScheduledRefresh:
+  case Off
+  case Every(interval: RefreshIntervalMinutes)
+
+object ScheduledRefresh:
+  /** The configured minutes: 0 = off. */
+  def fromMinutes(minutes: Int): Either[String, ScheduledRefresh] =
+    if minutes == 0 then Right(Off)
+    else RefreshIntervalMinutes.either(minutes).map(Every(_)).left.map(_ => s"$minutes is not 0 (off) or a positive number of minutes")
+
+given ConfigReader[ScheduledRefresh] = summon[ConfigReader[Int]].emap(ScheduledRefresh.fromMinutes)
 
 /** One plan pool: a floor (% that must stay LEFT) per window kind (`five_hour=25, seven_day=25`;
   * Codex windows by length, `300m`, `10080m`), how many LLM calls may draw on it at once, and how often it
   * is read while the autopilot has queued work for it. */
 final case class PlanPoolConfig(floors: String, maxCallsInFlight: Int,
-    refreshEveryMinutes: PlanQuota.ScheduledRefresh = PlanQuota.ScheduledRefresh.Off) derives ConfigReader
+    refreshEveryMinutes: ScheduledRefresh = ScheduledRefresh.Off) derives ConfigReader
 
 /** The Claude plan pool: [[PlanPoolConfig]]'s two, and how it takes a fresh reading when a run wants
   * the pool and its last one is too old to decide on (docs/research-plan-quotas.md §8). `refresh` is
@@ -107,7 +121,7 @@ final case class PlanPoolConfig(floors: String, maxCallsInFlight: Int,
   * reads it on a schedule while the autopilot has queued work for it. */
 final case class ClaudePlanConfig(floors: String, maxCallsInFlight: Int, refresh: String, probeModel: String,
     probeMaxTokens: Int, probeTimeoutSeconds: Int,
-    refreshEveryMinutes: PlanQuota.ScheduledRefresh = PlanQuota.ScheduledRefresh.Off) derives ConfigReader
+    refreshEveryMinutes: ScheduledRefresh = ScheduledRefresh.Off) derives ConfigReader
 
 /** Subscription pools (docs/research-plan-quotas.md §5): a snapshot older than `staleMinutes` is
   * unknown; a window with no floor of its own has `defaultFloor`; a stale reading lets a run go on only
@@ -215,24 +229,7 @@ object FinalPanel:
   * refutes, updates, superseded_by). Anything but `auto` is manual. */
 final case class AgentApprovalsConfig(statusChange: String, edges: String, articlePublish: String,
     articleFilter: String = "manual", articlePlan: String = "manual", goalPlan: String = "manual",
-    auto: AutoApprovalsConfig = AutoApprovalsConfig()) derives ConfigReader:
-  def statusMode: Agents.ApprovalMode  = AgentApprovalsConfig.mode(statusChange)
-  def edgeMode: Agents.ApprovalMode    = AgentApprovalsConfig.mode(edges)
-  /** `compile-article`: `manual` (the default) waits for a person before the article is written. */
-  def publishMode: Agents.ApprovalMode = AgentApprovalsConfig.mode(articlePublish)
-  /** `infer-filter`: `manual` (the default) records the filter only once a person approves it. */
-  def filterMode: Agents.ApprovalMode  = AgentApprovalsConfig.mode(articleFilter)
-
-  /** Whether the managers' supervisor decides an open approval of `kind` by its code checks (the
-    * autopilot's auto approvals, docs/research-process-managers.md "As built: the autopilot"):
-    * `article-plan` and `goal-plan` = `auto` (or `checked`); `article-publish` = `checked` — its `auto`
-    * approves in the run at once, unchecked, as before, and the supervisor only decides what was left
-    * open. Any other kind, or any other value, is a person's. */
-  def checked(kind: Agents.ApprovalKind): Boolean = kind match
-    case Agents.ApprovalKind.ArticlePlan    => AgentApprovalsConfig.isChecked(articlePlan)
-    case Agents.ApprovalKind.GoalPlan       => AgentApprovalsConfig.isChecked(goalPlan)
-    case Agents.ApprovalKind.ArticlePublish => AgentApprovalsConfig.isChecked(articlePublish)
-    case _                                  => false
+    auto: AutoApprovalsConfig = AutoApprovalsConfig()) derives ConfigReader
 
 /** The caps and the thresholds of the checked auto approvals ([[AgentApprovalsConfig.checked]]): at
   * most `articlesPerGoalPerDay` planned articles of one research area, `publishPerDay` article drafts and
@@ -253,10 +250,6 @@ object AgentApprovalsConfig:
   def isChecked(raw: String): Boolean =
     val v = Option(raw).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT)
     v == "auto" || v == "checked"
-
-  /** A value that is not `auto` — a typo included — is the safe one. */
-  def mode(raw: String): Agents.ApprovalMode =
-    Agents.ApprovalMode.parse(raw).getOrElse(Agents.ApprovalMode.Manual)
 
 /** `plan-goal`: at most this many sub-goals, queries and works in one plan (a longer answer is sent
   * back), each query at most `queryChars` long. */
@@ -427,27 +420,4 @@ final case class AgentsConfig(
     runtimes: AgentRuntimesConfig,
     quota: QuotaConfig,
     autopilot: AgentAutopilotConfig = AgentAutopilotConfig()
-) derives ConfigReader:
-
-  /** The HTTP provider block for a kind; the CLI providers have none ([[providers]]). */
-  def provider(k: Agents.ProviderKind): Option[AgentProviderConfig] = k match
-    case Agents.ProviderKind.Anthropic  => Some(providers.anthropic)
-    case Agents.ProviderKind.OpenAI     => Some(providers.openai)
-    case Agents.ProviderKind.Local      => Some(providers.local)
-    case Agents.ProviderKind.ClaudeCode | Agents.ProviderKind.Codex | Agents.ProviderKind.Opencode |
-         Agents.ProviderKind.Plugin(_) => None
-
-  /** The configured `provider:model` of a role, as written (empty = unset). */
-  def role(r: Agents.Role): String = r match
-    case Agents.Role.Probe      => roles.probe
-    case Agents.Role.Extractor  => roles.extractor
-    case Agents.Role.Reviewer   => roles.reviewer
-    case Agents.Role.ColdReader => roles.coldReader
-    case Agents.Role.Skeptic    => roles.skeptic
-    case Agents.Role.Fixer      => roles.fixer
-    case Agents.Role.Planner    => roles.planner
-    case Agents.Role.Writer     => roles.writer
-
-  /** How the command-line providers are signed in — which models draw on a plan pool. */
-  def logins: PlanQuota.Logins =
-    PlanQuota.Logins(providers.claudeCode.useApiKey, providers.codex.useApiKey, providers.opencode.chatgptLogin)
+) derives ConfigReader

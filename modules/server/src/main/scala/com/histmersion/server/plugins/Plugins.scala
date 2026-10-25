@@ -2,8 +2,8 @@ package com.histmersion.server.plugins
 
 import com.histmersion.pluginhost.{Generation, HostServices, PluginHost, PolicyHttp, Registries}
 
-import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.api.{HotPlan, PluginState, PluginStatus}
+import com.histmersion.config.{AppConfig, HotPlan, LoadedConfig}
+import com.histmersion.api.{PluginState, PluginStatus}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.{Plugin, PluginHttp}

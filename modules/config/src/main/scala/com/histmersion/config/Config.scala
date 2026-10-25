@@ -1,8 +1,5 @@
 package com.histmersion.config
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 import org.ekrich.config.ConfigFactory
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 
@@ -184,10 +181,41 @@ final case class PassageLimits(limit: Int, maxLimit: Int, context: Int, maxConte
   def contextOf(requested: Option[Int]): Int =
     requested.filter(_ >= 0).getOrElse(context).max(0).min(math.max(0, maxContext))
 
-given ConfigReader[TimeConfig]    = ConfigReader.derived
-given ConfigReader[DebounceConfig] = ConfigReader.derived
-given ConfigReader[EventsUiConfig] = ConfigReader.derived
-given ConfigReader[UiConfig]      = ConfigReader.derived
+/** The timeline's span (`ui.time`): the earliest and latest year it reaches, and the years it opens on. */
+final case class UiTimeSettings(min: Long, max: Long, defaultFrom: Long, defaultTo: Long) derives ConfigReader
+
+/** `ui.debounce`: the quiet periods before the page acts on typing and state changes; `previewMs` is the one
+  * before a HOVERED suggestion's preview reloads the lists. */
+final case class UiDebounceSettings(suggestMs: Int, searchMs: Int, reloadMs: Int, previewMs: Int) derives ConfigReader
+
+/** `ui.events`: the events on the map in playback — how long a local and a regional event fade (seconds of
+  * playback), the most one playback returns, and how far an area outline is simplified (degrees). */
+final case class UiEventsSettings(localFadeSeconds: Double, regionalFadeSeconds: Double, mapLimit: Int,
+    outlineToleranceDeg: Double) derives ConfigReader
+
+/** The `ui` block. The page reads it through `/api/config`, where the server adds what is no setting of
+  * this block: whether writes need a key, whether agents run, the plugins and the base map's language. */
+final case class UiSettings(
+    tiles: String,
+    tilesMaxZoom: Int,
+    markerRadius: Int,
+    viewportDebounceMs: Int,
+    pageSize: Int,
+    facetSuggestions: Int,
+    treeDepth: Int,
+    treeSamples: Int,
+    maxBuckets: Int,
+    debounce: UiDebounceSettings,
+    time: UiTimeSettings,
+    narrowMaxWidthPx: Int,
+    narrowMaxHeightPx: Int,
+    events: UiEventsSettings,
+    countersPollSeconds: Int = 30,
+    jobPollMs: Int = 1000,
+    tilesTone: String = "light",
+    docsUrl: String = "",
+    baseMapSource: String = "auto"
+) derives ConfigReader
 
 /** `histmersion query` (plan §5.2 stream 2.8): the read-only SQL escape hatch's safety rails.
   * `timeoutMs` becomes `SET LOCAL statement_timeout` inside the READ ONLY transaction, `maxRows`
@@ -338,6 +366,18 @@ final case class BasemapOnDemandConfig(enabled: Boolean, maxZoom: Int, cacheGb: 
 final case class BasemapLabelsConfig(url: String, files: List[String], maxZoom: Int, language: String,
     attribution: String) derives ConfigReader
 
+/** Where the sea floor's extract comes from (`basemap.bathymetry.source`). */
+enum SeaFloorSource(val wire: String):
+  /** NOAA's ETOPO1 (1 arc-minute, ~1.8 km) through Mapzen's terrain tiles: one GET a tile. */
+  case Etopo1 extends SeaFloorSource("etopo1")
+  /** The GEBCO grid (15 arc-seconds, ~460 m): its GeoTIFFs read by range and made into tiles by the fetch. */
+  case Gebco extends SeaFloorSource("gebco")
+
+object SeaFloorSource:
+  def parse(s: String): Either[String, SeaFloorSource] =
+    values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+      .toRight(s"'$s' is not a sea-floor source (${values.map(_.wire).mkString(", ")})")
+
 given ConfigReader[SeaFloorSource] = ConfigReader.stringReader.emap(SeaFloorSource.parse)
 
 /** The sea floor: terrarium tiles at `url` (`{z}/{x}/{y}`), zooms 0…`maxZoom` of the region, one GET a
@@ -405,9 +445,7 @@ final case class MediaConfig(
     asked.filter(_ > 0).getOrElse(defaultLimit).max(1).min(maxLimit.max(1))
 
 final case class MediaWikidataConfig(apiUrl: String, batch: Int, maxlag: Int, placeProperties: String,
-    eventProperties: String) derives ConfigReader:
-  def placeRoles: List[(String, String)] = MediaRoles.parse(placeProperties)
-  def eventRoles: List[(String, String)] = MediaRoles.parse(eventProperties)
+    eventProperties: String) derives ConfigReader
 
 final case class MediaCommonsConfig(apiUrl: String, batch: Int, maxlag: Int, licences: String) derives ConfigReader
 
@@ -441,10 +479,9 @@ final case class MediaPluginCollectionsConfig(licences: String, perCollection: M
 final case class MediaCoversConfig(openLibraryUrl: String, openLibraryPage: String, requestIntervalMs: Int,
     size: String, thumbSize: String) derives ConfigReader
 
-/** How a paper's illustration is chosen among its figures (`media.illustrations`, [[FigurePick]]). */
+/** How a paper's illustration is chosen among its figures (`media.illustrations`). */
 final case class MediaIllustrationsConfig(minSide: Int, minArea: Int, maxAspect: Double, maxRefs: Int,
-    earlyPages: Int, pageScanMin: Int) derives ConfigReader:
-  def rules: FigurePick.Rules = FigurePick.Rules(minSide, minArea, maxAspect, maxRefs, earlyPages, pageScanMin)
+    earlyPages: Int, pageScanMin: Int) derives ConfigReader
 
 /** Events from catalogues (#1449): `events` in reference.conf. The HTTP politeness (User-Agent,
   * retries, Retry-After cap) is `media`'s; each catalogue has its own pace. */
@@ -464,9 +501,7 @@ final case class EventsConfig(
     links: EventsLinksConfig,
     leads: EventsLeadsConfig,
     siteTypes: SiteTypesConfig
-) derives ConfigReader:
-  def regionBox: Option[BBox] = BBox.parse(region)
-  def tolerance: CatalogMerge.Tolerance = CatalogMerge.Tolerance(mergeKm, mergeYears)
+) derives ConfigReader
 
 /** `floorYear`: the earliest year a GVP dating may reach (the list is of HOLOCENE eruptions: a ± that
   * runs before it is held there, [[CatalogDating.Limits]]). */
@@ -478,9 +513,7 @@ final case class EventsWikidataConfig(sparqlUrl: String, apiUrl: String, request
     classes: String, languages: String, batch: Int) derives ConfigReader:
   def languageList: List[String] = languages.split(",").map(_.trim).filter(_.nonEmpty).toList
 final case class EventsLinksConfig(km: Double, years: Long, nameWeight: Double, findingWeight: Double, minScore: Double,
-    minNameChars: Int, maxCandidates: Int, sourcesPerName: Int, nearFindings: Int, batch: Int) derives ConfigReader:
-  def weights: EventMatcher.Weights =
-    EventMatcher.Weights(km, years, nameWeight, findingWeight, minScore, minNameChars, maxCandidates)
+    minNameChars: Int, maxCandidates: Int, sourcesPerName: Int, nearFindings: Int, batch: Int) derives ConfigReader
 final case class EventsLeadsConfig(km: Double, years: Long, articleKm: Double, largeVei: Int, largeMagnitude: Double,
     articleLimit: Int) derives ConfigReader
 /** Refining Wikidata sites' types from their items' classes (`events.site-types`). */
@@ -497,7 +530,7 @@ final case class AppConfig(
     storage: StorageConfig,
     merge: MergeConfig,
     limits: Limits,
-    ui: UiConfig,
+    ui: UiSettings,
     cli: CliConfig,
     query: QueryConfig,
     lint: LintConfig,

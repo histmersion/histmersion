@@ -1,8 +1,5 @@
 package com.histmersion.config
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Configuration for the acquisition & assessment toolset (plan §5.2, stream 2.6).

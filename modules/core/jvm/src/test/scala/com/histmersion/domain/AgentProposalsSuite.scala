@@ -54,6 +54,6 @@ class AgentProposalsSuite extends munit.FunSuite:
     assertEquals(route(edge, None, Manual, Auto), Route.Apply)
 
   test("an approval mode that is not exactly auto is manual"):
-    assertEquals(AgentApprovalsConfig.mode("AUTO"), ApprovalMode.Auto)
-    assertEquals(AgentApprovalsConfig.mode("automatic"), ApprovalMode.Manual)
-    assertEquals(AgentApprovalsConfig.mode(""), ApprovalMode.Manual)
+    assertEquals(ApprovalModes.configured("AUTO"), ApprovalMode.Auto)
+    assertEquals(ApprovalModes.configured("automatic"), ApprovalMode.Manual)
+    assertEquals(ApprovalModes.configured(""), ApprovalMode.Manual)

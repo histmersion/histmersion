@@ -18,7 +18,7 @@ The product plan and its waves: `docs/plan.md`. What it is: `README.md`; the doc
 values ── the newtypes every layer speaks of: Citekey, Year, Period, Doi, WikidataId, LatLon.   Iron ONLY
 api   ── the CONTRACT on the wire (JVM + JS): wire records, Tapir endpoint defs, circe codecs + schemas,
          Markdown, and the helpers they need.   NO database code, NO side effects.   depends on values ONLY
-config ── AppConfig and its readers (sconfig, Kindlings), reference.conf.   JVM only.   depends on values, api
+config ── AppConfig and its readers (sconfig, Kindlings), reference.conf.   JVM only.   depends on values ONLY
 core  ── the DOMAIN (package `domain`): the logic server and db run on, frontmatter, export. JVM only.
          NO database code, NO side effects.                       depends on values, api, config
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on config, core
@@ -69,9 +69,9 @@ database, it needs a new endpoint instead.
 
 If `api`, `config` or `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a
 `println` in any of them; the compiler keeps `api` free of `domain` and `config`, and `config` free of
-`domain`. The domain still works on api's wire records and takes config records as its settings, and config
-reads into a few wire records (recorded, temporary edges); `docs/research-module-layout.md` has the target
-layout and the steps that remain.
+`domain` and `api` (the server converts a config record the wire shows, `server/ConfigViews`). The domain
+still works on api's wire records and takes config records as its settings (recorded, temporary edges);
+`docs/research-module-layout.md` has the target layout and the steps that remain.
 
 ## One implementation per operation
 
@@ -116,8 +116,8 @@ unless there is a written reason.
 
 These rules bind new and changed code. Existing code that breaks them is brought in line when it is
 changed for another reason, not in a sweep. Iron (`io.github.iltotore::iron`) is a dependency of
-`values`, `api` and `core`; Chimney (`io.scalaland::chimney`) of `chimney-iron` only so far: the first
-model module that needs it adds it, with its native-image metadata. The examples were compiled against Iron 3.4.1 and
+`values`, `api` and `core`; Chimney (`io.scalaland::chimney`) of `server`, where the layers meet (and of
+`chimney-iron`): another module that needs it adds it, with its native-image metadata. The examples were compiled against Iron 3.4.1 and
 Chimney 2.1.0.
 
 ### 1. No primitives in the model

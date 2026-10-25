@@ -148,6 +148,7 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 | io.netty:netty-transport-rxtx | 4.2.18.Final | Apache License, Version 2.0 | compatible |
 | io.netty:netty-transport-sctp | 4.2.18.Final | Apache License, Version 2.0 | compatible |
 | io.netty:netty-transport-udt | 4.2.18.Final | Apache License, Version 2.0 | compatible |
+| io.scalaland:chimney_3 | 2.1.0 | Apache-2.0 | compatible |
 | org.apache.httpcomponents:httpclient | 4.5.14 | Apache License, Version 2.0 | compatible |
 | org.apache.httpcomponents:httpcore | 4.4.16 | Apache License, Version 2.0 | compatible |
 | org.apache.httpcomponents:httpmime | 4.5.14 | Apache License, Version 2.0 | compatible |

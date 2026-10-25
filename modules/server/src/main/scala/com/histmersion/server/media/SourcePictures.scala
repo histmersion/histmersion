@@ -20,7 +20,7 @@ import javax.sql.DataSource
   * the picture's own bytes. */
 final class SourcePictures(ds: DataSource, cfg: => MediaConfig, http: HttpTransport, converter: ConverterClient):
 
-  private def rules = cfg.illustrations.rules
+  private def rules = cfg.illustrations.figureRules
 
   /** Pure: a figure row as [[FigurePick]] weighs it. */
   private def toFigure(f: MediaRepo.SourceFigure): FigurePick.Figure =
