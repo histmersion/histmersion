@@ -44,9 +44,10 @@ object ListFilterBar:
 
   // ── the controls ────────────────────────────────────────────────────────────────────────────────
 
-  /** A facet as toggle chips: `label` then one chip per value with its count; hidden while it has none. */
+  /** A facet as toggle chips: `label` then one chip per value with its count; hidden while it has none.
+    * `hint` is a value's meaning (its chip's tooltip), `about` what the group filters (the label's). */
   def chips(label: String, counts: Signal[List[(String, Int)]], field: Field[List[String]],
-      show: String => String = identity, hint: String => Option[String] = _ => None): HtmlElement =
+      show: String => String = identity, hint: String => Option[String] = _ => None, about: String = ""): HtmlElement =
     val items = counts.combineWith(field.signal).map((c, sel) => chipItems(c, sel).map((v, n) => (v, n, sel.contains(v))))
     div(
       cls := "btn-group list-facet",
@@ -54,7 +55,7 @@ object ListFilterBar:
       aria.label := label,
       dataAttr("facet") := label,
       cls("is-hidden") <-- items.map(_.isEmpty),
-      span(cls := "list-facet-label muted", label),
+      span(cls := "list-facet-label muted", Option.when(about.nonEmpty)(title := about), label),
       children <-- items.split(_._1) { (v, _, item) =>
         button(
           typ := "button",
@@ -70,16 +71,18 @@ object ListFilterBar:
     )
 
   /** A facet with many values (managers, models) as a `<select>`: `any <label>`, then each value with
-    * its count. */
+    * its count. `hint` is a value's meaning (its option's tooltip), `about` what the menu filters. */
   def picker(label: String, counts: Signal[List[(String, Int)]], field: Field[Option[String]],
-      show: String => String = identity): HtmlElement =
+      show: String => String = identity, hint: String => Option[String] = _ => None, about: String = ""): HtmlElement =
     select(
       cls := "field list-select",
       aria.label := label,
       dataAttr("facet") := label,
+      Option.when(about.nonEmpty)(title := about),
       children <-- counts.combineWith(field.signal).map { (c, sel) =>
         option(value := "", selected := sel.isEmpty, s"any $label") ::
-          chipItems(c, sel.toList).map((v, n) => option(value := v, selected := sel.contains(v), optionLabel(v, n, show)))
+          chipItems(c, sel.toList).map((v, n) => option(value := v, selected := sel.contains(v), hint(v).map(h => title := h),
+            optionLabel(v, n, show)))
       },
       onChange.mapToValue --> (v => UiState.set(field := typed(v))())
     )

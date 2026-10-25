@@ -14,8 +14,9 @@ import org.scalajs.dom
   * long. The value is a [[UiState]] field, so the menu, the URL and the map cannot disagree. */
 object IconSelect:
 
-  /** One option: its value ("" = no filter), its label, its icon's markup, the group it is listed under. */
-  final case class Opt(value: String, label: String, icon: String, group: Option[String] = None)
+  /** One option: its value ("" = no filter), its label, its icon's markup, the group it is listed under,
+    * and what it means (its tooltip), when the label alone does not say. */
+  final case class Opt(value: String, label: String, icon: String, group: Option[String] = None, hint: Option[String] = None)
 
   /** Pure: the option a typed prefix names — the first after `from` (wrapping) whose label starts with it. */
   def typeAhead(opts: List[Opt], from: Int, prefix: String): Option[Int] =
@@ -166,6 +167,7 @@ object IconSelect:
               role := "option",
               aria.selected := (o.value == chosen),
               dataAttr("value") := o.value,
+              o.hint.map(h => title := h),
               span(cls := "icon-select-icon", onMountCallback(c => c.thisNode.ref.innerHTML = o.icon)),
               span(o.label),
               onMouseMove --> { _ => if active.now() != i then active.set(i) },

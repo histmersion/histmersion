@@ -66,6 +66,33 @@ object JobsView:
     case MergeApplyJob.JobKind => "merge apply"
     case other             => Label.display(other)
 
+  /** What each kind of job does; a tooltip on its filter chip. The kinds the server alone names are
+    * spelled out here (the web page sees only the api module). */
+  def kindMeaning(kind: String): Option[String] = kind match
+    case Ingest.KindIngest       => Some("Brings in a source: fetches its open-access file or takes your upload, converts it to text (OCR) and stores it.")
+    case Ingest.KindReocr        => Some("Converts a stored source's original file to text (OCR) again.")
+    case InitPlan.JobKind        => Some("The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches.")
+    case MergeApplyJob.JobKind   => Some("Merges another collection's bundle into this one, after taking a backup.")
+    case Vacuum.JobKind          => Some("Database clean-up (VACUUM): frees the space old row versions hold after a re-seed or a gazetteer load.")
+    case Agents.JobKind          => Some("An agent run; the agent runs window shows its steps.")
+    case "basemap-fetch"         => Some("Downloads and assembles base-map layers (vector map, terrain relief, sea floor) for an area.")
+    case "places-fetch"          => Some("Downloads an external gazetteer, or Natural Earth land, and updates the places from it.")
+    case "places-hierarchy"      => Some("Works out which places lie inside which (spatial containment), for the place hierarchy.")
+    case "events-import"         => Some("Imports the events of an external event catalogue.")
+    case "events-candidates"     => Some("Looks for the sources that may attest each catalogue event: candidate links for you to confirm or reject.")
+    case "events-rederive"       => Some("Recomputes the dating of catalogue events from their stored records; nothing is downloaded.")
+    case "site-types"            => Some("Looks up on Wikidata what type of site each Wikidata site on the map is.")
+    case "media-import"          => Some("Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events.")
+    case "media-covers"          => Some("Pictures of sources: Open Library covers by ISBN, and an illustration picked from a source's own figures.")
+    case _                       => None
+
+  /** What each job state means for a person, and what comes next; a tooltip on its filter button. */
+  def stateMeaning(s: JobState): String = s match
+    case JobState.Queued  => "Waiting for a free worker; it starts by itself."
+    case JobState.Running => "A worker is doing it now; its progress line says how far it got."
+    case JobState.Done    => "Finished without an error; an ingest's source is stored now."
+    case JobState.Failed  => "Ended with the error shown on its row, was cancelled before it started, or was interrupted by a server restart."
+
   /** What a job without a citekey is about, from its stored [[JobDetail]] (#770): an init job names
     * what it imports. `None` for a job that has a citekey, or no detail. */
   def what(j: JobInfo): Option[String] =
@@ -141,7 +168,8 @@ object JobsView:
         button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart()))
       ),
       div(cls := "toolbar list-filters",
-        ListFilterBar.chips("kind", listing.signal.map(_.page.facet("kind")), UiState.jobKinds, kindLabel),
+        ListFilterBar.chips("kind", listing.signal.map(_.page.facet("kind")), UiState.jobKinds, kindLabel, kindMeaning,
+          about = "Show only jobs of the kinds picked (any of them); none picked shows every kind."),
         div(cls := "btn-group",
           ListFilterBar.text("subject: a citekey, a target, an id", UiState.jobSubject),
           ListFilterBar.day("started on or after", UiState.jobSince),
@@ -176,6 +204,7 @@ object JobsView:
       button(
         typ := "button",
         cls := "btn btn--toggle",
+        title := value.fold("Every job, whatever its state.")(stateMeaning),
         aria.pressed <-- UiState.jobStatus.signal.map(v => (v == value).toString),
         span(label),
         child.text <-- count.map(n => if n > 0 then s" ${Paging.grouped(n)}" else ""),
@@ -183,6 +212,8 @@ object JobsView:
       )
     div(
       cls := "btn-group jobs-filter",
+      role := "group",
+      aria.label := "state",
       btn("all", None, listing.signal.map(l => ListPaging.count(l, None, _.status))),
       JobState.values.toList.map(s => btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))))
     )

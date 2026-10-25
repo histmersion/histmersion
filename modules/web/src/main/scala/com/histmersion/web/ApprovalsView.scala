@@ -27,17 +27,34 @@ object ApprovalsView:
     * compile-article's article-publish → review); a tooltip on the kind wherever it is shown. */
   def kindMeaning(kind: String): Option[String] = ApprovalKind.parse(kind).map {
     case ApprovalKind.GoalPlan => "A research goal's plan: its sub-goals, search queries and works to read. " +
-        "Approving creates them; no article is written yet."
+        "Approving creates them; that unblocks proposing the goal's articles."
     case ApprovalKind.ArticlePlan => "Which new articles a goal needs (propose-articles). " +
-        "Approving lets its seeding manager write drafts of them."
-    case ApprovalKind.ArticlePublish => "A draft an agent has written (compile-article). " +
-        "Approving stores it as the article, or appends its section; the review panel checks it afterwards."
+        "Approving unblocks its seeding manager to write drafts of them."
+    case ApprovalKind.ArticlePublish => "Makes the draft an agent wrote (compile-article) readable as an article, " +
+        "not yet reviewed (or appends its section). Approving unblocks its review."
     case ApprovalKind.ArticleFilter => "An article's coverage filter: which sources it should account for. " +
-        "Approving records it on the article."
+        "Approving records it on the article; its review waits for this decision."
     case ApprovalKind.StatusChange => "A source's status (current, contested, superseded…). Approving changes it."
     case ApprovalKind.Edge => "A typed link between two sources (challenges, refutes, superseded by…). Approving adds it."
     case ApprovalKind.HintEffect => "An action for a manager (hold, prioritise, skip, a setting) a model proposed " +
         "from your hint. Applied only if you approve it."
+  }
+
+  /** What each state the filter buttons offer means; a tooltip on the button. */
+  def stateMeaning(state: String): Option[String] =
+    if state == "all" then Some("Every approval, whatever its state.")
+    else ApprovalState.parse(state).map {
+      case ApprovalState.Open     => "Waiting for a decision: approve it to apply the change, or reject it."
+      case ApprovalState.Approved => "Approved, and the change applied."
+      case ApprovalState.Rejected => "Rejected: kept on record, and nothing changed."
+      case ApprovalState.Failed   => "Approved, but applying it failed (its subject had changed or was gone); the reason is on its row."
+    }
+
+  /** Who decided an approval, in a sentence; a tooltip on the "decided by" chips. */
+  def decidedByMeaning(by: String): Option[String] = ListFilters.DecidedBy.parse(by).map {
+    case ListFilters.DecidedBy.Person    => "Decided by a person: every decision that is not the autopilot's or an automatic one."
+    case ListFilters.DecidedBy.Autopilot => "Decided by the autopilot's code checks, within the day's cap, with no person involved."
+    case ListFilters.DecidedBy.Auto      => "Applied the moment it was proposed: its kind is set to be approved automatically."
   }
 
   /** What an approval would change, in words. */
@@ -216,6 +233,7 @@ object ApprovalsView:
           typ := "button",
           cls := "btn btn--toggle",
           dataAttr("state") := s,
+          stateMeaning(s).map(m => title := m),
           aria.pressed <-- UiState.approvalState.signal.map(v => (shownState(v) == s).toString),
           span(s),
           child.text <-- list.listing.signal.map(l => { val n = count(l, s); if n > 0 then s" ${Paging.grouped(n)}" else "" }),
@@ -287,8 +305,10 @@ object ApprovalsView:
         stateButtons,
         button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart()))),
       div(cls := "toolbar list-filters",
-        ListFilterBar.chips("kind", list.listing.signal.map(_.page.facet("kind")), UiState.approvalKinds, hint = kindMeaning),
-        ListFilterBar.chips("decided by", list.listing.signal.map(_.page.facet("decidedBy")), UiState.approvalBy),
+        ListFilterBar.chips("kind", list.listing.signal.map(_.page.facet("kind")), UiState.approvalKinds, hint = kindMeaning,
+          about = "Show only approvals of the kinds picked (any of them): what the change is."),
+        ListFilterBar.chips("decided by", list.listing.signal.map(_.page.facet("decidedBy")), UiState.approvalBy,
+          hint = decidedByMeaning, about = "Show only approvals decided the ways picked (any of them)."),
         div(cls := "btn-group",
           ListFilterBar.text("subject: a goal, article, manager or citekey", UiState.approvalSubject),
           ListFilterBar.clearButton(filterFields))),
