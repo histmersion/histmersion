@@ -3,6 +3,7 @@ package com.histmersion.web
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.*
 import com.histmersion.web.map.*
+import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -450,6 +451,19 @@ object BaseMaps:
     val x = math.max(8.0, math.min(windowWidth - width - 8, buttonRight - width))
     (if buttonLeft < 0 then 8.0 else x, buttonBottom + 4)
 
+  /** Which side of its button the panel opens on: under it, its top `top` px from the window's top; or over
+    * it, its bottom `bottom` px from the window's bottom. */
+  enum PanelSide:
+    case Below(top: Double)
+    case Above(bottom: Double)
+
+  /** Pure: under the button, unless less than `minBelow` px is left under it and more is above — the
+    * button low in a tablet's map & tools drawer, where the panel would be squeezed into a strip. */
+  def panelSide(buttonTop: Double, buttonBottom: Double, windowHeight: Double, minBelow: Double): PanelSide =
+    val below = windowHeight - buttonBottom - 4
+    if below < minBelow && buttonTop - 4 > below then PanelSide.Above(windowHeight - buttonTop + 4)
+    else PanelSide.Below(buttonBottom + 4)
+
   private def place(): Unit =
     for
       b <- Option(dom.document.getElementById("map-options-button"))
@@ -459,6 +473,12 @@ object BaseMaps:
       val (x, y) = placement(r.left, r.right, r.bottom, math.min(300.0, dom.window.innerWidth * 0.92), dom.window.innerWidth)
       p.style.setProperty("--map-options-x", s"${x}px")
       p.style.setProperty("--map-options-y", s"${y}px")
+      val minBelow = if Viewport.tabletNow then Layout.mapOptionsMinBelow.value.toDouble else 0.0
+      panelSide(r.top, r.bottom, dom.window.innerHeight, minBelow) match
+        case PanelSide.Above(bottom) =>
+          p.classList.add("is-above")
+          p.style.setProperty("--map-options-b", s"${bottom}px")
+        case PanelSide.Below(_) => p.classList.remove("is-above")
 
   private def close(): Unit =
     open.set(false)

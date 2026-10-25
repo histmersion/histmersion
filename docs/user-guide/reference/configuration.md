@@ -165,6 +165,7 @@ The settings of backups and portable bundles are listed with them, in
 | `ui.time.default-from` / `.default-to` | — | `-3500` / `-500` | initial timeline window |
 | `ui.narrow-max-width-px` | `HISTMERSION_UI_NARROW_MAX_WIDTH_PX` | `760` | at or below this viewport width the web UI uses its phone layout: the map first; filters, timeline, layers and tools on demand (buttons, or a swipe in from the edge); the list as a bottom sheet; windows full-screen |
 | `ui.narrow-max-height-px` | `HISTMERSION_UI_NARROW_MAX_HEIGHT_PX` | `500` | …and so it does on a touch screen at or below this height (a phone held sideways) |
+| `ui.tablet-max-width-px` | `HISTMERSION_UI_TABLET_MAX_WIDTH_PX` | `1366` | wider than the phone layout and at or below this width, the web UI uses its tablet layout: the phone's map-first page at tablet size, with the timeline open, the list as a sheet at the right-hand side and windows that float; `0` turns it off (the desktop layout from the phone's width up) |
 | `ui.events.local-fade-seconds` | `HISTMERSION_UI_EVENTS_LOCAL_FADE_SECONDS` | `2.5` | map playback: a LOCAL event (a battle) shows while the playhead is inside its span, then fades out over this many seconds of playback (at the speed playing; paused, it holds) |
 | `ui.events.regional-fade-seconds` | `HISTMERSION_UI_EVENTS_REGIONAL_FADE_SECONDS` | `1.0` | the same for a REGIONAL event's label and region outline |
 | `ui.events.map-limit` | `HISTMERSION_UI_EVENTS_MAP_LIMIT` | `2000` | most events `/api/events/geo` returns for one playback |

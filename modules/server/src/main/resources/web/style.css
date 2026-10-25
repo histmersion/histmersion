@@ -432,6 +432,8 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .map-option-row:last-child { justify-content:flex-end; display:flex; gap:var(--gap-inline); border-top:1px solid var(--line);
   padding-top:var(--space-2); }
 [data-layout="narrow"] .map-options { left:var(--pad); right:var(--pad); width:auto; }
+/* opened over its button when there is no room under it (BaseMaps.panelSide: a tablet's drawer) */
+.map-options.is-above { top:auto; bottom:var(--map-options-b, 8px); max-height:calc(100vh - var(--map-options-b, 8px) - 8px); }
 .hd-site-marker { cursor:pointer; }
 /* a region or polity known only by a POINT (no boundary yet): its name, never a dot — and nothing at all
    while the map is zoomed out (`.map-far`, PlaceGlyph), where one name would stand for a whole country */
@@ -1188,6 +1190,37 @@ a.chip:hover { border-color:var(--accent); }
 /* on a phone the panel is a bottom sheet under the bar: keep its last rows ("show N more") above it */
 [data-layout="narrow"] .histmersion-app:has(.wm-taskbar) .sidebar { padding-bottom:calc(var(--tap) + 14px); }
 [data-layout="narrow"] .cite-tooltip { display:none; }   /* a tap follows the link; no hover card */
+
+/* ═══ the tablet layout ════════════════════════════════════════════════════════════════════════════
+   Above the phone's width and up to `ui.tablet-max-width-px`, Viewport.scala adds <html data-tablet> to
+   data-layout="narrow": the phone's map-first page (the app bar, the two drawers, the folded legend and
+   notice) at a tablet's size. The side column and the bars above the map left a 768 px portrait tablet a
+   map of 9 % of the screen; here the map keeps two thirds or more. What differs from a phone: touch
+   targets of 44 px instead of the phone's vmin-scaled ones, the timeline unfolded (MobileChrome) with its
+   controls on one line, the list a sheet at the right-hand side rather than across the bottom, windows
+   floating, moved and resized as on a desktop, and hover cards where there is a pointer that hovers. */
+[data-layout="narrow"][data-tablet] {
+  --tap:44px; --pad:10px; --fs:15px; --fs-small:13px;
+  --sheet-w:min(420px, 100vw);
+}
+[data-layout="narrow"][data-tablet] .mb-search { flex:0 1 420px; width:auto; }
+[data-layout="narrow"][data-tablet] .mb-timeline { max-width:none; margin-left:auto; }
+[data-layout="narrow"][data-tablet] .tl-ctl { row-gap:0; }
+[data-layout="narrow"][data-tablet] .tl-ctl-start { grid-column:auto; }
+[data-layout="narrow"][data-tablet] .tl-presets-dropdown { width:min(420px, calc(100vw - 2 * var(--pad))); }
+[data-layout="narrow"][data-tablet] .map-options { left:auto; right:var(--pad); width:min(340px, calc(100vw - 2 * var(--pad))); }
+/* the list: a sheet at the right, the map beside it still in view when it is pulled up */
+[data-layout="narrow"][data-tablet] .sidebar { left:auto; width:var(--sheet-w); border-left:1px solid var(--line); }
+[data-layout="narrow"][data-tablet] .sidebar.sheet-half { height:min(50dvh, 560px); }
+[data-layout="narrow"][data-tablet] .wm-taskbar { right:var(--sheet-w); }
+/* windows: placed, moved and resized by WindowManager as on a desktop, not full-screen */
+[data-layout="narrow"][data-tablet] .wm-window { left:var(--wx); top:var(--wy); width:var(--ww); height:var(--wh);
+  min-width:300px; min-height:200px; border:1px solid var(--line); border-radius:var(--radius-lg); }
+[data-layout="narrow"][data-tablet] .wm-titlebar { min-height:var(--tap); }
+[data-layout="narrow"][data-tablet] .wm-resize-handle { display:block; }
+@media (hover:hover) and (pointer:fine) {
+  [data-layout="narrow"][data-tablet] .cite-tooltip { display:block; }
+}
 
 /* ── a map place's card (PlaceHover → Preview.showAt) and the chosen place's chip on the map ───────── */
 .cite-tooltip.place-tip { max-width:var(--tip-maxw, 360px); }

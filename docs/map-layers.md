@@ -183,12 +183,13 @@ for the layers, and what stayed:
   a marker still answers.
 - **Popups** are the interface's `Popup` (`.hd-popup`, the content in `.hd-popup-content`); the
   legend, the base-map menu and the options sit in the surface's corners.
-- **The legend and the map's foot on a phone** (#4292, `web.MapFold`): in the narrow layout the legend
+- **The legend and the map's foot on a phone or a tablet** (#4292, #4431, `web.MapFold`): in the narrow layout (a phone's
+  and, with `data-tablet`, a tablet's) the legend
   (bottom right: the ramp and the key) and the foot (bottom left: the past-landscape notice and the
   credits) are folded to a button each (`.hd-legend-toggle`, `.map-foot-toggle`, `aria-expanded`); opened,
   the overlay stands over its button, which closes it (Escape too). Opened in any layout the legend is at
   most the map's width less two 16 px gutters (`--map-gutter`) and its height (`--map-w`/`--map-h`, written
-  by `MapFold.followSize` as the map resizes — a tablet's map is a small part of the page), and its body
+  by `MapFold.followSize` as the map resizes — a short map is a small part of the page), and its body
   is the one scroll container, the key's own line (`summary`, its close) held at its top. The foot rises
   over the right-hand corner only while there is room above it under the zoom buttons
   (`BaseMaps.noticeLift`'s `room`); else the opened legend lies over it. A foot that warns (the map is not

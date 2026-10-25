@@ -47,6 +47,9 @@ final case class UiConfig(
     narrowMaxWidthPx: Int,
     /** …or, on a touch screen, at or below this height (a phone held sideways). */
     narrowMaxHeightPx: Int,
+    /** Wider than the phone layout but at or below this width (CSS px): the same map-first layout at
+      * tablet size — floating windows, the list a sheet at the side. */
+    tabletMaxWidthPx: Int,
     /** The events layer of the map's playback (#1440). */
     events: EventsUiConfig,
     /** How often the page re-reads the toolbar's counts and "something new" marks (`GET

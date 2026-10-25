@@ -12,7 +12,7 @@ import org.scalajs.dom
   *   - the MAP & TOOLS drawer (the layer switches, the base map, the tools) slides in from the right —
   *     its button, or a swipe in from the right edge;
   *   - a drawer closes on a swipe back, a tap on the dimmed map, Escape, or when a tool is chosen;
-  *   - the timeline folds away under the bar until ⏱.
+  *   - the timeline folds away under the bar until ⏱ — on a tablet it starts unfolded: there is room.
   * All of it is hidden on a wide screen by the stylesheet; its state is this object's alone (not in
   * the URL — a shared link opens on the map). */
 object MobileChrome:
@@ -48,6 +48,10 @@ object MobileChrome:
 
   /** The filters that are set but not visible in the bar (the search is): the ☰ badge. */
   def hiddenFilterCount(chips: List[UiState.ActiveChip]): Int = chips.count(_.key != UiState.q.key)
+
+  /** Whether the timeline is unfolded when the page comes into `mode`: on a tablet, whose map keeps most
+    * of the screen with it open; on a phone it waits for ⏱. */
+  def timelineOpenIn(mode: Viewport.Mode): Boolean = mode == Viewport.Mode.Tablet
 
   // ── state ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -150,6 +154,7 @@ object MobileChrome:
 
   /** A swipe on an open drawer towards its edge closes it; Escape closes it too. Installed once. */
   def install(): Unit =
+    Viewport.modeSignal.foreach(m => timelineOpen.set(timelineOpenIn(m)))(using unsafeWindowOwner)
     // `var`: a primary-pointer gesture owned by the drawer, never a nested control.
     var gesture = Option.empty[(Double, Drawer, Double, Double)]
     def drawerAt(t: dom.EventTarget): Option[Drawer] = t match
@@ -176,8 +181,10 @@ object MobileChrome:
       if gesture.exists(_._1 == e.pointerId) then gesture = None
     })
     dom.document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
-      // the drawer takes this Escape, not the window manager (which runs after, on `window`)
-      if e.key == "Escape" && !e.defaultPrevented && drawer.now().isDefined then
+      // the drawer takes this Escape, not the window manager (which runs after, on `window`) — unless a
+      // panel opened inside the drawer (the map options) is open: that Escape is the panel's alone
+      val panelOpen = dom.document.querySelector(".viewport-toggle [role=dialog]:not(.is-hidden)") != null
+      if e.key == "Escape" && !e.defaultPrevented && drawer.now().isDefined && !panelOpen then
         e.preventDefault()
         close()
     })

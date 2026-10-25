@@ -15,7 +15,7 @@ class ConfigViewsSuite extends munit.FunSuite:
       ui.facetSuggestions, ui.treeDepth, ui.treeSamples, ui.maxBuckets,
       DebounceConfig(ui.debounce.suggestMs, ui.debounce.searchMs, ui.debounce.reloadMs, ui.debounce.previewMs),
       TimeConfig(ui.time.min, ui.time.max, ui.time.defaultFrom, ui.time.defaultTo),
-      ui.narrowMaxWidthPx, ui.narrowMaxHeightPx,
+      ui.narrowMaxWidthPx, ui.narrowMaxHeightPx, ui.tabletMaxWidthPx,
       EventsUiConfig(ui.events.localFadeSeconds, ui.events.regionalFadeSeconds, ui.events.mapLimit,
         ui.events.outlineToleranceDeg),
       ui.countersPollSeconds, ui.jobPollMs, writeKeyRequired = true, agentsEnabled = true, ui.tilesTone,

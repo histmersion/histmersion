@@ -7,7 +7,7 @@ import com.histmersion.web.map.*
 class BaseMapsSuite extends munit.FunSuite:
 
   private val ui = UiConfig("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 12, 5, 250, 20, 12, 2, 3, 40,
-    DebounceConfig(150, 250, 400, 120), TimeConfig(-5000, 2000, -3500, -500), 760, 500, EventsUiConfig(1.5, 3, 5000, 0.05))
+    DebounceConfig(150, 250, 400, 120), TimeConfig(-5000, 2000, -3500, -500), 760, 500, 1366, EventsUiConfig(1.5, 3, 5000, 0.05))
 
   private def status(available: Boolean, readableMissing: List[String] = Nil, focus: Boolean = false, onDemand: Boolean = false,
       sea: Boolean = true) =
@@ -118,6 +118,13 @@ class BaseMapsSuite extends munit.FunSuite:
     assertEquals(BaseMaps.noticeLift(10, 300, 900, 1200, 40), 0.0)
     assertEquals(BaseMaps.noticeLift(10, 300, 200, 400, 40), 44.0)
     assertEquals(BaseMaps.placement(900, 1000, 40, 300, 1100), (700.0, 44.0))
+
+  test("the map options open under their button, or over it when a tablet's drawer leaves no room under it"):
+    import BaseMaps.PanelSide
+    assertEquals(BaseMaps.panelSide(10, 40, 900, 280), PanelSide.Below(44.0))
+    assertEquals(BaseMaps.panelSide(818, 862, 1024, 280), PanelSide.Above(210.0))
+    assertEquals(BaseMaps.panelSide(818, 862, 1024, 0), PanelSide.Below(866.0), "0: always under (the phone, the desktop)")
+    assertEquals(BaseMaps.panelSide(100, 140, 300, 280), PanelSide.Below(144.0), "no more room above: under")
 
   test("the notice rises over an opened legend only while the map has room for it above; else the legend lies over it"):
     assertEquals(BaseMaps.noticeLift(16, 300, 16, 374, 200, room = 500), 204.0)

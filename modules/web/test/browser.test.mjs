@@ -313,7 +313,8 @@ test('#718: the About button opens the server report — build, health states, j
 // underneath as one block — the search, place, more/fewer, clear-all row and the expanded filters below
 // it are never interleaved with the toolbar's buttons, at any width down to the phone layout.
 test('#1521: the toolbar stays on top and the filters wrap underneath it as one block', async () => {
-  for (const width of [1440, 1100, 820]) {
+  // the desktop layout's widths (a tablet's, up to 1366 px, has the toolbar in a drawer: #4431)
+  for (const width of [1440, 1400]) {
     await withPage({ width, height: 900 }, async page => {
       assert.equal(await page.evaluate(() => document.documentElement.dataset.layout), 'wide', `wide at ${width}`);
       // open the expanded filters, so they are measured too
@@ -924,7 +925,7 @@ async function pagePoint(page, lat, lon) {
 // its ✕ in reach; a card whose picture arrives after it was placed is placed again, inside the viewport.
 test('cards stay inside the viewport: near an edge, taller than it when pinned, and when their content grows', async () => {
   const feed = { unplaced: 0, events: [evGeo('zz_top', 'Zz top', 'battle', 38.0, 32.0), evGeo('zz_low', 'Zz low', 'siege', 36.6, 33.4)] };
-  await withPage({ width: 1100, height: 640 }, async page => {
+  await withPage({ width: 1440, height: 640 }, async page => {
     await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
     await page.route('**/api/events/zz_top', route => route.fulfill({ json: evDetail('zz_top', 'Zz top', 'battle', 60) }));
     await page.route('**/api/events/zz_low', route => route.fulfill({ json: evDetail('zz_low', 'Zz low', 'siege', 2) }));
@@ -1283,7 +1284,7 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 390, height: 844
 // #4718: the control itself — on every base map, reached by the keyboard, labelled; the choice applies at once
 // (the note follows the system's setting live) and is kept across a reload.
 test('map motion: the control is reached by the keyboard, applies at once, follows the system live, and is kept', async () => {
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.evaluate(() => localStorage.removeItem('histmersion.ui.mapMotion'));
     await page.reload();
@@ -2167,7 +2168,7 @@ async function mapColours(page) {
 test('the base map: Readable and Physical drawn from the server\'s extract (the notice, their credits), and the online maps', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     assert.deepEqual((await page.evaluate(baseMapState)).options, ['readable', 'physical', 'standard', 'muted', 'dark']);
     // an online map: the options hold the map's motion alone (#4718), the vector styles' own options hidden
     await page.locator('.map-options-btn').click();
@@ -2245,7 +2246,7 @@ test('land cover is drawn at every zoom, in both base maps: the satellite classe
       'orchard', 'vineyard', 'barren', 'bare_rock', 'scree', 'sand', 'beach', 'wetland', 'glacier']) },
     physical: { layers: ['forest-lc', 'forest', 'sand', 'green-lc', 'glacier', 'landuse-veil'], kinds: null },
   };
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     for (const style of ['readable', 'physical']) {
       const doc = await (await fetch(new URL(`/web/styles/${style}.json`, baseURL))).json();
       const byId = Object.fromEntries(doc.layers.map(l => [l.id, l]));
@@ -2289,7 +2290,7 @@ const rgba = c => c.startsWith('#') ? [1, 3, 5].map(i => parseInt(c.slice(i, i +
 test('the base maps\' names read at 4.5:1 against what lies under them, through their halo, in both styles', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     for (const style of ['readable', 'physical']) {
       const doc = await (await fetch(new URL(`/web/styles/${style}.json`, baseURL))).json();
       const paint = Object.fromEntries(doc.layers.filter(l => l.type === 'symbol' && typeof l.paint?.['text-color'] === 'string')
@@ -2345,7 +2346,7 @@ test('the base maps\' names read at 4.5:1 against what lies under them, through 
 test('the page prints no warning of its own while the map is used (WebGL probing, scrolling, the base maps)', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract'); return; }
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     const said = [];
     page.on('console', m => { if (m.type() === 'warning' || m.type() === 'error') said.push(m.text()); });
     await page.reload();
@@ -2370,7 +2371,7 @@ test('the page prints no warning of its own while the map is used (WebGL probing
 test('map options: names off and on, their language, contours only where Physical has the detailed relief; kept across a reload', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     await page.evaluate(() => window.__testMap.setView([37.6, 25.0], 7));
     await chooseBaseMap(page, 'readable');
     await page.waitForFunction(() => window.__testMap.names().length > 3, null, { timeout: 15000 });
@@ -2421,7 +2422,7 @@ test('contours: a line saying why none are drawn here (zoomed out, outside the d
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   const why = page => page.locator('.map-option-contours-why');
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     // inside the Argolid but zoomed out: enabled, none yet
     await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 9));
     await chooseBaseMap(page, 'physical');
@@ -2440,7 +2441,7 @@ test('contours: a line saying why none are drawn here (zoomed out, outside the d
   }, { source: 'local' });
   // a server with no focus region: the on-demand relief alone enables the contours; without it they are disabled
   for (const onDemand of [true, false]) {
-    await withPage({ width: 1280, height: 800 }, async page => {
+    await withPage({ width: 1440, height: 900 }, async page => {
       await page.route('**/api/basemap', async route => {
         const res = await route.fetch();
         const s = await res.json();
@@ -2477,7 +2478,7 @@ test('the sea\'s depth: an option of both styles, on in Physical and off in Read
     if (on) await depth(page).check(); else await depth(page).uncheck();
     await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n, before, { timeout: 15000 });
   };
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     await page.evaluate(() => window.__testMap.setView([37.6, 25.0], 7));
     // Physical: on by default, the depth layer drawn; off and on again
     await chooseBaseMap(page, 'physical');
@@ -2515,7 +2516,7 @@ test('the sea\'s depth: an option of both styles, on in Physical and off in Read
 test('map options: an option whose data is not downloaded is disabled, its line saying what to fetch', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     // the server as if it had no relief and no sea floor
     await page.route('**/api/basemap', async route => {
       const res = await route.fetch();
@@ -2567,7 +2568,7 @@ test('offline: with the local maps only, the page asks no other host — the two
   const config = await (await fetch(new URL('/api/config', baseURL))).json();
   if (status.styles.some(s => s.missing.length === 0)) assert.equal(config.baseMapSource, 'local');
   const outside = [];
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     await page.waitForFunction(() => document.querySelectorAll('.map-base-select option').length > 0);
     let st = await page.evaluate(baseMapState);
     assert.deepEqual(st.options, ['readable', 'physical'], 'no online map');
@@ -2591,7 +2592,7 @@ test('offline: with the local maps only, the page asks no other host — the two
 test('base-map choices: a style the download cannot draw whole is marked and says what to run', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
-  await withPage({ width: 1280, height: 800 }, async page => {
+  await withPage({ width: 1440, height: 900 }, async page => {
     // the status of a server whose download left out roads, places and borders
     await page.route('**/api/basemap', async route => {
       const res = await route.fetch();
@@ -2683,13 +2684,13 @@ test('the past-landscape notice never lies under the credits or the map key, wid
 // #4292: on a phone the map's legend and its foot (the past-landscape notice with the credits) took a third of
 // the map, and the key, opened, was wider than the screen with its close control off it. In the narrow layout
 // each is folded to a button; opened, the legend fits the screen less its 16 px gutters and the map, scrolls
-// inside itself and its close stays where it can be tapped; nothing scrolls the page sideways. A tablet (the
-// wide layout, a small map) keeps the legend open, inside the map.
+// inside itself and its close stays where it can be tapped; nothing scrolls the page sideways. A tablet folds
+// them the same way (#4431).
 test('on a phone the legend and the notice fold to buttons; the opened key fits the screen and closes', async () => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   const G = 16;
   for (const viewport of [{ width: 360, height: 740 }, { width: 390, height: 844 }, { width: 430, height: 932 },
-    { width: 844, height: 390 }, { width: 768, height: 1024 }]) {
+    { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }]) {
     const at = `${viewport.width}×${viewport.height}`;
     await withPage(viewport, async page => {
       // the longest key (the events' kinds), over a vector style that shows the notice
@@ -2714,7 +2715,7 @@ test('on a phone the legend and the notice fold to buttons; the opened key fits 
         return x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight && !!document.elementFromPoint(x, y)?.closest(s);
       }, sel);
       const narrow = await page.evaluate(() => document.documentElement.dataset.layout === 'narrow');
-      assert.equal(narrow, viewport.width !== 768, `${at}: the phone layout on a phone, the wide one on a tablet`);
+      assert.ok(narrow, `${at}: the map-first layout on a phone and on a tablet`);
       assert.equal(await sideways(), 0, `${at}: no sideways scroll`);
       const map = await box('#map');
       if (narrow) {
@@ -2783,6 +2784,126 @@ test('on a phone the legend and the notice fold to buttons; the opened key fits 
   }
 });
 
+// #4431: at a tablet's width the side column and the bars above the map left it 9 % of a 768×1024 screen and
+// 23 % of a 1024×768 one. Between the phone and the desktop the page is now the map-first layout at tablet
+// size: the map keeps at least 60 % of the screen (less the list's sheet over it) and most of its height,
+// nothing scrolls sideways, and every panel — the timeline, both drawers, the list, a window, the legend —
+// is reached and closed, by pointer and by keyboard. The phone and the desktop keep their layouts.
+test('#4431: at tablet widths the map keeps most of the screen, and every panel opens and closes', async () => {
+  for (const viewport of [{ width: 768, height: 1024 }, { width: 1024, height: 768 }]) {
+    const at = `${viewport.width}×${viewport.height}`;
+    await withPage(viewport, async page => {
+      const sideways = () => page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      const box = sel => page.evaluate(s => {
+        const e = document.querySelector(s), r = e.getBoundingClientRect();
+        return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height };
+      }, sel);
+      // on screen: inside the viewport, and what a tap at its centre reaches
+      const reachable = sel => page.evaluate(s => {
+        const e = document.querySelector(s), r = e.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+        return r.width > 0 && r.left >= -1 && r.right <= innerWidth + 1 && x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight &&
+          !!document.elementFromPoint(x, y)?.closest(s);
+      }, sel);
+      const offScreen = sel => page.evaluate(s => {
+        const r = document.querySelector(s).getBoundingClientRect();
+        return r.right <= 1 || r.left >= innerWidth - 1;
+      }, sel);
+      assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.layout, document.documentElement.hasAttribute('data-tablet')]),
+        ['narrow', true], `${at}: the tablet layout`);
+      await synchronizedSize(page);
+      // the map's share: its area less the list's sheet lying over it, and its height
+      const share = await page.evaluate(() => {
+        const m = document.getElementById('map').getBoundingClientRect(), s = document.querySelector('.sidebar').getBoundingClientRect();
+        const ix = Math.max(0, Math.min(m.right, s.right) - Math.max(m.left, s.left));
+        const iy = Math.max(0, Math.min(m.bottom, s.bottom) - Math.max(m.top, s.top));
+        return { area: (m.width * m.height - ix * iy) / (innerWidth * innerHeight), height: m.height / innerHeight, width: m.width / innerWidth };
+      });
+      assert.ok(share.area >= 0.6, `${at}: the map's share of the screen ${share.area.toFixed(2)}`);
+      assert.ok(share.height >= 0.6 && share.width >= 0.99, `${at}: the map's height and width ${JSON.stringify(share)}`);
+      assert.equal(await sideways(), 0, `${at}: no sideways scroll`);
+      // the timeline is open, its controls on one line; ⏱ folds it (the map grows) and unfolds it
+      assert.ok(await page.locator('.tl').isVisible(), `${at}: the timeline starts open`);
+      assert.equal(await page.locator('.mb-timeline').getAttribute('aria-expanded'), 'true');
+      const ctl = await page.evaluate(() => [...document.querySelectorAll('.tl-ctl > *')].filter(e => e.offsetParent)
+        .map(e => Math.round(e.getBoundingClientRect().top)));
+      assert.ok(Math.max(...ctl) - Math.min(...ctl) < 20, `${at}: the timeline's controls on one line: ${ctl}`);
+      const before = await synchronizedSize(page);
+      await page.locator('.mb-timeline').click();
+      assert.ok(await page.locator('.tl').isHidden(), `${at}: ⏱ folds the timeline`);
+      assert.ok((await synchronizedSize(page)).height > before.height, `${at}: the map takes its room`);
+      await page.locator('.mb-timeline').click();
+      assert.deepEqual(await synchronizedSize(page), before, `${at}: and gives it back`);
+      // the filters drawer, by keyboard: Enter on ☰ opens it, Escape closes it
+      assert.ok(await offScreen('.fbar'), `${at}: the filters start in their drawer`);
+      await page.locator('.mb-filters').focus();
+      await page.keyboard.press('Enter');
+      await page.waitForFunction(() => document.querySelector('.fbar').getBoundingClientRect().left >= 0);
+      await page.waitForTimeout(300);
+      assert.ok(await reachable('.fbar .drawer-close'), `${at}: the filters drawer is open`);
+      assert.equal(await sideways(), 0, `${at}: the open drawer scrolls nothing sideways`);
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(() => document.querySelector('.fbar').getBoundingClientRect().right <= 1);
+      // the map & tools drawer, by pointer: its button, then its ✕
+      await page.locator('.mb-maptools').click();
+      await page.waitForFunction(() => document.querySelector('.viewport-toggle').getBoundingClientRect().right <= innerWidth + 1);
+      await page.waitForTimeout(300);
+      // the drawer scrolls inside itself: its last controls are reached by scrolling it, not the page
+      await page.locator('.viewport-toggle .map-base-select').scrollIntoViewIfNeeded();
+      assert.ok(await reachable('.viewport-toggle .map-base-select'), `${at}: the base map's menu in the drawer`);
+      assert.equal(await page.evaluate(() => scrollY), 0, `${at}: the page itself does not scroll`);
+      // the map options, with Map motion (#4718), by keyboard: inside the screen, whole enough to use, Escape closes
+      await page.locator('.map-options-btn').focus();
+      await page.keyboard.press('Enter');
+      await page.locator('.map-motion-select').waitFor();
+      const opts = await box('.map-options');
+      assert.ok(opts.t >= 0 && opts.b <= viewport.height && opts.l >= 0 && opts.r <= viewport.width && opts.h >= 200,
+        `${at}: the map options inside the screen: ${JSON.stringify(opts)}`);
+      await page.locator('.map-motion-select').scrollIntoViewIfNeeded();
+      assert.ok(await reachable('.map-motion-select'), `${at}: Map motion`);
+      await page.keyboard.press('Escape');
+      await page.locator('.map-options').waitFor({ state: 'hidden' });
+      // a tool opens a window: floating, inside the screen, not full-screen; the drawer closes for it
+      await page.locator('.drawer-tools button', { hasText: 'about' }).click();
+      await page.locator('.wm-window').waitFor();
+      await page.waitForFunction(() => document.querySelector('.viewport-toggle').getBoundingClientRect().left >= innerWidth - 1);
+      const win = await box('.wm-window');
+      assert.ok(win.w < viewport.width * 0.8 && win.l >= 0 && win.r <= viewport.width && win.t >= 0 && win.b <= viewport.height,
+        `${at}: a floating window inside the screen: ${JSON.stringify(win)}`);
+      assert.ok(await reachable('.wm-window .wm-close'), `${at}: its close button`);
+      await page.keyboard.press('Escape');
+      await page.locator('.wm-window').waitFor({ state: 'detached' });
+      // the list: a sheet at the side, pulled up by its handle and back down
+      const peek = await box('.sidebar');
+      assert.ok(peek.r >= viewport.width - 1 && peek.w <= 421, `${at}: the list's sheet at the right: ${JSON.stringify(peek)}`);
+      await page.locator('.sheet-handle').click();
+      await page.waitForFunction(() => document.querySelector('.sidebar').classList.contains('sheet-half'));
+      await page.waitForTimeout(300);
+      assert.ok((await box('.sidebar')).h > peek.h + 100, `${at}: the handle pulls the list up`);
+      assert.ok(await reachable('.sidebar .tabs .tab'), `${at}: the list's tabs`);
+      assert.equal(await sideways(), 0);
+      await page.locator('.sheet-handle').click();
+      await page.locator('.sheet-handle').click();
+      await page.waitForFunction(() => !document.querySelector('.sidebar').classList.contains('sheet-half') &&
+        !document.querySelector('.sidebar').classList.contains('sheet-full'));
+      await page.waitForTimeout(300);
+      // the legend: folded to its button, which opens and folds it (#4292)
+      assert.ok(await reachable('.hd-legend-toggle'), `${at}: the legend's button`);
+      await page.locator('.hd-legend-toggle').click();
+      assert.equal(await page.locator('.hd-legend-toggle').getAttribute('aria-expanded'), 'true');
+      await page.keyboard.press('Escape');
+      assert.equal(await page.locator('.hd-legend-toggle').getAttribute('aria-expanded'), 'false');
+      assert.equal(await sideways(), 0);
+    });
+  }
+  // the phone and the desktop are not tablets
+  for (const [viewport, layout] of [[{ width: 390, height: 844 }, 'narrow'], [{ width: 1440, height: 900 }, 'wide']]) {
+    await withPage(viewport, async page => {
+      assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.layout, document.documentElement.hasAttribute('data-tablet')]),
+        [layout, false], `${viewport.width} px`);
+    });
+  }
+});
+
 test('without a GPU the map says so and draws its cheapest form; the app still works', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract'); return; }
@@ -2790,7 +2911,7 @@ test('without a GPU the map says so and draws its cheapest form; the app still w
   if (!isChromium) { t.skip('Chromium\'s software rasteriser: run with HISTMERSION_TEST_BROWSER=chromium'); return; }
   const soft = await launchSoftwareChromium();
   try {
-    const context = await soft.newContext({ viewport: { width: 1280, height: 800 } });
+    const context = await soft.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
@@ -2815,7 +2936,7 @@ test('no WebGL 2: the map says why and what to do, and the rest of the page work
   for (const [flag, why] of [['--disable-webgl2', /WebGL 1 only/], ['--disable-webgl', /draws no WebGL/]]) {
     const b = await launchChromiumWithout(flag);
     try {
-      const page = await (await b.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
+      const page = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
       const errors = [];
       page.on('pageerror', e => errors.push(e.message));
       await page.route('**/*', r => new URL(r.request().url()).origin === origin ? r.continue() : r.abort());
