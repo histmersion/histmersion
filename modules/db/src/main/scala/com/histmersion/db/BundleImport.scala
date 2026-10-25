@@ -5,7 +5,7 @@ import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.BundlePlan.{Decision, Ledger, Local}
-import com.histmersion.domain.BundleEntities.BlobUse
+import com.histmersion.files.BundleEntities.BlobUse
 
 import com.augustnagro.magnum.*
 import io.circe.syntax.*

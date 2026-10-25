@@ -276,54 +276,6 @@ object MergePlanner:
       left.map(_.toString).sorted.mkString(","), rightRev, leftRev, extra).mkString("\u0000")
     s"${letter(kind, entity)}-${BundleFormat.sha256Hex(text).take(8)}"
 
-  // ── describing records ──────────────────────────────────────────────────────────────────────
-
-  private def describe(s: BundleSource): List[String] =
-    val who = s.authors.take(2).mkString("; ") + (if s.authors.length > 2 then " et al." else "")
-    List(s"\"${s.title}\"",
-      List(Some(who).filter(_.nonEmpty), s.year.map(_.toString), Some(s.doi.fold("no DOI")(d => s"DOI $d")),
-        Some(s.status.wire)).flatten.mkString(" · "))
-
-  private def side(s: BundleSource): IssueSide = IssueSide(s.citekey, s.uid, describe(s))
-
-  private def rangeText(r: Option[BundleRange]): String = r match
-    case None                              => "none"
-    case Some(BundleRange(None, None))     => "always"
-    case Some(b) => s"${b.start.fold("…")(_.toString)}..${b.end.fold("…")(_.toString)}"
-
-  private def preview(s: String, n: Int = 80): String =
-    val one = s.replaceAll("\\s+", " ").trim
-    if one.length <= n then one else one.take(n - 1) + "…"
-
-  // ── what the review screen shows beside an issue ────────────────────────────────────────────
-
-  private[domain] def span(r: BundleRange): IssueSpan = IssueSpan(r.start, r.end)
-
-  private def eventSpan(e: BundleEvent): Option[IssueSpan] =
-    val (a, b) = (e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom))
-    Option.when(a.isDefined || b.isDefined)(IssueSpan(a, b))
-
-  private def clip(s: Option[String], n: Int = 600): Option[String] =
-    s.map(_.trim).filter(_.nonEmpty).map(t => if t.length <= n then t else t.take(n - 1) + "…")
-
-  /** A source pair, field by field (the three-column table: here | result | bundle). */
-  private[domain] def sourceFields(l: BundleSource, r: BundleSource): List[IssueField] =
-    def range(p: Option[BundleRange]) = p.map(x => rangeText(Some(x)))
-    def list(xs: List[String]) = Option(xs.mkString("; ")).filter(_.nonEmpty)
-    List(
-      IssueField("citekey", Some(l.citekey), Some(r.citekey)),
-      IssueField("title", Some(l.title), Some(r.title)),
-      IssueField("authors", list(l.authors), list(r.authors)),
-      IssueField("year", l.year.map(_.toString), r.year.map(_.toString)),
-      IssueField("DOI", l.doi, r.doi),
-      IssueField("venue", l.venue, r.venue),
-      IssueField("status", Some(l.status.wire), Some(r.status.wire)),
-      IssueField("period", range(l.period), range(r.period)),
-      IssueField("tags", list(l.tags), list(r.tags)),
-      IssueField("summary", clip(l.summary), clip(r.summary)),
-      IssueField("notes", clip(l.notes), clip(r.notes)),
-      IssueField("OCR body", l.bodySha256.map(h => s"sha256 ${h.take(12)}…"), r.bodySha256.map(h => s"sha256 ${h.take(12)}…")))
-
   /** Two versions of an article, with the three-way merge's regions over their common version (or
     * the whole text as one region when there is none). */
   private[domain] def articleText(base: Option[String], left: String, right: String): IssueText =
@@ -335,35 +287,6 @@ object MergePlanner:
         }
       case None => List(IssueHunk(conflict = true, Nil, left.split("\n", -1).toList, right.split("\n", -1).toList))
     IssueText(base, left, right, hunks)
-
-  /** An event pair: its fields, both geometries (hex EWKB here; the database turns them into GeoJSON
-    * for the screen) and spans. */
-  private[domain] def eventDetail(l: BundleEvent, r: BundleEvent): IssueDetail =
-    def dates(e: BundleEvent) = Some(List(e.notBefore, e.beginBy, e.endFrom, e.notAfter).map(_.fold("…")(_.toString)).mkString(" · "))
-    IssueDetail(
-      fields = List(IssueField("id", Some(l.id), Some(r.id)), IssueField("label", Some(l.label), Some(r.label)),
-        IssueField("kind", Some(l.kind), Some(r.kind)),
-        IssueField("dates (not before · begin by · end from · not after)", dates(l), dates(r)),
-        IssueField("place", l.placeId, r.placeId), IssueField("historicity", Some(l.historicity), Some(r.historicity)),
-        IssueField("description", clip(l.description), clip(r.description))),
-      place = Some(IssuePlace(l.geom, r.geom, eventSpan(l), eventSpan(r))))
-
-  private[domain] def placeDetail(l: BundlePlace, r: BundlePlace): IssueDetail =
-    IssueDetail(
-      fields = List(IssueField("label", Some(l.label), Some(r.label)), IssueField("kind", Some(l.kind), Some(r.kind)),
-        IssueField("span", Some(rangeText(l.period)), Some(rangeText(r.period))),
-        IssueField("names", Option(l.names.map(_.name).mkString("; ")).filter(_.nonEmpty),
-          Option(r.names.map(_.name).mkString("; ")).filter(_.nonEmpty))),
-      place = Some(IssuePlace(l.geom, r.geom, l.period.map(span), r.period.map(span))))
-
-  /** An approved plan, as one line a person can compare. */
-  private[domain] def planText(j: Json): String =
-    j.as[GoalPlans.Plan].toOption.fold(preview(j.noSpaces, 300)) { p =>
-      List(Option(p.rationale).filter(_.nonEmpty).map(r => preview(r, 160)),
-        Option.when(p.subGoals.nonEmpty)(s"sub-goals: ${p.subGoals.map(_.slug).mkString(", ")}"),
-        Option.when(p.queries.nonEmpty)(s"queries: ${p.queries.mkString("; ")}"),
-        Option.when(p.works.nonEmpty)(s"${Plural.count(p.works.size, "work")}")).flatten.mkString(" · ")
-    }
 
   /** Events and places point at places by id, places and periods at their parents by id: a bundle
     * place (period) matched to one here under another id is pointed at under that id. Pure. */
@@ -558,11 +481,11 @@ object MergePlanner:
         if p.flags.nonEmpty then s"the same work? ${p.flags.mkString("; ")} (score ${SourceMatcher.signed(ev.score)})"
         else s"possibly the same work (score ${SourceMatcher.signed(ev.score)})"
       add(Draft(MergeIssue(gateIds(p.right.uid), IssueKind.SameWork, IssueSeverity.Blocking, BundleKind.Source, title,
-        Some(side(p.left.source)), Some(side(p.right.source)),
+        Some(MergeIssueDetail.side(p.left.source)), Some(MergeIssueDetail.side(p.right.source)),
         ev.why ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${SourceMatcher.signed(sc)})"),
         List(km.Map, km.Both),
         Option.when(ev.score >= cfg.autoMerge)(MergeDecision.withArg(km.Map, p.left.source.citekey)),
-        detail = Some(IssueDetail(sourceFields(p.left.source, p.right.source)))),
+        detail = Some(IssueDetail(MergeIssueDetail.sourceFields(p.left.source, p.right.source)))),
         Set(km.Both)))
     }
 
@@ -575,7 +498,7 @@ object MergePlanner:
       def mk(kind: IssueKind, title: String, opts: List[DecisionKind], suggested: Option[MergeDecision] = None,
           sev: IssueSeverity = IssueSeverity.Blocking, why: List[String] = Nil): Draft =
         Draft(MergeIssue(issueId(kind, BundleKind.Source, fu, lu, rr, ll), kind, sev, BundleKind.Source, title,
-          Some(side(l)), Some(side(r)), why, opts, suggested, cond, detail = Some(IssueDetail(sourceFields(l, r)))), Set.empty)
+          Some(MergeIssueDetail.side(l)), Some(MergeIssueDetail.side(r)), why, opts, suggested, cond, detail = Some(IssueDetail(MergeIssueDetail.sourceFields(l, r)))), Set.empty)
       val doiR = r.doi.flatMap(MergeText.doiKey)
       val doiL = l.doi.flatMap(MergeText.doiKey)
       val sameDoi = doiR.isDefined && doiR == doiL
@@ -600,7 +523,7 @@ object MergePlanner:
         text(r.notes, l.notes).map(_ =>
           mk(IssueKind.NotesDiffers, "notes differ", List(km.KeepLeft, km.KeepRight, km.Concat))),
         r.period.zip(l.period).filter((a, b) => a != b).map((a, b) =>
-          mk(IssueKind.PeriodDiffers, s"period differs: ${rangeText(Some(b))} here, ${rangeText(Some(a))} in the bundle",
+          mk(IssueKind.PeriodDiffers, s"period differs: ${MergeIssueDetail.rangeText(Some(b))} here, ${MergeIssueDetail.rangeText(Some(a))} in the bundle",
             List(km.KeepLeft, km.KeepRight, km.Hull), Some(MergeDecision.of(km.Hull)))),
         r.bodySha256.zip(l.bodySha256).filter((a, b) => a != b).map { (a, b) =>
           val sim = sketches.get(a).zip(sketches.get(b)).map((x, y) => s" (MinHash ${SourceMatcher.fixed(x.similarity(y), 2)})").getOrElse("")
@@ -625,10 +548,10 @@ object MergePlanner:
         val suggestion = renameSuggestion(s, in, fes)
         Draft(MergeIssue(issueId(IssueKind.CitekeyCollision, BundleKind.Source, List(s.uid), List(o.uid),
           rightRev(s.uid), leftRev(o.uid)), IssueKind.CitekeyCollision, IssueSeverity.Blocking, BundleKind.Source,
-          title, Some(side(o)), Some(side(s)),
+          title, Some(MergeIssueDetail.side(o)), Some(MergeIssueDetail.side(s)),
           if asAlias then List("rename-left cannot free an old citekey: the bundle's source takes a new one") else Nil,
           if asAlias then List(km.RenameRight) else List(km.RenameRight, km.RenameLeft),
-          Some(MergeDecision.withArg(km.RenameRight, suggestion)), cond, detail = Some(IssueDetail(sourceFields(o, s)))), Set.empty)
+          Some(MergeDecision.withArg(km.RenameRight, suggestion)), cond, detail = Some(IssueDetail(MergeIssueDetail.sourceFields(o, s)))), Set.empty)
       }
 
     fes.sources.foreach { s =>
@@ -656,10 +579,10 @@ object MergePlanner:
               IssueKind.AliasConflict, IssueSeverity.Blocking, BundleKind.Source,
               s"old citekey ${a.alias} names ${src.fold(a.sourceUid.toString)(_.citekey)} in the bundle, " +
                 s"but ${sourcesByUid.get(o).fold(o.toString)(_.citekey)} here" + (if asCitekey then " (its citekey)" else ""),
-              sourcesByUid.get(o).map(side), src.map(side),
+              sourcesByUid.get(o).map(MergeIssueDetail.side), src.map(MergeIssueDetail.side),
               List("keep-left drops the bundle's old citekey; this collection's meaning stays"),
               if asCitekey then List(km.KeepLeft) else lr, Some(MergeDecision.of(km.KeepLeft)), cond,
-              detail = sourcesByUid.get(o).zip(src).map((x, y) => IssueDetail(sourceFields(x, y)))), Set(km.KeepLeft))
+              detail = sourcesByUid.get(o).zip(src).map((x, y) => IssueDetail(MergeIssueDetail.sourceFields(x, y)))), Set(km.KeepLeft))
           }
         fates.get(a.sourceUid) match
           case Some(Fate.Same(l, _)) => conflict(l, None).foreach(add)
@@ -698,11 +621,11 @@ object MergePlanner:
           nearIssue(rf.uid) = id
           add(Draft(MergeIssue(id, IssueKind.FindingNearDuplicate, IssueSeverity.Default, BundleKind.Finding,
             s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(j, 2)})",
-            Some(IssueSide(lf.id, lf.uid, List(preview(lf.claim)))), Some(IssueSide(rf.id, rf.uid, List(preview(rf.claim)))),
+            Some(IssueSide(lf.id, lf.uid, List(MergeIssueDetail.preview(lf.claim)))), Some(IssueSide(rf.id, rf.uid, List(MergeIssueDetail.preview(rf.claim)))),
             List("by default both are kept; merge makes them one finding"), List(km.Both, km.Merge),
             Some(MergeDecision.of(km.Both)), cond, detail = Some(IssueDetail(List(
               IssueField("claim", Some(lf.claim), Some(rf.claim)),
-              IssueField("period", lf.period.map(x => rangeText(Some(x))), rf.period.map(x => rangeText(Some(x)))),
+              IssueField("period", lf.period.map(x => MergeIssueDetail.rangeText(Some(x))), rf.period.map(x => MergeIssueDetail.rangeText(Some(x)))),
               IssueField("region", lf.region, rf.region),
               IssueField("confidence", lf.confidence.map(_.toString.toLowerCase), rf.confidence.map(_.toString.toLowerCase)))))),
             Set.empty))
@@ -734,12 +657,12 @@ object MergePlanner:
                 val tag = alt.fold("")(DecisionKind.wireOf)
                 val id = issueId(IssueKind.AttestationUnanchored, BundleKind.Attestation, List(t.uid), List(l.uid),
                   if foreign then rightRev(t.uid) else localRev(t.uid), kept.getOrElse(""), tag)
-                val att = IssueSide(s"${t.targetType} ${t.targetId}", t.uid, t.quote.map(q => s"«${preview(q)}»").toList)
+                val att = IssueSide(s"${t.targetType} ${t.targetId}", t.uid, t.quote.map(q => s"«${MergeIssueDetail.preview(q)}»").toList)
                 val whose = if foreign then "the bundle's" else "this collection's"
                 add(Draft(MergeIssue(id, IssueKind.AttestationUnanchored, IssueSeverity.Blocking, BundleKind.Attestation,
                   s"$whose attestation on ${l.citekey}: its quote is not in the body the merge keeps" +
                     alt.fold("")(k => s" (if the body is ${DecisionKind.wireOf(k)})"),
-                  if foreign then Some(side(l)) else Some(att), if foreign then Some(att) else Some(side(r)),
+                  if foreign then Some(MergeIssueDetail.side(l)) else Some(att), if foreign then Some(att) else Some(MergeIssueDetail.side(r)),
                   List(if t.quote.exists(_.nonEmpty) then "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
                        else "it has a position but no quote, so it cannot be found again"),
                   List(km.Drop, km.KeepUnanchored), None, c, detail = Some(IssueDetail(List(
@@ -810,9 +733,9 @@ object MergePlanner:
       in.articleHistory.getOrElse(local, Nil).find(_._1 == sha).map(_._2)
     /** The two records of a row question side by side, where the screen can show more than labels. */
     def rowDetail(kind: BundleKind, u: UUID): Option[IssueDetail] = kind match
-      case BundleKind.Source => sourcesByUid.get(u).zip(localized.sources.find(_.uid == u)).map((l, r) => IssueDetail(sourceFields(l, r)))
-      case BundleKind.Event  => localEvent.get(u).zip(bundleEvent.get(u)).map(eventDetail)
-      case BundleKind.Place  => in.local.places.find(_.uid == u).zip(localized.places.find(_.uid == u)).map(placeDetail)
+      case BundleKind.Source => sourcesByUid.get(u).zip(localized.sources.find(_.uid == u)).map((l, r) => IssueDetail(MergeIssueDetail.sourceFields(l, r)))
+      case BundleKind.Event  => localEvent.get(u).zip(bundleEvent.get(u)).map(MergeIssueDetail.eventDetail)
+      case BundleKind.Place  => in.local.places.find(_.uid == u).zip(localized.places.find(_.uid == u)).map(MergeIssueDetail.placeDetail)
       case _                 => None
     // a bundle uid → (the uid here, what M4 does)
     val merges = scala.collection.mutable.LinkedHashMap.empty[UUID, (UUID, Merges)]
@@ -884,11 +807,11 @@ object MergePlanner:
       }
     labelTaken(BundleKind.Source, localized.sources.filter(s => localRevs.contains(s.uid)), _.uid, _.citekey,
       s => in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)), "citekey",
-      detailOf = (s, o) => sourcesByUid.get(o).map(l => IssueDetail(sourceFields(l, s))))
+      detailOf = (s, o) => sourcesByUid.get(o).map(l => IssueDetail(MergeIssueDetail.sourceFields(l, s))))
     labelTaken(BundleKind.Event, localized.events, _.uid, _.id, e => in.labels.events.get(e.id), "event id",
       options = List(km.KeepLeft, km.KeepRight, km.RenameRight),
       merge = (e, o) => localEvent.get(o).filter(MergeFold.sameCore(_, e)).map(_ => Merges.EventFold),
-      detailOf = (e, o) => localEvent.get(o).map(eventDetail(_, e)))
+      detailOf = (e, o) => localEvent.get(o).map(MergeIssueDetail.eventDetail(_, e)))
     labelTaken(BundleKind.Goal, localized.goals, _.uid, _.slug, g => in.labels.goals.get(g.slug), "goal slug",
       merge = (_, o) => localGoal.get(o).map(_ => Merges.GoalFold))
     // an acquire/tasks item with the same text here is the same item
@@ -971,7 +894,7 @@ object MergePlanner:
               (if o.geom != p.geom then "with different geometries" else "with different time spans"),
             Some(IssueSide(o.id, o.uid, List(o.label))), Some(IssueSide(p.id, f, List(p.label))),
             List("keep-left keeps this collection's place (the bundle's events point at it); keep-right takes the bundle's " +
-              "geometry and span"), lr, detail = Some(placeDetail(o, p))), Set.empty))
+              "geometry and span"), lr, detail = Some(MergeIssueDetail.placeDetail(o, p))), Set.empty))
         case None =>
           localPlaceById.values.find(x => in.placeMatches.get(f).contains(x.id)).foreach(o => merges(f) = o.uid -> Merges.PlaceFold)
     }
@@ -985,14 +908,14 @@ object MergePlanner:
           periodIssues(f) = id
           add(Draft(MergeIssue(id, IssueKind.NamedPeriodDiffers, IssueSeverity.Blocking, BundleKind.Period,
             s"named period ${p.id} was added on both sides and says something else: " +
-              s"${o.label} ${rangeText(o.period)} here, ${p.label} ${rangeText(p.period)} in the bundle",
+              s"${o.label} ${MergeIssueDetail.rangeText(o.period)} here, ${p.label} ${MergeIssueDetail.rangeText(p.period)} in the bundle",
             Some(IssueSide(o.id, o.uid, List(o.label))), Some(IssueSide(p.id, f, List(p.label))),
             List("keep-left keeps this collection's period; keep-right takes the bundle's label and span"), lr,
             detail = Some(IssueDetail(
               fields = List(IssueField("label", Some(o.label), Some(p.label)),
-                IssueField("span", Some(rangeText(o.period)), Some(rangeText(p.period))),
+                IssueField("span", Some(MergeIssueDetail.rangeText(o.period)), Some(MergeIssueDetail.rangeText(p.period))),
                 IssueField("authority", o.authority, p.authority), IssueField("region", o.region, p.region)),
-              place = Some(IssuePlace(leftSpan = o.period.map(span), rightSpan = p.period.map(span)))))), Set.empty))
+              place = Some(IssuePlace(leftSpan = o.period.map(MergeIssueDetail.span), rightSpan = p.period.map(MergeIssueDetail.span)))))), Set.empty))
         case None =>
           localPeriodById.values.find(x => in.periodMatches.get(f).contains(x.id)).foreach(o => merges(f) = o.uid -> Merges.PeriodFold)
     }
@@ -1013,7 +936,7 @@ object MergePlanner:
           Some(IssueSide(r.slug, f, r.planApprovedAt.map(a => s"approved $a").toList)),
           List("the plan approved later wins when both say when; here they do not"), lr,
           detail = Some(IssueDetail(fields = List(
-            IssueField("plan", l.plan.map(planText), r.plan.map(planText)),
+            IssueField("plan", l.plan.map(MergeIssueDetail.planText), r.plan.map(MergeIssueDetail.planText)),
             IssueField("approved", l.planApprovedAt, r.planApprovedAt))))), Set.empty))
     }
     // …and the schedules both sides have for a goal that is one: this collection's are kept
@@ -1674,7 +1597,7 @@ object MergePlanner:
         case Merges.ArticleTheirs    => info += s"article $label: the bundle's text continues this collection's — taken (fast-forward)"
         case Merges.ArticleMerged(_) => info += s"article $label: changed on both sides, merged three-way without a conflict — queued for review"
         case Merges.GoalFold         => info += s"goal $label: the same goal on both sides — the status further along, notes joined"
-        case Merges.QueueFold        => info += s"queue item «${preview(label, 50)}»: the same item on both sides — one item, done if done anywhere"
+        case Merges.QueueFold        => info += s"queue item «${MergeIssueDetail.preview(label, 50)}»: the same item on both sides — one item, done if done anywhere"
         case Merges.EventFold        => info += s"event $label: the same dating and place on both sides — one event, datings and participants unioned"
         case Merges.EventAcross      =>
           info += s"event $label: the bundle's ${rawRevs.get(f).fold("")(_.label)} has the same label, dates and place — one event"
