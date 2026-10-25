@@ -174,7 +174,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
         val (es, eb) = get(s"$url/api/export/goals")
         assertEquals(es, 200, eb)
-        assert(eb.startsWith(com.histmersion.domain.GoalsExport.Header), eb.take(200))
+        assert(eb.startsWith(com.histmersion.api.GoalsExport.Header), eb.take(200))
         assert(eb.contains("Do not edit"), eb.take(400))
         val top = eb.indexOf("\n## ZZ top goal\n")
         val sub = eb.indexOf("\n### ZZ sub goal\n")
