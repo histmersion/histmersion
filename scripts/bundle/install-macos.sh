@@ -9,7 +9,7 @@
 #                                            none; an existing file is never touched)       HISTMERSION_CONFIG
 #   ~/Library/LaunchAgents/com.histmersion.server.plist   starts it at login, restarts it if it dies
 #   ~/bin/histmersion                        the CLI                                 HISTMERSION_BIN_DIR
-#   ~/.m2/repository/com/kubuszok/histmersion-*   the plugin API, platform and testkit, for plugin builds
+#   ~/.m2/repository/com/histmersion/histmersion-*   the plugin API, platform and testkit, for plugin builds
 #
 # --move renames the bundle into place instead of copying it (a developer build, short on disk).
 # The server binary (install-build.sh; HISTMERSION_BUILD=local|prebuilt|jvm) is LINKED ON THIS MAC by

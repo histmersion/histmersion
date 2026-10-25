@@ -2347,7 +2347,7 @@ with what the server ships.
 **What a plugin compiles against.** The bundle carries a Maven repository, `maven/` (`server/pluginRepo`,
 copied by `scripts/bundle/server.sh`; `histmersion plugin repo [--url]`), with two artifacts at the build's
 version: `com.kubuszok::histmersion-plugin-api` (jar, sources, POM: sconfig and kindlings' sconfig
-derivation) and `com.kubuszok::histmersion-plugin-platform`, a POM-only artifact whose dependencies are the
+derivation) and `com.histmersion::histmersion-plugin-platform`, a POM-only artifact whose dependencies are the
 libraries the server provides to plugins, at the versions the server's runtime class path resolves
 (`Runtime / update`, not `V.*`: an eviction can raise one). Third-party jars still come from Maven
 Central; only Histmersion's own artifacts live in the local repository. A release attaches the repository
@@ -2434,7 +2434,7 @@ reads a plugin's collection (`PluginMedia`, incl. the licence judgement `refusal
 wrappers (`SttpHttp`, `PluginCollection`, `PluginAiClient`). Host code logs through `HostLog` (scribe by
 default) so a test captures the lines.
 
-`modules/plugin-testkit` (`com.kubuszok::histmersion-plugin-testkit`, package
+`modules/plugin-testkit` (`com.histmersion::histmersion-plugin-testkit`, package
 `com.histmersion.plugin.testkit`) depends on plugin-host only. `server/pluginRepo` writes it into the
 install's `maven/` with `histmersion-plugin-host` and `histmersion-core` (jar, sources, POM each);
 everything else comes from Maven Central through their POMs. A plugin uses it as `//> using test.dep`

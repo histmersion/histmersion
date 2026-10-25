@@ -12,7 +12,7 @@ object PluginRepo {
     override def toString: String = s"$group:$artifact:$version"
   }
 
-  /** The directory of one version in the Maven layout: `com/kubuszok/histmersion-plugin-api_3/0.1.0`. */
+  /** The directory of one version in the Maven layout: `com/histmersion/histmersion-plugin-api_3/0.1.0`. */
   def versionDir(group: String, artifact: String, version: String): String =
     s"${group.replace('.', '/')}/$artifact/$version"
 

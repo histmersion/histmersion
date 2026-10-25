@@ -199,7 +199,7 @@ class PluginTemplateSuite extends munit.FunSuite:
       assertEquals(PluginAuthoring.repository(Some("https://example.org/m2"), Left(CliError("no install")), Left(CliError("no HOME"))).map(_._1),
         Right(TemplateRepository.Remote(PluginRepository.parse("https://example.org/m2", _ => false).toOption.get)))
       assertEquals(PluginAuthoring.apiJars(Right(install)), Right((install.apiJar, install.apiSources)))
-      assert(install.apiJar.toString.endsWith(s"maven/com/kubuszok/histmersion-plugin-api_3/${PluginBuildVersions.histmersion}/" +
+      assert(install.apiJar.toString.endsWith(s"maven/com/histmersion/histmersion-plugin-api_3/${PluginBuildVersions.histmersion}/" +
         s"histmersion-plugin-api_3-${PluginBuildVersions.histmersion}.jar"), install.apiJar)
     finally Files.walk(root).sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) })
 

@@ -26,11 +26,11 @@ are copied, so running it again after an update is cheap.
 
 It holds these artifacts, all at the version of your Histmersion:
 
-- **`com.kubuszok::histmersion-plugin-api`**: the API a plugin compiles against, with its sources
+- **`com.histmersion::histmersion-plugin-api`**: the API a plugin compiles against, with its sources
   (the documentation of every type) and a POM.
-- **`com.kubuszok::histmersion-plugin-platform`**: no code, only a POM. Its dependencies are the
+- **`com.histmersion::histmersion-plugin-platform`**: no code, only a POM. Its dependencies are the
   libraries the server provides to plugins, at exactly the versions it ships (below).
-- **`com.kubuszok::histmersion-plugin-testkit`**: a test dependency that runs a plugin as the server
+- **`com.histmersion::histmersion-plugin-testkit`**: a test dependency that runs a plugin as the server
   does (see [Testing](#testing)), with the parts of Histmersion it needs.
 
 A plugin depends on both **compile-only**: the server provides them at run time, so they are never
@@ -101,8 +101,8 @@ The two Scala files are the ones you edit, and `project.scala` is the build:
 ```scala
 //> using scala 3.10.0
 //> using repository m2Local
-//> using compileOnly.dep com.kubuszok::histmersion-plugin-api:0.1.0-SNAPSHOT
-//> using compileOnly.dep com.kubuszok::histmersion-plugin-platform:0.1.0-SNAPSHOT
+//> using compileOnly.dep com.histmersion::histmersion-plugin-api:0.1.0-SNAPSHOT
+//> using compileOnly.dep com.histmersion::histmersion-plugin-platform:0.1.0-SNAPSHOT
 //> using resourceDir resources
 
 //> using publish.organization doimirror
@@ -111,8 +111,8 @@ The two Scala files are the ones you edit, and `project.scala` is the build:
 //> using publish.doc false
 
 //> using test.dep org.scalameta::munit:1.3.6
-//> using test.dep com.kubuszok::histmersion-plugin-platform:0.1.0-SNAPSHOT
-//> using test.dep com.kubuszok::histmersion-plugin-testkit:0.1.0-SNAPSHOT
+//> using test.dep com.histmersion::histmersion-plugin-platform:0.1.0-SNAPSHOT
+//> using test.dep com.histmersion::histmersion-plugin-testkit:0.1.0-SNAPSHOT
 //> using test.resourceDir test-resources
 //> using test.javaProp histmersion.plugin.project=${.}
 ```
@@ -242,10 +242,10 @@ version      := "0.1.0"
 resolvers += Resolver.mavenLocal                 // ~/.m2/repository: histmersion plugin repo --m2
 val histmersion = "0.1.0-SNAPSHOT"
 libraryDependencies ++= Seq(
-  "com.kubuszok" %% "histmersion-plugin-api"      % histmersion % Provided,
-  "com.kubuszok" %% "histmersion-plugin-platform" % histmersion % Provided,
+  "com.histmersion" %% "histmersion-plugin-api"      % histmersion % Provided,
+  "com.histmersion" %% "histmersion-plugin-platform" % histmersion % Provided,
   "org.scala-lang.modules" %% "scala-xml"         % "2.5.0",
-  "com.kubuszok" %% "histmersion-plugin-testkit"  % histmersion % Test,   // see Testing
+  "com.histmersion" %% "histmersion-plugin-testkit"  % histmersion % Test,   // see Testing
   "org.scalameta" %% "munit"                      % "1.3.6" % Test
 )
 Test / fork := true                              // the testkit finds recordings/ under the project
@@ -555,7 +555,7 @@ replayed offline.
 
 ### Without a server: the plugin testkit
 
-Every install's Maven repository carries `com.kubuszok::histmersion-plugin-testkit`, a test dependency
+Every install's Maven repository carries `com.histmersion::histmersion-plugin-testkit`, a test dependency
 (`//> using test.dep …`, or `% Test` in sbt). It runs your plugin the way the server does, using the
 server's own code, but needs no server, no database and no Postgres:
 

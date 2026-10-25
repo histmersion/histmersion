@@ -7,7 +7,7 @@ import Dependencies.*
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 ThisBuild / scalaVersion := "3.10.0"
-ThisBuild / organization := "com.kubuszok"
+ThisBuild / organization := "com.histmersion"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 
 // Every module is AGPL-3.0-or-later, plugin-api and the first-party plugins included (LICENSE, NOTICE).

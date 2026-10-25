@@ -191,7 +191,7 @@ api="$(HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin api-jar 2>&1)" |
 HOME="$data/home" HISTMERSION_INSTALL_DIR="$b" "$b/bin/histmersion" plugin new smoke-new --dir "$data/smoke-new" > "$data/new.out" 2>&1 \
   || fail "plugin new: $(cat "$data/new.out")"
 grep -qx "//> using repository m2Local" "$data/smoke-new/project.scala" \
-  && grep -q "^//> using compileOnly.dep com.kubuszok::histmersion-plugin-platform:" "$data/smoke-new/project.scala" \
+  && grep -q "^//> using compileOnly.dep com.histmersion::histmersion-plugin-platform:" "$data/smoke-new/project.scala" \
   && ! grep -qE "^//> using (jar|repository file:)" "$data/smoke-new/project.scala" \
   && ! grep -q "^//> using" "$data/smoke-new/SmokeNew.scala" \
   && grep -qx "smokenew.SmokeNewPlugin" "$data/smoke-new/resources/META-INF/services/com.histmersion.plugin.Plugin" \
@@ -238,12 +238,12 @@ else
   grep -q "plugin hello 0.1.0 · SPI 2 · access: open · provides source-fetcher:hello" "$data/add.out" || fail "plugin add did not describe the plugin"
   [ -f "$rd/plugins/hello-0.1.0.jar" ] || fail "plugin add did not install hello-0.1.0.jar"
   # by its coordinates, from the fixture repository: its POM lists hello-lib, which is installed with it
-  rel "$ri/bin/histmersion" plugin add com.kubuszok::histmersion-plugin-hello-deps:0.1.0 --repo "$fixtures" --yes > "$data/add-deps.out" 2>&1 \
+  rel "$ri/bin/histmersion" plugin add com.histmersion::histmersion-plugin-hello-deps:0.1.0 --repo "$fixtures" --yes > "$data/add-deps.out" 2>&1 \
     || fail "plugin add hello-deps: $(cat "$data/add-deps.out")"
   sed 's/^/  /' "$data/add-deps.out"
-  grep -q "dependency: com.kubuszok:histmersion-plugin-hello-lib_3:0.1.0" "$data/add-deps.out" || fail "plugin add did not resolve hello-deps's dependency"
+  grep -q "dependency: com.histmersion:histmersion-plugin-hello-lib_3:0.1.0" "$data/add-deps.out" || fail "plugin add did not resolve hello-deps's dependency"
   [ -f "$rd/plugins/hello-deps-0.1.0.jar" ] && [ -f "$rd/plugins/hello-deps-0.1.0.pom" ] || fail "plugin add did not install hello-deps-0.1.0.jar with its POM"
-  grep -qx "com.kubuszok-histmersion-plugin-hello-lib_3-0.1.0.jar" "$rd/plugins/lib/classpath" || fail "hello-lib is not in plugins/lib: $(cat "$rd/plugins/lib/classpath" 2>/dev/null)"
+  grep -qx "com.histmersion-histmersion-plugin-hello-lib_3-0.1.0.jar" "$rd/plugins/lib/classpath" || fail "hello-lib is not in plugins/lib: $(cat "$rd/plugins/lib/classpath" 2>/dev/null)"
   rel "$ri/bin/histmersion" plugin status > "$data/status.out" 2>&1 || fail "plugin status: $(cat "$data/status.out")"
   grep -q "REBUILD NEEDED" "$data/status.out" || fail "plugin status does not ask for a rebuild: $(cat "$data/status.out")"
   start=$(date +%s)
