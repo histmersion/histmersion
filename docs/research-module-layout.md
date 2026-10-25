@@ -366,12 +366,130 @@ their areas (merge, sources).
 **Plugin authors.** `plugin-api` did not change. The testkit contract (`plugin-testkit-api.txt`) did not
 change.
 
+## Step 7, batch 2 as built (#3967, 2026-10-25)
+
+The shared vocabularies first, as decided (Unresolved → resolved), then the areas whose coupling was
+smallest: goals, and the build identity. One commit each, every one compiling and passing the JVM suites
+of the modules it touched; `just test-it` passed once at the end.
+
+```
+values   JVM+JS   newtypes + the vocabularies domain, wire and store share     iron
+                  (18 files, 0.9k lines; no codec)
+api      JVM+JS   com.histmersion.api (99 files, 21.6k lines)                  values, tapir-core, circe, kindlings
+config   JVM      com.histmersion.config                                       values
+core     JVM      com.histmersion.domain (60 files)                            values, api, config (temporary)
+```
+
+**The vocabularies, in `values`.** Two commits.
+
+- *Top-level ones:* `SourceStatus`, `Confidence`, `EdgeKind`, `GoalStatus`, `PlaceKind`, `LocationPrecision`,
+  `MediaRole`, `Historicity`, `EventEdgeKind`, `EventLinkStatus`, `BundleKind` and the merge vocabularies
+  (`IssueSeverity`, `IssueKind`, `DecisionKind`, `MatchOutcome`, `EditionsPolicy`, `DecidedBy`,
+  `MatchMethod`), with the spelling table they all share (`WireEnumValues`: every value, its spelling, the
+  value a spelling names). Their logic came with them (`PlaceKind.parse`, `LocationPrecision.of`,
+  `MediaRole.order`, `BundleKind.file`), all of it pure.
+- *Nested ones,* which api declared inside its objects: `Agents`' `ProviderKind`, `Role`, `RunState`,
+  `Pipeline`, `TargetKind`, `ApprovalKind`, `ApprovalState`, `ApprovalMode`; `Managers`' `Kind`, `State`,
+  `ItemStatus`; `GoalPlans`' `DraftMode`, `LinkKind`, `ScheduleKind`; `ListFilters`' `DecidedBy`. In
+  `values` they are top-level, so the generic names got a qualifier: `AgentRole`, `ManagerKind`,
+  `ManagerState`, `GoalLinkKind`, `ApprovalDecidedBy`. Each api object `export`s them under its old names
+  (`export com.histmersion.values.{AgentRole as Role, …}`), so the wire records, the endpoints, the web
+  page, the CLI and the server read exactly as before; the domain names the `values` types.
+- *Instances:* the circe encoders/decoders and tapir schemas are api's `VocabularyCodecs`, each built from
+  the spelling table by `WireEnum` as before, and exported to the api package, where every file finds them
+  as it found them on the companions. db's column codecs stayed in db.
+- *A rule this exposed:* outside api, a file that derives a codec or schema must
+  `import com.histmersion.api.VocabularyCodecs.given`. Without it Kindlings derives an instance for a
+  vocabulary field by itself, and nothing fails to compile: a checkpointed compile run's `Snap` wrote
+  `"mode":{"Create":{}}` instead of `"mode":"create"`. Every derivation file of server, cli and web imports
+  it now (the domain's files had it already, through `import com.histmersion.api.given`), and
+  `VocabularyWireSuite` holds a checkpointed record to the wire spelling. The scaladoc of `VocabularyCodecs`
+  states the rule.
+- *Scala.js:* `values` is cross-built and takes no locale library, so `toLowerCase(Locale.ROOT)` became
+  `Ascii.lower` (A–Z only), which is what `Locale.ROOT` does to an enum's name.
+- *Unchanged wire, proved:* a scratch suite dumped, for every endpoint of `Api.all`, its `showDetail`, the
+  JSON Schema (sttp-apispec, as the MCP layer builds them) and the tapir `Schema.show` (validators
+  included, so an enumeration's values) of every body, query, path and header input, every output and
+  error output; then the REST index and the MCP `tools/list` of a server on a test database — 2 674 117
+  bytes, byte-identical before the batch, after the first vocabulary commit and after the second. There is
+  no OpenAPI document in the build (no tapir-openapi-docs); this dump covers what one would hold.
+  `VocabularySuite` (values, JVM and JS) round-trips every enum's spellings and pins the ones the store
+  and clients rely on.
+
+**The areas.**
+
+| area | moved | to | why there | edge left |
+|---|---|---|---|---|
+| goals | `GoalsExport` (GOALS.md) and its suite | api | a Markdown projection of api's goal records, written by the server's export and the CLI's meta export — §2 puts Markdown rendering of responses with the wire records | `GoalFocus`, `PlanGoal`, `WatchSchedules` work on wire records (`PlanGoalItem`, `GoalSchedule`, `Plan`, `PlannedWork`, `ManagerConfig`…) |
+| build identity | `Version` | api | what `/api/version` (`VersionInfo`) and `/api/about` report; server, CLI and plugin-host read it | — |
+
+The other areas were not started. What the domain still takes from api is now records, not vocabularies:
+merge (`MergePlanner` 41 names, `BundleEntities` 27, `MergeFold` 14 — the bundle and merge records),
+managers (`ManagerPolicy` 19: `ManagerConfig`, `ItemState`, `Hold`, `RunMark`, `HintEffect`, …), agents
+(`CompareRuns` 13, the run records), articles (`ReviewArticle` 13, `CompileArticle` 6: coverage and
+critique records), sources (`EnrichSource` 10: the patch records; `Frontmatter`, `Export`: `Source`,
+`Finding`), acquire (`AcquireParse` 7: `WorkRef`, `ArchiveItem`, …). Each needs a domain record and a
+Chimney transformer in the server — §2's "split only when there is a reason" applied per record, about a
+day per area as §5 estimated — or the record stays a recorded edge. The shared text helpers (`Plural` in
+11 domain files, `LatinFold`, `YearFmt`/`Years`, `Geocode.key`) remain the other recurring edge; they are
+pure and cross-built, and would fit `values` only by widening what `values` is for, so they were left.
+
+**Measured.** Domain → api the way batch 1 counted it (files importing api; compiling core with every api
+import removed: files with errors / distinct names not found — this counter reads 210 names where batch 1's
+read 196 for the same tree), and the CLI → domain edge the same way (cli compiled with every domain import
+removed; names counted as types, without the 4–5 lower-case names that are knock-on errors):
+
+| after | domain files · importing api · by wildcard | api imports removed: files / names | cli files importing domain | domain imports removed: files / types |
+|---|---|---|---|---|
+| batch 1 (`7d4d6e72`) | 62 · 59 · 51 | 47 / 210 | 29 of 38 | 9 / 13 |
+| top-level vocabularies (`ea4dd571`) | 62 · 57 · 51 | 45 / 195 | 29 of 38 | 9 / 13 |
+| nested vocabularies (`f0e9e19d`) | 62 · 57 · 51 | 45 / 180 | 29 of 38 | 9 / 13 |
+| goals (`a148142d`) | 61 · 56 · 50 | 44 / 176 | 29 of 38 | 8 / 12 |
+| Version (`929b5972`) | 60 · 55 · 49 | 44 / 176 | 29 of 38 | 7 / 11 |
+
+(The CLI's first row is inferred: the vocabulary commits moved nothing out of the domain, so the names
+it takes from the domain could not change; measured from the second row on.)
+
+**How far the CLI is from `api` + `config`.** It takes eleven domain types, all local-file work:
+`BundleTar` (and through it `BundleFormat`), `MergeResolutionsFile`, `ArticleNote`, `PluginKit` (with its
+`Coordinates`, `Index`, `Installed`, `Origin`), `DirSize`, `PlaceSeed` and `CoverChoice`. None of them uses
+config (the imports are step 4's blanket ones), and none is domain logic in §2's sense: they read and write
+the files a client and the server exchange — the `.hmx` bundle, the resolution file, the Markdown mirror,
+the plugin set — over api's records. They are what still ties cli to core, and moving more of their kind
+into the domain would tie it harder. The proposal:
+
+- the file formats (`BundleFormat`, `BundleTar`, `BundleReader`, `MergeResolutionsFile`, `ArticleNote`,
+  `PluginKit`; `Frontmatter` and `Export`, the server's and db's twins of `ArticleNote`, can follow) go to
+  api's JVM side (`modules/api/jvm`, where `ApiIndex` is), which then depends on snakeyaml — already in the
+  CLI binary — or, if api should stay endpoints and codecs, to a small JVM module of client files (`api` +
+  snakeyaml) that cli and server both take;
+- `CoverChoice` and the Open Library id helpers it calls go with them (the CLI is its only user);
+- `DirSize` (the server's storage report uses it too) and `PlaceSeed` (the server's init too) are plain JDK
+  file helpers and go with the file formats.
+
+With that, cli depends on `api` + `config`, and its 29 domain imports become api ones. `Bundle`,
+`SourceDelete`, `Rename` and `PlaceEdits` stay in api, where they are.
+
+**Filter.** Not decided: no area of this batch moved it.
+
+**Native-image metadata.** A tracing-agent run of the server and the CLI on an empty test database (scratch
+HOME and config, a non-default port; REST GETs of every endpoint, MCP tools, source and goal writes, the
+CLI's reads and exports) recorded the lazy given fields of `VocabularyCodecs`; the entries that named the
+same fields on the former api companions were dropped with the classes: server 1 158 → 1 143 reflection
+entries, CLI 655 → 640. `app.bundle.js`: 15 788 593 → 15 715 799 B raw, 1 785 110 → 1 773 435 B gzip −6
+(not attributed). The bundle built, `smoke.sh` and `--self-check` pass.
+
+**Plugin authors.** `plugin-api` did not change, nor did the testkit contract (`plugin-testkit-api.txt`).
+A JVM client compiled against api sees the moved vocabularies in package `com.histmersion.values` (top-level
+ones: `com.histmersion.api.SourceStatus` is now `com.histmersion.values.SourceStatus`); the nested ones keep
+their api names through the exports. The JSON is the same.
+
 ## Unresolved
 
 - Whether `Filter` (used by web 28 times, db 52, server 55) is a wire record or a domain value with an
   SQL rendering decides whether it lands in `api` or `domain`; db's `Filter → SQL` code suggests the
   latter, with a wire `FilterView`. Steps 4–6 left it in `api`, with everything the wire needs; step 7's
-  first batch did not need to decide it.
+  first two batches did not need to decide it.
 
 **Resolved.**
 
