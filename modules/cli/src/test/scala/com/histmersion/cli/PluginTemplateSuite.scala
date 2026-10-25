@@ -35,6 +35,10 @@ class PluginTemplateSuite extends munit.FunSuite:
     assertEquals(ScalaPackage.parse("org.example.mirror").map(_.path), Right("org/example/mirror"))
     assert(ScalaPackage.parse("Org.example").isLeft)
     assert(ScalaPackage.parse("org..example").isLeft)
+    assertEquals(ScalaPackage.parse("Org"), Left("'Org' is not a package name ([a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*)"))
+    assertEquals(PluginId.parse("My-Mirror"), Left("'My-Mirror' is not a plugin id: lower-case letters and digits in words " +
+      "joined by single dashes, starting with a letter ([a-z][a-z0-9]*(-[a-z0-9]+)*)"))
+    assertEquals(PluginRepository.parse("ftp://x", _ => false), Left(s"no such directory: ${java.nio.file.Path.of("ftp://x").toAbsolutePath.normalize}"))
 
   test("the plugin class is named after the id, without doubling 'Plugin'"):
     assertEquals(PluginTemplate.pluginClass(PluginId.parse("mirror").toOption.get), "MirrorPlugin")
@@ -167,10 +171,10 @@ class PluginTemplateSuite extends munit.FunSuite:
     finally Files.walk(root).sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) })
 
   test("a repository: a URL as given, a directory as its file: URL, a missing directory refused"):
-    assertEquals(PluginRepository.parse("https://repo.example.org/m2", _ => false).map(_.url), Right("https://repo.example.org/m2"))
+    assertEquals(PluginRepository.parse("https://repo.example.org/m2", _ => false).map(r => r.value: String), Right("https://repo.example.org/m2"))
     val root = Files.createTempDirectory("plugin-repo")
     try
-      assertEquals(PluginRepository.parse(root.toString, Files.isDirectory(_)).map(_.url), Right(root.toUri.toString))
+      assertEquals(PluginRepository.parse(root.toString, Files.isDirectory(_)).map(r => r.value: String), Right(root.toUri.toString))
       assert(PluginRepository.parse(root.resolve("nope").toString, Files.isDirectory(_)).left.exists(_.contains("no such directory")))
     finally Files.walk(root).sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) })
 
