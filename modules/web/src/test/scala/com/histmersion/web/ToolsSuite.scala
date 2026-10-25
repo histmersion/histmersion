@@ -102,6 +102,8 @@ class ToolsSuite extends munit.FunSuite:
     assert(JobsView.subjectStored(job("a", JobState.Done)))
     assert(JobsView.subjectStored(job("a", JobState.Running, Ingest.KindReocr)))
     assertEquals(JobsView.kindLabel("some_kind"), "some kind")
+    assertEquals(JobsView.kindLabel(Ingest.KindIngest), "ingest (fetch or upload, then OCR)")
+    assertEquals(RunsView.originLabel("ingest"), "by an ingest (before the enrich manager)")
   }
 
   // #770: an init job showed as "Init" with no subject

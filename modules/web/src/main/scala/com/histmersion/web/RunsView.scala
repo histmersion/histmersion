@@ -55,6 +55,15 @@ object RunsView:
       (n.manager.isEmpty || r.managerId.exists(n.manager.contains)))
 
   /** The query the window sends, from its filter fields. Pure. */
+  /** Who started a run, for a person: `ingest` is the enrichment an ingest started itself, before the
+    * enrich manager took that over (16 Oct 2026); since then those runs are the manager's. */
+  def originLabel(origin: String): String = origin match
+    case "person"  => "by a person"
+    case "manager" => "by a manager"
+    case "ingest"  => "by an ingest (before the enrich manager)"
+    case "run"     => "by another run"
+    case other     => Label.display(other)
+
   def filterOf(status: Option[RunState], pipelines: List[String], origins: List[String], manager: Option[String],
       provider: Option[String], model: Option[String], goal: Option[String], since: Option[String], until: Option[String],
       subject: Option[String]): ListFilters.RunFilter =
@@ -156,7 +165,7 @@ object RunsView:
           "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models)))),
       div(cls := "toolbar list-filters",
         ListFilterBar.chips("pipeline", facet("pipeline"), UiState.runPipelines),
-        ListFilterBar.chips("origin", facet("origin"), UiState.runOrigins),
+        ListFilterBar.chips("origin", facet("origin"), UiState.runOrigins, originLabel),
         div(cls := "btn-group",
           ListFilterBar.picker("manager", facet("manager"), UiState.runManager),
           ListFilterBar.picker("provider", facet("provider"), UiState.runProvider),
