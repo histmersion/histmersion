@@ -203,9 +203,17 @@ object LayerFilters:
       IconSelect.Opt(g, s"all $g", layerIcon(PointKinds.Events), under) ::
         EventTaxonomy.kinds.filter(_.group == g).map(k => IconSelect.Opt(k.kind, k.label, badge(Shape.Square, k.icon), under))
     }
+  /** What each event tier means; the tier menu's tooltips. */
+  def tierMeaning(tier: String): Option[String] = tier match
+    case EventTier.Attested  => Some("Events a source in the corpus attests: its own record, or an attestation linked to it.")
+    case EventTier.Catalogue => Some("Events only an external catalogue knows; no source in the corpus attests them yet.")
+    case _                   => None
+
   val tiers: List[IconSelect.Opt] = List(
-    IconSelect.Opt("", "all", Icon.html(Icon.TierPair)),
-    IconSelect.Opt(EventTier.Attested, "attested by a source", """<span class="hd-badge hd-badge--square hd-ev hd-ev--attested opt-badge"></span>"""),
-    IconSelect.Opt(EventTier.Catalogue, "catalogue only", """<span class="hd-badge hd-badge--square hd-ev hd-ev--catalogue opt-badge"></span>"""))
+    IconSelect.Opt("", "all", Icon.html(Icon.TierPair), hint = Some("Every event, attested or not.")),
+    IconSelect.Opt(EventTier.Attested, "attested by a source", """<span class="hd-badge hd-badge--square hd-ev hd-ev--attested opt-badge"></span>""",
+      hint = tierMeaning(EventTier.Attested)),
+    IconSelect.Opt(EventTier.Catalogue, "catalogue only", """<span class="hd-badge hd-badge--square hd-ev hd-ev--catalogue opt-badge"></span>""",
+      hint = tierMeaning(EventTier.Catalogue)))
   val siteTypes: List[IconSelect.Opt] =
     IconSelect.Opt("", "all", layerIcon(PointKinds.Sites)) :: SiteTypes.all.map(t => IconSelect.Opt(t.id, t.label, badge(Shape.Circle, t.icon)))

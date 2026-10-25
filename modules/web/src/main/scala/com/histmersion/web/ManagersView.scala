@@ -34,6 +34,27 @@ object ManagersView:
     else if note.startsWith("focus:") then "queued"
     else "active"
 
+  /** What a manager does, from its id (`review`, `enrich`, `seed:<goal>`, `watch:<goal>`); a tooltip on
+    * the runs window's manager menu. */
+  def managerMeaning(id: String): Option[String] =
+    val goal = id.dropWhile(_ != ':').drop(1)
+    Kind.parse(id.takeWhile(_ != ':')).map {
+      case Kind.Review => "The review manager: reviews the library's articles until their reviews converge."
+      case Kind.Enrich => "The enrich manager: enriches the library's sources until each one is enriched."
+      case Kind.Seed   => s"Seeds the research area $goal: plans it, proposes its new articles and, once approved, compiles them."
+      case Kind.Watch  => s"Watches the research area $goal: an acquisition sweep and a currency check on its schedule."
+    }
+
+  /** What each status of a manager's item means; a tooltip on the items' filter buttons. */
+  def itemStatusMeaning(s: ItemStatus): String = s match
+    case ItemStatus.Pending   => "Waiting to start; the scheduler picks the order."
+    case ItemStatus.Held      => "Held: it does not start until released, its approval is decided, or its hold ends."
+    case ItemStatus.Active    => "A run is working on it now."
+    case ItemStatus.Done      => "Settled: its runs got it where the manager wanted it."
+    case ItemStatus.Stopped   => "Settled without being done: skipped, or the manager gave up on it. Re-open brings it back."
+    case ItemStatus.Failed    => "Settled because its run failed. Re-open brings it back."
+    case ItemStatus.Cancelled => "Settled because the work is moot: its target is gone, or its sweep was removed."
+
   /** What a person can do to this item: by its status — but an item the autopilot's focus holds is not
     * released by hand (pin its goal instead). */
   def itemActionsFor(i: ManagerItem): List[String] =
@@ -335,6 +356,36 @@ object ManagersView:
     ws.filter(w => (types.isEmpty || types.contains(w.jobType)) && (codes.isEmpty || codes.contains(w.code)) &&
       subject.forall(t => (w.target + " " + w.goal.getOrElse("") + " " + w.manager).toLowerCase.contains(t.trim.toLowerCase)))
 
+  /** What each job type of the scheduler's queue is; a tooltip on its filter chip. */
+  def jobTypeMeaning(jobType: String): Option[String] = jobType match
+    case "goal-plan" => Some("Planning a research goal: its sub-goals, search queries and works (plan-goal runs).")
+    case "propose"   => Some("Proposing the articles a research area should have (propose-articles runs).")
+    case "sweep"     => Some("Acquisition sweeps: discovering new works for a goal and ranking them (acquisition-sweep runs).")
+    case "currency"  => Some("Currency checks: retractions and newer critiques of a goal's sources (currency-check runs).")
+    case "enrich"    => Some("Enriching a source: summary, findings, dates, places, status (enrich-source runs).")
+    case "compile"   => Some("Compiling a new article from the corpus (compile-article runs).")
+    case "extend"    => Some("Appending a section to an article from its new sources (compile-article runs).")
+    case "filter"    => Some("Inferring an article's coverage filter (infer-filter runs).")
+    case "review"    => Some("Reviewing articles and revising them (review-article runs).")
+    case _           => None
+
+  /** Why an item waits, by its code (the queue's, and an item's own); a tooltip on the "why" chips. */
+  def waitMeaning(code: String): Option[String] = code match
+    case "capacity"    => Some("No place free: the most runs at once are running. It starts when one finishes, in the order shown.")
+    case "pool"        => Some("The subscription plan its models draw on already carries as many runs as it takes.")
+    case "manager-cap" => Some("Its manager already has as many runs in flight as its own runs-at-once setting allows.")
+    case "blocked"     => Some("Cannot start yet; its row says why (a spending cap, a model's allowance, or work that must come first).")
+    case "busy"        => Some("Could not start in the last pass (another run is writing its target, say); the next pass tries again.")
+    case "budget"      => Some("Nothing starts: today's or this month's agent spending cap is reached.")
+    case "drain"       => Some("Nothing new starts: draining, so the runs in flight finish first, until a person lifts it.")
+    case AgentScheduler.Code.Person  => Some("Waits for a person to decide an approval; it holds no place.")
+    case AgentScheduler.Code.Held    => Some("Held by a person; it holds no place.")
+    case AgentScheduler.Code.NotDue  => Some("Not due yet: a cooldown, or a failed run's backoff.")
+    case AgentScheduler.Code.Running => Some("Started: its run is in flight.")
+    case AgentScheduler.Code.Settled => Some("Settled: done, stopped, failed or cancelled.")
+    case AgentScheduler.Code.Paused  => Some("Its manager or its run is paused.")
+    case _             => None
+
   /** A facet of the queue as the filter chips count it: each value with its items, the most first. */
   def facet(ws: List[AgentScheduler.Waiting], of: AgentScheduler.Waiting => String): List[(String, Int)] =
     ws.groupMapReduce(of)(_ => 1)(_ + _).toList.sortBy((v, n) => (-n, v))
@@ -407,8 +458,10 @@ object ManagersView:
         )
       }),
       div(cls := "list-filters",
-        ListFilterBar.chips("type", waiting.map(facet(_, _.jobType)), UiState.schedTypes),
-        ListFilterBar.chips("why", waiting.map(facet(_, _.code)), UiState.schedCodes),
+        ListFilterBar.chips("type", waiting.map(facet(_, _.jobType)), UiState.schedTypes, hint = jobTypeMeaning,
+          about = "Show only waiting items of the job types picked (any of them): what kind of work they are."),
+        ListFilterBar.chips("why", waiting.map(facet(_, _.code)), UiState.schedCodes, hint = waitMeaning,
+          about = "Show only waiting items held back for the reasons picked (any of them)."),
         div(cls := "toolbar",
           ListFilterBar.text("target, goal or manager", UiState.schedSubject),
           ListFilterBar.clearButton(filters))),
@@ -572,6 +625,7 @@ object ManagersView:
           div(cls := "btn-group",
             (None :: ItemStatus.values.toList.map(s => Some(s.wire))).map(s =>
               button(typ := "button", cls := "btn btn--toggle btn--sm", aria.pressed <-- status.signal.map(v => (v == s).toString),
+                title := s.flatMap(ItemStatus.parse).fold("Every item, whatever its status.")(itemStatusMeaning),
                 s.getOrElse("all"), onClick --> (_ => status.set(s)))))),
         child <-- page.signal.map {
           case None => p(cls := "muted", "Loading…")

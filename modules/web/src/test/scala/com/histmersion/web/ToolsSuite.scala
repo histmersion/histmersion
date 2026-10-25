@@ -106,8 +106,40 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(RunsView.originLabel("ingest"), "by an ingest (before the enrich manager)")
     import com.histmersion.values.ApprovalKind
     assert(ApprovalKind.values.forall(k => ApprovalsView.kindMeaning(k.wire).nonEmpty))
-    assert(ApprovalsView.kindMeaning("article-publish").exists(_.contains("review panel checks it afterwards")))
+    assert(ApprovalsView.kindMeaning("article-publish").exists(_.contains("unblocks its review")))
     assert(com.histmersion.values.Pipeline.values.forall(p => RunsView.pipelineMeaning(p.wire).nonEmpty))
+  }
+
+  test("every value a filter button, chip or menu offers has a meaning on hover") {
+    import com.histmersion.values.{ApprovalState, ItemStatus, ManagerKind, ProviderKind, RunState}
+    assert(JobState.values.forall(s => JobsView.stateMeaning(s).nonEmpty))
+    val jobKinds = List(Ingest.KindIngest, Ingest.KindReocr, InitPlan.JobKind, MergeApplyJob.JobKind, Vacuum.JobKind,
+      Agents.JobKind, "basemap-fetch", "places-fetch", "places-hierarchy", "events-import", "events-candidates",
+      "events-rederive", "site-types", "media-import", "media-covers")
+    assertEquals(jobKinds.filter(JobsView.kindMeaning(_).isEmpty), Nil)
+    assertEquals(JobsView.kindMeaning("something-new"), None)
+    assert(RunState.values.forall(s => RunsView.stateMeaning(s).nonEmpty))
+    assert(Agents.Origin.values.forall(o => RunsView.originMeaning(o.wire).nonEmpty))
+    assertEquals(RunsView.originLabel("scheduler"), "by a goal's schedule")
+    val providers = List(ProviderKind.Anthropic, ProviderKind.OpenAI, ProviderKind.Local, ProviderKind.ClaudeCode,
+      ProviderKind.Codex, ProviderKind.Opencode)
+    assert(providers.forall(p => RunsView.providerMeaning(p.wire).nonEmpty))
+    assertEquals(RunsView.providerMeaning("some-plugin"), None)
+    assert(ApprovalsView.States.forall(s => ApprovalsView.stateMeaning(s).nonEmpty))
+    assert(ApprovalState.values.forall(s => ApprovalsView.States.contains(s.wire)))
+    assert(ListFilters.DecidedBy.values.forall(d => ApprovalsView.decidedByMeaning(d.wire).nonEmpty))
+    assert(ItemStatus.values.forall(s => ManagersView.itemStatusMeaning(s).nonEmpty))
+    assert(ManagerKind.values.forall(k => ManagersView.managerMeaning(k.wire).nonEmpty))
+    assert(ManagersView.managerMeaning(Managers.seedId("sea-peoples")).exists(_.contains("sea-peoples")))
+    assertEquals(ManagersView.managerMeaning("nobody"), None)
+    val jobTypes = List("goal-plan", "propose", "sweep", "currency", "enrich", "compile", "extend", "filter", "review")
+    assertEquals(jobTypes.filter(ManagersView.jobTypeMeaning(_).isEmpty), Nil)
+    val codes = List("capacity", "pool", "manager-cap", "blocked", "busy", "budget", "drain",
+      AgentScheduler.Code.Person, AgentScheduler.Code.Held, AgentScheduler.Code.NotDue, AgentScheduler.Code.Running,
+      AgentScheduler.Code.Settled, AgentScheduler.Code.Paused)
+    assertEquals(codes.filter(ManagersView.waitMeaning(_).isEmpty), Nil)
+    assert(EventTier.all.forall(t => LayerFilters.tierMeaning(t).nonEmpty))
+    assert(LayerFilters.tiers.forall(_.hint.nonEmpty))
   }
 
   // #770: an init job showed as "Init" with no subject

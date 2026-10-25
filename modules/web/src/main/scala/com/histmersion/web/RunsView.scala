@@ -39,6 +39,17 @@ object RunsView:
     case RunState.WaitingApproval => "waiting for approval"
     case other                    => other.wire
 
+  /** What each run state means for a person, and what comes next; a tooltip on its filter button. */
+  def stateMeaning(s: RunState): String = s match
+    case RunState.Queued          => "Waiting for a free place among the runs at once; it starts by itself."
+    case RunState.Running         => "Its steps are being worked on now; the run's window shows each one."
+    case RunState.Paused          => "Stopped for now, resumable: a budget or allowance reached, a server restart, or a pause. " +
+        "An allowance pause resumes by itself."
+    case RunState.WaitingApproval => "Waits for a person to decide its approval; it holds no worker and is queued again once decided."
+    case RunState.Done            => "Finished every step."
+    case RunState.Failed          => "Ended with the error shown on its row."
+    case RunState.Cancelled       => "Stopped for good by a person, or because its manager was stopped; it does not resume."
+
   /** [[stateLabel]] of a status as stored; an unknown one as it is. */
   def statusLabel(status: String): String = RunState.parse(status).fold(status)(stateLabel)
 
@@ -54,7 +65,6 @@ object RunsView:
       (n.origin.isEmpty || n.origin.contains(r.origin.getOrElse(Agents.Origin.Person.wire))) &&
       (n.manager.isEmpty || r.managerId.exists(n.manager.contains)))
 
-  /** The query the window sends, from its filter fields. Pure. */
   /** What each pipeline does; a tooltip on its filter chip. */
   def pipelineMeaning(pipeline: String): Option[String] = pipeline match
     case "plan-goal"         => Some("Plans a research goal: sub-goals, search queries, works to read (a goal-plan approval).")
@@ -75,8 +85,30 @@ object RunsView:
     case "manager" => "by a manager"
     case "ingest"  => "by an ingest (before the enrich manager)"
     case "run"     => "by another run"
+    case "scheduler" => "by a goal's schedule"
     case other     => Label.display(other)
 
+  /** Who started a run, in a sentence; a tooltip on its filter chip. */
+  def originMeaning(origin: String): Option[String] = Agents.Origin.values.find(_.wire == origin).map {
+    case Agents.Origin.Person    => "Started by a person: from this page, the CLI or an MCP tool."
+    case Agents.Origin.Scheduler => "Started by a goal's schedule; nobody watches it, so a failure or a pause leaves a backlog item."
+    case Agents.Origin.Run       => "Started by another run, such as a compile-article run starting the review of its article."
+    case Agents.Origin.Ingest    => "Queued by an ingest for the source it brought in (automatic enrichment), before the enrich manager took that over."
+    case Agents.Origin.Manager   => "Dispatched by a process manager for one of its work items."
+  }
+
+  /** Who serves a model, for a person; a tooltip on the provider menu's options. A provider a plugin
+    * registered has no meaning here. */
+  def providerMeaning(provider: String): Option[String] = provider match
+    case "anthropic"   => Some("Anthropic's API, with an API key: metered, billed per token.")
+    case "openai"      => Some("OpenAI's API, with an API key: metered, billed per token.")
+    case "local"       => Some("A model behind an OpenAI-compatible endpoint you run (llama.cpp, LM Studio, vLLM, Ollama).")
+    case "claude-code" => Some("Your own claude command-line tool on your Claude login: your plan's usage, not an API key.")
+    case "codex"       => Some("Your own codex command-line tool on its ChatGPT plan login.")
+    case "opencode"    => Some("The opencode command-line tool; its model is named as opencode names it (openai/…).")
+    case _             => None
+
+  /** The query the window sends, from its filter fields. Pure. */
   def filterOf(status: Option[RunState], pipelines: List[String], origins: List[String], manager: Option[String],
       provider: Option[String], model: Option[String], goal: Option[String], since: Option[String], until: Option[String],
       subject: Option[String]): ListFilters.RunFilter =
@@ -177,12 +209,17 @@ object RunsView:
         button(typ := "button", cls := "btn", title := "each role's model chain, the allowances, the provider check",
           "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models)))),
       div(cls := "toolbar list-filters",
-        ListFilterBar.chips("pipeline", facet("pipeline"), UiState.runPipelines, hint = pipelineMeaning),
-        ListFilterBar.chips("origin", facet("origin"), UiState.runOrigins, originLabel),
+        ListFilterBar.chips("pipeline", facet("pipeline"), UiState.runPipelines, hint = pipelineMeaning,
+          about = "Show only runs of the pipelines picked (any of them): what kind of work the run does."),
+        ListFilterBar.chips("origin", facet("origin"), UiState.runOrigins, originLabel, originMeaning,
+          about = "Show only runs started the ways picked (any of them)."),
         div(cls := "btn-group",
-          ListFilterBar.picker("manager", facet("manager"), UiState.runManager),
-          ListFilterBar.picker("provider", facet("provider"), UiState.runProvider),
-          ListFilterBar.picker("model", facet("model"), UiState.runModel)),
+          ListFilterBar.picker("manager", facet("manager"), UiState.runManager, hint = ManagersView.managerMeaning,
+            about = "Show only the runs one process manager dispatched."),
+          ListFilterBar.picker("provider", facet("provider"), UiState.runProvider, hint = providerMeaning,
+            about = "Show only runs that used a model of this provider: started with it, or reported by a step."),
+          ListFilterBar.picker("model", facet("model"), UiState.runModel,
+            about = "Show only runs that used this model (provider:model): started with it, or reported by a step.")),
         div(cls := "btn-group",
           ListFilterBar.text("goal", UiState.runGoal),
           ListFilterBar.text("target: a citekey or slug", UiState.runSubject),
@@ -216,6 +253,7 @@ object RunsView:
       button(
         typ := "button",
         cls := "btn btn--toggle",
+        title := value.fold("Every run, whatever its state.")(stateMeaning),
         aria.pressed <-- UiState.runStatus.signal.map(v => (v == value).toString),
         span(label),
         child.text <-- count.map(n => if n > 0 then s" ${Paging.grouped(n)}" else ""),
