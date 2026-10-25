@@ -695,12 +695,19 @@ for these reasons:
 
 ## Unresolved
 
-- Whether `Filter` (used by web 28 times, db 52, server 55) is a wire record or a domain value with an
-  SQL rendering decides whether it lands in `api` or `domain`; db's `Filter → SQL` code suggests the
-  latter, with a wire `FilterView`. Steps 4–6 left it in `api`, with everything the wire needs; step 7's
-  first four batches did not need to decide it.
+None.
 
 **Resolved.**
+
+- *`Filter`: a wire record, in `api`* — decided 2026-10-25 (#3967, step 7 batch 5). The query model is
+  built by the clients (web 9 files, 28 uses; the CLI 7, 14 — `Filter.of`, `FilterQuery`), read by the server
+  (9 files, 54 uses: it resolves place names into gazetteer ids and hands the value on) and rendered as SQL
+  by db (`FilterSql`, 9 files, 52 uses). The domain reads none: no domain file names `Filter`. A domain
+  value with a wire `FilterView` would be a field-for-field twin, converted on every handler path, and hold
+  no logic of its own — what interprets a filter is SQL, which is db's, and the flat-shape parse the three
+  surfaces share (`Filter.of`), which the CLI needs and so stays in api. Rule 3 lets db reuse the wire value
+  while nothing is in its way, and nothing is: db stores and reads wire records in 50 of its 57 files. `BBox`
+  stays beside it; the domain's one use (the event catalogues' thresholds) takes it as a value.
 
 - *The vocabularies domain and wire share* (`EdgeKind`, `SourceStatus`, `GoalStatus`, `PlaceKind`,
   `MediaRole`, …) — decided 2026-10-25 (#3967, step 7 batch 2): they live in `values` as plain Scala types
