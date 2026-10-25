@@ -553,8 +553,8 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
                 acc.flatMap(rs => AgentRepo.get(ds, id).toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
                   .map(r => rs :+ RunDetail(r, AgentRepo.steps(ds, r.id, Int.MaxValue), Nil)))
               }
-      cmp  <- CompareRuns.compare(runs, billingOf).left.map(ApiError(_))
-    yield cmp
+      cmp  <- CompareRuns.compare(runs.map(CompareRunsViews.run), billingOf).left.map(ApiError(_))
+    yield CompareRunsViews.comparison(cmp)
 
   /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */
   private def billingOf(ref: String): Option[String] =

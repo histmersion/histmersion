@@ -10,7 +10,7 @@ import com.histmersion.values.WireEnumValues
   * `/api/agents/…`. No I/O here; the server runs the agents, the CLI and web UI only read this. */
 object Agents:
 
-  export com.histmersion.values.{AgentRole as Role, ApprovalKind, ApprovalMode, ApprovalState, Pipeline, ProviderKind, RunState, TargetKind}
+  export com.histmersion.values.{AgentRole as Role, ApprovalKind, ApprovalMode, ApprovalState, Pipeline, ProviderKind, RunState, StepStatus, TargetKind}
 
   /** `provider:model`. The model id may itself contain colons (`local:qwen2.5-coder:32b`), so only the
     * FIRST colon separates the provider. */
@@ -157,12 +157,6 @@ object Agents:
   object StepKind:
     def parse(s: String): Option[StepKind] = values.find(_.wire == s)
 
-  enum StepStatus(val wire: String):
-    case Done   extends StepStatus("done")
-    case Failed extends StepStatus("failed")
-
-  object StepStatus:
-    def parse(s: String): Option[StepStatus] = values.find(_.wire == s)
 
   /** Who started a run: a person (CLI, web UI, MCP), a goal's schedule, another run (a
     * compile-article run chains its review), or an ingest job (auto-enrich). A scheduled or ingest

@@ -1,21 +1,73 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.api.given
-import com.histmersion.config.given
-
-import com.histmersion.api.Agents.{RunDetail, StepInfo, StepStatus, Usage}
-import com.histmersion.api.RunCompare.*
 import io.circe.Decoder
 import io.circe.parser.decode
-import com.histmersion.values.{Pipeline, RunState}
+import com.histmersion.values.{Pipeline, RunState, StepStatus}
 
 /** `agent compare` (#992): the pure half. Reads two or more runs' recorded steps (their FULL outputs)
   * and lays them side by side; `billing` names how a configured model is paid for (a plan pool or a
   * price — the server knows, from its config). Nothing is judged: counts, tokens, times, and what one
   * run produced that the others did not. */
 object CompareRuns:
+
+  // ── what is compared: the recorded runs ──────────────────────────────────────────────────────
+
+  /** Tokens, as a provider reports them; `input` includes the cached ones. */
+  final case class Tokens(input: Long = 0, output: Long = 0, cacheRead: Long = 0, cacheWrite: Long = 0):
+    def +(o: Tokens): Tokens = Tokens(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
+
+  object Tokens:
+    val Zero: Tokens = Tokens()
+
+  /** A role's model, as a run was told to use it. */
+  final case class ModelChoice(role: String, model: String)
+
+  /** A run as compared: what it ran on, its state, and the models it was given. */
+  final case class RunHead(id: String, pipeline: String, target: String, status: String, dryRun: Boolean,
+      model: Option[String], modelFor: List[ModelChoice])
+
+  /** One attempt of one step, with its full recorded output. `firstCallTokens` and `turns` are None where
+    * nothing was recorded (a provider that cannot tell, or a run recorded before they were kept). */
+  final case class Step(name: String, status: String, model: Option[String], actualModel: Option[String], usage: Tokens,
+      costUsd: Double, startedAt: String, finishedAt: String, firstCallTokens: Option[Long], turns: Option[Int],
+      output: Option[String], error: Option[String])
+
+  final case class Run(run: RunHead, steps: List[Step])
+
+  // ── what a comparison says ───────────────────────────────────────────────────────────────────
+
+  /** One run, in total. `seconds` = the sum of its steps' durations. */
+  final case class RunSide(id: String, status: String, dryRun: Boolean, model: Option[String],
+      modelFor: List[ModelChoice], usage: Tokens, costUsd: Double, seconds: Long, attempts: Int, failures: Int)
+
+  /** One step of one run, every attempt summed. `billing` names how each configured model is paid for. */
+  final case class StepSide(models: List[String], actual: List[String], billing: List[String], usage: Tokens,
+      costUsd: Double, seconds: Long, attempts: Int, failures: Int, firstCallTokens: Option[Long] = None,
+      turns: Option[Int] = None)
+
+  /** One step name, and that step in each run (None = the run has no such step). */
+  final case class StepRow(name: String, runs: List[Option[StepSide]])
+
+  /** enrich-source's outputs; the period is the classify step's, in signed years. */
+  final case class EnrichSide(findings: Int, quotesChecked: Int, quotesPassed: Int, placesAsked: Int,
+      placesResolved: Int, datedFindings: Int, periodStart: Option[Long], periodEnd: Option[Long], summaryChars: Int,
+      notesChars: Int, uniqueClaims: List[String])
+
+  final case class ReviewerSide(reviewer: String, verdict: Option[String], majors: Int, minors: Int)
+
+  final case class KindCount(kind: String, count: Int)
+
+  /** review-article's outputs: the last round's verdict, the rounds, round 1 per reviewer and by kind. */
+  final case class ReviewSide(verdict: Option[String], rounds: Int, reviewers: List[ReviewerSide], kinds: List[KindCount],
+      majors: List[String])
+
+  /** Round 1's major findings two runs share; `pairs` shows each match as `<a's id> ↔ <b's id>`. */
+  final case class MajorOverlap(a: String, b: String, aMajors: Int, bMajors: Int, shared: Int, pairs: List[String])
+
+  final case class Comparison(pipeline: String, target: String, runs: List[RunSide], steps: List[StepRow],
+      enrich: List[EnrichSide], review: List[ReviewSide], overlaps: List[MajorOverlap], notes: List[String])
+
+  // ── comparing ────────────────────────────────────────────────────────────────────────────────
 
   /** A rejected findings answer's quote failures are counted from the verifier's own words. */
   private val QuoteFailure = "the quote is not in the text"
@@ -24,7 +76,7 @@ object CompareRuns:
     * least this much of their words (Jaccard over the normalised words), or quote the same passage. */
   val ProblemSimilarity = 0.5
 
-  def compare(runs: List[RunDetail], billing: String => Option[String]): Either[String, Comparison] =
+  def compare(runs: List[Run], billing: String => Option[String]): Either[String, Comparison] =
     for
       _ <- Either.cond(runs.size >= 2, (), "give at least two runs to compare")
       _ <- Either.cond(runs.map(_.run.id).distinct.size == runs.size, (), "a run is given twice")
@@ -60,28 +112,28 @@ object CompareRuns:
     }.toList
 
   /** A step's duration in whole seconds (the store keeps seconds); 0 when a time is unreadable. */
-  def seconds(s: StepInfo): Long =
+  def seconds(s: Step): Long =
     (for
       a <- scala.util.Try(java.time.Instant.parse(s.startedAt)).toOption
       b <- scala.util.Try(java.time.Instant.parse(s.finishedAt)).toOption
     yield math.max(0L, b.getEpochSecond - a.getEpochSecond)).getOrElse(0L)
 
-  private def sum(us: List[Usage]): Usage = us.foldLeft(Usage.Zero)(_ + _)
+  private def sum(us: List[Tokens]): Tokens = us.foldLeft(Tokens.Zero)(_ + _)
 
-  def stepSide(attempts: List[StepInfo], billing: String => Option[String]): StepSide =
+  def stepSide(attempts: List[Step], billing: String => Option[String]): StepSide =
     val models = attempts.flatMap(_.model).distinct
     StepSide(models, attempts.flatMap(_.actualModel).distinct, models.flatMap(billing).distinct,
       sum(attempts.map(_.usage)), attempts.map(_.costUsd).sum, attempts.map(seconds).sum, attempts.size,
       attempts.count(_.status == StepStatus.Failed.wire), attempts.flatMap(_.firstCallTokens).headOption,
       Option.when(attempts.exists(_.turns.isDefined))(attempts.flatMap(_.turns).sum))
 
-  private def runSide(d: RunDetail): RunSide =
+  private def runSide(d: Run): RunSide =
     val r = d.run
-    RunSide(r.id, r.status, r.dryRun, r.model, r.params.overrides, sum(d.steps.map(_.usage)), d.steps.map(_.costUsd).sum,
+    RunSide(r.id, r.status, r.dryRun, r.model, r.modelFor, sum(d.steps.map(_.usage)), d.steps.map(_.costUsd).sum,
       d.steps.map(seconds).sum, d.steps.size, d.steps.count(_.status == StepStatus.Failed.wire))
 
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
-  private def output[O: Decoder](d: RunDetail, name: String): Option[O] =
+  private def output[O: Decoder](d: Run, name: String): Option[O] =
     d.steps.filter(s => s.name == name && s.status == StepStatus.Done.wire).lastOption
       .flatMap(_.output).flatMap(decode[O](_).toOption)
 
@@ -94,7 +146,7 @@ object CompareRuns:
   /** The quote check over every attempt of every findings step: (checked, passed). A finished attempt
     * says it itself; a rejected one holds the rejected answer, and the verifier's reasons say which
     * quotes failed. An attempt with no readable answer checked nothing. */
-  def quoteCheck(steps: List[StepInfo]): (Int, Int) =
+  def quoteCheck(steps: List[Step]): (Int, Int) =
     steps.filter(s => isFindings(s.name)).foldLeft((0, 0)) { case ((checked, passed), s) =>
       if s.status == StepStatus.Done.wire then
         s.output.flatMap(decode[VerifiedFindings](_).toOption).fold((checked, passed)) { v =>
@@ -110,11 +162,11 @@ object CompareRuns:
     }
 
   /** The claims a run's enrichment ended with: the geocoded findings, else what the findings steps kept. */
-  private def claims(d: RunDetail): List[String] =
+  private def claims(d: Run): List[String] =
     output[Geocoded](d, "geocode").map(_.findings.map(_.claim)).getOrElse(
       d.steps.map(_.name).distinct.filter(isFindings).flatMap(n => output[VerifiedFindings](d, n).toList.flatMap(_.findings.map(_.claim))))
 
-  private def enrichSides(runs: List[RunDetail]): List[EnrichSide] =
+  private def enrichSides(runs: List[Run]): List[EnrichSide] =
     val all = runs.map(d => claims(d).map(c => AgentVerify.normalise(c) -> c))
     runs.zip(all).zipWithIndex.map { case ((d, mine), i) =>
       val others = all.patch(i, Nil, 1).flatten.map(_._1).toSet
@@ -139,7 +191,7 @@ object CompareRuns:
   private def round(name: String, prefix: String): Option[Int] =
     Option.when(name.startsWith(prefix))(name.stripPrefix(prefix).toIntOption).flatten
 
-  private def reviewSide(d: RunDetail): ReviewSide =
+  private def reviewSide(d: Run): ReviewSide =
     val merges = d.steps.map(_.name).distinct.flatMap(n => round(n, "merge-").map(_ -> n)).sortBy(_._1)
     val last   = merges.lastOption.flatMap((_, n) => output[Merged](d, n))
     val first  = output[Merged](d, "merge-1")
@@ -175,7 +227,7 @@ object CompareRuns:
         case None    => (acc, left)
     }._1
 
-  private def majorOverlaps(runs: List[RunDetail]): List[MajorOverlap] =
+  private def majorOverlaps(runs: List[Run]): List[MajorOverlap] =
     val majors = runs.map(d => d.run.id -> output[Merged](d, "merge-1").toList.flatMap(_.majors))
     for
       (i, j) <- majors.indices.toList.combinations(2).toList.map(p => (p(0), p(1)))
