@@ -34,6 +34,17 @@ object GoalsView:
       }
     walk(None, 0, Set.empty)
 
+  /** What each goal stage means, in the order a goal moves through them; the legend above the tree and
+    * the tooltip of every status badge. */
+  val stages: List[(String, String)] = List(
+    GoalStatus.Planned  -> "created; nothing works on it yet",
+    GoalStatus.Seeding  -> "finding and reading sources, writing its articles",
+    GoalStatus.Compiled -> "its articles are written; not all have passed review yet",
+    GoalStatus.Reviewed -> "every article (and sub-goal) passed the review panel",
+    GoalStatus.Done     -> "finished: only you set this, the autopilot never does")
+
+  def meaning(status: String): Option[String] = stages.collectFirst { case (s, m) if s == status => m }
+
   /** The open plan approval of a goal, if a plan run is waiting on one. */
   def pendingPlan(as: List[ApprovalInfo], slug: String): Option[ApprovalInfo] =
     as.find(a => a.approvalKind.contains(ApprovalKind.GoalPlan) && a.subject.contains(slug) &&
@@ -109,13 +120,21 @@ object GoalsView:
       child <-- goals.signal.combineWith(loaded.signal).map { (gs, isLoaded) =>
         if !isLoaded then p(cls := "muted", "Loading…")
         else if gs.isEmpty then p(cls := "muted", "No research goals yet. Create one with histmersion goals or the put_goal tool.")
-        else ul(cls := "goal-tree", tree(gs).map((g, depth) =>
+        else div(legend, ul(cls := "goal-tree", tree(gs).map((g, depth) =>
           li(cls := "goal-row", styleAttr := s"--depth:$depth",
-            span(cls := s"job-state goal-status state-${g.status}", g.status),
+            badge(g.status),
             button(typ := "button", cls := "link-btn", g.title, title := g.slug,
-              onClick --> (_ => WindowManager.open(WindowKey.Goal(g.slug)))))))
+              onClick --> (_ => WindowManager.open(WindowKey.Goal(g.slug))))))))
       }
     )
+
+  /** A goal's status as a coloured badge, its meaning on hover. */
+  def badge(status: String, text: String = ""): HtmlElement =
+    span(cls := s"job-state goal-status state-$status", meaning(status).map(m => title := m), if text.nonEmpty then text else status)
+
+  /** The stages, left to right, each badge with what it means. */
+  private def legend: HtmlElement =
+    ul(cls := "goal-legend", aria.label := "goal stages", stages.map((s, m) => li(badge(s), span(cls := "muted", m))))
 
   /** New research area: a goal, and — ticked — a plan-goal run for it, a seeding manager and a watcher
     * (both created paused; the watcher's auto-ingest of legal open-access finds is off unless ticked, with
@@ -238,7 +257,7 @@ object GoalsView:
         case Some(v) =>
           div(
             cls := "goal-detail",
-            div(cls := "run-head", span(cls := s"job-state state-${v.goal.status}", v.goal.status),
+            div(cls := "run-head", badge(v.goal.status),
               span(cls := "run-title", s" ${v.goal.title}")),
             v.goal.notes.filter(_.nonEmpty).map(n => p(n)),
             dl(cls := "run-facts",
@@ -252,7 +271,7 @@ object GoalsView:
             ManagersView.goalActions(v.goal.slug),
             Option.when(v.children.nonEmpty)(div(h4("Sub-goals"), ul(v.children.map(c =>
               li(button(typ := "button", cls := "link-btn", c.title, onClick --> (_ => WindowManager.open(WindowKey.Goal(c.slug)))),
-                span(cls := "muted", s" (${c.status})")))))),
+                " ", badge(c.status)))))),
             linksSection(slug, v.links, busy.signal, write),
             schedulesSection(slug, v.schedules, busy.signal, write),
             v.plan.map(pl => htmlTag("details")(cls := "goal-plan", htmlTag("summary")("the approved plan"), ApprovalsView.planBlock(pl))),

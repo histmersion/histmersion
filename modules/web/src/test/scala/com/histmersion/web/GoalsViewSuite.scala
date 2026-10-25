@@ -30,3 +30,8 @@ class GoalsViewSuite extends munit.FunSuite:
     assertEquals(GoalsView.linkToAdd(LinkKind.Source, "  ", "why"), None)
     val ls = List(GoalLink(LinkKind.Source, "a"), GoalLink(LinkKind.Query, "q"), GoalLink(LinkKind.Source, "b"))
     assertEquals(GoalsView.linksOf(ls, LinkKind.Source).map(_.ref), List("a", "b"))
+
+  test("every goal stage has a meaning, in the order a goal moves through them"):
+    assertEquals(GoalsView.stages.map(_._1), com.histmersion.values.GoalStatus.all)
+    assert(GoalsView.stages.forall(_._2.nonEmpty))
+    assertEquals(GoalsView.meaning("nonsense"), None)
