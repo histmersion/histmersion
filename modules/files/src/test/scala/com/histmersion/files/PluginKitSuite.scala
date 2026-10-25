@@ -121,6 +121,13 @@ class PluginKitSuite extends munit.FunSuite:
       .exists(_.contains("could not be loaded: boom")))
     assert(refusals(ok, 1, Map("p" -> "other.jar")).head.contains("already provided by other.jar"))
 
+  test("refusals: a provider that could not be loaded is refused for its own reason alone, never for an SPI 0"):
+    val foreign = "it was built against plugin SPI 1; this Histmersion speaks SPI 2 — rebuild the plugin against SPI 2"
+    val broken = PluginJar("b.jar", "1", List(PluginDescription("", "", 0, error = Some(foreign))))
+    assertEquals(refusals(broken, 2, Map.empty), List(s"a provider in b.jar could not be loaded: $foreign"))
+    val missing = PluginJar("m.jar", "1", List(PluginDescription("", "", 0, error = Some("class x.Y is missing"))))
+    assertEquals(refusals(missing, 2, Map("" -> "other.jar")), List("a provider in m.jar could not be loaded: class x.Y is missing"))
+
   test("kit manifest: SHA256SUMS round trip; verify names missing, changed and extra files"):
     val files = List(KitFile("lib/b.jar", "b" * 64), KitFile("classpath", "c" * 64))
     val sums = sha256sums(files)

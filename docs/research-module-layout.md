@@ -961,9 +961,10 @@ scala-cli against this branch's artifacts. Its 0.1.0 jar (SPI 1) is refused by t
 with the rebuild message; 0.2.0 installs with its scala-xml, relinks a scratch copy of the bundle, and that
 binary's `--self-check` lists `oabooks 0.2.0 — registered (source-fetcher:oapen, source-fetcher:doab)`.
 
-A refusal of a jar whose provider could not be loaded still carries a line `was built for plugin SPI 0`
-before the real reason (`PluginKit.refusals` compares the SPI of a provider it could not describe); that
-was so before this step, and is left for a later change.
+A refusal of a jar whose provider could not be loaded carried a line `was built for plugin SPI 0` before
+the real reason: `PluginKit.refusals` compared the SPI of a provider it could not describe. That was so
+before this step; since the follow-up, such a provider is refused with its own reason alone (the foreign-SPI
+or missing-class message of `PluginHost.foreignSpi`/`failure`), and `PluginKitSuite` holds it.
 
 **Plugin authors.** Rebuild against this release's plugin API: see developing.md, "SPI 2: what changed". An
 SPI-1 jar is refused at `plugin add`, at the relink and at startup with the message above.
