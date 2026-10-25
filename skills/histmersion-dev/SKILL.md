@@ -219,7 +219,11 @@ files keep their directives in `project.scala`. A library of its own is a plain
 <org>::<id>:0.1.0 --repo ./repo` → `plugin rebuild`. `--repo <dir|url>` on `new` for a repository unzipped
 from a release (`histmersion-maven-<tag>.zip`); `histmersion plugin api-jar [--sources]` prints the API
 jar's path in the repository. Editors: `scala-cli setup-ide .`, then Metals (sources come from the
-repository). sbt alternative: `resolvers += Resolver.mavenLocal`, the API and platform
+repository). `just plugin-template-check [dir] [kind…]` (scripts/bundle/plugin-template-check.sh; smoke.sh
+runs it when scala-cli is on PATH) builds, tests and publishes every kind against a bundle under a scratch
+HOME (scala-cli gets `-Duser.home` too: coursier's m2Local follows user.home) and fails on a warning, a jar
+holding more than the plugin's classes/services/defaults/metadata, or a POM listing the API, platform or
+testkit. sbt alternative: `resolvers += Resolver.mavenLocal`, the API and platform
 `% Provided`, own libraries as usual, `publishTo` a directory. Code and generator: `cli/PluginTemplate.scala`,
 `cli/PluginTemplateKinds.scala`; the user docs page is `docs/user-guide/plugins/developing.md`.
 

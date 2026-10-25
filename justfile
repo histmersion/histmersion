@@ -205,6 +205,11 @@ test-db-down:
     -"{{pg}}/pg_ctl" -D "{{test_db_dir}}" -m fast -w stop >/dev/null 2>&1
     rm -rf "{{test_db_dir}}" "{{test_db_dir}}.log"
 
+# Build, test and publish every kind of `histmersion plugin new` with scala-cli against a bundle (a scratch HOME; the jars and POMs must hold only the plugin); smoke.sh runs it too
+[group('dev')]
+plugin-template-check dir=bundle_dir *kinds:
+    scripts/bundle/plugin-template-check.sh {{dir}} {{kinds}}
+
 # Build both GraalVM native images with the active JDK, which must be the pinned one (into target/)
 [group('dev')]
 native:
