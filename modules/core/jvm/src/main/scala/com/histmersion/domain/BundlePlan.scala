@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
+import com.histmersion.api.BundleKindCounts
 import com.histmersion.api.given
 import com.histmersion.files.BundleEntities
 import com.histmersion.values.BundleKind

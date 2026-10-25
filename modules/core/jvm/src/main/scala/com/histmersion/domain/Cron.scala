@@ -1,8 +1,5 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 import java.time.{Instant, LocalDate, ZoneOffset}
 import java.time.temporal.ChronoUnit
 

@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
+import com.histmersion.api.{AssetLinks, BundleArticle, BundleEvent, BundleFinding, BundleGoal, BundleGoalLink,
+  BundleGoalSchedule, BundlePeriod, BundlePlace, BundleQueueItem, BundleRange, BundleSource, Lint, MergeDecision, Queue}
 import com.histmersion.files.*
 import com.histmersion.api.given
 

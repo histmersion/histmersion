@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
+import com.histmersion.api.{LatinFold, MatchSpan, PassageHit, PassageResult}
 import com.histmersion.api.given
 
 import java.util.regex.{Matcher, Pattern, PatternSyntaxException}

@@ -1,6 +1,10 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
+import com.histmersion.api.{ArticleLinks, AssetLinks, BundleAlias, BundleArticle, BundleAsset, BundleAssetLink,
+  BundleAttestation, BundleEdge, BundleEvent, BundleFinding, BundleGoal, BundleGoalLink, BundleInstance,
+  BundleManifest, BundlePeriod, BundlePlace, BundleQueueItem, BundleReference, BundleSource, IssueCondition,
+  IssueDetail, IssueField, IssueHunk, IssuePlace, IssueSide, IssueText, MatchCounts, MergeDecision, MergeIssue,
+  MergeIssueDetail, MergePlan, MergeResolutions, MergeTally, Plural, Queue, SourceMatch}
 import com.histmersion.files.*
 import com.histmersion.api.given
 

@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
+import com.histmersion.api.LatinFold
 import com.histmersion.api.given
 
 import java.text.Normalizer
