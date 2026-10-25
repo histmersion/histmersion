@@ -10,6 +10,7 @@ import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.api.Agents.ApprovalKind
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewLedger.*
+import com.histmersion.values.EdgeKind
 
 /** The critique checklist in the review (docs/research-review-convergence.md §6.8), pure: what a
   * missing-critique MAJOR is held to in each kind of pass, the skeptic's rulings on the open pairs,

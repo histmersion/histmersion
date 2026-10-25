@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Decoder, Encoder, Json, JsonObject}
 import sttp.tapir.Schema
+import com.histmersion.values.{PlaceKind, WireEnumValues}
 
 /** The gazetteer's EXTERNAL SOURCES (#1064): GeoNames, Wikidata and Linked Places Format datasets
   * (what the World Historical Gazetteer exports). All three arrive as LPF features — the GeoNames

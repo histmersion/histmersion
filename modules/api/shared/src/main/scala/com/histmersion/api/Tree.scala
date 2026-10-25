@@ -3,6 +3,7 @@ package com.histmersion.api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.values.PlaceKind
 
 /** NESTED GROUPING by deep time and by the gazetteer (plan §1.6 / §1.6a) — **pure**, no database.
   *

@@ -3,6 +3,7 @@ package com.histmersion.db
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** Round-trips against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class RepoSuite extends com.histmersion.db.DbSuite:

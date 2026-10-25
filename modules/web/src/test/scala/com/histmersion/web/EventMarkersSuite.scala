@@ -1,6 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.*
+import com.histmersion.values.PlaceKind
 
 /** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker
   * carries its kind's icon, its tier and its card's attribute, a typed site's icon its colour, the key

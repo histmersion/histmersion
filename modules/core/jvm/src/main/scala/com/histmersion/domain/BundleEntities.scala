@@ -8,6 +8,7 @@ import com.histmersion.config.given
 import io.circe.{Decoder, Encoder}
 
 import java.util.UUID
+import com.histmersion.values.BundleKind
 
 /** The entity content of a bundle, in memory — every NDJSON file of [[BundleFiles.all]] as its line
   * type. Small by construction: the large things (OCR bodies, version bodies, asset bytes,

@@ -4,6 +4,7 @@ import ox.supervised
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.PlaceKind
 
 /** The gazetteer over real HTTP (plan §1.6a): import a tiny Linked-Places document, then read it
   * back through every route. Gated on HISTMERSION_TEST_DB_URL like the other server suites.

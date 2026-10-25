@@ -8,6 +8,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.Path
+import com.histmersion.values.SourceStatus
 
 /** `histmersion calibre search|import|link|push|update|set|audit|sync|gaps` — the host-side Calibre integration.
   *

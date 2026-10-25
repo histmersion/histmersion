@@ -11,6 +11,7 @@ import com.histmersion.plugin as spi
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
 import com.histmersion.server.plugins.Plugins
+import com.histmersion.api.VocabularyCodecs.given
 import org.ekrich.config.ConfigFactory
 
 /** A THIRD-PARTY plugin's event catalogue (docs/research-plugins.md §6) read by `events import` through

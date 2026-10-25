@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Codec, Decoder, Encoder}
 import sttp.tapir.Schema
+import com.histmersion.values.WireEnumValues
 
 /** What a person approves before a P3 pipeline creates anything (docs/research-embedded-agents.md
   * §14): a goal's PLAN (sub-goals, search queries, candidate works — each DOI already looked up

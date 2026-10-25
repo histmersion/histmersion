@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.SourceStatus
+
 
 /** The pure half of a citekey rename: which new keys are acceptable, which short forms pointed at the
   * old key, how finding ids and composite ids move, and the link rewrite that must change the link

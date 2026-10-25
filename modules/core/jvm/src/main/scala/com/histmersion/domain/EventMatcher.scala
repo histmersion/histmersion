@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{AttestationPut, AttestationTarget, EventLinkCandidate, EventLinkStatus, EventPassage, EventTaxonomy, Plural}
+import com.histmersion.api.{AttestationPut, AttestationTarget, EventLinkCandidate, EventPassage, EventTaxonomy, Plural}
+import com.histmersion.values.EventLinkStatus
 
 /** The matcher. Pure: the database gives it the findings near an event and the passages naming it. */
 object EventMatcher:

@@ -8,6 +8,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.server.{Handlers, McpOut, McpTools}
+import com.histmersion.api.VocabularyCodecs.given
 
 /** The MCP half of #1449: `event_links` — the sources that may discuss an event, their confirmation
   * (an attestation from a passage that names it), and the leads catalogue events raise. The import is

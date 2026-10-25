@@ -2,13 +2,14 @@ package com.histmersion.server.events
 
 import com.histmersion.pluginhost.{HostOwned, PluginEvents}
 
-import com.histmersion.api.{BBox, CatalogProviderInfo, CatalogRecord, EventTaxonomy, Historicity, TimeSpan}
+import com.histmersion.api.{BBox, CatalogProviderInfo, CatalogRecord, EventTaxonomy, TimeSpan}
 import com.histmersion.domain.{CatalogDating, CatalogProvider}
 import com.histmersion.plugin.*
 import com.histmersion.server.acquire.fetchers.Builtin
 
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
+import com.histmersion.values.Historicity
 
 /** An event catalogue that is Histmersion's OWN code (GVP, NOAA, Wikidata), registered through the plugin
   * host like any other (docs/research-plugins.md §6, D2) but read by the host's own import with its

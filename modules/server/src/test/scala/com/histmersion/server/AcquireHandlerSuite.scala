@@ -9,6 +9,7 @@ import com.histmersion.db.{AcquireRepo, Db, Migrate, QueueRepo, SourceRepo}
 import com.histmersion.server.acquire.*
 
 import java.nio.file.Path
+import com.histmersion.values.SourceStatus
 
 /** The acquisition handlers against a real Postgres (`HISTMERSION_TEST_DB_URL`), with every upstream
   * replaced by a fake. What is exercised here is the part fixtures cannot reach: resolving references

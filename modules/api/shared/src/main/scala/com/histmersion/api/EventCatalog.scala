@@ -3,6 +3,7 @@ package com.histmersion.api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.values.Historicity
 
 /** Events from CATALOGUES (#1449): the Smithsonian's Holocene eruptions, NOAA's earthquakes, eruptions
   * and tsunamis, Wikidata's battles, sieges, wars, treaties… — every event a catalogue knows, not only

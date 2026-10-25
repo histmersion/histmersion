@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.augustnagro.magnum.*
+import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 
 /** The interactive-latency rewrites (docs/research-interactive-performance.md) return EXACTLY what
   * the shapes they replaced returned, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped

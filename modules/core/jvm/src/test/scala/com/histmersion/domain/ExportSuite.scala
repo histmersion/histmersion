@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** `Export.note` must be the inverse of `Frontmatter.parseNote` — that round trip is what lets the
   * Markdown wiki stay a faithful mirror of the database (plan §1.9a `export` / `seed --force`). */

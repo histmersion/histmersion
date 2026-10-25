@@ -6,6 +6,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.EnrichSource.*
+import com.histmersion.values.SourceStatus
 
 class EnrichSourceSuite extends munit.FunSuite:
 

@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.SourceStatus
 
 /** `edges` connects stored sources only (V026): the migration's data move, the write-path routing
   * into `unresolved_edges`, promotion when the target arrives, and the graph/neighbors reads built on

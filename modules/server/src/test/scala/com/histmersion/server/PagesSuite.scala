@@ -3,6 +3,7 @@ package com.histmersion.server
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** The server's HTML pages, pure: the anchor/chip/badge atoms and the typed page models rendered
   * from them. No database — the link resolver is a Map. */

@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.values.SourceStatus
 
 /** Store access for the acquisition & assessment toolset (stream 2.6): the Retraction Watch mirror,
   * stored assessments, the DOI/citekey lookups that turn a reference list into `references` edges,

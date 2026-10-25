@@ -8,6 +8,7 @@ import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.SourceStatus
 
 /** #1449 end to end against FAKE catalogues (recorded answers, no socket) and a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): a dry run stores nothing; GVP then NOAA merge the same

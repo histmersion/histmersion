@@ -1,8 +1,9 @@
 package com.histmersion.web
 
-import com.histmersion.api.{Confidence, ConfidenceStyle, YearFmt, Years, Label}
+import com.histmersion.api.{ConfidenceStyle, YearFmt, Years, Label}
 import com.histmersion.web.ui.ThemeTokens
 import scala.math.*
+import com.histmersion.values.Confidence
 
 object Fmt:
 

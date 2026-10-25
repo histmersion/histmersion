@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.SourceStatus
+
 
 /** The `Filter` contract (plan §1.0): the flat wire shape, its interpretation, and the Markdown that
   * shows a human/LLM *why* each source matched. All pure. */

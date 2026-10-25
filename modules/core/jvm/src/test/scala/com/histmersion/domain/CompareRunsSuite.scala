@@ -10,6 +10,7 @@ import com.histmersion.domain.EnrichSource.*
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import io.circe.syntax.*
+import com.histmersion.values.SourceStatus
 
 /** `agent compare` (#992), the pure half: what can be compared, the step union, the verifier's quote
   * check read back from accepted AND rejected answers, the claims only one run made, and the major

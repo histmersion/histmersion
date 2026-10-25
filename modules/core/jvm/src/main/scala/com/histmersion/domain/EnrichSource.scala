@@ -8,6 +8,7 @@ import com.histmersion.config.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.values.SourceStatus
 
 /** The `enrich-source` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md
   * §4.2): what each LLM step must return, how the body is cut into windows, how an answer is

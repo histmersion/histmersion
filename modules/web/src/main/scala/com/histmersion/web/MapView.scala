@@ -9,6 +9,7 @@ import org.scalajs.dom
 import scala.compiletime.uninitialized
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import com.histmersion.values.Confidence
 
 object MapView:
 

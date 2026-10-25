@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{Db, Migrate}
+import com.histmersion.values.PlaceKind
 
 /** The restore lock (plan §1.10) must cover EVERY write, not the handful it started with.
   *

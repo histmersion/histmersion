@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.{BundleKind, DecisionKind, IssueSeverity, MatchOutcome}
+
 /** How a merge plan reads (docs/research-merge-import.md §6.2) — the CLI, the REST answer's Markdown
   * and the MCP `merge_plan` tool print this, so the plan says the same thing everywhere. Pure. */
 object MergeMarkdown:

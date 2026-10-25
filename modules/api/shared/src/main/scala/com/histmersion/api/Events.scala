@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.circe.Codec
+import com.histmersion.values.PlaceKind
 
 /** The EVENTS database (plan §1.2): CIDOC-CRM compatible events with four-point time-spans,
   * hierarchical composition, causal/temporal edges and participant roles.
@@ -96,32 +97,6 @@ object EventScale:
       .orElse(placeKind.flatMap(ofPlaceKind))
       .orElse(Option.when(hasParent)(Local))
       .getOrElse(Local)
-
-object Historicity:
-  val Attested  = "attested"
-  val Inferred  = "inferred"
-  val Contested = "contested"
-  val Legendary = "legendary"
-  val Mythic    = "mythic"
-  val all: List[String] = List(Attested, Inferred, Contested, Legendary, Mythic)
-
-object EventEdgeKind:
-  val Before     = "before"
-  val Meets      = "meets"
-  val Overlaps   = "overlaps"
-  val During     = "during"
-  val Starts     = "starts"
-  val Finishes   = "finishes"
-  val Equals     = "equals"
-  val Causes     = "causes"
-  val Enables    = "enables"
-  val Triggers   = "triggers"
-  val RespondsTo = "responds_to"
-  val FallsWithin = "falls_within"
-  val allen: Set[String] = Set(Before, Meets, Overlaps, During, Starts, Finishes, Equals)
-  val causal: Set[String] = Set(Causes, Enables, Triggers, RespondsTo, FallsWithin)
-  val all: List[String] = List(Before, Meets, Overlaps, During, Starts, Finishes, Equals,
-    Causes, Enables, Triggers, RespondsTo, FallsWithin)
 
 object DatingMethod:
   val all: List[String] = List("dendrochronology", "radiocarbon", "stratigraphy",

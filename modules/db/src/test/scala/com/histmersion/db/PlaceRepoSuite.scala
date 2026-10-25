@@ -3,6 +3,7 @@ package com.histmersion.db
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 
 /** The gazetteer against a real PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers what cannot
   * be asserted purely: containment, the point tolerance, period overlap, the recursive hierarchy and

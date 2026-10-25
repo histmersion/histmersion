@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** The vocabulary codecs (#1798 item 11): a stored value the vocabulary does not know reads as its
   * UNKNOWN — a confidence as "not stated", a status as unassessed, a place's dating as unknown —

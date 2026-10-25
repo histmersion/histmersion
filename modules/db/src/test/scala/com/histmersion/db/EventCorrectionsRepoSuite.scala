@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import scala.util.Random
+import com.histmersion.values.Historicity
 
 /** The data-source assessment's P0 fixes against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): V088's generated uncertainty agrees with core.EventPrecision; the map's feed leaves the

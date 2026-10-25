@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
+import com.histmersion.values.WireEnumValues
 
 /** FORMATTING problems in the Markdown an agent wrote — an article body or summary, a source's notes
   * or summary — as the server's renderer will show them.

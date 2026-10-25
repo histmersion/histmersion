@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
+import com.histmersion.values.WireEnumValues
 
 /** Edits to an article body, anchored on its own text — how the review fixer answers (a list of small
   * changes code applies, never a rewritten body), and what `check_edits` / `POST

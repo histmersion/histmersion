@@ -8,6 +8,7 @@ import com.histmersion.config.given
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
+import com.histmersion.values.{BundleKind, SourceStatus}
 
 /** The pure half of the `.hmx` bundle: the tar container, canonical lines and revs, the bundle id,
   * manifest checks, the import decisions and the reader's problem reports. */

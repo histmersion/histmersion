@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.values.Citekey
+import com.histmersion.values.{BundleKind, Citekey}
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema

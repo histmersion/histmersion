@@ -6,6 +6,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import java.text.Normalizer
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** The deterministic checks every LLM answer passes through before code writes anything
   * (docs/research-embedded-agents.md §4.4). All pure; the engine supplies the corpus facts (the body,

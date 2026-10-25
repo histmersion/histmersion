@@ -12,6 +12,7 @@ import com.histmersion.server.{ConverterClient, Deps, Main}
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.values.{MediaRole, PlaceKind}
 
 /** The second slice of #1446 through the server, against the test database (HISTMERSION_TEST_DB_URL;
   * skipped otherwise) and fakes only — no network, no sidecar: a paper's illustration chosen from its

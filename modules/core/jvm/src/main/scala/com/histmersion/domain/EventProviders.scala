@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{BBox, CatalogRecord, EventTaxonomy, Historicity, TimeSpan, Years}
+import com.histmersion.api.{BBox, CatalogRecord, EventTaxonomy, TimeSpan, Years}
 import com.histmersion.config.*
 import com.histmersion.config.given
 
@@ -9,6 +9,7 @@ import io.circe.{ACursor, Json}
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
+import com.histmersion.values.Historicity
 
 /** The event catalogues' APIs (#1449): how to ask each, and how to read its answer into
   * [[CatalogRecord]]s. Pure — the requests are sent by the server's polite client; a test feeds

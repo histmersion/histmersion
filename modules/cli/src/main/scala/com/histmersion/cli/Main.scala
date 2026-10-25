@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.values.{EdgeKind, SourceStatus}
 
 /** Histmersion CLI — a pure HTTP client of the server (no DB access on the host). Every command maps to
   * one `Api` endpoint and prints the shared Markdown rendering, so CLI and MCP output agree. */

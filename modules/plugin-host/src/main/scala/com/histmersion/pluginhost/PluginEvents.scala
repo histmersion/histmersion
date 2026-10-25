@@ -1,11 +1,12 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.api.{BBox, CatalogRecord, EventTaxonomy, Historicity, TimeSpan}
+import com.histmersion.api.{BBox, CatalogRecord, EventTaxonomy, TimeSpan}
 import com.histmersion.domain.CatalogDating
 import com.histmersion.config.MediaConfig
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
+import com.histmersion.values.Historicity
 
 /** A plugin's catalogue as the host reads it: the query it is asked, its polite HTTP, and its records
   * checked and turned into the host's [[CatalogRecord]]s. Pure but for [[http]]. */

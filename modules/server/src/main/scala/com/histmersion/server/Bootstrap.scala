@@ -7,6 +7,7 @@ import com.histmersion.db.{JobRepo, PeriodRepo, PlaceRepo}
 import com.histmersion.server.importers.{GazetteerImporter, GazetteerLoad, ImportRunner, NaturalEarthLand, PeriodOFetch}
 
 import java.nio.file.{Files, Path}
+import com.histmersion.values.PlaceKind
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *

@@ -8,6 +8,7 @@ import com.histmersion.domain.HintProposals.{HintAnswer, Proposed}
 import com.histmersion.api.Managers.*
 import com.histmersion.db.{AgentRepo, ManagerRepo}
 import com.histmersion.server.Handlers
+import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 

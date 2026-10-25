@@ -1,8 +1,9 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{Lpf, PlaceInput, PlaceKind}
+import com.histmersion.api.{Lpf, PlaceInput}
 
 import java.nio.file.{Files, Path}
+import com.histmersion.values.PlaceKind
 
 /** The committed Pleiades seed and `lint --rule place-kind` agree (2026-10-09): `db/places/build.py`
   * derives every kind with the same type rules as [[PlaceReview]], so the lint proposes no change to a

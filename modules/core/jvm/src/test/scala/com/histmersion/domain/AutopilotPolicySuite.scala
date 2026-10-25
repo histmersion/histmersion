@@ -11,6 +11,7 @@ import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts, Next}
 import com.histmersion.api.Managers.*
 
 import java.time.Instant
+import com.histmersion.values.GoalStatus
 
 /** The autopilot's pure rules (docs/research-process-managers.md "As built: the autopilot"): the checked
   * auto approvals and their caps, the goal-status advance, the managers every goal has, the spread

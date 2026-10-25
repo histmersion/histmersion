@@ -5,6 +5,7 @@ import com.raquo.airstream.core.Transaction
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.*
 import com.histmersion.web.map.VectorStyle
+import com.histmersion.api.VocabularyCodecs.given
 import org.scalajs.dom
 import org.scalajs.dom.window
 

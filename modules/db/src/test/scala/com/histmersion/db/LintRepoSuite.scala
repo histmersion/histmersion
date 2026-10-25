@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Lint.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** Every lint rule, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

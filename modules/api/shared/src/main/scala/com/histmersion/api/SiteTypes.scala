@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.PlaceKind
+
 /** What a SITE is (#1449): a settlement, a fortification, a sanctuary, a burial… — a small set of
   * TYPES the map draws as icons inside the site's dot, so a reader sees the kind of place before
   * hovering it. Each type comes from what the gazetteer the site was imported from already says, never

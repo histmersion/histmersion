@@ -9,6 +9,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity, MatchOutcome}
 
 /** The merge review screen (`/merge`, docs/research-merge-import.md §6.5, milestone M6): upload
   * another collection's bundle, read its plan — the matched sources, every issue grouped (open first,

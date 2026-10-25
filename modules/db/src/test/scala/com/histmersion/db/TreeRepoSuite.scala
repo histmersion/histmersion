@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Tree.TreeRow
+import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 
 /** [[TreeRepo]] against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

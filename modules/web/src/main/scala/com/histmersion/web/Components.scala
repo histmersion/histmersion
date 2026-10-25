@@ -5,6 +5,7 @@ import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
+import com.histmersion.values.Confidence
 
 /** The web UI's shared building blocks. Each thing the UI shows in more than one place — a source
   * link, a chip, a confidence mark, a layer switch, an icon — is built HERE, once, so the sidebar,

@@ -372,6 +372,10 @@ change.
   SQL rendering decides whether it lands in `api` or `domain`; db's `Filter → SQL` code suggests the
   latter, with a wire `FilterView`. Steps 4–6 left it in `api`, with everything the wire needs; step 7's
   first batch did not need to decide it.
-- Whether the vocabularies domain and wire share (`EdgeKind`, `SourceStatus`, `GoalStatus`, `PlaceKind`,
-  `MediaRole`, …) — enums and string sets, not newtypes — move to `values` with their codecs in api, or
-  stay in api as a recorded edge.
+
+**Resolved.**
+
+- *The vocabularies domain and wire share* (`EdgeKind`, `SourceStatus`, `GoalStatus`, `PlaceKind`,
+  `MediaRole`, …) — decided 2026-10-25 (#3967, step 7 batch 2): they live in `values` as plain Scala types
+  with no codec, with their spelling table (`WireEnumValues`); the circe/tapir instances are in api
+  (`VocabularyCodecs`), db's column codecs stay in db. See "Step 7, batch 2 as built".

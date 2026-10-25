@@ -2,11 +2,12 @@ package com.histmersion.db
 
 import com.histmersion.api.Agents.*
 import com.histmersion.domain.AgentProposals
-import com.histmersion.api.{ArticlePlans, EdgeKind, GoalPlans, ListFilters, SourceStatus}
+import com.histmersion.api.{ArticlePlans, GoalPlans, ListFilters}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.ApprovalDigest
 import javax.sql.DataSource
+import com.histmersion.values.{EdgeKind, SourceStatus}
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind
   * `agent` (its options in `params`), its steps are `agent_steps` (one row per attempt; a `done` row

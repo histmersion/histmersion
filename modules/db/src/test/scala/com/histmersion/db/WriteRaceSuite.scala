@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 
 import java.util.concurrent.{CountDownLatch, Executors, TimeUnit}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.values.SourceStatus
 
 /** `ifUpdatedAt` is a compare-and-swap, and it was not one: `patch` read the row, compared the
   * token, then wrote — with nothing stopping a second patch from doing all three in between. Both

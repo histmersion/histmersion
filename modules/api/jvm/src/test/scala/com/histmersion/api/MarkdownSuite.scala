@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.{Confidence, SourceStatus}
+
 
 /** [[Markdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */
 class MarkdownSuite extends munit.FunSuite:

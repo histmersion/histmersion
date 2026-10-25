@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Codec, Json}
 import sttp.tapir.Schema
+import com.histmersion.values.PlaceKind
 
 /** A person's edits to the gazetteer (#987): a further name for a place, and a place of their own.
   *

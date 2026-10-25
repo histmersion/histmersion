@@ -8,6 +8,7 @@ import com.histmersion.api.GoalPlans.{LinkKind, ScheduleKind}
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
+import com.histmersion.values.{IssueKind, PlaceKind, SourceStatus}
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres
   * (docs/research-merge-import.md §7.8): a collection's own places and named periods (V052) and not

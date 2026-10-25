@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
+import com.histmersion.values.WireEnumValues
 
 /** THE CRITIQUE CHECKLIST (docs/research-review-convergence.md §6.8): every typed disagreement edge
   * (challenges, refutes, updates, superseded_by) with at least one end cited by an article, and what

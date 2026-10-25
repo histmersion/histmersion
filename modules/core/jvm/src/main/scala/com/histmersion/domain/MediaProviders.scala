@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.MediaRole
+import com.histmersion.values.MediaRole
 import com.histmersion.config.*
 import com.histmersion.config.given
 

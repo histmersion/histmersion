@@ -366,7 +366,8 @@ def dbTestGroups(module: String, groups: Int, heap: String, weights: Map[String,
 )
 
 // ── values: the newtypes every layer speaks of (citekeys, years, periods, DOIs, Wikidata ids,
-//    coordinates) — Iron only, JVM and JS. Opaque, so they erase to their base types.
+//    coordinates) and the vocabularies domain, wire and store share (source statuses, edge kinds, place
+//    kinds, …), with no codec — Iron only, JVM and JS. Opaque, so the newtypes erase to their base types.
 lazy val values = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
   .in(file("modules/values"))

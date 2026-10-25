@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{LocationPrecision, PlaceKind}
 
 /** Point-only seed regions (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise):

@@ -2,6 +2,7 @@ package com.histmersion.api
 
 
 import io.circe.parser.parse
+import com.histmersion.values.PlaceKind
 
 /** A person's gazetteer edits (#987): what a name, a language tag and a hand-added place may be. */
 class PlaceEditsSuite extends munit.FunSuite:

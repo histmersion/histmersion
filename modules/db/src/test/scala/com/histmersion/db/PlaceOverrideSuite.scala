@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{PlaceKind, SourceStatus}
 
 /** A person's kind and period for a place (V080), against a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise): setting one re-matches the place's findings; every writer of `places` — a

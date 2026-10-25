@@ -6,6 +6,7 @@ import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.values.PlaceKind
 
 /** Findings at one point: one marker, counting them all (a point holds several claims). */
 final case class Spot(lat: Double, lon: Double, items: List[GeoHit])

@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.ACursor
 import sttp.tapir.Schema
+import com.histmersion.values.WireEnumValues
 
 /** Named historical periods from **PeriodO** (https://perio.do) — a gazetteer of period DEFINITIONS:
   * each is a label, a time span and a spatial scope as one published authority stated them. The whole

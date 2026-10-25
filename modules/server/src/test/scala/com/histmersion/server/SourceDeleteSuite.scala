@@ -7,6 +7,7 @@ import com.histmersion.db.{ArticleRepo, Db, Migrate, SourceRepo}
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** Deleting a source (#969), against a real Postgres: the dry run lists everything and changes
   * nothing; an article citing the source (by its citekey, an old citekey or a short form), an event

@@ -9,6 +9,7 @@ import java.io.InputStream
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.util.UUID
 import javax.sql.DataSource
+import com.histmersion.values.{BundleKind, Confidence, SourceStatus}
 
 /** Which rows a bundle read covers: every one, the ones changed after a moment (`--since`), or the
   * ones with the given uids (what an import compares the bundle against). */

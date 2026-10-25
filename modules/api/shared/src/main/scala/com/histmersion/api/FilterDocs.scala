@@ -1,6 +1,7 @@
 package com.histmersion.api
 
 import sttp.tapir.Schema
+import com.histmersion.values.SourceStatus
 
 /** What each parameter of the shared [[Filter]] means, written ONCE (#1946; the 2026-10-16 review found
   * the 17-field filter described seven times, in four wordings). Every surface reads it: the REST query

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.{DecisionKind, IssueSeverity}
+
 /** The resolution file's text (docs/research-merge-import.md §6.3), on both sides of the wire: the
   * CLI's `--write-template` and the web review screen's download write it here; reading one is YAML,
   * `MergeResolutionsFile.parse` (the JVM), which the web reaches through `POST /api/merge/resolutions`.

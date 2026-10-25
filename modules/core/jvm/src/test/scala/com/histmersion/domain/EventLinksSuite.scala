@@ -7,6 +7,7 @@ import com.histmersion.config.given
 
 
 import io.circe.parser.parse
+import com.histmersion.values.EventLinkStatus
 
 /** #1449: the deterministic matcher (time/space overlap, name matches, no attestation without a
   * passage), the leads, an article's catalogue leads, and the site types from each gazetteer. */

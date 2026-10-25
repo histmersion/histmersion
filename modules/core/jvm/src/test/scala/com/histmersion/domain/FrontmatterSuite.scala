@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
+import com.histmersion.values.SourceStatus
 
 class FrontmatterSuite extends munit.FunSuite:
   val note =

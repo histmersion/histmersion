@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.values.Citekey
+import com.histmersion.values.{Citekey, SourceStatus}
 
 import com.histmersion.api.*
 import com.histmersion.config.*

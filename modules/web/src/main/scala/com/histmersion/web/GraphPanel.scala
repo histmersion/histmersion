@@ -7,6 +7,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.values.{EdgeKind, SourceStatus}
 
 /** The citation graph of one source, in a window: a force layout on a canvas, a legend and the
   * hovered node as a [[SourceLink]].

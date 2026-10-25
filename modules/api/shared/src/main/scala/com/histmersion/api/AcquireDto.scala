@@ -3,6 +3,7 @@ package com.histmersion.api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.values.SourceStatus
 
 /** Wire DTOs of the acquisition & assessment surface (plan §5.2 stream 2.6) — the ports of
   * `discover.py`, `refs.py`, `assess.py`, `followups.py`, `fetch_oa.py`, `archive_org.py` and the

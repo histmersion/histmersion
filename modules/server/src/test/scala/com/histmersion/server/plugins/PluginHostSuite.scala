@@ -5,6 +5,7 @@ import com.histmersion.pluginhost.{PluginHost, Generation, HostServices}
 import com.histmersion.api.{PluginSetting, PluginState, PluginStatus}
 import com.histmersion.plugin.*
 import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{Config, ConfigFactory}
 

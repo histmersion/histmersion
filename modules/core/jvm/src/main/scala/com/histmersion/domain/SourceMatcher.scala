@@ -8,6 +8,7 @@ import com.histmersion.config.given
 import MergeText.{AuthorAgreement, MinHash}
 
 import java.util.UUID
+import com.histmersion.values.EditionsPolicy
 
 /** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.)
   * Pure.

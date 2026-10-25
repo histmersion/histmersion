@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Geocode.KindHint
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{PlaceKind, SourceStatus}
 
 /** What an imported place's silence about time means (V074, 2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise):

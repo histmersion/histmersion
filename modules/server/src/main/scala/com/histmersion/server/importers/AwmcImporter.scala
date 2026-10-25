@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.circe.{Json, JsonObject}
+import com.histmersion.values.PlaceKind
 
 /** Imports classical-world geographic features from the Ancient World Mapping Center (AWMC).
   *

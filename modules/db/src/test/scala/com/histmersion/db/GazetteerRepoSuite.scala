@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Geocode.KindHint
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{PlaceKind, SourceStatus}
 
 /** The external gazetteer sources in the store (#1064), against a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise): joining by identifier only, provenance per row, idempotent re-runs, the sweep,

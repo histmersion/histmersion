@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.PlaceKind
+
 
 /** Pure tests for the gazetteer's Linked-Places / GeoJSON reader-writer (plan §1.6a). No database. */
 class PlacesSuite extends munit.FunSuite:

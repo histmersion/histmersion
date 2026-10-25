@@ -15,6 +15,7 @@ import io.circe.Json
 import sttp.ai.core.agent.*
 
 import java.time.Instant
+import com.histmersion.values.{GoalStatus, SourceStatus}
 
 /** The autopilot against a `*_test` database (docs/research-process-managers.md "As built: the
   * autopilot"): one switch carries a planned goal through plan → sources → articles → review to

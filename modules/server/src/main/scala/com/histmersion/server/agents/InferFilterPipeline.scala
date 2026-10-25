@@ -8,6 +8,7 @@ import com.histmersion.api.ArticlePlans.FilterProposal
 import com.histmersion.domain.FilterInference.{FilterAnswer, Inferred}
 import com.histmersion.db.AgentRepo
 import com.histmersion.server.Handlers
+import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 

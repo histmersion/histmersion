@@ -9,6 +9,7 @@ import com.histmersion.api.GoalPlans.{ArticleDraft, DraftMode, LinkKind}
 import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.db.{AgentRepo, GoalLinkRepo}
 import com.histmersion.server.Handlers
+import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 

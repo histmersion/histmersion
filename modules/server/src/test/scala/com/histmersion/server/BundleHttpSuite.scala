@@ -9,6 +9,7 @@ import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.Files
+import com.histmersion.values.BundleKind
 
 /** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`,
   * `POST /api/bundle/verify` and `POST /api/bundle/import` — the wiring, the write gate, the

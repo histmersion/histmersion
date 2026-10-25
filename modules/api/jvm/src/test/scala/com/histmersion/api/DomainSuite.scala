@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.{Confidence, EdgeKind, SourceStatus, WireEnumValues}
+
 
 class DomainSuite extends munit.FunSuite:
 

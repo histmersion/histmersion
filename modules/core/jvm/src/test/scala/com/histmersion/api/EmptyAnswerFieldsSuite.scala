@@ -8,6 +8,7 @@ import com.histmersion.domain.given
 
 import com.histmersion.api.Agents.ProbeAnswer
 import com.histmersion.api.GoalPlans.DraftMode
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** A strict-schema provider (Codex) sends `""` or `null` for a field it has nothing for, and `null`
   * decodes like an absent field. An answer whose NEEDED field is empty or null must fail its step's

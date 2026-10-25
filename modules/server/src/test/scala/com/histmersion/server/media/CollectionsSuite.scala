@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo.{Known, PlaceFacts, ProviderAsset, Rights, Target}
 import com.histmersion.server.ConverterClient
+import com.histmersion.values.MediaRole
 
 /** The store as a few maps, with the gazetteer facts the matches read. */
 final class CollStore(facts: Map[String, PlaceFacts], named: Map[String, List[PlaceFacts]]) extends MediaStore:

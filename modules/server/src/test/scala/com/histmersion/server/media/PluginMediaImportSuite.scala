@@ -16,6 +16,8 @@ import org.ekrich.config.ConfigFactory
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.values.{MediaRole, PlaceKind}
+import com.histmersion.api.VocabularyCodecs.given
 
 /** A THIRD-PARTY plugin's media collection (docs/research-plugins.md §6, §11) run by `media import`
   * through the registries, against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the

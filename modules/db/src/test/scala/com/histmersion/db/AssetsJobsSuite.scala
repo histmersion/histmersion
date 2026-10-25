@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.values.SourceStatus
 
 /** V006 round-trips against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class AssetsJobsSuite extends com.histmersion.db.DbSuite:

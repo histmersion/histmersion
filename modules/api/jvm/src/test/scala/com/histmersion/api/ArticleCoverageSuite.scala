@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.SourceStatus
+
 
 /** #958 — an article's coverage is computed and rendered by code from its recorded filter: the
   * uncited remainder, the status breakdown, the counts sentence, the reasons (present or missing),

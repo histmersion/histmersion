@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{PlaceKind, SourceStatus}
 
 /** The fixtures of [[RegionCleanupSuite]] and [[PlaceReviewSuite]]: a city with two Regiones, an
   * Athenian tribe beside Athens, provinces and a site on atlas grid squares' centres, a withdrawn

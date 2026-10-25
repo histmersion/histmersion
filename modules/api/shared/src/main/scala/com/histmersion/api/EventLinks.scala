@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.circe.Codec
+import com.histmersion.values.EventLinkStatus
 
 /** Linking events to the corpus (#1449), deterministically — no model: the sources whose FINDINGS lie
   * near an event in time and space, and the sources whose TEXT names it (any of its names — its label,
@@ -23,12 +24,6 @@ final case class EventPassage(start: Int, end: Int, quote: String, name: String,
     derives KindlingsCodecAsObject
 object EventPassage:
   given Schema[EventPassage] = KindlingsSchema.derived[EventPassage].schema
-
-object EventLinkStatus:
-  val Proposed  = "proposed"
-  val Confirmed = "confirmed"
-  val Rejected  = "rejected"
-  val all: List[String] = List(Proposed, Confirmed, Rejected)
 
 /** One source that may discuss an event: its score, the findings near the event, the passages naming
   * it, and the reasons in words. `status`: proposed | confirmed (an attestation exists) | rejected. */

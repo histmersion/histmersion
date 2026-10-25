@@ -7,6 +7,7 @@ import com.histmersion.config.given
 
 import com.histmersion.api.Agents.{ApprovalKind, RunState}
 import com.histmersion.domain.Scheduling.*
+import com.histmersion.values.EdgeKind
 
 /** The schedules' pure rules: when a due schedule may start, what a sweep may queue, how a ranking is
   * checked, and what a currency check makes of a citing paper. */

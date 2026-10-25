@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
+import com.histmersion.values.{BundleKind, Confidence, IssueKind, SourceStatus}
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2):
   * identity and tombstones (M0), a deterministic export (M1), and an import without matching —

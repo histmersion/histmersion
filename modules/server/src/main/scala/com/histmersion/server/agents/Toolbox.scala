@@ -6,6 +6,7 @@ import com.histmersion.server.Handlers
 import com.histmersion.server.McpTools
 import com.histmersion.server.McpTools.{ArticleCoverageInput, CheckEditsInput, FacetsInput, GetArticleInput, NeighborsInput, PassagesInput}
 import com.histmersion.server.OpsTools.QueryInput
+import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.ai.core.agent.AgentTool

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.values.Confidence
+
 /** Presentation constants shared by the server's HTML pages and the Scala.js web UI, so a
   * confidence badge on a source page and a dot on the map cannot drift apart. Pure strings — no DOM,
   * no server types. */

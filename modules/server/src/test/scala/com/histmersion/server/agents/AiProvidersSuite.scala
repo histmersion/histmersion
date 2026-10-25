@@ -8,6 +8,7 @@ import com.histmersion.api.PlanQuota
 import com.histmersion.api.Agents.*
 import com.histmersion.plugin.*
 import com.histmersion.server.plugins.Plugins
+import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import org.ekrich.config.ConfigFactory

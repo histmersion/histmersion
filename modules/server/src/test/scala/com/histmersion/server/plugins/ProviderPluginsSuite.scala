@@ -7,6 +7,7 @@ import com.histmersion.plugin.*
 import com.histmersion.server.events.{BuiltinCatalogues, HostEventCatalogue}
 import com.histmersion.server.media.{BuiltinMedia, MediaImporters, PluginCollection}
 import com.histmersion.server.agents.BuiltinAi
+import com.histmersion.api.VocabularyCodecs.given
 import org.ekrich.config.ConfigFactory
 
 import scala.collection.immutable.ListMap

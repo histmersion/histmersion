@@ -7,6 +7,7 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.CompileArticle.*
 import com.histmersion.api.GoalPlans.DraftMode
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** compile-article's pure logic: the claim table (quotes found in the record), the evidence model,
   * and the code self-check of a draft — fatal problems always sent back, the rest sent back until the

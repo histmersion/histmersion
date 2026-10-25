@@ -1,6 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.*
+import com.histmersion.values.{LocationPrecision, PlaceKind, SourceStatus}
 
 class PreviewSuite extends munit.FunSuite:
 

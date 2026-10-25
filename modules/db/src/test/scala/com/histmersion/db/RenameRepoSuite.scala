@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.values.{Confidence, SourceStatus}
 
 /** Renaming a citekey (V027): the foreign keys cascade, every column without one is rewritten, finding
   * ids move, `[[links]]` in articles (versioned) and source notes follow, parked edges waiting for

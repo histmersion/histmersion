@@ -9,6 +9,7 @@ import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.domain.PlanArticles.ArticlesAnswer
 import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ManagerRepo}
 import com.histmersion.server.Handlers
+import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
