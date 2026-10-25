@@ -1,9 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import com.histmersion.api.Agents.RunState
 import com.histmersion.domain.ManagerPolicy.*
@@ -191,8 +189,8 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(c.map(_.models.map(_.map(_.role))), Right(Some(List("fixer", "skeptic"))))
     assert(ManagerConfig.parse(List("maxRun=3")).isLeft)
     assert(ManagerConfig.parse(List("max-runs=x")).isLeft)
-    val d = ReviewManagerConfig(2, 3, 3, 2, 2, 30, 2, 10, 90)
-    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d, SimpleManagerConfig(4), SimpleManagerConfig(1), watch)
+    val d = ReviewManagerDefaults(2, 3, 3, 2, 2, 30, 2, 10, 90, inferFilter = true, extendMinNew = 0)
+    val m = ManagerDefaults(3, 15, 360, 0, d, ManagerRunDefaults(4), ManagerRunDefaults(1), watch)
     val rs = ReviewSettings.of(ManagerConfig(maxRuns = Some(3)), d, m)
     assertEquals((rs.maxRuns, rs.maxOpen, rs.rounds, rs.maxFailures), (3, 6, 3, 3))
     assertEquals(ReviewSettings.defaults(d, m).merge(ManagerConfig(rounds = Some(5))).rounds, Some(5))
@@ -245,12 +243,12 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(decided("rejected", None), Some("rejected"))
 
   test("settings by kind: enrich and seed take their own max-runs; seed's defaults show the plan's checks"):
-    val d = ReviewManagerConfig(2, 3, 3, 2, 2, 30, 2, 10, 90)
-    val m = AgentManagersConfig(true, 30, 90, 15, 360, 3, d, SimpleManagerConfig(4), SimpleManagerConfig(1), watch)
+    val d = ReviewManagerDefaults(2, 3, 3, 2, 2, 30, 2, 10, 90, inferFilter = true, extendMinNew = 0)
+    val m = ManagerDefaults(3, 15, 360, 0, d, ManagerRunDefaults(4), ManagerRunDefaults(1), watch)
     assertEquals(ReviewSettings.forKind(Kind.Enrich, ManagerConfig(), m).maxRuns, 4)
     assertEquals(ReviewSettings.forKind(Kind.Seed, ManagerConfig(maxRuns = Some(2)), m).maxRuns, 2)
     assertEquals(ReviewSettings.forKind(Kind.Review, ManagerConfig(), m).staleAfterDays, 90)
-    val sd = ReviewSettings.defaultsFor(Kind.Seed, m, AgentSeedConfig(6, 5, 0.5))
+    val sd = ReviewSettings.defaultsFor(Kind.Seed, m, SeedPlanDefaults(maxArticles = 6, minSources = 5))
     assertEquals((sd.maxRuns, sd.minSources, sd.maxArticles), (Some(1), Some(5), Some(6)))
     val c = ManagerConfig.parse(List("stale-after-days=30", "infer-filter=off", "min-sources=3", "max-articles=4"))
     assertEquals(c.map(x => (x.staleAfterDays, x.inferFilter, x.minSources, x.maxArticles)), Right((Some(30), Some(false), Some(3), Some(4))))
@@ -267,9 +265,9 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   // ── phase 3: the watcher and the cron ──────────────────────────────────────────────────────────
 
-  private val watch = WatchManagerConfig(maxRuns = 1, cron = "@weekly", autoIngestPerDay = 5)
-  private val mcfg  = AgentManagersConfig(true, 30, 90, 15, 360, 3, ReviewManagerConfig(2, 3, 3, 2, 2, 30, 2, 10, 90),
-    SimpleManagerConfig(4), SimpleManagerConfig(1), watch)
+  private val watch = WatchManagerDefaults(maxRuns = 1, autoIngestPerDay = 5)
+  private val mcfg  = ManagerDefaults(3, 15, 360, 0, ReviewManagerDefaults(2, 3, 3, 2, 2, 30, 2, 10, 90, inferFilter = true, extendMinNew = 0),
+    ManagerRunDefaults(4), ManagerRunDefaults(1), watch)
 
   test("watcher: its item kinds and words, its sweeps (none named = both), its settings and defaults"):
     assertEquals(itemKinds(Kind.Watch), List(AcquisitionSweep, CurrencyCheck, OaIngest))
@@ -283,7 +281,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(Sweep.of(ManagerConfig(sweeps = Some(List("currency")))), List(Sweep.Currency))
     assertEquals(Sweep.of(ManagerConfig(sweeps = Some(Nil))), Nil)
     assertEquals(ReviewSettings.forKind(Kind.Watch, ManagerConfig(), mcfg).maxRuns, 1)
-    val d = ReviewSettings.defaultsFor(Kind.Watch, mcfg, AgentSeedConfig(6, 5, 0.5))
+    val d = ReviewSettings.defaultsFor(Kind.Watch, mcfg, SeedPlanDefaults(maxArticles = 6, minSources = 5))
     assertEquals((d.autoIngest, d.autoIngestPerDay, d.sweeps), (Some(false), Some(5), Some(List("acquisition", "currency"))))
     val c = ManagerConfig.parse(List("sweeps=acquisition-sweep, currency", "auto-ingest=on", "auto-ingest-per-day=3"))
     assertEquals(c.map(x => (x.sweeps, x.autoIngest, x.autoIngestPerDay)),
@@ -325,6 +323,6 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(dailyBlock(None, BigDecimal(100)), None)
     assertEquals(dailyBlock(Some(2.0), BigDecimal("1.99")), None)
     assert(dailyBlock(Some(2.0), BigDecimal(2)).exists(_.contains("metered calls only")), dailyBlock(Some(2.0), BigDecimal(2)))
-    assertEquals(ReviewSettings.defaultsFor(Kind.Enrich, mcfg.copy(dailyUsd = 5), AgentSeedConfig(6, 5, 0.5)).dailyUsd, Some(5.0))
+    assertEquals(ReviewSettings.defaultsFor(Kind.Enrich, mcfg.copy(dailyUsd = 5), SeedPlanDefaults(maxArticles = 6, minSources = 5)).dailyUsd, Some(5.0))
     assertEquals(ManagerConfig.parse(List("daily-usd=1.5")).map(_.dailyUsd), Right(Some(1.5)))
     assert(ManagerConfig.parse(List("daily-usd=-1")).isLeft)

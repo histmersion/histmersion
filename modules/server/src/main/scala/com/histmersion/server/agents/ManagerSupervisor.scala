@@ -54,6 +54,7 @@ import javax.sql.DataSource
 final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: AgentsHandlers, h: com.histmersion.server.Handlers):
 
   private def mcfg = cfg.managers
+  private def managerDefaults = ManagerDefaultsViews.defaults(cfg.managers)
 
   /** The ticking thread; a `var` because it starts after construction and stops in tests. */
   @volatile private var thread: Option[Thread] = None
@@ -165,7 +166,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
 
   private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
 
-  def settings(m: ManagerInfo): ReviewSettings = ReviewSettings.forKind(kindOf(m), m.config, mcfg)
+  def settings(m: ManagerInfo): ReviewSettings = ReviewSettings.forKind(kindOf(m), m.config, managerDefaults)
 
   // ── 1. evaluate ────────────────────────────────────────────────────────────────────────────────
 
@@ -726,7 +727,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
               case None =>
                 val sweep   = item.kind == AcquisitionSweep
                 val autoOn  = sweep && m.config.autoIngest.contains(true)
-                val own     = if sweep then ManagerPolicy.ingestAllowance(m.config, mcfg,
+                val own     = if sweep then ManagerPolicy.ingestAllowance(m.config, managerDefaults,
                                 ManagerRepo.countEvents(ds, m.id, Feed.Ingested, ManagerPolicy.dayStart(now))) else 0
                 // the autopilot's cap shared by every watcher (none while it is off)
                 val shared  = if autoOn then agents.autopilot.sharedIngestLeft(now) else None

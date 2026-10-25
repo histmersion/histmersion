@@ -355,5 +355,5 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite:
     a.managers.tick(now)
     assertEquals(item(m.id, CurrencyCheck).status, "active")
     // a manager without a cap of its own takes agents.managers.daily-usd (0 = none)
-    assertEquals(ManagerPolicy.dailyCap(ManagerConfig(), baseCfg.agents.managers), None)
-    assertEquals(ManagerPolicy.dailyCap(ManagerConfig(), baseCfg.agents.managers.copy(dailyUsd = 3)), Some(3.0))
+    assertEquals(ManagerPolicy.dailyCap(ManagerConfig(), ManagerDefaultsViews.defaults(baseCfg.agents.managers)), None)
+    assertEquals(ManagerPolicy.dailyCap(ManagerConfig(), ManagerDefaultsViews.defaults(baseCfg.agents.managers.copy(dailyUsd = 3))), Some(3.0))
