@@ -48,9 +48,11 @@ private[cli] object KindSources:
       |""".stripMargin
 
   /** How a live suite starts: the mode from the environment (a replay of the case's recordings, the
-    * real site when asked, else skipped with the reason) and the plugin loaded as the server loads it. */
+    * real site when asked, else skipped) and the plugin loaded as the server loads it. munit reports a
+    * skipped test without its reason, in a run that still passes, so the reason is printed too. */
   private val LiveStart =
     """    val mode = HttpMode.fromEnv(Path.of("recordings", "@case@"))
+      |    mode.left.foreach(why => println(s"SKIPPED ${getClass.getSimpleName}: $why"))
       |    assume(mode.isRight, mode.left.getOrElse(""))
       |    val harness = PluginHarness.load("@id@", config, http = mode.toOption.get).fold(e => fail(e), identity)
       |""".stripMargin

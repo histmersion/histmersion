@@ -300,6 +300,7 @@ com.histmersion.plugin.testkit.FetcherAnswer$ unapply(com.histmersion.plugin.tes
 com.histmersion.plugin.testkit.HttpMode LiveVariable(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode ModeVariable(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode Offline(): com.histmersion.plugin.testkit.HttpMode
+com.histmersion.plugin.testkit.HttpMode ProjectProperty(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode class
 com.histmersion.plugin.testkit.HttpMode fromEnv(java.nio.file.Path, scala.collection.immutable.Map): scala.util.Either
 com.histmersion.plugin.testkit.HttpMode fromOrdinal(int): com.histmersion.plugin.testkit.HttpMode
@@ -312,6 +313,7 @@ com.histmersion.plugin.testkit.HttpMode productPrefix(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode$ LiveVariable(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode$ ModeVariable(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode$ Offline(): com.histmersion.plugin.testkit.HttpMode
+com.histmersion.plugin.testkit.HttpMode$ ProjectProperty(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode$ class
 com.histmersion.plugin.testkit.HttpMode$ fromEnv(java.nio.file.Path, scala.collection.immutable.Map): scala.util.Either
 com.histmersion.plugin.testkit.HttpMode$ fromOrdinal(int): com.histmersion.plugin.testkit.HttpMode

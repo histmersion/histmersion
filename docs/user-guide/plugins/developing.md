@@ -13,15 +13,25 @@ plugin build reads from it as it reads from any other repository:
 
 ```bash
 histmersion plugin repo          # …/Histmersion/maven
-histmersion plugin repo --url    # file:///…/Histmersion/maven/ — for a build's repository list
+histmersion plugin repo --url    # file:///…/Histmersion/maven/
+histmersion plugin repo --m2     # copy it into ~/.m2/repository, the local Maven repository
 ```
 
-It holds two artifacts, both at the version of your Histmersion:
+A build should not name that directory: its path is different on every computer, and a plugin's
+repository is often public. Instead, the installer (and `histmersion plugin new`, and `plugin repo
+--m2` whenever you ask) copies the install's artifacts into your **local Maven repository**,
+`~/.m2/repository`, which every build tool knows by name: `m2Local` in scala-cli,
+`Resolver.mavenLocal` in sbt, `mavenLocal()` in Gradle. Only files that are missing there or differ
+are copied, so running it again after an update is cheap.
+
+It holds these artifacts, all at the version of your Histmersion:
 
 - **`com.kubuszok::histmersion-plugin-api`**: the API a plugin compiles against, with its sources
   (the documentation of every type) and a POM.
 - **`com.kubuszok::histmersion-plugin-platform`**: no code, only a POM. Its dependencies are the
   libraries the server provides to plugins, at exactly the versions it ships (below).
+- **`com.kubuszok::histmersion-plugin-testkit`**: a test dependency that runs a plugin as the server
+  does (see [Testing](#testing)), with the parts of Histmersion it needs.
 
 A plugin depends on both **compile-only**: the server provides them at run time, so they are never
 packed into the plugin and never listed as its dependencies. Everything else comes from Maven Central
@@ -29,7 +39,7 @@ as usual.
 
 On a computer where Histmersion is not installed, use the repository from a release: each tagged
 release on GitHub carries it as `histmersion-maven-<version>.zip` (unzip it and name its `maven/`
-directory wherever this page uses the install's), and the API jars on their own as
+directory with `--repo` wherever this page uses the local Maven repository), and the API jars on their own as
 `histmersion-plugin-api-<version>.jar` and `-sources.jar`.
 
 ### The plugin platform
@@ -66,38 +76,68 @@ histmersion plugin new my-events --kind event-catalogue   # or another kind
 The kinds are `source-fetcher` (the default), `media-collection`, `event-catalogue`, `ai-provider` and
 `secret-vault`. Each writes a small plugin of that kind that works as written. `--dir` chooses
 another directory, `--package` another Scala package, and `--repo <directory or URL>` another Maven
-repository with the plugin API and platform than the install's (one unzipped from a release).
+repository with the plugin API, platform and testkit than the local one (one unzipped from a release, or
+a remote one). Without `--repo`, `new` copies the install's artifacts into `~/.m2/repository` first.
 
 What it writes, for `doi-mirror`:
 
 | file | what it is |
 |---|---|
+| `project.scala` | the build: every `//> using` directive of the project, the tests' too |
 | `DoiMirror.scala` | the plugin: its settings, the `Plugin` class and the source fetcher it adds |
 | `DoiMirror.test.scala` | its tests, a live check against the real site (skipped until you ask for it), and checks of what the jar must carry |
 | `README.md` | how to test it: offline, live, and recorded then replayed (see [Testing](#testing)) |
 | `.gitignore` | keeps the build's output and the published `repo/` out of version control |
 | `resources/META-INF/services/com.histmersion.plugin.Plugin` | names the plugin class, so the server can find it (Java's ServiceLoader reads it). Rename the class and you must rename it here too; a test checks it |
 | `resources/META-INF/histmersion/plugins/doi-mirror.conf` | the plugin's settings and their defaults |
-| `resources/META-INF/native-image/…/reachability-metadata.json` | what the server's native binary must be told about the plugin (see [Native image](#native-image)) |
+| `resources/META-INF/native-image/doimirror/doi-mirror/reachability-metadata.json` | what the server's native binary must be told about the plugin (see [Native image](#native-image)) |
 
-The two Scala files are the ones you edit. The top of `DoiMirror.scala` is the build:
+`test-resources/` (not written until you need it) holds files only the tests read, such as trimmed
+copies of a site's answers: it is on the test class path and never in the jar. The live check's
+recordings go in `recordings/` (see [Testing](#testing)).
+
+The two Scala files are the ones you edit, and `project.scala` is the build:
 
 ```scala
 //> using scala 3.10.0
-//> using repository file:///Users/you/Applications/Histmersion/maven/
+//> using repository m2Local
 //> using compileOnly.dep com.kubuszok::histmersion-plugin-api:0.1.0-SNAPSHOT
 //> using compileOnly.dep com.kubuszok::histmersion-plugin-platform:0.1.0-SNAPSHOT
 //> using resourceDir resources
+
 //> using publish.organization doimirror
 //> using publish.name doi-mirror
 //> using publish.version 0.1.0
+//> using publish.doc false
+
+//> using test.dep org.scalameta::munit:1.3.6
+//> using test.dep com.kubuszok::histmersion-plugin-platform:0.1.0-SNAPSHOT
+//> using test.dep com.kubuszok::histmersion-plugin-testkit:0.1.0-SNAPSHOT
+//> using test.resourceDir test-resources
+//> using test.javaProp histmersion.plugin.project=${.}
 ```
 
-The Scala version and the two Histmersion artifacts are the ones your Histmersion runs; keep them when
-you edit. The test file adds munit, the same two artifacts as test dependencies, since the tests
-run the plugin, and the **plugin testkit** (`com.kubuszok::histmersion-plugin-testkit`), which loads and
-runs the plugin as the server does (see [Testing](#testing)). The `publish` lines name the plugin when you publish it: change the organization to
-your own (a reversed domain name, say) and keep the version equal to the one in `PluginInfo`.
+- The Scala version and the Histmersion artifacts are the ones your Histmersion runs; keep them when you
+  edit. `m2Local` is `~/.m2/repository`; the project names no path of your computer, so it builds as
+  it is on another one with Histmersion installed.
+- The API and the platform are **compile-only**: the server provides them, so they are neither in the
+  jar nor in its POM. A compile-only dependency is not on the test class path, so the tests, which run
+  the plugin, name the platform again; the **plugin testkit** loads and runs the plugin as the server
+  does (see [Testing](#testing)) and brings the API with it.
+- The Histmersion version is written on four lines. scala-cli has no variables, so to build against
+  another Histmersion change all four.
+- `publish.doc false`: `publish` would otherwise build a Scaladoc jar, and Scaladoc warns about every
+  link into the compile-only API. The sources jar is still published, for editors.
+- `test.javaProp histmersion.plugin.project=${.}` gives the tests the project's directory (`${.}` is
+  the directory of `project.scala`), so the testkit finds `recordings/` wherever `scala-cli test` is
+  started.
+- The `publish` lines name the plugin when you publish it: change the organization to your own (a
+  reversed domain name, say) and keep the version equal to the one in `PluginInfo`.
+
+**More source files.** A plugin of several files keeps all its directives in `project.scala`,
+including the `test.*` ones: put a file's `//> using dep` there, not at the top of that file. scala-cli
+reads directives from every file and warns when they are spread over several; one file is one place to
+change a version. Name test files `*.test.scala`.
 
 The loop:
 
@@ -108,6 +148,9 @@ scala-cli --power publish . --publish-repository ./repo          # the jar and i
 histmersion plugin add doimirror::doi-mirror:0.1.0 --repo ./repo  # shows what it adds and needs, then installs it
 histmersion plugin rebuild                                        # link it into the server
 ```
+
+[Installing plugins](installing.md#install-a-plugin-from-its-source-repository) has these steps in
+full, with the relink's memory, updating and removing.
 
 Then turn it on in `histmersion.conf` and reload the settings:
 
@@ -129,7 +172,7 @@ artifacts are not in it; your own libraries are. `plugin add` reads that POM.
 Add a library as scala-cli adds any:
 
 ```scala
-//> using dep org.scala-lang.modules::scala-xml:2.4.0
+//> using dep org.scala-lang.modules::scala-xml:2.5.0
 ```
 
 Nothing more is needed. The published POM lists it, and `histmersion plugin add` resolves the
@@ -187,7 +230,7 @@ an older one stops with "TASTy signature has wrong version".
 
 ### With sbt instead
 
-The same works with sbt: add the install's repository to the resolvers, depend on the plugin API and
+The same works with sbt: add the local Maven repository to the resolvers, depend on the plugin API and
 platform as `Provided` (compiled against, not packaged, not a dependency of the published plugin), and
 on your own libraries as usual:
 
@@ -196,20 +239,24 @@ on your own libraries as usual:
 scalaVersion := "3.10.0"
 organization := "org.example"
 version      := "0.1.0"
-resolvers += "histmersion" at "file:///Users/you/Applications/Histmersion/maven/"   // histmersion plugin repo --url
+resolvers += Resolver.mavenLocal                 // ~/.m2/repository: histmersion plugin repo --m2
+val histmersion = "0.1.0-SNAPSHOT"
 libraryDependencies ++= Seq(
-  "com.kubuszok" %% "histmersion-plugin-api"      % "0.1.0-SNAPSHOT" % Provided,
-  "com.kubuszok" %% "histmersion-plugin-platform" % "0.1.0-SNAPSHOT" % Provided,
-  "org.scala-lang.modules" %% "scala-xml"         % "2.4.0",
-  "com.kubuszok" %% "histmersion-plugin-testkit"  % "0.1.0-SNAPSHOT" % Test,   // see Testing
+  "com.kubuszok" %% "histmersion-plugin-api"      % histmersion % Provided,
+  "com.kubuszok" %% "histmersion-plugin-platform" % histmersion % Provided,
+  "org.scala-lang.modules" %% "scala-xml"         % "2.5.0",
+  "com.kubuszok" %% "histmersion-plugin-testkit"  % histmersion % Test,   // see Testing
   "org.scalameta" %% "munit"                      % "1.3.6" % Test
 )
+Test / fork := true                              // the testkit finds recordings/ under the project
+Test / javaOptions += s"-Dhistmersion.plugin.project=${baseDirectory.value}"
 publishTo := Some(MavenCache("local-plugin-repo", baseDirectory.value / "repo"))
 publishConfiguration := publishConfiguration.value.withOverwrite(true)   // publish the same version again while developing
 ```
 
 The resources go in `src/main/resources/` (the same three files `plugin new` writes under `resources/`),
-the sources in `src/main/scala/`. `sbt publish` writes the jar and its POM to `./repo`; then
+the sources in `src/main/scala/`, the fixtures in `src/test/resources/`. sbt's `Provided` puts the API
+and the platform on the test class path too, and a `val` holds the Histmersion version once. `sbt publish` writes the jar and its POM to `./repo`; then
 `histmersion plugin add org.example::my-plugin:0.1.0 --repo ./repo`. No assembly or shading plugin is
 needed.
 
@@ -410,7 +457,11 @@ when it was linked. Two consequences:
    (`plugin rebuild --jvm`) plugins load at each start instead.
 2. **Reflection and resources need metadata.** Anything your plugin reaches dynamically — a class
    chosen by name, a resource file, a JNI call — must be declared in
-   `META-INF/native-image/<group>/<artifact>/reachability-metadata.json` inside your jar. Scala 3
+   `META-INF/native-image/<group>/<artifact>/reachability-metadata.json` inside your jar, where
+   `<group>` and `<artifact>` are the plugin's published organization and name (`publish.organization`
+   and `publish.name`; `plugin new` writes the file there). native-image reads every such file on the
+   class path, at any depth below `META-INF/native-image/`, and the relink asks for nothing more; the
+   group and artifact are GraalVM's convention, which keeps two jars' files from sharing a path. Scala 3
    lazy vals count: each keeps its value in a field named `<name>$lzy<n>`, reached by name, and every
    `given` the compiler derives (`derives ConfigReader`) is one. `plugin new` writes this file for the
    classes it generates, with the defaults file; the packaging test lists any lazy val field the file
@@ -446,12 +497,14 @@ fixtures without dependencies, and `sbt pluginHelloDeps/fixturesRepo` writes `he
 lists the `hello-lib` fixture) to a test Maven repository.
 
 **An example external plugin.** `histmersion-plugin-oabooks`, a separate repository, is a complete
-plugin built outside this one with sbt: an open-access source fetcher for openly licensed books in the
-OAPEN Library and DOAB. It compiles against the plugin API and platform from the install's repository
-(`Provided`), depends on scala-xml as an ordinary library, publishes its jar with a POM to a directory
-repository, carries its defaults and native-image metadata, and tests itself with the plugin testkit:
-unit tests on trimmed copies of OAPEN's answers, and a recorded live case (a book whose file OAPEN's
-bot check keeps from scripts, so the expected answer is "refused") replayed offline.
+plugin built outside this one with scala-cli, laid out as `histmersion plugin new` writes a plugin: an
+open-access source fetcher for openly licensed books in the OAPEN Library and DOAB. Its build is one
+`project.scala` for fourteen source files; it compiles against the plugin API and platform
+(`compileOnly.dep`), depends on scala-xml as an ordinary library, publishes its jar with a POM to a
+directory repository, carries its defaults and native-image metadata, and tests itself with the plugin
+testkit: unit tests on trimmed copies of OAPEN's answers (in `test-resources/`), and a recorded live
+case (a book whose file OAPEN's bot check keeps from scripts, so the expected answer is "refused")
+replayed offline.
 
 ## Testing
 
@@ -469,7 +522,8 @@ import java.nio.file.Path
 class DoiMirrorLiveSuite extends munit.FunSuite:
   test("finds and downloads a copy of a known work"):
     val mode = HttpMode.fromEnv(Path.of("recordings", "known-work"))
-    assume(mode.isRight, mode.left.getOrElse(""))                    // skipped, with the reason
+    mode.left.foreach(why => println(s"SKIPPED ${getClass.getSimpleName}: $why"))
+    assume(mode.isRight, mode.left.getOrElse(""))                    // skipped
     val harness = PluginHarness.load("doi-mirror", "base-url = \"https://mirror.example.org\"",
       http = mode.toOption.get).fold(e => fail(e), identity)        // or the server's refusal
     val work   = WorkKey.fromDoi("10.1234/abc", harness).getOrElse(WorkKey(doi = Some("10.1234/abc")))
@@ -503,6 +557,16 @@ class DoiMirrorLiveSuite extends munit.FunSuite:
 `HttpMode.fromEnv(dir)` lets one test serve all three uses: `HISTMERSION_PLUGIN_HTTP=live|record|replay`
 decides when set; otherwise recordings in `dir` are replayed (offline, in CI too); otherwise the test runs
 against the real site only with `HISTMERSION_PLUGIN_LIVE=1`, and is skipped without it.
+
+A relative `dir` is resolved against the project's directory, which `project.scala` hands the tests in
+the system property `histmersion.plugin.project` (`HttpMode.ProjectProperty`); without it, against the
+directory the test JVM was started in. So `scala-cli test /path/to/plugin`, run from anywhere, still
+replays the recordings.
+
+munit reports a test that `assume` skipped as "skipped", without the reason, and the run passes. That
+is why the generated live suites print `SKIPPED <suite>: <why>` first, with what to set to run it: a
+check you expected to replay and that printed this line found no recordings where it looked (the line
+names the directory).
 
 ```bash
 HISTMERSION_PLUGIN_LIVE=1 scala-cli test .          # against the real site, until it passes

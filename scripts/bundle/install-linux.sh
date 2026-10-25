@@ -9,6 +9,7 @@
 #   ${XDG_CONFIG_HOME:-~/.config}/histmersion/histmersion.conf   your settings (a commented template is written
 #                                                when there is none; an existing file is never touched)
 #   ~/.local/bin/histmersion                      the CLI                               HISTMERSION_BIN_DIR
+#   ~/.m2/repository/com/kubuszok/histmersion-*   the plugin API, platform and testkit, for plugin builds
 #
 # --move renames the bundle into place instead of copying it. The server binary (install-build.sh;
 # HISTMERSION_BUILD=local|prebuilt|jvm) is LINKED HERE by default, from the bundle's kit with the plugins
@@ -80,6 +81,14 @@ program="$(HISTMERSION_DATA_DIR="$data" ib_service_program "$dest")"
 
 mkdir -p "$bindir" "$data/logs" "$unit_dir"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
+
+# the plugin API, platform and testkit into the local Maven repository (~/.m2/repository), where a
+# plugin project finds them as m2Local without naming this install's path; only missing or changed files
+if [ -d "$dest/maven" ]; then
+  HISTMERSION_INSTALL_DIR="$dest" HISTMERSION_DATA_DIR="$data" "$dest/bin/histmersion" plugin repo --m2 >/dev/null 2>"$data/logs/plugin-repo-m2.log" \
+    && echo "→ plugin API, platform and testkit copied into ~/.m2/repository (for plugin builds)" \
+    || echo "note: could not copy the plugin artifacts into ~/.m2/repository ($data/logs/plugin-repo-m2.log); 'histmersion plugin repo --m2' retries"
+fi
 
 # per-install settings the service needs, passed through when set (never stored in the repo)
 env_line=""

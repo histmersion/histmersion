@@ -1,6 +1,6 @@
 package com.histmersion.plugin.testkit
 
-import com.histmersion.plugin.testkit.internal.{RecordedExchange, Scrubber}
+import com.histmersion.plugin.testkit.internal.{ProjectPaths, RecordedExchange, Scrubber}
 
 import java.nio.file.{Files, Path}
 
@@ -44,3 +44,15 @@ class RecordingsSuite extends munit.FunSuite:
         Right(HttpMode.Replay(Path.of("/nonexistent/recordings"))))
     finally
       Files.walk(dir).sorted(java.util.Comparator.reverseOrder()).forEach(p => Files.delete(p))
+
+  test("a relative recordings directory is the project's, wherever the build was started"):
+    val relative = Path.of("recordings", "known-work")
+    assertEquals(ProjectPaths.resolve(relative, Some("/work/my-plugin")), Path.of("/work/my-plugin/recordings/known-work"))
+    assertEquals(ProjectPaths.resolve(Path.of("./recordings/../recordings/x"), Some("/work/p/")), Path.of("/work/p/recordings/x"))
+    assertEquals(ProjectPaths.resolve(relative, None), relative.toAbsolutePath.normalize)
+    assertEquals(ProjectPaths.resolve(relative, Some("  ")), relative.toAbsolutePath.normalize)
+    assertEquals(ProjectPaths.resolve(Path.of("/elsewhere/rec"), Some("/work/p")), Path.of("/elsewhere/rec"))
+
+  test("the reason to skip names the directory it looked in, resolved"):
+    val why = HttpMode.fromEnv(Path.of("recordings", "never-recorded"), Map.empty)
+    assert(why.left.exists(_.contains(Path.of("recordings", "never-recorded").toAbsolutePath.toString)), why)

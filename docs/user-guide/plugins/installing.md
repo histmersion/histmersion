@@ -151,6 +151,65 @@ and say so.
 another macOS version.
 
 
+## Install a plugin from its source repository
+
+A plugin you have as source, such as one `histmersion plugin new` wrote or a scala-cli project cloned from
+its repository, is built, published into a directory and installed from there. You need an installed
+Histmersion (its `histmersion` CLI and the server), [scala-cli](https://scala-cli.virtuslab.org), and a JDK:
+use the one Histmersion is built with, GraalVM CE 25.4 (`sdk install java 25.4.4.1+1-graalce`, then point
+`JAVA_HOME` at it). The Histmersion source repository is not needed: the project reads the plugin API, the
+platform and the testkit from the local Maven repository (`//> using repository m2Local`,
+`~/.m2/repository`), into which the installer copies the install's; `histmersion plugin repo --m2` copies
+them again (after an update, say). From the plugin's directory:
+
+1. **Build and test.** Offline: the unit tests run, and recorded live checks are replayed.
+
+    ```bash
+    scala-cli test .
+    ```
+
+2. **Publish** the jar, its sources and its POM (which lists the plugin's own libraries) into `./repo`, a
+   Maven repository on disk:
+
+    ```bash
+    scala-cli --power publish . --publish-repository ./repo
+    ```
+
+3. **Install it** by the coordinates its `project.scala` publishes it under
+   (`publish.organization::publish.name:publish.version`). `plugin add` shows the id, version, SPI, what it
+   registers, the access its fetchers declare and its dependencies, then copies the jar and its POM into the
+   plugins directory and installs the POM's dependencies beside it (`--yes` skips the question):
+
+    ```bash
+    histmersion plugin add <group>::<name>:<version> --repo ./repo
+    ```
+
+4. **Enable it** in `histmersion.conf`, once:
+
+    ```hocon
+    histmersion.plugins.<id>.enabled = true
+    ```
+
+5. **Relink the server with it.** A native server runs only the plugins it was linked with, so it is linked
+   again with the plugins directory, self-checked, swapped in, restarted and health-checked; on failure the
+   previous binary comes back. The link peaks near 13.5 GB of memory. Let running jobs finish first:
+
+    ```bash
+    histmersion agent autopilot drain      # wait until `histmersion agent autopilot status` says DRAINED
+    histmersion plugin rebuild             # or: plugin rebuild --jvm — no relink, the server runs on the JVM
+    histmersion agent autopilot undrain
+    ```
+
+6. **Check** with `histmersion plugin status`: the running server lists the plugin's jar
+   (`… 1 jar (native): <name>-<version>.jar`). The server log names the plugin as it registers it.
+
+**Updating.** Raise `publish.version` in `project.scala` (and the version in the plugin's `PluginInfo`), then
+repeat steps 1–3 with that version, and step 5. `histmersion plugin status` says REBUILD NEEDED whenever the
+plugins directory differs from what the running server was linked with.
+
+**Removing.** `histmersion plugin rm <id> --rebuild` takes it out of the plugins directory and relinks; set
+`enabled = false` too, or the server warns that the setting configures no plugin.
+
 ## Plugins and secrets
 
 Plugins add to the server through one service (`com.histmersion.plugin.Plugin`, module
