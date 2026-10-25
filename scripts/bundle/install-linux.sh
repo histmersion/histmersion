@@ -9,7 +9,7 @@
 #   ${XDG_CONFIG_HOME:-~/.config}/histmersion/histmersion.conf   your settings (a commented template is written
 #                                                when there is none; an existing file is never touched)
 #   ~/.local/bin/histmersion                      the CLI                               HISTMERSION_BIN_DIR
-#   ~/.m2/repository/com/kubuszok/histmersion-*   the plugin API, platform and testkit, for plugin builds
+#   ~/.m2/repository/com/histmersion/histmersion-*   the plugin API, platform and testkit, for plugin builds
 #
 # --move renames the bundle into place instead of copying it. The server binary (install-build.sh;
 # HISTMERSION_BUILD=local|prebuilt|jvm) is LINKED HERE by default, from the bundle's kit with the plugins

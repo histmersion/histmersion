@@ -202,8 +202,8 @@ event-catalogue|ai-provider|secret-vault] [--with-agent-notes]`** (no checkout n
 on Maven Central — Histmersion is an app — but every install carries a Maven repository of its own, `maven/`:
 `histmersion plugin repo [--url]`; `plugin repo --m2` copies it into `~/.m2/repository`, which the installers
 and `plugin new` do too, so a project names `m2Local`, never a path of this machine). It holds
-`com.kubuszok::histmersion-plugin-api` (jar, sources, POM), the testkit and
-`com.kubuszok::histmersion-plugin-platform`, a POM-only artifact whose dependencies are the libraries the
+`com.histmersion::histmersion-plugin-api` (jar, sources, POM), the testkit and
+`com.histmersion::histmersion-plugin-platform`, a POM-only artifact whose dependencies are the libraries the
 server provides to plugins at the versions it ships (sconfig, kindlings, circe, cats, sttp client, tapir,
 ox, iron; the contract is `modules/plugin-api/plugin-platform.txt`, checked by `PluginPlatformSuite`). `new`
 writes a scala-cli project: `project.scala`, the build with EVERY directive (`//> using repository m2Local`,
@@ -232,7 +232,7 @@ testkit. sbt alternative: `resolvers += Resolver.mavenLocal`, the API and platfo
 `% Provided`, own libraries as usual, `publishTo` a directory. Code and generator: `cli/PluginTemplate.scala`,
 `cli/PluginTemplateKinds.scala`; the user docs page is `docs/user-guide/plugins/developing.md`.
 
-**Testing a plugin without a server: `com.kubuszok::histmersion-plugin-testkit`** (`modules/plugin-testkit`,
+**Testing a plugin without a server: `com.histmersion::histmersion-plugin-testkit`** (`modules/plugin-testkit`,
 shipped in `maven/` with `histmersion-plugin-host` and `histmersion-core`). `PluginHarness.load(id, config)`
 runs the server's own `PluginHost` (moved to `modules/plugin-host` for this; the server and the testkit
 share it, and the acquisition client, `FetchChain`, `WorkLookup`, `PluginMedia`/`PluginEvents`/`PluginAi`)

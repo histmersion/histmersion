@@ -24,7 +24,7 @@ class PluginToolSuite extends munit.FunSuite:
   private lazy val (helloDeps: Path, helloLib: Path) =
     val in   = getClass.getClassLoader.getResourceAsStream("plugin-fixtures.txt")
     val repo = Path.of(String(in.readAllBytes(), UTF_8).linesIterator.find(_.startsWith("repo=")).get.stripPrefix("repo="))
-    def jar(a: String) = repo.resolve(s"com/kubuszok/$a/0.1.0/$a-0.1.0.jar")
+    def jar(a: String) = repo.resolve(s"com/histmersion/$a/0.1.0/$a-0.1.0.jar")
     (jar("histmersion-plugin-hello-deps_3"), jar("histmersion-plugin-hello-lib_3"))
 
   private val tmp = FunFixture[Path](_ => Files.createTempDirectory("plugin-tool"), d =>
@@ -116,9 +116,9 @@ class PluginToolSuite extends munit.FunSuite:
 
   tmp.test("describe: a plugin is loaded with its dependencies from lib/; without them, the missing class is named"): d =>
     val lib = Files.createDirectories(d.resolve("lib"))
-    Files.copy(helloLib, lib.resolve("com.kubuszok-hello-lib.jar"))
-    Files.writeString(lib.resolve("classpath"), "com.kubuszok-hello-lib.jar\n")
-    assertEquals(PluginTool.dependencyJars(lib), List(lib.resolve("com.kubuszok-hello-lib.jar")))
+    Files.copy(helloLib, lib.resolve("com.histmersion-hello-lib.jar"))
+    Files.writeString(lib.resolve("classpath"), "com.histmersion-hello-lib.jar\n")
+    assertEquals(PluginTool.dependencyJars(lib), List(lib.resolve("com.histmersion-hello-lib.jar")))
     val withDeps = PluginTool.describe(helloDeps, URLClassLoader(PluginTool.dependencyJars(lib).map(_.toUri.toURL).toArray, loader))
     assertEquals(withDeps.plugins.map(p => (p.id, p.provides, p.error)), List(("hello-deps", List("source-fetcher:hello-deps"), None)))
     val without = PluginTool.describe(helloDeps, loader).plugins.head

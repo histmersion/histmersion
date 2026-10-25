@@ -16,7 +16,7 @@ class PluginResolverSuite extends munit.FunSuite:
 
   private val Version = "0.1.0"
   private def published(artifact: String, ext: String): Path =
-    fixtures.resolve(s"com/kubuszok/$artifact/$Version/$artifact-$Version.$ext")
+    fixtures.resolve(s"com/histmersion/$artifact/$Version/$artifact-$Version.$ext")
 
   private final case class Setup(kit: Path, plugins: Path, lib: Path, cache: Path):
     def args(extra: String*): List[String] =
@@ -47,25 +47,25 @@ class PluginResolverSuite extends munit.FunSuite:
     val s = setup(Nil)
     val (rc, out, err) = run(s)
     assertEquals(rc, 0, (out ++ err).mkString("\n"))
-    assert(out.exists(_.startsWith("dependency: com.kubuszok:histmersion-plugin-hello-lib_3:0.1.0 (for hello-deps-0.1.0.jar)")), out.mkString("\n"))
-    val name = "com.kubuszok-histmersion-plugin-hello-lib_3-0.1.0.jar"
+    assert(out.exists(_.startsWith("dependency: com.histmersion:histmersion-plugin-hello-lib_3:0.1.0 (for hello-deps-0.1.0.jar)")), out.mkString("\n"))
+    val name = "com.histmersion-histmersion-plugin-hello-lib_3-0.1.0.jar"
     assertEquals(lines(s.lib.resolve(LibDirectory.Classpath)), List(name))
     assertEquals(LibDirectory.sha256(s.lib.resolve(name)), LibDirectory.sha256(published("histmersion-plugin-hello-lib_3", "jar")))
     assertEquals(lines(s.lib.resolve(LibDirectory.Inputs)).map(_.split("  ").last), List("hello-deps-0.1.0.jar", "hello-deps-0.1.0.pom"))
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
 
   test("a module the server ships at the same or a newer version is not installed again"):
-    val s = setup(List("com.kubuszok:histmersion-plugin-hello-lib_3:0.2.0"))
+    val s = setup(List("com.histmersion:histmersion-plugin-hello-lib_3:0.2.0"))
     val (rc, out, err) = run(s)
     assertEquals(rc, 0, (out ++ err).mkString("\n"))
-    assert(out.exists(_.startsWith("provided by Histmersion: 1 module(s) (com.kubuszok:histmersion-plugin-hello-lib_3)")), out.mkString("\n"))
+    assert(out.exists(_.startsWith("provided by Histmersion: 1 module(s) (com.histmersion:histmersion-plugin-hello-lib_3)")), out.mkString("\n"))
     assertEquals(lines(s.lib.resolve(LibDirectory.Classpath)), Nil)
 
   test("a plugin that needs a NEWER version than the server ships is refused, naming the library and both versions"):
-    val s = setup(List("com.kubuszok:histmersion-plugin-hello-lib_3:0.0.9"))
+    val s = setup(List("com.histmersion:histmersion-plugin-hello-lib_3:0.0.9"))
     val (rc, _, err) = run(s)
     assertEquals(rc, 2)
-    assertEquals(err, List("refused: hello-deps-0.1.0.jar needs com.kubuszok:histmersion-plugin-hello-lib_3 0.1.0, but this Histmersion " +
+    assertEquals(err, List("refused: hello-deps-0.1.0.jar needs com.histmersion:histmersion-plugin-hello-lib_3 0.1.0, but this Histmersion " +
       "ships 0.0.9 — build the plugin against 0.0.9 (the histmersion-plugin-platform POM), or install a Histmersion that ships 0.1.0"))
     assert(!Files.exists(s.lib), "nothing written on a refusal")
 
@@ -73,7 +73,7 @@ class PluginResolverSuite extends munit.FunSuite:
     val s = setup(Nil)
     val (rc, out, _) = run(s, "--check")
     assertEquals(rc, 0)
-    assert(out.exists(_.startsWith("dependency: com.kubuszok:histmersion-plugin-hello-lib_3:0.1.0")))
+    assert(out.exists(_.startsWith("dependency: com.histmersion:histmersion-plugin-hello-lib_3:0.1.0")))
     assert(!Files.exists(s.lib))
 
   test("a jar without a POM has no dependencies of its own; a jar no longer needed leaves lib/"):
@@ -104,7 +104,7 @@ class PluginResolverSuite extends munit.FunSuite:
     assert(Files.readString(pom).contains("0.2.0-SNAPSHOT"), "the fixture POM's layout changed: fix the replacement above")
     val (rc, out, err) = run(s)
     assertEquals(rc, 0, (out ++ err).mkString("\n"))
-    assertEquals(lines(s.lib.resolve(LibDirectory.Classpath)), List("com.kubuszok-histmersion-plugin-hello-lib_3-0.1.0.jar"))
+    assertEquals(lines(s.lib.resolve(LibDirectory.Classpath)), List("com.histmersion-histmersion-plugin-hello-lib_3-0.1.0.jar"))
 
   test("usage: the kit and lib are required, an unknown option is named"):
     assert(PluginResolver.parse(List("x.jar")).isLeft)
