@@ -1,6 +1,6 @@
 package com.histmersion.server.media
 
-import com.histmersion.pluginhost.Polite
+import com.histmersion.pluginhost.{Polite, allowed, eventRoles, placeRoles}
 
 import com.histmersion.api.*
 import com.histmersion.config.*

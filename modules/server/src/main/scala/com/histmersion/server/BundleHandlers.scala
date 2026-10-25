@@ -91,7 +91,7 @@ final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
   private def importFile(file: Path, sha: String, resolutions: MergeResolutions, dryRun: Boolean)
       : Either[ApiError, BundleImportResult] =
     BundleImport.run(ds, file, sha,
-        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm), originals, resolutions, cfg.merge)
+        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm), originals, resolutions, MergeSettingsViews.settings(cfg.merge))
       .left.map(e => ApiError(s"bundle import failed: $e"))
 
   // ── uploaded bundles and the merge plan (M3) ─────────────────────────────────────────────────
@@ -129,7 +129,7 @@ final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
   def plan(req: MergePlanRequest): Either[ApiError, MergePlan] =
     uploaded(req.bundle).flatMap { p =>
       touch(p)
-      MergeState.planFile(ds, p, req.resolutions, cfg.merge, originals, cfg.limits.chunkChars)
+      MergeState.planFile(ds, p, req.resolutions, MergeSettingsViews.settings(cfg.merge), originals, cfg.limits.chunkChars)
         .left.map(e => ApiError(s"merge plan failed: $e"))
     }
 
@@ -154,7 +154,7 @@ final class BundleHandlers(deps: Deps, backup: () => Either[ApiError, String]):
         applyJobs.start(sha, req.planHash) { () =>
           BundleImport.apply(ds, p, sha,
               BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), originals,
-              req.resolutions, cfg.merge, req.planHash, () => backup().left.map(_.message))
+              req.resolutions, MergeSettingsViews.settings(cfg.merge), req.planHash, () => backup().left.map(_.message))
             .map { r =>
               if r.applied && r.mergeId.isDefined then MergeRepo.dropSession(ds, sha)
               r

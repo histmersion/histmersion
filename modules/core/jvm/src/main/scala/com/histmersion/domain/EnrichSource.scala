@@ -2,7 +2,6 @@ package com.histmersion.domain
 
 import com.histmersion.api.{FindingInput, FindingsPatch, Geocode, Lint, ListPatch, MetadataPatch, Period, PeriodInput,
   SourcePatch, WorkRef}
-import com.histmersion.config.AgentEnrichGuardsConfig
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -207,14 +206,11 @@ object EnrichSource:
   def normaliseTag(t: String): String =
     t.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", "_").replaceAll("^_+|_+$", "")
 
-  /** The findings step's guards (#1424, [[AgentEnrichGuardsConfig]]) and the gazetteer they ask:
+  /** The findings step's guards (#1424, config `agents.enrich.guards`) and the gazetteer they ask:
     * `resolves(place, kind, period)` is true when the geocoder would give the place a point — the same
     * question the `geocode` step asks later, put while the answer can still be sent back. */
   final case class FindingGuards(minPlacedShare: Double, centuryGapYears: Long, pointerPhrases: List[String],
       resolves: (String, Geocode.KindHint, Option[Period]) => Boolean)
-  object FindingGuards:
-    def apply(cfg: AgentEnrichGuardsConfig, resolves: (String, Geocode.KindHint, Option[Period]) => Boolean): FindingGuards =
-      FindingGuards(cfg.minPlacedShare, cfg.centuryGapYears.toLong, cfg.phrases, resolves)
 
   private val CenturyMention = "(?i)\\bcentur(?:y|ies)\\b|\\b\\d{1,2}\\s*(?:st|nd|rd|th)\\s*c\\.".r
   private val OrdinalDigits  = "(?i)\\b(\\d{1,2})\\s*(?:st|nd|rd|th)\\b".r

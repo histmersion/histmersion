@@ -2,9 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.api.*
 import com.histmersion.files.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import java.util.UUID
 import com.histmersion.values.{Confidence, DecisionKind, GoalStatus, IssueKind, SourceStatus}

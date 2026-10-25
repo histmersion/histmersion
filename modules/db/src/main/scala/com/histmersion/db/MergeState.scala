@@ -25,7 +25,7 @@ object MergeState:
   private def ids(us: Iterable[UUID]): List[String] = us.iterator.map(_.toString).toList.distinct
 
   def load(es: BundleEntities, m: BundleManifest, readProblems: List[String], originals: Originals,
-      chunkChars: Int = 0, cfg: Option[MergeConfig] = None)(using DbCon): Input =
+      chunkChars: Int = 0, cfg: Option[MergeSettings] = None)(using DbCon): Input =
     val inst   = BundleRepo.instance
     val schema = BundleRepo.schemaVersion
     // the bundle's own uids and those it refers to (an incremental bundle names records it does not carry)
@@ -127,7 +127,7 @@ object MergeState:
     * within `merge.place-within-km` or shapes overlapping by `merge.place-overlap-at-least` (the
     * intersection over the union); two places without a geometry match on the label alone. The
     * nearest (most overlapping) place wins; a local place is preferred to a seed one. */
-  private[db] def matchPlaces(ps: List[BundlePlace], cfg: MergeConfig)(using DbCon): Map[UUID, String] =
+  private[db] def matchPlaces(ps: List[BundlePlace], cfg: MergeSettings)(using DbCon): Map[UUID, String] =
     val norm = PlaceRepo.normLabelSql("p.label")
     ps.flatMap { b =>
       val within = cfg.placeWithinKm * 1000.0
@@ -247,7 +247,7 @@ object MergeState:
     finally in.close()
 
   /** `merge plan`: read the bundle, gather this collection's state in one read-only snapshot, plan. */
-  def planFile(ds: DataSource, file: Path, resolutions: MergeResolutions, cfg: MergeConfig, originals: Originals,
+  def planFile(ds: DataSource, file: Path, resolutions: MergeResolutions, cfg: MergeSettings, originals: Originals,
       chunkChars: Int = 0): Either[String, MergePlan] =
     val loaded = withFile(file)(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
@@ -261,7 +261,7 @@ object MergeState:
   /** The plan, inside the caller's transaction. `chunkChars` places a re-anchored attestation in its
     * FTS chunk; `merge plan` and `merge apply` must pass the same value, or their plan hashes differ. */
   private[db] def plan(file: Path, m: BundleManifest, loaded: BundleReader.Loaded, resolutions: MergeResolutions,
-      cfg: MergeConfig, originals: Originals, chunkChars: Int = 0)(using DbCon): (Input, MergePlanner.Result) =
+      cfg: MergeSettings, originals: Originals, chunkChars: Int = 0)(using DbCon): (Input, MergePlanner.Result) =
     val input0 = load(loaded.entities, m, loaded.problems, originals, chunkChars, Some(cfg))
     val sk     = sketches(file, input0, MergePlanner.sketchesWanted(input0, cfg), cfg.minhashSize)
     val input  = input0.copy(bodies = bodies(file, input0, MergePlanner.bodiesWanted(input0, sk, resolutions, cfg)))

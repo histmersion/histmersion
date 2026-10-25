@@ -1,6 +1,6 @@
 package com.histmersion.server.media
 
-import com.histmersion.pluginhost.{Polite, PluginMedia}
+import com.histmersion.pluginhost.{Polite, PluginMedia, allowed}
 
 import com.histmersion.api.*
 import com.histmersion.config.*

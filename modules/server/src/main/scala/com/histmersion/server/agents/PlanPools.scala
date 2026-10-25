@@ -1,7 +1,7 @@
 package com.histmersion.server.agents
 
 import com.histmersion.config.{AgentsConfig, ScheduledRefresh}
-import com.histmersion.domain.{PlanReadSchedule, ScheduledRead, logins}
+import com.histmersion.domain.{PlanReadSchedule, ScheduledRead}
 import com.histmersion.api.PlanQuota
 import com.histmersion.api.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.PlanQuota.*
@@ -193,7 +193,7 @@ final class PlanPools(ds: DataSource, cfg: => AgentsConfig, codexHome: () => Opt
     val at = now.toEpochMilli
     gate.exclusive(p, at) { last =>
       val newest = lastObserved(p).map(java.time.Instant.ofEpochMilli)
-      PlanReadSchedule.scheduledRead(schedule(p), autopilotOn, wanted, newest, last.map(java.time.Instant.ofEpochMilli), now) match
+      PlanReadSchedule.scheduledRead(schedule(p).readSchedule, autopilotOn, wanted, newest, last.map(java.time.Instant.ofEpochMilli), now) match
         case ScheduledRead.NotDue(why) => Left(why)
         case ScheduledRead.Due =>
           PlanQuota.refreshDecision(None, login(p, at), seams.refreshes && refreshMode(p).isDefined, last, staleMs, at, force = true)

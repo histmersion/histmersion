@@ -1,7 +1,6 @@
 package com.histmersion.domain
 
 import com.histmersion.api.{Acquire, Articles, WorkRef}
-import com.histmersion.config.AgentPlanConfig
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -139,5 +138,3 @@ object PlanGoal:
     else
       s"plan-goal $goal: approved — ${created} sub-goal(s), ${plan.queries.size} query link(s), " +
         s"${linked} work(s) in the corpus linked, ${queued} queued for acquisition (agent run ${runId.take(8)})"
-
-extension (c: AgentPlanConfig) def caps: PlanGoal.Caps = PlanGoal.Caps(c.maxSubGoals, c.maxQueries, c.maxWorks, c.queryChars)

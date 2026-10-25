@@ -129,31 +129,6 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(s.freesAt, Some(1000 + 3600L * 1000L)) // 0 < 0.1 once the spend leaves
     assertEquals(verdict(List(s.copy(freesAt = None))), (false, None))
 
-  test("config: claude-code is guarded by default (no API key, loopback only); chains and allowances load from env"):
-    val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
-    val cc  = cfg.agents.providers.claudeCode
-    assertEquals(cc.command, "claude")
-    assert(!cc.useApiKey && !cc.allowNonLoopback)
-    assertEquals(cc.extraArgs, "", "the settings files stay out through --setting-sources, which keeps the plan login (§3a P2)")
-    assert(cfg.agents.runtimes.claudeMod && cfg.agents.runtimes.generate && !cfg.agents.runtimes.interactiveMod)
-    assertEquals(cfg.agents.quota.claudePlan.maxCallsInFlight, 1)
-    assertEquals((cfg.agents.quota.claudePlan.refresh, cfg.agents.quota.claudePlan.probeModel), ("auto", "haiku"),
-      "a stale or missing Claude reading is refreshed by the probe (#989)")
-    assertEquals(cfg.agents.quota.fallthrough, "", "no chain falls from a plan to a paid key unless asked")
-    assert(!cfg.agents.providers.codex.useApiKey && !cfg.agents.providers.opencode.chatgptLogin)
-    assertEquals(cfg.agents.provider(ProviderKind.Codex), None)
-    assertEquals(cfg.agents.allowances, "")
-    assertEquals(cfg.agents.provider(ProviderKind.ClaudeCode), None, "claude-code is no HTTP provider")
-    val on = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of(
-      "HISTMERSION_AGENTS_ROLE_EXTRACTOR", "claude-code:sonnet > local:qwen",
-      "HISTMERSION_AGENTS_ALLOWANCES", "claude-code:* = 2M tokens/5h, reserve 20%",
-      "HISTMERSION_AGENTS_CLAUDE_COMMAND", "/opt/homebrew/bin/claude",
-      "HISTMERSION_AGENTS_CLAUDE_ALLOW_NON_LOOPBACK", "true")))
-    assertEquals(parseChain(on.agents.role(Agents.Role.Extractor)).map(_.map(_.wire)), Right(List("claude-code:sonnet", "local:qwen")))
-    assertEquals(parseAllowances(on.agents.allowances).map(_.map(_.text)), Right(List("2M tokens/5h, reserve 20%")))
-    assertEquals(on.agents.providers.claudeCode.command, "/opt/homebrew/bin/claude")
-    assert(on.agents.providers.claudeCode.allowNonLoopback)
-
   test("Markdown: the chains with the model a call would use, the allowances with use and reset, the doctor"):
     import Agents.*
     val m = ModelsInfo(enabled = true, Nil, List("enrich-source"), 4, Nil,

@@ -1,7 +1,6 @@
 package com.histmersion.domain
 
 import com.histmersion.api.{ArticleFilter, Plural}
-import com.histmersion.config.AgentInferFilterConfig
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -70,7 +69,3 @@ object FilterInference:
   /** The worklog line of a run. */
   def logLine(slug: String, outcome: String, runId: String): String =
     s"infer-filter [[$slug]]: $outcome (agent run ${runId.take(8)})"
-
-extension (c: AgentInferFilterConfig)
-  def limits: FilterInference.Limits = FilterInference.Limits(math.max(1, c.minHits), math.max(c.minHits, c.maxHits),
-    math.min(1.0, math.max(0.0, c.minCitedShare)))

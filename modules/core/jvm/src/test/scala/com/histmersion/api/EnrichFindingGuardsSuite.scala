@@ -143,18 +143,3 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     val (k2, w2) = check(mixed, last = true).toOption.get
     assertEquals(k2.findings.size, 2)
     assert(w2.exists(_.startsWith("dropped finding 3")), w2)
-
-  // ── config ────────────────────────────────────────────────────────────────────────────────────
-
-  test("config: the guards' defaults and env overrides"):
-    val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of())).agents.enrich.guards
-    assertEquals(cfg.minPlacedShare, 0.5)
-    assertEquals(cfg.centuryGapYears, 500)
-    assertEquals(cfg.phrases, List("this date", "around this date", "the next column", "the previous column",
-      "the table above", "the table below", "as listed"))
-    val on = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of(
-      "HISTMERSION_AGENTS_ENRICH_MIN_PLACED_SHARE", "0.75", "HISTMERSION_AGENTS_ENRICH_CENTURY_GAP_YEARS", "300",
-      "HISTMERSION_AGENTS_ENRICH_POINTER_PHRASES", " See Table 2 ,, ibid "))).agents.enrich.guards
-    assertEquals((on.minPlacedShare, on.centuryGapYears, on.phrases), (0.75, 300, List("see table 2", "ibid")))
-    val g = FindingGuards(on, (_, _, _) => true)
-    assertEquals((g.minPlacedShare, g.centuryGapYears, g.pointerPhrases), (0.75, 300L, List("see table 2", "ibid")))

@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.agent
+import com.histmersion.server.acquire.agent
 import com.histmersion.pluginhost.{Challenge, SttpTransport}
 import com.histmersion.server.acquire.*
 import com.sun.net.httpserver.{HttpExchange, HttpServer}

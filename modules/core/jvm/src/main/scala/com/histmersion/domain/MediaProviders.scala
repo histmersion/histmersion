@@ -1,8 +1,6 @@
 package com.histmersion.domain
 
 import com.histmersion.values.MediaRole
-import com.histmersion.config.*
-import com.histmersion.config.given
 
 import io.circe.Json
 
@@ -298,17 +296,6 @@ object Commons:
       val credit = (author.toList :+ name :+ "via Wikimedia Commons").mkString(", ")
       Right(Rights(licence, name, meta.get("LicenseUrl").map(_.trim).filter(_.nonEmpty).map(u =>
         if u.startsWith("//") then "https:" + u else u), author, credit))
-
-extension (c: MediaCommonsConfig) def allowed: Set[String] = MediaLicence.allowList(c.licences)
-extension (c: MediaDepictsConfig) def allowed: Set[String] = MediaLicence.allowList(c.licences)
-extension (c: MediaCollectionConfig) def allowed: Set[String] = MediaLicence.allowList(c.licences)
-extension (c: MediaPluginCollectionsConfig)
-  def allowed(collection: String): Set[String] = MediaLicence.allowList(c.perCollection.getOrElse(collection, c.licences))
-extension (c: MediaWikidataConfig)
-  def placeRoles: List[(String, String)] = MediaRoles.parse(c.placeProperties)
-  def eventRoles: List[(String, String)] = MediaRoles.parse(c.eventProperties)
-extension (c: MediaIllustrationsConfig)
-  def figureRules: FigurePick.Rules = FigurePick.Rules(c.minSide, c.minArea, c.maxAspect, c.maxRefs, c.earlyPages, c.pageScanMin)
 
 /** `P18:image,P242:locator-map` (config) → `List(P18 -> image, P242 -> locator-map)`. An entry that
   * is not `P<digits>:<known role>` is dropped, as is a second entry for the same property. */
