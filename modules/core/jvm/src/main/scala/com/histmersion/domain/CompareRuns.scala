@@ -5,10 +5,11 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.Agents.{Pipeline, RunDetail, StepInfo, StepStatus, Usage}
+import com.histmersion.api.Agents.{RunDetail, StepInfo, StepStatus, Usage}
 import com.histmersion.api.RunCompare.*
 import io.circe.Decoder
 import io.circe.parser.decode
+import com.histmersion.values.{Pipeline, RunState}
 
 /** `agent compare` (#992): the pure half. Reads two or more runs' recorded steps (their FULL outputs)
   * and lays them side by side; `billing` names how a configured model is paid for (a plan pool or a
@@ -37,7 +38,7 @@ object CompareRuns:
       val names    = unionInOrder(runs.map(_.steps.map(_.name).distinct))
       val rows     = names.map(n => StepRow(n, runs.map(d => Option(d.steps.filter(_.name == n)).filter(_.nonEmpty).map(stepSide(_, billing)))))
       val notes    = runs.collect {
-        case d if d.run.status != Agents.RunState.Done.wire =>
+        case d if d.run.status != RunState.Done.wire =>
           s"run ${d.run.id.take(8)} is ${d.run.status}, not done: its outputs are what it had so far"
       }
       val enrich = if pipeline.contains(Pipeline.EnrichSource) then enrichSides(runs) else Nil

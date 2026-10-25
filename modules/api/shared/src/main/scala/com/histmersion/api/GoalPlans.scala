@@ -37,20 +37,7 @@ object GoalPlans:
   object Plan:
     given Schema[Plan] = KindlingsSchema.derived[Plan].schema
 
-  /** Whether a compile run writes a NEW article or APPENDS a section to an existing one. */
-  enum DraftMode(val wire: String):
-    case Create extends DraftMode("create")
-    case Extend extends DraftMode("extend")
-
-  object DraftMode:
-    def parse(s: String): Option[DraftMode] = values.find(_.wire == s.trim.toLowerCase)
-    given WireEnumValues[DraftMode]:
-      def all: Array[DraftMode] = DraftMode.values
-      def wire(e: DraftMode): String = e.wire
-      def fromWire(s: String): Option[DraftMode] = parse(s)
-    given Encoder[DraftMode] = WireEnum.encoder
-    given Decoder[DraftMode] = WireEnum.decoder
-    given Schema[DraftMode]  = WireEnum.schema
+  export com.histmersion.values.{DraftMode, GoalLinkKind as LinkKind, ScheduleKind}
 
   /** An article a compile run drafted, as a person approves it. `text` is the whole body (create) or
     * the section to append (extend, under the heading `section` when given, else at the end).
@@ -77,23 +64,6 @@ object GoalPlans:
 
   // ── goal links and schedules ───────────────────────────────────────────────────────────────────
 
-  /** What a goal is linked to. */
-  enum LinkKind(val wire: String):
-    case Source    extends LinkKind("source")
-    case Article   extends LinkKind("article")
-    case Query     extends LinkKind("query")
-    case QueueItem extends LinkKind("queue-item")
-
-  object LinkKind:
-    def parse(s: String): Option[LinkKind] = values.find(_.wire == s.trim.toLowerCase)
-    given WireEnumValues[LinkKind]:
-      def all: Array[LinkKind] = LinkKind.values
-      def wire(e: LinkKind): String = e.wire
-      def fromWire(s: String): Option[LinkKind] = parse(s)
-    given Encoder[LinkKind] = WireEnum.encoder
-    given Decoder[LinkKind] = WireEnum.decoder
-    given Schema[LinkKind]  = WireEnum.schema
-
   /** One link of a goal. `title` is the source's or article's title (or the item's text) when the
     * target still exists; `None` marks a dangling link. */
   final case class GoalLink(kind: LinkKind, ref: String, note: Option[String] = None, title: Option[String] = None,
@@ -107,22 +77,6 @@ object GoalPlans:
     given Schema[LinkAdd] = KindlingsSchema.derived[LinkAdd].schema
     /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
     given Codec.AsObject[LinkAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[LinkAdd])
-
-  /** What a goal's schedule starts: a currency check of its sources, or an acquisition sweep of its
-    * queries. */
-  enum ScheduleKind(val wire: String, val pipeline: Agents.Pipeline):
-    case Currency    extends ScheduleKind("currency", Agents.Pipeline.CurrencyCheck)
-    case Acquisition extends ScheduleKind("acquisition", Agents.Pipeline.AcquisitionSweep)
-
-  object ScheduleKind:
-    def parse(s: String): Option[ScheduleKind] = values.find(_.wire == s.trim.toLowerCase)
-    given WireEnumValues[ScheduleKind]:
-      def all: Array[ScheduleKind] = ScheduleKind.values
-      def wire(e: ScheduleKind): String = e.wire
-      def fromWire(s: String): Option[ScheduleKind] = parse(s)
-    given Encoder[ScheduleKind] = WireEnum.encoder
-    given Decoder[ScheduleKind] = WireEnum.decoder
-    given Schema[ScheduleKind]  = WireEnum.schema
 
   /** One schedule of a goal. `cron` is five fields in UTC (or `@daily`…); `lastNote` says what the
     * scheduler last did (started run X, or skipped: why). */

@@ -7,9 +7,8 @@ import com.histmersion.config.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 
-import com.histmersion.api.Agents.RunState
 import com.histmersion.domain.AgentProposals.Proposal
-import com.histmersion.values.EdgeKind
+import com.histmersion.values.{ApprovalKind, EdgeKind, RunState}
 
 /** The pure parts of a goal's schedules and of the two scheduled pipelines
   * (docs/research-embedded-agents.md §14): whether a due schedule may start a run now (the previous
@@ -159,7 +158,7 @@ object Scheduling:
           val (from, edge, to) =
             if kind == Acquire.EdgeKinds.Supersedes then (target, EdgeKind.SupersededBy, citing)
             else (citing, if kind == Acquire.EdgeKinds.Refutes then EdgeKind.Refutes else EdgeKind.Challenges, target)
-          CurrencyAction.Propose(Proposal(Agents.ApprovalKind.Edge, from, edgeKind = Some(edge), target = Some(to),
+          CurrencyAction.Propose(Proposal(ApprovalKind.Edge, from, edgeKind = Some(edge), target = Some(to),
             evidence = evidence))
 
   /** The acquisition item a disagreeing paper outside the corpus becomes. */

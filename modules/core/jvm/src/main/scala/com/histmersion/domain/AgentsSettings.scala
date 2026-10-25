@@ -1,8 +1,8 @@
 package com.histmersion.domain
 
-import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode, ProviderKind, Role}
 import com.histmersion.api.PlanQuota
 import com.histmersion.config.{AgentApprovalsConfig, AgentProviderConfig, AgentsConfig}
+import com.histmersion.values.{AgentRole, ApprovalKind, ApprovalMode, ProviderKind}
 
 object ApprovalModes:
   /** A value that is not `auto` — a typo included — is the safe one. */
@@ -35,15 +35,15 @@ extension (c: AgentsConfig)
     case ProviderKind.ClaudeCode | ProviderKind.Codex | ProviderKind.Opencode | ProviderKind.Plugin(_) => None
 
   /** The configured `provider:model` of a role, as written (empty = unset). */
-  def role(r: Role): String = r match
-    case Role.Probe      => c.roles.probe
-    case Role.Extractor  => c.roles.extractor
-    case Role.Reviewer   => c.roles.reviewer
-    case Role.ColdReader => c.roles.coldReader
-    case Role.Skeptic    => c.roles.skeptic
-    case Role.Fixer      => c.roles.fixer
-    case Role.Planner    => c.roles.planner
-    case Role.Writer     => c.roles.writer
+  def role(r: AgentRole): String = r match
+    case AgentRole.Probe      => c.roles.probe
+    case AgentRole.Extractor  => c.roles.extractor
+    case AgentRole.Reviewer   => c.roles.reviewer
+    case AgentRole.ColdReader => c.roles.coldReader
+    case AgentRole.Skeptic    => c.roles.skeptic
+    case AgentRole.Fixer      => c.roles.fixer
+    case AgentRole.Planner    => c.roles.planner
+    case AgentRole.Writer     => c.roles.writer
 
   /** How the command-line providers are signed in — which models draw on a plan pool. */
   def logins: PlanQuota.Logins =

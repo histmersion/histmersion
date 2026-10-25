@@ -11,7 +11,7 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 import com.histmersion.domain.AgentProposals.{Proposal, ProposalAnswer}
-import com.histmersion.values.WireEnumValues
+import com.histmersion.values.{ApprovalKind, WireEnumValues}
 
 /** The `review-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md
   * §4.3): the mechanical checks, the validation of each reviewer's answer, the merge of the panel
@@ -862,7 +862,7 @@ object ReviewArticle:
               "`pair` (src>dst) — a disagreement with no recorded edge is a proposal, not a MAJOR")
           case None =>
             val proposed = f.pair.exists(ref => proposals.exists(pp =>
-              pp.kind == Agents.ApprovalKind.Edge && pp.target.exists(t => CritiqueRef(pp.citekey, t).same(ref))))
+              pp.kind == ApprovalKind.Edge && pp.target.exists(t => CritiqueRef(pp.citekey, t).same(ref))))
             val why = f.pair.fold("it names no checklist pair")(ref =>
               s"no edge is recorded between [[${ref.src}]] and [[${ref.dst}]]" +
                 (if proposed then " — its proposed edge waits for approval and joins the next run's checklist" else ""))

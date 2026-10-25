@@ -11,42 +11,7 @@ import sttp.tapir.Schema
   * pure in `core/jvm` ([[ManagerPolicy]]), the supervisor in the server. */
 object Managers:
 
-  /** What a manager drives: `review` (library-wide: articles until their review converges), `enrich`
-    * (library-wide: sources until enriched), `seed` (one research area: new articles proposed, approved
-    * and compiled), `watch` (one research area: an acquisition sweep and a currency check on its cron). */
-  enum Kind(val wire: String):
-    case Review extends Kind("review")
-    case Seed   extends Kind("seed")
-    case Watch  extends Kind("watch")
-    case Enrich extends Kind("enrich")
-
-  object Kind:
-    def parse(s: String): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
-
-  /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them),
-    * `stopped` cancelled its in-flight runs and items. */
-  enum State(val wire: String):
-    case Active  extends State("active")
-    case Paused  extends State("paused")
-    case Stopped extends State("stopped")
-
-  object State:
-    def parse(s: String): Option[State] = values.find(_.wire == s.trim.toLowerCase)
-
-  enum ItemStatus(val wire: String):
-    case Pending   extends ItemStatus("pending")
-    case Held      extends ItemStatus("held")
-    case Active    extends ItemStatus("active")
-    case Done      extends ItemStatus("done")
-    case Stopped   extends ItemStatus("stopped")
-    case Failed    extends ItemStatus("failed")
-    case Cancelled extends ItemStatus("cancelled")
-
-    /** Settled: only a person (re-open, enqueue) brings it back. */
-    def isFinal: Boolean = this == Done || this == Stopped || this == Failed || this == Cancelled
-
-  object ItemStatus:
-    def parse(s: String): Option[ItemStatus] = values.find(_.wire == s.trim.toLowerCase)
+  export com.histmersion.values.{ItemStatus, ManagerKind as Kind, ManagerState as State}
 
   /** Why an item exists: the manager's own selection, a person, a run that chained it, a hint, an
     * ingest job (`agents.auto-enrich`). */

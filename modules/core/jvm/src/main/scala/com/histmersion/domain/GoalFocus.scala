@@ -6,7 +6,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.api.Managers.*
-import com.histmersion.values.GoalStatus
+import com.histmersion.values.{GoalStatus, ItemStatus}
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"), pure: which research
   * goals are ACTIVE for model work — at most `max` at a time — which wait and why, which of their items are

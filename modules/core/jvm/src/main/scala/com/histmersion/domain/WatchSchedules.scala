@@ -5,10 +5,11 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.GoalPlans.{GoalSchedule, ScheduleKind}
+import com.histmersion.api.GoalPlans.GoalSchedule
 import com.histmersion.api.Managers.*
 
 import java.time.Instant
+import com.histmersion.values.{ManagerState, ScheduleKind}
 
 /** Goal schedules are research-area watchers since phase 3 (docs/research-process-managers.md §4 (c)):
   * the pure half of moving a `goal_schedules` row into its goal's `watch:<goal>` manager, and of showing
@@ -68,11 +69,11 @@ object WatchSchedules:
     m.goal.toList.flatMap { g =>
       Sweep.of(m.config).map { s =>
         val it = items.find(_.kind == s.itemKind)
-        val state = State.parse(m.state).getOrElse(State.Paused)
+        val state = ManagerState.parse(m.state).getOrElse(ManagerState.Paused)
         val note = state match
-          case State.Active  => s"watcher ${m.id}" + it.flatMap(_.outcome).fold("")(o => s": $o")
-          case State.Paused  => s"watcher ${m.id} is paused: resume it (Managers) for this schedule to fire"
-          case State.Stopped => s"watcher ${m.id} is stopped"
+          case ManagerState.Active  => s"watcher ${m.id}" + it.flatMap(_.outcome).fold("")(o => s": $o")
+          case ManagerState.Paused  => s"watcher ${m.id} is paused: resume it (Managers) for this schedule to fire"
+          case ManagerState.Stopped => s"watcher ${m.id} is stopped"
         GoalSchedule(g, kindOf(s), m.cron.getOrElse(""), enabled = m.cron.isDefined, m.config.budgetUsd,
           m.nextTickAt, it.filter(_.runId.isDefined).map(_.updatedAt), it.flatMap(_.runId),
           Some(note.take(500)))
