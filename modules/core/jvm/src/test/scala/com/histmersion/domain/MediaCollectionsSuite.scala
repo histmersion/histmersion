@@ -31,7 +31,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
   test("Met: an object's licence from isPublicDomain, astronomical years moved one back, place fields most specific first"):
     val r = MetMuseum.record(fixture("met-object.json")).fold(fail(_), identity)
     assertEquals(r.key, "252448")
-    assertEquals(r.period, Some((-1400L, -1201L)), "-1399..-1200 astronomical = 1400–1201 BCE")
+    assertEquals(r.period, DeepTime.span(-1400L, -1201L), "-1399..-1200 astronomical = 1400–1201 BCE")
     assertEquals(r.geography, List("excavation" -> "Mycenae", "country" -> "Greece"))
     assertEquals(r.imageUrl, Some("https://images.metmuseum.org/CRDImages/gr/web-large/DP121403.jpg"))
     assertEquals(r.originalUrl, Some("https://images.metmuseum.org/CRDImages/gr/original/DP121403.jpg"))
@@ -51,7 +51,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
     val earring = rs.head
     assertEquals(earring.key, "1916.131")
     assertEquals(earring.geography, List("culture" -> "Cyprus"))
-    assertEquals(earring.period, Some((-499L, -400L)))
+    assertEquals(earring.period, DeepTime.span(-499L, -400L))
     assertEquals(earring.imageUrl, Some("https://openaccess-cdn.clevelandart.org/1916.131/1916.131_web.jpg"))
     assertEquals(earring.rights.map(_.credit),
       Right("Earring, The Cleveland Museum of Art, Gift of Mr. and Mrs. J. H. Wade, CC0"))
@@ -68,7 +68,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
     val coin = rs.head
     assertEquals(coin.key, "4441")
     assertEquals(coin.geography, List("place_of_origin" -> "Cyprus"))
-    assertEquals(coin.period, Some((-65L, -64L)))
+    assertEquals(coin.period, DeepTime.span(-65L, -64L))
     assertEquals(coin.imageUrl, Some("https://www.artic.edu/iiif/2/96ab8413-59a3-e92c-314a-669173745abd/full/843,/0/default.jpg"))
     assertEquals(coin.thumbUrl, Some("https://www.artic.edu/iiif/2/96ab8413-59a3-e92c-314a-669173745abd/full/330,/0/default.jpg"))
     assertEquals(coin.pageUrl, "https://www.artic.edu/artworks/4441")
@@ -82,7 +82,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
     assertEquals(LibraryOfCongress.itemId("http://www.loc.gov/item/2007627513/"), Some("2007627513"))
     val r = LibraryOfCongress.record(fixture("loc-item.json"), "https://www.loc.gov", 1928, 1280, 330).fold(fail(_), identity)
     assertEquals(r.key, "2007627513")
-    assertEquals(r.period, Some((1880L, 1880L)))
+    assertEquals(r.period, DeepTime.span(1880L, 1880L))
     assertEquals(r.imageUrl.map(_.split('/').last), Some("1024.jpg"), "the largest JPEG no wider than display-px")
     assertEquals(r.thumbUrl.map(_.split('/').last), Some("1024.jpg"), "the smallest JPEG no narrower than thumb-px")
     assertEquals(r.originalUrl.map(_.split('/').last), Some("4000.jpg"))
@@ -94,7 +94,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
     val restricted = parse(fixture("loc-item.json").noSpaces.replace("No known restrictions on publication.", "Rights status not evaluated."))
       .toOption.get
     assert(LibraryOfCongress.record(restricted, "https://www.loc.gov", 1928, 1280, 330).toOption.get.rights.isLeft)
-    assertEquals(LibraryOfCongress.yearsOf("[ca. 1906-1910]"), Some((1906L, 1910L)))
+    assertEquals(LibraryOfCongress.yearsOf("[ca. 1906-1910]"), DeepTime.span(1906L, 1910L))
     assertEquals(LibraryOfCongress.yearsOf("undated"), None)
 
   // ── depictions ───────────────────────────────────────────────────────────────────────────────
@@ -110,12 +110,12 @@ class MediaCollectionsSuite extends munit.FunSuite:
 
   // ── matching ─────────────────────────────────────────────────────────────────────────────────
 
-  private def rec(geo: List[(String, String)], period: Option[(Long, Long)] = Some((-1400L, -1200L))) =
+  private def rec(geo: List[(String, String)], period: Option[com.histmersion.values.Period] = DeepTime.span(-1400L, -1200L)) =
     MediaRecord("k", "t", "https://x", Some("https://x/i.jpg"), None, None,
       Right(MediaRights.cc0(None, "t")), geo, period)
 
-  private val mycenae = MediaMatch.PlaceInfo("pleiades_570491", "Mycenae", Set("mycenae", "mykenai"), Some((-1600L, -1100L)))
-  private val greece  = MediaMatch.PlaceInfo("geonames_390903", "Greece", Set("greece"), Some((-3000L, -100L)))
+  private val mycenae = MediaMatch.PlaceInfo("pleiades_570491", "Mycenae", Set("mycenae", "mykenai"), DeepTime.span(-1600L, -1100L))
+  private val greece  = MediaMatch.PlaceInfo("geonames_390903", "Greece", Set("greece"), DeepTime.span(-3000L, -100L))
   private val onMap: MediaMatch.Resolve = Map(
     "mycenae" -> Set("pleiades_570491"), "mykenai" -> Set("pleiades_570491"), "greece" -> Set("geonames_390903"),
     "thebes" -> Set("thebes_egypt", "thebes_greece")).withDefaultValue(Set.empty)
@@ -131,25 +131,33 @@ class MediaCollectionsSuite extends munit.FunSuite:
   test("museum rule: uncertain and ambiguous values, missing or disjoint dates are never matched"):
     assertEquals(MediaMatch.museum(rec(List("culture" -> "Mycenae ?")), mycenae, onMap), Left("no place on the record"))
     assertEquals(MediaMatch.museum(rec(List("culture" -> "probably Mycenae")), mycenae, onMap), Left("no place on the record"))
-    val thebes = MediaMatch.PlaceInfo("thebes_greece", "Thebes", Set("thebes"), Some((-1600L, -1100L)))
+    val thebes = MediaMatch.PlaceInfo("thebes_greece", "Thebes", Set("thebes"), DeepTime.span(-1600L, -1100L))
     assertEquals(MediaMatch.museum(rec(List("city" -> "Thebes")), thebes, onMap), Left("its place name is ambiguous on the map"))
     assertEquals(MediaMatch.museum(rec(List("excavation" -> "Mycenae"), None), mycenae, onMap), Left("no dates on the record"))
     assertEquals(MediaMatch.museum(rec(List("excavation" -> "Mycenae")), mycenae.copy(period = None), onMap),
       Left("the place has no period to compare"))
-    assertEquals(MediaMatch.museum(rec(List("excavation" -> "Mycenae"), Some((1700L, 1750L))), mycenae, onMap),
+    assertEquals(MediaMatch.museum(rec(List("excavation" -> "Mycenae"), DeepTime.span(1700L, 1750L)), mycenae, onMap),
       Left("its dates do not overlap the place's"))
     assertEquals(MediaMatch.museum(rec(List("excavation" -> "Mycenae, Tomb 5")), mycenae, onMap),
       Left("its place is not on the map"), "whole value against whole name: never a substring")
 
   test("map rule: any location naming the place alone, made by max-year"):
-    val m = rec(List("location" -> "greece", "location" -> "mycenae"), Some((1880L, 1880L)))
+    val m = rec(List("location" -> "greece", "location" -> "mycenae"), DeepTime.span(1880L, 1880L))
     assertEquals(MediaMatch.map(m, mycenae, onMap, 1928), Right("location = mycenae; map of 1880–1880 CE"))
     assertEquals(MediaMatch.map(m, greece, onMap, 1928), Right("location = greece; map of 1880–1880 CE"))
-    assertEquals(MediaMatch.map(m.copy(period = Some((1950L, 1950L))), greece, onMap, 1928), Left("made after 1928"))
-    assertEquals(MediaMatch.map(rec(List("location" -> "thebes"), Some((1880L, 1880L))),
+    assertEquals(MediaMatch.map(m.copy(period = DeepTime.span(1950L, 1950L)), greece, onMap, 1928), Left("made after 1928"))
+    assertEquals(MediaMatch.map(rec(List("location" -> "thebes"), DeepTime.span(1880L, 1880L)),
       MediaMatch.PlaceInfo("thebes_egypt", "Thebes", Set("thebes"), None), onMap, 1928), Left("its place name is ambiguous on the map"))
 
   test("year ranges read as a person reads them; overlap is inclusive"):
-    assertEquals(MediaMatch.years((-200L, 100L)), "200 BCE–100 CE")
-    assert(MediaMatch.overlaps((-1200L, -1100L), (-1100L, -1000L)))
-    assert(!MediaMatch.overlaps((-1200L, -1101L), (-1100L, -1000L)))
+    def p(a: Long, b: Long) = DeepTime.span(a, b).get
+    assertEquals(MediaMatch.years(p(-200L, 100L)), "200 BCE–100 CE")
+    assert(MediaMatch.overlaps(p(-1200L, -1100L), p(-1100L, -1000L)))
+    assert(!MediaMatch.overlaps(p(-1200L, -1101L), p(-1100L, -1000L)))
+
+  test("deep time: two years in either order make a period; a year no Year holds makes none"):
+    assertEquals(DeepTime.span(-1100L, -1200L), DeepTime.span(-1200L, -1100L))
+    assertEquals(DeepTime.span(-1200L, -1100L).map(q => (q.start.value: Int, q.end.value: Int)), Some((-1200, -1100)))
+    assertEquals(DeepTime.span(5L, 5L).map(_.isPoint), Some(true))
+    assertEquals(DeepTime.span(-1L, Int.MaxValue.toLong + 1), None)
+    assertEquals(DeepTime.year(Int.MinValue.toLong - 1), None)

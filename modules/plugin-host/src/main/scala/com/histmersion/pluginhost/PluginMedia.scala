@@ -1,7 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.MediaConfig
-import com.histmersion.domain.{MediaLicence, MediaRecord, MediaRights as CoreRights}
+import com.histmersion.domain.{DeepTime, MediaLicence, MediaRecord, MediaRights as CoreRights}
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
@@ -43,7 +43,7 @@ object PluginMedia:
     MediaRecord(it.key.trim, it.title.trim, it.pageUrl.trim, it.imageUrl.map(_.trim).filter(_.nonEmpty),
       it.thumbUrl.map(_.trim).filter(_.nonEmpty), it.originalUrl.map(_.trim).filter(_.nonEmpty),
       Option(it.rights).getOrElse(Left("no rights statement")).flatMap(rights), it.geography,
-      it.period.map((a, b) => (a.min(b), a.max(b))), it.ids, it.withheld)
+      it.period.flatMap((a, b) => DeepTime.span(a, b)), it.ids, it.withheld)
 
   /** Pure: what a provider's licence statement means, read by the host as every built-in collection's
     * is ([[MediaLicence]]): the statement as an id or short name, or as a Creative Commons URL; the

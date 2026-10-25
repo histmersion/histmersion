@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.server.ConverterClient
+import io.scalaland.chimney.dsl.*
 
 import javax.sql.DataSource
 
@@ -21,10 +22,6 @@ import javax.sql.DataSource
 final class SourcePictures(ds: DataSource, cfg: => MediaConfig, http: HttpTransport, converter: ConverterClient):
 
   private def rules = cfg.illustrations.figureRules
-
-  /** Pure: a figure row as [[FigurePick]] weighs it. */
-  private def toFigure(f: MediaRepo.SourceFigure): FigurePick.Figure =
-    FigurePick.Figure(f.name, f.width, f.height)
 
   /** The thumbnail of `bytes`, or `None` (logged) when the sidecar makes none. */
   private def thumbnail(bytes: Array[Byte], name: String): Option[ConverterClient.Thumb] =
@@ -43,7 +40,7 @@ final class SourcePictures(ds: DataSource, cfg: => MediaConfig, http: HttpTransp
     val figs = MediaRepo.figures(ds, citekey)
     if figs.isEmpty then Left("no figures")
     else
-      val weighed = FigurePick.withRefs(figs.map(toFigure), MediaRepo.body(ds, citekey))
+      val weighed = FigurePick.withRefs(figs.map(SourcePictures.toFigure), MediaRepo.body(ds, citekey))
       FigurePick.choose(weighed, rules) match
         case None => Left("no figure fit to illustrate it")
         case Some(pick) =>
@@ -190,3 +187,8 @@ final class SourcePictures(ds: DataSource, cfg: => MediaConfig, http: HttpTransp
       case e: Exception =>
         scribe.warn(s"media: no illustration for $citekey: ${e.getMessage}")
         None
+
+object SourcePictures:
+  /** Pure: a figure row as [[FigurePick]] weighs it, before the text's links to it are counted. */
+  def toFigure(f: MediaRepo.SourceFigure): FigurePick.Figure =
+    f.into[FigurePick.Figure].enableDefaultValues.transform

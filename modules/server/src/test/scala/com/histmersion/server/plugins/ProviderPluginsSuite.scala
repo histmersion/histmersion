@@ -189,7 +189,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       Right(com.histmersion.plugin.MediaRights("CC0", credit = "Zq")), geography = List("find-spot" -> "Zqenai"),
       period = Some((-1300L, -1400L)), ids = List("pleiades" -> "1"))
     val r: MediaRecord = PluginMedia.record(it)
-    assertEquals((r.key, r.title, r.imageUrl, r.period), ("k1", "Bowl", Some("https://zq.example/k1.jpg"), Some((-1400L, -1300L))))
+    assertEquals((r.key, r.title, r.imageUrl, r.period), ("k1", "Bowl", Some("https://zq.example/k1.jpg"), com.histmersion.domain.DeepTime.span(-1400L, -1300L)))
     assertEquals(r.rights.map(_.licence.family), Right(MediaLicence.Cc0))
     assertEquals(r.ids, List("pleiades" -> "1"))
     assertEquals(PluginMedia.record(it.copy(rights = Left("not open access"))).rights, Left("not open access"))

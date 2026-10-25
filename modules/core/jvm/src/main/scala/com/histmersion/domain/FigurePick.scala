@@ -1,4 +1,4 @@
-package com.histmersion.api
+package com.histmersion.domain
 
 /** Which of a paper's own figures illustrates it on a hover card (#1446). Pure: the figures come
   * from the OCR conversion (the converter names them after their page, `fig-0004-03.png` = page 4,
