@@ -1,0 +1,12 @@
+{"kind":"status-change","citekey":"smith1987_tin","status":"superseded","edgeKind":null,"target":null,"evidence":"Doe shows the route is later.","quote":"the route is later"}
+{"kind":"edge","citekey":"doe2001_tin","status":null,"edgeKind":"challenges","target":"smith1987_tin","evidence":"It argues against.","quote":"we disagree"}
+{"kind":"edge","citekey":"doe2001_tin","status":null,"edgeKind":"refutes","target":"smith1987_tin","evidence":"It argues against.","quote":"we disagree"}
+{"kind":"edge","citekey":"doe2001_tin","status":null,"edgeKind":"updates","target":"smith1987_tin","evidence":"It argues against.","quote":"we disagree"}
+{"kind":"edge","citekey":"doe2001_tin","status":null,"edgeKind":"superseded_by","target":"smith1987_tin","evidence":"It argues against.","quote":"we disagree"}
+{"kind":"status-change","citekey":"smith1987_tin","status":null,"edgeKind":null,"target":null,"evidence":"","quote":null}
+{"kind":"edge","citekey":"smith1987_tin","status":null,"edgeKind":null,"target":null,"evidence":"","quote":null}
+{"kind":"goal-plan","citekey":"smith1987_tin","status":null,"edgeKind":null,"target":null,"evidence":"","quote":null}
+{"kind":"article-publish","citekey":"smith1987_tin","status":null,"edgeKind":null,"target":null,"evidence":"","quote":null}
+{"kind":"article-filter","citekey":"smith1987_tin","status":null,"edgeKind":null,"target":null,"evidence":"","quote":null}
+{"kind":"article-plan","citekey":"smith1987_tin","status":null,"edgeKind":null,"target":null,"evidence":"","quote":null}
+{"kind":"hint-effect","citekey":"smith1987_tin","status":null,"edgeKind":null,"target":null,"evidence":"","quote":null}
