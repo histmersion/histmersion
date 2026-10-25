@@ -1,9 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.config.*
+import com.histmersion.api.{CritiqueRef, Plural, WireEnum}
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.{Decoder, Encoder}
