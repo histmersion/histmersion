@@ -3,8 +3,8 @@ package com.histmersion.cli
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
+import com.histmersion.files.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

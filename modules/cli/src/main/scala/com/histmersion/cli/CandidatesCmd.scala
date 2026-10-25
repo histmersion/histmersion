@@ -4,7 +4,6 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 
 /** `histmersion candidates` (#3761): the new sources the deterministic search found for the research goals
   * — list them, sweep a goal's watches now, mark what was decided. A pure HTTP client of `AcquireApi`. */

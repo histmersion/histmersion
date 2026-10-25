@@ -2,7 +2,6 @@ package com.histmersion.cli
 
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 import com.histmersion.values.{EdgeKind, SourceStatus}
 
 /** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed

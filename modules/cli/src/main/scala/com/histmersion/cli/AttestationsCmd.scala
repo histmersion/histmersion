@@ -4,7 +4,6 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 
 object AttestationsCmd:
 

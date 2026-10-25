@@ -7893,7 +7893,7 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.PluginKit$Index$",
+      "type": "com.histmersion.files.PluginKit$Index$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -7901,7 +7901,7 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.PluginKit$KitManifest$",
+      "type": "com.histmersion.files.PluginKit$KitManifest$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy4"

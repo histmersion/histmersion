@@ -1,7 +1,8 @@
 package com.histmersion.server.plugins
 
 import com.histmersion.api.{PluginJar, PluginSet}
-import com.histmersion.domain.PluginKit
+import com.histmersion.files.*
+import com.histmersion.files.PluginKit
 import com.histmersion.plugin.Spi
 
 import java.net.URLClassLoader

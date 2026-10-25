@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.files
 
 import com.histmersion.values.PlaceKind
 

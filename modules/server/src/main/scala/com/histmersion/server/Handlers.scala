@@ -1,6 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.values.{BundleKind, Citekey, PlaceKind}
+import com.histmersion.files.*
 
 import com.histmersion.api.*
 import com.histmersion.config.*

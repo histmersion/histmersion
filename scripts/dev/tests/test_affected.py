@@ -23,12 +23,16 @@ class AffectedTest(unittest.TestCase):
 
     def test_api_shared_reaches_every_dependent(self):
         tests, db, _ = A.affected(["modules/api/shared/src/main/scala/X.scala"])
-        self.assertEqual(tests, ["apiJVM", "apiJS", "config", "coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "web", "server"])
+        self.assertEqual(tests, ["apiJVM", "apiJS", "config", "files", "coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "web", "server"])
         self.assertTrue(db)
 
-    def test_core_reaches_its_dependents_not_web(self):
+    def test_core_reaches_its_dependents_not_web_nor_cli(self):
         tests, _, _ = A.affected(["modules/core/shared/src/main/scala/X.scala"])
-        self.assertEqual(tests, ["apiJVM", "config", "coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "server"])
+        self.assertEqual(tests, ["apiJVM", "config", "coreJVM", "pluginHost", "pluginTestkit", "db", "server"])
+
+    def test_files_reach_core_and_cli(self):
+        tests, _, _ = A.affected(["modules/files/src/main/scala/X.scala"])
+        self.assertEqual(tests, ["apiJVM", "config", "files", "coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "server"])
 
     def test_api_js_reaches_web_not_server(self):
         # (and the lint suites, which read every module's main Scala)
@@ -76,7 +80,7 @@ class AffectedTest(unittest.TestCase):
             self.assertEqual(A.affected([p])[0], [], p)
 
     def test_files_the_suites_read(self):
-        self.assertEqual(A.affected(["skills/histmersion-dev/SKILL.md"])[0], ["coreJVM", "pluginHost", "pluginTestkit", "db", "cli", "server"])
+        self.assertEqual(A.affected(["skills/histmersion-dev/SKILL.md"])[0], ["coreJVM", "pluginHost", "pluginTestkit", "db", "server"])
         self.assertEqual(A.affected(["docs/writing-guide.md"])[0], ["server"])
         self.assertEqual(A.affected(["docs/user-guide/reference/cli.md"])[0][0], "coreJVM")
         self.assertEqual(A.affected(["modules/web/test/fixtures/basemap/terrain.pmtiles"])[0], ["server"])

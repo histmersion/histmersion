@@ -1,6 +1,7 @@
 package com.histmersion.server.plugins
 
-import com.histmersion.domain.PluginKit
+import com.histmersion.files.PluginKit
+import com.histmersion.files.*
 import com.histmersion.api.PluginSet
 
 import java.nio.charset.StandardCharsets.UTF_8

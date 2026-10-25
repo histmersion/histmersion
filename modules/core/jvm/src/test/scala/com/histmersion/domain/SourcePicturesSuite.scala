@@ -11,8 +11,7 @@ import com.histmersion.values.MediaRole
 
 /** The pure half of a source's picture (#1446): which figure illustrates a paper ([[FigurePick]]) —
   * on the fixture the converter produced from a generated journal paper (converter/tests/test_figures.py)
-  * and on hand-made cases — where a book's cover comes from ([[CoverChoice]], [[OpenLibrary]]), and
-  * the reports' arithmetic and Markdown. */
+  * and on hand-made cases — and the reports' arithmetic and Markdown. */
 class SourcePicturesSuite extends munit.FunSuite:
 
   private val rules = FigurePick.Rules()
@@ -69,25 +68,6 @@ class SourcePicturesSuite extends munit.FunSuite:
     assert(r("a.png")._2 < r("b.png")._2)
     val w = FigurePick.withRefs(List(fig("a.png", 1, 1), fig("c.png", 1, 1)), body)
     assertEquals(w.map(f => (f.name, f.refs, f.firstAt.isDefined)), List(("a.png", 2, true), ("c.png", 0, false)))
-
-  test("a book's cover: Calibre's own file first, then Open Library by ISBN, then by OCLC"):
-    val exists = Set("/lib/A/cover.jpg")
-    assertEquals(CoverChoice.choose(Some("/lib/A/cover.jpg"), exists, List("978-0-691-16838-8"), Some("123")),
-      Some(CoverChoice.Pick.Calibre("/lib/A/cover.jpg")))
-    assertEquals(CoverChoice.choose(Some("/lib/B/cover.jpg"), exists, List("bad", "978-0-691-16838-8"), Some("123")),
-      Some(CoverChoice.Pick.OpenLibrary("isbn", "9780691168388")), "the file is gone: the first usable ISBN")
-    assertEquals(CoverChoice.choose(None, exists, Nil, Some("(OCoLC)00012345")), Some(CoverChoice.Pick.OpenLibrary("oclc", "12345")))
-    assertEquals(CoverChoice.choose(None, exists, List("12"), None), None)
-
-  test("Open Library: identifiers normalised, URLs as the API documents them"):
-    assertEquals(OpenLibrary.isbn("0-306-40615-x"), Some("030640615X"))
-    assertEquals(OpenLibrary.isbn("97803064061"), None)
-    assertEquals(OpenLibrary.oclc("ocm00012345"), Some("12345"))
-    assertEquals(OpenLibrary.key(Some("x"), Some("ocm9")), Some("oclc" -> "9"))
-    assertEquals(OpenLibrary.coverUrl("https://covers.openlibrary.org/", "isbn", "9780691168388", "l"),
-      "https://covers.openlibrary.org/b/isbn/9780691168388-L.jpg?default=false")
-    assertEquals(OpenLibrary.pageUrl("https://openlibrary.org", "isbn", "9780691168388"),
-      "https://openlibrary.org/isbn/9780691168388")
 
   test("reports: a job's batches add up; the covers report in Markdown"):
     val a = MediaImportReport(MediaProvider.Commons, dryRun = false, targets = 50, files = 10, stored = 4,

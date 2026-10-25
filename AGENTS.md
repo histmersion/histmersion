@@ -19,12 +19,15 @@ values ── the newtypes every layer speaks of: Citekey, Year, Period, Doi, Wi
 api   ── the CONTRACT on the wire (JVM + JS): wire records, Tapir endpoint defs, circe codecs + schemas,
          Markdown, and the helpers they need.   NO database code, NO side effects.   depends on values ONLY
 config ── AppConfig and its readers (sconfig, Kindlings), reference.conf.   JVM only.   depends on values ONLY
+files ── the local files client and server exchange or keep (package `files`): the `.hmx` bundle's tar and
+         canonical JSON, the merge resolution file, the article note, the plugin set, a directory's size.
+         JVM only (snakeyaml).                                     depends on api ONLY
 core  ── the DOMAIN (package `domain`): the logic server and db run on, frontmatter, export. JVM only.
-         NO database code, NO side effects.                       depends on values, api, config
+         NO database code, NO side effects.                       depends on values, api, config, files
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on config, core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults)
          (and through them on values, api and config)
-cli   ── a PURE HTTP CLIENT of the server.         depends on config and core (api through core) — never db
+cli   ── a PURE HTTP CLIENT of the server.         depends on api, config and files — never core, never db
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
 plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
 plugin-host ── the host side of the SPI without server or DB: discovery, config, registration, the
@@ -67,7 +70,7 @@ credentials on the host. Every CLI command — reads and writes both — goes ov
 client derived from the same Tapir endpoint the server interprets. If a command seems to need the
 database, it needs a new endpoint instead.
 
-If `api`, `config` or `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a
+If `api`, `config`, `files` or `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a
 `println` in any of them; the compiler keeps `api` free of `domain` and `config`, and `config` free of
 `domain` and `api` (the server converts a config record the wire shows, `server/ConfigViews`). The domain
 still works on api's wire records and takes config records as its settings (recorded, temporary edges);

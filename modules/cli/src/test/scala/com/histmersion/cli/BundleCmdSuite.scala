@@ -1,8 +1,8 @@
 package com.histmersion.cli
 
 import com.histmersion.api.*
+import com.histmersion.files.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 import com.monovore.decline.Command
 import java.nio.file.Files
 import java.util.UUID

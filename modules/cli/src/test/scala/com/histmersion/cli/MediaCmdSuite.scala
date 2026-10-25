@@ -2,7 +2,6 @@ package com.histmersion.cli
 
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 import com.monovore.decline.Command
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.syntax.*

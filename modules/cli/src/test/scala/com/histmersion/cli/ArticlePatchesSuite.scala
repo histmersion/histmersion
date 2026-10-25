@@ -2,7 +2,6 @@ package com.histmersion.cli
 
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 
 /** `histmersion article patch` flag → [[ArticlePatch]]. Pure: the semantics of "only what you pass
   * changes" is asserted without a server. */

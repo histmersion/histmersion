@@ -3,7 +3,6 @@ package com.histmersion.cli
 import com.monovore.decline.Command
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
 
 /** The formatting-lint commands parse (`article lint <slug> [--fix]`, `lint --source/--article/--file`,
   * `--strict` on the writes, `places rename`), and `lint --file` checks a note's BODY: its own

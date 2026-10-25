@@ -1,9 +1,7 @@
-package com.histmersion.domain
+package com.histmersion.files
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 import com.histmersion.values.SourceStatus
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] (plan §5.2 stream 2.7). The shapes asserted here are the

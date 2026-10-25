@@ -1,6 +1,7 @@
 package com.histmersion.server.media
 
 import com.histmersion.pluginhost.{HttpTransport, Polite}
+import com.histmersion.files.*
 
 import com.histmersion.api.*
 import com.histmersion.config.*

@@ -65,7 +65,7 @@ just test-db-down
 
 **Iterate with `just test-quick`, gate with `just test-it`.** `test-quick` asks
 `scripts/dev/affected.py` which modules the branch touched (committed, staged, unstaged, untracked)
-and tests them and their dependents (core → db, cli, web, server; db → server; plugin-host → testkit, server; plugin-api → vaults,
+and tests them and their dependents (files → core, cli; core → db, plugin-host, server; db → server; plugin-host → testkit, server; plugin-api → vaults,
 server); a change to build.sbt or project/ tests everything. `--explain` shows why:
 `python3 scripts/dev/affected.py --explain`. Pass a test DB port when :55432 is taken:
 `just test_db_port=55561 test-quick`.

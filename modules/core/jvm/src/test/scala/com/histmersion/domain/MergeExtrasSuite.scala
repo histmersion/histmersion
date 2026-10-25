@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.config.*
+import com.histmersion.files.*
 import com.histmersion.api.*
 import com.histmersion.config.given
 import com.histmersion.api.given
