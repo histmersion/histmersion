@@ -484,12 +484,108 @@ A JVM client compiled against api sees the moved vocabularies in package `com.hi
 ones: `com.histmersion.api.SourceStatus` is now `com.histmersion.values.SourceStatus`); the nested ones keep
 their api names through the exports. The JSON is the same.
 
+## Step 7, batch 3 as built (#3967, 2026-10-25)
+
+The CLI onto `api` + `config` first, as decided, then three areas: agents, sources, acquire — one commit
+each, every one compiling and passing the JVM suites of the modules it touched; `just test-it` passed once
+at the end.
+
+```
+values   JVM+JS   newtypes + the shared vocabularies (StepStatus joined them)          iron
+api      JVM+JS   com.histmersion.api (99 files, 21.6k lines)                          values, tapir-core, circe, kindlings
+config   JVM      com.histmersion.config                                               values
+files    JVM      com.histmersion.files: the local files (11 files, 1.2k lines)        api, snakeyaml
+core     JVM      com.histmersion.domain (49 files)                                    values, api, config (temporary), files
+cli      JVM                                                                           api, config, files
+```
+
+**The CLI off core: a `files` module.** The eleven domain types the CLI still took read and write the files
+a client and the server exchange or keep, over api's records — the `.hmx` bundle's container and canonical
+JSON (`BundleTar`, `BundleFormat`), the merge resolution file (`MergeResolutionsFile`), the article note
+(`ArticleNote`), the plugin set and relink kit (`PluginKit` with `Coordinates`, `Index`, `Installed`,
+`Origin`), a directory's size (`DirSize`), the gazetteer seed's file names (`PlaceSeed`) and a book cover's
+source (`CoverChoice` with the `OpenLibrary` id helpers, split out of `MediaProviders`). They went to a new
+JVM module, `files` (package `com.histmersion.files`, api + snakeyaml), not into api, which stays endpoints,
+wire records and codecs. core and cli both take it; cli depends on `api`, `config` and `files`, and its 29
+domain imports are gone (0 of 38 files import the domain; compiled with no domain on its class path, it
+finds every name). `BundleReader` stayed in the domain: it decodes `BundleEntities`, the merge area's
+records. `BundleFormatSuite` kept the container and canonical-line tests; its entity, reader and decision
+tests became core's `BundleEntitiesSuite`. `scripts/dev/affected.py` knows the module (a change in core no
+longer re-tests cli).
+
+| CLI binary (`dist/histmersion/bin/histmersion`) | before (`d7202475`) | after |
+|---|---|---|
+| size | 74 041 360 B | 73 826 608 B (−214 752 B) |
+| reflection entries · naming `api`/`config`/`domain`/`files` | 640 · 462/95/2/0 | 640 · 462/95/0/2 |
+
+The CLI's two domain entries (`PluginKit$Index$`, `PluginKit$KitManifest$`) were renamed to the new package;
+a tracing-agent run then added and dropped nothing.
+
+**The areas.**
+
+| area | what moved | to | edge left |
+|---|---|---|---|
+| agents | `CompareRuns` got its own records: the recorded run (`Run`, `RunHead`, `Step`, `Tokens`, `ModelChoice`) and the comparison (`Comparison`, `RunSide`, `StepSide`, `StepRow`, `EnrichSide`, `ReviewSide`, `ReviewerSide`, `KindCount`, `MajorOverlap`); `StepStatus` to values (exported from `Agents` as before) | domain; server `agents/CompareRunsViews` converts `RunDetail` → `Run` and `Comparison` → `RunCompare.Comparison` with Chimney (`CompareRunsViewsSuite`: the conversion, the wire comparison, its Markdown) | none in `CompareRuns` itself; it still reads the checkpoints of `EnrichSource` and `ReviewArticle`, whose records hold api types (`FindingInput`, `Period`) |
+| sources | `Frontmatter`, `Export`, `SafePath` — the source note of the Markdown mirror, the source-side twins of `ArticleNote` | files (core no longer takes snakeyaml) | the enrichment patch records: `EnrichSource` (10 names: `SourcePatch`, `FindingInput`, `MetadataPatch`, …), `AgentProposals` (4) |
+| acquire | `AcquireParse` (the upstream JSON parsers) with `OaAccess`, `EuropePmcHit`, `PmcRecord`, `PmcObject` and its two suites — the pure half of the acquisition client, which `WorkLookup` already called | plugin-host (its tests take core's test class path for the captured fixtures) | `WorkRef` in `BrowserDownload`, `Scheduling`, `PlanGoal`, `EnrichSource` |
+
+Where the domain needed a record of its own (agents) the split followed rule 3: the domain's records hold
+only what the comparison reads (a step's sequence number, kind and prompt hash, and a run's other
+parameters are left out), and the wire derives a field the domain is given (`modelFor`, from the run's
+`params`). They keep the wire's plain `String`/`Long` fields: adopting newtypes there is the same per-area
+step batch 1 left for later. The other two areas needed no new record — what sat in the domain was file
+format and acquisition-client code, which went to the modules that hold those.
+
+Not started: merge (`MergePlanner` 40 names, `BundleEntities` 27, `MergeFold` 14), managers
+(`ManagerPolicy` 15, `WatchSchedules` 5, `HintProposals` 4), articles (`ReviewArticle` 13, `PlanArticles` 9,
+`CompileArticle` 5, `FilterInference` 5 — and they lean on api's pure article helpers, `ArticleCoverage`,
+`Articles.appendUnderSection`, which the web page uses too, so a domain copy would duplicate them), findings
+and queue (no domain file of their own; `PassageFinder` 4, `AcquireMatch` 2). Each is a set of records
+with a Chimney transformer in the server, as agents was.
+
+**Measured.** Domain → api the way batch 2 counted it (files importing api; compiling core with every api
+import removed: files with errors / distinct names not found), and the CLI → domain edge the same way:
+
+| after | domain files · importing api · by wildcard | api imports removed: files / names | cli files importing domain | domain imports removed: files / names |
+|---|---|---|---|---|
+| batch 2 (`d7202475`) | 60 · 55 · 49 | 44 / 176 | 29 of 38 | 7 / 15 |
+| files module (`e347d8f6`) | 53 · 49 · 43 | 39 / 166 | 0 of 38 | 0 / 0 |
+| agents (`24d56253`) | 53 · 48 · 42 | 39 / 154 | 0 of 38 | 0 / 0 |
+| sources (`1208d19a`) | 50 · 45 · 39 | 37 / 150 | 0 of 38 | 0 / 0 |
+| acquire (`86aa37eb`) | 49 · 44 · 38 | 36 / 146 | 0 of 38 | 0 / 0 |
+
+(The CLI's "names" now count every not-found name, lower-case knock-on errors included; batch 2's 11 types
+are the same measurement read as types only. `CompareRuns` still shows among the files with errors when api
+is removed: its fields typed through `EnrichSource`'s records fail with them.)
+
+**Unchanged wire, proved.** Batch 2's scratch suite (every endpoint's `showDetail`, JSON Schema and tapir
+`Schema.show` of every input and output, the REST index, the MCP `tools/list` of a server on a test
+database) dumped 2 674 117 bytes before the batch and after each of the four commits, byte-identical every
+time. `test-it`: 4 045 tests, none failed.
+
+**Filter.** Not decided: no area of this batch moved or needed it.
+
+**Native-image metadata.** A tracing-agent run of the JVM server and CLI on an empty test database (scratch
+HOME, data, cache and config, a non-default port; REST GETs of every endpoint, the page and its assets, MCP
+tools, `agent compare`, the CLI's reads, the Markdown export, a bundle export, verify and merge template)
+changed neither file: no moved class is reached by reflection except the two renamed `PluginKit` companions.
+Server 1 143 reflection entries before and after. `app.bundle.js`: 15 874 707 → 15 816 520 B raw,
+1 789 105 → 1 784 337 B gzip −6 (`web/fullLinkJS` of `d7202475` and of this branch; the page calls no moved
+code, so the difference is not attributed). The bundle built, `smoke.sh` and `--self-check` pass.
+
+**Plugin authors and API clients.** `plugin-api` did not change, nor did the testkit contract
+(`plugin-testkit-api.txt`). The install's Maven repository ships `histmersion-files` beside `-core`, which the
+testkit's POM now reaches through plugin-host → core. `com.histmersion.domain.AcquireParse` is now
+`com.histmersion.pluginhost.AcquireParse` (in `histmersion-plugin-host`, which the testkit depends on); the
+moved file types are in `com.histmersion.files`. A JVM client compiled against api sees `StepStatus` in
+`com.histmersion.values` (still `Agents.StepStatus` through the export). The JSON is the same.
+
 ## Unresolved
 
 - Whether `Filter` (used by web 28 times, db 52, server 55) is a wire record or a domain value with an
   SQL rendering decides whether it lands in `api` or `domain`; db's `Filter → SQL` code suggests the
   latter, with a wire `FilterView`. Steps 4–6 left it in `api`, with everything the wire needs; step 7's
-  first two batches did not need to decide it.
+  first three batches did not need to decide it.
 
 **Resolved.**
 
