@@ -24,6 +24,9 @@ object Layout:
   val mergeWindowMaxWidth: Double  = 1500.0
   val mergeWindowMaxHeight: Double = 1000.0
   val windowCascadeOffset: Int = 28
+  /** The least room under the map options' button for the panel to open there on a tablet; with less,
+    * and more above, it opens over the button. */
+  val mapOptionsMinBelow: Px = Px(280)
   val windowCascadeSlots: Int  = 5
   val pickerMax: Int       = 15
   val fitMaxZoom: Int      = 9

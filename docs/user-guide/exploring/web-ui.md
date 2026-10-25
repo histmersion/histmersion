@@ -234,3 +234,26 @@ opens the list of every shape and icon.
   <figcaption>On a phone: the map first, the controls behind the buttons of the top bar, the list as a
   sheet you pull up.</figcaption>
 </figure>
+
+## On a tablet or a small laptop
+
+From 761 up to 1366 pixels wide (a tablet held either way, a 1280 × 800 or 1366 × 768 laptop) the page
+uses the same map-first layout as a phone, sized for the larger screen. With the side column and the
+bars above it, the map used to get under a tenth of a tablet held upright; now it keeps three quarters
+or more of the screen.
+
+- The **top bar** holds the ☰ filters, the search field, the time span and the layers button, as on a
+  phone. The filters come in from the left and the map's layers, the base map, its options and the
+  tools come in from the right. Escape, the ✕, a tap on the dimmed map or a swipe back closes them.
+  With the map options open, Escape closes only them.
+- The **timeline** is open under the bar, its controls on one line. Its button in the bar (the time
+  span) folds it away to give the map more room, and opens it again.
+- The **list** is a sheet at the lower right. Its handle pulls it up to half the height, then all of
+  it, then back down. The map beside it stays in view.
+- **Windows** float over the map, as on a desktop: they can be moved, resized and minimised.
+- The map's **legend** and its **notice** are small buttons at its bottom corners, as on a phone.
+- With a mouse or a trackpad, hovering over a source or a place shows its card, as on a desktop.
+
+Wider than 1366 pixels, the page has the desktop layout described above. The width where the tablet
+layout ends is `ui.tablet-max-width-px` in the [configuration](../reference/configuration.md). Set it
+to `0` to have the desktop layout at every width above a phone's.

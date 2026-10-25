@@ -41,7 +41,7 @@ object MapFold:
     })
 
   /** The map's size as the overlays read it (`--map-w`/`--map-h`): an opened one fits inside the map, whatever
-    * the layout around it (a tablet's map is a small part of the page). */
+    * the layout around it (a short desktop window's map is a small part of the page). */
   def followSize(surface: MapSurface): Unit =
     def write(): Unit =
       val (w, h) = surface.size

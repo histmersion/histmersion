@@ -209,6 +209,7 @@ final case class UiSettings(
     time: UiTimeSettings,
     narrowMaxWidthPx: Int,
     narrowMaxHeightPx: Int,
+    tabletMaxWidthPx: Int,
     events: UiEventsSettings,
     countersPollSeconds: Int = 30,
     jobPollMs: Int = 1000,
