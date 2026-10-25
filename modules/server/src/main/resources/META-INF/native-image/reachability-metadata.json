@@ -7660,6 +7660,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy48"
+        },
+        {
+          "name": "derived$ConfigReader$lzy52"
         }
       ]
     },
@@ -7689,6 +7692,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy22"
+        },
+        {
+          "name": "derived$ConfigReader$lzy26"
         }
       ]
     },
@@ -7716,6 +7722,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy28"
+        },
+        {
+          "name": "derived$ConfigReader$lzy32"
         }
       ]
     },
@@ -7727,6 +7736,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy23"
+        },
+        {
+          "name": "derived$ConfigReader$lzy27"
         }
       ]
     },
@@ -7735,6 +7747,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy29"
+        },
+        {
+          "name": "derived$ConfigReader$lzy33"
         }
       ]
     },
@@ -7746,6 +7761,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy27"
+        },
+        {
+          "name": "derived$ConfigReader$lzy31"
         }
       ]
     },
@@ -7754,6 +7772,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy26"
+        },
+        {
+          "name": "derived$ConfigReader$lzy30"
         }
       ]
     },
@@ -7765,6 +7786,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy25"
+        },
+        {
+          "name": "derived$ConfigReader$lzy29"
         }
       ]
     },
@@ -7776,6 +7800,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy24"
+        },
+        {
+          "name": "derived$ConfigReader$lzy28"
         }
       ]
     },
@@ -7851,6 +7878,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy16"
+        },
+        {
+          "name": "derived$ConfigReader$lzy20"
         }
       ]
     },
@@ -7862,6 +7892,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy17"
+        },
+        {
+          "name": "derived$ConfigReader$lzy21"
         }
       ]
     },
@@ -7925,6 +7958,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy30"
+        },
+        {
+          "name": "derived$ConfigReader$lzy34"
         }
       ]
     },
@@ -7998,6 +8034,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy41"
+        },
+        {
+          "name": "derived$ConfigReader$lzy45"
         }
       ]
     },
@@ -8030,6 +8069,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy42"
+        },
+        {
+          "name": "derived$ConfigReader$lzy46"
         }
       ]
     },
@@ -8062,6 +8104,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy46"
+        },
+        {
+          "name": "derived$ConfigReader$lzy50"
         }
       ]
     },
@@ -8094,6 +8139,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy45"
+        },
+        {
+          "name": "derived$ConfigReader$lzy49"
         }
       ]
     },
@@ -8126,6 +8174,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy43"
+        },
+        {
+          "name": "derived$ConfigReader$lzy47"
         }
       ]
     },
@@ -8158,6 +8209,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy44"
+        },
+        {
+          "name": "derived$ConfigReader$lzy48"
         }
       ]
     },
@@ -8184,6 +8238,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy21"
+        },
+        {
+          "name": "derived$ConfigReader$lzy25"
         }
       ]
     },
@@ -8251,6 +8308,9 @@
           "name": "derived$ConfigReader$lzy15"
         },
         {
+          "name": "derived$ConfigReader$lzy19"
+        },
+        {
           "name": "derived$ConfigReader$lzy9"
         }
       ]
@@ -8286,6 +8346,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy37"
+        },
+        {
+          "name": "derived$ConfigReader$lzy41"
         }
       ]
     },
@@ -8315,6 +8378,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy35"
+        },
+        {
+          "name": "derived$ConfigReader$lzy39"
         }
       ]
     },
@@ -8344,6 +8410,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy33"
+        },
+        {
+          "name": "derived$ConfigReader$lzy37"
         }
       ]
     },
@@ -8376,6 +8445,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy39"
+        },
+        {
+          "name": "derived$ConfigReader$lzy43"
         }
       ]
     },
@@ -8402,6 +8474,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy36"
+        },
+        {
+          "name": "derived$ConfigReader$lzy40"
         }
       ]
     },
@@ -8434,6 +8509,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy40"
+        },
+        {
+          "name": "derived$ConfigReader$lzy44"
         }
       ]
     },
@@ -8457,6 +8535,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy38"
+        },
+        {
+          "name": "derived$ConfigReader$lzy42"
         }
       ]
     },
@@ -8486,6 +8567,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy34"
+        },
+        {
+          "name": "derived$ConfigReader$lzy38"
         }
       ]
     },
@@ -8562,6 +8646,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy20"
+        },
+        {
+          "name": "derived$ConfigReader$lzy24"
         }
       ]
     },
@@ -8591,6 +8678,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy32"
+        },
+        {
+          "name": "derived$ConfigReader$lzy36"
         }
       ]
     },
@@ -8608,6 +8698,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy19"
+        },
+        {
+          "name": "derived$ConfigReader$lzy23"
         }
       ]
     },
@@ -8637,6 +8730,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy18"
+        },
+        {
+          "name": "derived$ConfigReader$lzy22"
         }
       ]
     },
@@ -8665,6 +8761,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy14"
+        },
+        {
+          "name": "derived$ConfigReader$lzy18"
         },
         {
           "name": "derived$ConfigReader$lzy8"
@@ -8742,6 +8841,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy31"
+        },
+        {
+          "name": "derived$ConfigReader$lzy35"
         }
       ]
     },
@@ -8801,6 +8903,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy47"
+        },
+        {
+          "name": "derived$ConfigReader$lzy51"
         }
       ]
     },
@@ -8820,6 +8925,38 @@
         },
         {
           "name": "derived$ConfigReader$lzy6"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiDebounceSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy15"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiEventsSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy16"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy17"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiTimeSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy14"
         }
       ]
     },
@@ -10161,6 +10298,14 @@
     },
     {
       "type": "com.histmersion.server.AuthHandler"
+    },
+    {
+      "type": "com.histmersion.server.ConfigViews$",
+      "fields": [
+        {
+          "name": "given_Transformer_Path_String$lzy1"
+        }
+      ]
     },
     {
       "type": "com.histmersion.server.McpTools$",
@@ -12435,6 +12580,22 @@
       "fields": [
         {
           "name": "producerIndex"
+        }
+      ]
+    },
+    {
+      "type": "io.scalaland.chimney.dsl.TransformerDefinition",
+      "fields": [
+        {
+          "name": "given_ChimneySelector$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "io.scalaland.chimney.dsl.TransformerInto",
+      "fields": [
+        {
+          "name": "given_ChimneySelector$lzy1"
         }
       ]
     },
