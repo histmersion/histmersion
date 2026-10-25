@@ -1258,7 +1258,7 @@ a.chip:hover { border-color:var(--accent); }
 /* ── the About window ──────────────────────────────────────────────────────────────────────────── */
 .about-sections { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px 24px; }
 .about-title { font-size:13px; font-weight:650; margin:0 0 6px; color:var(--ink); }
-.about-rows { display:grid; grid-template-columns:auto 1fr; gap:3px 12px; margin:0; }
+.about-rows { display:grid; grid-template-columns:fit-content(45%) minmax(0, 1fr); gap:3px 12px; margin:0; }
 .about-rows dt { color:var(--muted); }
 .about-rows dd { margin:0; min-width:0; overflow-wrap:anywhere; }
 .about-detail { display:block; font-size:11.5px; }
