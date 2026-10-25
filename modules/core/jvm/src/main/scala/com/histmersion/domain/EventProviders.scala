@@ -1,8 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
+import com.histmersion.api.{BBox, CatalogRecord, EventTaxonomy, Historicity, TimeSpan, Years}
 import com.histmersion.config.*
-import com.histmersion.api.given
 import com.histmersion.config.given
 
 import io.circe.{ACursor, Json}

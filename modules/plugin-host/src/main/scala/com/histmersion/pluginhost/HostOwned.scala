@@ -9,7 +9,8 @@ trait HostOwned
   * a plugin's pictures, events or models would be taken for theirs. The server's built-in registries
   * define the same sets; a server suite fails when the two disagree. */
 object ReservedNames:
-  import com.histmersion.api.{Agents, CatalogProvider, MediaProvider}
+  import com.histmersion.api.{Agents, MediaProvider}
+  import com.histmersion.domain.CatalogProvider
 
   /** The built-in media imports (`media import <name>`) and their aliases, and every provider pictures
     * are stored under. */
