@@ -537,7 +537,7 @@ object PluginCmd:
       Opts.option[String]("sha256", "The SHA-256 the jar must have (refused otherwise)").orNone,
       Opts.options[String]("repo", "A Maven repository (a directory or a URL) to look in first, for the plugin and its dependencies; repeatable").orEmpty
     ).mapN { (arg, yes, rebuild, verify, unsigned, sha, repoArgs) => (c: Client) =>
-      val repos = repoArgs.traverse(r => PluginRepository.parse(r, Files.isDirectory(_)).map(_.url))
+      val repos = repoArgs.traverse(r => PluginRepository.parse(r, Files.isDirectory(_)).map(_.value))
         .left.map(CliError(_, exitCode = ExitCode.Usage))
       repos.flatMap(rs => local(c).map(_ -> rs)).flatMap { (ops, rs) =>
         ops.add(arg, AddOptions(yes, unsigned, verify, sha, rs)).flatMap { _ =>

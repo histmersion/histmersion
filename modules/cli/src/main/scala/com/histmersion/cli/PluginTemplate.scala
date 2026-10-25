@@ -1,5 +1,8 @@
 package com.histmersion.cli
 
+import io.github.iltotore.iron.*
+import io.github.iltotore.iron.constraint.string.Match
+
 import java.nio.file.Path
 
 /** The extension point a new plugin contributes to: its name on the command line, the suffix of the
@@ -18,40 +21,44 @@ object PluginKind:
 
 /** A plugin id: the settings key (`histmersion.plugins.<id>`) and the source of the project's names.
   * Stricter than the host's `[a-z0-9][a-z0-9-]*`: it must also make a Scala class name. */
-final case class PluginId private (value: String):
-  /** `my-mirror` → `MyMirror`. */
-  def typeName: String = value.split('-').map(_.capitalize).mkString
-  /** `my-mirror` → `mymirror`. */
-  def packageName: String = value.replace("-", "")
+type PluginId = PluginId.T
 
-object PluginId:
-  private val Rule = "[a-z][a-z0-9]*(-[a-z0-9]+)*"
+object PluginId extends RefinedType[String, Match["[a-z][a-z0-9]*(-[a-z0-9]+)*"]]:
   def parse(raw: String): Either[String, PluginId] =
-    Either.cond(raw.matches(Rule), PluginId(raw),
-      s"'$raw' is not a plugin id: lower-case letters and digits in words joined by single dashes, starting with a letter ($Rule)")
+    either(raw).left.map(_ => s"'$raw' is not a plugin id: lower-case letters and digits in words joined by single " +
+      "dashes, starting with a letter ([a-z][a-z0-9]*(-[a-z0-9]+)*)")
+
+  extension (id: PluginId)
+    /** `my-mirror` → `MyMirror`. */
+    def typeName: String = id.value.split('-').map(_.capitalize).mkString
+    /** `my-mirror` → `mymirror`. */
+    def packageName: String = id.value.replace("-", "")
 
 /** A Scala package name the project's sources are written in. */
-final case class ScalaPackage private (value: String):
-  def path: String = value.replace('.', '/')
+type ScalaPackage = ScalaPackage.T
 
-object ScalaPackage:
-  private val Rule = "[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*"
+object ScalaPackage extends RefinedType[String, Match["[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*"]]:
   def parse(raw: String): Either[String, ScalaPackage] =
-    Either.cond(raw.matches(Rule), ScalaPackage(raw), s"'$raw' is not a package name ($Rule)")
+    either(raw).left.map(_ => s"'$raw' is not a package name ([a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*)")
+
+  extension (pkg: ScalaPackage)
+    /** `org.example` → `org/example`. */
+    def path: String = pkg.value.replace('.', '/')
 
 /** A Maven repository named by URL: an `https://`, `http://` or `file:` URL, or a local directory as its
   * `file:` URL. What `plugin add --repo` looks in, and what `plugin new --repo` writes into a project. */
-final case class PluginRepository private (url: String)
+type PluginRepository = PluginRepository.T
 
-object PluginRepository:
+object PluginRepository extends RefinedType[String, Match["(https?|file):.+"]]:
   /** An `https://`, `http://` or `file:` URL as given, or a local directory as its `file:` URL; a
     * directory must exist. */
   def parse(raw: String, isDirectory: Path => Boolean): Either[String, PluginRepository] =
     val trimmed = raw.trim
-    if trimmed.matches("(https?|file):.+") then Right(PluginRepository(trimmed))
-    else
-      val dir = Path.of(trimmed).toAbsolutePath.normalize
-      Either.cond(isDirectory(dir), PluginRepository(dir.toUri.toString), s"no such directory: $dir")
+    option(trimmed) match
+      case Some(url) => Right(url)
+      case None =>
+        val dir = Path.of(trimmed).toAbsolutePath.normalize
+        if isDirectory(dir) then either(dir.toUri.toString) else Left(s"no such directory: $dir")
 
 /** Where a new plugin project resolves the plugin API, the platform and the testkit from. */
 enum TemplateRepository:
@@ -64,7 +71,7 @@ enum TemplateRepository:
   /** As `//> using repository` takes it. */
   def directive: String = this match
     case MavenLocal   => "m2Local"
-    case Remote(repo) => repo.url
+    case Remote(repo) => repo.value
 
 /** Histmersion's own artifacts in that repository, at the version of the install this CLI belongs to:
   * the plugin API (a jar, its sources, its POM) and the plugin platform (a POM whose dependencies are
