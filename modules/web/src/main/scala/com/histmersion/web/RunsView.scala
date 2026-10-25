@@ -55,6 +55,19 @@ object RunsView:
       (n.manager.isEmpty || r.managerId.exists(n.manager.contains)))
 
   /** The query the window sends, from its filter fields. Pure. */
+  /** What each pipeline does; a tooltip on its filter chip. */
+  def pipelineMeaning(pipeline: String): Option[String] = pipeline match
+    case "plan-goal"         => Some("Plans a research goal: sub-goals, search queries, works to read (a goal-plan approval).")
+    case "propose-articles"  => Some("Proposes which articles a goal needs (an article-plan approval).")
+    case "compile-article"   => Some("Writes an article draft from the corpus (an article-publish approval).")
+    case "review-article"    => Some("Reviews an article: rules, cold-reader and skeptic reviewers, then a fixer.")
+    case "enrich-source"     => Some("Reads a newly ingested source: summary, findings, dates, places, status.")
+    case "acquisition-sweep" => Some("Searches for new literature for a goal; ingests legal open access, queues the rest.")
+    case "currency-check"    => Some("Checks a goal's sources for retractions and newer critiques.")
+    case "infer-filter"      => Some("Works out an article's coverage filter (an article-filter approval).")
+    case "hint-effect"       => Some("Turns your hint to a manager into a proposed action (a hint-effect approval).")
+    case _                   => None
+
   /** Who started a run, for a person: `ingest` is the enrichment an ingest started itself, before the
     * enrich manager took that over (16 Oct 2026); since then those runs are the manager's. */
   def originLabel(origin: String): String = origin match
@@ -164,7 +177,7 @@ object RunsView:
         button(typ := "button", cls := "btn", title := "each role's model chain, the allowances, the provider check",
           "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models)))),
       div(cls := "toolbar list-filters",
-        ListFilterBar.chips("pipeline", facet("pipeline"), UiState.runPipelines),
+        ListFilterBar.chips("pipeline", facet("pipeline"), UiState.runPipelines, hint = pipelineMeaning),
         ListFilterBar.chips("origin", facet("origin"), UiState.runOrigins, originLabel),
         div(cls := "btn-group",
           ListFilterBar.picker("manager", facet("manager"), UiState.runManager),
