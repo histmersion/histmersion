@@ -287,8 +287,91 @@ recorded; 11 entries of map-style types deleted long ago were dropped) and a tra
 server and CLI added only what this branch's new code reached; after steps 5 and 6 a second run left
 both files unchanged.
 
+## Step 7, batch 1 as built (#3967, 2026-10-25)
+
+The config → api edge, then three areas: media, events, places — one commit each, each compiling and
+passing the JVM suites of the modules it touched.
+
+```
+values   JVM+JS   Citekey, Year, Period, Doi, WikidataId, LatLon            iron
+api      JVM+JS   com.histmersion.api (96 files, 22.1k lines)                values, tapir-core, circe, kindlings
+config   JVM      com.histmersion.config (6 files)                           values
+core     JVM      com.histmersion.domain (62 files)                          values, api, config (temporary)
+server   JVM      + Chimney (layer conversions at its edges)
+```
+
+**config → api, removed.** `config` depends on `values` alone; the server converts what it shows.
+
+- The `ui` block is read into config-side records (`UiSettings`, `UiTimeSettings`, `UiDebounceSettings`,
+  `UiEventsSettings`), which leave out the four fields the server fills in (`writeKeyRequired`,
+  `agentsEnabled`, `plugins`, `mapLanguage`). `server/ConfigViews` derives the wire `UiConfig` from them with
+  Chimney, and the `/api/about` config-file line (`ConfigFileInfo`) from `UserConfigFile`. This is where the
+  two must differ; the wire records keep their names, so the OpenAPI and MCP schemas did not change.
+- `SeaFloorSource`, `ScheduledRefresh` (with `RefreshIntervalMinutes`) and the reload graph (`HotPlan`,
+  `HotNode`) were never on the wire: they moved to config. The scheduled-read decision they fed moved to
+  the domain (`PlanReadSchedule`).
+- What config computed into api types — approval modes and checked kinds, provider blocks, roles, plan
+  logins, media roles, figure rules, an event box, tolerance and match weights — are domain extensions on
+  the config records, as step 4 did for config → domain. One was renamed: the illustrations' `rules` is
+  `figureRules`, because top-level extensions sharing a name must sit in one file.
+- Suites that tested api code from config (`Usage.budgeted`, `ConfigFileInfo.describe`, `ReloadMarkdown`)
+  moved to api; config's suites need no api fixture, so config dropped its `test->test` on api.
+- Chimney (`io.scalaland::chimney` 2.1.0) is a server dependency now (THIRD-PARTY.md: Apache-2.0). The
+  server needs no `chimney-iron` yet: domain and api share `values`' newtypes, so no newtype → newtype
+  conversion arises; the native-image tasks still read `Compile / fullClasspath`.
+
+**The areas.** The rule held throughout: a record is split only where domain and wire must differ, and
+none of the three needed it. What did move is domain logic that sat in api because step 4's closure
+took whole files — objects with no codec, no endpoint and no use in the web page:
+
+| area | moved api → domain | values adopted | Chimney in server | edge left (what the domain still takes from api) |
+|---|---|---|---|---|
+| media | `FigurePick`, `MediaRoles` | `Period`: a collection record's dates and the place it is matched to (`MediaRecord.period`, `MediaMatch.PlaceInfo.period`) | stored figure row → `FigurePick.Figure` | `MediaRole` (the role vocabulary the wire and the store speak), `Geocode.key` (the place-name key, the twin of the SQL function both sides compare by) |
+| events | `CatalogProvider`, `CatalogDating`, `StoredEvent`, `CatalogMerge` (`EventCatalogue.scala`), `EventMatcher` | none — `StoredEvent`'s coordinates and Wikidata id are read back from stored rows, and checking them on read (`LatLon`, `WikidataId`) would change which stored events a merge matches | none needed | `CatalogRecord` (a wire record db also stores as JSON), `TimeSpan` and `Years` (the four-point span and its year arithmetic), `EventTaxonomy`, `Historicity`, `BBox`, the wire records the matcher returns (`EventLinkCandidate`, `AttestationPut`), `Plural` |
+| places | `PlaceReview` (the place-kind lint) | `Period`: a linked item's dates and a reclassified polity's period; db writes it with `PeriodSql.literalOf` | none needed | `PlaceKind` (the kind vocabulary), `YearFmt`, `Geocode.key` |
+
+`DeepTime` (domain) turns the store's `Long` years into `Year` and `Period`: two years in either order make a
+period, a year outside `Int` makes none. Every period these areas built was already ordered, and no real
+year is outside `Int`, so no record and no match changed.
+
+**Measured.** Domain files importing api: 55 of 55 before the batch, 59 of 62 after (the three new ones
+take nothing from it); by wildcard 55 → 51 — the moved and narrowed files name what they take. api: 98 →
+96 files, 22 753 → 22 099 lines; config: 10 imports of api → 0. Compiling core with every api import
+removed lists what the domain still takes, by name: 44 files and 193 names before the areas (after the
+config commit), 47 files and 196 names after. The count did not fall, and is not meant to by moves of this
+kind: the logic that left api still speaks api's records, so it now shows on the domain's side of the
+edge — what shrank is api, which no longer carries domain logic the wire never uses. Native-image
+metadata: no entry named a moved class (none is reached by reflection); a tracing-agent run of the server
+and the CLI on an empty test database added the config-side `ui` records' companions (their derived
+readers are lazy vals), new lazy reader fields of the config companions whose files changed,
+`ConfigViews` and the two Chimney DSL classes its transformers build — server 1 151 → 1 158 reflection
+entries, CLI 651 → 655.
+`app.bundle.js`: 15 848 224 → 15 788 593 B raw, 1 789 378 → 1 785 110 B gzip −6 (not attributed by source
+map; the moved objects are the only api code that left). The bundle built, `smoke.sh` and
+`--self-check` pass.
+
+**What remains, and what is next.** The vocabularies both sides speak (`EdgeKind`, `SourceStatus`,
+`GoalStatus`, `PlaceKind`, `MediaRole`, `Historicity`, `LocationPrecision`, …) are where most of the
+remaining edge sits; each carries its `WireEnum` codecs on its companion in api. The target puts them in
+`values`, with the instances moving to api as orphan givens, so the next batch has to decide whether a
+vocabulary that is not a newtype belongs in `values`. The shared text helpers (`Plural`, `LatinFold`,
+`YearFmt`/`Years`, `Geocode.key`) are the other recurring edge. Of the movable api definitions left,
+most are used by the CLI (`Bundle`, `SourceDelete`, `Rename`, `PlaceEdits`); moving them to the domain
+would tie the CLI to core harder, against step 7's aim of a CLI on `api` + `config`, so they wait for
+their areas (merge, sources).
+
+**Filter.** Not decided: no area of this batch moved `Filter`. Events still take `BBox` from api's
+`Filter.scala`, a value that could equally live in `values`.
+
+**Plugin authors.** `plugin-api` did not change. The testkit contract (`plugin-testkit-api.txt`) did not
+change.
+
 ## Unresolved
 
 - Whether `Filter` (used by web 28 times, db 52, server 55) is a wire record or a domain value with an
   SQL rendering decides whether it lands in `api` or `domain`; db's `Filter → SQL` code suggests the
-  latter, with a wire `FilterView`. Steps 4–6 left it in `api`, with everything the wire needs.
+  latter, with a wire `FilterView`. Steps 4–6 left it in `api`, with everything the wire needs; step 7's
+  first batch did not need to decide it.
+- Whether the vocabularies domain and wire share (`EdgeKind`, `SourceStatus`, `GoalStatus`, `PlaceKind`,
+  `MediaRole`, …) — enums and string sets, not newtypes — move to `values` with their codecs in api, or
+  stay in api as a recorded edge.
