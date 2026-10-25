@@ -60,7 +60,7 @@ object JobsView:
 
   /** What kind of work a job is, for a person. */
   def kindLabel(kind: String): String = kind match
-    case Ingest.KindIngest => "OCR of an upload"
+    case Ingest.KindIngest => "ingest (fetch or upload, then OCR)"
     case Ingest.KindReocr  => "OCR again"
     case InitPlan.JobKind  => "reference data import"
     case MergeApplyJob.JobKind => "merge apply"
