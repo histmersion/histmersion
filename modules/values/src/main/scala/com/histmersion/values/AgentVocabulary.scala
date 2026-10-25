@@ -98,6 +98,14 @@ object RunState:
     case (WaitingApproval, Queued) | (WaitingApproval, Cancelled)                  => Some(to)
     case _                                                                          => None
 
+/** How one attempt of a run's step ended, stored in `agent_steps.status`. */
+enum StepStatus(val wire: String):
+  case Done   extends StepStatus("done")
+  case Failed extends StepStatus("failed")
+
+object StepStatus:
+  def parse(s: String): Option[StepStatus] = values.find(_.wire == s)
+
 /** The pipelines the engine can run. Each one is Scala code (steps, gates, validation) plus one
   * prompt per LLM step. */
 enum Pipeline(val wire: String, val version: Int, val targetKind: TargetKind, val roles: List[AgentRole],

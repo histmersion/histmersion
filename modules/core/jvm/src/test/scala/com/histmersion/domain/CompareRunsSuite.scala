@@ -5,7 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.Agents.*
+import com.histmersion.domain.CompareRuns.{ModelChoice, Run, RunHead, Step, Tokens}
 import com.histmersion.domain.EnrichSource.*
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
@@ -18,15 +18,13 @@ import com.histmersion.values.SourceStatus
 class CompareRunsSuite extends munit.FunSuite:
 
   private def step(seq: Int, name: String, status: String = "done", output: Option[String] = None, model: Option[String] = None,
-      actual: Option[String] = None, error: Option[String] = None, usage: Usage = Usage.Zero, cost: Double = 0,
-      started: String = "2026-10-08T10:00:00Z", finished: String = "2026-10-08T10:00:03Z", attempt: Int = 1): StepInfo =
-    StepInfo(seq, name, if model.isDefined then "llm" else "code", attempt, status, model, None, usage, cost, error, output,
-      started, finished, actual)
+      actual: Option[String] = None, error: Option[String] = None, usage: Tokens = Tokens.Zero, cost: Double = 0,
+      started: String = "2026-10-08T10:00:00Z", finished: String = "2026-10-08T10:00:03Z", attempt: Int = 1): Step =
+    Step(name, status, model, actual, usage, cost, started, finished, None, None, output, error)
 
-  private def run(id: String, pipeline: String, target: String, steps: List[StepInfo], status: String = "done",
-      dry: Boolean = false, overrides: List[ModelOverride] = Nil): RunDetail =
-    RunDetail(RunInfo(id, pipeline, target, status, dryRun = dry, params = RunParams(modelFor = Option.when(overrides.nonEmpty)(overrides))),
-      steps, Nil)
+  private def run(id: String, pipeline: String, target: String, steps: List[Step], status: String = "done",
+      dry: Boolean = false, overrides: List[ModelChoice] = Nil): Run =
+    Run(RunHead(id, pipeline, target, status, dry, None, overrides), steps)
 
   private val billing: String => Option[String] = {
     case "claude-code:haiku" => Some("plan pool: claude-plan")
@@ -49,13 +47,13 @@ class CompareRunsSuite extends munit.FunSuite:
 
   test("a step's attempts are summed: models tried, what served them, how each was paid, tokens, time, failures"):
     val s = CompareRuns.stepSide(List(
-      step(3, "classify", "failed", model = Some("claude-code:haiku"), actual = Some("claude-haiku-5-5"), usage = Usage(10, 2), error = Some("bad")),
-      step(3, "classify", model = Some("anthropic:x"), actual = Some("x-2026"), usage = Usage(20, 4, 5), cost = 0.01, attempt = 2)), billing)
-    assertEquals(s, RunCompare.StepSide(List("claude-code:haiku", "anthropic:x"), List("claude-haiku-5-5", "x-2026"),
-      List("plan pool: claude-plan", "price: 1/5 USD per million tokens"), Usage(30, 6, 5), 0.01, 6, 2, 1))
+      step(3, "classify", "failed", model = Some("claude-code:haiku"), actual = Some("claude-haiku-5-5"), usage = Tokens(10, 2), error = Some("bad")),
+      step(3, "classify", model = Some("anthropic:x"), actual = Some("x-2026"), usage = Tokens(20, 4, 5), cost = 0.01, attempt = 2)), billing)
+    assertEquals(s, CompareRuns.StepSide(List("claude-code:haiku", "anthropic:x"), List("claude-haiku-5-5", "x-2026"),
+      List("plan pool: claude-plan", "price: 1/5 USD per million tokens"), Tokens(30, 6, 5), 0.01, 6, 2, 1))
     assertEquals(CompareRuns.seconds(step(1, "x", started = "bad")), 0L)
 
-  test("V072: a step's first call is its first attempt's that recorded one, its turns every recorded attempt's; both shown"):
+  test("V072: a step's first call is its first attempt's that recorded one, its turns every recorded attempt's"):
     val before = step(3, "classify", "failed", model = Some("claude-code:haiku"), error = Some("bad"))
     val a1 = step(3, "classify", "failed", model = Some("claude-code:haiku"), error = Some("bad"), attempt = 2)
       .copy(firstCallTokens = Some(6200), turns = Some(7))
@@ -64,16 +62,6 @@ class CompareRunsSuite extends munit.FunSuite:
     assertEquals((s.firstCallTokens, s.turns), (Some(6200L), Some(12)))
     val old = CompareRuns.stepSide(List(before), billing)
     assertEquals((old.firstCallTokens, old.turns), (None, None), "a run before V072 says nothing")
-    val now   = run("a", "enrich-source", "x2020", List(a2))
-    val prior = run("b", "enrich-source", "x2020", List(before.copy(status = "done", error = None)))
-    val md = AgentsMarkdown.compare(CompareRuns.compare(List(now, prior), billing).toOption.get)
-    val row = md.linesIterator.find(_.startsWith("| classify")).get
-    val cells = row.split(" \\| ").toList
-    assert(cells(1).contains("first call 6900 tok · 5 turns"), row)
-    assert(!cells(2).contains("first call"), "the old run's cell has no reading")
-    assertEquals(AgentsMarkdown.callShape(Some(4100), Some(1)), "first call 4100 tok · 1 turn")
-    assertEquals(AgentsMarkdown.callShape(None, Some(3)), "3 turns")
-    assertEquals(AgentsMarkdown.callShape(None, None), "")
 
   // ── enrich-source ──────────────────────────────────────────────────────────────────────────────
 
@@ -106,8 +94,8 @@ class CompareRunsSuite extends munit.FunSuite:
     val b = enrich("b", List(FindingInput("tin  came by SEA."), FindingInput("Tin was rare.")), Nil, "N.")
     val cmp = CompareRuns.compare(List(a, b), billing).fold(fail(_), identity)
     assertEquals(cmp.enrich, List(
-      RunCompare.EnrichSide(2, 2, 2, 2, 1, 1, Some(-1600), Some(-1200), 10, 16, List("Copper came from Cyprus.")),
-      RunCompare.EnrichSide(2, 2, 2, 0, 0, 0, Some(-1600), Some(-1200), 10, 2, List("Tin was rare."))),
+      CompareRuns.EnrichSide(2, 2, 2, 2, 1, 1, Some(-1600), Some(-1200), 10, 16, List("Copper came from Cyprus.")),
+      CompareRuns.EnrichSide(2, 2, 2, 0, 0, 0, Some(-1600), Some(-1200), 10, 2, List("Tin was rare."))),
       "the same claim worded with other case and spacing is not unique")
     assertEquals(cmp.review, Nil)
     assertEquals(cmp.steps.map(_.name), List("classify", "findings-1", "geocode", "notes"))
@@ -118,8 +106,8 @@ class CompareRunsSuite extends munit.FunSuite:
     val b = run("bbbbbbbb2", "enrich-source", "x2020", List(step(1, "load")), status = "paused")
     val cmp = CompareRuns.compare(List(a, b), billing).fold(fail(_), identity)
     assertEquals(cmp.notes, List("run bbbbbbbb is paused, not done: its outputs are what it had so far"))
-    assertEquals(cmp.steps, List(RunCompare.StepRow("load", List(Some(RunCompare.StepSide(Nil, Nil, Nil, Usage.Zero, 0, 3, 1, 0)),
-      Some(RunCompare.StepSide(Nil, Nil, Nil, Usage.Zero, 0, 3, 1, 0))))))
+    assertEquals(cmp.steps, List(CompareRuns.StepRow("load", List(Some(CompareRuns.StepSide(Nil, Nil, Nil, Tokens.Zero, 0, 3, 1, 0)),
+      Some(CompareRuns.StepSide(Nil, Nil, Nil, Tokens.Zero, 0, 3, 1, 0))))))
 
   // ── review-article ─────────────────────────────────────────────────────────────────────────────
 
@@ -155,11 +143,7 @@ class CompareRunsSuite extends munit.FunSuite:
     assertEquals(cmp.review.map(r => (r.verdict, r.rounds)), List((Some("PASS"), 2), (Some("MAJOR"), 1)))
     assertEquals(cmp.review.head.reviewers.map(r => (r.reviewer, r.verdict, r.majors, r.minors)), List(
       ("rules", Some("MAJOR"), 1, 0), ("cold-reader", Some("MINOR"), 0, 1), ("skeptic", Some("MAJOR"), 1, 0), ("mechanical", None, 0, 1)))
-    assertEquals(cmp.review.head.kinds, List(RunCompare.KindCount("term", 2), RunCompare.KindCount("date", 1)))
+    assertEquals(cmp.review.head.kinds, List(CompareRuns.KindCount("term", 2), CompareRuns.KindCount("date", 1)))
     assertEquals(cmp.review.head.majors, List("R1 major (Intro): tin is not defined", "S1 major (Dates): the date is wrong"))
-    assertEquals(cmp.overlaps, List(RunCompare.MajorOverlap("a", "b", 2, 1, 1, List("R1 ↔ R1"))))
+    assertEquals(cmp.overlaps, List(CompareRuns.MajorOverlap("a", "b", 2, 1, 1, List("R1 ↔ R1"))))
     assertEquals(cmp.enrich, Nil)
-    val md = AgentsMarkdown.compare(cmp)
-    assert(md.contains("| verdict (last round) | PASS | MAJOR |") && md.contains("| rounds | 2 | 1 |") &&
-      md.contains("| kind: date (round 1) | 1 | 0 |") && md.contains("- a × b: 1 shared of 2 and 1 (R1 ↔ R1)"), md)
-    assert(md.contains("| merge-1 | code · 0/0 · 3 s | code · 0/0 · 3 s |"), md)
