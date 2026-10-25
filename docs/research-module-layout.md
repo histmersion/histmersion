@@ -580,12 +580,125 @@ testkit's POM now reaches through plugin-host → core. `com.histmersion.domain.
 moved file types are in `com.histmersion.files`. A JVM client compiled against api sees `StepStatus` in
 `com.histmersion.values` (still `Agents.StepStatus` through the export). The JSON is the same.
 
+## Step 7, batch 4 as built (#3967, 2026-10-25)
+
+Two areas: merge, then managers with the domain → config edge they carry. One commit each, each
+compiling and passing the JVM suites of the modules it touched; `just test-it` passed once at the end.
+The third area offered (the agent checkpoints, `EnrichSource`'s and `AgentProposals`' patch records,
+`WorkRef`) was not started; why is under *What is left for batch 5*.
+
+```
+values   JVM+JS   newtypes + the shared vocabularies                                   iron
+api      JVM+JS   com.histmersion.api (100 files, 21.6k lines; + MergeIssueDetail)     values, tapir-core, circe, kindlings
+config   JVM      com.histmersion.config                                               values
+files    JVM      com.histmersion.files (13 files, 1.5k lines; + BundleEntities,       api, snakeyaml
+                  BundleReader)
+core     JVM      com.histmersion.domain (48 files; + ManagerDefaults)                 values, api, config (temporary), files
+```
+
+**Merge.** The merge records are of two kinds, and neither needed a domain twin:
+
+- *The bundle's lines* (`BundleSource`, `BundleFinding`, … — the `.hmx` file's NDJSON) are what the planner
+  compares, and it compares them as lines: a row's rev is the hash of its canonical line, and localizing a
+  bundle rewrites its lines as JSON (uids and labels mapped field by field). A domain copy would be turned
+  back into its line for every rev and every rewrite, so rule 3 gives no reason to split them; they are a
+  recorded edge, the file format the domain merges.
+- *The plan* (`MergePlan`, `MergeIssue` and its `Issue*` parts, `MatchCounts`, `MergeTally`, `MergeDecision`,
+  `MergeResolutions`) is what `merge plan` returns, the resolution file holds and `merge_decisions` stores as
+  JSON. The planner builds it in its final shape; a domain copy would be a field-for-field twin. Also a
+  recorded edge.
+
+What did move:
+
+| moved | to | why there |
+|---|---|---|
+| `BundleEntities` (the bundle's content in memory: NDJSON payloads, decoding, revs, references, blob uses) and `BundleReader` (reading and verifying a `.hmx` stream) | files | bundle file-format code beside `BundleFormat` and `BundleTar`; batch 3 had left `BundleReader` in the domain only because it decodes `BundleEntities`. Its entity and reader tests went with it (`files/BundleEntitiesSuite`); the localize, fold and import-decision tests stayed in core (`BundleMergeSuite`) |
+| the issue-detail helpers: a source described as an issue side, a pair of sources/events/places as fields, spans and places, a goal plan as one line (`describe`, `side`, `rangeText`, `preview`, `clip`, `span`, `eventSpan`, `sourceFields`, `eventDetail`, `placeDetail`, `planText`) | api `MergeIssueDetail` (with `MergeIssueDetailSuite`, JVM and JS) | wire records to wire records, what the review screen shows; the three-way article text stays in the planner, which owns `Diff3` |
+
+Edge left: `MergePlanner` 38 names (the lines and the plan, `ArticleLinks.retarget`, `AssetLinks.safeName`,
+`Plural`), `MergeFold` 14 (the lines, `Lint.normaliseTag`, `AssetLinks`, `MergeDecision`), `SourceMatcher` 1,
+`BundlePlan` 1; domain → config: `MergeConfig` and `MergeWeights` (`MergePlanner`, `SourceMatcher`), read by
+db's `MergeState` too.
+
+**Managers, and the config decision.** `ManagerPolicy` took `AgentManagersConfig` and `AgentSeedConfig`,
+config records that also hold what only the supervisor reads (the tick, event retention, crons, scan
+intervals, the drain size). Decided: the domain takes a settings record of its own, holding exactly what the
+policy falls back on where a manager's saved config sets nothing — `ManagerDefaults` (with
+`ReviewManagerDefaults`, `ManagerRunDefaults`, `WatchManagerDefaults`) and `SeedPlanDefaults`. The server
+converts at its edge with Chimney (`server/agents/ManagerDefaultsViews`, `ManagerDefaultsViewsSuite` field by
+field): each call site converts the config as it reads it, because the config may be reloaded. All six call
+sites were in server, so no db signature changed. `ManagerPolicy` no longer imports config.
+
+The same move fits the other domain → config edges — a domain settings record per policy, converted in the
+server — but each is its own area's change: `MergeConfig` is read by db as well, so it would cross db's
+signatures too.
+
+`ManagerPolicy`'s 15 api names stay a recorded edge: `ManagerConfig` (a manager's saved config), `ItemState`,
+`Hold`, `RunMark`, `HintEffect` (the item state the store keeps as JSON), the item kinds and `Sweep`, and
+`ManagersMarkdown.usd`, `Plural` — one shape on both sides.
+
+**Measured.** Domain → api the way batch 3 counted it; domain → config the same way (files importing config;
+compiling core with every config import removed: files with errors / distinct names not found):
+
+| after | domain files · importing api · by wildcard | api imports removed: files / names | domain files importing config | config imports removed: files / names |
+|---|---|---|---|---|
+| batch 3 (`0d6a1c38`) | 49 · 44 · 38 | 36 / 146 | 37 | 13 / 26 |
+| merge (`a1131262`) | 47 · 42 · 36 | 34 / 128 | 35 | 13 / 26 |
+| managers (`5eaaffbf`) | 48 · 42 · 36 | 34 / 128 | 34 | 12 / 22 |
+
+Of the 37 domain files importing config, 13 used it (the rest are step 4's blanket imports); 12 do now:
+`MediaProviders` (6 media configs), `EventProviders` (4 events configs), `AgentsSettings` (3), `SourceMatcher`
+and `MergePlanner` (`MergeConfig`, `MergeWeights`), `SchedulerPolicy`, `RepositoryLanding`, `PlanReadSchedule`,
+`PlanGoal`, `HttpPolicy`, `FilterInference`, `EnrichSource` (one each).
+
+**Unchanged wire, proved.** Batch 3's scratch suite (every endpoint's `showDetail`, JSON Schema and tapir
+`Schema.show` of every input and output, the REST index, the MCP `tools/list` of a server on a test database)
+dumped 2 674 117 bytes before the batch and after each commit, byte-identical every time, and identical to
+batch 3's last dump. No store record or checkpoint changed shape. `test-it`: 4 069 tests, none failed.
+
+**Native-image metadata.** No entry named a moved class. A tracing-agent run of the JVM server and CLI on an
+empty test database (scratch HOME, data, cache and config, a non-default port; batch 3's run — REST GETs of
+every endpoint, the page and its assets, MCP tools, the CLI's reads, the Markdown export, a bundle export,
+verify and merge plan — plus a manager created and listed, which computes its effective defaults through
+`ManagerDefaultsViews`) changed neither file: server 1 143 reflection entries, CLI 640, as before.
+The bundle built (one `just bundle`), `smoke.sh` passed with its plugin template check (every kind of
+`plugin new` built, tested and published with scala-cli) and the relink, and `--self-check` passed. The CLI
+binary is 74 057 952 B (batch 3 measured 73 826 608 B on its own branch; master has gained the plugin-template
+commits since, so the difference is not attributed).
+
+**Plugin authors and API clients.** `plugin-api` did not change, nor did the testkit contract
+(`plugin-testkit-api.txt`). The install's Maven repository ships the same nine artifacts as after batch 3 (`values`, `api`,
+`config`, `files`, `core`, and the four plugin ones); their contents moved:`com.histmersion.domain.BundleEntities` and `BundleReader` are now in
+`com.histmersion.files` (`histmersion-files`); `MergeIssueDetail` is new in api. The JSON is the same.
+
+**What is left for batch 5.** Articles and the `Filter` decision, as planned (`ReviewArticle` 13 names,
+`PlanArticles` 9, `CompileArticle` 5, `FilterInference` 5), and the final edge cleanup. Not started here,
+for these reasons:
+
+- *The agent checkpoints.* `EnrichSource`'s step records (`Classified`, `Findings`, `VerifiedFindings`,
+  `Geocoded`, which holds api's `FindingInput`) and `ReviewArticle`'s (`Finding`, `Merged`, `Report`) are the
+  stored JSON of agent steps, with their codecs derived in the domain, and `CompareRuns` decodes them itself.
+  Giving them domain records means moving those codecs out of the domain (to api or server), and with them
+  the decoding `CompareRuns` does — a change to how every step writes and reads its checkpoint, whose bytes
+  must be proved against stored runs. `ReviewArticle`'s half is the articles area; `EnrichSource`'s
+  (10 names: its patch records `SourcePatch`, `MetadataPatch`, `FindingsPatch`, `ListPatch`, `FindingInput`,
+  `PeriodInput`, and `Period`, `Geocode`, `Lint`, `WorkRef`) and `AgentProposals`' (4) belong with it, since the
+  same steps write both.
+- *`WorkRef`* (`BrowserDownload`, `Scheduling`, `PlanGoal`, `EnrichSource`): the upstream work record the
+  discover endpoints return and plugin-host's acquisition client builds; the domain reads it in the same
+  shape, so a domain twin has no reason yet.
+- *Managers' neighbours:* `SchedulerPolicy` 8, `GoalFocus` 6, `WatchSchedules` 5, `HintProposals` 4 — the same
+  item-kind and saved-config records as `ManagerPolicy`, a recorded edge.
+- *Domain → config:* the 12 files above; `ManagerDefaults` is the pattern.
+- The recorded edges this batch kept: the merge records (bundle lines and plan), the managers' saved config
+  and item state.
+
 ## Unresolved
 
 - Whether `Filter` (used by web 28 times, db 52, server 55) is a wire record or a domain value with an
   SQL rendering decides whether it lands in `api` or `domain`; db's `Filter → SQL` code suggests the
   latter, with a wire `FilterView`. Steps 4–6 left it in `api`, with everything the wire needs; step 7's
-  first three batches did not need to decide it.
+  first four batches did not need to decide it.
 
 **Resolved.**
 
