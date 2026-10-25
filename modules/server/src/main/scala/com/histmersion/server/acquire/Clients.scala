@@ -1,6 +1,6 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.pluginhost.{FetchChain, OaFetcher, PluginHost, Url, WorkLookup}
+import com.histmersion.pluginhost.{AcquireParse, FetchChain, OaFetcher, PluginHost, Url, WorkLookup}
 
 import com.histmersion.api.*
 import com.histmersion.config.*

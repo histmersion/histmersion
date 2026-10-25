@@ -1,7 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.AcquireConfig
-import com.histmersion.domain.AcquireParse
+import com.histmersion.pluginhost.AcquireParse
 import com.histmersion.api.WorkRef
 import com.histmersion.plugin.WorkKey
 import io.circe.Json

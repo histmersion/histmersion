@@ -1,7 +1,7 @@
 package com.histmersion.server.acquire.fetchers
 
 import com.histmersion.config.AcquireConfig
-import com.histmersion.domain.AcquireParse
+import com.histmersion.pluginhost.AcquireParse
 import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
 import com.histmersion.server.acquire.{ArchiveClient, Http}
 

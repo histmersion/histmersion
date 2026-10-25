@@ -32,7 +32,8 @@ cli   ── a PURE HTTP CLIENT of the server.         depends on api, config an
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
 plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
 plugin-host ── the host side of the SPI without server or DB: discovery, config, registration, the
-              acquisition client, the chain, how plugin media/catalogues/AI are read.   core + plugin-api
+              acquisition client and its parsers of the upstreams' JSON, the chain, how plugin
+              media/catalogues/AI are read.                                core + plugin-api
 plugin-testkit ─ a plugin's TEST dependency: load and run it as the server does (plugin-host), with
               live/record/replay HTTP; shipped in the install's maven/, its API a contract.  plugin-host
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
