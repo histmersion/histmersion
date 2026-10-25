@@ -105,7 +105,7 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       }
     val plansWait = if perManager.exists(_._2.exists(_.kind == PlanGoalItem)) then agents.focus.goalPlansWait() else None
     val cands = perManager.flatMap { (m, items) =>
-      val daily = ManagerPolicy.dailyBlock(ManagerPolicy.dailyCap(m.config, cfg.managers), BigDecimal(m.spentTodayUsd))
+      val daily = ManagerPolicy.dailyBlock(ManagerPolicy.dailyCap(m.config, ManagerDefaultsViews.defaults(cfg.managers)), BigDecimal(m.spentTodayUsd))
       val open  = if items.exists(i => i.kind == ArticleReview || i.kind == ProposeArticles) then ManagerRepo.openKeys(ds, m.id) else Nil
       val over  = m.config.models.getOrElse(Nil)
       val memo  = collection.mutable.Map.empty[Pipeline, Either[String, List[PlanQuota.PoolId]]] // per manager and pass

@@ -32,7 +32,8 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
   /** The settings in effect: the saved config over the server's defaults for its kind; a watcher's ingest
     * backlog and the days it takes to drain (`backlog` = one snapshot for every manager listed). */
   private def withEffective(m: ManagerInfo, backlog: => OaBacklog.Snapshot): ManagerInfo =
-    val e = m.copy(effective = ReviewSettings.defaultsFor(kindOf(m), mcfg, cfg.seed).merge(m.config))
+    val e = m.copy(effective = ReviewSettings.defaultsFor(kindOf(m), ManagerDefaultsViews.defaults(mcfg),
+      ManagerDefaultsViews.seedPlan(cfg.seed)).merge(m.config))
     if kindOf(m) != Kind.Watch then e
     else backlog.perManager.get(m.id).fold(e)((n, days) => e.copy(backlog = n, backlogDays = days))
 

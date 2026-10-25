@@ -30,6 +30,7 @@ final class OaBacklog(ds: DataSource, cfg: => AgentsConfig, h: com.histmersion.s
     agents: AgentsHandlers):
 
   private def mcfg = cfg.managers
+  private def managerDefaults = ManagerDefaultsViews.defaults(cfg.managers)
 
   // ── adding ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -75,7 +76,7 @@ final class OaBacklog(ds: DataSource, cfg: => AgentsConfig, h: com.histmersion.s
   private def ownLeft(now: Instant): Map[String, Int] =
     val today = ManagerRepo.countEventsBy(ds, Feed.Ingested, ManagerPolicy.dayStart(now))
     ManagerRepo.light(ds).filter(m => m.kind == Kind.Watch.wire && m.state == State.Active.wire && m.config.autoIngest.contains(true))
-      .map(m => m.id -> ManagerPolicy.ingestAllowance(m.config, mcfg, today.getOrElse(m.id, 0))).toMap
+      .map(m => m.id -> ManagerPolicy.ingestAllowance(m.config, managerDefaults, today.getOrElse(m.id, 0))).toMap
 
   /** What a sweep of watcher `managerId` reserves for the backlog: its own pending backlog items, and every
     * pending backlog item of a watcher that drains (the shared cap's). */
@@ -189,7 +190,7 @@ final class OaBacklog(ds: DataSource, cfg: => AgentsConfig, h: com.histmersion.s
 
   private def settingsOf(managerId: String): ManagerPolicy.ReviewSettings =
     val c = ManagerRepo.get(ds, managerId).map(_.config).getOrElse(ManagerConfig())
-    ManagerPolicy.ReviewSettings.forKind(Kind.Watch, c, mcfg)
+    ManagerPolicy.ReviewSettings.forKind(Kind.Watch, c, managerDefaults)
 
   /** The acquisition item for `doi` (an existing one that names it, else a new one in the sweep's wording),
     * linked to every goal. None when the list refused it. */

@@ -1,9 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.ReviewLedger.Ledger
@@ -24,7 +22,7 @@ object ManagerPolicy:
       backoffMinutes: Int, maxBackoffMinutes: Int, staleAfterDays: Int = 0, inferFilter: Boolean = false)
 
   object ReviewSettings:
-    def of(c: ManagerConfig, d: ReviewManagerConfig, m: AgentManagersConfig): ReviewSettings =
+    def of(c: ManagerConfig, d: ReviewManagerDefaults, m: ManagerDefaults): ReviewSettings =
       val maxRuns = math.max(0, c.maxRuns.getOrElse(d.maxRuns))
       ReviewSettings(maxRuns, math.max(maxRuns, c.maxOpen.getOrElse(2 * maxRuns)), math.max(1, c.rounds.getOrElse(d.rounds)),
         math.max(1, c.maxRunsPerArticle.getOrElse(d.maxRunsPerArticle)), math.max(1, c.noProgressRuns.getOrElse(d.noProgressRuns)),
@@ -34,7 +32,7 @@ object ManagerPolicy:
         math.max(0, c.staleAfterDays.getOrElse(d.staleAfterDays)), c.inferFilter.getOrElse(d.inferFilter))
 
     /** The settings of a manager of kind `k`. */
-    def forKind(k: ManagerKind, c: ManagerConfig, m: AgentManagersConfig): ReviewSettings = k match
+    def forKind(k: ManagerKind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings = k match
       case ManagerKind.Review => of(c, m.review, m)
       case other =>
         val maxRuns = math.max(0, c.maxRuns.getOrElse(simple(other, m).maxRuns))
@@ -42,13 +40,13 @@ object ManagerPolicy:
           math.max(0, c.cooldownMinutes.getOrElse(0)), 0, 0, math.max(1, c.maxFailures.getOrElse(m.maxFailures)),
           math.max(1, m.backoffMinutes), math.max(1, m.maxBackoffMinutes))
 
-    private def simple(k: ManagerKind, m: AgentManagersConfig): SimpleManagerConfig = k match
+    private def simple(k: ManagerKind, m: ManagerDefaults): ManagerRunDefaults = k match
       case ManagerKind.Enrich => m.enrich
-      case ManagerKind.Watch  => SimpleManagerConfig(m.watch.maxRuns)
+      case ManagerKind.Watch  => ManagerRunDefaults(m.watch.maxRuns)
       case _           => m.seed
 
     /** The defaults as a config (what `effective` shows for an unset key). */
-    def defaults(d: ReviewManagerConfig, m: AgentManagersConfig): ManagerConfig =
+    def defaults(d: ReviewManagerDefaults, m: ManagerDefaults): ManagerConfig =
       ManagerConfig(maxRuns = Some(d.maxRuns), maxOpen = Some(2 * d.maxRuns), rounds = Some(d.rounds),
         maxRunsPerArticle = Some(d.maxRunsPerArticle), noProgressRuns = Some(d.noProgressRuns),
         reopenLimit = Some(d.reopenLimit), cooldownMinutes = Some(d.cooldownMinutes), lowWater = Some(d.lowWater),
@@ -56,7 +54,7 @@ object ManagerPolicy:
         inferFilter = Some(d.inferFilter), dailyUsd = dailyCap(ManagerConfig(), m), extendMinNew = Some(d.extendMinNew))
 
     /** The defaults of a manager of kind `k`; a seeding manager's also show the plan's checks (`seed`). */
-    def defaultsFor(k: ManagerKind, m: AgentManagersConfig, seed: AgentSeedConfig): ManagerConfig = k match
+    def defaultsFor(k: ManagerKind, m: ManagerDefaults, seed: SeedPlanDefaults): ManagerConfig = k match
       case ManagerKind.Review => defaults(m.review, m)
       case ManagerKind.Seed =>
         ManagerConfig(maxRuns = Some(m.seed.maxRuns), maxOpen = Some(2 * m.seed.maxRuns), maxFailures = Some(m.maxFailures),
@@ -104,7 +102,7 @@ object ManagerPolicy:
     }
 
   /** A manager's own daily cap in effect: its `dailyUsd`, else `agents.managers.daily-usd`; 0 = none. */
-  def dailyCap(c: ManagerConfig, m: AgentManagersConfig): Option[Double] =
+  def dailyCap(c: ManagerConfig, m: ManagerDefaults): Option[Double] =
     c.dailyUsd.orElse(Option(m.dailyUsd)).filter(_ > 0)
 
   /** Why a manager starts nothing more today, if it does not: its runs' metered spend this UTC day reached
@@ -122,7 +120,7 @@ object ManagerPolicy:
   /** How many legal open-access works a watcher's next acquisition sweep may ingest: none unless it opted
     * in (`autoIngest`, default off), else what is left of its daily cap (`perDay`) after the ones it
     * ingested today. */
-  def ingestAllowance(c: ManagerConfig, m: AgentManagersConfig, ingestedToday: Int): Int =
+  def ingestAllowance(c: ManagerConfig, m: ManagerDefaults, ingestedToday: Int): Int =
     if !c.autoIngest.contains(true) then 0
     else math.max(0, c.autoIngestPerDay.getOrElse(m.watch.autoIngestPerDay) - math.max(0, ingestedToday))
 
