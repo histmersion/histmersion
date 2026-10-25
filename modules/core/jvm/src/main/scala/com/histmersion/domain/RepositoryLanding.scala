@@ -1,9 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import io.circe.{ACursor, Json}
 
@@ -270,10 +268,3 @@ object RepositoryLanding:
   def looksLikeHtml(b: Array[Byte]): Boolean =
     val head = new String(b.take(2048), "ISO-8859-1").toLowerCase
     head.contains("<html") || head.contains("<!doctype html") || head.contains("<head") || head.contains("<meta")
-
-extension (c: LandingConfig)
-  def rules: RepositoryLanding.Rules =
-    RepositoryLanding.Rules(LandingConfig.split(c.allowHosts),
-      (LandingConfig.split(c.denyHosts) ++ LandingConfig.split(c.denyHostsExtra)).distinct,
-      LandingConfig.split(c.academicHostWords), LandingConfig.split(c.generators), LandingConfig.split(c.denyGenerators),
-      LandingConfig.split(c.denyHostWords), LandingConfig.split(c.oaPublisherHosts))

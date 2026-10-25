@@ -12,6 +12,7 @@ import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
 import com.histmersion.values.{BundleKind, Confidence, IssueKind, SourceStatus}
+import io.scalaland.chimney.dsl.*
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2):
   * identity and tombstones (M0), a deterministic export (M1), and an import without matching —
@@ -24,6 +25,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg              = AppConfig.load()
+  private lazy val merge            = cfg.merge.transformInto[MergeSettings]
   private lazy val admin            = testPool(cfg.db.copy(url = testDb.get))
   private val tmp                   = Files.createTempDirectory("histmersion-bundle-suite")
 
@@ -162,7 +164,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     Files.write(f, bundle)
     BundleImport.run(ds, f, BundleFormat.sha256Hex(bundle),
       BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals),
-      resolutions, cfg.merge)
+      resolutions, merge)
       .fold(e => fail(e), identity)
 
   private def text(entries: List[(String, Array[Byte])], path: String): String =

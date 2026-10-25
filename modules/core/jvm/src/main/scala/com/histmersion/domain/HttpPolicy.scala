@@ -1,9 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import java.time.{Instant, ZonedDateTime}
 import java.time.format.DateTimeFormatter
@@ -107,7 +105,3 @@ object HttpPolicy:
       scala.util.Try(java.util.Base64.getMimeDecoder.decode(m.group(1).replaceAll("\\s+", ""))).toOption
         .filter(_.nonEmpty)
     }
-
-extension (c: AcquireConfig)
-  /** The identifier every acquisition upstream sees: the product, never the contact. */
-  def agent: String = HttpPolicy.userAgent(c.userAgent)

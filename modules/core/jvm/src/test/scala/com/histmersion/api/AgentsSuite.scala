@@ -115,36 +115,6 @@ class AgentsSuite extends munit.FunSuite:
     assert(!RunParams().fixes)
     assert(RunParams(fix = Some(true)).fixes)
 
-  test("agents are OFF by default and every key loads; env switches them on"):
-    val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
-    assert(!cfg.agents.enabled)
-    assertEquals(cfg.agents.maxConcurrentRuns, 4)
-    assertEquals(cfg.agents.roles.extractor, "")
-    val on = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of(
-      "HISTMERSION_AGENTS_ENABLED", "true", "HISTMERSION_AGENTS_ROLE_EXTRACTOR", "local:m", "ANTHROPIC_API_KEY", "sk-secret")))
-    assert(on.agents.enabled)
-    assertEquals(on.agents.role(Role.Extractor), "local:m")
-    assert(!on.agents.providers.anthropic.toString.contains("sk-secret"), "the key must never be printed")
-    assert(cfg.agents.autoEnrich, "auto-enrich is on by default (it acts only with agents on)")
-    assert(!AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of(
-      "HISTMERSION_AGENTS_AUTO_ENRICH", "false"))).agents.autoEnrich)
-
-  test("P2 keys: approvals manual, review rounds, trace pruning and prompt overrides by default; env overrides"):
-    val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
-    assertEquals(cfg.agents.approvals.statusMode, ApprovalMode.Manual)
-    assertEquals(cfg.agents.approvals.edgeMode, ApprovalMode.Manual)
-    assertEquals(cfg.agents.review.maxRounds, 3)
-    assertEquals(cfg.agents.trace.keepMessagesDays, 30)
-    assertEquals(cfg.agents.promptsDir, "")
-    assert(cfg.agents.enrich.upstream)
-    val on = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of(
-      "HISTMERSION_AGENTS_APPROVE_EDGES", "auto", "HISTMERSION_AGENTS_REVIEW_ROUNDS", "2",
-      "HISTMERSION_AGENTS_PROMPTS_DIR", "/tmp/p", "HISTMERSION_AGENTS_KEEP_MESSAGES_DAYS", "0")))
-    assertEquals(on.agents.approvals.edgeMode, ApprovalMode.Auto)
-    assertEquals(on.agents.review.maxRounds, 2)
-    assertEquals(on.agents.promptsDir, "/tmp/p")
-    assertEquals(on.agents.trace.keepMessagesDays, 0)
-
   test("RunState: a run waits for an approval only from running, and leaves it only to the queue or cancelled"):
     import RunState.*
     assertEquals(next(Running, WaitingApproval), Some(WaitingApproval))
@@ -168,21 +138,6 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(Origin.parse("scheduler"), Some(Origin.Scheduler))
     // a run stored before P3 reads its new options as absent
     assertEquals(io.circe.parser.decode[RunParams]("""{"fix":true}"""), Right(RunParams(fix = Some(true))))
-
-  test("P3 keys: publishing waits for a person, the scheduler is on but needs agents; env overrides"):
-    val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
-    assertEquals(cfg.agents.approvals.publishMode, ApprovalMode.Manual)
-    assertEquals(cfg.agents.roles.planner, "")
-    assertEquals(cfg.agents.roles.writer, "")
-    assert(cfg.agents.scheduler.enabled && cfg.agents.compile.review)
-    assertEquals(cfg.agents.plan.caps.works, 15)
-    val on = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of(
-      "HISTMERSION_AGENTS_APPROVE_PUBLISH", "auto", "HISTMERSION_AGENTS_ROLE_WRITER", "local:w",
-      "HISTMERSION_AGENTS_SCHEDULER", "false", "HISTMERSION_AGENTS_COMPILE_MAX_SOURCES", "5")))
-    assertEquals(on.agents.approvals.publishMode, ApprovalMode.Auto)
-    assertEquals(on.agents.role(Role.Writer), "local:w")
-    assert(!on.agents.scheduler.enabled)
-    assertEquals(on.agents.compile.maxSources, 5)
 
   test("Markdown: a plan and a draft as a person reads them before approving; a goal with its links and schedules"):
     import GoalPlans.*

@@ -1,9 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
 

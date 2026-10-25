@@ -4,7 +4,8 @@ import com.histmersion.pluginhost.{FetchChain, Url}
 
 import com.histmersion.config.AcquireConfig
 import com.histmersion.pluginhost.AcquireParse
-import com.histmersion.domain.{RepositoryLanding, rules}
+import com.histmersion.domain.RepositoryLanding
+import com.histmersion.server.acquire.rules
 import com.histmersion.plugin.{Fetch, FetchContext, SourceFetcher, WorkKey}
 import com.histmersion.server.acquire.{FetchedFile, Http, OaFetch, OpenAlexCrossref}
 

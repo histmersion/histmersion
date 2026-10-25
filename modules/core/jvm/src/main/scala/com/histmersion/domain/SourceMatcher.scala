@@ -1,9 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import MergeText.{AuthorAgreement, MinHash}
 
@@ -17,7 +15,7 @@ import com.histmersion.values.EditionsPolicy
   *    match whatever the score. A DOI on one side only is neutral; two different DOIs are a hard flag.
   *  - **C, blocking**: only pairs that share a title key, a first-author surname key, a citekey stem
   *    or a label (citekey or alias) are scored.
-  *  - **D, score**: a weight per field comparison ([[MergeWeights]]), plus one when a citekey of one
+  *  - **D, score**: a weight per field comparison ([[MatchWeights]]), plus one when a citekey of one
   *    side is an old citekey (alias) of the other.
   *
   * Then each bundle source is assigned at most one source here, best first (strong keys, then the
@@ -88,7 +86,7 @@ object SourceMatcher:
 
   /** The evidence about `right` (the bundle's) and `left` (this collection's). `sketches` are the
     * MinHash signatures of OCR bodies by their sha256, when they were computed. */
-  def evidence(right: Side, left: Side, sketches: Map[String, MinHash], w: MergeWeights): Evidence =
+  def evidence(right: Side, left: Side, sketches: Map[String, MinHash], w: MatchWeights): Evidence =
     val (r, l) = (right.source, left.source)
     val strong =
       (if doi(r).isDefined && doi(r) == doi(l) then List("DOI") else Nil) ++
@@ -167,7 +165,7 @@ object SourceMatcher:
 
   /** Pair every `right` with at most one `left`. `editions` answers the year-gap question for all:
     * `Merge` drops the flag, `Separate` makes such a pair two works. */
-  def assign(rights: List[Side], lefts: List[Side], sketches: Map[String, MinHash], cfg: MergeConfig,
+  def assign(rights: List[Side], lefts: List[Side], sketches: Map[String, MinHash], cfg: MergeSettings,
       editions: Option[EditionsPolicy]): Matching =
     val byKey: Map[String, List[Side]] =
       lefts.flatMap(l => blockingKeys(l).map(_ -> l)).groupMap(_._1)(_._2)

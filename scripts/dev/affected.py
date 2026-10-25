@@ -29,7 +29,7 @@ DEPS = {
     "coreJVM": ["valuesJVM", "apiJVM", "config", "files"],
     "pluginApi": [],
     "pluginVaults": ["pluginApi"],
-    "pluginHost": ["coreJVM", "pluginApi"],
+    "pluginHost": ["coreJVM", "config", "pluginApi"],
     "pluginTestkit": ["pluginHost"],
     "pluginHello": ["pluginApi"],
     "pluginHelloAi": ["pluginApi"],

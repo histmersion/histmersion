@@ -1,9 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 /** How long the Codex home of the agent runs keeps what each run leaves behind (#2582): every
   * `codex exec` writes a session transcript (`sessions/YYYY/MM/DD/rollout-*.jsonl`) and adds to its

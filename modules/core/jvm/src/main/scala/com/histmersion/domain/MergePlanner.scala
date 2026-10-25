@@ -2,9 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.api.*
 import com.histmersion.files.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import BundlePlan.{Decision, Ledger, Local}
 import MergeFold.{ArticleOutcome, FindingMatch}
@@ -325,7 +323,7 @@ object MergePlanner:
 
   /** The OCR bodies (by sha256) whose MinHash could decide a pair: those of every blocked pair whose
     * bodies differ — the database computes them before [[plan]]. */
-  def sketchesWanted(in: Input, cfg: MergeConfig): Set[String] =
+  def sketchesWanted(in: Input, cfg: MergeSettings): Set[String] =
     val (rights, lefts) = matchSides(in)
     val byKey = lefts.flatMap(l => SourceMatcher.blockingKeys(l).map(_ -> l)).groupMap(_._1)(_._2)
     rights.flatMap { r =>
@@ -341,7 +339,7 @@ object MergePlanner:
 
   /** The OCR bodies (by sha256) the plan must read to re-anchor attestations: those of every matched
     * pair whose bodies differ and whose sources carry attestations. */
-  def bodiesWanted(in: Input, sketches: Map[String, MinHash], resolutions: MergeResolutions, cfg: MergeConfig): Set[String] =
+  def bodiesWanted(in: Input, sketches: Map[String, MinHash], resolutions: MergeResolutions, cfg: MergeSettings): Set[String] =
     val (rights, lefts) = matchSides(in)
     val pairs = SourceMatcher.assign(rights, lefts, sketches, cfg, resolutions.policy.editions).pairs
     val withAtts = (in.foreign.attestations ++ in.local.attestations).filter(anchored).map(_.sourceUid).toSet
@@ -406,7 +404,7 @@ object MergePlanner:
   /** A label for an event id. */
   private val SlugShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
-  def plan(in: Input, sketches: Map[String, MinHash], resolutions: MergeResolutions, cfg: MergeConfig): Result =
+  def plan(in: Input, sketches: Map[String, MinHash], resolutions: MergeResolutions, cfg: MergeSettings): Result =
     val idOf    = mapUid(in.uidAliases, in.ledger)
     val fes     = in.foreign
     val rawRevs = fes.revs

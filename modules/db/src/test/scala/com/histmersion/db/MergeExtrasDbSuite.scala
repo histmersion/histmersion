@@ -10,6 +10,7 @@ import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
 import com.histmersion.values.{IssueKind, PlaceKind, SourceStatus}
+import io.scalaland.chimney.dsl.*
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres
   * (docs/research-merge-import.md §7.8): a collection's own places and named periods (V052) and not
@@ -20,6 +21,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb                = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg              = AppConfig.load()
+  private lazy val merge            = cfg.merge.transformInto[MergeSettings]
   private lazy val admin            = testPool(cfg.db.copy(url = testDb.get))
   private val tmp                   = Files.createTempDirectory("histmersion-merge-extras")
 
@@ -50,18 +52,18 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     MergeState.withFile(bundle)(BundleReader.read(_, hashBlobs = false)).entities
 
   private def planIn(ds: DataSource, bundle: Path, originals: Path, res: MergeResolutions = MergeResolutions()): MergePlan =
-    MergeState.planFile(ds, bundle, res, cfg.merge, Originals.inDir(originals), cfg.limits.chunkChars).fold(e => fail(e), identity)
+    MergeState.planFile(ds, bundle, res, merge, Originals.inDir(originals), cfg.limits.chunkChars).fold(e => fail(e), identity)
 
   private def importInto(ds: DataSource, bundle: Path, originals: Path): BundleImportResult =
     BundleImport.run(ds, bundle, BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
       BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals),
-      MergeResolutions(), cfg.merge).fold(e => fail(e), identity)
+      MergeResolutions(), merge).fold(e => fail(e), identity)
 
   private def applyIn(ds: DataSource, bundle: Path, originals: Path, res: MergeResolutions = MergeResolutions()): MergeApplyResult =
     val hash = planIn(ds, bundle, originals, res).planHash
     BundleImport.apply(ds, bundle, BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
       BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals),
-      res, cfg.merge, hash, () => Right("stub.dump")).fold(e => fail(e), identity)
+      res, merge, hash, () => Right("stub.dump")).fold(e => fail(e), identity)
 
   private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(q).frag.query[Int].run().head)
   private def text(ds: DataSource, q: String): Option[String] = connect(ds)(Sql.raw(q).frag.query[Option[String]].run().headOption.flatten)

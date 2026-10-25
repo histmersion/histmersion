@@ -1,9 +1,7 @@
-package com.histmersion.domain
+package com.histmersion.server.acquire
 
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.api.given
-import com.histmersion.config.given
+import com.histmersion.config.AppConfig
+import com.histmersion.domain.RepositoryLanding
 
 import io.circe.parser.parse
 

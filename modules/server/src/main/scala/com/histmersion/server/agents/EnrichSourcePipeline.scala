@@ -81,7 +81,7 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: => AgentsConf
     * the only point where a better name can still be asked for). */
   private def findings(ctx: RunCtx, l: Loaded, c: Classified): Either[Halt, List[VerifiedFinding]] =
     val existing = l.existingClaims.toSet
-    val guards   = FindingGuards(cfg.enrich.guards, (name, kind, at) => h.geocode(name, kind, at).isDefined)
+    val guards   = cfg.enrich.guards.guards((name, kind, at) => h.geocode(name, kind, at).isDefined)
     l.windows.foldLeft[Either[Halt, List[VerifiedFinding]]](Right(Nil)) { (acc, w) =>
       acc.flatMap { sofar =>
         val user = s"Extract the findings of this stretch of the source.\n\n${meta(l)}\n" +

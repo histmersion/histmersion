@@ -1,8 +1,6 @@
 package com.histmersion.domain
 
 import com.histmersion.api.Geocode
-import com.histmersion.config.*
-import com.histmersion.config.given
 import com.histmersion.values.{Period, Year}
 
 import io.circe.{ACursor, Json}

@@ -76,15 +76,6 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(depth("a", parent.get), 0)
     assertEquals(depth("x", Map("x" -> "y", "y" -> "x").get), 1)
 
-  test("config: article-plan/goal-plan take auto or checked; article-publish only checked reaches the supervisor"):
-    val c = AgentApprovalsConfig("manual", "manual", "auto", articlePlan = "Auto", goalPlan = "checked")
-    assert(c.checked(ApprovalKind.ArticlePlan) && c.checked(ApprovalKind.GoalPlan))
-    assert(c.checked(ApprovalKind.ArticlePublish), "auto publishes in the run; what it left open the supervisor checks")
-    assert(!AgentApprovalsConfig("manual", "manual", "manual").checked(ApprovalKind.ArticlePlan))
-    assert(!c.checked(ApprovalKind.Edge))
-    assertEquals(c.publishMode, Agents.ApprovalMode.Auto)
-    assertEquals(c.copy(articlePublish = "checked").publishMode, Agents.ApprovalMode.Manual, "checked: the run waits, the supervisor decides")
-
   // ── goal status ────────────────────────────────────────────────────────────────────────────────
 
   private val g = GoalFacts("g", GoalStatus.Planned, managed = false, articles = 0, compileOpen = false, reviewed = false, Nil)

@@ -51,7 +51,7 @@ object BundleImport:
   private type Decided = MergePlanner.Row
 
   def run(ds: DataSource, file: Path, bundleSha256: String, opts: Options, originals: Originals,
-      resolutions: MergeResolutions, merge: MergeConfig): Either[String, BundleImportResult] =
+      resolutions: MergeResolutions, merge: MergeSettings): Either[String, BundleImportResult] =
     val loaded = MergeState.withFile(file)(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
       case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
@@ -74,7 +74,7 @@ object BundleImport:
     * record left out (`keep-left` on a taken label), two works kept apart (`both`) — and refuses, with
     * the plan's issues, while any issue is open or a decision needs `merge apply` (M5). */
   private def importIn(file: Path, bundleSha: String, m: BundleManifest, loaded: BundleReader.Loaded,
-      opts: Options, originals: Originals, resolutions: MergeResolutions, merge: MergeConfig)(using DbCon): BundleImportResult =
+      opts: Options, originals: Originals, resolutions: MergeResolutions, merge: MergeSettings)(using DbCon): BundleImportResult =
     // one import at a time per database: two would decide against the same state and both write
     val _ = sql"SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext('histmersion.bundle-import'))) l".query[Int].run()
     val (input, planned) = MergeState.plan(file, m, loaded, resolutions, merge, originals, opts.chunkChars)
@@ -149,7 +149,7 @@ object BundleImport:
     * planned again inside the transaction: what that plan would still change is reported — 0 when
     * the merge is idempotent. */
   def apply(ds: DataSource, file: Path, bundleSha256: String, opts: Options, originals: Originals,
-      resolutions: MergeResolutions, merge: MergeConfig, planHash: String,
+      resolutions: MergeResolutions, merge: MergeSettings, planHash: String,
       backup: () => Either[String, String]): Either[String, MergeApplyResult] =
     val loaded = MergeState.withFile(file)(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
@@ -159,7 +159,7 @@ object BundleImport:
         catch case a: Abort => Right(MergeApplyResult(m.bundleId, m.instance, applied = false, planHash, problems = a.problems))
 
   private def applyIn(file: Path, bundleSha: String, m: BundleManifest, loaded: BundleReader.Loaded, opts: Options,
-      originals: Originals, resolutions: MergeResolutions, merge: MergeConfig, planHash: String,
+      originals: Originals, resolutions: MergeResolutions, merge: MergeSettings, planHash: String,
       backup: () => Either[String, String])(using DbCon): MergeApplyResult =
     val _ = sql"SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext('histmersion.bundle-import'))) l".query[Int].run()
     val (input, planned) = MergeState.plan(file, m, loaded, resolutions, merge, originals, opts.chunkChars)

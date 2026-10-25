@@ -5,6 +5,7 @@ import com.histmersion.files.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
+import io.scalaland.chimney.dsl.*
 
 
 import MergePlanner.{Input, Labels, LedgerEntry}
@@ -17,7 +18,7 @@ import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverit
   * The database twin of this fixture is `db.MergeSuite`. */
 object MergeFixture:
 
-  val cfg: MergeConfig = AppConfig.load().merge
+  val cfg: MergeSettings = AppConfig.load().merge.transformInto[MergeSettings]
 
   val work: UUID = UUID.fromString("0191a2f0-0000-7000-8000-000000000001")
   val home: UUID = UUID.fromString("0193c0f0-0000-7000-8000-000000000002")

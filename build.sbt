@@ -435,14 +435,16 @@ lazy val files = project
   .settings(commonDeps)
   .settings(libraryDependencies += "org.yaml" % "snakeyaml" % V.snakeyaml)
 
-// ── core: package `domain` — the logic server and db run on. JVM only. It depends on files, and on
-//    api and config for now (recorded, temporary edges: the domain works on wire records and takes
-//    config records as its settings). NO database code.
+// ── core: package `domain` — the logic server and db run on. JVM only. It depends on files and api
+//    (the wire records the domain works on where both sides have one shape, the pure helpers clients
+//    share, and the instances its own derived codecs need). Never on config: the domain takes settings
+//    records of its own, which the server converts from config. Its tests read reference.conf. NO
+//    database code.
 lazy val core = crossProject(JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("modules/core"))
   .dependsOn(values, api % "compile->compile;test->test")
-  .jvmConfigure(_.dependsOn(config % "compile->compile;test->test", files))
+  .jvmConfigure(_.dependsOn(config % "test->test", files))
   .settings(name := "histmersion-core")
   .settings(commonDeps)
   .settings(
@@ -456,7 +458,9 @@ lazy val core = crossProject(JVMPlatform)
   )
   .jvmSettings(
     // the build's pure helper is tested with the other suites (BuildTestGroupsSuite)
-    Test / unmanagedSources += (ThisBuild / baseDirectory).value / "project" / "TestGroups.scala"
+    Test / unmanagedSources += (ThisBuild / baseDirectory).value / "project" / "TestGroups.scala",
+    // the fixtures convert reference.conf's records into the domain's settings, as the server does
+    libraryDependencies += "io.scalaland" %% "chimney" % V.chimney % Test
   )
 
 lazy val coreJVM = core.jvm
@@ -479,10 +483,10 @@ lazy val pluginApi = project
 //    contract, secret resolution and staged registration (PluginHost), the acquisition client and its
 //    transports, the acquisition chain, and how the host reads a plugin's media collection, event
 //    catalogue and AI provider. The server runs it; the plugin testkit runs the SAME code, so a plugin's
-//    test sees what the server would. No database, no listener: core and plugin-api only.
+//    test sees what the server would. No database, no listener: core, config and plugin-api only.
 lazy val pluginHost = project
   .in(file("modules/plugin-host"))
-  .dependsOn(coreJVM % "compile->compile;test->test", pluginApi)
+  .dependsOn(coreJVM % "compile->compile;test->test", config, pluginApi)
   .settings(name := "histmersion-plugin-host")
   .settings(commonDeps)
   .settings(
@@ -653,7 +657,9 @@ lazy val db = project
       // (StaticLoggerBinder) is invisible to it and every library log was dropped with a
       // "No SLF4J providers were found" warning at startup (#824)
       "com.outr"        %% "scribe"                     % V.scribe,
-      "com.outr"        %% "scribe-slf4j2"              % V.scribe
+      "com.outr"        %% "scribe-slf4j2"              % V.scribe,
+      // the merge suites convert reference.conf's merge settings into the domain's, as the server does
+      "io.scalaland"    %% "chimney"                    % V.chimney % Test
     )
   )
 

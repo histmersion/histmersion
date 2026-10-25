@@ -1,9 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 /** Finding a quoted passage again in another text — the W3C Web Annotation TextQuoteSelector
   * (`exact` + `prefix` + `suffix`), as an attestation stores it (`quote`/`prefix`/`suffix`). Used when
