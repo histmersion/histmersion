@@ -482,7 +482,7 @@ lazy val pluginApi = project
 //    test sees what the server would. No database, no listener: core and plugin-api only.
 lazy val pluginHost = project
   .in(file("modules/plugin-host"))
-  .dependsOn(coreJVM, pluginApi)
+  .dependsOn(coreJVM % "compile->compile;test->test", pluginApi)
   .settings(name := "histmersion-plugin-host")
   .settings(commonDeps)
   .settings(

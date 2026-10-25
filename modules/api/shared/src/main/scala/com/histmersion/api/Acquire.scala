@@ -9,7 +9,8 @@ import com.histmersion.values.SourceStatus
   *
   * No I/O, no config lookups, no exceptions: every function here is a transformation, so all of it is
   * unit-testable without a network or a database. The network lives behind traits in the server
-  * module; the JSON shapes upstreams return are parsed by [[AcquireParse]].
+  * module; the JSON shapes upstreams return are parsed by plugin-host's `AcquireParse`, beside the
+  * acquisition client.
   */
 object Acquire:
 

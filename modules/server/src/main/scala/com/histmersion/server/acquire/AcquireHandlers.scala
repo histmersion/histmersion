@@ -2,7 +2,7 @@ package com.histmersion.server.acquire
 
 import com.histmersion.values.Citekey
 
-import com.histmersion.pluginhost.{FetchChain, OaFetcher, WorkLookup}
+import com.histmersion.pluginhost.{AcquireParse, FetchChain, OaFetcher, WorkLookup}
 
 import com.histmersion.api.*
 import com.histmersion.config.*

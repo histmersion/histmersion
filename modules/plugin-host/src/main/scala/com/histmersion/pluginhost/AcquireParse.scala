@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.pluginhost
 
 import com.histmersion.api.*
 import com.histmersion.api.given
@@ -151,13 +151,13 @@ object AcquireParse:
 
   /** Titles carry inline markup (`<i>c</i>. 1200 BC`, `H<sub>2</sub>O`): drop the tags WITHOUT a
     * space — they sit inside words — and collapse what is left. */
-  private[domain] def inlineMarkup(s: String): String =
+  private[pluginhost] def inlineMarkup(s: String): String =
     s.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim
 
   /** Some publishers deposit a chapter title with its first page glued on: "109Writing and Religion
     * in …". Digits running straight into a capitalised word are that page; "1177 B.C." (a space) and
     * "3.2 ka" are left alone. */
-  private[domain] def gluedPageNumber(s: String): String =
+  private[pluginhost] def gluedPageNumber(s: String): String =
     s.replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", "")
 
   /** A Crossref `works?query=` page → the works on it (the search fallback when OpenAlex is down). */
