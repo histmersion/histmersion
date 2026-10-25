@@ -227,7 +227,7 @@ final case class EventDetail(
     findings: List[EventFindingRef] = Nil,
     /** The articles that cite its attesting sources. */
     articles: List[EventArticleRef] = Nil,
-    /** Sources that POSSIBLY discuss it — proposed, unconfirmed ([[EventMatcher]]). */
+    /** Sources that POSSIBLY discuss it — proposed, unconfirmed (the domain's `EventMatcher`). */
     candidates: List[EventLinkCandidate] = Nil,
     /** The questions it raises ([[EventLeads]]). */
     leads: List[EventLead] = Nil,
@@ -402,7 +402,7 @@ object EventGeo:
   /** Pure: the years an event covers in every time view — its outer span (`notBefore` else `beginBy`,
     * to `notAfter` else `endFrom`). An OPEN-ENDED event (one end known, #1768) covers the end it states
     * alone — an event with only a start is an event at its start (its start window when `notBefore` and
-    * `beginBy` are both known), as [[CatalogDating.span]] writes a catalogue's — never every year after
+    * `beginBy` are both known), as the domain's `CatalogDating.span` writes a catalogue's — never every year after
     * it: an event still going on states an end (the present year); nothing is inferred from its kind.
     * An undated one, nothing. The database's generated `events.outer_span` (V089) is the same rule
     * (`EventOuterSpanSuite` checks the two agree), so the map's feed and the web draw the same years. */

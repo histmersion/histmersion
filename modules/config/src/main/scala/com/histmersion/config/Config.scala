@@ -504,7 +504,7 @@ final case class EventsConfig(
 ) derives ConfigReader
 
 /** `floorYear`: the earliest year a GVP dating may reach (the list is of HOLOCENE eruptions: a ± that
-  * runs before it is held there, [[CatalogDating.Limits]]). */
+  * runs before it is held there). */
 final case class EventsGvpConfig(url: String, pageSize: Int, windowYears: Long, requestIntervalMs: Int, regionMinVei: Int,
     outsideMinVei: Int, floorYear: Long) derives ConfigReader
 final case class EventsNoaaConfig(url: String, pageSize: Int, requestIntervalMs: Int, datasets: String,

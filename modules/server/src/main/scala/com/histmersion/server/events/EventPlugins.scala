@@ -2,7 +2,8 @@ package com.histmersion.server.events
 
 import com.histmersion.pluginhost.{HostOwned, PluginEvents}
 
-import com.histmersion.api.{BBox, CatalogDating, CatalogProvider, CatalogProviderInfo, CatalogRecord, EventTaxonomy, Historicity, TimeSpan}
+import com.histmersion.api.{BBox, CatalogProviderInfo, CatalogRecord, EventTaxonomy, Historicity, TimeSpan}
+import com.histmersion.domain.{CatalogDating, CatalogProvider}
 import com.histmersion.plugin.*
 import com.histmersion.server.acquire.fetchers.Builtin
 
