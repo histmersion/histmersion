@@ -242,7 +242,7 @@ object ManagersView:
       Option.when(f.changes.nonEmpty)(div(cls := "form-ok", f.changes.mkString("; ").take(400))),
       ul(cls := "job-list focus-active", f.active.map(g =>
         li(cls := "job-row",
-          span(cls := s"job-state state-${g.status}", g.stage),
+          GoalsView.badge(g.status, g.stage),
           div(cls := "job-main",
             div(cls := "job-subject", goalLink(g.slug), Option.when(g.pinned)(span(cls := "muted", " · pinned")),
               span(cls := "muted", s" · ${g.title}")),
@@ -254,7 +254,7 @@ object ManagersView:
         div(cls := "muted", s"next (${f.queued} waiting for a slot):"),
         ol(cls := "job-list focus-queue", f.queue.map(g =>
           li(cls := "job-row",
-            span(cls := s"job-state state-${g.status}", g.stage),
+            GoalsView.badge(g.status, g.stage),
             div(cls := "job-main",
               div(cls := "job-subject", goalLink(g.slug)),
               div(cls := "muted", g.why),
@@ -317,7 +317,7 @@ object ManagersView:
           s.focus.map(f => focusPanel(f, x => st.update(_.map(_.copy(focus = Some(x)))), failure)),
           ul(cls := "job-list autopilot-goals", s.goals.map(g =>
             li(cls := "job-row",
-              span(cls := s"job-state state-${g.status}", g.status),
+              GoalsView.badge(g.status),
               div(cls := "job-main",
                 div(cls := "job-subject",
                   button(typ := "button", cls := "link-btn", g.slug, onClick --> (_ => WindowManager.open(WindowKey.Goal(g.slug)))),

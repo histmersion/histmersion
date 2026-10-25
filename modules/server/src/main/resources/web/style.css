@@ -923,10 +923,13 @@ a.chip:hover { border-color:var(--accent); }
 .job-state.state-waiting { background:#2a2440; color:var(--accent); }
 .job-state.state-dry-run { background:#2a2440; color:var(--accent); margin-left:var(--gap-inline); }
 /* a research goal's stage (the autopilot's table in the managers window) */
-.job-state.state-planned { background:#2a2f3a; color:var(--muted); }
-.job-state.state-seeding { background:#2a2440; color:var(--accent); }
-.job-state.state-compiled { background:#1a2e3a; color:#6eb8e7; }
-.job-state.state-reviewed { background:#1a3a2a; color:var(--health-ok); }
+/* a research goal's stage: grey planned → red seeding → yellow compiled → green reviewed → blue done
+   (three classes, so a goal's "done" is blue where a job's is green) */
+.job-state.goal-status.state-planned { background:#2a2f3a; color:var(--health-unknown); }
+.job-state.goal-status.state-seeding { background:#3a1a1a; color:var(--health-down); }
+.job-state.goal-status.state-compiled { background:#3a331a; color:var(--health-busy); }
+.job-state.goal-status.state-reviewed { background:#1a3a2a; color:var(--health-ok); }
+.job-state.goal-status.state-done { background:#1a2e3a; color:#6eb8e7; }
 .autopilot { border-bottom:1px solid var(--line); padding-bottom:var(--gap-group); margin-bottom:var(--gap-group); }
 .autopilot-state { font-weight:600; color:var(--muted); align-self:center; margin-right:var(--gap-inline); }
 .autopilot-state.is-on { color:var(--health-ok); }
@@ -969,8 +972,9 @@ a.chip:hover { border-color:var(--accent); }
 .goal-tree { list-style:none; margin:0; padding:0; }
 .goal-row { display:flex; align-items:center; gap:8px; padding:4px 6px 4px calc(6px + var(--depth, 0) * 18px); border-radius:6px; }
 .goal-row:hover { background:var(--panel); }
-.goal-status.state-planned, .goal-status.state-seeding { background:#2a2f3a; color:var(--muted); }
-.goal-status.state-compiled, .goal-status.state-reviewed { background:#1a2e3a; color:#6eb8e7; }
+.goal-legend { list-style:none; margin:0 0 10px; padding:0 0 8px; display:flex; flex-wrap:wrap; gap:4px 16px;
+  font-size:12px; border-bottom:1px solid var(--line); }
+.goal-legend li { display:flex; align-items:center; gap:6px; }
 .goal-section { margin:12px 0; }
 .goal-section h4 { margin:0 0 4px; }
 .goal-links, .goal-schedules, .goal-runs { margin:2px 0 6px; padding-left:18px; font-size:12.5px; }
