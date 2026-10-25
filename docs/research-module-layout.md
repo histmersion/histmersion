@@ -166,7 +166,7 @@ classes regenerates both modules' reachability metadata with the tracing agent i
 | 5 | `config` module (JVM) from `core.config`; cli and db depend on it instead of core's JVM side | 1 day |
 | 6 | `api` module (JVM + JS) from `core.api`; web depends on `api` only. `domain` (what is left of core) may still depend on `api` here — a recorded, temporary edge — where domain logic works on wire records | 3–4 days |
 | 7 | Per area (sources, findings, places, events, articles, goals, queue, merge, media, agents, managers, acquire — ~12), remove the domain → api edge: a domain record where it must differ, Chimney transformers in server, the circe/tapir instances out of domain companions. cli then depends on `api` + `config` only | ~1 day per area, 10–12 days |
-| 8 | plugin-api newtypes for the values it exchanges (years, coordinates, DOI, Wikidata id, licence), refined-type transformers in the server's adapters; one SPI version bump, announced to plugin authors | 2 days |
+| 8 | plugin-api newtypes for the values it exchanges (years, coordinates, DOI, Wikidata id, licence), refined-type transformers in the server's adapters; one SPI version bump, announced to plugin authors (done: *Step 8 as built*) | 2 days |
 | 9 | MiMa (`sbt-mima-plugin`) on plugin-api against the last released version, at the first release that promises SPI compatibility | ½ day |
 
 Total for C: about 21–27 working days, of which step 7 is the bulk and can be spread over the areas'
@@ -842,6 +842,136 @@ events, AI) and in `server/plugins`; plugin-host now depends on config directly,
 conversions, so the step 8 newtypes for coordinates, years, DOIs and licences meet the domain there. The
 domain's media and event values (`MediaLicence`, `CatalogMerge.Tolerance`, `FigurePick.Rules`) are plain
 domain types the adapters can target.
+
+## Step 8 as built (#3967, 2026-10-25)
+
+plugin-api's own newtypes, the host's conversions, and one SPI version bump (SPI 2); then the CLI's plugin
+models as newtypes (#4110). Two commits, each compiling and passing the JVM suites of the modules it
+touched; `just test-it` passed once at the end.
+
+```
+plugin-api  JVM   the SPI and its own newtypes (Values.scala)               sconfig, kindlings-sconfig, iron
+plugin-host JVM   + SpiValues: plugin-api ↔ values                          core, config, plugin-api
+cli         JVM   PluginId, ScalaPackage, PluginRepository as newtypes       api (→ values → iron), config, files
+```
+
+**The inventory.** Every field and parameter of the SPI that is a plain `String`, `Int`, `Long` or `Double`,
+and what became of it. The rule: a value of the model the SPI exchanges about works, places, events and
+pictures gets plugin-api's own copy of the newtype the model has for it, over the same constraint; licence
+statements get one of their own. Names, vocabularies and measurements the host keeps as text or numbers stay
+plain, each for the reason given.
+
+| became a newtype | where | over |
+|---|---|---|
+| `Year` | `WorkKey.year`; `CatalogueQuery.from`/`to`; `CatalogueEvent.notBefore`/`notAfter`/`beginBy`/`endFrom`/`central`; `EventCatalogue.floorYear`; `MediaMatchRule.Map.maxYear` | `Int`, `Pure` (values' `Year`). The years were `Long` in the event and media parts: the host's own `Year` is `Int`, and every stored year fits it |
+| `Period` | `MediaPlace.period`, `MediaItem.period` (were `(Long, Long)`) | a private-constructor case class with `from` (refuses a period that ends before it starts) and `point`, as values' |
+| `Latitude`, `Longitude` | `MediaPlace.lat`/`lon`, `CatalogueEvent.lat`/`lon`, `CatalogueQuery.area` (four `Double`s → `(Longitude, Latitude, Longitude, Latitude)`) | `Double`, `Interval.Closed` (values') |
+| `Doi` | `WorkKey.doi` | `String`, values' `Match` |
+| `WikidataId` | `MediaPlace.wikidata`, `CatalogueEvent.wikidata` | `String`, values' `Match` |
+| `Licence` | `FetchedFile.licence`, `MediaRights.licence`, `EventCatalogue.licence` | `String`, `Pure`: a licence AS ITS PROVIDER STATES IT. The host reads and judges the statement (`MediaLicence`); a constraint would move that judgement into the plugin, which the SPI forbids, and the host must see an unreadable statement to refuse it with its reason |
+
+| stayed plain | why |
+|---|---|
+| `PluginInfo.id`, every `Registry.add` id, `SecretVault.name`, the AI provider name | names the host keys its config and registries by, as strings; it checks each at registration and refuses it with a reason in `plugin status`. No model value to convert to |
+| `PluginInfo.version`, `spiVersion` | a free-form version; a generation number compared for equality |
+| `WorkKey.arxiv`/`pmid`/`pmcid`/`archive`/`isbn`, `MediaItem.ids`, `MediaItem.geography`, `MediaItem.key`, `CatalogueEvent.id`/`group` | identifiers of other systems the host passes on unchecked; a constraint would drop ones it passes today |
+| `MediaCollection.role`, `CatalogueEvent.historicity`, `CatalogueEvent.kind`, `AiCheck.level` | vocabularies the model itself keeps as spelled strings (values' `MediaRole`, `Historicity`); the host checks membership with a reason (`kind` is open and normalised) |
+| `CatalogueEvent.vei`/`magnitude`/`deaths`/`plusMinus` | measurements stored as the catalogue states them (a negative ± is dropped, as before); a constraint would change which records are stored |
+| titles, labels, URLs, credits, authors, descriptions, citations, JSON text, `FetchedFile.source`/`extension` | free text |
+| `requestIntervalMs`, `perPlace`, `AiTurnRequest` and `AiUsage` counts, `AiHttpResponse.status`, `untilEpochMs`, `timeoutSeconds` | counts and protocol values the host uses as given |
+| `SecretRef` fields, `PluginContext.env(name)` | parsed by plugin-api's own `SecretRef.parse`; an environment variable's name |
+
+**The conversions** are `pluginhost/SpiValues`. Both sides keep copies over the same constraint, so a
+conversion is a free refined-type one (`values.Latitude(ok.value)`), which stops compiling when one side's
+constraint changes. Towards a plugin, a host value goes as it is; where the host still holds a plain value
+(stored years, coordinates, DOIs, Wikidata ids) it is parsed, and one that does not parse is left out (a
+query's years are held at what a `Year` holds; an area with a corner off the globe is left out — the host
+applies the area itself anyway). From a plugin, every value is checked again with plugin-api's own
+constraint before the free conversion, because a newtype is erased: a plugin that used `assume`, or was
+built against another constraint, can hand over anything. A value that fails is a `Left` naming it, and the
+record is refused: `q-1: catalogue 'zq': latitude 95.0 is not between -90 and 90`. A record the host cannot
+read at all (a boxed `Long` where a `Year` should be: an older SPI's shape) is refused, never thrown:
+`… handed over a record the host cannot read (ClassCastException: …) — is the plugin built against plugin
+SPI 2?`. A media item with such a period is unreadable (its rights a `Left` naming it), so it is never kept.
+`SpiValuesSuite` (plugin-host) covers both directions, the rejections (with `assume` standing in for such a
+plugin), the catalogue record, the media item and the query.
+
+What the host no longer does: SPI 1's host upper-cased a Wikidata id and dropped one that was none; under
+SPI 2 the type does that in the plugin, and one that still fails (`assume`) refuses the record. The old
+`its position is not on the globe` refusal became the newtype's (`latitude … is not between -90 and 90`).
+A media item's period was accepted in either order; a `Period` cannot be built reversed, and the conversion
+still orders its ends.
+
+**The SPI version.** `Spi.Version` was `val Version: Int = 1`: not a constant, so a plugin read it from the
+host's `Spi` at run time, and an SPI-1 jar loaded by a bumped host would have claimed the host's number. It
+is `inline val Version = 2` now: the number is compiled into the plugin (`iconst_2` in its `PluginInfo`), and
+`Spi$` has no `Version()` member left, so an SPI-1 jar fails to link on exactly that read.
+
+*Policy: refused, with a clear message* (nothing is released). `PluginHost.foreignSpi` recognises the
+`NoSuchMethodError` naming `com.histmersion.plugin.Spi$.Version()` as SPI 1, and any other linkage error
+naming an SPI member as "another plugin SPI"; `PluginHost.failure` turns it into `it was built against plugin
+SPI 1; this Histmersion speaks SPI 2 — rebuild the plugin against SPI 2 (`histmersion plugin repo` has its
+API)`. That message is what `plugin add` shows (refused before anything is installed), what the relink
+pre-flight (`PluginTool check`) refuses with, and what the server logs at startup, with the provider class
+named. Discovery now reads each plugin's `info` under the same guard (`PluginHost.described`), so a plugin
+whose `info` fails is reported, not thrown through `build`. A plugin built for another *declared* SPI (the
+`foreign-spi` fixture) is refused as before, now with "rebuild it against SPI 2" appended. The SPI-1
+compatibility shims of `FetchedFile` (its four-field `apply` and constructor) are gone. No compatibility path:
+an SPI-1 plugin's `CatalogueEvent` years are boxed `Long`s where SPI 2 reads `Int`s, which only a rebuild fixes.
+
+**The platform contract.** Iron joins plugin-api's dependencies (its POM lists it). It was already a platform
+library at the server's version (`io.github.iltotore:iron_3:3.4.1`), so `plugin-platform.txt` changed only in
+its header, which now says that sconfig, kindlings-sconfig-derivation and iron are also plugin-api's own
+dependencies; `PluginPlatformSuite` passes unchanged. No new reflection: the newtypes are opaque, their
+companions hold their runtime constraint in static finals (no lazy field), and `Period` is a plain case class.
+
+**The testkit.** `AcceptedEvent`'s dating fields are `Option[Year]`, as `CatalogueEvent`'s; `FetchReport.licence`
+stays the text the server records. The API contract (`plugin-testkit-api.txt`) did not change: it lists erased
+signatures, and an opaque newtype erases to its base type (`Option[Year]` and `Option[Long]` are both
+`scala.Option`).
+
+**The template and the built-ins.** `plugin new` writes SPI-2 code for every kind (`Doi(…)` in the fetcher's
+tests and `Doi.option` in its live check, `Licence(…)` in the media collection and the catalogue, `Year`,
+`Latitude.option`/`Longitude.option` in the catalogue, whose listed events' `year` is an `Int`); the agent notes
+say how the newtypes are built. The template check passed for every kind before the bundle (against the
+branch's plugin repository and the CLI on the JVM) and again in `smoke.sh`. The built-in fetchers, collections
+and catalogues, the fixtures, the testkit's kit plugins and the server's plugin suites speak the newtypes;
+developing.md has "SPI 2: what changed" (a table of every changed member and what a plugin changes).
+
+**#4110: the CLI's plugin models.** `PluginId`, `ScalaPackage` and `PluginRepository` were case classes with a
+private constructor and a hand-written check. They are `RefinedType`s over the same rules, their helpers
+(`typeName`, `packageName`, `path`) extensions, `parse` keeping the messages a person sees; `PluginRepository`'s
+`url` is its `.value`. Iron reaches the CLI through values (cli → api → values); its dependencies are unchanged.
+No CLI metadata entry named the three classes.
+
+**Unchanged wire, proved.** Batch 2's scratch suite dumped 2 674 117 bytes on master and after the SPI commit,
+byte-identical, and identical to step 7's last dump (the CLI commit changes no server code). `test-it`: 4 120
+tests, none failed.
+
+**Native-image metadata.** A tracing-agent run of the JVM server and CLI on an empty test database (step 7's
+run, plus `media providers` and `events catalogues`, which list the built-in collections and catalogues
+through the SPI types) changed neither file: server 1 143 reflection entries, CLI 640; plugin-api's 2. The
+bundle built (one `just bundle`), `smoke.sh` passed with its template check and the hello/hello-deps relink
+(`plugin hello 0.1.0 · SPI 2 · …`), and `--self-check` passed. The server binary is
+175 408 112 B, the CLI 74 057 936 B (74 057 952 B after step 7); the relink peaked at 11.7 GB.
+
+**The external plugin.** `histmersion-plugin-oabooks` was rebuilt against SPI 2 (its `WorkKey.doi`/`year`
+reads take `.value`; its tests build `Doi(…)`/`Year(…)`) as 0.2.0, tested (37 tests) and published with
+scala-cli against this branch's artifacts. Its 0.1.0 jar (SPI 1) is refused by this branch's `plugin add`
+with the rebuild message; 0.2.0 installs with its scala-xml, relinks a scratch copy of the bundle, and that
+binary's `--self-check` lists `oabooks 0.2.0 — registered (source-fetcher:oapen, source-fetcher:doab)`.
+
+A refusal of a jar whose provider could not be loaded still carries a line `was built for plugin SPI 0`
+before the real reason (`PluginKit.refusals` compares the SPI of a provider it could not describe); that
+was so before this step, and is left for a later change.
+
+**Plugin authors.** Rebuild against this release's plugin API: see developing.md, "SPI 2: what changed". An
+SPI-1 jar is refused at `plugin add`, at the relink and at startup with the message above.
+
+**What step 9 should know.** MiMa on plugin-api will guard erased signatures: an opaque newtype's constraint
+is not in them, so a tightened plugin-api constraint is invisible to MiMa. It is the host's re-check in
+`SpiValues` that keeps such a change safe, and `Spi.Version` (now compiled into each plugin) that tells the
+generations apart.
 
 ## Unresolved
 
