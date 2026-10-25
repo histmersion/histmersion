@@ -1,9 +1,7 @@
-package com.histmersion.domain
+package com.histmersion.files
 
 import com.histmersion.api.*
-import com.histmersion.config.*
 import com.histmersion.api.given
-import com.histmersion.config.given
 
 import org.yaml.snakeyaml.{DumperOptions, Yaml}
 import scala.jdk.CollectionConverters.*

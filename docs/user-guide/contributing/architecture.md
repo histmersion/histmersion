@@ -35,8 +35,8 @@ tools (`/mcp`), the REST API (`/api`), the server-rendered source and article pa
 | `values` | the newtypes every layer speaks of: `Citekey`, `Year`, `Period`, `Doi`, `WikidataId`, `LatLon` (JVM and Scala.js) | Iron only | — |
 | `api` | **the contract on the wire**: wire records · `Filter` · Tapir endpoint definitions · their codecs and schemas · Markdown rendering (JVM and Scala.js). No database code, no side effects. | `values` | — |
 | `config` | the config model: `AppConfig`, its readers, `reference.conf`, the reload plan | `values` | — |
-| `files` | the local files a client and the server exchange or keep: the `.hmx` bundle's container and canonical JSON · the merge resolution file · the article note · the plugin set and relink kit records · a directory's size | `api` | — |
-| `core` | **the domain**: the logic the server and the store run on · frontmatter parsing · export. No database code, no side effects. | `values`, `api`, `config`, `files` | — |
+| `files` | the local files a client and the server exchange or keep: the `.hmx` bundle's container and canonical JSON · the merge resolution file · the source and article notes of the Markdown mirror (frontmatter parsing, export) · the plugin set and relink kit records · a directory's size | `api` | — |
+| `core` | **the domain**: the logic the server and the store run on. No database code, no side effects. | `values`, `api`, `config`, `files` | — |
 | `db` | **the store**: Magnum repos over Postgres/PostGIS · Flyway migrations · the seed importer | `config`, `core` | — |
 | `server` | MCP (Chimp) + REST (Tapir/netty-sync) + article pages + the web UI. **The only database client.** | `core`, `db`, `plugin-api`, `plugin-host`, `plugin-vaults` | native image |
 | `cli` | **a pure HTTP client** of the server — sttp client derived from `api`'s endpoints. No pgjdbc, no DB credentials on the host. | `api`, `config`, `files` — **never** `core` or `db` | native image |
