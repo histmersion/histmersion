@@ -204,9 +204,9 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 @keyframes layer-fade-out { from { opacity:1; } to { opacity:0; } }
 .hd-fade-in  { animation:layer-fade-in .4s ease-out; }
 .hd-fade-out { animation:layer-fade-out .35s ease-in forwards; pointer-events:none; }
-@media (prefers-reduced-motion: reduce) {
-  .hd-fade-in, .hd-fade-out { animation-duration:1ms; }
-}
+/* the map's motion (#4718): `data-map-motion` on the root is web.map.MotionPref's answer — the reader's "Map
+   motion" setting, by default the system's prefers-reduced-motion — and every map animation below reads it */
+:root[data-map-motion="still"] .hd-fade-in, :root[data-map-motion="still"] .hd-fade-out { animation-duration:1ms; }
 /* the map's markers (web.map.DomMarker): each at its point (`--tx`/`--ty`, written as the map moves), a
    box centred on it when it has one; far outside the view it is hidden, not moved. A zoom that regroups the
    markers moves them out of (or into) their bubbles (`.hd-cluster-move`, web.map.ClusterMotion): an
@@ -231,9 +231,8 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-marker.hd-cluster-ghost.hd-cluster-move { animation:cluster-fly .25s cubic-bezier(.4, 0, 1, 1) forwards; }
 @keyframes cluster-arrive { 0%, 55% { opacity:0; } 100% { opacity:1; } }
 .hd-marker.hd-cluster-arrive { animation:cluster-arrive .25s ease-out; }
-@media (prefers-reduced-motion: reduce) {
-  .hd-marker.hd-cluster-move, .hd-marker.hd-cluster-ghost.hd-cluster-move, .hd-marker.hd-cluster-arrive { animation:none; }
-}
+:root[data-map-motion="still"] :is(.hd-marker.hd-cluster-move, .hd-marker.hd-cluster-ghost.hd-cluster-move,
+  .hd-marker.hd-cluster-arrive) { animation:none; }
 /* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */
 .pick-head { padding:10px 14px; border-bottom:1px solid var(--line); background:#161a23; }
 .pick-head .back { color:var(--accent); font-size:12px; text-decoration:none; }
@@ -394,10 +393,8 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .hd-map-label--l { font-size:15px; letter-spacing:.06em; text-transform:uppercase; }
 .hd-map-label.is-culled, .hd-area-point.is-culled { opacity:0; visibility:hidden; }
 .hd-by-findings .hd-map-label { font-style:italic; opacity:calc(var(--o, 1) * .8); }
-@media (prefers-reduced-motion: reduce) {
-  .hd-area-point { transition:opacity .22s, visibility .22s; }
-  .hd-area-point.is-culled { scale:1; }
-}
+:root[data-map-motion="still"] .hd-area-point { transition:opacity .22s, visibility .22s; }
+:root[data-map-motion="still"] .hd-area-point.is-culled { scale:1; }
 /* the map's controls (web.map Corner): the credits compact — one line that starts with © OpenStreetMap,
    all of it on a tap or hover — and the notice's corner rising above the right-hand corner where they would
    meet (BaseMaps.fitNotice) */
@@ -431,6 +428,7 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .map-option-row .field, .map-option-row input[type="range"] { flex:1; min-width:0; }
 .map-option.is-disabled label { color:var(--muted); cursor:default; }
 .map-option-why { color:var(--muted); font-size:var(--fs-xs); margin:2px 0 0 22px; overflow-wrap:anywhere; }
+.map-options-online .map-option-why, .map-motion-note { margin-left:0; }
 .map-option-row:last-child { justify-content:flex-end; display:flex; gap:var(--gap-inline); border-top:1px solid var(--line);
   padding-top:var(--space-2); }
 [data-layout="narrow"] .map-options { left:var(--pad); right:var(--pad); width:auto; }
@@ -1377,7 +1375,7 @@ a.chip:hover { border-color:var(--accent); }
   font-style:normal; font-weight:600; }
 .hd-event--regional .hd-area-point { font-style:normal; font-weight:700; font-variant:small-caps; letter-spacing:.08em;
   font-size:13px; }
-@media (prefers-reduced-motion: reduce) { .hd-event { transition:none; } }
+:root[data-map-motion="still"] .hd-event { transition:none; }
 
 /* ── icons on the map (#1449): ONE registry (web.Glyphs, Lucide), monochrome, drawn in currentColor ──── */
 .glyph { width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round;
@@ -1414,7 +1412,7 @@ a.chip:hover { border-color:var(--accent); }
 .hd-point.hd-badge--photo   { --glyph-size:14px; }
 .hd-point:hover { opacity:1; transform:scale(1.12); }
 .hd-point-wrap:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--radius-sm); }
-@media (prefers-reduced-motion: reduce) { .hd-point { transition:none; } }
+:root[data-map-motion="still"] .hd-point { transition:none; }
 /* a finding: its source's kind on a diamond; its period span a ring of four widths; coincident findings
    their count instead of an icon */
 .hd-find.ring-1::before { box-shadow:0 0 0 1px rgba(255,255,255,.35); }

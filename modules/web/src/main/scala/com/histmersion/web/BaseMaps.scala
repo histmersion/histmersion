@@ -5,6 +5,8 @@ import com.histmersion.api.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
+import scala.scalajs.js
+
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"; docs/research-map-styles.md):
   *
   *  - **Readable** and **Physical**, the two vector styles drawn from this server's own extracts
@@ -289,7 +291,7 @@ object BaseMaps:
       )
     )
 
-  /** The button that opens the options; disabled on an online map. */
+  /** The button that opens the options: the map's motion on every map, and the vector styles' own options. */
   private def optionsButton: HtmlElement =
     button(
       typ := "button",
@@ -299,8 +301,7 @@ object BaseMaps:
       htmlAttr("aria-haspopup", com.raquo.laminar.codecs.StringAsIsCodec) := "dialog",
       aria.controls := "map-options",
       aria.expanded <-- open.signal,
-      disabled <-- onVector.map(!_),
-      title <-- onVector.map(b => if b then "Map options: names, their language, contours, the sea's depth" else "Map options — for Readable and Physical"),
+      title <-- onVector.map(b => if b then "Map options: names, their language, contours, the sea's depth; map motion" else "Map options: map motion"),
       Icon(Icon.MapContours),
       onClick --> { _ => open.update(!_) }
     )
@@ -376,44 +377,72 @@ object BaseMaps:
       cls := "map-options",
       role := "dialog",
       aria.label := "map options",
-      cls("is-hidden") <-- open.signal.combineWith(onVector).map((o, v) => !o || !v),
-      div(cls := "map-option",
-        label_(
-          input(typ := "checkbox", cls := "map-option-names",
-            checked <-- UiState.mapOptions.signal.map(_.names.getOrElse(true)),
-            onInput.mapToChecked --> (on => setPrefs(_.copy(names = Option.when(!on)(false))))),
-          span("Names"))),
-      div(cls := "map-option map-option-row",
-        label_(span("Language"),
-          select(cls := "field map-language-select", aria.label := "names' language",
-            disabled <-- UiState.mapOptions.signal.map(_.names.contains(false)),
-            languageChoices(defaultLanguage).map((code, name) => option(value := code, name)),
-            controlled(
-              value <-- UiState.mapOptions.signal.map(_.language.getOrElse(defaultLanguage)),
-              onChange.mapToValue --> (v => setPrefs(_.copy(language = Option.when(v != defaultLanguage)(v)))))))),
-      div(cls := "map-option",
-        cls("is-disabled") <-- why.map(_.isDefined),
-        label_(
-          input(typ := "checkbox", cls := "map-option-contours", disabled <-- why.map(_.isDefined),
-            checked <-- UiState.mapOptions.signal.combineWith(why).map((p, w) => w.isEmpty && p.contours.getOrElse(true)),
-            onInput.mapToChecked --> (on => setPrefs(_.copy(contours = Option.when(!on)(false))))),
-          span("Contour lines")),
-        child.maybe <-- why.combineWith(note).map((w, n) => w.orElse(n).map(t => div(cls := "map-option-why map-option-contours-why", t)))),
-      div(cls := "map-option",
-        cls("is-disabled") <-- depthWhy.map(_.isDefined),
-        label_(
-          input(typ := "checkbox", cls := "map-option-depth", disabled <-- depthWhy.map(_.isDefined),
-            checked <-- UiState.mapOptions.signal.combineWith(shown.signal, depthWhy).map((p, b, w) =>
-              w.isEmpty && b.vector.exists(p.seaDepth)),
-            onInput.mapToChecked --> (on => shown.now().vector.foreach(v => setPrefs(_.withSeaDepth(v, on))))),
-          span("Sea depth")),
-        child.maybe <-- depthWhy.map(_.map(w => div(cls := "map-option-why map-option-depth-why", w)))),
+      cls("is-hidden") <-- open.signal.map(!_),
+      // the vector styles' own options: on an online map, a line that says where they are
+      div(cls := "map-options-vector", cls("is-hidden") <-- onVector.map(!_),
+        div(cls := "map-option",
+          label_(
+            input(typ := "checkbox", cls := "map-option-names",
+              checked <-- UiState.mapOptions.signal.map(_.names.getOrElse(true)),
+              onInput.mapToChecked --> (on => setPrefs(_.copy(names = Option.when(!on)(false))))),
+            span("Names"))),
+        div(cls := "map-option map-option-row",
+          label_(span("Language"),
+            select(cls := "field map-language-select", aria.label := "names' language",
+              disabled <-- UiState.mapOptions.signal.map(_.names.contains(false)),
+              languageChoices(defaultLanguage).map((code, name) => option(value := code, name)),
+              controlled(
+                value <-- UiState.mapOptions.signal.map(_.language.getOrElse(defaultLanguage)),
+                onChange.mapToValue --> (v => setPrefs(_.copy(language = Option.when(v != defaultLanguage)(v)))))))),
+        div(cls := "map-option",
+          cls("is-disabled") <-- why.map(_.isDefined),
+          label_(
+            input(typ := "checkbox", cls := "map-option-contours", disabled <-- why.map(_.isDefined),
+              checked <-- UiState.mapOptions.signal.combineWith(why).map((p, w) => w.isEmpty && p.contours.getOrElse(true)),
+              onInput.mapToChecked --> (on => setPrefs(_.copy(contours = Option.when(!on)(false))))),
+            span("Contour lines")),
+          child.maybe <-- why.combineWith(note).map((w, n) => w.orElse(n).map(t => div(cls := "map-option-why map-option-contours-why", t)))),
+        div(cls := "map-option",
+          cls("is-disabled") <-- depthWhy.map(_.isDefined),
+          label_(
+            input(typ := "checkbox", cls := "map-option-depth", disabled <-- depthWhy.map(_.isDefined),
+              checked <-- UiState.mapOptions.signal.combineWith(shown.signal, depthWhy).map((p, b, w) =>
+                w.isEmpty && b.vector.exists(p.seaDepth)),
+              onInput.mapToChecked --> (on => shown.now().vector.foreach(v => setPrefs(_.withSeaDepth(v, on))))),
+            span("Sea depth")),
+          child.maybe <-- depthWhy.map(_.map(w => div(cls := "map-option-why map-option-depth-why", w))))),
+      div(cls := "map-option map-options-online", cls("is-hidden") <-- onVector,
+        div(cls := "map-option-why", "Names, contours and the sea's depth are options of Readable and Physical.")),
+      motionOption,
       div(cls := "map-option map-option-row",
         button(typ := "button", cls := "btn btn--ghost btn--sm map-options-reset", "Reset",
           disabled <-- UiState.mapOptions.signal.map(_ == MapPrefs()),
           onClick --> { _ => setPrefs(_ => MapPrefs()) }),
         button(typ := "button", cls := "btn btn--ghost btn--sm map-options-close", "Close", onClick --> { _ => close() }))
     )
+
+  /** The map's motion (#4718), on every base map: follow the system's reduced-motion setting, always animate,
+    * or never ([[MotionPref]]); and, when it follows the system and the system asks for reduced motion, a line
+    * that says why nothing moves. */
+  private def motionOption: HtmlElement =
+    div(cls := "map-option map-option-row map-option-motion",
+      label_(span("Map motion"),
+        select(cls := "field map-motion-select", idAttr := "map-motion-select", aria.label := "map motion",
+          aria.describedBy <-- MotionPref.heldBySystem.map(h => if h then "map-motion-note" else ""),
+          MapMotion.values.toList.map(m => option(value := m.wire, m.label)),
+          controlled(
+            value <-- UiState.mapMotion.signal.map(_.wire),
+            onChange.mapToValue --> (v => MapMotion.fromWire(v).foreach(m => UiState.set(UiState.mapMotion := m)()))))),
+      child.maybe <-- MotionPref.heldBySystem.map(h => Option.when(h)(
+        div(idAttr := "map-motion-note", cls := "map-option-why map-motion-note", role := "note", MotionNote))))
+
+  /** The line under "Map motion" while the system's setting keeps the map still. */
+  val MotionNote = "Animations are off because your system asks for reduced motion."
+
+  /** The panel's first control a reader can reach (an online map hides the vector styles' options). */
+  private def firstControl(): Option[dom.HTMLElement] =
+    dom.document.querySelectorAll("#map-options input, #map-options select").toList
+      .map(_.asInstanceOf[dom.HTMLElement]).find(e => e.offsetParent != null && !e.asInstanceOf[js.Dynamic].disabled.asInstanceOf[Boolean])
 
   /** Where the panel goes: under its button, its right edge at the button's — moved left or right to stay
     * inside the window. Pure. */
@@ -443,7 +472,6 @@ object BaseMaps:
       aria.label := "base map",
       baseSelect,
       div(cls := "map-options-anchor", optionsButton, panel),
-      onVector --> { v => if !v then open.set(false) },
       documentEvents(_.onKeyDown) --> { e => if e.key == "Escape" && open.now() then close() },
       documentEvents(_.onPointerDown) --> { e =>
         val t = e.target.asInstanceOf[dom.Element]
@@ -451,7 +479,7 @@ object BaseMaps:
       },
       open.signal.changes.filter(identity) --> { _ =>
         place()
-        dom.window.setTimeout(() => Option(dom.document.querySelector("#map-options input")).foreach(_.asInstanceOf[dom.HTMLElement].focus()), 0)
+        dom.window.setTimeout(() => firstControl().foreach(_.focus()), 0)
       },
       windowEvents(_.onResize) --> { _ => if open.now() then place() }
     )

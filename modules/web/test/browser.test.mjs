@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { appendFileSync } from 'node:fs';
 import { engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
+import { routeFullLoad } from './perf-fixtures.mjs';
+import { fullLoadView, motionTrace } from './perf-paths.mjs';
+import { trackRequests } from './perf-lib.mjs';
 
 // Use a separately started test server; these tests only GET data and change browser-local state.
 const baseURL = process.env.HISTMERSION_SERVER_URL;
@@ -1210,6 +1213,120 @@ test('a zoom slides the points of a split bubble out and flies merging points in
   }
 });
 
+// #4718: the reader's "Map motion" (map options), per device — follow the system's reduced-motion setting (the
+// default), always animate, or never — at what the page really holds with every layer on over a period (the
+// full load: 500 findings, 200 sites, 200 pictures, up to 1 500 events in view, 140 polities). Each zoom is
+// traced frame by frame: the regroup's motion (markers moving while the camera stands) and the camera's ease
+// (asked by the app, and by MapLibre's own zoom button). Reported with HISTMERSION_TEST_MOTION_REPORT=1.
+const MOTION_MODES = [
+  // [the choice kept (null: never chosen), the system asks for reduced motion, the map animates]
+  [null, true, false],
+  ['always', true, true],
+  ['never', false, false],
+  [null, false, true],
+];
+for (const viewport of [{ width: 1920, height: 1080 }, { width: 390, height: 844 }]) {
+  test(`map motion at ${viewport.width}×${viewport.height}, every layer on: follow the system, always, never`, async () => {
+    await withPage(viewport, async page => {
+      trackRequests(page);
+      await routeFullLoad(page);
+      for (const [motion, reduced, animates] of MOTION_MODES) {
+        const what = `${motion ?? 'follow the system'}${reduced ? ' (system: reduce)' : ''}`;
+        await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' });
+        const held = await fullLoadView(page, baseURL, { motion });
+        assert.ok(held.held >= 300 && held.drawn > 0, `${what}: the full load is held: ${JSON.stringify(held)}`);
+        assert.equal(await page.evaluate(() => document.documentElement.dataset.mapMotion), animates ? 'animate' : 'still', what);
+        // the app's zooms across whole levels: the regroup and the camera
+        const zooms = [];
+        for (const z of [6, 7, 6, 5]) zooms.push(await motionTrace(page, z));
+        // MapLibre's own zoom button: its camera alone
+        const button = await motionTrace(page, null, { button: 'in' });
+        if (process.env.HISTMERSION_TEST_MOTION_REPORT) console.log(`# motion ${engineName} ${viewport.width}x${viewport.height} ${what} ` +
+          JSON.stringify({ held, zooms: zooms.map(({ animated, zoomMs, cameraFrames, motionFrames, maxMoved, ghosts, longestFrameMs }) =>
+            ({ animated, zoomMs, cameraFrames, motionFrames, maxMoved, ghosts, longestFrameMs })),
+          button: { zoomMs: button.zoomMs, cameraFrames: button.cameraFrames, longestFrameMs: button.longestFrameMs } }));
+        const motionFrames = zooms.reduce((n, z) => n + z.motionFrames, 0);
+        if (animates) {
+          assert.ok(zooms.some(z => z.animated), `${what}: a zoom regroups with motion: ${JSON.stringify(zooms)}`);
+          assert.ok(motionFrames >= 3, `${what}: markers move across frames after the zoom: ${motionFrames}`);
+          for (const z of zooms) assert.ok(z.zoomMs >= 150 && z.cameraFrames >= 5, `${what}: the camera eases: ${JSON.stringify(z)}`);
+          // (the button's time includes the click's own round trip: its frames say whether the camera eased)
+          assert.ok(button.cameraFrames >= 5, `${what}: MapLibre's zoom button eases: ${JSON.stringify(button)}`);
+        } else {
+          assert.ok(zooms.every(z => !z.animated && z.ghosts === 0), `${what}: no regroup motion: ${JSON.stringify(zooms)}`);
+          assert.equal(motionFrames, 0, `${what}: no marker moves while the camera stands`);
+          for (const z of zooms) assert.ok(z.zoomMs < 100 && z.cameraFrames <= 3, `${what}: the camera jumps: ${JSON.stringify(z)}`);
+          assert.ok(button.cameraFrames <= 3, `${what}: MapLibre's zoom button jumps: ${JSON.stringify(button)}`);
+        }
+        // the note: only while following the system and the system asks for reduced motion (on a phone the map's
+        // tools are in their drawer)
+        if (viewport.width < 760) await page.locator('.mb-maptools').click();
+        await page.locator('.map-options-btn').click();
+        await page.locator('.map-motion-select').waitFor();
+        assert.equal(await page.locator('.map-motion-select').inputValue(), motion ?? 'system');
+        const note = page.locator('.map-motion-note');
+        if (motion === null && reduced) {
+          assert.match(await note.innerText(), /Animations are off because your system asks for reduced motion/);
+          // inside the menu, never over the map when the menu is closed
+          await page.keyboard.press('Escape');
+          await page.locator('.map-options').waitFor({ state: 'hidden' });
+          assert.equal(await note.isVisible(), false, 'the note goes with the menu');
+        } else {
+          assert.equal(await note.count(), 0, `${what}: no note`);
+          await page.keyboard.press('Escape');
+        }
+      }
+    });
+  });
+}
+
+// #4718: the control itself — on every base map, reached by the keyboard, labelled; the choice applies at once
+// (the note follows the system's setting live) and is kept across a reload.
+test('map motion: the control is reached by the keyboard, applies at once, follows the system live, and is kept', async () => {
+  await withPage({ width: 1280, height: 800 }, async page => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.evaluate(() => localStorage.removeItem('histmersion.ui.mapMotion'));
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    const attr = () => page.evaluate(() => document.documentElement.dataset.mapMotion);
+    assert.equal(await attr(), 'still', 'follows the system: still');
+    // the options button opens the menu from the keyboard on any base map; its first control takes the focus
+    await page.locator('.map-options-btn').focus();
+    await page.keyboard.press('Enter');
+    await page.locator('.map-motion-select').waitFor();
+    const online = await page.evaluate(() => !document.getElementById('map').classList.contains('basemap-vector'));
+    if (online) assert.equal(await page.evaluate(() => document.activeElement?.id), 'map-motion-select', 'the motion setting has the focus');
+    assert.equal(await page.locator('.map-motion-select').getAttribute('aria-label'), 'map motion');
+    assert.equal(await page.locator('.map-option-motion label > span').innerText(), 'Map motion');
+    assert.deepEqual(await page.locator('.map-motion-select option').allInnerTexts(), ['Follow the system', 'Always animate', 'Never animate']);
+    await page.locator('.map-motion-note').waitFor();
+    assert.equal(await page.locator('.map-motion-select').getAttribute('aria-describedby'), 'map-motion-note');
+    // the system's setting changes: followed at once, the note goes
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.waitForFunction(() => document.documentElement.dataset.mapMotion === 'animate');
+    await page.locator('.map-motion-note').waitFor({ state: 'detached' });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.locator('.map-motion-note').waitFor();
+    // always: applies at once, without a reload
+    await page.locator('.map-motion-select').selectOption('always');
+    await page.waitForFunction(() => document.documentElement.dataset.mapMotion === 'animate');
+    await page.locator('.map-motion-note').waitFor({ state: 'detached' });
+    assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('histmersion.ui.mapMotion'))), ['always']);
+    // kept across a reload, never in the link
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    assert.equal(await attr(), 'animate');
+    assert.ok(!page.url().includes('mapMotion'));
+    await page.locator('.map-options-btn').click();
+    assert.equal(await page.locator('.map-motion-select').inputValue(), 'always');
+    await page.locator('.map-motion-select').selectOption('never');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    assert.equal(await attr(), 'still', 'never: still whatever the system says');
+  });
+});
+
 // The user's "the circles that group sources should group every kind of dot": findings, sites, events and
 // pictures join ONE cluster group; a bubble counts only what is shown (a layer switched off, the year window
 // moved), says what it holds, splits on zoom-in, and its list shows every kind with its icon.
@@ -2052,7 +2169,12 @@ test('the base map: Readable and Physical drawn from the server\'s extract (the 
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
   await withPage({ width: 1280, height: 800 }, async page => {
     assert.deepEqual((await page.evaluate(baseMapState)).options, ['readable', 'physical', 'standard', 'muted', 'dark']);
-    assert.ok(await page.locator('.map-options-btn').isDisabled(), 'no options on an online map');
+    // an online map: the options hold the map's motion alone (#4718), the vector styles' own options hidden
+    await page.locator('.map-options-btn').click();
+    await page.locator('.map-motion-select').waitFor();
+    assert.ok(!(await page.locator('.map-option-names').isVisible()), 'no vector options on an online map');
+    assert.ok(await page.locator('.map-options-online').isVisible());
+    await page.keyboard.press('Escape');
     await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 8));
     await chooseBaseMap(page, 'readable');
     let st = await page.evaluate(baseMapState);
@@ -2084,7 +2206,9 @@ test('the base map: Readable and Physical drawn from the server\'s extract (the 
     await page.locator('.map-base-select').selectOption('dark');
     await page.waitForFunction(() => !document.querySelector('.terrain-notice') && !document.getElementById('map').classList.contains('basemap-vector'));
     assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-dark')));
-    assert.ok(await page.locator('.map-options-btn').isDisabled());
+    await page.locator('.map-options-btn').click();
+    assert.ok(!(await page.locator('.map-option-names').isVisible()) && await page.locator('.map-motion-select').isVisible());
+    await page.keyboard.press('Escape');
     await page.locator('.map-base-select').selectOption('standard');
     // an online map's credits: the box holds them alone
     await page.waitForFunction(() => /OpenStreetMap/.test(document.querySelector('.map-foot .map-credits')?.textContent ?? '') &&

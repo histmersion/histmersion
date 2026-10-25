@@ -10,7 +10,6 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import scala.util.Try
 
 /** The NAMES on the map: every region and polity on the boundaries layer is named, and the names that
   * would collide are thinned out, events first, then larger shapes ([[LabelPlacement]] decides where
@@ -339,8 +338,8 @@ object MapLabels:
   /** The map's zoom now (the raster grid's) — fractional in a zoom. */
   private def zoomNow(): Double = map.zoom
 
-  private def reducedMotion(): Boolean =
-    Try(dom.window.matchMedia("(prefers-reduced-motion: reduce)").matches).getOrElse(false)
+  /** The names snap instead of easing when the map does not animate (the reader's "Map motion", #4718). */
+  private def reducedMotion(): Boolean = !MotionPref.animate()
 
   /** The settled viewport in the zoom-0 plane. */
   private def viewNow(zoom: Double): Rect =

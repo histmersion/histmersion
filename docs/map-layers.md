@@ -152,6 +152,14 @@ than `Layout.clusterAnimateMax` markers drawn (in view and its margin, before or
 zooms without its split/merge animation (`ClusterMotion`; counted by the points held until #4291, so a wide
 window, whose view fetches more events, lost the animation a phone kept).
 
+**Whether the map moves at all** is `web.map.MotionPref` (#4718): the reader's *Map motion* (`UiState.mapMotion`,
+per device: follow the system — the default —, always, never) over the system's `prefers-reduced-motion`,
+followed live. Every motion of the map asks it — the regroup (`PointSet.layout`), the names' easing
+(`MapLabels`), the camera (`MapLibreSurface`: each `setView`/`fitBounds`/`panBy` the app makes eases only when
+the map animates, and then `essential`; MapLibre's own gestures through its `reduceMotion` option, set when
+the map is made) — and the stylesheet's map transitions read its answer from the root's `data-map-motion`
+(`animate` | `still`), not from the media query. Nothing else on the page reads it.
+
 `PointKindsSuite` runs the same assertions over all four descriptors (shape, glyph, aria, title, the
 filter predicate, the cluster count), so the kinds cannot drift apart again.
 

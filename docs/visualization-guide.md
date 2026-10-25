@@ -147,6 +147,11 @@ Every point on the map — findings, sites, events, pictures — is drawn by ONE
   `Layout.clusterAnimateMax` (1 000) markers drawn the group redraws at once (the map's own zoom still
   animates). Since #4291 the limit counts the markers on screen, not the points held: a desktop window's
   view holds ~2 000 events and findings and draws a few hundred markers, and keeps the animation.
+- **Motion is the reader's to switch off** (#4718): the regroup, the names' easing and the camera's ease all
+  follow *Map motion* in the map options (`web.map.MotionPref`): by default the system's reduced-motion
+  setting, or always, or never. Nothing the map shows depends on motion: with it off every change lands in
+  one step, in the same place. A map animation added later reads `MotionPref.animate()` (code) or
+  `:root[data-map-motion="still"]` (stylesheet), never `prefers-reduced-motion` directly.
 - **The same icons everywhere**: the toolbar's layer switches are the shapes (outlined), the legend's key
   shows them with their meaning and every glyph with its name, the filter menus show each option's badge
   (key and menus alike: the map's shape at ≥ 22 px, a 14 px glyph, on a neutral grey fill that stands off

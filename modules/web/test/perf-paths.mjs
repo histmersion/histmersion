@@ -340,3 +340,82 @@ export async function playback(page, baseURL, from, to, seconds = 4) {
     findingsRequestsPerSecond: per(asked.findings), placesRequestsPerSecond: per(asked.places),
     outlineUploadsPerSecond: per(l.uploads) };
 }
+
+// ── map motion (#4718) ──────────────────────────────────────────────────────────────────────────────
+
+/** The full load (perf-fixtures `fullLoad`, routed by the caller) with every layer on over its period, the
+  * reader's "Map motion" `motion` kept on this device (`null`: never chosen), the view at `at`, zoom `from`. */
+export async function fullLoadView(page, baseURL, { motion = null, at = [40, 24], from = 5, hash = '#from=-1600&to=-1100',
+  layers = '["boundaries","sites","media","events"]' } = {}) {
+  await page.goto(new URL('/', baseURL).href);
+  await page.evaluate(([l, m]) => {
+    localStorage.clear();
+    localStorage.setItem('histmersion.ui.layers', l);
+    if (m) localStorage.setItem('histmersion.ui.mapMotion', JSON.stringify([m]));
+  }, [layers, motion]);
+  await page.goto(new URL('/' + hash, baseURL).href);
+  await page.reload();
+  await ready(page);
+  await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, from]);
+  await settled(page);
+  await page.waitForTimeout(300);
+  return page.evaluate(() => ({ held: window.__testMap.points(),
+    drawn: document.querySelectorAll('#map .hd-pane--markers .hd-marker, #map .hd-pane--events .hd-marker, #map .hd-pane--sites .hd-marker').length }));
+}
+
+/** One zoom to `zoom`, traced frame by frame: asked through the app (`setZoom`, the cluster regroup's path) or
+  * by a click on MapLibre's own zoom button (`button`: `in` | `out`, MapLibre's camera alone). From the ask to
+  * 600 ms after the zoom's end, every frame: how many markers moved on screen (their centre > 0.5 px since the
+  * previous frame) while the camera stood as on the frame before — the regroup's motion — and whether the
+  * camera moved.
+  * `zoomMs`: the ask → the zoom's end (an eased zoom ~250–500 ms, a jump a frame or two); `cameraFrames`: frames
+  * on which the camera moved; `motionFrames`: frames after the zoom's end on which markers moved; `ghosts`:
+  * the most markers flying into a bubble on one frame; `longestFrameMs`: the longest frame interval. */
+export async function motionTrace(page, zoom, { button = null } = {}) {
+  const traced = page.evaluate(([z, viaButton]) => new Promise(resolve => {
+    const map = window.__testMap, a0 = map.clusterAnimations();
+    const sel = '#map .hd-pane--markers .hd-marker, #map .hd-pane--events .hd-marker, #map .hd-pane--sites .hd-marker';
+    const out = { cameraFrames: 0, motionFrames: 0, maxMoved: 0, ghosts: 0, longestFrameMs: 0, frames: 0 };
+    let prev = new Map(), tPrev = performance.now(), ended = false, tEnd = 0, camPrev = '';
+    const start = performance.now();
+    map.once('zoomend', () => { ended = true; tEnd = performance.now(); out.zoomMs = Math.round(tEnd - start); });
+    const f = () => {
+      const now = performance.now(), cur = new Map();
+      let moved = 0;
+      for (const e of document.querySelectorAll(sel)) {
+        if (e.classList.contains('is-offscreen')) continue;
+        const b = e.getBoundingClientRect(), c = [b.left + b.width / 2, b.top + b.height / 2];
+        cur.set(e, c);
+        const p = prev.get(e);
+        if (p && Math.hypot(p[0] - c[0], p[1] - c[1]) > 0.5) moved++;
+      }
+      // the camera as it stands: a frame on which it changed (an ease, or a jump's one frame) moves every marker
+      const c = map.getCenter(), cam = `${map.getZoom()},${c.lat},${c.lng}`;
+      const still = cam === camPrev && !map.isMoving();
+      out.frames++;
+      out.longestFrameMs = Math.max(out.longestFrameMs, Math.round(now - tPrev));
+      if (cam !== camPrev) out.cameraFrames++;
+      else if (still && ended && moved > 0) { out.motionFrames++; out.maxMoved = Math.max(out.maxMoved, moved); }
+      camPrev = cam;
+      out.ghosts = Math.max(out.ghosts, document.querySelectorAll('.hd-cluster-ghost').length);
+      prev = cur; tPrev = now;
+      if (!ended || now - tEnd < 600) requestAnimationFrame(f);
+      else resolve({ ...out, animated: map.clusterAnimations() > a0, reached: Math.round(map.getZoom() * 100) / 100 });
+    };
+    requestAnimationFrame(f);
+    if (!viaButton) map.setZoom(z);
+  }), [zoom, button]);
+  if (button) await page.locator(button === 'in' ? '.maplibregl-ctrl-zoom-in' : '.maplibregl-ctrl-zoom-out').click();
+  const r = await traced;
+  await quiet(page, 300);
+  return r;
+}
+
+/** Zooms across whole levels with the full load (#4718's budget): the frame figures of all of them, and how
+  * many animated their regroup. */
+export async function fullLoadZooms(page, zooms = [6, 7, 6, 5]) {
+  const runs = [];
+  const m = await measure(page, async () => { for (const z of zooms) runs.push(await motionTrace(page, z)); });
+  return { ...m, zooms: zooms.length, notAnimated: runs.filter(r => !r.animated).length,
+    motionFrames: runs.reduce((s, r) => s + r.motionFrames, 0), longestFrameMs: Math.max(...runs.map(r => r.longestFrameMs)) };
+}

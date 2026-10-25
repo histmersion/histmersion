@@ -39,7 +39,8 @@ The menu at the end of the layer buttons picks the map under your data — one o
   map yet, or when `ui.base-map-source = "online"`. Once the download is complete, the page asks no
   other computer for anything: [Working offline](../how-to/offline.md).
 
-The button beside the menu opens the **map options** for Readable and Physical: the names on or off,
+The button beside the menu opens the **map options**: on every base map the [map motion](#map-motion),
+and for Readable and Physical the names on or off,
 their language (*English*, *Local* — each name in its own language and script — or another), the sea
 coloured by its depth (on in Physical, off in Readable), and in Physical the contour lines. They stay open while you change things (Escape, or *Close*, closes them),
 each change shows at once, and they are remembered by this browser until **Reset**. An option the map
@@ -58,6 +59,35 @@ for missing data, the command that fetches it. A base map the download cannot dr
 <figure markdown>
   ![The map options over the Physical map: names, their language, contour lines](../assets/screenshots/map-options.png){ loading=lazy }
 </figure>
+
+### Map motion
+
+The map moves when you zoom: groups of points split as you zoom in and merge as you zoom out (the
+points slide out of a bubble, or fly into it), names grow and shrink into place, and the zoom itself
+glides instead of jumping. **Map motion**, in the map options, decides whether it does:
+
+| choice | what the map does |
+|---|---|
+| **Follow the system** (the default) | moves, unless your computer or phone asks for reduced motion — then everything on the map jumps to its new place |
+| **Always animate** | moves, whatever the system asks |
+| **Never animate** | jumps, whatever the system asks |
+
+The choice is kept by this browser on this device — another browser or another device keeps its own —
+and applies at once. While the setting follows the system and the system asks for reduced motion, a
+line under it says *Animations are off because your system asks for reduced motion*. "Follow the
+system" also follows a change made while the page is open. The map's own **+**/**−** buttons, a
+double click, the keyboard's zoom keys and the glide after a drag take a new choice when the page is
+next loaded. The rest of the page (the side panel, the sheet on a phone) is not affected.
+
+Where the system's setting is:
+
+- **macOS**: System Settings → Accessibility → Display → **Reduce motion**;
+- **iOS and iPadOS**: Settings → Accessibility → Motion → **Reduce Motion**;
+- **Android**: Settings → Accessibility → Colour and motion (or Visibility enhancements) → **Remove
+  animations** (the name and the place vary by maker);
+- **Windows 11**: Settings → Accessibility → Visual effects → **Animation effects** (off asks for
+  reduced motion); Windows 10: Settings → Ease of Access → Display → **Show animations in Windows**;
+- **Linux (GNOME)**: Settings → Accessibility → **Reduce Animation** (or *Enable Animations* off).
 
 !!! warning "Today's landscape, not the past's"
     Readable and Physical are drawn from **present-day** data. Coastlines have moved (silted harbours

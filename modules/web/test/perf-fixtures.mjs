@@ -116,3 +116,66 @@ export async function routeFixtures(page) {
   await page.route(/\/source\/zz_src_\d+/, r => r.fulfill({ body: sourceHtml(new URL(r.request().url()).pathname.split('/').pop()), contentType: 'text/html' }));
   await page.route(/\/api\/facets(\?|$)/, r => json(r, facets(new URL(r.request().url()).searchParams.get('prefix') ?? '')));
 }
+
+// ── every layer on (#4718) ──────────────────────────────────────────────────────────────────────────
+
+/** What the page really holds with every layer on over a period (#4718): 500 findings, 200 sites, 200 pictures,
+  * 1 500 events — all dated inside −1600…−1100, over Europe, the Mediterranean and the Near East (5° W–55° E,
+  * 28–52° N) — and 140 polity shapes alive in the period. The points stand around 80 centres (within 1.5° of
+  * one), as the corpus's evidence clusters at its sites: a 1920×1080 window then draws 206–345 markers over
+  * zooms 5–7, as the live corpus does (a restored copy, 2026-10-25: at most 328) — the same counts scattered
+  * evenly drew 400–670. `routeFullLoad` serves the feeds (the events by the view's area, as the server does). */
+export const fullLoad = (() => {
+  const r = rng(7);
+  const centres = Array.from({ length: 80 }, () => [28 + r() * 24, -5 + r() * 60]);
+  const near = () => { const c = centres[Math.floor(r() * centres.length)], a = 2 * Math.PI * r(), d = 1.5 * Math.sqrt(r());
+    return { lat: c[0] + d * Math.sin(a), lon: c[1] + d * Math.cos(a) }; };
+  const dated = () => { const a = Math.round(-1600 + r() * 450); return [a, a + Math.round(r() * 50)]; };
+  const findings = Array.from({ length: 500 }, (_, i) => {
+    const [a, b] = dated(), { lat, lon } = near();
+    return { citekey: `zz_src_${i % 40}`, title: `Zz source ${i % 40}`, claim: `Zz claim ${i} of the full load`,
+      regionName: 'Zz region', lon, lat, periodStart: a, periodEnd: b,
+      confidence: ['high', 'medium', 'low', 'contested'][i % 4], sourceKind: ['article', 'book', 'paper'][i % 3] };
+  });
+  const siteTypes = ['settlement', 'fortification', 'burial', 'sanctuary', 'palace'];
+  const sites = { type: 'FeatureCollection', features: Array.from({ length: 200 }, (_, i) => {
+    const [a, b] = dated(), { lat, lon } = near();
+    return { type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] },
+      properties: { id: `zz_site_${i}`, label: `Zz site ${i}`, kind: 'site', periodStart: a - 200, periodEnd: b + 200,
+        basis: 'dated', siteType: siteTypes[i % siteTypes.length] } };
+  }) };
+  const media = Array.from({ length: 200 }, (_, i) => {
+    const [a, b] = dated(), { lat, lon } = near();
+    return { citekey: null, assetName: `zz_${i}.jpg`, kind: 'photo', lat, lon, periodStart: a, periodEnd: b,
+      caption: null, uid: `zz_media_${i}` };
+  });
+  const kinds = ['battle', 'siege', 'treaty', 'founding', 'eruption', 'earthquake'];
+  const events = Array.from({ length: 1500 }, (_, i) => {
+    const [a] = dated(), { lat, lon } = near();
+    return { id: `zz_full_ev_${i}`, label: `Zz event ${i}`, kind: kinds[i % kinds.length], scale: 'local', historicity: 'attested',
+      tier: i % 5 ? 'attested' : 'catalogue', timeSpan: { notBefore: a, notAfter: a }, lat, lon, anchor: 'event' };
+  });
+  const realms = polities(140, 120, 8);
+  realms.features.forEach((f, i) => { f.properties.id = `zz_full_pol_${i}`; f.properties.periodStart = -1700; f.properties.periodEnd = -1000; });
+  return { findings, sites, media, events, polities: realms, hash: '#from=-1600&to=-1100',
+    layers: '["boundaries","sites","media","events"]' };
+})();
+
+/** The full load's events in the view's `area` (`west,south,east,north`). */
+export const fullLoadEventsIn = area => {
+  const [w, s, e, n] = (area ?? '-180,-90,180,90').split(',').map(Number);
+  const inLon = lon => (w <= e ? lon >= w && lon <= e : lon >= w || lon <= e);
+  return { unplaced: 0, events: fullLoad.events.filter(x => x.lat >= s && x.lat <= n && inLon(x.lon)) };
+};
+
+/** Every feed of the full load on its route (after `routeFixtures`, or alone: the real server answers the rest). */
+export async function routeFullLoad(page) {
+  const json = (route, body) => route.fulfill({ json: body });
+  await page.route(/\/api\/findings(\?|$)/, r => json(r, fullLoad.findings));
+  await page.route(/\/api\/media-geo(\?|$)/, r => json(r, fullLoad.media));
+  await page.route(/\/api\/events\/geo(\?|$)/, r => json(r, fullLoadEventsIn(new URL(r.request().url()).searchParams.get('area'))));
+  await page.route(/\/api\/places\/geo(\?|$)/, r => {
+    const kind = new URL(r.request().url()).searchParams.get('kind');
+    return json(r, kind === 'site' ? fullLoad.sites : kind === 'polity' ? fullLoad.polities : { type: 'FeatureCollection', features: [] });
+  });
+}

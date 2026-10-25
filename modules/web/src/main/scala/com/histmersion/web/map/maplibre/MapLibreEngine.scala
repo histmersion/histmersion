@@ -60,6 +60,10 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
       maxPitch = 0, pitchWithRotate = false, dragRotate = false, touchPitch = false, fadeDuration = 150,
       refreshExpiredTiles = false)
     pixelRatio.foreach(r => o.pixelRatio = r)
+    // MapLibre's own gestures (the zoom buttons, a double click, the keys, a drag's glide) ease unless it is told
+    // the reader wants reduced motion: its one switch for them is this option, read when the map is made — the
+    // reader's "Map motion" ([[MotionPref]]; under "follow the system" MapLibre reads the system itself, live)
+    MapMotion.mapLibreReduce(MotionPref.choice).foreach(r => o.reduceMotion = r)
     GlMap(o.asInstanceOf[js.Object])
   gl.touchZoomRotate.disableRotation()
   gl.keyboard.disableRotation()
@@ -87,16 +91,20 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
   gl.on("resize", (_: GlEvent) => sizeV = (el.clientWidth.toDouble, el.clientHeight.toDouble))
   def size: (Double, Double) = sizeV
 
+  // Every camera move the app asks for: animated only when the map animates now ([[MotionPref]]), and then
+  // `essential` — MapLibre otherwise drops the ease itself when the system asks for reduced motion, and "always
+  // animate" would not. A move that does not animate is a jump.
   def setView(at: LatLon, z: Double, animate: Boolean): Unit =
-    val o = js.Dynamic.literal(center = js.Array(at.lon, at.lat), zoom = z - ZoomShift).asInstanceOf[js.Object]
-    if animate then { val _ = gl.easeTo(o) } else { val _ = gl.jumpTo(o) }
+    val o = js.Dynamic.literal(center = js.Array(at.lon, at.lat), zoom = z - ZoomShift)
+    if MapLibreSurface.eases(animate) then { o.essential = true; val _ = gl.easeTo(o.asInstanceOf[js.Object]) }
+    else { val _ = gl.jumpTo(o.asInstanceOf[js.Object]) }
 
   def fitBounds(b: GeoBounds, padding: Int, maxZoom: Double, animate: Boolean): Unit =
     val _ = gl.fitBounds(js.Array(js.Array(b.west, b.south), js.Array(b.east, b.north)),
-      js.Dynamic.literal(padding = padding, maxZoom = maxZoom - ZoomShift, animate = animate).asInstanceOf[js.Object])
+      MapLibreSurface.motion(animate, js.Dynamic.literal(padding = padding, maxZoom = maxZoom - ZoomShift)))
 
   def panBy(dx: Double, dy: Double, animate: Boolean): Unit =
-    val _ = gl.panBy(js.Array(dx, dy), js.Dynamic.literal(animate = animate).asInstanceOf[js.Object])
+    val _ = gl.panBy(js.Array(dx, dy), MapLibreSurface.motion(animate, js.Dynamic.literal()))
 
   def project(p: LatLon): ScreenPt = { val q = gl.project(js.Array(p.lon, p.lat)); ScreenPt(q.x, q.y) }
   def unproject(p: ScreenPt): LatLon = { val ll = gl.unproject(js.Array(p.x, p.y)); LatLon(ll.lat, ll.lng) }
@@ -603,3 +611,14 @@ object MapLibreStyles:
         elevationKey = "ele", levelKey = "level", contourLayer = "contours")))
       ()
     }
+
+object MapLibreSurface:
+  /** Does a camera move the caller wants `animated` ease — only while the map animates ([[MotionPref]]). */
+  def eases(animated: Boolean): Boolean = animated && MotionPref.animate()
+
+  /** `o` with the motion of a camera move: `animate`, and `essential` when it eases (see `setView`). */
+  def motion(animated: Boolean, o: js.Dynamic): js.Object =
+    val e = eases(animated)
+    o.animate = e
+    if e then o.essential = true
+    o.asInstanceOf[js.Object]
