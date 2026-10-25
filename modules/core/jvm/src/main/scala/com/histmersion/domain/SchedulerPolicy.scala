@@ -1,10 +1,5 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.api.given
-import com.histmersion.config.given
-
 import com.histmersion.api.Managers.*
 
 import java.time.{Duration, Instant}
@@ -321,12 +316,9 @@ object SchedulerPolicy:
   def hours(minutes: Long): String =
     if minutes < 60 then s"$minutes min" else s"${minutes / 60} h" + (if minutes % 60 != 0 then s" ${minutes % 60} min" else "")
 
-  val DefaultWeights: String    = AgentSchedulerConfig.DefaultWeights
-  val DefaultPriorities: String = AgentSchedulerConfig.DefaultPriorities
-
   /** The settings in effect: `strategy` (a person's choice) over the config's; an unknown name is the default. */
-  def settings(c: AgentSchedulerConfig, strategy: Option[String] = None): Settings =
-    Settings(strategy.flatMap(Strategies.parse).orElse(Strategies.parse(c.strategy)).getOrElse(Strategies.all.head),
-      math.max(0, c.agingHours), math.max(0, c.maxWaitHours), math.min(1.0, math.max(0.0, c.minShare)),
-      parseTypeMap(DefaultWeights) ++ parseTypeMap(c.typeWeights), parseTypeMap(DefaultPriorities) ++ parseTypeMap(c.typePriorities),
-      math.max(0, c.gatheringSlots))
+  def settings(d: SchedulerDefaults, strategy: Option[String] = None): Settings =
+    Settings(strategy.flatMap(Strategies.parse).orElse(Strategies.parse(d.strategy)).getOrElse(Strategies.all.head),
+      math.max(0, d.agingHours), math.max(0, d.maxWaitHours), math.min(1.0, math.max(0.0, d.minShare)),
+      parseTypeMap(d.builtInWeights) ++ parseTypeMap(d.typeWeights),
+      parseTypeMap(d.builtInPriorities) ++ parseTypeMap(d.typePriorities), math.max(0, d.gatheringSlots))

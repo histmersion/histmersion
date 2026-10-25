@@ -29,7 +29,7 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
   def chosen: Option[(String, String, String)] = AutopilotRepo.strategy(ds)
 
   /** The settings in effect now. */
-  def settings: Settings = SchedulerPolicy.settings(cfg.scheduler, chosen.map(_._1))
+  def settings: Settings = SchedulerPolicy.settings(ManagerDefaultsViews.scheduler(cfg.scheduler), chosen.map(_._1))
 
   /** One pass as shown: when, whether it was dry, its inputs and its decision. */
   private final case class Snapshot(at: Instant, dry: Boolean, in: Inputs, s: Settings, d: Decision)
@@ -308,7 +308,7 @@ final class SchedulerService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
     val done: Either[ApiError, String] =
       if name == "default" then
         AutopilotRepo.setStrategy(ds, None, by)
-        Right(s"strategy back to agents.scheduler.strategy (${SchedulerPolicy.settings(cfg.scheduler).strategy.name}) (by $by)")
+        Right(s"strategy back to agents.scheduler.strategy (${SchedulerPolicy.settings(ManagerDefaultsViews.scheduler(cfg.scheduler)).strategy.name}) (by $by)")
       else Strategies.parse(name) match
         case None => Left(ApiError(s"unknown strategy '${in.strategy}' (one of: ${Strategies.names.mkString(", ")}, default)"))
         case Some(st) =>

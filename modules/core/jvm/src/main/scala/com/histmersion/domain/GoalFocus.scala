@@ -1,9 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.api.given
-import com.histmersion.config.given
+import com.histmersion.api.Plural
 
 import com.histmersion.api.Managers.*
 import com.histmersion.values.{GoalStatus, ItemStatus}

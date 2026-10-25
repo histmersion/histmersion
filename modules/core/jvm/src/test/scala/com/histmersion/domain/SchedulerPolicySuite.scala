@@ -190,3 +190,15 @@ class SchedulerPolicySuite extends munit.FunSuite:
     assertEquals(poolsWanted(waiting, chains), Set("chatgpt-plan", "claude-plan"))
     assertEquals(poolsWanted(waiting.take(2), chains), Set("chatgpt-plan"))
     assertEquals(poolsWanted(Nil, chains), Set.empty[String])
+
+  test("the settings: a person's strategy over the configured one, limits clamped, configured weights over the built-in"):
+    val d = SchedulerDefaults(strategy = "goal-first", agingHours = -1, maxWaitHours = 48, minShare = 1.5,
+      builtInWeights = "review=3, compile=3", typeWeights = "review=5", builtInPriorities = "review=9, sweep=2",
+      typePriorities = "sweep=4", gatheringSlots = -2)
+    val s = SchedulerPolicy.settings(d)
+    assertEquals(s.strategy, GoalFirst)
+    assertEquals((s.agingHours, s.maxWaitHours, s.minShare, s.gatheringSlots), (0, 48, 1.0, 0))
+    assertEquals(s.weights, parseTypeMap("review=5, compile=3"))
+    assertEquals(s.typePriority, parseTypeMap("review=9, sweep=4"))
+    assertEquals(SchedulerPolicy.settings(d, Some("type-balanced")).strategy, TypeBalanced)
+    assertEquals(SchedulerPolicy.settings(d.copy(strategy = "no-such"), Some("nor-this")).strategy, Strategies.all.head)
