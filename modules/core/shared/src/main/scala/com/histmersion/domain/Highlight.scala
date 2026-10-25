@@ -1,8 +1,5 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 /** Highlighting of search terms inside already-rendered HTML — pure, no parser, no dependencies.
   *
   * Used by `GET /source/{ck}?q=…` so a reader lands on the passage that matched. The rule that makes

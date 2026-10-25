@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
+import com.histmersion.api.{ManagersMarkdown, Plural}
 import com.histmersion.api.given
 
 import com.histmersion.api.Managers.*

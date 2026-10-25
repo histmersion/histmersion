@@ -1,8 +1,5 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 /** JATS (the NISO XML that PubMed Central publishes every article in) → Markdown, PURE (#1523).
   *
   * An author manuscript in PMC often has no PDF in NCBI's open dataset, only its JATS full text. That

@@ -1,8 +1,5 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 import io.circe.{ACursor, Json}
 
 /** Repository LANDING PAGES (#1580): an open-access location whose URL is an HTML record page rather

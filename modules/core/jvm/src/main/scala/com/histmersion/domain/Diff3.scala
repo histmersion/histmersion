@@ -1,8 +1,5 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 /** A line-based three-way merge (diff3; Khanna, Kunal & Pierce 2007), for article bodies that changed
   * on both sides since a common base (docs/research-merge-import.md §5.4). Pure.
   *

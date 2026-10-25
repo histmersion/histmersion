@@ -1,8 +1,5 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
-import com.histmersion.api.given
-
 /** How long the Codex home of the agent runs keeps what each run leaves behind (#2582): every
   * `codex exec` writes a session transcript (`sessions/YYYY/MM/DD/rollout-*.jsonl`) and adds to its
   * SQLite state (`state_*.sqlite`, `thread_history_*.sqlite`), and nothing ever removed them — 1.9 GB
