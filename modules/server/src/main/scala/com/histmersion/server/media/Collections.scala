@@ -172,7 +172,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
       if !col.usesIds then (Map.empty[String, Set[(String, String)]], Map.empty[(String, String), List[PlaceFacts]])
       else (store.placeExternalIds(answered.map(_._1.id)), store.mapPlacesWithIds(answered.flatMap(_._3).flatMap(_.ids).distinct))
     val judged = answered.flatMap { (t, f, recs) =>
-      val info    = MediaMatch.PlaceInfo(f.id, f.label, f.keys, f.period)
+      val info    = MediaMatch.PlaceInfo(f.id, f.label, f.keys, f.period.flatMap((a, b) => DeepTime.span(a, b)))
       val resolve = Collection.resolveFor(f, named, cfg.sameSiteKm)
       val resolveId = Collection.resolveIdFor(f, own.getOrElse(t.id, Set.empty), byId, cfg.sameSiteKm)
       recs.distinctBy(_.key).map { rec =>

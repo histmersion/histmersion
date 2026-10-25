@@ -195,7 +195,7 @@ object MediaRole:
   val RouteMap   = "route-map"
   /** A book's cover (a source's picture). */
   val Cover        = "cover"
-  /** One of a paper's own figures, chosen to illustrate it ([[FigurePick]]). */
+  /** One of a paper's own figures, chosen to illustrate it (the domain's `FigurePick`). */
   val Illustration = "illustration"
   /** A picture that depicts an event (Commons' `P180 depicts`, Wikidata's `P1299 depicted by`). */
   val Depiction    = "depiction"
@@ -213,16 +213,6 @@ object MediaRole:
   def order(role: String): Int = all.indexOf(role) match
     case -1 => all.size
     case i  => i
-
-/** `P18:image,P242:locator-map` (config) → `List(P18 -> image, P242 -> locator-map)`. An entry that
-  * is not `P<digits>:<known role>` is dropped, as is a second entry for the same property. */
-object MediaRoles:
-  def parse(s: String): List[(String, String)] =
-    Option(s).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).flatMap { e =>
-      e.split(":", 2).map(_.trim) match
-        case Array(p, r) if p.matches("P[1-9][0-9]*") && MediaRole.placeRoles.contains(r) => Some(p -> r)
-        case _                                                                            => None
-    }.distinctBy(_._1)
 
 /** The thumbnail a place or event card shows, with what its licence requires beside it: the credit
   * line, the licence (SPDX id or `public-domain`) and where to read it, and the page the picture
@@ -414,7 +404,7 @@ object MediaImportReport:
 /** `POST /api/media/covers` (a dry run: what would be done, from the database alone) and
   * `POST /api/media/covers/job` (doing it, as a job): Open Library covers for the sources whose
   * record holds an ISBN or OCLC number and no cover yet, and an illustration — one of its own
-  * figures ([[FigurePick]]) — for every source that has figures and no illustration yet. Calibre's
+  * figures (the domain's `FigurePick`) — for every source that has figures and no illustration yet. Calibre's
   * covers are the CLI's part (`histmersion media covers`): the library is on the user's machine.
   * `citekey` narrows it to one source; `refresh` redoes the ones that already have theirs. */
 final case class MediaCoversRequest(

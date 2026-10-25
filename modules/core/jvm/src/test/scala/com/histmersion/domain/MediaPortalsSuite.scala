@@ -57,7 +57,7 @@ class MediaPortalsSuite extends munit.FunSuite:
     assertEquals(recs.size, 4)
     val bowls = recs(1)
     assertEquals(bowls.key, "f589a368-62ed-43df-5738-4c84d2f5f765")
-    assertEquals(bowls.period, Some((-200L, 360L)))
+    assertEquals(bowls.period, DeepTime.span(-200L, 360L))
     assertEquals(bowls.ids, List("pleiades" -> "697725"))
     // the excavation units (Pottery 248, Locus none provided, Trench 94) name no place (#2571)
     assertEquals(bowls.geography.take(2), List("context" -> "Upper Temenos", "context" -> "Petra Great Temple"))
@@ -102,8 +102,8 @@ class MediaPortalsSuite extends munit.FunSuite:
 
   // ── the match by a record's own place id ─────────────────────────────────────────────────────
 
-  private val petra = MediaMatch.PlaceInfo("pleiades_697725", "Petra", Set("petra"), Some((-300L, 400L)))
-  private def rec(ids: List[(String, String)], geo: List[(String, String)], period: Option[(Long, Long)] = Some((-200L, 360L))) =
+  private val petra = MediaMatch.PlaceInfo("pleiades_697725", "Petra", Set("petra"), DeepTime.span(-300L, 400L))
+  private def rec(ids: List[(String, String)], geo: List[(String, String)], period: Option[com.histmersion.values.Period] = DeepTime.span(-200L, 360L)) =
     MediaRecord("k", "t", "p", Some("i"), None, None, Left("x"), geo, period, ids)
   private val idsOnMap: MediaMatch.ResolveId = Map(
     ("pleiades", "697725") -> Set("pleiades_697725"),
@@ -119,11 +119,11 @@ class MediaPortalsSuite extends munit.FunSuite:
     val finer = ("context" -> "Lion Gate") :: geo
     assertEquals(MediaMatch.withIds(rec(List("pleiades" -> "697725"), finer), petra, idsOnMap, namesOnMap, Set("context")),
       Left("its context names another place on the map"))
-    assertEquals(MediaMatch.withIds(rec(List("pleiades" -> "697725"), geo, Some((800L, 900L))), petra, idsOnMap,
+    assertEquals(MediaMatch.withIds(rec(List("pleiades" -> "697725"), geo, DeepTime.span(800L, 900L)), petra, idsOnMap,
       namesOnMap, Set("context")), Left("its dates do not overlap the place's"))
 
   test("an id naming only another place refuses it (not filed under the country); an id naming two places is ambiguous"):
-    val jordan = MediaMatch.PlaceInfo("geonames_248816", "Jordan", Set("jordan"), Some((-3000L, 2000L)))
+    val jordan = MediaMatch.PlaceInfo("geonames_248816", "Jordan", Set("jordan"), DeepTime.span(-3000L, 2000L))
     val geo = List("context" -> "Petra Great Temple", "region" -> "Jordan")
     assertEquals(MediaMatch.withIds(rec(List("pleiades" -> "697725"), geo), jordan, idsOnMap, namesOnMap, Set("context")),
       Left("its place id names another place on the map"))
@@ -150,7 +150,7 @@ class MediaPortalsSuite extends munit.FunSuite:
     assertEquals(recs.head.ids, List("geonames" -> "310858", "geonames" -> "6269133"), "a province and the Middle East")
     assertEquals(recs.map(_.withheld.isDefined), List(false, false, false, true), "the crania are withheld")
 
-  private val domuztepe = MediaMatch.PlaceInfo("wikidata_q4165990", "Domuztepe", Set("domuztepe"), Some((-6500L, -5400L)))
+  private val domuztepe = MediaMatch.PlaceInfo("wikidata_q4165990", "Domuztepe", Set("domuztepe"), DeepTime.span(-6500L, -5400L))
   // the live map (2026-10-23) has a place called "I" and Kahramanmaraş; the record's ids name the province
   private val domNames: MediaMatch.Resolve = Map("domuztepe" -> Set("wikidata_q4165990"), "i" -> Set("wikidata_q103776406"),
     "turkey" -> Set("ne_country_tur"), "asia" -> Set("asia")).withDefaultValue(Set.empty)
@@ -162,7 +162,7 @@ class MediaPortalsSuite extends munit.FunSuite:
     assertEquals(recs.map(MediaMatch.withIds(_, domuztepe, domIds, domNames, Set(OpenContext.Context))).distinct,
       List(Right("context = Domuztepe; 6500–5500 BCE within 6500–5400 BCE")))
     // the province's own place is not given the site's finds: the finer context names another place
-    val kahramanmaras = MediaMatch.PlaceInfo("ne_city_1159127453", "Kahramanmaraş", Set("kahramanmaras"), Some((-8000L, 2000L)))
+    val kahramanmaras = MediaMatch.PlaceInfo("ne_city_1159127453", "Kahramanmaraş", Set("kahramanmaras"), DeepTime.span(-8000L, 2000L))
     assertEquals(MediaMatch.withIds(recs.head, kahramanmaras, domIds, domNames, Set(OpenContext.Context)),
       Left("its context names another place on the map"))
     // the unit "I" kept as a context field (as before #2571) refused it: the map's "I" is another place

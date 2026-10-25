@@ -1,9 +1,9 @@
-package com.histmersion.api
+package com.histmersion.domain
 
+import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.domain.*
+import com.histmersion.api.given
 import com.histmersion.config.given
-import com.histmersion.domain.given
 
 
 import io.circe.parser.parse

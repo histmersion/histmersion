@@ -1,9 +1,9 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
+import com.histmersion.api.Geocode
 import com.histmersion.config.*
-import com.histmersion.api.given
 import com.histmersion.config.given
+import com.histmersion.values.{Period, Year}
 
 import io.circe.{ACursor, Json}
 
@@ -35,7 +35,7 @@ final case class MediaRecord(
     originalUrl: Option[String],
     rights: Either[String, MediaRights],
     geography: List[(String, String)],
-    period: Option[(Long, Long)],
+    period: Option[Period],
     ids: List[(String, String)] = Nil,
     withheld: Option[String] = None
 )
@@ -97,7 +97,7 @@ object MediaRights:
 object MediaMatch:
 
   /** A place the import asks about: its id and label, the keys of every name it goes by, its period. */
-  final case class PlaceInfo(id: String, label: String, keys: Set[String], period: Option[(Long, Long)])
+  final case class PlaceInfo(id: String, label: String, keys: Set[String], period: Option[Period])
 
   private val Uncertain = List("?", "probably", "possibly", "perhaps", "said to be", "attributed", "likely", "uncertain")
 
@@ -109,15 +109,16 @@ object MediaMatch:
   /** Pure: the name key of a value (empty when it is uncertain or blank). */
   def keyOf(v: String): String = if uncertain(v) then "" else Geocode.key(v)
 
-  /** Pure: do two inclusive year ranges overlap? */
-  def overlaps(a: (Long, Long), b: (Long, Long)): Boolean = a._1 <= b._2 && b._1 <= a._2
+  /** Pure: do two periods overlap? */
+  def overlaps(a: Period, b: Period): Boolean = a.start.value <= b.end.value && b.start.value <= a.end.value
 
-  /** Pure: a year range as a person reads it (`1400–1200 BCE`, `200 BCE–100 CE`). */
-  def years(p: (Long, Long)): String =
-    def y(v: Long) = if v < 0 then s"${-v} BCE" else s"$v CE"
-    if p._1 < 0 && p._2 < 0 then s"${-p._1}–${-p._2} BCE"
-    else if p._1 >= 0 && p._2 >= 0 then s"${p._1}–${p._2} CE"
-    else s"${y(p._1)}–${y(p._2)}"
+  /** Pure: a period as a person reads it (`1400–1200 BCE`, `200 BCE–100 CE`). */
+  def years(p: Period): String =
+    val (start, end) = (p.start.value, p.end.value)
+    def y(v: Int) = if v < 0 then s"${-v} BCE" else s"$v CE"
+    if start < 0 && end < 0 then s"${-start}–${-end} BCE"
+    else if start >= 0 && end >= 0 then s"$start–$end CE"
+    else s"${y(start)}–${y(end)}"
 
   /** What a value names on the map: the ids of the map places with that name key, equivalents of
     * one site counted once — the caller's lookup. */
@@ -199,7 +200,7 @@ object MediaMatch:
   def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: Int): Either[String, String] =
     rec.period match
       case None => Left("no date on the map")
-      case Some((_, end)) if end > maxYear => Left(s"made after $maxYear")
+      case Some(p) if p.end.value > maxYear => Left(s"made after $maxYear")
       case Some(p) => geography(rec, target, resolve, specific = false).map(geo => s"$geo; map of ${years(p)}")
 
 /** Shared reading helpers for the collection APIs. Pure. */
@@ -214,11 +215,11 @@ private[domain] object Read:
   def bool(c: ACursor, k: String): Option[Boolean] =
     c.downField(k).focus.flatMap(j => j.asBoolean.orElse(j.asString.map(_.trim.equalsIgnoreCase("true"))))
   def enc(s: String): String = URLEncoder.encode(s, UTF_8)
-  def range(a: Option[Long], b: Option[Long]): Option[(Long, Long)] =
+  def range(a: Option[Long], b: Option[Long]): Option[Period] =
     (a, b) match
-      case (Some(x), Some(y)) => Some((x.min(y), x.max(y)))
-      case (Some(x), None)    => Some((x, x))
-      case (None, Some(y))    => Some((y, y))
+      case (Some(x), Some(y)) => DeepTime.span(x, y)
+      case (Some(x), None)    => DeepTime.span(x, x)
+      case (None, Some(y))    => DeepTime.span(y, y)
       case _                  => None
 
 /** The Metropolitan Museum of Art Collection API (https://metmuseum.github.io/), no key. Search is
@@ -259,7 +260,7 @@ object MetMuseum:
         if Read.bool(c, "isPublicDomain").contains(true) then Right(MediaRights.cc0(artist, credit))
         else Left("not Open Access (isPublicDomain is false)")
       val period = Read.range(Read.long(c, "objectBeginDate").map(year), Read.long(c, "objectEndDate").map(year))
-        .filterNot(_ == (-1L, -1L))
+        .filterNot(_ == Period.point(Year(-1)))
       MediaRecord(id.toString, title, page, Read.str(c, "primaryImageSmall").orElse(Read.str(c, "primaryImage")), None,
         Read.str(c, "primaryImage"), rights, GeographyFields.flatMap(f => Read.str(c, f).map(f -> _)), period)
     }
@@ -373,9 +374,9 @@ object LibraryOfCongress:
         }.distinct)
 
   /** Pure: the first year in a date string (`1890`, `[ca. 1880]`, `1906-1910` → its range). */
-  def yearsOf(date: String): Option[(Long, Long)] =
+  def yearsOf(date: String): Option[Period] =
     val ys = """(?<![0-9])([0-9]{4})(?![0-9])""".r.findAllMatchIn(date).map(_.group(1).toLong).toList
-    ys.headOption.map(a => (ys.min, ys.max))
+    ys.headOption.flatMap(_ => DeepTime.span(ys.min, ys.max))
 
   private val NoKnown = "no known restrictions"
 
@@ -413,7 +414,7 @@ object LibraryOfCongress:
           if !advisory.toLowerCase(Locale.ROOT).contains(NoKnown) then
             Left(if advisory.isEmpty then "no rights statement" else "rights not \"No known restrictions\"")
           else if period.isEmpty then Left("no date on the map")
-          else if period.exists(_._2 > maxYear) then Left(s"made after $maxYear (may be in copyright)")
+          else if period.exists(_.end.value > maxYear) then Left(s"made after $maxYear (may be in copyright)")
           else Right(MediaRights.publicDomain(creator, credit, Some("https://www.loc.gov/legal/understanding-copyright/")))
         val geo = Read.strs(c, "location").map("location" -> _)
         MediaRecord(key, title, page, display, thumb, original, rights, geo, period)
