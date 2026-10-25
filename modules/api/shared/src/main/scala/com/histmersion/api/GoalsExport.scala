@@ -1,7 +1,4 @@
-package com.histmersion.domain
-
-import com.histmersion.api.*
-import com.histmersion.api.given
+package com.histmersion.api
 
 import com.histmersion.api.GoalPlans.{GoalLink, GoalSchedule, GoalView}
 import com.histmersion.values.{GoalLinkKind, GoalStatus}
@@ -49,7 +46,7 @@ object GoalsExport:
 
   /** `26 goal(s): 5 top-level, 21 sub-goals · compiled 11 · seeding 12 · reviewed 3`. Statuses in
     * their lifecycle order, then any other value alphabetically. */
-  private[domain] def summary(goals: List[Goal]): String =
+  private[api] def summary(goals: List[Goal]): String =
     val slugs    = goals.map(_.slug).toSet
     val topLevel = goals.count(g => g.parentSlug.forall(p => !slugs.contains(p)))
     val counts   = goals.groupBy(_.status).view.mapValues(_.size).toMap
@@ -60,7 +57,7 @@ object GoalsExport:
   /** Depth-first, slug order at every level. A goal whose parent is not among `views` is shown at the
     * top level (with its parent named); goals caught in a parent cycle, unreachable from any root,
     * are appended at the top level too, so no goal is ever dropped from the file. */
-  private[domain] def tree(views: List[GoalView]): List[(GoalView, Int)] =
+  private[api] def tree(views: List[GoalView]): List[(GoalView, Int)] =
     val bySlug   = views.map(v => v.goal.slug -> v).toMap
     val children = views.groupBy(_.goal.parentSlug).view.mapValues(_.sortBy(_.goal.slug)).toMap
     val roots    = views.filter(v => v.goal.parentSlug.forall(p => !bySlug.contains(p))).sortBy(_.goal.slug)

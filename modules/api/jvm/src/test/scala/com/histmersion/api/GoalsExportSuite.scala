@@ -1,9 +1,4 @@
-package com.histmersion.domain
-
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.api.given
-import com.histmersion.config.given
+package com.histmersion.api
 
 import com.histmersion.api.GoalPlans.*
 
