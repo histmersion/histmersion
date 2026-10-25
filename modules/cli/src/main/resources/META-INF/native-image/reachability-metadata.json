@@ -255,20 +255,6 @@
       ]
     },
     {
-      "type": "com.histmersion.api.Agents$ApprovalKind$",
-      "fields": [
-        {
-          "name": "given_Decoder_ApprovalKind$lzy1"
-        },
-        {
-          "name": "given_Encoder_ApprovalKind$lzy1"
-        },
-        {
-          "name": "given_Schema_ApprovalKind$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.api.Agents$CheckLevel$",
       "fields": [
         {
@@ -2087,20 +2073,6 @@
       ]
     },
     {
-      "type": "com.histmersion.api.BundleKind$",
-      "fields": [
-        {
-          "name": "given_Decoder_BundleKind$lzy1"
-        },
-        {
-          "name": "given_Encoder_BundleKind$lzy1"
-        },
-        {
-          "name": "given_Schema_BundleKind$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.api.BundleKindCounts$",
       "fields": [
         {
@@ -2326,20 +2298,6 @@
       ]
     },
     {
-      "type": "com.histmersion.api.Confidence$",
-      "fields": [
-        {
-          "name": "given_Decoder_Confidence$lzy1"
-        },
-        {
-          "name": "given_Encoder_Confidence$lzy1"
-        },
-        {
-          "name": "given_Schema_Confidence$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.api.ConfigFileInfo$",
       "fields": [
         {
@@ -2558,34 +2516,6 @@
       ]
     },
     {
-      "type": "com.histmersion.api.DecidedBy$",
-      "fields": [
-        {
-          "name": "given_Decoder_DecidedBy$lzy1"
-        },
-        {
-          "name": "given_Encoder_DecidedBy$lzy1"
-        },
-        {
-          "name": "given_Schema_DecidedBy$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.api.DecisionKind$",
-      "fields": [
-        {
-          "name": "given_Decoder_DecisionKind$lzy1"
-        },
-        {
-          "name": "given_Encoder_DecisionKind$lzy1"
-        },
-        {
-          "name": "given_Schema_DecisionKind$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.api.DeleteBlocker$",
       "fields": [
         {
@@ -2672,20 +2602,6 @@
       ]
     },
     {
-      "type": "com.histmersion.api.EdgeKind$",
-      "fields": [
-        {
-          "name": "given_Decoder_EdgeKind$lzy1"
-        },
-        {
-          "name": "given_Encoder_EdgeKind$lzy1"
-        },
-        {
-          "name": "given_Schema_EdgeKind$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.api.EdgesPatch$",
       "fields": [
         {
@@ -2710,20 +2626,6 @@
         },
         {
           "name": "given_Schema_EdgesResolved$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.api.EditionsPolicy$",
-      "fields": [
-        {
-          "name": "given_Decoder_EditionsPolicy$lzy1"
-        },
-        {
-          "name": "given_Encoder_EditionsPolicy$lzy1"
-        },
-        {
-          "name": "given_Schema_EditionsPolicy$lzy1"
         }
       ]
     },
@@ -3440,20 +3342,6 @@
       ]
     },
     {
-      "type": "com.histmersion.api.GoalPlans$DraftMode$",
-      "fields": [
-        {
-          "name": "given_Decoder_DraftMode$lzy1"
-        },
-        {
-          "name": "given_Encoder_DraftMode$lzy1"
-        },
-        {
-          "name": "given_Schema_DraftMode$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.api.GoalPlans$GoalLink$",
       "fields": [
         {
@@ -3498,20 +3386,6 @@
       ]
     },
     {
-      "type": "com.histmersion.api.GoalPlans$LinkKind$",
-      "fields": [
-        {
-          "name": "given_Decoder_LinkKind$lzy1"
-        },
-        {
-          "name": "given_Encoder_LinkKind$lzy1"
-        },
-        {
-          "name": "given_Schema_LinkKind$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.api.GoalPlans$Plan$",
       "fields": [
         {
@@ -3552,20 +3426,6 @@
         },
         {
           "name": "given_Schema_Removed$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.api.GoalPlans$ScheduleKind$",
-      "fields": [
-        {
-          "name": "given_Decoder_ScheduleKind$lzy1"
-        },
-        {
-          "name": "given_Encoder_ScheduleKind$lzy1"
-        },
-        {
-          "name": "given_Schema_ScheduleKind$lzy1"
         }
       ]
     },
@@ -3795,20 +3655,6 @@
       ]
     },
     {
-      "type": "com.histmersion.api.IssueKind$",
-      "fields": [
-        {
-          "name": "given_Decoder_IssueKind$lzy1"
-        },
-        {
-          "name": "given_Encoder_IssueKind$lzy1"
-        },
-        {
-          "name": "given_Schema_IssueKind$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.api.IssuePlace$",
       "fields": [
         {
@@ -3816,20 +3662,6 @@
         },
         {
           "name": "given_Schema_IssuePlace$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.api.IssueSeverity$",
-      "fields": [
-        {
-          "name": "given_Decoder_IssueSeverity$lzy1"
-        },
-        {
-          "name": "given_Encoder_IssueSeverity$lzy1"
-        },
-        {
-          "name": "given_Schema_IssueSeverity$lzy1"
         }
       ]
     },
@@ -3987,20 +3819,6 @@
         },
         {
           "name": "given_Schema_ListPatch$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.api.LocationPrecision$",
-      "fields": [
-        {
-          "name": "given_Decoder_LocationPrecision$lzy1"
-        },
-        {
-          "name": "given_Encoder_LocationPrecision$lzy1"
-        },
-        {
-          "name": "given_Schema_LocationPrecision$lzy1"
         }
       ]
     },
@@ -4363,34 +4181,6 @@
         },
         {
           "name": "given_Schema_MatchCounts$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.api.MatchMethod$",
-      "fields": [
-        {
-          "name": "given_Decoder_MatchMethod$lzy1"
-        },
-        {
-          "name": "given_Encoder_MatchMethod$lzy1"
-        },
-        {
-          "name": "given_Schema_MatchMethod$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.api.MatchOutcome$",
-      "fields": [
-        {
-          "name": "given_Decoder_MatchOutcome$lzy1"
-        },
-        {
-          "name": "given_Encoder_MatchOutcome$lzy1"
-        },
-        {
-          "name": "given_Schema_MatchOutcome$lzy1"
         }
       ]
     },
@@ -6253,20 +6043,6 @@
       ]
     },
     {
-      "type": "com.histmersion.api.SourceStatus$",
-      "fields": [
-        {
-          "name": "given_Decoder_SourceStatus$lzy1"
-        },
-        {
-          "name": "given_Encoder_SourceStatus$lzy1"
-        },
-        {
-          "name": "given_Schema_SourceStatus$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.api.SourceWithFindings$",
       "fields": [
         {
@@ -6539,6 +6315,155 @@
         },
         {
           "name": "given_Schema_VersionInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.VocabularyCodecs$",
+      "fields": [
+        {
+          "name": "given_Decoder_ApprovalKind$lzy1"
+        },
+        {
+          "name": "given_Decoder_BundleKind$lzy1"
+        },
+        {
+          "name": "given_Decoder_Confidence$lzy1"
+        },
+        {
+          "name": "given_Decoder_DecidedBy$lzy1"
+        },
+        {
+          "name": "given_Decoder_DecisionKind$lzy1"
+        },
+        {
+          "name": "given_Decoder_DraftMode$lzy1"
+        },
+        {
+          "name": "given_Decoder_EdgeKind$lzy1"
+        },
+        {
+          "name": "given_Decoder_EditionsPolicy$lzy1"
+        },
+        {
+          "name": "given_Decoder_GoalLinkKind$lzy1"
+        },
+        {
+          "name": "given_Decoder_IssueKind$lzy1"
+        },
+        {
+          "name": "given_Decoder_IssueSeverity$lzy1"
+        },
+        {
+          "name": "given_Decoder_LocationPrecision$lzy1"
+        },
+        {
+          "name": "given_Decoder_MatchMethod$lzy1"
+        },
+        {
+          "name": "given_Decoder_MatchOutcome$lzy1"
+        },
+        {
+          "name": "given_Decoder_ScheduleKind$lzy1"
+        },
+        {
+          "name": "given_Decoder_SourceStatus$lzy1"
+        },
+        {
+          "name": "given_Encoder_ApprovalKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_BundleKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_Confidence$lzy1"
+        },
+        {
+          "name": "given_Encoder_DecidedBy$lzy1"
+        },
+        {
+          "name": "given_Encoder_DecisionKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_DraftMode$lzy1"
+        },
+        {
+          "name": "given_Encoder_EdgeKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_EditionsPolicy$lzy1"
+        },
+        {
+          "name": "given_Encoder_GoalLinkKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_IssueKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_IssueSeverity$lzy1"
+        },
+        {
+          "name": "given_Encoder_LocationPrecision$lzy1"
+        },
+        {
+          "name": "given_Encoder_MatchMethod$lzy1"
+        },
+        {
+          "name": "given_Encoder_MatchOutcome$lzy1"
+        },
+        {
+          "name": "given_Encoder_ScheduleKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_SourceStatus$lzy1"
+        },
+        {
+          "name": "given_Schema_ApprovalKind$lzy1"
+        },
+        {
+          "name": "given_Schema_BundleKind$lzy1"
+        },
+        {
+          "name": "given_Schema_Confidence$lzy1"
+        },
+        {
+          "name": "given_Schema_DecidedBy$lzy1"
+        },
+        {
+          "name": "given_Schema_DecisionKind$lzy1"
+        },
+        {
+          "name": "given_Schema_DraftMode$lzy1"
+        },
+        {
+          "name": "given_Schema_EdgeKind$lzy1"
+        },
+        {
+          "name": "given_Schema_EditionsPolicy$lzy1"
+        },
+        {
+          "name": "given_Schema_GoalLinkKind$lzy1"
+        },
+        {
+          "name": "given_Schema_IssueKind$lzy1"
+        },
+        {
+          "name": "given_Schema_IssueSeverity$lzy1"
+        },
+        {
+          "name": "given_Schema_LocationPrecision$lzy1"
+        },
+        {
+          "name": "given_Schema_MatchMethod$lzy1"
+        },
+        {
+          "name": "given_Schema_MatchOutcome$lzy1"
+        },
+        {
+          "name": "given_Schema_ScheduleKind$lzy1"
+        },
+        {
+          "name": "given_Schema_SourceStatus$lzy1"
         }
       ]
     },
