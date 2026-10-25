@@ -693,6 +693,156 @@ for these reasons:
 - The recorded edges this batch kept: the merge records (bundle lines and plan), the managers' saved config
   and item state.
 
+## Step 7 as built: final (#3967, 2026-10-25)
+
+Batch 5 finished step 7: articles, the `Filter` decision, the agent checkpoints and patch records, the
+managers' neighbours, and the domain → config edge. One commit per area, each compiling and passing the JVM
+suites of the modules it touched; `just test-it` passed once at the end.
+
+```
+values   JVM+JS   newtypes + the shared vocabularies                                   iron
+api      JVM+JS   com.histmersion.api (100 files)                                      values, tapir-core, circe, kindlings
+config   JVM      com.histmersion.config                                               values
+files    JVM      com.histmersion.files                                                api, snakeyaml
+core     JVM      com.histmersion.domain (49 files)                                    values, api, files   (config: tests only)
+db       JVM                                                                           config, core
+plugin-host JVM                                                                        core, config, plugin-api
+server   JVM      + the config → domain conversions                                    core, db, plugin-host, …
+cli      JVM                                                                           api, config, files
+```
+
+**The golden files first.** Before anything moved, on master, `CheckpointGoldenSuite` (core) encoded
+representative values with the codecs stored runs were written with and committed them as
+`golden/checkpoints/*.ndjson`: `EnrichSource`'s `Classified` (every status), `Findings`, `VerifiedFindings`
+(every place-kind hint) and `Geocoded`; `ReviewArticle`'s `Finding` (every reviewer × severity), `Report` and
+`Merged` (every verdict); the `SourcePatch`es `enrich-source` and `AgentProposals` write (every proposal kind,
+every disagreement edge kind, every clearable metadata field); `WorkRef`. Every optional field is set in one
+sample and left out in another — 11 files, 63 lines. The suite decodes each stored line and encodes it back
+byte for byte, and encodes today's samples to exactly those lines; it passed after every later commit.
+
+**Articles.** No record was split. The domain's article pipelines work on two kinds of api type:
+
+- the records the article endpoints return and store — its coverage (`Coverage`, `CoverageReason`,
+  `CitedSource`), the critique checklist (`CritiquePair`, `CritiqueRef`, `CritiqueReason`, `CritiqueState`), its
+  stored filter (`ArticleFilter`), and the approval payloads the pipelines build in their final shape
+  (`ArticleDraft`, `ArticlePlan`, `ProposedArticle`, `FilterProposal`) — one shape on both sides;
+- the pure helpers the CLI and the server call too (`ArticleCoverage`, `ArticleEdits`, `Critiques`,
+  `CritiquePairing`, `Articles.slugOf`/`kindOf`/`appendUnderSection`, `Lint`): a domain copy would be a second
+  implementation of the same operation.
+
+The five files (`ReviewArticle`, `ReviewLedger`, `PlanArticles`, `CompileArticle`, `FilterInference`) now name
+what they take instead of importing api and config by wildcard.
+
+**`Filter`.** A wire record in api, rendered as SQL by db — see *Resolved*. The domain names no `Filter`.
+
+**Agent checkpoints and patch records.** No record was split, for one reason each:
+
+- `SourcePatch` with `MetadataPatch`, `FindingsPatch`, `ListPatch`, `PeriodInput`, `EdgesPatch`, `EdgeInput`:
+  the patch an agent run writes is the patch a person sends to `patch_source`, applied by the one handler;
+  a domain twin would be converted back into it on every write.
+- `Geocoded` holds the `FindingInput`s that patch adds; `Classified`, `Loaded` and `VerifiedFinding` hold the
+  wire `Period` the patch's `PeriodInput` is made from.
+- `ReviewArticle`'s `Finding`, `Report` and `Merged` hold `CritiqueRef` and `CritiqueReason`, the article's
+  critique records as the article stores them.
+- `WorkRef` is the upstream work record the discover endpoints return and plugin-host's acquisition client
+  builds; the domain reads it in that shape.
+- The checkpoints' codecs stay where stored runs were written from (their companions, with api's
+  instances for the vocabularies). Moving them out of the domain would move the decoding `CompareRuns` does
+  with them and change no byte — the golden files hold the bytes either way.
+
+`EnrichSource`, `AgentProposals`, `AgentVerify` and `WorkRef`'s readers (`BrowserDownload`, `Scheduling`,
+`PlanGoal`) name what they take.
+
+**Managers' neighbours.** `SchedulerPolicy.settings` took `AgentSchedulerConfig`, which also holds what only
+the supervisor reads; it now takes `SchedulerDefaults` (strategy, aging, waits, minimum share, gathering
+places, and the job types' weights and priorities with the built-in ones beneath the configured), converted
+with Chimney in `ManagerDefaultsViews.scheduler` — batch 4's pattern. `SchedulerPolicy`, `GoalFocus`,
+`WatchSchedules`, `HintProposals` and `AutopilotPolicy` take the managers' item kinds and saved config through
+`Managers.*`, as `ManagerPolicy` does: the item state and saved config the store keeps as JSON, one shape.
+
+**Domain → config, removed.** The 11 files that used config:
+
+| what the domain read | now | converted in |
+|---|---|---|
+| `MergeConfig`, `MergeWeights` (`MergePlanner`, `SourceMatcher`; db's `MergeState`, `BundleImport`) | `MergeSettings`, `MatchWeights` — the same fields without `applyWaitSeconds`, which only the server reads | server `MergeSettingsViews` (Chimney); db's signatures take `MergeSettings` |
+| `ScheduledRefresh` (`PlanReadSchedule`) | `ReadSchedule` (`Off`, `Every(Duration)`) | server `agents/AgentsSettings` |
+| extensions building a domain value from a config record: approval modes and checked kinds, a role's chain, a provider's block, the logins; infer-filter limits; plan caps; the enrichment guards | unchanged values (`ApprovalMode`, `FilterInference.Limits`, `PlanGoal.Caps`, `EnrichSource.FindingGuards`, …) | server `agents/AgentsSettings` (same extension names) |
+| the event catalogues' datasets, classes, region, tolerance, link weights | unchanged values | server `events/EventsSettings` |
+| the landing-page rules, the acquisition user agent | unchanged values | server `acquire/AcquireSettings` |
+| the media allowlists, Wikidata roles, figure rules | unchanged values | plugin-host `MediaSettings` (the plugin testkit uses one) |
+
+`MergeConfig` changing db's signatures was worth it: db only passed it on and read the two place
+thresholds, which `MergeSettings` carries; the server converts at its three call sites. Nothing else in db
+changed. The tests of the conversions moved with them (server `AgentsSettingsSuite`, `RepositoryLandingSuite`,
+`MergeSettingsViewsSuite`, the scheduler case of `ManagerDefaultsViewsSuite`; plugin-host `MediaSettingsSuite`);
+core's suites test the domain over domain values. plugin-host depends on config directly, as it already read
+it. core and db take Chimney in test scope, for their fixtures' merge settings.
+
+**build.sbt.** core no longer depends on config: `config % "test->test"` only (its suites read
+reference.conf), so a domain file that imports config does not compile. core still depends on api, and
+must: the edges below keep it.
+
+**The edges that remain: intentional, permanent.** What the domain takes from api, by kind, with the reason
+rule 3 gives for not splitting:
+
+| kind | types (domain files) | why one shape |
+|---|---|---|
+| the merge's bundle lines and plan | `Bundle*` lines, `MergePlan`, `MergeIssue`, `Issue*`, `MatchCounts`, `MergeTally`, `MergeDecision`, `MergeResolutions`, `SourceMatch`, `BundleKindCounts`, `MergeIssueDetail`, `ArticleLinks`, `AssetLinks` (`MergePlanner`, `MergeFold`, `SourceMatcher`, `BundlePlan`) | batch 4: the planner compares and rewrites lines as lines (a rev is the hash of the canonical line); the plan is what `merge plan` returns, the resolution file holds and the store keeps, built in its final shape |
+| the managers' saved config and item state | `Managers.*` (`ManagerConfig`, `ItemState`, `Hold`, `RunMark`, `HintEffect`, the item kinds, `Sweep`, `ManagerInfo`, `ManagerItem`), `GoalPlans.GoalSchedule`, `ManagersMarkdown` (`ManagerPolicy`, `SchedulerPolicy`, `GoalFocus`, `WatchSchedules`, `HintProposals`, `AutopilotPolicy`) | what the store keeps as JSON and the managers' endpoints return; the policies read and return it |
+| the article records and helpers | as under *Articles* (`ReviewArticle`, `ReviewLedger`, `CompileArticle`, `PlanArticles`, `FilterInference`) | wire and stored records; one implementation of the helpers |
+| the source patch and the work record | as under *Agent checkpoints* (`EnrichSource`, `AgentProposals`, `AgentVerify`, `BrowserDownload`, `Scheduling`, `PlanGoal`), and `GoalPlans.{Plan, PlannedGoal, PlannedWork}`, `Acquire`, `FollowupRow`, `AgentsMarkdown` (`PlanGoal`, `Scheduling`) | one write path; the plan a person approves is the plan the pipeline builds |
+| the event catalogues | `CatalogRecord`, `TimeSpan`, `Years`, `EventTaxonomy`, `EventGeo`, `CatalogProviderInfo`, `BBox`, and what the matcher returns (`EventLinkCandidate`, `AttestationPut`, `AttestationTarget`, `EventPassage`) (`EventCatalogue`, `EventProviders`, `EventMatcher`) | batch 1: a catalogue record is what db stores as JSON; the matcher returns the wire candidates |
+| passages and a lint rule's report | `PassageResult`, `PassageHit`, `MatchSpan` (`PassageFinder`); `Lint`, `LintItem`, `LintRuleReport`, `Rule` (`PointAreas`, `MergeFold`) | the result the endpoint returns, built in its final shape |
+| shared pure helpers | `Plural`, `LatinFold`, `YearFmt`, `Geocode` (`key`, `KindHint`), `Queue` (`AcquireMatch`, `MergeText`, `PlaceReview`, `MediaCollections`, `IngestBacklog`, `AutoEnrich`, …) | cross-built text helpers the web page and the CLI use too; batch 2 kept them out of `values` |
+| instances for the domain's own codecs | `import com.histmersion.api.given` (Kindlings' `Configuration`, `VocabularyCodecs`, `ValueCodecs`) and `WireEnum` (`ReviewArticle`, `ReviewLedger`) | the agent steps' typed answers and checkpoints derive their codecs in the domain (the JSON the golden files pin); their vocabulary fields need api's instances to keep the wire spelling |
+
+**Measured.** Domain → api and domain → config the way batch 4 counted them (files importing api, and by
+wildcard; compiling core with every api import removed: files with errors / distinct names not found; the
+same for config):
+
+| after | domain files · importing api · by wildcard | api imports removed: files / names | domain files importing config | config imports removed: files / names |
+|---|---|---|---|---|
+| step 6 (`9bb87cba`) | 55 · 55 · 55 | 42 / 200 | 46 | 11 / 18 |
+| batch 4 (`74d14285`) | 48 · 42 · 36 | 34 / 128 | 34 | 12 / 22 |
+| golden files (`18eb6f75`) | tests only | — | — | — |
+| articles (`8c7a8789`) | 48 · 42 · 31 | 34 / 128 | 30 | 12 / 22 |
+| `Filter` (`7f359fcf`) | doc only | — | — | — |
+| checkpoints (`d5917748`) | 48 · 42 · 25 | 34 / 128 | 26 | 12 / 22 |
+| managers (`f3e1627e`) | 48 · 42 · 20 | 34 / 128 | 21 | 11 / 21 |
+| domain off config (`f7e0d64b`) | 49 · 41 · 20 | 33 / 127 | 0 | 0 / 0 |
+| named imports (`e812cc0b`) | 49 · 32 · 0 | 33 / 127 | 0 | 0 / 0 |
+
+Against step 6: domain → config is gone (46 files, 18 names → none, and the build forbids it); domain → api
+went from 55 files all by wildcard to 32 naming what they take, and from 200 names to 127. The names did not
+fall further, and were not meant to: what is left is the list above, records with one shape on both sides
+and helpers with one implementation. (Step 6 was measured in a scratch worktree of `9bb87cba` with the same
+counter; the counter finds names a compile reports as not found, so it reads a little low — a name the
+compiler finds as a type where it wants a term, like `Plural` in `ReviewArticle`, is not counted — and reads
+the same way at every row.)
+
+**Unchanged wire, proved.** Batch 2's scratch suite dumped 2 674 117 bytes before the batch and after each
+code commit, byte-identical every time, and identical to batch 4's last dump. The golden files held after
+every commit. `test-it`: 4 095 tests, none failed.
+
+**Native-image metadata.** No entry named a moved class. A tracing-agent run of the JVM server and CLI on an
+empty test database (batch 4's run — REST GETs of every endpoint, the page and its assets, MCP tools, the
+CLI's reads, the Markdown export, a bundle export, verify and merge plan, a manager created and listed — plus a
+dry-run bundle import, which plans through `MergeSettingsViews`, the scheduler's settings and the quota view)
+changed neither file: server 1 143 reflection entries, CLI 640. The bundle built (one `just bundle`), `smoke.sh` passed with its plugin template check and the relink, and `--self-check` passed. The CLI binary is 74 057 952 B, as after batch 4.
+
+**Plugin authors and API clients.** `plugin-api` did not change, nor did the testkit contract
+(`plugin-testkit-api.txt`; `PluginHarness` imports the media allowlist from plugin-host now, internally).
+The install's Maven repository ships the same nine artifacts. Two POMs changed: `histmersion-core` lists `histmersion-config` (and Chimney) in test scope only, and `histmersion-plugin-host` lists `histmersion-config` itself, so the testkit's dependencies resolve to the same jars. A JVM client compiled against api sees no change. The JSON is the same. Code compiled against
+core that used the config extensions (`cfg.landing.rules`, `cfg.approvals.statusMode`, `media.commons.allowed`, …)
+finds them in `com.histmersion.server.{agents, events, acquire}` and `com.histmersion.pluginhost` now; the
+merge planner takes `MergeSettings`.
+
+**What step 8 should know.** plugin-api is untouched by step 7. Its adapters live in plugin-host (media,
+events, AI) and in `server/plugins`; plugin-host now depends on config directly, and holds the media config
+conversions, so the step 8 newtypes for coordinates, years, DOIs and licences meet the domain there. The
+domain's media and event values (`MediaLicence`, `CatalogMerge.Tolerance`, `FigurePick.Rules`) are plain
+domain types the adapters can target.
+
 ## Unresolved
 
 None.

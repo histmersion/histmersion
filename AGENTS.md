@@ -24,7 +24,7 @@ files ── the local files client and server exchange or keep (package `files`
          (frontmatter, export), the plugin set, a directory's size.
          JVM only (snakeyaml).                                     depends on api ONLY
 core  ── the DOMAIN (package `domain`): the logic server and db run on. JVM only.
-         NO database code, NO side effects.                       depends on values, api, config, files
+         NO database code, NO side effects.   depends on values, api, files — never config (its tests only)
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on config, core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults)
          (and through them on values, api and config)
@@ -33,7 +33,7 @@ web   ── the Scala.js page (Laminar) over the sttp client derived from api's
 plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault):  sconfig + kindlings ONLY
 plugin-host ── the host side of the SPI without server or DB: discovery, config, registration, the
               acquisition client and its parsers of the upstreams' JSON, the chain, how plugin
-              media/catalogues/AI are read.                                core + plugin-api
+              media/catalogues/AI are read.                       core, config + plugin-api
 plugin-testkit ─ a plugin's TEST dependency: load and run it as the server does (plugin-host), with
               live/record/replay HTTP; shipped in the install's maven/, its API a contract.  plugin-host
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
@@ -74,9 +74,11 @@ database, it needs a new endpoint instead.
 
 If `api`, `config`, `files` or `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a
 `println` in any of them; the compiler keeps `api` free of `domain` and `config`, and `config` free of
-`domain` and `api` (the server converts a config record the wire shows, `server/ConfigViews`). The domain
-still works on api's wire records and takes config records as its settings (recorded, temporary edges);
-`docs/research-module-layout.md` has the target layout and the steps that remain.
+`domain` and `api` (the server converts a config record the wire shows, `server/ConfigViews`), and the domain
+free of `config`: it takes settings records of its own (`ManagerDefaults`, `SchedulerDefaults`, `MergeSettings`,
+…), which the server — or plugin-host, for the media settings — converts from config where it reads them. The
+domain still works on api's wire records where both sides have one shape, and on the pure helpers clients
+share (recorded, permanent edges); `docs/research-module-layout.md` lists them, with the steps that remain.
 
 ## One implementation per operation
 
