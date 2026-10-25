@@ -1,0 +1,9 @@
+{"id":"S1","reviewer":"skeptic","severity":"major","kind":"missing-critique","where":"## Origins","quote":"tin came","problem":"The critique is not cited.","fix":"Cite it.","evidence":[{"citekey":"smith1987_tin","offset":120,"quote":"the route is later","ratio":0.97},{"citekey":"doe2001_tin","offset":null,"quote":"q","ratio":1.0}],"escalated":true,"pair":{"src":"doe2001_tin","dst":"smith1987_tin"}}
+{"id":"M1","reviewer":"mechanical","severity":"major","kind":"style","where":"","quote":"","problem":"A problem.","fix":"","evidence":[],"escalated":false,"pair":null}
+{"id":"M1","reviewer":"mechanical","severity":"minor","kind":"style","where":"","quote":"","problem":"A problem.","fix":"","evidence":[],"escalated":false,"pair":null}
+{"id":"R1","reviewer":"rules","severity":"major","kind":"style","where":"","quote":"","problem":"A problem.","fix":"","evidence":[],"escalated":false,"pair":null}
+{"id":"R1","reviewer":"rules","severity":"minor","kind":"style","where":"","quote":"","problem":"A problem.","fix":"","evidence":[],"escalated":false,"pair":null}
+{"id":"C1","reviewer":"cold-reader","severity":"major","kind":"style","where":"","quote":"","problem":"A problem.","fix":"","evidence":[],"escalated":false,"pair":null}
+{"id":"C1","reviewer":"cold-reader","severity":"minor","kind":"style","where":"","quote":"","problem":"A problem.","fix":"","evidence":[],"escalated":false,"pair":null}
+{"id":"S1","reviewer":"skeptic","severity":"major","kind":"style","where":"","quote":"","problem":"A problem.","fix":"","evidence":[],"escalated":false,"pair":null}
+{"id":"S1","reviewer":"skeptic","severity":"minor","kind":"style","where":"","quote":"","problem":"A problem.","fix":"","evidence":[],"escalated":false,"pair":null}

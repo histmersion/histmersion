@@ -1,0 +1,2 @@
+{"findings":[{"claim":"Tin came from the east.","quote":"tin came from the east","place":"Troy","placeKind":"site","start":{"value":2500,"unit":"BCE"},"end":{"value":2000,"unit":"BCE"},"periodName":"EBA","tags":["tin"],"confidence":"high"},{"claim":"A bare claim.","quote":"a bare claim","place":null,"placeKind":null,"start":null,"end":null,"periodName":null,"tags":[],"confidence":"low"}]}
+{"findings":[]}
