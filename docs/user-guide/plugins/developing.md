@@ -599,5 +599,8 @@ a file longer than a KiB, so `head -c 2048` of a PDF replays the same. Lines sta
 - In this repository, the plugin suites install, describe and relink the `hello` jar, the resolver's
   suites resolve `hello-deps` and its dependency offline, and the AI-provider suites run pipelines
   through `hello-ai`; `scripts/bundle/smoke.sh` relinks a real bundle with `hello` and `hello-deps` in
-  it. The testkit's own suites (`modules/plugin-testkit`) load test plugins of every kind. See
+  it. The testkit's own suites (`modules/plugin-testkit`) load test plugins of every kind, and
+  `just plugin-template-check` (which `smoke.sh` runs when scala-cli is installed) writes a project of
+  every kind with `plugin new`, under an empty HOME, then tests and publishes it with scala-cli and checks
+  that the jar holds only the plugin and the POM lists none of the API, the platform and the testkit. See
   [Contributing](../contributing/index.md).

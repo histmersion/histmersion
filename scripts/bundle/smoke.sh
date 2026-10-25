@@ -9,6 +9,8 @@
 #   scripts/bundle/smoke.sh <bundle-dir>
 # The relink needs GraalVM CE of the kit's version (the active JDK, or one `histmersion-toolchain path`
 # finds) and ~16 GB of memory; without them, or with HISTMERSION_SMOKE_RELINK=0, it is skipped and says so.
+# With scala-cli on PATH it also builds every kind of `histmersion plugin new` (plugin-template-check.sh;
+# HISTMERSION_SMOKE_TEMPLATE=0 skips it).
 # Ports are offset (18000/15433/18100) so it can run next to an installed Histmersion.
 set -euo pipefail
 b="$(cd "${1:?usage: $0 <bundle-dir>}" && pwd)"
@@ -196,6 +198,15 @@ grep -qx "//> using repository m2Local" "$data/smoke-new/project.scala" \
   && [ -f "$data/home/.m2/repository/${api_jar#"$b/maven/"}" ] \
   || fail "plugin new wrote an unexpected project: $(cat "$data/new.out"; cat "$data/smoke-new/project.scala")"
 echo "  $repo"
+
+echo "→ the plugin template: every kind of plugin new built, tested and published with scala-cli (a scratch HOME)"
+if [ "${HISTMERSION_SMOKE_TEMPLATE:-1}" = 0 ]; then echo "  skipped (HISTMERSION_SMOKE_TEMPLATE=0)"
+elif ! command -v scala-cli >/dev/null 2>&1; then echo "  skipped: scala-cli is not on PATH (https://scala-cli.virtuslab.org)"
+else
+  "$(dirname "$0")/plugin-template-check.sh" "$b" > "$data/template-check.out" 2>&1 \
+    || fail "the plugin template check failed: $(tail -40 "$data/template-check.out")"
+  sed 's/^/  /' "$data/template-check.out"
+fi
 
 echo "→ relink: the hello and hello-deps test plugins into a COPY of the bundle (bin/, kit/, libexec/, maven/), with the CLI"
 root="$(cd "$(dirname "$0")/../.." && pwd)"
