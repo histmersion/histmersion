@@ -1134,6 +1134,23 @@ option). No master password is stored:
   names every entry: tried and why, or not connected. The entry that opened the database last is tried
   first next time. `keepassxc-cli` 2.7 has no way to list keys, so detection is `ykman` only. Tests
   run fake `keepassxc-cli` and `ykman` scripts; `smoke.sh` checks a two-key list natively.
+  **One unlock per generation (2026-10-26).** A start with four `keepassxc:` references asked for four
+  touches: the host resolved each reference alone. `SecretVault.resolveAll(refs)` (a defaulted method,
+  so SPI 2 plugins compiled before it keep working: the JVM calls the trait's default, which resolves
+  one by one) is now what the host asks — once per vault and generation, on the first reference any
+  plugin about to register needs, with every reference of that vault the generation's plugins hold;
+  every answer, value or error, is kept for that build only (`PluginHost.GenerationSecrets`). The
+  KeePassXC vault answers two or more with one `keepassxc-cli open -q [-k] [-y] [--no-password] <db>`
+  (interactive mode, keepassxc-cli ≥ 2.6; `show` takes one entry, so there is no multi-entry `show`,
+  and `export` would dump the whole database): the password line is written ALONE and the prompt
+  (`<name>> `) awaited before any request — the unlock reads stdin ahead and swallows lines sent with
+  it (seen with keepassxc-cli 2.8.0) — then one `show -q -a <attr> <entry>` per reference (spaces,
+  tabs, quotes and backslashes escaped for the interactive line splitter), each answered before the
+  next: the text up to the next prompt, without the readline echo of the request line. An empty answer
+  is the entry's own error (stderr: "Could not find entry…"). The YubiKey plan, fallback and the touch
+  log line apply to the `open` (one line per attempt). One reference, or an entry holding a control
+  character, is still a plain `show`. A gated test (`HISTMERSION_TEST_KEEPASSXC=1`) runs the installed
+  `keepassxc-cli` against a database it creates in a temporary directory.
 - `1password` — `op read op://… [--account a]`; `service-account-token` (a `Secret`) becomes
   `OP_SERVICE_ACCOUNT_TOKEN` for `op` only; otherwise the desktop app signs `op` in.
 - `bitwarden` — `bw get <field> <item> --nointeraction` with `BW_SESSION` from `session` (a `Secret`);

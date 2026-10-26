@@ -50,6 +50,21 @@ final class MakerPlugin(calls: AtomicInteger = AtomicInteger(), id: String = "ma
       _ <- if c.fail.isEmpty then Right(()) else Left(c.fail)
     yield ()
 
+/** Registers a vault that answers in batches: every `resolveAll` call is recorded with what it asked;
+  * `missing` is an error, `unanswered` is left out of the answer. `resolve` alone is counted apart. */
+final class BatchVaultPlugin(batches: scala.collection.mutable.Buffer[List[String]], singles: AtomicInteger,
+    id: String = "batcher") extends Plugin:
+  type Config = MakerConfig
+  val info = PluginInfo(id, "0.3.0", Spi.Version)
+  override def defaultsResource = "META-INF/histmersion/plugins/maker.conf"
+  def register(c: MakerConfig, ctx: PluginContext) =
+    ctx.secretVaults.add(c.vault, new SecretVault:
+      val name = c.vault
+      def resolve(ref: String) = { singles.incrementAndGet(); Right(s"one($ref)") }
+      override def resolveAll(refs: List[String]) =
+        batches += refs
+        refs.filterNot(_ == "unanswered").map(r => r -> (if r == "missing" then Left(s"no entry '$r'") else Right(s"b($r)"))).toMap)
+
 final case class ConsumerConfig(token: Secret, extra: List[Secret]) derives ConfigReader
 
 /** Needs secrets; records the values it got (the test asserts on them, nothing else ever sees them). */
@@ -345,6 +360,50 @@ class PluginHostSuite extends munit.FunSuite:
     assert(logs.lines.exists(_.contains("helo configures no plugin")))
     assertEquals(g.report.spiVersion, Spi.Version)
 
+  test("a vault is asked ONCE for every reference the generation's plugins hold, before any registers"):
+    val batches = scala.collection.mutable.Buffer.empty[List[String]]
+    val singles = AtomicInteger()
+    val (got1, got2) = (scala.collection.mutable.Buffer.empty[String], scala.collection.mutable.Buffer.empty[String])
+    val (g, _) = build(List(BatchVaultPlugin(batches, singles), ConsumerPlugin(got1, "c1"), ConsumerPlugin(got2, "c2")),
+      """histmersion.plugins {
+        |  batcher { enabled = true, vault = "fake" }
+        |  c1 { enabled = true, token = "fake:a", extra = ["fake:b", "env:E"] }
+        |  c2 { enabled = true, token = "fake:b", extra = ["fake:c"] }
+        |}""".stripMargin, env("E" -> "e-val"))
+    assertEquals(statusOf(g, "c1").state, PluginState.Registered.wire)
+    assertEquals(statusOf(g, "c2").state, PluginState.Registered.wire)
+    assertEquals(batches.toList, List(List("a", "b", "c")), "one call, every reference of the vault, each once")
+    assertEquals(singles.get, 0)
+    assertEquals((got1.toList, got2.toList), (List("b(a)", "b(b)", "e-val"), List("b(b)", "b(c)")))
+
+  test("a batch answer: a missing entry fails its plugin alone; an unanswered one is named; a throwing batch is asked one by one"):
+    val batches = scala.collection.mutable.Buffer.empty[List[String]]
+    val got = scala.collection.mutable.Buffer.empty[String]
+    val (g, _) = build(List(BatchVaultPlugin(batches, AtomicInteger()), ConsumerPlugin(got, "c1"), ConsumerPlugin(got, "c2"),
+        ConsumerPlugin(got, "c3")),
+      """histmersion.plugins {
+        |  batcher.enabled = true
+        |  c1 { enabled = true, token = "fake:missing" }
+        |  c2 { enabled = true, token = "fake:unanswered" }
+        |  c3 { enabled = true, token = "fake:ok" }
+        |}""".stripMargin)
+    assertEquals(statusOf(g, "c1").error, Some("histmersion.plugins.c1: secret fake:missing: no entry 'missing'"))
+    assertEquals(statusOf(g, "c2").error, Some("histmersion.plugins.c2: secret fake:unanswered: vault 'fake' gave no answer for it"))
+    assertEquals(statusOf(g, "c3").state, PluginState.Registered.wire)
+    assertEquals(got.toList, List("b(ok)"))
+    assertEquals(batches.size, 1)
+    val throwing = new SecretVault:
+      val name = "t"
+      def resolve(r: String) = if r == "b" then throw new IllegalStateException("kaput") else Right(s"one($r)")
+      override def resolveAll(refs: List[String]) = throw new IllegalStateException("kaput")
+    assertEquals(PluginHost.resolveAll("t", List("a", "b"), throwing), Map(
+      "a" -> Right("one(a)"), "b" -> Left("secret t:b: vault 't' failed: IllegalStateException")))
+
+  test("a vault without resolveAll (an SPI-2 plugin compiled before it) is asked one reference at a time"):
+    val default = new SecretVault { val name = "d"; def resolve(r: String) = if r == "x" then Left("locked") else Right(s"v($r)") }
+    assertEquals(PluginHost.resolveAll("d", List("a", "x", "a"), default),
+      Map("a" -> Right("v(a)"), "x" -> Left("secret d:x: locked")))
+
   test("builds are independent: no state survives from one generation to the next"):
     val calls = AtomicInteger()
     val got   = scala.collection.mutable.Buffer.empty[String]
@@ -399,6 +458,32 @@ class PluginHostSuite extends munit.FunSuite:
     val shown = g.report.toString + logs.lines.mkString
     assert(!shown.contains("session-from") && !shown.contains("kp-master"), shown)
     assert(statusOf(g, "bitwarden").settings.contains(PluginSetting("session", "keepassxc:Histmersion/bw#password")))
+
+  test("end to end: four keepassxc references of three plugins are read in ONE keepassxc-cli open"):
+    val d = Files.createTempDirectory("histmersion-fake-bin")
+    val cli = d.resolve("keepassxc-cli")
+    Files.writeString(cli, "#!/bin/sh\necho \"$1\" >> \"$(dirname \"$0\")/kp-calls\"\n" +
+      "IFS= read -r pw\n[ \"$pw\" = \"kp-master\" ] || { echo 'Invalid credentials' >&2; exit 1; }\n" +
+      "[ \"$1\" = open ] || { for a; do e=$a; done; printf 'value-of-%s\\n' \"$e\"; exit 0; }\n" +
+      "printf 'v.kdbx> '\nwhile IFS= read -r line; do\n  printf '%s\\n' \"$line\"\n  [ \"$line\" = exit ] && exit 0\n" +
+      "  printf 'value-of-%s\\n' \"${line##* }\"\n  printf 'v.kdbx> '\ndone\n")
+    Files.setPosixFilePermissions(cli, PosixFilePermissions.fromString("rwx------"))
+    Files.writeString(d.resolve("bw"), "#!/bin/sh\nexit 0\n")
+    Files.setPosixFilePermissions(d.resolve("bw"), PosixFilePermissions.fromString("rwx------"))
+    val db = Files.writeString(d.resolve("v.kdbx"), "")
+    val got = scala.collection.mutable.Buffer.empty[String]
+    val (found, _) = PluginHost.discover(getClass.getClassLoader)
+    val (g, logs) = build(found ++ List(ConsumerPlugin(got, "c1"), ConsumerPlugin(got, "c2")),
+      s"""histmersion.plugins {
+         |  keepassxc { enabled = true, database = "$db", password = "env:KP_PASSWORD" }
+         |  bitwarden { enabled = true, session = "keepassxc:Histmersion/bw" }
+         |  c1 { enabled = true, token = "keepassxc:Histmersion/CORE", extra = ["keepassxc:Histmersion/Europeana"] }
+         |  c2 { enabled = true, token = "keepassxc:Histmersion/api.data.gov" }
+         |}""".stripMargin, env("PATH" -> d.toString, "KP_PASSWORD" -> "kp-master"))
+    assertEquals(List("bitwarden", "c1", "c2", "keepassxc").map(statusOf(g, _).state), List.fill(4)(PluginState.Registered.wire))
+    assertEquals(Files.readAllLines(d.resolve("kp-calls")).asScala.toList, List("open"), "one unlock for all four")
+    assertEquals(got.toList.sorted, List("value-of-Histmersion/CORE", "value-of-Histmersion/Europeana", "value-of-Histmersion/api.data.gov"))
+    assert(!(g.report.toString + logs.lines.mkString).contains("value-of"))
 
   // ── a config reload: only the plugins whose block changed (docs/research-plugins.md §3.5) ────────
 
