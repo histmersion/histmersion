@@ -490,7 +490,9 @@ users price them in `agents.prices` (`0/0` for a free one) and cap them with all
 The other extension points follow the same pattern: `MediaCollection` (`search` a place, `complete`
 a record; the host judges every licence and every match itself), `EventCatalogue` (`parts` and
 `read` pages of `CatalogueEvent`s, with its `licence` and `citation`) and `SecretVault` (`name`,
-`resolve(ref)`).
+`resolve(ref)`, and optionally `resolveAll(refs)`: the host asks a vault once for every reference of a
+config generation; the default calls `resolve` for each, a vault whose backend costs per call — an
+unlock, a hardware key — overrides it to pay once).
 
 ## Native image
 

@@ -327,6 +327,38 @@ object PluginHost:
             try v.resolve(r).left.map(e => s"secret ${ref.shown}: $e")
             catch case NonFatal(e) => Left(s"secret ${ref.shown}: vault '$name' failed: ${e.getClass.getSimpleName}")
 
+  /** Resolve several references of ONE vault in one call ([[SecretVault.resolveAll]]): each answer as
+    * [[resolve]] words it; a reference the vault did not answer is an error, an answer to one not
+    * asked is dropped. A `resolveAll` that throws (the SPI's default throws whatever one `resolve`
+    * throws) is answered one reference at a time instead, so a throw fails only its own reference. */
+  def resolveAll(name: String, refs: List[String], vault: SecretVault): Map[String, Either[String, String]] =
+    val asked = refs.distinct
+    def one(r: String) = resolve(SecretRef.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
+    try
+      val answers = Option(vault.resolveAll(asked)).getOrElse(Map.empty)
+      asked.map { r =>
+        r -> answers.get(r).flatMap(Option(_)).getOrElse(Left(s"vault '$name' gave no answer for it"))
+          .left.map(e => s"secret ${SecretRef.Vault(name, r).shown}: $e")
+      }.toMap
+    catch case NonFatal(_) => asked.map(r => r -> one(r)).toMap
+
+  /** The secrets of one generation: each vault is asked ONCE for all its references that `wanted`
+    * lists — on the first reference of it any plugin needs, so a vault registered earlier in the same
+    * build is asked then too — and every answer, value or error, is kept for this generation only (a
+    * reload resolves again; nothing outlives the build's registrations). */
+  private final class GenerationSecrets(env: Config, wanted: Map[String, List[String]]):
+    private val known = scala.collection.concurrent.TrieMap.empty[SecretRef, Either[String, String]]
+    def apply(ref: SecretRef, vaults: Map[String, SecretVault]): Either[String, String] =
+      known.getOrElse(ref, {
+        ref match
+          case SecretRef.Vault(name, asked) if vaults.contains(name) =>
+            val batch = (wanted.getOrElse(name, Nil) :+ asked).distinct
+              .filterNot(r => known.contains(SecretRef.Vault(name, r)))
+            resolveAll(name, batch, vaults(name)).foreach((r, v) => known.update(SecretRef.Vault(name, r), v))
+          case _ => known.update(ref, resolve(ref, env, vaults))
+        known.getOrElse(ref, resolve(ref, env, vaults))
+      })
+
   // ── a generation ────────────────────────────────────────────────────────────────────────────
 
   /** One enabled plugin after its config was decoded, waiting to register: `call` is `p.register`
@@ -466,8 +498,12 @@ object PluginHost:
       id -> r
     }
 
-    // registration passes; the secret cache is this generation's own (re-resolved on every build)
-    val cache = scala.collection.mutable.Map.empty[SecretRef, String] // local to this build, never shared
+    // registration passes; the secrets are this generation's own (re-resolved on every build), each
+    // vault asked once for every reference the plugins about to register hold
+    val ready = prepared.collect { case (_, Right(pr)) => pr }
+    val wanted = ready.flatMap(_.secrets.map(_.ref)).collect { case SecretRef.Vault(v, r) => v -> r }.distinct
+      .groupMap(_._1)(_._2)
+    val secrets = GenerationSecrets(env, wanted)
     @annotation.tailrec
     def passes(waiting: List[Prepared], regs: Registries,
         done: Map[String, (PluginStatus, Registries)]): (Registries, Map[String, (PluginStatus, Registries)]) =
@@ -476,7 +512,7 @@ object PluginHost:
           val missing = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }
           if missing.nonEmpty then (rs, ds, left :+ pr, prog)
           else
-            val (st, added) = pr.carried.getOrElse(register(pr, rs, env, services, cache))
+            val (st, added) = pr.carried.getOrElse(register(pr, rs, services, secrets))
             (rs ++ added, ds.updated(pr.p.info.id, (st, added)), left, true)
       }
       if left.isEmpty || !progressed then
@@ -489,7 +525,6 @@ object PluginHost:
         (rs, ds ++ stuck)
       else passes(left, rs, ds)
 
-    val ready = prepared.collect { case (_, Right(pr)) => pr }
     val (registries, registered) = passes(ready, Registries.empty, Map.empty)
     val statuses = prepared.map {
       case (_, Left(st))  => st
@@ -504,14 +539,11 @@ object PluginHost:
       ready.filter(_.secrets.nonEmpty).map(_.p.info.id).toSet)
 
   /** Resolve one prepared plugin's secrets and call its `register` with a staged context. */
-  private def register(pr: Prepared, regs: Registries, env: Config, services: HostServices,
-      cache: scala.collection.mutable.Map[SecretRef, String]): (PluginStatus, Registries) =
+  private def register(pr: Prepared, regs: Registries, services: HostServices,
+      secrets: GenerationSecrets): (PluginStatus, Registries) =
     val p  = pr.p
     val id = p.info.id
-    def resolved(s: Secret): Either[String, String] =
-      cache.get(s.ref) match
-        case Some(v) => Right(v)
-        case None    => resolve(s.ref, env, regs.secretVaults).map { v => cache.update(s.ref, v); v }
+    def resolved(s: Secret): Either[String, String] = secrets(s.ref, regs.secretVaults)
     val literal = pr.secrets.exists(_.ref.isInstanceOf[SecretRef.Value])
     val warns = if !literal then Nil else List(s"$Root.$id: a secret is written into the config (value:${SecretRef.Mask}) — " +
       "use env:<NAME> or a vault reference")

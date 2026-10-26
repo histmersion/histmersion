@@ -218,12 +218,32 @@ class VaultsSuite extends munit.FunSuite:
       |fi
       |slot=${yk%%:*}; serial=""; case "$yk" in *:*) serial=${yk#*:};; esac
       |[ -f "$dir/slow" ] && sleep 30
-      |if [ -n "$serial" ]; then
-      |  grep -qx "$serial" "$dir/plugged" 2>/dev/null || { echo "Error while reading the database: Could not find hardware key with serial number $serial. Please plug it in to continue." >&2; exit 1; }
-      |else
-      |  [ -s "$dir/plugged" ] || { echo "Error while reading the database: No YubiKey detected" >&2; exit 1; }
+      |if [ -n "$yk" ]; then
+      |  if [ -n "$serial" ]; then
+      |    grep -qx "$serial" "$dir/plugged" 2>/dev/null || { echo "Error while reading the database: Could not find hardware key with serial number $serial. Please plug it in to continue." >&2; exit 1; }
+      |  else
+      |    [ -s "$dir/plugged" ] || { echo "Error while reading the database: No YubiKey detected" >&2; exit 1; }
+      |  fi
+      |  [ "$slot" = "2" ] || { echo "Error while reading the database: Failed to complete a challenge-response, the specific error was: Hardware key slot is not configured." >&2; exit 1; }
       |fi
-      |[ "$slot" = "2" ] || { echo "Error while reading the database: Failed to complete a challenge-response, the specific error was: Hardware key slot is not configured." >&2; exit 1; }
+      |if [ "$1" = "open" ]; then
+      |  printf 'v.kdbx> '
+      |  while IFS= read -r line; do
+      |    printf '%s\n' "$line"
+      |    case "$line" in
+      |      exit|quit) exit 0;;
+      |      "show -q -a "*)
+      |        rest=${line#show -q -a }; attr=${rest%% *}; e=$(printf '%s' "${rest#* }" | sed 's/\\\(.\)/\1/g')
+      |        case "$e" in
+      |          missing) echo "Could not find entry with path missing." >&2;;
+      |          *) if [ "$attr" = password ]; then printf '%s\n' "secret of $e"; else printf '%s\n' "secret of $e/$attr"; fi;;
+      |        esac;;
+      |      *) echo "Unknown command ${line%% *}" >&2;;
+      |    esac
+      |    printf 'v.kdbx> '
+      |  done
+      |  exit 0
+      |fi
       |printf '%s\n' "secret of $entry"
       |""".stripMargin)
 
@@ -324,6 +344,98 @@ class VaultsSuite extends munit.FunSuite:
     script(d, "keepassxc-cli", "echo 'Could not find entry with path missing.' >&2\nexit 1\n")
     val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"]")
     assertEquals(v.resolve("missing"), Left("keepassxc: no entry 'missing'"))
+
+  // ── KeePassXC: one open for many references ────────────────────────────────────────────────
+
+  test("keepassxc session: the prompt, escaping for the interactive line, the answer without its echo"):
+    assertEquals(KeePassXcSession.prompt("v.kdbx> "), Some("v.kdbx> "))
+    assertEquals(KeePassXcSession.prompt("Please touch\nResearch> "), Some("Research> "))
+    assertEquals(KeePassXcSession.prompt("v.kdbx"), None)
+    assertEquals(KeePassXcSession.escape("A/Two words \"q\" b\\s\tt"), "A/Two\\ words\\ \\\"q\\\"\\ b\\\\s\\\tt")
+    assertEquals(KeePassXcSession.command("password", "A/Two words"), "show -q -a password A/Two\\ words")
+    assert(!KeePassXcSession.sendable("a\nb") && KeePassXcSession.sendable("a b"))
+    val out = "v.kdbx> show -q -a password A\nsecret\nv.kdbx> "
+    assertEquals(KeePassXcSession.segment(out, 8, "v.kdbx> "), Some("show -q -a password A\nsecret\n"))
+    assertEquals(KeePassXcSession.segment(out.dropRight(8), 8, "v.kdbx> "), None, "not answered yet")
+    assertEquals(KeePassXcSession.segment("v.kdbx> ", 8, "v.kdbx> "), None, "the old prompt is not an answer")
+    assertEquals(KeePassXcSession.answer("show -q -a password A\nsecret\n", "show -q -a password A"), "secret")
+    assertEquals(KeePassXcSession.answer("secret\n", "show -q -a password A"), "secret", "a session without readline echoes nothing")
+    assertEquals(KeePassXcSession.answer("show -q -a password A\n", "show -q -a password A"), "", "a missing entry prints nothing")
+
+  test("keepassxc batch: N references with ONE open — one touch line, the password on stdin, a missing entry its own error"):
+    val d = bin(); fakeKeePassXcYk(d); plug(d, "12345678")
+    val (v, ctx) = ykVault(d, "ykman = \"\", yubikey = \"2:12345678\"")
+    val quoted = "B/\"quoted\" back\\slash"
+    val r = v.resolveAll(List("A/One", "A/Two words#UserName", "missing", quoted, "A/One"))
+    assertEquals(r, Map(
+      "A/One"                -> Right("secret of A/One"),
+      "A/Two words#UserName" -> Right("secret of A/Two words/UserName"),
+      "missing"              -> Left("keepassxc: no entry 'missing'"),
+      quoted                 -> Right(s"secret of $quoted")))
+    assertEquals(calls(d), List(s"open -q -y 2:12345678 ${d.resolve("v.kdbx")}"), "one open, no show")
+    assertEquals(ctx.infos.count(_.contains("touch your YubiKey")), 1)
+    assert(ctx.infos.exists(_.contains("for 4 references")), ctx.infos)
+    assert(!(ctx.infos ++ calls(d) ++ r.values.flatMap(_.left.toOption)).exists(_.contains("master-pw")))
+
+  test("keepassxc batch: the first YubiKey absent, the second opens the session; it goes first next time"):
+    val d = bin(); fakeKeePassXcYk(d); plug(d, "87654321")
+    val (v, ctx) = ykVault(d, "ykman = \"\", yubikey = [\"2:12345678\", \"2:87654321\"]")
+    assertEquals(v.resolveAll(List("A", "B")), Map("A" -> Right("secret of A"), "B" -> Right("secret of B")))
+    assertEquals(calls(d).map(_.split(' ').take(4).mkString(" ")), List("open -q -y 2:12345678", "open -q -y 2:87654321"))
+    assertEquals(ctx.infos.count(_.contains("touch your YubiKey")), 2, "one line per open attempt")
+    plug(d, "12345678", "87654321")
+    assertEquals(v.resolveAll(List("C", "D")), Map("C" -> Right("secret of C"), "D" -> Right("secret of D")))
+    assertEquals(calls(d).drop(2).map(_.split(' ').take(4).mkString(" ")), List("open -q -y 2:87654321"))
+
+  test("keepassxc batch: a wrong password fails every reference after one open; no further key is tried"):
+    val d = bin(); fakeKeePassXcYk(d); plug(d, "1", "2")
+    val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"]", pw = "wrong-pw")
+    val r = v.resolveAll(List("A", "B"))
+    assertEquals(r.keySet, Set("A", "B"))
+    assert(r.values.forall(_.left.exists(e =>
+      e.contains("could not open v.kdbx for 2 references with a YubiKey — 2:1: invalid credentials") &&
+        e.contains("not trying further keys") && !e.contains("wrong-pw"))), r)
+    assertEquals(calls(d).size, 1)
+
+  test("keepassxc batch without a YubiKey: one password session; one reference alone is a plain show; bad ones refused"):
+    val d = bin(); fakeKeePassXcYk(d)
+    val db = Files.writeString(d.resolve("v.kdbx"), "")
+    val v = registered(KeePassXcPlugin(), s"""database = "$db", password = "env:KP"""",
+      Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("KP") -> "master-pw")))
+    assertEquals(v.resolveAll(List("A", "B#UserName")), Map("A" -> Right("secret of A"), "B#UserName" -> Right("secret of B/UserName")))
+    assertEquals(calls(d), List(s"open -q $db"))
+    assertEquals(v.resolveAll(List("C")), Map("C" -> Right("secret of C")))
+    assertEquals(calls(d).last, s"show -q -a password $db C")
+    val bad = v.resolveAll(List("-x", "D", "E"))
+    assertEquals(bad("-x"), Left("the entry may not start with '-'"))
+    assertEquals((bad("D"), bad("E")), (Right("secret of D"), Right("secret of E")))
+    assertEquals(calls(d).last, s"open -q $db", "the refused one ran nothing")
+    val wrong = registered(KeePassXcPlugin(), s"""database = "$db", password = "env:KP"""",
+      Ctx(Map("PATH" -> d.toString), Map(SecretRef.Env("KP") -> "nope")))
+    assert(wrong.resolveAll(List("A", "B")).values.forall(_.left.exists(_.contains("the database is locked"))))
+
+  test("keepassxc batch against the installed keepassxc-cli and a throwaway database (HISTMERSION_TEST_KEEPASSXC=1)"):
+    val cli = Subprocess.locate("keepassxc-cli", sys.env.get("PATH"))
+    val why = if !sys.env.get("HISTMERSION_TEST_KEEPASSXC").contains("1") then Some("set HISTMERSION_TEST_KEEPASSXC=1")
+      else cli.left.toOption
+    why.foreach(w => println(s"SKIPPED VaultsSuite real keepassxc-cli: $w"))
+    assume(why.isEmpty, why.getOrElse(""))
+    val exe = cli.toOption.get
+    val d = Files.createTempDirectory("histmersion-kpx-test")
+    val db = d.resolve("throwaway.kdbx").toString
+    def kp(args: List[String], stdin: String) =
+      val r = Subprocess.run(exe :: args, Map.empty, Some(stdin), 60.seconds).fold(fail(_), identity)
+      assertEquals(r.exit, 0, r.err)
+    kp(List("db-create", "-q", "-p", db), "test-pw\ntest-pw\n")
+    kp(List("mkdir", "-q", db, "G"), "test-pw\n")
+    kp(List("add", "-q", "-p", db, "G/One"), "test-pw\nfirst value\n")
+    kp(List("add", "-q", "-p", db, "G/Two words \"q\" b\\s"), "test-pw\nsecond\n")
+    kp(List("add", "-q", "-p", "-u", "someone", db, "Three"), "test-pw\nthird\n")
+    val v = registered(KeePassXcPlugin(), s"""cli = "$exe", database = "$db", password = "env:KP", ykman = \"\"""",
+      Ctx(Map("PATH" -> sys.env.getOrElse("PATH", "")), Map(SecretRef.Env("KP") -> "test-pw")))
+    assertEquals(v.resolveAll(List("G/One", "G/Two words \"q\" b\\s", "missing", "Three#UserName", "Three")), Map(
+      "G/One" -> Right("first value"), "G/Two words \"q\" b\\s" -> Right("second"),
+      "missing" -> Left("keepassxc: no entry 'missing'"), "Three#UserName" -> Right("someone"), "Three" -> Right("third")))
 
   // ── 1Password ───────────────────────────────────────────────────────────────────────────────
 

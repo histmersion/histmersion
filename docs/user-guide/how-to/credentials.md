@@ -56,7 +56,7 @@ password is stored.
 
 ### KeePassXC
 
-Needs `keepassxc-cli` (it comes with KeePassXC).
+Needs `keepassxc-cli` (it comes with KeePassXC; version 2.6 or newer, for its `open` command).
 
 ```hocon
 histmersion {
@@ -80,6 +80,17 @@ fails at once. Without `ykman` every entry is tried in order. The log says "touc
 each attempt; each attempt waits up to 30 seconds (`yubikey-timeout-seconds`). A wrong password or a
 missing entry stops at once — another key cannot fix those. The key that opened the database last is
 tried first next time. `ykman = ""` turns detection off.
+
+**One unlock per start or reload.** When the server starts, and on every `histmersion config reload`,
+Histmersion collects every `keepassxc:` reference in your settings — the Smithsonian and Europeana
+keys, CORE's, a Bitwarden session — and reads them all with **one** `keepassxc-cli open`: the database
+is unlocked once (one password, one YubiKey touch), and each reference is one `show` request inside
+that session, answered before the next is sent. The log says "touch your YubiKey" once per unlock
+attempt, naming how many references it is for. A missing entry fails only the plugin that names it;
+a failed unlock (a wrong password, no key touched in time) fails every plugin that needed the
+database, and a second listed YubiKey is tried exactly as above. The values stay in the server's
+memory, for the settings they were read for, and are read again at the next start or reload. A single
+reference is read with one `keepassxc-cli show`, as before.
 
 ### 1Password
 
