@@ -128,6 +128,18 @@ Bitwarden's session can be kept in KeePassXC, for example.
 | a **local** OpenAI-compatible server | `HISTMERSION_AGENTS_LOCAL_API_KEY` | environment only, if your server wants one |
 | a **plugin**'s service | its own block, `plugins.<id> { … }` | always a secret reference |
 
+## Getting the keys
+
+Where each key comes from, and what the sign-up looks like. All of these are free.
+
+| service | where to sign up | what to expect |
+|---|---|---|
+| **api.data.gov** (used by the Smithsonian Open Access API) | [api.data.gov/signup](https://api.data.gov/signup/) | A short form of four fields, your name and e-mail address among them. The key arrives **by e-mail**; there is no account page to come back to, so keep that e-mail. The form is loaded by a script: if the page stays on "Loading sign up form…", allow the site in your content blocker or open it in another browser. One key covers every api.data.gov service. |
+| **Flickr** | [flickr.com/services/api/keys/apply](https://www.flickr.com/services/api/keys/apply/) | Apply for a **non-commercial** key and describe what it is for in a sentence or two. Commercial keys are reviewed by Flickr's staff first. |
+
+Store each key as a secret reference (an `HISTMERSION_…` environment variable of the server, or a
+vault entry), never in the settings file or a repository.
+
 ### Logging in to the command-line AI tools
 
 The `claude-code`, `codex` and `opencode` providers run **your own** installed tool on **your own**
