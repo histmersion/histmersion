@@ -135,6 +135,7 @@ Where each key comes from, and what the sign-up looks like. All of these are fre
 | service | where to sign up | what to expect |
 |---|---|---|
 | **api.data.gov** (used by the Smithsonian Open Access API) | [api.data.gov/signup](https://api.data.gov/signup/) | A short form: first name, last name, e-mail address and an optional US phone number (leave it empty if you have none). The key arrives **by e-mail**; there is no account page to come back to, so keep that e-mail. The form is loaded by a script: if the page stays on "Loading sign up form…", allow the site in your content blocker or open it in another browser. One key covers every api.data.gov service. |
+| **Europeana** | [europeana.eu/en/account/api-keys](https://www.europeana.eu/en/account/api-keys) | Needs a Europeana account first: the page asks you to log in or **Join**. The join form asks for an e-mail address, a username (it may be shown publicly), first and last name and a password of at least 8 characters, and you confirm you are at least 13 and accept the terms of use. Logged in, you request the key on the same page. |
 | **Flickr** | [flickr.com/services/api/keys/apply](https://www.flickr.com/services/api/keys/apply/) | **Paid accounts only** (as of October 2026): Flickr has turned off key creation for free accounts and offers it to Flickr Pro subscribers. Histmersion has no Flickr provider; Flickr photographs are counted, not taken. |
 
 Store each key as a secret reference (an `HISTMERSION_…` environment variable of the server, or a
