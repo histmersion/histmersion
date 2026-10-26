@@ -14,6 +14,9 @@ import java.time.LocalDate
 trait ScholarlyIndex:
   def name: String
   def search(query: String, since: LocalDate, limit: Int): Either[String, List[WorkRef]]
+  /** Why the index would not be asked now (CORE's budget spent, CORE asked to wait), if it would not: a
+    * sweep then leaves its watches unread, keeping their watermarks, and says so. */
+  def unavailable: Option[String] = None
 
 /** The forward-citation and same-author alerts of a goal's sources (OpenAlex): the works citing one, a
   * work's authors, and an author's newer works. */
@@ -75,21 +78,28 @@ final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
       "max_results" -> math.max(1, math.min(limit, 100)).toString))
       .map(Candidates.arxivWorks(_).filter(_.year.forall(_ >= since.getYear)))
 
-/** CORE: only with `acquire.core.api-key` (its search refuses anonymous use). */
-final class CoreIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
+/** CORE: only with a key (its search refuses anonymous use) — the `oa-core` plugin's resolved
+  * `api-key`, else `acquire.core.api-key` — and through the server's CORE budget, at most
+  * `acquire.core.search-daily-tokens` a day. */
+final class CoreIndex(api: CoreApi, key: Option[String]) extends ScholarlyIndex:
   val name = "core"
+  override def unavailable: Option[String] = api.unavailable(CoreQuota.Purpose.Search)
   def search(query: String, since: LocalDate, limit: Int) =
-    cfg.core.key match
-      case None => Left("no acquire.core.api-key: CORE's search needs one")
+    key match
+      case None => Left("no CORE key (plugins.oa-core.api-key or acquire.core.api-key): CORE's search needs one")
       case Some(k) =>
-        http.json(Url(cfg.core.url, "/search/works", "q" -> s"($query) AND yearPublished>=${since.getYear}",
-          "limit" -> math.max(1, math.min(limit, 100)).toString), Map("Authorization" -> s"Bearer $k")).map(Candidates.coreWorks)
+        api.searchWorks(k, s"($query) AND yearPublished>=${since.getYear}", math.max(1, math.min(limit, 100)),
+          CoreQuota.Purpose.Search).left.map(_.message).map(Candidates.coreWorks)
 
 object Indexes:
-  /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). */
-  def of(cfg: AcquireConfig, http: Http): (List[ScholarlyIndex], CitationAlerts) =
+  /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). `coreKey`
+    * is CORE's key as the plugins resolved it ([[fetchers.CoreFetcher.key]]), else `acquire.core.api-key`;
+    * `core` the server's CORE budget. */
+  def of(cfg: AcquireConfig, http: Http, coreKey: Option[String] = None, core: CoreBudget = CoreBudget())
+      : (List[ScholarlyIndex], CitationAlerts) =
+    val key      = coreKey.orElse(cfg.core.key)
     val openalex = OpenAlexIndex(cfg, http)
     val all: Map[String, ScholarlyIndex] = Map("openalex" -> openalex, "crossref" -> CrossrefIndex(cfg, http),
-      "europepmc" -> EuropePmcIndex(cfg, http), "arxiv" -> ArxivIndex(cfg, http), "core" -> CoreIndex(cfg, http))
+      "europepmc" -> EuropePmcIndex(cfg, http), "arxiv" -> ArxivIndex(cfg, http), "core" -> CoreIndex(CoreApi(cfg, http, core), key))
     // CORE only with its key (its search refuses anonymous use): without one it is not asked at all
-    (cfg.candidates.indexes.map(_.trim.toLowerCase).distinct.filter(n => n != "core" || cfg.core.key.isDefined).flatMap(all.get), openalex)
+    (cfg.candidates.indexes.map(_.trim.toLowerCase).distinct.filter(n => n != "core" || key.isDefined).flatMap(all.get), openalex)

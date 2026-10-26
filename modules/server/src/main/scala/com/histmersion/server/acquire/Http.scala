@@ -3,7 +3,7 @@ package com.histmersion.server.acquire
 import com.histmersion.config.AcquireConfig
 import com.histmersion.domain.HttpPolicy
 
-import com.histmersion.pluginhost.{PolicyHttp, SttpTransport}
+import com.histmersion.pluginhost.{HttpAnswer, PolicyHttp, SttpTransport}
 import io.circe.Json
 
 /** The ONE seam between the acquisition toolset and the network.
@@ -20,6 +20,11 @@ trait Http:
   def text(url: String, headers: Map[String, String] = Map.empty): Either[String, String]
   def bytes(url: String, headers: Map[String, String] = Map.empty): Either[String, Array[Byte]]
 
+  /** One request, not retried, answered as it came — the status and headers too (CORE's budget reads
+    * them). A client that only has bodies (a test's) answers 200 with no headers, or its `Left`. */
+  def once(url: String, headers: Map[String, String] = Map.empty): Either[String, HttpAnswer] =
+    bytes(url, headers).map(HttpAnswer(200, Map.empty, _))
+
 object Http:
   /** A caller's own `User-Agent` (the PMC hosts get the project's public identity) replaces the
     * acquisition one; either goes through [[HttpPolicy.userAgent]], so neither can carry an e-mail. */
@@ -29,6 +34,8 @@ object Http:
   * challenge the end of a request) as the three verbs the acquisition clients read. */
 final class SttpHttp(policy: PolicyHttp) extends Http:
   def bytes(url: String, headers: Map[String, String]): Either[String, Array[Byte]] = policy.bytes(url, headers)
+
+  override def once(url: String, headers: Map[String, String]): Either[String, HttpAnswer] = policy.once(url, headers)
 
   def text(url: String, headers: Map[String, String]): Either[String, String] =
     bytes(url, headers).map(new String(_, "UTF-8"))

@@ -29,9 +29,9 @@ object Main:
   def server(cfg: AppConfig, host: String, port: Int, converter: ConverterClient,
       autoInit: Boolean = false, onHandlers: Handlers => Unit = _ => (),
       configFile: ConfigFileInfo = ConfigFileInfo(), plugins: Generation = Plugins.offline,
-      source: Option[(LoadedConfig, ConfigSource)] = None)(using Ox): NettySyncServer =
+      source: Option[(LoadedConfig, ConfigSource)] = None, core: CoreBudget = CoreBudget())(using Ox): NettySyncServer =
     build(hotConfig(cfg, configFile, source.map(_._1)), source.map(_._2), host, port, Some(converter), autoInit,
-      onHandlers, plugins)
+      onHandlers, plugins, core)
 
   private def hotConfig(cfg: AppConfig, configFile: ConfigFileInfo, loaded: Option[LoadedConfig]): HotConfig =
     loaded match
@@ -55,9 +55,12 @@ object Main:
     * may move it). */
   private def build(hc: HotConfig, source: Option[ConfigSource], host: String, port: Int,
       converter: Option[ConverterClient], autoInit: Boolean = false, onHandlers: Handlers => Unit = _ => (),
-      plugins: Generation = Plugins.offline)(using Ox): NettySyncServer =
-    val sg = ServerGraph.start(hc, source, Some(plugins)).fold(e => throw IllegalStateException(e), identity)
+      plugins: Generation = Plugins.offline, core: CoreBudget = CoreBudget())(using Ox): NettySyncServer =
+    val sg = ServerGraph.start(hc, source, Some(plugins), core).fold(e => throw IllegalStateException(e), identity)
     releaseAfterScope(sg.close())
+    // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
+    // from here on: a restart does not hand the day's tokens out again
+    core.persistTo(CoreQuotaStore.db(sg.ds))
     val deps = sg.deps(Maintenance())
     val cfg  = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h    = Handlers(deps, converter.getOrElse(ConverterClient.fromConfig(deps.cfg.converter)))
@@ -139,7 +142,7 @@ object Main:
   private def acquireHandlers(sg: ServerGraph, deps: Deps, h: Handlers): AcquireHandlers =
     val clients = sg.graph.node[AcquireClients](ServerGraph.Acquisition, deps = List(sg.plugins),
       keys = List("histmersion.acquire", "histmersion.media.max-retry-after-seconds")) { ctx =>
-      Right(acquireClients(ctx.config.app, ctx(sg.plugins)))
+      Right(acquireClients(ctx.config.app, ctx(sg.plugins), sg.core))
     }.fold(e => throw IllegalStateException(e), identity)
     AcquireHandlers(
       deps,
@@ -157,7 +160,7 @@ object Main:
     * included), the upstream clients built over it, and the chain of the generation's source fetchers
     * (the built-in archive-org, oa-unpaywall, oa-core, oa-openalex, oa-landing, pmc and arxiv unless
     * switched off) in `acquire.chain` order. */
-  private def acquireClients(app: AppConfig, plugins: Generation): AcquireClients =
+  private def acquireClients(app: AppConfig, plugins: Generation, core: CoreBudget): AcquireClients =
     val cfg = app.acquire
     // the one outbound policy's Retry-After cap is the media one (`media.max-retry-after-seconds`)
     // `acquire.tls` (#1568): more roots than the JDK's, only when asked for
@@ -170,7 +173,8 @@ object Main:
     scribe.info(chain.plan match
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")
-    val (indexes, alerts) = Indexes.of(cfg, http)
+    // CORE's search with the key the oa-core plugin resolved (its secret reference), on the same budget
+    val (indexes, alerts) = Indexes.of(cfg, http, fetchers.CoreFetcher.key(plugins.registries.sourceFetchers), core)
     AcquireClients(openalex, SemanticScholar(cfg, http, openalex), chain, Wikipedia(cfg, http),
       ArchiveOrg(cfg, http), RetractionWatch(cfg, http), indexes, alerts)
 
@@ -190,6 +194,9 @@ object Main:
     // (Safe: config never parses system properties, so these dotted keys don't reach sconfig.)
     System.setProperty("io.netty.allocator.type", "unpooled")
     System.setProperty("io.netty.leakDetection.level", "disabled")
+    // the ONE CORE budget of this process: every plugin generation's `core` fetcher and the new-source
+    // search's `core` index spend from it (kept in the database once it is open)
+    val core = CoreBudget()
     // eager, on the main thread (native-image StackValue constraint): reference.conf < the user config
     // file < the environment. A broken file stops the start — running on settings the user did not
     // ask for is worse than not running. A reload reads the file again with THIS environment.
@@ -202,7 +209,7 @@ object Main:
         // the plugins, also on the main thread and before anything is opened: each block layered over
         // the plugin's defaults, type-checked, decoded, its secrets resolved, registered (staged). A
         // plugin that fails contributes nothing and the server still starts; --self-check says so.
-        (l, Plugins.load(l))
+        (l, Plugins.load(l, core = core))
       case Left(err) =>
         scribe.error(err)
         sys.exit(3)
@@ -229,7 +236,7 @@ object Main:
     supervised {
       val srv =
         try build(hotConfig(cfg, loadedConfig.file.info, Some(loadedConfig)), Some(source), cfg.server.host,
-          cfg.server.port, None, autoInit = cfg.init.auto, plugins = generation)
+          cfg.server.port, None, autoInit = cfg.init.auto, plugins = generation, core = core)
         catch
           case e: Throwable =>
             scribe.error(s"Histmersion failed to start: ${e.getClass.getName}: ${e.getMessage}", e)

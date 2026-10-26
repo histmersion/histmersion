@@ -145,8 +145,10 @@ object CandidateList:
 
 /** What one sweep of a goal did: its watches as read, the works found, the candidates added (new) and
   * those found again, what was left out and why, and the goal's unseen candidates after it. */
+/** One sweep's result. `notes`: what the sweep left out and why — an index it did not ask (CORE's
+  * budget spent, CORE asked to wait). */
 final case class CandidateSweep(goal: String, watches: List[CandidateWatch], found: Int, added: Int, again: Int,
-    skipped: Map[String, Int], unseen: Int, dryRun: Boolean = false) derives KindlingsCodecAsObject
+    skipped: Map[String, Int], unseen: Int, dryRun: Boolean = false, notes: List[String] = Nil) derives KindlingsCodecAsObject
 object CandidateSweep:
   given Schema[CandidateSweep] = KindlingsSchema.derived[CandidateSweep].schema
 
@@ -191,6 +193,7 @@ object CandidatesMarkdown:
     val left = if s.skipped.isEmpty then "" else " Left out: " + s.skipped.toList.sortBy(_._1).map((k, n) => s"$n $k").mkString(", ") + "."
     (s"# Candidate sweep of goal `${s.goal}`${if s.dryRun then " (dry run: nothing stored)" else ""}" :: "" ::
       s"${s.found} work(s) found by ${s.watches.size} watch(es): ${s.added} new candidate(s), ${s.again} found again.$left " +
-      s"${s.unseen} unseen candidate(s) wait for a decision (`histmersion candidates --goal ${s.goal}`)." :: "" :: w).mkString("\n")
+      s"${s.unseen} unseen candidate(s) wait for a decision (`histmersion candidates --goal ${s.goal}`)." :: "" ::
+      (s.notes.map(n => s"- **$n**") ++ (if s.notes.isEmpty then Nil else List("")) ++ w)).mkString("\n")
 
   def marked(m: CandidateMarked): String = s"${m.updated} candidate(s) marked ${m.state}."

@@ -4,7 +4,7 @@ import com.histmersion.pluginhost.FetchChain
 
 import com.histmersion.config.AcquireConfig
 import com.histmersion.plugin.*
-import com.histmersion.server.acquire.{ArchiveClient, FetchedFile, Http, OpenAlexCrossref}
+import com.histmersion.server.acquire.{ArchiveClient, CoreBudget, FetchedFile, Http, OpenAlexCrossref}
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.plugin.PluginConfig.given
@@ -47,10 +47,11 @@ object BuiltinFetchers:
   val LandingGroup: Set[String] = Set("oa-unpaywall", "oa-openalex", "oa-landing")
 
   /** The plugins, over the host's acquisition settings and clients. The clients are asked for only
-    * when a fetch runs: registering opens nothing (`--self-check`). */
+    * when a fetch runs: registering opens nothing (`--self-check`). `core` is the server's CORE budget,
+    * which outlives the generation. */
   def plugins(cfg: AcquireConfig, http: () => Http, openalex: () => OpenAlexCrossref,
-      archive: () => ArchiveClient): List[Plugin] =
-    val oa = OaIndex(cfg, http, openalex)
+      archive: () => ArchiveClient, core: CoreBudget = CoreBudget()): List[Plugin] =
+    val oa = OaIndex(cfg, http, openalex, core)
     List(
       Builtin("archive-org", ctx => ctx.sourceFetchers.add("archive-org", ArchiveOrgFetcher(archive))),
       BuiltinWith[UnpaywallConfig]("oa-unpaywall", (c, ctx) =>
@@ -77,7 +78,8 @@ final case class UnpaywallConfig(contactEmail: Option[String]) derives ConfigRea
   def email: Option[String] = contactEmail.map(_.trim).filter(_.nonEmpty)
 
 /** `oa-core`'s settings. `api-key`: CORE's API key as a secret reference (`env:<NAME>`, a vault's);
-  * `null` = Histmersion's own `acquire.core.api-key`; without a key CORE is not asked. */
+  * `null` = Histmersion's own `acquire.core.api-key`; without a key CORE is not asked. The key it
+  * resolves is the new-source search's `core` index's too ([[CoreFetcher.key]]). */
 final case class CoreConfig(apiKey: Option[Secret]) derives ConfigReader
 
 object CoreConfig:

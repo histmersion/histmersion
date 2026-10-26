@@ -88,6 +88,9 @@ class BuiltinFetchersSuite extends munit.FunSuite:
       asked = asked :+ (url -> headers); Right(Json.obj())
     def text(url: String, headers: Map[String, String]): Either[String, String]       = Left("no")
     def bytes(url: String, headers: Map[String, String]): Either[String, Array[Byte]] = Left("no")
+    // CORE is asked once, not retried, through its budget
+    override def once(url: String, headers: Map[String, String]) =
+      asked = asked :+ (url -> headers); Right(com.histmersion.pluginhost.HttpAnswer(200, Map.empty, "{}".getBytes("UTF-8")))
 
   private def emailOf(url: String): Option[String] =
     java.net.URI(url).getRawQuery.split("&").toList.collectFirst { case q if q.startsWith("email=") =>

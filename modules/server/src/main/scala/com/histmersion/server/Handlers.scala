@@ -118,7 +118,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       configFile = deps.configFile,
       agentLease = agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)),
       plugins = deps.plugins.report,
-      storage = storageNow(now))
+      storage = storageNow(now),
+      upstreams = upstreamQuotas(now))
+
+  /** The metered upstreams' budgets as the database keeps them (CORE's: `upstream_quota`), under today's
+    * limits; none before CORE was first asked, and none when the database cannot be read (`about` says
+    * that elsewhere). */
+  def upstreamQuotas(now: Instant = Instant.now()): List[UpstreamQuota] =
+    scala.util.Try(com.histmersion.db.UpstreamQuotaRepo.load(ds, com.histmersion.server.acquire.CoreBudget.Upstream)).toOption.flatten
+      .map(s => com.histmersion.domain.CoreQuota.view(s, com.histmersion.server.acquire.CoreBudget.limits(cfg.acquire.core), now))
+      .toList
 
   /** The last storage measurement, with its age as of `now`. */
   private def storageNow(now: Instant): StorageReport =
