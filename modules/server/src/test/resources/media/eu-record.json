@@ -1,0 +1,36 @@
+{
+  "apikey": "fixture",
+  "success": true,
+  "statsDuration": 12,
+  "requestNumber": 999,
+  "object": {
+    "about": "/9200999/fixture_mycenae_lion_gate",
+    "type": "IMAGE",
+    "title": ["The Lion Gate, Mycenae"],
+    "aggregations": [
+      {
+        "about": "/aggregation/provider/9200999/fixture_mycenae_lion_gate",
+        "edmDataProvider": {"def": ["Fixture Archive"]},
+        "edmIsShownBy": "https://images.fixture.example/lion-gate.jpg",
+        "edmIsShownAt": "https://fixture.example/objects/lion-gate",
+        "edmRights": {"def": ["http://creativecommons.org/licenses/by-sa/4.0/"]},
+        "webResources": [
+          {
+            "about": "https://images.fixture.example/lion-gate.jpg",
+            "webResourceEdmRights": {"def": ["http://creativecommons.org/licenses/by-sa/4.0/"]},
+            "ebucoreHasMimeType": "image/jpeg",
+            "ebucoreWidth": 3000,
+            "ebucoreHeight": 2000
+          }
+        ]
+      }
+    ],
+    "europeanaAggregation": {
+      "about": "/aggregation/europeana/9200999/fixture_mycenae_lion_gate",
+      "edmPreview": "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fimages.fixture.example%2Flion-gate.jpg&type=IMAGE"
+    },
+    "proxies": [
+      {"about": "/proxy/provider/9200999/fixture_mycenae_lion_gate", "dctermsSpatial": {"def": ["Mycenae"]}}
+    ]
+  }
+}

@@ -15,8 +15,8 @@ object ReservedNames:
   /** The built-in media imports (`media import <name>`) and their aliases, and every provider pictures
     * are stored under. */
   val mediaCollections: Set[String] =
-    Set("wikidata", "depicts", "met", "cleveland", "aic", "loc", "pleiades", "opencontext",
-      "commons", "depictions", "cma", "artic", "oc") ++
+    Set("wikidata", "depicts", "met", "cleveland", "aic", "loc", "pleiades", "opencontext", "smithsonian", "europeana",
+      "commons", "depictions", "cma", "artic", "oc", "si", "smithsonian-open-access") ++
       MediaProvider.all ++ Set(MediaProvider.CommonsDepicts, MediaProvider.Pleiades)
 
   /** The built-in event catalogues and their aliases. */

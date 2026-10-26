@@ -159,8 +159,12 @@ object MediaProvider:
   /** Not an asset provider: what the Pleiades import (Commons files a Pleiades place record links)
     * records its checks and reports under — its pictures are `wikimedia-commons` assets. */
   val Pleiades = "pleiades"
+  /** Smithsonian Open Access objects whose image is CC0 (an api.data.gov key; off by default). */
+  val Smithsonian = "smithsonian"
+  /** Europeana's openly licensed images (CC0, PDM, CC BY, CC BY-SA; a personal key; off by default). */
+  val Europeana = "europeana"
   val all: List[String] = List(Source, Commons, Calibre, OpenLibrary, Met, Cleveland, ArtInstitute, LibraryOfCongress,
-    OpenContext)
+    OpenContext, Smithsonian, Europeana)
 
   /** The museum collections: an object's picture, tied to a place by find-spot and dates. */
   val museums: Set[String] = Set(Met, Cleveland, ArtInstitute)
@@ -183,6 +187,8 @@ object MediaProvider:
     case CommonsDepicts => "Wikimedia Commons (depictions)"
     case OpenContext => "Open Context"
     case Pleiades    => "Pleiades (linked Commons files)"
+    case Smithsonian => "Smithsonian Institution"
+    case Europeana   => "Europeana"
     case other       => other
 
 /** The thumbnail a place or event card shows, with what its licence requires beside it: the credit
@@ -296,7 +302,8 @@ object MediaProviderInfo:
   given Schema[MediaProviderInfo] = KindlingsSchema.derived[MediaProviderInfo].schema
 
 /** `POST /api/media/import`: ask a provider about places and events — `wikidata` (the default),
-  * `depicts`, `met`, `cleveland`, `aic`, `loc`, `pleiades` or `opencontext` (docs/media-providers.md). `dryRun` (the default) reads
+  * `depicts`, `met`, `cleveland`, `aic`, `loc`, `pleiades`, `opencontext`, `smithsonian` or `europeana`
+  * (docs/media-providers.md). `dryRun` (the default) reads
   * the provider's statements and licences and stores NOTHING; `place`/`event` narrow it to one;
   * `refresh` asks again about ones already asked (and re-reads the licences of what is stored). */
 final case class MediaImportRequest(
