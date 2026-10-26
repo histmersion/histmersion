@@ -1683,6 +1683,7 @@ reflective class.
 | plugin | registers | settings |
 |---|---|---|
 | `media-wikidata` · `media-depicts` · `media-met` · `media-cleveland` · `media-aic` · `media-loc` · `media-pleiades` · `media-opencontext` | `media-collection:wikidata` · `depicts` · `met` · `cleveland` · `aic` · `loc` · `pleiades` · `opencontext` | `media.<provider>.*`, unchanged |
+| `media-smithsonian` · `media-europeana` (2026-10-26; **off by default**) | `media-collection:smithsonian` · `europeana` | `api-key` (a `Secret`) in the plugin block, resolved at registration (`BuiltinWith[KeyedConfig]`, as `oa-core`); the rest `media.smithsonian.*` / `media.europeana.*`. Without a key the collection is registered and listed ("NO KEY SET") and its import is refused naming the setting; the API is not asked |
 | `events-gvp` · `events-noaa` · `events-wikidata` | `event-catalogue:gvp` · `noaa` · `wikidata` | `events.<catalogue>.*`, unchanged |
 
 Plugin ids are prefixed (`media-`, `events-`) because the registry names collide across kinds

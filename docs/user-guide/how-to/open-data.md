@@ -119,6 +119,8 @@ histmersion media import loc --place <place-id>
 | `loc` | places on the map | Library of Congress historical maps: "no known restrictions" and dated up to 1928 |
 | `pleiades` | places with a Pleiades id | the Commons files the Pleiades record links |
 | `opencontext` | places on the map | excavation photographs and drawings, each under its own Creative Commons licence (records flagged as human remains are left out) |
+| `smithsonian` | places on the map | Smithsonian Open Access objects whose image is CC0 — **off by default**: needs your own free api.data.gov key ([Credentials](credentials.md#where-you-need-credentials)) |
+| `europeana` | places on the map | Europeana's openly licensed images (CC0, public domain, CC BY, CC BY-SA) — **off by default**: needs your own free Europeana personal key ([Credentials](credentials.md#where-you-need-credentials)) |
 
 The rules every provider follows:
 
