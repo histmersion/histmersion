@@ -123,7 +123,10 @@ final case class About(
     plugins: PluginsReport = PluginsReport(),
     /** Where the data is on disk and how big each part is (measured in the background, see
       * [[StorageReport]]); empty from an older server. */
-    storage: StorageReport = StorageReport()
+    storage: StorageReport = StorageReport(),
+    /** The metered upstreams' budgets today (CORE); empty before one was first asked, or from an older
+      * server. */
+    upstreams: List[UpstreamQuota] = Nil
 ) derives KindlingsCodecAsObject
 object About:
   given Schema[About] = KindlingsSchema.derived[About].schema
@@ -187,7 +190,7 @@ object AboutMarkdown:
       s"- last backup: $backup",
       s"- config file: ${ConfigFileInfo.describe(a.configFile)}",
       s"- agent lease: ${a.agentLease.fold("none (no server runs agents on this database)")(_.describe)}"
-    ) ++ PluginsMarkdown.summary(a.plugins) ++ a.counts.toList.flatMap(c => List(
+    ) ++ a.upstreams.map(q => s"- ${UpstreamQuotaMarkdown.line(q)}") ++ PluginsMarkdown.summary(a.plugins) ++ a.counts.toList.flatMap(c => List(
       s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
         s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
       s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period")} · ${Plural.count(c.presets, "preset")}"

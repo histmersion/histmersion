@@ -334,4 +334,4 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       cfg.maxConcurrentRuns, row.lastBackupAt, row.lastLintAt,
       managers.filter(m => m.id == ReviewId || m.id == EnrichId).map(brief), progress,
       backlog = backlog.total, backlogDays = backlog.totalDays, focus = Some(agents.focus.info(now)), drain = agents.drain.info(),
-      goalPlansWait = agents.focus.goalPlansWait())
+      goalPlansWait = agents.focus.goalPlansWait(), upstreams = h.upstreamQuotas(now))

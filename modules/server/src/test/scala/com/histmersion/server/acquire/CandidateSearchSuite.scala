@@ -115,3 +115,31 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     assertEquals(CandidateRepo.list(ds, Some(Goal), "new", 10, 0).map(c => (c.doi, c.foundBy)),
       List("10.5555/zzcand.citing" -> List("openalex citing 10.5555/zzcand.src")))
     assert(search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep("zzcand-nowhere", dryRun = false).isLeft)
+
+  test("an index that may not be asked (CORE's budget, CORE's block) is left out of the sweep, which says so"):
+    fresh()
+    assert(GoalLinkRepo.link(ds, Goal, LinkKind.Query, "late bronze age", None))
+    assert(GoalLinkRepo.link(ds, Goal, LinkKind.Query, "sea peoples", None))
+    val oa = FakeIndex("openalex", Right(List(work("10.5555/zzcand.a"))))
+    // the first CORE search answers 429: from then on CORE says to wait
+    final class Throttled extends ScholarlyIndex:
+      val name = "core"
+      val asked = ConcurrentLinkedQueue[String]()
+      override def unavailable = Option.when(!asked.isEmpty)("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)")
+      def search(query: String, since: LocalDate, limit: Int) = { asked.add(query); Left("CORE not asked: CORE answered HTTP 429") }
+    val core = Throttled()
+    val s = search(List(oa, core), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
+    assertEquals(core.asked.size, 1, "asked once, then left out")
+    assertEquals(oa.asked.size, 3, "the other indexes are read as usual")
+    assertEquals(s.notes, List("core not asked this sweep: CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429) — " +
+      "2 watches left unread, which keep their watermarks and are read next sweep"))
+    assert(s.watches.filter(_.index == "core").forall(_.watermark.isEmpty), s.watches.toString)
+    assertEquals(s.added, 1)
+    // a budget spent before the sweep: CORE is not asked at all
+    val spent = new ScholarlyIndex:
+      val name = "core"
+      override def unavailable = Some("CORE's daily budget for searches is spent")
+      def search(query: String, since: LocalDate, limit: Int) = fail("asked")
+    val s2 = search(List(spent), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = true).toOption.get
+    assert(s2.notes.size == 1 && s2.notes.head.startsWith("core not asked this sweep: CORE's daily budget for searches is spent — 3 watches"),
+      s2.notes.toString)

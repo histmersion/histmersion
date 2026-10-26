@@ -53,7 +53,7 @@ final case class ReadOnlyPool(ds: DataSource, own: Option[HikariDataSource])
   * test) has its own graph, pools and all, closed with its Ox scope. */
 final class ServerGraph private (val graph: HotGraph[HotConfig], source: Option[ConfigSource],
     val pool: Hot[DataSource], val migrations: Hot[String], val queryPool: Hot[ReadOnlyPool],
-    val plugins: Hot[Generation]):
+    val plugins: Hot[Generation], val core: com.histmersion.server.acquire.CoreBudget):
 
   val ds: DataSource      = HotDataSource(pool)(identity)
   val queryDs: DataSource = HotDataSource(queryPool)(_.ds)
@@ -139,7 +139,8 @@ object ServerGraph:
   /** Build the graph's first generation: the pools, the migrations, the plugins. `plugins` is a
     * generation built already (Main's, for `--self-check`; a test's), used as the first value.
     * `Left` = the server cannot start (the database is unreachable, a migration failed). */
-  def start(initial: HotConfig, source: Option[ConfigSource], plugins: Option[Generation]): Either[String, ServerGraph] =
+  def start(initial: HotConfig, source: Option[ConfigSource], plugins: Option[Generation],
+      core: com.histmersion.server.acquire.CoreBudget = com.histmersion.server.acquire.CoreBudget()): Either[String, ServerGraph] =
     val graph   = HotGraph[HotConfig](initial)
     val prepare = source.map(_.prepare).getOrElse((_: AppConfig) => Right(()))
     val built =
@@ -171,10 +172,10 @@ object ServerGraph:
                 }
         plug <- graph.node[Generation](Plugins, keys = com.histmersion.server.plugins.Plugins.Keys) { ctx =>
                   Right(ctx.previous match
-                    case None => plugins.getOrElse(com.histmersion.server.plugins.Plugins.load(ctx.config.loaded))
-                    case prev => com.histmersion.server.plugins.Plugins.load(ctx.config.loaded, prev, ctx.changed))
+                    case None => plugins.getOrElse(com.histmersion.server.plugins.Plugins.load(ctx.config.loaded, core = core))
+                    case prev => com.histmersion.server.plugins.Plugins.load(ctx.config.loaded, prev, ctx.changed, core))
                 }
-      yield ServerGraph(graph, source, pool, mig, q, plug)
+      yield ServerGraph(graph, source, pool, mig, q, plug, core)
     built.left.foreach(_ => graph.close())
     built
 

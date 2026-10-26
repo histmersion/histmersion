@@ -7,7 +7,7 @@ import com.histmersion.api.{PluginState, PluginStatus}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.{Plugin, PluginHttp}
-import com.histmersion.server.acquire.{ArchiveOrg, Http, HttpPlugin, OpenAlexCrossref, SttpHttp}
+import com.histmersion.server.acquire.{ArchiveOrg, CoreBudget, Http, HttpPlugin, OpenAlexCrossref, SttpHttp}
 import com.histmersion.server.acquire.fetchers.BuiltinFetchers
 import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.BuiltinMedia
@@ -27,12 +27,14 @@ object Plugins:
     * `changed` the keys that changed: a plugin whose block did not change is carried over as it is
     * (not decoded, resolved or registered again) — unless it holds a secret (re-resolved on every
     * reload, §3.7), it failed last time, a secret vault's plugin changed, or a host key every
-    * plugin reads changed (`order`, `acquire.*`), which rebuilds them all. */
-  def load(loaded: LoadedConfig, previous: Option[Generation] = None, changed: List[String] = Nil): Generation =
+    * plugin reads changed (`order`, `acquire.*`), which rebuilds them all. `core` is the server's CORE
+    * budget, which every generation's `core` fetcher spends from. */
+  def load(loaded: LoadedConfig, previous: Option[Generation] = None, changed: List[String] = Nil,
+      core: CoreBudget = CoreBudget()): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     // ONE acquisition client for every plugin and built-in fetcher of this generation, built on first use
     lazy val http = acquisitionHttp(loaded.config)
-    val all = found ++ builtins(loaded.config, () => http)
+    val all = found ++ builtins(loaded.config, () => http, core)
     // a split plugin's former settings (oa-index) mapped onto its successors, with a deprecation warning
     val legacy = LegacyPlugins.migrate(loaded.user, loaded.env, defaultKeys(all))
     val g = PluginHost.build(all, legacy.user, legacy.env,
@@ -89,10 +91,10 @@ object Plugins:
     * (`media-wikidata`, `media-depicts`, `media-met`, … — [[BuiltinMedia]]) and event catalogues
     * (`events-gvp`, `events-noaa`, `events-wikidata` — [[BuiltinCatalogues]]) and AI providers (`ai-anthropic`,
     * `ai-openai`, `ai-local`, `ai-claude-code`, `ai-codex`, `ai-opencode` — [[BuiltinAi]]). */
-  def builtins(cfg: AppConfig, http: () => Http): List[Plugin] =
+  def builtins(cfg: AppConfig, http: () => Http, core: CoreBudget = CoreBudget()): List[Plugin] =
     lazy val openalex = OpenAlexCrossref(cfg.acquire, http())
     lazy val archive  = ArchiveOrg(cfg.acquire, http())
-    BuiltinFetchers.plugins(cfg.acquire, http, () => openalex, () => archive) ++ providers
+    BuiltinFetchers.plugins(cfg.acquire, http, () => openalex, () => archive, core) ++ providers
 
   /** The built-in media collections, event catalogues and AI providers: they read nothing at registration. */
   def providers: List[Plugin] = BuiltinMedia.plugins ++ BuiltinCatalogues.plugins ++ BuiltinAi.plugins

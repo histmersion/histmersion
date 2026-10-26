@@ -7,7 +7,8 @@ import com.histmersion.pluginhost.AcquireParse
 import com.histmersion.domain.RepositoryLanding
 import com.histmersion.server.acquire.rules
 import com.histmersion.plugin.{Fetch, FetchContext, SourceFetcher, WorkKey}
-import com.histmersion.server.acquire.{FetchedFile, Http, OaFetch, OpenAlexCrossref}
+import com.histmersion.domain.CoreQuota
+import com.histmersion.server.acquire.{CoreApi, CoreBudget, CoreFailure, FetchedFile, Http, OaFetch, OpenAlexCrossref}
 
 import io.circe.Json
 
@@ -24,7 +25,7 @@ import io.circe.Json
   * DataCite says the DOI resolves to. The two plugins say so as they register ([[unpaywallRegistered]],
   * [[openalexRegistered]]); [[com.histmersion.server.plugins.Plugins.carried]] rebuilds the three together
   * on a reload, so a carried landing step never reads the state of a generation that has gone. */
-final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => OpenAlexCrossref):
+final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => OpenAlexCrossref, coreBudget: CoreBudget):
   import Fetching.*
 
   /** What the landing step may read, as the index plugins of this generation registered: `Some(contact)`
@@ -64,8 +65,10 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
   /** `unpaywall`, asking with `email` (the plugin's `contact-email`, else Histmersion's). */
   def unpaywall(email: Option[String]): SourceFetcher =
     byDoi("unpaywall")((ctx, d) => unpaywallPdf(unpaywallRecord(ctx, d, email)))
-  /** `core`, with CORE's API key; without one it is never asked (a miss). */
-  def core(key: Option[String]): SourceFetcher = byDoi("core")((_, d) => corePdf(d, key))
+  /** `core`, with CORE's API key; without one it is never asked (a miss). Asked through the server's CORE
+    * budget: while CORE asked to wait, or the day's tokens are spent, it is a miss saying so, and the chain
+    * goes on. */
+  def core(key: Option[String]): CoreFetcher = CoreFetcher(key, (ctx, doi) => corePdf(ctx, doi, key))
   val openalex: SourceFetcher = byDoi("openalex")((ctx, d) => openalexOa(records(ctx, d)))
   /** `landing`: the indexes' records only of the index plugins registered, Unpaywall's with the very
     * contact (so the very memo key) `oa-unpaywall` asks with — one request per upstream per work. */
@@ -78,12 +81,16 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
       .flatMap(u => tryUrl(http(), "unpaywall", u))
       .headOption
 
-  private def corePdf(doi: String, key: Option[String]): Option[FetchedFile] =
-    key.flatMap { key =>
-      http().json(Url(cfg.core.url, "/search/works", "q" -> s"""doi:"$doi"""", "limit" -> "1"),
-        Map("Authorization" -> s"Bearer $key")).toOption
-        .toList.flatMap(AcquireParse.coreDownloadUrls)
-        .flatMap(u => tryUrl(http(), "core", u)).headOption
+  private def corePdf(ctx: FetchContext, doi: String, key: Option[String]): Fetch =
+    key.fold[Fetch](Fetch.Miss("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)")) { key =>
+      CoreApi(cfg, http(), coreBudget).searchWorks(key, s"""doi:"$doi"""", 1, CoreQuota.Purpose.Lookup) match
+        case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(skip.message)
+        case Left(CoreFailure.Failed(why)) =>
+          ctx.log.info(s"CORE lookup failed ($why)")
+          Fetch.Miss(s"core has no copy of $doi")
+        case Right(json) =>
+          answer(AcquireParse.coreDownloadUrls(json).iterator.flatMap(u => tryUrl(http(), "core", u)).nextOption(),
+            s"core has no copy of $doi")
     }
 
   private def openalexOa(r: OaRecords): Option[FetchedFile] =
@@ -194,3 +201,16 @@ final class OaIndex(cfg: AcquireConfig, http: () => Http, openalexClient: () => 
             ok
           }
         }.collectFirst { case Some(f) => f }
+
+/** The `core` fetcher, with the key its plugin resolved — which the new-source search's `core` index
+  * uses too, so that ONE setting (`plugins.oa-core.api-key`, a secret reference) enables both. */
+final class CoreFetcher(val key: Option[String], lookup: (FetchContext, String) => Fetch) extends SourceFetcher:
+  val access: com.histmersion.plugin.Access = com.histmersion.plugin.Access.Open
+  def fetch(work: WorkKey, ctx: FetchContext): Fetch =
+    work.doi.map(_.value).fold[Fetch](Fetch.Miss("core needs a DOI"))(lookup(ctx, _))
+
+object CoreFetcher:
+  /** The key the `oa-core` plugin of a generation registered its fetcher with (`None`: no `core`
+    * fetcher, or one without a key). */
+  def key(fetchers: scala.collection.immutable.ListMap[String, SourceFetcher]): Option[String] =
+    fetchers.get("core").collect { case c: CoreFetcher => c.key }.flatten
