@@ -3,6 +3,8 @@ package com.histmersion.domain
 import io.circe.Json
 import io.circe.parser.parse
 
+import com.histmersion.values.Period
+
 /** The pure half of the two key-gated collections: Smithsonian Open Access and Europeana. The Smithsonian
   * fixture's rows are three real records of the Smithsonian's open-data dump (National Museum of Asian
   * Art, read 2026-10-26; provenance notes trimmed) — the schema the API's rows carry — inside the search
@@ -152,3 +154,60 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
     assert(Europeana.item(noResource, rec).isRight, "the aggregation's edmRights answers")
     val neither = parse(text.replace("\"webResourceEdmRights\"", "\"x\"").replace("\"edmRights\"", "\"y\"")).toOption.get
     assertEquals(Europeana.item(neither, rec).left.toOption, Some("no licence on the full record"))
+
+  // ── relevance: natural-history specimens and modern objects ─────────────────────────────────
+
+  private val ex = Europeana.Exclusions(List("OpenUp!"), List("Natural History Museum", "Herbarium"),
+    List("PreservedSpecimen", "Preserved Specimen"))
+
+  test("Europeana: the search leaves out the excluded aggregators and dc:types; none excluded is the plain query"):
+    assertEquals(Europeana.query("Orkney", ex),
+      "where:(\"Orkney\") NOT PROVIDER:(\"OpenUp!\") NOT proxy_dc_type:(\"PreservedSpecimen\" OR \"Preserved Specimen\")")
+    assertEquals(Europeana.query("Orkney"), "where:(\"Orkney\")")
+    assert(Europeana.searchUrl(api, "Orkney", 20, ex).contains(Read.enc(Europeana.query("Orkney", ex))))
+
+  test("Europeana: a specimen record — its aggregator or its institution excluded — is withheld with the reason"):
+    val rs = Europeana.records(fixture("eu-search-orkney.json"), api, ex).fold(fail(_), identity).map(_.fold(fail(_), identity))
+    assertEquals(rs.map(r => r.key -> r.withheld), List(
+      "854/NHMUKXZOOX1950X3X1X144"            -> Some("an excluded provider (OpenUp!)"),
+      "9200999/fixture_orkney_herbarium_sheet" -> Some("an excluded data provider (Fixture Herbarium Trust)"),
+      "9200999/fixture_kirkwall_postcard"      -> None,
+      "9200999/fixture_orkney_mace_head"       -> None,
+      "9200999/fixture_orkney_undated"         -> None))
+    assert(Europeana.records(fixture("eu-search-orkney.json"), api).toOption.get.forall(_.exists(_.withheld.isEmpty)),
+      "nothing is withheld without exclusions")
+
+  test("Europeana: an excluded dc:type is compared by its letters, any case; the Record API refuses such a record"):
+    assertEquals(Europeana.excludedType(List("Sculpture", "preserved_specimen"), ex), Some("preserved_specimen"))
+    assertEquals(Europeana.excludedType(List("Sculpture"), ex), None)
+    val rec = Europeana.records(fixture("eu-search.json"), api).toOption.get.head.toOption.get
+    val specimen = parse(fixture("eu-record.json").noSpaces.replace("\"dctermsSpatial\"",
+      "\"dcType\":{\"en\":[\"Preserved Specimen\"]},\"dctermsSpatial\"")).toOption.get
+    assertEquals(Europeana.item(specimen, rec, ex).left.toOption, Some("an excluded type (Preserved Specimen)"))
+    assert(Europeana.item(specimen, rec).isRight, "no exclusions, no refusal")
+
+  test("Smithsonian: the search leaves out the excluded units; a row of one is withheld with the reason"):
+    assertEquals(Smithsonian.query("Orkney", List("NMNHINV", "NMNHBIRDS")),
+      "\"Orkney\" AND online_media_type:Images AND NOT unit_code:(NMNHINV OR NMNHBIRDS)")
+    assertEquals(Smithsonian.query("Orkney"), "\"Orkney\" AND online_media_type:Images")
+    val row = fixture("si-search.json").hcursor.downField("response").downField("rows").downArray.focus.get
+    assertEquals(Smithsonian.unitOf(row), Some("FSG"))
+    assertEquals(Smithsonian.record(row, List("NMNHINV")).map(_.withheld), Right(None))
+    val specimen = parse(row.noSpaces.replace("\"FSG\"", "\"NMNHINV\"")).toOption.get
+    assertEquals(Smithsonian.record(specimen, List("nmnhinv")).map(_.withheld), Right(Some("an excluded unit (NMNHINV)")))
+
+  test("dates: a modern record is refused by the latest year; an ancient one matches within the place's period up to it"):
+    val orkney = MediaMatch.PlaceInfo("orkney", "Orkney Islands", Set("orkney"), DeepTime.span(-7000L, 2100L))
+    def rec(period: Option[Period]) =
+      MediaRecord("k", "t", "p", None, None, None, Left("unused"), List("x" -> "Orkney"), period)
+    assertEquals(MediaMatch.dated("x = Orkney", rec(DeepTime.span(1896L, 1896L)), orkney, Some(1500)), Left("made after 1500 CE"))
+    assertEquals(MediaMatch.dated("x = Orkney", rec(DeepTime.span(1400L, 1600L)), orkney, Some(1500)), Left("made after 1500 CE"),
+      "made by the latest year: its end, not its start")
+    assertEquals(MediaMatch.dated("x = Orkney", rec(DeepTime.span(-3000L, -2500L)), orkney, Some(1500)),
+      Right("x = Orkney; 3000–2500 BCE within 7000 BCE–1500 CE"))
+    assertEquals(MediaMatch.dated("x = Orkney", rec(DeepTime.span(1896L, 1896L)), orkney, None),
+      Right("x = Orkney; 1896–1896 CE within 7000 BCE–2100 CE"), "no latest year: the place's period alone")
+    assertEquals(MediaMatch.dated("x = Orkney", rec(None), orkney, Some(1500)), Left("no dates on the record"))
+    val late = orkney.copy(period = DeepTime.span(1600L, 1900L))
+    assertEquals(MediaMatch.dated("x = Orkney", rec(DeepTime.span(1200L, 1300L)), late, Some(1500)),
+      Left("its dates do not overlap the place's"), "a place that begins after the latest year is never widened back")

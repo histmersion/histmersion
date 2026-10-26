@@ -38,8 +38,8 @@ decided, how a record is tied to a place, and which providers are not in yet and
 | `loc` | places on the map | map | the item's `rights_advisory` and date | "No known restrictions" AND dated by `media.loc.max-year` (1928), and matched |
 | `pleiades` | places on the map with a Pleiades id | image | Commons `imageinfo` + `extmetadata` of each linked file | the place's Pleiades record links the Commons file, and the allowlist takes it |
 | `opencontext` | places on the map | object | the record's `dc-terms:license` (a CC URL), read again from its media item | the allowlist takes it, not flagged as human remains, and matched (by id or name, and dates) |
-| `smithsonian` (a key; off by default) | places on the map | object | each image media item's `usage.access` (`CC0`) | an image of the record is itself CC0, and matched |
-| `europeana` (a key; off by default) | places on the map | object | the item's `rights` (the edm:rights URL), read again from the Record API | the allowlist takes it, and matched (by its `dcterms:spatial`, an id or a name, and dates) |
+| `smithsonian` (a key; off by default) | places on the map | object | each image media item's `usage.access` (`CC0`) | an image of the record is itself CC0, not a natural-history unit's, made by `media.smithsonian.max-year` (1500), and matched |
+| `europeana` (a key; off by default) | places on the map | object | the item's `rights` (the edm:rights URL), read again from the Record API | the allowlist takes it, not a natural-history specimen, made by `media.europeana.max-year` (1500), and matched (by its `dcterms:spatial`, an id or a name, and dates) |
 
 "Places on the map" are the places that hold findings, sites and features first, then by the number
 of sources citing them.
@@ -237,6 +237,21 @@ asked. A 401/403 answer ends the batch with "the API key was refused (check …a
 after the search — the museum rule, the download, the thumbnail, the credit, `--refresh` — is the
 collections' import above.
 
+Both search everything their institutions hold, so two more rules keep their answers to objects the
+research is about — comparative mythology, folklore, Bronze-Age history — rather than whatever names
+the place. The first live Europeana dry run (2026-10-26) linked three 1896 jellyfish specimens of the
+Natural History Museum, London, to the Orkney Islands: their `dcterms:spatial` was "Orkney", and 1896
+lies inside the place's gazetteer span (7000 BCE–2100 CE).
+
+- **Natural-history records are refused.** Each collection's `exclude-*` lists name them in the
+  provider's own fields; the search leaves them out where the API can, and a record that still
+  answers is refused with the reason ("an excluded provider (OpenUp!)", "an excluded unit (NMNHINV)"),
+  counted under *Not stored*. Lists are comma-separated; an empty one excludes nothing.
+- **An object made after `max-year` is refused** ("made after 1500 CE"), whatever place it names, and
+  the place's period is read up to that year (the basis says "within 7000 BCE–1500 CE"). A record
+  must still carry dates ("no dates on the record") and they must overlap the place's period.
+  `max-year = 0` sets no limit (the museum collections without a key leave it at 0).
+
 **Smithsonian Open Access** (`media import smithsonian`; an [api.data.gov](https://api.data.gov/signup/) key):
 
 - one search per place: `GET https://api.si.edu/openaccess/api/v1.0/search?q="<name>" AND
@@ -252,6 +267,13 @@ collections' import above.
   accession or collection date) read as signed years — `1550-1196 BCE`, `100 BCE-100 CE`,
   `12th-13th century`, `2nd millennium BCE`; an uncertain (`?`) or unreadable date is none, and the
   record is not matched;
+- natural history: the units in `media.smithsonian.exclude-providers` (the record's
+  `descriptiveNonRepeating.unit_code`, else the row's `unitCode`) — by default the National Museum of
+  Natural History's departments except Anthropology: `NMNHBIRDS`, `NMNHBOTANY`, `NMNHENTO`,
+  `NMNHFISHES`, `NMNHHERPS`, `NMNHINV`, `NMNHMAMMALS`, `NMNHMINSCI`, `NMNHPALEO` — are left out of the
+  search (`AND NOT unit_code:(…)` in `q`; `unit_code` is one of the fielded terms the API's `terms`
+  endpoint lists) and refused as "an excluded unit (…)" if one still answers;
+- `media.smithsonian.max-year` (1500): an object made later is refused;
 - credit: *Title, Maker, Unit, Smithsonian Institution, Credit line, CC0*;
 - pace: one search every 4 s (`media.smithsonian.request-interval-ms`), under api.data.gov's
   documented 1,000 requests an hour; images come from `ids.si.edu`, which the key does not count.
@@ -270,7 +292,22 @@ collections' import above.
   stored (a line in the report). A dry run never pays for that request;
 - tied to a place by its provider's own `dcterms:spatial` values first (the finest evidence: one
   naming only another place on the map refuses it), then by a GeoNames/Pleiades/Wikidata id among
-  its place URIs, else by the museum rule over its place labels; dates: its `year` values;
+  its place URIs, else by the museum rule over its place labels; dates: its `year` values, and an
+  object made after `media.europeana.max-year` (1500) is refused;
+- natural history, three lists, all in Europeana's own fields:
+  - `exclude-providers` (`OpenUp!`, the aggregator of Europe's natural-history collections): the
+    aggregator's exact name (`PROVIDER`), any case — left out of the search (`NOT PROVIDER:("…")` in
+    `query`, the documented boolean syntax) and refused as "an excluded provider (…)";
+  - `exclude-types` (`PreservedSpecimen`, `Preserved Specimen`, `FossilSpecimen`, `LivingSpecimen`,
+    their spaced forms and `Specimen` — the Darwin Core record bases natural-history providers write
+    in `dc:type`): left out of the search (`NOT proxy_dc_type:(…)`); a search item carries no
+    `dc:type`, so the Record API's proxies are read again before a picture is stored, and a match
+    (letters compared, any case) is refused as "an excluded type (…)";
+  - `exclude-data-providers` (`Natural History Museum`, `Naturalis`, `Naturkunde`, `Botanic Garden`,
+    `Herbarium`): a record of an institution (`dataProvider`) whose name contains one, any case, is
+    refused as "an excluded data provider (…)" — checked on the answer only, since `DATA_PROVIDER` is
+    matched exactly in a search. A natural-history museum's archaeology (the Naturhistorisches Museum
+    Wien's Hallstatt finds) is kept unless its name matches: add or drop entries to taste;
 - the pictures are Europeana's own cached renditions through its keyless Thumbnail API v3
   (`/thumbnail/v3/400/<md5 of the media URL>.jpg` stored, `…/200/…` the card's thumbnail; the media URL
   is the one its `edmPreview` was made from); the provider's file (`edmIsShownBy`) is recorded as the
@@ -283,8 +320,12 @@ envelope and error answers of both (each API answered a keyless and a wrong-key 
 {"success":false,"error":…,"message":…,"code":"401_key_invalid"}`, and both read the key from the
 `X-Api-Key` header); the Smithsonian record schema, from three real records of its open-data dump (the
 schema its API rows carry); Europeana's field names, from its Search and Record API documentation;
-the Thumbnail API's MD5 rule, against the documentation's own example. Not yet seen in a live
-answer: whether the Smithsonian search accepts the fielded `online_media_type:Images` term in `q`;
+the Thumbnail API's MD5 rule, against the documentation's own example; the fields of the 1896
+specimen records (`provider` OpenUp!, `dataProvider` "The Trustees of the Natural History Museum,
+London", `dc:type` "Preserved Specimen"), from Europeana's public item page. Not yet seen in a live
+answer: whether the Smithsonian search accepts the fielded `online_media_type:Images` and
+`NOT unit_code:(…)` terms in `q`, and Europeana the `NOT PROVIDER:(…)` and `NOT proxy_dc_type:(…)`
+clauses in `query`;
 how Europeana writes BCE years in `year` and its place labels (`edmPlaceLabel`) in the `rich`
 profile. The fixtures of the Europeana suites are constructed in the documented shape; the first
 dry run with a key is the check.
