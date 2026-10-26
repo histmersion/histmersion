@@ -60,7 +60,9 @@ final case class ArticlePage(
     cited: List[CitedSource],
     formatting: List[FormatIssue] = Nil,
     /** The coverage of its recorded filter (#958): the generated Not used list and Method note. */
-    coverage: Option[Coverage] = None
+    coverage: Option[Coverage] = None,
+    /** Its review state, the goals linking it and its review history. */
+    review: Option[ArticleReviewView] = None
 )
 
 /** The ONE Markdown dialect the server reads: CommonMark plus GFM pipe tables, configured the way
@@ -233,10 +235,59 @@ object Pages:
     ).filter(_.nonEmpty)
     s"""<h1>${esc(heading.getOrElse(a.title))}</h1>""" +
       (if meta.isEmpty then "" else s"""<p class="article-meta-line">${meta.mkString(" · ")}</p>""") +
+      p.review.fold("")(reviewLine) +
       formatNotice(p.formatting, "This article", Some(a.slug)) +
       prose +
       backlinks(p.backlinks) +
-      sourcesCited(citedEntries(p.cited, numbers, links))
+      sourcesCited(citedEntries(p.cited, numbers, links)) +
+      p.review.fold("")(reviewHistory)
+
+  // ── review ───────────────────────────────────────────────────────────────────────────────────
+
+  /** An article's review state as a badge, its meaning on hover. */
+  def reviewBadge(b: ReviewBadge): String =
+    s"""<span class="job-state review-state state-${b.state.wire}" title="${esc(b.detail)}">${esc(b.label)}</span>"""
+
+  /** A research goal's stage as the goals window draws it, linked to the goal's window. */
+  def goalBadgeLink(g: ReviewGoal): String =
+    val meaning = GoalStages.meaning(g.status).fold("")(m => s""" title="${esc(s"${g.status}: $m")}"""")
+    s"""<a class="goal-ref" href="/#open=goal:${esc(HtmlAtoms.segment(g.slug))}" title="${esc(g.slug)}">""" +
+      s"""<span class="job-state goal-status state-${esc(g.status)}"$meaning>${esc(g.status)}</span> """ +
+      s"""${esc(if g.title.trim.nonEmpty then g.title else g.slug)}</a>"""
+
+  /** `2026-10-20T09:00:00Z` as `2026-10-20 09:00 UTC`; anything else as it is. */
+  def readableUtc(t: String): String = t match
+    case s"${day}T${hh}:${mm}:${_}Z" => s"$day $hh:$mm UTC"
+    case other                       => other
+
+  /** Under the title: the review badge, and the research goals that link the article. */
+  def reviewLine(r: ArticleReviewView): String =
+    val goals = if r.goals.isEmpty then "" else
+      s""" <span class="muted">· ${if r.goals.size == 1 then "goal" else "goals"}:</span> """ +
+        r.goals.map(goalBadgeLink).mkString(""" <span class="muted">·</span> """)
+    s"""<p class="article-review-line"><span class="muted">review:</span> ${reviewBadge(r.badge)}$goals</p>"""
+
+  /** Every finding the review panel raised, run by run and round by round, with what became of it;
+    * collapsed, its summary saying how many there were and how many are open. */
+  def reviewHistory(r: ArticleReviewView): String =
+    if r.rounds.isEmpty then ""
+    else
+      val all  = r.rounds.flatMap(_.findings)
+      val runs = r.rounds.map(_.run).distinct.size
+      val open = all.count(_.outcome == "open")
+      val summary = s"Review history: ${Plural.count(all.size.toLong, "finding")} over ${Plural.count(runs.toLong, "run")}" +
+        (if open > 0 then s", $open still open" else ", none open")
+      val rounds = r.rounds.map { rd =>
+        val when = rd.startedAt.fold("")(t => s""" <span class="muted">· run started ${esc(readableUtc(t))}</span>""")
+        val items = rd.findings.map { f =>
+          val facts = List(ArticleReviewView.reviewerName(f.reviewer), f.kind, f.where).map(_.trim).filter(_.nonEmpty).map(esc)
+          s"""<li class="review-finding outcome-${esc(f.outcome)}"><span class="review-sev sev-${esc(f.severity)}">${esc(f.severity)}</span> """ +
+            s"""<b>${esc(f.id)}</b> <span class="muted">${facts.mkString(" · ")}</span> — ${esc(f.problem)}""" +
+            s"""<div class="review-outcome">${esc(ArticleReviewView.outcomeLine(f))}</div></li>"""
+        }
+        s"""<h3>Run ${rd.runNumber}, round ${rd.round}$when</h3><ul class="review-findings">${items.mkString}</ul>"""
+      }
+      s"""<details class="review-history"><summary>${esc(summary)}</summary>${rounds.mkString}</details>"""
 
   /** The footer's entries: every numbered source (in number order), then the article's other cited
     * sources — including a stored citekey that is not in the corpus, shown as such. */
@@ -322,7 +373,8 @@ final class PageBuilder(h: Handlers):
     h.getArticle(slug).toOption.map { v =>
       val generated = v.coverage.fold(List.empty[String])(c => ArticleLinks.targets(ArticleCoverage.sections(c)))
       val links = h.pageLinks(ArticleLinks.targets(v.article.body) ++ v.sourcesCited.map(_.citekey) ++ generated)
-      val html  = Pages.article(ArticlePage(v.article, v.backlinks, v.sourcesCited, v.formatting, v.coverage), links)
+      val html  = Pages.article(ArticlePage(v.article, v.backlinks, v.sourcesCited, v.formatting, v.coverage,
+        h.reviewOf(v.article.slug).toOption), links)
       (v.article.title, highlighted(html, q.map(_.trim).filter(_.nonEmpty)))
     }
 

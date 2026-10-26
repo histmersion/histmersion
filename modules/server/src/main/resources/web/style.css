@@ -930,6 +930,31 @@ a.chip:hover { border-color:var(--accent); }
 .job-state.goal-status.state-compiled { background:#3a331a; color:var(--health-busy); }
 .job-state.goal-status.state-reviewed { background:#1a3a2a; color:var(--health-ok); }
 .job-state.goal-status.state-done { background:#1a2e3a; color:#6eb8e7; }
+/* an article's review state (ArticlesTab, the article page): grey not reviewed · purple queued · blue in review ·
+   green passed · red MAJOR findings open · yellow stopped (a person decides) */
+.job-state.review-state { display:inline-block; margin-top:0; text-transform:none; letter-spacing:0; }
+.job-state.review-state.state-unreviewed { background:#2a2f3a; color:var(--health-unknown); }
+.job-state.review-state.state-queued { background:#2a2440; color:var(--accent); }
+.job-state.review-state.state-in-review { background:#1a2e3a; color:#6eb8e7; }
+.job-state.review-state.state-passed { background:#1a3a2a; color:var(--health-ok); }
+.job-state.review-state.state-majors-open { background:#3a1a1a; color:var(--health-down); }
+.job-state.review-state.state-stopped { background:#3a331a; color:var(--health-busy); }
+.article-meta .review-state { font-size:10px; padding:0 6px; }
+.article-review-line { display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; font-size:13px; margin:2px 0 8px; }
+.article-review-line .job-state { margin-top:0; }
+.goal-ref { display:inline-flex; align-items:center; gap:4px; color:var(--accent); text-decoration:none; }
+.goal-ref:hover { text-decoration:underline; }
+.review-history { margin:var(--space-6) 0; border-top:1px solid var(--line); padding-top:var(--space-4); }
+.review-history > summary { cursor:pointer; font-weight:600; }
+.review-history h3 { font-size:13px; margin:var(--space-5) 0 var(--space-2); }
+.review-findings { margin:0; padding-left:18px; font-size:12.5px; }
+.review-finding { margin:var(--space-2) 0; }
+.review-sev { font-size:10px; font-weight:600; text-transform:uppercase; margin-right:var(--space-1); }
+.review-sev.sev-major { color:var(--health-down); }
+.review-sev.sev-minor { color:var(--muted); }
+.review-outcome { color:var(--muted); font-size:12px; }
+.review-finding.outcome-open .review-outcome { color:var(--health-busy); }
+.review-finding.outcome-fixed .review-outcome { color:var(--health-ok); }
 .autopilot { border-bottom:1px solid var(--line); padding-bottom:var(--gap-group); margin-bottom:var(--gap-group); }
 .autopilot-state { font-weight:600; color:var(--muted); align-self:center; margin-right:var(--gap-inline); }
 .autopilot-state.is-on { color:var(--health-ok); }

@@ -6,7 +6,7 @@ import com.histmersion.files.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AliasRepo, MediaRepo, SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, CritiqueRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceOverrideRepo, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
+import com.histmersion.db.{AliasRepo, ArticleReviewRepo, MediaRepo, ReviewLedgerRepo, SourceDeleteRepo, AgentStateRepo, AggregateRepo, ArticleRepo, AssetLinkRepo, CoverageRepo, CritiqueRepo, AssetMetaRepo, AttestationRepo, BackupRepo, EventRepo, Geocoder, GoalRepo, Importer, Migrate, PlaceOverrideRepo, PlaceRepo, PlaceScope, SourceRepo, StatsRepo, TreeRepo}
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -1149,8 +1149,28 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `GET /api/articles` — the compiled articles citing the filter's sources (see
     * [[Api.ArticleQuery]]), narrowed by kind and searched with `text`. */
   def listArticles(q: Api.ArticleQuery): ArticleList =
-    val f = resolve(q.filter)
-    ArticleRepo.list(ds, f, scopeOf(f), q.kind, q.text, f.limit, f.offset)
+    val f    = resolve(q.filter)
+    val list = ArticleRepo.list(ds, f, scopeOf(f), q.kind, q.text, f.limit, f.offset)
+    val facts = ArticleReviewRepo.facts(ds, list.articles.map(_.slug))
+    list.copy(articles = list.articles.map(a =>
+      a.copy(review = Some(ArticleReviewStatus.badge(facts.get(a.slug).fold(ArticleReviewStatus.Facts())(_._1))))))
+
+  /** `GET /api/articles/{slug}/review` (MCP `article_review`, `histmersion article review`): the
+    * article's review state, its review history from the ledger (the only read that decodes one),
+    * the goals linking it and the approvals about it that wait for a person. */
+  def articleReview(slug: String): Either[ApiError, ArticleReviewView] =
+    val canon = ArticleRepo.canonical(ds, norm(slug))
+    ArticleRepo.load(ds, canon).toRight(Articles.notFound(slug)).flatMap(_ => reviewOf(canon))
+
+  /** The review view of an article known to exist (its canonical slug); a ledger that no longer
+    * decodes is an error rather than an empty history. */
+  def reviewOf(slug: String): Either[ApiError, ArticleReviewView] =
+    ReviewLedgerRepo.get(ds, slug).left.map(e => ApiError(e)).map { ledger =>
+      val (facts, updatedAt) = ArticleReviewRepo.facts(ds, List(slug)).getOrElse(slug, (ArticleReviewStatus.Facts(), None))
+      val starts = ledger.fold(Map.empty[String, String])(l => ArticleReviewRepo.runStarts(ds, ArticleReviewStatus.runOrder(l, Map.empty)))
+      ArticleReviewView(slug, ArticleReviewStatus.badge(facts), facts.item.flatMap(_.outcome), updatedAt,
+        ledger.fold(Nil)(ArticleReviewStatus.history(_, starts)), ArticleReviewRepo.goals(ds, slug), facts.waiting)
+    }
 
   /** One article, with its backlinks, the sources it cites, and — when it records a filter — its
     * coverage (#958), from which every surface renders the generated Not used list and Method note. */

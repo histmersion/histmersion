@@ -14,7 +14,14 @@ given DbCodec[ArticleVersionFull] = DbCodec.derived
 
 /** `text[]` columns decode straight into `List[String]` through [[Codecs]], so the wire DTOs are
   * read directly — no joined-string intermediate. */
-given DbCodec[ArticleSummary] = DbCodec.derived
+/** A list row as the database has it: [[ArticleSummary]] without the review state, which the server
+  * derives from other tables. */
+private final case class ArticleSummaryRow(slug: String, title: String, kind: String, summary: Option[String],
+    tags: List[String], regions: List[String], periodStart: Option[Long], periodEnd: Option[Long],
+    updatedAt: Option[String]):
+  def summaryRow: ArticleSummary =
+    ArticleSummary(slug, title, kind, summary, tags, regions, periodStart, periodEnd, updatedAt)
+private given DbCodec[ArticleSummaryRow] = DbCodec.derived
 given DbCodec[ArticleRow]     = DbCodec.derived
 given DbCodec[CitedSource]    = DbCodec.derived
 given DbCodec[ArticleRef]     = DbCodec.derived
@@ -324,8 +331,8 @@ object ArticleRepo:
         .frag.query[Int].run().headOption.getOrElse(0)
       val rows = (Sql.raw(s"SELECT $SummaryCols FROM articles a WHERE ") ++ where ++ Sql.raw(" ") ++
         order ++ Sql.of(" LIMIT ? OFFSET ?", I(limit), I(offset.max(0))))
-        .frag.query[ArticleSummary].run()
-      ArticleList.of(total, rows.toList, offset.max(0))
+        .frag.query[ArticleSummaryRow].run()
+      ArticleList.of(total, rows.toList.map(_.summaryRow), offset.max(0))
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The
     * filter's part is [[FilterSql.articleWhere]] (the one rule relating articles to sources). */
