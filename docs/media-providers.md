@@ -276,8 +276,8 @@ Both were checked on 2026-10-17 with read-only requests to their JSON endpoints:
 | Rijksmuseum | the legacy collection API needs a key; the newer data services are a Linked Art API to be studied | a key, or a Linked Art reader; few objects are in this corpus' periods |
 | David Rumsey Map Collection | no documented keyless JSON API with a per-record licence (its maps are CC BY-NC-SA, off by default) | a documented API, and `cc-by-nc-sa` listed for it |
 | Europeana | needs a user's API key (`wskey`) | a key in config; the record's `edm:rights` per item |
-| Flickr (Commons, CC) | needs a user's API key | a key; the photo's licence id per photo |
-| Pleiades' Flickr photographs | the photographs Pleiades shows come from a Flickr group its place records do not list; Flickr's API needs a key | a Flickr key; the photo's licence id per photo |
+| Flickr (Commons, CC) | needs a user's API key, and since 2026 Flickr creates keys only for paid Flickr Pro accounts | not planned: a key would need a paid account |
+| Pleiades' Flickr photographs | the photographs Pleiades shows come from a Flickr group its place records do not list; Flickr's API needs a key, which only paid Flickr Pro accounts can create | not planned: a key would need a paid account |
 | Pictures Pleiades links on other sites (Geograph, Livius, …) | no documented keyless API with a per-picture licence on those sites | a reader per site, each with its licence per picture |
 | Arachne / iDAI.objects | no licence on any record (above) | a per-image licence in its API |
 | ARIADNE | records are datasets, not images; the portal's JSON route is undocumented | a documented API with images and their licences |
