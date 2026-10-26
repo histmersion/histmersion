@@ -272,7 +272,7 @@ object ManagersView:
             div(cls := "job-meta muted", focusPace(g)),
             child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g)))))))),
       Option.when(f.queue.nonEmpty)(div(
-        div(cls := "muted", s"next (${f.queued} waiting for a slot):"),
+        div(cls := "muted focus-heading", s"next (${f.queued} waiting for a slot):"),
         ol(cls := "job-list focus-queue", f.queue.map(g =>
           li(cls := "job-row",
             GoalsView.badge(g.status, g.stage),
@@ -280,7 +280,7 @@ object ManagersView:
               div(cls := "job-subject", goalLink(g.slug)),
               div(cls := "muted", g.why),
               child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g)))))))))),
-      Option.when(f.waiting.nonEmpty)(div(cls := "muted", s"cannot use a slot now: ${waitingSummary(f.waiting)}")))
+      Option.when(f.waiting.nonEmpty)(div(cls := "muted focus-heading", s"cannot use a slot now: ${waitingSummary(f.waiting)}")))
 
   /** The drain in a line: draining (runs still finishing) or drained (safe to stop the server). */
   def drainLine(d: Autopilot.DrainInfo): String =
