@@ -438,6 +438,8 @@ final case class MediaConfig(
     loc: MediaCollectionConfig,
     pleiades: MediaCollectionConfig,
     openContext: MediaCollectionConfig,
+    smithsonian: MediaCollectionConfig,
+    europeana: MediaCollectionConfig,
     collections: MediaPluginCollectionsConfig,
     samples: Int
 ) derives ConfigReader:
@@ -455,7 +457,8 @@ final case class MediaCommonsConfig(apiUrl: String, batch: Int, maxlag: Int, lic
 final case class MediaDepictsConfig(perEvent: Int, searchLimit: Int, depictedBy: Boolean, licences: String)
     derives ConfigReader
 
-/** One open-access collection (`media.met`, `.cleveland`, `.aic`, `.loc`, `.pleiades`, `.open-context`): its API, its own pace,
+/** One open-access collection (`media.met`, `.cleveland`, `.aic`, `.loc`, `.pleiades`, `.open-context`,
+  * `.smithsonian`, `.europeana`): its API, its own pace,
   * how many records are looked at and kept per place, and the licence families it may be stored
   * under. `image-url` is the IIIF server where a collection has one; `max-year` the public-domain
   * boundary for maps. */

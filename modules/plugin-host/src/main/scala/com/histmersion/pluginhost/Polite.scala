@@ -127,8 +127,10 @@ final class Polite(http: HttpTransport, cfg: MediaConfig, sleep: Long => Unit = 
       }
     attempt(0, 0)
 
-  def json(url: String): Either[String, Json] =
-    get(url).flatMap(a => io.circe.parser.parse(a.text).left.map(e => s"${host(url)}: unparseable JSON (${e.getMessage})"))
+  /** One GET answered as JSON. `headers` as for [[get]] — a key-gated API's key travels in one, never in
+    * the URL (which an error line or a log may show). */
+  def json(url: String, headers: Map[String, String] = Map.empty): Either[String, Json] =
+    get(url, headers).flatMap(a => io.circe.parser.parse(a.text).left.map(e => s"${host(url)}: unparseable JSON (${e.getMessage})"))
 
   /** The bytes of a file and its type (the answer's Content-Type, else `fallbackMime`). */
   def file(url: String, fallbackMime: String): Either[String, (Array[Byte], String)] =

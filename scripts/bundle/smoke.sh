@@ -98,6 +98,10 @@ for id in media-wikidata media-depicts media-met media-cleveland media-aic media
     media-opencontext events-gvp events-noaa events-wikidata; do
   grep -qE "^ *(- )?$id [0-9.]+ — registered" "$data/self-check.out" || fail "--self-check: $id is not registered"
 done
+# the two that need a key of the user's own (Smithsonian, Europeana): built in, off by default
+for id in media-smithsonian media-europeana; do
+  grep -qE "^ *(- )?$id [0-9.]+ — disabled" "$data/self-check.out" || fail "--self-check: $id is not reported disabled"
+done
 # the built-in AI providers (docs/research-plugins.md §23): registered by default, one switch each
 for p in anthropic openai local claude-code codex opencode; do
   grep -qF "ai-$p 1.0.0 — registered (ai-provider:$p)" "$data/self-check.out" || fail "--self-check: ai-$p is not registered"

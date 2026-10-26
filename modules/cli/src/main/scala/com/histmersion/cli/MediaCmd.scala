@@ -35,7 +35,8 @@ object MediaCmd:
     * and any a plugin of the server registered (`media providers` lists them; the server decides). */
   private val importCmd = Opts.subcommand("import",
       "Bring in pictures from an outside provider (legally reusable only): wikidata (the default), depicts, met, " +
-        "cleveland, aic, loc, pleiades, opencontext, or a plugin's collection — `histmersion media providers` " +
+        "cleveland, aic, loc, pleiades, opencontext, smithsonian and europeana (off by default: a key of your own), or a " +
+        "plugin's collection — `histmersion media providers` " +
         "lists them with their terms. --dry-run asks about one batch and prints the counts per licence (and a " +
         "collection's matches, with their reasons); otherwise a server JOB asks about every place (or event) not " +
         "asked yet, batch by batch, and resumes where it stopped") {

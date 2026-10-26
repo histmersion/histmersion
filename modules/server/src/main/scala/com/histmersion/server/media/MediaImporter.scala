@@ -37,6 +37,9 @@ object MediaImporter:
   val Loc       = "loc"
   val Pleiades  = "pleiades"
   val OpenContext = "opencontext"
+  /** The key-gated collections ([[BuiltinMedia.keyed]]): built by their plugins, not by [[of]]. */
+  val Smithsonian = "smithsonian"
+  val Europeana   = "europeana"
   val names: List[String] = List(Wikidata, Depicts, Met, Cleveland, Aic, Loc, Pleiades, OpenContext)
 
   trait Run:

@@ -8,7 +8,10 @@ import com.histmersion.api.{MediaProvider, MediaProviderInfo}
 import com.histmersion.db.MediaRepo.PlaceFacts
 import com.histmersion.plugin.*
 import com.histmersion.server.{ConverterClient, Deps}
-import com.histmersion.server.acquire.fetchers.Builtin
+import com.histmersion.server.acquire.fetchers.{Builtin, BuiltinWith}
+
+import hearth.kindlings.sconfigderivation.ConfigReader
+import com.histmersion.plugin.PluginConfig.given
 
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
@@ -72,14 +75,37 @@ object BuiltinMedia:
         "Pleiades/GeoNames/Wikidata id, else by its site's name in its context path, and its dates; records flagged " +
         "as related to human remains are not shown"))
 
-  /** The plugin ids of the built-in collections. */
-  val pluginIds: Set[String] = entries.map(_.plugin).toSet
+  val SmithsonianPlugin = "media-smithsonian"
+  val EuropeanaPlugin   = "media-europeana"
 
-  /** Each a plugin of its own, registering its one collection. */
-  def plugins: List[Plugin] = entries.map(e => Builtin(e.plugin, _.mediaCollections.add(e.name, e)))
+  /** The built-in collections that need a key of the user's own: OFF by default, each with its key as a
+    * secret reference in its plugin block (`api-key`). Registered without a key, the collection is
+    * listed and its import says what is missing; it is never asked. */
+  val keyed: List[KeyedMeta] = List(
+    KeyedMeta(SmithsonianPlugin, MediaImporter.Smithsonian, "Smithsonian Open Access objects", "an api.data.gov key",
+      "Smithsonian Open Access objects whose image is itself CC0 (usage.access), tied to a place on the map " +
+        "when the object's most specific place field names it (and no other) and its dates overlap the place's; " +
+        "needs an api.data.gov key (histmersion.plugins.media-smithsonian.api-key, a secret reference)",
+      (conf, key) => SmithsonianCollection(conf.smithsonian, key), "media.smithsonian", _.smithsonian.enabled),
+    KeyedMeta(EuropeanaPlugin, MediaImporter.Europeana, "Europeana images", "a Europeana personal API key",
+      "Europeana's openly licensed images (reusability=open: CC0, PDM, CC BY, CC BY-SA), each record's own " +
+        "edm:rights read from the search and again from the Record API; tied to a place on the map by its " +
+        "dcterms:spatial name or a gazetteer id, and its dates; needs a personal API key " +
+        "(histmersion.plugins.media-europeana.api-key, a secret reference)",
+      (conf, key) => EuropeanaCollection(conf.europeana, key), "media.europeana", _.europeana.enabled))
+
+  /** The plugin ids of the built-in collections. */
+  val pluginIds: Set[String] = entries.map(_.plugin).toSet ++ keyed.map(_.plugin)
+
+  /** Each a plugin of its own, registering its one collection; a keyed one resolves its key first. */
+  def plugins: List[Plugin] = entries.map(e => Builtin(e.plugin, _.mediaCollections.add(e.name, e))) ++
+    keyed.map(m => BuiltinWith[KeyedConfig](m.plugin, (c, ctx) =>
+      c.apiKey.fold[Either[String, Option[String]]](Right(None))(s => ctx.secret(s).map(KeyedConfig.nonBlank))
+        .flatMap(key => ctx.mediaCollections.add(m.name, KeyedEntry(m, key)))))
 
   /** The other names `media import` takes for a built-in provider. */
   val aliases: Map[String, String] = Map(
+    "si" -> MediaImporter.Smithsonian, "smithsonian-open-access" -> MediaImporter.Smithsonian,
     "commons" -> MediaImporter.Wikidata, MediaProvider.Commons -> MediaImporter.Wikidata,
     "depictions" -> MediaImporter.Depicts, MediaProvider.CommonsDepicts -> MediaImporter.Depicts,
     MediaProvider.Met -> MediaImporter.Met,
@@ -90,7 +116,7 @@ object BuiltinMedia:
 
   /** Names a plugin's collection may not take: the built-in imports, their aliases, and every provider
     * the host stores pictures under (a plugin's pictures would be taken for theirs). */
-  val reserved: Set[String] = MediaImporter.names.toSet ++ aliases.keySet ++ MediaProvider.all ++
+  val reserved: Set[String] = MediaImporter.names.toSet ++ keyed.map(_.name) ++ aliases.keySet ++ MediaProvider.all ++
     Set(MediaProvider.CommonsDepicts, MediaProvider.Pleiades)
 
   /** Pure: the name an import request means — an alias resolved, blank = `wikidata`, else as given
@@ -102,7 +128,7 @@ object BuiltinMedia:
   /** Pure: the registered names in the order lists show them — the built-ins in their order, then the
     * plugins' collections in registration order. */
   def ordered(registered: List[String]): List[String] =
-    val own = entries.map(_.name)
+    val own = entries.map(_.name) ++ keyed.map(_.name)
     own.filter(registered.contains) ++ registered.filterNot(own.contains)
 
 /** The providers `media import` can run, from the plugins' registry of the calling thread's generation. */
@@ -115,6 +141,10 @@ object MediaImporters:
     collections.get(name).map(name -> _).toRight(
       BuiltinMedia.entries.find(_.name == name) match
         case Some(e) => s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)"
+        case None if BuiltinMedia.keyed.exists(_.name == name) =>
+          val m = BuiltinMedia.keyed.find(_.name == name).get
+          s"${m.title} ($name) is switched off — it is off by default and needs ${m.needs}: set " +
+            s"histmersion.plugins.${m.plugin}.enabled = true and its api-key (a secret reference)"
         case None => s"unknown media provider '${asked.trim}' (one of: " +
             s"${BuiltinMedia.ordered(collections.keys.toList).mkString(", ")}; `histmersion media providers` lists them)")
 
@@ -139,6 +169,9 @@ object MediaImporters:
     BuiltinMedia.ordered(collections.keys.toList).flatMap(n => collections.get(n).map(n -> _)).map {
       case (n, e: BuiltinMedia.Entry) =>
         MediaProviderInfo(n, e.title, e.over, e.description, e.plugin, builtin = true, "")
+      case (n, k: KeyedEntry) =>
+        MediaProviderInfo(n, k.title, k.over, k.description + (if k.key.isEmpty then " — NO KEY SET: not asked" else ""),
+          k.meta.plugin, builtin = true, "")
       case (n, h: HostMediaCollection) =>
         MediaProviderInfo(n, h.title, h.over, h.description, pluginOf(n), builtin = true, "")
       case (n, c) =>
@@ -199,3 +232,39 @@ object PluginCollection:
   def place(p: PlaceFacts): MediaPlace =
     MediaPlace(p.id, p.label, p.qid.flatMap(SpiValues.wikidata), p.lat.flatMap(SpiValues.latitude),
       p.lon.flatMap(SpiValues.longitude), p.period.flatMap((a, b) => SpiValues.period(a, b)))
+
+/** What a key-gated built-in collection is, before its key is known. `collection` builds it over the
+  * media settings and the key; `enabled` reads its own `media.<provider>.enabled`. */
+final case class KeyedMeta(plugin: String, name: String, title: String, needs: String, description: String,
+    collection: (com.histmersion.config.MediaConfig, String) => Collection, settings: String,
+    enabled: com.histmersion.config.MediaConfig => Boolean)
+
+/** A key-gated built-in collection as registered: its key, resolved from its secret reference when the
+  * plugin was built, or none. Without one, its import is refused with what to set — the API is not asked. */
+final class KeyedEntry(val meta: KeyedMeta, private[server] val key: Option[String]) extends HostMediaCollection:
+  def name: String = meta.name
+  val title: String = meta.title
+  def over: String = "places"
+  val role: String = MediaCollection.Object
+  override val description: String = meta.description
+  override def toString: String = s"KeyedEntry(${meta.name}, key ${if key.isDefined then "set" else "missing"})"
+  def importer(deps: Deps, http: HttpTransport, converter: ConverterClient): Either[String, MediaImporter] =
+    val cfg = deps.cfg.media
+    KeyedEntry.check(meta, key, cfg).flatMap(k =>
+      MediaImporter.collection(meta.collection(cfg, k), meta.title, meta.settings, deps.ds, cfg, http, converter,
+        DbMediaStore(deps.ds)))
+
+object KeyedEntry:
+  /** Pure: the key an import of `meta` runs with, or why it does not run — no key set, or its own
+    * `media.<provider>.enabled` off. */
+  def check(meta: KeyedMeta, key: Option[String], cfg: com.histmersion.config.MediaConfig): Either[String, String] =
+    if !meta.enabled(cfg) then Left(s"${meta.title} is switched off (${meta.settings}.enabled = false)")
+    else key.toRight(s"${meta.title} needs ${meta.needs}: set histmersion.plugins.${meta.plugin}.api-key to a secret " +
+      "reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked")
+
+/** A key-gated collection's plugin settings. `api-key`: the key as a SECRET REFERENCE (`env:<NAME>`, a
+  * vault's), never the key; `null` = none, and the collection is then not asked. */
+final case class KeyedConfig(apiKey: Option[Secret]) derives ConfigReader
+
+object KeyedConfig:
+  private[media] def nonBlank(v: String): Option[String] = Option(v).map(_.trim).filter(_.nonEmpty)
