@@ -216,9 +216,10 @@ Plugins add to the server through one service (`com.histmersion.plugin.Plugin`, 
 `modules/plugin-api`; the design is [`docs/research-plugins.md`](https://github.com/histmersion/histmersion/blob/master/docs/research-plugins.md)). Each one has
 its own block, `histmersion.plugins.<id> { … }`, layered over the defaults it ships
 (`META-INF/histmersion/plugins/<id>.conf`) with the environment over both. The built-in ones are the
-three secret vaults above, all disabled by default, and — all enabled — the seven acquisition plugins,
-the eight media collections (`media-wikidata`, `media-depicts`, `media-met`, `media-cleveland`,
-`media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`), the three event catalogues
+three secret vaults above, all disabled by default, the two media collections that need a key of your
+own (`media-smithsonian`, `media-europeana`), also disabled by default, and — all enabled — the seven
+acquisition plugins, the eight keyless media collections (`media-wikidata`, `media-depicts`, `media-met`,
+`media-cleveland`, `media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`), the three event catalogues
 (`events-gvp`, `events-noaa`, `events-wikidata`) and the six AI providers (`ai-anthropic`, `ai-openai`,
 `ai-local`, `ai-claude-code`, `ai-codex`, `ai-opencode`).
 

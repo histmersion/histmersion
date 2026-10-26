@@ -13,6 +13,9 @@ decided, how a record is tied to a place, and which providers are not in yet and
   stops with that reason.
 - **No personal data on the wire.** The User-Agent is `media.user-agent` (the project and its
   repository); no e-mail, no account, no key unless the provider requires one and it is configured.
+  A provider that needs a key is **off by default** and gets the user's own key — a free one; none
+  that would make each user pay a third party is built — as a secret reference, sent only as a header
+  to its API (never in a URL, never to an image host).
 - **The licence is read from each record, never assumed**, and judged by family against the
   provider's allowlist (`cc0`, `public-domain`, `cc-by`, `cc-by-sa`; non-commercial only when listed;
   an unreadable licence and all-rights-reserved never). A stored picture whose licence a later
@@ -35,6 +38,8 @@ decided, how a record is tied to a place, and which providers are not in yet and
 | `loc` | places on the map | map | the item's `rights_advisory` and date | "No known restrictions" AND dated by `media.loc.max-year` (1928), and matched |
 | `pleiades` | places on the map with a Pleiades id | image | Commons `imageinfo` + `extmetadata` of each linked file | the place's Pleiades record links the Commons file, and the allowlist takes it |
 | `opencontext` | places on the map | object | the record's `dc-terms:license` (a CC URL), read again from its media item | the allowlist takes it, not flagged as human remains, and matched (by id or name, and dates) |
+| `smithsonian` (a key; off by default) | places on the map | object | each image media item's `usage.access` (`CC0`) | an image of the record is itself CC0, and matched |
+| `europeana` (a key; off by default) | places on the map | object | the item's `rights` (the edm:rights URL), read again from the Record API | the allowlist takes it, and matched (by its `dcterms:spatial`, an id or a name, and dates) |
 
 "Places on the map" are the places that hold findings, sites and features first, then by the number
 of sources citing them.
@@ -218,10 +223,77 @@ Petra whose period is 300 BCE–100 CE). Open Context's label for that Pleiades 
 not the label, is what is compared. Most of Open Context is Anatolian, Levantine and Italian fieldwork
 (Domuztepe, Çatalhöyük, Petra, Poggio Civitate…); a search for "Mycenae" answered nothing on 2026-10-17.
 
+## Collections that need a key of your own (`smithsonian`, `europeana`)
+
+Both are built in and **off by default**: each needs a free key that every user requests for
+themselves ([credentials](user-guide/how-to/credentials.md#getting-the-keys)). The key is a secret
+reference in the plugin's block — `histmersion.plugins.media-smithsonian.api-key`,
+`histmersion.plugins.media-europeana.api-key` (`"env:<NAME>"` or a vault's, e.g.
+`"keepassxc:Histmersion/Europeana#password"`) — resolved when the plugin is built and on every
+`config reload`, and sent as the API's `X-Api-Key` header (both APIs document it; Europeana calls the
+`wskey` parameter deprecated). Switched on without a key, the collection is listed by
+`media providers` ("NO KEY SET") and `media import` refuses it, naming the setting; the API is not
+asked. A 401/403 answer ends the batch with "the API key was refused (check …api-key)". Everything
+after the search — the museum rule, the download, the thumbnail, the credit, `--refresh` — is the
+collections' import above.
+
+**Smithsonian Open Access** (`media import smithsonian`; an [api.data.gov](https://api.data.gov/signup/) key):
+
+- one search per place: `GET https://api.si.edu/openaccess/api/v1.0/search?q="<name>" AND
+  online_media_type:Images&rows=20&type=edanmdm&row_group=objects`;
+- a record is used only through an **image media item whose own `usage.access` is `CC0`**
+  (`content.descriptiveNonRepeating.online_media.media[]`); a record whose images are not CC0, or
+  that has none, is refused with that reason. The stored file is the item's "Screen Image" resource,
+  its "Thumbnail Image" the card's thumbnail, its "High-resolution JPEG" the recorded original;
+- place fields, most specific first: `freetext.place` (each value's comma parts in order:
+  "Raqqa, Syria" → Raqqa, then Syria), then `indexedStructured.geoLocation` from its finest level
+  (`L5` City … `L1` Continent);
+- dates: the `freetext.date` entry labelled as the object's date ("Date", "Date made", …; never an
+  accession or collection date) read as signed years — `1550-1196 BCE`, `100 BCE-100 CE`,
+  `12th-13th century`, `2nd millennium BCE`; an uncertain (`?`) or unreadable date is none, and the
+  record is not matched;
+- credit: *Title, Maker, Unit, Smithsonian Institution, Credit line, CC0*;
+- pace: one search every 4 s (`media.smithsonian.request-interval-ms`), under api.data.gov's
+  documented 1,000 requests an hour; images come from `ids.si.edu`, which the key does not count.
+
+**Europeana** (`media import europeana`; a Europeana **personal** API key):
+
+- one search per place: `GET https://api.europeana.eu/record/v2/search.json?query=where:("<name>")
+  &reusability=open&media=true&thumbnail=true&qf=TYPE:IMAGE&profile=rich&rows=20` —
+  `reusability=open` is Europeana's own filter for PDM, CC0, CC BY and CC BY-SA, and `where` is its
+  aggregated place field;
+- each item's licence is still its own `rights` (the edm:rights URL) read by the server and judged by
+  `media.europeana.licences` (`cc0,public-domain,cc-by,cc-by-sa`); a rightsstatements.org statement
+  (NoC-NC, InC, …) is not a licence the server reads and is refused. Before a picture is stored its
+  record is read again through the Record API (`/record/v2/{id}.json`): the licence of the web resource
+  shown (`webResourceEdmRights`, else the aggregation's `edmRights`) must be the search's, or it is not
+  stored (a line in the report). A dry run never pays for that request;
+- tied to a place by its provider's own `dcterms:spatial` values first (the finest evidence: one
+  naming only another place on the map refuses it), then by a GeoNames/Pleiades/Wikidata id among
+  its place URIs, else by the museum rule over its place labels; dates: its `year` values;
+- the pictures are Europeana's own cached renditions through its keyless Thumbnail API v3
+  (`/thumbnail/v3/400/<md5 of the media URL>.jpg` stored, `…/200/…` the card's thumbnail; the media URL
+  is the one its `edmPreview` was made from); the provider's file (`edmIsShownBy`) is recorded as the
+  original and never downloaded; the page is `https://www.europeana.eu/item/<id>`;
+- credit: *Title, Creator, Data provider, via Europeana, CC BY-SA 4.0*.
+
+What was confirmed and what is not yet (2026-10-26, without a key): the endpoints, parameters, the
+envelope and error answers of both (each API answered a keyless and a wrong-key request: Smithsonian
+`403 {"error":{"code":"API_KEY_MISSING"|"API_KEY_INVALID",…}}`, Europeana `401
+{"success":false,"error":…,"message":…,"code":"401_key_invalid"}`, and both read the key from the
+`X-Api-Key` header); the Smithsonian record schema, from three real records of its open-data dump (the
+schema its API rows carry); Europeana's field names, from its Search and Record API documentation;
+the Thumbnail API's MD5 rule, against the documentation's own example. Not yet seen in a live
+answer: whether the Smithsonian search accepts the fielded `online_media_type:Images` term in `q`;
+how Europeana writes BCE years in `year` and its place labels (`edmPlaceLabel`) in the `rich`
+profile. The fixtures of the Europeana suites are constructed in the documented shape; the first
+dry run with a key is the check.
+
 ## A plugin's own collection
 
 Every provider above is a built-in **plugin** (`media-wikidata`, `media-depicts`, `media-met`,
-`media-cleveland`, `media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`;
+`media-cleveland`, `media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`, and — off by
+default — `media-smithsonian`, `media-europeana`;
 docs/research-plugins.md §19), and a third-party plugin can register a collection of its own
 (`com.histmersion.plugin.MediaCollection`). `histmersion media providers` lists what this server has;
 `histmersion media import <name>` runs a plugin's collection exactly like a built-in one — dry run, job,
@@ -272,10 +344,8 @@ Both were checked on 2026-10-17 with read-only requests to their JSON endpoints:
 
 | provider | why not yet | what it needs |
 |---|---|---|
-| Smithsonian Open Access | needs an api.data.gov key; without one its response shape could not be confirmed | a key in `media.smithsonian.api-key` (env override), default off; CC0 per media item (`usage.access`) |
-| Rijksmuseum | the legacy collection API needs a key; the newer data services are a Linked Art API to be studied | a key, or a Linked Art reader; few objects are in this corpus' periods |
+| Rijksmuseum | not built yet. Its current Data Services need **no key** (checked 2026-10-26: `GET https://data.rijksmuseum.nl/search/collection?description=Mycenae` answers a Linked Art search page of object ids, its documentation says "No API key is needed"; the legacy `www.rijksmuseum.nl/api/…/collection` answers 410). Each object id resolves keyless (`https://id.rijksmuseum.nl/{id}`, `Accept: application/ld+json`) to Linked Art: the object `shows` a VisualItem whose own `subject_to` Right names its licence (a Creative Commons URL, e.g. the Public Domain Mark), and the VisualItem is `digitally_shown_by` a DigitalObject whose `access_point` is the IIIF image (`iiif.micr.io`) | a Linked Art reader: the search has no place field (only `description`, `title`, `creator`, `creationDate`, `type`, … — keyword matches), so each candidate costs three requests (object, visual item, digital object); few objects are in this corpus' periods |
 | David Rumsey Map Collection | no documented keyless JSON API with a per-record licence (its maps are CC BY-NC-SA, off by default) | a documented API, and `cc-by-nc-sa` listed for it |
-| Europeana | needs a user's API key (`wskey`) | a key in config; the record's `edm:rights` per item |
 | Flickr (Commons, CC) | needs a user's API key, and since 2026 Flickr creates keys only for paid Flickr Pro accounts | not planned: a key would need a paid account |
 | Pleiades' Flickr photographs | the photographs Pleiades shows come from a Flickr group its place records do not list; Flickr's API needs a key, which only paid Flickr Pro accounts can create | not planned: a key would need a paid account |
 | Pictures Pleiades links on other sites (Geograph, Livius, …) | no documented keyless API with a per-picture licence on those sites | a reader per site, each with its licence per picture |
@@ -285,10 +355,11 @@ Both were checked on 2026-10-17 with read-only requests to their JSON endpoints:
 ## Configuration
 
 `media.depicts.*`, `media.met.*`, `media.cleveland.*`, `media.aic.*`, `media.loc.*`, `media.pleiades.*`,
-`media.open-context.*` and `media.samples` — see the configuration reference (`docs/user-guide/reference/configuration.md`). A collection can be switched off with
+`media.open-context.*`, `media.smithsonian.*`, `media.europeana.*` and `media.samples` — see the configuration reference (`docs/user-guide/reference/configuration.md`). A collection can be switched off with
 `media.<provider>.enabled = false` (env `HISTMERSION_MEDIA_<PROVIDER>_ENABLED`, `…_OPEN_CONTEXT_…` for
 Open Context); its import then answers with that reason. Each is also a plugin:
 `histmersion.plugins.media-<provider>.enabled = false` (env `HISTMERSION_PLUGIN_MEDIA_<PROVIDER>_ENABLED`)
 takes it out of `media import` and `media providers` altogether — both switches must be on for a
-collection to run. A plugin's collection is judged by `media.collections.licences` and
+collection to run. `media-smithsonian` and `media-europeana` are off by default and need their
+`api-key` too (above). A plugin's collection is judged by `media.collections.licences` and
 `media.collections.per-collection.<name>`.

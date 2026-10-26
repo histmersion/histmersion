@@ -121,6 +121,8 @@ Bitwarden's session can be kept in KeePassXC, for example.
 |---|---|---|
 | the **polite-pool contact** for Crossref, OpenAlex and Unpaywall | `acquire.contact-email` (`HISTMERSION_ACQUIRE_CONTACT_EMAIL`) | not a secret, but yours: an e-mail address the services ask for, sent only as their `mailto`/`email` parameter. Unpaywall is not asked without one. |
 | **CORE** | `plugins.oa-core.api-key` | a secret reference; without a key CORE is not asked |
+| **Smithsonian Open Access** (`media import smithsonian`) | `plugins.media-smithsonian.api-key` | an api.data.gov key, as a secret reference. The plugin is off by default: set `plugins.media-smithsonian.enabled = true` too. Without a key it is listed but not asked |
+| **Europeana** (`media import europeana`) | `plugins.media-europeana.api-key` | your **personal** Europeana API key, as a secret reference. Off by default: set `plugins.media-europeana.enabled = true` too. Without a key it is listed but not asked |
 | **Semantic Scholar** (for `followups`) | `acquire.semantic-scholar.api-key` | optional; a key only raises the rate limit |
 | the server's own **write key** | `auth.api-key` (`HISTMERSION_API_KEY`) | when set, every write must send `Authorization: Bearer <key>`; set it whenever the server listens beyond your computer |
 | **Anthropic** API | `ANTHROPIC_API_KEY` | environment only |
@@ -140,6 +142,34 @@ Where each key comes from, and what the sign-up looks like. All of these are fre
 
 Store each key as a secret reference (an `HISTMERSION_…` environment variable of the server, or a
 vault entry), never in the settings file or a repository.
+
+For example, with both keys kept in KeePassXC — one entry per key, the key in the entry's password
+field — the settings file (`histmersion.conf`) holds only the references:
+
+```hocon
+histmersion {
+  plugins {
+    keepassxc {
+      enabled  = true
+      database = "/path/to/research.kdbx"
+    }
+    media-smithsonian {
+      enabled = true
+      api-key = "keepassxc:Histmersion/api.data.gov#password"
+    }
+    media-europeana {
+      enabled = true
+      api-key = "keepassxc:Histmersion/Europeana#password"
+    }
+  }
+}
+```
+
+Then `histmersion config reload` (no restart needed). A plugin whose reference cannot be resolved is
+reported as failed, naming the reference, by `histmersion-server --self-check` (above), and its
+collection is not offered; `histmersion media providers` lists the two collections, and says
+"NO KEY SET" for one that has no key. Each key is sent only as its API's `X-Api-Key` header, never in a URL. Start with a dry
+run on one place: `histmersion media import europeana --dry-run --limit 5`.
 
 ### Logging in to the command-line AI tools
 
