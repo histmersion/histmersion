@@ -1664,7 +1664,7 @@ test('the agent runs window: pipeline chips and the manager picker filter on the
     await page.waitForFunction(() => document.querySelectorAll('.runs-pane .run-row').length === 4);
     const chip = v => pane.locator(`.list-facet button[data-value="${v}"]`);
     assert.equal((await chip('review-article').innerText()).replace(/\s+/g, ' ').trim(), 'review-article 211');
-    assert.equal((await chip('manager').innerText()).replace(/\s+/g, ' ').trim(), 'manager 380');
+    assert.equal((await chip('manager').innerText()).replace(/\s+/g, ' ').trim(), 'by a manager 380');
     const t = await clickTimed(page, '.runs-pane .list-facet button[data-value="review-article"]', '.runs-pane .run-row');
     assert.equal(t.rows, 2);
     assert.ok(t.ms < 100, `a chip answers within 100 ms (${t.ms.toFixed(1)} ms)`);
@@ -1707,7 +1707,7 @@ test('the jobs window: kind chips with the server\'s counts filter the list, and
     const pane = page.locator('.jobs-pane');
     await page.waitForFunction(() => document.querySelectorAll('.jobs-pane .job-row').length === 4);
     const chip = v => pane.locator(`.list-facet button[data-value="${v}"]`);
-    assert.equal((await chip('ingest').innerText()).replace(/\s+/g, ' ').trim(), 'OCR of an upload 507');
+    assert.equal((await chip('ingest').innerText()).replace(/\s+/g, ' ').trim(), 'ingest (fetch or upload, then OCR) 507');
     const t = await clickTimed(page, '.jobs-pane .list-facet button[data-value="ingest"]', '.jobs-pane .job-row');
     assert.equal(t.rows, 2);
     assert.ok(t.ms < 100, `a chip answers within 100 ms (${t.ms.toFixed(1)} ms)`);
