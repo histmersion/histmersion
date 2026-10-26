@@ -972,9 +972,13 @@ a.chip:hover { border-color:var(--accent); }
 .goal-tree { list-style:none; margin:0; padding:0; }
 .goal-row { display:flex; align-items:center; gap:8px; padding:4px 6px 4px calc(6px + var(--depth, 0) * 18px); border-radius:6px; }
 .goal-row:hover { background:var(--panel); }
-.goal-legend { list-style:none; margin:0 0 10px; padding:0 0 8px; display:flex; flex-wrap:wrap; gap:4px 16px;
+/* one stage per row at every width: the badges share one column (equal width), the meanings start at one x
+   and wrap inside their own column */
+.goal-legend { list-style:none; margin:0 0 10px; padding:0 0 8px; display:grid;
+  grid-template-columns:max-content minmax(0, 1fr); gap:4px 10px; align-items:baseline;
   font-size:12px; border-bottom:1px solid var(--line); }
-.goal-legend li { display:flex; align-items:center; gap:6px; }
+.goal-legend li { display:contents; }
+.goal-legend .job-state { margin-top:0; }
 .goal-section { margin:12px 0; }
 .goal-section h4 { margin:0 0 4px; }
 .goal-links, .goal-schedules, .goal-runs { margin:2px 0 6px; padding-left:18px; font-size:12.5px; }
