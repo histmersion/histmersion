@@ -74,11 +74,21 @@ object Smithsonian:
   /** The header the key travels in (api.data.gov's documented alternative to the `api_key` parameter). */
   val KeyHeader = "X-Api-Key"
 
-  /** Pure: the query — the place's name as a phrase, objects with images only (a fielded term). */
-  def query(name: String): String = s"\"${name.replace("\"", " ").trim}\" AND online_media_type:Images"
+  /** Pure: the query — the place's name as a phrase, objects with images only, none of the excluded
+    * units (`unit_code`, a fielded term the API's `terms` endpoint lists). */
+  def query(name: String, excludedUnits: List[String] = Nil): String =
+    val units = excludedUnits.map(_.replaceAll("[^A-Za-z0-9_]", "")).filter(_.nonEmpty)
+    s"\"${name.replace("\"", " ").trim}\" AND online_media_type:Images" +
+      (if units.isEmpty then "" else units.mkString(" AND NOT unit_code:(", " OR ", ")"))
 
-  def searchUrl(api: String, name: String, rows: Int): String =
-    s"${api.stripSuffix("/")}/search?q=${Read.enc(query(name))}&rows=${rows.max(1).min(1000)}&type=edanmdm&row_group=objects"
+  def searchUrl(api: String, name: String, rows: Int, excludedUnits: List[String] = Nil): String =
+    s"${api.stripSuffix("/")}/search?q=${Read.enc(query(name, excludedUnits))}&rows=${rows.max(1).min(1000)}" +
+      "&type=edanmdm&row_group=objects"
+
+  /** Pure: the unit a row comes from — `descriptiveNonRepeating.unit_code`, else the row's `unitCode`. */
+  def unitOf(json: Json): Option[String] =
+    val c = json.hcursor
+    Read.str(c.downField("content").downField("descriptiveNonRepeating"), "unit_code").orElse(Read.str(c, "unitCode"))
 
   /** The labels of `freetext.date` that name when the object was made. */
   val DateLabels: Set[String] = Set("date", "date made", "date created", "creation date", "production date", "object date")
@@ -89,11 +99,11 @@ object Smithsonian:
 
   /** Pure: the rows of a search answer; an error answer (api.data.gov's `{error: {code, message}}`, or
     * EDAN's `{response: {error}}`) is a `Left`. */
-  def records(json: Json): Either[String, List[Either[String, MediaRecord]]] =
+  def records(json: Json, excludedUnits: List[String] = Nil): Either[String, List[Either[String, MediaRecord]]] =
     val c = json.hcursor
     val resp = c.downField("response")
     resp.downField("rows").focus.flatMap(_.asArray) match
-      case Some(rows) => Right(rows.toList.map(record))
+      case Some(rows) => Right(rows.toList.map(record(_, excludedUnits)))
       case None if Read.long(resp, "rowCount").isDefined => Right(Nil)
       case None =>
         val gov = c.downField("error")
@@ -107,8 +117,9 @@ object Smithsonian:
       Read.str(h, "content").map(v => Read.str(h, "label").getOrElse("").toLowerCase(Locale.ROOT) -> v)
     }
 
-  /** Pure: one row of a search answer. */
-  def record(json: Json): Either[String, MediaRecord] =
+  /** Pure: one row of a search answer; a row of an excluded unit (a natural-history department's
+    * specimen) is withheld with that reason, whatever its licence. */
+  def record(json: Json, excludedUnits: List[String] = Nil): Either[String, MediaRecord] =
     val c    = json.hcursor
     val cont = c.downField("content")
     val dnr  = cont.downField("descriptiveNonRepeating")
@@ -153,7 +164,8 @@ object Smithsonian:
         val geo = (places ++ levels).distinctBy((_, v) => v.toLowerCase(Locale.ROOT))
         val period = labelled(free, "date").filter((l, _) => DateLabels(l)).iterator
           .flatMap((_, v) => FreeTextDates.parse(v)).nextOption().flatMap((a, b) => DeepTime.span(a, b))
-        MediaRecord(key, title, page, image, thumb, original, rights, geo, period)
+        val excluded = unitOf(json).filter(u => excludedUnits.exists(_.equalsIgnoreCase(u))).map(u => s"an excluded unit ($u)")
+        MediaRecord(key, title, page, image, thumb, original, rights, geo, period, withheld = excluded)
       }
 
 /** The Europeana APIs (https://europeana.atlassian.net/wiki/spaces/EF/pages/2385739812, Record API page
@@ -174,11 +186,43 @@ object Europeana:
   val Spatial   = "dcterms:spatial"
   val Place     = "edm:Place"
 
-  def query(name: String): String = s"""where:("${name.replace("\"", " ").trim}")"""
+  /** The records an import refuses whatever place they name: those of an aggregator (`PROVIDER`, its
+    * name exactly, any case), of an institution whose name contains one of `dataProviders` (any case),
+    * or whose `dc:type` is one of `types` (letters compared, any case: `Preserved Specimen` =
+    * `PreservedSpecimen`). The aggregators and types are excluded in the search as well; a type is read
+    * again from the Record API, since a search item does not carry it. */
+  final case class Exclusions(providers: List[String], dataProviders: List[String], types: List[String])
+  object Exclusions:
+    val none: Exclusions = Exclusions(Nil, Nil, Nil)
 
-  def searchUrl(api: String, name: String, rows: Int): String =
-    s"${api.stripSuffix("/")}/record/v2/search.json?query=${Read.enc(query(name))}&reusability=open&media=true" +
+  private def phrase(s: String) = "\"" + s.replace("\"", " ").trim + "\""
+  private def anyOf(field: String, vs: List[String]) =
+    val ps = vs.map(_.trim).filter(_.nonEmpty)
+    if ps.isEmpty then "" else ps.map(phrase).mkString(s" NOT $field:(", " OR ", ")")
+
+  /** Pure: the query — the place as Europeana's aggregated `where` field, without the excluded
+    * aggregators (`PROVIDER`) and types (`proxy_dc_type`). */
+  def query(name: String, ex: Exclusions = Exclusions.none): String =
+    s"where:(${phrase(name)})" + anyOf("PROVIDER", ex.providers) + anyOf("proxy_dc_type", ex.types)
+
+  def searchUrl(api: String, name: String, rows: Int, ex: Exclusions = Exclusions.none): String =
+    s"${api.stripSuffix("/")}/record/v2/search.json?query=${Read.enc(query(name, ex))}&reusability=open&media=true" +
       s"&thumbnail=true&qf=${Read.enc("TYPE:IMAGE")}&profile=rich&rows=${rows.max(1).min(100)}"
+
+  private def letters(s: String) = s.toLowerCase(Locale.ROOT).filter(_.isLetterOrDigit)
+
+  /** Pure: why a record's aggregator or institution excludes it, or `None`. */
+  def excludedBy(providers: List[String], dataProviders: List[String], ex: Exclusions): Option[String] =
+    providers.find(p => ex.providers.exists(_.trim.equalsIgnoreCase(p))).map(p => s"an excluded provider ($p)")
+      .orElse(dataProviders.find { d =>
+        val name = d.toLowerCase(Locale.ROOT)
+        ex.dataProviders.map(_.trim.toLowerCase(Locale.ROOT)).exists(f => f.nonEmpty && name.contains(f))
+      }.map(d => s"an excluded data provider ($d)"))
+
+  /** Pure: the first of a record's `dc:type` values that is excluded, or `None`. */
+  def excludedType(types: List[String], ex: Exclusions): Option[String] =
+    val banned = ex.types.map(letters).filter(_.nonEmpty).toSet
+    types.find(t => banned(letters(t)))
 
   /** Pure: the Record API URL of a Europeana id (`/2058611/_kimbl_3_1`), each segment encoded. */
   def recordUrl(api: String, id: String): String =
@@ -221,19 +265,20 @@ object Europeana:
   private def isUri(s: String) = s.startsWith("http://") || s.startsWith("https://")
 
   /** Pure: the items of a search answer; `success: false` is a `Left` with Europeana's message. */
-  def records(json: Json, api: String): Either[String, List[Either[String, MediaRecord]]] =
+  def records(json: Json, api: String, ex: Exclusions = Exclusions.none): Either[String, List[Either[String, MediaRecord]]] =
     val c = json.hcursor
     if Read.bool(c, "success").contains(false) then
       Left(List(Read.str(c, "error"), Read.str(c, "message")).flatten.distinct.mkString(": ") match
         case "" => "the search failed"
         case e  => e)
     else c.downField("items").focus.flatMap(_.asArray) match
-      case Some(items) => Right(items.toList.map(record(_, api)))
+      case Some(items) => Right(items.toList.map(record(_, api, ex)))
       case None if Read.long(c, "totalResults").isDefined => Right(Nil)
       case None => Left("no items in the answer")
 
-  /** Pure: one search item. */
-  def record(json: Json, api: String): Either[String, MediaRecord] =
+  /** Pure: one search item; one of an excluded aggregator or institution ([[Exclusions]]) is withheld
+    * with that reason. */
+  def record(json: Json, api: String, ex: Exclusions = Exclusions.none): Either[String, MediaRecord] =
     val c = json.hcursor
     Read.str(c, "id").filter(_.startsWith("/")).toRight("no Europeana id").map { id =>
       val title    = values(c, "title").headOption.orElse(values(c, "dcTitleLangAware").headOption).getOrElse(id)
@@ -255,20 +300,25 @@ object Europeana:
       val years = values(c, "year").flatMap(y => y.trim.toLongOption).filter(_ != 0)
       val period = Option.when(years.nonEmpty)(()).flatMap(_ => DeepTime.span(years.min, years.max))
       MediaRecord(id.stripPrefix("/"), title, s"https://www.europeana.eu/item$id",
-        media.map(thumbnailUrl(api, _, 400)), media.map(thumbnailUrl(api, _, 200)), shownBy, rights, geo, period, ids)
+        media.map(thumbnailUrl(api, _, 400)), media.map(thumbnailUrl(api, _, 200)), shownBy, rights, geo, period, ids,
+        withheld = excludedBy(values(c, "provider"), values(c, "dataProvider"), ex))
     }
 
   /** Pure: a record completed from the Record API — the licence read AGAIN, from the web resource that is
     * shown (`webResourceEdmRights`), else from the provider's aggregation (`edmRights`): a missing or
-    * different licence refuses it. */
-  def item(json: Json, rec: MediaRecord): Either[String, MediaRecord] =
+    * different licence refuses it, and so does an excluded `dc:type` of any of its proxies. */
+  def item(json: Json, rec: MediaRecord, ex: Exclusions = Exclusions.none): Either[String, MediaRecord] =
     val c = json.hcursor
     if Read.bool(c, "success").contains(false) then
       Left(List(Read.str(c, "error"), Read.str(c, "message")).flatten.distinct.mkString(": "))
     else
       val obj = c.downField("object")
       val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor)
-      aggs.headOption.toRight("no aggregation on the record").flatMap { agg =>
+      val types = obj.downField("proxies").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor).flatMap(values(_, "dcType"))
+      val firstAggregation = excludedType(types, ex) match
+        case Some(t) => Left(s"an excluded type ($t)")
+        case None    => aggs.headOption.toRight("no aggregation on the record")
+      firstAggregation.flatMap { agg =>
         val shownBy = Read.str(agg, "edmIsShownBy").orElse(values(agg, "edmIsShownBy").headOption)
         val resource = agg.downField("webResources").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor)
           .find(r => shownBy.isDefined && Read.str(r, "about") == shownBy)

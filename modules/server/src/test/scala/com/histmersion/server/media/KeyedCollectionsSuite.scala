@@ -137,3 +137,45 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       List(target(mycenae)), dryRun = false, store)
     assertEquals(r.stored, 0)
     assert(r.failed.exists(_.contains("differs from the search's (CC-BY-SA-4.0)")), r.failed.toString)
+
+  // ── relevance: the default exclusions and max-year ──────────────────────────────────────────
+
+  private val orkney = PlaceFacts("ne_physical_1159102959", "Orkney Islands", Set("orkney islands", "orkney"),
+    Some((-7000L, 2100L)), None, Some(59.0), Some(-3.0))
+  private val orkneyStore = CollStore(Map(orkney.id -> orkney), Map("orkney" -> List(orkney)))
+
+  test("Europeana defaults: max-year 1500 and the natural-history exclusions are in the search and the reasons"):
+    assertEquals(cfg.europeana.maxYear, 1500)
+    val http = FakeMediaHttp { url =>
+      if url.startsWith("https://api.europeana.eu/record/v2/search.json?") then FakeMediaHttp.json(fx("eu-search-orkney.json"))
+      else Left(s"unexpected $url")
+    }
+    val r = run(EuropeanaCollection(cfg.europeana, key), http, List(target(orkney)), dryRun = true, orkneyStore)
+    assertEquals(r.samples.map(s => (s.key, s.basis)), List(
+      ("9200999/fixture_orkney_mace_head", "dcterms:spatial = Orkney; 3000–2500 BCE within 7000 BCE–1500 CE")))
+    assertEquals(r.rejected.map(c => c.key -> c.n).toMap, Map(
+      "an excluded provider (OpenUp!)" -> 1,
+      "an excluded data provider (Fixture Herbarium Trust)" -> 1,
+      "made after 1500 CE" -> 1,
+      "no dates on the record" -> 1))
+    val search = java.net.URLDecoder.decode(http.requests.head._1, "UTF-8")
+    assert(search.contains("NOT PROVIDER:(\"OpenUp!\")"), search)
+    assert(search.contains("NOT proxy_dc_type:(\"PreservedSpecimen\""), search)
+
+  test("Smithsonian defaults: max-year 1500, the natural-history units left out of the search and refused"):
+    assertEquals(cfg.smithsonian.maxYear, 1500)
+    val text = fx("si-search.json")
+    // the first row as a specimen of the invertebrate zoology department; the second dated after 1500
+    val rows = io.circe.parser.parse(text).toOption.get.hcursor.downField("response").downField("rows")
+    val bead = rows.downArray.focus.get.noSpaces.replace("\"FSG\"", "\"NMNHINV\"")
+    val tile = rows.downArray.right.focus.get.noSpaces.replace("late 12th-early 13th century", "1890")
+    val third = rows.downArray.right.right.focus.get.noSpaces
+    val answer = s"""{"status":200,"responseCode":1,"response":{"rows":[$bead,$tile,$third],"rowCount":3}}"""
+    val http = si(FakeMediaHttp.json(answer))
+    val r = run(SmithsonianCollection(cfg.smithsonian, key), http, List(target(egypt), target(syria)), dryRun = true)
+    assertEquals(r.samples, Nil)
+    assert(r.rejected.exists(c => c.key == "an excluded unit (NMNHINV)"), r.rejected.toString)
+    assert(r.rejected.exists(c => c.key == "made after 1500 CE"), r.rejected.toString)
+    val search = java.net.URLDecoder.decode(http.requests.head._1, "UTF-8")
+    assert(search.contains("AND NOT unit_code:(NMNHBIRDS OR "), search)
+    assert(!search.contains("NMNHANTHRO"), "Anthropology's objects are kept")

@@ -113,10 +113,12 @@ object MediaMatch:
   /** Pure: a period as a person reads it (`1400–1200 BCE`, `200 BCE–100 CE`). */
   def years(p: Period): String =
     val (start, end) = (p.start.value, p.end.value)
-    def y(v: Int) = if v < 0 then s"${-v} BCE" else s"$v CE"
     if start < 0 && end < 0 then s"${-start}–${-end} BCE"
     else if start >= 0 && end >= 0 then s"$start–$end CE"
-    else s"${y(start)}–${y(end)}"
+    else s"${year(start)}–${year(end)}"
+
+  /** Pure: one signed year as a person reads it (`1500 CE`, `1200 BCE`). */
+  def year(v: Int): String = if v < 0 then s"${-v} BCE" else s"$v CE"
 
   /** What a value names on the map: the ids of the map places with that name key, equivalents of
     * one site counted once — the caller's lookup. */
@@ -140,16 +142,24 @@ object MediaMatch:
         case Some((f, v, k)) =>
           if resolve(k) == Set(target.id) then Right(s"$f = $v") else Left("its place name is ambiguous on the map")
 
-  /** Pure: the museum rule — geography, then the dates; the basis names both. */
-  def museum(rec: MediaRecord, target: PlaceInfo, resolve: Resolve): Either[String, String] =
-    geography(rec, target, resolve, specific = true).flatMap { geo =>
-      (rec.period, target.period) match
-        case (None, _) => Left("no dates on the record")
-        case (_, None) => Left("the place has no period to compare")
-        case (Some(r), Some(p)) =>
-          if overlaps(r, p) then Right(s"$geo; ${years(r)} within ${years(p)}")
-          else Left("its dates do not overlap the place's")
-    }
+  /** Pure: the museum rule — geography, then the dates ([[dated]]); the basis names both. */
+  def museum(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, latest: Option[Int] = None): Either[String, String] =
+    geography(rec, target, resolve, specific = true).flatMap(dated(_, rec, target, latest))
+
+  /** Pure: the dates half of a match, after the place half (`basis`): the record must be dated; with a
+    * `latest` year (a collection's `max-year`: the last year the research is about), made by then —
+    * a record made later is refused whatever place it names, so a 19th-century specimen or print is not
+    * filed under a place whose gazetteer span runs to the present — and its dates must overlap the
+    * place's period, read up to `latest`. */
+  def dated(basis: String, rec: MediaRecord, target: PlaceInfo, latest: Option[Int]): Either[String, String] =
+    (rec.period, target.period) match
+      case (None, _) => Left("no dates on the record")
+      case (Some(r), _) if latest.exists(r.end.value > _) => Left(s"made after ${year(latest.get)}")
+      case (_, None) => Left("the place has no period to compare")
+      case (Some(r), Some(p)) =>
+        val window = latest.filter(y => y >= p.start.value && y < p.end.value).flatMap(y => DeepTime.span(p.start.value.toLong, y.toLong)).getOrElse(p)
+        if overlaps(r, window) then Right(s"$basis; ${years(r)} within ${years(window)}")
+        else Left("its dates do not overlap the place's")
 
   /** What a gazetteer id names on the map: the ids of the map places carrying it, equivalents of one
     * site counted once — the caller's lookup. */
@@ -167,9 +177,9 @@ object MediaMatch:
     *  - with no `deeper` field on the map, the ids decide — one naming the target alone ties it, one
     *    naming it among others is ambiguous, one naming only other places refuses it (an object from
     *    Petra is not also filed under Jordan) — and with no id on the map, the museum rule's names.
-    * Either way the dates must overlap; the basis names the id or the field, and the dates. */
+    * Either way the dates decide as in [[dated]]; the basis names the id or the field, and the dates. */
   def withIds(rec: MediaRecord, target: PlaceInfo, resolveId: ResolveId, resolve: Resolve,
-      deeper: Set[String]): Either[String, String] =
+      deeper: Set[String], latest: Option[Int] = None): Either[String, String] =
     val byId = rec.ids.map(id => id -> resolveId(id)).filter(_._2.nonEmpty)
     val idAlone = byId.find(_._2 == Set(target.id)).map((id, _) => s"${ExternalIds.show(id)} (the record's place id)")
     val finer = rec.geography.filter((f, _) => deeper(f))
@@ -185,14 +195,7 @@ object MediaMatch:
           case None if byId.exists(_._2.contains(target.id)) => Left("its place id is ambiguous on the map")
           case None if byId.nonEmpty => Left("its place id names another place on the map")
           case None => geography(rec, target, resolve, specific = true)
-    geo.flatMap { g =>
-      (rec.period, target.period) match
-        case (None, _) => Left("no dates on the record")
-        case (_, None) => Left("the place has no period to compare")
-        case (Some(r), Some(p)) =>
-          if overlaps(r, p) then Right(s"$g; ${years(r)} within ${years(p)}")
-          else Left("its dates do not overlap the place's")
-    }
+    geo.flatMap(dated(_, rec, target, latest))
 
   /** Pure: the map rule — a location naming the target, a map made by `maxYear` (public domain). */
   def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: Int): Either[String, String] =

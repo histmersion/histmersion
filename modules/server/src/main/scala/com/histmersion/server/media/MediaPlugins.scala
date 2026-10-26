@@ -85,12 +85,14 @@ object BuiltinMedia:
     KeyedMeta(SmithsonianPlugin, MediaImporter.Smithsonian, "Smithsonian Open Access objects", "an api.data.gov key",
       "Smithsonian Open Access objects whose image is itself CC0 (usage.access), tied to a place on the map " +
         "when the object's most specific place field names it (and no other) and its dates overlap the place's; " +
+        "natural-history units' specimens and objects made after media.smithsonian.max-year are refused; " +
         "needs an api.data.gov key (histmersion.plugins.media-smithsonian.api-key, a secret reference)",
       (conf, key) => SmithsonianCollection(conf.smithsonian, key), "media.smithsonian", _.smithsonian.enabled),
     KeyedMeta(EuropeanaPlugin, MediaImporter.Europeana, "Europeana images", "a Europeana personal API key",
       "Europeana's openly licensed images (reusability=open: CC0, PDM, CC BY, CC BY-SA), each record's own " +
         "edm:rights read from the search and again from the Record API; tied to a place on the map by its " +
-        "dcterms:spatial name or a gazetteer id, and its dates; needs a personal API key " +
+        "dcterms:spatial name or a gazetteer id, and its dates; natural-history specimens and objects made after " +
+        "media.europeana.max-year are refused; needs a personal API key " +
         "(histmersion.plugins.media-europeana.api-key, a secret reference)",
       (conf, key) => EuropeanaCollection(conf.europeana, key), "media.europeana", _.europeana.enabled))
 

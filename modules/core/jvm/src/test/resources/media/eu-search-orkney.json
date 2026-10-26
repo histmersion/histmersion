@@ -1,0 +1,147 @@
+{
+  "apikey": "fixture",
+  "success": true,
+  "requestNumber": 999,
+  "itemsCount": 5,
+  "totalResults": 5,
+  "items": [
+    {
+      "id": "/854/NHMUKXZOOX1950X3X1X144",
+      "type": "IMAGE",
+      "title": [
+        "Phialidium temporarium"
+      ],
+      "provider": [
+        "OpenUp!"
+      ],
+      "dataProvider": [
+        "The Trustees of the Natural History Museum, London"
+      ],
+      "rights": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "year": [
+        "1896"
+      ],
+      "dctermsSpatial": [
+        "Orkney"
+      ],
+      "edmIsShownBy": [
+        "https://images.fixture.example/NHMUKXZOOX1950X3X1X144.jpg"
+      ],
+      "edmPreview": [
+        "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fimages.fixture.example%2FNHMUKXZOOX1950X3X1X144.jpg&type=IMAGE"
+      ]
+    },
+    {
+      "id": "/9200999/fixture_orkney_herbarium_sheet",
+      "type": "IMAGE",
+      "title": [
+        "Herbarium sheet"
+      ],
+      "provider": [
+        "Fixture Aggregator"
+      ],
+      "dataProvider": [
+        "Fixture Herbarium Trust"
+      ],
+      "rights": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "year": [
+        "1902"
+      ],
+      "dctermsSpatial": [
+        "Orkney"
+      ],
+      "edmIsShownBy": [
+        "https://images.fixture.example/fixture_orkney_herbarium_sheet.jpg"
+      ],
+      "edmPreview": [
+        "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fimages.fixture.example%2Ffixture_orkney_herbarium_sheet.jpg&type=IMAGE"
+      ]
+    },
+    {
+      "id": "/9200999/fixture_kirkwall_postcard",
+      "type": "IMAGE",
+      "title": [
+        "Kirkwall harbour, postcard"
+      ],
+      "provider": [
+        "Fixture Aggregator"
+      ],
+      "dataProvider": [
+        "Fixture Archive"
+      ],
+      "rights": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "year": [
+        "1905"
+      ],
+      "dctermsSpatial": [
+        "Orkney"
+      ],
+      "edmIsShownBy": [
+        "https://images.fixture.example/fixture_kirkwall_postcard.jpg"
+      ],
+      "edmPreview": [
+        "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fimages.fixture.example%2Ffixture_kirkwall_postcard.jpg&type=IMAGE"
+      ]
+    },
+    {
+      "id": "/9200999/fixture_orkney_mace_head",
+      "type": "IMAGE",
+      "title": [
+        "Carved stone mace-head"
+      ],
+      "provider": [
+        "Fixture Aggregator"
+      ],
+      "dataProvider": [
+        "Fixture Museum"
+      ],
+      "rights": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "year": [
+        "-3000",
+        "-2500"
+      ],
+      "dctermsSpatial": [
+        "Orkney"
+      ],
+      "edmIsShownBy": [
+        "https://images.fixture.example/fixture_orkney_mace_head.jpg"
+      ],
+      "edmPreview": [
+        "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fimages.fixture.example%2Ffixture_orkney_mace_head.jpg&type=IMAGE"
+      ]
+    },
+    {
+      "id": "/9200999/fixture_orkney_undated",
+      "type": "IMAGE",
+      "title": [
+        "Carved stone ball"
+      ],
+      "provider": [
+        "Fixture Aggregator"
+      ],
+      "dataProvider": [
+        "Fixture Museum"
+      ],
+      "rights": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "dctermsSpatial": [
+        "Orkney"
+      ],
+      "edmIsShownBy": [
+        "https://images.fixture.example/fixture_orkney_undated.jpg"
+      ],
+      "edmPreview": [
+        "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fimages.fixture.example%2Ffixture_orkney_undated.jpg&type=IMAGE"
+      ]
+    }
+  ]
+}

@@ -14,3 +14,14 @@ class MediaSettingsSuite extends munit.FunSuite:
     assertEquals(m.wikidata.placeRoles.toMap.get("P3311"), Some(MediaRole.Plan))
     assertEquals(m.wikidata.placeRoles.toMap.get("P15"), Some(MediaRole.RouteMap))
     assertEquals(m.wikidata.eventRoles, List("P18" -> MediaRole.Image))
+
+  test("media config: max-year 0 sets no latest year; the exclusion lists are trimmed comma lists"):
+    val m = AppConfig.load(org.ekrich.config.ConfigFactory.empty).media
+    assertEquals((m.met.latestYear, m.europeana.latestYear, m.smithsonian.latestYear), (None, Some(1500), Some(1500)))
+    assertEquals(MediaSettings.items(" OpenUp! , ,Fixture Aggregator,"), List("OpenUp!", "Fixture Aggregator"))
+    assertEquals(MediaSettings.items(""), Nil)
+    val ex = m.europeana.europeanaExclusions
+    assertEquals(ex.providers, List("OpenUp!"))
+    assert(ex.dataProviders.contains("Natural History Museum") && ex.types.contains("PreservedSpecimen"), ex.toString)
+    assert(m.smithsonian.excludedProviders.contains("NMNHINV") && !m.smithsonian.excludedProviders.contains("NMNHANTHRO"))
+    assertEquals((m.met.excludedProviders, m.met.europeanaExclusions), (Nil, com.histmersion.domain.Europeana.Exclusions.none))
