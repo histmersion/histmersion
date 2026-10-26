@@ -91,6 +91,15 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals((c.agents.managers.watch.cron, c.agents.managers.watch.autoIngestPerDay, c.agents.managers.watch.maxRuns),
       ("@weekly", 5, 1))
 
+  test("CORE's budget: defaults under a personal key's limits, each one a setting with an env override"):
+    val c = AppConfig.load(env()).acquire.core
+    assertEquals((c.perMinute, c.dailyTokens, c.searchDailyTokens, c.lookupCost, c.searchCost, c.exhaustedPauseSeconds,
+      c.maxWaitSeconds), (20, 900, 600, 1, 1, 60, 30))
+    assertEquals(c.key, None)
+    val e = AppConfig.load(env("HISTMERSION_ACQUIRE_CORE_DAILY_TOKENS" -> "4500", "HISTMERSION_ACQUIRE_CORE_SEARCH_DAILY_TOKENS" -> "3000",
+      "HISTMERSION_ACQUIRE_CORE_PER_MINUTE" -> "8", "HISTMERSION_ACQUIRE_CORE_API_KEY" -> " k ")).acquire.core
+    assertEquals((e.dailyTokens, e.searchDailyTokens, e.perMinute, e.key), (4500, 3000, 8, Some("k")))
+
   test("the autopilot's focus: defaults, the environment and the file"):
     val a = AppConfig.load(env()).agents.autopilot
     assertEquals((a.maxActiveGoals, a.focusRatio, a.maxOpenSubGoals, a.focusQueueShown), (8, 3, 5, 10))

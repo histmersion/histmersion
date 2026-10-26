@@ -98,7 +98,9 @@ object Autopilot:
       ingestedToday: Int = 0, ingestCap: Int = 0, maxConcurrentRuns: Int = 0, lastBackup: Option[String] = None,
       lastLint: Option[String] = None, library: List[ManagerBrief] = Nil, goals: List[GoalProgress] = Nil,
       changes: List[String] = Nil, backlog: Int = 0, backlogDays: Option[Int] = None, focus: Option[FocusInfo] = None,
-      drain: Option[DrainInfo] = None, goalPlansWait: Option[String] = None)
+      drain: Option[DrainInfo] = None, goalPlansWait: Option[String] = None,
+      /** The metered upstreams' budgets today (CORE: the watchers' searches and the ingests' PDF lookups). */
+      upstreams: List[UpstreamQuota] = Nil)
       derives KindlingsCodecAsObject
   object AutopilotStatus:
     given Schema[AutopilotStatus] = KindlingsSchema.derived[AutopilotStatus].schema
@@ -213,7 +215,8 @@ object AutopilotMarkdown:
     val rules = s.approvals.map(r => s"${r.kind} ${r.mode}${if r.cap.nonEmpty then s" (${r.cap})" else ""}").mkString(", ")
     val facts = List(
       s"- approvals: ${if rules.isEmpty then "a person's" else rules}",
-      s"- legal open-access ingests today: ${s.ingestedToday}${if s.ingestCap > 0 then s" of ${s.ingestCap} (all watchers)" else ""}",
+      s"- legal open-access ingests today: ${s.ingestedToday}${if s.ingestCap > 0 then s" of ${s.ingestCap} (all watchers)" else ""}") ++
+      s.upstreams.map(q => s"- ${UpstreamQuotaMarkdown.line(q)}") ++ List(
       s"- ${ManagersMarkdown.backlog(s.backlog, s.backlogDays)}",
       s"- runs at once: at most ${s.maxConcurrentRuns} (agents.max-concurrent-runs)",
       s"- last backup: ${s.lastBackup.getOrElse("never by the autopilot")} · last lint --fix: ${s.lastLint.getOrElse("never by the autopilot")}",

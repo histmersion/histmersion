@@ -15044,6 +15044,9 @@
       "glob": "db/migration/V102__agent_drain.sql"
     },
     {
+      "glob": "db/migration/V103__upstream_quota.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

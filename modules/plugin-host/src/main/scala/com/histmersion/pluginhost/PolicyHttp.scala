@@ -70,6 +70,14 @@ final class PolicyHttp(userAgent: String, transport: HttpTransport, tries: Int =
               case HttpPolicy.Step.GiveUp(_)     => Left(s"$url: HTTP $code ${new String(answer.body.take(200), "UTF-8")}")
     attempt(0)
 
+  /** One GET with the policy's identity and NO retry: the answer as it came, a slow-down or an error
+    * included, with its headers — for an upstream whose own budget decides when to ask again (CORE's
+    * rate-limit headers), where a retry would spend what the budget is keeping. */
+  def once(url: String, headers: Map[String, String] = Map.empty): Either[String, HttpAnswer] =
+    val ua = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(PolicyHttp.UserAgent) => v }
+    transport.get(url, headers.filterNot(_._1.equalsIgnoreCase(PolicyHttp.UserAgent)) +
+      (PolicyHttp.UserAgent -> HttpPolicy.userAgent(ua.getOrElse(userAgent))))
+
   /** The client as the plugin SPI lends it: plugins get bytes, and parse what they asked for. */
   def plugin: PluginHttp = new PluginHttp:
     def get(url: String, headers: Map[String, String]) = bytes(url, headers)

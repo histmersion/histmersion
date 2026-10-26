@@ -46,11 +46,23 @@ final class CandidateSearch(ds: DataSource, cfg: => CandidatesConfig, indexes: =
         alerts.authors(w.subject).toOption.toList.flatMap(as => (as.headOption ++ as.lastOption).toList.distinct.take(c.authorsPerSource))
           .map(a => known(CandidateWatch(g.slug, Candidates.WatchKind.Author.wire, a, "openalex")))
       }.distinctBy(w => w.subject)
+      // an index that may not be asked now (CORE's budget spent, CORE asked to wait) is left out of the rest
+      // of this sweep: its watches keep their watermarks and are read next time
+      val leftOut = scala.collection.mutable.LinkedHashMap.empty[String, (String, Int)] // this sweep's tally
+      def query(i: ScholarlyIndex, w: CandidateWatch, since: LocalDate): Either[String, List[WorkRef]] =
+        leftOut.get(i.name).orElse(i.unavailable.map(_ -> 0)) match
+          case Some((why, n)) =>
+            leftOut.update(i.name, (why, n + 1))
+            Left(s"not asked this sweep — $why")
+          case None =>
+            val got = i.search(w.subject, since, c.perWatch)
+            got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why, 0))))
+            got
       val read = (base ++ authorWatches).map { w =>
         val since = Candidates.since(w.watermark, now, c.lookbackDays)
         val got: Either[String, List[WorkRef]] = Candidates.WatchKind.parse(w.kind) match
           case Some(Candidates.WatchKind.Query)  => byIndex.get(w.index).toRight(s"index '${w.index}' is not configured")
-                                                      .flatMap(_.search(w.subject, since, c.perWatch))
+                                                      .flatMap(query(_, w, since))
           case Some(Candidates.WatchKind.Citing) => alerts.citing(w.subject, since, c.perWatch)
           case Some(Candidates.WatchKind.Author) => alerts.byAuthor(w.subject, since, c.perWatch)
           case None                              => Left(s"unknown watch kind '${w.kind}'")
@@ -83,5 +95,9 @@ final class CandidateSearch(ds: DataSource, cfg: => CandidatesConfig, indexes: =
           lastFound = got.map(_.size).getOrElse(0))
       }
       val unseen = CandidateRepo.counts(ds, Some(g.slug)).find(_.state == Candidates.State.New.wire).fold(0)(_.count)
-      CandidateSweep(g.slug, watches, found.size, added, again, skipped, unseen, dryRun)
+      val notes = leftOut.toList.map { case (index, (why, n)) =>
+        s"$index not asked this sweep: $why — ${Plural.count(n, "watch", "watches")} left unread, which keep their " +
+          "watermarks and are read next sweep"
+      }
+      CandidateSweep(g.slug, watches, found.size, added, again, skipped, unseen, dryRun, notes)
     }
