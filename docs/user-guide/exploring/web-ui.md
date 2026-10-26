@@ -152,6 +152,11 @@ tags, authors, places, topics, statuses — shown as chips you can remove. The t
 | **by time** | counts grouped by period, nested |
 | **by region** | counts grouped by region, nested (a continent, its regions, their places) |
 
+Every tab starts with the same count line — *showing 1–20 of 285 sources · 491 findings · 1475 BCE →
+1465 BCE* — with what that tab adds: the findings for sources, the count of each kind for articles, the
+number of periods or regions for the two trees. Lists end with one **show 20 more (265 left)** button
+that brings the next rows.
+
 A count in *by time* and *by region* counts a source in **every** group it overlaps, so the numbers
 do not add up to the total. That is expected.
 

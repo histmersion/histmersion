@@ -13,9 +13,10 @@ object ArticlesTab:
     * server relates it to articles (see [[Api.ArticleQuery]]), so the two lists cannot disagree about
     * what is filtered. A page at a time; "show more" fetches past the first. */
   private val tab = FilterTab[Api.ArticleQuery, ArticleSummary](
-    name = "articles", noun = "articles",
+    name = "articles", singular = "article", noun = "articles",
     query = () => UiState.articleQuery(),
-    fetch = (q, offset) => ApiClient.articles(q.copy(filter = q.filter.copy(offset = offset))).map(r => (r.articles, r.total)),
+    fetch = (q, offset) => ApiClient.articles(q.copy(filter = q.filter.copy(offset = offset)))
+      .map(r => TabPage(r.articles, r.total, kindCounts(r.kinds) :+ ResultsPaging.span(UiState.from.now(), UiState.to.now()))),
     render = renderArticle,
     empty = "No articles relate to the current filter.",
     page = Layout.tabPage,
@@ -53,6 +54,10 @@ object ArticlesTab:
         else emptyNode
       )
     )
+
+  /** The count line's per-kind counts: `200 concepts`, `3 indexes`, the largest first. */
+  def kindCounts(kinds: List[ArticleKindCount]): List[String] =
+    ArticleList.byKind(kinds).map(k => Plural.count(k.count.toLong, k.kind, if k.kind.endsWith("x") then k.kind + "es" else ""))
 
   /** An article's review state as a coloured badge, what it means on hover. */
   def reviewBadge(b: ReviewBadge): HtmlElement =

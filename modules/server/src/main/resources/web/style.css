@@ -472,8 +472,6 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .article-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
 .event-source { font-size:11px; color:var(--accent); text-decoration:none; }
 .event-source:hover { text-decoration:underline; }
-.events-loading, .articles-loading { padding:12px 14px; color:var(--muted); font-size:12px; }
-.btn.show-more { min-height:auto; padding:var(--space-5); border-radius:0; border-top-color:var(--line); color:var(--accent); }
 /* ── gazetteer box (plan §1.6a): a place chip carries an id, so it is marked apart from a text chip */
 .f-gazetteer { min-width: 14rem; }
 .chips.gazetteer .chip-suggest .c { opacity: .65; font-size: .85em; }

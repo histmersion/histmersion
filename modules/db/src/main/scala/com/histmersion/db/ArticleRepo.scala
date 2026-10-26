@@ -327,12 +327,13 @@ object ArticleRepo:
       case Some(t) => Sql.raw("ORDER BY ts_rank_cd(a.tsv, ") ++ tsQuery(t) ++ Sql.raw(") DESC, a.title")
       case None    => Sql.raw("ORDER BY a.kind, a.title")
     connect(ds):
-      val total = (Sql.raw("SELECT count(*) FROM articles a WHERE ") ++ where)
-        .frag.query[Int].run().headOption.getOrElse(0)
+      val kinds = ArticleList.byKind((Sql.raw("SELECT a.kind, count(*)::int FROM articles a WHERE ") ++ where ++ Sql.raw(" GROUP BY a.kind"))
+        .frag.query[(String, Int)].run().toList.map(ArticleKindCount(_, _)))
+      val total = kinds.map(_.count).sum
       val rows = (Sql.raw(s"SELECT $SummaryCols FROM articles a WHERE ") ++ where ++ Sql.raw(" ") ++
         order ++ Sql.of(" LIMIT ? OFFSET ?", I(limit), I(offset.max(0))))
         .frag.query[ArticleSummaryRow].run()
-      ArticleList.of(total, rows.toList.map(_.summaryRow), offset.max(0))
+      ArticleList.of(total, rows.toList.map(_.summaryRow), offset.max(0), kinds)
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The
     * filter's part is [[FilterSql.articleWhere]] (the one rule relating articles to sources). */
