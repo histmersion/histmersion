@@ -39,39 +39,46 @@ final class Latest:
     case Success(a) => ok(a)
     case Failure(e) => failed(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString))
 
+/** One page of a tab's answer: its rows, the server's total, and the count line's extras for it
+  * (`200 concepts`, the filter's time window, …). */
+final case class TabPage[Row](rows: List[Row], total: Int, extras: List[String] = Nil)
+
 /** What a filter-driven list tab shows: the rows loaded from the server (a page at a time), how many
-  * the list reveals, the server's total, and whether a request is out or failed. Pure. */
+  * the list reveals, the server's total, the count line's extras, and whether a request is out or
+  * failed. Pure. */
 final case class TabState[Row](
     rows: List[Row] = Nil,
     total: Int = 0,
     shown: Int = 0,
     loading: Boolean = false,
     error: Option[String] = None,
-    loaded: Boolean = false):
+    loaded: Boolean = false,
+    extras: List[String] = Nil):
 
   /** Rows the list does not show yet — loaded or still on the server. */
   def left: Int = math.max(0, math.max(total, rows.size) - shown)
 
-  /** The "show more" label: `show 25 more (175 left)`, or `show 3 more` when that is all; `None` when
-    * every row is shown. */
-  def moreLabel(page: Int): Option[String] =
-    Option.when(left > 0) {
-      val n = math.min(page, left)
-      if n == left then s"show $n more" else s"show $n more ($left left)"
-    }
+  /** The "show more" label ([[ResultsPaging.moreLabel]]); `None` when every row is shown. */
+  def moreLabel(page: Int): Option[String] = ResultsPaging.moreLabel(left, page)
+
+  /** The count line ([[ResultsPaging.countLine]]); `loading…` before the first answer. */
+  def countLine(singular: String, plural: String): String =
+    if !loaded then "loading…"
+    else ResultsPaging.countLine(shown, math.max(total, rows.size), singular, plural, extras)
 
 object TabState:
   /** A new query was sent: what is shown stays until the answer comes; any old error is gone. */
   def loading[Row](s: TabState[Row]): TabState[Row] = s.copy(loading = true, error = None)
 
   /** The first page of a query's answer. */
-  def first[Row](rows: List[Row], total: Int, page: Int): TabState[Row] =
-    TabState(rows, total, math.min(page, rows.size), loaded = true)
+  def first[Row](p: TabPage[Row], page: Int): TabState[Row] =
+    TabState(p.rows, p.total, math.min(page, p.rows.size), loaded = true, extras = p.extras)
 
   /** A further page from the server, appended (what "show more" asked for once the loaded rows ran out). */
-  def appended[Row](s: TabState[Row], more: List[Row], total: Int, page: Int): TabState[Row] =
-    val rows = s.rows ++ more
-    s.copy(rows = rows, total = total, shown = math.min(s.shown + page, rows.size), loading = false, error = None)
+  def appended[Row](s: TabState[Row], p: TabPage[Row], page: Int): TabState[Row] =
+    val rows = s.rows ++ p.rows
+    s.copy(rows = rows, total = p.total, shown = math.min(s.shown + page, rows.size), loading = false, error = None,
+      extras = p.extras)
 
   /** A request failed: loading ends, the error is shown, the rows already there stay. */
   def failed[Row](s: TabState[Row], message: String): TabState[Row] =
@@ -86,19 +93,21 @@ object TabState:
 
 /** One controller for the list tabs that follow the global filter (Articles, Events — #1798 item 5):
   * on a UiState change it recomputes the query, skips an unchanged one, debounces, drops answers to
-  * superseded requests ([[Latest]]), shows a loading line, an error line (never stuck on "Loading…"),
-  * the empty text, and ONE "show N more (M left)" that reveals the loaded rows and then fetches the next
-  * page from the server.
+  * superseded requests ([[Latest]]), shows the sidebar's count line ([[ResultsPaging]], `· loading…`
+  * while a request is out), an error line (never stuck loading), the empty text, and ONE "show N more
+  * (M left)" that reveals the loaded rows and then fetches the next page from the server.
   *
-  * @param name     the CSS prefix (`articles` → `articles-pane`, `articles-list`, `articles-loading`)
+  * @param name     the CSS prefix (`articles` → `articles-pane`, `articles-list`)
+  * @param singular the row's noun in the count line (`article`); `noun` its plural
   * @param query    the query, a pure function of the UiState
-  * @param fetch    one page of the answer at an offset: its rows and the total
-  * @param fetchSize how many rows one request asks for; `page` how many "show more" reveals */
+  * @param fetch    one page of the answer at an offset: its rows, the total and the count line's extras
+  * @param page     how many rows "show more" reveals */
 final class FilterTab[Q, Row](
     name: String,
+    singular: String,
     noun: String,
     query: () => Q,
-    fetch: (Q, Int) => Future[(List[Row], Int)],
+    fetch: (Q, Int) => Future[TabPage[Row]],
     render: Row => HtmlElement,
     empty: String,
     page: Int,
@@ -113,14 +122,13 @@ final class FilterTab[Q, Row](
   def pane: HtmlElement =
     div(
       cls := s"$name-pane",
-      child <-- state.signal.map(s => if s.loading then div(cls := s"$name-loading", "Loading…") else emptyNode),
+      ResultsPaging.countBar(state.signal.map(_.countLine(singular, noun)), state.signal.map(s => s.loading && s.loaded),
+        state.signal.map(_.error.nonEmpty)),
       child.maybe <-- state.signal.map(_.error.map(m => p(cls := "form-error", role := "alert", s"Could not list $noun: $m"))),
       child.maybe <-- state.signal.map(s =>
         Option.when(s.loaded && !s.loading && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty))),
       ul(cls := s"$name-list", children <-- state.signal.map(s => s.rows.take(s.shown).map(render))),
-      child <-- state.signal.map(s =>
-        s.moreLabel(page).fold(emptyNode)(label =>
-          button(cls := "btn btn--bare btn--block show-more", label, disabled := s.loading, onClick --> (_ => more()))))
+      ResultsPaging.moreButton(state.signal.map(_.moreLabel(page)), state.signal.map(_.loading), () => more())
     )
 
   /** Called on every UiState change: refetch only when the query has changed, after the debounce. */
@@ -136,8 +144,7 @@ final class FilterTab[Q, Row](
     val q = query()
     lastQuery = Some(q)
     state.update(TabState.loading)
-    latest(fetch(q, 0))((rows, total) => state.set(TabState.first(rows, total, page)),
-      m => state.update(TabState.failed(_, m)))
+    latest(fetch(q, 0))(p => state.set(TabState.first(p, page)), m => state.update(TabState.failed(_, m)))
 
   /** "show more": the loaded rows first, then the next page from the server. */
   def more(): Unit =
@@ -146,5 +153,4 @@ final class FilterTab[Q, Row](
       case Left(offset) =>
         val q = lastQuery.getOrElse(query())
         state.update(TabState.loading)
-        latest(fetch(q, offset))((rows, total) => state.update(TabState.appended(_, rows, total, page)),
-          m => state.update(TabState.failed(_, m)))
+        latest(fetch(q, offset))(p => state.update(TabState.appended(_, p, page)), m => state.update(TabState.failed(_, m)))

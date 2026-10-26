@@ -675,13 +675,24 @@ object ArticleView:
 final case class ArticleList(total: Int, articles: List[ArticleSummary],
     /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
-    next: Option[Int] = None
+    next: Option[Int] = None,
+    /** How many of the `total` are of each kind, the largest first (ignores limit/offset). */
+    kinds: List[ArticleKindCount] = Nil
 ) derives KindlingsCodecAsObject:
   def page: OffsetPage = OffsetPage(total, offset, articles.size)
 object ArticleList:
   given Schema[ArticleList] = KindlingsSchema.derived[ArticleList].schema
-  def of(total: Int, rows: List[ArticleSummary], offset: Int): ArticleList =
-    ArticleList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
+  def of(total: Int, rows: List[ArticleSummary], offset: Int, kinds: List[ArticleKindCount] = Nil): ArticleList =
+    ArticleList(total, rows, offset, OffsetPage(total, offset, rows.size).next, kinds)
+
+  /** Per-kind counts as a list shows them: the largest first, then by kind. */
+  def byKind(counts: List[ArticleKindCount]): List[ArticleKindCount] =
+    counts.filter(_.count > 0).sortBy(k => (-k.count, k.kind))
+
+/** How many listed articles are of one kind. */
+final case class ArticleKindCount(kind: String, count: Int) derives KindlingsCodecAsObject
+object ArticleKindCount:
+  given Schema[ArticleKindCount] = KindlingsSchema.derived[ArticleKindCount].schema
 
 /** `POST /api/articles/import`: one note's raw text, parsed server-side by [[ArticleNote.parse]].
   * The host-side path of `histmersion seed` for articles — the CLI can read the host's `wiki` directories, the

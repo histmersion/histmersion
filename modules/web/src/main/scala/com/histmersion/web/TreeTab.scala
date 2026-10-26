@@ -20,12 +20,14 @@ object TreeTab:
 
   private val treeContent = Var[List[HtmlElement]](Nil)
   private val countText = Var("")
+  private val loading   = Var(false)
+  private val failed    = Var(false)
 
   def pane: HtmlElement =
     div(
       cls := "tree-pane",
       idAttr := "tree-pane",
-      div(idAttr := "tree-count", cls := "tree-count", child.text <-- countText.signal),
+      ResultsPaging.countBar(countText.signal, loading.signal, failed.signal, id = Some("tree-count")),
       div(idAttr := "tree-list", cls := "tree-list", children <-- treeContent.signal)
     )
 
@@ -67,7 +69,8 @@ object TreeTab:
         if axis.isEmpty then ()
         else
           val mine = latest.start()
-          countText.set("loading…")
+          if countText.now().isEmpty then countText.set("loading…") else loading.set(true)
+          failed.set(false)
           doLoad(cfg, mine)
 
   private def doLoad(cfg: UiConfig, mine: Int): Unit =
@@ -84,17 +87,15 @@ object TreeTab:
       asOf = asOf,
       samples = Some(cfg.treeSamples)
     )).onComplete { r =>
-      if latest.isCurrent(mine) then latest.answer(r, showTree, m => countText.set(s"Could not group the sources: $m"))
+      if latest.isCurrent(mine) then
+        loading.set(false)
+        latest.answer(r, showTree, m => { failed.set(true); countText.set(s"Could not group the sources: $m") })
     }
 
   private def showTree(data: TimeHistogram): Unit =
     lastData = Some(data)
     val roots = data.tree
-    val from = UiState.from.now().getOrElse(data.from)
-    val to = UiState.to.now().getOrElse(data.to)
-    val span = s"${Fmt.yr(from)} → ${Fmt.yr(to)}"
-    val asOfStr = data.asOf.map(a => s" · as of ${Fmt.yr(a)}").getOrElse("")
-    countText.set(s"${unitWord(data.total)} · by ${data.by} · $span$asOfStr")
+    countText.set(countLine(data, roots.size, UiState.from.now().getOrElse(data.from), UiState.to.now().getOrElse(data.to)))
 
     if roots.isEmpty then
       treeContent.set(List(
@@ -102,6 +103,13 @@ object TreeTab:
       ))
     else
       treeContent.set(roots.map(b => renderNode(b, 0, data)))
+
+  /** The count line, in the sidebar's one form ([[ResultsPaging]]): every source is in the tree, so
+    * `285 sources · 12 periods · 1475 BCE → 1465 BCE` (`· as of <year>` for regions). */
+  def countLine(data: TimeHistogram, roots: Int, from: Long, to: Long): String =
+    val groups = if data.by == "region" then Plural.count(roots.toLong, "region") else Plural.count(roots.toLong, "period")
+    ResultsPaging.countLine(data.total, data.total, "source",
+      extras = List(groups, ResultsPaging.span(Some(from), Some(to))) ++ data.asOf.map(a => s"as of ${Fmt.yr(a)}"))
 
   private def unitWord(n: Int): String = if n == 1 then "1 source" else s"$n sources"
 

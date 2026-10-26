@@ -1759,6 +1759,82 @@ test('articles: the review badge on each row with its meaning, and a linked goal
   });
 });
 
+// One pagination look for every sidebar tab: the same count line ("showing 1–N of T <things> · …") and
+// the same "show N more (M left)" button, which fetches the next page. Fixed answers; nothing is written.
+test('every sidebar tab: one count line and one "show N more (M left)" button', async () => {
+  const article = i => ({ slug: `zz_pg_${String(i).padStart(3, '0')}`, title: `Zz pg ${i}`, kind: 'concept',
+    summary: null, tags: [], regions: [], periodStart: null, periodEnd: null });
+  const event = i => ({ id: `zz_ev_${i}`, label: `Zz event ${i}`, kind: 'battle', timeSpan: { notBefore: -1300, beginBy: null,
+    endFrom: null, notAfter: -1290 }, historicity: 'attested', placeId: null, parentId: null, description: null,
+    citekey: null, scale: 'local', scaleStated: false, tier: 'catalogue', precision: 'precise' });
+  const source = i => ({ source: { citekey: `zz_src_${i}`, title: `Zz source ${i}`, year: 2000, status: 'current',
+    topics: [], regions: [], periodStart: null, periodEnd: null, summary: null }, why: [], matched: [] });
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const asked = [];
+    await page.route(/\/api\/sources(\?|$)/, route => {
+      const u = new URL(route.request().url());
+      const offset = Number(u.searchParams.get('offset') || 0), limit = Number(u.searchParams.get('limit') || 20);
+      asked.push(['sources', offset]);
+      const n = Math.min(limit, 47 - offset);
+      return route.fulfill({ json: { total: 47, hits: Array.from({ length: n }, (_, i) => source(offset + i)) } });
+    });
+    await page.route(/\/api\/articles(\?|$)/, route => route.fulfill({ json: { total: 30,
+      articles: Array.from({ length: 30 }, (_, i) => article(i)),
+      kinds: [{ kind: 'concept', count: 28 }, { kind: 'index', count: 2 }] } }));
+    await page.route(/\/api\/events(\?|$)/, route => {
+      const offset = Number(new URL(route.request().url()).searchParams.get('offset') || 0);
+      asked.push(['events', offset]);
+      return route.fulfill({ json: { total: 60, events: Array.from({ length: Math.min(25, 60 - offset) }, (_, i) => event(offset + i)) } });
+    });
+    await page.route(/\/api\/aggregate(\?|$)/, route => route.fulfill({ json: { from: -3500, to: -500, bucket: 100,
+      buckets: [], by: 'time', unit: 'sources', total: 47, depth: 1, tree: [
+        { key: 'lba', label: 'Late Bronze Age', kind: 'time', count: 40, start: -1600, end: -1100, overlap: 0,
+          contested: false, alsoUnder: [], children: [], samples: [] }] } }));
+    const count = sel => page.locator(`${sel} .count`).innerText();
+    const button = sel => page.locator(`${sel} .results-more button.more`);
+
+    // sources: the reference
+    await page.goto(new URL('/#tab=sources', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => /showing 1–20 of 47 sources/.test(document.querySelector('#count')?.innerText || ''));
+    assert.match(await page.locator('#count').innerText(), /^showing 1–20 of 47 sources · .* → /);
+    const srcMore = page.locator('.results-container .results-more button.more');
+    assert.equal(await srcMore.innerText(), 'show 20 more (27 left)');
+    await srcMore.click();
+    await page.waitForFunction(() => /showing 1–40 of 47 sources/.test(document.querySelector('#count')?.innerText || ''));
+    assert.equal(await srcMore.innerText(), 'show 7 more (7 left)');
+
+    // articles: the same line with the kind counts, the same button
+    await page.goto(new URL('/#tab=articles', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => document.querySelectorAll('.articles-list li').length === 25);
+    assert.match(await count('.articles-pane'), /^showing 1–25 of 30 articles · 28 concepts · 2 indexes · .* → /);
+    assert.equal(await button('.articles-pane').innerText(), 'show 5 more (5 left)');
+    await button('.articles-pane').click();
+    await page.waitForFunction(() => document.querySelectorAll('.articles-list li').length === 30);
+    assert.match(await count('.articles-pane'), /^30 articles · /);
+    assert.equal(await button('.articles-pane').count(), 0, 'no button once every row is shown');
+
+    // events: the same line and button; past the first fetch the next page comes from the server
+    await page.goto(new URL('/#tab=events', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => document.querySelectorAll('.events-list li').length === 25);
+    assert.match(await count('.events-pane'), /^showing 1–25 of 60 events · .* → /);
+    assert.equal(await button('.events-pane').innerText(), 'show 25 more (35 left)');
+    await button('.events-pane').click();
+    await page.waitForFunction(() => document.querySelectorAll('.events-list li').length === 50);
+    assert.ok(asked.some(([k, o]) => k === 'events' && o === 25), `the next page was fetched (${JSON.stringify(asked)})`);
+    assert.match(await count('.events-pane'), /^showing 1–50 of 60 events/);
+
+    // by time: every source is in the tree — the same line, no button
+    await page.goto(new URL('/#tab=bytime', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => /47 sources · 1 period/.test(document.querySelector('#tree-count')?.innerText || ''));
+    assert.match(await page.locator('#tree-count').innerText(), /^47 sources · 1 period · .* → /);
+    assert.equal(await page.locator('#tree-count').getAttribute('class'), 'count');
+  });
+});
+
 // #1798 item 5: the Articles tab reaches the rows past its first fetch (the "show more" button used to
 // vanish at 200 although the total was known), and a failed Events load says why instead of staying on
 // "Loading…". Fixed answers; nothing is written.
@@ -1778,7 +1854,7 @@ test('#1798: the Articles tab pages past its first fetch, and a failed Events lo
     await page.reload();
     const pane = page.locator('.articles-pane');
     await page.waitForFunction(() => document.querySelectorAll('.articles-list li').length === 25);
-    const more = pane.locator('.show-more');
+    const more = pane.locator('.results-more button.more');
     assert.match(await more.innerText(), /show 25 more \(205 left\)/);
     for (let i = 0; i < 20 && await more.isVisible(); i++) {
       const before = await pane.locator('.articles-list li').count();

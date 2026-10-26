@@ -33,7 +33,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     regions = List("Levant"), period = Some(Period(-1220, -1100)))
 
   private def reset(): Unit =
-    List(slug, "zz_article_other", "zz_article_tmp").foreach(s => ArticleRepo.delete(ds, s))
+    List(slug, "zz_article_other", "zz_article_tmp", "zz_article_myth").foreach(s => ArticleRepo.delete(ds, s))
 
   test("put → get round-trip, inclusive int8range bounds and a fresh updatedAt token"):
     reset()
@@ -160,6 +160,11 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     val r = ArticleRepo.list(ds, Filter(title = Some("ZZ TOTAL marker")), PlaceScope.empty, Some("concept"), None, 1, 0)
     assertEquals(r.articles.size, 1)
     assertEquals(r.total, 2)
+    assertEquals(r.kinds, List(ArticleKindCount("concept", 2)), "the per-kind counts ignore limit/offset too")
+    val myth = onlyMine("# T3\n\nbody", "zz_article_myth").copy(kind = "myth")
+    val _ = ArticleRepo.put(ds, myth)
+    val all = ArticleRepo.list(ds, Filter(title = Some("ZZ TOTAL marker")), PlaceScope.empty, None, None, 1, 0)
+    assertEquals((all.total, all.kinds), (3, List(ArticleKindCount("concept", 2), ArticleKindCount("myth", 1))))
 
   test("delete removes the article and its links"):
     reset()

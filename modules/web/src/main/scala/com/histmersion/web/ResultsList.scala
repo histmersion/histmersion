@@ -29,17 +29,15 @@ object ResultsList:
   private val countText = Var("")
   private val isBusy = Var(false)
   private val isError = Var(false)
+  /** The "show more" button's label (none while a cluster is picked or every source is shown), and
+    * whether its page is on its way. */
+  private val moreLabel   = Var(Option.empty[String])
+  private val moreLoading = Var(false)
 
   val element: HtmlElement =
     div(
       cls := "results-container",
-      div(
-        idAttr := "count",
-        cls <-- isBusy.signal.combineWith(isError.signal).map { (busy, err) =>
-          "count" + (if busy then " is-loading" else "") + (if err then " is-error" else "")
-        },
-        child.text <-- countText.signal
-      ),
+      ResultsPaging.countBar(countText.signal, isBusy.signal, isError.signal, id = Some("count")),
       div(
         idAttr := "list",
         cls <-- isBusy.signal.map(b => if b then "list is-busy" else "list"),
@@ -61,7 +59,8 @@ object ResultsList:
               if nextIdx >= 0 && nextIdx < rows.length then
                 rows(nextIdx).asInstanceOf[dom.HTMLElement].focus()
         }
-      )
+      ),
+      ResultsPaging.moreButton(moreLabel.signal, moreLoading.signal, () => more())
     )
 
   def busy(on: Boolean): Unit =
@@ -84,13 +83,10 @@ object ResultsList:
     isBusy.set(false)
     isError.set(false)
 
-    if hits.isEmpty then
-      countText.set(countLine())
-      content.set(List(emptyState()))
-    else
-      countText.set(countLine())
-      val rows = hits.map(hitRow) ++ moreButton()
-      content.set(rows)
+    countText.set(countLine())
+    content.set(if hits.isEmpty then List(emptyState()) else hits.map(hitRow))
+    moreLoading.set(false)
+    moreLabel.set(nextLabel())
 
   /** List what a map bubble (or a dot of coincident findings) holds: its findings by source — a row opens
     * the source — then its other dots (`others`: sites, events, pictures, each with its kind's icon), whose
@@ -156,6 +152,7 @@ object ResultsList:
     }
 
     content.set(header :: rows ++ others.map(otherRow))
+    moreLabel.set(None)
 
   /** A kind's icon at the head of a picked row, as a card's title has it. */
   private def pickIcon(icon: String, kind: String): HtmlElement =
@@ -185,19 +182,36 @@ object ResultsList:
     Fmt.esc(cleaned).replaceAll("\\*\\*(.+?)\\*\\*", "<mark>$1</mark>")
 
   private def countLine(): String =
-    val from = UiState.from.now()
-    val to = UiState.to.now()
-    val span = s"${Fmt.yr(from)} → ${Fmt.yr(to)}"
-    val shown = pageHits.length
-    val head =
-      if pageTotal == 0 then "no sources"
-      else if shown < pageTotal then s"showing 1–$shown of ${plural(pageTotal, "source")}"
-      else plural(pageTotal, "source")
-    val findingsStr = pageOpts match
-      case Some(o) if o.inView => s" · ${Plural.count(o.findings, "finding")} in view / ${o.total} total"
-      case Some(o) => s" · ${plural(o.findings, "finding")}"
-      case None => ""
-    s"$head$findingsStr · $span"
+    val findings = pageOpts match
+      case Some(o) if o.inView => s"${Plural.count(o.findings, "finding")} in view / ${o.total} total"
+      case Some(o)             => Plural.count(o.findings, "finding")
+      case None                => ""
+    ResultsPaging.countLine(pageHits.length, pageTotal, "source",
+      extras = List(findings, ResultsPaging.span(UiState.from.now(), UiState.to.now())))
+
+  /** The next page's size: the request's own limit (at least 20). */
+  private def pageSize: Int = pageParams.fold(20)(p => math.max(p.limit, 20))
+
+  private def nextLabel(): Option[String] =
+    pageParams.flatMap(_ => ResultsPaging.moreLabel(pageTotal - pageHits.length, pageSize))
+
+  /** "show more": the next page from the server, appended; a failure says so in the count line. */
+  private def more(): Unit =
+    pageParams.foreach { params =>
+      moreLoading.set(true)
+      ApiClient.sources(params.copy(offset = pageHits.length)).onComplete {
+        case scala.util.Success(r) =>
+          pageTotal = r.total
+          pageHits = pageHits ++ r.hits
+          countText.set(countLine())
+          content.set(pageHits.map(hitRow))
+          moreLoading.set(false)
+          moreLabel.set(nextLabel())
+        case scala.util.Failure(e) =>
+          moreLoading.set(false)
+          failed(s"Could not list more sources: ${Option(e.getMessage).getOrElse(e.toString)}")
+      }
+    }
 
   private def hitRow(h: Hit): HtmlElement =
     val src = h.source
@@ -278,33 +292,3 @@ object ResultsList:
       else
         p(cls := "muted", "No filters are active — widen the span, or pan the map.")
     )
-
-  private def moreButton(): List[HtmlElement] =
-    pageParams match
-      case None => Nil
-      case Some(params) =>
-        val left = pageTotal - pageHits.length
-        if left <= 0 then Nil
-        else
-          val size = math.min(left, math.max(params.limit, 20))
-          val loading = Var(false)
-          List(button(
-            typ := "button",
-            cls := "btn btn--block more",
-            child.text <-- loading.signal.map(l =>
-              if l then "loading…"
-              else s"show $size more ($left left)"
-            ),
-            disabled <-- loading.signal,
-            onClick --> { _ =>
-              loading.set(true)
-              val nextParams = params.copy(offset = pageHits.length)
-              ApiClient.sources(nextParams).foreach { r =>
-                pageTotal = r.total
-                pageHits = pageHits ++ r.hits
-                countText.set(countLine())
-                val rows = pageHits.map(hitRow) ++ moreButton()
-                content.set(rows)
-              }
-            }
-          ))

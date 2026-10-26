@@ -13,9 +13,10 @@ object EventsTab:
     * server relates it to events (see [[Api.EventQuery]]). A page at a time; "show more" fetches past
     * the first. */
   private val tab = FilterTab[Api.EventQuery, EventSummary](
-    name = "events", noun = "events",
+    name = "events", singular = "event", noun = "events",
     query = () => UiState.eventQuery(),
-    fetch = (q, offset) => ApiClient.events(q.copy(filter = q.filter.copy(offset = offset))).map(r => (r.events, r.total)),
+    fetch = (q, offset) => ApiClient.events(q.copy(filter = q.filter.copy(offset = offset)))
+      .map(r => TabPage(r.events, r.total, List(ResultsPaging.span(UiState.from.now(), UiState.to.now())))),
     render = renderEvent,
     empty = "No events relate to the current filter.",
     page = Layout.tabPage,
