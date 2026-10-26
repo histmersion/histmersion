@@ -87,8 +87,9 @@ final class KeePassXcPlugin extends Plugin:
       Right(None)
     else Subprocess.locate(t, ctx.env("PATH")) match
       case Right(p) => Right(Some(p))
-      case Left(e) if !t.contains('/') =>
-        ctx.log.info(s"$e: the configured YubiKeys are tried in order (install ykman to try only the connected ones)")
+      case Left(_) if !t.contains('/') =>
+        ctx.log.info("the configured YubiKeys are tried in order, the one that opened the database last first " +
+          "(optional: with ykman on the PATH, only the connected ones are tried)")
         Right(None)
       case Left(e) => Left(s"ykman: $e")
 
