@@ -251,7 +251,7 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(v.resolve("Portal"), Right("secret of Portal"))
     assertEquals(calls(d), List(s"show -q -a password -y 2:12345678 ${d.resolve("v.kdbx")} Portal"))
     assert(ctx.infos.exists(m => m.contains("touch your YubiKey") && m.contains("2:12345678")), ctx.infos)
-    assert(ctx.infos.exists(_.contains("ykman was not found")), ctx.infos) // no ykman here: tried in order
+    assert(ctx.infos.exists(_.contains("tried in order, the one that opened the database last first")), ctx.infos) // no ykman here: tried in order
     assert(!ctx.infos.exists(_.contains("master-pw")))
 
   test("yubikey: with ykman, an absent first key is skipped without running keepassxc-cli; the present one opens"):
