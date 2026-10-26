@@ -100,7 +100,8 @@ object CoreQuota:
         else if purpose == Purpose.Search && s.searchTokens + cost > limits.searchDailyTokens then
           Left(Refusal.OverBudget(purpose, s.searchTokens, limits.searchDailyTokens))
         else
-          val perMinute = limits.perMinute.max(1)
+          // CORE's own reported window wins when it is smaller than ours (a new key may get less than its tier)
+          val perMinute = s.window.flatMap(_.limit).filter(_ > 0).fold(limits.perMinute)(_ min limits.perMinute).max(1)
           val inWindow  = s.recent.filter(t => t.toEpochMilli > now.toEpochMilli - Minute).sortBy(_.toEpochMilli)
           val slot =
             if inWindow.size < perMinute then now
