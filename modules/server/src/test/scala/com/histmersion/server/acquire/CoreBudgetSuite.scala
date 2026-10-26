@@ -38,7 +38,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       ex.sendResponseHeaders(r.code, b.length.toLong)
       ex.getResponseBody.write(b)
       ex.close()
-    server.createContext("/v3/search/works", (ex: HttpExchange) =>
+    server.createContext("/v3/search/works/", (ex: HttpExchange) =>
       val q = ex.getRequestURI.getRawQuery.split("&").collectFirst { case p if p.startsWith("q=") =>
         java.net.URLDecoder.decode(p.drop(2), "UTF-8") }.getOrElse("")
       asked.add(q -> Option(ex.getRequestHeaders.getFirst("Authorization")).getOrElse(""))

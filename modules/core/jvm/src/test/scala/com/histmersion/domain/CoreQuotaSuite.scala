@@ -69,6 +69,16 @@ class CoreQuotaSuite extends munit.FunSuite:
     // a minute later the window is free again
     assert(reserve(three, limits, Purpose.Lookup, t0.plusSeconds(62)).isRight)
 
+  test("pacing follows CORE's reported window when it is smaller than per-minute"):
+    val roomy  = limits.copy(perMinute = 20)
+    val window = observe(fresh, roomy, 200, Map("x-ratelimit-limit" -> "2", "x-ratelimit-remaining" -> "2"), t0)
+    val two    = (1 to 2).foldLeft(window)((s, i) => granted(s, at = t0.plusSeconds(i.toLong), l = roomy))
+    assert(reserve(two, roomy, Purpose.Lookup, t0.plusSeconds(10)).left.exists(_.isInstanceOf[Refusal.Paced]))
+    // a reported window larger than per-minute changes nothing
+    val wide = observe(fresh, limits, 200, Map("x-ratelimit-limit" -> "25", "x-ratelimit-remaining" -> "25"), t0)
+    val three = (1 to 3).foldLeft(wide)((s, i) => granted(s, at = t0.plusSeconds(i.toLong)))
+    assert(reserve(three, limits, Purpose.Lookup, t0.plusSeconds(10)).isLeft)
+
   test("the daily budget: searches stop at search-daily-tokens, the rest stays for PDF lookups; together at daily-tokens"):
     val free = limits.copy(perMinute = 1000)
     val searches = (1 to 6).foldLeft(fresh)((s, _) => granted(s, Purpose.Search, l = free))
