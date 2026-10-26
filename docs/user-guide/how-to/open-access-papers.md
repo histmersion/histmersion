@@ -47,7 +47,37 @@ Running `ingest` again on the same DOI is safe: it updates the details and never
   `HISTMERSION_ACQUIRE_CONTACT_EMAIL`) to your own; without one, Unpaywall is not asked. It is sent
   only as the service's `email`/`mailto` parameter, never in a header.
 - **CORE** needs an API key: `plugins.oa-core.api-key`, as a secret reference
-  ([Credentials and secrets](credentials.md)). Without one, CORE is skipped.
+  ([Credentials and secrets](credentials.md)). Without one, CORE is skipped. The same key also
+  lets the new-source search (`histmersion candidates`) read each goal's saved queries from CORE.
+
+### CORE's limits
+
+A personal CORE key allows 1,000 tokens a day and 25 a minute; a lookup or a search costs 1 token
+(CORE may change these). The PDF lookups of the chain and the searches of the goal watchers share
+**one budget**, kept in the database so that a restart does not reset it:
+
+| setting | default | what it limits |
+|---|---|---|
+| `acquire.core.daily-tokens` | `900` | tokens a day (a UTC day), lookups and searches together |
+| `acquire.core.search-daily-tokens` | `600` | what searches may spend of that; the other 300 are kept for PDF lookups |
+| `acquire.core.per-minute` | `20` | calls in any 60 seconds; a call waits up to `acquire.core.max-wait-seconds` (30) for its slot |
+| `acquire.core.lookup-cost` · `search-cost` | `1` · `1` | what one call costs, if CORE changes its prices |
+| `acquire.core.exhausted-pause-seconds` | `60` | the pause after a refusal that names no retry time |
+
+When CORE answers HTTP 429, or its `X-RateLimit-Remaining` header reaches 0, Histmersion does not ask
+it again until the time CORE gives in `X-RateLimit-Retry-After`. Meanwhile:
+
+- an ingest skips the `core` step and goes on down the chain; the job's report says
+  `core: no copy — CORE not asked: …` with the reason;
+- a candidate sweep leaves CORE out and says so at the top of its report. Those watches keep their
+  place and are read at the next sweep.
+
+`histmersion about` and `histmersion agent autopilot status` show the day's spending, CORE's own count
+of what is left, and any wait:
+
+```
+- CORE today (UTC 2026-10-26): 214 of 900 tokens — PDF lookups 61, searches 153 of 600 · at most 20 a minute · CORE's window 18 of 25 left
+```
 - Everyone else needs nothing.
 
 ## When there is no legal copy
