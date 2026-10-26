@@ -530,6 +530,12 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .input[ArticleCoverageInput]
       .handle(in => ToolResult.text(McpTools.articleCoverageMarkdown(h, in)))
 
+  private val articleReview =
+    tool("article_review")
+      .description(McpTools.ArticleReviewDoc)
+      .input[ArticleReviewInput]
+      .handle(in => ToolResult.text(McpTools.articleReviewMarkdown(h, in)))
+
   private val exportArticle =
     tool("export_article")
       .description(
@@ -958,7 +964,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   val server = McpServer(tools =
     List(ping, search, facets, getSource, passages, geoWhen, histogram, neighbors, sourceGraph, contradictions,
       putSource, patchSource, renameSource, exportSource,
-      backup, configTool, vacuumTool, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, exportArticle,
+      backup, configTool, vacuumTool, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, articleReview, exportArticle,
       articleVersions, articleVersion, places, placeNames, placeOverride, addPlaceTool, periods, events, patchEventTool,
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
@@ -1280,6 +1286,24 @@ object McpTools:
   /** `article_coverage`: the one handler, rendered. */
   def articleCoverageMarkdown(h: Handlers, in: ArticleCoverageInput): String =
     h.articleCoverage(in.slug).fold(McpOut.refusal, ArticleCoverage.markdown)
+
+  /** `article_review` as `/mcp` describes it. */
+  val ArticleReviewDoc: String =
+    "Where one article stands with the review panel (rules reviewer, cold reader, skeptic, mechanical checks): " +
+      "its state (unreviewed, queued, in-review with the round, passed, majors-open, stopped) with what it means, " +
+      "the review manager's last outcome, the research goals that link the article with their stage, the approvals " +
+      "about it that wait for a person, and its review history from the review ledger — every finding by run and " +
+      "round, with reviewer, kind, place, problem and what became of it (fixed, rejected with the record's sentence, " +
+      "won't fix, still open). CLI: histmersion article review."
+
+  /** `article_review`: the one handler, rendered. */
+  def articleReviewMarkdown(h: Handlers, in: ArticleReviewInput): String =
+    h.articleReview(in.slug).fold(McpOut.refusal, ArticleReviewView.markdown)
+
+  final case class ArticleReviewInput(slug: String) derives KindlingsCodecAsObject
+  object ArticleReviewInput:
+    given Schema[ArticleReviewInput] = KindlingsSchema.derived[ArticleReviewInput].schema
+      .modify(_.slug)(_.description("The article's slug"))
 
   final case class ArticleCoverageInput(slug: String) derives KindlingsCodecAsObject
   object ArticleCoverageInput:

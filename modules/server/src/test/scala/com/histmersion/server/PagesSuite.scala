@@ -154,3 +154,31 @@ class PagesSuite extends munit.FunSuite:
     assert(doc.contains("""<script src="/web/app.bundle.js"""), doc)
     assert(doc.contains("""data-page="source""""), doc)
     assert(!doc.contains("article.js") && !doc.contains("citations.js"), doc)
+
+  // ── review ────────────────────────────────────────────────────────────────────────────────────
+
+  private val review = ArticleReviewView("sea_peoples",
+    ReviewBadge(ReviewState.MajorsOpen, "1 major open", "Reviewed: 1 MAJOR finding is still open.", openMajors = 1, findings = 2, runs = 1),
+    rounds = List(ReviewRound("run-a", 1, 1, Some("2026-10-01T10:00:00Z"), List(
+      ReviewFinding("R1", "rules", "major", "decorative-citation", "Background ¶2", "a <cited> claim", "", "", "rejected",
+        note = "the record supports it", closedBy = Some("fixer"), closedRound = Some(1), closedRunNumber = Some(1)),
+      ReviewFinding("S1", "skeptic", "major", "omitted-critique", "", "the 2019 critique is missing", "", "", "open")))),
+    goals = List(ReviewGoal("sea-peoples-goal", "The Sea Peoples & the collapse", "compiled")))
+
+  test("the article page shows the review badge with its meaning, and the goals that link it, under the title"):
+    val html = Pages.article(articlePage("# The Sea Peoples\n\nText.").copy(review = Some(review)), links)
+    assert(html.contains("""<span class="job-state review-state state-majors-open" title="Reviewed: 1 MAJOR finding is still open.">1 major open</span>"""), html)
+    assert(html.indexOf("article-review-line") < html.indexOf("<p>Text.</p>"), html)
+    assert(html.contains("""<a class="goal-ref" href="/#open=goal:sea-peoples-goal" title="sea-peoples-goal">"""), html)
+    assert(html.contains("""<span class="job-state goal-status state-compiled" title="compiled: its articles are written; not all have passed review yet">compiled</span> The Sea Peoples &amp; the collapse</a>"""), html)
+    assert(!Pages.article(articlePage("# The Sea Peoples\n\nText."), links).contains("article-review-line"))
+
+  test("the review history: collapsed, counted, run by run, each finding with reviewer, kind, place and fate"):
+    val html = Pages.reviewHistory(review)
+    assert(html.startsWith("""<details class="review-history"><summary>Review history: 2 findings over 1 run, 1 still open</summary>"""), html)
+    assert(html.contains("<h3>Run 1, round 1 <span class=\"muted\">· run started 2026-10-01 10:00 UTC</span></h3>"), html)
+    assert(html.contains("""<b>R1</b> <span class="muted">rules reviewer · decorative-citation · Background ¶2</span> — a &lt;cited&gt; claim"""), html)
+    assert(html.contains("""<div class="review-outcome">rejected by fixer in run 1, round 1: the record supports it</div>"""), html)
+    assert(html.contains("""<li class="review-finding outcome-open"><span class="review-sev sev-major">major</span> <b>S1</b> <span class="muted">skeptic · omitted-critique</span>"""), html)
+    assertEquals(Pages.reviewHistory(review.copy(rounds = Nil)), "")
+    assertEquals(Pages.readableUtc("2026-10-01T10:00"), "2026-10-01T10:00")

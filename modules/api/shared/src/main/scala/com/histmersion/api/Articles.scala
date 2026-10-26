@@ -623,7 +623,9 @@ final case class ArticleSummary(
     regions: List[String],
     periodStart: Option[Long],
     periodEnd: Option[Long],
-    updatedAt: Option[String] = None
+    updatedAt: Option[String] = None,
+    /** Where it stands with the review panel (`GET /api/articles/{slug}/review` has the history). */
+    review: Option[ReviewBadge] = None
 ) derives KindlingsCodecAsObject
 object ArticleSummary:
   given Schema[ArticleSummary] = KindlingsSchema.derived[ArticleSummary].schema

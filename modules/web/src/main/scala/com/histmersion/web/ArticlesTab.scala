@@ -23,7 +23,7 @@ object ArticlesTab:
 
   def pane: HtmlElement = tab.pane
 
-  private def renderArticle(art: ArticleSummary): HtmlElement =
+  private[web] def renderArticle(art: ArticleSummary): HtmlElement =
     li(
       cls := "article-row",
       a(
@@ -36,6 +36,7 @@ object ArticlesTab:
         div(
           cls := "article-meta",
           span(cls := "article-kind", Fmt.display(art.kind)),
+          art.review.map(reviewBadge),
           Fmt.periodStr(art.periodStart, art.periodEnd) match
             case "" => emptyNode
             case per => span(cls := "article-period", per)
@@ -52,6 +53,13 @@ object ArticlesTab:
         else emptyNode
       )
     )
+
+  /** An article's review state as a coloured badge, what it means on hover. */
+  def reviewBadge(b: ReviewBadge): HtmlElement =
+    span(cls := reviewClass(b.state), title := b.detail, b.label)
+
+  /** The badge's classes: the stylesheet colours each state (as the article page's badge). */
+  def reviewClass(state: ReviewState): String = s"job-state review-state state-${state.wire}"
 
   private def stripMd(s: String): String =
     s.replaceAll("\\[\\[([^\\]]+)\\]\\]", "$1")

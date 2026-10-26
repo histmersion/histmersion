@@ -60,6 +60,30 @@ the `tasks` list for that article.
 
 **A passed review is not a guarantee.** It means three automated readers found no major problem.
 
+### Seeing where an article stands
+
+Every article carries a coloured **review badge**: in the Articles tab, under its title in the
+article window, and on its page. Hover over it for what it means.
+
+| badge | meaning |
+|---|---|
+| **not reviewed** (grey) | no review of the article is recorded and none is queued |
+| **queued** (purple) | the review manager will run the panel when a run slot is free — or again after a cooldown, when the last run left MAJOR findings open |
+| **in review · round n** (blue) | the panel is working on it now, in pass *n* of the run |
+| **passed** (green) | reviewed, and no MAJOR finding is open (minor ones may be) |
+| **n majors open** (red) | reviewed, and *n* MAJOR findings are still open |
+| **review stopped** (yellow) | the review manager gave up (the MAJOR findings did not go down over two runs, or a finding kept coming back); a person decides what happens next |
+
+The hover text also names any approval about the article that waits for you (a coverage filter to
+approve, for example). Beside the badge, the article lists the **research goals** that link it, each
+with its stage badge; click one to open the goal.
+
+At the end of the article, **Review history** (closed until you open it) lists every finding the
+panel ever raised, run by run and round by round: which reviewer raised it, what kind of problem,
+where, and what became of it — *fixed*, *rejected* with the sentence of the record that answered it,
+*won't fix*, or still *open*. From a terminal: `histmersion article review <slug>`; for an assistant,
+the `article_review` tool.
+
 ## Other pipelines
 
 | run | does |

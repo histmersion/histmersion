@@ -1722,6 +1722,43 @@ test('the jobs window: kind chips with the server\'s counts filter the list, and
   });
 });
 
+// An article's review state: each Articles row carries the server's badge, its meaning on hover; in the
+// article window (the server's page, here a fixed fragment of the shape Pages renders) a research goal
+// that links the article opens the goal's window. Fixed answers; nothing is written.
+test('articles: the review badge on each row with its meaning, and a linked goal opens its window', async () => {
+  const row = (slug, review) => ({ slug, title: `Zz ${slug}`, kind: 'concept', summary: null, tags: [], regions: [],
+    periodStart: null, periodEnd: null, review });
+  const badge = (state, label, detail) => ({ state, label, detail, openMajors: 0, openMinors: 0, findings: 0, runs: 0 });
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.route(/\/api\/articles(\?|$)/, route => route.fulfill({ json: { total: 2, articles: [
+      row('zz_rev_a', badge('in-review', 'in review · round 2', 'In review: the review panel is working on it now (round 2 of this run).')),
+      row('zz_rev_b', badge('majors-open', '3 majors open', 'Reviewed: 3 MAJOR findings are still open.'))] } }));
+    await page.route(/\/article\/zz_rev_a\?fragment=true/, route => route.fulfill({ contentType: 'text/html', body:
+      '<h1>Zz rev a</h1><p class="article-review-line"><span class="muted">review:</span> ' +
+      '<span class="job-state review-state state-in-review" title="In review.">in review · round 2</span> ' +
+      '<span class="muted">· goal:</span> <a class="goal-ref" href="/#open=goal:zz-rev-goal" title="zz-rev-goal">' +
+      '<span class="job-state goal-status state-compiled">compiled</span> Zz goal</a></p><p>Text.</p>' }));
+    await page.route('**/api/goals/zz-rev-goal**', route => route.fulfill({ json: { slug: 'zz-rev-goal', title: 'Zz goal',
+      status: 'compiled', tags: [], regions: [] } }));
+    await page.goto(new URL('/#tab=articles', baseURL).href);
+    await page.reload();
+    const badges = page.locator('.articles-list .article-meta .review-state');
+    await page.waitForFunction(() => document.querySelectorAll('.articles-list .review-state').length === 2);
+    assert.deepEqual(await badges.allInnerTexts(), ['in review · round 2', '3 majors open']);
+    assert.equal(await badges.nth(1).getAttribute('title'), 'Reviewed: 3 MAJOR findings are still open.');
+    assert.match(await badges.nth(1).getAttribute('class'), /\bstate-majors-open\b/);
+    // the colour comes from the stylesheet: a red badge, not the grey of an unstyled one
+    const colours = await badges.evaluateAll(els => els.map(e => getComputedStyle(e).color));
+    assert.notEqual(colours[0], colours[1], `each state its own colour (${colours})`);
+    await page.locator('.articles-list .article-link').first().click();
+    const goal = page.locator('.wm-content .article-review-line a.goal-ref');
+    await goal.waitFor();
+    await goal.click();
+    await page.locator('.wm-title', { hasText: 'goal · zz-rev-goal' }).waitFor();
+    assert.equal(await page.locator('.wm-title', { hasText: 'Zz rev a' }).count(), 1, 'the article window stays open');
+  });
+});
+
 // #1798 item 5: the Articles tab reaches the rows past its first fetch (the "show more" button used to
 // vanish at 200 although the total was known), and a failed Events load says why instead of staying on
 // "Loading…". Fixed answers; nothing is written.

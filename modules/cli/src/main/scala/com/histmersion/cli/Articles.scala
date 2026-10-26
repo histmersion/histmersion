@@ -265,6 +265,14 @@ object ArticleCli:
     }
   }
 
+  /** `article review <slug>` — where the article stands with the review panel, and its review history. */
+  private val review = Opts.subcommand("review",
+      "The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it") {
+    (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
+      c.articleReview(slug).map(r => Output.emit(json, r)(ArticleReviewView.markdown))
+    }
+  }
+
   private val patch = Opts.subcommand("patch", "Extend or correct one article — only the parts you pass change") {
     (
       Opts.argument[String]("slug"),
@@ -311,8 +319,8 @@ object ArticleCli:
 
   /** The `article` command group, added to `histmersion`'s subcommands by [[Main]]. */
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/lint/check/coverage/rename/export/import/versions articles") {
-      list orElse get orElse put orElse patch orElse lint orElse check orElse coverage orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
+    Opts.subcommand("article", "The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles") {
+      list orElse get orElse put orElse patch orElse lint orElse check orElse coverage orElse review orElse delete orElse exportCmd orElse importCmd orElse versions orElse versionCmd orElse
         LabelRenameCmd(BundleKind.Article)
     }
 

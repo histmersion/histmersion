@@ -31,6 +31,10 @@ class CssTokensSuite extends munit.FunSuite:
         ConfidenceStyle.desaturate(mid.replace(" ", ""), c), level)
     }
 
+  test("every article review state has a badge colour"):
+    val missing = ReviewState.values.toList.map(_.wire).filterNot(w => css.contains(s".job-state.review-state.state-$w {"))
+    assertEquals(missing, Nil)
+
   test("every var(--…) the stylesheet uses for a colour category is one it defines"):
     val families = List("--edge-", "--status-", "--media-", "--conf-", "--ramp-", "--place-", "--graph-")
     val used = """var\((--[\w-]+)""".r.findAllMatchIn(css).map(_.group(1)).toSet

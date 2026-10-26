@@ -59,6 +59,7 @@ hand.
 | `histmersion article lint [--fix] [--json] <slug>` | Formatting problems of one article's body and summary (--fix applies the wording-safe repairs) |
 | `histmersion article check [--edits-file <string>] [--body-file <string>] [--kind <string>] [--json] <slug>` | Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing |
 | `histmersion article coverage [--json] <slug>` | The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections |
+| `histmersion article review [--json] <slug>` | The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it |
 | `histmersion article delete <slug>` | Remove one article (its links go with it) |
 | `histmersion article export <dir>` | Write each article to &lt;dir&gt;/&lt;kind&gt;/&lt;slug&gt;.md |
 | `histmersion article import [--force] <dir>` | Import &lt;dir&gt;/&lt;kind&gt;/*.md (and any *.md in &lt;dir&gt; itself) |

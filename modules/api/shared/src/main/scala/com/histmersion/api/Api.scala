@@ -573,6 +573,14 @@ object Api:
     endpoint.get.in("api" / "articles" / path[String]("slug") / "coverage")
       .errorOut(writeErrors).out(jsonBody[Coverage])
 
+  /** `GET /api/articles/{slug}/review` — where the article stands with the review panel (a state
+    * derived from the review manager's item and the review ledger), every finding the panel raised
+    * on it in time order with what became of it, the research goals linking it and the approvals
+    * about it that wait for a person. */
+  lazy val articleReview: PublicEndpoint[String, ApiError, ArticleReviewView, Any] =
+    endpoint.get.in("api" / "articles" / path[String]("slug") / "review")
+      .errorOut(writeErrors).out(jsonBody[ArticleReviewView])
+
   lazy val deleteArticle: PublicEndpoint[String, ApiError, ArticleDeleted, Any] =
     endpoint.delete.in("api" / "articles" / path[String]("slug"))
       .errorOut(writeErrors).out(jsonBody[ArticleDeleted])
@@ -617,7 +625,7 @@ object Api:
     // `articles/import`, `articles/{slug}/export` and `articles/{slug}/versions` are longer paths than
     // `articles/{slug}`, so they are interpreted first — exactly as `exportSource` precedes `getSource`.
     articles, articleSlugs, importArticle, exportArticle, articleVersions, articleVersion,
-    lintArticle, fixArticleFormat, checkArticle, articleCoverage, getArticle, putArticle, patchArticle, deleteArticle,
+    lintArticle, fixArticleFormat, checkArticle, articleCoverage, articleReview, getArticle, putArticle, patchArticle, deleteArticle,
     // events (1.2): /{id} before the list; `events/geo` before `events/{id}`
     events, eventsGeo, getEvent, putEvent, patchEvent, deleteEvent,
     // attestations (1.3): /{id} before the list

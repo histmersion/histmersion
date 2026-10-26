@@ -36,14 +36,9 @@ object GoalsView:
 
   /** What each goal stage means, in the order a goal moves through them; the legend above the tree and
     * the tooltip of every status badge. */
-  val stages: List[(String, String)] = List(
-    GoalStatus.Planned  -> "created; nothing works on it yet",
-    GoalStatus.Seeding  -> "finding and reading sources, writing its articles",
-    GoalStatus.Compiled -> "its articles are written; not all have passed review yet",
-    GoalStatus.Reviewed -> "every article (and sub-goal) passed the review panel",
-    GoalStatus.Done     -> "finished: only you set this, the autopilot never does")
+  val stages: List[(String, String)] = GoalStages.all
 
-  def meaning(status: String): Option[String] = stages.collectFirst { case (s, m) if s == status => m }
+  def meaning(status: String): Option[String] = GoalStages.meaning(status)
 
   /** The open plan approval of a goal, if a plan run is waiting on one. */
   def pendingPlan(as: List[ApprovalInfo], slug: String): Option[ApprovalInfo] =
