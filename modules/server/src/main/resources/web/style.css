@@ -936,6 +936,8 @@ a.chip:hover { border-color:var(--accent); }
 .autopilot-goals { max-height:40vh; overflow:auto; }
 /* the autopilot's focus: the active goals, the queue (numbered: the order they become active) */
 .autopilot-focus { border-top:1px solid var(--line); margin-top:var(--gap-group); padding-top:var(--gap-group); }
+/* "next (n waiting for a slot):" and "cannot use a slot now:" head their own part of the focus panel */
+.focus-heading { margin-top:var(--space-5); font-weight:600; }
 .focus-queue { max-height:30vh; overflow:auto; padding-left:0; list-style-position:inside; }
 /* the central scheduler: what the last pass started, and the queue (numbered: the order they start in) */
 .scheduler { border-bottom:1px solid var(--line); padding-bottom:var(--gap-group); margin-bottom:var(--gap-group); }
