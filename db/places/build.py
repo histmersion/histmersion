@@ -17,9 +17,11 @@ import csv, json, math, os, re, sys
 
 csv.field_size_limit(10 ** 7)
 
-# The corpus's window (Aegean → Iranian plateau, Egypt → Caucasus). Pleiades covers the whole Roman
-# world; keeping all 42 000 places would commit ~20 MB of points nothing in the corpus refers to.
-BBOX = (-11.0, 15.0, 75.0, 60.0)  # minLon, minLat, maxLon, maxLat
+# Where the seed keeps places: the whole world (minLon, minLat, maxLon, maxLat). Until 2026-10-27
+# Pleiades was cut to the Aegean → Iranian plateau, Egypt → Caucasus window (-11, 15, 75, 60), which
+# left out Aksum, Adulis, Muziris and the Arabian incense ports; Natural Earth to -25, -5, 150, 78,
+# which left out the Americas, southern Africa and Oceania.
+BBOX = (-180.0, -90.0, 180.0, 90.0)
 
 def slug(s):
     return re.sub(r'_+$', '', re.sub(r'[^a-z0-9]+', '_', (s or '').strip().lower())).strip('_')[:64]
@@ -217,11 +219,13 @@ def pleiades(src, names_src, out):
 # The places a person names in plain English — seas, lakes, rivers, mountain ranges, peninsulas,
 # deserts, islands, peaks and present-day cities — which neither the countries file nor Pleiades
 # (ancient names, Roman-world window) has: "Balkans", "Black Sea", "Dnieper", "Kraków".
-# Public domain, like the countries. 1:10m, clipped to the corpus's wider window (Atlantic → Pacific,
-# equator → Arctic), shapes simplified to ~1 km: they are for finding a name and drawing an outline.
+# Public domain, like the countries. 1:10m, the whole world (`BBOX`, tested on a feature's bbox centre),
+# shapes simplified to ~1 km: they are for finding a name and drawing an outline.
 NE_PHYS_SOURCE = "Natural Earth 1:10m physical/cultural vectors (public domain)"
-NE_WINDOW = (-25.0, -5.0, 150.0, 78.0)  # minLon, minLat, maxLon, maxLat — tested on a feature's bbox centre
-NE_NAME_LANGS = ["ar", "de", "el", "en", "es", "fa", "fr", "he", "hu", "it", "nl", "pl", "pt", "ru", "sv", "tr", "uk"]
+# every language Natural Earth translates names into (`name_<code>`); `zht` is Traditional Chinese
+NE_NAME_LANGS = ["ar", "bn", "de", "el", "en", "es", "fa", "fr", "he", "hi", "hu", "id", "it", "ja", "ko", "nl",
+                 "pl", "pt", "ru", "sv", "tr", "uk", "ur", "vi", "zh", "zht"]
+NE_LANG_TAG = {"zht": "zh-Hant"}
 NE_SIMPLIFY = 0.01  # degrees, ≈ 1 km
 
 # Natural Earth's abbreviations, spelled out as an alternative name ("Balkan Pen." → "Balkan Peninsula")
@@ -263,13 +267,14 @@ def coords_of(g):
     walk((g or {}).get("coordinates") or [])
     return out
 
-def in_window(g):
+def in_window(g, window=BBOX):
+    """Has the geometry coordinates, and is the centre of its bbox inside `window`?"""
     cs = coords_of(g)
     if not cs:
         return False
     xs, ys = [c[0] for c in cs], [c[1] for c in cs]
     cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
-    return NE_WINDOW[0] <= cx <= NE_WINDOW[2] and NE_WINDOW[1] <= cy <= NE_WINDOW[3]
+    return window[0] <= cx <= window[2] and window[1] <= cy <= window[3]
 
 def _dp(pts, tol):
     """Douglas–Peucker over one line (iterative, so a long coastline cannot overflow the stack)."""
@@ -331,7 +336,7 @@ def ne_names(p, label):
     for l in NE_NAME_LANGS:
         v = title_case(p.get("name_" + l) or "")
         if v:
-            names.append((v, l))
+            names.append((v, NE_LANG_TAG.get(l, l)))
             if l == "en":
                 names.append((expand(v), "en"))
     return names
@@ -423,7 +428,7 @@ def natural_earth_places(src, out):
             continue
         names = [(label, ""), (p.get("name"), ""), (p.get("nameascii"), ""), (p.get("ls_name"), "")]
         names += [(a, "") for a in re.split(r"[|;]", p.get("namealt") or "")]
-        names += [(p.get("name_" + l), l) for l in NE_NAME_LANGS]
+        names += [(p.get("name_" + l), NE_LANG_TAG.get(l, l)) for l in NE_NAME_LANGS]
         props = {"featurecla": p.get("featurecla"), "modern": True, "country": p.get("adm0name"),
                  "admin1": p.get("adm1name")}
         if p.get("wikidataid"):
