@@ -13,6 +13,12 @@ class MapRegionsSuite extends munit.FunSuite:
     assertEquals(choices(status).map(c => (c.id, c.bbox)), List(("configured", Some("-12,20,90,62")),
       ("argolid", Some("22.5,37.4,23.2,37.9")), ("world", Some("world")), (OwnBox, None)))
 
+  test("the default configured region is the whole world, listed once"):
+    val cs = choices(status.copy(bbox = "world"))
+    assertEquals(cs.map(c => (c.id, c.bbox)), List(("configured", Some("world")),
+      ("argolid", Some("22.5,37.4,23.2,37.9")), (OwnBox, None)))
+    assertEquals(cs.head.label, "the configured region (the whole world)")
+
   test("the fetch: the map for a box replaces the region; the relief of a named region or of a box of one's own"):
     assertEquals(request(" 20,30,40,50 ", Content.Map, None, "", dryRun = true),
       Right(BasemapFetchQuery(bbox = Some("20,30,40,50"), dryRun = true)))
