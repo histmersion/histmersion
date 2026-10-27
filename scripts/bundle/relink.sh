@@ -313,11 +313,13 @@ if [ "${#linked[@]}" -gt 0 ]; then
 fi
 
 # ── 7. native-image ───────────────────────────────────────────────────────────────────────────────
-step "native-image (about 2 minutes and ~13.5 GB of memory; log: $log)"
+# HISTMERSION_NATIVE_XMX: an optional cap on the builder's heap, as in build.sbt (none by default)
+xmx=(); [ -n "${HISTMERSION_NATIVE_XMX:-}" ] && xmx=("-J-Xmx$HISTMERSION_NATIVE_XMX")
+step "native-image (about 2 minutes and 9–10 GB of memory; log: $log)"
 start=$(date +%s)
 rc=0
 # in the work dir: native-image leaves reports (build artifacts, crash notes) in its working directory
-(cd "$work" && "$gv/bin/native-image" "@$kit/native-image.args" -cp "$(kit_cp):$patched" "$main_class" \
+(cd "$work" && "$gv/bin/native-image" ${xmx[@]+"${xmx[@]}"} "@$kit/native-image.args" -cp "$(kit_cp):$patched" "$main_class" \
   "$work/histmersion-server.new") >> "$log" 2>&1 || rc=$?
 [ "$rc" = 0 ] && [ -x "$work/histmersion-server.new" ] || { tail -20 "$log" >&2; hk_die 3 "native-image failed (exit $rc) — the current binary is unchanged; JVM mode works with the same plugins: histmersion-relink --jvm"; }
 peak="$(grep -o 'Peak RSS: [0-9.,]*[A-Z]*' "$log" | tail -1 || true)"

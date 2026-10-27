@@ -86,7 +86,7 @@ toolchain (`histmersion-toolchain check`; `histmersion-toolchain install` provis
 (`HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12) and disk; runs a **pre-flight on the JVM** (the plugins'
 dependencies resolved into `plugins/lib/`, every jar has a provider of this SPI, no id or class twice
 among the kit, the plugins and their dependencies, then the server's own `--self-check` with the plugins,
-their dependencies and your config) before spending ~13.5 GB; Sloth-patches the plugin jars and their
+their dependencies and your config) before spending 9–10 GB; Sloth-patches the plugin jars and their
 dependencies; links; runs the **new binary's
 `--self-check`** (never as a server) and requires the directory's plugin-set digest and every new plugin
 registered; signs it; swaps it in keeping the old one as `bin/histmersion-server.prev`; restarts the
