@@ -50,11 +50,13 @@ class PleiadesNames(unittest.TestCase):
         fs = self.build([["1", "Iberia (modern region/peninsula)", "40", "-5", "precise", "region", "", "", ""]], [])
         self.assertEqual([n["toponym"] for n in fs["pleiades_1"]["names"]], ["Iberia (modern region/peninsula)"])
 
-    def test_outside_the_window_and_unlocated_are_dropped(self):
-        fs = self.build([["1", "Far", "70", "100", "precise", "settlement", "", "", ""],
+    def test_unlocated_are_dropped_and_every_region_kept(self):
+        fs = self.build([["1", "Muziris", "10.16", "76.2", "precise", "settlement", "", "", ""],
                          ["2", "Lost", "40", "20", "unlocated", "settlement", "", "", ""],
-                         ["3", "Kept", "40", "20", "precise", "settlement", "-500", "300", ""]], [])
-        self.assertEqual(list(fs), ["pleiades_3"])
+                         ["3", "Kept", "40", "20", "precise", "settlement", "-500", "300", ""],
+                         ["4", "Aksum", "14.13", "38.72", "precise", "settlement", "", "", ""]], [])
+        self.assertEqual(sorted(fs), ["pleiades_1", "pleiades_3", "pleiades_4"],
+                         "South India and Ethiopia lay outside the window the seed was cut to until 2026-10-27")
 
 
 class NaturalEarthNames(unittest.TestCase):
@@ -82,10 +84,20 @@ class NaturalEarthNames(unittest.TestCase):
         self.assertEqual(g["coordinates"][0][0], g["coordinates"][0][-1])
         self.assertGreaterEqual(len(g["coordinates"][0]), 4)
 
-    def test_the_window_tests_the_bbox_centre(self):
+    def test_the_window_is_the_world_and_tests_the_bbox_centre(self):
         self.assertTrue(build.in_window({"type": "Point", "coordinates": [19.9, 50.1]}))
-        self.assertFalse(build.in_window({"type": "Point", "coordinates": [-100, 40]}))
+        self.assertTrue(build.in_window({"type": "Point", "coordinates": [-100, 40]}), "the Americas too")
+        self.assertTrue(build.in_window({"type": "Point", "coordinates": [151.2, -33.9]}), "and Oceania")
         self.assertFalse(build.in_window({"type": "Point", "coordinates": []}))
+        line = {"type": "LineString", "coordinates": [[0, 0], [30, 10]]}
+        self.assertTrue(build.in_window(line, (10, 0, 20, 10)), "centre (15, 5)")
+        self.assertFalse(build.in_window(line, (20, 0, 40, 10)))
+
+    def test_every_natural_earth_language(self):
+        names = build.ne_names({"name": "Huang He", "name_zh": "黄河", "name_zht": "黃河", "name_hi": "ह्वांग हो"}, "Huang He")
+        self.assertIn(("黄河", "zh"), names)
+        self.assertIn(("黃河", "zh-Hant"), names)
+        self.assertIn(("ह्वांग हो", "hi"), names)
 
 
 class Supplement(unittest.TestCase):

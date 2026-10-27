@@ -21,9 +21,9 @@ derived files from upstream, and their outputs are committed.
 | file | features | what it is | licence |
 |---|---:|---|---|
 | `01-natural-earth.json` | 207 | continents → subregions → countries, `kind = region` | public domain |
-| `02-natural-earth-physical.json` | 1 825 | seas, gulfs, straits, lakes, rivers, mountain ranges, peninsulas, deserts, islands, peaks — `kind = feature\|region`, `modern: true` | public domain |
-| `03-pleiades.json` | 33 778 | ancient places as points with every attested/romanised/modern name, `kind = site\|region\|polity\|people\|feature` | CC-BY |
-| `04-natural-earth-places.json` | 3 995 | present-day cities and towns as points, `kind = site`, `modern: true` | public domain |
+| `02-natural-earth-physical.json` | 3 858 | seas, gulfs, straits, lakes, rivers, mountain ranges, peninsulas, deserts, islands, peaks — `kind = feature\|region`, `modern: true` | public domain |
+| `03-pleiades.json` | 34 397 | ancient places as points with every attested/romanised/modern name, `kind = site\|region\|polity\|people\|feature` | CC-BY |
+| `04-natural-earth-places.json` | 7 342 | present-day cities and towns as points, `kind = site`, `modern: true` | public domain |
 | `05-curated.json` | 84 | the curated supplement: historical regions, valleys and sites the sources above lack (`supplement/places.csv`) | CC0 (Wikidata coordinates) |
 | `polities/macro_regions.geojson` | 6 | Anatolia, Aegean, Levant, Mesopotamia, Egypt, Pontic-Caspian steppe | CC0 (stream 2.2) |
 | `polities/{eba,mba,lba,ia1,ia2}.geojson` | 71 | Bronze/Iron-Age polity polygons per canonical period | CC0 / ODbL (stream 2.2) |
@@ -80,10 +80,10 @@ hand-traced polygons under `polities/` use. `histmersion places import <file>` l
   `lint --rule place-grid-point` offers a linked Wikidata coordinate instead.
 - **Pleiades periods come from the dump's own `minDate`/`maxDate`**, already signed years (BCE
   negative) — no PeriodO lookup needed. `maxDate = 2100` is Pleiades' own "still extant" convention.
-- **Pleiades is clipped** to the corpus window (lon −11–75, lat 15–60: Ireland → Indus, Nubia →
-  Uppsala; until #987 it was lon 15–60, lat 25–50, which left out Etruria, Rome, Gaul, Britain and
-  Elephantine) and to locatable, drawable feature types. Widen `BBOX` in `build.py` and re-run
-  `fetch.sh` to change that.
+- **Pleiades is the whole dump**, cut only to locatable, drawable feature types (`BBOX` in
+  `build.py` is the world). Until 2026-10-27 it was clipped to lon −11–75, lat 15–60 (and before #987
+  to lon 15–60, lat 25–50), which left out Aksum, Adulis, Muziris, the incense ports of southern
+  Arabia and the places east of the Indus: 620 places more since then.
 - **Pleiades names come from the names dump** (#987). The places dump carries only a title
   ("Mortuum Mare/Asphaltitis Limne"), so "Dead Sea", "Sea of Galilee" and every attested Greek,
   Latin, Akkadian or Hebrew spelling were missing until the names dump was read. They are imported
@@ -95,8 +95,11 @@ hand-traced polygons under `polities/` use. `histmersion places import <file>` l
   (the time rule, `places.modern-from` in `docs/user-guide/reference/configuration.md`) shows a city only from `places.modern-from` (1500) on, and a physical
   feature (kind `feature`, or a physical `region`) at any time; the map across all time draws neither. A label is NE's own `name`, spelled out ("Balkan Pen." → "Balkan
   Peninsula"); its looser `name_en` is a further name, because the geocoder ranks a label above a
-  name and "Levant" must stay the region, not NE's "Levant Coast". 1:10m, clipped to lon −25–150,
-  lat −5–78 by each feature's bbox centre, shapes simplified to ~1 km.
+  name and "Levant" must stay the region, not NE's "Levant Coast". 1:10m, the whole world (until
+  2026-10-27 clipped to lon −25–150, lat −5–78, which left out the Americas, southern Africa and
+  Oceania), shapes simplified to ~1 km, with every name translation Natural Earth carries (26
+  languages: Arabic, Bengali, Chinese in both scripts, Hindi, Indonesian, Japanese, Korean, Urdu,
+  Vietnamese and the European ones).
 
 ### The curated supplement (`supplement/`, #987)
 
