@@ -356,18 +356,18 @@ object TimelineView:
         h.setAttribute("width", HANDLE_W.toString); h.setAttribute("height", O_BASE.toString)
         h.setAttribute("rx", "2")
         g.appendChild(h)
-      val fromLabel = dom.document.createElementNS(ns, "text")
-      fromLabel.setAttribute("class", "tl-ov-label")
-      fromLabel.setAttribute("x", (selX0 + 3).toString)
-      fromLabel.setAttribute("y", (O_BASE + 11).toString)
-      fromLabel.textContent = Fmt.yr(sf)
-      g.appendChild(fromLabel)
-      val toLabel = dom.document.createElementNS(ns, "text")
-      toLabel.setAttribute("class", "tl-ov-label tl-ov-label-end")
-      toLabel.setAttribute("x", (selX1 - 3).toString)
-      toLabel.setAttribute("y", (O_BASE + 11).toString)
-      toLabel.textContent = Fmt.yr(st)
-      g.appendChild(toLabel)
+      // the two years: inside the selection, outside its handles when they are close, else one label
+      val labels = RangeLabels.place(Fmt.yr(sf), Fmt.yr(st), selX0, selX1, w) match
+        case RangeLabels.Placement.Inside(f, t)  => List(f, t)
+        case RangeLabels.Placement.Outside(f, t) => List(f, t)
+        case RangeLabels.Placement.Joined(l)     => List(l)
+      for l <- labels do
+        val label = dom.document.createElementNS(ns, "text")
+        label.setAttribute("class", "tl-ov-label")
+        label.setAttribute("x", l.x.toString)
+        label.setAttribute("y", (O_BASE + 11).toString)
+        label.textContent = l.text
+        g.appendChild(label)
 
   private def renderOverview(): Unit =
     renderOverviewCurve()
