@@ -14,6 +14,8 @@ class ConfigSuite extends munit.FunSuite:
   test("the events region and the base-map download default to the whole world"):
     assertEquals(AppConfig.load().events.region, "-180,-90,180,90")
     assertEquals(AppConfig.load().basemap.bbox, "world")
+    val langs = AppConfig.load().events.wikidata.languageList
+    assert(List("zh", "ja", "ar", "hi", "mul").forall(langs.contains), s"an event outside Europe gets a label: $langs")
 
   test("env overrides (always strings) are accepted for numeric keys"):
     val env = org.ekrich.config.ConfigFactory.parseMap(
