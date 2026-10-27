@@ -7,6 +7,9 @@
     ./build.py tgn <TGN explicit.zip> <AAT explicit.zip> <out.ndjson.gz>   # Getty TGN, the N-Triples dumps
     ./build.py pin <extracts.json> <name> <file> [key=value …]   # record version, sha256, size, counts
 
+    --bbox world|window|minLon,minLat,maxLon,maxLat   where places are kept (default: world)
+    --langs all|window|en,de,…                        the languages names are kept in (default: all)
+
 An output (and `pin`'s file) given as a bare file name is written to (read from) the directory the server
 reads extracts from by default — `$XDG_CACHE_HOME/histmersion/gazetteer`, else
 `~/.cache/histmersion/gazetteer` (`cache_dir`); `--out DIR` names another, and a path with a directory
@@ -24,38 +27,115 @@ publishes only the current day's dump and Wikidata changes by the minute, so the
 extract, never on an upstream URL. Nothing here touches a database or the network except
 `wikidata-fetch`. Stdlib only.
 
-Both extracts are clipped to the research window `BBOX` (Europe, the Mediterranean, the Near
-East, Anatolia, the Caucasus, the steppe, Central and South Asia, Egypt and North Africa) and to the
-feature kinds that name historical geography; see db/gazetteer/README.md for the measured volumes
-behind each filter.
+The extracts cover the whole world, with names in every language, by default; `--bbox` and `--langs`
+cut a regional one for a small install (`--bbox window --langs window` is the Europe-to-Central-Asia
+extract pinned until 2026-10-27). What is kept is cut by KIND, never by place: the feature kinds that
+name historical geography; see db/gazetteer/README.md for the measured volumes behind each filter.
 """
 import csv, gzip, hashlib, io, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request, zipfile
 
 csv.field_size_limit(10 ** 7)
 
-# minLon, minLat, maxLon, maxLat: Iceland → the Tarim basin, Sri Lanka/Sahel → the North Cape
-BBOX = (-25.0, 5.0, 100.0, 72.0)
+# minLon, minLat, maxLon, maxLat. The default is the whole world: every place the sources name,
+# wherever it is. `--bbox` builds a regional extract for a small install.
+WORLD = (-180.0, -90.0, 180.0, 90.0)
+# The region the extracts were cut to until 2026-10-27 (Iceland → the Tarim basin, Sri Lanka/Sahel →
+# the North Cape): `--bbox window`.
+WINDOW = (-25.0, 5.0, 100.0, 72.0)
 
-# The languages a name is kept in: the corpus's own (en de fr it es pl), the ancient and original
-# languages of the research regions, and the modern languages of those regions (a finding often
-# names a site by its local spelling). A name with NO language is kept too — GeoNames' bare
-# variants are transliterations ("Bogazkoy") a geocoder needs.
+# By default a name is kept in EVERY language its source gives (a finding may name a place in any
+# script). `--langs` keeps only some, as a regional extract for a small install does; a name with NO
+# language is kept either way — GeoNames' bare variants are transliterations ("Bogazkoy") a geocoder needs.
 CORPUS_LANGS = ["en", "de", "fr", "it", "es", "pl"]
+# The ancient, classical and original languages of the world's past — a name in one is evidence the place
+# is historical (the keep rules below), so this list is used whatever `--langs` says.
 ANCIENT_LANGS = ["grc", "la", "akk", "hit", "sux", "uga", "phn", "arc", "syc", "egy", "cop", "peo", "pal",
-                 "xcl", "sa", "pi", "ota", "got", "non", "ang", "gmy", "elx", "xld", "xlu", "hbo", "he"]
-MODERN_LANGS = ["el", "tr", "ar", "fa", "ru", "uk", "be", "hy", "ka", "az", "ku", "ckb", "bg", "sr", "mk", "hr",
-                "bs", "sl", "sq", "ro", "hu", "cs", "sk", "lt", "lv", "et", "fi", "sv", "no", "da", "nl", "pt",
-                "ca", "ga", "cy", "kk", "uz", "ky", "tk", "tg", "ps", "ur", "hi", "ne", "bn", "pa", "mt",
-                "am", "ber"]
-LANGS = set(CORPUS_LANGS + ANCIENT_LANGS + MODERN_LANGS)
-HISTORICAL_LANGS = set(ANCIENT_LANGS)
+                 "xcl", "sa", "pi", "ota", "got", "non", "ang", "gmy", "elx", "xld", "xlu", "hbo", "he",
+                 # East, South and Central Asia, Africa, the Americas
+                 "lzh", "och", "ltc", "ojp", "okm", "oko", "kaw", "omy", "xct", "cmg", "otk", "sog", "kho",
+                 "txb", "xto", "pra", "pka", "oty", "omx", "obr", "gez", "xmr", "nci", "emy", "qwc"]
+# The modern languages of the former window: `--langs window` (with the two lists above).
+WINDOW_MODERN_LANGS = ["el", "tr", "ar", "fa", "ru", "uk", "be", "hy", "ka", "az", "ku", "ckb", "bg", "sr", "mk",
+                       "hr", "bs", "sl", "sq", "ro", "hu", "cs", "sk", "lt", "lv", "et", "fi", "sv", "no", "da",
+                       "nl", "pt", "ca", "ga", "cy", "kk", "uz", "ky", "tk", "tg", "ps", "ur", "hi", "ne", "bn",
+                       "pa", "mt", "am", "ber"]
+WINDOW_LANGS = frozenset(CORPUS_LANGS + ANCIENT_LANGS + WINDOW_MODERN_LANGS)
+HISTORICAL_LANGS = frozenset(ANCIENT_LANGS)
+# The languages Wikidata descriptions are fetched in when every name language is kept: the window's and
+# the world's widely written ones. One description per item is kept (English, else the native label's
+# language, else the first of these), so this caps a query, not what a card can say.
+WORLD_MODERN_LANGS = ["zh", "ja", "ko", "vi", "th", "lo", "km", "my", "id", "ms", "jv", "tl", "mn", "bo", "dz",
+                      "si", "ta", "te", "kn", "ml", "mr", "gu", "or", "as", "sd", "dv", "sw", "ha", "yo", "ig",
+                      "zu", "xh", "af", "so", "om", "ti", "mg", "rw", "ln", "wo", "ff", "qu", "ay", "gn", "nah",
+                      "ht", "mi", "haw", "sm", "to", "fj", "iu", "kl", "ug", "ky", "tt", "ba", "sah", "eo", "is",
+                      "fo", "gl", "eu", "oc", "br", "lb", "fy", "yi", "ast", "hsb", "ia"]
+# The language a title is taken from: the first of these that has one (else the first by code).
+TITLE_LANGS = ["en", "mul"] + CORPUS_LANGS[1:] + ANCIENT_LANGS + WINDOW_MODERN_LANGS + WORLD_MODERN_LANGS
+DESCRIPTION_LANGS = frozenset(CORPUS_LANGS + WINDOW_MODERN_LANGS + WORLD_MODERN_LANGS + ANCIENT_LANGS)
+# Wikidata's "mul" (one label for every language, mostly a proper name in its own script) is a name
+# with no particular language.
+NO_LANG = {"mul", "und", "zxx"}
+
+
+class Scope:
+    """Where and in which languages an extract keeps places and names: `bbox` (minLon, minLat, maxLon,
+    maxLat; the world by default) and `langs` (a set, or None for every language)."""
+
+    def __init__(self, bbox=WORLD, langs=None):
+        self.bbox = tuple(float(x) for x in bbox)
+        self.langs = None if langs is None else frozenset(langs)
+
+    @property
+    def world(self):
+        return self.bbox == WORLD
+
+    def contains(self, lon, lat):
+        b = self.bbox
+        return b[0] <= lon <= b[2] and b[1] <= lat <= b[3]
+
+    def lang(self, code):
+        """The language a name is kept under: "" for none; None when it is not kept at all."""
+        code = (code or "").strip()
+        if not code or code in NO_LANG:
+            return ""
+        if self.langs is None or code in self.langs:
+            return code
+        return None
+
+    def describe(self):
+        where = "world" if self.world else ",".join(f"{x:g}" for x in self.bbox)
+        return {"bbox": where, "langs": "all" if self.langs is None else len(self.langs)}
+
+
+DEFAULT_SCOPE = Scope()
+
+
+def parse_bbox(s):
+    """`world`, `window` or minLon,minLat,maxLon,maxLat."""
+    s = (s or "").strip().lower()
+    if s in ("", "world"):
+        return WORLD
+    if s == "window":
+        return WINDOW
+    parts = [float(x) for x in s.split(",")]
+    if len(parts) != 4 or not (parts[0] < parts[2] and parts[1] < parts[3]):
+        raise ValueError(f"--bbox '{s}' is not minLon,minLat,maxLon,maxLat (west < east, south < north)")
+    if parts[0] < -180 or parts[2] > 180 or parts[1] < -90 or parts[3] > 90:
+        raise ValueError(f"--bbox '{s}' is outside the world")
+    return tuple(parts)
+
+
+def parse_langs(s):
+    """`all` (None), `window`, or a comma-separated list of language codes."""
+    s = (s or "").strip()
+    if s.lower() in ("", "all"):
+        return None
+    if s.lower() == "window":
+        return WINDOW_LANGS
+    return frozenset(x.strip() for x in s.split(",") if x.strip())
 
 GEONAMES_SOURCE = "GeoNames (geonames.org), CC BY 4.0"
 WIKIDATA_SOURCE = "Wikidata (wikidata.org), CC0"
-
-
-def in_bbox(lon, lat):
-    return BBOX[0] <= lon <= BBOX[2] and BBOX[1] <= lat <= BBOX[3]
 
 
 def r5(x):
@@ -182,8 +262,8 @@ def gn_rows(all_zip):
                 yield c
 
 
-def gn_alternate_names(alt_zip, wanted):
-    """geonameid → (names, wikidata ids) for the candidate ids only."""
+def gn_alternate_names(alt_zip, wanted, scope=DEFAULT_SCOPE):
+    """geonameid → (names, wikidata ids) for the candidate ids only, in the scope's languages."""
     names, wd = {}, {}
     with zipfile.ZipFile(alt_zip) as z:
         with z.open("alternateNamesV2.txt") as fh:
@@ -201,7 +281,8 @@ def gn_alternate_names(alt_zip, wanted):
                     continue
                 if lang in GN_PSEUDO_LANGS or not nm:
                     continue
-                if lang and lang not in LANGS:
+                lang = scope.lang(lang)
+                if lang is None:
                     continue
                 colloquial = len(c) > 6 and c[6] == "1"
                 if colloquial:
@@ -220,19 +301,19 @@ def gn_keep(fcode, population, names, wd):
     return any(n.get("historic") or n.get("when") or n.get("lang") in HISTORICAL_LANGS for n in names)
 
 
-def geonames(all_zip, alt_zip, out):
-    stats = {"rows": 0, "window": 0, "candidates": 0, "kept": 0, "names": 0, "links": 0}
+def geonames(all_zip, alt_zip, out, scope=DEFAULT_SCOPE):
+    stats = {"scope": scope.describe(), "rows": 0, "window": 0, "candidates": 0, "kept": 0, "names": 0, "links": 0}
     wanted = set()
     for c in gn_rows(all_zip):
         stats["rows"] += 1
         lat, lon = float(c[4]), float(c[5])
-        if not in_bbox(lon, lat):
+        if not scope.contains(lon, lat):
             continue
         stats["window"] += 1
         if gn_candidate(c[6], c[7]):
             wanted.add(int(c[0]))
     stats["candidates"] = len(wanted)
-    names, wd = gn_alternate_names(alt_zip, wanted)
+    names, wd = gn_alternate_names(alt_zip, wanted, scope)
 
     def features():
         rows = []
@@ -309,20 +390,34 @@ PREFIX schema: <http://schema.org/>
 """
 
 
-def wd_scope():
+_WD_LONLAT = "BIND(geof:longitude(?c) AS ?lon) BIND(geof:latitude(?c) AS ?lat)"
+
+
+def wd_scope(scope=DEFAULT_SCOPE):
+    """The items of the root classes with a coordinate; outside a world scope, inside its bbox."""
     roots = " ".join(f"wd:{q}" for q, _ in WD_ROOTS)
-    return (f"VALUES ?root {{ {roots} }} ?item wdt:P31/wdt:P279* ?root . ?item wdt:P625 ?c . "
-            f"BIND(geof:longitude(?c) AS ?lon) BIND(geof:latitude(?c) AS ?lat) "
-            f"FILTER(?lon >= {BBOX[0]} && ?lon <= {BBOX[2]} && ?lat >= {BBOX[1]} && ?lat <= {BBOX[3]})")
+    where = f"VALUES ?root {{ {roots} }} ?item wdt:P31/wdt:P279* ?root . ?item wdt:P625 ?c ."
+    if scope.world:
+        return where
+    b = scope.bbox
+    return (f"{where} {_WD_LONLAT} "
+            f"FILTER(?lon >= {b[0]:g} && ?lon <= {b[2]:g} && ?lat >= {b[1]:g} && ?lat <= {b[3]:g})")
 
 
-def wd_queries():
-    langs = ", ".join(f'"{l}"' for l in sorted(LANGS))
-    s = wd_scope()
+def _lang_filter(var, langs):
+    if langs is None:
+        return ""
+    quoted = ", ".join(f'"{l}"' for l in sorted(langs))
+    return f" FILTER(LANG(?{var}) IN ({quoted}))"
+
+
+def wd_queries(scope=DEFAULT_SCOPE):
+    s = wd_scope(scope)
+    names = lambda var: _lang_filter(var, scope.langs)  # noqa: E731
     return {
-        "core": f"SELECT DISTINCT ?item ?root ?lon ?lat WHERE {{ {s} }}",
-        "labels": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item rdfs:label ?name . FILTER(LANG(?name) IN ({langs})) }}",
-        "aliases": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item skos:altLabel ?name . FILTER(LANG(?name) IN ({langs})) }}",
+        "core": f"SELECT DISTINCT ?item ?root ?lon ?lat WHERE {{ {s}{'' if not scope.world else ' ' + _WD_LONLAT} }}",
+        "labels": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item rdfs:label ?name .{names('name')} }}",
+        "aliases": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item skos:altLabel ?name .{names('name')} }}",
         # one query per property: a `VALUES ?prop` join makes the endpoint sort on ?prop and time out.
         # Each time with its PRECISION (a century is not a year) and its RANK (a preferred statement
         # overrides the normal ones, a deprecated one is wrong) — the full statement, not `wdt:`.
@@ -333,10 +428,12 @@ def wd_queries():
         "official": f"SELECT DISTINCT ?item ?name ?start ?end WHERE {{ {s} ?item p:P1448 ?st . ?st ps:P1448 ?name . "
                     f"OPTIONAL {{ ?st pq:P580 ?start }} OPTIONAL {{ ?st pq:P582 ?end }} }}",
         "native": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item wdt:P1705 ?name . }}",
-        # what the item IS ("former country in modern-day Spain"): schema:description, in the same
-        # languages as the names; the extract keeps English and the language of the native label
-        "descriptions": f"SELECT DISTINCT ?item ?d WHERE {{ {s} ?item schema:description ?d . "
-                        f"FILTER(LANG(?d) IN ({langs})) }}",
+        # what the item IS ("former country in modern-day Spain"): schema:description, in the names'
+        # languages — with every language, in DESCRIPTION_LANGS: the descriptions of every item in every
+        # language do not finish on QLever (2026-10-27), and the extract keeps only English and the
+        # language of the native label anyway
+        "descriptions": f"SELECT DISTINCT ?item ?d WHERE {{ {s} ?item schema:description ?d ."
+                        f"{_lang_filter('d', scope.langs if scope.langs is not None else DESCRIPTION_LANGS)} }}",
     }
 
 
@@ -445,7 +542,7 @@ def urllib_post(endpoint, user_agent, timeout=3600):
 
 
 def wikidata_fetch(endpoint, out_dir, user_agent="Histmersion/0.1 (gazetteer import)", pause=5.0,
-                   retries=WD_RETRIES, post=None, sleep=time.sleep):
+                   retries=WD_RETRIES, post=None, sleep=time.sleep, scope=DEFAULT_SCOPE):
     """Run each query once and save its TSV. A generic User-Agent, one request at a time, a pause
     between them, a timeout answered by asking in pages and a "slow down" by waiting
     ([[fetch_query]]). Resumable: a query whose result file is already complete is not asked again
@@ -455,9 +552,9 @@ def wikidata_fetch(endpoint, out_dir, user_agent="Histmersion/0.1 (gazetteer imp
     os.makedirs(out_dir, exist_ok=True)
     meta_path = os.path.join(out_dir, "fetch.json")
     meta = json.load(open(meta_path)) if os.path.exists(meta_path) else {}
-    meta.update({"endpoint": endpoint, "files": meta.get("files", {})})
+    meta.update({"endpoint": endpoint, "files": meta.get("files", {}), "scope": scope.describe()})
     meta.setdefault("fetched", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
-    for name, q in wd_queries().items():
+    for name, q in wd_queries(scope).items():
         path = os.path.join(out_dir, f"{name}.tsv")
         if os.path.exists(path) and name in meta["files"]:
             continue
@@ -672,8 +769,10 @@ def when_ranges(start, end):
     return {"timespans": [span]} if span else None
 
 
-def wikidata(src_dir, out):
-    stats = {"items": 0, "kept": 0, "names": 0, "links": 0, "dated": 0, "described": 0, "century": 0}
+def wikidata(src_dir, out, scope=DEFAULT_SCOPE):
+    """The Wikidata extract from the TSV results of [[wikidata_fetch]] — cut again to `scope`, so a
+    regional extract can be built from a world fetch."""
+    stats = {"scope": scope.describe(), "items": 0, "kept": 0, "names": 0, "links": 0, "dated": 0, "described": 0, "century": 0}
     kinds = dict(WD_ROOTS)
     order = {q: i for i, (q, _) in enumerate(WD_ROOTS)}
     core = {}
@@ -682,6 +781,8 @@ def wikidata(src_dir, out):
         if not q or root not in kinds:
             continue
         lon, lat = float(literal(r["lon"])[0]), float(literal(r["lat"])[0])
+        if not scope.contains(lon, lat):
+            continue
         cur = core.get(q)
         pt = (r5(lon), r5(lat))
         if cur is None:
@@ -704,8 +805,9 @@ def wikidata(src_dir, out):
         for r in tsv_rows(path):
             q = qid(r.get("item"))
             text, lang = literal(r.get("name"))
-            if q and text and (kind == "native" or lang in LANGS):
-                add_name(q, name_obj(text, lang if lang in LANGS else ""))
+            kept = scope.lang(lang)
+            if q and text and (kind == "native" or kept is not None):
+                add_name(q, name_obj(text, kept or ""))
     labels = {}
     for r in tsv_rows(os.path.join(src_dir, "labels.tsv")):
         q = qid(r.get("item"))
@@ -720,7 +822,7 @@ def wikidata(src_dir, out):
             if q and text:
                 s = wd_year(r["start"]) if r.get("start") else None
                 e = wd_year(r["end"]) if r.get("end") else None
-                add_name(q, name_obj(text, lang if lang in LANGS else "", when(s, e)))
+                add_name(q, name_obj(text, scope.lang(lang) or "", when(s, e)))
     times = {}
     for prop in WD_TIMES:
         for r in tsv_rows(os.path.join(src_dir, f"time_{prop}.tsv")):
@@ -734,7 +836,7 @@ def wikidata(src_dir, out):
         for r in tsv_rows(path):
             q = qid(r.get("item"))
             text, lang = literal(r.get("d"))
-            if q in core and text and lang in LANGS:
+            if q in core and text and scope.lang(lang):
                 descs.setdefault(q, {})[lang] = text
     native_langs = {}
     path = os.path.join(src_dir, "native.tsv")
@@ -742,7 +844,7 @@ def wikidata(src_dir, out):
         for r in tsv_rows(path):
             q = qid(r.get("item"))
             _, lang = literal(r.get("name"))
-            if q in core and lang in LANGS:
+            if q in core and scope.lang(lang):
                 native_langs.setdefault(q, set()).add(lang)
     ids = {}
     for prop in WD_IDS:
@@ -779,10 +881,11 @@ WD_LINK = {"P1566": ("exactMatch", "gn"), "P1584": ("closeMatch", "pl"), "P1667"
 def wd_descriptions(by_lang, native_langs):
     """LPF `descriptions`: English, then the language(s) of the item's native label (the place's
     own language, where Wikidata has a description in it). An item with neither keeps the first of
-    the corpus languages, then the window's modern ones, so a card still says what the place is."""
+    the corpus languages, then the other modern and the ancient ones, so a card still says what the place is."""
     langs = (["en"] if "en" in by_lang else []) + sorted(l for l in native_langs if l != "en" and l in by_lang)
     if not langs:
-        langs = next(([l] for l in CORPUS_LANGS + MODERN_LANGS + ANCIENT_LANGS if l in by_lang), [])
+        langs = next(([l] for l in CORPUS_LANGS + WINDOW_MODERN_LANGS + WORLD_MODERN_LANGS + ANCIENT_LANGS
+                       if l in by_lang), [])
     return [{"value": by_lang[l], "lang": l} for l in langs]
 
 
@@ -798,8 +901,8 @@ def _name_years(names):
 
 
 def wd_feature(q, core, kind, labels, names, times, ids, stats, descriptions=()):
-    title = labels.get("en") or next((labels[l] for l in CORPUS_LANGS + ANCIENT_LANGS + MODERN_LANGS
-                                      if l in labels), q)
+    title = next((labels[l] for l in TITLE_LANGS if l in labels), None) \
+        or next((labels[l] for l in sorted(labels)), q)
     start, end = wd_span(times, _name_years(names), [d["value"] for d in descriptions], stats)
     props = {"title": title, "kind": kind, "source": WIKIDATA_SOURCE, "class": core["root"]}
     span = when_ranges(start, end)
@@ -978,17 +1081,18 @@ def aat_labels(aat_zip, wanted):
     return out
 
 
-def tgn(tgn_zip, aat_zip, out):
-    """The TGN extract: places in the window whose type is historical or archaeological, or that have
+def tgn(tgn_zip, aat_zip, out, scope=DEFAULT_SCOPE):
+    """The TGN extract: places in the scope whose type is historical or archaeological, or that have
     a historic, dated or historical-language name; each with its names (language, use dates, historic
     flag), its English scope note and its place type. Several passes over the zip, read in place."""
-    stats = {"window": 0, "candidates": 0, "kept": 0, "names": 0, "dated": 0, "described": 0}
+    stats = {"scope": scope.describe(), "window": 0, "candidates": 0, "kept": 0, "names": 0, "dated": 0,
+             "described": 0}
     with zipfile.ZipFile(tgn_zip) as z:
         def scan(suffixes, predicates):
             for m in getty_members(z, *suffixes):
                 yield from nt_triples(z, m, predicates)
 
-        # 1. where: the coordinates of `<tgn/X-place>`, clipped to the window
+        # 1. where: the coordinates of `<tgn/X-place>`, inside the scope
         lat, lon = {}, {}
         for s, p, o in scan(["Coordinates.nt"], [_P_LAT, _P_LONG]):
             i = getty_id(s, "tgn")
@@ -996,7 +1100,7 @@ def tgn(tgn_zip, aat_zip, out):
                 continue
             v = float(nt_literal(o)[0])
             (lat if p == _P_LAT else lon)[i[:-6]] = v
-        where = {i: (r5(lon[i]), r5(lat[i])) for i in lat if i in lon and in_bbox(lon[i], lat[i])}
+        where = {i: (r5(lon[i]), r5(lat[i])) for i in lat if i in lon and scope.contains(lon[i], lat[i])}
         stats["window"] = len(where)
         del lat, lon
 
@@ -1046,8 +1150,8 @@ def tgn(tgn_zip, aat_zip, out):
             if not d.get("text"):
                 continue
             i, pref = terms[t]
-            lang = tgn_lang(d.get("tag"))
-            if lang and lang not in LANGS:
+            lang = scope.lang(tgn_lang(d.get("tag")))
+            if lang is None:
                 continue
             names.setdefault(i, []).append(name_obj(d["text"], lang, when(d.get("start"), d.get("end")),
                                                     bool(d.get("historic"))))
@@ -1145,30 +1249,44 @@ def out_path(name, out_dir=None, env=None):
     return os.path.join(d, name)
 
 
-def split_out(argv):
-    """`--out DIR` (anywhere) and the remaining arguments."""
-    rest, out = [], None
+OPTIONS = ("out", "bbox", "langs")
+
+
+def split_options(argv):
+    """`--out DIR`, `--bbox B` and `--langs L` (anywhere, `--x v` or `--x=v`) and the remaining arguments."""
+    rest, opts = [], {}
     it = iter(argv)
     for a in it:
-        if a == "--out":
-            out = next(it, None)
-        elif a.startswith("--out="):
-            out = a.split("=", 1)[1]
+        key = a[2:].split("=", 1)[0] if a.startswith("--") else None
+        if key in OPTIONS:
+            opts[key] = a.split("=", 1)[1] if "=" in a else next(it, None)
         else:
             rest.append(a)
-    return out, rest
+    return opts, rest
+
+
+def split_out(argv):
+    """`--out DIR` (anywhere) and the remaining arguments."""
+    opts, rest = split_options(argv)
+    return opts.get("out"), rest
 
 
 def main(argv):
-    out, argv = split_out(argv)
+    opts, argv = split_options(argv)
+    out = opts.get("out")
+    try:
+        scope = Scope(parse_bbox(opts.get("bbox")), parse_langs(opts.get("langs")))
+    except ValueError as e:
+        print(e, file=sys.stderr)
+        return 2
     if len(argv) >= 4 and argv[0] == "geonames":
-        print(json.dumps(geonames(argv[1], argv[2], out_path(argv[3], out)), indent=2))
+        print(json.dumps(geonames(argv[1], argv[2], out_path(argv[3], out), scope), indent=2))
     elif len(argv) >= 3 and argv[0] == "wikidata-fetch":
-        print(json.dumps(wikidata_fetch(argv[1], argv[2]), indent=2))
+        print(json.dumps(wikidata_fetch(argv[1], argv[2], scope=scope), indent=2))
     elif len(argv) >= 3 and argv[0] == "wikidata":
-        print(json.dumps(wikidata(argv[1], out_path(argv[2], out)), indent=2))
+        print(json.dumps(wikidata(argv[1], out_path(argv[2], out), scope), indent=2))
     elif len(argv) >= 4 and argv[0] == "tgn":
-        print(json.dumps(tgn(argv[1], argv[2] or None, out_path(argv[3], out)), indent=2))
+        print(json.dumps(tgn(argv[1], argv[2] or None, out_path(argv[3], out), scope), indent=2))
     elif len(argv) >= 4 and argv[0] == "pin":
         print(json.dumps(pin(argv[1], argv[2], out_path(argv[3], out), argv[4:]), indent=2))
     else:
