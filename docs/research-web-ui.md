@@ -1,0 +1,263 @@
+# Web UI redesign — research and proposal
+
+**Status (2026-10-27):** research and a visual proposal only. Nothing in the UI changes until the
+maintainer has seen and accepted the visual design of every change. The full reports are in
+[`research-assets/web-ui/`](research-assets/web-ui/):
+
+| report | what it holds |
+|---|---|
+| [`evidence-review.md`](research-assets/web-ui/evidence-review.md) | what peer-reviewed HCI, cognitive-psychology and visualisation research shows, 13 topics, ~150 references, evidence grades |
+| [`audit.md`](research-assets/web-ui/audit.md) | inventory of every view and control, grouping vs data model, consistency, windows/tabs, credits, five confirmed bugs (file:line) |
+| [`capabilities.md`](research-assets/web-ui/capabilities.md) | what the CLI/MCP can do that the web UI cannot, first-run steps, how agents find sources, what planned features need |
+| [`icons-licences-pleiades.md`](research-assets/web-ui/icons-licences-pleiades.md) | every map icon judged, open-licence candidates (SVGs in `icons/`), which map credits the law requires, which Pleiades fields we drop |
+
+## 1. Why
+
+Each element of today's UI is defensible on its own; together they overload. The maintainer's list:
+always-visible map, research/agent/job and filter controls; no browsing view for sources and
+articles; licences shown for every map source; backlog, worklog, runs, jobs and managers that look
+like unrelated tools; `snake_case`/`kebab-case` labels; inconsistent fonts, borders and styles; no way
+to open things in a new tab; functions the web UI cannot reach (downloads, unpausing, re-fetching);
+a jagged timeline; playback that stops on its last frame; coincident points that never split;
+thumbnail-only pictures; overflowing names; unintuitive event and site icons; Pleiades descriptions
+not shown; and planned features (notes, bookmarks, read marks, optional multi-user, permissions,
+visual config) with nowhere to go. The goal: a UI a non-technical person can use without
+instructions, built on what research shows helps people work — not gamification, dark patterns or
+fashion.
+
+## 2. What the audit measured
+
+- **Density.** ~59 controls are visible at once on a 1440×900 screen before any window is open
+  (11 tools, 15 map-layer controls, 11 filters, sidebar tabs, timeline). 392 px of bars sit above the
+  map, which gets 42 % of the viewport. Two identical `+ / −` pairs sit 110 px apart (timeline zoom
+  and map zoom); two year ranges (publication year and period) look alike. Four open windows raise
+  the count to 243.
+- **Grouping.** An agent run *is* a job row, yet runs and jobs are separate windows that never link
+  to each other. 666 goal → backlog links exist in the data and none is clickable. Worklog entries
+  name runs only in prose. The models window is reachable only from inside the runs window.
+- **Consistency.** Raw identifiers reach the reader in at least 15 places (`review-article`,
+  `article-publish`, `basemap-fetch`, `seven_day`, a config key in prose, citekeys as window titles).
+  29 font sizes, 18 radii, 30 shadows, 51 literal colours; two conflicting palettes for source status;
+  dark theme only.
+- **Tabs.** Every window has a hash URL, but no control is a link, so nothing can be middle- or
+  ⌘-clicked into a new tab (lost with the window manager on 2026-09-18).
+- **Credits.** A permanent 300 × 110 px box on desktop; a raw `CC-BY-SA-3.0` code token in picture
+  popups.
+
+## 3. What the evidence supports (short form)
+
+Ranked by strength of evidence and relevance (full citations in the review):
+
+1. Filter and brush responses under ~100 ms (Liu & Heer 2014).
+2. Keep the state people need on screen — active filters, position, comparison targets
+   (Cowan 2001; Plumlee & Ware 2006).
+3. Interrupt rarely; batch non-urgent notices (Iqbal & Horvitz 2007; Mark et al. 2008).
+4. Good defaults beat settings (Jachimowicz et al. 2019 meta-analysis; Mackay 1991).
+5. Stable layouts; never auto-rearrange. Users choose what to show (Findlater & McGrenere 2004;
+   Sears & Shneiderman 1994).
+6. Group dense content visibly instead of thinning it (Rosenholtz et al. 2007; Wolfe & Horowitz 2017).
+7. Linked views — map ↔ timeline ↔ list — beat toggling (North & Shneiderman 2000).
+8. WCAG 2.2 AA helps everyone: contrast, target size, keyboard, focus (Schmutz et al. 2016).
+9. Design for re-finding: history, visited marks, bookmarks, search — not folder trees
+   (Teevan et al. 2007; Whittaker et al. 2011).
+10. Supervising automation: keep people in the loop, make state visible, add friction against
+    rubber-stamping consequential approvals (Endsley 1995; Parasuraman et al. 2000; Buçinca et al. 2021).
+11. Label icons (Wiedenbeck 1999).
+12. Visible navigation and strong signifiers (Pernice & Budiu 2016; Burmistrov et al. 2015).
+13. Teach in context and by doing, not with up-front tours (Carroll et al. 1987; Kendrick 2020).
+14. Plain, consistent labels with good information scent; broad and shallow structure
+    (Pirolli & Card 1999; Larson & Czerwinski 1998).
+15. Animation for spotting change, static/small multiples for comparing (Robertson et al. 2008;
+    Griffin et al. 2006).
+
+**Not supported:** the "7 ± 2 menu items" rule; adaptive UIs that reorder themselves; mandatory
+tours; hidden/hamburger navigation on desktop; icon-only toolbars; maximal minimalism as a usability
+rule; animation as the default analysis view; folder hierarchies for notes; streaks, badges and
+points; judging usability by looks. **Weak or missing evidence:** marker clustering/spiderfying,
+unified activity feeds, setup wizards, empty states — the proposal follows the strongest adjacent
+evidence and the evaluation plan (§ 9) tests these.
+
+## 4. The proposal
+
+The visual design is a canvas of 11 screens (Explore, Explore with layers and a selected place, map
+details, Library, Research overview, a goal page, Settings, first-run setup, tablet, visual system,
+icons), shared with the maintainer for review.
+
+### 4.1 Four places, always labelled
+
+One top bar: **Explore** (map + timeline) · **Library** (browse and read) · **Research** (goals,
+agents, decisions, activity) · **Settings**. It replaces the 11-button toolbar; every former window
+has a home in one of the four (table in § 4.6). The bar also carries one search field, an agent
+status pill ("Agents working · 3 runs") and a "N need your decision" pill — the only standing
+notification, shown only when there is something to decide. A logo slot sits at its left and costs
+no extra space.
+
+### 4.2 Explore
+
+- **Filters** move to one left panel shared with Library, foldable to a 48 px rail that shows the
+  count of active filters. Words, place, period and topic are visible; authors, status, tags and
+  publication year sit behind "More filters", but an *active* filter always shows as a chip. The
+  period is set on the timeline and echoed in the panel, so the two year ranges can no longer be
+  confused. "Save this view" stores filters + map position (the first bookmark kind).
+- **Layers** move into one map panel. A layer's options appear only while it is on (today they stay
+  visible, disabled).
+- **Timeline** sits under the map: one labelled Play button and speed, "Zoom to period" and
+  "Show all time" as text buttons (so they can't be mistaken for map zoom), a smooth area curve
+  without per-bucket dots (fixes bug (a), § 5), exact counts on hover. It folds to one line.
+- **Results** on the right: "On the map / Everywhere", tabs for sources, articles, events, places
+  and pictures with counts; every row is a real link with bookmark and new-tab actions.
+- **Selecting** anything replaces the results with its detail (← back), from where it can be pinned
+  as a floating window or opened in a tab.
+- The map gets ~70 % of the screen instead of 42 %.
+
+### 4.3 Library
+
+A reading-first view with the same filters: "My library" (everything, bookmarks, my notes, not read
+yet, recently opened), a sortable list (title, year, status, period; a dot for unread), and a reading
+pane (serif, 62-character lines) with Bookmark, Add note, Mark as read/unread, Show on the map, Open
+in a new tab, and links to what a source cites, who answers it and the articles that cite it. Adding
+sources (upload, DOI, Calibre import, merge a collection) moves here from the toolbar.
+
+### 4.4 Research — one system
+
+- **Overview:** agent state as one three-way control — *Working · Finish current work, then pause ·
+  Pause now* (today: autopilot on/off + drain/undrain); weekly AI-limit use; **Needs your decision**
+  with the reason and a link to the evidence before the accept button (friction against
+  rubber-stamping); goals with progress and what blocks them; one **Activity** list.
+- **Activity** merges agent runs, background jobs, worklog entries and the person's own decisions in
+  one time-ordered list, filterable (running now, agent work, background jobs, your actions,
+  problems). Agent runs and long jobs get Pause/Cancel in place.
+- **A goal page** shows its plan, each step linked to the agent work that did it, what it produced
+  (articles, sources, backlog items, items waiting to be acquired) and its history.
+- **Backlog** and **To acquire** stay separate lists, each item linked to its goal and to the run or
+  job that created or closed it.
+- Data changes needed: a `goal_slug`/`run_id` link on queue items; worklog entries written with
+  structured references instead of prose; one activity endpoint over jobs + queue log + decisions;
+  pause/cancel for background jobs (today only agent runs can be paused).
+
+### 4.5 Settings and first-run setup
+
+Everything the CLI can download, refresh, pause or configure gets a place: data and downloads
+(background map, sea depth, gazetteers, periods, event catalogues, picture providers — each with
+size, last update, Update/Pause/Remove), where to look for sources, AI agents, keys (vault
+references, never plain values), Calibre, backups (back up now, list, restore), plugins, credits,
+people and access (only when multi-user is on), "Advanced (all settings)" as a generated form over
+the full config, and "Run the setup again". First run is a 7-step setup with safe defaults and
+"Skip the rest": finding open papers (contact e-mail, used only for Unpaywall/Crossref), maps (area to
+download, where the map opens — task #6552), background data, research agents (optional), Calibre
+(optional). Needs: a config-write API (or a settings layer in the database) on top of the existing
+reload machinery, and a restart trigger.
+
+### 4.6 Windows, tabs and addresses
+
+Every item opens three ways: click (side panel), pin (floating window; minimised windows fold into a
+tray), ⌘/Ctrl-click or ↗ (new browser tab). Every page and item gets a real path (`/explore`,
+`/library`, `/research/activity`, `/research/goals/<slug>`, `/settings/data`, `/source/<ck>`,
+`/article/<slug>`, `/place/<id>` …), every link is an `<a href>`, and the in-window link handler
+respects modifier keys.
+
+| today | proposed home |
+|---|---|
+| research goals, approvals, agent managers, agent runs, models | Research › Goals, Needs you, Activity, AI models and limits |
+| backlog, worklog, jobs | Research › Backlog, Activity |
+| to acquire | Research › To acquire |
+| upload, merge another collection | Library › Add sources |
+| about, map regions, storage | Settings › About, Data and downloads |
+| API key | Settings › Keys (and a sign-in prompt when a write needs it) |
+
+### 4.7 Visual system
+
+Two typefaces bundled for offline use (Source Sans 3 for the interface, Source Serif 4 for reading;
+both OFL), six sizes (12/13/14/16/20/26), two weights, three radii (4/8/pill), two shadows, light and
+dark themes following the system setting, one token set used by every component. Blue = place and
+selection, ochre = time, orange-brown = needs you/problem. One source-status code everywhere, with
+colour, shape **and** word. Targets ≥ 32 px (desktop) / ≥ 44 px (touch); visible focus;
+`prefers-reduced-motion` respected.
+
+### 4.8 Wording
+
+Sentence case everywhere; plain names instead of identifiers (`review-article` → "Review an
+article", `article-publish` → "Make an article readable", `basemap-fetch` → "Download the background
+map", `seven_day` → "This week's limit", drain → "Finish current work, then pause"). One label
+dictionary replaces the fall-backs that show identifiers today (`ListFilterBar` `identity`,
+`Label.display`); identifiers stay visible under "Details" for command-line users.
+
+### 4.9 Map
+
+- **Credits:** OpenStreetMap's licence requires a visible credit on the map; it may fold to an "i"
+  after the first pan/zoom, and one Credits page covers the rest. Fix the missing land-cover credit
+  and the wrong Cliopatria licence label. The terrain notice moves behind the "i".
+- **Coincident points** fan out around their spot on click (Esc folds them); list rows open the item
+  directly instead of zooming.
+- **Pictures** open full size with author, linked licence, provider page and "save the original";
+  ‹ › steps through pictures at the same place; long file names wrap and a readable title is derived.
+- **Playback** ends by restoring the whole selected period and says so, with "Play again".
+- **Place card:** import the Pleiades description, place types, connections (e.g. the Arkadiko
+  bridge ↔ Tiryns, Epidauros), references, Wikipedia/Wikidata links, location accuracy and name
+  periods, and show them on the place's detail.
+- **Icons:** keep Lucide (upgraded to 1.x) and add Tabler, which draws the same way; a few CC0/Apache
+  glyphs redrawn as line icons; custom glyphs for earthquake, naval battle, siege, palace, burial
+  mound (and aqueduct); split infrastructure into bridge, road and aqueduct; resolve the castle and
+  crown collisions. Every icon is labelled in the legend; each gets a recognition check before
+  shipping (§ 9).
+
+### 4.10 Room for planned features
+
+Bookmarks, notes and read marks have places in the item header and in Library › My library. Notes
+list where they were left. Multi-user stays optional: in single-user mode there is no sign-in and no
+user menu; when enabled, a user menu appears, and Settings › People and access manages roles, with
+the UI hiding what a role cannot use (server-side checks first; today reads are always open and one
+shared key gates writes). Config editing appears as Settings and "Advanced (all settings)".
+
+## 5. Bugs found, independent of the redesign
+
+Confirmed in code (details in the audit, § 6): (a) the timeline draws ~1 000 one-pixel S-curve steps
+plus ~1 000 dots, hence the jagged line and 1-px risers; (b) playback never redraws the full span when
+it ends or stops; (c) identical coordinates cluster forever and a media row in such a cluster silently
+never opens; (d) the map feed carries only thumbnail URLs, and the lightbox handles only `/assets/`
+images; (e) the map popup has no wrap rule for long names. These can be fixed before or with the
+redesign.
+
+## 6. How agents find sources (not a UI change)
+
+Histmersion's own agents never use Wikipedia: every agent role has `web: none`, and new-source search
+queries OpenAlex, Crossref, Europe PMC, arXiv and CORE, plus works citing a goal's sources and newer
+work by their authors. Wikipedia enters only through the research workspace's `trailhead` skill and
+the MCP `discover` tool description, both of which suggest starting from a Wikipedia article and take
+only its DOI/arXiv references — never its text. Recommendation: start topics from highly cited recent
+review articles and the citation graph, demote Wikipedia to an optional last resort, and reword the
+skill and tool description to match.
+
+## 7. Open decisions for the maintainer
+
+1. Accept, change or reject each screen of the design canvas.
+2. Default theme: follow the system (proposed) or keep dark first.
+3. Bundled Source Sans 3 / Source Serif 4, or the system font stack.
+4. Fix the five bugs (§ 5) now, ahead of the redesign?
+5. Custom icon glyphs: draw them in-house (proposed) or accept CC BY icons with a credit.
+6. Settings storage: write the `.conf` file, or keep UI-edited settings in the database layered over
+   it (proposed: database layer, `.conf` stays the base and is never rewritten).
+7. Demote Wikipedia in the `trailhead` skill and the `discover` tool description (§ 6).
+
+## 8. Phasing (after acceptance)
+
+1. Tokens, type, both themes, label dictionary — no layout change.
+2. Top bar, routes and real links; windows keep working.
+3. Explore: filter panel, layers panel, timeline, results, detail panel, map fixes.
+4. Library.
+5. Research unification (with the data links in § 4.4).
+6. Settings, setup and the config-write API.
+7. Icons and the Pleiades place card.
+8. Planned features: bookmarks, notes, read marks, then optional multi-user.
+
+Each phase lands behind the existing browser tests, measured at live data volumes with all layers on,
+plus refreshed user documentation and an in-context tutorial at the end.
+
+## 9. Evaluation plan
+
+Cheap and repeated rather than one big study: heuristic evaluation by 3 evaluators against Nielsen's
+heuristics and WCAG 2.2; a cognitive walkthrough of five core tasks (find sources on a place and
+period, read and bookmark one, approve an agent decision, download pictures, set up from scratch);
+first-click tests on the new navigation; an icon recognition test (target ≥ 85 % correct, as in
+ANSI Z535.3) for every map glyph; 2–3 rounds of think-aloud with 5 people each, including
+non-technical users; SUS and NASA-TLX before and after. Details in the evidence review, § 13.
