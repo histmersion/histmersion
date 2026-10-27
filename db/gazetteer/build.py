@@ -393,15 +393,29 @@ PREFIX schema: <http://schema.org/>
 _WD_LONLAT = "BIND(geof:longitude(?c) AS ?lon) BIND(geof:latitude(?c) AS ?lat)"
 
 
-def wd_scope(scope=DEFAULT_SCOPE):
-    """The items of the root classes with a coordinate; outside a world scope, inside its bbox."""
+def wd_scope(scope=DEFAULT_SCOPE, band=None):
+    """The items of the root classes with a coordinate: in the whole world, or inside the scope's bbox —
+    or inside `band`, a part of it (minLon, minLat, maxLon, maxLat; [[split_band]]). A band's east and north
+    edges are open, unless they are the scope's own, so a point on the edge between two bands is in one."""
     roots = " ".join(f"wd:{q}" for q, _ in WD_ROOTS)
     where = f"VALUES ?root {{ {roots} }} ?item wdt:P31/wdt:P279* ?root . ?item wdt:P625 ?c ."
-    if scope.world:
+    area = band or (None if scope.world else scope.bbox)
+    if area is None:
         return where
-    b = scope.bbox
+    east = "<=" if area[2] >= scope.bbox[2] else "<"
+    north = "<=" if area[3] >= scope.bbox[3] else "<"
     return (f"{where} {_WD_LONLAT} "
-            f"FILTER(?lon >= {b[0]:g} && ?lon <= {b[2]:g} && ?lat >= {b[1]:g} && ?lat <= {b[3]:g})")
+            f"FILTER(?lon >= {area[0]:g} && ?lon {east} {area[2]:g} && ?lat >= {area[1]:g} && ?lat {north} {area[3]:g})")
+
+
+def split_band(area):
+    """Two halves of a bbox, across its longer side (in degrees)."""
+    w, s, e, n = area
+    if e - w >= n - s:
+        mid = float(f"{(w + e) / 2:g}")
+        return [(w, s, mid, n), (mid, s, e, n)]
+    mid = float(f"{(s + n) / 2:g}")
+    return [(w, s, e, mid), (w, mid, e, n)]
 
 
 def _lang_filter(var, langs):
@@ -411,11 +425,11 @@ def _lang_filter(var, langs):
     return f" FILTER(LANG(?{var}) IN ({quoted}))"
 
 
-def wd_queries(scope=DEFAULT_SCOPE):
-    s = wd_scope(scope)
+def wd_queries(scope=DEFAULT_SCOPE, band=None):
+    s = wd_scope(scope, band)
     names = lambda var: _lang_filter(var, scope.langs)  # noqa: E731
     return {
-        "core": f"SELECT DISTINCT ?item ?root ?lon ?lat WHERE {{ {s}{'' if not scope.world else ' ' + _WD_LONLAT} }}",
+        "core": f"SELECT DISTINCT ?item ?root ?lon ?lat WHERE {{ {s if _WD_LONLAT in s else s + ' ' + _WD_LONLAT} }}",
         "labels": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item rdfs:label ?name .{names('name')} }}",
         "aliases": f"SELECT DISTINCT ?item ?name WHERE {{ {s} ?item skos:altLabel ?name .{names('name')} }}",
         # one query per property: a `VALUES ?prop` join makes the endpoint sort on ?prop and time out.
@@ -444,7 +458,16 @@ def wd_queries(scope=DEFAULT_SCOPE):
 WD_PAGE = 250_000        # rows per page once a query has timed out whole
 WD_MIN_PAGE = 5_000      # a page that still times out at this size is given up on
 WD_RETRIES = 8           # failed attempts per request (page) before giving up
+# A world-wide query too big for one answer is asked again for each half of its area, and so on
+# ([[fetch_banded]]): ordering the whole result for pages still times out — in query planning — once it
+# holds tens of millions of rows (every description of 2.2 M items, 2026-10-27). Below this size (degrees,
+# both sides) a band falls back to pages.
+WD_MIN_BAND = 0.5
 _TIMEOUT = re.compile(r"time[ds]?[ -]?out|timed out|cancel+ed", re.I)
+
+
+class QueryTimeout(RuntimeError):
+    """The endpoint ran out of time on a query asked whole (`fetch_query(pages=False)`)."""
 
 
 class HttpFailure(Exception):
@@ -494,7 +517,7 @@ def paged(query, limit, offset):
 
 
 def fetch_query(query, post, out, sleep=time.sleep, page=None, first_page=WD_PAGE, min_page=WD_MIN_PAGE,
-                retries=WD_RETRIES, log=lambda msg: print(msg, file=sys.stderr)):
+                retries=WD_RETRIES, log=lambda msg: print(msg, file=sys.stderr), pages=True):
     """Run one SPARQL SELECT and write its TSV result to the binary file `out`; returns the number of
     requests that succeeded. `post(query_text) -> bytes` asks the endpoint (raising [[HttpFailure]]).
 
@@ -502,7 +525,8 @@ def fetch_query(query, post, out, sleep=time.sleep, page=None, first_page=WD_PAG
     the page (from the same offset: the pages already written stay), never below `min_page`. A BUSY answer
     waits its Retry-After (else 60 s × attempt) and asks again. A 200 whose rows end in QLever's export
     error ([[export_failure]]) counts as that error — a timeout then pages too. Each request gets
-    `retries` failed attempts; the header line is written once."""
+    `retries` failed attempts; the header line is written once. `pages=False`: a timeout raises
+    [[QueryTimeout]] instead, with nothing written."""
     offset, attempts, done, header = 0, 0, 0, None
     while True:
         text = query if page is None else paged(query, page, offset)
@@ -517,6 +541,8 @@ def fetch_query(query, post, out, sleep=time.sleep, page=None, first_page=WD_PAG
             if kind == "fatal" or attempts > retries:
                 raise RuntimeError(f"HTTP {e.code} after {attempts} attempt(s): {e.detail}") from e
             if kind == "timeout":
+                if not pages:
+                    raise QueryTimeout(e.detail) from e
                 smaller = first_page if page is None else page // 2
                 if smaller < min_page:
                     raise RuntimeError(f"timed out at a page of {page} rows (minimum {min_page}): {e.detail}") from e
@@ -545,6 +571,35 @@ def fetch_query(query, post, out, sleep=time.sleep, page=None, first_page=WD_PAG
         offset += page
 
 
+def fetch_banded(name, scope, post, out, sleep=time.sleep, retries=WD_RETRIES, min_band=WD_MIN_BAND,
+                 log=lambda msg: print(msg, file=sys.stderr)):
+    """Query `name` of [[wd_queries]] over the scope, whole first; a timeout asks again for each half of
+    the area ([[split_band]], depth first, so the rows come west to east, south to north), and a band
+    smaller than `min_band` on both sides in pages ([[fetch_query]]). One header; returns the requests."""
+    header, asked, todo = None, 0, [None]
+    while todo:
+        band = todo.pop(0)
+        area = band or scope.bbox
+        small = area[2] - area[0] < min_band and area[3] - area[1] < min_band
+        buf = io.BytesIO()
+        try:
+            asked += fetch_query(wd_queries(scope, band)[name], post, buf, sleep=sleep, retries=retries, log=log,
+                                 pages=small)
+        except QueryTimeout:
+            halves = split_band(area)
+            log(f"  timed out on {','.join(f'{x:g}' for x in area)}: asking for each half")
+            todo[0:0] = halves
+            continue
+        head, _, rows = buf.getvalue().partition(b"\n")
+        if header is None:
+            header = head
+            out.write(head + b"\n")
+        if rows and not rows.endswith(b"\n"):
+            rows += b"\n"
+        out.write(rows)
+    return asked
+
+
 def urllib_post(endpoint, user_agent, timeout=3600):
     """`post` for [[fetch_query]]: a form POST, TSV back; a non-2xx answer becomes [[HttpFailure]]."""
     def post(query):
@@ -563,8 +618,8 @@ def urllib_post(endpoint, user_agent, timeout=3600):
 def wikidata_fetch(endpoint, out_dir, user_agent="Histmersion/0.1 (gazetteer import)", pause=5.0,
                    retries=WD_RETRIES, post=None, sleep=time.sleep, scope=DEFAULT_SCOPE):
     """Run each query once and save its TSV. A generic User-Agent, one request at a time, a pause
-    between them, a timeout answered by asking in pages and a "slow down" by waiting
-    ([[fetch_query]]). Resumable: a query whose result file is already complete is not asked again
+    between them, a timeout answered by asking for each half of the area ([[fetch_banded]]) and a
+    "slow down" by waiting ([[fetch_query]]). Resumable: a query whose result file is already complete is not asked again
     (results are written to `.part` first). Records the endpoint, the time and each file's sha256 in
     `fetch.json`."""
     post = post or urllib_post(endpoint, user_agent)
@@ -573,14 +628,14 @@ def wikidata_fetch(endpoint, out_dir, user_agent="Histmersion/0.1 (gazetteer imp
     meta = json.load(open(meta_path)) if os.path.exists(meta_path) else {}
     meta.update({"endpoint": endpoint, "files": meta.get("files", {}), "scope": scope.describe()})
     meta.setdefault("fetched", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
-    for name, q in wd_queries(scope).items():
+    for name in wd_queries(scope):
         path = os.path.join(out_dir, f"{name}.tsv")
         if os.path.exists(path) and name in meta["files"]:
             continue
         try:
             with open(path + ".part", "wb") as fh:
-                fetch_query(q, post, fh, sleep=sleep, retries=retries,
-                            log=lambda msg, name=name: print(f"  {name}:{msg}", file=sys.stderr))
+                fetch_banded(name, scope, post, fh, sleep=sleep, retries=retries,
+                             log=lambda msg, name=name: print(f"  {name}:{msg}", file=sys.stderr))
         except RuntimeError as e:
             raise RuntimeError(f"{name}: {e}") from e
         os.replace(path + ".part", path)
