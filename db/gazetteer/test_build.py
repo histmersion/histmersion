@@ -31,7 +31,7 @@ class GeoNames(unittest.TestCase):
         gn_row(3, "Old Hamlet", 40.2, 34.8, "P", "PPL"),                      # kept: a historic name
         gn_row(4, "Hotel Hattusa", 40.03, 34.62, "S", "HTL"),                 # a hotel: dropped
         gn_row(5, "Hattusa ruins", 40.02, 34.61, "S", "ANS"),                 # an ancient site: kept
-        gn_row(6, "Somewhere far", 40.0, -100.0, "P", "PPLA"),                # outside the window
+        gn_row(6, "Somewhere far", 40.0, -100.0, "P", "PPLA"),                # outside the old window: kept
         gn_row(7, "Quarter", 40.0, 34.0, "P", "PPLX"),                        # a section: dropped
         gn_row(8, "Linked village", 40.0, 35.0, "P", "PPL"),                  # kept: a Wikidata link
     ]
@@ -45,21 +45,31 @@ class GeoNames(unittest.TestCase):
         alt_row(16, 1, "en", "Mikoyan", frm="1935", to="1956"),
     ]
 
-    def build(self):
+    def build(self, scope=build.DEFAULT_SCOPE):
         d = tempfile.mkdtemp()
         a, n, out = (os.path.join(d, f) for f in ("all.zip", "alt.zip", "out.ndjson.gz"))
         with zipfile.ZipFile(a, "w") as z:
             z.writestr("allCountries.txt", "\n".join(self.ROWS) + "\n")
         with zipfile.ZipFile(n, "w") as z:
             z.writestr("alternateNamesV2.txt", "\n".join(self.ALTS) + "\n")
-        stats = build.geonames(a, n, out)
+        stats = build.geonames(a, n, out, scope)
         return stats, out
 
-    def test_filters_window_kinds_and_bare_hamlets(self):
+    def test_filters_kinds_and_bare_hamlets_worldwide(self):
         stats, out = self.build()
         ids = [f["@id"] for f in features(out)]
-        self.assertEqual(ids, [f"https://sws.geonames.org/{i}/" for i in (1, 3, 5, 8)])
-        self.assertEqual(stats["kept"], 4)
+        self.assertEqual(ids, [f"https://sws.geonames.org/{i}/" for i in (1, 3, 5, 6, 8)],
+                         "by kind, never by place: the seat in the Americas is kept")
+        self.assertEqual(stats["kept"], 5)
+        self.assertEqual(stats["scope"], {"bbox": "world", "langs": "all"})
+
+    def test_a_regional_extract_is_clipped_to_its_bbox_and_languages(self):
+        stats, out = self.build(build.Scope(build.WINDOW, build.WINDOW_LANGS))
+        fs = features(out)
+        self.assertEqual([f["@id"] for f in fs], [f"https://sws.geonames.org/{i}/" for i in (1, 3, 5, 8)])
+        names = {(n["toponym"], n.get("lang", "")) for n in fs[0]["names"]}
+        self.assertNotIn(("博阿兹卡莱", "zh"), names, "a language outside the regional list")
+        self.assertIn(("Ḫattuša", "hit"), names)
 
     def test_names_languages_and_dates(self):
         _, out = self.build()
@@ -67,7 +77,7 @@ class GeoNames(unittest.TestCase):
         names = {(n["toponym"], n.get("lang", "")): n for n in f["names"]}
         self.assertIn(("Ḫattuša", "hit"), names)
         self.assertIn(("Bogazkale", ""), names)
-        self.assertNotIn(("博阿兹卡莱", "zh"), names, "a language outside the research window's")
+        self.assertIn(("博阿兹卡莱", "zh"), names, "every language is kept by default")
         self.assertFalse(any("wikipedia" in n["toponym"] for n in f["names"]), "a link is no name")
         self.assertEqual(names[("Boğazköy", "tr")]["when"], {"timespans": [{"end": {"in": "1937"}}]})
         self.assertEqual(names[("Mikoyan", "en")]["when"], {"timespans": [{"start": {"in": "1935"}, "end": {"in": "1956"}}]})
@@ -93,7 +103,7 @@ class Wikidata(unittest.TestCase):
             for r in rows:
                 fh.write("\t".join(r) + "\n")
 
-    def build(self):
+    def build(self, scope=build.DEFAULT_SCOPE):
         d = tempfile.mkdtemp()
         e = "<http://www.wikidata.org/entity/{}>"
         self.write(d, "core", ["item", "root", "lon", "lat"], [
@@ -101,10 +111,12 @@ class Wikidata(unittest.TestCase):
             [e.format("Q5684"), e.format("Q486972"), "44.42111", "32.5425"],
             [e.format("Q1"), e.format("Q486972"), "30.0", "40.0"],     # a plain settlement: dropped
             [e.format("Q2"), e.format("Q486972"), "31.0", "41.0"],     # a settlement with a GeoNames id: kept
+            [e.format("Q3"), e.format("Q839954"), "-72.54583", "-13.16333"],  # an archaeological site in the Andes
         ])
         self.write(d, "labels", ["item", "name"], [
             [e.format("Q5684"), '"Babylon"@en'], [e.format("Q5684"), '"Βαβυλών"@grc'],
-            [e.format("Q1"), '"Nowhere"@en'], [e.format("Q2"), '"Linked"@en'], [e.format("Q5684"), '"巴比伦"@zh']])
+            [e.format("Q1"), '"Nowhere"@en'], [e.format("Q2"), '"Linked"@en'], [e.format("Q5684"), '"巴比伦"@zh'],
+            [e.format("Q3"), '"Machu Picchu"@mul'], [e.format("Q3"), '"Machu Pikchu"@qu']])
         self.write(d, "aliases", ["item", "name"], [[e.format("Q5684"), '"Babili \\"Gate of God\\""@en']])
         self.write(d, "time_P571", ["item", "t"], [[e.format("Q5684"), "-2200-01-01T00:00:00Z"]])
         for p in ("P576", "P580", "P582"):
@@ -115,12 +127,12 @@ class Wikidata(unittest.TestCase):
         self.write(d, "id_P1584", ["item", "v"], [[e.format("Q5684"), '"893951"']])
         self.write(d, "official", ["item", "name", "start", "end"], [[e.format("Q2"), '"Linkedgrad"@ru', "1920-01-01T00:00:00Z", "1991-01-01T00:00:00Z"]])
         out = os.path.join(d, "out.ndjson.gz")
-        return build.wikidata(d, out), out
+        return build.wikidata(d, out, scope), out
 
     def test_items_names_dates_links(self):
         stats, out = self.build()
         fs = {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}
-        self.assertEqual(sorted(fs), ["Q2", "Q5684"])
+        self.assertEqual(sorted(fs), ["Q2", "Q3", "Q5684"])
         b = fs["Q5684"]
         self.assertEqual(b["properties"]["kind"], "site", "ancient city outranks settlement")
         self.assertEqual(b["properties"]["class"], "Q15661340")
@@ -129,13 +141,27 @@ class Wikidata(unittest.TestCase):
         names = {(n["toponym"], n.get("lang", "")) for n in b["names"]}
         self.assertIn(("Βαβυλών", "grc"), names)
         self.assertIn(('Babili "Gate of God"', "en"), names)
-        self.assertNotIn(("巴比伦", "zh"), names)
+        self.assertIn(("巴比伦", "zh"), names, "every language is kept by default")
         self.assertEqual(b["links"], [{"identifier": "gn:98228", "type": "exactMatch"},
                                       {"identifier": "pl:893951", "type": "closeMatch"}])
         self.assertEqual(b["geometry"]["coordinates"], [44.42111, 32.5425], "the smallest of several points")
         q2 = {(n["toponym"], n.get("lang", "")): n for n in fs["Q2"]["names"]}
         self.assertEqual(q2[("Linkedgrad", "ru")]["when"], {"timespans": [{"start": {"in": "1920"}, "end": {"in": "1991"}}]})
         self.assertTrue(fs["Q2"]["properties"]["modern"], "undated: never drawn on the time-sliced map")
+
+    def test_every_continent_and_language_by_default(self):
+        _, out = self.build()
+        mp = {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}["Q3"]
+        self.assertEqual(mp["properties"]["title"], "Machu Picchu", "no English label: the 'mul' one")
+        self.assertEqual({(n["toponym"], n.get("lang", "")) for n in mp["names"]},
+                         {("Machu Picchu", ""), ("Machu Pikchu", "qu")}, "'mul' is a name in no particular language")
+
+    def test_a_regional_extract_from_a_world_fetch(self):
+        stats, out = self.build(build.Scope(build.WINDOW, build.WINDOW_LANGS))
+        fs = {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}
+        self.assertEqual(sorted(fs), ["Q2", "Q5684"], "the Andes are outside the window")
+        self.assertNotIn(("巴比伦", "zh"), {(n["toponym"], n.get("lang", "")) for n in fs["Q5684"]["names"]})
+        self.assertEqual(stats["scope"]["bbox"], "-25,5,100,72")
 
 
 class WikidataTimesAndDescriptions(unittest.TestCase):
@@ -375,7 +401,7 @@ class Tgn(unittest.TestCase):
     def triples(self, rows):
         return "".join(f"{s} {p} {o} .\n" for s, p, o in rows)
 
-    def build(self):
+    def build(self, scope=build.DEFAULT_SCOPE):
         g, gvp = self.G, "<http://vocab.getty.edu/ontology#"
         t = lambda i: f"<{g}tgn/{i}>"
         term = lambda i: f"<{g}tgn/term/{i}>"
@@ -391,7 +417,7 @@ class Tgn(unittest.TestCase):
             (t(7000002), pref, term("3-en")),                                   # archaeological site: kept
             (t(7000003), typ, gvp + "PhysPlaceConcept>"), (t(7000003), pref, term("4-en")),
             (t(7000003), alt, term("5-grc")),                                   # a river with an ancient name
-            (t(7000004), typ, gvp + "AdminPlaceConcept>"), (t(7000004), pref, term("6-la")),   # outside the window
+            (t(7000004), typ, gvp + "AdminPlaceConcept>"), (t(7000004), pref, term("6-la")),   # outside the old window
             (t(7030632), typ, gvp + "Facet>"),
         ]
         terms = [
@@ -435,14 +461,20 @@ class Tgn(unittest.TestCase):
         with zipfile.ZipFile(az, "w") as z:
             z.writestr("AATOut_1Subjects.nt", "")
             z.writestr("AATOut_2Terms.nt", self.triples(aat_terms + aat_subjects))
-        stats = build.tgn(tz, az, out)
+        stats = build.tgn(tz, az, out, scope)
         return stats, {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}, out
 
-    def test_window_classes_and_the_keep_rule(self):
+    def test_classes_and_the_keep_rule(self):
         stats, fs, _ = self.build()
-        self.assertEqual(sorted(fs), ["7000002", "7000003", "7001393"],
-                         "a plain town is dropped, the far-away place and the facet are no candidates")
+        self.assertEqual(sorted(fs), ["7000002", "7000003", "7000004", "7001393"],
+                         "a plain town is dropped and the facet is no candidate; the place in Australia is kept")
+        self.assertEqual((stats["window"], stats["candidates"], stats["kept"]), (5, 5, 4))
+
+    def test_a_regional_extract(self):
+        stats, fs, _ = self.build(build.Scope(build.WINDOW, build.WINDOW_LANGS))
+        self.assertEqual(sorted(fs), ["7000002", "7000003", "7001393"], "the far-away place is no candidate")
         self.assertEqual((stats["window"], stats["candidates"], stats["kept"]), (4, 4, 3))
+        self.assertNotIn(("雅典", "zh"), {(n["toponym"], n.get("lang", "")) for n in fs["7001393"]["names"]})
 
     def test_athens(self):
         _, fs, _ = self.build()
@@ -457,7 +489,7 @@ class Tgn(unittest.TestCase):
         self.assertTrue(names[("Athenae", "la")]["historic"])
         self.assertIn(("Ἀθῆναι", "grc"), names)
         self.assertIn(("Athenai", ""), names)
-        self.assertNotIn(("雅典", "zh"), names, "a language outside the window's")
+        self.assertIn(("雅典", "zh"), names, "every language is kept by default")
         self.assertEqual(a["descriptions"], [{"value": "Was an ancient metropolis.", "lang": "en"}])
         self.assertEqual(a["types"], [{"identifier": "aat:300008347", "label": "inhabited places"}])
         self.assertNotIn("links", a, "TGN carries no links: it joins by its own id")
@@ -488,6 +520,51 @@ class Tgn(unittest.TestCase):
         self.assertEqual(build.sha256(a), build.sha256(b))
 
 
+class Scopes(unittest.TestCase):
+    """The world and every language by default; `--bbox` / `--langs` for a regional extract."""
+
+    def test_parse_bbox(self):
+        self.assertEqual(build.parse_bbox(None), build.WORLD)
+        self.assertEqual(build.parse_bbox("world"), build.WORLD)
+        self.assertEqual(build.parse_bbox("window"), (-25.0, 5.0, 100.0, 72.0))
+        self.assertEqual(build.parse_bbox("-10, 30, 40, 60"), (-10.0, 30.0, 40.0, 60.0))
+        for bad in ("1,2,3", "10,0,5,1", "0,10,5,1", "-200,0,10,10", "a,b,c,d"):
+            with self.assertRaises(ValueError, msg=bad):
+                build.parse_bbox(bad)
+
+    def test_parse_langs(self):
+        self.assertIsNone(build.parse_langs(None))
+        self.assertIsNone(build.parse_langs("all"))
+        self.assertEqual(build.parse_langs("window"), build.WINDOW_LANGS)
+        self.assertEqual(build.parse_langs("en, zh"), frozenset({"en", "zh"}))
+
+    def test_scope(self):
+        world = build.Scope()
+        self.assertTrue(world.world)
+        self.assertTrue(world.contains(-72.5, -13.2) and world.contains(151.2, -33.9) and world.contains(116.4, 39.9))
+        self.assertEqual((world.lang("zh"), world.lang("mul"), world.lang("")), ("zh", "", ""))
+        win = build.Scope(build.WINDOW, build.WINDOW_LANGS)
+        self.assertFalse(win.contains(-72.5, -13.2))
+        self.assertEqual((win.lang("zh"), win.lang("grc"), win.lang("mul")), (None, "grc", ""))
+        self.assertEqual(win.describe(), {"bbox": "-25,5,100,72", "langs": len(build.WINDOW_LANGS)})
+
+    def test_historical_languages_of_every_continent(self):
+        for code in ("grc", "lzh", "sa", "gez", "nci", "emy", "qwc", "kaw"):
+            self.assertIn(code, build.HISTORICAL_LANGS)
+
+    def test_world_queries_carry_no_bbox_and_no_language_filter(self):
+        q = build.wd_queries()
+        self.assertNotIn("FILTER", q["labels"])
+        self.assertNotIn("FILTER", q["core"])
+        self.assertIn("?lon", q["core"])
+        self.assertIn("FILTER(LANG(?d) IN (", q["descriptions"], "descriptions in every language do not finish")
+        self.assertIn('"zh"', q["descriptions"])
+        r = build.wd_queries(build.Scope(build.WINDOW, build.WINDOW_LANGS))
+        self.assertIn("?lon >= -25 && ?lon <= 100 && ?lat >= 5 && ?lat <= 72", r["labels"])
+        self.assertIn('FILTER(LANG(?name) IN ("akk"', r["labels"])
+        self.assertNotIn('"zh"', r["labels"])
+
+
 class OutputDir(unittest.TestCase):
     """Built extracts go where the server reads them by default: the XDG cache directory (#1403)."""
 
@@ -503,6 +580,11 @@ class OutputDir(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(d, "histmersion", "gazetteer")))
         self.assertEqual(build.out_path("a.ndjson.gz", out_dir=os.path.join(d, "o")), os.path.join(d, "o", "a.ndjson.gz"))
         self.assertEqual(build.out_path("./a.ndjson.gz"), "./a.ndjson.gz", "a directory part: as given")
+
+    def test_split_options(self):
+        self.assertEqual(build.split_options(["geonames", "--bbox", "window", "a", "--langs=en,zh", "--out", "/d"]),
+                         ({"bbox": "window", "langs": "en,zh", "out": "/d"}, ["geonames", "a"]))
+        self.assertEqual(build.split_options(["x"]), ({}, ["x"]))
 
     def test_split_out(self):
         self.assertEqual(build.split_out(["geonames", "--out", "/d", "a", "b"]), ("/d", ["geonames", "a", "b"]))
