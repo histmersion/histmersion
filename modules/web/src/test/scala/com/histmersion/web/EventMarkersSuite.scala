@@ -47,12 +47,6 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(EventMarker.rampAt(battle, (-1000L, -500L)), 0.0, "clamped")
     assertEquals(EventMarker.rampAt(battle, (-1274L, -1274L)), 0.5)
 
-  test("the view as an area: wrapped and clamped like the in-view filter"):
-    // Scala.js prints a whole Double without ".0"; the server's BBox.parse reads either
-    assertEquals(EventMarker.area(10, 30, 40.12345, 45), "10,30,40.1235,45")
-    assertEquals(EventMarker.area(-200, -95, 220, 95), "-180,-90,180,90")
-    assertEquals(EventMarker.area(170, 0, 190, 10), "170,0,-170,10", "across the antimeridian")
-
   test("a site's marker is a circle badge: its type's icon and colour; the exclamation mark when untyped"):
     val fort = SitePoint(Some("zz_f"), "Zz fort", PlaceKind.Site, Some("fortification"), None, 37, 32, None)
     val h = PointMarker.html(PointKinds.Sites, fort, "rgb(9,9,9)")

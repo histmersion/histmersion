@@ -61,8 +61,8 @@ what the map always did), its **start** or its **end** — sent as `asOf` — or
 period** with their **earliest** or **latest** shape — sent as `from`/`to`/`pick`
 (`/api/places/geo`, `PlaceRepo.geoJsonAt`). The cache key is the resolved time (`GeoTime`), so a
 snapshot at one year is one entry whichever choice led there. Playback always draws the playhead's
-year. The sites layer takes a snapshot's year, and the midpoint for the two whole-period choices
-(range sites are not built).
+year. The sites, events and pictures do not read it: they are every item whose dates overlap the
+span (below, "Every site, event and picture").
 
 Over a range every state alive at any time in it is drawn — they may overlap — one shape per state:
 
@@ -197,3 +197,55 @@ for the layers, and what stayed:
 - The base map's names (Readable, Physical) are drawn and collision-checked by MapLibre over the whole
   view, so they are never cut at a tile's edge (docs/research-map-styles.md §2); the corpus's own
   labels stay HTML above them.
+
+## Every site, event and picture: the point layers as tiles (2026-10-27)
+
+**Why.** The sites layer asked `/api/places/geo?kind=site` for 200 sites of the whole world at the
+span's MIDDLE year, the pictures layer `/api/media-geo` for 200, the events layer `/api/events/geo`
+for at most `ui.events.map-limit` (2 000) in the view; and the places feed drew an imported place only
+once a finding named it — so of the 92 600 dated sites of the 2026-10-27 corpus (27 800 curated, nearly
+all Pleiades, i.e. the Mediterranean; 64 800 dated Wikidata items, 5 600 of them outside Europe and the
+Near East) the map showed 200, all of them curated. A screenshot read as "nothing happened anywhere
+else". The reader's rule: every site, event and picture, without filtering, without bringing a laptop to
+its knees.
+
+**As built.**
+
+- **Server**: `GET /api/tiles/{sites|events|media}/{z}/{x}/{y}` (`api.TilesApi`, `server.MapTileService`,
+  `db.TileRepo`) — Mapbox vector tiles of 512-pixel Web Mercator tiles (MapLibre's own grid), one layer
+  named after the layer. The selection is the layer's own, every item, no limit: the sites by the place
+  time rule over the span as a RANGE (`PlaceRepo.inWindowSql`: dated and overlapping it; present-day ones
+  from `places.modern-from`; an undated one only by a finding or event dated in it; never an undated
+  import) — curated or imported alike —, of the site-type menu's type (`SiteTypesSql`, generated from
+  `api.SiteTypes`' tables, held to `SiteTypes.of` by its suite); the events as `/api/events/geo` selects
+  them under the filter (sources, span, kind, tier); the pictures as `/api/media-geo` (span overlap,
+  provider, licence). Each item falls in exactly one tile of a zoom (its tile units in `[0, 4096)`; the
+  grid's top and bottom tiles reach the poles).
+- **Thinning keeps the counts**: a tile shallower than `ui.map-tiles.max-zoom` (11: the map's deepest
+  view) holding more than `ui.map-tiles.max-points` (600) items counts them by cells of
+  `ui.map-tiles.cell-px` (32 px, 256 a tile): a cell of several is ONE feature — `n` its count, `lo`/`hi`
+  the least and greatest middle of their dated spans, `w s e nn` their box; a cell of one is the item
+  itself. A tile is therefore at most ~600 items or 256 cells — under 110 KB on the live corpus — and the
+  counts of every tile of a zoom add up to every item (`TileRepoSuite`).
+- **Caching**: the server keeps cut tiles (`ui.map-tiles.cache-mb`, LRU) under the VERSIONS of what each
+  layer reads (V105: `map_changes`, one insert-only row per writing transaction and group — `places`,
+  `events`, `corpus`, `media` — summed, folded by the server); the ETag is that key's, `Cache-Control:
+  no-cache`, so a browser revalidates and gets 304 until a write. A restore clears the cache.
+- **Web**: the three layers are `TiledPoints` (`web/TiledLayers.scala`): the map interface's
+  `PointTiles` (`MapSurface.pointTiles`; MapLibre's vector source with an invisible circle layer —
+  MapLibre fetches, caches and decodes the tiles — and `NoMap.Tiles`, which asks for nothing) gives the
+  features of the view's tiles at its zoom (`z` on every feature), each once; items become the kinds' own
+  points (`TileDecode`), cells `TileCellPoint`s of `CellKind`. Both join the ONE cluster layer, so the
+  markers, glyphs, cards, keyboard and the bubbles' mix are unchanged; a cell drawn alone is the bubble of
+  its count; a bubble holding a cell (`Member.cell`) zooms into the boxes it holds instead of listing.
+- **The span**: a tiled layer keeps what it shows, recoloured, while the span moves and asks for the
+  span's tiles once it settles (`MapView.waitsForQuiet`, `Layout.rangeReloadMs`) — a new span is every
+  tile of the view cut again, per layer. **Playback** asks for the playhead's window widened to whole
+  buckets (`PlaybackBuckets`: the years `ui.map-tiles.playback-bucket-seconds` of playback cover, a round
+  1/2/5 × 10ⁿ): the URL changes once a bucket, the tiles of a replay are kept, and an item stays a little
+  past its window's edge (at most a bucket). Playback's event LABELS (`EventLayer`) still come from
+  `/api/events/geo`, capped by `ui.events.map-limit`.
+- Gone: `Layout.siteFetchLimit`, `mediaFetchLimit`, `eventFetchLimit`, `MapView.siteYear`, the events'
+  reload per pan and `EventMarker.area`, the view's box it sent.
+
+Measured on a restore of the 2026-10-27 backup: docs/research-web-perf.md, "Every site, event and picture".

@@ -397,3 +397,152 @@ late stands in), and the same zooms with the map held still (*never*) measure 52
   (Chromium 1.5 %). The live page draws at most ~330; a merge of that size is beyond what it shows today.
 - MapLibre's own gestures take a changed setting at the next page load (above); a live switch would need
   MapLibre to expose its reduced-motion value after a map is made.
+
+## Every site, event and picture: the point layers as tiles (2026-10-27)
+
+The sites, pictures and events layers asked for 200 sites (the whole world, the span's middle year), 200
+pictures and at most 2 000 events of the view; the map showed 200 of the corpus's 92 600 dated sites,
+every one from the curated (Mediterranean) gazetteer. They are now read from vector tiles
+(`GET /api/tiles/…`, docs/map-layers.md "Every site, event and picture"): every item of the span, a
+crowded tile's items counted by cells. Measured on a restore of the 2026-10-27 backup (1.08 M places, 92 600
+dated sites, 2 489 events, 3 135 located pictures) in a `*_test` database on a throwaway Postgres 18.4 /
+PostGIS 3.6.4, the JVM server on loopback, headless Chromium 1248 with the GPU (`modules/web/test/perf-tiles.mjs`,
+1440×900, every layer on — boundaries, sites, pictures, events —, each view after a cold server start).
+*Before* is the base commit's bundle (446ab3c1, served through `HISTMERSION_PERF_BUNDLE`) on the same
+server and data: its JSON feeds count as its "tiles". *After, 343 k* adds 250 000 synthetic dated sites
+spread over the whole world (60° S–70° N, −4000…1800) to the copy — the density a global gazetteer import
+is expected to bring.
+
+**The server, per tile** (a probe over loopback — each request twice, its time and its decoded features —, a tile around Rome; *cold* the first request of
+that tile and span after a server start — the first of all includes the JIT's warm-up —, *warm* the kept
+tile):
+
+| layer | span | z | tile | bytes | features (cells · items) | cold ms | warm ms |
+|---|---|---|---|---:|---:|---:|---:|
+| sites | year -500 | 2 | 2/1 | 10112 | 103 (79 · 24) | 319 | 5 |
+| sites | year -500 | 4 | 8/5 | 8451 | 92 (54 · 38) | 16 | 4 |
+| sites | year -500 | 6 | 34/23 | 37244 | 513 (0 · 513) | 25 | 4 |
+| sites | year -500 | 8 | 136/95 | 11600 | 151 (0 · 151) | 15 | 3 |
+| sites | year -500 | 10 | 547/380 | 8732 | 114 (0 · 114) | 15 | 4 |
+| sites | -3000..2000 | 2 | 2/1 | 24477 | 239 (225 · 14) | 200 | 4 |
+| sites | -3000..2000 | 4 | 8/5 | 24347 | 231 (230 · 1) | 43 | 4 |
+| sites | -3000..2000 | 6 | 34/23 | 16131 | 162 (145 · 17) | 16 | 3 |
+| sites | -3000..2000 | 8 | 136/95 | 4323 | 41 (36 · 5) | 13 | 5 |
+| sites | -3000..2000 | 10 | 547/380 | 14647 | 156 (108 · 48) | 12 | 3 |
+| events | year -500 | 2 | 2/1 | 1883 | 17 (0 · 17) | 24 | 3 |
+| events | year -500 | 4 | 8/5 | 420 | 2 (0 · 2) | 6 | 3 |
+| events | year -500 | 6 | 34/23 | 268 | 1 (0 · 1) | 5 | 3 |
+| events | year -500 | 8 | 136/95 | 0 | 0 (0 · 0) | 4 | 3 |
+| events | year -500 | 10 | 547/380 | 0 | 0 (0 · 0) | 4 | 3 |
+| events | -3000..2000 | 2 | 2/1 | 9348 | 81 (56 · 25) | 10 | 3 |
+| events | -3000..2000 | 4 | 8/5 | 32881 | 349 (0 · 349) | 13 | 3 |
+| events | -3000..2000 | 6 | 34/23 | 12856 | 137 (0 · 137) | 8 | 3 |
+| events | -3000..2000 | 8 | 136/95 | 4078 | 43 (0 · 43) | 6 | 3 |
+| events | -3000..2000 | 10 | 547/380 | 3741 | 39 (0 · 39) | 6 | 3 |
+| media | year -500 | 2 | 2/1 | 105806 | 474 (0 · 474) | 20 | 3 |
+| media | year -500 | 4 | 8/5 | 16832 | 68 (0 · 68) | 5 | 3 |
+| media | year -500 | 6 | 34/23 | 15606 | 63 (0 · 63) | 5 | 2 |
+| media | year -500 | 8 | 136/95 | 6778 | 29 (0 · 29) | 4 | 2 |
+| media | year -500 | 10 | 547/380 | 4247 | 18 (0 · 18) | 4 | 3 |
+| media | -3000..2000 | 2 | 2/1 | 15643 | 110 (87 · 23) | 8 | 3 |
+| media | -3000..2000 | 4 | 8/5 | 21695 | 131 (76 · 55) | 6 | 3 |
+| media | -3000..2000 | 6 | 34/23 | 87230 | 388 (0 · 388) | 7 | 4 |
+| media | -3000..2000 | 8 | 136/95 | 58821 | 268 (0 · 268) | 6 | 3 |
+| media | -3000..2000 | 10 | 547/380 | 54995 | 250 (0 · 250) | 6 | 2 |
+
+At 343 k dated sites the shallowest tiles of a whole range are the cost: 0.5–0.6 s for the world tile (z0),
+0.13–0.28 s at z1, 0.07–0.2 s at z2, cold; 3–4 ms kept. A single year stays under 125 ms at every zoom.
+
+**One view, every layer on — before:**
+
+| span | zoom | tiles (feeds) | KB (largest) | tile p50 / max ms | last tile ms | longest task | points held · drawn | sites items · cells (counted) | media | events |
+|---|---:|---:|---:|---:|---:|---:|---:|---|---|---|
+| year -500 | 2 | 7 | 174 (78) | 36 / 119 | 255 | 0 | 734 · 34 | — | — | — |
+| year -500 | 4 | 1 | 11 (11) | 10 / 10 | 30 | 0 | 724 · 98 | — | — | — |
+| year -500 | 6 | 1 | 5 (5) | 7 / 7 | 33 | 0 | 709 · 97 | — | — | — |
+| year -500 | 8 | 1 | 1 (1) | 8 / 8 | 18 | 0 | 698 · 29 | — | — | — |
+| year -500 | 10 | 1 | 1 (1) | 6 / 6 | 13 | 0 | 698 · 15 | — | — | — |
+| -3000..2000 | 2 | 7 | 2742 (760) | 33 / 87 | 253 | 0 | 2674 · 53 | — | — | — |
+| -3000..2000 | 4 | 1 | 609 (609) | 37 / 37 | 64 | 0 | 2285 · 148 | — | — | — |
+| -3000..2000 | 6 | 1 | 254 (254) | 14 / 14 | 46 | 0 | 1354 · 153 | — | — | — |
+| -3000..2000 | 8 | 1 | 51 (51) | 8 / 8 | 26 | 0 | 815 · 65 | — | — | — |
+| -3000..2000 | 10 | 1 | 19 (19) | 6 / 6 | 13 | 0 | 726 · 22 | — | — | — |
+
+**After:**
+
+| span | zoom | tiles (feeds) | KB (largest) | tile p50 / max ms | last tile ms | longest task | points held · drawn | sites items · cells (counted) | media | events |
+|---|---:|---:|---:|---:|---:|---:|---:|---|---|---|
+| year -500 | 2 | 36 | 332 (105) | 65 / 112 | 486 | 0 | 1182 · 40 | 319 · 32 (5591) | 489 · 0 (0) | 47 · 0 (0) |
+| year -500 | 4 | 18 | 178 (85) | 48 / 70 | 100 | 0 | 1658 · 173 | 701 · 137 (5209) | 489 · 0 (0) | 36 · 0 (0) |
+| year -500 | 6 | 18 | 173 (44) | 34 / 40 | 71 | 0 | 1899 · 215 | 1067 · 177 (2759) | 340 · 0 (0) | 20 · 0 (0) |
+| year -500 | 8 | 18 | 66 (26) | 22 / 30 | 53 | 0 | 1055 · 156 | 693 · 0 (0) | 62 · 0 (0) | 5 · 0 (0) |
+| year -500 | 10 | 18 | 34 (11) | 23 / 28 | 45 | 0 | 627 · 102 | 279 · 0 (0) | 50 · 0 (0) | 3 · 0 (0) |
+| -3000..2000 | 2 | 18 | 197 (39) | 28 / 185 | 341 | 0 | 1231 · 87 | 184 · 134 (90297) | 194 · 48 (2338) | 357 · 40 (1696) |
+| -3000..2000 | 4 | 18 | 275 (41) | 36 / 136 | 172 | 0 | 2533 · 418 | 114 · 819 (87785) | 397 · 129 (2030) | 753 · 47 (995) |
+| -3000..2000 | 6 | 18 | 525 (99) | 45 / 60 | 99 | 0 | 3815 · 405 | 43 · 1007 (36234) | 1467 · 0 (0) | 1024 · 0 (0) |
+| -3000..2000 | 8 | 18 | 215 (71) | 19 / 32 | 64 | 0 | 2060 · 285 | 875 · 230 (2645) | 495 · 0 (0) | 186 · 0 (0) |
+| -3000..2000 | 10 | 18 | 127 (57) | 17 / 40 | 63 | 0 | 1326 · 201 | 608 · 81 (1017) | 305 · 0 (0) | 58 · 0 (0) |
+
+**After, 343 k dated sites:**
+
+| span | zoom | tiles (feeds) | KB (largest) | tile p50 / max ms | last tile ms | longest task | points held · drawn | sites items · cells (counted) | media | events |
+|---|---:|---:|---:|---:|---:|---:|---:|---|---|---|
+| year -500 | 2 | 36 | 391 (105) | 73 / 122 | 468 | 0 | 1311 · 179 | 0 · 480 (23559) | 489 · 0 (0) | 47 · 0 (0) |
+| year -500 | 4 | 18 | 305 (85) | 46 / 59 | 103 | 0 | 2819 · 664 | 1196 · 803 (8234) | 489 · 0 (0) | 36 · 0 (0) |
+| year -500 | 6 | 18 | 190 (44) | 50 / 64 | 100 | 0 | 2084 · 292 | 1248 · 181 (2789) | 340 · 0 (0) | 20 · 0 (0) |
+| year -500 | 8 | 18 | 68 (27) | 31 / 41 | 65 | 0 | 1070 · 161 | 708 · 0 (0) | 62 · 0 (0) | 5 · 0 (0) |
+| year -500 | 10 | 18 | 34 (11) | 29 / 33 | 52 | 0 | 628 · 105 | 280 · 0 (0) | 50 · 0 (0) | 3 · 0 (0) |
+| -3000..2000 | 2 | 18 | 254 (39) | 278 / 526 | 676 | 0 | 1407 · 190 | 7 · 487 (314607) | 194 · 48 (2338) | 357 · 40 (1696) |
+| -3000..2000 | 4 | 18 | 359 (41) | 69 / 170 | 203 | 0 | 3136 · 663 | 0 · 1536 (132417) | 397 · 129 (2030) | 753 · 47 (995) |
+| -3000..2000 | 6 | 18 | 579 (99) | 46 / 65 | 105 | 0 | 4224 · 533 | 134 · 1325 (38965) | 1467 · 0 (0) | 1024 · 0 (0) |
+| -3000..2000 | 8 | 18 | 229 (71) | 30 / 40 | 73 | 0 | 2205 · 375 | 1009 · 241 (2698) | 495 · 0 (0) | 186 · 0 (0) |
+| -3000..2000 | 10 | 18 | 128 (57) | 27 / 33 | 59 | 0 | 1341 · 209 | 623 · 81 (1018) | 305 · 0 (0) | 58 · 0 (0) |
+
+*tiles (feeds)*: requests the view made for these layers (after: three layers × the view's tiles; before:
+the layers' JSON feeds — the first row includes the page's first load); *last tile ms*: from the view
+set to its last tile in; *sites items · cells (counted)*: the sites drawn as themselves, the cells of
+crowded tiles and the sites those cells count. Before, the world over −3000…2000 held 2 674 points
+(200 sites, 200 pictures, 2 000 events — the caps — and the findings) and its events feed alone was
+2.7 MB (every regional event's outline); after, it holds 1 231 points standing for
+90 297 sites, 2 338 + 194 pictures and 1 696 + 357 events, in 197 KB of tiles. The page's work barely
+grows with the corpus: a tile is at most 600 items or 256 cells, so 343 k sites hold 1 407 points at a world
+view (1 231 with 92 600).
+
+**Gestures** (the same page; whole range; *before* holds 2 244 / 1 456 points at zooms 3 / 6, *after* 1 237 /
+4 716, *after 343 k* 2 151 / 5 236):
+
+| gesture: input → paint p95 / max ms · dropped · frame max ms · longest task ms | before | after | after, 343 k dated sites |
+|---|---|---|---|
+| pan, zoom 3 (40 drags + 4 wheel zooms) | 49 / 51.5 · 0 % · 16.8 · 0 | 43.3 / 52.1 · 0 % · 16.8 · 0 | 51.3 / 56.7 · 0 % · 16.8 · 0 |
+| pan, zoom 6 | 28.6 / 35.7 · 0 % · 16.8 · 0 | 53.9 / 54.1 · 0 % · 16.8 · 0 | 52.9 / 54.9 · 0 % · 16.8 · 0 |
+| timeline drag, zoom 3 | 33.8 / 38.3 · 0 % · 16.8 · 0 | 36.9 / 44.2 · 0 % · 16.8 · 0 | 55.6 / 60.5 · 0 % · 16.8 · 0 |
+| timeline drag, zoom 6 | 37.5 / 43 · 0 % · 16.8 · 0 | 55.7 / 59.9 · 0.8 % · 33.2 · 0 | 63.1 / 67.8 · 0.8 % · 33.4 · 0 |
+| playback −3000…−1000, 5 s | 20 / 20 · 0 % · 16.8 · 0 | 17 / 17 · 1.7 % · 50 · 0 | 20 / 20 · 1.3 % · 33.4 · 0 |
+
+Playback, the layers' requests: before 81 (2 973 KB) in 5 s, after 97 (325 KB), after 343 k 121 (738 KB) — the
+boundaries' own, 5 a second, unchanged and not counted. Every pan and drag input is inside the 100 ms rule; the longest frame of
+any gesture is 50 ms (one frame of playback) and no long task was seen.
+
+**Decisions, from these numbers.**
+
+- **Playback reads tiles by time bucket**, not the existing feeds: the feeds were capped (the very caps
+  this removes), and their answer per playback frame was the events' 2.7 MB. A bucket of one second of
+  playback (`ui.map-tiles.playback-bucket-seconds`; 100 years at −3000…−1000 over the default 30 s) changes
+  the URL ~0.7 times a second: ~19 tile requests a second of 3–27 ms (kept tiles on a replay), 0–1.7 %
+  dropped frames, frame p95 16.7 ms.
+- **A dragged span waits until it settles** (250 ms): every new span is every tile of the view cut again,
+  per layer; during the drag the layers keep their items, recoloured in place — input p95 37–63 ms.
+- **Thinning is counting, not dropping**: 600 items or 256 cells a tile keeps a tile under 110 KB and the
+  page's points held at 1 200–5 200 whatever the corpus; the client's own clustering then draws 40–670
+  markers.
+
+**Remaining.**
+
+- The shallowest tiles of a whole range at the density of a global import: 0.5–0.6 s for zoom 0 and up to
+  0.3 s for zoom 1, cold (every dated site of the world is read and counted). Kept tiles answer in 3–4 ms,
+  but a new span at a world view waits for them. A pyramid — a zoom's cells summed from the next zoom's,
+  or counts stored per cell and century — would make them as cheap as zoom 4.
+- Playback's event LABELS (`EventLayer`, names and outlines) still come from `/api/events/geo`, capped at
+  `ui.events.map-limit` (2 000); the markers are every event.
+- A pan at zoom 6 with ~4 700 points held: input p95 54 ms (before: 29 ms with 1 456) — inside the rule,
+  but it is where the client's cost grows (the cluster layer's regroup of every held point).
