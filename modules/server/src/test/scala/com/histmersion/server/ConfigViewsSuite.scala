@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.api.{ConfigFileInfo, DebounceConfig, EventsUiConfig, PluginsReport, TimeConfig, UiConfig}
+import com.histmersion.api.{ConfigFileInfo, DebounceConfig, EventsUiConfig, MapTilesUiConfig, PluginsReport, TimeConfig, UiConfig}
 import com.histmersion.config.{AppConfig, UserConfigFile}
 
 import java.nio.file.Path
@@ -18,6 +18,7 @@ class ConfigViewsSuite extends munit.FunSuite:
       ui.narrowMaxWidthPx, ui.narrowMaxHeightPx, ui.tabletMaxWidthPx,
       EventsUiConfig(ui.events.localFadeSeconds, ui.events.regionalFadeSeconds, ui.events.mapLimit,
         ui.events.outlineToleranceDeg),
+      MapTilesUiConfig(ui.mapTiles.maxZoom, ui.mapTiles.playbackBucketSeconds),
       ui.countersPollSeconds, ui.jobPollMs, writeKeyRequired = true, agentsEnabled = true, ui.tilesTone,
       PluginsReport(), ui.docsUrl, baseMapSource = "local", mapLanguage = "de"))
 

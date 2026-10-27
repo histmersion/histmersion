@@ -193,6 +193,12 @@ final case class UiDebounceSettings(suggestMs: Int, searchMs: Int, reloadMs: Int
 final case class UiEventsSettings(localFadeSeconds: Double, regionalFadeSeconds: Double, mapLimit: Int,
     outlineToleranceDeg: Double) derives ConfigReader
 
+/** `ui.map-tiles`: the map's point layers as vector tiles — the deepest tile cut (MapLibre's zoom), the
+  * most items a shallower tile keeps alone, the side of the cells it counts the rest by (pixels of a
+  * 512-pixel tile), the server's tile cache, and playback's time buckets (seconds of playback). */
+final case class UiMapTilesSettings(maxZoom: Int, maxPoints: Int, cellPx: Int, cacheMb: Int,
+    playbackBucketSeconds: Double) derives ConfigReader
+
 /** The `ui` block. The page reads it through `/api/config`, where the server adds what is no setting of
   * this block: whether writes need a key, whether agents run, the plugins and the base map's language. */
 final case class UiSettings(
@@ -211,6 +217,7 @@ final case class UiSettings(
     narrowMaxHeightPx: Int,
     tabletMaxWidthPx: Int,
     events: UiEventsSettings,
+    mapTiles: UiMapTilesSettings,
     countersPollSeconds: Int = 30,
     jobPollMs: Int = 1000,
     tilesTone: String = "light",

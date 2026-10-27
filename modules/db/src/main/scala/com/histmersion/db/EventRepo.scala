@@ -28,7 +28,12 @@ private[db] final case class EventDetailRow(row: EventRow, geometry: Option[Stri
 
 /** One event on the map before its outline is read ([[EventRepo.geo]]). */
 private[db] final case class EventGeoRow(row: EventRow, lat: Double, lon: Double, anchor: String,
-    placeLabel: Option[String], hasArea: Boolean, vei: Option[Int], magnitude: Option[Double])
+    placeLabel: Option[String], hasArea: Boolean, vei: Option[Int], magnitude: Option[Double]):
+  /** The event as the map draws it, without its outline. */
+  def toGeo: EventGeo =
+    val e = row.toSummary
+    EventGeo(e.id, e.label, e.kind, e.scale, e.historicity, e.timeSpan, lat, lon, anchor,
+      e.placeId, placeLabel, e.parentId, None, e.tier, EventLeads.size(vei, magnitude), e.precision, e.datingNote)
 
 private[db] final case class EventDatingRow(
     eventId: String, citekey: String,
@@ -122,16 +127,7 @@ object EventRepo:
     // counted; an undated one (its outer span unbounded) would otherwise stand in every period
     val where = listed ++ Sql.of(" AND e.uncertainty <= ?", Param.L(EventPrecision.ApproximateUpTo))
     connect(ds):
-      val rows = (Sql.raw(s"""SELECT $summaryCols,
-              ST_Y(a.pt), ST_X(a.pt), s.src, ep.label, GeometryType(s.g) IN ('POLYGON', 'MULTIPOLYGON'),
-              (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
-              (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id)
-            FROM $fromEvents
-            CROSS JOIN LATERAL (SELECT coalesce(e.geom, ep.geom) AS g,
-                                       CASE WHEN e.geom IS NOT NULL THEN 'event' ELSE 'place' END AS src) s
-            CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(s.g) = 'POINT' THEN s.g
-                                            ELSE ST_PointOnSurface(s.g) END AS pt) a
-            WHERE s.g IS NOT NULL AND """) ++ where ++
+      val rows = (geoSelect ++ where ++
         Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
         Sql.of(" LIMIT ?", Param.I(limit.max(1))))
         .frag.query[EventGeoRow].run().toList
@@ -139,12 +135,7 @@ object EventRepo:
         .frag.query[Int].run().head
       val imprecise = (Sql.raw(s"SELECT count(*)::int FROM $fromEvents WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND ") ++
         listed ++ Sql.of(" AND e.uncertainty > ?", Param.L(EventPrecision.ApproximateUpTo))).frag.query[Int].run().head
-      val items = rows.map { r =>
-        val e = r.row.toSummary
-        (r, EventGeo(e.id, e.label, e.kind, e.scale, e.historicity, e.timeSpan, r.lat, r.lon, r.anchor,
-          e.placeId, r.placeLabel, e.parentId, None, e.tier, EventLeads.size(r.vei, r.magnitude), e.precision,
-          e.datingNote))
-      }
+      val items = rows.map(r => (r, r.toGeo))
       val wanted = items.collect { case (r, g) if r.hasArea && g.scale == EventScale.Regional => g.id }
       val outlines: Map[String, String] =
         if wanted.isEmpty then Map.empty
@@ -154,6 +145,39 @@ object EventRepo:
                 FROM ${SqlLiteral(fromEvents)} WHERE e.id = ANY($wanted::text[])"""
             .query[(String, Option[String])].run().collect { case (id, Some(g)) => id -> g }.toMap
       EventGeoList(items.map((_, g) => g.copy(outline = outlines.get(g.id))), unplaced, imprecise)
+
+  /** The events of `ids` as the map's tiles draw one ([[geo]]'s rows, without an outline), by id;
+    * an id with no position, or dated too loosely, is left out as [[geo]] leaves it out. */
+  def geoOf(ds: DataSource, ids: List[String]): Map[String, EventGeo] =
+    if ids.isEmpty then Map.empty
+    else connect(ds):
+      (geoSelect ++ Sql.of("e.id = ANY(?) AND e.uncertainty <= ?", Param.A(ids), Param.L(EventPrecision.ApproximateUpTo)))
+        .frag.query[EventGeoRow].run().map(r => r.row.id -> r.toGeo).toMap
+
+  /** An event's ANCHOR over `events e` with its place `ep`: its own geometry, else its place's
+    * (`s.g`, `s.src`), as a point — the point itself, or the point-on-surface of an area (`a.pt`). */
+  private[db] val anchorJoins: String =
+    """CROSS JOIN LATERAL (SELECT coalesce(e.geom, ep.geom) AS g,
+                                 CASE WHEN e.geom IS NOT NULL THEN 'event' ELSE 'place' END AS src) s
+       CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(s.g) = 'POINT' THEN s.g
+                                       ELSE ST_PointOnSurface(s.g) END AS pt) a"""
+
+  /** The SELECT of the map's event rows ([[EventGeoRow]]), up to its WHERE (which the caller ends). */
+  private val geoSelect: Sql = Sql.raw(s"""SELECT $summaryCols,
+              ST_Y(a.pt), ST_X(a.pt), s.src, ep.label, GeometryType(s.g) IN ('POLYGON', 'MULTIPOLYGON'),
+              (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
+              (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id)
+            FROM $fromEvents $anchorJoins
+            WHERE s.g IS NOT NULL AND """)
+
+  /** The map's events as [[TileRepo]] selects them: the anchor's id, place and dates, for [[geo]]'s
+    * selection (`where`, over `events e` with `ep`), in the tile's box `envelope`. */
+  private[db] def tileCandidates(where: Sql, envelope: Sql): Sql =
+    Sql.raw(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
+                  ${PeriodSql.start("e.outer_span")} AS ps, ${PeriodSql.end("e.outer_span")} AS pe
+                FROM $fromEvents $anchorJoins
+                WHERE s.g IS NOT NULL AND e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND s.g && """) ++
+      envelope ++ Sql.raw(" AND ") ++ where
 
   def get(ds: DataSource, id: String): Option[EventDetail] =
     connect(ds):

@@ -169,6 +169,11 @@ The settings of backups and portable bundles are listed with them, in
 | `ui.events.local-fade-seconds` | `HISTMERSION_UI_EVENTS_LOCAL_FADE_SECONDS` | `2.5` | map playback: a LOCAL event (a battle) shows while the playhead is inside its span, then fades out over this many seconds of playback (at the speed playing; paused, it holds) |
 | `ui.events.regional-fade-seconds` | `HISTMERSION_UI_EVENTS_REGIONAL_FADE_SECONDS` | `1.0` | the same for a REGIONAL event's label and region outline |
 | `ui.events.map-limit` | `HISTMERSION_UI_EVENTS_MAP_LIMIT` | `2000` | most events `/api/events/geo` returns for one playback |
+| `ui.map-tiles.max-zoom` | `HISTMERSION_UI_MAP_TILES_MAX_ZOOM` | `11` | the deepest tile `/api/tiles` cuts (MapLibre's 512-pixel zoom: the app's `ui.tiles-max-zoom` 12 is 11 there); at it every item is a feature of its own, deeper views draw it larger |
+| `ui.map-tiles.max-points` | `HISTMERSION_UI_MAP_TILES_MAX_POINTS` | `600` | a shallower tile holding more items than this counts them by cells (one feature a cell, with its count, dates' range and box): a tile stays under ~100 KB whatever the density |
+| `ui.map-tiles.cell-px` | `HISTMERSION_UI_MAP_TILES_CELL_PX` | `32` | a cell's side, in pixels of the tile drawn at its own zoom (256 cells a tile at most) |
+| `ui.map-tiles.cache-mb` | `HISTMERSION_UI_MAP_TILES_CACHE_MB` | `64` | the tiles the server keeps, the least recently asked for going first; a write to what a layer reads makes its kept tiles stale at once |
+| `ui.map-tiles.playback-bucket-seconds` | `HISTMERSION_UI_MAP_TILES_PLAYBACK_BUCKET_SECONDS` | `1.0` | in playback the tiled layers are drawn for the playhead's window widened to whole buckets of the years this many seconds of playback cover (a round number), so their tiles change once a bucket and a replay finds them kept |
 | `ui.events.outline-tolerance-deg` | `HISTMERSION_UI_EVENTS_OUTLINE_TOLERANCE_DEG` | `0.02` | a regional event's area outline is simplified to this many degrees |
 | `query.timeout-ms` | `HISTMERSION_QUERY_TIMEOUT_MS` | `10000` | `SET LOCAL statement_timeout` for `histmersion query` |
 | `query.max-rows` | `HISTMERSION_QUERY_MAX_ROWS` | `500` | row cap; a result that hits it comes back `truncated` |

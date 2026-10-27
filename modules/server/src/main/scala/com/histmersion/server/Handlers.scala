@@ -908,6 +908,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): List[PlaceHit] =
     PlaceRepo.search(ds, q, asOf, cfg.limits.page(limit, cfg.places.searchLimit), cfg.places.modernFrom).toList
 
+  /** The map's sites, events and pictures as vector tiles (`GET /api/tiles/…`). */
+  val tiles: MapTileService = MapTileService(ds, () => cfg.ui.mapTiles, () => cfg.places.modernFrom, f => scopeOf(f))
+
+  def tile(q: TilesApi.TileQuery): Either[ApiError, TilesApi.TileAnswer] = tiles.tile(q)
+
   /** `GET /api/places/geo` — the map layers' shapes for the time [[GeoPick.resolve]] makes of the query. */
   def placesGeo(q: Api.PlacesGeoQuery): Either[ApiError, String] =
     q.pick.map(_.trim).filter(_.nonEmpty) match
@@ -1151,6 +1156,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         role  = com.histmersion.db.Db.provisionQueryRole(ds, cfg.query).left.toOption
                   .map(m => s"the read-only role '${cfg.query.user}' was not re-provisioned: $m").toList
         _     = { com.histmersion.db.Db.evict(ds); com.histmersion.db.Db.evict(deps.queryDs) }
+        // the restored versions of what the map's tiles read may be ones the kept tiles were cut under
+        _     = tiles.cache.clear()
         v    <- Migrate.validate(ds).left.map(m => ApiError(s"restored ${req.file}, but the schema does not validate: $m"))
       yield RestoreResult(req.file, v, before, BackupRepo.sourceCount(ds), r._1, r._2 ++ role)
 

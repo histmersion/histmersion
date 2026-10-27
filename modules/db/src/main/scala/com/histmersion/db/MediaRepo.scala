@@ -576,9 +576,7 @@ object MediaRepo:
     val k = q.kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val (provider, license) = (clean(q.provider), clean(q.license))
     connect(ds):
-      sql"""SELECT a.citekey, a.name, a.kind, ST_Y(ST_PointOnSurface(a.geom)), ST_X(ST_PointOnSurface(a.geom)),
-                   lower(a.period), upper(a.period) - 1, a.caption, a.uid::text, a.provider, a.license, a.credit,
-                   a.thumb IS NOT NULL
+      sql"""SELECT ${SqlLiteral(geoCols)}
             FROM assets a
             WHERE a.geom IS NOT NULL
               AND (${k}::text IS NULL OR a.kind = ${k}::text)
@@ -588,9 +586,42 @@ object MediaRepo:
               AND (${license}::text IS NULL OR (${license}::text = 'none' AND coalesce(btrim(a.license), '') = '')
                    OR a.license = ${license}::text)
             ORDER BY lower(a.period) NULLS LAST LIMIT ${limit.max(1)}"""
-        .query[MediaGeoRow].run().toList.map(r =>
-          MediaGeoHit(r.citekey, r.name, r.kind, r.lat, r.lon, r.periodStart, r.periodEnd, r.caption, r.uid,
-            r.provider, r.license, r.credit, Option.when(r.hasThumb)(MediaThumb.thumbPath(r.uid))))
+        .query[MediaGeoRow].run().toList.map(geoHit)
+
+  /** The pictures of `uids` as the map's tiles draw one ([[geo]]'s hits), by uid. */
+  def geoOf(ds: DataSource, uids: List[String]): Map[String, MediaGeoHit] =
+    if uids.isEmpty then Map.empty
+    else connect(ds):
+      sql"""SELECT ${SqlLiteral(geoCols)} FROM assets a
+            WHERE a.geom IS NOT NULL AND a.uid = ANY(${uids}::uuid[])"""
+        .query[MediaGeoRow].run().map(r => r.uid -> geoHit(r)).toMap
+
+  /** The pictures of the media layer as [[TileRepo]] selects them — [[geo]]'s selection, every one
+    * whose dates overlap `window` (none: whatever their dates), in the tile's box `envelope`: uid, point
+    * and dates. */
+  private[db] def tileCandidates(kind: Option[String], provider: Option[String], license: Option[String],
+      window: Option[(Long, Long)], envelope: Sql): Sql =
+    val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
+    val ps = List.newBuilder[Sql]
+    k.foreach(v => ps += Sql.of("a.kind = ?", Param.S(v)))
+    clean(provider).foreach(p =>
+      ps += (if p == MediaProvider.Source then Sql.raw("a.provider IS NULL") else Sql.of("a.provider = ?", Param.S(p))))
+    clean(license).foreach(l =>
+      ps += (if l == "none" then Sql.raw("coalesce(btrim(a.license), '') = ''") else Sql.of("a.license = ?", Param.S(l))))
+    window.foreach((lo, hi) => ps += Sql.raw(PeriodSql.overlaps("a.period", s"${lo}::bigint", s"${hi}::bigint")))
+    val rest = ps.result().foldLeft(Sql.empty)((acc, p) => acc ++ Sql.raw(" AND ") ++ p)
+    Sql.raw("SELECT a.uid::text AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, lower(a.period) AS ps, upper(a.period) - 1 AS pe" +
+      " FROM assets a CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(a.geom) = 'POINT' THEN a.geom" +
+      " ELSE ST_PointOnSurface(a.geom) END AS pt) q WHERE a.geom IS NOT NULL AND a.geom && ") ++ envelope ++ rest
+
+  private val geoCols =
+    """a.citekey, a.name, a.kind, ST_Y(ST_PointOnSurface(a.geom)), ST_X(ST_PointOnSurface(a.geom)),
+       lower(a.period), upper(a.period) - 1, a.caption, a.uid::text, a.provider, a.license, a.credit,
+       a.thumb IS NOT NULL"""
+
+  private def geoHit(r: MediaGeoRow): MediaGeoHit =
+    MediaGeoHit(r.citekey, r.name, r.kind, r.lat, r.lon, r.periodStart, r.periodEnd, r.caption, r.uid,
+      r.provider, r.license, r.credit, Option.when(r.hasThumb)(MediaThumb.thumbPath(r.uid)))
 
   // ── a source's pictures: its cover and its illustration (#1446) ──────────────────────────────
 

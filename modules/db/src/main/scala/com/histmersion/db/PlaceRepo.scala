@@ -493,7 +493,7 @@ object PlaceRepo:
 
   /** A physical feature of the seed: there at any time ([[PlaceTimeBasis.Timeless]]). */
   private def timelessSql(alias: String): String =
-    s"(NOT ${importedSql(alias)} AND ($alias.kind = 'feature' OR (${modernSql(alias)} AND $alias.kind = 'region')))"
+    s"(NOT ${importedSql(alias)} AND ($alias.kind = 'feature' OR ($alias.kind = 'region' AND ${modernSql(alias)})))"
 
   /** [[PlaceTimeBasis.of]] in SQL, over a `places` row aliased `alias`: the basis's wire name. */
   private[db] def timeBasisSql(alias: String): String =
@@ -534,10 +534,17 @@ object PlaceRepo:
   private[db] def inTimeSql(alias: String, asOf: Option[Long], kind: Option[String] = None): String =
     inWindowSql(alias, asOf.map(y => (y, y)), kind)
 
-  /** [[inTimeSql]] over the inclusive window `lo..hi` ([[windowCte]]): shown at ANY year of it. */
-  private[db] def inWindowSql(alias: String, window: Option[(Long, Long)], kind: Option[String] = None): String =
+  /** [[inTimeSql]] over the inclusive window `lo..hi` ([[windowCte]]): shown at ANY year of it. With
+    * `modernFrom` the rule reads the window and whether it reaches `modern-from` as literals instead of
+    * from the `tw` CTE, which then need not head the statement: a map tile's query (`TileRepo`), where
+    * the planner, seeing the window, probes the findings of each undated place through its
+    * `finding_places` rows — through the CTE's init-plan it read every finding of the window for each
+    * of them (2.5 s of a sites tile over -3000..2000, 2026-10-27). */
+  private[db] def inWindowSql(alias: String, window: Option[(Long, Long)], kind: Option[String] = None,
+      modernFrom: Option[Long] = None): String =
     window.fold("true") { (lo, hi) =>
-      val w        = "(SELECT tw.w FROM tw)"
+      val w        = modernFrom.fold("(SELECT tw.w FROM tw)")(_ => s"int8range(${lo}::bigint, ${hi}::bigint, '[]')")
+      val modernOn = modernFrom.fold("(SELECT tw.modern_on FROM tw)")(m => if hi >= m then "true" else "false")
       val modern   = modernSql(alias)
       val undated  = undatedSql(alias)
       val timeless = timelessSql(alias)
@@ -545,8 +552,8 @@ object PlaceRepo:
       val physicalKind = kind.forall(k => k == PlaceKind.Feature || k == PlaceKind.Region)
       val lead     = if physicalKind then s"($overlap OR $timeless)" else overlap
       s"($lead AND ($timeless" +
-        s" OR ($modern AND (SELECT tw.modern_on FROM tw))" +
-        s" OR (NOT $modern AND NOT $undated)" +
+        s" OR ($modern AND $modernOn)" +
+        s" OR (NOT $undated AND NOT $modern)" +
         s" OR (NOT $modern AND $undated AND $alias.geom IS NULL)" +
         s" OR (NOT $modern AND $undated AND $alias.geom IS NOT NULL AND (" +
         s"EXISTS (SELECT 1 FROM finding_places fp JOIN findings f ON f.id = fp.finding_id" +
