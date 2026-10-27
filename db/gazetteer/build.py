@@ -485,12 +485,12 @@ class HttpFailure(Exception):
 def classify(code, detail):
     """What a failed answer means: 'timeout' (the QUERY is too big — it ran out of time or of the
     endpoint's memory: ask for less), 'busy' (the endpoint
-    asks to slow down — wait and ask again) or 'fatal' (anything else — a syntax error, a 404)."""
+    asks to slow down, or its gateway lost it (502) — wait and ask again) or 'fatal' (anything else — a syntax error, a 404)."""
     if code in (429, 503, 504) and _TIMEOUT.search(detail or ""):
         return "timeout"
     if code in (500, 503) and _TOO_BIG.search(detail or ""):
         return "timeout"
-    if code in (429, 503):
+    if code in (429, 502, 503):
         return "busy"
     return "fatal"
 

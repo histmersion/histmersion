@@ -336,6 +336,7 @@ class FetchBackoff(unittest.TestCase):
         self.assertEqual(build.classify(500, "Internal Server Error"), "fatal")
         self.assertEqual(build.classify(429, "Too Many Requests"), "busy")
         self.assertEqual(build.classify(503, ""), "busy")
+        self.assertEqual(build.classify(502, "<h1>502 Bad Gateway</h1>"), "busy", "a gateway hiccup: wait, ask again")
         self.assertEqual(build.classify(400, "timed out"), "fatal", "a 400 is the query's fault, never retried")
         self.assertEqual(build.classify(404, ""), "fatal")
 
