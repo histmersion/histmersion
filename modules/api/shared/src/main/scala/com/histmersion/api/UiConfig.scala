@@ -31,6 +31,13 @@ final case class EventsUiConfig(
 object EventsUiConfig:
   given Schema[EventsUiConfig] = KindlingsSchema.derived[EventsUiConfig].schema
 
+/** The map's point layers as vector tiles (`ui.map-tiles`, [[TilesApi]]): the deepest tile the server
+  * cuts (MapLibre's zoom: the app's minus one), and how many seconds of playback one time bucket of the
+  * layers covers. */
+final case class MapTilesUiConfig(maxZoom: Int = 11, playbackBucketSeconds: Double = 1.0) derives KindlingsCodecAsObject
+object MapTilesUiConfig:
+  given Schema[MapTilesUiConfig] = KindlingsSchema.derived[MapTilesUiConfig].schema
+
 final case class UiConfig(
     tiles: String,
     tilesMaxZoom: Int,
@@ -52,6 +59,8 @@ final case class UiConfig(
     tabletMaxWidthPx: Int,
     /** The events layer of the map's playback (#1440). */
     events: EventsUiConfig,
+    /** The map's sites, events and pictures as vector tiles. */
+    mapTiles: MapTilesUiConfig = MapTilesUiConfig(),
     /** How often the page re-reads the toolbar's counts and "something new" marks (`GET
       * /api/ui/counters`), in seconds; it also re-reads them after its own changes and when the tab
       * comes back into view. */

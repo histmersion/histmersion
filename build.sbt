@@ -634,7 +634,7 @@ lazy val chimneyIronTests = project
 // ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
 lazy val db = project
   .in(file("modules/db"))
-  .dependsOn(config, coreJVM)
+  .dependsOn(config, coreJVM % "compile->compile;test->test")
   .settings(name := "histmersion-db")
   .settings(commonDeps)
   // Inside a group the suites run one at a time on purpose: several rewrite source_chunks/finding_places
