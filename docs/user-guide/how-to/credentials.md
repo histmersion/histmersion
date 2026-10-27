@@ -76,18 +76,20 @@ Without `password`, the database is opened with `--no-password` (a key file or a
 **YubiKey challenge-response.** `yubikey` is one `"<slot>[:<serial>]"` or a **list** of them, tried
 in order — for example your main key and a backup key. If `ykman` (YubiKey Manager) is installed,
 Histmersion first asks it which keys are plugged in and tries only those; with none plugged in it
-fails at once. Without `ykman` every entry is tried in order. The log says "touch your YubiKey" at
-each attempt; each attempt waits up to 30 seconds (`yubikey-timeout-seconds`). A wrong password or a
+fails at once. Without `ykman` every entry is tried in order. Whether a touch is needed is the key's
+own setting, the same as in the KeePassXC app: a key set up without "require touch" answers on its
+own and nothing blinks. If yours asks for one, the log says "touch your YubiKey if it blinks" at each
+attempt; each attempt waits up to 30 seconds (`yubikey-timeout-seconds`). A wrong password or a
 missing entry stops at once — another key cannot fix those. The key that opened the database last is
 tried first next time. `ykman = ""` turns detection off.
 
 **One unlock per start or reload.** When the server starts, and on every `histmersion config reload`,
 Histmersion collects every `keepassxc:` reference in your settings — the Smithsonian and Europeana
 keys, CORE's, a Bitwarden session — and reads them all with **one** `keepassxc-cli open`: the database
-is unlocked once (one password, one YubiKey touch), and each reference is one `show` request inside
+is unlocked once (one password, at most one YubiKey touch), and each reference is one `show` request inside
 that session, answered before the next is sent. The log says "touch your YubiKey" once per unlock
 attempt, naming how many references it is for. A missing entry fails only the plugin that names it;
-a failed unlock (a wrong password, no key touched in time) fails every plugin that needed the
+a failed unlock (a wrong password, no key plugged in or touched in time) fails every plugin that needed the
 database, and a second listed YubiKey is tried exactly as above. The values stay in the server's
 memory, for the settings they were read for, and are read again at the next start or reload. A single
 reference is read with one `keepassxc-cli show`, as before.
