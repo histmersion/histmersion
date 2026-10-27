@@ -315,7 +315,12 @@ def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String]
       checkNoLegacyNativeConfigs((Compile / resourceDirectory).value / "META-INF" / "native-image")
       val ni  = (pinnedGraalVmHome() / "bin" / "native-image").getAbsolutePath
       log.info(s"native-image → $out")
-      val cmd = Seq(ni) ++ extraOpts ++ Seq("-cp", cp, mainCls, out.getAbsolutePath)
+      // HISTMERSION_NATIVE_XMX: a cap on the builder's heap (a JVM size, e.g. 12g; default none — the server
+      // image needs more than 9 GB of heap, and a smaller cap only fails with OutOfMemoryError)
+      val xmx = sys.env.get("HISTMERSION_NATIVE_XMX").map(_.trim).filter(_.nonEmpty).map(x => s"-J-Xmx$x")
+      // HISTMERSION_NATIVE_PARALLELISM: the builder's threads (default: every core); fewer threads hold less at once
+      val par = sys.env.get("HISTMERSION_NATIVE_PARALLELISM").map(_.trim).filter(_.nonEmpty).map(p => s"--parallelism=$p")
+      val cmd = Seq(ni) ++ xmx ++ par ++ extraOpts ++ Seq("-cp", cp, mainCls, out.getAbsolutePath)
       val rc  = scala.sys.process.Process(cmd).!
       if (rc != 0) sys.error(s"native-image failed (exit $rc)")
       log.info(s"native image built → $out")
