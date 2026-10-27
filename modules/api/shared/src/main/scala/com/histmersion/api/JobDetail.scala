@@ -49,7 +49,9 @@ final case class JobDetail(
     eventRederive: Option[EventRederiveReport] = None,
     /** Any other background job's (#1946: the places fetch, land and hierarchy builds): what it does,
       * in words ("fetch cliopatria"). */
-    about: Option[String] = None
+    about: Option[String] = None,
+    /** A re-check job's: what it re-checks, since when, and the stopped job it resumes. */
+    recheck: Option[AcquireChecks.RecheckJob] = None
 ) derives KindlingsCodecAsObject
 object JobDetail:
   given Schema[JobDetail] = KindlingsSchema.derived[JobDetail].schema
@@ -63,3 +65,4 @@ object JobDetail:
       .orElse(j.detail.flatMap(_.media))
       .orElse(j.detail.flatMap(_.events))
       .orElse(j.detail.flatMap(_.about))
+      .orElse(j.detail.flatMap(_.recheck).map(AcquireChecks.RecheckJob.describe))

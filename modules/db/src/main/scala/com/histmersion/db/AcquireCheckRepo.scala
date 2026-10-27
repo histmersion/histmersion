@@ -14,7 +14,8 @@ object AcquireCheckRepo:
   /** An item's last check: when, under which fetcher generation, what it found, why, and how many times it
     * was checked. */
   final case class Row(item: Int, at: Instant, generation: String, outcome: String, reason: String, checks: Int):
-    def last: AcquireRecheck.LastCheck = AcquireRecheck.LastCheck(at, generation)
+    def last: AcquireRecheck.LastCheck =
+      AcquireRecheck.LastCheck(at, generation, failed = AcquireRecheck.Outcome.parse(outcome).contains(AcquireRecheck.Outcome.Failed))
 
   private val Select = SqlLiteral(
     "SELECT item_id, (extract(epoch FROM checked_at) * 1000)::bigint, generation, outcome, reason, checks FROM acquire_checks")

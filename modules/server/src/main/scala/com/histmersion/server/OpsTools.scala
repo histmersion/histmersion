@@ -65,8 +65,9 @@ object OpsTools:
             "done items and the file's prose blocks), `add` appends `text` under an optional `topic`, " +
             "`done` closes item `id`, `recheck` runs the acquisition list's legal re-check now (closes the items " +
             "the corpus holds with their text, tries a few due ones through the legal open-access chain only; " +
-            "`id` = that item alone, `limit` = at most that many tried, `dryRun: true` only lists what it would " +
-            "close and try). This is where a queue/tracker/changelog belongs — never write " +
+            "`id` = that item alone, `limit` = at most that many tried, `all: true` = every open item with a DOI, " +
+            "due or not, past the daily caps; `dryRun: true` only lists what it would close and try; a pass of more " +
+            "than one item runs as a job — follow it with job_status). This is where a queue/tracker/changelog belongs — never write " +
             "one as a new file. `topic` groups items under a heading; on `log` it defaults to today's " +
             "date, so an added line lands in today's entry.")
         .input[QueueInput]
@@ -134,7 +135,7 @@ object OpsTools:
               case Left(e)  => McpOut.refusal(e)
           case None => "_done needs an `id` (run action=list to see them)_"
       case "recheck" =>
-        h.agents.managing.acquireRecheck(AcquireChecks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp")))
+        h.agents.managing.acquireRecheck(AcquireChecks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp"), in.all))
           .fold(McpOut.refusal, AcquireChecksMarkdown.result)
       case other =>
         s"_unknown action '$other' — use list, add, done or recheck_"
@@ -176,7 +177,8 @@ object OpsTools:
       .modify(_.topic)(_.description("Group the item under this heading (defaults to today's date for log)"))
       .modify(_.reason)(_.description("Why this item is on the list / what research direction it serves (for action=add)"))
       .modify(_.id)(_.description("The item id (for action=done; for action=recheck: that acquisition item only)"))
-      .modify(_.all)(_.description("Include done items and prose blocks (for action=list)"))
+      .modify(_.all)(_.description("Include done items and prose blocks (for action=list); for action=recheck: every open " +
+        "acquisition item with a DOI, due or not, past the caps (a job)"))
       .modify(_.dryRun)(_.description("action=recheck: list what it would close and try; no fetcher is asked, nothing stored"))
       .modify(_.limit)(_.description("action=recheck: try at most this many due items (default acquire.recheck.per-pass)"))
 
