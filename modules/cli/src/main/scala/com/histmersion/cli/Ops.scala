@@ -30,17 +30,27 @@ object Ops:
     case Rm(id: Int)
     case Export(dir: String)
     case Import(dir: String)
+    /** `queue acquire recheck`: the acquisition list's legal re-check now. */
+    case Recheck(dryRun: Boolean, limit: Option[Int], id: Option[Int])
 
   object QueueArgs:
     val usage: String =
       "usage: histmersion queue <acquire|tasks|log> [--all] | queue <list> add \"<text>\" [--topic t] | " +
-        "queue done <id> | queue edit <id> \"<text>\" | queue rm <id> | queue export <dir> | queue import <dir>"
+        "queue done <id> | queue edit <id> \"<text>\" | queue rm <id> | queue export <dir> | queue import <dir> | " +
+        "queue acquire recheck [--dry-run] [--limit n] [--id <item>]"
 
-    /** Pure: positional words + flags → a command, or the usage line. */
-    def parse(args: List[String], topic: Option[String], reason: Option[String], all: Boolean): Either[String, QueueCmd] =
+    /** Pure: positional words + flags → a command, or the usage line. `--dry-run`, `--limit` and `--id`
+      * belong to `acquire recheck` alone. */
+    def parse(args: List[String], topic: Option[String], reason: Option[String], all: Boolean, dryRun: Boolean = false,
+        limit: Option[Int] = None, item: Option[Int] = None): Either[String, QueueCmd] =
       def id(s: String): Either[String, Int] =
         s.toIntOption.toRight(s"'$s' is not an item id — $usage")
+      val recheckFlags = dryRun || limit.isDefined || item.isDefined
       args match
+        case "acquire" :: "recheck" :: Nil =>
+          if limit.exists(_ < 0) then Left(s"--limit is 0 or more — $usage")
+          else Right(QueueCmd.Recheck(dryRun, limit, item))
+        case _ if recheckFlags => Left(s"--dry-run, --limit and --id go with `queue acquire recheck` — $usage")
         case "done" :: i :: Nil     => id(i).map(QueueCmd.Done.apply)
         case "edit" :: i :: text :: Nil =>
           if text.trim.isEmpty then Left(s"edit needs the new text — $usage") else id(i).map(QueueCmd.Edit(_, text))
@@ -185,15 +195,18 @@ object Ops:
   val queue: Opts[Client => Either[CliError, Unit]] =
     // NB: no `|` in the description — `tools/gen-cli-docs.sh` pastes it into a Markdown TABLE cell.
     // The full grammar (which needs pipes to read well) is `QueueArgs.usage`, printed on a bad call.
-    Opts.subcommand("queue", "Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import") {
+    Opts.subcommand("queue", "Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import; acquire recheck: the legal re-check of the acquisition list") {
       (
         Opts.arguments[String]("args").orEmpty,
         Opts.option[String]("topic", "Group the added item under this heading").orNone,
         Opts.option[String]("reason", "Why this item is on the list / what research direction it serves").orNone,
         Opts.flag("all", "Include done items and the file's prose blocks").orFalse,
+        Opts.flag("dry-run", "acquire recheck: list what it would close and try; no fetcher is asked, nothing stored").orFalse,
+        Opts.option[Int]("limit", "acquire recheck: try at most this many due items (default acquire.recheck.per-pass)").orNone,
+        Opts.option[Int]("id", "acquire recheck: this acquisition item only, due or not").orNone,
         Output.jsonFlag
-      ).mapN { (args, topic, reason, all, json) => (c: Client) =>
-        QueueArgs.parse(args, topic, reason, all) match
+      ).mapN { (args, topic, reason, all, dryRun, limit, item, json) => (c: Client) =>
+        QueueArgs.parse(args, topic, reason, all, dryRun, limit, item) match
           case Left(msg)  => Left(CliError(msg, exitCode = ExitCode.Usage))
           case Right(cmd) => run(c, cmd, json)
       }
@@ -202,7 +215,7 @@ object Ops:
   private def run(c: Client, cmd: QueueCmd, json: Boolean): Either[CliError, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
       c.queueList(list, all).map(l =>
-        Output.emit(json, l)(l => Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items)).getOrElse("")))
+        Output.emit(json, l)(l => Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items, l.checks)).getOrElse("")))
     case QueueCmd.Add(list, text, topic, reason) =>
       c.queueAdd(list, QueueAdd(text, topic, reason = reason)).map(i =>
         Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}"))
@@ -217,6 +230,9 @@ object Ops:
       writeMeta(c, Path.of(dir)).map(fs => println(s"wrote ${fs.mkString(", ")} to $dir"))
     case QueueCmd.Import(dir) =>
       readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => println(s"  $l")))
+    case QueueCmd.Recheck(dryRun, limit, id) =>
+      c.call(ManagersApi.acquireRecheck)(AcquireChecks.RecheckRequest(dryRun, limit, id, Some("cli")))
+        .map(r => Output.emit(json, r)(AcquireChecksMarkdown.result))
 
 /** Pure helpers for `lint --file`. */
 object FileFormat:

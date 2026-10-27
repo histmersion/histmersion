@@ -52,8 +52,8 @@ histmersion ingest 10.1234/example-doi --legal-only
 ```
 
 With no legal copy it behaves like a plain `ingest`: the source is created with its details only, and
-the report says how to bring the file in by hand. The watchers' auto-ingest always asks the legal services
-only.
+the report says how to bring the file in by hand. The watchers' auto-ingest and the acquisition list's
+re-check (below) always ask the legal services only.
 
 ### What some services need
 
@@ -118,6 +118,44 @@ shows the same list.
 
 **The acquisition list is yours.** A watcher with auto-ingest on ingests only legal open-access works;
 anything without a legal copy goes to this list for you to decide.
+
+### The list is checked again
+
+A work that had no legal copy when it was listed may have one later: an author deposits it in a
+repository, or you add a plugin or a key (CORE's, say). So Histmersion looks at the list again by itself,
+without using an AI model:
+
+- an item whose paper is already in the corpus **with its text** is ticked off;
+- the other items that name a DOI are tried through the **legal** services only — never a fetcher the
+  config marks unauthorised, whatever `acquire.allow-unauthorised` says. When a copy is found, its text is
+  recognised and the item is ticked off once that is done. A source you already have with its details only
+  gets the text, and keeps your notes and findings;
+- an item with still no copy says when it was checked and what each service answered:
+
+```
+- [ ] Author 2019, Title — https://doi.org/10.1234/example  `#42`
+  - _checked 2026-10-27: no legal copy (unpaywall: no copy — no open-access location; landing: refused — bot-protection 403)_
+```
+
+An item is checked again after a week (`acquire.recheck.every-days`), or at once when the services change
+(a new fetcher plugin, a new key). A few items are tried at a time, at most 40 a day; while the autopilot
+is on, the re-check takes at most a quarter of its daily legal download allowance, after the watchers'
+backlog. It runs with the agents' managers and pauses while the autopilot drains. To switch it off, set
+`acquire.recheck.enabled = false`. The settings are in [Configuration](../reference/configuration.md).
+
+You can also run it yourself:
+
+```bash
+histmersion queue acquire recheck --dry-run      # what it would tick off and try; asks no service
+histmersion queue acquire recheck                # a pass now
+histmersion queue acquire recheck --id 42        # just this item, even if it was checked recently
+```
+
+`histmersion agent autopilot status` and `histmersion about` show one line about it:
+
+```
+- acquire re-check: 12 of 455 items with a DOI due, 3 closed and 1 found this week, 5 of 40 tried today — next pass at the next managers' tick
+```
 
 ## Old books: archive.org
 

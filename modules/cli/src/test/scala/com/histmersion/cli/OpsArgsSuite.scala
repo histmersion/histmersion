@@ -46,6 +46,23 @@ class OpsArgsSuite extends munit.FunSuite:
     assertEquals(parse(), Left(QueueArgs.usage))
     assertEquals(parse("acquire", "wat", "x"), Left(QueueArgs.usage))
 
+  test("`queue acquire recheck` takes --dry-run, --limit and --id; the flags belong to it alone"):
+    assertEquals(parse("acquire", "recheck"), Right(QueueCmd.Recheck(false, None, None)))
+    assertEquals(QueueArgs.parse(List("acquire", "recheck"), None, None, all = false, dryRun = true, limit = Some(5)),
+      Right(QueueCmd.Recheck(true, Some(5), None)))
+    assertEquals(QueueArgs.parse(List("acquire", "recheck"), None, None, all = false, item = Some(42)),
+      Right(QueueCmd.Recheck(false, None, Some(42))))
+    assert(QueueArgs.parse(List("acquire", "recheck"), None, None, all = false, limit = Some(-1)).left.exists(_.contains("--limit")))
+    assert(QueueArgs.parse(List("acquire"), None, None, all = false, dryRun = true).left.exists(_.contains("go with `queue acquire recheck`")))
+    assert(QueueArgs.parse(List("done", "3"), None, None, all = false, item = Some(3)).isLeft)
+    assertEquals(parse("tasks", "recheck"), Left(QueueArgs.usage), "only the acquisition list is re-checked")
+
+  test("the decline options parse into the recheck command"):
+    val cmd = com.monovore.decline.Command("histmersion", "test")(Ops.queue)
+    assert(cmd.parse(List("queue", "acquire", "recheck", "--dry-run", "--limit", "5", "--json"), Map.empty).isRight)
+    assert(cmd.parse(List("queue", "acquire", "recheck", "--id", "42"), Map.empty).isRight)
+    assert(cmd.parse(List("queue", "acquire", "recheck", "--id", "x"), Map.empty).isLeft)
+
   test("the usage line names all three lists and every verb"):
-    List("acquire", "tasks", "log", "add", "done", "rm", "export", "import")
+    List("acquire", "tasks", "log", "add", "done", "rm", "export", "import", "recheck")
       .foreach(w => assert(QueueArgs.usage.contains(w), s"usage does not mention $w"))

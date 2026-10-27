@@ -119,7 +119,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       agentLease = agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)),
       plugins = deps.plugins.report,
       storage = storageNow(now),
-      upstreams = upstreamQuotas(now))
+      upstreams = upstreamQuotas(now),
+      acquireRecheck = scala.util.Try(agents.acquireRecheck.status(now)).toOption)
 
   /** The metered upstreams' budgets as the database keeps them (CORE's: `upstream_quota`), under today's
     * limits; none before CORE was first asked, and none when the database cannot be read (`about` says

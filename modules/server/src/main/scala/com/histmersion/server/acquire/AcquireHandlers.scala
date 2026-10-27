@@ -34,7 +34,8 @@ final class AcquireHandlers(
     retractionWatch: => RetractionWatchClient,
     jobs: IngestJobs,
     indexes: => List[ScholarlyIndex] = Nil,
-    alerts: => CitationAlerts = NoAlerts
+    alerts: => CitationAlerts = NoAlerts,
+    generation: => String = ""
 ):
   private val ds  = deps.ds
   private def cfg = deps.cfg
@@ -581,12 +582,18 @@ final class AcquireHandlers(
     maintenance.guard("acquire/ingest")(ingestNow(req,
       if req.legalOnly then AcquireHandlers.IngestPath.PersonLegal else AcquireHandlers.IngestPath.Person))
 
-  /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)): the LEGAL
-    * open-access chain only — no unauthorised fetcher is asked, whatever `acquire.allow-unauthorised`
-    * says — and a work with no legal file is refused (Left) rather than stored as metadata alone, so it
-    * goes to the acquisition list instead. An existing source is never fetched again. */
+  /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)) and the acquisition
+    * list's re-check: the LEGAL open-access chain only — no unauthorised fetcher is asked, whatever
+    * `acquire.allow-unauthorised` says — and a work with no legal file is refused (Left) rather than stored
+    * as metadata alone, so it goes to (or stays on) the acquisition list instead. An existing source with
+    * its original is never fetched again; a metadata-only one named by `req.citekey` is fetched and
+    * converted into, keeping its enrichment. */
   def ingestLegal(req: IngestRequest): Either[ApiError, IngestReport] =
     maintenance.guard("acquire/ingest")(ingestNow(req.copy(refetch = false), AcquireHandlers.IngestPath.Watcher))
+
+  /** The legal chain's generation now ([[FetcherGeneration]]): it changes when a legal fetcher or a fetcher
+    * plugin's settings or key change, which makes the acquisition list's items due for a re-check again. */
+  def fetcherGeneration: String = generation
 
   def archiveImport(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
     maintenance.guard("archive/import")(archiveImportNow(req))
@@ -621,7 +628,7 @@ object AcquireHandlers:
     case Person extends IngestPath(false, false)
     /** `histmersion ingest <doi> --legal-only`. */
     case PersonLegal extends IngestPath(true, false)
-    /** A watcher's auto-ingest. */
+    /** A watcher's auto-ingest, the acquisition list's re-check. */
     case Watcher extends IngestPath(true, true)
 
   /** The host a file was fetched from (`www.ebi.ac.uk`, `pmc-oa-opendata.s3.amazonaws.com`), for the

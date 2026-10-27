@@ -63,11 +63,14 @@ object OpsTools:
             "download), `tasks` (the agent's backlog) and `log` (the dated worklog). One tool, one " +
             "`action`: `list` shows the open items of `list` with their ids (`all: true` also shows " +
             "done items and the file's prose blocks), `add` appends `text` under an optional `topic`, " +
-            "`done` closes item `id`. This is where a queue/tracker/changelog belongs — never write " +
+            "`done` closes item `id`, `recheck` runs the acquisition list's legal re-check now (closes the items " +
+            "the corpus holds with their text, tries a few due ones through the legal open-access chain only; " +
+            "`id` = that item alone, `limit` = at most that many tried, `dryRun: true` only lists what it would " +
+            "close and try). This is where a queue/tracker/changelog belongs — never write " +
             "one as a new file. `topic` groups items under a heading; on `log` it defaults to today's " +
             "date, so an added line lands in today's entry.")
         .input[QueueInput]
-        .handle(in => ToolResult.text(runQueue(ops, in)))
+        .handle(in => ToolResult.text(runQueue(ops, h, in)))
 
     val query =
       tool("query")
@@ -106,11 +109,11 @@ object OpsTools:
     List(lint, queue, query, schema, backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
-  private def runQueue(ops: OpsHandlers, in: QueueInput): String =
+  private def runQueue(ops: OpsHandlers, h: Handlers, in: QueueInput): String =
     def render(list: String) =
       ops.queueList(list, in.all) match
         case Right(l) =>
-          Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items)).getOrElse(s"_unknown list ${l.list}_")
+          Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items, l.checks)).getOrElse(s"_unknown list ${l.list}_")
         case Left(e) => McpOut.refusal(e)
 
     in.action.trim.toLowerCase match
@@ -130,8 +133,11 @@ object OpsTools:
               case Right(i) => s"done **#${i.id}**: ${i.text}"
               case Left(e)  => McpOut.refusal(e)
           case None => "_done needs an `id` (run action=list to see them)_"
+      case "recheck" =>
+        h.agents.managing.acquireRecheck(AcquireChecks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp")))
+          .fold(McpOut.refusal, AcquireChecksMarkdown.result)
       case other =>
-        s"_unknown action '$other' — use list, add or done_"
+        s"_unknown action '$other' — use list, add, done or recheck_"
 
   // Inputs last, per the file convention: circe Codec + tapir Schema both derived by Kindlings.
   final case class LintInput(
@@ -158,17 +164,21 @@ object OpsTools:
       topic: Option[String] = None,
       reason: Option[String] = None,
       id: Option[Int] = None,
-      all: Boolean = false
+      all: Boolean = false,
+      dryRun: Boolean = false,
+      limit: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object QueueInput:
     given Schema[QueueInput] = KindlingsSchema.derived[QueueInput].schema
-      .modify(_.action)(_.description("What to do: list | add | done"))
+      .modify(_.action)(_.description("What to do: list | add | done | recheck (the acquisition list's legal re-check)"))
       .modify(_.list)(_.description("Which queue: acquire | tasks | log"))
       .modify(_.text)(_.description("The item text (for action=add)"))
       .modify(_.topic)(_.description("Group the item under this heading (defaults to today's date for log)"))
       .modify(_.reason)(_.description("Why this item is on the list / what research direction it serves (for action=add)"))
-      .modify(_.id)(_.description("The item id (for action=done)"))
+      .modify(_.id)(_.description("The item id (for action=done; for action=recheck: that acquisition item only)"))
       .modify(_.all)(_.description("Include done items and prose blocks (for action=list)"))
+      .modify(_.dryRun)(_.description("action=recheck: list what it would close and try; no fetcher is asked, nothing stored"))
+      .modify(_.limit)(_.description("action=recheck: try at most this many due items (default acquire.recheck.per-pass)"))
 
   final case class QueryInput(sql: String) derives KindlingsCodecAsObject
   object QueryInput:

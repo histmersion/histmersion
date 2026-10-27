@@ -49,11 +49,15 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
   private def backlogPending: Int =
     if acfg.ingestBacklogShare <= 0 then 0 else ManagerRepo.backlogCounts(ds).values.map(_._1).sum
 
-  /** What is left today of the legal open-access ingests all watchers share (None: off, or no shared cap). */
+  /** What is left today of the legal open-access ingests all watchers share — the acquisition list's
+    * re-check's finds counted too (None: off, or no shared cap). */
   def sharedIngestLeft(now: Instant): Option[Int] =
     if !on then None
-    else AutopilotPolicy.sharedIngestLeft(ingestCap,
-      ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)))
+    else AutopilotPolicy.sharedIngestLeft(ingestCap, ingestedToday(now))
+
+  /** The legal open-access ingests today: every watcher's, and the acquisition list's re-check's. */
+  def ingestedToday(now: Instant): Int =
+    ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)) + agents.acquireRecheck.fetchedToday(now)
 
   /** Make sure of the goals' managers at the next tick (a plan created sub-goals). */
   def soon(): Unit = AutopilotRepo.ensureSoon(ds)
@@ -330,8 +334,9 @@ final class AutopilotService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
         rule(Agents.ApprovalKind.ArticlePublish,
           AutopilotPolicy.capText(caps.publishPerDay, AgentRepo.openCount(ds, Agents.ApprovalKind.ArticlePublish),
             caps.publishBacklogShare, caps.publishCeiling) + s", filter at least ${caps.publishMinSources} sources")),
-      ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)), if row.enabled then ingestCap else 0,
+      ingestedToday(now), if row.enabled then ingestCap else 0,
       cfg.maxConcurrentRuns, row.lastBackupAt, row.lastLintAt,
       managers.filter(m => m.id == ReviewId || m.id == EnrichId).map(brief), progress,
       backlog = backlog.total, backlogDays = backlog.totalDays, focus = Some(agents.focus.info(now)), drain = agents.drain.info(),
-      goalPlansWait = agents.focus.goalPlansWait(), upstreams = h.upstreamQuotas(now))
+      goalPlansWait = agents.focus.goalPlansWait(), upstreams = h.upstreamQuotas(now),
+      acquireRecheck = Some(agents.acquireRecheck.status(now)))

@@ -126,7 +126,9 @@ final case class About(
     storage: StorageReport = StorageReport(),
     /** The metered upstreams' budgets today (CORE); empty before one was first asked, or from an older
       * server. */
-    upstreams: List[UpstreamQuota] = Nil
+    upstreams: List[UpstreamQuota] = Nil,
+    /** The acquisition list's legal re-check; absent when it could not be read, or from an older server. */
+    acquireRecheck: Option[AcquireChecks.RecheckStatus] = None
 ) derives KindlingsCodecAsObject
 object About:
   given Schema[About] = KindlingsSchema.derived[About].schema
@@ -190,7 +192,8 @@ object AboutMarkdown:
       s"- last backup: $backup",
       s"- config file: ${ConfigFileInfo.describe(a.configFile)}",
       s"- agent lease: ${a.agentLease.fold("none (no server runs agents on this database)")(_.describe)}"
-    ) ++ a.upstreams.map(q => s"- ${UpstreamQuotaMarkdown.line(q)}") ++ PluginsMarkdown.summary(a.plugins) ++ a.counts.toList.flatMap(c => List(
+    ) ++ a.upstreams.map(q => s"- ${UpstreamQuotaMarkdown.line(q)}") ++
+      a.acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList ++ PluginsMarkdown.summary(a.plugins) ++ a.counts.toList.flatMap(c => List(
       s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
         s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
       s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period")} · ${Plural.count(c.presets, "preset")}"

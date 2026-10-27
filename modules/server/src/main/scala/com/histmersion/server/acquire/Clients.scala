@@ -258,7 +258,9 @@ final case class AcquireClients(
     retractionWatch: RetractionWatchClient,
     /** The indexes a goal's watches read, and the citation/author alerts (#3761). */
     indexes: List[ScholarlyIndex] = Nil,
-    alerts: CitationAlerts = NoAlerts)
+    alerts: CitationAlerts = NoAlerts,
+    /** The legal chain's generation ([[FetcherGeneration]]): what makes the acquisition list due again. */
+    generation: String = "")
 
 /** No citation or author alerts (a test, or a server built without them). */
 object NoAlerts extends CitationAlerts:

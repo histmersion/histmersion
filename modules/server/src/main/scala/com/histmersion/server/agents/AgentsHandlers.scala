@@ -61,6 +61,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
     * days (the sweep parks them, the managers' tick drains them). */
   val oaBacklog: OaBacklog = OaBacklog(ds, cfg, h, () => upstream, this)
 
+  /** The acquisition list's legal re-check (the managers' tick runs it; `queue acquire recheck` by hand). */
+  val acquireRecheck: AcquireRecheckService = AcquireRecheckService(ds, deps.cfg.acquire.recheck, h, () => upstream, this)
+
   /** The run pool. Constructed here, started by [[start]] (from `Main`, after the OCR pool). */
   val engine: Engine = Engine(ds, cfg, this, Map(
     Pipeline.EnrichSource     -> EnrichSourcePipeline(h, ds, cfg, () => upstream, approvals),

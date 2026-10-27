@@ -26,6 +26,13 @@ trait AgentUpstream:
     * fetcher, whatever `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not
     * connected by default: a fixture that does not answer it ingests nothing. */
   def ingestLegal(doi: String): Either[String, IngestReport] = Left("the acquisition toolset is not connected")
+  /** The acquisition list's re-check of one DOI: [[ingestLegal]], fetched and converted into the
+    * metadata-only source `into` when there is one (its enrichment stays). */
+  def ingestLegalInto(doi: String, into: Option[String]): Either[String, IngestReport] = ingestLegal(doi)
+  /** The legal chain's generation (a digest that changes with a fetcher or a key); "" when not connected. */
+  def fetcherGeneration: String = ""
+  /** Whether the acquisition toolset is attached (Offline is not). */
+  def connected: Boolean = true
   /** The deterministic new-source search of a goal (#3761): its watches read from their watermarks, the new
     * candidates stored (a dry run stores nothing). Not connected by default: a fixture that does not answer
     * it keeps the sweep's live search. */
@@ -46,6 +53,7 @@ object AgentUpstream:
     def assess(citekey: String, apply: Boolean)           = off
     def followups(id: String, since: Option[Int], limit: Option[Int]) = off
     def discover(query: String, limit: Int)                = off
+    override def connected                                = false
 
   /** The server's own acquisition handlers — the same calls `histmersion refs/assess/followups` make. */
   def of(a: AcquireHandlers): AgentUpstream = new AgentUpstream:
@@ -58,6 +66,9 @@ object AgentUpstream:
     def discover(query: String, limit: Int) =
       a.discover(query, None, None, Some(limit), notInDb = false).left.map(_.message)
     override def ingestLegal(doi: String) = a.ingestLegal(IngestRequest(doi)).left.map(_.message)
+    override def ingestLegalInto(doi: String, into: Option[String]) =
+      a.ingestLegal(IngestRequest(doi, citekey = into)).left.map(_.message)
+    override def fetcherGeneration = a.fetcherGeneration
     override def sweepCandidates(goal: String, dryRun: Boolean) =
       a.sweepCandidates(CandidateSweepRequest(goal, dryRun)).left.map(_.message)
     override def candidates(goal: String, state: String, limit: Int) =

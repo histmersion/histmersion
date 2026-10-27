@@ -13,7 +13,8 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * each group was first added; an item can be ticked off, edited (text and topic) and deleted. An
   * acquisition item can also be fulfilled: "Upload…" opens the upload form filled in from it (the
   * OCR job ticks it off when it succeeds), and "Link existing source…" picks a source already in
-  * the corpus and ticks it off at once; either way it reads `ingested as [[citekey]]`. The
+  * the corpus and ticks it off at once; either way it reads `ingested as [[citekey]]`. An item the legal
+  * re-check looked at says when and what it found (`checked 2026-10-27: no legal copy (…)`). The
   * worklog's topic is the entry's date: it is grouped by that, newest date first, and its entries
   * can only be added. Every write follows [[Auth]]. */
 object QueueView:
@@ -185,6 +186,7 @@ object QueueView:
   def pane(kind: Queue.Kind): HtmlElement =
     val sp      = spec(kind)
     val items   = Var(List.empty[Queue.QueueItem])
+    val checks  = Var(Map.empty[Int, AcquireChecks.AcquireCheck])
     val loaded  = Var(false)
     val failure = Var(Option.empty[String])
     val adding  = Var(false)
@@ -198,6 +200,7 @@ object QueueView:
           l =>
             failure.set(None)
             items.set(l.items.filterNot(_.status == Queue.Note))
+            checks.set(l.checks.map(c => c.item -> c).toMap)
             loaded.set(true)
         )
       }
@@ -242,10 +245,10 @@ object QueueView:
         (in, reset) => write("add the item", ApiClient.queueAdd(kind.label, in))(_ => reset()),
         () => adding.set(false)))),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
-      child <-- items.signal.combineWith(loaded.signal).map { (its, ok) =>
+      child <-- items.signal.combineWith(loaded.signal, checks.signal).map { (its, ok, cs) =>
         if !ok then p(cls := "muted", "Loading…")
         else if its.isEmpty then p(cls := "muted", sp.empty)
-        else div(cls := "queue-groups", groups(kind, its).map((t, is) => renderGroup(sp, t, is, ops, topicsId)))
+        else div(cls := "queue-groups", groups(kind, its).map((t, is) => renderGroup(sp, t, is, ops, topicsId, cs)))
       }
     )
 
@@ -299,16 +302,17 @@ object QueueView:
     )
 
   private def renderGroup(sp: Spec, topic: Option[String], its: List[Queue.QueueItem], ops: Ops,
-      topicsId: String): HtmlElement =
+      topicsId: String, checks: Map[Int, AcquireChecks.AcquireCheck]): HtmlElement =
     val (title, path) = heading(topic, sp.untitled)
     div(
       cls := "queue-group",
       if path.nonEmpty then div(cls := "group-path muted", path.mkString(" › ")) else emptyNode,
       h3(cls := "group-topic", title),
-      ul(cls := "queue-items", its.map(renderItem(sp, _, ops, topicsId)))
+      ul(cls := "queue-items", its.map(i => renderItem(sp, i, ops, topicsId, checks.get(i.id))))
     )
 
-  private def renderItem(sp: Spec, item: Queue.QueueItem, ops: Ops, topicsId: String): HtmlElement =
+  private def renderItem(sp: Spec, item: Queue.QueueItem, ops: Ops, topicsId: String,
+      check: Option[AcquireChecks.AcquireCheck]): HtmlElement =
     val done = item.status == Queue.Done
     val mode = Var(Mode.Idle)
     li(
@@ -334,6 +338,8 @@ object QueueView:
         },
         item.reason.filter(_.trim.nonEmpty).map(r => div(cls := "item-reason muted", segments(r).map(render))),
         item.doneAt.filter(_ => done).map(d => div(cls := "item-reason muted", s"done ${d.take(10)}")),
+        check.filter(_ => !done).map(c => div(cls := "item-reason muted", title := s"checked ${c.checks} time(s)",
+          segments(c.reason).map(render))),
         if !sp.editable then emptyNode
         else
           child <-- mode.signal.map {

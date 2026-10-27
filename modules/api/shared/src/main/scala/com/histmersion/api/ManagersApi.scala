@@ -100,6 +100,14 @@ object ManagersApi:
     endpoint.post.in("api" / "agents" / "autopilot" / "repair-acquire").errorOut(errors)
       .in(jsonBody[RepairAcquire.RepairRequest]).out(jsonBody[RepairAcquire.RepairResult])
 
+  /** `POST /api/queue/acquire/recheck {dryRun?, limit?, id?}` — the acquisition list's legal re-check, now:
+    * the open items the corpus holds with their original are closed, a few due ones are tried through the
+    * legal chain only (or item `id`, due or not). `dryRun` lists what it would close and try, asking no
+    * fetcher. Refused while the autopilot drains (not a dry run). */
+  lazy val acquireRecheck: PublicEndpoint[AcquireChecks.RecheckRequest, ApiError, AcquireChecks.RecheckResult, Any] =
+    endpoint.post.in("api" / "queue" / "acquire" / "recheck").errorOut(errors)
+      .in(jsonBody[AcquireChecks.RecheckRequest]).out(jsonBody[AcquireChecks.RecheckResult])
+
   /** `GET /api/agents/autopilot/focus` — the focus (docs/research-process-managers.md "As built: the
     * focus"): the active goals (why each was chosen, what it does or waits for, its pace), the queue in the
     * order the next become active, and the goals that cannot use a slot now. Readable with the autopilot
@@ -157,5 +165,5 @@ object ManagersApi:
 
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   lazy val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
-    removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire, focus, setFocus, scheduler, setScheduler,
+    removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire, acquireRecheck, focus, setFocus, scheduler, setScheduler,
     schedulerWhy, digest, decideAll, drain, stalls)

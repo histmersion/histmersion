@@ -37,11 +37,12 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite:
   private val Model = ModelRef(ProviderKind.Local, "scripted")
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
-  /** The crons off (a test drives every sweep itself), room for every run. */
+  /** The crons off (a test drives every sweep itself), room for every run; the acquisition list's re-check
+    * off (it would try the items a test leaves on the list, and this suite counts the backlog's ingests). */
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
-    b.copy(db = b.db.copy(url = testDb.get),
+    b.copy(db = b.db.copy(url = testDb.get), acquire = b.acquire.copy(recheck = b.acquire.recheck.copy(enabled = false)),
       agents = b.agents.copy(enabled = true, prices = "scripted=1/2", maxConcurrentRuns = 20,
         scheduler = b.agents.scheduler.copy(enabled = false),
         autopilot = b.agents.autopilot.copy(backupHours = 0, lintHours = 0),

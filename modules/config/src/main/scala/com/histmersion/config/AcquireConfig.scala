@@ -88,6 +88,12 @@ final case class TlsConfig(systemTrust: Boolean, extraCaFile: String) derives Co
 final case class CandidatesConfig(indexes: List[String], lookbackDays: Int, perWatch: Int, sources: Int,
     authorsPerSource: Int, arxivApiUrl: String) derives ConfigReader
 
+/** The acquisition list's legal re-check: on or off, the days an item's check holds, the items tried a
+  * day and a pass, the minutes between passes, and the share (percent) of the autopilot's shared daily
+  * legal ingest allowance it may take. */
+final case class RecheckConfig(enabled: Boolean, everyDays: Int, perDay: Int, perPass: Int, passMinutes: Int,
+    sharePercent: Int) derives ConfigReader
+
 final case class AcquireDefaults(
     searchLimit: Int,      // discover search page size
     minYear: Int,          // discover: oldest publication year considered
@@ -126,7 +132,8 @@ final case class AcquireConfig(
     spoolDir: String,
     defaults: AcquireDefaults,
     tls: TlsConfig,
-    candidates: CandidatesConfig
+    candidates: CandidatesConfig,
+    recheck: RecheckConfig
 ) derives ConfigReader:
 
   /** The contact e-mail, when one is configured. It is a per-install setting (never in the repo), so
