@@ -301,7 +301,6 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .tl-ov-handle { fill:var(--accent); opacity:.7; cursor:ew-resize; transition:opacity .12s; }
 .tl-ov-handle:hover { opacity:1; }
 .tl-ov-label { fill:var(--accent); font:8px system-ui,-apple-system,sans-serif; font-variant-numeric:tabular-nums; }
-.tl-ov-label-end { text-anchor:end; }
 /* ── detail bar (zoomed range, drag-to-zoom) ─────────────────────────────────────────────── */
 .tl-detail-wrap { padding:2px 16px 0; }
 .tl-detail-svg { display:block; width:100%; cursor:crosshair; touch-action:none; user-select:none; }
