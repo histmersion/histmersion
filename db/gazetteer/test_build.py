@@ -3,7 +3,7 @@
 
     python3 -m unittest db/gazetteer/test_build.py
 """
-import gzip, io, json, os, sys, tempfile, unittest, zipfile
+import gzip, io, json, os, re, sys, tempfile, unittest, zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build  # noqa: E402
@@ -373,6 +373,43 @@ class FetchBackoff(unittest.TestCase):
         build.fetch_query("SELECT ?item ?name WHERE { ?item ?p ?name }", post, out, sleep=lambda s: None, log=lambda m: None)
         self.assertEqual(out.getvalue(), b"?item\t?name\n<x>\t1\n", "nothing of the cut-off answer is kept")
         self.assertIn("LIMIT 250000 OFFSET 0", asked[1], "a timeout while exporting asks in pages")
+
+    def test_split_band_halves_the_longer_side(self):
+        self.assertEqual(build.split_band(build.WORLD), [(-180, -90, 0, 90), (0, -90, 180, 90)])
+        self.assertEqual(build.split_band((0, -90, 180, 90)), [(0, -90, 90, 90), (90, -90, 180, 90)])
+        self.assertEqual(build.split_band((0, 0, 10, 40)), [(0, 0, 10, 20), (0, 20, 10, 40)])
+
+    def test_a_band_is_open_on_its_inner_east_and_north_edges(self):
+        q = build.wd_scope(build.DEFAULT_SCOPE, (0, -90, 180, 0))
+        self.assertIn("?lon >= 0 && ?lon <= 180 && ?lat >= -90 && ?lat < 0", q, "the world's own edge is closed")
+        self.assertIn("BIND(geof:longitude", build.wd_queries(build.DEFAULT_SCOPE, (0, 0, 10, 10))["labels"])
+        self.assertEqual(build.wd_queries()["core"].count("BIND(geof:longitude"), 1)
+        self.assertEqual(build.wd_queries(band=(0, 0, 10, 10))["core"].count("BIND(geof:longitude"), 1)
+
+    def test_a_query_too_big_for_the_world_is_asked_for_each_half(self):
+        points = {"q1": (-100, 40), "q2": (10, 50), "q3": (0, 0), "q4": (150, -30), "q5": (179.9, 89)}
+        calls = []
+
+        def post(text):
+            calls.append(text)
+            m = re.search(r"\?lon >= (\S+) && \?lon (<=?) (\S+) && \?lat >= (\S+) && \?lat (<=?) (\S+)\)", text)
+            if not m:
+                raise build.HttpFailure(429, "Operation timed out")
+            w, eop, e, so, nop, n = m.groups()
+            w, e, so, n = float(w), float(e), float(so), float(n)
+            if e - w > 90:
+                raise build.HttpFailure(429, "Operation timed out. Last operation: Query planning")
+            inside = [q for q, (lo, la) in points.items()
+                      if lo >= w and (lo <= e if eop == "<=" else lo < e) and la >= so and (la <= n if nop == "<=" else la < n)]
+            return ("?item\t?name\n" + "".join(f"<{q}>\t\"{q}\"@en\n" for q in inside)).encode()
+        out = io.BytesIO()
+        asked = build.fetch_banded("labels", build.DEFAULT_SCOPE, post, out, sleep=lambda s: None, log=lambda m: None)
+        lines = out.getvalue().decode().splitlines()
+        self.assertEqual(lines[0], "?item\t?name", "one header")
+        self.assertEqual(sorted(l.split("\t")[0] for l in lines[1:]), ["<q1>", "<q2>", "<q3>", "<q4>", "<q5>"],
+                         "every row once — the point on the 0° meridian and the equator too")
+        self.assertEqual(asked, 4, "world → two halves → four quarters of 90°")
+        self.assertFalse(any("LIMIT" in c for c in calls), "bands are asked whole, not in pages")
 
     def test_timeout_below_the_minimum_page_gives_up(self):
         post, _ = self.endpoint(100, too_big_above=1)
