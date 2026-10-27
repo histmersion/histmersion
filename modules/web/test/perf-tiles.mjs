@@ -1,6 +1,7 @@
 // The map's tiled layers (sites, pictures, events: `/api/tiles`, docs/map-layers.md) at a corpus's real
 // density, every layer on: what one view asks for and holds at zooms 2–10 over a single year and over
-// -3000..2000, the pan and the timeline drag on top of it, and playback. READ-ONLY: GETs, map moves and
+// -3000..2000, the pan and the timeline drag on top of it, and playback. With HISTMERSION_PERF_BUNDLE an
+// older bundle (the layers' JSON feeds) is measured the same way: its feed requests count as the tiles. READ-ONLY: GETs, map moves and
 // the timeline only. Prints JSON (`--md`: the Markdown rows of docs/research-web-perf.md).
 //
 //   HISTMERSION_SERVER_URL=http://127.0.0.1:18437 node modules/web/test/perf-tiles.mjs [--md]
@@ -25,7 +26,7 @@ const browser = await chromium.launch({ headless: true, args: gpuArgs(),
 const tileLog = [];
 function trackTiles(page) {
   page.on('requestfinished', async r => {
-    if (!r.url().includes('/api/tiles/')) return;
+    if (!/\/api\/(tiles\/|places\/geo\?.*kind=site|media-geo|events\/geo)/.test(r.url())) return;
     const t = r.timing(), sizes = await r.sizes().catch(() => ({ responseBodySize: 0 }));
     tileLog.push({ at: Date.now(), ms: t.responseEnd > 0 ? t.responseEnd : 0, bytes: sizes.responseBodySize });
   });
@@ -49,7 +50,7 @@ async function tilesIn(page) {
 }
 
 /** What the map holds and draws now. */
-const held = page => page.evaluate(() => ({ points: window.__testMap.points(), tiled: window.__testMap.tiled(),
+const held = page => page.evaluate(() => ({ points: window.__testMap.points(), tiled: window.__testMap.tiled?.() ?? null,
   drawn: document.querySelectorAll('#map .hd-pane--markers .hd-marker, #map .hd-pane--events .hd-marker, #map .hd-pane--sites .hd-marker').length }));
 
 const out = { url: baseURL, at: new Date().toISOString(), views: [], gestures: {} };
@@ -97,10 +98,10 @@ try {
 }
 
 if (md) {
-  console.log('| span | zoom | tiles | KB (largest) | tile p50 / max ms | last tile ms | longest task | points held · drawn | sites items · cells (counted) | media | events |');
+  console.log('| span | zoom | tiles (feeds) | KB (largest) | tile p50 / max ms | last tile ms | longest task | points held · drawn | sites items · cells (counted) | media | events |');
   console.log('|---|---:|---:|---:|---:|---:|---:|---:|---|---|---|');
   for (const v of out.views) {
-    const t = l => `${v.tiled[l].items} · ${v.tiled[l].cells} (${v.tiled[l].counted})`;
+    const t = l => v.tiled ? `${v.tiled[l].items} · ${v.tiled[l].cells} (${v.tiled[l].counted})` : '—';
     console.log(`| ${v.span} | ${v.zoom} | ${v.tiles} | ${v.kb} (${v.maxKb}) | ${v.p50Ms} / ${v.maxMs} | ${v.lastTileMs} | ${v.longTaskMax} | ${v.points} · ${v.drawn} | ${t('sites')} | ${t('media')} | ${t('events')} |`);
   }
   console.log();

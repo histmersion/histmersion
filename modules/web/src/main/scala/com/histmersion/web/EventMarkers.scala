@@ -31,14 +31,6 @@ object EventMarker:
       if hi == lo then 0.5 else (((a + b) / 2.0 - lo) / (hi - lo)).max(0).min(1)
     }
 
-  /** Pure: the map's view as the `area` an events query takes, wrapped and clamped as the in-view
-    * filter does (`minLon,minLat,maxLon,maxLat`). */
-  def area(west: Double, south: Double, east: Double, north: Double): String =
-    def r(x: Double) = Math.round(x * 1e4) / 1e4
-    def wrap(x: Double) = { val y = ((x + 180) % 360 + 360) % 360 - 180; if y == -180 && x > 0 then 180.0 else y }
-    val (w, e) = if east - west >= 360 then (-180.0, 180.0) else (wrap(west), wrap(east))
-    s"${r(w)},${r(south.max(-90))},${r(e)},${r(north.min(90))}"
-
 /** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — read
   * from the server's tiles (`/api/tiles/events/…`, the filter's selection: its sources, the span, the
   * kind and tier menus); the points are [[PointKinds.Events]], the crowded tiles' cells bubbles. */
