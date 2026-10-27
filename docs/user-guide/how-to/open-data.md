@@ -67,6 +67,39 @@ histmersion places load lpf --apply         # every Linked Places file in the dr
 They join the existing places **by shared identifiers only** (a Wikidata id, a Pleiades id), so an
 import never creates a duplicate by name.
 
+The extracts cover **the whole world, with names in every language** their source gives: what is left
+out is left out by kind (a bare hamlet known only by a dot, a hotel, a school), never by where it is.
+A smaller install can build regional extracts instead: `build.py --bbox minLon,minLat,maxLon,maxLat`
+(or `--bbox window`, Europe to Central Asia, which the pinned extracts were cut to until 2026-10-27)
+and `--langs en,fr,…`; pin them with `build.py pin`. The bundled places (Natural Earth, Pleiades)
+cover the whole world too.
+
+### How long it takes, and how much room
+
+Measured on 2026-10-27 on a laptop (Apple silicon, an empty corpus), for the whole world in every
+language:
+
+| step | time | room it needs |
+|---|---:|---|
+| first start: the bundled places and period presets (automatic) | under 1 min | the database grows by ~0.2 GB (46 000 places) |
+| build the GeoNames extract: download the two dumps (627 MB), then `build.py geonames` | a few minutes + ~1.5 min | 6.3 GB of memory while it runs; 70 MB extract |
+| build the Wikidata extract: `build.py wikidata-fetch` (15 queries to the public QLever service), then `build.py wikidata` | **2–4 hours** + 3 min | 2.8 GB of query results on disk, 9.5 GB of memory to build; 121 MB extract |
+| build the TGN extract: download Getty's export (1.3 GB) and AAT's (140 MB), then `build.py tgn` | **about 1.5 hours** (Getty sends ~14 MB a minute) + 2.5 min | 7.2 GB of memory to build; 3 MB extract |
+| `places load geonames --apply` | ~9 min | the database grows by ~3.4 GB |
+| `places load wikidata --apply` | ~27 min | the database grows by ~6.4 GB |
+| `places load tgn --apply` | ~35 s | ~0.1 GB |
+
+So with all three the gazetteer holds 1.8 M places, 17.5 M names and 2.6 M links, and the database
+grows by **about 9.7 GB** (6.2 GB of it the names, with their search indexes); the imports take
+**about 40 minutes**. Building the extracts yourself takes most of an afternoon, nearly all of it
+waiting on the two public services; copying them from another install takes none. The Wikidata fetch
+asks one query at a time and waits whenever the service asks it to (or its gateway fails), so its
+time depends on how busy QLever is; it can be stopped and run again, and the queries it finished are
+kept. A re-import of the same extract changes nothing and takes a fraction of the time.
+
+A smaller install keeps a region and fewer languages instead: `--bbox -25,5,100,72 --langs window`
+(Europe to Central Asia) gave about 4.9 GB and 20 minutes of imports.
+
 You can also import any Linked Places or GeoJSON file of your own: `histmersion places import
 <file.json>`.
 
