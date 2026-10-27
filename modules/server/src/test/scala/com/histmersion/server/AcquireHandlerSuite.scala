@@ -376,6 +376,34 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assert(r.steps.exists(s => s.step == "fetch" && s.detail.contains("oapen: 20.500.12657/23223")), r.steps.toString)
     wipe("zzacq_ingested")
 
+  test("--legal-only: a person's ingest asks the legal chain alone, even with acquire.allow-unauthorised = true"):
+    wipe("zzacq_ingested")
+    import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
+    val asked = java.util.concurrent.atomic.AtomicInteger(0)
+    val unauthorised = new SourceFetcher:
+      val access = Access.Unauthorised
+      def fetch(w: WorkKey, c: FetchContext) = { asked.incrementAndGet(); Fetch.Miss("stub") }
+    val open = new SourceFetcher:
+      val access = Access.Open
+      def fetch(w: WorkKey, c: FetchContext) = Fetch.Miss("no open-access location")
+    val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
+    val allowing = cfg.copy(acquire = cfg.acquire.copy(allowUnauthorised = true))
+    val r = handlers(oa = chain, app = allowing).ingest(IngestRequest("10.1038/zztest001", legalOnly = true))
+      .fold(e => fail(e.message), identity)
+    assertEquals(asked.get, 0, "no fetcher the config marks unauthorised is asked")
+    assert(r.steps.exists(_.step == "legal-only"), r.steps.toString)
+    assert(r.dropIn.isDefined, "with no legal copy it is a person's ingest as usual: the drop-in is explained")
+    assert(SourceRepo.load(ds, "zzacq_ingested").isDefined, "the metadata-only source is created")
+    // without the flag the person's path asks it (the switch is on), and the watcher's never does
+    wipe("zzacq_ingested")
+    val _ = handlers(oa = chain, app = allowing).ingest(IngestRequest("10.1038/zztest001"))
+    assertEquals(asked.get, 1)
+    wipe("zzacq_ingested")
+    val legal = handlers(oa = chain, app = allowing).ingestLegal(IngestRequest("10.1038/zztest001"))
+    assertEquals(asked.get, 1)
+    assert(legal.left.exists(_.message.contains("unpaywall: no copy — no open-access location")), legal.toString)
+    wipe("zzacq_ingested")
+
   test("no open-access copy: the source is still created and the manual drop-in is explained"):
     wipe("zzacq_ingested")
     val r = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001"))

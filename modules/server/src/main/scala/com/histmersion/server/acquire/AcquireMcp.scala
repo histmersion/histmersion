@@ -103,10 +103,11 @@ final class AcquireMcp(h: AcquireHandlers):
           "updates its metadata and never wipes enrichment; one with no original yet (metadata only) is " +
           "fetched and converted, one that has its original keeps it unless `refetch: true`. When no open-access copy exists the source " +
           "is still created from metadata and the report tells you where to drop the file in by hand. " +
+          "`legalOnly: true` asks the legal chain alone (never a fetcher the config marks unauthorised). " +
           "Input is a DOI or `arxiv:<id>`.")
       .input[IngestInput]
       .handle(in =>
-        render(h.ingest(IngestRequest(in.id, in.citekey, in.arxiv, in.refetch)))(AcquireMarkdown.ingest))
+        render(h.ingest(IngestRequest(in.id, in.citekey, in.arxiv, in.refetch, in.legalOnly)))(AcquireMarkdown.ingest))
 
   private val archive =
     tool("archive")
@@ -206,10 +207,12 @@ object AcquireMcp:
       id: String,
       citekey: Option[String] = None,
       arxiv: Option[String] = None,
-      refetch: Boolean = false
+      refetch: Boolean = false,
+      legalOnly: Boolean = false
   ) derives KindlingsCodecAsObject
   object IngestInput:
     given Schema[IngestInput] = KindlingsSchema.derived[IngestInput].schema
+      .modify(_.legalOnly)(_.description("Ask the legal open-access chain only — never a fetcher the config marks unauthorised"))
 
   final case class ArchiveInput(
       query: Option[String] = None,

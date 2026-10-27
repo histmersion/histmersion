@@ -40,6 +40,11 @@ class ListOptsSuite extends munit.FunSuite:
     assert(jobs.parse(List("jobs", "--kind", "ingest", "--status", "failed", "--subject", "x", "--json"), Map.empty).isRight)
     assert(jobs.parse(List("jobs", "4f1c"), Map.empty).isRight)
 
+  test("ingest takes --legal-only for an identifier"):
+    assert(parse(AcquireCmd.ingest, "ingest", "10.1038/zz1", "--legal-only").isRight)
+    assert(parse(AcquireCmd.ingest, "ingest", "10.1038/zz1", "--legal-only", "--refetch", "--json").isRight)
+    assert(parse(AcquireCmd.ingest, "ingest", "10.1038/zz1", "--legal").isLeft)
+
   test("the next-page line repeats every filter, a list option once per value"):
     val f = ApprovalFilter(kind = List("goal-plan,edge"), decidedBy = List("person"))
     assertEquals(PageCmd.next("agent approvals", f.options ++ List("limit" -> Some("20")), "41"),
