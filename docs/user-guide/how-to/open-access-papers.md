@@ -138,23 +138,49 @@ without using an AI model:
 ```
 
 An item is checked again after a week (`acquire.recheck.every-days`), or at once when the services change
-(a new fetcher plugin, a new key). A few items are tried at a time, at most 40 a day; while the autopilot
-is on, the re-check takes at most a quarter of its daily legal download allowance, after the watchers'
-backlog. It runs with the agents' managers and pauses while the autopilot drains. To switch it off, set
-`acquire.recheck.enabled = false`. The settings are in [Configuration](../reference/configuration.md).
+(a new fetcher plugin, a new key). A check that got no answer — a service that said "too many requests",
+or was down — is tried again six hours later (`acquire.recheck.retry-hours`). A few items are tried at a
+time, at most 40 a day; while the autopilot is on, the re-check takes at most a quarter of its daily legal
+download allowance, after the watchers' backlog. It runs with the agents' managers and pauses while the
+autopilot drains. To switch it off, set `acquire.recheck.enabled = false`. The settings are in
+[Configuration](../reference/configuration.md).
 
 You can also run it yourself:
 
 ```bash
 histmersion queue acquire recheck --dry-run      # what it would tick off and try; asks no service
-histmersion queue acquire recheck                # a pass now
+histmersion queue acquire recheck                # a pass now, within the limits above
+histmersion queue acquire recheck --limit 20     # up to 20 due items, still within the day's limits
 histmersion queue acquire recheck --id 42        # just this item, even if it was checked recently
+histmersion queue acquire recheck --all          # EVERY item with a DOI, checked recently or not
 ```
 
-`histmersion agent autopilot status` and `histmersion about` show one line about it:
+Each item takes a minute or more (the services are asked politely, one after another), so a pass of more
+than one item runs on the server as a **job**: the command follows it and prints its progress, and
+`--no-wait` prints the job's id and returns. `histmersion jobs` lists it; closing the terminal does not
+stop it.
+
+```
+job 3f2a…: running — 120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 Too Many Requests …)
+```
+
+`--all` ignores the week, the 40 a day and the autopilot's allowance — you asked for every item — but
+still uses the legal services only. Items the corpus already holds with their text are ticked off first.
+A service that refuses because too many requests were made is fine: that item is counted as *failed*,
+keeps the reason, the job goes on with the next one, and the regular re-check tries it again later. What
+the job finds still counts in the autopilot's daily download line, so the status stays honest.
+
+Only one such job runs at a time; asking for another names the running one. The regular passes wait while
+it runs. When the autopilot drains, the job stops after the item in flight and goes on by itself once the
+drain is lifted; after a restart it goes on by itself too (or when you run `--all` again), skipping the
+items it had already checked.
+
+`histmersion agent autopilot status` and `histmersion about` show one line about it, with the job when
+one runs:
 
 ```
 - acquire re-check: 12 of 455 items with a DOI due, 3 closed and 1 found this week, 5 of 40 tried today — next pass at the next managers' tick
+- acquire re-check: … — job 3f2a… running: 120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 …)
 ```
 
 ## Old books: archive.org

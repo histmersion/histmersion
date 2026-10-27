@@ -43,3 +43,23 @@ class AcquireChecksSuite extends munit.FunSuite:
     val dry = AcquireChecksMarkdown.result(RecheckResult(dryRun = true, rows = List(RecheckRow(3, Some("10.1/c"), WouldTry, "never checked"))))
     assert(dry.contains("dry run: no fetcher asked, nothing stored") && dry.contains("- would try 1 item through the legal chain"), dry)
     assert(AcquireChecksMarkdown.result(RecheckResult(dryRun = false)).contains("_Nothing to do._"))
+
+  test("a pass that runs as a job: what it re-checks and how to follow it; the jobs list names it"):
+    val detail = RecheckJob(all = true, since = "2026-10-27T10:00:00Z", by = "cli")
+    val job = JobInfo("j-1", RecheckJob.JobKind, "running", detail = Some(JobDetail(recheck = Some(detail))))
+    val md = AcquireChecksMarkdown.result(RecheckResult(dryRun = false, open = 460, withDoi = 453, due = 453, allowance = 453,
+      job = Some(job)))
+    assert(md.contains("- 460 open items, 453 with a DOI; 453 to try"), md)
+    assert(md.contains("- started as job `j-1`: the acquisition list's legal re-check of every open item with a DOI " +
+      "— `histmersion jobs j-1` follows it"), md)
+    assertEquals(JobDetail.subject(job), Some("the acquisition list's legal re-check of every open item with a DOI"))
+    assertEquals(RecheckJob.describe(RecheckJob(all = false, upTo = 5, resumes = Some("j-0"))),
+      "the acquisition list's legal re-check of up to 5 due items (resuming job j-0)")
+
+  test("the status line names the re-check job running, on or off"):
+    val running = Some("job j-1 running: 120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429)")
+    val s = RecheckStatus(enabled = true, withDoi = 453, due = 300, perDay = 40, job = running)
+    assert(AcquireChecksMarkdown.line(s).endsWith(" — job j-1 running: 120/453 items · 3 closed · 9 fetched · 98 no legal copy · " +
+      "10 failed (HTTP 429)"), AcquireChecksMarkdown.line(s))
+    assertEquals(AcquireChecksMarkdown.line(RecheckStatus(enabled = false, job = Some("job j-1 running: 0/2 items"))),
+      "acquire re-check: off (acquire.recheck.enabled = false) — job j-1 running: 0/2 items")

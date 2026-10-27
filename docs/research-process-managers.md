@@ -608,3 +608,60 @@ in the corpus with their text (they should simply be closed).
   and the status line; 25 % of the shared allowance, counted against it; drain; and through the real
   `AcquireHandlers` and `FetchChain` with `allow-unauthorised = true`: the stub unauthorised fetcher is never
   asked, a found copy goes into the metadata-only source, no copy creates no source).
+
+### As built: the re-check as a job (2026-10-27)
+
+Branch `recheck-job`. No migration.
+
+**The gap.** A pass by hand ran inside the HTTP request, and each item takes 1–3 minutes (publisher pacing,
+retries), so `histmersion queue acquire recheck --limit 50` outlived the CLI's request; and a person could not
+re-check every item at once, because `per-day` and the shared allowance cap a pass by hand too.
+
+- **`histmersion queue acquire recheck --all`** (`RecheckRequest.all`, the MCP `queue` action `recheck` with
+  `all: true`): a server JOB (`jobs.kind = acquire_recheck`, `BackgroundJob` like the vacuum and media jobs)
+  over EVERY open acquisition item that names a DOI, due or not, past `per-pass`, `per-day`, the shared allowance
+  and its share. Legal chain only, as every try (`ingestLegalInto`). The response carries the job
+  (`RecheckResult.job`); the CLI follows it (`IngestCmd.pollJob`), `--no-wait` prints its id and returns, and
+  `histmersion jobs` lists it with `JobDetail.recheck` (`RecheckJob`: `all`, `upTo`, `since`, `by`, `resumes`).
+- **A capped pass of more than one item** (no `--all`, no `--id`, not a dry run) is the same job over the due
+  items the caps allow when it starts (`upTo`); one that would try at most one item, `--id` and `--dry-run`
+  still answer at once. A dry run with `--all` lists every item it would try. The scheduled passes of the
+  managers' tick are unchanged (small, in the tick).
+- **What the job does** (`AcquireRecheckService.runJob`): it holds the pass lock for as long as it runs (it waits
+  for a pass in flight first), closes the items the corpus holds with their text, then tries each item of
+  `AcquireRecheck.jobPicks` in `AcquireRecheck.order` (the never-checked first, then the oldest check, then the
+  id), each check recorded in `acquire_checks` before the next — so an interruption loses at most the item in
+  flight. Progress in the job's `progress`: `120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed
+  (HTTP 429 …)` (`AcquireRecheck.progressLine`, the last no-answer's reason shortened). One worklog line at the
+  end, `(by <who>, job <id>)`, and why it stopped when it did.
+- **Resume**: the checks' timestamps, not a new column — `RecheckJob.since` is when the job FIRST started, and a
+  resumed job skips every item checked at or after it (`AcquireRecheck.checkedSince`; its counts start from
+  `countSince(since)`, so the progress carries over). A job a restart failed as `interrupted`
+  (`JobRepo.failInterrupted`) or the drain stopped (`AcquireRecheck.StoppedDraining`) is resumable
+  (`AcquireRecheck.resumable`); one that finished or failed otherwise is not. The managers' tick resumes the
+  NEWEST re-check job when it is resumable (a new job with `resumes` = its id and the same `since`) before any
+  scheduled pass; `--all` asked again resumes a stopped `--all` job instead of starting over. A finished job is
+  never resumed: `--all` after it starts from the beginning.
+- **One at a time** (`BackgroundJob.Slot`): a second request is refused with 409, naming the running job; `--id`
+  and dry runs are refused too while it runs; the scheduled passes skip.
+- **Drain** (the convention of agent runs: what waits is checkpointed and goes on after): between two items the
+  job stops when the autopilot drains (resumable) and when a restore starts (not resumable). `DrainService.tick`
+  counts a running re-check job as active, so the drain is recorded as drained only once it stopped; the tick
+  resumes it once the drain is lifted.
+- **Failures**: an answer that did not come (a rate limit, an upstream down) is a `failed` check with its reason,
+  and the job goes on with the next item. A failed check is due again after `acquire.recheck.retry-hours` (6),
+  not `every-days` (`LastCheck.failed`), so the scheduled passes retry it within their caps.
+- **Counters**: the job's finds are `fetched` checks, which `AcquireRecheckService.fetchedToday` — and so
+  `AutopilotService.ingestedToday` and the shared allowance — already counts; the job itself never reads the
+  counters, so they never stop `--all` (a capped job reads them once, when it starts).
+- **Status**: `RecheckStatus.job` — the running job and its progress, or the newest stopped one and what resumes
+  it — appended to the re-check line of `agent autopilot status` and `about`, on or off.
+- Tests: `AcquireRecheckSuite` (core: the retry window, the order, `jobPicks` for `--all` and a capped job and
+  their resumption, `resumable`, the progress line), `AcquireChecksSuite` (api: the job's report, its subject in
+  the jobs list, the status line with a job), `OpsArgsSuite` (cli: `--all`, `--no-wait`, their conflicts),
+  `AcquireRecheckDbSuite` (DB, fixture upstreams: `--all` tries every item past every cap, the checked ones too,
+  records each, counts its find in the shared counter, keeps a 429 as `failed` due again after retry-hours; a
+  capped pass of more than one item is a job, of one at once; one job at a time, the tick waits, the status names
+  it; the drain stops it after the item in flight, is drained only then, and the tick resumes it once lifted;
+  after a restart `--all` again and the tick resume it, skipping what it checked; `--all` through the real
+  `FetchChain` with `allow-unauthorised = true` never asks the stub unauthorised fetcher).

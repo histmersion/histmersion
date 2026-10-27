@@ -63,6 +63,25 @@ class OpsArgsSuite extends munit.FunSuite:
     assert(cmd.parse(List("queue", "acquire", "recheck", "--id", "42"), Map.empty).isRight)
     assert(cmd.parse(List("queue", "acquire", "recheck", "--id", "x"), Map.empty).isLeft)
 
+  test("`queue acquire recheck --all`: every open item; --no-wait returns with the job id; neither goes elsewhere"):
+    assertEquals(QueueArgs.parse(List("acquire", "recheck"), None, None, all = true),
+      Right(QueueCmd.Recheck(false, None, None, all = true)))
+    assertEquals(QueueArgs.parse(List("acquire", "recheck"), None, None, all = true, noWait = true),
+      Right(QueueCmd.Recheck(false, None, None, all = true, noWait = true)))
+    assertEquals(QueueArgs.parse(List("acquire", "recheck"), None, None, all = true, dryRun = true),
+      Right(QueueCmd.Recheck(true, None, None, all = true)), "a dry run of --all lists every item it would try")
+    assertEquals(QueueArgs.parse(List("acquire", "recheck"), None, None, all = false, limit = Some(20), noWait = true),
+      Right(QueueCmd.Recheck(false, Some(20), None, noWait = true)))
+    assert(QueueArgs.parse(List("acquire", "recheck"), None, None, all = true, item = Some(4)).left.exists(_.contains("not both")))
+    assert(QueueArgs.parse(List("acquire", "recheck"), None, None, all = true, limit = Some(4)).left.exists(_.contains("not both")))
+    assert(QueueArgs.parse(List("tasks"), None, None, all = false, noWait = true).left.exists(_.contains("--no-wait")))
+    assertEquals(QueueArgs.parse(List("acquire"), None, None, all = true), Right(QueueCmd.Show("acquire", true)),
+      "--all without recheck still shows the done items")
+    val cmd = com.monovore.decline.Command("histmersion", "test")(Ops.queue)
+    assert(cmd.parse(List("queue", "acquire", "recheck", "--all", "--no-wait"), Map.empty).isRight)
+    assert(cmd.parse(List("queue", "acquire", "recheck", "--all", "--json"), Map.empty).isRight)
+    assert(QueueArgs.usage.contains("--all") && QueueArgs.usage.contains("--no-wait"))
+
   test("the usage line names all three lists and every verb"):
     List("acquire", "tasks", "log", "add", "done", "rm", "export", "import", "recheck")
       .foreach(w => assert(QueueArgs.usage.contains(w), s"usage does not mention $w"))

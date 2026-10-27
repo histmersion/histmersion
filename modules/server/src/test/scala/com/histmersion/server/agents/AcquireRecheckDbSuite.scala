@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.AcquireChecks.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AcquireCheckRepo, AutopilotRepo, Migrate, SourceRepo}
+import com.histmersion.db.{AcquireCheckRepo, AutopilotRepo, JobRepo, Migrate, SourceRepo}
 import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.server.{Deps, Handlers}
@@ -42,6 +42,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM agent_managers".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzrecheck%'".update.run()
       sql"DELETE FROM queue_items WHERE text ILIKE '%zzrecheck%' OR text LIKE 'acquire re-check:%'".update.run()
+      sql"DELETE FROM jobs WHERE kind = ${RecheckJob.JobKind}".update.run()
       sql"UPDATE agent_autopilot SET enabled = false, paused = '{}', changed_by = '', last_ensure_at = NULL".update.run()
     val _ = AutopilotRepo.setDrain(ds, on = false, "test")
 
@@ -78,6 +79,9 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
     up.asked.asScala.toList
   private def found(d: String, ck: String) =
     Right(IngestReport(ck, Some(d), Some("found"), created = true, Some(PdfInfo("unpaywall", None, 2048, None)), 0, None, Nil))
+  /** A pass at once, as the managers' tick runs it (a person's pass of more than one item is a job). */
+  private def passNow(a: AgentsHandlers, in: RecheckRequest): Either[ApiError, RecheckResult] =
+    a.acquireRecheck.pass(in, Instant.now()).toRight(ApiError("a pass is running"))
   private def status(h: Handlers, id: Int): String = h.ops.queueList("acquire", all = true).toOption.get.items.find(_.id == id).get.status
 
   test("a pass: the item the corpus holds with its text closes, a metadata-only source is fetched into, the rest is tried and keeps why"):
@@ -87,7 +91,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
     val full = item(h, "full"); val meta = item(h, "meta"); val none = item(h, "none")
     val noDoi = h.ops.queueAdd("acquire", QueueAdd("Zzrecheck, a book with no DOI")).toOption.get.id
     up.answer = (d, into) => if d == doi("meta") then found(d, into.get) else Left(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none; landing: refused — bot-protection 403")
-    val r = a.acquireRecheck.run(RecheckRequest(limit = Some(10))).fold(e => fail(e.message), identity)
+    val r = passNow(a, RecheckRequest(limit = Some(10))).fold(e => fail(e.message), identity)
     assertEquals((r.closed, r.fetched, r.noCopy, r.failed), (1, 1, 1, 0), r.toString)
     assertEquals(asked(up).toSet, Set[(String, Option[String])](doi("meta") -> Some("zzrecheck_meta"), doi("none") -> None), "the closed one is not fetched")
     assertEquals(status(h, full), Queue.Done)
@@ -104,14 +108,14 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
     assert(Queue.markdown(Queue.Kind.Acquire, listing.items, listing.checks).contains(s"_checked $day: no legal copy"))
     assert(h.ops.queueList("log", all = true).toOption.get.items.exists(_.text.startsWith("acquire re-check: 1 closed")))
     // again at once: nothing is due (checked within every-days), nothing is asked
-    val again = a.acquireRecheck.run(RecheckRequest(limit = Some(10))).fold(e => fail(e.message), identity)
+    val again = passNow(a, RecheckRequest(limit = Some(10))).fold(e => fail(e.message), identity)
     assertEquals((again.due, again.closed), (0, 0))
     assertEquals(asked(up).size, 2)
 
   test("due again after every-days, or at once under a new fetcher generation; one item by id, due or not"):
     val (a, h, up) = setup()
     val one = item(h, "one"); val two = item(h, "two")
-    val _ = a.acquireRecheck.run(RecheckRequest(limit = Some(10)))
+    val _ = passNow(a, RecheckRequest(limit = Some(10)))
     assertEquals(asked(up).size, 2)
     val later = Instant.now().plusSeconds(8L * 86400L)
     assertEquals(a.acquireRecheck.run(RecheckRequest(dryRun = true), later).toOption.get.due, 2, "a week later both are due")
@@ -131,10 +135,10 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
   test("the caps: per pass, per day; a status line with what is due"):
     val (a, h, up) = setup(baseCfg.copy(acquire = baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = 2, perDay = 3))))
     (1 to 5).foreach(i => item(h, s"c$i"))
-    val first = a.acquireRecheck.run(RecheckRequest()).toOption.get
+    val first = passNow(a, RecheckRequest()).toOption.get
     assertEquals((first.due, first.allowance, asked(up).size), (5, 2, 2))
     assert(first.note.exists(_.contains("3 due item(s) wait for the next pass")), first.note.toString)
-    val second = a.acquireRecheck.run(RecheckRequest()).toOption.get
+    val second = passNow(a, RecheckRequest()).toOption.get
     assertEquals((second.allowance, asked(up).size), (1, 3), "the day's cap: 3")
     val st = a.acquireRecheck.status()
     assertEquals((st.due, st.triedToday, st.perDay), (2, 3, 3))
@@ -148,10 +152,10 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
     connect(ds)(sql"UPDATE agent_autopilot SET enabled = true".update.run())
     (1 to 4).foreach(i => item(h, s"s$i"))
     up.answer = (d, _) => found(d, "zzrecheck" + d.replaceAll("[^a-z0-9]", ""))
-    val r = a.acquireRecheck.run(RecheckRequest()).toOption.get
+    val r = passNow(a, RecheckRequest()).toOption.get
     assertEquals((r.allowance, r.fetched), (2, 2), "25 % of 8")
     assertEquals(a.autopilot.sharedIngestLeft(Instant.now()), Some(6), "the re-check's finds count against the shared allowance")
-    assertEquals(a.acquireRecheck.run(RecheckRequest()).toOption.get.allowance, 0)
+    assertEquals(passNow(a, RecheckRequest()).toOption.get.allowance, 0)
 
   test("draining: the managers' pass does nothing and a pass by hand is refused, a dry run still lists"):
     val (a, h, up) = setup()
@@ -209,7 +213,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
     a.attach(AgentUpstream.of(acq))
     assert(h.putSource("zzrecheck_kept", SourcePut(title = "Kept", doi = Some(doi("oa")), notes = Some("Compiled."))).isRight)
     val oa = item(h, "oa"); val closed = item(h, "closed")
-    val r = a.acquireRecheck.run(RecheckRequest(limit = Some(10))).fold(e => fail(e.message), identity)
+    val r = passNow(a, RecheckRequest(limit = Some(10))).fold(e => fail(e.message), identity)
     assertEquals(unauthorisedAsked.get, 0, "a fetcher the config marks unauthorised is never asked")
     assertEquals((r.fetched, r.noCopy), (1, 1), r.toString)
     assertEquals(r.rows.find(_.item == oa).flatMap(_.citekey), Some("zzrecheck_kept"), "fetched into the metadata-only source")
@@ -219,3 +223,187 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
     val why = AcquireCheckRepo.of(ds, List(closed)).get(closed).map(_.reason).getOrElse("")
     assert(why.contains("no legal copy (unpaywall: no copy — no open-access location)"), why)
     assertEquals(AcquireCheckRepo.of(ds, List(oa)).get(oa).map(_.generation), Some("real"))
+
+  // ── the re-check job ───────────────────────────────────────────────────────────────────────────
+
+  private def jobOf(r: Either[ApiError, RecheckResult]): JobInfo =
+    r.fold(e => fail(e.message), res => res.job.getOrElse(fail(s"not a job: $res")))
+
+  /** The job once it ended (it runs on its own thread) and its slot is free. */
+  private def ended(a: AgentsHandlers, id: String): JobInfo =
+    awaitTrue(s"job $id")(JobRepo.get(ds, id).exists(j => JobState.parse(j.status).exists(_.isTerminal)) &&
+      !a.acquireRecheck.jobRunning)
+    JobRepo.get(ds, id).get
+
+  private def awaitTrue(what: String)(p: => Boolean): Unit =
+    val until = System.currentTimeMillis() + 30000L
+    while !p do
+      if System.currentTimeMillis() > until then fail(s"timed out waiting for $what")
+      Thread.sleep(20)
+
+  /** An answer that waits for `release` once `started` (the item in flight while the test looks). */
+  private final class Gate:
+    val started = java.util.concurrent.CountDownLatch(1)
+    val release = java.util.concurrent.CountDownLatch(1)
+    def hold(d: String): Either[String, IngestReport] =
+      started.countDown()
+      val _ = release.await(30, java.util.concurrent.TimeUnit.SECONDS)
+      Left(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
+
+  private val tightCfg = baseCfg.copy(
+    agents = baseCfg.agents.copy(autopilot = baseCfg.agents.autopilot.copy(ingestPerDay = 4)),
+    acquire = baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = 1, perDay = 2, sharePercent = 0)))
+
+  test("--all: a job over every open item with a DOI, due or not, past every cap; each check recorded, the finds counted"):
+    val (a, h, up) = setup(tightCfg)
+    connect(ds)(sql"UPDATE agent_autopilot SET enabled = true".update.run())
+    val ids = (1 to 6).toList.map(i => item(h, s"a$i"))
+    val _ = h.ops.queueAdd("acquire", QueueAdd("Zzrecheck, a book with no DOI")).toOption.get.id
+    // two of them were checked an hour ago: not due, still tried
+    ids.take(2).foreach(i => AcquireCheckRepo.record(ds, i, Instant.now().minusSeconds(3600), "g1", AcquireRecheck.Outcome.NoCopy, "x"))
+    assertEquals(a.acquireRecheck.run(RecheckRequest(limit = Some(5))).toOption.get.allowance, 0,
+      "without --all the caps leave nothing (no share of the shared allowance)")
+    assertEquals(asked(up), Nil)
+    assert(h.putSource("zzrecheck_full", SourcePut(title = "Full", doi = Some(doi("full")), body = Some("The text."))).isRight)
+    val full = item(h, "full")
+    val ingestedBefore = a.autopilot.ingestedToday(Instant.now())
+    up.answer = (d, into) =>
+      if d == doi("a3") then found(d, "zzrecheck_a3")
+      else if d == doi("a4") then Left("HTTP 429 Too Many Requests from api.example.invalid")
+      else Left(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
+    val r = a.acquireRecheck.run(RecheckRequest(all = true, by = Some("test")))
+    val job = jobOf(r)
+    assertEquals((r.toOption.get.withDoi, r.toOption.get.allowance), (7, 6))
+    assertEquals(job.kind, RecheckJob.JobKind)
+    assertEquals(job.detail.flatMap(_.recheck).map(d => (d.all, d.by)), Some((true, "test")))
+    val done = ended(a, job.id)
+    assertEquals(done.status, JobState.Done.wire, done.toString)
+    assertEquals(asked(up).map(_._1).toSet, ids.indices.map(k => doi(s"a${k + 1}")).toSet, "every item with a DOI, the closed one not")
+    assertEquals(asked(up).map(_._1).takeRight(2), List(doi("a1"), doi("a2")), "the never-checked first, the checked ones after")
+    assertEquals(done.progress, Some("6/6 items · 1 closed · 1 fetched · 4 no legal copy · 1 failed (HTTP 429 Too Many Requests from api.example.invalid)"))
+    assertEquals(status(h, full), Queue.Done)
+    val checks = AcquireCheckRepo.of(ds, ids)
+    assertEquals(checks.values.map(_.outcome).toList.sorted, List(Failed, Fetched, NoCopy, NoCopy, NoCopy, NoCopy))
+    assert(checks(ids(3)).reason.contains("no answer (HTTP 429"), checks(ids(3)).reason)
+    assertEquals(a.acquireRecheck.fetchedToday(Instant.now()), 1)
+    assertEquals(a.autopilot.ingestedToday(Instant.now()) - ingestedBefore, 1, "the job's find counts in the shared ingest counter")
+    val log = h.ops.queueList("log", all = true).toOption.get.items.map(_.text).filter(_.startsWith("acquire re-check:"))
+    assert(log.exists(l => l.contains("1 closed") && l.contains(s"(by test, job ${job.id})")), log.toString)
+    // a rate-limited check stays due for the schedule: retry-hours later, not every-days
+    val later = Instant.now().plusSeconds(7L * 3600L)
+    assertEquals(a.acquireRecheck.run(RecheckRequest(dryRun = true), later).toOption.get.rows.filter(_.action != WouldClose)
+      .map(_.item).toSet.intersect(ids.toSet), Set(ids(3)))
+
+  test("a person's capped pass of more than one item is a job too; one item answers at once"):
+    val (a, h, up) = setup(baseCfg.copy(acquire = baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = 3, perDay = 40))))
+    (1 to 5).foreach(i => item(h, s"l$i"))
+    val one = a.acquireRecheck.run(RecheckRequest(limit = Some(1))).fold(e => fail(e.message), identity)
+    assertEquals((one.job, one.noCopy), (None, 1), "at most one: the pass at once")
+    val r = a.acquireRecheck.run(RecheckRequest(limit = Some(3)))
+    val job = jobOf(r)
+    assertEquals(r.toOption.get.allowance, 3)
+    assertEquals(ended(a, job.id).progress, Some("3/3 items · 0 closed · 0 fetched · 3 no legal copy · 0 failed"))
+    assertEquals(asked(up).size, 4)
+    assertEquals(a.acquireRecheck.run(RecheckRequest(limit = Some(3))).toOption.get.job, None, "one due item left: at once")
+    assertEquals(asked(up).size, 5)
+
+  test("one job at a time: a second request names the running one; the scheduled passes wait; the status line shows it"):
+    val (a, h, up) = setup()
+    val ids = (1 to 3).toList.map(i => item(h, s"o$i"))
+    val gate = Gate()
+    up.answer = (d, _) => gate.hold(d)
+    val job = jobOf(a.acquireRecheck.run(RecheckRequest(all = true)))
+    assert(gate.started.await(30, java.util.concurrent.TimeUnit.SECONDS))
+    val second = a.acquireRecheck.run(RecheckRequest(all = true))
+    assert(second.left.exists(e => e.message.contains(s"job ${job.id}") && e.code.contains(AgentsApi.CodeConflict)), second.toString)
+    assert(a.acquireRecheck.run(RecheckRequest(id = Some(ids.last))).left.exists(_.message.contains(job.id)), "nor one item")
+    assertEquals(a.acquireRecheck.tick(Instant.now()), Nil, "no scheduled pass while the job runs")
+    val line = AcquireChecksMarkdown.line(a.acquireRecheck.status())
+    assert(line.contains(s"job ${job.id} running: 0/3 items"), line)
+    assert(AutopilotMarkdown.status(a.autopilot.status()).contains(s"job ${job.id} running"), "in the autopilot status")
+    gate.release.countDown()
+    assertEquals(ended(a, job.id).status, JobState.Done.wire)
+    assertEquals(asked(up).size, 3, "the tick tried none of them")
+    assert(!AcquireChecksMarkdown.line(a.acquireRecheck.status()).contains("job "), "a finished job is not named")
+
+  test("draining: the job stops after the item in flight, the drain waits for it, and a tick resumes it once lifted"):
+    val (a, h, up) = setup()
+    val ids = (1 to 4).toList.map(i => item(h, s"d$i"))
+    val gate = Gate()
+    up.answer = (d, _) => gate.hold(d)
+    val job = jobOf(a.acquireRecheck.run(RecheckRequest(all = true, by = Some("test"))))
+    assert(gate.started.await(30, java.util.concurrent.TimeUnit.SECONDS))
+    val _ = AutopilotRepo.setDrain(ds, on = true, "test")
+    assertEquals(a.drain.tick(Instant.now()), Nil, "not drained while the job's item is in flight")
+    gate.release.countDown()
+    val stopped = ended(a, job.id)
+    assertEquals((stopped.status, stopped.error), (JobState.Failed.wire, Some(AcquireRecheck.StoppedDraining)))
+    assertEquals(asked(up).size, 1, "the item in flight finished, nothing after it")
+    assertEquals(a.drain.tick(Instant.now()), List("drained"))
+    assertEquals(a.acquireRecheck.tick(Instant.now()), Nil, "no resume while draining")
+    assert(AcquireChecksMarkdown.line(a.acquireRecheck.status()).contains(s"job ${job.id} stopped"), "the status names it")
+    val _ = AutopilotRepo.setDrain(ds, on = false, "test")
+    up.answer = (d, _) => Left(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found")
+    val resumed = a.acquireRecheck.tick(Instant.now())
+    assert(resumed.exists(_.contains(s"job ${job.id} (${AcquireRecheck.StoppedDraining}) resumed as job")), resumed.toString)
+    val next = JobRepo.page(ds, JobRepo.JobQuery(kinds = List(RecheckJob.JobKind)), 1, None, None).toOption.get._1.head
+    assertEquals(next.detail.flatMap(_.recheck).flatMap(_.resumes), Some(job.id))
+    assertEquals(next.detail.flatMap(_.recheck).map(_.since), job.detail.flatMap(_.recheck).map(_.since), "the same start")
+    val end = ended(a, next.id)
+    assertEquals(end.progress, Some("4/4 items · 0 closed · 0 fetched · 4 no legal copy · 0 failed"), "the counts carry over")
+    assertEquals(asked(up).map(_._1), ids.indices.toList.map(i => doi(s"d${i + 1}")), "each item once: the resumed job skipped the first")
+    assertEquals(a.acquireRecheck.tick(Instant.now()).filter(_.contains("resumed")), Nil, "a finished job is not resumed")
+
+  test("after a restart: the interrupted job is resumed — by the tick, or by --all again — skipping what it checked"):
+    val (a, h, up) = setup()
+    val ids = (1 to 4).toList.map(i => item(h, s"r$i"))
+    val since = Instant.now().minusSeconds(600)
+    // what a restart leaves: a job that ran, checked two items, and was failed as interrupted at startup
+    val j = JobRepo.create(ds, RecheckJob.JobKind, None, None,
+      detail = Some(JobDetail(recheck = Some(RecheckJob(all = true, since = since.toString, by = "cli")))))
+    val _ = JobRepo.transition(ds, j.id, JobState.Queued, JobState.Running)
+    ids.take(2).foreach(i => AcquireCheckRepo.record(ds, i, since.plusSeconds(60), "g1", AcquireRecheck.Outcome.NoCopy, "x"))
+    val _ = JobRepo.failInterrupted(ds)
+    assertEquals(JobRepo.get(ds, j.id).flatMap(_.error), Some(JobState.Interrupted))
+    val r = a.acquireRecheck.run(RecheckRequest(all = true))
+    val job = jobOf(r)
+    assert(r.toOption.get.note.exists(_.contains(s"resumes job ${j.id}")), r.toString)
+    assertEquals(ended(a, job.id).progress, Some("4/4 items · 0 closed · 0 fetched · 4 no legal copy · 0 failed"))
+    assertEquals(asked(up).map(_._1), List(doi("r3"), doi("r4")))
+    // a fresh --all after a finished one starts over, every item again
+    val again = jobOf(a.acquireRecheck.run(RecheckRequest(all = true)))
+    assertEquals(again.detail.flatMap(_.recheck).flatMap(_.resumes), None)
+    val _ = ended(a, again.id)
+    assertEquals(asked(up).size, 6)
+    // the tick resumes an interrupted one by itself
+    Thread.sleep(5)
+    val k = JobRepo.create(ds, RecheckJob.JobKind, None, None,
+      detail = Some(JobDetail(recheck = Some(RecheckJob(all = true, since = Instant.now().toString, by = "cli")))))
+    val _ = JobRepo.transition(ds, k.id, JobState.Queued, JobState.Running)
+    val _ = JobRepo.transition(ds, k.id, JobState.Running, JobState.Failed, None, Some(JobState.Interrupted))
+    assert(a.acquireRecheck.tick(Instant.now()).exists(_.contains(s"job ${k.id} (interrupted) resumed")))
+    awaitTrue("the resumed job")(!a.acquireRecheck.jobRunning)
+    assertEquals(asked(up).size, 10)
+
+  test("--all stays on the legal chain: a fetcher the config marks unauthorised is never asked"):
+    val unauthorisedAsked = java.util.concurrent.atomic.AtomicInteger(0)
+    val unauthorised = new SourceFetcher:
+      val access = Access.Unauthorised
+      def fetch(w: WorkKey, c: FetchContext) =
+        unauthorisedAsked.incrementAndGet()
+        Fetch.Found(FetchedFile("stub", None, ("%PDF-1.4\n" + "u" * 2000).getBytes("UTF-8"), "pdf"))
+    val open = new SourceFetcher:
+      val access = Access.Open
+      def fetch(w: WorkKey, c: FetchContext) = Fetch.Miss("no open-access location")
+    val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
+    val cfg   = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
+    val deps  = Deps(cfg, ds)
+    val h     = Handlers(deps)
+    val a     = AgentsHandlers(deps, h, (_, _) => Right(ScriptedClient(Model)))
+    a.attach(AgentUpstream.of(AcquireHandlers(deps, Discovery, NoCitations, chain, NoWiki, NoArchive, NoRw,
+      SkeletonIngest(ds, cfg.limits.chunkChars), generation = "real")))
+    val ids = (1 to 3).toList.map(i => item(h, s"u$i"))
+    val done = ended(a, jobOf(a.acquireRecheck.run(RecheckRequest(all = true))).id)
+    assertEquals(done.progress, Some("3/3 items · 0 closed · 0 fetched · 3 no legal copy · 0 failed"), done.toString)
+    assertEquals(unauthorisedAsked.get, 0, "a fetcher the config marks unauthorised is never asked")
+    assertEquals(AcquireCheckRepo.of(ds, ids).size, 3)

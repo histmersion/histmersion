@@ -35,13 +35,14 @@ final class DrainService(ds: DataSource, cfg: => AgentsConfig, h: com.histmersio
       s"draining since $since${if by.nonEmpty then s" (by $by)" else ""}: nothing new starts until it is lifted " +
         "(histmersion agent autopilot undrain)"))
 
-  /** From the managers' tick: the first tick with no run queued or running records it drained (a run that
-    * resumes by itself afterwards — an allowance, a restart — makes it draining again). */
+  /** From the managers' tick: the first tick with no run queued or running — and no acquisition list
+    * re-check job, which stops after the item in flight — records it drained (a run that resumes by itself
+    * afterwards — an allowance, a restart — makes it draining again). */
   def tick(now: Instant): List[String] =
     AutopilotRepo.drain(ds) match
       case None => Nil
       case Some((since, _, at)) =>
-        val active = AgentRepo.active(ds)
+        val active = AgentRepo.active(ds) + (if agents.acquireRecheck.jobRunning then 1 else 0)
         if active == 0 && at.isEmpty then
           AutopilotRepo.drained(ds, Some(now))
           log(s"autopilot: drained (draining since $since): no agent run is queued or running — safe to stop the server")
