@@ -41,6 +41,20 @@ citation links, and checks it for retractions and corrections.
 
 Running `ingest` again on the same DOI is safe: it updates the details and never wipes enrichment.
 
+### Only the legal services
+
+A plugin you install yourself may add a fetcher that obtains copies **without** the rights holder's
+permission. Histmersion ships none, and such a fetcher runs only when you switch
+`acquire.allow-unauthorised` on. To keep one ingest to the legal services whatever that switch says:
+
+```bash
+histmersion ingest 10.1234/example-doi --legal-only
+```
+
+With no legal copy it behaves like a plain `ingest`: the source is created with its details only, and
+the report says how to bring the file in by hand. The watchers' auto-ingest always asks the legal services
+only.
+
 ### What some services need
 
 - **Unpaywall** asks for a contact e-mail. Set `acquire.contact-email` (environment

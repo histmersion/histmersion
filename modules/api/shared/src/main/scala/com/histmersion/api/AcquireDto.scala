@@ -291,7 +291,11 @@ final case class IngestRequest(
     /** Fetch and convert again although the source already has its original (a stored file or a
       * converted body) — the new conversion replaces the body. Without it such a source only has its
       * metadata and edges refreshed; one with no original is always fetched. */
-    refetch: Boolean = false
+    refetch: Boolean = false,
+    /** Ask the legal chain only: no fetcher the config marks unauthorised runs, whatever
+      * `acquire.allow-unauthorised` says. Otherwise a person's ingest as usual — with no legal copy the
+      * source is still created from its metadata. */
+    legalOnly: Boolean = false
 ) derives KindlingsCodecAsObject
 object IngestRequest:
   given Schema[IngestRequest] = KindlingsSchema.derived[IngestRequest].schema

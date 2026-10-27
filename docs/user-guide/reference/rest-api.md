@@ -171,7 +171,7 @@ GeoNames/Wikidata place is on no time-sliced map.
 | `POST` | `/api/acquire/assess` | `{id, apply}` | `Assessment`; `apply` patches `status` |
 | `POST` | `/api/acquire/retractions` | — | `RetractionsUpdate` — refresh the Retraction Watch mirror |
 | `POST` | `/api/acquire/followups` | `{id, since, limit, apply}` | `FollowupsResult` with a proposed edge kind per citing paper |
-| `POST` | `/api/acquire/ingest` | `{id, citekey?, arxiv?}` | `IngestReport` — metadata → OA PDF → job → edges → assessment |
+| `POST` | `/api/acquire/ingest` | `{id, citekey?, arxiv?, refetch?, legalOnly?}` | `IngestReport` — metadata → OA PDF → job → edges → assessment; `legalOnly` asks the legal chain alone (never a fetcher the config marks unauthorised, whatever `acquire.allow-unauthorised` says) and is otherwise the same |
 | `GET` | `/api/acquire/archive/search` · `/info` | `q`/`id` | archive.org items and their downloadable files |
 | `POST` | `/api/acquire/archive/import` | `{id, citekey?, format?}` | `IngestReport`; lending-only items are refused |
 | `GET` | `/api/acquire/calibre/gaps` | `limit` | `CalibreGaps` — sources not in Calibre yet, each with `storedOriginal`; `histmersion calibre gaps` counts only those with an original to push |

@@ -300,7 +300,7 @@ final class AcquireHandlers(
   /** `histmersion ingest <doi|arxiv:id>`: metadata → legal OA PDF → the ingest job → reference edges →
     * assessment. Every step is reported, including the ones that failed, because "no OA copy" is a
     * normal outcome that the user answers with a manual drop-in. */
-  private def ingestNow(req: IngestRequest, legalOnly: Boolean = false): Either[ApiError, IngestReport] =
+  private def ingestNow(req: IngestRequest, path: AcquireHandlers.IngestPath): Either[ApiError, IngestReport] =
     Acquire.parseIdent(req.id).left.map(err).flatMap { ident =>
       val steps = List.newBuilder[IngestStep]
 
@@ -334,7 +334,7 @@ final class AcquireHandlers(
       else
         // the citekey becomes a spool directory name, and it can come from the CALLER (--citekey)
         // or from an upstream record's title — neither is trustworthy as a path segment.
-        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.value, steps, req.refetch, legalOnly))
+        Citekey.of(citekey.get).flatMap(ck => ingestWith(doi, arxiv, work, ck.value, steps, req.refetch, path))
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
@@ -350,8 +350,8 @@ final class AcquireHandlers(
       work: Option[WorkRef],
       citekey: String,
       steps: scala.collection.mutable.Builder[IngestStep, List[IngestStep]],
-      refetch: Boolean = false,
-      legalOnly: Boolean = false
+      refetch: Boolean,
+      path: AcquireHandlers.IngestPath
   ): Either[ApiError, IngestReport] =
     {
       // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
@@ -361,11 +361,13 @@ final class AcquireHandlers(
       val skip = original.filter(_ => !refetch)
 
       // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal
-      //    ones alone for a watcher's auto-ingest) ──
+      //    ones alone for a watcher's auto-ingest and `--legal-only`) ──
       val key = WorkLookup.key(doi, arxiv, work)
       val chain = skip match
         case Some(have) => FetchChain.Outcome(Left(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again"), Nil)
-        case None       => oa.fetchWorkExplained(key, legalOnly)
+        case None       => oa.fetchWorkExplained(key, path.legalChain)
+      if skip.isEmpty && path == AcquireHandlers.IngestPath.PersonLegal && acq.allowUnauthorised then
+        steps += IngestStep("legal-only", true, "the legal chain only: the fetchers the config marks unauthorised were not asked")
       val fetched = chain.file
       fetched match
         case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes" +
@@ -387,8 +389,9 @@ final class AcquireHandlers(
       }
 
       // a watcher's auto-ingest brings a work in only WITH its legal file: no metadata-only source
-      if legalOnly && fetched.isLeft then
-        Left(err(s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}"))
+      if path.needsFile && fetched.isLeft then
+        val answers = Option.when(chain.answers.nonEmpty)(chain.answers.map(_.line).mkString(" — ", "; ", "")).getOrElse("")
+        Left(err(s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}$answers"))
       else
         val spooled: Option[Path] = fetched.toOption.flatMap { f =>
           Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
@@ -423,7 +426,7 @@ final class AcquireHandlers(
           steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
           // an open-access work no script may download goes to the acquisition list once, as a download
           // in the browser (#1581) — a person's ingest only: a watcher's legal path queues its own
-          if fetched.isLeft && skip.isEmpty && !legalOnly && browserOnly.isEmpty then
+          if fetched.isLeft && skip.isEmpty && !path.needsFile && browserOnly.isEmpty then
             for
               d    <- doi
               w    <- work
@@ -573,15 +576,17 @@ final class AcquireHandlers(
   def followups(req: FollowupsRequest): Either[ApiError, FollowupsResult] =
     maintenance.guard("followups")(followupsNow(req))
 
+  /** A person's ingest; `legalOnly` asks the legal chain alone, and is otherwise the same. */
   def ingest(req: IngestRequest): Either[ApiError, IngestReport] =
-    maintenance.guard("acquire/ingest")(ingestNow(req))
+    maintenance.guard("acquire/ingest")(ingestNow(req,
+      if req.legalOnly then AcquireHandlers.IngestPath.PersonLegal else AcquireHandlers.IngestPath.Person))
 
   /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)): the LEGAL
     * open-access chain only — no unauthorised fetcher is asked, whatever `acquire.allow-unauthorised`
     * says — and a work with no legal file is refused (Left) rather than stored as metadata alone, so it
     * goes to the acquisition list instead. An existing source is never fetched again. */
   def ingestLegal(req: IngestRequest): Either[ApiError, IngestReport] =
-    maintenance.guard("acquire/ingest")(ingestNow(req.copy(refetch = false), legalOnly = true))
+    maintenance.guard("acquire/ingest")(ingestNow(req.copy(refetch = false), AcquireHandlers.IngestPath.Watcher))
 
   def archiveImport(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
     maintenance.guard("archive/import")(archiveImportNow(req))
@@ -607,6 +612,18 @@ final class AcquireHandlers(
     }
 
 object AcquireHandlers:
+
+  /** Who ingests by identifier: which fetchers it asks (`legalChain`: never one the config marks
+    * unauthorised), and whether a work it found no file for is refused instead of stored from its
+    * metadata (`needsFile`). */
+  enum IngestPath(val legalChain: Boolean, val needsFile: Boolean):
+    /** `histmersion ingest <doi>`. */
+    case Person extends IngestPath(false, false)
+    /** `histmersion ingest <doi> --legal-only`. */
+    case PersonLegal extends IngestPath(true, false)
+    /** A watcher's auto-ingest. */
+    case Watcher extends IngestPath(true, true)
+
   /** The host a file was fetched from (`www.ebi.ac.uk`, `pmc-oa-opendata.s3.amazonaws.com`), for the
     * fetch step: the provenance names the channel, this names where the copy actually came from. */
   def hostOf(url: Option[String]): Option[String] =
