@@ -357,6 +357,23 @@ class FetchBackoff(unittest.TestCase):
         self.assertTrue(all(l == "5" for l in limits[2:]))
         self.assertEqual(n, 5, "pages of 5: 0, 5, 10, 15, 20")
 
+    def test_a_result_cut_off_while_exported_is_a_timeout_not_a_result(self):
+        cut = (b"?item\t?name\n<x>\t\"a\"@en\n<y>\t\"\xd5\n !!!!>># An error has occurred while exporting the query "
+               b"result. Unfortunately due to limitations in the HTTP 1.1 protocol, there is no better way to report "
+               b"this than to append it to the incomplete result. The error message was:\nOperation timed out.")
+        self.assertEqual(build.export_failure(cut), "Operation timed out.")
+        self.assertIsNone(build.export_failure(b"?item\n<x>\n"))
+        answers = [cut, b"?item\t?name\n<x>\t1\n"]
+        asked = []
+
+        def post(q):
+            asked.append(q)
+            return answers.pop(0)
+        out = io.BytesIO()
+        build.fetch_query("SELECT ?item ?name WHERE { ?item ?p ?name }", post, out, sleep=lambda s: None, log=lambda m: None)
+        self.assertEqual(out.getvalue(), b"?item\t?name\n<x>\t1\n", "nothing of the cut-off answer is kept")
+        self.assertIn("LIMIT 250000 OFFSET 0", asked[1], "a timeout while exporting asks in pages")
+
     def test_timeout_below_the_minimum_page_gives_up(self):
         post, _ = self.endpoint(100, too_big_above=1)
         with self.assertRaises(RuntimeError) as e:

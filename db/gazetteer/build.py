@@ -465,6 +465,21 @@ def classify(code, detail):
     return "fatal"
 
 
+# QLever streams a result with HTTP 200 before it is complete; a query that runs out of time WHILE its rows
+# are exported ends in this line and the error, appended to the rows written so far (2026-10-27: the
+# world's labels stopped after 632 588 of 18.3 M rows). Such an answer is a failure, never a result.
+_EXPORT_ERROR = b"An error has occurred while exporting the query result"
+
+
+def export_failure(data):
+    """The error QLever appended to a truncated result, or None for a complete one."""
+    i = data.rfind(_EXPORT_ERROR)
+    if i < 0:
+        return None
+    tail = data[i:].decode("utf-8", "replace")
+    return tail.rsplit("The error message was:", 1)[-1].strip() or "an error while exporting the result"
+
+
 _SELECT = re.compile(r"^\s*SELECT\s+(?:DISTINCT\s+)?(.*?)\s+WHERE\b", re.I | re.S)
 
 
@@ -485,13 +500,17 @@ def fetch_query(query, post, out, sleep=time.sleep, page=None, first_page=WD_PAG
 
     Whole first (`page=None`); on a TIMEOUT in pages of `first_page` rows, each further timeout halving
     the page (from the same offset: the pages already written stay), never below `min_page`. A BUSY answer
-    waits its Retry-After (else 60 s × attempt) and asks again. Each request gets `retries` failed
-    attempts; the header line is written once."""
+    waits its Retry-After (else 60 s × attempt) and asks again. A 200 whose rows end in QLever's export
+    error ([[export_failure]]) counts as that error — a timeout then pages too. Each request gets
+    `retries` failed attempts; the header line is written once."""
     offset, attempts, done, header = 0, 0, 0, None
     while True:
         text = query if page is None else paged(query, page, offset)
         try:
             data = post(text)
+            broken = export_failure(data)
+            if broken is not None:
+                raise HttpFailure(504 if _TIMEOUT.search(broken) else 500, f"result cut off: {broken}")
         except HttpFailure as e:
             kind = classify(e.code, e.detail)
             attempts += 1
