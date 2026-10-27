@@ -67,7 +67,7 @@ HISTORICAL_LANGS = frozenset(ANCIENT_LANGS)
 WORLD_MODERN_LANGS = ["zh", "ja", "ko", "vi", "th", "lo", "km", "my", "id", "ms", "jv", "tl", "mn", "bo", "dz",
                       "si", "ta", "te", "kn", "ml", "mr", "gu", "or", "as", "sd", "dv", "sw", "ha", "yo", "ig",
                       "zu", "xh", "af", "so", "om", "ti", "mg", "rw", "ln", "wo", "ff", "qu", "ay", "gn", "nah",
-                      "ht", "mi", "haw", "sm", "to", "fj", "iu", "kl", "ug", "ky", "tt", "ba", "sah", "eo", "is",
+                      "ht", "mi", "haw", "sm", "to", "fj", "iu", "kl", "ug", "tt", "ba", "sah", "eo", "is",
                       "fo", "gl", "eu", "oc", "br", "lb", "fy", "yi", "ast", "hsb", "ia"]
 # The language a title is taken from: the first of these that has one (else the first by code).
 TITLE_LANGS = ["en", "mul"] + CORPUS_LANGS[1:] + ANCIENT_LANGS + WINDOW_MODERN_LANGS + WORLD_MODERN_LANGS
@@ -133,6 +133,7 @@ def parse_langs(s):
     if s.lower() == "window":
         return WINDOW_LANGS
     return frozenset(x.strip() for x in s.split(",") if x.strip())
+
 
 GEONAMES_SOURCE = "GeoNames (geonames.org), CC BY 4.0"
 WIKIDATA_SOURCE = "Wikidata (wikidata.org), CC0"
@@ -464,6 +465,9 @@ WD_RETRIES = 8           # failed attempts per request (page) before giving up
 # both sides) a band falls back to pages.
 WD_MIN_BAND = 0.5
 _TIMEOUT = re.compile(r"time[ds]?[ -]?out|timed out|cancel+ed", re.I)
+# QLever out of memory for one query ("Tried to allocate 250 kB, but only 180.3 kB were available", HTTP
+# 500, 2026-10-27): the query is too big, like a timeout — asking for less is the answer.
+_TOO_BIG = re.compile(r"tried to allocate|out of memory|memory limit", re.I)
 
 
 class QueryTimeout(RuntimeError):
@@ -479,9 +483,12 @@ class HttpFailure(Exception):
 
 
 def classify(code, detail):
-    """What a failed answer means: 'timeout' (the QUERY is too big — ask for less), 'busy' (the endpoint
+    """What a failed answer means: 'timeout' (the QUERY is too big — it ran out of time or of the
+    endpoint's memory: ask for less), 'busy' (the endpoint
     asks to slow down — wait and ask again) or 'fatal' (anything else — a syntax error, a 404)."""
     if code in (429, 503, 504) and _TIMEOUT.search(detail or ""):
+        return "timeout"
+    if code in (500, 503) and _TOO_BIG.search(detail or ""):
         return "timeout"
     if code in (429, 503):
         return "busy"
