@@ -331,6 +331,9 @@ class FetchBackoff(unittest.TestCase):
         self.assertEqual(build.classify(429, "Query timed out"), "timeout")
         self.assertEqual(build.classify(429, '{"exception":"Timeout after 60s"}'), "timeout")
         self.assertEqual(build.classify(503, "operation was cancelled"), "timeout")
+        self.assertEqual(build.classify(500, '{"exception": "Tried to allocate 250 kB, but only 180.3 kB were available"}'),
+                         "timeout", "out of memory: the query is too big, ask for less")
+        self.assertEqual(build.classify(500, "Internal Server Error"), "fatal")
         self.assertEqual(build.classify(429, "Too Many Requests"), "busy")
         self.assertEqual(build.classify(503, ""), "busy")
         self.assertEqual(build.classify(400, "timed out"), "fatal", "a 400 is the query's fault, never retried")
