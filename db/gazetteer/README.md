@@ -33,7 +33,7 @@ dir>/gazetteer`; an extract found there and not in the cache directory is verifi
 hosted** anywhere: a pin's `url` is empty, and `places load` then stops and names the exact path to put
 the file at, its sha256 and size, and the setting that moves the folder. (A pin's `url`, when one is
 set, is downloaded from.) Either way its **sha256 is verified before a
-single line is read**, and a mismatch is refused. Why not the bundle: the two extracts are 82 MB together and change on their own schedule
+single line is read**, and a mismatch is refused. Why not the bundle: the three world extracts are 194 MB together (82 MB for the window ones) and change on their own schedule
 (a re-pin is a commit to `extracts.json`, not a 3.3 GB rebuild); why not an upstream URL: GeoNames
 publishes only today's dump and Wikidata changes by the minute, so only OUR extract can be pinned.
 
@@ -47,18 +47,32 @@ format the LPF importer reads, so all three sources go through one reader
 open side stays open (a name used "until 1935" has no start). The output is deterministic: features
 sorted by id, keys sorted, gzip without a timestamp — the same input gives the same bytes.
 
-## The pinned extracts (GeoNames 2026-10-08, Wikidata 2026-10-09)
+## The pinned extracts (GeoNames 2026-10-27, Wikidata 2026-10-27, TGN 2026-10-18): the whole world
 
 | name | features | names | links | file size | built from |
 |---|---:|---:|---:|---:|---|
-| `geonames` | 725 096 | 2 353 211 | 151 158 | 31.5 MB | `allCountries.zip` + `alternateNamesV2.zip` of 2026-10-08 (627 MB of zips, read in place) |
-| `wikidata` | 766 641 | 5 830 600 | 438 607 | 53.7 MB | 15 SPARQL result files (~1.1 GB TSV) from QLever, Wikidata dump of 2026-08-10 updated live, queried 2026-10-09; 80 098 dated, 252 471 described, 3 centuries-typed-as-years dropped |
+| `geonames` | 1 613 557 | 5 438 700 | 230 695 | 69.8 MB | `allCountries.zip` + `alternateNamesV2.zip` of 2026-10-27 (627 MB of zips, read in place; 81 s, 6.3 GB of memory) |
+| `wikidata` | 1 136 126 | 14 308 007 | 790 639 | 121.3 MB | 15 SPARQL result files (2.8 GB TSV) from QLever, Wikidata dump of 2026-08-10 updated live, queried 2026-10-27; 114 945 dated, 1 113 124 described, 2 centuries-typed-as-years dropped, 22 857 items with no readable coordinate left out (173 s, 9.5 GB of memory) |
+| `tgn` | 39 906 | 179 787 | — | 3.1 MB | the explicit export of 2026-10-18 (below) |
+
+The window extracts they replace (pinned 2026-10-08/09/17): GeoNames 725 096 features, 2 353 211 names,
+31.5 MB; Wikidata 766 641, 5 830 600, 53.7 MB; TGN 32 383, 112 632, 2.2 MB. Of the world extracts,
+GeoNames has 729 094 features inside the old window and 884 463 outside it, Wikidata 756 709 and
+379 417, TGN 32 508 and 7 398. Names come in 624 (GeoNames), 653 (Wikidata) and 332 (TGN) languages.
+The fetch (2026-10-27) took about 3 h 40 min against QLever, most of it the labels and descriptions
+asked band by band (below), including waits on its 502s.
 
 ### Filters, and the measurements behind them
 
-**Window.** Both are clipped to lon −25…100, lat 5…72: Europe, the Mediterranean, the Near East,
-Anatolia, the Caucasus, the steppe, Central and South Asia, Egypt and North Africa
-(`BBOX` in `build.py`).
+**Scope (since 2026-10-27).** The whole world, with names in every language: `build.py`'s `--bbox`
+defaults to `world` and `--langs` to `all`. What is left out is cut by KIND (the filters below), never
+by place. Until 2026-10-27 every extract was clipped to lon −25…100, lat 5…72 (Europe, the
+Mediterranean, the Near East, the steppe, Central and South Asia, Egypt and North Africa) and kept
+names only in that window's languages; `--bbox window --langs window` still builds that extract, and
+any `--bbox minLon,minLat,maxLon,maxLat` / `--langs en,de,…` a smaller one, for a small install. The
+Wikidata build cuts a world fetch to its `--bbox` again, so one fetch serves both. A name tagged
+`mul` (Wikidata's label for every language) is a name with no language, and the item's title when it
+has no English label.
 
 **GeoNames** (CC BY 4.0): 13.47 M rows worldwide, 6.13 M in the window, of which 2.90 M are of the
 classes asked for — A (administrative), P (populated places) and the historical/archaeological spots
@@ -74,12 +88,14 @@ ordinary `PPL` hamlets known only by a dot. So:
 - **S**: only ANS (archaeological), RUIN, HSTS (historical site), CSTL, FT, PYR(S), TMPL, TMB, MSTY,
   SHRN, RLG, CTRR, HERM, CH, MSQE, SYG, PGDA, MNMT, WALLA, BUR, CAVE, BDGQ — never hotels, schools
   or banks.
-- **names**: alternateNamesV2 in English, the corpus languages (de fr it es pl), the ancient and
-  original languages (grc la akk hit sux uga phn arc syc egy cop peo pal xcl sa pi ota got non ang
-  hbo he …) and the modern languages of the window; plus names with no language (transliterations
-  like "Bogazkoy"). Colloquial names and pseudo-codes (links, postcodes, airport codes) dropped.
+- **names**: alternateNamesV2 in every language (`--langs` narrows it), plus names with no language
+  (transliterations like "Bogazkoy"). A name in a historical language (`ANCIENT_LANGS`: grc la akk hit
+  sux … and, since 2026-10-27, those of East, South and Central Asia, Africa and the Americas — lzh och
+  ltc ojp okm kaw xct sog kho txb pra oty gez xmr nci emy qwc …) keeps an ordinary place.
+  Colloquial names and pseudo-codes (links, postcodes, airport codes) dropped.
   `from`/`to` become the name's `when`; GeoNames' `wkdt` ids become `exactMatch` links.
-- Result: **725 096** features. Every one is `modern: true` (undated: findable and placeable, never
+- Result: **1 613 557** features world-wide (13 483 421 rows read, 6 028 060 of the classes asked for;
+  in the window, 2026-10-08: 725 096). Every one is `modern: true` (undated: findable and placeable, never
   drawn on the time-sliced map; place search and suggestions at a time offer it only from
   `places.modern-from` on).
 
@@ -87,14 +103,15 @@ ordinary `PPL` hamlets known only by a dot. So:
 closure, computed by the endpoint) of historical country (Q3024240, 77 classes in the closure),
 historical region (Q1620908, 923), former administrative territorial entity (Q19953632, 789), ancient
 city (Q15661340, 29), polis (Q148837), archaeological site (Q839954, 594) and human settlement
-(Q486972, 2 728). 1 472 902 such items in the window; 1.08 M of them have no GeoNames id. A plain
+(Q486972, 2 728). 2 162 950 such items in the world (2026-10-27; 1 472 902 in the window,
+2026-10-09). A plain
 present-day settlement adds nothing GeoNames lacks, so a settlement is kept only when it links to
 another gazetteer (P1566 GeoNames, P1584 Pleiades, P1667 TGN), is dated, or has a name in a historical
 language; every item of the historical classes is kept. Labels, aliases, native labels (P1705) and
-official names (P1448, dated by their P580/P582 qualifiers) in the same languages as GeoNames; the
+official names (P1448, dated by their P580/P582 qualifiers) in every language; the
 place's span from inception/start (P571/P580) and dissolution/end (P576/P582). Wikidata writes years
-in XSD 1.1 (year 0 = 1 BCE), converted to the corpus's historical reckoning. Result: **766 621**
-features, 80 092 of them dated.
+in XSD 1.1 (year 0 = 1 BCE), converted to the corpus's historical reckoning. Result: **1 136 126**
+features world-wide, 114 945 of them dated (in the window, 2026-10-09: 766 621, 80 092).
 
 **Times, since 2026-10-09.** Each time property is read as full statements — value, PRECISION and
 RANK (`p:`/`psv:`), not the truthy `wdt:` value: the preferred statements win when there are any, a
@@ -121,6 +138,18 @@ aliases, each time property, each id property, official names, native labels), ~
 `VALUES ?prop` join makes QLever sort on `?prop` and time out. The endpoint is an argument, so WDQS
 or a local QLever can be used for the smaller classes.
 
+**A world-wide query too big for one answer** (`fetch_banded`, 2026-10-27). Asked for the whole world,
+the labels (18.3 M rows) ran out of time while they were exported, and the descriptions timed out even
+in pages of 7 812 rows: each page orders the whole result, and the ordering no longer finishes ("Last
+operation: Query planning"). So a query that times out is asked again for each half of its area,
+across the longer side, depth first, until the parts fit; a band's inner east and north edges are
+open (`lon < e`), so a point on a boundary is read once. Only a band under half a degree on both
+sides falls back to pages. QLever also answers HTTP 200 before a result is complete: a query that runs
+out of time while its rows stream ends in "An error has occurred while exporting the query result"
+appended to the rows so far (`export_failure`). Such an answer is the error it reports, never a
+result. The descriptions are fetched in `DESCRIPTION_LANGS` (the window's and the world's widely
+written languages) even with every name language: one description per item is kept anyway.
+
 **When the endpoint says no** (`fetch_query`). QLever reports a query that ran out of time as HTTP
 429 — the same code as "too many requests" — with the timeout in the body. Asking the same query
 again only times out again, so the two are told apart (`classify`): a **timeout** (429/503/504 whose
@@ -138,6 +167,7 @@ UA='Histmersion/<version> (gazetteer import)'
 curl -fsSL -A "$UA" -O https://download.geonames.org/export/dump/allCountries.zip
 curl -fsSL -A "$UA" -O https://download.geonames.org/export/dump/alternateNamesV2.zip
 # a bare output name goes to the cache directory the server reads (~/.cache/histmersion/gazetteer); --out DIR elsewhere
+# the whole world in every language by default; --bbox window --langs window (or any box / languages) for a regional one
 python3 -I <repo>/db/gazetteer/build.py geonames allCountries.zip alternateNamesV2.zip geonames-<date>.ndjson.gz   # ~1 min
 python3 -I <repo>/db/gazetteer/build.py wikidata-fetch https://qlever.dev/api/wikidata wd                          # ~10 min, resumable
 python3 -I <repo>/db/gazetteer/build.py wikidata wd wikidata-<date>.ndjson.gz                                       # ~1 min
@@ -265,7 +295,25 @@ names), a second `geonames --apply` adds 613 names, and a third round of dry run
 So after the fix (or instead of it), run `places load wikidata --apply`, `geonames --apply`, and
 both once more.
 
-## What an import costs (measured 2026-10-08, a laptop, an empty corpus)
+## What an import costs
+
+**The world extracts** (2026-10-27, a laptop, a `*_test` database holding only the bundled seed —
+46 s and 234 MB on first start — imported in the order geonames, wikidata, tgn):
+
+| step | first run | database |
+|---|---:|---:|
+| `places load geonames --apply` | 8 min 55 s — 1 062 297 new places, 7 521 joined, names +3 531 835, links +1 276 702, 543 739 point-only regions/polities not kept | 0.23 → 3.60 GB |
+| `places load wikidata --apply` | 26 min 36 s — 656 615 new places, 417 176 joined, names +13 477 610, links +1 263 385, descriptions +1 116 849, 62 335 point-only areas not kept | 3.40 → 9.79 GB |
+| `places load tgn --apply` | 35 s — 37 115 new places, 1 460 joined, names +170 020 | 9.79 → 9.90 GB |
+
+After all three: 1 801 992 places, 17 533 239 names, 2 628 032 links; `place_names` is 6.2 GB with its
+indexes, `places` 1.4 GB, `place_links` 0.9 GB, `place_footprints` 0.6 GB, `place_descriptions`
+0.35 GB. `GET /api/places?q=` stays at 8–84 ms (Machu Picchu, Great Zimbabwe, Anyang, Angkor,
+Cahokia). Most of the growth is the names in every language; `--langs` is the lever for a small
+install. (Recommended order remains wikidata, geonames, tgn: GeoNames records then join by the
+Wikidata cross-links; in the order above Wikidata joined 417 176 GeoNames places instead.)
+
+**The window extracts** (2026-10-08, a laptop, an empty corpus):
 
 | step | first run | re-run (same versions) |
 |---|---:|---:|
@@ -273,8 +321,8 @@ both once more.
 | `places load geonames --apply` | ~9.5 min — 474 477 new places, 250 619 joined | ~45 s, nothing changed |
 | `places load lpf --apply` | seconds per WHG-sized file | seconds |
 
-After all three the gazetteer holds 1.27 M places, 8.34 M names and 1.76 M links, and the database
-grows by ~4.9 GB (trigram and name-key indexes included). Each real run that changes something
+After all three the gazetteer held 1.27 M places, 8.34 M names and 1.76 M links, and the database
+grew by ~4.9 GB (trigram and name-key indexes included). Each real run that changes something
 re-materialises `finding_places` at the end, which takes longer with a large corpus. A dry run
 takes about as long as the import; its join counts are exact within a batch of 1 000 records and
 slightly high across batches (a record cannot join a place an earlier, rolled-back batch would have
@@ -293,20 +341,23 @@ Each file is a dataset `lpf:<file name>`, versioned by its sha256; its title, ci
 time span come from the FeatureCollection's own keys or a `<file>.meta.json` beside it (the only place
 an LP-TSV file can say them). Removing a file from the folder does not remove what it imported.
 
-## Getty TGN (#1403) — pinned 2026-10-17 (dump of 2026-01-04)
+## Getty TGN (#1403) — pinned 2026-10-27 (dump of 2026-10-18)
 
 The Getty Thesaurus of Geographic Names (ODC-By 1.0: "Contains information from the Getty Thesaurus
 of Geographic Names (TGN)®, which is made available under the ODC Attribution License") is a third
 pinned source, `tgn`, beside GeoNames and Wikidata: `histmersion places load tgn [--apply]`. Like them
 it is joined **by shared identifiers only** — a TGN record has no links of its own, so it joins the
-place that already carries its `tgn:` id (the Wikidata extract gives 25 753 items in the window one,
-from P1667) and otherwise becomes `tgn_<id>`; it ranks after Wikidata and before GeoNames, and its
+place that already carries its `tgn:` id (the Wikidata extract gives 38 527 items in the world one,
+from P1667; 25 753 in the window) and otherwise becomes `tgn_<id>`; it ranks after Wikidata and before GeoNames, and its
 places follow the imported-source rules (undated = unknown, a point-only region or state is no place,
 not in the hierarchy, drawn only with a finding). Run it after `wikidata`. V093 admits the kind and
 rebuilds the partial indexes whose predicates name the imported sources.
 
-**Pinned on 2026-10-17** from the 2026-01-04 export: `tgn-2026-01-04.ndjson.gz`, 2.2 MB, 32 383 places,
-112 632 names (8 325 places dated, 8 194 described). To rebuild or re-pin (~1.3 GB of downloads; the
+**Pinned on 2026-10-27** from the 2026-10-18 export, the whole world: `tgn-2026-10-18.ndjson.gz`, 3.1 MB,
+39 906 places, 179 787 names (9 245 places dated, 11 357 described; 2 975 412 located subjects read).
+Until then the window extract of the 2026-01-04 export: 2.2 MB, 32 383 places, 112 632 names. TGN marks
+few places outside Europe and the Near East as historical, so the world adds 7 398 places, not more: the
+keep rule is by type and name, not by region. To rebuild or re-pin (~1.3 GB of downloads; the
 dumps are read in place, never unpacked):
 
 ```bash
@@ -317,9 +368,11 @@ python3 -I <repo>/db/gazetteer/build.py tgn explicit.zip aat-explicit.zip tgn-<d
 python3 -I <repo>/db/gazetteer/build.py pin <repo>/db/gazetteer/extracts.json tgn tgn-<date>.ndjson.gz version=<date> built=<today>
 ```
 
-`<date>` is the dump's: the 2026-01-04 export (`Last-Modified: Sun, 04 Jan 2026`, sha256
-`36cba1c4fbd0ee07c212253dc439610f04935291eb9bf84cf87c45a8e0e086ac`; AAT
-`19fd093a25cfc0642193b9e2c93f7f8de9658c424ba746661bad97d483f7d569`) was the current one on 2026-10-17.
+`<date>` is the dump's: the 2026-10-18 export (`Last-Modified: Sun, 18 Oct 2026 21:53:12 GMT`, 1 163 917 500
+bytes, sha256 `d007a6a267432c0e197b714cad706ab5f993ebb34f61ec22e0375b1d56bf893a`; AAT of 2026-10-17,
+`8330c9f3015d068a9d3fafc504d3711e76b952824dbedbeb8119955f46a764e5`) was the current one on 2026-10-27
+(before: the 2026-01-04 export, sha256 `36cba1c4fbd0ee07c212253dc439610f04935291eb9bf84cf87c45a8e0e086ac`).
+Getty's server sent it at about 14 MB a minute: `curl -C -` resumes a cut download.
 
 **What the export holds** (measured on that dump): 2 991 143 subjects — 2 075 701 `AdminPlaceConcept`,
 915 309 `PhysPlaceConcept`, 55 `PhysAdminPlaceConcept`, plus guide terms and facets — and 2 972 719
@@ -329,7 +382,7 @@ coordinates. The members `build.py` reads: `TGNOut_Coordinates.nt` (`<tgn/X-plac
 language tag, `gvp:estStart`/`estEnd`, `gvp:historicFlag`), `TGNOut_ScopeNotes.nt` (27 852 notes and
 their links); AAT's `AATOut_2Terms.nt` gives the place types' English labels (`gvp:prefLabelGVP`).
 
-**Filters.** The window (`BBOX`); a place class (no facets, no guide terms); then kept when its place
+**Filters.** The scope (`--bbox`, the world by default); a place class (no facets, no guide terms); then kept when its place
 type is historical or archaeological (`TGN_HISTORICAL_TYPE`: ancient, archaeological, deserted,
 abandoned, former, historical, ruins, necropolis, tell, tumulus, hillfort, oppidum, colony, …) or when
 it has a historic, dated or historical-language name — the GeoNames rule, so a present-day town known

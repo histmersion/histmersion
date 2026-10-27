@@ -1,43 +1,43 @@
 {
   "extracts": [
     {
-      "attribution": "GeoNames (geonames.org), CC BY 4.0 — data from the GeoNames dump of 2026-10-08",
-      "built": "2026-10-08",
-      "bytes": 31528538,
-      "features": 725096,
-      "file": "geonames-2026-10-08.ndjson.gz",
+      "attribution": "GeoNames (geonames.org), CC BY 4.0 — data from the GeoNames dump of 2026-10-27",
+      "built": "2026-10-27",
+      "bytes": 69769688,
+      "features": 1613557,
+      "file": "geonames-2026-10-27.ndjson.gz",
       "licence": "CC BY 4.0",
       "name": "geonames",
-      "sha256": "f5c05b194333ecb7e98bbf227e8dd866d1bdf4695c9517e416c2230408d7a8db",
-      "title": "GeoNames (allCountries + alternateNamesV2, research window)",
+      "sha256": "ec4be2177da849ce5a8a7f42397bebe6b1dbc70b505ae4f26070356dec8d6871",
+      "title": "GeoNames (allCountries + alternateNamesV2, the whole world, every language)",
       "url": "",
-      "version": "2026-10-08"
+      "version": "2026-10-27"
     },
     {
       "attribution": "Contains information from the Getty Thesaurus of Geographic Names (TGN)®, which is made available under the ODC Attribution License (ODC-By 1.0) — explicit N-Triples export",
-      "built": "2026-10-17",
-      "bytes": 2156068,
-      "features": 32383,
-      "file": "tgn-2026-01-04.ndjson.gz",
+      "built": "2026-10-27",
+      "bytes": 3149037,
+      "features": 39906,
+      "file": "tgn-2026-10-18.ndjson.gz",
       "licence": "ODC-By 1.0",
       "name": "tgn",
-      "sha256": "cab28bcb1219a79fcc80f618c4326d4cfa1b54c1b0745e414e57f942bd9d39db",
-      "title": "Getty TGN places (historical and archaeological places, historic and dated names; research window)",
+      "sha256": "93ec6459d0f4ebb43f8d44337f37478d0864d9bec64f079ddbd7ec04ae0602cd",
+      "title": "Getty TGN places (historical and archaeological places, historic and dated names; the whole world, every language)",
       "url": "",
-      "version": "2026-01-04"
+      "version": "2026-10-18"
     },
     {
-      "attribution": "Wikidata (wikidata.org), CC0 — via the QLever SPARQL endpoint, index of the 2026-08-10 dump updated live, queried 2026-10-09",
-      "built": "2026-10-09",
-      "bytes": 53726177,
-      "features": 766641,
-      "file": "wikidata-2026-10-09.ndjson.gz",
+      "attribution": "Wikidata (wikidata.org), CC0 — via the QLever SPARQL endpoint, index of the 2026-08-10 dump updated live, queried 2026-10-27",
+      "built": "2026-10-27",
+      "bytes": 121278169,
+      "features": 1136126,
+      "file": "wikidata-2026-10-27.ndjson.gz",
       "licence": "CC0",
       "name": "wikidata",
-      "sha256": "38808b7413e0378253ed88272af51e3a34e61cff71b555b6c8d003779bd49550",
-      "title": "Wikidata places (settlements, archaeological sites, historical countries and regions; research window)",
+      "sha256": "2716548e5a7c39f9be23fe84fe02cafd42d91b593bf89839c3207feae8bf23e6",
+      "title": "Wikidata places (settlements, archaeological sites, historical countries and regions; the whole world, every language)",
       "url": "",
-      "version": "2026-10-09"
+      "version": "2026-10-27"
     }
   ]
 }

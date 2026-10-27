@@ -114,7 +114,11 @@ On its first start the server imports, as a background job, the **gazetteer** th
 (Natural Earth, Pleiades, and traced Bronze- and Iron-Age states) and the timeline's **period
 presets** (a selection from PeriodO). The web page works meanwhile; the map fills in when the job
 is done — a minute or two. `histmersion jobs` shows it; `HISTMERSION_INIT_AUTO=false` turns the
-automatic import off, and `histmersion init` runs it on demand. See
+automatic import off, and `histmersion init` runs it on demand. These places cover the whole world
+(about 46 000; under a minute, ~0.2 GB). The large gazetteers — GeoNames, Wikidata and Getty TGN, 1.8 M
+places in every language — are a separate, optional step: about 40 minutes of import and ~10 GB of
+database once their extracts are on disk, and an afternoon to build those extracts yourself (see
+[how long it takes](../how-to/open-data.md#how-long-it-takes-and-how-much-room)). See
 [Open data](../how-to/open-data.md) for what else you can import.
 
 ## Removing it
