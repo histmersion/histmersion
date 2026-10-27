@@ -112,6 +112,7 @@ class Wikidata(unittest.TestCase):
             [e.format("Q1"), e.format("Q486972"), "30.0", "40.0"],     # a plain settlement: dropped
             [e.format("Q2"), e.format("Q486972"), "31.0", "41.0"],     # a settlement with a GeoNames id: kept
             [e.format("Q3"), e.format("Q839954"), "-72.54583", "-13.16333"],  # an archaeological site in the Andes
+            [e.format("Q4"), e.format("Q839954"), "", ""],  # a coordinate of "unknown value": no place
         ])
         self.write(d, "labels", ["item", "name"], [
             [e.format("Q5684"), '"Babylon"@en'], [e.format("Q5684"), '"Βαβυλών"@grc'],
@@ -132,7 +133,8 @@ class Wikidata(unittest.TestCase):
     def test_items_names_dates_links(self):
         stats, out = self.build()
         fs = {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}
-        self.assertEqual(sorted(fs), ["Q2", "Q3", "Q5684"])
+        self.assertEqual(sorted(fs), ["Q2", "Q3", "Q5684"], "Q4 has no readable coordinate")
+        self.assertEqual(stats["unplaced"], 1)
         b = fs["Q5684"]
         self.assertEqual(b["properties"]["kind"], "site", "ancient city outranks settlement")
         self.assertEqual(b["properties"]["class"], "Q15661340")

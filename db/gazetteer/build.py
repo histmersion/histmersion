@@ -850,10 +850,20 @@ def when_ranges(start, end):
     return {"timespans": [span]} if span else None
 
 
+def wd_point(row):
+    """(lon, lat) of a core row, or None: an item whose coordinate is "unknown value", or one on another
+    globe, has none the endpoint can read (the world query, with no bbox FILTER, returns it empty)."""
+    try:
+        return float(literal(row.get("lon"))[0]), float(literal(row.get("lat"))[0])
+    except (TypeError, ValueError):
+        return None
+
+
 def wikidata(src_dir, out, scope=DEFAULT_SCOPE):
     """The Wikidata extract from the TSV results of [[wikidata_fetch]] — cut again to `scope`, so a
     regional extract can be built from a world fetch."""
-    stats = {"scope": scope.describe(), "items": 0, "kept": 0, "names": 0, "links": 0, "dated": 0, "described": 0, "century": 0}
+    stats = {"scope": scope.describe(), "items": 0, "kept": 0, "names": 0, "links": 0, "dated": 0, "described": 0, "century": 0,
+             "unplaced": 0}
     kinds = dict(WD_ROOTS)
     order = {q: i for i, (q, _) in enumerate(WD_ROOTS)}
     core = {}
@@ -861,9 +871,11 @@ def wikidata(src_dir, out, scope=DEFAULT_SCOPE):
         q, root = qid(r.get("item")), qid(r.get("root"))
         if not q or root not in kinds:
             continue
-        lon, lat = float(literal(r["lon"])[0]), float(literal(r["lat"])[0])
-        if not scope.contains(lon, lat):
+        point = wd_point(r)
+        if point is None or not scope.contains(*point):
+            stats["unplaced"] += point is None
             continue
+        lon, lat = point
         cur = core.get(q)
         pt = (r5(lon), r5(lat))
         if cur is None:
