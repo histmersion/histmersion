@@ -158,6 +158,16 @@ class EventCatalogSuite extends munit.FunSuite:
     assertEquals(EventProviders.keep(erup(37, 25, None).copy(lat = None), t), Left("no position"))
     assertEquals(EventProviders.keep(erup(37, 25, Some(5)), t.copy(area = BBox.parse("0,0,10,10"))), Left("outside --bbox"))
 
+  test("thresholds over the default region, the world: a small eruption or quake anywhere is kept"):
+    val world = EventProviders.Thresholds(BBox.parse("-180,-90,180,90"), 0, 4, 0, 6.5)
+    def at(kind: String, lat: Double, lon: Double) =
+      CatalogRecord("x", "1", "", "x", kind, TimeSpan(Some(-1), None, None, Some(-1)), Some(lat), Some(lon),
+        vei = Some(1), magnitude = Some(4.0))
+    for (lat, lon) <- List((-39.3, -71.9), (19.4, -155.3), (-6.1, 105.4), (35.4, 138.7), (-3.1, 37.4), (64.0, -19.0))
+    do
+      assert(EventProviders.keep(at("eruption", lat, lon), world).isRight, s"eruption at $lat,$lon")
+      assert(EventProviders.keep(at("earthquake", lat, lon), world).isRight, s"earthquake at $lat,$lon")
+
   // ── merging ─────────────────────────────────────────────────────────────────────────────────
 
   private val tol = CatalogMerge.Tolerance(60, 30)

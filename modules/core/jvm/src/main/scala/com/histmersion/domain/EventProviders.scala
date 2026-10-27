@@ -319,8 +319,8 @@ object EventProviders:
   def limits(provider: String, present: Long, gvpFloor: Long): CatalogDating.Limits =
     CatalogDating.Limits(present, Option.when(provider == CatalogProvider.Gvp)(gvpFloor))
 
-  /** Pure: does a record pass the configured thresholds? Inside the research `region` everything (at
-    * the region's own minimum); outside it an eruption needs `outsideVei`, an earthquake
+  /** Pure: does a record pass the configured thresholds? Inside `region` (the world by default)
+    * everything (at the region's own minimum); outside a narrower one an eruption needs `outsideVei`, an earthquake
     * `outsideMagnitude`. A record with no position never passes (it cannot be drawn or matched in
     * space). `Left` is why not. */
   final case class Thresholds(region: Option[BBox], regionVei: Int, outsideVei: Int, regionMagnitude: Double,

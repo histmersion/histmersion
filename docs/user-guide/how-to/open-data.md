@@ -97,8 +97,10 @@ histmersion events import wikidata --bbox 20,30,45,45
 | `wikidata` — battles, sieges, wars, treaties, revolts, disasters | CC0 | Wikidata (CC0), <https://www.wikidata.org> |
 
 By default an import reads the years −12000 to 499 (`events.min-year`, `events.max-year`) and keeps
-every event inside the research region `events.region` (`-25,20,90,70`: longitude −25 to 90,
-latitude 20 to 70); outside it, only eruptions of VEI 4 or more (the volcanic explosivity index) and earthquakes of magnitude 6.5 or more are kept. Records of the same kind from
+every event it reads, wherever on Earth it happened (`events.region` is the whole world,
+`-180,-90,180,90`). A smaller install can set a narrower `events.region` (for example `-25,20,90,70`,
+Europe to Central Asia): every event inside it is kept, and outside it only eruptions of VEI 4 or more
+(the volcanic explosivity index) and earthquakes of magnitude 6.5 or more. Records of the same kind from
 two catalogues close in space and time are merged into one event. An import is a server job that can
 be resumed; it never overwrites an event someone compiled or corrected.
 
