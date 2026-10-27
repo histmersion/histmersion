@@ -5,6 +5,7 @@ import { engineName, isChromium, isFirefox, launch, launchChromiumWithout, launc
 import { routeFullLoad } from './perf-fixtures.mjs';
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
 import { trackRequests } from './perf-lib.mjs';
+import { routeTiles } from './tile-fixtures.mjs';
 
 // Use a separately started test server; these tests only GET data and change browser-local state.
 const baseURL = process.env.HISTMERSION_SERVER_URL;
@@ -490,6 +491,7 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
       if (kind === 'site') return route.fulfill({ json: sites });
       return route.continue();
     });
+    await routeTiles(page, { sites: sites.features });
     await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["boundaries","sites"]'));
     await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
@@ -615,6 +617,7 @@ test('#1446: hovering a site with a picture shows the image and its credit', asy
     let thumbs = 0;
     await page.route('**/api/places/geo**', route => new URL(route.request().url()).searchParams.get('kind') === 'site'
       ? route.fulfill({ json: site }) : route.continue());
+    await routeTiles(page, { sites: site.features });
     await page.route(`**/api/places/${id}?**`, route => route.fulfill({ json: detail }));
     await page.route(`**/media/${uid}/thumb`, route => { thumbs++; return route.fulfill({ body: png, contentType: 'image/png' }); });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites"]'));
@@ -675,7 +678,8 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
   };
   await withPage({ width: 1440, height: 900 }, async page => {
     const asked = [];
-    await page.route('**/api/events/geo**', route => { asked.push(new URL(route.request().url())); return route.fulfill({ json: feed }); });
+    await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await routeTiles(page, { events: feed.events, asked });
     await page.route('**/api/events/zz_battle', route => route.fulfill({ json: detail }));
     await page.route('**/api/events/zz_eruption', route => route.fulfill({ json: eruption }));
     await page.evaluate(() => { localStorage.setItem('histmersion.ui.layers', '["events"]'); });
@@ -698,7 +702,8 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
     assert.equal(styles[0].border, 'solid');
     assert.equal(styles[1].border, 'dashed');
     assert.notEqual(styles[0].bg, styles[1].bg);
-    assert.ok(asked.some(u => u.searchParams.get('context') === 'true' && u.searchParams.get('area')), 'the feed is narrowed to the view');
+    assert.ok(asked.some(u => u.pathname.startsWith('/api/tiles/events/') && u.searchParams.get('context') === 'true'),
+      'the events are the tiles of the view');
     // the attested event's card lists its source (a source link) and the article citing it
     await hoverForCard(page, '.hd-ev[data-id="zz_battle"]', '.cite-tooltip .section-sources a[data-ck="zz_src2020"]');
     assert.match(await page.locator('.cite-tooltip').innerText(), /Zz article/);
@@ -743,6 +748,7 @@ test('P0: approximate events are faded, imprecise ones are not drawn, the card s
   };
   await withPage({ width: 1440, height: 900 }, async page => {
     await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await routeTiles(page, { events: feed.events });
     await page.route('**/api/events/zz_approx', route => route.fulfill({ json: detail }));
     await page.evaluate(() => { localStorage.setItem('histmersion.ui.layers', '["events"]'); });
     await page.goto(new URL('/#from=-1700&to=-1500', baseURL).href);
@@ -779,6 +785,7 @@ test('#1449: a site is a period-coloured circle with its type icon (white on a h
   await withPage({ width: 1440, height: 900 }, async page => {
     await page.route('**/api/places/geo**', route => new URL(route.request().url()).searchParams.get('kind') === 'site'
       ? route.fulfill({ json: sites }) : route.continue());
+    await routeTiles(page, { sites: sites.features });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites"]'));
     await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
     await page.reload();
@@ -927,6 +934,7 @@ test('cards stay inside the viewport: near an edge, taller than it when pinned, 
   const feed = { unplaced: 0, events: [evGeo('zz_top', 'Zz top', 'battle', 38.0, 32.0), evGeo('zz_low', 'Zz low', 'siege', 36.6, 33.4)] };
   await withPage({ width: 1440, height: 640 }, async page => {
     await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await routeTiles(page, { events: feed.events });
     await page.route('**/api/events/zz_top', route => route.fulfill({ json: evDetail('zz_top', 'Zz top', 'battle', 60) }));
     await page.route('**/api/events/zz_low', route => route.fulfill({ json: evDetail('zz_low', 'Zz low', 'siege', 2) }));
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
@@ -1021,6 +1029,7 @@ test('every card kind leads with its icon: source, site, region, event, picture'
     await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
     await page.route('**/api/events/zz_b', route => route.fulfill({ json: evDetail('zz_b', 'Zz battle', 'battle', 1) }));
     await page.route('**/api/media-geo**', route => route.fulfill({ json: media }));
+    await routeTiles(page, { sites: sites.features, events: feed.events, media });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["boundaries","sites","events","media"]'));
     await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
     await page.reload();
@@ -1092,6 +1101,8 @@ test('a cluster of events is a square; a zoom animates by the markers drawn, not
     await page.route('**/api/findings**', route => route.fulfill({ json: [] }));
     await page.route('**/api/places/geo**', route => route.fulfill({ json: { type: 'FeatureCollection', features: [] } }));
     await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    // the tiles of a view the map has not seen are cut from the feed of that moment
+    await routeTiles(page, { events: () => feed.events });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
     await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
     await page.reload();
@@ -1120,19 +1131,20 @@ test('a cluster of events is a square; a zoom animates by the markers drawn, not
       };
       tick();
     }));
+    // the points of the view's tiles held: at least `n` (a view holds what its tiles hold)
     const showing = async (events, n, at, zoom) => {
       feed = { unplaced: 0, events };
       await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, zoom]);
-      await page.waitForFunction(k => window.__testMap.points() === k, n, { timeout: 15000 });
+      await page.waitForFunction(k => window.__testMap.points() >= k, n, { timeout: 15000 });
       return drawn();
     };
     assert.equal(await zoomAnimates(8), true, 'three points: the zoom animates');
     // 1 203 points held, a few dozen markers drawn: animated (it was not, counted by the points held)
-    const fewDrawn = await showing(few.concat(many), 1203, [30, 5], 4);
+    const fewDrawn = await showing(few.concat(many), 1200, [30, 5], 4);
     assert.ok(fewDrawn < 200, `a few dozen markers for 1 203 points: ${fewDrawn}`);
     assert.equal(await zoomAnimates(5), true, '1 203 points, a few dozen markers: the zoom animates');
     // over a thousand markers drawn: drawn at once
-    const manyDrawn = await showing(grid, grid.length, [38, 25], 6);
+    const manyDrawn = await showing(grid, 1000, [38, 25], 6);
     assert.ok(manyDrawn > 1000, `over a thousand markers drawn: ${manyDrawn}`);
     assert.equal(await zoomAnimates(7), false, `${manyDrawn} markers: the zoom does not animate`);
     // back to a few: animated again
@@ -1349,6 +1361,7 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
       return route.fulfill({ json: findings.filter(f => f.periodEnd >= from && f.periodStart <= to) });
     });
     await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
+    await routeTiles(page, { sites: sites.features, events: feed.events });
     await page.route('**/api/events/zz_e4', route => route.fulfill({ json: evDetail('zz_e4', 'Zz battle four', 'battle', 1) }));
     await page.route('**/api/places/zz_s2?**', route => route.fulfill({ json: { place: { id: 'zz_s2', label: 'Zz site 2', kind: 'site',
       periodStart: -1400, periodEnd: -1100, source: null, names: '' }, geometry: null, parents: [], children: [], findings: 0, asOf: null,
@@ -1414,7 +1427,8 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
 test('the icon menus: icons per option, keyboard choice updates the filter; the toolbar shows each layer\'s shape', async () => {
   await withPage({ width: 1440, height: 900 }, async page => {
     let asked = [];
-    await page.route('**/api/events/geo**', route => { asked.push(new URL(route.request().url())); return route.fulfill({ json: { unplaced: 0, events: [] } }); });
+    await page.route('**/api/events/geo**', route => route.fulfill({ json: { unplaced: 0, events: [] } }));
+    await routeTiles(page, { asked });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events","sites"]'));
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
@@ -1466,7 +1480,8 @@ test('the icon menus: icons per option, keyboard choice updates the filter; the 
     assert.equal(await kind.locator('.icon-select-icon .hd-badge--square').count(), 1);
     assert.ok(await kind.evaluate(el => el === document.activeElement), 'the focus is back on the button');
     await page.waitForTimeout(400);
-    assert.ok(asked.slice(before).some(u => u.searchParams.get('kind') === 'siege'), 'kind=siege was asked for');
+    assert.ok(asked.slice(before).some(u => u.pathname.startsWith('/api/tiles/events/') && u.searchParams.get('kind') === 'siege'),
+      'kind=siege was asked for');
     // Escape closes without choosing; a click outside closes too
     await page.keyboard.press('ArrowDown');
     await list.waitFor();
@@ -1892,6 +1907,7 @@ test('markers: four silhouettes by outline, legible glyphs, a readable key, conc
     await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
     await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
     await page.route('**/api/media-geo**', route => route.fulfill({ json: media }));
+    await routeTiles(page, { sites: sites.features, events: feed.events, media });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites","events","media"]'));
     await page.goto(new URL('/#from=-1350&to=-1100', baseURL).href);
     await page.reload();

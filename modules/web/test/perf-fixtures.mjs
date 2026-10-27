@@ -3,6 +3,8 @@
 // 2 400 events, a year's ~140 polities and a whole range's 1 600, articles — from a fixed seed, so every
 // run measures the same work. Nothing here is corpus data; every name starts with "Zz".
 
+import { routeTiles } from './tile-fixtures.mjs';
+
 /** A small deterministic generator (mulberry32). */
 function rng(seed) {
   let a = seed >>> 0;
@@ -106,6 +108,8 @@ export async function routeFixtures(page) {
   await page.route(/\/api\/sources(\?|$)/, r => json(r, sources));
   await page.route(/\/api\/sources\/zz_src_\d+(\?|$)/, r => json(r, sourceCard(new URL(r.request().url()).pathname.split('/').pop())));
   await page.route(/\/api\/events\/geo(\?|$)/, r => json(r, events));
+  // the events layer reads tiles; playback's labels the feed above
+  await routeTiles(page, { events: events.events });
   await page.route(/\/api\/places\/geo(\?|$)/, r => {
     const q = new URL(r.request().url()).searchParams;
     if (q.get('kind') !== 'polity') return json(r, { type: 'FeatureCollection', features: [] });
@@ -178,4 +182,6 @@ export async function routeFullLoad(page) {
     const kind = new URL(r.request().url()).searchParams.get('kind');
     return json(r, kind === 'site' ? fullLoad.sites : kind === 'polity' ? fullLoad.polities : { type: 'FeatureCollection', features: [] });
   });
+  // the sites, pictures and events layers read the server's tiles
+  await routeTiles(page, { sites: fullLoad.sites.features, media: fullLoad.media, events: fullLoad.events });
 }

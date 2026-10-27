@@ -71,6 +71,12 @@ object MapHandle:
       /** How many points the cluster layer holds, and how many zooms animated its bubbles. */
       points = (() => MapView.dots.size): js.Function0[Int],
       clusterAnimations = (() => MapView.dots.animations): js.Function0[Int],
+      /** What each tiled layer shows: `{items, cells, counted}` — its items drawn as themselves, the cells
+        * of its crowded tiles, and the items those cells count. */
+      tiled = (() =>
+        def of(t: TiledPoints[?]) = { val (i, c, n) = t.counts; js.Dynamic.literal(items = i, cells = c, counted = n) }
+        js.Dynamic.literal(sites = of(MapView.sitesLayer), media = of(MapView.mediaLayer), events = of(EventMarkers.layer))
+      ): js.Function0[js.Dynamic],
       /** How many times a base map was drawn whole (every tile of the view). */
       baseMapsDrawn = (() => drawn): js.Function0[Int],
       capabilities = (() => { val c = s.capabilities; js.Dynamic.literal(webgl = c.webgl, software = c.software, renderer = c.renderer, webgl2 = c.webgl2) })

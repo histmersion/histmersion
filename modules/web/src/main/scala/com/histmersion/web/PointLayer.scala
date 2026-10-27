@@ -62,6 +62,9 @@ trait PointKind[A]:
   def open(key: String, a: A, row: dom.Element): Unit
   /** The client-side part of its filter (a menu the server is not asked about). */
   def keep(a: A): Boolean = true
+  /** Its marker drawn alone recoloured in place for `span` (only the colour moved): the badge's `--c`. */
+  def recolour(m: DomMarker, a: A, span: (Long, Long)): Unit =
+    Option(m.el.querySelector(".hd-point")).foreach(_.asInstanceOf[dom.html.Element].style.setProperty("--c", fill(a, span)))
 
 /** The pure half: a point's marker markup. */
 object PointMarker:
@@ -141,9 +144,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
               d.span = span
               d.member = member
               restyled = true
-              if sameLook then
-                set().drawnAlone(k).foreach(m => Option(m.el.querySelector(".hd-point")).foreach(
-                  _.asInstanceOf[dom.html.Element].style.setProperty("--c", kind.fill(a, span))))
+              if sameLook then set().drawnAlone(k).foreach(m => kind.recolour(m, a, span))
               else
                 reshaped = true
                 set().replace(d)

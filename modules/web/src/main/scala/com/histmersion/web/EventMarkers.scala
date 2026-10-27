@@ -39,28 +39,27 @@ object EventMarker:
     val (w, e) = if east - west >= 360 then (-180.0, 180.0) else (wrap(west), wrap(east))
     s"${r(w)},${r(south.max(-90))},${r(e)},${r(north.min(90))}"
 
-/** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — in the
-  * map's view; the filter bar's kind and tier menus narrow it. One request per change of span, view or
-  * filter (`/api/events/geo`, server-side bbox + time + kind); the points are [[PointKinds.Events]]. */
+/** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — read
+  * from the server's tiles (`/api/tiles/events/…`, the filter's selection: its sources, the span, the
+  * kind and tier menus); the points are [[PointKinds.Events]], the crowded tiles' cells bubbles. */
 object EventMarkers:
 
-  /** The markers — a [[PointLayer]] of [[PointKinds.Events]], attached and detached by the map with its
+  /** The markers — a [[TiledPoints]] of [[PointKinds.Events]], attached and detached by the map with its
     * other overlays ([[MapView]]). */
-  val layer: PointLayer[EventGeo] = PointLayer(PointKinds.Events, () => MapView.dots, () => MapView.spanMid())
-  // the request a late answer must belong to
-  private val latest = Latest()
+  val layer: TiledPoints[EventGeo] = TiledPoints(TileLayer.Events,
+    PointLayer(PointKinds.Events, () => MapView.dots, () => MapView.spanMid()), DotKind.Event, TileDecode.event,
+    () => MapView.tilesConfig.maxZoom)
 
-  /** Load the events of `span` in the view (the layer must be attached). */
-  def load(span: (Long, Long), limit: Int): Unit =
-    if TheMap.isUp && layer.isAttached then
-      val b = TheMap.surface.bounds
-      val (lo, hi) = (span._1.min(span._2), span._1.max(span._2))
-      val q = Api.EventQuery(UiState.toFilter().copy(period = Some(Period(lo, hi)), limit = limit),
-        kind = UiState.eventKind.now(), tier = UiState.eventTier.now(), context = Some(true),
-        area = Some(EventMarker.area(b.west, b.south, b.east, b.north)))
-      latest.onCurrent(ApiClient.eventsGeo(q))(_.foreach { list =>
-        if layer.isAttached then layer.show(list.events, span)
-      })(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+  /** Pure: the tiles' query for the events of `tiles` (a span) under `filter`, by kind and tier — the
+    * filter's paging and its sort left out, which every tile of a span shares. */
+  def query(filter: Filter, tiles: (Long, Long), kind: Option[String], tier: Option[String]): TilesApi.TileQuery =
+    TilesApi.TileQuery(TileLayer.Events.wire, 0, 0, 0,
+      filter.copy(period = Some(Period(tiles._1, tiles._2)), limit = Filter().limit, offset = 0, sort = Filter().sort),
+      kind = kind, tier = tier, context = Some(true))
+
+  /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
+  def load(tiles: (Long, Long), span: (Long, Long)): Unit =
+    layer.load(ApiClient.tileTemplate(query(UiState.toFilter(), tiles, UiState.eventKind.now(), UiState.eventTier.now())), span)
 
 /** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and —
   * while their layers are on — the event kinds (natural, human) and site types, each icon with its name.

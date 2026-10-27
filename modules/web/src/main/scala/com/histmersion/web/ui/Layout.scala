@@ -44,12 +44,9 @@ object Layout:
     * 1 744 over -3000..2000 (~7 MB of stored simplified outlines, V090); the server caps it at
     * `places.geo-max-limit`. */
   val overlayRangeFetchLimit: Int = 2000
-  val mediaFetchLimit: Int   = 200
-  val siteFetchLimit: Int    = 200
   /** The events layer (#1449): its markers' size (a square: smaller than the circle's box, as big to the
-    * eye), and the most one view asks for. */
+    * eye). */
   val eventMarkerSize: Px    = Px(24)
-  val eventFetchLimit: Int   = 1500
   /** The most markers (points drawn alone and bubbles, in view and its margin) the map's cluster layer
     * draws before and after a zoom and still animates it (bubbles splitting and merging): above it a zoom
     * redraws them at once ([[com.histmersion.web.map.ClusterMotion]]). Counted on screen, not among the
