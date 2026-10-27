@@ -57,6 +57,7 @@ final class NoMapSurface(el: dom.HTMLElement, why: String, caps: Capabilities, m
   def shapes(id: String, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id, NoMap.Shapes(id))
   def shapeSet(id: String): Option[ShapeSet] = sets.get(id)
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
+  def pointTiles(id: String, layer: String, maxZoom: Int): PointTiles = NoMap.Tiles
   def popup(at: LatLon, html: String, cls: String = ""): Popup = new Popup:
     def close(): Unit = ()
     def isOpen: Boolean = false
@@ -80,6 +81,13 @@ object NoMap:
     def set(shapes: Seq[ShapeFeature]): Unit = current = shapes.map(_.id)
     def restyle(id: String, colour: String, alpha: Double): Unit = ()
     def ids: Seq[String] = current
+
+  /** Tiles that are never asked for: no map, no features. */
+  object Tiles extends PointTiles:
+    def setTiles(template: Option[String]): Unit = ()
+    def features: Seq[TilePointFeature] = Nil
+    def onChange(f: () => Unit): Subscription = new Subscription { def cancel(): Unit = () }
+    def loaded: Boolean = true
 
   private def esc(s: String) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 

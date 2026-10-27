@@ -24,7 +24,10 @@ final case class DotEntry(kind: DotKind, id: String, label: String, icon: String
   * ([[Certainty.NoSay]] for a dot that is not a finding), and what its bubble's list shows — the findings
   * themselves, or the dot's row. */
 final case class Member(kind: DotKind, n: Int, mids: List[Double], certainty: Certainty,
-    findings: List[GeoHit] = Nil, entry: Option[DotEntry] = None)
+    findings: List[GeoHit] = Nil, entry: Option[DotEntry] = None, cell: Option[com.histmersion.web.map.GeoBounds] = None):
+  /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their
+    * box (`cell`) is where a click zooms. */
+  def aggregate: Boolean = cell.isDefined
 
 /** A bubble's OUTLINE (#1647): the shape grammar's event square carried over to the clusters, so a
   * cluster of events reads apart from one of findings at a glance (docs/visualization-guide.md §2a). */
@@ -49,6 +52,10 @@ object DotCluster:
     def mids: List[Double] = members.flatMap(_.mids)
     /** The least certain member's certainty (only findings carry one other than [[Certainty.NoSay]]). */
     def certainty: Certainty = Certainty.worst(members.map(_.certainty))
+    /** Some of it is only counted (a tile's cells): it cannot all be listed. */
+    def counted: Boolean = members.exists(_.aggregate)
+    /** The boxes of its cells. */
+    def cells: List[com.histmersion.web.map.GeoBounds] = members.flatMap(_.cell)
 
   /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed
     * order, those it has none of left out. */

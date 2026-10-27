@@ -95,6 +95,10 @@ class GlMap(options: js.Object) extends js.Object:
   def setFilter(layer: String, filter: js.Any): this.type = js.native
   def setFeatureState(feature: js.Object, state: js.Object): this.type = js.native
   def queryRenderedFeatures(point: js.Array[Double], options: js.UndefOr[js.Object] = js.undefined): js.Array[RenderedFeature] = js.native
+  /** The features of a source's tiles held for the view (a vector source: of one `sourceLayer`). */
+  def querySourceFeatures(source: String, options: js.UndefOr[js.Object] = js.undefined): js.Array[js.Dynamic] = js.native
+  /** Every tile the source needs for the view is in. */
+  def isSourceLoaded(id: String): Boolean = js.native
   def addControl(control: js.Any, position: js.UndefOr[String] = js.undefined): this.type = js.native
   def removeControl(control: js.Any): this.type = js.native
   def triggerRepaint(): Unit                    = js.native

@@ -60,6 +60,13 @@ object ApiClient:
           Future.failed(ApiFailure(code, ApiError(s"could not read the server's answer (HTTP $code): $other")))
     }
 
+  /** The URL template of a layer's tiles (`{z}`, `{x}`, `{y}` for the map to fill in): `q`'s request as the
+    * tile endpoint builds it, the tile given as placeholder numbers no tile has, swapped for the
+    * template's markers. Absolute: the map's workers fetch it. */
+  def tileTemplate(q: TilesApi.TileQuery): String =
+    val req = interp.toRequest(TilesApi.tile, None).apply(q.copy(z = TilePlaceholder.Z, x = TilePlaceholder.X, y = TilePlaceholder.Y))
+    dom.window.location.origin + TilePlaceholder.fill(req.uri.toString)
+
   def config(): Future[UiConfig]                                       = call(Api.config)(())
   def sources(f: Filter): Future[SearchResult]                         = call(Api.sources)(f)
   def findings(q: Api.FindingsQuery): Future[List[GeoHit]]             = call(Api.findings)(q)
@@ -285,3 +292,12 @@ object ApiClient:
       r    <- dom.fetch(url).toFuture
       body <- r.text().toFuture
     yield (r.status, body)
+
+/** The placeholders of a tile URL template ([[ApiClient.tileTemplate]]). Pure. */
+object TilePlaceholder:
+  val Z: Int  = 900000001
+  val X: Long = 900000002L
+  val Y: Long = 900000003L
+
+  /** `uri` with the placeholder tile replaced by `{z}/{x}/{y}`. */
+  def fill(uri: String): String = uri.replace(s"/$Z/$X/$Y", "/{z}/{x}/{y}")

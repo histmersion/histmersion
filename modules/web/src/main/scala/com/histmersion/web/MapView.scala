@@ -22,11 +22,15 @@ object MapView:
   // the four kinds of point (docs/map-layers.md): ONE layer implementation, four descriptors, one
   // cluster layer; the events' layer is EventMarkers'
   private val findingsLayer                 = PointLayer(PointKinds.Findings, () => dots, () => spanMid())
-  private val mediaLayer                    = PointLayer(PointKinds.Media, () => dots, () => spanMid())
-  private var mediaReqId: Int               = 0
-  private val sitesLayer                    = PointLayer(PointKinds.Sites, () => dots, () => spanMid())
-  private var sitesReqId: Int               = 0
+  // the sites and the pictures: every one of the span, read from the server's tiles (docs/map-layers.md)
+  private[web] val sitesLayer = TiledPoints(TileLayer.Sites, PointLayer(PointKinds.Sites, () => dots, () => spanMid()),
+    DotKind.Site, TileDecode.site, () => tilesConfig.maxZoom)
+  private[web] val mediaLayer = TiledPoints(TileLayer.Media, PointLayer(PointKinds.Media, () => dots, () => spanMid()),
+    DotKind.Media, TileDecode.media, () => tilesConfig.maxZoom)
   private var playbackMode: Boolean         = false
+  // `var`s: the tiles' settings (from the page's config), and playback's speed (its time buckets)
+  private[web] var tilesConfig: MapTilesUiConfig = MapTilesUiConfig()
+  private var playYearsPerSecond: Double = 0.0
 
   /** The map's ONE cluster layer, for every kind of point ([[PointLayer]]): what is near on screen is one
     * bubble, whatever it is. Regions never join. */
@@ -34,7 +38,8 @@ object MapView:
     paneOf = d => TheMap.pane(d.layer.kind.pane), pane = () => TheMap.pane(MapStack.Pane.Markers),
     surface = () => TheMap.surface, key = _.key, at = _.at,
     radius = () => clusterRadius(maxDotRadius, PointKinds.all.map(_.box)).toDouble,
-    single = (d, fadeIn) => d.layer.render(d, fadeIn), bubble = ds => bubbleMarker(ds),
+    single = (d, fadeIn) => if d.member.aggregate then bubbleMarker(Seq(d)) else d.layer.render(d, fadeIn),
+    bubble = ds => bubbleMarker(ds),
     animateMax = Layout.clusterAnimateMax, exitMs = Layout.exitAnimMs, fadeOut = FadingLayer.fadeOut.value,
     repaint = (m, ds) => repaintBubble(m, ds))
 
@@ -100,6 +105,7 @@ object MapView:
     * recoloured and faded in place. */
   def playFrame(points: List[GeoHit], span: (Long, Long), ph: Long, yearsPerSecond: Double): Unit =
     playLead = (yearsPerSecond * Layout.playbackLeadSeconds).toLong
+    playYearsPerSecond = yearsPerSecond
     playFade = math.max(1.0, yearsPerSecond * Layout.playbackAreaFadeSeconds)
     playhead = ph.toDouble
     render(points, span)
@@ -246,27 +252,44 @@ object MapView:
     m
 
   /** A drawn bubble's colours set again in place (its members' colours moved with the span). */
-  private def repaintBubble(m: DomMarker, ds: Seq[Dot]): Unit =
-    val held = DotCluster.contents(ds)
+  private def repaintBubble(m: DomMarker, ds: Seq[Dot]): Unit = repaintHeld(m, DotCluster.contents(ds))
+
+  /** A tile's cell drawn alone, recoloured in place. */
+  private[web] def repaintCell(m: DomMarker, member: Member): Unit = repaintHeld(m, DotCluster.Contents(List(member)))
+
+  private def repaintHeld(m: DomMarker, held: DotCluster.Contents): Unit =
     val (a, b) = rampEnds(held.mids, currentSpan, held.certainty)
     Option(m.el.querySelector(".hd-cluster")).map(_.asInstanceOf[dom.html.Element]).foreach { c =>
       c.style.setProperty("--g0", a)
       c.style.setProperty("--g1", b)
     }
 
-  /** A bubble chosen: its list, or (too many to list) the map zoomed in on it. */
+  /** The map zoomed in on `boxes` (a bubble's, or a tile's cells', items), as far as it takes to part
+    * them — deeper than a list's fit, since a cell holds items the page has not got yet. */
+  private[web] def zoomInto(boxes: List[GeoBounds]): Unit =
+    if TheMap.isUp && boxes.nonEmpty then
+      val b = boxes.reduce(_.extend(_))
+      val s = TheMap.surface
+      // at least one level deeper: a cell's items, all at one point, still part at the deepest tile
+      if b.north - b.south < 1e-9 && b.east - b.west < 1e-9 then s.setView(LatLon(b.south, b.west), math.min(s.maxZoom, s.zoom + 2), animate = true)
+      else s.fitBounds(b, 40, s.maxZoom)
+
+  /** A bubble chosen: its list, or (too many to list, or some only counted in a tile's cell) the map
+    * zoomed in on it. */
   private def open(ds: Seq[Dot]): Unit =
       val all = DotCluster.contents(ds)
       val pts = ds.map(_.at)
       val b = GeoBounds(pts.map(_.lat).min, pts.map(_.lon).min, pts.map(_.lat).max, pts.map(_.lon).max)
-      def zoomIn(): Unit = TheMap.surface.fitBounds(b, 40, fitMaxZoom)
-      // too many to list: zoom in, unless the map cannot (dots at one point stay one bubble)
-      if all.total > pickerMax && TheMap.surface.zoom < TheMap.surface.maxZoom - 0.01 then zoomIn()
+      def zoomIn(): Unit = if all.counted then zoomInto(b :: all.cells) else TheMap.surface.fitBounds(b, 40, fitMaxZoom)
+      val deepest = TheMap.surface.zoom >= TheMap.surface.maxZoom - 0.01
+      // too many to list, or counted and not listed: zoom in, unless the map cannot (dots at one point stay one bubble)
+      if (all.total > pickerMax || all.counted) && !deepest then zoomIn()
       else ResultsList.pick(all.findings, s"${DotCluster.summary(all)} in this cluster", Some(() => zoomIn()),
         DotCluster.ordered(DotCluster.others(ds)))
 
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius
+    tilesConfig = ui.mapTiles
     BaseMaps.configure(ui)
     // the span the page opens on (UiState is restored before this mounts): the overlays switched on
     // from the browser's storage load at once, and loaded the placeholder span (0, 1) — a wasted request
@@ -294,17 +317,15 @@ object MapView:
         // the media layer's provider/licence filters reload it, when it is on
         UiState.mediaProvider.signal.combineWith(UiState.mediaLicense.signal).changes
           .foreach(_ => if layerSync.attached(MapLayer.Media) then loadMedia(currentSpan))(using ctx.owner)
-        // the events layer (#1449): its kind/tier menus and the view reload it; the key follows the layers
+        // the events layer (#1449): its kind/tier menus reload it; the key follows the layers
         UiState.eventKind.signal.combineWith(UiState.eventTier.signal).changes
           .foreach(_ => if layerSync.attached(MapLayer.Events) then loadEvents(currentSpan))(using ctx.owner)
         UiState.siteType.signal.changes
           .foreach(_ => if layerSync.attached(MapLayer.Sites) then loadSites(currentSpan))(using ctx.owner)
-        // the "States shown" menu: the boundaries, and the sites' year for a snapshot
+        // the "States shown" menu: the boundaries (the sites, events and pictures are every one of the span)
         UiState.areaPick.signal.changes.foreach { _ =>
           if layerSync.attached(MapLayer.Boundaries) then loadOverlay(currentSpan)
-          if layerSync.attached(MapLayer.Sites) then loadSites(currentSpan)
         }(using ctx.owner)
-        surface.on(MapEventKind.MoveEnd)(_ => if layerSync.attached(MapLayer.Events) then reloadEvents(currentSpan))
         UiState.layers.signal.foreach(ls => updateKey(ls(MapLayer.Events), ls(MapLayer.Sites)))(using ctx.owner)
         // the finding markers follow their switch the same way; `render` keeps their content current
         // while they are off, so switching them back on shows the current span at once
@@ -369,10 +390,21 @@ object MapView:
     if legendEl != null then
       Option(legendEl.querySelector(".hd-key-slot")).foreach(_.innerHTML = MapKey.html(events, sites))
 
-  private def loadEvents(span: (Long, Long)): Unit = EventMarkers.load(span, Layout.eventFetchLimit)
+  private def loadEvents(span: (Long, Long)): Unit = EventMarkers.load(tileSpan(span), span)
 
-  /** A pan or zoom asks for the events in the new view at most once per `Layout.layerReloadMs`. */
-  private val reloadEvents = Throttle[(Long, Long)](Layout.layerReloadMs, loadEvents)
+  /** Pure: the span the tiled layers are asked for — the span itself, or in playback the playhead's
+    * window widened to whole time buckets ([[PlaybackBuckets]]), so their tiles change once a bucket. */
+  private[web] def tileSpanOf(span: (Long, Long), playback: Boolean, yearsPerSecond: Double, bucketSeconds: Double): (Long, Long) =
+    val ordered = (span._1.min(span._2), span._1.max(span._2))
+    if playback then PlaybackBuckets.widen(ordered, PlaybackBuckets.years(yearsPerSecond, bucketSeconds)) else ordered
+
+  private def tileSpan(span: (Long, Long)): (Long, Long) =
+    tileSpanOf(span, playbackMode, playYearsPerSecond, tilesConfig.playbackBucketSeconds)
+
+  /** The tiled layers on the map (sites, pictures, events). */
+  private def tiledOn: List[TiledPoints[?]] =
+    List(MapLayer.Sites -> sitesLayer, MapLayer.Media -> mediaLayer, MapLayer.Events -> EventMarkers.layer)
+      .collect { case (l, t) if layerSync.attached(l) => t }
 
   private def updateLegend(span: (Long, Long)): Unit =
     if legendEl == null then ()
@@ -405,8 +437,10 @@ object MapView:
     if TheMap.isUp then
       updateLegend(span)
       findingsLayer.show(Spot.of(points), span)
+      // the tiled layers keep what they show, recoloured, until the tiles of the new span are in
+      tiledOn.foreach(_.recolour(span))
       reloadLayers(span)
-      if layerSync.attached.exists(waitsForQuiet(_, UiState.areaPick.now(), playbackMode)) then reloadRangeAreas(span)
+      if layerSync.attached.exists(waitsForQuiet(_, UiState.areaPick.now(), playbackMode)) then reloadQuiet(span)
 
   /** Bring the point `key` out of its bubble (zooming in as far as it takes), then `andThen`. */
   private[web] def reveal(key: String, andThen: () => Unit): Unit =
@@ -419,16 +453,21 @@ object MapView:
     layerSync.attached.foreach(l => if !waitsForQuiet(l, UiState.areaPick.now(), playbackMode) then slot(l).load(span))
   })
 
-  /** The whole-range boundaries, once the span has stopped moving for `Layout.rangeReloadMs`. */
-  private val reloadRangeAreas = Debounce[(Long, Long)](Layout.rangeReloadMs, span =>
-    if layerSync.attached(MapLayer.Boundaries) then loadOverlay(span))
+  /** The layers that wait for the span to settle, once it has stopped moving for `Layout.rangeReloadMs`. */
+  private val reloadQuiet = Debounce[(Long, Long)](Layout.rangeReloadMs, span =>
+    layerSync.attached.foreach(l => if waitsForQuiet(l, UiState.areaPick.now(), playbackMode) then slot(l).load(span)))
 
   /** Pure: does `layer` wait until the span settles instead of following a drag (#1949)? The boundaries
     * over a whole range ("All states in period") do: every span is a new answer of megabytes (1 600
     * shapes, ~7 MB), which a throttled drag fetched, parsed and drew five times a second — 300 ms frames
-    * and a request queue. A snapshot year and playback follow the drag as before. */
+    * and a request queue. So do the sites, events and pictures: a new span is every tile of the view
+    * cut again, for each of them — while the span moves they keep what they show, recoloured. A
+    * snapshot year follows the drag as before; in playback every layer follows the playhead (the tiled
+    * ones by whole time buckets, [[tileSpanOf]]). */
   private[web] def waitsForQuiet(layer: MapLayer, pick: GeoPick, playback: Boolean): Boolean =
-    layer == MapLayer.Boundaries && !pick.snapshot && !playback
+    !playback && (layer match
+      case MapLayer.Boundaries => !pick.snapshot
+      case _                   => true)
 
   /** Place GeoJSON by (kind, time): a drag back and forth over the same years is served locally. The
     * time is what the "States shown" menu made of the span ([[areaTime]]), so a snapshot at the same
@@ -453,13 +492,6 @@ object MapView:
     * always draws the playhead's one year (the middle of its window). */
   private[web] def areaTime(span: (Long, Long), pick: GeoPick, playback: Boolean): GeoTime =
     GeoPick.resolve(None, Some(span._1), Some(span._2), if playback then GeoPick.Mid else pick)
-
-  /** Pure: the year the sites layer is drawn at: a snapshot pick's year, else (a whole range, or
-    * playback) the middle — sites over a range are not built. */
-  private[web] def siteYear(span: (Long, Long), pick: GeoPick, playback: Boolean): Long =
-    val lo = span._1.min(span._2)
-    val hi = span._1.max(span._2)
-    GeoPick.yearOf(if playback || !pick.snapshot then GeoPick.Mid else pick, lo, hi)
 
   /** Pure: how many areas the boundaries layer asks for at `time` — a year's few hundred at most, or
     * every state of a whole range. */
@@ -596,25 +628,18 @@ object MapView:
   /** The year a place's card reads the gazetteer at: the middle of the span the map shows. */
   private[web] def spanMid(): Option[Long] = Some((currentSpan._1 + currentSpan._2) / 2)
 
-  private def loadMedia(span: (Long, Long)): Unit =
-    mediaReqId += 1
-    val myId = mediaReqId
-    val q = Api.MediaGeoQuery(from = Some(span._1), to = Some(span._2), limit = Some(Layout.mediaFetchLimit),
-      provider = UiState.mediaProvider.now(), license = UiState.mediaLicense.now())
-    ApiClient.mediaGeo(q).foreach { hits =>
-      if myId == mediaReqId then mediaLayer.show(hits, span)
-    }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+  /** Pure: a tile query's span — `from`/`to` of the shared filter. */
+  private[web] def tileFilter(span: (Long, Long)): Filter = Filter(period = Some(Period(span._1, span._2)))
 
+  /** Every picture of the span, by provider and licence. */
+  private def loadMedia(span: (Long, Long)): Unit =
+    mediaLayer.load(ApiClient.tileTemplate(TilesApi.TileQuery(TileLayer.Media.wire, 0, 0, 0, tileFilter(tileSpan(span)),
+      provider = UiState.mediaProvider.now(), license = UiState.mediaLicense.now())), span)
+
+  /** Every site of the span, of the type the site-type menu (#1449) keeps. */
   private def loadSites(span: (Long, Long)): Unit =
-    sitesReqId += 1
-    val myId = sitesReqId
-    val year = siteYear(span, UiState.areaPick.now(), playbackMode)
-    placesGeoCached("site", GeoTime.At(year), Layout.siteFetchLimit).foreach { geojson =>
-      if myId == sitesReqId then
-        val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
-        // the site-type menu (#1449) is the descriptor's own filter (PointKinds.Sites.keep)
-        sitesLayer.show(features.toList.map(SitePoint.of), span)
-    }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
+    sitesLayer.load(ApiClient.tileTemplate(TilesApi.TileQuery(TileLayer.Sites.wire, 0, 0, 0, tileFilter(tileSpan(span)),
+      siteType = UiState.siteType.now())), span)
 
 /** Keeps the overlays attached to a map equal to a WANTED set. Idempotent — applying the same set
   * twice attaches nothing twice — which is what lets the map subscribe to `UiState.layers` and a

@@ -75,7 +75,10 @@ PeriodO; [Open data](../how-to/open-data.md) shows how to import more.
 The map draws, for the years on the timeline:
 
 - **findings** — where your sources make claims;
-- **sites** — gazetteer places of kind `site` alive in those years;
+- **sites** — every gazetteer place of kind `site` alive at some time in those years: the curated
+  gazetteer's and the dated sites imported from Wikidata, wherever they are (an undated imported place
+  is never on a time view; a place dated only by its findings shows when a finding or event dated then
+  is attached to it);
 - **events** — see [Events](events.md);
 - **pictures** — see [Pictures](media.md);
 - **areas** — regions and states alive in those years.

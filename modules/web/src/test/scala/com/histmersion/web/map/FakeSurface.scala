@@ -62,6 +62,7 @@ final class FakeSurface(w: Double = 1000, h: Double = 600, caps: Capabilities = 
   def shapes(id: String, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id, FakeShapes(id))
   def shapeSet(id: String): Option[ShapeSet] = sets.get(id)
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
+  def pointTiles(id: String, layer: String, maxZoom: Int): PointTiles = NoMap.Tiles
   def popup(at: LatLon, html: String, cls: String): Popup = new Popup:
     def close(): Unit = ()
     def isOpen: Boolean = true

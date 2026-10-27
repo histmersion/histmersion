@@ -193,12 +193,13 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(MapView.overlayLimit(GeoTime.At(1500)), Layout.overlayFetchLimit)
     assert(Layout.overlayRangeFetchLimit > Layout.overlayFetchLimit)
 
-  test("the sites take a snapshot's year, and the middle for a whole-range pick or in playback"):
-    import com.histmersion.api.GeoPick
-    assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.Start, playback = false), 1000L)
-    assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.End, playback = false), 1500L)
-    assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.Earliest, playback = false), 1250L)
-    assertEquals(MapView.siteYear((1000L, 1500L), GeoPick.End, playback = true), 1250L)
+  test("the tiled layers are asked for the span itself; in playback for its window widened to whole buckets"):
+    assertEquals(MapView.tileSpanOf((-1500L, -1600L), playback = false, 0.0, 1.0), (-1600L, -1500L))
+    // 166 years a second, a bucket of one second: 200-year buckets
+    assertEquals(MapView.tileSpanOf((-1650L, -1550L), playback = true, 166.0, 1.0), (-1800L, -1401L))
+    // the next frames stay in the same buckets: the same tiles
+    assertEquals(MapView.tileSpanOf((-1640L, -1540L), playback = true, 166.0, 1.0), (-1800L, -1401L))
+    assertEquals(MapView.tileFilter((-10L, 20L)).period, Some(com.histmersion.api.Period(-10L, 20L)))
 
   test("the query carries a snapshot as asOf and a whole range as from/to/pick"):
     import com.histmersion.api.{Api, GeoTime}
@@ -213,7 +214,7 @@ class MapViewSuite extends munit.FunSuite:
 
   // ── waitsForQuiet (#1949) ───────────────────────────────────────────────────────
 
-  test("waitsForQuiet: only the boundaries over a whole range wait for the span to settle") {
+  test("waitsForQuiet: the boundaries over a whole range and the tiled layers wait for the span to settle") {
     import com.histmersion.api.GeoPick
     assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Latest, playback = false))
     assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Earliest, playback = false))
@@ -221,5 +222,6 @@ class MapViewSuite extends munit.FunSuite:
       assert(!MapView.waitsForQuiet(MapLayer.Boundaries, p, playback = false), s"a snapshot ($p) follows the drag")
     assert(!MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Latest, playback = true), "playback draws one year")
     for l <- List(MapLayer.Sites, MapLayer.Media, MapLayer.Events) do
-      assert(!MapView.waitsForQuiet(l, GeoPick.Latest, playback = false), s"$l follows the drag")
+      assert(MapView.waitsForQuiet(l, GeoPick.Mid, playback = false), s"$l waits: a new span is every tile cut again")
+      assert(!MapView.waitsForQuiet(l, GeoPick.Mid, playback = true), s"$l follows playback by its buckets")
   }

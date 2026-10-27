@@ -167,7 +167,8 @@ for (const [style, name] of [['readable', 'Readable'], ['physical', 'Physical']]
     if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
     await withPerfPage(async ({ page, cdp }) => {
       const m = await paths.vectorMap(page, baseURL, style);
-      assert.ok(m.points >= 2000 && m.shapes >= 1000, `the full load: ${m.points} points, ${m.shapes} shapes`);
+      // the events are the tiles of the view (docs/map-layers.md): its share of the fixture's 2 400, not all of them
+      assert.ok(m.points >= 400 && m.shapes >= 1000, `the full load: ${m.points} points, ${m.shapes} shapes`);
       // the GPU budgets on a GPU; the software path (HISTMERSION_TEST_GPU=0) has its own, named apart
       const software = await page.evaluate(() => window.histmersionMap.capabilities().software);
       assert.equal(software, !wantsGpu(), `the map took the ${software ? 'software' : 'GPU'} path`);

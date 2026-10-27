@@ -17,10 +17,15 @@ switched on and off:
 | on the map | what it is |
 |---|---|
 | **findings** | the claims your sources make, at the place they are about. Several claims at one spot show as one marker with a count. The colour follows the date; paler means lower confidence. |
-| **sites** | ancient places from the gazetteer (settlements, sanctuaries, forts, burials…), as they existed in those years. |
-| **events** | battles, sieges, eruptions, earthquakes, treaties. A local event (a battle) shows as a dot at its site; a regional one (a war, a migration) as a label with the region's outline. |
-| **pictures** | images of places and events whose licence allows reuse, each with its credit. |
+| **sites** | every place of the gazetteer that is a site (settlements, sanctuaries, forts, burials…) and existed at some time in those years — anywhere in the world. |
+| **events** | every battle, siege, eruption, earthquake or treaty of those years. A local event (a battle) shows as a dot at its site; a regional one (a war, a migration) as a label with the region's outline. |
+| **pictures** | every picture of a place or an event dated into those years whose licence allows reuse, each with its credit. |
 | **areas** | regions and the states of the time, drawn as shapes. |
+
+Nothing is left out to keep the map light: where many markers would sit on top of each other, they are
+drawn as one round bubble with their number — the whole world at once shows tens of thousands of sites
+as a few hundred bubbles. Click a bubble to zoom in on what it holds (a small one lists them); zoomed in
+far enough, every marker stands on its own. The bubbles' colour spans the dates of what they hold.
 
 Hover over a marker for a short card; click it (or press Enter on it) for the details — a site
 click also filters the lists by that place.
