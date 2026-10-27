@@ -15047,6 +15047,9 @@
       "glob": "db/migration/V103__upstream_quota.sql"
     },
     {
+      "glob": "db/migration/V104__acquire_checks.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

@@ -549,6 +549,11 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
   def repairAcquire(in: RepairAcquire.RepairRequest): Either[ApiError, RepairAcquire.RepairResult] =
     Right(agents.oaBacklog.repair(in))
 
+  /** `POST /api/queue/acquire/recheck` — the acquisition list's legal re-check now ([[AcquireRecheckService.run]]);
+    * runnable with agents off. */
+  def acquireRecheck(in: AcquireChecks.RecheckRequest): Either[ApiError, AcquireChecks.RecheckResult] =
+    agents.acquireRecheck.run(in)
+
   /** `GET /api/agents/autopilot/focus` — readable with agents off (what it would focus on). */
   def focus: Autopilot.FocusInfo = agents.focus.info()
 

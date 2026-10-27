@@ -39,7 +39,9 @@ import javax.sql.DataSource
   *
   * Between 2 and 3 the watchers' INGEST BACKLOG drains ([[OaBacklog.drain]]): a few of the legal
   * open-access works that waited for a day's allowance are ingested — before any new sweep, which gets only
-  * what the backlog leaves of the allowance.
+  * what the backlog leaves of the allowance. Then the acquisition list's LEGAL RE-CHECK
+  * ([[AcquireRecheckService.tick]]) closes the items the corpus holds and tries a few due ones through the
+  * legal chain, within its own caps and its share of what the backlog leaves.
   *
   * Four kinds run: `review` (library-wide: article-review, infer-filter and article-extend items),
   * `enrich` (library-wide: source-enrich items — what `agents.auto-enrich` feeds), `seed:<goal>`
@@ -87,6 +89,9 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       val t = Thread.ofPlatform().daemon(true).name("histmersion-agent-managers").unstarted(() => loop())
       thread = Some(t)
       t.start()
+
+  /** Whether the ticking thread runs here (agents and managers enabled, the lease held). */
+  def running: Boolean = thread.isDefined
 
   def stop(): Unit =
     stopping = true
@@ -136,6 +141,8 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       // seed before the plan: sourceless goals queue legal open-access candidates (no model), then the drain
       out ++= guarded("seed", out)(agents.seeding.tick(now))
       if !agents.drain.draining then out ++= guarded("ingest-backlog", out)(agents.oaBacklog.drain(now))
+      // the acquisition list's legal re-check: after the backlog, which keeps the shared allowance first
+      out ++= guarded("acquire-recheck", out)(agents.acquireRecheck.tick(now))
       // the ones that may start runs, refilled, then dispatched round-robin over the global room
       val live = ManagerRepo.list(ds).filter(m => State.parse(m.state).contains(State.Active) &&
         Kind.parse(m.kind).exists(Running))

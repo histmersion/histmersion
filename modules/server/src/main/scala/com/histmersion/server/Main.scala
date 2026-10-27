@@ -154,7 +154,8 @@ object Main:
       retractionWatch = clients.peek.retractionWatch,
       jobs = QueuedIngest(h.ingest, deps.ds, deps.cfg.limits.chunkChars, deps.cfg.places.pointToleranceKm),
       indexes = clients.peek.indexes,
-      alerts = clients.peek.alerts)
+      alerts = clients.peek.alerts,
+      generation = clients.peek.generation)
 
   /** The acquisition clients for one config and one plugin generation: one HTTP client (`acquire.tls`
     * included), the upstream clients built over it, and the chain of the generation's source fetchers
@@ -174,9 +175,11 @@ object Main:
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")
     // CORE's search with the key the oa-core plugin resolved (its secret reference), on the same budget
-    val (indexes, alerts) = Indexes.of(cfg, http, fetchers.CoreFetcher.key(plugins.registries.sourceFetchers), core)
+    val coreKey = fetchers.CoreFetcher.key(plugins.registries.sourceFetchers)
+    val (indexes, alerts) = Indexes.of(cfg, http, coreKey, core)
+    val generation = FetcherGeneration.of(chain.plan, plugins.report.plugins, cfg.contact.isDefined, coreKey.isDefined)
     AcquireClients(openalex, SemanticScholar(cfg, http, openalex), chain, Wikipedia(cfg, http),
-      ArchiveOrg(cfg, http), RetractionWatch(cfg, http), indexes, alerts)
+      ArchiveOrg(cfg, http), RetractionWatch(cfg, http), indexes, alerts, generation)
 
   def main(args: Array[String]): Unit =
     // the command line first: an argument the server does not know ends it HERE, before the config, the

@@ -53,8 +53,10 @@ object Queue:
   object QueueItem:
     given Schema[QueueItem] = KindlingsSchema.derived[QueueItem].schema
 
-  /** `GET /api/queue/{list}` — open items by default, everything with `?all=true`. */
-  final case class QueueListing(list: String, items: List[QueueItem]) derives KindlingsCodecAsObject
+  /** `GET /api/queue/{list}` — open items by default, everything with `?all=true`; on the acquisition list,
+    * each checked item's last legal re-check (`checks`, by item id). */
+  final case class QueueListing(list: String, items: List[QueueItem], checks: List[AcquireChecks.AcquireCheck] = Nil)
+      derives KindlingsCodecAsObject
   object QueueListing:
     given Schema[QueueListing] = KindlingsSchema.derived[QueueListing].schema
 
@@ -351,8 +353,9 @@ object Queue:
   // ── terminal / MCP rendering ─────────────────────────────────────────────────────────────────
 
   /** `queue <list>` output: open items grouped by topic (LOG stays chronological), with the ids the
-    * `done`/`rm` commands take. */
-  def markdown(kind: Kind, items: List[QueueItem]): String =
+    * `done`/`rm` commands take; an acquisition item the re-check looked at says when and what it found. */
+  def markdown(kind: Kind, items: List[QueueItem], checks: List[AcquireChecks.AcquireCheck] = Nil): String =
+    val checked = checks.map(c => c.item -> c).toMap
     val shown = items.filterNot(_.status == Note)
     if shown.isEmpty then s"_${kind.label}: nothing queued._"
     else
@@ -366,7 +369,8 @@ object Queue:
         val lines = is.sortBy(_.id).map { i =>
           val box = if !kind.checkboxes then "" else if i.status == Done then "[x] " else "[ ] "
           val why = i.reason.map(r => s" — _${r}_").getOrElse("")
-          s"- $box${i.text.linesIterator.mkString(" ")}$why  `#${i.id}`"
+          s"- $box${i.text.linesIterator.mkString(" ")}$why  `#${i.id}`" +
+            checked.get(i.id).fold("")(c => s"\n  - _${c.reason}_")
         }
         s"\n\n**$head**\n${lines.mkString("\n")}"
       }

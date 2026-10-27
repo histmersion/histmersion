@@ -531,3 +531,80 @@ within the same `max-concurrent-runs`, and almost nothing finished.
   kept; a pin, a person's cap, cap 0 and autopilot off release every hold; goal plans under the focus),
   `ManagerAutopilotSuite` (updated: the proposal behind a plan waiting for a person is held for the focus; a
   plan code may decide again is decided one tick later), and a browser test of the focus panel.
+
+## As built: the acquisition list's re-check (2026-10-27)
+
+Branch `acquire-recheck`. Migration **V104** (`acquire_checks`).
+
+**The gap.** An item reached the acquisition list (the person's buy/borrow list) because no legal copy was found
+when it was added, and nothing ever looked again. Of 456 open items, 455 name a DOI; many were listed before the
+fetchers and keys of today existed, 40 are metadata-only sources in the corpus (no body, no stored file) and 2 are
+in the corpus with their text (they should simply be closed).
+
+- **A model-free pass of the managers' tick** (`AcquireRecheckService.tick`), right after the ingest backlog's
+  drain, every `acquire.recheck.pass-minutes` (10), never while the autopilot drains, and only when
+  `acquire.recheck.enabled` (true). It needs the managers' tick (agents and managers enabled, the agent lease
+  held), like the backlog's drain; the focus never holds it.
+- **What a pass does with each OPEN acquisition item** (pure `AcquireRecheck.action`, on the first DOI the item's
+  text names, `Scheduling.dois`): the corpus holds the DOI with its original (a non-empty body or a stored file,
+  `AcquireCheckRepo.heldByDoi`) → the item is ticked off as fulfilled by that source (`Queue.fulfil`, the one write
+  every import makes) — not capped; no DOI → nothing; otherwise → a try, if DUE.
+- **Due** (`AcquireRecheck.isDue`): never checked, checked `acquire.recheck.every-days` (7) ago, or checked under
+  another **fetcher generation**. The generation (`FetcherGeneration`, a 16-hex digest from
+  `AcquireRecheck.generation`) covers what the LEGAL chain is: its fetchers in order with their access, each
+  fetcher plugin's id, version, state and effective settings (secrets as their references, as every report shows
+  them), and whether a contact e-mail and a CORE key are there. It is computed with the acquisition clients
+  (rebuilt when `acquire.*` or the plugins change) and stored with each check, so a new fetcher, a new key or a
+  changed setting makes every item due again at once — within the caps. A fetcher the config marks unauthorised
+  is left out of the digest: the re-check never asks one. Known limit: a key written as a literal `value:`
+  reference is masked in the report, so changing one literal for another does not change the generation.
+- **A try** is `AcquireHandlers.ingestLegal` (the watcher's path, `IngestPath.Watcher`): the legal chain only,
+  whatever `acquire.allow-unauthorised` says; with `citekey` = the metadata-only source when there is one, so the
+  file is fetched and converted INTO it and its enrichment stays; no file → refused, no metadata-only source is
+  created. The order: never checked first, then the oldest check, then the item id. A copy found is handed to the
+  OCR job, and the job closes the item when it stores the text (every import closes the items naming its DOI —
+  so the item is not closed before its text exists; if the conversion fails, the next due pass tries again). The
+  refusal now carries each fetcher's answer (`no legal open-access copy of <doi>: <message> — unpaywall: no copy —
+  …; landing: refused — …`), which the backlog's acquisition items also show.
+- **Caps** (`AcquireRecheck.allowance`): at most `per-pass` (3) a pass and `per-day` (40) a UTC day (closures
+  aside); under the autopilot's shared daily legal ingest allowance (`agents.autopilot.ingest-per-day`) only what
+  the watchers' pending backlog leaves of it, and at most `share-percent` (25) of the cap — so the backlog and the
+  watchers' new finds keep priority. The re-check's finds count against the shared allowance
+  (`AutopilotService.sharedIngestLeft` / `ingestedToday` add them), so the watchers see them too. Per-host pacing
+  and the CORE budget are the chain's own and apply unchanged. With the autopilot off there is no shared cap; the
+  re-check's own caps hold.
+- **What is kept**: `acquire_checks` — one row per checked item (`item_id` → `queue_items`, deleted with it):
+  `checked_at`, `generation`, `outcome` (`closed` | `fetched` | `no-copy` | `failed`), `reason` (≤ 500 chars,
+  `AcquireRecheck.reason`: `checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused —
+  bot-protection 403)`) and `checks` (how many times). `GET /api/queue/acquire` returns them as
+  `QueueListing.checks`; `histmersion queue acquire`, the MCP `queue` tool and the web page's *to acquire* window
+  show the reason under the item. One worklog line per pass that did something.
+- **By hand**: `histmersion queue acquire recheck [--dry-run] [--limit N] [--id <item>]`, `POST
+  /api/queue/acquire/recheck {dryRun?, limit?, id?}`, the MCP `queue` action `recheck` (still 68 tools). `--id`
+  tries that item, due or not; `--limit` replaces `per-pass` (the day's cap and the shared allowance still hold).
+  A dry run lists the items it would close and the due ones it would try and asks no fetcher (a fetch downloads
+  the file, so the chain has no cheap dry run). Refused while the autopilot drains, a dry run aside. One pass at a
+  time (a lock): the tick and a person's run never try the same item twice.
+- **Status**: `RecheckStatus` in `AutopilotStatus.acquireRecheck` and `About.acquireRecheck` — one line in
+  `histmersion agent autopilot status` and `histmersion about`: `acquire re-check: 12 of 455 items with a DOI due,
+  3 closed and 1 found this week, 5 of 40 tried today — next pass …` (or why it waits: off, draining, the
+  managers not running here, the day's tries spent, when the next item falls due). The day's ingest line names
+  how many of the legal ingests were the re-check's.
+- **`histmersion ingest <doi> --legal-only`** (`IngestRequest.legalOnly`, the MCP `ingest_doi` `legalOnly`):
+  a person's ingest through the legal chain only (`IngestPath.PersonLegal`) — otherwise the person's path
+  unchanged: no copy → the metadata-only source, the drop-in hint, the browser-download item for a publisher that
+  refuses scripts. With `allow-unauthorised` on, the report says the others were not asked (`legal-only` step).
+- Tests: `AcquireRecheckSuite` (core: due-ness, the window, the generation bump and digest, the next due time,
+  the closing rules, the outcome of a failure, the reason and its fetcher answers, the pass allowance under the
+  caps and the shared allowance, the pass cadence), `FetcherGenerationSuite` (server: a legal fetcher, a key, a
+  contact, a version change it; an unauthorised fetcher and a non-fetcher plugin do not), `AcquireChecksSuite`
+  (api: the item's line in `queue acquire`, the status line in the autopilot status, a pass's report),
+  `OpsArgsSuite` / `ListOptsSuite` (cli: `queue acquire recheck` and its flags, `ingest --legal-only`),
+  `AcquireHandlerSuite` (DB: `--legal-only` never asks a stub unauthorised fetcher with `allow-unauthorised =
+  true`, still creates the metadata-only source; the watcher's refusal names each fetcher's answer),
+  `AcquireRecheckDbSuite` (DB, fixture upstreams: a pass closes the item the corpus holds, fetches into the
+  metadata-only source keeping its notes, records why the rest has no copy and shows it; nothing due again at
+  once; due after the window or a new generation; one item by id; dry run asks nothing; per-pass and per-day caps
+  and the status line; 25 % of the shared allowance, counted against it; drain; and through the real
+  `AcquireHandlers` and `FetchChain` with `allow-unauthorised = true`: the stub unauthorised fetcher is never
+  asked, a found copy goes into the metadata-only source, no copy creates no source).

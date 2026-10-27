@@ -1,0 +1,45 @@
+package com.histmersion.api
+
+import com.histmersion.api.AcquireChecks.*
+
+/** The acquisition list's re-check as every surface shows it: an item's last check under it in `queue
+  * acquire`, the status line (`agent autopilot status`, `about`) and a pass's report. Pure. */
+class AcquireChecksSuite extends munit.FunSuite:
+
+  private val item = Queue.QueueItem(7, "acquire", "Zz 2019, Tin — https://doi.org/10.1/zz", Some("tin"), Queue.Open)
+  private val check = AcquireCheck(7, "2026-10-27T10:00:00Z", NoCopy,
+    "checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)", 2)
+
+  test("`queue acquire` says under an item when it was last checked and what each fetcher answered"):
+    val md = Queue.markdown(Queue.Kind.Acquire, List(item), List(check))
+    assert(md.contains("`#7`\n  - _checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)_"), md)
+    assert(!Queue.markdown(Queue.Kind.Acquire, List(item)).contains("checked"), "an unchecked item says nothing")
+
+  test("the status line: what is due, what it closed and found this week, today's tries, the next pass"):
+    val s = RecheckStatus(enabled = true, withDoi = 455, due = 12, triedToday = 5, perDay = 40, fetchedToday = 1,
+      closedWeek = 3, fetchedWeek = 1, everyDays = 7, nextPass = Some("at the next managers' tick"))
+    assertEquals(AcquireChecksMarkdown.line(s),
+      "acquire re-check: 12 of 455 items with a DOI due, 3 closed and 1 found this week, 5 of 40 tried today — next pass at the next managers' tick")
+    assert(AcquireChecksMarkdown.line(s.copy(note = Some("held while the autopilot drains"))).endsWith("(held while the autopilot drains)"))
+    assertEquals(AcquireChecksMarkdown.line(RecheckStatus(enabled = false)), "acquire re-check: off (acquire.recheck.enabled = false)")
+
+  test("the autopilot status and about carry the line; the re-check's finds are named among the day's ingests"):
+    val r  = RecheckStatus(enabled = true, withDoi = 3, due = 1, triedToday = 2, perDay = 40, fetchedToday = 2)
+    val st = Autopilot.AutopilotStatus(on = true, ingestedToday = 9, ingestCap = 60, acquireRecheck = Some(r))
+    val md = AutopilotMarkdown.status(st)
+    assert(md.contains("- legal open-access ingests today: 9 of 60 (all watchers), 2 of them by the acquisition list's re-check"), md)
+    assert(md.contains("- acquire re-check: 1 of 3 items with a DOI due"), md)
+    assert(!AutopilotMarkdown.status(st.copy(acquireRecheck = None)).contains("re-check"))
+
+  test("a pass's report: the counts and one line per item; a dry run says it asked no fetcher"):
+    val r = RecheckResult(dryRun = false, open = 4, withDoi = 3, due = 2, allowance = 2, closed = 1, fetched = 1, noCopy = 1,
+      rows = List(RecheckRow(1, Some("10.1/a"), Closed, "in the corpus with its original", Some("a2020_x")),
+        RecheckRow(2, Some("10.1/b"), Fetched, "checked 2026-10-27: a legal copy found (unpaywall)", Some("b2021_y")),
+        RecheckRow(3, Some("10.1/c"), NoCopy, "checked 2026-10-27: no legal copy")))
+    val md = AcquireChecksMarkdown.result(r)
+    assert(md.contains("- closed 1 item the corpus holds with its text"), md)
+    assert(md.contains("- a legal copy found for 1 (converting: the conversion closes the item), no legal copy for 1, no answer for 0"), md)
+    assert(md.contains("- #1 https://doi.org/10.1/a · closed [[a2020_x]]: in the corpus with its original"), md)
+    val dry = AcquireChecksMarkdown.result(RecheckResult(dryRun = true, rows = List(RecheckRow(3, Some("10.1/c"), WouldTry, "never checked"))))
+    assert(dry.contains("dry run: no fetcher asked, nothing stored") && dry.contains("- would try 1 item through the legal chain"), dry)
+    assert(AcquireChecksMarkdown.result(RecheckResult(dryRun = false)).contains("_Nothing to do._"))

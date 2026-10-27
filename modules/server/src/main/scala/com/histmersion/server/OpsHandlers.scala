@@ -7,7 +7,7 @@ import com.histmersion.api.Lint.*
 import com.histmersion.api.Query.*
 import com.histmersion.api.Queue.*
 import com.histmersion.api.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{ArticleRepo, Geocoder, GoalLinkRepo, GoalRepo, LintRepo, PlaceReviewRepo, PointAreaRepo, QueryRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{AcquireCheckRepo, ArticleRepo, Geocoder, GoalLinkRepo, GoalRepo, LintRepo, PlaceReviewRepo, PointAreaRepo, QueryRepo, QueueRepo, SourceRepo}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the
   * read-only query (plan §5.2). Reached by REST through [[OpsRoutes]] and by MCP through
@@ -129,7 +129,14 @@ final class OpsHandlers(deps: Deps):
     Kind.parse(list).toRight(ApiError(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
 
   def queueList(list: String, all: Boolean): Either[ApiError, QueueListing] =
-    kindOf(list).map(k => QueueListing(k.label, QueueRepo.list(ds, k, all).toList))
+    kindOf(list).map { k =>
+      val items = QueueRepo.list(ds, k, all).toList
+      val checks =
+        if k != Kind.Acquire then Nil
+        else AcquireCheckRepo.of(ds, items.map(_.id)).values.toList.sortBy(_.item).map(r =>
+          AcquireChecks.AcquireCheck(r.item, r.at.toString, r.outcome, r.reason, r.checks))
+      QueueListing(k.label, items, checks)
+    }
 
   /** A LOG item with no topic joins today's entry (`## 2026-08-25`), which is how an appended
     * worklog line behaves; ACQUIRE and TASKS items simply have no topic until one is given. */
