@@ -179,9 +179,14 @@ borders **Readable** draws (about 0.2 GB more). `histmersion basemap status` say
 extract kept, which base map lacks something in it and the command that adds it, and recommends one
 more fetch for one made before 2026-10-19 (which kept only coast, water and land cover).
 
-**Sizes** for the default region (`basemap.bbox`, `-12,20,90,62`: Atlantic Europe to the Indus,
-the Sahel to southern Scandinavia), measured on one complete zoom-10 download of the whole region
-(2026-10-20; zooms 8 and 9 are its first zooms):
+**Sizes.** A fetch downloads the whole world by default (`basemap.bbox = world`): about **3.8 GB**
+for the vector layer to zoom 10, **3.2 GB** for the relief to zoom 8 and **1.8 GB** for the sea floor
+to zoom 7 (21 845 tiles) — about 8.8 GB in all (a dry run of Protomaps' build of 2026-10-27; zoom by
+zoom, the vector layer is 0.37 GB to 8 and 1.0 GB more for 9). A smaller install downloads a region
+instead (`basemap.bbox` or `--bbox`), and the map outside it is still drawn, read on demand. For
+`-12,20,90,62` (Atlantic Europe to the Indus, the Sahel to southern Scandinavia, the default until
+2026-10-27), measured on one complete zoom-10 download of that region (2026-10-20; zooms 8 and 9 are
+its first zooms):
 
 | `--max-zoom` (vector) | downloaded | stored (default) | stored (`--keep-all`) |
 |---|---|---|---|
@@ -196,6 +201,8 @@ small, drop it:
 (then close to 16, 56 and 138 MB, as before 2026-10-19). The web page asks the server only for the layers its style draws,
 so a large extract costs the page nothing it does not show. (Readable then lacks its roads, towns
 and borders.)
+
+The relief, for the same region (the world: 0.67 GB to zoom 7, 3.2 GB to 8):
 
 | `--terrain-max-zoom` (512-pixel tiles) | downloaded = stored |
 |---|---|

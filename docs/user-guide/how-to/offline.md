@@ -43,7 +43,10 @@ histmersion basemap fetch --keep-all --dry-run   # what it would download and ke
 histmersion basemap fetch --keep-all             # the download, as a job; run it again to resume
 ```
 
-Measured for the default region (`basemap.bbox`, Atlantic Europe to the Indus) on 2026-10-20:
+The default download is the whole world (`basemap.bbox = world`): about 3.8 GB of vector layer,
+3.2 GB of relief and 1.8 GB of sea floor (a dry run on 2026-10-27; `--dry-run` says it zoom by zoom).
+A region is much smaller — measured for `-12,20,90,62` (`--bbox -12,20,90,62`, Atlantic Europe to the
+Indus) on 2026-10-20:
 
 | file | downloaded | kept |
 |---|---|---|

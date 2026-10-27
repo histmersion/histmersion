@@ -25,10 +25,14 @@ object MapRegions:
 
   val OwnBox = "own"
 
+  /** The configured region first — the whole world by default, then listed once, as itself. */
   def choices(s: BasemapStatus): List[RegionChoice] =
-    List(RegionChoice("configured", s"the configured region (${s.bbox})", Some(s.bbox))) ++
-      s.regions.map(r => RegionChoice(r.name, s"${r.name} (${r.bbox})", Some(r.bbox))) ++
-      List(RegionChoice("world", "the whole world", Some("world")), RegionChoice(OwnBox, "a box of my own", None))
+    val world = RegionChoice("world", "the whole world", Some("world"))
+    val configured =
+      if s.bbox.trim.equalsIgnoreCase("world") then world.copy(id = "configured", label = "the configured region (the whole world)")
+      else RegionChoice("configured", s"the configured region (${s.bbox})", Some(s.bbox))
+    List(configured) ++ s.regions.map(r => RegionChoice(r.name, s"${r.name} (${r.bbox})", Some(r.bbox))) ++
+      Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(OwnBox, "a box of my own", None))
 
   /** The fetch for a box, what it holds, the named region it is (if it is one) and the depth typed (blank:
     * the configured one). A relief download is a focus region: the named one, or one named after its box. */
