@@ -214,7 +214,7 @@ object JobsView:
       JobState.values.toList.map(s => btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))))
     )
 
-  private def row(j: JobInfo, mine: Boolean): HtmlElement =
+  private[web] def row(j: JobInfo, mine: Boolean): HtmlElement =
     li(
       cls := s"job-row job-${j.state.wire}",
       cls("job-mine") := mine,
@@ -228,10 +228,11 @@ object JobsView:
             case Some(ck)                     => code(cls := "job-ck", title := "not stored yet", ck)
             case None                         => what(j).fold(emptyNode)(w => span(cls := "job-what", w)),
           span(cls := "muted", s" · ${kindLabel(j.kind)}"),
-          j.acquireItem.map(i => span(cls := "muted job-item",
-            title := (if j.succeeded then s"acquisition item $i was ticked off by this job"
-                      else s"acquisition item $i is ticked off when this job succeeds"),
-            s" · for acquisition item $i"))
+          j.acquireItem.map(i => span(cls := "muted job-item", " · for ",
+            QueueItemLink(Queue.Kind.Acquire, i,
+              title := (if j.succeeded then s"acquisition item $i was ticked off by this job"
+                        else s"acquisition item $i is ticked off when this job succeeds"),
+              s"acquisition item $i")))
         ),
         j.progress.filter(_.nonEmpty).map(pr => div(cls := "job-progress", pr)),
         j.error.filter(_.nonEmpty).map(e => div(cls := "job-error", e)),
@@ -240,7 +241,9 @@ object JobsView:
             .mkString("\n"), l)),
         div(
           cls := "job-meta muted",
-          span(title := s"job ${j.id}", s"job ${j.id.take(8)}"),
+          // an agent run is a job: its row leads to the run; any other job, to its own page
+          if j.kind == JobKind.Agent.wire then WinLink(WindowKey.Run(j.id), title := s"agent run ${j.id}", s"run ${j.id.take(8)}")
+          else RouteLink(Route.Job(j.id), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.take(8)}"),
           Option(j.createdAt).filter(_.nonEmpty).map(c => span(title := c, s" · started ${agoOf(c)}")),
           Option(j.updatedAt).filter(u => u.nonEmpty && u != j.createdAt)
             .map(u => span(title := u, s" · updated ${agoOf(u)}"))

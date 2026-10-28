@@ -111,13 +111,6 @@ object LayerToggle:
       onClick.compose(_.sample(on)) --> (current => set(!current))
     )
 
-/** A button that OPENS A WINDOW, drawn like a [[LayerToggle]]: pressed while its window is open,
-  * because that is read from [[UiState.open]] rather than kept here. A second click closes it. */
-object WindowToggle:
-  def apply(icon: Icon, label: String, key: WindowKey): HtmlElement =
-    LayerToggle(icon, label, UiState.open.signal.map(_.contains(key)),
-      on => if on then WindowManager.open(key) else WindowManager.close(key))
-
 /** A button that starts a WRITE. While the server wants an API key and none is held it is drawn
   * locked and opens the key window instead ([[Auth]]) — it asks for the key rather than failing. */
 object WriteButton:
@@ -151,7 +144,7 @@ object SourceLink:
       L.href := href(citekey),
       label.getOrElse(idLabel(citekey, doi)),
       onClick --> { ev =>
-        if !ev.metaKey && !ev.ctrlKey && !ev.shiftKey then
+        if Router.plain(ev) then
           ev.preventDefault()
           ev.stopPropagation()
           ArticleModal.open(citekey, UiState.q.now().map("q" -> _).toMap)
@@ -174,7 +167,7 @@ object ArticleLink:
       L.href := href(slug),
       label,
       onClick --> { ev =>
-        if !ev.metaKey && !ev.ctrlKey && !ev.shiftKey then
+        if Router.plain(ev) then
           ev.preventDefault()
           ev.stopPropagation()
           ArticleModal.openSlug(slug)

@@ -76,20 +76,6 @@ object ViewportToggle:
       GeoPick.values.toList.map(p => option(value := p.wire, p.label))
     )
 
-  /** The tools (upload, jobs, the lists, the key), for the map & tools drawer on a phone, where the
-    * filter bar that holds them on a wide screen is a drawer of its own. The same buttons — they show
-    * the same state — so nothing here can disagree with the wide layout. Choosing one closes the
-    * drawer: its window is what the reader wants now. */
-  private def drawerTools: HtmlElement =
-    div(
-      cls := "drawer-tools",
-      div(cls := "drawer-subtitle", "tools"),
-      Toolbar.element,
-      onClick --> { e =>
-        if Option(e.target.asInstanceOf[dom.Element].closest("button")).isDefined then MobileChrome.close()
-      }
-    )
-
   def init(config: UiConfig): HtmlElement =
     // `var`: the pending debounce timer of the moveend handler below
     var timer: Int = 0
@@ -121,7 +107,6 @@ object ViewportToggle:
           IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers), off(MapLayer.Events), offWhy(MapLayer.Events))),
         BaseMaps.controls
       ),
-      drawerTools,
       onMountUnmountCallbackWithState(
         mount = _ =>
           Option.when(TheMap.isUp)(TheMap.surface).map { map =>

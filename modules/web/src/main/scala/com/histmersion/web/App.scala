@@ -44,21 +44,33 @@ object App:
       MergeView.configure(ui)
       MapRegionsView.configure(ui)
 
+      Router.init()
       val appEl = div(
         cls := "histmersion-app",
         MobileChrome.rootClasses,
-        MobileChrome.bar(ui),
+        // which of the four places is showing: the narrow layout moves the search for Explore's own
+        dataAttr("showing") <-- Router.route.map(_.place.toString.toLowerCase),
         // the dragged width is data; the grid that uses it is the stylesheet's
         styleAttr <-- sidebarWidth.signal.map(w => s"--sidebar-w:${w}px"),
-        MapView.init(ui),
-        PlacesInput.mapChips,
-        sidebarElement(ui),
-        TimelineView.init(ui),
-        FilterBar.init(ui),
-        ViewportToggle.init(ui),
+        TopBar.element(ui),
+        // Explore stays laid out under the other pages, hidden and out of the keyboard's way, so the map
+        // is neither resized nor reloaded by a visit to Library or Research
+        div(
+          cls := "explore-place",
+          cls("is-away") <-- Router.route.map(_ != Route.Explore),
+          inert <-- Router.route.map(_ != Route.Explore),
+          MobileChrome.bar(ui),
+          MapView.init(ui),
+          PlacesInput.mapChips,
+          sidebarElement(ui),
+          TimelineView.init(ui),
+          FilterBar.init(ui),
+          ViewportToggle.init(ui),
+          MobileChrome.scrim,
+          MobileChrome.edges
+        ),
+        Pages.element(ui),
         ArticleModal.element,
-        MobileChrome.scrim,
-        MobileChrome.edges,
         statusElement
       )
 
@@ -69,6 +81,7 @@ object App:
       TreeTab.init(ui)
       ArticleModal.restore()
       WindowManager.installKeys()
+      TopBar.installShortcut()
       val initTab = activeTab
       if initTab == SidebarTab.Articles.key then ArticlesTab.load()
       else if initTab == SidebarTab.Events.key then EventsTab.load()
@@ -88,6 +101,9 @@ object App:
 
       load()
     }
+
+  /** The `inert` attribute: the subtree takes no focus, clicks or find-in-page. */
+  private val inert = htmlAttr("inert", com.raquo.laminar.codecs.BooleanAsAttrPresenceCodec)
 
   private val statusVar = Var("")
   private def statusElement: HtmlElement =

@@ -250,8 +250,10 @@ test('#4037: About › Map regions — a named region checked zoom by zoom, down
       return route.fulfill({ json: { removed: ['/zz/terrain-focus/argolid.pmtiles'], bytes: 1 } });
     });
 
-    await page.locator('.tool-btns button[title="About"]:visible').click();
-    const panel = page.locator('.about-pane .map-regions');
+    // the map regions are Settings › Data and downloads (Settings opens there)
+    await page.locator('.places a[data-nav="settings"]').click();
+    assert.equal(new URL(page.url()).pathname, '/settings/data');
+    const panel = page.locator('.place-page .map-regions');
     await panel.waitFor();
     assert.ok((await panel.innerText()).includes('the map'), 'what is downloaded is listed');
     // a named region fills in its box; the download waits for the size to be checked
@@ -288,11 +290,11 @@ test('#4037: About › Map regions — a named region checked zoom by zoom, down
   });
 });
 
-test('#718: the About button opens the server report — build, health states, job queue, store, plugins', async () => {
+test('#718: Settings › About shows the server report — build, health states, job queue, store, plugins', async () => {
   for (const viewport of [{ width: 1440, height: 900 }, phone]) {
     await withPage(viewport, async page => {
-      if (viewport.width < 760) await page.locator('.mb-maptools').click();
-      await page.locator('.tool-btns button[title="About"]:visible').click();
+      await page.locator('.places a[data-nav="settings"]').click();
+      await page.locator('.side-nav a', { hasText: 'About Histmersion' }).click();
       const pane = page.locator('.about-pane .about-sections');
       await pane.waitFor();
       const text = await pane.innerText();
@@ -304,42 +306,36 @@ test('#718: the About button opens the server report — build, health states, j
       // every health check carries a state the stylesheet knows, whatever text the server sent
       const states = await page.locator('.about-state').evaluateAll(els => els.map(e => e.className));
       assert.ok(states.length >= 3 && states.every(c => /state-(ok|busy|down|unknown)/.test(c)), String(states));
-      assert.ok(new URL(page.url()).hash.includes('open=about'), 'the window is in the URL');
+      assert.equal(new URL(page.url()).pathname, '/settings/about', 'the page is in the URL');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     });
   }
 });
 
-// #1521: when the filter bar runs out of room, the toolbar keeps the top line(s) and the filters wrap
-// underneath as one block — the search, place, more/fewer, clear-all row and the expanded filters below
-// it are never interleaved with the toolbar's buttons, at any width down to the phone layout.
-test('#1521: the toolbar stays on top and the filters wrap underneath it as one block', async () => {
-  // the desktop layout's widths (a tablet's, up to 1366 px, has the toolbar in a drawer: #4431)
+// #1521, phase 2: the tools left the filter bar for the top bar's four places; the bar stays on one line
+// above everything, and the filters below it stay one block — the place, more/fewer, clear-all row and the
+// expanded filters under it — at the desktop layout's widths.
+test('#1521: the top bar stays on one line above the filters, which stay one block', async () => {
   for (const width of [1440, 1400]) {
     await withPage({ width, height: 900 }, async page => {
       assert.equal(await page.evaluate(() => document.documentElement.dataset.layout), 'wide', `wide at ${width}`);
-      // open the expanded filters, so they are measured too
       if (await page.locator('#f-more').isHidden()) await page.locator('#f-more-toggle').click();
       const boxes = await page.evaluate(() => {
         const rects = sel => [...document.querySelectorAll(sel)].filter(e => e.offsetParent)
           .map(e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
         return {
-          tools: rects('.fbar .tool-btns .btn'),
+          bar: rects('.top-bar'),
+          places: rects('.top-bar .place-tab'),
           main: rects('.fbar .frow-main .frow-filters > *'),
           more: rects('.fbar #f-more > *'),
         };
       });
-      assert.ok(boxes.tools.length >= 8, `toolbar buttons at ${width}: ${boxes.tools.length}`);
-      assert.equal(boxes.main.length, 4, `search, place, more/fewer, clear all at ${width}`);
+      assert.equal(boxes.places.length, 4, `four places at ${width}`);
+      assert.equal(new Set(boxes.places.map(b => Math.round(b.top))).size, 1, `the places on one line at ${width}`);
+      assert.equal(boxes.main.length, 3, `place, more/fewer, clear all at ${width}`);
       assert.ok(boxes.more.length >= 5, `expanded filters at ${width}`);
       const filters = [...boxes.main, ...boxes.more];
-      const firstFilter = Math.min(...filters.map(b => b.top));
-      // every toolbar button's top is above every filter control's top…
-      assert.ok(Math.max(...boxes.tools.map(b => b.top)) < firstFilter, `a button below a filter at ${width}`);
-      // …and no button reaches into the filters' block: the block is contiguous
-      const toolsBottom = Math.max(...boxes.tools.map(b => b.bottom));
-      assert.ok(toolsBottom <= firstFilter + 1, `buttons end at ${toolsBottom}, filters start at ${firstFilter} (${width})`);
-      // the expanded filters stay under the main filter row
+      assert.ok(boxes.bar[0].bottom <= Math.min(...filters.map(b => b.top)) + 1, `the bar above the filters at ${width}`);
       assert.ok(Math.min(...boxes.more.map(b => b.top)) >= Math.max(...boxes.main.map(b => b.bottom)) - 1,
         `expanded filters above the main row at ${width}`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
@@ -366,7 +362,7 @@ test('#1440: playback draws local and regional events, fades the local one, and 
     let asked = 0;
     await page.route('**/api/events/geo**', route => { asked++; return route.fulfill({ json: feed }); });
     // a century to play: the span comes from the hash the page is LOADED with
-    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1300&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.locator('.tl-playback button').first().click();
@@ -406,7 +402,7 @@ test('#1447: area names stay whole on screen and apart, an archipelago is named,
     await page.route('**/api/places/geo**', route => new URL(route.request().url()).searchParams.get('kind') === 'polity'
       ? route.fulfill({ json: feed }) : route.continue());
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["boundaries"]'));
-    await page.goto(new URL('/#from=-1300&to=-1300', baseURL).href);
+    await page.goto(new URL('/explore#from=-1300&to=-1300', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => {
@@ -494,7 +490,7 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
     await routeTiles(page, { sites: sites.features });
     await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["boundaries","sites"]'));
-    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1300&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
@@ -553,41 +549,45 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
   });
 });
 
-// The toolbar's notices: a window with something new since it was last opened is bold, with the count
-// of what waits; opening it clears the bold at once and for good (the mark is the server's, so a reload
-// agrees). It WRITES one backlog item to the test server (and removes it), so it refuses the live port.
-test('a toolbar button is bold with news until its window is opened, and stays read after a reload', async () => {
+// The lists' notices: a list with something new since it was last shown is marked in Research's side
+// navigation, with the count of what waits; showing it clears the mark at once and for good (the mark is
+// the server's, so a reload agrees). It WRITES one backlog item to the test server (and removes it), so it
+// refuses the live port.
+test('a list is marked with news in Research until its page is shown, and stays read after a reload', async () => {
   assert.notEqual(new URL(baseURL).port, '8000', 'never against the live server: this test writes');
   const api = (path, init = {}) => fetch(new URL(path, baseURL), { ...init, headers: { 'content-type': 'application/json' } });
   await api('/api/ui/seen/tasks', { method: 'POST', body: '{}' });
   const added = await (await api('/api/queue/tasks', { method: 'POST', body: JSON.stringify({ text: 'zz playwright notice' }) })).json();
   try {
     const open = (await (await api('/api/queue/tasks')).json()).items.length;
+    const count = String(Math.min(open, 99)) + (open > 99 ? '+' : '');
     await withPage({ width: 1440, height: 900 }, async page => {
-      const button = page.locator('.fbar .tool-btns button[title="Backlog"]');
-      await page.waitForFunction(() => document.querySelector('.fbar .tool-btns button[title="Backlog"]')?.classList.contains('has-news'));
-      assert.equal(await button.evaluate(el => getComputedStyle(el).fontWeight), '600', 'bold (the strong of the two weights)');
-      assert.equal(await button.locator('.btn-count').innerText(), String(Math.min(open, 99)) + (open > 99 ? '+' : ''));
-      // the other buttons are not bold for it
-      assert.equal(await page.locator('.fbar .tool-btns button[title="Jobs"]').evaluate(el => el.classList.contains('has-news')), false);
-      // opening the window reads it: not bold in the same frame the window opens
-      const ms = await button.evaluate(el => new Promise(resolve => {
+      await page.locator('.places a[data-nav="research"]').click();
+      const link = page.locator('.side-nav a[href="/research/backlog"]');
+      await page.waitForFunction(() => document.querySelector('.side-nav a[href="/research/backlog"]')?.classList.contains('has-news'));
+      assert.equal(await link.locator('.side-count').innerText(), count);
+      // the other lists are not marked for it
+      assert.equal(await page.locator('.side-nav a[href="/research/goals"]').evaluate(el => el.classList.contains('has-news')), false);
+      // showing the list reads it: unmarked in the same frame its page is shown
+      const ms = await link.evaluate(el => new Promise(resolve => {
         const t0 = performance.now();
         el.click();
-        const tick = () => el.classList.contains('has-news') ? requestAnimationFrame(tick) : resolve(performance.now() - t0);
+        const tick = () => {
+          const now = document.querySelector('.side-nav a[href="/research/backlog"]');
+          now && !now.classList.contains('has-news') ? resolve(performance.now() - t0) : requestAnimationFrame(tick);
+        };
         tick();
       }));
-      assert.ok(ms <= 100, `the bold went after ${ms.toFixed(1)} ms`);
-      await page.waitForSelector('.tasks-pane');
-      assert.equal(await button.locator('.btn-count').innerText(), String(Math.min(open, 99)) + (open > 99 ? '+' : ''), 'the count stays');
-      // closed again: still read; and after a reload, read too — the server holds the mark
-      await button.click();
+      assert.ok(ms <= 100, `the mark went after ${ms.toFixed(1)} ms`);
+      await page.waitForSelector('.place-page .tasks-pane');
+      assert.equal(await link.locator('.side-count').innerText(), count, 'the count stays');
+      // another page: still read; and after a reload, read too — the server holds the mark
+      await page.locator('.side-nav a[href="/research/goals"]').click();
       await page.waitForFunction(() => !document.querySelector('.tasks-pane'));
-      assert.equal(await button.evaluate(el => el.classList.contains('has-news')), false);
+      assert.equal(await link.evaluate(el => el.classList.contains('has-news')), false);
       await page.reload();
-      await page.waitForFunction(() => window.__testMap);
-      await page.waitForSelector('.fbar .tool-btns button[title="Backlog"] .btn-count');
-      assert.equal(await button.evaluate(el => el.classList.contains('has-news')), false, 'still read after a reload');
+      await page.waitForSelector('.side-nav a[href="/research/backlog"] .side-count');
+      assert.equal(await link.evaluate(el => el.classList.contains('has-news')), false, 'still read after a reload');
     });
   } finally {
     await api(`/api/queue/items/${added.id}`, { method: 'DELETE' });
@@ -621,7 +621,7 @@ test('#1446: hovering a site with a picture shows the image and its credit', asy
     await page.route(`**/api/places/${id}?**`, route => route.fulfill({ json: detail }));
     await page.route(`**/media/${uid}/thumb`, route => { thumbs++; return route.fulfill({ body: png, contentType: 'image/png' }); });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites"]'));
-    await page.goto(new URL('/#from=-1400&to=-1300', baseURL).href);
+    await page.goto(new URL('/explore#from=-1400&to=-1300', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.73, 22.75], 8, { animate: false }));
@@ -698,7 +698,7 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
     await page.route('**/api/events/zz_battle', route => route.fulfill({ json: detail }));
     await page.route('**/api/events/zz_eruption', route => route.fulfill({ json: eruption }));
     await page.evaluate(() => { localStorage.setItem('histmersion.ui.layers', '["events"]'); });
-    await page.goto(new URL('/#from=-1700&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1700&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.3, 32.5], 7, { animate: false }));
@@ -766,7 +766,7 @@ test('P0: approximate events are faded, imprecise ones are not drawn, the card s
     await routeTiles(page, { events: feed.events });
     await page.route('**/api/events/zz_approx', route => route.fulfill({ json: detail }));
     await page.evaluate(() => { localStorage.setItem('histmersion.ui.layers', '["events"]'); });
-    await page.goto(new URL('/#from=-1700&to=-1500', baseURL).href);
+    await page.goto(new URL('/explore#from=-1700&to=-1500', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.0, 33.5], 7, { animate: false }));
@@ -802,7 +802,7 @@ test('#1449: a site is a period-coloured circle with its type icon (white on a h
       ? route.fulfill({ json: sites }) : route.continue());
     await routeTiles(page, { sites: sites.features });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites"]'));
-    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1300&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32.5], 7, { animate: false }));
@@ -863,7 +863,7 @@ test('hovering a finding dot shows its source card, not the citekey', async () =
     let asked = 0;
     await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
     await page.route(`**/api/sources/${ck}?**`, route => { asked++; return route.fulfill({ json: source }); });
-    await page.goto(new URL('/#from=-3000&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-3000&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
@@ -953,7 +953,7 @@ test('cards stay inside the viewport: near an edge, taller than it when pinned, 
     await page.route('**/api/events/zz_top', route => route.fulfill({ json: evDetail('zz_top', 'Zz top', 'battle', 60) }));
     await page.route('**/api/events/zz_low', route => route.fulfill({ json: evDetail('zz_low', 'Zz low', 'siege', 2) }));
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
-    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1300&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     const mapTop = await page.evaluate(() => document.getElementById('map').getBoundingClientRect().top);
@@ -1046,7 +1046,7 @@ test('every card kind leads with its icon: source, site, region, event, picture'
     await page.route('**/api/media-geo**', route => route.fulfill({ json: media }));
     await routeTiles(page, { sites: sites.features, events: feed.events, media });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["boundaries","sites","events","media"]'));
-    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1300&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.4, 32.3], 7, { animate: false }));
@@ -1119,7 +1119,7 @@ test('a cluster of events is a square; a zoom animates by the markers drawn, not
     // the tiles of a view the map has not seen are cut from the feed of that moment
     await routeTiles(page, { events: () => feed.events });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
-    await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1350&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
@@ -1199,7 +1199,7 @@ test('a zoom slides the points of a split bubble out and flies merging points in
       if (reduced) await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
       await page.route('**/api/places/geo**', route => route.fulfill({ json: { type: 'FeatureCollection', features: [] } }));
-      await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+      await page.goto(new URL('/explore#from=-1350&to=-1200', baseURL).href);
       await page.waitForFunction(() => window.__testMap);
       await page.evaluate(() => window.__testMap.setView([37.55, 32.03], 7, { animate: false }));
       await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3', null, { timeout: 15000 });
@@ -1382,7 +1382,7 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
       periodStart: -1400, periodEnd: -1100, source: null, names: '' }, geometry: null, parents: [], children: [], findings: 0, asOf: null,
       siteType: 'burial', media: [] } }));
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites","events"]'));
-    await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1350&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
@@ -1407,10 +1407,10 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
     await page.locator('.viewport-toggle button[title="Sources"]').click();
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
     // the year window moves past the findings: they leave the bubble
-    await page.goto(new URL('/#from=-1200&to=-1100', baseURL).href);
+    await page.goto(new URL('/explore#from=-1200&to=-1100', baseURL).href);
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3', null, { timeout: 10000 });
     assert.equal((await bubble()).says, '2 sites · 1 event');
-    await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1350&to=-1200', baseURL).href);
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5', null, { timeout: 10000 });
     // a click lists every kind, each row with its icon; a site's row pins its card
     await page.waitForFunction(() => document.querySelectorAll('.hd-marker .hd-cluster').length === 1);
@@ -1538,7 +1538,9 @@ test('the jobs window says latest N of M, counts every state, and loads an older
       if (!before) headers['X-Next-Before'] = 'zz-job-099';
       return route.fulfill({ json: rows, headers });
     });
-    await page.locator('.fbar .tool-btns button[title="Jobs"]').click();
+    await page.locator('.places a[data-nav="research"]').click();
+    await page.locator('.side-nav a', { hasText: 'Activity' }).click();
+    await page.locator('.page-tabs a', { hasText: 'Background jobs' }).click();
     const pane = page.locator('.jobs-pane');
     const heading = pane.locator('.list-heading');
     await heading.waitFor();
@@ -1771,7 +1773,7 @@ test('articles: the review badge on each row with its meaning, and a linked goal
       '<span class="job-state goal-status state-compiled">compiled</span> Zz goal</a></p><p>Text.</p>' }));
     await page.route('**/api/goals/zz-rev-goal**', route => route.fulfill({ json: { slug: 'zz-rev-goal', title: 'Zz goal',
       status: 'compiled', tags: [], regions: [] } }));
-    await page.goto(new URL('/#tab=articles', baseURL).href);
+    await page.goto(new URL('/explore#tab=articles', baseURL).href);
     await page.reload();
     const badges = page.locator('.articles-list .article-meta .review-state');
     await page.waitForFunction(() => document.querySelectorAll('.articles-list .review-state').length === 2);
@@ -1825,7 +1827,7 @@ test('every sidebar tab: one count line and one "show N more (M left)" button', 
     const button = sel => page.locator(`${sel} .results-more button.more`);
 
     // sources: the reference
-    await page.goto(new URL('/#tab=sources', baseURL).href);
+    await page.goto(new URL('/explore#tab=sources', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => /showing 1–20 of 47 sources/.test(document.querySelector('#count')?.innerText || ''));
     assert.match(await page.locator('#count').innerText(), /^showing 1–20 of 47 sources · .* → /);
@@ -1836,7 +1838,7 @@ test('every sidebar tab: one count line and one "show N more (M left)" button', 
     assert.equal(await srcMore.innerText(), 'show 7 more (7 left)');
 
     // articles: the same line with the kind counts, the same button
-    await page.goto(new URL('/#tab=articles', baseURL).href);
+    await page.goto(new URL('/explore#tab=articles', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => document.querySelectorAll('.articles-list li').length === 25);
     assert.match(await count('.articles-pane'), /^showing 1–25 of 30 articles · 28 concepts · 2 indexes · .* → /);
@@ -1847,7 +1849,7 @@ test('every sidebar tab: one count line and one "show N more (M left)" button', 
     assert.equal(await button('.articles-pane').count(), 0, 'no button once every row is shown');
 
     // events: the same line and button; past the first fetch the next page comes from the server
-    await page.goto(new URL('/#tab=events', baseURL).href);
+    await page.goto(new URL('/explore#tab=events', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => document.querySelectorAll('.events-list li').length === 25);
     assert.match(await count('.events-pane'), /^showing 1–25 of 60 events · .* → /);
@@ -1858,7 +1860,7 @@ test('every sidebar tab: one count line and one "show N more (M left)" button', 
     assert.match(await count('.events-pane'), /^showing 1–50 of 60 events/);
 
     // by time: every source is in the tree — the same line, no button
-    await page.goto(new URL('/#tab=bytime', baseURL).href);
+    await page.goto(new URL('/explore#tab=bytime', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => /47 sources · 1 period/.test(document.querySelector('#tree-count')?.innerText || ''));
     assert.match(await page.locator('#tree-count').innerText(), /^47 sources · 1 period · .* → /);
@@ -1881,7 +1883,7 @@ test('#1798: the Articles tab pages past its first fetch, and a failed Events lo
       return route.fulfill({ json: { total: 230, articles: rows } });
     });
     await page.route(/\/api\/events(\?|$)/, route => route.fulfill({ status: 500, body: 'boom' }));
-    await page.goto(new URL('/#tab=articles', baseURL).href);
+    await page.goto(new URL('/explore#tab=articles', baseURL).href);
     await page.reload();
     const pane = page.locator('.articles-pane');
     await page.waitForFunction(() => document.querySelectorAll('.articles-list li').length === 25);
@@ -1895,7 +1897,7 @@ test('#1798: the Articles tab pages past its first fetch, and a failed Events lo
     assert.equal(await pane.locator('.articles-list li').count(), 230, 'every row is reachable');
     assert.ok(offsets.includes(200), `the next page was fetched from the server (offsets ${offsets})`);
     // the Events tab: a failed load ends with an announced error, not "Loading…" forever
-    await page.goto(new URL('/#tab=events', baseURL).href);
+    await page.goto(new URL('/explore#tab=events', baseURL).href);
     await page.reload();
     const err = page.locator('.events-pane .form-error[role="alert"]');
     await err.waitFor();
@@ -1925,7 +1927,7 @@ test('markers: four silhouettes by outline, legible glyphs, a readable key, conc
     await page.route('**/api/media-geo**', route => route.fulfill({ json: media }));
     await routeTiles(page, { sites: sites.features, events: feed.events, media });
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["sites","events","media"]'));
-    await page.goto(new URL('/#from=-1350&to=-1100', baseURL).href);
+    await page.goto(new URL('/explore#from=-1350&to=-1100', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37, 32], 7, { animate: false }));
@@ -1994,7 +1996,7 @@ test('#1946: a finding with no confidence is drawn unstated, not high, and the l
   const findings = [at('zz_none2026', 25, null), at('zz_high2026', 35, 'high')];
   await withPage({ width: 1440, height: 900 }, async page => {
     await page.route('**/api/findings**', route => route.fulfill({ json: findings }));
-    await page.goto(new URL('/#from=-1300&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1300&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37, 30], 6, { animate: false }));
@@ -2175,7 +2177,7 @@ test('managers phase 3: the watch box, the daily spend, a watcher\'s sweeps', as
     const row = page.locator('.manager-row').filter({ hasText: 'Watch manager · Zz pw watch' });
     await row.waitFor();
     assert.match(await row.innerText(), /today 0\.50 of 2\.00 USD, 12\.3k tokens/);
-    await row.locator('button', { hasText: 'Watch manager · Zz pw watch' }).click();
+    await row.locator('a', { hasText: 'Watch manager · Zz pw watch' }).click();
     const sweeps = page.locator('.manager-sweeps');
     await sweeps.waitFor();
     const text = await sweeps.innerText();
@@ -2765,7 +2767,7 @@ test('the legend and the notice box stay over the markers and under a popup', as
   await withPage({ width: 1440, height: 900 }, async page => {
     await page.route('**/api/findings**', route => route.fulfill({ json: feed }));
     await page.route('**/api/places/geo**', route => route.fulfill({ json: { type: 'FeatureCollection', features: [] } }));
-    await page.goto(new URL('/#from=-1350&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1350&to=-1200', baseURL).href);
     await page.waitForFunction(() => window.__testMap && document.querySelector('.hd-legend') && document.querySelector('.map-foot'));
     // a marker under the centre of each: the legend and the credits box
     const spots = await page.evaluate(() => ['.hd-legend', '.map-foot'].map(sel => {
@@ -2775,7 +2777,7 @@ test('the legend and the notice box stay over the markers and under a popup', as
     }));
     feed = spots.map((s, i) => ({ citekey: `zz_z${i}`, title: `Zz ${i}`, claim: 'c', regionName: null, lat: s.at.lat, lon: s.at.lng,
       periodStart: -1300, periodEnd: -1250, confidence: 'high', sourceKind: 'paper' }));
-    await page.goto(new URL('/#from=-1340&to=-1200', baseURL).href);
+    await page.goto(new URL('/explore#from=-1340&to=-1200', baseURL).href);
     for (const s of spots) {
       // the marker is drawn right under the control's centre…
       await page.waitForFunction(([x, y]) => [...document.querySelectorAll('.hd-marker')].some(e => {
@@ -3007,10 +3009,11 @@ test('#4431: at tablet widths the map keeps most of the screen, and every panel 
       assert.ok(await reachable('.map-motion-select'), `${at}: Map motion`);
       await page.keyboard.press('Escape');
       await page.locator('.map-options').waitFor({ state: 'hidden' });
-      // a tool opens a window: floating, inside the screen, not full-screen; the drawer closes for it
-      await page.locator('.drawer-tools button', { hasText: 'about' }).click();
-      await page.locator('.wm-window').waitFor();
+      // a window (the key's prompt, which needs no data): floating, inside the screen, not full-screen
+      await page.keyboard.press('Escape');
       await page.waitForFunction(() => document.querySelector('.viewport-toggle').getBoundingClientRect().left >= innerWidth - 1);
+      await page.evaluate(() => { location.hash = 'open=key'; });
+      await page.locator('.wm-window').waitFor();
       const win = await box('.wm-window');
       assert.ok(win.w < viewport.width * 0.8 && win.l >= 0 && win.r <= viewport.width && win.t >= 0 && win.b <= viewport.height,
         `${at}: a floating window inside the screen: ${JSON.stringify(win)}`);
@@ -3298,7 +3301,7 @@ test('pictures at one spot: fanned out, each opens, the list opens them, a pictu
     await routeTiles(page, { media });
     await page.route(/\/media\/[^/]+\/(thumb|file)$/, route => route.fulfill({ body: png, contentType: 'image/png' }));
     await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["media"]'));
-    await page.goto(new URL('/#from=-1500&to=-1100', baseURL).href);
+    await page.goto(new URL('/explore#from=-1500&to=-1100', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     for (const zoom of [8, null]) {
@@ -3373,7 +3376,7 @@ test('the timeline draws a smooth curve at its shown size; one hover marker says
       h.buckets = h.buckets.map(b => ({ ...b, count: Math.max(0, Math.round(20 + 14 * Math.sin(b.start / 97) + 9 * Math.sin(b.start / 23) - (Math.abs(b.start % 900) < 60 ? 40 : 0))) }));
       return route.fulfill({ response: res, json: h });
     });
-    await page.goto(new URL('/#from=-3000&to=-1000', baseURL).href);
+    await page.goto(new URL('/explore#from=-3000&to=-1000', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => document.querySelector('.tl-detail-svg .tl-dt-curve path.tl-area-line'));
     await page.waitForTimeout(500);
@@ -3411,10 +3414,10 @@ test('the timeline draws a smooth curve at its shown size; one hover marker says
 // page's <head> before it paints, so a reload never flashes the other one. Pressing it answers within a frame.
 test('theme: the button cycles system → light → dark → system, persists, and system follows the colour scheme', async () => {
   await withPage({ width: 1440, height: 900 }, async page => {
-    const button = page.locator('.tool-btns .theme-btn:visible');
+    const button = page.locator('.top-bar .theme-btn:visible');
     const state = () => page.evaluate(() => ({
       attr: document.documentElement.getAttribute('data-theme'),
-      choice: [...document.querySelectorAll('.tool-btns .theme-btn')].find(b => b.offsetParent !== null)?.getAttribute('data-theme-choice'),
+      choice: [...document.querySelectorAll('.top-bar .theme-btn')].find(b => b.offsetParent !== null)?.getAttribute('data-theme-choice'),
       stored: (() => { try { return localStorage.getItem('histmersion.theme'); } catch { return 'unreadable'; } })(),
       bg: getComputedStyle(document.body).backgroundColor,
       panel: getComputedStyle(document.querySelector('.sidebar')).backgroundColor,
@@ -3431,7 +3434,7 @@ test('theme: the button cycles system → light → dark → system, persists, a
     // a press: light, at once — the new colours within a frame of the click
     const ms = await page.evaluate(() => new Promise(resolve => {
       const t0 = performance.now();
-      [...document.querySelectorAll('.tool-btns .theme-btn')].find(b => b.offsetParent !== null).click();
+      [...document.querySelectorAll('.top-bar .theme-btn')].find(b => b.offsetParent !== null).click();
       requestAnimationFrame(() => { void getComputedStyle(document.body).backgroundColor; resolve(performance.now() - t0); });
     }));
     assert.ok(ms < 100, `the theme changed in ${ms.toFixed(1)} ms`);
@@ -3459,4 +3462,341 @@ test('theme: the button cycles system → light → dark → system, persists, a
     assert.ok(await page.evaluate(() => document.fonts.check('14px "Source Sans 3"')), 'Source Sans 3 is loaded');
     assert.match(await page.evaluate(() => getComputedStyle(document.body).fontFamily), /^"Source Sans 3"/);
   });
+});
+
+// ── Phase 2 of the redesign: the top bar, real routes and real links ─────────────────────────────────────
+
+/** The server's config with the agents on (the test server runs none): their sections and pages show. */
+async function agentsOn(page) {
+  await page.route('**/api/config', async route => {
+    const res = await route.fetch();
+    return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true } });
+  });
+}
+
+/** Where the page is, what it shows, and which of the four places is marked. */
+const where = page => page.evaluate(() => ({
+  path: location.pathname,
+  place: document.querySelector('.top-bar .place-tab[aria-current="page"]')?.textContent,
+  page: !document.querySelector('.place-page')?.classList.contains('is-hidden'),
+  explore: getComputedStyle(document.querySelector('#map')).visibility === 'visible',
+}));
+
+test('every page renders under its place, with the top bar, from its own address', async () => {
+  const pages = [
+    ['/explore', 'Explore', null], ['/library', 'Library', '.library-sources-pane'],
+    ['/library/articles', 'Library', '.library-articles-pane'], ['/library/upload', 'Library', '.upload-pane'],
+    ['/library/merge', 'Library', '.merge-pane'], ['/research', 'Research', '.managers-pane'],
+    ['/research/decisions', 'Research', '.approvals-pane'], ['/research/goals', 'Research', '.goals-pane'],
+    ['/research/goals/zz-pw-nogoal', 'Research', '.goal-pane'], ['/research/activity', 'Research', '.runs-pane'],
+    ['/research/activity/jobs', 'Research', '.jobs-pane'], ['/research/activity/worklog', 'Research', '.log-pane'],
+    ['/research/backlog', 'Research', '.tasks-pane'], ['/research/acquire', 'Research', '.acquire-pane'],
+    ['/research/models', 'Research', '.models-pane'], ['/run/zz-pw-norun', 'Research', '.place-page .item-page'],
+    ['/manager/zz-pw-nomanager', 'Research', '.place-page .item-page'], ['/settings', 'Settings', '.map-regions'],
+    ['/settings/keys', 'Settings', '.key-pane'], ['/settings/about', 'Settings', '.about-pane'],
+    ['/place/zz-pw-noplace', 'Explore', '.card-page'], ['/event/zz-pw-noevent', 'Explore', '.card-page'],
+  ];
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await agentsOn(page);
+    for (const [path, place, shows] of pages) {
+      await page.goto(new URL(path, baseURL).href);
+      await page.locator('.top-bar').waitFor();
+      if (shows) await page.locator(shows).first().waitFor();
+      const w = await where(page);
+      assert.equal(w.place, place, `${path}: under ${place}`);
+      assert.equal(w.page, path !== '/explore', `${path}: a page over Explore`);
+      assert.equal(w.explore, path === '/explore', `${path}: the map shown only on Explore`);
+      assert.match(await page.title(), / · Histmersion$/, `${path}: a title`);
+      assert.ok(!(await page.title()).includes('_'), `${path}: the title is words`);
+    }
+    // an address the web UI does not know says so, with the way back
+    await page.goto(new URL('/research/zz-nope', baseURL).href);
+    await page.locator('.place-page h1', { hasText: 'No such page' }).waitFor();
+  });
+});
+
+test('every window of the old toolbar is reachable from the new navigation, each from one place', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await agentsOn(page);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    const via = async (place, side, tab, pane) => {
+      await page.locator(`.places a[data-nav="${place}"]`).click();
+      if (side) await page.locator('.side-nav a', { hasText: side }).first().click();
+      if (tab) await page.locator('.page-tabs a', { hasText: tab }).click();
+      await page.locator(`.place-page ${pane}`).waitFor();
+      return new URL(page.url()).pathname;
+    };
+    const found = {
+      'Research goals': await via('research', 'Goals', null, '.goals-pane'),
+      'Backlog': await via('research', 'Backlog', null, '.tasks-pane'),
+      'Agent runs': await via('research', 'Activity', 'Agent runs', '.runs-pane'),
+      'Agent managers': await via('research', 'Overview', null, '.managers-pane'),
+      'Approvals': await via('research', 'Needs your decision', null, '.approvals-pane'),
+      'AI models and limits': await via('research', 'AI models and limits', null, '.models-pane'),
+      'To acquire': await via('research', 'To acquire', null, '.acquire-pane'),
+      'Upload': await via('library', 'Upload a file', null, '.upload-pane'),
+      'Merge another collection': await via('library', 'Merge another collection', null, '.merge-pane'),
+      'Jobs': await via('research', 'Activity', 'Background jobs', '.jobs-pane'),
+      'Worklog': await via('research', 'Activity', 'Worklog', '.log-pane'),
+      'API key': await via('settings', 'Keys', null, '.key-pane'),
+      'About': await via('settings', 'About Histmersion', null, '.about-pane'),
+      'Map regions': await via('settings', 'Data and downloads', null, '.map-regions'),
+    };
+    assert.equal(new Set(Object.values(found)).size, Object.keys(found).length, JSON.stringify(found));
+    // and none of them is a floating window any more
+    assert.equal(await page.locator('.wm-window').count(), 0);
+  });
+});
+
+test('moving between pages is history: back and forward walk it, and the map keeps its state', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.goto(new URL('/explore#from=-2000&to=-1000', baseURL).href);
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => { window.__firstLoad = true; });
+    await page.locator('.places a[data-nav="library"]').click();
+    await page.locator('.library-sources-pane').waitFor();
+    await page.locator('.places a[data-nav="research"]').click();
+    await page.locator('.side-nav a', { hasText: 'Goals' }).click();
+    await page.locator('.goals-pane').waitFor();
+    assert.equal((await where(page)).path, '/research/goals');
+    // the hash state rides along: the span is still there
+    assert.match(new URL(page.url()).hash, /from=-2000/);
+    await page.goBack();
+    assert.equal((await where(page)).path, '/research');
+    await page.goBack();
+    await page.locator('.library-sources-pane').waitFor();
+    assert.equal((await where(page)).place, 'Library');
+    await page.goBack();
+    const w = await where(page);
+    assert.deepEqual([w.path, w.place, w.page, w.explore], ['/explore', 'Explore', false, true]);
+    assert.match(new URL(page.url()).hash, /from=-2000&to=-1000/);
+    await page.goForward();
+    await page.locator('.library-sources-pane').waitFor();
+    // no page was loaded again: every step was the web UI's own (the map's handle is the first load's)
+    assert.equal(await page.evaluate(() => window.__firstLoad), true);
+  });
+});
+
+test('old addresses land on their new pages: #open= toolbar windows, /acquire, /tasks, /log, /merge', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const cases = [
+      ['/#open=goals', '/research/goals', '.goals-pane'], ['/#open=jobs', '/research/activity/jobs', '.jobs-pane'],
+      ['/#open=about', '/settings/about', '.about-pane'], ['/#open=upload', '/library/upload', '.upload-pane'],
+      ['/acquire', '/research/acquire', '.acquire-pane'], ['/tasks', '/research/backlog', '.tasks-pane'],
+      ['/log', '/research/activity/worklog', '.log-pane'], ['/merge', '/library/merge', '.merge-pane'],
+      ['/', '/explore', null],
+    ];
+    for (const [from, to, pane] of cases) {
+      await page.goto(new URL(from, baseURL).href);
+      if (pane) await page.locator(`.place-page ${pane}`).waitFor();
+      else await page.waitForFunction(() => location.pathname === '/explore');
+      assert.equal(new URL(page.url()).pathname, to, from);
+      assert.ok(!new URL(page.url()).hash.includes('open=goals') && !new URL(page.url()).hash.includes('open=jobs'), from);
+    }
+    // a window of one item named with a toolbar window stays open, over the toolbar window's page
+    await page.goto(new URL('/#open=key&open=jobs', baseURL).href);
+    await page.locator('.place-page .jobs-pane').waitFor();
+    await page.locator('.wm-window .key-pane').waitFor();
+    assert.match(new URL(page.url()).hash, /open=key/);
+  });
+});
+
+test('links are real: a modifier click is the browser\'s (a new tab), a plain click stays in the page', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    // what the page did with each click: the handlers run before this window-level listener, which then stops
+    // the browser from following the link itself (no tab is opened by the test)
+    await page.evaluate(() => {
+      window.__clicks = [];
+      window.addEventListener('click', e => {
+        const a = e.target.closest('a');
+        if (a) { window.__clicks.push({ href: a.getAttribute('href'), prevented: e.defaultPrevented }); e.preventDefault(); }
+      });
+    });
+    const click = (sel, mods) => page.locator(sel).first().evaluate((el, m) =>
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0, ...m })), mods);
+    const last = () => page.evaluate(() => window.__clicks.at(-1));
+    for (const mods of [{ metaKey: true }, { ctrlKey: true }, { shiftKey: true }]) {
+      await click('.places a[data-nav="library"]', mods);
+      assert.deepEqual(await last(), { href: '/library', prevented: false }, JSON.stringify(mods));
+      assert.equal(new URL(page.url()).pathname, '/explore', 'the page stayed');
+    }
+    await click('.places a[data-nav="library"]', {});
+    assert.deepEqual(await last(), { href: '/library', prevented: true });
+    await page.locator('.library-sources-pane').waitFor();
+    // a job's link in the jobs list: its own page's address
+    await page.locator('.places a[data-nav="research"]').click();
+    await page.locator('.side-nav a', { hasText: 'Activity' }).click();
+    const jobLink = page.locator('.jobs-pane .job-meta a').first();
+    if (await jobLink.count()) {
+      const href = await jobLink.getAttribute('href');
+      assert.match(href, /^\/(job|run)\//);
+      await click('.jobs-pane .job-meta a', { metaKey: true });
+      assert.deepEqual(await last(), { href, prevented: false });
+    }
+
+    // inside a window's server-rendered page: a plain click opens the linked source in another window; with
+    // ⌘ the browser has it (the handler used to take every click)
+    await page.route('**/source/zz_pw_a?*', route => route.fulfill({ contentType: 'text/html',
+      body: '<h1>Zz A</h1><p><a class="src-ref" data-ck="zz_pw_b" href="/source/zz_pw_b">Zz B</a></p>' }));
+    await page.route('**/source/zz_pw_b?*', route => route.fulfill({ contentType: 'text/html', body: '<h1>Zz B</h1>' }));
+    await page.route('**/api/sources/zz_pw_*', route => route.fulfill({ status: 404, json: { error: 'none' } }));
+    await page.evaluate(() => { location.hash = 'open=source:zz_pw_a'; });
+    const inWindow = '.wm-window .wm-content a[href="/source/zz_pw_b"]';
+    await page.locator(inWindow).waitFor();
+    await click(inWindow, { metaKey: true });
+    assert.deepEqual(await last(), { href: '/source/zz_pw_b', prevented: false });
+    assert.equal(await page.locator('.wm-window').count(), 1, 'no window for a modified click');
+    await click(inWindow, {});
+    assert.deepEqual(await last(), { href: '/source/zz_pw_b', prevented: true });
+    await page.locator('.wm-window').nth(1).waitFor();
+    // a window of one item can be opened in a tab: its title bar's ↗ is its page's address
+    assert.equal(await page.locator('.wm-window .wm-newtab').first().getAttribute('href'), '/source/zz_pw_a');
+  });
+});
+
+test('a real ⌘/Ctrl click on a place opens a new tab and leaves this one where it was', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
+    const [tab] = await Promise.all([
+      page.context().waitForEvent('page', { timeout: 5000 }),
+      page.locator('.places a[data-nav="research"]').click({ modifiers: [modifier] }),
+    ]);
+    await tab.waitForLoadState();
+    assert.equal(new URL(tab.url()).pathname, '/research');
+    assert.equal(new URL(page.url()).pathname, '/explore');
+    await tab.close();
+  });
+});
+
+test('pages over Explore neither resize nor reload the map, and Explore comes back as it was', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const before = await page.evaluate(() => {
+      const r = document.querySelector('#map').getBoundingClientRect();
+      window.__mapResizes = 0;
+      new ResizeObserver(() => { window.__mapResizes++; }).observe(document.querySelector('#map'));
+      return { w: r.width, h: r.height };
+    });
+    await page.waitForTimeout(200);
+    const base = await page.evaluate(() => window.__mapResizes);
+    const feeds = [];
+    page.on('request', r => { if (/\/api\/(findings|geo)/.test(r.url())) feeds.push(r.url()); });
+    for (const place of ['library', 'research', 'settings', 'explore']) {
+      await page.locator(`.places a[data-nav="${place}"]`).click();
+      await page.waitForTimeout(150);
+    }
+    const after = await page.evaluate(() => {
+      const r = document.querySelector('#map').getBoundingClientRect();
+      return { w: r.width, h: r.height, resizes: window.__mapResizes };
+    });
+    assert.deepEqual([after.w, after.h], [before.w, before.h]);
+    assert.equal(after.resizes, base, 'the map was not resized');
+    assert.deepEqual(feeds, [], 'the map\'s feed was not asked again');
+  });
+});
+
+test('tablet and phone: the four places stay labelled and reachable; the decisions notice shortens', async () => {
+  for (const viewport of [{ width: 820, height: 1180 }, phone]) {
+    await withPage(viewport, async page => {
+      await page.route('**/api/ui/counters', async route => {
+        const res = await route.fetch();
+        const body = await res.json();
+        body.boards = body.boards.map(b => b.key === 'approvals' ? { ...b, count: 2 } : b);
+        return route.fulfill({ response: res, json: body });
+      });
+      await page.reload();
+      await page.waitForFunction(() => window.__testMap);
+      const tabs = await page.locator('.top-bar .place-tab').evaluateAll(els => els.map(e => {
+        const r = e.getBoundingClientRect();
+        return { text: e.textContent, visible: r.width > 0 && r.right <= innerWidth + 1 && r.left >= 0 };
+      }));
+      assert.deepEqual(tabs.map(t => t.text), ['Explore', 'Library', 'Research', 'Settings']);
+      assert.ok(tabs.every(t => t.visible), `${viewport.width}: every place on screen ${JSON.stringify(tabs)}`);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'no sideways scroll');
+      const pill = page.locator('.decisions-pill');
+      await pill.waitFor();
+      assert.equal(await pill.getAttribute('aria-label'), '2 need your decision');
+      assert.ok(['2 need you', '2'].includes((await pill.innerText()).trim()), await pill.innerText());
+      await page.locator('.places a[data-nav="research"]').click();
+      await page.locator('.place-page .side-nav').waitFor();
+      assert.equal(new URL(page.url()).pathname, '/research');
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    });
+  }
+});
+
+test('the agents\' status and the decisions notice: shown from the counters, the notice only when there is one', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    let agents = { running: 3, queued: 12, on: true, draining: false }, open = 0;
+    await page.route('**/api/ui/counters', async route => {
+      const res = await route.fetch();
+      const body = await res.json();
+      body.agents = agents;
+      body.boards = body.boards.map(b => b.key === 'approvals' ? { ...b, count: open } : b);
+      return route.fulfill({ response: res, json: body });
+    });
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('.agent-pill').waitFor();
+    assert.equal(await page.locator('.agent-pill').innerText(), 'Agents working · 3 runs');
+    assert.equal(await page.locator('.agent-pill').getAttribute('href'), '/research/activity');
+    assert.equal(await page.locator('.decisions-pill').count(), 0, 'no decision waits: no notice');
+    agents = { running: 0, queued: 0, on: false, draining: false };
+    open = 1;
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await page.locator('.decisions-pill').waitFor();
+    assert.equal(await page.locator('.agent-pill').innerText(), 'Agents paused');
+    assert.equal(await page.locator('.decisions-pill .pill-long').innerText(), '1 needs your decision');
+    await page.locator('.decisions-pill').click();
+    assert.equal(new URL(page.url()).pathname, '/research/decisions');
+  });
+});
+
+test('the search is in the top bar: it filters Library as it is typed, and Enter elsewhere goes to Library', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.locator('.places a[data-nav="settings"]').click();
+    await page.keyboard.press('/');
+    assert.equal(await page.evaluate(() => document.activeElement?.id), 'f-q', '/ focuses the search');
+    await page.keyboard.type('zz nothing like this');
+    await page.keyboard.press('Enter');
+    await page.locator('.library-sources-pane').waitFor();
+    assert.equal(new URL(page.url()).pathname, '/library');
+    assert.equal(new URLSearchParams(new URL(page.url()).hash.slice(1)).get('q'), 'zz nothing like this');
+  });
+});
+
+// The links the data had and the page lacked: a backlog item names the goals that link it, a goal's linked
+// item leads to it in its list (marked), and a job leads to its own page. WRITES a goal and a backlog item to
+// the test server (removed after), so it refuses the live port.
+test('a backlog item links its goals, and a goal\'s linked item leads to it in its list', async () => {
+  assert.notEqual(new URL(baseURL).port, '8000', 'never against the live server: this test writes');
+  const api = (path, init = {}) => fetch(new URL(path, baseURL), { ...init, headers: { 'content-type': 'application/json' } });
+  const item = await (await api('/api/queue/tasks', { method: 'POST', body: JSON.stringify({ text: 'zz pw linked item' }) })).json();
+  try {
+    assert.equal((await api('/api/goals/zz-pw-linked', { method: 'PUT', body: JSON.stringify({ title: 'Zz PW linked goal', status: 'seeding' }) })).status, 200);
+    assert.equal((await api('/api/goals/zz-pw-linked/links', { method: 'POST',
+      body: JSON.stringify({ kind: 'queue-item', ref: String(item.id) }) })).status, 200);
+    await withPage({ width: 1440, height: 900 }, async page => {
+      await page.goto(new URL('/research/backlog', baseURL).href);
+      const row = page.locator(`#queue-item-${item.id}`);
+      await row.waitFor();
+      const goal = row.locator('.item-goals a', { hasText: 'Zz PW linked goal' });
+      assert.equal(await goal.getAttribute('href'), '/research/goals/zz-pw-linked');
+      // the goal's page lists the item as a link into the backlog, which marks it
+      await page.goto(new URL('/research/goals/zz-pw-linked', baseURL).href);
+      const link = page.locator('.goal-links a', { hasText: `#${item.id}` });
+      await link.waitFor();
+      assert.equal(await link.getAttribute('href'), `/research/backlog?item=${item.id}`);
+      await link.click();
+      await page.locator(`#queue-item-${item.id}.is-target`).waitFor();
+      assert.equal(new URL(page.url()).pathname + new URL(page.url()).search, `/research/backlog?item=${item.id}`);
+      // a plain click on a goal opens its window, over the list
+      await page.locator(`#queue-item-${item.id} .item-goals a`).click();
+      await page.locator('.wm-window .goal-pane').waitFor();
+      assert.equal(new URL(page.url()).pathname, '/research/backlog');
+    });
+  } finally {
+    await api('/api/goals/zz-pw-linked', { method: 'DELETE' });
+    await api(`/api/queue/items/${item.id}`, { method: 'DELETE' });
+  }
 });

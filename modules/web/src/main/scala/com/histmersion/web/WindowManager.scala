@@ -66,7 +66,13 @@ object WindowManager:
       }
     )
 
+  /** Open `key`'s window — or, for a window of the old toolbar, show the page that took it over. */
   def open(key: WindowKey): Unit =
+    Route.ofWindow(key) match
+      case Some(page) => Router.go(page)
+      case None       => openWindow(key)
+
+  private def openWindow(key: WindowKey): Unit =
     shown.get(key) match
       case Some(wid) =>
         focus(wid)
@@ -100,9 +106,10 @@ object WindowManager:
     val _ = UiState.open.signal.foreach(sync)(using unsafeWindowOwner)
 
   private def sync(keys: List[WindowKey]): Unit =
-    val (toClose, toOpen) = reconcile(shown.keys.toList, keys)
+    // a toolbar window named in the hash is a page now: the router goes there (`Route.legacy`)
+    val (toClose, toOpen) = reconcile(shown.keys.toList, keys.filter(Route.ofWindow(_).isEmpty))
     toClose.flatMap(shown.get).foreach(closeWin(_))
-    toOpen.foreach(open)
+    toOpen.foreach(openWindow)
 
   /** Which open windows to close and which keys to open so the windows match `wanted`. Pure. */
   private[web] def reconcile(open: List[WindowKey], wanted: List[WindowKey]): (List[WindowKey], List[WindowKey]) =
@@ -111,6 +118,7 @@ object WindowManager:
   /** The title of `key`'s window, once its content knows a better one than [[WindowKey.initialTitle]]: an
     * item's own title, never its identifier (which the title's tooltip keeps). */
   def retitle(key: WindowKey, title: String): Unit =
+    Route.ofItem(key).foreach(Router.retitle(_, title))
     shown.get(key).foreach(wid => windows.update(_.map(w => if w.id == wid && w.title != title then w.copy(title = title) else w)))
 
   /** Close the window showing `key`, if one is open. */
@@ -158,9 +166,12 @@ object WindowManager:
     Option(href).map(_.trim).filter(h => (h.startsWith("/#") || h.startsWith("#")) && h.contains("="))
       .map(_.dropWhile(_ != '#'))
 
+  /** In-window links open in the page — another window, a filter added — on a plain click only: with
+    * ⌘/Ctrl/Shift/Alt (or the middle button, which sends no click) the browser opens the link's address
+    * in a new tab or window, as anywhere else. */
   private def wireLinks(wid: Int, root: dom.Element): Unit =
     root.addEventListener("click", { (ev: dom.MouseEvent) =>
-      val anchor = Option(ev.target.asInstanceOf[dom.Element].closest("a"))
+      val anchor = Option(ev.target.asInstanceOf[dom.Element].closest("a")).filter(_ => Router.plain(ev))
       anchor.foreach { a =>
         val raw = Option(a.getAttribute("href")).getOrElse("")
         // following `/#tag=x` NAVIGATED the hash, and the popstate that followed replaced every
@@ -183,6 +194,12 @@ object WindowManager:
           else
             open(target)
         }
+        // a page of the web UI (a run, a goal, the backlog): its window, or the page, without a reload
+        if m.isEmpty && !ev.defaultPrevented then
+          Route.parse(raw.takeWhile(c => c != '?' && c != '#')).filterNot(_.serverPage).foreach { r =>
+            ev.preventDefault()
+            Route.window(r).fold(Router.goHref(raw.takeWhile(_ != '#')))(open)
+          }
       }
     })
 
@@ -328,20 +345,11 @@ object WindowManager:
       initial.key match
         case WindowKey.Graph(ck)      => div(cls := "wm-content wm-graph", idAttr := s"wm-content-$wid", GraphPanel.element(ck))
         case WindowKey.EditSource(ck) => div(cls := "wm-content", idAttr := s"wm-content-$wid", SourceEditor(ck))
-        case WindowKey.Jobs           => div(cls := "wm-content", idAttr := s"wm-content-$wid", JobsView.pane)
-        case WindowKey.Upload         => div(cls := "wm-content", idAttr := s"wm-content-$wid", UploadView.pane)
-        case k @ (WindowKey.Acquire | WindowKey.Tasks | WindowKey.Log) =>
-          div(cls := "wm-content", idAttr := s"wm-content-$wid", WindowKey.queueOf(k).map(QueueView.pane))
+        // the old toolbar's windows are pages now (`open` goes there); single items open as windows, and the
+        // key's prompt
         case WindowKey.ApiKey         => div(cls := "wm-content", idAttr := s"wm-content-$wid", Auth.keyPane)
-        case WindowKey.About          => div(cls := "wm-content", idAttr := s"wm-content-$wid", AboutView.pane)
-        case WindowKey.Runs           => div(cls := "wm-content", idAttr := s"wm-content-$wid", RunsView.pane)
         case WindowKey.Run(id)        => div(cls := "wm-content", idAttr := s"wm-content-$wid", RunsView.runPane(id))
-        case WindowKey.Models         => div(cls := "wm-content", idAttr := s"wm-content-$wid", ModelsView.pane)
-        case WindowKey.Approvals      => div(cls := "wm-content", idAttr := s"wm-content-$wid", ApprovalsView.pane)
-        case WindowKey.Goals          => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.pane)
         case WindowKey.Goal(slug)     => div(cls := "wm-content", idAttr := s"wm-content-$wid", GoalsView.goalPane(slug))
-        case WindowKey.Merge          => div(cls := "wm-content", idAttr := s"wm-content-$wid", MergeView.pane)
-        case WindowKey.Managers       => div(cls := "wm-content", idAttr := s"wm-content-$wid", ManagersView.pane)
         case WindowKey.Manager(id)    => div(cls := "wm-content", idAttr := s"wm-content-$wid", ManagersView.managerPane(id))
         case _                        => div(cls := "wm-content modal-content", idAttr := s"wm-content-$wid"),
       div(

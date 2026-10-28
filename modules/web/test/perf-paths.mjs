@@ -161,7 +161,7 @@ export async function filterTyping(page, text, chipPrefix) {
 
 /** The Articles tab, then its first article: from the click to its window, and to its content. */
 export async function articleOpen(page, baseURL) {
-  await page.goto(new URL('/#tab=articles', baseURL).href);
+  await page.goto(new URL('/explore#tab=articles', baseURL).href);
   await page.reload();
   await ready(page);
   await page.locator('.articles-list .article-link').first().waitFor();
@@ -241,7 +241,7 @@ export async function vectorMap(page, baseURL, style, { lat = 37.9, lon = 25.4, 
     localStorage.setItem('histmersion.ui.baseMap', `["${s}"]`);
     if (o) { localStorage.setItem('histmersion.ui.layers', '["boundaries","events"]'); localStorage.setItem('histmersion.ui.areaPick', '["latest"]'); }
   }, [style, overlays]);
-  await page.goto(new URL('/#from=-3000&to=1500', baseURL).href);
+  await page.goto(new URL('/explore#from=-3000&to=1500', baseURL).href);
   await page.reload();
   await ready(page);
   await settled(page);   // the app's own start (the findings, the list) is firstRender's
@@ -278,7 +278,7 @@ export { memory };
   * and the markers drawn at the start. */
 export async function clusterZoom(page, baseURL, { at = [40, 22], from = 4, zooms = [5, 6, 5, 4] } = {}) {
   await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["events"]'));
-  await page.goto(new URL('/#from=-3500&to=1500', baseURL).href);
+  await page.goto(new URL('/explore#from=-3500&to=1500', baseURL).href);
   await page.reload();
   await ready(page);
   await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, from]);

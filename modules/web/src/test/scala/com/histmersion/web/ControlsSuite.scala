@@ -2,31 +2,9 @@ package com.histmersion.web
 
 import com.histmersion.api.*
 
-/** The pure halves of the shared controls: the toolbar's three groups and their order, the playback
-  * speed menu, and the period-preset menu's grouping by region. */
+/** The pure halves of the shared controls: the playback speed menu, and the period-preset menu's grouping
+  * by region. */
 class ControlsSuite extends munit.FunSuite:
-
-  // ── the toolbar ────────────────────────────────────────────────────────────────────────────────
-
-  test("the toolbar is three groups, in order: what to do · acquisition · the system"):
-    assertEquals(Toolbar.groups.map(_._1), List(Toolbar.Group.Plan, Toolbar.Group.Acquire, Toolbar.Group.System))
-    assertEquals(Toolbar.visible(agents = false, keyRequired = false), List(
-      List("Research goals", "Backlog"),
-      List("To acquire", "Upload", "Merge another collection"),
-      List("Jobs", "Worklog", "About")))
-
-  test("the agents' windows join the first group, the key the last — about stays last"):
-    assertEquals(Toolbar.visible(agents = true, keyRequired = true), List(
-      List("Research goals", "Backlog", "Agent runs", "Agent managers", "Approvals"),
-      List("To acquire", "Upload", "Merge another collection"),
-      List("Jobs", "Worklog", "API key", "About")))
-
-  test("every tool opens a different window, and every group has a name for a screen reader"):
-    val keys = Toolbar.groups.flatMap(_._2).map(_.key)
-    assertEquals(keys.distinct, keys)
-    assert(Toolbar.Group.values.forall(_.label.nonEmpty))
-    // no underscore identifiers where words are meant
-    assert(Toolbar.groups.flatMap(_._2).forall(t => !t.label.contains("_")))
 
   // ── playback speed ─────────────────────────────────────────────────────────────────────────────
 

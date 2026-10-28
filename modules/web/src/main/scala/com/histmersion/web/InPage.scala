@@ -68,3 +68,18 @@ object StandalonePage:
       InPage.wire(root)
       InPage.wireShortcut(root)
     }
+    topBar()
+
+  /** The web UI's top bar in place of the page's "← Histmersion" line: the four places stay one click
+    * away from a source or an article opened in a tab of its own. Its links load the web UI. */
+  private def topBar(): Unit =
+    import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+    Option(document.querySelector("body > .nav")).foreach { nav =>
+      ApiClient.config().foreach { ui =>
+        nav.textContent = ""
+        nav.classList.add("has-top-bar")
+        // a source and an article are both read in Library
+        val _ = com.raquo.laminar.api.L.render(nav, TopBar.element(ui, TopBar.Host.Standalone(PlaceTab.Library)))
+        Notices.refresh()
+      }
+    }

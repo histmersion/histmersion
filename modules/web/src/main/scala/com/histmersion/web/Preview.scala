@@ -602,7 +602,7 @@ object Preview:
     val (w, h) = naturalSize(box)
     apply(box, underFit(r.left, r.top, r.bottom, r.width, w, h, window.innerWidth, window.innerHeight), h)
 
-  private def cardView(c: Card): HtmlElement =
+  private[web] def cardView(c: Card): HtmlElement =
     div(
       div(cls := "cite-tip-title",
         c.icon.map(i => span(cls := "cite-tip-icon", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(i)))),

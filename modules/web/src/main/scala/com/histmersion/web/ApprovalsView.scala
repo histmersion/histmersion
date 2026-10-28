@@ -365,13 +365,13 @@ object ApprovalsView:
                 a.target.fold(span("?"))(t => SourceLink(t)))
             case Some(ApprovalKind.GoalPlan) =>
               span("Plan for the goal ", a.subject.fold(span("?"))(g =>
-                button(typ := "button", cls := "link-btn", title := g, Wording.humanize(g), onClick --> (_ => WindowManager.open(WindowKey.Goal(g))))))
+                WinLink(WindowKey.Goal(g), title := g, Wording.humanize(g))))
             case Some(ApprovalKind.ArticlePublish) =>
               span(if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then "publish the new article " else "append a section to ",
                 a.subject.fold(span("?"))(s => if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then strong(s) else com.histmersion.web.ArticleLink(s, s)))
             case Some(ApprovalKind.HintEffect) =>
               span(a.subject.fold(span("A manager"))(id =>
-                  button(typ := "button", cls := "link-btn", title := id, Wording.manager(id), onClick --> (_ => WindowManager.open(WindowKey.Manager(id))))),
+                  WinLink(WindowKey.Manager(id), title := id, Wording.manager(id))),
                 ": ", strong(a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))),
                 a.hintEffect.map(p => span(cls := "muted", s" — proposed by ${Option(p.by).filter(_.nonEmpty).getOrElse("a model")} " +
                   s"from hint #${p.hint}: “${p.text.take(200)}”")))
@@ -387,8 +387,7 @@ object ApprovalsView:
         a.result.filter(_.nonEmpty).map(r => p(cls := "muted", r)),
         div(cls := "job-meta muted",
           span(s"#${a.id}"),
-          a.runId.map(id => span(" · ", button(typ := "button", cls := "link-btn", s"run ${id.take(8)}",
-            onClick --> (_ => WindowManager.open(WindowKey.Run(id)))))),
+          a.runId.map(id => span(" · ", WinLink(WindowKey.Run(id), s"run ${id.take(8)}"))),
           span(" · ", span(cls := "approval-kind", title := kindMeaning(a.kind).fold(a.kind)(m => s"$m (${a.kind})"), kindLabel(a.kind))),
           span(s" · proposed ${a.createdAt}"),
           decidedLine(a).map(d => span(cls := "approval-decided", s" · $d"))),

@@ -87,4 +87,4 @@ class MergeViewSuite extends munit.FunSuite:
   test("the window key and the /merge address"):
     assertEquals(WindowKey.parse("merge"), Some(WindowKey.Merge))
     assertEquals(WindowKey.Merge.wire, "merge")
-    assertEquals(WindowKey.ofPath("/merge"), Some(WindowKey.Merge))
+    assertEquals(Route.legacy("/merge", Nil), Some(Route.Landing(Route.Library(LibrarySection.Merge), Nil)))

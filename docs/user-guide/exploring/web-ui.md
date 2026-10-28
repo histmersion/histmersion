@@ -1,7 +1,9 @@
 # The web page
 
-Open <http://localhost:8000>. The page has four parts: the **toolbar** that opens windows, the
-**filters** and the **timeline** under it, the **map**, and the **side panel** with the lists.
+Open <http://localhost:8000>. The **top bar** leads to the four places — **Explore** (the map and the
+timeline), **Library** (the lists of sources and articles, and adding sources), **Research** (goals,
+agents, decisions, activity, the lists) and **Settings** — and holds the search field. Explore has the
+**filters** and the **timeline**, the **map**, and the **side panel** with the lists.
 
 <figure markdown="span">
   ![The web page at 1440 by 900 pixels: toolbar buttons across the top, the search and filter fields, the timeline with its bars, the layer switches, the map of the eastern Mediterranean, and the list of sources on the right](../assets/screenshots/home-light.png){ loading=lazy }
@@ -184,22 +186,32 @@ or a shared link brings them back.
 | **a citation graph** | the network of sources around one source, with their links and statuses |
 | **an article** | the article, its sources, its coverage notes, the articles linking to it |
 
-The toolbar opens the others:
+A run, a goal and an agent manager open in a window too; each also has a page of its own
+(`/run/<id>`, `/research/goals/<slug>`, `/manager/<id>`), with **Pin as window** to keep it floating over
+the other pages. Everything else has its place:
 
-| toolbar | window |
-|---|---|
-| Research goals | your research areas as a tree, and a form for a new one |
-| Backlog | the `tasks` list |
-| Agent runs · Agent managers · Approvals | the built-in agents (shown only when the server runs them) |
-| To acquire | the acquisition list: what to buy, borrow or find |
-| Upload | upload a PDF or EPUB for text recognition |
-| Merge another collection | review and merge a `.hmx` bundle from another machine |
-| Jobs | text-recognition and import jobs, with progress |
-| Worklog | the `log` list, by date |
-| API key | enter the key writes need (shown only when the server asks for one) |
-| About | version, the licence and a link to the source code of the running version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
+| place › section | address | what is in it |
+|---|---|---|
+| Library › Sources, Articles | `/library`, `/library/articles` | the sources and articles the filters select |
+| Library › Upload a file | `/library/upload` | upload a PDF or EPUB for text recognition |
+| Library › Merge another collection | `/library/merge` | review and merge a `.hmx` bundle from another machine |
+| Research › Overview | `/research` | the agent managers, the autopilot and its focus (when the server runs agents) |
+| Research › Needs your decision | `/research/decisions` | what the agents propose, for you to approve or reject |
+| Research › Goals | `/research/goals` | your research areas as a tree, and a form for a new one |
+| Research › Activity | `/research/activity`, `…/jobs`, `…/worklog` | agent runs; text-recognition and import jobs, with progress; the `log` list, by date |
+| Research › Backlog | `/research/backlog` | the `tasks` list |
+| Research › To acquire | `/research/acquire` | the acquisition list: what to buy, borrow or find |
+| Research › AI models and limits | `/research/models` | the agents' models and allowances |
+| Settings › Data and downloads | `/settings/data` | the map regions downloaded, and downloading more |
+| Settings › Keys | `/settings/keys` | the key writes need (a write asks for it where it is needed) |
+| Settings › About Histmersion | `/settings/about` | version, the licence and a link to the source code of the running version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
 
-The last button of the toolbar is the **theme**: the page follows your system's light or dark setting
+Every link is a real link: ⌘-, Ctrl- or Shift-click (or the middle button) opens it in a new tab, and Back
+and Forward walk the pages. Addresses of the earlier page (`/#open=goals`, `/acquire`, `/tasks`, `/log`,
+`/merge`) lead to their new pages. The top bar also shows what the agents are doing, and how many of
+their proposals need your decision — only when some do. `/` puts the cursor in the search field.
+
+The top bar's round button is the **theme**: the page follows your system's light or dark setting
 until you press it; each press moves on to light, to dark, and back to the system's setting. The browser
 remembers the choice, for the windows, the source and article pages and every other tab of the same
 server.

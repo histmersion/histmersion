@@ -102,11 +102,9 @@ enum WindowKey:
     case Managers       => "Agent managers"
     case Manager(id)    => com.histmersion.api.Wording.manager(id)
 
-  /** The standalone page this window mirrors, for "open in a new tab". */
-  def pageHref: Option[String] = this match
-    case Source(ck)    => Some(SourceLink.href(ck))
-    case Article(slug) => Some(s"/article/${com.histmersion.api.HtmlAtoms.segment(slug)}")
-    case _             => None
+  /** The page this window mirrors, for "open in a new tab": a source's or an article's standalone page,
+    * a run's, a goal's or a manager's page of the web UI. */
+  def pageHref: Option[String] = Route.ofItem(this).map(_.path)
 
 object WindowKey:
   /** The window of each bookkeeping list, and back. */
@@ -121,11 +119,6 @@ object WindowKey:
     case Tasks   => Some(Queue.Kind.Tasks)
     case Log     => Some(Queue.Kind.Log)
     case _       => None
-
-  /** Pure: the window a page path stands for — `/acquire`, `/tasks`, `/log`, `/merge` — if any. */
-  def ofPath(path: String): Option[WindowKey] =
-    if path == "/merge" then Some(Merge)
-    else Queue.Kind.values.find(k => path == s"/${k.label}").map(ofQueue)
 
   private val Keyed = "^(source|article|graph|edit|run|goal|manager):(.+)$".r
 

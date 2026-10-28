@@ -20,9 +20,11 @@ class NoticesSuite extends munit.FunSuite:
     assertEquals(Notices.boardOf(WindowKey.Log), Some(Board.Log))
     assertEquals(Notices.boardOf(WindowKey.Goal("bronze-age")), None, "one goal's window is not the goals list")
     assertEquals(Notices.boardOf(WindowKey.Jobs), None)
-    // every board has a button in the toolbar
-    val tools = Toolbar.groups.flatMap(_._2).map(_.key)
-    Board.values.foreach(b => assert(tools.exists(k => Notices.boardOf(k).contains(b)), b.toString))
+    // every board is a page of Research's, which marks it read while it is shown
+    val pages = List(Route.Research(ResearchSection.Goals), Route.Research(ResearchSection.Decisions),
+      Route.Research(ResearchSection.Backlog), Route.Research(ResearchSection.Acquire), Route.Activity(ActivityTab.Worklog))
+    Board.values.foreach(b => assert(pages.exists(r => Route.board(r).flatMap(Notices.boardOf).contains(b)), b.toString))
+    assertEquals(Route.board(Route.Activity(ActivityTab.Jobs)), None)
 
   test("an open window with news is marked read at the latest change it showed"):
     val cs = Map("tasks" -> c("tasks", Some(t2), Some(t1)), "goals" -> c("goals", Some(t2), Some(t1)),
