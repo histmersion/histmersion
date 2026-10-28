@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { appendFileSync } from 'node:fs';
 import { engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
-import { routeFullLoad } from './perf-fixtures.mjs';
+import { fullLoad, routeFullLoad } from './perf-fixtures.mjs';
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
 import { trackRequests } from './perf-lib.mjs';
 import { routeTiles } from './tile-fixtures.mjs';
@@ -3093,6 +3093,55 @@ test('no WebGL 2: the map says why and what to do, and the rest of the page work
     }
   }
 });
+// (b): playback, stopped with ⏹ or run to its end, leaves the map as it was before it played: the findings, the
+// legend's years, the boundaries — not its last frame's window.
+test('playback stopped or run out restores the whole span on the map', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    trackRequests(page);
+    await routeFullLoad(page);
+    const tiles = [];
+    await routeTiles(page, { sites: fullLoad.sites.features, media: fullLoad.media, events: fullLoad.events, asked: tiles });
+    await fullLoadView(page, baseURL);
+    await page.waitForTimeout(1500);
+    const state = () => page.evaluate(() => ({
+      lo: document.querySelector('.hd-legend .lo')?.textContent, hi: document.querySelector('.hd-legend .hi')?.textContent,
+      points: window.__testMap.points(), polities: window.__testMap.shapes('polities').slice().sort() }));
+    const before = await state();
+    assert.ok(before.lo && before.hi && before.points > 300 && before.polities.length > 0, JSON.stringify(before));
+    const year = page.locator('.tl-play-year');
+    // ⏹ part-way
+    await page.locator('button[aria-label="play"]').click();
+    await page.waitForFunction(() => document.querySelector('.tl-play-year')?.textContent);
+    await page.waitForTimeout(2500);
+    const playing = await state();
+    assert.notEqual(`${playing.lo}–${playing.hi}`, `${before.lo}–${before.hi}`, `the frames draw their window: ${JSON.stringify(playing)}`);
+    await page.locator('button[aria-label="stop and reset"]').click();
+    assert.equal(await year.textContent(), '');
+    await page.waitForFunction(b => {
+      const lo = document.querySelector('.hd-legend .lo')?.textContent, hi = document.querySelector('.hd-legend .hi')?.textContent;
+      return lo === b.lo && hi === b.hi && window.__testMap.points() === b.points &&
+        JSON.stringify(window.__testMap.shapes('polities').slice().sort()) === JSON.stringify(b.polities);
+    }, before, { timeout: 5000 }).catch(async () => assert.fail(`after ⏹: ${JSON.stringify(await state())} ≠ ${JSON.stringify(before)}`));
+    // the tiled layers are asked for the whole span again (playback asked for its window's buckets)
+    const [from, to] = [-1600, -1100];
+    await page.waitForFunction(() => true);
+    await page.waitForTimeout(1200);
+    assert.ok(tiles.slice(-6).some(u => Number(u.searchParams.get('from')) === from && Number(u.searchParams.get('to')) === to),
+      `the tiles of the whole span: ${tiles.slice(-6).map(u => u.search).join(' ')}`);
+    // run to its end, at the fastest speed (30 s / 4)
+    await page.locator('select.tl-play-speed').selectOption('4×');
+    await page.locator('button[aria-label="play"]').click();
+    await page.waitForFunction(() => document.querySelector('.tl-play-year')?.textContent);
+    await page.waitForFunction(() => document.querySelector('button[aria-label="play"]') && !document.querySelector('.tl-play-year')?.textContent,
+      null, { timeout: 20000 });
+    await page.waitForFunction(b => {
+      const lo = document.querySelector('.hd-legend .lo')?.textContent, hi = document.querySelector('.hd-legend .hi')?.textContent;
+      return lo === b.lo && hi === b.hi && window.__testMap.points() === b.points &&
+        JSON.stringify(window.__testMap.shapes('polities').slice().sort()) === JSON.stringify(b.polities);
+    }, before, { timeout: 5000 }).catch(async () => assert.fail(`after the end: ${JSON.stringify(await state())} ≠ ${JSON.stringify(before)}`));
+  });
+});
+
 // (a): the timeline's count curve is smooth — a bucket every ~5 px through a monotone curve, no mark per bucket,
 // drawn at the size it is shown (no stretch) — and one hover marker tells a bucket's exact count, at once.
 test('the timeline draws a smooth curve at its shown size; one hover marker says a bucket\'s count', async () => {

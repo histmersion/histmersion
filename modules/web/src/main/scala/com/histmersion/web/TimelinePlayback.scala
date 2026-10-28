@@ -128,6 +128,10 @@ object TimelinePlayback:
     MapView.setPlaybackMode(false)
     EventLayer.stop()
     if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, false)
+    // the last frame drew the playhead's window: the map shows the whole span again (findings, legend,
+    // sites, pictures, events, boundaries), whether playback ran out or ⏹ stopped it
+    val (sf, st) = TimelineView.currentSpan
+    App.restoreSpan(sf, st)
 
   private def tick(ts: Double): Unit =
     if playing.now() then

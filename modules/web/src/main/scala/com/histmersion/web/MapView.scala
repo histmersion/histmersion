@@ -81,13 +81,13 @@ object MapView:
     if TheMap.isUp then { val _ = TheMap.surface.popup(LatLon(lat, lon), s"""<div class="hd-popup-content">$html</div>""") }
 
   /** Playback starts or stops. Its states are drawn from every state fetched while it plays (#3764,
-    * [[PlaybackAreas]]); stopped, the boundaries are drawn for the span shown, as before. */
+    * [[PlaybackAreas]]). Stopped, the map is drawn for the span shown again (the caller's
+    * [[App.restoreSpan]]: the findings, the legend, the tiles and the boundaries of the whole span) —
+    * this alone only lets go of playback's states. */
   def setPlaybackMode(on: Boolean): Unit =
     val was = playbackMode
     playbackMode = on
-    if was && !on then
-      playAreas.clear()
-      if overlayOn && TheMap.isUp then loadOverlay(currentSpan)
+    if was && !on then playAreas.clear()
 
   // ── playback (#3764): every frame draws from what is held; nothing is fetched or re-made per frame ──
 
