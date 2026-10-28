@@ -169,7 +169,7 @@ class PagesSuite extends munit.FunSuite:
     val html = Pages.article(articlePage("# The Sea Peoples\n\nText.").copy(review = Some(review)), links)
     assert(html.contains("""<span class="job-state review-state state-majors-open" title="Reviewed: 1 MAJOR finding is still open.">1 major open</span>"""), html)
     assert(html.indexOf("article-review-line") < html.indexOf("<p>Text.</p>"), html)
-    assert(html.contains("""<a class="goal-ref" href="/#open=goal:sea-peoples-goal" title="sea-peoples-goal">"""), html)
+    assert(html.contains("""<a class="goal-ref" href="/research/goals/sea-peoples-goal" title="sea-peoples-goal">"""), html)
     assert(html.contains("""<span class="job-state goal-status state-compiled" title="compiled: its articles are written; not all have passed review yet">Compiled</span> The Sea Peoples &amp; the collapse</a>"""), html)
     assert(!Pages.article(articlePage("# The Sea Peoples\n\nText."), links).contains("article-review-line"))
 

@@ -54,11 +54,21 @@ object Queue:
     given Schema[QueueItem] = KindlingsSchema.derived[QueueItem].schema
 
   /** `GET /api/queue/{list}` — open items by default, everything with `?all=true`; on the acquisition list,
-    * each checked item's last legal re-check (`checks`, by item id). */
-  final case class QueueListing(list: String, items: List[QueueItem], checks: List[AcquireChecks.AcquireCheck] = Nil)
-      derives KindlingsCodecAsObject
+    * each checked item's last legal re-check (`checks`, by item id); on every list, the research goals that
+    * link an item (`goals`, by item id — the goal links of kind `queue-item`). */
+  final case class QueueListing(list: String, items: List[QueueItem], checks: List[AcquireChecks.AcquireCheck] = Nil,
+      goals: List[ItemGoals] = Nil) derives KindlingsCodecAsObject
   object QueueListing:
     given Schema[QueueListing] = KindlingsSchema.derived[QueueListing].schema
+
+  /** The research goals that link one item: slug and title. */
+  final case class ItemGoals(item: Int, goals: List[GoalRef]) derives KindlingsCodecAsObject
+  object ItemGoals:
+    given Schema[ItemGoals] = KindlingsSchema.derived[ItemGoals].schema
+
+  final case class GoalRef(slug: String, title: String) derives KindlingsCodecAsObject
+  object GoalRef:
+    given Schema[GoalRef] = KindlingsSchema.derived[GoalRef].schema
 
   /** `POST /api/queue/{list}` — and, internally, one parsed row on the way in from a file. */
   final case class QueueAdd(

@@ -170,6 +170,23 @@ object Wording:
     else if autopilotOn then "Agents: working"
     else "Agents: paused"
 
+  /** The top bar's status of the agents: paused; finishing current work (draining) while runs remain;
+    * working, with how many runs are running or waiting; or on with nothing to do. */
+  def agentsGlance(a: UiNotices.AgentsGlance): String =
+    def runs(n: Int) = if n == 1 then "1 run" else s"$n runs"
+    if !a.on || (a.draining && a.running == 0) then "Agents paused"
+    else if a.draining then s"Agents finishing current work · ${runs(a.running)}"
+    else if a.running > 0 then s"Agents working · ${runs(a.running)}"
+    else if a.queued > 0 then s"Agents working · ${a.queued} waiting"
+    else "Agents on · nothing to do"
+
+  /** The top bar's notice of the approvals waiting for a person (none: no notice). */
+  def decisions(open: Int): Option[String] =
+    Option.when(open > 0)(if open == 1 then "1 needs your decision" else s"$open need your decision")
+
+  /** The same, short, where the bar is narrow ("2 need you"). */
+  def decisionsShort(open: Int): String = if open == 1 then "1 needs you" else s"$open need you"
+
   val Drain   = "Finish current work, then pause"
   val Undrain = "Resume"
 

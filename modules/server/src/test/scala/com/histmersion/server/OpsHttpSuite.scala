@@ -172,6 +172,14 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
           assertEquals(ls, 200, lb)
         assertEquals(post(s"$url/api/goals/zzgoals-sub/links", """{"kind":"query","ref":"zz drought"}""")._1, 200)
 
+        // the web UI's links both ways: an item names the goals that link it; a goal's link names the item's list
+        val listing = io.circe.parser.decode[com.histmersion.api.Queue.QueueListing](get(s"$url/api/queue/tasks?all=true")._2)
+          .fold(e => fail(e.toString), identity)
+        assertEquals(listing.goals.find(_.item == gone).map(_.goals.map(_.slug)), Some(List("zzgoals-sub")))
+        assertEquals(listing.goals.find(_.item == ok).flatMap(_.goals.headOption).map(_.title), Some("ZZ sub goal"))
+        val view = get(s"$url/api/goals/zzgoals-sub/view")._2
+        assert(view.contains(s""""ref":"$gone"""") && view.contains(""""queue":"tasks""""), view)
+
         val (es, eb) = get(s"$url/api/export/goals")
         assertEquals(es, 200, eb)
         assert(eb.startsWith(com.histmersion.api.GoalsExport.Header), eb.take(200))

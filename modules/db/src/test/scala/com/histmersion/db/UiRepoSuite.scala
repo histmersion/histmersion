@@ -42,6 +42,21 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(cs.filter(_.count.isDefined).map(_.key), List("tasks", "approvals", "acquire"))
     assert(cs.forall(_.count.forall(_ >= 0)))
 
+  test("the agents at a glance count the agent runs running and queued, and read the autopilot's switch"):
+    final class Rollback extends RuntimeException
+    val autopilot = connect(ds)(sql"SELECT enabled, drain_since IS NOT NULL FROM agent_autopilot WHERE id"
+      .query[(Boolean, Boolean)].run().headOption.getOrElse((false, false)))
+    // inside a transaction that is rolled back: no other suite's agent worker ever sees these runs
+    try transact(ds) {
+      sql"""INSERT INTO jobs (id, kind, status) VALUES ('zz-ui-glance-r', 'agent', 'running'),
+              ('zz-ui-glance-q', 'agent', 'queued'), ('zz-ui-glance-i', 'ingest', 'running')""".update.run()
+      val g = UiRepo.agentsGlance
+      assert(g.running >= 1 && g.queued >= 1, g.toString)
+      assertEquals((g.on, g.draining), autopilot)
+      throw Rollback()
+    } catch case _: Rollback => ()
+    assertEquals(connect(ds)(sql"SELECT count(*) FROM jobs WHERE id LIKE 'zz-ui-glance-%'".query[Long].run().head), 0L)
+
   test("V083 left a mark for every board, so an upgraded corpus does not light up at once"):
     val marked = connect(ds)(sql"SELECT board FROM ui_seen".query[String].run()).toSet
     assert(Board.wires.forall(marked), marked.toString)

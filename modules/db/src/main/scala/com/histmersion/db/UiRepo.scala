@@ -1,6 +1,7 @@
 package com.histmersion.db
 
-import com.histmersion.api.UiNotices
+import com.histmersion.api.{Agents, UiNotices}
+import com.histmersion.values.RunState
 import com.histmersion.api.UiNotices.{Board, Counters}
 
 import com.augustnagro.magnum.*
@@ -41,6 +42,20 @@ object UiRepo:
       val (n, latest, seen) = byBoard.getOrElse(b.wire, (None, None, None))
       UiNotices.counter(b, Some(n.getOrElse(0)), latest, seen)
     })
+
+  /** The research agents at a glance: the agent runs running and queued, and the autopilot's switch and
+    * drain (off and not draining while it was never switched). */
+  def agents(ds: DataSource): UiNotices.AgentsGlance = connect(ds)(agentsGlance)
+
+  private[db] def agentsGlance(using DbCon): UiNotices.AgentsGlance =
+    val (running, queued) =
+      sql"""SELECT (count(*) FILTER (WHERE status = ${RunState.Running.wire}))::int,
+                   (count(*) FILTER (WHERE status = ${RunState.Queued.wire}))::int
+            FROM jobs WHERE kind = ${Agents.JobKind}""".query[(Int, Int)].run().head
+    val (on, draining) =
+      sql"SELECT enabled, drain_since IS NOT NULL FROM agent_autopilot WHERE id".query[(Boolean, Boolean)].run()
+        .headOption.getOrElse((false, false))
+    UiNotices.AgentsGlance(running, queued, on, draining)
 
   /** The reader saw `board` up to `at` (an ISO instant; `None` = now). The mark only moves forward.
     * Returns the stored mark. */

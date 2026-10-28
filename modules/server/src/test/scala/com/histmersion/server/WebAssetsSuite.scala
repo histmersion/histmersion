@@ -15,8 +15,13 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(html.contains("<div id=\"app\"></div>"), html)
     assert(html.contains("app.src = \"/web/app.bundle.js"), html)
 
-  test("each bookkeeping list's address, and the merge screen's, serve the app, which opens that window"):
-    assertEquals(HttpApi.appPaths, Set(List("acquire"), List("tasks"), List("log"), List("merge")))
+  test("the web UI's pages, its items' pages and the old list addresses serve the app; anything else does not"):
+    def app(p: String) = com.histmersion.api.WebPaths.isApp(p.split('/').toList.filter(_.nonEmpty))
+    List("/", "/explore", "/library", "/library/upload", "/research", "/research/goals/bronze-age",
+      "/research/activity/jobs", "/settings/keys", "/place/pleiades:579885", "/event/ev1", "/run/3f2a",
+      "/manager/watch:x", "/job/77", "/acquire", "/tasks", "/log", "/merge").foreach(p => assert(app(p), p))
+    List("/source/x", "/article/y", "/run", "/run/a/b", "/nope", "/web/style.css", "/api/sources", "/jobs")
+      .foreach(p => assert(!app(p), p))
 
   test("both page shells apply the reader's stored theme before the stylesheet paints"):
     val key = "localStorage.getItem(\"histmersion.theme\")"
@@ -157,7 +162,7 @@ class WebAssetsSuite extends munit.FunSuite:
     List("layer-btn", "tl-btn", "action-btn", "text-input", "item-btn").foreach(c =>
       assert(!js.contains("\"" + c) && !js.contains(" " + c + "\""), s"the UI still uses class $c"))
     // and what the code uses, the stylesheet defines
-    List("btn btn--toggle", "btn btn--ghost", "btn btn--primary", "toolbar tool-btns", "field").foreach(c =>
+    List("btn btn--toggle", "btn btn--ghost", "btn btn--primary", "toolbar list-filters", "field").foreach(c =>
       assert(js.contains(c), s"the bundle no longer uses '$c'"))
 
   test("the toolbar's groups stack in the phone drawer, separated by a line across"):

@@ -136,8 +136,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     r.copy(ageSeconds = r.measuredAt.flatMap(t => scala.util.Try(Instant.parse(t)).toOption)
       .map(t => math.max(0L, now.getEpochSecond - t.getEpochSecond)))
 
-  /** `GET /api/ui/counters` — the toolbar's counts and "something new" marks ([[UiNotices]]). */
-  def uiCounters: UiNotices.Counters = com.histmersion.db.UiRepo.counters(ds)
+  /** `GET /api/ui/counters` — the lists' counts and "something new" marks ([[UiNotices]]), and, where the
+    * server runs agents, what they are doing (the top bar's status). */
+  def uiCounters: UiNotices.Counters =
+    val counters = com.histmersion.db.UiRepo.counters(ds)
+    if cfg.agents.enabled then counters.copy(agents = Some(com.histmersion.db.UiRepo.agents(ds))) else counters
 
   /** `POST /api/ui/seen/{board}` — the reader opened that window, which showed items up to `mark.at`.
     * Answers the counters after the mark moved. */

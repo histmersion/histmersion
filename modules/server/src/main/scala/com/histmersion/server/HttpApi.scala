@@ -224,8 +224,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
       .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
       .serverLogic[Identity](p => Left(ApiError(s"no such endpoint: /api/${p.mkString("/")}")))
 
-  /** The web UI, at the ROOT path only. It used to have no path input at all, so every
-    * unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page. */
+  /** The web UI, at its own pages' addresses only ([[WebPaths]]). It used to have no path input at all,
+    * so every unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page. */
   private val index: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in(paths)
@@ -234,7 +234,7 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogic[Identity] { segments =>
         val path = segments.filter(_.nonEmpty)
-        if path.isEmpty || HttpApi.appPaths.contains(path) then Right(Static.read("web/index.html"))
+        if WebPaths.isApp(path) then Right(Static.read("web/index.html"))
         else Left(s"not found: /${segments.mkString("/")}")
       }
 
@@ -319,11 +319,6 @@ object Article:
   /** The Scala.js bundle — the same file the web UI's `index.html` loads, which carries every page's
     * entry point (`web.Main` dispatches on the path). */
   val BundlePath = "/web/app.bundle.js?v=2"
-
-object HttpApi:
-  /** Page paths that serve the app itself: each bookkeeping list's address (`/acquire`, `/tasks`,
-    * `/log`) and the merge review screen's (`/merge`), which the page turns into that window. */
-  val appPaths: Set[List[String]] = Queue.Kind.values.map(k => List(k.label)).toSet + List("merge")
 
 object Static:
   def read(path: String): String =
