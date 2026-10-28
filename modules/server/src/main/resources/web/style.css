@@ -278,7 +278,7 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .chip-suggest li.active { background:#2c3450; }
 .chip-suggest li .c { color:var(--muted); font-variant-numeric:tabular-nums; }
 /* ── source rows in the sidebar ──────────────────────────────────────────────────────────────── */
-.hit .title { font-size:12.5px; margin-top:2px; }
+.hit .title { font-size:12.5px; margin-top:2px; overflow-wrap:anywhere; }
 .hit .why { margin:4px 0 0; padding-left:16px; color:var(--muted); font-size:11px; }
 .hit .matches { margin-top:5px; font-size:11.5px; }
 .hit .matches .lbl { color:var(--muted); font-size:11px; }
@@ -612,7 +612,9 @@ header h1 .tagline { display:block; font-weight:400; margin-top:2px; }
 /* the map's popups (a finding's, a picture's): the panel's colours, over every pane */
 .hd-popup { z-index:var(--z-map-popups); font:12px system-ui; }
 .hd-popup .maplibregl-popup-content { background:var(--panel); color:var(--ink); border:1px solid var(--line);
-  border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,.45); padding:10px 22px 10px 12px; }
+  border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,.45); padding:10px 22px 10px 12px;
+  /* a picture's name is often one 40–180-character run of `_`-joined words: it wraps inside the popup */
+  overflow-wrap:anywhere; }
 .hd-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color:var(--panel); }
 .hd-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color:var(--panel); }
 .hd-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color:var(--panel); }
