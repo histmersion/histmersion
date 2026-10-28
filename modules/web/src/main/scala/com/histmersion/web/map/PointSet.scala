@@ -110,6 +110,10 @@ object Clustering:
     (shown.collect { case (ks, _) if ks.size == 1 => ks.head }.toSet,
       shown.collect { case (ks, _) if ks.size > 1 => s"${ks.head}|${ks.size}" -> ks }.toMap)
 
+  /** Pure: do `pts` all stand at one spot — a bubble no zoom can part? */
+  def onePlace(pts: Seq[LatLon]): Boolean =
+    pts.nonEmpty && pts.forall(p => p.lat == pts.head.lat && p.lon == pts.head.lon)
+
   /** The zoom a map at `zoom` clusters at: the nearest whole zoom (the bubbles regroup as the map
     * passes the middle between two). Pure. */
   def level(zoom: Double): Int = math.round(zoom).toInt
@@ -162,6 +166,20 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
       surface().on(MapEventKind.ZoomEnd)(_ => layout(animate = true))
       surface().on(MapEventKind.MoveEnd)(_ => layout(animate = true))
       surface().on(MapEventKind.Resize)(_ => schedule())
+      // a fanned-out bubble folds back when the map zooms, on Escape, and on a press anywhere else on the map
+      // (not on its own markers, nor in a popup one of them opened)
+      surface().on(MapEventKind.ZoomStart)(_ => unspiderfy())
+      dom.document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
+        if e.key == "Escape" && spider.isDefined && !e.defaultPrevented then
+          e.preventDefault()
+          unspiderfy()
+      })
+      dom.document.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
+        if spider.isDefined then
+          val t = e.target.asInstanceOf[dom.Element]
+          val onMap = t != null && surface().container.contains(t)
+          if onMap && t.closest(s".${Spiderfy.Member}, .${Spiderfy.Fanned}, .hd-popup") == null then unspiderfy()
+      }, true)
 
   def add(ds: Iterable[D]): Unit =
     ds.foreach(d => items(key(d)) = d)
@@ -194,28 +212,84 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
   def recolour(): Unit =
     bubbles.values.foreach((m, ks) => if ks.forall(items.contains) then repaint(m, ks.map(items)))
 
-  /** The point `k`'s own marker, while it is drawn alone. */
-  def drawnAlone(k: String): Option[DomMarker] = singles.get(k).filter((m, p) => p.has(m)).map(_._1)
+  /** The point `k`'s own marker, while it is drawn alone (or fanned out of its bubble). */
+  def drawnAlone(k: String): Option[DomMarker] =
+    singles.get(k).filter((m, p) => p.has(m)).map(_._1)
+      .orElse(spider.flatMap(_.members.find(_._1 == k)).map(_._2).filter((m, p) => p.has(m)).map(_._1))
+
+  // ── a bubble fanned out (spiderfied): its points drawn around it, each on a thin leg to its spot ───
+
+  /** A fanned-out bubble: its points, their markers and panes, the legs, the bubble itself. */
+  private final class Spider(val keys: Seq[String], val members: Seq[(String, (DomMarker, MarkerPane))], val legs: DomMarker,
+      val bubble: Option[DomMarker])
+  private var spider: Option[Spider] = None
+
+  /** The points fanned out now (none: no bubble is). */
+  def spidered: Seq[String] = spider.fold(Seq.empty)(_.keys)
+
+  /** Fan the points `ks` out around where their bubble stands ([[Spiderfy]]), each drawn as it is alone, a
+    * thin leg back to the spot — the only way to reach points no zoom can part (one spot, or the deepest
+    * zoom). Anything else fanned out folds back first. `separation`: the markers' spacing, px. */
+  def spiderfy(ks: Seq[String], separation: Double): Unit =
+    unspiderfy()
+    install()
+    val ds = ks.filter(items.contains)
+    if ds.size >= 2 && surface() != null then
+      val pts = ds.map(k => at(items(k)))
+      val c = LatLon(pts.map(_.lat).sum / pts.size, pts.map(_.lon).sum / pts.size)
+      val offsets = Spiderfy.offsets(ds.size, separation)
+      val reach = offsets.map((x, y) => math.max(math.abs(x), math.abs(y))).maxOption.getOrElse(0.0)
+      val side = (2 * math.ceil(reach) + 4).toInt
+      val legsEl = DomMarker.element(Spiderfy.Legs, Spiderfy.legsSvg(offsets, side))
+      val legs = DomMarker(c.lat, c.lon, legsEl, Some((side, side)))
+      pane().add(legs)
+      val bubble = bubbles.get(s"${ks.head}|${ks.size}").filter(_._2 == ks).map(_._1)
+      bubble.foreach(_.el.classList.add(Spiderfy.Fanned))
+      val members = ds.zip(offsets).map { (k, off) =>
+        val m = single(items(k), false)
+        m.setLatLng(c.lat, c.lon)
+        m.el.classList.add(Spiderfy.Member)
+        m.el.style.setProperty("--sx", s"${off._1}px")
+        m.el.style.setProperty("--sy", s"${off._2}px")
+        m.setZ(Spiderfy.Z)
+        val p = paneOf(items(k))
+        p.add(m)
+        k -> (m, p)
+      }
+      spider = Some(Spider(ds, members, legs, bubble))
+
+  /** Fold a fanned-out bubble back. */
+  def unspiderfy(): Unit =
+    spider.foreach { sp =>
+      sp.members.foreach((_, mp) => mp._2.remove(mp._1))
+      pane().remove(sp.legs)
+      sp.bubble.foreach(_.el.classList.remove(Spiderfy.Fanned))
+    }
+    spider = None
 
   /** The group `k` is in at this zoom (itself alone: one key). */
   def groupKeys(k: String): Seq[String] = groupOf.get(k).fold(Seq(k))(g => groups(g)._1)
 
-  /** Zoom (and pan) until `k` stands alone, then `andThen`. */
+  /** Zoom (and pan) until `k` stands alone, then `andThen` — or, where no zoom parts it from its bubble
+    * (points at its very spot, or the deepest zoom reached), `andThen` where it is: it was left undone
+    * there, and a picture at a spot it shares never opened. */
   def zoomToShow(k: String, andThen: () => Unit): Unit =
     val s = surface()
     items.get(k).foreach { d =>
       def done(): Boolean = drawnAlone(k).isDefined
+      def deepest: Boolean = s.zoom >= s.maxZoom - 0.01
+      def inseparable: Boolean = Clustering.onePlace(groupKeys(k).flatMap(items.get).map(at))
       layout(animate = false)
-      if done() then andThen()
+      if done() || deepest || inseparable then andThen()
       else
         val p = at(d)
         // `var`: the subscription of the zoom's end, taken off when it is reached
         var sub: Subscription = null
         sub = s.on(MapEventKind.MoveEnd) { _ =>
           layout(animate = false)
-          if done() || s.zoom >= s.maxZoom - 0.01 then
+          if done() || deepest || inseparable then
             sub.cancel()
-            if done() then andThen()
+            andThen()
         }
         s.setView(p, math.min(s.maxZoom, math.max(s.zoom + 1, level + 2)), animate = true)
     }
@@ -260,6 +334,11 @@ final class PointSet[D](paneOf: D => MarkerPane, pane: () => MarkerPane, surface
           if regrouped && animate && ClusterMotion.within(drawnMarkers, wanted._1.size + wanted._2.size, animateMax) && MotionPref.animate() then Some(drawnPlaces())
           else None
         draw(wanted, before)
+        // a fanned-out bubble regrouped or gone, or one of its points taken away: folded back
+        spider.foreach { sp =>
+          val still = sp.keys.forall(items.contains) && sp.bubble.forall(b => bubbles.values.exists(_._1 eq b))
+          if !still then unspiderfy()
+        }
       measure("hd-points-group", t0, t1)
       measure("hd-points-draw", t1, dom.window.performance.now())
 
@@ -470,3 +549,44 @@ object ClusterMotion:
   def arrive(m: DomMarker): Unit =
     m.el.classList.add("hd-cluster-arrive")
     dom.window.setTimeout(() => m.el.classList.remove("hd-cluster-arrive"), Ms + 70)
+
+/** Fanning a bubble's points out around it (the "spiderfy" of the marker-cluster plugins): a ring for a few, a
+  * spiral for more, each point on a thin leg back to the spot. Pure but for the legs' markup. */
+object Spiderfy:
+  /** A fanned-out point's marker; the bubble it came out of; the legs' element. */
+  val Member = "hd-spider"
+  val Fanned = "hd-spidered"
+  val Legs   = "hd-spider-legs"
+  /** Fanned-out points stand over every other marker of their pane. */
+  val Z      = 2000
+  /** Up to this many go on one ring; more on a spiral. */
+  val RingMax = 8
+
+  /** Pure: each point's offset from the spot (px, y down) for `n` points `separation` px apart: on a ring
+    * (the first a little past twelve o'clock) or an outward spiral, never on the spot itself. */
+  def offsets(n: Int, separation: Double): Vector[(Double, Double)] =
+    if n <= 0 then Vector.empty
+    else if n == 1 then Vector((0.0, -separation))
+    else if n <= RingMax then
+      // the ring's circumference holds n markers with room between them (and at least a marker's width)
+      val radius = math.max(separation, separation * n / (2 * math.Pi) * 1.15)
+      val step = 2 * math.Pi / n
+      val start = -math.Pi / 2 + math.Pi / 6
+      Vector.tabulate(n)(i => (radius * math.cos(start + i * step), radius * math.sin(start + i * step)))
+    else
+      // Archimedes' spiral: each point `separation` along the curve from the last, the arms `separation` apart
+      val b = separation / (2 * math.Pi)
+      // `var`: walking out along the spiral
+      var angle = 2 * math.Pi
+      Vector.tabulate(n) { _ =>
+        val r = b * angle
+        val at = (r * math.cos(angle - math.Pi / 2), r * math.sin(angle - math.Pi / 2))
+        angle += separation / r
+        at
+      }
+
+  /** The legs: an SVG `side` px square, centred on the spot, a line to each offset. */
+  def legsSvg(offsets: Seq[(Double, Double)], side: Int): String =
+    val c = side / 2.0
+    val lines = offsets.map((x, y) => s"""<line x1="$c" y1="$c" x2="${c + x}" y2="${c + y}"/>""").mkString
+    s"""<svg width="$side" height="$side" viewBox="0 0 $side $side" aria-hidden="true">$lines</svg>"""

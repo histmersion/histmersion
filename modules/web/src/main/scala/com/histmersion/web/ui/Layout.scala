@@ -29,6 +29,8 @@ object Layout:
   val mapOptionsMinBelow: Px = Px(280)
   val windowCascadeSlots: Int  = 5
   val pickerMax: Int       = 15
+  /** The most dots a bubble no zoom parts is fanned out into around its spot (more: listed only). */
+  val spiderMax: Int       = 40
   val fitMaxZoom: Int      = 9
   /** Below this zoom a region or polity known only by a point (no boundary yet) is not labelled:
     * zoomed out, one name at one point would stand for a whole country ([[com.histmersion.web.PlaceGlyph]]). */
