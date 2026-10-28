@@ -279,11 +279,9 @@ object RunsView:
     TargetKind.parse(r.targetKind) match
       case Some(TargetKind.Article) => com.histmersion.web.ArticleLink(r.target, r.target)
       case Some(TargetKind.Goal) =>
-        button(typ := "button", cls := "link-btn", title := r.target, s"Goal: ${Wording.humanize(r.target)}",
-          onClick --> (_ => WindowManager.open(WindowKey.Goal(r.target))))
+        WinLink(WindowKey.Goal(r.target), title := r.target, s"Goal: ${Wording.humanize(r.target)}")
       case Some(TargetKind.Manager) =>
-        button(typ := "button", cls := "link-btn", title := r.target, Wording.manager(r.target),
-          onClick --> (_ => WindowManager.open(WindowKey.Manager(r.target))))
+        WinLink(WindowKey.Manager(r.target), title := r.target, Wording.manager(r.target))
       case _                        => SourceLink(r.target)
 
   private def row(r: RunInfo): HtmlElement =
@@ -294,8 +292,7 @@ object RunsView:
       div(
         cls := "job-main",
         div(cls := "job-subject",
-          button(typ := "button", cls := "link-btn", title := s"Open this run (${r.pipeline})", pipelineLabel(r.pipeline),
-            onClick --> (_ => WindowManager.open(WindowKey.Run(r.id)))),
+          WinLink(WindowKey.Run(r.id), title := s"Open this run (${r.pipeline})", pipelineLabel(r.pipeline)),
           " · ", target(r),
           Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" · $o"))),
         r.progress.filter(_.nonEmpty).map(pr => div(cls := "job-progress", pr)),
@@ -360,14 +357,12 @@ object RunsView:
         span(cls := "run-title", title := r.pipeline, s" ${pipelineLabel(r.pipeline)} · "), target(r),
         Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" ($o)"))),
       pausedFor(r).map(why => p(cls := "run-paused", pausedText(r, why),
-        Option.when(why == Agents.PauseReason.Allowance.wire)(span(" ", button(typ := "button", cls := "link-btn",
-          "models & allowances", onClick --> (_ => WindowManager.open(WindowKey.Models))))))),
+        Option.when(why == Agents.PauseReason.Allowance.wire)(span(" ", WinLink(WindowKey.Models, "models & allowances"))))),
       Option.when(r.isWaiting)(p(cls := "run-waiting",
         s"Waiting for a person to decide ${waitingFor(r).fold("its approval")(id => s"approval #$id")}; it goes on by itself once decided. ",
-        button(typ := "button", cls := "link-btn", "open the approvals",
-          onClick --> (_ => WindowManager.open(WindowKey.Approvals))))),
+        WinLink(WindowKey.Approvals, "open the approvals"))),
       r.goal.map(g => p(cls := "muted", "For the goal ",
-        button(typ := "button", cls := "link-btn", title := g, Wording.humanize(g), onClick --> (_ => WindowManager.open(WindowKey.Goal(g)))))),
+        WinLink(WindowKey.Goal(g), title := g, Wording.humanize(g)))),
       r.error.filter(e => e.nonEmpty && r.status != RunState.Paused.wire).map(e => p(cls := "job-error", e)),
       r.progress.filter(_.nonEmpty).map(pr => p(cls := "job-progress", pr)),
       dl(cls := "run-facts",

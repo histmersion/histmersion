@@ -28,10 +28,12 @@ object ArticlesTab:
     li(
       cls := "article-row",
       a(
-        href := "#",
+        href := Route.Article(art.slug).path,
         cls := "article-link",
-        onClick.preventDefault --> { _ =>
-          ArticleModal.openSlug(art.slug)
+        onClick --> { ev =>
+          if Router.plain(ev) then
+            ev.preventDefault()
+            ArticleModal.openSlug(art.slug)
         },
         div(cls := "article-title", art.title),
         div(

@@ -85,24 +85,6 @@ object FilterBar:
         cls := "frow frow-main",
         div(
           cls := "frow-filters",
-          // search box
-          div(
-            cls := "f f-q",
-            label(forId := "f-q", "Search"),
-            input(
-              typ := "search",
-              cls := "field",
-              idAttr := "f-q",
-              placeholder := "full text…",
-              autoFocus := true,
-              // controlled by UiState.q: "clear all", back/forward and a shared link all show up here
-              controlled(
-                value <-- UiState.q.signal.map(_.getOrElse("")),
-                onInput.mapToValue --> UiState.setSearch
-              ),
-              onKeyDown --> { e => if e.key == "Enter" then e.preventDefault() }
-            )
-          ),
           // place input
           div(
             cls := "f f-gazetteer",
@@ -138,8 +120,7 @@ object FilterBar:
               Option(dom.document.getElementById("f-q")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
             }
           )
-        ),
-        Toolbar.element
+        )
       ),
       // more filters row
       div(

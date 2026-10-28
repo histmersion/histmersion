@@ -144,8 +144,7 @@ object AboutView:
       child <-- about.signal.map {
         case None    => p(cls := "muted", "Loading…")
         case Some(a) => div(cls := "about-sections", sections(a).map(section))
-      },
-      MapRegionsView.panel
+      }
     )
 
   private def section(s: Section): HtmlElement =

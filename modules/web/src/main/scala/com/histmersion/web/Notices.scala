@@ -9,7 +9,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-/** The toolbar's notices ([[UiNotices]]): each watched window's count (open approvals, things to
+/** The lists' notices ([[UiNotices]]), shown in Research's side navigation: each watched list's count (open approvals, things to
   * acquire, the open backlog) and whether it has something NEW since it was last opened — its button
   * is bold until then.
   *
@@ -51,6 +51,10 @@ object Notices:
   // ── state ───────────────────────────────────────────────────────────────────────────────────────
 
   private val boards = Var(Map.empty[String, Counter])
+  private val glance = Var(Option.empty[UiNotices.AgentsGlance])
+
+  /** What the research agents are doing (none where the server runs no agents). */
+  def agents: Signal[Option[UiNotices.AgentsGlance]] = glance.signal.distinct
 
   def counter(b: Board): Signal[Option[Counter]] = boards.signal.map(_.get(b.wire)).distinct
 
@@ -65,6 +69,7 @@ object Notices:
 
   private def apply(cs: Counters): Unit =
     boards.set(cs.boards.map(c => c.key -> c).toMap)
+    glance.set(cs.agents)
 
   /** Re-read the counters; `after` sees them once they are in. */
   def refresh(after: Map[String, Counter] => Unit = _ => ()): Unit =
@@ -110,6 +115,7 @@ object Notices:
       val every = math.max(5, ui.countersPollSeconds) * 1000
       dom.window.setInterval(() => if !dom.document.hidden then refresh(), every)
       dom.document.addEventListener("visibilitychange", (_: dom.Event) => if !dom.document.hidden then refresh())
-      UiState.open.signal.combineWith(boards.signal).foreach { (open, cs) =>
-        toMark(open, cs).foreach((b, at) => mark(b, at))
+      // a list is read while its page is shown, or its window open
+      UiState.open.signal.combineWith(Router.route, boards.signal).foreach { (open, page, cs) =>
+        toMark(open ++ Route.board(page).toList, cs).foreach((b, at) => mark(b, at))
       }(using unsafeWindowOwner)

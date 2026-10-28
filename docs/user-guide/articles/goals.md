@@ -22,7 +22,7 @@ work through.
 
 ## Creating a goal
 
-On the web page, open **research goals** in the toolbar and use **New research area**: a title,
+On the web page, open **Research › Goals** and use **New research area**: a title,
 optional notes and tags, and three options:
 
 | option | creates |

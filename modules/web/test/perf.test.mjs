@@ -235,18 +235,19 @@ test('every cache the page keeps is bounded', async () => {
   });
 });
 
-test('a closed window stops polling, and its page reloaded in place keeps one set of handlers', async () => {
+test('a page left stops polling, and a window\'s page reloaded in place keeps one set of handlers', async () => {
   await withPerfPage(async ({ page, cdp }) => {
     await page.waitForFunction(() => !!window.__testMap);
     let polls = 0;
     page.on('request', r => { if (/\/api\/jobs(\?|$)/.test(new URL(r.url()).pathname + new URL(r.url()).search)) polls++; });
-    await page.locator('.fbar .tool-btns button[title="Jobs"]:visible').click();
+    // the jobs are Research › Activity › Background jobs: shown, then left for Explore
+    await page.goto(new URL('/research/activity/jobs', baseURL).href);
     await page.locator('.jobs-pane').waitFor();
-    await page.keyboard.press('Escape');
-    await page.waitForFunction(() => !document.querySelector('.wm-window'));
+    await page.locator('.places a[data-nav="explore"]').click();
+    await page.waitForFunction(() => !document.querySelector('.jobs-pane'));
     const atClose = polls;
     await page.waitForTimeout(3500);   // past the first poll's delay (1 s) and its backoff
-    assert.equal(polls, atClose, 'no poll after the window closed');
+    assert.equal(polls, atClose, 'no poll after the page was left');
 
     // a source window whose page links to itself: following the link reloads the content in place
     await page.locator('#list [data-ck]').first().click();

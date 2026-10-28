@@ -197,8 +197,7 @@ object ManagersView:
       child.maybe <-- RunsView.enabled.signal.map(on => Option.when(on)(div(cls := "btn-group",
         buttons.map((kind, icon, label, tip) => WriteButton(icon, label, tip, () => go(kind)))))),
       child.maybe <-- note.signal.map(_.map((n, id) => span(cls := "muted wm-note", n,
-        Option.when(id.nonEmpty)(button(typ := "button", cls := "link-btn", " open the manager",
-          onClick --> (_ => WindowManager.open(WindowKey.Manager(id)))))))))
+        Option.when(id.nonEmpty)(WinLink(WindowKey.Manager(id), " open the manager"))))))
 
   /** The article window: Review (the review manager, first in line), Extend (compile the new sources of
     * its filter into it, then review it) and Enrich (the sources it cites that are not enriched yet). */
@@ -248,7 +247,7 @@ object ManagersView:
     def pinButton(g: Autopilot.FocusGoal) =
       val (verb, tip) = if g.pinned then ("unpin", "Let the focus choose again") else ("pin", "Keep this goal active (it takes a slot now)")
       button(typ := "button", cls := "btn btn--sm", Wording.capitalize(verb), title := tip, onClick --> (_ => go(s"$verb ${g.slug}")(ApiClient.setFocus(verb, Some(g.slug)))))
-    def goalLink(slug: String) = button(typ := "button", cls := "link-btn", slug, onClick --> (_ => WindowManager.open(WindowKey.Goal(slug))))
+    def goalLink(slug: String) = WinLink(WindowKey.Goal(slug), slug)
     div(cls := "autopilot-focus",
       div(cls := "toolbar",
         div(cls := "btn-group", span(cls := "autopilot-state", focusHead(f))),
@@ -342,8 +341,7 @@ object ManagersView:
               GoalsView.badge(g.status),
               div(cls := "job-main",
                 div(cls := "job-subject",
-                  button(typ := "button", cls := "link-btn", title := g.slug, Option(g.title).filter(_.trim.nonEmpty).getOrElse(Wording.humanize(g.slug)),
-                    onClick --> (_ => WindowManager.open(WindowKey.Goal(g.slug))))),
+                  WinLink(WindowKey.Goal(g.slug), title := g.slug, Option(g.title).filter(_.trim.nonEmpty).getOrElse(Wording.humanize(g.slug)))),
                 div(cls := "job-meta muted", goalLine(g)),
                 Option.when(g.managers.nonEmpty)(div(cls := "muted", g.managers.map(m => s"${Wording.manager(m.id).takeWhile(_ != '·').trim} ${m.state}").mkString(" · "))))))))
       })
@@ -443,7 +441,7 @@ object ManagersView:
             li(cls := "job-row",
               span(cls := s"job-state state-${x.code}", title := x.code, Wording.humanize(x.code)),
               div(cls := "job-main",
-                div(cls := "job-subject", button(typ := "button", cls := "link-btn", title := x.slug, Wording.humanize(x.slug), onClick --> (_ => WindowManager.open(WindowKey.Goal(x.slug)))),
+                div(cls := "job-subject", WinLink(WindowKey.Goal(x.slug), title := x.slug, Wording.humanize(x.slug)),
                   span(cls := "muted", x.idleDays.fold(" · never progressed")(d => s" · idle $d d"))),
                 div(cls := "job-progress", x.why),
                 div(cls := "muted", s"unblock: ${x.action}"))))))
@@ -479,7 +477,7 @@ object ManagersView:
               span(cls := s"job-state state-${w.code}", title := w.code, waitLabel(w.code)),
               div(cls := "job-main",
                 div(cls := "job-subject",
-                  button(typ := "button", cls := "link-btn", w.target, onClick --> (_ => WindowManager.open(WindowKey.Manager(w.manager)))),
+                  WinLink(WindowKey.Manager(w.manager), w.target),
                   span(cls := "muted", s" · ${jobTypeLabel(w.jobType)} · ${Wording.manager(w.manager)}" + w.goal.fold("")(g => s" · goal ${Wording.humanize(g)}") +
                     (if w.position > 0 then s" · #${w.position} in line" else ""))),
                 div(cls := "job-progress", w.why),
@@ -516,7 +514,7 @@ object ManagersView:
             stateBadge(m),
             div(cls := "job-main",
               div(cls := "job-subject",
-                button(typ := "button", cls := "link-btn", title := m.id, Wording.manager(m.id), onClick --> (_ => WindowManager.open(WindowKey.Manager(m.id))))),
+                WinLink(WindowKey.Manager(m.id), title := m.id, Wording.manager(m.id))),
               m.statusNote.filter(_.nonEmpty).map(n => div(cls := "job-progress", n)),
               div(cls := "job-meta muted", counts(m.counts), s" · ${Plural.count(m.inFlight, "run")} in flight",
                 s" · ${ManagersMarkdown.today(m)}"),
@@ -652,8 +650,7 @@ object ManagersView:
         child <-- events.signal.map(es =>
           if es.isEmpty then p(cls := "muted", "No events yet.")
           else ul(cls := "manager-events", es.map(e => li(span(cls := "muted", s"${e.at} · "), strong(e.kind), s" ${e.text}",
-            e.runId.map(r => span(" ", button(typ := "button", cls := "link-btn", s"run ${r.take(8)}",
-              onClick --> (_ => WindowManager.open(WindowKey.Run(r)))))))))),
+            e.runId.map(r => span(" ", WinLink(WindowKey.Run(r), s"run ${r.take(8)}"))))))),
         // newest first with a `before` cursor: the list-paging branch's "Show older"
         ListPaging.olderButton(older.signal.map(_.isDefined), loadingOlder.signal, () => showOlder())),
       child <-- detail.signal.map(_.map(_.manager)).map {
@@ -708,7 +705,7 @@ object ManagersView:
           span(cls := "muted", s" · priority ${i.priority} · ${Plural.count(i.attempts, "run")}" +
             (if i.failures > 0 then s", ${i.failures} failed" else ""))),
         i.run.map(r => div(cls := "job-progress",
-          button(typ := "button", cls := "link-btn", s"run ${r.id.take(8)} ${r.status}", onClick --> (_ => WindowManager.open(WindowKey.Run(r.id)))),
+          WinLink(WindowKey.Run(r.id), s"run ${r.id.take(8)} ${r.status}"),
           r.progress.filter(_.nonEmpty).map(p => span(cls := "muted", s" · $p")))),
         i.hold.map(h => div(cls := "muted", "held" + h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") +
           h.focus.fold("")(g => s" for the focus (goal $g; pin it in the managers window to run it now)") +

@@ -78,7 +78,7 @@ try {
   }
   // the gestures on top of a whole range at a world view and at a regional one
   for (const [zoom, at] of [[3, [30, 20]], [6, [41.9, 12.5]]]) {
-    await page.goto(new URL('/#from=-3000&to=2000', baseURL).href);
+    await page.goto(new URL('/explore#from=-3000&to=2000', baseURL).href);
     await page.reload();
     await paths.valueOf(page, () => !!window.__testMap);
     await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, zoom]);

@@ -3,20 +3,23 @@
 // the memory compared with where it stood after the first rounds (when every lazy part has loaded
 // once and every cache has had its first fill). A leak is what keeps growing with the rounds.
 //
-// Read-only: the windows it opens are About, Jobs and a source's page (GET only); nothing it clicks
-// writes.
+// Read-only: the pages it shows are About and the jobs, the window a source's page (GET only); nothing it
+// clicks writes.
 
 import { memory, quiet } from './perf-lib.mjs';
 
 /** One round: every interaction once. */
 async function round(page, i) {
-  // windows: open and close (a click on the toolbar, Escape to close)
-  for (const title of ['About', 'Jobs']) {
-    await page.locator(`.fbar .tool-btns button[title="${title}"]:visible`).click();
-    await page.locator('.wm-window').first().waitFor();
-    await page.keyboard.press('Escape');
-    await page.waitForFunction(() => !document.querySelector('.wm-window'));
-  }
+  // pages: Settings › About and Research › Activity › Background jobs shown, then back to the map
+  await page.locator('.places a[data-nav="settings"]').click();
+  await page.locator('.side-nav a', { hasText: 'About Histmersion' }).click();
+  await page.locator('.about-pane').waitFor();
+  await page.locator('.places a[data-nav="research"]').click();
+  await page.locator('.side-nav a', { hasText: 'Activity' }).click();
+  await page.locator('.page-tabs a', { hasText: 'Background jobs' }).click();
+  await page.locator('.jobs-pane').waitFor();
+  await page.locator('.places a[data-nav="explore"]').click();
+  await page.waitForFunction(() => !document.querySelector('.jobs-pane'));
   // a source's window, its page followed to itself (reloaded in place) where it links to itself
   const src = page.locator('#list .hit [data-ck]').first();
   if (await src.count()) {

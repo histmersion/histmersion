@@ -213,18 +213,95 @@ button, input, select, textarea { font-family:inherit; }
 code, kbd, pre, samp { font-family:var(--font-mono); }
 :focus-visible { outline-color:var(--accent); }
 #app { height:100%; }
-.histmersion-app { display:grid; grid-template-columns: 1fr var(--sidebar-w, 360px); grid-template-rows: auto auto auto 1fr; height:100%; }
+.histmersion-app { display:grid; grid-template-columns: 1fr var(--sidebar-w, 360px); grid-template-rows: auto auto auto auto 1fr; height:100%; }
 .muted { color:var(--muted); font-size:var(--fs-xs); }
-#map { grid-column:1; grid-row:4; min-height:0; position:relative; z-index:0; } /* its panes (z-index up to 1000) stay inside it, under the timeline's menus */
-.sidebar { grid-column:2; grid-row:1/5; background:var(--panel); border-left:1px solid var(--line); overflow-y:auto; position:relative; }
+#map { grid-column:1; grid-row:5; min-height:0; position:relative; z-index:0; } /* its panes (z-index up to 1000) stay inside it, under the timeline's menus */
+.sidebar { grid-column:2; grid-row:2/6; background:var(--panel); border-left:1px solid var(--line); overflow-y:auto; position:relative; }
 .sidebar-resize { position:absolute; left:-3px; top:0; bottom:0; width:6px; cursor:col-resize; z-index:10; }
 .sidebar-resize:hover { background:var(--accent); opacity:.3; }
-.fbar { grid-column:1; grid-row:1; background:var(--panel); border-bottom:1px solid var(--line); }
-.tl { grid-column:1; grid-row:2; }
-.viewport-toggle { grid-column:1; grid-row:3; display:flex; align-items:center; padding:var(--bar-py) var(--bar-px);
+.fbar { grid-column:1; grid-row:2; background:var(--panel); border-bottom:1px solid var(--line); }
+.tl { grid-column:1; grid-row:3; }
+.viewport-toggle { grid-column:1; grid-row:4; display:flex; align-items:center; padding:var(--bar-py) var(--bar-px);
   background:var(--panel); border-bottom:1px solid var(--line); }
 .layer-toggles { margin-left:auto; }
 #status { grid-column:1/3; position:fixed; bottom:8px; left:16px; font-size:var(--fs-xs); color:var(--muted); z-index:500; }
+
+/* ── the top bar: the logo's place, the four places, the search, the agents, the theme, help ────────── */
+.top-bar { grid-column:1 / -1; grid-row:1; display:flex; align-items:center; gap:var(--space-6); min-height:52px; min-width:0;
+  padding:0 var(--space-6); background:var(--panel); border-bottom:1px solid var(--line); position:relative; z-index:30;
+  font-size:var(--fs-md); line-height:1.45; }
+/* on a source's or an article's own page, the bar spans the page above the text */
+.article-page > .nav.has-top-bar { margin:-28px -20px 18px; }
+.article-page .top-bar a.place-tab { color:var(--ink2); }
+.article-page .top-bar a.place-tab.on, .article-page .top-bar a.brand { color:var(--ink); }
+.brand { display:flex; align-items:center; gap:var(--space-4); flex:none; color:var(--ink); font-weight:var(--fw-strong);
+  font-size:var(--fs-lg); text-decoration:none; }
+.brand:hover { text-decoration:none; }
+/* the logo's slot, until there is a logo */
+.brand-mark { display:grid; place-items:center; width:26px; height:26px; border:1.5px dashed var(--line2);
+  border-radius:var(--radius-sm); font-family:var(--font-read); font-size:var(--fs-md); color:var(--ink3); }
+.places { display:flex; align-self:stretch; gap:var(--space-1); flex:none; }
+.place-tab { display:flex; align-items:center; padding:0 14px; color:var(--ink2); font-weight:var(--fw-strong);
+  font-size:var(--fs-md); text-decoration:none; border-top:3px solid transparent; border-bottom:3px solid transparent; }
+.place-tab:hover { color:var(--ink); background:var(--sunk); text-decoration:none; }
+.place-tab.on { color:var(--ink); border-bottom-color:var(--accent); }
+.top-search { position:relative; flex:1 1 auto; min-width:0; max-width:520px; }
+.top-search-field { width:100%; padding-left:34px; padding-right:32px; background:var(--bg); }
+.top-search-icon { position:absolute; left:10px; top:50%; translate:0 -50%; width:16px; height:16px; color:var(--ink3);
+  pointer-events:none; }
+.top-search .kbd { position:absolute; right:8px; top:50%; translate:0 -50%; padding:0 5px; line-height:18px;
+  font-size:var(--fs-xs); color:var(--ink3); border:1px solid var(--line2); border-radius:var(--radius-sm); pointer-events:none; }
+.top-search-field:focus ~ .kbd, .top-search-field:not(:placeholder-shown) ~ .kbd { display:none; }
+.top-status { display:flex; align-items:center; gap:var(--space-4); flex:none; margin-left:auto; }
+.pill { display:inline-flex; align-items:center; gap:var(--space-3); min-height:30px; padding:0 var(--space-5); white-space:nowrap;
+  border:1px solid var(--line2); border-radius:var(--radius-pill); background:var(--panel); color:var(--ink);
+  font-weight:var(--fw-strong); font-size:var(--fs-sm); text-decoration:none; }
+.pill:hover { background:var(--hover-bg); text-decoration:none; }
+.pill--attn { border-color:var(--attn); color:var(--attn); background:var(--attn-soft); }
+.pill--attn:hover { background:var(--attn-soft); text-decoration:underline; }
+/* the agents' state: a filled dot while runs run, a ring while paused — the shape says it, not only the colour */
+.pill-dot { flex:none; width:8px; height:8px; border-radius:50%; background:var(--ink3); }
+.agent-pill.is-working .pill-dot { background:var(--ok); }
+.agent-pill.is-paused .pill-dot { background:none; border:2px solid var(--ink3); }
+.pill-short, .pill-count { display:none; }
+
+/* ── the pages over Explore: Library, Research, Settings, an item ──────────────────────────────────── */
+/* Explore keeps its layout under them (the map is neither resized nor reloaded), hidden */
+.explore-place { display:contents; }
+.explore-place.is-away { visibility:hidden; }
+.place-page { grid-column:1 / -1; grid-row:2 / -1; position:relative; z-index:20; min-height:0; overflow:hidden;
+  background:var(--bg); }
+.page-layout { display:flex; height:100%; min-height:0; }
+.side-nav { flex:none; display:flex; flex-direction:column; gap:var(--space-1); width:232px; padding:var(--space-5);
+  overflow-y:auto; background:var(--panel); border-right:1px solid var(--line); }
+.side-link { display:flex; justify-content:space-between; align-items:center; gap:var(--space-4); padding:7px 10px;
+  border-radius:var(--radius-sm); color:var(--ink); font-weight:var(--fw-strong); font-size:var(--fs-md); text-decoration:none; }
+.side-link:hover { background:var(--sunk); text-decoration:none; }
+.side-link.on { background:var(--accent-soft); }
+/* a list with something new since it was last shown: a dot after its name */
+.side-link.has-news .side-label::after { content:""; display:inline-block; width:7px; height:7px; margin-left:var(--space-3);
+  border-radius:50%; background:var(--accent); vertical-align:middle; }
+.side-count { color:var(--ink3); font-weight:var(--fw-normal); font-size:var(--fs-sm); }
+.side-count--attn { padding:0 7px; border-radius:var(--radius-pill); background:var(--attn); color:var(--panel);
+  font-weight:var(--fw-strong); }
+.side-group { margin:var(--space-5) 10px var(--space-1); color:var(--ink3); font-size:var(--fs-xs); font-weight:var(--fw-strong); }
+.side-group:first-child { margin-top:0; }
+.side-note { margin:var(--space-5) 10px var(--space-2); }
+.side-action { margin-top:var(--space-4); }
+.page-main { flex:1 1 auto; min-width:0; }
+.page-single .page-main { max-width:900px; margin:0 auto; }
+.page-title { margin:0 0 var(--space-5); font-size:var(--fs-2xl); font-weight:var(--fw-strong); overflow-wrap:anywhere; }
+.page-tabs { display:flex; gap:var(--space-1); margin-bottom:var(--space-5); border-bottom:1px solid var(--line); }
+.page-tab { padding:var(--space-4) var(--space-5); color:var(--ink2); font-weight:var(--fw-strong); font-size:var(--fs-sm);
+  text-decoration:none; border-bottom:3px solid transparent; }
+.page-tab:hover { color:var(--ink); text-decoration:none; }
+.page-tab.on { color:var(--ink); border-bottom-color:var(--accent); }
+.item-head { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-5); margin-bottom:var(--space-5); }
+.item-head .page-title { flex:1 1 auto; min-width:0; margin:0; }
+.card-page .card-page-card { position:static; max-width:640px; box-shadow:none; pointer-events:auto; }
+.library-list ul { margin:0; padding:0; list-style:none; }
+/* a list item a link pointed at (`?item=`) */
+.queue-item.is-target { outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--radius-sm); }
 .count { padding:10px 14px; color:var(--muted); font-size:var(--fs-xs); border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--panel); }
 .hit { padding:10px 14px; border-bottom:1px solid var(--line); cursor:pointer; }
 .hit:hover { background:var(--hover-bg); }
@@ -350,7 +427,6 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .fbar { display:flex; flex-wrap:wrap; gap:var(--space-3) var(--space-6); align-items:flex-start; padding:var(--bar-py) var(--bar-px); }
 .fbar .f { display:flex; align-items:center; gap:var(--space-3); min-width:0; }
 .fbar label { color:var(--muted); font-size:var(--fs-control); white-space:nowrap; }
-.fbar #f-q { width:190px; }
 .yr-label { font-size:var(--fs-xs); color:var(--muted); font-variant-numeric:tabular-nums; min-width:30px; text-align:center; }
 .year-range { position:relative; width:160px; height:20px; cursor:pointer; touch-action:none; user-select:none; }
 .year-range-track { position:absolute; left:0; right:0; height:4px; background:var(--line2); border-radius:var(--radius-sm); top:8px; }
@@ -932,25 +1008,16 @@ a.chip:hover { border-color:var(--accent); }
 .graph-stage .graph-canvas { position:absolute; inset:0; }
 .graph-info { flex:none; padding:6px 10px; font-size:var(--fs-xs); border-top:1px solid var(--line); min-height:18px; }
 
-/* ── tools: the toolbar, window actions, the tool windows' forms (jobs, upload, edit, key) ────── */
-.tool-btns { margin-left:auto; }
-/* the theme button: its icon says the choice (the "system" icon's right half filled); the word only where
-   buttons carry words (the phone's drawer) */
+/* ── tools: window actions, the tool windows' forms (jobs, upload, edit, key) ─────────────────────── */
+/* the theme button: its icon says the choice (the "system" icon's right half filled); its word is its label */
 .theme-btn[data-theme-choice="system"] .icon path:last-child { fill:currentColor; }
 .theme-btn .theme-label { display:none; }
-[data-layout="narrow"] .theme-btn .theme-label { display:inline; }
-[data-layout="narrow"] .theme-btn { padding:0 var(--control-px); }
-.tool-btns .btn.key-held { border-color:var(--ok); color:var(--ok); }
-/* the toolbar's notices (Notices): a window with something new since it was last opened is bold until
-   it is opened; what waits on someone (open approvals, things to acquire, the open backlog) is counted */
-.tool-btns .btn.has-news { font-weight:var(--fw-strong); color:var(--ink); }
-.tool-btns .btn.has-news .icon { stroke-width:2.4; }
+/* a count on a button (a filter chip's matches) */
 .btn-count { min-width:18px; padding:0 5px; border-radius:var(--radius-pill); background:var(--attn-soft); color:var(--attn);
   font-size:var(--fs-xs); font-weight:var(--fw-strong); line-height:16px; text-align:center; font-variant-numeric:tabular-nums; }
 .btn--toggle[aria-pressed="true"] .btn-count { background:var(--on-accent); color:var(--accent); }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%);
   white-space:nowrap; border:0; }
-.tool-btns .btn.key-held[aria-pressed="true"] { background:var(--ok); border-color:var(--ok); color:var(--panel); }
 .wm-actions { display:flex; flex-wrap:wrap; gap:var(--gap-inline); padding:var(--space-3) var(--space-5); border-bottom:1px solid var(--line); background:var(--panel); flex:none; }
 .btn.locked { border-style:dashed; }
 .tool-pane { font-size:var(--fs-sm); }
@@ -1180,7 +1247,7 @@ img.is-zoomable { cursor:zoom-in; }
 
    Sizes follow the screen: every length below is one of these tokens or derived from them. vmin, so a
    phone held sideways is sized by its short side. */
-.mobile-bar, .drawer-head, .drawer-tools, .drawer-scrim, .edge-grab, .sheet-handle, .tl-detail-btn { display:none; }
+.mobile-bar, .drawer-head, .drawer-scrim, .edge-grab, .sheet-handle, .tl-detail-btn { display:none; }
 .length-probe { position:absolute; visibility:hidden; width:0; height:var(--probe); }
 
 [data-layout="narrow"] {
@@ -1192,7 +1259,8 @@ img.is-zoomable { cursor:zoom-in; }
   --drawer-w:min(86vw, 380px);
   --handle-h:calc(var(--tap) * .5);
   --sheet-peek:calc(var(--handle-h) + var(--tap) + var(--pad));   /* handle + the title filter */
-  --sheet-full-gap:var(--bar-h);                   /* a fully pulled-up list leaves the bar showing */
+  --top-h:calc(var(--tap) + 1px);                  /* the top bar: one row of places */
+  --sheet-full-gap:calc(var(--top-h) + var(--bar-h));   /* a fully pulled-up list leaves the bars showing */
   /* the control tokens, at touch size: every .btn and .field follows */
   --control-h:var(--tap); --control-h-sm:var(--tap); --fs-control:var(--fs); --fs-icon:calc(var(--tap) * .42);
   --control-px:var(--pad); --control-px-sm:calc(var(--pad) * .8);
@@ -1201,11 +1269,35 @@ img.is-zoomable { cursor:zoom-in; }
 [data-layout="narrow"] body { overflow:hidden; font-size:var(--fs); }
 /* minmax(0,…): a plain 1fr column never shrinks below its content, and the bar's search box would
    then widen the page past the screen */
-[data-layout="narrow"] .histmersion-app { grid-template-columns:minmax(0, 1fr); grid-template-rows:auto auto 1fr; height:100dvh; }
+[data-layout="narrow"] .histmersion-app { grid-template-columns:minmax(0, 1fr); grid-template-rows:auto auto auto 1fr; height:100dvh; }
 [data-layout="narrow"] input, [data-layout="narrow"] select, [data-layout="narrow"] textarea { font-size:max(16px, var(--fs)); } /* ≥16px: no zoom on focus */
 
+/* ── the top bar, narrow: the four places keep their labels; the search moves to the app bar on Explore,
+   the agents' state to Research, and the notice of decisions shortens ─────────────────────────────── */
+[data-layout="narrow"] .top-bar { gap:var(--pad); min-height:var(--top-h); padding:0 var(--pad); }
+[data-layout="narrow"] .brand-name, [data-layout="narrow"] .agent-pill, [data-layout="narrow"] .top-search .kbd { display:none; }
+[data-layout="narrow"] .brand-mark { width:28px; height:28px; }
+[data-layout="narrow"] .place-tab { padding:0 var(--space-5); }
+[data-layout="narrow"] .histmersion-app[data-showing="explore"] .top-search { display:none; }
+[data-layout="narrow"] .pill-long { display:none; }
+[data-layout="narrow"] .pill-short { display:inline; }
+[data-layout="narrow"] .pill { min-height:calc(var(--tap) * .75); }
+/* a phone: the places, and the count of decisions — the theme and help are in Settings' reach */
+[data-layout="narrow"]:not([data-tablet]) .top-bar { gap:var(--space-3); }
+[data-layout="narrow"]:not([data-tablet]) .place-tab { padding:0 var(--space-3); font-size:var(--fs-sm); }
+[data-layout="narrow"]:not([data-tablet]) :is(.top-search, .help-link, .top-bar .theme-btn, .pill-short) { display:none; }
+[data-layout="narrow"]:not([data-tablet]) .pill-count { display:inline; }
+[data-layout="narrow"]:not([data-tablet]) .pill { padding:0 var(--space-4); }
+/* the pages: their sections a strip of labelled links across the top */
+[data-layout="narrow"] .page-layout { flex-direction:column; }
+[data-layout="narrow"] .side-nav { flex-direction:row; flex-wrap:nowrap; width:auto; padding:var(--space-3) var(--pad);
+  overflow-x:auto; overflow-y:hidden; border-right:none; border-bottom:1px solid var(--line); }
+[data-layout="narrow"] .side-link { flex:none; min-height:var(--control-h); }
+[data-layout="narrow"] :is(.side-group, .side-note, .side-action) { display:none; }
+[data-layout="narrow"] .page-main { padding:var(--pad); }
+
 /* ── the app bar ────────────────────────────────────────────────────────────────────────────────── */
-[data-layout="narrow"] .mobile-bar { display:flex; grid-row:1; grid-column:1; align-items:center; gap:var(--pad);
+[data-layout="narrow"] .mobile-bar { display:flex; grid-row:2; grid-column:1; align-items:center; gap:var(--pad);
   padding:var(--pad); background:var(--panel); border-bottom:1px solid var(--line); z-index:800; }
 /* the bar's buttons are .btn--toggle, its search a .field; only the glyph size and the layout are theirs */
 [data-layout="narrow"] .mb-btn { position:relative; flex:none; }
@@ -1220,7 +1312,7 @@ img.is-zoomable { cursor:zoom-in; }
   background:var(--accent); color:var(--on-accent); font-size:var(--fs-xs); font-weight:var(--fw-strong); line-height:18px; text-align:center; }
 
 /* ── the timeline: folded under the bar until ⏱ ─────────────────────────────────────────────────── */
-[data-layout="narrow"] .tl { grid-row:2; display:none; }
+[data-layout="narrow"] .tl { grid-row:3; display:none; }
 [data-layout="narrow"] .histmersion-app.timeline-open .tl { display:block; }
 [data-layout="narrow"] .tl-overview-wrap, [data-layout="narrow"] .tl-detail-wrap { padding:0 var(--pad); }
 [data-layout="narrow"] .tl-overview-svg { height:clamp(36px, 7vmin, 56px); }
@@ -1235,7 +1327,7 @@ img.is-zoomable { cursor:zoom-in; }
 
 /* ── the map ────────────────────────────────────────────────────────────────────────────────────── */
 /* its panes and controls (z-index up to 1000) stay inside it, under the sheet, the bar and the drawers */
-[data-layout="narrow"] #map { grid-row:3; position:relative; z-index:0; }
+[data-layout="narrow"] #map { grid-row:4; position:relative; z-index:0; }
 [data-layout="narrow"] .maplibregl-ctrl-bottom-left, [data-layout="narrow"] .maplibregl-ctrl-bottom-right { bottom:var(--sheet-peek); }
 [data-layout="narrow"] .maplibregl-ctrl-group button { width:var(--tap); height:var(--tap); }
 [data-layout="narrow"] .hd-legend { font-size:var(--fs-small); }
@@ -1259,10 +1351,10 @@ img.is-zoomable { cursor:zoom-in; }
 [data-layout="narrow"] .hd-legend-body, [data-layout="narrow"] .map-foot-body {
   max-height:calc(var(--map-h, 100dvh) - var(--sheet-peek) - var(--map-gutter) - var(--space-3) * 2 - var(--control-h-sm));
   overflow-y:auto; }
-[data-layout="narrow"] #status { top:calc(var(--bar-h) + 4px); bottom:auto; right:var(--pad); left:auto; }
+[data-layout="narrow"] #status { top:calc(var(--top-h) + var(--bar-h) + 4px); bottom:auto; right:var(--pad); left:auto; }
 
 /* the strips along the map's edges that catch a swipe in (so the map does not pan instead) */
-[data-layout="narrow"] .edge-grab { display:block; position:fixed; top:var(--bar-h); bottom:var(--sheet-peek); width:14px;
+[data-layout="narrow"] .edge-grab { display:block; position:fixed; top:calc(var(--top-h) + var(--bar-h)); bottom:var(--sheet-peek); width:14px;
   z-index:650; touch-action:none; }
 [data-layout="narrow"] .edge-left { left:0; }
 [data-layout="narrow"] .edge-right { right:0; }
@@ -1282,15 +1374,13 @@ img.is-zoomable { cursor:zoom-in; }
 [data-layout="narrow"] .drawer-head { display:flex; align-items:center; justify-content:space-between; position:sticky; top:0;
   z-index:2; min-height:var(--bar-h); background:var(--panel); border-bottom:1px solid var(--line); }
 [data-layout="narrow"] .drawer-title { font-size:calc(var(--fs) * 1.1); font-weight:var(--fw-strong); }
-[data-layout="narrow"] .drawer-subtitle { color:var(--muted); font-size:var(--fs-small); font-weight:var(--fw-strong);
-  margin-top:var(--pad); }
 
 /* the filters drawer: every filter, labelled, one per line (the search is in the bar) */
 [data-layout="narrow"] .fbar .frow, [data-layout="narrow"] .fbar .frow-filters { flex-direction:column; flex-wrap:nowrap;
   align-items:stretch; gap:var(--pad); }
 [data-layout="narrow"] .fbar .f { flex-direction:column; align-items:stretch; gap:4px; }
 [data-layout="narrow"] .fbar label { font-size:var(--fs-small); }
-[data-layout="narrow"] .fbar .f-q, [data-layout="narrow"] .fbar .f-more, [data-layout="narrow"] .fbar .tool-btns { display:none; }
+[data-layout="narrow"] .fbar .f-more { display:none; }
 [data-layout="narrow"] .frow-more { border-top:none; padding-top:0; }
 [data-layout="narrow"] .fbar .field { width:100%; }
 [data-layout="narrow"] .fbar > * { flex:none; }
@@ -1313,7 +1403,6 @@ img.is-zoomable { cursor:zoom-in; }
   padding-top:var(--gap-group); border-top:1px solid var(--line); }
 [data-layout="narrow"] .viewport-toggle .btn { justify-content:flex-start; gap:var(--pad); }
 [data-layout="narrow"] .viewport-toggle .icon { width:calc(var(--tap) * .4); height:calc(var(--tap) * .4); }
-[data-layout="narrow"] .drawer-tools { display:flex; flex-direction:column; gap:var(--gap-group); }
 
 /* ── the list: a bottom sheet over the map ──────────────────────────────────────────────────────── */
 [data-layout="narrow"] .sidebar { position:fixed; left:0; right:0; bottom:0; z-index:700;
@@ -1416,7 +1505,7 @@ img.is-zoomable { cursor:zoom-in; }
 .media-credit { font-size:var(--fs-xs); color:var(--muted); }
 [data-layout="narrow"] .cite-tooltip.place-tip { display:block; }   /* a tap on a place shows its card */
 .map-place-chips { display:none; }
-[data-layout="narrow"] .map-place-chips { display:flex; flex-wrap:wrap; gap:4px; grid-row:3; grid-column:1;
+[data-layout="narrow"] .map-place-chips { display:flex; flex-wrap:wrap; gap:4px; grid-row:4; grid-column:1;
   align-self:start; justify-self:end; position:relative; z-index:500; margin:var(--pad); max-width:calc(100% - 4 * var(--tap)); }
 [data-layout="narrow"] .map-place-chips.is-hidden { display:none; }
 [data-layout="narrow"] .map-place-chips .chip { background:var(--panel); border:1px solid var(--place-pick);

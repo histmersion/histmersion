@@ -20,7 +20,7 @@ which every sentence points back to its source.
 ## What you see
 
 <figure markdown="span">
-  ![The web page: the toolbar and filters at the top left, the timeline under them, the map below, and the list of sources on the right](../assets/screenshots/home-light.png){ loading=lazy }
+  ![The web page: the top bar with the four places and the search, the filters at the top left, the timeline under them, the map below, and the list of sources on the right](../assets/screenshots/home-light.png){ loading=lazy }
   <figcaption>The four parts of the page: filters and timeline at the top, the map, the list on the
   right — and windows, which open on top of the map.</figcaption>
 </figure>

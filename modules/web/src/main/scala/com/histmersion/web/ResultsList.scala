@@ -213,7 +213,7 @@ object ResultsList:
       }
     }
 
-  private def hitRow(h: Hit): HtmlElement =
+  private[web] def hitRow(h: Hit): HtmlElement =
     val src = h.source
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
     val meta = List(

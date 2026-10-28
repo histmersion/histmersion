@@ -504,9 +504,15 @@ object UiState:
     params.toString
 
   private def writeHash(push: Boolean): Unit =
+    if mirrorHash then navigate(window.location.pathname + window.location.search, push)
+
+  /** Go to another page of the web UI (`pathAndSearch`, e.g. `/research/backlog?item=3`): the address
+    * changes, the hash state goes along (the filters, the open windows), and with `push` it is a step in
+    * the history that Back undoes. */
+  def navigate(pathAndSearch: String, push: Boolean): Unit =
     if mirrorHash then
       val qs  = hashString
-      val url = if qs.nonEmpty then "#" + qs else window.location.pathname + window.location.search
+      val url = pathAndSearch + (if qs.nonEmpty then "#" + qs else "")
       if push then
         seq = { high += 1; high }
         window.history.pushState(js.Dynamic.literal(histmersionSeq = seq), "", url)

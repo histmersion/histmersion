@@ -42,7 +42,7 @@ for (const style of ['readable', 'physical']) {
         localStorage.setItem('histmersion.ui.sources', '[]');
         localStorage.setItem('histmersion.ui.areaPick', '["latest"]');
       }, style);
-      await page.goto(new URL('/#from=-3000&to=1500', baseURL).href);
+      await page.goto(new URL('/explore#from=-3000&to=1500', baseURL).href);
       await page.reload();
       await page.waitForFunction(() => !!window.__testMap && !window.__testMap.isMoving(), null, { timeout: 30000 });
       await page.evaluate(() => window.__testMap.setView([37.9, 25.4], 7));
