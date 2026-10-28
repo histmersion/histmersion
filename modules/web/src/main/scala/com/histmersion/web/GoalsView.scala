@@ -118,8 +118,7 @@ object GoalsView:
         else div(legend, ul(cls := "goal-tree", tree(gs).map((g, depth) =>
           li(cls := "goal-row", styleAttr := s"--depth:$depth",
             badge(g.status),
-            button(typ := "button", cls := "link-btn", g.title, title := g.slug,
-              onClick --> (_ => WindowManager.open(WindowKey.Goal(g.slug))))))))
+            WinLink(WindowKey.Goal(g.slug), g.title, title := g.slug)))))
       }
     )
 
@@ -262,12 +261,12 @@ object GoalsView:
               Option.when(v.goal.tags.nonEmpty)(List(dt("Tags"), dd(v.goal.tags.map(Wording.value).mkString(", ")))).toList.flatten,
               Option.when(v.goal.regions.nonEmpty)(List(dt("Regions"), dd(v.goal.regions.map(Wording.value).mkString(", ")))).toList.flatten,
               v.goal.parentSlug.toList.flatMap(ps => List(dt("part of"),
-                dd(button(typ := "button", cls := "link-btn", ps, onClick --> (_ => WindowManager.open(WindowKey.Goal(ps))))))),
+                dd(WinLink(WindowKey.Goal(ps), ps)))),
               v.budgetUsd.toList.flatMap(b => List(dt("run cap"), dd(s"${AgentsMarkdown.usd(b)} USD")))),
             planSection(slug, approvals.signal, busy.signal, () => plan()),
             ManagersView.goalActions(v.goal.slug),
             Option.when(v.children.nonEmpty)(div(h4("Sub-goals"), ul(v.children.map(c =>
-              li(button(typ := "button", cls := "link-btn", c.title, onClick --> (_ => WindowManager.open(WindowKey.Goal(c.slug)))),
+              li(WinLink(WindowKey.Goal(c.slug), c.title),
                 " ", badge(c.status)))))),
             linksSection(slug, v.links, busy.signal, write),
             schedulesSection(slug, v.schedules, busy.signal, write),
@@ -309,7 +308,9 @@ object GoalsView:
           case LinkKind.Source    => SourceLink(l.ref, label = l.title.map(t => s"${l.ref} — $t"))
           case LinkKind.Article   => com.histmersion.web.ArticleLink(l.ref, l.title.getOrElse(l.ref))
           case LinkKind.Query     => span(s"“${l.ref}”")
-          case LinkKind.QueueItem => span(s"#${l.ref} ", span(cls := "muted", l.title.getOrElse("(gone)"))),
+          case LinkKind.QueueItem =>
+            val text = span(s"#${l.ref} ", span(cls := "muted", l.title.getOrElse("(gone)")))
+            l.queue.flatMap(Queue.Kind.parse).zip(l.ref.toIntOption).fold(text)((k, id) => QueueItemLink(k, id, text)),
         Option.when(l.title.isEmpty && l.kind != LinkKind.Query)(span(cls := "muted", " (missing)")),
         l.note.filter(_.nonEmpty).map(n => span(cls := "muted", s" · $n")),
         child.maybe <-- Auth.writable.map(w => Option.when(w)(
@@ -357,8 +358,7 @@ object GoalsView:
         current.map(c => div(cls := "muted",
           c.nextRunAt.fold("not scheduled")(n => s"next $n"),
           c.lastRunAt.map(l => s" · last run $l"),
-          c.lastRun.map(id => span(" · ", button(typ := "button", cls := "link-btn", s"run ${id.take(8)}",
-            onClick --> (_ => WindowManager.open(WindowKey.Run(id)))))),
+          c.lastRun.map(id => span(" · ", WinLink(WindowKey.Run(id), s"run ${id.take(8)}"))),
           c.lastNote.filter(_.nonEmpty).map(n => s" · $n"))),
         child <-- Auth.writable.map { w =>
           if !w then current.fold(span(cls := "muted", "no schedule"))(c => span(code(c.cron), if c.enabled then " on" else " off"))
@@ -389,7 +389,7 @@ object GoalsView:
         if rs.isEmpty then emptyNode
         else div(h4("Runs"), ul(cls := "goal-runs", rs.map(r =>
           li(span(cls := s"job-state state-${r.status}", r.status), " ",
-            button(typ := "button", cls := "link-btn", s"${r.pipeline} ${r.target}", onClick --> (_ => WindowManager.open(WindowKey.Run(r.id)))),
+            WinLink(WindowKey.Run(r.id), s"${r.pipeline} ${r.target}"),
             span(cls := "muted", s" · ${r.createdAt}")))))
       }
     )
