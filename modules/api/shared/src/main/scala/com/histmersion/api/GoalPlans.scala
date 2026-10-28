@@ -65,9 +65,10 @@ object GoalPlans:
   // ── goal links and schedules ───────────────────────────────────────────────────────────────────
 
   /** One link of a goal. `title` is the source's or article's title (or the item's text) when the
-    * target still exists; `None` marks a dangling link. */
+    * target still exists; `None` marks a dangling link. `queue`: the list a linked queue item is on
+    * (`acquire`, `tasks`), so a link can lead to it. */
   final case class GoalLink(kind: LinkKind, ref: String, note: Option[String] = None, title: Option[String] = None,
-      createdAt: String = "") derives KindlingsCodecAsObject
+      createdAt: String = "", queue: Option[String] = None) derives KindlingsCodecAsObject
   object GoalLink:
     given Schema[GoalLink] = KindlingsSchema.derived[GoalLink].schema
 

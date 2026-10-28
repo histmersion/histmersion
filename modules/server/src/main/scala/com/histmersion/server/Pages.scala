@@ -248,10 +248,11 @@ object Pages:
   def reviewBadge(b: ReviewBadge): String =
     s"""<span class="job-state review-state state-${b.state.wire}" title="${esc(b.detail)}">${esc(Wording.capitalize(b.label))}</span>"""
 
-  /** A research goal's stage as the goals window draws it, linked to the goal's window. */
+  /** A research goal's stage as the goals list draws it, linked to the goal's page (in the web UI a plain click
+    * opens its window). */
   def goalBadgeLink(g: ReviewGoal): String =
     val meaning = GoalStages.meaning(g.status).fold("")(m => s""" title="${esc(s"${g.status}: $m")}"""")
-    s"""<a class="goal-ref" href="/#open=goal:${esc(HtmlAtoms.segment(g.slug))}" title="${esc(g.slug)}">""" +
+    s"""<a class="goal-ref" href="/research/goals/${esc(HtmlAtoms.segment(g.slug))}" title="${esc(g.slug)}">""" +
       s"""<span class="job-state goal-status state-${esc(g.status)}"$meaning>${esc(Wording.capitalize(g.status))}</span> """ +
       s"""${esc(if g.title.trim.nonEmpty then g.title else g.slug)}</a>"""
 

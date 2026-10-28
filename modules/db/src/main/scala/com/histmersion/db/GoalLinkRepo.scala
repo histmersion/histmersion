@@ -14,7 +14,8 @@ object GoalLinkRepo:
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
-  private final case class LinkRow(kind: String, ref: String, note: Option[String], title: Option[String], createdAt: String)
+  private final case class LinkRow(kind: String, ref: String, note: Option[String], title: Option[String], createdAt: String,
+      queue: Option[String])
   private given DbCodec[LinkRow] = DbCodec.derived
 
   /** A goal's links, each with the title of what it points at (`None` = it no longer exists; a query
@@ -26,12 +27,24 @@ object GoalLinkRepo:
                                WHEN 'article' THEN (SELECT a.title FROM articles a WHERE a.slug = l.ref)
                                WHEN 'queue-item' THEN (SELECT q.text FROM queue_items q WHERE q.id::text = l.ref)
                                ELSE NULL END,
-                   to_char(l.created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)})
+                   to_char(l.created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
+                   CASE l.kind WHEN 'queue-item' THEN (SELECT q.list FROM queue_items q WHERE q.id::text = l.ref) END
             FROM goal_links l WHERE l.goal_slug = $goal
             ORDER BY CASE l.kind WHEN 'source' THEN 0 WHEN 'article' THEN 1 WHEN 'query' THEN 2 ELSE 3 END,
                      l.created_at, l.ref""".query[LinkRow].run().toList.flatMap { r =>
-        LinkKind.parse(r.kind).map(k => GoalLink(k, r.ref, r.note, r.title, r.createdAt))
+        LinkKind.parse(r.kind).map(k => GoalLink(k, r.ref, r.note, r.title, r.createdAt, r.queue))
       }
+
+  /** The goals that link each of these queue items, by item: (item id, goal slug, goal title), the goals
+    * of an item by title. */
+  def goalsOfItems(ds: DataSource, items: List[Int]): List[(Int, String, String)] =
+    if items.isEmpty then Nil
+    else connect(ds):
+      val refs = items.map(_.toString)
+      sql"""SELECT l.ref, g.slug, g.title FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
+            WHERE l.kind = ${LinkKind.QueueItem.wire} AND l.ref = ANY($refs::text[])
+            ORDER BY g.title, g.slug""".query[(String, String, String)].run().toList
+        .flatMap((ref, slug, title) => ref.toIntOption.map((_, slug, title)))
 
   /** The refs of one kind (a sweep's queries, a currency check's sources). */
   def refs(ds: DataSource, goal: String, kind: LinkKind): List[String] =

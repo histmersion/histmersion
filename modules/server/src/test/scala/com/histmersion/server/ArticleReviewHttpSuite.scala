@@ -113,7 +113,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
         val (ps, page) = get(s"$url/article/$Running?fragment=true")
         assertEquals(ps, 200, page)
         assert(page.contains("""<span class="job-state review-state state-in-review""""), page)
-        assert(page.contains(s"""href="/#open=goal:$Goal""""), page)
+        assert(page.contains(s"""href="/research/goals/$Goal""""), page)
         assert(page.contains("Review history: 3 findings over 2 runs, 1 still open"), page)
         assert(page.contains("rejected by fixer in run 1, round 1: the record supports the sentence"), page)
 

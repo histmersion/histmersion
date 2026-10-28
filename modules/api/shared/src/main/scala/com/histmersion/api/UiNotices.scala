@@ -44,8 +44,17 @@ object UiNotices:
   object Counter:
     given Schema[Counter] = KindlingsSchema.derived[Counter].schema
 
-  /** `GET /api/ui/counters` — every board, in the enum's order. */
-  final case class Counters(boards: List[Counter]) derives KindlingsCodecAsObject
+  /** The research agents at a glance, for the top bar's status: how many runs are running and how many
+    * wait their turn, whether the autopilot is on, and whether it is finishing current work before it
+    * pauses (draining). */
+  final case class AgentsGlance(running: Int = 0, queued: Int = 0, on: Boolean = false, draining: Boolean = false)
+      derives KindlingsCodecAsObject
+  object AgentsGlance:
+    given Schema[AgentsGlance] = KindlingsSchema.derived[AgentsGlance].schema
+
+  /** `GET /api/ui/counters` — every board, in the enum's order; `agents` only where the server runs
+    * research agents. */
+  final case class Counters(boards: List[Counter], agents: Option[AgentsGlance] = None) derives KindlingsCodecAsObject
   object Counters:
     given Schema[Counters] = KindlingsSchema.derived[Counters].schema
 

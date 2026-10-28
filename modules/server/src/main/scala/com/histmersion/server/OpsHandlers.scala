@@ -135,7 +135,9 @@ final class OpsHandlers(deps: Deps):
         if k != Kind.Acquire then Nil
         else AcquireCheckRepo.of(ds, items.map(_.id)).values.toList.sortBy(_.item).map(r =>
           AcquireChecks.AcquireCheck(r.item, r.at.toString, r.outcome, r.reason, r.checks))
-      QueueListing(k.label, items, checks)
+      val goals = com.histmersion.db.GoalLinkRepo.goalsOfItems(ds, items.map(_.id)).groupBy(_._1).toList.sortBy(_._1)
+        .map((id, gs) => ItemGoals(id, gs.map((_, slug, title) => GoalRef(slug, title))))
+      QueueListing(k.label, items, checks, goals)
     }
 
   /** A LOG item with no topic joins today's entry (`## 2026-08-25`), which is how an appended
