@@ -145,7 +145,7 @@ people and access (only when multi-user is on), "Advanced (all settings)" as a g
 the full config, and "Run the setup again". First run is a 7-step setup with safe defaults and
 "Skip the rest": finding open papers (contact e-mail, used only for Unpaywall/Crossref), maps (area to
 download, where the map opens — task #6552), background data, research agents (optional), Calibre
-(optional). Needs: a config-write API (or a settings layer in the database) on top of the existing
+(optional). Needs: an API that writes the `.conf` file itself (decision 6 in § 7), on top of the existing
 reload machinery, and a restart trigger.
 
 ### 4.6 Windows, tabs and addresses
@@ -228,16 +228,24 @@ only its DOI/arXiv references — never its text. Recommendation: start topics f
 review articles and the citation graph, demote Wikipedia to an optional last resort, and reword the
 skill and tool description to match.
 
-## 7. Open decisions for the maintainer
+## 7. Decisions (2026-10-28)
 
-1. Accept, change or reject each screen of the design canvas.
-2. Default theme: follow the system (proposed) or keep dark first.
-3. Bundled Source Sans 3 / Source Serif 4, or the system font stack.
-4. Fix the five bugs (§ 5) now, ahead of the redesign?
-5. Custom icon glyphs: draw them in-house (proposed) or accept CC BY icons with a credit.
-6. Settings storage: write the `.conf` file, or keep UI-edited settings in the database layered over
-   it (proposed: database layer, `.conf` stays the base and is never rewritten).
-7. Demote Wikipedia in the `trailhead` skill and the `discover` tool description (§ 6).
+1. Screens: still under review. Icons got a second round (see below).
+2. **Theme:** one button cycling *system → light → dark*, as in the documentation site; system by default.
+3. **Fonts:** ship them (Source Sans 3, Source Serif 4) with the app.
+4. **Bugs (§ 5): fix now**, plus one more: opening the filters or resizing the right sidebar must not
+   reload or visibly redraw the map — and a regression test keeps it that way through the redesign.
+5. **Icons, round 2:** eruption = cone with an ash cloud; earthquake = a house with shake lines;
+   tsunami = one big breaker that reads at 15 px; siege = three swords closing on a house; collapse =
+   the state-formation crown cracked and toppling (ruins read as a site); invasion = a sword driven
+   into a house; burial = a gravestone; palace = a crown on a colonnade; shipwreck = the period galley,
+   sinking.
+6. **Settings live in the `.conf` file**, never in the database: a person must be able to repair a
+   broken configuration without the web UI, the database or the server running. The settings UI and
+   setup write the file (keeping comments and unknown keys) and trigger the existing reload.
+7. **Wikipedia is supplementary**: never ranked above querying the research databases. The
+   `trailhead` skill now starts from recent reviews and the most-cited work, then the citation graph;
+   `wikirefs` comes last, to catch gaps. The `discover` tool description and the user guide say the same.
 
 ## 8. Phasing (after acceptance)
 
@@ -246,7 +254,7 @@ skill and tool description to match.
 3. Explore: filter panel, layers panel, timeline, results, detail panel, map fixes.
 4. Library.
 5. Research unification (with the data links in § 4.4).
-6. Settings, setup and the config-write API.
+6. Settings, setup and a `.conf`-writing API (comments and unknown keys kept; reload afterwards).
 7. Icons and the Pleiades place card.
 8. Planned features: bookmarks, notes, read marks, then optional multi-user.
 
