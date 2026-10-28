@@ -1,0 +1,5041 @@
+{
+"authorities": {
+"p0ds9qj": {
+"id": "p0ds9qj",
+"periods": {
+"p0ds9qj24b2": {
+"broader": "p0ds9qj9kdj",
+"label": "Old Palace period",
+"localizedLabels": {
+"el": [
+"Παλαιοανακτορική Εποχή"
+],
+"en": [
+"Old Palace period"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-1899"
+},
+"label": "1900 BC"
+},
+"stop": {
+"in": {
+"year": "-1599"
+},
+"label": "1600 BC"
+}
+},
+"p0ds9qj2b54": {
+"label": "Medieval/Frankish",
+"localizedLabels": {
+"el": [
+"Μεσαιωνική/Φραγκοκρατία"
+],
+"en": [
+"Medieval/Frankish"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "0323"
+},
+"label": "323 AD"
+},
+"stop": {
+"in": {
+"year": "1453"
+},
+"label": "1453 AD"
+}
+},
+"p0ds9qj2gtr": {
+"broader": "p0ds9qjmkt4",
+"label": "Early Helladic IIA",
+"localizedLabels": {
+"el": [
+"Πρώιμη Ελλαδική ΙΙΑ"
+],
+"en": [
+"Early Helladic IIA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-2699"
+},
+"label": "2700 BC"
+},
+"stop": {
+"in": {
+"year": "-2399"
+},
+"label": "2400 BC"
+}
+},
+"p0ds9qj2hxw": {
+"broader": "p0ds9qjpdcd",
+"label": "Classical",
+"localizedLabels": {
+"el": [
+"Κλασική Περίοδος"
+],
+"en": [
+"Classical"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0479"
+},
+"label": "480 BC"
+},
+"stop": {
+"in": {
+"year": "-0322"
+},
+"label": "323 BC"
+}
+},
+"p0ds9qj2nvc": {
+"label": "Ottoman",
+"localizedLabels": {
+"el": [
+"Οθωμανική Περίοδος/Μετά-Βυζαντινοί Χρόνοι"
+],
+"en": [
+"Ottoman"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "1453"
+},
+"label": "1453 AD"
+},
+"stop": {
+"in": {
+"year": "1821"
+},
+"label": "1821 AD"
+}
+},
+"p0ds9qj2p2s": {
+"broader": "p0ds9qjdc5k",
+"label": "Middle Minoan IIIB",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική ΙΙΙΒ"
+],
+"en": [
+"Middle Minoan IIIB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1639",
+"latestYear": "-1629"
+},
+"label": "1640/1630 BC"
+},
+"stop": {
+"in": {
+"year": "-1599"
+},
+"label": "1600 BC"
+}
+},
+"p0ds9qj2wwg": {
+"broader": "p0ds9qjjf69",
+"label": "Mesolithic",
+"localizedLabels": {
+"el": [
+"Μεσολιθική"
+],
+"en": [
+"Mesolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-10999"
+},
+"label": "11,000 BC"
+},
+"stop": {
+"in": {
+"year": "-6799"
+},
+"label": "6,800 BC"
+}
+},
+"p0ds9qj378f": {
+"broader": "p0ds9qjwwfx",
+"label": "Late Roman",
+"localizedLabels": {
+"el": [
+"Ύστερη Ρωμαϊκή"
+],
+"en": [
+"Late Roman"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "0250"
+},
+"label": "250 AD"
+},
+"stop": {
+"in": {
+"year": "0600"
+},
+"label": "600 AD"
+}
+},
+"p0ds9qj3fwb": {
+"broader": "p0ds9qj3x2t",
+"label": "Final Neolithic or Chalcolithic",
+"localizedLabels": {
+"el": [
+"Τελική Νεολιθική ή Χαλκολιθική"
+],
+"en": [
+"Final Neolithic or Chalcolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-4499",
+"latestYear": "-4399"
+},
+"label": "4500/4400 BC"
+},
+"stop": {
+"in": {
+"year": "-2999"
+},
+"label": "3000 BC"
+}
+},
+"p0ds9qj3kgs": {
+"broader": "p0ds9qj7tp9",
+"label": "Middle Protocorinthian",
+"localizedLabels": {
+"el": [
+"Μέση Πρωτο-Κορινθιακή"
+],
+"en": [
+"Middle Protocorinthian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0689"
+},
+"label": "690 BC"
+},
+"stop": {
+"in": {
+"year": "-0649"
+},
+"label": "650 BC"
+}
+},
+"p0ds9qj3t4n": {
+"broader": "p0ds9qj4tbn",
+"label": "Early Helladic I",
+"localizedLabels": {
+"el": [
+"Πρώιμη Ελλαδική Ι"
+],
+"en": [
+"Early Helladic I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-3099"
+},
+"label": "3100 BC"
+},
+"stop": {
+"in": {
+"year": "-2699"
+},
+"label": "2700 BC"
+}
+},
+"p0ds9qj3txg": {
+"broader": "p0ds9qjm95d",
+"label": "Middle Minoan II",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική ΙΙ"
+],
+"en": [
+"Middle Minoan II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1874",
+"latestYear": "-1849"
+},
+"label": "1875/1850 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1749",
+"latestYear": "-1699"
+},
+"label": "1750/1700 BC"
+}
+},
+"p0ds9qj3x2t": {
+"broader": "p0ds9qjjf69",
+"label": "Neolithic",
+"localizedLabels": {
+"el": [
+"Νεολιθική"
+],
+"en": [
+"Neolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-6499"
+},
+"label": "6500 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-3199",
+"latestYear": "-2999"
+},
+"label": "3200/3000 BC"
+}
+},
+"p0ds9qj49wh": {
+"broader": "p0ds9qj9kdj",
+"label": "Post-palatial period",
+"localizedLabels": {
+"el": [
+"Μετανακτορική Εποχή"
+],
+"en": [
+"Post-palatial period"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-1389"
+},
+"label": "1390 BC"
+},
+"stop": {
+"in": {
+"year": "-1069"
+},
+"label": "1070 BC"
+}
+},
+"p0ds9qj4tbn": {
+"broader": "p0ds9qj9pc2",
+"label": "Early Helladic",
+"localizedLabels": {
+"el": [
+"Πρώιμη Ελλαδική"
+],
+"en": [
+"Early Helladic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-3099"
+},
+"label": "3100 BC"
+},
+"stop": {
+"in": {
+"year": "-1999"
+},
+"label": "2000 BC"
+}
+},
+"p0ds9qj4wcg": {
+"broader": "p0ds9qjcznw",
+"label": "Middle Byzantine",
+"localizedLabels": {
+"el": [
+"Μέσοι Βυζαντινοί Χρόνοι"
+],
+"en": [
+"Middle Byzantine"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "0610"
+},
+"label": "610 AD"
+},
+"stop": {
+"in": {
+"year": "1204"
+},
+"label": "1204 AD"
+}
+},
+"p0ds9qj535x": {
+"broader": "p0ds9qjb6nz",
+"label": "Late Minoan IIIA2",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική ΙΙΙΑ2"
+],
+"en": [
+"Late Minoan IIIA2"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1389",
+"latestYear": "-1369"
+},
+"label": "1390/1370 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1329",
+"latestYear": "-1314"
+},
+"label": "1330/1315 BC"
+}
+},
+"p0ds9qj56p6": {
+"broader": "p0ds9qj7xjv",
+"label": "Late Helladic IIIB1",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΙΒ1"
+],
+"en": [
+"Late Helladic IIIB1"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1329",
+"latestYear": "-1314"
+},
+"label": "1330/1315 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1199",
+"latestYear": "-1189"
+},
+"label": "1200/1190 BC"
+}
+},
+"p0ds9qj56qg": {
+"broader": "p0ds9qjh4dh",
+"label": "Late Minoan III",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική ΙΙΙ"
+],
+"en": [
+"Late Minoan III"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1419",
+"latestYear": "-1409"
+},
+"label": "1420/1410 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1074",
+"latestYear": "-1049"
+},
+"label": "1075/1050 BC"
+}
+},
+"p0ds9qj57zs": {
+"broader": "p0ds9qjvx5m",
+"label": "Transitional to Corinthian",
+"localizedLabels": {
+"el": [
+"Μεταβατική στην Κορινθιακή Περίοδο"
+],
+"en": [
+"Transitional to Corinthian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0624"
+},
+"label": "625 BC"
+},
+"stop": {
+"in": {
+"year": "-0609"
+},
+"label": "610 BC"
+}
+},
+"p0ds9qj5k9r": {
+"broader": "p0ds9qjcznw",
+"label": "Early Christian",
+"localizedLabels": {
+"el": [
+"Παλαιοχριστιανικοί Χρόνοι"
+],
+"en": [
+"Early Christian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "0175"
+},
+"label": "175 AD"
+},
+"stop": {
+"in": {
+"year": "0625"
+},
+"label": "625 AD"
+}
+},
+"p0ds9qj5m2x": {
+"broader": "p0ds9qjwd4n",
+"label": "Late Helladic IIIC",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΙC"
+],
+"en": [
+"Late Helladic IIIC"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1199",
+"latestYear": "-1189"
+},
+"label": "1200/1190 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1074",
+"latestYear": "-1049"
+},
+"label": "1075/1050 BC"
+}
+},
+"p0ds9qj5rzp": {
+"broader": "p0ds9qj3fwb",
+"label": "Final Neolithic Crete",
+"localizedLabels": {
+"el": [
+"Τελική Νεολιθική (Κρήτη)"
+],
+"en": [
+"Final Neolithic Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-4499",
+"latestYear": "-4399"
+},
+"label": "4500/4400 BC"
+},
+"stop": {
+"in": {
+"year": "-2999"
+},
+"label": "3000 BC"
+}
+},
+"p0ds9qj5w67": {
+"broader": "p0ds9qjcjmh",
+"label": "Late Geometric II",
+"localizedLabels": {
+"el": [
+"Ύστερη Γεωμετρική ΙΙ"
+],
+"en": [
+"Late Geometric II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0734"
+},
+"label": "735 BC"
+},
+"stop": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+}
+},
+"p0ds9qj6kgg": {
+"broader": "p0ds9qjztzb",
+"label": "Middle Helladic III",
+"localizedLabels": {
+"el": [
+"Μέση Ελλαδική ΙΙΙ"
+],
+"en": [
+"Middle Helladic III"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1699"
+},
+"label": "1700 BC"
+},
+"stop": {
+"in": {
+"year": "-1599"
+},
+"label": "1600 BC"
+}
+},
+"p0ds9qj6tvj": {
+"broader": "p0ds9qjscgp",
+"label": "Late Neolithic II Greece",
+"localizedLabels": {
+"el": [
+"Ύστερη Νεολιθική ΙΙ (Ελλάδα)"
+],
+"en": [
+"Late Neolithic II Greece"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-4799"
+},
+"label": "4800 BC"
+},
+"stop": {
+"in": {
+"year": "-4499"
+},
+"label": "4500 BC"
+}
+},
+"p0ds9qj6vmq": {
+"broader": "p0ds9qj9kdj",
+"label": "Final Palatial period",
+"localizedLabels": {
+"el": [
+"Τελική Ανακτορική Εποχή"
+],
+"en": [
+"Final Palatial period"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-1449"
+},
+"label": "1450 BC"
+},
+"stop": {
+"in": {
+"year": "-1299"
+},
+"label": "1300 BC"
+}
+},
+"p0ds9qj79hw": {
+"broader": "p0ds9qjsdpq",
+"label": "Middle Paleolithic",
+"localizedLabels": {
+"el": [
+"Μέση Παλαιολιθική"
+],
+"en": [
+"Middle Paleolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-99999"
+},
+"label": "100000 BC"
+},
+"stop": {
+"in": {
+"year": "-34999"
+},
+"label": "35000 BC"
+}
+},
+"p0ds9qj7fw7": {
+"broader": "p0ds9qjdc5k",
+"label": "Middle Minoan IIIA",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική ΙΙΙΑ"
+],
+"en": [
+"Middle Minoan IIIA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1699",
+"latestYear": "-1649"
+},
+"label": "1700/1650 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1639",
+"latestYear": "-1629"
+},
+"label": "1640/1630 BC"
+}
+},
+"p0ds9qj7ggw": {
+"broader": "p0ds9qjcjmh",
+"label": "Late Geometric I",
+"localizedLabels": {
+"el": [
+"Ύστερη Γεωμετρικη Ι"
+],
+"en": [
+"Late Geometric I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0759"
+},
+"label": "760 BC"
+},
+"stop": {
+"in": {
+"year": "-0734"
+},
+"label": "735 BC"
+}
+},
+"p0ds9qj7tp9": {
+"broader": "p0ds9qjwzmx",
+"label": "Protocorinthian",
+"localizedLabels": {
+"el": [
+"Πρωτο-Κορινθιακή"
+],
+"en": [
+"Protocorinthian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0719"
+},
+"label": "720 BC"
+},
+"stop": {
+"in": {
+"year": "-0624"
+},
+"label": "625 BC"
+}
+},
+"p0ds9qj7xjv": {
+"broader": "p0ds9qjwd4n",
+"label": "Late Helladic IIIB",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΙΒ"
+],
+"en": [
+"Late Helladic IIIB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1329",
+"latestYear": "-1314"
+},
+"label": "1330/1315 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1199",
+"latestYear": "-1189"
+},
+"label": "1200/1190 BC"
+}
+},
+"p0ds9qj87qd": {
+"broader": "p0ds9qjkzn8",
+"label": "Middle Geometric",
+"localizedLabels": {
+"el": [
+"Μέση Γεωμετρική"
+],
+"en": [
+"Middle Geometric"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0849"
+},
+"label": "850 BC"
+},
+"stop": {
+"in": {
+"year": "-0759"
+},
+"label": "760 BC"
+}
+},
+"p0ds9qj8jfc": {
+"broader": "p0ds9qjh4dh",
+"label": "Late Minoan I",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική Ι"
+],
+"en": [
+"Late Minoan I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1699",
+"latestYear": "-1674"
+},
+"label": "1700/1675 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1469",
+"latestYear": "-1459"
+},
+"label": "1470/1460 BC"
+}
+},
+"p0ds9qj8snx": {
+"broader": "p0ds9qjq7b2",
+"label": "Late Bronze Age",
+"localizedLabels": {
+"el": [
+"Ύστερη Εποχή του Χαλκού"
+],
+"en": [
+"Late Bronze Age"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1624"
+},
+"label": "1625 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1074",
+"latestYear": "-1049"
+},
+"label": "1075/1050 BC"
+}
+},
+"p0ds9qj8xzn": {
+"broader": "p0ds9qjq6gx",
+"label": "Late Helladic IIB",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΒ"
+],
+"en": [
+"Late Helladic IIB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1479",
+"latestYear": "-1469"
+},
+"label": "1480/1470 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1419",
+"latestYear": "-1409"
+},
+"label": "1420/1410 BC"
+}
+},
+"p0ds9qj8z99": {
+"broader": "p0ds9qjd2xr",
+"label": "Early Cycladic III",
+"localizedLabels": {
+"el": [
+"Πρώιμη Κυκλαδική ΙΙΙ"
+],
+"en": [
+"Early Cycladic III"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-2199"
+},
+"label": "2200 BC"
+},
+"stop": {
+"in": {
+"year": "-1999"
+},
+"label": "2000 BC"
+}
+},
+"p0ds9qj93mp": {
+"broader": "p0ds9qjvx5m",
+"label": "Early Corinthian",
+"localizedLabels": {
+"el": [
+"Πρώιμη Κορινθιακή"
+],
+"en": [
+"Early Corinthian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0609"
+},
+"label": "610 BC"
+},
+"stop": {
+"in": {
+"year": "-0579"
+},
+"label": "580 BC"
+}
+},
+"p0ds9qj9766": {
+"broader": "p0ds9qjscgp",
+"label": "Late Neolithic I Greece",
+"localizedLabels": {
+"el": [
+"Ύστερη Νεολιθική Ι (Ελλάδα)"
+],
+"en": [
+"Late Neolithic I Greece"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-5299"
+},
+"label": "5300 BC"
+},
+"stop": {
+"in": {
+"year": "-4799"
+},
+"label": "4800 BC"
+}
+},
+"p0ds9qj97j5": {
+"broader": "p0ds9qjqc49",
+"label": "Late Neolithic Crete",
+"localizedLabels": {
+"el": [
+"Ύστερη Νεολιθική (Κρήτη)"
+],
+"en": [
+"Late Neolithic Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-5299"
+},
+"label": "5300 BC"
+},
+"stop": {
+"in": {
+"year": "-4499"
+},
+"label": "4500 BC"
+}
+},
+"p0ds9qj9fbw": {
+"broader": "p0ds9qjdx5q",
+"label": "Late Protogeometric",
+"localizedLabels": {
+"el": [
+"Ύστερη Πρωτογεωμετρική"
+],
+"en": [
+"Late Protogeometric"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1099"
+},
+"label": "1100 BC"
+},
+"stop": {
+"in": {
+"year": "-0899"
+},
+"label": "900 BC"
+}
+},
+"p0ds9qj9fg4": {
+"broader": "p0ds9qj2hxw",
+"label": "Late Classical",
+"localizedLabels": {
+"el": [
+"Ύστερη Κλασική"
+],
+"en": [
+"Late Classical"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0399"
+},
+"label": "400 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-0329",
+"latestYear": "-0319"
+},
+"label": "330/320 BC"
+}
+},
+"p0ds9qj9kdj": {
+"broader": "p0ds9qjq7b2",
+"label": "Bronze Age Minoan",
+"localizedLabels": {
+"el": [
+"Εποχή του Χαλκού Μινωική"
+],
+"en": [
+"Bronze Age Minoan"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-3099"
+},
+"label": "3100 BC"
+},
+"stop": {
+"in": {
+"year": "-1049"
+},
+"label": "1050 BC"
+}
+},
+"p0ds9qj9pc2": {
+"label": "Bronze Age Helladic",
+"localizedLabels": {
+"el": [
+"Εποχή του Χαλκού Ελλαδική"
+],
+"en": [
+"Bronze Age Helladic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-3099"
+},
+"label": "3100 BC"
+},
+"stop": {
+"in": {
+"year": "-1049"
+},
+"label": "1050 BC"
+}
+},
+"p0ds9qjb2tf": {
+"broader": "p0ds9qj3x2t",
+"label": "Initial Neolithic Crete",
+"localizedLabels": {
+"el": [
+"Αρχική Νεολιθική (Κρήτη)"
+],
+"en": [
+"Initial Neolithic Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-6999"
+},
+"label": "7,000 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-6499",
+"latestYear": "-6399"
+},
+"label": "6500/6400 BC"
+}
+},
+"p0ds9qjb6nz": {
+"broader": "p0ds9qj56qg",
+"label": "Late Minoan IIIA",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική ΙΙΙΑ"
+],
+"en": [
+"Late Minoan IIIA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1419",
+"latestYear": "-1409"
+},
+"label": "1420/1410 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1329",
+"latestYear": "-1314"
+},
+"label": "1330/1315 BC"
+}
+},
+"p0ds9qjbp46": {
+"broader": "p0ds9qj2hxw",
+"label": "Early Classical",
+"localizedLabels": {
+"el": [
+"Πρώιμη Κλασική"
+],
+"en": [
+"Early Classical"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-0497",
+"latestYear": "-0479"
+},
+"label": "498/480 BC"
+},
+"stop": {
+"in": {
+"year": "-0449"
+},
+"label": "450 BC"
+}
+},
+"p0ds9qjc3v7": {
+"broader": "p0ds9qjwd4n",
+"label": "Late Helladic IIIA",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΙΑ"
+],
+"en": [
+"Late Helladic IIIA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1419",
+"latestYear": "-1409"
+},
+"label": "1420/1410 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1329",
+"latestYear": "-1314"
+},
+"label": "1330/1315 BC"
+}
+},
+"p0ds9qjcjmh": {
+"broader": "p0ds9qjkzn8",
+"label": "Late Geometric",
+"localizedLabels": {
+"el": [
+"Ύστερη Γεωμετρική"
+],
+"en": [
+"Late Geometric"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0759"
+},
+"label": "760 BC"
+},
+"stop": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+}
+},
+"p0ds9qjcpdr": {
+"broader": "p0ds9qjc3v7",
+"label": "Late Helladic IIIA1",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΙΑ1"
+],
+"en": [
+"Late Helladic IIIA1"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1419",
+"latestYear": "-1409"
+},
+"label": "1420/1410 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1389",
+"latestYear": "-1369"
+},
+"label": "1390/1370 BC"
+}
+},
+"p0ds9qjcv5z": {
+"broader": "p0ds9qjvx5m",
+"label": "Late Corinthian",
+"localizedLabels": {
+"el": [
+"Ύστερη Κορινθιακή"
+],
+"en": [
+"Late Corinthian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0554"
+},
+"label": "555 BC"
+},
+"stop": {
+"in": {
+"year": "-0534"
+},
+"label": "535 BC"
+}
+},
+"p0ds9qjcznw": {
+"label": "Byzantine",
+"localizedLabels": {
+"el": [
+" Βυζαντινή Περίοδος"
+],
+"en": [
+"Byzantine"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "0324"
+},
+"label": "324 AD"
+},
+"stop": {
+"in": {
+"year": "1453"
+},
+"label": "1453 AD"
+}
+},
+"p0ds9qjcztd": {
+"broader": "p0ds9qj4tbn",
+"label": "Early Helladic III",
+"localizedLabels": {
+"el": [
+"Πρώιμη Ελλαδική ΙΙΙ"
+],
+"en": [
+"Early Helladic III"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-2199"
+},
+"label": "2200 BC"
+},
+"stop": {
+"in": {
+"year": "-1999"
+},
+"label": "2000 BC"
+}
+},
+"p0ds9qjd2xr": {
+"broader": "p0ds9qjhmqs",
+"label": "Early Cycladic",
+"localizedLabels": {
+"el": [
+"Πρώιμη Κυκλαδική"
+],
+"en": [
+"Early Cycladic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-3099"
+},
+"label": "3100 BC"
+},
+"stop": {
+"in": {
+"year": "-1999"
+},
+"label": "2000 BC"
+}
+},
+"p0ds9qjd4td": {
+"broader": "p0ds9qjq6gx",
+"label": "Late Helladic IIA",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΑ"
+],
+"en": [
+"Late Helladic IIA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1634",
+"latestYear": "-1599"
+},
+"label": "1635/1600 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1479",
+"latestYear": "-1469"
+},
+"label": "1480/1470 BC"
+}
+},
+"p0ds9qjd8b9": {
+"broader": "p0ds9qjcznw",
+"label": "Early Byzantine",
+"localizedLabels": {
+"el": [
+"Πρώιμοι Βυζαντινοί Χρόνοι"
+],
+"en": [
+"Early Byzantine"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "0324"
+},
+"label": "324 AD"
+},
+"stop": {
+"in": {
+"year": "0610"
+},
+"label": "610 AD"
+}
+},
+"p0ds9qjdc5k": {
+"broader": "p0ds9qjm95d",
+"label": "Middle Minoan III",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική ΙΙΙ"
+],
+"en": [
+"Middle Minoan III"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1749",
+"latestYear": "-1699"
+},
+"label": "1750/1700 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1699",
+"latestYear": "-1674"
+},
+"label": "1700/1675 BC"
+}
+},
+"p0ds9qjdx5q": {
+"broader": "p0ds9qjrvwn",
+"label": "Protogeometric",
+"localizedLabels": {
+"el": [
+"Πρωτογεωμετρική"
+],
+"en": [
+"Protogeometric"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1099"
+},
+"label": "1100 BC"
+},
+"stop": {
+"in": {
+"year": "-0899"
+},
+"label": "900 BC"
+}
+},
+"p0ds9qjf48v": {
+"label": "Modern period",
+"localizedLabels": {
+"el": [
+"Νεότερα ελληνική περίοδος"
+],
+"en": [
+"Modern period"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "1821"
+},
+"label": "1821 AD"
+},
+"stop": {
+"in": {
+"year": "2000"
+},
+"label": "2000 AD"
+}
+},
+"p0ds9qjfhcm": {
+"broader": "p0ds9qjm95d",
+"label": "Middle Minoan I",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική Ι"
+],
+"en": [
+"Middle Minoan I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-2099",
+"latestYear": "-2049"
+},
+"label": "2100/2050 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1874",
+"latestYear": "-1849"
+},
+"label": "1875/1850 BC"
+}
+},
+"p0ds9qjfjbk": {
+"broader": "p0ds9qj7ggw",
+"label": "Late Geometric IB",
+"localizedLabels": {
+"el": [
+"Ύστερη Γεωμετρική ΙΒ"
+],
+"en": [
+"Late Geometric IB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0749"
+},
+"label": "750 BC"
+},
+"stop": {
+"in": {
+"year": "-0734"
+},
+"label": "735 BC"
+}
+},
+"p0ds9qjfwb6": {
+"broader": "p0ds9qjfhcm",
+"label": "Middle Minoan IB",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική ΙΒ"
+],
+"en": [
+"Middle Minoan IB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1924",
+"latestYear": "-1899"
+},
+"label": "1925/1900 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1874",
+"latestYear": "-1849"
+},
+"label": "1875/1850 BC"
+}
+},
+"p0ds9qjghsd": {
+"broader": "p0ds9qj2hxw",
+"label": "High Classical",
+"localizedLabels": {
+"el": [
+"Μέση/Ώριμη Κλασική"
+],
+"en": [
+"High Classical"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0449"
+},
+"label": "450 BC"
+},
+"stop": {
+"in": {
+"year": "-0399"
+},
+"label": "400 BC"
+}
+},
+"p0ds9qjgpdf": {
+"broader": "p0ds9qjb6nz",
+"label": "Late Minoan IIIA1",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική ΙΙΙΑ1"
+],
+"en": [
+"Late Minoan IIIA1"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1419",
+"latestYear": "-1409"
+},
+"label": "1420/1410 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1389",
+"latestYear": "-1369"
+},
+"label": "1390/1370 BC"
+}
+},
+"p0ds9qjh3bn": {
+"broader": "p0ds9qjpvn5",
+"label": "Early Minoan II",
+"localizedLabels": {
+"el": [
+"Πρώιμη Μινωική ΙΙ"
+],
+"en": [
+"Early Minoan II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-2649"
+},
+"label": "2650 BC"
+},
+"stop": {
+"in": {
+"year": "-2199"
+},
+"label": "2200 BC"
+}
+},
+"p0ds9qjh4dh": {
+"broader": "p0ds9qj9kdj",
+"label": "Late Minoan",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική"
+],
+"en": [
+"Late Minoan"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1699",
+"latestYear": "-1674"
+},
+"label": "1700/1675 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1074",
+"latestYear": "-1049"
+},
+"label": "1075/1050 BC"
+}
+},
+"p0ds9qjh68t": {
+"label": "Venetian",
+"localizedLabels": {
+"el": [
+"Βενετοκρατία"
+],
+"en": [
+"Venetian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "1200"
+},
+"label": "1200 AD"
+},
+"stop": {
+"in": {
+"year": "1650"
+},
+"label": "1650 AD"
+}
+},
+"p0ds9qjh6s9": {
+"broader": "p0ds9qjcznw",
+"label": "Late Byzantine",
+"localizedLabels": {
+"el": [
+"Ύστεροι Βυζαντινοί Χρόνοι"
+],
+"en": [
+"Late Byzantine"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "1204"
+},
+"label": "1204 AD"
+},
+"stop": {
+"in": {
+"year": "1453"
+},
+"label": "1453 AD"
+}
+},
+"p0ds9qjhb7k": {
+"broader": "p0ds9qjp52w",
+"label": "Late Cycladic I",
+"localizedLabels": {
+"el": [
+"Ύστερη Κυκλαδική Ι"
+],
+"en": [
+"Late Cycladic I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1599"
+},
+"label": "1600 BC"
+},
+"stop": {
+"in": {
+"year": "-1499"
+},
+"label": "1500 BC"
+}
+},
+"p0ds9qjhmqs": {
+"broader": "p0ds9qjq7b2",
+"label": "Bronze Age Cycladic",
+"localizedLabels": {
+"el": [
+"Εποχή του Χαλκού (Κυκλάδες)"
+],
+"en": [
+"Bronze Age Cycladic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-3099"
+},
+"label": "3100 BC"
+},
+"stop": {
+"in": {
+"year": "-1079"
+},
+"label": "1080 BC"
+}
+},
+"p0ds9qjhp2p": {
+"broader": "p0ds9qjmv48",
+"label": "Late Hellenistic",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελληνιστική"
+],
+"en": [
+"Late Hellenistic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0149"
+},
+"label": "150 BC"
+},
+"stop": {
+"in": {
+"year": "-0030"
+},
+"label": "31 BC"
+}
+},
+"p0ds9qjj57h": {
+"broader": "p0ds9qj3txg",
+"label": "Middle Minoan IIB",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική ΙΙΒ"
+],
+"en": [
+"Middle Minoan IIB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-1749"
+},
+"label": "1750 BC"
+},
+"stop": {
+"in": {
+"year": "-1699"
+},
+"label": "1700 BC"
+}
+},
+"p0ds9qjj67r": {
+"broader": "p0ds9qjwzmx",
+"label": "Late Archaic",
+"localizedLabels": {
+"el": [
+"Ύστερη Αρχαϊκή"
+],
+"en": [
+"Late Archaic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0559"
+},
+"label": "560 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-0489",
+"latestYear": "-0479"
+},
+"label": "490/480 BC"
+}
+},
+"p0ds9qjj6zz": {
+"broader": "p0ds9qjsdpq",
+"label": "Upper Paleolithic",
+"localizedLabels": {
+"el": [
+"Ανώτερη Παλαιολιθική"
+],
+"en": [
+"Upper Paleolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-34999"
+},
+"label": "35,000 BC"
+},
+"stop": {
+"in": {
+"year": "-10999"
+},
+"label": "11,000 BC"
+}
+},
+"p0ds9qjjf69": {
+"label": "Stone Age ",
+"localizedLabels": {
+"el": [
+"Εποχή του Λίθου"
+],
+"en": [
+"Stone Age "
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-349999"
+},
+"label": "350000 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-3199",
+"latestYear": "-2999"
+},
+"label": "3200/3000 BC"
+}
+},
+"p0ds9qjjkgp": {
+"broader": "p0ds9qjncd7",
+"label": "Late Protoattic",
+"localizedLabels": {
+"el": [
+"Ύστερη Πρωτο-Αττική"
+],
+"en": [
+"Late Protoattic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0649"
+},
+"label": "650 BC"
+},
+"stop": {
+"in": {
+"year": "-0629"
+},
+"label": "630 BC"
+}
+},
+"p0ds9qjjnwr": {
+"broader": "p0ds9qj5w67",
+"label": "Late Geometric IIB",
+"localizedLabels": {
+"el": [
+"Ύστερη Γεωμετρική ΙΙΒ"
+],
+"en": [
+"Late Geometric IIB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0719"
+},
+"label": "720 BC"
+},
+"stop": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+}
+},
+"p0ds9qjk6pt": {
+"broader": "p0ds9qj3fwb",
+"label": "Final Neolithic or Chalcolithic Greece",
+"localizedLabels": {
+"el": [
+"Τελική Νεολιθική ή Χαλκολιθική (Ελλάδα)"
+],
+"en": [
+"Final Neolithic or Chalcolithic Greece"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-4499"
+},
+"label": "4500 BC"
+},
+"stop": {
+"in": {
+"year": "-2999"
+},
+"label": "3000 BC"
+}
+},
+"p0ds9qjk8tj": {
+"broader": "p0ds9qjz4bs",
+"label": "Daedalic",
+"localizedLabels": {
+"el": [
+"Δαιδαλική Περίοδος"
+],
+"en": [
+"Daedalic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0659"
+},
+"label": "660 BC"
+},
+"stop": {
+"in": {
+"year": "-0619"
+},
+"label": "620 BC"
+}
+},
+"p0ds9qjkb6q": {
+"broader": "p0ds9qjq7b2",
+"label": "Middle Bronze Age",
+"localizedLabels": {
+"el": [
+"Μέση Εποχή του Χαλκού"
+],
+"en": [
+"Middle Bronze Age"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-2099"
+},
+"label": "2100 BC"
+},
+"stop": {
+"in": {
+"year": "-1549"
+},
+"label": "1550 BC"
+}
+},
+"p0ds9qjkkqz": {
+"broader": "p0ds9qj56qg",
+"label": "Late Minoan IIIC",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική ΙΙΙΓ"
+],
+"en": [
+"Late Minoan IIIC"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1199",
+"latestYear": "-1189"
+},
+"label": "1200/1190 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1074",
+"latestYear": "-1049"
+},
+"label": "1075/1050 BC"
+}
+},
+"p0ds9qjkmpx": {
+"broader": "p0ds9qjmkt4",
+"label": "Early Helladic IIB",
+"localizedLabels": {
+"el": [
+"Πρώιμη Ελλαδική ΙΙΒ"
+],
+"en": [
+"Early Helladic IIB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-2399"
+},
+"label": "2400 BC"
+},
+"stop": {
+"in": {
+"year": "-2199"
+},
+"label": "2200 BC"
+}
+},
+"p0ds9qjks8p": {
+"broader": "p0ds9qjwzmx",
+"label": "Early Archaic",
+"localizedLabels": {
+"el": [
+"Πρώιμη Αρχαϊκή"
+],
+"en": [
+"Early Archaic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+},
+"stop": {
+"in": {
+"year": "-0619"
+},
+"label": "620 BC"
+}
+},
+"p0ds9qjkvdd": {
+"broader": "p0ds9qjh4dh",
+"label": "Late Minoan II",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική ΙΙ"
+],
+"en": [
+"Late Minoan II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1469",
+"latestYear": "-1459"
+},
+"label": "1470/1460 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1419",
+"latestYear": "-1409"
+},
+"label": "1420/1410 BC"
+}
+},
+"p0ds9qjkz7p": {
+"broader": "p0ds9qjq7b2",
+"label": "Early Bronze Age",
+"localizedLabels": {
+"el": [
+"Πρώιμη Εποχή του Χαλκού"
+],
+"en": [
+"Early Bronze Age"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-3199"
+},
+"label": "3200 BC"
+},
+"stop": {
+"in": {
+"year": "-2099"
+},
+"label": "2100 BC"
+}
+},
+"p0ds9qjkzn8": {
+"broader": "p0ds9qjrvwn",
+"label": "Geometric",
+"localizedLabels": {
+"el": [
+"Γεωμετρική"
+],
+"en": [
+"Geometric"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0899"
+},
+"label": "900 BC"
+},
+"stop": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+}
+},
+"p0ds9qjm3cm": {
+"broader": "p0ds9qj97j5",
+"label": "Late Neolithic II Crete",
+"localizedLabels": {
+"el": [
+"Ύστερη Νεολιθική ΙΙ (Κρήτη)"
+],
+"en": [
+"Late Neolithic II Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-4899"
+},
+"label": "4900 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-4499",
+"latestYear": "-4399"
+},
+"label": "4500/4400 BC"
+}
+},
+"p0ds9qjm4xm": {
+"broader": "p0ds9qj5rzp",
+"label": "Final Neolithic II Crete",
+"localizedLabels": {
+"el": [
+"Τελική Νεολιθική ΙΙ (Κρήτη)"
+],
+"en": [
+"Final Neolithic II Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-3899"
+},
+"label": "3900 BC"
+},
+"stop": {
+"in": {
+"year": "-3599"
+},
+"label": "3600 BC"
+}
+},
+"p0ds9qjm632": {
+"broader": "p0ds9qjd2xr",
+"label": "Early Cycladic II",
+"localizedLabels": {
+"el": [
+"Πρώιμη Κυκλαδική ΙΙ"
+],
+"en": [
+"Early Cycladic II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-2699"
+},
+"label": "2700 BC"
+},
+"stop": {
+"in": {
+"year": "-2199"
+},
+"label": "2200 BC"
+}
+},
+"p0ds9qjm95d": {
+"broader": "p0ds9qj9kdj",
+"label": "Middle Minoan",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική "
+],
+"en": [
+"Middle Minoan"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-2099",
+"latestYear": "-2049"
+},
+"label": "2100/2050 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1699",
+"latestYear": "-1674"
+},
+"label": "1700/1675 BC"
+}
+},
+"p0ds9qjmkt4": {
+"broader": "p0ds9qj4tbn",
+"label": "Early Helladic II",
+"localizedLabels": {
+"el": [
+"Πρώιμη Ελλαδική ΙΙ"
+],
+"en": [
+"Early Helladic II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-2699"
+},
+"label": "2700 BC"
+},
+"stop": {
+"in": {
+"year": "-2199"
+},
+"label": "2200 BC"
+}
+},
+"p0ds9qjmv48": {
+"broader": "p0ds9qjpdcd",
+"label": "Hellenistic",
+"localizedLabels": {
+"el": [
+"Ελληνιστική Περίοδος"
+],
+"en": [
+"Hellenistic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0322"
+},
+"label": "323 BC"
+},
+"stop": {
+"in": {
+"year": "-0030"
+},
+"label": "31 BC"
+}
+},
+"p0ds9qjmztx": {
+"broader": "p0ds9qjmv48",
+"label": "Middle Hellenistic",
+"localizedLabels": {
+"el": [
+"Μέση Ελληνιστική"
+],
+"en": [
+"Middle Hellenistic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0219"
+},
+"label": "220 BC"
+},
+"stop": {
+"in": {
+"year": "-0149"
+},
+"label": "150 BC"
+}
+},
+"p0ds9qjn6xc": {
+"broader": "p0ds9qj9pc2",
+"label": "Late Helladic",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική"
+],
+"en": [
+"Late Helladic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1699",
+"latestYear": "-1674"
+},
+"label": "1700/1675 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1074",
+"latestYear": "-1049"
+},
+"label": "1075/1050 BC"
+}
+},
+"p0ds9qjncd7": {
+"broader": "p0ds9qjwzmx",
+"label": "Protoattic",
+"localizedLabels": {
+"el": [
+"Πρωτο-Αττική"
+],
+"en": [
+"Protoattic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+},
+"stop": {
+"in": {
+"year": "-0629"
+},
+"label": "630 BC"
+}
+},
+"p0ds9qjnnnc": {
+"broader": "p0ds9qjwzmx",
+"label": "Middle Archaic",
+"localizedLabels": {
+"el": [
+"Μέση Αρχαϊκή "
+],
+"en": [
+"Middle Archaic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0619"
+},
+"label": "620 BC"
+},
+"stop": {
+"in": {
+"year": "-0559"
+},
+"label": "560 BC"
+}
+},
+"p0ds9qjnpft": {
+"broader": "p0ds9qjdx5q",
+"label": "Middle Protogeometric",
+"localizedLabels": {
+"el": [
+" Μέση Πρωτογεωμετρική"
+],
+"en": [
+"Middle Protogeometric"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1099"
+},
+"label": "1100 BC"
+},
+"stop": {
+"in": {
+"year": "-0899"
+},
+"label": "900 BC"
+}
+},
+"p0ds9qjnv4g": {
+"broader": "p0ds9qj3txg",
+"label": "Middle Minoan IIA",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική ΙΙΑ"
+],
+"en": [
+"Middle Minoan IIA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-1799"
+},
+"label": "1800 BC"
+},
+"stop": {
+"in": {
+"year": "-1749"
+},
+"label": "1750 BC"
+}
+},
+"p0ds9qjnwfd": {
+"broader": "p0ds9qjvx5m",
+"label": "Middle Corinthian",
+"localizedLabels": {
+"el": [
+"Μέση Κορινθιακή"
+],
+"en": [
+"Middle Corinthian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0579"
+},
+"label": "580 BC"
+},
+"stop": {
+"in": {
+"year": "-0554"
+},
+"label": "555 BC"
+}
+},
+"p0ds9qjp52w": {
+"broader": "p0ds9qjhmqs",
+"label": "Late Cycladic",
+"localizedLabels": {
+"el": [
+"Ύστερη Κυκλαδική"
+],
+"en": [
+"Late Cycladic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1599"
+},
+"label": "1600 BC"
+},
+"stop": {
+"in": {
+"year": "-1079"
+},
+"label": "1080 BC"
+}
+},
+"p0ds9qjpd2q": {
+"broader": "p0ds9qj8jfc",
+"label": "Late Minoan IA",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική ΙΑ"
+],
+"en": [
+"Late Minoan IA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1699",
+"latestYear": "-1674"
+},
+"label": "1700/1675 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1624",
+"latestYear": "-1599"
+},
+"label": "1625/1600 BC"
+}
+},
+"p0ds9qjpdcd": {
+"label": "Antiquity",
+"localizedLabels": {
+"el": [
+"Ιστορικοί Χρόνοι"
+],
+"en": [
+"Antiquity"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0799"
+},
+"label": "800 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "0324",
+"latestYear": "0600"
+},
+"label": "324 AD or 600 AD "
+}
+},
+"p0ds9qjpt9w": {
+"broader": "p0ds9qjrvwn",
+"label": "Sub-Mycenean",
+"localizedLabels": {
+"el": [
+"Υπο-μυκηναϊκή Περίοδος"
+],
+"en": [
+"Sub-Mycenean"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1099"
+},
+"label": "1100 BC"
+},
+"stop": {
+"in": {
+"year": "-1049"
+},
+"label": "1050 BC"
+}
+},
+"p0ds9qjpvn5": {
+"broader": "p0ds9qj9kdj",
+"label": "Early Minoan",
+"localizedLabels": {
+"el": [
+"Πρώιμη Μινωική"
+],
+"en": [
+"Early Minoan"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-3099"
+},
+"label": "3100 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-2099",
+"latestYear": "-2049"
+},
+"label": "2100/2050 BC"
+}
+},
+"p0ds9qjpwh7": {
+"broader": "p0ds9qjqc49",
+"label": "Late Neolithic Northern Greece",
+"localizedLabels": {
+"el": [
+"Ύστερη Νεολιθική (Βόρεια Ελλάδα)"
+],
+"en": [
+"Late Neolithic Northern Greece"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-5499"
+},
+"label": "5500 BC"
+},
+"stop": {
+"in": {
+"year": "-3249"
+},
+"label": "3250 BC"
+}
+},
+"p0ds9qjq6gx": {
+"broader": "p0ds9qjn6xc",
+"label": "Late Helladic II",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙ"
+],
+"en": [
+"Late Helladic II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1634",
+"latestYear": "-1599"
+},
+"label": "1635/1600 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1419",
+"latestYear": "-1409"
+},
+"label": "1420/1410 BC"
+}
+},
+"p0ds9qjq76t": {
+"broader": "p0ds9qj7tp9",
+"label": "Late Protocorinthian",
+"localizedLabels": {
+"el": [
+"Ύστερη Πρωτο-Κορινθιακή"
+],
+"en": [
+"Late Protocorinthian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0649"
+},
+"label": "650 BC"
+},
+"stop": {
+"in": {
+"year": "-0624"
+},
+"label": "625 BC"
+}
+},
+"p0ds9qjq7b2": {
+"label": "Bronze Age",
+"localizedLabels": {
+"el": [
+"Εποχή του Χαλκού"
+],
+"en": [
+"Bronze Age"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-3199"
+},
+"label": "3200 BC"
+},
+"stop": {
+"in": {
+"year": "-1049"
+},
+"label": "1050 BC"
+}
+},
+"p0ds9qjq8xb": {
+"broader": "p0ds9qj97j5",
+"label": "Late Neolithic I Crete",
+"localizedLabels": {
+"el": [
+"Ύστερη Νεολιθική I (Κρήτη)"
+],
+"en": [
+"Late Neolithic I Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-5299"
+},
+"label": "5300 BC"
+},
+"stop": {
+"in": {
+"year": "-4899"
+},
+"label": "4900 BC"
+}
+},
+"p0ds9qjqbxt": {
+"broader": "p0ds9qjfhcm",
+"label": "Middle Minoan IA",
+"localizedLabels": {
+"el": [
+"Μέση Μινωική ΙΑ"
+],
+"en": [
+"Middle Minoan IA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-2099",
+"latestYear": "-2049"
+},
+"label": "2100/2050 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1924",
+"latestYear": "-1899"
+},
+"label": "1925/1900 BC"
+}
+},
+"p0ds9qjqc49": {
+"broader": "p0ds9qj3x2t",
+"label": "Late Neolithic",
+"localizedLabels": {
+"el": [
+"Ύστερη Νεολιθική"
+],
+"en": [
+"Late Neolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-5499",
+"latestYear": "-5299"
+},
+"label": "5500/5300 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-4499",
+"latestYear": "-3249"
+},
+"label": "4500/3250 BC"
+}
+},
+"p0ds9qjqhhk": {
+"broader": "p0ds9qjztzb",
+"label": "Middle Helladic I",
+"localizedLabels": {
+"el": [
+"Μέση Ελλαδική Ι"
+],
+"en": [
+"Middle Helladic I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1999"
+},
+"label": "2000 BC"
+},
+"stop": {
+"in": {
+"year": "-1899"
+},
+"label": "1900 BC"
+}
+},
+"p0ds9qjqppc": {
+"broader": "p0ds9qjpdcd",
+"label": "Late Antique",
+"localizedLabels": {
+"el": [
+"Ύστερη Αρχαιότητα"
+],
+"en": [
+"Late Antique"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "0306"
+},
+"label": "306 AD"
+},
+"stop": {
+"in": {
+"year": "0610"
+},
+"label": "610 AD"
+}
+},
+"p0ds9qjqr72": {
+"broader": "p0ds9qj5rzp",
+"label": "Final Neolithic IV Crete",
+"localizedLabels": {
+"el": [
+"Τελική Νεολιθική ΙV (Κρήτη)"
+],
+"en": [
+"Final Neolithic IV Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-3299"
+},
+"label": "3300 BC"
+},
+"stop": {
+"in": {
+"year": "-2999"
+},
+"label": "3000 BC"
+}
+},
+"p0ds9qjr2pw": {
+"broader": "p0ds9qjztzb",
+"label": "Middle Helladic II",
+"localizedLabels": {
+"el": [
+"Μέση Ελλαδική ΙΙ"
+],
+"en": [
+"Middle Helladic II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1899"
+},
+"label": "1900 BC"
+},
+"stop": {
+"in": {
+"year": "-1699"
+},
+"label": "1700 BC"
+}
+},
+"p0ds9qjr3jz": {
+"broader": "p0ds9qjpvn5",
+"label": "Early Minoan I",
+"localizedLabels": {
+"el": [
+"Πρώιμη Μινωική Ι"
+],
+"en": [
+"Early Minoan I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-3099"
+},
+"label": "3100 BC"
+},
+"stop": {
+"in": {
+"year": "-2999"
+},
+"label": "3000 BC"
+}
+},
+"p0ds9qjrdgq": {
+"broader": "p0ds9qjp52w",
+"label": "Late Cycladic III",
+"localizedLabels": {
+"el": [
+"Ύστερη Κυκλαδική ΙΙΙ"
+],
+"en": [
+"Late Cycladic III"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1389"
+},
+"label": "1390 BC"
+},
+"stop": {
+"in": {
+"year": "-1079"
+},
+"label": "1080 BC"
+}
+},
+"p0ds9qjrgzd": {
+"broader": "p0ds9qj9kdj",
+"label": "New Palace period",
+"localizedLabels": {
+"el": [
+"Νεοανακτορική Εποχή"
+],
+"en": [
+"New Palace period"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-1599"
+},
+"label": "1600 BC"
+},
+"stop": {
+"in": {
+"year": "-1389"
+},
+"label": "1390 BC"
+}
+},
+"p0ds9qjrhs6": {
+"broader": "p0ds9qjncd7",
+"label": "Middle Protoattic",
+"localizedLabels": {
+"el": [
+"Μέση Πρωτο-Αττική"
+],
+"en": [
+"Middle Protoattic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0674"
+},
+"label": "675 BC"
+},
+"stop": {
+"in": {
+"year": "-0649"
+},
+"label": "650 BC"
+}
+},
+"p0ds9qjrk5c": {
+"broader": "p0ds9qj3x2t",
+"label": "Middle Neolithic ",
+"localizedLabels": {
+"el": [
+"Μέση Νεολιθική"
+],
+"en": [
+"Middle Neolithic "
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-5899",
+"latestYear": "-5799"
+},
+"label": "5900/5800 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-5499",
+"latestYear": "-4749"
+},
+"label": "5500/4750 BC"
+}
+},
+"p0ds9qjrr5n": {
+"broader": "p0ds9qj3x2t",
+"label": "Pre-Pottery or Aceramic Neolithic",
+"localizedLabels": {
+"el": [
+"Προκεραμική ή Ακεραμική Νεολιθική"
+],
+"en": [
+"Pre-Pottery or Aceramic Neolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-6799"
+},
+"label": "6800 BC"
+},
+"stop": {
+"in": {
+"year": "-6499"
+},
+"label": "6500 BC"
+}
+},
+"p0ds9qjrv2j": {
+"broader": "p0ds9qj9kdj",
+"label": "Prepalatial period",
+"localizedLabels": {
+"el": [
+"Προανακτορική Εποχή"
+],
+"en": [
+"Prepalatial period"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-3649",
+"latestYear": "-3499"
+},
+"label": "3650/3500 BC"
+},
+"stop": {
+"in": {
+"year": "-1999"
+},
+"label": "2000 BC"
+}
+},
+"p0ds9qjrvwn": {
+"label": "Early Iron Age",
+"localizedLabels": {
+"el": [
+"Πρώιμη Εποχή του Σιδήρου"
+],
+"en": [
+"Early Iron Age"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1099"
+},
+"label": "1100 BC"
+},
+"stop": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+}
+},
+"p0ds9qjs62t": {
+"broader": "p0ds9qj56qg",
+"label": "Late Minoan IIIB",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική ΙΙΙΒ"
+],
+"en": [
+"Late Minoan IIIB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1329",
+"latestYear": "-1314"
+},
+"label": "1330/1315 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1199",
+"latestYear": "-1189"
+},
+"label": "1200/1190 BC"
+}
+},
+"p0ds9qjs8v6": {
+"broader": "p0ds9qj7tp9",
+"label": "Early Protocorinthian",
+"localizedLabels": {
+"el": [
+"Πρώιμη Πρωτο-Κορινθιακή"
+],
+"en": [
+"Early Protocorinthian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0719"
+},
+"label": "720 BC"
+},
+"stop": {
+"in": {
+"year": "-0689"
+},
+"label": "690 BC"
+}
+},
+"p0ds9qjs9st": {
+"broader": "p0ds9qjv6nb",
+"label": "Middle Cycladic I",
+"localizedLabels": {
+"el": [
+"Μέση Κυκλαδική Ι"
+],
+"en": [
+"Middle Cycladic I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1999"
+},
+"label": "2000 BC"
+},
+"stop": {
+"in": {
+"year": "-1899"
+},
+"label": "1900 BC"
+}
+},
+"p0ds9qjscgp": {
+"broader": "p0ds9qjqc49",
+"label": "Late Neolithic Greece",
+"localizedLabels": {
+"el": [
+"Ύστερη Νεολιθική (Ελλάδα)"
+],
+"en": [
+"Late Neolithic Greece"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-5299"
+},
+"label": "5300 BC"
+},
+"stop": {
+"in": {
+"year": "-4499"
+},
+"label": "4500 BC"
+}
+},
+"p0ds9qjsdpq": {
+"broader": "p0ds9qjjf69",
+"label": "Paleolithic",
+"localizedLabels": {
+"el": [
+"Παλαιολιθική"
+],
+"en": [
+"Paleolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-349999"
+},
+"label": "350000 BC"
+},
+"stop": {
+"in": {
+"year": "-10999"
+},
+"label": "11000 BC"
+}
+},
+"p0ds9qjsf3x": {
+"broader": "p0ds9qjp52w",
+"label": "Late Cycladic II",
+"localizedLabels": {
+"el": [
+"Ύστερη Κυκλαδική ΙΙ"
+],
+"en": [
+"Late Cycladic II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1499"
+},
+"label": "1500 BC"
+},
+"stop": {
+"in": {
+"year": "-1389"
+},
+"label": "1390 BC"
+}
+},
+"p0ds9qjsg4h": {
+"broader": "p0ds9qj5rzp",
+"label": "Final Neolithic IB Crete",
+"localizedLabels": {
+"el": [
+"Τελική Νεολιθική ΙΒ (Κρήτη)"
+],
+"en": [
+"Final Neolithic IB Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-4199"
+},
+"label": "4200 BC"
+},
+"stop": {
+"in": {
+"year": "-3899"
+},
+"label": "3900 BC"
+}
+},
+"p0ds9qjsqcd": {
+"broader": "p0ds9qjmv48",
+"label": "Early Hellenistic",
+"localizedLabels": {
+"el": [
+"Πρώιμη Ελληνιστική"
+],
+"en": [
+"Early Hellenistic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0329"
+},
+"label": "330 BC"
+},
+"stop": {
+"in": {
+"year": "-0219"
+},
+"label": "220 BC"
+}
+},
+"p0ds9qjsx4v": {
+"broader": "p0ds9qjwmfv",
+"label": "Early Neolithic Greece",
+"localizedLabels": {
+"el": [
+"Αρχαιότερη Νεολιθική (Ελλάδα)"
+],
+"en": [
+"Early Neolithic Greece"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-6499"
+},
+"label": "6500 BC"
+},
+"stop": {
+"in": {
+"year": "-5799"
+},
+"label": "5800 BC"
+}
+},
+"p0ds9qjt2cp": {
+"broader": "p0ds9qjwmfv",
+"label": "Early Neolithic Crete",
+"localizedLabels": {
+"el": [
+"Αρχαιότερη Νεολιθική (Κρήτη)"
+],
+"en": [
+"Early Neolithic Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-6499"
+},
+"label": "6500 BC"
+},
+"stop": {
+"in": {
+"year": "-5899"
+},
+"label": "5900 BC"
+}
+},
+"p0ds9qjt7fk": {
+"broader": "p0ds9qjkzn8",
+"label": "Early Geometric",
+"localizedLabels": {
+"el": [
+"Πρώιμη Γεωμετρική"
+],
+"en": [
+"Early Geometric"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0899"
+},
+"label": "900 BC"
+},
+"stop": {
+"in": {
+"year": "-0849"
+},
+"label": "850 BC"
+}
+},
+"p0ds9qjtf5r": {
+"broader": "p0ds9qjrk5c",
+"label": "Middle Neolithic Northern Greece",
+"localizedLabels": {
+"el": [
+"Μέση Νεολιθική (Βόρεια Ελλάδα)"
+],
+"en": [
+"Middle Neolithic Northern Greece"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-5799"
+},
+"label": "5800 BC"
+},
+"stop": {
+"in": {
+"year": "-5499"
+},
+"label": "5500 BC"
+}
+},
+"p0ds9qjthh8": {
+"broader": "p0ds9qjhmqs",
+"label": "Early Cycladic I",
+"localizedLabels": {
+"el": [
+"Πρώιμη Κυκλαδική I"
+],
+"en": [
+"Early Cycladic I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-3099"
+},
+"label": "3100 BC"
+},
+"stop": {
+"in": {
+"year": "-2699"
+},
+"label": "2700 BC"
+}
+},
+"p0ds9qjv32h": {
+"broader": "p0ds9qjncd7",
+"label": "Early Protoattic",
+"localizedLabels": {
+"el": [
+"Πρώιμη Πρωτο-Αττική"
+],
+"en": [
+"Early Protoattic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+},
+"stop": {
+"in": {
+"year": "-0674"
+},
+"label": "675 BC"
+}
+},
+"p0ds9qjv6nb": {
+"broader": "p0ds9qjhmqs",
+"label": "Middle Cycladic",
+"localizedLabels": {
+"el": [
+"Μέση Κυκλαδική"
+],
+"en": [
+"Middle Cycladic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1999"
+},
+"label": "2000 BC"
+},
+"stop": {
+"in": {
+"year": "-1599"
+},
+"label": "1600 BC"
+}
+},
+"p0ds9qjv9j7": {
+"broader": "p0ds9qjn6xc",
+"label": "Late Helladic I",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική Ι"
+],
+"en": [
+"Late Helladic I"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1699",
+"latestYear": "-1674"
+},
+"label": "1700/1675 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1634",
+"latestYear": "-1599"
+},
+"label": "1635/1600 BC"
+}
+},
+"p0ds9qjvfn5": {
+"broader": "p0ds9qjpvn5",
+"label": "Early Minoan III",
+"localizedLabels": {
+"el": [
+"Πρώιμη Μινωική ΙΙΙ"
+],
+"en": [
+"Early Minoan III"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-2199"
+},
+"label": "2200 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-2099",
+"latestYear": "-2049"
+},
+"label": "2100/2050 BC"
+}
+},
+"p0ds9qjvv6d": {
+"broader": "p0ds9qjh3bn",
+"label": "Early Minoan IIB",
+"localizedLabels": {
+"el": [
+"Πρώιμη Μινωική ΙΙΒ"
+],
+"en": [
+"Early Minoan IIB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-2449",
+"latestYear": "-2399"
+},
+"label": "2450/2400 BC"
+},
+"stop": {
+"in": {
+"year": "-2199"
+},
+"label": "2200 BC"
+}
+},
+"p0ds9qjvx5m": {
+"broader": "p0ds9qjwzmx",
+"label": "Corinthian",
+"localizedLabels": {
+"el": [
+"Κορινθιακή"
+],
+"en": [
+"Corinthian"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0624"
+},
+"label": "625 BC"
+},
+"stop": {
+"in": {
+"year": "-0534"
+},
+"label": "535 BC"
+}
+},
+"p0ds9qjw3hk": {
+"broader": "p0ds9qjc3v7",
+"label": "Late Helladic IIIA2",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΙΑ2"
+],
+"en": [
+"Late Helladic IIIA2"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1389",
+"latestYear": "-1369"
+},
+"label": "1390/1370 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1329",
+"latestYear": "-1314"
+},
+"label": "1330/1315 BC"
+}
+},
+"p0ds9qjwd4n": {
+"broader": "p0ds9qjn6xc",
+"label": "Late Helladic III",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΙ"
+],
+"en": [
+"Late Helladic III"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1419",
+"latestYear": "-1409"
+},
+"label": "1420/1410 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1074",
+"latestYear": "-1049"
+},
+"label": "1075/1050 BC"
+}
+},
+"p0ds9qjwmfv": {
+"broader": "p0ds9qj3x2t",
+"label": "Early Neolithic",
+"localizedLabels": {
+"el": [
+"Αρχαιότερη Νεολιθική"
+],
+"en": [
+"Early Neolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-6499"
+},
+"label": "6500 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-5899",
+"latestYear": "-5799"
+},
+"label": "5900/5800 BC"
+}
+},
+"p0ds9qjwq59": {
+"broader": "p0ds9qjrvwn",
+"label": "Sub-Minoan",
+"localizedLabels": {
+"el": [
+"Υπο-Μινωική Περίοδος"
+],
+"en": [
+"Sub-Minoan"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-1069"
+},
+"label": "1070 BC"
+},
+"stop": {
+"in": {
+"year": "-1014"
+},
+"label": "1015 BC"
+}
+},
+"p0ds9qjwwfx": {
+"broader": "p0ds9qjpdcd",
+"label": "Roman",
+"localizedLabels": {
+"el": [
+" Ρωμαϊκή Περίοδος"
+],
+"en": [
+"Roman"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0030"
+},
+"label": "31 BC"
+},
+"stop": {
+"in": {
+"year": "0324"
+},
+"label": "324 AD"
+}
+},
+"p0ds9qjwzmx": {
+"broader": "p0ds9qjpdcd",
+"label": "Archaic",
+"localizedLabels": {
+"el": [
+"Αρχαϊκή"
+],
+"en": [
+"Archaic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+},
+"stop": {
+"in": {
+"year": "-0479"
+},
+"label": "480 BC"
+}
+},
+"p0ds9qjx3rv": {
+"broader": "p0ds9qjrk5c",
+"label": "Middle Neolithic Crete",
+"localizedLabels": {
+"el": [
+"Μέση Νεολιθική (Κρήτη)"
+],
+"en": [
+"Middle Neolithic Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-5899"
+},
+"label": "5900 BC"
+},
+"stop": {
+"in": {
+"year": "-5299"
+},
+"label": "5300 BC"
+}
+},
+"p0ds9qjx739": {
+"broader": "p0ds9qjmv48",
+"label": "Graeco-Roman",
+"localizedLabels": {
+"el": [
+"Ελληνο-Ρωμαϊκή Περίοδος"
+],
+"en": [
+"Graeco-Roman"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0149"
+},
+"label": "150 BC"
+},
+"stop": {
+"in": {
+"year": "-0030"
+},
+"label": "31 BC"
+}
+},
+"p0ds9qjx7vs": {
+"broader": "p0ds9qjdx5q",
+"label": "Early Protogeometric",
+"localizedLabels": {
+"el": [
+"Πρώιμη Πρωτογεωμετρική"
+],
+"en": [
+"Early Protogeometric"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1099"
+},
+"label": "1100 BC"
+},
+"stop": {
+"in": {
+"year": "-0899"
+},
+"label": "900 BC"
+}
+},
+"p0ds9qjxc5w": {
+"broader": "p0ds9qjv6nb",
+"label": "Middle Cycladic II",
+"localizedLabels": {
+"el": [
+"Μέση Κυκλαδική ΙΙ"
+],
+"en": [
+"Middle Cycladic II"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1899"
+},
+"label": "1900 BC"
+},
+"stop": {
+"in": {
+"year": "-1699"
+},
+"label": "1700 BC"
+}
+},
+"p0ds9qjxdv4": {
+"broader": "p0ds9qjsdpq",
+"label": "Lower Paleolithic",
+"localizedLabels": {
+"el": [
+"Κατώτερη Παλαιολιθική",
+"Lower Paleolithic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-349999"
+},
+"label": "350000 BC"
+},
+"stop": {
+"in": {
+"year": "-99999"
+},
+"label": "100000 BC"
+}
+},
+"p0ds9qjxgtb": {
+"broader": "p0ds9qjrk5c",
+"label": "Middle Neolithic Greece",
+"localizedLabels": {
+"el": [
+"Μέση Νεολιθική (Ελλάδα)"
+],
+"en": [
+"Middle Neolithic Greece"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-5799"
+},
+"label": "5800 BC"
+},
+"stop": {
+"in": {
+"year": "-4749"
+},
+"label": "4750 BC"
+}
+},
+"p0ds9qjxhhw": {
+"broader": "p0ds9qjv6nb",
+"label": "Middle Cycladic III",
+"localizedLabels": {
+"el": [
+"Μέση Κυκλαδική ΙΙΙ"
+],
+"en": [
+"Middle Cycladic III"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1699"
+},
+"label": "1700 BC"
+},
+"stop": {
+"in": {
+"year": "-1599"
+},
+"label": "1600 BC"
+}
+},
+"p0ds9qjxzm6": {
+"broader": "p0ds9qj7xjv",
+"label": "Late Helladic IIIB2",
+"localizedLabels": {
+"el": [
+"Ύστερη Ελλαδική ΙΙΙΒ2"
+],
+"en": [
+"Late Helladic IIIB2"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1199",
+"latestYear": "-1189"
+},
+"label": "1200/1190 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1074",
+"latestYear": "-1049"
+},
+"label": "1075/1050 BC"
+}
+},
+"p0ds9qjxzxt": {
+"broader": "p0ds9qj8jfc",
+"label": "Late Minoan IB",
+"localizedLabels": {
+"el": [
+"Ύστερη Μινωική ΙΒ"
+],
+"en": [
+"Late Minoan IB"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"earliestYear": "-1624",
+"latestYear": "-1599"
+},
+"label": "1625/1600 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-1469",
+"latestYear": "-1459"
+},
+"label": "1470/1460 BC"
+}
+},
+"p0ds9qjz4bs": {
+"broader": "p0ds9qjwzmx",
+"label": "Orientalizing",
+"localizedLabels": {
+"el": [
+"Ανατολίζουσα Περίοδος"
+],
+"en": [
+"Orientalizing"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0719"
+},
+"label": "720 BC"
+},
+"stop": {
+"in": {
+"year": "-0599"
+},
+"label": "600 BC"
+}
+},
+"p0ds9qjz4z5": {
+"broader": "p0ds9qj5rzp",
+"label": "Final Neolithic III Crete",
+"localizedLabels": {
+"el": [
+"Τελική Νεολιθική ΙΙΙ (Κρήτη)"
+],
+"en": [
+"Final Neolithic III Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-3599"
+},
+"label": "3600 BC"
+},
+"stop": {
+"in": {
+"year": "-3299"
+},
+"label": "3300 BC"
+}
+},
+"p0ds9qjzch4": {
+"broader": "p0ds9qjwzmx",
+"label": "Sub-Geometric",
+"localizedLabels": {
+"el": [
+"Υπο-Γεωμετρική Περίοδος"
+],
+"en": [
+"Sub-Geometric"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0699"
+},
+"label": "700 BC"
+},
+"stop": {
+"in": {
+"year": "-0599"
+},
+"label": "600 BC"
+}
+},
+"p0ds9qjzd5d": {
+"broader": "p0ds9qj5rzp",
+"label": "Final Neolithic IA Crete",
+"localizedLabels": {
+"el": [
+"Τελική Νεολιθική ή Χαλκολιθική ΙΑ (Κρήτη)"
+],
+"en": [
+"Final Neolithic IA Crete"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-4499"
+},
+"label": "4500 BC"
+},
+"stop": {
+"in": {
+"year": "-4199"
+},
+"label": "4200 BC"
+}
+},
+"p0ds9qjzfk7": {
+"broader": "p0ds9qj5w67",
+"label": "Late Geometric IIA",
+"localizedLabels": {
+"el": [
+"Ύστερη Γεωμετρικη ΙΙΑ"
+],
+"en": [
+"Late Geometric IIA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0734"
+},
+"label": "735 BC"
+},
+"stop": {
+"in": {
+"year": "-0719"
+},
+"label": "720 BC"
+}
+},
+"p0ds9qjzpq7": {
+"broader": "p0ds9qj7ggw",
+"label": "Late Geometric IA",
+"localizedLabels": {
+"el": [
+"Ύστερη Γεωμετρική ΙΑ"
+],
+"en": [
+"Late Geometric IA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-0759"
+},
+"label": "760 BC"
+},
+"stop": {
+"in": {
+"year": "-0749"
+},
+"label": "750 BC"
+}
+},
+"p0ds9qjztzb": {
+"broader": "p0ds9qj9pc2",
+"label": "Middle Helladic",
+"localizedLabels": {
+"el": [
+"Μέση Ελλαδική"
+],
+"en": [
+"Middle Helladic"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q41",
+"label": "Greece"
+}
+],
+"start": {
+"in": {
+"year": "-1999"
+},
+"label": "2000 BC"
+},
+"stop": {
+"in": {
+"year": "-1599"
+},
+"label": "1600 BC"
+}
+},
+"p0ds9qjzv9x": {
+"broader": "p0ds9qjh3bn",
+"label": "Early Minoan IIA",
+"localizedLabels": {
+"el": [
+"Πρώιμη Μινωική ΙΙΑ"
+],
+"en": [
+"Early Minoan IIA"
+]
+},
+"spatialCoverage": [
+{
+"id": "http://www.wikidata.org/entity/Q34374",
+"label": "Crete"
+}
+],
+"start": {
+"in": {
+"year": "-2649"
+},
+"label": "2650 BC"
+},
+"stop": {
+"in": {
+"earliestYear": "-2449",
+"latestYear": "-2399"
+},
+"label": "2450/2400 BC"
+}
+}
+},
+"source": {
+"creators": [
+{
+"name": "British School at Athens"
+}
+],
+"title": "The British School at Athens: archaeological periods of Greece",
+"url": "https://www.bsa.ac.uk/",
+"yearPublished": "2022"
+}
+}
+}
+}

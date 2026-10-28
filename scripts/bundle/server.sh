@@ -81,5 +81,5 @@ ls -la "$out" | sed 's/^/  /'
 data="$(dirname "$out")/db"
 rm -rf "$data" && mkdir -p "$data"
 cp -R "$root/db/places" "$root/db/periods" "$root/db/gazetteer" "$data/"
-find "$data" \( -name '*.py' -o -name '*.sh' -o -name '__pycache__' \) -prune -exec rm -rf {} +
+find "$data" \( -name '*.py' -o -name '*.sh' -o -name '__pycache__' -o -name 'testdata' \) -prune -exec rm -rf {} +
 du -sh "$data" | sed 's/^/  /'

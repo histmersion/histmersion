@@ -128,6 +128,74 @@ the server makes of it is below.
 language of the item's native label (P1705) as LPF `descriptions[]` (`{value, lang}`), which the
 importer stores in `place_descriptions` (V074) — also for a record that JOINED a seed place.
 
+**Heritage monuments, of every period (2026-10-28).** The roots above missed the medieval and Ottoman
+monuments of a region — Akronauplia (Q3555617), Larissa Castle (Q1012861), the Talantio monastery
+(Q56398298) and the Bermpaka church (Q38280392) are all in Wikidata with coordinates, but castles,
+monasteries and churches reach none of those classes (`docs/research-gazetteer-greece.md`). So the
+extract also keeps:
+
+- every item with a **heritage designation** (P1435), whatever its class — it is a site, with no
+  `class` of its own unless it also reaches a root;
+- instances (P31/P279*) of castle Q23413, fort Q1785071, fortification Q57821, city walls Q16748868,
+  city gate Q82117, tower house Q91312, tower Q12518, monastery Q44613, chapel Q108325, church building
+  Q16970, mosque Q32815, synagogue Q34627, aqueduct Q474 and bridge Q12280 — after the archaeological
+  site in `WD_ROOTS` (an item of the older roots keeps its class) and before the settlement.
+
+With each record, in `properties`: `p31` (the item's own classes: the server types a site from them
+first, `SiteTypes.wikidataOwn` — a fortress, a minaret, an Eastern Orthodox church), `heritage`
+(`[{id, label, start, end}]`: the designation, its English label, and its P580/P582 qualifiers, the
+designation's own dates — never the monument's), `periods` (the P2348 values and labels) and
+`registers` (P13741 Archaeological Cadastre, P2186 Wiki Loves Monuments, P9951 Greek Castles, P8218
+Archaeology in Greece Online, P8068 ToposText, P1936 DARE: ids only — the importer joins by gazetteer ids,
+and the Cadastre's data itself is not redistributable). A settlement with a designation or a register id
+is kept like a linked one.
+
+**Where a date comes from** (`properties.date_source`, for the place card). The time statements first, as
+above: `wikidata-p580` when a start or end time (P580/P582) gave a bound, else `wikidata-p571`
+(inception: the start, the end open), else `wikidata-p576`. Only an item they leave undated is dated by
+its **time period** (P2348) through PeriodO (`--periodo d.json`, the dump `db/periods/fetch.sh` reads;
+its sha256 is in the build's stats): `p2348-periodo:<id>[+<id>…]`, with `periodo: [{id, label,
+authority, authorityTitle}]`. A period is a date range only in a region, so the authorities are chosen by
+the item's country (P17, `PERIODO_SCHEMES`): for Greece the British School at Athens' periods
+(p0ds9qj), then the Chronique des fouilles (p0gtzvd), the Cambridge Companion to the Aegean Bronze Age
+(p0qp9rs) and Pleiades (p03wskd). No PeriodO period links Wikidata, and Wikidata's periods are broader
+than an authority's ("classical antiquity" is no BSA "Classical", 480–323 BCE), so a curated table
+(`PERIODO_ALIASES`, 26 entries checked against both labels) names the period a Wikidata period IS; any
+other matches only a period with the same words (or one `sameAs` the item), one per authority. EVERY
+P2348 value of an item must resolve, or it stays undated: "Neolithic" and "Frankokratia" with only the
+first known would end the item in 3000 BCE. Nothing is guessed: no PeriodO, no country with a scheme, an
+unmatched period — no date.
+
+**The Greece run** (`--bbox 19.3,34.7,29.7,41.8`, which also takes in western Turkey, southern Albania,
+North Macedonia and Bulgaria; QLever, 2026-10-28; PeriodO dump sha256 `c745db85…`):
+
+| | before (the old roots, same fetch) | after |
+|---|---:|---:|
+| records | 32 428 | 49 317 (+16 889) |
+| with a designation (P1435) | — | 6 682 (2 650 of no root class) |
+| with a register id | — | 8 935 |
+| dated | 1 917 | 5 260 |
+| — `wikidata-p571` / `p580` / `p576` | | 2 922 / 1 432 / 52 |
+| — `p2348-periodo` | | 854 |
+
+Of the 3 767 records dated only by P2348, 854 are dated; 16 in Greece are not (Frankokratia,
+"prehistory", a century item), and 2 897 are outside Greece (2 829 in North Macedonia), where no scheme is
+listed yet. Site types after (`SiteTypes.of` over `p31`, then `class`): settlement 23 843, sanctuary
+10 298, find-spot 6 185, fortification 2 991, burial 900, bridge 775, tower 473, villa 441, aqueduct 165,
+others 208, none 3 038 (before: settlement 23 578, find-spot 7 959, none 891). A test cut of 23 of these
+records and the BSA scheme is committed (`testdata/wikidata-greece`, `GreeceFixture`).
+
+**QLever's 30 s limit (2026-10-28).** The endpoint now stops every query at 30 s, and the plans the
+queries had timed out even on one square degree. Three shapes fix it: every aspect joins the item SET
+computed first in a subquery (`SELECT DISTINCT ?item`); a statement query (`p:`, the times, the
+designations, the official names) restricts the statements to those items in a subquery of its own (else
+QLever joins every statement of the property world-wide on `?st`: P576 timed out on a band in the sea,
+over the subquery all of Greece takes 11 s); and a regional extract asks for descriptions in every
+language (the ~190-code `LANG IN` filter times out in query PLANNING). A connection QLever closes in the
+middle of a result is a timeout too (`read_body`). The world fetch has not been re-run with these shapes.
+`wikidata-fetch [<endpoint>] <dir>` defaults to `WD_ENDPOINT` (`https://qlever.dev/api/wikidata`; the old
+qlever.cs.uni-freiburg.de redirects there), or `--endpoint URL`.
+
 **Why SPARQL against QLever, not the dump or WDQS.** The JSON dump is ~140 GB compressed (~1.6 TB
 of JSON) — a full download and parse for under 1 % of it. The Wikidata Query Service stops every
 query at 60 s; the class closure × coordinates join for settlements alone does not finish, so it
@@ -170,7 +238,7 @@ curl -fsSL -A "$UA" -O https://download.geonames.org/export/dump/alternateNamesV
 # the whole world in every language by default; --bbox window --langs window (or any box / languages) for a regional one
 python3 -I <repo>/db/gazetteer/build.py geonames allCountries.zip alternateNamesV2.zip geonames-<date>.ndjson.gz   # ~1 min
 python3 -I <repo>/db/gazetteer/build.py wikidata-fetch https://qlever.dev/api/wikidata wd                          # ~10 min, resumable
-python3 -I <repo>/db/gazetteer/build.py wikidata wd wikidata-<date>.ndjson.gz                                       # ~1 min
+python3 -I <repo>/db/gazetteer/build.py wikidata wd wikidata-<date>.ndjson.gz --periodo p0d.json                    # ~1 min; p0d.json: PeriodO, zstd -d
 python3 -I <repo>/db/gazetteer/build.py pin <repo>/db/gazetteer/extracts.json geonames geonames-<date>.ndjson.gz version=<date> built=<date>
 python3 -I <repo>/db/gazetteer/build.py pin <repo>/db/gazetteer/extracts.json wikidata wikidata-<date>.ndjson.gz version=<date> built=<date>
 ```
