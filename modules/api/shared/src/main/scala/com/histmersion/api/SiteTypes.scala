@@ -9,9 +9,10 @@ import com.histmersion.values.PlaceKind
   *
   *  - Pleiades: the place's `feature_types` (comma-separated, `temple-2` a variant of `temple`);
   *  - GeoNames: the feature code (`P.PPL` a populated place, `S.RUIN` ruins, `S.TMB` a tomb…);
-  *  - Wikidata: the item's class — the import kept only "archaeological site" (Q839954) or "human
-  *    settlement" (Q486972); the item's own P31 classes, read for the places on the map and walked up
-  *    P279 through [[wikidataClasses]] alone, refine it (stored in `places.site_type`).
+  *  - Wikidata: the item's own P31 classes the extract keeps (`properties.p31`, since 2026-10-28), else
+  *    the root class the import reached (`properties.class`: an archaeological site, a settlement, a
+  *    castle, a church…); the P31 classes, read for the places on the map and walked up P279 through
+  *    [[wikidataClasses]] alone, refine it (stored in `places.site_type`).
   *
   * A site of no known type keeps the plain dot. */
 object SiteTypes:
@@ -34,6 +35,9 @@ object SiteTypes:
   val Palace         = "palace"
   val Monument       = "monument"
   val Shipwreck      = "shipwreck"
+  val Tower          = "tower"
+  val Bridge         = "bridge"
+  val Aqueduct       = "aqueduct"
 
   val all: List[SiteType] = List(
     SiteType(Settlement, "settlement", "building-2"),
@@ -43,7 +47,12 @@ object SiteTypes:
     SiteType(Burial, "burial, tomb", "pyramid"),
     SiteType(Mine, "mine, quarry", "pickaxe"),
     SiteType(Port, "port, harbour", "anchor"),
-    SiteType(Infrastructure, "road, bridge, aqueduct", "route"),
+    SiteType(Infrastructure, "road, canal, cistern", "route"),
+    // their own glyphs come with the icon family (docs/research-assets/web-ui/icons-licences-pleiades.md:
+    // Tabler building-bridge-2, an aqueduct arcade); until then a vendored glyph no other site type uses
+    SiteType(Bridge, "bridge", "waves"),
+    SiteType(Aqueduct, "aqueduct", "droplets"),
+    SiteType(Tower, "tower", "shield"),
     SiteType(Theatre, "theatre, amphitheatre", "venetian-mask"),
     SiteType(Findspot, "find-spot, excavation", "shovel"),
     SiteType(Cave, "cave", "door-open"),
@@ -75,7 +84,7 @@ object SiteTypes:
     "mausoleum" -> Burial, "catacomb" -> Burial,
     "mine" -> Mine, "quarry" -> Mine,
     "port" -> Port, "harbor" -> Port, "harbour" -> Port, "anchorage" -> Port, "lighthouse" -> Port,
-    "road" -> Infrastructure, "bridge" -> Infrastructure, "aqueduct" -> Infrastructure,
+    "road" -> Infrastructure, "bridge" -> Bridge, "aqueduct" -> Aqueduct,
     "station" -> Infrastructure, "milestone" -> Infrastructure, "canal" -> Infrastructure,
     "dam" -> Infrastructure, "cistern" -> Infrastructure, "pass" -> Infrastructure, "bath" -> Infrastructure,
     "theatre" -> Theatre, "theater" -> Theatre, "amphitheatre" -> Theatre, "amphitheater" -> Theatre,
@@ -90,8 +99,8 @@ object SiteTypes:
 
   /** When a place lists several types, the most specific wins: a temple inside a settlement is drawn as
     * a temple, a fortified settlement as a fortification. Lower = preferred. */
-  private val preference: List[String] = List(Palace, Sanctuary, Theatre, Burial, Fortification, Mine, Port,
-    Shipwreck, Cave, Monument, Villa, Infrastructure, Settlement, Findspot)
+  val preference: List[String] = List(Palace, Sanctuary, Theatre, Burial, Fortification, Tower, Mine, Port,
+    Shipwreck, Cave, Monument, Villa, Aqueduct, Bridge, Infrastructure, Settlement, Findspot)
 
   private def best(types: Iterable[String]): Option[String] =
     types.toList.distinct.sortBy(t => preference.indexOf(t) match { case -1 => preference.size; case i => i }).headOption
@@ -108,13 +117,13 @@ object SiteTypes:
   val geonamesCodes: Map[String, String] = Map(
     "S.RUIN" -> Findspot, "S.ANS" -> Findspot, "S.HSTS" -> Findspot,
     "S.TMB" -> Burial, "S.CMTY" -> Burial, "S.PYR" -> Burial, "S.PYRS" -> Burial, "S.GRVE" -> Burial,
-    "S.CSTL" -> Fortification, "S.FT" -> Fortification, "S.WALLA" -> Fortification, "S.TOWR" -> Fortification,
+    "S.CSTL" -> Fortification, "S.FT" -> Fortification, "S.WALLA" -> Fortification, "S.TOWR" -> Tower,
     "S.TMPL" -> Sanctuary, "S.CH" -> Sanctuary, "S.MSTY" -> Sanctuary, "S.MSQE" -> Sanctuary, "S.SHRN" -> Sanctuary,
     "S.CTRR" -> Sanctuary,
     "S.PAL" -> Palace, "S.MNMT" -> Monument, "S.MNA" -> Mine, "S.MN" -> Mine, "S.MNQR" -> Mine, "S.MNAU" -> Mine,
     "S.MNCU" -> Mine, "S.MNFE" -> Mine, "S.QUAR" -> Mine,
     "L.PRT" -> Port, "S.HBR" -> Port, "H.HBR" -> Port, "S.LTHSE" -> Port,
-    "S.BDG" -> Infrastructure, "S.AQDT" -> Infrastructure, "R.RD" -> Infrastructure, "R.RDA" -> Infrastructure,
+    "S.BDG" -> Bridge, "S.AQDT" -> Aqueduct, "R.RD" -> Infrastructure, "R.RDA" -> Infrastructure,
     "S.AMTH" -> Theatre, "S.THTR" -> Theatre, "S.STDM" -> Theatre,
     "H.WRCK" -> Shipwreck, "S.WRCK" -> Shipwreck,
     "S.CAVE" -> Cave, "H.CAVE" -> Cave, "T.CAVE" -> Cave)
@@ -132,7 +141,9 @@ object SiteTypes:
   val HumanSettlement    = "Q486972"
 
   /** The curated classes a Wikidata item's P31 (walked up P279 through THIS table only) maps to.
-    * Each id was checked against its Wikidata label on 2026-10-14 (the label is the comment). */
+    * Each id was checked against its Wikidata label on 2026-10-14, the heritage buildings' on 2026-10-28
+    * (the label is the comment). A tower is a tower (a clock tower, a minaret, a watchtower's generic
+    * class); a watchtower, a defensive or fortified tower and a tower house are fortifications. */
   val wikidataClasses: Map[String, String] = Map(
     HumanSettlement -> Settlement, "Q15661340" -> Settlement /* ancient city */, "Q515" -> Settlement /* city */,
     "Q15253706" -> Settlement /* city */, "Q755017" -> Settlement /* tell */, "Q532" -> Settlement /* village */,
@@ -143,13 +154,20 @@ object SiteTypes:
     "Q57821" -> Fortification /* fortification */, "Q1785071" -> Fortification /* fort */,
     "Q23413" -> Fortification /* castle */, "Q744099" -> Fortification /* hillfort */,
     "Q88291" -> Fortification /* citadel */, "Q16748868" -> Fortification /* city walls */,
-    "Q192601" -> Fortification /* oppidum */,
-    "Q12280" -> Infrastructure /* bridge */, "Q474" -> Infrastructure /* aqueduct */,
+    "Q192601" -> Fortification /* oppidum */, "Q57831" -> Fortification /* fortress */,
+    "Q82117" -> Fortification /* city gate */, "Q57346" -> Fortification /* defensive wall */,
+    "Q947103" -> Fortification /* watchtower */, "Q20034791" -> Fortification /* defensive tower */,
+    "Q81917" -> Fortification /* fortified tower */, "Q91312" -> Fortification /* tower house */,
+    "Q12518" -> Tower /* tower */, "Q853854" -> Tower /* clock tower */, "Q200334" -> Tower /* bell tower */,
+    "Q48356" -> Tower /* minaret */,
+    "Q12280" -> Bridge /* bridge */, "Q474" -> Aqueduct /* aqueduct */,
     "Q34442" -> Infrastructure /* road */,
     "Q44539" -> Sanctuary /* temple */, "Q29553" -> Sanctuary /* sanctuary */, "Q16970" -> Sanctuary /* church building */,
     "Q697295" -> Sanctuary /* shrine */, "Q44613" -> Sanctuary /* monastery */, "Q32815" -> Sanctuary /* mosque */,
     "Q34627" -> Sanctuary /* synagogue */, "Q1088552" -> Sanctuary /* Catholic church building */,
     "Q24398318" -> Sanctuary /* religious building */, "Q267596" -> Sanctuary /* ancient Greek temple */,
+    "Q108325" -> Sanctuary /* chapel */, "Q2031836" -> Sanctuary /* Eastern Orthodox church building */,
+    "Q2977" -> Sanctuary /* cathedral */,
     "Q381885" -> Burial /* tomb */, "Q39614" -> Burial /* cemetery */, "Q200141" -> Burial /* necropolis */,
     "Q34023" -> Burial /* tumulus (a kurgan is one) */, "Q5737" -> Burial /* burial mound */,
     "Q12516" -> Burial /* pyramid */, "Q173387" -> Burial /* grave */, "Q162875" -> Burial /* mausoleum */,
@@ -168,22 +186,32 @@ object SiteTypes:
     * by [[preference]] among those the table knows), else the superclasses reached through P279 (the
     * caller walks those, nearest first), else the class the import kept. */
   def wikidata(p31: List[String], superclasses: List[String], importClass: Option[String]): Option[String] =
-    best(p31.flatMap(wikidataClasses.get))
+    wikidataOwn(p31)
       .orElse(superclasses.flatMap(wikidataClasses.get).headOption)
       .orElse(importClass.flatMap(wikidataClasses.get))
+
+  /** Pure: the type a Wikidata item's own P31 classes give — the most specific by [[preference]] among
+    * those [[wikidataClasses]] knows; None when it knows none. */
+  def wikidataOwn(p31: List[String]): Option[String] = best(p31.map(_.trim).flatMap(wikidataClasses.get))
+
+  /** Pure: the P31 classes in a Wikidata extract's `properties.p31` (a JSON array of ids, as text). */
+  def p31Of(json: Option[String]): List[String] =
+    json.toList.flatMap(s => "Q[0-9]+".r.findAllIn(s).toList)
 
   // ── one place ────────────────────────────────────────────────────────────────────────────────
 
   /** Pure: the type a place has on the map: the STORED one (a Wikidata refinement), else what its
-    * gazetteer's own fields say — Pleiades' feature types, GeoNames' feature code, the Wikidata import's
-    * class. Only a site or a feature has one (a region is an area, a polity a state). */
+    * gazetteer's own fields say — Pleiades' feature types, GeoNames' feature code, the Wikidata item's own
+    * P31 classes, the Wikidata import's class. Only a site or a feature has one (a region is an area, a
+    * polity a state). */
   def of(placeId: String, placeKind: String, stored: Option[String], featureTypes: Option[String],
-      fcode: Option[String], wikidataClass: Option[String]): Option[String] =
+      fcode: Option[String], wikidataClass: Option[String], p31: List[String] = Nil): Option[String] =
     if placeKind != PlaceKind.Site && placeKind != PlaceKind.Feature then None
     else
       stored.filter(byId.contains)
         .orElse(featureTypes.flatMap(pleiades))
         .orElse(fcode.flatMap(geonames))
+        .orElse(wikidataOwn(p31))
         .orElse(wikidataClass.flatMap(c => wikidataClasses.get(c.trim)))
 
 /** `POST /api/site-types/refine`: `limit` sites at most (none = every one not asked yet), `refresh`

@@ -86,7 +86,9 @@ class EventLinksSuite extends munit.FunSuite:
     assertEquals(SiteTypes.pleiades("fortified-settlement, settlement"), Some(SiteTypes.Fortification))
     assertEquals(SiteTypes.pleiades("tumulus"), Some(SiteTypes.Burial))
     assertEquals(SiteTypes.pleiades("mine-2,quarry"), Some(SiteTypes.Mine))
-    assertEquals(SiteTypes.pleiades("road,bridge"), Some(SiteTypes.Infrastructure))
+    assertEquals(SiteTypes.pleiades("road,bridge"), Some(SiteTypes.Bridge), "a bridge is more specific than a road")
+    assertEquals(SiteTypes.pleiades("road"), Some(SiteTypes.Infrastructure))
+    assertEquals(SiteTypes.pleiades("aqueduct-2"), Some(SiteTypes.Aqueduct))
     assertEquals(SiteTypes.pleiades("amphitheatre"), Some(SiteTypes.Theatre))
     assertEquals(SiteTypes.pleiades("archaeological-site"), Some(SiteTypes.Findspot))
     assertEquals(SiteTypes.pleiades("province-2"), None)
@@ -97,6 +99,9 @@ class EventLinksSuite extends munit.FunSuite:
     assertEquals(SiteTypes.geonames("s.ruin"), Some(SiteTypes.Findspot))
     assertEquals(SiteTypes.geonames("S.TMB"), Some(SiteTypes.Burial))
     assertEquals(SiteTypes.geonames("S.HTL"), None)
+    assertEquals(SiteTypes.geonames("S.BDG"), Some(SiteTypes.Bridge))
+    assertEquals(SiteTypes.geonames("S.AQDT"), Some(SiteTypes.Aqueduct))
+    assertEquals(SiteTypes.geonames("S.TOWR"), Some(SiteTypes.Tower))
 
   test("Wikidata: own classes first, then the walked superclasses, then the import's class"):
     assertEquals(SiteTypes.wikidata(List("Q755017"), Nil, Some(SiteTypes.ArchaeologicalSite)), Some(SiteTypes.Settlement))
@@ -105,6 +110,20 @@ class EventLinksSuite extends munit.FunSuite:
     assertEquals(SiteTypes.wikidata(List("Q44539", "Q486972"), Nil, None), Some(SiteTypes.Sanctuary), "a temple in a settlement")
     assertEquals(SiteTypes.wikidata(Nil, Nil, None), None)
 
+  test("Wikidata heritage buildings (2026-10-28): castles, towers, churches, bridges and aqueducts"):
+    assertEquals(SiteTypes.wikidataOwn(List("Q57831", "Q88291")), Some(SiteTypes.Fortification), "Akronauplia: fortress, citadel")
+    assertEquals(SiteTypes.wikidataOwn(List("Q23413")), Some(SiteTypes.Fortification), "Larissa Castle")
+    assertEquals(SiteTypes.wikidataOwn(List("Q44613")), Some(SiteTypes.Sanctuary), "Talantio monastery")
+    assertEquals(SiteTypes.wikidataOwn(List("Q16970", "Q2031836")), Some(SiteTypes.Sanctuary), "Bermpaka church")
+    assertEquals(SiteTypes.wikidataOwn(List("Q12518")), Some(SiteTypes.Tower))
+    assertEquals(SiteTypes.wikidataOwn(List("Q947103")), Some(SiteTypes.Fortification), "a watchtower defends")
+    assertEquals(SiteTypes.wikidataOwn(List("Q12518", "Q839954")), Some(SiteTypes.Tower), "a tower is more than a find-spot")
+    assertEquals(SiteTypes.wikidataOwn(List("Q12280")), Some(SiteTypes.Bridge))
+    assertEquals(SiteTypes.wikidataOwn(List("Q474")), Some(SiteTypes.Aqueduct))
+    assertEquals(SiteTypes.wikidataOwn(List("Q1")), None)
+    assertEquals(SiteTypes.p31Of(Some("""["Q16970","Q2031836"]""")), List("Q16970", "Q2031836"))
+    assertEquals(SiteTypes.p31Of(None), Nil)
+
   test("a place's type: the stored refinement, else its gazetteer's own field; only sites and features"):
     assertEquals(SiteTypes.of("wikidata_q1", "site", Some("burial"), None, None, Some(SiteTypes.HumanSettlement)), Some("burial"))
     assertEquals(SiteTypes.of("wikidata_q1", "site", None, None, None, Some(SiteTypes.HumanSettlement)), Some("settlement"))
@@ -112,6 +131,12 @@ class EventLinksSuite extends munit.FunSuite:
     assertEquals(SiteTypes.of("geonames_1", "site", None, None, Some("P.PPL"), None), Some("settlement"))
     assertEquals(SiteTypes.of("pleiades_1", "region", None, Some("settlement"), None, None), None)
     assertEquals(SiteTypes.of("x", "site", Some("not-a-type"), None, None, None), None)
+    // a Wikidata item's own P31 before the class the import reached; a heritage-only item has no class
+    assertEquals(SiteTypes.of("wikidata_q1", "site", None, None, None, Some(SiteTypes.ArchaeologicalSite), List("Q23413")),
+      Some("fortification"))
+    assertEquals(SiteTypes.of("wikidata_q1", "site", None, None, None, None, List("Q44613")), Some("sanctuary"))
+    assertEquals(SiteTypes.of("wikidata_q1", "site", None, None, None, Some(SiteTypes.HumanSettlement), List("Q1")),
+      Some("settlement"), "an unknown P31: the import's class")
 
   test("every type and kind has an icon name; the mapping tables only name known types"):
     assert(SiteTypes.all.forall(_.icon.nonEmpty) && EventTaxonomy.kinds.forall(_.icon.nonEmpty))
