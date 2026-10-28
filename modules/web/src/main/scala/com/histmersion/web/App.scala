@@ -283,6 +283,12 @@ object App:
   def quickRenderIfCached(from: Long, to: Long): Unit =
     quickRenderRange(from, to)
 
+  /** The map drawn for the span `[from, to]` again, from the findings held — after playback, which drew
+    * its frames' windows: the findings, the legend's years, the tiled layers and the boundaries all of
+    * the whole span, as before it played (with no findings held too: the layers still follow the span). */
+  def restoreSpan(from: Long, to: Long): Unit =
+    MapView.render(cachedFindings.filter(pt => pt.periodStart.forall(_ <= to) && pt.periodEnd.forall(_ >= from)), (from, to))
+
   private def schedule(): Unit =
     val key = paramsKey()
     if lastParams.contains(key) then ()
