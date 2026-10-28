@@ -230,7 +230,9 @@ skill and tool description to match.
 
 ## 7. Decisions (2026-10-28)
 
-1. Screens: still under review. Icons got a second round (see below).
+1. **Screens: accepted (2026-10-28)** — all page designs on the canvas. Implementation follows § 8.
+   Icons: burial, palace, shipwreck and collapse accepted in round 2; eruption, earthquake and tsunami
+   are in a third round.
 2. **Theme:** one button cycling *system → light → dark*, as in the documentation site; system by default.
 3. **Fonts:** ship them (Source Sans 3, Source Serif 4) with the app.
 4. **Bugs (§ 5): fix now**, plus one more: opening the filters or resizing the right sidebar must not
