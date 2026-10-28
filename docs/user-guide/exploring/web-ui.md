@@ -199,6 +199,11 @@ The toolbar opens the others:
 | API key | enter the key writes need (shown only when the server asks for one) |
 | About | version, the licence and a link to the source code of the running version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
 
+The last button of the toolbar is the **theme**: the page follows your system's light or dark setting
+until you press it; each press moves on to light, to dark, and back to the system's setting. The browser
+remembers the choice, for the windows, the source and article pages and every other tab of the same
+server.
+
 Windows and lists name things in plain words: an agent run is "Review an article", not
 `review-article`; a background job "Download the background map", not `basemap-fetch`. The name the
 command line uses is in the tooltip of the word, and in a window title's tooltip.

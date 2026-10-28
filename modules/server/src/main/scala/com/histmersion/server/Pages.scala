@@ -179,14 +179,14 @@ object Pages:
       case FullText.Hidden      => ""
       case FullText.Missing     => """<hr><p class="muted">No full text is stored for this source.</p>"""
       // normalised here as well as at import: the corpus was seeded before the figure-link rewrite
-      case FullText.Shown(text) => "<hr>" + html(AssetLinks.normalizeBody(text, r.title))
+      case FullText.Shown(text) => s"""<hr><div class="reading src-body">${html(AssetLinks.normalizeBody(text, r.title))}</div>"""
     s"""<h1>${esc(r.title)}</h1>""" +
       s"""<p class="src-byline">$byline</p>""" +
       s"""<p class="src-ident"><span class="lbl">$ident</span> ${identifier(r)}</p>""" +
       facets.mkString +
       formatNotice(p.formatting, "These notes", None) +
-      prose(p.summary).fold("")(h => s"""<div class="src-summary">$h</div>""") +
-      prose(p.notes).fold("")(h => s"<h2>Notes</h2>$h") +
+      prose(p.summary).fold("")(h => s"""<div class="src-summary reading">$h</div>""") +
+      prose(p.notes).fold("")(h => s"""<h2>Notes</h2><div class="reading">$h</div>""") +
       findings +
       citations(p.cites, p.citedBy) +
       Article.toggle(r.citekey, p.fullText != FullText.Hidden, p.query) +
@@ -237,7 +237,7 @@ object Pages:
       (if meta.isEmpty then "" else s"""<p class="article-meta-line">${meta.mkString(" · ")}</p>""") +
       p.review.fold("")(reviewLine) +
       formatNotice(p.formatting, "This article", Some(a.slug)) +
-      prose +
+      s"""<div class="reading article-body">$prose</div>""" +
       backlinks(p.backlinks) +
       sourcesCited(citedEntries(p.cited, numbers, links)) +
       p.review.fold("")(reviewHistory)

@@ -75,9 +75,10 @@ object HtmlRender:
   def chips(field: ChipField, values: List[String]): String =
     values.map(_.trim).filter(_.nonEmpty).distinct.map(chip(field, _)).mkString(" ")
 
+  /** A source's standing: the one status code — its mark (colour and shape, the stylesheet's `st-<status>`)
+    * and its word. */
   def statusBadge(status: SourceStatus): String =
-    val wire = status.wire
-    s"""<span class="status-badge st-$wire">$wire</span>"""
+    s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(status)} (${status.wire})">${Wording.status(status)}</span>"""
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */
   def confidenceBadge(c: Confidence): String = HtmlAtoms.confidenceBadge(c)

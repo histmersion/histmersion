@@ -105,3 +105,132 @@ class CssTokensSuite extends munit.FunSuite:
   test("a pane lets the pointer through everywhere but its markers"):
     val pane = """(?s)\.hd-pane\s*\{([^}]*)\}""".r.findFirstMatchIn(css).map(_.group(1)).getOrElse(fail("no .hd-pane rule"))
     assert(pane.contains("pointer-events:none"), pane)
+
+  // ── the theme: one token set, light and dark (the web UI's visual system) ──────────────────────────
+
+  private def declarations(block: String): Map[String, String] =
+    """(--[\w-]+)\s*:\s*([^;]+);""".r.findAllMatchIn(block).map(m => m.group(1) -> m.group(2).trim).toMap
+
+  /** The dark set chosen with the theme button, and the one the system's setting picks under "system". */
+  private val darkChosen: Map[String, String] =
+    declarations("""(?s):root\[data-theme="dark"\]\s*\{(.*?)\}""".r.findFirstMatchIn(css).map(_.group(1))
+      .getOrElse(fail("no :root[data-theme=\"dark\"] block")))
+  private val darkSystem: Map[String, String] =
+    declarations("""(?s)@media \(prefers-color-scheme: dark\)\s*\{\s*:root:not\(\[data-theme="light"\]\)\s*\{(.*?)\}""".r
+      .findFirstMatchIn(css).map(_.group(1)).getOrElse(fail("no prefers-color-scheme: dark block")))
+
+  /** A theme's resolved colour: its own value, `var(--x)` followed, as a hex triple. */
+  private def colour(theme: Map[String, String], token: String): (Int, Int, Int) =
+    def resolve(t: String, depth: Int): String =
+      val v = theme.getOrElse(t, rootTokens.getOrElse(t, fail(s"$t is not defined")))
+      """^var\((--[\w-]+)\)$""".r.findFirstMatchIn(v).fold(v)(m => if depth > 5 then v else resolve(m.group(1), depth + 1))
+    val v = resolve(token, 0)
+    Wcag.hex(v).getOrElse(fail(s"$token is not a hex colour: $v"))
+
+  private val light: Map[String, String] = rootTokens
+  private val dark: Map[String, String]  = rootTokens ++ darkChosen
+
+  test("the system's dark theme is the button's dark theme, token for token"):
+    assertEquals(darkSystem, darkChosen)
+
+  test("the dark theme redefines every colour the light theme's surfaces, text and states use"):
+    val themed = List("--bg", "--panel", "--sunk", "--ink", "--ink2", "--ink3", "--line", "--line2", "--control-line",
+      "--accent", "--on-accent", "--accent-soft", "--time", "--time-soft", "--time-fill", "--attn", "--attn-soft",
+      "--ok", "--ok-soft", "--danger", "--danger-soft", "--mark-bg", "--sh-pop", "--sh-win", "--scrim") ++
+      Palette.statuses.map(Palette.status) ++ Palette.edgeKinds.map(Palette.edge)
+    assertEquals(themed.filterNot(darkChosen.contains), Nil)
+    assertEquals(themed.filterNot(rootTokens.contains), Nil)
+
+  /** Text on a surface: WCAG 2.2 AA, 4.5:1 (every text size the UI uses is under 18.66 px bold). */
+  private val textPairs: List[(String, String)] =
+    (for fg <- List("--ink", "--ink2", "--ink3", "--muted", "--accent"); bg <- List("--bg", "--panel", "--sunk", "--accent-soft")
+      yield fg -> bg) ++
+      List("--on-accent" -> "--accent", "--time" -> "--panel", "--time" -> "--bg", "--time" -> "--time-soft",
+        "--attn" -> "--panel", "--attn" -> "--attn-soft", "--ok" -> "--panel", "--ok" -> "--ok-soft",
+        "--danger" -> "--panel", "--danger" -> "--danger-soft", "--ink" -> "--time-soft", "--ink" -> "--attn-soft",
+        "--ink" -> "--ok-soft", "--ink" -> "--danger-soft", "--mark-ink" -> "--mark-bg", "--ink2" -> "--accent-soft")
+
+  /** A control's edge, the focus ring and the source-status marks against what they sit on: 3:1. */
+  private val componentPairs: List[(String, String)] =
+    for
+      fg <- List("--control-line", "--accent") ++ Palette.statuses.map(Palette.status)
+      bg <- List("--bg", "--panel", "--sunk")
+    yield fg -> bg
+
+  for (name, theme) <- List("light" -> light, "dark" -> dark) do
+    test(s"$name theme: every text pair is WCAG 2.2 AA (4.5:1)"):
+      val low = textPairs.map((f, b) => (f, b, Wcag.contrast(colour(theme, f), colour(theme, b)))).filter(_._3 < Wcag.AaText)
+      assertEquals(low.map((f, b, c) => f"$f on $b: $c%.2f"), Nil)
+
+    test(s"$name theme: every control edge and status mark is WCAG 2.2 AA for components (3:1)"):
+      val low = componentPairs.map((f, b) => (f, b, Wcag.contrast(colour(theme, f), colour(theme, b)))).filter(_._3 < 3.0)
+      assertEquals(low.map((f, b, c) => f"$f on $b: $c%.2f"), Nil)
+
+  /** The stylesheet's rules, without the token blocks and the font faces: what must NAME tokens. */
+  private lazy val rules: String =
+    css.replaceAll("""(?s)/\*.*?\*/""", "")
+      .replaceAll("""(?s):root(\[data-theme="dark"\]|:not\(\[data-theme="light"\]\))?\s*\{[^}]*\}""", "")
+      .replaceAll("""(?s)\[data-layout="narrow"\](\[data-tablet\])?\s*\{[^}]*\}""", "")
+      .replaceAll("""(?s)@font-face\s*\{[^}]*\}""", "")
+
+  test("rules name colour tokens, never colours (but a mask's opaque stop)"):
+    val literals = """#[0-9a-fA-F]{3,8}\b|rgba?\(\s*\d""".r.findAllMatchIn(rules).map(m =>
+      rules.substring(math.max(0, m.start - 40), math.min(rules.length, m.end + 20)).replace('\n', ' ')).toList
+    assertEquals(literals.filterNot(_.contains("linear-gradient(to bottom, #000")), Nil)
+
+  test("type: six sizes, two weights, three radii, two shadows — tokens, not numbers"):
+    val sizes   = """font-size:\s*([^;}]+)""".r.findAllMatchIn(rules).map(_.group(1).trim).toSet
+    // the narrow layout's own scale (`--fs`, the 16 px floor that keeps a phone from zooming into a field) and a
+    // map glyph's size, which its marker sets
+    assertEquals(sizes.filterNot(v => v.startsWith("var(--fs") || v.endsWith("em") || v == "inherit" ||
+      v.startsWith("var(--glyph-size") || v == "calc(var(--fs) * 1.1)" || v == "max(16px, var(--fs))"), Set.empty[String])
+    val weights = """font-weight:\s*([^;}]+)""".r.findAllMatchIn(rules).map(_.group(1).trim).toSet
+    assertEquals(weights.filterNot(_.startsWith("var(--fw-")), Set.empty[String])
+    assertEquals(Set(rootTokens("--fs-xs"), rootTokens("--fs-sm"), rootTokens("--fs-md"), rootTokens("--fs-lg"),
+      rootTokens("--fs-xl"), rootTokens("--fs-2xl")), Set("12px", "13px", "14px", "16px", "20px", "26px"))
+    val radii = """border-radius:\s*([^;}]+)""".r.findAllMatchIn(rules).map(_.group(1).trim).toSet
+    // 50 %: a round mark is a shape, not a corner; 1 px: the status code's square and diamond; 0: none
+    assertEquals(radii.filterNot(v => v.startsWith("var(--radius") || v.startsWith("var(--badge-corner") ||
+      Set("50%", "1px", "0").contains(v) || v.matches("""var\(--radius-lg\) var\(--radius-lg\) 0 0""")), Set.empty[String])
+    val elevations = """box-shadow:\s*([^;}]+)""".r.findAllMatchIn(rules).map(_.group(1).trim)
+      .filter(v => """\d+px \d+px""".r.findFirstIn(v).exists(_ => !v.startsWith("0 0 ") && !v.startsWith("inset")))
+      .toSet
+    // a drop shadow with an offset is one of the two elevations (rings and outlines are 0 0 …)
+    assertEquals(elevations.filterNot(v => v.contains("var(--marker-shadow)") || v.contains("var(--glyph-edge)")), Set.empty[String])
+
+  test("no badge or label is upper-cased by CSS (only the map's large region names, a cartographic style)"):
+    val upper = """([^{}]+)\{[^}]*text-transform:\s*uppercase""".r.findAllMatchIn(rules).map(_.group(1).trim).toList
+    // a first letter raised is sentence case, not capitals
+    assertEquals(upper.filterNot(_.endsWith("::first-letter")), List(".hd-map-label--l"))
+
+  test("the interface and the reading text are the bundled faces, with a fallback, and one monospace stack"):
+    assert(rootTokens("--font-ui").startsWith("\"Source Sans 3\""), rootTokens("--font-ui"))
+    assert(rootTokens("--font-read").startsWith("\"Source Serif 4\""), rootTokens("--font-read"))
+    assert(rootTokens("--font-ui").endsWith("sans-serif") && rootTokens("--font-read").endsWith("serif"))
+    for (family, file) <- List("Source Sans 3" -> "SourceSans3", "Source Serif 4" -> "SourceSerif4"); (w, f) <- List(400 -> "Regular", 600 -> "Semibold") do
+      assert(css.contains(s"""font-family:"$family"; font-style:normal; font-weight:$w; font-display:swap;\n  src:url("vendor/source-fonts/$file-$f.woff2")"""),
+        s"$family $w")
+      assert(Option(getClass.getClassLoader.getResource(s"web/vendor/source-fonts/$file-$f.woff2")).isDefined, s"$file-$f.woff2 is not bundled")
+    val monos = """font(?:-family)?:[^;}]*(monospace)""".r.findAllMatchIn(rules).toList
+    assertEquals(monos, Nil, "a monospace face is var(--font-mono)")
+    val reading = """(?s)\.reading \{([^}]*)\}""".r.findFirstMatchIn(css).map(_.group(1)).getOrElse(fail("no .reading rule"))
+    assert(reading.contains("font-family:var(--font-read)") && reading.contains("font-size:var(--fs-lg)") &&
+      reading.contains("line-height:var(--read-lh)") && reading.contains("max-width:var(--read-measure)"), reading)
+    assertEquals((rootTokens("--read-lh"), rootTokens("--read-measure")), ("1.6", "62ch"))
+
+  test("every source status has a mark (colour + shape) and its word is not upper-cased"):
+    Palette.statuses.foreach(s => assert(css.contains(s".st-$s::before"), s"no mark for $s"))
+    assert("""\.status-badge\.st-retracted[^{]*\{[^}]*line-through""".r.findFirstIn(css).isDefined, "retracted is struck through")
+    assert("""\.st-contested::before[^{]*\{[^}]*rotate\(45deg\)""".r.findFirstIn(css).isDefined, "contested is a diamond")
+    assert("""\.st-unassessed::before[^{]*\{[^}]*dashed""".r.findFirstIn(css).isDefined, "not assessed is a dashed ring")
+    assert("""\.st-superseded::before[^{]*\{[^}]*border:2px solid""".r.findFirstIn(css).isDefined, "superseded is a ring")
+    assert(!css.contains(".cite-tip-status."), "the cards' own status palette is gone")
+
+  test("a state's colour means one thing: done is the same green everywhere, seeding is not an error"):
+    def bg(sel: String) = """(?s)""" + java.util.regex.Pattern.quote(sel) + """ \{([^}]*)\}"""
+    def decl(sel: String) = bg(sel).r.findFirstMatchIn(css).map(_.group(1)).getOrElse(fail(s"no rule $sel"))
+    val done = List(".job-state.state-done", ".job-state.goal-status.state-done", ".job-state.review-state.state-passed",
+      ".job-state.state-approved").map(decl)
+    done.foreach(d => assert(d.contains("background:var(--ok-soft); color:var(--ok)"), d))
+    val seeding = decl(".job-state.goal-status.state-seeding")
+    assert(!seeding.contains("danger") && !seeding.contains("health-down"), seeding)

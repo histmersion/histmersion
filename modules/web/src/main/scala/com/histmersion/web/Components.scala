@@ -65,6 +65,11 @@ enum Icon(val paths: List[String]):
                                       "M12 10.3c1.3 0 2.3.7 2.3 1.6s-1 1.6-2.3 1.6-2.3-.7-2.3-1.6 1-1.6 2.3-1.6z"))
   /** An irregular outline: the regions and polities (their boundaries). */
   case Region       extends Icon(List("M4 8l6-4 7 2 3.5 6-3 7-8 1-5.5-5z"))
+  /** The theme button (Lucide's contrast, sun and moon): following the system, light, dark. */
+  case ThemeSystem extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M12 17a5 5 0 0 0 0-10z"))
+  case ThemeLight  extends Icon(List("M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8z", "M12 2v2", "M12 20v2", "M4.93 4.93l1.41 1.41",
+                                     "M17.66 17.66l1.41 1.41", "M2 12h2", "M20 12h2", "M6.34 17.66l-1.41 1.41", "M19.07 4.93l-1.41 1.41"))
+  case ThemeDark   extends Icon(List("M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"))
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",
                                     "M7.7 7.2l8.6 1.3", "M7 8l4 8.3", "M17 10l-4.2 6.4"))
 
@@ -234,6 +239,12 @@ object Chip:
   /** A chip for a stored VALUE: the label is its display form. */
   def value(v: String, remove: Option[() => Unit] = None, prefix: Option[String] = None): HtmlElement =
     apply(Label.display(v), remove, prefix)
+
+/** A source's standing, the one status code everywhere: a mark whose colour AND shape say the status (the
+  * stylesheet's `.status-badge.st-<status>`) and the word ([[Wording.status]]); the stored value on hover. */
+object StatusBadge:
+  def apply(s: com.histmersion.values.SourceStatus): HtmlElement =
+    span(cls := s"status-badge st-${s.wire}", title := s"Status: ${Wording.status(s)} (${s.wire})", Wording.status(s))
 
 /** The confidence mark: the shared icon plus the colour the map's dots use for that level
   * ([[ConfidenceStyle]]), labelled for screen readers and on hover. */

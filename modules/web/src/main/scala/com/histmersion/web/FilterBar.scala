@@ -61,7 +61,10 @@ object FilterBar:
           ApiClient.facets(c.facet, Some(prefix), UiState.toFilter(except = Set(c.state.key)))
             .map(_.take(config.facetSuggestions)),
         onChange = values => UiState.set(c.state := values)(),
-        onPreview = v => UiState.setPreview(v.map(UiState.Preview(c.state.key, _)))
+        onPreview = v => UiState.setPreview(v.map(UiState.Preview(c.state.key, _))),
+        // a status reads as the status code: its mark and its word
+        display = if c.state.key == UiState.status.key then Wording.statusOf else Label.display,
+        mark = v => Option.when(c.state.key == UiState.status.key)(s"st-${v.trim.toLowerCase}")
       )
 
       div(

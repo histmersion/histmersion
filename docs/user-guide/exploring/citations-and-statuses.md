@@ -72,8 +72,11 @@ histmersion followups <citekey>           # later papers citing it, each with a 
   network call (seconds per source), and a proposal is a hint, not a verdict: read the citing paper
   before you record a disagreement.
 
-On the web page, each source shows its status as a coloured badge, and the citation graph window
-draws the links.
+On the web page, each source shows its status the same way everywhere — on its page, in its card, in
+the citation graph and in the status filter — as a mark whose colour and shape go together, and the
+word: foundational an indigo dot, current a green dot, contested an orange diamond, superseded a grey
+ring, debunked a red square, retracted a red square with the word struck through, not assessed
+(`unassessed`) a dashed grey ring. The citation graph window draws the links.
 
 <figure markdown="span">
   ![The citation graph window: a contested source in the middle as a pink node, the papers citing it and the one it cites around it as blue and grey nodes, joined by arrows; a legend for current, contested, unassessed, references and challenges](../assets/screenshots/graph.png){ loading=lazy }
