@@ -710,7 +710,7 @@ object BasemapService:
         "names" -> Json.fromInt(names),
         "fetchedAt" -> Json.fromString(fetchedAt)))
 
-  val JobKind = "basemap-fetch"
+  val JobKind = com.histmersion.api.JobKind.BasemapFetch.wire
 
   /** Where the extracts live: `basemap.dir`, else `$XDG_CACHE_HOME/histmersion/basemap` (default
     * `~/.cache/histmersion/basemap`), else under the data directory. */

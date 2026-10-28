@@ -121,7 +121,7 @@ object ApprovalsView:
 
   /** What the confirmation of a bulk decision asks. */
   def confirmText(d: Decision, as: List[ApprovalInfo]): String =
-    val kinds = as.groupMapReduce(_.kind)(_ => 1)(_ + _).toList.sortBy(-_._2).map((k, n) => s"$n $k").mkString(", ")
+    val kinds = as.groupMapReduce(_.kind)(_ => 1)(_ + _).toList.sortBy(-_._2).map((k, n) => s"$n ${kindLabel(k).toLowerCase}").mkString(", ")
     s"${if d == Decision.Approve then "Approve" else "Reject"} ${Plural.count(as.size, "approval")} ($kinds)? " +
       "Each is decided as if its own button were pressed, one after another, with the same checks."
 
@@ -223,6 +223,13 @@ object ApprovalsView:
   private def shownSignal: Signal[(ListPaging.Listing[ApprovalInfo], ListFilters.ApprovalFilter)] =
     list.listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), f))
 
+  /** An approval's state (or "all") as its button and badge read it. */
+  def stateLabel(s: String): String =
+    if s == "all" then "All" else ApprovalState.parse(s).fold(Wording.humanize(s))(Wording.approvalState)
+
+  /** An approval's kind as a person reads it ([[Wording.approvalKind]]). */
+  def kindLabel(kind: String): String = ApprovalKind.parse(kind).fold(Wording.humanize(kind))(Wording.approvalKind)
+
   private def stateButtons: HtmlElement =
     def count(l: ListPaging.Listing[ApprovalInfo], s: String) =
       ListPaging.count(l, Option.when(s != "all")(s), _.state)
@@ -235,7 +242,7 @@ object ApprovalsView:
           dataAttr("state") := s,
           stateMeaning(s).map(m => title := m),
           aria.pressed <-- UiState.approvalState.signal.map(v => (shownState(v) == s).toString),
-          span(s),
+          span(stateLabel(s)),
           child.text <-- list.listing.signal.map(l => { val n = count(l, s); if n > 0 then s" ${Paging.grouped(n)}" else "" }),
           onClick --> (_ => UiState.set(UiState.approvalState := stateValue(s))())
         )
@@ -257,7 +264,7 @@ object ApprovalsView:
         button(typ := "button", cls := (if d == Decision.Approve then "btn btn--sm btn--primary" else "btn btn--sm"),
           dataAttr("bulk") := d.wire,
           disabled <-- targets.combineWith(bulkBusy.signal).map((t, b) => t.isEmpty || b),
-          child.text <-- targets.map(t => s"${d.wire} selected (${t.size})"),
+          child.text <-- targets.map(t => s"${Wording.capitalize(d.wire)} selected (${t.size})"),
           onClick(_.sample(targets)) --> { t =>
             if t.nonEmpty && org.scalajs.dom.window.confirm(confirmText(d, t)) then decideAll(t, d)
           })
@@ -266,7 +273,7 @@ object ApprovalsView:
 
   /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
   def digestLine(g: com.histmersion.api.ApprovalDigest.KindGroup): String =
-    s"${g.kind} ${Paging.grouped(g.count)}" + g.oldest.fold("")(o => s" (oldest $o)") +
+    s"${kindLabel(g.kind)} ${Paging.grouped(g.count)}" + g.oldest.fold("")(o => s" (oldest $o)") +
       (g.decidedBy match
         case "checked"                                    => " · the autopilot's checks decide them within the day's cap"
         case com.histmersion.api.ApprovalDigest.Waits     => " · waiting: nobody needs to decide them now"
@@ -303,7 +310,7 @@ object ApprovalsView:
       list.listing.signal.map(_.rows.filter(isOpen).map(_.id).toSet) --> (ids => selected.update(_.intersect(ids))),
       div(cls := "pane-bar",
         stateButtons,
-        button(typ := "button", cls := "btn", "refresh", onClick --> (_ => list.restart()))),
+        button(typ := "button", cls := "btn", "Refresh", onClick --> (_ => list.restart()))),
       div(cls := "toolbar list-filters",
         ListFilterBar.chips("kind", list.listing.signal.map(_.page.facet("kind")), UiState.approvalKinds, hint = kindMeaning,
           about = "Show only approvals of the kinds picked (any of them): what the change is."),
@@ -319,7 +326,8 @@ object ApprovalsView:
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
         val st = shownState(f.normalized.state)
         Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading",
-          ListPaging.heading(l, "approval", Option.when(st != "all")(st), _.state, qualifier(f))))
+          ListPaging.heading(l, "approval", Option.when(st != "all")(st), _.state,
+            Option.when(st != "all")(stateLabel(st)).toList ++ f.normalized.kind.map(kindLabel))))
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
@@ -347,7 +355,7 @@ object ApprovalsView:
       dataAttr("kind") := a.kind,
       pick.map(pk => child.maybe <-- Auth.writable.map(w => Option.when(w)(input(typ := "checkbox", cls := "approval-pick",
         aria.label := s"select approval ${a.id}", checked <-- pk.on, onClick.mapToChecked --> (c => pk.set(c)))))),
-      span(cls := s"job-state state-${a.state}", a.state),
+      span(cls := s"job-state state-${a.state}", title := a.state, stateLabel(a.state)),
       div(
         cls := "job-main",
         div(cls := "job-subject approval-change",
@@ -356,14 +364,14 @@ object ApprovalsView:
               span(SourceLink(a.citekey), s" ${a.edgeKind.map(_.replace('_', ' ')).getOrElse("?")} ",
                 a.target.fold(span("?"))(t => SourceLink(t)))
             case Some(ApprovalKind.GoalPlan) =>
-              span("plan for goal ", a.subject.fold(span("?"))(g =>
-                button(typ := "button", cls := "link-btn", g, onClick --> (_ => WindowManager.open(WindowKey.Goal(g))))))
+              span("Plan for the goal ", a.subject.fold(span("?"))(g =>
+                button(typ := "button", cls := "link-btn", title := g, Wording.humanize(g), onClick --> (_ => WindowManager.open(WindowKey.Goal(g))))))
             case Some(ApprovalKind.ArticlePublish) =>
               span(if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then "publish the new article " else "append a section to ",
                 a.subject.fold(span("?"))(s => if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then strong(s) else com.histmersion.web.ArticleLink(s, s)))
             case Some(ApprovalKind.HintEffect) =>
-              span("manager ", a.subject.fold(span("?"))(id =>
-                  button(typ := "button", cls := "link-btn", id, onClick --> (_ => WindowManager.open(WindowKey.Manager(id))))),
+              span(a.subject.fold(span("A manager"))(id =>
+                  button(typ := "button", cls := "link-btn", title := id, Wording.manager(id), onClick --> (_ => WindowManager.open(WindowKey.Manager(id))))),
                 ": ", strong(a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))),
                 a.hintEffect.map(p => span(cls := "muted", s" — proposed by ${Option(p.by).filter(_.nonEmpty).getOrElse("a model")} " +
                   s"from hint #${p.hint}: “${p.text.take(200)}”")))
@@ -381,7 +389,7 @@ object ApprovalsView:
           span(s"#${a.id}"),
           a.runId.map(id => span(" · ", button(typ := "button", cls := "link-btn", s"run ${id.take(8)}",
             onClick --> (_ => WindowManager.open(WindowKey.Run(id)))))),
-          span(" · ", span(cls := "approval-kind", kindMeaning(a.kind).map(m => title := m), a.kind)),
+          span(" · ", span(cls := "approval-kind", title := kindMeaning(a.kind).fold(a.kind)(m => s"$m (${a.kind})"), kindLabel(a.kind))),
           span(s" · proposed ${a.createdAt}"),
           decidedLine(a).map(d => span(cls := "approval-decided", s" · $d"))),
         Option.when(isOpen(a))(div(
@@ -392,9 +400,9 @@ object ApprovalsView:
               div(cls := "form-row",
                 input(typ := "text", cls := "field", aria.label := "note", placeholder := "note (optional)",
                   controlled(value <-- note.signal, onInput.mapToValue --> note.writer)),
-                button(typ := "button", cls := "btn btn--primary", "approve", disabled <-- busy.signal.map(_(a.id)),
+                button(typ := "button", cls := "btn btn--primary", "Approve", disabled <-- busy.signal.map(_(a.id)),
                   onClick --> (_ => decide(a, Decision.Approve, note.now()))),
-                button(typ := "button", cls := "btn", "reject", disabled <-- busy.signal.map(_(a.id)),
+                button(typ := "button", cls := "btn", "Reject", disabled <-- busy.signal.map(_(a.id)),
                   onClick --> (_ => decide(a, Decision.Reject, note.now()))))
           }))
       )

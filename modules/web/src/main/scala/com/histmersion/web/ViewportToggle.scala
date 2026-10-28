@@ -46,7 +46,7 @@ object ViewportToggle:
   private def off(l: MapLayer): Signal[Boolean] = UiState.layerOn(l).map(!_)
 
   /** Pure: why a disabled option of layer `l` cannot be used. */
-  def offWhy(l: MapLayer): String = s"turn on ${l.label} first"
+  def offWhy(l: MapLayer): String = s"Turn on ${l.label.toLowerCase} first"
 
   /** One layer's group: its switch, then the options that are its own (#1446, #1449). */
   private def layerGroup(l: MapLayer): HtmlElement =
@@ -55,7 +55,7 @@ object ViewportToggle:
       case MapLayer.Sites      => List(IconSelect("site type", UiState.siteType, Val(LayerFilters.siteTypes), off(l), offWhy(l)))
       case MapLayer.Media      => List(
         MediaFilters.select("provider", UiState.mediaProvider, MediaFilters.providers.signal, MediaProvider.title, off(l), offWhy(l)),
-        MediaFilters.select("licence", UiState.mediaLicense, MediaFilters.licences.signal, identity, off(l), offWhy(l)))
+        MediaFilters.select("licence", UiState.mediaLicense, MediaFilters.licences.signal, LicenseName.label, off(l), offWhy(l)))
       case MapLayer.Events     => List(IconSelect("event kind", UiState.eventKind, Val(LayerFilters.eventKinds), off(l), offWhy(l)))
     div(cls := "btn-group layer-group", role := "group", aria.label := l.label,
       LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _)), opts)
@@ -115,7 +115,7 @@ object ViewportToggle:
           LayerToggle(PointKinds.Findings.icon, PointKinds.Findings.layerLabel, UiState.sources.signal,
             v => UiState.set(UiState.sources := v)()),
           // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
-          LayerToggle(Icon.InView, "only sources in view", UiState.inView.signal, setInView)),
+          LayerToggle(Icon.InView, "Only sources in view", UiState.inView.signal, setInView)),
         MapLayer.values.toList.map(layerGroup),
         div(cls := "btn-group tier-group", role := "group", aria.label := "event tier",
           IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers), off(MapLayer.Events), offWhy(MapLayer.Events))),

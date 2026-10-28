@@ -132,7 +132,7 @@ object Agents:
   // ── runs and steps ─────────────────────────────────────────────────────────────────────────────
 
   /** The `jobs.kind` of an agent run. */
-  val JobKind = "agent"
+  val JobKind = com.histmersion.api.JobKind.Agent.wire
 
   /** Why a run is paused — the reason is shown and decides whether a plain resume can help. */
   enum PauseReason(val wire: String):

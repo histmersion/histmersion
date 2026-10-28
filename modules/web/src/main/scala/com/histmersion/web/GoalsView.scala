@@ -125,7 +125,7 @@ object GoalsView:
 
   /** A goal's status as a coloured badge, its meaning on hover. */
   def badge(status: String, text: String = ""): HtmlElement =
-    span(cls := s"job-state goal-status state-$status", meaning(status).map(m => title := m), if text.nonEmpty then text else status)
+    span(cls := s"job-state goal-status state-$status", meaning(status).map(m => title := m), if text.nonEmpty then text else Wording.capitalize(status))
 
   /** The stages, left to right, each badge with what it means. */
   private def legend: HtmlElement =
@@ -245,6 +245,8 @@ object GoalsView:
       cls := "tool-pane goal-pane",
       onMountCallback { _ => refresh() },
       ApprovalsView.changed.events --> (_ => refresh()),
+      view.signal.changes.collect { case Some(v) if v.goal.title.trim.nonEmpty => v.goal.title } --> (t =>
+        WindowManager.retitle(WindowKey.Goal(slug), s"Goal · $t")),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child.maybe <-- message.signal.map(_.map(m => p(cls := "form-ok", m))),
       child <-- view.signal.map {
@@ -256,9 +258,9 @@ object GoalsView:
               span(cls := "run-title", s" ${v.goal.title}")),
             v.goal.notes.filter(_.nonEmpty).map(n => p(n)),
             dl(cls := "run-facts",
-              dt("slug"), dd(code(v.goal.slug)),
-              Option.when(v.goal.tags.nonEmpty)(List(dt("tags"), dd(v.goal.tags.mkString(", ")))).toList.flatten,
-              Option.when(v.goal.regions.nonEmpty)(List(dt("regions"), dd(v.goal.regions.mkString(", ")))).toList.flatten,
+              dt("Identifier"), dd(code(v.goal.slug)),
+              Option.when(v.goal.tags.nonEmpty)(List(dt("Tags"), dd(v.goal.tags.map(Wording.value).mkString(", ")))).toList.flatten,
+              Option.when(v.goal.regions.nonEmpty)(List(dt("Regions"), dd(v.goal.regions.map(Wording.value).mkString(", ")))).toList.flatten,
               v.goal.parentSlug.toList.flatMap(ps => List(dt("part of"),
                 dd(button(typ := "button", cls := "link-btn", ps, onClick --> (_ => WindowManager.open(WindowKey.Goal(ps))))))),
               v.budgetUsd.toList.flatMap(b => List(dt("run cap"), dd(s"${AgentsMarkdown.usd(b)} USD")))),

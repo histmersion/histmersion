@@ -103,7 +103,7 @@ object AboutView:
           Option.when(p.settings.nonEmpty)(p.settings.map(s => s"${s.key} = ${s.value}").mkString(", ")),
           p.error,
           Option.when(p.warnings.nonEmpty)(p.warnings.mkString("; "))).flatten.mkString(" · ")
-        Row(p.id, p.state, Some(st), Some(detail))
+        Row(Wording.plugin(p.id), Wording.capitalize(p.state), Some(st), Some(s"${p.id} · $detail"))
       } ++ r.warnings.map(w => Row("", w))))
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
@@ -154,7 +154,7 @@ object AboutView:
       h3(cls := "about-title", s.title),
       dl(cls := "about-rows", s.rows.flatMap { r =>
         List(
-          dt(cls := (if r.depth > 0 then s"about-nested depth-${math.min(r.depth, 3)}" else ""), r.label),
+          dt(cls := (if r.depth > 0 then s"about-nested depth-${math.min(r.depth, 3)}" else ""), Wording.heading(r.label)),
           dd(
             r.href.fold(r.state.fold(span(r.value))(st => span(cls := s"about-state state-${st.label}", r.value)))(url =>
               a(href := url, target := "_blank", rel := "noopener", r.value)),

@@ -239,8 +239,8 @@ final class MediaHandlers(deps: Deps, http: HttpTransport, converter: ConverterC
     else Right(MediaRepo.fillFigureLicences(ds, apply = false))
 
 object MediaHandlers:
-  val ImportJobKind = "media-import"
-  val CoversJobKind = "media-covers"
+  val ImportJobKind = com.histmersion.api.JobKind.MediaImport.wire
+  val CoversJobKind = com.histmersion.api.JobKind.MediaCovers.wire
 
   /** A converter that makes no thumbnails (tests; a server whose sidecar is down still serves cards). */
   object NoThumbnails extends ConverterClient:

@@ -21,10 +21,10 @@ object FilterBar:
 
   /** In the order the row shows them: authors, topics, status, tags (then "published between", "sort by"). */
   private val chipFields = List(
-    ChipField(UiState.authors, "authors", "authors", "e.g. Reich"),
-    ChipField(UiState.topics, "topics", "topics", "e.g. bronze age collapse"),
-    ChipField(UiState.status, "status", "status", "e.g. foundational"),
-    ChipField(UiState.tags, "tags", "tags", "e.g. sea peoples")
+    ChipField(UiState.authors, "authors", "Authors", "e.g. Reich"),
+    ChipField(UiState.topics, "topics", "Topics", "e.g. bronze age collapse"),
+    ChipField(UiState.status, "status", "Status", "e.g. foundational"),
+    ChipField(UiState.tags, "tags", "Tags", "e.g. sea peoples")
   )
 
   private val sorts = List("relevance", "cited", "period", "year", "title")
@@ -85,7 +85,7 @@ object FilterBar:
           // search box
           div(
             cls := "f f-q",
-            label(forId := "f-q", "search"),
+            label(forId := "f-q", "Search"),
             input(
               typ := "search",
               cls := "field",
@@ -103,7 +103,7 @@ object FilterBar:
           // place input
           div(
             cls := "f f-gazetteer",
-            label(forId := "f-place-search", "place"),
+            label(forId := "f-place-search", "Place"),
             PlacesInput.init(config)
           ),
           // more filters toggle
@@ -114,7 +114,7 @@ object FilterBar:
             aria.expanded <-- moreOpen.signal,
             htmlAttr("aria-controls", StringAsIsCodec) := "f-more",
             child.text <-- moreOpen.signal.map(o =>
-              if o then "fewer filters ▴" else "more filters ▾"
+              if o then "Fewer filters ▴" else "More filters ▾"
             ),
             onClick --> { _ =>
               val next = !moreOpen.now()
@@ -128,7 +128,7 @@ object FilterBar:
             typ := "button",
             cls := "btn btn--ghost f-clear",
             idAttr := "f-clear",
-            "clear all",
+            "Clear all",
             onClick --> { _ =>
               UiState.clearFilters()
               PlacesInput.sync()
@@ -149,7 +149,7 @@ object FilterBar:
         // sort
         div(
           cls := "f",
-          label(forId := "f-sort", "sort by"),
+          label(forId := "f-sort", "Sort by"),
           select(
             cls := "field",
             idAttr := "f-sort",
@@ -157,7 +157,7 @@ object FilterBar:
               value <-- UiState.sort.signal.map(_.filter(sorts.contains).getOrElse(sorts.head)),
               onChange.mapToValue --> { v => UiState.set(UiState.sort := Some(v))() }
             ),
-            sorts.map(v => option(value := v, v))
+            sorts.map(v => option(value := v, Wording.capitalize(v)))
           )
         )
       )
@@ -200,7 +200,7 @@ object FilterBar:
 
     div(
       cls := "f f-years",
-      label("published between"),
+      label("Published between"),
       htmlTag("span")(
         cls := "yr-label",
         child.text <-- sliderFrom.map(_.map(_.toString).getOrElse(YEAR_MIN.toString))

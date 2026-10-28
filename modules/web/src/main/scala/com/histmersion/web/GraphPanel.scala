@@ -48,7 +48,10 @@ object GraphPanel:
     val state   = Var[Load](Load.Loading)
     val hovered = Var(Option.empty[GraphNode])
     ApiClient.graph(citekey, Some(Depth)).onComplete {
-      case scala.util.Success(g) => state.set(Load.Loaded(g))
+      case scala.util.Success(g) =>
+        state.set(Load.Loaded(g))
+        g.nodes.find(_.id == g.root).flatMap(_.title).filter(_.trim.nonEmpty)
+          .foreach(t => WindowManager.retitle(WindowKey.Graph(citekey), s"Citation graph · $t"))
       case scala.util.Failure(e) => state.set(Load.Failed(e.getMessage))
     }
     div(
@@ -72,7 +75,7 @@ object GraphPanel:
         s.toString.toLowerCase)),
       kinds.map(k => span(cls := "graph-legend-item",
         span(cls := "graph-legend-color", styleAttr := s"--c:var(${Palette.edge(EdgeKind.wireOf(k))})"),
-        Label.display(EdgeKind.wireOf(k))))
+        Wording.capitalize(Label.display(EdgeKind.wireOf(k)))))
     )
 
   private def info(node: Signal[Option[GraphNode]]): HtmlElement =

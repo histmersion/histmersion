@@ -58,33 +58,28 @@ object JobsView:
   def counts(jobs: List[JobInfo]): Map[JobState, Int] =
     jobs.groupMapReduce(_.state)(_ => 1)(_ + _)
 
-  /** What kind of work a job is, for a person. */
-  def kindLabel(kind: String): String = kind match
-    case Ingest.KindIngest => "ingest (fetch or upload, then OCR)"
-    case Ingest.KindReocr  => "OCR again"
-    case InitPlan.JobKind  => "reference data import"
-    case MergeApplyJob.JobKind => "merge apply"
-    case other             => Label.display(other)
+  /** What kind of work a job is, for a person ([[Wording.jobKind]]); a kind it does not know, as words. */
+  def kindLabel(kind: String): String = Wording.jobKindOf(kind)
 
-  /** What each kind of job does; a tooltip on its filter chip. The kinds the server alone names are
-    * spelled out here (the web page sees only the api module). */
-  def kindMeaning(kind: String): Option[String] = kind match
-    case Ingest.KindIngest       => Some("Brings in a source: fetches its open-access file or takes your upload, converts it to text (OCR) and stores it.")
-    case Ingest.KindReocr        => Some("Converts a stored source's original file to text (OCR) again.")
-    case InitPlan.JobKind        => Some("The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches.")
-    case MergeApplyJob.JobKind   => Some("Merges another collection's bundle into this one, after taking a backup.")
-    case Vacuum.JobKind          => Some("Database clean-up (VACUUM): frees the space old row versions hold after a re-seed or a gazetteer load.")
-    case Agents.JobKind          => Some("An agent run; the agent runs window shows its steps.")
-    case "basemap-fetch"         => Some("Downloads and assembles base-map layers (vector map, terrain relief, sea floor) for an area.")
-    case "places-fetch"          => Some("Downloads an external gazetteer, or Natural Earth land, and updates the places from it.")
-    case "places-hierarchy"      => Some("Works out which places lie inside which (spatial containment), for the place hierarchy.")
-    case "events-import"         => Some("Imports the events of an external event catalogue.")
-    case "events-candidates"     => Some("Looks for the sources that may attest each catalogue event: candidate links for you to confirm or reject.")
-    case "events-rederive"       => Some("Recomputes the dating of catalogue events from their stored records; nothing is downloaded.")
-    case "site-types"            => Some("Looks up on Wikidata what type of site each Wikidata site on the map is.")
-    case "media-import"          => Some("Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events.")
-    case "media-covers"          => Some("Pictures of sources: Open Library covers by ISBN, and an illustration picked from a source's own figures.")
-    case _                       => None
+  /** What each kind of job does; a tooltip on its filter chip, after its identifier (for the command line). */
+  def kindMeaning(kind: String): Option[String] = JobKind.parse(kind).map {
+    case JobKind.Ingest           => "Brings in a source: fetches its open-access file or takes your upload, converts it to text (OCR) and stores it."
+    case JobKind.Reocr            => "Converts a stored source's original file to text (OCR) again."
+    case JobKind.Init             => "The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches."
+    case JobKind.MergeApply       => "Merges another collection's bundle into this one, after taking a backup."
+    case JobKind.Vacuum           => "Database clean-up (VACUUM): frees the space old row versions hold after a re-seed or a gazetteer load."
+    case JobKind.Agent            => "An agent run; the agent runs window shows its steps."
+    case JobKind.AcquireRecheck   => "Checks the to-acquire list again: which items have a legal open copy or are in the library now."
+    case JobKind.BasemapFetch     => "Downloads and assembles base-map layers (vector map, terrain relief, sea floor) for an area."
+    case JobKind.PlacesFetch      => "Downloads an external gazetteer, or Natural Earth land, and updates the places from it."
+    case JobKind.PlacesHierarchy  => "Works out which places lie inside which (spatial containment), for the place hierarchy."
+    case JobKind.EventsImport     => "Imports the events of an external event catalogue."
+    case JobKind.EventsCandidates => "Looks for the sources that may attest each catalogue event: candidate links for you to confirm or reject."
+    case JobKind.EventsRederive   => "Recomputes the dating of catalogue events from their stored records; nothing is downloaded."
+    case JobKind.SiteTypes        => "Looks up on Wikidata what type of site each Wikidata site on the map is."
+    case JobKind.MediaImport      => "Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events."
+    case JobKind.MediaCovers      => "Pictures of sources: Open Library covers by ISBN, and an illustration picked from a source's own figures."
+  }
 
   /** What each job state means for a person, and what comes next; a tooltip on its filter button. */
   def stateMeaning(s: JobState): String = s match
@@ -107,7 +102,7 @@ object JobsView:
         (if more > 0 then s" and $more more" else "")
     }
 
-  def stateLabel(s: JobState): String = s.wire
+  def stateLabel(s: JobState): String = Wording.jobState(s)
 
   /** Is the job's subject a stored source yet? An ingest creates the source only when its OCR
     * finished; a re-OCR runs on a source that already exists. */
@@ -178,13 +173,14 @@ object JobsView:
       list.errorLine("Could not list jobs"),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         Option.when(isLoaded && l.rows.nonEmpty)(
-          p(cls := "muted list-heading", ListPaging.heading(l, "job", filter.map(_.wire), _.status, currentFilter().qualifier)))
+          p(cls := "muted list-heading", ListPaging.heading(l, "job", filter.map(_.wire), _.status,
+            filter.map(stateLabel).toList ++ currentFilter().normalized.kind.map(kindLabel))))
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
         else Option.when(l.rows.isEmpty)(
           p(cls := "muted", if ListFilterBar.anySet(filterFields.drop(1)) then "No jobs match the filter."
-            else filter.fold("No background jobs yet.")(s => s"No ${stateLabel(s)} jobs.")))
+            else filter.fold("No background jobs yet.")(s => s"No ${stateLabel(s).toLowerCase} jobs.")))
       },
       // keyed by the row itself: a row that did not change keeps its element, so new rows arriving on
       // top do not rebuild (or move the reader off) the ones below
@@ -214,7 +210,7 @@ object JobsView:
       cls := "btn-group jobs-filter",
       role := "group",
       aria.label := "state",
-      btn("all", None, listing.signal.map(l => ListPaging.count(l, None, _.status))),
+      btn("All", None, listing.signal.map(l => ListPaging.count(l, None, _.status))),
       JobState.values.toList.map(s => btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))))
     )
 

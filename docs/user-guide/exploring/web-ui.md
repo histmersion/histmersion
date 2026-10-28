@@ -188,16 +188,20 @@ The toolbar opens the others:
 
 | toolbar | window |
 |---|---|
-| research goals | your research areas as a tree, and a form for a new one |
-| backlog | the `tasks` list |
-| agent runs · agent managers · approvals | the built-in agents (shown only when the server runs them) |
-| to acquire | the acquisition list: what to buy, borrow or find |
-| upload | upload a PDF or EPUB for text recognition |
-| merge another collection | review and merge a `.hmx` bundle from another machine |
-| jobs | text-recognition and import jobs, with progress |
-| worklog | the `log` list, by date |
+| Research goals | your research areas as a tree, and a form for a new one |
+| Backlog | the `tasks` list |
+| Agent runs · Agent managers · Approvals | the built-in agents (shown only when the server runs them) |
+| To acquire | the acquisition list: what to buy, borrow or find |
+| Upload | upload a PDF or EPUB for text recognition |
+| Merge another collection | review and merge a `.hmx` bundle from another machine |
+| Jobs | text-recognition and import jobs, with progress |
+| Worklog | the `log` list, by date |
 | API key | enter the key writes need (shown only when the server asks for one) |
-| about | version, the licence and a link to the source code of the running version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
+| About | version, the licence and a link to the source code of the running version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
+
+Windows and lists name things in plain words: an agent run is "Review an article", not
+`review-article`; a background job "Download the background map", not `basemap-fetch`. The name the
+command line uses is in the tooltip of the word, and in a window title's tooltip.
 
 <figure markdown="span">
   ![The About window: server version and commit, schema version, the config file; health of the server, database and converter, all green; the job queue; the last backup; the counts of sources, findings, articles, events, places and periods; the first plugins](../assets/screenshots/about.png){ loading=lazy }

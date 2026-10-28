@@ -27,20 +27,20 @@ object Toolbar:
   /** The toolbar, as data: the groups in order, each with its tools in order. Pure. */
   val groups: List[(Group, List[Tool])] = List(
     Group.Plan -> List(
-      Tool(Icon.Goals, "research goals", WindowKey.Goals),
-      Tool(Icon.Tasks, "backlog", WindowKey.Tasks),
-      Tool(Icon.Runs, "agent runs", WindowKey.Runs, Shown.WithAgents),
-      Tool(Icon.Managers, "agent managers", WindowKey.Managers, Shown.WithAgents),
-      Tool(Icon.Approvals, "approvals", WindowKey.Approvals, Shown.WithAgents)),
+      Tool(Icon.Goals, "Research goals", WindowKey.Goals),
+      Tool(Icon.Tasks, "Backlog", WindowKey.Tasks),
+      Tool(Icon.Runs, "Agent runs", WindowKey.Runs, Shown.WithAgents),
+      Tool(Icon.Managers, "Agent managers", WindowKey.Managers, Shown.WithAgents),
+      Tool(Icon.Approvals, "Approvals", WindowKey.Approvals, Shown.WithAgents)),
     Group.Acquire -> List(
-      Tool(Icon.Acquire, "to acquire", WindowKey.Acquire),
-      Tool(Icon.Upload, "upload", WindowKey.Upload),
-      Tool(Icon.Merge, "merge another collection", WindowKey.Merge)),
+      Tool(Icon.Acquire, "To acquire", WindowKey.Acquire),
+      Tool(Icon.Upload, "Upload", WindowKey.Upload),
+      Tool(Icon.Merge, "Merge another collection", WindowKey.Merge)),
     Group.System -> List(
-      Tool(Icon.Jobs, "jobs", WindowKey.Jobs),
-      Tool(Icon.Log, "worklog", WindowKey.Log),
+      Tool(Icon.Jobs, "Jobs", WindowKey.Jobs),
+      Tool(Icon.Log, "Worklog", WindowKey.Log),
       Tool(Icon.Key, "API key", WindowKey.ApiKey, Shown.WithKey),
-      Tool(Icon.Info, "about", WindowKey.About))
+      Tool(Icon.Info, "About", WindowKey.About))
   )
 
   /** The labels a reader sees, group by group, given what the server offers. Pure. */

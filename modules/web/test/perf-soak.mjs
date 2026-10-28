@@ -11,7 +11,7 @@ import { memory, quiet } from './perf-lib.mjs';
 /** One round: every interaction once. */
 async function round(page, i) {
   // windows: open and close (a click on the toolbar, Escape to close)
-  for (const title of ['about', 'jobs']) {
+  for (const title of ['About', 'Jobs']) {
     await page.locator(`.fbar .tool-btns button[title="${title}"]:visible`).click();
     await page.locator('.wm-window').first().waitFor();
     await page.keyboard.press('Escape');

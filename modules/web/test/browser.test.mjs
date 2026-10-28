@@ -250,7 +250,7 @@ test('#4037: About › Map regions — a named region checked zoom by zoom, down
       return route.fulfill({ json: { removed: ['/zz/terrain-focus/argolid.pmtiles'], bytes: 1 } });
     });
 
-    await page.locator('.tool-btns button[title="about"]:visible').click();
+    await page.locator('.tool-btns button[title="About"]:visible').click();
     const panel = page.locator('.about-pane .map-regions');
     await panel.waitFor();
     assert.ok((await panel.innerText()).includes('the map'), 'what is downloaded is listed');
@@ -292,12 +292,12 @@ test('#718: the About button opens the server report — build, health states, j
   for (const viewport of [{ width: 1440, height: 900 }, phone]) {
     await withPage(viewport, async page => {
       if (viewport.width < 760) await page.locator('.mb-maptools').click();
-      await page.locator('.tool-btns button[title="about"]:visible').click();
+      await page.locator('.tool-btns button[title="About"]:visible').click();
       const pane = page.locator('.about-pane .about-sections');
       await pane.waitFor();
       const text = await pane.innerText();
-      for (const label of ['Server', 'commit', 'schema version', 'Health', 'converter', 'Job queue', 'queued',
-        'Backups', 'last backup', 'Store', 'gazetteer places', 'period presets',
+      for (const label of ['Server', 'Commit', 'Schema version', 'Health', 'Converter', 'Job queue', 'Queued',
+        'Backups', 'Last backup', 'Store', 'Gazetteer places', 'Period presets',
         // #2018: the plugins in the binary, the built-in media collections and event catalogues among them
         'Plugins', 'media-met', 'media-collection:met', 'events-gvp', 'event-catalogue:gvp'])
         assert.ok(text.includes(label), `About shows ${label}`);
@@ -541,9 +541,9 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
     await page.evaluate(() => window.__testMap.closePopup());
     await page.waitForFunction(() => !document.querySelector('.hd-popup'));   // it fades out first
     // the boundaries switched off and on: every shape is added again, after the dots
-    await page.locator('.viewport-toggle button[title="boundaries"]').click();
+    await page.locator('.viewport-toggle button[title="Boundaries"]').click();
     await page.waitForFunction(() => window.__testMap.shapes('polities').length === 0);
-    await page.locator('.viewport-toggle button[title="boundaries"]').click();
+    await page.locator('.viewport-toggle button[title="Boundaries"]').click();
     await page.waitForFunction(() => window.__testMap.shapes('polities').includes('zz_realm'));
     await check();
     // the region is still a target of its own
@@ -564,12 +564,12 @@ test('a toolbar button is bold with news until its window is opened, and stays r
   try {
     const open = (await (await api('/api/queue/tasks')).json()).items.length;
     await withPage({ width: 1440, height: 900 }, async page => {
-      const button = page.locator('.fbar .tool-btns button[title="backlog"]');
-      await page.waitForFunction(() => document.querySelector('.fbar .tool-btns button[title="backlog"]')?.classList.contains('has-news'));
+      const button = page.locator('.fbar .tool-btns button[title="Backlog"]');
+      await page.waitForFunction(() => document.querySelector('.fbar .tool-btns button[title="Backlog"]')?.classList.contains('has-news'));
       assert.equal(await button.evaluate(el => getComputedStyle(el).fontWeight), '700', 'bold');
       assert.equal(await button.locator('.btn-count').innerText(), String(Math.min(open, 99)) + (open > 99 ? '+' : ''));
       // the other buttons are not bold for it
-      assert.equal(await page.locator('.fbar .tool-btns button[title="jobs"]').evaluate(el => el.classList.contains('has-news')), false);
+      assert.equal(await page.locator('.fbar .tool-btns button[title="Jobs"]').evaluate(el => el.classList.contains('has-news')), false);
       // opening the window reads it: not bold in the same frame the window opens
       const ms = await button.evaluate(el => new Promise(resolve => {
         const t0 = performance.now();
@@ -586,7 +586,7 @@ test('a toolbar button is bold with news until its window is opened, and stays r
       assert.equal(await button.evaluate(el => el.classList.contains('has-news')), false);
       await page.reload();
       await page.waitForFunction(() => window.__testMap);
-      await page.waitForSelector('.fbar .tool-btns button[title="backlog"] .btn-count');
+      await page.waitForSelector('.fbar .tool-btns button[title="Backlog"] .btn-count');
       assert.equal(await button.evaluate(el => el.classList.contains('has-news')), false, 'still read after a reload');
     });
   } finally {
@@ -1396,15 +1396,15 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
     assert.deepEqual(await bubble(), { n: 5, says: '2 findings · 2 sites · 1 event', mixed: true, withEvents: true });
     // a layer switched off leaves the bubble at once; back on, it returns
-    await page.locator('.viewport-toggle button[title="sites"]').click();
+    await page.locator('.viewport-toggle button[title="Sites"]').click();
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
     assert.equal((await bubble()).says, '2 findings · 1 event');
-    await page.locator('.viewport-toggle button[title="sites"]').click();
+    await page.locator('.viewport-toggle button[title="Sites"]').click();
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
-    await page.locator('.viewport-toggle button[title="sources"]').click();
+    await page.locator('.viewport-toggle button[title="Sources"]').click();
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
     assert.equal((await bubble()).says, '2 sites · 1 event');
-    await page.locator('.viewport-toggle button[title="sources"]').click();
+    await page.locator('.viewport-toggle button[title="Sources"]').click();
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
     // the year window moves past the findings: they leave the bubble
     await page.goto(new URL('/#from=-1200&to=-1100', baseURL).href);
@@ -1448,7 +1448,7 @@ test('the icon menus: icons per option, keyboard choice updates the filter; the 
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     // the toolbar: each layer switch's icon is its marker shape, named
-    for (const name of ['sources', 'boundaries', 'sites', 'media', 'events']) {
+    for (const name of ['Sources', 'Boundaries', 'Sites', 'Media', 'Events']) {
       const b = page.locator(`.viewport-toggle button[title="${name}"]`);
       assert.equal(await b.locator('svg.icon').count(), 1, name);
       assert.equal((await b.innerText()).trim(), name);
@@ -1538,7 +1538,7 @@ test('the jobs window says latest N of M, counts every state, and loads an older
       if (!before) headers['X-Next-Before'] = 'zz-job-099';
       return route.fulfill({ json: rows, headers });
     });
-    await page.locator('.fbar .tool-btns button[title="jobs"]').click();
+    await page.locator('.fbar .tool-btns button[title="Jobs"]').click();
     const pane = page.locator('.jobs-pane');
     const heading = pane.locator('.list-heading');
     await heading.waitFor();
@@ -1547,9 +1547,9 @@ test('the jobs window says latest N of M, counts every state, and loads an older
     // the buttons count the table, not the 100 rows loaded (6 of which failed)
     const button = label => pane.locator('.jobs-filter button', { hasText: new RegExp(`^${label}\\b`) });
     const label = async l => (await button(l).textContent()).replace(/\s+/g, ' ').trim();
-    assert.equal(await label('all'), 'all 150');
-    assert.equal(await label('failed'), 'failed 10');
-    assert.equal(await label('done'), 'done 140');
+    assert.equal(await label('All'), 'All 150');
+    assert.equal(await label('Failed'), 'Failed 10');
+    assert.equal(await label('Done'), 'Done 140');
     const more = pane.locator('.list-more');
     assert.ok(await more.isVisible(), 'Show older is offered');
     await more.locator('button').click();
@@ -1559,12 +1559,12 @@ test('the jobs window says latest N of M, counts every state, and loads an older
     assert.equal(await more.isVisible(), false, 'nothing older: the button is gone');
     assert.equal(await pane.locator('.job-row').last().locator('.job-meta').innerText().then(t => t.includes('zz-job-1')), true);
     // a filter starts over from the newest page, asked for with the state
-    await button('failed').click();
-    await page.waitForFunction(() => document.querySelector('.jobs-pane .list-heading')?.innerText === '10 failed jobs');
+    await button('Failed').click();
+    await page.waitForFunction(() => document.querySelector('.jobs-pane .list-heading')?.innerText === '10 jobs · Failed');
     assert.equal(await pane.locator('.job-row').count(), 10);
     assert.equal(asked.at(-1).status, 'failed');
     assert.equal(asked.at(-1).before, undefined);
-    assert.equal(await label('all'), 'all 150', 'the counts stay the whole table');
+    assert.equal(await label('All'), 'All 150', 'the counts stay the whole table');
     assert.equal(await more.isVisible(), false);
   });
 });
@@ -1618,24 +1618,25 @@ test('the approvals window: kind chips with the server\'s counts, a picked kind 
     const pane = page.locator('.approvals-pane');
     const heading = pane.locator('.list-heading');
     await page.waitForFunction(() => document.querySelectorAll('.approvals-pane .approval-row').length === 4);
-    assert.equal(await heading.innerText(), 'Latest 4 of 97 open approvals');
+    assert.equal(await heading.innerText(), 'Latest 4 of 97 approvals · Needs a decision');
     const chip = v => pane.locator(`.list-facet button[data-value="${v}"]`);
     const chipText = async v => (await chip(v).innerText()).replace(/\s+/g, ' ').trim();
-    assert.equal(await chipText('goal-plan'), 'goal-plan 64');
-    assert.equal(await chipText('article-publish'), 'article-publish 30');
-    assert.equal(await chipText('edge'), 'edge 3');
-    assert.equal(await pane.locator('.approvals-state button[data-state="open"]').innerText().then(t => t.replace(/\s+/g, ' ').trim()), 'open 97');
+    assert.equal(await chipText('goal-plan'), 'Plan a goal 64');
+    assert.equal(await chipText('article-publish'), 'Make an article readable 30');
+    assert.equal(await chipText('edge'), 'Link two sources 3');
+    assert.equal(await chip('edge').getAttribute('title'), 'A typed link between two sources (challenges, refutes, superseded by…). Approving adds it. (edge)');
+    assert.equal(await pane.locator('.approvals-state button[data-state="open"]').innerText().then(t => t.replace(/\s+/g, ' ').trim()), 'Needs a decision 97');
     // a kind: the rows of other kinds leave in the same frame; the request carries the kind
     const t = await clickTimed(page, '.approvals-pane .list-facet button[data-value="goal-plan"]', '.approvals-pane .approval-row');
     assert.equal(t.rows, 2, 'the other kinds are gone at once');
     assert.ok(t.ms < 100, `a chip answers within 100 ms (${t.ms.toFixed(1)} ms)`);
     assert.equal(await chip('goal-plan').getAttribute('aria-pressed'), 'true');
-    await page.waitForFunction(() => document.querySelector('.approvals-pane .list-heading')?.innerText === 'Latest 2 of 64 open goal-plan approvals');
+    await page.waitForFunction(() => document.querySelector('.approvals-pane .list-heading')?.innerText === 'Latest 2 of 64 approvals · Needs a decision, Plan a goal');
     assert.deepEqual(asked.at(-1).kind, ['goal-plan']);
     assert.ok(page.url().includes('apprKind=goal-plan'), page.url());
     // multi-select: a second kind widens to both
     await chip('edge').click();
-    await page.waitForFunction(() => document.querySelector('.approvals-pane .list-heading')?.innerText === 'Latest 3 of 67 open goal-plan/edge approvals');
+    await page.waitForFunction(() => document.querySelector('.approvals-pane .list-heading')?.innerText === 'Latest 3 of 67 approvals · Needs a decision, Plan a goal, Link two sources');
     assert.deepEqual(asked.at(-1).kind, ['goal-plan', 'edge']);
     await chip('edge').click();
     await page.waitForFunction(() => document.querySelectorAll('.approvals-pane .approval-row').length === 2);
@@ -1656,7 +1657,7 @@ test('the approvals window: kind chips with the server\'s counts, a picked kind 
     await page.waitForFunction(() => !document.querySelector('.approvals-bulk button[data-bulk="approve"]')?.textContent.includes('(2)'));
     await page.waitForTimeout(300);
     assert.equal(dialogs.length, 1);
-    assert.match(dialogs[0], /^Approve 2 approvals \(2 goal-plan\)\?/);
+    assert.match(dialogs[0], /^Approve 2 approvals \(2 plan a goal\)\?/);
     assert.deepEqual(decided.sort(), [[7, 'approve'], [9, 'approve']]);
     // "clear filters" empties every filter and the URL
     await pane.locator('.list-clear').click();
@@ -1693,24 +1694,24 @@ test('the agent runs window: pipeline chips and the manager picker filter on the
     const pane = page.locator('.runs-pane');
     await page.waitForFunction(() => document.querySelectorAll('.runs-pane .run-row').length === 4);
     const chip = v => pane.locator(`.list-facet button[data-value="${v}"]`);
-    assert.equal((await chip('review-article').innerText()).replace(/\s+/g, ' ').trim(), 'review-article 211');
+    assert.equal((await chip('review-article').innerText()).replace(/\s+/g, ' ').trim(), 'Review an article 211');
     assert.equal((await chip('manager').innerText()).replace(/\s+/g, ' ').trim(), 'by a manager 380');
     const t = await clickTimed(page, '.runs-pane .list-facet button[data-value="review-article"]', '.runs-pane .run-row');
     assert.equal(t.rows, 2);
     assert.ok(t.ms < 100, `a chip answers within 100 ms (${t.ms.toFixed(1)} ms)`);
-    await page.waitForFunction(() => document.querySelector('.runs-pane .list-heading')?.innerText === 'Latest 2 of 211 review-article runs');
+    await page.waitForFunction(() => document.querySelector('.runs-pane .list-heading')?.innerText === 'Latest 2 of 211 runs · Review an article');
     assert.deepEqual(asked.at(-1).pipeline, ['review-article']);
     assert.ok(page.url().includes('runPipeline=review-article'), page.url());
     // the manager picker lists the counted managers, and picking one sends it
     const picker = pane.locator('select.list-select[data-facet="manager"]');
-    assert.deepEqual(await picker.locator('option').allInnerTexts(), ['any manager', 'review (223)', 'enrich (176)']);
+    assert.deepEqual(await picker.locator('option').allInnerTexts(), ['Any manager', 'Review manager (223)', 'Enrich manager (176)']);
     await picker.selectOption('review');
     await page.waitForFunction(() => document.querySelectorAll('.runs-pane .run-row').length === 2);
     await page.waitForFunction(() => location.hash.includes('runManager=review'));
     assert.deepEqual(asked.at(-1).manager, ['review']);
     assert.deepEqual(asked.at(-1).pipeline, ['review-article'], 'filters add up');
     // a state button on top of the filters: the request carries all three
-    await pane.locator('.jobs-filter button', { hasText: /^failed/ }).click();
+    await pane.locator('.jobs-filter button', { hasText: /^Failed/ }).click();
     await page.waitForFunction(() => document.querySelectorAll('.runs-pane .run-row').length === 1);
     assert.deepEqual(asked.at(-1).status, ['failed']);
   });
@@ -1737,14 +1738,14 @@ test('the jobs window: kind chips with the server\'s counts filter the list, and
     const pane = page.locator('.jobs-pane');
     await page.waitForFunction(() => document.querySelectorAll('.jobs-pane .job-row').length === 4);
     const chip = v => pane.locator(`.list-facet button[data-value="${v}"]`);
-    assert.equal((await chip('ingest').innerText()).replace(/\s+/g, ' ').trim(), 'ingest (fetch or upload, then OCR) 507');
+    assert.equal((await chip('ingest').innerText()).replace(/\s+/g, ' ').trim(), 'Bring in a source 507');
     const t = await clickTimed(page, '.jobs-pane .list-facet button[data-value="ingest"]', '.jobs-pane .job-row');
     assert.equal(t.rows, 2);
     assert.ok(t.ms < 100, `a chip answers within 100 ms (${t.ms.toFixed(1)} ms)`);
-    await page.waitForFunction(() => document.querySelector('.jobs-pane .list-heading')?.innerText === 'Latest 2 of 507 ingest jobs');
+    await page.waitForFunction(() => document.querySelector('.jobs-pane .list-heading')?.innerText === 'Latest 2 of 507 jobs · Bring in a source');
     assert.deepEqual(asked.at(-1), ['ingest']);
     // the counts of the other kinds stay: they are counted over every other filter
-    assert.equal((await chip('media-import').innerText()).replace(/\s+/g, ' ').trim(), 'media-import 18');
+    assert.equal((await chip('media-import').innerText()).replace(/\s+/g, ' ').trim(), 'Fetch pictures 18');
     await page.reload();
     await page.waitForFunction(() => document.querySelectorAll('.jobs-pane .job-row').length === 2);
     assert.equal(await chip('ingest').getAttribute('aria-pressed'), 'true');
@@ -1774,7 +1775,7 @@ test('articles: the review badge on each row with its meaning, and a linked goal
     await page.reload();
     const badges = page.locator('.articles-list .article-meta .review-state');
     await page.waitForFunction(() => document.querySelectorAll('.articles-list .review-state').length === 2);
-    assert.deepEqual(await badges.allInnerTexts(), ['in review · round 2', '3 majors open']);
+    assert.deepEqual(await badges.allInnerTexts(), ['In review · round 2', '3 majors open']);
     assert.equal(await badges.nth(1).getAttribute('title'), 'Reviewed: 3 MAJOR findings are still open.');
     assert.match(await badges.nth(1).getAttribute('class'), /\bstate-majors-open\b/);
     // the colour comes from the stylesheet: a red badge, not the grey of an unstyled one
@@ -1784,7 +1785,7 @@ test('articles: the review badge on each row with its meaning, and a linked goal
     const goal = page.locator('.wm-content .article-review-line a.goal-ref');
     await goal.waitFor();
     await goal.click();
-    await page.locator('.wm-title', { hasText: 'goal · zz-rev-goal' }).waitFor();
+    await page.locator('.wm-title', { hasText: 'Goal · Zz' }).waitFor();
     assert.equal(await page.locator('.wm-title', { hasText: 'Zz rev a' }).count(), 1, 'the article window stays open');
   });
 });
@@ -2171,10 +2172,10 @@ test('managers phase 3: the watch box, the daily spend, a watcher\'s sweeps', as
       route.fulfill({ json: { items: [], total: 0, offset: 0, limit: 25 } }));
     await page.goto(new URL('/#open=managers', baseURL).href);
     await page.reload();
-    const row = page.locator('.manager-row').filter({ hasText: 'watch:zz-pw-watch' });
+    const row = page.locator('.manager-row').filter({ hasText: 'Watch manager · Zz pw watch' });
     await row.waitFor();
     assert.match(await row.innerText(), /today 0\.50 of 2\.00 USD, 12\.3k tokens/);
-    await row.locator('button', { hasText: 'watch:zz-pw-watch' }).click();
+    await row.locator('button', { hasText: 'Watch manager · Zz pw watch' }).click();
     const sweeps = page.locator('.manager-sweeps');
     await sweeps.waitFor();
     const text = await sweeps.innerText();
@@ -2216,16 +2217,16 @@ test('autopilot: the switch and the goals\' stages in the managers window', asyn
     await page.reload();
     const ap = page.locator('.autopilot');
     await ap.locator('.autopilot-goals li').first().waitFor();
-    assert.match(await ap.innerText(), /Autopilot off/);
+    assert.match(await ap.innerText(), /Agents: paused/);
     assert.match(await ap.innerText(), /1 planned · 1 seeding/);
-    const row = ap.locator('.autopilot-goals li').filter({ hasText: 'zz-pw-ap' }).first();
+    const row = ap.locator('.autopilot-goals li').filter({ hasText: 'Zz PW autopilot' }).first();
     assert.match(await row.innerText(), /4 sources · 1 article · 1 open approval · 7 done in 7 days, 2 open \(~2 d\)/);
-    await ap.locator('button', { hasText: 'turn on' }).click();
+    await ap.locator('button', { hasText: 'Start working' }).click();
     // the new state shows before the server answers (the answer takes 300 ms here)
     await page.waitForFunction(() => document.querySelector('.autopilot-state.is-on'), null, { timeout: 250 });
     await page.waitForFunction(() => /seed:zz-pw-ap2 created/.test(document.querySelector('.autopilot').innerText));
     assert.deepEqual(posted, [{ on: true, by: 'web' }]);
-    assert.match(await ap.innerText(), /article-plan checked/);
+    assert.match(await ap.innerText(), /plan new articles: checked/);
     assert.match(await ap.innerText(), /ingests today 0 of 20/);
   });
 });
@@ -3161,7 +3162,7 @@ test('the map neither refetches nor rebuilds when the filters fold or the sideba
     const held = await fullLoadView(page, baseURL);
     assert.ok(held.held >= 300 && held.drawn > 50, `the full load is drawn: ${JSON.stringify(held)}`);
     // "only sources in view": a moved view refetches the list, a resized one must not
-    await page.locator('button[title="only sources in view"]').click();
+    await page.locator('button[title="Only sources in view"]').click();
     await quiet(page, 800);
     await page.waitForFunction(() => !document.querySelector('#count.is-loading'));
     await page.waitForTimeout(500);
@@ -3404,3 +3405,4 @@ test('the timeline draws a smooth curve at its shown size; one hover marker says
     assert.equal(await page.locator('.tl-detail-svg .tl-hover-label').count(), 0, 'gone when the pointer leaves');
   });
 });
+

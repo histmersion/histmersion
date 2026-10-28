@@ -66,7 +66,7 @@ class ManagersViewSuite extends munit.FunSuite:
   test("window keys: managers and one manager round-trip through the hash"):
     assertEquals(WindowKey.parse(WindowKey.Managers.wire), Some(WindowKey.Managers))
     assertEquals(WindowKey.parse(WindowKey.Manager("review").wire), Some(WindowKey.Manager("review")))
-    assertEquals(WindowKey.Manager("review").initialTitle, "manager · review")
+    assertEquals(WindowKey.Manager("review").initialTitle, "Review manager")
 
   test("phase 2 settings: stale days, infer filter, seed checks round-trip through the form"):
     val f = ManagersView.fields(ManagerConfig(staleAfterDays = Some(30), inferFilter = Some(false), minSources = Some(4), maxArticles = Some(3)))
@@ -166,18 +166,18 @@ class SchedulerPanelSuite extends munit.FunSuite:
     assertEquals(ManagersView.facet(ws, _.jobType), List("review" -> 2, "sweep" -> 1))
     val s = SchedulerStatus("goal-first", "person", maxRuns = 4, occupied = 3, pools = List(PoolUse("chatgpt-plan", 1, 2)), forPerson = 2)
     assertEquals(ManagersView.schedulerHead(s),
-      "Scheduler: goal-first (set by a person) · 3 of 4 runs at once · chatgpt-plan 1/2 · 2 items wait for a person (no place held)")
+      "Scheduler: One goal at a time (set by a person) · 3 of 4 runs at once · ChatGPT plan 1/2 · 2 items wait for a person (no place held)")
 
 
 /** The approvals window's digest line. */
 class ApprovalDigestLineSuite extends munit.FunSuite:
   import com.histmersion.api.ApprovalDigest.KindGroup
   test("a kind: how many, the oldest, who decides"):
-    assertEquals(ApprovalsView.digestLine(KindGroup("goal-plan", 64, Some("2026-10-21"))), "goal-plan 64 (oldest 2026-10-21) · a person decides")
+    assertEquals(ApprovalsView.digestLine(KindGroup("goal-plan", 64, Some("2026-10-21"))), "Plan a goal 64 (oldest 2026-10-21) · a person decides")
     assertEquals(ApprovalsView.digestLine(KindGroup("goal-plan", 64, Some("2026-10-21"), "waits")),
-      "goal-plan 64 (oldest 2026-10-21) · waiting: nobody needs to decide them now")
+      "Plan a goal 64 (oldest 2026-10-21) · waiting: nobody needs to decide them now")
     assertEquals(ApprovalsView.digestLine(KindGroup("article-publish", 2, None, "checked")),
-      "article-publish 2 · the autopilot's checks decide them within the day's cap")
+      "Make an article readable 2 · the autopilot's checks decide them within the day's cap")
 
 
 /** The autopilot section's drain line. */
@@ -185,5 +185,5 @@ class DrainLineSuite extends munit.FunSuite:
   import com.histmersion.api.Autopilot.DrainInfo
   test("draining with runs in flight, then drained"):
     assertEquals(ManagersView.drainLine(DrainInfo("2026-10-24T10:00:00Z", "cli", inFlight = 2)),
-      "DRAINING since 2026-10-24T10:00:00Z (by cli): nothing new starts; 2 runs in flight still finishing")
-    assert(ManagersView.drainLine(DrainInfo("t", drained = true, drainedAt = Some("t2"))).startsWith("DRAINED since t2"))
+      "Finishing current work, then pausing (since 2026-10-24T10:00:00Z, by cli): nothing new starts; 2 runs in flight still finishing")
+    assert(ManagersView.drainLine(DrainInfo("t", drained = true, drainedAt = Some("t2"))).startsWith("Paused since t2"))

@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.{JobInfo, JobState, ListFilters}
+import com.histmersion.api.{JobInfo, JobState, ListFilters, Wording}
 import com.histmersion.api.Agents.{ApprovalInfo, Decision, RunInfo, RunState}
 
 /** The pure halves of the list windows' filters (ListFilterBar, and the approvals, runs and jobs
@@ -20,8 +20,11 @@ class ListFiltersViewSuite extends munit.FunSuite:
     assertEquals(ListFilterBar.chipItems(Nil, Nil), Nil)
     assertEquals(ListFilterBar.toggled(List("edge"), "goal-plan"), List("edge", "goal-plan"))
     assertEquals(ListFilterBar.toggled(List("edge", "goal-plan"), "edge"), List("goal-plan"))
-    assertEquals(ListFilterBar.optionLabel("review", 1223), "review (1,223)")
-    assertEquals(ListFilterBar.optionLabel("seed:x", 0), "seed:x")
+    assertEquals(ListFilterBar.optionLabel("review-article", 1223), "Review an article (1,223)")
+    assertEquals(ListFilterBar.optionLabel("seed:x", 0, Wording.manager), "Seeding manager · X")
+    assertEquals(ListFilterBar.optionLabel("some-new-kind", 2), "Some new kind (2)", "an identifier never reads raw")
+    assertEquals(ListFilterBar.tooltip("edge", Wording.label, _ => Some("A typed link.")), Some("A typed link. (edge)"))
+    assertEquals(ListFilterBar.tooltip("x", identity, _ => None), None)
 
   test("a typed text and a picked day commit trimmed, or not at all"):
     assertEquals(ListFilterBar.typed("  tin "), Some("tin"))
@@ -56,8 +59,8 @@ class ListFiltersViewSuite extends munit.FunSuite:
     val rows = List(appr(1, "goal-plan"), appr(2, "goal-plan"), appr(3, "edge"), appr(4, "edge", "approved"))
     assertEquals(ApprovalsView.bulkTargets(Set(1, 3, 4, 9), rows).map(_.id), List(1L, 3L))
     val text = ApprovalsView.confirmText(Decision.Approve, rows.take(3))
-    assert(text.startsWith("Approve 3 approvals (2 goal-plan, 1 edge)?"), text)
-    assert(ApprovalsView.confirmText(Decision.Reject, rows.take(1)).startsWith("Reject 1 approval (1 goal-plan)?"))
+    assert(text.startsWith("Approve 3 approvals (2 plan a goal, 1 link two sources)?"), text)
+    assert(ApprovalsView.confirmText(Decision.Reject, rows.take(1)).startsWith("Reject 1 approval (1 plan a goal)?"))
 
   test("approvals: who decided, as the row says it"):
     assertEquals(ApprovalsView.decidedLine(appr(1, "goal-plan")), None)

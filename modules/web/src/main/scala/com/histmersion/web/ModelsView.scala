@@ -122,6 +122,14 @@ object ModelsView:
 
   /** The subscription pools: one bar per window with its floor marker, the reset, how old the reading
     * is and where it came from, and the hold switch (behind the write gate). */
+  /** `five_hour=25, seven_day=40` → `5-hour limit 25 %, this week's limit 40 %`: the floors as limits. */
+  def floorsText(floors: String): String =
+    floors.split(",").toList.map(_.trim).filter(_.nonEmpty).map { f =>
+      f.split("=", 2) match
+        case Array(k, v) => s"${Wording.allowanceWindow(k.trim).toLowerCase} ${v.trim.stripSuffix("%")} %"
+        case _           => f
+    }.mkString(", ")
+
   private def plansBlock(q: PlanQuota.QuotaInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     div(cls := "plan-pools",
       h4("Subscription plans"),
@@ -130,7 +138,7 @@ object ModelsView:
       ul(cls := "allowance-list", q.plans.map { pl =>
         li(cls := s"allowance ${if pl.usable then "is-usable" else "is-paused"}",
           div(cls := "allowance-head",
-            strong(pl.title), span(cls := "muted", s" · floors ${if pl.floors.isEmpty then "none" else pl.floors} (${pl.floorsSource})" +
+            strong(pl.title), span(cls := "muted", title := pl.floors, s" · floors ${if pl.floors.isEmpty then "none" else floorsText(pl.floors)} (${pl.floorsSource})" +
               pl.planType.fold("")(t => s" · plan $t")),
             if !pl.available then span(cls := "run-paused", s" · ${pl.reason.getOrElse("unavailable: no login")}")
             else if pl.held then span(cls := "run-paused", " · held")
@@ -153,7 +161,9 @@ object ModelsView:
           else div(pl.windows.map { w =>
             val (used, floorAt) = windowBar(w)
             div(cls := "allowance-limit",
-              span(cls := "allowance-name", if w.limit == "claude" || w.limit == "codex" then w.kind else s"${w.limit} ${w.kind}"),
+              span(cls := "allowance-name", title := s"${w.limit} ${w.kind}",
+                if w.limit == "claude" || w.limit == "codex" then Wording.allowanceWindow(w.kind)
+                else s"${Wording.humanize(w.limit)}: ${Wording.allowanceWindow(w.kind).toLowerCase}"),
               div(cls := s"allowance-bar plan-bar ${if w.usable then "" else "is-over"}", styleAttr := s"--pct:$used%; --floor:$floorAt%",
                 role := "img", aria.label := s"$used % used, floor at ${w.floor} % left"),
               span(cls := "muted", s"$used % used · floor ${w.floor} % left" + w.resetsAt.fold("")(t => s" · resets $t") +

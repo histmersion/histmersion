@@ -210,7 +210,7 @@ class MapViewSuite extends munit.FunSuite:
 
   test("a disabled layer option says which switch turns it on"):
     import com.histmersion.web.MapLayer
-    assertEquals(ViewportToggle.offWhy(MapLayer.Boundaries), "turn on boundaries first")
+    assertEquals(ViewportToggle.offWhy(MapLayer.Boundaries), "Turn on boundaries first")
 
   // ── waitsForQuiet (#1949) ───────────────────────────────────────────────────────
 

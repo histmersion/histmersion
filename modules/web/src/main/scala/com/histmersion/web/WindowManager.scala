@@ -108,6 +108,11 @@ object WindowManager:
   private[web] def reconcile(open: List[WindowKey], wanted: List[WindowKey]): (List[WindowKey], List[WindowKey]) =
     (open.filterNot(wanted.contains), wanted.filterNot(open.contains).distinct)
 
+  /** The title of `key`'s window, once its content knows a better one than [[WindowKey.initialTitle]]: an
+    * item's own title, never its identifier (which the title's tooltip keeps). */
+  def retitle(key: WindowKey, title: String): Unit =
+    shown.get(key).foreach(wid => windows.update(_.map(w => if w.id == wid && w.title != title then w.copy(title = title) else w)))
+
   /** Close the window showing `key`, if one is open. */
   def close(key: WindowKey): Unit = shown.get(key).foreach(closeWin(_))
 
@@ -132,7 +137,7 @@ object WindowManager:
           if contentEl != null then
             contentEl.innerHTML = html
             val titleEl = contentEl.querySelector("h1, h2")
-            val title = if titleEl != null then titleEl.textContent.trim else id
+            val title = if titleEl != null then titleEl.textContent.trim else key.initialTitle
             windows.update(_.map(w => if w.id == wid then w.copy(title = title) else w))
             // both handlers are delegated on the content root, which outlives its content: wire it once.
             // Every reload (a link to the same page inside it, an edit's refresh) added two more, and a
@@ -194,9 +199,9 @@ object WindowManager:
   private def sourceActions(ck: String): HtmlElement =
     div(
       cls := "wm-actions",
-      button(typ := "button", cls := "btn btn--ghost btn--sm wm-graph-btn", title := "citation graph", Icon(Icon.Graph), span("graph"),
+      button(typ := "button", cls := "btn btn--ghost btn--sm wm-graph-btn", title := "Citation graph", Icon(Icon.Graph), span("Graph"),
         onClick --> (_ => open(WindowKey.Graph(ck)))),
-      WriteButton(Icon.Edit, "edit", "edit this source's metadata", () => open(WindowKey.EditSource(ck)))
+      WriteButton(Icon.Edit, "Edit", "Edit this source's metadata", () => open(WindowKey.EditSource(ck)))
     )
 
   private def focus(wid: Int): Unit =
@@ -305,7 +310,7 @@ object WindowManager:
             dragWin = None
             ev.target.asInstanceOf[dom.HTMLElement].releasePointerCapture(ev.pointerId)
         },
-        span(cls := "wm-title", child.text <-- wSignal.map(_.title)),
+        span(cls := "wm-title", title := initial.key.wire, child.text <-- wSignal.map(_.title)),
         div(
           cls := "wm-buttons",
           button(typ := "button", cls := "btn btn--bare btn--icon btn--sm wm-btn", "−", title := "Minimize",

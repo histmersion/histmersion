@@ -246,13 +246,13 @@ object Pages:
 
   /** An article's review state as a badge, its meaning on hover. */
   def reviewBadge(b: ReviewBadge): String =
-    s"""<span class="job-state review-state state-${b.state.wire}" title="${esc(b.detail)}">${esc(b.label)}</span>"""
+    s"""<span class="job-state review-state state-${b.state.wire}" title="${esc(b.detail)}">${esc(Wording.capitalize(b.label))}</span>"""
 
   /** A research goal's stage as the goals window draws it, linked to the goal's window. */
   def goalBadgeLink(g: ReviewGoal): String =
     val meaning = GoalStages.meaning(g.status).fold("")(m => s""" title="${esc(s"${g.status}: $m")}"""")
     s"""<a class="goal-ref" href="/#open=goal:${esc(HtmlAtoms.segment(g.slug))}" title="${esc(g.slug)}">""" +
-      s"""<span class="job-state goal-status state-${esc(g.status)}"$meaning>${esc(g.status)}</span> """ +
+      s"""<span class="job-state goal-status state-${esc(g.status)}"$meaning>${esc(Wording.capitalize(g.status))}</span> """ +
       s"""${esc(if g.title.trim.nonEmpty then g.title else g.slug)}</a>"""
 
   /** `2026-10-20T09:00:00Z` as `2026-10-20 09:00 UTC`; anything else as it is. */

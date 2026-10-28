@@ -185,14 +185,15 @@ class PlaceHoverSuite extends munit.FunSuite:
     val s = AboutView.sections(about.copy(plugins = report))
     assertEquals(s.map(_.title), List("Server", "Health", "Job queue", "Backups", "Store", "Plugins"))
     val rows = s.find(_.title == "Plugins").get.rows
-    def row(id: String) = rows.find(_.label == id).get
-    assertEquals((row("media-met").value, row("media-met").state), ("registered", Some(ServiceState.Ok)))
-    assertEquals(row("media-met").detail, Some("v1.0.0 · media-collection:met"))
+    def row(id: String) = rows.find(_.label == Wording.plugin(id)).get
+    assertEquals((row("media-met").value, row("media-met").state), ("Registered", Some(ServiceState.Ok)))
+    assertEquals(row("media-met").label, "Pictures: Met")
+    assertEquals(row("media-met").detail, Some("media-met · v1.0.0 · media-collection:met"))
     assertEquals(row("portal").detail,
-      Some("v0.2.0 · media-collection:portal, event-catalogue:portal · token = env:PORTAL_TOKEN, key = value:***"))
+      Some("portal · v0.2.0 · media-collection:portal, event-catalogue:portal · token = env:PORTAL_TOKEN, key = value:***"))
     assertEquals(row("1password").state, Some(ServiceState.Unknown))
     assertEquals((row("broken").state, row("broken").detail),
-      (Some(ServiceState.Down), Some("v0.1.0 · histmersion.plugins.broken.x: bad")))
+      (Some(ServiceState.Down), Some("broken · v0.1.0 · histmersion.plugins.broken.x: bad")))
     assertEquals(rows.last, AboutView.Row("", "histmersion.plugins.helo configures no plugin in this binary — ignored"))
     assertEquals(AboutView.plugins(PluginsReport()), None)
   }

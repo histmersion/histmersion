@@ -25,7 +25,7 @@ object VacuumPlan:
 object Vacuum:
 
   /** The `jobs.kind` of a vacuum job. */
-  val JobKind = "vacuum"
+  val JobKind = com.histmersion.api.JobKind.Vacuum.wire
 
   /** A table name as Postgres stores an unquoted identifier: lower case letters, digits, `_`. */
   private val TableShape = "^[a-z_][a-z0-9_]{0,62}$".r

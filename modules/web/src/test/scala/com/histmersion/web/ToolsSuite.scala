@@ -101,8 +101,9 @@ class ToolsSuite extends munit.FunSuite:
     assert(!JobsView.subjectStored(job("a", JobState.Running)))
     assert(JobsView.subjectStored(job("a", JobState.Done)))
     assert(JobsView.subjectStored(job("a", JobState.Running, Ingest.KindReocr)))
-    assertEquals(JobsView.kindLabel("some_kind"), "some kind")
-    assertEquals(JobsView.kindLabel(Ingest.KindIngest), "ingest (fetch or upload, then OCR)")
+    assertEquals(JobsView.kindLabel("some_kind"), "Some kind")
+    assertEquals(JobsView.kindLabel("basemap-fetch"), "Download the background map")
+    assertEquals(JobsView.kindLabel(Ingest.KindIngest), "Bring in a source")
     assertEquals(RunsView.originLabel("ingest"), "by an ingest (before the enrich manager)")
     import com.histmersion.values.ApprovalKind
     assert(ApprovalKind.values.forall(k => ApprovalsView.kindMeaning(k.wire).nonEmpty))
@@ -146,7 +147,7 @@ class ToolsSuite extends munit.FunSuite:
   test("an init job says what it imports; one that skipped periods says which") {
     val plan = InitPlan(gazetteer = true, periodPresets = true, fetch = List("periodo"))
     val init = JobInfo("i", InitPlan.JobKind, JobState.Running.wire, detail = Some(JobDetail(init = Some(plan))))
-    assertEquals(JobsView.kindLabel(InitPlan.JobKind), "reference data import")
+    assertEquals(JobsView.kindLabel(InitPlan.JobKind), "Import reference data")
     assertEquals(JobsView.what(init), Some("bundled gazetteer, bundled period presets, fetch periodo"))
     assertEquals(JobsView.what(job("a", JobState.Running)), None) // an OCR job's subject is its citekey
     assertEquals(JobsView.skippedLine(init), None)
@@ -206,7 +207,7 @@ class ToolsSuite extends munit.FunSuite:
 
   test("a topic path reads without underscores or bold markers") {
     assertEquals(QueueView.heading(Some("**Highest value — get first** > greek_god_origins")),
-      ("greek god origins", List("Highest value — get first")))
+      ("Greek god origins", List("Highest value — get first")))
     assertEquals(QueueView.heading(None), ("Uncategorised", Nil))
   }
 
@@ -225,8 +226,8 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(WindowKey.parse("tasks"), Some(WindowKey.Tasks))
     assertEquals(WindowKey.parse(" log "), Some(WindowKey.Log))
     assertEquals(WindowKey.parse("logs"), None)
-    assertEquals(WindowKey.Tasks.initialTitle, "backlog")
-    assertEquals(WindowKey.Log.initialTitle, "worklog")
+    assertEquals(WindowKey.Tasks.initialTitle, "Backlog")
+    assertEquals(WindowKey.Log.initialTitle, "Worklog")
     List(WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log).foreach(k => assert(!k.initialTitle.contains("_"), k))
     assertEquals(WindowKey.Tasks.pageHref, None)
     import FieldCodec.given

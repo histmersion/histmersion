@@ -84,10 +84,10 @@ object Icon:
 
 /** An overlay the map can show. The wire name is how it is persisted in [[UiState]]. */
 enum MapLayer(val wire: String, val label: String, val icon: Icon):
-  case Boundaries extends MapLayer("boundaries", "boundaries", Icon.Region)
-  case Sites      extends MapLayer("sites", "sites", Icon.PointSite)
-  case Media      extends MapLayer("media", "media", Icon.PointMedia)
-  case Events     extends MapLayer("events", "events", Icon.PointEvent)
+  case Boundaries extends MapLayer("boundaries", "Boundaries", Icon.Region)
+  case Sites      extends MapLayer("sites", "Sites", Icon.PointSite)
+  case Media      extends MapLayer("media", "Media", Icon.PointMedia)
+  case Events     extends MapLayer("events", "Events", Icon.PointEvent)
 
 object MapLayer:
   def fromWire(s: String): Option[MapLayer] = values.find(_.wire == s.trim.toLowerCase)

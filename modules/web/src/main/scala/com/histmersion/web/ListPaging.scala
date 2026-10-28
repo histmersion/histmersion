@@ -52,12 +52,15 @@ object ListPaging:
   def pollUpTo[A](cur: Listing[A], id: A => String): Option[String] =
     if cur.extended then cur.rows.lastOption.map(id) else None
 
-  /** The window's heading: `37 jobs`, `Latest 100 of 2,431 jobs`, `Latest 100 of 412 failed jobs`.
+  /** The window's heading: `37 jobs`, `Latest 100 of 2,431 jobs`, `Latest 100 of 412 jobs · Failed`.
     * `l` holds the rows the `state` filter shows, and the total is that state's [[count]] — so the
-    * moment a filter changes, before its own page arrives, the heading is already right. */
+    * moment a filter changes, before its own page arrives, the heading is already right. `filters` are
+    * what the list is narrowed to, as a person reads them (the label dictionary's words, never the
+    * identifiers the command line's heading uses). */
   def heading[A](l: Listing[A], singular: String, state: Option[String], stateOf: A => String,
-      qualifier: Option[String] = None): String =
-    Paging.heading(l.rows.size, count(l, state, stateOf), singular, qualifier = qualifier.orElse(state))
+      filters: List[String] = Nil): String =
+    Paging.heading(l.rows.size, count(l, state, stateOf), singular) +
+      (if filters.isEmpty then "" else filters.mkString(" · ", ", ", ""))
 
   /** A filter button's count: the server's count of that state over the whole list (`None` = every
     * state); the loaded rows' when the server sent none. */
