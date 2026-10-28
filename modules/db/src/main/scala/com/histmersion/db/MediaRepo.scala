@@ -22,7 +22,8 @@ given DbCodec[MediaItemRow] = DbCodec.derived
 
 private[db] final case class MediaGeoRow(citekey: Option[String], name: String, kind: Option[String], lat: Double,
     lon: Double, periodStart: Option[Long], periodEnd: Option[Long], caption: Option[String], uid: String,
-    provider: Option[String], license: Option[String], credit: Option[String], hasThumb: Boolean)
+    provider: Option[String], license: Option[String], credit: Option[String], hasThumb: Boolean,
+    sourceUrl: Option[String], licenseUrl: Option[String], author: Option[String])
 given DbCodec[MediaGeoRow] = DbCodec.derived
 
 private[db] final case class MediaTargetRow(targetType: String, targetId: String, role: String, label: String,
@@ -617,11 +618,12 @@ object MediaRepo:
   private val geoCols =
     """a.citekey, a.name, a.kind, ST_Y(ST_PointOnSurface(a.geom)), ST_X(ST_PointOnSurface(a.geom)),
        lower(a.period), upper(a.period) - 1, a.caption, a.uid::text, a.provider, a.license, a.credit,
-       a.thumb IS NOT NULL"""
+       a.thumb IS NOT NULL, a.source_url, a.license_url, a.author"""
 
   private def geoHit(r: MediaGeoRow): MediaGeoHit =
     MediaGeoHit(r.citekey, r.name, r.kind, r.lat, r.lon, r.periodStart, r.periodEnd, r.caption, r.uid,
-      r.provider, r.license, r.credit, Option.when(r.hasThumb)(MediaThumb.thumbPath(r.uid)))
+      r.provider, r.license, r.credit, Option.when(r.hasThumb)(MediaThumb.thumbPath(r.uid)),
+      fileUrl = Some(MediaThumb.filePath(r.uid)), sourceUrl = r.sourceUrl, licenseUrl = r.licenseUrl, author = r.author)
 
   // ── a source's pictures: its cover and its illustration (#1446) ──────────────────────────────
 

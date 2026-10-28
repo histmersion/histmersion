@@ -75,7 +75,7 @@ const event = e => {
 const picture = h => ({ at: [h.lat, h.lon], a: h.periodStart, b: h.periodEnd,
   props: { k: h.uid || `${h.assetName}|${h.lat}|${h.lon}`, uid: h.uid || `${h.assetName}|${h.lat}|${h.lon}`, citekey: h.citekey,
     assetName: h.assetName, kind: h.kind, periodStart: h.periodStart, periodEnd: h.periodEnd, caption: h.caption, provider: h.provider,
-    license: h.license, credit: h.credit, thumbUrl: h.thumbUrl } });
+    license: h.license, credit: h.credit, thumbUrl: h.thumbUrl, sourceUrl: h.sourceUrl, licenseUrl: h.licenseUrl, author: h.author } });
 
 /** Serve the tiled layers from `sites` (GeoJSON point features), `events` (`EventGeo`s) and `media`
   * (`MediaGeoHit`s) — a function of the request's URL each, or an array. `asked` collects every tile URL. */

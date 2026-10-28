@@ -212,6 +212,9 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val hits = MediaRepo.geo(ds, q, 1000)
     assert(hits.nonEmpty && hits.forall(h => h.provider.contains(P) && h.license.contains(Lic) && h.citekey.isEmpty))
     assert(hits.exists(h => h.thumbUrl.contains(s"/media/${h.uid}/thumb") && h.credit.isDefined))
+    // what a full-size view shows: the stored rendition (this server's), the provider's page, the licence's text
+    assert(hits.forall(h => h.fileUrl.contains(s"/media/${h.uid}/file") && h.sourceUrl.exists(_.startsWith("http"))), hits.toString)
+    assert(hits.exists(h => h.licenseUrl.contains("https://creativecommons.org/licenses/by-sa/9.9") && h.author.contains("Ann")), hits.toString)
     assertEquals(MediaRepo.geo(ds, q.copy(provider = Some("source")), 1000).filter(_.license.contains(Lic)), Nil)
     val dated = MediaRepo.geo(ds, q.copy(from = Some(-1500), to = Some(-1400)), 1000)
     assert(dated.nonEmpty && dated.forall(_.periodStart.exists(_ <= -1400)), "the place's period dates the picture")

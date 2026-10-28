@@ -32,9 +32,14 @@ class TiledLayersSuite extends munit.FunSuite:
 
   test("a picture feature is the media layer's hit"):
     val f = feature(41.9, 12.5, "uid" -> "u1", "assetName" -> "Forum", "kind" -> "photo", "periodStart" -> -50,
-      "periodEnd" -> 300, "provider" -> "met", "license" -> "CC0-1.0", "credit" -> "The Met", "thumbUrl" -> "/api/media/u1/thumb")
+      "periodEnd" -> 300, "provider" -> "met", "license" -> "CC0-1.0", "credit" -> "The Met", "thumbUrl" -> "/api/media/u1/thumb",
+      "sourceUrl" -> "https://www.metmuseum.org/art/collection/search/1", "licenseUrl" -> "https://creativecommons.org/publicdomain/zero/1.0/",
+      "author" -> "Unknown maker")
+    // its full size is this server's file of the uid (not carried per picture); the provider's page and the licence's
     assertEquals(TileDecode.media(f), Some(MediaGeoHit(None, "Forum", Some("photo"), 41.9, 12.5, Some(-50L), Some(300L), None,
-      "u1", Some("met"), Some("CC0-1.0"), Some("The Met"), Some("/api/media/u1/thumb"))))
+      "u1", Some("met"), Some("CC0-1.0"), Some("The Met"), Some("/api/media/u1/thumb"), fileUrl = Some("/media/u1/file"),
+      sourceUrl = Some("https://www.metmuseum.org/art/collection/search/1"),
+      licenseUrl = Some("https://creativecommons.org/publicdomain/zero/1.0/"), author = Some("Unknown maker"))))
 
   test("a cell: its count, dates' range and box; it counts for all of them in a bubble and is not listed"):
     val f = feature(10, 20, "k" -> "c4/1/2", "n" -> 37, "lo" -> -1500.5, "hi" -> -200, "w" -> 19, "s" -> 9, "e" -> 21, "nn" -> 11)

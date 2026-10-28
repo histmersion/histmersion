@@ -196,7 +196,7 @@ object Preview:
   /** Pure: the line under a card's picture — its credit and licence (the licence a link when it has a
     * page), as the licence asks for it to be shown. */
   def creditLine(t: MediaThumb): (String, Option[(String, String)]) =
-    val lic = t.license.map(l => l -> t.licenseUrl.orElse(t.sourceUrl).getOrElse(""))
+    val lic = t.license.map(l => l -> t.licenseUrl.orElse(LicenseName.url(l)).orElse(t.sourceUrl).getOrElse(""))
     (t.credit, lic.map((l, u) => (l, u)))
 
   // ── typed, cached fetches ────────────────────────────────────────────────────────────────────
@@ -684,13 +684,25 @@ object Preview:
         ctx.thisNode.ref.style.setProperty("--w", w.toString)
         ctx.thisNode.ref.style.setProperty("--h", h.toString)
       }),
-      img(cls := "cite-tip-thumb", src := t.url, alt := credit, loadingAttr := "lazy"),
+      img(cls := "cite-tip-thumb is-zoomable", src := t.url, alt := credit, loadingAttr := "lazy", title := "open full size",
+        // a click opens the stored picture full size, with its credit, licence and provider's page (Lightbox)
+        onMountCallback(ctx => fullAttrs(t).foreach((k, v) => ctx.thisNode.ref.setAttribute(k, v)))),
       figCaption(cls := "cite-tip-credit",
         span(credit),
         lic.map((l, u) =>
-          if u.isEmpty then span(" · ", l)
-          else span(" · ", a(cls := "cite-tip-link", href := u, target := "_blank", rel := "noopener license", l))))
+          val name = LicenseName.label(l)
+          if u.isEmpty then span(" · ", name)
+          else span(" · ", a(cls := "cite-tip-link", href := u, target := "_blank", rel := "noopener license", name))))
     )
+
+  /** Pure: the attributes that open a card's picture full size ([[Lightbox]]): the stored file, its
+    * credit, licence and the provider's page. */
+  def fullAttrs(t: MediaThumb): List[(String, String)] =
+    val item = Lightbox.Item(MediaThumb.filePath(t.uid), t.credit, None, Some(t.credit).filter(_.nonEmpty), None,
+      t.license, t.licenseUrl, t.sourceUrl, None)
+    val vals = List("data-full" -> Some(item.src), "data-lb-credit" -> item.credit, "data-lb-license" -> item.license,
+      "data-lb-license-url" -> item.licenseUrl, "data-lb-source-url" -> item.sourceUrl)
+    vals.collect { case (k, Some(v)) if v.nonEmpty => k -> v }
 
   /** Pure: the thumbnail's stored size (`--w`/`--h` for `.cite-tip-media`), when it is known. */
   def sizeOf(t: MediaThumb): Option[(Int, Int)] = (t.width, t.height) match

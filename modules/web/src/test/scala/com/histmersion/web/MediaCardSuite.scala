@@ -84,6 +84,31 @@ class MediaCardSuite extends munit.FunSuite:
     val h = MediaPopup.html(pic, "", "")
     assert(h.contains(s"""src="${thumb.url}""""), h)
     assert(h.contains("A &lt;b&gt;&amp;&lt;/b&gt; B"), "the credit is escaped: " + h)
-    assert(h.contains("<code>CC-BY-SA-2.5</code>") && h.contains("Wikimedia Commons"), h)
+    // the licence by its name, linked to its text — never the stored id as a code token
+    assert(!h.contains("<code>"), h)
+    assert(h.contains("""<a class="media-license" href="https://creativecommons.org/licenses/by-sa/2.5/" target="_blank" rel="noopener license">CC BY-SA 2.5</a>""")
+      && h.contains("Wikimedia Commons"), h)
+    // no full-size URL known: the thumbnail opens nothing
+    assert(!h.contains("data-full"), h)
     assert(h.startsWith(s"""<div class="cite-tip-title media-popup-title">${CardIcons.html("image")}Lions-Gate-Mycenae.jpg</div>"""),
       "a picture's popup leads with the picture icon: " + h)
+
+  test("the media layer's popup: a picture with its full size opens it, with title, credit, licence and provider page"):
+    val pic = MediaGeoHit(None, "Lions_Gate_of_Mycenae_seen_from_the_ramp_in_the_morning_light.jpg", Some("photo"), 37.0, 22.0,
+      None, None, None, thumb.uid, Some(MediaProvider.Commons), Some("CC-BY-SA-3.0"), Some("Photo: A. Author"), Some(thumb.url),
+      fileUrl = Some(s"/media/${thumb.uid}/file"), sourceUrl = Some("https://commons.wikimedia.org/wiki/File:Lions.jpg"),
+      licenseUrl = None, author = Some("A. Author"))
+    val h = MediaPopup.html(pic, "", "")
+    assert(h.contains(s"""data-full="/media/${thumb.uid}/file""""), h)
+    assert(h.contains("is-zoomable"), h)
+    assert(h.contains("""data-lb-source-url="https://commons.wikimedia.org/wiki/File:Lions.jpg""""), h)
+    val item = MediaPopup.full(pic).get
+    assertEquals(item.src, s"/media/${thumb.uid}/file")
+    assertEquals(item.title, Some(pic.assetName))
+    assertEquals(item.provider, Some(MediaProvider.Commons))
+
+  test("a card's picture opens the stored picture full size, with its credit, licence and provider page"):
+    val attrs = Preview.fullAttrs(thumb).toMap
+    assertEquals(attrs.get("data-full"), Some(s"/media/${thumb.uid}/file"))
+    assertEquals(attrs.get("data-lb-credit"), Some(thumb.credit))
+    assertEquals(attrs.get("data-lb-license"), thumb.license)

@@ -640,10 +640,25 @@ test('#1446: hovering a site with a picture shows the image and its credit', asy
     assert.ok(thumbs >= 1, 'the thumbnail was fetched from this server');
     const credit = await page.locator('.cite-tooltip .cite-tip-credit').innerText();
     assert.match(credit, /Zz Photographer, CC BY-SA 2\.5, via Wikimedia Commons/);
-    assert.match(credit, /CC-BY-SA-2\.5/);
+    // the licence by its name (not the stored id), linked to its text
+    assert.equal(await page.locator('.cite-tooltip .cite-tip-credit a').innerText(), 'CC BY-SA 2.5');
     assert.equal(await page.locator('.cite-tooltip .cite-tip-credit a').getAttribute('href'),
       'https://creativecommons.org/licenses/by-sa/2.5');
     if (process.env.HOVER_SHOT) await page.screenshot({ path: process.env.HOVER_SHOT });
+    // the card pinned (a click on its site; a hover card lets the pointer through), a click on its picture opens
+    // the stored picture full size, its credit and licence under it
+    await page.route(`**/media/${uid}/file`, route => route.fulfill({ body: png, contentType: 'image/png' }));
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    const pinned = page.locator('.cite-tooltip.is-pinned img.cite-tip-thumb');
+    await pinned.waitFor();
+    await pinned.click();
+    const lightbox = page.locator('.lightbox');
+    await lightbox.waitFor();
+    assert.equal(await lightbox.locator('img').getAttribute('src'), `/media/${uid}/file`);
+    assert.match(await lightbox.locator('.lightbox-credit').innerText(), /Zz Photographer, CC BY-SA 2\.5, via Wikimedia Commons/);
+    assert.equal(await lightbox.locator('a.media-license').getAttribute('href'), 'https://creativecommons.org/licenses/by-sa/2.5');
+    await page.keyboard.press('Escape');
+    await lightbox.waitFor({ state: 'detached' });
   });
 });
 
@@ -3139,6 +3154,91 @@ test('playback stopped or run out restores the whole span on the map', async () 
       return lo === b.lo && hi === b.hi && window.__testMap.points() === b.points &&
         JSON.stringify(window.__testMap.shapes('polities').slice().sort()) === JSON.stringify(b.polities);
     }, before, { timeout: 5000 }).catch(async () => assert.fail(`after the end: ${JSON.stringify(await state())} ≠ ${JSON.stringify(before)}`));
+  });
+});
+
+// (c) + (d) + (e): four pictures at one spot (as at a museum) are one bubble at every zoom. A click fans them out
+// around the spot on thin legs; each opens its popup, its long `_` name wrapped inside it; Escape folds them back. A
+// row of the bubble's list opens its picture's popup even where no zoom parts it. The popup's picture opens full size
+// with its title, credit, licence (its name, linked) and the provider's page.
+test('pictures at one spot: fanned out, each opens, the list opens them, a picture opens full size', async () => {
+  const at = [36.52, 34.5576];
+  const longName = 'Hattusa_museum_bronze_age_tablet_with_cuneiform_inscription_from_the_great_temple_archive_room_2.jpg';
+  const media = [0, 1, 2, 3].map(i => ({ citekey: null, assetName: i === 2 ? longName : `Zz_picture_${i}.jpg`, kind: 'photo',
+    lat: at[0], lon: at[1], periodStart: -1400, periodEnd: -1200, caption: null, uid: `0190a0b0-0000-7000-8000-00000000c0${i}`,
+    provider: 'wikimedia-commons', license: 'CC-BY-SA-3.0', credit: `Zz Photographer ${i}, CC BY-SA 3.0, via Wikimedia Commons`,
+    thumbUrl: `/media/0190a0b0-0000-7000-8000-00000000c0${i}/thumb`, sourceUrl: `https://commons.wikimedia.org/wiki/File:Zz_${i}.jpg`,
+    author: `Zz Photographer ${i}` }));
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const png = Buffer.from(await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 64; c.height = 48;
+      const g = c.getContext('2d'); g.fillStyle = '#3a6'; g.fillRect(0, 0, 64, 48);
+      return c.toDataURL('image/png').split(',')[1];
+    }), 'base64');
+    await routeTiles(page, { media });
+    await page.route(/\/media\/[^/]+\/(thumb|file)$/, route => route.fulfill({ body: png, contentType: 'image/png' }));
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', '["media"]'));
+    await page.goto(new URL('/#from=-1500&to=-1100', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    for (const zoom of [8, null]) {
+      const z = zoom ?? await page.evaluate(() => window.__testMap.getMaxZoom());
+      await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, z]);
+      const bubble = page.locator('#map .hd-dot-wrap').first();
+      await bubble.waitFor();
+      await settledAt(page, '#map .hd-dot-wrap', at[0], at[1]);
+      assert.equal(await page.locator('#map .hd-point-wrap--photo:not(.hd-spider)').count(), 0, `zoom ${z}: one bubble, no picture alone`);
+      await bubble.click();
+      const legs = page.locator('#map .hd-spider-legs line');
+      await page.locator('#map .hd-spider').first().waitFor();
+      assert.equal(await page.locator('#map .hd-spider').count(), 4, `zoom ${z}: the four fanned out`);
+      assert.equal(await legs.count(), 4, `zoom ${z}: a leg each`);
+      const spots = await page.locator('#map .hd-spider').evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }));
+      for (let i = 0; i < spots.length; i++) for (let j = i + 1; j < spots.length; j++)
+        assert.ok(Math.hypot(spots[i][0] - spots[j][0], spots[i][1] - spots[j][1]) >= 20, `zoom ${z}: apart: ${JSON.stringify(spots)}`);
+      // the third: its popup, its long name inside it
+      await page.locator('#map .hd-spider').nth(2).click();
+      const popup = page.locator('.hd-popup .maplibregl-popup-content');
+      await popup.waitFor();
+      const title = await page.locator('.hd-popup .media-popup-title').innerText();
+      assert.ok(media.some(m => title.includes(m.assetName)), title);
+      // Escape (the popup closes on it first, or on the map's own key; then the fan) folds them back
+      await page.keyboard.press('Escape');
+      await page.locator('#map .hd-spider').first().waitFor({ state: 'detached', timeout: 3000 }).catch(async () => {
+        await page.keyboard.press('Escape');
+        await page.locator('#map .hd-spider').first().waitFor({ state: 'detached', timeout: 3000 });
+      });
+      // the list of the bubble: a picture's row opens its popup where no zoom parts it (it silently did nothing)
+      await page.evaluate(() => window.__testMap.closePopup());
+      await bubble.click();
+      await page.keyboard.press('Escape');
+      const row = page.locator(`#list .hit-dot[data-dot-kind="media"]`).filter({ hasText: longName });
+      await row.waitFor();
+      // the pick row's long name stays inside the list
+      assert.ok(await row.locator('.title').evaluate(e => e.scrollWidth <= e.clientWidth + 1), 'the row title wraps');
+      await row.click();
+      await page.locator('.hd-popup .media-popup-title').filter({ hasText: longName.slice(0, 20) }).waitFor({ timeout: 5000 });
+      assert.ok(await popup.evaluate(e => e.scrollWidth <= e.clientWidth + 1), 'the popup holds its long name');
+      const pw = await popup.evaluate(e => e.getBoundingClientRect().width);
+      assert.ok(pw <= 341, `the popup keeps its width: ${pw}`);
+      // its picture, full size
+      const thumb = page.locator('.hd-popup img.media-popup-thumb');
+      assert.equal(await thumb.getAttribute('data-full'), `/media/${media[2].uid}/file`);
+      await thumb.click();
+      const box = page.locator('.lightbox');
+      await box.waitFor();
+      assert.equal(await box.locator('img').getAttribute('src'), `/media/${media[2].uid}/file`);
+      assert.equal(await box.locator('.lightbox-title').innerText(), longName);
+      assert.match(await box.locator('.lightbox-credit').innerText(), /Zz Photographer 2, CC BY-SA 3\.0, via Wikimedia Commons/);
+      const lic = box.locator('a.media-license');
+      assert.equal(await lic.innerText(), 'CC BY-SA 3.0');
+      assert.equal(await lic.getAttribute('href'), 'https://creativecommons.org/licenses/by-sa/3.0/');
+      assert.equal(await box.locator('a.lightbox-source').getAttribute('href'), media[2].sourceUrl);
+      assert.equal(await box.locator('code').count(), 0, 'the licence is its name, not a code token');
+      await page.keyboard.press('Escape');
+      await box.waitFor({ state: 'detached' });
+      await page.evaluate(() => window.__testMap.closePopup());
+    }
   });
 });
 

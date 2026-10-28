@@ -76,3 +76,17 @@ class VectorTilesSuite extends munit.FunSuite:
     val pts = (1 to 50).map(i => TilePoint(i, i, Seq("kind" -> TileValue.Text("site"))))
     val bytes = VectorTileWriter.layer("sites", pts)
     assertEquals(new String(bytes, "UTF-8").sliding(4).count(_ == "site"), 2) // the layer's name and the value
+
+  test("a picture's feature carries what its full-size view shows: the provider's page, the licence's text, the author"):
+    import com.histmersion.api.{MediaGeoHit, TileProps as P}
+    val h = MediaGeoHit(None, "Lions_Gate.jpg", Some("photo"), 37.7, 22.7, None, None, None, "u1", Some("wikimedia-commons"),
+      Some("CC-BY-SA-3.0"), Some("Ann, via Commons"), Some("/media/u1/thumb"), fileUrl = Some("/media/u1/file"),
+      sourceUrl = Some("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg"),
+      licenseUrl = Some("https://creativecommons.org/licenses/by-sa/3.0/"), author = Some("Ann"))
+    val props = TileFeatures.media(TileCell("u1", 10, 20, 1, None, None, 22.7, 37.7, 22.7, 37.7), h).props.toMap
+    assertEquals(props.get(P.SourceUrl), Some(TileValue.Text("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg")))
+    assertEquals(props.get(P.LicenseUrl), Some(TileValue.Text("https://creativecommons.org/licenses/by-sa/3.0/")))
+    assertEquals(props.get(P.Author), Some(TileValue.Text("Ann")))
+    // the full size is the uid's own file: the map makes its URL, the tile does not carry one per picture
+    assertEquals(props.get(P.ThumbUrl), Some(TileValue.Text("/media/u1/thumb")))
+    assert(!props.values.exists(_ == TileValue.Text("/media/u1/file")))

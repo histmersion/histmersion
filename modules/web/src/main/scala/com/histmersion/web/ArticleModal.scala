@@ -2,14 +2,11 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
-import org.scalajs.dom.document
 
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object ArticleModal:
-
-  private var lightboxEl: Option[dom.Element] = None
 
   val element: HtmlElement =
     div(
@@ -22,25 +19,12 @@ object ArticleModal:
           val editable = tag == "input" || tag == "textarea" || (ev.target match
             case el: dom.HTMLElement => el.isContentEditable
             case _                   => false)
-          if !editable && ev.key == "Escape" then
-            lightboxEl match
-              case Some(_) =>
-                ev.preventDefault()   // the lightbox takes this Escape, not the window under it
-                closeLightbox()
-              case None    => ()
+          if !editable && ev.key == "Escape" && Lightbox.isOpen then
+            ev.preventDefault()   // the lightbox takes this Escape, not the window under it
+            Lightbox.close()
       },
-      documentEvents(_.onClick) --> { (ev: dom.MouseEvent) =>
-        val img = Option(ev.target).flatMap { t =>
-          val el = t.asInstanceOf[dom.Element]
-          Option(el.closest("img")).orElse(if el.tagName == "IMG" then Some(el) else None)
-        }
-        img.foreach { imgEl =>
-          val src = imgEl.getAttribute("src")
-          if src != null && src.contains("/assets/") && imgEl.closest(".lightbox") == null then
-            ev.preventDefault()
-            openLightbox(src, imgEl.getAttribute("alt"))
-        }
-      }
+      // a page's figure, or a picture on the map or a card that names its full size: the lightbox
+      documentEvents(_.onClick) --> { (ev: dom.MouseEvent) => val _ = Lightbox.onClick(ev) }
     )
 
   def open(id: String, opts: Map[String, String] = Map.empty): Unit =
@@ -54,20 +38,3 @@ object ArticleModal:
   /** Keep the windows in step with the URL (`UiState.open`): now, and on every back/forward. */
   def restore(): Unit = WindowManager.followState()
 
-  private def openLightbox(src: String, alt: String): Unit =
-    closeLightbox()
-    val box = document.createElement("div")
-    box.asInstanceOf[dom.HTMLElement].className = "lightbox"
-    box.setAttribute("role", "dialog")
-    box.setAttribute("aria-label", if alt != null && alt.nonEmpty then alt else "figure")
-    val img = document.createElement("img").asInstanceOf[dom.HTMLImageElement]
-    img.src = src
-    img.alt = if alt != null then alt else ""
-    box.appendChild(img)
-    box.addEventListener("click", (_: dom.MouseEvent) => closeLightbox())
-    document.body.appendChild(box)
-    lightboxEl = Some(box)
-
-  private def closeLightbox(): Unit =
-    lightboxEl.foreach(_.remove())
-    lightboxEl = None

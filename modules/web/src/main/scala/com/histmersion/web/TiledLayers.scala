@@ -53,7 +53,15 @@ object TileDecode:
     val p = f.props
     for uid <- str(p, P.Uid) yield MediaGeoHit(str(p, P.Citekey), str(p, P.AssetName).getOrElse(uid), str(p, P.Kind),
       f.at.lat, f.at.lon, long(p, P.PeriodStart), long(p, P.PeriodEnd), str(p, P.Caption), uid, str(p, P.Provider),
-      str(p, P.License), str(p, P.Credit), str(p, P.ThumbUrl))
+      str(p, P.License), str(p, P.Credit), str(p, P.ThumbUrl), fileUrl = Some(MediaThumb.filePath(uid)),
+      sourceUrl = str(p, P.SourceUrl), licenseUrl = str(p, P.LicenseUrl), author = str(p, P.Author))
+
+object TiledPoints:
+  /** Pure: what a tiled layer shows after a read at the same URL and zoom — the features read now, then those
+    * shown before that the read no longer has (the map let their tile go) and that `keep` (near the view). */
+  def merge[A](fresh: Seq[A], was: Seq[A], key: A => String, keep: A => Boolean): Seq[A] =
+    val now = fresh.iterator.map(key).toSet
+    fresh ++ was.filter(a => !now(key(a)) && keep(a))
 
 /** The span the tiled layers are drawn for in playback: the playhead's window widened to whole buckets
   * of the years `ui.map-tiles.playback-bucket-seconds` of playback cover (a round number of years), so
