@@ -529,7 +529,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
       report.copy(pending = EventCatalogRepo.countSitesToType(ds, req.refresh, Some(started)), requests = c.requests)
 
 object EventCatalogHandlers:
-  val ImportJobKind     = "events-import"
-  val CandidatesJobKind = "events-candidates"
-  val SiteTypesJobKind  = "site-types"
-  val RederiveJobKind   = "events-rederive"
+  val ImportJobKind     = com.histmersion.api.JobKind.EventsImport.wire
+  val CandidatesJobKind = com.histmersion.api.JobKind.EventsCandidates.wire
+  val SiteTypesJobKind  = com.histmersion.api.JobKind.SiteTypes.wire
+  val RederiveJobKind   = com.histmersion.api.JobKind.EventsRederive.wire

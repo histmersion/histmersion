@@ -11,8 +11,8 @@ enum AggregateUnit(val param: Option[String]):
   case Starts   extends AggregateUnit(Some("starts"))
 
 enum SidebarTab(val key: String, val label: String):
-  case Sources  extends SidebarTab("sources", "sources")
-  case Articles extends SidebarTab("articles", "articles")
-  case Events   extends SidebarTab("events", "events")
-  case ByTime   extends SidebarTab("bytime", "by time")
-  case ByRegion extends SidebarTab("byregion", "by region")
+  case Sources  extends SidebarTab("sources", "Sources")
+  case Articles extends SidebarTab("articles", "Articles")
+  case Events   extends SidebarTab("events", "Events")
+  case ByTime   extends SidebarTab("bytime", "By time")
+  case ByRegion extends SidebarTab("byregion", "By region")

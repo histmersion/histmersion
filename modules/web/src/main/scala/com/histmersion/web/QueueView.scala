@@ -95,7 +95,7 @@ object QueueView:
     * `untitled` stands in for an item with no topic. */
   def heading(topic: Option[String], untitled: String = "Uncategorised"): (String, List[String]) =
     val parts = topic.getOrElse("").split(" > ").toList.map(_.trim.stripPrefix("**").stripSuffix("**").trim)
-      .filter(_.nonEmpty).map(Label.display)
+      .filter(_.nonEmpty).map(Wording.heading)
     parts match
       case Nil => (untitled, Nil)
       case ps  => (ps.last, ps.init)

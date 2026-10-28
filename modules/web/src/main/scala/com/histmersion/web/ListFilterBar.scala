@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.Paging
+import com.histmersion.api.{Paging, Wording}
 import com.raquo.laminar.api.L.*
 
 /** The filter controls of the three list windows — approvals, agent runs, jobs (core `ListFilters`):
@@ -30,8 +30,8 @@ object ListFilterBar:
   /** What a date box commits: its `YYYY-MM-DD`, or nothing (cleared, or a browser without one). */
   def date(s: String): Option[String] = typed(s).filter(_.matches("""\d{4}-\d{2}-\d{2}"""))
 
-  /** `review 223` — a value and its count, as a `<select>` option reads. */
-  def optionLabel(v: String, n: Int, show: String => String = identity): String =
+  /** `Review an article (223)` — a value and its count, as a `<select>` option reads. */
+  def optionLabel(v: String, n: Int, show: String => String = Wording.label): String =
     if n > 0 then s"${show(v)} (${Paging.grouped(n)})" else show(v)
 
   /** Is any of these filters set (the "clear" button is offered then)? */
@@ -44,10 +44,19 @@ object ListFilterBar:
 
   // ── the controls ────────────────────────────────────────────────────────────────────────────────
 
+  /** A value's tooltip: its meaning, then the identifier it stands for when the label is not that identifier
+    * (for people who type it on the command line). */
+  def tooltip(v: String, show: String => String, hint: String => Option[String]): Option[String] =
+    val id = Option.when(show(v) != v)(s"($v)")
+    (hint(v).toList ++ id.toList) match
+      case Nil   => None
+      case parts => Some(parts.mkString(" "))
+
   /** A facet as toggle chips: `label` then one chip per value with its count; hidden while it has none.
-    * `hint` is a value's meaning (its chip's tooltip), `about` what the group filters (the label's). */
+    * `show` is a value's label — by default the label dictionary's ([[Wording.label]]), never the raw
+    * identifier; `hint` its meaning (with the identifier, its chip's tooltip), `about` what the group filters. */
   def chips(label: String, counts: Signal[List[(String, Int)]], field: Field[List[String]],
-      show: String => String = identity, hint: String => Option[String] = _ => None, about: String = ""): HtmlElement =
+      show: String => String = Wording.label, hint: String => Option[String] = _ => None, about: String = ""): HtmlElement =
     val items = counts.combineWith(field.signal).map((c, sel) => chipItems(c, sel).map((v, n) => (v, n, sel.contains(v))))
     div(
       cls := "btn-group list-facet",
@@ -55,13 +64,13 @@ object ListFilterBar:
       aria.label := label,
       dataAttr("facet") := label,
       cls("is-hidden") <-- items.map(_.isEmpty),
-      span(cls := "list-facet-label muted", Option.when(about.nonEmpty)(title := about), label),
+      span(cls := "list-facet-label muted", Option.when(about.nonEmpty)(title := about), Wording.capitalize(label)),
       children <-- items.split(_._1) { (v, _, item) =>
         button(
           typ := "button",
           cls := "btn btn--toggle btn--sm",
           dataAttr("value") := v,
-          hint(v).map(h => title := h),
+          tooltip(v, show, hint).map(h => title := h),
           aria.pressed <-- item.map(_._3.toString),
           span(show(v)),
           span(cls := "btn-count", child.text <-- item.map(t => Paging.grouped(t._2))),
@@ -73,15 +82,15 @@ object ListFilterBar:
   /** A facet with many values (managers, models) as a `<select>`: `any <label>`, then each value with
     * its count. `hint` is a value's meaning (its option's tooltip), `about` what the menu filters. */
   def picker(label: String, counts: Signal[List[(String, Int)]], field: Field[Option[String]],
-      show: String => String = identity, hint: String => Option[String] = _ => None, about: String = ""): HtmlElement =
+      show: String => String = Wording.label, hint: String => Option[String] = _ => None, about: String = ""): HtmlElement =
     select(
       cls := "field list-select",
       aria.label := label,
       dataAttr("facet") := label,
       Option.when(about.nonEmpty)(title := about),
       children <-- counts.combineWith(field.signal).map { (c, sel) =>
-        option(value := "", selected := sel.isEmpty, s"any $label") ::
-          chipItems(c, sel.toList).map((v, n) => option(value := v, selected := sel.contains(v), hint(v).map(h => title := h),
+        option(value := "", selected := sel.isEmpty, s"Any $label") ::
+          chipItems(c, sel.toList).map((v, n) => option(value := v, selected := sel.contains(v), tooltip(v, show, hint).map(h => title := h),
             optionLabel(v, n, show)))
       },
       onChange.mapToValue --> (v => UiState.set(field := typed(v))())

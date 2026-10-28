@@ -1421,5 +1421,5 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
 object Handlers:
   /** The `jobs.kind` of a `places fetch` (a gazetteer, or the land) and of a hierarchy build (#1946). */
-  val PlacesFetchJobKind     = "places-fetch"
-  val PlacesHierarchyJobKind = "places-hierarchy"
+  val PlacesFetchJobKind     = com.histmersion.api.JobKind.PlacesFetch.wire
+  val PlacesHierarchyJobKind = com.histmersion.api.JobKind.PlacesHierarchy.wire

@@ -17,13 +17,14 @@ class ListPagingSuite extends munit.FunSuite:
     assertEquals(ListPaging.heading(part, "job", None, _.status), "Latest 100 of 2,431 jobs")
     val failed = ListPaging.first((1 to 100).map(i => job(s"j$i", JobState.Failed)).toList,
       page(412, Some("j100"), "failed" -> 412, "done" -> 2019))
-    assertEquals(ListPaging.heading(failed, "job", Some("failed"), _.status), "Latest 100 of 412 failed jobs")
+    assertEquals(ListPaging.heading(failed, "job", Some("failed"), _.status, List("Failed")), "Latest 100 of 412 jobs · Failed")
     // the filter just changed: the rows loaded under "all" that it shows, of that state's count
     val switched = ListPaging.first(List(job("x", JobState.Failed)), page(2431, Some("j100"), "failed" -> 412, "done" -> 2019))
-    assertEquals(ListPaging.heading(switched, "job", Some("failed"), _.status), "Latest 1 of 412 failed jobs")
+    assertEquals(ListPaging.heading(switched, "job", Some("failed"), _.status, List("Failed", "Fetch pictures")),
+      "Latest 1 of 412 jobs · Failed, Fetch pictures")
     // no counts from the server: the rows count themselves
     assertEquals(ListPaging.heading(ListPaging.first(List(job("a")), Paging.Page.empty), "approval", Some("done"), _.status),
-      "1 done approval")
+      "1 approval")
 
   test("Show older is there only while the server names an older page"):
     assert(ListPaging.first(List(job("a")), page(2, Some("a"))).hasOlder)

@@ -240,7 +240,7 @@ test('a closed window stops polling, and its page reloaded in place keeps one se
     await page.waitForFunction(() => !!window.__testMap);
     let polls = 0;
     page.on('request', r => { if (/\/api\/jobs(\?|$)/.test(new URL(r.url()).pathname + new URL(r.url()).search)) polls++; });
-    await page.locator('.fbar .tool-btns button[title="jobs"]:visible').click();
+    await page.locator('.fbar .tool-btns button[title="Jobs"]:visible').click();
     await page.locator('.jobs-pane').waitFor();
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.querySelector('.wm-window'));

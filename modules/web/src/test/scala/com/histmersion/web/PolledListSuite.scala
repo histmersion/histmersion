@@ -142,7 +142,7 @@ class PolledListSuite extends munit.FunSuite:
     assertEquals(ListPaging.keepOlder(loaded, Nil, (a: Long, b: Long) => a < b), Nil)
 
   test("runs: the state a person reads, not the wire word"):
-    assertEquals(RunsView.stateLabel(RunState.WaitingApproval), "waiting for approval")
-    assertEquals(RunsView.stateLabel(RunState.Running), "running")
-    assertEquals(RunsView.statusLabel("waiting"), "waiting for approval")
-    assertEquals(RunsView.statusLabel("nonsense"), "nonsense")
+    assertEquals(RunsView.stateLabel(RunState.WaitingApproval), "Waiting for a decision")
+    assertEquals(RunsView.stateLabel(RunState.Running), "Running")
+    assertEquals(RunsView.statusLabel("waiting"), "Waiting for a decision")
+    assertEquals(RunsView.statusLabel("nonsense"), "Nonsense")

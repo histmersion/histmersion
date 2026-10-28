@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.*
-import com.histmersion.api.Agents.{RunDetail, RunInfo, RunState, TargetKind}
+import com.histmersion.api.Agents.{Pipeline, RunDetail, RunInfo, RunState, TargetKind}
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
@@ -35,9 +35,10 @@ object RunsView:
 
   /** A run state as a person reads it — the filter buttons and the badges say `waiting for approval`,
     * not the wire word `waiting`. */
-  def stateLabel(s: RunState): String = s match
-    case RunState.WaitingApproval => "waiting for approval"
-    case other                    => other.wire
+  def stateLabel(s: RunState): String = Wording.runState(s)
+
+  /** A pipeline as a person reads it ([[Wording.pipeline]]); its identifier stays in the tooltip. */
+  def pipelineLabel(pipeline: String): String = Pipeline.parse(pipeline).fold(Wording.humanize(pipeline))(Wording.pipeline)
 
   /** What each run state means for a person, and what comes next; a tooltip on its filter button. */
   def stateMeaning(s: RunState): String = s match
@@ -50,8 +51,8 @@ object RunsView:
     case RunState.Failed          => "Ended with the error shown on its row."
     case RunState.Cancelled       => "Stopped for good by a person, or because its manager was stopped; it does not resume."
 
-  /** [[stateLabel]] of a status as stored; an unknown one as it is. */
-  def statusLabel(status: String): String = RunState.parse(status).fold(status)(stateLabel)
+  /** [[stateLabel]] of a status as stored; an unknown one as words. */
+  def statusLabel(status: String): String = RunState.parse(status).fold(Wording.humanize(status))(stateLabel)
 
   /** The runs a status filter shows. */
   def visible(runs: List[RunInfo], filter: Option[RunState]): List[RunInfo] =
@@ -214,11 +215,12 @@ object RunsView:
         ListFilterBar.chips("origin", facet("origin"), UiState.runOrigins, originLabel, originMeaning,
           about = "Show only runs started the ways picked (any of them)."),
         div(cls := "btn-group",
-          ListFilterBar.picker("manager", facet("manager"), UiState.runManager, hint = ManagersView.managerMeaning,
+          ListFilterBar.picker("manager", facet("manager"), UiState.runManager, show = Wording.manager, hint = ManagersView.managerMeaning,
             about = "Show only the runs one process manager dispatched."),
           ListFilterBar.picker("provider", facet("provider"), UiState.runProvider, hint = providerMeaning,
             about = "Show only runs that used a model of this provider: started with it, or reported by a step."),
-          ListFilterBar.picker("model", facet("model"), UiState.runModel,
+          // a model's name is its own (provider:model), not an identifier of ours
+          ListFilterBar.picker("model", facet("model"), UiState.runModel, show = identity,
             about = "Show only runs that used this model (provider:model): started with it, or reported by a step.")),
         div(cls := "btn-group",
           ListFilterBar.text("goal", UiState.runGoal),
@@ -229,13 +231,14 @@ object RunsView:
       list.errorLine("Could not list runs"),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading",
-          ListPaging.heading(l, "run", filter.map(_.wire), _.status, currentFilter().qualifier)))
+          ListPaging.heading(l, "run", filter.map(_.wire), _.status,
+            filter.map(stateLabel).toList ++ currentFilter().normalized.pipeline.map(pipelineLabel))))
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
         else Option.when(l.rows.isEmpty)(p(cls := "muted",
           if ListFilterBar.anySet(filterFields.drop(1)) then "No runs match the filter."
-          else filter.fold("No agent runs yet.")(s => s"No runs ${stateLabel(s)}.")))
+          else filter.fold("No agent runs yet.")(s => s"No runs ${stateLabel(s).toLowerCase}.")))
       },
       // keyed by the row itself: an unchanged row keeps its element while new ones arrive on top
       ul(cls := "job-list run-list", aria.busy <-- list.loading,
@@ -261,7 +264,7 @@ object RunsView:
       )
     div(
       cls := "btn-group jobs-filter",
-      btn("all", None, listing.signal.map(l => ListPaging.count(l, None, _.status))),
+      btn("All", None, listing.signal.map(l => ListPaging.count(l, None, _.status))),
       RunState.values.toList.map(s => btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))))
     )
 
@@ -270,16 +273,16 @@ object RunsView:
 
   /** A dry run (#992) is marked wherever the run is shown: it wrote nothing. */
   private def dryBadge(r: RunInfo): Option[HtmlElement] =
-    Option.when(r.dryRun)(span(cls := "job-state state-dry-run", title := "dry run: nothing was written to the corpus", "dry run"))
+    Option.when(r.dryRun)(span(cls := "job-state state-dry-run", title := "Dry run: nothing was written to the corpus", "Dry run"))
 
   private def target(r: RunInfo): HtmlElement =
     TargetKind.parse(r.targetKind) match
       case Some(TargetKind.Article) => com.histmersion.web.ArticleLink(r.target, r.target)
       case Some(TargetKind.Goal) =>
-        button(typ := "button", cls := "link-btn", s"goal ${r.target}",
+        button(typ := "button", cls := "link-btn", title := r.target, s"Goal: ${Wording.humanize(r.target)}",
           onClick --> (_ => WindowManager.open(WindowKey.Goal(r.target))))
       case Some(TargetKind.Manager) =>
-        button(typ := "button", cls := "link-btn", s"manager ${r.target}",
+        button(typ := "button", cls := "link-btn", title := r.target, Wording.manager(r.target),
           onClick --> (_ => WindowManager.open(WindowKey.Manager(r.target))))
       case _                        => SourceLink(r.target)
 
@@ -291,7 +294,7 @@ object RunsView:
       div(
         cls := "job-main",
         div(cls := "job-subject",
-          button(typ := "button", cls := "link-btn", title := "open this run", r.pipeline,
+          button(typ := "button", cls := "link-btn", title := s"Open this run (${r.pipeline})", pipelineLabel(r.pipeline),
             onClick --> (_ => WindowManager.open(WindowKey.Run(r.id)))),
           " · ", target(r),
           Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" · $o"))),
@@ -342,7 +345,9 @@ object RunsView:
       child <-- run.item.map {
         case None    => p(cls := "muted", "Loading…")
         case Some(d) => runBody(d, busy.signal, raise, act)
-      }
+      },
+      run.item.changes.collect { case Some(d) => d.run.pipeline } --> (pl =>
+        WindowManager.retitle(WindowKey.Run(id), s"Agent run · ${pipelineLabel(pl)}"))
     )
 
   private def runBody(d: RunDetail, busy: Signal[Boolean], raise: Var[String], act: Action => Unit): HtmlElement =
@@ -352,7 +357,7 @@ object RunsView:
       div(cls := "run-head",
         stateBadge(r.status),
         dryBadge(r),
-        span(cls := "run-title", s" ${r.pipeline} · "), target(r),
+        span(cls := "run-title", title := r.pipeline, s" ${pipelineLabel(r.pipeline)} · "), target(r),
         Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" ($o)"))),
       pausedFor(r).map(why => p(cls := "run-paused", pausedText(r, why),
         Option.when(why == Agents.PauseReason.Allowance.wire)(span(" ", button(typ := "button", cls := "link-btn",
@@ -361,8 +366,8 @@ object RunsView:
         s"Waiting for a person to decide ${waitingFor(r).fold("its approval")(id => s"approval #$id")}; it goes on by itself once decided. ",
         button(typ := "button", cls := "link-btn", "open the approvals",
           onClick --> (_ => WindowManager.open(WindowKey.Approvals))))),
-      r.goal.map(g => p(cls := "muted", "for goal ",
-        button(typ := "button", cls := "link-btn", g, onClick --> (_ => WindowManager.open(WindowKey.Goal(g)))))),
+      r.goal.map(g => p(cls := "muted", "For the goal ",
+        button(typ := "button", cls := "link-btn", title := g, Wording.humanize(g), onClick --> (_ => WindowManager.open(WindowKey.Goal(g)))))),
       r.error.filter(e => e.nonEmpty && r.status != RunState.Paused.wire).map(e => p(cls := "job-error", e)),
       r.progress.filter(_.nonEmpty).map(pr => p(cls := "job-progress", pr)),
       dl(cls := "run-facts",

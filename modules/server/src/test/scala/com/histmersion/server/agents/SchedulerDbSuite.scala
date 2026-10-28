@@ -226,7 +226,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     assert(judged(plan(g(7), 0)).isInstanceOf[AutopilotPolicy.Verdict.Approve], "not active in any focus: decided all the same")
     assert(judged(plan(g(1), 3)).isInstanceOf[AutopilotPolicy.Verdict.Approve])
     judged(plan(g(1), 6)) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("max-open-sub-goals"), w)
+      case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("limit on open sub-goals"), w)
       case v => fail(v.toString)
 
   test("goal plans wait while too many planned goals are unfinished: no plan-goal run, none decided by code, a person still may"):
@@ -250,7 +250,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     val _ = a.autoApprovals.sweep(Instant.now())
     assertEquals(AgentRepo.approval(ds, p.id).map(_.state), Some("open"))
     a.autoApprovals.judge(AgentRepo.approval(ds, p.id).get, None, None, Instant.now()) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("max-unfinished-goals"), w)
+      case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("limit on unfinished goals"), w)
       case v => fail(v.toString)
     val d = a.digest.digest()
     assert(d.goalPlansWait.exists(_.contains("drop to 2")), d)

@@ -76,7 +76,7 @@ object AutopilotPolicy:
     if p.subGoals + p.queries + p.works == 0 then Verdict.Reject("the plan proposes nothing")
     else if p.subGoals > 0 && p.depth >= maxDepth then
       Verdict.Reject(s"it proposes ${Plural.count(p.subGoals, "sub-goal")} for a goal ${depthText(p.depth)}; " +
-        s"sub-goals stop at depth $maxDepth (agents.approvals.auto.max-goal-depth)")
+        s"sub-goals stop at depth $maxDepth (the deepest sub-goal the checks approve)")
     else if approvedToday >= cap then Verdict.Leave(s"the daily cap of $cap goal plans is reached; decided tomorrow")
     else
       Verdict.Approve(s"${Plural.count(p.subGoals, "sub-goal")}, ${Plural.count(p.queries, "query", "queries")}, ${Plural.count(p.works, "work")}" +
@@ -89,7 +89,7 @@ object AutopilotPolicy:
     if !active then Some(s"focus: goal $goal is not one of the active goals; its plan waits for a person or its turn")
     else if proposed > 0 && openSubGoals + proposed > math.max(0, limit) then
       Some(s"focus: goal $goal has ${Plural.count(openSubGoals, "unfinished sub-goal")} and the plan adds $proposed; at most " +
-        s"$limit (agents.autopilot.max-open-sub-goals) are opened by code")
+        s"$limit are opened by code (the autopilot's limit on open sub-goals)")
     else None
 
   /** A goal plan decided by code whatever the focus (#3762 proposal 2): only its sub-goals are bounded — its
@@ -99,7 +99,7 @@ object AutopilotPolicy:
   def goalPlanSubGoals(goal: String, openSubGoals: Int, proposed: Int, limit: Int): Option[String] =
     Option.when(proposed > 0 && openSubGoals + proposed > math.max(0, limit))(
       s"goal $goal has ${Plural.count(openSubGoals, "unfinished sub-goal")} and the plan adds $proposed; at most " +
-        s"$limit (agents.autopilot.max-open-sub-goals) are opened by code")
+        s"$limit are opened by code (the autopilot's limit on open sub-goals)")
 
   /** The goals with an approved plan that are not finished yet (neither reviewed nor done): what a new goal
     * plan would add to. `goals` = every goal's slug and status. */
@@ -112,7 +112,7 @@ object AutopilotPolicy:
   def goalPlansWait(unfinished: Int, limit: Int): Option[String] =
     Option.when(limit > 0 && unfinished > limit)(
       s"goal plans wait until the unfinished goals drop to $limit: ${Plural.count(unfinished, "goal")} with an approved " +
-        s"plan ${if unfinished == 1 then "is" else "are"} not reviewed yet (agents.autopilot.max-unfinished-goals)")
+        s"plan ${if unfinished == 1 then "is" else "are"} not reviewed yet (the autopilot's limit on unfinished goals)")
 
   /** A daily cap scaled to the backlog (#3762 proposal 3): `share` ≤ 0 keeps `base`; else
     * `max(base, ⌈backlog × share⌉)`, never above `ceiling` (when it is above 0) — and never below 0. */

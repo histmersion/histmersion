@@ -61,7 +61,7 @@ object ArticlesTab:
 
   /** An article's review state as a coloured badge, what it means on hover. */
   def reviewBadge(b: ReviewBadge): HtmlElement =
-    span(cls := reviewClass(b.state), title := b.detail, b.label)
+    span(cls := reviewClass(b.state), title := b.detail, Wording.capitalize(b.label))
 
   /** The badge's classes: the stylesheet colours each state (as the article page's badge). */
   def reviewClass(state: ReviewState): String = s"job-state review-state state-${state.wire}"

@@ -11,15 +11,15 @@ class ControlsSuite extends munit.FunSuite:
   test("the toolbar is three groups, in order: what to do · acquisition · the system"):
     assertEquals(Toolbar.groups.map(_._1), List(Toolbar.Group.Plan, Toolbar.Group.Acquire, Toolbar.Group.System))
     assertEquals(Toolbar.visible(agents = false, keyRequired = false), List(
-      List("research goals", "backlog"),
-      List("to acquire", "upload", "merge another collection"),
-      List("jobs", "worklog", "about")))
+      List("Research goals", "Backlog"),
+      List("To acquire", "Upload", "Merge another collection"),
+      List("Jobs", "Worklog", "About")))
 
   test("the agents' windows join the first group, the key the last — about stays last"):
     assertEquals(Toolbar.visible(agents = true, keyRequired = true), List(
-      List("research goals", "backlog", "agent runs", "agent managers", "approvals"),
-      List("to acquire", "upload", "merge another collection"),
-      List("jobs", "worklog", "API key", "about")))
+      List("Research goals", "Backlog", "Agent runs", "Agent managers", "Approvals"),
+      List("To acquire", "Upload", "Merge another collection"),
+      List("Jobs", "Worklog", "API key", "About")))
 
   test("every tool opens a different window, and every group has a name for a screen reader"):
     val keys = Toolbar.groups.flatMap(_._2).map(_.key)

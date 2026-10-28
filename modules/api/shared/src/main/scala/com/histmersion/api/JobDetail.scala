@@ -18,7 +18,7 @@ object InitPlan:
   given Schema[InitPlan] = KindlingsSchema.derived[InitPlan].schema
 
   /** The `jobs.kind` of an init job. */
-  val JobKind = "init"
+  val JobKind = com.histmersion.api.JobKind.Init.wire
 
   /** `bundled gazetteer, bundled period presets, fetch periodo and pleiades` — for a person. Pure. */
   def describe(p: InitPlan): String =

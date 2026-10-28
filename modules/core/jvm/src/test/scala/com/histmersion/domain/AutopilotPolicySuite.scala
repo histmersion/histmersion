@@ -251,6 +251,6 @@ class NextArticleSuite extends munit.FunSuite:
     assertEquals(goalPlansWait(10, 10), None, "at the limit: offered")
     val w = goalPlansWait(60, 10).getOrElse(fail("waits"))
     assert(w.contains("drop to 10") && w.contains("60 goals with an approved plan are not reviewed yet") &&
-      w.contains("agents.autopilot.max-unfinished-goals"), w)
+      w.contains("the autopilot's limit on unfinished goals") && !w.contains("agents."), w)
     assert(goalPlansWait(2, 1).exists(_.contains("2 goals")))
     assertEquals(goalPlansWait(60, 0), None)

@@ -226,8 +226,8 @@ object Ingest:
     * Commons), so it is cached for a day rather than forever. */
   val MediaCacheControl = "public, max-age=86400"
 
-  val KindIngest = "ingest"
-  val KindReocr  = "reocr"
+  val KindIngest = com.histmersion.api.JobKind.Ingest.wire
+  val KindReocr  = com.histmersion.api.JobKind.Reocr.wire
 
   /** The `Content-Disposition` of `GET /api/sources/{ck}/original`: the stored file is
     * `<sha256>.<ext>`, served as `<citekey>.<ext>` so the format survives the download. */

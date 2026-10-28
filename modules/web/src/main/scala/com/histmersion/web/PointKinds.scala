@@ -51,7 +51,7 @@ object PointKinds:
     val dot   = DotKind.Finding
     val shape = Shape.Diamond
     val icon  = Icon.PointFinding
-    val layerLabel = "sources"
+    val layerLabel = "Sources"
     val meaning = "a finding (a source’s claim)"
     def box   = (Layout.findingMarkerSize.value, Layout.findingMarkerSize.value)
     def key(s: Spot): String = s"${s.lat}|${s.lon}"

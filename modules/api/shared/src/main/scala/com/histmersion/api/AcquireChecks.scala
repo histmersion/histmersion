@@ -54,7 +54,7 @@ object AcquireChecks:
     given Schema[RecheckJob] = KindlingsSchema.derived[RecheckJob].schema
 
     /** The `jobs.kind` of a re-check job. */
-    val JobKind = "acquire_recheck"
+    val JobKind = com.histmersion.api.JobKind.AcquireRecheck.wire
 
     /** `the acquisition list's legal re-check of every open item with a DOI (resuming job …)`. Pure. */
     def describe(j: RecheckJob): String =

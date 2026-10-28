@@ -147,6 +147,7 @@ object SourceEditor:
             orig.set(Some(sw.source))
             draft.set(Some(Draft.of(sw.source)))
             notice.set(then0)
+            WindowManager.retitle(WindowKey.EditSource(ck), s"Edit · ${sw.source.title}")
         )
       }
 

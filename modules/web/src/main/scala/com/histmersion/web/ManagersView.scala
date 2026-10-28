@@ -246,8 +246,8 @@ object ManagersView:
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else call.onComplete(_.fold(e => failure.set(Some(s"focus $what: ${e.getMessage}")), x => { failure.set(None); changed(x) }))
     def pinButton(g: Autopilot.FocusGoal) =
-      val (verb, tip) = if g.pinned then ("unpin", "let the focus choose again") else ("pin", "keep this goal active (it takes a slot now)")
-      button(typ := "button", cls := "btn btn--sm", verb, title := tip, onClick --> (_ => go(s"$verb ${g.slug}")(ApiClient.setFocus(verb, Some(g.slug)))))
+      val (verb, tip) = if g.pinned then ("unpin", "Let the focus choose again") else ("pin", "Keep this goal active (it takes a slot now)")
+      button(typ := "button", cls := "btn btn--sm", Wording.capitalize(verb), title := tip, onClick --> (_ => go(s"$verb ${g.slug}")(ApiClient.setFocus(verb, Some(g.slug)))))
     def goalLink(slug: String) = button(typ := "button", cls := "link-btn", slug, onClick --> (_ => WindowManager.open(WindowKey.Goal(slug))))
     div(cls := "autopilot-focus",
       div(cls := "toolbar",
@@ -255,7 +255,7 @@ object ManagersView:
         div(cls := "btn-group",
           input(typ := "number", cls := "field manager-prio", aria.label := "the cap of active goals", minAttr := "0",
             controlled(value <-- cap.signal, onInput.mapToValue --> cap.writer)),
-          button(typ := "button", cls := "btn btn--sm", "set cap", title := "at most this many goals active for model work (0 = no cap)",
+          button(typ := "button", cls := "btn btn--sm", "Set cap", title := "At most this many goals active for model work (0 = no cap)",
             onClick --> (_ => int(cap.now()).foreach(n => go("cap")(ApiClient.setFocus("max", value = Some(n)))))),
           Option.when(f.maxFrom == "person")(button(typ := "button", cls := "btn btn--sm", "default",
             title := "back to agents.autopilot.max-active-goals", onClick --> (_ => go("cap")(ApiClient.setFocus("max"))))))),
@@ -284,8 +284,8 @@ object ManagersView:
 
   /** The drain in a line: draining (runs still finishing) or drained (safe to stop the server). */
   def drainLine(d: Autopilot.DrainInfo): String =
-    if d.drained then s"DRAINED since ${d.drainedAt.getOrElse(d.since)}: nothing runs, nothing new starts — safe to stop the server"
-    else s"DRAINING since ${d.since}${if d.by.nonEmpty then s" (by ${d.by})" else ""}: nothing new starts; " +
+    if d.drained then s"Paused since ${d.drainedAt.getOrElse(d.since)}: nothing runs, nothing new starts — safe to stop the server"
+    else s"Finishing current work, then pausing (since ${d.since}${if d.by.nonEmpty then s", by ${d.by}" else ""}): nothing new starts; " +
       s"${Plural.count(d.inFlight, "run")} in flight still finishing"
 
   /** The goals by stage, in the order a goal moves through them: how many in each. */
@@ -313,16 +313,17 @@ object ManagersView:
       onMountCallback(_ => load()),
       div(cls := "toolbar",
         div(cls := "btn-group",
-          span(cls := "autopilot-state", cls("is-on") <-- shownOn, child.text <-- shownOn.map(on => if on then "Autopilot ON" else "Autopilot off")),
+          span(cls := "autopilot-state", cls("is-on") <-- shownOn,
+            child.text <-- shownOn.combineWith(st.signal.map(_.flatMap(_.drain).isDefined)).map(Wording.agentsState)),
           child <-- shownOn.map(on =>
-            if on then WriteButton(Icon.Managers, "turn off", "pause the seeding managers and watchers the autopilot runs", () => flip(false))
-            else WriteButton(Icon.Managers, "turn on",
+            if on then WriteButton(Icon.Managers, "Pause", "Pause the seeding managers and watchers the autopilot runs", () => flip(false))
+            else WriteButton(Icon.Managers, "Start working",
               "every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself", () => flip(true)))),
         div(cls := "btn-group",
           child <-- st.signal.map(_.flatMap(_.drain)).map {
-            case Some(_) => WriteButton(Icon.Managers, "undrain", "the scheduler admits work again", () => drain(false))
-            case None    => WriteButton(Icon.Managers, "drain",
-              "before a deploy: nothing new starts while the runs in flight finish (no manager is paused)", () => drain(true))
+            case Some(_) => WriteButton(Icon.Managers, Wording.Undrain, "The scheduler admits work again (undrain)", () => drain(false))
+            case None    => WriteButton(Icon.Managers, Wording.Drain,
+              "Before a deploy: nothing new starts while the runs in flight finish; no manager is paused (drain)", () => drain(true))
           })),
       child.maybe <-- st.signal.map(_.flatMap(_.drain).map(d => div(cls := "form-ok", drainLine(d)))),
       ErrorLine(failure.signal),
@@ -332,7 +333,7 @@ object ManagersView:
             s" · ${stages(s.goals)} · ingests today ${s.ingestedToday}${if s.ingestCap > 0 then s" of ${s.ingestCap}" else ""}" +
             s" · at most ${s.maxConcurrentRuns} runs at once"),
           Option.when(s.backlog > 0)(div(cls := "muted", ManagersMarkdown.backlog(s.backlog, s.backlogDays))),
-          div(cls := "muted", "approvals: " + s.approvals.map(r => s"${r.kind} ${r.mode}").mkString(" · ")),
+          div(cls := "muted", "Approvals: " + s.approvals.map(r => s"${ApprovalsView.kindLabel(r.kind).toLowerCase}: ${r.mode}").mkString(" · ")),
           Option.when(!s.cronsEnabled)(p(cls := "form-error", role := "alert", Autopilot.AutopilotStatus.CronsOff)),
           Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
           s.focus.map(f => focusPanel(f, x => st.update(_.map(_.copy(focus = Some(x)))), failure)),
@@ -341,10 +342,10 @@ object ManagersView:
               GoalsView.badge(g.status),
               div(cls := "job-main",
                 div(cls := "job-subject",
-                  button(typ := "button", cls := "link-btn", g.slug, onClick --> (_ => WindowManager.open(WindowKey.Goal(g.slug)))),
-                  span(cls := "muted", s" · ${g.title}")),
+                  button(typ := "button", cls := "link-btn", title := g.slug, Option(g.title).filter(_.trim.nonEmpty).getOrElse(Wording.humanize(g.slug)),
+                    onClick --> (_ => WindowManager.open(WindowKey.Goal(g.slug))))),
                 div(cls := "job-meta muted", goalLine(g)),
-                Option.when(g.managers.nonEmpty)(div(cls := "muted", g.managers.map(m => s"${m.id} ${m.state}").mkString(" · "))))))))
+                Option.when(g.managers.nonEmpty)(div(cls := "muted", g.managers.map(m => s"${Wording.manager(m.id).takeWhile(_ != '·').trim} ${m.state}").mkString(" · "))))))))
       })
     )
 
@@ -390,11 +391,15 @@ object ManagersView:
   def facet(ws: List[AgentScheduler.Waiting], of: AgentScheduler.Waiting => String): List[(String, Int)] =
     ws.groupMapReduce(of)(_ => 1)(_ + _).toList.sortBy((v, n) => (-n, v))
 
+  def strategyLabel(name: String): String = Wording.strategies.getOrElse(name, Wording.humanize(name))
+  def jobTypeLabel(t: String): String = Wording.schedulerJobTypes.getOrElse(t, Wording.humanize(t))
+  def waitLabel(code: String): String = Wording.waitCodes.getOrElse(code, Wording.humanize(code))
+
   /** The scheduler's heading: the strategy (and who chose it), the runs at once, the pools, what waits for a person. */
   def schedulerHead(s: AgentScheduler.SchedulerStatus): String =
-    s"Scheduler: ${s.strategy}" + (if s.strategyFrom == "person" then " (set by a person)" else "") +
+    s"Scheduler: ${strategyLabel(s.strategy)}" + (if s.strategyFrom == "person" then " (set by a person)" else "") +
       s" · ${s.occupied} of ${s.maxRuns} runs at once" +
-      (if s.pools.isEmpty then "" else " · " + s.pools.map(p => s"${p.pool} ${p.used}/${p.cap}").mkString(", ")) +
+      (if s.pools.isEmpty then "" else " · " + s.pools.map(p => s"${Wording.pool(p.pool)} ${p.used}/${p.cap}").mkString(", ")) +
       (if s.forPerson > 0 then s" · ${Plural.count(s.forPerson, "item")} wait for a person (no place held)" else "")
 
   /** The central scheduler: the strategy switch (behind the write gate), the resources, what the last pass
@@ -421,13 +426,13 @@ object ManagersView:
         div(cls := "btn-group", span(cls := "autopilot-state", child.text <-- st.signal.map(_.fold("Scheduler")(schedulerHead)))),
         div(cls := "btn-group", role := "group", aria.label := "strategy",
           children <-- st.signal.map(_.toList.flatMap(s => s.strategies.map(x =>
-            button(typ := "button", cls := "btn btn--toggle btn--sm", x.name, title := x.describe,
+            button(typ := "button", cls := "btn btn--toggle btn--sm", strategyLabel(x.name), title := s"${x.describe} (${x.name})",
               aria.pressed := (x.name == s.strategy).toString, onClick --> (_ => switch(x.name))))))),
         div(cls := "btn-group",
-          button(typ := "button", cls := "btn btn--sm", "refresh", onClick --> (_ => load())),
-          button(typ := "button", cls := "btn btn--sm", "stalls", title := "the goals with no progress, why, and what unblocks them",
+          button(typ := "button", cls := "btn btn--sm", "Refresh", onClick --> (_ => load())),
+          button(typ := "button", cls := "btn btn--sm", "Stalls", title := "The goals with no progress, why, and what unblocks them",
             onClick --> (_ => ApiClient.stalls().onComplete(_.fold(e => failure.set(Some(s"stalls: ${e.getMessage}")), r => stalls.set(Some(r)))))),
-          button(typ := "button", cls := "btn btn--sm", "approvals", title := "what waits for a person (the approvals window)",
+          button(typ := "button", cls := "btn btn--sm", "Approvals", title := "What waits for a person (the approvals window)",
             onClick --> (_ => { UiState.set(UiState.approvalState := None)(); WindowManager.open(WindowKey.Approvals) })))),
       ErrorLine(failure.signal),
       child.maybe <-- stalls.signal.map(_.map { r =>
@@ -436,9 +441,9 @@ object ManagersView:
             (if r.byReason.isEmpty then "" else ": " + r.byReason.map(x => s"${x.code} ${x.count}").mkString(" · "))),
           ul(cls := "job-list", r.stalled.take(100).map(x =>
             li(cls := "job-row",
-              span(cls := s"job-state state-${x.code}", x.code),
+              span(cls := s"job-state state-${x.code}", title := x.code, Wording.humanize(x.code)),
               div(cls := "job-main",
-                div(cls := "job-subject", button(typ := "button", cls := "link-btn", x.slug, onClick --> (_ => WindowManager.open(WindowKey.Goal(x.slug)))),
+                div(cls := "job-subject", button(typ := "button", cls := "link-btn", title := x.slug, Wording.humanize(x.slug), onClick --> (_ => WindowManager.open(WindowKey.Goal(x.slug)))),
                   span(cls := "muted", x.idleDays.fold(" · never progressed")(d => s" · idle $d d"))),
                 div(cls := "job-progress", x.why),
                 div(cls := "muted", s"unblock: ${x.action}"))))))
@@ -450,17 +455,17 @@ object ManagersView:
             s.types.filter(t => t.waiting > 0 || t.recent > 0).map(t => s"${t.jobType} ${t.recent} recent, ${t.waiting} waiting").mkString(" · ")),
           Option.when(s.started.nonEmpty)(ul(cls := "job-list scheduler-started", s.started.map(x =>
             li(cls := "job-row",
-              span(cls := "job-state state-running", x.jobType),
+              span(cls := "job-state state-running", title := x.jobType, jobTypeLabel(x.jobType)),
               div(cls := "job-main",
                 div(cls := "job-subject", button(typ := "button", cls := "link-btn", x.target, title := "its manager's runs",
-                  onClick --> (_ => openRuns(x.manager))), span(cls := "muted", s" · ${x.manager}")),
+                  onClick --> (_ => openRuns(x.manager))), span(cls := "muted", title := x.manager, s" · ${Wording.manager(x.manager)}")),
                 div(cls := "muted", x.why))))))
         )
       }),
       div(cls := "list-filters",
-        ListFilterBar.chips("type", waiting.map(facet(_, _.jobType)), UiState.schedTypes, hint = jobTypeMeaning,
+        ListFilterBar.chips("type", waiting.map(facet(_, _.jobType)), UiState.schedTypes, show = jobTypeLabel, hint = jobTypeMeaning,
           about = "Show only waiting items of the job types picked (any of them): what kind of work they are."),
-        ListFilterBar.chips("why", waiting.map(facet(_, _.code)), UiState.schedCodes, hint = waitMeaning,
+        ListFilterBar.chips("why", waiting.map(facet(_, _.code)), UiState.schedCodes, show = waitLabel, hint = waitMeaning,
           about = "Show only waiting items held back for the reasons picked (any of them)."),
         div(cls := "toolbar",
           ListFilterBar.text("target, goal or manager", UiState.schedSubject),
@@ -471,11 +476,11 @@ object ManagersView:
           if ws.isEmpty then p(cls := "muted", "Nothing waits.")
           else ol(cls := "job-list scheduler-queue", shown.map(w =>
             li(cls := "job-row",
-              span(cls := s"job-state state-${w.code}", w.code),
+              span(cls := s"job-state state-${w.code}", title := w.code, waitLabel(w.code)),
               div(cls := "job-main",
                 div(cls := "job-subject",
                   button(typ := "button", cls := "link-btn", w.target, onClick --> (_ => WindowManager.open(WindowKey.Manager(w.manager)))),
-                  span(cls := "muted", s" · ${w.jobType} · ${w.manager}" + w.goal.fold("")(g => s" · goal $g") +
+                  span(cls := "muted", s" · ${jobTypeLabel(w.jobType)} · ${Wording.manager(w.manager)}" + w.goal.fold("")(g => s" · goal ${Wording.humanize(g)}") +
                     (if w.position > 0 then s" · #${w.position} in line" else ""))),
                 div(cls := "job-progress", w.why),
                 Option.when(w.behind.nonEmpty)(div(cls := "muted", s"behind ${w.behind.mkString(", ")}")),
@@ -486,7 +491,7 @@ object ManagersView:
 
   private def stateBadge(m: ManagerInfo): HtmlElement =
     val b = badge(m)
-    span(cls := s"job-state state-${b.replace(' ', '-')}", title := m.statusNote.getOrElse(m.state), b)
+    span(cls := s"job-state state-${b.replace(' ', '-')}", title := m.statusNote.getOrElse(m.state), Wording.capitalize(b))
 
   def pane: HtmlElement =
     val ms      = Var(List.empty[ManagerInfo])
@@ -497,7 +502,7 @@ object ManagersView:
     div(
       cls := "tool-pane managers-pane",
       onMountCallback(_ => refresh()),
-      div(cls := "pane-bar", button(typ := "button", cls := "btn", "refresh", onClick --> (_ => refresh()))),
+      div(cls := "pane-bar", button(typ := "button", cls := "btn", "Refresh", onClick --> (_ => refresh()))),
       child.maybe <-- RunsView.enabled.signal.map(on => Option.when(!on)(p(cls := "muted",
         "Embedded agents are off on this server (agents.enabled): no manager starts a run."))),
       autopilotSection,
@@ -511,8 +516,7 @@ object ManagersView:
             stateBadge(m),
             div(cls := "job-main",
               div(cls := "job-subject",
-                button(typ := "button", cls := "link-btn", m.id, onClick --> (_ => WindowManager.open(WindowKey.Manager(m.id)))),
-                span(cls := "muted", s" · ${m.kind}${m.goal.fold("")(g => s" · goal $g")}")),
+                button(typ := "button", cls := "link-btn", title := m.id, Wording.manager(m.id), onClick --> (_ => WindowManager.open(WindowKey.Manager(m.id))))),
               m.statusNote.filter(_.nonEmpty).map(n => div(cls := "job-progress", n)),
               div(cls := "job-meta muted", counts(m.counts), s" · ${Plural.count(m.inFlight, "run")} in flight",
                 s" · ${ManagersMarkdown.today(m)}"),
@@ -661,7 +665,7 @@ object ManagersView:
   private def head(d: ManagerDetail, busy: Signal[Boolean], write: String => (=> scala.concurrent.Future[Any]) => Unit): HtmlElement =
     val m = d.manager
     div(cls := "goal-detail",
-      div(cls := "run-head", stateBadge(m), span(cls := "run-title", s" ${m.id} · ${m.kind}${m.goal.fold("")(g => s" · goal $g")}")),
+      div(cls := "run-head", stateBadge(m), span(cls := "run-title", title := m.id, s" ${Wording.manager(m.id)}")),
       m.statusNote.filter(_.nonEmpty).map(n => p(cls := "job-progress", n)),
       Option.when(m.state == State.Paused.wire && m.inFlight == 0)(
         p(cls := "muted", "Paused: it starts nothing (nothing is spent) until you resume it.")),

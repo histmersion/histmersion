@@ -77,27 +77,30 @@ enum WindowKey:
     case EditSource(ck) => Some(ck)
     case _              => None
 
-  /** A title to show before the content has told us a better one. */
+  /** A title to show before the content has told us a better one (the item's own title: the window retitles
+    * itself once it is loaded, `WindowManager.retitle`). Sentence case; never an identifier, which the title's
+    * tooltip carries. */
   def initialTitle: String = this match
-    case Graph(ck)      => s"graph · $ck"
-    case EditSource(ck) => s"edit · $ck"
-    case Jobs           => "background jobs"
-    case Upload         => "upload for OCR"
-    case Acquire        => "acquisition queue"
-    case Tasks          => "backlog"
-    case Log            => "worklog"
+    case Source(_)      => "Source"
+    case Article(_)     => "Article"
+    case Graph(_)       => "Citation graph"
+    case EditSource(_)  => "Edit a source"
+    case Jobs           => "Background jobs"
+    case Upload         => "Upload for OCR"
+    case Acquire        => "To acquire"
+    case Tasks          => "Backlog"
+    case Log            => "Worklog"
     case ApiKey         => "API key"
-    case About          => "about Histmersion"
-    case Runs           => "agent runs"
-    case Run(id)        => s"agent run · ${id.take(8)}"
-    case Models         => "agent models"
-    case Approvals      => "approvals"
-    case Goals          => "research goals"
-    case Goal(slug)     => s"goal · $slug"
-    case Merge          => "merge another collection"
-    case Managers       => "agent managers"
-    case Manager(id)    => s"manager · $id"
-    case _              => "loading…"
+    case About          => "About Histmersion"
+    case Runs           => "Agent runs"
+    case Run(_)         => "Agent run"
+    case Models         => "AI models and limits"
+    case Approvals      => "Approvals"
+    case Goals          => "Research goals"
+    case Goal(slug)     => s"Goal · ${com.histmersion.api.Wording.humanize(slug)}"
+    case Merge          => "Merge another collection"
+    case Managers       => "Agent managers"
+    case Manager(id)    => com.histmersion.api.Wording.manager(id)
 
   /** The standalone page this window mirrors, for "open in a new tab". */
   def pageHref: Option[String] = this match

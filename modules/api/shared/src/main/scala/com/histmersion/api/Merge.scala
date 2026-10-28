@@ -335,7 +335,7 @@ object MergeApplyJob:
   given Schema[MergeApplyJob] = KindlingsSchema.derived[MergeApplyJob].schema
 
   /** The `jobs.kind` of a merge apply. */
-  val JobKind = "merge-apply"
+  val JobKind = com.histmersion.api.JobKind.MergeApply.wire
 
   /** What an interrupted apply says. */
   val InterruptedText: String =
