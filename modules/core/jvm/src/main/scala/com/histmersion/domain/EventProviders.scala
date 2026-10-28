@@ -326,6 +326,22 @@ object EventProviders:
   final case class Thresholds(region: Option[BBox], regionVei: Int, outsideVei: Int, regionMagnitude: Double,
       outsideMagnitude: Double, area: Option[BBox] = None)
 
+  /** #6561: what a read part was kept under. A part is recorded as read together with the thresholds
+    * that judged its records, so widening the region (or lowering a VEI or magnitude floor) makes every
+    * part due again instead of skipping it as read — its records were judged by the old rule. */
+  def scope(t: Thresholds): String =
+    def box(b: BBox) = s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}"
+    s"region=${t.region.fold("world")(box)};vei=${t.regionVei}/${t.outsideVei};" +
+      s"mag=${t.regionMagnitude}/${t.outsideMagnitude};area=${t.area.fold("all")(box)}"
+
+  /** The key a part is recorded under in `scope`. */
+  def scopedPart(part: String, scope: String): String = s"$part @ $scope"
+
+  /** The parts recorded as read in `scope` (keys written under another scope, or before scopes, are not). */
+  def partsIn(recorded: Set[String], scope: String): Set[String] =
+    val suffix = s" @ $scope"
+    recorded.collect { case k if k.endsWith(suffix) => k.dropRight(suffix.length) }
+
   def keep(r: CatalogRecord, t: Thresholds): Either[String, Unit] =
     (r.lat, r.lon) match
       case (Some(la), Some(lo)) =>
