@@ -355,7 +355,8 @@ object MapView:
       onMountUnmountCallbackWithState(
         mount = ctx =>
           // A folded timeline or resized sidebar changes this element without a window resize: the
-          // map caches its size, so observe the container rather than any one layout toggle.
+          // map caches its size, so observe the container rather than any one layout toggle. The ONE
+          // observer (MapLibre's own is off): the map takes the size and is drawn in the same frame.
           if js.typeOf(js.Dynamic.global.ResizeObserver) == "undefined" then None
           else
             val resize: js.Function1[js.Any, Unit] = _ => if TheMap.isUp then TheMap.surface.resize()

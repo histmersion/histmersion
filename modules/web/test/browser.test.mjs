@@ -4,7 +4,7 @@ import { appendFileSync } from 'node:fs';
 import { engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
 import { fullLoad, routeFullLoad } from './perf-fixtures.mjs';
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
-import { trackRequests } from './perf-lib.mjs';
+import { quiet, trackRequests } from './perf-lib.mjs';
 import { routeTiles } from './tile-fixtures.mjs';
 
 // Use a separately started test server; these tests only GET data and change browser-local state.
@@ -3108,6 +3108,125 @@ test('no WebGL 2: the map says why and what to do, and the rest of the page work
     }
   }
 });
+
+// ── the web UI bugs of the 2026-10 audit (docs/research-assets/web-ui/audit.md §6) ─────────────────────
+
+// MapLibre's calls that rebuild what the map draws: a style, a source, a layer, a source's data or tiles. Wrapped
+// on the library's prototypes before the page makes its map, each counted in `window.__glCalls`.
+async function countGlCalls(page) {
+  await page.addInitScript(() => {
+    const calls = (window.__glCalls = {});
+    const wrap = (proto, name, label) => {
+      const f = proto?.[name];
+      if (!f || f.__counted) return;
+      proto[name] = function (...a) { calls[label] = (calls[label] || 0) + 1; return f.apply(this, a); };
+      proto[name].__counted = true;
+    };
+    const hook = () => {
+      const gl = window.maplibregl;
+      if (!gl?.Map) return false;
+      for (const n of ['setStyle', 'addSource', 'removeSource', 'addLayer', 'removeLayer', 'resize', 'redraw', 'jumpTo', 'easeTo', 'fitBounds'])
+        wrap(gl.Map.prototype, n, n);
+      for (const k of ['GeoJSONSource', 'VectorTileSource']) for (const n of ['setData', 'setTiles', 'setUrl']) wrap(gl[k]?.prototype, n, `${k}.${n}`);
+      return true;
+    };
+    if (!hook()) { const iv = setInterval(() => { if (hook()) clearInterval(iv); }, 2); }
+  });
+}
+
+// the markers drawn inside the map's box now, each marked as seen; how many were not seen before
+async function markersInView(page) {
+  return page.evaluate(() => {
+    const m = document.getElementById('map').getBoundingClientRect();
+    let seen = 0, fresh = 0;
+    for (const el of document.querySelectorAll('#map .hd-marker')) {
+      const r = el.getBoundingClientRect();
+      if (el.classList.contains('is-offscreen') || r.width === 0 || r.right < m.left || r.left > m.right || r.bottom < m.top || r.top > m.bottom) continue;
+      if (el.__inView) seen++; else { fresh++; el.__inView = true; }
+    }
+    return { seen, fresh };
+  });
+}
+
+// (f): the chrome around the map changing size — the filter row folded and unfolded, the sidebar dragged and back —
+// resizes the map and nothing more: no feed asked again, no tile asked twice, no style/source/layer made again, no
+// marker in view drawn anew, the centre where it was; each resize draws the map in the same frame (no blank frame).
+test('the map neither refetches nor rebuilds when the filters fold or the sidebar is dragged', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await countGlCalls(page);
+    trackRequests(page);
+    await routeFullLoad(page);
+    const tiles = [];
+    await routeTiles(page, { sites: fullLoad.sites.features, media: fullLoad.media, events: fullLoad.events, asked: tiles });
+    const held = await fullLoadView(page, baseURL);
+    assert.ok(held.held >= 300 && held.drawn > 50, `the full load is drawn: ${JSON.stringify(held)}`);
+    // "only sources in view": a moved view refetches the list, a resized one must not
+    await page.locator('button[title="only sources in view"]').click();
+    await quiet(page, 800);
+    await page.waitForFunction(() => !document.querySelector('#count.is-loading'));
+    await page.waitForTimeout(500);
+    const asked = [];
+    page.on('request', r => asked.push(new URL(r.url())));
+    const tilesBefore = new Set(tiles.map(u => u.href));
+    const tileCount = tiles.length;
+    const before = await page.evaluate(() => ({ calls: { ...window.__glCalls }, centre: window.__testMap.getCenter(),
+      zoom: window.__testMap.getZoom(), size: window.__testMap.getSize(), resizes: window.__testMap.resizes?.() ?? 0 }));
+    const first = await markersInView(page);
+    assert.ok(first.fresh > 50, `markers in view: ${JSON.stringify(first)}`);
+    const changes = [];
+    const step = async (what, act) => {
+      const size = await page.evaluate(() => window.__testMap.getSize());
+      await act();
+      await synchronizedSize(page);
+      await page.waitForTimeout(400);
+      changes.push({ what, from: size, to: await page.evaluate(() => window.__testMap.getSize()) });
+    };
+    await step('filters folded', () => page.locator('#f-more-toggle').click());
+    await step('filters unfolded', () => page.locator('#f-more-toggle').click());
+    const back = await markersInView(page);
+    const handle = await page.locator('.sidebar-resize').boundingBox();
+    const x = handle.x + handle.width / 2, y = handle.y + handle.height / 2;
+    await step('sidebar dragged wider', async () => {
+      await page.mouse.move(x, y); await page.mouse.down();
+      await page.mouse.move(x - 200, y, { steps: 12 }); await page.mouse.up();
+    });
+    await step('sidebar dragged back', async () => {
+      await page.mouse.move(x - 200, y); await page.mouse.down();
+      await page.mouse.move(x, y, { steps: 12 }); await page.mouse.up();
+    });
+    await quiet(page, 800);
+    await page.waitForTimeout(800);
+    const last = await markersInView(page);
+    const after = await page.evaluate(() => ({ calls: { ...window.__glCalls }, centre: window.__testMap.getCenter(),
+      zoom: window.__testMap.getZoom(), size: window.__testMap.getSize(), resizes: window.__testMap.resizes?.() ?? 0 }));
+    const report = JSON.stringify({ changes, before, after, first, back, last });
+    for (const c of changes) assert.notDeepEqual(c.from, c.to, `${c.what} changes the map's size: ${report}`);
+    assert.deepEqual(after.size, before.size, 'back to the size it had');
+    // the map followed every change, once each, and drew each in the same frame
+    // (a resize blanks the canvas until it is drawn: drawn on the next frame, the frame between showed no map)
+    const resizeCalls = (after.calls.resize ?? 0) - (before.calls.resize ?? 0);
+    assert.ok(resizeCalls >= changes.length, `the map took each new size: ${report}`);
+    assert.equal((after.calls.redraw ?? 0) - (before.calls.redraw ?? 0), resizeCalls, `each resize drawn at once: ${report}`);
+    // the page's one observer resizes it: MapLibre's own did again, 50 ms later, with every move event again
+    assert.equal(after.resizes - before.resizes, resizeCalls, `one resize per change, not two: ${report}`);
+    // nothing made again, the camera where it was
+    for (const k of ['setStyle', 'addSource', 'removeSource', 'addLayer', 'removeLayer', 'jumpTo', 'easeTo', 'fitBounds',
+      'GeoJSONSource.setData', 'VectorTileSource.setTiles', 'VectorTileSource.setUrl'])
+      assert.equal((after.calls[k] ?? 0) - (before.calls[k] ?? 0), 0, `${k}: ${report}`);
+    assert.deepEqual(after.centre, before.centre, 'the geographic centre stays put');
+    assert.equal(after.zoom, before.zoom);
+    // no feed asked again (the base map's and the layers' tiles for a newly shown edge are MapLibre's own)
+    const feeds = asked.filter(u => u.pathname.startsWith('/api/') && !u.pathname.startsWith('/api/tiles/') && !u.pathname.startsWith('/api/basemap/'));
+    assert.deepEqual(feeds.map(u => u.pathname + u.search), [], 'no feed is asked for again');
+    const again = tiles.slice(tileCount).filter(u => tilesBefore.has(u.href));
+    assert.deepEqual(again.map(u => u.pathname + u.search), [], 'no tile is asked for twice');
+    // the markers in view are the same elements: none drawn anew
+    assert.equal(back.fresh, 0, `filters folded and unfolded: no marker drawn anew in view: ${report}`);
+    assert.equal(last.fresh, 0, `sidebar dragged and back: no marker drawn anew in view: ${report}`);
+    assert.equal(last.seen, first.fresh, `every marker in view is still drawn: ${report}`);
+  });
+});
+
 // (b): playback, stopped with ⏹ or run to its end, leaves the map as it was before it played: the findings, the
 // legend's years, the boundaries — not its last frame's window.
 test('playback stopped or run out restores the whole span on the map', async () => {

@@ -37,6 +37,7 @@ object MapHandle:
       openPopup = ((at: js.Array[Double], text: String) => { val _ = s.popup(ll(at), s"""<div class="hd-popup-content zz-test-popup">${Fmt.esc(text)}</div>""", "") })
         : js.Function2[js.Array[Double], String, Unit],
       getSize = (() => { val (w, h) = s.size; js.Dynamic.literal(x = w, y = h) }): js.Function0[js.Dynamic],
+      resizes = (() => s.resizeCount): js.Function0[Int],
       closePopup = (() => s.closePopups()): js.Function0[Unit],
       isMoving = (() => s.isMoving): js.Function0[Boolean],
       /** Still, and every tile of the view drawn. */

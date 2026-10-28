@@ -58,7 +58,10 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
     val o = js.Dynamic.literal(container = el, style = MapLibreStyles.blank(), center = js.Array(30.0, 37.0),
       zoom = 5 - ZoomShift, maxZoom = maxZoom0 - ZoomShift, renderWorldCopies = true, attributionControl = false,
       maxPitch = 0, pitchWithRotate = false, dragRotate = false, touchPitch = false, fadeDuration = 150,
-      refreshExpiredTiles = false)
+      refreshExpiredTiles = false,
+      // the page follows the container's size itself ([[resize]], from MapView's observer): MapLibre's own
+      // observer resized it a second time, 50 ms later, sending every move event again
+      trackResize = false)
     pixelRatio.foreach(r => o.pixelRatio = r)
     // MapLibre's own gestures (the zoom buttons, a double click, the keys, a drag's glide) ease unless it is told
     // the reader wants reduced motion: its one switch for them is this option, read when the map is made — the
@@ -108,9 +111,20 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
 
   def project(p: LatLon): ScreenPt = { val q = gl.project(js.Array(p.lon, p.lat)); ScreenPt(q.x, q.y) }
   def unproject(p: ScreenPt): LatLon = { val ll = gl.unproject(js.Array(p.x, p.y)); LatLon(ll.lat, ll.lng) }
+  /** The container's new size taken — only when it changed (a resize sends every move event: the markers, the
+    * names and the tiled layers follow those) — and the map drawn again AT ONCE, in the same frame: a resized
+    * canvas is blank until it is drawn, and drawn only on the next animation frame it was painted blank for one
+    * frame, a flash of the whole map on every step of a sidebar drag or a filter row folded. */
   def resize(): Unit =
-    sizeV = (el.clientWidth.toDouble, el.clientHeight.toDouble)
-    val _ = gl.resize()
+    val now = (el.clientWidth.toDouble, el.clientHeight.toDouble)
+    if now != sizeV then
+      sizeV = now
+      resizes += 1
+      val _ = gl.resize()
+      val _ = gl.redraw()
+  // `var`: how many times the container's size was taken (diagnostics: a chrome change resizes, nothing more)
+  private var resizes = 0
+  override def resizeCount: Int = resizes
   def isMoving: Boolean = gl.isMoving()
   def isDrawn: Boolean = !gl.isMoving() && gl.loaded() && gl.areTilesLoaded()
   def capabilities: Capabilities = caps
