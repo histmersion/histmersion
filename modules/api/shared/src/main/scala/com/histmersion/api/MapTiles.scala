@@ -68,6 +68,9 @@ object TileProps:
   val License     = "license"
   val Credit      = "credit"
   val ThumbUrl    = "thumbUrl"
+  val SourceUrl   = "sourceUrl"
+  val LicenseUrl  = "licenseUrl"
+  val Author      = "author"
 
 /** One site of the sites tiles: what the places feed's site features carried (`/api/places/geo`). */
 final case class SiteTile(id: String, label: String, kind: String, siteType: Option[String], basis: String,

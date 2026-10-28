@@ -180,7 +180,9 @@ object TileFeatures:
   def media(c: TileCell, h: MediaGeoHit): TilePoint =
     TilePoint(c.x, c.y, text(P.Key, c.key) ++ text(P.Uid, h.uid) ++ text(P.Citekey, h.citekey) ++ text(P.AssetName, h.assetName) ++
       text(P.Kind, h.kind) ++ whole(P.PeriodStart, h.periodStart) ++ whole(P.PeriodEnd, h.periodEnd) ++ text(P.Caption, h.caption) ++
-      text(P.Provider, h.provider) ++ text(P.License, h.license) ++ text(P.Credit, h.credit) ++ text(P.ThumbUrl, h.thumbUrl))
+      text(P.Provider, h.provider) ++ text(P.License, h.license) ++ text(P.Credit, h.credit) ++ text(P.ThumbUrl, h.thumbUrl) ++
+      // its full size is this server's own `/media/{uid}/file`, which the map makes from the uid (not sent per picture)
+      text(P.SourceUrl, h.sourceUrl) ++ text(P.LicenseUrl, h.licenseUrl) ++ text(P.Author, h.author))
 
   /** The features of a tile of zoom `zoom`: each cell of several as a cell, each item with its record
     * (`record` by the item's key; an item whose record is gone since its cell was read is left out),
