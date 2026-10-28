@@ -3093,3 +3093,46 @@ test('no WebGL 2: the map says why and what to do, and the rest of the page work
     }
   }
 });
+// (a): the timeline's count curve is smooth — a bucket every ~5 px through a monotone curve, no mark per bucket,
+// drawn at the size it is shown (no stretch) — and one hover marker tells a bucket's exact count, at once.
+test('the timeline draws a smooth curve at its shown size; one hover marker says a bucket\'s count', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    // the counts the empty test database lacks: a wavy, deterministic strip (with gaps), on the real buckets
+    await page.route(/\/api\/aggregate(\?|$)/, async route => {
+      const res = await route.fetch();
+      const h = await res.json();
+      h.buckets = h.buckets.map(b => ({ ...b, count: Math.max(0, Math.round(20 + 14 * Math.sin(b.start / 97) + 9 * Math.sin(b.start / 23) - (Math.abs(b.start % 900) < 60 ? 40 : 0))) }));
+      return route.fulfill({ response: res, json: h });
+    });
+    await page.goto(new URL('/#from=-3000&to=-1000', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => document.querySelector('.tl-detail-svg .tl-dt-curve path.tl-area-line'));
+    await page.waitForTimeout(500);
+    for (const strip of ['.tl-overview-svg', '.tl-detail-svg']) {
+      const s = await page.evaluate(sel => {
+        const svg = document.querySelector(sel), r = svg.getBoundingClientRect();
+        const line = svg.querySelector('path.tl-area-line');
+        return { w: r.width, h: r.height, viewBox: svg.getAttribute('viewBox'), par: svg.getAttribute('preserveAspectRatio'),
+          segments: (line.getAttribute('d').match(/C/g) || []).length, dots: svg.querySelectorAll('.tl-area-dot, circle').length };
+      }, strip);
+      const [, , vw, vh] = s.viewBox.split(' ').map(Number);
+      assert.ok(Math.abs(vw - s.w) < 0.01 && Math.abs(vh - s.h) < 0.01, `${strip}: drawn at its shown size: ${JSON.stringify(s)}`);
+      assert.notEqual(s.par, 'none', `${strip}: never stretched`);
+      assert.equal(s.dots, 0, `${strip}: no mark per bucket`);
+      assert.ok(s.segments <= s.w / 4 && s.segments >= s.w / 8, `${strip}: a bucket every ~5 px: ${JSON.stringify(s)}`);
+    }
+    // the hover: the bucket under the pointer, its count, drawn in the same event
+    const hover = await page.evaluate(() => {
+      const svg = document.querySelector('.tl-detail-svg'), r = svg.getBoundingClientRect();
+      const t0 = performance.now();
+      svg.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: r.left + r.width * 0.4, clientY: r.top + 10 }));
+      const ms = performance.now() - t0;
+      return { ms, label: svg.querySelector('.tl-hover-label')?.textContent, dots: svg.querySelectorAll('.tl-hover-dot').length };
+    });
+    assert.ok(hover.ms < 100, `the hover answers within 100 ms: ${hover.ms}`);
+    assert.match(hover.label ?? '', /: \d+ sources?$/, JSON.stringify(hover));
+    assert.equal(hover.dots, 1, 'one hover marker');
+    await page.evaluate(() => document.querySelector('.tl-detail-svg').dispatchEvent(new PointerEvent('pointerleave')));
+    assert.equal(await page.locator('.tl-detail-svg .tl-hover-label').count(), 0, 'gone when the pointer leaves');
+  });
+});
