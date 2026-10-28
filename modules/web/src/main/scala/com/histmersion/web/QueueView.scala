@@ -187,6 +187,10 @@ object QueueView:
     val sp      = spec(kind)
     val items   = Var(List.empty[Queue.QueueItem])
     val checks  = Var(Map.empty[Int, AcquireChecks.AcquireCheck])
+    val goals   = Var(Map.empty[Int, List[Queue.GoalRef]])
+    // the item a link pointed at (`?item=`): marked, and scrolled to once it is listed
+    val target  = targetItem(org.scalajs.dom.window.location.search)
+    var scrolled = false
     val loaded  = Var(false)
     val failure = Var(Option.empty[String])
     val adding  = Var(false)
@@ -201,7 +205,17 @@ object QueueView:
             failure.set(None)
             items.set(l.items.filterNot(_.status == Queue.Note))
             checks.set(l.checks.map(c => c.item -> c).toMap)
+            goals.set(l.goals.map(g => g.item -> g.goals).toMap)
             loaded.set(true)
+            // an item that is done is listed with "show done" on: turn it on for the item asked for
+            target.foreach { id =>
+              if !l.items.exists(_.id == id) then sp.showDone.filterNot(_.now()).foreach(f => UiState.set(f := true)())
+              else if !scrolled then
+                scrolled = true
+                org.scalajs.dom.window.setTimeout(() =>
+                  Option(org.scalajs.dom.document.getElementById(itemAnchor(id))).foreach(
+                    _.asInstanceOf[scala.scalajs.js.Dynamic].scrollIntoView(scala.scalajs.js.Dynamic.literal(block = "center"))), 0)
+            }
         )
       }
 
@@ -245,10 +259,10 @@ object QueueView:
         (in, reset) => write("add the item", ApiClient.queueAdd(kind.label, in))(_ => reset()),
         () => adding.set(false)))),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
-      child <-- items.signal.combineWith(loaded.signal, checks.signal).map { (its, ok, cs) =>
+      child <-- items.signal.combineWith(loaded.signal, checks.signal, goals.signal).map { (its, ok, cs, gs) =>
         if !ok then p(cls := "muted", "Loading…")
         else if its.isEmpty then p(cls := "muted", sp.empty)
-        else div(cls := "queue-groups", groups(kind, its).map((t, is) => renderGroup(sp, t, is, ops, topicsId, cs)))
+        else div(cls := "queue-groups", groups(kind, its).map((t, is) => renderGroup(sp, t, is, ops, topicsId, cs, gs, target)))
       }
     )
 
@@ -302,22 +316,26 @@ object QueueView:
     )
 
   private def renderGroup(sp: Spec, topic: Option[String], its: List[Queue.QueueItem], ops: Ops,
-      topicsId: String, checks: Map[Int, AcquireChecks.AcquireCheck]): HtmlElement =
+      topicsId: String, checks: Map[Int, AcquireChecks.AcquireCheck], goals: Map[Int, List[Queue.GoalRef]],
+      target: Option[Int]): HtmlElement =
     val (title, path) = heading(topic, sp.untitled)
     div(
       cls := "queue-group",
       if path.nonEmpty then div(cls := "group-path muted", path.mkString(" › ")) else emptyNode,
       h3(cls := "group-topic", title),
-      ul(cls := "queue-items", its.map(i => renderItem(sp, i, ops, topicsId, checks.get(i.id))))
+      ul(cls := "queue-items", its.map(i => renderItem(sp, i, ops, topicsId, checks.get(i.id), goals.getOrElse(i.id, Nil),
+        target.contains(i.id))))
     )
 
   private def renderItem(sp: Spec, item: Queue.QueueItem, ops: Ops, topicsId: String,
-      check: Option[AcquireChecks.AcquireCheck]): HtmlElement =
+      check: Option[AcquireChecks.AcquireCheck], goals: List[Queue.GoalRef], isTarget: Boolean): HtmlElement =
     val done = item.status == Queue.Done
     val mode = Var(Mode.Idle)
     li(
       cls := "queue-item",
+      idAttr := itemAnchor(item.id),
       cls("done") := done,
+      cls("is-target") := isTarget,
       if sp.checkable then
         label(
           cls := "item-check",
@@ -340,6 +358,10 @@ object QueueView:
         item.doneAt.filter(_ => done).map(d => div(cls := "item-reason muted", s"done ${d.take(10)}")),
         check.filter(_ => !done).map(c => div(cls := "item-reason muted", title := s"checked ${c.checks} time(s)",
           segments(c.reason).map(render))),
+        Option.when(goals.nonEmpty)(div(cls := "item-goals muted",
+          if goals.size == 1 then "Goal: " else "Goals: ",
+          goals.map(g => WinLink(WindowKey.Goal(g.slug), title := g.slug, Option(g.title).filter(_.trim.nonEmpty)
+            .getOrElse(Wording.humanize(g.slug)))).flatMap(l => List[Modifier[HtmlElement]](", ", l)).drop(1))),
         if !sp.editable then emptyNode
         else
           child <-- mode.signal.map {
@@ -362,6 +384,14 @@ object QueueView:
           }
       )
     )
+
+  /** The id of an item's row, which a link to it scrolls to. */
+  def itemAnchor(id: Int): String = s"queue-item-$id"
+
+  /** The item a link to the list points at (`?item=12`). Pure. */
+  def targetItem(search: String): Option[Int] =
+    Option(search).map(_.stripPrefix("?")).getOrElse("").split('&').toList
+      .collectFirst { case kv if kv.startsWith("item=") => kv.drop(5) }.flatMap(_.toIntOption)
 
   /** A small button on an item; a write is disabled while writes are not allowed. */
   private def actionButton(text: String, act: () => Unit, write: Boolean = true): HtmlElement =

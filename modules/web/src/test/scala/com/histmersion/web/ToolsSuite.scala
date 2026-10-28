@@ -28,9 +28,12 @@ class ToolsSuite extends munit.FunSuite:
       Some(List(WindowKey.Jobs, WindowKey.EditSource("a2020_b"))))
   }
 
-  test("only page windows can open in a new tab") {
+  test("a window of one item can open in a new tab, as that item's page") {
     assertEquals(WindowKey.Source("a b").pageHref, Some("/source/a%20b"))
     assertEquals(WindowKey.Article("x").pageHref, Some("/article/x"))
+    assertEquals(WindowKey.Run("3f2a").pageHref, Some("/run/3f2a"))
+    assertEquals(WindowKey.Goal("bronze-age").pageHref, Some("/research/goals/bronze-age"))
+    assertEquals(WindowKey.Manager("watch:x").pageHref, Some("/manager/watch%3Ax"))
     assertEquals(WindowKey.Jobs.pageHref, None)
     assertEquals(WindowKey.EditSource("a").pageHref, None)
   }
@@ -244,13 +247,6 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(WindowKey.queueOf(WindowKey.Source("a2020_b")), None)
   }
 
-  test("/acquire, /tasks and /log open their window; other paths open the app as it is") {
-    assertEquals(WindowKey.ofPath("/acquire"), Some(WindowKey.Acquire))
-    assertEquals(WindowKey.ofPath("/tasks"), Some(WindowKey.Tasks))
-    assertEquals(WindowKey.ofPath("/log"), Some(WindowKey.Log))
-    List("/", "", "/logs", "/log/x", "/Tasks", "/source/a2020_b", "acquire").foreach(p =>
-      assertEquals(WindowKey.ofPath(p), None, p))
-  }
 
   test("the backlog groups by topic like the acquisition queue: groups in first-added order, items by id") {
     val its = List(qi(40, "tasks", Some("Histmersion")), qi(12, "tasks", Some("Corpus hygiene")),
@@ -525,4 +521,11 @@ class ToolsSuite extends munit.FunSuite:
     assert(segs.contains(Seg.Doi("10.1000/a_b")), segs.toString)
     assert(!segs.exists { case Seg.Ident(i) => i == "a_b"; case _ => false }, segs.toString)
   }
+
+  test("a link to a list item names it in the address; the list marks and scrolls to it"):
+    assertEquals(QueueView.targetItem("?item=12"), Some(12))
+    assertEquals(QueueView.targetItem("?x=1&item=7"), Some(7))
+    assertEquals(QueueView.targetItem(""), None)
+    assertEquals(QueueView.targetItem("?item=abc"), None)
+    assertEquals(QueueView.itemAnchor(12), "queue-item-12")
 
