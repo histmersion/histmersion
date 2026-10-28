@@ -54,8 +54,16 @@ object TimelineView:
   private var dtCurveLayer: dom.Element   = null
   private var dtAxisLayer: dom.Element    = null
   private var dtOverlayLayer: dom.Element = null
+  // the hover markers, above everything of their strip
+  private var ovHoverLayer: dom.Element   = null
+  private var dtHoverLayer: dom.Element   = null
+  // the points each curve was drawn through (the hover reads them)
+  private var ovPts: Vector[TimelineCurve.Pt] = Vector.empty
+  private var dtPts: Vector[TimelineCurve.Pt] = Vector.empty
   private var lastOvWidth: Double         = 0
   private var lastDtWidth: Double         = 0
+  private var lastOvHeight: Double        = 0
+  private var lastDtHeight: Double        = 0
   private var lastOvBarsLen: Int          = -1
   private var lastDtBarsLen: Int          = -1
   private var ovResizeRaf: Int            = 0
@@ -120,8 +128,10 @@ object TimelineView:
 
   private[web] val MAX_BUCKETS = Layout.maxBuckets
 
+  /** A bucket every [[TimelineCurve.PxPerBucket]] px (one a pixel drew a staircase of 1-px risers),
+    * and never more than `Layout.maxBuckets`. */
   private[web] def bucketSizeFor(spanYears: Long, pixelWidth: Double): Long =
-    val byPixels = Math.ceil(spanYears.toDouble / Math.max(pixelWidth, 100)).toLong
+    val byPixels = Math.ceil(spanYears.toDouble / (Math.max(pixelWidth, 100) / TimelineCurve.PxPerBucket)).toLong
     val byLimit  = Math.ceil(spanYears.toDouble / Layout.maxBuckets).toLong
     Math.max(1L, Math.max(byPixels, byLimit))
 
@@ -182,25 +192,40 @@ object TimelineView:
 
   // ── drawing helpers ───────────────────────────────────────────────────────────────────────────
 
+  /** The element's drawn width, fractions of a pixel included (the drawing is made at exactly this size:
+    * a whole-pixel `clientWidth` stretched it by the fraction). */
   private def elWidth(el: dom.Element): Double =
     if el == null then 600.0
     else
-      val w = el.asInstanceOf[dom.SVGElement].clientWidth.toDouble
-      if w > 0 then w
+      val r = el.getBoundingClientRect()
+      if r.width > 0 then r.width
       else
-        val r = el.getBoundingClientRect()
-        if r.width > 0 then r.width else 600.0
+        val w = el.asInstanceOf[dom.SVGElement].clientWidth.toDouble
+        if w > 0 then w else 600.0
 
   private def niceInterval(raw: Double): Double =
     val candidates = List(1.0, 2.0, 5.0, 10.0, 20.0, 25.0, 50.0, 100.0, 200.0, 250.0, 500.0,
       1000.0, 2000.0, 2500.0, 5000.0, 10000.0)
     candidates.find(_ >= raw).getOrElse(Math.pow(10, Math.ceil(Math.log10(raw))))
 
+  /** The element's drawn height (its stylesheet height: fixed on a wide screen, `clamp()` on a phone). */
+  private def elHeight(el: dom.Element, fallback: Double): Double =
+    if el == null then fallback
+    else
+      val r = el.getBoundingClientRect()
+      if r.height > 0 then r.height
+      else
+        val h = el.asInstanceOf[dom.SVGElement].clientHeight.toDouble
+        if h > 0 then h else fallback
+
+  /** The area and line of the counts `bs` over `[from, to]`, `w` px wide, standing on `baseY`: a smooth
+    * monotone curve ([[TimelineCurve]]), no mark per bucket (the hover marker says one bucket's count).
+    * Answers the points drawn, for the hover. */
   private def drawAreaCurve(svg: dom.Element, bs: List[TimeBucket], from: Long, to: Long,
-      w: Double, h: Double, baseY: Double, gradId: String, dots: Boolean = true): Unit =
+      w: Double, baseY: Double, gradId: String): Vector[TimelineCurve.Pt] =
     val ns = "http://www.w3.org/2000/svg"
-    val maxCount = if bs.isEmpty then 0 else bs.map(_.count).max
-    if bs.nonEmpty && maxCount > 0 then
+    val pts = TimelineCurve.points(bs, from, to, w, baseY, top = 4)
+    if pts.nonEmpty then
       val defs = dom.document.createElementNS(ns, "defs")
       val grad = dom.document.createElementNS(ns, "linearGradient")
       grad.setAttribute("id", gradId)
@@ -214,63 +239,57 @@ object TimelineView:
       defs.appendChild(grad)
       svg.appendChild(defs)
 
-      val span = (to - from).toDouble.max(1)
-      def xOf(yr: Double): Double = (yr - from.toDouble) / span * w
-
-      case class Pt(x: Double, y: Double, b: TimeBucket)
-      val pts = bs.map { b =>
-        val mid = (b.start.toDouble + b.end.toDouble) / 2
-        val x = xOf(mid)
-        val barH = (b.count.toDouble / maxCount) * (baseY - 4)
-        Pt(x, baseY - barH, b)
-      }
-
-      val pathD = new StringBuilder
-      pathD.append(s"M ${pts.head.x} $baseY L ${pts.head.x} ${pts.head.y}")
-      if pts.length == 1 then
-        pathD.append(s" L ${pts.head.x + 1} ${pts.head.y} L ${pts.head.x + 1} $baseY")
-      else
-        for i <- 1 until pts.length do
-          val p0 = pts(i - 1); val p1 = pts(i)
-          val cx = (p0.x + p1.x) / 2
-          pathD.append(s" C $cx ${p0.y} $cx ${p1.y} ${p1.x} ${p1.y}")
-        pathD.append(s" L ${pts.last.x} $baseY")
-      pathD.append(" Z")
-
       val path = dom.document.createElementNS(ns, "path")
       path.setAttribute("class", "tl-area")
-      path.setAttribute("d", pathD.toString)
+      path.setAttribute("d", TimelineCurve.areaPath(pts, baseY))
       path.setAttribute("fill", s"url(#$gradId)")
       path.setAttribute("opacity", "0.85")
       svg.appendChild(path)
 
       val line = dom.document.createElementNS(ns, "path")
-      val lineD = new StringBuilder
-      lineD.append(s"M ${pts.head.x} ${pts.head.y}")
-      for i <- 1 until pts.length do
-        val p0 = pts(i - 1); val p1 = pts(i)
-        val cx = (p0.x + p1.x) / 2
-        lineD.append(s" C $cx ${p0.y} $cx ${p1.y} ${p1.x} ${p1.y}")
       line.setAttribute("class", "tl-area-line")
-      line.setAttribute("d", lineD.toString)
+      line.setAttribute("d", TimelineCurve.linePath(pts))
       line.setAttribute("fill", "none")
       line.setAttribute("stroke", s"url(#$gradId)")
       line.setAttribute("stroke-width", "1.5")
       line.setAttribute("vector-effect", "non-scaling-stroke")
       svg.appendChild(line)
+    pts
 
-      for pt <- pts if dots && pt.b.count > 0 do
-        val dot = dom.document.createElementNS(ns, "circle")
-        dot.setAttribute("class", "tl-area-dot")
-        dot.setAttribute("cx", pt.x.toString)
-        dot.setAttribute("cy", pt.y.toString)
-        dot.setAttribute("r", "2")
-        val t = (((pt.b.start + pt.b.end).toDouble / 2) - from.toDouble) / span
-        dot.setAttribute("fill", Fmt.color(t.max(0).min(1)))
-        val titleEl = dom.document.createElementNS(ns, "title")
-        titleEl.textContent = s"${Fmt.yr(pt.b.start)}–${Fmt.yr(pt.b.end)}: ${pt.b.count} source(s)"
-        dot.appendChild(titleEl)
-        svg.appendChild(dot)
+  // ── the hover marker: ONE per strip, the bucket under the pointer and its exact count ─────────
+
+  /** The bucket nearest screen x `px` of a curve drawn as `pts` and moved on screen by (`tx`, `scale`),
+    * and where it stands on screen. Pure. */
+  private[web] def hoverAt(pts: IndexedSeq[TimelineCurve.Pt], px: Double, tx: Double, scale: Double): Option[(Double, TimelineCurve.Pt)] =
+    if scale <= 0 then None
+    else TimelineCurve.nearest(pts, (px - tx) / scale).map(p => (tx + p.x * scale, p))
+
+  /** Pure: what the hover marker says of a bucket. */
+  private[web] def hoverText(b: TimeBucket): String =
+    val years = if b.start == b.end then Fmt.yr(b.start) else s"${Fmt.yr(b.start)}–${Fmt.yr(b.end)}"
+    s"$years: ${Plural.count(b.count, "source")}"
+
+  private def showHover(layer: dom.Element, at: Option[(Double, TimelineCurve.Pt)], w: Double): Unit =
+    if layer != null then
+      clearLayer(layer)
+      at.filter((_, p) => p.bucket.count > 0).foreach { (x, p) =>
+        val dot = dom.document.createElementNS(svgNs, "circle")
+        dot.setAttribute("class", "tl-hover-dot")
+        dot.setAttribute("cx", x.toString); dot.setAttribute("cy", p.y.toString); dot.setAttribute("r", "3")
+        val span = (spanTo - spanFrom).toDouble.max(1)
+        dot.setAttribute("fill", Fmt.color((((p.bucket.start + p.bucket.end).toDouble / 2 - spanFrom) / span).max(0).min(1)))
+        layer.appendChild(dot)
+        val label = dom.document.createElementNS(svgNs, "text")
+        label.setAttribute("class", "tl-hover-label")
+        val text = hoverText(p.bucket)
+        // beside the marker, on the side with room for it
+        val right = x + 6 + text.length * 6.2 <= w
+        label.setAttribute("x", (if right then x + 6 else x - 6).toString)
+        label.setAttribute("y", "10")
+        label.setAttribute("text-anchor", if right then "start" else "end")
+        label.textContent = text
+        layer.appendChild(label)
+      }
 
   // ── overview rendering ────────────────────────────────────────────────────────────────────────
 
@@ -303,14 +322,25 @@ object TimelineView:
     else g.setAttribute("transform", s"translate($tx 0) scale($scale 1)")
     !identity
 
+  /** The strips' heights as drawn (the stylesheet's, a `clamp()` on a phone) and where the curve stands
+    * in them: the label band under it keeps its height, the curve takes the rest — drawn at the size it
+    * is shown, so nothing is stretched. */
+  private def ovHeight: Double = elHeight(overviewSvg, OH.toDouble)
+  private def ovBase(h: Double): Double = h - (OH - O_BASE)
+  private def dtHeight: Double = elHeight(detailSvg, DH.toDouble)
+  private def dtBase(h: Double): Double = h - (DH - D_BASE)
+
   private def renderOverviewCurve(): Unit =
     if overviewSvg != null then
       val w = elWidth(overviewSvg)
+      val h = ovHeight
       val bs = overviewBars.now()
-      if lastOvBarsLen != bs.length || lastOvWidth <= 0 then
+      if lastOvBarsLen != bs.length || lastOvWidth <= 0 || h != lastOvHeight then
         clearLayer(ovCurveLayer)
-        drawAreaCurve(ovCurveLayer, bs, limits.min, limits.max, w, O_BASE.toDouble, (O_BASE - 2).toDouble, "ov-grad")
+        showHover(ovHoverLayer, None, w)
+        ovPts = drawAreaCurve(ovCurveLayer, bs, limits.min, limits.max, w, ovBase(h) - 2, "ov-grad")
         lastOvWidth = w
+        lastOvHeight = h
         lastOvBarsLen = bs.length
       alignOverviewCurve(w)
 
@@ -323,7 +353,10 @@ object TimelineView:
     if overviewSvg != null then
       val svg = overviewSvg
       val w = elWidth(svg)
-      svg.setAttribute("viewBox", s"0 0 ${w.toInt} $OH")
+      val oh = ovHeight
+      val ovB = ovBase(oh)
+      // the drawing's own size: one unit a pixel, both ways
+      svg.setAttribute("viewBox", s"0 0 $w $oh")
       alignOverviewCurve(w)
       val ns = svgNs
       clearLayer(ovSelLayer)
@@ -336,24 +369,24 @@ object TimelineView:
       val dimLeft = dom.document.createElementNS(ns, "rect")
       dimLeft.setAttribute("class", "tl-ov-dim")
       dimLeft.setAttribute("x", "0"); dimLeft.setAttribute("y", "0")
-      dimLeft.setAttribute("width", selX0.toString); dimLeft.setAttribute("height", O_BASE.toString)
+      dimLeft.setAttribute("width", selX0.toString); dimLeft.setAttribute("height", ovB.toString)
       g.appendChild(dimLeft)
       val dimRight = dom.document.createElementNS(ns, "rect")
       dimRight.setAttribute("class", "tl-ov-dim")
       dimRight.setAttribute("x", selX1.toString); dimRight.setAttribute("y", "0")
-      dimRight.setAttribute("width", (w - selX1).toString); dimRight.setAttribute("height", O_BASE.toString)
+      dimRight.setAttribute("width", (w - selX1).toString); dimRight.setAttribute("height", ovB.toString)
       g.appendChild(dimRight)
       for ex <- List(selX0, selX1) do
         val edge = dom.document.createElementNS(ns, "line")
         edge.setAttribute("class", "tl-ov-edge")
         edge.setAttribute("x1", ex.toString); edge.setAttribute("y1", "0")
-        edge.setAttribute("x2", ex.toString); edge.setAttribute("y2", O_BASE.toString)
+        edge.setAttribute("x2", ex.toString); edge.setAttribute("y2", ovB.toString)
         g.appendChild(edge)
       for hx <- List(selX0, selX1) do
         val h = dom.document.createElementNS(ns, "rect")
         h.setAttribute("class", "tl-ov-handle")
         h.setAttribute("x", (hx - HANDLE_W / 2).toString); h.setAttribute("y", "0")
-        h.setAttribute("width", HANDLE_W.toString); h.setAttribute("height", O_BASE.toString)
+        h.setAttribute("width", HANDLE_W.toString); h.setAttribute("height", ovB.toString)
         h.setAttribute("rx", "2")
         g.appendChild(h)
       // the two years: inside the selection, outside its handles when they are close, else one label
@@ -365,7 +398,7 @@ object TimelineView:
         val label = dom.document.createElementNS(ns, "text")
         label.setAttribute("class", "tl-ov-label")
         label.setAttribute("x", l.x.toString)
-        label.setAttribute("y", (O_BASE + 11).toString)
+        label.setAttribute("y", (ovB + 11).toString)
         label.textContent = l.text
         g.appendChild(label)
 
@@ -386,13 +419,16 @@ object TimelineView:
   private def renderDetailCurve(): Unit =
     if detailSvg != null then
       val w = elWidth(detailSvg)
+      val h = dtHeight
       val bs = detailBars.now()
-      if lastDtBarsLen != bs.length || lastDtWidth <= 0 then
+      if lastDtBarsLen != bs.length || lastDtWidth <= 0 || h != lastDtHeight then
         clearLayer(dtCurveLayer)
+        showHover(dtHoverLayer, None, w)
         val (bf, bt) = dtBarsRange
-        drawAreaCurve(dtCurveLayer, bs, bf, bt, w, DH.toDouble, D_BASE.toDouble, "dt-grad")
+        dtPts = drawAreaCurve(dtCurveLayer, bs, bf, bt, w, dtBase(h), "dt-grad")
         dtDrawn = (bf, bt, w)
         lastDtWidth = w
+        lastDtHeight = h
         lastDtBarsLen = bs.length
       alignDetail(w)
 
@@ -407,20 +443,22 @@ object TimelineView:
     val stale = moved || loading.now() || detailBars.now().isEmpty
     clearLayer(dtUnderLayer)
     if stale then
-      drawAreaCurve(dtUnderLayer, underlayBuckets(overviewBars.now(), sf, st), sf, st, w,
-        DH.toDouble, D_BASE.toDouble, "dtu-grad", dots = false)
+      val _ = drawAreaCurve(dtUnderLayer, underlayBuckets(overviewBars.now(), sf, st), sf, st, w,
+        dtBase(dtHeight), "dtu-grad")
     renderDetailAxis(w)
 
   private def renderDetailAxis(w: Double): Unit =
     val ns = svgNs
     val g = dtAxisLayer
     clearLayer(g)
+    val dtH = dtHeight
+    val dtB = dtBase(dtH)
     val sf = spanFrom
     val st = spanTo
     val axisLine = dom.document.createElementNS(ns, "line")
     axisLine.setAttribute("class", "tl-axis")
-    axisLine.setAttribute("x1", "0"); axisLine.setAttribute("y1", (D_BASE + 0.5).toString)
-    axisLine.setAttribute("x2", w.toString); axisLine.setAttribute("y2", (D_BASE + 0.5).toString)
+    axisLine.setAttribute("x1", "0"); axisLine.setAttribute("y1", (dtB + 0.5).toString)
+    axisLine.setAttribute("x2", w.toString); axisLine.setAttribute("y2", (dtB + 0.5).toString)
     g.appendChild(axisLine)
     val spanYears = (st - sf).toDouble.max(1)
     val targetTicks = Math.max(3, (w / 120).toInt)
@@ -439,8 +477,8 @@ object TimelineView:
           if x >= 0 && x <= w then
             val tick = dom.document.createElementNS(ns, "line")
             tick.setAttribute("class", "tl-tick tl-tick-minor")
-            tick.setAttribute("x1", x.toString); tick.setAttribute("y1", (D_BASE + 1).toString)
-            tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (D_BASE + 3).toString)
+            tick.setAttribute("x1", x.toString); tick.setAttribute("y1", (dtB + 1).toString)
+            tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (dtB + 3).toString)
             g.appendChild(tick)
         yr += minor.toLong
     var yr = firstMajor
@@ -449,15 +487,15 @@ object TimelineView:
       if x >= 0 && x <= w - 4 then
         val tick = dom.document.createElementNS(ns, "line")
         tick.setAttribute("class", "tl-tick")
-        tick.setAttribute("x1", x.toString); tick.setAttribute("y1", D_BASE.toString)
-        tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (D_BASE + 5).toString)
+        tick.setAttribute("x1", x.toString); tick.setAttribute("y1", dtB.toString)
+        tick.setAttribute("x2", x.toString); tick.setAttribute("y2", (dtB + 5).toString)
         g.appendChild(tick)
         val lbl = Fmt.yr(yr)
         if x + 3 > lastLabelEnd then
           val txt = dom.document.createElementNS(ns, "text")
           txt.setAttribute("class", "tl-label")
           txt.setAttribute("x", (x + 3).toString)
-          txt.setAttribute("y", (DH - 2).toString)
+          txt.setAttribute("y", (dtH - 2).toString)
           txt.textContent = lbl
           g.appendChild(txt)
           lastLabelEnd = x + 3 + textWidth(lbl) + 8
@@ -467,7 +505,9 @@ object TimelineView:
     if detailSvg != null then
       val svg = detailSvg
       val w = elWidth(svg)
-      svg.setAttribute("viewBox", s"0 0 ${w.toInt} $DH")
+      val dh = dtHeight
+      val dtB = dtBase(dh)
+      svg.setAttribute("viewBox", s"0 0 $w $dh")
       if loading.now() then svg.classList.add("tl-loading")
       else svg.classList.remove("tl-loading")
       alignDetail(w)
@@ -487,7 +527,7 @@ object TimelineView:
             dragRect.setAttribute("class", "tl-drag")
             dragRect.setAttribute("x", dx0.toString); dragRect.setAttribute("y", "0")
             dragRect.setAttribute("width", Math.max(1.0, dx1 - dx0).toString)
-            dragRect.setAttribute("height", D_BASE.toString)
+            dragRect.setAttribute("height", dtB.toString)
             g.appendChild(dragRect)
       }
       TimelinePlayback.playheadNow.foreach { ph =>
@@ -496,7 +536,7 @@ object TimelineView:
           val line = dom.document.createElementNS(ns, "line")
           line.setAttribute("class", "tl-playhead")
           line.setAttribute("x1", px.toString); line.setAttribute("y1", "0")
-          line.setAttribute("x2", px.toString); line.setAttribute("y2", D_BASE.toString)
+          line.setAttribute("x2", px.toString); line.setAttribute("y2", dtB.toString)
           g.appendChild(line)
           val label = dom.document.createElementNS(ns, "text")
           label.setAttribute("class", "tl-playhead-label")
@@ -594,13 +634,13 @@ object TimelineView:
           val ns = "http://www.w3.org/2000/svg"
           val svg = dom.document.createElementNS(ns, "svg").asInstanceOf[dom.SVGElement]
           svg.setAttribute("class", "tl-overview-svg")
-          svg.setAttribute("preserveAspectRatio", "none")
           svg.setAttribute("width", "100%")
           svg.setAttribute("height", OH.toString)
           overviewSvg = svg
           ctx.thisNode.ref.appendChild(svg)
           ovCurveLayer = newLayer(svg, "tl-ov-curve")
           ovSelLayer = newLayer(svg, "tl-ov-sel")
+          ovHoverLayer = newLayer(svg, "tl-hover")
 
           renderOverview()
           overviewBars.signal.foreach(_ => { lastOvBarsLen = -1; renderOverviewCurve() })(using ctx.owner)
@@ -636,7 +676,16 @@ object TimelineView:
           })
 
           svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
+            if dragState.now().isEmpty then
+              val rect = svg.getBoundingClientRect()
+              val w = if rect.width > 0 then rect.width else 600.0
+              showHover(ovHoverLayer, hoverAt(ovPts, e.clientX - rect.left, 0, if lastOvWidth > 0 then w / lastOvWidth else 1), w)
+          })
+          svg.addEventListener("pointerleave", { (_: dom.PointerEvent) => showHover(ovHoverLayer, None, 0) })
+
+          svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
             dragState.now().foreach { d =>
+              showHover(ovHoverLayer, None, 0)
               val rect = svg.getBoundingClientRect()
               val w = if rect.width > 0 then rect.width else 600.0
               val cur = e.clientX - rect.left
@@ -679,7 +728,7 @@ object TimelineView:
                 renderOverviewSelection()
                 dom.window.clearTimeout(ovResizeRaf)
                 ovResizeRaf = dom.window.setTimeout(() => {
-                  if elWidth(svg) != lastOvWidth then
+                  if elWidth(svg) != lastOvWidth || ovHeight != lastOvHeight then
                     lastOvBarsLen = -1
                     renderOverview()
                 }, Layout.resizeSettleMs.toDouble)
@@ -697,7 +746,6 @@ object TimelineView:
           val ns = "http://www.w3.org/2000/svg"
           val svg = dom.document.createElementNS(ns, "svg").asInstanceOf[dom.SVGElement]
           svg.setAttribute("class", "tl-detail-svg")
-          svg.setAttribute("preserveAspectRatio", "none")
           svg.setAttribute("width", "100%")
           svg.setAttribute("height", DH.toString)
           detailSvg = svg
@@ -706,6 +754,7 @@ object TimelineView:
           dtCurveLayer = newLayer(svg, "tl-dt-curve")
           dtAxisLayer = newLayer(svg, "tl-dt-axis")
           dtOverlayLayer = newLayer(svg, "tl-dt-overlay")
+          dtHoverLayer = newLayer(svg, "tl-hover")
 
           renderDetail()
           detailBars.signal.foreach(_ => { lastDtBarsLen = -1; renderDetailCurve() })(using ctx.owner)
@@ -735,7 +784,17 @@ object TimelineView:
           })
 
           svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
+            if dragState.now().isEmpty then
+              val rect = svg.getBoundingClientRect()
+              val w = if rect.width > 0 then rect.width else 600.0
+              val (tx, scale) = realign(dtDrawn, (spanFrom, spanTo, w))
+              showHover(dtHoverLayer, hoverAt(dtPts, e.clientX - rect.left, tx, scale), w)
+          })
+          svg.addEventListener("pointerleave", { (_: dom.PointerEvent) => showHover(dtHoverLayer, None, 0) })
+
+          svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
             dragState.now().foreach { d =>
+              showHover(dtHoverLayer, None, 0)
               if d.kind == DragKind.ZoomDetail then
                 val rect = svg.getBoundingClientRect()
                 val cur = e.clientX - rect.left
@@ -772,7 +831,7 @@ object TimelineView:
                 renderDetailOverlay()
                 dom.window.clearTimeout(dtResizeRaf)
                 dtResizeRaf = dom.window.setTimeout(() => {
-                  if elWidth(svg) != lastDtWidth then
+                  if elWidth(svg) != lastDtWidth || dtHeight != lastDtHeight then
                     lastDtBarsLen = -1
                     renderDetail()
                 }, Layout.resizeSettleMs.toDouble)

@@ -310,9 +310,11 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* low-resolution stand-in (the overview curve) under a detail curve that is stale or refetching */
 .tl-dt-under { opacity:.45; pointer-events:none; }
 .tl-dt-under .tl-area { opacity:1; }
-.tl-stale .tl-area-dot { display:none; }
-.tl-area-dot { transition:r .1s; pointer-events:all; }
-.tl-area-dot:hover { r:4; stroke:var(--ink); stroke-width:1; }
+/* the one hover marker of a strip: the bucket under the pointer and its count */
+.tl-hover { pointer-events:none; }
+.tl-hover-dot { stroke:var(--ink); stroke-width:1; }
+.tl-hover-label { fill:var(--ink); font:9px system-ui; font-variant-numeric:tabular-nums;
+  paint-order:stroke; stroke:var(--panel); stroke-width:3px; stroke-linejoin:round; }
 .tl-axis { stroke:var(--line); stroke-width:1; }
 .tl-tick { stroke:var(--line); stroke-width:1; }
 .tl-label { fill:var(--muted); font:10px system-ui,-apple-system,sans-serif; font-variant-numeric:tabular-nums; }
