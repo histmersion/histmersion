@@ -221,3 +221,12 @@ class EventCatalogSuite extends munit.FunSuite:
     assert(EventImportReport.markdown(c).contains("dry run: nothing stored"))
     assertEquals(CatalogProvider.parse(" Smithsonian "), Right("gvp"))
     assert(CatalogProvider.parse("usgs").isLeft)
+
+  test("#6561: a part read under other thresholds is not read in this scope"):
+    val world = EventProviders.Thresholds(None, 0, 4, 0.0, 6.5)
+    val window = world.copy(region = Some(BBox(-25, 5, 100, 72)))
+    val (w, n) = (EventProviders.scope(world), EventProviders.scope(window))
+    assertNotEquals(w, n)
+    val recorded = Set(EventProviders.scopedPart("years:-3000..-2000", n), "years:-2000..-1000")
+    assertEquals(EventProviders.partsIn(recorded, n), Set("years:-3000..-2000"))
+    assertEquals(EventProviders.partsIn(recorded, w), Set.empty[String], "old-scope and unscoped keys are due again")

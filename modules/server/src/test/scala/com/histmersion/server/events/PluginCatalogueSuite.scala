@@ -94,7 +94,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assertEquals(http.requests.map(_._1).toList,
       List("https://zq.example/api/p1", "https://zq.example/api/p1b", "https://zq.example/api/p2"))
     assert(http.requests.forall(_._2.get("User-Agent").contains(HttpPolicy.userAgent(cfg.media.userAgent))))
-    assertEquals(EventCatalogRepo.partsDone(ds, Catalogue), Set("p1", "p1b"))
+    assertEquals(EventCatalogRepo.partsDone(ds, Catalogue).map(_.split(" @ ").head), Set("p1", "p1b"))
     val e = EventRepo.get(ds, "zq_quakes_b1").getOrElse(fail("not stored"))
     assertEquals((e.event.label, e.event.kind), ("Zq Battle One", "battle"))
     // the card names the plugin's catalogue with its terms

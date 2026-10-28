@@ -93,6 +93,11 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     val f = http
     val r = run(EventCatalogHandlers(Deps(cfg, ds), f), "gvp", dry = false)
     assertEquals((r.records, f.requests.size), (0, 0), "every window was read: nothing is asked again")
+    // #6561: a wider region (here: a lower VEI floor) judged differently — every window is read again
+    val wider = cfg.copy(events = cfg.events.copy(gvp = cfg.events.gvp.copy(regionMinVei = cfg.events.gvp.regionMinVei + 1)))
+    val f2 = http
+    val r2 = run(EventCatalogHandlers(Deps(wider, ds), f2), "gvp", dry = false)
+    assert(f2.requests.nonEmpty && r2.records > 0, s"thresholds changed: the windows are due again ($r2)")
 
   test("Wikidata: labels and aliases in other languages become the event's names"):
     val h = EventCatalogHandlers(Deps(cfg, ds), http)

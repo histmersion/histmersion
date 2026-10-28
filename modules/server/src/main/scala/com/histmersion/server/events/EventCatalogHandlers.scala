@@ -98,7 +98,8 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
       req.minMagnitude.getOrElse(ec.noaa.regionMinMagnitude), req.minMagnitude.getOrElse(ec.noaa.outsideMinMagnitude),
       area)
     if req.refresh && !req.dryRun then EventCatalogRepo.clearParts(ds, provider)
-    val done = if req.dryRun then Set.empty[String] else EventCatalogRepo.partsDone(ds, provider)
+    val scope = EventProviders.scope(th)
+    val done = if req.dryRun then Set.empty[String] else EventProviders.partsIn(EventCatalogRepo.partsDone(ds, provider), scope)
     val stored0 = EventCatalogRepo.stored(ds)
     val preRun  = stored0.map(_.id).toSet
     // `var`s: the run's state across parts — what is placed so far, the report, the requests sent
@@ -153,7 +154,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
             if req.dryRun then None
             else
               val s = EventCatalogRepo.save(ds, placed)
-              EventCatalogRepo.markPart(ds, provider, part, recs.size)
+              EventCatalogRepo.markPart(ds, provider, EventProviders.scopedPart(part, scope), recs.size)
               Some(s)
           report = EventImportReport.combine(report, EventImportReport(provider, req.dryRun, recs.size, kept.size,
             created, merged, matched, saved.fold(0)(_.updated), EventCount.of(kept.map(r => EventTaxonomy.canonical(r.kind))),
@@ -226,14 +227,14 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
 
     val pending = catalogue match
       case Some(cat) if !req.dryRun && !cat.isInstanceOf[HostEventCatalogue] =>
-        val now = EventCatalogRepo.partsDone(ds, provider)
+        val now = EventProviders.partsIn(EventCatalogRepo.partsDone(ds, provider), scope)
         PluginEvents.guard(Right(cat.parts(PluginEvents.query(from, to, area)))).fold(_ => 0, _.distinct.count(p => !now(p)))
       case _ => provider match
         case CatalogProvider.Gvp if !req.dryRun =>
-          val now = EventCatalogRepo.partsDone(ds, provider)
+          val now = EventProviders.partsIn(EventCatalogRepo.partsDone(ds, provider), scope)
           EventProviders.Gvp.windows(from.getOrElse(ec.minYear), to, ec.gvp.windowYears).count((a, b) => !now(s"years:$a..$b"))
         case CatalogProvider.Wikidata if !req.dryRun =>
-          val now = EventCatalogRepo.partsDone(ds, provider)
+          val now = EventProviders.partsIn(EventCatalogRepo.partsDone(ds, provider), scope)
           ec.wikidata.classList.count((q, _) => !now(s"class:$q"))
         case _ => 0
     val out = report.copy(pending = pending, requests = clients.map(_.requests).sum + report.requests)
