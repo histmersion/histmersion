@@ -235,8 +235,11 @@ trait MapSurface:
   def panBy(dx: Double, dy: Double, animate: Boolean = false): Unit
   def project(p: LatLon): ScreenPt
   def unproject(p: ScreenPt): LatLon
-  /** The container changed size without a window resize. */
+  /** The container changed size (a window resize, or the chrome around it: a folded filter row, a dragged
+    * sidebar): the map takes it and is drawn again at once — nothing is fetched or made again. */
   def resize(): Unit
+  /** How many times a change of the container's size was taken (diagnostics). */
+  def resizeCount: Int = 0
   def isMoving: Boolean
   /** Still, and every tile of the view drawn. */
   def isDrawn: Boolean

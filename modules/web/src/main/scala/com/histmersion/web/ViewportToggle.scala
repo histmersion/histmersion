@@ -125,9 +125,16 @@ object ViewportToggle:
       onMountUnmountCallbackWithState(
         mount = _ =>
           Option.when(TheMap.isUp)(TheMap.surface).map { map =>
-            // Push bbox on map moveend when the checkbox is checked (a zoom ends with a moveend too).
+            // Push bbox on map moveend when the checkbox is checked (a zoom ends with a moveend too) —
+            // when the view MOVED: the chrome around the map changing its size (a filter row folded, the
+            // sidebar dragged) ends with a moveend too, and refetched every list for the same place
+            // `var`: where the camera stood at the last moveend
+            var camera = (map.center, map.zoom)
             val sub = map.on(MapEventKind.MoveEnd) { _ =>
-              if UiState.inView.now() then
+              val now = (map.center, map.zoom)
+              val moved = now != camera
+              camera = now
+              if moved && UiState.inView.now() then
                 dom.window.clearTimeout(timer)
                 timer = dom.window.setTimeout(() => {
                   UiState.set(UiState.bbox := Some(bboxOf(map)))()

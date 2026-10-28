@@ -114,6 +114,8 @@ final class TiledPoints[A](layer: TileLayer, val items: PointLayer[A], dot: DotK
   private var on = false
   private var tiles: Option[PointTiles] = None
   private var shown: (Seq[A], Seq[TileCellPoint]) = (Nil, Nil)
+  // the tiles' URL and the zoom what is shown was read at
+  private var readAt: Option[(Option[String], Int)] = None
 
   private def source: Option[PointTiles] =
     if tiles.isEmpty && TheMap.isUp then
@@ -134,6 +136,7 @@ final class TiledPoints[A](layer: TileLayer, val items: PointLayer[A], dot: DotK
   def detach(): Unit =
     if on then
       on = false
+      readAt = None
       tiles.foreach(_.setTiles(None))
       items.detach()
       cells.detach()
@@ -151,11 +154,24 @@ final class TiledPoints[A](layer: TileLayer, val items: PointLayer[A], dot: DotK
       items.show(shown._1, s)
       cells.show(shown._2, s)
 
-  /** The features of the tiles in view, shown — once the tiles of the URL set last are all in. */
+  /** The features of the tiles in view, shown — once the tiles of the URL set last are all in. Read again for
+    * the same URL at the same zoom (the view moved, or only its size changed: a sidebar dragged), what was shown
+    * near the view and is no longer in a tile the map holds stays ([[TiledPoints.merge]]): the map lets go of
+    * the tiles a narrower view leaves, and their points went and came back, regrouping the bubbles near them. */
   private def read(): Unit =
     tiles.filter(_.loaded).foreach { t =>
       val (cs, is) = t.features.partition(TileDecode.isCell)
-      shown = (is.flatMap(decode), cs.map(TileDecode.cell(_, dot)))
+      val fresh = (is.flatMap(decode), cs.map(TileDecode.cell(_, dot)))
+      val at = (template, math.floor(TheMap.surface.zoom).toInt)
+      shown =
+        if !readAt.contains(at) then fresh
+        else
+          val s = TheMap.surface
+          val margin = math.max(s.size._1, s.size._2)
+          def near(p: (Double, Double)) = Clustering.inView(s, LatLon(p._1, p._2), margin)
+          (TiledPoints.merge(fresh._1, shown._1, items.kind.key, a => near(items.kind.at(a))),
+            TiledPoints.merge(fresh._2, shown._2, (c: TileCellPoint) => c.key, c => near((c.lat, c.lon))))
+      readAt = Some(at)
       items.show(shown._1, span)
       cells.show(shown._2, span)
     }

@@ -73,3 +73,11 @@ class TiledLayersSuite extends munit.FunSuite:
     assertEquals(q.layer, "events")
     assertEquals(q.filter, Filter(tags = List("bronze"), period = Some(Period(-1200, -1100))))
     assertEquals((q.kind, q.tier, q.context), (Some("battle"), None, Some(true)))
+
+  test("a read at the same URL and zoom keeps what was shown near the view and is in no tile held now"):
+    val fresh = List("a" -> 1, "b" -> 2)
+    val was = List("b" -> 0, "c" -> 3, "far" -> 4)
+    // "b" is read again (the new copy wins), "c" near the view stays, "far" goes
+    assertEquals(TiledPoints.merge(fresh, was, _._1, _._1 != "far"), List("a" -> 1, "b" -> 2, "c" -> 3))
+    assertEquals(TiledPoints.merge(Nil, was, _._1, _ => true), was)
+    assertEquals(TiledPoints.merge(fresh, Nil, _._1, _ => true), fresh)

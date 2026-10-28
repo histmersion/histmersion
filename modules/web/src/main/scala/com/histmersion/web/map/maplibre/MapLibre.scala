@@ -76,6 +76,7 @@ class GlMap(options: js.Object) extends js.Object:
   def getCanvasContainer(): dom.HTMLElement    = js.native
   def getCanvas(): dom.HTMLCanvasElement       = js.native
   def resize(): this.type                      = js.native
+  def redraw(): this.type                      = js.native
   def remove(): Unit                           = js.native
   def isStyleLoaded(): Boolean                 = js.native
   def loaded(): Boolean                        = js.native
