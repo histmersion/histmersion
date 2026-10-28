@@ -1,30 +1,41 @@
 ---
 name: trailhead
-description: Start a new research topic from a Wikipedia article or a search query — harvest the primary literature (foundational papers), build a prioritized ingest queue, and (optionally under /loop) autonomously ingest+enrich each paper into the corpus. Use when the user wants to learn a NEW topic or open a new line of inquiry (e.g. "learn about Bronze Age collapse", "start on Proto-Indo-European migrations").
+description: Start a new research topic from a search of the research databases (recent reviews first, then the citation graph) — harvest the primary literature, build a prioritized ingest queue, and (optionally under /loop) autonomously ingest+enrich each paper into the corpus. Use when the user wants to learn a NEW topic or open a new line of inquiry (e.g. "learn about Bronze Age collapse", "start on Proto-Indo-European migrations").
 allowed-tools: Bash(histmersion:*), mcp__histmersion__*, Agent
 ---
 
 # Trailhead — open a new topic
 
-Wikipedia is only a place to FIND papers; never summarize Wikipedia as the answer. Everything here
+Wikipedia is at most a supplementary place to FIND papers; never summarize it as the answer. Everything here
 runs through `histmersion` / `mcp__histmersion__*`. There are no `tools/*.py` scripts any more.
 
-## 1. Gather candidate DOIs (two complementary channels)
+## 1. Gather candidate DOIs — research databases first
+
+Start from what the research databases say, not from what an encyclopedia article happens to cite.
+In order of weight:
 
 ```bash
-# a) the references a Wikipedia article cites — the best signal for foundational work
-histmersion discover wikirefs "https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse"
+# a) recent reviews and syntheses: the field's own summary of where consensus stands
+histmersion discover search "<topic query> review" --since 2015 --sort cited --limit 25 --not-in-db
 
-# b) relevance- or citation-ranked literature search, already deduped against the corpus
-histmersion discover search "<topic query>" --limit 25 --not-in-db
+# b) the most-cited and the most relevant primary work
 histmersion discover search "<topic query>" --sort cited --limit 25 --not-in-db
+histmersion discover search "<topic query>" --limit 25 --not-in-db
 
-# c) one DOI you already have a lead on
+# c) the citation graph of the best hits: what they build on, and what answered them since
+histmersion refs <citekey>                 # backward, once a review is ingested
+histmersion followups <citekey|doi>        # forward: confirms / challenges / refutes / supersedes
+
+# d) one DOI you already have a lead on
 histmersion discover meta 10.1371/journal.pone.0071004
+
+# e) supplementary only: the DOIs a Wikipedia article cites. Use it to catch a gap, never as the
+#    starting point and never above a, b or c — its reference list reflects what its editors chose.
+histmersion discover wikirefs "https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse"
 ```
 
-MCP equivalent: `mcp__histmersion__discover` with `wikipediaUrl`, or `query` (+ `sort: "cited"`,
-`since`, `notInDb: true`), or `doi`.
+MCP equivalent: `mcp__histmersion__discover` with `query` (+ `sort: "cited"`, `since`, `notInDb: true`), or `doi`,
+or — supplementary only — `wikipediaUrl`.
 
 Every result carries the **citekey it would get** and whether the corpus already holds it.
 `--not-in-db` is what replaces the old "list `wiki/sources/` and diff by hand" step — use it, do not

@@ -7,14 +7,17 @@ work on your acquisition list instead. Read [Responsible use](../responsible-use
 ## Find literature
 
 ```bash
-histmersion discover search "late bronze age collapse" --since 2015 --not-in-db
+histmersion discover search "late bronze age collapse review" --since 2015 --sort cited --not-in-db
+histmersion discover search "late bronze age collapse" --sort cited --not-in-db
+histmersion followups 10.1234/example-doi                         # what answered a paper since
 histmersion discover meta 10.1234/example-doi                     # one paper's details
-histmersion discover wikirefs https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse
+histmersion discover wikirefs https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse   # supplementary
 ```
 
-`discover search` asks OpenAlex; `--not-in-db` leaves out what you already have. `wikirefs` collects
-every DOI a Wikipedia article cites — Wikipedia as a trailhead to the primary literature, not as a
-source.
+`discover search` asks OpenAlex; `--not-in-db` leaves out what you already have. Start with recent
+reviews, then the most-cited work, then follow the citation graph (`refs`, `followups`). `wikirefs`
+collects every DOI a Wikipedia article cites; use it only to catch a gap afterwards — its reference
+list is whatever the article's editors chose, and Wikipedia is never a source.
 
 ## Bring a paper in
 

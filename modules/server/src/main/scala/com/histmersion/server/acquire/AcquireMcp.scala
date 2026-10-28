@@ -29,9 +29,10 @@ final class AcquireMcp(h: AcquireHandlers):
       .description(
         "Find LITERATURE THAT IS NOT IN THE CORPUS YET — the trailhead into a new topic. Three modes, " +
           "pick one: `query` searches OpenAlex by relevance (or `sort: cited` for the most-cited work " +
-          "in the field); `doi` fetches normalised metadata for one paper; `wikipediaUrl` harvests " +
-          "every DOI a Wikipedia article cites, which is the fastest way to find the foundational " +
-          "papers on a subject. Each result carries the citekey it WOULD get and whether the corpus " +
+          "in the field; start a topic with `<topic> review`, `since` and `sort: cited` for recent reviews); " +
+          "`doi` fetches normalised metadata for one paper; `wikipediaUrl` harvests every DOI a Wikipedia " +
+          "article cites — SUPPLEMENTARY only, to catch a gap after the database searches and the citation " +
+          "graph (`refs`, `followups`), never the starting point or the main channel. Each result carries the citekey it WOULD get and whether the corpus " +
           "already has it, so `notInDb: true` gives you exactly the delta to ingest. Use the `search` " +
           "tool instead when you want what we already hold; this one goes out to the internet.")
       .input[DiscoverInput]
