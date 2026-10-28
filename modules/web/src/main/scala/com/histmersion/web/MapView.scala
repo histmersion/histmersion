@@ -275,17 +275,30 @@ object MapView:
       else s.fitBounds(b, 40, s.maxZoom)
 
   /** A bubble chosen: its list, or (too many to list, or some only counted in a tile's cell) the map
-    * zoomed in on it. */
+    * zoomed in on it. A bubble no zoom parts — its dots at one spot, or the deepest zoom reached — is also
+    * fanned out around its spot ([[PointSet.spiderfy]]), so each of its dots can be reached on the map. */
   private def open(ds: Seq[Dot]): Unit =
       val all = DotCluster.contents(ds)
       val pts = ds.map(_.at)
       val b = GeoBounds(pts.map(_.lat).min, pts.map(_.lon).min, pts.map(_.lat).max, pts.map(_.lon).max)
       def zoomIn(): Unit = if all.counted then zoomInto(b :: all.cells) else TheMap.surface.fitBounds(b, 40, fitMaxZoom)
       val deepest = TheMap.surface.zoom >= TheMap.surface.maxZoom - 0.01
+      // a tile's cell is only counted: zooming in fetches its dots, wherever they stand
+      val inseparable = deepest || (!all.counted && Clustering.onePlace(pts))
       // too many to list, or counted and not listed: zoom in, unless the map cannot (dots at one point stay one bubble)
-      if (all.total > pickerMax || all.counted) && !deepest then zoomIn()
-      else ResultsList.pick(all.findings, s"${DotCluster.summary(all)} in this cluster", Some(() => zoomIn()),
-        DotCluster.ordered(DotCluster.others(ds)))
+      if (all.total > pickerMax || all.counted) && !inseparable then zoomIn()
+      else
+        if inseparable && spiderfies(ds.size, ds.exists(_.member.aggregate)) then
+          dots.spiderfy(ds.map(_.key), spiderSeparation.toDouble)
+        ResultsList.pick(all.findings, s"${DotCluster.summary(all)} in this cluster", Some(() => zoomIn()),
+          DotCluster.ordered(DotCluster.others(ds)))
+
+  /** Pure: is a bubble of `n` dots fanned out (not when it holds a tile's counted cell, which is no one dot,
+    * or more than a spiral around the spot shows legibly)? */
+  private[web] def spiderfies(n: Int, holdsCell: Boolean): Boolean = n >= 2 && n <= Layout.spiderMax && !holdsCell
+
+  /** How far apart fanned-out dots stand: the widest marker box and a gap. */
+  private def spiderSeparation: Int = PointKinds.all.map(k => math.max(k.box._1, k.box._2)).max + 8
 
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius

@@ -233,6 +233,13 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-marker.hd-cluster-arrive { animation:cluster-arrive .25s ease-out; }
 :root[data-map-motion="still"] :is(.hd-marker.hd-cluster-move, .hd-marker.hd-cluster-ghost.hd-cluster-move,
   .hd-marker.hd-cluster-arrive) { animation:none; }
+/* a bubble no zoom parts, fanned out (web.map.Spiderfy): each dot drawn `--sx`/`--sy` off the spot, on a thin
+   leg back to it; the bubble stays faint under them until they fold back (Escape, a press elsewhere, a zoom) */
+.hd-marker.hd-spider { translate:var(--sx, 0px) var(--sy, 0px); }
+.hd-marker.hd-spidered { opacity:.3; }
+.hd-marker.hd-spider-legs { pointer-events:none; }
+.hd-spider-legs svg { display:block; overflow:visible; }
+.hd-spider-legs line { stroke:var(--ink); stroke-width:1; stroke-opacity:.55; }
 /* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */
 .pick-head { padding:10px 14px; border-bottom:1px solid var(--line); background:#161a23; }
 .pick-head .back { color:var(--accent); font-size:12px; text-decoration:none; }
