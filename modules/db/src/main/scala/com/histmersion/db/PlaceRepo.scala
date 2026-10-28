@@ -324,9 +324,12 @@ object PlaceRepo:
   /** What site `id` is (#1449), read as the map's layer reads it ([[SiteTypes.of]]): a stored refinement,
     * else its gazetteer's own fields — so its card shows the icon its marker has. */
   private def siteTypeOf(id: String)(using DbCon): Option[String] =
-    sql"""SELECT kind, site_type, properties->>'feature_types', properties->>'fcode', properties->>'class'
-          FROM places WHERE id = $id""".query[(String, Option[String], Option[String], Option[String], Option[String])]
-      .run().headOption.flatMap((kind, stored, ft, fcode, wd) => SiteTypes.of(id, kind, stored, ft, fcode, wd))
+    sql"""SELECT kind, site_type, properties->>'feature_types', properties->>'fcode', properties->>'class',
+                 properties->>'p31'
+          FROM places WHERE id = $id""".query[(String, Option[String], Option[String], Option[String], Option[String],
+        Option[String])]
+      .run().headOption.flatMap((kind, stored, ft, fcode, wd, p31) =>
+        SiteTypes.of(id, kind, stored, ft, fcode, wd, SiteTypes.p31Of(p31)))
 
   /** What place `id` IS, as its sources describe it (V074): English first, then the other languages;
     * within one language the best source first (an LPF dataset, then Wikidata, then GeoNames). */
@@ -700,7 +703,8 @@ object PlaceRepo:
         // (V090: simplified to the map, written once); `geom` stays the published shape
         " coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5)) AS geojson," +
         // what a site is (#1449): a stored refinement, else its gazetteer's own fields (core.SiteTypes)
-        " p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class'" +
+        " p.site_type, p.properties->>'feature_types', p.properties->>'fcode', p.properties->>'class'," +
+        " p.properties->>'p31'" +
         s" FROM (SELECT * FROM $drawn ORDER BY ${rank("")}") ++
       Sql.of(" LIMIT ?", I(limit.max(1))) ++
       Sql.raw(s") l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}")
@@ -798,14 +802,14 @@ object PlaceRepo:
     connect(ds):
       val rows = geoJsonTimeQuery(kind, time, limit, modernFrom).frag
         .query[(String, String, String, Option[Long], Option[Long], PlaceDating, PlaceTimeBasis, Boolean, String,
-          Option[String], Option[String], Option[String], Option[String])].run()
+          Option[String], Option[String], Option[String], Option[String], Option[String])].run()
       // one buffer for the whole collection: over a whole range it is ~7 MB of outlines, and building
       // a string per feature, then joining them, then wrapping the join copied it three times
       val out = java.lang.StringBuilder(rows.iterator.map(_._9.length + 256).sum + 64)
       val _ = out.append("""{"type":"FeatureCollection","features":[""")
       rows.zipWithIndex.foreach { case ((id, label, placeKind, ps, pe, dating, basis, hasBoundary, geojson,
-          stored, featureTypes, fcode, wdClass), i) =>
-        val siteType = SiteTypes.of(id, placeKind, stored, featureTypes, fcode, wdClass)
+          stored, featureTypes, fcode, wdClass, p31), i) =>
+        val siteType = SiteTypes.of(id, placeKind, stored, featureTypes, fcode, wdClass, SiteTypes.p31Of(p31))
         import io.circe.Json
         val propsObj = Json.obj(
           "id" -> Json.fromString(id),
