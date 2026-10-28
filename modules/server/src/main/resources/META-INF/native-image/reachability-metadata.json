@@ -15332,6 +15332,27 @@
       "glob": "web/vendor/noto-sans/noto-sans-latin-ext-600-normal.woff2"
     },
     {
+      "glob": "web/vendor/source-fonts/README.md"
+    },
+    {
+      "glob": "web/vendor/source-fonts/SourceSans3-OFL.txt"
+    },
+    {
+      "glob": "web/vendor/source-fonts/SourceSans3-Regular.woff2"
+    },
+    {
+      "glob": "web/vendor/source-fonts/SourceSans3-Semibold.woff2"
+    },
+    {
+      "glob": "web/vendor/source-fonts/SourceSerif4-OFL.txt"
+    },
+    {
+      "glob": "web/vendor/source-fonts/SourceSerif4-Regular.woff2"
+    },
+    {
+      "glob": "web/vendor/source-fonts/SourceSerif4-Semibold.woff2"
+    },
+    {
       "glob": "web/vendor/protomaps-leaflet/LICENSE.txt"
     },
     {

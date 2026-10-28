@@ -38,6 +38,10 @@ Web UI (modules/server/src/main/resources/web/vendor)
   vendor/lucide/LICENSE.txt
 - Noto Sans (WOFF2 subsets) — SIL Open Font License 1.1, Copyright the Noto Project Authors.
   vendor/noto-sans/OFL.txt
+- Source Sans 3 (3.052R, Regular and Semibold, WOFF2) — SIL Open Font License 1.1, Copyright 2010-2022
+  Adobe, with Reserved Font Name 'Source'. vendor/source-fonts/SourceSans3-OFL.txt
+- Source Serif 4 (4.005R, Regular and Semibold, WOFF2) — SIL Open Font License 1.1, Copyright 2014-2023
+  Adobe, with Reserved Font Name 'Source'. vendor/source-fonts/SourceSerif4-OFL.txt
 
 Place, period and map data shipped in the repository and the bundle
 --------------------------------------------------------------------
