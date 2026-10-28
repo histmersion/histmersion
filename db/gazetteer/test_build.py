@@ -380,6 +380,16 @@ class FetchBackoff(unittest.TestCase):
         self.assertEqual(out.getvalue(), b"?item\t?name\n<x>\t1\n", "nothing of the cut-off answer is kept")
         self.assertIn("LIMIT 250000 OFFSET 0", asked[1], "a timeout while exporting asks in pages")
 
+    def test_a_connection_closed_mid_result_is_a_timeout(self):
+        import http.client
+
+        class Cut:
+            def read(self):
+                raise http.client.IncompleteRead(b"?item\t?name\n<q1>")
+        with self.assertRaises(build.HttpFailure) as ctx:
+            build.read_body(Cut())
+        self.assertEqual(build.classify(ctx.exception.code, ctx.exception.detail), "timeout")
+
     def test_split_band_halves_the_longer_side(self):
         self.assertEqual(build.split_band(build.WORLD), [(-180, -90, 0, 90), (0, -90, 180, 90)])
         self.assertEqual(build.split_band((0, -90, 180, 90)), [(0, -90, 90, 90), (90, -90, 180, 90)])
@@ -623,6 +633,229 @@ class Scopes(unittest.TestCase):
         self.assertIn("?lon >= -25 && ?lon <= 100 && ?lat >= 5 && ?lat <= 72", r["labels"])
         self.assertIn('FILTER(LANG(?name) IN ("akk"', r["labels"])
         self.assertNotIn('"zh"', r["labels"])
+
+
+class HeritageDating(unittest.TestCase):
+    """Heritage items and their dates (2026-10-28): which statement dated a place, and P2348 through PeriodO."""
+    DUMP = {"authorities": {
+        "p0ds9qj": {"source": {"title": "The British School at Athens: archaeological periods of Greece"}, "periods": {
+            "p0ds9qjpdcd": {"label": "Antiquity", "start": {"in": {"year": "-0799"}},
+                            "stop": {"in": {"earliestYear": "0324", "latestYear": "0600"}}},
+            "p0ds9qj3x2t": {"label": "Neolithic", "start": {"in": {"year": "-6499"}},
+                            "stop": {"in": {"earliestYear": "-3199", "latestYear": "-2999"}}},
+            "p0ds9qjmv48": {"label": "Hellenistic", "start": {"in": {"year": "-0322"}}, "stop": {"in": {"year": "-0030"}}},
+            "p0ds9qjrk5c": {"label": "Middle Neolithic ", "start": {"in": {"year": "-5899"}}, "stop": {"in": {"year": "-4749"}}},
+            "p0ds9qjbad1": {"label": "Broken", "start": {"in": {}}, "stop": {"in": {"year": "0100"}}},
+            "p0ds9qjdup1": {"label": "Twice", "start": {"in": {"year": "0100"}}, "stop": {"in": {"year": "0200"}}},
+            "p0ds9qjdup2": {"label": "Twice", "start": {"in": {"year": "0300"}}, "stop": {"in": {"year": "0400"}}}}},
+        "p03wskd": {"source": {"partOf": {"title": "Pleiades"}}, "periods": {
+            "p03wskdtwc": {"label": "Twice", "localizedLabels": {"en": ["Twice (Pleiades)"]},
+                           "start": {"in": {"year": "0500"}}, "stop": {"in": {"year": "0600"}}},
+            "p03wskdlink": {"label": "Linked", "sameAs": "http://www.wikidata.org/entity/Q777",
+                            "start": {"in": {"year": "1000"}}, "stop": {"in": {"year": "1100"}}}}},
+        "p0other": {"periods": {"p0otherneo": {"label": "Neolithic", "start": {"in": {"year": "-3999"}},
+                                               "stop": {"in": {"year": "-1799"}}}}}}}
+
+    def setUp(self):
+        self.po = build.periodo_index(self.DUMP)
+
+    def test_periodo_years_and_bounds(self):
+        self.assertEqual(build.periodo_year("-0799"), -800, "ISO 8601: year 0 is 1 BCE")
+        self.assertEqual(build.periodo_year("0000"), -1)
+        self.assertEqual(build.periodo_year("0324"), 324)
+        self.assertIsNone(build.periodo_year("about 300"))
+        self.assertEqual(build.periodo_bound({"in": {"year": "-0799"}}), (-800, -800))
+        self.assertEqual(build.periodo_bound({"in": {"earliestYear": "0324", "latestYear": "0600"}}), (324, 600))
+        self.assertIsNone(build.periodo_bound({"in": {}}))
+        self.assertEqual(build.label_key("  The Hellenistic  Period "), "hellenistic")
+
+    def test_index_skips_a_period_without_a_span(self):
+        self.assertNotIn("p0ds9qjbad1", self.po["periods"])
+        self.assertEqual(self.po["periods"]["p03wskdlink"]["wikidata"], {"Q777"})
+        self.assertEqual(self.po["titles"]["p03wskd"], "Pleiades")
+
+    def test_alias_label_link_and_country(self):
+        greece = {"Q41"}
+        self.assertEqual(build.periodo_period("Q486761", "classical antiquity", greece, self.po)["id"], "p0ds9qjpdcd",
+                         "the curated alias: classical antiquity is the BSA's Antiquity, not its Classical")
+        self.assertEqual(build.periodo_period("Q999", "Hellenistic period", greece, self.po)["id"], "p0ds9qjmv48",
+                         "the same words")
+        self.assertEqual(build.periodo_period("Q998", "Middle Neolithic", greece, self.po)["id"], "p0ds9qjrk5c")
+        self.assertEqual(build.periodo_period("Q777", "whatever", greece, self.po)["id"], "p03wskdlink", "sameAs")
+        self.assertEqual(build.periodo_period("Q997", "Twice", greece, self.po)["id"], "p03wskdtwc",
+                         "two BSA periods of one label are no answer; the next authority has one")
+        self.assertIsNone(build.periodo_period("Q36422", "Neolithic", {"Q43"}, self.po),
+                          "outside every scheme's country: no date, never another region's")
+        self.assertIsNone(build.periodo_period("Q36422", "Neolithic", set(), self.po))
+        self.assertIsNone(build.periodo_period("Q816829", "periodization", greece, self.po))
+        self.assertIsNone(build.periodo_period("Q36422", "Neolithic", greece, None), "no PeriodO, no date")
+
+    def test_every_period_must_resolve(self):
+        po, greece = self.po, {"Q41"}
+        start, end, found = build.periodo_dating({"Q36422", "Q486761"}, greece, {}, po)
+        self.assertEqual((start, end), ((-6500, -6500), (324, 600)), "the earliest start, the latest stop")
+        self.assertEqual([p["id"] for p in found], ["p0ds9qj3x2t", "p0ds9qjpdcd"])
+        self.assertIsNone(build.periodo_dating({"Q36422", "Q816829"}, greece, {"Q816829": "periodization"}, po),
+                          "a value that is no period leaves the item undated, not dated by half")
+        self.assertIsNone(build.periodo_dating(set(), greece, {}, po))
+
+    def test_date_source(self):
+        self.assertEqual(build.date_source({"P571", "P580"}), "wikidata-p580")
+        self.assertEqual(build.date_source({"P582"}), "wikidata-p580")
+        self.assertEqual(build.date_source({"P571", "P576"}), "wikidata-p571")
+        self.assertEqual(build.date_source({"P576"}), "wikidata-p576")
+        self.assertIsNone(build.date_source(set()))
+
+    def feature(self, root, times=None, facts=None):
+        stats = {"names": 0, "links": 0, "dated": 0, "heritage": 0, "heritage_only": 0, "registers": 0,
+                 "dated_by": {}, "by_class": {}, "p2348": 0, "p2348_unresolved": 0}
+        f = build.wd_feature("Q1", {"root": root, "points": {(22.8, 37.6)}}, "site", {"en": "X"}, [], times or {}, set(),
+                             stats, (), facts)
+        return f, stats
+
+    def test_statements_win_over_periods(self):
+        f, stats = self.feature("Q839954", {"P571": [(1400, 7, "")]},
+                                {"periods": {"Q36422"}, "countries": {"Q41"}, "periodo": self.po})
+        self.assertEqual(f["when"], {"timespans": [{"start": {"earliest": "1301", "latest": "1400"}}]})
+        self.assertEqual(f["properties"]["date_source"], "wikidata-p571")
+        self.assertNotIn("periodo", f["properties"])
+        self.assertEqual(stats["dated_by"], {"wikidata-p571": 1})
+
+    def test_a_period_dates_through_periodo_and_says_so(self):
+        f, stats = self.feature("Q839954", None, {"periods": {"Q428995"}, "countries": {"Q41"},
+                                                  "period_labels": {"Q428995": "Hellenistic period"}, "periodo": self.po})
+        self.assertEqual(f["when"], {"timespans": [{"start": {"in": "-323"}, "end": {"in": "-31"}}]})
+        self.assertEqual(f["properties"]["date_source"], "p2348-periodo:p0ds9qjmv48")
+        self.assertEqual(f["properties"]["periodo"], [{"id": "p0ds9qjmv48", "label": "Hellenistic", "authority": "p0ds9qj",
+            "authorityTitle": "The British School at Athens: archaeological periods of Greece"}])
+        self.assertEqual(f["properties"]["periods"], [{"id": "Q428995", "label": "Hellenistic period"}])
+        self.assertNotIn("modern", f["properties"])
+        self.assertEqual(stats["dated_by"], {"p2348-periodo": 1})
+
+    def test_an_undated_heritage_item_stays_undated(self):
+        f, stats = self.feature(None, None, {
+            "p31": {"Q3947", "Q41176"}, "heritage": {("Q29048696", 1962, None), ("Q29048715", None, None)},
+            "heritage_labels": {"Q29048696": "protected building in Greece"},
+            "registers": {"P13741": ["164525:Monument"]}})
+        p = f["properties"]
+        self.assertTrue(p["modern"])
+        self.assertNotIn("when", f)
+        self.assertNotIn("class", p, "a designated item of no root class has none")
+        self.assertNotIn("types", f)
+        self.assertEqual(p["p31"], ["Q3947", "Q41176"])
+        self.assertEqual(p["heritage"], [{"id": "Q29048696", "label": "protected building in Greece", "start": 1962},
+                                         {"id": "Q29048715"}])
+        self.assertEqual(p["registers"], {"P13741": ["164525:Monument"]})
+        self.assertEqual((stats["heritage"], stats["heritage_only"], stats["by_class"]), (1, 1, {"P1435": 1}))
+
+    def test_heritage_queries_and_scope(self):
+        q = build.wd_queries()
+        self.assertIn("UNION { ?item wdt:P1435 ?designation . }", q["core"])
+        self.assertIn("wd:Q23413", q["core"])
+        for name in ("p31", "country", "heritage", "heritage_labels", "period", "period_labels", "reg_P13741"):
+            self.assertIn(name, q)
+        self.assertIn("pq:P580", q["heritage"])
+        self.assertTrue(q["labels"].startswith("SELECT DISTINCT ?item ?name WHERE { { SELECT DISTINCT ?item WHERE {"),
+                        "an aspect joins the item set computed first")
+        self.assertNotIn("SELECT DISTINCT ?item WHERE", q["core"])
+        self.assertIn("{ SELECT ?item ?st WHERE {", q["time_P576"], "statements restricted to the items first")
+        self.assertIn("{ SELECT ?item ?st WHERE {", q["heritage"])
+        self.assertIn('FILTER(LANG(?name) IN ("en", "mul"))', q["period_labels"])
+        greece = build.wd_queries(build.Scope(build.parse_bbox("19.3,34.7,29.7,41.8")))
+        self.assertIn("?lon >= 19.3 && ?lon <= 29.7 && ?lat >= 34.7 && ?lat <= 41.8", greece["heritage"])
+
+    def test_endpoint_and_periodo_options(self):
+        self.assertEqual(build.fetch_args(["wd"]), (build.WD_ENDPOINT, "wd"))
+        self.assertEqual(build.WD_ENDPOINT, "https://qlever.dev/api/wikidata")
+        self.assertEqual(build.fetch_args(["wd"], "http://localhost:7001"), ("http://localhost:7001", "wd"))
+        self.assertEqual(build.fetch_args(["http://x/sparql", "wd"]), ("http://x/sparql", "wd"))
+        self.assertEqual(build.split_options(["wikidata", "a", "b", "--periodo", "d.json", "--endpoint=http://e"]),
+                         ({"periodo": "d.json", "endpoint": "http://e"}, ["wikidata", "a", "b"]))
+
+    def test_load_periodo_reads_plain_json(self):
+        d = tempfile.mkdtemp()
+        path = os.path.join(d, "p0d.json")
+        with open(path, "w") as fh:
+            json.dump(self.DUMP, fh)
+        po = build.load_periodo(path)
+        self.assertIn("p0ds9qjpdcd", po["periods"])
+        self.assertEqual(po["sha256"], build.sha256(path))
+
+
+class GreeceFixture(unittest.TestCase):
+    """A committed cut of the Greece fetch (2026-10-28, `--bbox 19.3,34.7,29.7,41.8`, testdata/wikidata-greece):
+    23 items — the four Argolis monuments the old roots missed, and one of each new class, dating path and
+    keep rule — and the BSA scheme from PeriodO (p0ds9qj). Rebuilt here exactly as `build.py wikidata … --periodo`."""
+    HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "testdata", "wikidata-greece")
+
+    @classmethod
+    def setUpClass(cls):
+        out = os.path.join(tempfile.mkdtemp(), "greece.ndjson.gz")
+        cls.stats = build.wikidata(os.path.join(cls.HERE, "wd"), out,
+                                   periodo=build.load_periodo(os.path.join(cls.HERE, "periodo-bsa.json")))
+        cls.out = out
+        cls.fs = {f["@id"].rsplit("/", 1)[1]: f for f in features(out)}
+
+    def test_the_four_argolis_monuments_are_kept_and_typed(self):
+        for q, cls_, p31 in (("Q3555617", "Q1785071", ["Q57831", "Q88291"]),   # Akronauplia: fortress, citadel
+                             ("Q1012861", "Q23413", ["Q23413"]),               # Larissa Castle
+                             ("Q56398298", "Q44613", ["Q44613"]),              # the Talantio monastery
+                             ("Q38280392", "Q16970", ["Q16970", "Q2031836"])):  # the Bermpaka church
+            p = self.fs[q]["properties"]
+            self.assertEqual((p["kind"], p["class"], p["p31"]), ("site", cls_, p31), q)
+            self.assertIn("Q29048696", [h["id"] for h in p["heritage"]], f"{q}: a protected building in Greece")
+            self.assertEqual(p["heritage"][0]["label"], "protected building in Greece")
+
+    def test_talantio_and_bermpaka_are_dated_by_their_inception(self):
+        t = self.fs["Q56398298"]
+        self.assertEqual(t["when"], {"timespans": [{"start": {"earliest": "1301", "latest": "1400"}}]},
+                         "P571 1400 to the century: the 14th century, an open end")
+        self.assertEqual(t["properties"]["date_source"], "wikidata-p571")
+        b = self.fs["Q38280392"]
+        self.assertEqual(b["when"], {"timespans": [{"start": {"earliest": "1200", "latest": "1209"}}]},
+                         "P571 1200 (a decade) and 1300 (a century): the earliest inception")
+        self.assertEqual(b["properties"]["date_source"], "wikidata-p571")
+        self.assertEqual(b["properties"]["registers"]["P2186"], ["GR-J11-0037"])
+
+    def test_the_two_undated_castles_stay_undated(self):
+        for q in ("Q3555617", "Q1012861"):
+            self.assertNotIn("when", self.fs[q])
+            self.assertTrue(self.fs[q]["properties"]["modern"])
+            self.assertNotIn("date_source", self.fs[q]["properties"])
+
+    def test_dating_through_periodo(self):
+        a = self.fs["Q2827860"]  # Aigosthena: Hellenistic period, Classical Greece
+        self.assertEqual(a["when"], {"timespans": [{"start": {"in": "-480"}, "end": {"in": "-31"}}]})
+        self.assertEqual(a["properties"]["date_source"], "p2348-periodo:p0ds9qjmv48+p0ds9qj2hxw")
+        self.assertEqual({p["authority"] for p in a["properties"]["periodo"]}, {"p0ds9qj"})
+        m = self.fs["Q19053"]  # Mystras: Byzantine Empire → the BSA's Byzantine, 324–1453
+        self.assertEqual(m["when"], {"timespans": [{"start": {"in": "324"}, "end": {"in": "1453"}}]})
+        self.assertNotIn("when", self.fs["Q18419527"], "Frankokratia has no BSA period: undated, not guessed")
+        self.assertNotIn("when", self.fs["Q12904804"], "Neolithic in North Macedonia: no PeriodO scheme there")
+        self.assertEqual((self.stats["p2348"], self.stats["p2348_unresolved"]), (4, 2))
+
+    def test_new_classes_heritage_only_items_and_the_keep_rule(self):
+        classes = {q: f["properties"].get("class") for q, f in self.fs.items()}
+        for q, c in (("Q4484", "Q12280"), ("Q952924", "Q474"), ("Q91274", "Q12518"), ("Q12506", "Q32815"),
+                     ("Q747244", "Q34627"), ("Q4857720", "Q108325"), ("Q81650", "Q57821")):
+            self.assertEqual(classes[q], c, q)
+        for q in ("Q6514", "Q35958"):  # designated, of no root class (straits)
+            self.assertIsNone(classes[q])
+            self.assertNotIn("types", self.fs[q])
+            self.assertTrue(self.fs[q]["properties"]["heritage"])
+        self.assertIn("Q172267", self.fs, "a settlement with a designation is kept")
+        self.assertNotIn("Q122320", self.fs, "a plain settlement is not")
+        self.assertEqual(self.fs["Q10288"]["properties"]["registers"]["P13741"], ["164525:Monument"])
+        self.assertEqual(self.fs["Q11772"]["properties"]["date_source"], "wikidata-p580")
+        self.assertEqual(self.fs["Q206095"]["properties"]["date_source"], "wikidata-p576")
+        self.assertEqual(self.stats["dated_by"], {"wikidata-p571": 8, "wikidata-p580": 1, "p2348-periodo": 2,
+                                                  "wikidata-p576": 1})
+
+    def test_deterministic_bytes(self):
+        again = os.path.join(tempfile.mkdtemp(), "again.ndjson.gz")
+        build.wikidata(os.path.join(self.HERE, "wd"), again,
+                       periodo=build.load_periodo(os.path.join(self.HERE, "periodo-bsa.json")))
+        self.assertEqual(build.sha256(self.out), build.sha256(again))
 
 
 class OutputDir(unittest.TestCase):
