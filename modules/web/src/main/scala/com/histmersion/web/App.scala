@@ -32,6 +32,7 @@ object App:
       dom.console.error("Histmersion: config failed", e.getMessage)
       Option(dom.document.getElementById("app")).foreach(_.textContent = s"Failed to load config: ${e.getMessage}")
     }
+    Theme.install()
     configF.foreach { ui =>
       config = ui
       UiState.init(ui)

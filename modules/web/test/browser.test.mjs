@@ -566,7 +566,7 @@ test('a toolbar button is bold with news until its window is opened, and stays r
     await withPage({ width: 1440, height: 900 }, async page => {
       const button = page.locator('.fbar .tool-btns button[title="Backlog"]');
       await page.waitForFunction(() => document.querySelector('.fbar .tool-btns button[title="Backlog"]')?.classList.contains('has-news'));
-      assert.equal(await button.evaluate(el => getComputedStyle(el).fontWeight), '700', 'bold');
+      assert.equal(await button.evaluate(el => getComputedStyle(el).fontWeight), '600', 'bold (the strong of the two weights)');
       assert.equal(await button.locator('.btn-count').innerText(), String(Math.min(open, 99)) + (open > 99 ? '+' : ''));
       // the other buttons are not bold for it
       assert.equal(await page.locator('.fbar .tool-btns button[title="Jobs"]').evaluate(el => el.classList.contains('has-news')), false);
@@ -3406,3 +3406,57 @@ test('the timeline draws a smooth curve at its shown size; one hover marker says
   });
 });
 
+// The theme (web Theme): one button cycles system → light → dark → system, as the documentation site's does.
+// "System" follows prefers-color-scheme; a chosen theme is kept per browser (localStorage) and applied by the
+// page's <head> before it paints, so a reload never flashes the other one. Pressing it answers within a frame.
+test('theme: the button cycles system → light → dark → system, persists, and system follows the colour scheme', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const button = page.locator('.tool-btns .theme-btn:visible');
+    const state = () => page.evaluate(() => ({
+      attr: document.documentElement.getAttribute('data-theme'),
+      choice: [...document.querySelectorAll('.tool-btns .theme-btn')].find(b => b.offsetParent !== null)?.getAttribute('data-theme-choice'),
+      stored: (() => { try { return localStorage.getItem('histmersion.theme'); } catch { return 'unreadable'; } })(),
+      bg: getComputedStyle(document.body).backgroundColor,
+      panel: getComputedStyle(document.querySelector('.sidebar')).backgroundColor,
+    }));
+    const LIGHT = 'rgb(244, 245, 247)', DARK = 'rgb(17, 21, 25)';
+    await button.waitFor();
+    await page.emulateMedia({ colorScheme: 'light' });
+    let s = await state();
+    assert.deepEqual([s.attr, s.choice, s.stored, s.bg], ['system', 'system', null, LIGHT], 'system, light scheme');
+    await page.emulateMedia({ colorScheme: 'dark' });
+    s = await state();
+    assert.equal(s.bg, DARK, 'system follows a dark scheme');
+    assert.equal(s.panel, 'rgb(24, 32, 41)');
+    // a press: light, at once — the new colours within a frame of the click
+    const ms = await page.evaluate(() => new Promise(resolve => {
+      const t0 = performance.now();
+      [...document.querySelectorAll('.tool-btns .theme-btn')].find(b => b.offsetParent !== null).click();
+      requestAnimationFrame(() => { void getComputedStyle(document.body).backgroundColor; resolve(performance.now() - t0); });
+    }));
+    assert.ok(ms < 100, `the theme changed in ${ms.toFixed(1)} ms`);
+    s = await state();
+    assert.deepEqual([s.attr, s.choice, s.stored, s.bg], ['light', 'light', 'light', LIGHT], 'light under a dark scheme');
+    await button.click();
+    s = await state();
+    assert.deepEqual([s.attr, s.choice, s.stored, s.bg], ['dark', 'dark', 'dark', DARK], 'dark');
+    await page.emulateMedia({ colorScheme: 'light' });
+    assert.equal((await state()).bg, DARK, 'a chosen dark ignores the scheme');
+    assert.match(await button.getAttribute('title'), /^Theme: dark\. Click for the system's setting\.$/);
+    // remembered: a reload comes back dark, applied before the app's bundle has run
+    await page.reload();
+    assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'dark', 'applied by the <head>');
+    await page.waitForFunction(() => window.__testMap);
+    await button.waitFor();
+    s = await state();
+    assert.deepEqual([s.attr, s.choice, s.bg], ['dark', 'dark', DARK], 'still dark after a reload');
+    // and back to the system's setting: nothing stored, the scheme decides again
+    await button.click();
+    s = await state();
+    assert.deepEqual([s.attr, s.choice, s.stored, s.bg], ['system', 'system', null, LIGHT], 'system again');
+    // the interface face is the bundled one, loaded from this server
+    await page.evaluate(() => document.fonts.ready);
+    assert.ok(await page.evaluate(() => document.fonts.check('14px "Source Sans 3"')), 'Source Sans 3 is loaded');
+    assert.match(await page.evaluate(() => getComputedStyle(document.body).fontFamily), /^"Source Sans 3"/);
+  });
+});

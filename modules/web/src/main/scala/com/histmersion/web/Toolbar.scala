@@ -88,5 +88,7 @@ object Toolbar:
             ): Modifier[HtmlElement]
           }
         )
-      }
+      },
+      // how the page looks, not a window: its own group, last
+      div(cls := "btn-group", role := "group", aria.label := "appearance", Theme.toggle)
     )

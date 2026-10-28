@@ -13,7 +13,8 @@ class HtmlEscapeSuite extends munit.FunSuite:
 
   test("Article.page escapes the title into <title> (pure)"):
     val html = Article.page(payload, "<p>body</p>", PageKind.Source)
-    assert(!html.contains("<script>"), html.take(300))
+    // the page's own <head> script (the reader's theme) is not the payload
+    assert(!html.contains(payload) && !html.contains("<script>alert"), html.take(300))
     assert(html.contains("&lt;script&gt;alert(1)&lt;/script&gt; · Histmersion"), html.take(300))
     assert(html.contains("<p>body</p>"), "the body is already HTML and stays as it is")
 

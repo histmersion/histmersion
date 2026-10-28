@@ -241,7 +241,7 @@ object SourceEditor:
                 value <-- draft.signal.map(_.fold("")(_.status.wire)),
                 onChange.mapToValue --> (v => edit(_.copy(status = SourceStatus.fromString(v))))
               ),
-              SourceStatus.values.toList.map(s => option(value := s.wire, s.wire))
+              SourceStatus.values.toList.map(s => option(value := s.wire, Wording.status(s)))
             ))
         ),
         field("venue", Field.Venue, textIn(_.venue, (d, v) => d.copy(venue = v))),

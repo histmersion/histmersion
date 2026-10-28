@@ -614,7 +614,7 @@ object Preview:
       Option.when(c.chips.nonEmpty)(div(cls := "cite-tip-chips",
         c.chips.map((_, v) => Chip.value(v)))),
       Option.when(c.where.nonEmpty)(div(cls := "cite-tip-geo", c.where)),
-      c.status.map(s => div(cls := s"cite-tip-status ${s.toString.toLowerCase}", s.toString.toLowerCase)),
+      c.status.map(s => div(cls := "cite-tip-status", StatusBadge(s))),
       c.facts.map(f => div(cls := "cite-tip-fact", f)),
       Option.when(c.links.nonEmpty)(div(cls := "cite-tip-links",
         c.links.map((t, href) => a(cls := "cite-tip-link", com.raquo.laminar.api.L.href := href,

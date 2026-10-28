@@ -18,6 +18,16 @@ class WebAssetsSuite extends munit.FunSuite:
   test("each bookkeeping list's address, and the merge screen's, serve the app, which opens that window"):
     assertEquals(HttpApi.appPaths, Set(List("acquire"), List("tasks"), List("log"), List("merge")))
 
+  test("both page shells apply the reader's stored theme before the stylesheet paints"):
+    val key = "localStorage.getItem(\"histmersion.theme\")"
+    for (name, html) <- List("index.html" -> asset("index.html"),
+        "a server page" -> Article.page("t", "<p>b</p>", PageKind.values.head)) do
+      val at = html.indexOf(key)
+      assert(at > 0, s"$name: no theme script")
+      assert(at < html.indexOf("/web/style.css"), s"$name: the theme is applied after the stylesheet")
+      assert(html.contains("setAttribute(\"data-theme\",t)") && html.contains("catch(e)"), name)
+    assert(asset("index.html").contains("""<link rel="preload" href="/web/vendor/source-fonts/SourceSans3-Regular.woff2" as="font""""))
+
   test("the bundle is a classic script, never type=module (its top-level `this` must be the window)"):
     val html = asset("index.html")
     assert(!"<script[^>]*src=\"[^\"]*app\\.bundle\\.js".r.findFirstIn(html).exists(_.contains("module")), html)

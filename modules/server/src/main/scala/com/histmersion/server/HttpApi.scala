@@ -305,11 +305,16 @@ object Article:
   def page(title: String, bodyHtml: String, kind: PageKind): String =
     s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
        |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Histmersion</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
-       |<link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="${kind.wire}">
+       |$ThemeScript<link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="${kind.wire}">
        |<div class="nav"><a href="/">← Histmersion</a></div>
        |<main id="page-content">$bodyHtml</main>
        |<script src="$BundlePath"></script>
        |</body></html>""".stripMargin
+
+  /** The reader's theme (the web UI's `Theme`, kept in `localStorage`), applied before the stylesheet
+    * paints so a page never flashes the other theme first; the stylesheet follows the system without it. */
+  val ThemeScript =
+    """<script>try{var t=localStorage.getItem("histmersion.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>"""
 
   /** The Scala.js bundle — the same file the web UI's `index.html` loads, which carries every page's
     * entry point (`web.Main` dispatches on the path). */

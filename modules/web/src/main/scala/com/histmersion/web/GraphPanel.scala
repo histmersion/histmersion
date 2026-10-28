@@ -70,9 +70,7 @@ object GraphPanel:
     val (statuses, kinds) = legend(g)
     div(
       cls := "graph-legend",
-      statuses.map(s => span(cls := "graph-legend-item",
-        span(cls := "graph-legend-dot", styleAttr := s"--c:var(${Palette.status(s.toString.toLowerCase)})"),
-        s.toString.toLowerCase)),
+      statuses.map(s => span(cls := "graph-legend-item", StatusBadge(s))),
       kinds.map(k => span(cls := "graph-legend-item",
         span(cls := "graph-legend-color", styleAttr := s"--c:var(${Palette.edge(EdgeKind.wireOf(k))})"),
         Wording.capitalize(Label.display(EdgeKind.wireOf(k)))))
@@ -85,7 +83,7 @@ object GraphPanel:
         case None    => span(cls := "muted", "hover a node · double-click opens it · drag to move · wheel to zoom")
         case Some(n) =>
           span(SourceLink(n.id), " ", n.title.getOrElse(""), n.year.fold("")(y => s" ($y)"), " ",
-            n.status.fold(emptyNode)(s => span(cls := s"status-badge st-${s.wire}", s.wire)))
+            n.status.fold(emptyNode)(s => StatusBadge(s)))
       }
     )
 
@@ -110,6 +108,8 @@ object GraphPanel:
           val obs = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(measure)
           obs.observe(host)
           size.signal.foreach(_ => sim.resized())(using ctx.owner)
+          // a canvas cannot read CSS: it draws again with the new theme's colours
+          Theme.changes.foreach(_ => sim.resized())(using ctx.owner)
           measure(())
           sim.start()
           (obs, sim),

@@ -27,7 +27,11 @@ object ChipInput:
       getSuggestions: String => Future[List[Facet]],
       onChange: List[String] => Unit,
       /** Transient preview of a hovered suggestion; `None` ends it. Never touches the chips. */
-      onPreview: Option[String] => Unit = _ => ()
+      onPreview: Option[String] => Unit = _ => (),
+      /** How a value reads on its chip and in the suggestions. */
+      display: String => String = Label.display,
+      /** The classes of a value's mark, if it has one (a source status's `st-<status>`: the status code). */
+      mark: String => Option[String] = _ => None
   )
 
   /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change
@@ -117,10 +121,10 @@ object ChipInput:
         cls := "chips-list",
         children <-- values.map { vs =>
           vs.zipWithIndex.map { (v, i) =>
-            Chip.value(v, remove = Some { () =>
+            Chip(config.display(v), remove = Some { () =>
               removeAt(i)
               if inputEl != null then inputEl.focus()
-            })
+            }, extraCls = config.mark(v).fold("")(m => s"has-mark $m"), tip = Option.when(config.display(v) != v)(v))
           }
         }
       ),
@@ -195,7 +199,8 @@ object ChipInput:
               idAttr := s"$id-o$i",
               cls("active") <-- active.signal.map(_ == i),
               htmlAttr("aria-selected", StringAsIsCodec) <-- active.signal.map(a => (a == i).toString),
-              span(cls := "v", hintLabel(it.value)),
+              config.mark(it.value).map(m => span(cls := s"status-mark $m", aria.hidden := true)),
+              span(cls := "v", config.display(it.value)),
               " ",
               span(cls := "c", s"(${it.count})"),
               onMouseDown.preventDefault --> { _ => add(it.value) },

@@ -62,6 +62,7 @@ object StandalonePage:
   def isStandalone: Boolean = Option(document.body).exists(_.hasAttribute("data-page"))
 
   def init(): Unit =
+    Theme.install()
     Preview.install()
     Option(document.getElementById("page-content")).foreach { root =>
       InPage.wire(root)
