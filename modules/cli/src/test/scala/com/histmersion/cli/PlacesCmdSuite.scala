@@ -68,3 +68,26 @@ class PlacesCmdSuite extends munit.FunSuite:
       "--from", "-1300", "--to", "-1100"))
     assert(!parses("places", "add", "Gornji Grad", "--lon", "15.98", "--lat", "45.81"), "--source is required")
     assert(!parses("places", "add", "Gornji Grad", "--source", "x"), "--lon/--lat are required")
+
+  test("#6560: a relative seed dir falls back to the install the executable sits in"):
+    val install = Files.createTempDirectory("histmersion-install")
+    val _ = Files.createDirectories(install.resolve("db/places"))
+    val bin = Files.createDirectories(install.resolve("bin"))
+    val exe = Files.writeString(bin.resolve("histmersion"), "")
+    val elsewhere = Files.createTempDirectory("histmersion-cwd")
+    val (d, tried) = PlacesCmd.resolveSeedDir("db/places", elsewhere, Some(exe))
+    assertEquals(d, install.resolve("db/places").toRealPath())
+    assertEquals(tried.size, 2)
+
+  test("#6560: the working directory wins when it holds the seed dir; absolute paths are kept"):
+    val cwd = Files.createTempDirectory("histmersion-checkout")
+    val _ = Files.createDirectories(cwd.resolve("db/places"))
+    assertEquals(PlacesCmd.resolveSeedDir("db/places", cwd, None)._1, cwd.resolve("db/places"))
+    val abs = cwd.resolve("elsewhere").toAbsolutePath
+    assertEquals(PlacesCmd.resolveSeedDir(abs.toString, Path.of("/"), None), (abs, List(abs)))
+
+  test("#6560: nothing found — the first candidate, and every one tried for the message"):
+    val cwd = Files.createTempDirectory("histmersion-empty")
+    val (d, tried) = PlacesCmd.resolveSeedDir("db/places", cwd, None)
+    assertEquals(d, cwd.resolve("db/places"))
+    assertEquals(tried, List(cwd.resolve("db/places")))

@@ -103,6 +103,19 @@ object PlacesCmd:
   /** The seed set in import order — [[PlaceSeed.files]], shared with the server's first-run import. */
   private[cli] def seedFiles(dir: Path): List[(Path, Option[String])] = PlaceSeed.files(dir)
 
+  /** Where `places seed` reads: an absolute path as given; a relative one (the default `db/places`) under
+    * the working directory when it is there (a checkout), else under the install this executable sits in
+    * (`<home>/bin/histmersion`, through the `~/bin` symlink), whose bundle ships `db/places`. Returns the
+    * directory picked and every candidate tried, for the error message. */
+  def resolveSeedDir(dir: String, cwd: Path, exe: Option[Path]): (Path, List[Path]) =
+    val p = Path.of(dir)
+    if p.isAbsolute then (p, List(p))
+    else
+      val home = exe.flatMap(e => scala.util.Try(e.toRealPath()).toOption)
+        .flatMap(e => Option(e.getParent)).flatMap(b => Option(b.getParent))
+      val candidates = (cwd.resolve(p) :: home.map(_.resolve(p)).toList).map(_.normalize).distinct
+      (candidates.find(Files.isDirectory(_)).getOrElse(candidates.head), candidates)
+
   /** The whole committed seed set (`db/places`), imported in [[seedFiles]] order.
     *
     * A second pass re-imports every file that reported a DANGLING PARENT: a polygon may legitimately
@@ -114,9 +127,13 @@ object PlacesCmd:
       Opts.option[Int]("batch", "Features per request").orNone,
       Opts.flag("no-rebuild", "Do not re-materialise finding_places afterwards").orFalse)
       .mapN { (dir, batch, noRebuild) => (c: Client) =>
-        val d = Path.of(dir.filter(_.nonEmpty).getOrElse(seedDir))
+        val exe = scala.util.Try(ProcessHandle.current().info().command().orElse(null)).toOption
+          .flatMap(Option(_)).map(Path.of(_))
+        val (d, tried) = resolveSeedDir(dir.filter(_.nonEmpty).getOrElse(seedDir), Path.of("").toAbsolutePath, exe)
         val n = batch.getOrElse(defaultBatch)
-        if !Files.isDirectory(d) then Left(CliError(s"not a directory: $d", exitCode = ExitCode.Usage))
+        if !Files.isDirectory(d) then
+          Left(CliError(s"not a directory: ${tried.mkString(", ")} — pass --dir <path to db/places>",
+            exitCode = ExitCode.Usage))
         else
           val files = seedFiles(d)
           if files.isEmpty then
