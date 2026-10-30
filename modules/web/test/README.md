@@ -5,7 +5,9 @@ touch-slider versus drawer gestures, cancelled pointer sequences, and controlled
 and (`perf.test.mjs`) the web UI's speed and memory budgets and a soak test that fails on a leak
 (docs/research-web-perf.md).
 They use the real application and Chromium; external tile requests are blocked. They make no corpus
-writes. Use a separately started test server so tests do not depend on the live corpus.
+writes, but for `marks.test.mjs`: it writes the person's bookmarks, notes and read marks (and two sources named
+`zz_mark_*`) into the test server's database, a `*_test` one, and takes the bookmarks, notes and read marks away
+again. Use a separately started test server so tests do not depend on the live corpus.
 
 From the repository root:
 

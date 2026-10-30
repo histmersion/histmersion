@@ -207,7 +207,8 @@ Bookmarks, notes and read marks have places in the item header and in Library �
 list where they were left. Multi-user stays optional: in single-user mode there is no sign-in and no
 user menu; when enabled, a user menu appears, and Settings › People and access manages roles, with
 the UI hiding what a role cannot use (server-side checks first; today reads are always open and one
-shared key gates writes). Config editing appears as Settings and "Advanced (all settings)".
+shared key gates writes). Config editing appears as Settings and "Advanced (all settings)". Bookmarks, notes and read marks are built (§ 10, phase 8); multi-user is proposed in
+[`research-multi-user.md`](research-multi-user.md).
 
 ## 5. Bugs found, independent of the redesign
 
@@ -350,3 +351,66 @@ non-technical users; SUS and NASA-TLX before and after. Details in the evidence 
   sources and no credential; a change written, read back and set back to its default; a refused value; the map's
   last view; #7382). The browser tests that write the settings file run only when `HISTMERSION_TEST_CONFIG_FILE`
   names the test server's own file; the harness answers `/api/config` with `setupDue: false` unless a test asks.
+
+## 10. As built: phase 8, bookmarks, notes and read marks (2026-10-30)
+
+- **The person's data is in the database, shaped to travel** (V109; `research-deterministic-merge.md`): `bookmarks`,
+  `notes` and `read_marks`, each row a UUIDv7 `id`, `origin` (the instance that made it), `created_at` /
+  `updated_at`, a `user_id` (the fixed `local` user while the server runs for one person) and, for bookmarks and
+  notes, a tombstone in the row (`deleted_at`) instead of a delete. A **target** is an item of the collection
+  (`source`, `article`, `event`, `place`, `picture`, `goal` with its key; its `uid` kept where the table has one,
+  so a renamed source keeps its bookmark and shows its new title), a `point` on the map (lat, lon, optionally
+  the years), a saved `view` of Explore (the address's state after `#` — filters, span, layers — with the map's
+  centre and zoom), or a `period` (years). No foreign keys: a deleted item leaves what the person wrote.
+- **The read rule**: an item is read only when the person says so (**Mark as read**); opening it (Library's
+  reading pane, Explore's detail) is kept apart as `opened_at`, for **Recently opened**, and marks nothing read.
+  Marking unread keeps the row with no read time (the row is the item's latest state, as a register).
+- **Surfaces** (`domain.personal`: `BookmarkService`, `NoteService`, `ReadingService` — Implementation over the
+  tables, InMemory over one shared state by the same rules — and `PersonalControllers`): `GET|POST
+  /api/bookmarks`, `PATCH|DELETE /api/bookmarks/{id}`, `GET|POST /api/notes`, `GET|PATCH|DELETE /api/notes/{id}`
+  (an edit names `ifUpdatedAt`: 412 when the note changed since), `GET|PUT /api/reading`, `POST
+  /api/reading/opened`, `GET /api/reading/unread`; `histmersion bookmarks list|add|rm`, `histmersion notes
+  list|show|add|edit|rm`; MCP `bookmarks` and `notes`, **read only** — no tool adds, changes or removes them.
+- **The item's header** (`web.marks.ItemActions`, in the reading pane and Explore's detail): Bookmark (pressed
+  while it is), Add note, Mark as read / unread, "⋯"; the item's notes under it, each with Change and Delete.
+  The **note editor** is a plain text box with a Markdown preview (`NoteMarkdown`, a small safe subset built as
+  elements, never HTML), Save / Cancel, drafts kept per browser (`histmersion.noteDraft.*`, every access
+  guarded) until saved or cancelled.
+- **My library**: Everything, Bookmarks, My notes, Not read yet (the server's, a page at a time, per tab),
+  Recently opened, with counts; the shelf is in the address (`?shelf=`); a row opens back where it was left
+  (`OpenBack`); a dot marks a source or an article not marked read, in the shelves and Library's table.
+- **Saved views**: "Save this view…" in Explore's filter panel (as the mock-up shows), listed there and in
+  Bookmarks; opening one restores the hash state, the span and the map's centre and zoom.
+- **One context menu** (`web.ui.ContextMenu`): right click, the menu key or Shift+F10, and a visible "⋯" on the
+  reading pane, the map and the timeline; ↑ ↓ Home End, Enter, Escape returns the focus; no action is only there.
+  Rows and the reading pane: copy the text, the Markdown (`[title](link)`, a source's `[[citekey]]`) or the link,
+  bookmark, open in a new tab. The map: bookmark this place, add a note here, lock the map (`MapSurface.setLocked`:
+  drag, wheel, keys, pinch and the zoom buttons off, a notice with Unlock), start the map here (`ui.map-start`
+  through the settings service), bookmark this view. The timeline: lock it (no drag, click, wheel or button
+  moves the span; the page's own moves still do), start it at its years — the existing `ui.time.default-from` /
+  `default-to`, so no new key —, and **my periods**: there are no custom presets, so a period is a bookmark of
+  kind `period`, listed first in "Zoom to period" (and in Bookmarks), × removes it. The presets menu now opens
+  upwards: under the timeline at the foot of the window it scrolled the whole page.
+- **The map's "My notes" layer** (`MapLayer.Notes`, off by default like every layer): notes left at a point, as
+  DOM markers in the markers pane with the markers' tokens; a click or Enter shows the note in the map's popup.
+- **#7781**: a result row's actions (bookmark, new tab) are a column of the row itself (`.has-actions` grid),
+  at its right, as tall as the row (the row's padding as `--row-py`/`--row-px`), lit with its hover and focus;
+  they were a float that overflowed into the next row. The same on articles, events, places and pictures.
+- **#7780**: the results column defaults to 480 px — five tabs with five-digit counts measured 462 px at 1440×900;
+  the tablet's side sheet follows the same width with the desktop's type size (it needed 525 px at the tablet's
+  15 px) — and keeps the width per browser (`histmersion.resultsWidth`), 320 px to 60 % of the window, by drag or
+  by the focusable separator (← wider, → narrower, Shift ×4, Home, End). Below the fit the tab row scrolls with
+  shaded edges, never clipped silently. Resizing still neither refetches nor rebuilds the map.
+- **Not done**: bookmarks, notes and read marks do **not** travel in `.hmx` bundles — no person data does today
+  (`place_overrides` neither, `research-deterministic-merge.md` § 2.6); the rows carry what the exchange will
+  need (uid, origin, timestamps, tombstones, user). Optional multi-user is a design only:
+  [`research-multi-user.md`](research-multi-user.md).
+- **Tests**: the same scenarios over the in-memory and the database services (`PersonalServicesSuite`), the
+  controllers, an HTTP suite (REST and the read-only tools), the wire, the Markdown, the CLI's flags; Scala.js
+  suites for the pure parts; `modules/web/test/marks.test.mjs` (13 Chromium tests, in `test:browser`): bookmarks
+  of an item and of a saved view, notes (preview, draft, save, change, reopen at the target, delete), a map-point
+  note from the map's menu by keyboard and the layer, read marks and the shelves, the context menu's mouse and
+  keyboard paths and its copies, the map lock, the timeline lock and my periods, the starts written to and taken
+  out of the settings file (only with `HISTMERSION_TEST_CONFIG_FILE`), #7780 (the fit at 1440×900 and 820×1180;
+  the width by keys, by drag, remembered, no refetch) and #7781 (the actions inside their own row, the pointer
+  over them meets that row).
