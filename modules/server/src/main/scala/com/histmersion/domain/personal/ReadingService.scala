@@ -1,5 +1,6 @@
 package com.histmersion.domain.personal
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.personal.*
 import com.histmersion.domain.personal.PersonalState.StoredMark
 
@@ -70,7 +71,7 @@ object ReadingService:
 
     /** An item of the collection: what it is called and what "Not read yet" shows of it. */
     def addItem(row: UnreadRow): Unit =
-      state.updateAndGet(s => s.copy(catalog = s.catalog + (s"${row.kind.wire}:${row.id.value}" -> row))): Unit
+      state.updateAndGet(s => s.modify(_.catalog).using(_ + (s"${row.kind.wire}:${row.id.value}" -> row))): Unit
 
     private def view(s: PersonalState, m: StoredMark): ReadMark =
       val t = Target(m.kind, Some(m.key))
@@ -103,7 +104,7 @@ object ReadingService:
       val after = state.updateAndGet { s =>
         val m = find(s, user, kind, key).getOrElse(StoredMark(user, kind, key, None, None, None, t, t))
         val changed = change(m).copy(targetLabel = title.orElse(m.targetLabel), updatedAt = t)
-        s.copy(marks = s.marks.filterNot(x => x.user == user && x.kind == kind && x.key == key) :+ changed)
+        s.modify(_.marks).using(_.filterNot(x => x.user == user && x.kind == kind && x.key == key) :+ changed)
       }
       view(after, find(after, user, kind, key).get)
 

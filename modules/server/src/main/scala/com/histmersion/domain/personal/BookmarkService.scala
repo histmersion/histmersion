@@ -1,5 +1,6 @@
 package com.histmersion.domain.personal
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.personal.*
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
 
@@ -92,7 +93,7 @@ object BookmarkService:
           case Some(_) => s
           case None    =>
             val id = BookmarkId.parse(newId().toString).fold(e => throw IllegalStateException(e), identity)
-            s.copy(bookmarks = s.bookmarks :+ StoredBookmark(user, id, target, label, title, t, t))
+            s.modify(_.bookmarks).using(_ :+ StoredBookmark(user, id, target, label, title, t, t))
       }
       live(after, user)
         .filter(b => target.identity.fold(b.createdAt == t)(i => b.target.identity.contains(i)))

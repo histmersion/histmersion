@@ -1,5 +1,6 @@
 package com.histmersion.server.media
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
 
 import com.histmersion.api.*
@@ -185,22 +186,24 @@ final class MediaHandlers(deps: Deps, http: HttpTransport, converter: ConverterC
       if left <= 0 || deps.maintenance.active then acc
       else
         imp.targets(req.place, req.event, batch.min(left), req.refresh, since) match
-          case Left(e)    => acc.copy(failed = acc.failed :+ e)
+          case Left(e)    => acc.modify(_.failed).using(_ :+ e)
           case Right(Nil) => acc
           // none of the last batch's checks were recorded: asking again would spin on the same ones
           case Right(targets) if !single && targets.forall(t => seen(s"${t.targetType}:${t.id}")) =>
-            acc.copy(failed =
-              acc.failed :+ s"${targets.size} place(s)/event(s) came back unrecorded (${targets.head.id}…); stopped"
-            )
+            acc
+              .modify(_.failed)
+              .using(_ :+ s"${targets.size} place(s)/event(s) came back unrecorded (${targets.head.id}…); stopped")
           case Right(targets) =>
             scala.util.Try(run.run(targets, dryRun = false, req.refresh)) match
               case scala.util.Failure(e: InterruptedException) => throw e
               case scala.util.Failure(e)                       =>
                 scribe.error(s"media import job: batch ${acc.batches + 1} failed: ${e.getMessage}", e)
-                acc.copy(failed =
-                  acc.failed :+ s"batch ${acc.batches + 1} (${targets.head.id}…): " +
-                    s"${e.getClass.getSimpleName}: ${e.getMessage}"
-                )
+                acc
+                  .modify(_.failed)
+                  .using(
+                    _ :+ s"batch ${acc.batches + 1} (${targets.head.id}…): " +
+                      s"${e.getClass.getSimpleName}: ${e.getMessage}"
+                  )
               case scala.util.Success(r) =>
                 val next = MediaImportReport.combine(acc, r.copy(batches = 1))
                 progress(MediaHandlers.progressLine(next, total, run.requests))

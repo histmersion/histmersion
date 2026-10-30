@@ -1,5 +1,6 @@
 package com.histmersion.server.hot
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{HotNode, HotPlan}
 import ox.{supervised, Ox}
 
@@ -185,7 +186,7 @@ final class HotGraph[C](initial: C, log: HotGraph.Log = HotGraph.Log.scribe) ext
         defs.updateAndGet(_ :+ d)
         // the same generation with one node more; a pin on the snapshot before it simply lacks the node
         // (Handle.use then pins the current one for that call)
-        val next = s.copy(nodes = s.nodes.updated(name, i))
+        val next = s.modify(_.nodes).using(_.updated(name, i))
         current.set(next)
         Handle[A](name)
     }

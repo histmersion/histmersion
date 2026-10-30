@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.UpstreamQuota
 
 import java.time.{Instant, LocalDate, OffsetDateTime, ZoneOffset}
@@ -124,8 +125,8 @@ object CoreQuota:
           if waitMs > limits.maxWaitSeconds.toLong.max(0L) * 1000L then Left(Refusal.Paced(waitMs))
           else
             val spent = purpose match
-              case Purpose.Lookup => s.copy(lookupTokens = s.lookupTokens + cost)
-              case Purpose.Search => s.copy(searchTokens = s.searchTokens + cost)
+              case Purpose.Lookup => s.modify(_.lookupTokens).using(_ + cost)
+              case Purpose.Search => s.modify(_.searchTokens).using(_ + cost)
             Right(
               Grant(
                 spent.copy(block = None, recent = (inWindow :+ slot).sortBy(_.toEpochMilli).takeRight(perMinute)),

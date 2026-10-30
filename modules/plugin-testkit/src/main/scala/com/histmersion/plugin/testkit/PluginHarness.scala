@@ -1,5 +1,6 @@
 package com.histmersion.plugin.testkit
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.AppConfig
 import com.histmersion.api.PluginState
 import com.histmersion.pluginhost.allowed
@@ -418,7 +419,7 @@ object PluginHarness:
     val loaded = file match
       case None    => scala.util.Try(AppConfig.load(env)).toEither.left.map(_.getMessage)
       case Some(p) => AppConfig.loadWithUserFile(env, Some(p)).map(_.config)
-    loaded.map(c => c.copy(acquire = c.acquire.copy(contactEmail = "")))
+    loaded.map(c => c.modify(_.acquire.contactEmail).setTo(""))
 
   /** The values of the `env:` and `value:` secret references a config text names. */
   private def referencedValues(text: String, env: Map[String, String]): Set[String] =

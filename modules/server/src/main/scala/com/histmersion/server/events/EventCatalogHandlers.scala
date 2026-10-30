@@ -1,5 +1,6 @@
 package com.histmersion.server.events
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport, PluginEvents, Polite}
 
 import com.histmersion.api.*
@@ -142,7 +143,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
 
     def handle(part: String, fetched: Fetched): Unit =
       fetched match
-        case Left(why)   => report = report.copy(failed = report.failed :+ s"$part: $why")
+        case Left(why)   => report = report.modify(_.failed).using(_ :+ s"$part: $why")
         case Right(read) =>
           // a catalogue's dating held inside the present (and the GVP's Holocene floor, a plugin's own);
           // a plugin's record dated from its stated year when it gives no span — as rederive does
@@ -290,14 +291,14 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
       val h = PluginEvents.http(c)
       val q = PluginEvents.query(from, to, area)
       PluginEvents.guard(Right(cat.parts(q))) match
-        case Left(why)    => report = report.copy(failed = report.failed :+ s"parts: $why")
+        case Left(why)    => report = report.modify(_.failed).using(_ :+ s"parts: $why")
         case Right(parts) =>
           parts.distinct.foreach { first =>
             PluginEvents.readPart(cat, first, q, h, done, full) { (part, got) =>
               val recs = got.map(_.events.map(PluginEvents.record(provider, _)))
               recs.foreach(rs =>
                 if rs.exists(_.isLeft) then
-                  report = report.copy(failed = report.failed ++ rs.collect { case Left(w) => s"$part: $w" }.take(20))
+                  report = report.modify(_.failed).using(_ ++ rs.collect { case Left(w) => s"$part: $w" }.take(20))
               )
               handle(part, recs.map(_.collect { case Right(r) => r }))
             }

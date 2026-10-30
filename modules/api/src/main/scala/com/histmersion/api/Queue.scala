@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import hearth.kindlings.optics.syntax.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -301,7 +302,7 @@ object Queue:
         case l =>
           // an indented, non-blank line continues the item above it; anything else is note text
           if last.isDefined && l.nonEmpty && l.head.isWhitespace then
-            last = last.map(i => i.copy(text = i.text + "\n" + l))
+            last = last.map(i => i.modify(_.text).using(_ + "\n" + l))
           else
             flushItem()
             note += l
