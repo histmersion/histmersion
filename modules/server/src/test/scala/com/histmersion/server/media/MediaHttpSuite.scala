@@ -6,7 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{Db, EventRepo, MediaRepo, Migrate, PlaceRepo}
-import com.histmersion.server.{Deps, Main}
+import com.histmersion.server.{Composition, Deps}
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
@@ -131,7 +131,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
 
   test("the server: the place card carries the thumbnail, served locally with its type; list, show, facets"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (ps, pb) = get(s"$url/api/places/$PlaceId?counts=true")
@@ -177,7 +177,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
 
   test("the server: an event's Wikidata item is patched (and checked), and its card reads it"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (bad, bb) = send("PATCH", s"$url/api/events/$EventId", """{"wikidata":"132564"}""")

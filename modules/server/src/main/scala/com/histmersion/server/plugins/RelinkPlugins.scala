@@ -22,8 +22,8 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 /** The JVM-side tool of the relink kit (docs/research-plugins.md §7.4): run by `bin/histmersion-relink` and the JVM
-  * launcher with the kit's jars on the class path — never part of the server's native image (nothing in `Main` reaches
-  * it).
+  * launcher with the kit's jars on the class path, as [[pluginTool]] — never part of the server's native image (nothing
+  * the server's entry point reaches calls it).
   *
   * {{{
   *   describe [--lib <dir>] <jar>…           the plugins in each jar, as JSON (PluginJar)
@@ -44,7 +44,9 @@ import scala.util.control.NonFatal
   * learn what it contributes and on what terms: that runs the plugin's code, in this short-lived JVM, as installing it
   * will.
   */
-object PluginTool:
+@main def pluginTool(args: String*): Unit = sys.exit(RelinkPlugins.exitCode(args.toList))
+
+object RelinkPlugins:
 
   private val Usage =
     """usage: PluginTool describe [--lib <dir>] <jar>…
@@ -52,14 +54,12 @@ object PluginTool:
       |       PluginTool plugin-set [--lib <dir>] <out.jar> <record.json> <native|jvm> <kit dir> <jar>…
       |       PluginTool kit-manifest <kit dir> <version> <commit|-> <graalvm version>""".stripMargin
 
-  def main(args: Array[String]): Unit =
-    val rc =
-      try run(args.toList)
-      catch
-        case NonFatal(e) =>
-          System.err.println(s"PluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
-          3
-    sys.exit(rc)
+  def exitCode(args: List[String]): Int =
+    try run(args)
+    catch
+      case NonFatal(e) =>
+        System.err.println(s"PluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        3
 
   private def run(args: List[String]): Int = args match
     case cmd :: "--lib" :: lib :: rest => run(cmd, rest, dependencyJars(Path.of(lib)))
@@ -308,5 +308,6 @@ object PluginTool:
       .filterNot(Set("kit.json", "SHA256SUMS"))
       .sorted
       .map(rel => PluginKit.KitFile(rel, sha256(kit.resolve(rel))))
-    val main = Try(Files.readString(kit.resolve("main-class")).trim).getOrElse("com.histmersion.server.Main")
+    val main =
+      Try(Files.readString(kit.resolve("main-class")).trim).getOrElse("com.histmersion.server.histmersionServer")
     PluginKit.KitManifest(PluginKit.KitFormat, version, commit, graalvm, Spi.Version, main, files)

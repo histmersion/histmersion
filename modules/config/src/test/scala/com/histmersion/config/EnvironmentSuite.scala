@@ -25,5 +25,8 @@ class EnvironmentSuite extends munit.FunSuite:
     assertEquals(paths.dataDir("/srv/h"), Some(Path.of("/srv/h")))
     assertEquals(paths.cacheDir, Some(Path.of("/home/ada/.cache/histmersion")))
     assertEquals(paths.configFile, Some(Path.of("/home/ada/.config/histmersion/histmersion.conf")))
-    assertEquals(UserPaths(env, "Mac OS X").defaultDataDir, Some(Path.of("/home/ada/Library/Application Support/Histmersion")))
+    assertEquals(
+      UserPaths(env, "Mac OS X").defaultDataDir,
+      Some(Path.of("/home/ada/Library/Application Support/Histmersion"))
+    )
     assertEquals(UserPaths(Environment.empty, "Linux").dataDir(""), None)

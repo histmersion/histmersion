@@ -508,7 +508,7 @@ lazy val server = project
   .settings(
     name := "histmersion-server",
     description := "The server: MCP, REST and the web UI over the store; built as a native image",
-    Compile / mainClass := Some("com.histmersion.server.Main")
+    Compile / mainClass := Some("com.histmersion.server.histmersionServer")
   )
   .settings(commonDeps)
   // one suite at a time per group: a restore drops connections, and a booting server fails the running jobs
@@ -554,7 +554,7 @@ lazy val server = project
       cp.foreach(j => IO.copyFile(j, out / "lib" / j.getName))
       IO.writeLines(out / "classpath", names)
       IO.writeLines(out / "native-image.args", nativeImageOptions.value)
-      IO.write(out / "main-class", "com.histmersion.server.Main\n")
+      IO.write(out / "main-class", "com.histmersion.server.histmersionServer\n")
       // Sloth and its verifier, for the PLUGIN jars a relink links (these are patched already)
       (ThisBuild / slothJar).value.foreach(j => IO.copyFile(j, out / "tools" / "sloth.jar"))
       IO.copyFile(file("scripts") / "bundle" / "SlothVerify.java", out / "tools" / "SlothVerify.java")
@@ -781,7 +781,7 @@ lazy val cli = project
   .settings(
     name := "histmersion-cli",
     description := "The command line, a pure HTTP client of the server; built as a native image",
-    Compile / mainClass := Some("com.histmersion.cli.Main")
+    Compile / mainClass := Some("com.histmersion.cli.histmersionCli")
   )
   .settings(commonDeps)
   .enablePlugins(NativeImage)
@@ -824,6 +824,7 @@ lazy val web = project
   .settings(commonDeps)
   .settings(
     scalaJSUseMainModuleInitializer := true,
+    Compile / mainClass := Some("com.histmersion.web.histmersionWeb"),
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
     libraryDependencies ++= Seq(
       "com.raquo" %% "laminar" % V.laminar,

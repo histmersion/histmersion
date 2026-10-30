@@ -321,12 +321,12 @@ class PluginTreeSuite extends munit.FunSuite:
       .get
 
   test("plugin/ is up to date with agents/ and skills/ (run `just plugin` when this fails)"):
-    val tree = GeneratePlugin.tree().fold(m => fail(m), identity)
+    val tree = PluginTree.tree().fold(m => fail(m), identity)
     val stale = tree.toList.sortBy(_._1).collect {
       case (rel, text) if !Files.isRegularFile(root.resolve(rel)) || Files.readString(root.resolve(rel)) != text => rel
     }
     assertEquals(stale, Nil)
-    val extra = GeneratePlugin.Owned
+    val extra = PluginTree.Owned
       .map(root.resolve)
       .filter(Files.exists(_))
       .flatMap { d =>

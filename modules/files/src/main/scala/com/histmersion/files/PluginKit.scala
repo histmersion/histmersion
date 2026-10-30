@@ -13,7 +13,7 @@ import java.security.MessageDigest
 
 /** The pure half of user-added plugins and the relink kit (docs/research-plugins.md §7, §8): the plugin-set digest and
   * what `histmersion plugin status` concludes from it, the plugins directory's index, Maven coordinates, and the kit's
-  * checksum manifest. No file is read here: the callers (the CLI's `plugin` commands, the server's `PluginTool`) hash
+  * checksum manifest. No file is read here: the callers (the CLI's `plugin` commands, the server's `pluginTool`) hash
   * and list, and hand the results in.
   */
 object PluginKit:

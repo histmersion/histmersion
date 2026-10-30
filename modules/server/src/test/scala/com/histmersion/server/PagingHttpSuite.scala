@@ -38,7 +38,7 @@ class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

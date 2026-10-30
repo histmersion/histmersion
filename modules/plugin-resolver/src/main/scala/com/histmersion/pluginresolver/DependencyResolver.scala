@@ -20,19 +20,19 @@ import scala.util.control.NonFatal
   * each, and of everything it depends on, is on the class path already. What remains goes into `lib/`. Exit codes: 0
   * done, 1 usage, 2 refused, 3 failed (a repository, a download, a file).
   */
-object PluginResolver:
+@main def pluginResolver(args: String*): Unit = sys.exit(DependencyResolver.exitCode(args.toList))
+
+object DependencyResolver:
 
   private val Usage =
     "usage: PluginResolver resolve --kit <dir> --lib <dir> [--histmersion-repo <dir>] [--repo <url|dir>]… [--check] <plugin jar>…"
 
-  def main(args: Array[String]): Unit =
-    val rc =
-      try run(args.toList, s => System.out.println(s), s => System.err.println(s))
-      catch
-        case NonFatal(e) =>
-          System.err.println(s"PluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
-          3
-    sys.exit(rc)
+  def exitCode(args: List[String]): Int =
+    try run(args, s => System.out.println(s), s => System.err.println(s))
+    catch
+      case NonFatal(e) =>
+        System.err.println(s"PluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        3
 
   def run(args: List[String], out: String => Unit, err: String => Unit): Int = args match
     case "resolve" :: rest =>

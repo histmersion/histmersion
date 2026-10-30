@@ -168,7 +168,7 @@ object MergeCmd:
         hash = expected.map(_.trim).getOrElse(plan.planHash)
         _ <- Either.cond(
           yes || plan.changes == 0 ||
-            Main.confirm(
+            Cli.confirm(
               s"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
                 s"${Plural.count(plan.changes, "change")})? A backup is taken first."
             ),

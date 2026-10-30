@@ -35,7 +35,7 @@ printf '%s\n' "$jdk" > "$bundle/kit/graalvm-version"
 [ -f "$bundle/kit/tools/sloth.jar" ] || echo "  note: no Sloth jar (SLOTH_JAR) — a relink will link plugin jars unpatched"
 version="$(sed -n 's/.*version *:= *"\([^"]*\)".*/\1/p' "$root/build.sbt" | head -1)"
 commit="$(git -C "$root" rev-parse --short=12 HEAD 2>/dev/null || echo -)"
-"$home/bin/java" -cp "$bundle/kit/lib/*" com.histmersion.server.plugins.PluginTool kit-manifest \
+"$home/bin/java" -cp "$bundle/kit/lib/*" com.histmersion.server.plugins.pluginTool kit-manifest \
   "$bundle/kit" "$version" "$commit" "$(cat "$bundle/kit/graalvm-version")" | sed 's/^/  /'
 # the stock binary's plugin-set record: first-party plugins only
 printf '{\n  "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",\n  "spiVersion": %s,\n  "jars": [],\n  "mode": "native"\n}\n' \

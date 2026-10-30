@@ -443,7 +443,7 @@ direction	server:server/media/MediaImporters.scala	media -> server: Deps	1
 direction	server:server/media/SourcePictures.scala	media -> library: SourceCoverParams	1
 direction	server:server/plugins/LegacyPlugins.scala	util.plugins -> library: BuiltinFetchers	1
 direction	server:server/plugins/LegacyPlugins.scala	util.plugins -> library: OaIndex	1
-direction	server:server/plugins/PluginTool.scala	util.plugins -> server: Version	1
+direction	server:server/plugins/RelinkPlugins.scala	util.plugins -> server: Version	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> automation: BuiltinAi	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> catalogue: BuiltinCatalogues	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: ArchiveOrg	1

@@ -118,7 +118,7 @@ unless there is a written reason.
   the chunker, bbox maths — all pure, all unit-testable with no database.
 - **`Either[…, A]` for expected failures.** 404, a bad citekey, a malformed filter, an unreachable
   server: these are values, not exceptions. Exceptions are for genuinely unexpected states.
-- **Never `println` or `Console.err` outside `cli/Main`.** The server logs through **scribe**; the CLI
+- **Never `println` or `Console.err` outside `cli/Cli`.** The server logs through **scribe**; the CLI
   turns an `Either` into an exit code at the very edge (1 = usage, 2 = the server said no,
   3 = unreachable/startup failure).
 - **No side effects in object initialisers.** `Main` is the composition root: it builds

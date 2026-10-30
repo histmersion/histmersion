@@ -27,7 +27,7 @@ class HtmlEscapeSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       def get(u: String): (Int, String) =
         val c = java.net.http.HttpClient.newHttpClient()

@@ -76,7 +76,7 @@ hk_resolve() { # <java home> <install> <lib dir> <args…>
   # coursier's jar carries a Scala compiled before 3.8, whose lazy vals use sun.misc.Unsafe: without
   # the flag the JDK prints its deprecation warning on every run, between the resolver's own lines
   "$jh/bin/java" --sun-misc-unsafe-memory-access=allow -cp "$install/kit/lib/*:$install/kit/tools/resolver/*" \
-    com.histmersion.pluginresolver.PluginResolver resolve \
+    com.histmersion.pluginresolver.pluginResolver resolve \
     --kit "$install/kit" --lib "$lib" --histmersion-repo "$install/maven" "$@"
 }
 

@@ -50,7 +50,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     clean(cfg)
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/goals/$Goal", """{"title":"Zq tin"}""")._1, 200)

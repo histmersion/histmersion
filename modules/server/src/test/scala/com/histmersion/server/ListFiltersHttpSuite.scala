@@ -59,7 +59,7 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
 
   private def withServer(body: String => Unit): Unit =
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

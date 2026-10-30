@@ -8,7 +8,7 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 
 /** `histmersion periods …` — named historical periods, the web timeline's presets (#719) — and `histmersion init`, the
-  * first-run import (#720). Kept in its own file so the shared `Main` only gains one line.
+  * first-run import (#720). Kept in its own file so the shared `Cli` only gains one line.
   *
   * `periods seed` asks the SERVER to import the presets bundled with it: the CLI is a pure HTTP client and a fresh
   * install has no repo checkout to read them from. `--file` sends a PeriodO dataset from this machine instead (the

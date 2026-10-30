@@ -85,7 +85,7 @@ final class PluginOps(
     if !Files.isRegularFile(install.kitJson) then Left(err(s"no kit manifest at ${install.kitJson}"))
     else PluginKit.parseKit(Files.readString(install.kitJson)).map(_.spiVersion).left.map(err(_))
 
-  // ── describe (the kit's PluginTool on a JVM, through histmersion-relink) ───────────────────────
+  // ── describe (the kit's pluginTool on a JVM, through histmersion-relink) ───────────────────────
 
   /** What `jar` provides, loaded with the dependency jars of `lib` (`lib/classpath`). */
   def describe(jar: Path, lib: Option[Path] = None): Either[CliError, PluginJar] =

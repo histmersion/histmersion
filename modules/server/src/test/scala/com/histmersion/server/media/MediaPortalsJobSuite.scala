@@ -8,7 +8,7 @@ import com.histmersion.domain.*
 import com.histmersion.values.{MediaRole, PlaceKind}
 import com.histmersion.db.{Db, MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.db.given
-import com.histmersion.server.Main
+import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.parser.decode
 import java.net.{InetSocketAddress, URI, URLDecoder}
@@ -222,7 +222,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     "Open Context and Pleiades through the server: a dry run's reason, both jobs storing with the basis on the link"
   ):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       def job(body: String): JobInfo =
         val (js, jb) = post(s"$url/api/media/import/job", body)

@@ -9,7 +9,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.plugin as spi
-import com.histmersion.server.{Deps, Main}
+import com.histmersion.server.{Composition, Deps}
 import com.histmersion.server.plugins.Plugins
 import io.circe.parser.decode
 import org.ekrich.config.ConfigFactory
@@ -248,7 +248,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
   test("through the server: GET /api/media/providers lists the plugin's collection; about lists what it registered"):
     val client = HttpClient.newHttpClient()
     supervised {
-      val b = Main.server(base, "127.0.0.1", 0, MediaHandlers.NoThumbnails, plugins = generation).start()
+      val b = Composition.server(base, "127.0.0.1", 0, MediaHandlers.NoThumbnails, plugins = generation).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val r = client.send(

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Tests of bin/histmersion-relink's ORCHESTRATION (relink.sh) against a temporary install with FAKES:
-# a fake GraalVM (java answers PluginTool and --self-check; native-image writes a fake binary), fake
+# a fake GraalVM (java answers pluginTool and --self-check; native-image writes a fake binary), fake
 # launchctl/systemctl/curl (a "service" whose health follows the binary in bin/), fake codesign and gpg.
 # Nothing outside the temp dir is touched: no real service, no keychain, no network, no real build.
 # The real relink (real native-image, the hello plugin) is in scripts/bundle/smoke.sh.
@@ -28,16 +28,16 @@ graal="$tmp/graalvm"; mkdir -p "$graal/bin"
 echo 'JAVA_VERSION="25.0.4.1.1"' > "$graal/release"
 cat > "$graal/bin/java" <<'SH'
 #!/bin/bash
-# PluginTool <cmd> …, PluginResolver resolve …, Main --self-check, -jar sloth.jar, SlothVerify.java — told
+# pluginTool <cmd> …, pluginResolver resolve …, histmersionServer --self-check, -jar sloth.jar, SlothVerify.java — told
 # apart by the arguments. The resolver's answer is $STATE/resolve.out and .rc; with $STATE/resolve.dep it
 # also installs that one dependency jar into the --lib directory, as the real one would.
 echo "java $*" >> "$STATE/java.calls"
 args=" $* "
 digest="$(cat "$STATE/digest" 2>/dev/null || echo d1)"
 case "$args" in
-  *"PluginTool check "*) cat "$STATE/check.out" 2>/dev/null || echo "plugin: hello 0.1.0 (SPI 1) in hello-0.1.0.jar · access open"
+  *"pluginTool check "*) cat "$STATE/check.out" 2>/dev/null || echo "plugin: hello 0.1.0 (SPI 1) in hello-0.1.0.jar · access open"
                           exit "$(cat "$STATE/check.rc" 2>/dev/null || echo 0)" ;;
-  *"PluginResolver resolve "*)
+  *"pluginResolver resolve "*)
     set -- "$@"; while [ "$1" != --lib ]; do shift; done; lib="$2"
     cat "$STATE/resolve.out" 2>/dev/null
     rc="$(cat "$STATE/resolve.rc" 2>/dev/null || echo 0)"
@@ -46,14 +46,14 @@ case "$args" in
       if [ -f "$STATE/resolve.dep" ]; then n="$(cat "$STATE/resolve.dep")"; echo dep > "$lib/$n"; echo "$n" > "$lib/classpath"; fi
     fi
     exit "$rc" ;;
-  *"PluginTool plugin-set "*)
+  *"pluginTool plugin-set "*)
     set -- "$@"; while [ "$1" != plugin-set ]; do shift; done
     [ "$2" = --lib ] && shift 2
     out="$2" record="$3" mode="$4"
     echo "set-jar" > "$out"
     printf '{"digest":"%s","spiVersion":1,"jars":[],"mode":"%s"}\n' "$digest" "$mode" > "$record"
     echo "$digest" ;;
-  *"PluginTool describe "*) echo '[{"file":"x.jar","sha256":"00","plugins":[]}]' ;;
+  *"pluginTool describe "*) echo '[{"file":"x.jar","sha256":"00","plugins":[]}]' ;;
   *" --self-check "*)
     if [ -f "$STATE/jvm-selfcheck-fail" ]; then echo "- hello 0.1.0 — FAILED: broken on the JVM"; echo "self-check FAILED"; exit 2; fi
     echo "- hello 0.1.0 — registered (source-fetcher:hello)"; echo "- plugin-set digest: $digest"; echo "self-check passed" ;;
@@ -142,7 +142,7 @@ new_install() {
   echo "kit jar" > "$INSTALL/kit/lib/a.jar"
   echo a.jar > "$INSTALL/kit/classpath"
   echo "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter" > "$INSTALL/kit/native-image.args"
-  echo com.histmersion.server.Main > "$INSTALL/kit/main-class"
+  echo com.histmersion.server.histmersionServer > "$INSTALL/kit/main-class"
   echo 25.0.4.1.1 > "$INSTALL/kit/graalvm-version"
   echo sloth > "$INSTALL/kit/tools/sloth.jar"; echo verify > "$INSTALL/kit/tools/SlothVerify.java"
   echo resolver > "$INSTALL/kit/tools/resolver/histmersion-plugin-resolver.jar"
@@ -168,10 +168,10 @@ check "a relink succeeds (exit 0)" '[ "$rc" = 0 ] || { cat "$tmp/out"; false; }'
 check "the new binary is in bin/, the old one is .prev" 'binary_has "digest=d1" && grep -q "digest=e3b0" "$INSTALL/bin/histmersion-server.prev"'
 check "the plugin-set record is the new one, the old kept" 'grep -q "\"digest\":\"d1\"" "$INSTALL/bin/histmersion-server.plugin-set.json" && grep -q e3b0 "$INSTALL/bin/histmersion-server.plugin-set.json.prev"'
 check "native-image got the kit's arguments and class path, the plugin-set jar, the Sloth-patched plugin" \
-  'grep -q "@$INSTALL/kit/native-image.args -cp $INSTALL/kit/lib/a.jar:$INSTALL/.relink/plugin-set.jar:$INSTALL/.relink/plugins/hello-0.1.0.jar com.histmersion.server.Main" "$state/ni.calls"'
+  'grep -q "@$INSTALL/kit/native-image.args -cp $INSTALL/kit/lib/a.jar:$INSTALL/.relink/plugin-set.jar:$INSTALL/.relink/plugins/hello-0.1.0.jar com.histmersion.server.histmersionServer" "$state/ni.calls"'
 check "Sloth ran over the plugin jar only, then its verifier" 'grep -q "sloth.jar $INSTALL/.relink/plugins/hello-0.1.0.jar" "$state/java.calls" && grep -q SlothVerify.java "$state/java.calls"'
 check "the pre-flight ran on the JVM before the build (check, then the server's self-check)" \
-  '[ "$(grep -n "PluginTool check" "$state/java.calls" | cut -d: -f1)" -lt "$(grep -n -- "--self-check" "$state/java.calls" | cut -d: -f1)" ]'
+  '[ "$(grep -n "pluginTool check" "$state/java.calls" | cut -d: -f1)" -lt "$(grep -n -- "--self-check" "$state/java.calls" | cut -d: -f1)" ]'
 check "the service was restarted once and reports the new digest" '[ "$(grep -c kickstart "$state/restarts")" = 1 ] && grep -q "test.histmersion.relink" "$state/restarts"'
 check "signed ad hoc, the keychain never asked (identity -)" 'grep -q "codesign --force --sign - --identifier com.histmersion.server" "$state/codesign.calls" && [ ! -e "$state/security.calls" ]'
 check "the work dir and the lock are gone; a log was written" '[ ! -e "$INSTALL/.relink" ] && [ ! -e "$HISTMERSION_DATA_DIR/plugins/.relink.lock" ] && grep -q native-image "$HISTMERSION_DATA_DIR/logs/relink.log"'
@@ -323,8 +323,8 @@ echo "org.example-xml_3-2.4.0.jar" > "$state/resolve.dep"
 echo "dependency: org.example:xml_3:2.4.0 (for hello-0.1.0.jar)" > "$state/resolve.out"
 rc="$(relink)"
 lib="$HISTMERSION_DATA_DIR/plugins/lib"
-check "deps: the pre-flight resolves the plugins' dependencies into plugins/lib first, with the install's repository"   '[ "$rc" = 0 ] && grep -q "PluginResolver resolve --kit $INSTALL/kit --lib $lib --histmersion-repo $INSTALL/maven $HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$state/java.calls" && grep -q "dependency: org.example:xml_3:2.4.0" "$tmp/out"'
-check "deps: the check and the plugin set are made with lib/" 'grep -q "PluginTool check --lib $lib $INSTALL/kit" "$state/java.calls" && grep -q "PluginTool plugin-set --lib $lib" "$state/java.calls"'
+check "deps: the pre-flight resolves the plugins' dependencies into plugins/lib first, with the install's repository"   '[ "$rc" = 0 ] && grep -q "pluginResolver resolve --kit $INSTALL/kit --lib $lib --histmersion-repo $INSTALL/maven $HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$state/java.calls" && grep -q "dependency: org.example:xml_3:2.4.0" "$tmp/out"'
+check "deps: the check and the plugin set are made with lib/" 'grep -q "pluginTool check --lib $lib $INSTALL/kit" "$state/java.calls" && grep -q "pluginTool plugin-set --lib $lib" "$state/java.calls"'
 check "deps: the dependency is Sloth-patched and linked beside the plugin"   'grep -q "sloth.jar $INSTALL/.relink/plugins/org.example-xml_3-2.4.0.jar" "$state/java.calls" && grep -q -- "-cp $INSTALL/kit/lib/a.jar:$INSTALL/.relink/plugin-set.jar:$INSTALL/.relink/plugins/hello-0.1.0.jar:$INSTALL/.relink/plugins/org.example-xml_3-2.4.0.jar " "$state/ni.calls"'
 check "deps: the JVM self-check has it on the class path" 'grep -- "--self-check" "$state/java.calls" | grep -q "$lib/org.example-xml_3-2.4.0.jar"'
 check "deps: the build record changes with a dependency jar of lib/" \
@@ -338,18 +338,18 @@ check "deps: a plugin that needs a newer version of a shipped library: refused (
 
 new_install
 rc="$(relink --resolve --lib "$tmp/staged-lib" --repo https://repo.example.org/m2 --check "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar")"
-check "--resolve passes its options and jars to the resolver, with the install's repository"   '[ "$rc" = 0 ] && grep -q "PluginResolver resolve --kit $INSTALL/kit --lib $tmp/staged-lib --histmersion-repo $INSTALL/maven --repo https://repo.example.org/m2 --check $HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$state/java.calls"'
+check "--resolve passes its options and jars to the resolver, with the install's repository"   '[ "$rc" = 0 ] && grep -q "pluginResolver resolve --kit $INSTALL/kit --lib $tmp/staged-lib --histmersion-repo $INSTALL/maven --repo https://repo.example.org/m2 --check $HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$state/java.calls"'
 echo 2 > "$state/resolve.rc"
 rc="$(relink --resolve)"
-check "--resolve without jars: the plugins directory's; the resolver's exit code"   '[ "$rc" = 2 ] && grep -q "PluginResolver resolve --kit $INSTALL/kit --lib $HISTMERSION_DATA_DIR/plugins/lib --histmersion-repo $INSTALL/maven $HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$state/java.calls"'
+check "--resolve without jars: the plugins directory's; the resolver's exit code"   '[ "$rc" = 2 ] && grep -q "pluginResolver resolve --kit $INSTALL/kit --lib $HISTMERSION_DATA_DIR/plugins/lib --histmersion-repo $INSTALL/maven $HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar" "$state/java.calls"'
 
 new_install
 echo "org.example-xml_3-2.4.0.jar" > "$state/resolve.dep"
 jrc=0; HISTMERSION_JAVA_HOME="$graal" "$INSTALL/bin/histmersion-server-jvm" --self-check > "$tmp/jvm.out" 2>&1 || jrc=$?
-check "JVM mode: lib/ not resolved from these jars yet: resolved at start, the dependency on the class path"   '[ "$jrc" = 0 ] && [ "$(grep -c "PluginResolver resolve" "$state/java.calls")" = 1 ] && grep -- "--self-check" "$state/java.calls" | grep -q "$HISTMERSION_DATA_DIR/plugins/lib/org.example-xml_3-2.4.0.jar"'
+check "JVM mode: lib/ not resolved from these jars yet: resolved at start, the dependency on the class path"   '[ "$jrc" = 0 ] && [ "$(grep -c "pluginResolver resolve" "$state/java.calls")" = 1 ] && grep -- "--self-check" "$state/java.calls" | grep -q "$HISTMERSION_DATA_DIR/plugins/lib/org.example-xml_3-2.4.0.jar"'
 hk_plugin_inputs "$HISTMERSION_DATA_DIR/plugins" > "$HISTMERSION_DATA_DIR/plugins/lib/inputs"
 jrc=0; HISTMERSION_JAVA_HOME="$graal" "$INSTALL/bin/histmersion-server-jvm" --self-check > "$tmp/jvm.out" 2>&1 || jrc=$?
-check "JVM mode: lib/ current (its inputs are the directory's): not resolved again"   '[ "$jrc" = 0 ] && [ "$(grep -c "PluginResolver resolve" "$state/java.calls")" = 1 ]'
+check "JVM mode: lib/ current (its inputs are the directory's): not resolved again"   '[ "$jrc" = 0 ] && [ "$(grep -c "pluginResolver resolve" "$state/java.calls")" = 1 ]'
 
 rc="$(relink --describe "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar")"
 check "--describe prints the kit tool's JSON" '[ "$rc" = 0 ] && grep -q "\"plugins\":\[\]" "$tmp/out"'

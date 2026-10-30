@@ -77,7 +77,7 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
       converter = base.converter.copy(spoolDir = Files.createTempDirectory("histmersion-spool0").toString)
     )
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, NoConverter).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, NoConverter).start()
       try f(s"http://127.0.0.1:${b.port}/api/ingest")
       finally b.stop()
     }

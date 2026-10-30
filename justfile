@@ -229,7 +229,7 @@ native:
 # Regenerate the checked-in Claude Code plugin (plugin/, .claude-plugin/marketplace.json) from agents/ and skills/
 [group('dev')]
 plugin:
-    {{sbt}} "server/Test/runMain com.histmersion.server.agents.GeneratePlugin {{justfile_directory()}}"
+    {{sbt}} "server/Test/runMain com.histmersion.server.agents.generatePlugin {{justfile_directory()}}"
 
 # Regenerate the CLI reference table (docs/user-guide/reference/cli.md) from `histmersion --help`
 [group('dev')]

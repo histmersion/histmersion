@@ -9,8 +9,8 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{BundleKind, PlaceKind}
 
-/** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Main` only
-  * gains one line.
+/** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains
+  * one line.
   *
   * Import is done in BATCHES: the parse is pure and happens on the HOST ([[Lpf]] lives in `core`, and the CLI depends
   * on `core` only), and each batch is re-rendered as Linked Places Format and POSTed, so a 5 MB Pleiades extract never

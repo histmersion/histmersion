@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.ModelChains.*
 import com.histmersion.db.{AgentRepo, Db, Migrate, ModelSettingsRepo}
-import com.histmersion.server.{Deps, Handlers, Main}
+import com.histmersion.server.{Composition, Deps, Handlers}
 import sttp.ai.core.agent.*
 
 import java.net.URI
@@ -406,7 +406,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite:
     val list = """{"jsonrpc":"2.0","id":1,"method":"tools/list"}"""
     @volatile var hs: Option[Handlers] = None // the started server's handlers, for its run tokens
     ox.supervised {
-      val b = Main
+      val b = Composition
         .server(
           off,
           "127.0.0.1",

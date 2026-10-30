@@ -44,7 +44,7 @@ if [ "${#jars[@]}" -gt 0 ]; then
   fi
   # the plugin set this start runs with, reported by /api/about and --self-check as a relinked binary's is
   mkdir -p "$plugins/.jvm"
-  "$jh/bin/java" -cp "$kit/lib/*" com.histmersion.server.plugins.PluginTool plugin-set --lib "$plugins/lib" \
+  "$jh/bin/java" -cp "$kit/lib/*" com.histmersion.server.plugins.pluginTool plugin-set --lib "$plugins/lib" \
     "$plugins/.jvm/plugin-set.jar" "$plugins/.jvm/plugin-set.json" jvm "$kit" "${jars[@]}" >/dev/null \
     || hk_die 3 "could not describe the plugins in $plugins"
   cp="$cp:$plugins/.jvm/plugin-set.jar"
