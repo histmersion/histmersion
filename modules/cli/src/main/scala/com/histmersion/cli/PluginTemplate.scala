@@ -495,6 +495,7 @@ object PluginTemplate:
       |## Build, test, publish, install
       |
       |```bash
+      |scala-cli fmt .                        # scalafmt over the sources (a .scalafmt.conf, if any, sets the style)
       |scala-cli compile .
       |scala-cli test .                       # offline; HISTMERSION_PLUGIN_LIVE=1 also runs the live checks
       |scala-cli --power publish . --publish-repository ./@publishDir@   # the jar and its POM, in Maven layout

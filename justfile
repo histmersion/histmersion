@@ -113,6 +113,16 @@ health:
 
 # ── build & test ─────────────────────────────────────────────────────────────────────────────────
 
+# Format every Scala source, build.sbt and project/*.scala (scalafmt, .scalafmt.conf); compiling formats a module's sources too
+[group('dev')]
+fmt:
+    {{sbt}} scalafmtAll scalafmtSbt
+
+# Fail when a Scala source or build file is not formatted (`just fmt` fixes it); test-quick runs it first
+[group('dev')]
+fmt-check:
+    {{sbt}} scalafmtCheckAll scalafmtSbtCheck
+
 # Pure test suites (no database)
 [group('dev')]
 test:
@@ -158,11 +168,12 @@ test-it: test-db
     just test_db_port={{test_db_port}} test_db_dir={{quote(test_db_dir)}} test-db-down
     exit $rc
 
-# Test what changed — the modules touched since master (or the ones named: `just test-quick db cli`) and their dependents, DB suites on a throwaway Postgres; for iterating, `test-it` is the gate
+# Check the formatting, then test what changed — the modules touched since master (or the ones named: `just test-quick db cli`) and their dependents, DB suites on a throwaway Postgres; for iterating, `test-it` is the gate
 [group('dev')]
 test-quick *modules:
     #!/usr/bin/env bash
     set -uo pipefail
+    just fmt-check || { echo "not formatted — run: just fmt" >&2; exit 1; }
     mods="{{modules}}"
     [ -n "$mods" ] || mods="$(python3 scripts/dev/affected.py --explain)"
     [ -n "$mods" ] || { echo "no Scala module affected since master — nothing to test (just test-it runs everything)"; exit 0; }
