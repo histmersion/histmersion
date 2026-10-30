@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.pluginhost.Generation
 
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
 import com.histmersion.api.{ConfigFileInfo, ReloadReport}
 import com.histmersion.server.hot.Pinning
 import com.histmersion.server.plugins.Plugins
@@ -34,7 +34,12 @@ final class Deps(
     /** `histmersion config reload`: read the config file again and switch to it. */
     val reloader: () => ReloadReport = Deps.NoReload,
     /** A person's pause and cancel of the long background jobs this server runs. */
-    val jobStops: com.histmersion.domain.jobs.JobStops = com.histmersion.domain.jobs.JobStops()):
+    val jobStops: com.histmersion.domain.jobs.JobStops = com.histmersion.domain.jobs.JobStops(),
+    /** The load `cfg` came from: the settings file and the environment it was read with (Settings writes
+      * that file). */
+    loadedNow: Option[() => LoadedConfig] = None,
+    /** Ends this process so that the service it runs under starts it again; `None` where none does. */
+    val restart: Option[() => Unit] = None):
 
   /** The config the calling thread sees (its pinned generation's, else the current one). */
   def cfg: AppConfig = cfgNow()
@@ -45,6 +50,10 @@ final class Deps(
   /** The plugins' generation for this config: their registries and the report `about` and
     * `/api/config` show. */
   def plugins: Generation = pluginsNow()
+
+  /** The load the calling thread's config came from: its settings file and environment. */
+  def loaded: LoadedConfig = loadedNow.fold(LoadedConfig(cfg, UserConfigFile(
+    configFile.path.map(java.nio.file.Path.of(_)), configFile.loaded, configFile.unknownKeys)))(_())
 
 object Deps:
   /** A fixed `Deps` — one config, one pair of DataSources, nothing hot (tests, tools); its plugins are

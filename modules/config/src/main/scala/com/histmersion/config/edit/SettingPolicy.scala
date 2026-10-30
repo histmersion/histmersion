@@ -5,6 +5,16 @@ package com.histmersion.config.edit
   * should be known (a `value:` credential). Pure. */
 object SettingPolicy:
 
+  /** [[check]] of every edit, the first refusal ending it; the warnings of all of them. */
+  def all(edits: List[SettingEdit], schema: ConfigSchema, literalConsent: Boolean): Either[SettingError, List[String]] =
+    @scala.annotation.tailrec
+    def loop(rest: List[SettingEdit], notes: List[String]): Either[SettingError, List[String]] = rest match
+      case Nil => Right(notes)
+      case e :: tail => check(e, schema, literalConsent) match
+        case Left(err) => Left(err)
+        case Right(ns) => loop(tail, notes ++ ns)
+    loop(edits, Nil)
+
   def check(edit: SettingEdit, schema: ConfigSchema, literalConsent: Boolean): Either[SettingError, List[String]] =
     val key = edit.key
     for

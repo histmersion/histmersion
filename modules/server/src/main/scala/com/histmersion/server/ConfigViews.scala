@@ -14,8 +14,9 @@ object ConfigViews:
 
   /** The page's settings: the `ui` block, plus what the server knows and the block does not hold. */
   def page(ui: UiSettings, writeKeyRequired: Boolean, agentsEnabled: Boolean, plugins: PluginsReport,
-      baseMapSource: String, mapLanguage: String): UiConfig =
+      baseMapSource: String, mapLanguage: String, setupDue: Boolean = false): UiConfig =
     ui.into[UiConfig]
+      .withFieldConst(_.setupDue, setupDue)
       .withFieldConst(_.writeKeyRequired, writeKeyRequired)
       .withFieldConst(_.agentsEnabled, agentsEnabled)
       .withFieldConst(_.plugins, plugins)

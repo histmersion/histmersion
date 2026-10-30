@@ -10,7 +10,7 @@ class ConfigViewsSuite extends munit.FunSuite:
   test("the page's settings: every `ui` setting as read, and what the server adds"):
     val ui   = AppConfig.load().ui
     val page = ConfigViews.page(ui, writeKeyRequired = true, agentsEnabled = true, plugins = PluginsReport(),
-      baseMapSource = "local", mapLanguage = "de")
+      baseMapSource = "local", mapLanguage = "de", setupDue = true)
     assertEquals(page, UiConfig(ui.tiles, ui.tilesMaxZoom, ui.markerRadius, ui.viewportDebounceMs, ui.pageSize,
       ui.facetSuggestions, ui.treeDepth, ui.treeSamples, ui.maxBuckets,
       DebounceConfig(ui.debounce.suggestMs, ui.debounce.searchMs, ui.debounce.reloadMs, ui.debounce.previewMs),
@@ -20,7 +20,8 @@ class ConfigViewsSuite extends munit.FunSuite:
         ui.events.outlineToleranceDeg),
       MapTilesUiConfig(ui.mapTiles.maxZoom, ui.mapTiles.playbackBucketSeconds),
       ui.countersPollSeconds, ui.jobPollMs, writeKeyRequired = true, agentsEnabled = true, ui.tilesTone,
-      PluginsReport(), ui.docsUrl, baseMapSource = "local", mapLanguage = "de"))
+      PluginsReport(), ui.docsUrl, baseMapSource = "local", mapLanguage = "de",
+      com.histmersion.api.MapStartConfig(ui.mapStart.mode, ui.mapStart.lat, ui.mapStart.lon, ui.mapStart.zoom, ui.mapStart.label), setupDue = true))
 
   test("the config file's line: its path as text, whether it was read, the keys it ignored"):
     val f = UserConfigFile(Some(Path.of("/c/histmersion.conf")), loaded = true, List("histmersion.x"))

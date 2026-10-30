@@ -59,9 +59,9 @@ final class ServerGraph private (val graph: HotGraph[HotConfig], source: Option[
   val queryDs: DataSource = HotDataSource(queryPool)(_.ds)
 
   /** The handlers' view: config, file and plugins from the graph at each call. */
-  def deps(maintenance: Maintenance): Deps =
+  def deps(maintenance: Maintenance, restart: Option[() => Unit] = None): Deps =
     new Deps(() => graph.config.app, ds, queryDs, maintenance, () => graph.config.loaded.file.info,
-      () => plugins.peek, graph, () => reload())
+      () => plugins.peek, graph, () => reload(), loadedNow = Some(() => graph.config.loaded), restart = restart)
 
   /** Throw away the pooled connections of the pools in use now (after a restore: see [[Db.evict]]). */
   def evict(): Unit =

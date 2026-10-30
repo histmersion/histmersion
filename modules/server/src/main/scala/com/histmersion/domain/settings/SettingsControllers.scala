@@ -1,0 +1,32 @@
+package com.histmersion.domain.settings
+
+import com.histmersion.api.{ApiError, ConfigEdit, ReloadReport}
+import com.histmersion.config.edit.*
+
+/** `GET|POST /api/settings`, `POST /api/server/restart`, the `config` tool's `get`, `set`, `unset` and
+  * `restart`, and `histmersion config get|set|unset|restart` over the server. */
+final class SettingsControllers(settings: SettingsService, restarts: RestartService, reload: () => ReloadReport):
+
+  def page(prefix: Option[String]): Either[ApiError, ConfigEdit.Page] =
+    for
+      p    <- prefix.map(_.trim).filter(_.nonEmpty).fold(Right(None))(SettingKey.parse(_).map(Some(_))).left.map(ApiError(_))
+      snap <- settings.read(p).left.map(SettingsViews.error)
+    yield SettingsViews.page(snap, restarts.available)
+
+  /** The changes, each value read as its setting's kind; then the reload, when asked for and something changed. */
+  def write(w: ConfigEdit.Write): Either[ApiError, ConfigEdit.Written] =
+    for
+      edits   <- SettingEdit.parseAll(w.changes.map(c => c.key -> c.value), settings.schema).left.map(SettingsViews.error)
+      version <- w.version.map(_.trim).filter(_.nonEmpty)
+                   .fold(Right(None))(v => FileVersion.either(v).map(Some(_)).left.map(_ => ApiError(s"'$v' is not a settings file's version")))
+      outcome <- settings.write(edits, version, w.literalConsent).left.map(SettingsViews.error)
+    yield
+      val reloaded = Option.when(w.reload && outcome.wrote)(reload())
+      SettingsViews.written(outcome, reloaded, restarts.available)
+
+  def restart(): Either[ApiError, ConfigEdit.Restart] =
+    restarts.restart().fold(
+      why => Left(ApiError(why, Some(ConfigEdit.CodeUnavailable))),
+      msg => Right(ConfigEdit.Restart(accepted = true, msg)))
+
+  def setupDue: Boolean = settings.setupDue

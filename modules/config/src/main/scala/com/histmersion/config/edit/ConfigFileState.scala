@@ -6,9 +6,10 @@ import java.nio.file.Path
 
 /** The config file as read: its text (`None`: not there yet), its version, and its settings as parsed with
   * its includes, unresolved — what a change is made against. */
-final case class ConfigFileState(path: Path, text: Option[String], version: FileVersion, parsed: Config):
-  /** Is `o` the file itself (not a file it includes)? */
-  def here(o: ConfigOrigin): Boolean = ConfigFileState.sameFile(o, path)
+final case class ConfigFileState(path: Path, text: Option[String], version: FileVersion, parsed: Config,
+    own: Option[ConfigOrigin => Boolean] = None):
+  /** Is `o` the file itself (not a file it includes)? `own` says so for a text read without a file. */
+  def here(o: ConfigOrigin): Boolean = own.fold(ConfigFileState.sameFile(o, path))(_(o))
 
   /** What the file itself writes at `key`, if it is a plain value there. */
   def ownValue(key: SettingKey): Option[SettingValue] =

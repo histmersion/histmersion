@@ -55,13 +55,14 @@ object Main:
     * may move it). */
   private def build(hc: HotConfig, source: Option[ConfigSource], host: String, port: Int,
       converter: Option[ConverterClient], autoInit: Boolean = false, onHandlers: Handlers => Unit = _ => (),
-      plugins: Generation = Plugins.offline, core: CoreBudget = CoreBudget())(using Ox): NettySyncServer =
+      plugins: Generation = Plugins.offline, core: CoreBudget = CoreBudget(),
+      restart: Option[() => Unit] = None)(using Ox): NettySyncServer =
     val sg = ServerGraph.start(hc, source, Some(plugins), core).fold(e => throw IllegalStateException(e), identity)
     releaseAfterScope(sg.close())
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
     core.persistTo(CoreQuotaStore.db(sg.ds))
-    val deps = sg.deps(Maintenance())
+    val deps = sg.deps(Maintenance(), restart)
     val cfg  = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h    = Handlers(deps, converter.getOrElse(ConverterClient.fromConfig(deps.cfg.converter)))
     onHandlers(h) // a test's handle on this server's handlers (its run tokens); nothing in production
@@ -236,10 +237,21 @@ object Main:
           case e: Throwable =>
             scribe.error(s"Histmersion could not start its bundled runtime: ${e.getMessage}")
             sys.exit(3)
+    // a LaunchAgent (launchd names its job in XPC_SERVICE_NAME) or a systemd unit (INVOCATION_ID) starts the
+    // server again when it exits with an error: there, Settings can restart it by ending it with that code
+    val underService = sys.env.get("XPC_SERVICE_NAME").exists(_.contains("histmersion")) || sys.env.contains("INVOCATION_ID")
+    val restart = Option.when(underService)(() => {
+      val code = cfg.server.restartExitCode
+      val _ = Thread.ofVirtual().start(() => {
+        Thread.sleep(500) // the answer goes out first
+        scribe.info(s"restarting: exit $code, for the service to start the server again")
+        sys.exit(code)
+      })
+    })
     supervised {
       val srv =
         try build(hotConfig(cfg, loadedConfig.file.info, Some(loadedConfig)), Some(source), cfg.server.host,
-          cfg.server.port, None, autoInit = cfg.init.auto, plugins = generation, core = core)
+          cfg.server.port, None, autoInit = cfg.init.auto, plugins = generation, core = core, restart = restart)
         catch
           case e: Throwable =>
             scribe.error(s"Histmersion failed to start: ${e.getClass.getName}: ${e.getMessage}", e)

@@ -1,5 +1,7 @@
 package com.histmersion.config.edit
 
+import org.ekrich.config.Config
+
 import java.nio.file.Path
 
 /** What a write did to the config file.
@@ -14,3 +16,14 @@ import java.nio.file.Path
 final case class WriteOutcome(file: Path, changed: List[SettingKey], unchanged: List[SettingKey], backup: Option[Path],
     version: FileVersion, created: Boolean, restart: List[(SettingKey, String)], warnings: List[String]):
   def wrote: Boolean = changed.nonEmpty
+
+object WriteOutcome:
+  /** What `edited` did to the file at `path`: the restart-only settings among the changed ones, and the warnings —
+    * `notes`, and an environment variable of `env` that sets a changed setting too (and wins over the file). */
+  def of(path: Path, schema: ConfigSchema, env: Config, version: FileVersion, edited: EditedText, backup: Option[Path],
+      notes: List[String]): WriteOutcome =
+    val fields = edited.changed.flatMap(schema.field)
+    val shadowed = fields.flatMap(f => f.envVar.filter(v => env.hasPath(v)).map(v =>
+      s"The environment variable $v also sets ${f.key.relative}, and wins over the settings file while it is set."))
+    WriteOutcome(path, edited.changed, edited.unchanged, backup, version, created = false,
+      restart = fields.flatMap(f => f.restart.map(f.key -> _)), warnings = notes ++ shadowed)
