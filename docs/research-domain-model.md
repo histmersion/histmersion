@@ -3,7 +3,7 @@
 Status: **proposal, waiting for the user's approval**. Nothing here is built. Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised the same day after the user's review of §3 (subdomains above the
 features; no `planning`; `personal` as its own subdomain with a marks interface; `library`, `research`,
-`atlas`, `media` named; acquisition and OCR dissolved; automation writes only through other subdomains'
+`catalogue`, `media` named; acquisition and OCR dissolved; automation writes only through other subdomains'
 services). Answers review items #7485, #7490, #7903, #7908 and #7911, and the "ad-hoc model" remark.
 
 Inventories too long for this page are in `research-domain-model/`:
@@ -15,14 +15,16 @@ Inventories too long for this page are in `research-domain-model/`:
 | [`objects.md`](research-domain-model/objects.md) | all 645 top-level objects without a same-named type, each with its destination and a one-line reason |
 | [`primitives.md`](research-domain-model/primitives.md) | primitive parameters and fields by name, measured per module, and the counts behind §4 |
 
-`atlas` is a placeholder name for the subdomain of places, periods and events (Q17). It appears only as the package
-segment `domain.atlas` / `api.atlas` / `config.atlas`, so choosing another name is one package rename.
+`catalogue` is the subdomain of places, periods and events (Q17, decided 2026-10-30): the catalogue of data points the
+library's sources attest. Its packages are `domain.catalogue` / `api.catalogue` / `config.catalogue`. The event catalogues
+imported by plugins keep their name (SPI kind `event-catalogue`); inside the subdomain they are the events feature's
+*event-catalogue import*.
 
 ## 0. Summary
 
 1. The code is grouped into **nine subdomains**, each with its own vocabulary, and features inside them:
    `com.histmersion.domain.<subdomain>.<feature>` (§3). From the bottom: `platform` (jobs, identity, work lists,
-   lint runner, plugin host), `atlas` (places, periods, events and what attests them), `media`, `library`
+   lint runner, plugin host), `catalogue` (places, periods, events and what attests them), `media`, `library`
    (sources, findings, citations, labels, search, and getting sources in), `research` (research results; articles
    today), `automation` (the workflows: runs, managers, approvals, autopilot, schedules, goals, TASKS, LOG), then
    `exchange` (bundle, merge) and `operations` (backup, maintenance, settings, about, basemap) at the top, with
@@ -30,7 +32,7 @@ segment `domain.atlas` / `api.atlas` / `config.atlas`, so choosing another name 
 2. The grouping is **measured, not asserted**: 546 cross-subdomain type references and 408 commits of co-change
    (`dependencies.md`). The data moved merge and bundle out of operations (merge↔bundle co-change 0.50; 138 of
    operations' 146 references into research data were theirs), the job runner below every subdomain (used by
-   atlas, media and library), the evidence that attests events into the atlas (events use it 34 times; moving it
+   catalogue, media and library), the evidence that attests events into the catalogue (events use it 34 times; moving it
    cut upward references from 160 to 125), and the article review ledger into automation (review↔pipelines 0.44).
 3. **Direction**: each subdomain depends only on the ones below it; `personal` only on `platform`. 121 references
    point upward today; §3.4 lists each group with what removes it — mostly seven small interfaces that lower
@@ -55,7 +57,7 @@ segment `domain.atlas` / `api.atlas` / `config.atlas`, so choosing another name 
 9. **12 slices** (§9): groundwork, `personal` as the template, two plugin slices, then one subdomain per slice from
    the bottom up. Equivalence is shown by permanent snapshot files (OpenAPI, MCP `tools/list`, toolbox schemas, CLI
    help, plugin report, settings view), codec round-trips, contract suites, and the bundle with `--self-check`.
-10. Section 11 has 27 open questions; the ones that change the shape most are Q17 (the atlas's name), Q18 (test vs
+10. Section 11 has 27 open questions; the ones that change the shape most are Q18 (test vs
     sbt modules for the direction rule), Q24 (where goals live) and Q5 (the CLI agent runtimes).
 
 ## 1. The review points and where each is answered
@@ -69,7 +71,7 @@ segment `domain.atlas` / `api.atlas` / `config.atlas`, so choosing another name 
 | #7908 | `@main def` instead of `object X { def main }` | §5.5 |
 | #7911 | first-party plugins out of the server, one module per plugin or family, `plugin-api` only, ServiceLoader, built in, switchable | §8; slices 3, 4 (and 12 for ai-cli, Q5) |
 | §3 review | subdomains above features, measured by co-change and imports; no `planning`; `personal` with an interface owned by it; dependency direction enforced | §3.1–§3.4, §3.6, `dependencies.md` |
-| §3 review | `library`, `research`, `atlas`, `media` named; acquisition and OCR not domains; licence shared; automation writes through services; goals re-checked | §3.1, §3.5 (automation), §3.7 (licence), §3.8 (OCR), §8, Q24 |
+| §3 review | `library`, `research`, `catalogue`, `media` named; acquisition and OCR not domains; licence shared; automation writes through services; goals re-checked | §3.1, §3.5 (automation), §3.7 (licence), §3.8 (OCR), §8, Q24 |
 
 Fixed decisions kept everywhere: one ServiceLoader service type (`com.histmersion.plugin.Plugin`); `plugin-api` holds
 interfaces and plain data only; our own plugins are built in and can be disabled; everything stays AGPL-3.0-or-later.
@@ -120,7 +122,7 @@ Layers, bottom first. A subdomain may depend on the ones below it only (§3.3).
 | layer | subdomain | what it is about (its words) | features — `domain.<subdomain>.<feature>` | tables owned | lines today (main) |
 |---|---|---|---|---|---:|
 | 0 | `platform` | the machinery every subdomain runs on, holding no research content: job, job kind, uid, alias, tombstone, work list, lint rule, plugin generation | `jobs` (runner, records, kinds registry), `identity` (instance origin, uid redirects, tombstones, the alias mechanism), `maintenance` (the lock writes wait on), `worklist` (the list kernel of §6), `lint` (the runner; rules come from each subdomain), `plugins` (generation, registries, legacy settings) | `jobs`, `instance`, `uid_aliases`, `tombstones`, `alias_tombstones`, `queue_items` (rows owned per list, below) | 3 800 |
-| 1 | `atlas` (Q17) | data points on the map × timeline: place, name, period, event, dating, catalogue, gazetteer, and the evidence that attests them | `places` (gazetteer, names, overrides, relations, hierarchy, geocoder, site types, point areas, land, the gazetteer import loop), `periods` (presets, PeriodO), `events` (datings, edges, participants, the catalogue import loop, corrections), `evidence` (attestations, event link candidates and checks, leads), `maptiles` (tiles, undated sites, the `MapLayer` interface) | `places`, `place_*` (8), `gazetteer_sources`, `land`, `periods`, `seed_versions`, `events`, `event_*` (8), `corrections`, `attestations`, `site_undated_*`, `map_changes` | 14 200 (−900 to plugins) |
+| 1 | `catalogue` (Q17) | data points on the map × timeline: place, name, period, event, dating, catalogue, gazetteer, and the evidence that attests them | `places` (gazetteer, names, overrides, relations, hierarchy, geocoder, site types, point areas, land, the gazetteer import loop), `periods` (presets, PeriodO), `events` (datings, edges, participants, the event-catalogue import loop, corrections), `evidence` (attestations, event link candidates and checks, leads), `maptiles` (tiles, undated sites, the `MapLayer` interface) | `places`, `place_*` (8), `gazetteer_sources`, `land`, `periods`, `seed_versions`, `events`, `event_*` (8), `corrections`, `attestations`, `site_undated_*`, `map_changes` | 14 200 (−900 to plugins) |
 | 2 | `media` | pictures and their rights: asset, link, stated licence, credit, collection, figure, cover | `assets` (store, IIIF, thumbnails), `links`, `imports` (the collection import loop and its licence policy), `figures`, `covers` | `assets`, `asset_links`, `media_links`, `media_checks` | 7 000 (−2 400 to plugins) |
 | 3 | `library` | what sources say and how they get in: source, citekey, body, finding, citation edge, label, candidate, acquire check | `sources` (record, body, chunks, aliases, rename, delete), `findings`, `citations` (edges, refs, follow-ups, assessments, retractions), `labels`, `search` (filter, search, aggregate, histogram, geo-when, read-only query), `acquisition` (discovery, candidates and watches, recheck, the fetch chain and its quota, the ACQUIRE list), `ingest` (what an ingest does to a source: the job, the record, originals, seed import), `calibre` | `sources`, `source_*` (3), `findings`, `finding_places`, `edges`, `unresolved_edges`, `assessments`, `retraction_watch`, `source_candidates`, `candidate_watches`, `acquire_checks`, `upstream_quota`; `queue_items` where `list = 'acquire'` | 13 200 (−2 300 to plugins) |
 | 4 | `research` | research results; an article is the one kind today: article, version, link, coverage, critique pairing, review state | `articles` (record, versions, links, coverage, critique pairing, review state, prose lint, pages) | `articles`, `article_*` (4) | 5 100 |
@@ -158,9 +160,9 @@ and feature-level co-change decides the borderline placements.
 
 References between subdomains, final grouping (row depends on column):
 
-| from \ to | atlas | automation | exchange | library | media | operations | personal | platform | research |
+| from \ to | catalogue | automation | exchange | library | media | operations | personal | platform | research |
 |---|---|---|---|---|---|---|---|---|---|
-| **atlas** | · | 0 | 0 | 11 | 6 | 0 | 0 | 12 | 0 |
+| **catalogue** | · | 0 | 0 | 11 | 6 | 0 | 0 | 12 | 0 |
 | **automation** | 7 | · | 0 | 80 | 0 | 1 | 0 | 43 | 56 |
 | **exchange** | 19 | 8 | · | 18 | 5 | 2 | 0 | 16 | 6 |
 | **library** | 27 | 10 | 2 | · | 15 | 1 | 0 | 25 | 10 |
@@ -177,12 +179,12 @@ References between subdomains, final grouping (row depends on column):
 | proposal | decision | evidence |
 |---|---|---|
 | `operations` holds backup, bundle, merge, maintenance, settings, plugins host, instance | **merge and bundle become `exchange`** (top); operations keeps backup, maintenance, settings, instance, basemap | merge↔bundle co-change 0.50 (16 commits); merge's next partners are sources 0.23, articles 0.21, goals 0.19, events 0.15 — research data, not operations. Proposed operations referenced research subdomains 146 times, 138 from bundle and merge; what remains references them 16 times |
-| jobs in `automation` | **jobs, the identity tables, the maintenance lock, the work-list kernel, the lint runner and the plugin host form `platform`** (bottom) | jobs are used by agents 8, ingest 6, events 6, maintenance 5, basemap 5, merge 4; in automation they made atlas, media and library depend on automation (55 references into automation in the proposal, most of them jobs and the queues) |
-| `acquisition` as a subdomain with ingest and Calibre | **dissolved** (user): sources' acquisition, ingest and Calibre into `library`; gazetteer and catalogue import loops into `atlas`; the collection import loop into `media`; implementations into plugins (§8) | acquisition → library-side features 46 references, back 2; ingest co-changes with sources 0.17 and acquisition 0.14 |
-| attestations in corpus; event links and leads in events | **`evidence` (attestations, link candidates and checks, leads) in `atlas`** | events use evidence 34 times; evidence uses findings and citations twice. Moving it cut atlas → library from 46 to 11 and the upward total from 160 to 125 |
+| jobs in `automation` | **jobs, the identity tables, the maintenance lock, the work-list kernel, the lint runner and the plugin host form `platform`** (bottom) | jobs are used by agents 8, ingest 6, events 6, maintenance 5, basemap 5, merge 4; in automation they made catalogue, media and library depend on automation (55 references into automation in the proposal, most of them jobs and the queues) |
+| `acquisition` as a subdomain with ingest and Calibre | **dissolved** (user): sources' acquisition, ingest and Calibre into `library`; gazetteer and catalogue import loops into `catalogue`; the collection import loop into `media`; implementations into plugins (§8) | acquisition → library-side features 46 references, back 2; ingest co-changes with sources 0.17 and acquisition 0.14 |
+| attestations in corpus; event links and leads in events | **`evidence` (attestations, link candidates and checks, leads) in `catalogue`** | events use evidence 34 times; evidence uses findings and citations twice. Moving it cut catalogue → library from 46 to 11 and the upward total from 160 to 125 |
 | article review in writing | **the review panel and its ledger in `automation.review`; the article keeps its review state** | review↔pipelines co-change 0.44 (15 commits); the ledger names `ReviewGoal`, `ReviewApproval`, `AgentVerify`, `CompareRuns` |
-| corrections as a feature | **folded into `atlas.events`** | used only by events (16 references) and bundle |
-| map tiles in geography | **kept in `atlas.maptiles`**, with media and library drawing their layers through `MapLayer` | atlas → media 6 references, all tiles and detail pages |
+| corrections as a feature | **folded into `catalogue.events`** | used only by events (16 references) and bundle |
+| map tiles in geography | **kept in `catalogue.maptiles`**, with media and library drawing their layers through `MapLayer` | catalogue → media 6 references, all tiles and detail pages |
 | media beside corpus/writing | **media below library** | library → media 15 (ingest stores figures and originals as assets, source covers), media → library 3 |
 | search, query, corpus lint as corpus's read side | **search and query in `library.search`; lint's runner in `platform`, rules per subdomain** | search co-changes with articles 0.29, sources 0.20; lint's rules span places (11 commits), sources, media, events |
 | basemap as a generic area | **`operations.basemap`** (a feature with endpoints, jobs and settings, no research data) | co-changes with instance 0.18 (15), nothing else above 0.06 |
@@ -193,18 +195,18 @@ References between subdomains, final grouping (row depends on column):
 | subdomain | may depend on |
 |---|---|
 | `platform` | the shared kernel, `values`, `util.*` only |
-| `atlas` | platform |
-| `media` | platform, atlas |
-| `library` | platform, atlas, media |
-| `research` | platform, atlas, media, library |
-| `automation` | platform, atlas, media, library, research |
+| `catalogue` | platform |
+| `media` | platform, catalogue |
+| `library` | platform, catalogue, media |
+| `research` | platform, catalogue, media, library |
+| `automation` | platform, catalogue, media, library, research |
 | `exchange` | everything below it, automation included (it carries goals and work-list items) |
 | `operations` | everything below it; not exchange |
 | `personal` | platform only |
-| any subdomain | additionally the interface packages lower subdomains own for it to implement (`personal.marks`, `library.sources.referrers`, `atlas.maptiles.layers`, `atlas.evidence.passages`, `platform.jobs.kinds`, `platform.lint.rules`, `platform.identity.aliases`) |
+| any subdomain | additionally the interface packages lower subdomains own for it to implement (`personal.marks`, `library.sources.referrers`, `catalogue.maptiles.layers`, `catalogue.evidence.passages`, `platform.jobs.kinds`, `platform.lint.rules`, `platform.identity.aliases`) |
 | `server` (composition root, `server.views`) | everything |
 
-Core subdomains (atlas, media, library, research) never depend on automation, exchange or operations; personal
+Core subdomains (catalogue, media, library, research) never depend on automation, exchange or operations; personal
 depends only on platform and is implemented, never imported.
 
 **Enforcement: `ArchitectureSuite`** (server tests, no database, seconds). It reads every Scala source under
@@ -224,7 +226,7 @@ any. The compiler-enforced alternative — one sbt project per subdomain, as the
 | lint rules inside the platform runner (`LintRepo`, `Lint`) | 15 | **`LintRules`**: each subdomain contributes its rules; the runner, its fixes and its report stay in platform | 5 |
 | the alias and uid mechanism switching over owners' tables (`AliasRepo`, `AliasKind`, `ResolvedId`) | 5 | **`AliasTables`**: each owner registers its alias table | 5 |
 | the work-list kernel touching owners (goal scope, DOI matching, notes) | 4 | goal scope to automation, DOI matching to `library.acquisition` (§6.2) | 5 |
-| atlas pages and tiles needing media and library (`EventDetail`, `PlaceDetail`, tile features, places tree counts, the passage search over source bodies when an event is linked) | 17 | **`MapLayer`** (atlas owns; library and media implement), **`PassageSource`** (atlas's evidence owns; library implements), and detail pages in `server.views` | 6–7 |
+| catalogue pages and tiles needing media and library (`EventDetail`, `PlaceDetail`, tile features, places tree counts, the passage search over source bodies when an event is linked) | 17 | **`MapLayer`** (catalogue owns; library and media implement), **`PassageSource`** (catalogue's evidence owns; library implements), and detail pages in `server.views` | 6–7 |
 | media needing library (source covers, figures from a source's PDF) | 3 | covers and figures are `library.ingest` steps that store into media | 7–8 |
 | source rename and delete touching articles, goals, work lists, media (`SourceRepo`, `Rename`, `SourceDelete*`) | 9 | **`SourceReferrer`** (library owns): `references(uid)`, `renamed(from, to)`, `deleted(uid)` inside the library's transaction; research, media, automation implement it | 8 |
 | goal-aware acquisition code (candidate search by goal, ingest backlog, scheduling) | 10 | that code serves the agents and moves to automation | 8, 10 |
@@ -241,7 +243,7 @@ Subdomains do not assemble other subdomains' data for display.
 
 Automation owns the data and processes that define workflows: runs, steps, leases and checkpoints, schedules,
 managers, approvals, the autopilot, the TASKS and LOG lists, model chains and allowances. It **reads** the library,
-the atlas, media and research, and **inserts results** into research and the library, only through their public
+the catalogue, media and research, and **inserts results** into research and the library, only through their public
 services — the same methods a person's request reaches — with `Caller.Automation(run)`.
 
 Measured today (scan of automation's files for calls into other subdomains' repositories, and of automation's
@@ -252,7 +254,7 @@ repositories for SQL over other subdomains' tables):
 | `QueueRepo` (`get` 7, `acquireNaming` 3, `list` 2, `add` 1) | 13 | `AcquireRecheckService`, `OaBacklog`, `SeedService`, `ManagerSupervisor`, … | `QueueService` (platform) for TASKS and LOG; `AcquireListService` (library) for ACQUIRE |
 | `AcquireCheckRepo` (`countSince` 3, `record` 2, `heldByDoi`, `of`) | 7 | `AcquireRecheckService` | the recheck is the library's process (`library.acquisition`); `AcquireRecheckService` moves there and automation schedules it through its service |
 | `ArticleRepo.load` | 7 | the review, compile, propose and infer-filter pipelines, `ManagerSupervisor` | `ArticleService.get` |
-| `PeriodSql` fragments | 5 | `GoalRepo` | a period filter value; the SQL stays the atlas's |
+| `PeriodSql` fragments | 5 | `GoalRepo` | a period filter value; the SQL stays the catalogue's |
 | `JobRepo`, `AliasRepo.renamedTo`, `CandidateRepo.watches` | 4 | `AgentsHandlers`, `GoalSweep`, `ListQueries` | `JobService`, `IdentityService`, `CandidateService` |
 | SQL in `ManagerRepo`, `AgentRepo`, `GoalLinkRepo` reading `articles` (10), `article_versions` (1), `sources` (3), `queue_items` (5) | 19 | managers' "which articles need review / which sources lack X" queries | batch query methods on `ArticleService`, `SourceService`, `QueueService` (one call per page of ids; measured at live volumes in the slice, per the performance rule) |
 | SQL in `AgentRepo` writing `jobs` (9) and reading it (27) | 36 | a run is also a job | `JobService` |
@@ -303,7 +305,7 @@ enum ItemState:
 |---|---|---|
 | `source` | `library` | citekey and its aliases; uid |
 | `article` | `research` | slug and its aliases; uid |
-| `event`, `place` | `atlas` | event id and place id, their aliases; uid for events |
+| `event`, `place` | `catalogue` | event id and place id, their aliases; uid for events |
 | `picture` | `media` | asset uid |
 | `goal` | `automation` | goal slug and its aliases; uid |
 | `point`, `view`, `period` | personal itself | no owner: personal checks coordinates, the view's length and the years (today's `Target.check`) |
@@ -331,7 +333,7 @@ Today:
 | `MediaRights` (core) and `plugin.MediaRights`, `DataCredit` (api: name, use, licence, licence URL, credit, URL) | core, SPI, api | licence + licence URL + author + credit | **`domain.Attribution(licence, licenceUrl, author, credit)`** shared; `MediaRights` becomes it; a `DataCredit` is a dataset with an `Attribution` |
 | `sources.license` (from `FetchedFile.licence`) | library | the OA licence of a source | `Option[Licence]` on the source, classified on read (column unchanged, Q26) |
 | `assets.license`, `assets.license_url` | media | a picture's licence | `Attribution` |
-| `gazetteer_sources.licence`, a catalogue's licence (`CatalogProviderInfo`, `EventCatalogue.licence`), Cliopatria's (V107) | atlas | a dataset's licence | `Attribution` |
+| `gazetteer_sources.licence`, a catalogue's licence (`CatalogProviderInfo`, `EventCatalogue.licence`), Cliopatria's (V107) | catalogue | a dataset's licence | `Attribution` |
 | `plugin.Licence` (SPI) | plugin-api | a licence as a provider states it | stays: the host classifies it into `domain.Licence` |
 | allowlists (`media.<provider>.licences`, `media.collections.licences`, `per-collection.<name>`) | media | a policy over families | stays media's (`LicencePolicy` over `LicenceFamily`) |
 | `OaStatus` (`gold`/`diamond`) | library (`BrowserDownload`) | an open-access route, not a licence | stays the library's |
@@ -716,7 +718,7 @@ service of a higher subdomain is given the `InMemory` services of the lower ones
 | state record | shared by |
 |---|---|
 | `PlatformState` | jobs, identity, work lists |
-| `AtlasState` | places, periods, events, evidence |
+| `CatalogueState` | places, periods, events, evidence |
 | `MediaState` | assets, links, checks |
 | `LibraryState` | sources, findings, citations, labels, candidates, acquire checks |
 | `ResearchState` | articles, versions, links, coverage, review state |
@@ -798,10 +800,10 @@ Q18, and mechanical once the packages are clean.
 
 ## 8. Plugin separation (#7911)
 
-Acquiring is each subdomain's own business: the library acquires sources, the atlas acquires data points, media
+Acquiring is each subdomain's own business: the library acquires sources, the catalogue acquires data points, media
 acquires pictures. In each the **interface and the running of it** are domain code — the fetch chain, its quota,
 the ACQUIRE list, recheck, discovery and candidates (`library.acquisition`); the catalogue and gazetteer import
-loops (`atlas.events`, `atlas.places`); the collection import loop and its licence policy (`media`). The
+loops (`catalogue.events`, `catalogue.places`); the collection import loop and its licence policy (`media`). The
 **implementations** — fetchers, catalogues, collections, gazetteer importers — are plugins.
 
 ### 8.1 What each built-in needs from the server today (measured)
@@ -857,7 +859,7 @@ Not plugins (they read data shipped with the install, not an upstream someone ma
 the bundled gazetteer extracts (`GazetteerLoad`, 503 lines: a manifest of LPF files checked by SHA-256, the
 `histmersion init` path), the PeriodO presets (`PeriodOFetch` + the PeriodO parser, 214 lines: one source, also
 bundled), and Natural Earth land (`NaturalEarthLand`, 63 lines: the land mask the place checks use). They stay in
-`atlas` (Q23).
+`catalogue` (Q23).
 
 ### 8.3 The SPI additions
 
@@ -937,7 +939,7 @@ lines the slice moves or rewrites: S < 2 k, M 2–6 k, L 6–12 k, XL > 12 k. Ea
 | 3 | **Plugins I: fetchers and catalogues** | `upstreams`; SPI-1, 2, 3, 7; `plugins/fetchers`, `plugins/events`; host-supplied settings; `Builtin*`, `HostEventCatalogue`, `OaIndex`'s state go; the CORE quota behind SPI-2 | L (6 k) | high | identical requests in identical order (memo keys, landing pages, CORE pacing) and `events rederive` results; gated by recorded traffic and the fixture suites (`OaFetchSuite`, `PmcFetchSuite`, `LandingFetchSuite`, `EventImportSuite`, `PluginCatalogueSuite`) |
 | 4 | **Plugins II: media, gazetteers, ai-http** | SPI-4, 5, 6, 8, 10; `plugins/media`, `plugins/gazetteers`, `plugins/ai-http`; the media marker classes go; Wikidata pictures and depictions run through media's collection loop | L (6 k) | high | licences (M4), per-item roles, the agent loop's wire requests; gated by the media and importer fixture suites and by request bodies captured on a local stub of each AI API. The plugin report gains the three gazetteer plugins — the one intended snapshot change |
 | 5 | **Platform** | jobs and the `JobKinds` registry; identity with `AliasTables`; the maintenance lock; the work-list kernel (§6.2); the lint runner with `LintRules`; the plugin host glue; `util.ocr` split out | M (4 k + kind registrations across the code) | medium | every job kind re-registered; job detail rendering unchanged (snapshot of `job_status` output per kind) |
-| 6 | **Atlas** | places (gazetteer, geocoder, site types, point areas, land, the gazetteer loop), periods, events with corrections and the catalogue loop, evidence, map tiles with `MapLayer`, `PassageSource`; `PlaceId`, `EventId`, `Kilometres`, `Zoom`; `AtlasState` | XL (13 k) | medium | `PlaceRepo` (1 710 lines) and tile timing (performance suite at live volumes) |
+| 6 | **Catalogue** | places (gazetteer, geocoder, site types, point areas, land, the gazetteer loop), periods, events with corrections and the event-catalogue import loop, evidence, map tiles with `MapLayer`, `PassageSource`; `PlaceId`, `EventId`, `Kilometres`, `Zoom`; `CatalogueState` | XL (13 k) | medium | `PlaceRepo` (1 710 lines) and tile timing (performance suite at live volumes) |
 | 7 | **Media** | assets, links, IIIF, figures, covers, the import loop and `LicencePolicy`; the shared `Licence` and `Attribution` introduced here | M (4.6 k) | medium | the licence classification is shared from now on; media's fixture suites are its oracle |
 | 8 | **Library** | sources, findings, citations, labels, search and query, acquisition (discovery, candidates, recheck moved out of `agents`, fetch chain, ACQUIRE list), ingest over `util.ocr`, Calibre; `SourceReferrer`; `Citekey`, `SourceUid`, `Doi`, `Year`, `Latitude`/`Longitude`, `Title`, … end to end; `LibraryState` | XL (13 k + 2 k of `Handlers`/`McpTools`) | high | the most used types; the search SQL must not change (a snapshot of the SQL the filter suite generates) |
 | 9 | **Research** | articles: versions, links, coverage, critique pairing, review state, prose lint, pages; `Slug` | L (5 k + its share of `Handlers`) | medium | the review state written by automation (contract suite) |
@@ -979,13 +981,13 @@ Q1–Q16 are from the first draft, updated where the revision touched them. Q17�
 | Q14 | Markdown rendering: a `MarkdownRender[A]` type class with instances on the api types' companions, or one renderer object per feature? | The type class: it is "a function about a type", and the CLI and MCP share it |
 | Q15 | Plugins before the subdomains they live in (slices 3–4 before 5–12)? | Yes, so plugin code moves once |
 | Q16 | `cli` (76 files, flat) into `cli.<subdomain>` packages in slice 12, or later? | Slice 12: the move is cheap and the CLI help snapshot guards it |
-| Q17 | The name of the places/periods/events subdomain (written `atlas` here; one package segment to rename). Candidates: **`atlas`** — the reference work of places and their history on the map × timeline; **`chronotope`** — exact (time-space) but obscure to most readers; **`gazetteer`** — the field's own word, but strictly an index of places, not of periods and events | `atlas`: short, concrete, already how the web page presents the map × timeline, and it does not suggest places only |
+| Q17 | The name of the places/periods/events subdomain | **Decided (user, 2026-10-30): `catalogue`.** `atlas` and `gazetteer` cover places only; `chronotope` is misleading. |
 | Q18 | Enforce the direction with `ArchitectureSuite` (a test over imports) or with one sbt project per subdomain (the compiler, as `% Runtime` does for plugins)? | The test during the slices; split `server` into subdomain projects after slice 12 if the build-speed measurement shows a gain — by then it is mechanical |
-| Q19 | The evidence that attests data points (attestations, event link candidates and checks, leads) in `atlas` or in `library`? | `atlas`: events use it 34 times and it uses library types twice; in the library it was the largest source of upward references (46) |
+| Q19 | The evidence that attests data points (attestations, event link candidates and checks, leads) in `catalogue` or in `library`? | `catalogue`: events use it 34 times and it uses library types twice; in the library it was the largest source of upward references (46) |
 | Q20 | A `platform` subdomain at the bottom (jobs, identity, maintenance lock, work-list kernel, lint runner, plugin host), or those pieces in the shared kernel `com.histmersion.domain`? | `platform`: they own tables and services; the shared kernel stays types only |
 | Q21 | personal **pulls** (describe at read time; rename, merge and delete followed through uids, uid redirects and tombstones) or owners **push** changes to personal? Pull means a person's word search over marks matches the stored label, refreshed when the item is next shown | Pull: no subdomain has to know personal exists, and the stored label is already a column |
 | Q22 | Pages that join several subdomains (source, place and event detail, About, Activity): `server.views` above every subdomain, or the controllers of the highest subdomain involved? | `server.views`: it keeps every subdomain's controllers to its own data, and it is where the direction rule allows everything |
-| Q23 | Gazetteer importers: Cliopatria, AWMC and ChronOntology become plugins (SPI-10, 329 lines, three fixture suites), while the bundled extracts (`GazetteerLoad`), PeriodO presets and Natural Earth land stay in `atlas`? | Yes: the three read an upstream a user may switch off or replace; the others read data shipped with the install |
+| Q23 | Gazetteer importers: Cliopatria, AWMC and ChronOntology become plugins (SPI-10, 329 lines, three fixture suites), while the bundled extracts (`GazetteerLoad`), PeriodO presets and Natural Earth land stay in `catalogue`? | Yes: the three read an upstream a user may switch off or replace; the others read data shipped with the install |
 | Q24 | Goals: in `automation` (what the workflows act towards) or in `research` (the person's research goals)? Measured: goals use agents 12, managers 4, autopilot 4; are used by agents 15, managers 12, pipelines 9, autopilot 6, bundle 10, personal 2; co-change goals↔managers 0.22, agents 0.18, autopilot 0.18, approvals 0.18. In `research`, about 20 references would point upward unless the stages, plans and schedules moved out of the goal into automation records that refer to it | `automation` for now: the goal's stages, plans and schedules are workflow state. Revisit when goals gain content of their own (a written aim, its results); then the goal itself moves to `research` and automation keeps its plans and schedules about it |
 | Q25 | `automation` is 33 k lines (agents alone 14 k). One subdomain, or two (the agent runtime vs the research workflows)? | One: its features share one vocabulary and change together; its slice deploys in two steps |
 | Q26 | The shared `Licence`: classify stored strings on read (no migration), or store the family in new columns? | Classify on read: `classify` is pure and fast, and no column changes |
