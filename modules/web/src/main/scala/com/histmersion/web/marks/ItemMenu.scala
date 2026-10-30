@@ -29,6 +29,5 @@ object ItemMenu:
       ContextMenu.Entry("Copy as Markdown", () => Clipboard.copy(markdown(origin, ref, byline), "the Markdown")),
       ContextMenu.Entry("Copy the link", () => Clipboard.copy(link(origin, ref), "the link")),
       ContextMenu.Separator,
-      ContextMenu.Entry(if marked then "Remove the bookmark" else "Bookmark", () => ItemActions.bookmark(ref),
-        pressed = Some(marked)),
+      ContextMenu.Entry(if marked then "Remove the bookmark" else "Bookmark", () => ItemActions.bookmark(ref)),
       ContextMenu.Entry("Open in a new tab", () => { val _ = dom.window.open(ItemRef.page(ref.target), "_blank", "noopener") }))

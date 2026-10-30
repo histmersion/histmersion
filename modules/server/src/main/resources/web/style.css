@@ -2340,6 +2340,7 @@ body.page-wide .reading { max-width:none; }
   border-radius:var(--radius-pill); background:var(--attn-soft); color:var(--ink); border:1px solid var(--attn); font-size:var(--fs-sm); }
 .map-lock-note { position:absolute; top:var(--space-4); left:50%; translate:-50% 0; z-index:var(--z-map-popups); box-shadow:var(--sh-pop); }
 .map-lock-note .icon, .tl-lock-note .icon { width:16px; height:16px; }
+.map-lock-note .btn, .tl-lock-note .btn { border-radius:var(--radius-pill); }
 .is-map-locked .maplibregl-ctrl-zoom-in, .is-map-locked .maplibregl-ctrl-zoom-out { opacity:.4; pointer-events:none; }
 .is-map-locked .maplibregl-canvas { cursor:not-allowed; }
 .map-actions-ctrl { margin-top:var(--space-2); }
