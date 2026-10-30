@@ -490,7 +490,16 @@ object Markdown:
           s"- ${t.typeLabel}${per}"
         }.mkString("\n")
     val hier = if tree.isEmpty then "" else s"\n\n## Hierarchy\n\n${placeTree(tree)}"
-    header + what + src + shape + dating + names + geom + fps + lks + tps +
+    val rec = d.record
+    val record =
+      rec.dateSource.map(s => s"  \n**Dates from:** ${PlaceRecord.dateSourceText(s)}").getOrElse("") +
+        (if rec.periods.isEmpty then "" else s"  \n**Time periods:** ${rec.periods.mkString(", ")}") +
+        (if rec.designations.isEmpty then "" else "\n\n**Heritage designations**\n" + rec.designations.map { h =>
+          val when = List(h.start.map(x => s"from $x"), h.end.map(x => s"until $x")).flatten.mkString(" ")
+          s"- ${h.label.getOrElse(h.id)} `${h.id}`${if when.isEmpty then "" else s" ($when)"}"
+        }.mkString("\n")) +
+        (if rec.registers.isEmpty then "" else "\n\n**Listed in**\n" + rec.registers.map(r => s"- ${r.name}: `${r.id}`").mkString("\n"))
+    header + what + src + shape + dating + names + geom + record + fps + lks + tps +
       list("Part of", d.parents) + list("Contains", d.children) + hier
 
   def placeImport(r: PlaceImportResult): String =

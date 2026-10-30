@@ -318,8 +318,25 @@ object PlaceRepo:
         val tps = typesIn(id, asOf)
         PlaceDetail(r.toSummary, r.geometry, parents(id, asOf).toList, kids(id, asOf, Int.MaxValue, modernFrom).toList,
           r.findings, asOf, r.contested, fps, lks, tps, hasBoundary = r.hasBoundary, descriptions = descriptionsOf(id),
-          timeBasis = r.timeBasis, locationPrecision = r.precision, siteType = siteTypeOf(id))
+          timeBasis = r.timeBasis, locationPrecision = r.precision, siteType = siteTypeOf(id), record = recordOf(id))
       }
+
+  /** What place `id`'s own record says beyond its names and dates ([[PlaceRecord]]): `properties.date_source`,
+    * the labels of `periods`, `heritage` and `registers` — whatever shape they have, anything unexpected read
+    * as none. */
+  private def recordOf(id: String)(using DbCon): PlaceRecord =
+    val dateSource = sql"SELECT properties->>'date_source' FROM places WHERE id = $id".query[Option[String]].run().headOption.flatten
+    def array(key: String) = s"CASE WHEN jsonb_typeof(p.properties->'$key') = 'array' THEN p.properties->'$key' ELSE '[]'::jsonb END"
+    val periods = Sql.of(s"SELECT coalesce(x->>'label', x->>'id') FROM places p, jsonb_array_elements(${array("periods")}) x" +
+      " WHERE p.id = ? AND jsonb_typeof(x) = 'object'", Param.S(id)).frag.query[Option[String]].run().toList.flatten
+    val designations = Sql.of(s"SELECT x->>'id', x->>'label', x->>'start', x->>'end' FROM places p, jsonb_array_elements(${array("heritage")}) x" +
+      " WHERE p.id = ? AND jsonb_typeof(x) = 'object' AND x->>'id' IS NOT NULL", Param.S(id)).frag
+      .query[(String, Option[String], Option[String], Option[String])].run().toList.map(PlaceDesignation.apply)
+    val registers = sql"""SELECT r.key, v FROM places p,
+            jsonb_each(CASE WHEN jsonb_typeof(p.properties->'registers') = 'object' THEN p.properties->'registers' ELSE '{}'::jsonb END) r,
+            jsonb_array_elements_text(CASE WHEN jsonb_typeof(r.value) = 'array' THEN r.value ELSE jsonb_build_array(r.value) END) v
+          WHERE p.id = $id ORDER BY r.key, v""".query[(String, String)].run().toList.map(PlaceRegister.apply)
+    PlaceRecord(dateSource, periods, designations, registers)
 
   /** What site `id` is (#1449), read as the map's layer reads it ([[SiteTypes.of]]): a stored refinement,
     * else its gazetteer's own fields — so its card shows the icon its marker has. */

@@ -118,6 +118,19 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     connect(ds)(sql"DELETE FROM places WHERE id = 'zztile_v2'".update.run())
     assert(connect(ds)(UndatedSiteRepo.version()) > after)
 
+  test("a place's record: where its dates come from, its designations and registers; anything malformed read as none"):
+    site("zztile_r1", "Zztile Castle", "int8range(1200, 1400, '[]')", importSource = Some("wikidata"),
+      props = """{"date_source": "wikidata-p571", "periods": [{"id": "Q1", "label": "Byzantine"}],
+        "heritage": [{"id": "Q2", "label": "listed monument", "start": "1922"}, "garbage"],
+        "registers": {"P2186": ["GR-1", "GR-2"], "P1936": "99"}}""")
+    site("zztile_r2", "Zztile Odd", "int8range(1200, 1400, '[]')", props = """{"heritage": {"id": "Q3"}, "registers": []}""")
+    val r = PlaceRepo.get(ds, "zztile_r1").get.record
+    assertEquals(r.dateSource, Some("wikidata-p571"))
+    assertEquals(r.periods, List("Byzantine"))
+    assertEquals(r.designations, List(PlaceDesignation("Q2", Some("listed monument"), Some("1922"), None)))
+    assertEquals(r.registers, List(PlaceRegister("P1936", "99"), PlaceRegister("P2186", "GR-1"), PlaceRegister("P2186", "GR-2")))
+    assert(PlaceRepo.get(ds, "zztile_r2").get.record.isEmpty)
+
   test("grouping: a tile of more items than it keeps alone counts them by cell, and the counts add up to every item"):
     // 900 sites on a 30 × 30 grid 0.01° apart: more than a tile keeps alone
     connect(ds):
