@@ -3,6 +3,7 @@ import { after, before, test } from 'node:test';
 import { appendFileSync } from 'node:fs';
 import { engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
 import { fullLoad, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
+import { LIBRARY_SOURCES, routeLibrary } from './library-fixtures.mjs';
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
 import { quiet, trackRequests } from './perf-lib.mjs';
 import { routeTiles } from './tile-fixtures.mjs';
@@ -3515,7 +3516,8 @@ test('every page renders under its place, with the top bar, from its own address
   const pages = [
     ['/explore', 'Explore', null], ['/library', 'Library', '.library-sources-pane'],
     ['/library/articles', 'Library', '.library-articles-pane'], ['/library/upload', 'Library', '.upload-pane'],
-    ['/library/merge', 'Library', '.merge-pane'], ['/research', 'Research', '.managers-pane'],
+    ['/library/merge', 'Library', '.merge-pane'], ['/library/doi', 'Library', '.doi-pane'],
+    ['/research', 'Research', '.managers-pane'],
     ['/research/decisions', 'Research', '.approvals-pane'], ['/research/goals', 'Research', '.goals-pane'],
     ['/research/goals/zz-pw-nogoal', 'Research', '.goal-pane'], ['/research/activity', 'Research', '.runs-pane'],
     ['/research/activity/jobs', 'Research', '.jobs-pane'], ['/research/activity/worklog', 'Research', '.log-pane'],
@@ -3551,7 +3553,11 @@ test('every window of the old toolbar is reachable from the new navigation, each
     await page.waitForFunction(() => window.__testMap);
     const via = async (place, side, tab, pane) => {
       await page.locator(`.places a[data-nav="${place}"]`).click();
-      if (side) await page.locator('.side-nav a', { hasText: side }).first().click();
+      // Library's ways to add sources are in its header's menu
+      if (side && place === 'library') {
+        await page.locator('#add-sources-btn').click();
+        await page.locator('.add-sources-menu a', { hasText: side }).click();
+      } else if (side) await page.locator('.side-nav a', { hasText: side }).first().click();
       if (tab) await page.locator('.page-tabs a', { hasText: tab }).click();
       await page.locator(`.place-page ${pane}`).waitFor();
       return new URL(page.url()).pathname;
@@ -3566,6 +3572,7 @@ test('every window of the old toolbar is reachable from the new navigation, each
       'To acquire': await via('research', 'To acquire', null, '.acquire-pane'),
       'Upload': await via('library', 'Upload a file', null, '.upload-pane'),
       'Merge another collection': await via('library', 'Merge another collection', null, '.merge-pane'),
+      'Add by DOI': await via('library', 'Add by DOI', null, '.doi-pane'),
       'Jobs': await via('research', 'Activity', 'Background jobs', '.jobs-pane'),
       'Worklog': await via('research', 'Activity', 'Worklog', '.log-pane'),
       'API key': await via('settings', 'Keys', null, '.key-pane'),
@@ -4049,5 +4056,237 @@ test('the timeline: Play with its label, speeds in words, text buttons for the s
     assert.ok(await page.locator('.tl.is-folded').count(), 'kept folded');
     await page.locator('#tl-fold').click();
     assert.equal(await page.locator('.tl.is-folded').count(), 0);
+  });
+});
+
+// ── Library (phase 4): the shared filter panel, the table, the reading pane, adding sources ──────────────────
+
+/** Library's sources list on screen, its first page in. */
+async function libraryShown(page, path = '/library') {
+  await page.goto(new URL(path, baseURL).href);
+  await page.locator('.library-sources-pane .lib-row').first().waitFor();
+}
+
+test('Library and Explore share one filter state; "Show these on the map" takes it back to the map', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const asked = await routeLibrary(page);
+    await page.goto(new URL('/explore#topic=zz_topic', baseURL).href);
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('.places a[data-nav="library"]').click();
+    await page.locator('.library-sources-pane .lib-row').first().waitFor();
+    // the same panel, visible beside the list, its chip the topic Explore set; the list asked for it
+    assert.ok(await page.locator('.fbar').isVisible());
+    assert.ok(await page.locator('.my-library').isVisible(), 'My library tops the panel in Library');
+    assert.equal(await page.locator('.my-library a').count(), 1, 'only the shelf that works is offered');
+    await page.locator('.filter-chips .chip', { hasText: 'zz topic' }).waitFor();
+    assert.equal(asked.sources.at(-1).getAll('topic').join(), 'zz_topic');
+    // a filter set in Library: the list reads again with it, and Explore has it too
+    await page.locator('#f-words').fill('zz words');
+    await page.waitForFunction(() => new URLSearchParams(location.hash.slice(1)).get('q') === 'zz words');
+    await waitFor(async () => asked.sources.some(q => q.get('q') === 'zz words'));
+    const show = page.locator('.fbar a.show-on-map');
+    assert.match(await show.getAttribute('href'), /^\/explore#.*q=zz\+words/);
+    await show.click();
+    await page.waitForFunction(() => location.pathname === '/explore');
+    assert.equal(await page.locator('#f-words').inputValue(), 'zz words');
+    assert.ok(!(await page.locator('.my-library').isVisible()), 'My library is Library\'s alone');
+    // a page with no list: the panel is away
+    await page.locator('.places a[data-nav="research"]').click();
+    await page.locator('.place-page .side-nav').waitFor();
+    assert.equal(await page.locator('.fbar').evaluate(e => getComputedStyle(e).visibility), 'hidden');
+    // folded in Library as on Explore: the rail, and the list takes the room
+    await page.locator('.places a[data-nav="library"]').click();
+    await page.locator('.library-sources-pane .lib-row').first().waitFor();
+    const wide = await page.locator('.library-page').evaluate(e => e.getBoundingClientRect().left);
+    await page.locator('#f-fold').click();
+    await page.locator('#f-unfold').waitFor();
+    await page.waitForFunction(w => document.querySelector('.library-page').getBoundingClientRect().left < w, wide);
+  });
+});
+
+/** Polls `f` (a promise of a boolean) until true, for at most `ms`. */
+async function waitFor(f, ms = 5000) {
+  const end = Date.now() + ms;
+  while (!(await f())) {
+    if (Date.now() > end) throw new Error('timed out');
+    await new Promise(r => setTimeout(r, 50));
+  }
+}
+
+test('Library: a row chosen shows in the reading pane and the address; reload, back and forward keep it', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeLibrary(page);
+    await libraryShown(page);
+    assert.match(await page.locator('.library-range').innerText(), /^1–50 of 1,026$/);
+    assert.equal(await page.locator('.lib-row').count(), 50, 'a page of the list, not all of it');
+    assert.match(await page.locator('.library-tab', { hasText: 'Sources' }).innerText(), /1,026/);
+    assert.match(await page.locator('.library-tab', { hasText: 'Articles' }).innerText(), /38/);
+    const title = n => page.locator('.lib-row a.lib-title').nth(n);
+    const pane = page.locator('.reading-pane .reading-title');
+    // the title is a real link to the source's page
+    assert.equal(await title(0).getAttribute('href'), '/source/zz_lib_0');
+    await title(0).click();
+    await page.waitForFunction(() => location.search === '?item=zz_lib_0');
+    assert.match(await pane.innerText(), /Zz library source 0/);
+    assert.ok(await page.locator('.lib-row[data-key="zz_lib_0"]').evaluate(e => e.classList.contains('is-chosen')));
+    // the record fills in: type · venue · year, findings, the links with their counts
+    await page.locator('.reading-what', { hasText: 'Zz Journal of the Past' }).waitFor();
+    assert.match(await page.locator('.reading-findings h2').innerText(), /Findings · 5/);
+    assert.equal(await page.locator('.reading-finding').count(), 3);
+    assert.equal(await page.locator('.reading-all-findings').getAttribute('href'), '/source/zz_lib_0#findings');
+    const links = await page.locator('.reading-links').innerText();
+    assert.match(links, /Read the full text/); assert.match(links, /What it cites \(2\)/);
+    assert.match(links, /Who answers it \(1\)/); assert.match(links, /Cited in 1 article/);
+    assert.equal(await page.locator('.reading-tab').getAttribute('href'), '/source/zz_lib_0');
+    // a click anywhere on another row chooses it, as a step in the history
+    await page.locator('.lib-row[data-key="zz_lib_1"] td.col-period').click();
+    await page.waitForFunction(() => location.search === '?item=zz_lib_1');
+    assert.match(await pane.innerText(), /Zz library source 1/);
+    await page.goBack();
+    await page.waitForFunction(() => location.search === '?item=zz_lib_0');
+    await page.locator('.reading-title', { hasText: 'Zz library source 0' }).waitFor();
+    await page.goForward();
+    await page.locator('.reading-title', { hasText: 'Zz library source 1' }).waitFor();
+    await page.reload();
+    await page.locator('.reading-title', { hasText: 'Zz library source 1' }).waitFor();
+    await page.locator('.lib-row.is-chosen[data-key="zz_lib_1"]').waitFor();
+    // the articles: their own list and choice
+    await page.locator('.library-tab', { hasText: 'Articles' }).click();
+    await page.locator('.library-articles-pane .lib-row').first().waitFor();
+    assert.equal(new URL(page.url()).pathname, '/library/articles');
+    await page.locator('.lib-row a.lib-title').first().click();
+    await page.waitForFunction(() => location.search === '?item=zz_libart_0');
+    await page.locator('.reading-opening', { hasText: 'the opening paragraph of library article 0' }).waitFor();
+    assert.match(await page.locator('.reading-links').innerText(), /Sources cited \(1\)/);
+  });
+});
+
+test('Library: paging and the order ask the server for one page, not the whole list', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const asked = await routeLibrary(page);
+    // Library's pages (Explore's list, loading under it, asks for its own smaller page)
+    const library = () => asked.sources.filter(q => q.get('limit') === '50');
+    await libraryShown(page);
+    assert.ok(library().length >= 1, 'a page of 50 asked for');
+    await page.locator('.library-next').click();
+    await page.waitForFunction(() => document.querySelector('.library-range').textContent === '51–100 of 1,026');
+    assert.equal(library().at(-1).get('offset'), '50');
+    assert.equal(await page.locator('.lib-row').count(), 50);
+    await page.locator('#library-sort').selectOption('oldest');
+    await waitFor(async () => library().at(-1).get('sort') === 'oldest');
+    assert.match(new URL(page.url()).hash, /lsort=oldest/);
+    await page.waitForFunction(() => document.querySelector('.library-range').textContent === '1–50 of 1,026');
+    assert.ok(await page.locator('.library-prev').isDisabled());
+    // the order is Library's: Explore's sort is untouched
+    assert.ok(!new URLSearchParams(new URL(page.url()).hash.slice(1)).has('sort'));
+  });
+});
+
+test('Library: ⌘/Ctrl click on a title opens its page in a new tab and leaves the choice alone', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeLibrary(page);
+    await page.context().route(/\/source\/zz_lib_\d+/, r => r.fulfill({ contentType: 'text/html', body: '<h1>Zz tab</h1>' }));
+    await libraryShown(page);
+    const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
+    const [tab] = await Promise.all([
+      page.context().waitForEvent('page', { timeout: 5000 }),
+      page.locator('.lib-row a.lib-title').nth(2).click({ modifiers: [modifier] }),
+    ]);
+    await tab.waitForLoadState();
+    assert.equal(new URL(tab.url()).pathname, '/source/zz_lib_2');
+    await tab.close();
+    assert.equal(new URL(page.url()).search, '', 'nothing chosen here');
+    assert.equal(await page.locator('.lib-row.is-chosen').count(), 0);
+  });
+});
+
+test('Library: ↑ and ↓ move the choice through the table, Enter opens the whole page', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeLibrary(page);
+    await libraryShown(page);
+    await page.locator('.lib-row a.lib-title').first().click();
+    await page.waitForFunction(() => location.search === '?item=zz_lib_0');
+    const steps = await page.evaluate(() => history.length);
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.waitForFunction(() => location.search === '?item=zz_lib_2');
+    await page.locator('.reading-title', { hasText: 'Zz library source 2' }).waitFor();
+    assert.equal(await page.evaluate(() => document.activeElement?.closest('tr')?.dataset.key), 'zz_lib_2', 'the focus follows');
+    await page.keyboard.press('ArrowUp');
+    await page.waitForFunction(() => location.search === '?item=zz_lib_1');
+    assert.equal(await page.evaluate(() => history.length), steps, 'the arrows replace the address, they add no step');
+    await page.keyboard.press('Enter');
+    await page.waitForURL(u => new URL(u).pathname === '/source/zz_lib_1');
+    await page.locator('h1.zz-source-page').waitFor();
+  });
+});
+
+test('Library: Add by DOI asks the legal open-access chain only; Calibre is named as the command', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeLibrary(page);
+    const sent = [];
+    // never a real ingest: the request is answered here
+    await page.route('**/api/acquire/ingest', r => {
+      sent.push(JSON.parse(r.request().postData() ?? '{}'));
+      return r.fulfill({ json: { citekey: 'zz_doi_1', doi: '10.9999/zz.doi', title: 'Zz added by its DOI', created: true,
+        pdf: null, edgesAdded: 0, assessment: null, steps: [], dropIn: null } });
+    });
+    await libraryShown(page);
+    await page.locator('#add-sources-btn').click();
+    const menu = page.locator('#add-sources-menu');
+    assert.deepEqual(await menu.locator('a').allInnerTexts(), ['Upload a file', 'Add by DOI', 'Merge another collection']);
+    assert.match(await menu.innerText(), /histmersion calibre import <id>/);
+    await page.keyboard.press('Escape');
+    await menu.waitFor({ state: 'hidden' });
+    await page.locator('#add-sources-btn').click();
+    await menu.locator('a', { hasText: 'Add by DOI' }).click();
+    await page.waitForFunction(() => location.pathname === '/library/doi');
+    await page.locator('#doi-input').fill('not a doi');
+    await page.locator('.doi-add').click();
+    await page.locator('.doi-pane .form-error').waitFor();
+    assert.equal(sent.length, 0, 'nothing sent for what is not a DOI');
+    await page.locator('#doi-input').fill('https://doi.org/10.9999/zz.doi');
+    await page.locator('.doi-add').click();
+    await page.locator('.doi-result', { hasText: 'Zz added by its DOI' }).waitFor();
+    assert.deepEqual(sent.map(b => [b.id, b.legalOnly]), [['10.9999/zz.doi', true]]);
+    assert.equal(await page.locator('.doi-result a').getAttribute('href'), '/source/zz_doi_1');
+    assert.match(await page.locator('.doi-result').innerText(), /No legal open-access copy/);
+  });
+});
+
+test('Library in a narrow window: the reading pane alone with "← Back to list"; a phone stacks the rows', async () => {
+  const noSideways = page => page.evaluate(() => document.scrollingElement.scrollWidth <= window.innerWidth);
+  await withPage({ width: 820, height: 1180 }, async page => {
+    await routeLibrary(page);
+    await libraryShown(page);
+    assert.ok(!(await page.locator('.reading-pane').isVisible()), 'no pane before a choice');
+    assert.ok(await noSideways(page), 'no sideways scroll at 820 px');
+    // the filters are the drawer here, opened from the header
+    await page.locator('#library-filters').click();
+    await page.locator('.histmersion-app.drawer-filters').waitFor();
+    assert.ok(await page.locator('.fbar #f-words').isVisible());
+    await page.keyboard.press('Escape');
+    await page.locator('.histmersion-app.drawer-filters').waitFor({ state: 'detached' });
+    await page.locator('.lib-row a.lib-title').first().click();
+    await page.locator('.reading-title', { hasText: 'Zz library source 0' }).waitFor();
+    assert.ok(!(await page.locator('.library-list').isVisible()), 'the list makes way');
+    const pane = await page.locator('.reading-pane').boundingBox();
+    assert.ok(pane.width >= 800, `the pane takes the width: ${pane.width}`);
+    assert.ok(await noSideways(page));
+    await page.locator('.reading-back').click();
+    await page.locator('.library-list').waitFor();
+    assert.equal(new URL(page.url()).search, '');
+  });
+  await withPage(phone, async page => {
+    await routeLibrary(page);
+    await libraryShown(page);
+    assert.ok(!(await page.locator('.library-table thead').isVisible()), 'no column heads on a phone');
+    const [a, b] = await page.locator('.lib-row').first().locator('td').evaluateAll(tds =>
+      tds.slice(0, 2).map(td => td.getBoundingClientRect().top));
+    assert.ok(b > a, 'the title stands over the rest of its row');
+    assert.ok(await noSideways(page), 'no sideways scroll at 390 px');
+    await page.locator('.lib-row a.lib-title').first().click();
+    await page.locator('.reading-title', { hasText: 'Zz library source 0' }).waitFor();
+    assert.ok(await noSideways(page));
   });
 });

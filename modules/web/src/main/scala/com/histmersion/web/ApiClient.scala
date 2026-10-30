@@ -76,6 +76,12 @@ object ApiClient:
   def resolveId(id: String): Future[ResolvedId]                         = call(Api.resolveId)(id)
   def getSource(ck: String, body: Boolean = true): Future[SourceWithFindings] =
     call(Api.getSource)((ck, body))
+  /** The articles that cite a source (`GET /api/sources/{citekey}/articles`). */
+  def sourceArticles(ck: String): Future[List[Backlink]] = call(Api.sourceArticles)(ck)
+  /** `POST /api/acquire/ingest`: a DOI or arXiv id brought in ([[library.DoiIngest]] builds the request) —
+    * by the legal open-access chain only, whatever the request says: the server may be configured to allow
+    * fetchers without the rights holder's authorisation, and the web UI never sets them off. */
+  def ingestId(req: IngestRequest): Future[IngestReport] = call(AcquireApi.ingest)(req.copy(legalOnly = true))
   def neighbors(ck: String, kinds: List[String] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
   def articles(q: Api.ArticleQuery): Future[ArticleList]                = call(Api.articles)(q)

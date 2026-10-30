@@ -17,10 +17,11 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { engineName, isChromium, launch, wantsGpu } from './engine.mjs';
-import { memory, newPerfPage, quiet } from './perf-lib.mjs';
+import { inputToUpdate, memory, newPerfPage, quiet } from './perf-lib.mjs';
 import * as paths from './perf-paths.mjs';
 import { eventsIn, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
 import { soak } from './perf-soak.mjs';
+import { routeLibrary } from './library-fixtures.mjs';
 
 const baseURL = process.env.HISTMERSION_SERVER_URL;
 assert.ok(baseURL, 'Set HISTMERSION_SERVER_URL to the test server');
@@ -82,6 +83,10 @@ const BUDGETS = {
   // reader's "Map motion" left to follow a system that does not ask for reduced motion): no long task, the
   // frames within the zooms' budget, at a desktop's and a phone's size
   fullLoadZoom: { longTaskMax: 50, droppedPct: 15 },
+  // Library at the corpus's size (1 026 sources, a page of 50 drawn) beside the full map load: a row chosen by
+  // click or ↓ shows in the reading pane, and a page turned is drawn, within the input rule; the table holds
+  // one page, never the list
+  library: { clickMs: INPUT, keyMs: INPUT, pageMs: INPUT, rows: 50 },
   // a hundred rounds: what is allowed to remain (GC noise, a lazily built part)
   soak: { heapMB: 6, nodes: 150, listeners: 20, mapMarkers: 0 },
 };
@@ -219,6 +224,26 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 390, height: 844
     }, viewport);
   });
 }
+
+test('budgets: Library\'s table and reading pane answer within 100 ms, a page at a time', async () => {
+  await withPerfPage(async ({ page }) => {
+    await routeFullLoad(page);
+    await routeLibrary(page);
+    await page.goto(new URL('/library', baseURL).href);
+    await page.locator('.library-sources-pane .lib-row').first().waitFor();
+    await quiet(page);
+    const titled = n => `el.textContent.includes('Zz library source ${n}:')`;
+    const clickMs = await inputToUpdate(page, '.reading-pane .reading-title',
+      () => page.locator('.lib-row a.lib-title').nth(3).click(), titled(3));
+    await quiet(page);
+    const keyMs = await inputToUpdate(page, '.reading-pane .reading-title', () => page.keyboard.press('ArrowDown'), titled(4));
+    await quiet(page);
+    const pageMs = await inputToUpdate(page, '.library-range', () => page.locator('.library-next').click(),
+      `el.textContent === '51–100 of 1,026'`);
+    const rows = await page.locator('.lib-row').count();
+    within('library', { clickMs, keyMs, pageMs, rows });
+  });
+});
 
 test('every cache the page keeps is bounded', async () => {
   await withPerfPage(async ({ page }) => {

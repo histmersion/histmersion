@@ -13,7 +13,32 @@ also type: `1200 BCE`, `-1200`) and the **topic**; **More filters** opens the au
 publication years. Every filter in use is listed as a chip under *Active filters* — remove one with its ✕,
 or all of them with **Clear all**. The panel folds to a narrow rail on the side (the « button) that still
 counts the filters in use; your browser remembers whether it is folded. It lies over the map's edge, so
-folding or opening it never redraws the map. Library uses the same filters.
+folding or opening it never redraws the map. Library uses the same panel and the same filters: what you
+set in one is set in the other.
+
+## Library
+
+**Library** is for browsing and reading. On the left, **My library** (*Everything*, for now) sits above the
+filter panel, and **Show these on the map** under it opens Explore with the same filters. In the middle,
+**Sources** and **Articles** with their counts, the order (*Relevance*, *Newest publication*, *Oldest
+publication*, *Title*, *Period start*) and a table of 50 rows a page — a source's title and authors, year,
+status and period. On the right, the **reading pane** shows the row you choose: what it is, its title, authors,
+status, period and regions, its summary, its first findings (*All N findings* leads to the rest), and links to
+its full text, what it cites, who answers it (the sources that challenge, refute, update or supersede it) and
+the articles that cite it; an article shows its summary, its opening and the sources it cites. *Show on the
+map*, *Open in a new tab* and *Pin as window* are at the top of the pane.
+
+Every title is a real link: a click shows it in the pane (the address says which, `/library?item=<citekey>`,
+so a reload or Back brings it back), ⌘- or Ctrl-click opens its page in a new tab, ↑ and ↓ move through the
+table and Enter opens the whole page. In a narrow window the pane takes the whole width, with **← Back to list**;
+on a phone the rows stack.
+
+**Add sources ▾** at the top right uploads a file, adds a work **by its DOI** (or arXiv id) or merges another
+collection. A DOI is looked up and its legal open-access copy, when there is one, is fetched and read; the web
+page never asks the fetchers your configuration may allow without the rights holder's authorisation. Without a
+legal copy, the source is added from its record and you upload the file once you have it. A book in your
+Calibre library comes in with `histmersion calibre import <id>`, run on the computer that holds it
+([Books and Calibre](../how-to/books-and-calibre.md)).
 
 <figure markdown="span">
   ![The web page at 1440 by 900 pixels: toolbar buttons across the top, the search and filter fields, the timeline with its bars, the layer switches, the map of the eastern Mediterranean, and the list of sources on the right](../assets/screenshots/home-light.png){ loading=lazy }
@@ -219,9 +244,10 @@ the other pages. Everything else has its place:
 
 | place › section | address | what is in it |
 |---|---|---|
-| Library › Sources, Articles | `/library`, `/library/articles` | the sources and articles the filters select |
-| Library › Upload a file | `/library/upload` | upload a PDF or EPUB for text recognition |
-| Library › Merge another collection | `/library/merge` | review and merge a `.hmx` bundle from another machine |
+| Library › Sources, Articles | `/library`, `/library/articles` (`?item=` the chosen one) | the sources and articles the filters select, and the reading pane |
+| Library › Add sources › Upload a file | `/library/upload` | upload a PDF or EPUB for text recognition |
+| Library › Add sources › Add by DOI | `/library/doi` | add a work by its DOI or arXiv id (legal open access only) |
+| Library › Add sources › Merge another collection | `/library/merge` | review and merge a `.hmx` bundle from another machine |
 | Research › Overview | `/research` | the agent managers, the autopilot and its focus (when the server runs agents) |
 | Research › Needs your decision | `/research/decisions` | what the agents propose, for you to approve or reject |
 | Research › Goals | `/research/goals` | your research areas as a tree, and a form for a new one |

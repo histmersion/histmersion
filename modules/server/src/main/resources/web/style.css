@@ -1897,3 +1897,117 @@ img.is-zoomable { cursor:zoom-in; }
 .opt-badge.hd-ev--catalogue { --c:var(--opt-badge-fill); }
 .icon-select .icon, .icon-select-list .icon { width:20px; height:20px; }
 [data-layout="narrow"] .tl.is-folded .tl-overview-wrap { display:block; }
+
+/* ── Library: the filter panel beside the lists, the table, the reading pane ──────────────────────── */
+/* the filter panel is Explore's and Library's lists' only; elsewhere hidden, as Explore is */
+.fbar.is-away { visibility:hidden; }
+/* beside Library's lists it is the page's left column, the whole height under the top bar (a drawer in the
+   narrow layouts, as on Explore) */
+:root:not([data-layout="narrow"]) .histmersion-app.on-library-list .fbar { grid-row:2 / -1; z-index:21; box-shadow:none; }
+.histmersion-app.on-library-list .f-hint { display:none; }
+.my-library { display:flex; flex-direction:column; gap:var(--space-1); padding-bottom:var(--space-5);
+  border-bottom:1px solid var(--line); }
+.my-library-title { margin:0 0 var(--space-2); font-size:var(--fs-sm); font-weight:var(--fw-strong); color:var(--ink2); }
+.library-layout .library-main { display:flex; height:100%; min-height:0; padding:0; margin-left:var(--filters-w); }
+.library-page { --reading-w:520px; flex:1 1 auto; min-width:0; height:100%; min-height:0; display:grid;
+  grid-template-columns:minmax(0, 1fr) var(--reading-w); }
+.library-page a, .add-sources-page a { color:var(--accent); }
+.library-page a.btn, .add-sources-page a.btn, .add-sources-page a.page-tab { color:var(--ink); }
+.library-list { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--panel); }
+.library-head { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:0 var(--space-5);
+  padding:0 var(--space-6); border-bottom:1px solid var(--line); }
+.library-tabs { display:flex; gap:var(--space-1); }
+.library-page a.library-tab { padding:10px 12px; color:var(--ink2); font-weight:var(--fw-strong); text-decoration:none;
+  border-bottom:3px solid transparent; }
+.library-page a.library-tab:hover { color:var(--ink); }
+.library-page a.library-tab.on { color:var(--ink); border-bottom-color:var(--accent); }
+.library-tab .tab-count { margin-left:0; }
+.library-head-end { display:flex; align-items:center; gap:var(--space-4); padding:var(--space-3) 0; }
+.library-filters { display:none; }
+.add-sources { position:relative; }
+.add-sources-menu { position:absolute; right:0; top:calc(100% + var(--space-2)); z-index:40; width:300px; max-width:calc(100vw - 32px);
+  padding:var(--space-3); background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg);
+  box-shadow:var(--sh-pop); }
+.add-sources-menu ul { margin:0; padding:0; list-style:none; }
+.add-sources-menu a.add-way { display:block; padding:var(--space-4) var(--space-5); border-radius:var(--radius-sm); color:var(--ink);
+  font-weight:var(--fw-strong); text-decoration:none; }
+.add-sources-menu a.add-way:hover { background:var(--sunk); }
+.add-calibre { margin:var(--space-3) 0 0; padding:var(--space-4) var(--space-5) var(--space-2); border-top:1px solid var(--line); }
+.add-calibre code { overflow-wrap:anywhere; }
+.library-toolbar { padding:var(--space-3) var(--space-6); border-bottom:1px solid var(--line); }
+.library-range { margin-right:auto; font-size:var(--fs-xs); color:var(--ink3); font-variant-numeric:tabular-nums; }
+.library-sort { display:inline-flex; align-items:center; gap:var(--space-2); }
+.library-table-wrap { flex:1 1 auto; min-height:0; overflow:auto; }
+.library-table { width:100%; border-collapse:collapse; font-size:var(--fs-md); }
+.library-table th { position:sticky; top:0; z-index:1; padding:8px 10px; text-align:left; font-size:var(--fs-xs);
+  font-weight:var(--fw-strong); color:var(--ink3); background:var(--panel); border-bottom:1px solid var(--line); }
+.library-table td { padding:9px 10px; vertical-align:top; border-bottom:1px solid var(--line); }
+.lib-row { cursor:pointer; }
+.lib-row:hover td { background:var(--hover-bg); }
+.lib-row.is-chosen td { background:var(--accent-soft); }
+.library-page a.lib-title { color:var(--ink); font-weight:var(--fw-strong); text-decoration:none; overflow-wrap:anywhere; }
+.library-page a.lib-title:hover { text-decoration:underline; }
+.lib-title:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--radius-sm); }
+.lib-byline { margin-top:2px; font-size:var(--fs-xs); color:var(--ink3); }
+.lib-period { color:var(--time); font-weight:var(--fw-strong); font-size:var(--fs-sm); white-space:nowrap; }
+.lib-kind { font-size:var(--fs-xs); color:var(--ink2); }
+.col-year { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.library-empty { padding:var(--space-6); }
+/* the reading pane: actions, then the item in reading type */
+.reading-pane { display:flex; flex-direction:column; min-width:0; min-height:0; overflow-y:auto; background:var(--bg);
+  border-left:1px solid var(--line); }
+.reading-actions { position:sticky; top:0; z-index:1; display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3);
+  padding:var(--space-3) var(--space-5); background:var(--panel); border-bottom:1px solid var(--line); }
+.reading-acts { margin-left:auto; }
+.reading-acts .icon { width:16px; height:16px; }
+.reading-back { display:none; }
+.reading-body { display:flex; flex-direction:column; gap:var(--space-6); padding:20px 24px 32px; }
+.reading-head { display:flex; flex-direction:column; gap:var(--space-2); }
+.reading-what, .reading-regions { margin:0; font-size:var(--fs-xs); color:var(--ink3); }
+.reading-title { margin:var(--space-2) 0; font-family:var(--font-read); font-size:var(--fs-2xl); line-height:1.2;
+  font-weight:var(--fw-strong); overflow-wrap:anywhere; }
+.reading-authors { margin:0; color:var(--ink2); }
+.reading-facts { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-4) var(--space-5); margin:var(--space-3) 0 0; }
+.reading-summary, .reading-opening { margin:var(--space-4) 0 0; }
+.reading-subtitle { margin:0 0 var(--space-4); font-size:var(--fs-md); font-weight:var(--fw-strong); }
+.reading-findings ul { display:flex; flex-direction:column; gap:var(--space-4); margin:0; padding:0; list-style:none; }
+.reading-finding { padding:2px 0 2px 10px; border-left:3px solid var(--time-fill); font-size:var(--fs-md); }
+.reading-all-findings { display:inline-block; margin-top:var(--space-4); font-size:var(--fs-sm); }
+.reading-links { display:flex; flex-wrap:wrap; gap:var(--space-4) var(--space-6); font-size:var(--fs-md); }
+.reading-none { color:var(--ink3); }
+.reading-empty { padding:var(--space-6); }
+.reading-empty p { margin:0 0 var(--space-3); font-size:var(--fs-md); }
+/* adding sources */
+.add-sources-page .add-back { margin-bottom:var(--space-5); }
+.add-sources-page .add-calibre { border-top:none; padding:var(--space-5) 0 0; }
+.doi-intro { max-width:var(--read-measure); }
+.doi-form { margin:var(--space-5) 0; }
+.doi-label { font-weight:var(--fw-strong); font-size:var(--fs-sm); color:var(--ink2); }
+.doi-input { width:min(420px, 60vw); }
+.doi-result p { margin:var(--space-2) 0; }
+/* the narrow layouts: the filters are the drawer, opened from the header */
+[data-layout="narrow"] .library-layout .library-main { padding:0; margin-left:0; }
+[data-layout="narrow"] .library-filters { display:inline-flex; }
+[data-layout="narrow"] .library-filters .rail-count { margin-left:var(--space-2); }
+[data-layout="narrow"] .my-library { padding-top:var(--pad); }
+/* a narrow window: the list, or the chosen item over its whole width with the way back */
+@media (max-width: 960px) {
+  .library-page { grid-template-columns:minmax(0, 1fr); }
+  .library-page.has-item .library-list { display:none; }
+  .library-page:not(.has-item) .reading-pane { display:none; }
+  .reading-pane { border-left:none; }
+  .reading-back { display:inline-flex; }
+}
+/* a phone: the rows stack — the title over its year, status and period */
+@media (max-width: 600px) {
+  .library-head, .library-toolbar { padding-left:var(--space-5); padding-right:var(--space-5); }
+  .library-table thead { display:none; }
+  .library-table, .library-table tbody { display:block; }
+  .lib-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:var(--space-2) var(--space-5); padding:10px var(--space-5);
+    border-bottom:1px solid var(--line); }
+  .library-table td { display:block; padding:0; border-bottom:none; }
+  .library-table td.col-title { flex:1 1 100%; }
+  .lib-row.is-chosen { background:var(--accent-soft); }
+  .reading-body { padding:var(--space-6) var(--space-5) 24px; }
+  .reading-acts .btn { flex:1 1 auto; }
+}

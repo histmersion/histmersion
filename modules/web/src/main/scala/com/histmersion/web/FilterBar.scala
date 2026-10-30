@@ -107,7 +107,9 @@ object FilterBar:
       span(cls := "f-hint muted", "Also set by dragging on the timeline")
     )
 
-  def init(config: UiConfig): HtmlElement =
+  /** `top` and `foot`: what a page that lists by these filters adds above and under them (Library's "My
+    * library" and "Show these on the map"). */
+  def init(config: UiConfig, top: Modifier[HtmlElement] = emptyMod, foot: Modifier[HtmlElement] = emptyMod): HtmlElement =
     val someMoreSet = moreFields.exists(_.state.now().nonEmpty) ||
       UiState.yearFrom.now().isDefined || UiState.yearTo.now().isDefined
     moreOpen.set(moreOpenInitially(stored(moreKey), someMoreSet, Viewport.narrowNow))
@@ -135,6 +137,7 @@ object FilterBar:
       ),
       div(
         cls := "filter-body",
+        top,
         div(cls := "filter-head",
           h2(cls := "filter-title", "Filters"),
           button(typ := "button", cls := "btn btn--bare btn--icon filter-fold", idAttr := "f-fold",
@@ -191,7 +194,8 @@ object FilterBar:
                 PlacesInput.sync()
               }
             )),
-          FilterChips.list(config))
+          FilterChips.list(config)),
+        foot
       )
     )
   end init

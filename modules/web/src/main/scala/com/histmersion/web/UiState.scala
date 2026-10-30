@@ -264,6 +264,8 @@ object UiState:
   val inView   = Field[Boolean]("inView", "inView", false, Persist.Hash, Role.Span)
   /** The open windows — written by [[WindowManager]]. */
   val open     = Field[List[WindowKey]]("open", "open", Nil, Persist.Hash, Role.View)
+  /** Library's order of its sources ([[library.LibrarySort]]): a view of the list, not a filter. */
+  val librarySort = Field[Option[String]]("librarySort", "lsort", None, Persist.Hash, Role.View)
   val tab      = Field[Option[String]]("tab", "tab", None, Persist.Hash, Role.View)
   val layers   = Field[Set[MapLayer]]("layers", "layers", Set.empty, Persist.Local, Role.View)
   /** The finding markers ("sources") on the map. Not a [[MapLayer]]: it is ON by default, and a
@@ -338,7 +340,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, mapOptions, mediaProvider, mediaLicense, eventKind, eventTier, siteType, sitesUndated, eventsUndated, areaPick, mapMotion, sheet, jobStatus, jobKinds, jobSince, jobUntil, jobSubject,
+      inView, open, librarySort, tab, layers, sources, baseMap, mapOptions, mediaProvider, mediaLicense, eventKind, eventTier, siteType, sitesUndated, eventsUndated, areaPick, mapMotion, sheet, jobStatus, jobKinds, jobSince, jobUntil, jobSubject,
       runStatus, runPipelines, runOrigins, runManager, runProvider, runModel, runGoal, runSince, runUntil, runSubject,
       approvalState, approvalKinds, approvalBy, approvalSubject, schedTypes, schedCodes, schedSubject, acquireDone, tasksDone,
       mergeBundle, apiKey)

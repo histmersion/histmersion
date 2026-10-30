@@ -90,6 +90,12 @@ object Layout:
   val tabFetch: Int          = 200
   /** How many rows "show more" reveals in the Articles and Events tabs. */
   val tabPage: Int           = 25
+  /** How many rows a page of Library's tables holds. */
+  val libraryPage: Int       = 50
+  /** How many of a source's findings Library's reading pane lists before "All N findings". */
+  val readingFindings: Int   = 3
+  /** How much of an article's opening paragraph the reading pane shows, in characters. */
+  val readingOpening: Int    = 600
   /** How long the pointer rests on a map place before its card is fetched and shown. */
   val hoverDelayMs: Int      = 180
   /** The quiet period after the page's own change before the toolbar's counters are re-read (Notices). */
