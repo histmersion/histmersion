@@ -1,17 +1,20 @@
-# Current files → target subdomain and feature
+# Current files → target domain, supporting area and feature
 
-Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/main`, master 58de5489), grouped by the package the design moves it to: `com.histmersion.domain.<subdomain>.<feature>` for services, repositories, controllers and pure rules (server and core modules), `com.histmersion.api.<subdomain>.<feature>` for wire records, endpoints and renderers, `com.histmersion.config.<subdomain>` for settings records. The first cut was made by name rules, then corrected file by file where the measured references said otherwise (§3.2 of the design and `dependencies.md`); the slice that moves a subdomain re-checks its rows. Files the slices split between several owners (`Handlers`, `OpsHandlers`, `api/Queue`, `db/QueueRepo`) are listed where most of their content goes. `agents/AcquireRecheckService` is listed under `library.acquisition`, where §3.5 moves it (the measurements count it where it is today, in automation). `cli` and `web` keep their own trees.
+Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/main`, master 58de5489), grouped by where the design moves it. Domains: `com.histmersion.domain.<domain>.<feature>` (services, repositories, controllers, pure rules), with `api.<domain>.<feature>` and `config.<domain>` beside them. Supporting areas: `com.histmersion.util.<area>`. The first cut was made by name rules, then corrected file by file where the measured references said otherwise (`dependencies.md`); the slice that moves a domain re-checks its rows.
 
-`catalogue` is a placeholder name (Q17); renaming it is one package rename.
+Files listed whole under one place that the slices split between owners (measured shares in §3 of the design): the engine's mixed files (`ManagerSupervisor`, `ManagersHandlers`, `ManagerRepo`, `AgentsHandlers`, `Toolbox`, `AutopilotService`, `AutopilotPolicy`, `SchedulerService`, `SchedulerPolicy`, `GoalFocus`, …) give their article- and source-specific parts to research and library as workflow contributions; `util.data.exchange` (bundle and merge) gives its per-kind rules (about 4.8 k of 7.8 k lines) to the domains as data contributions; `Handlers`, `OpsHandlers`, `api/Queue` and `db/QueueRepo` split by owner. `agents/AcquireRecheckService` is listed under `library.acquisition`, where it moves. `cli` and `web` keep their own trees.
 
-| package | files | lines |
+| place | files | lines |
 |---|---:|---:|
-| `platform.identity` | 6 | 121 |
-| `platform.jobs` | 16 | 844 |
-| `platform.lint` | 9 | 1166 |
-| `platform.maintenance` | 1 | 34 |
-| `platform.plugins` | 14 | 1127 |
-| `platform.worklist` | 2 | 460 |
+| `automation.activity` | 8 | 453 |
+| `automation.agents` | 102 | 12871 |
+| `automation.approvals` | 11 | 1061 |
+| `automation.autopilot` | 6 | 1324 |
+| `automation.goals` | 16 | 2209 |
+| `automation.managers` | 16 | 5301 |
+| `automation.workflows` (the registry) | 2 | 50 |
+| `automation.scheduler` | 11 | 1710 |
+| `automation.worklists` | 2 | 460 |
 | `catalogue.events` | 57 | 4311 |
 | `catalogue.evidence` | 28 | 753 |
 | `catalogue.maptiles` | 23 | 1219 |
@@ -23,113 +26,252 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | `library.citations` | 19 | 294 |
 | `library.findings` | 6 | 133 |
 | `library.ingest` | 21 | 1817 |
+| `library.merge-rules` | 2 | 539 |
 | `library.search` | 30 | 1966 |
 | `library.sources` | 43 | 2631 |
+| `library.workflows` | 21 | 2651 |
 | `research.articles` | 55 | 3368 |
 | `research.articles.lint` | 1 | 1336 |
-| `research.articles.review` | 5 | 365 |
-| `automation.activity` | 8 | 453 |
-| `automation.agents` | 116 | 13643 |
-| `automation.approvals` | 12 | 1070 |
-| `automation.autopilot` | 7 | 1384 |
-| `automation.goals` | 16 | 2150 |
-| `automation.managers` | 22 | 5528 |
-| `automation.pipelines` | 16 | 4086 |
-| `automation.review` | 6 | 2706 |
-| `automation.scheduler` | 11 | 1710 |
-| `exchange.bundle` | 60 | 4264 |
-| `exchange.merge` | 41 | 5329 |
-| `operations.backup` | 13 | 701 |
-| `operations.basemap` | 48 | 5245 |
-| `operations.instance` | 24 | 624 |
-| `operations.maintenance` | 18 | 819 |
-| `operations.settings` | 39 | 1993 |
+| `research.articles.review` (the review state) | 5 | 365 |
+| `research.workflows` | 21 | 5100 |
 | `personal` | 38 | 1736 |
+| `util.* (json, markdown, text)` | 22 | 2403 |
+| `util.basemap` | 48 | 5245 |
+| `util.data.backup` | 13 | 701 |
+| `util.data.checks` | 9 | 1166 |
+| `util.data.exchange` | 99 | 9054 |
+| `util.data.maintenance` | 19 | 853 |
+| `util.data.storage` | 1 | 67 |
+| `util.database` | 5 | 139 |
+| `util.files` | 1 | 48 |
+| `util.identity` | 6 | 121 |
+| `util.jobs` | 16 | 844 |
+| `util.markdown` | 1 | 30 |
+| `util.ocr` | 8 | 457 |
+| `util.plugins` | 14 | 1127 |
+| `util.settings` | 39 | 1993 |
+| `server (composition, adapters)` | 21 | 4904 |
+| `server.instance (about, health, version, self-check, UI config)` | 23 | 557 |
+| `domain (shared kernel)` | 21 | 443 |
 | `api root` | 3 | 1449 |
 | `api.ui` | 5 | 162 |
 | `config root` | 18 | 657 |
-| `domain (shared kernel)` | 21 | 443 |
-| `server (composition, adapters)` | 21 | 4904 |
-| `server: split across subdomains` | 3 | 2403 |
-| `util.*` | 22 | 2403 |
-| `util.database` | 5 | 139 |
-| `util.files` | 1 | 48 |
-| `util.markdown` | 1 | 30 |
-| `util.ocr` | 8 | 457 |
 | `values` | 10 | 92 |
+| `server: split across domains (Handlers, OpsHandlers, McpTools parts)` | 3 | 2403 |
 
-## platform.identity
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/AliasKind.scala` | 18 |
-| api | `api/Aliases.scala` | 17 |
-| api | `api/InstanceInfo.scala` | 13 |
-| api | `api/ResolvedId.scala` | 14 |
-| api | `api/UidRedirect.scala` | 13 |
-| db | `db/AliasRepo.scala` | 46 |
-
-## platform.jobs
+## automation.activity
 
 | module | file | lines |
 |---|---|---:|
-| api | `api/JobActions.scala` | 15 |
-| api | `api/JobCounts.scala` | 48 |
-| api | `api/JobDetail.scala` | 32 |
-| api | `api/JobInfo.scala` | 25 |
-| api | `api/JobKind.scala` | 22 |
-| api | `api/JobState.scala` | 25 |
-| core | `domain/jobs/JobAction.scala` | 12 |
-| core | `domain/jobs/JobControlRules.scala` | 41 |
-| core | `domain/jobs/JobControlStep.scala` | 15 |
-| core | `domain/jobs/JobStop.scala` | 5 |
-| db | `db/JobRepo.scala` | 271 |
-| server | `domain/jobs/JobControlControllers.scala` | 12 |
-| server | `domain/jobs/JobControlService.scala` | 98 |
-| server | `domain/jobs/JobStopped.scala` | 6 |
-| server | `domain/jobs/JobStops.scala` | 35 |
-| server | `server/BackgroundJob.scala` | 182 |
+| api | `api/Activity.scala` | 73 |
+| api | `api/ActivityMarkdown.scala` | 53 |
+| core | `domain/activity/ActivityCursor.scala` | 20 |
+| core | `domain/activity/ActivityQuery.scala` | 16 |
+| core | `domain/activity/ActivityRules.scala` | 100 |
+| server | `domain/activity/ActivityControllers.scala` | 18 |
+| server | `domain/activity/ActivityRepo.scala` | 138 |
+| server | `domain/activity/ActivityService.scala` | 35 |
 
-## platform.lint
+## automation.agents
 
 | module | file | lines |
 |---|---|---:|
-| api | `api/FormatCheck.scala` | 11 |
-| api | `api/FormatField.scala` | 17 |
-| api | `api/FormatIssue.scala` | 19 |
-| api | `api/FormatMarkdown.scala` | 32 |
-| api | `api/FormatReport.scala` | 17 |
-| api | `api/FormatSeverity.scala` | 247 |
-| api | `api/Lint.scala` | 478 |
-| config | `config/LintConfig.scala` | 8 |
-| db | `db/LintRepo.scala` | 337 |
+| api | `api/AgentLeaseInfo.scala` | 14 |
+| api | `api/AgentMode.scala` | 31 |
+| api | `api/AgentStateDeleted.scala` | 14 |
+| api | `api/AgentStateEntry.scala` | 17 |
+| api | `api/AgentStatePut.scala` | 15 |
+| api | `api/Agents.scala` | 473 |
+| api | `api/AgentsApi.scala` | 176 |
+| api | `api/AgentsMarkdown.scala` | 514 |
+| api | `api/ModelChains.scala` | 308 |
+| api | `api/PlanQuota.scala` | 328 |
+| api | `api/RunCompare.scala` | 102 |
+| api | `api/Stalls.scala` | 174 |
+| api | `api/StallsMarkdown.scala` | 18 |
+| api | `api/StrictJson.scala` | 76 |
+| config | `config/AgentBudgetsConfig.scala` | 32 |
+| config | `config/AgentPlanConfig.scala` | 8 |
+| config | `config/AgentProviderConfig.scala` | 19 |
+| config | `config/AgentProvidersConfig.scala` | 13 |
+| config | `config/AgentRolesConfig.scala` | 18 |
+| config | `config/AgentRuntimesConfig.scala` | 10 |
+| config | `config/AgentStepConfig.scala` | 8 |
+| config | `config/AgentToolsConfig.scala` | 13 |
+| config | `config/AgentTraceConfig.scala` | 10 |
+| config | `config/AgentWatchdogConfig.scala` | 26 |
+| config | `config/AgentsConfig.scala` | 49 |
+| config | `config/ClaudeCodeConfig.scala` | 39 |
+| config | `config/ClaudePlanConfig.scala` | 19 |
+| config | `config/CodexConfig.scala` | 36 |
+| config | `config/OpencodeConfig.scala` | 9 |
+| config | `config/PlanPoolConfig.scala` | 13 |
+| config | `config/QuotaConfig.scala` | 17 |
+| config | `config/RuntimeConfig.scala` | 17 |
+| core | `domain/CodexRetention.scala` | 43 |
+| core | `domain/CompareRuns.scala` | 378 |
+| db | `db/AgentRepo.scala` | 950 |
+| db | `db/AgentStateRepo.scala` | 33 |
+| db | `db/ModelSettingsRepo.scala` | 64 |
+| db | `db/PlanQuotaRepo.scala` | 118 |
+| server | `server/agents/AgentDef.scala` | 27 |
+| server | `server/agents/AgentDefinitions.scala` | 252 |
+| server | `server/agents/AgentDoctor.scala` | 406 |
+| server | `server/agents/AgentGenerator.scala` | 400 |
+| server | `server/agents/AgentLease.scala` | 110 |
+| server | `server/agents/AgentRuntime.scala` | 29 |
+| server | `server/agents/AgentTrees.scala` | 165 |
+| server | `server/agents/AgentsHandlers.scala` | 1031 |
+| server | `server/agents/AgentsRoutes.scala` | 37 |
+| server | `server/agents/AgentsSettings.scala` | 79 |
+| server | `server/agents/AgentsTools.scala` | 816 |
+| server | `server/agents/AnswerSchemas.scala` | 60 |
+| server | `server/agents/Audience.scala` | 17 |
+| server | `server/agents/BuiltinAi.scala` | 48 |
+| server | `server/agents/Checked.scala` | 17 |
+| server | `server/agents/ClaudeCode.scala` | 428 |
+| server | `server/agents/ClaudeCodeClient.scala` | 121 |
+| server | `server/agents/ClaudeCodeEnv.scala` | 15 |
+| server | `server/agents/CliOutcome.scala` | 18 |
+| server | `server/agents/CliOutcomes.scala` | 75 |
+| server | `server/agents/CliProcess.scala` | 229 |
+| server | `server/agents/CliRuntime.scala` | 31 |
+| server | `server/agents/Codex.scala` | 125 |
+| server | `server/agents/CodexExecClient.scala` | 93 |
+| server | `server/agents/CodexHome.scala` | 149 |
+| server | `server/agents/CompareRunsViews.scala` | 21 |
+| server | `server/agents/Engine.scala` | 599 |
+| server | `server/agents/FirstCallProbe.scala` | 33 |
+| server | `server/agents/GenSettings.scala` | 32 |
+| server | `server/agents/GeneratePlugin.scala` | 52 |
+| server | `server/agents/Halt.scala` | 26 |
+| server | `server/agents/HostAiProvider.scala` | 14 |
+| server | `server/agents/InteractiveSpec.scala` | 11 |
+| server | `server/agents/LlmCall.scala` | 27 |
+| server | `server/agents/LlmClient.scala` | 157 |
+| server | `server/agents/ModelLimitReached.scala` | 12 |
+| server | `server/agents/ModelPicker.scala` | 430 |
+| server | `server/agents/Opencode.scala` | 92 |
+| server | `server/agents/OpencodeRunClient.scala` | 60 |
+| server | `server/agents/PickFailure.scala` | 17 |
+| server | `server/agents/Picked.scala` | 19 |
+| server | `server/agents/PlanPools.scala` | 644 |
+| server | `server/agents/PluginAiClient.scala` | 125 |
+| server | `server/agents/PoolSink.scala` | 17 |
+| server | `server/agents/Prompt.scala` | 52 |
+| server | `server/agents/Prompts.scala` | 43 |
+| server | `server/agents/QuotaGuard.scala` | 56 |
+| server | `server/agents/RefreshGate.scala` | 29 |
+| server | `server/agents/Refreshed.scala` | 10 |
+| server | `server/agents/RunCtx.scala` | 637 |
+| server | `server/agents/RunGrant.scala` | 15 |
+| server | `server/agents/RunScope.scala` | 8 |
+| server | `server/agents/RunTokenGate.scala` | 52 |
+| server | `server/agents/RunTokens.scala` | 55 |
+| server | `server/agents/SkillDef.scala` | 13 |
+| server | `server/agents/StepAgent.scala` | 26 |
+| server | `server/agents/StrictJsonSchema.scala` | 130 |
+| server | `server/agents/ToolName.scala` | 35 |
+| server | `server/agents/ToolResultCap.scala` | 95 |
+| server | `server/agents/ToolStyle.scala` | 17 |
+| server | `server/agents/Toolbox.scala` | 166 |
+| server | `server/agents/Trace.scala` | 35 |
+| server | `server/agents/WebAccess.scala` | 15 |
+| server | `server/agents/Writes.scala` | 14 |
 
-## platform.maintenance
+## automation.approvals
 
 | module | file | lines |
 |---|---|---:|
-| server | `server/Maintenance.scala` | 34 |
+| api | `api/ApprovalDigest.scala` | 122 |
+| api | `api/ApprovalDigestMarkdown.scala` | 37 |
+| api | `api/ListFilters.scala` | 241 |
+| config | `config/AgentApprovalsConfig.scala` | 24 |
+| config | `config/AutoApprovalsConfig.scala` | 25 |
+| core | `domain/ApprovalModes.scala` | 7 |
+| server | `server/ListQueries.scala` | 58 |
+| server | `server/agents/ApprovalDigestService.scala` | 99 |
+| server | `server/agents/Approvals.scala` | 211 |
+| server | `server/agents/AutoApprovals.scala` | 221 |
+| server | `server/agents/Decided.scala` | 16 |
 
-## platform.plugins
+## automation.autopilot
 
 | module | file | lines |
 |---|---|---:|
-| api | `api/PluginDescription.scala` | 17 |
-| api | `api/PluginFile.scala` | 9 |
-| api | `api/PluginJar.scala` | 11 |
-| api | `api/PluginSet.scala` | 33 |
-| api | `api/PluginSetting.scala` | 9 |
-| api | `api/PluginState.scala` | 15 |
-| api | `api/PluginStatus.scala` | 20 |
-| api | `api/PluginsMarkdown.scala` | 38 |
-| api | `api/PluginsReport.scala` | 16 |
-| files | `files/PluginKit.scala` | 319 |
-| server | `server/plugins/LegacyPlugins.scala` | 128 |
-| server | `server/plugins/PluginSetResource.scala` | 47 |
-| server | `server/plugins/PluginTool.scala` | 312 |
-| server | `server/plugins/Plugins.scala` | 153 |
+| api | `api/Autopilot.scala` | 139 |
+| api | `api/AutopilotMarkdown.scala` | 102 |
+| config | `config/AgentAutopilotConfig.scala` | 54 |
+| core | `domain/AutopilotPolicy.scala` | 445 |
+| db | `db/AutopilotRepo.scala` | 126 |
+| server | `server/agents/AutopilotService.scala` | 458 |
 
-## platform.worklist
+## automation.goals
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/Goal.scala` | 22 |
+| api | `api/GoalDeleted.scala` | 14 |
+| api | `api/GoalList.scala` | 19 |
+| api | `api/GoalPatch.scala` | 23 |
+| api | `api/GoalPlans.scala` | 119 |
+| api | `api/GoalPut.scala` | 22 |
+| api | `api/GoalStages.scala` | 14 |
+| api | `api/GoalsExport.scala` | 97 |
+| core | `domain/GoalFocus.scala` | 459 |
+| core | `domain/PlanGoal.scala` | 189 |
+| db | `db/FocusRepo.scala` | 181 |
+| db | `db/GoalLinkRepo.scala` | 228 |
+| db | `db/GoalRepo.scala` | 158 |
+| server | `server/agents/GoalFocusService.scala` | 368 |
+| server | `server/agents/GoalSweep.scala` | 68 |
+| server | `server/agents/PlanGoalPipeline.scala` | 228 |
+
+## automation.managers
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/Managers.scala` | 533 |
+| api | `api/ManagersApi.scala` | 177 |
+| api | `api/ManagersMarkdown.scala` | 165 |
+| config | `config/AgentManagersConfig.scala` | 18 |
+| config | `config/SimpleManagerConfig.scala` | 8 |
+| core | `domain/HintProposals.scala` | 121 |
+| core | `domain/ManagerDefaults.scala` | 12 |
+| core | `domain/ManagerPolicy.scala` | 617 |
+| core | `domain/ManagerRunDefaults.scala` | 3 |
+| db | `db/ManagerRepo.scala` | 1138 |
+| server | `server/agents/DrainService.scala` | 86 |
+| server | `server/agents/HintEffectPipeline.scala` | 130 |
+| server | `server/agents/ManagerDefaultsViews.scala` | 16 |
+| server | `server/agents/ManagerSupervisor.scala` | 1325 |
+| server | `server/agents/ManagersHandlers.scala` | 911 |
+| server | `server/agents/ManagersRoutes.scala` | 41 |
+
+## automation.workflows (the registry)
+
+| module | file | lines |
+|---|---|---:|
+| server | `server/agents/PipelineDef.scala` | 20 |
+| server | `server/agents/Pipelines.scala` | 30 |
+
+## automation.scheduler
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/AgentScheduler.scala` | 111 |
+| api | `api/AgentSchedulerMarkdown.scala` | 65 |
+| config | `config/AgentSchedulerConfig.scala` | 55 |
+| core | `domain/Cron.scala` | 139 |
+| core | `domain/PlanReadSchedule.scala` | 28 |
+| core | `domain/ReadSchedule.scala` | 7 |
+| core | `domain/SchedulerDefaults.scala` | 13 |
+| core | `domain/SchedulerPolicy.scala` | 458 |
+| core | `domain/Scheduling.scala` | 218 |
+| core | `domain/WatchSchedules.scala` | 97 |
+| server | `server/agents/SchedulerService.scala` | 519 |
+
+## automation.worklists
 
 | module | file | lines |
 |---|---|---:|
@@ -638,6 +780,13 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | server | `server/importers/CliopatriaImporter.scala` | 107 |
 | server | `server/importers/GazetteerImporter.scala` | 24 |
 
+## library.merge-rules
+
+| module | file | lines |
+|---|---|---:|
+| core | `domain/MergeText.scala` | 299 |
+| core | `domain/SourceMatcher.scala` | 240 |
+
 ## library.search
 
 | module | file | lines |
@@ -721,6 +870,32 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | files | `files/Frontmatter.scala` | 189 |
 | server | `server/FullText.scala` | 11 |
 
+## library.workflows
+
+| module | file | lines |
+|---|---|---:|
+| config | `config/AgentEnrichConfig.scala` | 16 |
+| config | `config/AgentEnrichGuardsConfig.scala` | 14 |
+| config | `config/AgentSeedConfig.scala` | 8 |
+| config | `config/AgentVerifyConfig.scala` | 8 |
+| config | `config/WatchManagerConfig.scala` | 12 |
+| core | `domain/AgentProposals.scala` | 164 |
+| core | `domain/AgentVerify.scala` | 208 |
+| core | `domain/AutoEnrich.scala` | 60 |
+| core | `domain/EnrichSource.scala` | 603 |
+| core | `domain/SeedPlanDefaults.scala` | 3 |
+| core | `domain/WatchManagerDefaults.scala` | 3 |
+| server | `server/agents/AcquisitionSweepPipeline.scala` | 341 |
+| server | `server/agents/AgentFacetsInput.scala` | 15 |
+| server | `server/agents/AgentGetSourceInput.scala` | 30 |
+| server | `server/agents/AgentSearchInput.scala` | 44 |
+| server | `server/agents/AgentUpstream.scala` | 101 |
+| server | `server/agents/CurrencyCheckPipeline.scala` | 104 |
+| server | `server/agents/EnrichSourcePipeline.scala` | 342 |
+| server | `server/agents/FollowupsInput.scala` | 17 |
+| server | `server/agents/OaBacklog.scala` | 454 |
+| server | `server/agents/SeedService.scala` | 104 |
+
 ## research.articles
 
 | module | file | lines |
@@ -787,7 +962,7 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 |---|---|---:|
 | server | `server/MarkdownLint.scala` | 1336 |
 
-## research.articles.review
+## research.articles.review (the review state)
 
 | module | file | lines |
 |---|---|---:|
@@ -797,395 +972,103 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | core | `domain/ArticleReviewStatus.scala` | 160 |
 | db | `db/ArticleReviewRepo.scala` | 99 |
 
-## automation.activity
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/Activity.scala` | 73 |
-| api | `api/ActivityMarkdown.scala` | 53 |
-| core | `domain/activity/ActivityCursor.scala` | 20 |
-| core | `domain/activity/ActivityQuery.scala` | 16 |
-| core | `domain/activity/ActivityRules.scala` | 100 |
-| server | `domain/activity/ActivityControllers.scala` | 18 |
-| server | `domain/activity/ActivityRepo.scala` | 138 |
-| server | `domain/activity/ActivityService.scala` | 35 |
-
-## automation.agents
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/AgentLeaseInfo.scala` | 14 |
-| api | `api/AgentMode.scala` | 31 |
-| api | `api/AgentStateDeleted.scala` | 14 |
-| api | `api/AgentStateEntry.scala` | 17 |
-| api | `api/AgentStatePut.scala` | 15 |
-| api | `api/Agents.scala` | 473 |
-| api | `api/AgentsApi.scala` | 176 |
-| api | `api/AgentsMarkdown.scala` | 514 |
-| api | `api/ModelChains.scala` | 308 |
-| api | `api/PlanQuota.scala` | 328 |
-| api | `api/RunCompare.scala` | 102 |
-| api | `api/Stalls.scala` | 174 |
-| api | `api/StallsMarkdown.scala` | 18 |
-| api | `api/StrictJson.scala` | 76 |
-| config | `config/AgentBudgetsConfig.scala` | 32 |
-| config | `config/AgentCompileConfig.scala` | 16 |
-| config | `config/AgentEnrichConfig.scala` | 16 |
-| config | `config/AgentEnrichGuardsConfig.scala` | 14 |
-| config | `config/AgentInferFilterConfig.scala` | 10 |
-| config | `config/AgentPlanConfig.scala` | 8 |
-| config | `config/AgentProviderConfig.scala` | 19 |
-| config | `config/AgentProvidersConfig.scala` | 13 |
-| config | `config/AgentReviewConfig.scala` | 31 |
-| config | `config/AgentRolesConfig.scala` | 18 |
-| config | `config/AgentRuntimesConfig.scala` | 10 |
-| config | `config/AgentSeedConfig.scala` | 8 |
-| config | `config/AgentStepConfig.scala` | 8 |
-| config | `config/AgentToolsConfig.scala` | 13 |
-| config | `config/AgentTraceConfig.scala` | 10 |
-| config | `config/AgentWatchdogConfig.scala` | 26 |
-| config | `config/AgentsConfig.scala` | 49 |
-| config | `config/ClaudeCodeConfig.scala` | 39 |
-| config | `config/ClaudePlanConfig.scala` | 19 |
-| config | `config/CodexConfig.scala` | 36 |
-| config | `config/FinalPanel.scala` | 13 |
-| config | `config/OpencodeConfig.scala` | 9 |
-| config | `config/PlanPoolConfig.scala` | 13 |
-| config | `config/QuotaConfig.scala` | 17 |
-| config | `config/RuntimeConfig.scala` | 17 |
-| core | `domain/CodexRetention.scala` | 43 |
-| core | `domain/CompareRuns.scala` | 378 |
-| core | `domain/SeedPlanDefaults.scala` | 3 |
-| db | `db/AgentRepo.scala` | 950 |
-| db | `db/AgentStateRepo.scala` | 33 |
-| db | `db/ModelSettingsRepo.scala` | 64 |
-| db | `db/PlanQuotaRepo.scala` | 118 |
-| server | `server/agents/AgentDef.scala` | 27 |
-| server | `server/agents/AgentDefinitions.scala` | 252 |
-| server | `server/agents/AgentDoctor.scala` | 406 |
-| server | `server/agents/AgentFacetsInput.scala` | 15 |
-| server | `server/agents/AgentGenerator.scala` | 400 |
-| server | `server/agents/AgentGetSourceInput.scala` | 30 |
-| server | `server/agents/AgentLease.scala` | 110 |
-| server | `server/agents/AgentRuntime.scala` | 29 |
-| server | `server/agents/AgentSearchInput.scala` | 44 |
-| server | `server/agents/AgentTrees.scala` | 165 |
-| server | `server/agents/AgentUpstream.scala` | 101 |
-| server | `server/agents/AgentsHandlers.scala` | 1031 |
-| server | `server/agents/AgentsRoutes.scala` | 37 |
-| server | `server/agents/AgentsSettings.scala` | 79 |
-| server | `server/agents/AgentsTools.scala` | 816 |
-| server | `server/agents/AnswerSchemas.scala` | 60 |
-| server | `server/agents/Audience.scala` | 17 |
-| server | `server/agents/BuiltinAi.scala` | 48 |
-| server | `server/agents/Checked.scala` | 17 |
-| server | `server/agents/ClaudeCode.scala` | 428 |
-| server | `server/agents/ClaudeCodeClient.scala` | 121 |
-| server | `server/agents/ClaudeCodeEnv.scala` | 15 |
-| server | `server/agents/CliOutcome.scala` | 18 |
-| server | `server/agents/CliOutcomes.scala` | 75 |
-| server | `server/agents/CliProcess.scala` | 229 |
-| server | `server/agents/CliRuntime.scala` | 31 |
-| server | `server/agents/Codex.scala` | 125 |
-| server | `server/agents/CodexExecClient.scala` | 93 |
-| server | `server/agents/CodexHome.scala` | 149 |
-| server | `server/agents/CompareRunsViews.scala` | 21 |
-| server | `server/agents/Engine.scala` | 599 |
-| server | `server/agents/FirstCallProbe.scala` | 33 |
-| server | `server/agents/FollowupsInput.scala` | 17 |
-| server | `server/agents/GenSettings.scala` | 32 |
-| server | `server/agents/GeneratePlugin.scala` | 52 |
-| server | `server/agents/Halt.scala` | 26 |
-| server | `server/agents/HostAiProvider.scala` | 14 |
-| server | `server/agents/InteractiveSpec.scala` | 11 |
-| server | `server/agents/LlmCall.scala` | 27 |
-| server | `server/agents/LlmClient.scala` | 157 |
-| server | `server/agents/ModelLimitReached.scala` | 12 |
-| server | `server/agents/ModelPicker.scala` | 430 |
-| server | `server/agents/OaBacklog.scala` | 454 |
-| server | `server/agents/Opencode.scala` | 92 |
-| server | `server/agents/OpencodeRunClient.scala` | 60 |
-| server | `server/agents/PickFailure.scala` | 17 |
-| server | `server/agents/Picked.scala` | 19 |
-| server | `server/agents/PlanPools.scala` | 644 |
-| server | `server/agents/PluginAiClient.scala` | 125 |
-| server | `server/agents/PoolSink.scala` | 17 |
-| server | `server/agents/Prompt.scala` | 52 |
-| server | `server/agents/Prompts.scala` | 43 |
-| server | `server/agents/QuotaGuard.scala` | 56 |
-| server | `server/agents/RefreshGate.scala` | 29 |
-| server | `server/agents/Refreshed.scala` | 10 |
-| server | `server/agents/RunCtx.scala` | 637 |
-| server | `server/agents/RunGrant.scala` | 15 |
-| server | `server/agents/RunScope.scala` | 8 |
-| server | `server/agents/RunTokenGate.scala` | 52 |
-| server | `server/agents/RunTokens.scala` | 55 |
-| server | `server/agents/SkillDef.scala` | 13 |
-| server | `server/agents/StepAgent.scala` | 26 |
-| server | `server/agents/StrictJsonSchema.scala` | 130 |
-| server | `server/agents/ToolName.scala` | 35 |
-| server | `server/agents/ToolResultCap.scala` | 95 |
-| server | `server/agents/ToolStyle.scala` | 17 |
-| server | `server/agents/Toolbox.scala` | 166 |
-| server | `server/agents/Trace.scala` | 35 |
-| server | `server/agents/WebAccess.scala` | 15 |
-| server | `server/agents/Writes.scala` | 14 |
-
-## automation.approvals
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/ApprovalDigest.scala` | 122 |
-| api | `api/ApprovalDigestMarkdown.scala` | 37 |
-| api | `api/ListFilters.scala` | 241 |
-| api | `api/ReviewApproval.scala` | 9 |
-| config | `config/AgentApprovalsConfig.scala` | 24 |
-| config | `config/AutoApprovalsConfig.scala` | 25 |
-| core | `domain/ApprovalModes.scala` | 7 |
-| server | `server/ListQueries.scala` | 58 |
-| server | `server/agents/ApprovalDigestService.scala` | 99 |
-| server | `server/agents/Approvals.scala` | 211 |
-| server | `server/agents/AutoApprovals.scala` | 221 |
-| server | `server/agents/Decided.scala` | 16 |
-
-## automation.autopilot
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/Autopilot.scala` | 139 |
-| api | `api/AutopilotMarkdown.scala` | 102 |
-| config | `config/AgentAutopilotConfig.scala` | 54 |
-| core | `domain/AutoEnrich.scala` | 60 |
-| core | `domain/AutopilotPolicy.scala` | 445 |
-| db | `db/AutopilotRepo.scala` | 126 |
-| server | `server/agents/AutopilotService.scala` | 458 |
-
-## automation.goals
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/Goal.scala` | 22 |
-| api | `api/GoalDeleted.scala` | 14 |
-| api | `api/GoalList.scala` | 19 |
-| api | `api/GoalPatch.scala` | 23 |
-| api | `api/GoalPlans.scala` | 119 |
-| api | `api/GoalPut.scala` | 22 |
-| api | `api/GoalStages.scala` | 14 |
-| api | `api/GoalsExport.scala` | 97 |
-| api | `api/ReviewGoal.scala` | 9 |
-| core | `domain/GoalFocus.scala` | 459 |
-| core | `domain/PlanGoal.scala` | 189 |
-| db | `db/FocusRepo.scala` | 181 |
-| db | `db/GoalLinkRepo.scala` | 228 |
-| db | `db/GoalRepo.scala` | 158 |
-| server | `server/agents/GoalFocusService.scala` | 368 |
-| server | `server/agents/PlanGoalPipeline.scala` | 228 |
-
-## automation.managers
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/Managers.scala` | 533 |
-| api | `api/ManagersApi.scala` | 177 |
-| api | `api/ManagersMarkdown.scala` | 165 |
-| config | `config/AgentManagersConfig.scala` | 18 |
-| config | `config/ReviewManagerConfig.scala` | 25 |
-| config | `config/SimpleManagerConfig.scala` | 8 |
-| config | `config/WatchManagerConfig.scala` | 12 |
-| core | `domain/HintProposals.scala` | 121 |
-| core | `domain/ManagerDefaults.scala` | 12 |
-| core | `domain/ManagerPolicy.scala` | 617 |
-| core | `domain/ManagerRunDefaults.scala` | 3 |
-| core | `domain/ReviewManagerDefaults.scala` | 15 |
-| core | `domain/WatchManagerDefaults.scala` | 3 |
-| db | `db/ManagerRepo.scala` | 1138 |
-| server | `server/agents/DrainService.scala` | 86 |
-| server | `server/agents/GoalSweep.scala` | 68 |
-| server | `server/agents/HintEffectPipeline.scala` | 130 |
-| server | `server/agents/ManagerDefaultsViews.scala` | 16 |
-| server | `server/agents/ManagerSupervisor.scala` | 1325 |
-| server | `server/agents/ManagersHandlers.scala` | 911 |
-| server | `server/agents/ManagersRoutes.scala` | 41 |
-| server | `server/agents/SeedService.scala` | 104 |
-
-## automation.pipelines
-
-| module | file | lines |
-|---|---|---:|
-| config | `config/AgentVerifyConfig.scala` | 8 |
-| core | `domain/AgentProposals.scala` | 164 |
-| core | `domain/AgentVerify.scala` | 208 |
-| core | `domain/CompileArticle.scala` | 432 |
-| core | `domain/EnrichSource.scala` | 603 |
-| core | `domain/FilterInference.scala` | 102 |
-| core | `domain/PlanArticles.scala` | 161 |
-| server | `server/agents/AcquisitionSweepPipeline.scala` | 341 |
-| server | `server/agents/CompileArticlePipeline.scala` | 346 |
-| server | `server/agents/CurrencyCheckPipeline.scala` | 104 |
-| server | `server/agents/EnrichSourcePipeline.scala` | 342 |
-| server | `server/agents/InferFilterPipeline.scala` | 179 |
-| server | `server/agents/PipelineDef.scala` | 20 |
-| server | `server/agents/Pipelines.scala` | 30 |
-| server | `server/agents/ProposeArticlesPipeline.scala` | 196 |
-| server | `server/agents/ReviewArticlePipeline.scala` | 850 |
-
-## automation.review
+## research.workflows
 
 | module | file | lines |
 |---|---|---:|
 | api | `api/LedgerRow.scala` | 22 |
+| api | `api/ReviewApproval.scala` | 9 |
 | api | `api/ReviewFinding.scala` | 26 |
+| api | `api/ReviewGoal.scala` | 9 |
 | api | `api/ReviewRound.scala` | 16 |
+| config | `config/AgentCompileConfig.scala` | 16 |
+| config | `config/AgentInferFilterConfig.scala` | 10 |
+| config | `config/AgentReviewConfig.scala` | 31 |
+| config | `config/FinalPanel.scala` | 13 |
+| config | `config/ReviewManagerConfig.scala` | 25 |
+| core | `domain/CompileArticle.scala` | 432 |
+| core | `domain/FilterInference.scala` | 102 |
+| core | `domain/PlanArticles.scala` | 161 |
 | core | `domain/ReviewArticle.scala` | 2013 |
 | core | `domain/ReviewLedger.scala` | 601 |
+| core | `domain/ReviewManagerDefaults.scala` | 15 |
 | db | `db/ReviewLedgerRepo.scala` | 28 |
+| server | `server/agents/CompileArticlePipeline.scala` | 346 |
+| server | `server/agents/InferFilterPipeline.scala` | 179 |
+| server | `server/agents/ProposeArticlesPipeline.scala` | 196 |
+| server | `server/agents/ReviewArticlePipeline.scala` | 850 |
 
-## automation.scheduler
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/AgentScheduler.scala` | 111 |
-| api | `api/AgentSchedulerMarkdown.scala` | 65 |
-| config | `config/AgentSchedulerConfig.scala` | 55 |
-| core | `domain/Cron.scala` | 139 |
-| core | `domain/PlanReadSchedule.scala` | 28 |
-| core | `domain/ReadSchedule.scala` | 7 |
-| core | `domain/SchedulerDefaults.scala` | 13 |
-| core | `domain/SchedulerPolicy.scala` | 458 |
-| core | `domain/Scheduling.scala` | 218 |
-| core | `domain/WatchSchedules.scala` | 97 |
-| server | `server/agents/SchedulerService.scala` | 519 |
-
-## exchange.bundle
+## personal
 
 | module | file | lines |
 |---|---|---:|
-| api | `api/Bundle.scala` | 21 |
-| api | `api/BundleAlias.scala` | 7 |
-| api | `api/BundleArticle.scala` | 20 |
-| api | `api/BundleArticleAlias.scala` | 7 |
-| api | `api/BundleArticleVersion.scala` | 16 |
-| api | `api/BundleAssessment.scala` | 16 |
-| api | `api/BundleAsset.scala` | 24 |
-| api | `api/BundleAssetLink.scala` | 19 |
-| api | `api/BundleAttestation.scala` | 28 |
-| api | `api/BundleBlobs.scala` | 9 |
-| api | `api/BundleCorrection.scala` | 20 |
-| api | `api/BundleEdge.scala` | 7 |
-| api | `api/BundleEvent.scala` | 40 |
-| api | `api/BundleEventAlias.scala` | 7 |
-| api | `api/BundleEventCandidate.scala` | 18 |
-| api | `api/BundleEventCatalogue.scala` | 27 |
-| api | `api/BundleEventCheck.scala` | 7 |
-| api | `api/BundleEventDating.scala` | 16 |
-| api | `api/BundleEventEdge.scala` | 13 |
-| api | `api/BundleEventParticipant.scala` | 8 |
-| api | `api/BundleEventSets.scala` | 11 |
-| api | `api/BundleFileInfo.scala` | 11 |
-| api | `api/BundleFiles.scala` | 42 |
-| api | `api/BundleFinding.scala` | 24 |
-| api | `api/BundleGoal.scala` | 28 |
-| api | `api/BundleGoalAlias.scala` | 7 |
-| api | `api/BundleGoalLink.scala` | 13 |
-| api | `api/BundleGoalSchedule.scala` | 6 |
-| api | `api/BundleImportResult.scala` | 26 |
-| api | `api/BundleInstance.scala` | 11 |
-| api | `api/BundleKindCounts.scala` | 23 |
-| api | `api/BundleManifest.scala` | 23 |
-| api | `api/BundleMarkdown.scala` | 67 |
-| api | `api/BundlePeriod.scala` | 18 |
-| api | `api/BundlePlace.scala` | 24 |
-| api | `api/BundlePlaceAlias.scala` | 7 |
-| api | `api/BundlePlaceLink.scala` | 5 |
-| api | `api/BundlePlaceName.scala` | 6 |
-| api | `api/BundlePlaceRelation.scala` | 6 |
-| api | `api/BundlePlaceType.scala` | 6 |
-| api | `api/BundleQueueItem.scala` | 19 |
-| api | `api/BundleRange.scala` | 8 |
-| api | `api/BundleReference.scala` | 11 |
-| api | `api/BundleSiteType.scala` | 6 |
-| api | `api/BundleSource.scala` | 35 |
-| api | `api/BundleTombstone.scala` | 9 |
-| api | `api/BundleUnresolvedEdge.scala` | 7 |
-| api | `api/BundleUpload.scala` | 11 |
-| api | `api/BundleVerifyResult.scala` | 15 |
-| config | `config/BundlesConfig.scala` | 9 |
-| core | `domain/BundlePlan.scala` | 182 |
-| db | `db/BundleExport.scala` | 108 |
-| db | `db/BundleImport.scala` | 1151 |
-| db | `db/BundleRepo.scala` | 1015 |
-| db | `db/BundleScope.scala` | 17 |
-| files | `files/BundleEntities.scala` | 218 |
-| files | `files/BundleFormat.scala` | 152 |
-| files | `files/BundleReader.scala` | 108 |
-| files | `files/BundleTar.scala` | 182 |
-| server | `server/BundleHandlers.scala` | 307 |
+| api | `api/personal/Bookmark.scala` | 20 |
+| api | `api/personal/BookmarkEdit.scala` | 11 |
+| api | `api/personal/BookmarkId.scala` | 15 |
+| api | `api/personal/BookmarkLabel.scala` | 14 |
+| api | `api/personal/BookmarkNew.scala` | 13 |
+| api | `api/personal/ItemKey.scala` | 13 |
+| api | `api/personal/ItemKind.scala` | 40 |
+| api | `api/personal/MapZoom.scala` | 13 |
+| api | `api/personal/Note.scala` | 19 |
+| api | `api/personal/NoteEdit.scala` | 13 |
+| api | `api/personal/NoteId.scala` | 15 |
+| api | `api/personal/NoteNew.scala` | 13 |
+| api | `api/personal/NoteText.scala` | 14 |
+| api | `api/personal/PersonalApi.scala` | 100 |
+| api | `api/personal/PersonalIds.scala` | 9 |
+| api | `api/personal/PersonalMarkdown.scala` | 51 |
+| api | `api/personal/ReadMark.scala` | 19 |
+| api | `api/personal/ReadMarkSet.scala` | 13 |
+| api | `api/personal/ReadOpened.scala` | 13 |
+| api | `api/personal/Target.scala` | 88 |
+| api | `api/personal/UnreadPage.scala` | 13 |
+| api | `api/personal/UnreadRow.scala` | 21 |
+| api | `api/personal/ViewState.scala` | 14 |
+| server | `domain/personal/BookmarkRepo.scala` | 97 |
+| server | `domain/personal/BookmarkService.scala` | 130 |
+| server | `domain/personal/ItemTitles.scala` | 45 |
+| server | `domain/personal/NoteEditRefused.scala` | 6 |
+| server | `domain/personal/NoteRepo.scala` | 84 |
+| server | `domain/personal/NoteService.scala` | 159 |
+| server | `domain/personal/PersonalControllers.scala` | 129 |
+| server | `domain/personal/PersonalRules.scala` | 83 |
+| server | `domain/personal/PersonalState.scala` | 53 |
+| server | `domain/personal/PersonalTools.scala` | 67 |
+| server | `domain/personal/ReadingRepo.scala` | 141 |
+| server | `domain/personal/ReadingService.scala` | 132 |
+| server | `domain/personal/ReadingShow.scala` | 15 |
+| server | `domain/personal/TargetColumns.scala` | 29 |
+| server | `domain/personal/UserId.scala` | 12 |
 
-## exchange.merge
+## util.* (json, markdown, text)
 
 | module | file | lines |
 |---|---|---:|
-| api | `api/InitPlan.scala` | 30 |
-| api | `api/IssueCondition.scala` | 11 |
-| api | `api/IssueDetail.scala` | 14 |
-| api | `api/IssueField.scala` | 11 |
-| api | `api/IssueHunk.scala` | 15 |
-| api | `api/IssuePlace.scala` | 15 |
-| api | `api/IssueSide.scala` | 13 |
-| api | `api/IssueSpan.scala` | 9 |
-| api | `api/IssueText.scala` | 11 |
-| api | `api/MergeApplyJob.scala` | 58 |
-| api | `api/MergeApplyRequest.scala` | 11 |
-| api | `api/MergeApplyResult.scala` | 28 |
-| api | `api/MergeDecision.scala` | 30 |
-| api | `api/MergeDetail.scala` | 16 |
-| api | `api/MergeImportRequest.scala` | 14 |
-| api | `api/MergeInfo.scala` | 22 |
-| api | `api/MergeIssue.scala` | 28 |
-| api | `api/MergeIssueDetail.scala` | 101 |
-| api | `api/MergeJobState.scala` | 18 |
-| api | `api/MergeLedger.scala` | 11 |
-| api | `api/MergeMarkdown.scala` | 201 |
-| api | `api/MergePlan.scala` | 32 |
-| api | `api/MergePlanRequest.scala` | 11 |
-| api | `api/MergePolicy.scala` | 11 |
-| api | `api/MergeResolution.scala` | 14 |
-| api | `api/MergeResolutions.scala` | 23 |
-| api | `api/MergeResolutionsText.scala` | 67 |
-| api | `api/MergeSession.scala` | 14 |
-| api | `api/MergeTally.scala` | 30 |
-| config | `config/MergeConfig.scala` | 33 |
-| config | `config/MergeWeights.scala` | 30 |
-| core | `domain/Diff3.scala` | 118 |
-| core | `domain/MergeFold.scala` | 513 |
-| core | `domain/MergePlanner.scala` | 2425 |
-| core | `domain/MergeSettings.scala` | 12 |
-| core | `domain/MergeText.scala` | 299 |
-| core | `domain/SourceMatcher.scala` | 240 |
-| db | `db/MergeRepo.scala` | 225 |
-| db | `db/MergeState.scala` | 401 |
-| files | `files/MergeResolutionsFile.scala` | 100 |
-| server | `server/MergeApplyJobs.scala` | 64 |
+| api | `api/ApiError.scala` | 15 |
+| api | `api/Csv.scala` | 41 |
+| api | `api/LatinFold.scala` | 84 |
+| api | `api/Markdown.scala` | 913 |
+| api | `api/Plural.scala` | 8 |
+| api | `api/ValueCodecs.scala` | 30 |
+| api | `api/VocabularyCodecs.scala` | 93 |
+| api | `api/WireEnum.scala` | 13 |
+| api | `api/Wording.scala` | 235 |
+| api | `api/Write.scala` | 241 |
+| api | `api/YearFmt.scala` | 34 |
+| api | `api/Years.scala` | 54 |
+| config | `config/ServiceUrl.scala` | 9 |
+| db | `db/Codecs.scala` | 59 |
+| db | `db/Db.scala` | 223 |
+| db | `db/Jsonb.scala` | 30 |
+| db | `db/Migrate.scala` | 192 |
+| db | `db/Param.scala` | 13 |
+| db | `db/Sql.scala` | 61 |
+| db | `db/Vocab.scala` | 18 |
+| server | `server/MarkdownFlavor.scala` | 25 |
+| server | `server/MarkdownHtml.scala` | 12 |
 
-## operations.backup
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/Backup.scala` | 137 |
-| api | `api/BackupInfo.scala` | 11 |
-| api | `api/BackupResult.scala` | 16 |
-| api | `api/BackupState.scala` | 10 |
-| api | `api/BackupStatus.scala` | 27 |
-| api | `api/BackupsUsage.scala` | 11 |
-| api | `api/RestoreRequest.scala` | 10 |
-| api | `api/RestoreResult.scala` | 20 |
-| config | `config/BackupsConfig.scala` | 11 |
-| db | `db/BackupRepo.scala` | 18 |
-| server | `server/BackupJobs.scala` | 68 |
-| server | `server/BackupService.scala` | 249 |
-| server | `server/PgRelocation.scala` | 113 |
-
-## operations.basemap
+## util.basemap
 
 | module | file | lines |
 |---|---|---:|
@@ -1238,36 +1121,143 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | server | `server/basemap/TerrariumPng.scala` | 142 |
 | server | `server/basemap/Vp8l.scala` | 509 |
 
-## operations.instance
+## util.data.backup
 
 | module | file | lines |
 |---|---|---:|
-| api | `api/About.scala` | 29 |
-| api | `api/AboutMarkdown.scala` | 50 |
-| api | `api/BuildStamp.scala` | 19 |
-| api | `api/CorpusCounts.scala` | 19 |
-| api | `api/DebounceConfig.scala` | 11 |
-| api | `api/EventsUiConfig.scala` | 15 |
-| api | `api/Health.scala` | 16 |
-| api | `api/MapStartConfig.scala` | 13 |
-| api | `api/MapStartMode.scala` | 8 |
-| api | `api/TimeConfig.scala` | 11 |
-| api | `api/UiApi.scala` | 31 |
-| api | `api/UiConfig.scala` | 38 |
-| api | `api/UiNotices.scala` | 59 |
-| api | `api/UpdateNotice.scala` | 12 |
-| api | `api/Version.scala` | 8 |
-| api | `api/VersionInfo.scala` | 9 |
-| config | `config/UiDebounceSettings.scala` | 8 |
-| config | `config/UiEventsSettings.scala` | 13 |
-| config | `config/UiMapStartSettings.scala` | 9 |
-| config | `config/UiSettings.scala` | 31 |
-| config | `config/UiTimeSettings.scala` | 6 |
-| db | `db/StatsRepo.scala` | 67 |
-| db | `db/UiRepo.scala` | 74 |
-| server | `server/TimeZoneCheck.scala` | 68 |
+| api | `api/Backup.scala` | 137 |
+| api | `api/BackupInfo.scala` | 11 |
+| api | `api/BackupResult.scala` | 16 |
+| api | `api/BackupState.scala` | 10 |
+| api | `api/BackupStatus.scala` | 27 |
+| api | `api/BackupsUsage.scala` | 11 |
+| api | `api/RestoreRequest.scala` | 10 |
+| api | `api/RestoreResult.scala` | 20 |
+| config | `config/BackupsConfig.scala` | 11 |
+| db | `db/BackupRepo.scala` | 18 |
+| server | `server/BackupJobs.scala` | 68 |
+| server | `server/BackupService.scala` | 249 |
+| server | `server/PgRelocation.scala` | 113 |
 
-## operations.maintenance
+## util.data.checks
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/FormatCheck.scala` | 11 |
+| api | `api/FormatField.scala` | 17 |
+| api | `api/FormatIssue.scala` | 19 |
+| api | `api/FormatMarkdown.scala` | 32 |
+| api | `api/FormatReport.scala` | 17 |
+| api | `api/FormatSeverity.scala` | 247 |
+| api | `api/Lint.scala` | 478 |
+| config | `config/LintConfig.scala` | 8 |
+| db | `db/LintRepo.scala` | 337 |
+
+## util.data.exchange
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/Bundle.scala` | 21 |
+| api | `api/BundleAlias.scala` | 7 |
+| api | `api/BundleArticle.scala` | 20 |
+| api | `api/BundleArticleAlias.scala` | 7 |
+| api | `api/BundleArticleVersion.scala` | 16 |
+| api | `api/BundleAssessment.scala` | 16 |
+| api | `api/BundleAsset.scala` | 24 |
+| api | `api/BundleAssetLink.scala` | 19 |
+| api | `api/BundleAttestation.scala` | 28 |
+| api | `api/BundleBlobs.scala` | 9 |
+| api | `api/BundleCorrection.scala` | 20 |
+| api | `api/BundleEdge.scala` | 7 |
+| api | `api/BundleEvent.scala` | 40 |
+| api | `api/BundleEventAlias.scala` | 7 |
+| api | `api/BundleEventCandidate.scala` | 18 |
+| api | `api/BundleEventCatalogue.scala` | 27 |
+| api | `api/BundleEventCheck.scala` | 7 |
+| api | `api/BundleEventDating.scala` | 16 |
+| api | `api/BundleEventEdge.scala` | 13 |
+| api | `api/BundleEventParticipant.scala` | 8 |
+| api | `api/BundleEventSets.scala` | 11 |
+| api | `api/BundleFileInfo.scala` | 11 |
+| api | `api/BundleFiles.scala` | 42 |
+| api | `api/BundleFinding.scala` | 24 |
+| api | `api/BundleGoal.scala` | 28 |
+| api | `api/BundleGoalAlias.scala` | 7 |
+| api | `api/BundleGoalLink.scala` | 13 |
+| api | `api/BundleGoalSchedule.scala` | 6 |
+| api | `api/BundleImportResult.scala` | 26 |
+| api | `api/BundleInstance.scala` | 11 |
+| api | `api/BundleKindCounts.scala` | 23 |
+| api | `api/BundleManifest.scala` | 23 |
+| api | `api/BundleMarkdown.scala` | 67 |
+| api | `api/BundlePeriod.scala` | 18 |
+| api | `api/BundlePlace.scala` | 24 |
+| api | `api/BundlePlaceAlias.scala` | 7 |
+| api | `api/BundlePlaceLink.scala` | 5 |
+| api | `api/BundlePlaceName.scala` | 6 |
+| api | `api/BundlePlaceRelation.scala` | 6 |
+| api | `api/BundlePlaceType.scala` | 6 |
+| api | `api/BundleQueueItem.scala` | 19 |
+| api | `api/BundleRange.scala` | 8 |
+| api | `api/BundleReference.scala` | 11 |
+| api | `api/BundleSiteType.scala` | 6 |
+| api | `api/BundleSource.scala` | 35 |
+| api | `api/BundleTombstone.scala` | 9 |
+| api | `api/BundleUnresolvedEdge.scala` | 7 |
+| api | `api/BundleUpload.scala` | 11 |
+| api | `api/BundleVerifyResult.scala` | 15 |
+| api | `api/InitPlan.scala` | 30 |
+| api | `api/IssueCondition.scala` | 11 |
+| api | `api/IssueDetail.scala` | 14 |
+| api | `api/IssueField.scala` | 11 |
+| api | `api/IssueHunk.scala` | 15 |
+| api | `api/IssuePlace.scala` | 15 |
+| api | `api/IssueSide.scala` | 13 |
+| api | `api/IssueSpan.scala` | 9 |
+| api | `api/IssueText.scala` | 11 |
+| api | `api/MergeApplyJob.scala` | 58 |
+| api | `api/MergeApplyRequest.scala` | 11 |
+| api | `api/MergeApplyResult.scala` | 28 |
+| api | `api/MergeDecision.scala` | 30 |
+| api | `api/MergeDetail.scala` | 16 |
+| api | `api/MergeImportRequest.scala` | 14 |
+| api | `api/MergeInfo.scala` | 22 |
+| api | `api/MergeIssue.scala` | 28 |
+| api | `api/MergeIssueDetail.scala` | 101 |
+| api | `api/MergeJobState.scala` | 18 |
+| api | `api/MergeLedger.scala` | 11 |
+| api | `api/MergeMarkdown.scala` | 201 |
+| api | `api/MergePlan.scala` | 32 |
+| api | `api/MergePlanRequest.scala` | 11 |
+| api | `api/MergePolicy.scala` | 11 |
+| api | `api/MergeResolution.scala` | 14 |
+| api | `api/MergeResolutions.scala` | 23 |
+| api | `api/MergeResolutionsText.scala` | 67 |
+| api | `api/MergeSession.scala` | 14 |
+| api | `api/MergeTally.scala` | 30 |
+| config | `config/BundlesConfig.scala` | 9 |
+| config | `config/MergeConfig.scala` | 33 |
+| config | `config/MergeWeights.scala` | 30 |
+| core | `domain/BundlePlan.scala` | 182 |
+| core | `domain/Diff3.scala` | 118 |
+| core | `domain/MergeFold.scala` | 513 |
+| core | `domain/MergePlanner.scala` | 2425 |
+| core | `domain/MergeSettings.scala` | 12 |
+| db | `db/BundleExport.scala` | 108 |
+| db | `db/BundleImport.scala` | 1151 |
+| db | `db/BundleRepo.scala` | 1015 |
+| db | `db/BundleScope.scala` | 17 |
+| db | `db/MergeRepo.scala` | 225 |
+| db | `db/MergeState.scala` | 401 |
+| files | `files/BundleEntities.scala` | 218 |
+| files | `files/BundleFormat.scala` | 152 |
+| files | `files/BundleReader.scala` | 108 |
+| files | `files/BundleTar.scala` | 182 |
+| files | `files/MergeResolutionsFile.scala` | 100 |
+| server | `server/BundleHandlers.scala` | 307 |
+| server | `server/MergeApplyJobs.scala` | 64 |
+
+## util.data.maintenance
 
 | module | file | lines |
 |---|---|---:|
@@ -1285,12 +1275,105 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | config | `config/StorageConfig.scala` | 19 |
 | db | `db/VacuumRepo.scala` | 43 |
 | files | `files/DirSize.scala` | 104 |
+| server | `server/Maintenance.scala` | 34 |
 | server | `server/ReadOnlyPool.scala` | 12 |
 | server | `server/StorageCache.scala` | 69 |
 | server | `server/StorageProbe.scala` | 225 |
 | server | `server/VacuumJobs.scala` | 62 |
 
-## operations.settings
+## util.data.storage
+
+| module | file | lines |
+|---|---|---:|
+| db | `db/StatsRepo.scala` | 67 |
+
+## util.database
+
+| module | file | lines |
+|---|---|---:|
+| config | `config/DbConfig.scala` | 5 |
+| config | `config/DbPoolConfig.scala` | 9 |
+| config | `config/PgTuning.scala` | 11 |
+| db | `db/Keyset.scala` | 65 |
+| db | `db/ListSql.scala` | 49 |
+
+## util.files
+
+| module | file | lines |
+|---|---|---:|
+| files | `files/SafePath.scala` | 48 |
+
+## util.identity
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/AliasKind.scala` | 18 |
+| api | `api/Aliases.scala` | 17 |
+| api | `api/InstanceInfo.scala` | 13 |
+| api | `api/ResolvedId.scala` | 14 |
+| api | `api/UidRedirect.scala` | 13 |
+| db | `db/AliasRepo.scala` | 46 |
+
+## util.jobs
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/JobActions.scala` | 15 |
+| api | `api/JobCounts.scala` | 48 |
+| api | `api/JobDetail.scala` | 32 |
+| api | `api/JobInfo.scala` | 25 |
+| api | `api/JobKind.scala` | 22 |
+| api | `api/JobState.scala` | 25 |
+| core | `domain/jobs/JobAction.scala` | 12 |
+| core | `domain/jobs/JobControlRules.scala` | 41 |
+| core | `domain/jobs/JobControlStep.scala` | 15 |
+| core | `domain/jobs/JobStop.scala` | 5 |
+| db | `db/JobRepo.scala` | 271 |
+| server | `domain/jobs/JobControlControllers.scala` | 12 |
+| server | `domain/jobs/JobControlService.scala` | 98 |
+| server | `domain/jobs/JobStopped.scala` | 6 |
+| server | `domain/jobs/JobStops.scala` | 35 |
+| server | `server/BackgroundJob.scala` | 182 |
+
+## util.markdown
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/HtmlAtoms.scala` | 30 |
+
+## util.ocr
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/ConvertedDoc.scala` | 15 |
+| api | `api/ConvertedImage.scala` | 18 |
+| core | `domain/Chunker.scala` | 96 |
+| server | `server/ConverterClient.scala` | 57 |
+| server | `server/ConverterState.scala` | 33 |
+| server | `server/HttpConverterClient.scala` | 163 |
+| server | `server/JatsConverter.scala` | 28 |
+| server | `server/acquire/Spool.scala` | 47 |
+
+## util.plugins
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/PluginDescription.scala` | 17 |
+| api | `api/PluginFile.scala` | 9 |
+| api | `api/PluginJar.scala` | 11 |
+| api | `api/PluginSet.scala` | 33 |
+| api | `api/PluginSetting.scala` | 9 |
+| api | `api/PluginState.scala` | 15 |
+| api | `api/PluginStatus.scala` | 20 |
+| api | `api/PluginsMarkdown.scala` | 38 |
+| api | `api/PluginsReport.scala` | 16 |
+| files | `files/PluginKit.scala` | 319 |
+| server | `server/plugins/LegacyPlugins.scala` | 128 |
+| server | `server/plugins/PluginSetResource.scala` | 47 |
+| server | `server/plugins/PluginTool.scala` | 312 |
+| server | `server/plugins/Plugins.scala` | 153 |
+
+## util.settings
 
 | module | file | lines |
 |---|---|---:|
@@ -1334,48 +1417,85 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | server | `server/HotConfig.scala` | 16 |
 | server | `server/MergeSettingsViews.scala` | 8 |
 
-## personal
+## server (composition, adapters)
 
 | module | file | lines |
 |---|---|---:|
-| api | `api/personal/Bookmark.scala` | 20 |
-| api | `api/personal/BookmarkEdit.scala` | 11 |
-| api | `api/personal/BookmarkId.scala` | 15 |
-| api | `api/personal/BookmarkLabel.scala` | 14 |
-| api | `api/personal/BookmarkNew.scala` | 13 |
-| api | `api/personal/ItemKey.scala` | 13 |
-| api | `api/personal/ItemKind.scala` | 40 |
-| api | `api/personal/MapZoom.scala` | 13 |
-| api | `api/personal/Note.scala` | 19 |
-| api | `api/personal/NoteEdit.scala` | 13 |
-| api | `api/personal/NoteId.scala` | 15 |
-| api | `api/personal/NoteNew.scala` | 13 |
-| api | `api/personal/NoteText.scala` | 14 |
-| api | `api/personal/PersonalApi.scala` | 100 |
-| api | `api/personal/PersonalIds.scala` | 9 |
-| api | `api/personal/PersonalMarkdown.scala` | 51 |
-| api | `api/personal/ReadMark.scala` | 19 |
-| api | `api/personal/ReadMarkSet.scala` | 13 |
-| api | `api/personal/ReadOpened.scala` | 13 |
-| api | `api/personal/Target.scala` | 88 |
-| api | `api/personal/UnreadPage.scala` | 13 |
-| api | `api/personal/UnreadRow.scala` | 21 |
-| api | `api/personal/ViewState.scala` | 14 |
-| server | `domain/personal/BookmarkRepo.scala` | 97 |
-| server | `domain/personal/BookmarkService.scala` | 130 |
-| server | `domain/personal/ItemTitles.scala` | 45 |
-| server | `domain/personal/NoteEditRefused.scala` | 6 |
-| server | `domain/personal/NoteRepo.scala` | 84 |
-| server | `domain/personal/NoteService.scala` | 159 |
-| server | `domain/personal/PersonalControllers.scala` | 129 |
-| server | `domain/personal/PersonalRules.scala` | 83 |
-| server | `domain/personal/PersonalState.scala` | 53 |
-| server | `domain/personal/PersonalTools.scala` | 67 |
-| server | `domain/personal/ReadingRepo.scala` | 141 |
-| server | `domain/personal/ReadingService.scala` | 132 |
-| server | `domain/personal/ReadingShow.scala` | 15 |
-| server | `domain/personal/TargetColumns.scala` | 29 |
-| server | `domain/personal/UserId.scala` | 12 |
+| server | `server/ArticlesApi.scala` | 83 |
+| server | `server/AuthHandler.scala` | 78 |
+| server | `server/Bootstrap.scala` | 320 |
+| server | `server/Deps.scala` | 88 |
+| server | `server/HttpApi.scala` | 357 |
+| server | `server/Jobs.scala` | 133 |
+| server | `server/Main.scala` | 350 |
+| server | `server/McpOut.scala` | 28 |
+| server | `server/McpTools.scala` | 2248 |
+| server | `server/OpsRoutes.scala` | 25 |
+| server | `server/ServerArgs.scala` | 24 |
+| server | `server/ServerGraph.scala` | 286 |
+| server | `server/ServerMode.scala` | 17 |
+| server | `server/Static.scala` | 15 |
+| server | `server/Supervisor.scala` | 335 |
+| server | `server/hot/Carried.scala` | 13 |
+| server | `server/hot/Hot.scala` | 24 |
+| server | `server/hot/HotDataSource.scala` | 38 |
+| server | `server/hot/HotGraph.scala` | 402 |
+| server | `server/hot/PinRequests.scala` | 24 |
+| server | `server/hot/Pinning.scala` | 16 |
+
+## server.instance (about, health, version, self-check, UI config)
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/About.scala` | 29 |
+| api | `api/AboutMarkdown.scala` | 50 |
+| api | `api/BuildStamp.scala` | 19 |
+| api | `api/CorpusCounts.scala` | 19 |
+| api | `api/DebounceConfig.scala` | 11 |
+| api | `api/EventsUiConfig.scala` | 15 |
+| api | `api/Health.scala` | 16 |
+| api | `api/MapStartConfig.scala` | 13 |
+| api | `api/MapStartMode.scala` | 8 |
+| api | `api/TimeConfig.scala` | 11 |
+| api | `api/UiApi.scala` | 31 |
+| api | `api/UiConfig.scala` | 38 |
+| api | `api/UiNotices.scala` | 59 |
+| api | `api/UpdateNotice.scala` | 12 |
+| api | `api/Version.scala` | 8 |
+| api | `api/VersionInfo.scala` | 9 |
+| config | `config/UiDebounceSettings.scala` | 8 |
+| config | `config/UiEventsSettings.scala` | 13 |
+| config | `config/UiMapStartSettings.scala` | 9 |
+| config | `config/UiSettings.scala` | 31 |
+| config | `config/UiTimeSettings.scala` | 6 |
+| db | `db/UiRepo.scala` | 74 |
+| server | `server/TimeZoneCheck.scala` | 68 |
+
+## domain (shared kernel)
+
+| module | file | lines |
+|---|---|---:|
+| api | `api/BBox.scala` | 29 |
+| api | `api/Dataset.scala` | 13 |
+| api | `api/GeoPick.scala` | 52 |
+| api | `api/GeoPoint.scala` | 4 |
+| api | `api/ListPatch.scala` | 17 |
+| api | `api/LpfDataset.scala` | 10 |
+| api | `api/OffsetPage.scala` | 29 |
+| api | `api/OpenSide.scala` | 14 |
+| api | `api/Paging.scala` | 89 |
+| api | `api/PeriodODataset.scala` | 21 |
+| api | `api/ServiceState.scala` | 39 |
+| api | `api/Span.scala` | 7 |
+| api | `api/SpatialHierarchyResult.scala` | 15 |
+| api | `api/StatusCount.scala` | 10 |
+| api | `api/TableSize.scala` | 9 |
+| api | `api/TimeSpan.scala` | 15 |
+| api | `api/Validity.scala` | 3 |
+| core | `domain/DeepTime.scala` | 17 |
+| core | `domain/Read.scala` | 31 |
+| core | `domain/ScheduledRead.scala` | 5 |
+| server | `server/ChipField.scala` | 14 |
 
 ## api root
 
@@ -1418,128 +1538,6 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | config | `config/UserPaths.scala` | 72 |
 | config | `config/edit/SettingSource.scala` | 5 |
 
-## domain (shared kernel)
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/BBox.scala` | 29 |
-| api | `api/Dataset.scala` | 13 |
-| api | `api/GeoPick.scala` | 52 |
-| api | `api/GeoPoint.scala` | 4 |
-| api | `api/ListPatch.scala` | 17 |
-| api | `api/LpfDataset.scala` | 10 |
-| api | `api/OffsetPage.scala` | 29 |
-| api | `api/OpenSide.scala` | 14 |
-| api | `api/Paging.scala` | 89 |
-| api | `api/PeriodODataset.scala` | 21 |
-| api | `api/ServiceState.scala` | 39 |
-| api | `api/Span.scala` | 7 |
-| api | `api/SpatialHierarchyResult.scala` | 15 |
-| api | `api/StatusCount.scala` | 10 |
-| api | `api/TableSize.scala` | 9 |
-| api | `api/TimeSpan.scala` | 15 |
-| api | `api/Validity.scala` | 3 |
-| core | `domain/DeepTime.scala` | 17 |
-| core | `domain/Read.scala` | 31 |
-| core | `domain/ScheduledRead.scala` | 5 |
-| server | `server/ChipField.scala` | 14 |
-
-## server (composition, adapters)
-
-| module | file | lines |
-|---|---|---:|
-| server | `server/ArticlesApi.scala` | 83 |
-| server | `server/AuthHandler.scala` | 78 |
-| server | `server/Bootstrap.scala` | 320 |
-| server | `server/Deps.scala` | 88 |
-| server | `server/HttpApi.scala` | 357 |
-| server | `server/Jobs.scala` | 133 |
-| server | `server/Main.scala` | 350 |
-| server | `server/McpOut.scala` | 28 |
-| server | `server/McpTools.scala` | 2248 |
-| server | `server/OpsRoutes.scala` | 25 |
-| server | `server/ServerArgs.scala` | 24 |
-| server | `server/ServerGraph.scala` | 286 |
-| server | `server/ServerMode.scala` | 17 |
-| server | `server/Static.scala` | 15 |
-| server | `server/Supervisor.scala` | 335 |
-| server | `server/hot/Carried.scala` | 13 |
-| server | `server/hot/Hot.scala` | 24 |
-| server | `server/hot/HotDataSource.scala` | 38 |
-| server | `server/hot/HotGraph.scala` | 402 |
-| server | `server/hot/PinRequests.scala` | 24 |
-| server | `server/hot/Pinning.scala` | 16 |
-
-## server: split across subdomains
-
-| module | file | lines |
-|---|---|---:|
-| server | `server/Handlers.scala` | 1891 |
-| server | `server/OpsHandlers.scala` | 287 |
-| server | `server/OpsTools.scala` | 225 |
-
-## util.*
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/ApiError.scala` | 15 |
-| api | `api/Csv.scala` | 41 |
-| api | `api/LatinFold.scala` | 84 |
-| api | `api/Markdown.scala` | 913 |
-| api | `api/Plural.scala` | 8 |
-| api | `api/ValueCodecs.scala` | 30 |
-| api | `api/VocabularyCodecs.scala` | 93 |
-| api | `api/WireEnum.scala` | 13 |
-| api | `api/Wording.scala` | 235 |
-| api | `api/Write.scala` | 241 |
-| api | `api/YearFmt.scala` | 34 |
-| api | `api/Years.scala` | 54 |
-| config | `config/ServiceUrl.scala` | 9 |
-| db | `db/Codecs.scala` | 59 |
-| db | `db/Db.scala` | 223 |
-| db | `db/Jsonb.scala` | 30 |
-| db | `db/Migrate.scala` | 192 |
-| db | `db/Param.scala` | 13 |
-| db | `db/Sql.scala` | 61 |
-| db | `db/Vocab.scala` | 18 |
-| server | `server/MarkdownFlavor.scala` | 25 |
-| server | `server/MarkdownHtml.scala` | 12 |
-
-## util.database
-
-| module | file | lines |
-|---|---|---:|
-| config | `config/DbConfig.scala` | 5 |
-| config | `config/DbPoolConfig.scala` | 9 |
-| config | `config/PgTuning.scala` | 11 |
-| db | `db/Keyset.scala` | 65 |
-| db | `db/ListSql.scala` | 49 |
-
-## util.files
-
-| module | file | lines |
-|---|---|---:|
-| files | `files/SafePath.scala` | 48 |
-
-## util.markdown
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/HtmlAtoms.scala` | 30 |
-
-## util.ocr
-
-| module | file | lines |
-|---|---|---:|
-| api | `api/ConvertedDoc.scala` | 15 |
-| api | `api/ConvertedImage.scala` | 18 |
-| core | `domain/Chunker.scala` | 96 |
-| server | `server/ConverterClient.scala` | 57 |
-| server | `server/ConverterState.scala` | 33 |
-| server | `server/HttpConverterClient.scala` | 163 |
-| server | `server/JatsConverter.scala` | 28 |
-| server | `server/acquire/Spool.scala` | 47 |
-
 ## values
 
 | module | file | lines |
@@ -1554,3 +1552,11 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | config | `config/RefreshIntervalMinutes.scala` | 7 |
 | config | `config/Seconds.scala` | 9 |
 | config | `config/TokenCount.scala` | 9 |
+
+## server: split across domains (Handlers, OpsHandlers, McpTools parts)
+
+| module | file | lines |
+|---|---|---:|
+| server | `server/Handlers.scala` | 1891 |
+| server | `server/OpsHandlers.scala` | 287 |
+| server | `server/OpsTools.scala` | 225 |

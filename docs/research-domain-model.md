@@ -1,64 +1,69 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
 Status: **proposal, waiting for the user's approval**. Nothing here is built. Written 2026-10-30 on master
-58de5489 (branch `domain-design`); revised the same day after the user's review of §3 (subdomains above the
-features; no `planning`; `personal` as its own subdomain with a marks interface; `library`, `research`,
-`catalogue`, `media` named; acquisition and OCR dissolved; automation writes only through other subdomains'
-services). Answers review items #7485, #7490, #7903, #7908 and #7911, and the "ad-hoc model" remark.
+58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
+`personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
+dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
+access as supporting areas fed by the domains, `platform`, `operations` and `exchange` dissolved (2026-10-31).
+Answers review items #7485, #7490, #7903, #7908 and #7911, and the "ad-hoc model" remark.
 
 Inventories too long for this page are in `research-domain-model/`:
 
 | file | what it lists |
 |---|---|
-| [`dependencies.md`](research-domain-model/dependencies.md) | the measured references between subdomains (final grouping and the starting proposal), every upward reference, git co-change |
-| [`files.md`](research-domain-model/files.md) | every source file of `server`, `core`, `db`, `api`, `config`, `files` mapped to its target subdomain and feature |
+| [`dependencies.md`](research-domain-model/dependencies.md) | the measured references between domains and supporting areas (final layout and the earlier ones), every upward reference, the engine's back doors before and after, the per-kind share of today's generic mechanisms, file-system access by place, git co-change |
+| [`files.md`](research-domain-model/files.md) | every source file of `server`, `core`, `db`, `api`, `config`, `files` mapped to its target domain or supporting area and feature |
 | [`objects.md`](research-domain-model/objects.md) | all 645 top-level objects without a same-named type, each with its destination and a one-line reason |
 | [`primitives.md`](research-domain-model/primitives.md) | primitive parameters and fields by name, measured per module, and the counts behind §4 |
 
-`catalogue` is the subdomain of places, periods and events (Q17, decided 2026-10-30): the catalogue of data points the
-library's sources attest. Its packages are `domain.catalogue` / `api.catalogue` / `config.catalogue`. The event catalogues
-imported by plugins keep their name (SPI kind `event-catalogue`); inside the subdomain they are the events feature's
-*event-catalogue import*.
+`catalogue` is the domain of places, periods and events (Q17, decided 2026-10-30): the catalogue of data points the
+map and the timeline show. The name is one package segment (`domain.catalogue`, `api.catalogue`,
+`config.catalogue`).
 
 ## 0. Summary
 
-1. The code is grouped into **nine subdomains**, each with its own vocabulary, and features inside them:
-   `com.histmersion.domain.<subdomain>.<feature>` (§3). From the bottom: `platform` (jobs, identity, work lists,
-   lint runner, plugin host), `catalogue` (places, periods, events and what attests them), `media`, `library`
-   (sources, findings, citations, labels, search, and getting sources in), `research` (research results; articles
-   today), `automation` (the workflows: runs, managers, approvals, autopilot, schedules, goals, TASKS, LOG), then
-   `exchange` (bundle, merge) and `operations` (backup, maintenance, settings, about, basemap) at the top, with
-   `personal` beside them. OCR is a supporting area (`util.ocr`), not a domain.
-2. The grouping is **measured, not asserted**: 546 cross-subdomain type references and 408 commits of co-change
-   (`dependencies.md`). The data moved merge and bundle out of operations (merge↔bundle co-change 0.50; 138 of
-   operations' 146 references into research data were theirs), the job runner below every subdomain (used by
-   catalogue, media and library), the evidence that attests events into the catalogue (events use it 34 times; moving it
-   cut upward references from 160 to 125), and the article review ledger into automation (review↔pipelines 0.44).
-3. **Direction**: each subdomain depends only on the ones below it; `personal` only on `platform`. 121 references
-   point upward today; §3.4 lists each group with what removes it — mostly seven small interfaces that lower
-   subdomains own and higher ones implement (personal's `Markable` among them) and a `server.views` layer for pages
-   that join several subdomains. An `ArchitectureSuite` over the imports enforces the table.
-4. **Automation writes like a person**: 36 direct calls from automation into other subdomains' repositories (15
-   files) and its SQL over `articles`, `sources`, `queue_items` and `jobs` go through the owners' services, with
-   `Caller.Automation(run)` (§3.5).
-5. The model stops passing primitives: **about 55 identifier and value newtypes** and 32 vocabulary enums (§4),
-   most of them in `values`, replace roughly 4 000 measured `String`/`Int`/`Long`/`Double` parameters and fields.
-   Their JSON, columns, HOCON keys, CLI flags and MCP schemas stay byte-identical. `Licence` becomes one shared
-   domain type for media, sources and datasets (§3.7).
-6. Of the 645 type-less top-level objects, 229 move onto a type, 51 namespace objects dissolve into packages, 29
+1. **Five domains** hold the research and its machinery: `automation` (a generic workflow engine),
+   `catalogue` (places, periods, events and what attests them), `media`, `library` (sources and getting them in)
+   and `research` (research results; articles today), plus `personal` beside them. Each is
+   `com.histmersion.domain.<domain>.<feature>` (§3).
+2. **Domains contribute, supporting areas run.** The engine defines workflows, runs, schedules, managers,
+   approvals and agents and knows no article or source; research, library and the others register their
+   workflow definitions and agent tools into it (§3.5). Data management works the same way: each domain says how
+   its data is stored, backed up, exported, carried in a bundle, merged, cached, maintained and checked; one
+   supporting area, `util.data`, runs it all from one place and feeds one 360° view (§3.6). Files and directories
+   are reached only through `util.storage`'s typed stores, never as paths (§3.7).
+3. **`platform`, `operations` and `exchange` dissolve** into supporting areas (`util.jobs`, `util.identity`,
+   `util.data`, `util.storage`, `util.plugins`, `util.settings`, `util.basemap`) and the composition root
+   (`server.instance`, `server.views`). Of bundle and merge's 7.8 k lines, about 4.8 k are rules about one kind of
+   record and move to that kind's domain; `MergePlanner` alone gives 1.75 k of its 2.4 k.
+4. **Measured, not asserted**: 616 type references and 402 commits of co-change (`dependencies.md`). With the
+   engine and the supporting areas at the bottom, 264 references point upward today, and 229 of them are exactly the
+   code that becomes contributions (engine → domains 120, data management → domains 81, plugin glue 12, job kinds
+   8, aliases 6); 31 between domains go through five named interfaces; 4 are personal's (§3.4). The engine's back
+   doors into domain data drop from 36 repository calls and 55 SQL statements to none (§3.5).
+5. **Direction**: supporting areas never import a domain; domains depend only on supporting areas and the
+   domains below them (automation, catalogue, media, library, research); personal only on supporting areas. An
+   `ArchitectureSuite` enforces it, and also that no file-system API is used outside `util.storage` and the
+   composition root.
+6. The model stops passing primitives: **about 55 identifier and value newtypes** and 32 vocabulary enums (§4)
+   replace roughly 4 000 measured `String`/`Int`/`Long`/`Double` parameters and fields; their JSON, columns, HOCON
+   keys, CLI flags and MCP schemas stay byte-identical. `Licence` is one shared domain type (§3.10).
+7. Of the 645 type-less top-level objects, 229 move onto a type, 51 namespace objects dissolve into packages, 29
    move into plugin modules, 10 handler groups become controllers, 6 `main` objects become `@main def`s, and 320
    stay standalone for one of six stated reasons (§5).
-7. Every service has the shape of AGENTS.md rule 13, with a worked example on the work lists (§6). Repositories
-   take the connection they run in; services open transactions through a small `Transactor`; the clock and the
-   environment come from the composition root.
-8. The 29 first-party implementations in the server (fetchers, catalogues, collections, AI providers, gazetteer
-   importers) move into **six plugin modules** beside vaults, plus a shared `upstreams` library; ten additive SPI
-   members close the measured gaps (§8). The running of each acquisition stays in its subdomain.
-9. **12 slices** (§9): groundwork, `personal` as the template, two plugin slices, then one subdomain per slice from
-   the bottom up. Equivalence is shown by permanent snapshot files (OpenAPI, MCP `tools/list`, toolbox schemas, CLI
-   help, plugin report, settings view), codec round-trips, contract suites, and the bundle with `--self-check`.
-10. Section 11 has 27 open questions; the ones that change the shape most are Q18 (test vs
-    sbt modules for the direction rule), Q24 (where goals live) and Q5 (the CLI agent runtimes).
+8. Every service has the shape of AGENTS.md rule 13 (§6), with two worked examples: the engine's work lists, and
+   research's compile-article workflow registered into the engine.
+9. The 29 first-party implementations in the server, and Calibre from the CLI, move into seven plugin modules beside
+   vaults, plus a shared `upstreams` library; eleven additive SPI members close the measured gaps (§8). The same
+   "domain defines and runs, plugin implements" shape is measured for twelve more integrations (§8.5), and the
+   plugin system gets a CLI side for a server on another machine (§8.6).
+10. **12 slices** (§9): groundwork, `personal` as the template, the two plugin slices, the supporting areas, the
+    engine, then one domain per slice from the bottom up — each registering its workflows and data contributions
+    as it moves. Equivalence is shown by permanent snapshot files (OpenAPI, MCP `tools/list`, toolbox schemas, CLI
+    help, plugin report, settings view), codec round-trips, contract suites, and the bundle with `--self-check`.
+11. Section 11 has 42 open questions, 4 of them decided or superseded; the ones that change the shape most are Q24 (goals as the
+    engine's objectives), Q28 (one data area or two), Q29 (jobs and record identity as supporting areas) and Q5
+    (the CLI agent runtimes).
 
 ## 1. The review points and where each is answered
 
@@ -66,18 +71,22 @@ imported by plugins keep their name (SPI kind `event-catalogue`); inside the sub
 |---|---|---|
 | #7485 | package by feature; `domain`, `domain.<sub>`, `util.<area>`; package-private repos; db = primitives only; services own transactions; no globals; Handlers → Controllers; api split into shared vs API-specific; subdomains independent of endpoints | §3, §6, §7; slices 2, 5–12 |
 | #7490 | `private final class Implementation` + `final class InMemory` on the service companion; InMemory behaves like the DB; shared atomic refs; seeded through the service; no mockito | §6 (with a contract suite that proves "behaves like the DB") |
-| model | "ad-hoc model, helpers on primitives instead of newtypes" | §4 (catalogue, measured), §5 |
+| model | "ad-hoc model, helpers on primitives instead of newtypes" | §4 (catalogue of newtypes, measured), §5 |
 | #7903 | no free-standing helper objects; rule 14 | §5, `objects.md`, rule text in §5.4 |
 | #7908 | `@main def` instead of `object X { def main }` | §5.5 |
 | #7911 | first-party plugins out of the server, one module per plugin or family, `plugin-api` only, ServiceLoader, built in, switchable | §8; slices 3, 4 (and 12 for ai-cli, Q5) |
-| §3 review | subdomains above features, measured by co-change and imports; no `planning`; `personal` with an interface owned by it; dependency direction enforced | §3.1–§3.4, §3.6, `dependencies.md` |
-| §3 review | `library`, `research`, `catalogue`, `media` named; acquisition and OCR not domains; licence shared; automation writes through services; goals re-checked | §3.1, §3.5 (automation), §3.7 (licence), §3.8 (OCR), §8, Q24 |
+| §3 review 1 | subdomains above features, measured; no `planning`; `personal` with an interface it owns; direction enforced | §3.1–§3.4, §3.9, `dependencies.md` |
+| §3 review 2 | `library`, `research`, `catalogue`, `media` named; acquisition and OCR not domains; licence shared | §3.1, §3.10, §3.11, §8 |
+| §3 review 3 | automation a generic engine; domains contribute workflows and tools; managers, goals, the definitions generator; `platform` a bag; maintenance split in two; automation's size | §3.3, §3.5, Q24, Q31–Q33 |
+| §3 review 4 | data management (storage, backup, export, bundle, merge, cache, maintenance, checks, figures) contributed by each domain, run by a supporting area with one 360° view; `platform`, `operations`, `exchange` dissolve; merge rules split | §3.3, §3.6, Q27–Q30, Q35 |
+| §3 review 5 | no domain touches directories or files; named stores from a supporting area; config places them | §3.7, Q36–Q38 |
 
 Fixed decisions kept everywhere: one ServiceLoader service type (`com.histmersion.plugin.Plugin`); `plugin-api` holds
 interfaces and plain data only; our own plugins are built in and can be disabled; everything stays AGPL-3.0-or-later.
-User decisions recorded in this revision: no `planning` subdomain (goals, TASKS and LOG go to automation, ACQUIRE to
-the library; `queue_items` stays one table); `personal` is a subdomain of its own that knows nothing about its
-targets; acquisition is not a subdomain; OCR is a supporting area.
+User decisions recorded: no `planning` subdomain (goals, TASKS and LOG go to automation, ACQUIRE to the library;
+`queue_items` stays one table); `personal` is a domain of its own that knows nothing about its targets; acquisition
+is not a domain; OCR, data management and file access are supporting areas; automation is a generic engine fed by
+the domains.
 
 ## 2. Today, measured
 
@@ -108,266 +117,435 @@ A start already exists. `server/…/domain/{activity,jobs,personal,settings}` fo
 trait, an `Implementation`, an `InMemory`, and controllers. They still use `() => Instant`, `DataSource` and
 primitive limits. Slice 2 brings them in line, and they are the pattern the rest copies.
 
-## 3. Subdomains and features
+## 3. Domains, supporting areas and features
 
-### 3.1 The subdomains
+### 3.1 The layout
 
-A subdomain is a part of the application with its own vocabulary; a feature is one piece of functionality with its
-own data inside it. Neither follows endpoints, tools or commands: one endpoint may call several features (the About
-window reads `operations`, `platform`, `library` and `automation`). Each table has exactly one owning feature; only
-the owner's repository touches it, and everyone else goes through the owner's service.
+A **domain** is a part of the application with its own vocabulary and its own data; a **feature** is one piece of
+functionality inside it. A **supporting area** (`com.histmersion.util.<area>`) is a mechanism with no research
+meaning that domains use and feed — like `util.database` today. Neither follows endpoints, tools or commands. Each
+table has exactly one owner; only the owner's repository touches it.
 
-Layers, bottom first. A subdomain may depend on the ones below it only (§3.3).
+Two patterns carry most of the design. Where a mechanism needs knowledge of every kind of record (running agentic
+workflows; backing up, carrying, merging, checking data), **the domain contributes the knowledge and a lower place
+runs it**: the workflow engine (`domain.automation`) for workflows, the data-management area (`util.data`) for
+data. And no domain reaches the file system: it asks `util.storage` for a named store (§3.7).
 
-| layer | subdomain | what it is about (its words) | features — `domain.<subdomain>.<feature>` | tables owned | lines today (main) |
-|---|---|---|---|---|---:|
-| 0 | `platform` | the machinery every subdomain runs on, holding no research content: job, job kind, uid, alias, tombstone, work list, lint rule, plugin generation | `jobs` (runner, records, kinds registry), `identity` (instance origin, uid redirects, tombstones, the alias mechanism), `maintenance` (the lock writes wait on), `worklist` (the list kernel of §6), `lint` (the runner; rules come from each subdomain), `plugins` (generation, registries, legacy settings) | `jobs`, `instance`, `uid_aliases`, `tombstones`, `alias_tombstones`, `queue_items` (rows owned per list, below) | 3 800 |
-| 1 | `catalogue` (Q17) | data points on the map × timeline: place, name, period, event, dating, catalogue, gazetteer, and the evidence that attests them | `places` (gazetteer, names, overrides, relations, hierarchy, geocoder, site types, point areas, land, the gazetteer import loop), `periods` (presets, PeriodO), `events` (datings, edges, participants, the event-catalogue import loop, corrections), `evidence` (attestations, event link candidates and checks, leads), `maptiles` (tiles, undated sites, the `MapLayer` interface) | `places`, `place_*` (8), `gazetteer_sources`, `land`, `periods`, `seed_versions`, `events`, `event_*` (8), `corrections`, `attestations`, `site_undated_*`, `map_changes` | 14 200 (−900 to plugins) |
-| 2 | `media` | pictures and their rights: asset, link, stated licence, credit, collection, figure, cover | `assets` (store, IIIF, thumbnails), `links`, `imports` (the collection import loop and its licence policy), `figures`, `covers` | `assets`, `asset_links`, `media_links`, `media_checks` | 7 000 (−2 400 to plugins) |
-| 3 | `library` | what sources say and how they get in: source, citekey, body, finding, citation edge, label, candidate, acquire check | `sources` (record, body, chunks, aliases, rename, delete), `findings`, `citations` (edges, refs, follow-ups, assessments, retractions), `labels`, `search` (filter, search, aggregate, histogram, geo-when, read-only query), `acquisition` (discovery, candidates and watches, recheck, the fetch chain and its quota, the ACQUIRE list), `ingest` (what an ingest does to a source: the job, the record, originals, seed import), `calibre` | `sources`, `source_*` (3), `findings`, `finding_places`, `edges`, `unresolved_edges`, `assessments`, `retraction_watch`, `source_candidates`, `candidate_watches`, `acquire_checks`, `upstream_quota`; `queue_items` where `list = 'acquire'` | 13 200 (−2 300 to plugins) |
-| 4 | `research` | research results; an article is the one kind today: article, version, link, coverage, critique pairing, review state | `articles` (record, versions, links, coverage, critique pairing, review state, prose lint, pages) | `articles`, `article_*` (4) | 5 100 |
-| 5 | `automation` | the workflows and what they act towards: run, step, lease, model chain, allowance, pipeline, review panel, approval, manager, autopilot, schedule, goal, task, log entry | `agents` (runs, steps, leases, state, chains, allowances, plan pools, toolbox, definitions), `pipelines`, `review` (the panel and its ledger), `approvals`, `managers`, `autopilot`, `scheduler`, `goals` (Q24), `tasks`, `log`, `activity` | `agent_*` (8), `plan_*`, `approvals`, `agent_managers`, `manager_*`, `agent_autopilot`, `review_ledgers`, `goals`, `goal_*` (4); `queue_items` where `list` is `tasks` or `log` | 33 300 (−3 000 to plugins) |
-| 6 | `exchange` | research records carried between databases: bundle, merge session, decision, ledger, plan, issue | `bundle`, `merge` | `merges`, `merge_decisions`, `merge_ledger`, `merge_sessions` | 9 600 |
-| 6 | `operations` | running the install: backup, vacuum, storage, settings, about, base map | `backup`, `maintenance` (vacuum, reindex, storage report, PostgreSQL relocation), `settings`, `instance` (about, health, version, self-check, UI config and counters), `basemap` | `ui_seen` | 9 400 |
-| beside | `personal` | one person's marks on anything: bookmark, note, read mark, saved view | `bookmarks`, `notes`, `reading`, `marks` (the interface others implement, §3.5) | `bookmarks`, `notes`, `read_marks` | 1 700 |
+| layer | place | what it is about (its words) | features | tables owned | lines today by file | moves to plugins | moves in from mechanisms (estimate) |
+|---|---|---|---|---|---:|---:|---:|
+| domain 1 | `automation` | the workflow engine: workflow definition, run, step, lease, checkpoint, schedule, manager, hint, approval, autopilot, objective (goal), task, log entry, agent runtime, toolbox, model chain, allowance, plan quota | `workflows` (the registry), `agents` (runs, steps, leases, runtimes, toolbox mechanism, definitions generator, chains, allowances, prices, plan pools), `managers`, `approvals`, `autopilot`, `scheduler`, `goals` (Q24), `worklists` (the list kernel; TASKS and LOG), `activity` | `agent_*` (8), `plan_*`, `approvals`, `agent_managers`, `manager_*`, `agent_autopilot`, `goals`, `goal_*` (4); `queue_items` where `list` is `tasks` or `log` | 25 400 | −3 000 (ai) | −5 400 out (upper bound: article- and source-specific blocks of 32 mixed files go to research and library) |
+| domain 2 | `catalogue` | data points on the map × timeline: place, name, period, event, dating, evidence, catalogue, gazetteer | `places` (gazetteer, names, overrides, relations, hierarchy, geocoder, site types, point areas, land, the gazetteer import loop), `periods`, `events` (datings, edges, participants, the event-catalogue import loop, corrections), `evidence` (attestations, event link candidates and checks, leads), `maptiles` (tiles, undated sites, `MapLayer`) | `places`, `place_*` (8), `gazetteer_sources`, `land`, `periods`, `seed_versions`, `events`, `event_*` (8), `corrections`, `attestations`, `site_undated_*`, `map_changes` | 14 200 | −1 000 | +900 (bundle, merge, lint, export rules) |
+| domain 3 | `media` | pictures and their rights: asset, link, stated licence, credit, collection, figure, cover | `assets` (store, IIIF, thumbnails), `links`, `imports` (the collection loop and its licence policy), `figures`, `covers` | `assets`, `asset_links`, `media_links`, `media_checks` | 7 000 | −2 400 | +200 |
+| domain 4 | `library` | what sources say and how they get in: source, citekey, body, finding, citation edge, label, candidate, acquire check | `sources`, `findings`, `citations`, `labels`, `search` (and the read-only query), `acquisition` (discovery, candidates, recheck, fetch chain, upstream quota, the ACQUIRE list), `ingest`, `calibre`, `workflows` (enrich-source, currency check, acquisition sweep, OA backlog, verify, seed, auto-enrich; the watch manager kind; its agent tools) | `sources`, `source_*` (3), `findings`, `finding_places`, `edges`, `unresolved_edges`, `assessments`, `retraction_watch`, `source_candidates`, `candidate_watches`, `acquire_checks`, `upstream_quota`; `queue_items` where `list = 'acquire'` | 16 900 (2 650 of it workflows) | −2 300 | +2 800 rules + up to 3 400 from the engine's mixed files |
+| domain 5 | `research` | research results; an article is the one kind today: article, version, link, coverage, critique pairing, review panel, ledger | `articles` (versions, links, coverage, critique pairing, review state, prose lint, pages), `workflows` (review-article with its panel and ledger, compile-article, propose-articles, infer-filter; the review manager kind; its agent tools) | `articles`, `article_*` (4), `review_ledgers` | 10 200 (5 100 of it workflows) | — | +1 000 rules + up to 2 000 from the engine's mixed files |
+| beside | `personal` | one person's marks on anything: bookmark, note, read mark, saved view | `bookmarks`, `notes`, `reading`, `marks` | `bookmarks`, `notes`, `read_marks` | 1 700 | — | — |
+| supporting | `util.data` | data management: data contribution, backup, restore, bundle, merge session, ledger, maintenance run, check, cache, export, diagnostics, the maintenance lock | `registry`, `backup`, `exchange` (bundle and merge mechanism), `maintenance` (vacuum, reindex, prune, relocation, the lock), `checks` (the lint and health runner), `export` (the Markdown mirror), `diagnostics` (the 360° view's data) | `merges`, `merge_decisions`, `merge_ledger`, `merge_sessions` | 11 800 | — | −5 500 out (per-kind rules to the domains) |
+| supporting | `util.storage` | named stores: location, store, blob, scratch file, size | `locations`, `stores`, `scratch`, `sizes` | — (the data directory) | 150 today (`SafePath`, `DirSize`) + every domain's file code | — | +file code from domains (188 uses) |
+| supporting | `util.jobs` | background job, job kind, job detail | runner, records, `JobKinds` registry | `jobs` | 840 | — | −260 (kind-specific details to the domains) |
+| supporting | `util.identity` | record identity: origin, uid, uid redirect, tombstone, alias | uids, redirects, tombstones, `AliasTables` registry | `instance`, `uid_aliases`, `tombstones`, `alias_tombstones` | 120 + SQL triggers | — | — |
+| supporting | `util.plugins` | the plugin generation and registries | generation, legacy settings, plugin set | — | 1 100 | (built-in lists leave) | — |
+| supporting | `util.settings` | the settings file: read, edit, reload, restart | | — (the settings file) | 2 000 | — | — |
+| supporting | `util.basemap` | the base map: download, PMTiles, terrain, labels | | — (files) | 5 200 | — | — |
+| supporting | `util.ocr`, `util.database`, `util.json`, `util.http`, `util.markdown`, `util.text`, `util.images`, `util.tiles`, `util.process` | §3.11 | | | 3 000 | | |
+| composition | `server` | the composition root, `server.views` (pages joining several domains), `server.instance` (about, health, version, self-check, UI config and counters) | | `ui_seen` (Q30) | 5 500 + 2 400 of handlers that dissolve | | |
 
-Outside the subdomains: the shared kernel `com.histmersion.domain` (types every subdomain uses: `Period`, `Licence`,
-`Attribution`, `Caller`, …), `values`, the supporting areas of §3.7 (`util.ocr` among them), and the server's
-composition root and `server.views`. Together 12 700 lines today (plus 460 for `util.ocr`), 4 400 of them the
-composition root and 2 400 the handlers that the slices dissolve. Per-file assignments: [`files.md`](research-domain-model/files.md).
+Per-file assignments: [`files.md`](research-domain-model/files.md). The engine's size is answered by the first
+pattern: by file it is 25.4 k lines, but up to 5.4 k of those are rules about articles and sources inside 32 mixed
+files, and 3 k are AI providers that become plugins — what remains is about 17–19 k lines of engine with no
+research vocabulary (Q25).
 
-`automation` is the largest (33 k lines, 14 k of them `agents`) because the agent machinery is; its features share
-one vocabulary and change together (agents↔managers 0.30, autopilot↔scheduler 0.27, goals↔managers 0.22), so it
-stays one subdomain whose slice deploys in two steps (Q25).
+**`research` and a second kind of result.** Today every result is an article, so `research.articles` is the only
+result feature and there is no generic "result" type. A second kind is a sibling package (`research.<kind>`), not a
+reshaping: what other code needs from research goes through `ArticleService` and the interfaces research implements
+(`Referable`, `SourceReferrer`, its data and workflow contributions). If a second kind came, these would move up
+into `research` itself, because they are not article-specific in meaning: the version history, the coverage filter
+(which library sources a result covers, with reasons), the review state and the review panel's ledger, `[[citekey]]`
+link resolution, and page rendering.
 
-**`research` and a second kind of result.** Today every result is an article, so `research` holds one feature,
-`articles`, and no generic "result" type. The boundary is drawn so that a second kind is a sibling package
-(`research.<kind>`), not a reshaping: what the rest of the code needs from research goes through `ArticleService`
-and through the interfaces research implements (`Markable` for personal, `SourceReferrer` for the library), and
-automation inserts results through the service like a person would. If a second kind came, these would move up
-into `research` itself, because they are not article-specific in meaning: the version history, the coverage
-filter (which library sources a result covers, with its reasons), the review state written by automation's review
-panel, `[[citekey]]` link resolution, and page rendering.
+### 3.2 What the measurements decided
 
-### 3.2 What the measurements changed
+Method (details and every table in [`dependencies.md`](research-domain-model/dependencies.md)): a **reference** is a
+`src/main` file naming a type that belongs elsewhere, counted once per (file, type); **co-change** is Jaccard over
+402 commits; the **per-kind share** of a generic mechanism counts its top-level blocks by the domain words they use.
+At the level of domains co-change is weak everywhere (Jaccard ≤ 0.23), so references decide the layering and
+feature-level co-change the borderline placements.
 
-Method (details and full tables in [`dependencies.md`](research-domain-model/dependencies.md)): a **reference** is a
-`src/main` file naming a type that belongs to another subdomain, counted once per (file, type); **co-change** is
-Jaccard over 408 commits (merges, the reformat 4c1da9d1, the step-2 split ba0a373d and commits over 60 files left
-out; old paths classified by the same name rules). At the level of subdomains co-change is weak everywhere (Jaccard
-≤ 0.23): features change together inside subdomains more than across them. So the references decide the layering,
-and feature-level co-change decides the borderline placements.
-
-References between subdomains, final grouping (row depends on column):
-
-| from \ to | catalogue | automation | exchange | library | media | operations | personal | platform | research |
-|---|---|---|---|---|---|---|---|---|---|
-| **catalogue** | · | 0 | 0 | 11 | 6 | 0 | 0 | 12 | 0 |
-| **automation** | 7 | · | 0 | 80 | 0 | 1 | 0 | 43 | 56 |
-| **exchange** | 19 | 8 | · | 18 | 5 | 2 | 0 | 16 | 6 |
-| **library** | 27 | 10 | 2 | · | 15 | 1 | 0 | 25 | 10 |
-| **media** | 11 | 0 | 0 | 3 | · | 0 | 0 | 4 | 1 |
-| **operations** | 5 | 4 | 2 | 5 | 0 | · | 0 | 17 | 0 |
-| **personal** | 1 | 2 | 0 | 0 | 0 | 0 | · | 1 | 0 |
-| **platform** | 12 | 4 | 3 | 21 | 1 | 8 | 1 | · | 6 |
-| **research** | 7 | 13 | 0 | 20 | 1 | 0 | 0 | 13 | · |
-
-546 references, **121 upward**. The starting proposal measured the same way had 622 references, 135 upward, and
-**71** references from a core subdomain into automation or operations — the user's forbidden direction — against
-**26** in the final grouping. Each change below is backed by numbers:
-
-| proposal | decision | evidence |
+| question | decision | evidence |
 |---|---|---|
-| `operations` holds backup, bundle, merge, maintenance, settings, plugins host, instance | **merge and bundle become `exchange`** (top); operations keeps backup, maintenance, settings, instance, basemap | merge↔bundle co-change 0.50 (16 commits); merge's next partners are sources 0.23, articles 0.21, goals 0.19, events 0.15 — research data, not operations. Proposed operations referenced research subdomains 146 times, 138 from bundle and merge; what remains references them 16 times |
-| jobs in `automation` | **jobs, the identity tables, the maintenance lock, the work-list kernel, the lint runner and the plugin host form `platform`** (bottom) | jobs are used by agents 8, ingest 6, events 6, maintenance 5, basemap 5, merge 4; in automation they made catalogue, media and library depend on automation (55 references into automation in the proposal, most of them jobs and the queues) |
-| `acquisition` as a subdomain with ingest and Calibre | **dissolved** (user): sources' acquisition, ingest and Calibre into `library`; gazetteer and catalogue import loops into `catalogue`; the collection import loop into `media`; implementations into plugins (§8) | acquisition → library-side features 46 references, back 2; ingest co-changes with sources 0.17 and acquisition 0.14 |
-| attestations in corpus; event links and leads in events | **`evidence` (attestations, link candidates and checks, leads) in `catalogue`** | events use evidence 34 times; evidence uses findings and citations twice. Moving it cut catalogue → library from 46 to 11 and the upward total from 160 to 125 |
-| article review in writing | **the review panel and its ledger in `automation.review`; the article keeps its review state** | review↔pipelines co-change 0.44 (15 commits); the ledger names `ReviewGoal`, `ReviewApproval`, `AgentVerify`, `CompareRuns` |
-| corrections as a feature | **folded into `catalogue.events`** | used only by events (16 references) and bundle |
-| map tiles in geography | **kept in `catalogue.maptiles`**, with media and library drawing their layers through `MapLayer` | catalogue → media 6 references, all tiles and detail pages |
-| media beside corpus/writing | **media below library** | library → media 15 (ingest stores figures and originals as assets, source covers), media → library 3 |
-| search, query, corpus lint as corpus's read side | **search and query in `library.search`; lint's runner in `platform`, rules per subdomain** | search co-changes with articles 0.29, sources 0.20; lint's rules span places (11 commits), sources, media, events |
-| basemap as a generic area | **`operations.basemap`** (a feature with endpoints, jobs and settings, no research data) | co-changes with instance 0.18 (15), nothing else above 0.06 |
-| OCR inside ingest | **`util.ocr`** (user): converter client and state, spool, JATS conversion, the mechanical chunker | converter co-changes with nothing above 0.07; the library's ingest is its only user |
+| merge and bundle: operations or a domain? | a mechanism in `util.data.exchange` with **per-kind rules contributed by the owners** | merge↔bundle co-change 0.50; merge's next partners are sources 0.23, articles 0.21, goals 0.19, events 0.15. Of their 7.8 k lines, ≈ 4.8 k are rules about one kind of record (library 2.8 k with `SourceMatcher` and `MergeText`, research 0.9 k, catalogue 0.85 k, media 0.2 k, automation 0.14 k); `MergePlanner` gives 1.75 k of 2.4 k. `util.data` changes with library in 30 commits, catalogue 30, research 21 — new kinds touch the generic code today |
+| jobs: automation, platform or support? | **`util.jobs`** | used by library 16, catalogue 6, media 4, data management 10, basemap 5; the agent engine writes runs into `jobs` (36 SQL statements); 0.26 k of 0.65 k are per-kind job details, which become `JobKinds` contributions |
+| record identity (uids, redirects, tombstones, aliases) | **`util.identity`** | read by every domain that resolves an id and written by the merge; its only domain knowledge is the alias mechanism's switch over five owners' tables (6 references), which becomes `AliasTables` |
+| the maintenance lock (platform) vs vacuum and restore (operations) | **one owner: `util.data.maintenance`**; controllers receive its `WriteGate` | the lock exists for restore, vacuum and merge apply; every write guard only asks it |
+| lint runner | **`util.data.checks`**, rules contributed per domain | lint's 1.1 k lines: 0.37 k generic, rules for library 0.46 k, research 0.1 k, catalogue 0.04 k; lint co-changes with places 0.12 (11 commits), sources, media, events |
+| plugin host, settings, basemap | **`util.plugins`, `util.settings`, `util.basemap`** | no research data; basemap co-changes only with the instance pages (0.18) |
+| about, health, version, self-check, UI config | **`server.instance`** (composition), reading `util.data.diagnostics` | they show every domain's figures; that is a view |
+| goals | **the engine's objectives** (`automation.goals`), with the stage rules that name articles and sources contributed (Q24) | 186 upward references with goals in the engine against 226 with goals in research; goals↔managers co-change 0.22, agents 0.18, autopilot 0.18 |
+| the review panel and its ledger | **research's workflow** (`research.workflows`) | review↔pipelines co-change 0.44 (15 commits); the ledger is about articles (ReviewArticle names research types 12 times) |
+| evidence (attestations, event links, leads) | **`catalogue.evidence`** | events use it 34 times; it uses library types twice |
+| map tiles | **`catalogue.maptiles`** with `MapLayer` | catalogue → media 6 references, all tiles and detail pages |
+| media and library | **media below library** | library → media 15 (ingest stores figures and originals as assets, covers), media → library 3 |
+
+The final reference matrix (row depends on column), with the supporting areas at the bottom and the domains in the
+order automation, catalogue, media, library, research:
+
+| from \ to | automation | catalogue | library | media | personal | research | util.basemap | util.data | util.identity | util.jobs | util.plugins | util.settings |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **automation** | · | 3 | 74 | 0 | 1 | 43 | 0 | 1 | 2 | 6 | 0 | 0 |
+| **catalogue** | 0 | · | 11 | 6 | 0 | 0 | 0 | 2 | 4 | 6 | 0 | 0 |
+| **library** | 84 | 32 | · | 15 | 0 | 10 | 0 | 8 | 2 | 16 | 2 | 0 |
+| **media** | 0 | 11 | 3 | · | 0 | 1 | 0 | 0 | 0 | 4 | 0 | 0 |
+| **personal** | 0 | 1 | 0 | 0 | · | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
+| **research** | 60 | 7 | 34 | 1 | 0 | · | 0 | 14 | 0 | 0 | 0 | 0 |
+| **util.basemap** | 0 | 0 | 2 | 0 | 0 | 0 | · | 3 | 0 | 5 | 0 | 0 |
+| **util.data** | 11 | 25 | 27 | 5 | 0 | 13 | 2 | · | 7 | 10 | 0 | 1 |
+| **util.identity** | 2 | 2 | 1 | 0 | 0 | 1 | 0 | 0 | · | 0 | 0 | 0 |
+| **util.jobs** | 0 | 4 | 4 | 0 | 0 | 0 | 2 | 6 | 0 | · | 0 | 0 |
+| **util.plugins** | 1 | 1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | · | 1 |
+| **util.settings** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 1 | · |
+
+Library → automation (84) and research → automation (60) are now downward: they are the workflows those domains
+contribute to the engine. Before/after, by layout (`dependencies.md` has each matrix):
+
+| layout | references | upward | what the upward ones are |
+|---|---:|---:|---|
+| starting proposal (corpus, geography, writing, media, acquisition, automation, operations) | 622 | 135 | 71 of them a core subdomain into automation or operations |
+| second draft (automation and exchange/operations on top, platform at the bottom) | 546 | 121 | interfaces still to introduce; automation reading domain data through 36 repository calls and 55 SQL statements |
+| **final** (engine and supporting areas at the bottom) | 616 | 264 | **229 are the contributions themselves** — the engine's 120 references into library, research and catalogue, data management's 81, plugin glue 12, job kinds 8, aliases 6, a name collision 2 — **31** between domains, **4** personal; §3.4 |
+
+The final layout has more upward references than the second draft because putting the engine and data management
+at the bottom exposes every rule about articles, sources and events they hold today; each such reference is a line
+that moves into the domain it is about. After the slices, the upward count is 0.
 
 ### 3.3 Direction, and how it is enforced
 
-| subdomain | may depend on |
+| place | may depend on |
 |---|---|
-| `platform` | the shared kernel, `values`, `util.*` only |
-| `catalogue` | platform |
-| `media` | platform, catalogue |
-| `library` | platform, catalogue, media |
-| `research` | platform, catalogue, media, library |
-| `automation` | platform, catalogue, media, library, research |
-| `exchange` | everything below it, automation included (it carries goals and work-list items) |
-| `operations` | everything below it; not exchange |
-| `personal` | platform only |
-| any subdomain | additionally the interface packages lower subdomains own for it to implement (`personal.marks`, `library.sources.referrers`, `catalogue.maptiles.layers`, `catalogue.evidence.passages`, `platform.jobs.kinds`, `platform.lint.rules`, `platform.identity.aliases`) |
-| `server` (composition root, `server.views`) | everything |
+| any `util.<area>` | other supporting areas, the shared kernel (`com.histmersion.domain` root types), `values` — never a domain |
+| `automation` | supporting areas |
+| `catalogue` | supporting areas, automation |
+| `media` | supporting areas, automation, catalogue |
+| `library` | supporting areas, automation, catalogue, media |
+| `research` | supporting areas, automation, catalogue, media, library |
+| `personal` | supporting areas only |
+| any domain | the interface packages higher domains own for it to implement (`personal.marks`, `library.sources.referrers`, `catalogue.maptiles.layers`, `catalogue.evidence.passages`) |
+| `server` (composition root, `server.views`, `server.instance`) | everything |
 
-Core subdomains (catalogue, media, library, research) never depend on automation, exchange or operations; personal
-depends only on platform and is implemented, never imported.
+**`ArchitectureSuite`** (server tests, no database, seconds) reads every Scala source under `com/histmersion/` in
+`core`, `server`, `db`, `files` and `config`, takes its place from its package, and fails, naming file and line, on:
 
-**Enforcement: `ArchitectureSuite`** (server tests, no database, seconds). It reads every Scala source under
-`com/histmersion/domain/` in `core` and `server`, takes the subdomain from the package, collects every
-`com.histmersion.domain.<x>` and `com.histmersion.api.<x>` it imports or names fully qualified, and fails on a pair the
-table does not allow, naming file and line. The table is a DAG, so a cycle is a failure too. From slice 1 it runs
-with an explicit list of known violations (the 121 of §3.4, by file); each slice removes its rows and may not add
-any. The compiler-enforced alternative — one sbt project per subdomain, as the plugin modules are kept apart with
-`% Runtime` — is Q18.
+1. an import or fully qualified name of `com.histmersion.domain.<x>` or `com.histmersion.api.<x>` the table does
+   not allow (a cycle is impossible: the table is a DAG);
+2. a file-system API — `java.nio.file`, `java.io.File`, `FileChannel`, `RandomAccessFile`, `File*Stream`,
+   `MappedByteBuffer` — outside `util.storage`, the composition root and the stand-alone tools (`pluginTool`,
+   `generateApiIndex`, `generatePlugin`); and `ProcessBuilder` outside `util.process`;
+3. a repository object referenced from outside its feature's package (the rule-13 check, for free).
+
+From slice 1 it runs with the list of known violations by file (the 264 references, the 188 file-system uses in
+domains, §3.7); each slice removes its rows and may add none. One sbt project per domain would make the compiler
+check rule 1 (Q18).
 
 ### 3.4 The upward references and what removes them
 
 | group | refs | what removes it | slice |
 |---|---:|---|---|
-| plugin glue in platform naming built-ins (`Plugins`, `LegacyPlugins`, `Builtin*`) | 12 | the built-ins become plugins | 3–4 |
-| the job kinds enumerated in platform (`JobKind`, `JobDetail`, `JobActions`, `JobRepo`) | 16 | **`JobKinds`**: `JobKind` becomes a newtype; each subdomain registers its kinds and renders its own job detail | 5 |
-| lint rules inside the platform runner (`LintRepo`, `Lint`) | 15 | **`LintRules`**: each subdomain contributes its rules; the runner, its fixes and its report stay in platform | 5 |
-| the alias and uid mechanism switching over owners' tables (`AliasRepo`, `AliasKind`, `ResolvedId`) | 5 | **`AliasTables`**: each owner registers its alias table | 5 |
-| the work-list kernel touching owners (goal scope, DOI matching, notes) | 4 | goal scope to automation, DOI matching to `library.acquisition` (§6.2) | 5 |
-| catalogue pages and tiles needing media and library (`EventDetail`, `PlaceDetail`, tile features, places tree counts, the passage search over source bodies when an event is linked) | 17 | **`MapLayer`** (catalogue owns; library and media implement), **`PassageSource`** (catalogue's evidence owns; library implements), and detail pages in `server.views` | 6–7 |
-| media needing library (source covers, figures from a source's PDF) | 3 | covers and figures are `library.ingest` steps that store into media | 7–8 |
-| source rename and delete touching articles, goals, work lists, media (`SourceRepo`, `Rename`, `SourceDelete*`) | 9 | **`SourceReferrer`** (library owns): `references(uid)`, `renamed(from, to)`, `deleted(uid)` inside the library's transaction; research, media, automation implement it | 8 |
-| goal-aware acquisition code (candidate search by goal, ingest backlog, scheduling) | 10 | that code serves the agents and moves to automation | 8, 10 |
-| research's review state naming automation types | 13 | research owns `ReviewState`; automation's review panel writes it through `ArticleService` | 9 |
-| personal joining five tables by name | 3 (+5 SQL joins) | **`Markable`** (§3.5) | 2 |
-| top-level cross-talk (merge settings view, backup state) | 5 | config records; `BackupState` read through operations' service by a view | 11–12 |
-| name collisions in the scan (`CitationCount`, `Coverage`, …) | 9 | nothing to do | — |
+| the engine naming library, research and catalogue types (`AgentsHandlers` 15, `ManagerSupervisor` 12, `Toolbox` 8, `ManagersHandlers` 7, `AgentsConfig` 6, `Scheduling`, `AgentsMarkdown`, `AnswerSchemas`, `CompareRuns`, `ManagerPolicy`, …) | 120 | the workflow, tool, manager-kind and objective-progress contributions (§3.5) | 7, then each domain |
+| `util.data` naming domain types (bundle and merge per-kind code, lint rules, storage figures) | 81 | `DataContribution` (§3.6) | 6, then each domain |
+| `util.plugins` naming built-ins (`Plugins`, `LegacyPlugins`) | 12 | the plugin slices | 3–4 |
+| `util.jobs` rendering domain job details (`JobKind`, `JobDetail`, `JobActions`) | 8 | `JobKinds`: a job kind is a newtype; each owner registers its kinds and renders its detail | 5 |
+| `util.identity` switching over owners' alias tables (`AliasRepo`, `AliasKind`, `ResolvedId`) | 6 | `AliasTables`: each owner registers its alias table | 5 |
+| catalogue pages and tiles needing media and library (`EventDetail`, `PlaceDetail`, tile features, places tree counts, the passage search over source bodies when events are linked) | 17 | `MapLayer` (catalogue owns; library and media implement), `PassageSource` (catalogue's evidence owns; library implements); detail pages in `server.views` | 8 |
+| media needing library (source covers, figures from a source's PDF) | 3 | covers and figures are `library.ingest` steps that store into media | 9–10 |
+| library naming research (rename and delete touching article links, `ArticleRepo`) | 10 | `SourceReferrer` (library owns; research, media and automation implement) | 10 |
+| media naming research, `util.basemap` naming library, automation naming personal (name collisions) | 4 | nothing | — |
+| personal joining five tables by name (`ItemKind`, `ItemTitles`) | 3 | `Referable` (§3.9) | 2 |
 
-A page that joins several subdomains for one response (a source's, a place's or an event's detail, About,
-Activity) is a **view**: a controller in `server.views`, above every subdomain, that calls their services.
-Subdomains do not assemble other subdomains' data for display.
+A page that joins several domains for one response (a source's, a place's or an event's detail page, About,
+Activity, the 360° data view) is a **view**: a controller in `server.views`, above every domain, that calls their
+services. No domain assembles another domain's data for display.
 
-### 3.5 Automation uses other subdomains like a person
+### 3.5 Automation: a generic engine the domains feed
 
-Automation owns the data and processes that define workflows: runs, steps, leases and checkpoints, schedules,
-managers, approvals, the autopilot, the TASKS and LOG lists, model chains and allowances. It **reads** the library,
-the catalogue, media and research, and **inserts results** into research and the library, only through their public
-services — the same methods a person's request reaches — with `Caller.Automation(run)`.
+The engine defines and controls workflows, agents and schedules. It owns runs, steps, checkpoints and leases, the
+scheduler, managers and their hints, approvals, the autopilot, the agent runtimes, the toolbox mechanism, model
+chains, allowances, prices and plan quotas, the TASKS and LOG lists, activity, and goals as objectives. It knows no
+article, source, place or picture. Domains register what is theirs, as plugins register into the plugin host:
 
-Measured today (scan of automation's files for calls into other subdomains' repositories, and of automation's
-repositories for SQL over other subdomains' tables):
+```scala
+package com.histmersion.domain.automation.workflows        // the engine's contribution interfaces
 
-| back door today | count | where | becomes |
-|---|---:|---|---|
-| `QueueRepo` (`get` 7, `acquireNaming` 3, `list` 2, `add` 1) | 13 | `AcquireRecheckService`, `OaBacklog`, `SeedService`, `ManagerSupervisor`, … | `QueueService` (platform) for TASKS and LOG; `AcquireListService` (library) for ACQUIRE |
-| `AcquireCheckRepo` (`countSince` 3, `record` 2, `heldByDoi`, `of`) | 7 | `AcquireRecheckService` | the recheck is the library's process (`library.acquisition`); `AcquireRecheckService` moves there and automation schedules it through its service |
-| `ArticleRepo.load` | 7 | the review, compile, propose and infer-filter pipelines, `ManagerSupervisor` | `ArticleService.get` |
-| `PeriodSql` fragments | 5 | `GoalRepo` | a period filter value; the SQL stays the catalogue's |
-| `JobRepo`, `AliasRepo.renamedTo`, `CandidateRepo.watches` | 4 | `AgentsHandlers`, `GoalSweep`, `ListQueries` | `JobService`, `IdentityService`, `CandidateService` |
-| SQL in `ManagerRepo`, `AgentRepo`, `GoalLinkRepo` reading `articles` (10), `article_versions` (1), `sources` (3), `queue_items` (5) | 19 | managers' "which articles need review / which sources lack X" queries | batch query methods on `ArticleService`, `SourceService`, `QueueService` (one call per page of ids; measured at live volumes in the slice, per the performance rule) |
-| SQL in `AgentRepo` writing `jobs` (9) and reading it (27) | 36 | a run is also a job | `JobService` |
-| writes through `Handlers` (`patchArticle` 5, `patchSource` 3, `putArticle`, `putGoal`, `patchGoal`) and the toolbox's tools | 11 + the toolbox | pipelines | already "as a person could"; they become `ArticleService`/`SourceService` calls with `Caller.Automation(run)` |
+/** A kind of workflow a domain defines: its roles, its steps, what it answers, how it ends. */
+trait WorkflowDefinition:
+  def id: WorkflowId                                         // "compile-article", "enrich-source", …
+  def roles: List[AgentRole]                                 // models, prompts and budgets come from the engine
+  def tools: List[ToolContribution]                          // what its agents may call
+  def start(request: WorkflowRequest, run: RunContext): Either[WorkflowError, WorkflowPlan]
+  def step(state: StepState, answer: StepAnswer, run: RunContext): StepOutcome   // next step, checkpoint, done, halt
+  def settled(result: RunResult, run: RunContext): Either[WorkflowError, Settled] // writes through its own services
 
-### 3.6 `personal` and the `Markable` interface
+/** An agent tool a domain offers: a schema and a call into its own services, run with the step's grant. */
+trait ToolContribution:
+  def name: ToolName                                         // "get_source", "check_edits", …
+  def description: String
+  def inputSchema: JsonSchema
+  def call(input: Json, caller: Caller.Automation): Either[ToolError, ToolResult]
+
+/** A kind of manager (review, watch, …): which items it keeps, how it picks the next one, what settles an item. */
+trait ManagerKind:
+  def kind: ManagerKindId
+  def items(manager: ManagerInfo, now: Instant): List[ManagerItemCandidate]
+  def dispatch(item: ManagerItem): WorkflowRequest
+  def settle(item: ManagerItem, result: RunResult): ItemStatus
+
+/** How a domain measures progress towards an objective (goal) in its own terms. */
+trait ObjectiveProgress:
+  def facts(goal: GoalRef): ObjectiveFacts                   // e.g. articles compiled and reviewed, sources enriched
+```
+
+The composition root builds one `Workflows` registry from every domain's contributions and hands it to the engine;
+the agent definitions generator (Claude Code, Codex and opencode trees, `just plugin`) renders the canonical skills
+and agents plus the contributed roles and tools — the generator is the engine's, its input is contributed.
+
+| contributed by | workflows | tools | manager kinds | lines today |
+|---|---|---|---|---:|
+| `research` | review-article (with its panel and ledger), compile-article, propose-articles, infer-filter (article coverage) | `get_article`, `check_edits`, `article_coverage` | review | 5 100 by file + its share of the mixed files |
+| `library` | enrich-source, currency check, acquisition sweep, the OA backlog and the acquire recheck, verify (quotes against bodies), seed, auto-enrich | `get_source`, `passages`, `search`, `facets`, `neighbors`, `query`, `followups` | watch | 2 650 by file + its share of the mixed files |
+| `catalogue` | none today: event linking and place review run deterministically. A future agentic workflow registers the same way | — | — | — |
+| `media` | none today | — | — | — |
+
+**The engine's back doors into domain data**, measured (`dependencies.md`):
+
+| | second draft | after the workflows move to their domains | after the design |
+|---|---:|---:|---:|
+| calls into other domains' repositories | 36 in 15 files | 10 in 3 files (`PeriodSql` 5 in `GoalRepo`; `ReviewLedgerRepo` 2 and `ArticleRepo` 3 in `ManagerSupervisor` and `ManagersHandlers`) | 0 — the period filter uses `util.database`'s range SQL; the review manager is research's `ManagerKind` |
+| SQL in engine repositories over domain tables | 55 (`articles` 10, `article_versions` 1, `sources` 3, `queue_items` 5, `jobs` 36) | 14 (`articles` 10, `article_versions` 1, `sources` 3 in `ManagerRepo`, `GoalLinkRepo`, `AgentRepo`) | 0 — goal links show their items through `Referable`; managers' article queries go with the review kind; runs are recorded through `util.jobs` |
+| writes into domains | 11 calls of `Handlers` + the toolbox | — | the same operations on the owners' services with `Caller.Automation(run)`, from inside the contributed workflows and tools |
+
+**Managers and hints.** The supervisor loop, items, holds, retries, cron, approvals settlement and hints are the
+engine's (`ManagerSupervisor` is 76 % domain-specific by the block scan, mostly `evaluateReview`, `afterDone`,
+`chainReview`, `staleArticles`); the kinds are contributed.
+
+### 3.6 Data management: each domain says how, `util.data` runs it from one place
+
+Every domain contributes one definition of the data it owns; `util.data` holds the registry, runs every operation
+across all contributors (one backup, one bundle export or import, one merge session, one maintenance run, one
+transaction where the operation needs it), owns the maintenance lock, and collects diagnostics.
+
+```scala
+package com.histmersion.util.data
+
+/** What a domain says about the data it owns. Every member has a default that says "nothing of that kind". */
+trait DataContribution:
+  def owner: DataOwner                                        // "library", "catalogue", …
+  def tables: List[OwnedTable]                                // for storage figures, vacuum, reindex, restore checks
+  def stores: List[Location] = Nil                            // its file stores (§3.7): backed up, sized, pruned
+  def carried: List[CarriedKind] = Nil                        // bundle: export rows, import rows, tombstones, in one transaction
+  def mergeRules: List[MergeRules] = Nil                      // per kind of record: match, fold, conflicts, ledger entries
+  def mirror: List[MirrorExport] = Nil                        // the Markdown mirror's notes for its records
+  def caches: List[CacheSpec] = Nil                           // what to invalidate when, and how big it is
+  def maintenance: List[MaintenanceTask] = Nil                // prune, rebuild (tiles, undated cells), reindex
+  def checks: List[CheckRule] = Nil                           // its lint rules and health checks, with safe fixes
+  def figures(using DbCon): DataFigures                       // counts and sizes for the 360° view
+```
+
+| operation | today | the mechanism (`util.data`) | contributed by each domain |
+|---|---|---|---|
+| backup and restore | `BackupService` (pg_dump, 476 lines, 359 generic) | the dump, the lock, the backups list and housekeeping | its file stores to include (originals, assets, basemap is not research data) |
+| bundle (`.hmx`) | `BundleRepo` 1 016, `BundleImport` 1 152, `BundleExport`, `files/Bundle*` | the tar, the canonical JSON, the manifest, one transaction, the importing flag | `CarriedKind`s: its rows out and in, its tombstones |
+| merge between databases | `MergePlanner` 2 426, `MergeFold`, `MergeState`, `MergeRepo`, `SourceMatcher`, `MergeText` | sessions, decisions, the ledger, the plan, 3-way text (`Diff3`), apply as a job | `MergeRules` per kind: sources and findings (≈ 1.05 k of the planner + `SourceMatcher`, `MergeText`), articles (≈ 0.3 k), events and places (≈ 0.3 k), goals (≈ 0.07 k), assets |
+| maintenance | `VacuumJobs`, `VacuumRepo`, `StorageProbe`, `StorageCache`, `PgRelocation` (606 lines, 422 generic) | vacuum, reindex, relocation, the lock (`WriteGate`) | its tables and caches (tile cache, undated cells, thumbnails, storage cache) |
+| checks | `LintRepo`, `api/Lint` (1.1 k, 0.37 k generic) | the runner, safe fixes, the report | its rules |
+| export to the Markdown mirror | `files/Export`, `ArticleNote`, `Frontmatter` (418 lines, 198 generic) | the directory layout and frontmatter writing | the notes of its records |
+| storage figures | `StatsRepo`, `StorageProbe`, `DirSize` | collection and the report | its tables, stores and caches |
+
+**One place, a 360° view.** About › Storage, backups, bundles, merges, vacuum, lint and health become views over
+the registry: per domain its size, counts, cache state, last backup and export, check findings and health. The
+existing endpoints, MCP tools and CLI commands stay byte-identical — they are now computed from the registry and the
+snapshots prove it. A new combined page in the web UI is later UI work, not part of this refactor (Q35).
+
+### 3.7 Files and directories: `util.storage`
+
+No domain touches `java.nio.file`, `java.io.File`, paths or the data directory. A domain asks for a **named store**
+and gets a typed handle:
+
+```scala
+package com.histmersion.util.storage
+
+/** The data directory's named places; config decides where each lives (`HISTMERSION_DATA_DIR` is read once, in Main). */
+enum Location:
+  case Originals, Spool, Assets, Thumbnails, Figures, TileCache, Basemap, Backups, Bundles, Exports,
+       GazetteerExtracts, AgentHomes, Plugins, RelinkKit, UserConfig
+
+opaque type StoreKey = String                               // a safe relative name: no "..", no absolute path
+
+trait Store:
+  def put(key: StoreKey, content: Content): Either[StoreError, Stored]          // temp file + atomic move
+  def get(key: StoreKey): Option[Blob]
+  def list(prefix: StoreKey = StoreKey.root): List[Stored]
+  def delete(key: StoreKey): Either[StoreError, Unit]
+  def size: ByteCount
+  def prune(rule: PruneRule): PruneReport
+
+trait Blob:
+  def size: ByteCount
+  def sha256: Sha256
+  def open(): InputStream                                     // big files stream
+  def readAt(offset: ByteOffset, length: ByteCount): Array[Byte]   // FileChannel / memory map inside
+
+trait Storage:
+  def store(location: Location): Store
+  def scratch(): Scratch                                      // temp files, removed when the scratch closes
+```
+
+Measured file-system use in main code (`dependencies.md` has the per-file lists):
+
+| place | uses | files | what it does | after |
+|---|---:|---:|---|---|
+| automation | 100 | 10 | agent homes and generated trees (`AgentTrees` 20, `CodexHome` 18, `GeneratePlugin` 12), CLI runtimes' working directories and processes (`CliProcess` 20), plan readings (`PlanPools` 8) | `Store(AgentHomes)`; processes through `util.process` with store handles |
+| library | 51 | 9 | ingest uploads and originals (`IngestHandlers` 21, `Originals` 9, `StoredOriginals` 7), the seed importer, frontmatter files | `Store(Originals)`, `Store(Spool)`, `Store(Exports)` |
+| catalogue | 31 | 2 | the bundled gazetteer extracts (`GazetteerLoad` 27), place seeds | `Store(GazetteerExtracts)` (read-only) |
+| media | 6 | 2 | figures and thumbnails | `Store(Figures)`, `Store(Thumbnails)` |
+| research, personal | 0 | 0 | — | — |
+| `util.basemap` | 119 | 11 | PMTiles reads and writes (`FileChannel` 14), the disk LRU, GEBCO parts | `Store(Basemap)`, `Store(TileCache)`; `Blob.readAt` covers the PMTiles range reads |
+| `util.data` | 91 | 8 | pg_dump and restore (`BackupService` 28), bundle files (`BundleHandlers` 25), relocation, sizes | `Store(Backups)`, `Store(Bundles)`; `util.process` runs pg_dump into a store's reserved file |
+| `util.plugins` | 36 | 3 | the relink tool's kit and plugin jars (`PluginTool` 28) | `Store(Plugins)`, `Store(RelinkKit)`; `pluginTool` is a stand-alone entry point and may keep paths at its edge |
+| `util.settings` | 30 | 7 | the settings file's atomic write (`ConfigFileWriter` 22) | `Store(UserConfig).put` (temp + atomic move) |
+| config loading, composition root | 49 | 8 | `UserPaths`, `AppConfig`, `Supervisor` (the converter child process), `Bootstrap` | stay: they build the locations |
+| `util.ocr` | 9 | 4 | the spool and the converter's files | `Store(Spool)` |
+
+188 uses in 23 domain files become store operations; the supporting areas' 294 uses move behind `util.storage`
+too, so sizes, cleanup and the 360° view see every file. `cli` (227 uses) is a host-side client and outside the
+rule; plugins keep their own file rules.
+
+Special cases, and how the handle covers them without a `Path` in a domain:
+
+| case | covered by |
+|---|---|
+| PMTiles range reads (`FileChannel`, positional reads) | `Blob.readAt(offset, length)`; the channel stays inside `util.storage` |
+| pg_dump / pg_restore writing to and reading from a path | `util.process` takes a `Store` reservation (`store.reserve(key)`), passes the path to the child process inside the supporting areas, and commits or discards it |
+| the relink kit (a directory of jars handed to native-image) | `Store(RelinkKit)`; the relink runs as a stand-alone tool whose edge may use paths |
+| the settings file's atomic move | `Store(UserConfig).put` writes a temp file and moves it atomically, as `ConfigFileWriter` does today |
+| agent CLI runtimes that need a home directory (`CODEX_HOME`, generated trees) | `util.process` launches with a `Store(AgentHomes)` sub-store as working directory; the engine never sees the path |
+
+### 3.8 Interfaces lower places own
+
+| interface | owner | implemented by | replaces |
+|---|---|---|---|
+| `WorkflowDefinition`, `ToolContribution`, `ManagerKind`, `ObjectiveProgress` | automation | research, library | the engine's 120 references into domains; 10 repository calls and 14 SQL reads |
+| `DataContribution` (with `CarriedKind`, `MergeRules`, `CheckRule`, …) | `util.data` | every domain | data management's 81 references |
+| `JobKinds` | `util.jobs` | every domain that runs jobs | 8 references |
+| `AliasTables` | `util.identity` | library, research, catalogue, automation | 6 references |
+| `Store` | `util.storage` | — (used) | 188 file-system uses in domains |
+| `Referable` | shared kernel | library, research, catalogue, media, automation | personal's joins; goal links', asset links' and attestations' target lookups |
+| `MapLayer`, `PassageSource` | catalogue | library, media | 17 references |
+| `SourceReferrer` | library | research, media, automation | 10 references |
+
+### 3.9 `personal` and `Referable`
 
 Personal owns bookmarks, notes and read marks (and saved views, which are bookmarks of kind `view`); each points at
 a target and knows nothing about it. Today `ItemTitles` joins `sources`, `articles`, `events`, `goals` and `places`
-by name in SQL and `ItemKind` enumerates the other subdomains' kinds. In the target, the subdomains whose records
-can be marked implement an interface owned by personal (dependency inversion); personal imports no subdomain.
+by name in SQL. Personal is not the only place that points at "an item of some kind": goal links, asset links and
+attestations do too. So the interface moves into the shared kernel, and personal adds only what is its own:
 
 ```scala
-package com.histmersion.domain.personal.marks       // the only package of personal that others import
+package com.histmersion.domain                               // shared kernel
 
-/** A record of another subdomain as a mark stores it: the owner's kind, its key, its uid where it has one. */
+/** A record of some domain as another one stores a reference to it. */
 final case class ItemRef(kind: ItemKind, key: ItemKey, uid: Option[ItemUid])
 
-type ItemKind = ItemKind.T                            // "source", "article", … — registered by the implementers
+type ItemKind = ItemKind.T                                     // "source", "article", … — registered by the owners
 object ItemKind extends RefinedType[String, Match["[a-z][a-z-]*"]]
 
-enum MarkTarget:
-  case Item(ref: ItemRef)                                                       // a source, article, event, place, picture, goal
-  case Point(at: LatLon, zoom: Option[MapZoom], years: Option[Period])          // a place on the map
-  case View(state: Option[ViewState], at: Option[LatLon], zoom: Option[MapZoom], years: Option[Period])
-  case Span(years: Period)                                                      // a period
-
-/** Implemented by each subdomain whose records can carry a bookmark, a note or a read mark. */
-trait Markable:
+/** Implemented by each domain whose records others point at. */
+trait Referable:
   def kinds: Set[ItemKind]
-  /** The record `key` names now — aliases and uid redirects followed — or why there is none. */
+  /** The record `key` names now — aliases and uid redirects followed (util.identity) — or why there is none. */
   def resolve(kind: ItemKind, key: ItemKey)(using DbCon): Either[String, ItemRef]
-  /** How each record shows in a person's lists. One call per kind on a page, batched. */
-  def describe(refs: Set[ItemRef])(using DbCon): Map[ItemRef, Marked]
-  /** Read marks make sense for this kind (sources and articles today). */
-  def readable(kind: ItemKind): Boolean = false
+  /** How each record shows wherever it is referenced. One call per kind on a page, batched. */
+  def describe(refs: Set[ItemRef])(using DbCon): Map[ItemRef, Described]
 
-final case class Marked(title: Title, at: Option[LatLon], years: Option[Period], route: WebRoute, state: ItemState)
+final case class Described(title: Title, at: Option[LatLon], years: Option[Period], route: WebRoute, state: ItemState)
 
 enum ItemState:
   case Live
-  case Renamed(now: ItemKey)          // the key is an alias now (citekey, slug, event id renamed)
-  case MergedInto(ref: ItemRef)       // a uid redirect a merge wrote (platform.identity)
-  case Deleted(at: Instant)           // a tombstone: the mark stays, shown as gone
+  case Renamed(now: ItemKey)          // the key is an alias now
+  case MergedInto(ref: ItemRef)       // a uid redirect a merge wrote
+  case Deleted(at: Instant)           // a tombstone: the reference stays, shown as gone
+
+package com.histmersion.domain.personal.marks
+
+enum MarkTarget:
+  case Item(ref: ItemRef)                                                       // source, article, event, place, picture, goal
+  case Point(at: LatLon, zoom: Option[MapZoom], years: Option[Period])
+  case View(state: Option[ViewState], at: Option[LatLon], zoom: Option[MapZoom], years: Option[Period])
+  case Span(years: Period)
+
+/** Read marks make sense for a kind (sources and articles today). */
+trait Readable:
+  def readable(kind: ItemKind): Boolean
 ```
 
-| target kind | implemented by | resolves through |
+| kind | `Referable` by | resolves through |
 |---|---|---|
-| `source` | `library` | citekey and its aliases; uid |
-| `article` | `research` | slug and its aliases; uid |
-| `event`, `place` | `catalogue` | event id and place id, their aliases; uid for events |
-| `picture` | `media` | asset uid |
-| `goal` | `automation` | goal slug and its aliases; uid |
-| `point`, `view`, `period` | personal itself | no owner: personal checks coordinates, the view's length and the years (today's `Target.check`) |
+| `source` | library | citekey and its aliases; uid |
+| `article` | research | slug and its aliases; uid |
+| `event`, `place` | catalogue | event id, place id and their aliases; uid for events |
+| `picture` | media | asset uid |
+| `goal` | automation | goal slug and its aliases; uid |
+| `point`, `view`, `period` | personal itself | coordinates, the view's length and the years (today's `Target.check`) |
 
-The composition root builds one `Markables` registry from the implementers and hands it to personal's services.
 Personal **pulls**: rename, merge and delete are answered by `describe` at read time — the uid stored with every
-mark (V109's `target_uid`) survives renames, merges are followed through `uid_aliases`, deletions read the
-tombstones — so no owner ever calls personal (Q21). The word search over a person's marks matches the stored
-`target_label`, which personal refreshes when `describe` returns a new title; today it matches the live title
-through the joins, so a renamed item is found by its new title only after it is next shown (Q21).
+mark (`target_uid`) survives renames, merges are followed through `uid_aliases`, deletions read the tombstones — so
+no domain calls personal (Q21). The word search over marks matches the stored `target_label`, which personal
+refreshes when `describe` returns a new title.
 
-**Per user.** Every personal service method already takes a `UserId` (`user_id = 'local'` today). With
-`docs/research-multi-user.md` (#7843) a `people` subdomain (accounts, sessions, roles) comes beside personal;
-personal needs from it nothing but the `UserId` value type in `values`, and the controllers pass the signed-in
-caller instead of `Caller.Local`.
+**Per user.** Every personal service method takes a `UserId` (`'local'` today). With
+`docs/research-multi-user.md` (#7843) a `people` area (accounts, sessions, roles) comes beside personal; personal
+needs from it only the `UserId` value type, and controllers pass the signed-in caller instead of `Caller.Local`.
 
-### 3.7 A shared `Licence`
+### 3.10 A shared `Licence`
 
 The licence is not media's: sources carry their open-access licence, datasets their data licence, pictures theirs.
-Today:
 
 | type or column | where | what it is | becomes |
 |---|---|---|---|
 | `MediaLicence.Licence(id, family)` with `classify`, `ofUrl`, `parse`, `allowList`, `allowed`, `needsAttribution`, `isPublicDomain` | core | a licence classified into a family | **`domain.Licence(id: LicenceId, family: LicenceFamily)`** in the shared kernel; the functions on its companion; `LicenceFamily` an enum with the wire strings kept |
-| `MediaRights` (core) and `plugin.MediaRights`, `DataCredit` (api: name, use, licence, licence URL, credit, URL) | core, SPI, api | licence + licence URL + author + credit | **`domain.Attribution(licence, licenceUrl, author, credit)`** shared; `MediaRights` becomes it; a `DataCredit` is a dataset with an `Attribution` |
-| `sources.license` (from `FetchedFile.licence`) | library | the OA licence of a source | `Option[Licence]` on the source, classified on read (column unchanged, Q26) |
+| `MediaRights` (core) and `plugin.MediaRights`, `DataCredit` (api) | core, SPI, api | licence + licence URL + author + credit | **`domain.Attribution(licence, licenceUrl, author, credit)`**; `MediaRights` becomes it; a `DataCredit` is a dataset with an `Attribution` |
+| `sources.license` (from `FetchedFile.licence`) | library | a source's OA licence | `Option[Licence]` on the source, classified on read (Q26) |
 | `assets.license`, `assets.license_url` | media | a picture's licence | `Attribution` |
-| `gazetteer_sources.licence`, a catalogue's licence (`CatalogProviderInfo`, `EventCatalogue.licence`), Cliopatria's (V107) | catalogue | a dataset's licence | `Attribution` |
-| `plugin.Licence` (SPI) | plugin-api | a licence as a provider states it | stays: the host classifies it into `domain.Licence` |
-| allowlists (`media.<provider>.licences`, `media.collections.licences`, `per-collection.<name>`) | media | a policy over families | stays media's (`LicencePolicy` over `LicenceFamily`) |
-| `OaStatus` (`gold`/`diamond`) | library (`BrowserDownload`) | an open-access route, not a licence | stays the library's |
+| `gazetteer_sources.licence`, a catalogue's licence, Cliopatria's (V107) | catalogue | a dataset's licence | `Attribution` |
+| `plugin.Licence` (SPI) | plugin-api | a licence as a provider states it | stays; the host classifies it |
+| allowlists (`media.<provider>.licences`, `media.collections.licences`, `per-collection.<name>`) | media | a policy over families | stays media's (`LicencePolicy`) |
+| `OaStatus` (`gold`/`diamond`) | library | an open-access route, not a licence | stays the library's |
 | `Access` (`Open`/`Subscription`/`Unauthorised`) | SPI | whether a fetch is authorised | stays the SPI's |
 | `MediaProvider`, `Provenance` | api | where a record came from | stay |
 
-`LicenceId` (the stored and sent string) is in `values`, because the web page names licences (`LicenseName`).
-Measured licence-ish fields today: `license: Option[String]` 19, `licence: String` 10, `licence: Option[…]` 10,
-`licenseUrl` 8, `licenceUrl` 4, `licences: String` 5 (outside web).
+`LicenceId` (the stored and sent string) is in `values`, because the web page names licences. Measured
+licence-ish fields today: `license: Option[String]` 19, `licence: String` 10, `licence: Option[…]` 10, `licenseUrl`
+8, `licenceUrl` 4, `licences: String` 5 (outside web).
 
-### 3.8 Supporting areas (`com.histmersion.util.<area>`)
+### 3.11 The other supporting areas
 
 | area | holds | module |
 |---|---|---|
-| `util.database` | the pool, `Transactor`, Flyway runner, generic column codecs, `Jsonb`, `Keyset`, `Param`, `Sql`, `ListSql`, `Vocab` | `db` |
-| `util.ocr` | the converter client and its state (the OCR service), the spool, JATS → Markdown conversion (over `upstreams`' JATS parser), the chunker. The library's `ingest` decides what happens to a source; this area only converts and splits | server |
-| `util.json` | generic newtype codecs and schemas, `WireEnum`, `StrictJson`, `StrictJsonSchema`, JSON cursor helpers (`Read`) | `api` (JVM + JS) |
+| `util.database` | the pool, `Transactor`, Flyway runner, generic column codecs, `Jsonb`, `Keyset`, `Param`, `Sql`, `ListSql`, `Vocab`, the deep-time range SQL (today's `PeriodSql`) | `db` |
+| `util.ocr` | the converter client and state, JATS → Markdown conversion (over `upstreams`' parser), the chunker; the library's ingest decides what happens to a source | server |
+| `util.process` | launching child processes (pg_dump, the converter, CLI agent runtimes) with store handles | server |
+| `util.json` | generic newtype codecs and schemas, `WireEnum`, `StrictJson`, `StrictJsonSchema`, JSON cursor helpers | `api` (JVM + JS) |
 | `util.http` | the outbound client, policy, politeness, TLS, `Url` | `plugin-host` / server |
 | `util.markdown` | flexmark flavour, Markdown → HTML, HTML atoms | server / `api` |
-| `util.text` | `FoldedText` (Latin folding), `Plural`, `Csv`, `Diff3` | `api` / `core` |
+| `util.text` | `FoldedText`, `Plural`, `Csv`, `Diff3`, `MinHash` | `api` / `core` |
 | `util.images` | PNG, VP8L, Terrarium PNG encoders | server |
 | `util.tiles` | MVT, PMTiles, the vector-tile writer | server / `core` |
-| `util.files` | `SafePath`, directory size, the tar container | `files` |
 
-`cli` and `web` keep their own trees (`cli.<subdomain>`, `web.<subdomain>`; `web` is already mostly so) and are
-touched only at their edges (slice 12).
+`cli` and `web` keep their own trees (`cli.<domain>`, `web.<domain>`) and are touched only at their edges (slice 12).
 
 ## 4. Newtype catalogue
 
 ### 4.1 Rules
 
 - **Where a newtype lives.** It goes in `values` (JVM + JS, Iron only) when it crosses the wire or more than one
-  feature uses it. It goes in `domain.<subdomain>.<feature>` when only one feature's logic uses it. It goes in
-  `config.<subdomain>` when it is a setting with no meaning outside configuration. `plugin-api` keeps its own
+  feature uses it. It goes in `domain.<domain>.<feature>` when only one feature's logic uses it. It goes in
+  `config.<domain>` when it is a setting with no meaning outside configuration. `plugin-api` keeps its own
   copies (`Year`, `Doi`, …; SPI 2), which chimney-iron converts because the names and constraints are the same.
 - **Shape.** Rule 1's `type X = X.T; object X extends RefinedType[Base, C]`. The constraint is `Pure` unless the
   code already rejects values today, so no valid input is refused that is accepted now. Where a value has a rule,
@@ -396,7 +574,7 @@ touched only at their edges (slice 12).
 | `EventId` | String | `Slug`'s rule | values | 34 | |
 | `JobId` | UUID-text String | UUID pattern | values | 40 | `jobId`, `job` |
 | `ManagerId`, `RunId`, `StepId`, `ApprovalId` | String / Long (as stored) | Pure | domain.automation (managers, agents, approvals) | 53 / 48 / – / – | |
-| `QueueItemId` | Int | `Positive` | domain.platform.worklist | 21 | the worked example (§6) |
+| `QueueItemId` | Int | `Positive` | domain.automation.worklists | 21 | the worked example (§6) |
 | `AssetId`, `AssetName` | Long / String | Pure | domain.media | 4 + share of `id: String` | |
 | `BookmarkId`, `NoteId`, `ItemKey`, `UserId` | | | exist (personal pilot) | — | kept |
 | `WikidataId` | String | exists | values | 18 | `wikidata`, `qid` |
@@ -417,7 +595,7 @@ slice types the uses in its own feature.
 | `Latitude`, `Longitude` | Double | exist | values | 186 (160) | also `BBox`'s four edges |
 | `Title`, `Summary`, `MarkdownBody`, `Claim`, `Venue`, `AuthorName` | String | Pure | values | 227 + 215 + 22 + 22 + 80 | one type per meaning, not one "Text" |
 | `Tag`, `Topic`, `Region` | String | Pure | values | 191 | label vocabularies; `rename_label` works on them |
-| `LicenceId` | String | Pure | values | 42 | the licence as stored and sent (an SPDX id, `public-domain` or a URL); the classified `Licence` is the shared domain type of §3.7 |
+| `LicenceId` | String | Pure | values | 42 | the licence as stored and sent (an SPDX id, `public-domain` or a URL); the classified `Licence` is the shared domain type of §3.10 |
 | `Sha256` | String | 64 lower-case hex | values | 39 | |
 | `Url` | String | Pure (absolute-URL check where today's code checks) | values | 133 | `ServiceUrl` (config) becomes this |
 | `CronExpression` | String | Pure; parsed by `Cron` | domain.automation.scheduler | 26 | `Cron`'s functions go on it |
@@ -492,7 +670,7 @@ visible change for the user to decide on.
 | O2 | holds `val X = "…"` constants of a closed vocabulary (`GoalStatus`, `MediaRole`, `AttestationTarget`) | an `enum` with `wire` strings | 32 |
 | O3 | is a namespace for a feature's types (`api.Agents`, `api.Managers`, `core.ReviewArticle` with 36 nested types) | dissolves: the types become top-level in the feature package; its functions follow O1 | 51 |
 | O4 | parses one upstream's JSON (`MetMuseum`, `Europeana`, `AcquireParse`, `PeriodO`, `Lpf`) | the companion of the record it produces (`MetObject.fromJson`), introduced where missing | in O1/O6 |
-| O5 | holds a subdomain's rules over a "facts" record (`GoalFocus.Facts`, `AutopilotPolicy.*Facts`, `SchedulerPolicy.Scored`) | methods of that record, renamed to say what it is (`FocusFacts`) | in O3 |
+| O5 | holds a domain's rules over a "facts" record (`GoalFocus.Facts`, `AutopilotPolicy.*Facts`, `SchedulerPolicy.Scored`) | methods of that record, renamed to say what it is (`FocusFacts`) | in O3 |
 | O6 | works on a value that has a meaning but no type (`Chunker`, `LatinFold`, `Highlight`, `SafePath`, `Frontmatter`, `ImageSize`, `ServerArgs`) | a new type that carries the functions | 37 |
 | O7 | is a built-in plugin's code | its plugin module (§8) | 29 |
 
@@ -517,11 +695,11 @@ Totals: 645 objects; 320 stay. Every row is in [`objects.md`](research-domain-mo
 | `api.Write` | error codes as `Int` constants and input checks | `enum WriteCode`; checks on `SourcePatch`, `FindingInput` | the codes are a vocabulary |
 | `api.Wording` | 28 sentences about several types | each to the companion of the type it words | 235 lines of free functions |
 | `api.Paging` | `Page` nested plus page arithmetic | `Page` top-level; arithmetic on `Page`/`PageSize` | cross-feature shared type |
-| `core.MergePlanner` | 2 425 lines, 9 nested types, 67 functions | `domain.exchange.merge.plan`: `MergePlan.of`, `LedgerEntry`, `Row` companions | the largest object |
+| `core.MergePlanner` | 2 425 lines, 9 nested types, 67 functions | split: the plan mechanism (`MergePlan.of`, `LedgerEntry`, ≈ 680 lines) into `util.data.exchange.merge`; the rules per kind (≈ 1 750 lines) into each domain's `MergeRules` | the largest object; §3.6 |
 | `core.ReviewArticle` | 2 013 lines, 36 nested types | `domain.automation.review` types, rules on `Reviewer`, `Verdict`, `ReviewFinding` | the second largest |
 | `server.MarkdownLint` | 1 336 lines | `domain.research.articles.lint`: `FormatFinding`, `Edit`, `LintContext` | prose lint belongs to the article, a research result |
 | `*Markdown` (28) | one renderer object per area | a `MarkdownRender[A]` instance on the companion of the wire type it renders (Q14) | "a function about a type" |
-| `Chunker` | `chunks(body)` | `util.ocr.Chunker` producing `Chunk`s (`Chunk` is the library's stored chunk) | the split is mechanical (§3.8) |
+| `Chunker` | `chunks(body)` | `util.ocr.Chunker` producing `Chunk`s (`Chunk` is the library's stored chunk) | the split is mechanical (§3.11) |
 | `UserPaths` (config) | reads `user.home` | a `UserPaths` value built once in `Main` from the environment | rule 12 |
 
 ### 5.3 What is not an O1 move
@@ -561,15 +739,16 @@ and stays.
 
 | piece | where | visibility | owns |
 |---|---|---|---|
-| domain types, pure rules | `domain.<s>.<f>` (core module when other modules need them, else server) | public or `private[<f>]` | invariants (smart constructors), pure decisions |
-| `<F>Service` trait | `domain.<s>.<f>` (server) | public | the feature's operations in domain types |
+| domain types, pure rules | `domain.<d>.<f>` (core module when other modules need them, else server) | public or `private[<f>]` | invariants (smart constructors), pure decisions |
+| `<F>Service` trait | `domain.<d>.<f>` (server) | public | the feature's operations in domain types |
 | `<F>Service.Implementation` | companion | `private final class` | transactions, calls of its repository and of other services |
 | `<F>Service.InMemory` | companion | `final class` | the same behaviour over `AtomicReference`s |
-| `<F>Repo` | `domain.<s>.<f>` (server) | `private[<f>] object` | SQL; every method takes `(using DbCon)`; never opens a transaction |
-| `<F>Controllers` | `domain.<s>.<f>` (server) | public `final class` | parse raw inputs into domain values (the boundary), maintenance guard, call services, convert to wire records (Chimney) |
-| `<F>Routes`, `<F>Tools` | `domain.<s>.<f>` (server) | public | bind the feature's Tapir endpoints and Chimp tools to controller methods; nothing else |
+| `<F>Repo` | `domain.<d>.<f>` (server) | `private[<f>] object` | SQL; every method takes `(using DbCon)`; never opens a transaction |
+| `<F>Controllers` | `domain.<d>.<f>` (server) | public `final class` | parse raw inputs into domain values (the boundary), maintenance guard, call services, convert to wire records (Chimney) |
+| `<F>Routes`, `<F>Tools` | `domain.<d>.<f>` (server) | public | bind the feature's Tapir endpoints and Chimp tools to controller methods; nothing else |
 | `<F>Endpoints`, wire records, renderers | `api.<s>.<f>` | public | the contract |
-| cross-subdomain read controllers | `server.views` | public | one response assembled from several subdomains' services (§3.4) |
+| cross-domain read controllers | `server.views` | public | one response assembled from several domains' services (§3.4) |
+| contributions | `domain.<d>.workflows`, the domain's `DataContribution`, its `Referable` | public | what the domain registers into the engine, data management and the shared kernel (§3.5, §3.6, §3.9) |
 
 `HttpApi` and `McpTools` become lists of the features' routes and tools, **in today's order**. Route matching and
 `tools/list` both depend on that order.
@@ -596,7 +775,7 @@ global) to date a log item. Ids are `Int`, the list is a `String` parsed in two 
 constants. The pure rules (`Queue.applyPatch`, `statusOf`, `render`, `parse`) live in an api namespace object. One
 repository serves three owners, and its `forGoal` query joins `goal_links`, another feature's table.
 
-Target: the list mechanism is a kernel in `domain.platform.worklist`; the table stays one table (`queue_items`, no
+Target: the list mechanism is the engine's kernel, `domain.automation.worklists`; the table stays one table (`queue_items`, no
 migration). Each owner constructs the kernel's service for its own list and adds its own rules on top:
 `library.acquisition` owns ACQUIRE (and the DOI matching of `acquireNaming`), `automation.tasks` owns TASKS and
 `automation.log` owns LOG (whose controller dates a new item's topic). The goal scope leaves the kernel: automation
@@ -605,7 +784,7 @@ asks its goals for the linked item ids and reads them with `byIds`.
 Target:
 
 ```scala
-package com.histmersion.domain.platform.worklist
+package com.histmersion.domain.automation.worklists
 
 enum QueueList(val wire: String, val file: String, val checkboxes: Boolean):     // was api.Queue.Kind
   case Acquire extends QueueList("acquire", "ACQUIRE.md", true)
@@ -710,48 +889,99 @@ the database" a tested fact, as #7490 asks. Tests seed an `InMemory` by calling 
 over `InMemory` services with no server and no database, as in `LogControllersSuite`, which checks the dated log
 topic with `Clock.fixed`.
 
-Where real services share data, the `InMemory` ones share one state record per subdomain, held in one
-`AtomicReference` and updated through lenses (rule 8). Across subdomains they never share state: an `InMemory`
-service of a higher subdomain is given the `InMemory` services of the lower ones and calls them, exactly as the
+Where real services share data, the `InMemory` ones share one state record per domain, held in one
+`AtomicReference` and updated through lenses (rule 8). Across domains they never share state: an `InMemory`
+service of a higher domain is given the `InMemory` services of the lower ones and calls them, exactly as the
 `Implementation` does.
 
 | state record | shared by |
 |---|---|
-| `PlatformState` | jobs, identity, work lists |
+| `JobsState`, `IdentityState` | `util.jobs`, `util.identity` (supporting areas have `InMemory` services too) |
 | `CatalogueState` | places, periods, events, evidence |
 | `MediaState` | assets, links, checks |
 | `LibraryState` | sources, findings, citations, labels, candidates, acquire checks |
 | `ResearchState` | articles, versions, links, coverage, review state |
-| `AutomationState` | runs, steps, approvals, managers, autopilot, schedules, goals |
-| `ExchangeState` | merge sessions, decisions, ledger |
+| `AutomationState` | runs, steps, approvals, managers, autopilot, schedules, goals, work lists |
+| `DataState` | merge sessions, decisions, ledger; backups list |
 | `PersonalState` | personal (exists) |
 
 ### 6.4 Controllers and the caller
 
 Each controller method and each writing service method takes the caller (`Caller.Person(user: UserId, role: Role)`
-or `Caller.Automation(run: RunId)`). Automation writes to other subdomains with `Caller.Automation`, through the
+or `Caller.Automation(run: RunId)`). Contributed workflows write with `Caller.Automation`, through the
 same service methods a person's request reaches (§3.5). Until `docs/research-multi-user.md` is built, a person is
 always `Caller.Local`. This is the one place the multi-user work will
 change, as that design already assumes for `PersonalControllers`.
+
+### 6.5 Worked example, second half: a workflow research contributes
+
+`compile-article` today lives in `server/agents/CompileArticlePipeline` (346 lines) and `core/CompileArticle`
+(432), reads articles through `ArticleRepo.load` and writes them through `Handlers.putArticle`. In the target it is
+research's, registered into the engine, and it touches articles only through research's own service and sources
+only through the library's:
+
+```scala
+package com.histmersion.domain.research.workflows.compile
+
+final class CompileArticleWorkflow(
+    articles: ArticleService,          // research's own service
+    coverage: CoverageService,         // research's own service
+    sources: SourceService             // library's public service (library is below research)
+) extends WorkflowDefinition:
+  val id = WorkflowId("compile-article")
+  val roles = List(AgentRole.Writer)
+  val tools = List(GetSourceTool(sources), PassagesTool(sources), CheckEditsTool(articles), ArticleCoverageTool(coverage))
+
+  def start(request: WorkflowRequest, run: RunContext): Either[WorkflowError, WorkflowPlan] =
+    for
+      slug   <- request.target[Slug]
+      filter <- coverage.filterOf(slug).toRight(WorkflowError.NoFilter(slug))
+    yield WorkflowPlan.of(CompileSteps.extract(filter))           // the rules of today's core/CompileArticle
+
+  def step(state: StepState, answer: StepAnswer, run: RunContext): StepOutcome =
+    CompileSteps.next(state, answer)                               // pure, tested without a server
+
+  def settled(result: RunResult, run: RunContext): Either[WorkflowError, Settled] =
+    articles.put(result.article, Caller.Automation(run.id)).map(Settled.Written(_))   // as a person would
+
+package com.histmersion.domain.research
+
+/** What research gives the engine; the composition root concatenates every domain's list. */
+object ResearchWorkflows:
+  def apply(articles: ArticleService, coverage: CoverageService, sources: SourceService): List[WorkflowDefinition] =
+    List(ReviewArticleWorkflow(…), CompileArticleWorkflow(articles, coverage, sources), ProposeArticlesWorkflow(…),
+         InferFilterWorkflow(…))
+```
+
+Testing it needs no server and no database: `WorkflowEngine.InMemory` drives the definition with a scripted model
+(sttp-ai's `agent-testkit`, as the scripted suites do today) over `ArticleService.InMemory`,
+`CoverageService.InMemory` and `SourceService.InMemory`, seeded through their own methods. The engine's own suites
+test runs, leases, retries and approvals with a trivial test workflow, so they never need an article.
+
+During the transition (slices 6–7, Q34) the engine registers today's pipelines through thin adapters that implement
+`WorkflowDefinition` over the old code; each domain's slice replaces its adapters with its own definitions.
 
 ## 7. Module layout after the change
 
 ### 7.1 sbt projects
 
-Packages follow §3: `domain.<subdomain>.<feature>` in `core` (the pure part) and `server` (services, repositories,
-controllers, routes, tools), `api.<subdomain>.<feature>` in `api`, `config.<subdomain>` in `config`.
+Packages follow §3: `domain.<domain>.<feature>` in `core` (the pure part) and `server` (services, repositories,
+controllers, routes, tools), `api.<domain>.<feature>` in `api`, `config.<domain>` in `config`; supporting areas
+`util.<area>` in the module that suits them (`util.database` in `db`, `util.json` in `api`, the server-side areas —
+`util.data`, `util.storage`, `util.jobs`, `util.identity`, `util.plugins`, `util.settings`, `util.basemap`,
+`util.ocr`, `util.process` — in `server`).
 
 | project | holds (packages) | depends on | change |
 |---|---|---|---|
 | `values` (JVM + JS) | `values`: identifiers, values, vocabulary enums, generic quantities, `LicenceId`, `UserId` | iron | grows (§4) |
-| `api` (JVM + JS) | `api` root: shared wire types (`ApiError`, `WriteCode`, `Page`, `Filter`, `BBox`, `TimeSpan`, Markdown primitives); `api.<subdomain>.<feature>`: records, `<F>Endpoints`, renderers; `util.json` | values | `Api.all` = the features' lists in today's order |
-| `config` | `config` root (`AppConfig`, loading, layers); `config.<subdomain>` settings records | values | flat package split by subdomain; step 2's quantities move to values |
+| `api` (JVM + JS) | `api` root: shared wire types (`ApiError`, `WriteCode`, `Page`, `Filter`, `BBox`, `TimeSpan`, Markdown primitives); `api.<domain>.<feature>`: records, `<F>Endpoints`, renderers; `util.json` | values | `Api.all` = the features' lists in today's order |
+| `config` | `config` root (`AppConfig`, loading, layers); `config.<domain>` settings records | values | flat package split by domain and area; step 2's quantities move to values |
 | `files` | `files` (bundle format, notes, merge file, plugin set), `util.files` | api | unchanged in scope |
-| `core` (JVM) | the shared kernel `domain` (`Period` helpers, `Licence`, `Attribution`, `Caller`) and the pure part of `domain.<subdomain>.<feature>` | values, files (and through `files` api, for the bundle records) | its logic stops using api's wire records, subdomain by subdomain (Q9) |
+| `core` (JVM) | the shared kernel `domain` (`Period` helpers, `Licence`, `Attribution`, `Caller`) and the pure part of `domain.<domain>.<feature>` | values, files (and through `files` api, for the bundle records) | its logic stops using api's wire records, subdomain by subdomain (Q9) |
 | `db` | `util.database` only: pool, `Transactor`, Flyway runner, generic codecs | config | **repositories, `FilterSql`, `PeriodSql`, `SiteTypesSql`, the bundle and merge stores and the seed importer leave** |
-| `server` | `server` (composition root, adapters, `server.views`); `domain.<subdomain>.<feature>` services, repositories, controllers, routes, tools; `util.ocr`; `resources/db/migration` (95 files) | core, db, api, plugin-host, `upstreams`; plugin modules **`% Runtime` only** | gains the repositories and the migrations |
+| `server` | `server` (composition root, adapters, `server.views`); `domain.<domain>.<feature>` services, repositories, controllers, routes, tools; the server-side supporting areas (`util.data`, `util.storage`, `util.jobs`, `util.identity`, `util.plugins`, `util.settings`, `util.basemap`, `util.ocr`, `util.process`); `resources/db/migration` (95 files) | core, db, api, plugin-host, `upstreams`; plugin modules **`% Runtime` only** | gains the repositories and the migrations |
 | `upstreams` *(new)* | `upstreams`: parsers and clients of public upstreams (OpenAlex, Crossref, Unpaywall, CORE, DataCite, archive.org, Europe PMC, arXiv, Wikidata, Commons, JATS, landing-page rules, catalogue dating) over `PluginHttp` | plugin-api, circe (plugin platform) | from `plugin-host/AcquireParse` & friends, `core/RepositoryLanding`, `Jats`, `Commons`, `Wikidata`, `CatalogDating`, `server/acquire` clients |
-| `plugin-api` | the SPI | sconfig, kindlings, iron | ten additive members (§8.3) |
+| `plugin-api` | the SPI | sconfig, kindlings, iron | eleven additive members (§8.3, §8.5); `PluginInfo.runsOn` later (§8.6) |
 | `plugin-host` | host side of the SPI | core, config, plugin-api, upstreams | its acquisition parsers move to `upstreams`; it uses the shared dating rules from there |
 | `plugin-testkit` | unchanged API | plugin-host | its published dependency set changes with plugin-host's |
 | `plugins/fetchers` *(new)* | `archive-org`, `oa-unpaywall`, `oa-core`, `oa-openalex`, `oa-landing`, `pmc`, `arxiv` | plugin-api, upstreams | from `server/acquire/fetchers` |
@@ -760,8 +990,9 @@ controllers, routes, tools), `api.<subdomain>.<feature>` in `api`, `config.<subd
 | `plugins/media` *(new)* | `media-wikidata`, `media-depicts`, `media-met`, `media-cleveland`, `media-aic`, `media-loc`, `media-pleiades`, `media-opencontext`, `media-smithsonian`, `media-europeana` | plugin-api, upstreams | from `server/media` collections and `core` parsers |
 | `plugins/ai-http` *(new)* | `ai-anthropic`, `ai-openai`, `ai-local` | plugin-api, circe | from `server/agents/LlmClient`'s provider part |
 | `plugins/ai-cli` *(new, Q5)* | `ai-claude-code`, `ai-codex`, `ai-opencode` | plugin-api | from `server/agents` runtimes |
+| `plugins/calibre` *(new)* | `calibre` (a `SourceCollection` with optional write-back) | plugin-api, circe | from the CLI's host-side Calibre code (≈ 1 400 lines, §8.5) |
 | `plugins/vaults` | `keepassxc`, `1password`, `bitwarden` | plugin-api | directory moved from `plugin-vaults`; artifact name kept |
-| `cli`, `web`, `plugin-resolver`, `plugin-fixtures/*`, `chimney-iron*` | | | unchanged except edges (slice 12) |
+| `cli`, `web`, `plugin-resolver`, `plugin-fixtures/*`, `chimney-iron*` | | | unchanged except edges (slice 12); the CLI's Calibre code becomes HTTP clients (slice 4) and a JVM-mode hand-off for CLI plugins (slice 13) |
 
 ```
 values       → iron
@@ -779,8 +1010,8 @@ cli          → api, config, files            (never core, db or server)
 web          → api                           (JS)
 ```
 
-Inside `core` and `server`, the subdomain table of §3.3 holds, checked by `ArchitectureSuite`. Splitting `server`
-into one sbt project per subdomain would make the compiler check it and let sbt compile subdomains in parallel; it is
+Inside `core` and `server`, the table of §3.3 holds, checked by `ArchitectureSuite`. Splitting `server`
+into one sbt project per domain and supporting area would make the compiler check it and let sbt compile them in parallel; it is
 Q18, and mechanical once the packages are clean.
 
 ### 7.2 Consequences
@@ -791,7 +1022,7 @@ Q18, and mechanical once the packages are clean.
   plans that change for chimney-iron.
 - Migrations: the files move from `modules/db/src/main/resources/db/migration` to the same path in `server`,
   unchanged, so Flyway checksums and `Migrate.Replaced` stay valid. The index generator moves with them (Q12). Each
-  table's owner is recorded in §3.1, not by splitting files: many migrations touch several subdomains' tables, and
+  table's owner is recorded in §3.1, not by splitting files: many migrations touch several domains' tables, and
   applied migrations are never edited. `queue_items` stays one table whose rows are owned per list.
 - Package moves rename classes, and `reachability-metadata.json` names classes. Every slice re-records the
   metadata with the pinned JDK (server `run` against an empty database, the CLI, and the plugin modules' own
@@ -800,7 +1031,7 @@ Q18, and mechanical once the packages are clean.
 
 ## 8. Plugin separation (#7911)
 
-Acquiring is each subdomain's own business: the library acquires sources, the catalogue acquires data points, media
+Acquiring is each domain's own business: the library acquires sources, the catalogue acquires data points, media
 acquires pictures. In each the **interface and the running of it** are domain code — the fetch chain, its quota,
 the ACQUIRE list, recheck, discovery and candidates (`library.acquisition`); the catalogue and gazetteer import
 loops (`catalogue.events`, `catalogue.places`); the collection import loop and its licence policy (`media`). The
@@ -882,7 +1113,7 @@ did through the earlier additions. MiMa is still the pending step 9.
 ### 8.4 What stays true
 
 - **Licences.** A plugin states a licence as plain data (`plugin.Licence`, SPI 2); the host classifies it into the
-  shared `domain.Licence` (§3.7) in every subdomain the same way.
+  shared `domain.Licence` (§3.10) in every domain the same way.
 - **One ServiceLoader type.** Each plugin module lists its providers in `META-INF/services/com.histmersion.plugin.Plugin`.
   `Plugins.builtins` and the `Builtin`/`BuiltinWith` wrappers go; discovery finds the first-party plugins as it
   finds vaults today.
@@ -897,6 +1128,96 @@ did through the earlier additions. MiMa is still the pending step 9.
 - **Tests.** `Plugins.offline` (a test's generation) becomes discovery with fetchers excluded, as before. The
   testkit is unchanged, and the first-party plugins' own suites use it like any plugin author would.
 - **AGPL.** Every new module inherits `ThisBuild / licenses`.
+
+### 8.5 More integrations as plugins: "the domain defines and runs, a plugin implements"
+
+The same shape — the domain owns the interface and the running (the job, the schedule, the quota, the surface), a
+plugin owns the integration — fits more than today's built-ins. Measured candidates:
+
+| integration | today | plugin kind | when | reason and size |
+|---|---|---|---|---|
+| **Calibre** | the CLI on the host: 1 708 lines in 15 files (`Calibre`, `CalibreCmd` 563, `CalibreJson`, `CalibreAudit`, `MediaCovers`, `Audit*`, `LinkedRecord`, `Update*`, …); the server: three endpoints (gaps, push metadata, pushed) and `AcquireRepo`'s gap queries, 64 lines of api | **`SourceCollection`** (SPI-11) | **now** (slice 4) | user decision: the server reads Calibre as a source of sources and may write back. Details below |
+| archive.org search, info and import | `ArchiveOrg` 49 + `AcquireHandlers.archive*` + its api records; its fetcher is a plugin from slice 3 | `SourceCollection` (read-only) | **now**, with Calibre | the same kind, read-only; the plugin already holds its client |
+| a folder of PDFs, Zotero | none | `SourceCollection` | later | the kind is named generally so they need no new SPI |
+| BibTeX / CSL / Zotero export | none | `CitationExport` | later | no code today |
+| the Markdown (Obsidian) mirror | 418 lines (`Export`, `ArticleNote`, `Frontmatter`) + the CLI's `export` | `MirrorFormat` | later | one format today, and the research workspace depends on its exact output; it is a `DataContribution` export now and becomes a plugin kind when a second format is asked for |
+| discovery indexes (OpenAlex, Crossref, Semantic Scholar, Wikipedia, Europe PMC, arXiv, CORE) | about 400 lines of `server/acquire/*Index`, `SemanticScholar`, `Wikipedia`, `CandidateSearch` | `DiscoveryIndex` | later (after slice 3 proves the `upstreams` split) | the parsers already move to `upstreams`; the index list is the next natural cut |
+| Retraction Watch | 16 lines + the update handler | `CurrencySource` | later | one source; small |
+| OCR converter backends | `ConverterClient` 57 + `HttpConverterClient` 163 over the converter service | `ConverterBackend` | no, for now | one backend, already behind a trait in `util.ocr` |
+| PeriodO, the bundled gazetteer extracts, Natural Earth land | 214 + 503 + 63 | — | no | data shipped with the install (Q23) |
+| base-map sources (vector extracts, GEBCO) | `BasemapFetch` 424, `GebcoSeaFloor` 179 | `BasemapSource` | later | no second source asked for |
+| backup targets | local `pg_dump` only | `BackupTarget` | later | a remote target is new work |
+| secret vaults, AI providers | already plugins | — | — | — |
+
+**Calibre as a server-side `SourceCollection` plugin** (user decision: "the server is accessing Calibre as a source
+of sources, and has an option to add missing papers there and to enrich Calibre's records").
+
+- **What the library defines and runs** (`library.collections`): searching a collection and importing an item into
+  the library (today's `calibre import`), the gaps check (sources whose original is not in a collection: today's
+  `calibre gaps`, which the research workspace's hook calls), the sync job (`calibre sync --apply`), link and
+  relink, the audit (a collection record against the library's), and the HTTP, MCP and CLI surface. The CLI's
+  `calibre …` commands become thin HTTP clients like every other command; their flags and output stay
+  byte-identical (the CLI help snapshot, plus output snapshots of each command over a fixture library).
+- **What the plugin implements** (`plugins/calibre`): reading the library (`calibredb list --for-machine`, falling
+  back to `sqlite3 -readonly` on `metadata.db` when the GUI holds the database, as today), the OPF and metadata
+  mapping, and the write-back (`calibredb add`, `set_metadata`). About 1 400 of the CLI's 1 708 lines move into it;
+  the rest (decline commands and output formatting) stays in the CLI as HTTP clients. For a server on another
+  machine the same plugin runs on the CLI side (§8.6).
+- **Capabilities.** `read` always; `add` and `update` only when the plugin's block says so (`write-back = false` by
+  default). Writes are refused while the Calibre GUI holds the library, with today's message.
+- **Configuration, no globals.** The library location and the `calibredb` executable are the plugin's settings
+  (`histmersion.plugins.calibre.library-path`, `…calibredb`), with the paths today's CLI uses as defaults.
+- **Reach.** The server runs as the user's LaunchAgent, so it can read the user's library; on macOS a library in a
+  protected folder needs the same TCC grant the relink kit documents (§21.2 of the plugins design). A server in a
+  container would need the library mounted — stated in the plugin's doctor check.
+- **A plugin may launch processes**: the rule that keeps paths and processes in supporting areas binds the server's
+  domains, not plugins (the vaults already run their CLIs).
+
+**The SPI for it** (all additive and defaulted; one ServiceLoader type; built-ins switchable):
+
+| # | addition | default |
+|---|---|---|
+| SPI-11 | `PluginContext.sourceCollections: Registry[SourceCollection]`; `SourceCollection(title, capabilities: Set[CollectionCapability], search(query): Either[String, List[CollectionItem]], item(id), original(id): Either[String, FetchedFile], add(item, file): Either[String, CollectionId], update(id, metadata): Either[String, Unit], audit(ids): List[CollectionFinding])` — `add`, `update` refuse unless the capability is declared | refusing registry; `add`/`update` refuse |
+| later | `DiscoveryIndex`, `CitationExport`, `MirrorFormat`, `CurrencySource`, `BasemapSource`, `BackupTarget`, `ConverterBackend` — each a registry on `PluginContext`, added when its first plugin is built | — |
+
+### 8.6 CLI plugins, for a server on another machine
+
+When the server runs on another machine (Tailscale, `docs/research-multi-user.md`, #7843), resources on the user's
+own machine — their Calibre library, a folder of PDFs, files to upload — are reachable only from the CLI. So the
+plugin system gets a CLI side, within the same rules:
+
+- **One plugin system.** Still ONE ServiceLoader service type (`Plugin`) and `plugin-api` interfaces only. A plugin
+  declares where its contributions run: `PluginInfo.runsOn: Set[Side]` (`Server`, `Cli`; default `Server`, so
+  every existing plugin is unchanged). The CLI builds a `PluginContext` of its own whose registries accept only the
+  kinds that make sense there (`sourceCollections` first) and refuse the rest, as hosts without a registry refuse
+  today.
+- **The same interface on both sides.** `SourceCollection` is implemented once. On the server it imports directly
+  and writes back with server-side originals. On the CLI the host part is a small adapter: it reads the local
+  collection through the plugin and talks to the remote server only through the existing HTTP API — `ingest` with
+  the uploaded original, `patch` for metadata, `GET …/original` and the gaps and metadata endpoints for write-back.
+  No new endpoint is needed for Calibre: today's CLI already does exactly this over HTTP.
+- **Which side runs.** The plugin's settings name the side (`histmersion.plugins.calibre.side = auto | server |
+  cli`). `auto` (the default) means: the server side when the server reports the collection reachable (its doctor
+  check), else the CLI side when the CLI has the plugin. The `calibre …` commands say which side ran.
+- **How the user sees it.** `/api/about`, `histmersion about` and the web About list the server's plugins as today;
+  `histmersion plugin list` lists the CLI's own plugins beside them, each marked with its side; `histmersion plugin
+  add|remove` install a CLI plugin into the CLI's plugins directory (`<data>/cli-plugins`, from config), with the same
+  POM-based dependency resolution as server plugins.
+- **No new privileges.** A CLI plugin acts through the CLI's HTTP client with the CLI user's token and role; it can do
+  nothing the user could not do with the CLI by hand, and the server checks every call as it does today.
+
+**How the native CLI loads plugins** (measured on the server: a relink is about 2 minutes and 11 GB of RAM, and the
+install already ships GraalVM, 681 MB, for the relink and JVM mode):
+
+| option | cost | verdict |
+|---|---|---|
+| relink the CLI with its plugins, like the server | minutes and gigabytes on every plugin change, a second relink kit to ship | no: CLI plugins are occasional sync commands |
+| a JVM-only CLI everywhere | about a second of JVM start on every command, for every user | no |
+| **the native CLI stays plugin-free and hands a plugin's commands to a JVM-mode CLI** (`histmersion-cli-jvm`, the CLI jar and the plugins directory on the installed GraalVM, as `server-jvm.sh` does for the server) | about a second of start-up only for plugin commands; one more script in the bundle | **recommended** |
+
+CLI plugin support is its own slice after the server-side Calibre plugin (slice 13, Q40). Until it lands, the
+CLI keeps today's host-side Calibre code for a remote server, so that case never breaks; slice 13 replaces it with
+the CLI side of the same plugin.
 
 ## 9. Slice plan
 
@@ -928,29 +1249,29 @@ In addition, per slice:
 
 ### 9.2 Slices
 
-One subdomain per slice, bottom up, after the groundwork, the template and the two plugin slices. Sizes count the
-lines the slice moves or rewrites: S < 2 k, M 2–6 k, L 6–12 k, XL > 12 k. Each slice ends with its rows gone from the
-`ArchitectureSuite` exception list.
+Groundwork, the template, the two plugin slices; then the supporting areas and the engine **before** the domains
+that contribute to them; then one domain per slice, bottom up, each replacing the transition adapters with its own
+contributions. Sizes count the lines the slice moves or rewrites: S < 2 k, M 2–6 k, L 6–12 k, XL > 12 k. Each slice
+ends with its rows gone from the `ArchitectureSuite` exception list.
 
 | # | slice | scope | size | risk | the risk is … |
 |---|---|---|---|---|---|
-| 1 | **Groundwork** | `ContractSnapshotSuite`; `ArchitectureSuite` with the 121 known exceptions; generic newtype instances (`util.json`, `util.database`); the identifier newtypes in `values`; `Transactor`, `Clock`/`Environment`/`UserPaths` from `Main`; `Caller`; `@main def` entry points (#7908) and every reference; AGENTS.md rule 14, the subdomain table and the "adding an operation" steps rewritten for controllers | M | low | the generic givens' form (fallback in §4.4); the entry-point rename in scripts (the relink tests cover it) |
-| 2 | **Personal** (the template) | the four pilots' shape made exact (Clock, `Transactor`, newtypes, contract suites); `Markable` with its five implementers placed in their future packages; `ItemTitles`' joins replaced; per-user `Caller` | S (2 k) | low | the word search over marks (Q21); listing speed with batched `describe` at live volumes |
-| 3 | **Plugins I: fetchers and catalogues** | `upstreams`; SPI-1, 2, 3, 7; `plugins/fetchers`, `plugins/events`; host-supplied settings; `Builtin*`, `HostEventCatalogue`, `OaIndex`'s state go; the CORE quota behind SPI-2 | L (6 k) | high | identical requests in identical order (memo keys, landing pages, CORE pacing) and `events rederive` results; gated by recorded traffic and the fixture suites (`OaFetchSuite`, `PmcFetchSuite`, `LandingFetchSuite`, `EventImportSuite`, `PluginCatalogueSuite`) |
-| 4 | **Plugins II: media, gazetteers, ai-http** | SPI-4, 5, 6, 8, 10; `plugins/media`, `plugins/gazetteers`, `plugins/ai-http`; the media marker classes go; Wikidata pictures and depictions run through media's collection loop | L (6 k) | high | licences (M4), per-item roles, the agent loop's wire requests; gated by the media and importer fixture suites and by request bodies captured on a local stub of each AI API. The plugin report gains the three gazetteer plugins — the one intended snapshot change |
-| 5 | **Platform** | jobs and the `JobKinds` registry; identity with `AliasTables`; the maintenance lock; the work-list kernel (§6.2); the lint runner with `LintRules`; the plugin host glue; `util.ocr` split out | M (4 k + kind registrations across the code) | medium | every job kind re-registered; job detail rendering unchanged (snapshot of `job_status` output per kind) |
-| 6 | **Catalogue** | places (gazetteer, geocoder, site types, point areas, land, the gazetteer loop), periods, events with corrections and the event-catalogue import loop, evidence, map tiles with `MapLayer`, `PassageSource`; `PlaceId`, `EventId`, `Kilometres`, `Zoom`; `CatalogueState` | XL (13 k) | medium | `PlaceRepo` (1 710 lines) and tile timing (performance suite at live volumes) |
-| 7 | **Media** | assets, links, IIIF, figures, covers, the import loop and `LicencePolicy`; the shared `Licence` and `Attribution` introduced here | M (4.6 k) | medium | the licence classification is shared from now on; media's fixture suites are its oracle |
-| 8 | **Library** | sources, findings, citations, labels, search and query, acquisition (discovery, candidates, recheck moved out of `agents`, fetch chain, ACQUIRE list), ingest over `util.ocr`, Calibre; `SourceReferrer`; `Citekey`, `SourceUid`, `Doi`, `Year`, `Latitude`/`Longitude`, `Title`, … end to end; `LibraryState` | XL (13 k + 2 k of `Handlers`/`McpTools`) | high | the most used types; the search SQL must not change (a snapshot of the SQL the filter suite generates) |
-| 9 | **Research** | articles: versions, links, coverage, critique pairing, review state, prose lint, pages; `Slug` | L (5 k + its share of `Handlers`) | medium | the review state written by automation (contract suite) |
-| 10 | **Automation** | two deploys. 10a: agents (runs, steps, leases, chains, allowances, plan pools, toolbox, definitions), approvals, the review panel. 10b: pipelines, managers, autopilot, scheduler, goals, TASKS, LOG, activity. Every back door of §3.5 replaced by the owner's service | XL (30 k) | high | the largest area; the toolbox snapshot, the scripted-model suites (`agent-testkit`) and the manager DB suites are the oracle; the batch reads that replace managers' SQL measured at live volumes |
-| 11 | **Exchange** | bundle and merge (`MergePlanner`); the carried records read and written through each owner's service or a carried-records interface where a join is needed for speed | L (9.6 k) | medium | merge has the strongest suites in the repository; bundle round-trips of a restored `*_test` copy |
-| 12 | **Operations and closing** | backup, maintenance, settings, instance, basemap; `server.views`; `db` reduced to `util.database`; `Handlers`/`OpsHandlers` deleted; `core`'s logic off api records; `cli.<subdomain>` packages and typed client edges; web edges; ai-cli with SPI-9 (if Q5 says now); `ArchitectureSuite` with no exceptions left; AGENTS.md module section rewritten | XL (12 k) | medium | many moves of self-contained code |
+| 1 | **Groundwork** | `ContractSnapshotSuite`; `ArchitectureSuite` with its three rules and the known exceptions (264 references, 188 file-system uses in domains); generic newtype instances; the identifier newtypes in `values`; `Transactor`, `Clock`/`Environment`/`UserPaths` from `Main`; `Caller`; `@main def` entry points (#7908); AGENTS.md rule 14, the layout table and the "adding an operation" steps | M | low | the generic givens' form (fallback in §4.4); the entry-point rename in scripts |
+| 2 | **Personal** (the template) | the pilots' shape made exact; `Referable` in the shared kernel with its five implementers placed in their future packages; `ItemTitles`' joins replaced; per-user `Caller` | S (2 k) | low | the word search over marks (Q21); listing speed with batched `describe` at live volumes |
+| 3 | **Plugins I: fetchers and event catalogues** | `upstreams`; SPI-1, 2, 3, 7; `plugins/fetchers`, `plugins/events`; host-supplied settings; `Builtin*`, `HostEventCatalogue`, `OaIndex`'s state go | L (6 k) | high | identical requests in identical order and `events rederive` results (recorded traffic, the fixture suites) |
+| 4 | **Plugins II: media, gazetteers, AI over HTTP, Calibre and archive.org** | SPI-4, 5, 6, 8, 10, 11; `plugins/media`, `plugins/gazetteers`, `plugins/ai-http`, `plugins/calibre`; archive.org's search and import as a read-only `SourceCollection` in `plugins/fetchers`; the server runs Calibre (§8.5) and the CLI's `calibre` commands become HTTP clients for a server on the same machine | L (8 k) | high | licences, roles, the agent loop's wire requests; Calibre's output snapshots over a fixture library. The plugin report gains the gazetteer and Calibre plugins — the intended snapshot changes |
+| 5 | **Supporting areas** | `util.storage` (locations, stores, scratch; the file code of the supporting areas behind it), `util.jobs` with `JobKinds`, `util.identity` with `AliasTables`, `util.plugins`, `util.settings`, `util.basemap`, `util.ocr`, `util.process`; today's per-kind code registered through adapters | L (8 k, mostly moves) | medium | every job kind and alias table re-registered; file layout unchanged (a snapshot of the data directory's tree after the smoke run) |
+| 6 | **Data management** | `util.data`: the registry, backup, maintenance with `WriteGate`, checks, export, the bundle and merge mechanism; today's per-kind code registered through adapters | L (12 k) | high | bundle round-trips and merges of a restored `*_test` copy, byte for byte; backups restore |
+| 7 | **The automation engine** | `WorkflowDefinition`, `ToolContribution`, `ManagerKind`, `ObjectiveProgress`; runs recorded through `util.jobs`; goals as objectives; work lists; the definitions generator fed by contributions; today's pipelines and tools registered through adapters | XL (25 k, mostly moves) | high | the toolbox snapshot, the scripted-model suites and the manager DB suites are the oracle |
+| 8 | **Catalogue** | places, periods, events with corrections and the event-catalogue import loop, evidence, map tiles with `MapLayer`, `PassageSource`; its data contributions (carried kinds, merge rules, checks, caches, the gazetteer extracts store) | XL (14 k) | medium | `PlaceRepo` and tile timing (performance suite at live volumes) |
+| 9 | **Media** | assets, links, IIIF, figures, covers, the collection loop; the shared `Licence` and `Attribution`; its data contributions and stores | M (5 k) | medium | licence classification shared from here on |
+| 10 | **Library** | sources, findings, citations, labels, search and query, acquisition, ingest over `util.ocr` and its stores, collections (Calibre and archive.org running), its workflows, tools and the watch manager kind, its data contributions (`SourceMatcher`, the sources' merge rules); `SourceReferrer` | XL (17 k + its share of `Handlers`) | high | the most used types; the search SQL must not change (a snapshot of the SQL the filter suite generates) |
+| 11 | **Research** | articles; its workflows (review panel and ledger, compile, propose, infer-filter), tools and the review manager kind; its data contributions | L (10 k + its share of `Handlers`) | medium | the review panel moves whole; its suites are the oracle |
+| 12 | **Closing** | `server.views`, `server.instance` over the diagnostics; `db` reduced to `util.database`; `Handlers`/`OpsHandlers` deleted; `cli.<domain>` packages; web edges; ai-cli with SPI-9 (Q5); every transition adapter gone; `ArchitectureSuite` with no exceptions; AGENTS.md's module section rewritten | L | medium | many moves of self-contained code |
+| 13 | **CLI plugins** (later, §8.6) | `PluginInfo.runsOn`, the CLI's plugin context, `histmersion-cli-jvm`, `histmersion plugin` for CLI plugins; Calibre's CLI side replaces the CLI's host-side code | M | medium | a second plugin context; the JVM hand-off's start-up time |
 
-Order: the plugins go **before** the subdomains they live in, so their parsers move once, into their modules. The
-subdomains go bottom up, so each one moves onto lower subdomains that already have their final packages and
-services. Each slice is deployed (bundle, self-check, smoke) before the next starts, and records its as-built
-section in this document.
+Each slice is deployed (bundle, self-check, smoke) before the next starts, and records its as-built section in this
+document.
 
 ## 10. What this design does not change
 
@@ -961,34 +1282,50 @@ section in this document.
 
 ## 11. Open questions
 
-Q1–Q16 are from the first draft, updated where the revision touched them. Q17–Q27 are new.
+Q1–Q16 are from the first draft; Q17–Q27 from the second; Q28–Q42 from the third, which also updated Q4, Q5, Q12, Q15,
+Q16, Q18, Q22 and Q24. Decided or superseded: Q17, Q20, Q25, Q27.
 
 | # | question | recommendation |
 |---|---|---|
 | Q1 | Parse raw inputs in the **controllers** (error texts unchanged; input records carry `Pure` "raw" newtypes) or in the **decoders** (constrained newtypes in input records, plus a decode-failure handler answering `ApiError(message)`, which changes some 400 texts)? | Controllers now; decoders as a separate, announced change later |
 | Q2 | Entry-point classes: keep the names (`@main def Main(args: String*)` keeps `com.histmersion.server.Main`) or use Scala-style names (`histmersionServer`, `histmersionCli`, `pluginTool`, …) and update every reference (§5.5)? | Scala-style names; every reference is in this repo and each kit carries its own `main-class` |
 | Q3 | The clock: `java.time.Clock` everywhere, or the pilots' `() => Instant`? | `java.time.Clock`: it also serves `LocalDate.now(clock)`, and `Clock.fixed` serves tests |
-| Q4 | Plugin modules: one per family (6 + vaults + the `upstreams` library) or one per plugin (29)? | Families: 29 sbt projects would add build time for no isolation the switch does not already give |
-| Q5 | ai-cli (`claude-code`, `codex`, `opencode`): build the `AiRuntime` SPI (SPI-9) and move them in slice 12, or keep them as the one host-owned exception? The measured coupling is 25 host types and ~100 call sites | Move them, last: design SPI-9 in slice 10a, move in slice 12; generator, trees, run tokens and plan-pool storage stay automation's. If slice 10a shows SPI-9 needs more than the members sketched, come back with numbers |
+| Q4 | Plugin modules: one per family (7 + vaults + the `upstreams` library) or one per plugin (31)? | Families: 31 sbt projects would add build time for no isolation the switch does not already give |
+| Q5 | ai-cli (`claude-code`, `codex`, `opencode`): build the `AiRuntime` SPI (SPI-9) and move them in slice 12, or keep them as the one host-owned exception? The measured coupling is 25 host types and ~100 call sites | Move them, last: design SPI-9 in slice 7 (the engine), move in slice 12; the generator, trees, run tokens and plan-pool storage stay the engine's |
 | Q6 | One shared `upstreams` library for the host and the plugins, or a copy of each parser on each side? | One library: discovery and the fetchers parse the same OpenAlex, Crossref and CORE records |
 | Q7 | Show the mapped host settings in a first-party plugin's report? | No: the report lists the plugin's own block, as today (byte-identical) |
 | Q8 | Flags: keep `Boolean` parameters (named) or newtype them too? | Keep `Boolean`; replace a Boolean with an enum only where two or more flags form a mode (`dryRun`/`apply`/`force`) |
 | Q9 | Keep `core` as a separate pure module, or fold it into the server? | Keep it: no database, fast tests, and plugin-host depends on it; it also carries the shared kernel (`Licence`, `Attribution`) |
 | Q10 | Goal slugs are unchecked today (all 214 live slugs pass the article rule). Apply `Slug`'s rule to `GoalSlug`? | Yes; a new goal with an invalid slug is then refused with the article slug's message |
 | Q11 | Reading a constrained newtype from the database: checked (fail with the column and value) or unchecked? | Checked; live data has 0 violations, and a violation should be loud |
-| Q12 | Migrations: one directory in the server (unchanged files) or split per subdomain? | One directory, with the owner of each table recorded in §3.1; splitting would mean editing applied migrations |
+| Q12 | Migrations: one directory in the server (unchanged files) or split per domain? | One directory, with the owner of each table recorded in §3.1; splitting would mean editing applied migrations |
 | Q13 | Media allowlists: built-ins check `media.<provider>.licences`, plugins `media.collections.licences` / `per-collection.<name>`. Keep both key families, or fold the built-ins' keys into `per-collection.<name>`? | Keep both for this step (no key changes), as a `LicencePolicy` over the shared `LicenceFamily`; folding them is a separate settings change |
 | Q14 | Markdown rendering: a `MarkdownRender[A]` type class with instances on the api types' companions, or one renderer object per feature? | The type class: it is "a function about a type", and the CLI and MCP share it |
-| Q15 | Plugins before the subdomains they live in (slices 3–4 before 5–12)? | Yes, so plugin code moves once |
-| Q16 | `cli` (76 files, flat) into `cli.<subdomain>` packages in slice 12, or later? | Slice 12: the move is cheap and the CLI help snapshot guards it |
+| Q15 | Plugins before the domains they live in (slices 3–4 before 8–11)? | Yes, so plugin code moves once |
+| Q16 | `cli` (76 files, flat) into `cli.<domain>` packages in slice 12, or later? | Slice 12: the move is cheap and the CLI help snapshot guards it |
 | Q17 | The name of the places/periods/events subdomain | **Decided (user, 2026-10-30): `catalogue`.** `atlas` and `gazetteer` cover places only; `chronotope` is misleading. |
-| Q18 | Enforce the direction with `ArchitectureSuite` (a test over imports) or with one sbt project per subdomain (the compiler, as `% Runtime` does for plugins)? | The test during the slices; split `server` into subdomain projects after slice 12 if the build-speed measurement shows a gain — by then it is mechanical |
+| Q18 | Enforce the direction (and the file-system and process rules) with `ArchitectureSuite`, or with one sbt project per domain and supporting area (the compiler, as `% Runtime` does for plugins)? | The test during the slices; split `server` into projects after slice 12 if the build-speed measurement shows a gain — by then it is mechanical |
 | Q19 | The evidence that attests data points (attestations, event link candidates and checks, leads) in `catalogue` or in `library`? | `catalogue`: events use it 34 times and it uses library types twice; in the library it was the largest source of upward references (46) |
-| Q20 | A `platform` subdomain at the bottom (jobs, identity, maintenance lock, work-list kernel, lint runner, plugin host), or those pieces in the shared kernel `com.histmersion.domain`? | `platform`: they own tables and services; the shared kernel stays types only |
+| Q20 | A `platform` subdomain at the bottom (jobs, identity, maintenance lock, work-list kernel, lint runner, plugin host)? | **Superseded (user, 2026-10-31):** platform dissolves — jobs, identity, plugins into supporting areas (Q29), the lock and the lint runner into `util.data`, the work-list kernel into the engine |
 | Q21 | personal **pulls** (describe at read time; rename, merge and delete followed through uids, uid redirects and tombstones) or owners **push** changes to personal? Pull means a person's word search over marks matches the stored label, refreshed when the item is next shown | Pull: no subdomain has to know personal exists, and the stored label is already a column |
-| Q22 | Pages that join several subdomains (source, place and event detail, About, Activity): `server.views` above every subdomain, or the controllers of the highest subdomain involved? | `server.views`: it keeps every subdomain's controllers to its own data, and it is where the direction rule allows everything |
+| Q22 | Pages that join several domains (source, place and event detail, About, Activity, the 360° data view): `server.views` above every domain, or the controllers of the highest domain involved? | `server.views`: it keeps every domain's controllers to its own data, and the direction rule allows it everything |
 | Q23 | Gazetteer importers: Cliopatria, AWMC and ChronOntology become plugins (SPI-10, 329 lines, three fixture suites), while the bundled extracts (`GazetteerLoad`), PeriodO presets and Natural Earth land stay in `catalogue`? | Yes: the three read an upstream a user may switch off or replace; the others read data shipped with the install |
-| Q24 | Goals: in `automation` (what the workflows act towards) or in `research` (the person's research goals)? Measured: goals use agents 12, managers 4, autopilot 4; are used by agents 15, managers 12, pipelines 9, autopilot 6, bundle 10, personal 2; co-change goals↔managers 0.22, agents 0.18, autopilot 0.18, approvals 0.18. In `research`, about 20 references would point upward unless the stages, plans and schedules moved out of the goal into automation records that refer to it | `automation` for now: the goal's stages, plans and schedules are workflow state. Revisit when goals gain content of their own (a written aim, its results); then the goal itself moves to `research` and automation keeps its plans and schedules about it |
-| Q25 | `automation` is 33 k lines (agents alone 14 k). One subdomain, or two (the agent runtime vs the research workflows)? | One: its features share one vocabulary and change together; its slice deploys in two steps |
+| Q24 | Goals: the engine's objectives (`automation.goals`; stage rules that name articles and sources contributed through `ObjectiveProgress`) or research's (the person's research goals, with the engine scheduling towards them through an interface)? Measured with the engine at the bottom: 186 upward references with goals in the engine, 226 with goals in research; goals use agents 12, worklists 5, managers 4, autopilot 4 and are used by workflows 15, agents 13, managers 7, autopilot 6, scheduler 5; co-change goals↔managers 0.22, agents 0.18, autopilot 0.18 | The engine's objectives now: their stages, plans, schedules, focus and links are workflow state. Revisit when goals gain content of their own (a written aim, its findings); then that content moves to research and the engine keeps an `Objective` reference to it |
+| Q25 | `automation` is 33 k lines (agents alone 14 k). One subdomain, or two? | **Answered by the engine design (2026-10-31):** about 17–19 k lines remain once the article- and source-specific blocks (up to 5.4 k) go to their domains and the AI providers (3 k) become plugins |
 | Q26 | The shared `Licence`: classify stored strings on read (no migration), or store the family in new columns? | Classify on read: `classify` is pure and fast, and no column changes |
-| Q27 | `exchange` reads and writes every carried table in bulk with direct SQL today (`BundleRepo` 1 015 lines, `BundleImport` 1 151). Through each owner's service, or through a `Carried` interface each owner's repository implements (export rows, import rows, tombstones) that exchange orchestrates in one transaction? | `Carried`: bulk speed and one transaction are what a bundle needs; the SQL for each table then lives with its owner |
+| Q27 | `exchange` reads and writes every carried table in bulk with direct SQL. Through each owner's service, or a `Carried` interface the owners implement? | **Decided (user, 2026-10-31):** data management is contributed by each domain and run by `util.data`; `Carried` becomes `DataContribution.carried`, merge rules `DataContribution.mergeRules` |
+| Q28 | Data management and file access: one supporting area or two, and their names (`util.data` + `util.storage`, or one `util.data` with a `storage` part)? | Two: `util.storage` (locations, stores, scratch files) is used by everything, data management included; `util.data` (registry, backup, bundle, merge, maintenance, checks, export, diagnostics) builds on it and on `util.database` |
+| Q29 | Jobs and record identity (uids, redirects, tombstones, aliases): supporting areas (`util.jobs`, `util.identity`) or a domain layer? | Supporting areas: they hold tables but no research meaning, every domain uses them, and their only domain knowledge (job details, alias tables) becomes contributions (`JobKinds`, `AliasTables`) |
+| Q30 | `ui_seen` (notices a person has seen): `server.instance` or `personal`? | `personal`: it is per person once #7843 lands; the instance pages read it through personal's service |
+| Q31 | Agent tools: contributed by the domain that owns the data (`ToolContribution`), or kept in the engine's toolbox? | Contributed: each tool calls its owner's service, with the step's grant; the engine keeps the toolbox mechanism (names, grants, result caps, MCP exposure) |
+| Q32 | Managers and hints: mechanism in the engine, manager kinds (review, watch) contributed by research and library? | Yes: `ManagerSupervisor` is 76 % kind-specific by the block scan; the loop, holds, retries, cron, approvals settlement and hints stay the engine's |
+| Q33 | The agent definitions generator (Claude Code, Codex, opencode trees; `just plugin`): engine or contributed? | The engine's generator, fed by the canonical skills and agents plus the roles and tools the domains contribute |
+| Q34 | During the transition, the supporting-area and engine slices register today's per-kind code through thin adapters, which each domain's slice replaces? | Yes: it keeps every slice deployable and the snapshots unchanged; slice 12 checks no adapter is left |
+| Q35 | The 360° data view: a new web page in this refactor, or only the registry and today's endpoints as views over it? | Only the registry and today's endpoints, MCP tools and CLI commands (byte-identical); the combined page is later UI work |
+| Q36 | Store locations: derive every `Location` from today's config keys (data directory, originals, spool, basemap, backups, …), adding a key only where a location has none? | Yes; a new key gets today's path as its default, so no install changes |
+| Q37 | Do the supporting areas also reach files only through `util.storage` (294 uses today), or only the domains (188)? | All of them: one place sees every file, so sizes, cleanup and the 360° view are complete |
+| Q38 | Stand-alone tools (`pluginTool`, `generateApiIndex`, `generatePlugin`) and the composition root keep paths at their edge? | Yes: they are entry points that build or receive locations; the rule binds the server's domains and supporting areas |
+| Q39 | Name the plugin kind for Calibre generally — `SourceCollection`, "a source of sources" (Calibre, archive.org now; a folder of PDFs, Zotero later) — rather than a Calibre-specific kind? | Yes: the library's running of it (search, import, gaps, sync, audit, link) is the same for every collection |
+| Q40 | CLI plugins for a server on another machine: the native CLI hands plugin commands to a JVM-mode CLI, in a later slice 13? | Yes: a relink of the CLI costs minutes and gigabytes per plugin change; a JVM-only CLI slows every command; the hand-off costs about a second only for plugin commands |
+| Q41 | Calibre write-back (adding missing sources, enriching Calibre's records): off unless configured? | Yes (`write-back = false` by default); writes are refused while the Calibre GUI holds the library, with today's message |
+| Q42 | Which further integrations become plugins in this refactor (§8.5)? | Calibre and archive.org's collection now (slice 4); discovery indexes, Retraction Watch, citation export, the mirror format, base-map sources, backup targets and converter backends later, each when it gets a second implementation or a user asks |
