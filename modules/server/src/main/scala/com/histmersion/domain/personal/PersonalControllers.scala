@@ -1,5 +1,7 @@
 package com.histmersion.domain.personal
 
+import com.histmersion.values.UserId
+
 import com.histmersion.api.{ApiError, Write}
 import com.histmersion.api.personal.*
 import com.histmersion.server.Maintenance

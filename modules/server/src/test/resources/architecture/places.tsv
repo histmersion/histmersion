@@ -1223,3 +1223,4 @@ server:server/plugins/LegacyPlugins.scala	util.plugins
 server:server/plugins/PluginSetResource.scala	util.plugins
 server:server/plugins/PluginTool.scala	util.plugins
 server:server/plugins/Plugins.scala	util.plugins
+config:config/NewtypeReaders.scala	config

@@ -1,5 +1,7 @@
 package com.histmersion.domain.personal
 
+import com.histmersion.values.UserId
+
 import com.histmersion.api.personal.*
 import com.histmersion.db.{Param, Sql, given}
 import com.histmersion.domain.personal.ItemTitles.{iso, joins, key, title}

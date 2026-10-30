@@ -16,9 +16,10 @@ import scala.jdk.CollectionConverters.*
   *   3. repository — a `…Repo` object named outside its feature.
   *
   * A file's place is its row in `architecture/places.tsv`, the design's table of where each file moves, while it is not
-  * there yet; then its package (`com.histmersion.domain.<domain>.<feature>`, `com.histmersion.util.<area>`). The violations that exist today are listed in `architecture/exceptions.tsv`; the list is exact both ways, so
-  * a new violation fails and so does a row nothing violates any more. Each slice of the refactor removes rows and adds
-  * none; `HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites the list from the sources.
+  * there yet; then its package (`com.histmersion.domain.<domain>.<feature>`, `com.histmersion.util.<area>`). The
+  * violations that exist today are listed in `architecture/exceptions.tsv`; the list is exact both ways, so a new
+  * violation fails and so does a row nothing violates any more. Each slice of the refactor removes rows and adds none;
+  * `HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites the list from the sources.
   */
 class ArchitectureSuite extends munit.FunSuite:
   import ArchitectureSuite.*
@@ -110,8 +111,7 @@ object ArchitectureSuite:
       var i = 0
       while i < n do
         val c = text(i)
-        if text.startsWith("//", i) then
-          while i < n && text(i) != '\n' do { out += ' '; i += 1 }
+        if text.startsWith("//", i) then while i < n && text(i) != '\n' do { out += ' '; i += 1 }
         else if text.startsWith("/*", i) then
           var depth = 0
           while i < n && (depth > 0 || text.startsWith("/*", i)) do
@@ -255,7 +255,9 @@ object ArchitectureSuite:
           else
             FileSystem.flatMap { (kind, re) =>
               val hits = re.findAllMatchIn(s.code).toList
-              hits.headOption.map(h => Violation("filesystem", s.key, kind, hits.size, s"${s.key}:${s.lineOf(h.start)}"))
+              hits.headOption.map(h =>
+                Violation("filesystem", s.key, kind, hits.size, s"${s.key}:${s.lineOf(h.start)}")
+              )
             }
         val processes =
           if l == "util.process" then Nil

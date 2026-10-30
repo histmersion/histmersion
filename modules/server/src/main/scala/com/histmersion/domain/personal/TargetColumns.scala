@@ -1,5 +1,7 @@
 package com.histmersion.domain.personal
 
+import com.histmersion.values.UserId
+
 import com.histmersion.api.personal.Target
 
 /** A target as the tables' columns hold it: plain values, which the database driver binds. */
