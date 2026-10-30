@@ -82,6 +82,9 @@ export async function newPerfPage(browser, origin, viewport = { width: 1440, hei
   await page.route('**/*', route => {
     const req = route.request(), u = new URL(req.url());
     if (u.origin !== origin) return route.abort();
+    // reading an item notes it as opened (Library's "Recently opened"): the one write that reading makes, refused
+    // here without counting, so the baseline stays read-only against a live server
+    if (req.method() === 'POST' && u.pathname === '/api/reading/opened') return route.abort();
     if (req.method() !== 'GET' && req.method() !== 'HEAD') { blocked.push(`${req.method()} ${u.pathname}`); return route.abort(); }
     if (bundle && u.pathname === '/web/app.bundle.js') return route.fulfill({ body: bundle, contentType: 'text/javascript' });
     return route.continue();

@@ -1622,6 +1622,9 @@ img.is-zoomable { cursor:zoom-in; }
 [data-layout="narrow"][data-tablet] .mb-search { flex:0 1 420px; width:auto; }
 [data-layout="narrow"][data-tablet] .mb-timeline { max-width:none; margin-left:auto; }
 [data-layout="narrow"][data-tablet] .tl-ctl { row-gap:0; }
+/* the span keeps the middle, but the two ends take what they need (the timeline's "⋯" made the end group the
+   wider, and two equal outer columns no longer fitted a 768 px tablet) */
+[data-layout="narrow"][data-tablet] .tl-ctl { grid-template-columns:auto minmax(0, 1fr) auto; }
 [data-layout="narrow"][data-tablet] .tl-ctl-start { grid-column:auto; }
 [data-layout="narrow"][data-tablet] .tl-presets-dropdown { width:min(420px, calc(100vw - 2 * var(--pad))); }
 [data-layout="narrow"][data-tablet] .map-options { left:auto; right:var(--pad); width:min(340px, calc(100vw - 2 * var(--pad))); }
