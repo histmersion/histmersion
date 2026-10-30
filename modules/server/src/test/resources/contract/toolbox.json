@@ -1,0 +1,1661 @@
+{
+  "tools" : {
+    "get_source" : {
+      "name" : "get_source",
+      "description" : "Read one source by citekey: its summary, findings and notes, or the part `section` names.",
+      "inputSchema" : {
+        "type" : "object",
+        "required" : [
+          "citekey"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "section" : {
+            "description" : "summary|findings|notes|toc|body|all (default: summary+findings+notes)",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "heading" : {
+            "description" : "Only the body under this heading (prefix match)",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "offset" : {
+            "description" : "Body slice start (a character offset, e.g. from passages)",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int32"
+          },
+          "chars" : {
+            "description" : "Body slice length",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int32"
+          }
+        }
+      }
+    },
+    "passages" : {
+      "name" : "passages",
+      "description" : "Find a word or quotation in ONE source's full text: the passages around each match (in **bold**), each with its body `offset` (get_source reads on from it) and heading. Literal, case- and accent-insensitive.",
+      "inputSchema" : {
+        "type" : "object",
+        "required" : [
+          "citekey",
+          "query"
+        ],
+        "properties" : {
+          "citekey" : {
+            "description" : "The source's citekey (an old, renamed one works too)",
+            "type" : "string"
+          },
+          "query" : {
+            "description" : "The text to find, matched literally (case- and accent-insensitive); a regex when regex=true",
+            "type" : "string"
+          },
+          "regex" : {
+            "description" : "Treat query as a Java regular expression (default false)",
+            "type" : "boolean"
+          },
+          "limit" : {
+            "description" : "Passages to show (default 10, max 50)",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int32"
+          },
+          "context" : {
+            "description" : "Characters of context around each match (default 600, max 3000)",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int32"
+          }
+        }
+      }
+    },
+    "search" : {
+      "name" : "search",
+      "description" : "Search the corpus: sources, compact, with the findings that matched.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "query" : {
+            "description" : "Free text: words AND-ed, \"a phrase\", -word, or",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "topics" : {
+            "description" : "Every one required",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "tags" : {
+            "description" : "Every one required",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "authors" : {
+            "description" : "Any one, a substring of an author's name",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "status" : {
+            "description" : "Any of foundational|current|contested|superseded|debunked|retracted|unassessed",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "from" : {
+            "description" : "Period start, a signed year (BCE negative)",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int64"
+          },
+          "to" : {
+            "description" : "Period end, a signed year",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int64"
+          },
+          "sort" : {
+            "description" : "relevance|cited|period|year|oldest|title",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "limit" : {
+            "description" : "Results per page",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int32"
+          },
+          "offset" : {
+            "description" : "The next page's offset, from the listing's footer",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int32"
+          }
+        }
+      }
+    },
+    "facets" : {
+      "name" : "facets",
+      "description" : "The existing values of one field, with source counts — pick from them instead of inventing new ones.",
+      "inputSchema" : {
+        "type" : "object",
+        "required" : [
+          "field"
+        ],
+        "properties" : {
+          "field" : {
+            "description" : "tags|authors|places|topics|status",
+            "type" : "string"
+          },
+          "prefix" : {
+            "description" : "Only values starting with this",
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "neighbors" : {
+      "name" : "neighbors",
+      "description" : "A source's typed edges in and out, with each neighbour's status. No edge is NOT evidence of agreement.",
+      "inputSchema" : {
+        "type" : "object",
+        "required" : [
+          "citekey"
+        ],
+        "properties" : {
+          "citekey" : {
+            "description" : "The source's citekey",
+            "type" : "string"
+          },
+          "kinds" : {
+            "description" : "Filter to these edge kinds only: references|challenges|refutes|updates|superseded_by",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      }
+    },
+    "query" : {
+      "name" : "query",
+      "description" : "One read-only SQL SELECT on the corpus database (Postgres) — e.g. every cited source's status at once.",
+      "inputSchema" : {
+        "type" : "object",
+        "required" : [
+          "sql"
+        ],
+        "properties" : {
+          "sql" : {
+            "description" : "One read-only SQL statement (Postgres refuses writes)",
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "get_article" : {
+      "name" : "get_article",
+      "description" : "One compiled article by slug: body, summary, the generated coverage sections, the sources it cites (title, year, status), backlinks. `parts` = comma-separated body,summary,coverage,cited,backlinks.",
+      "inputSchema" : {
+        "type" : "object",
+        "required" : [
+          "slug"
+        ],
+        "properties" : {
+          "slug" : {
+            "description" : "The article's slug (lowercase, e.g. steppe_hypothesis)",
+            "type" : "string"
+          },
+          "parts" : {
+            "description" : "Comma-separated parts to return: body,summary,coverage,cited,backlinks (default: all)",
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "followups" : {
+      "name" : "followups",
+      "description" : "The papers citing a source, each with its citation intents and a proposed edge kind — critiques the article may ignore.",
+      "inputSchema" : {
+        "type" : "object",
+        "required" : [
+          "id"
+        ],
+        "properties" : {
+          "id" : {
+            "description" : "A citekey, DOI or arxiv:<id>",
+            "type" : "string"
+          },
+          "since" : {
+            "description" : "Only papers published from this year on",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int32"
+          },
+          "limit" : {
+            "description" : "At most this many citing papers",
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int32"
+          }
+        }
+      }
+    },
+    "check_edits" : {
+      "name" : "check_edits",
+      "description" : "Dry-run edits (or a whole draft `body`) against the stored article: which edits apply, and what the review checks find in the result. Nothing is written.",
+      "inputSchema" : {
+        "$defs" : {
+          "EditAnswer" : {
+            "description" : "One change to the article body",
+            "type" : "object",
+            "required" : [
+              "op",
+              "anchor"
+            ],
+            "properties" : {
+              "op" : {
+                "description" : "replace | insertAfter | insertBefore | delete",
+                "type" : "string"
+              },
+              "anchor" : {
+                "description" : "Text copied EXACTLY from the current body (a sentence, or enough words to occur only once); edits apply in order, so an anchor is looked up in the text the earlier edits produced",
+                "type" : "string"
+              },
+              "text" : {
+                "description" : "replace: the new text; insertAfter/insertBefore: the text to insert, verbatim (start it with a blank line to add a paragraph); delete: null",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "type" : "object",
+        "required" : [
+          "slug"
+        ],
+        "properties" : {
+          "slug" : {
+            "description" : "The article's slug",
+            "type" : "string"
+          },
+          "edits" : {
+            "description" : "Edits to the current stored body, applied in order",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/EditAnswer"
+            }
+          },
+          "body" : {
+            "description" : "Instead of edits: a whole draft body",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "kind" : {
+            "description" : "Check the section set of this kind instead of the article's (index = none, for a fragment to be appended)",
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "article_coverage" : {
+      "name" : "article_coverage",
+      "description" : "An article's recorded filter: its sources, which are cited, each other one's stored reason, the drift (sources with no reason), and the generated Not used list and Method note.",
+      "inputSchema" : {
+        "type" : "object",
+        "required" : [
+          "slug"
+        ],
+        "properties" : {
+          "slug" : {
+            "description" : "The article's slug",
+            "type" : "string"
+          }
+        }
+      }
+    }
+  },
+  "roles" : {
+    "acquisition-ranker" : {
+      "tools" : [
+      ],
+      "answer" : {
+        "$defs" : {
+          "Pick" : {
+            "title" : "Pick",
+            "type" : "object",
+            "required" : [
+              "doi",
+              "why"
+            ],
+            "properties" : {
+              "doi" : {
+                "description" : "The DOI of a candidate, exactly as listed",
+                "type" : "string"
+              },
+              "why" : {
+                "description" : "Why it belongs to the goal, in one sentence",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "Ranking",
+        "type" : "object",
+        "properties" : {
+          "picks" : {
+            "description" : "The candidates that belong to the goal, most important first; leave out the rest",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/Pick"
+            }
+          }
+        }
+      }
+    },
+    "article-cold-reader" : {
+      "tools" : [
+      ],
+      "answer" : {
+        "$defs" : {
+          "ReaderFindingAnswer" : {
+            "title" : "ReaderFindingAnswer",
+            "type" : "object",
+            "required" : [
+              "severity",
+              "kind",
+              "where",
+              "quote",
+              "problem",
+              "fix"
+            ],
+            "properties" : {
+              "severity" : {
+                "description" : "major | minor — by the severity rules of your instructions",
+                "type" : "string"
+              },
+              "kind" : {
+                "description" : "The kind your instructions name (e.g. term, opaque, why, lost)",
+                "type" : "string"
+              },
+              "where" : {
+                "description" : "The section heading, or the first 8 words of the passage",
+                "type" : "string"
+              },
+              "quote" : {
+                "description" : "The article's words the finding is about, copied exactly",
+                "type" : "string"
+              },
+              "problem" : {
+                "description" : "What is wrong, in one or two sentences",
+                "type" : "string"
+              },
+              "fix" : {
+                "description" : "What would fix it",
+                "type" : "string"
+              }
+            }
+          },
+          "CheckAnswer" : {
+            "title" : "CheckAnswer",
+            "type" : "object",
+            "required" : [
+              "id",
+              "fixed",
+              "quote",
+              "note"
+            ],
+            "properties" : {
+              "id" : {
+                "description" : "The ledger id of your earlier finding (R4, C2, S7…)",
+                "type" : "string"
+              },
+              "fixed" : {
+                "description" : "true when the current article no longer has the problem",
+                "type" : "boolean"
+              },
+              "quote" : {
+                "description" : "The current article's words that show it — the fixed text, or the problem still there — copied exactly; empty only when the passage was deleted",
+                "type" : "string"
+              },
+              "note" : {
+                "description" : "One sentence: what changed, or why it is not fixed (needed when not fixed)",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "ColdReaderAnswer",
+        "type" : "object",
+        "required" : [
+          "verdict",
+          "explainBack",
+          "termsUndefined",
+          "opaqueSentences"
+        ],
+        "properties" : {
+          "verdict" : {
+            "description" : "PASS | MINOR | MAJOR — the worst of your findings",
+            "type" : "string"
+          },
+          "explainBack" : {
+            "description" : "Five plain sentences: the question, the answer, who disagrees with whom, what is open",
+            "type" : "string"
+          },
+          "emptySlots" : {
+            "description" : "The slot names you could not fill from the text; [] when all four are filled",
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [
+                "question",
+                "answer",
+                "disagreement",
+                "open"
+              ]
+            }
+          },
+          "findings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/ReaderFindingAnswer"
+            }
+          },
+          "termsUndefined" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "opaqueSentences" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lostAt" : {
+            "description" : "The section where you stopped following; null if you never did",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "checks" : {
+            "description" : "One check per earlier finding of yours that the review ledger lists as open (empty when it lists none)",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/CheckAnswer"
+            }
+          }
+        }
+      }
+    },
+    "article-fixer" : {
+      "tools" : [
+        "get_source",
+        "passages",
+        "neighbors",
+        "search",
+        "query",
+        "check_edits"
+      ],
+      "answer" : {
+        "$defs" : {
+          "EditAnswer" : {
+            "title" : "EditAnswer",
+            "description" : "One change to the article body",
+            "type" : "object",
+            "required" : [
+              "op",
+              "anchor"
+            ],
+            "properties" : {
+              "op" : {
+                "description" : "replace | insertAfter | insertBefore | delete",
+                "type" : "string"
+              },
+              "anchor" : {
+                "description" : "Text copied EXACTLY from the current body (a sentence, or enough words to occur only once); edits apply in order, so an anchor is looked up in the text the earlier edits produced",
+                "type" : "string"
+              },
+              "text" : {
+                "description" : "replace: the new text; insertAfter/insertBefore: the text to insert, verbatim (start it with a blank line to add a paragraph); delete: null",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "RejectionAnswer" : {
+            "title" : "RejectionAnswer",
+            "type" : "object",
+            "required" : [
+              "id",
+              "reason",
+              "citekey",
+              "quote"
+            ],
+            "properties" : {
+              "id" : {
+                "description" : "The id of the finding you reject (R2, S1…)",
+                "type" : "string"
+              },
+              "reason" : {
+                "type" : "string"
+              },
+              "citekey" : {
+                "description" : "The source whose record contradicts the finding",
+                "type" : "string"
+              },
+              "quote" : {
+                "description" : "The sentence of that record that contradicts it, copied EXACTLY (from get_source)",
+                "type" : "string"
+              }
+            }
+          },
+          "CoverageReason" : {
+            "title" : "CoverageReason",
+            "description" : "Why the article does not cite one source its filter returns",
+            "type" : "object",
+            "required" : [
+              "citekey",
+              "reason"
+            ],
+            "properties" : {
+              "citekey" : {
+                "description" : "The source's citekey",
+                "type" : "string"
+              },
+              "reason" : {
+                "description" : "One plain sentence: why it is left out (wrong region, period or sub-problem; no finding on the question). Empty removes it",
+                "type" : "string"
+              }
+            }
+          },
+          "WontFixAnswer" : {
+            "title" : "WontFixAnswer",
+            "type" : "object",
+            "required" : [
+              "id",
+              "reason"
+            ],
+            "properties" : {
+              "id" : {
+                "description" : "The id of the finding you decline",
+                "type" : "string"
+              },
+              "reason" : {
+                "description" : "Why, in one sentence",
+                "type" : "string"
+              }
+            }
+          },
+          "SetAsideAnswer" : {
+            "title" : "SetAsideAnswer",
+            "type" : "object",
+            "required" : [
+              "id",
+              "reason"
+            ],
+            "properties" : {
+              "id" : {
+                "description" : "The id of the missing-critique finding; empty for a checklist pair no finding names (one your edits brought in)",
+                "type" : "string"
+              },
+              "pair" : {
+                "description" : "The pair, as src>dst — null to use the one the finding names",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "reason" : {
+                "description" : "One sentence, after reading both records: what the article cites the source for, and why the critique does not touch it",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "FixerAnswer",
+        "type" : "object",
+        "required" : [
+          "notes"
+        ],
+        "properties" : {
+          "edits" : {
+            "description" : "The changes to the article, in order, each anchored on text copied EXACTLY from the body — small and local, never the whole article; code applies them",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/EditAnswer"
+            }
+          },
+          "applied" : {
+            "description" : "Ids of the findings you applied",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "rejected" : {
+            "description" : "Findings you reject, each with the record's contradicting sentence",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/RejectionAnswer"
+            }
+          },
+          "unresolvedMoved" : {
+            "description" : "Claims you moved to the unresolved section",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "notes" : {
+            "description" : "What the next review round should know",
+            "type" : "string"
+          },
+          "reasons" : {
+            "description" : "Why the article leaves out a source its filter returns, one per source (the generated Not used list shows them); an empty reason removes one. Only for sources of the filter the article does not cite",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/CoverageReason"
+            }
+          },
+          "wontFix" : {
+            "description" : "Findings you decline, with the reason: a MINOR, or a coverage MAJOR when no filter is recorded",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/WontFixAnswer"
+            }
+          },
+          "setAside" : {
+            "description" : "missing-critique findings you answer by setting the critique aside as not material — the reason is stored with the article and closes the finding (instead of an edit); with no id, a checklist pair your edits brought in",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/SetAsideAnswer"
+            }
+          }
+        }
+      }
+    },
+    "article-planner" : {
+      "tools" : [
+        "search",
+        "facets",
+        "get_article",
+        "article_coverage",
+        "get_source"
+      ],
+      "answer" : null
+    },
+    "article-rules-reviewer" : {
+      "tools" : [
+        "get_source",
+        "passages",
+        "neighbors",
+        "search",
+        "query",
+        "article_coverage"
+      ],
+      "answer" : {
+        "$defs" : {
+          "FindingAnswer" : {
+            "title" : "FindingAnswer",
+            "type" : "object",
+            "required" : [
+              "severity",
+              "kind",
+              "where",
+              "quote",
+              "problem",
+              "fix"
+            ],
+            "properties" : {
+              "severity" : {
+                "description" : "major | minor — by the severity rules of your instructions",
+                "type" : "string"
+              },
+              "kind" : {
+                "description" : "The rule or kind your instructions name (e.g. synth, decorative, term, missing-critique)",
+                "type" : "string"
+              },
+              "where" : {
+                "description" : "The section heading, or the first 8 words of the passage",
+                "type" : "string"
+              },
+              "quote" : {
+                "description" : "The article's words the finding is about, copied exactly",
+                "type" : "string"
+              },
+              "problem" : {
+                "description" : "What is wrong, in one or two sentences",
+                "type" : "string"
+              },
+              "fix" : {
+                "description" : "What would fix it",
+                "type" : "string"
+              },
+              "evidence" : {
+                "description" : "The records the finding rests on (at most 3): citekey, offset, and the sentence copied exactly; empty only when it rests on the article's own text",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/EvidenceAnswer"
+                }
+              },
+              "pair" : {
+                "description" : "missing-critique only: the critique-checklist pair it is about, as src>dst (the critic first); null otherwise",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "EvidenceAnswer" : {
+            "title" : "EvidenceAnswer",
+            "type" : "object",
+            "required" : [
+              "citekey",
+              "quote"
+            ],
+            "properties" : {
+              "citekey" : {
+                "description" : "The source whose record shows it",
+                "type" : "string"
+              },
+              "offset" : {
+                "description" : "Where in that source's body the quote is (the get_source offset you read at); null if not from the body",
+                "type" : [
+                  "integer",
+                  "null"
+                ],
+                "format" : "int32"
+              },
+              "quote" : {
+                "description" : "The sentence of that record, copied EXACTLY from get_source",
+                "type" : "string"
+              }
+            }
+          },
+          "SpotCheckAnswer" : {
+            "title" : "SpotCheckAnswer",
+            "type" : "object",
+            "required" : [
+              "citekey",
+              "claim",
+              "verdict",
+              "recordQuote"
+            ],
+            "properties" : {
+              "citekey" : {
+                "description" : "The cited source, read with get_source or passages in this step",
+                "type" : "string"
+              },
+              "claim" : {
+                "description" : "The article's words, copied exactly",
+                "type" : "string"
+              },
+              "verdict" : {
+                "description" : "attributable | extrapolatory | contradictory",
+                "type" : "string"
+              },
+              "recordQuote" : {
+                "description" : "The record's sentence it rests on, copied EXACTLY",
+                "type" : "string"
+              }
+            }
+          },
+          "CheckAnswer" : {
+            "title" : "CheckAnswer",
+            "type" : "object",
+            "required" : [
+              "id",
+              "fixed",
+              "quote",
+              "note"
+            ],
+            "properties" : {
+              "id" : {
+                "description" : "The ledger id of your earlier finding (R4, C2, S7…)",
+                "type" : "string"
+              },
+              "fixed" : {
+                "description" : "true when the current article no longer has the problem",
+                "type" : "boolean"
+              },
+              "quote" : {
+                "description" : "The current article's words that show it — the fixed text, or the problem still there — copied exactly; empty only when the passage was deleted",
+                "type" : "string"
+              },
+              "note" : {
+                "description" : "One sentence: what changed, or why it is not fixed (needed when not fixed)",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "RulesAnswer",
+        "type" : "object",
+        "required" : [
+          "verdict",
+          "filter"
+        ],
+        "properties" : {
+          "verdict" : {
+            "description" : "PASS | MINOR | MAJOR — the worst of your findings",
+            "type" : "string"
+          },
+          "findings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/FindingAnswer"
+            }
+          },
+          "filter" : {
+            "description" : "The filter you reconstructed and how many sources it returned",
+            "type" : "string"
+          },
+          "uncitedRelevant" : {
+            "description" : "Citekeys the filter returns that clearly belong and are neither cited nor under Not used",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "statusesSilent" : {
+            "description" : "Cited non-current, non-foundational citekeys whose status the article does not state",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "spotChecks" : {
+            "description" : "Checks 5–6: cited claims whose records you read in this step — at least three, on different sources (all when fewer are cited)",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/SpotCheckAnswer"
+            }
+          },
+          "checks" : {
+            "description" : "One check per earlier finding of yours that the review ledger lists as open (empty when it lists none)",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/CheckAnswer"
+            }
+          }
+        }
+      }
+    },
+    "article-skeptic" : {
+      "tools" : [
+        "get_source",
+        "passages",
+        "neighbors",
+        "search",
+        "query",
+        "followups"
+      ],
+      "answer" : {
+        "$defs" : {
+          "FindingAnswer" : {
+            "title" : "FindingAnswer",
+            "type" : "object",
+            "required" : [
+              "severity",
+              "kind",
+              "where",
+              "quote",
+              "problem",
+              "fix"
+            ],
+            "properties" : {
+              "severity" : {
+                "description" : "major | minor — by the severity rules of your instructions",
+                "type" : "string"
+              },
+              "kind" : {
+                "description" : "The rule or kind your instructions name (e.g. synth, decorative, term, missing-critique)",
+                "type" : "string"
+              },
+              "where" : {
+                "description" : "The section heading, or the first 8 words of the passage",
+                "type" : "string"
+              },
+              "quote" : {
+                "description" : "The article's words the finding is about, copied exactly",
+                "type" : "string"
+              },
+              "problem" : {
+                "description" : "What is wrong, in one or two sentences",
+                "type" : "string"
+              },
+              "fix" : {
+                "description" : "What would fix it",
+                "type" : "string"
+              },
+              "evidence" : {
+                "description" : "The records the finding rests on (at most 3): citekey, offset, and the sentence copied exactly; empty only when it rests on the article's own text",
+                "type" : "array",
+                "items" : {
+                  "$ref" : "#/$defs/EvidenceAnswer"
+                }
+              },
+              "pair" : {
+                "description" : "missing-critique only: the critique-checklist pair it is about, as src>dst (the critic first); null otherwise",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "EvidenceAnswer" : {
+            "title" : "EvidenceAnswer",
+            "type" : "object",
+            "required" : [
+              "citekey",
+              "quote"
+            ],
+            "properties" : {
+              "citekey" : {
+                "description" : "The source whose record shows it",
+                "type" : "string"
+              },
+              "offset" : {
+                "description" : "Where in that source's body the quote is (the get_source offset you read at); null if not from the body",
+                "type" : [
+                  "integer",
+                  "null"
+                ],
+                "format" : "int32"
+              },
+              "quote" : {
+                "description" : "The sentence of that record, copied EXACTLY from get_source",
+                "type" : "string"
+              }
+            }
+          },
+          "ProposalAnswer" : {
+            "title" : "ProposalAnswer",
+            "type" : "object",
+            "required" : [
+              "kind",
+              "citekey",
+              "evidence",
+              "quote"
+            ],
+            "properties" : {
+              "kind" : {
+                "description" : "status (change citekey's status) | edge (a disagreement edge from citekey to target)",
+                "type" : "string"
+              },
+              "citekey" : {
+                "description" : "The source the change is ON (an edge starts here)",
+                "type" : "string"
+              },
+              "status" : {
+                "description" : "For kind=status: foundational | current | contested | superseded | debunked | retracted",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "edgeKind" : {
+                "description" : "For kind=edge: challenges | refutes | updates | superseded_by (from the older source to the newer)",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "target" : {
+                "description" : "For kind=edge: the citekey the edge points to",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "evidence" : {
+                "description" : "Why, in one or two sentences",
+                "type" : "string"
+              },
+              "quote" : {
+                "description" : "The sentence of citekey's (or target's) record that shows it, copied EXACTLY",
+                "type" : "string"
+              }
+            }
+          },
+          "CheckAnswer" : {
+            "title" : "CheckAnswer",
+            "type" : "object",
+            "required" : [
+              "id",
+              "fixed",
+              "quote",
+              "note"
+            ],
+            "properties" : {
+              "id" : {
+                "description" : "The ledger id of your earlier finding (R4, C2, S7…)",
+                "type" : "string"
+              },
+              "fixed" : {
+                "description" : "true when the current article no longer has the problem",
+                "type" : "boolean"
+              },
+              "quote" : {
+                "description" : "The current article's words that show it — the fixed text, or the problem still there — copied exactly; empty only when the passage was deleted",
+                "type" : "string"
+              },
+              "note" : {
+                "description" : "One sentence: what changed, or why it is not fixed (needed when not fixed)",
+                "type" : "string"
+              }
+            }
+          },
+          "NotMaterialAnswer" : {
+            "title" : "NotMaterialAnswer",
+            "type" : "object",
+            "required" : [
+              "pair",
+              "reason"
+            ],
+            "properties" : {
+              "pair" : {
+                "description" : "The open pair, as src>dst",
+                "type" : "string"
+              },
+              "reason" : {
+                "description" : "One sentence: what the article cites the source for, and why the critique does not touch it (quote the article's words)",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "SkepticAnswer",
+        "type" : "object",
+        "required" : [
+          "verdict",
+          "claimsChecked"
+        ],
+        "properties" : {
+          "verdict" : {
+            "description" : "PASS | MINOR | MAJOR — the worst of your findings",
+            "type" : "string"
+          },
+          "findings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/FindingAnswer"
+            }
+          },
+          "proposals" : {
+            "description" : "Database errors you noticed, as changes for a person to approve: a status, or a disagreement edge — each with a quote from the record",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/ProposalAnswer"
+            }
+          },
+          "claimsChecked" : {
+            "description" : "How many load-bearing claims you checked",
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "checks" : {
+            "description" : "One check per earlier finding of yours that the review ledger lists as open (empty when it lists none)",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/CheckAnswer"
+            }
+          },
+          "notMaterial" : {
+            "description" : "Each open pair of the critique checklist that does NOT bear on a claim the article makes, with why (every open pair shown is either here or named by a missing-critique MAJOR finding)",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/NotMaterialAnswer"
+            }
+          }
+        }
+      }
+    },
+    "compile-extractor" : {
+      "tools" : [
+      ],
+      "answer" : {
+        "$defs" : {
+          "ClaimAnswer" : {
+            "title" : "ClaimAnswer",
+            "type" : "object",
+            "required" : [
+              "claim",
+              "quote",
+              "confidence"
+            ],
+            "properties" : {
+              "claim" : {
+                "description" : "One atomic claim (one fact), in your words, that bears on the article's question",
+                "type" : "string"
+              },
+              "quote" : {
+                "description" : "The sentence of the record that states it, copied EXACTLY",
+                "type" : "string"
+              },
+              "date" : {
+                "description" : "The date or period the claim is about, as the record gives it; null if none",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "place" : {
+                "description" : "The place the claim is about, as the record names it; null if none",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "confidence" : {
+                "description" : "high | medium | low | contested — how firmly the record states it",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "ExtractAnswer",
+        "type" : "object",
+        "required" : [
+          "relevant",
+          "reason"
+        ],
+        "properties" : {
+          "relevant" : {
+            "description" : "Does the record bear on the article's question at all?",
+            "type" : "boolean"
+          },
+          "reason" : {
+            "description" : "If not relevant: why (wrong region, period or sub-problem). Otherwise what it contributes",
+            "type" : "string"
+          },
+          "claims" : {
+            "description" : "Every claim of the record that bears on the question; empty if not relevant",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/ClaimAnswer"
+            }
+          }
+        }
+      }
+    },
+    "compile-writer" : {
+      "tools" : [
+        "check_edits"
+      ],
+      "answer" : {
+        "$defs" : {
+          "CoverageReason" : {
+            "title" : "CoverageReason",
+            "description" : "Why the article does not cite one source its filter returns",
+            "type" : "object",
+            "required" : [
+              "citekey",
+              "reason"
+            ],
+            "properties" : {
+              "citekey" : {
+                "description" : "The source's citekey",
+                "type" : "string"
+              },
+              "reason" : {
+                "description" : "One plain sentence: why it is left out (wrong region, period or sub-problem; no finding on the question). Empty removes it",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "DraftAnswer",
+        "type" : "object",
+        "required" : [
+          "title",
+          "summary",
+          "body"
+        ],
+        "properties" : {
+          "title" : {
+            "description" : "The article's title (a new article); repeat the current title when extending",
+            "type" : "string"
+          },
+          "summary" : {
+            "description" : "One or two plain sentences: what the article answers",
+            "type" : "string"
+          },
+          "body" : {
+            "description" : "New article: the WHOLE body in Markdown. Extending: ONLY the new text to add",
+            "type" : "string"
+          },
+          "section" : {
+            "description" : "Extending: the existing heading to add the text under (e.g. '## Disagreements'); null = at the end",
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "reasons" : {
+            "description" : "For each source of the claim table you do NOT cite: one plain sentence saying why it is left out (code lists it under the generated Not used section)",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/CoverageReason"
+            }
+          }
+        }
+      }
+    },
+    "enrich-classify" : {
+      "tools" : [
+        "facets",
+        "search"
+      ],
+      "answer" : {
+        "$defs" : {
+          "StatedPeriod" : {
+            "title" : "StatedPeriod",
+            "description" : "The deep-time span the source is ABOUT (not its publication date); null if none",
+            "type" : "object",
+            "required" : [
+              "start",
+              "end"
+            ],
+            "properties" : {
+              "start" : {
+                "$ref" : "#/$defs/StatedYear"
+              },
+              "end" : {
+                "$ref" : "#/$defs/StatedYear"
+              },
+              "name" : {
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "StatedYear" : {
+            "title" : "StatedYear",
+            "type" : "object",
+            "required" : [
+              "value",
+              "unit"
+            ],
+            "properties" : {
+              "value" : {
+                "description" : "The number as written, always positive (3300 for 3300 BCE)",
+                "type" : "integer",
+                "format" : "int64"
+              },
+              "unit" : {
+                "description" : "BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "Classification",
+        "type" : "object",
+        "required" : [
+          "summary",
+          "status",
+          "statusEvidence"
+        ],
+        "properties" : {
+          "summary" : {
+            "description" : "3-6 sentences: what the source argues and on what evidence",
+            "type" : "string"
+          },
+          "topics" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "regions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "tags" : {
+            "description" : "lowercase_snake_case; prefer tags the facets tool lists",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "period" : {
+            "description" : "The deep-time span the source is ABOUT (not its publication date); null if none",
+            "anyOf" : [
+              {
+                "$ref" : "#/$defs/StatedPeriod"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "status" : {
+            "description" : "foundational | current | contested | superseded | debunked | retracted | unassessed",
+            "type" : "string"
+          },
+          "statusEvidence" : {
+            "description" : "Why that status, from the text; empty if unassessed",
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "enrich-findings" : {
+      "tools" : [
+      ],
+      "answer" : {
+        "$defs" : {
+          "FindingProposal" : {
+            "title" : "FindingProposal",
+            "type" : "object",
+            "required" : [
+              "claim",
+              "quote",
+              "confidence"
+            ],
+            "properties" : {
+              "claim" : {
+                "description" : "One claim the source makes, in your words, one sentence",
+                "type" : "string"
+              },
+              "quote" : {
+                "description" : "The sentence(s) of the text that state it, copied EXACTLY, 8-60 words",
+                "type" : "string"
+              },
+              "place" : {
+                "description" : "The place the claim is about, as a gazetteer would name it; null if none",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "placeKind" : {
+                "description" : "What kind of place `place` is: site (a city, settlement or excavated site) | region (a country, landscape or province) | polity (a state, kingdom or empire) | water (a sea, lake or river) | unknown; null if no place",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "start" : {
+                "anyOf" : [
+                  {
+                    "$ref" : "#/$defs/StatedYear"
+                  },
+                  {
+                    "type" : "null"
+                  }
+                ]
+              },
+              "end" : {
+                "anyOf" : [
+                  {
+                    "$ref" : "#/$defs/StatedYear"
+                  },
+                  {
+                    "type" : "null"
+                  }
+                ]
+              },
+              "periodName" : {
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "tags" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "string"
+                }
+              },
+              "confidence" : {
+                "description" : "high | medium | low | contested — how firmly the SOURCE states it",
+                "type" : "string"
+              }
+            }
+          },
+          "StatedYear" : {
+            "title" : "StatedYear",
+            "type" : "object",
+            "required" : [
+              "value",
+              "unit"
+            ],
+            "properties" : {
+              "value" : {
+                "description" : "The number as written, always positive (3300 for 3300 BCE)",
+                "type" : "integer",
+                "format" : "int64"
+              },
+              "unit" : {
+                "description" : "BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "Findings",
+        "type" : "object",
+        "properties" : {
+          "findings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/FindingProposal"
+            }
+          }
+        }
+      }
+    },
+    "enrich-notes" : {
+      "tools" : [
+      ],
+      "answer" : {
+        "title" : "Notes",
+        "type" : "object",
+        "required" : [
+          "notes"
+        ],
+        "properties" : {
+          "notes" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "filter-inferrer" : {
+      "tools" : [
+        "search",
+        "facets",
+        "get_article",
+        "get_source"
+      ],
+      "answer" : null
+    },
+    "goal-planner" : {
+      "tools" : [
+        "search",
+        "facets",
+        "get_source"
+      ],
+      "answer" : {
+        "$defs" : {
+          "SubGoalAnswer" : {
+            "title" : "SubGoalAnswer",
+            "type" : "object",
+            "required" : [
+              "slug",
+              "title"
+            ],
+            "properties" : {
+              "slug" : {
+                "description" : "A new, lower-case slug for the sub-goal (letters, digits, '-', '_')",
+                "type" : "string"
+              },
+              "title" : {
+                "description" : "What the sub-goal is about, in a short phrase",
+                "type" : "string"
+              },
+              "notes" : {
+                "description" : "What it should establish, in one or two sentences; null if obvious",
+                "type" : [
+                  "string",
+                  "null"
+                ]
+              },
+              "tags" : {
+                "description" : "Tags from the corpus vocabulary (facets), not new ones",
+                "type" : "array",
+                "items" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "WorkAnswer" : {
+            "title" : "WorkAnswer",
+            "type" : "object",
+            "required" : [
+              "doi",
+              "why"
+            ],
+            "properties" : {
+              "doi" : {
+                "description" : "The work's DOI (10.xxxx/…), exactly; never invent one",
+                "type" : "string"
+              },
+              "why" : {
+                "description" : "Why this work matters for the goal, in one sentence",
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "title" : "PlanAnswer",
+        "type" : "object",
+        "required" : [
+          "rationale"
+        ],
+        "properties" : {
+          "rationale" : {
+            "description" : "How the plan covers the goal, in two or three sentences",
+            "type" : "string"
+          },
+          "subGoals" : {
+            "description" : "Narrower goals that split this one; empty if it needs none",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/SubGoalAnswer"
+            }
+          },
+          "queries" : {
+            "description" : "Literature search queries (plain words) that find the works the goal needs",
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "works" : {
+            "description" : "Specific works to read or acquire, by DOI — only DOIs you are sure of",
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/$defs/WorkAnswer"
+            }
+          }
+        }
+      }
+    },
+    "hint-reader" : {
+      "tools" : [
+      ],
+      "answer" : null
+    },
+    "probe" : {
+      "tools" : [
+        "get_source"
+      ],
+      "answer" : {
+        "title" : "ProbeAnswer",
+        "type" : "object",
+        "required" : [
+          "citekey",
+          "title"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "year" : {
+            "type" : [
+              "integer",
+              "null"
+            ],
+            "format" : "int32"
+          }
+        }
+      }
+    }
+  }
+}

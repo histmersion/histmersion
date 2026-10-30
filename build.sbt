@@ -768,7 +768,10 @@ lazy val server = project
       "com.softwaremill.sttp.ai" %% "claude" % V.sttpAi,
       "com.softwaremill.sttp.ai" %% "openai" % V.sttpAi,
       // the real agent loop against a scripted model (its scalatest matchers are not used)
-      "com.softwaremill.sttp.ai" %% "agent-testkit" % V.sttpAi % Test
+      "com.softwaremill.sttp.ai" %% "agent-testkit" % V.sttpAi % Test,
+      // the OpenAPI document ContractSnapshotSuite compares with its snapshot
+      "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs" % V.tapir % Test,
+      "com.softwaremill.sttp.apispec" %% "openapi-circe" % V.apispec % Test
     )
   )
 

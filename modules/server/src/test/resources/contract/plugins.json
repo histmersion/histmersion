@@ -1,0 +1,523 @@
+{
+  "spiVersion" : 2,
+  "plugins" : [
+    {
+      "id" : "1password",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : false,
+      "state" : "disabled",
+      "provides" : [
+      ],
+      "settings" : [
+        {
+          "key" : "account",
+          "value" : "\"\""
+        },
+        {
+          "key" : "cli",
+          "value" : "op"
+        },
+        {
+          "key" : "service-account-token",
+          "value" : "null"
+        },
+        {
+          "key" : "timeout-seconds",
+          "value" : "10"
+        }
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "ai-anthropic",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "ai-provider:anthropic"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "ai-claude-code",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "ai-provider:claude-code"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "ai-codex",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "ai-provider:codex"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "ai-local",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "ai-provider:local"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "ai-openai",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "ai-provider:openai"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "ai-opencode",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "ai-provider:opencode"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "archive-org",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "source-fetcher:archive-org"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "arxiv",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "source-fetcher:arxiv"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "bitwarden",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : false,
+      "state" : "disabled",
+      "provides" : [
+      ],
+      "settings" : [
+        {
+          "key" : "cli",
+          "value" : "bw"
+        },
+        {
+          "key" : "field",
+          "value" : "password"
+        },
+        {
+          "key" : "session",
+          "value" : "null"
+        },
+        {
+          "key" : "timeout-seconds",
+          "value" : "10"
+        }
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "events-gvp",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "event-catalogue:gvp"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "events-noaa",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "event-catalogue:noaa"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "events-wikidata",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "event-catalogue:wikidata"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "keepassxc",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : false,
+      "state" : "disabled",
+      "provides" : [
+      ],
+      "settings" : [
+        {
+          "key" : "attribute",
+          "value" : "password"
+        },
+        {
+          "key" : "cli",
+          "value" : "keepassxc-cli"
+        },
+        {
+          "key" : "database",
+          "value" : "\"\""
+        },
+        {
+          "key" : "key-file",
+          "value" : "\"\""
+        },
+        {
+          "key" : "password",
+          "value" : "null"
+        },
+        {
+          "key" : "timeout-seconds",
+          "value" : "10"
+        },
+        {
+          "key" : "ykman",
+          "value" : "ykman"
+        },
+        {
+          "key" : "yubikey",
+          "value" : "null"
+        },
+        {
+          "key" : "yubikey-timeout-seconds",
+          "value" : "30"
+        }
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-aic",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "media-collection:aic"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-cleveland",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "media-collection:cleveland"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-depicts",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "media-collection:depicts"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-europeana",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : false,
+      "state" : "disabled",
+      "provides" : [
+      ],
+      "settings" : [
+        {
+          "key" : "api-key",
+          "value" : "null"
+        }
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-loc",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "media-collection:loc"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-met",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "media-collection:met"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-opencontext",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "media-collection:opencontext"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-pleiades",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "media-collection:pleiades"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-smithsonian",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : false,
+      "state" : "disabled",
+      "provides" : [
+      ],
+      "settings" : [
+        {
+          "key" : "api-key",
+          "value" : "null"
+        }
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "media-wikidata",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "media-collection:wikidata"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "oa-core",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "source-fetcher:core"
+      ],
+      "settings" : [
+        {
+          "key" : "api-key",
+          "value" : "null"
+        }
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "oa-landing",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "source-fetcher:landing"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "oa-openalex",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "source-fetcher:openalex"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "oa-unpaywall",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "source-fetcher:unpaywall"
+      ],
+      "settings" : [
+        {
+          "key" : "contact-email",
+          "value" : "null"
+        }
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "pmc",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "source-fetcher:pmc",
+        "source-fetcher:pmc-text"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    }
+  ],
+  "warnings" : [
+  ],
+  "set" : null
+}

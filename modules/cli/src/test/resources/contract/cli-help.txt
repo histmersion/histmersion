@@ -1,0 +1,4283 @@
+==== histmersion
+Usage:
+    histmersion [--server <string>] [--token <string>] version
+    histmersion [--server <string>] [--token <string>] health
+    histmersion [--server <string>] [--token <string>] about
+    histmersion [--server <string>] [--token <string>] seed
+    histmersion [--server <string>] [--token <string>] reindex
+    histmersion [--server <string>] [--token <string>] search
+    histmersion [--server <string>] [--token <string>] facets
+    histmersion [--server <string>] [--token <string>] get
+    histmersion [--server <string>] [--token <string>] passages
+    histmersion [--server <string>] [--token <string>] geo-when
+    histmersion [--server <string>] [--token <string>] histogram
+    histmersion [--server <string>] [--token <string>] neighbors
+    histmersion [--server <string>] [--token <string>] graph
+    histmersion [--server <string>] [--token <string>] contradictions
+    histmersion [--server <string>] [--token <string>] put
+    histmersion [--server <string>] [--token <string>] patch
+    histmersion [--server <string>] [--token <string>] rename
+    histmersion [--server <string>] [--token <string>] delete
+    histmersion [--server <string>] [--token <string>] export
+    histmersion [--server <string>] [--token <string>] backup
+    histmersion [--server <string>] [--token <string>] backups
+    histmersion [--server <string>] [--token <string>] restore
+    histmersion [--server <string>] [--token <string>] maintenance
+    histmersion [--server <string>] [--token <string>] bundle
+    histmersion [--server <string>] [--token <string>] merge
+    histmersion [--server <string>] [--token <string>] article
+    histmersion [--server <string>] [--token <string>] places
+    histmersion [--server <string>] [--token <string>] periods
+    histmersion [--server <string>] [--token <string>] init
+    histmersion [--server <string>] [--token <string>] events
+    histmersion [--server <string>] [--token <string>] attestations
+    histmersion [--server <string>] [--token <string>] candidates
+    histmersion [--server <string>] [--token <string>] goals
+    histmersion [--server <string>] [--token <string>] agent-state
+    histmersion [--server <string>] [--token <string>] agent
+    histmersion [--server <string>] [--token <string>] media
+    histmersion [--server <string>] [--token <string>] asset-links
+    histmersion [--server <string>] [--token <string>] lint
+    histmersion [--server <string>] [--token <string>] queue
+    histmersion [--server <string>] [--token <string>] query
+    histmersion [--server <string>] [--token <string>] schema
+    histmersion [--server <string>] [--token <string>] discover
+    histmersion [--server <string>] [--token <string>] refs
+    histmersion [--server <string>] [--token <string>] assess
+    histmersion [--server <string>] [--token <string>] followups
+    histmersion [--server <string>] [--token <string>] ingest
+    histmersion [--server <string>] [--token <string>] archive
+    histmersion [--server <string>] [--token <string>] calibre
+    histmersion [--server <string>] [--token <string>] reocr
+    histmersion [--server <string>] [--token <string>] assets
+    histmersion [--server <string>] [--token <string>] jobs
+    histmersion [--server <string>] [--token <string>] activity
+    histmersion [--server <string>] [--token <string>] bookmarks
+    histmersion [--server <string>] [--token <string>] notes
+    histmersion [--server <string>] [--token <string>] config
+    histmersion [--server <string>] [--token <string>] basemap
+    histmersion [--server <string>] [--token <string>] plugin
+
+Histmersion — CLI over the Histmersion server (MCP twin)
+
+Options and flags:
+    --help
+        Display this help text.
+    --server <string>
+        Histmersion server URL (default: config cli.serverUrl / $HISTMERSION_SERVER_URL)
+    --token <string>
+        API key for authenticated servers (or $HISTMERSION_TOKEN)
+
+Subcommands:
+    version
+        Print the CLI and server versions
+    health
+        Server health (db, schema version)
+    about
+        Server build (version, commit), health, job queue, last backup, store counts and storage on disk
+    seed
+        Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir)
+    reindex
+        Rebuild the full-text chunk index for every source
+    search
+        Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched
+    facets
+        Vocabulary of a dimension (tags|authors|places|topics|status|provenance) with distinct-source counts
+    get
+        Show one source as Markdown (section: summary|findings|notes|toc|body|all)
+    passages
+        Find a word, phrase or regex inside one source's full text: the passages around each match, with offsets for get --offset
+    geo-when
+        Findings (the map feed) by place, deep time, bbox — the same filters as `search`
+    histogram
+        When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search
+    neighbors
+        Typed references to/from a source (references, challenges, refutes, updates, superseded_by)
+    graph
+        Source dependency graph: BFS traversal returning D3-ready nodes + links
+    contradictions
+        Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses
+    put
+        Send ONE note file (frontmatter + body) as a full create/replace
+    patch
+        Selectively enrich one source — only the parts you pass are changed
+    rename
+        Give a source a new citekey — findings, links in articles/notes and every table follow. The old citekey stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new citekey, and the answer names the new citekey.
+    delete
+        Delete a source with its findings, edges, figures and stored original — a dry run unless --apply; refused while an article cites it; Calibre is never touched
+    export
+        Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout
+    backup
+        Take a pg_dump backup of the server's database (optionally copy it here)
+    backups
+        List the backups on the server, newest first
+    restore
+        Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force
+    maintenance
+        Database upkeep on the server: vacuum
+    bundle
+        Portable .hmx bundles: export, verify and import a whole collection, carrying its identities
+    merge
+        Merge another collection's bundle into this one: plan it (every issue in one run), apply it; list, show and trace past merges
+    article
+        The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles
+    places
+        The gazetteer: search, show, rename, name, set, merge, rm, add, import, load external sources and materialise places
+    periods
+        Named periods (the timeline presets): search, show, seed and fetch from PeriodO
+    init
+        Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources
+    events
+        Historical events: search, show, patch, rename; import and re-derive catalogues, corrections, links to sources, leads
+    attestations
+        Granular source references: search, show, add, rm
+    candidates
+        New sources found for the research goals without a model: list, sweep, mark
+    goals
+        Research goals: list, get, update, plan, link, unlink, schedule, schedules, rename
+    agent-state
+        Agent state key-value store: list, get, set
+    agent
+        Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, digest, decide-all, managers, manager, enqueue, autopilot, scheduler, stalls
+    media
+        Pictures: import from providers, covers and illustrations of sources, list, show, fill-licences; a figure's detail, patch
+    asset-links
+        Semantic links between assets and entities: search, add, rm
+    lint
+        Health-check the corpus (34 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, article-critique-pairing, superseded-without-edge, article-markdown, note-markdown, finding-geocode, finding-unplaced, place-kind, place-grid-point, place-imported-point-area, finding-placeholder, media-licence, event-correction-conflict)
+    queue
+        Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import; acquire recheck: the legal re-check of the acquisition list (more than one item, or --all for every item past the caps, as a server job it follows)
+    query
+        Run ONE read-only SQL statement (a write is refused by Postgres itself)
+    schema
+        List the tables and columns `query` can read (from information_schema)
+    discover
+        Find literature upstream (OpenAlex / Crossref / Wikipedia)
+    refs
+        The reference list a paper deposited, resolved against the corpus
+    assess
+        Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact)
+    followups
+        Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites)
+    ingest
+        Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment)
+    archive
+        Internet Archive: search, inspect and import public texts
+    calibre
+        The local Calibre library: search, import, link, push, update, set, audit, sync, gaps
+    reocr
+        Convert a source's stored original again (e.g. under the slow, accurate OCR path)
+    assets
+        The figures stored with a source, and the URLs they are served at
+    jobs
+        Recent background jobs (OCR, imports, agent runs, …), filtered on the server, or one job by id; `jobs pause|resume|cancel <id>` controls one
+    activity
+        What the agents, the server and you did, one list, newest first: agent runs, background jobs, worklog lines and your decisions, each with what it touched
+    bookmarks
+        Your bookmarks: list, add, rm
+    notes
+        Your notes: list, show, add, edit, rm
+    config
+        The settings file: where it is, its settings (get, set, unset — the file is changed in place, comments and all), reloading and restarting the server
+    basemap
+        The web UI's local base map (street maps and terrain): status, styles, fetch, rm
+    plugin
+        Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine); new, repo and api-jar for writing one
+
+==== histmersion version
+Usage: histmersion version 
+
+Print the CLI and server versions
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion health
+Usage: histmersion health 
+
+Server health (db, schema version)
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion about
+Usage: histmersion about [--json]
+
+Server build (version, commit), health, job queue, last backup, store counts and storage on disk
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion seed
+Usage: histmersion seed [--force] [<dir>]
+
+Import a wiki/ or wiki/sources directory (articles beside it come too) — read on the HOST when that path exists here, otherwise asked of the SERVER (empty = configured corpus dir)
+
+Options and flags:
+    --help
+        Display this help text.
+    --force
+        Overwrite rows newer than the files
+
+==== histmersion reindex
+Usage: histmersion reindex 
+
+Rebuild the full-text chunk index for every source
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion search
+Usage: histmersion search [--group <string>] [--depth <integer>] [--as-of <integer>] [--samples <integer>] [--unit <string>] [--brief] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>] [--json] [<query>]
+
+Search the corpus (websearch syntax: "phrase", -not, or): sources with the findings that matched
+
+Options and flags:
+    --help
+        Display this help text.
+    --group <string>
+        Group the results into a tree instead of listing them: time | region | time,region | region,time
+    --depth <integer>
+        Levels of nesting for --group (1-3)
+    --as-of <integer>
+        Signed year the gazetteer hierarchy is read at for --group region (default: the middle of the window)
+    --samples <integer>
+        Sample sources listed under each leaf of the tree (0-5)
+    --unit <string>
+        What --group counts: sources (default) | findings
+    --brief
+        Compact listing: citekey, title, year, status, period, one why-line
+    --tag <string>
+        ALL required — every tag must be present on the source or one of its findings (repeatable)
+    --author <string>
+        ANY matches — a case-insensitive substring of an author's name (repeatable)
+    --place <string>
+        ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text (repeatable)
+    --topic <string>
+        ALL required — every topic must be present on the source (repeatable)
+    --status <string>
+        ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed (repeatable)
+    --year-from <integer>
+        Earliest publication year (inclusive)
+    --year-to <integer>
+        Latest publication year (inclusive)
+    --from <integer>
+        Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)
+    --to <integer>
+        Deep-time end, a signed year (BCE negative)
+    --bbox <string>
+        minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)
+    --sort <string>
+        Ordering: relevance|cited|period|year|oldest|title
+    --limit <integer>
+        Results per page (default: the configured page size, at most 500)
+    --offset <integer>
+        Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)
+    --title <string>
+        Case-insensitive substring of the listed item's title
+    --goal <string>
+        Only the sources a research goal links (its slug)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion facets
+Usage: histmersion facets [--prefix <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>] [--json] <field> [<query>]
+
+Vocabulary of a dimension (tags|authors|places|topics|status|provenance) with distinct-source counts
+
+Options and flags:
+    --help
+        Display this help text.
+    --prefix <string>
+        Case-insensitive prefix match
+    --tag <string>
+        ALL required — every tag must be present on the source or one of its findings (repeatable)
+    --author <string>
+        ANY matches — a case-insensitive substring of an author's name (repeatable)
+    --place <string>
+        ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text (repeatable)
+    --topic <string>
+        ALL required — every topic must be present on the source (repeatable)
+    --status <string>
+        ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed (repeatable)
+    --year-from <integer>
+        Earliest publication year (inclusive)
+    --year-to <integer>
+        Latest publication year (inclusive)
+    --from <integer>
+        Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)
+    --to <integer>
+        Deep-time end, a signed year (BCE negative)
+    --bbox <string>
+        minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)
+    --sort <string>
+        Ordering: relevance|cited|period|year|oldest|title
+    --limit <integer>
+        Results per page (default: the configured page size, at most 500)
+    --offset <integer>
+        Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)
+    --title <string>
+        Case-insensitive substring of the listed item's title
+    --goal <string>
+        Only the sources a research goal links (its slug)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion get
+Usage: histmersion get [--full] [--section <string>] [--heading <string>] [--offset <integer>] [--chars <integer>] [--json] <citekey>
+
+Show one source as Markdown (section: summary|findings|notes|toc|body|all)
+
+Options and flags:
+    --help
+        Display this help text.
+    --full
+        Include full text
+    --section <string>
+        Section to return: summary|findings|notes|toc|body|all (default: summary+findings+notes)
+    --heading <string>
+        Return body chunks under this heading (case-insensitive prefix)
+    --offset <integer>
+        Start the body at this character offset (0-based)
+    --chars <integer>
+        Return at most this many characters of the body
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion passages
+Usage: histmersion passages [--regex] [--limit <integer>] [--context <integer>] <citekey> <query>
+
+Find a word, phrase or regex inside one source's full text: the passages around each match, with offsets for get --offset
+
+Options and flags:
+    --help
+        Display this help text.
+    --regex
+        Treat the query as a Java regular expression (default: literal, case- and accent-insensitive)
+    --limit <integer>
+        Show at most this many passages (default 10, max 50)
+    --context <integer>
+        Characters of context around each match (default 600, max 3000)
+
+==== histmersion geo-when
+Usage: histmersion geo-when [--region <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>] [--json]
+
+Findings (the map feed) by place, deep time, bbox — the same filters as `search`
+
+Options and flags:
+    --help
+        Display this help text.
+    --region <string>
+        Region-name substring (alias of --place)
+    --tag <string>
+        ALL required — every tag must be present on the source or one of its findings (repeatable)
+    --author <string>
+        ANY matches — a case-insensitive substring of an author's name (repeatable)
+    --place <string>
+        ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text (repeatable)
+    --topic <string>
+        ALL required — every topic must be present on the source (repeatable)
+    --status <string>
+        ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed (repeatable)
+    --year-from <integer>
+        Earliest publication year (inclusive)
+    --year-to <integer>
+        Latest publication year (inclusive)
+    --from <integer>
+        Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)
+    --to <integer>
+        Deep-time end, a signed year (BCE negative)
+    --bbox <string>
+        minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)
+    --sort <string>
+        Ordering: relevance|cited|period|year|oldest|title
+    --limit <integer>
+        Results per page (default: the configured page size, at most 500)
+    --offset <integer>
+        Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)
+    --title <string>
+        Case-insensitive substring of the listed item's title
+    --goal <string>
+        Only the sources a research goal links (its slug)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion histogram
+Usage: histmersion histogram [--region <string>] [--unit <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>] [--json] [<query>]
+
+When is the evidence? Sources per adaptive time bucket (Markdown table + bar chart), for the same filters as search
+
+Options and flags:
+    --help
+        Display this help text.
+    --region <string>
+        Region-name substring (alias of --place)
+    --unit <string>
+        sources (default) | findings
+    --tag <string>
+        ALL required — every tag must be present on the source or one of its findings (repeatable)
+    --author <string>
+        ANY matches — a case-insensitive substring of an author's name (repeatable)
+    --place <string>
+        ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text (repeatable)
+    --topic <string>
+        ALL required — every topic must be present on the source (repeatable)
+    --status <string>
+        ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed (repeatable)
+    --year-from <integer>
+        Earliest publication year (inclusive)
+    --year-to <integer>
+        Latest publication year (inclusive)
+    --from <integer>
+        Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)
+    --to <integer>
+        Deep-time end, a signed year (BCE negative)
+    --bbox <string>
+        minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)
+    --sort <string>
+        Ordering: relevance|cited|period|year|oldest|title
+    --limit <integer>
+        Results per page (default: the configured page size, at most 500)
+    --offset <integer>
+        Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)
+    --title <string>
+        Case-insensitive substring of the listed item's title
+    --goal <string>
+        Only the sources a research goal links (its slug)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion neighbors
+Usage: histmersion neighbors [--kind <string>]... [--json] <citekey>
+
+Typed references to/from a source (references, challenges, refutes, updates, superseded_by)
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        Filter by edge kind (repeatable)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion graph
+Usage: histmersion graph [--depth <integer>] [--json] <citekey>
+
+Source dependency graph: BFS traversal returning D3-ready nodes + links
+
+Options and flags:
+    --help
+        Display this help text.
+    --depth <integer>
+        BFS depth 0–4 (default 2)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion contradictions
+Usage: histmersion contradictions [--since <integer>] [--json] [<citekey>]
+
+Disagreement edges (challenges, refutes, updates, superseded_by) and contested/superseded/debunked/retracted statuses
+
+Options and flags:
+    --help
+        Display this help text.
+    --since <integer>
+        Only show contradictions from citing papers published from this year on
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion put
+Usage: histmersion put <file.md>
+
+Send ONE note file (frontmatter + body) as a full create/replace
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion patch
+Usage: histmersion patch [--json <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--topics <string>] [--regions <string>] [--summary <string>] [--status <string>] [--title <string>] [--notes-file <string>] [--period <string>] [--body-file <string>] [--add-finding <string>]... [--remove-finding <string>]... [--if-updated-at <string>] [--add-edge <string>]... [--remove-edge <string>]... [--strict] <citekey>
+
+Selectively enrich one source — only the parts you pass are changed
+
+Options and flags:
+    --help
+        Display this help text.
+    --json <string>
+        A whole SourcePatch as JSON (the flags below override its parts)
+    --tags-add <string>
+        Comma-separated tags to add
+    --tags-remove <string>
+        Comma-separated tags to remove
+    --tags-replace <string>
+        Comma-separated tags replacing the current set
+    --topics <string>
+        Comma-separated topics replacing the current list
+    --regions <string>
+        Comma-separated regions replacing the current list
+    --summary <string>
+        New summary
+    --status <string>
+        foundational|current|contested|superseded|debunked|retracted|unassessed
+    --title <string>
+        New title
+    --notes-file <string>
+        File whose Markdown becomes this source's notes article
+    --period <string>
+        start,end as signed years, BCE negative (e.g. -3300,-2600)
+    --body-file <string>
+        File whose text REPLACES the converted body (e.g. a chapter cut out of a volume)
+    --add-finding <string>
+        A FindingInput as JSON (repeatable)
+    --remove-finding <string>
+        Finding id to drop, e.g. 'haak2015_massive#2' (repeatable)
+    --if-updated-at <string>
+        Precondition: the updatedAt you last read (fails when the row moved on)
+    --add-edge <string>
+        A typed edge FROM this source, <kind>:<citekey>, e.g. challenges:lord1968_oralpoet (repeatable; kinds: references, challenges, refutes, updates, superseded_by, supersedes, confirms, cites, foundational_for, compilation_of, review_of, verifies)
+    --remove-edge <string>
+        An edge FROM this source to drop, <kind>:<citekey> (repeatable)
+    --strict
+        Refuse the patch when its summary or notes have a formatting error
+
+==== histmersion rename
+Usage: histmersion rename [--json] <old> <new>
+
+Give a source a new citekey — findings, links in articles/notes and every table follow. The old citekey stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new citekey, and the answer names the new citekey.
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion delete
+Usage: histmersion delete [--apply] [--json] <citekey>
+
+Delete a source with its findings, edges, figures and stored original — a dry run unless --apply; refused while an article cites it; Calibre is never touched
+
+Options and flags:
+    --help
+        Display this help text.
+    --apply
+        Delete it (without this flag, a dry run lists what would go and what refuses it)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion export
+Usage: histmersion export [--sources-dir <string>] [--articles-dir <string>] [--meta-dir <string>] [--no-meta] <dir> [<citekey>...]
+
+Write sources to <dir>/sources/, articles to <dir>/<kind>/, bookkeeping to <dir>/meta/ — the seed layout
+
+Options and flags:
+    --help
+        Display this help text.
+    --sources-dir <string>
+        Where source notes go (default: <dir>/sources)
+    --articles-dir <string>
+        Where article notes go (default: <dir>)
+    --meta-dir <string>
+        Where ACQUIRE.md/TASKS.md/LOG.md/GOALS.md go (default: <dir>/meta)
+    --no-meta
+        Do not write the bookkeeping queues and the research goals
+
+==== histmersion backup
+Usage: histmersion backup [--download <string>]
+
+Take a pg_dump backup of the server's database (optionally copy it here)
+
+Options and flags:
+    --help
+        Display this help text.
+    --download <string>
+        Also stream the finished dump into this directory
+
+==== histmersion backups
+Usage: histmersion backups [--json]
+
+List the backups on the server, newest first
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion restore
+Usage: histmersion restore [--force] [--yes] <file>
+
+Restore a server-side backup (pg_restore --clean); refuses a non-empty database without --force
+
+Options and flags:
+    --help
+        Display this help text.
+    --force
+        Overwrite a database that still holds sources
+    --yes
+        Do not ask for confirmation
+
+==== histmersion maintenance
+Usage: histmersion maintenance vacuum
+
+Database upkeep on the server: vacuum
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    vacuum
+        VACUUM the tables a re-seed rewrites (or --table …) as a server job, outside any transaction; --analyze also refreshes planner statistics
+
+==== histmersion maintenance vacuum
+Usage: histmersion maintenance vacuum [--analyze] [--table <string>]... [--no-wait]
+
+VACUUM the tables a re-seed rewrites (or --table …) as a server job, outside any transaction; --analyze also refreshes planner statistics
+
+Options and flags:
+    --help
+        Display this help text.
+    --analyze
+        VACUUM (ANALYZE): also refresh the planner's statistics
+    --table <string>
+        A table to vacuum (repeatable; default: config maintenance.vacuum-tables)
+    --no-wait
+        Print the job id and return instead of following it
+
+==== histmersion bundle
+Usage:
+    histmersion bundle export
+    histmersion bundle verify
+    histmersion bundle import
+    histmersion bundle instance
+
+Portable .hmx bundles: export, verify and import a whole collection, carrying its identities
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    export
+        Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle
+    verify
+        Check a bundle against this server: format, schema, every checksum, record and blob — every problem listed
+    import
+        Import a bundle: what the merge plan says is new or changed, after every open issue is decided (--resolutions); refused while one is open
+    instance
+        This collection's identity (the origin of every row it creates); --label names it, e.g. work or home
+
+==== histmersion bundle export
+Usage: histmersion bundle export [--since <string>] <file.hmx>
+
+Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle
+
+Options and flags:
+    --help
+        Display this help text.
+    --since <string>
+        Only what changed after this moment (ISO-8601, e.g. a previous bundle's asOf)
+
+==== histmersion bundle verify
+Usage: histmersion bundle verify [--json] <file.hmx>
+
+Check a bundle against this server: format, schema, every checksum, record and blob — every problem listed
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion bundle import
+Usage: histmersion bundle import [--dry-run] [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--json] <file.hmx>
+
+Import a bundle: what the merge plan says is new or changed, after every open issue is decided (--resolutions); refused while one is open
+
+Options and flags:
+    --help
+        Display this help text.
+    --dry-run
+        Report what the import would do, and write nothing
+    --resolutions <string>
+        A resolution file (YAML; start one with merge plan --write-template)
+    --resolve <string>
+        Decide one issue: ID=decision, e.g. S-3c1e7a2b=keep-left (repeatable; overrides the file)
+    --editions <string>
+        Answer every edition (year-gap) question at once: merge or separate
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion bundle instance
+Usage: histmersion bundle instance [--label <string>]
+
+This collection's identity (the origin of every row it creates); --label names it, e.g. work or home
+
+Options and flags:
+    --help
+        Display this help text.
+    --label <string>
+        Name this instance; an empty string clears the name
+
+==== histmersion merge
+Usage:
+    histmersion merge plan
+    histmersion merge apply
+    histmersion merge list
+    histmersion merge show
+    histmersion merge ledger
+
+Merge another collection's bundle into this one: plan it (every issue in one run), apply it; list, show and trace past merges
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    plan
+        Dry run of importing a bundle into this collection: every match and every issue in one run, with stable ids to decide them by
+    apply
+        Carry out the merge of a bundle into this collection, as planned: a backup first, then one transaction
+    list
+        The merges this collection took in, newest first
+    show
+        One merge: its report, the resolutions it was given, the decisions it remembers
+    ledger
+        The merge ledger: which record of another collection each record here came from (one record with --uid, one merge with --merge)
+
+==== histmersion merge plan
+Usage: histmersion merge plan [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--write-template <string>] [--all] [--json] <file.hmx>
+
+Dry run of importing a bundle into this collection: every match and every issue in one run, with stable ids to decide them by
+
+Options and flags:
+    --help
+        Display this help text.
+    --resolutions <string>
+        A resolution file (YAML; start one with merge plan --write-template)
+    --resolve <string>
+        Decide one issue: ID=decision, e.g. S-3c1e7a2b=keep-left (repeatable; overrides the file)
+    --editions <string>
+        Answer every edition (year-gap) question at once: merge or separate
+    --write-template <string>
+        Write a resolution file listing every issue (decided ones filled in) to this path
+    --all
+        List every default, info line and match, not only the first few
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion merge apply
+Usage: histmersion merge apply [--resolutions <string>] [--resolve <string>]... [--editions <string>] [--plan <string>] [--yes] <file.hmx>
+
+Carry out the merge of a bundle into this collection, as planned: a backup first, then one transaction
+
+Options and flags:
+    --help
+        Display this help text.
+    --resolutions <string>
+        A resolution file (YAML; start one with merge plan --write-template)
+    --resolve <string>
+        Decide one issue: ID=decision, e.g. S-3c1e7a2b=keep-left (repeatable; overrides the file)
+    --editions <string>
+        Answer every edition (year-gap) question at once: merge or separate
+    --plan <string>
+        Apply only this plan (the hash merge plan printed); refused if the plan is now another
+    --yes
+        Do not ask for confirmation
+
+==== histmersion merge list
+Usage: histmersion merge list [--limit <integer>] [--json]
+
+The merges this collection took in, newest first
+
+Options and flags:
+    --help
+        Display this help text.
+    --limit <integer>
+        How many (default 50)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion merge show
+Usage: histmersion merge show [--json] <merge-id>
+
+One merge: its report, the resolutions it was given, the decisions it remembers
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion merge ledger
+Usage: histmersion merge ledger [--uid <string>] [--merge <string>] [--limit <integer>] [--json]
+
+The merge ledger: which record of another collection each record here came from (one record with --uid, one merge with --merge)
+
+Options and flags:
+    --help
+        Display this help text.
+    --uid <string>
+        A record: its uid (here, or merged away) or a citekey
+    --merge <string>
+        One merge: its id or first characters
+    --limit <integer>
+        How many rows (default 200)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion article
+Usage:
+    histmersion article list
+    histmersion article get
+    histmersion article put
+    histmersion article patch
+    histmersion article lint
+    histmersion article check
+    histmersion article coverage
+    histmersion article review
+    histmersion article delete
+    histmersion article export
+    histmersion article import
+    histmersion article versions
+    histmersion article version
+    histmersion article rename
+
+The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    list
+        List/search compiled articles (the filter flags select the sources they cite)
+    get
+        Show one article (parts: body,summary,coverage,cited,backlinks — default all)
+    put
+        Send ONE article note file (frontmatter + body) as a full create/replace
+    patch
+        Extend or correct one article — only the parts you pass change
+    lint
+        Formatting problems of one article's body and summary (--fix applies the wording-safe repairs)
+    check
+        Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing
+    coverage
+        The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections
+    review
+        The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it
+    delete
+        Remove one article (its links go with it)
+    export
+        Write each article to <dir>/<kind>/<slug>.md
+    import
+        Import <dir>/<kind>/*.md (and any *.md in <dir> itself)
+    versions
+        Show the edit history of one article
+    version
+        Show one historical version's full body
+    rename
+        Give an article a new slug — versions, links and every [[old]] in other articles follow. The old slug stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new slug, and the answer names the new slug.
+
+==== histmersion article list
+Usage: histmersion article list [--kind <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>] [--json] [<query>]
+
+List/search compiled articles (the filter flags select the sources they cite)
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        Article kind (concept|myth|culture|region|timeline|report|index)
+    --tag <string>
+        ALL required — every tag must be present on the source or one of its findings (repeatable)
+    --author <string>
+        ANY matches — a case-insensitive substring of an author's name (repeatable)
+    --place <string>
+        ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text (repeatable)
+    --topic <string>
+        ALL required — every topic must be present on the source (repeatable)
+    --status <string>
+        ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed (repeatable)
+    --year-from <integer>
+        Earliest publication year (inclusive)
+    --year-to <integer>
+        Latest publication year (inclusive)
+    --from <integer>
+        Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)
+    --to <integer>
+        Deep-time end, a signed year (BCE negative)
+    --bbox <string>
+        minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)
+    --sort <string>
+        Ordering: relevance|cited|period|year|oldest|title
+    --limit <integer>
+        Results per page (default: the configured page size, at most 500)
+    --offset <integer>
+        Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)
+    --title <string>
+        Case-insensitive substring of the listed item's title
+    --goal <string>
+        Only the sources a research goal links (its slug)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion article get
+Usage: histmersion article get [--parts <string>] [--json] <slug>
+
+Show one article (parts: body,summary,coverage,cited,backlinks — default all)
+
+Options and flags:
+    --help
+        Display this help text.
+    --parts <string>
+        Comma-separated parts to return: body,summary,coverage,cited,backlinks (default: all)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion article put
+Usage: histmersion article put [--kind <string>] [--strict] <file.md>
+
+Send ONE article note file (frontmatter + body) as a full create/replace
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        Kind when the frontmatter has no `type:`
+    --strict
+        Refuse the write when the Markdown has a formatting error (default: write, then list them)
+
+==== histmersion article patch
+Usage: histmersion article patch [--json <string>] [--title <string>] [--summary <string>] [--kind <string>] [--body-file <string>] [--append-file <string>] [--tags-add <string>] [--tags-remove <string>] [--tags-replace <string>] [--regions <string>] [--period <string>] [--if-updated-at <string>] [--strict] [--filter-query <string>] [--filter-topics <string>] [--filter-tags <string>] [--filter-status <string>] [--filter-places <string>] [--filter-period <string>] [--extra-query <string>]... [--clear-filter] [--reason <string>]... [--critique-reason <string>]... <slug>
+
+Extend or correct one article — only the parts you pass change
+
+Options and flags:
+    --help
+        Display this help text.
+    --json <string>
+        A whole ArticlePatch as JSON (the flags below override its parts)
+    --title <string>
+        New title
+    --summary <string>
+        New summary (the one-paragraph lede)
+    --kind <string>
+        New kind (concept|myth|culture|region|timeline|report|index)
+    --body-file <string>
+        File whose Markdown REPLACES the body
+    --append-file <string>
+        File whose Markdown is APPENDED to the body
+    --tags-add <string>
+        Comma-separated tags to add
+    --tags-remove <string>
+        Comma-separated tags to remove
+    --tags-replace <string>
+        Comma-separated tags replacing the current set
+    --regions <string>
+        Comma-separated regions replacing the current list
+    --period <string>
+        start,end as signed years, BCE negative (e.g. -1300,-1100)
+    --if-updated-at <string>
+        Precondition: the updatedAt you last read
+    --strict
+        Refuse the write when the Markdown has a formatting error (default: write, then list them)
+    --filter-query <string>
+        Coverage filter: the free-text query the article is compiled from (replaces the recorded filter)
+    --filter-topics <string>
+        Coverage filter: comma-separated topics the sources all have
+    --filter-tags <string>
+        Coverage filter: comma-separated tags the sources all have
+    --filter-status <string>
+        Coverage filter: comma-separated statuses, any of
+    --filter-places <string>
+        Coverage filter: comma-separated places, any of
+    --filter-period <string>
+        Coverage filter: start,end as signed years, BCE negative
+    --extra-query <string>
+        A further search the writer ran, reported in the Method note (repeatable)
+    --clear-filter
+        Remove the recorded filter (the Not used list and Method note stop being generated)
+    --reason <string>
+        <citekey>=<why the article leaves it out> — sets one source's reason; <citekey>= removes it (repeatable)
+    --critique-reason <string>
+        <src>><dst>=<why the critique does not bear on the article> — sets the reason of one critique-checklist pair (the critic first); <src>><dst>= removes it (repeatable)
+
+==== histmersion article lint
+Usage: histmersion article lint [--fix] [--json] <slug>
+
+Formatting problems of one article's body and summary (--fix applies the wording-safe repairs)
+
+Options and flags:
+    --help
+        Display this help text.
+    --fix
+        Apply the repairs that never change wording, then report what is left
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion article check
+Usage: histmersion article check [--edits-file <string>] [--body-file <string>] [--kind <string>] [--json] <slug>
+
+Dry-run edits to an article (or a whole draft body) and list the problems the review checks would find — writes nothing
+
+Options and flags:
+    --help
+        Display this help text.
+    --edits-file <string>
+        A JSON list of edits: [{"op": "replace|insertAfter|insertBefore|delete", "anchor": "…", "text": "…"}]
+    --body-file <string>
+        Instead of edits: a whole draft body (Markdown) to check
+    --kind <string>
+        Check the section set of this kind instead of the article's (index = none, for a fragment)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion article coverage
+Usage: histmersion article coverage [--json] <slug>
+
+The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion article review
+Usage: histmersion article review [--json] <slug>
+
+The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion article delete
+Usage: histmersion article delete <slug>
+
+Remove one article (its links go with it)
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion article export
+Usage: histmersion article export <dir>
+
+Write each article to <dir>/<kind>/<slug>.md
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion article import
+Usage: histmersion article import [--force] <dir>
+
+Import <dir>/<kind>/*.md (and any *.md in <dir> itself)
+
+Options and flags:
+    --help
+        Display this help text.
+    --force
+        Overwrite articles newer than the files
+
+==== histmersion article versions
+Usage: histmersion article versions <slug>
+
+Show the edit history of one article
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion article version
+Usage: histmersion article version <slug> <id>
+
+Show one historical version's full body
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion article rename
+Usage: histmersion article rename [--json] <old> <new>
+
+Give an article a new slug — versions, links and every [[old]] in other articles follow. The old slug stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new slug, and the answer names the new slug.
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion places
+Usage:
+    histmersion places search
+    histmersion places show
+    histmersion places children
+    histmersion places site-types
+    histmersion places rename
+    histmersion places name
+    histmersion places set
+    histmersion places overrides
+    histmersion places merge
+    histmersion places rm
+    histmersion places add
+    histmersion places import
+    histmersion places seed
+    histmersion places fetch
+    histmersion places sources
+    histmersion places load
+    histmersion places rebuild
+    histmersion places build-hierarchy
+
+The gazetteer: search, show, rename, name, set, merge, rm, add, import, load external sources and materialise places
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    search
+        Find places by name; the `id` it prints is what `--place` wants
+    show
+        One place: geometry, validity, parents and the subtree
+    children
+        What one place contains, as of a year
+    site-types
+        Refine the type (settlement, fortification, burial…) of the Wikidata sites on the map from their items' classes, as a server job; Pleiades and GeoNames sites are typed from their own fields already
+    rename
+        Give a place a new gazetteer id — names, parents, events and finding assignments follow. The old id stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new id, and the answer names the new id.
+    name
+        Names added by hand to gazetteer places: add, rm, list
+    set
+        Set what a place IS over what its source says — kind, period and/or point; kept by every re-seed, its findings matched again: `places set pleiades_886355306 --kind region --reason 'one of the 14 Augustan regiones'`
+    overrides
+        The kinds, periods and points set by hand (`places set`), with what each source says
+    merge
+        Merge a place into the one it is the same as — findings, links, children and references move; its id resolves there, and no re-seed brings it back
+    rm
+        Remove a place nothing refers to (refused while an event, attestation, child, hand-added name or a finding with no other place does); no re-seed brings it back
+    add
+        Add a point place of this collection's own (never touched by a re-seed); --source says where the point comes from
+    import
+        Upsert a Linked Places / GeoJSON file into the gazetteer
+    seed
+        Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities)
+    fetch
+        Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent.
+    sources
+        The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported
+    load
+        Import an external source — geonames, wikidata, tgn (Getty) or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply
+    rebuild
+        Re-materialise which findings fall in which places
+    build-hierarchy
+        Compute parent-child edges from spatial containment (point inside polygon). Idempotent.
+
+==== histmersion places search
+Usage: histmersion places search [--as-of <integer>] [--limit <integer>] [<query>]
+
+Find places by name; the `id` it prints is what `--place` wants
+
+Options and flags:
+    --help
+        Display this help text.
+    --as-of <integer>
+        Signed year the gazetteer is read at (BCE negative, e.g. -1400)
+    --limit <integer>
+        Max results
+
+==== histmersion places show
+Usage: histmersion places show [--as-of <integer>] [--depth <integer>] [--no-tree] <id>
+
+One place: geometry, validity, parents and the subtree
+
+Options and flags:
+    --help
+        Display this help text.
+    --as-of <integer>
+        Signed year the gazetteer is read at (BCE negative, e.g. -1400)
+    --depth <integer>
+        How deep the subtree goes
+    --no-tree
+        Skip the hierarchy walk
+
+==== histmersion places children
+Usage: histmersion places children [--as-of <integer>] <id>
+
+What one place contains, as of a year
+
+Options and flags:
+    --help
+        Display this help text.
+    --as-of <integer>
+        Signed year the gazetteer is read at (BCE negative, e.g. -1400)
+
+==== histmersion places site-types
+Usage: histmersion places site-types [--dry-run] [--limit <integer>] [--refresh] [--no-wait]
+
+Refine the type (settlement, fortification, burial…) of the Wikidata sites on the map from their items' classes, as a server job; Pleiades and GeoNames sites are typed from their own fields already
+
+Options and flags:
+    --help
+        Display this help text.
+    --dry-run
+        Count the sites it would ask about
+    --limit <integer>
+        Sites at most
+    --refresh
+        Ask again about sites asked before
+    --no-wait
+        Print the job id and return
+
+==== histmersion places rename
+Usage: histmersion places rename [--json] <old> <new>
+
+Give a place a new gazetteer id — names, parents, events and finding assignments follow. The old id stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new id, and the answer names the new id.
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion places name
+Usage:
+    histmersion places name add
+    histmersion places name rm
+    histmersion places name list
+
+Names added by hand to gazetteer places: add, rm, list
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    add
+        Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en`
+    rm
+        Remove a name added by hand (a name the seed gives cannot be removed)
+    list
+        The names added by hand; --csv prints them as db/places/supplement/names.csv lines, to promote into the seed
+
+==== histmersion places name add
+Usage: histmersion places name add [--lang <string>] <place-id> <name>
+
+Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en`
+
+Options and flags:
+    --help
+        Display this help text.
+    --lang <string>
+        Language tag of the name: en, grc, la, pl … (omit when unknown)
+
+==== histmersion places name rm
+Usage: histmersion places name rm [--lang <string>] <place-id> <name>
+
+Remove a name added by hand (a name the seed gives cannot be removed)
+
+Options and flags:
+    --help
+        Display this help text.
+    --lang <string>
+        Language tag of the name: en, grc, la, pl … (omit when unknown)
+
+==== histmersion places name list
+Usage: histmersion places name list [--place <string>] [--csv]
+
+The names added by hand; --csv prints them as db/places/supplement/names.csv lines, to promote into the seed
+
+Options and flags:
+    --help
+        Display this help text.
+    --place <string>
+        Only this place's (an id)
+    --csv
+        Print CSV (place_id,name,lang,why) instead of Markdown
+
+==== histmersion places set
+Usage: histmersion places set [--kind <string>] [--from <integer>] [--to <integer>] [--point <string>] [--reason <string>] [--reset] <place-id>
+
+Set what a place IS over what its source says — kind, period and/or point; kept by every re-seed, its findings matched again: `places set pleiades_886355306 --kind region --reason 'one of the 14 Augustan regiones'`
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        The kind it is: region|polity|site|feature|people
+    --from <integer>
+        Signed year it begins (BCE negative); the end stays as set (open the first time)
+    --to <integer>
+        Signed year it ends (BCE negative); the start stays as set (open the first time)
+    --point <string>
+        Its corrected point, latitude,longitude (a place known by a point only; --reason must name the gazetteer value)
+    --reason <string>
+        Why: the evidence the decision rests on
+    --reset
+        Drop the override: the kind, period and point its source states come back
+
+==== histmersion places overrides
+Usage: histmersion places overrides [--place <string>]
+
+The kinds, periods and points set by hand (`places set`), with what each source says
+
+Options and flags:
+    --help
+        Display this help text.
+    --place <string>
+        Only this place's (an id)
+
+==== histmersion places merge
+Usage: histmersion places merge [--reason <string>] <place-id> <into-id>
+
+Merge a place into the one it is the same as — findings, links, children and references move; its id resolves there, and no re-seed brings it back
+
+Options and flags:
+    --help
+        Display this help text.
+    --reason <string>
+        Why: the evidence the decision rests on
+
+==== histmersion places rm
+Usage: histmersion places rm [--reason <string>] <place-id>
+
+Remove a place nothing refers to (refused while an event, attestation, child, hand-added name or a finding with no other place does); no re-seed brings it back
+
+Options and flags:
+    --help
+        Display this help text.
+    --reason <string>
+        Why: the evidence the decision rests on
+
+==== histmersion places add
+Usage: histmersion places add [--kind <string>] --lon <floating-point> --lat <floating-point> --source <string> [--id <string>] [--name <string>]... [--lang <string>] [--from <integer>] [--to <integer>] <label>
+
+Add a point place of this collection's own (never touched by a re-seed); --source says where the point comes from
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        One of region, polity, site, feature, people
+    --lon <floating-point>
+        Longitude, decimal degrees (east positive)
+    --lat <floating-point>
+        Latitude, decimal degrees (north positive)
+    --source <string>
+        Where the coordinates come from: a gazetteer or Wikidata id, a map, a publication
+    --id <string>
+        The place id (default local_<label>)
+    --name <string>
+        A further name (repeatable)
+    --lang <string>
+        Language tag of the name: en, grc, la, pl … (omit when unknown)
+    --from <integer>
+        Signed year the place begins (BCE negative)
+    --to <integer>
+        Signed year the place ends (BCE negative)
+
+==== histmersion places import
+Usage: histmersion places import [--kind <string>] [--batch <integer>] [--dataset <string>] <file.json>
+
+Upsert a Linked Places / GeoJSON file into the gazetteer
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        Fallback kind for features that declare none: region|polity|site|feature|people
+    --batch <integer>
+        Features per request
+    --dataset <string>
+        Whose they are: local (this collection's own — the default; carried in a bundle) or seed (reference data every instance imports)
+
+==== histmersion places seed
+Usage: histmersion places seed [--dir <string>] [--batch <integer>] [--no-rebuild]
+
+Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities)
+
+Options and flags:
+    --help
+        Display this help text.
+    --dir <string>
+        Directory of LPF/GeoJSON files (default: config places.seedDir)
+    --batch <integer>
+        Features per request
+    --no-rebuild
+        Do not re-materialise finding_places afterwards
+
+==== histmersion places fetch
+Usage: histmersion places fetch [--dry-run] [--no-wait] <source>
+
+Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent.
+
+Options and flags:
+    --help
+        Display this help text.
+    --dry-run
+        Parse and transform only — do not upsert
+    --no-wait
+        Print the job id and return instead of following it
+
+==== histmersion places sources
+Usage: histmersion places sources 
+
+The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion places load
+Usage: histmersion places load [--apply] [--no-wait] <geonames|wikidata|tgn|lpf>
+
+Import an external source — geonames, wikidata, tgn (Getty) or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply
+
+Options and flags:
+    --help
+        Display this help text.
+    --apply
+        Import for real (without it: a dry run that reports what would change and keeps nothing)
+    --no-wait
+        Print the job id and return instead of following it
+
+==== histmersion places rebuild
+Usage: histmersion places rebuild 
+
+Re-materialise which findings fall in which places
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion places build-hierarchy
+Usage: histmersion places build-hierarchy [--no-wait]
+
+Compute parent-child edges from spatial containment (point inside polygon). Idempotent.
+
+Options and flags:
+    --help
+        Display this help text.
+    --no-wait
+        Print the job id and return instead of following it
+
+==== histmersion periods
+Usage:
+    histmersion periods search
+    histmersion periods show
+    histmersion periods seed
+    histmersion periods import
+    histmersion periods fetch
+
+Named periods (the timeline presets): search, show, seed and fetch from PeriodO
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    search
+        Find named periods by label, region or time span
+    show
+        One period: its span, authority, what it is part of and its divisions
+    seed
+        Import the period presets bundled with the server (a curated PeriodO subset); idempotent
+    import
+        Upsert a PeriodO dataset of your own (a dump or a subset); its periods are this collection's and travel in a bundle
+    fetch
+        Download PeriodO and import collections, each under one node; re-runnable and idempotent
+
+==== histmersion periods search
+Usage: histmersion periods search [--region <string>] [--from <integer>] [--to <integer>] [<query>]
+
+Find named periods by label, region or time span
+
+Options and flags:
+    --help
+        Display this help text.
+    --region <string>
+        Exact region (case-insensitive), e.g. Crete
+    --from <integer>
+        Signed year the period must reach (BCE negative)
+    --to <integer>
+        Signed year the period must start by
+
+==== histmersion periods show
+Usage: histmersion periods show <id>
+
+One period: its span, authority, what it is part of and its divisions
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion periods seed
+Usage: histmersion periods seed [--file <string>] [--replace]
+
+Import the period presets bundled with the server (a curated PeriodO subset); idempotent
+
+Options and flags:
+    --help
+        Display this help text.
+    --file <string>
+        Send this PeriodO dataset instead (e.g. db/periods/periodo-seed.json)
+    --replace
+        Also delete the seed periods the bundled seed no longer has (fetched ones too; your own are kept)
+
+==== histmersion periods import
+Usage: histmersion periods import [--collection <string>]... [--dataset <string>] <file.json>
+
+Upsert a PeriodO dataset of your own (a dump or a subset); its periods are this collection's and travel in a bundle
+
+Options and flags:
+    --help
+        Display this help text.
+    --collection <string>
+        Keep only this PeriodO authority id (repeatable)
+    --dataset <string>
+        Whose they are: local (this collection's own — the default; carried in a bundle) or seed (reference data every instance imports)
+
+==== histmersion periods fetch
+Usage: histmersion periods fetch [--collection <string>]... <source>
+
+Download PeriodO and import collections, each under one node; re-runnable and idempotent
+
+Options and flags:
+    --help
+        Display this help text.
+    --collection <string>
+        A PeriodO authority id, e.g. p0ds9qj (repeatable; default: config periods.periodo-collections)
+
+==== histmersion init
+Usage: histmersion init [--fetch] [--no-wait]
+
+Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources
+
+Options and flags:
+    --help
+        Display this help text.
+    --fetch
+        Also download the network gazetteers and PeriodO (config init.fetch-sources)
+    --no-wait
+        Print the job id and return instead of following it
+
+==== histmersion events
+Usage:
+    histmersion events search
+    histmersion events show
+    histmersion events patch
+    histmersion events rename
+    histmersion events import
+    histmersion events rederive
+    histmersion events corrections
+    histmersion events catalogues
+    histmersion events links
+    histmersion events candidates
+    histmersion events leads
+
+Historical events: search, show, patch, rename; import and re-derive catalogues, corrections, links to sources, leads
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    search
+        Find events by label or description (the filter flags select their sources)
+    show
+        One event: datings, edges, participants
+    patch
+        Change fields of one event: its scale, place, point, kind, label… (the rest stay); on a catalogue event the changes are kept across re-imports (`events corrections` lists them)
+    rename
+        Give an event a new id — attestations and asset links follow. The old id stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new id, and the answer names the new id.
+    import
+        Bring in every event a catalogue knows — gvp (Smithsonian Holocene eruptions), noaa (NCEI earthquakes, eruptions, tsunamis), wikidata (battles, sieges, wars, treaties, revolts, disasters), or a plugin's catalogue (`histmersion events catalogues` lists them) — merged with the events there (never overwriting a compiled one). A server job; resumable; --dry-run stores nothing and prints what it would import
+    rederive
+        Compute the dating of the stored catalogue records again from the records as read — NO network — and refresh the events the catalogues created (corrections by hand kept): the step after an importer's dating rules change. A server job; --dry-run counts what would change
+    corrections
+        The fields of catalogue events corrected by hand (kept over the catalogue on a re-import): conflicts first — the catalogue changed a corrected field to something else
+    catalogues
+        The event catalogues `events import` can read on this server (the built-in ones and any a plugin registered), their licences and how to cite them
+    links
+        The sources that may discuss an event (findings near it, passages naming it) — proposed, unconfirmed; --apply confirms one (an attestation from a passage naming the event), --reject stops proposing one
+    candidates
+        Compute the proposed links of the events not checked yet (--all: every event), as a server job
+    leads
+        Questions the events raise: catalogue events no source in the corpus discusses, with the findings around them counted and the commands that act on them (the filter flags select as for search)
+
+==== histmersion events search
+Usage: histmersion events search [--kind <string>] [--historicity <string>] [--place-id <string>] [--tier <string>] [--with-catalogue] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>] [--json] [<query>]
+
+Find events by label or description (the filter flags select their sources)
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        A kind (eruption|earthquake|tsunami|flood|drought|climate_event|epidemic|famine|natural_disaster|battle|naval_battle|siege|war|revolt|treaty|polity_formation|collapse|destruction|migration|invasion|technological_change|cultural_shift|era|construction|founding|event) or a group: natural|human
+    --historicity <string>
+        Filter: attested|inferred|contested|legendary|mythic
+    --place-id <string>
+        The event's own place id
+    --tier <string>
+        attested (a source in the corpus attests it) | catalogue (a catalogue alone)
+    --with-catalogue
+        Also list the catalogue events of the period, whatever sources the filter selects
+    --tag <string>
+        ALL required — every tag must be present on the source or one of its findings (repeatable)
+    --author <string>
+        ANY matches — a case-insensitive substring of an author's name (repeatable)
+    --place <string>
+        ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text (repeatable)
+    --topic <string>
+        ALL required — every topic must be present on the source (repeatable)
+    --status <string>
+        ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed (repeatable)
+    --year-from <integer>
+        Earliest publication year (inclusive)
+    --year-to <integer>
+        Latest publication year (inclusive)
+    --from <integer>
+        Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)
+    --to <integer>
+        Deep-time end, a signed year (BCE negative)
+    --bbox <string>
+        minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)
+    --sort <string>
+        Ordering: relevance|cited|period|year|oldest|title
+    --limit <integer>
+        Results per page (default: the configured page size, at most 500)
+    --offset <integer>
+        Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)
+    --title <string>
+        Case-insensitive substring of the listed item's title
+    --goal <string>
+        Only the sources a research goal links (its slug)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion events show
+Usage: histmersion events show [--json] <id>
+
+One event: datings, edges, participants
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion events patch
+Usage: histmersion events patch [--scale <string>] [--place-id <string>] [--lat <floating-point>] [--lon <floating-point>] [--geometry <string>] [--kind <string>] [--historicity <string>] [--label <string>] [--parent-id <string>] [--description <string>] [--citekey <string>] [--wikidata <string>] <id>
+
+Change fields of one event: its scale, place, point, kind, label… (the rest stay); on a catalogue event the changes are kept across re-imports (`events corrections` lists them)
+
+Options and flags:
+    --help
+        Display this help text.
+    --scale <string>
+        local (one place: a battle) | regional (across a region: an era) | auto (derive from kind, then place)
+    --place-id <string>
+        Gazetteer place id where it happened
+    --lat <floating-point>
+        Its own point: latitude (with --lon; write a negative as --lat=-1.5)
+    --lon <floating-point>
+        Its own point: longitude (with --lat)
+    --geometry <string>
+        Its own geometry as GeoJSON (instead of --lat/--lon)
+    --kind <string>
+        e.g. battle|siege|destruction|migration|war|cultural_shift
+    --historicity <string>
+        attested|inferred|contested|legendary|mythic
+    --label <string>
+        Its label
+    --parent-id <string>
+        The event it is part of
+    --description <string>
+        Its description
+    --citekey <string>
+        Its primary source
+    --wikidata <string>
+        The Wikidata item it is (Q…; "" clears) — where `media import` reads its picture
+
+==== histmersion events rename
+Usage: histmersion events rename [--json] <old> <new>
+
+Give an event a new id — attestations and asset links follow. The old id stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new id, and the answer names the new id.
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion events import
+Usage: histmersion events import [--dry-run] [--limit <integer>] [--bbox <string>] [--from <integer>] [--to <integer>] [--min-vei <integer>] [--min-magnitude <floating-point>] [--refresh] [--no-wait] <provider>
+
+Bring in every event a catalogue knows — gvp (Smithsonian Holocene eruptions), noaa (NCEI earthquakes, eruptions, tsunamis), wikidata (battles, sieges, wars, treaties, revolts, disasters), or a plugin's catalogue (`histmersion events catalogues` lists them) — merged with the events there (never overwriting a compiled one). A server job; resumable; --dry-run stores nothing and prints what it would import
+
+Options and flags:
+    --help
+        Display this help text.
+    --dry-run
+        Read the catalogue and count, store nothing
+    --limit <integer>
+        Records to keep at most
+    --bbox <string>
+        Only events inside minLon,minLat,maxLon,maxLat
+    --from <integer>
+        Only events ending at or after this signed year (write a negative as --from=-3000)
+    --to <integer>
+        Only events starting at or before this signed year (default events.max-year)
+    --min-vei <integer>
+        Eruptions: at least this VEI, everywhere (default: all in the region, events.gvp.outside-min-vei outside)
+    --min-magnitude <floating-point>
+        Earthquakes: at least this magnitude, everywhere
+    --refresh
+        Read again the parts an earlier import read
+    --no-wait
+        Print the job id and return
+
+==== histmersion events rederive
+Usage: histmersion events rederive [--provider <string>] [--dry-run] [--no-wait]
+
+Compute the dating of the stored catalogue records again from the records as read — NO network — and refresh the events the catalogues created (corrections by hand kept): the step after an importer's dating rules change. A server job; --dry-run counts what would change
+
+Options and flags:
+    --help
+        Display this help text.
+    --provider <string>
+        Only this catalogue: gvp | noaa | wikidata | a plugin's (default: all)
+    --dry-run
+        Count what would change, store nothing
+    --no-wait
+        Print the job id and return
+
+==== histmersion events corrections
+Usage: histmersion events corrections [--status <string>] [--event <string>] [--limit <integer>]
+
+The fields of catalogue events corrected by hand (kept over the catalogue on a re-import): conflicts first — the catalogue changed a corrected field to something else
+
+Options and flags:
+    --help
+        Display this help text.
+    --status <string>
+        active | agreed | conflict (default: all but agreed)
+    --event <string>
+        Only this event's
+    --limit <integer>
+        At most this many
+
+==== histmersion events catalogues
+Usage: histmersion events catalogues 
+
+The event catalogues `events import` can read on this server (the built-in ones and any a plugin registered), their licences and how to cite them
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion events links
+Usage: histmersion events links [--recompute] [--apply <string>]... [--reject <string>]... <event>
+
+The sources that may discuss an event (findings near it, passages naming it) — proposed, unconfirmed; --apply confirms one (an attestation from a passage naming the event), --reject stops proposing one
+
+Options and flags:
+    --help
+        Display this help text.
+    --recompute
+        Recompute the proposals first
+    --apply <string>
+        A citekey to confirm (repeatable)
+    --reject <string>
+        A citekey to stop proposing (repeatable)
+
+==== histmersion events candidates
+Usage: histmersion events candidates [--all] [--event <string>] [--limit <integer>] [--no-wait]
+
+Compute the proposed links of the events not checked yet (--all: every event), as a server job
+
+Options and flags:
+    --help
+        Display this help text.
+    --all
+        Every event, not only those never checked
+    --event <string>
+        Only this event
+    --limit <integer>
+        Events at most
+    --no-wait
+        Print the job id and return
+
+==== histmersion events leads
+Usage: histmersion events leads [--kind <string>] [--tier <string>] [--area <string>] [--tag <string>]... [--author <string>]... [--place <string>]... [--topic <string>]... [--status <string>]... [--year-from <integer>] [--year-to <integer>] [--from <integer>] [--to <integer>] [--bbox <string>] [--sort <string>] [--limit <integer>] [--offset <integer>] [--title <string>] [--goal <string>]
+
+Questions the events raise: catalogue events no source in the corpus discusses, with the findings around them counted and the commands that act on them (the filter flags select as for search)
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        A kind or natural|human
+    --tier <string>
+        catalogue (default) | attested
+    --area <string>
+        Only events inside minLon,minLat,maxLon,maxLat
+    --tag <string>
+        ALL required — every tag must be present on the source or one of its findings (repeatable)
+    --author <string>
+        ANY matches — a case-insensitive substring of an author's name (repeatable)
+    --place <string>
+        ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text (repeatable)
+    --topic <string>
+        ALL required — every topic must be present on the source (repeatable)
+    --status <string>
+        ANY matches — foundational|current|contested|superseded|debunked|retracted|unassessed (repeatable)
+    --year-from <integer>
+        Earliest publication year (inclusive)
+    --year-to <integer>
+        Latest publication year (inclusive)
+    --from <integer>
+        Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)
+    --to <integer>
+        Deep-time end, a signed year (BCE negative)
+    --bbox <string>
+        minLon,minLat,maxLon,maxLat (minLon > maxLon crosses the antimeridian)
+    --sort <string>
+        Ordering: relevance|cited|period|year|oldest|title
+    --limit <integer>
+        Results per page (default: the configured page size, at most 500)
+    --offset <integer>
+        Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)
+    --title <string>
+        Case-insensitive substring of the listed item's title
+    --goal <string>
+        Only the sources a research goal links (its slug)
+
+==== histmersion attestations
+Usage:
+    histmersion attestations search
+    histmersion attestations show
+    histmersion attestations add
+    histmersion attestations rm
+
+Granular source references: search, show, add, rm
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    search
+        Find attestations by source or target
+    show
+        One attestation by id
+    add
+        Create an attestation linking an entity to a source passage
+    rm
+        Delete an attestation by id
+
+==== histmersion attestations search
+Usage: histmersion attestations search [--citekey <string>] [--target-type <string>] [--target-id <string>] [--limit <integer>] [--offset <integer>]
+
+Find attestations by source or target
+
+Options and flags:
+    --help
+        Display this help text.
+    --citekey <string>
+        Filter by source citekey
+    --target-type <string>
+        Filter by target type: finding|event|event_dating|place|edge
+    --target-id <string>
+        Filter by target entity id
+    --limit <integer>
+        Max results
+    --offset <integer>
+        Skip this many (the list's footer names the next offset)
+
+==== histmersion attestations show
+Usage: histmersion attestations show <id>
+
+One attestation by id
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion attestations add
+Usage: histmersion attestations add --citekey <string> --target-type <string> --target-id <string> [--quote <string>] [--page <string>] [--chunk <integer>] [--note <string>]
+
+Create an attestation linking an entity to a source passage
+
+Options and flags:
+    --help
+        Display this help text.
+    --citekey <string>
+        Source citekey
+    --target-type <string>
+        Target type: finding|event|event_dating|place|edge
+    --target-id <string>
+        Target entity id
+    --quote <string>
+        Exact quoted passage
+    --page <string>
+        Page/folio label
+    --chunk <integer>
+        source_chunks ordinal
+    --note <string>
+        Note
+
+==== histmersion attestations rm
+Usage: histmersion attestations rm <id>
+
+Delete an attestation by id
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion candidates
+Usage:
+    histmersion candidates sweep
+    histmersion candidates mark
+    histmersion candidates [--goal <string>] [--state <string>] [--limit <integer>] [--offset <integer>]
+
+New sources found for the research goals without a model: list, sweep, mark
+
+Options and flags:
+    --help
+        Display this help text.
+    --goal <string>
+        One goal's candidates (default: every goal)
+    --state <string>
+        new|seen|queued|dismissed (default new: the unseen)
+    --limit <integer>
+        Max results
+    --offset <integer>
+        Skip this many (the list's footer names the next offset)
+
+Subcommands:
+    sweep
+        Read a goal's saved queries, citation and author alerts from their watermarks now (no model)
+    mark
+        Record a decision on candidates by id: seen, queued, dismissed (or new again)
+
+==== histmersion candidates sweep
+Usage: histmersion candidates sweep [--dry-run] <goal>
+
+Read a goal's saved queries, citation and author alerts from their watermarks now (no model)
+
+Options and flags:
+    --help
+        Display this help text.
+    --dry-run
+        Read, store nothing (no candidates, no watermarks)
+
+==== histmersion candidates mark
+Usage: histmersion candidates mark [--as <string>] <id>...
+
+Record a decision on candidates by id: seen, queued, dismissed (or new again)
+
+Options and flags:
+    --help
+        Display this help text.
+    --as <string>
+        seen|queued|dismissed|new
+
+==== histmersion goals
+Usage:
+    histmersion goals list
+    histmersion goals get
+    histmersion goals update
+    histmersion goals plan
+    histmersion goals link
+    histmersion goals unlink
+    histmersion goals schedule
+    histmersion goals schedules
+    histmersion goals rename
+
+Research goals: list, get, update, plan, link, unlink, schedule, schedules, rename
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    list
+        List research goals
+    get
+        Show one goal: sub-goals, links, schedules, approved plan
+    update
+        Update goal fields (patch)
+    plan
+        Ask the server's planner for sub-goals, search queries and works (DOIs checked upstream); nothing is created until you approve the plan (histmersion agent approve)
+    link
+        Link a goal to a source, an article, a search query or a queue item
+    unlink
+        Remove one link of a goal
+    schedule
+        Set (or --remove) a goal's currency or acquisition schedule: a sweep of its watcher watch:<goal> (created paused — resume it with `agent manager watch:<goal> resume`; its one cron is shared by both sweeps); runs only while the server's agents are enabled
+    schedules
+        Every goal's schedules, the next due first
+    rename
+        Give a goal a new slug — sub-goals, links and schedules follow. The old slug stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new slug, and the answer names the new slug.
+
+==== histmersion goals list
+Usage: histmersion goals list [--status <string>] [--limit <integer>] [--offset <integer>] [--json]
+
+List research goals
+
+Options and flags:
+    --help
+        Display this help text.
+    --status <string>
+        Filter: planned|seeding|compiled|reviewed|done
+    --limit <integer>
+        Max results
+    --offset <integer>
+        Skip this many (the list's footer names the next offset)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion goals get
+Usage: histmersion goals get [--json] <slug>
+
+Show one goal: sub-goals, links, schedules, approved plan
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion goals update
+Usage: histmersion goals update [--title <string>] [--status <string>] [--notes <string>] [--budget-usd <floating-point>] [--from <integer>] [--to <integer>] <slug>
+
+Update goal fields (patch)
+
+Options and flags:
+    --help
+        Display this help text.
+    --title <string>
+        New title
+    --status <string>
+        New status: planned|seeding|compiled|reviewed|done
+    --notes <string>
+        Progress notes
+    --budget-usd <floating-point>
+        Cost cap of the agent runs started for this goal (0 clears it)
+    --from <integer>
+        Signed year the goal's period begins (BCE negative, e.g. --from=-1200); alone, the end stays as set
+    --to <integer>
+        Signed year the goal's period ends (BCE negative); alone, the start stays as set
+
+==== histmersion goals plan
+Usage: histmersion goals plan [--model <string>] [--budget-usd <floating-point>] [--follow] <slug>
+
+Ask the server's planner for sub-goals, search queries and works (DOIs checked upstream); nothing is created until you approve the plan (histmersion agent approve)
+
+Options and flags:
+    --help
+        Display this help text.
+    --model <string>
+        provider:model for this call (default: the role's configured model)
+    --budget-usd <floating-point>
+        This run's cost cap in USD (default: the goal's, then agents.budgets.run-usd)
+    --follow
+        Wait for the run to finish (or pause, or wait for an approval), printing its progress
+
+==== histmersion goals link
+Usage:
+    histmersion goals link --source <string> [--note <string>] <slug>
+    histmersion goals link --article <string> [--note <string>] <slug>
+    histmersion goals link --query <string> [--note <string>] <slug>
+    histmersion goals link --item <integer> [--note <string>] <slug>
+
+Link a goal to a source, an article, a search query or a queue item
+
+Options and flags:
+    --help
+        Display this help text.
+    --source <string>
+        A citekey
+    --article <string>
+        An article slug
+    --query <string>
+        A literature search query (what the goal's acquisition sweep searches for)
+    --item <integer>
+        A queue item id
+    --note <string>
+        Why it is linked
+
+==== histmersion goals unlink
+Usage: histmersion goals unlink <slug> <kind> <ref>
+
+Remove one link of a goal
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion goals schedule
+Usage:
+    histmersion goals schedule --remove <slug> <kind>
+    histmersion goals schedule --cron <string> [--off] [--budget-usd <floating-point>] <slug> <kind>
+
+Set (or --remove) a goal's currency or acquisition schedule: a sweep of its watcher watch:<goal> (created paused — resume it with `agent manager watch:<goal> resume`; its one cron is shared by both sweeps); runs only while the server's agents are enabled
+
+Options and flags:
+    --help
+        Display this help text.
+    --remove
+        Delete the schedule
+    --cron <string>
+        Five fields in UTC (minute hour day-of-month month day-of-week), or @daily, @weekly, @monthly
+    --off
+        Take the sweep out of the watcher (its cron stays)
+    --budget-usd <floating-point>
+        Cost cap of each run it starts
+
+==== histmersion goals schedules
+Usage: histmersion goals schedules 
+
+Every goal's schedules, the next due first
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion goals rename
+Usage: histmersion goals rename [--json] <old> <new>
+
+Give a goal a new slug — sub-goals, links and schedules follow. The old slug stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new slug, and the answer names the new slug.
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent-state
+Usage:
+    histmersion agent-state list
+    histmersion agent-state get
+    histmersion agent-state set
+
+Agent state key-value store: list, get, set
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    list
+        List all agent state keys
+    get
+        Get one agent state entry
+    set
+        Set an agent state key (value as JSON)
+
+==== histmersion agent-state list
+Usage: histmersion agent-state list 
+
+List all agent state keys
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent-state get
+Usage: histmersion agent-state get <key>
+
+Get one agent state entry
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent-state set
+Usage: histmersion agent-state set <key> <value>
+
+Set an agent state key (value as JSON)
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent
+Usage:
+    histmersion agent models
+    histmersion agent allowance
+    histmersion agent quota
+    histmersion agent generate
+    histmersion agent doctor
+    histmersion agent probe
+    histmersion agent run
+    histmersion agent runs
+    histmersion agent show
+    histmersion agent compare
+    histmersion agent pause
+    histmersion agent resume
+    histmersion agent cancel
+    histmersion agent approvals
+    histmersion agent approve
+    histmersion agent reject
+    histmersion agent digest
+    histmersion agent decide-all
+    histmersion agent managers
+    histmersion agent manager
+    histmersion agent enqueue
+    histmersion agent autopilot
+    histmersion agent scheduler
+    histmersion agent stalls
+
+Embedded research agents: models, allowance, quota, generate, doctor, probe, run, runs, show, compare, pause, resume, cancel, approvals, approve, reject, digest, decide-all, managers, manager, enqueue, autopilot, scheduler, stalls
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    models
+        Each step role's model chain, the model its next call would use, and every allowance's use per window
+    allowance
+        Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config
+    quota
+        Subscription pools (Claude plan, ChatGPT plan): each window's use, its floor, reset and reading age; the hold switch; metered allowances
+    generate
+        Write the per-runtime agent definitions (Claude Code plugins, Codex home, opencode config) from the server's bundled agents and skills — on the SERVER's disk
+    doctor
+        Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login
+    probe
+        One live model call with one read-only tool (get_source) and a typed answer, checked against the record
+    run
+        Start a pipeline on a target (enrich-source <source>, review-article <article>, plan-goal <goal>, compile-article <article>, currency-check <goal>, acquisition-sweep <goal>, infer-filter <article>, hint-effect <manager>, propose-articles <goal>)
+    runs
+        Agent runs, newest first, filtered on the server
+    show
+        One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace)
+    compare
+        Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, the first call's input and the turns, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)
+    pause
+        Pause a run before its next step
+    resume
+        Resume a paused run (finished steps are replayed, not re-run)
+    cancel
+        Cancel a run
+    approvals
+        Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish, …), filtered on the server; the open ones by default
+    approve
+        Approve proposed changes (one or more ids): a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it
+    reject
+        Reject proposed changes (one or more ids; they stay on record)
+    digest
+        Everything waiting for a person in one view: the open approvals by kind (how many, the oldest, who decides them now, the subjects with the most, the ids) and the manager items held for a person; once a day it is also written to the worklog (agents.autopilot.digest-hour)
+    decide-all
+        Approve or reject every OPEN approval that matches at once — of a kind, about a subject, or the ids given (they narrow together; one is needed), the oldest first, each through the same decision a single one takes
+    managers
+        The process managers: each one's state, items, runs in flight, status line and last event
+    manager
+        One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|cron|config
+    enqueue
+        Hand a target to its manager, as the page buttons do: review|extend <article>, enrich <citekey|article|goal> (the unenriched sources it cites or links), seed <goal> (propose its next articles); a missing manager is created paused
+    autopilot
+        The autopilot: status (default) — per research goal its stage, managers, sources, articles, open approvals, last activity and pace, and the watchers' ingest backlog; on — every goal gets an active seeding manager and watcher and moves from planned to reviewed by itself (within every cap, budget and plan floor); off — the seeding managers and watchers it runs are paused; repair-acquire [--dry-run] — move the acquisition items a watcher's sweep created for legal open-access works into the watchers' ingest backlog (a person's items are never touched); focus [list|pin <goal>|unpin <goal>|priority <goal> <n>|max <n|default>] — at most max-active-goals goals are active for model work (finish-first: articles to review, then to compile, then enough sources; depth-first within a tree; a person's pins and priority; then the oldest), the others' model-using items wait; ingestion is not capped; drain — nothing new starts while the runs in flight finish (the status says DRAINED once none is queued or running: safe to stop the server for a deploy); undrain — lift it (turning it on lifts it too); mode <working|finish|pause> — the two switches as the web UI's one choice: working, finish current work then pause (on and draining), pause now (off)
+    scheduler
+        The central scheduler that admits the managers' work across every job type: status (default) — the strategy, the runs at once and plan pools, the job types' shares, what the last pass started and the queue with why each item waits; queue — only the waiting items, in the order they would start; why <item> — one item (its id, or the target of an open item): waiting behind what, running, waiting for a person, held, settled; strategy <type-balanced|goal-first|default> — switch it live (default: back to agents.scheduler.strategy)
+    stalls
+        The unfinished research goals with no progress in N days (default agents.autopilot.stall-days), each with the one reason it stands still — draining, waiting for a person, held, paused, a budget, quota, the scheduler's queue, a block, a failed item, no candidates, idle — and the command that unblocks it
+
+==== histmersion agent models
+Usage: histmersion agent models [set | reset]
+
+Each step role's model chain, the model its next call would use, and every allowance's use per window
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    set
+        Save a role's chain over the config: the models tried in order, first choice first
+    reset
+        Drop a role's saved chain: the server's config (agents.roles.<role>) applies again
+
+==== histmersion agent models set
+Usage: histmersion agent models set <role> <provider:model>...
+
+Save a role's chain over the config: the models tried in order, first choice first
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent models reset
+Usage: histmersion agent models reset <role>
+
+Drop a role's saved chain: the server's config (agents.roles.<role>) applies again
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent allowance
+Usage: histmersion agent allowance [--limit <string>]... [--reserve <integer>] [--remove] <target>
+
+Save the allowance of a model (provider:model) or of a provider (provider:*): tokens and/or USD per rolling window and a reserve below which the chain's next model is used; --remove goes back to config
+
+Options and flags:
+    --help
+        Display this help text.
+    --limit <string>
+        A limit: '<amount> tokens/<window>' or '<amount> usd/<window>' (window: 5h, 7d, day, week, month); repeatable; none = unlimited
+    --reserve <integer>
+        Stop using it once less than this % of any limit is left (0-99)
+    --remove
+        Drop the saved allowance: the server's config (agents.allowances) applies again
+
+==== histmersion agent quota
+Usage: histmersion agent quota [hold | release | floors | fallthrough | refresh]
+
+Subscription pools (Claude plan, ChatGPT plan): each window's use, its floor, reset and reading age; the hold switch; metered allowances
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    hold
+        Hold a plan pool: no agent run draws on it until it is released (claude-plan, chatgpt-plan)
+    release
+        Release a held plan pool
+    floors
+        Save a plan pool's floors — the share of each window that must stay left, e.g. 'five_hour=30, seven_day=25' (Codex windows by length: '300m=25, 10080m=20'); --reset goes back to config
+    fallthrough
+        Whether a role's chain may fall from a plan below its floor to a PAID key (off: the run pauses until the reset)
+    refresh
+        Take a fresh reading of a plan pool now, or of every pool (claude-plan, chatgpt-plan): the ChatGPT plan through codex app-server (spends nothing), the Claude plan through one minimal claude -p turn (spends a little of the plan)
+
+==== histmersion agent quota hold
+Usage: histmersion agent quota hold <pool>
+
+Hold a plan pool: no agent run draws on it until it is released (claude-plan, chatgpt-plan)
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent quota release
+Usage: histmersion agent quota release <pool>
+
+Release a held plan pool
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent quota floors
+Usage: histmersion agent quota floors [--reset] <pool> [<floors>]
+
+Save a plan pool's floors — the share of each window that must stay left, e.g. 'five_hour=30, seven_day=25' (Codex windows by length: '300m=25, 10080m=20'); --reset goes back to config
+
+Options and flags:
+    --help
+        Display this help text.
+    --reset
+        Drop the saved floors
+
+==== histmersion agent quota fallthrough
+Usage: histmersion agent quota fallthrough <role> <on|off>
+
+Whether a role's chain may fall from a plan below its floor to a PAID key (off: the run pauses until the reset)
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent quota refresh
+Usage: histmersion agent quota refresh [<pool>]
+
+Take a fresh reading of a plan pool now, or of every pool (claude-plan, chatgpt-plan): the ChatGPT plan through codex app-server (spends nothing), the Claude plan through one minimal claude -p turn (spends a little of the plan)
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent generate
+Usage: histmersion agent generate [--runtime <string>]... [--out <string>]
+
+Write the per-runtime agent definitions (Claude Code plugins, Codex home, opencode config) from the server's bundled agents and skills — on the SERVER's disk
+
+Options and flags:
+    --help
+        Display this help text.
+    --runtime <string>
+        Only this runtime: claude-code, codex or opencode (repeatable; default all three)
+    --out <string>
+        A directory on the server to write to instead of its runtimes directory
+
+==== histmersion agent doctor
+Usage: histmersion agent doctor [--offline]
+
+Check every provider without spending anything: keys, the free model listing, prices, the claude CLI and its login
+
+Options and flags:
+    --help
+        Display this help text.
+    --offline
+        Skip the providers' model listings (no network)
+
+==== histmersion agent probe
+Usage: histmersion agent probe [--model <string>] <citekey>
+
+One live model call with one read-only tool (get_source) and a typed answer, checked against the record
+
+Options and flags:
+    --help
+        Display this help text.
+    --model <string>
+        provider:model for this call (default: the role's configured model)
+
+==== histmersion agent run
+Usage: histmersion agent run [--model <string>] [--budget-usd <floating-point>] [--budget-tokens <integer>] [--fix] [--rounds <integer>] [--acquire-item <integer>] [--title <string>] [--kind <string>] [--query <string>] [--topic <string>]... [--tag <string>]... [--goal <string>] [--dry-run] [--model-for <string>]... [--follow] <pipeline> <target>
+
+Start a pipeline on a target (enrich-source <source>, review-article <article>, plan-goal <goal>, compile-article <article>, currency-check <goal>, acquisition-sweep <goal>, infer-filter <article>, hint-effect <manager>, propose-articles <goal>)
+
+Options and flags:
+    --help
+        Display this help text.
+    --model <string>
+        provider:model for this call (default: the role's configured model)
+    --budget-usd <floating-point>
+        This run's cost cap in USD (default: agents.budgets.run-usd)
+    --budget-tokens <integer>
+        This run's token cap (default: agents.budgets.run-tokens)
+    --fix
+        review-article: let the fixer revise the article between passes, each fix verified by the reviewers
+    --rounds <integer>
+        review-article: at most this many review passes: a full panel, then a verification pass after each fix (default: agents.review.max-rounds)
+    --acquire-item <integer>
+        enrich-source: the acquisition item this run fulfils (ticked off when it finishes)
+    --title <string>
+        compile-article: the title of a NEW article
+    --kind <string>
+        compile-article: the kind of a new article (concept, myth, culture, region, timeline, report, index)
+    --query <string>
+        compile-article: free-text filter for the sources to compile from
+    --topic <string>
+        compile-article: a topic the sources must have (repeatable)
+    --tag <string>
+        compile-article: a tag the sources must have (repeatable)
+    --goal <string>
+        The goal the run works for (a compiled article is linked to it)
+    --dry-run
+        Do every read and every model step but write nothing to the corpus; each write is recorded on its step (agent show)
+    --model-for <string>
+        role=provider:model: one role's model for this run only, over its chain and over --model (repeatable; roles: probe, extractor, reviewer, cold-reader, skeptic, fixer, planner, writer)
+    --follow
+        Wait for the run to finish (or pause, or wait for an approval), printing its progress
+
+==== histmersion agent runs
+Usage: histmersion agent runs [--status <string>]... [--pipeline <string>]... [--manager <string>]... [--goal <string>] [--model <string>]... [--provider <string>]... [--origin <string>]... [--since <string>] [--until <string>] [--subject <string>] [--limit <integer>] [--before <string>] [--json]
+
+Agent runs, newest first, filtered on the server
+
+Options and flags:
+    --help
+        Display this help text.
+    --status <string>
+        Only runs in these states: queued|running|paused|waiting|done|failed|cancelled (waiting = for an approval) (repeatable, or comma-separated)
+    --pipeline <string>
+        Only these pipelines: enrich-source|review-article|plan-goal|compile-article|currency-check|acquisition-sweep|infer-filter|hint-effect|propose-articles (repeatable, or comma-separated)
+    --manager <string>
+        Only the runs these process managers dispatched (review, enrich, seed:<goal>, …) (repeatable, or comma-separated)
+    --goal <string>
+        Only the runs for this goal
+    --model <string>
+        Only runs a step of which used this provider:model (repeatable, or comma-separated)
+    --provider <string>
+        Only runs a step of which used this provider (codex, claude-code, …) (repeatable, or comma-separated)
+    --origin <string>
+        Only runs started by: person|scheduler|run|ingest|manager (repeatable, or comma-separated)
+    --since <string>
+        Only those started at or after: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago
+    --until <string>
+        Only those started before the end of: 2026-10-01, or an ISO instant
+    --subject <string>
+        Only runs whose target matches this text (a citekey, an article or goal slug)
+    --limit <integer>
+        How many
+    --before <string>
+        The next older page: the id of the last run shown (the listing prints the command)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent show
+Usage: histmersion agent show [--messages] [--follow] <id>
+
+One run: its steps — tokens (with the first call's input and the turns), cost — and warnings (and --messages: the trace)
+
+Options and flags:
+    --help
+        Display this help text.
+    --messages
+        Include the traced messages and tool calls
+    --follow
+        Wait for the run to finish (or pause, or wait for an approval), printing its progress
+
+==== histmersion agent compare
+Usage: histmersion agent compare [--json] <run-id>...
+
+Runs of one pipeline on one target side by side: per step the model (configured → reported), tokens, the first call's input and the turns, cost or plan pool, time and attempts; then the outputs (enrich-source: findings, quote check, places, periods, summary and notes, the claims only one run made; review-article: verdicts, findings per reviewer and kind, the major findings runs share)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent pause
+Usage: histmersion agent pause <id>
+
+Pause a run before its next step
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent resume
+Usage: histmersion agent resume [--budget-usd <floating-point>] [--budget-tokens <integer>] <id>
+
+Resume a paused run (finished steps are replayed, not re-run)
+
+Options and flags:
+    --help
+        Display this help text.
+    --budget-usd <floating-point>
+        Raise the run's cost cap before resuming
+    --budget-tokens <integer>
+        Raise the run's token cap before resuming
+
+==== histmersion agent cancel
+Usage: histmersion agent cancel <id>
+
+Cancel a run
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent approvals
+Usage: histmersion agent approvals [--state <string>] [--kind <string>]... [--subject <string>] [--goal <string>] [--decided-by <string>]... [--limit <integer>] [--before <string>] [--json]
+
+Changes runs proposed for a person to decide (statuses, disagreement edges, goal plans, articles to publish, …), filtered on the server; the open ones by default
+
+Options and flags:
+    --help
+        Display this help text.
+    --state <string>
+        Only approvals in this state: open|approved|rejected|failed|all (default open)
+    --kind <string>
+        Only these kinds: status-change|edge|goal-plan|article-publish|article-filter|article-plan|hint-effect (repeatable, or comma-separated)
+    --subject <string>
+        Only those about something matching this text: a goal or article slug, a manager, a citekey
+    --goal <string>
+        Only one goal's: its plan, or proposed by a run for it
+    --decided-by <string>
+        Only those decided by: person|autopilot|auto (repeatable, or comma-separated)
+    --limit <integer>
+        How many
+    --before <string>
+        The next older page: the id of the last approval shown (the listing prints the command)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent approve
+Usage: histmersion agent approve [--note <string>] <id>...
+
+Approve proposed changes (one or more ids): a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it
+
+Options and flags:
+    --help
+        Display this help text.
+    --note <string>
+        Why — kept with the decision (with every id)
+
+==== histmersion agent reject
+Usage: histmersion agent reject [--note <string>] <id>...
+
+Reject proposed changes (one or more ids; they stay on record)
+
+Options and flags:
+    --help
+        Display this help text.
+    --note <string>
+        Why — kept with the decision (with every id)
+
+==== histmersion agent digest
+Usage: histmersion agent digest [--json]
+
+Everything waiting for a person in one view: the open approvals by kind (how many, the oldest, who decides them now, the subjects with the most, the ids) and the manager items held for a person; once a day it is also written to the worklog (agents.autopilot.digest-hour)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent decide-all
+Usage: histmersion agent decide-all [--kind <string>] [--subject <string>] [--id <integer>]... [--note <string>] [--limit <integer>] [--dry-run] [--json] <approve|reject>
+
+Approve or reject every OPEN approval that matches at once — of a kind, about a subject, or the ids given (they narrow together; one is needed), the oldest first, each through the same decision a single one takes
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        Only this kind (goal-plan, article-publish, …)
+    --subject <string>
+        Only approvals about this goal or article
+    --id <integer>
+        Only these approvals (repeatable)
+    --note <string>
+        Why — kept with every decision
+    --limit <integer>
+        At most this many (the oldest first)
+    --dry-run
+        List what it would decide; decide nothing
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent managers
+Usage: histmersion agent managers [--json]
+
+The process managers: each one's state, items, runs in flight, status line and last event
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent manager
+Usage:
+    histmersion agent manager new
+    histmersion agent manager <id> [status | items | events | pause | resume | stop | hint | enqueue | hold | release | skip | reopen | priority | cron | config]
+
+One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|cron|config
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    new
+        Create a manager: review (library-wide, id 'review'), enrich (library-wide, id 'enrich'), seed --goal g (id 'seed:g'; starts by proposing the area's articles), watch --goal g (id 'watch:g'; an acquisition sweep and a currency check on its cron, weekly by default; auto-ingest of legal open access only with --config auto-ingest=on); created paused
+    status
+        The manager: items in flight with their runs, hints, newest events
+    items
+        Its items, the most urgent first
+    events
+        Its events, newest first
+    pause
+        Start no new runs (its runs in flight go on, unless --runs)
+    resume
+        Start runs again (and resume the runs a pause --runs paused)
+    stop
+        Cancel its runs in flight and its open items
+    hint
+        A note its runs' fixer and skeptic read (standing unless --once); --suggest: the server's model proposes the action it asks for (hold, prioritise, skip, settings), applied only when you approve it
+    enqueue
+        Drive a target: kind review|filter|extend <article> (review manager), enrich <citekey> (enrich), propose <goal> (seed), sweep|currency <goal> (watch); a settled one is re-opened
+    hold
+        Hold an item: until a date, until a source (DOI or citekey) is in the corpus, or until released
+    release
+        Release a held item
+    skip
+        Stop an item as skipped (its run, if any, is cancelled)
+    reopen
+        Bring a settled item back (its runs counted from zero)
+    priority
+        Set an item's priority (higher first)
+    cron
+        When it fires (UTC): five fields, or @daily/@weekly/@monthly; "" clears it. A watcher re-opens its sweeps, the review manager refills, a seeding manager proposes again
+    config
+        Replace its settings: key=value pairs (none: back to the server's defaults): max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none), auto-approve (its runs' plans and drafts decided by code checks), extend-min-new
+
+==== histmersion agent manager new
+Usage: histmersion agent manager new [--goal <string>] [--config <string>]... [--cron <string>] [--active] [--json] <review|enrich|seed|watch>
+
+Create a manager: review (library-wide, id 'review'), enrich (library-wide, id 'enrich'), seed --goal g (id 'seed:g'; starts by proposing the area's articles), watch --goal g (id 'watch:g'; an acquisition sweep and a currency check on its cron, weekly by default; auto-ingest of legal open access only with --config auto-ingest=on); created paused
+
+Options and flags:
+    --help
+        Display this help text.
+    --goal <string>
+        The research area (seed, watch)
+    --config <string>
+        A setting key=value (repeatable): max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none), auto-approve (its runs' plans and drafts decided by code checks), extend-min-new
+    --cron <string>
+        When it fires: five fields in UTC, or @daily/@weekly/@monthly (watch: default @weekly)
+    --active
+        Start it active (default: paused — nothing is spent until you resume it)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent manager status
+Usage: histmersion agent manager status [--json]
+
+The manager: items in flight with their runs, hints, newest events
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent manager items
+Usage: histmersion agent manager items [--status <string>] [--offset <integer>] [--limit <integer>] [--json]
+
+Its items, the most urgent first
+
+Options and flags:
+    --help
+        Display this help text.
+    --status <string>
+        Only items in this state: pending|held|active|done|stopped|failed|cancelled
+    --offset <integer>
+        Skip this many
+    --limit <integer>
+        How many
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent manager events
+Usage: histmersion agent manager events [--before <integer>] [--limit <integer>]
+
+Its events, newest first
+
+Options and flags:
+    --help
+        Display this help text.
+    --before <integer>
+        Only events older than this id
+    --limit <integer>
+        How many
+
+==== histmersion agent manager pause
+Usage: histmersion agent manager pause [--runs]
+
+Start no new runs (its runs in flight go on, unless --runs)
+
+Options and flags:
+    --help
+        Display this help text.
+    --runs
+        Pause its runs in flight too
+
+==== histmersion agent manager resume
+Usage: histmersion agent manager resume 
+
+Start runs again (and resume the runs a pause --runs paused)
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent manager stop
+Usage: histmersion agent manager stop 
+
+Cancel its runs in flight and its open items
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent manager hint
+Usage: histmersion agent manager hint [--item <string>] [--once] [--suggest] <text>
+
+A note its runs' fixer and skeptic read (standing unless --once); --suggest: the server's model proposes the action it asks for (hold, prioritise, skip, settings), applied only when you approve it
+
+Options and flags:
+    --help
+        Display this help text.
+    --item <string>
+        Only about this target (or item id)
+    --once
+        For the next run only
+    --suggest
+        Let the server's planner model propose a structured action (an approval you decide)
+
+==== histmersion agent manager enqueue
+Usage: histmersion agent manager enqueue [--priority <integer>] <kind> <target>
+
+Drive a target: kind review|filter|extend <article> (review manager), enrich <citekey> (enrich), propose <goal> (seed), sweep|currency <goal> (watch); a settled one is re-opened
+
+Options and flags:
+    --help
+        Display this help text.
+    --priority <integer>
+        Its priority (default 10: first)
+
+==== histmersion agent manager hold
+Usage: histmersion agent manager hold [--until <string>] [--until-source <string>] [--reason <string>] <target>
+
+Hold an item: until a date, until a source (DOI or citekey) is in the corpus, or until released
+
+Options and flags:
+    --help
+        Display this help text.
+    --until <string>
+        A date (2026-11-01) or an instant
+    --until-source <string>
+        A DOI or citekey
+    --reason <string>
+        Why
+
+==== histmersion agent manager release
+Usage: histmersion agent manager release <target>
+
+Release a held item
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent manager skip
+Usage: histmersion agent manager skip [--reason <string>] <target>
+
+Stop an item as skipped (its run, if any, is cancelled)
+
+Options and flags:
+    --help
+        Display this help text.
+    --reason <string>
+        Why
+
+==== histmersion agent manager reopen
+Usage: histmersion agent manager reopen <target>
+
+Bring a settled item back (its runs counted from zero)
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent manager priority
+Usage: histmersion agent manager priority <target> <priority>
+
+Set an item's priority (higher first)
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent manager cron
+Usage: histmersion agent manager cron <cron>
+
+When it fires (UTC): five fields, or @daily/@weekly/@monthly; "" clears it. A watcher re-opens its sweeps, the review manager refills, a seeding manager proposes again
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent manager config
+Usage: histmersion agent manager config [<key=value>...]
+
+Replace its settings: key=value pairs (none: back to the server's defaults): max-runs, rounds, max-runs-per-article, no-progress-runs, reopen-limit, cooldown-minutes, low-water, refill-batch, max-failures, budget-usd, tags, goal, models, stale-after-days, infer-filter, min-sources, max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none), auto-approve (its runs' plans and drafts decided by code checks), extend-min-new
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion agent enqueue
+Usage: histmersion agent enqueue [--priority <integer>] [--json] <kind> <target>
+
+Hand a target to its manager, as the page buttons do: review|extend <article>, enrich <citekey|article|goal> (the unenriched sources it cites or links), seed <goal> (propose its next articles); a missing manager is created paused
+
+Options and flags:
+    --help
+        Display this help text.
+    --priority <integer>
+        Its priority (default 10: first)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent autopilot
+Usage: histmersion agent autopilot [--dry-run] [--json] [<status|on|off|drain|undrain|repair-acquire|focus|mode>] [<focus: list|pin|unpin|priority|max [goal] [n]>...]
+
+The autopilot: status (default) — per research goal its stage, managers, sources, articles, open approvals, last activity and pace, and the watchers' ingest backlog; on — every goal gets an active seeding manager and watcher and moves from planned to reviewed by itself (within every cap, budget and plan floor); off — the seeding managers and watchers it runs are paused; repair-acquire [--dry-run] — move the acquisition items a watcher's sweep created for legal open-access works into the watchers' ingest backlog (a person's items are never touched); focus [list|pin <goal>|unpin <goal>|priority <goal> <n>|max <n|default>] — at most max-active-goals goals are active for model work (finish-first: articles to review, then to compile, then enough sources; depth-first within a tree; a person's pins and priority; then the oldest), the others' model-using items wait; ingestion is not capped; drain — nothing new starts while the runs in flight finish (the status says DRAINED once none is queued or running: safe to stop the server for a deploy); undrain — lift it (turning it on lifts it too); mode <working|finish|pause> — the two switches as the web UI's one choice: working, finish current work then pause (on and draining), pause now (off)
+
+Options and flags:
+    --help
+        Display this help text.
+    --dry-run
+        repair-acquire: list what it would do, change nothing
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent scheduler
+Usage: histmersion agent scheduler [--limit <integer>] [--json] [<status|queue|why|strategy>] [<why: <item>; strategy: <name|default>>...]
+
+The central scheduler that admits the managers' work across every job type: status (default) — the strategy, the runs at once and plan pools, the job types' shares, what the last pass started and the queue with why each item waits; queue — only the waiting items, in the order they would start; why <item> — one item (its id, or the target of an open item): waiting behind what, running, waiting for a person, held, settled; strategy <type-balanced|goal-first|default> — switch it live (default: back to agents.scheduler.strategy)
+
+Options and flags:
+    --help
+        Display this help text.
+    --limit <integer>
+        How many waiting items to show (status: 50, queue: 200)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion agent stalls
+Usage: histmersion agent stalls [--days <integer>] [--json]
+
+The unfinished research goals with no progress in N days (default agents.autopilot.stall-days), each with the one reason it stands still — draining, waiting for a person, held, paused, a budget, quota, the scheduler's queue, a block, a failed item, no candidates, idle — and the command that unblocks it
+
+Options and flags:
+    --help
+        Display this help text.
+    --days <integer>
+        No progress in this many days
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion media
+Usage:
+    histmersion media import
+    histmersion media providers
+    histmersion media covers
+    histmersion media list
+    histmersion media show
+    histmersion media fill-licences
+    histmersion media detail
+    histmersion media patch
+
+Pictures: import from providers, covers and illustrations of sources, list, show, fill-licences; a figure's detail, patch
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    import
+        Bring in pictures from an outside provider (legally reusable only): wikidata (the default), depicts, met, cleveland, aic, loc, pleiades, opencontext, smithsonian and europeana (off by default: a key of your own), or a plugin's collection — `histmersion media providers` lists them with their terms. --dry-run asks about one batch and prints the counts per licence (and a collection's matches, with their reasons); otherwise a server JOB asks about every place (or event) not asked yet, batch by batch, and resumes where it stopped
+    providers
+        The providers `media import` can run on this server: the built-in ones and any a plugin registered, with what each asks about, the plugin that provides it and the licences it may store
+    covers
+        Pictures for the sources' hover cards: a book's cover from the local Calibre library (read-only), else Open Library's by ISBN/OCLC; a paper's illustration chosen among its own figures. --dry-run says what would be linked; otherwise the server part runs as a job
+    list
+        Stored pictures — source figures and providers' — with licence and credit
+    show
+        One picture: origin, licence, credit, and what it shows
+    fill-licences
+        Give a source's figures the licence the source records (only figures with none); counts unless --apply
+    detail
+        Show asset metadata including spatial/temporal
+    patch
+        Update asset metadata
+
+==== histmersion media import
+Usage: histmersion media import [--dry-run] [--limit <integer>] [--place <string>] [--event <string>] [--refresh] [--no-wait] <provider>
+
+Bring in pictures from an outside provider (legally reusable only): wikidata (the default), depicts, met, cleveland, aic, loc, pleiades, opencontext, smithsonian and europeana (off by default: a key of your own), or a plugin's collection — `histmersion media providers` lists them with their terms. --dry-run asks about one batch and prints the counts per licence (and a collection's matches, with their reasons); otherwise a server JOB asks about every place (or event) not asked yet, batch by batch, and resumes where it stopped
+
+Options and flags:
+    --help
+        Display this help text.
+    --dry-run
+        Read one batch, store nothing; print the counts per licence (and the matches, with their reasons)
+    --limit <integer>
+        Targets to ask about (a dry run: default media.default-limit; a job: all not asked yet)
+    --place <string>
+        Only this place
+    --event <string>
+        Only this event (its --wikidata item; providers that ask about events)
+    --refresh
+        Ask again about ones already asked, and re-read the licences of stored pictures
+    --no-wait
+        Print the job id and return instead of following it
+
+==== histmersion media providers
+Usage: histmersion media providers 
+
+The providers `media import` can run on this server: the built-in ones and any a plugin registered, with what each asks about, the plugin that provides it and the licences it may store
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion media covers
+Usage: histmersion media covers [--dry-run] [--limit <integer>] [--citekey <string>] [--refresh] [--no-calibre] [--no-open-library] [--no-illustrations] [--no-wait]
+
+Pictures for the sources' hover cards: a book's cover from the local Calibre library (read-only), else Open Library's by ISBN/OCLC; a paper's illustration chosen among its own figures. --dry-run says what would be linked; otherwise the server part runs as a job
+
+Options and flags:
+    --help
+        Display this help text.
+    --dry-run
+        Say what would be linked, store nothing
+    --limit <integer>
+        Sources to look at per step
+    --citekey <string>
+        Only this source
+    --refresh
+        Redo the sources that already have their cover / illustration
+    --no-calibre
+        Skip the Calibre library
+    --no-open-library
+        Do not ask Open Library
+    --no-illustrations
+        Covers only
+    --no-wait
+        Print the job id and return instead of following it
+
+==== histmersion media list
+Usage: histmersion media list [--provider <string>] [--licence <string>] [--place <string>] [--event <string>] [--q <string>] [--limit <integer>] [--offset <integer>] [--facets]
+
+Stored pictures — source figures and providers' — with licence and credit
+
+Options and flags:
+    --help
+        Display this help text.
+    --provider <string>
+        source|wikimedia-commons|calibre|open-library|met-museum|cleveland-museum|art-institute-chicago|library-of-congress|open-context|smithsonian|europeana
+    --licence <string>
+        An SPDX id (CC-BY-SA-4.0), public-domain, or none
+    --place <string>
+        Linked to this place
+    --event <string>
+        Linked to this event
+    --q <string>
+        Text in the name, file or credit
+    --limit <integer>
+        How many to list
+    --offset <integer>
+        Skip this many (the list's footer names the next offset)
+    --facets
+        Only the counts per provider and licence
+
+==== histmersion media show
+Usage: histmersion media show <uid>
+
+One picture: origin, licence, credit, and what it shows
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion media fill-licences
+Usage: histmersion media fill-licences [--apply]
+
+Give a source's figures the licence the source records (only figures with none); counts unless --apply
+
+Options and flags:
+    --help
+        Display this help text.
+    --apply
+        Write the licences
+
+==== histmersion media detail
+Usage: histmersion media detail <citekey> <name>
+
+Show asset metadata including spatial/temporal
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion media patch
+Usage: histmersion media patch [--kind <string>] [--caption <string>] [--license <string>] [--lat <floating-point>] [--lon <floating-point>] [--period-start <integer>] [--period-end <integer>] <citekey> <name>
+
+Update asset metadata
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        Asset kind: figure|photo|map|plan|scan
+    --caption <string>
+        Caption text
+    --license <string>
+        License identifier
+    --lat <floating-point>
+        Latitude
+    --lon <floating-point>
+        Longitude
+    --period-start <integer>
+        Period start (signed year)
+    --period-end <integer>
+        Period end (signed year)
+
+==== histmersion asset-links
+Usage:
+    histmersion asset-links search
+    histmersion asset-links add
+    histmersion asset-links rm
+
+Semantic links between assets and entities: search, add, rm
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    search
+        Find asset links
+    add
+        Create an asset link
+    rm
+        Delete an asset link by id
+
+==== histmersion asset-links search
+Usage: histmersion asset-links search [--citekey <string>] [--asset <string>] [--target-type <string>] [--target-id <string>]
+
+Find asset links
+
+Options and flags:
+    --help
+        Display this help text.
+    --citekey <string>
+        Filter by citekey
+    --asset <string>
+        Filter by asset name
+    --target-type <string>
+        Target type: event|finding|place|source|article
+    --target-id <string>
+        Filter by target id
+
+==== histmersion asset-links add
+Usage: histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>]
+
+Create an asset link
+
+Options and flags:
+    --help
+        Display this help text.
+    --citekey <string>
+        Source citekey
+    --asset <string>
+        Asset file name
+    --relation <string>
+        Relation: depicts|taken_at|illustrates|page_of
+    --target-type <string>
+        Target type: event|finding|place|source|article
+    --target-id <string>
+        Target entity id
+    --xywh <string>
+        Region within the asset (x,y,w,h)
+    --notes <string>
+        Free-text notes
+
+==== histmersion asset-links rm
+Usage: histmersion asset-links rm <id>
+
+Delete an asset link by id
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion lint
+Usage: histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]
+
+Health-check the corpus (34 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, article-critique-pairing, superseded-without-edge, article-markdown, note-markdown, finding-geocode, finding-unplaced, place-kind, place-grid-point, place-imported-point-area, finding-placeholder, media-licence, event-correction-conflict)
+
+Options and flags:
+    --help
+        Display this help text.
+    --rule <string>
+        Run only this rule (repeatable)
+    --fix
+        First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists, with --rule finding-unplaced give a point to the findings it lists, with --rule place-kind reclassify and merge the places it lists, with --rule place-grid-point move the places it lists, with --rule place-imported-point-area remove the places it lists (with --article/--source/--file: the formatting repairs)
+    --article <string>
+        Check only this article's formatting (a slug)
+    --source <string>
+        Check only this source's summary and notes for formatting problems (a citekey)
+    --file <string>
+        Check a local Markdown file's formatting before it is stored (--fix rewrites the file)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion queue
+Usage: histmersion queue [--topic <string>] [--reason <string>] [--all] [--dry-run] [--limit <integer>] [--id <integer>] [--no-wait] [--json] [<args>...]
+
+Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import; acquire recheck: the legal re-check of the acquisition list (more than one item, or --all for every item past the caps, as a server job it follows)
+
+Options and flags:
+    --help
+        Display this help text.
+    --topic <string>
+        Group the added item under this heading
+    --reason <string>
+        Why this item is on the list / what research direction it serves
+    --all
+        Include done items and the file's prose blocks; acquire recheck: every open item with a DOI, due or not, past the caps (a server job)
+    --dry-run
+        acquire recheck: list what it would close and try; no fetcher is asked, nothing stored
+    --limit <integer>
+        acquire recheck: try at most this many due items (default acquire.recheck.per-pass)
+    --id <integer>
+        acquire recheck: this acquisition item only, due or not
+    --no-wait
+        acquire recheck: print the job id and return instead of following the job
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion query
+Usage: histmersion query [--json] <sql>
+
+Run ONE read-only SQL statement (a write is refused by Postgres itself)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion schema
+Usage: histmersion schema [--json]
+
+List the tables and columns `query` can read (from information_schema)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion discover
+Usage:
+    histmersion discover search
+    histmersion discover meta
+    histmersion discover wikirefs
+
+Find literature upstream (OpenAlex / Crossref / Wikipedia)
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    search
+        OpenAlex search for literature to ingest
+    meta
+        Normalised metadata for one DOI
+    wikirefs
+        Harvest the DOIs a Wikipedia article cites (the trailhead)
+
+==== histmersion discover search
+Usage: histmersion discover search [--since <integer>] [--sort <string>] [--limit <integer>] [--not-in-db] [--json] <query>
+
+OpenAlex search for literature to ingest
+
+Options and flags:
+    --help
+        Display this help text.
+    --since <integer>
+        Only works published from this year on
+    --sort <string>
+        relevance (default) | cited
+    --limit <integer>
+        Max results
+    --not-in-db
+        Only works the corpus does NOT have yet
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion discover meta
+Usage: histmersion discover meta [--json] <doi>
+
+Normalised metadata for one DOI
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion discover wikirefs
+Usage: histmersion discover wikirefs [--json] <wikipedia-url>
+
+Harvest the DOIs a Wikipedia article cites (the trailhead)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion refs
+Usage: histmersion refs [--apply] [--json] <citekey|doi>
+
+The reference list a paper deposited, resolved against the corpus
+
+Options and flags:
+    --help
+        Display this help text.
+    --apply
+        Write the resolved references as `references` edges
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion assess
+Usage:
+    histmersion assess update-retractions
+    histmersion assess [--apply] [--force-status] [--json] <citekey|doi>
+
+Retraction / correction / impact verdict for a paper (retracted|corrected|current|low-impact)
+
+Options and flags:
+    --help
+        Display this help text.
+    --apply
+        Write the verdict into the source's status (only over 'unassessed'; a retraction always)
+    --force-status
+        With --apply, overwrite a status that is already set
+    --json
+        Print the raw JSON response instead of Markdown
+
+Subcommands:
+    update-retractions
+        Refresh the local Retraction Watch mirror (~60 000 rows)
+
+==== histmersion assess update-retractions
+Usage: histmersion assess update-retractions [--json]
+
+Refresh the local Retraction Watch mirror (~60 000 rows)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion followups
+Usage: histmersion followups [--since <integer>] [--limit <integer>] [--apply] [--json] <citekey|doi>
+
+Papers citing this one, with intents and a proposed edge kind (confirms|challenges|refutes|supersedes|cites)
+
+Options and flags:
+    --help
+        Display this help text.
+    --since <integer>
+        Only citing papers published from this year on
+    --limit <integer>
+        Max citing papers
+    --apply
+        Record the proposed edges for citing papers already in the corpus
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion ingest
+Usage: histmersion ingest [--citekey <string>] [--arxiv <string>] [--quality] [--force] [--title <string>] [--author <string>]... [--year <integer>] [--doi <string>] [--provenance <string>] [--no-wait] [--refetch] [--legal-only] [--acquire-item <integer>] [--json] <file|doi|arxiv:id>
+
+Bring a paper in: a local PDF/EPUB (uploaded and OCR'd, keeping its figures) or an identifier (metadata → legal OA PDF → the same OCR job → reference edges → assessment)
+
+Options and flags:
+    --help
+        Display this help text.
+    --citekey <string>
+        Citekey to store it under (required for a file; overrides the generated one for an identifier)
+    --arxiv <string>
+        arXiv id to try when the DOI has no OA copy
+    --quality
+        File upload: slow, accurate OCR (docling) — for image-only scans
+    --force
+        File upload: accept a file already stored under another citekey
+    --title <string>
+        File upload: title, used only when the source is being created
+    --author <string>
+        File upload: author, used only when the source is being created (repeatable)
+    --year <integer>
+        File upload: publication year, used only when the source is being created
+    --doi <string>
+        File upload: DOI, used only when the source is being created
+    --provenance <string>
+        How the source was acquired: manual|ill|author|scan|external-file|calibre|archive|oa (default: manual for file, oa for DOI)
+    --no-wait
+        File upload: print the job id and return instead of following it
+    --refetch
+        Identifier: fetch and convert again although the source already has its original (replaces its body)
+    --legal-only
+        Identifier: ask the legal open-access chain only, never a fetcher the config marks unauthorised
+    --acquire-item <integer>
+        File upload: id of the acquisition-queue item this file fulfils — ticked off when the OCR job succeeds
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion archive
+Usage:
+    histmersion archive search
+    histmersion archive info
+    histmersion archive import
+
+Internet Archive: search, inspect and import public texts
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    search
+        Search archive.org texts
+    info
+        One archive.org item: files and lending restriction
+    import
+        Import a PUBLIC archive.org item (lending-only is refused)
+
+==== histmersion archive search
+Usage: histmersion archive search [--rows <integer>] [--json] <query>
+
+Search archive.org texts
+
+Options and flags:
+    --help
+        Display this help text.
+    --rows <integer>
+        Max results
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion archive info
+Usage: histmersion archive info [--json] <identifier>
+
+One archive.org item: files and lending restriction
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion archive import
+Usage: histmersion archive import [--citekey <string>] [--format <string>] [--json] <identifier>
+
+Import a PUBLIC archive.org item (lending-only is refused)
+
+Options and flags:
+    --help
+        Display this help text.
+    --citekey <string>
+        Override the generated citekey
+    --format <string>
+        epub | pdf (default: whichever carries text)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion calibre
+Usage:
+    histmersion calibre search
+    histmersion calibre import
+    histmersion calibre link
+    histmersion calibre push
+    histmersion calibre update
+    histmersion calibre set
+    histmersion calibre audit
+    histmersion calibre sync
+    histmersion calibre gaps
+
+The local Calibre library: search, import, link, push, update, set, audit, sync, gaps
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    search
+        Search the local Calibre library (read-only); --unlinked lists the entries no source links yet, newest first
+    import
+        Import a purchased book from Calibre into the corpus and convert it (the Calibre original is never touched)
+    link
+        Link a source to an existing Calibre entry (checks the entry exists; Calibre itself is not changed)
+    push
+        Add a stored source's file to Calibre with title/authors/DOI/tags; --replace swaps the file of its linked entry instead (Calibre GUI must be closed)
+    update
+        Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed)
+    set
+        Set fields on a Calibre entry, e.g. --field languages:eng (settable: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series; Calibre GUI must be closed)
+    audit
+        Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only
+    sync
+        Push every source with a fetched file that is not in Calibre yet (dry run unless --apply)
+    gaps
+        List sources with a fetched file that are missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook)
+
+==== histmersion calibre search
+Usage: histmersion calibre search [--unlinked] [--limit <integer>] [--json] [<query>]
+
+Search the local Calibre library (read-only); --unlinked lists the entries no source links yet, newest first
+
+Options and flags:
+    --help
+        Display this help text.
+    --unlinked
+        Only entries no source is linked to (the query, if given, narrows them)
+    --limit <integer>
+        Max results
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion calibre import
+Usage: histmersion calibre import [--citekey <string>] [--format <string>] [--no-convert] [--no-wait] [--acquire-item <integer>] [--json] <calibre-id>
+
+Import a purchased book from Calibre into the corpus and convert it (the Calibre original is never touched)
+
+Options and flags:
+    --help
+        Display this help text.
+    --citekey <string>
+        Override the generated citekey
+    --format <string>
+        pdf | epub
+    --no-convert
+        Create or enrich the record only; do not upload the file for OCR
+    --no-wait
+        Queue the conversion and return instead of following it
+    --acquire-item <integer>
+        Id of the acquisition-queue item this book fulfils — ticked off when the conversion succeeds (without it, an open item naming the book's DOI is ticked off, and similar ones are listed)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion calibre link
+Usage: histmersion calibre link [--json] <citekey> <calibre-id>
+
+Link a source to an existing Calibre entry (checks the entry exists; Calibre itself is not changed)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion calibre push
+Usage: histmersion calibre push [--file <string>] [--replace] [--json] <citekey>
+
+Add a stored source's file to Calibre with title/authors/DOI/tags; --replace swaps the file of its linked entry instead (Calibre GUI must be closed)
+
+Options and flags:
+    --help
+        Display this help text.
+    --file <string>
+        The file to add (default: the original the server stored; without --replace, <cli.calibre.originals-dir>/<citekey>/paper.* first when present)
+    --replace
+        Replace the file of the source's LINKED Calibre entry instead of adding a new entry
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion calibre update
+Usage:
+    histmersion calibre update [--json] <citekey>
+    histmersion calibre update --all [--apply] [--json]
+
+Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+    --all
+        Every Calibre entry a source is linked to (a dry run listing the changes, unless --apply)
+    --apply
+        With --all: write the changes (Calibre GUI must be closed)
+
+==== histmersion calibre set
+Usage: histmersion calibre set --field <string> [--field <string>]... <calibre-id>
+
+Set fields on a Calibre entry, e.g. --field languages:eng (settable: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series; Calibre GUI must be closed)
+
+Options and flags:
+    --help
+        Display this help text.
+    --field <string>
+        <name>:<value>, repeatable
+
+==== histmersion calibre audit
+Usage: histmersion calibre audit [--json]
+
+Compare every source's Calibre entry with the corpus record (title, authors, year) — read-only
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion calibre sync
+Usage: histmersion calibre sync [--apply] [--limit <integer>] [--json]
+
+Push every source with a fetched file that is not in Calibre yet (dry run unless --apply)
+
+Options and flags:
+    --help
+        Display this help text.
+    --apply
+        Actually add them (Calibre GUI must be closed)
+    --limit <integer>
+        Only consider this many gaps
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion calibre gaps
+Usage: histmersion calibre gaps [--quiet] [--limit <integer>] [--json]
+
+List sources with a fetched file that are missing from Calibre; --quiet prints one line and exits 1 when there are any (the reminder hook)
+
+Options and flags:
+    --help
+        Display this help text.
+    --quiet
+        One line, exit 1 when gaps exist (records with no fetched file never count)
+    --limit <integer>
+        Max gaps to list
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion reocr
+Usage: histmersion reocr [--quality] [--no-wait] <citekey>
+
+Convert a source's stored original again (e.g. under the slow, accurate OCR path)
+
+Options and flags:
+    --help
+        Display this help text.
+    --quality
+        Slow, accurate OCR (docling)
+    --no-wait
+        Print the job id and return instead of following it
+
+==== histmersion assets
+Usage: histmersion assets <citekey>
+
+The figures stored with a source, and the URLs they are served at
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion jobs
+Usage:
+    histmersion jobs pause
+    histmersion jobs resume
+    histmersion jobs cancel
+    histmersion jobs [--status <string>]... [--kind <string>]... [--since <string>] [--until <string>] [--subject <string>] [--limit <integer>] [--before <string>] [--json] [<id>]
+
+Recent background jobs (OCR, imports, agent runs, …), filtered on the server, or one job by id; `jobs pause|resume|cancel <id>` controls one
+
+Options and flags:
+    --help
+        Display this help text.
+    --status <string>
+        Only jobs in these states: queued|running|done|failed|paused|cancelled (an agent run's too: waiting) (repeatable, or comma-separated)
+    --kind <string>
+        Only these job kinds: ingest, reocr, agent, media-import, events-import, init, basemap-fetch, … (repeatable, or comma-separated)
+    --since <string>
+        Only those started at or after: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago
+    --until <string>
+        Only those started before the end of: 2026-10-01, or an ISO instant
+    --subject <string>
+        Only jobs about something matching this text (citekey, target, detail), or whose id starts so
+    --limit <integer>
+        Max rows
+    --before <string>
+        The next older page: the id of the last job shown (the listing prints the command)
+    --json
+        Print the raw JSON response instead of Markdown
+
+Subcommands:
+    pause
+        Pause a long background job (a picture or event import, a base-map download, an acquisition re-check, the init job's gazetteer loads) after the part it is on — or an agent run; it keeps what it did
+    resume
+        Resume a paused job: it goes on with the parts it had not done
+    cancel
+        Cancel a job: a background job stops after the part it is on and is recorded as cancelled
+
+==== histmersion jobs pause
+Usage: histmersion jobs pause [--json] <id>
+
+Pause a long background job (a picture or event import, a base-map download, an acquisition re-check, the init job's gazetteer loads) after the part it is on — or an agent run; it keeps what it did
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion jobs resume
+Usage: histmersion jobs resume [--json] <id>
+
+Resume a paused job: it goes on with the parts it had not done
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion jobs cancel
+Usage: histmersion jobs cancel [--json] <id>
+
+Cancel a job: a background job stops after the part it is on and is recorded as cancelled
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion activity
+Usage: histmersion activity [--kind <string>] [--running] [--since <string>] [--goal <string>] [--limit <integer>] [--before <string>] [--json]
+
+What the agents, the server and you did, one list, newest first: agent runs, background jobs, worklog lines and your decisions, each with what it touched
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        Only: running, agents, jobs, yours, problems
+    --running
+        Only what is running now (as --kind running)
+    --since <string>
+        From: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago
+    --goal <string>
+        Only what concerns this research goal (its slug)
+    --limit <integer>
+        Entries (default 30, at most 200)
+    --before <string>
+        The next older page: the cursor the last page printed
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion bookmarks
+Usage:
+    histmersion bookmarks list
+    histmersion bookmarks add
+    histmersion bookmarks rm
+
+Your bookmarks: list, add, rm
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    list
+        Your bookmarks, newest first
+    add
+        Bookmark an item (`source anthony2007_horse`), a place on the map (`point --lat 37.73 --lon 22.75`), a view (`view --view 'from=-1300&to=-1100' --lat .. --lon .. --zoom 6`) or a period (`period --from -1200 --to -1150 --label 'the crisis years'`)
+    rm
+        Remove a bookmark (its id, from `bookmarks list`)
+
+==== histmersion bookmarks list
+Usage: histmersion bookmarks list [--kind <string>] [--query <string>] [--limit <integer>] [--json]
+
+Your bookmarks, newest first
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        Only: source, article, event, place, picture, goal, view, point, period
+    --query <string>
+        Words the bookmark's name or the item's title holds
+    --limit <integer>
+        How many (default 200)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion bookmarks add
+Usage: histmersion bookmarks add [--lat <floating-point>] [--lon <floating-point>] [--zoom <floating-point>] [--from <integer>] [--to <integer>] [--view <string>] [--label <string>] [--title <string>] [--json] <kind (source | article | event | place | picture | goal | view | point | period)> [<id>]
+
+Bookmark an item (`source anthony2007_horse`), a place on the map (`point --lat 37.73 --lon 22.75`), a view (`view --view 'from=-1300&to=-1100' --lat .. --lon .. --zoom 6`) or a period (`period --from -1200 --to -1150 --label 'the crisis years'`)
+
+Options and flags:
+    --help
+        Display this help text.
+    --lat <floating-point>
+        A point's latitude, degrees north
+    --lon <floating-point>
+        A point's longitude, degrees east
+    --zoom <floating-point>
+        A view's map zoom (2 a continent, 5 a country, 9 a city)
+    --from <integer>
+        The first year (BCE negative)
+    --to <integer>
+        The last year (BCE negative)
+    --view <string>
+        A view's filters: what follows # in Explore's address
+    --label <string>
+        Your name for it
+    --title <string>
+        What the item is called, when the collection does not hold it
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion bookmarks rm
+Usage: histmersion bookmarks rm [--json] <id>
+
+Remove a bookmark (its id, from `bookmarks list`)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion notes
+Usage:
+    histmersion notes list
+    histmersion notes show
+    histmersion notes add
+    histmersion notes edit
+    histmersion notes rm
+
+Your notes: list, show, add, edit, rm
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    list
+        Your notes, last changed first
+    show
+        One note in full
+    add
+        Leave a note on an item (`source anthony2007_horse --text …`) or on a place on the map (`point --lat 37.73 --lon 22.75 [--from -1300 --to -1100] --text …`)
+    edit
+        Replace a note's text
+    rm
+        Remove a note (its id, from `notes list`)
+
+==== histmersion notes list
+Usage: histmersion notes list [--kind <string>] [--item <string>] [--query <string>] [--limit <integer>] [--json]
+
+Your notes, last changed first
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        Only those left on: source, article, event, place, picture, goal, point
+    --item <string>
+        Only those left on this item (a citekey, a slug, an id)
+    --query <string>
+        Words the note or the item's title holds
+    --limit <integer>
+        How many (default 200)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion notes show
+Usage: histmersion notes show [--json] <id>
+
+One note in full
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion notes add
+Usage: histmersion notes add [--lat <floating-point>] [--lon <floating-point>] [--from <integer>] [--to <integer>] [--text <string>] [--file <string>] [--title <string>] [--json] <kind (source | article | event | place | picture | goal | point)> [<id>]
+
+Leave a note on an item (`source anthony2007_horse --text …`) or on a place on the map (`point --lat 37.73 --lon 22.75 [--from -1300 --to -1100] --text …`)
+
+Options and flags:
+    --help
+        Display this help text.
+    --lat <floating-point>
+        A point's latitude, degrees north
+    --lon <floating-point>
+        A point's longitude, degrees east
+    --from <integer>
+        The first year (BCE negative)
+    --to <integer>
+        The last year (BCE negative)
+    --text <string>
+        The note (Markdown)
+    --file <string>
+        Read the note from this Markdown file
+    --title <string>
+        What the item is called, when the collection does not hold it
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion notes edit
+Usage: histmersion notes edit [--text <string>] [--file <string>] [--json] <id>
+
+Replace a note's text
+
+Options and flags:
+    --help
+        Display this help text.
+    --text <string>
+        The note (Markdown)
+    --file <string>
+        Read the note from this Markdown file
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion notes rm
+Usage: histmersion notes rm [--json] <id>
+
+Remove a note (its id, from `notes list`)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion config
+Usage:
+    histmersion config path
+    histmersion config reload
+    histmersion config get
+    histmersion config set
+    histmersion config unset
+    histmersion config restart
+
+The settings file: where it is, its settings (get, set, unset — the file is changed in place, comments and all), reloading and restarting the server
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    path
+        Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about
+    reload
+        Make the server read its config file again and apply it in place, no restart (restart-only settings are listed, not applied)
+    get
+        A setting (or every setting, or those under --prefix): what the settings file says, what applies and from where, its default and what it does — a credential only as set or not
+    set
+        Change a setting in the settings file, in place (comments, order, includes and anything written by hand are kept, the old file is kept as .bak), checked first; then the server applies it
+    unset
+        Take a setting out of the settings file (back to its default), in place; then the server applies it
+    restart
+        Restart the server, for the settings only a restart applies (where it runs under its service: LaunchAgent, systemd)
+
+==== histmersion config path
+Usage: histmersion config path 
+
+Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion config reload
+Usage: histmersion config reload [--json]
+
+Make the server read its config file again and apply it in place, no restart (restart-only settings are listed, not applied)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion config get
+Usage: histmersion config get [--prefix <string>] [--local] [--json] [<key>]
+
+A setting (or every setting, or those under --prefix): what the settings file says, what applies and from where, its default and what it does — a credential only as set or not
+
+Options and flags:
+    --help
+        Display this help text.
+    --prefix <string>
+        The settings under this block, e.g. acquire
+    --local
+        Read or change the settings file on this machine directly, without the server (the default when it does not answer)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion config set
+Usage: histmersion config set [--local] [--no-reload] [--literal-secret] [--json] <key> <value>
+
+Change a setting in the settings file, in place (comments, order, includes and anything written by hand are kept, the old file is kept as .bak), checked first; then the server applies it
+
+Options and flags:
+    --help
+        Display this help text.
+    --local
+        Read or change the settings file on this machine directly, without the server (the default when it does not answer)
+    --no-reload
+        Change the file only; do not make the server apply it
+    --literal-secret
+        Allow a credential written as value:<the value itself> (anyone who can read the file can read it)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion config unset
+Usage: histmersion config unset [--local] [--no-reload] [--json] <key>
+
+Take a setting out of the settings file (back to its default), in place; then the server applies it
+
+Options and flags:
+    --help
+        Display this help text.
+    --local
+        Read or change the settings file on this machine directly, without the server (the default when it does not answer)
+    --no-reload
+        Change the file only; do not make the server apply it
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion config restart
+Usage: histmersion config restart [--json]
+
+Restart the server, for the settings only a restart applies (where it runs under its service: LaunchAgent, systemd)
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion basemap
+Usage:
+    histmersion basemap status
+    histmersion basemap fetch
+    histmersion basemap rm
+
+The web UI's local base map (street maps and terrain): status, styles, fetch, rm
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    status
+        What is downloaded, where, the free space there, and which styles lack data
+    fetch
+        Download the local base map (coast, water, rivers, land cover; relief; physical names; sea floor; with --keep-all roads, places and borders) as a server job — resumable; refused when the disk would be left with less than basemap.min-free-gb
+    rm
+        Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache
+
+==== histmersion basemap status
+Usage: histmersion basemap status [--json]
+
+What is downloaded, where, the free space there, and which styles lack data
+
+Options and flags:
+    --help
+        Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion basemap fetch
+Usage: histmersion basemap fetch [--layer <string>] [--max-zoom <integer>] [--terrain-max-zoom <integer>] [--bbox <string>] [--focus <string>] [--dry-run] [--keep-all] [--no-wait]
+
+Download the local base map (coast, water, rivers, land cover; relief; physical names; sea floor; with --keep-all roads, places and borders) as a server job — resumable; refused when the disk would be left with less than basemap.min-free-gb
+
+Options and flags:
+    --help
+        Display this help text.
+    --layer <string>
+        vector, terrain, labels, bathymetry or all (default all)
+    --max-zoom <integer>
+        Deepest zoom of the vector layer (default basemap.vector.max-zoom; with --layer terrain alone, of the relief)
+    --terrain-max-zoom <integer>
+        Deepest zoom of the relief, 512-pixel tiles (default basemap.terrain.max-zoom)
+    --bbox <string>
+        Region as minLon,minLat,maxLon,maxLat, or world (default basemap.bbox); --dry-run says the size zoom by zoom
+    --focus <string>
+        Keep the relief of a region deeper than the extract, to basemap.terrain.on-demand.max-zoom: a name of basemap.terrain.focus-regions (aegean, anatolia, levant, mesopotamia, nile-delta, argolid) or a new one with --bbox
+    --dry-run
+        Read only the directories and report what the download would take
+    --keep-all
+        Store the vector layer unfiltered — roads, places and borders too, for the Readable map (basemap.vector.drop not applied)
+    --no-wait
+        Print the job id and return instead of following it
+
+==== histmersion basemap rm
+Usage: histmersion basemap rm [--layer <string>] [--focus <string>] [--cache]
+
+Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache
+
+Options and flags:
+    --help
+        Display this help text.
+    --layer <string>
+        vector, terrain, labels, bathymetry or all — all includes the focus regions and the relief cache (default all; none when only --focus or --cache is given)
+    --focus <string>
+        A focus region's relief, by name, or all
+    --cache
+        The caches of tiles read on demand (the deeper relief, the map and the sea floor outside the region)
+
+==== histmersion plugin
+Usage:
+    histmersion plugin add
+    histmersion plugin rm
+    histmersion plugin list
+    histmersion plugin status
+    histmersion plugin rebuild
+    histmersion plugin rollback
+    histmersion plugin new
+    histmersion plugin repo
+    histmersion plugin api-jar
+
+Plugins of the Histmersion installed on THIS machine: add, rm, list, status, rebuild, rollback (refused when the CLI points at another machine); new, repo and api-jar for writing one
+
+Options and flags:
+    --help
+        Display this help text.
+
+Subcommands:
+    add
+        Install a plugin on this machine: a local path (copied, with the .pom beside it), an https URL (downloaded, SHA-256 shown) or group:artifact:version from Maven (group::artifact:version = a Scala 3 artifact); the dependencies its POM lists are installed with it, except what Histmersion ships; shows its id, version, SPI, access and dependencies first
+    rm
+        Remove an installed plugin (by id or jar file name) from this machine's plugins directory
+    list
+        The plugin jars in this machine's plugins directory, and whether the installed binary was linked with each
+    status
+        Compare the plugins directory's digest with the installed binary's and the running server's: is a rebuild (relink) or restart needed? Also the kit and signing
+    rebuild
+        Relink the server with the plugins directory (bin/histmersion-relink: pre-flight, native-image, self-check, swap, restart, health; the previous binary comes back on failure)
+    rollback
+        Put the previous server binary back (the one before the last relink) and restart
+    new
+        Write a new plugin project for scala-cli: project.scala (the build), <Name>.scala (the plugin), <Name>.test.scala (its tests) and resources/ (its services file, defaults, native-image metadata)
+    repo
+        The Maven repository of this machine's install that a plugin compiles against: the plugin API, histmersion-plugin-platform (the libraries Histmersion provides, at the versions it ships) and the plugin testkit; --url: as a file: URL; --m2: copy it into the local Maven repository (~/.m2/repository), which a build names as m2Local (scala-cli) or Resolver.mavenLocal (sbt)
+    api-jar
+        The path of the plugin API jar in this machine's install's Maven repository; --sources: of its sources jar, with the Scaladoc
+
+==== histmersion plugin add
+Usage: histmersion plugin add [--yes] [--rebuild] [--verify] [--unsigned] [--sha256 <string>] [--repo <string>]... <path|url|group:artifact:version>
+
+Install a plugin on this machine: a local path (copied, with the .pom beside it), an https URL (downloaded, SHA-256 shown) or group:artifact:version from Maven (group::artifact:version = a Scala 3 artifact); the dependencies its POM lists are installed with it, except what Histmersion ships; shows its id, version, SPI, access and dependencies first
+
+Options and flags:
+    --help
+        Display this help text.
+    --yes, -y
+        Install without asking (needed when there is no terminal)
+    --rebuild
+        Relink right after installing (histmersion plugin rebuild)
+    --verify
+        Require a valid GPG signature (<jar>.asc) even when GPG provenance is not set up
+    --unsigned
+        Install even when the signature is missing or does not verify
+    --sha256 <string>
+        The SHA-256 the jar must have (refused otherwise)
+    --repo <string>
+        A Maven repository (a directory or a URL) to look in first, for the plugin and its dependencies; repeatable
+
+==== histmersion plugin rm
+Usage: histmersion plugin rm [--rebuild] <id|file>
+
+Remove an installed plugin (by id or jar file name) from this machine's plugins directory
+
+Options and flags:
+    --help
+        Display this help text.
+    --rebuild
+        Relink right after removing
+
+==== histmersion plugin list
+Usage: histmersion plugin list 
+
+The plugin jars in this machine's plugins directory, and whether the installed binary was linked with each
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion plugin status
+Usage: histmersion plugin status 
+
+Compare the plugins directory's digest with the installed binary's and the running server's: is a rebuild (relink) or restart needed? Also the kit and signing
+
+Options and flags:
+    --help
+        Display this help text.
+
+==== histmersion plugin rebuild
+Usage: histmersion plugin rebuild [--no-restart] [--unsigned] [--ignore-memory] [--jvm] [--check]
+
+Relink the server with the plugins directory (bin/histmersion-relink: pre-flight, native-image, self-check, swap, restart, health; the previous binary comes back on failure)
+
+Options and flags:
+    --help
+        Display this help text.
+    --no-restart
+        Swap the binary but do not restart the service
+    --unsigned
+        Go on when the plugins directory does not match its signed manifest
+    --ignore-memory
+        Build even with less memory than a relink wants
+    --jvm
+        Switch to JVM mode instead of building (plugins found at each start)
+    --check
+        Run the pre-flight only
+
+==== histmersion plugin rollback
+Usage: histmersion plugin rollback [--no-restart]
+
+Put the previous server binary back (the one before the last relink) and restart
+
+Options and flags:
+    --help
+        Display this help text.
+    --no-restart
+        Do not restart the service
+
+==== histmersion plugin new
+Usage: histmersion plugin new [--kind <string>] [--dir <string>] [--package <string>] [--repo <string>] [--with-agent-notes] <id>
+
+Write a new plugin project for scala-cli: project.scala (the build), <Name>.scala (the plugin), <Name>.test.scala (its tests) and resources/ (its services file, defaults, native-image metadata)
+
+Options and flags:
+    --help
+        Display this help text.
+    --kind <string>
+        What it adds: source-fetcher, media-collection, event-catalogue, ai-provider, secret-vault (default source-fetcher)
+    --dir <string>
+        Where to write it (default ./<id>; must not exist or be empty)
+    --package <string>
+        The Scala package (default: the id without dashes)
+    --repo <string>
+        The Maven repository with the plugin API, platform and testkit to compile against, a directory or a URL (default: m2Local, the local Maven repository, into which this machine's install's are copied first: histmersion plugin repo --m2)
+    --with-agent-notes
+        Also write AGENTS.md (and CLAUDE.md pointing at it) for coding agents
+
+==== histmersion plugin repo
+Usage: histmersion plugin repo [--url] [--m2]
+
+The Maven repository of this machine's install that a plugin compiles against: the plugin API, histmersion-plugin-platform (the libraries Histmersion provides, at the versions it ships) and the plugin testkit; --url: as a file: URL; --m2: copy it into the local Maven repository (~/.m2/repository), which a build names as m2Local (scala-cli) or Resolver.mavenLocal (sbt)
+
+Options and flags:
+    --help
+        Display this help text.
+    --url
+        Print it as a file: URL
+    --m2
+        Copy the install's artifacts into ~/.m2/repository (the files missing or changed there) and print its path
+
+==== histmersion plugin api-jar
+Usage: histmersion plugin api-jar [--sources]
+
+The path of the plugin API jar in this machine's install's Maven repository; --sources: of its sources jar, with the Scaladoc
+
+Options and flags:
+    --help
+        Display this help text.
+    --sources
+        The sources jar instead of the jar
