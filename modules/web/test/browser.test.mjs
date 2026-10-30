@@ -255,9 +255,11 @@ test('#4037: About › Map regions — a named region checked zoom by zoom, down
       return route.fulfill({ json: { removed: ['/zz/terrain-focus/argolid.pmtiles'], bytes: 1 } });
     });
 
-    // the map regions are Settings › Data and downloads (Settings opens there)
+    // the map regions are Settings › Data and downloads, folded under "Choose the area…" (Settings opens on General)
     await page.locator('.places a[data-nav="settings"]').click();
-    assert.equal(new URL(page.url()).pathname, '/settings/data');
+    assert.equal(new URL(page.url()).pathname, '/settings/general');
+    await page.locator('.side-nav a[href="/settings/data"]').click();
+    await page.locator('.data-more > summary').click();
     const panel = page.locator('.place-page .map-regions');
     await panel.waitFor();
     assert.ok((await panel.innerText()).includes('the map'), 'what is downloaded is listed');
@@ -3525,7 +3527,8 @@ test('every page renders under its place, with the top bar, from its own address
     ['/research/activity/worklog', 'Research', '.log-pane'],
     ['/research/backlog', 'Research', '.tasks-pane'], ['/research/acquire', 'Research', '.acquire-pane'],
     ['/research/models', 'Research', '.models-pane'], ['/run/zz-pw-norun', 'Research', '.place-page .item-page'],
-    ['/manager/zz-pw-nomanager', 'Research', '.place-page .item-page'], ['/settings', 'Settings', '.map-regions'],
+    ['/manager/zz-pw-nomanager', 'Research', '.place-page .item-page'], ['/settings', 'Settings', '.settings-page[data-section="general"]'],
+    ['/settings/data', 'Settings', '.settings-page[data-section="data"]'],
     ['/settings/keys', 'Settings', '.key-pane'], ['/settings/about', 'Settings', '.about-pane'],
     ['/place/zz-pw-noplace', 'Explore', '.card-page'], ['/event/zz-pw-noevent', 'Explore', '.card-page'],
   ];
@@ -3580,7 +3583,7 @@ test('every window of the old toolbar is reachable from the new navigation, each
       'Worklog': await via('research', 'Activity', 'The worklog, by day', '.log-pane'),
       'API key': await via('settings', 'Keys', null, '.key-pane'),
       'About': await via('settings', 'About Histmersion', null, '.about-pane'),
-      'Map regions': await via('settings', 'Data and downloads', null, '.map-regions'),
+      'Map regions': await via('settings', 'Data and downloads', null, '.data-section .data-more'),
     };
     assert.equal(new Set(Object.values(found)).size, Object.keys(found).length, JSON.stringify(found));
     // and none of them is a floating window any more
