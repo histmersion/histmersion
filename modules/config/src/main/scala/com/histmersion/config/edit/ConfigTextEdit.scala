@@ -1,6 +1,6 @@
 package com.histmersion.config.edit
 
-import org.ekrich.config.{Config, ConfigException, ConfigObject, ConfigOrigin, ConfigValue}
+import org.ekrich.config.{Config, ConfigException, ConfigFactory, ConfigObject, ConfigOrigin, ConfigValue}
 import org.ekrich.config.parser.ConfigDocumentFactory
 
 import scala.annotation.tailrec
@@ -29,7 +29,7 @@ object ConfigTextEdit:
     @tailrec def loop(rest: List[SettingEdit], doc: org.ekrich.config.parser.ConfigDocument,
         changed: List[SettingKey], unchanged: List[SettingKey]): Either[SettingError, EditedText] =
       rest match
-        case Nil => Right(EditedText(doc.render, changed.reverse, unchanged.reverse))
+        case Nil => Right(EditedText(endsLikeAFile(text, doc.render), changed.reverse, unchanged.reverse))
         case edit :: tail =>
           (written(current, edit.key, here), edit) match
             case (Written.Substituted(_), _)     => Left(SettingError.Substitution(edit.key))
@@ -39,11 +39,11 @@ object ConfigTextEdit:
             case (Written.Nowhere, SettingEdit.Unset(k)) =>
               loop(tail, doc, changed, k :: unchanged)
             case (_, SettingEdit.Set(k, want)) =>
-              val next = doc.withValueText(k.hoconPath, want.hocon)
+              val next = ConfigDocumentFactory.parseString(inFileStyle(doc.render, doc.withValueText(k.hoconPath, want.hocon).render))
               if dropsVerbatim(doc.render, next.render) then Left(SettingError.Substitution(k))
               else loop(tail, next, k :: changed, unchanged)
             case (_, SettingEdit.Unset(k)) =>
-              val next = doc.withoutPath(k.hoconPath)
+              val next = withoutEmptyBlocks(doc.withoutPath(k.hoconPath), k)
               if dropsVerbatim(doc.render, next.render) then Left(SettingError.Substitution(k))
               else loop(tail, next, k :: changed, unchanged)
     try
@@ -52,6 +52,54 @@ object ConfigTextEdit:
       val last = edits.reverse.distinctBy(_.key.value).reverse
       loop(last, doc, Nil, Nil)
     catch case e: ConfigException => Left(SettingError.Unreadable(e.getMessage))
+
+  private val AddedBlock = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : \{\s*$""".r
+  private val AddedValue = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : (.*)$""".r
+
+  /** The lines an edit ADDED, in the file's own style: `key {` and `key = value` where sconfig writes `key : {`
+    * and `key : value`. Only lines not in `before` are touched, and only when the result reads the same. */
+  private def inFileStyle(before: String, after: String): String =
+    val old = before.linesIterator.toList.groupBy(identity).view.mapValues(_.size).toMap
+    @tailrec def loop(rest: List[String], seen: Map[String, Int], acc: List[String]): List[String] =
+      rest match
+        case Nil => acc.reverse
+        case line :: tail =>
+          val n = seen.getOrElse(line, 0)
+          if n < old.getOrElse(line, 0) then loop(tail, seen.updated(line, n + 1), line :: acc)
+          else
+            val styled = line match
+              case AddedBlock(indent, key)        => s"$indent$key {"
+              case AddedValue(indent, key, value) => s"$indent$key = $value"
+              case other                          => other
+            loop(tail, seen, styled :: acc)
+    val styled = loop(after.split("\n", -1).toList, Map.empty, Nil).mkString("\n")
+    val same = scala.util.Try(ConfigFactory.parseString(styled).root == ConfigFactory.parseString(after).root).getOrElse(false)
+    if same then styled else after
+
+  /** `doc` without the blocks taking `key` out left empty (`backups { }`), up to `histmersion` — unless a block
+    * holds a comment, which stays where it was written. */
+  private def withoutEmptyBlocks(doc: org.ekrich.config.parser.ConfigDocument, key: SettingKey): org.ekrich.config.parser.ConfigDocument =
+    @tailrec def loop(d: org.ekrich.config.parser.ConfigDocument, at: Option[SettingKey]): org.ekrich.config.parser.ConfigDocument =
+      at match
+        case None => d
+        case Some(block) =>
+          val empty = scala.util.Try(ConfigFactory.parseString(d.render).getObject(block.hoconPath).isEmpty).getOrElse(false)
+          val pruned = if empty then d.withoutPath(block.hoconPath) else d
+          if !empty || comments(pruned.render) < comments(d.render) then d
+          else loop(pruned, block.parent)
+    val root = loop(doc, key.parent)
+    // the `histmersion { }` block itself, when it is left empty and holds no comment
+    val emptyRoot = scala.util.Try(ConfigFactory.parseString(root.render).getObject(SettingKey.Root).isEmpty).getOrElse(false)
+    if emptyRoot then
+      val pruned = root.withoutPath(SettingKey.Root)
+      if comments(pruned.render) < comments(root.render) then root else pruned
+    else root
+
+  private def comments(text: String): Int = text.linesIterator.count(l => l.contains("#") || l.contains("//"))
+
+  /** A file that ended with a line break (or had no text) still does. */
+  private def endsLikeAFile(before: String, after: String): String =
+    if after.nonEmpty && !after.endsWith("\n") && (before.isEmpty || before.endsWith("\n")) then after + "\n" else after
 
   /** What each key is to hold after `edits` (`None`: taken out); the last change of a key wins. */
   def intended(edits: List[SettingEdit]): Map[String, Option[SettingValue]] =

@@ -2122,3 +2122,133 @@ img.is-zoomable { cursor:zoom-in; }
   .activity-row { flex-wrap:wrap; }
   .activity-when { width:auto; flex:1 1 100%; }
 }
+
+/* ── Settings: a page per section of its side navigation, cards of settings, one Save each ────────────── */
+.settings-page { max-width:880px; }
+.settings-page-lead, .settings-lead { margin:calc(-1 * var(--space-4)) 0 var(--space-6); color:var(--ink2); font-size:var(--fs-md); }
+.settings-lead { margin:0 0 var(--space-6); }
+.settings-section { display:flex; flex-direction:column; gap:var(--space-6); }
+.settings-card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg); }
+.settings-card-head { padding:var(--space-5) var(--space-6); border-bottom:1px solid var(--line); }
+.settings-card-title { margin:0; font-size:var(--fs-lg); font-weight:var(--fw-strong); }
+.settings-card-intro { margin:var(--space-2) 0 0; color:var(--ink2); font-size:var(--fs-sm); max-width:var(--read-measure); }
+.settings-card-body { padding:var(--space-2) var(--space-6); }
+.settings-card > .settings-save { padding:var(--space-5) var(--space-6); border-top:1px solid var(--line); }
+.setting-row { margin:0; padding:var(--space-5) 0; border:0; border-bottom:1px solid var(--line); min-width:0; }
+.setting-row:last-child { border-bottom:0; }
+.setting-row.is-changed { box-shadow:inset 3px 0 0 var(--accent); padding-left:var(--space-5); }
+.setting-head { display:flex; flex-wrap:wrap; align-items:baseline; gap:var(--space-2) var(--space-5); }
+.setting-name { font-weight:var(--fw-strong); font-size:var(--fs-md); color:var(--ink); padding:0; }
+.setting-key { font-family:var(--font-mono); font-size:var(--fs-xs); overflow-wrap:anywhere; }
+.setting-doc { margin:var(--space-2) 0 var(--space-3); color:var(--ink2); font-size:var(--fs-sm); max-width:var(--read-measure); }
+.setting-input { width:min(100%, 520px); }
+.setting-number { width:min(100%, 160px); }
+.setting-check { accent-color:var(--accent); width:18px; height:18px; margin:0 var(--space-3) 0 0; vertical-align:-3px; }
+.setting-status { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2) var(--space-4); margin-top:var(--space-3); }
+.setting-env, .setting-locked { color:var(--attn); }
+.setting-options { display:flex; flex-wrap:wrap; gap:var(--space-3) var(--space-6); margin-top:var(--space-3); }
+.setting-option input, .start-place-mode input { accent-color:var(--accent); }
+.settings-save .toolbar { margin-top:var(--space-2); }
+.settings-notice:empty { display:none; }
+.settings-saved { margin-top:var(--space-4); padding:var(--space-4) var(--space-5); border-radius:var(--radius);
+  background:var(--ok-soft); color:var(--ink); font-size:var(--fs-sm); }
+.settings-saved p { margin:0 0 var(--space-3); }
+.settings-saved-line { color:var(--ok); font-weight:var(--fw-strong); font-size:var(--fs-sm); }
+.settings-warning { color:var(--attn); }
+.settings-restart { padding:var(--space-4) 0; }
+.settings-table { border-collapse:collapse; width:100%; font-size:var(--fs-sm); }
+.settings-table th, .settings-table td { text-align:left; padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--line); }
+/* Data and downloads: a row per kind of data — what it is, its state, its actions */
+.data-head { display:flex; flex-wrap:wrap; align-items:flex-end; gap:var(--space-6); }
+.data-head .settings-lead { flex:1 1 320px; margin:0; }
+.data-disk { flex:0 1 300px; font-size:var(--fs-sm); }
+.data-disk-line { display:flex; justify-content:space-between; gap:var(--space-5); }
+.meter { height:6px; margin:var(--space-2) 0; border-radius:var(--radius-pill); background:var(--sunk); overflow:hidden; }
+.meter-fill { width:var(--share, 0%); height:100%; background:var(--accent); }
+.data-row { display:grid; grid-template-columns:minmax(0, 1fr) 170px 300px; gap:var(--space-6); align-items:center;
+  padding:var(--space-5) 0; border-bottom:1px solid var(--line); }
+.data-row:last-child { border-bottom:0; }
+.data-what strong { font-size:var(--fs-md); }
+.data-state { color:var(--ok); font-weight:var(--fw-strong); font-size:var(--fs-sm); }
+.data-state--off { color:var(--attn); }
+.data-actions { display:flex; flex-wrap:wrap; gap:var(--space-4); justify-content:flex-end; }
+.data-more { padding:var(--space-5) 0; }
+.data-more > summary { cursor:pointer; color:var(--accent); font-weight:var(--fw-strong); font-size:var(--fs-sm); }
+.download-jobs { padding:var(--space-3) 0; }
+.download-jobs-none { margin:var(--space-3) 0; font-size:var(--fs-sm); }
+/* where the map opens */
+.start-place { margin:0; padding:var(--space-4) 0; border:0; display:flex; flex-direction:column; gap:var(--space-4); min-width:0; }
+.start-place-legend { padding:0; font-weight:var(--fw-strong); font-size:var(--fs-md); }
+.start-place-mode { display:flex; align-items:center; gap:var(--space-3); }
+.start-place-find { display:flex; flex-wrap:wrap; gap:var(--space-4); align-items:flex-start; }
+.start-place-input { flex:1 1 260px; max-width:360px; }
+.start-place-hits { flex:1 0 100%; margin:0; padding:0; list-style:none; display:flex; flex-wrap:wrap; gap:var(--space-2) var(--space-4); }
+.start-place-hits:empty { display:none; }
+/* keys and passwords */
+.key-state { margin:var(--space-2) 0 var(--space-3); font-size:var(--fs-sm); }
+.key-edit { gap:var(--space-4); }
+.key-form { width:auto; flex:0 0 auto; }
+.key-entry { flex:1 1 220px; min-width:0; width:auto; }
+.key-consent { display:flex; gap:var(--space-3); align-items:center; margin-top:var(--space-3); color:var(--attn); font-size:var(--fs-sm); }
+/* advanced: every setting, a block at a time */
+.advanced-filter .field { width:min(100%, 420px); }
+.advanced-file { margin:var(--space-3) 0; }
+.advanced-block { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg); padding:0 var(--space-6); }
+.advanced-summary { cursor:pointer; padding:var(--space-5) 0; font-size:var(--fs-md); }
+.advanced-name { font-weight:var(--fw-strong); }
+.advanced-doc { font-size:var(--fs-sm); }
+.advanced-save { position:sticky; bottom:0; padding:var(--space-5) 0; background:var(--bg); border-top:1px solid var(--line); }
+.side-link.setup-again { color:var(--accent); }
+
+/* ── the first-run setup: steps on the left, one step at a time, no top bar ─────────────────────────── */
+.histmersion-app.is-setup > .top-bar { display:none; }
+.setup-page { min-height:100%; padding:48px var(--space-6); box-sizing:border-box; background:var(--bg); overflow-y:auto; height:100%; }
+.setup-frame { display:flex; flex-wrap:wrap; gap:32px; max-width:1040px; margin:0 auto; }
+.setup-aside { flex:1 1 240px; max-width:260px; }
+.setup-brand { display:flex; align-items:center; gap:var(--space-4); margin-bottom:20px; font-weight:var(--fw-strong); font-size:var(--fs-lg); }
+.setup-steps { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--space-1); }
+.setup-step { display:flex; align-items:center; gap:10px; padding:var(--space-4) 10px; border-radius:var(--radius-sm);
+  font-weight:var(--fw-strong); color:var(--ink2); }
+.setup-step.on { background:var(--accent-soft); color:var(--ink); }
+.setup-n { display:grid; place-items:center; flex:none; width:24px; height:24px; border-radius:50%; border:1.5px solid var(--line2); font-size:var(--fs-xs); }
+.setup-step.on .setup-n { border-color:var(--accent); color:var(--accent); }
+.setup-step.done .setup-n { background:var(--ok-soft); border-color:var(--ok); color:var(--ok); }
+.setup-optional { color:var(--ink3); font-weight:var(--fw-normal); font-size:var(--fs-sm); }
+.setup-note { margin-top:20px; }
+.setup-leave { font-size:var(--fs-sm); }
+.setup-main { flex:999 1 560px; min-width:0; display:flex; flex-direction:column; gap:var(--space-6); padding:28px 32px;
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg); font-size:var(--fs-lg); line-height:1.5; }
+.setup-title { margin:var(--space-1) 0 var(--space-3); font-size:var(--fs-2xl); font-weight:var(--fw-strong); }
+.setup-text { display:flex; flex-direction:column; gap:var(--space-6); }
+.setup-text > p { margin:0; color:var(--ink2); max-width:62ch; }
+.setup-group { margin:0; padding:0; border:0; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.setup-group > legend, .setup-text .start-place-legend { padding:0; margin-bottom:var(--space-4); font-size:var(--fs-xl); font-weight:var(--fw-strong); }
+.setup-group--grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); }
+.setup-group--grid > legend { grid-column:1 / -1; }
+.setup-opt { display:grid; grid-template-columns:20px minmax(0, 1fr) auto; gap:var(--space-5); align-items:start; padding:14px var(--space-6);
+  border:1px solid var(--line2); border-radius:var(--radius-lg); background:var(--panel); cursor:pointer; }
+.setup-opt.sel { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+.setup-opt input { width:18px; height:18px; margin-top:3px; accent-color:var(--accent); }
+.setup-opt strong { display:block; }
+.setup-opt .muted { display:block; font-size:var(--fs-sm); }
+.setup-size { font-weight:var(--fw-strong); white-space:nowrap; font-size:var(--fs-md); }
+.setup-email, .setup-calibre { width:min(100%, 420px); }
+.setup-bar { display:flex; flex-wrap:wrap; gap:10px; margin-top:auto; padding-top:var(--space-5); border-top:1px solid var(--line); }
+.setup-bar .setup-continue { margin-left:auto; }
+.setup-summary, .setup-results { margin:0; padding-left:20px; }
+.setup-failed { color:var(--danger); }
+[data-layout="narrow"] .setup-page { padding:var(--space-6) var(--pad); }
+[data-layout="narrow"] .setup-aside { max-width:none; }
+[data-layout="narrow"] .setup-main { padding:var(--space-6); }
+[data-layout="narrow"] .data-row { grid-template-columns:minmax(0, 1fr); gap:var(--space-3); }
+[data-layout="narrow"] .data-actions { justify-content:flex-start; }
+
+/* ── a source's or an article's own page: its tools, and the text at a reading width or page wide (#7382) ─ */
+.page-tools { display:flex; justify-content:flex-end; gap:var(--gap-group); margin-bottom:var(--space-5); font-family:var(--font-ui); }
+.page-tools .theme-btn { display:inline-flex; }
+body.page-wide.article-page > *:not(.nav):not(.article-toc) { max-width:min(100%, 1600px); }
+body.page-wide .reading { max-width:none; }
+/* the setup on a narrow screen: the steps as a row of numbers, the current one named */
+[data-layout="narrow"] .setup-steps { flex-direction:row; flex-wrap:wrap; gap:var(--space-2); }
+[data-layout="narrow"] .setup-step:not(.on) :is(.setup-label, .setup-optional) { display:none; }
+[data-layout="narrow"] .setup-note { display:none; }

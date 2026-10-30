@@ -36,3 +36,13 @@ export function launchSoftwareChromium() {
 export function launchChromiumWithout(...switches) {
   return chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined, args: switches });
 }
+
+/** `/api/config` as the app reads it, with `over` laid over the server's answer — by default the first-run
+  * setup NOT due, so a test server with an empty settings file opens on the page a test asks for, not on the
+  * setup. `target`: a page or a context (register it after a catch-all route: the newest route answers first). */
+export async function configOverride(target, over = {}) {
+  await target.route(url => new URL(url).pathname === '/api/config', async route => {
+    const res = await route.fetch();
+    await route.fulfill({ response: res, json: { ...(await res.json()), setupDue: false, ...over } });
+  });
+}

@@ -108,6 +108,23 @@ object ApiClient:
   def activity(show: Option[String], since: Option[String], goal: Option[String], limit: Option[Int],
       before: Option[String]): Future[Activity.Page] = call(Api.activity)((show, since, goal, limit, before))
   def jobControl(id: String, action: String): Future[JobInfo] = call(Api.jobControl)((id, action))
+
+  // ── Settings and the setup ───────────────────────────────────────────────────────────────────────
+
+  def settings(prefix: Option[String] = None): Future[ConfigEdit.Page] = call(ConfigEditApi.get)(prefix)
+  def writeSettings(w: ConfigEdit.Write): Future[ConfigEdit.Written]   = call(ConfigEditApi.write)(w)
+  def restartServer(): Future[ConfigEdit.Restart]                      = call(ConfigEditApi.restart)(())
+  def backupNow(): Future[BackupStatus]                                 = call(Api.backup)(())
+  def backups(): Future[List[BackupInfo]]                               = call(Api.backups)(())
+  def initData(fetch: Boolean): Future[JobInfo]                         = call(Api.init)(fetch)
+  def placeSources(): Future[List[GazetteerSourceInfo]]                 = call(Api.placeSources)(())
+  def loadPlaces(source: String): Future[JobInfo]                       = call(Api.loadPlaces)((source, true))
+  def eventCatalogues(): Future[List[CatalogProviderInfo]]              = call(EventsApi.catalogues)(())
+  def importEvents(provider: String): Future[JobInfo]                   =
+    call(EventsApi.importEvents)(EventImportRequest(provider, dryRun = false))
+  def mediaProviders(): Future[List[MediaProviderInfo]]                 = call(Api.mediaProviders)(())
+  def importMedia(provider: String): Future[JobInfo]                    =
+    call(Api.mediaImportJob)(MediaImportRequest(provider, dryRun = false))
   def setAgentMode(mode: AgentMode): Future[Autopilot.AutopilotStatus] =
     call(ManagersApi.setMode)(AgentMode.ModeSet(mode.wire, Some("web")))
   def acquireRecheck(in: AcquireChecks.RecheckRequest): Future[AcquireChecks.RecheckResult] =

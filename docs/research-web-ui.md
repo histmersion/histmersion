@@ -296,3 +296,57 @@ non-technical users; SUS and NASA-TLX before and after. Details in the evidence 
 - **A goal's page** (`/research/goals/<slug>`), **Backlog / To acquire** with goals, provenance and the
   re-check buttons, and **#7381**: goal stages each with their own colour, shape and word (tokens in both
   themes, AA), and every link the accent.
+
+## 10. As built: phase 6, Settings and the first-run setup (2026-10-30)
+
+- **The settings file is written, never the database** (decision 6). `config.edit` (config module) changes the
+  file's TEXT through sconfig's `ConfigDocument`, so comments, order, layout, includes and unknown keys stay;
+  added lines are written in the file's own style (`key {`, `key = value`) and a block a change empties is taken
+  out unless it holds a comment. Each change is checked against the schema of every setting read from
+  `reference.conf` (`ConfigSchema`: kind, default, the comment that documents it, its environment variable,
+  restart-only, credential), written to a temporary file beside the file, read back WITH its includes (the change
+  must be what the file now says: a later include or a second line of the same key is caught), loaded as the
+  server loads it (`AppConfig.loadWithUserFile`), and moved over the file in one step with the old text kept as
+  `.bak` (and the file's permissions). Refused, file untouched: a setting written with `${…}` or `+=` (also when
+  a duplicate plain line would win over it), one set in an included file, a wrong kind, an unknown key (with the
+  closest ones), a value the server could not start with, a change against a stale `version` (SHA-256 of the
+  text: 409). Setting what the file already says writes nothing.
+- **Credentials**: a plugin's is written as a reference (`env:NAME`, `<vault>:<entry>`); `value:` only with
+  `literalConsent` and a warning; a setting that is the credential itself (`auth.api-key`, `db.password`, the
+  providers' keys) is never written — its environment variable is named instead. No answer carries a value
+  (`SettingShown`: only the rule, the form — unset, env, vault, value, plain — and the reference).
+- **Surfaces**: `GET|POST /api/settings`, `POST /api/server/restart`; MCP `config` gains `get`, `set`, `unset`,
+  `restart`; `histmersion config get|set|unset|restart`, which change the file on this machine directly with
+  `--local` or when the server does not answer. After a change the server reloads (the existing hot reload);
+  a restart-only setting is said, with **Restart the server now** where the server runs under its LaunchAgent
+  (`XPC_SERVICE_NAME`) or systemd unit (`INVOCATION_ID`): it exits with `server.restart-exit-code` (75) and the
+  service starts it again. `domain.settings`: `SettingsService` (Implementation over the server's file; InMemory
+  over a text, by the same rules), `RestartService`, `SettingsControllers`.
+- **Settings** (`/settings/<section>`): General (theme and map motion, this browser's; where the map opens,
+  `ui.map-start` — #6552: the browser's last view under `last`, kept in `histmersion.mapView`, else the place,
+  found by name in the gazetteer or taken from the map's view now), Data and downloads (background map, sea
+  depth, the gazetteers, boundaries and periods, the event catalogues, the picture providers — each with its
+  state, Update / Check for update / Load / Remove over the existing jobs; the downloads under way with
+  Pause / Resume / Cancel; the disk used; the old map-regions panel folded under it), Where to look for sources
+  (contact e-mail, said to go to Crossref, OpenAlex and Unpaywall only; each finder on or off), AI agents, Keys
+  and passwords, Calibre and files, Backups (keep N, Back up now, the list; restore stays on the command line),
+  Plugins, People and access (a placeholder), Advanced (every setting, generated from the schema, a block at a
+  time, with a filter), Credits and licences, About, Run the setup again. One Save per card; the notice under it
+  says what changed, what waits for a restart, the warnings and a reload that failed. `/about` and `/storage`
+  lead to Settings.
+- **The first-run setup** (`/setup`): seven steps (Welcome · Finding open papers · Maps — the areas of
+  `basemap.setup-areas` with their size and the disk's free space, and where the map opens · Background data ·
+  Research agents · Calibre · Ready), safe defaults, nothing written or downloaded before **Finish and start the
+  downloads**; **Skip the rest** writes what was chosen so far and downloads nothing. Due while
+  `setup.completed` is false and the settings file sets nothing of its own (the installer's all-comment template
+  counts as nothing) — decided from the file, never the database; `/api/config` carries `setupDue`. A tab that
+  leaves it without saving is not sent back until it is closed (`sessionStorage`).
+- **#7382**: a source's or an article's own page has a toolbar above its text — **Reading width** / **Page
+  wide** (`histmersion.pageWidth`, per browser) and the theme button, there also where the top bar hides its own.
+- **Tests**: the config module's suites over real files (comments, includes before and after, substitutions,
+  `+=`, permissions, a symbolic link, idempotence, the round trip), the controllers over InMemory services, an
+  HTTP suite (a change written and reloaded, a refused one, the setup due, the restart refused), web unit
+  suites, and browser tests (the setup's steps and that nothing is written before the end; every section; values'
+  sources and no credential; a change written, read back and set back to its default; a refused value; the map's
+  last view; #7382). The browser tests that write the settings file run only when `HISTMERSION_TEST_CONFIG_FILE`
+  names the test server's own file; the harness answers `/api/config` with `setupDue: false` unless a test asks.

@@ -245,8 +245,17 @@ object Wording:
     * its name. */
   def plugin(id: String): String =
     val families = List("ai-" -> "AI provider", "oa-" -> "Open access", "media-" -> "Pictures", "events-" -> "Events")
-    families.collectFirst { case (prefix, family) if id.startsWith(prefix) => s"$family: ${humanize(id.stripPrefix(prefix))}" }
+    pluginNames.get(id).orElse(
+      families.collectFirst { case (prefix, family) if id.startsWith(prefix) => s"$family: ${humanize(id.stripPrefix(prefix))}" })
       .getOrElse(humanize(id))
+
+  /** The plugins whose names are spelt in their own way (the finders by the service each asks, the vaults by
+    * their product's name). */
+  private val pluginNames: Map[String, String] = Map(
+    "archive-org" -> "Internet Archive", "oa-unpaywall" -> "Open access: Unpaywall", "oa-core" -> "Open access: CORE",
+    "oa-openalex" -> "Open access: OpenAlex", "oa-landing" -> "Open access: publishers' own pages",
+    "pmc" -> "PubMed Central", "arxiv" -> "arXiv", "keepassxc" -> "KeePassXC", "1password" -> "1Password",
+    "bitwarden" -> "Bitwarden")
 
   // ── any identifier ───────────────────────────────────────────────────────────────────────────────────
 

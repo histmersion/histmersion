@@ -1,3 +1,4 @@
+import { configOverride } from './engine.mjs';
 import { readFileSync } from 'node:fs';
 
 // Browser-side speed and memory measurement for the web UI (#1949): what the page does between an
@@ -85,10 +86,7 @@ export async function newPerfPage(browser, origin, viewport = { width: 1440, hei
     if (bundle && u.pathname === '/web/app.bundle.js') return route.fulfill({ body: bundle, contentType: 'text/javascript' });
     return route.continue();
   });
-  if (source) await page.route('**/api/config', async route => {
-    const res = await route.fetch();
-    await route.fulfill({ response: res, json: { ...(await res.json()), baseMapSource: source } });
-  });
+  await configOverride(page, source ? { baseMapSource: source } : {});
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   trackRequests(page);
