@@ -10,7 +10,7 @@ type ViewState = ViewState.T
 
 object ViewState extends RefinedType[String, Pure]:
   /** The most characters a saved view keeps. */
-  val MaxChars = 8000
+  val MaxChars = 8192
   given Encoder[ViewState] = Encoder.encodeString.contramap(_.value)
   given Decoder[ViewState] = Decoder.decodeString.map(s => ViewState(s.trim.stripPrefix("#")))
   given Schema[ViewState]  = Schema.string[ViewState]
