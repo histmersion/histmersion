@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{
   ArticleLinks,
   AssetLinks,
@@ -829,7 +830,7 @@ object MergePlanner:
               conflict(p.left.uid, Some(IssueCondition(g, km.Map))),
               conflict(a.sourceUid, Some(IssueCondition(g, km.Both)))
             ) match
-              case (Some(x), Some(_)) => add(x.copy(issue = x.issue.copy(condition = None)))
+              case (Some(x), Some(_)) => add(x.modify(_.issue.condition).setTo(None))
               case (x, y)             => (x ++ y).foreach(add)
           case Some(Fate.New) | None => conflict(a.sourceUid, None).foreach(add)
           case Some(Fate.Deleted)    => ()
@@ -1581,7 +1582,7 @@ object MergePlanner:
           s
     val live: List[Draft] = all.flatMap { d =>
       standingOf(d.issue.id, Set.empty) match
-        case Standing.Live        => Some(d.copy(issue = d.issue.copy(condition = None)))
+        case Standing.Live        => Some(d.modify(_.issue.condition).setTo(None))
         case Standing.Conditional => Some(d)
         case Standing.Dropped     => None
     }
@@ -1696,10 +1697,10 @@ object MergePlanner:
         ms.foreach {
           case FindingMatch.Same(rf, lf) =>
             fold(rf.uid, lf.uid, BundleKind.Finding); findingLine(lf.uid) = _ => MergeFold.foldFinding(lf, rf)
-            tally = tally.copy(findingsMerged = tally.findingsMerged + 1)
+            tally = tally.modify(_.findingsMerged).using(_ + 1)
           case FindingMatch.Near(rf, lf, _) if merging(rf) =>
             fold(rf.uid, lf.uid, BundleKind.Finding); findingLine(lf.uid) = _ => MergeFold.foldFinding(lf, rf)
-            tally = tally.copy(findingsMerged = tally.findingsMerged + 1)
+            tally = tally.modify(_.findingsMerged).using(_ + 1)
           case _ => ()
         }
 
@@ -1711,7 +1712,7 @@ object MergePlanner:
           localAssets.find(x => x.sha256 == a.sha256 && !usedLocal(x.uid)) match
             case Some(x) =>
               usedLocal += x.uid; fold(a.uid, x.uid, BundleKind.Asset); assetLine(x.uid) = _ => x
-              tally = tally.copy(assetsMerged = tally.assetsMerged + 1)
+              tally = tally.modify(_.assetsMerged).using(_ + 1)
             case None if names(a.name) =>
               val n = MergeFold.freeAssetName(a.name, from, names.toSet)
               names += n
@@ -1750,25 +1751,25 @@ object MergePlanner:
                 case Some(AnchorTry(_, _, Some(a), co, _)) =>
                   attLine(t.uid) =
                     es => attIn(es, t.uid).copy(charStart = Some(a.start), charEnd = Some(a.end), chunkOrd = co)
-                  tally = tally.copy(attestationsReanchored = tally.attestationsReanchored + 1)
+                  tally = tally.modify(_.attestationsReanchored).using(_ + 1)
                 case Some(AnchorTry(_, _, None, _, issue)) =>
                   issue.flatMap(decisionIn).map(_.kind) match
                     case Some(km.KeepUnanchored) =>
                       attLine(t.uid) = es => attIn(es, t.uid).copy(charStart = None, charEnd = None, chunkOrd = None)
                     case _ =>
                       dropped += t.uid
-                      tally = tally.copy(attestationsDropped = tally.attestationsDropped + 1)
+                      tally = tally.modify(_.attestationsDropped).using(_ + 1)
         }
         tries.filterNot(_.foreign).foreach {
           case AnchorTry(t, _, Some(a), co, _) =>
             attFixes += AttestationFix(t.uid, Some(a), co, drop = false)
-            tally = tally.copy(attestationsReanchored = tally.attestationsReanchored + 1)
+            tally = tally.modify(_.attestationsReanchored).using(_ + 1)
           case AnchorTry(t, _, None, _, issue) =>
             issue.flatMap(decisionIn).map(_.kind) match
               case Some(km.KeepUnanchored) => attFixes += AttestationFix(t.uid, None, None, drop = false)
               case _                       =>
                 attFixes += AttestationFix(t.uid, None, None, drop = true)
-                tally = tally.copy(attestationsDropped = tally.attestationsDropped + 1)
+                tally = tally.modify(_.attestationsDropped).using(_ + 1)
         }
       }
     }
@@ -1861,31 +1862,31 @@ object MergePlanner:
           overrides(f) = Decision.Kept
         case Merges.ArticleTheirs =>
           articleFold(f, o, None, theirsWins = true, review = false)
-          tally = tally.copy(articlesFastForward = tally.articlesFastForward + 1)
+          tally = tally.modify(_.articlesFastForward).using(_ + 1)
         case Merges.ArticleMerged(b) =>
           articleFold(f, o, Some(rewrite(b)), theirsWins = false, review = true)
-          tally = tally.copy(articlesThreeWay = tally.articlesThreeWay + 1)
+          tally = tally.modify(_.articlesThreeWay).using(_ + 1)
         case Merges.GoalFold =>
           if f != o then fold(f, o, BundleKind.Goal)
           val planDecision = goalPlanIssue.get(f).flatMap(decisionIn).map(_.kind)
           goalLine(o) = es => MergeFold.foldGoal(localGoal(o), goalIn(es, o), from, planDecision)
-          tally = tally.copy(goalsMerged = tally.goalsMerged + 1)
+          tally = tally.modify(_.goalsMerged).using(_ + 1)
         case Merges.QueueFold =>
           if f != o then fold(f, o, BundleKind.QueueItem)
           queueLine(o) = es => MergeFold.foldQueue(localQueue(o), queueIn(es, o))
-          tally = tally.copy(queueMerged = tally.queueMerged + 1)
+          tally = tally.modify(_.queueMerged).using(_ + 1)
         case Merges.EventFold | Merges.EventAcross =>
           if f != o then fold(f, o, BundleKind.Event)
           eventLine(o) = es => MergeFold.foldEvent(localEvent(o), eventIn(es, o))
-          tally = tally.copy(eventsMerged = tally.eventsMerged + 1)
+          tally = tally.modify(_.eventsMerged).using(_ + 1)
         case Merges.PlaceFold =>
           fold(f, o, BundleKind.Place)
           placeLine(o) = es => MergeFold.foldPlace(localPlace(o), placeIn(es, o))
-          tally = tally.copy(placesMerged = tally.placesMerged + 1)
+          tally = tally.modify(_.placesMerged).using(_ + 1)
         case Merges.PeriodFold =>
           fold(f, o, BundleKind.Period)
           periodLine(o) = _ => localPeriod(o)
-          tally = tally.copy(periodsMerged = tally.periodsMerged + 1)
+          tally = tally.modify(_.periodsMerged).using(_ + 1)
     }
     // the decisions about articles and events that M4 carries out (keep-left and keep-right of a
     // plain conflict are M2's row decisions, below)
@@ -1903,7 +1904,7 @@ object MergePlanner:
             case km.File =>
               articleFold(f, o, Some(texts.getOrElse(i.id, "")), theirsWins = false, review = true)
               if sameUid then overrides(f) = Decision.FastForward
-              tally = tally.copy(articlesFromFile = tally.articlesFromFile + 1)
+              tally = tally.modify(_.articlesFromFile).using(_ + 1)
             case km.Both =>
               val slug = bothSlug(f, rawArticle(f).slug)
               if sameUid then
@@ -1915,7 +1916,7 @@ object MergePlanner:
               else
                 articleLine(f) = es => articleIn(es, f).copy(slug = slug, body = rewrite(rawArticle(f).body), rev = "")
               reviews += slug
-              tally = tally.copy(articlesBoth = tally.articlesBoth + 1)
+              tally = tally.modify(_.articlesBoth).using(_ + 1)
             case _ => ()
         case (IssueKind.LabelTaken, BundleKind.Event, Some(d), Some(f), Some(o))
             if d.kind == km.KeepRight && localEvent.contains(o) =>
@@ -1925,19 +1926,19 @@ object MergePlanner:
               eventIn(es, o).copy(id = localEvent(o).id, origin = localEvent(o).origin),
               localEvent(o)
             )
-          tally = tally.copy(eventsMerged = tally.eventsMerged + 1)
+          tally = tally.modify(_.eventsMerged).using(_ + 1)
         case (IssueKind.LabelTaken, BundleKind.Event, Some(d), Some(f), _) if d.kind == km.RenameRight =>
           d.argument.foreach(eid => eventLine(f) = es => eventIn(es, f).copy(id = eid))
         // a place (named period) added on both sides under one id: ours stays, or theirs wins
         case (IssueKind.PlaceDiffers, BundleKind.Place, Some(d), Some(f), Some(o)) =>
           fold(f, o, BundleKind.Place)
-          tally = tally.copy(placesMerged = tally.placesMerged + 1)
+          tally = tally.modify(_.placesMerged).using(_ + 1)
           if d.kind == km.KeepRight then
             placeLine(o) = es => MergeFold.foldPlace(placeIn(es, o).copy(origin = localPlace(o).origin), localPlace(o))
           else overrides(f) = Decision.Kept
         case (IssueKind.NamedPeriodDiffers, BundleKind.Period, Some(d), Some(f), Some(o)) =>
           fold(f, o, BundleKind.Period)
-          tally = tally.copy(periodsMerged = tally.periodsMerged + 1)
+          tally = tally.modify(_.periodsMerged).using(_ + 1)
           if d.kind == km.KeepRight then
             periodLine(o) = es => periodIn(es, o).copy(origin = localPeriod(o).origin, rev = "")
           else overrides(f) = Decision.Kept

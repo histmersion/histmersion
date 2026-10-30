@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.*
 import com.histmersion.web.ui.Layout
@@ -20,7 +21,7 @@ object ArticlesTab:
     query = () => UiState.articleQuery(),
     fetch = (q, offset) =>
       ApiClient
-        .articles(q.copy(filter = q.filter.copy(offset = offset)))
+        .articles(q.modify(_.filter.offset).setTo(offset))
         .map(r =>
           TabPage(r.articles, r.total, kindCounts(r.kinds) :+ ResultsPaging.span(UiState.from.now(), UiState.to.now()))
         ),

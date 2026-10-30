@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{CritiqueRef, Plural, WireEnum}
 import com.histmersion.api.given
 
@@ -202,7 +203,7 @@ object ReviewLedger:
         case None =>
           val id = nextId(led, f.reviewer)
           val g = f.copy(id = id)
-          (led.copy(entries = led.entries :+ Entry(g, run, round)), out :+ g, seen + id)
+          (led.modify(_.entries).using(_ :+ Entry(g, run, round)), out :+ g, seen + id)
     } match
       case (led, out, _) => (led, out.toList)
 

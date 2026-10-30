@@ -30,6 +30,10 @@ Every jar on the class path of the server, the CLI, plugin-api and the first-par
 | com.kubuszok:kindlings-derivation-commons_sjs1_3 | 0.3.3 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-json-schema-config-macro-providers_3 | 0.3.3 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-json-schema-config-macro-providers_sjs1_3 | 0.3.3 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-macro-commons_3 | 0.3.3 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-macro-commons_sjs1_3 | 0.3.3 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-optics_3 | 0.3.3 | Apache-2.0 | compatible |
+| com.kubuszok:kindlings-optics_sjs1_3 | 0.3.3 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-sconfig-derivation_3 | 0.3.3 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-tapir-schema-derivation_3 | 0.3.3 | Apache-2.0 | compatible |
 | com.kubuszok:kindlings-tapir-schema-derivation_sjs1_3 | 0.3.3 | Apache-2.0 | compatible |

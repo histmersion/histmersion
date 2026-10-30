@@ -205,6 +205,8 @@ lazy val api = projectMatrix
       // Kindlings derives circe Codec AND tapir Schema from the same model → they match by construction.
       "com.kubuszok" %% "kindlings-circe-derivation" % V.kindlings,
       "com.kubuszok" %% "kindlings-tapir-schema-derivation" % V.kindlings,
+      // lenses: one field of a record updated without spelling out the copy
+      "com.kubuszok" %% "kindlings-optics" % V.kindlings,
       // the model's newtypes (AGENTS.md, Coding practices 1-2): opaque, so they erase to their base types
       "io.github.iltotore" %% "iron" % V.iron
     )

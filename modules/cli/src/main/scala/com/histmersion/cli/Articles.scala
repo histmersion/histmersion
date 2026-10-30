@@ -1,5 +1,6 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -99,7 +100,7 @@ object ArticleCli:
             failed = sum.failed ++ r.failed,
             skipped = sum.skipped ++ r.skipped
           )
-        case Left(e) => sum.copy(failed = sum.failed :+ s"$name: ${e.message}")
+        case Left(e) => sum.modify(_.failed).using(_ :+ s"$name: ${e.message}")
     }
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */

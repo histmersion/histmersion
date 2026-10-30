@@ -1,5 +1,6 @@
 package com.histmersion.domain.personal
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.personal.*
 import com.histmersion.domain.personal.PersonalState.StoredNote
 
@@ -117,7 +118,7 @@ object NoteService:
     def add(user: UserId, target: Target, text: NoteText, title: Option[String], at: Instant): Note =
       val t = PersonalRules.kept(at)
       val id = NoteId.parse(newId().toString).fold(e => throw IllegalStateException(e), identity)
-      val after = state.updateAndGet(s => s.copy(notes = s.notes :+ StoredNote(user, id, target, text, title, t, t)))
+      val after = state.updateAndGet(s => s.modify(_.notes).using(_ :+ StoredNote(user, id, target, text, title, t, t)))
       view(after, after.notes.last)
 
     def edit(

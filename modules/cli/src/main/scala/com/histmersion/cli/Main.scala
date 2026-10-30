@@ -1,5 +1,6 @@
 package com.histmersion.cli
 
+import hearth.kindlings.optics.syntax.*
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -115,7 +116,7 @@ object Main:
             failed = sum.failed ++ r.failed ++ figureFailure,
             skipped = sum.skipped ++ r.skipped
           )
-        case Left(e) => sum.copy(failed = sum.failed :+ s"$ck: ${e.message}")
+        case Left(e) => sum.modify(_.failed).using(_ :+ s"$ck: ${e.message}")
     }
     val done = c.resolveEdges.map(e => report(acc.copy(edgesResolved = e.resolved)))
     layout.root.fold(done)(root =>
@@ -395,7 +396,7 @@ object Main:
         else
           c.getSource(ck)
             .map(sw =>
-              Output.emit(json, if full then sw else sw.copy(source = sw.source.copy(ocrMarkdown = None)))(sw =>
+              Output.emit(json, if full then sw else sw.modify(_.source.ocrMarkdown).setTo(None))(sw =>
                 Markdown.source(sw.source, sw.findings.toVector, full)
               )
             )

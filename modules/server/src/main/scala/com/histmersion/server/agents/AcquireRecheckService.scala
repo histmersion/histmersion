@@ -1,5 +1,6 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -301,7 +302,7 @@ final class AcquireRecheckService(
             case f :: rest                  =>
               if Thread.interrupted() then throw InterruptedException()
               if !QueueRepo.get(ds, f.item.id).exists(_.status == Queue.Open) then
-                loop(rest, t.copy(total = t.total - 1), rows)
+                loop(rest, t.modify(_.total).using(_ - 1), rows)
               else
                 val tried = attempt(f, gen, Instant.now())
                 val next = t.add(tried.outcome, tried.detail)

@@ -1,5 +1,6 @@
 package com.histmersion.web.setup
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.*
 import com.histmersion.web.{ApiClient, Auth, Route, RouteLink, Router, SettingsSection}
 import com.histmersion.web.settings.{Draft, FindersSection, SettingsStore, StartPlace}
@@ -295,7 +296,7 @@ object SetupPage:
                   Wording.plugin(f.id),
                   "",
                   choices.signal.map(_.finders.getOrElse(f.id, f.enabled)),
-                  b => choices.update(c => c.copy(finders = c.finders + (f.id -> b)))
+                  b => choices.update(c => c.modify(_.finders).using(_ + (f.id -> b)))
                 )
               )
           )

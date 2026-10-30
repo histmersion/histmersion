@@ -1,5 +1,6 @@
 package com.histmersion.server.agents
 
+import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.HostAiHttp
 
 import com.histmersion.api.*
@@ -457,7 +458,7 @@ final class AgentsHandlers(
         DoctorCheck("agent lease", CheckLevel.Warn, s"expired ($o until $u): the next server to start takes it")
       case None if cfg.enabled => DoctorCheck("agent lease", CheckLevel.Warn, "not held: the agents have not started")
       case None                => DoctorCheck("agent lease", CheckLevel.Ok, "not held (agents off)")
-    r.copy(checks = r.checks :+ held)
+    r.modify(_.checks).using(_ :+ held)
 
   // ── runs ───────────────────────────────────────────────────────────────────────────────────────
 

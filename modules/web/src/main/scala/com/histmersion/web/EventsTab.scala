@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import hearth.kindlings.optics.syntax.*
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.*
 import com.histmersion.web.ui.Layout
@@ -19,7 +20,7 @@ object EventsTab:
     query = () => UiState.eventQuery(),
     fetch = (q, offset) =>
       ApiClient
-        .events(q.copy(filter = q.filter.copy(offset = offset)))
+        .events(q.modify(_.filter.offset).setTo(offset))
         .map(r => TabPage(r.events, r.total, List(ResultsPaging.span(UiState.from.now(), UiState.to.now())))),
     render = renderEvent,
     empty = "No events relate to the current filter.",

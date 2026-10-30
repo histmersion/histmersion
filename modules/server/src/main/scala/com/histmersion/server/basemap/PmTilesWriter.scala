@@ -1,5 +1,6 @@
 package com.histmersion.server.basemap
 
+import hearth.kindlings.optics.syntax.*
 import io.circe.Json
 
 import java.io.{BufferedOutputStream, OutputStream}
@@ -47,7 +48,7 @@ final class PmTilesWriter(out: Path):
     )
     entries.lastOption match
       case Some(e) if e.offset == offset && e.length == length && e.tileId + e.runLength == id =>
-        entries(entries.size - 1) = e.copy(runLength = e.runLength + 1)
+        entries(entries.size - 1) = e.modify(_.runLength).using(_ + 1)
       case _ => entries += PmTiles.Entry(id, offset, length, 1)
 
   /** Complete the archive and return its size. `template` supplies the tile type, compression, zooms, bounds and
