@@ -21,7 +21,8 @@ object QueueRepo:
   private val Cols = SqlLiteral(
     """id, list, text, topic, status, reason,
        to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
-       to_char(done_at    AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""")
+       to_char(done_at    AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
+       goal_slug, created_job, closed_job""")
 
   private given DbCodec[QueueItem] = DbCodec.derived
 
@@ -35,6 +36,15 @@ object QueueRepo:
       else
         sql"""SELECT $Cols FROM queue_items
               WHERE list = ${kind.label} AND status = $Open ORDER BY id""".query[QueueItem].run()
+
+  /** The open (with `all`, every) items of `kind` that serve research goal `goal`: their own goal, or a
+    * goal link of kind `queue-item` naming them. */
+  def forGoal(ds: DataSource, kind: Kind, goal: String, all: Boolean): Vector[QueueItem] =
+    connect(ds):
+      sql"""SELECT $Cols FROM queue_items
+            WHERE list = ${kind.label} AND status <> $Note AND ($all OR status = $Open)
+              AND (goal_slug = $goal OR id::text IN (SELECT ref FROM goal_links WHERE goal_slug = $goal AND kind = 'queue-item'))
+            ORDER BY id""".query[QueueItem].run()
 
   def get(ds: DataSource, id: Int): Option[QueueItem] =
     connect(ds)(sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().headOption)
@@ -65,10 +75,12 @@ object QueueRepo:
 
   private[db] def insert(kind: Kind, in: QueueAdd)(using DbCon): QueueItem =
     val status = in.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Open)
-    val id = sql"""INSERT INTO queue_items (list, text, topic, status, reason, created_at, done_at)
+    val goal = in.goal.map(_.trim).filter(_.nonEmpty)
+    val job  = in.job.map(_.trim).filter(_.nonEmpty)
+    val id = sql"""INSERT INTO queue_items (list, text, topic, status, reason, created_at, done_at, goal_slug, created_job)
                    VALUES (${kind.label}, ${in.text}, ${in.topic}, $status, ${in.reason},
                            coalesce(${in.createdAt}::timestamptz, now()),
-                           CASE WHEN $status = $Done THEN now() END)
+                           CASE WHEN $status = $Done THEN now() END, $goal, $job)
                    RETURNING id""".query[Int].run().head
     sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().head
 
@@ -82,6 +94,7 @@ object QueueRepo:
           val next = Queue.applyPatch(cur, p)
           sql"""UPDATE queue_items
                 SET text = ${next.text}, topic = ${next.topic}, status = ${next.status}, reason = ${next.reason},
+                    goal_slug = ${next.goal}, closed_job = ${next.closedBy},
                     done_at = CASE WHEN ${next.status} = $Done THEN coalesce(done_at, now()) END
                 WHERE id = $id""".update.run()
           Right(sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().head)

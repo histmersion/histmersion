@@ -229,7 +229,7 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: => AgentsConf
     lint.foreach(l => ctx.warn(s"lint: $l"))
     val acquire = ctx.run.acquireItem.map(id =>
       ctx.write(s"tick off acquisition item $id", io.circe.Json.obj("item" -> id.asJson, "fulfilledBy" -> ck.asJson))(
-        tickOff(id, ck))(s"acquisition item $id not ticked off (${AgentsMarkdown.DryRunNote})"))
+        tickOff(id, ck, ctx.run.id))(s"acquisition item $id not ticked off (${AgentsMarkdown.DryRunNote})"))
     acquire.filter(_.contains("NOT")).foreach(ctx.warn)
     val what = if p.fieldsSet.isEmpty then "nothing new" else p.fieldsSet.mkString(", ")
     val approval = r.approval.fold("")(id => s"; its status proposal waits for approval $id")
@@ -239,10 +239,10 @@ final class EnrichSourcePipeline(h: Handlers, ds: DataSource, cfg: => AgentsConf
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never
     * fails the run: an item done or deleted meanwhile is left as it is, and said so. */
-  private def tickOff(id: Int, ck: String): String =
+  private def tickOff(id: Int, ck: String, runId: String): String =
     Queue.fulfillable(id, QueueRepo.get(ds, id)) match
       case Left(m) => s"acquisition item $id NOT ticked off: $m"
       case Right(item) =>
-        h.ops.queuePatch(id, Queue.fulfil(item, ck)) match
+        h.ops.queuePatch(id, Queue.fulfil(item, ck, Some(runId))) match
           case Right(_) => s"ticked off acquisition item $id"
           case Left(e)  => s"acquisition item $id NOT ticked off: ${e.message}"

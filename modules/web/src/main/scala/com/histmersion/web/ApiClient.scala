@@ -100,7 +100,9 @@ object ApiClient:
     call(UiApi.markSeen)((board, UiNotices.SeenMark(Some(at))))
 
   def queueList(list: String, all: Boolean = false): Future[Queue.QueueListing] =
-    call(OpsApi.queueList)((list, all))
+    call(OpsApi.queueList)((list, all, None))
+  def queueForGoal(list: String, goal: String, all: Boolean = false): Future[Queue.QueueListing] =
+    call(OpsApi.queueList)((list, all, Some(goal)))
   def queuePatch(id: Int, p: Queue.QueuePatch): Future[Queue.QueueItem] =
     call(OpsApi.queuePatch)((id, p))
   def queueAdd(list: String, in: Queue.QueueAdd): Future[Queue.QueueItem] =

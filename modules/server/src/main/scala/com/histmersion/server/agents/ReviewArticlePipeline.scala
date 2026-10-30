@@ -562,7 +562,7 @@ final class ReviewArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCon
             val p = QueuePatch(text = Some(text))
             ctx.write(s"tasks item #${item.id} rewritten", p.asJson)(h.ops.queuePatch(item.id, p).toOption.map(_.id))(Some(item.id))
           case None =>
-            val add = QueueAdd(text, topic = Some("agent review"))
+            val add = Pipelines.entry(ctx, text, Some("agent review"))
             ctx.write("tasks item", add.asJson)(h.ops.queueAdd(tasks, add).toOption.map(_.id))(None)
       case None =>
         current.foreach { item =>

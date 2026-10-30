@@ -25,6 +25,7 @@ object ManagersRoutes:
     ManagersApi.enqueue.serverLogic[Identity](in => m.enqueue(in)),
     ManagersApi.autopilot.serverLogicSuccess[Identity](_ => m.autopilot),
     ManagersApi.setAutopilot.serverLogic[Identity](in => m.setAutopilot(in)),
+    ManagersApi.setMode.serverLogic[Identity](in => m.setMode(in)),
     ManagersApi.repairAcquire.serverLogic[Identity](in => m.repairAcquire(in)),
     ManagersApi.acquireRecheck.serverLogic[Identity](in => m.acquireRecheck(in)),
     ManagersApi.focus.serverLogicSuccess[Identity](_ => m.focus),

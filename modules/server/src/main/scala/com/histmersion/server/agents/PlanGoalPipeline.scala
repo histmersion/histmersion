@@ -128,7 +128,8 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
       inCorpus.foreach(w => GoalLinkRepo.link(ds, slug, LinkKind.Source, w.citekey.get, Option(w.why).filter(_.nonEmpty)))
       val items = outside.flatMap { w =>
         queued.get(w.doi).map(Right(_)).getOrElse(
-          h.ops.queueAdd("acquire", QueueAdd(PlanGoal.acquireText(w, slug), topic = Some(s"goal $slug"))).map(_.id)) match
+          h.ops.queueAdd("acquire", QueueAdd(PlanGoal.acquireText(w, slug), topic = Some(s"goal $slug"), goal = Some(slug),
+            job = Some(ctx.run.id))).map(_.id)) match
           case Right(id) =>
             GoalLinkRepo.link(ds, slug, LinkKind.QueueItem, id.toString, Some(w.doi)); Some(id)
           case Left(e) => ctx.warn(s"apply: ${w.doi} not queued — ${e.message}"); None

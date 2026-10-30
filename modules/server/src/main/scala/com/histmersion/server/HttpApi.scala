@@ -150,6 +150,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.reocr.serverLogic[Identity]((ck, quality) => h.ingest.reocr(ck, quality)),
     Api.original.serverLogic[Identity](ck => h.ingest.original(ck)),
     Api.job.serverLogic[Identity](id => h.ingest.job(id)),
+    Api.jobControl.serverLogic[Identity]((id, action) => h.jobControl.control(id, action)),
+    Api.activity.serverLogic[Identity]((show, since, goal, limit, before) => h.activity.page(show, since, goal, limit, before)),
     Api.jobs.serverLogic[Identity]((f, limit, before, upTo) => h.ingest.jobsPage(f, limit, before, upTo)),
     Api.assets.serverLogicSuccess[Identity](ck => h.ingest.assets(ck)),
     Api.putAssets.serverLogic[Identity]((ck, in) => h.ingest.putAssets(ck, in)),

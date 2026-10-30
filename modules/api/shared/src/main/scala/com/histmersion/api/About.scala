@@ -32,13 +32,15 @@ object CorrespondingSource:
     commit.map(_.trim).filter(_.nonEmpty).fold(repo)(c => s"$repo/tree/$c")
 
 /** The OCR job queue, one count per [[JobState]]. */
-final case class JobCounts(queued: Int = 0, running: Int = 0, done: Int = 0, failed: Int = 0)
-    derives KindlingsCodecAsObject:
+final case class JobCounts(queued: Int = 0, running: Int = 0, done: Int = 0, failed: Int = 0, paused: Int = 0,
+    cancelled: Int = 0) derives KindlingsCodecAsObject:
   def of(s: JobState): Int = s match
-    case JobState.Queued  => queued
-    case JobState.Running => running
-    case JobState.Done    => done
-    case JobState.Failed  => failed
+    case JobState.Queued    => queued
+    case JobState.Running   => running
+    case JobState.Done      => done
+    case JobState.Failed    => failed
+    case JobState.Paused    => paused
+    case JobState.Cancelled => cancelled
 object JobCounts:
   given Schema[JobCounts] = KindlingsSchema.derived[JobCounts].schema
 
@@ -50,6 +52,8 @@ object JobCounts:
         case Some(JobState.Running) => acc.copy(running = acc.running + n)
         case Some(JobState.Done)    => acc.copy(done = acc.done + n)
         case Some(JobState.Failed)  => acc.copy(failed = acc.failed + n)
+        case Some(JobState.Paused)    => acc.copy(paused = acc.paused + n)
+        case Some(JobState.Cancelled) => acc.copy(cancelled = acc.cancelled + n)
         case None                   => acc
     }
 

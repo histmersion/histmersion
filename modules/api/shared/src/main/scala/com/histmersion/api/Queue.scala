@@ -39,7 +39,9 @@ object Queue:
   // ── wire DTOs ────────────────────────────────────────────────────────────────────────────────
 
   /** A stored row. `topic` is the `" > "`-joined heading path (absent = the file preamble);
-    * `createdAt`/`doneAt` are ISO-8601 UTC strings, as everywhere else on the wire. */
+    * `createdAt`/`doneAt` are ISO-8601 UTC strings, as everywhere else on the wire. `goal` = the research
+    * goal the item serves; `createdBy` / `closedBy` = the agent run or background job (a job id) that wrote
+    * it and that ticked it off — absent for a person's own item. */
   final case class QueueItem(
       id: Int,
       list: String,
@@ -48,7 +50,10 @@ object Queue:
       status: String,
       reason: Option[String] = None,
       createdAt: Option[String] = None,
-      doneAt: Option[String] = None
+      doneAt: Option[String] = None,
+      goal: Option[String] = None,
+      createdBy: Option[String] = None,
+      closedBy: Option[String] = None
   ) derives KindlingsCodecAsObject
   object QueueItem:
     given Schema[QueueItem] = KindlingsSchema.derived[QueueItem].schema
@@ -76,7 +81,11 @@ object Queue:
       topic: Option[String] = None,
       status: Option[String] = None,
       reason: Option[String] = None,
-      createdAt: Option[String] = None
+      createdAt: Option[String] = None,
+      /** The research goal the item serves. */
+      goal: Option[String] = None,
+      /** The agent run or background job writing it (its job id). */
+      job: Option[String] = None
   )
   object QueueAdd:
     given Schema[QueueAdd] = KindlingsSchema.derived[QueueAdd].schema
@@ -90,7 +99,11 @@ object Queue:
       status: Option[String] = None,
       text: Option[String] = None,
       topic: Option[String] = None,
-      reason: Option[String] = None
+      reason: Option[String] = None,
+      /** The research goal the item serves (blank clears it). */
+      goal: Option[String] = None,
+      /** The agent run or background job that ticks the item off (with `status = "done"`). */
+      closedBy: Option[String] = None
   )
   object QueuePatch:
     given Schema[QueuePatch] = KindlingsSchema.derived[QueuePatch].schema
@@ -156,8 +169,8 @@ object Queue:
 
   /** The ONE write that ticks `item` off as fulfilled by the source `citekey` — made by the web UI's
     * "Link existing source…" and by an OCR job that was started for the item alike. */
-  def fulfil(item: QueueItem, citekey: String): QueuePatch =
-    QueuePatch(status = Some(Done), reason = Some(fulfilledReason(item.reason, citekey)))
+  def fulfil(item: QueueItem, citekey: String, by: Option[String] = None): QueuePatch =
+    QueuePatch(status = Some(Done), reason = Some(fulfilledReason(item.reason, citekey)), closedBy = by)
 
   /** Whether an upload may name `id` as the acquisition item it fulfils, given what the store holds
     * under that id: it must exist, be on the acquisition list, and still be open. Checked when the
@@ -170,15 +183,26 @@ object Queue:
       case Some(i) if i.status != Open                => Left(s"item $id is not an open acquisition item")
       case Some(i)                                    => Right(i)
 
+  /** Pure: the goals of each item, by item id — its own goal first, then the goals that link it, each once. */
+  def itemGoals(own: List[(Int, GoalRef)], linked: List[(Int, GoalRef)]): List[ItemGoals] =
+    (own ++ linked).groupBy(_._1).toList.sortBy(_._1).map((id, gs) => ItemGoals(id, gs.map(_._2).distinctBy(_.slug)))
+
   /** Pure: the row a patch makes of `cur`. Absent fields stay; `status` is normalised; a blank
-    * `topic`/`reason` clears it. `doneAt` is the database's to stamp, so it is left alone here. */
+    * `topic`/`reason`/`goal` clears it. `doneAt` is the database's to stamp, so it is left alone here. The run
+    * or job that closed an item is kept while it stays done: reopened, it was closed by no one. */
   def applyPatch(cur: QueueItem, p: QueuePatch): QueueItem =
     def clearable(v: Option[String], old: Option[String]) = v.fold(old)(x => Some(x.trim).filter(_.nonEmpty))
+    val status = p.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(cur.status)
+    val closedBy =
+      if status != Done then None
+      else p.closedBy.map(_.trim).filter(_.nonEmpty).orElse(Option.when(cur.status == Done)(cur.closedBy).flatten)
     cur.copy(
-      status = p.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(cur.status),
+      status = status,
       text = p.text.getOrElse(cur.text),
       topic = clearable(p.topic, cur.topic),
-      reason = clearable(p.reason, cur.reason)
+      reason = clearable(p.reason, cur.reason),
+      goal = clearable(p.goal, cur.goal),
+      closedBy = closedBy
     )
 
   /** Validate a caller-supplied `created_at`. It is handed to Postgres as `?::timestamptz`, so a

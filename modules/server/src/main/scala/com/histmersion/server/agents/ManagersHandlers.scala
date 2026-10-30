@@ -581,6 +581,21 @@ final class ManagersHandlers(ds: DataSource, cfg: => AgentsConfig, limits: => Li
   /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — pin, unpin, priority, max. */
   def setFocus(in: Autopilot.FocusSet): Either[ApiError, Autopilot.FocusInfo] = agents.focus.set(in)
 
+  /** `POST /api/agents/autopilot/mode {mode}` — the three-way control ([[AgentMode]]): the autopilot and the
+    * drain moved, in order, to what the mode stands for. Idempotent. */
+  def setMode(in: AgentMode.ModeSet): Either[ApiError, Autopilot.AutopilotStatus] =
+    AgentMode.parse(in.mode)
+      .toRight(ApiError(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}"))
+      .map { to =>
+        val now = agents.autopilot.status()
+        val by  = in.by.map(_.trim).filter(_.nonEmpty).orElse(Some("person"))
+        AgentMode.steps(now.on, now.drain.isDefined, to).foldLeft(now) { (_, step) =>
+          step match
+            case AgentMode.Step.Autopilot(on) => agents.autopilot.set(Autopilot.AutopilotSet(on, by))
+            case AgentMode.Step.Drain(on)     => agents.drain.set(Autopilot.DrainSet(on, by))
+        }
+      }
+
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
   def setAutopilot(in: Autopilot.AutopilotSet): Either[ApiError, Autopilot.AutopilotStatus] =
     Right(agents.autopilot.set(in))

@@ -151,7 +151,7 @@ final class Bootstrap(deps: Deps, download: String => Either[String, String] = P
 
   private def start(p: InitPlan): Either[ApiError, JobInfo] =
     BackgroundJob.start(ds, Bootstrap.JobKind, Some(JobDetail(init = Some(p))), slot, "an init job",
-      pins = deps.pins)((job, note) =>
+      pins = deps.pins, stops = Some(deps.jobStops))((job, note) =>
       run(job.id, p, note))
 
   private def run(id: String, p: InitPlan, note: String => Unit): BackgroundJob.Outcome =

@@ -189,3 +189,23 @@ class QueueRepoSuite extends com.histmersion.db.DbSuite:
     val today = java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString
     val _ = QueueRepo.add(ds, Kind.Log, QueueAdd("ran the lint", Some(today)))
     assert(exported(Kind.Log).contains(s"## $today\n- ran the lint"), exported(Kind.Log))
+
+  test("an item keeps its goal and the run that wrote it; the job that ticks it off is recorded, reopening forgets it"):
+    val added = QueueRepo.add(ds, Kind.Acquire, QueueAdd("Drake 2012", goal = Some("zz-links-goal"), job = Some("zz-run-1")))
+    assertEquals((added.goal, added.createdBy, added.closedBy), (Some("zz-links-goal"), Some("zz-run-1"), None))
+    val done = QueueRepo.patch(ds, added.id, Queue.fulfil(added, "drake2012", Some("zz-job-9"))).fold(e => fail(e.message), identity)
+    assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("zz-job-9"), Some("zz-run-1")))
+    assertEquals(QueueRepo.patch(ds, added.id, QueuePatch(status = Some(Open))).map(_.closedBy), Right(None))
+
+  test("a goal's items: its own, and those a goal link names; open only unless all"):
+    val _ = GoalRepo.put(ds, "zz-links-goal", GoalPut("Zz links"))
+    val own    = QueueRepo.add(ds, Kind.Tasks, QueueAdd("own item", goal = Some("zz-links-goal")))
+    val linked = QueueRepo.add(ds, Kind.Tasks, QueueAdd("linked item"))
+    val other  = QueueRepo.add(ds, Kind.Tasks, QueueAdd("someone else's"))
+    val closed = QueueRepo.add(ds, Kind.Tasks, QueueAdd("closed item", goal = Some("zz-links-goal"), status = Some(Done)))
+    val _ = GoalLinkRepo.link(ds, "zz-links-goal", GoalPlans.LinkKind.QueueItem, linked.id.toString, None)
+    assertEquals(QueueRepo.forGoal(ds, Kind.Tasks, "zz-links-goal", all = false).map(_.id).toList, List(own.id, linked.id))
+    assertEquals(QueueRepo.forGoal(ds, Kind.Tasks, "zz-links-goal", all = true).map(_.id).toList, List(own.id, linked.id, closed.id))
+    assert(!QueueRepo.forGoal(ds, Kind.Tasks, "zz-links-goal", all = true).exists(_.id == other.id))
+    assertEquals(QueueRepo.forGoal(ds, Kind.Acquire, "zz-links-goal", all = true).toList, Nil)
+    val _ = connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz-links-goal'".update.run())

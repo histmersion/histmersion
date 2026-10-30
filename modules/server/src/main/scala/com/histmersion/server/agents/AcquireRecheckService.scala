@@ -197,7 +197,7 @@ final class AcquireRecheckService(ds: DataSource, rcfg: => RecheckConfig, h: com
   private def startJob(plan: JobPlan, by: String, resumes: Option[String]): Either[ApiError, JobInfo] =
     val detail = RecheckJob(plan.all, plan.upTo, plan.since.toString, by, resumes)
     BackgroundJob.start(ds, RecheckJob.JobKind, Some(JobDetail(recheck = Some(detail))), jobSlot,
-      "an acquisition list re-check job", Some(AgentsApi.CodeConflict), agents.pins)((job, progress) =>
+      "an acquisition list re-check job", Some(AgentsApi.CodeConflict), agents.pins, Some(agents.jobStops))((job, progress) =>
       runJob(job.id, plan, by, progress))
 
   /** The job's body: the items the corpus holds with their text closed first, then each item of
@@ -213,7 +213,7 @@ final class AcquireRecheckService(ds: DataSource, rcfg: => RecheckConfig, h: com
         val gen = up.fetcherGeneration
         progress("closing the items the corpus holds with their text")
         val fs     = facts(None)
-        val closed = fs.collect { case f @ Facts(_, Action.Close(ck), _) => f -> ck }.flatMap((f, ck) => close(f, ck, gen, Instant.now()))
+        val closed = fs.collect { case f @ Facts(_, Action.Close(ck), _) => f -> ck }.flatMap((f, ck) => close(f, ck, gen, Instant.now(), Some(jobId)))
         val before = AcquireCheckRepo.countSince(ds, plan.since)
         def n(o: Outcome) = before.getOrElse(o.wire, 0)
         val triedByJob = n(Outcome.Fetched) + n(Outcome.NoCopy) + n(Outcome.Failed)
@@ -245,7 +245,7 @@ final class AcquireRecheckService(ds: DataSource, rcfg: => RecheckConfig, h: com
           rows = closed ++ rows.reverse.filter(_.action == Fetched))
         if r.closed + r.fetched + r.noCopy + r.failed > 0 || stop.isDefined then
           val _ = h.ops.queueAdd("log", QueueAdd((s"${summary(r)} (by $by, job $jobId" +
-            stop.fold(")")(why => s"; $why)")).take(1000)))
+            stop.fold(")")(why => s"; $why)")).take(1000), job = Some(jobId)))
         stop.fold(BackgroundJob.Outcome.done(line))(why => BackgroundJob.Outcome(Some(line), Some(why)))
     finally passing.unlock()
 
@@ -298,8 +298,8 @@ final class AcquireRecheckService(ds: DataSource, rcfg: => RecheckConfig, h: com
       r
 
   /** The item ticked off as fulfilled by `citekey` (the one write every import makes), and its check. */
-  private def close(f: Facts, citekey: String, generation: String, now: Instant): Option[RecheckRow] =
-    h.ops.queuePatch(f.item.id, Queue.fulfil(f.item, citekey)) match
+  private def close(f: Facts, citekey: String, generation: String, now: Instant, job: Option[String] = None): Option[RecheckRow] =
+    h.ops.queuePatch(f.item.id, Queue.fulfil(f.item, citekey, job)) match
       case Left(e) =>
         scribe.warn(s"acquire re-check: item #${f.item.id} could not be closed: ${e.message}")
         None

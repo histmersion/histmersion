@@ -187,6 +187,25 @@ object Wording:
   /** The same, short, where the bar is narrow ("2 need you"). */
   def decisionsShort(open: Int): String = if open == 1 then "1 needs you" else s"$open need you"
 
+  /** The three-way control's choices. */
+  def agentMode(m: AgentMode): String = m match
+    case AgentMode.Working   => "Working"
+    case AgentMode.Finishing => "Finish current work, then pause"
+    case AgentMode.Paused    => "Pause now"
+
+  /** What the agents are doing, as the overview's card says it. */
+  def agentsHeading(m: AgentMode): String = m match
+    case AgentMode.Working   => "Research agents are working"
+    case AgentMode.Finishing => "Research agents are finishing current work, then pausing"
+    case AgentMode.Paused    => "Research agents are paused"
+
+  /** What an activity entry is, as its row's first word says it. */
+  def activityKind(k: Activity.EntryKind): String = k match
+    case Activity.EntryKind.Run      => "Agent work"
+    case Activity.EntryKind.Job      => "Background job"
+    case Activity.EntryKind.Log      => "Note"
+    case Activity.EntryKind.Decision => "You decided"
+
   val Drain   = "Finish current work, then pause"
   val Undrain = "Resume"
 
@@ -217,6 +236,8 @@ object Wording:
     case JobState.Running => "Running"
     case JobState.Done    => "Done"
     case JobState.Failed  => "Failed"
+    case JobState.Paused    => "Paused"
+    case JobState.Cancelled => "Cancelled"
 
   // ── plugins ──────────────────────────────────────────────────────────────────────────────────────────
 

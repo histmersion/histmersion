@@ -142,7 +142,7 @@ object JobRepo:
     }
 
   /** Startup reconciliation: nothing survives the process, so anything still `running` failed with
-    * it. Returns how many rows were corrected. Agent runs are NOT touched: their finished steps are
+    * it — and a background job a person paused, whose way to go on was the process's. Returns how many rows were corrected. Agent runs are NOT touched: their finished steps are
     * checkpointed, so an interrupted run is paused and resumable (`AgentRepo.reconcile`). *
     * `except`: the jobs this process is still running or holding queued — a config reload that swapped
     * back to a database (docs/research-plugins.md §3.6) must not fail its own work there. */
@@ -150,7 +150,7 @@ object JobRepo:
     transact(ds):
       sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
                             progress = NULL, updated_at = now()
-            WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire})
+            WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire}, ${JobState.Paused.wire})
               AND kind <> ${Agents.JobKind}
               AND NOT (id = ANY($except::text[]))""".update.run()
 

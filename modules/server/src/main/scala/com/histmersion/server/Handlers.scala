@@ -67,6 +67,19 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * Constructing it starts nothing; `Main` starts its run pool after the OCR pool. */
   val agents: com.histmersion.server.agents.AgentsHandlers = com.histmersion.server.agents.AgentsHandlers(deps, this)
 
+  /** Research › Activity: runs, jobs, worklog lines and a person's decisions, one list. */
+  val activity: com.histmersion.domain.activity.ActivityControllers =
+    com.histmersion.domain.activity.ActivityControllers(com.histmersion.domain.activity.ActivityService(ds), () => Instant.now())
+
+  /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
+  lazy val jobControl: com.histmersion.domain.jobs.JobControlControllers =
+    import com.histmersion.domain.jobs.{JobAction, JobControlControllers, JobControlService}
+    def run(id: String, a: JobAction): Either[ApiError, Unit] = (a match
+      case JobAction.Pause  => agents.engine.pause(id)
+      case JobAction.Resume => agents.engine.resume(id, None, None)
+      case JobAction.Cancel => agents.engine.cancel(id)).map(_ => ())
+    JobControlControllers(JobControlService(ds, deps.jobStops, run))
+
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
   /** The Storage part of About: measured in the background, at most once per `storage.ttl-seconds`

@@ -306,6 +306,31 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
                 Paging.olderLine(page, c => s"call `job_status` again with the same filters and `before: \"$c\"`"))))
       }
 
+  private val jobControlTool =
+    tool("job_control")
+      .description(
+        "Pause, resume or cancel a job by `id` (`action`: pause | resume | cancel). A long background job — a picture " +
+          "or event import, a base-map download, an acquisition re-check, the init job's gazetteer loads — stops after " +
+          "the part it is on: paused it keeps what it did and, resumed, goes on with the parts it had not done; " +
+          "cancelled it is recorded as cancelled. An agent run takes its own pause, resume and cancel. Other jobs (an " +
+          "OCR, a vacuum) run as one piece and are refused. Only when the user asked for it.")
+      .input[JobControlInput]
+      .handle(in => h.jobControl.control(in.id, in.action).fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j))))
+
+  private val activityTool =
+    tool("activity")
+      .description(
+        "Research › Activity: agent runs, background jobs, worklog lines and the person's own decisions in ONE list, " +
+          "newest first, each naming what it touched (goal, run or job, source, article, list item, approval). `show`: " +
+          "all (default) | running | agents | jobs | yours | problems; `since` (2026-10-01, an ISO instant, or 7d / 12h ago); " +
+          "`goal` = one research goal's history; `limit` (default 30, at most 200); `before` = the cursor the last page " +
+          "gave, for the next older one. Use to see what happened recently or what is going on now.")
+      .input[ActivityInput]
+      .handle { in =>
+        h.activity.page(in.show, in.since, in.goal, in.limit, in.before).fold(McpOut.error, p =>
+          ToolResult.text(ActivityMarkdown.page(p, c => s"_Older: call `activity` again with the same filters and `before: \"$c\"`._")))
+      }
+
   private val assets =
     tool("assets")
       .description(
@@ -969,7 +994,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       attestations, putAttestation, deleteAttestationTool,
       goalsToolRead, putGoalTool, patchGoalTool,
       agentStateTool, deleteAgentStateTool,
-      ingest, jobStatus, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool, mergePlanTool, mergesTool,
+      ingest, jobStatus, jobControlTool, activityTool, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool, mergePlanTool, mergesTool,
       renameLabel)
       ++ OpsTools(h.ops, h)  // stream 2.8: lint · queue · query
       ++ com.histmersion.server.events.EventCatalogTools(h)  // #1449: event_links (proposed links, leads)
@@ -1406,6 +1431,15 @@ object McpTools:
       .modify(_.provenance)(_.description("How the source was acquired: manual|ill|author|scan|external-file|calibre|archive|oa"))
       .modify(_.acquireItem)(_.description(
         "Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds"))
+
+  final case class JobControlInput(id: String, action: String) derives KindlingsCodecAsObject, KindlingsSchema
+  object JobControlInput:
+    given Schema[JobControlInput] = summon[KindlingsSchema[JobControlInput]].schema
+
+  final case class ActivityInput(show: Option[String] = None, since: Option[String] = None, goal: Option[String] = None,
+      limit: Option[Int] = None, before: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
+  object ActivityInput:
+    given Schema[ActivityInput] = summon[KindlingsSchema[ActivityInput]].schema
 
   final case class JobStatusInput(
       id: Option[String] = None,
