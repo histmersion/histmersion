@@ -71,9 +71,9 @@ object NoteMarkers:
     for la <- n.target.lat; lo <- n.target.lon do
       shown.foreach(_.unmount())
       val pop = TheMap.surface.popup(LatLon(la.value, lo.value), "", "note-popup")
-      pop.element.foreach { el =>
+      TheMap.surface.popupBody(pop).foreach { body =>
         val box = dom.document.createElement("div")
-        Option(el.querySelector(".maplibregl-popup-content")).getOrElse(el).appendChild(box)
+        body.appendChild(box)
         shown = Some(render(box, div(cls := "note-popup-body",
           p(cls := "note-popup-where muted", Target.where(n.target)),
           NoteList.card(n))))

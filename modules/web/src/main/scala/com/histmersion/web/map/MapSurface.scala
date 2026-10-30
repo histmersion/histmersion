@@ -238,6 +238,12 @@ trait MapSurface:
   /** The container changed size (a window resize, or the chrome around it: a folded filter row, a dragged
     * sidebar): the map takes it and is drawn again at once — nothing is fetched or made again. */
   def resize(): Unit
+  /** Whether `el` is the map's own chrome — a control, a popup — where the page's map menu does not open. */
+  def isChrome(el: dom.Element): Boolean = false
+  /** Put the page's own control `el` in corner `c`, styled as the map's controls are. */
+  def addControl(el: dom.HTMLElement, c: Corner): Unit = Option(corner(c)).foreach(_.appendChild(el))
+  /** Where a popup's own content goes (the popup itself where it has no separate box). */
+  def popupBody(p: Popup): Option[dom.HTMLElement] = p.element
   /** Locked, a person's drag, wheel, keys and pinch neither pan nor zoom it (the page's own moves still do). */
   def setLocked(locked: Boolean): Unit = ()
   /** How many times a change of the container's size was taken (diagnostics). */
