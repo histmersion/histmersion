@@ -3562,8 +3562,7 @@ test('every window of the old toolbar is reachable from the new navigation, each
         await page.locator('.add-sources-menu a', { hasText: side }).click();
       } else if (side) await page.locator('.side-nav a', { hasText: side }).first().click();
       // Activity's detailed lists are linked under its one list; the managers sit in a disclosure of the overview
-      if (tab === 'managers') await page.locator('.research-managers > summary').click();
-      else if (tab) await page.locator('.activity-details a', { hasText: tab }).click();
+      if (tab && tab !== 'managers') await page.locator('.activity-details a', { hasText: tab }).click();
       await page.locator(`.place-page ${pane}`).waitFor();
       return new URL(page.url()).pathname;
     };

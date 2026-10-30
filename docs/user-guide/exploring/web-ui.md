@@ -248,12 +248,12 @@ the other pages. Everything else has its place:
 | Library › Add sources › Upload a file | `/library/upload` | upload a PDF or EPUB for text recognition |
 | Library › Add sources › Add by DOI | `/library/doi` | add a work by its DOI or arXiv id (legal open access only) |
 | Library › Add sources › Merge another collection | `/library/merge` | review and merge a `.hmx` bundle from another machine |
-| Research › Overview | `/research` | the agent managers, the autopilot and its focus (when the server runs agents) |
+| Research › Overview | `/research` | the agents as one choice — **Working**, **Finish current work, then pause**, **Pause now** — with what runs and waits and the AI plan's weekly limit; the oldest decisions waiting for you, each with its reason and what to read first; your goals with their steps done and what blocks them; the latest activity; the agent managers, in detail |
 | Research › Needs your decision | `/research/decisions` | what the agents propose, for you to approve or reject |
-| Research › Goals | `/research/goals` | your research areas as a tree, and a form for a new one |
-| Research › Activity | `/research/activity`, `…/jobs`, `…/worklog` | agent runs; text-recognition and import jobs, with progress; the `log` list, by date |
-| Research › Backlog | `/research/backlog` | the `tasks` list |
-| Research › To acquire | `/research/acquire` | the acquisition list: what to buy, borrow or find |
+| Research › Goals | `/research/goals`, `/research/goals/<slug>` | your research areas as a tree, and a form for a new one; a goal's page — its question, stage and schedule, **Check for new publications now**, **Pause this goal**, its plan with each step linked to the agent work that did it, what it produced (articles, its sources in Library and on the map, its backlog and acquisition items) and its history |
+| Research › Activity | `/research/activity` (`…/running`, `…/agents`, `…/jobs`, `…/yours`, `…/problems`; `?goal=` one goal's) | ONE list, newest first, of agent runs, background jobs, worklog lines and your own decisions, each linked to what it touched; a run or a long job (a picture or event import, a map download, a re-check) has **Pause**, **Resume** and **Cancel** in place — it stops after the part it is on and, resumed, goes on from there. The detailed lists — every agent run, every background job, the worklog by day — are linked under it |
+| Research › Backlog | `/research/backlog` (`?goal=` one goal's) | the `tasks` list; each item names its goal and the run or job that wrote or ticked it off |
+| Research › To acquire | `/research/acquire` (`?goal=` one goal's) | the acquisition list: what to buy, borrow or find — with each item's last legal re-check, **Re-check now** and **Re-check all** |
 | Research › AI models and limits | `/research/models` | the agents' models and allowances |
 | Settings › Data and downloads | `/settings/data` | the map regions downloaded, and downloading more |
 | Settings › Keys | `/settings/keys` | the key writes need (a write asks for it where it is needed) |

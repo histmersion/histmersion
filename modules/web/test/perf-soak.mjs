@@ -10,13 +10,13 @@ import { memory, quiet } from './perf-lib.mjs';
 
 /** One round: every interaction once. */
 async function round(page, i) {
-  // pages: Settings › About and Research › Activity › Background jobs shown, then back to the map
+  // pages: Settings › About and Research › Activity › Every background job shown, then back to the map
   await page.locator('.places a[data-nav="settings"]').click();
   await page.locator('.side-nav a', { hasText: 'About Histmersion' }).click();
   await page.locator('.about-pane').waitFor();
   await page.locator('.places a[data-nav="research"]').click();
   await page.locator('.side-nav a', { hasText: 'Activity' }).click();
-  await page.locator('.page-tabs a', { hasText: 'Background jobs' }).click();
+  await page.locator('.activity-details a', { hasText: 'Every background job' }).click();
   await page.locator('.jobs-pane').waitFor();
   await page.locator('.places a[data-nav="explore"]').click();
   await page.waitForFunction(() => !document.querySelector('.jobs-pane'));

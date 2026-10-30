@@ -2066,8 +2066,8 @@ img.is-zoomable { cursor:zoom-in; }
 .goal-steps { margin-left:auto; }
 .bar { height:6px; border-radius:3px; background:var(--sunk); overflow:hidden; }
 .bar i { display:block; width:var(--done, 0%); height:100%; background:var(--accent); }
-.activity-chips { display:flex; flex-wrap:wrap; gap:var(--space-3); margin:0 0 var(--space-5); }
-.card .ch .activity-chips { margin:0; }
+.activity-chips { display:flex; flex-wrap:wrap; gap:var(--space-3); width:auto; max-width:none; margin:0 0 var(--space-5); }
+.card .ch .activity-chips { flex:1 1 0; min-width:0; margin:0; }
 .fchip { display:inline-flex; align-items:center; min-height:var(--control-h-sm); padding:0 10px; border:1px solid var(--line2);
   border-radius:var(--radius-pill); background:var(--panel); color:var(--ink2); font-size:var(--fs-xs);
   font-weight:var(--fw-strong); text-decoration:none; }

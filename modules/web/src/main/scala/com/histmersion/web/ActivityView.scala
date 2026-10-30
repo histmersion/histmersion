@@ -182,7 +182,7 @@ object ActivityView:
 
   /** The chips: each a link to its page, the goal kept; the running and the problems counted. */
   def chips(ui: UiConfig, on: Option[ActivityTab], goal: Option[String], counts: Signal[Activity.Counts]): HtmlElement =
-    navTag(cls := "chips activity-chips", aria.label := "Show",
+    navTag(cls := "activity-chips", aria.label := "Show",
       ActivityTab.values.toList.filter(t => t.isChip && (ui.agentsEnabled || !t.agents)).map { t =>
         val selected = on.contains(t)
         a(cls := "fchip", cls("on") := selected, href := s"${Route.Activity(t).path}${search(goal)}",
