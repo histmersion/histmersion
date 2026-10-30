@@ -60,6 +60,7 @@ object MapView:
     case MapLayer.Sites      => Slot(sitesLayer.attach, sitesLayer.detach, loadSites)
     case MapLayer.Media      => Slot(mediaLayer.attach, mediaLayer.detach, loadMedia)
     case MapLayer.Events     => Slot(EventMarkers.layer.attach, EventMarkers.layer.detach, loadEvents)
+    case MapLayer.Notes      => Slot(marks.NoteMarkers.attach, marks.NoteMarkers.detach, _ => ())
 
   /** The overlays on the map, reconciled with `UiState.layers` — the map FOLLOWS the state (it never
     * keeps a copy of its own), and replaying a state never toggles anything twice. */
@@ -327,6 +328,8 @@ object MapView:
         MapLabels.install(surface, ui)(using ctx.owner)
         BaseMaps.install(surface, ui)(using ctx.owner)
         MapHandle.install(surface)
+        marks.MapMenu.install(surface)
+        marks.NoteMarkers.install()
         // the overlays and the base map follow UiState (restored from the browser's storage by
         // UiState.init, before this mounts) — there is no other copy of that state to disagree with
         UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)

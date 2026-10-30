@@ -3902,7 +3902,7 @@ test('the layers panel: one button says how many are on; a layer\'s options show
   await withPage({ width: 1440, height: 900 }, async page => {
     await routeFullLoad(page);
     const btn = page.locator('#layers-btn');
-    assert.match(await btn.innerText(), /Layers · \d of 5 on/);
+    assert.match(await btn.innerText(), /Layers · \d of 6 on/);
     assert.equal(await page.locator('#layers-panel').isVisible(), false, 'the panel starts closed');
     await btn.click();
     await page.locator('#layers-panel').waitFor();

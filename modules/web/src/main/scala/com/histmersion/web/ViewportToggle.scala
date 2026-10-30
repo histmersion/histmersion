@@ -73,6 +73,7 @@ object ViewportToggle:
         MediaFilters.select("licence", UiState.mediaLicense, MediaFilters.licences.signal, LicenseName.label))
       case MapLayer.Events     => List(IconSelect("event kind", UiState.eventKind, Val(LayerFilters.eventKinds)),
         IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers)), undatedBox(UiState.eventsUndated, "events"))
+      case MapLayer.Notes      => Nil
     div(cls := "layer-group", role := "group", aria.label := l.label, dataAttr("layer") := l.wire,
       LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _)),
       child.maybe <-- UiState.layerOn(l).map(on => Option.when(on)(div(cls := "layer-options", opts))))

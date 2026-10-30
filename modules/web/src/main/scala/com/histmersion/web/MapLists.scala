@@ -9,7 +9,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 /** One row of the Places or Pictures tab: its key, name, a note, the icon's markup, its page and how a plain
   * click opens it. */
 final case class MapListRow(key: String, label: String, note: String, icon: String, href: String, open: () => Unit,
-    undated: Boolean = false)
+    undated: Boolean = false, kind: com.histmersion.api.personal.ItemKind = com.histmersion.api.personal.ItemKind.Place)
 
 /** What a Places or Pictures tab shows: its rows, how many there are in all (some only counted by the map,
   * which lists them when zoomed in), and a line saying where they are from. */
@@ -118,7 +118,7 @@ object MapLists:
         span(cls := "row-title", r.label),
         onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); r.open() } }),
       Option.when(r.note.nonEmpty)(div(cls := "meta", r.note)),
-      NewTabLink(r.href, r.label)
+      marks.RowActions(marks.ItemRef(com.histmersion.api.personal.Target.item(r.kind, r.key), r.label), r.href, r.note)
     )
 
 /** The "open in a new tab" action of a list row or a detail. */

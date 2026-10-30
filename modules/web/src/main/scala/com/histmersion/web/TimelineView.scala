@@ -113,9 +113,20 @@ object TimelineView:
     if b > limits.max then { b = limits.max; a = b - width }
     (a, Math.max(a + MIN_SPAN, b))
 
+  /** Locked, the timeline keeps its span: no drag, wheel, click or menu of its own changes it. */
+  val locked: Var[Boolean] = Var(false)
+
+  def setLocked(on: Boolean): Unit =
+    locked.set(on)
+    ui.Flash.say(if on then "The timeline is locked: its years stay until you unlock it." else "The timeline moves again.")
+
+  /** The person's own periods ([[marks.PeriodMarks]]) and the naming of a new one, in the presets menu. */
+  private val namingPeriod = Var(Option.empty[String])
+
   private def setSpan(from: Long, to: Long, push: Boolean = true): Unit =
     val (nf, nt) = clamp(from, to)
-    if nf == spanFrom && nt == spanTo then ()
+    if locked.now() then bumpRender()
+    else if nf == spanFrom && nt == spanTo then ()
     else
       UiState.from.set(Some(nf))
       UiState.to.set(Some(nt))
@@ -589,6 +600,21 @@ object TimelineView:
       }
     )
 
+  /** The timeline's own actions: lock it, start it at the years shown, keep the years as one of my periods. */
+  private def menuEntries(config: UiConfig): List[ui.ContextMenu.Entry] =
+    val (a, b) = (spanFrom, spanTo)
+    List(
+      ui.ContextMenu.Entry(if locked.now() then "Unlock the timeline" else "Lock the timeline", () => setLocked(!locked.now()),
+        pressed = Some(locked.now())),
+      ui.ContextMenu.Entry(s"Start the timeline at ${Fmt.periodStr(a, b)}", () => marks.PeriodMarks.startAt(a, b),
+        hint = Some("The years the timeline opens on, for everyone who opens Histmersion from this server")),
+      ui.ContextMenu.Entry("Add these years to my periods…", () => {
+        presetView.set(ViewportToggle.viewBox)
+        loadPresets()
+        namingPeriod.set(Some(Fmt.periodStr(a, b)))
+        showPresets.set(true)
+      }))
+
   // ── public entry point ────────────────────────────────────────────────────────────────────────
 
   def init(config: UiConfig): HtmlElement =
@@ -602,6 +628,7 @@ object TimelineView:
       cls := "tl-presets-dropdown",
       aria.label := "period presets",
       hidden <-- showPresets.signal.map(!_),
+      marks.PeriodMarks.section(namingPeriod, () => (spanFrom, spanTo), (a, b) => { setSpan(a, b); showPresets.set(false) }),
       children <-- periodPresets.signal.combineWith(presetView.signal).map { (ps, view) =>
         val groups = PresetMenu.groups(ps, view)
         if groups.isEmpty then List(div(cls := "tl-preset-loading", "no period presets available"))
@@ -639,6 +666,8 @@ object TimelineView:
       cls("tl-detail-open") <-- detailOpen.signal,
       // folded to its line of controls (a wide screen), as this browser left it
       cls("is-folded") <-- folded.signal,
+      cls("is-locked") <-- locked.signal,
+      ui.ContextMenu.on("Timeline actions", () => menuEntries(config)),
       // ── Overview bar (full range, draggable handles) ──────────────────────────────────────
       div(
         cls := "tl-overview-wrap",
@@ -663,7 +692,7 @@ object TimelineView:
           loadOverview(elWidth(svg))
 
           svg.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-            if e.button == 0 then
+            if e.button == 0 && !locked.now() then
               val rect = svg.getBoundingClientRect()
               val w = if rect.width > 0 then rect.width else 600.0
               val x = e.clientX - rect.left
@@ -788,7 +817,7 @@ object TimelineView:
           }, js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions])
 
           svg.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-            if e.button == 0 then
+            if e.button == 0 && !locked.now() then
               val rect = svg.getBoundingClientRect()
               val x = e.clientX - rect.left
               dragState.set(Some(DragInfo(x, x, DragKind.ZoomDetail, spanFrom, spanTo)))
@@ -880,6 +909,9 @@ object TimelineView:
           detailLatest.cancel()
         }
       ),
+      div(cls := "tl-lock-note", cls("is-hidden") <-- locked.signal.map(!_), role := "status",
+        Icon(Icon.Lock), span("The timeline is locked"),
+        button(typ := "button", cls := "btn btn--sm tl-unlock", "Unlock", onClick --> (_ => setLocked(false)))),
       // ── Controls: playback · the span shown · zoom to a period, show all time, fold
       div(cls := "tl-ctl",
         TimelinePlayback.element(config),
@@ -898,6 +930,7 @@ object TimelineView:
             ),
             presetsDropdown
           ),
+          ui.ContextMenu.button("Timeline actions", () => menuEntries(config), "tl-menu-btn"),
           button(typ := "button", cls := "btn btn--ghost tl-all-time", idAttr := "tl-all-time",
             title := "Show every year the timeline holds", "Show all time",
             onClick --> { _ => setSpan(limits.min, limits.max) }),

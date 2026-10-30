@@ -265,9 +265,10 @@ object ResultsList:
           )
         )
       else emptyNode,
-      NewTabLink(SourceLink.href(src.citekey), src.title),
+      marks.RowActions(marks.ItemRef.source(src.citekey, src.title), SourceLink.href(src.citekey),
+        List(src.authors.take(3).mkString(", "), src.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")),
       onClick --> { ev =>
-        val inLink = Option(ev.target.asInstanceOf[dom.Element].closest("a")).isDefined
+        val inLink = Option(ev.target.asInstanceOf[dom.Element].closest("a, button")).isDefined
         if !inLink then openSource(src.citekey, inPanel)
       },
       onKeyDown --> { ev =>

@@ -31,7 +31,7 @@ class ExploreChromeSuite extends munit.FunSuite:
     assertEquals(FilterChips.count(Nil, period = false), 0)
 
   test("the layers button says how many layers are on"):
-    assertEquals(ViewportToggle.layersLabel(2, ViewportToggle.LayerCount), "Layers · 2 of 5 on")
+    assertEquals(ViewportToggle.layersLabel(2, ViewportToggle.LayerCount), "Layers · 2 of 6 on")
 
   test("playback speeds read in plain words"):
     assertEquals(TimelinePlayback.Speeds.map(TimelinePlayback.speedWords),

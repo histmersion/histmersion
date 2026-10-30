@@ -302,6 +302,15 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
 
   private val popups = mutable.ListBuffer.empty[GlPopup]
 
+  override def setLocked(locked: Boolean): Unit =
+    List(gl.dragPan, gl.scrollZoom, gl.boxZoom, gl.doubleClickZoom, gl.keyboard, gl.touchZoomRotate).foreach { h =>
+      if locked then h.disable() else h.enable()
+    }
+    if !locked then
+      gl.touchZoomRotate.disableRotation()
+      gl.keyboard.disableRotation()
+    el.classList.toggle("is-map-locked", locked)
+
   def popup(at: LatLon, html: String, cls: String): Popup =
     closePopups()
     val p = GlPopup(js.Dynamic.literal(closeButton = true, closeOnClick = true, maxWidth = "340px", offset = 14,

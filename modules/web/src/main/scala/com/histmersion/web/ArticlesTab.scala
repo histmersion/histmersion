@@ -32,7 +32,7 @@ object ArticlesTab:
   private[web] def renderArticle(art: ArticleSummary, inPanel: Boolean = false): HtmlElement =
     li(
       cls := "article-row",
-      NewTabLink(Route.Article(art.slug).path, art.title),
+      marks.RowActions(marks.ItemRef.article(art.slug, art.title), Route.Article(art.slug).path, Fmt.display(art.kind)),
       a(
         href := Route.Article(art.slug).path,
         cls := "article-link",

@@ -231,7 +231,7 @@ code, kbd, pre, samp { font-family:var(--font-mono); }
 /* Explore: the top bar; the map with the filter panel lying over its left edge and the layers button over its
    top right; the timeline under the map; the results on the right. The filter panel never resizes the map,
    folded (`.filters-folded`: its 48 px rail) or open: the map's left-hand controls move clear of it instead. */
-.histmersion-app { display:grid; grid-template-columns: 1fr var(--sidebar-w, 360px); grid-template-rows: auto 1fr auto; height:100%;
+.histmersion-app { display:grid; grid-template-columns: 1fr var(--sidebar-w, 480px); grid-template-rows: auto 1fr auto; height:100%;
   --filters-w:288px; }
 .histmersion-app.filters-folded { --filters-w:48px; }
 .muted { color:var(--muted); font-size:var(--fs-xs); }
@@ -240,6 +240,7 @@ code, kbd, pre, samp { font-family:var(--font-mono); }
 .sidebar { grid-column:2; grid-row:2/4; background:var(--panel); border-left:1px solid var(--line); overflow-y:auto; position:relative; }
 .sidebar-resize { position:absolute; left:-3px; top:0; bottom:0; width:6px; cursor:col-resize; z-index:10; }
 .sidebar-resize:hover { background:var(--accent); opacity:.3; }
+.sidebar-resize:focus-visible { background:var(--accent); opacity:.6; outline:none; }
 .fbar { grid-column:1; grid-row:2; justify-self:start; align-self:stretch; width:var(--filters-w); min-height:0; z-index:4;
   background:var(--panel); border-right:1px solid var(--line); box-shadow:var(--sh-pop); overflow-y:auto; }
 .tl { grid-column:1; grid-row:3; border-top:1px solid var(--line); }
@@ -296,11 +297,28 @@ code, kbd, pre, samp { font-family:var(--font-mono); }
 .results-head { display:flex; justify-content:space-between; align-items:center; gap:var(--space-4); flex-wrap:wrap;
   padding:var(--space-4) var(--space-5) 0; }
 .results-sort { display:inline-flex; align-items:center; gap:var(--space-2); }
-.results-panel .tabs { gap:0; padding:var(--space-3) var(--space-3) 0; overflow-x:auto; scrollbar-width:thin; }
+.results-panel .tabs { gap:0; padding:var(--space-3) var(--space-3) 0; overflow-x:auto; scrollbar-width:thin;
+  /* a row of tabs wider than the column scrolls, and its cut-off edge shades so it is plain there is more */
+  background:linear-gradient(to right, var(--panel) 40%, transparent) left / 24px 100% no-repeat local,
+    linear-gradient(to left, var(--panel) 40%, transparent) right / 24px 100% no-repeat local,
+    linear-gradient(to right, var(--line2), transparent) left / 10px 100% no-repeat scroll,
+    linear-gradient(to left, var(--line2), transparent) right / 10px 100% no-repeat scroll, var(--panel); }
 .results-panel .tabs .tab { padding:var(--space-2) var(--space-3); white-space:nowrap; flex:none; }
 .tab-count { margin-left:var(--space-2); color:var(--ink3); font-weight:var(--fw-normal); font-variant-numeric:tabular-nums; }
 .hit { position:relative; }
-.hit .new-tab, .article-row .new-tab, .event-row .new-tab { float:right; margin-left:var(--space-2); }
+/* a list row's own actions (bookmark, new tab): a column of the row itself, at its right and as tall as it,
+   lit with the row's hover and focus — never floated into the next row (#7781) */
+.has-actions { display:grid; grid-template-columns:minmax(0, 1fr) auto; column-gap:var(--space-2); align-items:start; }
+.has-actions > :not(.row-actions) { grid-column:1; min-width:0; }
+.has-actions > .row-actions { grid-column:2; grid-row:1 / span 24; align-self:stretch; display:flex; flex-direction:column;
+  justify-content:flex-start; gap:var(--space-1); margin:calc(-1 * var(--row-py, 0px)) calc(-1 * var(--row-px, 0px)) calc(-1 * var(--row-py, 0px)) 0;
+  padding:var(--space-2); border-left:1px solid transparent; }
+.has-actions > .row-actions .btn { flex:1 1 0; min-height:var(--control-h-sm); color:var(--ink3); }
+.has-actions:is(:hover, :focus-within) > .row-actions { border-left-color:var(--line); }
+.has-actions:is(:hover, :focus-within) > .row-actions .btn { color:var(--ink); }
+.has-actions > .row-actions .btn:hover, .has-actions > .row-actions .btn:focus-visible { background:var(--accent-soft); }
+.row-bookmark.is-on, .item-bookmark.is-on { color:var(--accent); }
+.row-bookmark.is-on .icon, .item-bookmark.is-on .icon { fill:currentColor; }
 .row-link { color:inherit; text-decoration:none; display:inline; }
 .row-link:hover { text-decoration:underline; }
 .hit a.title { display:block; color:var(--ink); font-weight:var(--fw-strong); }
@@ -396,7 +414,7 @@ code, kbd, pre, samp { font-family:var(--font-mono); }
 /* a list item a link pointed at (`?item=`) */
 .queue-item.is-target { outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--radius-sm); }
 .count { padding:10px 14px; color:var(--muted); font-size:var(--fs-xs); border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--panel); }
-.hit { padding:10px 14px; border-bottom:1px solid var(--line); cursor:pointer; }
+.hit { --row-py:10px; --row-px:14px; padding:var(--row-py) var(--row-px); border-bottom:1px solid var(--line); cursor:pointer; }
 .hit:hover { background:var(--hover-bg); }
 .hit .ck { color:var(--accent); font-weight:var(--fw-strong); font-size:var(--fs-xs); }
 .hit .claim { font-size:var(--fs-sm); margin-top:2px; }
@@ -601,9 +619,10 @@ header { flex-wrap:wrap; align-items:flex-start; }
 /* ── period presets ───────────────────────────────────────────────────────────────────────── */
 .tl-preset-wrap { position:relative; }
 /* the preset menu: a heading per region (folded unless the map shows it), a row per definition */
-.tl-presets-dropdown { position:absolute; top:100%; left:0; z-index:20; width:min(380px, 90vw); max-height:min(60vh, 460px);
+/* it opens upwards: the timeline sits at the foot of the window, and a menu under it scrolled the whole page */
+.tl-presets-dropdown { position:absolute; bottom:100%; left:0; z-index:20; width:min(380px, 90vw); max-height:min(60vh, 460px);
            overflow-y:auto; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg);
-           box-shadow:var(--sh-pop); margin-top:var(--space-2); padding:var(--space-2) 0; }
+           box-shadow:var(--sh-pop); margin-bottom:var(--space-2); padding:var(--space-2) 0; }
 .tl-preset-note { padding:var(--space-2) var(--space-5) var(--space-3); font-size:var(--fs-xs); }
 .tl-preset-region { cursor:pointer; padding:var(--space-3) var(--space-5); font-size:var(--fs-control); font-weight:var(--fw-strong);
            color:var(--ink); border-top:1px solid var(--line); }
@@ -744,7 +763,7 @@ header { flex-wrap:wrap; align-items:flex-start; }
 .hit-article .claim { color:var(--muted); margin-top:3px; }
 /* ── articles & events tab lists ─────────────────────────────────────────────────────────────── */
 .articles-list, .events-list { list-style:none; padding:0; margin:0; }
-.article-row, .event-row { padding:10px 14px; border-bottom:1px solid var(--line); }
+.article-row, .event-row { --row-py:10px; --row-px:14px; padding:var(--row-py) var(--row-px); border-bottom:1px solid var(--line); }
 .article-row:hover, .event-row:hover { background:var(--hover-bg); }
 .article-link { text-decoration:none; color:inherit; display:block; }
 .article-title, .event-label { font-size:var(--fs-sm); font-weight:var(--fw-strong); color:var(--ink); }
@@ -1051,7 +1070,7 @@ header h1 .tagline { display:block; font-weight:var(--fw-normal); margin-top:2px
 /* The bar of minimised windows ends where the sources/articles panel begins (its width is the
    draggable --sidebar-w), so it never covers the panel or its "show N more" button; its buttons
    scroll inside the bar instead of running under the panel. */
-.wm-taskbar { position:fixed; bottom:0; left:0; right:var(--sidebar-w, 360px); display:flex; gap:var(--gap-inline); padding:var(--space-3) var(--space-5);
+.wm-taskbar { position:fixed; bottom:0; left:0; right:var(--sidebar-w, 480px); display:flex; gap:var(--gap-inline); padding:var(--space-3) var(--space-5);
               background:var(--panel); border-top:1px solid var(--line); pointer-events:auto;
               z-index:999; overflow-x:auto; }
 .wm-taskbar-btn { flex:none; max-width:180px; overflow:hidden; text-overflow:ellipsis; justify-content:flex-start; }
@@ -1557,7 +1576,7 @@ img.is-zoomable { cursor:zoom-in; }
 [data-layout="narrow"] .title-filter { padding:0 var(--pad) var(--pad); }
 [data-layout="narrow"] .tabs { top:var(--handle-h); overflow-x:auto; padding:0 var(--pad); }
 [data-layout="narrow"] .tabs .tab { min-height:var(--tap); white-space:nowrap; }
-[data-layout="narrow"] .hit { padding:var(--pad) calc(var(--pad) * 1.3); }
+[data-layout="narrow"] .hit { --row-py:var(--pad); --row-px:calc(var(--pad) * 1.3); }
 
 /* ── windows: one at a time, full-screen ────────────────────────────────────────────────────────── */
 [data-layout="narrow"] .wm-window { left:0; top:0; width:100%; height:100%; min-width:0; min-height:0;
@@ -1595,8 +1614,11 @@ img.is-zoomable { cursor:zoom-in; }
    floating, moved and resized as on a desktop, and hover cards where there is a pointer that hovers. */
 [data-layout="narrow"][data-tablet] {
   --tap:44px; --pad:10px; --fs:15px; --fs-small:13px;
-  --sheet-w:min(420px, 100vw);
+  --sheet-w:min(var(--sidebar-w, 480px), 100vw);
 }
+/* five tabs and their counts across the side sheet (#7780): the tablet's touch height, the desktop's type */
+[data-layout="narrow"][data-tablet] .results-panel .tabs .tab { font-size:var(--fs-sm); padding:0 var(--space-3); }
+[data-layout="narrow"][data-tablet] .sidebar-resize { display:block; }
 [data-layout="narrow"][data-tablet] .mb-search { flex:0 1 420px; width:auto; }
 [data-layout="narrow"][data-tablet] .mb-timeline { max-width:none; margin-left:auto; }
 [data-layout="narrow"][data-tablet] .tl-ctl { row-gap:0; }
@@ -2252,3 +2274,97 @@ body.page-wide .reading { max-width:none; }
 [data-layout="narrow"] .setup-steps { flex-direction:row; flex-wrap:wrap; gap:var(--space-2); }
 [data-layout="narrow"] .setup-step:not(.on) :is(.setup-label, .setup-optional) { display:none; }
 [data-layout="narrow"] .setup-note { display:none; }
+
+/* ═══ bookmarks, notes, read marks, menus ══════════════════════════════════════════════════════════════ */
+.item-actions { flex-wrap:wrap; }
+.item-actions .icon { width:16px; height:16px; }
+.item-read.is-on { color:var(--ok); }
+.detail-marks { display:flex; flex-direction:column; gap:var(--space-3); margin:var(--space-3) 0; }
+.reading-actions .item-actions { margin-right:auto; }
+
+/* the one menu of actions */
+.context-menu { position:fixed; left:var(--menu-x, 0px); top:var(--menu-y, 0px); z-index:5000; min-width:230px; max-width:min(360px, 90vw);
+  background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--sh-pop);
+  padding:var(--space-2) 0; display:flex; flex-direction:column; }
+.context-menu:focus { outline:none; }
+.context-menu-title { margin:0; padding:var(--space-1) var(--space-4) var(--space-2); font-size:var(--fs-xs); color:var(--muted);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.context-menu-item { all:unset; box-sizing:border-box; display:flex; flex-direction:column; gap:2px; padding:var(--space-2) var(--space-4);
+  min-height:var(--control-h); justify-content:center; cursor:pointer; font-size:var(--fs-control); }
+.context-menu-item:hover, .context-menu-item:focus-visible { background:var(--accent-soft); }
+.context-menu-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.context-menu-item[aria-checked="true"] .context-menu-label::after { content:" ✓"; color:var(--accent); }
+.context-menu-item:disabled { cursor:default; opacity:.55; }
+.context-menu-hint { font-size:var(--fs-xs); color:var(--muted); }
+.context-menu-sep { height:1px; background:var(--line); margin:var(--space-2) 0; }
+.menu-btn .icon { width:16px; height:16px; }
+.flash { position:fixed; left:50%; bottom:var(--space-6); translate:-50% 0; z-index:5001; padding:var(--space-2) var(--space-5);
+  border-radius:var(--radius-pill); background:var(--ink); color:var(--bg); font-size:var(--fs-sm); box-shadow:var(--sh-pop);
+  opacity:0; pointer-events:none; transition:opacity .2s; }
+.flash.is-on { opacity:1; }
+.offscreen { position:fixed; left:-9999px; top:0; }
+
+/* a note: the editor, and a note where it is read */
+.note-editor-scrim { position:fixed; inset:0; z-index:4000; background:var(--scrim); display:grid; place-items:center; padding:var(--space-5); }
+.note-editor { width:min(640px, 100%); max-height:calc(100dvh - 2 * var(--space-5)); overflow:auto; display:flex; flex-direction:column;
+  gap:var(--space-3); padding:var(--space-5) var(--space-6); background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--radius-lg); box-shadow:var(--sh-win); }
+.note-editor-title { margin:0; font-size:var(--fs-lg); }
+.note-editor-on { margin:0; }
+.note-editor-text { width:100%; min-height:12em; resize:vertical; font-family:var(--font-mono); font-size:var(--fs-sm); line-height:1.5; }
+.note-editor-preview { min-height:12em; padding:var(--space-3) var(--space-4); border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--bg); overflow:auto; }
+.note-editor-hint { margin:0; }
+.note-list { display:flex; flex-direction:column; gap:var(--space-3); margin:var(--space-4) 0; }
+.note-card { padding:var(--space-3) var(--space-4); border-left:3px solid var(--time); background:var(--time-soft); border-radius:var(--radius-sm); }
+.note-when { margin:0 0 var(--space-2); }
+.note-text { max-width:var(--read-measure); }
+.note-text p, .note-text ul, .note-text ol, .note-text blockquote, .note-text pre { margin:0 0 var(--space-2); }
+.note-text blockquote { padding-left:var(--space-4); border-left:2px solid var(--line); color:var(--ink2); }
+.note-text pre { white-space:pre-wrap; font-size:var(--fs-sm); }
+.note-card-acts { margin-top:var(--space-2); }
+.note-popup .maplibregl-popup-content { max-width:340px; }
+.note-popup-where { margin:0 0 var(--space-2); }
+
+/* the map's notes layer: a note on a square, as the map's markers are drawn */
+.hd-note-marker { display:grid; place-items:center; border-radius:var(--radius-sm); background:var(--time); color:var(--glyph-on-fill);
+  border:var(--badge-edge-w) solid var(--marker-edge); box-shadow:var(--marker-shadow); cursor:pointer; }
+.hd-note-marker .icon { width:16px; height:16px; }
+.hd-note-marker:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+/* a locked map or timeline says so over itself */
+.map-lock-note, .tl-lock-note { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-1) var(--space-2) var(--space-1) var(--space-4);
+  border-radius:var(--radius-pill); background:var(--attn-soft); color:var(--ink); border:1px solid var(--attn); font-size:var(--fs-sm); }
+.map-lock-note { position:absolute; top:var(--space-4); left:50%; translate:-50% 0; z-index:var(--z-map-popups); box-shadow:var(--sh-pop); }
+.map-lock-note .icon, .tl-lock-note .icon { width:16px; height:16px; }
+.is-map-locked .maplibregl-ctrl-zoom-in, .is-map-locked .maplibregl-ctrl-zoom-out { opacity:.4; pointer-events:none; }
+.is-map-locked .maplibregl-canvas { cursor:not-allowed; }
+.map-actions-ctrl { margin-top:var(--space-2); }
+.map-actions-ctrl .menu-btn { background:var(--panel); border:1px solid var(--control-line); }
+.tl-lock-note { align-self:flex-start; margin:var(--space-2) var(--space-4) 0; }
+.tl.is-locked :is(.tl-overview-svg, .tl-detail-svg) { cursor:not-allowed; opacity:.75; }
+
+/* saved views, my periods */
+.saved-views .muted { margin:0 0 var(--space-2); }
+.save-view-form { display:flex; flex-direction:column; gap:var(--space-2); }
+.saved-view-list { margin:var(--space-2) 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:var(--space-1); }
+.saved-view { display:flex; align-items:center; justify-content:space-between; gap:var(--space-2); }
+.saved-view-open { min-width:0; overflow-wrap:anywhere; }
+.tl-my-periods { display:flex; flex-direction:column; }
+.tl-my-period { display:flex; align-items:center; }
+.tl-my-period .tl-preset-item { flex:1 1 auto; }
+.tl-period-form { display:flex; flex-direction:column; gap:var(--space-2); padding:var(--space-2) var(--space-4); }
+
+/* My library's shelves and the unread dot */
+.unread-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-right:7px; vertical-align:2px; flex:none; }
+.library-everything { display:contents; }
+.shelf-list { flex:1 1 auto; min-height:0; overflow:auto; display:flex; flex-direction:column; }
+.shelf-rows { margin:0; padding:0; list-style:none; }
+.shelf-row { display:flex; align-items:flex-start; gap:var(--space-3); padding:var(--space-3) var(--space-5); border-bottom:1px solid var(--line); }
+.shelf-row:hover { background:var(--hover-bg); }
+.shelf-row.is-chosen { background:var(--accent-soft); }
+.shelf-main { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.shelf-kind { text-transform:none; }
+.shelf-title { font-weight:var(--fw-strong); color:var(--ink); overflow-wrap:anywhere; }
+.shelf-line { font-size:var(--fs-sm); color:var(--ink2); overflow-wrap:anywhere; }
+.shelf-acts { flex:none; }
