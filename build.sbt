@@ -337,6 +337,8 @@ lazy val commonDeps = Seq(
   // own tzdb, checked by `histmersion-server --self-check` (TimeZoneCheck, TimeZoneCheckSuite).
   excludeDependencies += ExclusionRule("io.github.cquiroz", "scala-java-time-tzdb_3"),
   testFrameworks += new TestFramework("munit.Framework"),
+  // every compile formats the module's sources first (.scalafmt.conf); `just fmt-check` is the gate
+  scalafmtOnCompile := true,
   Test / fork := false,
   Test / extraTestDigests += sbt.util.Digest.sha256Hash(s"test-db=${(ThisBuild / testDbOn).value}".getBytes("UTF-8"))
 )

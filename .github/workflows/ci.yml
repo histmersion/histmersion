@@ -48,6 +48,8 @@ jobs:
           path: ~/.cache/rattler
           key: rattler-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('runtime/postgres/pixi.lock') }}
 
+      - name: formatting (scalafmt; `just fmt` fixes it)
+        run: sbt --server -batch scalafmtCheckAll scalafmtSbtCheck
       - name: throwaway PostgreSQL 18 + PostGIS (the bundled runtime)
         run: just test-db
       - name: unit + integration tests

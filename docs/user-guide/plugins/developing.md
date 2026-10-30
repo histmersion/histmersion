@@ -143,6 +143,7 @@ The loop:
 
 ```bash
 cd doi-mirror
+scala-cli fmt .                                                   # format the sources (scalafmt)
 scala-cli test .                                                  # compile, run the tests
 scala-cli --power publish . --publish-repository ./repo          # the jar and its POM
 histmersion plugin add doimirror::doi-mirror:0.1.0 --repo ./repo  # shows what it adds and needs, then installs it

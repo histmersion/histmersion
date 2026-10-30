@@ -38,6 +38,8 @@ just                 # list every recipe
 just test            # sbt test — pure suites
 just test-it         # every suite, DB-backed ones on a throwaway Postgres (removed afterwards) — the gate
 just test-quick      # while iterating: modules changed since master + their dependents (or: just test-quick db cli)
+just fmt             # scalafmt over every Scala source and build file (compiling formats a module too)
+just fmt-check       # fails on an unformatted file — the first step of test-quick and of CI
 just native          # both native images, built with the pinned JDK (scripts/bundle/server.sh)
 just install         # build the native bundle and install it (LaunchAgent, ~/Applications/Histmersion)
 just restart · just logs [server|postgres|converter] · just health
@@ -336,6 +338,7 @@ is the house style for `README.md`, the documentation site (`docs/user-guide/`),
 ## Before you commit
 
 ```bash
+just fmt-check                   # formatted (just fmt fixes it)
 sbt "testOnly *"                 # bypass the result cache
 sbt cli/nativeImage server/nativeImage
 ./tools/gen-cli-docs.sh --check  # the docs' CLI table still matches the binary

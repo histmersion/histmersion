@@ -554,6 +554,14 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
   keep what a step does not act on out of it; `PromptTrimSuite` holds the rules every role must keep
   and a ceiling per review role (`PromptBudget` prints the sizes).
 
+## Formatting
+
+Every Scala source, `build.sbt` and `project/*.scala` is formatted by **scalafmt** (`.scalafmt.conf`:
+Scala 3 dialect, 120 columns; it keeps each block's braces or indentation as written). Compiling formats
+a module's sources (`scalafmtOnCompile`); `just fmt` formats everything, `just fmt-check` fails on an
+unformatted file and is the first step of `just test-quick` and of CI. Commits that only reformat go in
+`.git-blame-ignore-revs` (`git config blame.ignoreRevsFile .git-blame-ignore-revs` once per clone).
+
 ## Commits
 
 - One logical change per commit. Imperative subject under ~72 chars, no trailing period:
@@ -571,6 +579,7 @@ formatted against `Locale.ROOT` (see `Backup.humanBytes`) — the default locale
 ## Before you say it is done
 
 ```bash
+just fmt-check                                    # formatted (just fmt fixes it)
 sbt "testOnly *"                                  # not the cached result
 sbt cli/nativeImage server/nativeImage            # both binaries still build
 just bundle && scripts/bundle/smoke.sh dist/histmersion   # the bundle works end to end, beside the live install
