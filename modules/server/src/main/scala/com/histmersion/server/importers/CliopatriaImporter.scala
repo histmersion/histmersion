@@ -9,7 +9,7 @@ import com.histmersion.values.PlaceKind
 /** Imports polity polygons from the Seshat Cliopatria dataset.
   *
   * Source: https://github.com/Seshat-Global-History-Databank/cliopatria
-  * License: CC BY-NC-SA
+  * License: CC BY 4.0 (the repository's LICENSE.md)
   * Coverage: ~13,700 features, 3400 BCE to present, worldwide polity boundaries.
   *
   * Each Cliopatria feature is a time-slice of a polity — the same polity name appears multiple times
@@ -20,10 +20,10 @@ import com.histmersion.values.PlaceKind
 object CliopatriaImporter extends GazetteerImporter:
 
   val name = "cliopatria"
-  val description = "Seshat Cliopatria polity polygons (CC BY-NC-SA, ~13K features from 3400 BCE)"
+  val description = "Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)"
   val fetchUrl = "https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip"
 
-  private val Source = "Cliopatria (Seshat Databank), CC BY-NC-SA"
+  private val Source = "Cliopatria (Seshat Databank), CC BY 4.0"
 
   def transform(rawJson: String): Either[String, List[PlaceInput]] =
     io.circe.parser.parse(rawJson).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>

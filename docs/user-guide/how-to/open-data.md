@@ -35,7 +35,7 @@ histmersion places fetch land                  # the coastline, used to clip sta
 
 | `places fetch …` | what | licence |
 |---|---|---|
-| `cliopatria` | Seshat Cliopatria: ~13 700 polity outlines, 3400 BCE to today | CC BY-NC-SA (non-commercial) |
+| `cliopatria` | Seshat Cliopatria: ~13 700 polity outlines, 3400 BCE to today | CC BY 4.0 |
 | `awmc` | Ancient World Mapping Center: regional names of the classical world, linked to Pleiades | ODbL |
 | `chronontology` | ChronOntology (DAI): ~14 000 named periods with regions | open access, as published by the DAI |
 | `land` | Natural Earth land and minor islands (not places; only for clipping) | public domain |
