@@ -80,6 +80,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       case JobAction.Cancel => agents.engine.cancel(id)).map(_ => ())
     JobControlControllers(JobControlService(ds, deps.jobStops, run))
 
+  /** A person's bookmarks, notes and read marks (the one local user's while the server runs for one person). */
+  lazy val personal: com.histmersion.domain.personal.PersonalControllers =
+    import com.histmersion.domain.personal.{BookmarkService, NoteService, PersonalControllers, ReadingService}
+    PersonalControllers(BookmarkService(ds), NoteService(ds), ReadingService(ds), deps.maintenance, () => Instant.now())
+
   /** Settings: the settings file read and changed (never the database), reloaded into this server; the
     * restart for what only a restart applies. */
   lazy val settings: com.histmersion.domain.settings.SettingsControllers =
