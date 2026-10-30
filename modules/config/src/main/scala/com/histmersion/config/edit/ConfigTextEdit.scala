@@ -53,6 +53,26 @@ object ConfigTextEdit:
       loop(last, doc, Nil, Nil)
     catch case e: ConfigException => Left(SettingError.Unreadable(e.getMessage))
 
+  /** What each key is to hold after `edits` (`None`: taken out); the last change of a key wins. */
+  def intended(edits: List[SettingEdit]): Map[String, Option[SettingValue]] =
+    edits.map {
+      case SettingEdit.Set(k, v) => k.value -> Some(v)
+      case SettingEdit.Unset(k)  => k.value -> None
+    }.toMap
+
+  /** The new file, read back (with its includes, unresolved; `here` its own origins), says what each change
+    * wrote — an include after it, or a second line for the same key, would otherwise win over it. */
+  def verify(parsed: Config, here: ConfigOrigin => Boolean, edited: EditedText,
+      intended: Map[String, Option[SettingValue]]): Either[SettingError, Unit] =
+    edited.changed.iterator.map { key =>
+      (written(parsed, key, here), intended.getOrElse(key.value, None)) match
+        case (Written.Substituted(_), _)          => Left(SettingError.Substitution(key))
+        case (Written.Elsewhere(f), _)            => Left(SettingError.FromInclude(key, f))
+        case (Written.Here(v), Some(w)) if SettingValue.fromConfig(v).exists(SettingValue.same(_, w)) => Right(())
+        case (Written.Nowhere, None)              => Right(())
+        case _ => Left(SettingError.Invalid(s"${key.relative} did not read back as it was written"))
+    }.find(_.isLeft).getOrElse(Right(()))
+
   /** Did an edit take out a substitution or an include the file had (a key written twice, once with
     * `${…}`, its plain value being the one that counts)? Those are kept exactly, so such a change is refused. */
   private def dropsVerbatim(before: String, after: String): Boolean =

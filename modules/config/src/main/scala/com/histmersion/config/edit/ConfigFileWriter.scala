@@ -32,38 +32,16 @@ final class ConfigFileWriter(val path: Path, env: Config, schema: ConfigSchema):
   def write(edits: List[SettingEdit], expected: Option[FileVersion], literalConsent: Boolean): Either[SettingError, WriteOutcome] =
     ConfigFileWriter.lock.synchronized {
       for
-        notes   <- policy(edits, literalConsent)
+        notes   <- SettingPolicy.all(edits, schema, literalConsent)
         current <- read()
         _       <- Either.cond(expected.forall(_ == current.version), (), SettingError.Changed)
         edited  <- ConfigTextEdit(current.text.getOrElse(ConfigFileWriter.NewFileHeader), current.parsed, current.here, edits)
-        outcome <- if edited.changed.isEmpty then Right(outcome(current, edited, None, notes))
-                   else commit(current, edited, intended(edits)).map(bak => outcome(current, edited, bak, notes)
+        outcome <- if edited.changed.isEmpty then Right(WriteOutcome.of(path, schema, env, current.version, edited, None, notes))
+                   else commit(current, edited, ConfigTextEdit.intended(edits)).map(bak =>
+                     WriteOutcome.of(path, schema, env, current.version, edited, bak, notes)
                      .copy(version = FileVersion.of(Some(edited.text)), created = current.text.isEmpty))
       yield outcome
     }
-
-  /** What each key is to hold after `edits` (`None`: taken out); the last change of a key wins. */
-  private def intended(edits: List[SettingEdit]): Map[String, Option[SettingValue]] =
-    edits.map {
-      case SettingEdit.Set(k, v) => k.value -> Some(v)
-      case SettingEdit.Unset(k)  => k.value -> None
-    }.toMap
-
-  private def policy(edits: List[SettingEdit], literalConsent: Boolean): Either[SettingError, List[String]] =
-    @scala.annotation.tailrec
-    def loop(rest: List[SettingEdit], notes: List[String]): Either[SettingError, List[String]] = rest match
-      case Nil => Right(notes)
-      case e :: tail => SettingPolicy.check(e, schema, literalConsent) match
-        case Left(err) => Left(err)
-        case Right(ns) => loop(tail, notes ++ ns)
-    loop(edits, Nil)
-
-  private def outcome(current: ConfigFileState, edited: EditedText, backup: Option[Path], notes: List[String]): WriteOutcome =
-    val fields = edited.changed.flatMap(schema.field)
-    val shadowed = fields.flatMap(f => f.envVar.filter(v => env.hasPath(v)).map(v =>
-      s"The environment variable $v also sets ${f.key.relative}, and wins over the settings file while it is set."))
-    WriteOutcome(path, edited.changed, edited.unchanged, backup, current.version, created = false,
-      restart = fields.flatMap(f => f.restart.map(f.key -> _)), warnings = notes ++ shadowed)
 
   /** Write `edited` beside the file, check it, keep the old text as `.bak`, and move the new one in. */
   private def commit(current: ConfigFileState, edited: EditedText,
@@ -76,7 +54,7 @@ final class ConfigFileWriter(val path: Path, env: Config, schema: ConfigSchema):
         Files.writeString(temp, edited.text, StandardCharsets.UTF_8)
         for
           parsed <- parse(temp).left.map(e => SettingError.Invalid(e.message))
-          _      <- verify(parsed, temp, edited, intended)
+          _      <- ConfigTextEdit.verify(parsed, o => ConfigFileState.sameFile(o, temp), edited, intended)
           _      <- AppConfig.loadWithUserFile(env, Some(temp)).left.map(m =>
                       SettingError.Invalid(m.replace(temp.toString, path.toString)))
           bak    <- backup(current)
@@ -85,20 +63,6 @@ final class ConfigFileWriter(val path: Path, env: Config, schema: ConfigSchema):
       finally
         val _ = Files.deleteIfExists(temp)
     catch case e: IOException => Left(SettingError.Io(e.getMessage))
-
-  /** Read back, each change is what the new file says (an include after it, or a second line for the same key,
-    * would otherwise win over it). */
-  private def verify(parsed: Config, temp: Path, edited: EditedText,
-      intended: Map[String, Option[SettingValue]]): Either[SettingError, Unit] =
-    val here = (o: org.ekrich.config.ConfigOrigin) => ConfigFileState.sameFile(o, temp)
-    edited.changed.iterator.map { key =>
-      (ConfigTextEdit.written(parsed, key, here), intended.getOrElse(key.value, None)) match
-        case (Written.Substituted(_), _)          => Left(SettingError.Substitution(key))
-        case (Written.Elsewhere(f), _)            => Left(SettingError.FromInclude(key, f))
-        case (Written.Here(v), Some(w)) if SettingValue.fromConfig(v).exists(SettingValue.same(_, w)) => Right(())
-        case (Written.Nowhere, None)              => Right(())
-        case _ => Left(SettingError.Invalid(s"${key.relative} did not read back as it was written"))
-    }.find(_.isLeft).getOrElse(Right(()))
 
   private def backup(current: ConfigFileState): Either[SettingError, Option[Path]] =
     if current.text.isEmpty then Right(None)

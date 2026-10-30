@@ -80,6 +80,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       case JobAction.Cancel => agents.engine.cancel(id)).map(_ => ())
     JobControlControllers(JobControlService(ds, deps.jobStops, run))
 
+  /** Settings: the settings file read and changed (never the database), reloaded into this server; the
+    * restart for what only a restart applies. */
+  lazy val settings: com.histmersion.domain.settings.SettingsControllers =
+    import com.histmersion.domain.settings.{RestartService, SettingsControllers, SettingsService}
+    SettingsControllers(SettingsService(() => deps.loaded), RestartService(deps.restart), () => configReload())
+
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
   /** The Storage part of About: measured in the background, at most once per `storage.ttl-seconds`
@@ -177,7 +183,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * (their settings with secrets as references, never values). */
   def uiConfig: UiConfig = ConfigViews.page(cfg.ui, writeKeyRequired = cfg.auth.apiKey.nonEmpty,
     agentsEnabled = cfg.agents.enabled, plugins = deps.plugins.report, baseMapSource = baseMapSource,
-    mapLanguage = cfg.basemap.labels.language)
+    mapLanguage = cfg.basemap.labels.language, setupDue = scala.util.Try(settings.setupDue).getOrElse(false))
 
   /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract
     * can draw one of the vector styles whole — a `stat` and a cached header read. */

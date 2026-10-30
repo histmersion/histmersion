@@ -38,6 +38,11 @@ final case class MapTilesUiConfig(maxZoom: Int = 11, playbackBucketSeconds: Doub
 object MapTilesUiConfig:
   given Schema[MapTilesUiConfig] = KindlingsSchema.derived[MapTilesUiConfig].schema
 
+/** Where the map opens (`ui.map-start`, [[MapStartMode]]): where this browser left it, or always at
+  * the centre and zoom given; `label` names the place for a person. */
+final case class MapStartConfig(mode: String = MapStartMode.Last.wire, lat: Double = 37.0, lon: Double = 30.0,
+    zoom: Double = 5, label: String = "") derives KindlingsCodecAsObject, KindlingsSchema
+
 final case class UiConfig(
     tiles: String,
     tilesMaxZoom: Int,
@@ -88,7 +93,12 @@ final case class UiConfig(
     baseMapSource: String = "auto",
     /** The language of the base map's names unless a viewer chooses another (`basemap.labels.language`):
       * filled in by the server like `writeKeyRequired` — NOT a `ui` key of its own. */
-    mapLanguage: String = "en"
+    mapLanguage: String = "en",
+    /** Where the map opens (`ui.map-start`). */
+    mapStart: MapStartConfig = MapStartConfig(),
+    /** Whether the first-run setup is due — filled in by the server from `setup.completed` and whether the
+      * config file sets anything, NOT a `ui` key of its own. */
+    setupDue: Boolean = false
 ) derives KindlingsCodecAsObject
 object UiConfig:
   given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema

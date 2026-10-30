@@ -71,6 +71,9 @@ final class Client(val serverUrl: String, token: Option[String] = None):
 
   // ── backup / restore (plan §1.10): the DUMP is taken server-side; the host only copies it off ──
   def configReload: Either[CliError, ReloadReport] = call(Api.configReload)(())
+  def settings(prefix: Option[String]): Either[CliError, ConfigEdit.Page] = call(ConfigEditApi.get)(prefix)
+  def writeSettings(w: ConfigEdit.Write): Either[CliError, ConfigEdit.Written] = call(ConfigEditApi.write)(w)
+  def restartServer: Either[CliError, ConfigEdit.Restart] = call(ConfigEditApi.restart)(())
   def backup: Either[CliError, BackupStatus]      = call(Api.backup)(())
   def backupStatus: Either[CliError, BackupStatus] = call(Api.backupStatus)(())
   def vacuum(in: VacuumRequest): Either[CliError, JobInfo] = call(Api.maintenanceVacuum)(in)

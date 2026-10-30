@@ -404,17 +404,36 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   private val configTool =
     tool("config")
       .description(
-        "The server's own configuration. `action: \"reload\"` reads the config file again and switches the " +
-          "running server to it in place — no restart: changed components (the database pool, a new " +
-          "database's migrations, the plugins whose block changed, the acquisition clients) are built " +
-          "beside the running ones and swapped in only when all of them built, so a broken config changes " +
-          "nothing. Answers what was applied, what needs a restart (the listening host/port, the bundled " +
-          "runtime, pool sizes), what was rebuilt, and any error.")
+        "The server's own settings, kept in its settings file (never in the database). `get` shows settings " +
+          "(`key` one, or `prefix` a block such as `acquire`): what the file says, what applies and from where, " +
+          "the default and what the setting does — a credential only as set or not and how it is referred to. " +
+          "`set` (`key`, `value` as a person would type it) and `unset` (`key`) change the file in place, keeping " +
+          "its comments, order, includes and anything written by hand, check the change first (a refused change " +
+          "says why in plain words), keep the old file as .bak and reload the server. A credential is written as " +
+          "a reference — env:NAME or <vault>:<entry> — and `value:` only with `literalConsent`. `reload` reads the " +
+          "file again and switches the running server to it in place; `restart` restarts a server that runs " +
+          "under its service, for the settings only a restart applies (the listening host/port, the bundled " +
+          "runtime, pool sizes).")
       .input[ConfigInput]
       .handle { in =>
+        def page(f: com.histmersion.api.ConfigEdit.Page => String, prefix: Option[String]) =
+          h.settings.page(prefix).fold(McpOut.error, p => ToolResult.text(f(p)))
         in.action.trim.toLowerCase(java.util.Locale.ROOT) match
-          case "reload" => ToolResult.text(ReloadMarkdown.report(h.configReload()))
-          case other    => McpOut.error(ApiError(s"unknown action '$other' (one of: reload)"))
+          case "reload"  => ToolResult.text(ReloadMarkdown.report(h.configReload()))
+          case "get"     =>
+            in.key.map(_.trim).filter(_.nonEmpty) match
+              case Some(k) => page(p => p.field(k).fold(s"No setting called $k.")(ConfigEditMarkdown.field), Some(k))
+              case None    => page(ConfigEditMarkdown.page, in.prefix)
+          case "set" | "unset" =>
+            in.key.map(_.trim).filter(_.nonEmpty) match
+              case None    => McpOut.error(ApiError(s"`${in.action}` needs a `key`"))
+              case Some(k) =>
+                val value = if in.action.trim.equalsIgnoreCase("unset") then None else Some(in.value.getOrElse(""))
+                h.settings.write(com.histmersion.api.ConfigEdit.Write(List(com.histmersion.api.ConfigEdit.Change(k, value)),
+                  literalConsent = in.literalConsent.getOrElse(false)))
+                  .fold(McpOut.error, w => ToolResult.text(ConfigEditMarkdown.written(w)))
+          case "restart" => h.settings.restart().fold(McpOut.error, r => ToolResult.text(ConfigEditMarkdown.restart(r)))
+          case other     => McpOut.error(ApiError(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
       }
 
   private val backup =
@@ -1262,10 +1281,15 @@ object McpTools:
       .modify(_.unit)(_.description("What to count: sources (default) | findings"))
 
   /** The `config` tool's input: what to do with the server's configuration. */
-  final case class ConfigInput(action: String) derives KindlingsCodecAsObject
+  final case class ConfigInput(action: String, key: Option[String] = None, value: Option[String] = None,
+      prefix: Option[String] = None, literalConsent: Option[Boolean] = None) derives KindlingsCodecAsObject
   object ConfigInput:
     given Schema[ConfigInput] = KindlingsSchema.derived[ConfigInput].schema
-      .modify(_.action)(_.description("reload: read the config file again and apply it in place"))
+      .modify(_.action)(_.description("get | set | unset | reload | restart"))
+      .modify(_.key)(_.description("the setting, e.g. backups.keep (get, set, unset)"))
+      .modify(_.value)(_.description("set: the value as a person types it — text, a number, true/false, a list [a, b]"))
+      .modify(_.prefix)(_.description("get: the settings under this block, e.g. acquire"))
+      .modify(_.literalConsent)(_.description("set: a credential may be written as value:… (the key itself in the file)"))
 
   final case class BackupInput() derives KindlingsCodecAsObject
   object BackupInput:

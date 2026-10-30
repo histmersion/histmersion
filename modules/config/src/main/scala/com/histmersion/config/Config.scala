@@ -614,21 +614,30 @@ object AppConfig:
             decode(merged).left.map(e => s"Histmersion config error: $e")
               .map(LoadedConfig(_, UserConfigFile(Some(p), loaded = false), env = env,
                 merged = ConfigReload.settings(merged)))
-          case Some(user) =>
-            for
-              // the settings and the KIND of each from the defaults alone: an env value is always a
-              // string, and would make every key it overrides look like a string setting
-              known   <- resolved(reference).left.map(inFile(p))
-              keys    <- ConfigLayers.check(user, known).left.map(inFile(p))
-              // the file's OWN values are checked, not what the environment leaves of them: a mistyped
-              // setting that an env var happens to shadow today is still a broken file
-              asFiled <- resolved(user.withFallback(reference).withFallback(env)).left.map(inFile(p))
-              _       <- ConfigLayers.typeCheck(keys.settings, asFiled, known).left.map(inFile(p))
-              merged  <- resolved(ConfigLayers.merged(reference, user, env)).left.map(inFile(p))
-              cfg     <- decode(merged).left.map(inFile(p))
-            yield LoadedConfig(cfg, UserConfigFile(Some(p), loaded = true, keys.unknown), user, env,
-              ConfigReload.settings(merged))
+          case Some(user) => withUser(reference, user, env, Some(p), inFile(p))
         }
+
+  /** The same load over the TEXT of a config file (a change checked before it is written, without a file;
+    * an include in it is not followed). */
+  def loadWithUserText(env: org.ekrich.config.Config, text: String): Either[String, LoadedConfig] =
+    val within = (msg: String) => s"Histmersion config: $msg"
+    try withUser(ConfigLayers.reference, ConfigFactory.parseString(text), env, None, within)
+    catch case e: org.ekrich.config.ConfigException => Left(within(e.getMessage))
+
+  private def withUser(reference: org.ekrich.config.Config, user: org.ekrich.config.Config, env: org.ekrich.config.Config,
+      p: Option[java.nio.file.Path], inFile: String => String): Either[String, LoadedConfig] =
+    for
+      // the settings and the KIND of each from the defaults alone: an env value is always a
+      // string, and would make every key it overrides look like a string setting
+      known   <- resolved(reference).left.map(inFile)
+      keys    <- ConfigLayers.check(user, known).left.map(inFile)
+      // the file's OWN values are checked, not what the environment leaves of them: a mistyped
+      // setting that an env var happens to shadow today is still a broken file
+      asFiled <- resolved(user.withFallback(reference).withFallback(env)).left.map(inFile)
+      _       <- ConfigLayers.typeCheck(keys.settings, asFiled, known).left.map(inFile)
+      merged  <- resolved(ConfigLayers.merged(reference, user, env)).left.map(inFile)
+      cfg     <- decode(merged).left.map(inFile)
+    yield LoadedConfig(cfg, UserConfigFile(p, loaded = true, keys.unknown), user, env, ConfigReload.settings(merged))
 
   /** An environment `Config` as a lookup (its keys are variable names, not paths). */
   def lookup(env: org.ekrich.config.Config): String => Option[String] =

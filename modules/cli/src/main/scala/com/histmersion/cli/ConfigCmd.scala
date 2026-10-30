@@ -55,6 +55,6 @@ object ConfigCmd:
   }
 
   val command: Opts[Client => Either[CliError, Unit]] =
-    Opts.subcommand("config", "The config file: where it is (this machine), and making the server reload it") {
-      path orElse reload
+    Opts.subcommand("config", "The settings file: where it is, its settings (get, set, unset — the file is changed in place, comments and all), reloading and restarting the server") {
+      path orElse reload orElse SettingsCmd.get orElse SettingsCmd.set orElse SettingsCmd.unset orElse SettingsCmd.restart
     }
