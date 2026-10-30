@@ -4138,6 +4138,10 @@ test('Library: a row chosen shows in the reading pane and the address; reload, b
     assert.match(links, /Read the full text/); assert.match(links, /What it cites \(2\)/);
     assert.match(links, /Who answers it \(1\)/); assert.match(links, /Cited in 1 article/);
     assert.equal(await page.locator('.reading-tab').getAttribute('href'), '/source/zz_lib_0');
+    // pinned: the source floats in a window over the page
+    await page.locator('.reading-pin').click();
+    await page.locator('.wm-window').waitFor();
+    await page.locator('.wm-window .wm-close').click();
     // a click anywhere on another row chooses it, as a step in the history
     await page.locator('.lib-row[data-key="zz_lib_1"] td.col-period').click();
     await page.waitForFunction(() => location.search === '?item=zz_lib_1');
@@ -4158,6 +4162,12 @@ test('Library: a row chosen shows in the reading pane and the address; reload, b
     await page.waitForFunction(() => location.search === '?item=zz_libart_0');
     await page.locator('.reading-opening', { hasText: 'the opening paragraph of library article 0' }).waitFor();
     assert.match(await page.locator('.reading-links').innerText(), /Sources cited \(1\)/);
+    // shown on the map: Explore, with the item's detail in the results' place
+    await page.locator('.reading-map').click();
+    await page.waitForFunction(() => location.pathname === '/explore');
+    await page.locator('.result-detail[data-kind="article"]').waitFor();
+    await page.goBack();
+    await page.locator('.reading-title', { hasText: 'Zz library article 0' }).waitFor();
   });
 });
 

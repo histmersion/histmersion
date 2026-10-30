@@ -71,7 +71,6 @@ object LibraryTable:
       cls := "lib-row",
       cls("is-chosen") <-- on,
       dataAttr("key") := r.key,
-      aria.selected <-- on,
       // a click anywhere on the row chooses it, as on its title
       onClick --> { ev =>
         val t = ev.target.asInstanceOf[dom.Element]
