@@ -45,7 +45,15 @@ final class AcquireRecheckService(
 
   private def settings: Settings =
     val c = rcfg
-    Settings(c.enabled, c.everyDays, c.perDay, c.perPass, c.passMinutes, c.sharePercent, c.retryHours)
+    Settings(
+      c.enabled,
+      c.everyDays.value,
+      c.perDay.value,
+      c.perPass.value,
+      c.passMinutes.value,
+      c.sharePercent.value,
+      c.retryHours.value
+    )
 
   /** When the last scheduled pass ran (epoch ms; 0 = not since the start). */
   private val lastPass = AtomicLong(0L)

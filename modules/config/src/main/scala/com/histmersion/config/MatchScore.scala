@@ -1,0 +1,9 @@
+package com.histmersion.config
+
+import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+
+type MatchScore = MatchScore.T
+object MatchScore extends RefinedType[Double, Pure]:
+  given ConfigReader[MatchScore] = summon[ConfigReader[Double]].emap(MatchScore.either)

@@ -89,7 +89,10 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     assertEquals((s.found, s.added, s.again, s.unseen), (5, 2, 0, 2))
     assertEquals(s.skipped, Map("in the corpus or queued" -> 2))
     // the first read looks back acquire.candidates.lookback-days; the watermark is today's after it
-    assertEquals(oa.asked.peek(), ("bronze age collapse", day.minusDays(cfg.acquire.candidates.lookbackDays.toLong)))
+    assertEquals(
+      oa.asked.peek(),
+      ("bronze age collapse", day.minusDays(cfg.acquire.candidates.lookbackDays.value.toLong))
+    )
     assertEquals(
       CandidateRepo.watches(ds, Goal).map(w => (w.index, w.watermark, w.lastFound)),
       List(("crossref", Some("2026-10-24"), 2), ("openalex", Some("2026-10-24"), 3))

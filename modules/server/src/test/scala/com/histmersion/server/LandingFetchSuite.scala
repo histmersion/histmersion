@@ -237,7 +237,7 @@ class LandingFetchSuite extends munit.FunSuite:
       case u if u.startsWith(openalexOf(c, doi))        => bytes(s"""{"locations":[${locs.mkString(",")}]}""")
       case u if u.startsWith("https://eprints.example") => bytes("<html><head></head></html>")
     }
-    assert(fetch(c.copy(landing = c.landing.copy(maxPages = 3)), http, doi).isLeft)
+    assert(fetch(c.copy(landing = c.landing.copy(maxPages = ItemCount(3))), http, doi).isLeft)
     assertEquals(http.asked.count(_.startsWith("https://eprints.example")), 3)
     val off = FakeUpstream {
       case u if u.startsWith(openalexOf(c, doi)) => bytes(s"""{"locations":[${locs.mkString(",")}]}""")

@@ -35,7 +35,7 @@ final class CandidateSearch(
       GoalLinkRepo
         .refs(ds, goal.slug, LinkKind.Article)
         .flatMap(a => ArticleRepo.sourcesCited(ds, a).filter(_.title.isDefined).map(_.citekey))).distinct
-      .take(math.max(0, c.sources))
+      .take(math.max(0, c.sources.value))
     val withDoi = cited.flatMap(ck => SourceRepo.load(ds, ck).flatMap(_.doi).flatMap(Acquire.normalizeDoi).map(ck -> _))
     val citing = withDoi.map((ck, doi) => CandidateWatch(goal.slug, Candidates.WatchKind.Citing.wire, doi, "openalex"))
     q ++ citing
@@ -58,7 +58,7 @@ final class CandidateSearch(
             .authors(w.subject)
             .toOption
             .toList
-            .flatMap(as => (as.headOption ++ as.lastOption).toList.distinct.take(c.authorsPerSource))
+            .flatMap(as => (as.headOption ++ as.lastOption).toList.distinct.take(c.authorsPerSource.value))
             .map(a => known(CandidateWatch(g.slug, Candidates.WatchKind.Author.wire, a, "openalex")))
         }
         .distinctBy(w => w.subject)
@@ -71,19 +71,19 @@ final class CandidateSearch(
             leftOut.update(i.name, (why, n + 1))
             Left(s"not asked this sweep — $why")
           case None =>
-            val got = i.search(w.subject, since, c.perWatch)
+            val got = i.search(w.subject, since, c.perWatch.value)
             got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why, 0))))
             got
       val read = (base ++ authorWatches).map { w =>
-        val since = Candidates.since(w.watermark, now, c.lookbackDays)
+        val since = Candidates.since(w.watermark, now, c.lookbackDays.value)
         val got: Either[String, List[WorkRef]] = Candidates.WatchKind.parse(w.kind) match
           case Some(Candidates.WatchKind.Query) =>
             byIndex
               .get(w.index)
               .toRight(s"index '${w.index}' is not configured")
               .flatMap(query(_, w, since))
-          case Some(Candidates.WatchKind.Citing) => alerts.citing(w.subject, since, c.perWatch)
-          case Some(Candidates.WatchKind.Author) => alerts.byAuthor(w.subject, since, c.perWatch)
+          case Some(Candidates.WatchKind.Citing) => alerts.citing(w.subject, since, c.perWatch.value)
+          case Some(Candidates.WatchKind.Author) => alerts.byAuthor(w.subject, since, c.perWatch.value)
           case None                              => Left(s"unknown watch kind '${w.kind}'")
         (w, since, got)
       }

@@ -8,10 +8,10 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * and arXiv's API.
   */
 final case class CandidatesConfig(
-    indexes: List[String],
-    lookbackDays: Int,
-    perWatch: Int,
-    sources: Int,
-    authorsPerSource: Int,
-    arxivApiUrl: String
+    indexes: List[IndexName],
+    lookbackDays: Days,
+    perWatch: ItemCount,
+    sources: ItemCount,
+    authorsPerSource: ItemCount,
+    arxivApiUrl: ServiceUrl
 ) derives ConfigReader

@@ -17,7 +17,7 @@ final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
     http
       .text(
         Url(
-          cfg.candidates.arxivApiUrl,
+          cfg.candidates.arxivApiUrl.value,
           "",
           "search_query" -> s"all:\"$query\"",
           "sortBy" -> "submittedDate",

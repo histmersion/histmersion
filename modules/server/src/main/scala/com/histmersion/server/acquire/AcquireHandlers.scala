@@ -117,7 +117,7 @@ final class AcquireHandlers(
     if query.isEmpty then Left(err("give a search query"))
     else
       discovery
-        .search(query, since, sort, cfg.limits.page(limit, acq.defaults.searchLimit))
+        .search(query, since, sort, cfg.limits.page(limit, acq.defaults.searchLimit.value))
         .left
         .map(err)
         .map { works =>
@@ -235,9 +235,9 @@ final class AcquireHandlers(
           work.exists(_.isRetracted),
           cited,
           year,
-          d.wellCitedAt,
-          d.lowCitedAt,
-          d.staleBefore
+          d.wellCitedAt.value,
+          d.lowCitedAt.value,
+          d.staleBefore.value
         )
 
         val checkedAt = t.citekey.filter(_ => store).map { ck =>
@@ -339,7 +339,7 @@ final class AcquireHandlers(
         .toRight(err(s"no DOI for '${req.id}' — the citation graph is keyed by DOI"))
         .flatMap { doi =>
           val work = discovery.meta(doi).getOrElse(WorkRef(doi = Some(doi)))
-          val cap = cfg.limits.page(req.limit, acq.defaults.followupsLimit)
+          val cap = cfg.limits.page(req.limit, acq.defaults.followupsLimit.value)
           citations.citing(work, req.since, cap).left.map(err).map { (backend, rows) =>
             val index = AcquireRepo.doiIndex(ds)
             val enriched = Acquire.rankFollowups(rows).map { r =>
@@ -600,7 +600,7 @@ final class AcquireHandlers(
       jobId: Option[String]
   ): List[IngestStep] =
     val items = QueueRepo.list(ds, Queue.Kind.Acquire, all = false).toList
-    AcquireMatch.decide(items, doi, title, authors, acq.defaults.titleMatchAt).map {
+    AcquireMatch.decide(items, doi, title, authors, acq.defaults.titleMatchAt.value).map {
       case AcquireMatch.Decision.Close(i) =>
         IngestStep(
           "acquire",
@@ -622,7 +622,7 @@ final class AcquireHandlers(
     if query.isEmpty then Left(err("give a search query"))
     else
       archive
-        .search(query, rows.filter(_ > 0).getOrElse(acq.defaults.archiveRows))
+        .search(query, rows.filter(_ > 0).getOrElse(acq.defaults.archiveRows.value))
         .left
         .map(err)
         .map(items => ArchiveSearchResult(query, items.size, items))

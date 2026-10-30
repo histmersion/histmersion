@@ -1,6 +1,7 @@
 package com.histmersion.config
 
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
+import com.histmersion.values.Year
 
 /** Env-var overrides (`port = ${?HISTMERSION_PORT}`) always arrive as HOCON STRINGS; the derived readers below
   * therefore accept either a number or a numeric string. Lexical-scope givens take priority over the companion-scope
@@ -23,3 +24,4 @@ given ConfigReader[Double] = lenient("double", ConfigReader.doubleReader, _.toDo
 given ConfigReader[Boolean] = lenient("boolean", ConfigReader.booleanReader, _.toBooleanOption)
 
 given ConfigReader[SeaFloorSource] = ConfigReader.stringReader.emap(SeaFloorSource.parse)
+given ConfigReader[Year] = summon[ConfigReader[Int]].emap(Year.either)

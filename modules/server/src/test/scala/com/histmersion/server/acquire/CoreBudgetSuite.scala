@@ -1,6 +1,6 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.config.{AcquireConfig, AppConfig}
+import com.histmersion.config.{AcquireConfig, ApiKey, AppConfig, ItemCount, Seconds, ServiceUrl, TokenCount}
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{Doi, Fetch, FetchContext, FetchedFile, PluginHttp, PluginLog, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.{FetchChain, Generation, PluginHost}
@@ -86,13 +86,13 @@ class CoreBudgetSuite extends munit.FunSuite:
   ): AcquireConfig =
     base.copy(core =
       base.core.copy(
-        url = s"${core.base}/v3",
-        apiKey = key,
-        perMinute = perMinute,
-        dailyTokens = daily,
-        searchDailyTokens = searches,
-        maxWaitSeconds = maxWait,
-        exhaustedPauseSeconds = 60
+        url = ServiceUrl.applyUnsafe(s"${core.base}/v3"),
+        apiKey = ApiKey.applyUnsafe(key),
+        perMinute = ItemCount.applyUnsafe(perMinute),
+        dailyTokens = TokenCount.applyUnsafe(daily),
+        searchDailyTokens = TokenCount.applyUnsafe(searches),
+        maxWaitSeconds = Seconds.applyUnsafe(maxWait),
+        exhaustedPauseSeconds = Seconds(60)
       )
     )
 

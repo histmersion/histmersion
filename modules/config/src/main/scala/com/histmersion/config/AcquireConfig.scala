@@ -32,7 +32,7 @@ final case class AcquireConfig(
     archiveOrg: ServiceConfig,
     wikipedia: ServiceConfig,
     retractionWatch: RetractionWatchConfig,
-    chain: String,
+    chain: CommaList,
     allowUnauthorised: Boolean,
     userAgent: String,
     timeoutSeconds: Int,
@@ -54,4 +54,4 @@ final case class AcquireConfig(
   /** The acquisition chain's order: the source-fetcher ids `chain` lists (comma-separated); fetchers it does not name
     * run after these, in plugin registration order.
     */
-  def chainIds: List[String] = LandingConfig.split(chain)
+  def chainIds: List[String] = chain.entries

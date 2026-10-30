@@ -96,11 +96,11 @@ object CoreBudget:
   /** The limits `acquire.core.*` set. */
   def limits(c: CoreServiceConfig): CoreQuota.Limits =
     CoreQuota.Limits(
-      c.perMinute,
-      c.dailyTokens,
-      c.searchDailyTokens,
-      c.lookupCost,
-      c.searchCost,
-      c.exhaustedPauseSeconds,
-      c.maxWaitSeconds
+      c.perMinute.value,
+      c.dailyTokens.value,
+      c.searchDailyTokens.value,
+      c.lookupCost.value,
+      c.searchCost.value,
+      c.exhaustedPauseSeconds.value,
+      c.maxWaitSeconds.value
     )

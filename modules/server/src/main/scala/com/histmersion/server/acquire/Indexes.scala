@@ -27,7 +27,7 @@ object Indexes:
     // CORE only with its key (its search refuses anonymous use): without one it is not asked at all
     (
       cfg.candidates.indexes
-        .map(_.trim.toLowerCase)
+        .map(_.value.trim.toLowerCase)
         .distinct
         .filter(n => n != "core" || key.isDefined)
         .flatMap(all.get),
