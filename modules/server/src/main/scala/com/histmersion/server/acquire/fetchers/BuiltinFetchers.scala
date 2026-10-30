@@ -1,12 +1,9 @@
 package com.histmersion.server.acquire.fetchers
 
-import com.histmersion.pluginhost.FetchChain
-
 import com.histmersion.config.AcquireConfig
 import com.histmersion.plugin.*
-import com.histmersion.server.acquire.{ArchiveClient, CoreBudget, FetchedFile, Http, OpenAlexCrossref}
+import com.histmersion.server.acquire.{ArchiveClient, CoreBudget, Http, OpenAlexCrossref}
 
-import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.plugin.PluginConfig.given
 import com.histmersion.api.VocabularyCodecs.given
 
@@ -83,62 +80,3 @@ object BuiltinFetchers:
       ),
       Builtin("arxiv", ctx => ctx.sourceFetchers.add("arxiv", ArxivFetcher(cfg, http)))
     )
-
-/** A built-in plugin's settings: none of its own beyond the host's `enabled`. */
-final case class BuiltinConfig() derives ConfigReader
-
-/** `oa-unpaywall`'s settings. `contact-email`: the e-mail Unpaywall requires with every request (its `email` parameter,
-  * nothing else); `null` = Histmersion's own `acquire.contact-email`, and with neither Unpaywall is not asked (it
-  * answers 422). Per install, never in the repository.
-  */
-final case class UnpaywallConfig(contactEmail: Option[String]) derives ConfigReader:
-  def email: Option[String] = contactEmail.map(_.trim).filter(_.nonEmpty)
-
-/** `oa-core`'s settings. `api-key`: CORE's API key as a secret reference (`env:<NAME>`, a vault's); `null` =
-  * Histmersion's own `acquire.core.api-key`; without a key CORE is not asked. The key it resolves is the new-source
-  * search's `core` index's too ([[CoreFetcher.key]]).
-  */
-final case class CoreConfig(apiKey: Option[Secret]) derives ConfigReader
-
-object CoreConfig:
-  private[fetchers] def nonBlank(v: String): Option[String] = Option(v).map(_.trim).filter(_.nonEmpty)
-
-/** One built-in plugin with settings of its own, `C`, decoded from its block by `C`'s reader. Its defaults resource
-  * (`META-INF/histmersion/plugins/<id>.conf`, in the server) names every key.
-  */
-final class BuiltinWith[C](id: String, contribute: (C, PluginContext) => Either[String, Unit])(using ConfigReader[C])
-    extends Plugin:
-  type Config = C
-  val info: PluginInfo = PluginInfo(id, BuiltinFetchers.Version, Spi.Version)
-  def register(config: C, ctx: PluginContext): Either[String, Unit] = contribute(config, ctx)
-
-/** One built-in plugin: its id, and what it registers. Its defaults resource (`META-INF/histmersion/plugins/<id>.conf`,
-  * in the server) sets `enabled = true`.
-  */
-final class Builtin(id: String, contribute: PluginContext => Either[String, Unit]) extends Plugin:
-  type Config = BuiltinConfig
-  val info: PluginInfo = PluginInfo(id, BuiltinFetchers.Version, Spi.Version)
-  def register(config: BuiltinConfig, ctx: PluginContext): Either[String, Unit] = contribute(ctx)
-
-/** What the built-in fetchers share: one download, checked. */
-private[acquire] object Fetching:
-
-  /** Download `url`; a copy only when it is a PDF. Any other answer is logged and is no copy. */
-  def tryUrl(http: Http, source: String, url: String, headers: Map[String, String] = Map.empty): Option[FetchedFile] =
-    http.bytes(url, headers) match
-      case Right(b) if FetchChain.looksLikePdf(b) => Some(FetchedFile(source, Some(url), b, "pdf"))
-      case Right(b)                               =>
-        scribe.info(s"acquire: $source: $url returned ${b.length} bytes that are not a PDF — skipping")
-        None
-      case Left(e) =>
-        scribe.info(s"acquire: $source fetch failed ($e)")
-        None
-
-  /** A step's answer: the copy, or a miss saying which identifier it needed or that it found none. */
-  def answer(found: Option[FetchedFile], none: => String): Fetch =
-    found.fold(Fetch.Miss(none))(Fetch.Found(_))
-
-  /** A fetcher from a function — the built-ins are all open access. */
-  def open(f: (WorkKey, FetchContext) => Fetch): SourceFetcher = new SourceFetcher:
-    val access: Access = Access.Open
-    def fetch(work: WorkKey, ctx: FetchContext): Fetch = f(work, ctx)

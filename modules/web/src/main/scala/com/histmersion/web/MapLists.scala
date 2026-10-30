@@ -6,25 +6,6 @@ import com.histmersion.web.map.TheMap
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-/** One row of the Places or Pictures tab: its key, name, a note, the icon's markup, its page and how a plain click
-  * opens it.
-  */
-final case class MapListRow(
-    key: String,
-    label: String,
-    note: String,
-    icon: String,
-    href: String,
-    open: () => Unit,
-    undated: Boolean = false,
-    kind: com.histmersion.api.personal.ItemKind = com.histmersion.api.personal.ItemKind.Place
-)
-
-/** What a Places or Pictures tab shows: its rows, how many there are in all (some only counted by the map, which lists
-  * them when zoomed in), and a line saying where they are from.
-  */
-final case class MapListState(rows: List[MapListRow], total: Int, note: String)
-
 /** The Places and Pictures tabs of the results: "On the map", what the map's sites and pictures layers hold in its view
   * (with what they only count there); "Everywhere", the places named by the filter's words, or every picture of the
   * span.
@@ -194,17 +175,4 @@ object MapLists:
       ),
       Option.when(r.note.nonEmpty)(div(cls := "meta", r.note)),
       marks.RowActions(marks.ItemRef(com.histmersion.api.personal.Target.item(r.kind, r.key), r.label), r.href, r.note)
-    )
-
-/** The "open in a new tab" action of a list row or a detail. */
-object NewTabLink:
-  def apply(href0: String, what: String): HtmlElement =
-    a(
-      cls := "btn btn--bare btn--icon btn--sm new-tab",
-      href := href0,
-      target := "_blank",
-      rel := "noopener",
-      title := s"Open “$what” in a new tab",
-      aria.label := s"Open $what in a new tab",
-      Icon(Icon.NewTab)
     )

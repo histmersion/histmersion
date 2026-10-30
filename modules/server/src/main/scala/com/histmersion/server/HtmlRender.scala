@@ -8,15 +8,6 @@ import com.histmersion.values.{Confidence, SourceStatus}
 /** What a `[[wikilink]]` resolves to on an HTML page: a stored source or a compiled article. */
 type LinkTarget = SourceRef | ArticleRef
 
-/** A metadata dimension a chip filters the web UI by. `hashKey` is the web UI's URL-hash key, so a chip is a link that
-  * works in the modal, on a standalone page and pasted anywhere.
-  */
-enum ChipField(val hashKey: String):
-  case Topic extends ChipField("topic")
-  case Place extends ChipField("place")
-  case Tag extends ChipField("tag")
-  case Author extends ChipField("author")
-
 /** The HTML atoms of the server-rendered pages — PURE string builders, one shape per thing, so a source reference looks
   * and behaves the same in an article's prose, its "Sources cited" footer, a source's "Cites / Cited by" list and the
   * backlinks.

@@ -2423,8 +2423,3 @@ object MergePlanner:
       .filter(w => w.nonEmpty && !suffix.contains(w))
     val byWord = words.headOption.map(w => s.citekey + w).filterNot(usedHere)
     byWord.getOrElse(Iterator.from(0).map(i => s.citekey + ('b' + i).toChar).find(c => !usedHere(c)).get)
-
-/** Citekey shape for a rename. */
-object Citekeys:
-  private val Shape = "^[a-z][a-z0-9_]*$".r
-  def valid(ck: String): Boolean = Shape.matches(ck)

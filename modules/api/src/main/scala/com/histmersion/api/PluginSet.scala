@@ -10,40 +10,6 @@ import sttp.tapir.Schema
   * plugins directory. First-party plugins are not in it: they are in every binary (§4.2 option B).
   */
 
-/** One plugin a jar provides, as `PluginTool describe` found it on the JVM: its info, what a registration with its
-  * defaults (enabled, nothing else set) contributes, and the access its source fetchers declare (`open`,
-  * `subscription`, `unauthorised`).
-  *
-  * @param error
-  *   why it could not be instantiated or registered with its defaults (the access is then unknown; the plugin may still
-  *   work once configured)
-  */
-final case class PluginDescription(
-    id: String,
-    version: String,
-    spiVersion: Int,
-    provides: List[String] = Nil,
-    access: List[String] = Nil,
-    error: Option[String] = None
-) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object PluginDescription:
-  given Schema[PluginDescription] = summon[KindlingsSchema[PluginDescription]].schema
-
-/** One jar of a plugin set: its file name in the plugins directory, its SHA-256 and the plugins in it. */
-final case class PluginJar(file: String, sha256: String, plugins: List[PluginDescription] = Nil)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema
-object PluginJar:
-  given Schema[PluginJar] = summon[KindlingsSchema[PluginJar]].schema
-
-/** A file a plugin set was linked with besides its jars: the POM beside a plugin jar (`x-1.0.pom`), or a dependency jar
-  * of the plugins directory's `lib/` (`lib/y-2.0.jar`); with its SHA-256.
-  */
-final case class PluginFile(file: String, sha256: String) derives KindlingsCodecAsObject, KindlingsSchema
-object PluginFile:
-  given Schema[PluginFile] = summon[KindlingsSchema[PluginFile]].schema
-
 /** @param digest
   *   SHA-256 over the sorted `<file> <sha256>` lines of the jars (order-independent); the empty set's digest for a
   *   binary linked with first-party plugins only

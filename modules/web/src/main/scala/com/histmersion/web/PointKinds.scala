@@ -6,59 +6,6 @@ import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.values.PlaceKind
-
-/** Findings at one point: one marker, counting them all (a point holds several claims). */
-final case class Spot(lat: Double, lon: Double, items: List[GeoHit])
-
-object Spot:
-  /** Pure: findings grouped by their exact point, in the order they came. */
-  def of(points: Iterable[GeoHit]): List[Spot] =
-    val spots =
-      scala.collection.mutable.LinkedHashMap.empty[(Double, Double), scala.collection.mutable.ListBuffer[GeoHit]]
-    for pt <- points; lat <- pt.lat; lon <- pt.lon do
-      spots.getOrElseUpdate((lat, lon), scala.collection.mutable.ListBuffer.empty) += pt
-    spots.toList.map { case ((lat, lon), items) => Spot(lat, lon, items.toList) }
-
-/** A site from the places feed (`/api/places/geo?kind=site`). */
-final case class SitePoint(
-    id: Option[String],
-    label: String,
-    kind: String,
-    siteType: Option[String],
-    basis: Option[String],
-    lat: Double,
-    lon: Double,
-    period: Option[(Double, Double)],
-    undated: Boolean = false
-):
-  def name: String = if label.nonEmpty then label else id.getOrElse("site")
-  def mid: Option[Double] = period.map((a, b) => (a + b) / 2)
-
-  /** Its type, when it is one the map knows. */
-  def known: Option[SiteTypes.SiteType] = siteType.flatMap(SiteTypes.get)
-
-object SitePoint:
-  private def str(v: js.Dynamic): Option[String] = if js.isUndefined(v) || v == null then None else Some(v.toString)
-
-  /** A GeoJSON point feature of the places feed. */
-  def of(f: js.Dynamic): SitePoint =
-    val p = f.properties
-    val c = f.geometry.coordinates
-    val ps = p.selectDynamic("periodStart")
-    val pe = p.selectDynamic("periodEnd")
-    val period = if js.isUndefined(ps) || js.isUndefined(pe) || ps == null || pe == null then None
-    else Some((ps.asInstanceOf[Double], pe.asInstanceOf[Double]))
-    SitePoint(
-      str(p.id),
-      str(p.label).getOrElse(""),
-      str(p.kind).getOrElse(PlaceKind.Site),
-      str(p.siteType),
-      str(p.basis),
-      c.selectDynamic("1").asInstanceOf[Double],
-      c.selectDynamic("0").asInstanceOf[Double],
-      period
-    )
 
 /** The four kinds of point (docs/map-layers.md): findings, sites, events, pictures — each a descriptor of
   * [[PointLayer]].

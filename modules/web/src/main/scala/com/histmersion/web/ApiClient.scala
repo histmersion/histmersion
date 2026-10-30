@@ -16,25 +16,6 @@ import sttp.tapir.client.sttp4.SttpClientInterpreter
 
 import com.histmersion.api.*
 
-/** A request the server answered with an error status: the status and the server's own message. `unauthorized` is a
-  * write refused by the API-key gate; `conflict` a stale `ifUpdatedAt`.
-  */
-final case class ApiFailure(status: Int, error: ApiError) extends Exception(error.message):
-  def unauthorized: Boolean = status == 401 || status == 403
-  def conflict: Boolean = status == 412
-  def duplicate: Boolean = status == 409
-
-object ApiFailure:
-  /** Pure: what a failed response means, from its status and whatever body could be decoded. */
-  def of(status: Int, decoded: Option[ApiError]): ApiFailure =
-    ApiFailure(
-      status,
-      decoded.getOrElse(ApiError(status match
-        case 401 | 403 => "the server refused the change: an API key is required"
-        case 0         => "the server could not be reached"
-        case s         => s"unexpected response from the server (HTTP $s)"))
-    )
-
 object ApiClient:
 
   private val backend = FetchBackend()
@@ -416,12 +397,3 @@ object ApiClient:
       r <- dom.fetch(url).toFuture
       body <- r.text().toFuture
     yield (r.status, body)
-
-/** The placeholders of a tile URL template ([[ApiClient.tileTemplate]]). Pure. */
-object TilePlaceholder:
-  val Z: Int = 900000001
-  val X: Long = 900000002L
-  val Y: Long = 900000003L
-
-  /** `uri` with the placeholder tile replaced by `{z}/{x}/{y}`. */
-  def fill(uri: String): String = uri.replace(s"/$Z/$X/$Y", "/{z}/{x}/{y}")

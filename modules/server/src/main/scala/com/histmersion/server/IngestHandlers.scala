@@ -9,7 +9,6 @@ import com.histmersion.domain.*
 import com.histmersion.db.{AssetRepo, JobRepo, QueueRepo, SourceRepo}
 
 import java.nio.file.{Files, Path, StandardCopyOption}
-import javax.sql.DataSource
 import scala.jdk.OptionConverters.*
 
 /** The ONE implementation of the ingest surface (plan §1.8) — REST routes, MCP tools and the CLI all reach these,
@@ -555,30 +554,6 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient, afterStore: S
           )
         )
       case _ => Right(())
-
-/** What `/api/health` says about the OCR sidecar (#692). */
-enum ConverterState:
-  case Ok
-
-  /** A conversion is in flight and the probe got no answer: the single worker is busy, not down. */
-  case Busy(jobId: String)
-  case Down(reason: String)
-
-  /** The `converter` line of [[Health]]. */
-  def render: String = this match
-    case Ok           => "ok"
-    case Busy(id)     => s"converter busy: job $id"
-    case Down(reason) => reason
-
-  /** Busy is healthy: the server is doing exactly what it is for. */
-  def healthy: Boolean = this match
-    case Down(_) => false
-    case _       => true
-
-object ConverterState:
-  /** From the raw probe answer (`"ok"` or why not) and the job the converter is working on, if any. */
-  def of(probe: String, busyJob: Option[String]): ConverterState =
-    if probe == "ok" then Ok else busyJob.fold(Down(probe))(Busy(_))
 
 object IngestHandlers:
   /** The stored original of content hash `sha`: `<spoolDir>/<sha>.<ext>`, if it is there. */

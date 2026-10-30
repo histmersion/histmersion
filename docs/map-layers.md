@@ -231,7 +231,7 @@ its knees.
   layer reads (V105: `map_changes`, one insert-only row per writing transaction and group — `places`,
   `events`, `corpus`, `media` — summed, folded by the server); the ETag is that key's, `Cache-Control:
   no-cache`, so a browser revalidates and gets 304 until a write. A restore clears the cache.
-- **Web**: the three layers are `TiledPoints` (`web/TiledLayers.scala`): the map interface's
+- **Web**: the three layers are `TiledPoints` (`web/TiledPoints.scala`): the map interface's
   `PointTiles` (`MapSurface.pointTiles`; MapLibre's vector source with an invisible circle layer —
   MapLibre fetches, caches and decodes the tiles — and `NoMap.Tiles`, which asks for nothing) gives the
   features of the view's tiles at its zoom (`z` on every feature), each once; items become the kinds' own

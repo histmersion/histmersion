@@ -6,10 +6,6 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
-
 /** Backup / restore (plan §1.10) — the PURE half: file naming, the one gate between a client-supplied name and the
   * filesystem, and the JDBC-URL → `pg_dump` arguments translation.
   *
@@ -188,84 +184,3 @@ object Backup:
       val exp = math.min(units.size, (math.log(n.toDouble) / math.log(1000)).toInt)
       val v = n.toDouble / math.pow(1000, exp.toDouble)
       String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1))
-
-/** Where a backup job is. On the wire as its lower-case name (`BackupStatus.state`). */
-enum BackupState:
-  case Running, Done, Failed
-  def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
-
-object BackupState:
-  def parse(s: String): Option[BackupState] = values.find(_.wire == s)
-
-// ── wire DTOs (declared last: Kindlings derivation is order-sensitive at the file level) ────────
-
-/** `POST /api/backup` — one freshly written archive. */
-final case class BackupResult(
-    file: String,
-    bytes: Long,
-    sha256: String,
-    durationMs: Long,
-    /** Older archives deleted afterwards to keep `backups.keep`. */
-    pruned: List[String] = Nil
-) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object BackupResult:
-  given Schema[BackupResult] = summon[KindlingsSchema[BackupResult]].schema
-
-/** One row of `GET /api/backups`, newest first. No checksum here on purpose — hashing every archive on every listing
-  * would read gigabytes; `POST /api/backup` reports the checksum of what it wrote. `createdAt` is when the dump was
-  * taken ([[Backup.takenAt]]).
-  */
-final case class BackupInfo(file: String, bytes: Long, createdAt: String)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema
-object BackupInfo:
-  given Schema[BackupInfo] = summon[KindlingsSchema[BackupInfo]].schema
-
-/** `POST /api/restore`. `force` is required whenever the database still holds sources — a restore is
-  * `pg_restore --clean --if-exists`, i.e. it DROPS what is there.
-  */
-final case class RestoreRequest(file: String, force: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema
-object RestoreRequest:
-  given Schema[RestoreRequest] = summon[KindlingsSchema[RestoreRequest]].schema
-
-/** The outcome of a restore: the schema version Flyway validated afterwards, how many sources the database held before
-  * and after, and any line `pg_restore` complained about (it exits 0 with "errors ignored on restore" when a dump was
-  * taken by a NEWER pg_dump than the server).
-  */
-final case class RestoreResult(
-    file: String,
-    schemaVersion: String,
-    sourcesBefore: Int,
-    sourcesAfter: Int,
-    durationMs: Long,
-    warnings: List[String] = Nil
-) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object RestoreResult:
-  given Schema[RestoreResult] = summon[KindlingsSchema[RestoreResult]].schema
-
-/** `POST /api/backup` and `GET /api/backup/status`: a backup job, which may still be running. `state` is a
-  * [[BackupState]]; `bytes`/`sha256` are set once it is done, `error` once it failed.
-  */
-final case class BackupStatus(
-    file: String,
-    state: String,
-    durationMs: Long,
-    bytes: Option[Long] = None,
-    sha256: Option[String] = None,
-    error: Option[String] = None,
-    pruned: List[String] = Nil
-) derives KindlingsCodecAsObject,
-      KindlingsSchema:
-  def stateOf: Option[BackupState] = BackupState.parse(state)
-  def result: Option[BackupResult] =
-    for b <- bytes; h <- sha256 if stateOf.contains(BackupState.Done) yield BackupResult(file, b, h, durationMs, pruned)
-
-object BackupStatus:
-  given Schema[BackupStatus] = summon[KindlingsSchema[BackupStatus]].schema
-  def running(file: String, elapsedMs: Long): BackupStatus = BackupStatus(file, BackupState.Running.wire, elapsedMs)
-  def done(r: BackupResult): BackupStatus =
-    BackupStatus(r.file, BackupState.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
-  def failed(file: String, elapsedMs: Long, error: String): BackupStatus =
-    BackupStatus(file, BackupState.Failed.wire, elapsedMs, error = Some(error))

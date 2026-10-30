@@ -4,32 +4,8 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.plugin.PluginHttp
 import sttp.client4.*
-import sttp.client4.httpclient.HttpClientSyncBackend
-import sttp.model.Uri
 
-import java.util.Locale
 import scala.concurrent.duration.*
-
-/** A bot-protection CHALLENGE (Cloudflare's "Just a moment…" interstitial and its kin) rather than an answer. Such a
-  * host is treated as having no copy: it is neither retried nor worked around.
-  */
-object Challenge:
-  def isChallenge(code: Int, headers: Map[String, String], body: Array[Byte]): Boolean =
-    val mitigated = headers.exists((k, v) => k.equalsIgnoreCase("cf-mitigated") && v.toLowerCase.contains("challenge"))
-    val page = new String(body.take(4096), "ISO-8859-1").toLowerCase
-    mitigated || isAnubis(body) || ((code == 403 || code == 429 || code == 503) &&
-      (page.contains("<title>just a moment") || page.contains("challenge-platform") ||
-        page.contains("<title>attention required")))
-
-  /** An Anubis page (OAPEN's file server runs one): its proof-of-work challenge or its refusal, whatever the status
-    * (200 by default, 401/403 as configured). Its markers are its own — the challenge's `anubis_challenge` script, its
-    * assets under `/.within.website/x/` — and a file never starts with them, so any status counts; a PDF is never read
-    * as one.
-    */
-  private def isAnubis(body: Array[Byte]): Boolean =
-    val head = new String(body.take(32768), "ISO-8859-1").toLowerCase
-    !head.startsWith("%pdf") &&
-    (head.contains("id=\"anubis_challenge\"") || (head.contains("/.within.website/x/") && head.contains("anubis")))
 
 /** The acquisition client: every request a source fetcher (a plugin's through [[PluginHttp]], or a built-in one) and
   * the metadata lookups make, over one [[HttpTransport]].
@@ -119,48 +95,3 @@ object PolicyHttp:
   /** The transport the acquisition client sends on: `acquire.timeout-seconds`, `acquire.tls`'s trust. */
   def acquisitionTransport(cfg: AppConfig): HttpTransport =
     SttpTransport(cfg.acquire.timeoutSeconds, OutboundTls.configure(cfg.acquire.tls).map(_._1))
-
-/** The acquisition transport: java.net.http through sttp, which follows redirects. `tls` is the trust `acquire.tls`
-  * configured ([[OutboundTls.configure]]); `None` keeps the client's default, the JDK's roots.
-  */
-final class SttpTransport(timeoutSeconds: Int, tls: Option[javax.net.ssl.SSLContext] = None) extends HttpTransport:
-  // HTTP/1.1 on every request: java.net.http negotiates HTTP/2 by ALPN, and some hosts that offer h2
-  // then drop the stream — Europe PMC's www.ebi.ac.uk answered every h2 request with "EOF reached while
-  // reading" while HTTP/1.1 got a 200. One download per request gains nothing from h2's multiplexing.
-  private val backend = tls.fold(HttpClientSyncBackend(customizeRequest = SttpTransport.http11)) { ctx =>
-    // the client sttp would build (no redirects of its own — sttp follows them — and its connect
-    // timeout), with the configured trust
-    HttpClientSyncBackend.usingClient(
-      java.net.http.HttpClient
-        .newBuilder()
-        .followRedirects(java.net.http.HttpClient.Redirect.NEVER)
-        .connectTimeout(java.time.Duration.ofMillis(BackendOptions.Default.connectionTimeout.toMillis))
-        .sslContext(ctx)
-        .build(),
-      customizeRequest = SttpTransport.http11
-    )
-  }
-
-  def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer] =
-    val req = basicRequest
-      .get(Uri.unsafeParse(url))
-      .headers(headers)
-      .readTimeout(timeoutSeconds.seconds)
-      .response(asByteArrayAlways)
-    scala.util
-      .Try(req.send(backend))
-      .toEither
-      .left
-      .map(e => s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
-      .map(resp =>
-        HttpAnswer(
-          resp.code.code,
-          resp.headers.reverse.map(h => h.name.toLowerCase(Locale.ROOT) -> h.value).toMap,
-          resp.body
-        )
-      )
-
-object SttpTransport:
-  /** The same request, pinned to HTTP/1.1 (see the backend above). */
-  val http11: java.net.http.HttpRequest => java.net.http.HttpRequest = r =>
-    java.net.http.HttpRequest.newBuilder(r, (_, _) => true).version(java.net.http.HttpClient.Version.HTTP_1_1).build()

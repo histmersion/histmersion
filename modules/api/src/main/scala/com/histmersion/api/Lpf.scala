@@ -1,0 +1,396 @@
+package com.histmersion.api
+
+import io.circe.{Json, JsonObject}
+import com.histmersion.values.PlaceKind
+
+/** The GAZETTEER (plan §1.6a): the domain model, the wire DTOs, and a **pure** reader/writer for the Linked Places
+  * Format — the World-Historical-Gazetteer interchange JSON — which is a superset of a plain GeoJSON
+  * `FeatureCollection`, so both load through the same code path.
+  *
+  * Nothing here touches a database. `Lpf.parse` turns bytes into [[PlaceInput]] values and `Lpf.render` turns them
+  * back, so `parse(render(xs)) == Right(xs)` — the round-trip the plan asks for. Geometry is carried as the **GeoJSON
+  * text** it arrived as and handed to PostGIS by `ST_GeomFromGeoJSON`; this module never interprets coordinates.
+  */
+
+// ── domain ──────────────────────────────────────────────────────────────────────────────────────
+
+// ── Linked Places Format (and plain GeoJSON) ───────────────────────────────────────────────────
+
+/** Reader/writer for the Linked Places Format (LPF v1.1) and plain GeoJSON `FeatureCollection`s.
+  *
+  * LPF that WHG exports looks like
+  * {{{
+  * { "type": "FeatureCollection", "features": [
+  *   { "@id": "hatti_lba", "type": "Feature",
+  *     "properties": { "title": "Hittite Empire" },
+  *     "when": { "timespans": [ { "start": { "in": "-1400" }, "end": { "in": "-1180" } } ] },
+  *     "names": [ { "toponym": "Hatti", "lang": "hit" } ],
+  *     "types": [ { "label": "kingdom" } ],
+  *     "geometry": { "type": "MultiPolygon", "coordinates": [ … ] },
+  *     "relations": [ { "relationType": "gvp:broaderPartitive", "relationTo": "anatolia",
+  *                      "when": { "timespans": [ { "start": { "in": "-1650" } } ] } } ] } ] }
+  * }}}
+  * A plain GeoJSON feature has none of `@id`/`when`/`names`/`types`/`relations`; the reader then falls back to the
+  * usual property spellings (`title`/`name`/`NAME`/`ADMIN`, `period`/`start`/`end`, `parent`/`part_of`) and to the
+  * `kind` the caller passed in.
+  */
+object Lpf:
+
+  /** Histmersion uses historical reckoning (no year zero: 1 BCE = -1, 2 BCE = -2). ISO 8601 / astronomical year
+    * numbering has a year zero (1 BCE = 0, 2 BCE = -1). These convert between the two for LPF interop.
+    */
+  def toIso(historicalYear: Long): Long = Years.toAstronomical(historicalYear)
+  def fromIso(isoYear: Long): Long = Years.fromAstronomical(isoYear)
+
+  val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
+
+  /** LPF's part-of predicates, plus the plain spellings an ad-hoc GeoJSON uses. */
+  private val PartOfPredicates =
+    Set(
+      "gvp:broaderpartitive",
+      "gvp:broaderpartitiveoverlaps",
+      "gvp:broadermeronymic",
+      "part_of",
+      "partof",
+      "within",
+      "broader"
+    )
+
+  /** Keys the writer emits itself; everything else in `properties` is kept verbatim in [[Place.properties]] so a
+    * parse→render→parse cycle is the identity.
+    */
+  private val OwnKeys = Set("title", "kind", "source")
+
+  // ── time ─────────────────────────────────────────────────────────────────────────────────────
+
+  private val Circa = """^(?:c|ca|circa)\.?\s+""".r
+  // An era word stands alone: not preceded by a letter (`(?:^|[^a-z])`, which CONSUMES that character —
+  // the same test as a look-behind for a find, and a look-behind is what Scala.js cannot compile, #1403)
+  // and not followed by one (a look-ahead, which it can).
+  private val Bce = """(?:^|[^a-z])b\.?\s?c\.?(?:e\.?)?(?![a-z])""".r
+  private val Ce = """(?:^|[^a-z])(?:a\.?\s?d\.?|c\.?\s?e\.?)(?![a-z])""".r
+  private val Digits = """-?\d+""".r
+  private val IsoDate = """^-?\d{1,6}-\d{2}""".r
+
+  /** A signed year (BCE negative, **historical reckoning**) from the spellings LPF and hand-made GeoJSON actually
+    * contain: `"-1400"`, `"1400 BCE"`, `"c. 1500 BC"`, `"1200 CE"`, `"AD 800"`, and ISO-ish `"-0500-01-01"`. An
+    * explicit minus sign wins over an era word.
+    *
+    * Bare years (`"-1400"`, `"1400 BCE"`) are treated as historical reckoning — the practical convention in
+    * WHG/Pleiades data. ISO 8601 dates with month/day (e.g. `"-0500-01-01"`) are converted from astronomical year
+    * numbering via [[fromIso]] (year 0 = 1 BCE).
+    */
+  def parseYear(raw: String): Option[Long] =
+    val t = Circa.replaceFirstIn(raw.trim.toLowerCase, "")
+    if t.isEmpty then None
+    else
+      val isIso = IsoDate.findFirstIn(t).isDefined
+      val era =
+        if Bce.findFirstIn(t).isDefined then -1
+        else if Ce.findFirstIn(t).isDefined then 1
+        else 0
+      Digits.findFirstIn(t).flatMap(_.toLongOption).map { n =>
+        val y = if n < 0 then n else if era < 0 then -n else n
+        if isIso then fromIso(y) else y
+      }
+
+  /** A year from any JSON scalar (LPF mixes `"-1400"` and `-1400`). */
+  private def yearOf(j: Json): Option[Long] =
+    Years.fromJson(j, parseYear)
+
+  /** One end of a timespan: LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`; a bare
+    * scalar is accepted too. `wide` picks the outer bound.
+    */
+  private def bound(j: Json, wide: String, narrow: String): Option[Long] =
+    j.asObject match
+      case None      => yearOf(j)
+      case Some(obj) =>
+        obj("in")
+          .flatMap(yearOf)
+          .orElse(obj(wide).flatMap(yearOf))
+          .orElse(obj(narrow).flatMap(yearOf))
+
+  /** LPF `when` → a [[Span]] of signed years that keeps an OPEN side open (#1403): the widest span across every
+    * timespan, where one timespan without `start` (or `end`) leaves that side of the whole unknown — a name used "from
+    * 1900" is not a name of the one year 1900. Accepts the strict shape (`{"timespans":[{"start":…,"end":…}]}`), the
+    * flat shape (`{"start":…,"end":…}`), and a bare string/number (that one year). `None` when nothing datable is
+    * present.
+    */
+  def parseWhen(j: Json): Option[Span] =
+    def span(o: JsonObject): Option[Span] =
+      val s = o("start").flatMap(bound(_, "earliest", "latest"))
+      val e = o("end").flatMap(bound(_, "latest", "earliest"))
+      (s, e) match
+        case (Some(a), Some(b)) => Some(if a <= b then Span(s, e) else Span(e, s))
+        case (None, None)       => None
+        case _                  => Some(Span(s, e))
+    j.asObject match
+      case None      => yearOf(j).map(y => Span(Some(y), Some(y)))
+      case Some(obj) =>
+        val spans = obj("timespans")
+          .flatMap(_.asArray)
+          .map(_.toList)
+          .getOrElse(Nil)
+          .flatMap(_.asObject)
+          .flatMap(span)
+        (spans ++ span(obj).toList) match
+          case Nil => None
+          case ps  =>
+            Some(
+              Span(
+                if ps.forall(_.from.isDefined) then Some(ps.flatMap(_.from).min) else None,
+                if ps.forall(_.to.isDefined) then Some(ps.flatMap(_.to).max) else None
+              )
+            )
+
+  /** A [[Period]] as the strict LPF `when` the reader accepts back; the `open` side is left out. Years are written in
+    * historical reckoning (the practical convention in WHG/Pleiades data). Use [[toIso]] explicitly when strict ISO
+    * 8601 output is needed.
+    */
+  def renderWhen(p: Period, open: Option[OpenSide] = None): Json =
+    val (s, e) = OpenSide.bounds(Some(p), open)
+    Json.obj(
+      "timespans" -> Json.arr(
+        Json.fromFields(
+          s.map(v => "start" -> Json.obj("in" -> Json.fromString(v.toString))).toList ++
+            e.map(v => "end" -> Json.obj("in" -> Json.fromString(v.toString))).toList
+        )
+      )
+    )
+
+  // ── reading ──────────────────────────────────────────────────────────────────────────────────
+
+  private def str(o: JsonObject, keys: String*): Option[String] =
+    keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)
+
+  private def slug(s: String): String =
+    s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
+
+  /** `[a, b]`, `{"start":a,"end":b}`, `"a,b"` or a single year — the shapes a hand-made GeoJSON uses for
+    * `properties.period`. A pair with one side missing keeps that side open, as [[parseWhen]].
+    */
+  private def propertyPeriod(o: JsonObject): Option[Span] =
+    def fromPair(a: Option[Long], b: Option[Long]): Option[Span] = (a, b) match
+      case (Some(x), Some(y)) => Some(if x <= y then Span(a, b) else Span(b, a))
+      case (None, None)       => None
+      case _                  => Some(Span(a, b))
+    o("period")
+      .flatMap { p =>
+        p.asArray match
+          case Some(v) if v.sizeIs >= 2 => fromPair(yearOf(v(0)), yearOf(v(1)))
+          case Some(v) if v.sizeIs == 1 => yearOf(v(0)).map(y => Span(Some(y), Some(y)))
+          case _                        =>
+            p.asString.filter(_.contains(",")) match
+              case Some(s) =>
+                val parts = s.split(",").map(_.trim).toList
+                fromPair(parts.headOption.flatMap(parseYear), parts.drop(1).headOption.flatMap(parseYear))
+              case None => parseWhen(p)
+      }
+      .orElse(
+        fromPair(
+          o("periodStart")
+            .flatMap(yearOf)
+            .orElse(o("period_start").flatMap(yearOf))
+            .orElse(o("start").flatMap(yearOf))
+            .orElse(o("minDate").flatMap(yearOf)),
+          o("periodEnd")
+            .flatMap(yearOf)
+            .orElse(o("period_end").flatMap(yearOf))
+            .orElse(o("end").flatMap(yearOf))
+            .orElse(o("maxDate").flatMap(yearOf))
+        )
+      )
+
+  private def readNames(f: JsonObject, props: JsonObject, label: String): List[PlaceName] =
+    val declared = f("names").orElse(props("names")).flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { n =>
+      n.asString
+        .map(s => PlaceName(s.trim))
+        .orElse(n.asObject.flatMap { o =>
+          str(o, "toponym", "name", "title", "label").map { t =>
+            val (period, open) =
+              OpenSide.split(o("when").flatMap(parseWhen).orElse(propertyPeriod(o)).getOrElse(Span.always))
+            PlaceName(t, str(o, "lang", "language").getOrElse(""), period, open)
+          }
+        })
+    }
+    // a plain GeoJSON keeps its alternates in a delimited property
+    val alts = str(props, "alt_names", "altNames", "NAME_ALT", "nameAlt").toList
+      .flatMap(_.split("[|;]").toList)
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .map(PlaceName(_))
+    val given_ = (declared ++ alts)
+      .filter(_.name.nonEmpty)
+      .distinctBy(n => (n.name.toLowerCase, n.lang.toLowerCase))
+    // the display label is always a name — unless a declared entry already spells it (with a lang or
+    // a validity of its own), in which case adding a bare duplicate would only be noise.
+    val spelled = given_.map(_.name.toLowerCase).toSet
+    val all = given_ ++ Option(PlaceName(label))
+      .filter(n => n.name.nonEmpty && !spelled.contains(n.name.toLowerCase))
+    all.sortBy(n => (n.name.toLowerCase, n.lang.toLowerCase))
+
+  /** Relation arrays come in two dialects: LPF's `relations: [{relationType, relationTo, when}]` and the plain one this
+    * repo's own hand-traced polygons use, `part_of: [{parent_id, period_start, period_end}]`. A bare string element (or
+    * a bare `parent: "id"` property) is a `part_of` too.
+    */
+  private def readRelations(id: String, f: JsonObject, props: JsonObject): List[PlaceRelation] =
+    val arrays = List(f("relations"), props("relations"), props("part_of"), props("partOf"), props("parents")).flatten
+      .flatMap(_.asArray)
+      .flatMap(_.toList)
+    val declared = arrays.flatMap { j =>
+      j.asString
+        .map(p => PlaceRelation(id, p.trim, PlaceRelation.PartOf, None))
+        .orElse(j.asObject.flatMap { o =>
+          val pred = str(o, "relationType", "relation_type", "kind", "type").getOrElse("gvp:broaderPartitive")
+          val kind = if PartOfPredicates.contains(pred.toLowerCase) then PlaceRelation.PartOf else pred
+          str(o, "relationTo", "relation_to", "parent", "parentId", "parent_id", "target")
+            .map { p =>
+              val (period, open) =
+                OpenSide.split(o("when").flatMap(parseWhen).orElse(propertyPeriod(o)).getOrElse(Span.always))
+              PlaceRelation(id, p, kind, period, open)
+            }
+        })
+    }
+    val flat = str(props, "parent", "part_of", "partOf", "parentId")
+      .map(p => PlaceRelation(id, p, PlaceRelation.PartOf, None))
+    (declared ++ flat)
+      .filter(_.parentId.nonEmpty)
+      .distinctBy(r => (r.parentId, r.kind))
+      .sortBy(r => (r.parentId, r.kind))
+
+  /** One feature → one [[PlaceInput]]. `defaultKind` is what `histmersion places import --kind` passes; `ordinal` only
+    * matters for a feature with no id at all.
+    */
+  def readFeature(j: Json, defaultKind: String, ordinal: Int): Either[String, PlaceInput] =
+    j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
+      val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
+      val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")
+        .orElse(str(f, "title", "label"))
+        .orElse(
+          f("names")
+            .flatMap(_.asArray)
+            .flatMap(_.headOption)
+            .flatMap(n => n.asString.orElse(n.asObject.flatMap(str(_, "toponym", "name"))))
+        )
+        .getOrElse("")
+      val id = str(f, "@id", "id")
+        .orElse(str(props, "@id", "id", "pid"))
+        .getOrElse(if label.nonEmpty then slug(label) else s"feature_$ordinal")
+      if id.isEmpty then Left(s"feature #$ordinal has no id and no title")
+      else
+        val kind = str(props, "kind")
+          .flatMap(PlaceKind.parse)
+          .orElse(
+            f("types")
+              .orElse(props("types"))
+              .flatMap(_.asArray)
+              .map(_.toList)
+              .getOrElse(Nil)
+              .flatMap(t => t.asString.orElse(t.asObject.flatMap(str(_, "label", "identifier", "sourceLabel"))))
+              .flatMap(PlaceKind.parse)
+              .headOption
+          )
+          .orElse(str(props, "featureType", "feature_type", "TYPE").flatMap(PlaceKind.parse))
+          .getOrElse(defaultKind)
+        val (period, open) = OpenSide.split(
+          f("when")
+            .flatMap(parseWhen)
+            .orElse(props("when").flatMap(parseWhen))
+            .orElse(propertyPeriod(props))
+            .getOrElse(Span.always)
+        )
+        val leftover = props.filterKeys(k => !OwnKeys.contains(k))
+        Right(
+          PlaceInput(
+            Place(
+              id = id,
+              label = if label.nonEmpty then label else id,
+              kind = kind,
+              geometry = f("geometry").filterNot(_.isNull).map(_.noSpaces),
+              period = period,
+              source = str(props, "source", "citation").orElse(str(f, "source")),
+              properties = Some(leftover).filter(_.nonEmpty).map(Json.fromJsonObject(_).noSpaces),
+              open = open
+            ),
+            readNames(f, props, if label.nonEmpty then label else id),
+            readRelations(id, f, props)
+          )
+        )
+    }
+
+  /** Parse an LPF document, a plain GeoJSON `FeatureCollection`, a bare array of features, or a single feature. Returns
+    * the first structural error rather than a partial list — an import that silently drops half its rows is worse than
+    * one that fails.
+    */
+  def parse(json: String, defaultKind: String = PlaceKind.Region): Either[String, List[PlaceInput]] =
+    io.circe.parser.parse(json).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
+      val found: Option[List[Json]] =
+        doc.asArray
+          .map(_.toList)
+          .orElse(doc.asObject.flatMap(_("features")).flatMap(_.asArray).map(_.toList))
+          .orElse(
+            doc.asObject
+              .filter(o => o.contains("geometry") || o.contains("properties"))
+              .map(o => List(Json.fromJsonObject(o)))
+          )
+      val features: Either[String, List[Json]] =
+        found.toRight("not a FeatureCollection: no `features` array and not a feature")
+      features.flatMap { fs =>
+        val parsed = fs.zipWithIndex.map((f, i) => readFeature(f, defaultKind, i))
+        parsed.collectFirst { case Left(e) => e } match
+          case Some(e) => Left(e)
+          case None    => Right(parsed.collect { case Right(p) => p })
+      }
+    }
+
+  // ── writing ──────────────────────────────────────────────────────────────────────────────────
+
+  private def renderFeature(in: PlaceInput): Json =
+    val leftover = in.place.properties
+      .flatMap(io.circe.parser.parse(_).toOption)
+      .flatMap(_.asObject)
+      .getOrElse(JsonObject.empty)
+    val props = JsonObject.fromIterable(
+      List("title" -> Json.fromString(in.place.label), "kind" -> Json.fromString(in.place.kind)) ++
+        in.place.source.map(s => "source" -> Json.fromString(s)).toList ++
+        leftover.toList
+    )
+    val fields = List.newBuilder[(String, Json)]
+    fields += "@id" -> Json.fromString(in.place.id)
+    fields += "type" -> Json.fromString("Feature")
+    fields += "properties" -> Json.fromJsonObject(props)
+    fields += "types" -> Json.arr(Json.obj("label" -> Json.fromString(in.place.kind)))
+    in.place.period.foreach(p => fields += "when" -> renderWhen(p, in.place.open))
+    if in.names.nonEmpty then
+      fields += "names" -> Json.arr(in.names.map { n =>
+        Json.fromFields(
+          List("toponym" -> Json.fromString(n.name)) ++
+            (if n.lang.isEmpty then Nil else List("lang" -> Json.fromString(n.lang))) ++
+            n.period.map(p => "when" -> renderWhen(p, n.open)).toList
+        )
+      }*)
+    if in.relations.nonEmpty then
+      fields += "relations" -> Json.arr(in.relations.map { r =>
+        Json.fromFields(
+          List(
+            "relationType" -> Json.fromString(if r.kind == PlaceRelation.PartOf then "gvp:broaderPartitive"
+            else r.kind),
+            "relationTo" -> Json.fromString(r.parentId)
+          ) ++
+            r.period.map(p => "when" -> renderWhen(p, r.open)).toList
+        )
+      }*)
+    fields += "geometry" -> in.place.geometry
+      .flatMap(io.circe.parser.parse(_).toOption)
+      .getOrElse(Json.Null)
+    Json.fromFields(fields.result())
+
+  /** Serialise back to LPF. `parse(render(xs)) == Right(xs)` for anything `parse` produced. */
+  def render(items: List[PlaceInput]): String =
+    Json
+      .obj(
+        "type" -> Json.fromString("FeatureCollection"),
+        "@context" -> Json.fromString(Context),
+        "features" -> Json.arr(items.map(renderFeature)*)
+      )
+      .spaces2

@@ -53,22 +53,6 @@ final private[db] case class CandidateRow(
     reasons: List[String]
 ) derives DbCodec
 
-final case class LeadRow(
-    id: String,
-    label: String,
-    kind: String,
-    notBefore: Option[Long],
-    beginBy: Option[Long],
-    endFrom: Option[Long],
-    notAfter: Option[Long],
-    tier: String,
-    vei: Option[Int],
-    magnitude: Option[Double],
-    findingsNear: Int,
-    proposed: Int,
-    attesting: Int
-) derives DbCodec
-
 /** Events from catalogues (#1449): what an import merges with and writes, the parts it has read, the proposed links to
   * the corpus and the facts the leads are computed from.
   */

@@ -21,63 +21,6 @@ import sttp.shared.Identity
 
 import scala.concurrent.duration.*
 
-/** One LLM step's request, provider-neutral: a system prompt, ONE user message (untrusted data goes here, delimited,
-  * never into the system prompt), the tools the step is allowed (its allowlist — sttp-ai's loop answers "Tool not
-  * found" for anything else), the typed answer, and the loop limits. `interceptors` see every LLM and tool call
-  * (tracing, the run's budget).
-  */
-final case class LlmCall[Out](
-    system: String,
-    user: String,
-    tools: List[AgentTool[Identity, ?]],
-    schema: ResponseSchema[Out],
-    maxIterations: Int,
-    maxTokens: Int,
-    interceptors: List[AgentInterceptor[Identity]] = Nil,
-    /** The canonical definition this call runs as: a CLI runtime launches it by name (the generated agent carries the
-      * same prompt, rendered for that runtime), and a run token is bound to it.
-      */
-    agent: Option[AgentDef] = None,
-    /** The run and step the call belongs to (None: a probe outside any run). */
-    scope: Option[RunScope] = None
-)
-
-/** Which run and step an LLM call belongs to — what a run token is bound to. */
-final case class RunScope(run: String, step: Int)
-
-/** The model's PLAN said no (the `claude-code` CLI's "usage limit reached"): not a broken provider but an exhausted one
-  * — the engine skips the model until `until` (or `limit-cooldown-minutes`) and tries the chain's next one.
-  */
-final class ModelLimitReached(val model: ModelRef, val until: Option[java.time.Instant], message: String)
-    extends RuntimeException(message)
-
-/** The input of a step's FIRST model call — input + cache read + cache write tokens: the fixed part every turn re-sends
-  * (the system prompt, the tool definitions) plus the step's own prompt. Measured per step attempt so a change to that
-  * fixed part shows (`agent show`: "first call N tok").
-  *
-  * An HTTP provider's tool loop passes [[aroundLlmCall]] once per model call, so the first response's usage is the
-  * first call's. A command-line provider runs its whole loop as ONE intercepted call whose usage is the whole loop's:
-  * it [[FirstCallProbe.report]]s what its own output says (None when it cannot tell) before that call returns, and the
-  * total is never taken for the first call.
-  */
-final private[agents] class FirstCallProbe extends AgentInterceptor[Identity]:
-  // set once per step attempt: by the first response, or by a CLI client's report (which wins)
-  private val state = java.util.concurrent.atomic.AtomicReference[Option[Option[Long]]](None)
-
-  def tokens: Option[Long] = state.get().flatten
-
-  def report(tokens: Option[Long]): Unit = state.set(Some(tokens))
-
-  override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
-    val r = next
-    val _ = state.compareAndSet(None, Some(r.usage.map(_.inputTokens.value).filter(_ > 0)))
-    r
-
-private[agents] object FirstCallProbe:
-  /** A command-line client's reading of its first model call, to every probe among `interceptors`. */
-  def report(interceptors: List[AgentInterceptor[Identity]], tokens: Option[Long]): Unit =
-    interceptors.foreach { case p: FirstCallProbe => p.report(tokens); case _ => () }
-
 /** A configured model, ready to run [[LlmCall]]s. The engine never sees a provider type: the three sttp-ai builders are
   * hidden behind [[run]], so a pinned-but-pre-1.0 library touches one file.
   */

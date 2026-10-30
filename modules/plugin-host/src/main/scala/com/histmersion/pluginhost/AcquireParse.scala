@@ -5,36 +5,6 @@ import com.histmersion.api.given
 
 import io.circe.{ACursor, Json}
 
-/** PURE parsers for the JSON the acquisition upstreams return (OpenAlex, Crossref, Unpaywall, CORE, Semantic Scholar,
-  * archive.org, Wikipedia).
-  *
-  * Keeping them here — separate from the HTTP clients — is what makes the whole toolset testable from fixtures: a test
-  * feeds real captured JSON (`src/test/resources/acquire/`) straight into these functions with no network involved.
-  * Everything is total: a missing or unexpected field yields `None`/`Nil`, never an exception, because upstreams do
-  * change shape.
-  */
-/** Whether a free copy of a work exists, as an OA index (Unpaywall) reports it. */
-final case class OaAccess(isOa: Boolean, status: Option[String], url: Option[String])
-
-/** What Europe PMC's search knows about one DOI (#1523): the PMC copy, if any, whether it is in the open-access subset,
-  * and the PDF links it lists as free to read (`OA` open access, `F` free — an author manuscript); `S` (subscription)
-  * and `R` (registration) links are never taken.
-  */
-final case class EuropePmcHit(pmcid: Option[String], isOpenAccess: Boolean, pdfUrls: List[String])
-
-/** One object of NCBI's PMC Article Datasets bucket, by key, with the MD5 the metadata records. */
-final case class PmcObject(key: String, md5: Option[String])
-
-/** A PMC Article Datasets metadata record: which files NCBI publishes for one article version. */
-final case class PmcRecord(
-    pmcid: String,
-    openAccess: Boolean,
-    manuscript: Boolean,
-    license: Option[String],
-    pdf: Option[PmcObject],
-    xml: Option[PmcObject]
-)
-
 object AcquireParse:
 
   // ── small cursor helpers ────────────────────────────────────────────────────────────────────

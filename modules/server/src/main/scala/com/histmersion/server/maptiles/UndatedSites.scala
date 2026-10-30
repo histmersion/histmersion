@@ -2,16 +2,13 @@ package com.histmersion.server.maptiles
 
 import com.histmersion.db.UndatedSiteRepo
 import com.histmersion.domain.*
-import com.histmersion.domain.maptiles.{GridCell, UndatedBuild}
+import com.histmersion.domain.maptiles.GridCell
 
 import com.augustnagro.magnum.{connect, transact}
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import javax.sql.DataSource
 import scala.annotation.tailrec
-
-/** One site of no known date, as the map draws it: its id, point and type. */
-final case class UndatedSite(id: String, lat: Double, lon: Double, siteType: Option[String])
 
 /** The sites with no known date in a map tile: counted by the squares of its grid, or listed one by one. */
 trait UndatedSites:

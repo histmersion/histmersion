@@ -49,7 +49,7 @@ Because `api` defines each endpoint once and `server` implements it once in `Han
 route, the MCP tool and the CLI command are the *same* operation with the *same* Markdown output.
 They agree by construction, not by discipline.
 
-Adding an operation therefore touches, in order: `api/Dto.scala` (input and output types),
+Adding an operation therefore touches, in order: `api/<Type>.scala` (input and output types, one per file),
 `api/Api.scala` (the endpoint, added to `Api.all`), `api/Markdown.scala` (how it renders), the
 repo in `db` if it needs the database, `server/Handlers.scala` (the one implementation),
 `server/HttpApi.scala` **and** `server/McpTools.scala` (both wired), then `cli/Client.scala` and

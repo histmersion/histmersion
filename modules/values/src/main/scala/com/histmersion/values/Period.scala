@@ -9,9 +9,3 @@ object Period:
     Either.cond(start.value <= end.value, new Period(start, end), PeriodError.EndsBeforeStart(start, end))
 
   def point(year: Year): Period = new Period(year, year)
-
-enum PeriodError:
-  case EndsBeforeStart(start: Year, end: Year)
-
-  def message: String = this match
-    case EndsBeforeStart(s, e) => s"the period ends (${e.value}) before it starts (${s.value})"

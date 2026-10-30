@@ -1,24 +1,10 @@
 package com.histmersion.config.edit
 
-import org.ekrich.config.{Config, ConfigException, ConfigFactory, ConfigObject, ConfigOrigin, ConfigValue}
+import org.ekrich.config.{Config, ConfigException, ConfigFactory, ConfigObject, ConfigOrigin}
 import org.ekrich.config.parser.ConfigDocumentFactory
 
 import scala.annotation.tailrec
 import scala.util.Try
-
-/** The file after a set of changes: its new text, the keys that changed and the ones that already said so. */
-final case class EditedText(text: String, changed: List[SettingKey], unchanged: List[SettingKey])
-
-/** Where a value of the config file, as read with its includes, was written: in the file itself, or in a file it
-  * includes.
-  */
-enum Written:
-  case Nowhere
-  case Here(value: ConfigValue)
-  case Elsewhere(file: String)
-
-  /** Behind a `${…}` substitution, `+=`, or an object merged with one. */
-  case Substituted(at: SettingKey)
 
 /** Changes to the config file's TEXT that keep everything else as it is: its comments, its order, its layout, its
   * includes and its unknown keys (sconfig's `ConfigDocument`, which edits the parsed text, not a rendering of the

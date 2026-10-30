@@ -1,0 +1,23 @@
+package com.histmersion.api
+
+import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import sttp.tapir.Schema
+import io.circe.Codec
+
+final case class GoalPut(
+    title: String,
+    status: String = "planned",
+    notes: Option[String] = None,
+    tags: List[String] = Nil,
+    regions: List[String] = Nil,
+    periodStart: Option[Long] = None,
+    periodEnd: Option[Long] = None,
+    parentSlug: Option[String] = None
+) derives KindlingsSchema
+
+object GoalPut:
+  given Schema[GoalPut] = summon[KindlingsSchema[GoalPut]].schema
+
+  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
+  given Codec.AsObject[GoalPut] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPut])

@@ -1,7 +1,6 @@
 package com.histmersion.api
 
 import com.histmersion.values.PlaceKind
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 
 /** What a SITE is (#1449): a settlement, a fortification, a sanctuary, a burial… — a small set of TYPES the map draws
   * as icons inside the site's dot, so a reader sees the kind of place before hovering it. Each type comes from what the
@@ -387,37 +386,3 @@ object SiteTypes:
         .orElse(fcode.flatMap(geonames))
         .orElse(wikidataOwn(p31))
         .orElse(wikidataClass.flatMap(c => wikidataClasses.get(c.trim)))
-
-/** `POST /api/site-types/refine`: `limit` sites at most (none = every one not asked yet), `refresh` asks again about
-  * those asked before, `dryRun` only counts.
-  */
-final case class SiteTypesRequest(dryRun: Boolean = false, limit: Option[Int] = None, refresh: Boolean = false)
-    derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
-      KindlingsSchema
-object SiteTypesRequest:
-  given sttp.tapir.Schema[SiteTypesRequest] = summon[KindlingsSchema[SiteTypesRequest]].schema
-
-/** What a refinement did: sites asked about, typed (per type), left with the class the import kept. */
-final case class SiteTypesReport(
-    dryRun: Boolean,
-    pending: Int = 0,
-    asked: Int = 0,
-    typed: List[EventCount] = Nil,
-    untyped: Int = 0,
-    requests: Int = 0,
-    failed: List[String] = Nil
-) derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
-      KindlingsSchema
-object SiteTypesReport:
-  given sttp.tapir.Schema[SiteTypesReport] = summon[KindlingsSchema[SiteTypesReport]].schema
-  def summary(r: SiteTypesReport): String =
-    if r.dryRun then s"${r.pending} Wikidata site(s) on the map would be asked about"
-    else
-      (List(
-        s"${r.asked} site(s) asked",
-        s"typed: ${if r.typed.isEmpty then "none" else r.typed.map(c => s"${c.key} ${c.n}").mkString(", ")}",
-        s"${r.untyped} kept the import's class",
-        s"${r.pending} left",
-        s"${r.requests} request(s)"
-      ) ++
-        Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}")).mkString(" · ")

@@ -8,25 +8,6 @@ import java.nio.file.{Files, Path, StandardOpenOption}
 import java.nio.{ByteBuffer, ByteOrder}
 import scala.util.Using
 
-/** One GEBCO GeoTIFF the region needs: where it is, its grid, the part of it the region covers and the range requests
-  * that read that part.
-  */
-final case class GebcoPart(name: String, url: String, grid: GeoTiffGrid, window: GridWindow, runs: List[RowRun]):
-  def bytes: Long = runs.map(_.length).sum
-  def file(work: Path, run: RowRun): Path = work.resolve(s"gebco-$name-${run.firstRow}.bin")
-
-/** What a GEBCO fetch of a region reads and writes: the GeoTIFF parts, and the tiles (z, x, y) of zooms 0…`maxZoom`
-  * over the region — `edge` are those reaching past it, whose outside is taken from ETOPO1's tile of the same place.
-  */
-final case class GebcoPlan(
-    bbox: BBox,
-    maxZoom: Int,
-    parts: List[GebcoPart],
-    tiles: Vector[(Long, (Int, Long, Long))],
-    edge: Set[(Int, Long, Long)]
-):
-  def readBytes: Long = parts.map(_.bytes).sum
-
 /** The sea floor from the GEBCO grid (15 arc-seconds, ~460 m; public domain), made into Terrarium tiles here: GEBCO
   * publishes the grid as eight 90° GeoTIFFs of uncompressed rows, so the rows a region needs are read by range, kept
   * beside the archive until it is written (an interrupted fetch resumes), and sampled into the tiles of zooms

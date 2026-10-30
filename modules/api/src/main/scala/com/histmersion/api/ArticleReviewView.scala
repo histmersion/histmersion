@@ -2,99 +2,7 @@ package com.histmersion.api
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
-import com.histmersion.values.{GoalStatus, WireEnumValues}
-
-/** Where an article stands with the `review-article` panel (rules reviewer, cold reader, skeptic and the mechanical
-  * checks), as one word: derived by the server from the review manager's item for the article and the article's review
-  * ledger (`domain.ArticleReviewStatus`).
-  */
-enum ReviewState(val wire: String, val meaning: String):
-  case Unreviewed extends ReviewState("unreviewed", "no review of this article is recorded and none is queued")
-  case Queued extends ReviewState("queued", "waiting for the review panel to take it up")
-  case InReview extends ReviewState("in-review", "the review panel is working on it now")
-  case Passed extends ReviewState("passed", "reviewed: no MAJOR finding is open")
-  case MajorsOpen extends ReviewState("majors-open", "reviewed: MAJOR findings are still open")
-  case Stopped extends ReviewState("stopped", "the review manager gave up on it; a person decides what happens next")
-
-object ReviewState:
-  def parse(s: String): Option[ReviewState] = values.find(_.wire == s.trim.toLowerCase)
-  given WireEnumValues[ReviewState]:
-    def all: Array[ReviewState] = ReviewState.values
-    def wire(e: ReviewState): String = e.wire
-    def fromWire(s: String): Option[ReviewState] = parse(s)
-  given Encoder[ReviewState] = WireEnum.encoder
-  given Decoder[ReviewState] = WireEnum.decoder
-  given Schema[ReviewState] = WireEnum.schema
-
-/** An article's review state as a badge: the state, its short `label` (`in review · round 2`, `3 majors open`) and the
-  * `detail` sentence its tooltip shows. The counts are of the review ledger's findings; `round` is the pass of the run
-  * that is going on now.
-  */
-final case class ReviewBadge(
-    state: ReviewState,
-    label: String,
-    detail: String,
-    openMajors: Int = 0,
-    openMinors: Int = 0,
-    findings: Int = 0,
-    runs: Int = 0,
-    round: Option[Int] = None
-) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ReviewBadge:
-  given Schema[ReviewBadge] = summon[KindlingsSchema[ReviewBadge]].schema
-
-/** One finding of the review ledger, where it was raised and what became of it: `outcome` is the ledger's status
-  * (`open`, `fixed`, `rejected`, `wont-fix`, `set-aside`); `note` the closure's evidence (the record's sentence of a
-  * rejection, the reason a minor one was declined).
-  */
-final case class ReviewFinding(
-    id: String,
-    reviewer: String,
-    severity: String,
-    kind: String,
-    where: String,
-    problem: String,
-    fix: String,
-    quote: String,
-    outcome: String,
-    note: String = "",
-    closedBy: Option[String] = None,
-    closedRound: Option[Int] = None,
-    closedRunNumber: Option[Int] = None,
-    reopened: Int = 0,
-    /** Raised by the final pass of its run: the next run's work. */
-    deferred: Boolean = false
-) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ReviewFinding:
-  given Schema[ReviewFinding] = summon[KindlingsSchema[ReviewFinding]].schema
-
-/** The findings first raised in one pass (`round`) of one review run; `runNumber` counts the runs of this article from
-  * 1, `startedAt` is when the run began (UTC, when the run is still recorded).
-  */
-final case class ReviewRound(
-    run: String,
-    runNumber: Int,
-    round: Int,
-    startedAt: Option[String],
-    findings: List[ReviewFinding]
-) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object ReviewRound:
-  given Schema[ReviewRound] = summon[KindlingsSchema[ReviewRound]].schema
-
-/** A research goal that links the article, with the goal's stage. */
-final case class ReviewGoal(slug: String, title: String, status: String) derives KindlingsCodecAsObject, KindlingsSchema
-object ReviewGoal:
-  given Schema[ReviewGoal] = summon[KindlingsSchema[ReviewGoal]].schema
-
-/** An approval about the article that waits for a person (an `article-filter`, an `article-publish`). */
-final case class ReviewApproval(id: Long, kind: String) derives KindlingsCodecAsObject, KindlingsSchema
-object ReviewApproval:
-  given Schema[ReviewApproval] = summon[KindlingsSchema[ReviewApproval]].schema
 
 /** `GET /api/articles/{slug}/review` — the article's review state, the review manager's last word on it (`outcome`, at
   * `updatedAt`), every finding the panel raised in time order, the research goals that link it and the approvals about
@@ -160,17 +68,3 @@ object ArticleReviewView:
           }
           .mkString("\n\n")
     head + goals + approvals + history
-
-/** What each research-goal stage means, in the order a goal moves through them: the goals window's legend and the
-  * tooltip of every goal-stage badge, in the web page and on the server's pages.
-  */
-object GoalStages:
-  val all: List[(String, String)] = List(
-    GoalStatus.Planned -> "created; nothing works on it yet",
-    GoalStatus.Seeding -> "finding and reading sources, writing its articles",
-    GoalStatus.Compiled -> "its articles are written; not all have passed review yet",
-    GoalStatus.Reviewed -> "every article (and sub-goal) passed the review panel",
-    GoalStatus.Done -> "finished: only you set this, the autopilot never does"
-  )
-
-  def meaning(status: String): Option[String] = all.collectFirst { case (s, m) if s == status => m }

@@ -1,8 +1,8 @@
 package com.histmersion.plugin.testkit
 
-import com.histmersion.plugin.testkit.internal.{ProjectPaths, RecordedExchange}
+import com.histmersion.plugin.testkit.internal.ProjectPaths
 
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 
 /** Where a [[PluginHarness]]'s requests go. Whatever the mode, every request passes through the server's own HTTP
   * policy first — its User-Agent, its timeouts and TLS trust, `Retry-After`, bot challenges ending the request — so a
@@ -86,32 +86,3 @@ object HttpMode:
           s"no recordings in $dir: set $LiveVariable=1 to run against the real site " +
             s"($ModeVariable=record to keep its answers for an offline replay)"
         )
-
-/** A canned answer of [[HttpMode.Stub]]. */
-final case class StubAnswer(status: Int, body: Array[Byte], headers: Map[String, String] = Map.empty)
-
-object StubAnswer:
-  /** A 200 with this body. */
-  def ok(body: Array[Byte], contentType: String = "application/octet-stream"): StubAnswer =
-    StubAnswer(200, body, Map("content-type" -> contentType))
-
-  /** A 200 with this text, UTF-8. */
-  def text(body: String, contentType: String = "text/plain; charset=utf-8"): StubAnswer =
-    ok(body.getBytes(java.nio.charset.StandardCharsets.UTF_8), contentType)
-
-/** A request a [[HttpMode.Replay]] had no recording of: the test fails with it, naming the URLs. */
-final class UnrecordedRequest(urls: List[String], dir: Path)
-    extends AssertionError(
-      s"no recording in $dir of: ${urls.distinct.mkString(", ")} — record the case again " +
-        s"(${HttpMode.ModeVariable}=record), or the plugin now asks for something it did not ask for before"
-    )
-
-/** Paths of a test's recordings. */
-object Recordings:
-  /** Whether `dir` holds at least one recorded exchange. */
-  def exist(dir: Path): Boolean =
-    Files.isDirectory(dir) && {
-      val files = Files.list(dir)
-      try files.anyMatch(_.getFileName.toString.endsWith(RecordedExchange.Suffix))
-      finally files.close()
-    }
