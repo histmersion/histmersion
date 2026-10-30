@@ -89,6 +89,7 @@ object Router:
     case Route.Research(s) => if s == ResearchSection.Overview then "Research" else s.label
     case Route.Activity(t) => t.label
     case Route.Settings(s) => s.label
+    case Route.Setup       => "Set up Histmersion"
     case Route.Goal(slug)  => s"Goal · ${com.histmersion.api.Wording.humanize(slug)}"
     case Route.Run(_)      => "Agent run"
     case Route.Manager(id) => com.histmersion.api.Wording.manager(id)

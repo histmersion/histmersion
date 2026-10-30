@@ -316,7 +316,10 @@ object MapView:
         // without WebGL 2 it is not drawn at all, and its place says why (NoMapSurface)
         val surface = Engines.surface(ctx.thisNode.ref, ui.tilesMaxZoom.toDouble, caps => Option.when(caps.software)(1.0))
         TheMap.install(surface)
-        surface.setView(LatLon(37.0, 30.0), 5)
+        val (startAt, startZoom) = com.histmersion.web.map.MapStart.initial(ui.mapStart,
+          Store.Browser.get(com.histmersion.web.map.MapStart.StorageKey))
+        surface.setView(startAt, startZoom)
+        val _ = surface.on(MapEventKind.MoveEnd)(_ => com.histmersion.web.map.MapStart.remember(ui.mapStart, surface.center, surface.zoom))
         PlaceHover.shapes("polities", PlaceHover.Places(polityPlaces.get, spanMid))
         addLegend(surface)
         PlaceHover.install(surface)

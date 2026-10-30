@@ -29,6 +29,7 @@ object Pages:
     case Route.Explore                => div()
     case Route.Library(s)             => libraryPage(ui, s)
     case Route.Settings(s)            => layout("Settings sections", settingsSide(s), Some(s.label), settings(ui, s))
+    case Route.Setup                  => com.histmersion.web.setup.SetupPage.element(ui)
     case Route.Place(id)              => single(placePage(id))
     case Route.Event(id)              => single(eventPage(id))
     case Route.Source(_) | Route.Article(_) => single(p(cls := "muted", "Loading…"))
@@ -185,13 +186,12 @@ object Pages:
   // ── Settings ────────────────────────────────────────────────────────────────────────────────────
 
   private def settingsSide(on: SettingsSection): List[Modifier[HtmlElement]] =
-    SettingsSection.values.toList.map(s => sideLink(Route.Settings(s), s.label, s == on))
+    val (common, rare) = SettingsSection.values.toList.partition(!_.rare)
+    common.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++ List(group("Rarely needed")) ++
+      rare.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++
+      List(RouteLink(Route.Setup, cls := "side-link setup-again", span(cls := "side-label", "Run the setup again")))
 
-  private def settings(ui: UiConfig, s: SettingsSection): HtmlElement = s match
-    case SettingsSection.Data  => div(cls := "tool-pane", MapRegionsView.panel)
-    case SettingsSection.Keys  => Auth.keyPane
-    case SettingsSection.Credits => CreditsView.pane
-    case SettingsSection.About => AboutView.pane
+  private def settings(ui: UiConfig, s: SettingsSection): HtmlElement = com.histmersion.web.settings.SettingsPages.page(ui, s)
 
   // ── places and events ───────────────────────────────────────────────────────────────────────────
 

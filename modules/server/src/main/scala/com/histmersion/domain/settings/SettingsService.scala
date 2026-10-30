@@ -13,7 +13,7 @@ trait SettingsService:
   def schema: ConfigSchema
 
   /** The settings now; `prefix` keeps those under it (`acquire`). */
-  def read(prefix: Option[SettingKey]): Either[SettingError, SettingsSnapshot]
+  def read(prefix: Option[SettingKey], extra: List[SettingKey] = Nil): Either[SettingError, SettingsSnapshot]
 
   /** Change the file (comments, order, includes and anything written by hand kept), against `expected`. */
   def write(edits: List[SettingEdit], expected: Option[FileVersion], literalConsent: Boolean): Either[SettingError, WriteOutcome]
@@ -32,10 +32,11 @@ object SettingsService:
 
   /** The snapshot of a file read as `state`, its settings loaded into `loaded` (or why they would not load). */
   private[settings] def snapshot(schema: ConfigSchema, state: ConfigFileState, loaded: Either[String, LoadedConfig],
-      env: Config, prefix: Option[SettingKey], completed: Boolean, file: Option[Path]): SettingsSnapshot =
+      env: Config, prefix: Option[SettingKey], completed: Boolean, file: Option[Path],
+      extra: List[SettingKey]): SettingsSnapshot =
     val merged = loaded.fold(_ => AppConfig.loadWithUserText(env, "").fold(_ => ConfigFactory.empty, _.merged), _.merged)
     val problems = loaded.fold(List(_), l => l.file.warnings)
-    SettingsSnapshot(file, state.text.isDefined, state.version, SettingsReader.read(schema, state, merged, env, prefix),
+    SettingsSnapshot(file, state.text.isDefined, state.version, SettingsReader.read(schema, state, merged, env, prefix, extra),
       problems, setupDue = !completed && !ConfigSchema.setsAnything(state.parsed))
 
   private final class Implementation(loaded: () => LoadedConfig, val schema: ConfigSchema) extends SettingsService:
@@ -43,11 +44,11 @@ object SettingsService:
       val l = loaded()
       l.file.path.map(p => ConfigFileWriter(p, l.env, schema))
 
-    def read(prefix: Option[SettingKey]): Either[SettingError, SettingsSnapshot] =
+    def read(prefix: Option[SettingKey], extra: List[SettingKey]): Either[SettingError, SettingsSnapshot] =
       val l = loaded()
       writer.toRight(noFile).flatMap(w => w.read().map { state =>
         val now = AppConfig.loadWithUserFile(l.env, Some(w.path))
-        snapshot(schema, state, now, l.env, prefix, now.fold(_ => l.config.setup.completed, _.config.setup.completed), Some(w.path))
+        snapshot(schema, state, now, l.env, prefix, now.fold(_ => l.config.setup.completed, _.config.setup.completed), Some(w.path), extra)
       })
 
     def write(edits: List[SettingEdit], expected: Option[FileVersion], literalConsent: Boolean): Either[SettingError, WriteOutcome] =
@@ -77,10 +78,10 @@ object SettingsService:
 
     private def here(o: org.ekrich.config.ConfigOrigin): Boolean = o.description.startsWith(path.toString)
 
-    def read(prefix: Option[SettingKey]): Either[SettingError, SettingsSnapshot] =
+    def read(prefix: Option[SettingKey], extra: List[SettingKey]): Either[SettingError, SettingsSnapshot] =
       state.map { s =>
         val loaded = AppConfig.loadWithUserText(env, s.text.getOrElse(""))
-        snapshot(schema, s, loaded, env, prefix, loaded.fold(_ => false, _.config.setup.completed), Some(path))
+        snapshot(schema, s, loaded, env, prefix, loaded.fold(_ => false, _.config.setup.completed), Some(path), extra)
       }
 
     def write(edits: List[SettingEdit], expected: Option[FileVersion], literalConsent: Boolean): Either[SettingError, WriteOutcome] =

@@ -7,13 +7,13 @@ package com.histmersion.api
 object WebPaths:
 
   /** First path segments under which every address is a page of the web UI. */
-  val Places: Set[String] = Set("explore", "library", "research", "settings")
+  val Places: Set[String] = Set("explore", "library", "research", "settings", "setup")
 
   /** First segments of an item's page: one segment more, the item's id (`/run/<id>`). */
   val Items: Set[String] = Set("place", "event", "run", "manager", "job")
 
-  /** The old one-segment addresses of the lists and of the merge screen. */
-  val Legacy: Set[String] = Set("acquire", "tasks", "log", "merge")
+  /** The old one-segment addresses of the lists, of the merge screen and of the About and Storage windows. */
+  val Legacy: Set[String] = Set("acquire", "tasks", "log", "merge", "about", "storage")
 
   /** Is this path (its segments, empty ones dropped) a page of the web UI? */
   def isApp(segments: List[String]): Boolean = segments match

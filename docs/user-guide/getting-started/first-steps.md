@@ -11,9 +11,11 @@ If the command says it cannot reach Histmersion, see [Troubleshooting](../refere
 
 ## 2. Open the web page
 
-Open <http://localhost:8000> in your browser. On a fresh install the map shows places from the
-gazetteer once the first-run import has finished, and the timeline offers period presets. There are
-no sources yet. [The web page](../exploring/web-ui.md) explains every part of it.
+Open <http://localhost:8000> in your browser. On a fresh install it starts with a short setup: your
+contact e-mail for finding open papers, the maps to keep, the background data to download — each with a
+safe choice already made ([Settings and the first-run setup](../exploring/settings.md)). Then the map
+shows places from the gazetteer once the first-run import has finished, and the timeline offers period
+presets. There are no sources yet. [The web page](../exploring/web-ui.md) explains every part of it.
 
 <figure markdown="span">
   ![The web page with a small collection loaded: filters and timeline at the top, the map of the eastern Mediterranean with markers and state outlines, the list of sources on the right](../assets/screenshots/home-light.png){ loading=lazy }

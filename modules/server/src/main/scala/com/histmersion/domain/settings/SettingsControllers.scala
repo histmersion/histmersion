@@ -4,13 +4,15 @@ import com.histmersion.api.{ApiError, ConfigEdit, ReloadReport}
 import com.histmersion.config.edit.*
 
 /** `GET|POST /api/settings`, `POST /api/server/restart`, the `config` tool's `get`, `set`, `unset` and
-  * `restart`, and `histmersion config get|set|unset|restart` over the server. */
-final class SettingsControllers(settings: SettingsService, restarts: RestartService, reload: () => ReloadReport):
+  * `restart`, and `histmersion config get|set|unset|restart` over the server. `knownKeys`: keys of open blocks
+  * listed although the file does not set them (each plugin's `enabled` and settings). */
+final class SettingsControllers(settings: SettingsService, restarts: RestartService, reload: () => ReloadReport,
+    knownKeys: () => List[String] = () => Nil):
 
   def page(prefix: Option[String]): Either[ApiError, ConfigEdit.Page] =
     for
       p    <- prefix.map(_.trim).filter(_.nonEmpty).fold(Right(None))(SettingKey.parse(_).map(Some(_))).left.map(ApiError(_))
-      snap <- settings.read(p).left.map(SettingsViews.error)
+      snap <- settings.read(p, knownKeys().flatMap(k => SettingKey.parse(k).toOption)).left.map(SettingsViews.error)
     yield SettingsViews.page(snap, restarts.available)
 
   /** The changes, each value read as its setting's kind; then the reload, when asked for and something changed. */

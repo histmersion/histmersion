@@ -211,3 +211,22 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     writer(link).write(List(set("backups.keep", num(12))), None, literalConsent = false).fold(e => fail(e.message), identity)
     assert(Files.isSymbolicLink(link))
     assert(read(real).contains("keep = 12"))
+
+  test("what is added is written in the file's own style, and a block left empty is taken out with its last setting"):
+    val f = fileWith("# mine\n")
+    ok(f, set("backups.keep", num(4)), set("acquire.contact-email", text("someone@example.org")))
+    val added = read(f)
+    assert(added.startsWith("# mine\n"), added)
+    assert(added.contains("histmersion {") && added.contains("keep = 4") && added.contains("contact-email = \"someone@example.org\""), added)
+    assert(!added.contains(" : "), s"no sconfig-style colons: $added")
+    ok(f, unset("backups.keep"), unset("acquire.contact-email"))
+    assertEquals(read(f).trim, "# mine")
+    // a block that holds a comment stays, emptied or not
+    val g = fileWith("histmersion {\n  backups {\n    # kept for later\n    keep = 3\n  }\n}\n")
+    ok(g, unset("backups.keep"))
+    assert(read(g).contains("# kept for later") && read(g).contains("backups"), read(g))
+
+  test("a file written from nothing ends with a line break"):
+    val f = fileWith("")
+    ok(f, set("backups.keep", num(3)))
+    assert(read(f).endsWith("}\n"), read(f))

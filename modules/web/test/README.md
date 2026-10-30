@@ -18,7 +18,7 @@ just test-db
 Start an already-built native server in a second terminal:
 
 ```bash
-HISTMERSION_RUNTIME=false \
+HISTMERSION_RUNTIME=false HISTMERSION_CONFIG=/tmp/histmersion-test.conf \
 HISTMERSION_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test \
 HISTMERSION_PORT=18080 HISTMERSION_PUBLIC_URL=http://127.0.0.1:18080 \
 HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap \
@@ -30,8 +30,15 @@ dist/histmersion/bin/histmersion-server
 Then run:
 
 ```bash
-HISTMERSION_SERVER_URL=http://127.0.0.1:18080 npm --prefix modules/web run test:browser
+HISTMERSION_SERVER_URL=http://127.0.0.1:18080 HISTMERSION_TEST_CONFIG_FILE=/tmp/histmersion-test.conf \
+  npm --prefix modules/web run test:browser
 ```
+
+Start the server with `HISTMERSION_CONFIG` naming a scratch settings file (an empty one will do), never your
+own. The tests that WRITE the settings file through Settings and the setup run only when
+`HISTMERSION_TEST_CONFIG_FILE` is set to that same file (they put it back as it was); without it they are
+skipped. The harness answers `/api/config` with `setupDue: false`, so a server whose settings file sets nothing
+opens on the page a test asks for, not on the first-run setup.
 
 `HISTMERSION_BASEMAP_DIR` points the server at a small Aegean extract of the base maps' data
 (`fixtures/basemap`, 10.5 MB with its physical names, sea floor and an Argolid focus region, its licences

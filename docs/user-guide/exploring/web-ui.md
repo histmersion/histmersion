@@ -255,13 +255,21 @@ the other pages. Everything else has its place:
 | Research › Backlog | `/research/backlog` (`?goal=` one goal's) | the `tasks` list; each item names its goal and the run or job that wrote or ticked it off |
 | Research › To acquire | `/research/acquire` (`?goal=` one goal's) | the acquisition list: what to buy, borrow or find — with each item's last legal re-check, **Re-check now** and **Re-check all** |
 | Research › AI models and limits | `/research/models` | the agents' models and allowances |
-| Settings › Data and downloads | `/settings/data` | the map regions downloaded, and downloading more |
-| Settings › Keys | `/settings/keys` | the key writes need (a write asks for it where it is needed) |
-| Settings › About Histmersion | `/settings/about` | version, the licence and a link to the source code of the running version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
+| Settings › General | `/settings/general` | the theme, the map's motion, where the map opens |
+| Settings › Data and downloads | `/settings/data` | the background map, places, periods, events and pictures, each with Update or Remove; the downloads under way; the disk used |
+| Settings › Where to look for sources | `/settings/sources` | your contact e-mail and the open-access finders |
+| Settings › AI agents | `/settings/ai` | research agents on or off, how many at once, the AI providers |
+| Settings › Keys and passwords | `/settings/keys` | whether each key is set and where it is kept; the key writes need |
+| Settings › Calibre and files, Backups, Plugins, People and access | `/settings/calibre`, `/settings/backups`, `/settings/plugins`, `/settings/people` | see [Settings](settings.md) |
+| Settings › Advanced (all settings) | `/settings/advanced` | every setting, with its default and what it does |
+| Settings › Credits and licences | `/settings/credits` | every dataset and its licence |
+| Settings › About Histmersion | `/settings/about` (also `/about`) | version, the licence and a link to the source code of the running version, health, the job queue, the last backup, counts, where the data is on disk and how much space each part takes (and the free space left), plugins |
+| The first-run setup | `/setup` | seven steps on a first run; again from Settings › Run the setup again |
 
 Every link is a real link: ⌘-, Ctrl- or Shift-click (or the middle button) opens it in a new tab, and Back
 and Forward walk the pages. Addresses of the earlier page (`/#open=goals`, `/acquire`, `/tasks`, `/log`,
-`/merge`) lead to their new pages. The top bar also shows what the agents are doing, and how many of
+`/merge`, `/about`, `/storage`) lead to their new pages. [Settings and the first-run setup](settings.md)
+has its own page. The top bar also shows what the agents are doing, and how many of
 their proposals need your decision — only when some do. `/` puts the cursor in the search field.
 
 The top bar's round button is the **theme**: the page follows your system's light or dark setting

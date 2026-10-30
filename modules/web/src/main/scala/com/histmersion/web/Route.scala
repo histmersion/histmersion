@@ -50,12 +50,20 @@ enum ActivityTab(val slug: String, val label: String, val agents: Boolean, val s
   /** One of the merged list's filter chips (not a detailed list). */
   def isChip: Boolean = show.isDefined
 
-/** Settings' sections. */
-enum SettingsSection(val slug: String, val label: String):
-  case Data  extends SettingsSection("data", "Data and downloads")
-  case Keys  extends SettingsSection("keys", "Keys")
-  case Credits extends SettingsSection("credits", "Credits")
-  case About extends SettingsSection("about", "About Histmersion")
+/** Settings' sections, in the order of its side navigation; `rare`: under "Rarely needed". */
+enum SettingsSection(val slug: String, val label: String, val rare: Boolean = false):
+  case General  extends SettingsSection("general", "General")
+  case Data     extends SettingsSection("data", "Data and downloads")
+  case Finders  extends SettingsSection("sources", "Where to look for sources")
+  case Agents   extends SettingsSection("ai", "AI agents")
+  case Keys     extends SettingsSection("keys", "Keys and passwords")
+  case Calibre  extends SettingsSection("calibre", "Calibre and files")
+  case Backups  extends SettingsSection("backups", "Backups")
+  case Plugins  extends SettingsSection("plugins", "Plugins")
+  case People   extends SettingsSection("people", "People and access", rare = true)
+  case Advanced extends SettingsSection("advanced", "Advanced (all settings)", rare = true)
+  case Credits  extends SettingsSection("credits", "Credits and licences", rare = true)
+  case About    extends SettingsSection("about", "About Histmersion", rare = true)
 
 /** A page of the web UI, by its address. Every page and every item has a real path, so each can be
   * bookmarked, shared, and opened in a new tab; the open windows and the filters ride along in the hash
@@ -67,6 +75,8 @@ enum Route:
   case Activity(tab: ActivityTab)
   case Goal(slug: String)
   case Settings(section: SettingsSection)
+  /** The first-run setup, run again from Settings. */
+  case Setup
   case Source(citekey: String)
   case Article(slug: String)
   case Place(id: String)
@@ -83,6 +93,7 @@ enum Route:
     case Activity(t)       => sub("/research/activity", t.slug)
     case Goal(slug)        => s"/research/goals/${HtmlAtoms.segment(slug)}"
     case Settings(s)       => sub("/settings", s.slug)
+    case Setup             => "/setup"
     case Source(ck)        => SourceLink.href(ck)
     case Article(slug)     => ArticleLink.href(slug)
     case Place(id)         => s"/place/${HtmlAtoms.segment(id)}"
@@ -98,7 +109,7 @@ enum Route:
     case Explore | Place(_) | Event(_)                              => PlaceTab.Explore
     case Library(_) | Source(_) | Article(_)                        => PlaceTab.Library
     case Research(_) | Activity(_) | Goal(_) | Run(_) | Manager(_) | Job(_) => PlaceTab.Research
-    case Settings(_)                                                => PlaceTab.Settings
+    case Settings(_) | Setup                                        => PlaceTab.Settings
 
   /** Whether the server renders this page itself (a full page load), rather than the web UI. */
   def serverPage: Boolean = this match
@@ -120,7 +131,7 @@ object Route:
     case PlaceTab.Explore  => Explore
     case PlaceTab.Library  => Library(LibrarySection.Sources)
     case PlaceTab.Research => Research(ResearchSection.Overview)
-    case PlaceTab.Settings => Settings(SettingsSection.Data)
+    case PlaceTab.Settings => Settings(SettingsSection.General)
 
   private def segments(path: String): List[String] =
     Option(path).getOrElse("").split('/').toList.filter(_.nonEmpty).map(decode)
@@ -148,9 +159,10 @@ object Route:
                             .map(Research(_))
         case _         => None
       case "settings" :: rest                      => rest match
-        case Nil       => Some(Settings(SettingsSection.Data))
+        case Nil       => Some(Settings(SettingsSection.General))
         case List(s)   => SettingsSection.values.find(_.slug == s).map(Settings(_))
         case _         => None
+      case List("setup")                           => Some(Setup)
       case List("source", ck)                      => Some(Source(ck))
       case List("article", slug)                   => Some(Article(slug))
       case List("place", id)                       => Some(Place(id))
@@ -228,6 +240,8 @@ object Route:
     val byPath: Option[Route] = segments(path) match
       case Nil            => Some(Explore)
       case List("merge")  => Some(Library(LibrarySection.Merge))
+      case List("about")  => Some(Settings(SettingsSection.About))
+      case List("storage") | List("settings", "storage") | List("settings", "map-regions") => Some(Settings(SettingsSection.Data))
       case List(list)     => Queue.Kind.values.find(_.label == list).flatMap(k => ofWindow(WindowKey.ofQueue(k)))
       case _              => None
     val (toolWindows, items) = open.partition(ofWindow(_).isDefined)

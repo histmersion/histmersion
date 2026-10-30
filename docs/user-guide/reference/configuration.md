@@ -75,6 +75,46 @@ applied because of an error. With `config.watch = true` the server reloads by it
 `config.watch-debounce-ms` after the file last changed (off by default; on macOS the JDK's file watcher
 polls, so a change can take a few seconds to be seen).
 
+## Changing settings from Settings or the command line
+
+Settings in the web UI, the first-run setup, `histmersion config get|set|unset` and the MCP `config` tool
+(`action: get|set|unset`) read and change **this same file** — never the database — so it stays the one
+place settings live and can be repaired with a text editor when the server, the database or the web UI is
+not running. `GET /api/settings[?prefix=acquire]` lists every setting (what the file says, what applies and
+where it comes from — default, file or environment — its default, the comment that documents it in
+`reference.conf`, its environment variable, whether it is restart-only); `POST /api/settings` changes some:
+
+```json
+{"changes": [{"key": "backups.keep", "value": "10"}, {"key": "ui.page-size"}], "version": "<from GET>"}
+```
+
+(a change without `value` takes the setting out of the file, back to its default). A change is made to the
+file's **text** (sconfig's `ConfigDocument`), so its comments, order, layout, includes and unknown keys stay
+as they are; written to a temporary file beside it; read back with its includes (the change must be what
+the file now says); loaded as the server loads it; and only then moved over the file in one step, the old
+text kept as `histmersion.conf.bak` (the file's permissions too). Refused, with the reason and the file
+untouched:
+
+- a value of the wrong kind, a key that is no setting (with the closest ones), or one the server could not
+  start with;
+- a setting the file writes with a substitution (`${…}`) or `+=`, or one set in an included file — kept
+  exactly as written: change it there;
+- a credential's value: a plugin's credential is written as a **reference** (`env:<NAME>`, `<vault>:<entry>`),
+  `value:<literal>` only with `literalConsent: true` (a warning says anyone who can read the file can read it);
+  a setting that holds the credential itself (`auth.api-key`, `db.password`, the AI providers' `api-key`) is
+  never written — set its environment variable. No answer ever carries a credential's value: only whether it
+  is set and how it is referred to;
+- a change made against a `version` the file no longer has (it changed in an editor or another window): 409.
+
+After a change the server reloads (above); a restart-only setting is listed with **Restart the server now**
+where the server runs under its LaunchAgent or systemd unit (`POST /api/server/restart`, `histmersion config
+restart`: the server exits with `server.restart-exit-code` and its service starts it again). `histmersion
+config get|set|unset` change the file on this machine directly with `--local`, or when the server does not
+answer. Setting a value the file already holds writes nothing.
+
+The **first-run setup** is offered while `setup.completed` is false and the file sets nothing of its own;
+finishing or skipping it writes `setup.completed = true`.
+
 ## Blocking more hosts
 
 The landing-page step of the acquisition chain (`oa-landing`) never reads a page from a host in
@@ -131,6 +171,7 @@ The settings of backups and portable bundles are listed with them, in
 | `server.public-url` | `HISTMERSION_PUBLIC_URL` | `http://localhost:8000` | how clients reach the server; used for absolute URLs and to generate `.mcp.json` |
 | `server.request-timeout-seconds` | `HISTMERSION_REQUEST_TIMEOUT` | `1800` | one HTTP request end to end; must cover a `pg_dump`/`pg_restore` (netty's own default, 20 s, is not enough for a backup of the live corpus) |
 | `server.shutdown-grace-seconds` | `HISTMERSION_SHUTDOWN_GRACE` | `10` | on stop, how long open connections may stay before they are closed — an idle keep-alive connection counts as open; `0` closes them at once (the test suites do) |
+| `server.restart-exit-code` | `HISTMERSION_RESTART_EXIT_CODE` | `75` | the exit code a restart asked for in Settings (or `histmersion config restart`) ends the server with; its LaunchAgent or systemd unit starts it again on a non-zero exit. Offered only under such a service |
 | `server.source-url` | `HISTMERSION_SOURCE_URL` | `https://github.com/histmersion/histmersion` | the repository of the program's source code; the About window and `histmersion about` link it at the commit the server was built from. If you run a changed version for other people, point it at the repository that holds your changes — the licence asks you to offer them that source ([Legal notice](../legal.md)) |
 | `db.url` | `HISTMERSION_DB_URL` | `jdbc:postgresql://localhost:5432/histmersion` | JDBC URL. The bundle replaces host and port with its own Postgres (`127.0.0.1:<runtime.pg-port>`) and keeps the database name |
 | `db.user` | `HISTMERSION_DB_USER` | `histmersion` | |
@@ -158,6 +199,8 @@ The settings of backups and portable bundles are listed with them, in
 | `ui.base-map-source` | `HISTMERSION_UI_BASE_MAP_SOURCE` | `auto` | which base maps the web page offers ([Working offline](../how-to/offline.md)): `local` — only the maps drawn from this server's own download, and the page asks no other host for anything; `online` — also the online maps below (`ui.tiles`, its Muted and Dark variants), the online Standard first; `auto` — `local` once the download can draw Readable or Physical whole, else `online`. `/api/config` answers it resolved |
 | `ui.tiles` | `HISTMERSION_TILES` | OSM tile URL | the online Standard map's tiles (and its Dark variant's); offered only when `ui.base-map-source` is online — the local maps need no tile server at all |
 | `ui.tiles-max-zoom` | — | `12` | |
+| `ui.map-start.mode` | `HISTMERSION_UI_MAP_START_MODE` | `last` | where the map opens (Settings › General, the setup): `last` = where this browser last left it (kept in its storage), at the place below the first time; `place` = always at the place below |
+| `ui.map-start.lat` · `.lon` · `.zoom` · `.label` | — | `37.0` · `30.0` · `5` · `Anatolia` | that place: its centre, the zoom (2 a continent, 5 a country, 9 a city) and its name as Settings shows it |
 | `ui.tiles-tone` | `HISTMERSION_TILES_TONE` | `light` | `dark` when `ui.tiles` is a dark map: the map's place names switch to light text on a dark halo |
 | `ui.tree-depth` | `HISTMERSION_TREE_DEPTH` | `2` | default nesting of `/api/aggregate?by=…` and the web UI's "by time" / "by region" tabs (max 3) |
 | `ui.tree-samples` | `HISTMERSION_TREE_SAMPLES` | `3` | sample sources listed under a leaf of that tree (0–5) |
@@ -369,6 +412,7 @@ The settings of backups and portable bundles are listed with them, in
 | `agents.prompts-dir` | `HISTMERSION_AGENTS_PROMPTS_DIR` | *(empty)* | a directory overriding the bundled agent definitions file by file, mirroring the bundled `agents/` tree (`article-skeptic.md`, `_shared/review-fixer.md`, `skills/<name>/SKILL.md`, …) — iterate on a prompt without a rebuild (`histmersion agent generate` carries it into the CLI runtimes' trees) |
 | `basemap.dir` | `HISTMERSION_BASEMAP_DIR` | *(empty)* = `$XDG_CACHE_HOME/histmersion/basemap`, else `~/.cache/histmersion/basemap` | where `histmersion basemap fetch` stores the local map's files (`vector.pmtiles`, `terrain.pmtiles`, `labels.pmtiles`, `bathymetry.pmtiles`, the focus regions in `terrain-focus/`, the tiles read on demand in `terrain-cache/`, `vector-cache/` and `sea-cache/`) and its unfinished downloads; a cache — they can be fetched again |
 | `basemap.bbox` | `HISTMERSION_BASEMAP_BBOX` | `world` | the region a fetch downloads: `world`, or `minLon,minLat,maxLon,maxLat` for a smaller download (`-12,20,90,62`, Atlantic Europe to the Indus, the default until 2026-10-27: about 2 GB against the world's 8.8 GB); `--bbox` overrides it once |
+| `basemap.setup-areas` | — | the whole world (8.8 GB), Europe, the Mediterranean and the Near East (2.0 GB) | the areas the first-run setup offers for the background map, each `"<what it is>\|<world, or minLon,minLat,maxLon,maxLat>\|<about how many GB>"` |
 | `basemap.min-free-gb` | `HISTMERSION_BASEMAP_MIN_FREE_GB` | `5` | a fetch is refused when it would leave less free disk than this where the files go |
 | `basemap.request-gap-ms` | `HISTMERSION_BASEMAP_REQUEST_GAP_MS` | `250` | the pause between two range requests to a provider |
 | `basemap.max-request-mb` · `.overfetch` | — | `64` · `0.05` | the largest single range request; a gap between two tiles up to this share of a request is read rather than split into two requests |
@@ -405,6 +449,7 @@ The settings of backups and portable bundles are listed with them, in
 | `basemap.map-max-zoom` | `HISTMERSION_BASEMAP_MAP_MAX_ZOOM` | `16` | how far the map zooms in on Readable and Physical (their relief drawn larger beyond the deepest tile, contours to 10 m); the online maps keep `ui.tiles-max-zoom` |
 | `ui.job-poll-ms` | `HISTMERSION_UI_JOB_POLL_MS` | `1000` | how often a window following a background job (About › Map regions: a size check or a download) asks for its progress |
 | `ui.docs-url` | `HISTMERSION_UI_DOCS_URL` | this guide on GitHub | the user guide's root; the web page links into it (the base map's notice) |
+| `setup.completed` | `HISTMERSION_SETUP_COMPLETED` | `false` | the first-run setup was finished or skipped (it writes this); while false and the settings file sets nothing, the web UI opens on the setup |
 | `config.watch` | `HISTMERSION_CONFIG_WATCH` | `false` | reload the config by itself when the file changes (see [Reloading the config](#reloading-the-config-no-restart)) |
 | `config.watch-debounce-ms` | `HISTMERSION_CONFIG_WATCH_DEBOUNCE_MS` | `500` | …this long after its last change (an editor writes in steps) |
 | `config.drain-seconds` | `HISTMERSION_CONFIG_DRAIN_SECONDS` | `10` | how long a reload waits for the previous generation's users (in-flight requests, job steps) before it reports them as still draining |

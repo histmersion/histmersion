@@ -185,7 +185,12 @@ object MergeView:
   /** The latest plan request: an answer to an older one is dropped (a `var`: it counts requests). */
   private var planReq = 0
 
-  def configure(ui: UiConfig): Unit = tiles = Some(ui.tiles -> ui.tilesMaxZoom)
+  def configure(ui: UiConfig): Unit =
+    tiles = Some(ui.tiles -> ui.tilesMaxZoom)
+    startView = ui.mapStart
+
+  /** Where a map with nothing to show opens (`ui.map-start`); set from `/api/config` like `tiles`. */
+  private var startView = MapStartConfig()
 
   private def bundle: Option[String] = UiState.mergeBundle.now()
 
@@ -506,7 +511,9 @@ object MergeView:
           }.flatten
           geoms.reduceOption(_.extend(_)) match
             case Some(b) => m.fitBounds(b, 24, 9, animate = false)
-            case None    => m.setView(LatLon(37.0, 30.0), 4)
+            case None    =>
+              val (at, zoom) = com.histmersion.web.map.MapStart.initial(startView, None)
+              m.setView(at, math.max(1, zoom - 1))
           map = Some(m)
           dom.window.setTimeout(() => map.foreach(_.resize()), 50)
         ,

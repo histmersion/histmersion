@@ -44,9 +44,15 @@ object App:
       MergeView.configure(ui)
       MapRegionsView.configure(ui)
 
+      com.histmersion.web.settings.DownloadJobs.configure(ui.jobPollMs)
+
       Router.init()
+      // a first run (no setup done, a settings file of nothing): the setup first, wherever the address points
+      if ui.setupDue && Router.now() != Route.Setup && !com.histmersion.web.setup.SetupPage.left then
+        Router.go(Route.Setup, push = false)
       val appEl = div(
         cls := "histmersion-app",
+        cls("is-setup") <-- Router.route.map(_ == Route.Setup),
         MobileChrome.rootClasses,
         // which of the four places is showing: the narrow layout moves the search for Explore's own
         dataAttr("showing") <-- Router.route.map(_.place.toString.toLowerCase),

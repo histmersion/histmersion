@@ -8,14 +8,15 @@ import scala.util.Try
 
 /** Every setting as it stands, from the schema, the settings file as read and the merged settings it loaded
   * into (`merged`: environment > file > reference.conf, `histmersion { … }`). The keys a file writes in an open
-  * block (a plugin's own settings) are listed too, after reference.conf's. Pure. */
+  * block (a plugin's own settings) are listed too, after reference.conf's, and `extra` keys of open blocks
+  * the caller knows of (each plugin's `enabled` and settings). Pure. */
 object SettingsReader:
 
   def read(schema: ConfigSchema, state: ConfigFileState, merged: Config, env: Config,
-      prefix: Option[SettingKey]): List[SettingReading] =
+      prefix: Option[SettingKey], extra: List[SettingKey] = Nil): List[SettingReading] =
     val within = (k: SettingKey) => prefix.forall(p => k.within(p))
     val known  = schema.fields.filter(f => within(f.key))
-    val open   = openKeys(state.parsed).filter(within).filterNot(k => known.exists(_.key == k)).flatMap(schema.field)
+    val open   = (openKeys(state.parsed) ++ extra).distinct.filter(within).filterNot(k => known.exists(_.key == k)).flatMap(schema.field)
     (known ++ open).map(reading(_, state, merged, env))
 
   def reading(field: SettingField, state: ConfigFileState, merged: Config, env: Config): SettingReading =

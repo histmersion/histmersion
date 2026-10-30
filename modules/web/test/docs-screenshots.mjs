@@ -11,6 +11,7 @@
 // server's and the map tiles refused, and each shot waits for the network, the map's tiles, the fonts
 // and the windows' content before it is taken. The server's own machine-specific values (its config
 // file's path, the host name in the agent lease) are replaced in /api/about before the page sees them.
+import { configOverride } from './engine.mjs';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -46,6 +47,7 @@ async function open(browser, { viewport = wide, hash = '', local = {}, path = ''
     if (!offline && /(^|\.)tile\.openstreetmap\.(org|fr)$/.test(url.hostname)) return route.continue();
     return route.abort();
   });
+  await configOverride(context);
   await context.route(`${origin}/api/about`, async route => {
     const res = await route.fetch();
     const about = await res.json();

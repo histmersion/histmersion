@@ -13,6 +13,7 @@ class RouteSuite extends munit.FunSuite:
       ResearchSection.values.filter(_ != ResearchSection.Activity).map(Route.Research(_)) ++
       ActivityTab.values.map(Route.Activity(_)) ++
       SettingsSection.values.map(Route.Settings(_)) ++
+      List(Route.Setup) ++
       List(Route.Goal("bronze-age"), Route.Run("3f2a-77"), Route.Manager("watch:bronze-age"), Route.Job("10ed4471"),
         Route.Place("pleiades:579885"), Route.Event("ev-1"), Route.Source("cline2014_year"), Route.Article("sea-peoples"))
 
@@ -36,7 +37,11 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.Research(ResearchSection.Decisions).path, "/research/decisions")
     assertEquals(Route.Research(ResearchSection.Models).path, "/research/models")
     assertEquals(Route.Settings(SettingsSection.Data).path, "/settings/data")
-    assertEquals(Route.parse("/settings"), Some(Route.Settings(SettingsSection.Data)))
+    assertEquals(Route.parse("/settings"), Some(Route.Settings(SettingsSection.General)))
+    assertEquals(Route.Settings(SettingsSection.Finders).path, "/settings/sources")
+    assertEquals(Route.Settings(SettingsSection.Advanced).path, "/settings/advanced")
+    assertEquals(Route.Setup.path, "/setup")
+    assertEquals(Route.Setup.place, PlaceTab.Settings)
     assertEquals(Route.Run("a b").path, "/run/a%20b")
     assertEquals(Route.parse("/run/a%20b"), Some(Route.Run("a b")))
     assertEquals(Route.Place("pleiades:579885").path, "/place/pleiades%3A579885")
@@ -99,6 +104,11 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.legacy("/acquire", Nil), Some(Route.Landing(Route.Research(ResearchSection.Acquire), Nil)))
     assertEquals(Route.legacy("/tasks", Nil), Some(Route.Landing(Route.Research(ResearchSection.Backlog), Nil)))
     assertEquals(Route.legacy("/log", Nil), Some(Route.Landing(Route.Activity(ActivityTab.Worklog), Nil)))
+    // the About and Storage windows' old addresses are Settings' pages now
+    assertEquals(Route.legacy("/about", Nil), Some(Route.Landing(Route.Settings(SettingsSection.About), Nil)))
+    assertEquals(Route.legacy("/storage", Nil), Some(Route.Landing(Route.Settings(SettingsSection.Data), Nil)))
+    assertEquals(Route.legacy("/settings/storage", Nil), Some(Route.Landing(Route.Settings(SettingsSection.Data), Nil)))
+    assertEquals(Route.legacy("/", List(WindowKey.About)), Some(Route.Landing(Route.Settings(SettingsSection.About), Nil)))
     assertEquals(Route.legacy("/", List(WindowKey.Goals)), Some(Route.Landing(Route.Research(ResearchSection.Goals), Nil)))
     assertEquals(Route.legacy("/", List(WindowKey.Run("r1"), WindowKey.Jobs, WindowKey.About)),
       Some(Route.Landing(Route.Activity(ActivityTab.JobList), List(WindowKey.Run("r1")))))

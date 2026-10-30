@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { appendFileSync } from 'node:fs';
-import { engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
+import { configOverride, engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
 import { fullLoad, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
 import { LIBRARY_SOURCES, routeLibrary } from './library-fixtures.mjs';
 import { goal as researchGoal, routeResearch } from './research-fixtures.mjs';
@@ -24,7 +24,7 @@ after(async () => { await browser?.close(); });
   * `local` or `online`; by default what the server says. `outside`: every request to another host is
   * recorded there (and refused, as always). */
 
-async function withPage(viewport, run, { source, outside } = {}) {
+async function withPage(viewport, run, { source, outside, setup, path } = {}) {
   // Firefox has no mobile emulation: a narrow viewport with touch is its phone (the layout follows the width)
   const context = await browser.newContext({ viewport, isMobile: isChromium && viewport.width < 760, hasTouch: true });
   try {
@@ -43,11 +43,8 @@ async function withPage(viewport, run, { source, outside } = {}) {
       outside?.push(route.request().url());
       return route.abort(); // No third-party tile servers are needed.
     });
-    if (source) await page.route('**/api/config', async route => {
-      const res = await route.fetch();
-      await route.fulfill({ response: res, json: { ...(await res.json()), baseMapSource: source } });
-    });
-    await page.goto(baseURL);
+    await configOverride(page, { ...(source ? { baseMapSource: source } : {}), ...(setup ? { setupDue: true } : {}) });
+    await page.goto(path ? new URL(path, baseURL).href : baseURL);
     await page.waitForFunction(() => window.__testMap);
     await run(page);
     assert.deepEqual(errors, [], 'application JavaScript errors');
@@ -3085,6 +3082,7 @@ test('without a GPU the map says so and draws its cheapest form; the app still w
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.route('**/*', r => new URL(r.request().url()).origin === origin ? r.continue() : r.abort());
+    await configOverride(page);
     await page.goto(baseURL);
     await page.waitForFunction(() => window.histmersionMap);
     const caps = await page.evaluate(() => window.histmersionMap.capabilities());
@@ -3109,6 +3107,7 @@ test('no WebGL 2: the map says why and what to do, and the rest of the page work
       const errors = [];
       page.on('pageerror', e => errors.push(e.message));
       await page.route('**/*', r => new URL(r.request().url()).origin === origin ? r.continue() : r.abort());
+      await configOverride(page);
       await page.goto(baseURL);
       const note = page.locator('#map .map-unavailable');
       await note.waitFor();
@@ -4484,6 +4483,7 @@ test('#7381: every goal stage has its own colour, shape and word in both themes,
     const context = await browser.newContext({ viewport: { width: 1200, height: 800 }, colorScheme: scheme });
     try {
       const page = await context.newPage();
+      await configOverride(page);
       await page.goto(new URL('/research/goals', baseURL).href);
       await page.locator('.goals-pane .goal-legend .goal-status').first().waitFor();
       const looks = await page.evaluate(() => [...document.querySelectorAll('.goal-legend .goal-status')].map(b => {
@@ -4502,4 +4502,211 @@ test('#7381: every goal stage has its own colour, shape and word in both themes,
       assert.equal(linkColours[0], linkColours[1], `${scheme}: a plain link is the accent`);
     } finally { await context.close(); }
   }
+});
+
+// ── phase 6: Settings, the first-run setup, the settings file written through the UI, #7382 ──────────────────
+
+const desk = { width: 1440, height: 900 };
+
+/** The server's settings file, as /api/settings names it. */
+async function settingsFile(page) {
+  return page.evaluate(async () => (await (await fetch('/api/settings?prefix=setup')).json()).file);
+}
+
+/** Tests that WRITE the server's settings file run only when HISTMERSION_TEST_CONFIG_FILE names that very file —
+  * a scratch file of the test server's, never a person's own. */
+async function writableSettings(page, t) {
+  const want = process.env.HISTMERSION_TEST_CONFIG_FILE;
+  const file = await settingsFile(page);
+  if (!want || !file || file !== want) {
+    t.skip(`set HISTMERSION_TEST_CONFIG_FILE to the test server's own settings file (${file ?? 'none'}) to run it`);
+    return false;
+  }
+  return true;
+}
+
+test('the first-run setup: shown when it is due, seven steps with safe defaults, nothing written before the end', async () => {
+  await withPage(desk, async page => {
+    const writes = [];
+    page.on('request', r => { if (r.method() !== 'GET' && new URL(r.url()).pathname.startsWith('/api/')) writes.push(r.url()); });
+    await page.waitForURL(u => new URL(u).pathname === '/setup');
+    await page.locator('.setup-title').waitFor();
+    assert.equal(await page.locator('.setup-step').count(), 7);
+    assert.equal(await page.locator('.top-bar').isVisible(), false, 'the setup has the page to itself');
+    assert.equal(await page.locator('.setup-step.on').innerText(), '1\nWelcome');
+    await page.locator('.setup-continue').click();
+    // finding open papers: the contact e-mail, explained, and an address that is none is refused
+    await page.locator('#setup-email').fill('not an address');
+    await page.locator('.setup-continue').click();
+    await page.locator('.setup-main .form-error').waitFor();
+    assert.equal(await page.locator('.setup-step.on .setup-n').innerText(), '2');
+    assert.match(await page.locator('.setup-text').innerText(), /sends it to those three only/);
+    await page.locator('#setup-email').fill('someone@example.org');
+    await page.locator('.setup-continue').click();
+    // maps: the area with its size and the disk's free space; whole world chosen; where the map opens
+    assert.equal(await page.locator('.setup-step.on .setup-n').innerText(), '3');
+    assert.ok(await page.locator('.setup-area').count() >= 2);
+    assert.equal(await page.locator('.setup-area.sel').count(), 1);
+    assert.match(await page.locator('.setup-area.sel').innerText(), /GB/);
+    await page.locator('.start-place').waitFor();
+    await page.locator('.setup-back').click();
+    assert.equal(await page.locator('#setup-email').inputValue(), 'someone@example.org', 'Back keeps what was typed');
+    for (let i = 0; i < 5; i++) await page.locator('.setup-continue').click();
+    assert.equal(await page.locator('.setup-step.on .setup-n').innerText(), '7');
+    assert.match(await page.locator('.setup-summary').innerText(), /background map/i);
+    assert.deepEqual(writes, [], 'nothing is written or downloaded before the setup is finished');
+  }, { setup: true });
+});
+
+test('the setup, finished: its choices go into the settings file and the setup is no longer due', async t => {
+  await withPage(desk, async page => {
+    if (!(await writableSettings(page, t))) return;
+    await page.waitForURL(u => new URL(u).pathname === '/setup');
+    await page.locator('.setup-continue').click();
+    await page.locator('#setup-email').fill('someone@example.org');
+    await page.locator('.setup-continue').click();
+    // no map download, no background data: finishing writes the settings and starts nothing
+    await page.locator('.setup-area', { hasText: 'No map download' }).click();
+    await page.locator('.setup-continue').click();
+    for (const box of await page.locator('.setup-opt input[type=checkbox]').all()) if (await box.isChecked()) await box.click();
+    for (let i = 0; i < 3; i++) await page.locator('.setup-continue').click();
+    await page.locator('.setup-finish').click();
+    await page.locator('.setup-done').waitFor();
+    assert.match(await page.locator('.setup-done').innerText(), /Nothing is downloading/);
+    const after = await page.evaluate(async () => (await (await fetch('/api/settings?prefix=acquire.contact-email')).json()));
+    assert.equal(after.fields?.[0]?.value ?? after.sections[0].fields[0].value, '"someone@example.org"');
+    // (/api/config is the test's own here; the settings say what the server says)
+    const settings = await page.evaluate(async () => (await (await fetch('/api/settings?prefix=setup')).json()));
+    assert.equal(settings.setupDue, false);
+    // put the file back as it was for the other tests
+    await page.evaluate(async () => fetch('/api/settings', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ changes: [{ key: 'acquire.contact-email' }, { key: 'setup.completed' }] }) }));
+  }, { setup: true });
+});
+
+test('Settings: every section opens from its side navigation; the old About and Storage addresses land on theirs', async () => {
+  await withPage(desk, async page => {
+    await page.locator('.top-bar [data-nav="settings"]').click();
+    await page.waitForURL(u => new URL(u).pathname === '/settings/general');
+    const links = page.locator('.side-nav .side-link');
+    const labels = await links.allInnerTexts();
+    for (const l of ['General', 'Data and downloads', 'Where to look for sources', 'AI agents', 'Keys and passwords',
+      'Calibre and files', 'Backups', 'Plugins', 'People and access', 'Advanced (all settings)', 'Credits and licences',
+      'About Histmersion', 'Run the setup again']) assert.ok(labels.some(x => x.trim() === l), `${l} in ${labels}`);
+    for (const slug of ['data', 'sources', 'ai', 'keys', 'calibre', 'backups', 'plugins', 'people', 'advanced', 'credits', 'about']) {
+      await page.locator(`.side-nav a[href="/settings/${slug}"]`).click();
+      await page.locator(`.settings-page[data-section="${slug}"]`).waitFor();
+    }
+    for (const [old, now] of [['/about', '/settings/about'], ['/storage', '/settings/data']]) {
+      await page.goto(new URL(old, baseURL).href);
+      await page.waitForURL(u => new URL(u).pathname === now);
+    }
+  });
+});
+
+test('Settings show where each value comes from and never a key or password', async () => {
+  await withPage(desk, async page => {
+    await page.goto(new URL('/settings/advanced', baseURL).href);
+    await page.locator('#advanced-q').fill('backups.keep');
+    const row = page.locator('.setting-row[data-key="backups.keep"]');
+    await row.waitFor();
+    assert.match(await row.innerText(), /archives left after a dump/);
+    assert.match(await row.locator('.setting-status').innerText(), /default|settings file|environment variable/i);
+    await page.goto(new URL('/settings/keys', baseURL).href);
+    await page.locator('.key-row').first().waitFor();
+    const json = await page.evaluate(async () => JSON.stringify(await (await fetch('/api/settings')).json()));
+    for (const f of JSON.parse(json).sections.flatMap(s => s.fields).filter(f => f.credential))
+      assert.ok(f.value == null && f.effective == null && f.default == null, `${f.key} shows only its state`);
+    for (const input of await page.locator('.key-entry').all()) assert.equal(await input.inputValue(), '', 'no key is filled in');
+  });
+});
+
+test('a setting changed in Settings is written into the settings file, read back, and set back to its default', async t => {
+  await withPage(desk, async page => {
+    if (!(await writableSettings(page, t))) return;
+    await page.goto(new URL('/settings/backups', baseURL).href);
+    const row = page.locator('.setting-row[data-key="backups.keep"]');
+    await row.waitFor();
+    const input = row.locator('input.setting-input');
+    await input.fill('7');
+    assert.match(await page.locator('.settings-save-btn').first().innerText(), /Save the change/);
+    await page.locator('.settings-save-btn').first().click();
+    await page.locator('.settings-saved-line').first().waitFor();
+    assert.match(await page.locator('.settings-saved-line').first().innerText(), /Saved in the settings file/);
+    // read again from the server: the file says 7 now
+    await page.reload();
+    await row.waitFor();
+    assert.equal(await row.locator('input.setting-input').inputValue(), '7');
+    const keep = await page.evaluate(async () =>
+      (await (await fetch('/api/settings?prefix=backups.keep')).json()).sections[0].fields[0]);
+    assert.equal(keep.value, '7');
+    assert.equal(keep.source, 'file');
+    // back to the default: the setting leaves the file
+    await row.locator('.setting-reset').click();
+    await page.locator('.settings-save-btn').first().click();
+    await page.waitForFunction(async () =>
+      (await (await fetch('/api/settings?prefix=backups.keep')).json()).sections[0].fields[0].value == null);
+  });
+});
+
+test('a value the server could not start with is refused in plain words, and the file stays as it was', async t => {
+  await withPage(desk, async page => {
+    if (!(await writableSettings(page, t))) return;
+    const before = await page.evaluate(async () => (await (await fetch('/api/settings?prefix=backups')).json()).version);
+    await page.goto(new URL('/settings/backups', baseURL).href);
+    const input = page.locator('.setting-row[data-key="backups.keep"] input.setting-input');
+    await input.waitFor();
+    await input.fill('lots');
+    await page.locator('.settings-save-btn').first().click();
+    await page.locator('.settings-notice .form-error').waitFor();
+    assert.match(await page.locator('.settings-notice .form-error').innerText(), /backups\.keep/);
+    const after = await page.evaluate(async () => (await (await fetch('/api/settings?prefix=backups')).json()).version);
+    assert.equal(after, before);
+  });
+});
+
+test('where the map opens: where this browser left it, kept across a reload', async () => {
+  await withPage(desk, async page => {
+    await page.evaluate(() => window.__testMap.setView([12.5, 44.25], 6));
+    await page.waitForFunction(() => (localStorage.getItem('histmersion.mapView') || '').startsWith('12.5,44.25'));
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.waitForFunction(() => Math.abs(window.__testMap.getCenter().lat - 12.5) < 0.01 && Math.abs(window.__testMap.getZoom() - 6) < 0.01);
+  });
+});
+
+test('#7382: a source\'s or an article\'s own page has the theme and a width control, remembered by the browser', async () => {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  try {
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.route('**/*', r => new URL(r.request().url()).origin === origin ? r.continue() : r.abort());
+    await configOverride(page);
+    await page.route('**/article/zz_page_tools', route => route.fulfill({ contentType: 'text/html', body:
+      '<!doctype html><html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="/web/style.css"></head>' +
+      '<body class="article-page" data-page="article"><div class="nav"><a href="/">← Histmersion</a></div>' +
+      `<main id="page-content"><h1>Zz page tools</h1><div class="reading"><p>${'A long sentence of the article. '.repeat(60)}</p></div></main>` +
+      '<script src="/web/app.bundle.js?v=2"></script></body></html>' }));
+    await page.goto(new URL('/article/zz_page_tools', baseURL).href);
+    await page.locator('.page-tools').waitFor();
+    const width = () => page.locator('#page-content .reading').evaluate(e => e.getBoundingClientRect().width);
+    const reading = await width();
+    assert.equal(await page.locator('.page-width-btn[data-width="reading"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('.page-width-btn[data-width="wide"]').click();
+    assert.ok(await page.evaluate(() => document.body.classList.contains('page-wide')));
+    const wideW = await width();
+    assert.ok(wideW > reading * 1.5, `page wide is wider: ${reading} → ${wideW}`);
+    await page.reload();
+    await page.locator('.page-tools').waitFor();
+    assert.ok(await page.evaluate(() => document.body.classList.contains('page-wide')), 'the width is remembered');
+    // the theme: system → light → dark, on the page itself
+    const theme = page.locator('.page-tools .theme-btn');
+    await theme.click();
+    assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'light');
+    await theme.click();
+    assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'dark');
+    await page.locator('.page-width-btn[data-width="reading"]').click();
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
 });

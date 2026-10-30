@@ -75,6 +75,8 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.manager("watch:bronze-age-collapse"), "Watch manager · Bronze age collapse")
     assertEquals(Wording.manager("review"), "Review manager")
     assertEquals(Wording.plugin("ai-anthropic"), "AI provider: Anthropic")
+    assertEquals(Wording.plugin("keepassxc"), "KeePassXC")
+    assertEquals(Wording.plugin("oa-core"), "Open access: CORE")
 
   test("an identifier the dictionary does not know is shown as words, never raw"):
     assertEquals(Wording.label("some-new_kind"), "Some new kind")

@@ -353,7 +353,9 @@ final case class BasemapConfig(
     terrain: BasemapTerrainConfig,
     labels: BasemapLabelsConfig,
     bathymetry: BasemapBathymetryConfig,
-    mapMaxZoom: Int
+    mapMaxZoom: Int,
+    /** The areas the setup offers: "<label>|<world or a box>|<about how many GB>". */
+    setupAreas: List[String] = Nil
 ) derives ConfigReader
 
 /** `drop`: the vector layers (or their kinds) never stored — [[Basemap.parseDrop]]; everything else is

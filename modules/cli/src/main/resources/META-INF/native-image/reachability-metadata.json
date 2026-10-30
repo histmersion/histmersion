@@ -100,6 +100,9 @@
       ]
     },
     {
+      "type": "com.histmersion.api.Activity$Show[]"
+    },
+    {
       "type": "com.histmersion.api.AgentLeaseInfo$",
       "fields": [
         {
@@ -635,6 +638,9 @@
           "name": "about$lzy1"
         },
         {
+          "name": "activity$lzy1"
+        },
+        {
           "name": "addPlace$lzy1"
         },
         {
@@ -852,6 +858,9 @@
         },
         {
           "name": "job$lzy1"
+        },
+        {
+          "name": "jobControl$lzy1"
         },
         {
           "name": "jobs$lzy1"
@@ -2297,6 +2306,134 @@
         },
         {
           "name": "given_Schema_CitedSource$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEdit$Change$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy5"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEdit$Credential$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEdit$Field$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEdit$Page$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy4"
+        },
+        {
+          "name": "given_Schema_Page$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEdit$Restart$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy9"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy9"
+        },
+        {
+          "name": "given_Schema_Restart$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEdit$RestartNote$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy7"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy7"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEdit$Section$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEdit$Write$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy6"
+        },
+        {
+          "name": "given_Schema_Write$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEdit$Written$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy8"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy8"
+        },
+        {
+          "name": "given_Schema_Written$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ConfigEditApi$",
+      "fields": [
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "get$lzy1"
+        },
+        {
+          "name": "restart$lzy1"
+        },
+        {
+          "name": "write$lzy1"
         }
       ]
     },
@@ -6515,6 +6652,9 @@
       "type": "com.histmersion.config.AcquireConfig$",
       "fields": [
         {
+          "name": "derived$ConfigReader$lzy10"
+        },
+        {
           "name": "derived$ConfigReader$lzy6"
         },
         {
@@ -6536,6 +6676,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy7"
+        },
+        {
+          "name": "derived$ConfigReader$lzy9"
         }
       ]
     },
@@ -6878,6 +7021,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy52"
+        },
+        {
+          "name": "derived$ConfigReader$lzy55"
         }
       ]
     },
@@ -6910,6 +7056,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy26"
+        },
+        {
+          "name": "derived$ConfigReader$lzy28"
         }
       ]
     },
@@ -6940,6 +7089,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy32"
+        },
+        {
+          "name": "derived$ConfigReader$lzy34"
         }
       ]
     },
@@ -6951,6 +7103,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy27"
+        },
+        {
+          "name": "derived$ConfigReader$lzy29"
         }
       ]
     },
@@ -6962,6 +7117,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy33"
+        },
+        {
+          "name": "derived$ConfigReader$lzy35"
         }
       ]
     },
@@ -6973,6 +7131,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy31"
+        },
+        {
+          "name": "derived$ConfigReader$lzy33"
         }
       ]
     },
@@ -6984,6 +7145,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy30"
+        },
+        {
+          "name": "derived$ConfigReader$lzy32"
         }
       ]
     },
@@ -6995,6 +7159,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy29"
+        },
+        {
+          "name": "derived$ConfigReader$lzy31"
         }
       ]
     },
@@ -7006,6 +7173,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy28"
+        },
+        {
+          "name": "derived$ConfigReader$lzy30"
         }
       ]
     },
@@ -7024,6 +7194,9 @@
       "type": "com.histmersion.config.CalibreCliConfig$",
       "fields": [
         {
+          "name": "derived$ConfigReader$lzy11"
+        },
+        {
           "name": "derived$ConfigReader$lzy7"
         },
         {
@@ -7039,6 +7212,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy6"
+        },
+        {
+          "name": "derived$ConfigReader$lzy7"
         }
       ]
     },
@@ -7084,6 +7260,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy20"
+        },
+        {
+          "name": "derived$ConfigReader$lzy22"
         }
       ]
     },
@@ -7095,6 +7274,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy21"
+        },
+        {
+          "name": "derived$ConfigReader$lzy23"
         }
       ]
     },
@@ -7152,6 +7334,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy34"
+        },
+        {
+          "name": "derived$ConfigReader$lzy36"
         }
       ]
     },
@@ -7163,6 +7348,14 @@
         },
         {
           "name": "derived$ConfigReader$lzy4"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.CoreServiceConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy3"
         }
       ]
     },
@@ -7210,6 +7403,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy45"
+        },
+        {
+          "name": "derived$ConfigReader$lzy48"
         }
       ]
     },
@@ -7227,6 +7423,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy46"
+        },
+        {
+          "name": "derived$ConfigReader$lzy49"
         }
       ]
     },
@@ -7244,6 +7443,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy50"
+        },
+        {
+          "name": "derived$ConfigReader$lzy53"
         }
       ]
     },
@@ -7261,6 +7463,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy49"
+        },
+        {
+          "name": "derived$ConfigReader$lzy52"
         }
       ]
     },
@@ -7278,6 +7483,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy47"
+        },
+        {
+          "name": "derived$ConfigReader$lzy50"
         }
       ]
     },
@@ -7295,6 +7503,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy48"
+        },
+        {
+          "name": "derived$ConfigReader$lzy51"
         }
       ]
     },
@@ -7324,6 +7535,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy25"
+        },
+        {
+          "name": "derived$ConfigReader$lzy27"
         }
       ]
     },
@@ -7340,6 +7554,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy4"
+        },
+        {
+          "name": "derived$ConfigReader$lzy5"
         }
       ]
     },
@@ -7391,6 +7608,9 @@
           "name": "derived$ConfigReader$lzy19"
         },
         {
+          "name": "derived$ConfigReader$lzy21"
+        },
+        {
           "name": "derived$ConfigReader$lzy9"
         }
       ]
@@ -7417,6 +7637,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy41"
+        },
+        {
+          "name": "derived$ConfigReader$lzy44"
         }
       ]
     },
@@ -7437,6 +7660,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy39"
+        },
+        {
+          "name": "derived$ConfigReader$lzy42"
         }
       ]
     },
@@ -7457,6 +7683,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy37"
+        },
+        {
+          "name": "derived$ConfigReader$lzy40"
         }
       ]
     },
@@ -7474,6 +7703,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy43"
+        },
+        {
+          "name": "derived$ConfigReader$lzy46"
         }
       ]
     },
@@ -7491,6 +7723,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy40"
+        },
+        {
+          "name": "derived$ConfigReader$lzy43"
         }
       ]
     },
@@ -7508,6 +7743,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy44"
+        },
+        {
+          "name": "derived$ConfigReader$lzy47"
         }
       ]
     },
@@ -7525,6 +7763,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy42"
+        },
+        {
+          "name": "derived$ConfigReader$lzy45"
         }
       ]
     },
@@ -7545,6 +7786,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy38"
+        },
+        {
+          "name": "derived$ConfigReader$lzy41"
         }
       ]
     },
@@ -7624,6 +7868,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy24"
+        },
+        {
+          "name": "derived$ConfigReader$lzy26"
         }
       ]
     },
@@ -7644,6 +7891,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy36"
+        },
+        {
+          "name": "derived$ConfigReader$lzy39"
         }
       ]
     },
@@ -7661,6 +7911,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy23"
+        },
+        {
+          "name": "derived$ConfigReader$lzy25"
         }
       ]
     },
@@ -7690,6 +7943,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy22"
+        },
+        {
+          "name": "derived$ConfigReader$lzy24"
         }
       ]
     },
@@ -7723,6 +7979,9 @@
           "name": "derived$ConfigReader$lzy18"
         },
         {
+          "name": "derived$ConfigReader$lzy20"
+        },
+        {
           "name": "derived$ConfigReader$lzy8"
         },
         {
@@ -7739,10 +7998,21 @@
       ]
     },
     {
+      "type": "com.histmersion.config.RecheckConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy8"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.config.RetractionWatchConfig$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy3"
+        },
+        {
+          "name": "derived$ConfigReader$lzy4"
         }
       ]
     },
@@ -7789,6 +8059,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy35"
+        },
+        {
+          "name": "derived$ConfigReader$lzy38"
         }
       ]
     },
@@ -7805,6 +8078,14 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.SetupConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy37"
         }
       ]
     },
@@ -7833,6 +8114,9 @@
         },
         {
           "name": "derived$ConfigReader$lzy51"
+        },
+        {
+          "name": "derived$ConfigReader$lzy54"
         }
       ]
     },
@@ -7849,6 +8133,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy5"
+        },
+        {
+          "name": "derived$ConfigReader$lzy6"
         }
       ]
     },
@@ -7857,6 +8144,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy15"
+        },
+        {
+          "name": "derived$ConfigReader$lzy16"
         }
       ]
     },
@@ -7865,6 +8155,25 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy16"
+        },
+        {
+          "name": "derived$ConfigReader$lzy17"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiMapStartSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy15"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.UiMapTilesSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy18"
         }
       ]
     },
@@ -7873,6 +8182,9 @@
       "fields": [
         {
           "name": "derived$ConfigReader$lzy17"
+        },
+        {
+          "name": "derived$ConfigReader$lzy19"
         }
       ]
     },
@@ -7892,6 +8204,14 @@
         },
         {
           "name": "derived$ConfigReader$lzy29"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.edit.ConfigSchema$",
+      "fields": [
+        {
+          "name": "reference$lzy1"
         }
       ]
     },

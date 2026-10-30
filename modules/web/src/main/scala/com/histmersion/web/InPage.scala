@@ -63,6 +63,7 @@ object StandalonePage:
 
   def init(): Unit =
     Theme.install()
+    PageTools.install()
     Preview.install()
     Option(document.getElementById("page-content")).foreach { root =>
       InPage.wire(root)

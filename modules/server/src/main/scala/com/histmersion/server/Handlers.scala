@@ -84,7 +84,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * restart for what only a restart applies. */
   lazy val settings: com.histmersion.domain.settings.SettingsControllers =
     import com.histmersion.domain.settings.{RestartService, SettingsControllers, SettingsService}
-    SettingsControllers(SettingsService(() => deps.loaded), RestartService(deps.restart), () => configReload())
+    SettingsControllers(SettingsService(() => deps.loaded), RestartService(deps.restart), () => configReload(),
+      () => deps.plugins.report.plugins.flatMap(p =>
+        s"histmersion.plugins.${p.id}.enabled" :: p.settings.map(st => s"histmersion.plugins.${p.id}.${st.key}")))
 
   def version: VersionInfo = VersionInfo(Version.name, Version.version)
 
