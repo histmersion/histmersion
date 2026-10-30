@@ -21,7 +21,7 @@ object Spot:
 
 /** A site from the places feed (`/api/places/geo?kind=site`). */
 final case class SitePoint(id: Option[String], label: String, kind: String, siteType: Option[String],
-    basis: Option[String], lat: Double, lon: Double, period: Option[(Double, Double)]):
+    basis: Option[String], lat: Double, lon: Double, period: Option[(Double, Double)], undated: Boolean = false):
   def name: String = if label.nonEmpty then label else id.getOrElse("site")
   def mid: Option[Double] = period.map((a, b) => (a + b) / 2)
   /** Its type, when it is one the map knows. */
@@ -101,15 +101,19 @@ object PointKinds:
     def key(p: SitePoint): String = p.id.getOrElse(s"${p.lat}|${p.lon}")
     def at(p: SitePoint): (Double, Double) = (p.lat, p.lon)
     def inner(p: SitePoint): String = Glyphs.badge(CardIcons.siteMarker(p.known.map(_.id)))
-    override def classes(p: SitePoint): String = MapView.placeClasses("hd-site-icon hd-site-marker", p.basis)
+    override def classes(p: SitePoint): String =
+      MapView.placeClasses("hd-site-icon hd-site-marker", p.basis) + (if p.undated then s" ${MapView.UndatedClass}" else "")
+    // a site of no known date beneath the dated ones
+    override def zIndex(p: SitePoint): Int = if p.undated then -100 else 0
     override def attrs(p: SitePoint): String = p.known.fold("")(t => s""" data-site-type="${t.id}"""")
     def fill(p: SitePoint, span: (Long, Long)): String =
       MapView.viridisAt(p.mid.getOrElse((span._1 + span._2).toDouble / 2), span)
     private def note(p: SitePoint): String =
-      List(p.known.fold("site of unknown type")(_.label), p.period.fold("")((a, b) => Fmt.periodStr(Some(a.toLong), Some(b.toLong))))
+      List(p.known.fold("site of unknown type")(_.label),
+        if p.undated then "date unknown" else p.period.fold("")((a, b) => Fmt.periodStr(Some(a.toLong), Some(b.toLong))))
         .filter(_.nonEmpty).mkString(" · ")
     def member(p: SitePoint): Member =
-      Member(DotKind.Site, 1, p.mid.toList, Certainty.NoSay,
+      Member(DotKind.Site, 1, p.mid.toList, Certainty.NoSay, undated = if p.undated then 1 else 0,
         entry = Some(DotEntry(DotKind.Site, key(p), p.name, CardIcons.place(p.kind, p.known.map(_.id)), p.mid, note(p))))
     def label(p: SitePoint): String = s"${p.name} · ${p.known.fold("site")(_.label)}"
     def action(p: SitePoint): String = "show only this place and pin its card"
@@ -137,12 +141,15 @@ object PointKinds:
     def inner(e: EventGeo): String = Glyphs.badge(CardIcons.event(e.kind))
     override def classes(e: EventGeo): String =
       s"hd-ev hd-ev--${EventMarker.tierClass(e.tier)} hd-ev--${EventTaxonomy.of(e.kind).group}" +
-        (if e.precision == EventPrecision.Approximate then " hd-ev--approximate" else "")
+        (if e.precision == EventPrecision.Approximate then " hd-ev--approximate" else "") +
+        (if undated(e) then s" ${MapView.UndatedClass}" else "")
+    /** Pure: has it no known date (its outer span open on both sides)? */
+    def undated(e: EventGeo): Boolean = EventGeo.outer(e.timeSpan).isEmpty
     override def attrs(e: EventGeo): String = s""" data-id="${Fmt.esc(e.id)}""""
     def fill(e: EventGeo, span: (Long, Long)): String = Fmt.color(EventMarker.rampAt(e, span))
     private def mid(e: EventGeo): Option[Double] = EventGeo.outer(e.timeSpan).map((a, b) => (a + b).toDouble / 2)
     def member(e: EventGeo): Member =
-      Member(DotKind.Event, 1, mid(e).toList, Certainty.NoSay,
+      Member(DotKind.Event, 1, mid(e).toList, Certainty.NoSay, undated = if undated(e) then 1 else 0,
         entry = Some(DotEntry(DotKind.Event, e.id, e.label, CardIcons.event(e.kind), mid(e), EventPlayback.note(e))))
     def label(e: EventGeo): String = EventMarker.describe(e)
     def action(e: EventGeo): String = "pin its card"
@@ -151,7 +158,7 @@ object PointKinds:
       * ([[EventPrecision.mapped]], decided in core); this keeps a stray one off the map too. */
     override def keep(e: EventGeo): Boolean = EventPrecision.mapped(e.precision)
     // the corpus's events above the catalogue's
-    override def zIndex(e: EventGeo): Int = if e.tier == EventTier.Catalogue then 0 else 500
+    override def zIndex(e: EventGeo): Int = if undated(e) then -100 else if e.tier == EventTier.Catalogue then 0 else 500
     def activate(e: EventGeo, how: Activation): Unit =
       val el = how.element
       Preview.pin(Preview.Target.Event(e.id), () => el.filter(_.isConnected).map { x =>

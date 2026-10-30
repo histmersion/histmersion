@@ -48,7 +48,8 @@ async function round(page, i) {
   await page.mouse.down();
   for (let s = 1; s <= 6; s++) await page.mouse.move(x + s * d, y);
   await page.mouse.up();
-  // every layer on, then off again
+  // every layer on, then off again (in the layers panel, opened by its button)
+  if (await page.locator('#layers-btn').isVisible() && !(await page.locator('#layers-panel').isVisible())) await page.locator('#layers-btn').click();
   const toggles = page.locator('.layer-toggles .layer-group > button.btn--toggle');
   const m = await toggles.count();
   for (let t = 0; t < m; t++) await toggles.nth(t).click();

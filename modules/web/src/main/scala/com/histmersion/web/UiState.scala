@@ -281,6 +281,10 @@ object UiState:
   val eventKind = Field[Option[String]]("eventKind", "eventKind", None, Persist.Local, Role.View)
   val eventTier = Field[Option[String]]("eventTier", "eventTier", None, Persist.Local, Role.View)
   val siteType  = Field[Option[String]]("siteType", "siteType", None, Persist.Local, Role.View)
+  /** "Also show sites (events) with no known date": drawn beneath the dated ones, outlined dashed. Off by
+    * default; per device. */
+  val sitesUndated  = Field[Boolean]("sitesUndated", "sitesUndated", false, Persist.Local, Role.View)
+  val eventsUndated = Field[Boolean]("eventsUndated", "eventsUndated", false, Persist.Local, Role.View)
   /** How the boundaries layer reads the period ([[GeoPick]]): a snapshot at its middle (the default),
     * start or end, or every state in it with its earliest or latest shape. Sites follow a snapshot's
     * year and the middle otherwise; playback always draws one year. Per device. */
@@ -334,7 +338,7 @@ object UiState:
 
   private val fields: List[Field[?]] =
     List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
-      inView, open, tab, layers, sources, baseMap, mapOptions, mediaProvider, mediaLicense, eventKind, eventTier, siteType, areaPick, mapMotion, sheet, jobStatus, jobKinds, jobSince, jobUntil, jobSubject,
+      inView, open, tab, layers, sources, baseMap, mapOptions, mediaProvider, mediaLicense, eventKind, eventTier, siteType, sitesUndated, eventsUndated, areaPick, mapMotion, sheet, jobStatus, jobKinds, jobSince, jobUntil, jobSubject,
       runStatus, runPipelines, runOrigins, runManager, runProvider, runModel, runGoal, runSince, runUntil, runSubject,
       approvalState, approvalKinds, approvalBy, approvalSubject, schedTypes, schedCodes, schedSubject, acquireDone, tasksDone,
       mergeBundle, apiKey)

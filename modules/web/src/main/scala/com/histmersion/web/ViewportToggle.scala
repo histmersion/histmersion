@@ -42,77 +42,124 @@ object ViewportToggle:
     "Which states the boundaries layer draws for the period. Sites use the same year, or the midpoint " +
       "for “all states in period”; playback shows one year at a time."
 
-  /** Is layer `l` off — its options disabled? */
-  private def off(l: MapLayer): Signal[Boolean] = UiState.layerOn(l).map(!_)
+  /** Pure: how many of the map's `total` layers are on, as the layers button says it. */
+  def layersLabel(on: Int, total: Int): String = s"Layers · $on of $total on"
 
-  /** Pure: why a disabled option of layer `l` cannot be used. */
-  def offWhy(l: MapLayer): String = s"Turn on ${l.label.toLowerCase} first"
+  /** The layers the button counts: the findings, then every [[MapLayer]]. */
+  val LayerCount: Int = 1 + MapLayer.values.length
 
-  /** One layer's group: its switch, then the options that are its own (#1446, #1449). */
-  private def layerGroup(l: MapLayer): HtmlElement =
-    val opts: List[HtmlElement] = l match
-      case MapLayer.Boundaries => List(areaPickSelect)
-      case MapLayer.Sites      => List(IconSelect("site type", UiState.siteType, Val(LayerFilters.siteTypes), off(l), offWhy(l)))
-      case MapLayer.Media      => List(
-        MediaFilters.select("provider", UiState.mediaProvider, MediaFilters.providers.signal, MediaProvider.title, off(l), offWhy(l)),
-        MediaFilters.select("licence", UiState.mediaLicense, MediaFilters.licences.signal, LicenseName.label, off(l), offWhy(l)))
-      case MapLayer.Events     => List(IconSelect("event kind", UiState.eventKind, Val(LayerFilters.eventKinds), off(l), offWhy(l)))
-    div(cls := "btn-group layer-group", role := "group", aria.label := l.label,
-      LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _)), opts)
+  /** Whether the layers panel is open (a wide screen: on a phone it is the map & tools drawer). */
+  val open: Var[Boolean] = Var(false)
 
-  /** The boundaries layer's "States shown" menu: how it reads the period ([[GeoPick]]); disabled while
-    * the layer is off (its choice still sets the sites' year). */
-  private def areaPickSelect: HtmlElement =
-    select(
-      idAttr := "area-pick",
-      cls := "field area-pick-select",
-      aria.label := "States shown",
-      title <-- off(MapLayer.Boundaries).map(d => if d then s"States shown — ${offWhy(MapLayer.Boundaries)}" else AreaPickHelp),
-      disabled <-- off(MapLayer.Boundaries),
-      controlled(
-        value <-- UiState.areaPick.signal.map(_.wire),
-        onChange.mapToValue --> { v => GeoPick.parse(v).foreach(p => UiState.set(UiState.areaPick := p)()) }
-      ),
-      GeoPick.values.toList.map(p => option(value := p.wire, p.label))
+  private val onCount: Signal[Int] =
+    UiState.sources.signal.combineWith(UiState.layers.signal).map((src, ls) => (if src then 1 else 0) + ls.size)
+
+  /** The undated sites' or events' switch, under their layer. */
+  private def undatedBox(field: Field[Boolean], what: String): HtmlElement =
+    label(
+      cls := "layer-check",
+      input(typ := "checkbox", idAttr := s"undated-$what",
+        controlled(checked <-- field.signal, onClick.mapToChecked --> { v => UiState.set(field := v)() })),
+      s" Also show $what with no known date"
     )
 
+  /** One layer's row: its switch and — only while it is on — its own options (#1446, #1449). */
+  private def layerGroup(l: MapLayer): HtmlElement =
+    def opts: List[HtmlElement] = l match
+      case MapLayer.Boundaries => List(areaPickSelect)
+      case MapLayer.Sites      => List(IconSelect("site type", UiState.siteType, Val(LayerFilters.siteTypes)), undatedBox(UiState.sitesUndated, "sites"))
+      case MapLayer.Media      => List(
+        MediaFilters.select("provider", UiState.mediaProvider, MediaFilters.providers.signal, MediaProvider.title),
+        MediaFilters.select("licence", UiState.mediaLicense, MediaFilters.licences.signal, LicenseName.label))
+      case MapLayer.Events     => List(IconSelect("event kind", UiState.eventKind, Val(LayerFilters.eventKinds)),
+        IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers)), undatedBox(UiState.eventsUndated, "events"))
+    div(cls := "layer-group", role := "group", aria.label := l.label, dataAttr("layer") := l.wire,
+      LayerToggle(l.icon, l.label, UiState.layerOn(l), UiState.setLayer(l, _)),
+      child.maybe <-- UiState.layerOn(l).map(on => Option.when(on)(div(cls := "layer-options", opts))))
+
+  /** The boundaries layer's "States shown" menu: how it reads the period ([[GeoPick]]). */
+  private def areaPickSelect: HtmlElement =
+    label(cls := "layer-field",
+      span(cls := "layer-field-label", "States shown"),
+      select(
+        idAttr := "area-pick",
+        cls := "field area-pick-select",
+        title := AreaPickHelp,
+        controlled(
+          value <-- UiState.areaPick.signal.map(_.wire),
+          onChange.mapToValue --> { v => GeoPick.parse(v).foreach(p => UiState.set(UiState.areaPick := p)()) }
+        ),
+        GeoPick.values.toList.map(p => option(value := p.wire, p.label))
+      ))
+
+  // `var`: the pending debounce timer of the moveend handler below
+  private var timer: Int = 0
+
+  /** "On the map" (only the sources in the map's view) or "Everywhere": the results follow the map's view
+    * while it is on. */
+  def setInView(on: Boolean): Unit =
+    dom.window.clearTimeout(timer)
+    if on && TheMap.isUp then UiState.set(UiState.inView := true, UiState.bbox := Some(bboxOf(TheMap.surface)))()
+    else UiState.set(UiState.inView := false, UiState.bbox := None)()
+
+  /** The "Layers · N of M on" button over the map, and the panel it opens: the findings and each layer, a
+    * layer's options only while it is on, the background map and a link to the map's settings. On a phone
+    * the panel is the map & tools drawer. */
   def init(config: UiConfig): HtmlElement =
-    // `var`: the pending debounce timer of the moveend handler below
-    var timer: Int = 0
     val initialInView = UiState.inView.now()
-
-    def setInView(on: Boolean): Unit =
-      dom.window.clearTimeout(timer)
-      if on then UiState.set(UiState.inView := true, UiState.bbox := Some(bboxOf(TheMap.surface)))()
-      else UiState.set(UiState.inView := false, UiState.bbox := None)()
-
     div(
-      cls := "viewport-toggle",
-      // on a phone this row is the map & tools drawer, and this its heading
-      MobileChrome.drawerHead("map & tools"),
-      // one group per layer — its switch, then its own options — one separator between groups
-      // (`.toolbar`). An option whose layer is off stays in place, disabled, its title saying why:
-      // nothing comes and goes, so nothing after it moves. Then the event tier (the attested /
-      // catalogue split), and the base map under everything.
-      div(
-        cls := "toolbar layer-toggles",
-        // the finding markers first: they are what the map is for; "only sources in view" is theirs
-        div(cls := "btn-group layer-group", role := "group", aria.label := "findings",
-          LayerToggle(PointKinds.Findings.icon, PointKinds.Findings.layerLabel, UiState.sources.signal,
-            v => UiState.set(UiState.sources := v)()),
-          // a highlighted toggle like the layers, not a checkbox: it shows UiState.inView itself
-          LayerToggle(Icon.InView, "Only sources in view", UiState.inView.signal, setInView)),
-        MapLayer.values.toList.map(layerGroup),
-        div(cls := "btn-group tier-group", role := "group", aria.label := "event tier",
-          IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers), off(MapLayer.Events), offWhy(MapLayer.Events))),
-        BaseMaps.controls
+      cls := "layers-anchor",
+      button(
+        typ := "button",
+        cls := "btn layers-btn",
+        idAttr := "layers-btn",
+        aria.expanded <-- open.signal,
+        htmlAttr("aria-controls", com.raquo.laminar.codecs.StringAsIsCodec) := "layers-panel",
+        Icon(Icon.Layers),
+        span(child.text <-- onCount.map(layersLabel(_, LayerCount))),
+        onClick --> (_ => open.update(!_))
       ),
+      div(
+        cls := "viewport-toggle layers-panel",
+        idAttr := "layers-panel",
+        role := "dialog",
+        aria.label := "Map layers",
+        cls("is-open") <-- open.signal,
+        // on a phone this panel is the map & tools drawer, and this its heading
+        MobileChrome.drawerHead("map & tools"),
+        div(cls := "layers-head",
+          h2(cls := "layers-title", "Layers"),
+          button(typ := "button", cls := "btn btn--bare btn--icon", aria.label := "close the layers", "✕",
+            onClick --> (_ => open.set(false)))),
+        div(
+          cls := "layer-toggles",
+          // the finding markers first: they are what the map is for
+          div(cls := "layer-group", role := "group", aria.label := "findings", dataAttr("layer") := "sources",
+            LayerToggle(PointKinds.Findings.icon, PointKinds.Findings.layerLabel, UiState.sources.signal,
+              v => UiState.set(UiState.sources := v)())),
+          MapLayer.values.toList.map(layerGroup)
+        ),
+        div(cls := "layers-base",
+          h3(cls := "layers-subtitle", "Background map"),
+          BaseMaps.controls,
+          RouteLink(Route.Settings(SettingsSection.Data), cls := "layers-settings", "Map settings and downloads"))
+      ),
+      // Escape closes the panel — unless it closes a menu or the map options inside it first
+      documentEvents(_.onKeyDown) --> { e =>
+        val inner = Option(e.target).collect { case el: dom.Element => el }
+          .exists(_.closest(".map-options-anchor, .icon-select") != null)
+        if e.key == "Escape" && open.now() && !Viewport.narrowNow && !inner then open.set(false)
+      },
+      documentEvents(_.onPointerDown) --> { e =>
+        val t = e.target.asInstanceOf[dom.Element]
+        if open.now() && !Viewport.narrowNow && t != null && t.closest(".layers-anchor, .icon-select-menu, .map-options") == null then open.set(false)
+      },
       onMountUnmountCallbackWithState(
         mount = _ =>
           Option.when(TheMap.isUp)(TheMap.surface).map { map =>
-            // Push bbox on map moveend when the checkbox is checked (a zoom ends with a moveend too) —
-            // when the view MOVED: the chrome around the map changing its size (a filter row folded, the
-            // sidebar dragged) ends with a moveend too, and refetched every list for the same place
+            // Push bbox on map moveend while "On the map" is chosen — when the view MOVED: the chrome around
+            // the map changing its size (the sidebar dragged) ends with a moveend too, and refetched every
+            // list for the same place
             // `var`: where the camera stood at the last moveend
             var camera = (map.center, map.zoom)
             val sub = map.on(MapEventKind.MoveEnd) { _ =>
@@ -139,7 +186,7 @@ object ViewportToggle:
                 UiState.set(UiState.bbox := Some(bboxOf(map)))()
             sub
           },
-        // the map outlives this row: its handlers go with the row, and so does a pending bbox write
+        // the map outlives this panel: its handlers go with it, and so does a pending bbox write
         unmount = (_, st) => st.flatten.foreach { sub =>
           dom.window.clearTimeout(timer)
           sub.cancel()

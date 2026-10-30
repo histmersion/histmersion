@@ -277,3 +277,5 @@ object PlaceHover:
       case (_, _, Some(ll))    => anchorAt(ll)
       case _                   => { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
     settle(t, on, anchor, how.element.filter(_ => how.keyboard), how.keyboard)
+    // chosen, its detail replaces the results; unchosen, the results come back
+    if on then ResultsPanel.show(t) else if ResultsPanel.selected.now().exists(_ == t) then ResultsPanel.back()

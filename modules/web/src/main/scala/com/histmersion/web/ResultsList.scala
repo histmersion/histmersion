@@ -26,6 +26,8 @@ object ResultsList:
   private var pageOpts: Option[SourceRenderOpts] = None
 
   private val content = Var[List[HtmlElement]](Nil)
+  /** How many sources the filter selects (the Sources tab's count), once answered. */
+  val total: Var[Option[Int]] = Var(None)
   private val countText = Var("")
   private val isBusy = Var(false)
   private val isError = Var(false)
@@ -79,12 +81,13 @@ object ResultsList:
     pageTotal = result.total
     pageParams = opts.params
     pageOpts = Some(opts)
+    total.set(Some(result.total))
 
     isBusy.set(false)
     isError.set(false)
 
     countText.set(countLine())
-    content.set(if hits.isEmpty then List(emptyState()) else hits.map(hitRow))
+    content.set(if hits.isEmpty then List(emptyState()) else hits.map(hitRow(_, inPanel = true)))
     moreLoading.set(false)
     moreLabel.set(nextLabel())
 
@@ -204,7 +207,7 @@ object ResultsList:
           pageTotal = r.total
           pageHits = pageHits ++ r.hits
           countText.set(countLine())
-          content.set(pageHits.map(hitRow))
+          content.set(pageHits.map(hitRow(_, inPanel = true)))
           moreLoading.set(false)
           moreLabel.set(nextLabel())
         case scala.util.Failure(e) =>
@@ -213,7 +216,9 @@ object ResultsList:
       }
     }
 
-  private[web] def hitRow(h: Hit): HtmlElement =
+  /** A source's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens
+    * its window), what it is, why it matched, and "open in a new tab". */
+  private[web] def hitRow(h: Hit, inPanel: Boolean = false): HtmlElement =
     val src = h.source
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
     val meta = List(
@@ -231,7 +236,8 @@ object ResultsList:
       role := "button",
       tabIndex := 0,
       div(cls := "ck", SourceLink(src.citekey, src.doi)),
-      div(cls := "title", src.title),
+      a(cls := "title row-link", href := SourceLink.href(src.citekey), src.title,
+        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); openSource(src.citekey, inPanel) } }),
       div(cls := "meta", meta),
       src.snippet.filter(_.nonEmpty).map(s =>
         div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(s)))
@@ -259,13 +265,21 @@ object ResultsList:
           )
         )
       else emptyNode,
-      onClick --> { _ => ArticleModal.open(src.citekey, Map("q" -> UiState.q.now().getOrElse(""))) },
+      NewTabLink(SourceLink.href(src.citekey), src.title),
+      onClick --> { ev =>
+        val inLink = Option(ev.target.asInstanceOf[dom.Element].closest("a")).isDefined
+        if !inLink then openSource(src.citekey, inPanel)
+      },
       onKeyDown --> { ev =>
-        if ev.key == "Enter" || ev.key == " " then
+        if (ev.key == "Enter" || ev.key == " ") && ev.target == ev.currentTarget then
           ev.preventDefault()
-          ArticleModal.open(src.citekey, Map("q" -> UiState.q.now().getOrElse("")))
+          openSource(src.citekey, inPanel)
       }
     )
+
+  private def openSource(ck: String, inPanel: Boolean): Unit =
+    if inPanel then ResultsPanel.show(Preview.Target.Source(ck))
+    else ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse("")))
 
   private def emptyState(): HtmlElement =
     val chips = UiState.activeChips()

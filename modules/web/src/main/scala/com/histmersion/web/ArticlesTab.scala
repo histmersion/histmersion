@@ -17,23 +17,29 @@ object ArticlesTab:
     query = () => UiState.articleQuery(),
     fetch = (q, offset) => ApiClient.articles(q.copy(filter = q.filter.copy(offset = offset)))
       .map(r => TabPage(r.articles, r.total, kindCounts(r.kinds) :+ ResultsPaging.span(UiState.from.now(), UiState.to.now()))),
-    render = renderArticle,
+    render = renderArticle(_, inPanel = true),
     empty = "No articles relate to the current filter.",
     page = Layout.tabPage,
     debounceMs = () => UiState.reloadDelay(Layout.tabReloadMs))
 
   def pane: HtmlElement = tab.pane
 
-  private[web] def renderArticle(art: ArticleSummary): HtmlElement =
+  /** How many the list holds, once it has an answer (its tab's count). */
+  val total: Signal[Option[Int]] = tab.state.signal.map(s => Option.when(s.loaded)(math.max(s.total, s.rows.size)))
+
+  /** An article's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens
+    * its window) and "open in a new tab". */
+  private[web] def renderArticle(art: ArticleSummary, inPanel: Boolean = false): HtmlElement =
     li(
       cls := "article-row",
+      NewTabLink(Route.Article(art.slug).path, art.title),
       a(
         href := Route.Article(art.slug).path,
         cls := "article-link",
         onClick --> { ev =>
           if Router.plain(ev) then
             ev.preventDefault()
-            ArticleModal.openSlug(art.slug)
+            if inPanel then ResultsPanel.show(Preview.Target.Article(art.slug)) else ArticleModal.openSlug(art.slug)
         },
         div(cls := "article-title", art.title),
         div(

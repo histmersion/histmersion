@@ -159,19 +159,21 @@ export async function filterTyping(page, text, chipPrefix) {
     lastKeyToListMs: toList, suggestMs: suggest, previewToListMs: preview };
 }
 
-/** The Articles tab, then its first article: from the click to its window, and to its content. */
+/** The Articles tab, then its first article: from the click to its detail in the results, and from "Pin as
+  * window" to its content in the window. */
 export async function articleOpen(page, baseURL) {
   await page.goto(new URL('/explore#tab=articles', baseURL).href);
   await page.reload();
   await ready(page);
   await page.locator('.articles-list .article-link').first().waitFor();
   const link = page.locator('.articles-list .article-link').first();
-  const shown = await inputToUpdate(page, '.wm-window', () => link.click());
+  const shown = await inputToUpdate(page, '.result-detail', () => link.click());
   const result = { windowMs: shown };
+  // pinned as a window: from the click to the article's own content in it
+  result.contentMs = await inputToUpdate(page, '.wm-window .wm-content', () => page.locator('.result-detail .detail-pin').click(),
+    `el.querySelector('h1, h2')`);
   await page.locator('.wm-window .wm-close').click();
-  await page.waitForFunction(() => !document.querySelector('.wm-window'));
-  result.contentMs = await inputToUpdate(page, '.wm-window .wm-content', () => link.click(), `el.querySelector('h1, h2')`);
-  await page.locator('.wm-window .wm-close').click();
+  await page.locator('#detail-back').click();
   return result;
 }
 
@@ -256,6 +258,7 @@ export async function vectorMap(page, baseURL, style, { lat = 37.9, lon = 25.4, 
   const pan = await mapPan(page);
   await page.evaluate(([la, lo, z]) => window.__testMap.setView([la, lo], z - 1), [lat, lon, zoom]);
   const zoomed = await mapZoom(page);
+  if (await page.locator('#layers-btn').isVisible() && !(await page.locator('#layers-panel').isVisible())) await page.locator('#layers-btn').click();
   await page.locator('.map-options-btn').click();
   await page.locator('.map-options').waitFor();
   const options = await measure(page, async () => {
@@ -328,11 +331,11 @@ export async function playback(page, baseURL, from, to, seconds = 4) {
     requestAnimationFrame(f);
   }), seconds * 1000);
   const m = await measure(page, async () => {
-    await page.locator('.tl-playback button[title="play"]').click();
+    await page.locator('#tl-play').click();
     await page.waitForTimeout(seconds * 1000);
   });
   const l = await looks;
-  await page.locator('.tl-playback button[title="pause"]').click();
+  await page.locator('#tl-play').click();
   page.off('request', onRequest);
   const per = n => Math.round(10 * n / seconds) / 10;
   return { ...m, states: l.frames ? (await page.evaluate(() => window.__testMap.shapes('polities').length)) : 0,

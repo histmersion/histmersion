@@ -188,6 +188,7 @@ object Pages:
   private def settings(ui: UiConfig, s: SettingsSection): HtmlElement = s match
     case SettingsSection.Data  => div(cls := "tool-pane", MapRegionsView.panel)
     case SettingsSection.Keys  => Auth.keyPane
+    case SettingsSection.Credits => CreditsView.pane
     case SettingsSection.About => AboutView.pane
 
   // ── places and events ───────────────────────────────────────────────────────────────────────────
@@ -244,7 +245,7 @@ object LibraryLists:
     name = "library-sources", singular = "source", noun = "sources",
     query = () => UiState.toFilter().copy(limit = Layout.tabFetch),
     fetch = (f, offset) => ApiClient.sources(f.copy(offset = offset)).map(r => TabPage(r.hits, r.total)),
-    render = ResultsList.hitRow,
+    render = ResultsList.hitRow(_),
     empty = "No sources match the current filter.",
     page = Layout.tabPage,
     debounceMs = () => UiState.reloadDelay(Layout.tabReloadMs)))
@@ -254,7 +255,7 @@ object LibraryLists:
     query = () => UiState.articleQuery(),
     fetch = (q, offset) => ApiClient.articles(q.copy(filter = q.filter.copy(offset = offset)))
       .map(r => TabPage(r.articles, r.total, ArticlesTab.kindCounts(r.kinds))),
-    render = ArticlesTab.renderArticle,
+    render = ArticlesTab.renderArticle(_),
     empty = "No articles relate to the current filter.",
     page = Layout.tabPage,
     debounceMs = () => UiState.reloadDelay(Layout.tabReloadMs)))

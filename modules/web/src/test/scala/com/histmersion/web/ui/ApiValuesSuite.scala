@@ -20,7 +20,7 @@ class ApiValuesSuite extends munit.FunSuite:
 
   test("SidebarTab covers all expected tabs"):
     val keys = SidebarTab.values.map(_.key).toSet
-    assertEquals(keys, Set("sources", "articles", "events", "bytime", "byregion"))
+    assertEquals(keys, Set("sources", "articles", "events", "places", "pictures"))
 
   test("SidebarTab keys are all non-empty"):
     for t <- SidebarTab.values do

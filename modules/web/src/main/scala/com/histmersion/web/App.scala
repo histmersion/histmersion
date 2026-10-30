@@ -2,7 +2,7 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.*
-import com.histmersion.web.ui.{Layout, SidebarTab}
+import com.histmersion.web.ui.SidebarTab
 import org.scalajs.dom
 
 import scala.compiletime.uninitialized
@@ -51,7 +51,10 @@ object App:
         // which of the four places is showing: the narrow layout moves the search for Explore's own
         dataAttr("showing") <-- Router.route.map(_.place.toString.toLowerCase),
         // the dragged width is data; the grid that uses it is the stylesheet's
-        styleAttr <-- sidebarWidth.signal.map(w => s"--sidebar-w:${w}px"),
+        styleAttr <-- ResultsPanel.width.signal.map(w => s"--sidebar-w:${w}px"),
+        // the filter panel lies over the map: folded or open, the map keeps its size; its corners' controls
+        // move clear of it (the stylesheet's `--filters-w`)
+        cls("filters-folded") <-- FilterBar.folded.signal,
         TopBar.element(ui),
         // Explore stays laid out under the other pages, hidden and out of the keyboard's way, so the map
         // is neither resized nor reloaded by a visit to Library or Research
@@ -62,7 +65,7 @@ object App:
           MobileChrome.bar(ui),
           MapView.init(ui),
           PlacesInput.mapChips,
-          sidebarElement(ui),
+          ResultsPanel.element(ui),
           TimelineView.init(ui),
           FilterBar.init(ui),
           ViewportToggle.init(ui),
@@ -82,10 +85,12 @@ object App:
       ArticleModal.restore()
       WindowManager.installKeys()
       TopBar.installShortcut()
-      val initTab = activeTab
-      if initTab == SidebarTab.Articles.key then ArticlesTab.load()
-      else if initTab == SidebarTab.Events.key then EventsTab.load()
-      else if initTab == SidebarTab.ByTime.key || initTab == SidebarTab.ByRegion.key then TreeTab.show(initTab)
+      // every tab's count is shown: the lists load at once, and each refetches only when its query changed
+      ArticlesTab.load()
+      EventsTab.load()
+      TreeTab.show(SidebarTab.Sources.key)
+      MapLists.refresh(ui)
+      MapLists.follow(ui)
 
       loadTagline()
 
@@ -94,9 +99,8 @@ object App:
       lastParams = Some(paramsKey())
       UiState.signal.foreach { _ =>
         schedule()
-        val tab = activeTab
-        if tab == SidebarTab.Articles.key then ArticlesTab.refresh()
-        else if tab == SidebarTab.Events.key then EventsTab.refresh()
+        ArticlesTab.refresh()
+        EventsTab.refresh()
       }(using unsafeWindowOwner)
 
       load()
@@ -108,141 +112,6 @@ object App:
   private val statusVar = Var("")
   private def statusElement: HtmlElement =
     span(idAttr := "status", child.text <-- statusVar.signal)
-
-  private val sidebarWidth = Var(Layout.sidebarDefault.value)
-
-  private def activeTab: String = UiState.tab.now().getOrElse(SidebarTab.Sources.key)
-  private def activeTabSignal: Signal[String] = UiState.tab.signal.map(_.getOrElse(SidebarTab.Sources.key))
-  private def setActiveTab(key: String): Unit =
-    UiState.set(UiState.tab := Some(key))(push = true)
-    // every tab tells the tree which axis is showing — none, for the others — so a hidden tree stops
-    // reloading on each filter change (it kept the axis of the last tree tab and refetched behind the list)
-    TreeTab.show(key)
-    if key == SidebarTab.Articles.key then ArticlesTab.load()
-    else if key == SidebarTab.Events.key then EventsTab.load()
-
-  private def sidebarElement(ui: UiConfig): HtmlElement =
-    val tabs = SidebarTab.values.toList.map(t => t.key -> t.label)
-    div(
-      cls := "sidebar",
-      // the bottom sheet's height in the narrow layout (the classes do nothing on a wide screen)
-      cls <-- UiState.sheet.signal.map(s => s"sheet-${s.wire}"),
-      sheetHandle,
-      div(
-        cls := "sidebar-resize",
-        onPointerDown --> { ev =>
-          ev.preventDefault()
-          val startX = ev.clientX
-          val startW = sidebarWidth.now()
-          val target = ev.target.asInstanceOf[dom.HTMLElement]
-          target.setPointerCapture(ev.pointerId)
-          val move = { (me: dom.PointerEvent) =>
-            val nw = Math.max(Layout.sidebarMinWidth.value, Math.min(Layout.sidebarMaxWidth.value, startW - (me.clientX - startX).toInt))
-            sidebarWidth.set(nw)
-          }: js.Function1[dom.PointerEvent, Unit]
-          val up = { (_: dom.PointerEvent) =>
-            target.removeEventListener("pointermove", move)
-          }: js.Function1[dom.PointerEvent, Unit]
-          target.addEventListener("pointermove", move)
-          target.addEventListener("pointerup", up, js.Dynamic.literal(once = true).asInstanceOf[dom.EventListenerOptions])
-        }
-      ),
-      titleFilter,
-      div(
-        cls := "tabs",
-        tabs.map { (key, label) =>
-          button(
-            cls <-- activeTabSignal.map(t => if t == key then "tab active" else "tab"),
-            label,
-            onClick --> { _ => setActiveTab(key) }
-          )
-        }
-      ),
-      div(
-        cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Sources.key),
-        ResultsList.element
-      ),
-      div(
-        cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Articles.key),
-        ArticlesTab.pane
-      ),
-      div(
-        cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Events.key),
-        EventsTab.pane
-      ),
-      div(
-        cls("is-hidden") <-- activeTabSignal.map(t => t != SidebarTab.ByTime.key && t != SidebarTab.ByRegion.key),
-        TreeTab.pane
-      )
-    )
-
-  /** The bottom sheet's grab handle (shown only in the narrow layout): a tap moves the sheet one step
-    * up (from full back to the strip); a vertical drag lets go at the nearest of the three. */
-  private def sheetHandle: HtmlElement =
-    // `var`s: the drag in progress — where it started, and whether it moved enough to be a drag
-    var startY  = 0.0
-    var dragged = false
-    def h = dom.window.innerHeight.toDouble
-    /** A length token of the stylesheet's, in px. Measured, not parsed: the tokens are `clamp()` and
-      * `calc()` of the screen's size, which only layout resolves. */
-    def px(name: String) =
-      scala.util.Try {
-        val probe = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
-        probe.className = "length-probe"
-        probe.style.setProperty("--probe", s"var($name)")
-        dom.document.body.appendChild(probe)
-        val v = probe.getBoundingClientRect().height
-        probe.remove()
-        v
-      }.getOrElse(0.0)
-    def sheetOf(ev: dom.PointerEvent) = Option(ev.target.asInstanceOf[dom.Element].closest(".sidebar"))
-      .map(_.asInstanceOf[dom.HTMLElement])
-    button(
-      typ := "button",
-      cls := "sheet-handle",
-      aria.label := "resize the list",
-      title <-- UiState.sheet.signal.map(s => if s == Sheet.Full then "shrink the list" else "pull the list up"),
-      span(cls := "sheet-grip"),
-      onPointerDown --> { ev =>
-        startY = ev.clientY
-        dragged = false
-        ev.target.asInstanceOf[dom.HTMLElement].setPointerCapture(ev.pointerId)
-      },
-      onPointerMove --> { ev =>
-        if ev.buttons != 0 then   // pressed: a mouse hovering over the handle is not a drag
-          if math.abs(ev.clientY - startY) > 12 then dragged = true
-          // the sheet follows the finger; the stylesheet uses the height while `sheet-dragging` is on
-          if dragged then sheetOf(ev).foreach { el =>
-            el.classList.add("sheet-dragging")
-            el.style.setProperty("--sheet-live", s"${math.max(px("--sheet-peek"), h - ev.clientY)}px")
-          }
-      },
-      onPointerUp --> { ev =>
-        sheetOf(ev).foreach(_.classList.remove("sheet-dragging"))
-        val next =
-          if dragged then Sheet.nearest((h - ev.clientY) / h, px("--sheet-peek") / h, 1 - px("--sheet-full-gap") / h)
-          else Sheet.next(UiState.sheet.now())
-        UiState.set(UiState.sheet := next)()
-      }
-    )
-
-  /** The ONE title quick-filter, above the tab strip: it narrows every tab (sources by title,
-    * articles by title, events by label) through [[UiState.title]]. */
-  private def titleFilter: HtmlElement =
-    div(
-      cls := "title-filter",
-      input(
-        typ := "search",
-        cls := "field",
-        idAttr := "f-title",
-        placeholder := "filter by title…",
-        aria.label := "filter by title",
-        controlled(
-          value <-- UiState.title.signal.map(_.getOrElse("")),
-          onInput.mapToValue --> { v => UiState.set(UiState.title := Some(v).filter(_.trim.nonEmpty))() }
-        )
-      )
-    )
 
   private def loadTagline(): Unit =
     ApiClient.sources(Filter(limit = 1)).foreach { r =>
