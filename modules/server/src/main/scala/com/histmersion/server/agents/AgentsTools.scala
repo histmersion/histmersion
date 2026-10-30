@@ -216,6 +216,8 @@ object AgentsTools:
             "backlog; `on: true|false` turns the autopilot on — every goal gets its seeding manager and watcher and moves " +
             "from planned to reviewed by itself — or off), `drain` (nothing new starts while the runs in flight finish — the " +
             "autopilot's status says DRAINED once none is queued or running, safe for a deploy; `on: false` lifts it), " +
+            "`mode` (the two as one choice, as the web UI shows it: `mode: working` — on, nothing held back; `finish` — " +
+            "finish current work, then pause (the drain); `pause` — pause now (the autopilot off)), " +
             "`repair-acquire` (the acquisition items a watcher's sweep created " +
             "for legal open-access works move into the watchers' ingest backlog, to be ingested within the daily caps; a " +
             "person's items are never touched; `dryRun: true` lists what it would do), `focus` (the autopilot's focus: at most " +
@@ -252,10 +254,12 @@ object AgentsTools:
                                   case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some("mcp"))).map(AutopilotMarkdown.status)
             case "repair-acquire" => m.repairAcquire(RepairAcquire.RepairRequest(in.dryRun, Some("mcp"))).map(RepairAcquire.markdown)
             case "drain" => m.drain(Autopilot.DrainSet(in.on.getOrElse(true), Some("mcp"))).map(AutopilotMarkdown.status)
+            case "mode" => in.mode.map(_.trim).filter(_.nonEmpty).toRight(ApiError("`mode` needs `mode`: working, finish or pause"))
+                             .flatMap(md => m.setMode(AgentMode.ModeSet(md, Some("mcp")))).map(AutopilotMarkdown.status)
             case "focus" => in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
                               case None    => Right(AutopilotMarkdown.focus(m.focus))
                               case Some(v) => m.setFocus(Autopilot.FocusSet(v, in.goal, in.value, Some("mcp"))).map(AutopilotMarkdown.focus)
-            case other => Left(ApiError(s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, " +
+            case other => Left(ApiError(s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, mode, " +
                             "drain, repair-acquire, focus)"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
@@ -456,7 +460,7 @@ object AgentsTools:
       priority: Option[Int] = None, until: Option[String] = None, untilSource: Option[String] = None,
       kind: Option[String] = None, goal: Option[String] = None, cron: Option[String] = None,
       effect: Option[Managers.HintEffect] = None, suggest: Boolean = false, on: Option[Boolean] = None,
-      dryRun: Boolean = false, focus: Option[String] = None, value: Option[Int] = None)
+      dryRun: Boolean = false, focus: Option[String] = None, value: Option[Int] = None, mode: Option[String] = None)
       derives KindlingsCodecAsObject
   object ManagerInput:
     given Schema[ManagerInput] = KindlingsSchema.derived[ManagerInput].schema

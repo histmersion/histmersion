@@ -175,7 +175,7 @@ final class CompileArticlePipeline(h: Handlers, ds: DataSource, cfg: => AgentsCo
   private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided): Either[String, Written] =
     def task(why: String): Unit =
       ctx.warn(why)
-      val item = QueueAdd(s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.take(8)})", topic = Some("agent compile"))
+      val item = Pipelines.entry(ctx, s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.take(8)})", Some("agent compile"))
       val _ = ctx.write("tasks item", item.asJson)(h.ops.queueAdd("tasks", item).map(_ => ()))(Right(()))
     if !decided.approved then Right(Written(written = false, "the draft was rejected", None))
     else

@@ -44,7 +44,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
       : Either[ApiError, JobInfo] =
     def go: Either[ApiError, JobInfo] =
       BackgroundJob.start(ds, kind, Some(JobDetail(events = Some(describe))), slot, "an events run",
-        pins = deps.pins)((job, progress) =>
+        pins = deps.pins, stops = Option.when(kind == EventCatalogHandlers.ImportJobKind)(deps.jobStops))((job, progress) =>
         BackgroundJob.Outcome.of(body(job, progress)))
     if write then deps.maintenance.guard(kind)(go) else go
 

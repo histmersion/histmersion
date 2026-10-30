@@ -201,7 +201,8 @@ final class OaBacklog(ds: DataSource, cfg: => AgentsConfig, h: com.histmersion.s
       val text = w.acquireText.getOrElse(Scheduling.acquireText(
         Scheduling.Candidate(doi, if w.title.nonEmpty then w.title else doi, w.year, w.authors, w.venue, isOa = true, "", None),
         goal, w.why))
-      h.ops.queueAdd(Queue.Kind.Acquire.label, QueueAdd(text, topic = Option.when(goal.nonEmpty)(s"goal $goal"))).toOption.map(_.id)
+      h.ops.queueAdd(Queue.Kind.Acquire.label, QueueAdd(text, topic = Option.when(goal.nonEmpty)(s"goal $goal"),
+        goal = Option.when(goal.nonEmpty)(goal))).toOption.map(_.id)
     }
     id.foreach(i => goals.foreach(g => GoalLinkRepo.link(ds, g, LinkKind.QueueItem, i.toString, Some(doi))))
     id

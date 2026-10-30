@@ -376,7 +376,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
                 case BasemapLayer.Bathymetry => s"${cfg.bathymetry.extractMaxZoom} (sea floor, ${cfg.bathymetry.source.wire})"
               }.mkString(" / ")
         BackgroundJob.start(deps.ds, BasemapService.JobKind, Some(JobDetail(about = Some(what))), slot, "a base-map fetch",
-          Some(BasemapApi.Busy), deps.pins)((_, note) => BackgroundJob.Outcome.of(run(a, note)))
+          Some(BasemapApi.Busy), deps.pins, Some(deps.jobStops))((_, note) => BackgroundJob.Outcome.of(run(a, note)))
       }
 
   /** The job: each layer in turn — planned, checked against the free disk, downloaded, assembled. */

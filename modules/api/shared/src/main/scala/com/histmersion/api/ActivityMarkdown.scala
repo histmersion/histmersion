@@ -1,0 +1,52 @@
+package com.histmersion.api
+
+import com.histmersion.api.Activity.{Entry, EntryKind, Page}
+
+/** The activity list as Markdown: what `histmersion activity` prints and the `activity` tool answers. */
+object ActivityMarkdown:
+
+  /** `2026-10-30T12:40:00.123456Z` → `2026-10-30 12:40`. Pure. */
+  def minute(at: String): String = at.take(16).replace('T', ' ')
+
+  /** What the entry is about, in words: a run's pipeline and target, a job's kind and what it does, the line
+    * itself, a decision on its subject. Pure. */
+  def headline(e: Entry): String = e.entryKind match
+    case Some(EntryKind.Run) =>
+      val what = Agents.Pipeline.parse(e.what).fold(Wording.humanize(e.what))(Wording.pipeline)
+      what + e.target.filter(_.nonEmpty).fold("")(t => s" — $t")
+    case Some(EntryKind.Job) =>
+      Wording.jobKindOf(e.what) + e.citekey.orElse(e.target).filter(_.nonEmpty).fold("")(t => s" — $t")
+    case Some(EntryKind.Decision) =>
+      val outcome = Agents.ApprovalState.parse(e.state).fold(e.state)(Wording.approvalState).toLowerCase
+      s"${Agents.ApprovalKind.parse(e.what).fold(Wording.humanize(e.what))(Wording.approvalKind)} ($outcome)" +
+        Option(e.text).filter(_.nonEmpty).fold("")(t => s" — $t")
+    case Some(EntryKind.Log) | None => e.text
+
+  /** A run's or job's state in words, else nothing. Pure. */
+  def stateOf(e: Entry): String = e.entryKind match
+    case Some(EntryKind.Run) => Agents.RunState.parse(e.state).fold(e.state)(Wording.runState)
+    case Some(EntryKind.Job) => JobState.parse(e.state).fold(e.state)(Wording.jobState)
+    case _                   => ""
+
+  /** The links of an entry, as the CLI can follow them. Pure. */
+  def refs(e: Entry): List[String] =
+    e.goal.map(g => s"goal $g").toList ++
+      e.job.filter(_ => !e.entryKind.exists(k => k == EntryKind.Run || k == EntryKind.Job)).map(j => s"run/job ${j.take(8)}") ++
+      e.citekey.map(c => s"[[${c}]]") ++ e.article.map(a => s"article $a") ++
+      e.queueItem.filter(_ => !e.entryKind.contains(EntryKind.Log)).map(i => s"${e.queueList.getOrElse("queue")} item #$i") ++
+      e.approval.map(a => s"approval #$a")
+
+  def line(e: Entry): String =
+    val kind  = e.entryKind.fold(e.kind)(Wording.activityKind)
+    val state = stateOf(e)
+    val id    = e.entryKind.filter(k => k == EntryKind.Run || k == EntryKind.Job).flatMap(_ => e.job).fold("")(j => s" `${j.take(8)}`")
+    val refsText = refs(e)
+    s"- ${minute(e.at)} · **$kind**$id · ${headline(e).replace('\n', ' ').take(200)}" +
+      (if state.nonEmpty then s" · $state" else "") +
+      e.error.filter(_.nonEmpty).fold("")(err => s" — ${err.take(160)}") +
+      (if refsText.nonEmpty then s" _(${refsText.mkString(", ")})_" else "")
+
+  def page(p: Page, olderHint: String => String): String =
+    val head = s"**Activity** — ${p.counts.running} running now · ${p.counts.problemsWeek} problem(s) this week"
+    val body = if p.entries.isEmpty then "_Nothing here._" else p.entries.map(line).mkString("\n")
+    (List(head, "", body) ++ p.next.map(c => s"\n${olderHint(c)}").toList).mkString("\n")

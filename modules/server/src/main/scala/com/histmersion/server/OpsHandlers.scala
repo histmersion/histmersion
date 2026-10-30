@@ -128,16 +128,17 @@ final class OpsHandlers(deps: Deps):
   private def kindOf(list: String): Either[ApiError, Kind] =
     Kind.parse(list).toRight(ApiError(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
 
-  def queueList(list: String, all: Boolean): Either[ApiError, QueueListing] =
+  def queueList(list: String, all: Boolean, goal: Option[String] = None): Either[ApiError, QueueListing] =
     kindOf(list).map { k =>
-      val items = QueueRepo.list(ds, k, all).toList
+      val items = goal.map(_.trim).filter(_.nonEmpty).fold(QueueRepo.list(ds, k, all))(g => QueueRepo.forGoal(ds, k, g, all)).toList
       val checks =
         if k != Kind.Acquire then Nil
         else AcquireCheckRepo.of(ds, items.map(_.id)).values.toList.sortBy(_.item).map(r =>
           AcquireChecks.AcquireCheck(r.item, r.at.toString, r.outcome, r.reason, r.checks))
-      val goals = com.histmersion.db.GoalLinkRepo.goalsOfItems(ds, items.map(_.id)).groupBy(_._1).toList.sortBy(_._1)
-        .map((id, gs) => ItemGoals(id, gs.map((_, slug, title) => GoalRef(slug, title))))
-      QueueListing(k.label, items, checks, goals)
+      val linked = com.histmersion.db.GoalLinkRepo.goalsOfItems(ds, items.map(_.id)).map((id, slug, title) => (id, GoalRef(slug, title)))
+      val titles = items.flatMap(_.goal).distinct.flatMap(s => GoalRepo.get(ds, s).map(g => s -> g.title)).toMap
+      val own    = items.flatMap(i => i.goal.map(s => (i.id, GoalRef(s, titles.getOrElse(s, s)))))
+      QueueListing(k.label, items, checks, Queue.itemGoals(own, linked))
     }
 
   /** A LOG item with no topic joins today's entry (`## 2026-08-25`), which is how an appended

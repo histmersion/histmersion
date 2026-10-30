@@ -246,7 +246,8 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
       case Next.Retry(notBefore, failures, note) => retry(m, item, run, notBefore, failures, note, out)
       case Next.Stop(outcome, task, state) =>
         val failed = st == RunState.Failed
-        val filed  = task.flatMap(t => h.ops.queueAdd(Queue.Kind.Tasks.label, QueueAdd(t, topic = Some("agent manager"))).toOption.map(_.id))
+        val filed  = task.flatMap(t => h.ops.queueAdd(Queue.Kind.Tasks.label, QueueAdd(t, topic = Some("agent manager"), goal = m.goal,
+          job = Some(run))).toOption.map(_.id))
         val text   = outcome + filed.fold("")(id => s" (task #$id)")
         if ManagerRepo.evaluated(ds, item.id, Some(run), if failed then ItemStatus.Failed else ItemStatus.Stopped, None,
             Option.when(failed)(item.failures + 1), state, Some(text)) then
@@ -439,7 +440,7 @@ final class ManagerSupervisor(ds: DataSource, cfg: => AgentsConfig, agents: Agen
           }
         }
         moved.toList.map { text =>
-          val _ = h.ops.queueAdd("log", QueueAdd(s"goal $g: $text (watcher $id)".take(1000)))
+          val _ = h.ops.queueAdd("log", QueueAdd(s"goal $g: $text (watcher $id)".take(1000), goal = Some(g)))
           scribe.info(s"goal $g: $text")
           s"$id: migrated"
         }

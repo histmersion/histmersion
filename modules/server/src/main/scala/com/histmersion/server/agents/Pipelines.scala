@@ -11,9 +11,17 @@ import io.circe.syntax.*
   *    resolves too), read without the body. */
 private[agents] object Pipelines:
 
+  /** The goal a run works for: its own, else the goal it targets. */
+  def goalOf(run: com.histmersion.api.Agents.RunInfo): Option[String] =
+    run.goal.orElse(Option.when(run.targetKind == com.histmersion.values.TargetKind.Goal.wire)(run.target)).filter(_.nonEmpty)
+
+  /** A bookkeeping item a run writes: it names the run and the goal the run works for. */
+  def entry(ctx: RunCtx, text: String, topic: Option[String] = None): QueueAdd =
+    QueueAdd(text, topic = topic, goal = goalOf(ctx.run), job = Some(ctx.run.id))
+
   /** Add `line` to the worklog; answers the line. */
   def log(h: Handlers, ctx: RunCtx, line: String): Either[String, String] =
-    val entry = QueueAdd(line)
+    val entry = Pipelines.entry(ctx, line)
     ctx.write("log line", entry.asJson)(h.ops.queueAdd("log", entry).left.map(_.message).map(_ => line))(Right(line))
 
   def isCitekey(h: Handlers)(ck: String): Boolean = h.getSource(ck, body = false).isRight

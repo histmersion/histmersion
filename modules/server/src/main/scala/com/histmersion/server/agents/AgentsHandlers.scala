@@ -37,6 +37,9 @@ final class AgentsHandlers(deps: Deps, h: Handlers, clientFor: LlmClient.Factory
   /** How the engine, the managers and their threads keep work on the generation it started on. */
   val pins: com.histmersion.server.hot.Pinning = deps.pins
 
+  /** A person's pause and cancel of the server's long background jobs. */
+  val jobStops: com.histmersion.domain.jobs.JobStops = deps.jobStops
+
   /** The acquisition toolset (OpenAlex/Crossref, refs, assess, followups). A `var` because it is built
     * AFTER [[Handlers]] (it needs the ingest queue), and attached by `Main` before the pool starts;
     * until then — and in a test that attaches nothing — the steps that need it say it is offline. */

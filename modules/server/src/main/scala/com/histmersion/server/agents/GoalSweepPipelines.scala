@@ -45,7 +45,7 @@ private[agents] trait GoalSweep:
           { val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, id.toString, Some(doi)) })(())
         Right(false)
       case None =>
-        val item = QueueAdd(text, topic = Some(s"goal $goal"))
+        val item = QueueAdd(text, topic = Some(s"goal $goal"), goal = Some(goal), job = Some(ctx.run.id))
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
           h.ops.queueAdd("acquire", item).left.map(_.message).map { added =>
             val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, added.id.toString, Some(doi))

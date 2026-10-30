@@ -32,7 +32,9 @@ final class Deps(
     /** Pins work to a generation; [[Pinning.none]] without a hot graph (a test's fixed `Deps`). */
     val pins: Pinning = Pinning.none,
     /** `histmersion config reload`: read the config file again and switch to it. */
-    val reloader: () => ReloadReport = Deps.NoReload):
+    val reloader: () => ReloadReport = Deps.NoReload,
+    /** A person's pause and cancel of the long background jobs this server runs. */
+    val jobStops: com.histmersion.domain.jobs.JobStops = com.histmersion.domain.jobs.JobStops()):
 
   /** The config the calling thread sees (its pinned generation's, else the current one). */
   def cfg: AppConfig = cfgNow()

@@ -5,8 +5,8 @@ import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{JobRepo, MediaRepo}
-import com.histmersion.server.{ConverterClient, Deps}
+import com.histmersion.db.MediaRepo
+import com.histmersion.server.{BackgroundJob, ConverterClient, Deps}
 
 import java.util.concurrent.atomic.AtomicReference
 
@@ -85,35 +85,17 @@ final class MediaHandlers(deps: Deps, http: HttpTransport, converter: ConverterC
 
   // ── jobs ──────────────────────────────────────────────────────────────────────────────────────
 
-  /** Start `body` as a `jobs` row of `kind` on its own daemon thread; `histmersion jobs <id>` follows
-    * it, a restart fails it as `interrupted` like every other unfinished job. `body` returns the
-    * summary the finished job shows, or why it failed. */
+  /** Media jobs share the one-place runs' `busy` mark: one media run of any sort at a time. */
+  private val jobSlot = BackgroundJob.Slot(busy)
+
+  /** Start `body` as a `jobs` row of `kind` ([[BackgroundJob]]): `histmersion jobs <id>` follows it, a
+    * restart fails it as `interrupted` like every other unfinished job, and a person may pause, resume or
+    * cancel it between its batches. `body` returns the summary the finished job shows, or why it failed. */
   private def startJob(kind: String, describe: String)(body: (String => Unit) => Either[String, String])
       : Either[ApiError, JobInfo] =
     deps.maintenance.guard(kind) {
-      claim(describe).map { _ =>
-        val job = JobRepo.create(ds, kind, None, None, detail = Some(JobDetail(media = Some(describe))))
-        busy.set(Some(s"job ${job.id}"))
-        // on the generation (database, config) the request was pinned to
-        val work = deps.pins.carry {
-          try
-            val _ = JobRepo.transition(ds, job.id, JobState.Queued, JobState.Running, Some("starting"))
-            val out =
-              try body(p => JobRepo.progress(ds, job.id, p))
-              catch
-                case _: InterruptedException => Left("interrupted")
-                case e: Throwable =>
-                  scribe.error(s"$kind job ${job.id} died: ${e.getMessage}", e)
-                  Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
-            val _ = out match
-              case Right(summary) => JobRepo.transition(ds, job.id, JobState.Running, JobState.Done, Some(summary))
-              case Left(why)      => JobRepo.transition(ds, job.id, JobState.Running, JobState.Failed, None, Some(why))
-          finally busy.set(None)
-        }
-        val t = Thread.ofPlatform().daemon(true).name(s"histmersion-$kind").unstarted(() => work.run())
-        t.start()
-        JobRepo.get(ds, job.id).getOrElse(job)
-      }
+      BackgroundJob.start(ds, kind, Some(JobDetail(media = Some(describe))), jobSlot, "a media run",
+        pins = deps.pins, stops = Some(deps.jobStops))((_, progress) => BackgroundJob.Outcome.of(body(progress)))
     }
 
   /** The import as a job: `media.import-batch` items at a time, most-cited sites first, each batch
@@ -134,8 +116,10 @@ final class MediaHandlers(deps: Deps, http: HttpTransport, converter: ConverterC
           val what = (if single then s"${imp.title} of ${req.place.orElse(req.event).getOrElse("")}"
                       else s"${imp.title} of ${cap.fold(s"every ${imp.over}")(n => s"up to $n ${imp.over}")} not asked yet") +
                      (if req.refresh then " (refresh)" else "")
+          // a refresh asks again what was asked before this job started — a resumed job too
+          val since = Option.when(req.refresh)(System.currentTimeMillis())
           startJob(MediaHandlers.ImportJobKind, what) { progress =>
-            Right(MediaHandlers.summary(runImport(imp, req, single, cap, progress)))
+            Right(MediaHandlers.summary(runImport(imp, req, single, cap, since, progress)))
           }
         }
     }
@@ -145,8 +129,7 @@ final class MediaHandlers(deps: Deps, http: HttpTransport, converter: ConverterC
     * picture is a line in the report, never the end of the job; a batch that throws is reported and
     * ends it (its targets are not recorded as asked, so the next job resumes there, not past it). */
   private def runImport(imp: MediaImporter, req: MediaImportRequest, single: Boolean, limit: Option[Int],
-      progress: String => Unit): MediaImportReport =
-    val since = Option.when(req.refresh)(System.currentTimeMillis())
+      since: Option[Long], progress: String => Unit): MediaImportReport =
     val run   = imp.start()
     val batch = imp.batch.max(1)
     val cap   = limit.getOrElse(Int.MaxValue)

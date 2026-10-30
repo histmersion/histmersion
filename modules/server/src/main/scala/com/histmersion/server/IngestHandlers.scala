@@ -310,8 +310,8 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient,
                 // the source is written; only now is the item it was acquired for fulfilled. This
                 // worker holds the job in `running`, so the transition below cannot be refused
                 val ticked = job.params.acquireItem match
-                  case Some(item)                              => List(tickOff(item, job.params.citekey))
-                  case None if job.kind == Ingest.KindIngest   => matchAcquisitions(job.params.citekey)
+                  case Some(item)                              => List(tickOff(item, job.params.citekey, id))
+                  case None if job.kind == Ingest.KindIngest   => matchAcquisitions(job.params.citekey, id)
                   case None                                    => Nil
                 val enrich = afterStoreSafely(job.params.citekey)
                 val _ = JobRepo.transition(ds, id, JobState.Running, JobState.Done,
@@ -376,7 +376,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient,
   /** Tick `id` off as fulfilled by `citekey`, and say what happened for the job's progress line. It
     * never fails the job: the source is stored either way. An item deleted or ticked off by hand
     * while the OCR ran is left as it is. */
-  private def tickOff(id: Int, citekey: String): String =
+  private def tickOff(id: Int, citekey: String, jobId: String): String =
     def warning(message: String): String =
       scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: $message")
       s"acquisition item $id NOT ticked off: $message"
@@ -384,7 +384,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient,
       QueueRepo.get(ds, id).filter(_.status == Queue.Open) match
         case None => s"acquisition item $id was no longer open"
         case Some(item) =>
-          QueueRepo.patch(ds, id, Queue.fulfil(item, citekey)) match
+          QueueRepo.patch(ds, id, Queue.fulfil(item, citekey, Some(jobId))) match
             case Right(_) => s"ticked off acquisition item $id"
             case Left(e)  => warning(e.message)
     catch
@@ -395,7 +395,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient,
   /** No item was named (#970): close the open acquisition items that name the stored source's DOI,
     * and list the ones that only resemble it ([[AcquireMatch.decide]]). One line per item, for the
     * job's progress. Like [[tickOff]] it never fails the job: the source is stored either way. */
-  private def matchAcquisitions(citekey: String): List[String] =
+  private def matchAcquisitions(citekey: String, jobId: String): List[String] =
     try
       SourceRepo.load(ds, citekey).toList.flatMap { s =>
         val items = QueueRepo.list(ds, Queue.Kind.Acquire, all = false).toList
@@ -403,7 +403,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient,
           AcquireMatch.describe(d, id =>
             QueueRepo.get(ds, id).filter(_.status == Queue.Open)
               .toRight("it was no longer open")
-              .flatMap(item => QueueRepo.patch(ds, id, Queue.fulfil(item, citekey)).left.map(_.message))
+              .flatMap(item => QueueRepo.patch(ds, id, Queue.fulfil(item, citekey, Some(jobId))).left.map(_.message))
               .map(_ => ()))
         }
       }

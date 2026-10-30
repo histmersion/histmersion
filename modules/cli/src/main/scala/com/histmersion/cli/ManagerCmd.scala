@@ -60,13 +60,18 @@ object ManagerCmd:
         "model work (finish-first: articles to review, then to compile, then enough sources; depth-first within a tree; a " +
         "person's pins and priority; then the oldest), the others' model-using items wait; ingestion is not capped; " +
         "drain — nothing new starts while the runs in flight finish (the status says DRAINED once none is queued or " +
-        "running: safe to stop the server for a deploy); undrain — lift it (turning it on lifts it too)") {
-    (Opts.argument[String]("status|on|off|drain|undrain|repair-acquire|focus").withDefault("status"),
+        "running: safe to stop the server for a deploy); undrain — lift it (turning it on lifts it too); mode " +
+        "<working|finish|pause> — the two switches as the web UI's one choice: working, finish current work then pause " +
+        "(on and draining), pause now (off)") {
+    (Opts.argument[String]("status|on|off|drain|undrain|repair-acquire|focus|mode").withDefault("status"),
       Opts.arguments[String]("focus: list|pin|unpin|priority|max [goal] [n]").orEmpty,
       Opts.flag("dry-run", "repair-acquire: list what it would do, change nothing").orFalse, Output.jsonFlag).mapN {
       (verb, rest, dry, json) => (c: Client) =>
         def status(call: Either[CliError, Autopilot.AutopilotStatus]) = call.map(s => Output.emit(json, s)(AutopilotMarkdown.status))
         verb.trim.toLowerCase match
+          case "mode" => rest match
+            case List(m) => status(c.call(ManagersApi.setMode)(AgentMode.ModeSet(m, Some("cli"))))
+            case _       => Left(CliError("autopilot mode takes one of: working, finish, pause", exitCode = ExitCode.Usage))
           case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
             Left(CliError(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})", exitCode = ExitCode.Usage))
           case "status" => status(c.call(ManagersApi.autopilot)(()))
@@ -82,7 +87,7 @@ object ManagerCmd:
               case None    => c.call(ManagersApi.focus)(())
               case Some(r) => c.call(ManagersApi.setFocus)(r)
             }.map(f => Output.emit(json, f)(AutopilotMarkdown.focus))
-          case other => Left(CliError(s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus)", exitCode = ExitCode.Usage))
+          case other => Left(CliError(s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus, mode)", exitCode = ExitCode.Usage))
     }
   }
 

@@ -76,8 +76,23 @@ object IngestCmd:
         c.assets(ck).map(rows => println(IngestMarkdown.assets(ck, rows.toVector))))
     }
 
-  private val jobs = Opts.subcommand("jobs", "Recent background jobs (OCR, imports, agent runs, …), filtered on the server, or one job by id") {
-    (Opts.argument[String]("id").orNone, ListOpts.jobs,
+  /** `histmersion jobs pause|resume|cancel <id>`. */
+  private def control(action: String, help: String): Opts[Client => Either[CliError, Unit]] =
+    Opts.subcommand(action, help) {
+      (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
+        c.call(Api.jobControl)((id, action)).map(j => Output.emit(json, j)(IngestMarkdown.job))
+      }
+    }
+
+  private val controls =
+    control("pause", "Pause a long background job (a picture or event import, a base-map download, an acquisition " +
+      "re-check, the init job's gazetteer loads) after the part it is on — or an agent run; it keeps what it did") orElse
+      control("resume", "Resume a paused job: it goes on with the parts it had not done") orElse
+      control("cancel", "Cancel a job: a background job stops after the part it is on and is recorded as cancelled")
+
+  private val jobs = Opts.subcommand("jobs", "Recent background jobs (OCR, imports, agent runs, …), filtered on the server, " +
+      "or one job by id; `jobs pause|resume|cancel <id>` controls one") {
+    controls orElse (Opts.argument[String]("id").orNone, ListOpts.jobs,
       Opts.option[Int]("limit", "Max rows").orNone,
       Opts.option[String]("before", "The next older page: the id of the last job shown (the listing prints the command)").orNone,
       Output.jsonFlag)

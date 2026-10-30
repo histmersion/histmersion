@@ -698,7 +698,7 @@ final class Engine(val ds: DataSource, cfgNow: => AgentsConfig, val agents: Agen
           if scheduled then s"scheduled ${run.pipeline}${run.goal.fold("")(g => s" for goal $g")} (agent run ${run.id.take(8)}) $w"
           else s"${run.pipeline} of [[${run.target}]] queued by its import (agent run ${run.id.take(8)}) $w"
         val _ = QueueRepo.add(ds, com.histmersion.api.Queue.Kind.Tasks, com.histmersion.api.Queue.QueueAdd(
-          text, topic = Some(if scheduled then "agent schedules" else "auto-enrich")))
+          text, topic = Some(if scheduled then "agent schedules" else "auto-enrich"), goal = Pipelines.goalOf(run), job = Some(run.id)))
       }
 
   /** A waiting run whose approval was decided goes back to the queue. `false` = it was not waiting. */

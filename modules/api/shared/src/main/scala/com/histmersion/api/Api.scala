@@ -641,7 +641,7 @@ object Api:
     // GET `periods/{id}` never shadows them
     period, seedPeriods, importPeriods, fetchPeriods, init,
     // ingest, jobs and assets (2.4); `sources/{ck}/assets` precedes `sources/{ck}` like `export`
-    ingest, reocr, original, job, jobs, assets, putAssets, assetDetail, patchAsset, asset,
+    ingest, reocr, original, job, jobControl, jobs, activity, assets, putAssets, assetDetail, patchAsset, asset,
     // asset links (1.6)
     mediaGeo, assetLinks, createAssetLink, deleteAssetLink,
     // media from outside providers (#1446): `media/facets|import|fill-licences` before `media/{uid}`
@@ -1071,6 +1071,30 @@ object Api:
   lazy val job: PublicEndpoint[String, ApiError, JobInfo, Any] =
     base.get.in("jobs" / path[String]("id")).out(jsonBody[JobInfo])
       .errorOut(statusCode(StatusCode.NotFound))
+
+  /** `POST /api/jobs/{id}/{pause|resume|cancel}` — a long background job (a picture or event import, a
+    * base-map download, an acquisition re-check, the init job's gazetteer loads) is asked to stop after the
+    * part it is on, keeping what it did (pause: resumed, it skips that) or not (cancel); an agent run takes
+    * its own pause, resume and cancel. 409 when the job's state refuses the action. */
+  lazy val jobControl: PublicEndpoint[(String, String), ApiError, JobInfo, Any] =
+    endpoint.post.in("api" / "jobs" / path[String]("id") / path[String]("action"))
+      .errorOut(oneOf[ApiError](
+        oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
+        oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError])(ApiError.hasCode(JobActions.CodeConflict)),
+        oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))))
+      .out(jsonBody[JobInfo])
+
+  /** `GET /api/activity?show=…&since=…&goal=…&limit=…&before=…` — Research › Activity: agent runs,
+    * background jobs, worklog lines and a person's decisions, one list, newest first ([[Activity]]). */
+  lazy val activity: PublicEndpoint[(Option[String], Option[String], Option[String], Option[Int], Option[String]), ApiError,
+      Activity.Page, Any] =
+    base.get.in("activity")
+      .in(query[Option[String]]("show").description(s"one of: ${Activity.Show.values.map(_.wire).mkString(", ")} (default all)"))
+      .in(query[Option[String]]("since").description("from: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago"))
+      .in(query[Option[String]]("goal").description("only what concerns this research goal (its slug)"))
+      .in(query[Option[Int]]("limit").description(s"entries per page (default ${Activity.DefaultLimit}, at most ${Activity.MaxLimit})"))
+      .in(query[Option[String]]("before").description("the next older page: the cursor the last page gave"))
+      .out(jsonBody[Activity.Page])
 
   /** `GET /api/jobs?status=…&kind=…&since=…&until=…&q=…&before=<id>&upTo=<id>` — newest first,
     * filtered on the server ([[ListFilters.JobFilter]]), paged by keyset ([[Paging]]): `before` = the

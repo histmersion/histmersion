@@ -92,6 +92,13 @@ object ManagersApi:
     endpoint.post.in("api" / "agents" / "autopilot").errorOut(errors).in(jsonBody[Autopilot.AutopilotSet])
       .out(jsonBody[Autopilot.AutopilotStatus])
 
+  /** `POST /api/agents/autopilot/mode {mode}` — the agents' state as one choice ([[AgentMode]]): `working`,
+    * `finish` (finish current work, then pause: the drain) or `pause` (now: the autopilot off). Answers the
+    * status. */
+  lazy val setMode: PublicEndpoint[AgentMode.ModeSet, ApiError, Autopilot.AutopilotStatus, Any] =
+    endpoint.post.in("api" / "agents" / "autopilot" / "mode").errorOut(errors).in(jsonBody[AgentMode.ModeSet])
+      .out(jsonBody[Autopilot.AutopilotStatus])
+
   /** `POST /api/agents/autopilot/repair-acquire {dryRun}` — the one-shot repair: the open acquisition
     * items a watcher's sweep created for a legal open-access work move into that watcher's ingest backlog
     * (and leave the list); the ones already in the corpus leave it; nothing a person added is touched.
@@ -165,5 +172,5 @@ object ManagersApi:
 
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   lazy val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
-    removeHint, events, action, enqueue, autopilot, setAutopilot, repairAcquire, acquireRecheck, focus, setFocus, scheduler, setScheduler,
+    removeHint, events, action, enqueue, autopilot, setAutopilot, setMode, repairAcquire, acquireRecheck, focus, setFocus, scheduler, setScheduler,
     schedulerWhy, digest, decideAll, drain, stalls)

@@ -62,9 +62,11 @@ object OpsApi:
     endpoint.delete.in("api" / "queue" / "items" / path[Int]("id"))
       .errorOut(opsErrors).out(jsonBody[QueueItem])
 
-  /** `GET /api/queue/{list}` — open items (`?all=true` for done and note rows too). */
-  lazy val queueList: PublicEndpoint[(String, Boolean), ApiError, QueueListing, Any] =
+  /** `GET /api/queue/{list}` — open items (`?all=true` for done and note rows too); `?goal=` only the
+    * items that serve that research goal (their own goal, or a goal link naming them). */
+  lazy val queueList: PublicEndpoint[(String, Boolean, Option[String]), ApiError, QueueListing, Any] =
     endpoint.get.in("api" / "queue" / path[String]("list")).in(sttp.tapir.query[Boolean]("all").default(false))
+      .in(sttp.tapir.query[Option[String]]("goal").description("only the items serving this research goal (its slug)"))
       .errorOut(opsErrors).out(jsonBody[QueueListing])
 
   lazy val queueAdd: PublicEndpoint[(String, QueueAdd), ApiError, QueueItem, Any] =
