@@ -1,5 +1,7 @@
 package com.histmersion.domain.personal
 
+import com.histmersion.values.UserId
+
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.personal.*
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
