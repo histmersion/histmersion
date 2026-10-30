@@ -302,6 +302,15 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: Double, pixelRatio: O
 
   private val popups = mutable.ListBuffer.empty[GlPopup]
 
+  override def isChrome(e: dom.Element): Boolean = e.closest(".maplibregl-popup, .maplibregl-ctrl") != null
+
+  override def addControl(c: dom.HTMLElement, at: Corner): Unit =
+    c.classList.add("maplibregl-ctrl")
+    Option(corner(at)).foreach(_.appendChild(c))
+
+  override def popupBody(p: Popup): Option[dom.HTMLElement] =
+    p.element.map(e => Option(e.querySelector(".maplibregl-popup-content")).collect { case h: dom.HTMLElement => h }.getOrElse(e))
+
   override def setLocked(locked: Boolean): Unit =
     List(gl.dragPan, gl.scrollZoom, gl.boxZoom, gl.doubleClickZoom, gl.keyboard, gl.touchZoomRotate).foreach { h =>
       if locked then h.disable() else h.enable()

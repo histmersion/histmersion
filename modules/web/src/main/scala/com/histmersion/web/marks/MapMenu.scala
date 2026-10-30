@@ -63,7 +63,7 @@ object MapMenu:
     val box = surface.container
     box.addEventListener("contextmenu", { (e: dom.MouseEvent) =>
       val t = e.target.asInstanceOf[dom.Element]
-      if t.closest(".hd-marker, .maplibregl-popup, .maplibregl-ctrl, .map-lock-note") == null then
+      if t.closest(".hd-marker, .map-lock-note") == null && !surface.isChrome(t) then
         e.preventDefault()
         val r = box.getBoundingClientRect()
         val at = surface.unproject(ScreenPt(e.clientX - r.left, e.clientY - r.top))
@@ -71,16 +71,16 @@ object MapMenu:
     })
     box.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
       val t = e.target.asInstanceOf[dom.Element]
-      if ContextMenu.isMenuKey(e.key, e.shiftKey) && t.closest(".hd-marker, .maplibregl-popup") == null then
+      if ContextMenu.isMenuKey(e.key, e.shiftKey) && t.closest(".hd-marker") == null && !surface.isChrome(t) then
         e.preventDefault()
         val r = box.getBoundingClientRect()
         ContextMenu.show("Map actions", entries(surface, surface.center), r.left + r.width / 2, r.top + r.height / 2,
           Option(e.target).collect { case h: dom.HTMLElement => h })
     })
-    Option(surface.corner(Corner.TopLeft)).foreach { corner =>
-      val _ = render(corner, div(cls := "maplibregl-ctrl map-actions-ctrl",
-        ContextMenu.button("Map actions", () => entries(surface, surface.center), "map-actions-btn")))
-    }
+    val ctrl = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+    ctrl.className = "map-actions-ctrl"
+    surface.addControl(ctrl, Corner.TopLeft)
+    val _ = render(ctrl, ContextMenu.button("Map actions", () => entries(surface, surface.center), "map-actions-btn"))
     val _ = render(box, div(cls := "map-lock-note", cls("is-hidden") <-- locked.signal.map(!_), role := "status",
       Icon(Icon.Lock), span("The map is locked"),
       button(typ := "button", cls := "btn btn--sm map-unlock", "Unlock", onClick --> (_ => setLocked(false, surface)))))
