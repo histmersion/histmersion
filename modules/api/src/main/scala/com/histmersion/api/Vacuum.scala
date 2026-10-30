@@ -20,9 +20,9 @@ object VacuumRequest:
   given Codec.AsObject[VacuumRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[VacuumRequest])
 
 /** What a vacuum job does, decided when it starts and stored on the job (`jobs.detail.vacuum`). */
-final case class VacuumPlan(analyze: Boolean, tables: List[String]) derives KindlingsCodecAsObject
+final case class VacuumPlan(analyze: Boolean, tables: List[String]) derives KindlingsCodecAsObject, KindlingsSchema
 object VacuumPlan:
-  given Schema[VacuumPlan] = KindlingsSchema.derived[VacuumPlan].schema
+  given Schema[VacuumPlan] = summon[KindlingsSchema[VacuumPlan]].schema
 
 object Vacuum:
 

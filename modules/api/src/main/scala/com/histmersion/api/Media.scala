@@ -36,10 +36,10 @@ final case class AssetPatch(
     lon: Option[Double] = None,
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
-)
+) derives KindlingsSchema
 
 object AssetPatch:
-  given Schema[AssetPatch] = KindlingsSchema.derived[AssetPatch].schema
+  given Schema[AssetPatch] = summon[KindlingsSchema[AssetPatch]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AssetPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[AssetPatch])
@@ -58,10 +58,11 @@ final case class AssetDetail(
     lon: Option[Double] = None,
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object AssetDetail:
-  given Schema[AssetDetail] = KindlingsSchema.derived[AssetDetail].schema
+  given Schema[AssetDetail] = summon[KindlingsSchema[AssetDetail]].schema
 
 final case class AssetLink(
     id: Long,
@@ -72,10 +73,11 @@ final case class AssetLink(
     targetId: String,
     xywh: Option[String] = None,
     notes: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object AssetLink:
-  given Schema[AssetLink] = KindlingsSchema.derived[AssetLink].schema
+  given Schema[AssetLink] = summon[KindlingsSchema[AssetLink]].schema
 
 final case class AssetLinkPut(
     citekey: String,
@@ -85,10 +87,11 @@ final case class AssetLinkPut(
     targetId: String,
     xywh: Option[String] = None,
     notes: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object AssetLinkPut:
-  given Schema[AssetLinkPut] = KindlingsSchema.derived[AssetLinkPut].schema
+  given Schema[AssetLinkPut] = summon[KindlingsSchema[AssetLinkPut]].schema
 
 final case class AssetLinkList(
     total: Int,
@@ -96,21 +99,23 @@ final case class AssetLinkList(
     /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def page: OffsetPage = OffsetPage(total, offset, links.size)
 
 object AssetLinkList:
-  given Schema[AssetLinkList] = KindlingsSchema.derived[AssetLinkList].schema
+  given Schema[AssetLinkList] = summon[KindlingsSchema[AssetLinkList]].schema
   def of(total: Int, rows: List[AssetLink], offset: Int): AssetLinkList =
     AssetLinkList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 final case class AssetLinkDeleted(
     id: Long,
     deleted: Boolean
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object AssetLinkDeleted:
-  given Schema[AssetLinkDeleted] = KindlingsSchema.derived[AssetLinkDeleted].schema
+  given Schema[AssetLinkDeleted] = summon[KindlingsSchema[AssetLinkDeleted]].schema
 
 /** One geolocated picture on the media layer: a source's figure (`citekey` set) or a provider's picture of a place or
   * an event (`provider` set, `citekey` empty) — then with its licence, credit line and the local thumbnail URL the
@@ -136,10 +141,11 @@ final case class MediaGeoHit(
     sourceUrl: Option[String] = None,
     licenseUrl: Option[String] = None,
     author: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object MediaGeoHit:
-  given Schema[MediaGeoHit] = KindlingsSchema.derived[MediaGeoHit].schema
+  given Schema[MediaGeoHit] = summon[KindlingsSchema[MediaGeoHit]].schema
 
 // ── media from outside providers (#1446) ────────────────────────────────────────────────────────
 
@@ -238,10 +244,11 @@ final case class MediaThumb(
     sourceUrl: Option[String] = None,
     width: Option[Int] = None,
     height: Option[Int] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object MediaThumb:
-  given Schema[MediaThumb] = KindlingsSchema.derived[MediaThumb].schema
+  given Schema[MediaThumb] = summon[KindlingsSchema[MediaThumb]].schema
 
   /** The local URLs of a stored picture's thumbnail and rendition. */
   def thumbPath(uid: String): String = s"/media/$uid/thumb"
@@ -260,10 +267,11 @@ final case class MediaTarget(
       * (`excavation = Mycenae; 1400–1200 BCE within 1600–1100 BCE`).
       */
     basis: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object MediaTarget:
-  given Schema[MediaTarget] = KindlingsSchema.derived[MediaTarget].schema
+  given Schema[MediaTarget] = summon[KindlingsSchema[MediaTarget]].schema
 
 /** One stored picture, whichever its origin: a source's figure (`citekey`) or a provider's (`provider`, `providerKey`),
   * with its licence and credit and what it is linked to.
@@ -290,10 +298,11 @@ final case class MediaItem(
     thumbUrl: Option[String] = None,
     fileUrl: String = "",
     targets: List[MediaTarget] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object MediaItem:
-  given Schema[MediaItem] = KindlingsSchema.derived[MediaItem].schema
+  given Schema[MediaItem] = summon[KindlingsSchema[MediaItem]].schema
 
 final case class MediaList(
     total: Int,
@@ -301,19 +310,22 @@ final case class MediaList(
     /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def page: OffsetPage = OffsetPage(total, offset, items.size)
 object MediaList:
-  given Schema[MediaList] = KindlingsSchema.derived[MediaList].schema
+  given Schema[MediaList] = summon[KindlingsSchema[MediaList]].schema
   def of(total: Int, rows: List[MediaItem], offset: Int): MediaList =
     MediaList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 /** A count by key (a provider, a licence, a role, a reason); `allowed = false` marks a licence the provider's allowlist
   * refuses.
   */
-final case class MediaCount(key: String, n: Int, allowed: Boolean = true) derives KindlingsCodecAsObject
+final case class MediaCount(key: String, n: Int, allowed: Boolean = true)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object MediaCount:
-  given Schema[MediaCount] = KindlingsSchema.derived[MediaCount].schema
+  given Schema[MediaCount] = summon[KindlingsSchema[MediaCount]].schema
 
   /** Pure: count `keys`, most frequent first, then by key. */
   def of(keys: List[String], allowed: String => Boolean = _ => true): List[MediaCount] =
@@ -350,9 +362,10 @@ final case class MediaProviderInfo(
     plugin: String,
     builtin: Boolean,
     licences: String
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object MediaProviderInfo:
-  given Schema[MediaProviderInfo] = KindlingsSchema.derived[MediaProviderInfo].schema
+  given Schema[MediaProviderInfo] = summon[KindlingsSchema[MediaProviderInfo]].schema
 
 /** `POST /api/media/import`: ask a provider about places and events — `wikidata` (the default), `depicts`, `met`,
   * `cleveland`, `aic`, `loc`, `pleiades`, `opencontext`, `smithsonian` or `europeana` (docs/media-providers.md).
@@ -366,10 +379,11 @@ final case class MediaImportRequest(
     place: Option[String] = None,
     event: Option[String] = None,
     refresh: Boolean = false
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object MediaImportRequest:
-  given Schema[MediaImportRequest] = KindlingsSchema.derived[MediaImportRequest].schema
+  given Schema[MediaImportRequest] = summon[KindlingsSchema[MediaImportRequest]].schema
 
 /** What an import found and did. The counts per licence come BEFORE anything is stored — a dry run is exactly this
   * report with `stored = updated = linked = 0`.
@@ -415,7 +429,8 @@ final case class MediaImportReport(
       * and why.
       */
     samples: List[MediaSample] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 /** One record a collection import ties to a place or event, with the reason. */
 final case class MediaSample(
@@ -427,13 +442,14 @@ final case class MediaSample(
     license: String,
     basis: String,
     url: String
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object MediaSample:
-  given Schema[MediaSample] = KindlingsSchema.derived[MediaSample].schema
+  given Schema[MediaSample] = summon[KindlingsSchema[MediaSample]].schema
 
 object MediaImportReport:
-  given Schema[MediaImportReport] = KindlingsSchema.derived[MediaImportReport].schema
+  given Schema[MediaImportReport] = summon[KindlingsSchema[MediaImportReport]].schema
 
   /** Pure: two batches' reports as one — the counts added, the lists joined, the later `pending`. */
   def combine(a: MediaImportReport, b: MediaImportReport): MediaImportReport =
@@ -486,19 +502,21 @@ final case class MediaCoversRequest(
       * `histmersion media covers` passes when Calibre has no cover file).
       */
     isbn: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object MediaCoversRequest:
-  given Schema[MediaCoversRequest] = KindlingsSchema.derived[MediaCoversRequest].schema
+  given Schema[MediaCoversRequest] = summon[KindlingsSchema[MediaCoversRequest]].schema
 
 /** One source's picture, done or (in a dry run) to do: its role (`cover`, `illustration`), where it comes from
   * (`calibre`, `open-library`, `source` — one of its own figures) and what (a figure's name, an ISBN, a Calibre id).
   */
 final case class MediaSourceLine(citekey: String, role: String, provider: String, detail: String)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object MediaSourceLine:
-  given Schema[MediaSourceLine] = KindlingsSchema.derived[MediaSourceLine].schema
+  given Schema[MediaSourceLine] = summon[KindlingsSchema[MediaSourceLine]].schema
 
 /** What a covers/illustrations run did (or would do): the sources looked at, the covers and illustrations linked, each
   * one, why others had none (per reason), and what failed.
@@ -511,10 +529,11 @@ final case class MediaCoversReport(
     lines: List[MediaSourceLine] = Nil,
     skipped: List[MediaCount] = Nil,
     failed: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object MediaCoversReport:
-  given Schema[MediaCoversReport] = KindlingsSchema.derived[MediaCoversReport].schema
+  given Schema[MediaCoversReport] = summon[KindlingsSchema[MediaCoversReport]].schema
 
   /** Pure: two runs' reports as one. */
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
@@ -544,14 +563,17 @@ final case class SourceCoverParams(
 
 /** What the media layer can be filtered by: pictures per provider and per licence (`none` = no licence recorded).
   */
-final case class MediaFacets(providers: List[MediaCount], licences: List[MediaCount]) derives KindlingsCodecAsObject
+final case class MediaFacets(providers: List[MediaCount], licences: List[MediaCount])
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object MediaFacets:
-  given Schema[MediaFacets] = KindlingsSchema.derived[MediaFacets].schema
+  given Schema[MediaFacets] = summon[KindlingsSchema[MediaFacets]].schema
 
 /** `POST /api/media/fill-licences`: a source's figures take the source's licence where the source records one and the
   * figure has none. Without `apply` it only counts.
   */
 final case class FigureLicenceFill(candidates: Int, updated: Int, applied: Boolean, bySource: List[MediaCount] = Nil)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object FigureLicenceFill:
-  given Schema[FigureLicenceFill] = KindlingsSchema.derived[FigureLicenceFill].schema
+  given Schema[FigureLicenceFill] = summon[KindlingsSchema[FigureLicenceFill]].schema

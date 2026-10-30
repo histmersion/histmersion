@@ -29,9 +29,9 @@ import com.histmersion.values.WireEnumValues
   *     the entry is still in the library: [[CalibreEntryCheck]]);
   *   - the log queue records the delete.
   */
-final case class SourceDeleteRequest(apply: Boolean = false)
+final case class SourceDeleteRequest(apply: Boolean = false) derives KindlingsSchema
 object SourceDeleteRequest:
-  given Schema[SourceDeleteRequest] = KindlingsSchema.derived[SourceDeleteRequest].schema
+  given Schema[SourceDeleteRequest] = summon[KindlingsSchema[SourceDeleteRequest]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[SourceDeleteRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[SourceDeleteRequest])
@@ -55,9 +55,10 @@ object DeleteBlockerKind:
 
 /** One thing that refuses the delete: an article (slug, title), an event (id, label), a job (id). */
 final case class DeleteBlocker(kind: DeleteBlockerKind, id: String, title: Option[String] = None)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object DeleteBlocker:
-  given Schema[DeleteBlocker] = KindlingsSchema.derived[DeleteBlocker].schema
+  given Schema[DeleteBlocker] = summon[KindlingsSchema[DeleteBlocker]].schema
 
 /** A kind of row a delete removes (or, for `EdgesIn`, parks). */
 enum DeletePart(val wire: String, val label: String):
@@ -89,9 +90,9 @@ object DeletePart:
   given Decoder[DeletePart] = WireEnum.decoder
   given Schema[DeletePart] = WireEnum.schema
 
-final case class DeleteCount(part: DeletePart, rows: Int) derives KindlingsCodecAsObject
+final case class DeleteCount(part: DeletePart, rows: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object DeleteCount:
-  given Schema[DeleteCount] = KindlingsSchema.derived[DeleteCount].schema
+  given Schema[DeleteCount] = summon[KindlingsSchema[DeleteCount]].schema
 
 /** The answer of a delete, dry run or applied.
   *
@@ -126,12 +127,13 @@ final case class SourceDeletion(
     mentions: List[Int] = Nil,
     calibreId: Option[String] = None,
     logEntry: Option[Int] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def refused: Boolean = blockers.nonEmpty
   def count(p: DeletePart): Int = counts.find(_.part == p).fold(0)(_.rows)
 
 object SourceDeletion:
-  given Schema[SourceDeletion] = KindlingsSchema.derived[SourceDeletion].schema
+  given Schema[SourceDeletion] = summon[KindlingsSchema[SourceDeletion]].schema
 
 /** What the host's Calibre library says of a deleted source's linked entry (#1776). The server cannot see the library,
   * so the CLI looks it up (read-only, `Calibre.byId`) before it prints the answer: the record's stored `calibreId` may

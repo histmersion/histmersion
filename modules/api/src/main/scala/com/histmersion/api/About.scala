@@ -20,9 +20,10 @@ final case class BuildStamp(
     dirty: Boolean = false,
     licence: Option[String] = None,
     sourceUrl: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object BuildStamp:
-  given Schema[BuildStamp] = KindlingsSchema.derived[BuildStamp].schema
+  given Schema[BuildStamp] = summon[KindlingsSchema[BuildStamp]].schema
 
 /** The AGPL (section 13) has a server offer everyone who uses it over a network the source of the very version that is
   * running: the repository at the commit it was built from, or the repository itself when the commit is unknown. The
@@ -41,7 +42,8 @@ final case class JobCounts(
     failed: Int = 0,
     paused: Int = 0,
     cancelled: Int = 0
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def of(s: JobState): Int = s match
     case JobState.Queued    => queued
     case JobState.Running   => running
@@ -50,7 +52,7 @@ final case class JobCounts(
     case JobState.Paused    => paused
     case JobState.Cancelled => cancelled
 object JobCounts:
-  given Schema[JobCounts] = KindlingsSchema.derived[JobCounts].schema
+  given Schema[JobCounts] = summon[KindlingsSchema[JobCounts]].schema
 
   /** Pure: fold `(status, count)` rows into the counts; a status that is no [[JobState]] is dropped. */
   def of(rows: List[(String, Int)]): JobCounts =
@@ -77,9 +79,10 @@ final case class CorpusCounts(
     periods: Int,
     /** of those, the ones the timeline offers as presets (`preset` set, V062) */
     presets: Int = 0
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CorpusCounts:
-  given Schema[CorpusCounts] = KindlingsSchema.derived[CorpusCounts].schema
+  given Schema[CorpusCounts] = summon[KindlingsSchema[CorpusCounts]].schema
 
 /** The user config file the server read at startup (`reference.conf` < this file < the environment). */
 final case class ConfigFileInfo(
@@ -91,9 +94,10 @@ final case class ConfigFileInfo(
     loaded: Boolean = false,
     /** Keys of the file that are no setting (a typo), ignored. */
     unknownKeys: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ConfigFileInfo:
-  given Schema[ConfigFileInfo] = KindlingsSchema.derived[ConfigFileInfo].schema
+  given Schema[ConfigFileInfo] = summon[KindlingsSchema[ConfigFileInfo]].schema
 
   /** `path (read)` / `path (not found: defaults and environment only)` / `none`. Pure. */
   def describe(c: ConfigFileInfo): String =
@@ -109,11 +113,12 @@ object ConfigFileInfo:
   * schedules and the managers on this database.
   */
 final case class AgentLeaseInfo(owner: String, until: String, expired: Boolean, thisServer: Boolean)
-    derives KindlingsCodecAsObject:
+    derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def describe: String =
     s"$owner${if thisServer then " (this server)" else ""} until $until${if expired then " — expired" else ""}"
 object AgentLeaseInfo:
-  given Schema[AgentLeaseInfo] = KindlingsSchema.derived[AgentLeaseInfo].schema
+  given Schema[AgentLeaseInfo] = summon[KindlingsSchema[AgentLeaseInfo]].schema
 
 final case class About(
     name: String,
@@ -144,9 +149,10 @@ final case class About(
     upstreams: List[UpstreamQuota] = Nil,
     /** The acquisition list's legal re-check; absent when it could not be read, or from an older server. */
     acquireRecheck: Option[AcquireChecks.RecheckStatus] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object About:
-  given Schema[About] = KindlingsSchema.derived[About].schema
+  given Schema[About] = summon[KindlingsSchema[About]].schema
 
 /** What a dependency's health text means. The converter reports free text (`ok`, `busy: 2 jobs`, `degraded: …`,
   * `converter at … is unreachable`); a client shows the state and keeps the text as the detail, so a wording it has

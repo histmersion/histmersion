@@ -15,17 +15,17 @@ import com.histmersion.values.PlaceKind
   */
 
 /** `POST /api/places/{id}/names` — `lang` is a language tag (`en`, `grc`, `pl`); absent = unspecified. */
-final case class PlaceNameAdd(name: String, lang: Option[String] = None)
+final case class PlaceNameAdd(name: String, lang: Option[String] = None) derives KindlingsSchema
 object PlaceNameAdd:
-  given Schema[PlaceNameAdd] = KindlingsSchema.derived[PlaceNameAdd].schema
+  given Schema[PlaceNameAdd] = summon[KindlingsSchema[PlaceNameAdd]].schema
   given Codec.AsObject[PlaceNameAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceNameAdd])
 
 /** `POST /api/places/{id}/names/remove` — only a name a person added can be removed: an imported one would come back
   * with the next seed.
   */
-final case class PlaceNameRemove(name: String, lang: Option[String] = None)
+final case class PlaceNameRemove(name: String, lang: Option[String] = None) derives KindlingsSchema
 object PlaceNameRemove:
-  given Schema[PlaceNameRemove] = KindlingsSchema.derived[PlaceNameRemove].schema
+  given Schema[PlaceNameRemove] = summon[KindlingsSchema[PlaceNameRemove]].schema
   given Codec.AsObject[PlaceNameRemove] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceNameRemove])
 
 /** What a name edit did. `changed = false`: the place already had that name as a manual one (add), or never had it
@@ -40,15 +40,17 @@ final case class PlaceNameChanged(
     added: Boolean,
     changed: Boolean,
     wasImported: Boolean = false
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceNameChanged:
-  given Schema[PlaceNameChanged] = KindlingsSchema.derived[PlaceNameChanged].schema
+  given Schema[PlaceNameChanged] = summon[KindlingsSchema[PlaceNameChanged]].schema
 
 /** One name a person added — `GET /api/places/names`, `histmersion places name list`. */
 final case class ManualPlaceName(placeId: String, label: String, name: String, lang: String)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ManualPlaceName:
-  given Schema[ManualPlaceName] = KindlingsSchema.derived[ManualPlaceName].schema
+  given Schema[ManualPlaceName] = summon[KindlingsSchema[ManualPlaceName]].schema
 
 /** `POST /api/places` — one point place of a person's own. `source` says where the coordinates come from and is
   * required (nothing in the gazetteer is a guessed point); `id` defaults to `local_<label>`; `names` are further names
@@ -231,9 +233,10 @@ final case class PlaceOverride(
     lon: Option[Double] = None,
     sourceLat: Option[Double] = None,
     sourceLon: Option[Double] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceOverride:
-  given Schema[PlaceOverride] = KindlingsSchema.derived[PlaceOverride].schema
+  given Schema[PlaceOverride] = summon[KindlingsSchema[PlaceOverride]].schema
 
 /** What a `places set` did: the kind and period before and after, and how the place's findings moved (`findingsBefore`
   * → `findingsAfter`; `unlocated` = findings that had it and now have no place at all). `latBefore`…`lonAfter`: the
@@ -254,9 +257,10 @@ final case class PlaceOverrideChanged(
     lonBefore: Option[Double] = None,
     latAfter: Option[Double] = None,
     lonAfter: Option[Double] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceOverrideChanged:
-  given Schema[PlaceOverrideChanged] = KindlingsSchema.derived[PlaceOverrideChanged].schema
+  given Schema[PlaceOverrideChanged] = summon[KindlingsSchema[PlaceOverrideChanged]].schema
 
 /** `POST /api/places/{id}/merge` — the place is the same as `into`: its findings, links, children, events, attestations
   * and asset links move there, it is deleted, and its id stays an old id of `into` — which no re-seed brings back as a
@@ -273,9 +277,9 @@ object PlaceMergeIn:
 /** `POST /api/places/{id}/remove` — delete a place nothing refers to (no event, attestation, asset link, child, name
   * added by hand, nor a finding it is the only place of); no re-seed brings it back.
   */
-final case class PlaceRemoveIn(reason: Option[String] = None)
+final case class PlaceRemoveIn(reason: Option[String] = None) derives KindlingsSchema
 object PlaceRemoveIn:
-  given Schema[PlaceRemoveIn] = KindlingsSchema.derived[PlaceRemoveIn].schema
+  given Schema[PlaceRemoveIn] = summon[KindlingsSchema[PlaceRemoveIn]].schema
   given Codec.AsObject[PlaceRemoveIn] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceRemoveIn])
 
 /** What a merge or a removal did. `into`/`intoLabel` are empty for a removal; `findingsBefore` counts the findings
@@ -290,9 +294,10 @@ final case class PlaceGone(
     findingsBefore: Int,
     findingsAfter: Int,
     unlocated: Int
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceGone:
-  given Schema[PlaceGone] = KindlingsSchema.derived[PlaceGone].schema
+  given Schema[PlaceGone] = summon[KindlingsSchema[PlaceGone]].schema
 
 /** A validated [[PlaceOverrideSet]]. */
 enum PlaceOverrideEdit:

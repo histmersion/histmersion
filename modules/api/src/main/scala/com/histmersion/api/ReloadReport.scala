@@ -41,11 +41,12 @@ final case class ReloadReport(
     errors: List[String] = Nil,
     warnings: List[String] = Nil,
     file: Option[String] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def ok: Boolean = errors.isEmpty
 
 object ReloadReport:
-  given Schema[ReloadReport] = KindlingsSchema.derived[ReloadReport].schema
+  given Schema[ReloadReport] = summon[KindlingsSchema[ReloadReport]].schema
 
 /** The reload report as Markdown, every surface's. Pure. */
 object ReloadMarkdown:

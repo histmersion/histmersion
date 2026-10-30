@@ -25,22 +25,24 @@ final case class PluginDescription(
     provides: List[String] = Nil,
     access: List[String] = Nil,
     error: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PluginDescription:
-  given Schema[PluginDescription] = KindlingsSchema.derived[PluginDescription].schema
+  given Schema[PluginDescription] = summon[KindlingsSchema[PluginDescription]].schema
 
 /** One jar of a plugin set: its file name in the plugins directory, its SHA-256 and the plugins in it. */
 final case class PluginJar(file: String, sha256: String, plugins: List[PluginDescription] = Nil)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PluginJar:
-  given Schema[PluginJar] = KindlingsSchema.derived[PluginJar].schema
+  given Schema[PluginJar] = summon[KindlingsSchema[PluginJar]].schema
 
 /** A file a plugin set was linked with besides its jars: the POM beside a plugin jar (`x-1.0.pom`), or a dependency jar
   * of the plugins directory's `lib/` (`lib/y-2.0.jar`); with its SHA-256.
   */
-final case class PluginFile(file: String, sha256: String) derives KindlingsCodecAsObject
+final case class PluginFile(file: String, sha256: String) derives KindlingsCodecAsObject, KindlingsSchema
 object PluginFile:
-  given Schema[PluginFile] = KindlingsSchema.derived[PluginFile].schema
+  given Schema[PluginFile] = summon[KindlingsSchema[PluginFile]].schema
 
 /** @param digest
   *   SHA-256 over the sorted `<file> <sha256>` lines of the jars (order-independent); the empty set's digest for a
@@ -64,9 +66,10 @@ final case class PluginSet(
     kit: Option[String] = None,
     linkedAt: Option[String] = None,
     dependencies: Option[List[PluginFile]] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PluginSet:
-  given Schema[PluginSet] = KindlingsSchema.derived[PluginSet].schema
+  given Schema[PluginSet] = summon[KindlingsSchema[PluginSet]].schema
 
   /** The file name of the resource inside the image, and of the record beside the binary. */
   val Resource = "META-INF/histmersion/plugin-set.json"

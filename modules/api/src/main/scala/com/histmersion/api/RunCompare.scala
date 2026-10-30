@@ -24,9 +24,10 @@ object RunCompare:
       seconds: Long,
       attempts: Int,
       failures: Int
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RunSide:
-    given Schema[RunSide] = KindlingsSchema.derived[RunSide].schema
+    given Schema[RunSide] = summon[KindlingsSchema[RunSide]].schema
 
   /** One step of one run, every attempt summed: the configured models it tried, what the providers reported serving,
     * how each was paid for (`plan pool: claude-plan`, a price), tokens, cost, time. `firstCallTokens`: the input of the
@@ -45,16 +46,17 @@ object RunCompare:
       failures: Int,
       firstCallTokens: Option[Long] = None,
       turns: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object StepSide:
-    given Schema[StepSide] = KindlingsSchema.derived[StepSide].schema
+    given Schema[StepSide] = summon[KindlingsSchema[StepSide]].schema
 
   /** One step name, and that step in each run (in the order the runs were given; None = the run has no such step — it
     * stopped earlier, or took fewer rounds).
     */
-  final case class StepRow(name: String, runs: List[Option[StepSide]]) derives KindlingsCodecAsObject
+  final case class StepRow(name: String, runs: List[Option[StepSide]]) derives KindlingsCodecAsObject, KindlingsSchema
   object StepRow:
-    given Schema[StepRow] = KindlingsSchema.derived[StepRow].schema
+    given Schema[StepRow] = summon[KindlingsSchema[StepRow]].schema
 
   /** enrich-source's outputs. `quotesChecked`/`quotesPassed`: the verifier's quote check over every answer of every
     * findings step (a rejected answer's findings included); `uniqueClaims`: the claims no other compared run made
@@ -72,19 +74,21 @@ object RunCompare:
       summaryChars: Int,
       notesChars: Int,
       uniqueClaims: List[String]
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object EnrichSide:
-    given Schema[EnrichSide] = KindlingsSchema.derived[EnrichSide].schema
+    given Schema[EnrichSide] = summon[KindlingsSchema[EnrichSide]].schema
 
   /** One reviewer of round 1: its verdict and its findings by severity. */
   final case class ReviewerSide(reviewer: String, verdict: Option[String], majors: Int, minors: Int)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ReviewerSide:
-    given Schema[ReviewerSide] = KindlingsSchema.derived[ReviewerSide].schema
+    given Schema[ReviewerSide] = summon[KindlingsSchema[ReviewerSide]].schema
 
-  final case class KindCount(kind: String, count: Int) derives KindlingsCodecAsObject
+  final case class KindCount(kind: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
   object KindCount:
-    given Schema[KindCount] = KindlingsSchema.derived[KindCount].schema
+    given Schema[KindCount] = summon[KindlingsSchema[KindCount]].schema
 
   /** review-article's outputs: the last round's verdict and the number of rounds; round 1 (the one every run reviews on
     * the same text) per reviewer, by kind, and its major findings as lines.
@@ -95,17 +99,19 @@ object RunCompare:
       reviewers: List[ReviewerSide],
       kinds: List[KindCount],
       majors: List[String]
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ReviewSide:
-    given Schema[ReviewSide] = KindlingsSchema.derived[ReviewSide].schema
+    given Schema[ReviewSide] = summon[KindlingsSchema[ReviewSide]].schema
 
   /** Round 1's major findings two runs share: matched on `where` and a similar problem. `pairs` shows each match as
     * `<a's id> ↔ <b's id>`.
     */
   final case class MajorOverlap(a: String, b: String, aMajors: Int, bMajors: Int, shared: Int, pairs: List[String])
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object MajorOverlap:
-    given Schema[MajorOverlap] = KindlingsSchema.derived[MajorOverlap].schema
+    given Schema[MajorOverlap] = summon[KindlingsSchema[MajorOverlap]].schema
 
   /** The comparison. `enrich`/`review` hold one side per run (same order as `runs`) for those two pipelines, empty for
     * the others; `notes` say what could not be read.
@@ -119,6 +125,7 @@ object RunCompare:
       review: List[ReviewSide] = Nil,
       overlaps: List[MajorOverlap] = Nil,
       notes: List[String] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object Comparison:
-    given Schema[Comparison] = KindlingsSchema.derived[Comparison].schema
+    given Schema[Comparison] = summon[KindlingsSchema[Comparison]].schema

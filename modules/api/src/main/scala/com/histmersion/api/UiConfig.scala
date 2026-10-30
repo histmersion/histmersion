@@ -4,17 +4,20 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: Long) derives KindlingsCodecAsObject
+final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: Long)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object TimeConfig:
-  given Schema[TimeConfig] = KindlingsSchema.derived[TimeConfig].schema
+  given Schema[TimeConfig] = summon[KindlingsSchema[TimeConfig]].schema
 
 /** `previewMs`: the quiet period before a HOVERED suggestion's preview reloads the lists — shorter than `reloadMs`,
   * because a preview is read while the pointer rests and the answer takes ~20 ms.
   */
 final case class DebounceConfig(suggestMs: Int, searchMs: Int, reloadMs: Int, previewMs: Int)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object DebounceConfig:
-  given Schema[DebounceConfig] = KindlingsSchema.derived[DebounceConfig].schema
+  given Schema[DebounceConfig] = summon[KindlingsSchema[DebounceConfig]].schema
 
 /** The events on the map in playback (#1440). A LOCAL event shows while the playhead is inside its span and fades out
   * over `localFadeSeconds` of playback after it ends; a REGIONAL one shows its label and the region's faint outline for
@@ -27,16 +30,19 @@ final case class EventsUiConfig(
     regionalFadeSeconds: Double,
     mapLimit: Int,
     outlineToleranceDeg: Double
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventsUiConfig:
-  given Schema[EventsUiConfig] = KindlingsSchema.derived[EventsUiConfig].schema
+  given Schema[EventsUiConfig] = summon[KindlingsSchema[EventsUiConfig]].schema
 
 /** The map's point layers as vector tiles (`ui.map-tiles`, [[TilesApi]]): the deepest tile the server cuts (MapLibre's
   * zoom: the app's minus one), and how many seconds of playback one time bucket of the layers covers.
   */
-final case class MapTilesUiConfig(maxZoom: Int = 11, playbackBucketSeconds: Double = 1.0) derives KindlingsCodecAsObject
+final case class MapTilesUiConfig(maxZoom: Int = 11, playbackBucketSeconds: Double = 1.0)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object MapTilesUiConfig:
-  given Schema[MapTilesUiConfig] = KindlingsSchema.derived[MapTilesUiConfig].schema
+  given Schema[MapTilesUiConfig] = summon[KindlingsSchema[MapTilesUiConfig]].schema
 
 /** Where the map opens (`ui.map-start`, [[MapStartMode]]): where this browser left it, or always at the centre and zoom
   * given; `label` names the place for a person.
@@ -114,6 +120,7 @@ final case class UiConfig(
       * sets anything, NOT a `ui` key of its own.
       */
     setupDue: Boolean = false
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object UiConfig:
-  given Schema[UiConfig] = KindlingsSchema.derived[UiConfig].schema
+  given Schema[UiConfig] = summon[KindlingsSchema[UiConfig]].schema

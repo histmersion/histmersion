@@ -48,7 +48,8 @@ object Agents:
     * convention sttp-ai uses); `cacheRead`/`cacheWrite` are subsets of it.
     */
   final case class Usage(input: Long = 0, output: Long = 0, cacheRead: Long = 0, cacheWrite: Long = 0)
-      derives KindlingsCodecAsObject:
+      derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def +(o: Usage): Usage =
       Usage(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
     def total: Long = input + output
@@ -61,7 +62,7 @@ object Agents:
 
   object Usage:
     val Zero: Usage = Usage()
-    given Schema[Usage] = KindlingsSchema.derived[Usage].schema
+    given Schema[Usage] = summon[KindlingsSchema[Usage]].schema
 
   /** USD per million tokens. Cache rates default to the input rate when not given. */
   final case class Price(
@@ -214,12 +215,16 @@ object Agents:
   /** `POST /api/agents/probe` — one LLM call with one read-only tool (`get_source`) and a typed answer: the
     * connectivity and tool-calling check for a configured model.
     */
-  final case class ProbeRequest(citekey: String, model: Option[String] = None) derives KindlingsCodecAsObject
+  final case class ProbeRequest(citekey: String, model: Option[String] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ProbeRequest:
-    given Schema[ProbeRequest] = KindlingsSchema.derived[ProbeRequest].schema
+    given Schema[ProbeRequest] = summon[KindlingsSchema[ProbeRequest]].schema
 
   /** The typed answer the probe asks for. */
-  final case class ProbeAnswer(citekey: String, title: String, year: Option[Int]) derives KindlingsCodecAsObject:
+  final case class ProbeAnswer(citekey: String, title: String, year: Option[Int])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema:
     /** What the answer leaves empty that the probe asks for: an empty citekey or title, and no year for a record that
       * has one (`recordYear`; a source with none is rightly answered with null). A strict-schema provider sends `""`
       * and `null` where it has nothing, and they must not pass.
@@ -234,7 +239,7 @@ object Agents:
       )
     ).flatten
   object ProbeAnswer:
-    given Schema[ProbeAnswer] = KindlingsSchema.derived[ProbeAnswer].schema
+    given Schema[ProbeAnswer] = summon[KindlingsSchema[ProbeAnswer]].schema
 
   final case class ProbeResult(
       model: String,
@@ -252,9 +257,10 @@ object Agents:
         */
       problems: List[String] = Nil,
       attempts: Int = 1
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ProbeResult:
-    given Schema[ProbeResult] = KindlingsSchema.derived[ProbeResult].schema
+    given Schema[ProbeResult] = summon[KindlingsSchema[ProbeResult]].schema
 
   /** `POST /api/agents/runs` — start a pipeline on a target. `model` overrides every role of the run
     * (`provider:model`); the budgets override `agents.budgets.run-*`.
@@ -290,17 +296,18 @@ object Agents:
       dryRun: Option[Boolean] = None,
       /** One role's model for this run only, over its chain and over `model` (#992). */
       modelFor: List[ModelOverride] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RunRequest:
-    given Schema[RunRequest] = KindlingsSchema.derived[RunRequest].schema
+    given Schema[RunRequest] = summon[KindlingsSchema[RunRequest]].schema
 
   /** `--model-for <role>=<provider:model>`: the model (or `a > b` chain) one role of a run uses, over the role's chain
     * and over the run's `model`. The role is checked by the server.
     */
-  final case class ModelOverride(role: String, model: String) derives KindlingsCodecAsObject:
+  final case class ModelOverride(role: String, model: String) derives KindlingsCodecAsObject, KindlingsSchema:
     def text: String = s"$role=$model"
   object ModelOverride:
-    given Schema[ModelOverride] = KindlingsSchema.derived[ModelOverride].schema
+    given Schema[ModelOverride] = summon[KindlingsSchema[ModelOverride]].schema
 
     /** `role=provider:model`; only the first `=` separates (a model id never holds one, a role never). */
     def parse(s: String): Either[String, ModelOverride] =
@@ -352,12 +359,13 @@ object Agents:
         * keeps its old steps.
         */
       oaBacklog: Option[Boolean] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def fixes: Boolean = fix.contains(true)
     def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
   object RunParams:
-    given Schema[RunParams] = KindlingsSchema.derived[RunParams].schema
+    given Schema[RunParams] = summon[KindlingsSchema[RunParams]].schema
 
   /** One run, as listed. Amounts are totals over every recorded step. */
   final case class RunInfo(
@@ -391,7 +399,8 @@ object Agents:
       managerItem: Option[Long] = None,
       /** The last sign of life the stall watchdog recorded (step boundary or CLI output). */
       heartbeatAt: Option[String] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def isWaiting: Boolean = status == RunState.WaitingApproval.wire
 
     /** The model ref (or chain) `role` uses in this run: its `--model-for`, else `--model`, else None (the role's own
@@ -400,12 +409,12 @@ object Agents:
     def modelFor(role: Role): Option[String] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)
   object RunInfo:
-    given Schema[RunInfo] = KindlingsSchema.derived[RunInfo].schema
+    given Schema[RunInfo] = summon[KindlingsSchema[RunInfo]].schema
 
   /** A write a step of a DRY run skipped: what it is, and its payload (JSON, e.g. the whole patch). */
-  final case class WouldWrite(what: String, payload: String) derives KindlingsCodecAsObject
+  final case class WouldWrite(what: String, payload: String) derives KindlingsCodecAsObject, KindlingsSchema
   object WouldWrite:
-    given Schema[WouldWrite] = KindlingsSchema.derived[WouldWrite].schema
+    given Schema[WouldWrite] = summon[KindlingsSchema[WouldWrite]].schema
 
   /** One checkpointed step. `output` is the step's recorded result (JSON), truncated for display — for a rejected LLM
     * answer, the answer that was rejected. `model` is the configured ref, `actualModel` what the provider reported
@@ -432,7 +441,8 @@ object Agents:
       wouldWrite: List[WouldWrite] = Nil,
       firstCallTokens: Option[Long] = None,
       turns: Option[Int] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     /** `claude-code:haiku → claude-haiku-5-5`; the configured ref alone when the provider said the same (or nothing).
       */
     def modelText: String = (model, actualModel) match
@@ -441,7 +451,7 @@ object Agents:
       case (None, Some(a))                                       => a
       case (None, None)                                          => ""
   object StepInfo:
-    given Schema[StepInfo] = KindlingsSchema.derived[StepInfo].schema
+    given Schema[StepInfo] = summon[KindlingsSchema[StepInfo]].schema
 
   /** One traced message of an LLM step: the assistant's text, or a tool call with its (truncated) result.
     */
@@ -454,20 +464,23 @@ object Agents:
       toolInput: Option[String] = None,
       toolResult: Option[String] = None,
       latencyMs: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object MessageInfo:
-    given Schema[MessageInfo] = KindlingsSchema.derived[MessageInfo].schema
+    given Schema[MessageInfo] = summon[KindlingsSchema[MessageInfo]].schema
 
   final case class RunDetail(run: RunInfo, steps: List[StepInfo], messages: List[MessageInfo])
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RunDetail:
-    given Schema[RunDetail] = KindlingsSchema.derived[RunDetail].schema
+    given Schema[RunDetail] = summon[KindlingsSchema[RunDetail]].schema
 
   /** `GET /api/agents/models` — each role, the model it resolves to, and whether it can run. */
   final case class RoleModel(role: String, model: Option[String], ready: Boolean, problem: Option[String])
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RoleModel:
-    given Schema[RoleModel] = KindlingsSchema.derived[RoleModel].schema
+    given Schema[RoleModel] = summon[KindlingsSchema[RoleModel]].schema
 
   /** `roles` is each role's model NOW (the chain's first usable one, else its first); `chains` and `allowances` are the
     * whole picture: every chained model, and each allowance's use per window.
@@ -481,9 +494,10 @@ object Agents:
       chains: List[ModelChains.RoleChain] = Nil,
       allowances: List[ModelChains.AllowanceStatus] = Nil,
       now: String = ""
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ModelsInfo:
-    given Schema[ModelsInfo] = KindlingsSchema.derived[ModelsInfo].schema
+    given Schema[ModelsInfo] = summon[KindlingsSchema[ModelsInfo]].schema
 
   // ── agent doctor ───────────────────────────────────────────────────────────────────────────────
 
@@ -505,9 +519,11 @@ object Agents:
     given io.circe.Decoder[CheckLevel] = WireEnum.decoder
     given Schema[CheckLevel] = WireEnum.schema
 
-  final case class DoctorCheck(name: String, level: CheckLevel, detail: String) derives KindlingsCodecAsObject
+  final case class DoctorCheck(name: String, level: CheckLevel, detail: String)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object DoctorCheck:
-    given Schema[DoctorCheck] = KindlingsSchema.derived[DoctorCheck].schema
+    given Schema[DoctorCheck] = summon[KindlingsSchema[DoctorCheck]].schema
 
   /** One provider: whether any role's chain uses it, the models those chains name, its checks, and the models it lists
     * upstream (when it was asked: online, and a listing endpoint answered).
@@ -518,13 +534,14 @@ object Agents:
       models: List[String],
       checks: List[DoctorCheck],
       upstreamModels: List[String] = Nil
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def level: CheckLevel =
       if checks.exists(_.level == CheckLevel.Fail) then CheckLevel.Fail
       else if checks.exists(_.level == CheckLevel.Warn) then CheckLevel.Warn
       else CheckLevel.Ok
   object ProviderDoctor:
-    given Schema[ProviderDoctor] = KindlingsSchema.derived[ProviderDoctor].schema
+    given Schema[ProviderDoctor] = summon[KindlingsSchema[ProviderDoctor]].schema
 
   /** `GET /api/agents/doctor[?offline=true]` — every provider, checked without spending anything: keys present, the
     * provider's free model listing (online), every chained model priced, the `claude` CLI installed and logged in.
@@ -535,9 +552,10 @@ object Agents:
       online: Boolean,
       providers: List[ProviderDoctor],
       checks: List[DoctorCheck]
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object DoctorReport:
-    given Schema[DoctorReport] = KindlingsSchema.derived[DoctorReport].schema
+    given Schema[DoctorReport] = summon[KindlingsSchema[DoctorReport]].schema
 
   // ── generated runtime trees ────────────────────────────────────────────────────────────────────
 
@@ -545,9 +563,10 @@ object Agents:
     * under the server's runtimes directory, or under `out` (a SERVER-side path).
     */
   final case class GenerateRequest(runtimes: List[String] = Nil, out: Option[String] = None)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object GenerateRequest:
-    given Schema[GenerateRequest] = KindlingsSchema.derived[GenerateRequest].schema
+    given Schema[GenerateRequest] = summon[KindlingsSchema[GenerateRequest]].schema
 
   /** Where the trees went, how many files they hold, how many changed and how many stale ones went; `definitions` = the
     * fingerprint of what they were generated from.
@@ -559,9 +578,10 @@ object Agents:
       written: Int,
       removed: Int,
       definitions: String
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object GenerateResult:
-    given Schema[GenerateResult] = KindlingsSchema.derived[GenerateResult].schema
+    given Schema[GenerateResult] = summon[KindlingsSchema[GenerateResult]].schema
 
   // ── approvals ──────────────────────────────────────────────────────────────────────────────────
 
@@ -603,12 +623,13 @@ object Agents:
       articles: Option[ArticlePlans.ArticlePlan] = None,
       /** hint-effect: the action a model proposed for a manager, from a hint. */
       hintEffect: Option[Managers.HintProposal] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def approvalKind: Option[ApprovalKind] = ApprovalKind.parse(kind)
   object ApprovalInfo:
-    given Schema[ApprovalInfo] = KindlingsSchema.derived[ApprovalInfo].schema
+    given Schema[ApprovalInfo] = summon[KindlingsSchema[ApprovalInfo]].schema
 
   /** `POST /api/agents/approvals/{id}/{approve|reject}` — an optional note kept with the decision. */
-  final case class DecisionRequest(note: Option[String] = None) derives KindlingsCodecAsObject
+  final case class DecisionRequest(note: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
   object DecisionRequest:
-    given Schema[DecisionRequest] = KindlingsSchema.derived[DecisionRequest].schema
+    given Schema[DecisionRequest] = summon[KindlingsSchema[DecisionRequest]].schema

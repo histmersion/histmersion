@@ -42,30 +42,34 @@ object UiNotices:
       latest: Option[String] = None,
       seen: Option[String] = None,
       fresh: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object Counter:
-    given Schema[Counter] = KindlingsSchema.derived[Counter].schema
+    given Schema[Counter] = summon[KindlingsSchema[Counter]].schema
 
   /** The research agents at a glance, for the top bar's status: how many runs are running and how many wait their turn,
     * whether the autopilot is on, and whether it is finishing current work before it pauses (draining).
     */
   final case class AgentsGlance(running: Int = 0, queued: Int = 0, on: Boolean = false, draining: Boolean = false)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object AgentsGlance:
-    given Schema[AgentsGlance] = KindlingsSchema.derived[AgentsGlance].schema
+    given Schema[AgentsGlance] = summon[KindlingsSchema[AgentsGlance]].schema
 
   /** `GET /api/ui/counters` — every board, in the enum's order; `agents` only where the server runs research agents.
     */
-  final case class Counters(boards: List[Counter], agents: Option[AgentsGlance] = None) derives KindlingsCodecAsObject
+  final case class Counters(boards: List[Counter], agents: Option[AgentsGlance] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object Counters:
-    given Schema[Counters] = KindlingsSchema.derived[Counters].schema
+    given Schema[Counters] = summon[KindlingsSchema[Counters]].schema
 
   /** `POST /api/ui/seen/{board}` — the reader opened the window, which showed items up to `at` (the `latest` it was
     * given). Absent: up to now. The marker only moves forward.
     */
-  final case class SeenMark(at: Option[String] = None) derives KindlingsCodecAsObject
+  final case class SeenMark(at: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
   object SeenMark:
-    given Schema[SeenMark] = KindlingsSchema.derived[SeenMark].schema
+    given Schema[SeenMark] = summon[KindlingsSchema[SeenMark]].schema
 
   /** Pure: is there something new? Nothing at all is never new; never seen with something there is. */
   def fresh(latest: Option[String], seen: Option[String]): Boolean =

@@ -12,9 +12,9 @@ import sttp.tapir.Schema
 object AgentScheduler:
 
   /** A strategy and what it does. */
-  final case class StrategyLine(name: String, describe: String = "") derives KindlingsCodecAsObject
+  final case class StrategyLine(name: String, describe: String = "") derives KindlingsCodecAsObject, KindlingsSchema
   object StrategyLine:
-    given Schema[StrategyLine] = KindlingsSchema.derived[StrategyLine].schema
+    given Schema[StrategyLine] = summon[KindlingsSchema[StrategyLine]].schema
 
   /** An item the last pass started, and why it was chosen. */
   final case class Started(
@@ -25,9 +25,10 @@ object AgentScheduler:
       target: String,
       goal: Option[String] = None,
       why: String = ""
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object Started:
-    given Schema[Started] = KindlingsSchema.derived[Started].schema
+    given Schema[Started] = summon[KindlingsSchema[Started]].schema
 
   /** An item that waits: its effective priority (goal priority + aging), how long it waited, why (`code`: capacity |
     * pool | manager-cap | blocked | busy | stopped | drain | person …), the items it waits behind, and its place in the
@@ -46,14 +47,15 @@ object AgentScheduler:
       why: String = "",
       behind: List[String] = Nil,
       position: Int = 0
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object Waiting:
-    given Schema[Waiting] = KindlingsSchema.derived[Waiting].schema
+    given Schema[Waiting] = summon[KindlingsSchema[Waiting]].schema
 
   /** A plan pool: the runs drawing on it now and how many it takes (max-calls-in-flight × pool-overcommit). */
-  final case class PoolUse(pool: String, used: Int = 0, cap: Int = 0) derives KindlingsCodecAsObject
+  final case class PoolUse(pool: String, used: Int = 0, cap: Int = 0) derives KindlingsCodecAsObject, KindlingsSchema
   object PoolUse:
-    given Schema[PoolUse] = KindlingsSchema.derived[PoolUse].schema
+    given Schema[PoolUse] = summon[KindlingsSchema[PoolUse]].schema
 
   /** A job type: its weight and priority, its starts among the recent ones, the items of it waiting. */
   final case class TypeLine(
@@ -63,9 +65,10 @@ object AgentScheduler:
       priority: Int = 0,
       recent: Int = 0,
       waiting: Int = 0
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object TypeLine:
-    given Schema[TypeLine] = KindlingsSchema.derived[TypeLine].schema
+    given Schema[TypeLine] = summon[KindlingsSchema[TypeLine]].schema
 
   /** `GET /api/agents/scheduler`. `strategyFrom` = config | person; `at` = when the pass shown ran (`dry` = no pass ran
     * yet: what one would do now, nothing started); `maxRuns`/`occupied` = agents.max-concurrent-runs and the runs
@@ -90,14 +93,17 @@ object AgentScheduler:
       stop: Option[String] = None,
       settings: List[String] = Nil,
       changes: List[String] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object SchedulerStatus:
-    given Schema[SchedulerStatus] = KindlingsSchema.derived[SchedulerStatus].schema
+    given Schema[SchedulerStatus] = summon[KindlingsSchema[SchedulerStatus]].schema
 
   /** `POST /api/agents/scheduler`: switch the strategy live (`default` = back to agents.scheduler.strategy). */
-  final case class SchedulerSet(strategy: String, by: Option[String] = None) derives KindlingsCodecAsObject
+  final case class SchedulerSet(strategy: String, by: Option[String] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object SchedulerSet:
-    given Schema[SchedulerSet] = KindlingsSchema.derived[SchedulerSet].schema
+    given Schema[SchedulerSet] = summon[KindlingsSchema[SchedulerSet]].schema
 
   /** `GET /api/agents/scheduler/why/{item}`: one item (by id, or by target among the open items) — its status, why it
     * is where it is, what it waits behind, its place in the order.
@@ -114,9 +120,10 @@ object AgentScheduler:
       position: Int = 0,
       run: Option[String] = None,
       approval: Option[Long] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object WhyInfo:
-    given Schema[WhyInfo] = KindlingsSchema.derived[WhyInfo].schema
+    given Schema[WhyInfo] = summon[KindlingsSchema[WhyInfo]].schema
 
   /** The codes a waiting item carries (the pass's, and the ones read from an item that is not a candidate). */
   object Code:

@@ -11,14 +11,10 @@ import com.histmersion.values.{Confidence, SourceStatus}
 /** Magnum codecs for the shared wire DTOs (defined in core, DB-agnostic). Types whose fields changed from String to
   * List[String] or Option[Confidence] use internal row types with conversions; the rest derive directly.
   */
-given DbCodec[SourceRepo.GeoFeedRow] = DbCodec.derived // confidence reads via DbCodec[Confidence]
 given DbCodec[NeighborRow] = DbCodec.derived
 given DbCodec[ContradictionRow] = DbCodec.derived
 given DbCodec[Facet] = DbCodec.derived
 given DbCodec[TocEntry] = DbCodec.derived
-given DbCodec[FilterSql.SourceRow] = DbCodec.derived
-given DbCodec[FilterSql.SnippetRow] = DbCodec.derived
-given DbCodec[SourceRepo.FindingHitRow] = DbCodec.derived
 
 /** Flat projections used only by the write paths (Magnum maps a SELECT's columns positionally). `text[]` columns decode
   * straight into `List[String]` through [[Codecs]].
@@ -44,7 +40,7 @@ final private[db] case class FullSourceRow(
     ocrMarkdown: Option[String],
     notes: Option[String],
     updatedAt: String
-)
+) derives DbCodec
 final private[db] case class FindingIdRow(
     id: String,
     claim: String,
@@ -57,14 +53,10 @@ final private[db] case class FindingIdRow(
     tags: List[String],
     confidence: Option[Confidence],
     significance: Option[String]
-)
-final private[db] case class EdgeRow(src: String, dst: String, kind: String)
-final private[db] case class CitekeyMillis(citekey: String, millis: Long)
+) derives DbCodec
+final private[db] case class EdgeRow(src: String, dst: String, kind: String) derives DbCodec
+final private[db] case class CitekeyMillis(citekey: String, millis: Long) derives DbCodec
 
-given DbCodec[FullSourceRow] = DbCodec.derived
-given DbCodec[FindingIdRow] = DbCodec.derived
-given DbCodec[EdgeRow] = DbCodec.derived
-given DbCodec[CitekeyMillis] = DbCodec.derived
 given DbCodec[SourceDetail] = DbCodec.derived
 given DbCodec[FindingRow] = DbCodec.derived
 given DbCodec[SourceRef] = DbCodec.derived
@@ -822,7 +814,7 @@ object SourceRepo:
       tags: List[String],
       topics: List[String],
       hasCover: Boolean
-  ):
+  ) derives DbCodec:
     def toHit: GeoHit =
       GeoHit(
         citekey,
@@ -877,7 +869,7 @@ object SourceRepo:
       /** The gazetteer labels / ids this finding was materialised into (plan §1.6a). */
       places: List[String] = Nil,
       placeIds: List[String] = Nil
-  ):
+  ) derives DbCodec:
     def toMatch: FindingMatch =
       FindingMatch(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil, places)
     def assignedPlaceIds: List[String] = placeIds

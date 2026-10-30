@@ -50,8 +50,7 @@ object AgentRepo:
       managerId: Option[String],
       managerItem: Option[Long],
       heartbeatAt: Option[String]
-  )
-  private given DbCodec[RunRow] = DbCodec.derived
+  ) derives DbCodec
 
   final private case class StepRow(
       seq: Int,
@@ -74,8 +73,7 @@ object AgentRepo:
       wouldWrite: Option[String],
       firstCallTokens: Option[Long],
       turns: Option[Int]
-  )
-  private given DbCodec[StepRow] = DbCodec.derived
+  ) derives DbCodec
 
   private given DbCodec[MessageInfo] = DbCodec.derived
 
@@ -610,8 +608,7 @@ object AgentRepo:
       decidedAt: Option[String],
       subject: Option[String],
       seq: Option[Int]
-  )
-  private given DbCodec[ApprovalRow] = DbCodec.derived
+  ) derives DbCodec
 
   private val approvalSelect = Sql.raw(
     s"""SELECT id, job_id, kind, citekey, status, current_status, edge_kind, target, proposal::text, state, note,

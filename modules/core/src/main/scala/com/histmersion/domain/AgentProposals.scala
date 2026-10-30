@@ -32,7 +32,8 @@ object AgentProposals:
       target: Option[String] = None,
       evidence: String = "",
       quote: Option[String] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     /** One line for a person: what would change. */
     def describe: String = kind match
       case ApprovalKind.StatusChange => s"[[$citekey]] status → ${status.fold("?")(_.wire)}"
@@ -49,7 +50,7 @@ object AgentProposals:
       case _ => SourcePatch()
 
   object Proposal:
-    given Schema[Proposal] = KindlingsSchema.derived[Proposal].schema
+    given Schema[Proposal] = summon[KindlingsSchema[Proposal]].schema
 
   /** What becomes of a proposal. */
   enum Route:

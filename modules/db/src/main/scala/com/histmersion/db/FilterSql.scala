@@ -4,6 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{MediaRole, SourceStatus}
+import com.augustnagro.magnum.DbCodec
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.
@@ -366,7 +367,7 @@ object FilterSql:
     Search.snippetsQuery(q, snippetWords, citekeys)
 
   /** One snippet row: (citekey, heading, snippet). */
-  final case class SnippetRow(citekey: String, heading: Option[String], snippet: String)
+  final case class SnippetRow(citekey: String, heading: Option[String], snippet: String) derives DbCodec
 
   /** Every finding of the page's sources; which of them actually *matched* is decided purely, by [[findingWhy]], so the
     * explanation is unit-testable without a database.
@@ -500,7 +501,7 @@ object FilterSql:
       bodyHit: Boolean,
       snippet: Option[String] = None,
       matchedHeading: Option[String] = None
-  ):
+  ) derives DbCodec:
     /** The WIRE shape: arrays as proper lists. */
     def toHit: SearchHit =
       SearchHit(

@@ -15,9 +15,9 @@ import sttp.ai.core.agent.*
 
 import scala.collection.immutable.ListMap
 
-final case class Ping(word: String) derives KindlingsCodecAsObject
+final case class Ping(word: String) derives KindlingsCodecAsObject, KindlingsSchema
 object Ping:
-  given sttp.tapir.Schema[Ping] = KindlingsSchema.derived[Ping].schema
+  given sttp.tapir.Schema[Ping] = summon[KindlingsSchema[Ping]].schema
 
 /** AI providers as plugins (docs/research-plugins.md §22–§23), no database and no network: the six built-ins registered
   * and switched off like any plugin; a third-party provider registered beside them and refused under a host name; the

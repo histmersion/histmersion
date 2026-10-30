@@ -142,9 +142,10 @@ final case class TimeSpan(
     beginBy: Option[Long] = None,
     endFrom: Option[Long] = None,
     notAfter: Option[Long] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object TimeSpan:
-  given Schema[TimeSpan] = KindlingsSchema.derived[TimeSpan].schema
+  given Schema[TimeSpan] = summon[KindlingsSchema[TimeSpan]].schema
 
 /** Summary of one event (list results). */
 final case class EventSummary(
@@ -170,11 +171,12 @@ final case class EventSummary(
     plusMinus: Option[Long] = None,
     /** How it was dated (`Tephrochronology`, `Isotopic: K/Ar`…), as the catalogue says. */
     datingMethod: Option[String] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   /** The stated dating in words — `250 CE ± 2500 (tephrochronology)` ([[EventPrecision.note]]). */
   def datingNote: Option[String] = EventPrecision.note(central, plusMinus, datingMethod)
 object EventSummary:
-  given Schema[EventSummary] = KindlingsSchema.derived[EventSummary].schema
+  given Schema[EventSummary] = summon[KindlingsSchema[EventSummary]].schema
 
 /** Per-source dating of an event (the ChronOntology pattern). */
 final case class EventDating(
@@ -183,9 +185,10 @@ final case class EventDating(
     timeSpan: TimeSpan,
     method: Option[String] = None,
     note: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventDating:
-  given Schema[EventDating] = KindlingsSchema.derived[EventDating].schema
+  given Schema[EventDating] = summon[KindlingsSchema[EventDating]].schema
 
 /** A temporal or causal edge between two events. */
 final case class EventEdge(
@@ -194,9 +197,10 @@ final case class EventEdge(
     kind: String,
     citekey: String,
     note: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventEdge:
-  given Schema[EventEdge] = KindlingsSchema.derived[EventEdge].schema
+  given Schema[EventEdge] = summon[KindlingsSchema[EventEdge]].schema
 
 /** An actor who participated in an event. */
 final case class EventParticipant(
@@ -204,9 +208,10 @@ final case class EventParticipant(
     actor: String,
     role: String = "participant",
     citekey: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventParticipant:
-  given Schema[EventParticipant] = KindlingsSchema.derived[EventParticipant].schema
+  given Schema[EventParticipant] = summon[KindlingsSchema[EventParticipant]].schema
 
 /** Full detail view of one event (GET /api/events/{id}). */
 final case class EventDetail(
@@ -241,9 +246,10 @@ final case class EventDetail(
     leads: List[EventLead] = Nil,
     /** Its fields a person corrected by hand, kept over the catalogue's on a re-import ([[Corrections]]). */
     corrections: List[Correction] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventDetail:
-  given Schema[EventDetail] = KindlingsSchema.derived[EventDetail].schema
+  given Schema[EventDetail] = summon[KindlingsSchema[EventDetail]].schema
 
 /** A source attesting an event: through the event's own `citekey` (`via = "citekey"`) or an attestation (`via =
   * "attestation"`, with its quote).
@@ -254,9 +260,10 @@ final case class EventSourceRef(
     year: Option[Int] = None,
     via: String = "citekey",
     quote: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventSourceRef:
-  given Schema[EventSourceRef] = KindlingsSchema.derived[EventSourceRef].schema
+  given Schema[EventSourceRef] = summon[KindlingsSchema[EventSourceRef]].schema
 
 /** A finding near an event: how far (km) and how many years from its span (0 = overlapping). */
 final case class EventFindingRef(
@@ -267,14 +274,17 @@ final case class EventFindingRef(
     yearGap: Long,
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventFindingRef:
-  given Schema[EventFindingRef] = KindlingsSchema.derived[EventFindingRef].schema
+  given Schema[EventFindingRef] = summon[KindlingsSchema[EventFindingRef]].schema
 
 /** An article citing one of an event's attesting sources. */
-final case class EventArticleRef(slug: String, title: String, citekey: String) derives KindlingsCodecAsObject
+final case class EventArticleRef(slug: String, title: String, citekey: String)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventArticleRef:
-  given Schema[EventArticleRef] = KindlingsSchema.derived[EventArticleRef].schema
+  given Schema[EventArticleRef] = summon[KindlingsSchema[EventArticleRef]].schema
 
 /** Create/replace one event. */
 final case class EventPut(
@@ -292,9 +302,9 @@ final case class EventPut(
     participants: List[EventParticipant] = Nil,
     /** `local` | `regional`; absent (or `auto`) = derived ([[EventScale.effective]]). */
     scale: Option[String] = None
-)
+) derives KindlingsSchema
 object EventPut:
-  given Schema[EventPut] = KindlingsSchema.derived[EventPut].schema
+  given Schema[EventPut] = summon[KindlingsSchema[EventPut]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[EventPut] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPut])
@@ -317,9 +327,9 @@ final case class EventPatch(
     scale: Option[String] = None,
     /** The Wikidata item the event is (`Q…`); `""` clears it. */
     wikidata: Option[String] = None
-)
+) derives KindlingsSchema
 object EventPatch:
-  given Schema[EventPatch] = KindlingsSchema.derived[EventPatch].schema
+  given Schema[EventPatch] = summon[KindlingsSchema[EventPatch]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[EventPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPatch])
@@ -375,9 +385,9 @@ object EventGeometry:
   private def fmt(d: Double): String = BigDecimal(d).bigDecimal.stripTrailingZeros.toPlainString
 
 /** Confirmation of event deletion. */
-final case class EventDeleted(id: String, deleted: Boolean) derives KindlingsCodecAsObject
+final case class EventDeleted(id: String, deleted: Boolean) derives KindlingsCodecAsObject, KindlingsSchema
 object EventDeleted:
-  given Schema[EventDeleted] = KindlingsSchema.derived[EventDeleted].schema
+  given Schema[EventDeleted] = summon[KindlingsSchema[EventDeleted]].schema
 
 /** List result for events. */
 final case class EventList(
@@ -386,10 +396,11 @@ final case class EventList(
     /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def page: OffsetPage = OffsetPage(total, offset, events.size)
 object EventList:
-  given Schema[EventList] = KindlingsSchema.derived[EventList].schema
+  given Schema[EventList] = summon[KindlingsSchema[EventList]].schema
   def of(total: Int, rows: List[EventSummary], offset: Int): EventList =
     EventList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
@@ -421,9 +432,10 @@ final case class EventGeo(
     precision: String = EventPrecision.Precise,
     /** The stated dating in words (`250 CE ± 2500 (tephrochronology)`), for the marker's title. */
     dating: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventGeo:
-  given Schema[EventGeo] = KindlingsSchema.derived[EventGeo].schema
+  given Schema[EventGeo] = summon[KindlingsSchema[EventGeo]].schema
 
   /** Pure: the years an event covers in every time view — its outer span (`notBefore` else `beginBy`, to `notAfter`
     * else `endFrom`). An OPEN-ENDED event (one end known, #1768) covers the end it states alone — an event with only a
@@ -452,6 +464,7 @@ object EventGeo:
   * dated to be drawn at a year (`imprecise`: [[EventPrecision]] — the events list shows them).
   */
 final case class EventGeoList(events: List[EventGeo], unplaced: Int = 0, imprecise: Int = 0)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventGeoList:
-  given Schema[EventGeoList] = KindlingsSchema.derived[EventGeoList].schema
+  given Schema[EventGeoList] = summon[KindlingsSchema[EventGeoList]].schema

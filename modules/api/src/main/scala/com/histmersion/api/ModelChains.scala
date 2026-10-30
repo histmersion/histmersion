@@ -290,22 +290,25 @@ object ModelChains:
 
   /** A limit on the wire (and in `agent_allowances.limits`): `{amount: 500000, measure: "tokens", window: "5h"}`.
     */
-  final case class LimitSpec(amount: Double, measure: Measure, window: String) derives KindlingsCodecAsObject
+  final case class LimitSpec(amount: Double, measure: Measure, window: String)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object LimitSpec:
-    given Schema[LimitSpec] = KindlingsSchema.derived[LimitSpec].schema
+    given Schema[LimitSpec] = summon[KindlingsSchema[LimitSpec]].schema
 
   /** `PUT /api/agents/models/{role}` — the role's chain, first choice first. */
-  final case class ChainSet(models: List[String]) derives KindlingsCodecAsObject
+  final case class ChainSet(models: List[String]) derives KindlingsCodecAsObject, KindlingsSchema
   object ChainSet:
-    given Schema[ChainSet] = KindlingsSchema.derived[ChainSet].schema
+    given Schema[ChainSet] = summon[KindlingsSchema[ChainSet]].schema
 
   /** `PUT /api/agents/allowances` — the allowance of one model or provider (`claude-code:*`). No limit at all =
     * unlimited (a saved empty allowance overrides one from config).
     */
   final case class AllowanceSet(target: String, limits: List[LimitSpec] = Nil, reservePct: Int = 0)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object AllowanceSet:
-    given Schema[AllowanceSet] = KindlingsSchema.derived[AllowanceSet].schema
+    given Schema[AllowanceSet] = summon[KindlingsSchema[AllowanceSet]].schema
 
   /** Where a setting comes from: the server's config file / environment, or saved in the database (`agent models set`,
     * the web UI), which wins until it is reset.
@@ -325,9 +328,10 @@ object ModelChains:
       reserve: Double,
       usable: Boolean,
       freesAt: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object LimitStatus:
-    given Schema[LimitStatus] = KindlingsSchema.derived[LimitStatus].schema
+    given Schema[LimitStatus] = summon[KindlingsSchema[LimitStatus]].schema
 
   final case class AllowanceStatus(
       target: String,
@@ -337,9 +341,10 @@ object ModelChains:
       usable: Boolean,
       freesAt: Option[String] = None,
       note: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object AllowanceStatus:
-    given Schema[AllowanceStatus] = KindlingsSchema.derived[AllowanceStatus].schema
+    given Schema[AllowanceStatus] = summon[KindlingsSchema[AllowanceStatus]].schema
 
   /** One model of a role's chain: `ready` = on a plan pool or priced, and buildable (key present, provider allowed);
     * `usable` = ready AND every allowance covering it has headroom above its reserve; `billing` = how a ready model is
@@ -353,9 +358,10 @@ object ModelChains:
       freesAt: Option[String] = None,
       billing: Option[String] = None,
       cooling: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ChainEntry:
-    given Schema[ChainEntry] = KindlingsSchema.derived[ChainEntry].schema
+    given Schema[ChainEntry] = summon[KindlingsSchema[ChainEntry]].schema
 
   /** A role's chain and the model the next call would use (`active`; none = the role would pause). */
   final case class RoleChain(
@@ -364,6 +370,7 @@ object ModelChains:
       models: List[ChainEntry],
       active: Option[String] = None,
       problem: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RoleChain:
-    given Schema[RoleChain] = KindlingsSchema.derived[RoleChain].schema
+    given Schema[RoleChain] = summon[KindlingsSchema[RoleChain]].schema

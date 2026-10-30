@@ -216,10 +216,10 @@ object OpsTools:
       .schema
       .modify(_.sql)(_.description("One read-only SQL statement (Postgres refuses writes)"))
 
-  final case class SchemaInput() derives KindlingsCodecAsObject
+  final case class SchemaInput() derives KindlingsCodecAsObject, KindlingsSchema
   object SchemaInput:
-    given Schema[SchemaInput] = KindlingsSchema.derived[SchemaInput].schema
+    given Schema[SchemaInput] = summon[KindlingsSchema[SchemaInput]].schema
 
-  final case class BackupsInput() derives KindlingsCodecAsObject
+  final case class BackupsInput() derives KindlingsCodecAsObject, KindlingsSchema
   object BackupsInput:
-    given Schema[BackupsInput] = KindlingsSchema.derived[BackupsInput].schema
+    given Schema[BackupsInput] = summon[KindlingsSchema[BackupsInput]].schema

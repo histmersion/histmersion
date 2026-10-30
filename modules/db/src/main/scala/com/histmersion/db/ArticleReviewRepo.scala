@@ -24,14 +24,11 @@ object ArticleReviewRepo:
       openMinors: Option[Int],
       runs: Option[Int],
       round: Option[Int]
-  )
-  private given DbCodec[FactsRow] = DbCodec.derived
+  ) derives DbCodec
 
-  final private case class ApprovalRow(subject: String, id: Long, kind: String)
-  private given DbCodec[ApprovalRow] = DbCodec.derived
+  final private case class ApprovalRow(subject: String, id: Long, kind: String) derives DbCodec
 
-  final private case class GoalRow(slug: String, title: String, status: String)
-  private given DbCodec[GoalRow] = DbCodec.derived
+  final private case class GoalRow(slug: String, title: String, status: String) derives DbCodec
 
   /** The approval kinds that leave an article waiting for a person. */
   val WaitingKinds: List[String] = List("article-filter", "article-publish")

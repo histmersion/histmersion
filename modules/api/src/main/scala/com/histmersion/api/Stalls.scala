@@ -22,13 +22,14 @@ object Stalls:
       code: String = "",
       why: String = "",
       action: String = ""
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object Stall:
-    given Schema[Stall] = KindlingsSchema.derived[Stall].schema
+    given Schema[Stall] = summon[KindlingsSchema[Stall]].schema
 
-  final case class ReasonCount(code: String, count: Int) derives KindlingsCodecAsObject
+  final case class ReasonCount(code: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
   object ReasonCount:
-    given Schema[ReasonCount] = KindlingsSchema.derived[ReasonCount].schema
+    given Schema[ReasonCount] = summon[KindlingsSchema[ReasonCount]].schema
 
   /** `GET /api/agents/stalls?days=N`: the goals looked at (unfinished), the stalled ones (the longest idle first), and
     * how many per reason.
@@ -39,9 +40,10 @@ object Stalls:
       goals: Int = 0,
       stalled: List[Stall] = Nil,
       byReason: List[ReasonCount] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object StallReport:
-    given Schema[StallReport] = KindlingsSchema.derived[StallReport].schema
+    given Schema[StallReport] = summon[KindlingsSchema[StallReport]].schema
 
   /** The reasons, in the order they are checked (the first that holds is the one named). */
   object Code:

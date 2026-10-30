@@ -18,10 +18,8 @@ final private[db] case class GoalRow(
     periodEnd: Option[Long],
     parentSlug: Option[String],
     updatedAt: Option[String]
-):
+) derives DbCodec:
   def toDto: Goal = Goal(slug, title, status, notes, tags, regions, periodStart, periodEnd, parentSlug, updatedAt)
-
-given DbCodec[GoalRow] = DbCodec.derived
 
 object GoalRepo:
 

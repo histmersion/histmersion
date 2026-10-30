@@ -91,11 +91,12 @@ object ArticleEdits:
     * for a delete). Numbered from 1, in the order given.
     */
   final case class EditResult(index: Int, op: Op, anchor: String, text: String, problem: Option[String] = None)
-      derives KindlingsCodecAsObject:
+      derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def applied: Boolean = problem.isEmpty
     def label: String = s"edit $index (${op.wire} \"$anchor\")"
   object EditResult:
-    given Schema[EditResult] = KindlingsSchema.derived[EditResult].schema
+    given Schema[EditResult] = summon[KindlingsSchema[EditResult]].schema
 
   /** The body after the edits that applied, and every edit's result. */
   final case class Applied(body: String, results: List[EditResult]):
@@ -230,10 +231,11 @@ object ArticleEdits:
       wordsBefore: Int,
       wordsAfter: Int,
       body: String
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def clean: Boolean = problems.isEmpty
   object ArticleCheck:
-    given Schema[ArticleCheck] = KindlingsSchema.derived[ArticleCheck].schema
+    given Schema[ArticleCheck] = summon[KindlingsSchema[ArticleCheck]].schema
 
   /** The check as every surface prints it (the resulting body is left out: it can be long). */
   def markdown(c: ArticleCheck): String =

@@ -296,9 +296,10 @@ final case class FormatIssue(
     excerpt: String,
     message: String,
     fix: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object FormatIssue:
-  given Schema[FormatIssue] = KindlingsSchema.derived[FormatIssue].schema
+  given Schema[FormatIssue] = summon[KindlingsSchema[FormatIssue]].schema
 
 /** The formatting report of one subject (an article slug, a citekey, or `text`). `fixed` lists the repairs `--fix`
   * applied (empty for a read-only check); `text` is the repaired text when the subject was a text sent to
@@ -309,19 +310,21 @@ final case class FormatReport(
     issues: List[FormatIssue],
     fixed: List[String] = Nil,
     text: Option[String] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def errors: Int = issues.count(_.severity == FormatSeverity.Error)
   def warnings: Int = issues.count(_.severity == FormatSeverity.Warning)
 object FormatReport:
-  given Schema[FormatReport] = KindlingsSchema.derived[FormatReport].schema
+  given Schema[FormatReport] = summon[KindlingsSchema[FormatReport]].schema
 
 /** `POST /api/lint/markdown`: check Markdown that is not stored yet (a file an agent is about to `article put`). `fix`
   * returns the repaired text in [[FormatReport.text]].
   */
 final case class FormatCheck(text: String, field: FormatField = FormatField.Body, fix: Boolean = false)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object FormatCheck:
-  given Schema[FormatCheck] = KindlingsSchema.derived[FormatCheck].schema
+  given Schema[FormatCheck] = summon[KindlingsSchema[FormatCheck]].schema
 
 /** How a formatting report reads on every Markdown surface (MCP, CLI). */
 object FormatMarkdown:

@@ -419,9 +419,9 @@ object Tree:
 // native-image metadata indexes the derived lazies per compilation unit.
 
 /** One sample source under a leaf bucket — enough to decide whether to open it, no more. */
-final case class BucketSample(citekey: String, title: String) derives KindlingsCodecAsObject
+final case class BucketSample(citekey: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema
 object BucketSample:
-  given Schema[BucketSample] = KindlingsSchema.derived[BucketSample].schema
+  given Schema[BucketSample] = summon[KindlingsSchema[BucketSample]].schema
 
 /** One node of the aggregation tree (plan §1.6).
   *

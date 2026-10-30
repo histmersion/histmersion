@@ -23,8 +23,7 @@ object CandidateRepo:
       lastRun: Option[String],
       lastError: Option[String],
       lastFound: Int
-  )
-  private given DbCodec[WatchRow] = DbCodec.derived
+  ) derives DbCodec
 
   /** A goal's watches as they were last read. */
   def watches(ds: DataSource, goal: String): List[CandidateWatch] =
@@ -90,8 +89,7 @@ object CandidateRepo:
       state: String,
       firstSeen: String,
       lastSeen: String
-  )
-  private given DbCodec[Row] = DbCodec.derived
+  ) derives DbCodec
 
   /** A page of candidates of one goal (every goal: `None`) in one state, oldest found first. */
   def list(ds: DataSource, goal: Option[String], state: String, limit: Int, offset: Int): List[SourceCandidate] =

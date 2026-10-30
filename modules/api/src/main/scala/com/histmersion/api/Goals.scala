@@ -18,10 +18,11 @@ final case class Goal(
     periodEnd: Option[Long] = None,
     parentSlug: Option[String] = None,
     updatedAt: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object Goal:
-  given Schema[Goal] = KindlingsSchema.derived[Goal].schema
+  given Schema[Goal] = summon[KindlingsSchema[Goal]].schema
 
 final case class GoalPut(
     title: String,
@@ -32,10 +33,10 @@ final case class GoalPut(
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None,
     parentSlug: Option[String] = None
-)
+) derives KindlingsSchema
 
 object GoalPut:
-  given Schema[GoalPut] = KindlingsSchema.derived[GoalPut].schema
+  given Schema[GoalPut] = summon[KindlingsSchema[GoalPut]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[GoalPut] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPut])
@@ -51,10 +52,10 @@ final case class GoalPatch(
     parentSlug: Option[String] = None,
     /** The cost cap of the runs started for this goal (USD; 0 clears it — the server default applies). */
     budgetUsd: Option[Double] = None
-)
+) derives KindlingsSchema
 
 object GoalPatch:
-  given Schema[GoalPatch] = KindlingsSchema.derived[GoalPatch].schema
+  given Schema[GoalPatch] = summon[KindlingsSchema[GoalPatch]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[GoalPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatch])
@@ -65,21 +66,23 @@ final case class GoalList(
     /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def page: OffsetPage = OffsetPage(total, offset, goals.size)
 
 object GoalList:
-  given Schema[GoalList] = KindlingsSchema.derived[GoalList].schema
+  given Schema[GoalList] = summon[KindlingsSchema[GoalList]].schema
   def of(total: Int, rows: List[Goal], offset: Int): GoalList =
     GoalList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 final case class GoalDeleted(
     slug: String,
     deleted: Boolean
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object GoalDeleted:
-  given Schema[GoalDeleted] = KindlingsSchema.derived[GoalDeleted].schema
+  given Schema[GoalDeleted] = summon[KindlingsSchema[GoalDeleted]].schema
 
 // ── agent state ────────────────────────────────────────────────────────────────────────────────
 
@@ -91,17 +94,18 @@ final case class AgentStateEntry(
     key: String,
     value: String,
     updatedAt: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object AgentStateEntry:
-  given Schema[AgentStateEntry] = KindlingsSchema.derived[AgentStateEntry].schema
+  given Schema[AgentStateEntry] = summon[KindlingsSchema[AgentStateEntry]].schema
 
 final case class AgentStatePut(
     value: String
-)
+) derives KindlingsSchema
 
 object AgentStatePut:
-  given Schema[AgentStatePut] = KindlingsSchema.derived[AgentStatePut].schema
+  given Schema[AgentStatePut] = summon[KindlingsSchema[AgentStatePut]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AgentStatePut] = StrictJson.codec(KindlingsCodecAsObject.derived[AgentStatePut])
@@ -109,7 +113,8 @@ object AgentStatePut:
 final case class AgentStateDeleted(
     key: String,
     deleted: Boolean
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object AgentStateDeleted:
-  given Schema[AgentStateDeleted] = KindlingsSchema.derived[AgentStateDeleted].schema
+  given Schema[AgentStateDeleted] = summon[KindlingsSchema[AgentStateDeleted]].schema

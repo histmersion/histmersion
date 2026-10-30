@@ -162,28 +162,33 @@ final case class CoverageSource(
     year: Option[Int],
     status: SourceStatus,
     authors: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CoverageSource:
-  given Schema[CoverageSource] = KindlingsSchema.derived[CoverageSource].schema
+  given Schema[CoverageSource] = summon[KindlingsSchema[CoverageSource]].schema
 
 /** A source the article does not cite, with its stored reason (`None` = not given yet). */
-final case class CoverageEntry(source: CoverageSource, reason: Option[String]) derives KindlingsCodecAsObject
+final case class CoverageEntry(source: CoverageSource, reason: Option[String])
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CoverageEntry:
-  given Schema[CoverageEntry] = KindlingsSchema.derived[CoverageEntry].schema
+  given Schema[CoverageEntry] = summon[KindlingsSchema[CoverageEntry]].schema
 
 /** A typed disagreement edge (`from` challenges/refutes/updates/superseded_by `to`). */
-final case class CoverageEdge(from: String, kind: String, to: String) derives KindlingsCodecAsObject
+final case class CoverageEdge(from: String, kind: String, to: String) derives KindlingsCodecAsObject, KindlingsSchema
 object CoverageEdge:
-  given Schema[CoverageEdge] = KindlingsSchema.derived[CoverageEdge].schema
+  given Schema[CoverageEdge] = summon[KindlingsSchema[CoverageEdge]].schema
 
 /** One of the writer's further searches: how many sources it returns, and which of them the article cites. */
-final case class CoverageSearch(query: String, total: Int, cited: List[String]) derives KindlingsCodecAsObject
+final case class CoverageSearch(query: String, total: Int, cited: List[String])
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CoverageSearch:
-  given Schema[CoverageSearch] = KindlingsSchema.derived[CoverageSearch].schema
+  given Schema[CoverageSearch] = summon[KindlingsSchema[CoverageSearch]].schema
 
-final case class StatusCount(status: SourceStatus, count: Int) derives KindlingsCodecAsObject
+final case class StatusCount(status: SourceStatus, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object StatusCount:
-  given Schema[StatusCount] = KindlingsSchema.derived[StatusCount].schema
+  given Schema[StatusCount] = summon[KindlingsSchema[StatusCount]].schema
 
 /** How the stored coverage has drifted from the live corpus and the body. */
 enum DriftKind(val wire: String):
@@ -205,9 +210,9 @@ object DriftKind:
   given Decoder[DriftKind] = WireEnum.decoder
   given Schema[DriftKind] = WireEnum.schema
 
-final case class CoverageDrift(kind: DriftKind, citekeys: List[String]) derives KindlingsCodecAsObject
+final case class CoverageDrift(kind: DriftKind, citekeys: List[String]) derives KindlingsCodecAsObject, KindlingsSchema
 object CoverageDrift:
-  given Schema[CoverageDrift] = KindlingsSchema.derived[CoverageDrift].schema
+  given Schema[CoverageDrift] = summon[KindlingsSchema[CoverageDrift]].schema
 
 /** `GET /api/articles/{slug}/coverage`: the article's filter against the live corpus.
   *
@@ -253,11 +258,12 @@ final case class Coverage(
       * source, addressed, reasoned or open.
       */
     critiques: List[CritiquePair] = Nil
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def capped: Boolean = checked < total
   def unplaced: List[String] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
 object Coverage:
-  given Schema[Coverage] = KindlingsSchema.derived[Coverage].schema
+  given Schema[Coverage] = summon[KindlingsSchema[Coverage]].schema
 
 object ArticleCoverage:
 

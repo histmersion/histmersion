@@ -22,9 +22,10 @@ import com.histmersion.values.EventLinkStatus
   * around it.
   */
 final case class EventPassage(start: Int, end: Int, quote: String, name: String, context: String = "")
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventPassage:
-  given Schema[EventPassage] = KindlingsSchema.derived[EventPassage].schema
+  given Schema[EventPassage] = summon[KindlingsSchema[EventPassage]].schema
 
 /** One source that may discuss an event: its score, the findings near the event, the passages naming it, and the
   * reasons in words. `status`: proposed | confirmed (an attestation exists) | rejected.
@@ -38,21 +39,24 @@ final case class EventLinkCandidate(
     findings: List[String] = Nil,
     passages: List[EventPassage] = Nil,
     reasons: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventLinkCandidate:
-  given Schema[EventLinkCandidate] = KindlingsSchema.derived[EventLinkCandidate].schema
+  given Schema[EventLinkCandidate] = summon[KindlingsSchema[EventLinkCandidate]].schema
 
 final case class EventLinkList(eventId: String, label: String, candidates: List[EventLinkCandidate])
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventLinkList:
-  given Schema[EventLinkList] = KindlingsSchema.derived[EventLinkList].schema
+  given Schema[EventLinkList] = summon[KindlingsSchema[EventLinkList]].schema
 
 /** `POST /api/events/{id}/links`: `recompute` the candidates; `confirm` sources (each becomes an attestation from its
   * best passage — refused for a source with no passage naming the event); `reject` sources (they stop being proposed).
   */
 final case class EventLinksRequest(recompute: Boolean = false, confirm: List[String] = Nil, reject: List[String] = Nil)
+    derives KindlingsSchema
 object EventLinksRequest:
-  given Schema[EventLinksRequest] = KindlingsSchema.derived[EventLinksRequest].schema
+  given Schema[EventLinksRequest] = summon[KindlingsSchema[EventLinksRequest]].schema
   given Codec.AsObject[EventLinksRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[EventLinksRequest])
 
 /** What a links call did: the candidates now, the attestations written, and the sources refused with why.
@@ -62,17 +66,19 @@ final case class EventLinksResult(
     attested: List[Attestation] = Nil,
     refused: List[String] = Nil,
     rejected: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventLinksResult:
-  given Schema[EventLinksResult] = KindlingsSchema.derived[EventLinksResult].schema
+  given Schema[EventLinksResult] = summon[KindlingsSchema[EventLinksResult]].schema
 
 /** `POST /api/events/candidates` (a job): the candidates of every event — or the catalogue ones only, or those not
   * computed yet — so the cards and `events leads` read stored answers.
   */
 final case class EventCandidatesRequest(all: Boolean = false, event: Option[String] = None, limit: Option[Int] = None)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventCandidatesRequest:
-  given Schema[EventCandidatesRequest] = KindlingsSchema.derived[EventCandidatesRequest].schema
+  given Schema[EventCandidatesRequest] = summon[KindlingsSchema[EventCandidatesRequest]].schema
 
 // ── questions that guide research ───────────────────────────────────────────────────────────────
 
@@ -81,9 +87,10 @@ object EventCandidatesRequest:
   * `query` the text the web UI hands the discover endpoint.
   */
 final case class EventLeadAction(kind: String, label: String, command: String, query: Option[String] = None)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventLeadAction:
-  given Schema[EventLeadAction] = KindlingsSchema.derived[EventLeadAction].schema
+  given Schema[EventLeadAction] = summon[KindlingsSchema[EventLeadAction]].schema
 
 /** One question an event raises, in counts, dates and distances. */
 final case class EventLead(
@@ -96,13 +103,14 @@ final case class EventLead(
     actions: List[EventLeadAction] = Nil,
     findingsNear: Int = 0,
     candidates: Int = 0
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventLead:
-  given Schema[EventLead] = KindlingsSchema.derived[EventLead].schema
+  given Schema[EventLead] = summon[KindlingsSchema[EventLead]].schema
 
-final case class EventLeadList(total: Int, leads: List[EventLead]) derives KindlingsCodecAsObject
+final case class EventLeadList(total: Int, leads: List[EventLead]) derives KindlingsCodecAsObject, KindlingsSchema
 object EventLeadList:
-  given Schema[EventLeadList] = KindlingsSchema.derived[EventLeadList].schema
+  given Schema[EventLeadList] = summon[KindlingsSchema[EventLeadList]].schema
 
 /** What a lead is computed from: the event, its tier, the catalogue's magnitude / VEI, the corpus's findings near it
   * (within `km` and `years`), its proposed (unconfirmed) sources and attesting ones.
@@ -210,9 +218,10 @@ final case class ArticleEventLead(
     size: Option[String],
     findingsNear: Int,
     provider: String
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ArticleEventLead:
-  given Schema[ArticleEventLead] = KindlingsSchema.derived[ArticleEventLead].schema
+  given Schema[ArticleEventLead] = summon[KindlingsSchema[ArticleEventLead]].schema
 
   /** Pure: does an article body name the event (its label or another of its names, ignoring case)? */
   def mentioned(body: String, names: List[String]): Boolean =

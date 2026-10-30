@@ -40,9 +40,10 @@ object EnrichSource:
       )
 
   final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[String] = None)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object StatedPeriod:
-    given Schema[StatedPeriod] = KindlingsSchema.derived[StatedPeriod].schema
+    given Schema[StatedPeriod] = summon[KindlingsSchema[StatedPeriod]].schema
 
   final case class Classification(
       summary: String,
@@ -92,13 +93,13 @@ object EnrichSource:
       )
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the SOURCE states it"))
 
-  final case class Findings(findings: List[FindingProposal] = Nil) derives KindlingsCodecAsObject
+  final case class Findings(findings: List[FindingProposal] = Nil) derives KindlingsCodecAsObject, KindlingsSchema
   object Findings:
-    given Schema[Findings] = KindlingsSchema.derived[Findings].schema
+    given Schema[Findings] = summon[KindlingsSchema[Findings]].schema
 
-  final case class Notes(notes: String) derives KindlingsCodecAsObject
+  final case class Notes(notes: String) derives KindlingsCodecAsObject, KindlingsSchema
   object Notes:
-    given Schema[Notes] = KindlingsSchema.derived[Notes].schema
+    given Schema[Notes] = summon[KindlingsSchema[Notes]].schema
 
   // ── checkpointed intermediate values ───────────────────────────────────────────────────────────
 

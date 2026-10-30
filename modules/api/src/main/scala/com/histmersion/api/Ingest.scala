@@ -400,9 +400,10 @@ final case class AssetInput(
     width: Option[Int] = None,
     height: Option[Int] = None,
     sha256: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object AssetInput:
-  given Schema[AssetInput] = KindlingsSchema.derived[AssetInput].schema
+  given Schema[AssetInput] = summon[KindlingsSchema[AssetInput]].schema
 
 /** A stored asset, without the bytes (the listing endpoint / `histmersion assets`). */
 final case class AssetInfo(
@@ -412,14 +413,15 @@ final case class AssetInfo(
     sha256: String,
     width: Option[Int] = None,
     height: Option[Int] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object AssetInfo:
-  given Schema[AssetInfo] = KindlingsSchema.derived[AssetInfo].schema
+  given Schema[AssetInfo] = summon[KindlingsSchema[AssetInfo]].schema
 
 /** How many assets a write stored. */
-final case class AssetsStored(citekey: String, stored: Int) derives KindlingsCodecAsObject
+final case class AssetsStored(citekey: String, stored: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object AssetsStored:
-  given Schema[AssetsStored] = KindlingsSchema.derived[AssetsStored].schema
+  given Schema[AssetsStored] = summon[KindlingsSchema[AssetsStored]].schema
 
 /** One OCR job. `status` is a [[JobState]] spelling; `progress` is free text for the CLI's line. */
 final case class JobInfo(
@@ -436,18 +438,20 @@ final case class JobInfo(
     acquireItem: Option[Int] = None,
     /** What the job imports and what it left out, when that is more than a citekey ([[JobDetail]]). */
     detail: Option[JobDetail] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def state: JobState = JobState.parse(status).getOrElse(JobState.Failed)
   def isTerminal: Boolean = state.isTerminal
   def succeeded: Boolean = state == JobState.Done
 object JobInfo:
-  given Schema[JobInfo] = KindlingsSchema.derived[JobInfo].schema
+  given Schema[JobInfo] = summon[KindlingsSchema[JobInfo]].schema
 
 /** `POST /api/ingest` / `POST /api/sources/{ck}/reocr` — 202 with the job to poll. */
 final case class IngestAccepted(jobId: String, citekey: String, status: String, sha256: Option[String] = None)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object IngestAccepted:
-  given Schema[IngestAccepted] = KindlingsSchema.derived[IngestAccepted].schema
+  given Schema[IngestAccepted] = summon[KindlingsSchema[IngestAccepted]].schema
 
 /** The converter sidecar's `/convert` response (see `converter/app.py`). */
 final case class ConvertedImage(
@@ -457,15 +461,17 @@ final case class ConvertedImage(
     width: Option[Int] = None,
     height: Option[Int] = None,
     sha256: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ConvertedImage:
-  given Schema[ConvertedImage] = KindlingsSchema.derived[ConvertedImage].schema
+  given Schema[ConvertedImage] = summon[KindlingsSchema[ConvertedImage]].schema
 
 final case class ConvertedDoc(
     markdown: String,
     pages: Int = 0,
     images: List[ConvertedImage] = Nil,
     filename: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ConvertedDoc:
-  given Schema[ConvertedDoc] = KindlingsSchema.derived[ConvertedDoc].schema
+  given Schema[ConvertedDoc] = summon[KindlingsSchema[ConvertedDoc]].schema

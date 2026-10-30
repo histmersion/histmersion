@@ -115,7 +115,7 @@ final private[db] case class BSourceRow(
     originalSha: Option[String],
     updatedAt: String,
     isbns: List[String]
-)
+) derives DbCodec
 final private[db] case class BFindingRow(
     uid: UUID,
     origin: UUID,
@@ -133,7 +133,7 @@ final private[db] case class BFindingRow(
     confidence: Option[Confidence],
     significance: Option[String],
     updatedAt: String
-)
+) derives DbCodec
 final private[db] case class BAssessmentRow(
     sourceUid: UUID,
     checkedAt: String,
@@ -142,7 +142,7 @@ final private[db] case class BAssessmentRow(
     citedBy: Option[Int],
     influential: Option[Int],
     verdict: String
-)
+) derives DbCodec
 final private[db] case class BArticleRow(
     uid: UUID,
     origin: UUID,
@@ -157,7 +157,7 @@ final private[db] case class BArticleRow(
     pLo: Option[Long],
     pHi: Option[Long],
     updatedAt: String
-)
+) derives DbCodec
 final private[db] case class BVersionRow(
     uid: UUID,
     origin: UUID,
@@ -167,7 +167,7 @@ final private[db] case class BVersionRow(
     summary: Option[String],
     versionOf: String,
     createdAt: String
-)
+) derives DbCodec
 final private[db] case class BAssetRow(
     uid: UUID,
     origin: UUID,
@@ -186,7 +186,7 @@ final private[db] case class BAssetRow(
     pLo: Option[Long],
     pHi: Option[Long],
     updatedAt: String
-)
+) derives DbCodec
 final private[db] case class BEventRow(
     uid: UUID,
     origin: UUID,
@@ -212,7 +212,7 @@ final private[db] case class BEventRow(
     central: Option[Long],
     plusMinus: Option[Long],
     datingMethod: Option[String]
-)
+) derives DbCodec
 final private[db] case class BCatalogueRow(
     eventUid: UUID,
     provider: String,
@@ -232,7 +232,7 @@ final private[db] case class BCatalogueRow(
     historicity: String,
     record: String,
     retrievedAt: String
-)
+) derives DbCodec
 final private[db] case class BCandidateRow(
     eventUid: UUID,
     sourceUid: UUID,
@@ -243,7 +243,7 @@ final private[db] case class BCandidateRow(
     passages: String,
     reasons: List[String],
     computedAt: String
-)
+) derives DbCodec
 final private[db] case class BDatingRow(
     eventUid: UUID,
     citekey: String,
@@ -254,7 +254,7 @@ final private[db] case class BDatingRow(
     notAfter: Option[Long],
     method: Option[String],
     note: Option[String]
-)
+) derives DbCodec
 final private[db] case class BEventEdgeRow(
     eventUid: UUID,
     dstUid: UUID,
@@ -262,14 +262,14 @@ final private[db] case class BEventEdgeRow(
     citekey: String,
     sourceUid: Option[UUID],
     note: Option[String]
-)
+) derives DbCodec
 final private[db] case class BParticipantRow(
     eventUid: UUID,
     actor: String,
     role: String,
     citekey: Option[String],
     sourceUid: Option[UUID]
-)
+) derives DbCodec
 final private[db] case class BGoalRow(
     uid: UUID,
     origin: UUID,
@@ -288,7 +288,7 @@ final private[db] case class BGoalRow(
     plan: Option[String],
     planApprovedAt: Option[String],
     budgetUsd: Option[BigDecimal]
-)
+) derives DbCodec
 final private[db] case class BGoalLinkRow(
     goalUid: UUID,
     kind: String,
@@ -296,14 +296,14 @@ final private[db] case class BGoalLinkRow(
     refUid: Option[UUID],
     note: Option[String],
     createdAt: String
-)
+) derives DbCodec
 final private[db] case class BGoalScheduleRow(
     goalUid: UUID,
     kind: String,
     cron: String,
     enabled: Boolean,
     budgetUsd: Option[BigDecimal]
-)
+) derives DbCodec
 final private[db] case class BPlaceRow(
     uid: UUID,
     origin: UUID,
@@ -317,7 +317,7 @@ final private[db] case class BPlaceRow(
     source: Option[String],
     properties: Option[String],
     updatedAt: String
-)
+) derives DbCodec
 final private[db] case class BPlaceNameRow(
     placeId: String,
     name: String,
@@ -325,7 +325,7 @@ final private[db] case class BPlaceNameRow(
     pNull: Boolean,
     pLo: Option[Long],
     pHi: Option[Long]
-)
+) derives DbCodec
 final private[db] case class BPlaceRelRow(
     childId: String,
     parentId: String,
@@ -333,7 +333,7 @@ final private[db] case class BPlaceRelRow(
     pNull: Boolean,
     pLo: Option[Long],
     pHi: Option[Long]
-)
+) derives DbCodec
 final private[db] case class BPlaceTypeRow(
     placeId: String,
     typeLabel: String,
@@ -341,7 +341,7 @@ final private[db] case class BPlaceTypeRow(
     pLo: Option[Long],
     pHi: Option[Long],
     citekey: Option[String]
-)
+) derives DbCodec
 final private[db] case class BPeriodRow(
     uid: UUID,
     origin: UUID,
@@ -354,7 +354,7 @@ final private[db] case class BPeriodRow(
     region: Option[String],
     parentId: Option[String],
     updatedAt: String
-)
+) derives DbCodec
 final private[db] case class BQueueRow(
     uid: UUID,
     origin: UUID,
@@ -366,33 +366,11 @@ final private[db] case class BQueueRow(
     createdAt: String,
     doneAt: Option[String],
     updatedAt: String
-)
-final private[db] case class BTombstoneRow(uid: UUID, kind: String, origin: UUID, deletedAt: String)
+) derives DbCodec
+final private[db] case class BTombstoneRow(uid: UUID, kind: String, origin: UUID, deletedAt: String) derives DbCodec
 
-given DbCodec[BSourceRow] = DbCodec.derived
 // a finding's confidence reads through `DbCodec[Option[Confidence]]` (Codecs): an unknown word is "not stated"
-given DbCodec[BFindingRow] = DbCodec.derived
-given DbCodec[BAssessmentRow] = DbCodec.derived
-given DbCodec[BArticleRow] = DbCodec.derived
-given DbCodec[BVersionRow] = DbCodec.derived
-given DbCodec[BAssetRow] = DbCodec.derived
-given DbCodec[BEventRow] = DbCodec.derived
-given DbCodec[BCatalogueRow] = DbCodec.derived
-given DbCodec[BCandidateRow] = DbCodec.derived
 given DbCodec[BundleCorrection] = DbCodec.derived
-given DbCodec[BDatingRow] = DbCodec.derived
-given DbCodec[BEventEdgeRow] = DbCodec.derived
-given DbCodec[BParticipantRow] = DbCodec.derived
-given DbCodec[BGoalRow] = DbCodec.derived
-given DbCodec[BGoalLinkRow] = DbCodec.derived
-given DbCodec[BGoalScheduleRow] = DbCodec.derived
-given DbCodec[BPlaceRow] = DbCodec.derived
-given DbCodec[BPlaceNameRow] = DbCodec.derived
-given DbCodec[BPlaceRelRow] = DbCodec.derived
-given DbCodec[BPlaceTypeRow] = DbCodec.derived
-given DbCodec[BPeriodRow] = DbCodec.derived
-given DbCodec[BQueueRow] = DbCodec.derived
-given DbCodec[BTombstoneRow] = DbCodec.derived
 given DbCodec[InstanceInfo] = DbCodec.derived
 
 /** The bundle's view of the database (docs/research-merge-import.md §4): every table a bundle carries, read as the
@@ -1110,5 +1088,4 @@ final private[db] case class BAttestationFullRow(
     note: Option[String],
     createdAt: String,
     updatedAt: String
-)
-given DbCodec[BAttestationFullRow] = DbCodec.derived
+) derives DbCodec

@@ -130,8 +130,7 @@ object Geocoder:
       lat: Double,
       from: Option[Long],
       to: Option[Long]
-  )
-  private given DbCodec[Placed] = DbCodec.derived
+  ) derives DbCodec
 
   /** The findings whose stored point is EXACTLY the one the pre-#981 geocoder chose for their place name — the only
     * points the repair may move, so a hand-placed coordinate is never touched.
@@ -218,7 +217,7 @@ object Geocoder:
   // ── the fill (#987) ─────────────────────────────────────────────────────────────────────────────
 
   final private case class Unplaced(id: String, citekey: String, region: String, from: Option[Long], to: Option[Long])
-  private given DbCodec[Unplaced] = DbCodec.derived
+      derives DbCodec
 
   /** The findings with a place name and no point — what `finding-unplaced` reads. */
   val unplacedSql: String =

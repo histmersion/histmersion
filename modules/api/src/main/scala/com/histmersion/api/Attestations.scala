@@ -45,10 +45,11 @@ final case class Attestation(
     xywh: Option[String] = None,
     ctsUrn: Option[String] = None,
     note: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object Attestation:
-  given Schema[Attestation] = KindlingsSchema.derived[Attestation].schema
+  given Schema[Attestation] = summon[KindlingsSchema[Attestation]].schema
 
 final case class AttestationPut(
     citekey: String,
@@ -65,10 +66,10 @@ final case class AttestationPut(
     xywh: Option[String] = None,
     ctsUrn: Option[String] = None,
     note: Option[String] = None
-)
+) derives KindlingsSchema
 
 object AttestationPut:
-  given Schema[AttestationPut] = KindlingsSchema.derived[AttestationPut].schema
+  given Schema[AttestationPut] = summon[KindlingsSchema[AttestationPut]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AttestationPut] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPut])
@@ -85,10 +86,10 @@ final case class AttestationPatch(
     xywh: Option[String] = None,
     ctsUrn: Option[String] = None,
     note: Option[String] = None
-)
+) derives KindlingsSchema
 
 object AttestationPatch:
-  given Schema[AttestationPatch] = KindlingsSchema.derived[AttestationPatch].schema
+  given Schema[AttestationPatch] = summon[KindlingsSchema[AttestationPatch]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AttestationPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPatch])
@@ -99,18 +100,20 @@ final case class AttestationList(
     /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def page: OffsetPage = OffsetPage(total, offset, attestations.size)
 
 object AttestationList:
-  given Schema[AttestationList] = KindlingsSchema.derived[AttestationList].schema
+  given Schema[AttestationList] = summon[KindlingsSchema[AttestationList]].schema
   def of(total: Int, rows: List[Attestation], offset: Int): AttestationList =
     AttestationList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
 final case class AttestationDeleted(
     id: Long,
     deleted: Boolean
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object AttestationDeleted:
-  given Schema[AttestationDeleted] = KindlingsSchema.derived[AttestationDeleted].schema
+  given Schema[AttestationDeleted] = summon[KindlingsSchema[AttestationDeleted]].schema

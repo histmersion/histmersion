@@ -557,14 +557,15 @@ final case class GazetteerExtract(
     attribution: Option[String] = None,
     url: Option[String] = None,
     built: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object GazetteerExtract:
-  given Schema[GazetteerExtract] = KindlingsSchema.derived[GazetteerExtract].schema
+  given Schema[GazetteerExtract] = summon[KindlingsSchema[GazetteerExtract]].schema
 
 /** The manifest file itself. */
-final case class GazetteerManifest(extracts: List[GazetteerExtract]) derives KindlingsCodecAsObject
+final case class GazetteerManifest(extracts: List[GazetteerExtract]) derives KindlingsCodecAsObject, KindlingsSchema
 object GazetteerManifest:
-  given Schema[GazetteerManifest] = KindlingsSchema.derived[GazetteerManifest].schema
+  given Schema[GazetteerManifest] = summon[KindlingsSchema[GazetteerManifest]].schema
 
 /** One source as `GET /api/places/sources` reports it: what is pinned or found on disk, whether the file is there, and
   * what was last imported from it (`gazetteer_sources`).
@@ -585,9 +586,10 @@ final case class GazetteerSourceInfo(
     citation: Option[String] = None,
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object GazetteerSourceInfo:
-  given Schema[GazetteerSourceInfo] = KindlingsSchema.derived[GazetteerSourceInfo].schema
+  given Schema[GazetteerSourceInfo] = summon[KindlingsSchema[GazetteerSourceInfo]].schema
 
 /** What one import (or its dry run) did, per source. `created` places are new; `joined` records found their place by an
   * identifier; the name and link counts are rows inserted, removed and changed — a second run of the same version
@@ -616,7 +618,8 @@ final case class GazetteerLoadCounts(
       * ([[Gazetteer.dropsPointArea]]).
       */
     pointAreasSkipped: Long = 0
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def +(o: GazetteerLoadCounts): GazetteerLoadCounts =
     copy(
       records = records + o.records,
@@ -656,4 +659,4 @@ final case class GazetteerLoadCounts(
        else "") +
       (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
 object GazetteerLoadCounts:
-  given Schema[GazetteerLoadCounts] = KindlingsSchema.derived[GazetteerLoadCounts].schema
+  given Schema[GazetteerLoadCounts] = summon[KindlingsSchema[GazetteerLoadCounts]].schema

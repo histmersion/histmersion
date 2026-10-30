@@ -41,9 +41,10 @@ final case class ReviewBadge(
     findings: Int = 0,
     runs: Int = 0,
     round: Option[Int] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ReviewBadge:
-  given Schema[ReviewBadge] = KindlingsSchema.derived[ReviewBadge].schema
+  given Schema[ReviewBadge] = summon[KindlingsSchema[ReviewBadge]].schema
 
 /** One finding of the review ledger, where it was raised and what became of it: `outcome` is the ledger's status
   * (`open`, `fixed`, `rejected`, `wont-fix`, `set-aside`); `note` the closure's evidence (the record's sentence of a
@@ -66,9 +67,10 @@ final case class ReviewFinding(
     reopened: Int = 0,
     /** Raised by the final pass of its run: the next run's work. */
     deferred: Boolean = false
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ReviewFinding:
-  given Schema[ReviewFinding] = KindlingsSchema.derived[ReviewFinding].schema
+  given Schema[ReviewFinding] = summon[KindlingsSchema[ReviewFinding]].schema
 
 /** The findings first raised in one pass (`round`) of one review run; `runNumber` counts the runs of this article from
   * 1, `startedAt` is when the run began (UTC, when the run is still recorded).
@@ -79,19 +81,20 @@ final case class ReviewRound(
     round: Int,
     startedAt: Option[String],
     findings: List[ReviewFinding]
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ReviewRound:
-  given Schema[ReviewRound] = KindlingsSchema.derived[ReviewRound].schema
+  given Schema[ReviewRound] = summon[KindlingsSchema[ReviewRound]].schema
 
 /** A research goal that links the article, with the goal's stage. */
-final case class ReviewGoal(slug: String, title: String, status: String) derives KindlingsCodecAsObject
+final case class ReviewGoal(slug: String, title: String, status: String) derives KindlingsCodecAsObject, KindlingsSchema
 object ReviewGoal:
-  given Schema[ReviewGoal] = KindlingsSchema.derived[ReviewGoal].schema
+  given Schema[ReviewGoal] = summon[KindlingsSchema[ReviewGoal]].schema
 
 /** An approval about the article that waits for a person (an `article-filter`, an `article-publish`). */
-final case class ReviewApproval(id: Long, kind: String) derives KindlingsCodecAsObject
+final case class ReviewApproval(id: Long, kind: String) derives KindlingsCodecAsObject, KindlingsSchema
 object ReviewApproval:
-  given Schema[ReviewApproval] = KindlingsSchema.derived[ReviewApproval].schema
+  given Schema[ReviewApproval] = summon[KindlingsSchema[ReviewApproval]].schema
 
 /** `GET /api/articles/{slug}/review` — the article's review state, the review manager's last word on it (`outcome`, at
   * `updatedAt`), every finding the panel raised in time order, the research goals that link it and the approvals about
@@ -105,9 +108,10 @@ final case class ArticleReviewView(
     rounds: List[ReviewRound] = Nil,
     goals: List[ReviewGoal] = Nil,
     approvals: List[ReviewApproval] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ArticleReviewView:
-  given Schema[ArticleReviewView] = KindlingsSchema.derived[ArticleReviewView].schema
+  given Schema[ArticleReviewView] = summon[KindlingsSchema[ArticleReviewView]].schema
 
   /** A reviewer's wire name as a person reads it. */
   def reviewerName(wire: String): String = wire match

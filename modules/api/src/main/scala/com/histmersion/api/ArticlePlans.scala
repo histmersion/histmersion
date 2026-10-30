@@ -25,11 +25,12 @@ object ArticlePlans:
       citedIn: Int = 0,
       missed: List[String] = Nil,
       sample: List[String] = Nil
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     /** The share of the cited sources the filter returns (1 when the article cites none). */
     def recall: Double = if cited == 0 then 1.0 else citedIn.toDouble / cited
   object FilterProposal:
-    given Schema[FilterProposal] = KindlingsSchema.derived[FilterProposal].schema
+    given Schema[FilterProposal] = summon[KindlingsSchema[FilterProposal]].schema
 
   /** One article a plan proposes: its new slug, title and kind, the filter it is compiled from, why, the sources the
     * filter returns, and its largest overlap with an article of the area (`overlap`, the share of its sources that
@@ -44,9 +45,10 @@ object ArticlePlans:
       hits: Int = 0,
       overlap: Double = 0,
       overlapWith: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ProposedArticle:
-    given Schema[ProposedArticle] = KindlingsSchema.derived[ProposedArticle].schema
+    given Schema[ProposedArticle] = summon[KindlingsSchema[ProposedArticle]].schema
 
   /** The articles planned for research area `goal`, and what code dropped (with why). */
   final case class ArticlePlan(
@@ -54,10 +56,11 @@ object ArticlePlans:
       rationale: String = "",
       articles: List[ProposedArticle] = Nil,
       dropped: List[String] = Nil
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def isEmpty: Boolean = articles.isEmpty
   object ArticlePlan:
-    given Schema[ArticlePlan] = KindlingsSchema.derived[ArticlePlan].schema
+    given Schema[ArticlePlan] = summon[KindlingsSchema[ArticlePlan]].schema
 
   /** A filter in one line, the writing guide's `search {…}` form. */
   def filterLine(f: ArticleFilter): String = f.line
