@@ -70,7 +70,7 @@
           "doc" : "on stop, how long open connections may stay before they are closed; an IDLE keep-alive one counts too. 0 = close at once",
           "default" : "10",
           "value" : null,
-          "effective" : "\"0\"",
+          "effective" : "10",
           "source" : "default",
           "envVar" : "HISTMERSION_SHUTDOWN_GRACE",
           "restart" : "the listener's shutdown grace is set when it is bound",

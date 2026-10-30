@@ -110,7 +110,19 @@ class ContractSnapshotSuite extends munit.FunSuite:
       .read(None)
       .map(SettingsViews.page(_, restartable = false))
       .fold(e => throw AssertionError(e.toString), identity)
-    check("settings.json", page.asJson.spaces2)
+    check("settings.json", withoutProcessEnvironment(page.asJson).spaces2)
+
+  /** sconfig resolves `${?VAR}` in reference.conf against the process environment whatever environment the load is
+    * given, so a variable set where the suite runs (a forked test group sets `HISTMERSION_SHUTDOWN_GRACE`) shows in
+    * that setting's effective value. The snapshot shows the default there instead.
+    */
+  private def withoutProcessEnvironment(page: Json): Json =
+    def field(f: Json): Json =
+      val set = f.hcursor.get[String]("envVar").toOption.exists(sys.env.contains)
+      f.hcursor.downField("default").focus.filter(_ => set).fold(f)(d => f.mapObject(_.add("effective", d)))
+    def section(s: Json): Json =
+      s.mapObject(o => o.add("fields", o("fields").fold(Json.arr())(_.mapArray(_.map(field)))))
+    page.mapObject(o => o.add("sections", o("sections").fold(Json.arr())(_.mapArray(_.map(section)))))
 
 /** A data source with no database behind it: every connection is refused. */
 private object RefusingDataSource extends javax.sql.DataSource:
