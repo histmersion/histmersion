@@ -41,6 +41,11 @@ object SettingControl:
           controlled(value <-- draft.shown(f), onInput.mapToValue --> (v => draft.set(f.key, Some(v)))))
 
   /** Where the value comes from, and the way back to the default. */
+  /** The default, in words: "On by default" for a flag, else "Default: …". Pure. */
+  def defaultText(kind: String, default: String): String =
+    if kind == "flag" then s"${if Draft.isOn(default) then "On" else "Off"} by default."
+    else if default.isEmpty then "Default: (empty)." else s"Default: $default."
+
   private def status(f: ConfigEdit.Field, draft: Draft): HtmlElement =
     val dflt = Draft.plain(f.default)
     div(cls := "setting-status muted",
@@ -51,7 +56,8 @@ object SettingControl:
         child.text <-- draft.signal.map(d => d.get(f.key) match
           case Some(None)                                      => "Back to the default when saved."
           case Some(Some(_))                                   => "Changed — not saved yet."
-          case None if f.source == ConfigEdit.Source.File.wire => s"Set in the settings file. Default: ${if dflt.isEmpty then "(empty)" else dflt}."
+          case None if f.source == ConfigEdit.Source.File.wire => s"Set in the settings file. ${defaultText(f.kind, dflt)}"
+          case None if f.kind == "flag"                        => defaultText(f.kind, dflt)
           case None                                            => s"The default${if dflt.isEmpty then "" else s": $dflt"}."))),
       f.restart.map(why => span(cls := "setting-restart", s" Takes effect after a restart ($why).")),
       Option.when(f.source == ConfigEdit.Source.File.wire && f.locked.isEmpty)(

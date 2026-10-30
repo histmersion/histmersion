@@ -15,6 +15,9 @@ class SettingsWebSuite extends munit.FunSuite:
   test("a setting's name is its last word, as words"):
     assertEquals(SettingControl.nameOf("histmersion.acquire.contact-email"), "Contact email")
     assertEquals(SettingControl.nameOf("backups.keep"), "Keep")
+    assertEquals(SettingControl.defaultText("flag", "true"), "On by default.")
+    assertEquals(SettingControl.defaultText("flag", "false"), "Off by default.")
+    assertEquals(SettingControl.defaultText("number", "5"), "Default: 5.")
 
   test("the disk's share: what Histmersion takes, against the free space left"):
     assertEquals(DataSection.share(0, 100), 0)
