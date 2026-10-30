@@ -194,3 +194,14 @@ Already shaped for it: every row of `bookmarks`, `notes` and `read_marks` (V109)
 7. **Password rules** — length ≥ 12, no other composition rules (NIST SP 800-63B), a rate limit and a short
    delay per failed sign-in, and a lock-out logged but not permanent.
 8. **Two-factor sign-in** — not in the first version; TOTP is a small addition once accounts exist.
+
+### Decisions (2026-10-30)
+
+Questions 2, 3, 4, 5, 7 and 8 are answered as recommended. Two are reopened:
+
+- **1 (anonymous reading)** — reading without signing in must also work when the server is reached
+  through Tailscale, not only on `localhost`. Revised proposal pending: trust is decided by an explicit
+  list of networks, not by "loopback or not".
+- **6 (the local CLI)** — rejected as proposed: anyone running the CLI as the same OS user can edit the
+  `.conf` and the database directly anyway, so making that user sign in protects nothing. Revised
+  proposal pending: the local CLI and MCP authenticate automatically, with no sign-in.
