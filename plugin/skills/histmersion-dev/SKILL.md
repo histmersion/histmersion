@@ -90,6 +90,10 @@ just test-quick                     # what the branch changed, and what depends 
 just test-quick server              # one module (and nothing else)
 ```
 
+The names are sbt project ids. `values`, `api` and `core` are `projectMatrix` rows: the JVM row is
+`values`, `api`, `core`, the Scala.js row `valuesJS`, `apiJS` (`just test-quick api apiJS`). Their shared
+sources sit in `src/main/scala`, a platform's own in `src/main/scalajvm` / `src/main/scalajs`.
+
 Every pure function needs a test. `Filter → SQL`, markdown rendering, the frontmatter parser, the
 time parser, bbox splitting — all pure, all testable without a database.
 
@@ -322,7 +326,7 @@ refresh both MCP tool tables.
 
 ### Adding a lint rule
 
-Rules are a catalog in `modules/api/shared/src/main/scala/com/histmersion/api/Lint.scala` (`Rule(name,
+Rules are a catalog in `modules/api/src/main/scala/com/histmersion/api/Lint.scala` (`Rule(name,
 description)`, wire spelling `--rule dangling-edges`) with the SQL in
 `modules/db/src/main/scala/com/histmersion/db/LintRepo.scala`. Adding one means: the catalog entry, the
 query, a `LintRepoSuite` case, and the count in every description that says "13 rules" — the CLI

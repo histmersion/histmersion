@@ -5,7 +5,7 @@ The illustration is chosen server-side (`FigurePick`, Scala) from the figures a 
 their names (the page), sizes and how often the Markdown links each. This test builds a paper the
 way journals print them — a masthead strip and a small logo on every page, one large map on page 2,
 a small icon — converts it, and checks the converter's answer carries exactly what that choice
-needs. The same answer is checked in as `modules/core/jvm/src/test/resources/figures/paper.json`,
+needs. The same answer is checked in as `modules/core/src/test/resources/figures/paper.json`,
 which `FigurePickSuite` runs the choice over (regenerate it with `FIGURES_FIXTURE=<path> pytest`).
 """
 from __future__ import annotations
