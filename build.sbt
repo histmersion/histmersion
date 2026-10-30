@@ -81,205 +81,6 @@ Global / concurrentRestrictions := Seq(
 val testDbOn = settingKey[Boolean]("HISTMERSION_TEST_DB_URL is set: the DB-backed suites run")
 ThisBuild / testDbOn := sys.env.get("HISTMERSION_TEST_DB_URL").exists(_.nonEmpty)
 
-// ── native-image (custom task; no sbt-2.0 plugin available yet) ─────────────────────────────────
-// Shells out to GraalVM `native-image` over the module's full classpath. Reachability metadata
-// (captured via the tracing agent) lives in each module's src/main/resources/META-INF/native-image/.
-val nativeImage = taskKey[Unit]("Build a GraalVM native image for this module")
-
-/** VirtusLab Sloth (https://github.com/VirtusLab/sloth) rewrites the lazy-val bytecode of jars that were compiled by
-  * Scala < 3.8 (circe, cats, tapir, sttp, decline, sconfig, magnolia…) from the `sun.misc.Unsafe` scheme to the
-  * `VarHandle` scheme Scala 3.8 emits. Without it every native binary prints JDK 25's "terminally deprecated method in
-  * sun.misc.Unsafe" warning on first lazy val, and JDK 26 removes the method. The Sloth CLI jar is not published; build
-  * it with `sbt cli/assembly` in a Sloth checkout and point `SLOTH_JAR` at it (default: a checkout next to this repo,
-  * as CI makes one, or next to the main worktree when building from a `git worktree`). Absent → the native image is
-  * built from the unpatched jars and a log line says so; `scripts/bundle/smoke.sh` then fails on the warning.
-  */
-val slothJar = settingKey[Option[File]]("Sloth CLI assembly used to patch pre-3.8 lazy vals before native-image")
-ThisBuild / slothJar := {
-  // SLOTH_JAR first; then a checkout next to this one, then one next to the MAIN worktree when this
-  // is a linked `git worktree` (#874) — see project/SlothLookup.scala
-  val repo = (ThisBuild / baseDirectory).value
-  val checkouts = SlothLookup.checkouts(repo, SlothLookup.gitCommonDir(repo))
-  val candidates = sys.env.get("SLOTH_JAR").map(file) ++
-    checkouts.flatMap(c => (c / "cli" / "target" * "scala-*" / "sloth.jar").get())
-  candidates.find(_.isFile)
-}
-
-/** Copy every classpath jar to `target/sloth/` and run Sloth over it (in place, with the whole classpath as type
-  * hierarchy so stack-map frames resolve). A copy is re-patched only when the original's CONTENT changed — its SHA-256
-  * is kept beside the copy. (Timestamps were the signal once, and a rebuilt jar of our own went unnoticed: the native
-  * binaries shipped stale code.) Returns the classpath to hand to native-image.
-  *
-  * Speed (docs/research-build-speed.md §4): our own jars (`histmersion-*`, compiled by Scala 3.8 — no Unsafe lazy vals)
-  * are copied, not patched; the Sloth runs go side by side (one JVM per jar, at most half the cores), reading the
-  * ORIGINAL jars as hierarchy (patching changes method bodies, never a type) so no run reads a jar another is
-  * rewriting; and a patched, verified jar is kept in `store` (the checkout's target/sloth-store, keyed by the
-  * original's and Sloth's SHA-256) so the CLI reuses what the server's image patched instead of patching the same 30
-  * jars again.
-  */
-def slothPatch(log: sbt.util.Logger, sloth: Option[File], entries: Seq[File], outDir: File, store: File): Seq[File] =
-  sloth match {
-    case None =>
-      log.warn("sloth: no Sloth jar found (SLOTH_JAR) — native image keeps pre-3.8 lazy vals (sun.misc.Unsafe warning)")
-      entries
-    case Some(jar) =>
-      IO.createDirectory(outDir)
-      val jars = entries.filter(_.getName.endsWith(".jar"))
-      val dirs = entries.filterNot(_.getName.endsWith(".jar"))
-      val copies = jars.map(j => j -> outDir / j.getName)
-      def sha(f: File): String = {
-        val md = java.security.MessageDigest.getInstance("SHA-256")
-        md.digest(IO.readBytes(f)).map(b => f"$b%02x").mkString
-      }
-      def marker(dst: File): File = new File(dst.getPath + ".src-sha256")
-      val hashes = copies.map { case (src, _) => src -> sha(src) }.toMap
-      val slothSha = sha(jar)
-      val stale = copies.filter { case (src, dst) =>
-        !dst.isFile || !marker(dst).isFile || IO.read(marker(dst)).trim != hashes(src)
-      }
-      def stored(src: File): File = store / s"${hashes(src).take(32)}-${slothSha.take(16)}" / src.getName
-      val (own, others) = stale.partition { case (src, _) => src.getName.startsWith("histmersion-") }
-      val (reused, toPatch) = others.partition { case (src, _) => stored(src).isFile }
-      stale.foreach { case (src, dst) => IO.delete(marker(dst)) }
-      own.foreach { case (src, dst) => IO.copyFile(src, dst) }
-      reused.foreach { case (src, dst) => IO.copyFile(stored(src), dst) }
-      toPatch.foreach { case (src, dst) => IO.copyFile(src, dst) }
-      val hierarchy = (copies.map(_._2) ++ dirs).mkString(java.io.File.pathSeparator)
-      val originals = (jars ++ dirs).mkString(java.io.File.pathSeparator)
-      val javaBin = sys.env.get("JAVA_HOME").map(_ + "/bin/java").getOrElse("java")
-      val par = math.max(1, math.min(8, java.lang.Runtime.getRuntime.availableProcessors / 2))
-      val pool = java.util.concurrent.Executors.newFixedThreadPool(par)
-      val runs = try {
-        val fs = toPatch.map { case (_, dst) =>
-          pool.submit(new java.util.concurrent.Callable[(File, Int)] {
-            def call(): (File, Int) = dst -> scala.sys.process
-              .Process(
-                Seq(javaBin, "-jar", jar.getAbsolutePath, dst.getAbsolutePath, "--hierarchy-classpath", originals)
-              )
-              .!(scala.sys.process.ProcessLogger(_ => (), e => if e.contains("Error") then log.error(s"sloth: $e")))
-          })
-        }
-        fs.map(_.get())
-      } finally pool.shutdown()
-      runs.collectFirst { case (dst, rc) if rc != 0 => sys.error(s"sloth failed on ${dst.getName} (exit $rc)") }
-      // Sloth has emitted classes the JVM rejects (sttp's SafeGZIPInputStream: every gzip-encoded
-      // upstream response failed). The JVM's verifier checks every class it changed; a rejected one
-      // gets its original bytes back. See scripts/bundle/SlothVerify.java.
-      if toPatch.nonEmpty then {
-        val verifier = (file("scripts") / "bundle" / "SlothVerify.java").getAbsolutePath
-        val pairs = toPatch.flatMap { case (src, dst) => Seq(src.getAbsolutePath, dst.getAbsolutePath) }
-        val out = new StringBuilder
-        val rc = scala.sys.process
-          .Process(Seq(javaBin, verifier, hierarchy) ++ pairs)
-          .!(scala.sys.process.ProcessLogger(l => out.append(l).append('\n'), e => out.append(e).append('\n')))
-        out.toString.linesIterator.filter(_.nonEmpty).foreach(l => log.warn(s"sloth verify: $l"))
-        if rc != 0 then sys.error("sloth verify: a class stays unverifiable after restoring its original bytes")
-      }
-      // only a copy that was patched AND verified is marked current — and kept for the next module
-      toPatch.foreach { case (src, dst) =>
-        val keep = stored(src)
-        val tmp = new File(keep.getPath + s".tmp-${java.util.UUID.randomUUID()}")
-        IO.copyFile(dst, tmp)
-        java.nio.file.Files.move(
-          tmp.toPath,
-          keep.toPath,
-          java.nio.file.StandardCopyOption.ATOMIC_MOVE,
-          java.nio.file.StandardCopyOption.REPLACE_EXISTING
-        )
-      }
-      stale.foreach { case (src, dst) => IO.write(marker(dst), hashes(src)) }
-      log.info(
-        s"sloth: ${toPatch.size} jar(s) patched and verified ($par at a time), ${reused.size} reused, " +
-          s"${own.size} of ours copied, ${copies.size - stale.size} up to date → $outDir"
-      )
-      copies.map(_._2) ++ dirs
-  }
-
-// Writes the module's Compile classpath to target/classpath.txt so the app can be run under the
-// GraalVM native-image tracing agent directly (no sbt classes polluting the collected metadata).
-val writeClasspath = taskKey[Unit]("Write the module classpath to target/classpath.txt")
-def writeClasspathSetting: Seq[Setting[?]] = Seq(
-  writeClasspath := {
-    val conv = fileConverter.value
-    val cp = (Compile / fullClasspath).value
-      .map(a => conv.toPath(a.data).toFile)
-      .mkString(java.io.File.pathSeparator)
-    val f = target.value / "classpath.txt"
-    IO.write(f, cp)
-    streams.value.log.info(s"classpath → $f")
-  }
-)
-
-// Runs the app (forked `run`/`runMain`) under the GraalVM native-image tracing agent, MERGING the
-// captured reflection/resource/JNI metadata into src/main/resources/META-INF/native-image. So simply
-// exercising the app via sbt keeps the native-image metadata current — no separate command to run.
-// Requires sbt to run on the pinned GraalVM (`pinnedGraalVmHome`): agents of other JDKs write other formats.
-//
-// On JDK 25 the agent writes ONE `reachability-metadata.json` per module; the legacy split files
-// (reflect-config.json, resource-config.json, …) are gone and must not be reintroduced beside it —
-// this agent EMPTIES a legacy resource-config.json it finds in the merge dir. Resources are recorded
-// as they are requested, so exercise every web asset and boot once against an empty database.
-def agentRunSettings: Seq[Setting[?]] = {
-  def agentOpt(resourceDir: File): String =
-    pinnedGraalVmHome()
-    val dir = resourceDir / "META-INF" / "native-image"
-    IO.createDirectory(dir)
-    s"-agentlib:native-image-agent=config-merge-dir=${dir.getAbsolutePath}"
-  Seq(
-    Compile / run / fork := true,
-    Compile / runMain / fork := true,
-    Compile / run / javaOptions += agentOpt((Compile / resourceDirectory).value),
-    Compile / runMain / javaOptions += agentOpt((Compile / resourceDirectory).value)
-  )
-}
-
-// The GraalVM CE version scripts/bundle/graalvm-pins.txt pins: the JAVA_VERSION its `release` file declares.
-lazy val pinnedGraalVm: String =
-  IO.readLines(file("scripts") / "bundle" / "graalvm-pins.txt")
-    .map(_.trim)
-    .find(line => line.nonEmpty && !line.startsWith("#"))
-    .map(_.split("\\s+").head)
-    .getOrElse(sys.error("scripts/bundle/graalvm-pins.txt pins no GraalVM version"))
-
-// The JDK sbt runs on, which must be the pinned GraalVM CE with native-image — the one .sdkmanrc activates.
-def pinnedGraalVmHome(): File = {
-  val home = file(sys.props("java.home"))
-  val release = home / "release"
-  val version =
-    if release.exists then
-      IO.readLines(release).collectFirst { case s"""JAVA_VERSION="$v"""" => v }.getOrElse("unknown")
-    else "unknown"
-  if version != pinnedGraalVm || !(home / "bin" / "native-image").exists then
-    sys.error(
-      s"sbt runs on JDK $version ($home), not GraalVM CE $pinnedGraalVm with native-image (scripts/bundle/graalvm-pins.txt).\n" +
-        "  In the checkout run `sdk env install && sdk env`, then start sbt again."
-    )
-  home
-}
-
-// The pre-JDK-25 split metadata files. The pinned agent never writes them; finding one beside
-// reachability-metadata.json means the app was run under an older JDK's agent — and with both formats
-// present the JDK-25 agent empties resource-config.json, silently dropping every resource. Refuse to
-// build rather than ship a mixed image (a .gitignore would only hide them; native-image still reads them).
-val legacyNativeConfigs = Seq(
-  "jni-config.json",
-  "predefined-classes-config.json",
-  "proxy-config.json",
-  "reflect-config.json",
-  "resource-config.json",
-  "serialization-config.json"
-)
-
-def checkNoLegacyNativeConfigs(dir: File): Unit = {
-  val found = legacyNativeConfigs.map(dir / _).filter(_.exists)
-  if found.nonEmpty then
-    sys.error(
-      s"legacy native-image metadata beside reachability-metadata.json: ${found.map(_.getName).mkString(", ")} in $dir\n" +
-        "  these come from a tracing-agent run under a JDK other than the one pinned in scripts/bundle/graalvm-pins.txt.\n" +
-        "  Delete them, then regenerate with the pinned JDK (CLAUDE.md, 'The tracing-agent rule')."
-    )
-}
-
 /** One artifact into a Maven repository directory, as `publish` would lay it out: the POM and each `(classifier, file)`
   * (`""` = the main jar) under `<group path>/<name>_<scala>/<version>/`, each with its .sha1/.md5/.sha256. A Scala
   * module's name carries the Scala binary version, as everywhere.
@@ -314,23 +115,6 @@ def resolvedModules(report: UpdateReport): Map[String, String] =
     .map(m => s"${m.module.organization}:${m.module.name}" -> m.module.revision)
     .toMap
 
-// The server's native-image flags — ONE list, used by `server/nativeImage` and written into the relink
-// kit (`relinkKit`), so a relinked binary is linked exactly as the bundled one.
-// Reachability metadata comes from the tracing agent (META-INF/native-image/reachability-metadata.json)
-// — it covers flexmark's enum reflection, snakeyaml, pgjdbc, flyway, and the config/web resources.
-// Flags: keep netty's excluded JNI transports at run-time init (→ NIO); and let scribe's SLF4J
-// logger adapter be created at build time. Netty classes that are build-time initialised keep an
-// SLF4J logger in a static field, which since #824 is a scribe adapter. It holds only its name and
-// looks the scribe configuration up on every call, so baking it into the image heap is safe.
-// No `--enable-url-protocols=https` (#3752): GraalVM 25.1+ deprecates it for reachability metadata — the
-// `https` (and `http`) handler's constructor registered for reflection, which the tracing agent records in
-// the server's reachability-metadata.json. No `--no-fallback` either: it has had no effect since 25.1 (the
-// fallback image is gone), and the builder warned that it sets the deprecated FallbackThreshold.
-val serverNativeOpts = Seq(
-  "--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll",
-  "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter"
-)
-
 val relinkKit =
   taskKey[File]("Write the relink kit: the Sloth-patched class path, its order, the native-image arguments")
 
@@ -341,42 +125,6 @@ val pluginPlatform =
 val pluginRepo = taskKey[File](
   "Write the Maven repository an install ships for plugin authors: plugin-api, plugin-platform and plugin-testkit"
 )
-
-// NOTE: `Compile / mainClass` is set inline in each project, NOT here — sbt 2 identifies settings by
-// source position, so a `:=` inside a shared def would make the last caller win for every project.
-def nativeImageSettings(mainCls: String, outName: String, extraOpts: Seq[String] = Nil): Seq[Setting[?]] =
-  Seq(
-    // UNCACHED: sbt 2 caches task results by default, but the binary this writes is not part of the
-    // result — a restored CI cache reported the task done and no binary existed (bundle.yml, 2026-09-25)
-    nativeImage := Def.uncached {
-      val log = streams.value.log
-      val conv = fileConverter.value // sbt 2.0: classpath entries are virtual file refs
-      val entries = (Compile / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
-      val cp = slothPatch(
-        log,
-        (ThisBuild / slothJar).value,
-        entries,
-        target.value / "sloth",
-        (ThisBuild / baseDirectory).value / "target" / "sloth-store"
-      ).mkString(java.io.File.pathSeparator)
-      val out = target.value / outName
-      // a killed agent run leaves agent-pid*/ scratch dirs in the merge dir; never let them in
-      IO.delete(((Compile / resourceDirectory).value / "META-INF" / "native-image" * "agent-pid*").get())
-      checkNoLegacyNativeConfigs((Compile / resourceDirectory).value / "META-INF" / "native-image")
-      val ni = (pinnedGraalVmHome() / "bin" / "native-image").getAbsolutePath
-      log.info(s"native-image → $out")
-      // HISTMERSION_NATIVE_XMX: a cap on the builder's heap (a JVM size, e.g. 12g; default none — the server
-      // image needs more than 9 GB of heap, and a smaller cap only fails with OutOfMemoryError)
-      val xmx = sys.env.get("HISTMERSION_NATIVE_XMX").map(_.trim).filter(_.nonEmpty).map(x => s"-J-Xmx$x")
-      // HISTMERSION_NATIVE_PARALLELISM: the builder's threads (default: every core); fewer threads hold less at once
-      val par =
-        sys.env.get("HISTMERSION_NATIVE_PARALLELISM").map(_.trim).filter(_.nonEmpty).map(p => s"--parallelism=$p")
-      val cmd = Seq(ni) ++ xmx ++ par ++ extraOpts ++ Seq("-cp", cp, mainCls, out.getAbsolutePath)
-      val rc = scala.sys.process.Process(cmd).!
-      if rc != 0 then sys.error(s"native-image failed (exit $rc)")
-      log.info(s"native image built → $out")
-    }
-  )
 
 lazy val commonDeps = Seq(
   libraryDependencies += "org.scalameta" %% "munit" % V.munit % Test,
@@ -768,20 +516,30 @@ lazy val server = project
   // interrupted`, which is right for the one-server deployment but lets two suites booting at once
   // cancel each other's jobs. Groups have separate databases, so neither reaches across them.
   .settings(dbTestGroups("server", groups = 5, heap = "2g"))
-  .settings(writeClasspathSetting)
-  .settings(agentRunSettings)
-  .settings(nativeImageSettings("com.histmersion.server.Main", "histmersion-server", serverNativeOpts))
+  .enablePlugins(NativeImage)
+  .settings(
+    nativeImageName := "histmersion-server",
+    // ONE list, for server/nativeImage and the relink kit, so a relinked binary is linked as the bundled one.
+    // netty's excluded JNI transports stay run-time initialised (→ NIO); scribe's SLF4J adapter, which netty's
+    // build-time-initialised classes keep in a static field, holds only its name and is safe in the image heap.
+    // No --enable-url-protocols (deprecated since GraalVM 25.1: the agent's metadata registers the http/https
+    // handlers) and no --no-fallback (no effect since 25.1).
+    nativeImageOptions := Seq(
+      "--initialize-at-run-time=io.netty.channel.kqueue,io.netty.channel.epoll",
+      "--initialize-at-build-time=org.slf4j.ScribeLoggerAdapter"
+    )
+  )
   .settings(
     // the relink kit (docs/research-plugins.md §7.4, §8.7): what `bin/histmersion-relink` links a
     // binary with user plugins from, without sbt — the Sloth-patched class path the native image is
-    // built from, in its order, and the native-image arguments of `serverNativeOpts`. scripts/bundle/
+    // built from, in its order, and the native-image arguments of `nativeImageOptions`. scripts/bundle/
     // server.sh copies it into the bundle and adds the manifest (kit.json, SHA256SUMS).
     // UNCACHED for the reason `nativeImage` is: its output is files, not the task's result.
     relinkKit := Def.uncached {
       val log = streams.value.log
       val conv = fileConverter.value
       val entries = (Compile / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
-      val cp = slothPatch(
+      val cp = Sloth.patch(
         log,
         (ThisBuild / slothJar).value,
         entries,
@@ -798,7 +556,7 @@ lazy val server = project
       IO.delete(out)
       cp.foreach(j => IO.copyFile(j, out / "lib" / j.getName))
       IO.writeLines(out / "classpath", names)
-      IO.writeLines(out / "native-image.args", serverNativeOpts)
+      IO.writeLines(out / "native-image.args", nativeImageOptions.value)
       IO.write(out / "main-class", "com.histmersion.server.Main\n")
       // Sloth and its verifier, for the PLUGIN jars a relink links (these are patched already)
       (ThisBuild / slothJar).value.foreach(j => IO.copyFile(j, out / "tools" / "sloth.jar"))
@@ -1023,9 +781,8 @@ lazy val cli = project
   .dependsOn(api.jvm(scala3), config, files)
   .settings(name := "histmersion-cli", Compile / mainClass := Some("com.histmersion.cli.Main"))
   .settings(commonDeps)
-  .settings(writeClasspathSetting)
-  .settings(agentRunSettings)
-  .settings(nativeImageSettings("com.histmersion.cli.Main", "histmersion-cli"))
+  .enablePlugins(NativeImage)
+  .settings(nativeImageName := "histmersion-cli")
   .settings(
     libraryDependencies ++= Seq(
       "com.monovore" %% "decline" % V.decline,

@@ -36,7 +36,7 @@ near 12 GB; the CLI binary is 69 MB, the server binary 168 MB — measured in
 ## The relink kit
 
 A bundle carries `kit/`: the server's Sloth-patched jars in class-path order, the native-image flags
-(`serverNativeOpts` in `build.sbt` is the one list) and their checksums. `bin/histmersion-relink`
+(the server's `nativeImageOptions` in `build.sbt` is the one list) and their checksums. `bin/histmersion-relink`
 links a server from it plus the plugin jars, with no sbt and no compile — that is what the installers
 and `histmersion plugin rebuild` run. See [Installing plugins](../plugins/installing.md#relinking) and
 {{ repo_file("docs/research-plugins.md") }} §18–§21.

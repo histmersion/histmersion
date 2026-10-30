@@ -62,7 +62,7 @@ event catalogues and AI providers (`server/agents/AiPlugins`: `ai-anthropic` …
 `agents.providers.*`, §23) are built in the same way.
 
 A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit
-(`server/relinkKit`: the Sloth-patched class path and `serverNativeOpts`, the ONE list of native-image
+(`server/relinkKit`: the Sloth-patched class path and `server/nativeImageOptions`, the ONE list of native-image
 flags) — or run on the JVM (`bin/histmersion-server-jvm`); `histmersion plugin …` manages them on the
 local machine and never touches the database (§18). A plugin compiles against the install's Maven
 repository (`maven/`, `server/pluginRepo`: plugin-api and the plugin-platform POM, whose libraries and
@@ -495,7 +495,7 @@ version its `release` file declares, which is the string every check compares): 
 with the official release URL and its SHA-256. `.sdkmanrc` names the same build
 (`java=25.4.4.1+1-graalce`, which sdkman downloads from that URL), so in a checkout
 `sdk env install && sdk env` is the whole setup. The build uses the **active** JDK (`JAVA_HOME`, else
-`java` on `PATH`) and refuses any other version: `nativeImage` and the tracing-agent run in build.sbt,
+`java` on `PATH`) and refuses any other version: `nativeImage` and the tracing-agent run (`project/NativeImage.scala`),
 the justfile's sbt recipes (`scripts/dev/sbt.sh`) and `scripts/bundle/server.sh`, which also writes the
 version into the relink kit (`kit/graalvm-version`). The pins file serves the machines without sdkman:
 CI (`.github/workflows/ci.yml`, `bundle.yml`) and an end user's relink provision it with

@@ -18,7 +18,7 @@ sdk env install && sdk env   # once per checkout, then `sdk env` per shell (or s
 ```
 
 Everything uses the active JDK and refuses any other version, naming `sdk env install`: `nativeImage`
-and the tracing-agent run (build.sbt), the justfile's sbt recipes (`scripts/dev/sbt.sh`) and
+and the tracing-agent run (`project/NativeImage.scala`), the justfile's sbt recipes (`scripts/dev/sbt.sh`) and
 `scripts/bundle/server.sh`. `histmersion-toolchain` (`scripts/bundle/toolchain.sh`) is for the relink kit
 and CI only, on machines without sdkman. 25.4 is an innovation release — no fixes after the next one — so the pin moves
 with each new one: the pins file (version, URLs, SHA-256 against the release's `.sha256` and GitHub's
@@ -114,8 +114,10 @@ sbt --server -batch cli/nativeImage      # → target/out/jvm/*/histmersion-cli/
 sbt --server -batch server/nativeImage   # → target/out/jvm/*/histmersion-server/histmersion-server
 ```
 
-~35–60 s each. The custom `nativeImage` task shells out to GraalVM's `native-image` over the module's
-full classpath (no sbt-native-image plugin exists for sbt 2 yet).
+~35–60 s each. The custom `nativeImage` task (`project/NativeImage.scala`, enabled on server and cli) shells out
+to GraalVM's `native-image` over the module's Sloth-patched class path (`project/Sloth.scala`) with the module's
+`nativeImageOptions` (no sbt-native-image plugin exists for sbt 2 yet). `show server/nativeImageOptions`
+prints the server's flags, which the relink kit carries too.
 
 ### The tracing-agent rule
 
