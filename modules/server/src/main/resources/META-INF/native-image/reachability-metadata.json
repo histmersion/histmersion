@@ -15859,6 +15859,9 @@
       "glob": "db/migration/V108__queue_item_links.sql"
     },
     {
+      "glob": "db/migration/V109__bookmarks_notes_read_marks.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

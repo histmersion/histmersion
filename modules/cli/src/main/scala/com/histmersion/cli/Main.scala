@@ -428,6 +428,7 @@ object Main:
           // stream 2.4 — OCR that keeps the figures, as a job (`ingest <file>` lives in AcquireCmd,
           // which owns the name and dispatches file-vs-DOI)
           orElse IngestCmd.all orElse ActivityCmd.command
+          orElse BookmarksCmd.command orElse NotesCmd.command
           orElse ConfigCmd.command
           // the terrain base map's extracts on the server's machine
           orElse BasemapCmd.command

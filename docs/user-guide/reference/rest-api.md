@@ -53,6 +53,13 @@ the single definition the server interprets and the CLI derives its client from.
 | `POST` | `/api/reindex` | `after`, `limit` | one resumable slice of the FTS chunk rebuild |
 | `POST` | `/api/ingest` | `citekey`, `filename?`, `quality?`, `force?`, `title?`, `author*`, `year?`, `doi?`, `acquireItem?` + the document as the **raw body** | **202** `IngestAccepted{jobId, citekey, status, sha256}`; **409** when the same bytes are already stored under another citekey (unless `force`); **400** when `acquireItem` is not an open acquisition item. With `acquireItem`, the OCR job ticks that item off (`ingested as [[citekey]]`) when it succeeds and leaves it open when it fails. Without it, the job (of every import: an upload, `ingest <doi>`, `archive import`, `calibre import`) closes the open acquisition items that name the source's DOI — any case, resolver prefix or trailing punctuation — the same way, and lists items whose text resembles the title and first author (`acquire.defaults.title-match-at`) in its `progress` as possible matches, never closing them; a re-OCR matches nothing |
 | `POST` | `/api/sources/{citekey}/reocr` | `quality` | 202 + a job; converts the spooled original again |
+| `GET` · `POST` | `/api/bookmarks` | `kind`, `q`, `limit` · `BookmarkNew{target, label?, title?}` | `[Bookmark]` · `Bookmark{id, target{kind, id?, lat?, lon?, zoom?, from?, to?, view?}, title, label?, createdAt, updatedAt}` — the person's bookmarks, newest first: an item (`kind` `source`\|`article`\|`event`\|`place`\|`picture`\|`goal` with its `id`), a place on the map (`point`: `lat`, `lon`, optionally `from`..`to`), a saved view of Explore (`view`: the address's state after `#`, with the map's `lat`, `lon`, `zoom`) or a `period` (`from`..`to`). `title` = what the item is called now (renames followed), else the name it had when it was bookmarked. An item is bookmarked once: posting it again answers its bookmark (renamed when `label` is given). `q` = words the label or title holds; `limit` 200 (at most 1000) |
+| `PATCH` · `DELETE` | `/api/bookmarks/{id}` | `BookmarkEdit{label?}` · — | `Bookmark` — renamed · removed (answered as it was; kept in the database as a tombstone); 404 for none |
+| `GET` · `POST` | `/api/notes` | `kind`, `id` (the item's key), `q`, `limit` · `NoteNew{target, text, title?}` | `[Note]` · `Note{id, target, text, title, createdAt, updatedAt}` — the person's notes (Markdown), last changed first, each with the item or the place on the map it was left on (a view or a period holds none) |
+| `GET` · `PATCH` · `DELETE` | `/api/notes/{id}` | — · `NoteEdit{text, ifUpdatedAt?}` · — | `Note` — one note · its text changed (412 when it changed since `ifUpdatedAt`, the `updatedAt` the writer saw) · removed (a tombstone); 404 for none |
+| `GET` · `PUT` | `/api/reading` | `kind`, `show` (`read` default \| `opened` \| `all`), `limit` · `ReadMarkSet{kind, id, read, title?}` | `[ReadMark]` · `ReadMark{kind, id, title, read, readAt?, openedAt?}` — sources and articles the person marked read (only by saying so: opening one marks nothing), or opened; `PUT` marks one read or not read yet |
+| `POST` | `/api/reading/opened` | `ReadOpened{kind, id, title?}` | `ReadMark` — the person opened a source or an article now (Library's "Recently opened") |
+| `GET` | `/api/reading/unread` | `kind` (`source` default \| `article`), `limit`, `offset` | `UnreadPage{rows[{kind, id, title, authors[], year?, status?, periodStart?, periodEnd?}], total, offset}` — what is not marked read, by title, a page at a time |
 | `GET` | `/api/jobs/{id}` · `/api/jobs` | `status`, `kind`, `since`, `until`, `subject`, `limit`, `before`, `upTo` | `JobInfo` / `[JobInfo]` — `queued\|running\|done\|failed` (an agent run's `paused\|waiting\|cancelled` too) — newest first (`created_at`, then id); **filtered on the server** ([list filters](#list-filters)): `status` and `kind` match any of their values (repeat the parameter or comma-separate: `kind=ingest,reocr`), `since` / `until` bound the start (`2026-10-01`, an ISO instant, or `7d` / `12h` / `30m` ago; `until` a date includes that day), `subject` = text in what the job is about (its citekey, an agent run's target or pipeline, its stored detail) or the start of its id; an unknown state, or a date that cannot be read, is a 400. **Paged by keyset**: `before=<id>` = the next older page after that row, `upTo=<id>` = every row down to and including it; the body stays an array and the headers carry `X-Total-Count` (rows matching the filters), `X-Next-Before` (the cursor of the next older page, absent on the last), `X-State-Counts` (`done=12,failed=3`: every state's count, over the other filters but not the state filter) and `X-Facet-Counts` (`kind=ingest=507,kind=reocr=8`: each kind's count, over the other filters but not the kind filter) |
 | `GET` | `/api/sources/{citekey}/assets` | — | `[AssetInfo{name, mime, bytes, sha256, width, height}]` |
 | `POST` | `/api/sources/{citekey}/assets` | `[AssetInput{name, mime, base64, …}]` | add figures to an existing source (host-side `seed`) |
@@ -235,7 +242,7 @@ The index of [`Api.all`](https://github.com/histmersion/histmersion/blob/master/
 so it lists every endpoint the server defines even where the table above has no row of its own yet.
 
 <!-- BEGIN API INDEX (generated by `just api-docs` — do not edit by hand) -->
-253 endpoints on 213 paths:
+266 endpoints on 220 paths:
 
 | methods | path |
 |---|---|
@@ -322,6 +329,8 @@ so it lists every endpoint the server defines even where the table above has no 
 | `GET` · `DELETE` | `/api/basemap` |
 | `POST` | `/api/basemap/fetch` |
 | `GET` | `/api/basemap/{layer}/{z}/{x}/{y}` |
+| `GET` · `POST` | `/api/bookmarks` |
+| `PATCH` · `DELETE` | `/api/bookmarks/{id}` |
 | `GET` | `/api/bundle` |
 | `POST` | `/api/bundle/import` |
 | `POST` | `/api/bundle/upload` |
@@ -385,6 +394,8 @@ so it lists every endpoint the server defines even where the table above has no 
 | `GET` | `/api/merges/ledger` |
 | `GET` | `/api/merges/{id}` |
 | `GET` | `/api/neighbors/{citekey}` |
+| `GET` · `POST` | `/api/notes` |
+| `GET` · `PATCH` · `DELETE` | `/api/notes/{id}` |
 | `GET` | `/api/periods` |
 | `POST` | `/api/periods/fetch` |
 | `POST` | `/api/periods/import` |
@@ -417,6 +428,9 @@ so it lists every endpoint the server defines even where the table above has no 
 | `GET` · `POST` | `/api/queue/{list}` |
 | `GET` | `/api/queue/{list}/export` |
 | `POST` | `/api/queue/{list}/import` |
+| `GET` · `PUT` | `/api/reading` |
+| `POST` | `/api/reading/opened` |
+| `GET` | `/api/reading/unread` |
 | `POST` | `/api/reindex` |
 | `GET` | `/api/resolve/{id}` |
 | `POST` | `/api/restore` |

@@ -211,6 +211,14 @@ hand.
 | `histmersion jobs cancel [--json] <id>` | Cancel a job: a background job stops after the part it is on and is recorded as cancelled |
 | `histmersion jobs [--status <string>]... [--kind <string>]... [--since <string>] [--until <string>] [--subject <string>] [--limit <integer>] [--before <string>] [--json] [<id>]` | Recent background jobs (OCR, imports, agent runs, …), filtered on the server, or one job by id; `jobs pause|resume|cancel <id>` controls one |
 | `histmersion activity [--kind <string>] [--running] [--since <string>] [--goal <string>] [--limit <integer>] [--before <string>] [--json]` | What the agents, the server and you did, one list, newest first: agent runs, background jobs, worklog lines and your decisions, each with what it touched |
+| `histmersion bookmarks list [--kind <string>] [--query <string>] [--limit <integer>] [--json]` | Your bookmarks, newest first |
+| `histmersion bookmarks add [--lat <floating-point>] [--lon <floating-point>] [--zoom <floating-point>] [--from <integer>] [--to <integer>] [--view <string>] [--label <string>] [--title <string>] [--json] <kind (source | article | event | place | picture | goal | view | point | period)> [<id>]` | Bookmark an item (`source anthony2007_horse`), a place on the map (`point --lat 37.73 --lon 22.75`), a view (`view --view 'from=-1300&to=-1100' --lat .. --lon .. --zoom 6`) or a period (`period --from -1200 --to -1150 --label 'the crisis years'`) |
+| `histmersion bookmarks rm [--json] <id>` | Remove a bookmark (its id, from `bookmarks list`) |
+| `histmersion notes list [--kind <string>] [--item <string>] [--query <string>] [--limit <integer>] [--json]` | Your notes, last changed first |
+| `histmersion notes show [--json] <id>` | One note in full |
+| `histmersion notes add [--lat <floating-point>] [--lon <floating-point>] [--from <integer>] [--to <integer>] [--text <string>] [--file <string>] [--title <string>] [--json] <kind (source | article | event | place | picture | goal | point)> [<id>]` | Leave a note on an item (`source anthony2007_horse --text …`) or on a place on the map (`point --lat 37.73 --lon 22.75 [--from -1300 --to -1100] --text …`) |
+| `histmersion notes edit [--text <string>] [--file <string>] [--json] <id>` | Replace a note's text |
+| `histmersion notes rm [--json] <id>` | Remove a note (its id, from `notes list`) |
 | `histmersion config path` | Where the user config file is on this machine (printed alone on stdout), whether it exists and reads cleanly; the running server's file is in histmersion about |
 | `histmersion config reload [--json]` | Make the server read its config file again and apply it in place, no restart (restart-only settings are listed, not applied) |
 | `histmersion config get [--prefix <string>] [--local] [--json] [<key>]` | A setting (or every setting, or those under --prefix): what the settings file says, what applies and from where, its default and what it does — a credential only as set or not |

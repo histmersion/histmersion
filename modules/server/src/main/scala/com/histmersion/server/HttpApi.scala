@@ -7,6 +7,7 @@ import sttp.shared.Identity
 import sttp.model.{Header, MediaType, StatusCode}
 import sttp.tapir.json.circe.*
 import com.histmersion.api.*
+import com.histmersion.api.personal.PersonalApi
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -154,6 +155,20 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     ConfigEditApi.get.serverLogic[Identity](prefix => h.settings.page(prefix)),
     ConfigEditApi.write.serverLogic[Identity](w => h.settings.write(w)),
     ConfigEditApi.restart.serverLogic[Identity](_ => h.settings.restart()),
+    // a person's bookmarks, notes and read marks: `reading/unread` and `reading/opened` before `reading`
+    PersonalApi.bookmarks.serverLogic[Identity]((kind, q, limit) => h.personal.listBookmarks(kind, q, limit)),
+    PersonalApi.addBookmark.serverLogic[Identity](in => h.personal.addBookmark(in)),
+    PersonalApi.editBookmark.serverLogic[Identity]((id, in) => h.personal.editBookmark(id, in)),
+    PersonalApi.removeBookmark.serverLogic[Identity](id => h.personal.removeBookmark(id)),
+    PersonalApi.notes.serverLogic[Identity]((kind, id, q, limit) => h.personal.listNotes(kind, id, q, limit)),
+    PersonalApi.note.serverLogic[Identity](id => h.personal.note(id)),
+    PersonalApi.addNote.serverLogic[Identity](in => h.personal.addNote(in)),
+    PersonalApi.editNote.serverLogic[Identity]((id, in) => h.personal.editNote(id, in)),
+    PersonalApi.removeNote.serverLogic[Identity](id => h.personal.removeNote(id)),
+    PersonalApi.unread.serverLogic[Identity]((kind, limit, offset) => h.personal.unread(kind, limit, offset)),
+    PersonalApi.opened.serverLogic[Identity](in => h.personal.opened(in)),
+    PersonalApi.reading.serverLogic[Identity]((kind, show, limit) => h.personal.readMarks(kind, show, limit)),
+    PersonalApi.setRead.serverLogic[Identity](in => h.personal.setRead(in)),
     Api.activity.serverLogic[Identity]((show, since, goal, limit, before) => h.activity.page(show, since, goal, limit, before)),
     Api.jobs.serverLogic[Identity]((f, limit, before, upTo) => h.ingest.jobsPage(f, limit, before, upTo)),
     Api.assets.serverLogicSuccess[Identity](ck => h.ingest.assets(ck)),
