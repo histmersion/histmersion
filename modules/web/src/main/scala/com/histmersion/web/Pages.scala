@@ -2,7 +2,6 @@ package com.histmersion.web
 
 import com.histmersion.api.*
 import com.histmersion.api.UiNotices.Board
-import com.histmersion.web.ui.Layout
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.codecs.StringAsIsCodec
 
@@ -26,7 +25,7 @@ object Pages:
 
   private def page(ui: UiConfig, r: Route): HtmlElement = r match
     case Route.Explore                => div()
-    case Route.Library(s)             => layout("Library sections", librarySide(s), Some(Router.title(r)), library(s))
+    case Route.Library(s)             => libraryPage(ui, s)
     case Route.Settings(s)            => layout("Settings sections", settingsSide(s), Some(s.label), settings(ui, s))
     case Route.Place(id)              => single(placePage(id))
     case Route.Event(id)              => single(eventPage(id))
@@ -70,18 +69,12 @@ object Pages:
 
   // ── Library ─────────────────────────────────────────────────────────────────────────────────────
 
-  private def librarySide(on: LibrarySection): List[Modifier[HtmlElement]] =
-    def item(s: LibrarySection) = sideLink(Route.Library(s), s.label, s == on)
-    List(group("Browse"), item(LibrarySection.Sources), item(LibrarySection.Articles),
-      group("Add sources"), item(LibrarySection.Upload), item(LibrarySection.Merge),
-      p(cls := "side-note muted", "The lists follow the same filters as Explore."),
-      RouteLink(Route.Explore, cls := "btn btn--block side-action", "Show these on the map"))
-
-  private def library(s: LibrarySection): HtmlElement = s match
-    case LibrarySection.Sources  => LibraryLists.sources.view
-    case LibrarySection.Articles => LibraryLists.articles.view
-    case LibrarySection.Upload   => UploadView.pane
-    case LibrarySection.Merge    => MergeView.pane
+  /** Library's lists beside the filter panel (which lies over this page's left edge), or a way of adding
+    * sources. */
+  private def libraryPage(ui: UiConfig, s: LibrarySection): HtmlElement =
+    if s.isList then div(cls := "page-layout library-layout", mainTag(cls := "page-main library-main", idAttr := "page-main",
+      h1(cls := "sr-only", "Library"), library.LibraryPage.element(ui, s)))
+    else single(library.AddSources.page(s))
 
   // ── Research ────────────────────────────────────────────────────────────────────────────────────
 
@@ -227,35 +220,3 @@ object Pages:
     single(div(h1(cls := "page-title", "No such page"),
       p("This address names no page of Histmersion. ", RouteLink(Route.Explore, "Explore the map"), " or ",
         RouteLink(Route.Library(LibrarySection.Sources), "browse the library"), ".")))
-
-/** Library's two lists — the sources and the articles the global filter selects — with the same rows as
-  * Explore's side panel, a page at a time. */
-object LibraryLists:
-
-  final class LibraryList[Q, Row](tab: FilterTab[Q, Row]):
-    def view: HtmlElement =
-      div(
-        cls := "library-list",
-        onMountCallback(_ => tab.load()),
-        UiState.signal --> (_ => tab.refresh()),
-        tab.pane
-      )
-
-  val sources: LibraryList[Filter, Hit] = LibraryList(FilterTab[Filter, Hit](
-    name = "library-sources", singular = "source", noun = "sources",
-    query = () => UiState.toFilter().copy(limit = Layout.tabFetch),
-    fetch = (f, offset) => ApiClient.sources(f.copy(offset = offset)).map(r => TabPage(r.hits, r.total)),
-    render = ResultsList.hitRow(_),
-    empty = "No sources match the current filter.",
-    page = Layout.tabPage,
-    debounceMs = () => UiState.reloadDelay(Layout.tabReloadMs)))
-
-  val articles: LibraryList[Api.ArticleQuery, ArticleSummary] = LibraryList(FilterTab[Api.ArticleQuery, ArticleSummary](
-    name = "library-articles", singular = "article", noun = "articles",
-    query = () => UiState.articleQuery(),
-    fetch = (q, offset) => ApiClient.articles(q.copy(filter = q.filter.copy(offset = offset)))
-      .map(r => TabPage(r.articles, r.total, ArticlesTab.kindCounts(r.kinds))),
-    render = ArticlesTab.renderArticle(_),
-    empty = "No articles relate to the current filter.",
-    page = Layout.tabPage,
-    debounceMs = () => UiState.reloadDelay(Layout.tabReloadMs)))

@@ -55,6 +55,7 @@ object App:
         // the filter panel lies over the map: folded or open, the map keeps its size; its corners' controls
         // move clear of it (the stylesheet's `--filters-w`)
         cls("filters-folded") <-- FilterBar.folded.signal,
+        cls("on-library-list") <-- Router.route.map(r => filtersShown(r) && r != Route.Explore),
         TopBar.element(ui),
         // Explore stays laid out under the other pages, hidden and out of the keyboard's way, so the map
         // is neither resized nor reloaded by a visit to Library or Research
@@ -67,11 +68,15 @@ object App:
           PlacesInput.mapChips,
           ResultsPanel.element(ui),
           TimelineView.init(ui),
-          FilterBar.init(ui),
           ViewportToggle.init(ui),
-          MobileChrome.scrim,
           MobileChrome.edges
         ),
+        // the filter panel is Explore's and Library's lists' (one filter state): it lies over the map, or
+        // beside the lists; elsewhere it is hidden and out of the keyboard's way like Explore
+        FilterBar.init(ui, library.MyLibrary.panelTop, library.MyLibrary.panelFoot).amend(
+          cls("is-away") <-- Router.route.map(r => !filtersShown(r)),
+          inert <-- Router.route.map(r => !filtersShown(r))),
+        MobileChrome.scrim,
         Pages.element(ui),
         ArticleModal.element,
         statusElement
@@ -105,6 +110,12 @@ object App:
 
       load()
     }
+
+  /** The pages the filter panel is shown on: Explore and Library's two lists. */
+  private def filtersShown(r: Route): Boolean = r match
+    case Route.Explore    => true
+    case Route.Library(s) => s.isList
+    case _                => false
 
   /** The `inert` attribute: the subtree takes no focus, clicks or find-in-page. */
   private val inert = htmlAttr("inert", com.raquo.laminar.codecs.BooleanAsAttrPresenceCodec)

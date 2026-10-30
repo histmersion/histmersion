@@ -165,7 +165,7 @@ histmersion merge show 0193f1c4                    # one merge's report, resolut
 histmersion merge ledger --uid guterbock1997_hittite   # where a record came from; the merged-away uids that redirect to it
 ```
 
-The same review on a screen: **Library › Merge another collection** in the web UI (`/library/merge`) uploads a bundle,
+The same review on a screen: **Library › Add sources › Merge another collection** in the web UI (`/library/merge`) uploads a bundle,
 shows its plan — the issues grouped, open ones first, with a counter — and decides each in place: a
 source pair as a field table (here | result | bundle) with the score's evidence, an article as a
 three-way view (here | common version | bundle) with an editor for the merged text, a place or an

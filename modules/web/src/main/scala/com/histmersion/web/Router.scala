@@ -12,10 +12,13 @@ object Router:
   private val current = Var[Route](Route.Explore)
   /** Whether the address named no page the web UI knows (`/research/nope`). */
   private val missing = Var(false)
+  /** The address's query (`?item=…`): what a page shows within itself, such as Library's chosen item. */
+  private val query = Var("")
 
   def route: StrictSignal[Route] = current.signal
   def now(): Route               = current.now()
   def missingSignal: Signal[Boolean] = missing.signal
+  def search: StrictSignal[String] = query.signal
 
   /** A click a link should handle itself: the primary button with no modifier. ⌘/Ctrl/Shift/Alt and the
     * middle button are the browser's (a new tab or window), so the handler leaves them alone. Pure. */
@@ -33,10 +36,12 @@ object Router:
   /** Read the address: an old one ([[Route.legacy]]) is replaced by its new page in place (no history step). */
   private def settle(): Unit =
     val path = window.location.pathname
+    query.set(window.location.search)
     Route.legacy(path, UiState.open.now()) match
       case Some(Route.Landing(to, open)) =>
         if open != UiState.open.now() then UiState.open.set(open)
         UiState.navigate(to.path + (if Route.parse(path).contains(to) then window.location.search else ""), push = false)
+        query.set(window.location.search)
         show(to)
       case None =>
         Route.parse(path) match
@@ -55,6 +60,7 @@ object Router:
     if r.serverPage then window.location.assign(r.path)
     else
       UiState.navigate(r.path + search, push)
+      query.set(search)
       show(r)
 
   /** Go to a page given as an address of its own (`/research/backlog?item=3`). */

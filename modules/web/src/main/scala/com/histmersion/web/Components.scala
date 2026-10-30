@@ -30,6 +30,8 @@ enum Icon(val paths: List[String]):
   case Filter     extends Icon(List("M3.5 5h17l-6.5 8v6l-4 1.5V13z"))
   case FoldLeft   extends Icon(List("M14.5 5.5L8 12l6.5 6.5"))
   case NewTab     extends Icon(List("M13.5 4.5h6v6", "M19.5 4.5L11 13", "M18 14v5.5H4.5V6H10"))
+  /** A folded map: show it on the map. */
+  case FoldedMap  extends Icon(List("M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z", "M9 4v14", "M15 6v14"))
   case Info       extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M12 11v6", "M12 7.5h.01"))
   case Key        extends Icon(List("M11 14a4.5 4.5 0 1 1 2-2l8 8v2h-3v-2h-2v-2h-2z", "M7.5 9.5h.01"))
   case Edit       extends Icon(List("M4 20h4L19 9l-4-4L4 16z", "M13.5 6.5l4 4"))
