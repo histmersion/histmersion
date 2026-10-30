@@ -34,7 +34,7 @@ object TreeRepo:
       periodStart: Option[Long],
       periodEnd: Option[Long],
       placeIds: List[String]
-  ):
+  ) derives DbCodec:
     def toRow: TreeRow = TreeRow(key, citekey, title, periodStart, periodEnd, placeIds.distinct)
 
   final private[db] case class RegionNodeRow(
@@ -45,7 +45,7 @@ object TreeRepo:
       periodEnd: Option[Long],
       contested: Boolean,
       withdrawn: Boolean
-  ):
+  ) derives DbCodec:
     def toNode: RegionNode =
       RegionNode(id, label, kind, periodOf(periodStart, periodEnd), contested, withdrawn)
 
@@ -55,13 +55,9 @@ object TreeRepo:
       kind: String,
       periodStart: Option[Long],
       periodEnd: Option[Long]
-  ):
+  ) derives DbCodec:
     def toRelation: PlaceRelation =
       PlaceRelation(childId, parentId, kind, periodOf(periodStart, periodEnd))
-
-  given DbCodec[TreeRowRaw] = DbCodec.derived
-  given DbCodec[RegionNodeRow] = DbCodec.derived
-  given DbCodec[RelationRow] = DbCodec.derived
 
   // ── the counted units ────────────────────────────────────────────────────────────────────────
 

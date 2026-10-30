@@ -48,7 +48,7 @@ object SourceDeleteRepo:
       }
 
   final private case class Row(citekey: String, title: String, calibreId: Option[String], sha256: Option[String])
-  private given DbCodec[Row] = DbCodec.derived
+      derives DbCodec
 
   private[db] def planIn(requested: String)(using DbCon): Either[ApiError, Plan] =
     sql"SELECT citekey, title, calibre_id, sha256 FROM sources WHERE citekey = $requested"

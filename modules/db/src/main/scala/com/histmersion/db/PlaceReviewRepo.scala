@@ -23,8 +23,7 @@ object PlaceReviewRepo:
       periods: Option[String],
       start: Option[Long],
       end: Option[Long]
-  )
-  private given DbCodec[Row] = DbCodec.derived
+  ) derives DbCodec
 
   final private case class ItemRow(
       placeId: String,
@@ -32,8 +31,7 @@ object PlaceReviewRepo:
       itemClass: Option[String],
       from: Option[Long],
       to: Option[Long]
-  )
-  private given DbCodec[ItemRow] = DbCodec.derived
+  ) derives DbCodec
 
   private given DbCodec[Candidate] = DbCodec.derived
 
@@ -173,7 +171,7 @@ object PlaceReviewRepo:
       ref: String,
       lon: Double,
       lat: Double
-  ):
+  ) derives DbCodec:
     def km: Double = Geocode.distanceKm(fromLon, fromLat, lon, lat)
 
     /** One line: id, label, the grid point, the better one and how far. */
@@ -192,7 +190,6 @@ object PlaceReviewRepo:
         lon,
         km
       )
-  private given DbCodec[Relocation] = DbCodec.derived
 
   /** Every grid-cell place a linked record (Wikidata's P625) puts somewhere that is no grid centre itself; one per
     * place, the nearest such point. A place whose point a person set (`places set --point`, V081) is decided: never

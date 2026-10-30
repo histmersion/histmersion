@@ -13,9 +13,9 @@ import sttp.tapir.Schema
 object ApprovalDigest:
 
   /** A subject (a goal, an article) and its open approvals of a kind. */
-  final case class SubjectCount(subject: String, count: Int) derives KindlingsCodecAsObject
+  final case class SubjectCount(subject: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
   object SubjectCount:
-    given Schema[SubjectCount] = KindlingsSchema.derived[SubjectCount].schema
+    given Schema[SubjectCount] = summon[KindlingsSchema[SubjectCount]].schema
 
   /** One kind's open approvals: how many, the oldest's date, who decides them now (`person`, `checked`: the autopilot's
     * checks, within the day's cap, or `waits`: nobody is asked to, see [[Digest.goalPlansWait]]), the subjects with the
@@ -28,9 +28,10 @@ object ApprovalDigest:
       decidedBy: String = "person",
       subjects: List[SubjectCount] = Nil,
       ids: List[Long] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object KindGroup:
-    given Schema[KindGroup] = KindlingsSchema.derived[KindGroup].schema
+    given Schema[KindGroup] = summon[KindlingsSchema[KindGroup]].schema
 
   /** `GET /api/agents/approvals/digest`: when it was read, every open approval in all, the kinds (the most first), the
     * manager items held for a person or whose run waits for one, when the daily line was last written to the worklog,
@@ -43,9 +44,10 @@ object ApprovalDigest:
       heldForPerson: Int = 0,
       lastWritten: Option[String] = None,
       goalPlansWait: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object Digest:
-    given Schema[Digest] = KindlingsSchema.derived[Digest].schema
+    given Schema[Digest] = summon[KindlingsSchema[Digest]].schema
 
   /** `POST /api/agents/approvals/decide`: `approve` or `reject` every OPEN approval that matches — of `kind`, about
     * `subject` (exactly), or the `ids` given (all three narrow together; at least one is needed) — at most `limit`
@@ -60,13 +62,14 @@ object ApprovalDigest:
       dryRun: Boolean = false,
       limit: Option[Int] = None,
       by: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object BulkDecide:
-    given Schema[BulkDecide] = KindlingsSchema.derived[BulkDecide].schema
+    given Schema[BulkDecide] = summon[KindlingsSchema[BulkDecide]].schema
 
-  final case class BulkFailed(id: Long, error: String) derives KindlingsCodecAsObject
+  final case class BulkFailed(id: Long, error: String) derives KindlingsCodecAsObject, KindlingsSchema
   object BulkFailed:
-    given Schema[BulkFailed] = KindlingsSchema.derived[BulkFailed].schema
+    given Schema[BulkFailed] = summon[KindlingsSchema[BulkFailed]].schema
 
   /** What a bulk decision did (a dry run: would do): the approvals it matched, the ones decided (or that would be), the
     * ones refused and why, and how many open approvals are left.
@@ -78,9 +81,10 @@ object ApprovalDigest:
       decided: List[Long] = Nil,
       failed: List[BulkFailed] = Nil,
       left: Int = 0
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object BulkResult:
-    given Schema[BulkResult] = KindlingsSchema.derived[BulkResult].schema
+    given Schema[BulkResult] = summon[KindlingsSchema[BulkResult]].schema
 
   /** A group's `decidedBy` while nobody is asked to decide it. */
   val Waits = "waits"

@@ -18,8 +18,7 @@ final private[db] case class MediaThumbRow(
     sourceUrl: Option[String],
     width: Option[Int],
     height: Option[Int]
-)
-given DbCodec[MediaThumbRow] = DbCodec.derived
+) derives DbCodec
 
 final private[db] case class MediaItemRow(
     uid: String,
@@ -41,8 +40,7 @@ final private[db] case class MediaItemRow(
     originalUrl: Option[String],
     retrievedAt: Option[String],
     hasThumb: Boolean
-)
-given DbCodec[MediaItemRow] = DbCodec.derived
+) derives DbCodec
 
 final private[db] case class MediaGeoRow(
     citekey: Option[String],
@@ -61,8 +59,7 @@ final private[db] case class MediaGeoRow(
     sourceUrl: Option[String],
     licenseUrl: Option[String],
     author: Option[String]
-)
-given DbCodec[MediaGeoRow] = DbCodec.derived
+) derives DbCodec
 
 final private[db] case class MediaTargetRow(
     targetType: String,
@@ -70,8 +67,7 @@ final private[db] case class MediaTargetRow(
     role: String,
     label: String,
     item: String
-)
-given DbCodec[MediaTargetRow] = DbCodec.derived
+) derives DbCodec
 
 /** Pictures from outside providers (#1446, V082): one `assets` row each, with `provider` set instead of a `citekey`,
   * linked to the places and events they show through `media_links`; and the read paths every stored picture shares —

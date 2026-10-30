@@ -9,18 +9,19 @@ import sttp.tapir.Schema
 // agents have no shell, and paging a 450 KB body through `get_source` slices cost them their turns.
 
 /** One match inside a passage: `[start, end)` character offsets into [[PassageHit.text]]. */
-final case class MatchSpan(start: Int, end: Int) derives KindlingsCodecAsObject
+final case class MatchSpan(start: Int, end: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object MatchSpan:
-  given Schema[MatchSpan] = KindlingsSchema.derived[MatchSpan].schema
+  given Schema[MatchSpan] = summon[KindlingsSchema[MatchSpan]].schema
 
 /** One passage: `offset` is where `text` starts in the body — the SAME character offset `get_source` takes, so
   * `get_source {offset}` reads on from here — `heading` the breadcrumb of the section it sits in (as the table of
   * contents shows it), and `matches` the matched spans inside `text`.
   */
 final case class PassageHit(offset: Int, heading: Option[String], text: String, matches: List[MatchSpan])
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PassageHit:
-  given Schema[PassageHit] = KindlingsSchema.derived[PassageHit].schema
+  given Schema[PassageHit] = summon[KindlingsSchema[PassageHit]].schema
 
 /** The answer of `passages`: `matches` counted over the whole body (stopping at the configured cap, then `capped`),
   * merged into `total` passages of which `passages` are shown.
@@ -34,9 +35,10 @@ final case class PassageResult(
     total: Int,
     passages: List[PassageHit],
     bodyChars: Int
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PassageResult:
-  given Schema[PassageResult] = KindlingsSchema.derived[PassageResult].schema
+  given Schema[PassageResult] = summon[KindlingsSchema[PassageResult]].schema
 
 /** How a [[PassageResult]] reads as Markdown — the one rendering the MCP tool, the agents' tool and the CLI print.
   */

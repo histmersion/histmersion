@@ -53,24 +53,29 @@ final case class StorageEntry(
     shrink: Option[String] = None,
     volume: Option[String] = None,
     host: String = "server"
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object StorageEntry:
-  given Schema[StorageEntry] = KindlingsSchema.derived[StorageEntry].schema
+  given Schema[StorageEntry] = summon[KindlingsSchema[StorageEntry]].schema
 
 /** One of the database's largest tables, indexes and TOAST included (`pg_total_relation_size`). */
-final case class TableSize(name: String, bytes: Long) derives KindlingsCodecAsObject
+final case class TableSize(name: String, bytes: Long) derives KindlingsCodecAsObject, KindlingsSchema
 object TableSize:
-  given Schema[TableSize] = KindlingsSchema.derived[TableSize].schema
+  given Schema[TableSize] = summon[KindlingsSchema[TableSize]].schema
 
 /** A file system the entries sit on, and its free space (what this process may still write). */
-final case class StorageVolume(id: String, totalBytes: Long, freeBytes: Long) derives KindlingsCodecAsObject
+final case class StorageVolume(id: String, totalBytes: Long, freeBytes: Long)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object StorageVolume:
-  given Schema[StorageVolume] = KindlingsSchema.derived[StorageVolume].schema
+  given Schema[StorageVolume] = summon[KindlingsSchema[StorageVolume]].schema
 
 /** The archives in `backups.dir` and how many `backups.keep` leaves after each dump (0 = every one). */
-final case class BackupsUsage(count: Int, bytes: Long, newest: Option[String], keep: Int) derives KindlingsCodecAsObject
+final case class BackupsUsage(count: Int, bytes: Long, newest: Option[String], keep: Int)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object BackupsUsage:
-  given Schema[BackupsUsage] = KindlingsSchema.derived[BackupsUsage].schema
+  given Schema[BackupsUsage] = summon[KindlingsSchema[BackupsUsage]].schema
 
 /** @param measuring
   *   a measurement is under way; the rest is the previous one (or empty, on the first)
@@ -99,9 +104,10 @@ final case class StorageReport(
     lowFreeBytes: Long = Storage.DefaultLowFreeBytes,
     hints: List[String] = Nil,
     problems: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object StorageReport:
-  given Schema[StorageReport] = KindlingsSchema.derived[StorageReport].schema
+  given Schema[StorageReport] = summon[KindlingsSchema[StorageReport]].schema
 
 /** How to make each kind of location smaller — one sentence a person can act on. Pure. */
 object StorageAdvice:

@@ -19,8 +19,7 @@ final private[db] case class MergeRow(
     backup: Option[String],
     ledgerRows: Int,
     redirects: Int
-)
-given DbCodec[MergeRow] = DbCodec.derived
+) derives DbCodec
 
 final private[db] case class LedgerDbRow(
     foreignUid: UUID,
@@ -32,8 +31,7 @@ final private[db] case class LedgerDbRow(
     localRevAfter: Option[String],
     decision: String,
     recordedAt: String
-)
-given DbCodec[LedgerDbRow] = DbCodec.derived
+) derives DbCodec
 
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):
   * `merge list | show | ledger` read `merges`, `merge_ledger`, `uid_aliases` and `merge_decisions`; the web review

@@ -14,9 +14,10 @@ object PersonalTools:
   import McpTools.given
 
   final case class BookmarksInput(kind: Option[String] = None, query: Option[String] = None, limit: Option[Int] = None)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object BookmarksInput:
-    given Schema[BookmarksInput] = KindlingsSchema.derived[BookmarksInput].schema
+    given Schema[BookmarksInput] = summon[KindlingsSchema[BookmarksInput]].schema
 
   final case class NotesInput(
       id: Option[String] = None,
@@ -24,9 +25,10 @@ object PersonalTools:
       item: Option[String] = None,
       query: Option[String] = None,
       limit: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object NotesInput:
-    given Schema[NotesInput] = KindlingsSchema.derived[NotesInput].schema
+    given Schema[NotesInput] = summon[KindlingsSchema[NotesInput]].schema
 
   def apply(personal: PersonalControllers) =
     val bookmarks =

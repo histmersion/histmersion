@@ -10,9 +10,9 @@ import sttp.tapir.Schema
   */
 
 /** One effective setting of a plugin's block (the user's keys over the plugin's defaults). */
-final case class PluginSetting(key: String, value: String) derives KindlingsCodecAsObject
+final case class PluginSetting(key: String, value: String) derives KindlingsCodecAsObject, KindlingsSchema
 object PluginSetting:
-  given Schema[PluginSetting] = KindlingsSchema.derived[PluginSetting].schema
+  given Schema[PluginSetting] = summon[KindlingsSchema[PluginSetting]].schema
 
 /** How a plugin ended up. */
 enum PluginState:
@@ -54,9 +54,10 @@ final case class PluginStatus(
     settings: List[PluginSetting] = Nil,
     warnings: List[String] = Nil,
     error: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PluginStatus:
-  given Schema[PluginStatus] = KindlingsSchema.derived[PluginStatus].schema
+  given Schema[PluginStatus] = summon[KindlingsSchema[PluginStatus]].schema
 
 /** Every plugin in this binary, in registration order, and what is wrong with the config around them (a block no plugin
   * claims, an `order` entry naming no plugin). `spiVersion` is the SPI this server speaks. `set` is the user-added
@@ -67,11 +68,12 @@ final case class PluginsReport(
     plugins: List[PluginStatus] = Nil,
     warnings: List[String] = Nil,
     set: Option[PluginSet] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   /** Every plugin that was enabled is registered, and none was refused. */
   def ok: Boolean = plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire)
 object PluginsReport:
-  given Schema[PluginsReport] = KindlingsSchema.derived[PluginsReport].schema
+  given Schema[PluginsReport] = summon[KindlingsSchema[PluginsReport]].schema
 
 /** The plugins as Markdown, like every other surface. Pure. */
 object PluginsMarkdown:

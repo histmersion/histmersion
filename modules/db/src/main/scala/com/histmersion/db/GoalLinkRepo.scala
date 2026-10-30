@@ -22,8 +22,7 @@ object GoalLinkRepo:
       title: Option[String],
       createdAt: String,
       queue: Option[String]
-  )
-  private given DbCodec[LinkRow] = DbCodec.derived
+  ) derives DbCodec
 
   /** A goal's links, each with the title of what it points at (`None` = it no longer exists; a query has no title).
     * Sources, then articles, queries, queue items; oldest first within a kind.
@@ -141,8 +140,7 @@ object GoalLinkRepo:
       lastRunAt: Option[String],
       lastJob: Option[String],
       lastNote: Option[String]
-  )
-  private given DbCodec[ScheduleRow] = DbCodec.derived
+  ) derives DbCodec
 
   private val scheduleSelect = Sql.raw(s"""SELECT goal_slug, kind, cron, enabled, budget_usd,
               to_char(next_run_at AT TIME ZONE 'UTC', $ts), to_char(last_run_at AT TIME ZONE 'UTC', $ts),

@@ -52,16 +52,21 @@ final case class Correction(
     label: Option[String] = None,
     createdAt: String = "",
     checkedAt: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object Correction:
-  given Schema[Correction] = KindlingsSchema.derived[Correction].schema
+  given Schema[Correction] = summon[KindlingsSchema[Correction]].schema
 
-final case class CorrectionList(total: Int, corrections: List[Correction]) derives KindlingsCodecAsObject
+final case class CorrectionList(total: Int, corrections: List[Correction])
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CorrectionList:
-  given Schema[CorrectionList] = KindlingsSchema.derived[CorrectionList].schema
+  given Schema[CorrectionList] = summon[KindlingsSchema[CorrectionList]].schema
 
 /** What a refresh did with the corrections it met: kept applying, retired, newly in conflict. */
-final case class CorrectionCounts(kept: Int = 0, retired: Int = 0, conflicts: Int = 0) derives KindlingsCodecAsObject:
+final case class CorrectionCounts(kept: Int = 0, retired: Int = 0, conflicts: Int = 0)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def +(o: CorrectionCounts): CorrectionCounts =
     CorrectionCounts(kept + o.kept, retired + o.retired, conflicts + o.conflicts)
   def isEmpty: Boolean = kept == 0 && retired == 0 && conflicts == 0
@@ -72,7 +77,7 @@ final case class CorrectionCounts(kept: Int = 0, retired: Int = 0, conflicts: In
       s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict"
     )
 object CorrectionCounts:
-  given Schema[CorrectionCounts] = KindlingsSchema.derived[CorrectionCounts].schema
+  given Schema[CorrectionCounts] = summon[KindlingsSchema[CorrectionCounts]].schema
 
 object Corrections:
 

@@ -15,11 +15,8 @@ final private[db] case class AssetInfoRow(
     sha256: String,
     width: Option[Int],
     height: Option[Int]
-)
-final private[db] case class AssetBytesRow(mime: String, bytes: Array[Byte])
-
-given DbCodec[AssetInfoRow] = DbCodec.derived
-given DbCodec[AssetBytesRow] = DbCodec.derived
+) derives DbCodec
+final private[db] case class AssetBytesRow(mime: String, bytes: Array[Byte]) derives DbCodec
 
 /** The figures that belong with a source's Markdown (plan §1.8).
   *

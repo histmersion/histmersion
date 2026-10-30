@@ -15,11 +15,12 @@ final case class InitPlan(
     periodPresets: Boolean = false,
     fetch: List[String] = Nil,
     check: Boolean = false
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def isEmpty: Boolean = !gazetteer && !periodPresets && fetch.isEmpty
 
 object InitPlan:
-  given Schema[InitPlan] = KindlingsSchema.derived[InitPlan].schema
+  given Schema[InitPlan] = summon[KindlingsSchema[InitPlan]].schema
 
   /** The `jobs.kind` of an init job. */
   val JobKind = com.histmersion.api.JobKind.Init.wire
@@ -61,9 +62,10 @@ final case class JobDetail(
     about: Option[String] = None,
     /** A re-check job's: what it re-checks, since when, and the stopped job it resumes. */
     recheck: Option[AcquireChecks.RecheckJob] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object JobDetail:
-  given Schema[JobDetail] = KindlingsSchema.derived[JobDetail].schema
+  given Schema[JobDetail] = summon[KindlingsSchema[JobDetail]].schema
 
   /** What a job works on, for a person: its citekey, what an init job imports, the plan a merge apply carries out, or
     * what a vacuum job vacuums.

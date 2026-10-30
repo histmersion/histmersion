@@ -23,9 +23,10 @@ import com.histmersion.values.Historicity
   * read on 2026-10-14 (see each).
   */
 final case class CatalogProviderInfo(id: String, title: String, licence: String, citation: String, home: String)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CatalogProviderInfo:
-  given Schema[CatalogProviderInfo] = KindlingsSchema.derived[CatalogProviderInfo].schema
+  given Schema[CatalogProviderInfo] = summon[KindlingsSchema[CatalogProviderInfo]].schema
 
 // ── one record of a catalogue ───────────────────────────────────────────────────────────────────
 
@@ -61,11 +62,12 @@ final case class CatalogRecord(
       * `events rederive` parses again with no network.
       */
     raw: Option[String] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   /** The key it is stored under in `event_catalogue`. */
   def key: (String, String) = (provider, providerId)
 object CatalogRecord:
-  given Schema[CatalogRecord] = KindlingsSchema.derived[CatalogRecord].schema
+  given Schema[CatalogRecord] = summon[KindlingsSchema[CatalogRecord]].schema
 
   /** Pure: the id an event created from this record gets (`gvp_13879`, `noaa_volcano_1351`, `wikidata_q131386`).
     * Stable, so a re-import finds it.
@@ -99,14 +101,15 @@ final case class EventImportRequest(
     minVei: Option[Int] = None,
     minMagnitude: Option[Double] = None,
     refresh: Boolean = false
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventImportRequest:
-  given Schema[EventImportRequest] = KindlingsSchema.derived[EventImportRequest].schema
+  given Schema[EventImportRequest] = summon[KindlingsSchema[EventImportRequest]].schema
 
 /** A count by key (a kind, a reason). */
-final case class EventCount(key: String, n: Int) derives KindlingsCodecAsObject
+final case class EventCount(key: String, n: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object EventCount:
-  given Schema[EventCount] = KindlingsSchema.derived[EventCount].schema
+  given Schema[EventCount] = summon[KindlingsSchema[EventCount]].schema
 
   /** Pure: count `keys`, most frequent first, then by key. */
   def of(keys: List[String]): List[EventCount] =
@@ -142,9 +145,10 @@ final case class EventImportReport(
       * person said), and in conflict (the catalogue changed to something else).
       */
     corrections: CorrectionCounts = CorrectionCounts()
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventImportReport:
-  given Schema[EventImportReport] = KindlingsSchema.derived[EventImportReport].schema
+  given Schema[EventImportReport] = summon[KindlingsSchema[EventImportReport]].schema
 
   def combine(a: EventImportReport, b: EventImportReport): EventImportReport =
     EventImportReport(
@@ -209,9 +213,10 @@ object EventImportReport:
   * would change.
   */
 final case class EventRederiveRequest(provider: Option[String] = None, dryRun: Boolean = false)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventRederiveRequest:
-  given Schema[EventRederiveRequest] = KindlingsSchema.derived[EventRederiveRequest].schema
+  given Schema[EventRederiveRequest] = summon[KindlingsSchema[EventRederiveRequest]].schema
 
 /** What a re-derivation read and did: `records` read back, `changed` whose dating changed, `fromRaw` parsed again from
   * the catalogue's own record (the rest, stored before V088 kept it, read back from their span:
@@ -230,9 +235,10 @@ final case class EventRederiveReport(
     offMap: Int = 0,
     examples: List[String] = Nil,
     corrections: CorrectionCounts = CorrectionCounts()
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventRederiveReport:
-  given Schema[EventRederiveReport] = KindlingsSchema.derived[EventRederiveReport].schema
+  given Schema[EventRederiveReport] = summon[KindlingsSchema[EventRederiveReport]].schema
 
   /** Pure: the one line `histmersion jobs` shows. */
   def summary(r: EventRederiveReport): String =
@@ -268,9 +274,10 @@ final case class EventCatalogueRef(
     magnitude: Option[Double] = None,
     deaths: Option[Long] = None,
     retrievedAt: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object EventCatalogueRef:
-  given Schema[EventCatalogueRef] = KindlingsSchema.derived[EventCatalogueRef].schema
+  given Schema[EventCatalogueRef] = summon[KindlingsSchema[EventCatalogueRef]].schema
 
 /** An event's TIER (docs/visualization-guide.md §1): `attested` when a source in the corpus attests it (its own
   * `citekey`, or an attestation row), `catalogue` when only a catalogue knows it.

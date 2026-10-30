@@ -445,9 +445,10 @@ final case class PeriodDetail(
     period: HistoricalPeriod,
     parent: Option[HistoricalPeriod] = None,
     children: List[HistoricalPeriod] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PeriodDetail:
-  given Schema[PeriodDetail] = KindlingsSchema.derived[PeriodDetail].schema
+  given Schema[PeriodDetail] = summon[KindlingsSchema[PeriodDetail]].schema
 
 /** What a period import wrote: rows upserted (authority nodes included), how many of those were authority nodes, the
   * timeline presets now in the store, the definitions NOT imported — how many (`skippedCount`) and, up to a limit,
@@ -461,9 +462,10 @@ final case class PeriodImportResult(
     skipped: List[SkippedPeriod] = Nil,
     skippedCount: Int = 0,
     removed: Int = 0
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PeriodImportResult:
-  given Schema[PeriodImportResult] = KindlingsSchema.derived[PeriodImportResult].schema
+  given Schema[PeriodImportResult] = summon[KindlingsSchema[PeriodImportResult]].schema
 
 /** Why a PeriodO definition was not imported (#771). */
 enum PeriodSkip:
@@ -497,6 +499,7 @@ object PeriodSkip:
 
 /** One PeriodO definition left out of an import: its id and label, why, and the numbers that say so. */
 final case class SkippedPeriod(id: String, label: String, reason: PeriodSkip, detail: String)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object SkippedPeriod:
-  given Schema[SkippedPeriod] = KindlingsSchema.derived[SkippedPeriod].schema
+  given Schema[SkippedPeriod] = summon[KindlingsSchema[SkippedPeriod]].schema

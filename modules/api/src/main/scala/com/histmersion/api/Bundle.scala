@@ -532,27 +532,30 @@ final case class BundleTombstone(uid: UUID, kind: BundleKind, origin: UUID, dele
 
 // ── the manifest ──────────────────────────────────────────────────────────────────────────────────
 
-final case class BundleInstance(id: UUID, label: Option[String] = None) derives KindlingsCodecAsObject
+final case class BundleInstance(id: UUID, label: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
 object BundleInstance:
-  given Schema[BundleInstance] = KindlingsSchema.derived[BundleInstance].schema
+  given Schema[BundleInstance] = summon[KindlingsSchema[BundleInstance]].schema
 
 /** One NDJSON file: its path, how many lines, its size and its sha256. */
-final case class BundleFileInfo(path: String, lines: Int, bytes: Long, sha256: String) derives KindlingsCodecAsObject
+final case class BundleFileInfo(path: String, lines: Int, bytes: Long, sha256: String)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object BundleFileInfo:
-  given Schema[BundleFileInfo] = KindlingsSchema.derived[BundleFileInfo].schema
+  given Schema[BundleFileInfo] = summon[KindlingsSchema[BundleFileInfo]].schema
 
-final case class BundleBlobs(count: Int, bytes: Long) derives KindlingsCodecAsObject
+final case class BundleBlobs(count: Int, bytes: Long) derives KindlingsCodecAsObject, KindlingsSchema
 object BundleBlobs:
-  given Schema[BundleBlobs] = KindlingsSchema.derived[BundleBlobs].schema
+  given Schema[BundleBlobs] = summon[KindlingsSchema[BundleBlobs]].schema
 
 /** The reference data a bundle does NOT carry, fingerprinted: the gazetteer and the named periods come from the same
   * bundled seeds on every instance (`histmersion init`), so events point into them by id. A differing fingerprint is
   * reported on import, never fatal.
   */
 final case class BundleReference(places: Int, placesDigest: String, periods: Int, periodsDigest: String)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object BundleReference:
-  given Schema[BundleReference] = KindlingsSchema.derived[BundleReference].schema
+  given Schema[BundleReference] = summon[KindlingsSchema[BundleReference]].schema
 
 /** `manifest.json`. Deterministic: there is no wall-clock export time — `asOf` is the newest change the bundle carries
   * (the value to pass as the next `--since`), and `bundleId` is derived from the instance and the content, so two
@@ -569,21 +572,24 @@ final case class BundleManifest(
     files: List[BundleFileInfo],
     blobs: BundleBlobs,
     reference: BundleReference
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object BundleManifest:
-  given Schema[BundleManifest] = KindlingsSchema.derived[BundleManifest].schema
+  given Schema[BundleManifest] = summon[KindlingsSchema[BundleManifest]].schema
 
 // ── what the endpoints answer ─────────────────────────────────────────────────────────────────────
 
 /** `GET /api/instance` — this collection's identity. */
-final case class InstanceInfo(id: UUID, label: Option[String], createdAt: String) derives KindlingsCodecAsObject
+final case class InstanceInfo(id: UUID, label: Option[String], createdAt: String)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object InstanceInfo:
-  given Schema[InstanceInfo] = KindlingsSchema.derived[InstanceInfo].schema
+  given Schema[InstanceInfo] = summon[KindlingsSchema[InstanceInfo]].schema
 
 /** `PUT /api/instance` — name this collection ("work", "home"); blank clears the label. */
-final case class InstanceLabel(label: Option[String]) derives KindlingsCodecAsObject
+final case class InstanceLabel(label: Option[String]) derives KindlingsCodecAsObject, KindlingsSchema
 object InstanceLabel:
-  given Schema[InstanceLabel] = KindlingsSchema.derived[InstanceLabel].schema
+  given Schema[InstanceLabel] = summon[KindlingsSchema[InstanceLabel]].schema
 
 /** `POST /api/bundle/verify` — every problem found, not just the first. */
 final case class BundleVerifyResult(
@@ -591,9 +597,10 @@ final case class BundleVerifyResult(
     manifest: Option[BundleManifest],
     blobsChecked: Int,
     problems: List[String]
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object BundleVerifyResult:
-  given Schema[BundleVerifyResult] = KindlingsSchema.derived[BundleVerifyResult].schema
+  given Schema[BundleVerifyResult] = summon[KindlingsSchema[BundleVerifyResult]].schema
 
 /** What an import did (or, with `dryRun`, would do) to the entities of one kind. */
 final case class BundleKindCounts(
@@ -607,10 +614,11 @@ final case class BundleKindCounts(
     skippedDeleted: Int = 0,
     /** Held back for `merge apply`: part of a source that is the same work as one here (M3). */
     held: Int = 0
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def changed: Int = inserted + updated + deleted
 object BundleKindCounts:
-  given Schema[BundleKindCounts] = KindlingsSchema.derived[BundleKindCounts].schema
+  given Schema[BundleKindCounts] = summon[KindlingsSchema[BundleKindCounts]].schema
 
 /** `POST /api/bundle/import`. `problems` are blocking — when there are any nothing was written; among them every open
   * issue of the merge plan (`issues` has them whole, to render as `merge plan` does) and every decision only
@@ -632,7 +640,8 @@ final case class BundleImportResult(
       */
     issues: List[MergeIssue] = Nil,
     planHash: Option[String] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def changed: Int = counts.map(_.changed).sum
 object BundleImportResult:
-  given Schema[BundleImportResult] = KindlingsSchema.derived[BundleImportResult].schema
+  given Schema[BundleImportResult] = summon[KindlingsSchema[BundleImportResult]].schema

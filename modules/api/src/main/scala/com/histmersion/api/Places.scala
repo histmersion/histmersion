@@ -113,9 +113,10 @@ final case class PlaceFootprint(
     certainty: Option[String] = None,
     accuracyM: Option[Float] = None,
     citekey: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceFootprint:
-  given Schema[PlaceFootprint] = KindlingsSchema.derived[PlaceFootprint].schema
+  given Schema[PlaceFootprint] = summon[KindlingsSchema[PlaceFootprint]].schema
   val Roles: List[String] = List("extent", "core", "maximal", "frontier", "seat", "snapshot")
   val Certainties: List[String] = List("definite", "approximate", "uncertain")
 
@@ -125,15 +126,17 @@ final case class PlaceType(
     typeLabel: String,
     period: Option[Period] = None,
     citekey: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceType:
-  given Schema[PlaceType] = KindlingsSchema.derived[PlaceType].schema
+  given Schema[PlaceType] = summon[KindlingsSchema[PlaceType]].schema
 
 /** A cross-reference to an external gazetteer or authority (Pleiades, Wikidata, TGN, GeoNames). */
 final case class PlaceLink(placeId: String, scheme: String, externalId: String, relation: String = "close_match")
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceLink:
-  given Schema[PlaceLink] = KindlingsSchema.derived[PlaceLink].schema
+  given Schema[PlaceLink] = summon[KindlingsSchema[PlaceLink]].schema
   val Schemes: List[String] = List("pleiades", "wikidata", "tgn", "geonames", "whg")
   val Relations: List[String] = List("close_match", "exact_match", "broad_match", "see_also")
 
@@ -291,9 +294,11 @@ object PlaceShape:
 
 /** One description of a place, in one language (`""` unknown), from one source (`wikidata`, `lpf:<dataset>`).
   */
-final case class PlaceDescription(text: String, lang: String = "", source: String = "") derives KindlingsCodecAsObject
+final case class PlaceDescription(text: String, lang: String = "", source: String = "")
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceDescription:
-  given Schema[PlaceDescription] = KindlingsSchema.derived[PlaceDescription].schema
+  given Schema[PlaceDescription] = summon[KindlingsSchema[PlaceDescription]].schema
 
 /** A named historical period following the PeriodO model — a concept with a temporal extent, an authority, a geographic
   * scope and an optional parent (e.g. "Iron Age I" under "Iron Age"). `preset` is set on the definitions the web
@@ -308,9 +313,10 @@ final case class HistoricalPeriod(
     region: Option[String] = None,
     parentId: Option[String] = None,
     preset: Option[PresetRegion] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object HistoricalPeriod:
-  given Schema[HistoricalPeriod] = KindlingsSchema.derived[HistoricalPeriod].schema
+  given Schema[HistoricalPeriod] = summon[KindlingsSchema[HistoricalPeriod]].schema
 
 // ── Linked Places Format (and plain GeoJSON) ───────────────────────────────────────────────────
 
@@ -718,11 +724,12 @@ final case class PlaceSummary(
       * place.
       */
     importSource: Option[String] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   /** "end 1769 CE, start unknown", "date unknown", "1300 BCE–1100 BCE" (see [[PlaceDating.describe]]). */
   def when: String = PlaceDating.describe(dating, periodStart, periodEnd)
 object PlaceSummary:
-  given Schema[PlaceSummary] = KindlingsSchema.derived[PlaceSummary].schema
+  given Schema[PlaceSummary] = summon[KindlingsSchema[PlaceSummary]].schema
 
 /** `GET /api/places?q=` — a search result: the row, which of its names matched, and how many findings are assigned to
   * it (through `finding_places`, so it reflects the last `places rebuild`).
@@ -740,11 +747,12 @@ final case class PlaceHit(
     contested: Boolean = false,
     dating: PlaceDating = PlaceDating.Stated,
     importSource: Option[String] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def toSummary: PlaceSummary =
     PlaceSummary(id, label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
 object PlaceHit:
-  given Schema[PlaceHit] = KindlingsSchema.derived[PlaceHit].schema
+  given Schema[PlaceHit] = summon[KindlingsSchema[PlaceHit]].schema
 
 /** `GET /api/places/{id}?asOf=` — the row plus its GeoJSON geometry and the hierarchy AS OF `asOf` (only edges whose
   * own `period` covers it). `geometry` is GeoJSON **text**; a place with no shape of its own reports the union of its
@@ -792,7 +800,8 @@ final case class PlaceDetail(
       * designations and the registers that list it (a Wikidata place's extract carries them).
       */
     record: PlaceRecord = PlaceRecord()
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   /** A region or polity whose only shape is a point (one with no geometry at all is a hierarchy node, not a missing
     * boundary).
     */
@@ -814,7 +823,7 @@ final case class PlaceDetail(
   /** Read at a time, the place is there only by the findings dated then: its card says so. */
   def datedByFindings: Boolean = asOf.isDefined && timeBasis == PlaceTimeBasis.Findings
 object PlaceDetail:
-  given Schema[PlaceDetail] = KindlingsSchema.derived[PlaceDetail].schema
+  given Schema[PlaceDetail] = summon[KindlingsSchema[PlaceDetail]].schema
 
 /** A heritage designation of a place (Wikidata P1435): its item, its name, and the designation's own dates (when it was
   * granted or lifted — never the monument's), as the record states them.
@@ -871,9 +880,11 @@ object PlaceRecord:
   * the gazetteer, with no other filter. The same numbers the lists show after the place is chosen as a filter (before
   * any other filter narrows them further).
   */
-final case class PlaceCounts(sources: Int, findings: Int, articles: Int, events: Int) derives KindlingsCodecAsObject
+final case class PlaceCounts(sources: Int, findings: Int, articles: Int, events: Int)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceCounts:
-  given Schema[PlaceCounts] = KindlingsSchema.derived[PlaceCounts].schema
+  given Schema[PlaceCounts] = summon[KindlingsSchema[PlaceCounts]].schema
 
 /** One row of the hierarchy walk (`places` MCP tool / `histmersion places show --tree`): `depth` is the distance from a
   * root, so the caller renders an indented list without re-walking anything.
@@ -885,9 +896,10 @@ final case class PlaceTreeRow(
     depth: Int,
     findings: Int,
     contested: Boolean = false
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceTreeRow:
-  given Schema[PlaceTreeRow] = KindlingsSchema.derived[PlaceTreeRow].schema
+  given Schema[PlaceTreeRow] = summon[KindlingsSchema[PlaceTreeRow]].schema
 
 /** `POST /api/places/import` — what the upsert wrote. */
 final case class PlaceImportResult(
@@ -897,9 +909,10 @@ final case class PlaceImportResult(
     failed: List[String] = Nil,
     /** A real `places fetch` runs as a background job (#1946): its id, the counts then being zero. */
     job: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceImportResult:
-  given Schema[PlaceImportResult] = KindlingsSchema.derived[PlaceImportResult].schema
+  given Schema[PlaceImportResult] = summon[KindlingsSchema[PlaceImportResult]].schema
 
 /** `POST /api/places/rebuild` — the materialisation of `finding_places`. `byGeometry` counts links made by containment,
   * `byName` those made by the `region_name` fallback (a finding can have both); `unlocated` is how many findings ended
@@ -912,9 +925,10 @@ final case class PlaceRebuildResult(
     located: Int,
     unlocated: Int,
     places: Int
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object PlaceRebuildResult:
-  given Schema[PlaceRebuildResult] = KindlingsSchema.derived[PlaceRebuildResult].schema
+  given Schema[PlaceRebuildResult] = summon[KindlingsSchema[PlaceRebuildResult]].schema
 
 /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment. */
 final case class SpatialHierarchyResult(
@@ -925,9 +939,10 @@ final case class SpatialHierarchyResult(
       * them.
       */
     job: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object SpatialHierarchyResult:
-  given Schema[SpatialHierarchyResult] = KindlingsSchema.derived[SpatialHierarchyResult].schema
+  given Schema[SpatialHierarchyResult] = summon[KindlingsSchema[SpatialHierarchyResult]].schema
 
 /** Whose a place or a named period is (V052): `seed` — imported from the reference data every instance seeds itself
   * with (`histmersion init`, `places seed`, `places fetch`, `periods seed`, `periods fetch`), never carried in a

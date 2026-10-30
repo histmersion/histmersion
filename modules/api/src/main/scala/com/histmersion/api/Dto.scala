@@ -26,9 +26,10 @@ final case class SearchHit(
     matchedHeading: Option[String] = None, // that chunk's heading breadcrumb
     doi: Option[String] = None, // the link label when present (else the citekey)
     authors: List[String] = Nil // as stored: Library's table shows them under the title
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object SearchHit:
-  given Schema[SearchHit] = KindlingsSchema.derived[SearchHit].schema
+  given Schema[SearchHit] = summon[KindlingsSchema[SearchHit]].schema
 
 /** Full source record for `get_source`. */
 final case class SourceDetail(
@@ -58,9 +59,10 @@ final case class SourceDetail(
     uid: Option[java.util.UUID] = None,
     /** The instance that created the source (this one, or the one a bundle import brought it from). */
     origin: Option[java.util.UUID] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object SourceDetail:
-  given Schema[SourceDetail] = KindlingsSchema.derived[SourceDetail].schema
+  given Schema[SourceDetail] = summon[KindlingsSchema[SourceDetail]].schema
 
 /** One geo-located, time-scoped finding row. */
 final case class FindingRow(
@@ -76,9 +78,10 @@ final case class FindingRow(
     significance: Option[String] = None,
     /** The finding's permanent identity (V030); its `<citekey>#<n>` id is a label that a rename moves. */
     uid: Option[java.util.UUID] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object FindingRow:
-  given Schema[FindingRow] = KindlingsSchema.derived[FindingRow].schema
+  given Schema[FindingRow] = summon[KindlingsSchema[FindingRow]].schema
 
 /** A source with its findings (the `get_source` response). */
 final case class SourceWithFindings(
@@ -92,9 +95,10 @@ final case class SourceWithFindings(
       * illustrate it — the local thumbnail, with its credit.
       */
     illustration: Option[MediaThumb] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object SourceWithFindings:
-  given Schema[SourceWithFindings] = KindlingsSchema.derived[SourceWithFindings].schema
+  given Schema[SourceWithFindings] = summon[KindlingsSchema[SourceWithFindings]].schema
 
 /** A finding plus its source, for `geo_when` and the map. */
 final case class GeoHit(
@@ -112,9 +116,10 @@ final case class GeoHit(
     doi: Option[String] = None,
     /** What the source is ([[SourceKinds]]): the map draws the finding with that kind's icon. */
     sourceKind: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object GeoHit:
-  given Schema[GeoHit] = KindlingsSchema.derived[GeoHit].schema
+  given Schema[GeoHit] = summon[KindlingsSchema[GeoHit]].schema
 
 /** One reference edge touching a source, oriented relative to it (out = this cites/relates dst). `citekey` is the OTHER
   * end's id — a citekey for a [[NeighborTarget.Source]], a slug for an [[NeighborTarget.Article]], the raw stored
@@ -127,9 +132,10 @@ final case class NeighborRow(
     title: Option[String],
     status: Option[SourceStatus] = None,
     target: NeighborTarget = NeighborTarget.Source
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object NeighborRow:
-  given Schema[NeighborRow] = KindlingsSchema.derived[NeighborRow].schema
+  given Schema[NeighborRow] = summon[KindlingsSchema[NeighborRow]].schema
 
 /** One row of `/api/contradictions`: an edge whose kind is challenges/refutes/updates/superseded_by, OR a source with a
   * contested/superseded/debunked/retracted status.
@@ -145,18 +151,21 @@ final case class ContradictionRow(
     otherTitle: Option[String],
     otherYear: Option[Int] = None,
     otherStatus: Option[SourceStatus] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ContradictionRow:
-  given Schema[ContradictionRow] = KindlingsSchema.derived[ContradictionRow].schema
+  given Schema[ContradictionRow] = summon[KindlingsSchema[ContradictionRow]].schema
 
 /** The result of `/api/contradictions`. */
-final case class ContradictionsResult(rows: List[ContradictionRow], total: Int) derives KindlingsCodecAsObject
+final case class ContradictionsResult(rows: List[ContradictionRow], total: Int)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ContradictionsResult:
-  given Schema[ContradictionsResult] = KindlingsSchema.derived[ContradictionsResult].schema
+  given Schema[ContradictionsResult] = summon[KindlingsSchema[ContradictionsResult]].schema
 
-final case class VersionInfo(name: String, version: String) derives KindlingsCodecAsObject
+final case class VersionInfo(name: String, version: String) derives KindlingsCodecAsObject, KindlingsSchema
 object VersionInfo:
-  given Schema[VersionInfo] = KindlingsSchema.derived[VersionInfo].schema
+  given Schema[VersionInfo] = summon[KindlingsSchema[VersionInfo]].schema
 
 /** `/api/health`: each dependency reports ok/error text (`converter` = the OCR sidecar, plan §1.8). `warnings`: what
   * the server runs without but someone should know — a style file refused, say — never a reason for `status` to change.
@@ -167,13 +176,14 @@ final case class Health(
     schemaVersion: Option[String],
     converter: Option[String] = None,
     warnings: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object Health:
-  given Schema[Health] = KindlingsSchema.derived[Health].schema
+  given Schema[Health] = summon[KindlingsSchema[Health]].schema
 
-final case class SeedRequest(dir: String, force: Boolean = false) derives KindlingsCodecAsObject
+final case class SeedRequest(dir: String, force: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema
 object SeedRequest:
-  given Schema[SeedRequest] = KindlingsSchema.derived[SeedRequest].schema
+  given Schema[SeedRequest] = summon[KindlingsSchema[SeedRequest]].schema
 
 /** `skipped` = citekeys whose stored row is NEWER than the file on disk (agent enrichment that a reseed would have
   * wiped); re-run with `force` to overwrite them anyway.
@@ -183,9 +193,10 @@ final case class SeedResult(
     failed: List[String],
     edgesResolved: Int,
     skipped: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object SeedResult:
-  given Schema[SeedResult] = KindlingsSchema.derived[SeedResult].schema
+  given Schema[SeedResult] = summon[KindlingsSchema[SeedResult]].schema
 
 /** `POST /api/reindex`: one resumable slice of the FTS chunk rebuild. Re-indexing the whole corpus costs minutes
   * (Postgres spends ~2 ms per chunk building the tsvector), far past any HTTP timeout, so the endpoint walks `sources`
@@ -193,9 +204,10 @@ object SeedResult:
   * `remaining` is how many sources are still untouched. The CLI loops until `remaining` is 0.
   */
 final case class ReindexResult(sources: Int, chunks: Int, lastCitekey: Option[String], remaining: Int)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ReindexResult:
-  given Schema[ReindexResult] = KindlingsSchema.derived[ReindexResult].schema
+  given Schema[ReindexResult] = summon[KindlingsSchema[ReindexResult]].schema
 
 /** `GET /api/resolve/{id}` — what a bare identifier met in free text names: a stored source, an article, or nothing
   * (both empty). Always a 200: "names nothing" is an answer, not an error.
@@ -204,9 +216,10 @@ final case class ResolvedId(
     id: String,
     source: Option[ResolvedSource] = None,
     article: Option[ResolvedArticle] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ResolvedId:
-  given Schema[ResolvedId] = KindlingsSchema.derived[ResolvedId].schema
+  given Schema[ResolvedId] = summon[KindlingsSchema[ResolvedId]].schema
 
 final case class ResolvedSource(
     citekey: String,
@@ -215,19 +228,20 @@ final case class ResolvedSource(
     year: Option[Int],
     title: String,
     status: SourceStatus
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def ref: SourceRef = SourceRef(citekey, doi, authors, year, title, status)
 object ResolvedSource:
-  given Schema[ResolvedSource] = KindlingsSchema.derived[ResolvedSource].schema
+  given Schema[ResolvedSource] = summon[KindlingsSchema[ResolvedSource]].schema
 
-final case class ResolvedArticle(slug: String, title: String) derives KindlingsCodecAsObject
+final case class ResolvedArticle(slug: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema
 object ResolvedArticle:
-  given Schema[ResolvedArticle] = KindlingsSchema.derived[ResolvedArticle].schema
+  given Schema[ResolvedArticle] = summon[KindlingsSchema[ResolvedArticle]].schema
 
 /** `code` lets one error output carry several HTTP statuses (see `Write.Code*`); absent = 400. */
-final case class ApiError(message: String, code: Option[String] = None) derives KindlingsCodecAsObject
+final case class ApiError(message: String, code: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
 object ApiError:
-  given Schema[ApiError] = KindlingsSchema.derived[ApiError].schema
+  given Schema[ApiError] = summon[KindlingsSchema[ApiError]].schema
 
   /** The `oneOfVariantValueMatcher` test for one [[ApiError.code]]. Tapir hands the matcher an `Any`, and under
     * `-source:future` a constructor pattern on `Any` is a warning (it is not `Matchable`) — so the value is checked
@@ -256,16 +270,19 @@ final case class FindingMatch(
       * has run.
       */
     places: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object FindingMatch:
-  given Schema[FindingMatch] = KindlingsSchema.derived[FindingMatch].schema
+  given Schema[FindingMatch] = summon[KindlingsSchema[FindingMatch]].schema
 
 /** A source that matched, plus the evidence: `matched` = its findings that satisfied the period/bbox/place/tag
   * criteria, `why` = source-level reasons ("title matches 'collapse'").
   */
-final case class Hit(source: SearchHit, matched: List[FindingMatch], why: List[String]) derives KindlingsCodecAsObject
+final case class Hit(source: SearchHit, matched: List[FindingMatch], why: List[String])
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object Hit:
-  given Schema[Hit] = KindlingsSchema.derived[Hit].schema
+  given Schema[Hit] = summon[KindlingsSchema[Hit]].schema
 
 /** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
 final case class SearchResult(
@@ -274,10 +291,11 @@ final case class SearchResult(
     /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def page: OffsetPage = OffsetPage(total, offset, hits.size)
 object SearchResult:
-  given Schema[SearchResult] = KindlingsSchema.derived[SearchResult].schema
+  given Schema[SearchResult] = summon[KindlingsSchema[SearchResult]].schema
   def of(total: Int, hits: List[Hit], offset: Int): SearchResult =
     SearchResult(total, hits, offset, OffsetPage(total, offset, hits.size).next)
 
@@ -290,10 +308,11 @@ final case class GeoHitPage(
     /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def page: OffsetPage = OffsetPage(total, offset, hits.size)
 object GeoHitPage:
-  given Schema[GeoHitPage] = KindlingsSchema.derived[GeoHitPage].schema
+  given Schema[GeoHitPage] = summon[KindlingsSchema[GeoHitPage]].schema
   def of(total: Int, hits: List[GeoHit], offset: Int): GeoHitPage =
     GeoHitPage(total, hits, offset, OffsetPage(total, offset, hits.size).next)
 
@@ -307,16 +326,17 @@ final case class Facet(
     id: Option[String] = None,
     /** The gazetteer place behind `id` has a disputed shape (plan §1.6a) — rendered "(contested)". */
     contested: Boolean = false
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object Facet:
-  given Schema[Facet] = KindlingsSchema.derived[Facet].schema
+  given Schema[Facet] = summon[KindlingsSchema[Facet]].schema
 
 /** One bar of the timeline strip: an inclusive `[start, end]` year range and how many units (sources by default) have a
   * period overlapping it. See [[Aggregate]].
   */
-final case class TimeBucket(start: Long, end: Long, count: Int) derives KindlingsCodecAsObject
+final case class TimeBucket(start: Long, end: Long, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object TimeBucket:
-  given Schema[TimeBucket] = KindlingsSchema.derived[TimeBucket].schema
+  given Schema[TimeBucket] = summon[KindlingsSchema[TimeBucket]].schema
 
 /** The whole `/api/aggregate` answer: the window actually aggregated, the adaptive bucket size chosen for it, and —
   * depending on `by` — the flat strip and/or the nested tree.
@@ -342,18 +362,19 @@ final case class TimeHistogram(
     depth: Int = 0,
     asOf: Option[Long] = None,
     tree: List[Bucket] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object TimeHistogram:
-  given Schema[TimeHistogram] = KindlingsSchema.derived[TimeHistogram].schema
+  given Schema[TimeHistogram] = summon[KindlingsSchema[TimeHistogram]].schema
 
 // ── get_source sectioning (plan §6 A1/A7/A18) ─────────────────────────────────────────────────
 
 /** One entry in the table of contents: a heading from `source_chunks`, its first chunk `ord` and the total characters
   * under it.
   */
-final case class TocEntry(heading: String, ord: Int, chars: Int) derives KindlingsCodecAsObject
+final case class TocEntry(heading: String, ord: Int, chars: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object TocEntry:
-  given Schema[TocEntry] = KindlingsSchema.derived[TocEntry].schema
+  given Schema[TocEntry] = summon[KindlingsSchema[TocEntry]].schema
 
 /** The valid values of `section` on `get_source`. */
 object SourceSection:

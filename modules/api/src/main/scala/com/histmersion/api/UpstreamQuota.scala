@@ -23,9 +23,10 @@ final case class UpstreamQuota(
     rateLimit: Option[Int] = None,
     rateRemaining: Option[Int] = None,
     observedAt: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object UpstreamQuota:
-  given Schema[UpstreamQuota] = KindlingsSchema.derived[UpstreamQuota].schema
+  given Schema[UpstreamQuota] = summon[KindlingsSchema[UpstreamQuota]].schema
 
 object UpstreamQuotaMarkdown:
 

@@ -16,9 +16,10 @@ object GoalPlans:
 
   /** A sub-goal a plan proposes (created as a child of the planned goal when approved). */
   final case class PlannedGoal(slug: String, title: String, notes: Option[String] = None, tags: List[String] = Nil)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object PlannedGoal:
-    given Schema[PlannedGoal] = KindlingsSchema.derived[PlannedGoal].schema
+    given Schema[PlannedGoal] = summon[KindlingsSchema[PlannedGoal]].schema
 
   /** A work a plan proposes to read, as code found it upstream: `inCorpus` works are linked to the goal, the others
     * become acquisition items. `why` is the planner's reason.
@@ -32,9 +33,10 @@ object GoalPlans:
       inCorpus: Boolean = false,
       isOa: Boolean = false,
       why: String = ""
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object PlannedWork:
-    given Schema[PlannedWork] = KindlingsSchema.derived[PlannedWork].schema
+    given Schema[PlannedWork] = summon[KindlingsSchema[PlannedWork]].schema
 
   /** A verified plan. `dropped` says what code removed from the planner's answer, and why (a DOI that does not resolve,
     * a sub-goal slug already taken…), so a person sees the whole story.
@@ -46,10 +48,11 @@ object GoalPlans:
       queries: List[String] = Nil,
       works: List[PlannedWork] = Nil,
       dropped: List[String] = Nil
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def isEmpty: Boolean = subGoals.isEmpty && queries.isEmpty && works.isEmpty
   object Plan:
-    given Schema[Plan] = KindlingsSchema.derived[Plan].schema
+    given Schema[Plan] = summon[KindlingsSchema[Plan]].schema
 
   export com.histmersion.values.{DraftMode, GoalLinkKind as LinkKind, ScheduleKind}
 
@@ -73,9 +76,10 @@ object GoalPlans:
       filter: String = "",
       /** The reasons the write stores for the filter's sources the text leaves out (#958). */
       reasons: List[CoverageReason] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ArticleDraft:
-    given Schema[ArticleDraft] = KindlingsSchema.derived[ArticleDraft].schema
+    given Schema[ArticleDraft] = summon[KindlingsSchema[ArticleDraft]].schema
 
   // ── goal links and schedules ───────────────────────────────────────────────────────────────────
 
@@ -90,14 +94,15 @@ object GoalPlans:
       title: Option[String] = None,
       createdAt: String = "",
       queue: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object GoalLink:
-    given Schema[GoalLink] = KindlingsSchema.derived[GoalLink].schema
+    given Schema[GoalLink] = summon[KindlingsSchema[GoalLink]].schema
 
   /** `POST /api/goals/{slug}/links`. */
-  final case class LinkAdd(kind: LinkKind, ref: String, note: Option[String] = None)
+  final case class LinkAdd(kind: LinkKind, ref: String, note: Option[String] = None) derives KindlingsSchema
   object LinkAdd:
-    given Schema[LinkAdd] = KindlingsSchema.derived[LinkAdd].schema
+    given Schema[LinkAdd] = summon[KindlingsSchema[LinkAdd]].schema
 
     /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
     given Codec.AsObject[LinkAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[LinkAdd])
@@ -115,22 +120,24 @@ object GoalPlans:
       lastRunAt: Option[String] = None,
       lastRun: Option[String] = None,
       lastNote: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object GoalSchedule:
-    given Schema[GoalSchedule] = KindlingsSchema.derived[GoalSchedule].schema
+    given Schema[GoalSchedule] = summon[KindlingsSchema[GoalSchedule]].schema
 
   /** `PUT /api/goals/{slug}/schedules/{kind}` — create or change a schedule. */
   final case class ScheduleSet(cron: String, enabled: Boolean = true, budgetUsd: Option[Double] = None)
+      derives KindlingsSchema
   object ScheduleSet:
-    given Schema[ScheduleSet] = KindlingsSchema.derived[ScheduleSet].schema
+    given Schema[ScheduleSet] = summon[KindlingsSchema[ScheduleSet]].schema
 
     /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
     given Codec.AsObject[ScheduleSet] = StrictJson.codec(KindlingsCodecAsObject.derived[ScheduleSet])
 
   /** `DELETE /api/goals/{slug}/schedules/{kind}` and `…/links`. */
-  final case class Removed(removed: Boolean) derives KindlingsCodecAsObject
+  final case class Removed(removed: Boolean) derives KindlingsCodecAsObject, KindlingsSchema
   object Removed:
-    given Schema[Removed] = KindlingsSchema.derived[Removed].schema
+    given Schema[Removed] = summon[KindlingsSchema[Removed]].schema
 
   /** `GET /api/goals/{slug}/view` — a goal with what hangs off it. */
   final case class GoalView(
@@ -140,6 +147,7 @@ object GoalPlans:
       schedules: List[GoalSchedule] = Nil,
       plan: Option[Plan] = None,
       budgetUsd: Option[Double] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object GoalView:
-    given Schema[GoalView] = KindlingsSchema.derived[GoalView].schema
+    given Schema[GoalView] = summon[KindlingsSchema[GoalView]].schema

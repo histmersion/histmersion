@@ -23,9 +23,7 @@ final private[db] case class AssetDetailRow(
     lon: Option[Double],
     periodStart: Option[Long],
     periodEnd: Option[Long]
-)
-
-given DbCodec[AssetDetailRow] = DbCodec.derived
+) derives DbCodec
 
 object AssetMetaRepo:
 

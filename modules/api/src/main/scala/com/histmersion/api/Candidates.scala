@@ -172,9 +172,10 @@ final case class CandidateWatch(
     lastRun: Option[String] = None,
     lastError: Option[String] = None,
     lastFound: Int = 0
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CandidateWatch:
-  given Schema[CandidateWatch] = KindlingsSchema.derived[CandidateWatch].schema
+  given Schema[CandidateWatch] = summon[KindlingsSchema[CandidateWatch]].schema
 
 /** A work found for a goal, deduplicated (#3761): `doi` is its key; `foundBy` every watch that found it. */
 final case class SourceCandidate(
@@ -192,13 +193,14 @@ final case class SourceCandidate(
     state: String = Candidates.State.New.wire,
     firstSeen: String = "",
     lastSeen: String = ""
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object SourceCandidate:
-  given Schema[SourceCandidate] = KindlingsSchema.derived[SourceCandidate].schema
+  given Schema[SourceCandidate] = summon[KindlingsSchema[SourceCandidate]].schema
 
-final case class CandidateCount(state: String, count: Int) derives KindlingsCodecAsObject
+final case class CandidateCount(state: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object CandidateCount:
-  given Schema[CandidateCount] = KindlingsSchema.derived[CandidateCount].schema
+  given Schema[CandidateCount] = summon[KindlingsSchema[CandidateCount]].schema
 
 /** A page of candidates, and how many there are in each state (of the goal, or of every goal). */
 final case class CandidateList(
@@ -208,9 +210,10 @@ final case class CandidateList(
     counts: List[CandidateCount],
     offset: Int = 0,
     next: Option[Int] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CandidateList:
-  given Schema[CandidateList] = KindlingsSchema.derived[CandidateList].schema
+  given Schema[CandidateList] = summon[KindlingsSchema[CandidateList]].schema
 
 /** What one sweep of a goal did: its watches as read, the works found, the candidates added (new) and those found
   * again, what was left out and why, and the goal's unseen candidates after it.
@@ -228,22 +231,25 @@ final case class CandidateSweep(
     unseen: Int,
     dryRun: Boolean = false,
     notes: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CandidateSweep:
-  given Schema[CandidateSweep] = KindlingsSchema.derived[CandidateSweep].schema
+  given Schema[CandidateSweep] = summon[KindlingsSchema[CandidateSweep]].schema
 
-final case class CandidateSweepRequest(goal: String, dryRun: Boolean = false) derives KindlingsCodecAsObject
+final case class CandidateSweepRequest(goal: String, dryRun: Boolean = false)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CandidateSweepRequest:
-  given Schema[CandidateSweepRequest] = KindlingsSchema.derived[CandidateSweepRequest].schema
+  given Schema[CandidateSweepRequest] = summon[KindlingsSchema[CandidateSweepRequest]].schema
 
 /** Set candidates' state (`seen`, `queued`, `dismissed`, or `new` again). */
-final case class CandidateMark(ids: List[Long], state: String) derives KindlingsCodecAsObject
+final case class CandidateMark(ids: List[Long], state: String) derives KindlingsCodecAsObject, KindlingsSchema
 object CandidateMark:
-  given Schema[CandidateMark] = KindlingsSchema.derived[CandidateMark].schema
+  given Schema[CandidateMark] = summon[KindlingsSchema[CandidateMark]].schema
 
-final case class CandidateMarked(state: String, updated: Int) derives KindlingsCodecAsObject
+final case class CandidateMarked(state: String, updated: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object CandidateMarked:
-  given Schema[CandidateMarked] = KindlingsSchema.derived[CandidateMarked].schema
+  given Schema[CandidateMarked] = summon[KindlingsSchema[CandidateMarked]].schema
 
 /** The candidates as Markdown — what the CLI prints and the MCP tool answers. Pure. */
 object CandidatesMarkdown:

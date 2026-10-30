@@ -1253,9 +1253,9 @@ object McpTools:
     hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
 
   // Circe Codec + tapir Schema both derived from each input by Kindlings → matching by construction.
-  final case class PingInput() derives KindlingsCodecAsObject
+  final case class PingInput() derives KindlingsCodecAsObject, KindlingsSchema
   object PingInput:
-    given Schema[PingInput] = KindlingsSchema.derived[PingInput].schema
+    given Schema[PingInput] = summon[KindlingsSchema[PingInput]].schema
 
   /** The MCP spelling of [[com.histmersion.api.Filter]] — flat and all-optional, so a model can fill in only what it
     * knows. `Filter.of` is the single interpreter of this shape (REST and CLI share it).
@@ -1547,9 +1547,9 @@ object McpTools:
       .modify(_.citekey)(_.description("The source's current citekey"))
       .modify(_.newCitekey)(_.description("The citekey it should have from now on"))
 
-  final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject
+  final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject, KindlingsSchema
   object ExportSourceInput:
-    given Schema[ExportSourceInput] = KindlingsSchema.derived[ExportSourceInput].schema
+    given Schema[ExportSourceInput] = summon[KindlingsSchema[ExportSourceInput]].schema
 
   /** The MCP spelling of [[com.histmersion.api.Filter]] for `histogram` — now the FULL filter shape (A2).
     * `periodStart`/`periodEnd` and `region` are deprecated aliases (A1).
@@ -1627,9 +1627,9 @@ object McpTools:
         _.description("set: a credential may be written as value:… (the key itself in the file)")
       )
 
-  final case class BackupInput() derives KindlingsCodecAsObject
+  final case class BackupInput() derives KindlingsCodecAsObject, KindlingsSchema
   object BackupInput:
-    given Schema[BackupInput] = KindlingsSchema.derived[BackupInput].schema
+    given Schema[BackupInput] = summon[KindlingsSchema[BackupInput]].schema
   // ── article tool inputs (plan §5.2 stream 2.7). The write tools reuse the REST DTOs verbatim, so
   //    the MCP schema and the HTTP body are the same shape — one contract, two transports.
   final case class ListArticlesInput(
@@ -1762,9 +1762,9 @@ object McpTools:
     given Codec.AsObject[PatchArticleInput] =
       StrictJson.codec(KindlingsCodecAsObject.derived[PatchArticleInput]) // #813
 
-  final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject
+  final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject, KindlingsSchema
   object ExportArticleInput:
-    given Schema[ExportArticleInput] = KindlingsSchema.derived[ExportArticleInput].schema
+    given Schema[ExportArticleInput] = summon[KindlingsSchema[ExportArticleInput]].schema
 
   final case class ArticleVersionsInput(slug: String) derives KindlingsCodecAsObject
   object ArticleVersionsInput:
@@ -1875,9 +1875,9 @@ object McpTools:
       )
       .modify(_.before)(_.description("Listing: the next older page — the id of the last job shown"))
 
-  final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject
+  final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject, KindlingsSchema
   object AssetsInput:
-    given Schema[AssetsInput] = KindlingsSchema.derived[AssetsInput].schema
+    given Schema[AssetsInput] = summon[KindlingsSchema[AssetsInput]].schema
 
   final case class EventsInput(
       query: Option[String] = None,

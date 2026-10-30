@@ -207,24 +207,27 @@ final case class BackupResult(
     durationMs: Long,
     /** Older archives deleted afterwards to keep `backups.keep`. */
     pruned: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object BackupResult:
-  given Schema[BackupResult] = KindlingsSchema.derived[BackupResult].schema
+  given Schema[BackupResult] = summon[KindlingsSchema[BackupResult]].schema
 
 /** One row of `GET /api/backups`, newest first. No checksum here on purpose — hashing every archive on every listing
   * would read gigabytes; `POST /api/backup` reports the checksum of what it wrote. `createdAt` is when the dump was
   * taken ([[Backup.takenAt]]).
   */
-final case class BackupInfo(file: String, bytes: Long, createdAt: String) derives KindlingsCodecAsObject
+final case class BackupInfo(file: String, bytes: Long, createdAt: String)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object BackupInfo:
-  given Schema[BackupInfo] = KindlingsSchema.derived[BackupInfo].schema
+  given Schema[BackupInfo] = summon[KindlingsSchema[BackupInfo]].schema
 
 /** `POST /api/restore`. `force` is required whenever the database still holds sources — a restore is
   * `pg_restore --clean --if-exists`, i.e. it DROPS what is there.
   */
-final case class RestoreRequest(file: String, force: Boolean = false) derives KindlingsCodecAsObject
+final case class RestoreRequest(file: String, force: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema
 object RestoreRequest:
-  given Schema[RestoreRequest] = KindlingsSchema.derived[RestoreRequest].schema
+  given Schema[RestoreRequest] = summon[KindlingsSchema[RestoreRequest]].schema
 
 /** The outcome of a restore: the schema version Flyway validated afterwards, how many sources the database held before
   * and after, and any line `pg_restore` complained about (it exits 0 with "errors ignored on restore" when a dump was
@@ -237,9 +240,10 @@ final case class RestoreResult(
     sourcesAfter: Int,
     durationMs: Long,
     warnings: List[String] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object RestoreResult:
-  given Schema[RestoreResult] = KindlingsSchema.derived[RestoreResult].schema
+  given Schema[RestoreResult] = summon[KindlingsSchema[RestoreResult]].schema
 
 /** `POST /api/backup` and `GET /api/backup/status`: a backup job, which may still be running. `state` is a
   * [[BackupState]]; `bytes`/`sha256` are set once it is done, `error` once it failed.
@@ -252,13 +256,14 @@ final case class BackupStatus(
     sha256: Option[String] = None,
     error: Option[String] = None,
     pruned: List[String] = Nil
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def stateOf: Option[BackupState] = BackupState.parse(state)
   def result: Option[BackupResult] =
     for b <- bytes; h <- sha256 if stateOf.contains(BackupState.Done) yield BackupResult(file, b, h, durationMs, pruned)
 
 object BackupStatus:
-  given Schema[BackupStatus] = KindlingsSchema.derived[BackupStatus].schema
+  given Schema[BackupStatus] = summon[KindlingsSchema[BackupStatus]].schema
   def running(file: String, elapsedMs: Long): BackupStatus = BackupStatus(file, BackupState.Running.wire, elapsedMs)
   def done(r: BackupResult): BackupStatus =
     BackupStatus(r.file, BackupState.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)

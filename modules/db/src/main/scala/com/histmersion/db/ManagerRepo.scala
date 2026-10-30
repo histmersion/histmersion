@@ -37,8 +37,7 @@ object ManagerRepo:
       nextTickAt: Option[String],
       createdAt: String,
       updatedAt: String
-  )
-  private given DbCodec[ManagerRow] = DbCodec.derived
+  ) derives DbCodec
 
   private val managerSelect =
     Sql.raw(s"""SELECT id, kind, goal_slug, state, pause_runs, config::text, status_note, cron, ${at("next_tick_at")},
@@ -289,8 +288,7 @@ object ManagerRepo:
       origin: String,
       createdAt: String,
       updatedAt: String
-  )
-  private given DbCodec[ItemRow] = DbCodec.derived
+  ) derives DbCodec
 
   private val itemSelect =
     Sql.raw(s"""SELECT id, manager_id, kind, target, status, priority, attempts, failures, run_id, evaluated_run,
@@ -729,8 +727,7 @@ object ManagerRepo:
       config: ManagerConfig,
       statusNote: Option[String],
       planItem: Boolean
-  )
-  private given DbCodec[Light] = DbCodec.derived
+  ) derives DbCodec
 
   def light(ds: DataSource): List[Light] =
     connect(ds):
@@ -927,8 +924,7 @@ object ManagerRepo:
       authors: List[String],
       venue: Option[String],
       why: Option[String]
-  )
-  private given DbCodec[SweepAcquireItem] = DbCodec.derived
+  ) derives DbCodec
 
   def sweepAcquireItems(ds: DataSource): List[SweepAcquireItem] =
     connect(ds):
@@ -1039,8 +1035,7 @@ object ManagerRepo:
       uses: Int,
       proposal: Option[Long],
       proposed: Option[HintEffect]
-  )
-  private given DbCodec[HintRow] = DbCodec.derived
+  ) derives DbCodec
 
   /** A hint, with the newest OPEN `hint-effect` approval about it (a model's proposed action waiting for a person) and
     * that action.

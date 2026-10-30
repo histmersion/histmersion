@@ -21,8 +21,7 @@ object AutopilotRepo:
       lastEnsureAt: Option[String],
       lastBackupAt: Option[String],
       lastLintAt: Option[String]
-  )
-  private given DbCodec[Row] = DbCodec.derived
+  ) derives DbCodec
 
   def get(ds: DataSource): Row =
     connect(ds):

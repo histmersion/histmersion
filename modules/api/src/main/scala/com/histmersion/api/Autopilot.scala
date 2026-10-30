@@ -12,15 +12,16 @@ import sttp.tapir.Schema
 object Autopilot:
 
   /** `POST /api/agents/autopilot` — turn it on or off (idempotent); `by` = who (default `person`). */
-  final case class AutopilotSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject
+  final case class AutopilotSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
   object AutopilotSet:
-    given Schema[AutopilotSet] = KindlingsSchema.derived[AutopilotSet].schema
+    given Schema[AutopilotSet] = summon[KindlingsSchema[AutopilotSet]].schema
 
   /** One manager, in a line. */
   final case class ManagerBrief(id: String, kind: String, state: String, note: Option[String] = None)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ManagerBrief:
-    given Schema[ManagerBrief] = KindlingsSchema.derived[ManagerBrief].schema
+    given Schema[ManagerBrief] = summon[KindlingsSchema[ManagerBrief]].schema
 
   /** One research goal: its status (the stage), its managers, the sources and articles linked to it, the approvals open
     * about it (its plans and its articles' drafts), when one of its managers last did something, the items its managers
@@ -40,14 +41,17 @@ object Autopilot:
       doneLast7: Int = 0,
       open: Int = 0,
       etaDays: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object GoalProgress:
-    given Schema[GoalProgress] = KindlingsSchema.derived[GoalProgress].schema
+    given Schema[GoalProgress] = summon[KindlingsSchema[GoalProgress]].schema
 
   /** How an approval kind is decided now: `person`, or `checked` (the supervisor's code checks). */
-  final case class ApprovalRule(kind: String, mode: String, cap: String = "") derives KindlingsCodecAsObject
+  final case class ApprovalRule(kind: String, mode: String, cap: String = "")
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ApprovalRule:
-    given Schema[ApprovalRule] = KindlingsSchema.derived[ApprovalRule].schema
+    given Schema[ApprovalRule] = summon[KindlingsSchema[ApprovalRule]].schema
 
   /** One goal of the focus (docs/research-process-managers.md "As built: the focus"): active — why it was chosen, what
     * it is doing or waiting for, its pace (items settled in 7 days, open, days at that pace) — or queued — why it
@@ -66,18 +70,20 @@ object Autopilot:
       open: Int = 0,
       doneLast7: Int = 0,
       etaDays: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object FocusGoal:
-    given Schema[FocusGoal] = KindlingsSchema.derived[FocusGoal].schema
+    given Schema[FocusGoal] = summon[KindlingsSchema[FocusGoal]].schema
 
   /** A goal that cannot use a slot now: `code` = children (its sub-goals first) | person (an approval only a person
     * decides) | held (a person's hold) | stuck (its items stopped) | idle (nothing to do until its cron or new sources) |
     * plans (enough goal plans wait for a person already).
     */
   final case class FocusWaiting(slug: String, code: String, why: String = "", pinned: Boolean = false)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object FocusWaiting:
-    given Schema[FocusWaiting] = KindlingsSchema.derived[FocusWaiting].schema
+    given Schema[FocusWaiting] = summon[KindlingsSchema[FocusWaiting]].schema
 
   /** `GET /api/agents/autopilot/focus`: whether the focus is in force (the autopilot on and a cap above 0), the cap and
     * where it comes from (`config` = agents.autopilot.max-active-goals, `person` = set with `focus max`), the active
@@ -95,9 +101,10 @@ object Autopilot:
       held: Int = 0,
       note: Option[String] = None,
       changes: List[String] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object FocusInfo:
-    given Schema[FocusInfo] = KindlingsSchema.derived[FocusInfo].schema
+    given Schema[FocusInfo] = summon[KindlingsSchema[FocusInfo]].schema
 
   /** `POST /api/agents/autopilot/focus`: `pin` / `unpin` a goal (a pinned goal is always active), its `priority`
     * (`value`; higher first, after the stage and the tree), or `max` (`value`: the cap, 0 = none; absent: back to
@@ -108,9 +115,10 @@ object Autopilot:
       goal: Option[String] = None,
       value: Option[Int] = None,
       by: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object FocusSet:
-    given Schema[FocusSet] = KindlingsSchema.derived[FocusSet].schema
+    given Schema[FocusSet] = summon[KindlingsSchema[FocusSet]].schema
     val Actions = List("pin", "unpin", "priority", "max")
 
   /** Drain mode (#3762 proposal 4): since when and by whom; `drained` = no agent run is queued or running (safe to stop
@@ -122,16 +130,17 @@ object Autopilot:
       drained: Boolean = false,
       drainedAt: Option[String] = None,
       inFlight: Int = 0
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object DrainInfo:
-    given Schema[DrainInfo] = KindlingsSchema.derived[DrainInfo].schema
+    given Schema[DrainInfo] = summon[KindlingsSchema[DrainInfo]].schema
 
   /** `POST /api/agents/autopilot/drain {on}`: start draining (nothing new starts; the runs in flight finish) or lift
     * it.
     */
-  final case class DrainSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject
+  final case class DrainSet(on: Boolean, by: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
   object DrainSet:
-    given Schema[DrainSet] = KindlingsSchema.derived[DrainSet].schema
+    given Schema[DrainSet] = summon[KindlingsSchema[DrainSet]].schema
 
   /** `GET /api/agents/autopilot`. `since`/`by` = when and by whom it was last switched; `changes` = what the switch
     * just did (an on/off answer only); `ingestedToday` / `ingestCap` = the legal open-access ingests of all watchers
@@ -165,9 +174,10 @@ object Autopilot:
       upstreams: List[UpstreamQuota] = Nil,
       /** The acquisition list's legal re-check (absent from an older server). */
       acquireRecheck: Option[AcquireChecks.RecheckStatus] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object AutopilotStatus:
-    given Schema[AutopilotStatus] = KindlingsSchema.derived[AutopilotStatus].schema
+    given Schema[AutopilotStatus] = summon[KindlingsSchema[AutopilotStatus]].schema
 
     /** What the status says while `agents.scheduler.enabled` is false. */
     val CronsOff = "the managers' crons are off (agents.scheduler.enabled = false, HISTMERSION_AGENTS_SCHEDULER): " +
@@ -179,9 +189,11 @@ object Autopilot:
 object RepairAcquire:
 
   /** `dryRun` = list what it would do and change nothing; `by` = who asked. */
-  final case class RepairRequest(dryRun: Boolean = false, by: Option[String] = None) derives KindlingsCodecAsObject
+  final case class RepairRequest(dryRun: Boolean = false, by: Option[String] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RepairRequest:
-    given Schema[RepairRequest] = KindlingsSchema.derived[RepairRequest].schema
+    given Schema[RepairRequest] = summon[KindlingsSchema[RepairRequest]].schema
 
   /** One acquisition item a watcher's sweep created: `move` (a legal open-access work: into the watcher's ingest
     * backlog, item `backlogItem`, and the acquisition item removed), `remove` (in the corpus already: the acquisition
@@ -195,9 +207,10 @@ object RepairAcquire:
       action: String = "",
       detail: String = "",
       backlogItem: Option[Long] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RepairRow:
-    given Schema[RepairRow] = KindlingsSchema.derived[RepairRow].schema
+    given Schema[RepairRow] = summon[KindlingsSchema[RepairRow]].schema
 
   /** What it did (a dry run: would do). `untouched` = the open acquisition items NOT created by a
     * watcher's sweep (a person's, a plan's, a currency check's): never changed. `backlog` / `backlogDays`
@@ -212,9 +225,10 @@ object RepairAcquire:
       rows: List[RepairRow] = Nil,
       backlog: Int = 0,
       backlogDays: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RepairResult:
-    given Schema[RepairResult] = KindlingsSchema.derived[RepairResult].schema
+    given Schema[RepairResult] = summon[KindlingsSchema[RepairResult]].schema
 
   val Move = "move"
   val Remove = "remove"

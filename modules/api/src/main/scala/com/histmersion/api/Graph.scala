@@ -15,26 +15,29 @@ final case class GraphNode(
     year: Option[Int] = None,
     status: Option[SourceStatus] = None,
     depth: Int = 0
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object GraphNode:
-  given Schema[GraphNode] = KindlingsSchema.derived[GraphNode].schema
+  given Schema[GraphNode] = summon[KindlingsSchema[GraphNode]].schema
 
 final case class GraphLink(
     source: String,
     target: String,
     kind: String
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object GraphLink:
-  given Schema[GraphLink] = KindlingsSchema.derived[GraphLink].schema
+  given Schema[GraphLink] = summon[KindlingsSchema[GraphLink]].schema
 
 final case class SourceGraph(
     root: String,
     depth: Int,
     nodes: List[GraphNode],
     links: List[GraphLink]
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object SourceGraph:
-  given Schema[SourceGraph] = KindlingsSchema.derived[SourceGraph].schema
+  given Schema[SourceGraph] = summon[KindlingsSchema[SourceGraph]].schema

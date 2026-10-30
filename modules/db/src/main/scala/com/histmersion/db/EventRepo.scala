@@ -30,7 +30,7 @@ final private[db] case class EventRow(
     plusMinus: Option[Long],
     datingMethod: Option[String],
     uncertainty: Option[Long]
-):
+) derives DbCodec:
   def toSummary: EventSummary =
     EventSummary(
       id,
@@ -51,7 +51,7 @@ final private[db] case class EventRow(
       datingMethod
     )
 
-final private[db] case class EventDetailRow(row: EventRow, geometry: Option[String]):
+final private[db] case class EventDetailRow(row: EventRow, geometry: Option[String]) derives DbCodec:
   def toSummary: EventSummary = row.toSummary
 
 /** One event on the map before its outline is read ([[EventRepo.geo]]). */
@@ -64,7 +64,7 @@ final private[db] case class EventGeoRow(
     hasArea: Boolean,
     vei: Option[Int],
     magnitude: Option[Double]
-):
+) derives DbCodec:
   /** The event as the map draws it, without its outline. */
   def toGeo: EventGeo =
     val e = row.toSummary
@@ -97,14 +97,10 @@ final private[db] case class EventDatingRow(
     notAfter: Option[Long],
     method: Option[String],
     note: Option[String]
-):
+) derives DbCodec:
   def toDto: EventDating =
     EventDating(eventId, citekey, TimeSpan(notBefore, beginBy, endFrom, notAfter), method, note)
 
-given DbCodec[EventRow] = DbCodec.derived
-given DbCodec[EventDetailRow] = DbCodec.derived
-given DbCodec[EventGeoRow] = DbCodec.derived
-given DbCodec[EventDatingRow] = DbCodec.derived
 given DbCodec[EventEdge] = DbCodec.derived
 given DbCodec[EventParticipant] = DbCodec.derived
 

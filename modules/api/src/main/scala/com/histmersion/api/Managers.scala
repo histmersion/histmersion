@@ -168,9 +168,10 @@ object Managers:
 
   /** One article the seeding manager compiles: what its approved proposal said. */
   final case class ArticleSpec(title: String, kind: String, filter: ArticleFilter, why: String = "")
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ArticleSpec:
-    given Schema[ArticleSpec] = KindlingsSchema.derived[ArticleSpec].schema
+    given Schema[ArticleSpec] = summon[KindlingsSchema[ArticleSpec]].schema
 
   /** A manager's saved settings (`agent_managers.config`). Every field is optional: an absent one is the server's
     * default (`agents.managers.<kind>.*`). `models` = a model per role for its runs, over the role's chain.
@@ -222,7 +223,8 @@ object Managers:
         * gets an `article-extend` item (0 = never; None = `agents.managers.review.extend-min-new`).
         */
       extendMinNew: Option[Int] = None
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     /** `other`'s values where it has one, else these. */
     def merge(other: ManagerConfig): ManagerConfig = ManagerConfig(
       other.maxRuns.orElse(maxRuns),
@@ -251,7 +253,7 @@ object Managers:
       other.extendMinNew.orElse(extendMinNew)
     )
   object ManagerConfig:
-    given Schema[ManagerConfig] = KindlingsSchema.derived[ManagerConfig].schema
+    given Schema[ManagerConfig] = summon[KindlingsSchema[ManagerConfig]].schema
 
     /** `k=v` pairs (the CLI's `--config`) → a config; a key it does not know, or a value that does not parse, is an
       * error. `models` takes `role=provider:model` entries separated by `;`; tags by `,`.
@@ -330,10 +332,11 @@ object Managers:
       stopped: Int = 0,
       failed: Int = 0,
       cancelled: Int = 0
-  ) derives KindlingsCodecAsObject:
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def open: Int = pending + held + active
   object ItemCounts:
-    given Schema[ItemCounts] = KindlingsSchema.derived[ItemCounts].schema
+    given Schema[ItemCounts] = summon[KindlingsSchema[ItemCounts]].schema
 
     def of(rows: List[(String, Int)]): ItemCounts =
       rows.foldLeft(ItemCounts()) { case (c, (s, n)) =>
@@ -357,9 +360,10 @@ object Managers:
       at: String = "",
       kind: String = "",
       text: String = ""
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ManagerEvent:
-    given Schema[ManagerEvent] = KindlingsSchema.derived[ManagerEvent].schema
+    given Schema[ManagerEvent] = summon[KindlingsSchema[ManagerEvent]].schema
 
   /** One manager, as listed. `statusNote` is derived by the supervisor ("starved: …", "at capacity", "idle", "3
     * pending"); `inFlight` = its runs not settled yet.
@@ -392,9 +396,10 @@ object Managers:
         */
       backlog: Int = 0,
       backlogDays: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ManagerInfo:
-    given Schema[ManagerInfo] = KindlingsSchema.derived[ManagerInfo].schema
+    given Schema[ManagerInfo] = summon[KindlingsSchema[ManagerInfo]].schema
 
   /** Why an item is held and until when: a date, a source (DOI or citekey) entering the corpus, or a person deciding
     * approval `untilApproval` (the proposal its run left: the item is then settled with the decision, not run again) —
@@ -408,9 +413,10 @@ object Managers:
       hint: Option[Long] = None,
       untilApproval: Option[Long] = None,
       focus: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object Hold:
-    given Schema[Hold] = KindlingsSchema.derived[Hold].schema
+    given Schema[Hold] = summon[KindlingsSchema[Hold]].schema
 
   /** What one evaluated run left: the open MAJORs before and after, the most often reopened finding, the escalated
     * ones, whether every open MAJOR was a missing-critique finding (`churn`), and the open pairs of the article's
@@ -426,9 +432,10 @@ object Managers:
       churn: Boolean = false,
       pairsBefore: Option[Int] = None,
       pairsAfter: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RunMark:
-    given Schema[RunMark] = KindlingsSchema.derived[RunMark].schema
+    given Schema[RunMark] = summon[KindlingsSchema[RunMark]].schema
 
   /** An item's own memory (`manager_items.state`): the evaluated runs, the open MAJORs and the open critique-checklist
     * pairs when the current run was dispatched, how often a person re-opened it; a compile item's approved `spec`; and
@@ -443,9 +450,10 @@ object Managers:
       spec: Option[ArticleSpec] = None,
       filterHits: Option[Int] = None,
       oa: Option[OaWork] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ItemState:
-    given Schema[ItemState] = KindlingsSchema.derived[ItemState].schema
+    given Schema[ItemState] = summon[KindlingsSchema[ItemState]].schema
 
   /** A legal open-access work waiting in a watcher's ingest backlog (an `oa-ingest` item's state): what the sweep knew
     * of it, every research goal that found it (one entry however many watchers did; each goal is linked to the source
@@ -463,9 +471,10 @@ object Managers:
       why: String = "",
       foundBy: Option[String] = None,
       acquireText: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object OaWork:
-    given Schema[OaWork] = KindlingsSchema.derived[OaWork].schema
+    given Schema[OaWork] = summon[KindlingsSchema[OaWork]].schema
 
   /** One work item. `run` is its current (or last) run, for its progress. */
   final case class ManagerItem(
@@ -487,9 +496,10 @@ object Managers:
       createdAt: String = "",
       updatedAt: String = "",
       run: Option[Agents.RunInfo] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ManagerItem:
-    given Schema[ManagerItem] = KindlingsSchema.derived[ManagerItem].schema
+    given Schema[ManagerItem] = summon[KindlingsSchema[ManagerItem]].schema
 
   /** What a structured hint does besides being read by the runs: put targets (or those matching a tag, topic or goal)
     * first, hold them until a date or a source exists, skip them — or (`config`, only as a model's proposal a person
@@ -505,9 +515,10 @@ object Managers:
       untilSource: Option[String] = None,
       priority: Option[Int] = None,
       config: Option[ManagerConfig] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object HintEffect:
-    given Schema[HintEffect] = KindlingsSchema.derived[HintEffect].schema
+    given Schema[HintEffect] = summon[KindlingsSchema[HintEffect]].schema
     val Prioritise = "prioritise"
     val HoldAction = "hold"
     val Skip = "skip"
@@ -529,9 +540,10 @@ object Managers:
       effect: HintEffect,
       by: String = "",
       why: String = ""
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object HintProposal:
-    given Schema[HintProposal] = KindlingsSchema.derived[HintProposal].schema
+    given Schema[HintProposal] = summon[KindlingsSchema[HintProposal]].schema
 
   /** One hint. `effect` = the action applied (a person's, or a model's a person approved); `proposed` = the open
     * `hint-effect` approval waiting with a model's proposed action, and that action.
@@ -549,9 +561,10 @@ object Managers:
       uses: Int = 0,
       proposal: Option[Long] = None,
       proposed: Option[HintEffect] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ManagerHint:
-    given Schema[ManagerHint] = KindlingsSchema.derived[ManagerHint].schema
+    given Schema[ManagerHint] = summon[KindlingsSchema[ManagerHint]].schema
 
   /** `GET /api/agents/managers/{id}` — the manager, its active items (with their runs), its live hints and its newest
     * events.
@@ -561,20 +574,24 @@ object Managers:
       current: List[ManagerItem] = Nil,
       hints: List[ManagerHint] = Nil,
       events: List[ManagerEvent] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ManagerDetail:
-    given Schema[ManagerDetail] = KindlingsSchema.derived[ManagerDetail].schema
+    given Schema[ManagerDetail] = summon[KindlingsSchema[ManagerDetail]].schema
 
   /** A page of items: `total` matching the status filter. */
   final case class ItemPage(items: List[ManagerItem], total: Int, offset: Int, limit: Int)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ItemPage:
-    given Schema[ItemPage] = KindlingsSchema.derived[ItemPage].schema
+    given Schema[ItemPage] = summon[KindlingsSchema[ItemPage]].schema
 
   /** A page of events, newest first; `before` the id to ask for the next older page with. */
-  final case class EventPage(events: List[ManagerEvent], before: Option[Long] = None) derives KindlingsCodecAsObject
+  final case class EventPage(events: List[ManagerEvent], before: Option[Long] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object EventPage:
-    given Schema[EventPage] = KindlingsSchema.derived[EventPage].schema
+    given Schema[EventPage] = summon[KindlingsSchema[EventPage]].schema
 
   // ── requests ───────────────────────────────────────────────────────────────────────────────────
 
@@ -588,31 +605,35 @@ object Managers:
       config: ManagerConfig = ManagerConfig(),
       paused: Option[Boolean] = None,
       cron: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ManagerCreate:
-    given Schema[ManagerCreate] = KindlingsSchema.derived[ManagerCreate].schema
+    given Schema[ManagerCreate] = summon[KindlingsSchema[ManagerCreate]].schema
 
   /** `PUT /api/agents/managers/{id}` — the settings (replaced as given; absent = the default), the cron. */
   final case class ManagerUpdate(config: Option[ManagerConfig] = None, cron: Option[String] = None)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ManagerUpdate:
-    given Schema[ManagerUpdate] = KindlingsSchema.derived[ManagerUpdate].schema
+    given Schema[ManagerUpdate] = summon[KindlingsSchema[ManagerUpdate]].schema
 
   /** `POST /api/agents/managers/{id}/items` and `POST /api/agents/enqueue` — a target to drive (an article slug, a
     * citekey, a goal slug, by `kind`); an item that exists is re-opened at this priority.
     */
   final case class EnqueueRequest(kind: String, target: String, priority: Option[Int] = None)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object EnqueueRequest:
-    given Schema[EnqueueRequest] = KindlingsSchema.derived[EnqueueRequest].schema
+    given Schema[EnqueueRequest] = summon[KindlingsSchema[EnqueueRequest]].schema
 
   /** What `POST /api/agents/enqueue` did: the manager the targets went to, the items it now has for them, and what was
     * not queued (an enriched source, a target that does not exist).
     */
   final case class EnqueueResult(managerId: String, items: List[ManagerItem] = Nil, skipped: List[String] = Nil)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object EnqueueResult:
-    given Schema[EnqueueResult] = KindlingsSchema.derived[EnqueueResult].schema
+    given Schema[EnqueueResult] = summon[KindlingsSchema[EnqueueResult]].schema
 
   /** `PATCH …/items/{item}` — `action`: hold (with `until` or `untilSource`), release, priority (with `priority`),
     * skip, reopen.
@@ -623,9 +644,10 @@ object Managers:
       until: Option[String] = None,
       untilSource: Option[String] = None,
       reason: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ItemPatch:
-    given Schema[ItemPatch] = KindlingsSchema.derived[ItemPatch].schema
+    given Schema[ItemPatch] = summon[KindlingsSchema[ItemPatch]].schema
     val Actions = List("hold", "release", "priority", "skip", "reopen")
 
   /** `POST …/hints` — `item` (an item id or its target) scopes it to one item; `once` = for the next run only. `effect`
@@ -641,9 +663,10 @@ object Managers:
       author: Option[String] = None,
       propose: Option[Boolean] = None,
       suggest: Option[Boolean] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object HintAdd:
-    given Schema[HintAdd] = KindlingsSchema.derived[HintAdd].schema
+    given Schema[HintAdd] = summon[KindlingsSchema[HintAdd]].schema
 
   /** The verbs of `POST /api/agents/managers/{id}/{action}`. */
   val Actions: List[String] = List("pause", "resume", "stop")

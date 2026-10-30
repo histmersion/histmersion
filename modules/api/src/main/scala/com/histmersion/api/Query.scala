@@ -28,9 +28,9 @@ import sttp.tapir.Schema
 object Query:
 
   /** The statement to run. ONE statement — a `;`-separated batch is rejected by [[check]]. */
-  final case class QueryRequest(sql: String) derives KindlingsCodecAsObject
+  final case class QueryRequest(sql: String) derives KindlingsCodecAsObject, KindlingsSchema
   object QueryRequest:
-    given Schema[QueryRequest] = KindlingsSchema.derived[QueryRequest].schema
+    given Schema[QueryRequest] = summon[KindlingsSchema[QueryRequest]].schema
 
   /** Column names plus rows of stringified cells (NULL = absent), which is the only shape that survives an arbitrary
     * projection through one static JSON schema. `truncated` says the row cap (`query.max-rows`) cut the result short.
@@ -41,24 +41,29 @@ object Query:
       rowCount: Int,
       truncated: Boolean,
       elapsedMs: Long
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object QueryResult:
-    given Schema[QueryResult] = KindlingsSchema.derived[QueryResult].schema
+    given Schema[QueryResult] = summon[KindlingsSchema[QueryResult]].schema
 
-  final case class SchemaColumn(name: String, dataType: String, nullable: Boolean) derives KindlingsCodecAsObject
+  final case class SchemaColumn(name: String, dataType: String, nullable: Boolean)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object SchemaColumn:
-    given Schema[SchemaColumn] = KindlingsSchema.derived[SchemaColumn].schema
+    given Schema[SchemaColumn] = summon[KindlingsSchema[SchemaColumn]].schema
 
-  final case class SchemaTable(name: String, kind: String, columns: List[SchemaColumn]) derives KindlingsCodecAsObject
+  final case class SchemaTable(name: String, kind: String, columns: List[SchemaColumn])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object SchemaTable:
-    given Schema[SchemaTable] = KindlingsSchema.derived[SchemaTable].schema
+    given Schema[SchemaTable] = summon[KindlingsSchema[SchemaTable]].schema
 
   /** `GET /api/schema/tables` — read from `information_schema` at request time, never a hand-written list, so it cannot
     * go stale as migrations land.
     */
-  final case class SchemaTables(tables: List[SchemaTable]) derives KindlingsCodecAsObject
+  final case class SchemaTables(tables: List[SchemaTable]) derives KindlingsCodecAsObject, KindlingsSchema
   object SchemaTables:
-    given Schema[SchemaTables] = KindlingsSchema.derived[SchemaTables].schema
+    given Schema[SchemaTables] = summon[KindlingsSchema[SchemaTables]].schema
 
   // ── the statement check (pure) ───────────────────────────────────────────────────────────────
 

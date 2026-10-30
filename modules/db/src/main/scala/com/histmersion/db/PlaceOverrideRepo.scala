@@ -25,8 +25,7 @@ object PlaceOverrideRepo:
       lat: Option[Double],
       lon: Option[Double],
       hasShape: Boolean
-  )
-  private given DbCodec[Row] = DbCodec.derived
+  ) derives DbCodec
   private given DbCodec[PlaceOverride] = DbCodec.derived
 
   /** The place's label, kind, STATED period (an unknown start reads as none) and point (when it is a point; `hasShape`

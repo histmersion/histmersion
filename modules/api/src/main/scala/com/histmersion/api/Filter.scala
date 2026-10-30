@@ -34,7 +34,8 @@ final case class Filter(
     title: Option[String] = None, // case-insensitive substring of the LISTED item's own title:
     // a source's title, an article's title, an event's label
     goal: Option[String] = None // the sources a research goal links (its slug)
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
 
   /** True when nothing at all is being filtered (only paging/sorting). */
   def isEmpty: Boolean =
@@ -52,7 +53,7 @@ final case class Filter(
   def hasFindingCriteria: Boolean = period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty
 
 object Filter:
-  given Schema[Filter] = KindlingsSchema.derived[Filter].schema
+  given Schema[Filter] = summon[KindlingsSchema[Filter]].schema
 
   /** Open-ended bounds for half-specified ranges. Deep time never comes near these; they exist so a `Period` stays a
     * closed interval (and so `int8range(..,'[]')` can't overflow bigint).
@@ -141,7 +142,9 @@ object Filter:
 /** A lon/lat viewport (WGS84). `minLon > maxLon` means the box crosses the antimeridian and is evaluated as two
   * envelopes (see `FilterSql`).
   */
-final case class BBox(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) derives KindlingsCodecAsObject:
+final case class BBox(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def crossesAntimeridian: Boolean = minLon > maxLon
 
   /** Point-in-box test with the antimeridian rule. Mirrors the SQL exactly. */
@@ -151,7 +154,7 @@ final case class BBox(minLon: Double, minLat: Double, maxLon: Double, maxLat: Do
     latOk && lonOk
 
 object BBox:
-  given Schema[BBox] = KindlingsSchema.derived[BBox].schema
+  given Schema[BBox] = summon[KindlingsSchema[BBox]].schema
 
   /** `minLon,minLat,maxLon,maxLat` (the CLI/UI spelling). */
   def parse(s: String): Option[BBox] =

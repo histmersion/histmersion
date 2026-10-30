@@ -24,14 +24,14 @@ import com.histmersion.values.WireEnumValues
 
 /** Two sources joined by a disagreement edge, the critic (`src`) first, as code and models name them: `src>dst`.
   */
-final case class CritiqueRef(src: String, dst: String) derives KindlingsCodecAsObject:
+final case class CritiqueRef(src: String, dst: String) derives KindlingsCodecAsObject, KindlingsSchema:
   def wire: String = s"$src>$dst"
 
   /** The same two sources, in either direction. */
   def same(o: CritiqueRef): Boolean = (src == o.src && dst == o.dst) || (src == o.dst && dst == o.src)
 
 object CritiqueRef:
-  given Schema[CritiqueRef] = KindlingsSchema.derived[CritiqueRef].schema
+  given Schema[CritiqueRef] = summon[KindlingsSchema[CritiqueRef]].schema
 
   private def key(s: String): String =
     s.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT)
@@ -118,9 +118,10 @@ final case class CritiqueSide(
     year: Option[Int] = None,
     cited: Boolean = false,
     mentions: Int = 0
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CritiqueSide:
-  given Schema[CritiqueSide] = KindlingsSchema.derived[CritiqueSide].schema
+  given Schema[CritiqueSide] = summon[KindlingsSchema[CritiqueSide]].schema
 
 /** One pair of the checklist: the critic, the kinds of edge from it to the other source, the other source, its state,
   * and the stored reason when it has one.
@@ -132,7 +133,8 @@ final case class CritiquePair(
     state: CritiqueState,
     reason: Option[String] = None,
     reasonBy: Option[String] = None
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def ref: CritiqueRef = CritiqueRef(src.citekey, dst.citekey)
   def open: Boolean = state == CritiqueState.Open
 
@@ -153,7 +155,7 @@ final case class CritiquePair(
   /** `[[a]] refutes [[b]]`. */
   def line: String = s"[[${src.citekey}]] ${kinds.mkString("/")} [[${dst.citekey}]]"
 object CritiquePair:
-  given Schema[CritiquePair] = KindlingsSchema.derived[CritiquePair].schema
+  given Schema[CritiquePair] = summon[KindlingsSchema[CritiquePair]].schema
 
 object Critiques:
 

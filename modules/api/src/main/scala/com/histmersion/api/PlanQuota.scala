@@ -301,9 +301,10 @@ object PlanQuota:
       ageSeconds: Long,
       source: String,
       why: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object WindowStatus:
-    given Schema[WindowStatus] = KindlingsSchema.derived[WindowStatus].schema
+    given Schema[WindowStatus] = summon[KindlingsSchema[WindowStatus]].schema
 
   /** One plan pool: its windows, floors (and where they come from), hold, the verdict. */
   final case class PoolStatus(
@@ -326,33 +327,38 @@ object PlanQuota:
       refresh: Option[String] = None,
       refreshesToday: Int = 0,
       lastRefresh: Option[RefreshInfo] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object PoolStatus:
-    given Schema[PoolStatus] = KindlingsSchema.derived[PoolStatus].schema
+    given Schema[PoolStatus] = summon[KindlingsSchema[PoolStatus]].schema
 
   /** One fresh reading a pool took: when (ISO-8601 UTC), how (`probe`, `app-server`), why (`pick`, `paused-run`,
     * `command`), whether it read anything, and what.
     */
   final case class RefreshInfo(at: String, mode: String, trigger: String, ok: Boolean, detail: String)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RefreshInfo:
-    given Schema[RefreshInfo] = KindlingsSchema.derived[RefreshInfo].schema
+    given Schema[RefreshInfo] = summon[KindlingsSchema[RefreshInfo]].schema
 
   /** `POST /api/agents/quota/refresh` — take a fresh reading of one pool now (None = every pool). */
-  final case class QuotaRefresh(pool: Option[String] = None) derives KindlingsCodecAsObject
+  final case class QuotaRefresh(pool: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
   object QuotaRefresh:
-    given Schema[QuotaRefresh] = KindlingsSchema.derived[QuotaRefresh].schema
+    given Schema[QuotaRefresh] = summon[KindlingsSchema[QuotaRefresh]].schema
 
   /** What a refresh of one pool did (`refreshed` = a reading was taken and recorded) and the pool after it. */
   final case class PoolRefreshed(pool: String, refreshed: Boolean, detail: String, status: PoolStatus)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object PoolRefreshed:
-    given Schema[PoolRefreshed] = KindlingsSchema.derived[PoolRefreshed].schema
+    given Schema[PoolRefreshed] = summon[KindlingsSchema[PoolRefreshed]].schema
 
   /** `lifted`: the models whose cool-down after a reported usage limit the fresh readings lifted. */
-  final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[String] = Nil) derives KindlingsCodecAsObject
+  final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[String] = Nil)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object QuotaRefreshed:
-    given Schema[QuotaRefreshed] = KindlingsSchema.derived[QuotaRefreshed].schema
+    given Schema[QuotaRefreshed] = summon[KindlingsSchema[QuotaRefreshed]].schema
 
   /** `GET /api/agents/quota` — the plan pools and the metered ones (the allowances), and the roles whose chain may fall
     * from a plan to a paid key.
@@ -363,43 +369,52 @@ object PlanQuota:
       fallthrough: List[String],
       now: String,
       cooldowns: List[Cooldown] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object QuotaInfo:
-    given Schema[QuotaInfo] = KindlingsSchema.derived[QuotaInfo].schema
+    given Schema[QuotaInfo] = summon[KindlingsSchema[QuotaInfo]].schema
 
   /** A model skipped because its plan reported its usage limit, until `until` — or until a reading of its pool taken
     * since says the pool is usable for it (`agent quota refresh <pool>`, #1827).
     */
-  final case class Cooldown(model: String, until: String, reason: String) derives KindlingsCodecAsObject
+  final case class Cooldown(model: String, until: String, reason: String)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object Cooldown:
-    given Schema[Cooldown] = KindlingsSchema.derived[Cooldown].schema
+    given Schema[Cooldown] = summon[KindlingsSchema[Cooldown]].schema
 
   /** `PUT /api/agents/quota/{pool}` — hold or release a pool, and/or save its floors (`"five_hour=30, seven_day=25"`;
     * an empty string drops the saved floors, config's apply again).
     */
-  final case class PoolSet(hold: Option[Boolean] = None, floors: Option[String] = None) derives KindlingsCodecAsObject
+  final case class PoolSet(hold: Option[Boolean] = None, floors: Option[String] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object PoolSet:
-    given Schema[PoolSet] = KindlingsSchema.derived[PoolSet].schema
+    given Schema[PoolSet] = summon[KindlingsSchema[PoolSet]].schema
 
   /** `PUT /api/agents/quota/fallthrough/{role}` — whether the role's chain may fall from a plan below its floor to a
     * paid key.
     */
-  final case class FallthroughSet(fallthrough: Boolean) derives KindlingsCodecAsObject
+  final case class FallthroughSet(fallthrough: Boolean) derives KindlingsCodecAsObject, KindlingsSchema
   object FallthroughSet:
-    given Schema[FallthroughSet] = KindlingsSchema.derived[FallthroughSet].schema
+    given Schema[FallthroughSet] = summon[KindlingsSchema[FallthroughSet]].schema
 
   /** A Claude Code mod's report: `$.session.usage().rateLimits` (`{kind, percentUsed, resetsAt}`). */
   final case class ModWindow(kind: String, percentUsed: Double, resetsAt: Option[String] = None)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ModWindow:
-    given Schema[ModWindow] = KindlingsSchema.derived[ModWindow].schema
+    given Schema[ModWindow] = summon[KindlingsSchema[ModWindow]].schema
 
-  final case class ModReport(source: String, rateLimits: List[ModWindow]) derives KindlingsCodecAsObject
+  final case class ModReport(source: String, rateLimits: List[ModWindow])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ModReport:
-    given Schema[ModReport] = KindlingsSchema.derived[ModReport].schema
+    given Schema[ModReport] = summon[KindlingsSchema[ModReport]].schema
 
   /** What the mod is told: go on, or stop (and when the pool frees). */
   final case class GuardAnswer(allow: Boolean, reason: Option[String] = None, resetsAt: Option[String] = None)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object GuardAnswer:
-    given Schema[GuardAnswer] = KindlingsSchema.derived[GuardAnswer].schema
+    given Schema[GuardAnswer] = summon[KindlingsSchema[GuardAnswer]].schema

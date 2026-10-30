@@ -15,8 +15,8 @@ import com.histmersion.values.SourceStatus
   */
 object AcquireRepo:
 
-  final private case class DoiKey(doi: String, citekey: String)
-  final private case class RwRow(nature: Option[String], reason: Option[String], date: Option[String])
+  final private case class DoiKey(doi: String, citekey: String) derives DbCodec
+  final private case class RwRow(nature: Option[String], reason: Option[String], date: Option[String]) derives DbCodec
   final private case class GapRow(
       citekey: String,
       title: String,
@@ -29,7 +29,7 @@ object AcquireRepo:
       provenance: Option[String],
       calibreId: Option[String],
       isbn: Option[String]
-  )
+  ) derives DbCodec
   final private case class AssessmentRow(
       citekey: String,
       checkedAt: String,
@@ -37,12 +37,7 @@ object AcquireRepo:
       citedBy: Option[Int],
       influential: Option[Int],
       verdict: String
-  )
-
-  private given DbCodec[DoiKey] = DbCodec.derived
-  private given DbCodec[RwRow] = DbCodec.derived
-  private given DbCodec[GapRow] = DbCodec.derived
-  private given DbCodec[AssessmentRow] = DbCodec.derived
+  ) derives DbCodec
 
   // ── Retraction Watch mirror ─────────────────────────────────────────────────────────────────
 

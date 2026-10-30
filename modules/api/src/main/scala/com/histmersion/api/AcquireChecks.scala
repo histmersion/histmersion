@@ -15,9 +15,10 @@ object AcquireChecks:
     * `failed`), the short reason shown with the item, and how many times it was checked.
     */
   final case class AcquireCheck(item: Int, checkedAt: String, outcome: String, reason: String, checks: Int = 1)
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object AcquireCheck:
-    given Schema[AcquireCheck] = KindlingsSchema.derived[AcquireCheck].schema
+    given Schema[AcquireCheck] = summon[KindlingsSchema[AcquireCheck]].schema
 
   /** `POST /api/queue/acquire/recheck`: a pass now. `dryRun` = list the items it would close and the due ones it would
     * try (no fetcher is asked, nothing is stored); `limit` = at most this many tried (default
@@ -31,9 +32,10 @@ object AcquireChecks:
       id: Option[Int] = None,
       by: Option[String] = None,
       all: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RecheckRequest:
-    given Schema[RecheckRequest] = KindlingsSchema.derived[RecheckRequest].schema
+    given Schema[RecheckRequest] = summon[KindlingsSchema[RecheckRequest]].schema
 
   /** One item of a pass: `closed` (in the corpus with its original), `fetched` (a legal copy found and converting),
     * `no-copy`, `failed`, `no-doi`; in a dry run `would-close`, `would-try`, `due` (past the pass's caps). `citekey` =
@@ -45,9 +47,10 @@ object AcquireChecks:
       action: String = "",
       detail: String = "",
       citekey: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RecheckRow:
-    given Schema[RecheckRow] = KindlingsSchema.derived[RecheckRow].schema
+    given Schema[RecheckRow] = summon[KindlingsSchema[RecheckRow]].schema
 
   /** What a pass did (a dry run: would do). `open` = the open acquisition items, `withDoi` = those naming a DOI, `due` =
     * the ones due for a try (with `all`: every one naming a DOI), `allowance` = how many this pass could try; `note` =
@@ -67,9 +70,10 @@ object AcquireChecks:
       rows: List[RecheckRow] = Nil,
       note: Option[String] = None,
       job: Option[JobInfo] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RecheckResult:
-    given Schema[RecheckResult] = KindlingsSchema.derived[RecheckResult].schema
+    given Schema[RecheckResult] = summon[KindlingsSchema[RecheckResult]].schema
 
   /** What a re-check job does (`jobs.detail`): every open item naming a DOI (`all`), or at most `upTo` due ones;
     * `since` (ISO instant) = when it first started — an item checked since was checked by it, and a job that `resumes`
@@ -81,9 +85,10 @@ object AcquireChecks:
       since: String = "",
       by: String = "",
       resumes: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RecheckJob:
-    given Schema[RecheckJob] = KindlingsSchema.derived[RecheckJob].schema
+    given Schema[RecheckJob] = summon[KindlingsSchema[RecheckJob]].schema
 
     /** The `jobs.kind` of a re-check job. */
     val JobKind = com.histmersion.api.JobKind.AcquireRecheck.wire
@@ -112,9 +117,10 @@ object AcquireChecks:
       note: Option[String] = None,
       /** A re-check job running (`job <id> running: <its progress>`), or one stopped that a tick resumes. */
       job: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object RecheckStatus:
-    given Schema[RecheckStatus] = KindlingsSchema.derived[RecheckStatus].schema
+    given Schema[RecheckStatus] = summon[KindlingsSchema[RecheckStatus]].schema
 
   val Closed = "closed"
   val Fetched = "fetched"

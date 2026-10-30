@@ -628,9 +628,9 @@ final case class ArticlePut(
     filter: Option[ArticleFilter] = None,
     /** Why each source of the filter the body does not cite is left out. */
     reasons: List[CoverageReason] = Nil
-)
+) derives KindlingsSchema
 object ArticlePut:
-  given Schema[ArticlePut] = KindlingsSchema.derived[ArticlePut].schema
+  given Schema[ArticlePut] = summon[KindlingsSchema[ArticlePut]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[ArticlePut] = StrictJson.codec(KindlingsCodecAsObject.derived[ArticlePut])
@@ -673,12 +673,12 @@ final case class ArticlePatch(
       * `updatedAt` as it is.
       */
     critiqueReasons: List[CritiqueReason] = Nil
-):
+) derives KindlingsSchema:
   /** Nothing but critique reasons (and the token): the article row is not written. */
   def onlyCritiques: Boolean =
     critiqueReasons.nonEmpty && copy(critiqueReasons = Nil, ifUpdatedAt = None) == ArticlePatch()
 object ArticlePatch:
-  given Schema[ArticlePatch] = KindlingsSchema.derived[ArticlePatch].schema
+  given Schema[ArticlePatch] = summon[KindlingsSchema[ArticlePatch]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[ArticlePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[ArticlePatch])
@@ -696,9 +696,10 @@ final case class ArticleSummary(
     updatedAt: Option[String] = None,
     /** Where it stands with the review panel (`GET /api/articles/{slug}/review` has the history). */
     review: Option[ReviewBadge] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ArticleSummary:
-  given Schema[ArticleSummary] = KindlingsSchema.derived[ArticleSummary].schema
+  given Schema[ArticleSummary] = summon[KindlingsSchema[ArticleSummary]].schema
 
 /** The article itself (`GET /api/articles/{slug}`), body included. */
 final case class ArticleRow(
@@ -714,14 +715,17 @@ final case class ArticleRow(
     updatedAt: Option[String] = None,
     /** The article's permanent identity (V030), which a bundle carries; the slug is its label. */
     uid: Option[java.util.UUID] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ArticleRow:
-  given Schema[ArticleRow] = KindlingsSchema.derived[ArticleRow].schema
+  given Schema[ArticleRow] = summon[KindlingsSchema[ArticleRow]].schema
 
 /** Something that links TO an article: another article, or a source whose notes mention it. */
-final case class Backlink(kind: String, id: String, title: Option[String]) derives KindlingsCodecAsObject
+final case class Backlink(kind: String, id: String, title: Option[String])
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object Backlink:
-  given Schema[Backlink] = KindlingsSchema.derived[Backlink].schema
+  given Schema[Backlink] = summon[KindlingsSchema[Backlink]].schema
 
 /** A source an article cites, with the metadata the footer shows. `title` is `None` when the citekey is not (yet) in
   * the corpus — a dangling citation.
@@ -733,9 +737,10 @@ final case class CitedSource(
     status: Option[SourceStatus],
     authors: List[String] = Nil,
     doi: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object CitedSource:
-  given Schema[CitedSource] = KindlingsSchema.derived[CitedSource].schema
+  given Schema[CitedSource] = summon[KindlingsSchema[CitedSource]].schema
 
 /** `GET /api/articles/{slug}` — the article with both directions of its link graph resolved, and the formatting
   * problems of its body and summary ([[FormatIssue]]: what will not display as the writer meant), so an agent sees them
@@ -748,9 +753,10 @@ final case class ArticleView(
     formatting: List[FormatIssue] = Nil,
     /** The coverage of its recorded filter (#958) — `None` when it records none. */
     coverage: Option[Coverage] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ArticleView:
-  given Schema[ArticleView] = KindlingsSchema.derived[ArticleView].schema
+  given Schema[ArticleView] = summon[KindlingsSchema[ArticleView]].schema
 
 /** `GET /api/articles` — `total` ignores limit/offset. */
 final case class ArticleList(
@@ -761,10 +767,11 @@ final case class ArticleList(
     next: Option[Int] = None,
     /** How many of the `total` are of each kind, the largest first (ignores limit/offset). */
     kinds: List[ArticleKindCount] = Nil
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   def page: OffsetPage = OffsetPage(total, offset, articles.size)
 object ArticleList:
-  given Schema[ArticleList] = KindlingsSchema.derived[ArticleList].schema
+  given Schema[ArticleList] = summon[KindlingsSchema[ArticleList]].schema
   def of(total: Int, rows: List[ArticleSummary], offset: Int, kinds: List[ArticleKindCount] = Nil): ArticleList =
     ArticleList(total, rows, offset, OffsetPage(total, offset, rows.size).next, kinds)
 
@@ -773,9 +780,9 @@ object ArticleList:
     counts.filter(_.count > 0).sortBy(k => (-k.count, k.kind))
 
 /** How many listed articles are of one kind. */
-final case class ArticleKindCount(kind: String, count: Int) derives KindlingsCodecAsObject
+final case class ArticleKindCount(kind: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object ArticleKindCount:
-  given Schema[ArticleKindCount] = KindlingsSchema.derived[ArticleKindCount].schema
+  given Schema[ArticleKindCount] = summon[KindlingsSchema[ArticleKindCount]].schema
 
 /** `POST /api/articles/import`: one note's raw text, parsed server-side by [[ArticleNote.parse]]. The host-side path of
   * `histmersion seed` for articles — the CLI can read the host's `wiki` directories, the containerised server cannot.
@@ -797,13 +804,14 @@ final case class ArticleImport(
     force: Boolean = false,
     /** Refuse the import when the body has a formatting ERROR (see [[FormatIssue]]). */
     strict: Boolean = false
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ArticleImport:
-  given Schema[ArticleImport] = KindlingsSchema.derived[ArticleImport].schema
+  given Schema[ArticleImport] = summon[KindlingsSchema[ArticleImport]].schema
 
-final case class ArticleDeleted(slug: String, deleted: Boolean) derives KindlingsCodecAsObject
+final case class ArticleDeleted(slug: String, deleted: Boolean) derives KindlingsCodecAsObject, KindlingsSchema
 object ArticleDeleted:
-  given Schema[ArticleDeleted] = KindlingsSchema.derived[ArticleDeleted].schema
+  given Schema[ArticleDeleted] = summon[KindlingsSchema[ArticleDeleted]].schema
 
 /** One version in the history of an article (list view — summary truncated, word count computed). */
 final case class ArticleVersion(
@@ -813,9 +821,10 @@ final case class ArticleVersion(
     updatedAt: String,
     createdAt: String,
     wordCount: Int
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ArticleVersion:
-  given Schema[ArticleVersion] = KindlingsSchema.derived[ArticleVersion].schema
+  given Schema[ArticleVersion] = summon[KindlingsSchema[ArticleVersion]].schema
 
 /** One historical version of an article's body (detail view — full body included). */
 final case class ArticleVersionFull(
@@ -825,6 +834,7 @@ final case class ArticleVersionFull(
     summary: Option[String],
     updatedAt: String,
     createdAt: String
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object ArticleVersionFull:
-  given Schema[ArticleVersionFull] = KindlingsSchema.derived[ArticleVersionFull].schema
+  given Schema[ArticleVersionFull] = summon[KindlingsSchema[ArticleVersionFull]].schema

@@ -87,9 +87,9 @@ final case class SourcePut(
     calibreId: Option[String] = None,
     findings: List[FindingInput] = Nil,
     edges: List[EdgeInput] = Nil
-)
+) derives KindlingsSchema
 object SourcePut:
-  given Schema[SourcePut] = KindlingsSchema.derived[SourcePut].schema
+  given Schema[SourcePut] = summon[KindlingsSchema[SourcePut]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[SourcePut] = StrictJson.codec(KindlingsCodecAsObject.derived[SourcePut])
@@ -163,9 +163,9 @@ final case class MetadataPatch(
     provenance: Option[String] = None,
     calibreId: Option[String] = None,
     clear: List[MetadataField] = Nil
-)
+) derives KindlingsSchema
 object MetadataPatch:
-  given Schema[MetadataPatch] = KindlingsSchema.derived[MetadataPatch].schema
+  given Schema[MetadataPatch] = summon[KindlingsSchema[MetadataPatch]].schema
 
   private val derived: Codec.AsObject[MetadataPatch] = KindlingsCodecAsObject.derived[MetadataPatch]
 
@@ -202,9 +202,9 @@ final case class ListPatch(
     add: List[String] = Nil,
     remove: List[String] = Nil,
     replace: Option[List[String]] = None
-)
+) derives KindlingsSchema
 object ListPatch:
-  given Schema[ListPatch] = KindlingsSchema.derived[ListPatch].schema
+  given Schema[ListPatch] = summon[KindlingsSchema[ListPatch]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[ListPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[ListPatch])
@@ -214,9 +214,9 @@ final case class FindingsPatch(
     add: List[FindingInput] = Nil,
     remove: List[String] = Nil,
     replace: Option[List[FindingInput]] = None
-)
+) derives KindlingsSchema
 object FindingsPatch:
-  given Schema[FindingsPatch] = KindlingsSchema.derived[FindingsPatch].schema
+  given Schema[FindingsPatch] = summon[KindlingsSchema[FindingsPatch]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[FindingsPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[FindingsPatch])
@@ -225,24 +225,24 @@ object FindingsPatch:
   * patched citekey (#698: a different `src` used to be silently replaced, turning a critic → target edge into a
   * self-edge). To record `a --kind--> b`, patch `a`.
   */
-final case class EdgeInput(dst: String, kind: EdgeKind, src: Option[String] = None)
+final case class EdgeInput(dst: String, kind: EdgeKind, src: Option[String] = None) derives KindlingsSchema
 object EdgeInput:
-  given Schema[EdgeInput] = KindlingsSchema.derived[EdgeInput].schema
+  given Schema[EdgeInput] = summon[KindlingsSchema[EdgeInput]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[EdgeInput] = StrictJson.codec(KindlingsCodecAsObject.derived[EdgeInput])
 
-final case class EdgesPatch(add: List[EdgeInput] = Nil, remove: List[EdgeInput] = Nil)
+final case class EdgesPatch(add: List[EdgeInput] = Nil, remove: List[EdgeInput] = Nil) derives KindlingsSchema
 object EdgesPatch:
-  given Schema[EdgesPatch] = KindlingsSchema.derived[EdgesPatch].schema
+  given Schema[EdgesPatch] = summon[KindlingsSchema[EdgesPatch]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[EdgesPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EdgesPatch])
 
 /** Deep time as signed years, BCE negative (3300 BCE -> -3300). */
-final case class PeriodInput(start: Long, end: Long)
+final case class PeriodInput(start: Long, end: Long) derives KindlingsSchema
 object PeriodInput:
-  given Schema[PeriodInput] = KindlingsSchema.derived[PeriodInput].schema
+  given Schema[PeriodInput] = summon[KindlingsSchema[PeriodInput]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[PeriodInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PeriodInput])
@@ -263,9 +263,9 @@ final case class SourcePatch(
     findings: Option[FindingsPatch] = None,
     edges: Option[EdgesPatch] = None,
     ifUpdatedAt: Option[String] = None
-)
+) derives KindlingsSchema
 object SourcePatch:
-  given Schema[SourcePatch] = KindlingsSchema.derived[SourcePatch].schema
+  given Schema[SourcePatch] = summon[KindlingsSchema[SourcePatch]].schema
 
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[SourcePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[SourcePatch])
@@ -296,14 +296,15 @@ final case class NoteImport(
     mtime: Option[Long] = None,
     force: Boolean = false,
     assets: List[AssetInput] = Nil
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object NoteImport:
-  given Schema[NoteImport] = KindlingsSchema.derived[NoteImport].schema
+  given Schema[NoteImport] = summon[KindlingsSchema[NoteImport]].schema
 
 /** Result of unifying short edge targets to full citekeys after a client-driven seed. */
-final case class EdgesResolved(resolved: Int) derives KindlingsCodecAsObject
+final case class EdgesResolved(resolved: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object EdgesResolved:
-  given Schema[EdgesResolved] = KindlingsSchema.derived[EdgesResolved].schema
+  given Schema[EdgesResolved] = summon[KindlingsSchema[EdgesResolved]].schema
 
 /** Pure merge rules for the write operations. */
 object Write:

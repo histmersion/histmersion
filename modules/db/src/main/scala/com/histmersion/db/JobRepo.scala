@@ -20,9 +20,7 @@ final private[db] case class JobRow(
     updatedAt: String,
     acquireItem: Option[Int],
     detail: Option[String]
-)
-
-given DbCodec[JobRow] = DbCodec.derived
+) derives DbCodec
 
 /** OCR jobs (plan §1.8). The row is the durable part of a job; the queue itself is in memory, which is precisely why a
   * restart must reconcile: [[failInterrupted]] turns every `running` row into `failed: interrupted` at startup, so no

@@ -20,7 +20,7 @@ final private[db] case class CorrectionRow(
     upstreamNow: Option[String],
     createdAt: String,
     checkedAt: Option[String]
-):
+) derives DbCodec:
   def toDto(label: Option[String] = None): Correction =
     Correction(
       id,
@@ -37,8 +37,6 @@ final private[db] case class CorrectionRow(
       checkedAt
     )
   def json(s: String): Json = Jsonb.read[Json](s).getOrElse(Json.Null)
-
-given DbCodec[CorrectionRow] = DbCodec.derived
 
 /** CORRECTIONS BY HAND (V088, [[Corrections]]): a person's value for one field of a target an importer writes, with
   * what upstream said then and at the last refresh. Generic over the target kind; the events are the first target

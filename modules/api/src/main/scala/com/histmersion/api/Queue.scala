@@ -54,9 +54,10 @@ object Queue:
       goal: Option[String] = None,
       createdBy: Option[String] = None,
       closedBy: Option[String] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object QueueItem:
-    given Schema[QueueItem] = KindlingsSchema.derived[QueueItem].schema
+    given Schema[QueueItem] = summon[KindlingsSchema[QueueItem]].schema
 
   /** `GET /api/queue/{list}` — open items by default, everything with `?all=true`; on the acquisition list, each
     * checked item's last legal re-check (`checks`, by item id); on every list, the research goals that link an item
@@ -67,18 +68,19 @@ object Queue:
       items: List[QueueItem],
       checks: List[AcquireChecks.AcquireCheck] = Nil,
       goals: List[ItemGoals] = Nil
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object QueueListing:
-    given Schema[QueueListing] = KindlingsSchema.derived[QueueListing].schema
+    given Schema[QueueListing] = summon[KindlingsSchema[QueueListing]].schema
 
   /** The research goals that link one item: slug and title. */
-  final case class ItemGoals(item: Int, goals: List[GoalRef]) derives KindlingsCodecAsObject
+  final case class ItemGoals(item: Int, goals: List[GoalRef]) derives KindlingsCodecAsObject, KindlingsSchema
   object ItemGoals:
-    given Schema[ItemGoals] = KindlingsSchema.derived[ItemGoals].schema
+    given Schema[ItemGoals] = summon[KindlingsSchema[ItemGoals]].schema
 
-  final case class GoalRef(slug: String, title: String) derives KindlingsCodecAsObject
+  final case class GoalRef(slug: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema
   object GoalRef:
-    given Schema[GoalRef] = KindlingsSchema.derived[GoalRef].schema
+    given Schema[GoalRef] = summon[KindlingsSchema[GoalRef]].schema
 
   /** `POST /api/queue/{list}` — and, internally, one parsed row on the way in from a file. */
   final case class QueueAdd(
@@ -91,9 +93,9 @@ object Queue:
       goal: Option[String] = None,
       /** The agent run or background job writing it (its job id). */
       job: Option[String] = None
-  )
+  ) derives KindlingsSchema
   object QueueAdd:
-    given Schema[QueueAdd] = KindlingsSchema.derived[QueueAdd].schema
+    given Schema[QueueAdd] = summon[KindlingsSchema[QueueAdd]].schema
 
     /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
     given Codec.AsObject[QueueAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[QueueAdd])
@@ -111,9 +113,9 @@ object Queue:
       goal: Option[String] = None,
       /** The agent run or background job that ticks the item off (with `status = "done"`). */
       closedBy: Option[String] = None
-  )
+  ) derives KindlingsSchema
   object QueuePatch:
-    given Schema[QueuePatch] = KindlingsSchema.derived[QueuePatch].schema
+    given Schema[QueuePatch] = summon[KindlingsSchema[QueuePatch]].schema
 
     /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
     given Codec.AsObject[QueuePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[QueuePatch])
@@ -121,13 +123,15 @@ object Queue:
   /** `POST /api/queue/{list}/import` — the whole Markdown file, parsed server-side. `replace` (the default) makes
     * import idempotent: the list is emptied first, so importing the same file twice does not double it.
     */
-  final case class QueueImport(text: String, replace: Boolean = true) derives KindlingsCodecAsObject
+  final case class QueueImport(text: String, replace: Boolean = true) derives KindlingsCodecAsObject, KindlingsSchema
   object QueueImport:
-    given Schema[QueueImport] = KindlingsSchema.derived[QueueImport].schema
+    given Schema[QueueImport] = summon[KindlingsSchema[QueueImport]].schema
 
-  final case class QueueImported(list: String, items: Int, notes: Int, replaced: Int) derives KindlingsCodecAsObject
+  final case class QueueImported(list: String, items: Int, notes: Int, replaced: Int)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object QueueImported:
-    given Schema[QueueImported] = KindlingsSchema.derived[QueueImported].schema
+    given Schema[QueueImported] = summon[KindlingsSchema[QueueImported]].schema
 
   // ── the three lists ──────────────────────────────────────────────────────────────────────────
 

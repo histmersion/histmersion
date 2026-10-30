@@ -28,10 +28,9 @@ final private case class ArticleSummaryRow(
     periodStart: Option[Long],
     periodEnd: Option[Long],
     updatedAt: Option[String]
-):
+) derives DbCodec:
   def summaryRow: ArticleSummary =
     ArticleSummary(slug, title, kind, summary, tags, regions, periodStart, periodEnd, updatedAt)
-private given DbCodec[ArticleSummaryRow] = DbCodec.derived
 given DbCodec[ArticleRow] = DbCodec.derived
 given DbCodec[CitedSource] = DbCodec.derived
 given DbCodec[ArticleRef] = DbCodec.derived
@@ -50,11 +49,8 @@ final private[db] case class FullArticleRow(
     updatedAt: String,
     filter: Option[String],
     reasons: String
-)
-final private[db] case class SlugMillis(slug: String, millis: Long)
-
-given DbCodec[FullArticleRow] = DbCodec.derived
-given DbCodec[SlugMillis] = DbCodec.derived
+) derives DbCodec
+final private[db] case class SlugMillis(slug: String, millis: Long) derives DbCodec
 
 /** The ARTICLES store (plan §5.2 stream 2.7) — the compiled wiki.
   *

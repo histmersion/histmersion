@@ -19,23 +19,26 @@ object Lint:
   /** One offending row. `citekey` is the source to go and fix; `detail` says what is wrong with it (and, for a dangling
     * edge, what it probably meant).
     */
-  final case class LintItem(citekey: String, detail: String) derives KindlingsCodecAsObject
+  final case class LintItem(citekey: String, detail: String) derives KindlingsCodecAsObject, KindlingsSchema
   object LintItem:
-    given Schema[LintItem] = KindlingsSchema.derived[LintItem].schema
+    given Schema[LintItem] = summon[KindlingsSchema[LintItem]].schema
 
   /** One rule's verdict. `count` ignores the `items` cap. */
   final case class LintRuleReport(rule: String, description: String, count: Int, items: List[LintItem])
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
   object LintRuleReport:
-    given Schema[LintRuleReport] = KindlingsSchema.derived[LintRuleReport].schema
+    given Schema[LintRuleReport] = summon[KindlingsSchema[LintRuleReport]].schema
 
   /** `fixed` lists the repairs actually applied (`POST /api/lint/fix`), e.g.
     * `resolve-edges: 3 edge target(s) rewritten`. Empty for a plain read-only lint.
     */
-  final case class LintReport(rules: List[LintRuleReport], fixed: List[String] = Nil) derives KindlingsCodecAsObject:
+  final case class LintReport(rules: List[LintRuleReport], fixed: List[String] = Nil)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def total: Int = rules.map(_.count).sum
   object LintReport:
-    given Schema[LintReport] = KindlingsSchema.derived[LintReport].schema
+    given Schema[LintReport] = summon[KindlingsSchema[LintReport]].schema
 
   /** What `POST /api/lint/fix` did. Both repairs are bounded per call — `remaining` is how many sources still need
     * re-chunking, so a caller (the CLI) loops until it reaches 0. `findingsRegeocoded` counts the `finding-geocode`
@@ -58,9 +61,10 @@ object Lint:
         */
       pointAreasRemoved: Int = 0,
       pointAreasRemaining: Int = 0
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object LintFixResult:
-    given Schema[LintFixResult] = KindlingsSchema.derived[LintFixResult].schema
+    given Schema[LintFixResult] = summon[KindlingsSchema[LintFixResult]].schema
 
   /** The catalog. `name` is the wire/CLI spelling (`--rule dangling-edges`). */
   final case class Rule(name: String, description: String)

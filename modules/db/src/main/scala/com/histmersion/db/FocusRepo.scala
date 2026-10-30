@@ -27,8 +27,7 @@ object FocusRepo:
       why: Option[String],
       leftAt: Option[String],
       leftWhy: Option[String]
-  )
-  private given DbCodec[GoalRow] = DbCodec.derived
+  ) derives DbCodec
 
   def goals(ds: DataSource): List[GoalRow] =
     connect(ds):
@@ -61,8 +60,7 @@ object FocusRepo:
       approvalKind: Option[String],
       autoApprove: Option[String],
       goals: List[String]
-  )
-  private given DbCodec[WorkRow] = DbCodec.derived
+  ) derives DbCodec
 
   def work(ds: DataSource): List[WorkRow] =
     connect(ds):

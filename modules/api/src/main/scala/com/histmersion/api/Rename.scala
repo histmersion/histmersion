@@ -7,16 +7,16 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 /** Body of `POST /api/sources/{citekey}/rename`. */
-final case class RenameRequest(newCitekey: String) derives KindlingsCodecAsObject
+final case class RenameRequest(newCitekey: String) derives KindlingsCodecAsObject, KindlingsSchema
 object RenameRequest:
-  given Schema[RenameRequest] = KindlingsSchema.derived[RenameRequest].schema
+  given Schema[RenameRequest] = summon[KindlingsSchema[RenameRequest]].schema
 
 /** How many rows of one table/column a rename rewrote — for the columns that hold a citekey (or a finding id) WITHOUT a
   * foreign key, which the cascade cannot reach.
   */
-final case class RenameCount(table: String, rows: Int) derives KindlingsCodecAsObject
+final case class RenameCount(table: String, rows: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object RenameCount:
-  given Schema[RenameCount] = KindlingsSchema.derived[RenameCount].schema
+  given Schema[RenameCount] = summon[KindlingsSchema[RenameCount]].schema
 
 /** What a rename changed, as counted inside its transaction. */
 final case class RenameCounts(
@@ -34,9 +34,10 @@ final case class RenameCounts(
     columns: List[RenameCount],
     /** Parked edges (`unresolved_edges`) that named the NEW citekey and became real edges. */
     edgesPromoted: Int
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object RenameCounts:
-  given Schema[RenameCounts] = KindlingsSchema.derived[RenameCounts].schema
+  given Schema[RenameCounts] = summon[KindlingsSchema[RenameCounts]].schema
 
 /** The answer of a rename: the source under its new citekey (without its body) and the counts. */
 final case class SourceRenamed(
@@ -48,14 +49,15 @@ final case class SourceRenamed(
       * — but the host-side originals directory is keyed by citekey.
       */
     calibreId: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 object SourceRenamed:
-  given Schema[SourceRenamed] = KindlingsSchema.derived[SourceRenamed].schema
+  given Schema[SourceRenamed] = summon[KindlingsSchema[SourceRenamed]].schema
 
 /** An old citekey and the source it now names (`GET /api/source-aliases`). */
-final case class SourceAlias(alias: String, citekey: String) derives KindlingsCodecAsObject
+final case class SourceAlias(alias: String, citekey: String) derives KindlingsCodecAsObject, KindlingsSchema
 object SourceAlias:
-  given Schema[SourceAlias] = KindlingsSchema.derived[SourceAlias].schema
+  given Schema[SourceAlias] = summon[KindlingsSchema[SourceAlias]].schema
 
 /** The pure rules of a citekey rename. The database half (existence, aliases, the rewrite itself) is
   * `SourceRepo.rename`, one transaction.
@@ -104,17 +106,18 @@ object Rename:
 /** Body of `POST /api/articles/{slug}/rename`, `/api/events/{id}/rename`, `/api/goals/{slug}/rename`,
   * `/api/places/{id}/rename`: the new label.
   */
-final case class LabelRename(to: String) derives KindlingsCodecAsObject
+final case class LabelRename(to: String) derives KindlingsCodecAsObject, KindlingsSchema
 object LabelRename:
-  given Schema[LabelRename] = KindlingsSchema.derived[LabelRename].schema
+  given Schema[LabelRename] = summon[KindlingsSchema[LabelRename]].schema
 
 /** What renaming an article, an event or a goal did: the old label is kept as an alias (it keeps resolving, as an old
   * citekey does), and `rewritten` names the articles whose `[[old]]` links were rewritten (an article rename only).
   */
 final case class LabelRenamed(entity: BundleKind, from: String, to: String, rewritten: List[String] = Nil)
-    derives KindlingsCodecAsObject
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 object LabelRenamed:
-  given Schema[LabelRenamed] = KindlingsSchema.derived[LabelRenamed].schema
+  given Schema[LabelRenamed] = summon[KindlingsSchema[LabelRenamed]].schema
 
 /** The pure rule of a label rename (article slug, event id, goal slug): the shape every one of them already has to
   * have.

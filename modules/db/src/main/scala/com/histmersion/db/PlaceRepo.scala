@@ -46,7 +46,7 @@ final private[db] case class PlaceDetailRow(
     hasBoundary: Boolean,
     timeBasis: PlaceTimeBasis,
     precision: LocationPrecision
-):
+) derives DbCodec:
   def toSummary: PlaceSummary =
     PlaceSummary(id, label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
 
@@ -54,7 +54,6 @@ given DbCodec[PlaceSummary] = DbCodec.derived
 given DbCodec[PlaceHit] = DbCodec.derived
 given DbCodec[PlaceTreeRow] = DbCodec.derived
 given DbCodec[ManualPlaceName] = DbCodec.derived
-given DbCodec[PlaceDetailRow] = DbCodec.derived
 given DbCodec[PlaceDescription] = DbCodec.derived
 
 final private[db] case class FootprintRow(
@@ -66,7 +65,7 @@ final private[db] case class FootprintRow(
     certainty: Option[String],
     accuracyM: Option[Float],
     citekey: Option[String]
-):
+) derives DbCodec:
   def toDto: PlaceFootprint =
     PlaceFootprint(
       id,
@@ -77,7 +76,6 @@ final private[db] case class FootprintRow(
       accuracyM,
       citekey
     )
-given DbCodec[FootprintRow] = DbCodec.derived
 given DbCodec[PlaceLink] = DbCodec.derived
 
 final private[db] case class PlaceTypeRow(
@@ -86,10 +84,9 @@ final private[db] case class PlaceTypeRow(
     periodStart: Option[Long],
     periodEnd: Option[Long],
     citekey: Option[String]
-):
+) derives DbCodec:
   def toDto: PlaceType =
     PlaceType(placeId, typeLabel, for s <- periodStart; e <- periodEnd yield Period(s, e), citekey)
-given DbCodec[PlaceTypeRow] = DbCodec.derived
 
 final private[db] case class HistPeriodRow(
     id: String,
@@ -100,7 +97,7 @@ final private[db] case class HistPeriodRow(
     region: Option[String],
     parentId: Option[String],
     preset: Option[String]
-):
+) derives DbCodec:
   def toDto: HistoricalPeriod =
     HistoricalPeriod(
       id,
@@ -111,7 +108,6 @@ final private[db] case class HistPeriodRow(
       parentId,
       preset.flatMap(PresetRegion.fromWire)
     )
-given DbCodec[HistPeriodRow] = DbCodec.derived
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
   * place that decides which findings belong to which places.
@@ -1210,8 +1206,7 @@ object PlaceRepo:
       citekey: String,
       lon: Double,
       lat: Double
-  )
-  private given DbCodec[Placeholder] = DbCodec.derived
+  ) derives DbCodec
 
   /** Every placeholder finding: id, place name, period, citekey and point (`lint --rule finding-placeholder`). */
   val placeholderFindingsSql: String =
@@ -1390,8 +1385,7 @@ object PlaceRepo:
             WHERE f.period IS NULL OR f.period && a.period
             ON CONFLICT DO NOTHING""".update.run()
 
-  final private case class Named(id: String, name: String, from: Option[Long], to: Option[Long])
-  private given DbCodec[Named] = DbCodec.derived
+  final private case class Named(id: String, name: String, from: Option[Long], to: Option[Long]) derives DbCodec
 
   /** The explicit NAME match for explicit-only points: a finding whose place name the geocoder ([[Geocoder.resolveIn]])
     * resolves to such a place belongs to it — whatever point the finding was given by hand. Only the names one of whose

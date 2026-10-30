@@ -20,7 +20,7 @@ final private[db] case class StoredEventRow(
     keys: List[String],
     catalogue: Option[String],
     label: String
-)
+) derives DbCodec
 
 final private[db] case class CatalogueRefRow(
     provider: String,
@@ -30,7 +30,7 @@ final private[db] case class CatalogueRefRow(
     magnitude: Option[Double],
     deaths: Option[Long],
     retrievedAt: String
-)
+) derives DbCodec
 
 final private[db] case class NearFindingRow(
     id: String,
@@ -40,7 +40,7 @@ final private[db] case class NearFindingRow(
     yearGap: Long,
     periodStart: Option[Long],
     periodEnd: Option[Long]
-)
+) derives DbCodec
 
 final private[db] case class CandidateRow(
     eventId: String,
@@ -51,7 +51,7 @@ final private[db] case class CandidateRow(
     findings: List[String],
     passages: String,
     reasons: List[String]
-)
+) derives DbCodec
 
 final case class LeadRow(
     id: String,
@@ -67,13 +67,7 @@ final case class LeadRow(
     findingsNear: Int,
     proposed: Int,
     attesting: Int
-)
-
-given DbCodec[StoredEventRow] = DbCodec.derived
-given DbCodec[CatalogueRefRow] = DbCodec.derived
-given DbCodec[NearFindingRow] = DbCodec.derived
-given DbCodec[CandidateRow] = DbCodec.derived
-given DbCodec[LeadRow] = DbCodec.derived
+) derives DbCodec
 
 /** Events from catalogues (#1449): what an import merges with and writes, the parts it has read, the proposed links to
   * the corpus and the facts the leads are computed from.

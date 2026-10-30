@@ -70,14 +70,15 @@ final case class BasemapLayerInfo(
     onDemand: Option[BasemapOnDemand] = None,
     /** The relief only: the focus regions kept to a deeper zoom (`fetch --layer terrain --focus <name>`). */
     focus: List[BasemapFocus] = Nil
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   /** The deepest zoom the page can ask this layer for: the extract's, a focus region's, or the on-demand relief's.
     */
   def deepest: Option[Int] =
     (maxZoom.toList ++ focus.map(_.maxZoom) ++ onDemand.filter(_.enabled).map(_.maxZoom).toList).maxOption
 
 object BasemapLayerInfo:
-  given Schema[BasemapLayerInfo] = KindlingsSchema.derived[BasemapLayerInfo].schema
+  given Schema[BasemapLayerInfo] = summon[KindlingsSchema[BasemapLayerInfo]].schema
 
 /** The relief deeper than the extract, fetched tile by tile from the provider when a page shows an area
   * (`basemap.terrain.on-demand`): to `maxZoom`, cached in `dir` up to `maxBytes` (least recently used dropped first).
@@ -91,10 +92,11 @@ final case class BasemapOnDemand(
     bytes: Long,
     maxBytes: Long,
     offlineUntil: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object BasemapOnDemand:
-  given Schema[BasemapOnDemand] = KindlingsSchema.derived[BasemapOnDemand].schema
+  given Schema[BasemapOnDemand] = summon[KindlingsSchema[BasemapOnDemand]].schema
 
 /** A focus region's relief archive: its name, region, zooms and size. */
 final case class BasemapFocus(
@@ -106,10 +108,11 @@ final case class BasemapFocus(
     maxZoom: Int,
     tiles: Long,
     fetchedAt: Option[String] = None
-) derives KindlingsCodecAsObject
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object BasemapFocus:
-  given Schema[BasemapFocus] = KindlingsSchema.derived[BasemapFocus].schema
+  given Schema[BasemapFocus] = summon[KindlingsSchema[BasemapFocus]].schema
 
 /** `GET /api/basemap`: is the terrain base map there, what of it, and how to get it. */
 final case class BasemapStatus(
@@ -137,32 +140,35 @@ final case class BasemapStatus(
     mapMaxZoom: Int = 16,
     /** The named regions a fetch knows (`basemap.terrain.focus-regions`), for a page to offer. */
     regions: List[BasemapRegion] = Nil
-) derives KindlingsCodecAsObject:
+) derives KindlingsCodecAsObject,
+      KindlingsSchema:
   /** The style `id`'s missing layers: empty when it can be drawn whole or is not known. */
   def missing(id: String): List[String] = styles.find(_.id == id).fold(Nil)(_.missing)
 
 object BasemapStatus:
-  given Schema[BasemapStatus] = KindlingsSchema.derived[BasemapStatus].schema
+  given Schema[BasemapStatus] = summon[KindlingsSchema[BasemapStatus]].schema
 
 /** A named region: its name and `minLon,minLat,maxLon,maxLat`. */
-final case class BasemapRegion(name: String, bbox: String) derives KindlingsCodecAsObject
+final case class BasemapRegion(name: String, bbox: String) derives KindlingsCodecAsObject, KindlingsSchema
 
 object BasemapRegion:
-  given Schema[BasemapRegion] = KindlingsSchema.derived[BasemapRegion].schema
+  given Schema[BasemapRegion] = summon[KindlingsSchema[BasemapRegion]].schema
 
 /** One named style against the stored extract: the vector data layers it draws that the download left out
   * (`basemap.vector.drop`).
   */
-final case class BasemapStyleState(id: String, name: String, missing: List[String] = Nil) derives KindlingsCodecAsObject
+final case class BasemapStyleState(id: String, name: String, missing: List[String] = Nil)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object BasemapStyleState:
-  given Schema[BasemapStyleState] = KindlingsSchema.derived[BasemapStyleState].schema
+  given Schema[BasemapStyleState] = summon[KindlingsSchema[BasemapStyleState]].schema
 
 /** `DELETE /api/basemap?layer=`: what was removed. */
-final case class BasemapRemoved(removed: List[String], bytes: Long) derives KindlingsCodecAsObject
+final case class BasemapRemoved(removed: List[String], bytes: Long) derives KindlingsCodecAsObject, KindlingsSchema
 
 object BasemapRemoved:
-  given Schema[BasemapRemoved] = KindlingsSchema.derived[BasemapRemoved].schema
+  given Schema[BasemapRemoved] = summon[KindlingsSchema[BasemapRemoved]].schema
 
 /** The fetch's options: which layers, how deep, where; a dry run downloads only the directories and reports what the
   * extract would take. Empty values fall back to the configuration.

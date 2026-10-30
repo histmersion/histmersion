@@ -180,9 +180,10 @@ object AcquireMcp:
       sort: Option[String] = None,
       limit: Option[Int] = None,
       notInDb: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object DiscoverInput:
-    given Schema[DiscoverInput] = KindlingsSchema.derived[DiscoverInput].schema
+    given Schema[DiscoverInput] = summon[KindlingsSchema[DiscoverInput]].schema
 
   final case class CandidatesInput(
       goal: Option[String] = None,
@@ -193,13 +194,14 @@ object AcquireMcp:
       as: Option[String] = None,
       sweep: Boolean = false,
       dryRun: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object CandidatesInput:
-    given Schema[CandidatesInput] = KindlingsSchema.derived[CandidatesInput].schema
+    given Schema[CandidatesInput] = summon[KindlingsSchema[CandidatesInput]].schema
 
-  final case class RefsInput(id: String, apply: Boolean = false) derives KindlingsCodecAsObject
+  final case class RefsInput(id: String, apply: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema
   object RefsInput:
-    given Schema[RefsInput] = KindlingsSchema.derived[RefsInput].schema
+    given Schema[RefsInput] = summon[KindlingsSchema[RefsInput]].schema
 
   final case class AssessInput(
       id: Option[String] = None,
@@ -207,18 +209,20 @@ object AcquireMcp:
       forceStatus: Boolean = false,
       updateRetractions: Boolean = false,
       retractionsStatus: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object AssessInput:
-    given Schema[AssessInput] = KindlingsSchema.derived[AssessInput].schema
+    given Schema[AssessInput] = summon[KindlingsSchema[AssessInput]].schema
 
   final case class FollowupsInput(
       id: String,
       since: Option[Int] = None,
       limit: Option[Int] = None,
       apply: Boolean = false
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object FollowupsInput:
-    given Schema[FollowupsInput] = KindlingsSchema.derived[FollowupsInput].schema
+    given Schema[FollowupsInput] = summon[KindlingsSchema[FollowupsInput]].schema
 
   final case class IngestInput(
       id: String,
@@ -242,6 +246,7 @@ object AcquireMcp:
       citekey: Option[String] = None,
       format: Option[String] = None,
       rows: Option[Int] = None
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ArchiveInput:
-    given Schema[ArchiveInput] = KindlingsSchema.derived[ArchiveInput].schema
+    given Schema[ArchiveInput] = summon[KindlingsSchema[ArchiveInput]].schema

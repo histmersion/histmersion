@@ -40,10 +40,9 @@ object PointAreaRepo:
       findings: Int,
       alone: Int,
       pinned: Int
-  ):
+  ) derives DbCodec:
     def listed: Listed =
       Listed(id, label, source, kind, Dating.of(startUnknown, lowerInf, upperInf), findings, alone, pinned)
-  private given DbCodec[Row] = DbCodec.derived
 
   /** The counts by source, kind and dating. */
   def groupsIn(kinds: List[String])(using DbCon): List[Group] =
