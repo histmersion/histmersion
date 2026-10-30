@@ -164,6 +164,8 @@ const shots = {
   'map-options': { local: { layers: '[]', sources: '["false"]', baseMap: '["physical"]' },
     hash: 'from=-1700&to=-1000', run: async (page, shoot) => {
       await baseMapShot(page, async () => {}, [37.6, 24.2, 8]);
+      // the map options are in the layers panel, opened by its button over the map
+      if (await page.locator('#layers-btn').isVisible()) await page.locator('#layers-btn').click();
       await page.locator('.map-options-btn').click();
       await page.locator('.map-options').waitFor();
       await settle(page, 300);
