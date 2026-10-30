@@ -667,7 +667,10 @@ final case class PlaceDetail(
     media: List[MediaThumb] = Nil,
     /** What a site IS ([[SiteTypes]]) — the type the map draws its icon for, so its card shows the
       * same icon; `None` for an untyped site and for every other kind. */
-    siteType: Option[String] = None
+    siteType: Option[String] = None,
+    /** What the place's own record says beyond its names and dates: where its dates come from, its heritage
+      * designations and the registers that list it (a Wikidata place's extract carries them). */
+    record: PlaceRecord = PlaceRecord()
 ) derives KindlingsCodecAsObject:
   /** A region or polity whose only shape is a point (one with no geometry at all is a hierarchy
     * node, not a missing boundary). */
@@ -685,6 +688,44 @@ final case class PlaceDetail(
   def datedByFindings: Boolean = asOf.isDefined && timeBasis == PlaceTimeBasis.Findings
 object PlaceDetail:
   given Schema[PlaceDetail] = KindlingsSchema.derived[PlaceDetail].schema
+
+/** A heritage designation of a place (Wikidata P1435): its item, its name, and the designation's own dates
+  * (when it was granted or lifted — never the monument's), as the record states them. */
+final case class PlaceDesignation(id: String, label: Option[String] = None, start: Option[String] = None,
+    end: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
+
+/** A register that lists a place: the Wikidata property naming it and the place's id there. */
+final case class PlaceRegister(property: String, id: String) derives KindlingsCodecAsObject, KindlingsSchema:
+  /** The register's name, or the property when it is not one the extract keeps. */
+  def name: String = PlaceRegister.names.getOrElse(property, property)
+
+object PlaceRegister:
+  /** The registers the Wikidata extract keeps, by property. */
+  val names: Map[String, String] = Map(
+    "P13741" -> "Archaeological Cadastre (Greece)",
+    "P2186"  -> "Wiki Loves Monuments",
+    "P9951"  -> "Greek Castles",
+    "P8218"  -> "Archaeology in Greece Online",
+    "P8068"  -> "ToposText",
+    "P1936"  -> "DARE (Digital Atlas of the Roman Empire)")
+
+/** What a place's own record says beyond its names and dates ([[PlaceDetail.record]]): where its dates come
+  * from (`dateSource`, e.g. `wikidata-p571`), its time periods' names, its heritage designations, and the
+  * registers that list it. Empty for a place whose source states none of it. */
+final case class PlaceRecord(dateSource: Option[String] = None, periods: List[String] = Nil,
+    designations: List[PlaceDesignation] = Nil, registers: List[PlaceRegister] = Nil)
+    derives KindlingsCodecAsObject, KindlingsSchema:
+  def isEmpty: Boolean = dateSource.isEmpty && periods.isEmpty && designations.isEmpty && registers.isEmpty
+
+object PlaceRecord:
+  /** Pure: where a place's dates come from, in words — `wikidata-p580` "Wikidata: start and end time",
+    * `p2348-periodo:<ids>` "its time period, dated by PeriodO". */
+  def dateSourceText(s: String): String = s.trim.toLowerCase match
+    case "wikidata-p580"                       => "Wikidata: its start and end time"
+    case "wikidata-p571"                       => "Wikidata: its inception"
+    case "wikidata-p576"                       => "Wikidata: when it was dissolved or destroyed"
+    case p if p.startsWith("p2348-periodo")    => "Wikidata: its time period, dated by PeriodO"
+    case other                                 => other
 
 /** How much of the corpus a place selects: what `place=<id>` narrows each list to — the place AND its
   * descendants in the gazetteer, with no other filter. The same numbers the lists show after the place
