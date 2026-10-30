@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A stored asset, without the bytes (the listing endpoint / `histmersion assets`). */
 final case class AssetInfo(
     name: String,
     mime: String,

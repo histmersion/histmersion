@@ -3,12 +3,6 @@ package com.histmersion.api
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** The region headings the web timeline lists its period presets under. A heading is NAVIGATION — where a definition
-  * applies is PeriodO's own spatial coverage, carried on every row as `region` — so the boxes are only what the map
-  * must mostly show for a heading to come first in the menu. The wire name is how the seed (`histmersion.presets`) and
-  * the `periods.preset` column spell it. Declared in the order the menu lists them: alphabetical, the continent-wide
-  * definitions last.
-  */
 enum PresetRegion(val wire: String, val label: String, val box: Option[BBox]):
   case Aegean extends PresetRegion("aegean", "Aegean", Some(BBox(19.5, 34.5, 29.5, 41.5)))
   case Anatolia extends PresetRegion("anatolia", "Anatolia", Some(BBox(26.0, 35.8, 45.0, 42.2)))

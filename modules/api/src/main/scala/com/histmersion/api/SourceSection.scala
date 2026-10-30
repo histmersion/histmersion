@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** The valid values of `section` on `get_source`. */
 object SourceSection:
   val Summary = "summary"
   val Findings = "findings"

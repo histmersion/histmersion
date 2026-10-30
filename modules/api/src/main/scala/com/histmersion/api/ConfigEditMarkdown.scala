@@ -1,10 +1,8 @@
 package com.histmersion.api
 
-/** Settings as Markdown, every surface's (`histmersion config get|set|unset`, the `config` tool). Pure. */
 object ConfigEditMarkdown:
   import ConfigEdit.*
 
-  /** A setting's value as it may be shown: a credential's state, never its value. */
   def shown(f: Field): String =
     f.credential match
       case Some(c) if !c.isSet => "not set"

@@ -3,18 +3,13 @@ package com.histmersion.api
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** Why a PeriodO definition was not imported (#771). */
 enum PeriodSkip:
-  /** No readable start or stop year. */
   case NoSpan
 
-  /** It ends before it starts. */
   case EndsBeforeStart
 
-  /** A bound lies outside [[PeriodO.MinYear]]..[[PeriodO.MaxYear]]. */
   case OutOfRange
 
-  /** Far longer than anything else its authority states for the region ([[PeriodO.SpanFactor]]). */
   case ImplausibleSpan
 
 object PeriodSkip:

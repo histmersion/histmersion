@@ -2,8 +2,7 @@ package com.histmersion.api
 
 import io.circe.{Codec as CirceCodec, Decoder, Encoder}
 
-/** The FLAT wire shape of a [[Filter]] — the REST query parameters, in one case class so Tapir can `mapInTo` it (and
-  * the CLI can encode a `Filter` back into a request). Param names are FIXED; other streams depend on them.
+/** One case class so Tapir can `mapInTo` it. The parameter names are fixed: callers send them as REST query parameters.
   */
 final case class FilterQuery(
     q: Option[String],
@@ -50,9 +49,6 @@ final case class FilterQuery(
     )
 
 object FilterQuery:
-  /** Inverse of [[FilterQuery.toFilter]] — needed so the CLI's derived sttp client can send a `Filter`. Half-open
-    * ranges built by `Filter.periodOf` are rendered back as half-open.
-    */
   def from(f: Filter): FilterQuery =
     def lo(p: Option[Period]) = Filter.lowerGiven(p)
     def hi(p: Option[Period]) = Filter.upperGiven(p)

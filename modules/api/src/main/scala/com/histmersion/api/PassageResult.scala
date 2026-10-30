@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The answer of `passages`: `matches` counted over the whole body (stopping at the configured cap, then `capped`),
-  * merged into `total` passages of which `passages` are shown.
-  */
 final case class PassageResult(
     citekey: String,
     query: String,

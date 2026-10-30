@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A source or an article the person has not marked read, as a list shows it. */
 final case class UnreadRow(
     kind: ItemKind,
     id: ItemKey,

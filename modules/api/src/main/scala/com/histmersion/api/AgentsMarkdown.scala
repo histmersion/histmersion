@@ -1,19 +1,12 @@
 package com.histmersion.api
 
-/** Markdown for the embedded-agent surface — its own object, like [[IngestMarkdown]], so this stream does not append to
-  * [[Markdown]]. Every surface answers Markdown.
-  */
 object AgentsMarkdown:
   import Agents.*
 
-  /** Four decimals, locale-free (the wire is never localised; see AGENTS.md on `en_PL`). */
   def usd(d: Double): String =
-    val scale = if d != 0 && math.abs(d) < 0.0001 then 6 else 4 // a micro-budget must not read as 0
+    val scale = if d != 0 && math.abs(d) < 0.0001 then 6 else 4
     BigDecimal(d).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString
 
-  /** `first call 6200 tok · 7 turns` — what a step's first model call took in, and its turns; "" when neither was
-    * recorded.
-    */
   def callShape(firstCallTokens: Option[Long], turns: Option[Int]): String =
     (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => Plural.count(t, "turn"))).mkString(" · ")
 
@@ -53,7 +46,6 @@ object AgentsMarkdown:
       else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
     s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}"
 
-  /** One role's chain, with why each model would be passed over. */
   def roleChain(c: ModelChains.RoleChain): String =
     val lines = c.models.zipWithIndex.map { (e, i) =>
       val state = if e.usable then "usable"
@@ -82,10 +74,7 @@ object AgentsMarkdown:
     (s"- `${a.target}` (${a.source}${if a.reservePct > 0 then s", reserve ${a.reservePct}%" else ""}) — $state" +
       a.note.fold("")(n => s" · $n") :: limits).mkString("\n")
 
-  /** One allowance after it was set. */
   def allowance(a: ModelChains.AllowanceStatus): String = allowanceBlock(a)
-
-  // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
 
   private def pct(d: Double): String =
     java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
@@ -96,7 +85,6 @@ object AgentsMarkdown:
     else if s < 172800 then s"${s / 3600} h"
     else s"${s / 86400} d"
 
-  /** One plan pool: the verdict, the windows with their floors, reset, the reading's age and source. */
   def pool(p: PlanQuota.PoolStatus): String =
     val state =
       if !p.available then s"**${p.reason.getOrElse("unavailable: no login")}**"
@@ -120,7 +108,6 @@ object AgentsMarkdown:
       s" · ${p.maxCallsInFlight} call(s) at once${p.planType.fold("")(t => s" · plan $t")}" +
       p.note.fold("")(n => s"\n\n_${n}_") + windows + refreshLine(p)
 
-  /** How the pool takes a fresh reading, how often it did today, and the last one. */
   private def refreshLine(p: PlanQuota.PoolStatus): String =
     val how = p.refresh.fold("no fresh reading is taken (refresh off)")(m => s"fresh reading by $m")
     val times = if p.refreshesToday == 1 then "once" else s"${p.refreshesToday} times"
@@ -129,7 +116,6 @@ object AgentsMarkdown:
     )
     s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last"
 
-  /** `agent quota refresh`: what each pool's fresh reading did, then the pool. */
   def refreshed(q: PlanQuota.QuotaRefreshed): String =
     q.pools
       .map(r => s"**${r.pool}**: ${if r.refreshed then "read" else "no reading"} — ${r.detail}\n\n${pool(r.status)}")
@@ -138,7 +124,6 @@ object AgentsMarkdown:
        else
          s"\n\nBack in use (the fresh reading lifted the cool-down after a reported limit): ${q.lifted.map(m => s"`$m`").mkString(", ")}")
 
-  /** `agent quota`: the plan pools, then the metered allowances, then which chains may fall through. */
   def quota(q: PlanQuota.QuotaInfo): String =
     val metered =
       if q.metered.isEmpty then "_No metered allowance: API keys are capped only by the run's and the day's budgets._"
@@ -159,7 +144,6 @@ object AgentsMarkdown:
     s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") + cooling +
       s"\n\n## Metered\n\n$metered\n\n$fall"
 
-  /** `agent generate`. */
   def generated(r: GenerateResult): String =
     s"Generated ${r.runtimes.mkString(", ")} in ${r.dir}: ${r.files} file(s), ${r.written} written, ${r.removed} removed " +
       s"(definitions ${r.definitions.take(12)})."
@@ -194,7 +178,6 @@ object AgentsMarkdown:
        else p.toolCalls.map(c => s"- tool: `$c`").mkString("", "\n", "\n\n")) +
       s"```json\n${p.rawAnswer}\n```"
 
-  /** A run's options, as words (`fix, 3 rounds`, `for acquisition item 12`); empty when it has none. */
   def options(r: RunInfo): String =
     List(
       Option.when(r.dryRun)("dry run, writes nothing"),
@@ -209,7 +192,6 @@ object AgentsMarkdown:
       r.origin.filter(_ == Origin.Scheduler.wire).map(_ => "scheduled")
     ).flatten.mkString(", ")
 
-  /** What a dry run's step says of each write it skipped. */
   val DryRunNote = "dry run: not written"
 
   def runLine(r: RunInfo): String =
@@ -219,9 +201,6 @@ object AgentsMarkdown:
     s"${r.id} · ${r.status} · ${r.pipeline} ${r.target}$opts$goal · ${tokens(r.usage)} · $budget" +
       r.progress.filter(_.nonEmpty).fold("")(p => s" · $p") + r.error.filter(_.nonEmpty).fold("")(e => s" · $e")
 
-  /** A page of runs ([[Paging]]): a `Latest 20 of 312 runs` line when it is not the whole list, and the `older` line
-    * (how to ask for the next page) at the end.
-    */
   def runs(
       rs: List[RunInfo],
       page: Paging.Page = Paging.Page.empty,
@@ -233,11 +212,9 @@ object AgentsMarkdown:
       "# Agent runs\n\n" + pageLine(rs.size, page, "run", status) + facetLines(page, RunFacets) +
         rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o")
 
-  /** `Latest 20 of 312 runs.` and a blank line — nothing when the page is the whole list. */
   private def pageLine(shown: Int, page: Paging.Page, singular: String, qualifier: Option[String]): String =
     if page.total <= shown then "" else s"${Paging.heading(shown, page.total, singular, qualifier = qualifier)}.\n\n"
 
-  /** The facets a runs listing names, with how they read ([[ListFilters]]). */
   val RunFacets: List[(String, String)] =
     List(
       "pipeline" -> "By pipeline",
@@ -247,12 +224,8 @@ object AgentsMarkdown:
       "model" -> "By model"
     )
 
-  /** The facets an approvals listing names. */
   val ApprovalFacets: List[(String, String)] = List("kind" -> "By kind", "decidedBy" -> "Decided by")
 
-  /** One line per facet the page carries (`By kind: goal-plan 64 · edge 3`), then a blank line; nothing when it carries
-    * none (a server that predates them).
-    */
   def facetLines(page: Paging.Page, facets: List[(String, String)]): String =
     val lines = facets.map((name, label) => ListFilters.facetLine(label, page.facet(name))).filter(_.nonEmpty)
     if lines.isEmpty then "" else lines.mkString("  \n") + "\n\n"
@@ -304,9 +277,6 @@ object AgentsMarkdown:
           .mkString("\n\n")
     head + warnings + steps + writes + msgs
 
-  // ── approvals ──────────────────────────────────────────────────────────────────────────────────
-
-  /** What an approval would change, in one line. */
   def change(a: ApprovalInfo): String =
     ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
@@ -340,7 +310,6 @@ object AgentsMarkdown:
     val res = a.result.filter(_.nonEmpty).fold("")(r => s" · $r")
     s"#${a.id} · ${a.state} · ${change(a)}$run$res"
 
-  /** A page of approvals ([[Paging]]), like [[runs]]: `state` names the filter in the page line. */
   def approvals(
       as: List[ApprovalInfo],
       page: Paging.Page = Paging.Page.empty,
@@ -359,7 +328,6 @@ object AgentsMarkdown:
             .orElse(a.filter.map(ArticlePlans.filterBlock))
             .orElse(a.articles.map(ArticlePlans.planBlock))
             .fold("")(b => "\n\n" + indent(b) + "\n")
-          // a plan's rationale is the head of its block; an article's summary has no other place
           val evidence =
             if a.plan.isDefined || a.articles.isDefined then "" else s"\n  ${a.evidence.replace("\n", " ").take(400)}"
           s"- ${approvalLine(a)}$evidence$quote$note$detail"
@@ -368,7 +336,6 @@ object AgentsMarkdown:
 
   private def indent(b: String): String = b.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n")
 
-  /** A plan, as a person reads it before approving. */
   def planBlock(p: GoalPlans.Plan): String =
     val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
     val queries = p.queries.map(q => s"- query: $q")
@@ -385,7 +352,6 @@ object AgentsMarkdown:
       .filter(_.nonEmpty)
       .mkString("\n\n")
 
-  /** A draft, as a person reads it before approving (the text cut at `chars`; 0 = whole). */
   def draftBlock(d: GoalPlans.ArticleDraft, chars: Int): String =
     val head = s"${d.mode.wire} · ${d.kind} · \"${d.title}\"${d.section.fold("")(s => s" · under '$s'")} · " +
       s"cites ${d.cited.size} source(s) · ${d.filter}"
@@ -395,8 +361,6 @@ object AgentsMarkdown:
       d.text.take(chars) + s"\n… (${d.text.length - chars} more characters)"
     else d.text
     s"$head\n\n$problems\n\n```markdown\n$text\n```"
-
-  // ── goals: links, schedules ────────────────────────────────────────────────────────────────────
 
   def scheduleLine(s: GoalPlans.GoalSchedule): String =
     val state = if s.enabled then "on" else "off"
@@ -433,8 +397,6 @@ object AgentsMarkdown:
     val plan = v.plan.fold("")(p => s"\n\n## Approved plan\n\n${planBlock(p)}")
     Markdown.goal(v.goal) + budget + children + links + sch + plan
 
-  // ── compare (#992) ─────────────────────────────────────────────────────────────────────────────
-
   private def cell(s: String): String = s.replace("|", "\\|").replace("\n", " ")
 
   private def secs(n: Long): String = if n < 120 then s"$n s" else s"${n / 60} min ${n % 60} s"
@@ -455,7 +417,6 @@ object AgentsMarkdown:
   private def ratio(n: Int, of: Int): String =
     if of == 0 then "—" else s"$n/$of (${BigDecimal(100.0 * n / of).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
-  /** `agent compare`: the runs, every step side by side, then the pipeline's outputs. */
   def compare(c: RunCompare.Comparison): String =
     import RunCompare.*
     val ids = c.runs.map(_.id.take(8))

@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** One question an event raises, in counts, dates and distances. */
 final case class EventLead(
     eventId: String,
     label: String,

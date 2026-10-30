@@ -4,11 +4,6 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-// ── article kind ──────────────────────────────────────────────────────────────────────────────────
-
-/** The kinds the compiled wiki uses. Not a constraint — the kind field is free text so a new section needs no migration
-  * — but the vocabulary the tools advertise and the CLI validates.
-  */
 enum ArticleKind:
   case Concept, Myth, Culture, Region, Timeline, Report, Index
 

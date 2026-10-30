@@ -3,7 +3,6 @@ package com.histmersion.api
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 
-/** One site of the sites tiles: what the places feed's site features carried (`/api/places/geo`). */
 final case class SiteTile(
     id: String,
     label: String,

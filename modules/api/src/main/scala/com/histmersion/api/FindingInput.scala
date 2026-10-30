@@ -6,19 +6,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
 
-/** The WRITE side of the contract (plan §1.9a): DTOs for `put_source` / `patch_source` plus the pure merge that turns a
-  * patch into a new [[Source]]. No I/O here — the db module persists the result, so every merge rule is unit-testable
-  * without Postgres.
-  *
-  * Two operations, deliberately asymmetric:
-  *   - `put_source` REPLACES everything for a citekey (create / deliberate re-import; what `seed` does),
-  *   - `patch_source` touches ONLY the parts present in the request (enrichment; what agents do).
-  *
-  * Every field is optional with a `None`/`Nil` default so an omitted JSON key decodes to "absent" and therefore means
-  * "leave alone".
-  */
-
-/** A finding as supplied by a writer: no id — the store allocates a stable `<citekey>#<n>`. */
 final case class FindingInput(
     claim: String,
     region: Option[String] = None,
@@ -37,10 +24,8 @@ object FindingInput:
     .schema
     .modify(_.confidence)(_.description("high | medium | low | contested — another word is refused"))
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[FindingInput] = StrictJson.codec(KindlingsCodecAsObject.derived[FindingInput])
 
-  /** Round-trip helper: an existing finding back into writer form (drops the id). */
   def of(f: Finding): FindingInput = FindingInput(
     claim = f.claim,
     region = f.region,

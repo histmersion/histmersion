@@ -6,10 +6,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
 
-/** Selective enrichment. Every top-level part is independently optional; a present part replaces only itself, an absent
-  * part is untouched. `ifUpdatedAt` is an optimistic-concurrency precondition: supply the `updatedAt` you last read and
-  * the write is rejected (HTTP 412) if the row moved on.
-  */
 final case class SourcePatch(
     metadata: Option[MetadataPatch] = None,
     summary: Option[String] = None,
@@ -26,5 +22,4 @@ final case class SourcePatch(
 object SourcePatch:
   given Schema[SourcePatch] = summon[KindlingsSchema[SourcePatch]].schema
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[SourcePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[SourcePatch])

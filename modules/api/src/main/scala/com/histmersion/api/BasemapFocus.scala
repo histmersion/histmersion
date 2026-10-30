@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A focus region's relief archive: its name, region, zooms and size. */
 final case class BasemapFocus(
     name: String,
     file: String,

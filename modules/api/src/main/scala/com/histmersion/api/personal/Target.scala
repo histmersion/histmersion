@@ -8,10 +8,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** What a bookmark or a note points at, and where it opens back to: an item of the collection (`kind` and `id`), a
-  * point on the map (`lat`, `lon`, optionally the years `from`..`to`), a saved view of Explore (`view` with the map's
-  * `lat`, `lon` and `zoom`, and the span `from`..`to` it shows), or a period (`from`..`to`).
-  */
 final case class Target(
     kind: ItemKind,
     id: Option[ItemKey] = None,
@@ -23,12 +19,8 @@ final case class Target(
     view: Option[ViewState] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema:
-  /** The item's key, for an item of the collection. */
   def itemKey: Option[String] = Option.when(kind.isItem)(id.map(_.value)).flatten
 
-  /** One string per target that is the same item: `source:anthony2007_horse`; a point, a view or a period has none
-    * (each saved one is its own). Pure.
-    */
   def identity: Option[String] = itemKey.map(k => s"${kind.wire}:$k")
 
 object Target:
@@ -36,9 +28,6 @@ object Target:
 
   def item(kind: ItemKind, key: String): Target = Target(kind, Some(ItemKey(key.trim)))
 
-  /** `t` as it is kept: the fields its kind uses, checked, and the others dropped; refused when `kind` may not be
-    * `what`'s target or a field it needs is missing. Pure.
-    */
   def check(t: Target, allowed: Set[ItemKind], what: String): Either[String, Target] =
     val years = (t.from, t.to) match
       case (Some(a), Some(b)) if a.value > b.value =>
@@ -76,14 +65,11 @@ object Target:
                   view = view.map(ViewState(_))
                 )
               )
-          case _ => // a period
+          case _ =>
             if t.from.isEmpty || t.to.isEmpty then Left(s"a $what on a period names its years (from and to)")
             else Right(Target(ItemKind.Period, from = t.from, to = t.to))
       }
 
-  /** Where a target is, in words, beside its name: a point's position and years, a view's map and span, a period's
-    * years. Empty for an item. Pure.
-    */
   def where(t: Target): String =
     val span = YearFmt.period(t.from.map(_.value.toLong), t.to.map(_.value.toLong))
     val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, "N", "S")}, ${degrees(lo.value, "E", "W")}")

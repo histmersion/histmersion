@@ -4,35 +4,18 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** `histmersion lint` — the health checks the research workspace used to run by hand as DuckDB queries plus `grep` for
-  * dead wikilinks (plan §5.1 row `lint-wiki`, §5.2 stream 2.8).
-  *
-  * A rule is **a pure SQL projection plus a pure classifier**: `db.LintRepo` fetches the raw rows (the corpus is small
-  * — a few thousand rows at worst) and everything that decides *whether a row offends*, *what the detail line says* and
-  * *how the report renders* lives here, with no database. That is what makes each rule unit-testable.
-  *
-  * The report is deliberately shaped as `rules[] { rule, count, items[] }`: `count` is always the TRUE total, while
-  * `items` is capped at `lint.max-items` so a corpus-wide problem does not produce a megabyte of JSON.
-  */
 object Lint:
 
-  /** One offending row. `citekey` is the source to go and fix; `detail` says what is wrong with it (and, for a dangling
-    * edge, what it probably meant).
-    */
   final case class LintItem(citekey: String, detail: String) derives KindlingsCodecAsObject, KindlingsSchema
   object LintItem:
     given Schema[LintItem] = summon[KindlingsSchema[LintItem]].schema
 
-  /** One rule's verdict. `count` ignores the `items` cap. */
   final case class LintRuleReport(rule: String, description: String, count: Int, items: List[LintItem])
       derives KindlingsCodecAsObject,
         KindlingsSchema
   object LintRuleReport:
     given Schema[LintRuleReport] = summon[KindlingsSchema[LintRuleReport]].schema
 
-  /** `fixed` lists the repairs actually applied (`POST /api/lint/fix`), e.g.
-    * `resolve-edges: 3 edge target(s) rewritten`. Empty for a plain read-only lint.
-    */
   final case class LintReport(rules: List[LintRuleReport], fixed: List[String] = Nil)
       derives KindlingsCodecAsObject,
         KindlingsSchema:
@@ -40,11 +23,6 @@ object Lint:
   object LintReport:
     given Schema[LintReport] = summon[KindlingsSchema[LintReport]].schema
 
-  /** What `POST /api/lint/fix` did. Both repairs are bounded per call — `remaining` is how many sources still need
-    * re-chunking, so a caller (the CLI) loops until it reaches 0. `findingsRegeocoded` counts the `finding-geocode`
-    * moves, and `findingsPlaced` the points the `finding-unplaced` fill gave, each made only when its rule was asked
-    * for.
-    */
   final case class LintFixResult(
       applied: List[String],
       edgesResolved: Int,
@@ -56,9 +34,6 @@ object Lint:
       placesReclassified: Int = 0,
       placesMerged: Int = 0,
       placesRelocated: Int = 0,
-      /** `place-imported-point-area`: places removed by this call, and how many are left — bounded per call like the
-        * reindex, so a caller loops until `pointAreasRemaining` is 0.
-        */
       pointAreasRemoved: Int = 0,
       pointAreasRemaining: Int = 0
   ) derives KindlingsCodecAsObject,
@@ -66,7 +41,6 @@ object Lint:
   object LintFixResult:
     given Schema[LintFixResult] = summon[KindlingsSchema[LintFixResult]].schema
 
-  /** The catalog. `name` is the wire/CLI spelling (`--rule dangling-edges`). */
   final case class Rule(name: String, description: String)
 
   val DanglingEdges = "dangling-edges"
@@ -84,7 +58,6 @@ object Lint:
   val UnlocatedFindings = "unlocated-findings"
   val LegacyFigureLinks = "legacy-figure-links"
   val DanglingArticleLinks = "dangling-article-links"
-  // ── wave 3 rules (plan §6, A9/A14/A15/A17/A18) ───────────────────────────────────────────
   val NonCanonicalTag = "non-canonical-tag"
   val MissingYear = "missing-year"
   val YearCitekeyMismatch = "year-citekey-mismatch"
@@ -94,20 +67,15 @@ object Lint:
   val ArticleThinSummary = "article-thin-summary"
   val SupersededWithoutEdge = "superseded-without-edge"
   val ArticleCritiquePairing = "article-critique-pairing"
-  // ── formatting (the Markdown agents write; checks in server.MarkdownLint) ─────────────────────
   val ArticleFormat = "article-markdown"
   val NoteFormat = "note-markdown"
-  // ── the geocoder (#981) ──────────────────────────────────────────────────────────────────────
   val FindingGeocode = "finding-geocode"
   val FindingUnplaced = "finding-unplaced"
-  // ── the gazetteer's point-only regions (2026-10-09) ──────────────────────────────────────────
   val PlaceKindRule = "place-kind"
   val PlaceGridPoint = "place-grid-point"
   val PlaceImportedPointArea = "place-imported-point-area"
   val FindingPlaceholder = "finding-placeholder"
-  // ── media (#1446) ────────────────────────────────────────────────────────────────────────────
   val MediaLicenceRule = "media-licence"
-  // ── corrections by hand (V088) ───────────────────────────────────────────────────────────────
   val EventCorrectionConflict = "event-correction-conflict"
 
   val all: List[Rule] = List(
@@ -205,9 +173,6 @@ object Lint:
 
   def rule(name: String): Option[Rule] = all.find(_.name == name.trim.toLowerCase)
 
-  /** Which rules to run: empty selection = all of them. An unknown name is an error, not a silent empty report — a typo
-    * in `--rule` must never look like a clean bill of health.
-    */
   def select(requested: List[String]): Either[String, List[Rule]] =
     val wanted = requested.map(_.trim).filter(_.nonEmpty)
     if wanted.isEmpty then Right(all)
@@ -217,17 +182,8 @@ object Lint:
         Left(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}")
       else Right(wanted.flatMap(rule).distinct)
 
-  // ── pure classifiers ─────────────────────────────────────────────────────────────────────────
-
-  /** Blank = absent, or nothing but whitespace. */
   def blank(s: Option[String]): Boolean = s.forall(_.trim.isEmpty)
 
-  /** The citekeys a dangling edge target most plausibly meant, best first.
-    *
-    * Ranked the way the corpus is actually written: `heggarty2023` is a SHORT citekey for `heggarty2023_language`, so
-    * an exact `target_` prefix wins; then any prefix match; then keys sharing a long common prefix (a typo —
-    * `heggarrty2023_language`). Ties break alphabetically so the output is deterministic.
-    */
   def suggest(target: String, citekeys: Iterable[String], max: Int): List[String] =
     val t = target.trim.toLowerCase
     if t.isEmpty || max <= 0 then Nil
@@ -237,7 +193,6 @@ object Lint:
         var i = 0
         while i < n && a.charAt(i) == b.charAt(i) do i += 1
         i
-      // rank: 0 = "<target>_…" (a short citekey), 1 = any prefix match, 2 = shares ≥ 4 leading chars
       val scored = citekeys.iterator
         .filter(_ != target)
         .flatMap { ck =>
@@ -251,19 +206,8 @@ object Lint:
         .toList
       scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take(max)
 
-  /** Does this edge target look like a SOURCE reference rather than a concept/article link?
-    *
-    * The corpus convention is `author<year>_word` — `heggarty2023_language`, `gray_atkinson_2003` — so a four-digit
-    * year is the signal. Targets without one (`bronze_age_collapse`, `oral_tradition`) are `[[wikilinks]]` to compiled
-    * ARTICLES, not to sources: on the seeded corpus they are 1 050 of the 1 051 unresolved targets, and flagging them
-    * as broken references would bury the one that actually is.
-    */
   def looksLikeCitekey(target: String): Boolean = """\d{4}""".r.findFirstIn(target).isDefined
 
-  /** `dangling-edges`: every edge whose target is not a citekey, annotated with the closest candidates. Deduplicated on
-    * (src, kind, dst); the targets that look like SOURCE references sort first, because those are the ones a human can
-    * act on — the rest are article links and say so.
-    */
   def danglingEdges(edges: List[Edge], citekeys: Set[String], maxSuggestions: Int): List[LintItem] =
     edges.distinct
       .filterNot(e => citekeys.contains(e.dst))
@@ -277,10 +221,6 @@ object Lint:
         LintItem(e.src, s"${e.kind} → ${e.dst} ($what)$tail")
       }
 
-  /** `unresolved-short-citekeys`: the subset of the dangling targets that ARE the prefix of a real citekey — i.e. a
-    * short form nobody expanded. Exactly one candidate means `POST /api/edges/resolve` can fix it mechanically; more
-    * than one needs a human to choose.
-    */
   def unresolvedShortCitekeys(edges: List[Edge], citekeys: Set[String], maxSuggestions: Int): List[LintItem] =
     edges.distinct
       .filterNot(e => citekeys.contains(e.dst))
@@ -297,34 +237,25 @@ object Lint:
       }
       .sortBy(i => (i.citekey, i.detail))
 
-  /** `duplicate-doi` / `duplicate-sha256`: rows sharing a normalised key. Each member of a duplicate group becomes an
-    * item naming its partners, so either side can be opened from the report.
-    */
   def duplicates(rows: List[(String, String)], label: String): List[LintItem] =
     rows
       .filter((_, key) => key.trim.nonEmpty)
       .groupBy((_, key) => key.trim.toLowerCase)
       .toList
       .filter((_, group) => group.map(_._1).distinct.sizeIs > 1)
-      .sortBy((key, _) => key) // duplicate groups stay together, members alphabetical inside one
+      .sortBy((key, _) => key)
       .flatMap { (key, group) =>
         val cks = group.map(_._1).distinct.sorted
         cks.map(ck => LintItem(ck, s"$label $key — also on ${cks.filterNot(_ == ck).mkString(", ")}"))
       }
 
-  // ── wave 3 classifiers (pure, no database) ─────────────────────────────────────────────────
-
-  /** Lowercase snake_case: `[a-z0-9][a-z0-9_]*`. */
   private val CanonicalTag = """^[a-z0-9][a-z0-9_]*$""".r
 
-  /** A tag is canonical when it is lowercase snake_case. */
   def isCanonicalTag(tag: String): Boolean = CanonicalTag.matches(tag)
 
-  /** Normalise a tag to lowercase snake_case: lowercase, spaces/hyphens → underscores, collapse. */
   def normaliseTag(tag: String): String =
     tag.trim.toLowerCase.replaceAll("""[\s-]+""", "_").replaceAll("_+", "_").stripPrefix("_").stripSuffix("_")
 
-  /** `non-canonical-tag`: sources whose tags are not in lowercase_snake_case. */
   def nonCanonicalTags(rows: List[(String, List[String])]): List[LintItem] =
     rows
       .flatMap { (ck, tags) =>
@@ -332,7 +263,6 @@ object Lint:
       }
       .sortBy(i => (i.citekey, i.detail))
 
-  /** `year-citekey-mismatch`: the four-digit year in the citekey disagrees with the stored year. */
   private val YearInCitekey = """(\d{4})""".r.unanchored
 
   def yearCitekeyMismatch(rows: List[(String, Option[Int])]): List[LintItem] =
@@ -348,7 +278,6 @@ object Lint:
       }
       .sortBy(_.citekey)
 
-  /** `author-pipe`: an author name containing '|' is a parse artifact. */
   def authorPipe(rows: List[(String, List[String])]): List[LintItem] =
     rows
       .flatMap { (ck, authors) =>
@@ -356,9 +285,6 @@ object Lint:
       }
       .sortBy(i => (i.citekey, i.detail))
 
-  /** Banned filler phrases from the writing guide. A body paragraph containing any of these is an `article-filler` lint
-    * finding. Kept here in Lint.scala and referenced by the guide.
-    */
   val FillerPhrases: List[String] = List(
     "it is worth noting",
     "it should be noted",
@@ -390,12 +316,8 @@ object Lint:
   private val FillerPattern: scala.util.matching.Regex =
     FillerPhrases.map(p => java.util.regex.Pattern.quote(p)).mkString("(?i)(?:", "|", ")").r
 
-  /** Shorter than this is a label, not a summary: the nine found on 2026-09-25 were "placeholder" and workflow chatter
-    * ("Origin article for the Greek god origins program.", 49 chars); a real one runs ~300.
-    */
   val MinSummaryChars = 80
 
-  /** `article-thin-summary`: over (slug, summary) — an empty summary is "". */
   def articleThinSummary(rows: List[(String, String)]): List[LintItem] =
     rows
       .flatMap { (slug, summary) =>
@@ -413,7 +335,6 @@ object Lint:
       }
       .sortBy(_.citekey)
 
-  /** `article-filler`: articles whose body contains banned filler phrases. */
   def articleFiller(articles: List[(String, String)]): List[LintItem] =
     articles
       .flatMap { (slug, body) =>
@@ -431,12 +352,8 @@ object Lint:
       }
       .sortBy(_.citekey)
 
-  /** A body paragraph is text between blank lines (or at the start/end of the body). We skip headings (`# …`), list
-    * items (`- …`), blockquotes (`> …`), metadata lines (`_…_`), and code blocks. A paragraph without any `[[citekey]]`
-    * is uncited.
-    */
   private val WikilinkCitekey =
-    """\[\[((?=[a-z0-9_]*(?:_|\d{4}))[a-z][a-z0-9_]*)""".r // same shape as ArticleLinks.Citekey
+    """\[\[((?=[a-z0-9_]*(?:_|\d{4}))[a-z][a-z0-9_]*)""".r
 
   def articleUncitedParagraphs(articles: List[(String, String)]): List[LintItem] =
     articles
@@ -448,9 +365,6 @@ object Lint:
       }
       .sortBy(_.citekey)
 
-  /** `article-critique-pairing` ([[CritiquePairing]]): one item per paragraph hit, over `(slug, body)`. `resolve`,
-    * `edges` and `work` are the corpus's (canonical citekeys).
-    */
   def articleCritiquePairing(
       articles: List[(String, String)],
       resolve: String => Option[String],
@@ -461,10 +375,8 @@ object Lint:
       .flatMap((slug, body) => CritiquePairing.hits(body, resolve, edges, work).map(h => LintItem(slug, h.line)))
       .sortBy(_.citekey)
 
-  /** The longest text that may introduce a list without a citation of its own. */
   val MaxListLeadIn = 300
 
-  /** Words that end in a full stop without ending a sentence (`c. 1200 BCE`, `e.g. Pylos`, `Mt. Ida`). */
   private val Abbreviations: Set[String] =
     Set(
       "c",
@@ -490,14 +402,11 @@ object Lint:
 
   private val SentenceEnd = "([^\\s]*)[.!?]+[\"”’)]*\\s+(?=(\\S))".r
 
-  /** Pure: how many sentences `text` holds — a `.`, `!` or `?` followed by a space and a capital (or an opening quote,
-    * bracket or link) ends one, unless the word before it is an abbreviation or an initial (`A. Evans`). Empty text: 0.
-    */
   def sentenceCount(text: String): Int =
     val t = text.trim
     if t.isEmpty then 0
     else
-      // (no \p{Lu} in the pattern: core is cross-built to Scala.js, the next char is tested instead)
+      // No `\p{Lu}` in the pattern: this code is also compiled to Scala.js, so the next char is tested instead.
       val ends = SentenceEnd.findAllMatchIn(t).count { m =>
         val next = m.group(2).head
         val word = m.group(1).replaceAll("^[(\"“]+", "").toLowerCase
@@ -505,22 +414,15 @@ object Lint:
       }
       ends + 1
 
-  /** Pure: is `text` a list's lead-in — ONE sentence of at most [[MaxListLeadIn]] chars ending in `:` ("These sources
-    * mention X only in their full text:")? A longer paragraph that merely ends in `:` makes claims and is not one.
-    */
   def isListLeadIn(text: String): Boolean =
     val t = text.trim
     t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount(t) == 1
 
-  /** Extract prose paragraphs from an article body, skipping headings, lists, quotes, metadata, fences, and a list's
-    * lead-in ([[isListLeadIn]]) whose next block is a list — it introduces the cited items, it makes no claim (#937).
-    */
   def extractParagraphs(body: String): List[String] =
     val lines = body.linesIterator.toList
     var inFence = false
     val paras = List.newBuilder[String]
     val current = new StringBuilder()
-    // a paragraph that may be a list's lead-in waits for the next block to decide
     var leadIn: Option[String] = None
     def settle(nextIsList: Boolean): Unit =
       leadIn.foreach(t => if !nextIsList then paras += t)
@@ -530,49 +432,35 @@ object Lint:
       if text.nonEmpty then if isListLeadIn(text) then leadIn = Some(text) else paras += text
       current.clear()
     def isList(t: String) = t.startsWith("- ") || t.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf(t).isDefined
-    // a block that starts a new element (not a continuation of the paragraph) settles a waiting lead-in
     def block(nextIsList: Boolean): Unit = { flush(); settle(nextIsList) }
     for line <- lines do
       val t = line.trim
       if t.startsWith("```") then
         block(nextIsList = false)
         inFence = !inFence
-      else if inFence then () // skip fenced code
+      else if inFence then ()
       else if t.isEmpty then flush()
-      else if t.startsWith("#") then block(nextIsList = false) // heading
-      else if isList(t) then block(nextIsList = true) // list
-      else if t.startsWith("> ") then block(nextIsList = false) // blockquote
-      else if t.startsWith("_") && t.endsWith("_") then block(nextIsList = false) // metadata line
-      else if t.startsWith("|") then block(nextIsList = false) // table
+      else if t.startsWith("#") then block(nextIsList = false)
+      else if isList(t) then block(nextIsList = true)
+      else if t.startsWith("> ") then block(nextIsList = false)
+      else if t.startsWith("_") && t.endsWith("_") then block(nextIsList = false)
+      else if t.startsWith("|") then block(nextIsList = false)
       else
-        if current.isEmpty then settle(nextIsList = false) // a new paragraph after a blank line
+        if current.isEmpty then settle(nextIsList = false)
         current.append(line).append(" ")
     block(nextIsList = false)
     paras.result()
 
-  /** The formatting check, as the server runs it (flexmark lives there, not here): the text, which field it is, and
-    * whether it is an article body.
-    */
   type FormatChecker = (String, FormatField, Boolean) => List[FormatIssue]
 
-  /** `article-markdown` / `note-markdown`: one item per formatting problem, over `(id, field, text)` rows; an article
-    * body is checked as one. Ordered by id, then position.
-    */
   def formatItems(rows: List[(String, FormatField, String)], check: FormatChecker): List[LintItem] =
     rows.filter(_._3.trim.nonEmpty).sortBy((id, f, _) => (id, f.ordinal)).flatMap { (id, field, text) =>
       check(text, field, field == FormatField.Body).map(i => LintItem(id, FormatMarkdown.line(i)))
     }
 
-  /** Assemble one rule's verdict, capping the listed items (never the count). */
   def report(r: Rule, items: List[LintItem], maxItems: Int): LintRuleReport =
     LintRuleReport(r.name, r.description, items.size, items.take(math.max(0, maxItems)))
 
-  // ── rendering ────────────────────────────────────────────────────────────────────────────────
-
-  /** The Markdown every surface prints: grouped by rule, with counts, clean rules folded into one line so a healthy
-    * corpus is a short report. (Lives here rather than in `Markdown` so the lint stream owns one file — see AGENTS.md
-    * "one implementation per operation".)
-    */
   def markdown(rep: LintReport): String =
     val fixed = if rep.fixed.isEmpty then "" else rep.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")
     val (clean, dirty) = rep.rules.partition(_.count == 0)

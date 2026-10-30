@@ -4,9 +4,8 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The outcome of a restore: the schema version Flyway validated afterwards, how many sources the database held before
-  * and after, and any line `pg_restore` complained about (it exits 0 with "errors ignored on restore" when a dump was
-  * taken by a NEWER pg_dump than the server).
+/** `pg_restore` exits 0 with "errors ignored on restore" when the dump came from a newer `pg_dump` than the server, so
+  * the lines it complained about are reported.
   */
 final case class RestoreResult(
     file: String,

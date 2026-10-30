@@ -10,5 +10,4 @@ final case class EdgesPatch(add: List[EdgeInput] = Nil, remove: List[EdgeInput] 
 object EdgesPatch:
   given Schema[EdgesPatch] = summon[KindlingsSchema[EdgesPatch]].schema
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[EdgesPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EdgesPatch])

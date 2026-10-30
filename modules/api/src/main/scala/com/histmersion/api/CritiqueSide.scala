@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** One source as a checklist pair shows it. `cited`: the article's body links it; `mentions`: in how many of its
-  * paragraphs.
-  */
 final case class CritiqueSide(
     citekey: String,
     title: Option[String] = None,

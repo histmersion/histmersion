@@ -6,9 +6,6 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 
-// ── what the endpoints answer ─────────────────────────────────────────────────────────────────────
-
-/** `GET /api/instance` — this collection's identity. */
 final case class InstanceInfo(id: UUID, label: Option[String], createdAt: String)
     derives KindlingsCodecAsObject,
       KindlingsSchema

@@ -2,24 +2,10 @@ package com.histmersion.api
 
 import com.histmersion.values.SourceStatus
 
-/** COVERAGE (#958) — the part of an article that says which sources it was compiled from, which of them it cites, and
-  * why it leaves the others out: the "Not used" list, its counts, and the mechanical half of the `_Method_` note.
-  *
-  * A model used to write all of this by hand, and got it wrong: sources listed as "nothing found" that discuss the
-  * topic, counts that did not match the filter. Now the article RECORDS its filter ([[ArticleFilter]]) and a reason per
-  * left-out source ([[CoverageReason]]); code computes the rest from the live corpus ([[ArticleCoverage.compute]]) and
-  * renders it ([[ArticleCoverage.sections]]) every time the article is read — the page, `get_article`, the export —
-  * exactly as the "Sources cited" footer is generated rather than written. A model supplies only the REASONS.
-  *
-  * Everything here is pure; `server.Handlers.articleCoverage` gathers the inputs from the database.
-  */
-
 object ArticleCoverage:
 
-  /** The edge kinds that record a disagreement (writing guide, the four disagreement steps). */
   val DisagreementKinds: List[String] = List("challenges", "refutes", "updates", "superseded_by")
 
-  /** Statuses a reader is told at the source's mention (writing guide rule 2). */
   private val Stated: Set[SourceStatus] = Set(
     SourceStatus.Contested,
     SourceStatus.Superseded,
@@ -28,26 +14,9 @@ object ArticleCoverage:
     SourceStatus.Unassessed
   )
 
-  /** Statuses the Method note says are absent when none of the sources has them. */
   private val Disputed: List[SourceStatus] =
     List(SourceStatus.Contested, SourceStatus.Superseded, SourceStatus.Debunked, SourceStatus.Retracted)
 
-  /** THE coverage computation, over plain data the handler gathered.
-    *
-    * @param hits
-    *   the filter's sources as read (at most `limits.coverage-sources`, citekey order)
-    * @param total
-    *   how many the filter returns in all
-    * @param citedInFilter
-    *   the sources the body cites that the filter returns (exact, whatever the cap)
-    * @param cited
-    *   every source the body cites (canonical citekeys; a hand-written Not used section is NOT citation, see
-    *   [[withoutNotUsed]])
-    * @param reasons
-    *   the stored reasons, by citekey
-    * @param edges
-    *   disagreement edges touching any cited source (other kinds are dropped here)
-    */
   def compute(
       slug: String,
       filter: ArticleFilter,
@@ -74,7 +43,6 @@ object ArticleCoverage:
     val drift = List(
       CoverageDrift(DriftKind.Unplaced, notUsed.filter(_.reason.isEmpty).map(_.source.citekey)),
       CoverageDrift(DriftKind.ReasonForCited, reasons.keys.toList.filter(citedSet).sorted),
-      // with a capped read a reason may belong to an unread hit: say nothing rather than something wrong
       CoverageDrift(
         DriftKind.ReasonOutside,
         if capped then Nil else reasons.keys.toList.filterNot(ck => readSet(ck) || citedSet(ck)).sorted
@@ -96,34 +64,19 @@ object ArticleCoverage:
       drift
     )
 
-  /** The sources still unplaced if the body cited `cited` and the reasons were `reasons` — how a fixer's answer is
-    * checked against the coverage it was given.
-    */
   def unplacedAfter(c: Coverage, cited: Set[String], reasons: Map[String, String]): List[String] =
     c.notUsed.map(_.source.citekey).filterNot(ck => cited(ck) || reasons.contains(ck))
 
-  // ── rendering ─────────────────────────────────────────────────────────────────────────────────
-
-  /** Where the generated sections start and end in an EXPORTED note, so an import can drop them (the body never holds
-    * them). HTML comments: Obsidian and the page do not show them.
-    */
+  /** HTML comments, so Obsidian and the page do not show them. */
   val GeneratedStart = "<!-- generated from the article's filter: edits here are not kept -->"
   val GeneratedEnd = "<!-- end of generated sections -->"
 
-  /** The heading the generated list carries (and a hand-written one is recognised by). */
   val NotUsedHeading = "Not used"
 
-  /** The generated sections, as Markdown: the Not used list (a lead-in with the counts, ending in ':' so it is a list's
-    * lead-in, not an uncited paragraph) and the one-line `_Method:_` note.
-    */
   def sections(c: Coverage): String = s"${notUsed(c)}\n\n${method(c)}"
 
-  /** `sections` between the export markers. */
   def exported(c: Coverage): String = s"$GeneratedStart\n\n${sections(c)}\n\n$GeneratedEnd"
 
-  /** `## Not used`, a lead-in with the counts, and one line per reason (sources with the same reason share a line;
-    * those with none share the last: "not yet assessed").
-    */
   def notUsed(c: Coverage): String =
     val src = Plural.noun(c.total, "source")
     val citedN = c.cited.size
@@ -156,9 +109,6 @@ object ArticleCoverage:
   private def endSentence(s: String): String =
     if s.endsWith(".") || s.endsWith("?") || s.endsWith("!") then s else s"$s."
 
-  /** The one-line `_Method:_` note: the filter and its total, the status breakdown, the further searches, citations
-    * outside the filter, and the disagreement edges touching the cited sources.
-    */
   def method(c: Coverage): String =
     val statuses =
       if c.statuses.isEmpty then Nil
@@ -191,17 +141,12 @@ object ArticleCoverage:
     case one :: Nil => one
     case _          => s"${xs.init.mkString(", ")} or ${xs.last}"
 
-  /** Text inside the italic Method line: an `_` or `*` of a user's query would end the emphasis. */
+  /** An `_` or `*` of a user's query would end the Method line's Markdown emphasis. */
   private def escape(s: String): String = s.replace("*", "\\*").replace("_", "\\_")
-
-  // ── bodies that still carry hand-written sections ──────────────────────────────────────────────
 
   private def isHeading(l: String) = l.trim.startsWith("#")
   private def level(l: String) = l.trim.takeWhile(_ == '#').length
 
-  /** `text` without its hand-written "Not used" section (heading to the next heading of the same or higher level): the
-    * sources named there are listed, not cited.
-    */
   def withoutNotUsed(text: String): String =
     val lines = text.split("\n", -1).toList
     lines.indexWhere(l =>
@@ -214,12 +159,8 @@ object ArticleCoverage:
         val end = rest.indexWhere(l => isHeading(l) && level(l) <= lv)
         (lines.take(i) ++ (if end < 0 then Nil else rest.drop(end))).mkString("\n")
 
-  /** Does the body carry a hand-written `_Method` note (a line starting `_Method`)? */
   def hasMethodLine(text: String): Boolean = text.linesIterator.exists(_.trim.startsWith("_Method"))
 
-  /** An exported note's body with the generated block (between the markers) removed — what an import stores. Text
-    * outside the markers is untouched.
-    */
   def stripGenerated(body: String): String =
     val s = body.indexOf(GeneratedStart)
     if s < 0 then body
@@ -229,7 +170,6 @@ object ArticleCoverage:
       (body.substring(0, s).stripTrailing + (if tail.trim.isEmpty then ""
                                              else "\n\n" + tail.dropWhile(_.isWhitespace))).trim
 
-  /** How the coverage reads in a terminal: the filter, counts, drift, then the generated sections. */
   def markdown(c: Coverage): String =
     val drift =
       if c.drift.isEmpty then "No drift: every source the filter returns is cited or has a reason."

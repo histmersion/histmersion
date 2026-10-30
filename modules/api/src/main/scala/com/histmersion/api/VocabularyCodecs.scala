@@ -21,11 +21,9 @@ import com.histmersion.values.{
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
-/** The wire instances of the vocabularies `values` defines: each enum is its wire string ([[WireEnum]]), and its schema
-  * a string with the enumeration of those strings. Exported to the package, so every api file finds them as it found
-  * them on the enums' companions. Another module imports `com.histmersion.api.VocabularyCodecs.given` in every file
-  * that derives a codec or schema: without it Kindlings derives one for a vocabulary field by itself, and spells the
-  * value differently (an enum with parameters as an object), with nothing failing to compile.
+/** Every file of another module that derives a codec or schema imports `com.histmersion.api.VocabularyCodecs.given`:
+  * without it Kindlings derives its own instance for a vocabulary field, spelled differently (an enum with parameters
+  * as an object), and nothing fails to compile.
   */
 object VocabularyCodecs:
   given Encoder[SourceStatus] = WireEnum.encoder

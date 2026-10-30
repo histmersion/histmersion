@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A dated type for a place — a settlement that becomes a port, a village that becomes a capital. */
 final case class PlaceType(
     placeId: String,
     typeLabel: String,

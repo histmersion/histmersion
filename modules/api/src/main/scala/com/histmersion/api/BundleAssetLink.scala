@@ -10,9 +10,7 @@ final case class BundleAssetLink(
     assetUid: UUID,
     relation: String,
     targetType: String,
-    /** The target's label (a finding id, a citekey, a slug, an event or place id). */
     targetId: String,
-    /** The target's uid when it is an entity that has one. */
     targetUid: Option[UUID],
     xywh: Option[String],
     notes: Option[String],

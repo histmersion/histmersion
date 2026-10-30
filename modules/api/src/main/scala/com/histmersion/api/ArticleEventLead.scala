@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A catalogue event an ARTICLE's period and region hold that its text never names — a lead listed on the article's
-  * coverage, never inserted into its prose.
-  */
 final case class ArticleEventLead(
     eventId: String,
     label: String,
@@ -20,12 +17,10 @@ final case class ArticleEventLead(
 object ArticleEventLead:
   given Schema[ArticleEventLead] = summon[KindlingsSchema[ArticleEventLead]].schema
 
-  /** Pure: does an article body name the event (its label or another of its names, ignoring case)? */
   def mentioned(body: String, names: List[String]): Boolean =
     val b = body.toLowerCase(java.util.Locale.ROOT)
     names.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains)
 
-  /** Pure: the coverage section listing them. */
   def markdown(leads: List[ArticleEventLead]): String =
     if leads.isEmpty then ""
     else

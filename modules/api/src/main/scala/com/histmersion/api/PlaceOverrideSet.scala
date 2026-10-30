@@ -6,15 +6,6 @@ import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.values.PlaceKind
 
-// ── a person's kind and period for a place (V080) ─────────────────────────────────────────────────
-
-/** `POST /api/places/{id}/override` — what a person decides a place IS, over what its source says: `kind` and/or the
-  * period `periodStart`..`periodEnd` (signed years; one side alone leaves the other open) and/or the POINT
-  * `pointLat`/`pointLon` (V081: a place known by a point whose stored point is wrong; `reason` is then required — it
-  * names the gazetteer value the point comes from). Given again, only what is passed changes — a kind, one side of the
-  * period, the point. `reset: true` drops the override and puts back what the source says. Every re-import keeps it
-  * (the database applies it, V080/V081).
-  */
 final case class PlaceOverrideSet(
     kind: Option[String] = None,
     periodStart: Option[Long] = None,

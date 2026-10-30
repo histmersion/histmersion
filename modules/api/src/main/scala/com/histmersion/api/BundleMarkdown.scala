@@ -1,8 +1,5 @@
 package com.histmersion.api
 
-/** How the portable-bundle answers read (docs/research-merge-import.md): the CLI prints these, so a report says the
-  * same thing wherever it is shown. Pure.
-  */
 object BundleMarkdown:
 
   def instance(i: InstanceInfo): String =

@@ -4,7 +4,6 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** What refuses a delete. */
 enum DeleteBlockerKind(val wire: String, val label: String):
   case Article extends DeleteBlockerKind("article", "cited by article")
   case Event extends DeleteBlockerKind("event", "primary source of event")

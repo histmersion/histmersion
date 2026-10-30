@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.values.SourceStatus
 
-/** One source of the filter's result set. */
 final case class CoverageSource(
     citekey: String,
     title: String,

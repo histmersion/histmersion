@@ -4,10 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** What one import (or its dry run) did, per source. `created` places are new; `joined` records found their place by an
-  * identifier; the name and link counts are rows inserted, removed and changed — a second run of the same version
-  * reports zeros.
-  */
 final case class GazetteerLoadCounts(
     source: String,
     version: String,
@@ -25,11 +21,7 @@ final case class GazetteerLoadCounts(
     descriptionsAdded: Long = 0,
     descriptionsRemoved: Long = 0,
     descriptionsChanged: Long = 0,
-    /** Links whose relation or item facts (class, point, dates — V077) changed. */
     linksChanged: Long = 0,
-    /** Records not kept as places of their own: a GeoNames/Wikidata region, polity or people known only by a point
-      * ([[Gazetteer.dropsPointArea]]).
-      */
     pointAreasSkipped: Long = 0
 ) derives KindlingsCodecAsObject,
       KindlingsSchema:
@@ -53,13 +45,11 @@ final case class GazetteerLoadCounts(
       pointAreasSkipped = pointAreasSkipped + o.pointAreasSkipped
     )
 
-  /** Nothing would change: the store already holds exactly this version. */
   def unchanged: Boolean =
     created == 0 && placesChanged == 0 && namesAdded == 0 && namesRemoved == 0 && namesChanged == 0 &&
       linksAdded == 0 && linksRemoved == 0 && linksChanged == 0 && placesRemoved == 0 &&
       descriptionsAdded == 0 && descriptionsRemoved == 0 && descriptionsChanged == 0
 
-  /** One line for a job summary. */
   def describe: String =
     s"$source $version: ${Plural.count(records, "record")}, $created new place(s), $joined joined an existing place, " +
       s"$placesChanged place(s) changed, names +$namesAdded −$namesRemoved ~$namesChanged, links +$linksAdded −$linksRemoved" +

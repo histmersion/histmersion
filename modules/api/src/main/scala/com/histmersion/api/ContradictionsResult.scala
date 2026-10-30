@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The result of `/api/contradictions`. */
 final case class ContradictionsResult(rows: List[ContradictionRow], total: Int)
     derives KindlingsCodecAsObject,
       KindlingsSchema

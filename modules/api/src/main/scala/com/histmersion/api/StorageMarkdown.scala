@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** The Storage section of `histmersion about`. Pure. */
 object StorageMarkdown:
 
   def render(r: StorageReport): List[String] =

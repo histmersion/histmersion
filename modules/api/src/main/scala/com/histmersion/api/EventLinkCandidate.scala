@@ -5,9 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.values.EventLinkStatus
 
-/** One source that may discuss an event: its score, the findings near the event, the passages naming it, and the
-  * reasons in words. `status`: proposed | confirmed (an attestation exists) | rejected.
-  */
 final case class EventLinkCandidate(
     eventId: String,
     citekey: String,

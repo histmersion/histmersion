@@ -5,7 +5,6 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import sttp.tapir.Schema
 
-/** A note's own id: a UUID, written in lower case. */
 type NoteId = NoteId.T
 
 object NoteId extends RefinedType[String, Match[PersonalIds.UuidRule]]:

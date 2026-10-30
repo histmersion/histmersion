@@ -3,28 +3,10 @@ package com.histmersion.api
 import com.histmersion.api.GoalPlans.{GoalLink, GoalSchedule, GoalView}
 import com.histmersion.values.{GoalLinkKind, GoalStatus}
 
-/** `meta/GOALS.md` — the research goals as a read-only Markdown projection, written next to the three bookkeeping files
-  * by `histmersion queue export <dir>` and `histmersion export <dir>`.
-  *
-  * Unlike ACQUIRE/TASKS/LOG this file is NOT importable, and `queue import` never reads it: a goal is a row with typed
-  * links into other tables (articles, sources, queue-item ids), schedules whose cron state the scheduler owns, and an
-  * approved plan stored as JSON. The Markdown flattens all of that into prose, so parsing it back could only guess —
-  * and a guess that re-links the wrong queue item or drops a schedule is worse than no import. Goals move between
-  * instances losslessly in a bundle (`histmersion bundle export`); this file is for reading in Obsidian and for git
-  * history.
-  *
-  * ==Determinism==
-  * The output is a pure function of the rows, ordered so it diffs small: goals by slug at every level of the tree,
-  * links by kind (articles, sources, searches, queue items) and then by ref (queue items by numeric id), schedules by
-  * kind. Values that change on their own — a goal's `updated_at`, a schedule's next/last firing and its last note — are
-  * left out, so a scheduler tick or a no-op patch does not rewrite the file.
-  */
 object GoalsExport:
 
-  /** The file name inside the meta directory. */
   val File = "GOALS.md"
 
-  /** The first line of every export; also how a reader (or a test) recognises the file. */
   val Header = "# 🎯 GOALS — research goals"
 
   private val Notice =
@@ -32,11 +14,6 @@ object GoalsExport:
       "Do not edit: the next export overwrites this file. The source of truth is Histmersion " +
       "(`histmersion goals …`)._"
 
-  /** Render every goal as one file. `views` carries each goal with its links, schedules, approved plan and run cap (its
-    * `children` are not used: the tree is rebuilt from `parentSlug`, so a goal is shown exactly once). `itemStatus`
-    * maps a linked queue item's id to its status (`open`/`done`); an id absent from it is a link to an item that no
-    * longer exists.
-    */
   def render(views: List[GoalView], itemStatus: Map[Int, String]): String =
     val goals = views.map(_.goal)
     val head = List(Header, Notice, summary(goals), "---")
@@ -45,9 +22,6 @@ object GoalsExport:
       if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, depth, known, itemStatus))
     (head ++ body).mkString("\n\n") + "\n"
 
-  /** `26 goal(s): 5 top-level, 21 sub-goals · compiled 11 · seeding 12 · reviewed 3`. Statuses in their lifecycle
-    * order, then any other value alphabetically.
-    */
   private[api] def summary(goals: List[Goal]): String =
     val slugs = goals.map(_.slug).toSet
     val topLevel = goals.count(g => g.parentSlug.forall(p => !slugs.contains(p)))
@@ -56,10 +30,6 @@ object GoalsExport:
     val byStatus = order.map(s => s" · $s ${counts(s)}").mkString
     s"${goals.size} goal(s): $topLevel top-level, ${goals.size - topLevel} sub-goal(s)$byStatus"
 
-  /** Depth-first, slug order at every level. A goal whose parent is not among `views` is shown at the top level (with
-    * its parent named); goals caught in a parent cycle, unreachable from any root, are appended at the top level too,
-    * so no goal is ever dropped from the file.
-    */
   private[api] def tree(views: List[GoalView]): List[(GoalView, Int)] =
     val bySlug = views.map(v => v.goal.slug -> v).toMap
     val children = views.groupBy(_.goal.parentSlug).view.mapValues(_.sortBy(_.goal.slug)).toMap
@@ -82,7 +52,6 @@ object GoalsExport:
       Option(YearFmt.openPeriod(g.periodStart, g.periodEnd, "")).filter(_.nonEmpty).map(p => s"**Period:** $p"),
       Option.when(g.regions.nonEmpty)(s"**Regions:** ${g.regions.mkString(", ")}"),
       Option.when(g.tags.nonEmpty)(s"**Tags:** ${g.tags.mkString(", ")}"),
-      // only when the nesting cannot show it: the parent is missing, or the goal sits in a parent cycle
       g.parentSlug.filter(_ => depth == 0).map(p => s"**Parent:** `$p`" + (if known(p) then "" else " (not found)")),
       v.budgetUsd.map(b => s"**Run cap:** ${AgentsMarkdown.usd(b)} USD")
     ).flatten.mkString("  \n")
@@ -96,7 +65,6 @@ object GoalsExport:
       .toList
     (List(heading + "\n\n" + facts) ++ notes ++ links ++ sch ++ plan).mkString("\n\n")
 
-  /** One labelled list per link kind, in a fixed order; an empty kind is left out. */
   private def linkSections(links: List[GoalLink], itemStatus: Map[Int, String]): List[String] =
     def section(kind: GoalLinkKind, label: String, line: GoalLink => String, key: GoalLink => (Long, String)) =
       links.filter(_.kind == kind).sortBy(key) match
@@ -114,9 +82,6 @@ object GoalsExport:
   private def titled(l: GoalLink): String = l.title.fold(" — (not found)")(t => s" — ${oneLine(t)}")
   private def noted(l: GoalLink): String = l.note.map(oneLine).filter(_.nonEmpty).fold("")(n => s" · $n")
 
-  /** `- [x] #495 Ingest …` — the checkbox is the item's state in its own list; an item that no longer exists keeps its
-    * id, so the link can still be found and removed.
-    */
   private def queueLine(l: GoalLink, itemStatus: Map[Int, String]): String =
     l.ref.toIntOption.flatMap(itemStatus.get) match
       case Some(st) =>
@@ -124,11 +89,9 @@ object GoalsExport:
         s"$box `#${l.ref}` ${l.title.map(oneLine).getOrElse("")}${noted(l)}"
       case None => s"`#${l.ref}` (not found)${noted(l)}"
 
-  /** A schedule without the fields the scheduler rewrites on every tick. */
   private def scheduleLine(s: GoalSchedule): String =
     val state = if s.enabled then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b)} USD")
     s"${s.kind.wire} · `${s.cron}` · $state$budget"
 
-  /** A multi-line value on one list line (a queue item's continuation lines, a pasted note). */
   private def oneLine(s: String): String = s.linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" ")

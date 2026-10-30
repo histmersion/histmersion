@@ -1,8 +1,5 @@
 package com.histmersion.api
 
-/** Rendering of the ingest surface — kept out of [[Markdown]] so concurrent streams do not all append to the same file.
-  * Same contract: every surface answers Markdown.
-  */
 object IngestMarkdown:
 
   def job(j: JobInfo): String =
@@ -14,7 +11,7 @@ object IngestMarkdown:
       j.sha256.map(s => s"- **sha256:** ${s.take(12)}…"),
       j.acquireItem.map(i =>
         s"- **acquisition item:** $i" + (j.state match
-          case JobState.Done   => "" // the progress line says what happened
+          case JobState.Done   => ""
           case JobState.Failed => " (left open: the job failed)"
           case _               => " (ticked off when the job succeeds)")
       ),
@@ -32,9 +29,6 @@ object IngestMarkdown:
     ).flatten
     s"### job ${j.id} · ${j.kind}\n\n${lines.mkString("\n")}"
 
-  /** A page of jobs ([[Paging]]): headed `37 jobs`, or `Latest 20 of 2,431 failed jobs` when the page is not the whole
-    * list, with the `older` line (how to ask for the next page) under the table.
-    */
   def jobs(
       js: Vector[JobInfo],
       page: Paging.Page = Paging.Page.empty,

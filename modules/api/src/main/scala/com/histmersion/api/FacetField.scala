@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import io.circe.{Codec as CirceCodec, Decoder, Encoder}
 
-/** The dimensions `/api/facets` can count. */
 enum FacetField:
   case Tags, Authors, Places, Topics, Status, Provenance
 

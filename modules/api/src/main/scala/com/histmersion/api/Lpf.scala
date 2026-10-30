@@ -3,19 +3,6 @@ package com.histmersion.api
 import io.circe.{Json, JsonObject}
 import com.histmersion.values.PlaceKind
 
-/** The GAZETTEER (plan §1.6a): the domain model, the wire DTOs, and a **pure** reader/writer for the Linked Places
-  * Format — the World-Historical-Gazetteer interchange JSON — which is a superset of a plain GeoJSON
-  * `FeatureCollection`, so both load through the same code path.
-  *
-  * Nothing here touches a database. `Lpf.parse` turns bytes into [[PlaceInput]] values and `Lpf.render` turns them
-  * back, so `parse(render(xs)) == Right(xs)` — the round-trip the plan asks for. Geometry is carried as the **GeoJSON
-  * text** it arrived as and handed to PostGIS by `ST_GeomFromGeoJSON`; this module never interprets coordinates.
-  */
-
-// ── domain ──────────────────────────────────────────────────────────────────────────────────────
-
-// ── Linked Places Format (and plain GeoJSON) ───────────────────────────────────────────────────
-
 /** Reader/writer for the Linked Places Format (LPF v1.1) and plain GeoJSON `FeatureCollection`s.
   *
   * LPF that WHG exports looks like
@@ -44,7 +31,6 @@ object Lpf:
 
   val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
 
-  /** LPF's part-of predicates, plus the plain spellings an ad-hoc GeoJSON uses. */
   private val PartOfPredicates =
     Set(
       "gvp:broaderpartitive",
@@ -56,29 +42,18 @@ object Lpf:
       "broader"
     )
 
-  /** Keys the writer emits itself; everything else in `properties` is kept verbatim in [[Place.properties]] so a
-    * parse→render→parse cycle is the identity.
-    */
   private val OwnKeys = Set("title", "kind", "source")
 
-  // ── time ─────────────────────────────────────────────────────────────────────────────────────
-
   private val Circa = """^(?:c|ca|circa)\.?\s+""".r
-  // An era word stands alone: not preceded by a letter (`(?:^|[^a-z])`, which CONSUMES that character —
-  // the same test as a look-behind for a find, and a look-behind is what Scala.js cannot compile, #1403)
-  // and not followed by one (a look-ahead, which it can).
+  // An era word stands alone: not preceded by a letter (`(?:^|[^a-z])`, which consumes that character, in place
+  // of a look-behind, which Scala.js cannot compile) and not followed by one (a look-ahead, which it can).
   private val Bce = """(?:^|[^a-z])b\.?\s?c\.?(?:e\.?)?(?![a-z])""".r
   private val Ce = """(?:^|[^a-z])(?:a\.?\s?d\.?|c\.?\s?e\.?)(?![a-z])""".r
   private val Digits = """-?\d+""".r
   private val IsoDate = """^-?\d{1,6}-\d{2}""".r
 
-  /** A signed year (BCE negative, **historical reckoning**) from the spellings LPF and hand-made GeoJSON actually
-    * contain: `"-1400"`, `"1400 BCE"`, `"c. 1500 BC"`, `"1200 CE"`, `"AD 800"`, and ISO-ish `"-0500-01-01"`. An
-    * explicit minus sign wins over an era word.
-    *
-    * Bare years (`"-1400"`, `"1400 BCE"`) are treated as historical reckoning — the practical convention in
-    * WHG/Pleiades data. ISO 8601 dates with month/day (e.g. `"-0500-01-01"`) are converted from astronomical year
-    * numbering via [[fromIso]] (year 0 = 1 BCE).
+  /** Bare years (`"-1400"`, `"1400 BCE"`) are historical reckoning, the practical convention in WHG/Pleiades data; ISO
+    * 8601 dates with month and day (`"-0500-01-01"`) are astronomical and converted via [[fromIso]].
     */
   def parseYear(raw: String): Option[Long] =
     val t = Circa.replaceFirstIn(raw.trim.toLowerCase, "")
@@ -94,13 +69,11 @@ object Lpf:
         if isIso then fromIso(y) else y
       }
 
-  /** A year from any JSON scalar (LPF mixes `"-1400"` and `-1400`). */
+  /** LPF mixes `"-1400"` and `-1400`. */
   private def yearOf(j: Json): Option[Long] =
     Years.fromJson(j, parseYear)
 
-  /** One end of a timespan: LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`; a bare
-    * scalar is accepted too. `wide` picks the outer bound.
-    */
+  /** LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`. */
   private def bound(j: Json, wide: String, narrow: String): Option[Long] =
     j.asObject match
       case None      => yearOf(j)
@@ -110,12 +83,6 @@ object Lpf:
           .orElse(obj(wide).flatMap(yearOf))
           .orElse(obj(narrow).flatMap(yearOf))
 
-  /** LPF `when` → a [[Span]] of signed years that keeps an OPEN side open (#1403): the widest span across every
-    * timespan, where one timespan without `start` (or `end`) leaves that side of the whole unknown — a name used "from
-    * 1900" is not a name of the one year 1900. Accepts the strict shape (`{"timespans":[{"start":…,"end":…}]}`), the
-    * flat shape (`{"start":…,"end":…}`), and a bare string/number (that one year). `None` when nothing datable is
-    * present.
-    */
   def parseWhen(j: Json): Option[Span] =
     def span(o: JsonObject): Option[Span] =
       val s = o("start").flatMap(bound(_, "earliest", "latest"))
@@ -143,10 +110,7 @@ object Lpf:
               )
             )
 
-  /** A [[Period]] as the strict LPF `when` the reader accepts back; the `open` side is left out. Years are written in
-    * historical reckoning (the practical convention in WHG/Pleiades data). Use [[toIso]] explicitly when strict ISO
-    * 8601 output is needed.
-    */
+  /** Years in historical reckoning, the practical convention in WHG/Pleiades data. */
   def renderWhen(p: Period, open: Option[OpenSide] = None): Json =
     val (s, e) = OpenSide.bounds(Some(p), open)
     Json.obj(
@@ -158,17 +122,12 @@ object Lpf:
       )
     )
 
-  // ── reading ──────────────────────────────────────────────────────────────────────────────────
-
   private def str(o: JsonObject, keys: String*): Option[String] =
     keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)
 
   private def slug(s: String): String =
     s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
 
-  /** `[a, b]`, `{"start":a,"end":b}`, `"a,b"` or a single year — the shapes a hand-made GeoJSON uses for
-    * `properties.period`. A pair with one side missing keeps that side open, as [[parseWhen]].
-    */
   private def propertyPeriod(o: JsonObject): Option[Span] =
     def fromPair(a: Option[Long], b: Option[Long]): Option[Span] = (a, b) match
       case (Some(x), Some(y)) => Some(if x <= y then Span(a, b) else Span(b, a))
@@ -213,7 +172,6 @@ object Lpf:
           }
         })
     }
-    // a plain GeoJSON keeps its alternates in a delimited property
     val alts = str(props, "alt_names", "altNames", "NAME_ALT", "nameAlt").toList
       .flatMap(_.split("[|;]").toList)
       .map(_.trim)
@@ -222,16 +180,13 @@ object Lpf:
     val given_ = (declared ++ alts)
       .filter(_.name.nonEmpty)
       .distinctBy(n => (n.name.toLowerCase, n.lang.toLowerCase))
-    // the display label is always a name — unless a declared entry already spells it (with a lang or
-    // a validity of its own), in which case adding a bare duplicate would only be noise.
     val spelled = given_.map(_.name.toLowerCase).toSet
     val all = given_ ++ Option(PlaceName(label))
       .filter(n => n.name.nonEmpty && !spelled.contains(n.name.toLowerCase))
     all.sortBy(n => (n.name.toLowerCase, n.lang.toLowerCase))
 
-  /** Relation arrays come in two dialects: LPF's `relations: [{relationType, relationTo, when}]` and the plain one this
-    * repo's own hand-traced polygons use, `part_of: [{parent_id, period_start, period_end}]`. A bare string element (or
-    * a bare `parent: "id"` property) is a `part_of` too.
+  /** Relation arrays come in two dialects: LPF's `relations: [{relationType, relationTo, when}]` and the plain
+    * `part_of: [{parent_id, period_start, period_end}]` of hand-traced polygons.
     */
   private def readRelations(id: String, f: JsonObject, props: JsonObject): List[PlaceRelation] =
     val arrays = List(f("relations"), props("relations"), props("part_of"), props("partOf"), props("parents")).flatten
@@ -258,9 +213,6 @@ object Lpf:
       .distinctBy(r => (r.parentId, r.kind))
       .sortBy(r => (r.parentId, r.kind))
 
-  /** One feature → one [[PlaceInput]]. `defaultKind` is what `histmersion places import --kind` passes; `ordinal` only
-    * matters for a feature with no id at all.
-    */
   def readFeature(j: Json, defaultKind: String, ordinal: Int): Either[String, PlaceInput] =
     j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
@@ -318,10 +270,6 @@ object Lpf:
         )
     }
 
-  /** Parse an LPF document, a plain GeoJSON `FeatureCollection`, a bare array of features, or a single feature. Returns
-    * the first structural error rather than a partial list — an import that silently drops half its rows is worse than
-    * one that fails.
-    */
   def parse(json: String, defaultKind: String = PlaceKind.Region): Either[String, List[PlaceInput]] =
     io.circe.parser.parse(json).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val found: Option[List[Json]] =
@@ -342,8 +290,6 @@ object Lpf:
           case None    => Right(parsed.collect { case Right(p) => p })
       }
     }
-
-  // ── writing ──────────────────────────────────────────────────────────────────────────────────
 
   private def renderFeature(in: PlaceInput): Json =
     val leftover = in.place.properties
@@ -385,7 +331,6 @@ object Lpf:
       .getOrElse(Json.Null)
     Json.fromFields(fields.result())
 
-  /** Serialise back to LPF. `parse(render(xs)) == Right(xs)` for anything `parse` produced. */
   def render(items: List[PlaceInput]): String =
     Json
       .obj(

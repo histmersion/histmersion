@@ -1,14 +1,9 @@
 package com.histmersion.api.personal
 
-/** Bookmarks and notes as Markdown: what `histmersion bookmarks|notes` print and the `bookmarks` and `notes` tools
-  * answer.
-  */
 object PersonalMarkdown:
 
-  /** `2026-10-30T12:40:00.123456Z` → `2026-10-30 12:40`. Pure. */
   def minute(at: String): String = at.take(16).replace('T', ' ')
 
-  /** What a target is, as a line names it: `source anthony2007_horse`, `place on the map 37.10° N, …`. Pure. */
   def targetLine(t: Target): String =
     val where = Target.where(t)
     (t.itemKey.map(k => s"${t.kind.label.toLowerCase} `$k`").toList ++
@@ -25,7 +20,6 @@ object PersonalMarkdown:
     if bs.isEmpty then "_No bookmarks._"
     else (s"**Bookmarks** — ${bs.size}" :: "" :: bs.map(bookmarkLine)).mkString("\n")
 
-  /** The first line of a note's text, at most `chars` long. Pure. */
   def excerpt(text: String, chars: Int = 120): String =
     val first = text.linesIterator.map(_.trim).find(_.nonEmpty).getOrElse("")
     if first.length <= chars then first else first.take(chars - 1).trim + "…"

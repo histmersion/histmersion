@@ -18,5 +18,4 @@ final case class AssetPatch(
 object AssetPatch:
   given Schema[AssetPatch] = summon[KindlingsSchema[AssetPatch]].schema
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AssetPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[AssetPatch])

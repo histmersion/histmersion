@@ -4,23 +4,12 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The approval digest (#3762 proposal 3): everything waiting for a person, in ONE view — the open approvals grouped by
-  * kind (how many, the oldest, who decides them now, the subjects with the most) and the manager items held for a
-  * person — instead of a hundred single items; written once a UTC day to the worklog, and readable at any time (`GET
-  * /api/agents/approvals/digest`). A group is decided in one request (`POST /api/agents/approvals/decide`: a kind, a
-  * subject, or ids), each through the same decision a person's click takes.
-  */
 object ApprovalDigest:
 
-  /** A subject (a goal, an article) and its open approvals of a kind. */
   final case class SubjectCount(subject: String, count: Int) derives KindlingsCodecAsObject, KindlingsSchema
   object SubjectCount:
     given Schema[SubjectCount] = summon[KindlingsSchema[SubjectCount]].schema
 
-  /** One kind's open approvals: how many, the oldest's date, who decides them now (`person`, `checked`: the autopilot's
-    * checks, within the day's cap, or `waits`: nobody is asked to, see [[Digest.goalPlansWait]]), the subjects with the
-    * most, and the ids (oldest first, at most [[IdsShown]]).
-    */
   final case class KindGroup(
       kind: String,
       count: Int,
@@ -33,10 +22,6 @@ object ApprovalDigest:
   object KindGroup:
     given Schema[KindGroup] = summon[KindlingsSchema[KindGroup]].schema
 
-  /** `GET /api/agents/approvals/digest`: when it was read, every open approval in all, the kinds (the most first), the
-    * manager items held for a person or whose run waits for one, when the daily line was last written to the worklog,
-    * and why goal plans wait (too many unfinished goals), if they do.
-    */
   final case class Digest(
       at: String,
       total: Int = 0,
@@ -49,10 +34,6 @@ object ApprovalDigest:
   object Digest:
     given Schema[Digest] = summon[KindlingsSchema[Digest]].schema
 
-  /** `POST /api/agents/approvals/decide`: `approve` or `reject` every OPEN approval that matches — of `kind`, about
-    * `subject` (exactly), or the `ids` given (all three narrow together; at least one is needed) — at most `limit`
-    * (oldest first). `dryRun` lists what it would decide.
-    */
   final case class BulkDecide(
       decision: String,
       kind: Option[String] = None,
@@ -71,9 +52,6 @@ object ApprovalDigest:
   object BulkFailed:
     given Schema[BulkFailed] = summon[KindlingsSchema[BulkFailed]].schema
 
-  /** What a bulk decision did (a dry run: would do): the approvals it matched, the ones decided (or that would be), the
-    * ones refused and why, and how many open approvals are left.
-    */
   final case class BulkResult(
       decision: String,
       dryRun: Boolean = false,
@@ -86,18 +64,12 @@ object ApprovalDigest:
   object BulkResult:
     given Schema[BulkResult] = summon[KindlingsSchema[BulkResult]].schema
 
-  /** A group's `decidedBy` while nobody is asked to decide it. */
   val Waits = "waits"
 
-  /** The ids a group lists. */
   val IdsShown = 50
 
-  /** One open approval as the digest reads it. */
   final case class Open(id: Long, kind: String, subject: Option[String], createdAt: String)
 
-  /** The open approvals grouped by kind, the most first (then the kind); `checked` = the autopilot's checks decide that
-    * kind now; `waiting` = the kinds nobody is asked to decide now. Pure.
-    */
   def group(open: List[Open], checked: String => Boolean, waiting: Set[String] = Set.empty): List[KindGroup] =
     open
       .groupBy(_.kind)
@@ -122,7 +94,6 @@ object ApprovalDigest:
       }
       .sortBy(g => (-g.count, g.kind))
 
-  /** Which open approvals a bulk decision matches, oldest first, at most `limit`. Pure. */
   def matching(open: List[Open], b: BulkDecide): List[Open] =
     open
       .filter(o =>
@@ -132,7 +103,6 @@ object ApprovalDigest:
       .sortBy(_.id)
       .take(math.max(1, b.limit.getOrElse(Int.MaxValue)))
 
-  /** The digest in one worklog line. */
   def line(d: Digest): String =
     if d.total == 0 && d.heldForPerson == 0 then "approval digest: nothing waits for a person"
     else

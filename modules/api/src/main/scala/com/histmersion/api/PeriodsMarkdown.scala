@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** Rendering of the periods surface — its own object so this stream does not grow [[Markdown]]. */
 object PeriodsMarkdown:
 
   private def years(p: Period): String = YearFmt.period(Some(p.start), Some(p.end))
@@ -49,6 +48,5 @@ object PeriodsMarkdown:
       s"$head\n\nskipped ${Plural.count(r.skippedCount, "definition")} (not imported):\n" +
         skippedList(r.skipped) + (if more > 0 then s"\n- …and $more more" else "")
 
-  /** One line per skipped definition: id, label, why. */
   def skippedList(ss: List[SkippedPeriod]): String =
     ss.map(s => s"- `${s.id}` ${s.label}: ${s.detail}").mkString("\n")

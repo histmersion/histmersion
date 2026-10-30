@@ -4,11 +4,9 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
 final case class SearchResult(
     total: Int,
     hits: List[Hit],
-    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
 ) derives KindlingsCodecAsObject,

@@ -19,5 +19,4 @@ final case class GoalPut(
 object GoalPut:
   given Schema[GoalPut] = summon[KindlingsSchema[GoalPut]].schema
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[GoalPut] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPut])

@@ -3,28 +3,12 @@ package com.histmersion.api
 import io.circe.{Json, JsonObject}
 import com.histmersion.values.PlaceKind
 
-/** The gazetteer's EXTERNAL SOURCES (#1064): GeoNames, Wikidata and Linked Places Format datasets (what the World
-  * Historical Gazetteer exports). All three arrive as LPF features — the GeoNames and Wikidata extracts are LPF too,
-  * one feature per line, built by `db/gazetteer/build.py` — so this is ONE reader, and the place model of [[Lpf]]
-  * underneath it.
-  *
-  * What it adds to [[Lpf]]: the feature's identity in other gazetteers ([[ExternalId]]: its own `@id` and its `links`),
-  * time spans with an OPEN side (a name used "until 1935"), name citations, and the LP-TSV dialect. Places are joined
-  * across sources only by those identifiers — Wikidata ↔ GeoNames ↔ Pleiades ↔ TGN, an LPF `closeMatch`/`exactMatch` —
-  * never by coordinates: a record whose identifiers name a place already in the gazetteer adds its names to THAT place
-  * ([[Gazetteer.canonical]]), and only a record that names none becomes a place of its own.
-  *
-  * Pure: nothing here reads a file or a database.
-  */
-
 object Gazetteer:
 
-  /** The key of a source in `gazetteer_sources` and on every row it writes. */
   def sourceKey(kind: GazetteerKind, dataset: Option[String] = None): String = kind match
     case GazetteerKind.Lpf => s"lpf:${dataset.getOrElse("")}"
     case k                 => k.wire
 
-  /** `the World's Cities.lpf.json` → `the_world_s_cities`: an LPF dataset's key, from its file name. */
   def datasetSlug(fileName: String): String =
     val base = fileName
       .replaceAll("(?i)(\\.meta)?\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
@@ -34,12 +18,6 @@ object Gazetteer:
   private def slug(s: String): String =
     s.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "")
 
-  // ── which place a record joins ───────────────────────────────────────────────────────────────
-
-  /** Who wins when a record's identifiers name SEVERAL places: the bundled seed (Pleiades, Natural Earth, the curated
-    * supplement) and a person's own places first, then a scholarly LPF dataset, then Wikidata, then Getty TGN, then
-    * GeoNames; the smaller id breaks a tie. Deterministic for a given store.
-    */
   def rank(m: PlaceMatch): Int = m.importSource.flatMap(GazetteerKind.ofKey) match
     case None                         => if m.importSource.isEmpty then 0 else 5
     case Some(GazetteerKind.Lpf)      => 1
@@ -47,21 +25,9 @@ object Gazetteer:
     case Some(GazetteerKind.Tgn)      => 3
     case Some(GazetteerKind.Geonames) => 4
 
-  /** The BULK sources — a point and a name list per item, most of them undated: GeoNames, Wikidata, Getty TGN. Their
-    * places are imported dots (no part of the hierarchy, drawn only with a finding; `PlaceRepo.importedSql`), their
-    * silence about time means unknown ([[unknownWhenSilent]]) and an area known only by their point is no place
-    * ([[PointAreaSources]]). An LPF dataset is none of these: a scholarly dataset's statements are its own.
-    */
   val ImportedSources: List[String] =
     List(GazetteerKind.Wikidata, GazetteerKind.Geonames, GazetteerKind.Tgn).map(k => sourceKey(k))
 
-  /** The place a record's names go to, or `None` — then it becomes a place of its own (`record.placeId`). Never by
-    * coordinates. `byOwn` are the places the record's OWN id names (and its own earlier place), `byLinks` those its
-    * links name. Best first: a place for which the id is NATIVE (a seed id, or one the record that created the place
-    * gave it) before one a joining record merely copied it to; then one named by the record's own id before one named
-    * by a link; then [[rank]]; then the smaller id. Native first is what keeps a re-run stable: the links a joining
-    * record writes never pull another record (or itself, next time) somewhere else.
-    */
   def canonical(byOwn: List[PlaceMatch], byLinks: List[PlaceMatch] = Nil): Option[String] =
     (byOwn.map(_ -> 0) ++ byLinks.map(_ -> 1))
       .groupBy(_._1.placeId)
@@ -72,46 +38,24 @@ object Gazetteer:
       .headOption
       .map(_._1.placeId)
 
-  // ── time semantics of an imported place ──────────────────────────────────────────────────────
-
-  /** The default of `places.sources.open-start-window-years` (reference.conf), which V074 used to fix the rows stored
-    * before it; `GazetteerSourcesSuite` keeps the three equal.
-    */
   val DefaultOpenStartWindowYears: Int = 300
 
-  /** Does this source's silence mean UNKNOWN? GeoNames, Wikidata and TGN ([[ImportedSources]]): yes — an item with no
-    * inception was not there "since forever". The bundled seed, a person's places and an LPF dataset state their
-    * periods on purpose ([[PlaceDating.Stated]]).
+  /** GeoNames, Wikidata and TGN leave most items undated, and their silence means unknown: an item with no inception
+    * was not there since forever.
     */
   def unknownWhenSilent(sourceKey: String): Boolean =
     GazetteerKind.ofKey(sourceKey).exists(k => k != GazetteerKind.Lpf)
 
-  /** The stored period of a record of `sourceKey`: for GeoNames and Wikidata a known end with no start becomes
-    * `[end − windowYears, end]` with `startUnknown` (so a filter sees the place only in that window before its end);
-    * everything else is stored as stated — an undated record keeps the open range and is told apart by its source
-    * ([[PlaceDating.Unknown]]).
-    */
   def validity(sourceKey: String, span: Span, windowYears: Int): Validity = span match
     case Span(None, Some(end)) if unknownWhenSilent(sourceKey) =>
       Validity(Some(end - math.max(0, windowYears)), Some(end), startUnknown = true)
     case Span(from, to) => Validity(from, to, startUnknown = false)
 
-  // ── an area known only by a point ────────────────────────────────────────────────────────────
-
-  /** The default of `places.sources.point-area-kinds` (reference.conf; `GazetteerSourcesSuite` keeps the two equal):
-    * the kinds that stand for an AREA, which a GeoNames or Wikidata record must give a shape to become a place.
-    */
   val DefaultPointAreaKinds: List[String] = List(PlaceKind.Region, PlaceKind.Polity, PlaceKind.People)
 
-  /** The sources the rule applies to: GeoNames, Wikidata and TGN ([[ImportedSources]]), which give every item a
-    * coordinate and no boundary. A seed place, a person's place and an LPF dataset keep their points (a curated
-    * point-only region is drawn as "no boundary yet" and reviewed by `lint --rule place-kind`).
-    */
+  /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
   val PointAreaSources: List[String] = ImportedSources
 
-  /** Is this shape only a point — a `Point`, a `MultiPoint`, or no geometry at all? A polygon or a line is a shape;
-    * anything unreadable is treated as a shape (never dropped on a guess).
-    */
   def pointOnly(g: Option[GazGeometry]): Boolean = g match
     case None                     => true
     case Some(GazGeometry.Wkt(t)) =>
@@ -126,27 +70,12 @@ object Gazetteer:
         .flatMap(_.asString)
         .exists(k => k == "Point" || k == "MultiPoint")
 
-  /** Is `r` an area known only by a point, from a source whose such records are NOT kept as places (2026-10-09)? A
-    * GeoNames or Wikidata region, polity or people (`kinds`) with a point is no region on the map — it draws as a dot
-    * or a "no boundary yet" label, competes in name search with the real thing, and holds findings only by the accident
-    * of a shared point. Such a record still JOINS a place its identifiers name (its names, links, class and dates go
-    * there); it only never becomes a place of its own.
-    */
   def dropsPointArea(source: String, r: GazRecord, kinds: Set[String]): Boolean =
     PointAreaSources.contains(source) && kinds.contains(r.kind) && pointOnly(r.geometry)
 
-  /** An LPF record with no `when` of its own takes its DATASET's (an LPF dataset's places follow its own `when`); a
-    * dated record, or a dataset that states none, is left alone.
-    */
   def inDataset(r: GazRecord, ds: LpfDataset): GazRecord =
     if r.span.isEmpty && !ds.span.isEmpty then r.copy(span = ds.span) else r
 
-  // ── names ────────────────────────────────────────────────────────────────────────────────────
-
-  /** One name per (name, lang) — the key a source's names are stored under. A dated entry wins over an undated repeat
-    * of the same name; several dated ones become their widest span (an open side stays open); citations are kept,
-    * joined. Sorted, so the store sees a stable order.
-    */
   def mergeNames(ns: List[GazName]): List[GazName] =
     ns.map(n => n.copy(name = n.name.trim, lang = n.lang.trim.toLowerCase(java.util.Locale.ROOT)))
       .filter(_.name.nonEmpty)
@@ -167,15 +96,7 @@ object Gazetteer:
       }
       .sortBy(n => (n.name.toLowerCase(java.util.Locale.ROOT), n.name, n.lang))
 
-  // ── time ─────────────────────────────────────────────────────────────────────────────────────
-
-  /** LPF `when` → a [[Span]] that keeps an OPEN side open: the widest of its timespans, where a timespan without
-    * `start` (or `end`) leaves that side unknown. A bare year is that one year. The same reading as [[Lpf.parseWhen]],
-    * which the bundled seed and `places import` use.
-    */
   def span(j: Json): Span = Lpf.parseWhen(j).getOrElse(Span.always)
-
-  // ── LPF features ─────────────────────────────────────────────────────────────────────────────
 
   private def str(o: JsonObject, keys: String*): Option[String] =
     keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)
@@ -205,8 +126,6 @@ object Gazetteer:
         })
     }
 
-  /** LPF `descriptions[]` (`{value, lang}`, or a plain string): trimmed, one per (lang, text), in the order given.
-    */
   private def readDescriptions(f: JsonObject): List[GazDescription] =
     f("descriptions")
       .flatMap(_.asArray)
@@ -240,19 +159,12 @@ object Gazetteer:
       }
       .distinctBy(_.id)
 
-  /** The place id a record of `sourceKey` gets: its own authority id where it has one (`wikidata_q42`), else
-    * `lpf_<dataset>_<the @id's last segment>`.
-    */
   def placeIdFor(own: Option[ExternalId], ref: String, dataset: String): String =
     own.map(_.placeId).getOrElse {
       val tail = slug(ref.split("[/#=]").filter(_.trim.nonEmpty).lastOption.getOrElse(ref))
       s"lpf_${dataset}_${if tail.nonEmpty then tail.take(64) else "x" + Integer.toHexString(ref.hashCode)}"
     }
 
-  /** One LPF feature (a line of an extract, or an element of a FeatureCollection) → a record. `dataset` is the LPF
-    * dataset key (for the ids of places it creates); `defaultSource` the citation a feature without its own `source`
-    * gets.
-    */
   def fromFeature(
       j: Json,
       dataset: String,
@@ -285,9 +197,6 @@ object Gazetteer:
       }
     }
 
-  /** What a FeatureCollection says about its dataset (`title`/`name`, `citation`, `license`, `when`); a sidecar's keys
-    * win over the file's own.
-    */
   def dataset(top: JsonObject, sidecar: Option[JsonObject] = None): LpfDataset =
     def pick(keys: String*): Option[String] = sidecar.flatMap(str(_, keys*)).orElse(str(top, keys*))
     val when = sidecar.flatMap(_("when")).orElse(top("when")).fold(Span.always)(span)
@@ -298,11 +207,9 @@ object Gazetteer:
       when
     )
 
-  // ── LP-TSV ───────────────────────────────────────────────────────────────────────────────────
-
   /** The LP-TSV columns this reader understands (Linked Places TSV v0.5): `id title title_source ccodes matches
-    * variants types lon lat geowkt start end` (`attestation_year` and the rest are kept nowhere). `matches` and
-    * `variants` are `;`-separated; a variant may end in `@lang`.
+    * variants types lon lat geowkt start end`. `matches` and `variants` are `;`-separated; a variant may end in
+    * `@lang`.
     */
   def fromTsvRow(
       header: List[String],
@@ -361,5 +268,5 @@ object Gazetteer:
           )
         )
 
-  /** Split one TSV line. LP-TSV has no quoting: a tab separates, nothing escapes. */
+  /** LP-TSV has no quoting: a tab separates, nothing escapes. */
   def tsvCells(line: String): List[String] = line.split("\t", -1).toList

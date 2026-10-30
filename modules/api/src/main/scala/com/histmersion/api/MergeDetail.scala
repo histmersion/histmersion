@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** `GET /api/merges/{id}`: the row, its report as it was written (an apply's or an import's), the resolutions it was
-  * given and the decisions it left to remember.
-  */
 final case class MergeDetail(
     merge: MergeInfo,
     applied: Option[MergeApplyResult] = None,

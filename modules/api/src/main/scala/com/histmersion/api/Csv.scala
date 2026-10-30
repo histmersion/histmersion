@@ -1,17 +1,17 @@
 package com.histmersion.api
 
-/** A minimal RFC 4180 reader: quoted fields, doubled quotes inside them, embedded commas and newlines, and CRLF line
-  * endings. Enough for the Retraction Watch export and nothing more.
+/** A minimal RFC 4180 reader (quoted fields, doubled quotes, embedded commas and newlines, CRLF): enough for the
+  * Retraction Watch export.
   */
 object Csv:
 
   def parse(text: String): List[List[String]] =
     val rows = List.newBuilder[List[String]]
-    var row = List.newBuilder[String] // scanning a CSV is inherently a fold over characters with
-    val field = new StringBuilder // two pieces of state; a var pair is the honest encoding
+    var row = List.newBuilder[String]
+    val field = new StringBuilder
     var quoted = false
     var i = 0
-    var any = false // did this row have any content at all (skip blank lines)
+    var any = false
 
     def endField(): Unit = { row += field.toString; field.setLength(0) }
     def endRow(): Unit =

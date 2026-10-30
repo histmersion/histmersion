@@ -4,21 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** @param measuring
-  *   a measurement is under way; the rest is the previous one (or empty, on the first)
-  * @param measuredAt
-  *   when the entries were measured (ISO-8601)
-  * @param tookMillis
-  *   how long that took
-  * @param ageSeconds
-  *   seconds between `measuredAt` and the server's clock when it answered
-  * @param lowFreeBytes
-  *   below this much free space a volume gets a [[hints]] line (`storage.low-free-gb`)
-  * @param hints
-  *   what to do about low free space — [[Storage.hints]] of the rest
-  * @param problems
-  *   what could not be measured — said, never hidden
-  */
 final case class StorageReport(
     measuring: Boolean = false,
     measuredAt: Option[String] = None,

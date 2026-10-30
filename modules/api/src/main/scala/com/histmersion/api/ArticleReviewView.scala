@@ -4,10 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** `GET /api/articles/{slug}/review` — the article's review state, the review manager's last word on it (`outcome`, at
-  * `updatedAt`), every finding the panel raised in time order, the research goals that link it and the approvals about
-  * it that wait for a person.
-  */
 final case class ArticleReviewView(
     slug: String,
     badge: ReviewBadge,
@@ -21,7 +17,6 @@ final case class ArticleReviewView(
 object ArticleReviewView:
   given Schema[ArticleReviewView] = summon[KindlingsSchema[ArticleReviewView]].schema
 
-  /** A reviewer's wire name as a person reads it. */
   def reviewerName(wire: String): String = wire match
     case "rules"       => "rules reviewer"
     case "cold-reader" => "cold reader"
@@ -29,7 +24,6 @@ object ArticleReviewView:
     case "mechanical"  => "mechanical check"
     case other         => other
 
-  /** What became of a finding, in words: `fixed`, `rejected: <note>`, `open`, … */
   def outcomeLine(f: ReviewFinding): String =
     val base = f.outcome match
       case "wont-fix"           => "won't fix"

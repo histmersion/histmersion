@@ -6,7 +6,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
 
-/** Set-like edit of a string list: `replace` first (when given), then `remove`, then `add`. */
 final case class ListPatch(
     add: List[String] = Nil,
     remove: List[String] = Nil,
@@ -15,5 +14,4 @@ final case class ListPatch(
 object ListPatch:
   given Schema[ListPatch] = summon[KindlingsSchema[ListPatch]].schema
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[ListPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[ListPatch])

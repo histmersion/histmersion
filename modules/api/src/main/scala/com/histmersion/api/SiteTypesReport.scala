@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 
-/** What a refinement did: sites asked about, typed (per type), left with the class the import kept. */
 final case class SiteTypesReport(
     dryRun: Boolean,
     pending: Int = 0,

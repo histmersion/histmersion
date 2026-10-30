@@ -4,15 +4,8 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The stall report (#3762 proposal 4): every unfinished research goal with no progress in N days, with the ONE reason
-  * it stands still and the action that unblocks it — so nobody has to toggle managers to find out what is stuck. Pure:
-  * the server reads the facts, [[classify]] names the reason.
-  */
 object Stalls:
 
-  /** One stalled goal: when it last progressed (a run started or settled, a source ingested, a sweep) and how many days
-    * ago (None: never), why it stands still (`code` — see [[Code]]) and what unblocks it.
-    */
   final case class Stall(
       slug: String,
       title: String = "",
@@ -31,9 +24,6 @@ object Stalls:
   object ReasonCount:
     given Schema[ReasonCount] = summon[KindlingsSchema[ReasonCount]].schema
 
-  /** `GET /api/agents/stalls?days=N`: the goals looked at (unfinished), the stalled ones (the longest idle first), and
-    * how many per reason.
-    */
   final case class StallReport(
       days: Int,
       at: String,
@@ -45,7 +35,6 @@ object Stalls:
   object StallReport:
     given Schema[StallReport] = summon[KindlingsSchema[StallReport]].schema
 
-  /** The reasons, in the order they are checked (the first that holds is the one named). */
   object Code:
     val Drain = "drain"
     val Person = "person"
@@ -60,14 +49,8 @@ object Stalls:
     val Running = "running"
     val Idle = "idle"
 
-  /** A scheduler wait of one of a goal's items: its code, why, and its place in the order. */
   final case class SchedWait(code: String, why: String, position: Int = 0)
 
-  /** What the report reads about one goal. `approvals` = its open approvals (id, kind), its own and its
-    * articles'; `personHeld` = its items a person holds; `paused` = its managers that are paused; `waits` =
-    * the scheduler's waits of its items; `lastStop` = its last stopped or failed item's outcome; `noCandidates`
-    * = its last sweep found nothing new; `open` = its open items; `running` = its runs queued or running.
-    */
   final case class Facts(
       slug: String,
       title: String = "",
@@ -86,10 +69,8 @@ object Stalls:
       running: Int = 0
   )
 
-  /** No progress in `days` days (never progressed counts as stalled). */
   def stalled(f: Facts, days: Int): Boolean = f.idleDays.forall(_ >= math.max(0, days))
 
-  /** Why one goal stands still, and the action that unblocks it: (code, why, action). */
   def classify(f: Facts): (String, String, String) =
     val g = f.slug
     def waitOf(p: SchedWait => Boolean) = f.waits.find(p)
@@ -176,7 +157,6 @@ object Stalls:
                             s"histmersion agent scheduler why <item>"
                           )
 
-  /** The report over every goal's facts: the stalled ones, the longest idle (never first) then the slug. */
   def report(facts: List[Facts], days: Int, at: String): StallReport =
     val stalls = facts
       .filter(stalled(_, days))

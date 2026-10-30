@@ -2,38 +2,19 @@ package com.histmersion.api
 
 import com.histmersion.values.{ApprovalKind, ApprovalState, ManagerKind, Pipeline, RunState, SourceStatus}
 
-/** THE label dictionary: every internal identifier the web UI shows — a pipeline, an approval's kind, a job's kind, a
-  * state, a scheduler strategy or pool, an allowance window, a manager's kind — as plain wording in sentence case
-  * ("Review an article", not `review-article`). The identifier itself stays the wire value, in the URL, the filters and
-  * a tooltip, for people who use the command line. An identifier the dictionary does not know (a plugin's, one added
-  * later) is never shown raw either: [[label]] spells it as words. Pure.
-  */
 object Wording:
 
-  /** `type-balanced` / `seven_day` / `watch:bronze-age` → `Type balanced` / `Seven day` / `Watch: bronze age`: the
-    * identifier as words, its first letter upper-case — what an identifier the dictionary does not know reads as.
-    */
   def humanize(id: String): String =
     val words =
       id.trim.replace(':', '\u0000').replaceAll("[_-]+", " ").replace("\u0000", ": ").replaceAll("\\s+", " ").trim
     capitalize(words)
 
-  /** The first letter upper-case, the rest as it is: sentence case for a label that is already words. */
   def capitalize(s: String): String = if s.isEmpty then s else s.substring(0, 1).toUpperCase + s.substring(1)
 
-  /** A data value (a topic, a tag, a region) as words: `bronze_age_collapse` → `bronze age collapse`. Its hyphens stay
-    * (`Indo-European`); only identifiers lose theirs ([[humanize]]).
-    */
   def value(s: String): String = Label.display(s)
 
-  /** A heading made from a stored topic or group name: a slug-shaped one (`disputed-grand-theories`,
-    * `phoenician_levantine`) as words in sentence case, anything already written as words as it is, its first letter
-    * upper-case.
-    */
   def heading(s: String): String =
     if s.trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then humanize(s) else capitalize(Label.display(s.trim))
-
-  // ── a source's standing ──────────────────────────────────────────────────────────────────────────────
 
   def status(s: SourceStatus): String = s match
     case SourceStatus.Foundational => "Foundational"
@@ -44,11 +25,8 @@ object Wording:
     case SourceStatus.Retracted    => "Retracted"
     case SourceStatus.Unassessed   => "Not assessed"
 
-  /** A status as stored (`current`); an unknown word as words. */
   def statusOf(wire: String): String =
     SourceStatus.values.find(_.wire == wire.trim.toLowerCase).fold(humanize(wire))(status)
-
-  // ── agent work ───────────────────────────────────────────────────────────────────────────────────────
 
   def pipeline(p: Pipeline): String = p match
     case Pipeline.EnrichSource     => "Enrich a source"
@@ -91,7 +69,6 @@ object Wording:
     case ManagerKind.Watch  => "Watch manager"
     case ManagerKind.Enrich => "Enrich manager"
 
-  /** A manager by its id (`watch:bronze-age`, `review`): its kind's name, then the goal it serves as words. */
   def manager(id: String): String =
     val (kind, rest) = id.span(_ != ':')
     ManagerKind
@@ -100,7 +77,6 @@ object Wording:
         managerKind(k) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(g)}")
       )
 
-  /** The scheduler's job types: the kind of work a manager item is. */
   val schedulerJobTypes: Map[String, String] = Map(
     "goal-plan" -> "Plan a goal",
     "propose" -> "Propose articles",
@@ -113,7 +89,6 @@ object Wording:
     "review" -> "Review an article"
   )
 
-  /** Why a manager item waits (the scheduler's codes). */
   val waitCodes: Map[String, String] = Map(
     "capacity" -> "No free place",
     "pool" -> "Plan is full",
@@ -130,22 +105,17 @@ object Wording:
     AgentScheduler.Code.Paused -> "Paused"
   )
 
-  /** The scheduler's strategies, by name. */
   val strategies: Map[String, String] = Map(
     "type-balanced" -> "Balance the kinds of work",
     "goal-first" -> "One goal at a time",
     "default" -> "The configured strategy"
   )
 
-  /** A subscription plan's pool (`claude-plan`): the plan's name. */
   def pool(id: String): String = id.trim.toLowerCase match
     case "claude-plan"  => "Claude plan"
     case "chatgpt-plan" => "ChatGPT plan"
     case other          => humanize(other.stripSuffix("-plan")) + (if other.endsWith("-plan") then " plan" else "")
 
-  /** An allowance window as a provider names it — `five_hour`, `seven_day`, `seven_day_opus`, or a length in minutes
-    * (`300m`, `codex/10080m`) — as the limit it is.
-    */
   def allowanceWindow(kind: String): String =
     val k = kind.trim.toLowerCase.split('/').last
     def span(minutes: Long): String = minutes match
@@ -164,19 +134,11 @@ object Wording:
       case s if s.startsWith("five_hour_") => s"5-hour limit (${humanize(s.stripPrefix("five_hour_"))})"
       case other                           => humanize(other)
 
-  // ── the agents as a whole ────────────────────────────────────────────────────────────────────────────
-
-  /** The agents' state, as one control reads it: working; finishing current work, then pausing (draining); paused (the
-    * autopilot off).
-    */
   def agentsState(autopilotOn: Boolean, draining: Boolean): String =
     if draining then "Agents: finishing current work, then pausing"
     else if autopilotOn then "Agents: working"
     else "Agents: paused"
 
-  /** The top bar's status of the agents: paused; finishing current work (draining) while runs remain; working, with how
-    * many runs are running or waiting; or on with nothing to do.
-    */
   def agentsGlance(a: UiNotices.AgentsGlance): String =
     def runs(n: Int) = if n == 1 then "1 run" else s"$n runs"
     if !a.on || (a.draining && a.running == 0) then "Agents paused"
@@ -185,26 +147,21 @@ object Wording:
     else if a.queued > 0 then s"Agents working · ${a.queued} waiting"
     else "Agents on · nothing to do"
 
-  /** The top bar's notice of the approvals waiting for a person (none: no notice). */
   def decisions(open: Int): Option[String] =
     Option.when(open > 0)(if open == 1 then "1 needs your decision" else s"$open need your decision")
 
-  /** The same, short, where the bar is narrow ("2 need you"). */
   def decisionsShort(open: Int): String = if open == 1 then "1 needs you" else s"$open need you"
 
-  /** The three-way control's choices. */
   def agentMode(m: AgentMode): String = m match
     case AgentMode.Working   => "Working"
     case AgentMode.Finishing => "Finish current work, then pause"
     case AgentMode.Paused    => "Pause now"
 
-  /** What the agents are doing, as the overview's card says it. */
   def agentsHeading(m: AgentMode): String = m match
     case AgentMode.Working   => "Research agents are working"
     case AgentMode.Finishing => "Research agents are finishing current work, then pausing"
     case AgentMode.Paused    => "Research agents are paused"
 
-  /** What an activity entry is, as its row's first word says it. */
   def activityKind(k: Activity.EntryKind): String = k match
     case Activity.EntryKind.Run      => "Agent work"
     case Activity.EntryKind.Job      => "Background job"
@@ -213,8 +170,6 @@ object Wording:
 
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
-
-  // ── background jobs ──────────────────────────────────────────────────────────────────────────────────
 
   def jobKind(k: JobKind): String = k match
     case JobKind.Ingest           => "Bring in a source"
@@ -244,10 +199,6 @@ object Wording:
     case JobState.Paused    => "Paused"
     case JobState.Cancelled => "Cancelled"
 
-  // ── plugins ──────────────────────────────────────────────────────────────────────────────────────────
-
-  /** A plugin by its id (`ai-anthropic`, `oa-unpaywall`, `media-europeana`, `events-noaa`): what it is, then its name.
-    */
   def plugin(id: String): String =
     val families = List("ai-" -> "AI provider", "oa-" -> "Open access", "media-" -> "Pictures", "events-" -> "Events")
     pluginNames
@@ -257,9 +208,6 @@ object Wording:
       })
       .getOrElse(humanize(id))
 
-  /** The plugins whose names are spelt in their own way (the finders by the service each asks, the vaults by their
-    * product's name).
-    */
   private val pluginNames: Map[String, String] = Map(
     "archive-org" -> "Internet Archive",
     "oa-unpaywall" -> "Open access: Unpaywall",
@@ -273,11 +221,6 @@ object Wording:
     "bitwarden" -> "Bitwarden"
   )
 
-  // ── any identifier ───────────────────────────────────────────────────────────────────────────────────
-
-  /** Every identifier the dictionary names, by wire. Where two vocabularies share a word, the more specific function
-    * above is the one a view calls; this is what a list's filter chips and every fall-back use.
-    */
   lazy val known: Map[String, String] =
     schedulerJobTypes ++ waitCodes ++ strategies ++
       JobKind.values.map(k => k.wire -> jobKind(k)) ++
@@ -289,5 +232,4 @@ object Wording:
       JobState.values.map(s => s.wire -> jobState(s)) ++
       RunState.values.map(s => s.wire -> runState(s))
 
-  /** An identifier as a person reads it: its name in the dictionary, else its words ([[humanize]]). */
   def label(id: String): String = known.getOrElse(id.trim, humanize(id))

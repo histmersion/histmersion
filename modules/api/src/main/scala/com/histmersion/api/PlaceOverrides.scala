@@ -7,7 +7,6 @@ object PlaceOverrides:
 
   private def invalid(msg: String) = ApiError(msg, Some(Write.CodeInvalid))
 
-  /** Validate a [[PlaceOverrideSet]]. Pure. */
   def edit(in: PlaceOverrideSet): Either[ApiError, PlaceOverrideEdit] =
     val kind = in.kind.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
     val reason = in.reason.map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
@@ -57,12 +56,10 @@ object PlaceOverrides:
         )
       yield PlaceOverrideEdit.Put(kind, period, reason, point)
 
-  /** A reason as stored: trimmed, inner whitespace collapsed, at most [[MaxReason]] characters. */
   def reason(raw: Option[String]): Either[ApiError, Option[String]] =
     val r = raw.map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
     Either.cond(r.forall(_.length <= MaxReason), r, invalid(s"a reason is at most $MaxReason characters"))
 
-  /** `--point 37.95,58.21` (latitude first, as a map gives it) → (lat, lon). Pure. */
   def parsePoint(raw: String): Either[String, (Double, Double)] =
     raw.split(",", -1).map(_.trim).toList match
       case List(a, b) =>
@@ -74,7 +71,6 @@ object PlaceOverrides:
           case _                  => Left(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21")
       case _ => Left(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21")
 
-  /** A point as a reader sees it: "38.5000 N 57.5000 E", "16.1011 S 31.4592 W". */
   def pointText(lat: Double, lon: Double): String =
     String.format(
       java.util.Locale.ROOT,
@@ -85,5 +81,4 @@ object PlaceOverrides:
       if lon < 0 then "W" else "E"
     )
 
-  /** A period as a reader sees it: "27 BCE–410 CE", "from 27 BCE", "until 410 CE", "undated". */
   def periodText(start: Option[Long], end: Option[Long]): String = YearFmt.openPeriod(start, end)

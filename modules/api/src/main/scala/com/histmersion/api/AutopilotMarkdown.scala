@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** The autopilot as Markdown — every surface (CLI, MCP) prints this. Pure. */
 object AutopilotMarkdown:
   import Autopilot.*
 
@@ -19,7 +18,6 @@ object AutopilotMarkdown:
   private def pace(g: FocusGoal): String =
     s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
 
-  /** The focus: the active goals with why and what each is doing, the queue, the goals that wait. */
   def focus(f: FocusInfo): String =
     val head = s"## Focus: ${if f.on then s"at most ${f.max} active goals" else "not in force"}" +
       (if f.maxFrom == "person" then " (set by a person)" else " (agents.autopilot.max-active-goals)")

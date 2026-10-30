@@ -4,19 +4,6 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** FORMATTING problems in the Markdown an agent wrote — an article body or summary, a source's notes or summary — as
-  * the server's renderer will show them.
-  *
-  * This file is the CONTRACT (the rule catalogue and the wire shapes, shared by the server, the CLI and the web UI).
-  * The checks themselves run on the server (`server.MarkdownLint`), because they parse the text with the same flexmark
-  * configuration the pages are rendered with: "a table is expected here, and the renderer made a paragraph of it" is a
-  * fact about that parser, not a guess from a regular expression.
-  */
-
-/** How bad one problem is. `Error`: the text will NOT render as its writer meant (a table shown as pipes, literal `**`,
-  * a link that is not one). `Warning`: it renders, but is probably not what was meant (a skipped heading level, a
-  * duplicated section, agent chatter).
-  */
 enum FormatSeverity:
   case Error, Warning
 
@@ -29,11 +16,7 @@ object FormatSeverity:
   given Decoder[FormatSeverity] = WireEnum.decoder
   given Schema[FormatSeverity] = WireEnum.schema
 
-/** The catalogue. `wire` is the id a report and `--rule` use; `severity` is the default (a check may lower it for a
-  * milder variant); `fixable` says whether `--fix` can repair it without touching wording.
-  */
 enum FormatRule(val wire: String, val severity: FormatSeverity, val fixable: Boolean, val description: String):
-  // ── the document as a whole ──────────────────────────────────────────────────────────────────
   case Frontmatter
       extends FormatRule(
         "frontmatter",
@@ -83,7 +66,6 @@ enum FormatRule(val wire: String, val severity: FormatSeverity, val fixable: Boo
         false,
         "a placeholder left in the text (TODO, XXX, [citation needed], <insert …>)"
       )
-  // ── tables ───────────────────────────────────────────────────────────────────────────────────
   case TableNotRendered
       extends FormatRule(
         "table-not-rendered",
@@ -98,7 +80,6 @@ enum FormatRule(val wire: String, val severity: FormatSeverity, val fixable: Boo
         false,
         "a table row with more or fewer cells than the header — extra cells are dropped, missing ones are blank"
       )
-  // ── inline markup ────────────────────────────────────────────────────────────────────────────
   case Emphasis
       extends FormatRule(
         "emphasis",
@@ -141,7 +122,6 @@ enum FormatRule(val wire: String, val severity: FormatSeverity, val fixable: Boo
         false,
         "raw HTML: an unclosed or unknown tag (an unclosed one swallows what follows)"
       )
-  // ── links ────────────────────────────────────────────────────────────────────────────────────
   case LinkSyntax
       extends FormatRule(
         "link-syntax",
@@ -205,7 +185,6 @@ enum FormatRule(val wire: String, val severity: FormatSeverity, val fixable: Boo
         false,
         "a footnote (`[^1]`) — the renderer has no footnotes, so the marker and the note show literally"
       )
-  // ── headings ─────────────────────────────────────────────────────────────────────────────────
   case HeadingSyntax
       extends FormatRule(
         "heading-syntax",
@@ -241,7 +220,6 @@ enum FormatRule(val wire: String, val severity: FormatSeverity, val fixable: Boo
         false,
         "a `## Sources cited` section in the body — the page generates that list from the [[citekey]] links"
       )
-  // ── lists ────────────────────────────────────────────────────────────────────────────────────
   case ListGlued
       extends FormatRule(
         "list-glued",

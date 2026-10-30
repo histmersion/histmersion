@@ -4,11 +4,9 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** List result for events. */
 final case class EventList(
     total: Int,
     events: List[EventSummary],
-    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
 ) derives KindlingsCodecAsObject,

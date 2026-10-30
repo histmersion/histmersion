@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** A hierarchy edge with its OWN validity — "Hatti part_of Anatolia" holds only for its `period`. */
 final case class PlaceRelation(
     childId: String,
     parentId: String,
@@ -8,7 +7,6 @@ final case class PlaceRelation(
     period: Option[Period] = None,
     open: Option[OpenSide] = None
 ):
-  /** The inclusive bounds stored for it ([[OpenSide.bounds]]). */
   def bounds: (Option[Long], Option[Long]) = OpenSide.bounds(period, open)
 
 object PlaceRelation:

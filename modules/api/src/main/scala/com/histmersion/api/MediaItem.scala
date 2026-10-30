@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** One stored picture, whichever its origin: a source's figure (`citekey`) or a provider's (`provider`, `providerKey`),
-  * with its licence and credit and what it is linked to.
-  */
 final case class MediaItem(
     uid: String,
     name: String,

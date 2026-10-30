@@ -7,28 +7,15 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** Edits to an article body, anchored on its own text — how the review fixer answers (a list of small changes code
-  * applies, never a rewritten body), and what `check_edits` / `POST /api/articles/{slug}/check` dry-runs.
-  *
-  * An edit names an `anchor`: text copied from the body as it stands when the edit is applied. Edits apply IN ORDER,
-  * each to the result of the ones before it. The anchor must occur exactly once; whitespace is normalised for the match
-  * (any run of spaces, tabs and newlines in the anchor matches any run in the body), nothing else is. An anchor found
-  * nowhere, or in more than one place, is a problem naming the edit's number and the anchor's head, and that edit is
-  * skipped — the later ones still apply to the text without it. Pure; table-tested.
-  */
 object ArticleEdits:
 
   enum Op(val wire: String):
-    /** The anchor becomes `text`. */
     case Replace extends Op("replace")
 
-    /** `text` goes right after the anchor (start it with a blank line for a new paragraph). */
     case InsertAfter extends Op("insertAfter")
 
-    /** `text` goes right before the anchor. */
     case InsertBefore extends Op("insertBefore")
 
-    /** The anchor is removed (and the blank lines around it closed up). */
     case Delete extends Op("delete")
 
   object Op:
@@ -41,7 +28,6 @@ object ArticleEdits:
     given Decoder[Op] = WireEnum.decoder
     given Schema[Op] = WireEnum.schema
 
-  /** One edit as a model (or a person) states it. */
   final case class EditAnswer(op: Op, anchor: String, text: Option[String] = None) derives KindlingsCodecAsObject
   object EditAnswer:
     given Schema[EditAnswer] = KindlingsSchema
@@ -62,7 +48,6 @@ object ArticleEdits:
         )
       )
 
-  /** A validated edit. */
   enum Edit:
     def anchor: String
     case Replace(anchor: String, text: String)
@@ -70,9 +55,8 @@ object ArticleEdits:
     case InsertBefore(anchor: String, text: String)
     case Delete(anchor: String)
 
-  /** An answer → an edit: an empty anchor, a replace with no new text, or an insert with nothing to insert, is a
-    * problem. A replace whose text is empty or null is NOT read as a delete: a strict-schema provider sends `null` (or
-    * `""`) for a field it left out, and an edit that deletes says so with `delete`.
+  /** A replace whose text is empty or null is not read as a delete: a strict-schema provider sends `null` (or `""`) for
+    * a field it left out.
     */
   def parse(a: EditAnswer): Either[String, Edit] =
     val anchor = Option(a.anchor).getOrElse("")
@@ -88,9 +72,6 @@ object ArticleEdits:
         case Op.InsertAfter         => Right(Edit.InsertAfter(anchor, text))
         case Op.InsertBefore        => Right(Edit.InsertBefore(anchor, text))
 
-  /** What happened to one edit: `problem` None = applied. `anchor` is the anchor's head; `text` what it wrote (empty
-    * for a delete). Numbered from 1, in the order given.
-    */
   final case class EditResult(index: Int, op: Op, anchor: String, text: String, problem: Option[String] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema:
@@ -99,21 +80,18 @@ object ArticleEdits:
   object EditResult:
     given Schema[EditResult] = summon[KindlingsSchema[EditResult]].schema
 
-  /** The body after the edits that applied, and every edit's result. */
   final case class Applied(body: String, results: List[EditResult]):
     def problems: List[String] = results.flatMap(r => r.problem.map(p => s"${r.label}: $p"))
     def appliedCount: Int = results.count(_.applied)
 
-  /** The first words of an anchor, on one line — how a problem names it. */
   def head(anchor: String, max: Int = 48): String =
     val one = anchor.trim.replaceAll("\\s+", " ")
     if one.length <= max then one else one.take(max).trim + "…"
 
-  /** `s` with every whitespace run as one space, and for each kept character its offset in `s`. */
   private def squeeze(s: String): (String, Array[Int]) =
     val out = StringBuilder()
     val pos = Array.newBuilder[Int]
-    var i = 0 // offset in `s`; a scan loop
+    var i = 0
     while i < s.length do
       if s(i).isWhitespace then
         val from = i
@@ -126,9 +104,6 @@ object ArticleEdits:
   private def occurrences(text: String, needle: String): List[Int] =
     Iterator.iterate(text.indexOf(needle))(i => text.indexOf(needle, i + 1)).takeWhile(_ >= 0).toList
 
-  /** Where `anchor` is in `text`, as `[start, end)`: exactly once verbatim, else exactly once with whitespace
-    * normalised. Not found, or found more than once, is the problem to report.
-    */
   def locate(text: String, anchor: String): Either[String, (Int, Int)] =
     val a = anchor.trim
     occurrences(text, a) match
@@ -140,15 +115,12 @@ object ArticleEdits:
         val na = a.replaceAll("\\s+", " ")
         occurrences(sq, na) match
           case List(i) =>
-            val last = i + na.length - 1 // the anchor is trimmed: its last character is not whitespace
+            val last = i + na.length - 1
             Right((pos(i), pos(last) + 1))
           case Nil =>
             Left("the anchor is not in the article — copy it exactly from the current body (earlier edits included)")
           case more => Left(s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once")
 
-  /** Remove `[s, e)` and close up the gap: the whitespace on both sides becomes one blank line if either side had one,
-    * one newline if either had one, else one space (none at the start or end).
-    */
   private def cut(text: String, s: Int, e: Int): String =
     val before = text.substring(0, s)
     val after = text.substring(e)
@@ -165,7 +137,6 @@ object ArticleEdits:
       else ""
     head + joint + tail + (if tail.isEmpty then post.filter(_ == '\n').take(1) else "")
 
-  /** One edit on `text`. */
   def applyOne(text: String, e: Edit): Either[String, String] =
     locate(text, e.anchor).map { (s, end) =>
       e match
@@ -175,10 +146,6 @@ object ArticleEdits:
         case Edit.Delete(_)          => cut(text, s, end)
     }
 
-  /** Apply `edits` to `body` in order. An edit that does not parse, whose anchor is missing or ambiguous, or that
-    * `refuse` turns down (e.g. its text links to nothing) is skipped with its problem; the rest apply. The caller
-    * decides what a skipped edit means (a retry, or — on the last attempt — a warning).
-    */
   def applyAll(body: String, edits: List[EditAnswer], refuse: EditAnswer => Option[String] = _ => None): Applied =
     @tailrec def loop(rest: List[EditAnswer], number: Int, cur: String, acc: Vector[EditResult]): Applied =
       rest match
@@ -190,15 +157,10 @@ object ArticleEdits:
             case Left(p)  => loop(tail, number + 1, cur, acc :+ base.copy(problem = Some(p)))
     loop(edits, 1, body, Vector.empty)
 
-  /** A draft to check: edits to the stored body, or a whole body. */
   enum Draft:
     case Edits(edits: List[EditAnswer])
     case Body(text: String)
 
-  /** `POST /api/articles/{slug}/check` / `check_edits`: `edits` against the stored body, or a whole `body` (not both).
-    * `kind` overrides the article's kind for the section-set check (`index` checks none — for a fragment that is to be
-    * appended).
-    */
   final case class ArticleCheckRequest(
       edits: List[EditAnswer] = Nil,
       body: Option[String] = None,
@@ -220,10 +182,6 @@ object ArticleEdits:
         _.description("Check the section set of this kind instead of the article's (index = none, for a fragment)")
       )
 
-  /** What the pipeline's validation would say of a draft: each edit's result, the problems of the resulting body, and
-    * whether any of them is FATAL (an empty body, a link to nothing the draft added) — a fatal result is never written.
-    * `body` is the resulting text.
-    */
   final case class ArticleCheck(
       slug: String,
       kind: String,
@@ -239,7 +197,6 @@ object ArticleEdits:
   object ArticleCheck:
     given Schema[ArticleCheck] = summon[KindlingsSchema[ArticleCheck]].schema
 
-  /** The check as every surface prints it (the resulting body is left out: it can be long). */
   def markdown(c: ArticleCheck): String =
     val edits =
       if c.edits.isEmpty then ""

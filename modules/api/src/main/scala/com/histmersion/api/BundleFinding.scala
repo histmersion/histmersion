@@ -9,7 +9,6 @@ final case class BundleFinding(
     uid: UUID,
     origin: UUID,
     sourceUid: UUID,
-    /** The label, `<citekey>#<n>`. */
     id: String,
     claim: String,
     region: Option[String],

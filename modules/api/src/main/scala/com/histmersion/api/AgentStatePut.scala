@@ -12,5 +12,4 @@ final case class AgentStatePut(
 object AgentStatePut:
   given Schema[AgentStatePut] = summon[KindlingsSchema[AgentStatePut]].schema
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AgentStatePut] = StrictJson.codec(KindlingsCodecAsObject.derived[AgentStatePut])

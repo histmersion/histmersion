@@ -5,11 +5,6 @@ import sttp.tapir.Schema
 
 import com.histmersion.values.WireEnumValues
 
-// ── merge apply as a job (§7.7 open question 3) ───────────────────────────────────────────────────
-
-/** Where an apply is. On the wire as its lower-case name. `Interrupted`: the server stopped while it ran — its
-  * transaction committed or rolled back as a whole, never half (`merge list` says which).
-  */
 enum MergeJobState:
   case Running, Done, Failed, Interrupted
 

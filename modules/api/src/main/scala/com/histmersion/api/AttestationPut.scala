@@ -25,5 +25,4 @@ final case class AttestationPut(
 object AttestationPut:
   given Schema[AttestationPut] = summon[KindlingsSchema[AttestationPut]].schema
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AttestationPut] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPut])

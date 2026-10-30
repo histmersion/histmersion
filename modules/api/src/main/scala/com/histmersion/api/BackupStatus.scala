@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** `POST /api/backup` and `GET /api/backup/status`: a backup job, which may still be running. `state` is a
-  * [[BackupState]]; `bytes`/`sha256` are set once it is done, `error` once it failed.
-  */
 final case class BackupStatus(
     file: String,
     state: String,

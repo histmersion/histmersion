@@ -5,9 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.syntax.*
 import sttp.tapir.Schema
 
-/** One correction, as listed (`histmersion events corrections`, an event's card). Values are JSON text. `upstreamNow`
-  * is what upstream said at the last refresh (`None`: not refreshed since).
-  */
 final case class Correction(
     id: Long,
     targetKind: String,

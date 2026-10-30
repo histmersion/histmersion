@@ -4,25 +4,19 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** IIIF Image API Level 1 — the DTOs and parameter parsing (plan §4.3).
-  *
-  * The IIIF Image API serves images at `/iiif/{identifier}/{region}/{size}/{rotation}/{quality}.{format}`. Level 1
-  * compliance requires:
+/** IIIF Image API Level 1, served at `/iiif/{identifier}/{region}/{size}/{rotation}/{quality}.{format}`. Level 1
+  * requires:
   *   - region: `full` or pixel `x,y,w,h`
   *   - size: `max`, `^max`, `w,`, `,h`, `w,h`, `!w,h`
   *   - rotation: `0` only
   *   - quality: `default` only
   *   - format: `jpg`, `png`
-  *
-  * The identifier is `{citekey}/{name}` — the same key pair the asset endpoint uses.
   */
 object Iiif:
 
   val ApiContext = "http://iiif.io/api/image/3/context.json"
   val Protocol = "http://iiif.io/api/image"
   val Profile = "level1"
-
-  // ── region ──────────────────────────────────────────────────────────────────────────────────
 
   enum Region:
     case Full
@@ -42,8 +36,6 @@ object Iiif:
             yield Pixels(x, y, w, h))
               .toRight(s"invalid region coordinates: '$s' (expected x,y,w,h with w,h > 0)")
           case _ => Left(s"invalid region: '$s' (expected 'full' or 'x,y,w,h')")
-
-  // ── size ────────────────────────────────────────────────────────────────────────────────────
 
   enum Size:
     case Max
@@ -86,8 +78,6 @@ object Iiif:
                 .toRight(s"invalid exact size: '$s'")
             case _ => Left(s"invalid size: '$s'")
 
-  // ── format ──────────────────────────────────────────────────────────────────────────────────
-
   def parseFormat(s: String): Either[String, String] = s.trim.toLowerCase match
     case "jpg" | "jpeg" => Right("jpg")
     case "png"          => Right("png")
@@ -97,15 +87,7 @@ object Iiif:
     case "png" => "image/png"
     case _     => "image/jpeg"
 
-  // ── info.json response ──────────────────────────────────────────────────────────────────────
-
-  /** The IIIF Image Information document (info.json), Level 1 subset.
-    *
-    * The `@context`, `type`, `protocol` and `profile` fields use circe's snake_case transform plus explicit
-    * `@`-prefixed keys, which `KindlingsCodecAsObject` handles via the Configuration. We instead use `io.circe.Json` to
-    * build the document directly, avoiding derivation complexity for a response that has `@`-prefixed keys circe
-    * derivation cannot produce.
-    */
+  /** Built as `Json` by hand: the IIIF document's `@`-prefixed keys are beyond circe derivation. */
   def infoJson(id: String, width: Int, height: Int): io.circe.Json =
     import io.circe.Json
     import io.circe.syntax.*

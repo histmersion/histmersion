@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.values.Confidence
 
-/** One geo-located, time-scoped finding row. */
 final case class FindingRow(
     claim: String,
     regionName: Option[String],
@@ -17,7 +16,6 @@ final case class FindingRow(
     tags: List[String],
     confidence: Option[Confidence],
     significance: Option[String] = None,
-    /** The finding's permanent identity (V030); its `<citekey>#<n>` id is a label that a rename moves. */
     uid: Option[java.util.UUID] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema

@@ -4,22 +4,14 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** `POST /api/agents/autopilot/repair-acquire` and what it did: the one-shot repair of the acquisition list
-  * (docs/research-process-managers.md "As built: the ingest backlog").
-  */
 object RepairAcquire:
 
-  /** `dryRun` = list what it would do and change nothing; `by` = who asked. */
   final case class RepairRequest(dryRun: Boolean = false, by: Option[String] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema
   object RepairRequest:
     given Schema[RepairRequest] = summon[KindlingsSchema[RepairRequest]].schema
 
-  /** One acquisition item a watcher's sweep created: `move` (a legal open-access work: into the watcher's ingest
-    * backlog, item `backlogItem`, and the acquisition item removed), `remove` (in the corpus already: the acquisition
-    * item removed), `keep` (why it stays on the list).
-    */
   final case class RepairRow(
       item: Int,
       doi: String,
@@ -33,10 +25,6 @@ object RepairAcquire:
   object RepairRow:
     given Schema[RepairRow] = summon[KindlingsSchema[RepairRow]].schema
 
-  /** What it did (a dry run: would do). `untouched` = the open acquisition items NOT created by a
-    * watcher's sweep (a person's, a plan's, a currency check's): never changed. `backlog` / `backlogDays`
-    * = the ingest backlog afterwards and the days to drain it at the current allowance.
-    */
   final case class RepairResult(
       dryRun: Boolean,
       moved: Int = 0,

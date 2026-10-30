@@ -5,10 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** Embedded research agents (docs/research-embedded-agents.md): the pure vocabulary — providers, roles, model
-  * references, prices and cost, run and step states, pipelines — and the wire DTOs of `/api/agents/…`. No I/O here; the
-  * server runs the agents, the CLI and web UI only read this.
-  */
 object Agents:
 
   export com.histmersion.values.{
@@ -23,14 +19,13 @@ object Agents:
     TargetKind
   }
 
-  /** `provider:model`. The model id may itself contain colons (`local:qwen2.5-coder:32b`), so only the FIRST colon
-    * separates the provider.
+  /** The model id may itself contain colons (`local:qwen2.5-coder:32b`), so only the first colon separates the
+    * provider.
     */
   final case class ModelRef(provider: ProviderKind, model: String):
     def wire: String = s"${provider.wire}:$model"
 
   object ModelRef:
-    /** `provider:model`; `known` = the names plugin providers are registered under now. */
     def parse(s: String, known: Set[String] = Set.empty): Either[String, ModelRef] =
       val t = s.trim
       t.indexOf(':') match
@@ -42,10 +37,8 @@ object Agents:
             case Some(_) if m.isEmpty => Left(s"'$t' names no model")
             case Some(k)              => Right(ModelRef(k, m))
 
-  // ── usage, prices and cost ─────────────────────────────────────────────────────────────────────
-
-  /** Tokens of one or more LLM calls. `input` counts ALL prompt tokens, cached ones included (the provider-normalised
-    * convention sttp-ai uses); `cacheRead`/`cacheWrite` are subsets of it.
+  /** `input` counts all prompt tokens, cached ones included (the provider-normalised convention sttp-ai uses);
+    * `cacheRead`/`cacheWrite` are subsets of it.
     */
   final case class Usage(input: Long = 0, output: Long = 0, cacheRead: Long = 0, cacheWrite: Long = 0)
       derives KindlingsCodecAsObject,
@@ -54,9 +47,6 @@ object Agents:
       Usage(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
     def total: Long = input + output
 
-    /** What counts against a run's token budget: uncached input, cache writes and output in full, cache reads at
-      * `cacheReadWeight` (`input` already includes the cached tokens).
-      */
     def budgeted(cacheReadWeight: Double): Long =
       math.max(0L, input - cacheRead) + output + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
 
@@ -64,39 +54,29 @@ object Agents:
     val Zero: Usage = Usage()
     given Schema[Usage] = summon[KindlingsSchema[Usage]].schema
 
-  /** USD per million tokens. Cache rates default to the input rate when not given. */
   final case class Price(
       input: BigDecimal,
       output: BigDecimal,
       cacheRead: Option[BigDecimal] = None,
       cacheWrite: Option[BigDecimal] = None
   ):
-    /** The cost of `u` at this price, in USD. */
     def cost(u: Usage): BigDecimal =
       val plain = math.max(u.input - u.cacheRead - u.cacheWrite, 0L)
       (BigDecimal(plain) * input + BigDecimal(u.cacheRead) * cacheRead.getOrElse(input) +
         BigDecimal(u.cacheWrite) * cacheWrite.getOrElse(input) + BigDecimal(u.output) * output) / Prices.Million
 
-    /** `in/out[/cache-read/cache-write]`, as `agents.prices` writes it. */
     def text: String =
       val n = (d: BigDecimal) => d.bigDecimal.stripTrailingZeros.toPlainString
       (List(input, output) ++ cacheRead.zip(cacheWrite).toList.flatMap((r, w) => List(r, w))).map(n).mkString("/")
 
-  /** How a model's calls are paid for. A model on a subscription plan (`claude-code` and `codex` on their logins,
-    * `opencode:openai/…` on a ChatGPT login) is governed by its plan pool's floors (docs/research-plan-quotas.md), not
-    * by USD: it needs no price and costs 0 USD against the run's and the day's budgets — its tokens still count against
-    * the run's token budget. Every other model is metered and must be priced.
-    */
   enum Billing:
     case Plan(pool: PlanQuota.PoolId)
     case Metered(price: Price)
 
-    /** What `u` costs against the USD budgets. */
     def cost(u: Usage): BigDecimal = this match
       case Plan(_)    => BigDecimal(0)
       case Metered(p) => p.cost(u)
 
-    /** As `agent models` and the doctor show it. */
     def describe: String = this match
       case Plan(p)    => s"plan pool: ${p.wire}"
       case Metered(p) => s"price: ${p.text} USD per million tokens"
@@ -104,9 +84,6 @@ object Agents:
   object Prices:
     private[Agents] val Million = BigDecimal(1000000)
 
-    /** `"<model>=<in>/<out>[/<cache-read>/<cache-write>]; …"` → model id → [[Price]]. Blank = no prices. Every
-      * malformed entry is reported, not skipped: a typo must not make a model silently free.
-      */
     def parse(s: String): Either[String, Map[String, Price]] =
       val entries = s.split(";").toList.map(_.trim).filter(_.nonEmpty)
       val parsed = entries.map { e =>
@@ -128,16 +105,12 @@ object Agents:
         case Nil  => Right(parsed.collect { case Right(kv) => kv }.toMap)
         case errs => Left(errs.mkString("; "))
 
-    /** The cost of `u` on `model`. An UNPRICED model is an error, never zero — the inverse of sttp-ai's `PriceTable`,
-      * which counts an unknown model as free and so would never trip a cost budget.
+    /** An unpriced model is an error, never zero: sttp-ai's `PriceTable` counts an unknown model as free, so it would
+      * never trip a cost budget.
       */
     def cost(prices: Map[String, Price], model: String, u: Usage): Either[String, BigDecimal] =
       prices.get(model).toRight(unpriced(model)).map(_.cost(u))
 
-    /** How `m` is paid for: its plan pool when it draws on one (`pool`, from [[PlanQuota.poolOf]]) — no price needed —
-      * else its price. A METERED model with no price is an error, never free: a typo must not make a model silently
-      * free.
-      */
     def billing(prices: Map[String, Price], m: ModelRef, pool: Option[PlanQuota.PoolId]): Either[String, Billing] =
       pool match
         case Some(p) => Right(Billing.Plan(p))
@@ -146,38 +119,24 @@ object Agents:
     private def unpriced(model: String): String =
       s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for a free local model"
 
-    /** Why a command-line model is metered, when it would otherwise draw on a plan. */
     private def metered(m: ModelRef): String = m.provider match
       case ProviderKind.ClaudeCode => " (claude-code is set to use an API key, so it bills the API, not the plan)"
       case ProviderKind.Codex      => " (codex is set to use an API key, so it bills the API, not the plan)"
       case ProviderKind.Opencode   => " (an opencode model is metered unless it is openai/… on a ChatGPT login)"
       case _                       => ""
 
-  // ── runs and steps ─────────────────────────────────────────────────────────────────────────────
-
-  /** The `jobs.kind` of an agent run. */
   val JobKind = com.histmersion.api.JobKind.Agent.wire
 
-  /** Why a run is paused — the reason is shown and decides whether a plain resume can help. */
   enum PauseReason(val wire: String):
     case Budget extends PauseReason("budget")
     case Interrupted extends PauseReason("interrupted")
     case Requested extends PauseReason("requested")
     case Provider extends PauseReason("provider")
 
-    /** Every model of a role's chain is below its allowance; the run resumes by itself once a window frees enough
-      * (`jobs.resume_at`).
-      */
     case Allowance extends PauseReason("allowance")
 
-    /** Every model of a role's chain draws on a subscription pool below its floor (or held), and the chain may not fall
-      * through to a paid key; the run resumes by itself at the earliest reset.
-      */
     case PlanQuota extends PauseReason("plan-quota")
 
-    /** The stall watchdog: the run gave no sign of life (no step boundary, no line from its CLI) for
-      * `agents.watchdog.stall-minutes`; its processes were killed and it resumes by itself shortly.
-      */
     case Stalled extends PauseReason("stalled")
 
   enum StepKind(val wire: String):
@@ -187,48 +146,30 @@ object Agents:
   object StepKind:
     def parse(s: String): Option[StepKind] = values.find(_.wire == s)
 
-  /** Who started a run: a person (CLI, web UI, MCP), a goal's schedule, another run (a compile-article run chains its
-    * review), or an ingest job (auto-enrich). A scheduled or ingest run that fails or pauses leaves a backlog item;
-    * nobody was watching it.
-    */
   enum Origin(val wire: String):
     case Person extends Origin("person")
     case Scheduler extends Origin("scheduler")
     case Run extends Origin("run")
 
-    /** An ingest job queued it for the source it brought in (`agents.auto-enrich`). */
     case Ingest extends Origin("ingest")
 
-    /** A process manager dispatched it for one of its work items (docs/research-process-managers.md). */
     case Manager extends Origin("manager")
 
-    /** Nobody is watching it: a run of this origin that a restart interrupted goes on by itself, and one that fails or
-      * pauses leaves a backlog item (a manager files its own).
-      */
     def unattended: Boolean = this != Person
 
   object Origin:
     def parse(s: String): Option[Origin] = values.find(_.wire == s.trim.toLowerCase)
 
-  // ── wire DTOs ─────────────────────────────────────────────────────────────────────────────────
-
-  /** `POST /api/agents/probe` — one LLM call with one read-only tool (`get_source`) and a typed answer: the
-    * connectivity and tool-calling check for a configured model.
-    */
   final case class ProbeRequest(citekey: String, model: Option[String] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema
   object ProbeRequest:
     given Schema[ProbeRequest] = summon[KindlingsSchema[ProbeRequest]].schema
 
-  /** The typed answer the probe asks for. */
   final case class ProbeAnswer(citekey: String, title: String, year: Option[Int])
       derives KindlingsCodecAsObject,
         KindlingsSchema:
-    /** What the answer leaves empty that the probe asks for: an empty citekey or title, and no year for a record that
-      * has one (`recordYear`; a source with none is rightly answered with null). A strict-schema provider sends `""`
-      * and `null` where it has nothing, and they must not pass.
-      */
+    /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
     def problems(recordYear: Option[Int]): List[String] = List(
       Option.when(Option(citekey).forall(_.trim.isEmpty))("the citekey is empty — give the source's citekey"),
       Option.when(Option(title).forall(_.trim.isEmpty))(
@@ -252,9 +193,6 @@ object Agents:
       usage: Usage,
       costUsd: Option[Double],
       millis: Long,
-      /** Why the (last) answer was not accepted: a field the probe asks for left empty, or no typed answer (prose, a
-        * schema mismatch).
-        */
       problems: List[String] = Nil,
       attempts: Int = 1
   ) derives KindlingsCodecAsObject,
@@ -262,54 +200,34 @@ object Agents:
   object ProbeResult:
     given Schema[ProbeResult] = summon[KindlingsSchema[ProbeResult]].schema
 
-  /** `POST /api/agents/runs` — start a pipeline on a target. `model` overrides every role of the run
-    * (`provider:model`); the budgets override `agents.budgets.run-*`.
-    */
   final case class RunRequest(
       pipeline: String,
       target: String,
       model: Option[String] = None,
       budgetUsd: Option[Double] = None,
       budgetTokens: Option[Long] = None,
-      /** review-article: let the fixer revise the article between rounds (default: review only). */
       fix: Option[Boolean] = None,
-      /** review-article: at most this many review passes — a full panel, then a verification pass after each fix
-        * (default `agents.review.max-rounds`).
-        */
       rounds: Option[Int] = None,
-      /** enrich-source: the acquisition item this run fulfils; ticked off when the run finishes. */
       acquireItem: Option[Int] = None,
-      /** compile-article: the title and kind of a NEW article (ignored when the slug exists). */
       title: Option[String] = None,
       kind: Option[String] = None,
-      /** compile-article: the filter whose sources the article is compiled from — free text, and topics/tags (all-of).
-        * At least one for a new article; an existing one defaults to its title.
-        */
       query: Option[String] = None,
       topics: List[String] = Nil,
       tags: List[String] = Nil,
-      /** The goal the run works for (its links and log carry it). */
+      /** Every field is optional: a run stored before an option existed must still decode. */
       goal: Option[String] = None,
-      /** Do every read and every LLM step, write nothing to the corpus: each write a step would make is recorded on the
-        * step instead (#992).
-        */
       dryRun: Option[Boolean] = None,
-      /** One role's model for this run only, over its chain and over `model` (#992). */
       modelFor: List[ModelOverride] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema
   object RunRequest:
     given Schema[RunRequest] = summon[KindlingsSchema[RunRequest]].schema
 
-  /** `--model-for <role>=<provider:model>`: the model (or `a > b` chain) one role of a run uses, over the role's chain
-    * and over the run's `model`. The role is checked by the server.
-    */
   final case class ModelOverride(role: String, model: String) derives KindlingsCodecAsObject, KindlingsSchema:
     def text: String = s"$role=$model"
   object ModelOverride:
     given Schema[ModelOverride] = summon[KindlingsSchema[ModelOverride]].schema
 
-    /** `role=provider:model`; only the first `=` separates (a model id never holds one, a role never). */
     def parse(s: String): Either[String, ModelOverride] =
       s.indexOf('=') match
         case -1 => Left(s"'${s.trim}' is not <role>=<provider:model>")
@@ -319,9 +237,6 @@ object Agents:
           else if m.isEmpty then Left(s"'${s.trim}' names no model")
           else Right(ModelOverride(r, m))
 
-  /** A run's pipeline options, stored with the run (`jobs.params`) so a resumed run sees the same ones. Every field is
-    * optional: a run started before an option existed decodes as its default.
-    */
   final case class RunParams(
       fix: Option[Boolean] = None,
       rounds: Option[Int] = None,
@@ -331,33 +246,13 @@ object Agents:
       topics: Option[List[String]] = None,
       tags: Option[List[String]] = None,
       modelFor: Option[List[ModelOverride]] = None,
-      /** The person's notes (manager hints) snapshotted when a manager dispatched the run: appended to the user message
-        * of the steps that act on them, the same on a resume.
-        */
       notes: Option[List[String]] = None,
-      /** compile-article: chain a review-article run after writing (None = `agents.compile.review`). */
       chainReview: Option[Boolean] = None,
-      /** propose-articles: a proposed article's filter returns at least this many sources (None =
-        * `agents.seed.min-sources`), and at most `maxArticles` are proposed (None = `agents.seed.max-articles`).
-        */
       minSources: Option[Int] = None,
       maxArticles: Option[Int] = None,
-      /** acquisition-sweep from a watcher that opted in: ingest at most this many of the legal open-access works it
-        * picks (the legal chain only); the rest go to the acquisition list. Fixed at dispatch (what is left of the
-        * watcher's daily cap), so a resumed run keeps it.
-        */
       autoIngest: Option[Int] = None,
-      /** hint-effect: the hint (`manager_hints.id`) whose action the run proposes. */
       hint: Option[Long] = None,
-      /** plan-goal: at most this many sub-goals (None = `agents.plan.max-sub-goals`); the autopilot gives 0 to a goal
-        * at `agents.approvals.auto.max-goal-depth`.
-        */
       subGoals: Option[Int] = None,
-      /** acquisition-sweep from a watcher with auto-ingest on: the legal open-access picks past `autoIngest` wait in
-        * the watcher's ingest backlog (ingested on a later day, within the caps) instead of going to the acquisition
-        * list — which keeps only the works with no legal copy. Set at dispatch; a run dispatched before it existed
-        * keeps its old steps.
-        */
       oaBacklog: Option[Boolean] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
@@ -367,7 +262,6 @@ object Agents:
   object RunParams:
     given Schema[RunParams] = summon[KindlingsSchema[RunParams]].schema
 
-  /** One run, as listed. Amounts are totals over every recorded step. */
   final case class RunInfo(
       id: String,
       pipeline: String,
@@ -386,43 +280,27 @@ object Agents:
       targetKind: String = "",
       params: RunParams = RunParams(),
       acquireItem: Option[Int] = None,
-      /** The goal the run works for, the run that started it, and who did. */
       goal: Option[String] = None,
       parent: Option[String] = None,
       origin: Option[String] = None,
-      /** A run paused because every model of a role is below its allowance resumes by itself then. */
       resumeAt: Option[String] = None,
-      /** Writes nothing to the corpus: what it would write is recorded on its steps (#992). */
       dryRun: Boolean = false,
-      /** The process manager and its work item that dispatched the run (origin `manager`). */
       managerId: Option[String] = None,
       managerItem: Option[Long] = None,
-      /** The last sign of life the stall watchdog recorded (step boundary or CLI output). */
       heartbeatAt: Option[String] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
     def isWaiting: Boolean = status == RunState.WaitingApproval.wire
 
-    /** The model ref (or chain) `role` uses in this run: its `--model-for`, else `--model`, else None (the role's own
-      * chain).
-      */
     def modelFor(role: Role): Option[String] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)
   object RunInfo:
     given Schema[RunInfo] = summon[KindlingsSchema[RunInfo]].schema
 
-  /** A write a step of a DRY run skipped: what it is, and its payload (JSON, e.g. the whole patch). */
   final case class WouldWrite(what: String, payload: String) derives KindlingsCodecAsObject, KindlingsSchema
   object WouldWrite:
     given Schema[WouldWrite] = summon[KindlingsSchema[WouldWrite]].schema
 
-  /** One checkpointed step. `output` is the step's recorded result (JSON), truncated for display — for a rejected LLM
-    * answer, the answer that was rejected. `model` is the configured ref, `actualModel` what the provider reported
-    * serving (`claude-sonnet-4-5`; several joined by ` + `, the busiest first). `wouldWrite`: in a dry run, the writes
-    * the step skipped. `firstCallTokens`: the input of the attempt's FIRST model call (input + cache tokens) — the
-    * fixed part every turn re-sends plus the step's prompt; None when the provider cannot tell or the attempt predates
-    * it. `turns`: the model turns it took.
-    */
   final case class StepInfo(
       seq: Int,
       name: String,
@@ -443,8 +321,6 @@ object Agents:
       turns: Option[Int] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
-    /** `claude-code:haiku → claude-haiku-5-5`; the configured ref alone when the provider said the same (or nothing).
-      */
     def modelText: String = (model, actualModel) match
       case (Some(m), Some(a)) if m.drop(m.indexOf(':') + 1) != a => s"$m → $a"
       case (Some(m), _)                                          => m
@@ -453,8 +329,6 @@ object Agents:
   object StepInfo:
     given Schema[StepInfo] = summon[KindlingsSchema[StepInfo]].schema
 
-  /** One traced message of an LLM step: the assistant's text, or a tool call with its (truncated) result.
-    */
   final case class MessageInfo(
       seq: Int,
       n: Int,
@@ -475,16 +349,12 @@ object Agents:
   object RunDetail:
     given Schema[RunDetail] = summon[KindlingsSchema[RunDetail]].schema
 
-  /** `GET /api/agents/models` — each role, the model it resolves to, and whether it can run. */
   final case class RoleModel(role: String, model: Option[String], ready: Boolean, problem: Option[String])
       derives KindlingsCodecAsObject,
         KindlingsSchema
   object RoleModel:
     given Schema[RoleModel] = summon[KindlingsSchema[RoleModel]].schema
 
-  /** `roles` is each role's model NOW (the chain's first usable one, else its first); `chains` and `allowances` are the
-    * whole picture: every chained model, and each allowance's use per window.
-    */
   final case class ModelsInfo(
       enabled: Boolean,
       roles: List[RoleModel],
@@ -499,11 +369,6 @@ object Agents:
   object ModelsInfo:
     given Schema[ModelsInfo] = summon[KindlingsSchema[ModelsInfo]].schema
 
-  // ── agent doctor ───────────────────────────────────────────────────────────────────────────────
-
-  /** How one check came out: `Warn` is a configuration that works but deserves a look (a provider no role uses, a plan
-    * with no allowance), `Fail` one that cannot work as configured.
-    */
   enum CheckLevel(val wire: String):
     case Ok extends CheckLevel("ok")
     case Warn extends CheckLevel("warn")
@@ -525,9 +390,6 @@ object Agents:
   object DoctorCheck:
     given Schema[DoctorCheck] = summon[KindlingsSchema[DoctorCheck]].schema
 
-  /** One provider: whether any role's chain uses it, the models those chains name, its checks, and the models it lists
-    * upstream (when it was asked: online, and a listing endpoint answered).
-    */
   final case class ProviderDoctor(
       provider: String,
       used: Boolean,
@@ -543,10 +405,6 @@ object Agents:
   object ProviderDoctor:
     given Schema[ProviderDoctor] = summon[KindlingsSchema[ProviderDoctor]].schema
 
-  /** `GET /api/agents/doctor[?offline=true]` — every provider, checked without spending anything: keys present, the
-    * provider's free model listing (online), every chained model priced, the `claude` CLI installed and logged in.
-    * `checks` holds what is not about one provider.
-    */
   final case class DoctorReport(
       enabled: Boolean,
       online: Boolean,
@@ -557,20 +415,12 @@ object Agents:
   object DoctorReport:
     given Schema[DoctorReport] = summon[KindlingsSchema[DoctorReport]].schema
 
-  // ── generated runtime trees ────────────────────────────────────────────────────────────────────
-
-  /** `POST /api/agents/generate` — write the per-runtime trees (`claude-code`, `codex`, `opencode`; none = all three)
-    * under the server's runtimes directory, or under `out` (a SERVER-side path).
-    */
   final case class GenerateRequest(runtimes: List[String] = Nil, out: Option[String] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema
   object GenerateRequest:
     given Schema[GenerateRequest] = summon[KindlingsSchema[GenerateRequest]].schema
 
-  /** Where the trees went, how many files they hold, how many changed and how many stale ones went; `definitions` = the
-    * fingerprint of what they were generated from.
-    */
   final case class GenerateResult(
       dir: String,
       runtimes: List[String],
@@ -583,9 +433,6 @@ object Agents:
   object GenerateResult:
     given Schema[GenerateResult] = summon[KindlingsSchema[GenerateResult]].schema
 
-  // ── approvals ──────────────────────────────────────────────────────────────────────────────────
-
-  /** The decisions a person can take on an open approval. */
   enum Decision(val wire: String):
     case Approve extends Decision("approve")
     case Reject extends Decision("reject")
@@ -593,11 +440,6 @@ object Agents:
   object Decision:
     def parse(s: String): Option[Decision] = values.find(_.wire == s.trim.toLowerCase)
 
-  /** One proposal, as listed. For a status change `status` is the proposed status (and `current` the one it had when
-    * proposed); for an edge, `edgeKind` runs from `citekey` to `target`. `quote` is the passage of `citekey`'s text the
-    * proposal rests on, verified by code before it was recorded. A goal plan or an article to publish is about
-    * `subject` (a goal or article slug; `citekey` is empty) and carries its proposal in `plan` or `article`.
-    */
   final case class ApprovalInfo(
       id: Long,
       runId: Option[String],
@@ -617,11 +459,8 @@ object Agents:
       subject: Option[String] = None,
       plan: Option[GoalPlans.Plan] = None,
       article: Option[GoalPlans.ArticleDraft] = None,
-      /** article-filter: the filter proposed, with what code measured. */
       filter: Option[ArticlePlans.FilterProposal] = None,
-      /** article-plan: the articles proposed for the goal. */
       articles: Option[ArticlePlans.ArticlePlan] = None,
-      /** hint-effect: the action a model proposed for a manager, from a hint. */
       hintEffect: Option[Managers.HintProposal] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
@@ -629,7 +468,6 @@ object Agents:
   object ApprovalInfo:
     given Schema[ApprovalInfo] = summon[KindlingsSchema[ApprovalInfo]].schema
 
-  /** `POST /api/agents/approvals/{id}/{approve|reject}` — an optional note kept with the decision. */
   final case class DecisionRequest(note: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
   object DecisionRequest:
     given Schema[DecisionRequest] = summon[KindlingsSchema[DecisionRequest]].schema

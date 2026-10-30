@@ -2,9 +2,8 @@ package com.histmersion.api
 
 import scala.annotation.tailrec
 
-/** What a dependency's health text means. The converter reports free text (`ok`, `busy: 2 jobs`, `degraded: …`,
-  * `converter at … is unreachable`); a client shows the state and keeps the text as the detail, so a wording it has
-  * never seen still renders — as [[ServiceState.Unknown]] at worst.
+/** The converter reports free text (`ok`, `busy: 2 jobs`, `degraded: …`), so a wording never seen before reads as
+  * [[ServiceState.Unknown]] at worst.
   */
 enum ServiceState:
   case Ok, Busy, Down, Unknown
@@ -30,7 +29,6 @@ object ServiceState:
     "answered"
   )
 
-  /** Pure: the state behind a health text. */
   def of(text: Option[String]): ServiceState =
     text.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case None                                                               => Unknown

@@ -5,7 +5,6 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import sttp.tapir.Schema
 
-/** A bookmark's own id: a UUID, written in lower case. */
 type BookmarkId = BookmarkId.T
 
 object BookmarkId extends RefinedType[String, Match[PersonalIds.UuidRule]]:

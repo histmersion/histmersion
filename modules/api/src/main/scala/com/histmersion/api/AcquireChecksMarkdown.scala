@@ -1,10 +1,8 @@
 package com.histmersion.api
 
-/** The re-check as Markdown — every surface (CLI, MCP) prints this. Pure. */
 object AcquireChecksMarkdown:
   import AcquireChecks.*
 
-  /** `acquire re-check: 12 due, 3 closed and 1 found this week, 5 of 40 tried today — next pass …`. */
   def line(s: RecheckStatus): String =
     val job = s.job.fold("")(j => s" — $j")
     if !s.enabled then s"acquire re-check: off (acquire.recheck.enabled = false)$job"
@@ -15,7 +13,6 @@ object AcquireChecksMarkdown:
 
   def result(r: RecheckResult): String = r.job.fold(pass(r))(j => started(r, j))
 
-  /** A pass that runs as a job: what it does, and how to follow it. */
   private def started(r: RecheckResult, j: JobInfo): String =
     s"# Acquisition list re-check\n\n" +
       s"- ${Plural.count(r.open, "open item")}, ${r.withDoi} with a DOI; ${r.allowance} to try\n" +

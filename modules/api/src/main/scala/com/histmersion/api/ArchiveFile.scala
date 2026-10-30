@@ -4,8 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-// ── archive.org ────────────────────────────────────────────────────────────────────────────────
-
 final case class ArchiveFile(name: String, format: Option[String], megabytes: Double)
     derives KindlingsCodecAsObject,
       KindlingsSchema

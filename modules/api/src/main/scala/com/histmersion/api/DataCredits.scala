@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** The datasets, by what they are used for. Pure data. */
 object DataCredits:
   private val odbl = Some("https://opendatacommons.org/licenses/odbl/1-0/")
   private val ccBy4 = Some("https://creativecommons.org/licenses/by/4.0/")

@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The bundle's sources, by how they were matched. */
 final case class MatchCounts(
     sources: Int = 0,
     byUid: Int = 0,

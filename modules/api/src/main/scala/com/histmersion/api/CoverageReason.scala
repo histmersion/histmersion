@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** Why the article leaves one source of its filter out. An empty `reason` in a patch REMOVES it. */
 final case class CoverageReason(citekey: String, reason: String) derives KindlingsCodecAsObject
 object CoverageReason:
   given Schema[CoverageReason] = KindlingsSchema
@@ -18,13 +17,8 @@ object CoverageReason:
       )
     )
 
-  /** The longest reason kept: one line of a list, not a paragraph. */
   val MaxChars = 500
 
-  /** Merge `stated` into `current`: a reason replaces the source's previous one, an empty one removes it. Each reason
-    * is folded onto one line (it is a list item). A key that is not citekey-shaped, or a reason longer than
-    * [[MaxChars]], is refused. Pure.
-    */
   def merge(current: Map[String, String], stated: List[CoverageReason]): Either[String, Map[String, String]] =
     stated.foldLeft[Either[String, Map[String, String]]](Right(current)) { (acc, r) =>
       acc.flatMap { m =>
@@ -38,5 +32,4 @@ object CoverageReason:
       }
     }
 
-  /** The stored map as a list, in citekey order (the wire form). */
   def list(m: Map[String, String]): List[CoverageReason] = m.toList.sortBy(_._1).map(CoverageReason(_, _))

@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 final case class GoalList(
     total: Int,
     goals: List[Goal],
-    /** Where this page starts, and the offset of the next one (absent on the last) — [[OffsetPage]]. */
     offset: Int = 0,
     next: Option[Int] = None
 ) derives KindlingsCodecAsObject,

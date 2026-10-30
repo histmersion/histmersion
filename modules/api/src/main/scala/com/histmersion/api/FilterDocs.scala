@@ -3,16 +3,9 @@ package com.histmersion.api
 import sttp.tapir.Schema
 import com.histmersion.values.SourceStatus
 
-/** What each parameter of the shared [[Filter]] means, written ONCE (#1946; the 2026-10-16 review found the 17-field
-  * filter described seven times, in four wordings). Every surface reads it: the REST query parameters
-  * ([[Api.filterQuery]]: each query parameter's description), the MCP tool inputs that carry the filter (`search`,
-  * `facets`, `geo_when`, `histogram` — [[describe]]), the agents' `search` tool ([[Param.brief]]: every turn of a step
-  * re-sends a tool's schema, so the agent's is a few words) and the CLI's `FilterFlags`. A parameter is named by its
-  * REST spelling (`tag`, `q`) and its MCP spelling (`tags`, `query`); the CLI flag is the REST one with `--`. Pure.
-  */
+/** [[Param.brief]] is the agents' wording, a few words: every turn of an agent step re-sends a tool's schema. */
 object FilterDocs:
 
-  /** One filter parameter: its REST and MCP names, what it means, and the agent's few words. */
   final case class Param(rest: String, mcp: String, doc: String, brief: String)
 
   val query = Param(
@@ -78,7 +71,6 @@ object FilterDocs:
     Param("title", "title", "Case-insensitive substring of the listed item's title", "A substring of the title")
   val goal = Param("goal", "goal", "Only the sources a research goal links (its slug)", "A research goal's slug")
 
-  /** Every parameter, in the REST order. */
   val all: List[Param] =
     List(
       query,
@@ -102,12 +94,8 @@ object FilterDocs:
       goal
     )
 
-  /** `schema` with each filter field it has described ([[Param.doc]], by its MCP name); fields it does not have are
-    * left alone, and so is everything else.
-    */
   def describe[T](schema: Schema[T]): Schema[T] = describeWith(schema)(_.doc)
 
-  /** [[describe]] with the agent's words ([[Param.brief]]). */
   def describeBrief[T](schema: Schema[T]): Schema[T] = describeWith(schema)(_.brief)
 
   private def describeWith[T](schema: Schema[T])(text: Param => String): Schema[T] =

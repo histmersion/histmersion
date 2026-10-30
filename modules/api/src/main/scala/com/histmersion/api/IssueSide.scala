@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 
-/** One side of an issue: the record's label, its uid, and a few lines describing it. */
 final case class IssueSide(label: String, uid: UUID, lines: List[String] = Nil)
     derives KindlingsCodecAsObject,
       KindlingsSchema

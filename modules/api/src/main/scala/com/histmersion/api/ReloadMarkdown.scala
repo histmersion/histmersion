@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** The reload report as Markdown, every surface's. Pure. */
 object ReloadMarkdown:
   def report(r: ReloadReport): String =
     def list(title: String, xs: List[String]): List[String] =

@@ -4,13 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-// ── temporal geography (V016) ───────────────────────────────────────────────────────────────
-
-/** A dated geometry for a place — one place can have many footprints with different roles, periods and provenances.
-  * Follows the Pleiades Place/Location split. `role` describes what the shape represents: `extent` (the full
-  * territory), `core` (heartland), `maximal` (greatest extent), `frontier` (a border zone), `seat` (a point where power
-  * sits), `snapshot` (one moment in time).
-  */
+/** Follows the Pleiades Place/Location split: one place, many dated footprints. */
 final case class PlaceFootprint(
     id: Int,
     placeId: String,

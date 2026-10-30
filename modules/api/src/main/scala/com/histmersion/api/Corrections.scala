@@ -6,22 +6,17 @@ import io.circe.syntax.*
 object Corrections:
 
   enum Outcome:
-    /** Upstream still says what it said: the correction keeps applying. */
     case Keep
 
-    /** Upstream now says what the person said: the correction is retired. */
     case Retire
 
-    /** Upstream changed to something else: the correction keeps applying and is flagged. */
     case Conflict
 
-  /** Pure: the outcome of a refresh for one correction (the table above). */
   def reconcile(value: Json, upstreamThen: Json, upstreamNow: Json): Outcome =
     if upstreamNow == value then Outcome.Retire
     else if upstreamNow == upstreamThen then Outcome.Keep
     else Outcome.Conflict
 
-  /** Pure: the status an outcome leaves. */
   def status(o: Outcome): String = o match
     case Outcome.Keep     => CorrectionStatus.Active
     case Outcome.Retire   => CorrectionStatus.Agreed
@@ -30,15 +25,12 @@ object Corrections:
   def counts(os: Iterable[Outcome]): CorrectionCounts =
     CorrectionCounts(os.count(_ == Outcome.Keep), os.count(_ == Outcome.Retire), os.count(_ == Outcome.Conflict))
 
-  /** Pure: a JSON value in a line of text (a string unquoted, null as "none"). */
   def show(json: String): String =
     io.circe.parser.parse(json).toOption match
       case Some(j) if j.isNull => "none"
       case Some(j)             => j.asString.getOrElse(j.noSpaces)
       case None                => json
 
-  /** Pure: one correction in words — what was changed, what the catalogue said, and, in conflict, what it says now.
-    */
   def describe(c: Correction): String =
     val base = s"${c.field}: “${Fmt.clip(show(c.value))}” (was “${Fmt.clip(show(c.upstreamValue))}”" +
       c.upstream.fold("")(u => s" in $u") + ")"
@@ -51,7 +43,6 @@ object Corrections:
   private object Fmt:
     def clip(s: String): String = if s.length > 80 then s.take(79) + "…" else s
 
-  /** Pure: a list as Markdown (`histmersion events corrections`, the MCP tool). */
   def markdown(l: CorrectionList): String =
     if l.corrections.isEmpty then "_No corrections by hand._"
     else

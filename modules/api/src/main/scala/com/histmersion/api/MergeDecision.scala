@@ -5,9 +5,6 @@ import sttp.tapir.Schema
 
 import com.histmersion.values.DecisionKind
 
-/** One decision: its kind and, for the kinds that take one, the argument (a citekey, a path). On the wire and in the
-  * resolution file it is one string — `keep-left`, `map:guterbock1997_hittite`.
-  */
 final case class MergeDecision(kind: DecisionKind, argument: Option[String] = None):
   def wire: String = DecisionKind.wireOf(kind) + argument.fold("")(a => s":$a")
 
@@ -15,7 +12,6 @@ object MergeDecision:
   def of(kind: DecisionKind): MergeDecision = MergeDecision(kind, None)
   def withArg(kind: DecisionKind, arg: String): MergeDecision = MergeDecision(kind, Some(arg))
 
-  /** Parse `kind[:argument]`; the argument is required exactly by the kinds that take one. Pure. */
   def parse(raw: String): Either[String, MergeDecision] =
     val s = raw.trim
     val (k, arg) = s.indexOf(':') match
@@ -29,7 +25,6 @@ object MergeDecision:
         Left(s"'$s': ${DecisionKind.wireOf(d)} takes no argument")
       case Some(d) => Right(MergeDecision(d, arg.filter(_.nonEmpty)))
 
-  // the string form IS the value (the resolution file's spelling), so it crosses the wire as one
   given Encoder[MergeDecision] = Encoder.encodeString.contramap(_.wire)
   given Decoder[MergeDecision] = Decoder.decodeString.emap(parse)
   given Schema[MergeDecision] = Schema.string[MergeDecision]

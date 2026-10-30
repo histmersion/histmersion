@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A page of candidates, and how many there are in each state (of the goal, or of every goal). */
 final case class CandidateList(
     goal: Option[String],
     state: String,

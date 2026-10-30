@@ -3,17 +3,8 @@ package com.histmersion.api
 import io.circe.Json
 import com.histmersion.values.PlaceKind
 
-/** A person's edits to the gazetteer (#987): a further name for a place, and a place of their own.
-  *
-  * The bundled seed (`db/places`) is re-imported by every `histmersion init`, and an import REPLACES the names of the
-  * places it mentions — so a name added by hand is stored as `manual` (V068), which no import deletes, and a place
-  * added by hand is a `local` place (V052) with an id no seed uses, which no import touches and which a bundle carries.
-  * Everything that decides whether an edit is well-formed lives here, pure.
-  */
-
 object PlaceEdits:
 
-  /** The prefix of the ids [[PlaceAdd]] makes up — no seed file uses it, so a re-seed never touches them. */
   val LocalPrefix = "local_"
 
   private val LangShape = "^[a-z]{2,3}(-[a-z0-9]{2,8})*$".r
@@ -21,7 +12,6 @@ object PlaceEdits:
 
   private def invalid(msg: String) = ApiError(msg, Some(Write.CodeInvalid))
 
-  /** A name as stored: trimmed, inner whitespace collapsed; blank is refused. */
   def name(raw: String): Either[ApiError, String] =
     val n = raw.trim.replaceAll("\\s+", " ")
     if n.isEmpty then Left(invalid("the name is empty"))
@@ -30,22 +20,15 @@ object PlaceEdits:
 
   val MaxName = 200
 
-  /** A language tag as stored: lower case; absent or blank = `""` (unspecified, as the seed stores it). */
   def lang(raw: Option[String]): Either[ApiError, String] =
     raw.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
       case None                            => Right("")
       case Some(l) if LangShape.matches(l) => Right(l)
       case Some(l)                         => Left(invalid(s"'$l' is not a language tag (e.g. en, grc, pl, sr-latn)"))
 
-  /** `local_` + the label as a slug, diacritics folded: "Gornji Grad" → `local_gornji_grad`, "Kraków" → `local_krakow`.
-    * A label in another script gives no slug — pass an id.
-    */
   def defaultId(label: String): String =
     LocalPrefix + Geocode.key(label).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
 
-  /** A validated [[PlaceAdd]] as the import row it becomes: a GeoJSON point, the label and every further name, the
-    * period, the source. Pure — the caller checks the id is free.
-    */
   def toInput(in: PlaceAdd): Either[ApiError, PlaceInput] =
     val label = in.label.trim.replaceAll("\\s+", " ")
     val kind = in.kind.trim.toLowerCase(java.util.Locale.ROOT)
@@ -105,9 +88,6 @@ object PlaceEdits:
         names
       )
 
-  /** The CSV `histmersion places name list --csv` writes — the columns of `db/places/supplement/names.csv`, so a name a
-    * person added can be promoted into the bundled seed by pasting the lines.
-    */
   def csv(rows: List[ManualPlaceName]): String =
     def cell(s: String) =
       if s.exists(c => c == ',' || c == '"' || c == '\n') then "\"" + s.replace("\"", "\"\"") + "\"" else s

@@ -5,9 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** Who holds the agent lease (docs/research-process-managers.md §2): only that server runs the agent engine, the
-  * schedules and the managers on this database.
-  */
 final case class AgentLeaseInfo(owner: String, until: String, expired: Boolean, thisServer: Boolean)
     derives KindlingsCodecAsObject,
       KindlingsSchema:

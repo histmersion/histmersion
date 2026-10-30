@@ -1,13 +1,9 @@
 package com.histmersion.api
 
-/** The catalogue half of an event's Markdown (`events show`, the `events` tool) and the links lists. */
 object EventLinksMarkdown:
 
   private def km(d: Double): String = s"${math.round(d)} km"
 
-  /** Pure: the tier, the catalogues (licence, citation), the attesting sources, the articles, the findings near it, the
-    * proposed sources (unconfirmed) and the leads. Empty for an event with none.
-    */
   def context(d: EventDetail): String =
     val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == EventTier.Catalogue then
                                                " — known from a catalogue only: a research lead, not evidence"

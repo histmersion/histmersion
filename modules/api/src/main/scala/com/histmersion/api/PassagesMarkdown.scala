@@ -1,11 +1,5 @@
 package com.histmersion.api
 
-// ── passages: find text inside ONE source's body (#954) ─────────────────────────────────────────
-// What `histmersion get <ck> --full | grep -n <term>` does in a shell, as one call: the embedded review
-// agents have no shell, and paging a 450 KB body through `get_source` slices cost them their turns.
-
-/** How a [[PassageResult]] reads as Markdown — the one rendering the MCP tool, the agents' tool and the CLI print.
-  */
 object PassagesMarkdown:
 
   def render(r: PassageResult): String =
@@ -25,9 +19,8 @@ object PassagesMarkdown:
       val tail = if more > 0 then List(s"_$more more — raise limit or narrow the query._") else Nil
       (head :: items ++ tail).mkString("\n\n")
 
-  /** The passage text with each match wrapped in `**…**`. */
   def marked(p: PassageHit): String =
-    val b = new StringBuilder(p.text.length + p.matches.size * 4) // local accumulator
+    val b = new StringBuilder(p.text.length + p.matches.size * 4)
     val end = p.matches.sortBy(_.start).foldLeft(0) { (at, m) =>
       val s = m.start.max(at).min(p.text.length)
       val e = m.end.max(s).min(p.text.length)

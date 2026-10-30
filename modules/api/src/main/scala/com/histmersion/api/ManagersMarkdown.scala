@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import scala.annotation.tailrec
 
-/** The managers as Markdown — every surface renders the same text. Pure. */
 object ManagersMarkdown:
   import Managers.*
 
@@ -19,13 +18,11 @@ object ManagersMarkdown:
       case "" => "no items"
       case s  => s
 
-  /** Today's spend, against the daily cap in effect when there is one. */
   def today(m: ManagerInfo): String =
     val cap = m.effective.dailyUsd.orElse(m.config.dailyUsd).filter(_ > 0)
     s"today ${usd(m.spentTodayUsd)}${cap.fold("")(c => s" of ${usd(c)}")} USD" +
       (if m.tokensToday > 0 then s", ${tokens(m.tokensToday)} tokens" else "")
 
-  /** USD: two decimals, four below a dime (a scripted or cheap run must not read as 0); locale-free. */
   def usd(d: Double): String =
     BigDecimal(d).setScale(if d != 0 && math.abs(d) < 0.1 then 4 else 2, BigDecimal.RoundingMode.HALF_UP).toString
 
@@ -33,7 +30,6 @@ object ManagersMarkdown:
     def one(x: Double) = BigDecimal(x).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
     if n >= 1000000 then s"${one(n / 1e6)}M" else if n >= 1000 then s"${one(n / 1e3)}k" else n.toString
 
-  /** The ingest backlog in a few words: how many wait and when they are in (0 days = today). */
   def backlog(n: Int, days: Option[Int]): String =
     s"${Plural.count(n, "legal open-access work")} in the ingest backlog" + (if n == 0 then ""
                                                                              else
@@ -84,7 +80,6 @@ object ManagersMarkdown:
   def events(p: EventPage): String =
     if p.events.isEmpty then "_No events._" else p.events.map(e => s"- ${event(e)}").mkString("\n")
 
-  /** A structured action in a few words. */
   def effect(e: HintEffect): String =
     if e.action == HintEffect.Config then s"settings: ${e.config.fold("none")(configLine)}"
     else
@@ -92,7 +87,6 @@ object ManagersMarkdown:
         e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +
         e.untilSource.fold("")(s => s" until $s exists") + e.priority.fold("")(p => s" (priority $p)")
 
-  /** The keys a settings change sets, `key=value`. */
   def configLine(c: ManagerConfig): String =
     List(
       c.maxRuns.map(n => s"maxRuns=$n"),
@@ -132,7 +126,6 @@ object ManagersMarkdown:
     s"#${h.id} (${if h.standing then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
       h.retiredAt.fold("")(r => s" · retired $r") + (if h.uses > 0 then s" · reached ${h.uses} run(s)" else "")
 
-  /** What an enqueue did. */
   def enqueued(r: EnqueueResult): String =
     val head = if r.items.isEmpty then s"Nothing queued for **${r.managerId}**." else s"Queued for **${r.managerId}**:"
     (List(head) ++ r.items.map(i => s"- ${item(i)}") ++ r.skipped.map(x => s"- not queued: $x")).mkString("\n")

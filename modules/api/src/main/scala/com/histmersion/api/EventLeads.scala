@@ -1,23 +1,10 @@
 package com.histmersion.api
 
-/** Linking events to the corpus (#1449), deterministically — no model: the sources whose FINDINGS lie near an event in
-  * time and space, and the sources whose TEXT names it (any of its names — its label, the catalogue's other labels and
-  * aliases in other languages). Such a source is a PROPOSED link, kept with its evidence (the finding ids, the passages
-  * with their character offsets) and a score; it is shown as "possibly discussed in", unconfirmed. Confirming one
-  * writes an ATTESTATION — and only from a passage that names the event: a source no passage of which names it is never
-  * attested by this path, however close its findings are.
-  *
-  * And the QUESTIONS an event raises — a catalogue event no source discusses, with the corpus's findings around it
-  * counted — as factual leads with the commands that act on them.
-  */
-
 object EventLeads:
 
-  /** Pure: an event's years in words (`1630 BCE–1590 BCE`, or one year: [[YearFmt.span]]). */
   def years(ts: TimeSpan): String =
     YearFmt.span(ts)
 
-  /** Pure: the size the catalogue gives (`VEI 7`, `M 7.3`), if any. */
   def size(vei: Option[Int], magnitude: Option[Double]): Option[String] =
     vei
       .map(v => s"VEI $v")
@@ -25,7 +12,6 @@ object EventLeads:
 
   private def q(s: String): String = "\"" + s.replace("\"", "'") + "\""
 
-  /** Pure: the commands that act on a lead about `label`. */
   def actions(eventId: String, label: String, yrs: String, proposed: Int): List[EventLeadAction] =
     List(
       EventLeadAction(
@@ -47,10 +33,6 @@ object EventLeads:
         )
         .toList
 
-  /** Pure: the lead an event raises, if any. A CATALOGUE event no source attests: "No source in the corpus discusses
-    * this …", with the findings around it counted and, when sources are proposed, how many. An attested event raises
-    * none.
-    */
   def of(f: LeadFacts): Option[EventLead] =
     if f.tier != EventTier.Catalogue || f.attesting > 0 then None
     else
@@ -78,7 +60,6 @@ object EventLeads:
         )
       )
 
-  /** Pure: Markdown for a list of leads (`histmersion events leads`, the MCP tool). */
   def markdown(l: EventLeadList): String =
     if l.leads.isEmpty then
       "_No leads: every event in the selection is attested by a source in the corpus, or none matched._"

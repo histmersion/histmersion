@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** `GET /api/places?q=` — a search result: the row, which of its names matched, and how many findings are assigned to
-  * it (through `finding_places`, so it reflects the last `places rebuild`).
-  */
 final case class PlaceHit(
     id: String,
     label: String,
