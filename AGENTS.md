@@ -245,12 +245,96 @@ goes in the commit message.
 excludeDependencies += ExclusionRule("io.github.cquiroz", "scala-java-time-tzdb_3")
 ```
 
+### 7. Derive in the `derives` clause
+
+Type-class instances that Kindlings derives are requested in the type's `derives` clause, not as a
+separate `given … = …derived` line.
+
+```scala
+final case class BuildStamp(version: Version, commit: CommitId) derives KindlingsCodecAsObject, KindlingsSchema
+```
+
+### 8. Lenses and loops, not copies and reallocating folds
+
+Updating one field of an accumulator (`acc.copy(queued = acc.queued + n)`) is a job for a lens
+(Kindlings' optics). A fold that allocates a new value for every element is written as a `@tailrec`
+loop over plain parameters, building the result once at the end.
+
+```scala
+def of(states: List[(JobState, Int)]): JobCounts =
+  @tailrec def loop(rest: List[(JobState, Int)], queued: Int, running: Int, done: Int): JobCounts =
+    rest match
+      case (JobState.Queued, n) :: tail  => loop(tail, queued + n, running, done)
+      case (JobState.Running, n) :: tail => loop(tail, queued, running + n, done)
+      case (_, n) :: tail                => loop(tail, queued, running, done + n)
+      case Nil                           => JobCounts(queued, running, done)
+  loop(states, 0, 0, 0)
+```
+
+### 9. One top-level type per file
+
+A file holds one top-level type with its companion, unless the types are genuinely one thing: a sealed
+hierarchy, or a helper so tied to a type that it could live in its companion. Several unrelated types in
+one file make the incremental compiler recompile every use site of all of them when one changes.
+
+### 10. Package by feature, not by layer
+
+- Types shared across the whole application: `com.histmersion.domain`.
+- Each subdomain (a functionality of the core): `com.histmersion.domain.<subdomain>`, e.g.
+  `domain.backup`, `domain.export`.
+- Supporting areas (database, files, JSON, …): `com.histmersion.util.<area>`, e.g. `util.database`,
+  `util.json`.
+- What is shared only inside a (sub)domain is package-private, not public. A service and its repository
+  live in the same package, and the repository is invisible outside it.
+- Subdomains follow functionality, not the shape of endpoints, MCP tools or CLI commands: one endpoint may
+  use several subdomains.
+- The `db` module holds database primitives only; migrations and repositories belong to the feature that
+  owns the data.
+- Shared API types and API-specific types live apart.
+
+### 11. Services own transactions
+
+A repository method takes the transaction it runs in; it never opens one. The service opens the
+transaction, so several repository calls are atomic together.
+
+### 12. No globals
+
+Nothing reads the environment, system properties, the clock or the working directory directly
+(`System.getenv`, `sys.props`, `Instant.now()` …). Values come from configuration, or are passed in.
+
+### 13. Services are traits; controllers depend on them
+
+A service is a trait. Its companion holds the implementations:
+
+```scala
+trait BackupService:
+  def run(request: BackupRequest): Either[BackupError, Backup]
+
+object BackupService:
+  def apply(config: BackupConfig, transactor: Transactor): BackupService = Implementation(config, transactor)
+
+  private final class Implementation(config: BackupConfig, transactor: Transactor) extends BackupService:
+    …
+
+  final class InMemory(state: AtomicReference[BackupState]) extends BackupService:
+    …
+```
+
+`InMemory` is not a mock. It does not persist, but in tests it behaves exactly as the database
+implementation does. Where the real services share data, the in-memory ones share atomic references, and
+a test seeds them by calling the `InMemory` services themselves. No mocking library.
+
+Endpoint logic lives in `…Controllers` (not `…Handlers`) that take services as dependencies, so a
+controller is unit-tested with `InMemory` services and no server.
+
+Rules 7–13 bind new code from 2026-10-30. Existing code is migrated by two planned jobs (a style sweep and
+a restructure by feature), not piecemeal; until then, follow the surrounding code where the two conflict
+only to keep one file consistent.
+
 ## Kindlings: codecs, schemas and config are derived, not written
 
 ```scala
-final case class SearchHit(…) derives KindlingsCodecAsObject
-object SearchHit:
-  given Schema[SearchHit] = KindlingsSchema.derived[SearchHit].schema
+final case class SearchHit(…) derives KindlingsCodecAsObject, KindlingsSchema
 ```
 
 Circe codec and Tapir schema come from the **same** API case class, so the JSON on the wire and the
