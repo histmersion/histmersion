@@ -22,7 +22,7 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
     * variables of an AI tool's environment), which takes any single value. `None`: no such setting. */
   def field(key: SettingKey): Option[SettingField] =
     byKey.get(key).orElse(Option.when(ConfigSchema.inOpenBlock(key))(
-      SettingField(key, SettingKind.Any, None, "", None, ConfigSchema.restartOf(key), SecretRule.of(key))))
+      SettingField(key, ConfigSchema.openKind(key), None, "", None, ConfigSchema.restartOf(key), SecretRule.of(key))))
 
   /** The known settings named most like `key`, for "did you mean". */
   def closest(key: SettingKey, n: Int = 3): List[SettingKey] =
@@ -77,6 +77,11 @@ object ConfigSchema:
     }
 
   private def openBlock(path: List[String]): Boolean = ConfigLayers.OpenBlocks.contains(path)
+
+  /** The kind of an open block's key: a plugin's `enabled` is true or false (the host's own key); any other
+    * takes any single value. */
+  def openKind(key: SettingKey): SettingKind =
+    if key.leaf == "enabled" && key.within(SettingKey.applyUnsafe("histmersion.plugins")) then SettingKind.Flag else SettingKind.Any
 
   def inOpenBlock(key: SettingKey): Boolean =
     val p = key.segments

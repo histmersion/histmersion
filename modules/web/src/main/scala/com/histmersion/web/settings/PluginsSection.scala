@@ -15,6 +15,17 @@ object PluginsSection:
     case Some(PluginState.Refused)    => s"Not loaded: ${p.error.getOrElse("no reason given")}"
     case None                         => Wording.humanize(p.state)
 
+  /** What a plugin adds, in words (`source-fetcher:oa-core` → "Finds papers"). Pure. */
+  def provides(p: PluginStatus): List[String] =
+    p.provides.map(_.takeWhile(_ != ':')).distinct.map {
+      case "source-fetcher"   => "Finds papers"
+      case "media-collection" => "Pictures"
+      case "event-catalogue"  => "Events"
+      case "ai-provider"      => "An AI provider"
+      case "secret-vault"     => "A password manager"
+      case other              => Wording.humanize(other)
+    }
+
   def pane(ui: UiConfig): HtmlElement =
     val r = ui.plugins
     div(cls := "settings-section",
@@ -22,7 +33,7 @@ object PluginsSection:
         Some("Turn a plugin on or off; the server applies it at once. A plugin that needs a key of your own (Europeana, " +
           "Smithsonian) works once the key is in Keys and passwords."),
         r.plugins.map(p => SettingsForm.Item(s"plugins.${p.id}.enabled", Some(Wording.plugin(p.id)),
-          Some((state(p) :: p.provides.map(Wording.humanize).take(3)).mkString(" · ")), fallback = Some(p.enabled.toString)))),
+          Some((state(p) :: provides(p)).mkString(" · ")), fallback = Some(p.enabled.toString)))),
       sectionTag(cls := "settings-card",
         div(cls := "settings-card-head", h2(cls := "settings-card-title", "Added to this install"),
           p(cls := "settings-card-intro", "Plugins of your own are added on the command line (histmersion plugin add), " +

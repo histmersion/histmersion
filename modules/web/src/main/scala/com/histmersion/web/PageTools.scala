@@ -13,7 +13,7 @@ object PageWidth:
   /** A stored value; anything else is the reading width. Pure. */
   def fromWire(s: String): PageWidth = values.find(_.wire == Option(s).fold("")(_.trim.toLowerCase)).getOrElse(Reading)
 
-/** The tools of a source's or an article's own page (#7382): the width of its text and the theme, at the top of
+/** The tools of a source's or an article's own page: the width of its text and the theme, at the top of
   * the page — also where the top bar has no room for its theme button. The width is kept in the browser's
   * storage (and read back with care: a private window may have none). */
 object PageTools:

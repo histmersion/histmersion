@@ -30,8 +30,16 @@ object AdvancedSection:
           div(cls := "advanced-file muted", p.file.fold("This server has no settings file.")(f => s"Settings file: $f"),
             p.problems.map(x => com.histmersion.web.ErrorLine.text(x)))
       },
-      children <-- SettingsStore.current.map(_.flatMap(_.toOption).toList.flatMap(_.sections)).map(_.map(s => block(s, draft, query.signal))),
-      div(cls := "advanced-save", SettingsForm.saveBar(draft)))
+      div(cls := "advanced-save", SettingsForm.saveBar(draft)),
+      children <-- SettingsStore.current.map(_.flatMap(_.toOption).toList.flatMap(_.sections)).map(_.map(s => block(s, draft, query.signal))))
+
+  /** The blocks whose names say little as words. */
+  private val Names = Map("db" -> "Database", "ui" -> "The web page", "cli" -> "The command line", "init" -> "First-run data",
+    "agents" -> "AI agents", "acquire" -> "Finding sources", "basemap" -> "Background map", "config" -> "Reloading the settings",
+    "runtime" -> "The bundled database and converter", "media" -> "Pictures", "places" -> "Places", "query" -> "Read-only queries")
+
+  /** A block's name for a person. Pure. */
+  def sectionName(id: String): String = Names.getOrElse(id, Wording.humanize(id))
 
   /** One block, folded until opened (or while the filter finds something in it). */
   private def block(s: ConfigEdit.Section, draft: Draft, query: Signal[String]): HtmlElement =
@@ -40,7 +48,7 @@ object AdvancedSection:
     detailsTag(cls := "advanced-block", dataAttr("section") := s.id,
       htmlAttr("open", com.raquo.laminar.codecs.BooleanAsAttrPresenceCodec) <-- open.signal.combineWith(query).map((o, q) => o || q.trim.nonEmpty && shown.exists(matches(_, q))),
       summaryTag(cls := "advanced-summary", onClick.preventDefault --> (_ => open.update(!_)),
-        span(cls := "advanced-name", Wording.humanize(s.id)), span(cls := "muted", s" · ${s.fields.size}"),
+        span(cls := "advanced-name", sectionName(s.id)), span(cls := "muted", s" · ${s.fields.size}"),
         Option.when(s.doc.nonEmpty)(span(cls := "advanced-doc muted", s" — ${s.doc}"))),
       children <-- open.signal.combineWith(query).map { (o, q) =>
         if !o && q.trim.isEmpty then Nil

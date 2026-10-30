@@ -88,8 +88,25 @@ object DataSection:
         disabled <-- Auth.writable.map(!_), onClick --> (_ => start(text, what, job)))
     private def start(text: String, what: String, job: => Future[JobInfo]): Unit =
       job.onComplete { r =>
-        said.set(Some(r.toEither.left.map(SettingsStore.message).map(_ => s"$text: started. It is listed under “Downloading now”.")))
-        DownloadJobs.refresh()
+        r.toEither.left.map(SettingsStore.message) match
+          case Left(why) => said.set(Some(Left(why)))
+          case Right(j) if j.detail.flatMap(_.about).exists(_.startsWith("dry run")) || what.endsWith("-check") =>
+            said.set(Some(Right(s"$text: checking…")))
+            follow(text, j.id, 0)
+          case Right(_) =>
+            said.set(Some(Right(s"$text: started. It is listed under “Downloading now”.")))
+            DownloadJobs.refresh()
+      }
+
+    /** A check (a dry run) is quick: follow it to its end and say what it found. */
+    private def follow(text: String, id: String, n: Int): Unit =
+      val _ = scala.scalajs.js.timers.setTimeout(1000) {
+        ApiClient.job(id).foreach { j =>
+          if !j.isTerminal && n < 120 then follow(text, id, n + 1)
+          else said.set(Some(
+            if j.succeeded then Right(s"$text: ${j.progress.getOrElse("done")}")
+            else Left(s"$text: ${j.error.getOrElse(j.status)}")))
+        }
       }
 
   private def maps(b: BasemapStatus, starter: Starter): List[HtmlElement] =

@@ -7,8 +7,8 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-/** Settings › General: the theme and the map's motion (this browser's own), and where the map opens (#6552:
-  * the settings file's `ui.map-start`, for every browser). */
+/** Settings › General: the theme and the map's motion (this browser's own), and where the map opens (the
+  * settings file's `ui.map-start`, for every browser). */
 object GeneralSection:
 
   def pane(ui: UiConfig): HtmlElement =
