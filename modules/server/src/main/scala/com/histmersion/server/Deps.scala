@@ -2,10 +2,12 @@ package com.histmersion.server
 
 import com.histmersion.pluginhost.Generation
 
-import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
+import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserConfigFile, UserPaths}
 import com.histmersion.api.{ConfigFileInfo, ReloadReport}
 import com.histmersion.server.hot.Pinning
 import com.histmersion.server.plugins.Plugins
+import com.histmersion.util.database.Transactor
+import java.time.Clock
 import javax.sql.DataSource
 
 /** Everything the handlers need. Built once in `Main` (the composition root) and passed down — no object-initialisation
@@ -39,8 +41,18 @@ final class Deps(
       */
     loadedNow: Option[() => LoadedConfig] = None,
     /** Ends this process so that the service it runs under starts it again; `None` where none does. */
-    val restart: Option[() => Unit] = None
+    val restart: Option[() => Unit] = None,
+    /** The time, the environment and the per-user paths: read once by the entry point, never globally. */
+    val clock: Clock = Clock.systemUTC(),
+    val environment: Environment = Environment.empty,
+    val userPaths: UserPaths = UserPaths(Environment.empty, "")
 ):
+
+  /** Transactions on the application role ([[ds]]). */
+  val transactor: Transactor = Transactor(ds)
+
+  /** Connections of the read-only role ([[queryDs]]), for the `query` escape hatch alone. */
+  val queryTransactor: Transactor = Transactor(queryDs)
 
   /** The config the calling thread sees (its pinned generation's, else the current one). */
   def cfg: AppConfig = cfgNow()

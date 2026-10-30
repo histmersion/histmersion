@@ -8,8 +8,15 @@ import scala.jdk.CollectionConverters.*
 
 /** Where Histmersion keeps its per-user files: the data directory (the bundle's cluster, logs and backups; the agent
   * trees) and the user config file. ONE resolver, so the server, the bundle supervisor, the agent trees and the CLI
-  * cannot disagree about a path. Pure: `env` is the environment, `osName` the `os.name` property.
+  * cannot disagree about a path. Built once by the entry point from the environment and the `os.name` property.
   */
+final case class UserPaths(environment: Environment, osName: String):
+  def isMac: Boolean = UserPaths.isMac(osName)
+  def defaultDataDir: Option[Path] = UserPaths.defaultDataDir(environment.lookup, osName)
+  def dataDir(configured: String): Option[Path] = UserPaths.dataDir(configured, environment.lookup, osName)
+  def cacheDir: Option[Path] = UserPaths.cacheDir(environment.lookup)
+  def configFile: Option[Path] = UserPaths.configFile(environment.lookup)
+
 object UserPaths:
 
   /** Names the config file outright, wherever it is. */

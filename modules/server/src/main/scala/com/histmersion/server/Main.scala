@@ -5,7 +5,7 @@ import com.histmersion.pluginhost.{FetchChain, Generation, OutboundTls}
 import sttp.tapir.server.netty.sync.{NettySyncServer, NettySyncServerOptions}
 import sttp.tapir.server.netty.NettyConfig
 import scala.concurrent.duration.*
-import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
+import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserConfigFile, UserPaths}
 import com.histmersion.api.{ConfigFileInfo, PluginsMarkdown}
 import com.histmersion.server.acquire.*
 import com.histmersion.server.hot.{Hot, PinRequests}
@@ -93,14 +93,15 @@ object Main:
       onHandlers: Handlers => Unit = _ => (),
       plugins: Generation = Plugins.offline,
       core: CoreBudget = CoreBudget(),
-      restart: Option[() => Unit] = None
+      restart: Option[() => Unit] = None,
+      system: SystemContext = SystemContext.isolated
   )(using Ox): NettySyncServer =
     val sg = ServerGraph.start(hc, source, Some(plugins), core).fold(e => throw IllegalStateException(e), identity)
     releaseAfterScope(sg.close())
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
     core.persistTo(CoreQuotaStore.db(sg.ds))
-    val deps = sg.deps(Maintenance(), restart)
+    val deps = sg.deps(Maintenance(), restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h = Handlers(deps, converter.getOrElse(ConverterClient.fromConfig(deps.cfg.converter)))
     onHandlers(h) // a test's handle on this server's handlers (its run tokens); nothing in production
@@ -293,6 +294,10 @@ object Main:
         scribe.error(err)
         sys.exit(3)
     val loaded = loadedConfig.config
+    // the environment the settings were read with, and the paths and the clock: the only reads of them
+    val environment = Environment.of(loadedConfig.env)
+    val system =
+      SystemContext(java.time.Clock.systemUTC(), environment, UserPaths(environment, System.getProperty("os.name", "")))
     mode match
       case ServerMode.SelfCheck =>
         val zones = TimeZoneCheck.jdk()
@@ -302,12 +307,12 @@ object Main:
     val reread = () => AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path)
     // the native bundle: run the bundled Postgres + converter as children and point the config at them;
     // a reloaded config is pointed at them the same way (the children themselves are restart-only)
-    val explicit = Option(System.getenv("HISTMERSION_RUNTIME")).map(_.trim.toLowerCase).filter(_.nonEmpty)
+    val explicit = environment.nonBlank("HISTMERSION_RUNTIME").map(_.toLowerCase)
     val bundled = loaded.runtime.enabled || (explicit.isEmpty && Supervisor.bundled(Supervisor.currentExecutable))
     val (cfg, source) =
       if !bundled then (loaded, ConfigSource(reread))
       else
-        try (Supervisor.start(loaded), Supervisor.reloadSource(loaded, reread))
+        try (Supervisor.start(loaded, system.userPaths), Supervisor.reloadSource(loaded, reread, system.userPaths))
         catch
           case e: Throwable =>
             scribe.error(s"Histmersion could not start its bundled runtime: ${e.getMessage}")
@@ -315,7 +320,9 @@ object Main:
     // a LaunchAgent (launchd names its job in XPC_SERVICE_NAME) or a systemd unit (INVOCATION_ID) starts the
     // server again when it exits with an error: there, Settings can restart it by ending it with that code
     val underService =
-      sys.env.get("XPC_SERVICE_NAME").exists(_.contains("histmersion")) || sys.env.contains("INVOCATION_ID")
+      environment.get("XPC_SERVICE_NAME").exists(_.contains("histmersion")) || environment
+        .get("INVOCATION_ID")
+        .isDefined
     val restart = Option.when(underService) { () =>
       val code = cfg.server.restartExitCode
       val _ = Thread.ofVirtual().start { () =>
@@ -336,7 +343,8 @@ object Main:
             autoInit = cfg.init.auto,
             plugins = generation,
             core = core,
-            restart = restart
+            restart = restart,
+            system = system
           )
         catch
           case e: Throwable =>

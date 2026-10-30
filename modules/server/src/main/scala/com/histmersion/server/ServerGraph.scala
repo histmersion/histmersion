@@ -41,7 +41,7 @@ final class ServerGraph private (
   val queryDs: DataSource = HotDataSource(queryPool)(_.ds)
 
   /** The handlers' view: config, file and plugins from the graph at each call. */
-  def deps(maintenance: Maintenance, restart: Option[() => Unit] = None): Deps =
+  def deps(maintenance: Maintenance, restart: Option[() => Unit], system: SystemContext): Deps =
     new Deps(
       () => graph.config.app,
       ds,
@@ -52,7 +52,10 @@ final class ServerGraph private (
       graph,
       () => reload(),
       loadedNow = Some(() => graph.config.loaded),
-      restart = restart
+      restart = restart,
+      clock = system.clock,
+      environment = system.environment,
+      userPaths = system.userPaths
     )
 
   /** Throw away the pooled connections of the pools in use now (after a restore: see [[Db.evict]]). */
