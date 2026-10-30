@@ -149,11 +149,11 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
   test("V076 dates a stored Cliopatria concept from its slices and leaves one with no dated slice alone"):
     connect(ds):
       val _ = sql"""INSERT INTO places (id, label, kind, period, source) VALUES
-                      ('cliopatria_zqtv_kingdom', 'zqtv kingdom', 'polity', int8range(NULL, NULL), 'Cliopatria (Seshat Databank), CC BY-NC-SA'),
-                      ('cliopatria_zqtv_kingdom_-900_-801', 'Zqtv Kingdom', 'polity', int8range(-900, -801, '[]'), 'Cliopatria (Seshat Databank), CC BY-NC-SA'),
-                      ('cliopatria_zqtv_kingdom_-700_-601', 'Zqtv Kingdom', 'polity', int8range(-700, -601, '[]'), 'Cliopatria (Seshat Databank), CC BY-NC-SA'),
-                      ('cliopatria_zqtv_nodates', 'zqtv nodates', 'polity', int8range(NULL, NULL), 'Cliopatria (Seshat Databank), CC BY-NC-SA'),
-                      ('cliopatria_zqtv_nodates_3', 'Zqtv Nodates', 'polity', int8range(NULL, NULL), 'Cliopatria (Seshat Databank), CC BY-NC-SA')
+                      ('cliopatria_zqtv_kingdom', 'zqtv kingdom', 'polity', int8range(NULL, NULL), 'Cliopatria (Seshat Databank), CC BY 4.0'),
+                      ('cliopatria_zqtv_kingdom_-900_-801', 'Zqtv Kingdom', 'polity', int8range(-900, -801, '[]'), 'Cliopatria (Seshat Databank), CC BY 4.0'),
+                      ('cliopatria_zqtv_kingdom_-700_-601', 'Zqtv Kingdom', 'polity', int8range(-700, -601, '[]'), 'Cliopatria (Seshat Databank), CC BY 4.0'),
+                      ('cliopatria_zqtv_nodates', 'zqtv nodates', 'polity', int8range(NULL, NULL), 'Cliopatria (Seshat Databank), CC BY 4.0'),
+                      ('cliopatria_zqtv_nodates_3', 'Zqtv Nodates', 'polity', int8range(NULL, NULL), 'Cliopatria (Seshat Databank), CC BY 4.0')
                     ON CONFLICT (id) DO NOTHING""".update.run()
       val _ = sql"""INSERT INTO place_relations (child_id, parent_id, kind, period) VALUES
                       ('cliopatria_zqtv_kingdom_-900_-801', 'cliopatria_zqtv_kingdom', 'part_of', int8range(-900, -801, '[]')),

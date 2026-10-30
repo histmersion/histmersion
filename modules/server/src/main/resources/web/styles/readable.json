@@ -12,6 +12,7 @@
     },
     "lc": {
       "type": "vector",
+      "attribution": "land cover: <a href=\"https://esa-worldcover.org/en/data-access\">© ESA WorldCover</a>",
       "tiles": [
         "/api/basemap/vector/{z}/{x}/{y}?v={version}&layers=landcover:a"
       ],
