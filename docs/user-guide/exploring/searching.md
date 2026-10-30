@@ -41,7 +41,7 @@ histmersion search '"sea peoples"' --limit 30
 | the period it is about | `--from`, `--to` | the **years the source or its findings are about**, signed (1200 BCE is `-1200`) |
 | map area | `--bbox minLon,minLat,maxLon,maxLat` | findings inside the box (a west edge east of the east edge crosses the date line) |
 | title | `--title` | part of the title |
-| order | `--sort` | `relevance`, `cited`, `period`, `year` or `title` |
+| order | `--sort` | `relevance`, `cited`, `period`, `year` (newest first), `oldest` or `title` |
 | paging | `--limit`, `--offset` | at most 500 per page; the list's footer gives the next offset |
 
 Two kinds of year are easy to mix up. `--year-from 2010` means "published in 2010 or later".

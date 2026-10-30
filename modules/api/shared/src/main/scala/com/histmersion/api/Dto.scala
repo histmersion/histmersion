@@ -23,7 +23,8 @@ final case class SearchHit(
     // FTS extras (plan §1.4). Optional so callers that don't run a text query keep compiling.
     snippet: Option[String] = None,        // ts_headline over the best-matching body chunk (**term**)
     matchedHeading: Option[String] = None, // that chunk's heading breadcrumb
-    doi: Option[String] = None             // the link label when present (else the citekey)
+    doi: Option[String] = None,            // the link label when present (else the citekey)
+    authors: List[String] = Nil            // as stored: Library's table shows them under the title
 ) derives KindlingsCodecAsObject
 object SearchHit:
   given Schema[SearchHit] = KindlingsSchema.derived[SearchHit].schema

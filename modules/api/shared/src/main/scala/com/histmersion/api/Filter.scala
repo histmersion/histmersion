@@ -152,9 +152,10 @@ object BBox:
       val ds = xs.flatMap(_.toDoubleOption)
       if ds.length == xs.length then Some(ds.toArray) else None
 
-/** Result ordering. Wire form is the lowercase label (`relevance|cited|period|year|title`). */
+/** Result ordering. Wire form is the lowercase label (`relevance|cited|period|year|oldest|title`): `year` is
+  * the newest publication first, `oldest` the oldest first. */
 enum Sort:
-  case Relevance, Cited, PeriodStart, Year, Title
+  case Relevance, Cited, PeriodStart, Year, Oldest, Title
 
 object Sort:
   def label(s: Sort): String = s match
@@ -162,13 +163,15 @@ object Sort:
     case Cited       => "cited"
     case PeriodStart => "period"
     case Year        => "year"
+    case Oldest      => "oldest"
     case Title       => "title"
 
   def parse(s: String): Option[Sort] = s.trim.toLowerCase.replace("_", "") match
     case "relevance" | "rank"            => Some(Relevance)
     case "cited" | "citations"           => Some(Cited)
     case "period" | "periodstart" | "time" => Some(PeriodStart)
-    case "year"                          => Some(Year)
+    case "year" | "newest"               => Some(Year)
+    case "oldest"                        => Some(Oldest)
     case "title"                         => Some(Title)
     case _                               => None
 

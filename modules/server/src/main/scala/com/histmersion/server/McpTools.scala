@@ -30,7 +30,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "1200 BCE is -1200) and a lon/lat box. A source matches a period/box/place through its own " +
           "metadata OR any of its findings. Use the `facets` tool FIRST to discover the tag/author/" +
           "place/topic vocabulary instead of guessing terms; a filter with an unknown tag returns " +
-          "nothing. Page with `limit`/`offset`; `sort` is relevance|cited|period|year|title. " +
+          "nothing. Page with `limit`/`offset`; `sort` is relevance|cited|period|year|oldest|title. " +
           "USE `groupBy` TO SEE **WHEN** AND **WHERE** THE EVIDENCE SITS BEFORE READING SOURCES: " +
           "groupBy = time | region | time,region | region,time returns a nested tree of counts " +
           "instead of a list — adaptive time buckets, and/or the gazetteer from continents down — " +

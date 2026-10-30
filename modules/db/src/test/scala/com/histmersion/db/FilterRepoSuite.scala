@@ -107,6 +107,8 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(keys(run(Filter(authors = List("cline", "anthony")))).sorted,
       List("zzf_alpha", "zzf_beta"))
     assertEquals(find(run(Filter(authors = List("cline"))), "zzf_alpha").why, List("author: Eric H. Cline"))
+    // the row carries its authors, for a table of sources
+    assertEquals(find(run(Filter(authors = List("cline"))), "zzf_alpha").source.authors, List("Eric H. Cline"))
 
   test("places match sources.regions ∪ findings.region_name"):
     assertEquals(keys(run(Filter(places = List("Levant")))), List("zzf_alpha"))
@@ -141,6 +143,13 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     val next = SourceRepo.sources(ds, f.copy(limit = 1, offset = 1, sort = Sort.Title), words)
     assertEquals(next.total, 3)
     assertNotEquals(page.hits.head.source.citekey, next.hits.head.source.citekey)
+
+  test("sorting: by publication year, newest or oldest first"):
+    val f = Filter(places = List("Levant", "Pontic", "Oceania"))
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Year), words)),
+      List("zzf_gamma", "zzf_alpha", "zzf_beta"))
+    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Oldest), words)),
+      List("zzf_beta", "zzf_alpha", "zzf_gamma"))
 
   test("sorting: by title, by citations, by period start"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))

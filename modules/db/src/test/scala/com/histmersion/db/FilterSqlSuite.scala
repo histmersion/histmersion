@@ -143,6 +143,7 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.orderBy(Sort.Cited), "ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey")
     assertEquals(FilterSql.orderBy(Sort.PeriodStart), "ORDER BY lower(s.period) ASC NULLS LAST, s.citekey")
     assertEquals(FilterSql.orderBy(Sort.Year), "ORDER BY s.year DESC NULLS LAST, s.citekey")
+    assertEquals(FilterSql.orderBy(Sort.Oldest), "ORDER BY s.year ASC NULLS LAST, s.citekey")
     assertEquals(FilterSql.orderBy(Sort.Title), "ORDER BY lower(s.title) ASC, s.citekey")
 
   test("sourcesQuery with a text query uses a CTE for ranking, defers snippets"):
