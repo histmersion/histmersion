@@ -174,7 +174,7 @@ object Pages:
     val prose = (md: Option[String]) => md.map(_.trim).filter(_.nonEmpty).map(html)
     val findings =
       if p.findings.isEmpty then ""
-      else s"""<h2>Findings (${p.findings.size})</h2><ul class="findings">${p.findings.map(finding).mkString}</ul>"""
+      else s"""<h2 id="findings">Findings (${p.findings.size})</h2><ul class="findings">${p.findings.map(finding).mkString}</ul>"""
     val body = p.fullText match
       case FullText.Hidden      => ""
       case FullText.Missing     => """<hr><p class="muted">No full text is stored for this source.</p>"""
@@ -194,10 +194,10 @@ object Pages:
 
   /** "Cites" and "Cited by", each omitted when empty — and nothing at all when both are. */
   def citations(cites: List[Citation], citedBy: List[Citation]): String =
-    def block(title: String, cs: List[Citation]) =
+    def block(anchor: String, title: String, cs: List[Citation]) =
       if cs.isEmpty then ""
-      else s"""<h2>$title (${cs.size})</h2><ul class="citations">${cs.map(citation).mkString}</ul>"""
-    block("Cites", cites) + block("Cited by", citedBy)
+      else s"""<h2 id="$anchor">$title (${cs.size})</h2><ul class="citations">${cs.map(citation).mkString}</ul>"""
+    block("cites", "Cites", cites) + block("cited-by", "Cited by", citedBy)
 
   private def kindLabel(kind: String): String = s"""<span class="edge-kind">${esc(Label.display(kind))}</span> """
 
@@ -318,7 +318,7 @@ object Pages:
             s"""<li$id>${sourceLink(e.citekey, e.doi, if byline.nonEmpty then byline else t)} <i>${esc(t)}</i>$status""" +
               s""" <span class="ident">$ident</span></li>"""
       }
-      s"""<h2>Sources cited (${entries.size})</h2><ol class="sources-cited">${items.mkString}</ol>"""
+      s"""<h2 id="sources-cited">Sources cited (${entries.size})</h2><ol class="sources-cited">${items.mkString}</ol>"""
 
   def backlinks(rows: List[Backlink]): String =
     if rows.isEmpty then ""
