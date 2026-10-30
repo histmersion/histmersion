@@ -4,7 +4,7 @@ import { appendFileSync } from 'node:fs';
 import { configOverride, engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
 import { fullLoad, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
 import { LIBRARY_SOURCES, routeLibrary } from './library-fixtures.mjs';
-import { goal as researchGoal, routeResearch } from './research-fixtures.mjs';
+import { approvals, goal as researchGoal, routeResearch } from './research-fixtures.mjs';
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
 import { quiet, trackRequests } from './perf-lib.mjs';
 import { routeTiles } from './tile-fixtures.mjs';
@@ -4362,6 +4362,49 @@ test('Needs your decision: the oldest first, each with its reason and what to re
     await page.waitForFunction(() => true);
     await new Promise(r => setTimeout(r, 300));
     assert.deepEqual(writes.decide, ['901:approve']);
+  });
+});
+
+test('a decision\'s evidence link is followed once: in the page for its own pages, by the browser for a server page or a modified click', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeResearch(page);
+    const plan = { id: 903, runId: 'zz-run-plan', kind: 'goal-plan', citekey: '', subject: 'zz-collapse', state: 'open',
+      evidence: 'Zz a plan of three articles.', createdAt: new Date(Date.now() - 30 * 60000).toISOString() };
+    await page.route(/\/api\/agents\/approvals(\?|$)/, r => r.fulfill({ json: [...approvals, plan], headers: { 'X-Total-Count': '3' } }));
+    await page.goto(new URL('/research', baseURL).href);
+    await page.locator('.research-decisions .decision-row[data-approval="903"]').waitFor();
+    // what the page did with each click: the handlers run before this window-level listener, which then stops the
+    // browser from following the link itself, so the page's own navigation is all that can move it
+    await page.evaluate(() => {
+      window.__clicks = [];
+      window.addEventListener('click', e => {
+        const a = e.target.closest('a');
+        if (a) { window.__clicks.push({ href: a.getAttribute('href'), prevented: e.defaultPrevented }); e.preventDefault(); }
+      });
+    });
+    const click = (sel, mods) => page.locator(sel).first().evaluate((el, m) =>
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0, ...m })), mods);
+    const last = () => page.evaluate(() => window.__clicks.at(-1));
+    const source = '.decision-row[data-approval="901"] .decision-evidence[href="/source/zz_drake_2012"]';
+    const article = '.decision-row[data-approval="902"] .decision-evidence[href="/article/zz-hittite-storm-god"]';
+    const own = '.decision-row[data-approval="903"] .decision-evidence[href="/research/goals/zz-collapse"]';
+    for (const [sel, href] of [[source, '/source/zz_drake_2012'], [article, '/article/zz-hittite-storm-god']]) {
+      for (const mods of [{}, { metaKey: true }, { ctrlKey: true }, { shiftKey: true }]) {
+        await click(sel, mods);
+        assert.deepEqual(await last(), { href, prevented: false }, `${href} ${JSON.stringify(mods)}`);
+        await new Promise(r => setTimeout(r, 100));
+        assert.equal(new URL(page.url()).pathname, '/research', `${href} ${JSON.stringify(mods)}: the page itself never follows it`);
+      }
+    }
+    for (const mods of [{ metaKey: true }, { ctrlKey: true }, { shiftKey: true }]) {
+      await click(own, mods);
+      assert.deepEqual(await last(), { href: '/research/goals/zz-collapse', prevented: false }, JSON.stringify(mods));
+      await new Promise(r => setTimeout(r, 100));
+      assert.equal(new URL(page.url()).pathname, '/research', `${JSON.stringify(mods)}: a modified click leaves this tab alone`);
+    }
+    await click(own, {});
+    assert.deepEqual(await last(), { href: '/research/goals/zz-collapse', prevented: true });
+    await page.waitForFunction(() => location.pathname === '/research/goals/zz-collapse');
   });
 });
 
