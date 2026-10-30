@@ -113,7 +113,8 @@ class PagesSuite extends munit.FunSuite:
   test("a trailing hand-written Sources list is dropped under the generated footer"):
     val html = Pages.article(articlePage("# T\n\nprose [[drews1993_end]]\n\n## Sources\n\n- [[drews1993_end]]\n",
       List(CitedSource("drews1993_end", Some(drews.title), Some(1993), Some(SourceStatus.Contested), drews.authors))), links)
-    assertEquals("<h2>Sources".r.findAllIn(html).size, 1, html)
+    assertEquals("<h2[^>]*>Sources".r.findAllIn(html).size, 1, html)
+    assert(html.contains("""<h2 id="sources-cited">Sources cited ("""), html)
 
   // ── source page ───────────────────────────────────────────────────────────────────────────────
 
@@ -135,6 +136,8 @@ class PagesSuite extends munit.FunSuite:
       Some("key_evidence"))
     val html = Pages.source(sourcePage.copy(findings = List(f)), links)
     assert(html.contains("south caucasus (41.00, 45.00)"), html)
+    // Library's reading pane links "All N findings" here
+    assert(html.contains("""<h2 id="findings">Findings (1)</h2>"""), html)
     assert(!html.replaceAll("<[^>]*>", "").contains("_"), "no underscore reaches the reader: " + html)
 
   test("Cites / Cited by merge typed edges, unresolved edges and the articles citing the source"):
@@ -142,8 +145,8 @@ class PagesSuite extends munit.FunSuite:
       cites = List(Citation.ToSource(drews, "challenges"), Citation.Unresolved("ghost2019_x", "references")),
       citedBy = List(Citation.ToArticle(topic, None)))
     val html = Pages.source(p, links)
-    assert(html.contains("<h2>Cites (2)</h2>"), html)
-    assert(html.contains("<h2>Cited by (1)</h2>"), html)
+    assert(html.contains("""<h2 id="cites">Cites (2)</h2>"""), html)
+    assert(html.contains("""<h2 id="cited-by">Cited by (1)</h2>"""), html)
     assert(html.contains(HtmlRender.sourceRef(drews, "Drews 1993")), html)
     assert(html.contains("""<span class="edge-kind">challenges</span>"""), html)
     assert(html.contains("not in the corpus yet"), html)
