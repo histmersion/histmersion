@@ -469,13 +469,15 @@ test('start the map here and start the timeline at its years: written to the set
     try {
       await page.evaluate(() => window.__testMap.setView([37.6, 22.8], 6));
       await page.locator('#map canvas').focus();
+      const centre = await page.evaluate(() => window.__testMap.getCenter());
       await page.keyboard.press('Shift+F10');
       await page.locator('.context-menu [role^=menuitem]', { hasText: 'Start the map here' }).click();
       await page.waitForFunction(async () => {
         const p = await (await fetch('/api/settings?prefix=ui.map-start')).json();
         return p.sections.flatMap(s => s.fields).find(f => f.key === 'histmersion.ui.map-start.mode')?.value === '"place"';
       });
-      assert.ok(Math.abs(Number(await settingValue(page, 'ui.map-start.lat')) - 37.6) < 0.01);
+      const lat = await settingValue(page, 'ui.map-start.lat');
+      assert.ok(Math.abs(Number(lat) - centre.lat) < 0.01, `the map's centre (${centre.lat}) is where it starts: ${lat}`);
       await page.locator('.tl-menu-btn').click();
       const label = await page.locator('.tl-span-label').innerText();
       await page.locator('.context-menu [role^=menuitem]', { hasText: 'Start the timeline at' }).click();
