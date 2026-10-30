@@ -144,10 +144,11 @@ object VectorTileWriter:
 
 /** What a tile's query answers before the tile is written: ONE item (`key` the item's, `n` 1) or a CELL
   * of `n` items (`key` the cell's), at `x`/`y` in tile units (a cell's: its items' mean), the least and
-  * greatest middle of their dated spans (`None`: none of them is dated at both ends) and their bounding
-  * box in degrees. */
+  * greatest middle of their dated spans (`None`: none of them is dated at both ends), their bounding
+  * box in degrees, and how many of them have no known date (`undated`: drawn only when a viewer asks
+  * for them). */
 final case class TileCell(key: String, x: Int, y: Int, n: Int, midLo: Option[Double], midHi: Option[Double],
-    west: Double, south: Double, east: Double, north: Double):
+    west: Double, south: Double, east: Double, north: Double, undated: Int = 0):
   def isItem: Boolean = n == 1
 
 /** A layer's tile features, from its cells and the records of its items ([[com.histmersion.api.TileProps]]).
@@ -159,23 +160,29 @@ object TileFeatures:
   private def text(k: String, v: Option[String]): Seq[(String, TileValue)] = v.toSeq.map(s => k -> TileValue.Text(s))
   private def whole(k: String, v: Option[Long]): Seq[(String, TileValue)] = v.toSeq.map(n => k -> TileValue.Whole(n))
 
+  /** How many of a cell's items (or whether an item) have no known date: left out when none. */
+  private def undated(c: TileCell): Seq[(String, TileValue)] =
+    Option.when(c.undated > 0)(P.Undated -> TileValue.Whole(c.undated.toLong)).toSeq
+
   /** A cell of several items: its key, count, dates' range and box. */
   def cell(c: TileCell): TilePoint =
-    TilePoint(c.x, c.y, text(P.Key, c.key) ++ Seq(P.Count -> TileValue.Whole(c.n.toLong)) ++
+    TilePoint(c.x, c.y, text(P.Key, c.key) ++ Seq(P.Count -> TileValue.Whole(c.n.toLong)) ++ undated(c) ++
       c.midLo.toSeq.map(v => P.MidLo -> TileValue.Real(v)) ++ c.midHi.toSeq.map(v => P.MidHi -> TileValue.Real(v)) ++
       Seq(P.West -> TileValue.Real(c.west), P.South -> TileValue.Real(c.south), P.East -> TileValue.Real(c.east),
         P.North -> TileValue.Real(c.north)))
 
   def site(c: TileCell, s: SiteTile): TilePoint =
     TilePoint(c.x, c.y, text(P.Key, c.key) ++ text(P.Id, s.id) ++ text(P.Label, s.label) ++ text(P.Kind, s.kind) ++
-      text(P.SiteType, s.siteType) ++ text(P.Basis, s.basis) ++ whole(P.PeriodStart, s.periodStart) ++ whole(P.PeriodEnd, s.periodEnd))
+      text(P.SiteType, s.siteType) ++ text(P.Basis, s.basis) ++ whole(P.PeriodStart, s.periodStart) ++ whole(P.PeriodEnd, s.periodEnd) ++
+      undated(c))
 
   def event(c: TileCell, e: EventGeo): TilePoint =
     TilePoint(c.x, c.y, text(P.Key, c.key) ++ text(P.Id, e.id) ++ text(P.Label, e.label) ++ text(P.Kind, e.kind) ++
       text(P.Scale, e.scale) ++ text(P.Historicity, e.historicity) ++ whole(P.NotBefore, e.timeSpan.notBefore) ++
       whole(P.BeginBy, e.timeSpan.beginBy) ++ whole(P.EndFrom, e.timeSpan.endFrom) ++ whole(P.NotAfter, e.timeSpan.notAfter) ++
       text(P.Anchor, e.anchor) ++ text(P.PlaceId, e.placeId) ++ text(P.PlaceLabel, e.placeLabel) ++ text(P.ParentId, e.parentId) ++
-      text(P.Tier, e.tier) ++ text(P.Size, e.size) ++ text(P.Precision, e.precision) ++ text(P.Dating, e.dating))
+      text(P.Tier, e.tier) ++ text(P.Size, e.size) ++ text(P.Precision, e.precision) ++ text(P.Dating, e.dating) ++
+      undated(c))
 
   def media(c: TileCell, h: MediaGeoHit): TilePoint =
     TilePoint(c.x, c.y, text(P.Key, c.key) ++ text(P.Uid, h.uid) ++ text(P.Citekey, h.citekey) ++ text(P.AssetName, h.assetName) ++

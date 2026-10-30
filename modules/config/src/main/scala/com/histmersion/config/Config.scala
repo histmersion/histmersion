@@ -197,7 +197,7 @@ final case class UiEventsSettings(localFadeSeconds: Double, regionalFadeSeconds:
   * most items a shallower tile keeps alone, the side of the cells it counts the rest by (pixels of a
   * 512-pixel tile), the server's tile cache, and playback's time buckets (seconds of playback). */
 final case class UiMapTilesSettings(maxZoom: Int, maxPoints: Int, cellPx: Int, cacheMb: Int,
-    playbackBucketSeconds: Double) derives ConfigReader
+    playbackBucketSeconds: Double, undatedKeptZoom: Int) derives ConfigReader
 
 /** The `ui` block. The page reads it through `/api/config`, where the server adds what is no setting of
   * this block: whether writes need a key, whether agents run, the plugins and the base map's language. */
