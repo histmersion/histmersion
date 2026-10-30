@@ -6,21 +6,12 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
-/** Backup / restore (plan §1.10) — the PURE half: file naming, the one gate between a client-supplied name and the
-  * filesystem, and the JDBC-URL → `pg_dump` arguments translation.
-  *
-  * The dump itself is taken SERVER-side (`com.histmersion.server.BackupService`): the CLI is a pure HTTP client and
-  * deliberately holds no database credentials, so `pg_dump`/`pg_restore` run in the process that has them. Archives are
-  * `pg_dump -Fc` (custom, compressed, `pg_restore`-able).
-  */
 object Backup:
 
   val Prefix = "histmersion-"
   val Extension = ".dump"
 
-  /** UTC, second resolution, no separators — so the names sort chronologically as plain text and survive every
-    * filesystem: `histmersion-20260825T145112Z.dump`.
-    */
+  /** No separators, so the names sort chronologically as plain text and are valid on every filesystem. */
   private val Stamp: DateTimeFormatter =
     DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC)
 
@@ -28,10 +19,6 @@ object Backup:
 
   def fileName(at: Instant): String = s"$Prefix${timestamp(at)}$Extension"
 
-  /** Two backups inside the same second would otherwise pick the same name and the second would silently overwrite the
-    * first: `histmersion-…Z.dump` → `histmersion-…Z-2.dump` → `-3` … `taken` is the caller's "does this file already
-    * exist" (the filesystem, or a test's set).
-    */
   def uniqueName(name: String, taken: String => Boolean): String =
     if !taken(name) then name
     else
@@ -40,10 +27,8 @@ object Backup:
 
   private val Written = """histmersion-(\d{8}T\d{6}Z)(?:-(\d+))?\.dump""".r
 
-  /** The archives beyond the newest `keep`, oldest first: what a finished dump prunes. Only names this service writes
-    * count (`histmersion-<stamp>[-n].dump`; anything else in the directory is someone's own file and stays), and the
-    * order is the stamp then the same-second suffix — as plain text `…Z-2.dump` sorts BEFORE `…Z.dump`. `keep <= 0`
-    * keeps everything.
+  /** Only names this service writes count: anything else in the directory is someone's own file. As plain text
+    * `…Z-2.dump` sorts before `…Z.dump`, so the order is the stamp, then the same-second suffix.
     */
   def toPrune(names: List[String], keep: Int): List[String] =
     if keep <= 0 then Nil
@@ -53,23 +38,14 @@ object Backup:
       }
       ours.sortBy(_._2).reverse.drop(keep).map(_._1).reverse
 
-  /** A UTC stamp anywhere in a name, with its same-second suffix — `keep-before-schema-024- 20260925T085045Z.dump`
-    * carries one too, though it is not a name this service writes.
-    */
   private val AnyStamp = """(\d{8}T\d{6}Z)(?:-(\d+))?""".r.unanchored
 
-  /** When an archive was taken: the stamp in its name when it has one (a copy keeps that, not its mtime), else the
-    * file's `mtime`. Pure.
-    */
+  /** The stamp in the name wins over the mtime: a copied archive keeps its name but not its mtime. */
   def takenAt(name: String, mtime: Instant): Instant = name match
     case AnyStamp(stamp, _) =>
       scala.util.Try(Instant.from(Stamp.parse(stamp))).getOrElse(mtime)
     case _ => mtime
 
-  /** Newest first BY TIME (#772): sorting by name put `keep-before-…` above every `histmersion-…` archive, and `about`
-    * reported it as the last backup. Ties (one second) go to the higher same-second suffix, then the name. `createdAt`
-    * is ISO-8601, as [[BackupInfo]] carries it. Pure.
-    */
   def newestFirst(bs: List[BackupInfo]): List[BackupInfo] =
     def suffix(n: String) = n match
       case AnyStamp(_, sfx) => Option(sfx).flatMap(_.toIntOption).getOrElse(1)
@@ -77,13 +53,8 @@ object Backup:
     def at(b: BackupInfo) = scala.util.Try(Instant.parse(b.createdAt)).getOrElse(Instant.EPOCH)
     bs.sortBy(b => (at(b), suffix(b.file), b.file)).reverse
 
-  /** Deliberately strict: one path segment, starting with an alphanumeric (so `..` and dotfiles are out), no separator
-    * of either flavour, no NUL, ending in [[Extension]]. Callers additionally check the name against the LISTING, so
-    * only a file we ourselves wrote can be read or restored.
-    */
   private val Safe = "[A-Za-z0-9][A-Za-z0-9._-]*".r
 
-  /** The ONE gate between a client-supplied name and the filesystem. */
   def safeName(raw: String): Either[String, String] =
     val n = Option(raw).map(_.trim).getOrElse("")
     if n.isEmpty then Left("no backup file given")
@@ -94,12 +65,9 @@ object Backup:
       Left(s"'$n' is not a plain backup file name — no directories, no '..', letters/digits/._- only")
     else Right(n)
 
-  /** Everything `pg_dump`/`pg_restore` need on the command line to reach the same database the server is connected to.
-    * `host`/`port` are optional: absent from the JDBC URL means "let libpq decide" (its own defaults / `PGHOST` /
-    * `PGPORT`), which is also why no port literal appears here.
-    */
+  /** Absent `host`/`port` let libpq decide (its own defaults, `PGHOST`, `PGPORT`). */
   final case class PgTarget(host: Option[String], port: Option[Int], database: String):
-    /** `-h host -p port -d db`, plus `-w` so a missing password fails instead of prompting forever. */
+    /** `-w`: a missing password fails instead of `pg_dump` prompting forever. */
     def args: List[String] =
       host.toList.flatMap(h => List("-h", h)) ++
         port.toList.flatMap(p => List("-p", p.toString)) ++
@@ -107,9 +75,6 @@ object Backup:
 
   private val JdbcScheme = "jdbc:postgresql:"
 
-  /** `jdbc:postgresql://host:port/db?opts` → [[PgTarget]]. Also accepts the host-less `jdbc:postgresql:db` form and
-    * bracketed IPv6 authorities.
-    */
   def parseJdbc(url: String): Either[String, PgTarget] =
     val u = Option(url).map(_.trim).getOrElse("")
     if !u.startsWith(JdbcScheme) then Left(s"not a PostgreSQL JDBC URL: '$u'")
@@ -138,17 +103,10 @@ object Backup:
 
   private val IgnoredErrors = """errors ignored on restore:\s*(\d+)""".r
 
-  /** How to read `pg_restore`'s exit code — the one genuinely subtle part of a restore.
-    *
-    * `pg_restore` exits 1 whenever it skipped ANY statement, even one it deliberately continued past, and then says so
-    * on its last line: `warning: errors ignored on restore: N`. That happens routinely on a version skew — an archive
-    * written by a NEWER `pg_dump` starts with `SET transaction_timeout = 0`, which Postgres < 17 rejects — while the
-    * data itself restores perfectly. Failing the whole operation there would be wrong; silently returning success would
-    * be worse. So: a run that reached the "errors ignored" summary SUCCEEDED with warnings, anything else that exits
-    * non-zero FAILED. (The caller additionally re-validates the schema with Flyway, which is what catches a restore
-    * that broke something real.)
-    *
-    * Right = the notable output lines, to report as warnings. Left = an actionable failure message.
+  /** `pg_restore` exits 1 whenever it skipped any statement, even one it continued past, and then ends with `warning:
+    * errors ignored on restore: N`. That happens routinely on a version skew (an archive from a newer `pg_dump` starts
+    * with `SET transaction_timeout = 0`, which Postgres < 17 rejects) while the data restores perfectly, so a run that
+    * reached that summary succeeded with warnings.
     */
   def restoreOutcome(exit: Int, output: List[String]): Either[String, List[String]] =
     val notable = output
@@ -159,9 +117,6 @@ object Backup:
     if exit == 0 || completed then Right(notable)
     else Left(s"pg_restore failed (exit $exit): ${notable.takeRight(5).mkString("; ")}")
 
-  // ── error codes shared by the endpoints ───────────────────────────────────────────────────────
-
-  /** A write arrived while a restore held the maintenance lock → 503 (see `Api.writeErrors`). */
   val CodeMaintenance = "maintenance"
 
   def maintenance(op: String): ApiError =
@@ -170,12 +125,8 @@ object Backup:
   def missing(file: String): ApiError =
     ApiError(s"no backup named '$file' in the backups directory", Some(Write.CodeNotFound))
 
-  /** `1.4 GB` / `812.0 kB` / `37 B` — decimal units, which is what `ls -h` on a dump reports too.
-    *
-    * Formatted against `Locale.ROOT`, NOT the default locale: this string goes onto the wire in a Markdown API
-    * response, so the decimal separator must not depend on the machine's locale. (JDK 25 ships a CLDR in which `en_PL`
-    * — an English UI in Poland — takes its number symbols from the region and renders `%.1f` as `2,5`; JDK 22 rendered
-    * `2.5`. The value is data, not UI.)
+  /** Formatted against `Locale.ROOT`: the string goes onto the wire, and JDK 25's CLDR renders `%.1f` as `2,5` under
+    * locales such as `en_PL`.
     */
   def humanBytes(n: Long): String =
     val units = Vector("kB", "MB", "GB", "TB")

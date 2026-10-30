@@ -2,44 +2,16 @@ package com.histmersion.api
 
 import com.histmersion.values.PlaceKind
 
-/** NESTED GROUPING by deep time and by the gazetteer (plan §1.6 / §1.6a) — **pure**, no database.
-  *
-  * `TreeRepo` selects the rows (one per counted unit: a source, or a finding for `unit=findings`) together with the
-  * period and the gazetteer places they were materialised into; everything below turns those rows into the [[Bucket]]
-  * tree that `/api/aggregate?by=…` returns, the CLI prints and the web UI draws. Bucketing therefore lives in ONE place
-  * and is unit-testable without Postgres — the same reasoning as [[Aggregate]], whose adaptive sizes this reuses
-  * verbatim.
-  *
-  * Two rules run through all of it:
-  *
-  *   - **Counts are non-additive.** A unit is counted in EVERY bucket it overlaps (time) and in every place that covers
-  *     it (region), so children never sum to their parent. [[Bucket.overlap]] says how many of a node's units sit in
-  *     more than one of its children, which is what lets the UI print "12 sources, 3 in more than one subregion"
-  *     instead of pretending the numbers add up.
-  *   - **The hierarchy is read AS OF a year.** A `part_of` edge and a place both carry their own validity; only those
-  *     covering `asOf` are walked. That is why the same Hattusa finding sits under the Hittite Empire at −1400 and
-  *     under Phrygia at −700, and why `by=time,region` reads the gazetteer at each time bucket's own midpoint.
-  */
 object Tree:
 
-  /** The deepest nesting the API will build (plan §1.6: "up to depth 3"). */
   val MaxDepth: Int = 3
 
-  /** The most sample sources a leaf may carry (plan §1.6: "0–5 sample sources per leaf"). A cap on the SHAPE of the
-    * contract, not a tunable — the default count is config (`ui.tree-samples`).
-    */
   val MaxSamples: Int = 5
 
-  /** `time` buckets carry `start`/`end`; `region` buckets carry `placeId` (empty for `unlocated`). */
   val KindTime = "time"
   val KindRegion = "region"
   val KeyUnlocated = "unlocated"
 
-  /** One counted unit as the repo selected it: a SOURCE (`key` = citekey) or, for `unit=findings`, one finding (`key` =
-    * finding id, `citekey`/`title` still name the source it belongs to). `placeIds` are the gazetteer places the unit
-    * was materialised into (`finding_places`); empty = unlocated. Undated (`start`/`end` both `None`) units are dropped
-    * by the time levels, exactly as in [[Aggregate]].
-    */
   final case class TreeRow(
       key: String,
       citekey: String,
@@ -50,9 +22,6 @@ object Tree:
   ):
     def toPeriodRow: PeriodRow = PeriodRow(start, end)
 
-  /** A gazetteer node as the tree needs it: what to label it, and when it was itself valid. (The full row is
-    * [[PlaceSummary]]; the tree only ever needs these four fields.)
-    */
   final case class RegionNode(
       id: String,
       label: String,
@@ -63,68 +32,35 @@ object Tree:
       withdrawn: Boolean = false
   )
 
-  // ── which nodes may HEAD the region tree ──────────────────────────────────────────────────────
-
-  /** Kinds that can be a top level. A `site` or a `feature` is a leaf by construction — Pleiades contributes ~15 700 of
-    * them — and a parentless one ("Asopos (river)", "Euboia (mountain)") heading the forest buries the continents under
-    * a list of rivers.
-    */
   val RootKinds: Set[String] = Set(PlaceKind.Region, PlaceKind.Polity, "continent")
 
-  /** Pleiades spells an uncertain identification into the LABEL: a trailing `?` on the name or a part of it ("Theren?
-    * (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name ("*Granouas (river)"). Those are hypotheses
-    * about what a place was called, not levels of a geography, and they have no business being one of the handful of
-    * rows a reader starts from.
+  /** Pleiades writes an uncertain identification into the label: a trailing `?` on the name or a part of it ("Theren?
+    * (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name ("*Granouas (river)").
     */
   def uncertainLabel(label: String): Boolean =
     val l = label.trim
     l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn")
 
-  /** May this node be a ROOT of the region tree? Nothing here removes a node from the tree — a river still appears
-    * under the region that contains it — it only decides what the top level is allowed to be.
-    */
   def rootEligible(n: RegionNode): Boolean =
     RootKinds.contains(n.kind) && !n.withdrawn && !uncertainLabel(n.label)
 
-  // ── validity as of a year ─────────────────────────────────────────────────────────────────────
-
-  /** A period covers `asOf`; a missing period means "always", and a missing `asOf` means "whenever". */
   def coversAsOf(p: Option[Period], asOf: Option[Long]): Boolean = (p, asOf) match
     case (None, _)                     => true
     case (_, None)                     => true
     case (Some(Period(a, b)), Some(y)) => y >= a && y <= b
 
-  /** Inclusive `[start, end]` overlap — the Scala twin of `int8range(a, b, '[]') &&`. */
   private def overlaps(row: TreeRow, from: Long, to: Long): Boolean =
     Aggregate.span(row.toPeriodRow).exists((a, b) => a <= to && b >= from)
 
-  /** The middle of an inclusive bucket, rounded DOWN so the same bucket always reads the gazetteer at the same year
-    * (`by=time,region` nests the hierarchy as of this).
-    */
   def midpoint(start: Long, end: Long): Long = start + Math.floorDiv(end - start, 2L)
 
-  // ── the time axis ─────────────────────────────────────────────────────────────────────────────
-
-  /** Time buckets over `[from, to]` at the adaptive size for that span, each nesting its children at
-    * [[Aggregate.finer]] down to `depth` levels (clamped to [[MaxDepth]]).
-    *
-    * A unit is counted in every bucket its period overlaps, so counts do not sum; undated units are absent. Empty
-    * buckets are dropped — a tree row reading "0" is noise (the timeline strip, which DOES need the gaps, keeps using
-    * [[Aggregate.histogram]]). Leaves carry up to `samples` sample sources, in the order the repo returned them (i.e.
-    * under the caller's `sort=`).
-    */
   def timeTime(rows: List[TreeRow], from: Long, to: Long, depth: Int, samples: Int = 0): List[Bucket] =
     val (lo, hi) = order(from, to)
     timeLevel(rows, lo, hi, Aggregate.bucketSize(hi - lo), clamp(depth), samples, (_, _, _) => (Nil, 0))
 
-  /** [[timeTime]] under its plan name (`by=time`). */
   def timeTree(rows: List[TreeRow], from: Long, to: Long, depth: Int, samples: Int = 0): List[Bucket] =
     timeTime(rows, from, to, depth, samples)
 
-  /** One level of time buckets. `nest` produces the children (and their overlap count) of a bucket when something other
-    * than a finer time level belongs there — that is how `time,region` hangs the gazetteer, read at the bucket's own
-    * midpoint, under each bucket.
-    */
   private def timeLevel(
       rows: List[TreeRow],
       from: Long,
@@ -147,9 +83,7 @@ object Tree:
               case (Nil, _) if finer < size =>
                 (splitWorthShowing(count, timeLevel(mine, bStart, bEnd, finer, depth - 1, samples, nest)), 0)
               case (Nil, _) => (Nil, 0)
-              // finer TIME children are not an overlap worth reporting (a period spanning two
-              // buckets is the normal case); REGION children are — that is the non-additive fact.
-              case (ks, o) => (ks, o)
+              case (ks, o)  => (ks, o)
         Some(
           Bucket(
             label = Markdown.periodLabel(Some(bStart), Some(bEnd)),
@@ -165,33 +99,11 @@ object Tree:
         )
     }
 
-  /** How much smaller than its parent a time child has to be for the finer level to be worth drawing at all.
-    */
   val SplitRatio: Double = 0.8
 
-  /** Finer TIME buckets only earn their rows when they SAY something.
-    *
-    * A unit sits in every bucket its period overlaps, and this corpus is mostly long-range syntheses: a −3300…−1200
-    * source is in all 21 hundred-year children of its millennium, so every child carries very nearly the parent's own
-    * count. Expanded, that was 341 rows of near-identical numbers with nothing in them to choose between — the reader
-    * scrolls a wall of "34 sources".
-    *
-    * So the level is kept only when at least one child is materially smaller than the parent (below [[SplitRatio]] of
-    * it), i.e. when the split actually separates the evidence. Otherwise the parent is a leaf and shows its sample
-    * sources instead, which is the thing worth looking at.
-    */
   def splitWorthShowing(parent: Int, kids: List[Bucket]): List[Bucket] =
     if kids.sizeIs > 1 && kids.exists(_.count < parent * SplitRatio) then kids else Nil
 
-  // ── the region axis ───────────────────────────────────────────────────────────────────────────
-
-  /** The gazetteer levels from the roots (continents) down, `depth` levels deep, AS OF `asOf`.
-    *
-    * A unit belongs to a node when the node is one of its places or an ANCESTOR of one, walking only `part_of` edges
-    * whose own period — and whose endpoints' own periods — cover `asOf`. Counts are therefore non-additive and
-    * [[Bucket.overlap]] reports how many units are in more than one child. Units whose places are all invalid at `asOf`
-    * (or which have none) land in the trailing `unlocated` bucket. Nodes no unit reaches are dropped.
-    */
   def regionTree(
       rows: List[TreeRow],
       nodes: List[RegionNode],
@@ -203,10 +115,6 @@ object Tree:
   ): List[Bucket] =
     regions(rows, nodes, relations, asOf, clamp(depth), samples, (_, _) => Nil, root)._1
 
-  /** `by=time,region`: time buckets first, then INSIDE each bucket the gazetteer as it stood at that bucket's own
-    * midpoint — so the same finding sits under the Hittite Empire in −1600…−1200 and under Phrygia in −800…−600.
-    * `depth` counts the REGION levels below the (single) time level.
-    */
   def timeRegionTree(
       rows: List[TreeRow],
       from: Long,
@@ -228,9 +136,6 @@ object Tree:
         regions(mine, nodes, relations, Some(midpoint(bStart, bEnd)), clamp(depth), samples, (_, _) => Nil)
     )
 
-  /** `by=region,time`: the gazetteer first (as of `asOf`), then a single level of time buckets under each region LEAF —
-    * "where, and then when inside there".
-    */
   def regionTimeTree(
       rows: List[TreeRow],
       from: Long,
@@ -254,10 +159,6 @@ object Tree:
       root
     )._1
 
-  /** Shared machinery of every region level; returns the roots and how many units reach more than one of them (which is
-    * the `overlap` a `time,region` bucket reports). `leaf` supplies the children of a node the region recursion stopped
-    * at — `region,time` hangs time buckets there, plain `region` hangs nothing.
-    */
   private def regions(
       rows: List[TreeRow],
       nodes: List[RegionNode],
@@ -276,19 +177,12 @@ object Tree:
     val kidsOf = edges.groupMap(_.parentId)(_.childId).view.mapValues(_.distinct).toMap
     val parents = edges.groupMap(_.childId)(_.parentId).view.mapValues(_.distinct).toMap
 
-    // which nodes each unit reaches: its own places that are valid at `asOf`, plus their ancestors
     val reach = rows.iterator.map(r => r.key -> ancestors(r.placeIds.filter(live).toSet, parents)).toMap
     def at(id: String): List[TreeRow] = rows.filter(r => reach(r.key).contains(id))
 
-    // ONE PATH PER PLACE. The gazetteer is a DAG, not a tree: "Anatolia" is part of both Asia and
-    // Europe, so a naive walk draws it (and its whole subtree, and its counts) twice and the reader
-    // has no way to tell the two copies apart. It is drawn under the first parent that reaches it —
-    // the biggest, since siblings are ordered by count — and that copy says where else it sits.
     val drawnAt = scala.collection.mutable.Map.empty[String, Unit]
 
     def level(ids: List[String], seen: Set[String], left: Int): List[Bucket] =
-      // Ordered BEFORE the walk, not after: siblings are ranked by count, and "drawn under the
-      // biggest parent that reaches it" is only true if the biggest one gets there first.
       ids.distinct
         .filterNot(seen.contains)
         .map(id => (id, at(id)))
@@ -306,7 +200,6 @@ object Tree:
                 level(allKids, seen + id, left - 1) match
                   case Nil => leaf(mine, id)
                   case ks  => ks
-            // every OTHER valid parent this node has, named — "(also under Europe)"
             val elsewhere = parents
               .getOrElse(id, Nil)
               .filterNot(seen.contains)
@@ -323,8 +216,6 @@ object Tree:
                 end = node.period.map(_.end),
                 placeId = Some(node.id),
                 count = distinct(mine),
-                // over ALL valid children, not only the rendered ones: truncating at `depth` must not
-                // change what "in more than one subregion" means
                 overlap = overlapOf(mine, allKids.map(at)),
                 contested = node.contested,
                 children = kids,
@@ -334,15 +225,6 @@ object Tree:
             )
         }
 
-    // An explicit `root` is how a client fetches ONE node's subtree lazily: the answer is that node
-    // and what is under it, not the whole forest with the node buried three levels down.
-    //
-    // Otherwise roots are the nodes with no valid parent AND eligible to be one ([[rootEligible]]):
-    // a region, polity or continent whose record is neither withdrawn nor an uncertain
-    // identification. Everything else still appears in the tree, under whatever contains it — it
-    // just does not get to be one of the handful of rows the reader starts from. Without this the
-    // seeded corpus opens on 35 roots, 25 of them Pleiades rivers, mountains and
-    // "Withdrawn (duplicate): …" records, with the five continents scattered among them.
     val rootIds = root.filter(id => byId.get(id).exists(n => coversAsOf(n.period, asOf))) match
       case Some(id) => List(id)
       case None     =>
@@ -352,9 +234,6 @@ object Tree:
           .map(_.id)
           .toList
     val located = level(rootIds, Set.empty, depth)
-    // "unlocated" means "not counted anywhere ABOVE", not merely "has no place": a unit whose every
-    // place is invalid as of `asOf` — or is unreachable from any root, which is what a cyclic
-    // gazetteer produces — must still appear somewhere, or the tree quietly loses sources.
     val shown = rendered(located)
     val lost = rows.filter(r => reach(r.key).intersect(shown).isEmpty)
     val roots =
@@ -369,13 +248,9 @@ object Tree:
         )
     (roots, overlapOf(rows, rootIds.map(at)))
 
-  /** Every gazetteer id that actually made it into the rendered forest. */
   private def rendered(buckets: List[Bucket]): Set[String] =
     buckets.iterator.flatMap(b => b.placeId.toSet ++ rendered(b.children)).toSet
 
-  /** Everything reachable UPWARD from `start` through `parents`, including `start` itself. Bounded by the visited set,
-    * so a cyclic gazetteer is harmless rather than a stack overflow.
-    */
   private def ancestors(start: Set[String], parents: Map[String, List[String]]): Set[String] =
     @annotation.tailrec
     def go(frontier: Set[String], seen: Set[String]): Set[String] =
@@ -383,13 +258,8 @@ object Tree:
       if next.isEmpty then seen else go(next, seen ++ next)
     go(start, start)
 
-  // ── counting ──────────────────────────────────────────────────────────────────────────────────
-
   private def distinct(rows: List[TreeRow]): Int = rows.iterator.map(_.key).toSet.size
 
-  /** How many of `rows` are counted in more than one of the given child groups — the non-additive fact the UI prints as
-    * "N in more than one subregion".
-    */
   private def overlapOf(rows: List[TreeRow], groups: List[List[TreeRow]]): Int =
     val sets = groups.map(_.iterator.map(_.key).toSet).filter(_.nonEmpty)
     if sets.sizeIs < 2 then 0
@@ -402,9 +272,6 @@ object Tree:
   private def clamp(depth: Int): Int = depth.max(1).min(MaxDepth)
   private def order(a: Long, b: Long): (Long, Long) = if a <= b then (a, b) else (b, a)
 
-  /** The axes `/api/aggregate?by=` understands, parsed once here so REST, MCP and the CLI cannot disagree about what
-    * `time,region` means.
-    */
   def parseBy(s: String): Option[List[String]] =
     val parts = s.split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList
     if parts.nonEmpty && parts.forall(p => p == KindTime || p == KindRegion) && parts == parts.distinct

@@ -4,17 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** @param state
-  *   a [[PluginState]]'s wire name
-  * @param provides
-  *   what it registered, `<registry>:<id>` (`secret-vault:keepassxc`)
-  * @param settings
-  *   its effective block, secrets as references (empty when it was refused)
-  * @param warnings
-  *   what works but should be changed (a secret written as `value:`)
-  * @param error
-  *   why it failed or was refused
-  */
 final case class PluginStatus(
     id: String,
     version: String,

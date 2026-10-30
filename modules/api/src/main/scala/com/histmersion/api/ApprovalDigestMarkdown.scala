@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** The digest and a bulk decision as Markdown — every surface prints this. Pure. */
 object ApprovalDigestMarkdown:
   import ApprovalDigest.*
 

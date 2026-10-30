@@ -5,9 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.values.SourceStatus
 
-/** One row of `/api/contradictions`: an edge whose kind is challenges/refutes/updates/superseded_by, OR a source with a
-  * contested/superseded/debunked/retracted status.
-  */
 final case class ContradictionRow(
     citekey: String,
     title: String,

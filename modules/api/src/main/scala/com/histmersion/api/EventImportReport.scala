@@ -4,26 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** Events from CATALOGUES (#1449): the Smithsonian's Holocene eruptions, NOAA's earthquakes, eruptions and tsunamis,
-  * Wikidata's battles, sieges, wars, treaties… — every event a catalogue knows, not only the ones a compiled source
-  * names. A catalogue event is a RESEARCH LEAD, not evidence: it is drawn lighter than an event a source in the corpus
-  * attests (docs/visualization-guide.md §1), and its card names the catalogue, its licence and its citation as its
-  * provenance.
-  *
-  * This file is the pure half: the providers' identities and terms, the mapping of their datings onto the four-point
-  * time-span, the records an import reads, how records from several catalogues and the events already stored are merged
-  * into ONE event, the report of an import, and the shapes of the proposed links to the corpus and of the questions an
-  * event raises.
-  */
-
-// ── providers ───────────────────────────────────────────────────────────────────────────────────
-
-/** What an import read and did (a dry run: would do). `records` read from the catalogue; `skipped` per reason (no
-  * position, below the threshold, outside the years…); `kept` records that pass; `created` new events, `merged` records
-  * joined to another record of this run, `matched` records joined to an event already stored (`matchedEvents` names a
-  * few); `byKind` the kept records' kinds; `parts` the catalogue requests (a class, a page) done, `pending` those left
-  * for the next run.
-  */
 final case class EventImportReport(
     provider: String,
     dryRun: Boolean,
@@ -42,9 +22,6 @@ final case class EventImportReport(
     failed: List[String] = Nil,
     licence: String = "",
     citation: String = "",
-    /** The refreshed events' corrections by hand ([[Corrections]]): kept, retired (the catalogue now says what the
-      * person said), and in conflict (the catalogue changed to something else).
-      */
     corrections: CorrectionCounts = CorrectionCounts()
 ) derives KindlingsCodecAsObject,
       KindlingsSchema
@@ -73,7 +50,6 @@ object EventImportReport:
       a.corrections + b.corrections
     )
 
-  /** Pure: the one line `histmersion jobs` shows for a finished import. */
   def summary(r: EventImportReport): String =
     val verb = if r.dryRun then "would create" else "created"
     List(
@@ -88,7 +64,6 @@ object EventImportReport:
       r.corrections.summary
     ).flatten.mkString(" · ")
 
-  /** Pure: the report as Markdown (the CLI after the job, the MCP answer). */
   def markdown(r: EventImportReport): String =
     def counts(cs: List[EventCount]) = if cs.isEmpty then "none" else cs.map(c => s"${c.key} ${c.n}").mkString(" · ")
     val head = s"## Event import — ${r.provider}${if r.dryRun then " (dry run: nothing stored)" else ""}"

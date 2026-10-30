@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A finding near an event: how far (km) and how many years from its span (0 = overlapping). */
 final case class EventFindingRef(
     id: String,
     citekey: String,

@@ -1,8 +1,6 @@
 package com.histmersion.api
 
-/** How sure a link is: LPF's `exactMatch` (the same entity) or `closeMatch` (near enough to join on). The wire spelling
-  * is `place_links.relation`.
-  */
+/** LPF's `exactMatch` (the same entity) or `closeMatch` (near enough to join on). */
 enum LinkMatch:
   case Exact, Close
 

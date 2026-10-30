@@ -4,12 +4,9 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** Two sources joined by a disagreement edge, the critic (`src`) first, as code and models name them: `src>dst`.
-  */
 final case class CritiqueRef(src: String, dst: String) derives KindlingsCodecAsObject, KindlingsSchema:
   def wire: String = s"$src>$dst"
 
-  /** The same two sources, in either direction. */
   def same(o: CritiqueRef): Boolean = (src == o.src && dst == o.dst) || (src == o.dst && dst == o.src)
 
 object CritiqueRef:
@@ -18,7 +15,6 @@ object CritiqueRef:
   private def key(s: String): String =
     s.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT)
 
-  /** `src>dst` (also `src -> dst`, `src → dst`, each side optionally in `[[…]]`). */
   def parse(s: String): Either[String, CritiqueRef] =
     val t = Option(s).getOrElse("").replace("->", ">").replace("→", ">")
     t.split(">", -1).toList match

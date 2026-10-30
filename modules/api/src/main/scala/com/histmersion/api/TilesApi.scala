@@ -4,18 +4,8 @@ import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import sttp.model.{HeaderNames, StatusCode}
 
-/** The tile endpoint's definition (appended to [[Api.all]]). REST only, like `/api/places/geo` and `/api/events/geo`: a
-  * feed for the web map, of no use to an agent or a terminal — `events`, `places` and `media` (MCP and CLI) answer the
-  * same selections as lists.
-  */
 object TilesApi:
 
-  /** One tile's request: the layer and the tile, the shared [[Filter]] (its `from`/`to` the span — a RANGE: every item
-    * whose dates OVERLAP it), and what each layer is narrowed by: the events' `kind`, `tier`, `historicity`, `context`,
-    * `text` and `placeId` ([[Api.EventQuery]]); the sites' `siteType`; the pictures' `kind`, `provider` and `license`
-    * ([[Api.MediaGeoQuery]]). `undated` (sites and events): also every item with no known date, whatever the span —
-    * each marked ([[TileProps.Undated]]). `ifNoneMatch` is the browser's revalidation.
-    */
   final case class TileQuery(
       layer: String,
       z: Int,
@@ -34,12 +24,8 @@ object TilesApi:
       undated: Option[Boolean] = None,
       ifNoneMatch: Option[String] = None
   ):
-    /** Are the items with no known date asked for? */
     def withUndated: Boolean = undated.contains(true)
 
-  /** A tile's answer: its bytes (none when the browser's copy is current), its type, its ETag (the data's version: a
-    * write to what the layer reads changes it), its caching rule and status (200, 304).
-    */
   final case class TileAnswer(
       bytes: Array[Byte],
       contentType: String,
@@ -48,13 +34,8 @@ object TilesApi:
       status: StatusCode
   )
 
-  /** The type of a Mapbox vector tile. */
   val ContentType = "application/vnd.mapbox-vector-tile"
 
-  /** `GET /api/tiles/{layer}/{z}/{x}/{y}?<filter>&kind=&tier=&historicity=&context=&text=&placeId=&siteType=&provider=&license=&undated=`
-    * — one vector tile of `sites`, `events` or `media` (one layer of that name) for the span `from`..`to`. 400 for an
-    * unknown layer or a tile outside the grid.
-    */
   lazy val tile: PublicEndpoint[TileQuery, ApiError, TileAnswer, Any] =
     endpoint.get
       .in("api" / "tiles" / path[String]("layer") / path[Int]("z") / path[Long]("x") / path[Long]("y"))

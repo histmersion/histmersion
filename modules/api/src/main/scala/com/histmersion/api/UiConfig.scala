@@ -16,57 +16,21 @@ final case class UiConfig(
     maxBuckets: Int,
     debounce: DebounceConfig,
     time: TimeConfig,
-    /** At or below this viewport width (CSS px) the web UI uses its narrow, phone layout. */
     narrowMaxWidthPx: Int,
-    /** …or, on a touch screen, at or below this height (a phone held sideways). */
     narrowMaxHeightPx: Int,
-    /** Wider than the phone layout but at or below this width (CSS px): the same map-first layout at tablet size —
-      * floating windows, the list a sheet at the side.
-      */
     tabletMaxWidthPx: Int,
-    /** The events layer of the map's playback (#1440). */
     events: EventsUiConfig,
-    /** The map's sites, events and pictures as vector tiles. */
     mapTiles: MapTilesUiConfig = MapTilesUiConfig(),
-    /** How often the page re-reads the toolbar's counts and "something new" marks (`GET /api/ui/counters`), in seconds;
-      * it also re-reads them after its own changes and when the tab comes back into view.
-      */
     countersPollSeconds: Int = 30,
-    /** How often a window following a background job (a base-map download) asks for its progress, in ms. */
     jobPollMs: Int = 1000,
-    /** Whether the server gates writes behind `Authorization: Bearer <key>` (`auth.api-key` is set). NOT a
-      * configuration key of its own: the server fills it in from `auth` when it answers `/api/config`, so the page can
-      * hide its write controls until the reader has entered a key.
-      */
     writeKeyRequired: Boolean = false,
-    /** Whether the server runs embedded agents (`agents.enabled`); like `writeKeyRequired`, filled in by the server, so
-      * the page offers the agent runs and approvals windows only when they work.
-      */
     agentsEnabled: Boolean = false,
-    /** Whether the configured `tiles` are a light or a dark map (`ui.tiles-tone`: "light" or "dark"): the map's place
-      * names are drawn dark on a light halo over light tiles, and the inverse over dark.
-      */
     tilesTone: String = "light",
-    /** The server's plugins (`histmersion.plugins`), filled in by the server like `writeKeyRequired` — NOT a
-      * configuration key of its own. Secret settings show their reference, never the value.
-      */
     plugins: PluginsReport = PluginsReport(),
-    /** The user guide's root URL (`ui.docs-url`): the page links into it (the base map's notice). */
     docsUrl: String = "",
-    /** Which base maps the page offers (`ui.base-map-source`, [[BaseMapSource]]): `local` (only those drawn from the
-      * server's extracts — no request to any other host), `online` (the online raster maps too), or `auto`. The server
-      * answers it resolved: `local` or `online`.
-      */
     baseMapSource: String = "auto",
-    /** The language of the base map's names unless a viewer chooses another (`basemap.labels.language`): filled in by
-      * the server like `writeKeyRequired` — NOT a `ui` key of its own.
-      */
     mapLanguage: String = "en",
-    /** Where the map opens (`ui.map-start`). */
     mapStart: MapStartConfig = MapStartConfig(),
-    /** Whether the first-run setup is due — filled in by the server from `setup.completed` and whether the config file
-      * sets anything, NOT a `ui` key of its own.
-      */
     setupDue: Boolean = false
 ) derives KindlingsCodecAsObject,
       KindlingsSchema

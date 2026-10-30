@@ -2,14 +2,10 @@ package com.histmersion.api
 
 import com.histmersion.values.{BundleKind, DecidedBy, DecisionKind, IssueSeverity, MatchOutcome}
 
-/** How a merge plan reads (docs/research-merge-import.md §6.2) — the CLI, the REST answer's Markdown and the MCP
-  * `merge_plan` tool print this, so the plan says the same thing everywhere. Pure.
-  */
 object MergeMarkdown:
 
   def who(i: BundleInstance): String = i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)")
 
-  /** `all` lists every default and info line, not only the first few. */
   def plan(p: MergePlan, all: Boolean = false): String =
     val m = p.matches
     val open = p.issues.filter(i => i.severity == IssueSeverity.Blocking && i.condition.isEmpty && i.decision.isEmpty)
@@ -59,7 +55,6 @@ object MergeMarkdown:
           s"(${Plural.count(p.changes, "change")}; a backup is taken first)._"
     (head :: sections ++ List(next)).mkString("\n\n")
 
-  /** What `merge apply` did (§6.4). */
   def applied(r: MergeApplyResult): String =
     val t = r.tally
     def count(k: BundleKind)(f: BundleKindCounts => Int): Int = r.counts.find(_.kind == k).fold(0)(f)
@@ -102,7 +97,6 @@ object MergeMarkdown:
     ).flatten
     (head :: body ++ sections).mkString("\n\n")
 
-  /** Where an apply job is (`POST /api/merge/apply`, `GET /api/merge/apply/{job}`). */
   def applyJob(j: MergeApplyJob): String =
     j.state match
       case MergeJobState.Running =>
@@ -113,7 +107,6 @@ object MergeMarkdown:
         s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText)}"
       case MergeJobState.Done => j.result.fold(s"**Done** (job `${j.job}`).")(applied)
 
-  /** `merge list`. */
   def merges(ms: List[MergeInfo]): String =
     if ms.isEmpty then "_No merges yet: nothing was imported from another collection._"
     else
@@ -125,7 +118,6 @@ object MergeMarkdown:
             s"${m.backup.getOrElse("—")} |"
         )).mkString("\n")
 
-  /** `merge show <id>`. */
   def detail(d: MergeDetail): String =
     val m = d.merge
     val head = List(
@@ -149,7 +141,6 @@ object MergeMarkdown:
     )
     (head :: report ++ res.toList ++ rem.toList).mkString("\n\n")
 
-  /** `merge ledger`. */
   def ledger(l: MergeLedger): String =
     val head = l.query.fold("**Merge ledger** (latest)")(q => s"**Merge ledger** of `$q`")
     val rows =
@@ -168,7 +159,6 @@ object MergeMarkdown:
     )
     ((head :: rows.mkString("\n") :: Nil) ++ redirects.toList).mkString("\n\n")
 
-  /** An article, event or goal renamed. */
   def renamed(r: LabelRenamed): String =
     val what = r.entity match
       case BundleKind.Article => "Article"

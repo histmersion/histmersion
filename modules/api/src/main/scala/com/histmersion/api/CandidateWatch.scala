@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A goal's watch (#3761): what it reads, from which index, the day it reads from, its last read. */
 final case class CandidateWatch(
     goal: String,
     kind: String,

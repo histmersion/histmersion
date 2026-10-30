@@ -5,29 +5,17 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** Model chains and allowances (docs/research-model-providers.md §3, docs/research-embedded-agents.md §15): per step
-  * role an ORDERED list of models, and per model (or per provider, `claude-code:*`) a set of limits — tokens and/or USD
-  * per ROLLING window — with a reserve. Before every LLM call the engine takes the first model of the role's chain
-  * whose every limit still has more than its reserve left; when none has, the run pauses until the earliest window
-  * frees enough.
-  *
-  * Pure: parsing (the config grammar, which is also what the CLI accepts), and the usage maths over a list of spends.
-  * The server reads the spends from `agent_steps`; nothing here does I/O.
-  */
 object ModelChains:
   import Agents.{ModelRef, ProviderKind}
 
-  // ── chains ─────────────────────────────────────────────────────────────────────────────────────
-
-  /** `"claude-code:sonnet > anthropic:claude-sonnet-4-5 > local:qwen3"` — tried in that order. One model is a chain of
-    * one (every `roles.*` written before chains existed still reads). Blank = no model. A model id never contains `>`.
+  /** One model is a chain of one, so a `roles.*` setting written before chains existed still reads. A model id never
+    * contains `>`.
     */
   def parseChain(s: String, known: Set[String] = Set.empty): Either[String, List[ModelRef]] =
     val parts = s.split('>').toList.map(_.trim)
     if parts.forall(_.isEmpty) then Right(Nil)
     else parseModels(parts, known)
 
-  /** A chain given as separate model references (the REST body, the CLI's arguments). */
   def parseModels(refs: List[String], known: Set[String] = Set.empty): Either[String, List[ModelRef]] =
     val parsed = refs.map(_.trim).filter(_.nonEmpty).map(ModelRef.parse(_, known))
     parsed.collect { case Left(m) => m } match
@@ -39,11 +27,6 @@ object ModelChains:
 
   def chainText(ms: List[ModelRef]): String = ms.map(_.wire).mkString(" > ")
 
-  // ── allowances ─────────────────────────────────────────────────────────────────────────────────
-
-  /** What a limit counts: tokens (input + output, cached input included — the same total the run's token budget counts)
-    * or USD (priced by `agents.prices`).
-    */
   enum Measure(val wire: String):
     case Tokens extends Measure("tokens")
     case Usd extends Measure("usd")
@@ -58,11 +41,7 @@ object ModelChains:
     given io.circe.Decoder[Measure] = WireEnum.decoder
     given Schema[Measure] = WireEnum.schema
 
-  /** A ROLLING window: the spend of the last `seconds` counts. `hour`, `day`, `week`, `month` (30 days) or `<n>m|h|d|w`
-    * (`5h` — a Claude plan's session window, `7d`).
-    */
   final case class Window(seconds: Long):
-    /** The shortest exact spelling: `5h`, `7d`, `90m`; a whole number of weeks stays in days (`7d`). */
     def text: String =
       if seconds % 86400 == 0 then s"${seconds / 86400}d"
       else if seconds % 3600 == 0 then s"${seconds / 3600}h"
@@ -72,7 +51,6 @@ object ModelChains:
     private val Unit = Map('m' -> 60L, 'h' -> 3600L, 'd' -> 86400L, 'w' -> 604800L)
     private val Names = Map("hour" -> 3600L, "day" -> 86400L, "week" -> 604800L, "month" -> 30L * 86400L)
 
-    /** The longest window a limit may have: the spend sums read at most this far back. */
     val MaxSeconds: Long = 90L * 86400L
 
     def parse(s: String): Either[String, Window] =
@@ -85,7 +63,6 @@ object ModelChains:
         case Some(x) if x < 60 || x > MaxSeconds => Left(s"window '$s' must be between 1 minute and 90 days")
         case Some(x)                             => Right(Window(x))
 
-  /** At most `amount` of `measure` in any `window`. */
   final case class Limit(amount: BigDecimal, measure: Measure, window: Window):
     def text: String = measure match
       case Measure.Tokens => s"${Limit.compact(amount)} tokens/${window.text}"
@@ -93,7 +70,6 @@ object ModelChains:
     def spec: LimitSpec = LimitSpec(amount.toDouble, measure, window.text)
 
   object Limit:
-    /** `2000000` → `2M`, `500000` → `500k` (exact only); anything else as digits. */
     def compact(a: BigDecimal): String =
       val units = List(BigDecimal(1000000000) -> "G", BigDecimal(1000000) -> "M", BigDecimal(1000) -> "k")
       units
@@ -114,7 +90,6 @@ object ModelChains:
         .filter(_ > 0)
         .toRight(s"'$raw' is not a positive amount")
 
-    /** `500k tokens/5h`, `2M tokens/week`, `5 usd/day`, `$5/day`. */
     def parse(s: String): Either[String, Limit] =
       val t = s.trim
       t.lastIndexOf('/') match
@@ -144,9 +119,7 @@ object ModelChains:
         _ <- Either.cond(s.measure == Measure.Usd || a.isWhole, (), s"a token count is a whole number, not ${s.amount}")
       yield Limit(a, s.measure, w)
 
-  /** What an allowance covers: one model (`anthropic:claude-sonnet-4-5`) or every model of one provider
-    * (`claude-code:*` — a Claude plan is one pool, whichever model spends it).
-    */
+  /** `claude-code:*` covers every model of the provider: a Claude plan is one pool, whichever model spends it. */
   enum Target:
     case Model(ref: ModelRef)
     case Provider(kind: ProviderKind)
@@ -160,7 +133,6 @@ object ModelChains:
       case Provider(k) => m.provider == k
 
   object Target:
-    /** `known`: the names plugin providers are registered under now. */
     def parse(s: String, known: Set[String] = Set.empty): Either[String, Target] =
       val t = s.trim
       if t.endsWith(":*") then
@@ -171,7 +143,6 @@ object ModelChains:
           .toRight(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})")
       else ModelRef.parse(t, known).map(Model(_))
 
-  /** Pause using what `target` covers once less than `reservePct` % of any limit is left. */
   final case class Allowance(target: Target, limits: List[Limit], reservePct: Int):
     def text: String =
       (limits.map(_.text) ++ Option.when(reservePct > 0)(s"reserve $reservePct%")).mkString(", ")
@@ -186,10 +157,6 @@ object ModelChains:
           Left(s"${target.wire}: two limits on the same measure and window (${windows.map(_.text).mkString(", ")})")
         else Right(Allowance(target, limits, reservePct))
 
-  /** `agents.allowances`: `"<target> = <limit>, <limit>, reserve <n>%; <target> = …"`, e.g.
-    * `"claude-code:* = 2M tokens/5h, 20M tokens/7d, reserve 10%; anthropic:claude-sonnet-4-5 = 5 usd/day"`. Every
-    * malformed entry is reported — a typo must not lift a cap.
-    */
   def parseAllowances(s: String, known: Set[String] = Set.empty): Either[String, List[Allowance]] =
     val entries = s.split(';').toList.map(_.trim).filter(_.nonEmpty)
     val parsed = entries.map { e =>
@@ -204,7 +171,6 @@ object ModelChains:
         if dup.nonEmpty then Left(s"an allowance is given twice for ${dup.mkString(", ")}") else Right(as)
       case errs => Left(errs.mkString("; "))
 
-  /** One allowance from its target and its items (`500k tokens/5h`, `reserve 10%`). */
   def parseAllowance(target: String, items: List[String], known: Set[String] = Set.empty): Either[String, Allowance] =
     val ts = items.map(_.trim).filter(_.nonEmpty)
     val (reserves, limits) = ts.partition(_.toLowerCase(java.util.Locale.ROOT).startsWith("reserve"))
@@ -223,15 +189,8 @@ object ModelChains:
   def parseReserve(s: String): Either[String, Int] =
     s.trim.stripPrefix("=").trim.stripSuffix("%").trim.toIntOption.toRight(s"'${s.trim}' is not a reserve percentage")
 
-  // ── usage maths ────────────────────────────────────────────────────────────────────────────────
-
-  /** One recorded spend: when (epoch ms), how many tokens, how many USD. */
   final case class Spend(at: Long, tokens: Long, usd: BigDecimal)
 
-  /** One limit against the spends: `used` in its window, `remaining`, the `reserve` (in the limit's own unit), whether
-    * the model may still be used (`used < amount − reserve`), and — when it may not — `freesAt`: the first moment
-    * enough of the window's spend has aged out (None = never, a reserve as large as the limit).
-    */
   final case class LimitState(
       limit: Limit,
       used: BigDecimal,
@@ -240,7 +199,6 @@ object ModelChains:
       usable: Boolean,
       freesAt: Option[Long]
   ):
-    /** What may still be spent before the reserve is reached (0 when it is). */
     def headroom: BigDecimal = (limit.amount - reserve - used).max(0)
 
   private def measureOf(s: Spend, m: Measure): BigDecimal = m match
@@ -254,8 +212,6 @@ object ModelChains:
     val reserve = limit.amount * reservePct / 100
     val threshold = limit.amount - reserve
     val usable = used < threshold
-    // the window rolls: the oldest spend leaves it first. Drop spends in order until what is left is
-    // under the threshold; that spend's age-out time is when the limit frees.
     val freesAt =
       if usable || threshold <= 0 then None
       else
@@ -266,58 +222,39 @@ object ModelChains:
           .collectFirst { case (left, Some(at)) if left < threshold => at }
     LimitState(limit, used, (limit.amount - used).max(0), reserve, usable, freesAt)
 
-  /** Every limit of an allowance at `now`. */
   def states(a: Allowance, spends: Seq[Spend], now: Long): List[LimitState] =
     a.limits.map(limitState(_, a.reservePct, spends, now))
 
-  /** Whether a set of limit states lets the model run, and if not when it may again: the LATEST of the exhausted
-    * limits' free times (all of them must free); None when one never frees.
-    */
   def verdict(ss: List[LimitState]): (Boolean, Option[Long]) =
     val blocked = ss.filterNot(_.usable)
     if blocked.isEmpty then (true, None)
     else (false, if blocked.exists(_.freesAt.isEmpty) then None else Some(blocked.flatMap(_.freesAt).max))
 
-  /** What one LLM call may spend before any limit reaches its reserve: the smallest headroom per measure (None = that
-    * measure is not limited).
-    */
   def headroom(ss: List[LimitState]): (Option[Long], Option[BigDecimal]) =
     val tok = ss.filter(_.limit.measure == Measure.Tokens).map(_.headroom).minOption.map(_.toLong)
     val usd = ss.filter(_.limit.measure == Measure.Usd).map(_.headroom).minOption
     (tok, usd)
 
-  // ── wire DTOs ──────────────────────────────────────────────────────────────────────────────────
-
-  /** A limit on the wire (and in `agent_allowances.limits`): `{amount: 500000, measure: "tokens", window: "5h"}`.
-    */
   final case class LimitSpec(amount: Double, measure: Measure, window: String)
       derives KindlingsCodecAsObject,
         KindlingsSchema
   object LimitSpec:
     given Schema[LimitSpec] = summon[KindlingsSchema[LimitSpec]].schema
 
-  /** `PUT /api/agents/models/{role}` — the role's chain, first choice first. */
   final case class ChainSet(models: List[String]) derives KindlingsCodecAsObject, KindlingsSchema
   object ChainSet:
     given Schema[ChainSet] = summon[KindlingsSchema[ChainSet]].schema
 
-  /** `PUT /api/agents/allowances` — the allowance of one model or provider (`claude-code:*`). No limit at all =
-    * unlimited (a saved empty allowance overrides one from config).
-    */
   final case class AllowanceSet(target: String, limits: List[LimitSpec] = Nil, reservePct: Int = 0)
       derives KindlingsCodecAsObject,
         KindlingsSchema
   object AllowanceSet:
     given Schema[AllowanceSet] = summon[KindlingsSchema[AllowanceSet]].schema
 
-  /** Where a setting comes from: the server's config file / environment, or saved in the database (`agent models set`,
-    * the web UI), which wins until it is reset.
-    */
   enum SettingSource(val wire: String):
     case Config extends SettingSource("config")
     case Saved extends SettingSource("saved")
 
-  /** One limit, as `agent models` shows it. Times are ISO-8601 UTC. */
   final case class LimitStatus(
       limit: String,
       measure: Measure,
@@ -346,10 +283,6 @@ object ModelChains:
   object AllowanceStatus:
     given Schema[AllowanceStatus] = summon[KindlingsSchema[AllowanceStatus]].schema
 
-  /** One model of a role's chain: `ready` = on a plan pool or priced, and buildable (key present, provider allowed);
-    * `usable` = ready AND every allowance covering it has headroom above its reserve; `billing` = how a ready model is
-    * paid for (`plan pool: claude-plan`, `price: 3/15 …`).
-    */
   final case class ChainEntry(
       model: String,
       ready: Boolean,
@@ -363,7 +296,6 @@ object ModelChains:
   object ChainEntry:
     given Schema[ChainEntry] = summon[KindlingsSchema[ChainEntry]].schema
 
-  /** A role's chain and the model the next call would use (`active`; none = the role would pause). */
   final case class RoleChain(
       role: String,
       source: String,

@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A cross-reference to an external gazetteer or authority (Pleiades, Wikidata, TGN, GeoNames). */
 final case class PlaceLink(placeId: String, scheme: String, externalId: String, relation: String = "close_match")
     derives KindlingsCodecAsObject,
       KindlingsSchema
@@ -13,7 +12,6 @@ object PlaceLink:
   val Schemes: List[String] = List("pleiades", "wikidata", "tgn", "geonames", "whg")
   val Relations: List[String] = List("close_match", "exact_match", "broad_match", "see_also")
 
-  /** The authority's own page for an id, for the schemes that have one; `None` otherwise. */
   def url(scheme: String, externalId: String): Option[String] =
     val id = externalId.trim
     if id.isEmpty then None
@@ -27,7 +25,6 @@ object PlaceLink:
         case "commons"  => Some(s"https://commons.wikimedia.org/wiki/Category:${id.replace(' ', '_')}")
         case _          => None
 
-  /** What to call a scheme on a card. */
   def schemeTitle(scheme: String): String = scheme.trim.toLowerCase(java.util.Locale.ROOT) match
     case "wikidata" => "Wikidata"
     case "geonames" => "GeoNames"

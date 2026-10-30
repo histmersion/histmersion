@@ -6,8 +6,6 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 
-// ── the manifest ──────────────────────────────────────────────────────────────────────────────────
-
 final case class BundleInstance(id: UUID, label: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
 object BundleInstance:
   given Schema[BundleInstance] = summon[KindlingsSchema[BundleInstance]].schema

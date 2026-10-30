@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** Per-source dating of an event (the ChronOntology pattern). */
 final case class EventDating(
     eventId: String,
     citekey: String,

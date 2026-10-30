@@ -4,7 +4,6 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** What an article did about one critique. */
 enum CritiqueState(val wire: String):
   case Addressed extends CritiqueState("addressed")
   case Reasoned extends CritiqueState("reasoned")

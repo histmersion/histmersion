@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-// ── wire DTOs (declared last: see AGENTS.md on `derives KindlingsCodecAsObject` ordering) ─────────
-
-/** One image as it travels on the wire — from the converter, and into `POST /api/sources/{ck}/assets`. */
 final case class AssetInput(
     name: String,
     mime: String,

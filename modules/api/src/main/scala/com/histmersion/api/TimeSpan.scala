@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-// ── DTOs ───────────────────────────────────────────────────────────────────────────────────────
-
-/** Four-point time-span: uncertain bounds bracket the certain core. */
 final case class TimeSpan(
     notBefore: Option[Long] = None,
     beginBy: Option[Long] = None,

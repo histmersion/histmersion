@@ -4,7 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The converter sidecar's `/convert` response (see `converter/app.py`). */
+/** The converter sidecar's `/convert` response. */
 final case class ConvertedImage(
     name: String,
     mime: String,

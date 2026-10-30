@@ -6,10 +6,6 @@ import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.values.PlaceKind
 
-/** `POST /api/places` — one point place of a person's own. `source` says where the coordinates come from and is
-  * required (nothing in the gazetteer is a guessed point); `id` defaults to `local_<label>`; `names` are further names
-  * (the label is always one), all in `lang`.
-  */
 final case class PlaceAdd(
     label: String,
     kind: String,

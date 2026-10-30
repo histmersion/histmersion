@@ -4,10 +4,8 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A named historical period following the PeriodO model — a concept with a temporal extent, an authority, a geographic
-  * scope and an optional parent (e.g. "Iron Age I" under "Iron Age"). `preset` is set on the definitions the web
-  * timeline offers, and names the region heading they are listed under ([[PresetRegion]]); `region` stays PeriodO's own
-  * statement of where it applies.
+/** Follows the PeriodO model. `region` is PeriodO's own statement of where the period applies; `preset` only names the
+  * heading the timeline lists it under.
   */
 final case class HistoricalPeriod(
     id: String,

@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** One OCR job. `status` is a [[JobState]] spelling; `progress` is free text for the CLI's line. */
 final case class JobInfo(
     id: String,
     kind: String,
@@ -15,9 +14,7 @@ final case class JobInfo(
     sha256: Option[String] = None,
     createdAt: String = "",
     updatedAt: String = "",
-    /** The acquisition item the job ticks off when it succeeds (an upload started from one). */
     acquireItem: Option[Int] = None,
-    /** What the job imports and what it left out, when that is more than a citekey ([[JobDetail]]). */
     detail: Option[JobDetail] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema:

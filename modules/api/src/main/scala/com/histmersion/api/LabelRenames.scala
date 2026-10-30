@@ -2,9 +2,6 @@ package com.histmersion.api
 
 import com.histmersion.values.BundleKind
 
-/** The pure rule of a label rename (article slug, event id, goal slug): the shape every one of them already has to
-  * have.
-  */
 object LabelRenames:
   private val Shape = "^[a-z0-9][a-z0-9_.-]*$".r
 

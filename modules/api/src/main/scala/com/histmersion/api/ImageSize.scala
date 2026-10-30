@@ -1,12 +1,6 @@
 package com.histmersion.api
 
-/** Pixel dimensions read straight from an image's header — PNG, JPEG and GIF.
-  *
-  * The converter reports the sizes it produced, but figures picked up off disk by the seed importer arrive as bare
-  * bytes. Rather than pull in an image library (ImageIO is a native-image liability), the three headers we actually
-  * store are parsed by hand: it is a dozen lines, it is pure, and it is unit-testable. Anything unrecognised is simply
-  * `None` — the columns are optional.
-  */
+/** Headers parsed by hand rather than through ImageIO, a native-image liability. */
 object ImageSize:
 
   def of(bytes: Array[Byte]): Option[(Int, Int)] =

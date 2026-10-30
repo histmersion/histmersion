@@ -4,12 +4,10 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A count by key (a kind, a reason). */
 final case class EventCount(key: String, n: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object EventCount:
   given Schema[EventCount] = summon[KindlingsSchema[EventCount]].schema
 
-  /** Pure: count `keys`, most frequent first, then by key. */
   def of(keys: List[String]): List[EventCount] =
     keys.groupBy(identity).toList.map((k, v) => EventCount(k, v.size)).sortBy(c => (-c.n, c.key))
   def add(a: List[EventCount], b: List[EventCount]): List[EventCount] =

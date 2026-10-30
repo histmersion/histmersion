@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A temporal or causal edge between two events. */
 final case class EventEdge(
     srcId: String,
     dstId: String,

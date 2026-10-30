@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** One page of "Not read yet", by title: `total` of them in all, this page from `offset`. */
 final case class UnreadPage(rows: List[UnreadRow], total: Int, offset: Int = 0)
     derives KindlingsCodecAsObject,
       KindlingsSchema

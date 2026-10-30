@@ -6,15 +6,12 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 
-/** The resolution file (`--resolutions`), merged with `--resolve` flags and `--editions`. */
 final case class MergeResolutions(
     resolve: List[MergeResolution] = Nil,
     policy: MergePolicy = MergePolicy(),
-    /** The bundle id the file was written for, when it says. */
     bundle: Option[UUID] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema:
-  /** `later` wins per issue (flags over the file); its policy where it sets one. */
   def overriddenBy(later: MergeResolutions): MergeResolutions =
     val ids = later.resolve.map(_.issue).toSet
     MergeResolutions(

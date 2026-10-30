@@ -2,15 +2,10 @@ package com.histmersion.api
 
 import com.histmersion.api.Activity.{Entry, EntryKind, Page}
 
-/** The activity list as Markdown: what `histmersion activity` prints and the `activity` tool answers. */
 object ActivityMarkdown:
 
-  /** `2026-10-30T12:40:00.123456Z` → `2026-10-30 12:40`. Pure. */
   def minute(at: String): String = at.take(16).replace('T', ' ')
 
-  /** What the entry is about, in words: a run's pipeline and target, a job's kind and what it does, the line itself, a
-    * decision on its subject. Pure.
-    */
   def headline(e: Entry): String = e.entryKind match
     case Some(EntryKind.Run) =>
       val what = Agents.Pipeline.parse(e.what).fold(Wording.humanize(e.what))(Wording.pipeline)
@@ -23,13 +18,11 @@ object ActivityMarkdown:
         Option(e.text).filter(_.nonEmpty).fold("")(t => s" — $t")
     case Some(EntryKind.Log) | None => e.text
 
-  /** A run's or job's state in words, else nothing. Pure. */
   def stateOf(e: Entry): String = e.entryKind match
     case Some(EntryKind.Run) => Agents.RunState.parse(e.state).fold(e.state)(Wording.runState)
     case Some(EntryKind.Job) => JobState.parse(e.state).fold(e.state)(Wording.jobState)
     case _                   => ""
 
-  /** The links of an entry, as the CLI can follow them. Pure. */
   def refs(e: Entry): List[String] =
     e.goal.map(g => s"goal $g").toList ++
       e.job

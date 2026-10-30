@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The OCR job queue, one count per [[JobState]]. */
 final case class JobCounts(
     queued: Int = 0,
     running: Int = 0,
@@ -25,7 +24,6 @@ final case class JobCounts(
 object JobCounts:
   given Schema[JobCounts] = summon[KindlingsSchema[JobCounts]].schema
 
-  /** Pure: fold `(status, count)` rows into the counts; a status that is no [[JobState]] is dropped. */
   def of(rows: List[(String, Int)]): JobCounts =
     @tailrec def loop(
         rest: List[(String, Int)],

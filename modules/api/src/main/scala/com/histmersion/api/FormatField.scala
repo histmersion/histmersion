@@ -4,7 +4,6 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** Which stored text a problem is in. */
 enum FormatField:
   case Body, Summary, Notes
 

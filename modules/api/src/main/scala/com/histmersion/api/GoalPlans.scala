@@ -6,24 +6,14 @@ import io.circe.{Codec, Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** What a person approves before a P3 pipeline creates anything (docs/research-embedded-agents.md §14): a goal's PLAN
-  * (sub-goals, search queries, candidate works — each DOI already looked up upstream by code) and an article DRAFT (a
-  * new article, or a section to append to one, with the code self-check's remaining problems). They travel inside an
-  * approval ([[Agents.ApprovalInfo]]), are stored as the approval's payload, and the run that proposed them applies
-  * exactly this value when it resumes. Wire types only; the logic is in `core` and the server.
-  */
 object GoalPlans:
 
-  /** A sub-goal a plan proposes (created as a child of the planned goal when approved). */
   final case class PlannedGoal(slug: String, title: String, notes: Option[String] = None, tags: List[String] = Nil)
       derives KindlingsCodecAsObject,
         KindlingsSchema
   object PlannedGoal:
     given Schema[PlannedGoal] = summon[KindlingsSchema[PlannedGoal]].schema
 
-  /** A work a plan proposes to read, as code found it upstream: `inCorpus` works are linked to the goal, the others
-    * become acquisition items. `why` is the planner's reason.
-    */
   final case class PlannedWork(
       doi: String,
       title: Option[String] = None,
@@ -38,9 +28,6 @@ object GoalPlans:
   object PlannedWork:
     given Schema[PlannedWork] = summon[KindlingsSchema[PlannedWork]].schema
 
-  /** A verified plan. `dropped` says what code removed from the planner's answer, and why (a DOI that does not resolve,
-    * a sub-goal slug already taken…), so a person sees the whole story.
-    */
   final case class Plan(
       goal: String,
       rationale: String = "",
@@ -56,12 +43,6 @@ object GoalPlans:
 
   export com.histmersion.values.{DraftMode, GoalLinkKind as LinkKind, ScheduleKind}
 
-  /** An article a compile run drafted, as a person approves it. `text` is the whole body (create) or the section to
-    * append (extend, under the heading `section` when given, else at the end). `problems` are what the code self-check
-    * still found after the writer's last attempt; `cited` the citekeys the text cites, `notUsed` the filter's sources
-    * it leaves out, with why (for the person; `reasons` is what is stored, and the page lists them under its generated
-    * Not used).
-    */
   final case class ArticleDraft(
       slug: String,
       mode: DraftMode,
@@ -74,19 +55,12 @@ object GoalPlans:
       notUsed: List[String] = Nil,
       problems: List[String] = Nil,
       filter: String = "",
-      /** The reasons the write stores for the filter's sources the text leaves out (#958). */
       reasons: List[CoverageReason] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema
   object ArticleDraft:
     given Schema[ArticleDraft] = summon[KindlingsSchema[ArticleDraft]].schema
 
-  // ── goal links and schedules ───────────────────────────────────────────────────────────────────
-
-  /** One link of a goal. `title` is the source's or article's title (or the item's text) when the target still exists;
-    * `None` marks a dangling link. `queue`: the list a linked queue item is on (`acquire`, `tasks`), so a link can lead
-    * to it.
-    */
   final case class GoalLink(
       kind: LinkKind,
       ref: String,
@@ -99,17 +73,13 @@ object GoalPlans:
   object GoalLink:
     given Schema[GoalLink] = summon[KindlingsSchema[GoalLink]].schema
 
-  /** `POST /api/goals/{slug}/links`. */
   final case class LinkAdd(kind: LinkKind, ref: String, note: Option[String] = None) derives KindlingsSchema
   object LinkAdd:
     given Schema[LinkAdd] = summon[KindlingsSchema[LinkAdd]].schema
 
-    /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
     given Codec.AsObject[LinkAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[LinkAdd])
 
-  /** One schedule of a goal. `cron` is five fields in UTC (or `@daily`…); `lastNote` says what the scheduler last did
-    * (started run X, or skipped: why).
-    */
+  /** `cron`: five fields in UTC, or `@daily`… */
   final case class GoalSchedule(
       goal: String,
       kind: ScheduleKind,
@@ -125,21 +95,17 @@ object GoalPlans:
   object GoalSchedule:
     given Schema[GoalSchedule] = summon[KindlingsSchema[GoalSchedule]].schema
 
-  /** `PUT /api/goals/{slug}/schedules/{kind}` — create or change a schedule. */
   final case class ScheduleSet(cron: String, enabled: Boolean = true, budgetUsd: Option[Double] = None)
       derives KindlingsSchema
   object ScheduleSet:
     given Schema[ScheduleSet] = summon[KindlingsSchema[ScheduleSet]].schema
 
-    /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
     given Codec.AsObject[ScheduleSet] = StrictJson.codec(KindlingsCodecAsObject.derived[ScheduleSet])
 
-  /** `DELETE /api/goals/{slug}/schedules/{kind}` and `…/links`. */
   final case class Removed(removed: Boolean) derives KindlingsCodecAsObject, KindlingsSchema
   object Removed:
     given Schema[Removed] = summon[KindlingsSchema[Removed]].schema
 
-  /** `GET /api/goals/{slug}/view` — a goal with what hangs off it. */
   final case class GoalView(
       goal: Goal,
       children: List[Goal] = Nil,

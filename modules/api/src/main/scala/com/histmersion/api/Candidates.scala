@@ -2,18 +2,8 @@ package com.histmersion.api
 
 import io.circe.{ACursor, Json}
 
-/** Deterministic new-source search (#3761, the design of #3645): what each research goal WATCHES — its saved literature
-  * queries on each scholarly index, the works citing its sources, its sources' authors — each with a date WATERMARK
-  * (the day it was last read: the next read asks only for what is newer), and the CANDIDATES found, deduplicated by DOI
-  * across indexes and against the corpus and the acquisition list, stored on the server with a state. No model reads
-  * anything here: a person or an agent only filters the unseen candidates (`histmersion candidates`, MCP `candidates`),
-  * and a goal's scheduled acquisition sweep starts its ranking model only when there are new ones.
-  */
 object Candidates:
 
-  /** What a watch reads: a saved `query`, the works `citing` one of the goal's sources (a citekey), the newer works of
-    * an `author` of one (an OpenAlex author id).
-    */
   enum WatchKind(val wire: String):
     case Query extends WatchKind("query")
     case Citing extends WatchKind("citing")
@@ -21,9 +11,6 @@ object Candidates:
   object WatchKind:
     def parse(s: String): Option[WatchKind] = values.find(_.wire == s.trim.toLowerCase)
 
-  /** A candidate's state: `new` (nobody looked yet), `seen` (shown to a ranking or a person, not taken), `queued` (put
-    * on the acquisition list or ingested), `dismissed` (not for this goal).
-    */
   enum State(val wire: String):
     case New extends State("new")
     case Seen extends State("seen")
@@ -32,29 +19,23 @@ object Candidates:
   object State:
     def parse(s: String): Option[State] = values.find(_.wire == s.trim.toLowerCase)
 
-  /** The indexes searched for a goal's queries (the citing and author alerts read OpenAlex). */
   val Indexes: List[String] = List("openalex", "crossref", "europepmc", "arxiv", "core")
 
-  /** Pure: a work's DOI as a key — lower case, without its resolver prefix; an arXiv preprint without one gets arXiv's
-    * DataCite DOI (`10.48550/arxiv.<id>`), so the same preprint from two indexes is one.
+  /** An arXiv preprint without a DOI gets arXiv's DataCite DOI (`10.48550/arxiv.<id>`), so the same preprint from two
+    * indexes is one.
     */
   def keyOf(w: WorkRef): Option[String] =
     w.doi
       .flatMap(Acquire.normalizeDoi)
       .orElse(w.arxivId.map(a => s"10.48550/arxiv.${a.trim.toLowerCase.replaceAll("v\\d+$", "")}"))
 
-  /** Pure: the day a watch reads from — its watermark, or (never read) `lookbackDays` before `today`. */
   def since(watermark: Option[String], today: java.time.LocalDate, lookbackDays: Int): java.time.LocalDate =
     watermark
       .flatMap(w => scala.util.Try(java.time.LocalDate.parse(w.take(10))).toOption)
       .getOrElse(today.minusDays(math.max(0, lookbackDays).toLong))
 
-  /** One work found, with what found it (`openalex query "…"`, `openalex citing [[ck]]`, …). */
   final case class Found(key: String, work: WorkRef, by: String)
 
-  /** Pure: the works of one sweep, each once (by key), with every watch that found it; works without a DOI or arXiv id,
-    * retracted ones, and those in `known` (the corpus, the acquisition list) are left out and counted by reason.
-    */
   def dedupe(
       found: List[(String, WorkRef)],
       known: Set[String]
@@ -73,7 +54,6 @@ object Candidates:
     }
     (kept.toList.map { case (k, (w, bys)) => (k, w, bys) }, skipped.toMap)
 
-  /** Pure: the fuller record of two of one work (each field from the first that has it). */
   def richer(a: WorkRef, b: WorkRef): WorkRef =
     a.copy(
       title = a.title.orElse(b.title),
@@ -86,13 +66,8 @@ object Candidates:
       openalexId = a.openalexId.orElse(b.openalexId)
     )
 
-  // ── parsing the indexes' answers (pure) ──────────────────────────────────────────────────────────
-
   private def str(c: ACursor, k: String): Option[String] = c.get[String](k).toOption.map(_.trim).filter(_.nonEmpty)
 
-  /** Europe PMC's `search` answer (`resultType=core`): each result's DOI, title, authors, year, journal, open access
-    * and abstract.
-    */
   def europepmcWorks(json: Json): List[WorkRef] =
     json.hcursor.downField("resultList").downField("result").values.toList.flatten.map { r =>
       val c = r.hcursor
@@ -108,9 +83,7 @@ object Candidates:
       )
     }
 
-  /** CORE's `search/works` answer: each work's DOI, title, authors, year, publisher, abstract (open access by CORE's
-    * nature when it holds a full text).
-    */
+  /** CORE holds full texts, so a work with one is open access by CORE's nature. */
   def coreWorks(json: Json): List[WorkRef] =
     json.hcursor.downField("results").values.toList.flatten.map { r =>
       val c = r.hcursor
@@ -126,9 +99,6 @@ object Candidates:
       )
     }
 
-  /** arXiv's Atom answer: each entry's id (without its version), title, authors, year, DOI, abstract — read without an
-    * XML library (the feed's shape is fixed and small).
-    */
   def arxivWorks(atom: String): List[WorkRef] =
     def tag(s: String, t: String): Option[String] =
       s"(?s)<$t[^>]*>(.*?)</$t>".r.findFirstMatchIn(s).map(_.group(1).replaceAll("\\s+", " ").trim).filter(_.nonEmpty)
@@ -148,7 +118,6 @@ object Candidates:
       )
     }
 
-  /** OpenAlex's work: its authors' ids (`A…`), in byline order. */
   def openalexAuthorIds(json: Json): List[String] =
     json.hcursor
       .downField("authorships")

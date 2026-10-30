@@ -1,24 +1,18 @@
 package com.histmersion.api
 
-/** Render query results as Markdown — the wire format served to LLMs (MCP) and printed by the CLI. */
 object Markdown:
 
   private def year(y: Option[Int]): String = y.map(_.toString).getOrElse("n.d.")
   private def fmtYear(v: Long): String = YearFmt(v)
   private def period(start: Option[Long], end: Option[Long]): String = periodLabel(start, end)
 
-  /** `1300 BCE–1100 BCE` (empty when either bound is missing). Public: the SQL layer uses it to phrase the "why" of a
-    * match, so the CLI, MCP and the explanations all read the same.
-    */
   def periodLabel(start: Option[Long], end: Option[Long]): String = YearFmt.period(start, end)
   private def place(region: Option[String], lat: Option[Double], lon: Option[Double]): String =
     (lat, lon) match
       case (Some(la), Some(lo)) => s"${region.map(_ + " ").getOrElse("")}($la, $lo)"
       case _                    => region.getOrElse("")
 
-  /** The passage that matched, as a quote line: `> _heading_ — …**term**…` (plan §1.4). Gives an LLM the evidence, not
-    * just the citekey. `ts_headline` marks hits with `**` already.
-    */
+  /** `ts_headline` marks hits with `**` already. */
   private def snippet(h: SearchHit): String =
     h.snippet.map(_.replaceAll("\\s+", " ").trim).filter(_.nonEmpty) match
       case None    => ""
@@ -39,13 +33,6 @@ object Markdown:
       }
       s"### ${hits.size} result(s)\n\n${body.mkString("\n")}"
 
-  /** The filtered search result (plan §1.0): one entry per SOURCE, each followed by a `matches:` sub-list naming the
-    * findings that satisfied the filter — claim · place · period · why — so a human or an LLM can judge relevance
-    * without opening the source.
-    */
-  /** Paged by [[OffsetPage]]: the result says where it starts, so no caller can forget the offset (the CLI did, and
-    * every page claimed `next: offset=20`).
-    */
   def searchResults(result: SearchResult): String =
     if result.hits.isEmpty then "_No matching sources._"
     else
@@ -73,9 +60,6 @@ object Markdown:
       val footer = OffsetPage.footer(result.page)
       s"$header\n\n${body.mkString("\n")}$footer"
 
-  /** Brief search results (`verbose=false`): citekey · title · year · status · period · one why-line. No snippets, no
-    * matches list, no summaries — just enough to pick a source to open.
-    */
   def briefResults(result: SearchResult): String =
     if result.hits.isEmpty then "_No matching sources._"
     else
@@ -90,33 +74,20 @@ object Markdown:
       val footer = OffsetPage.footer(result.page)
       s"$header\n\n${body.mkString("\n")}$footer"
 
-  /** Trailing paging line (A6): `_showing 1–20 of 54 — next: offset=20 — full set: limit=54_` ([[OffsetPage.footer]]).
-    */
   def pagingFooter(p: OffsetPage): String = OffsetPage.footer(p)
 
-  /** `/api/facets` output: the vocabulary of one dimension with DISTINCT-source counts. */
   def facets(field: String, rows: Vector[Facet]): String =
     if rows.isEmpty then s"_No $field in the current filter._"
     else
-      // a `places` value backed by the gazetteer also prints its id — THAT is what `place=` wants
-      // (it matches through `finding_places` and the hierarchy, where the bare name only matches text)
       val items = rows.map(f =>
         s"- ${f.value}${contestedMark(f.contested, f.value)} (${f.count})" +
           f.id.map(i => s" · `$i`").getOrElse("")
       )
       s"### $field (${rows.size})\n\n${items.mkString("\n")}"
 
-  /** A comma-joined metadata value rendered as WEB UI LINKS — `[steppe](/#tag=steppe)`.
-    *
-    * Reading a source is otherwise a dead end: the page tells you what it is about and gives you no way to ask "what
-    * else is about that". The href is the web UI's own URL hash (the keys of `web.UiState`), so pasted anywhere it is a
-    * shareable link that opens the web UI with that filter applied. (The HTML pages use `server.HtmlRender.chip`, the
-    * same href.)
-    */
   def chipLinks(values: String, hashKey: String): String =
     chipLinks(values.split(",").iterator.map(_.trim).filter(_.nonEmpty).toList, hashKey)
 
-  /** Chip links from a proper list: `[readable label](/#key=value)` for each value. */
   def chipLinks(values: List[String], hashKey: String): String =
     values
       .filter(_.nonEmpty)
@@ -125,21 +96,17 @@ object Markdown:
 
   private[api] def enc(s: String): String = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
-  /** Table of contents as Markdown (the `toc` section of `get_source`). */
   def toc(entries: List[TocEntry]): String =
     if entries.isEmpty then "_(no headings in body)_"
     else
       val items = entries.map(e => s"- **${e.heading}** — ord ${e.ord}, ${e.chars} chars")
       s"### Table of Contents (${entries.size} heading(s))\n\n${items.mkString("\n")}"
 
-  /** A body slice with a trailing truncation hint when there is more. `total` = total characters available.
-    */
   def bodySlice(text: String, offset: Int, total: Int): String =
     val remaining = total - offset - text.length
     if remaining > 0 then s"$text\n\n_…$remaining more chars — pass offset=${offset + text.length}_"
     else text
 
-  /** Just the findings section, for `section=findings`. */
   def sourceFindingsOnly(findings: Vector[FindingRow]): String =
     if findings.isEmpty then "_(no findings)_"
     else
@@ -169,11 +136,8 @@ object Markdown:
     val tags = if s.tags.nonEmpty then s"  \n**Tags:** ${chipLinks(s.tags, "tag")}" else ""
     val doi = s.doi.map(d => s"  \n**DOI:** $d").getOrElse("")
     val prov = s.provenance.filter(_.nonEmpty).map(p => s"  \n**Provenance:** $p").getOrElse("")
-    // the permanent identity (V030): what a bundle carries, and what survives a rename
     val uid = s.uid.map(u => s"  \n**Uid:** $u").getOrElse("")
     val summary = s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
-    // the agent-written article about the source (plan §1.9a `notes`) — after the abstract, before
-    // the evidence, so `get_source` and the HTML page both show what we have compiled about it
     val notes = s.notes.map(_.trim).filter(_.nonEmpty).map(n => s"\n\n## Notes\n\n$n").getOrElse("")
     val findingsMd =
       if findings.isEmpty then ""
@@ -193,10 +157,8 @@ object Markdown:
           s"- ${f.claim}${if tail.nonEmpty then s"  \n  _${tail}_" else ""}"
         }
         s"\n\n## Findings (${findings.size})\n${items.mkString("\n")}"
-    // The stored OCR body is normalised HERE as well as at import (plan §1.8): the corpus was seeded
-    // before the figure-link rewrite existed, so a body still carrying `/Users/…/figures/x.png` —
-    // which a browser resolves against the server root and draws 0×0 — has to come out right without
-    // waiting for a `seed --force`. Both steps are idempotent, so doing it twice costs nothing.
+    // Normalised here as well as at import: older bodies still carry `/Users/…/figures/x.png` links, which a
+    // browser resolves against the server root and draws 0×0.
     val body =
       if !fullText then ""
       else
@@ -205,11 +167,6 @@ object Markdown:
           .getOrElse("\n\n_(no full text stored)_")
     header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body
 
-  /** `isArticle` answers "is there a compiled article under this slug?". An edge target that is not a source but IS an
-    * article — `references → bronze_age_collapse`, which is most of them — becomes a link INTO the wiki instead of the
-    * bold dead end it used to be; a target that is neither stays plain text, because a link to a 404 is worse than no
-    * link.
-    */
   def neighbors(citekey: String, rows: Vector[NeighborRow]): String =
     if rows.isEmpty then
       s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
@@ -277,17 +234,12 @@ object Markdown:
         "_Edge kinds: references, challenges, refutes, updates, superseded_by. " +
         "An empty result is not evidence of agreement._"
 
-  /** "Mentioned in articles" — the compiled wiki pages that cite this source (`article_links` with
-    * `target_kind = 'source'`). The other half of the two-way hop: `/article/{slug}` already lists the sources it
-    * cites, so a source has to list the articles that cite it, or the graph is only ever walkable downwards.
-    */
   def sourceArticles(rows: Vector[Backlink]): String =
     if rows.isEmpty then ""
     else
       val items = rows.map(b => s"- [${b.title.getOrElse(b.id)}](/article/${b.id})")
       s"\n\n## Mentioned in articles (${rows.size})\n${items.mkString("\n")}"
 
-  /** One page of `geo_when` ([[GeoHitPage]]): the findings grouped by source, with the paging lines. */
   def geoPage(p: GeoHitPage): String =
     if p.hits.isEmpty then
       OffsetPage.markdown(p.page, "finding(s)", "_No findings match that place/time._", Nil)(_ => "")
@@ -314,13 +266,6 @@ object Markdown:
         }
       s"### ${hits.size} finding(s)\n\n${blocks.mkString("\n")}"
 
-  /** The timeline strip as text (plan §1.7): a Markdown table plus an inline bar chart, so an LLM (MCP) or a terminal
-    * (CLI) can see *when* the evidence is without opening the UI. Counts overlap buckets, so they deliberately do not
-    * sum to a total.
-    *
-    * When the table would exceed 12 rows, CONSECUTIVE buckets with the SAME count are collapsed into one wide row
-    * (A16): `1600–1360 BCE: 2 sources (24 buckets)`.
-    */
   def histogram(h: TimeHistogram, unit: String): String =
     val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
     if h.buckets.isEmpty then s"_No time buckets for $span._"
@@ -348,14 +293,11 @@ object Markdown:
       val col = if starts then "sources" else unit
       (List(head, "", s"| period | $col | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
 
-  /** A collapsed histogram row: the span of one or more consecutive buckets sharing a count. */
   final case class CollapsedBucket(start: Long, end: Long, count: Int, merged: Int)
 
-  /** Collapse consecutive runs of identical counts when the raw table would exceed 12 rows. */
   def collapseHistogram(buckets: List[TimeBucket]): List[CollapsedBucket] =
     if buckets.sizeIs <= 12 then buckets.map(b => CollapsedBucket(b.start, b.end, b.count, 1))
     else
-      // group consecutive buckets with the same count
       val runs = buckets
         .foldLeft(List.empty[CollapsedBucket]) { (acc, b) =>
           acc match
@@ -367,14 +309,6 @@ object Markdown:
         .reverse
       runs
 
-  /** The §1.6 NESTED tree as indented Markdown — what `histmersion search --group time,region` prints and what the MCP
-    * `search` tool returns when `groupBy` is set. One line per bucket:
-    * `- **label** — N source(s) · M in more than one subregion · period`, its samples as a deeper indent, so an LLM can
-    * see WHEN and WHERE the evidence sits before opening anything.
-    *
-    * Counts are non-additive by construction (a unit is in every bucket it overlaps), which the trailing note says
-    * explicitly — otherwise the first thing any reader does is add the children up and conclude the numbers are broken.
-    */
   def tree(h: TimeHistogram, unit: String): String =
     val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
     if h.tree.isEmpty then s"_No $unit to group for $span._"
@@ -385,7 +319,6 @@ object Markdown:
         "children never sum to their parent — \"N in more than one …\" is how many are double-counted._"
       (List(head, "", treeLines(h.tree, unit, 0).mkString("\n"), "", note)).mkString("\n")
 
-  /** The bucket lines of [[tree]], `depth` levels of two-space indent deep. */
   private def treeLines(buckets: List[Bucket], unit: String, depth: Int): List[String] =
     val pad = "  " * depth
     buckets.flatMap { b =>
@@ -400,13 +333,9 @@ object Markdown:
       line :: (kids ++ samps)
     }
 
-  /** What a bucket's children ARE, for the overlap phrase ("3 in more than one subregion"). */
   private def childNoun(b: Bucket): String =
     if b.children.exists(_.kind == Tree.KindTime) then "period" else "subregion"
 
-  // ── backup / restore (plan §1.10) ─────────────────────────────────────────────────────────────
-
-  /** What `POST /api/backup` wrote — the checksum is what you verify a copied-off dump against. */
   def backup(r: BackupResult): String =
     s"""### Backup written
        |
@@ -417,7 +346,6 @@ object Markdown:
       (if r.pruned.isEmpty then ""
        else s"\n- **pruned** (older than the newest kept): ${r.pruned.mkString(", ")}")
 
-  /** A backup job: the finished archive, or where it stands. */
   def backupStatus(s: BackupStatus): String =
     s.stateOf match
       case Some(BackupState.Done)   => s.result.map(backup).getOrElse(s"### Backup written\n\n- **file:** ${s.file}")
@@ -427,7 +355,6 @@ object Markdown:
         s"### Backup running\n\n- **file:** ${s.file}\n- **for:** ${s.durationMs / 1000} s — " +
           "`histmersion backup` waits for it; `GET /api/backup/status` reports when it is written"
 
-  /** The archives on the server, newest first. */
   def backups(rows: Vector[BackupInfo]): String =
     if rows.isEmpty then "_No backups on the server yet._"
     else
@@ -445,12 +372,7 @@ object Markdown:
        |- **schema version:** ${r.schemaVersion} (Flyway validate passed)
        |- **sources:** ${r.sourcesBefore} → ${r.sourcesAfter}
        |- **took:** ${r.durationMs} ms""".stripMargin + warn
-  // ── the gazetteer (plan §1.6a) ───────────────────────────────────────────────────────────────
 
-  /** A hand-traced shape whose extent is disputed is marked everywhere its label is drawn — unless the label already
-    * says so (some traced polygons carry "(contested)" in the label itself, and "Israel (united monarchy, as narrated)
-    * (contested) (contested)" helps nobody).
-    */
   def contestedMark(contested: Boolean, label: String = ""): String =
     if contested && !label.toLowerCase.contains("contested") then " (contested)" else ""
 
@@ -458,16 +380,12 @@ object Markdown:
     val p = period(ps, pe)
     if p.isEmpty then kind else s"$kind · $p"
 
-  /** Kind and period as the place's source states it ([[PlaceDating]]: "end 1769 CE, start unknown"). */
   private def kindWhen(s: PlaceSummary): String =
     if s.dating == PlaceDating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else s"${s.kind} · ${s.when}"
 
   private def asOfNote(asOf: Option[Long]): String =
     asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("")
 
-  /** `/api/places?q=` — search results. Each row carries the id, because THAT is what `--place` / `place=` want: an id
-    * matches through `finding_places` and the hierarchy, a name only by text.
-    */
   def places(rows: Vector[PlaceHit], asOf: Option[Long] = None): String =
     if rows.isEmpty then "_No matching places._"
     else
@@ -479,7 +397,6 @@ object Markdown:
       }
       s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}"
 
-  /** The hierarchy as an indented list — `depth` is the distance from the walk's root. */
   def placeTree(rows: Vector[PlaceTreeRow]): String =
     if rows.isEmpty then "_No hierarchy._"
     else
@@ -490,7 +407,6 @@ object Markdown:
         }
         .mkString("\n")
 
-  /** `/api/places/{id}` — one place: what it is, when it was, what it contains, and where it sits. */
   def place(d: PlaceDetail, tree: Vector[PlaceTreeRow] = Vector.empty): String =
     val p = d.place
     val header = s"# ${p.label}${contestedMark(d.contested || p.contested, p.label)}" +
@@ -566,9 +482,6 @@ object Markdown:
     if r.failed.isEmpty then head
     else s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}"
 
-  /** `histmersion places sources` (#1064): each external source, whether its file is there, what the pin says and what
-    * was imported.
-    */
   def gazetteerSources(rows: List[GazetteerSourceInfo]): String =
     if rows.isEmpty then "_No external gazetteer sources: no pinned extracts and no LPF files._"
     else
@@ -583,7 +496,6 @@ object Markdown:
       }
       (head :: body).mkString("\n")
 
-  /** A name edit (#987): what changed, on which place. */
   def placeNameChanged(r: PlaceNameChanged): String =
     val lang = if r.lang.isEmpty then "" else s" (${r.lang})"
     val what =
@@ -593,7 +505,6 @@ object Markdown:
       else s"added the name **${r.name}**$lang to"
     s"$what **${r.label}** `${r.placeId}` — names added by hand survive every re-seed"
 
-  /** The names people added (#987). */
   def manualPlaceNames(rows: List[ManualPlaceName]): String =
     if rows.isEmpty then "_No names added by hand._"
     else
@@ -603,7 +514,6 @@ object Markdown:
         }
         .mkString("\n")
 
-  /** A kind/period set by hand (V080): what changed and how the place's findings moved. */
   def placeOverrideChanged(r: PlaceOverrideChanged): String =
     val kind = if r.kindBefore == r.kindAfter then s"kind ${r.kindAfter}" else s"kind ${r.kindBefore} → ${r.kindAfter}"
     val period = if r.periodBefore == r.periodAfter then s"period ${r.periodAfter}"
@@ -620,7 +530,6 @@ object Markdown:
     val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
     s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost"
 
-  /** A merge or a removal (V080). */
   def placeGone(r: PlaceGone): String =
     val head = r.into match
       case Some(into) =>
@@ -629,7 +538,6 @@ object Markdown:
     val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
     s"$head; no re-seed brings it back\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost"
 
-  /** The kinds and periods people set by hand (V080). */
   def placeOverrides(rows: List[PlaceOverride]): String =
     if rows.isEmpty then "_No place has a kind, period or point set by hand._"
     else
@@ -649,7 +557,6 @@ object Markdown:
         }
         .mkString("\n")
 
-  /** A place a person added (#987). */
   def placeAdded(p: PlaceSummary): String =
     s"added **${p.label}** `${p.id}` _(${kindOf(p.kind, p.periodStart, p.periodEnd)})_" +
       p.source.fold("")(src => s" — source: $src") +
@@ -661,8 +568,6 @@ object Markdown:
       s"(${r.byGeometry} by geometry, ${r.byName} by region name); " +
       s"${r.located} finding(s) located, ${r.unlocated} unlocated"
 
-  // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
-
   private def timeSpan(ts: TimeSpan): String = YearFmt.spanLong(ts)
 
   private def eventLine(e: EventSummary): String =
@@ -671,7 +576,6 @@ object Markdown:
     val prec = EventPrecision.label(e.precision).fold("")(l => s" · $l")
     s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts$prec)_$ck"
 
-  /** `local` (stated) / `regional` (derived from the kind, the place, the geometry). */
   private[api] def eventScale(e: EventSummary): String =
     s"${e.scale} (${if e.scaleStated then "stated" else "derived"})"
 
@@ -730,8 +634,6 @@ object Markdown:
       corrections +
       EventLinksMarkdown.context(d)
 
-  // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
-
   private def attestationLine(a: Attestation): String =
     val loc = List(
       a.page.map(p => s"p.$p"),
@@ -774,8 +676,6 @@ object Markdown:
     val n = a.note.map(n => s"\n\n$n").getOrElse("")
     header + locBlock + q + n
 
-  // ── goals (plan §1.5) ────────────────────────────────────────────────────────────────────────
-
   private def goalLine(g: Goal): String =
     val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, "") match
       case "" => ""
@@ -798,8 +698,6 @@ object Markdown:
     val upd = g.updatedAt.map(u => s"  \n_Updated: ${u}_").getOrElse("")
     header + period + parent + tags + regions + notes + upd
 
-  // ── agent state ──────────────────────────────────────────────────────────────────────────────
-
   def agentStateList(entries: List[AgentStateEntry]): String =
     if entries.isEmpty then "_No agent state entries._"
     else
@@ -814,8 +712,6 @@ object Markdown:
   def agentState(e: AgentStateEntry): String =
     val upd = e.updatedAt.map(u => s"  \n_Updated: ${u}_").getOrElse("")
     s"# `${e.key}`\n\n```json\n${e.value}\n```$upd"
-
-  // ── media associations (plan §1.6) ──────────────────────────────────────────────────────────
 
   def assetDetail(ck: String, a: AssetDetail): String =
     val loc = (a.lat, a.lon) match
@@ -836,9 +732,6 @@ object Markdown:
     val cap = a.caption.map(c => s"\n\n> $c").getOrElse("")
     s"# `$ck` / `${a.name}`\n\n$meta$loc$per$cap"
 
-  // ── media from outside providers (#1446) ─────────────────────────────────────────────────────
-
-  /** One picture on a card or a detail page: role, credit, licence and its local thumbnail. */
   def mediaThumbLine(t: MediaThumb): String =
     val lic = t.license.fold("no licence")(l => t.licenseUrl.fold(s"`$l`")(u => s"[`$l`]($u)"))
     val from = t.sourceUrl.fold("")(u => s" · [source]($u)")
@@ -848,7 +741,6 @@ object Markdown:
     if cs.isEmpty then "none"
     else cs.map(c => s"${c.key} ${c.n}${if c.allowed then "" else " (not allowed)"}").mkString(" · ")
 
-  /** `histmersion media providers`: one line per provider `media import` can run. */
   def mediaProviders(ps: List[MediaProviderInfo]): String =
     if ps.isEmpty then "No media provider is registered (every media plugin is switched off)."
     else
@@ -896,7 +788,6 @@ object Markdown:
       licences + rejected + mediaSamples(r.samples, r.dryRun) + done + revoked + failed + pending
     ).mkString("\n")
 
-  /** The matches of a collection or depictions import, each with its reason — for a person to judge. */
   private def mediaSamples(xs: List[MediaSample], dryRun: Boolean): String =
     if xs.isEmpty then ""
     else
@@ -905,7 +796,6 @@ object Markdown:
           s"- ${x.targetType} `${x.targetId}` (${x.targetLabel}) ← ${x.title} [`${x.key}`](${x.url}) · `${x.license}` — ${x.basis}"
         ).mkString("\n")
 
-  /** A covers/illustrations run: the counts, each source's picture, why others have none. */
   def mediaCoversReport(r: MediaCoversReport): String =
     val mode = if r.dryRun then "dry run — nothing stored" else "stored"
     val verb = if r.dryRun then "would link" else "linked"
@@ -990,9 +880,6 @@ object Markdown:
     val notes = l.notes.map(n => s"  \n$n").getOrElse("")
     s"# Link #${l.id}\n\n**Relation:** ${l.relation}  \n**Target:** ${l.targetType}:${l.targetId}  \n**Asset:** ${l.citekey}/${l.assetName}$xywh$notes"
 
-  /** A citekey rename: what moved, and the two things outside the database that are keyed by the citekey and are NOT
-    * the server's to change (the host's Calibre originals directory and the exported Markdown mirror).
-    */
   def sourceRenamed(r: SourceRenamed): String =
     val c = r.counts
     def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")

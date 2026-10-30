@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** The candidates as Markdown — what the CLI prints and the MCP tool answers. Pure. */
 object CandidatesMarkdown:
 
   private def counts(cs: List[CandidateCount]): String =

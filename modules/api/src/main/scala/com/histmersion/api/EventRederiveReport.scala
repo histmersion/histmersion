@@ -4,11 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** What a re-derivation read and did: `records` read back, `changed` whose dating changed, `fromRaw` parsed again from
-  * the catalogue's own record (the rest, stored before V088 kept it, read back from their span:
-  * `CatalogDating.centralOf`), the events refreshed, the precision of the records before and after ([[EventPrecision]])
-  * and how many leave the map (`offMap`: imprecise now), and a few examples.
-  */
 final case class EventRederiveReport(
     dryRun: Boolean,
     providers: List[String],
@@ -26,7 +21,6 @@ final case class EventRederiveReport(
 object EventRederiveReport:
   given Schema[EventRederiveReport] = summon[KindlingsSchema[EventRederiveReport]].schema
 
-  /** Pure: the one line `histmersion jobs` shows. */
   def summary(r: EventRederiveReport): String =
     def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")
     List(

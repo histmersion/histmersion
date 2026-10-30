@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** How to make each kind of location smaller — one sentence a person can act on. Pure. */
 object StorageAdvice:
 
   def shrink(key: String, keep: Int): Option[String] = key match

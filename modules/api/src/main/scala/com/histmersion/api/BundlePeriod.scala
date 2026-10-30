@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 
 import java.util.UUID
 
-/** A named period added here (`periods.dataset = 'local'`). */
 final case class BundlePeriod(
     uid: UUID,
     origin: UUID,

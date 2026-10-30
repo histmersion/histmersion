@@ -22,5 +22,4 @@ final case class AttestationPatch(
 object AttestationPatch:
   given Schema[AttestationPatch] = summon[KindlingsSchema[AttestationPatch]].schema
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AttestationPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPatch])

@@ -1,13 +1,8 @@
 package com.histmersion.api
 
-/** One id in one authority: Wikidata `Q42`, GeoNames `2643743`, Pleiades `579885`, TGN `7011944`. */
 final case class ExternalId(scheme: LinkScheme, id: String):
-  /** `wikidata:Q42` — how a source names a record it imported. */
   def key: String = s"${scheme.wire}:$id"
 
-  /** The id a place gets when this record is the first to bring it in: `geonames_2643743`, `wikidata_q42` — the
-    * convention of the seed's own `pleiades_579885`.
-    */
   def placeId: String = s"${scheme.wire}_${id.toLowerCase(java.util.Locale.ROOT)}"
 
 object ExternalId:
@@ -18,9 +13,6 @@ object ExternalId:
   private val TgnUri = """^https?://vocab\.getty\.edu/(?:page/)?tgn/(\d+)(?:[-/].*)?$""".r
   private val WhgUri = """^https?://(?:www\.)?whgazetteer\.org/(?:api/)?(?:places?|db)/(?:\?id=)?(\d+)/?.*$""".r
 
-  /** `wd:Q42`, `gn:123`, `pl:579885`, `tgn:7011944`, `whg:123` or the authority's URI; `None` for anything else (a VIAF
-    * id, a dataset-local id). Ids are normalised: `Q` upper case, digits as is.
-    */
   def parse(raw: String): Option[ExternalId] =
     val s = raw.trim
     def make(scheme: LinkScheme, id: String): Option[ExternalId] =

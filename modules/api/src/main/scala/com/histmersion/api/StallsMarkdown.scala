@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** The stall report as Markdown — every surface prints this. Pure. */
 object StallsMarkdown:
   import Stalls.*
 

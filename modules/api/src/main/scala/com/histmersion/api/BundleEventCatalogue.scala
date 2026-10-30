@@ -5,10 +5,6 @@ import io.circe.Json
 
 import java.util.UUID
 
-/** What a CATALOGUE says about an event (`event_catalogue`, V085), one line per (provider, provider id). Not an entity
-  * of its own: it travels beside its event, by the event's uid, and an import keeps the newer read of a record
-  * (`retrievedAt`).
-  */
 final case class BundleEventCatalogue(
     eventUid: UUID,
     provider: String,

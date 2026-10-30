@@ -4,11 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-// ── the pinned extracts and their state (wire) ──────────────────────────────────────────────────
-
-/** One pinned extract (`db/gazetteer/extracts.json`): the file the import reads, its checksum and size, and where a
-  * missing copy may be downloaded from (`url`, empty = never).
-  */
 final case class GazetteerExtract(
     name: String,
     file: String,

@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** `POST /api/merge/import`: import an uploaded bundle, taking the resolutions into account. */
 final case class MergeImportRequest(
     bundle: String,
     resolutions: MergeResolutions = MergeResolutions(),

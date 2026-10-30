@@ -4,9 +4,6 @@ object UpstreamQuotaMarkdown:
 
   private def name(upstream: String): String = if upstream == "core" then "CORE" else upstream
 
-  /** `CORE today (UTC 2026-10-26): 14 of 900 tokens — PDF lookups 10, searches 4 of 600 · at most 20 a minute · CORE's
-    * window 18 of 25 left · BLOCKED until … (HTTP 429)`. Pure.
-    */
   def line(q: UpstreamQuota): String =
     val spent = q.lookupTokens + q.searchTokens
     val window = q.rateRemaining.fold("")(r => s" · CORE's window $r of ${q.rateLimit.fold("?")(_.toString)} left")

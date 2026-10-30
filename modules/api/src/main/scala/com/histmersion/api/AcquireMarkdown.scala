@@ -1,23 +1,17 @@
 package com.histmersion.api
 
-/** Markdown renderings of the acquisition & assessment results — the wire format of every surface: the MCP tools return
-  * these strings, the CLI prints them, and they read the same either way. Pure functions of a DTO, like [[Markdown]].
-  */
 object AcquireMarkdown:
 
   private def esc(s: String): String = s.replace("|", "\\|").replace("\n", " ").trim
   private def cell(s: Option[String]): String = esc(s.getOrElse("—"))
   private def num(n: Option[Int]): String = n.map(_.toString).getOrElse("—")
 
-  /** `10.1038/nature14317` → a resolver link, so a reader can open it from the terminal or the chat. */
   private def doiLink(doi: Option[String]): String =
     doi.map(d => s"[$d](https://doi.org/$d)").getOrElse("—")
 
   private def table(header: List[String], rows: List[List[String]]): String =
     val sep = header.map(_ => "---")
     (List(header, sep) ++ rows).map(_.mkString("| ", " | ", " |")).mkString("\n")
-
-  // ── discover ────────────────────────────────────────────────────────────────────────────────
 
   def discover(r: DiscoverResult): String =
     if r.works.isEmpty then s"_No works found for **${esc(r.query)}**._"
@@ -49,8 +43,7 @@ object AcquireMarkdown:
       w.venue.getOrElse(""),
       w.workType.getOrElse("")
     ).filter(_.nonEmpty).mkString(" · ")
-    // `oaStatus` is set by every upstream that knows (OpenAlex, Unpaywall — `closed` when there is
-    // no copy); a work with none came from a source that records no access at all (Crossref)
+    // OpenAlex and Unpaywall set `oaStatus` (`closed` when there is no copy); Crossref records no access at all.
     val oa =
       if w.isOa then s"open access (${w.oaStatus.getOrElse("?")})"
       else if w.oaStatus.isEmpty then "OA status unknown (the metadata came from Crossref, which records none)"
@@ -80,8 +73,6 @@ object AcquireMarkdown:
         (if r.arxiv.isEmpty then "" else s"\n\n**arXiv:** ${r.arxiv.mkString(", ")}") +
         "\n\n_A trailhead, not a reading list: assess before ingesting (`histmersion assess <doi>`)._"
 
-  // ── refs ────────────────────────────────────────────────────────────────────────────────────
-
   def refs(r: RefsResult): String =
     if r.references.isEmpty then s"_No reference list deposited for **${esc(r.target)}** (backend: ${r.backend})._"
     else
@@ -100,8 +91,6 @@ object AcquireMarkdown:
   private def edgeNote(r: RefsResult): String =
     if r.edgesAdded > 0 then s"${r.edgesAdded} `references` edge(s) written"
     else "re-run with `--apply` to write the `references` edges"
-
-  // ── assess ──────────────────────────────────────────────────────────────────────────────────
 
   def assessment(a: Assessment): String =
     val icon = a.verdict match
@@ -159,8 +148,6 @@ object AcquireMarkdown:
           "so far. Ask again to see whether it has finished."
       case None => s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}."
 
-  // ── followups ───────────────────────────────────────────────────────────────────────────────
-
   def followups(r: FollowupsResult): String =
     if r.followups.isEmpty then s"_Nothing cites **${esc(r.target)}** in that window._"
     else
@@ -191,8 +178,6 @@ object AcquireMarkdown:
         (if ctx.isEmpty then "" else "\n\n**Citation contexts**\n" + ctx.mkString("\n")) +
         applied + caveat
 
-  // ── archive.org ─────────────────────────────────────────────────────────────────────────────
-
   def archiveSearch(r: ArchiveSearchResult): String =
     if r.items.isEmpty then s"_Nothing on archive.org for **${esc(r.query)}**._"
     else
@@ -221,7 +206,7 @@ object AcquireMarkdown:
             "downloaded here (no DRM circumvention)."
         )
       else Nil
-    // NB: no stripMargin — every table row starts with '|', which stripMargin would eat.
+    // No stripMargin: every table row starts with '|', which stripMargin would eat.
     (List(
       s"### ${i.title.getOrElse(i.identifier)}",
       "",
@@ -232,8 +217,6 @@ object AcquireMarkdown:
     ) ++ restriction ++ List("", files) ++ i.description.toList.flatMap(d => List("", d)))
       .mkString("\n")
 
-  // ── ingest ──────────────────────────────────────────────────────────────────────────────────
-
   def ingest(r: IngestReport): String =
     val steps = r.steps.map(s => s"- ${if s.ok then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
@@ -242,7 +225,7 @@ object AcquireMarkdown:
       case None if r.steps.exists(s => s.step == "fetch" && s.ok) =>
         "**PDF:** not fetched — the source already has its original"
       case None => "**PDF:** none found through legal open access"
-    // no stripMargin here either: `assessment` embeds tables and quote lines
+    // No stripMargin: `assessment` embeds tables, whose rows start with '|'.
     (List(
       s"### ${if r.created then "Ingested" else "Updated"} `${r.citekey}`",
       "",
@@ -254,12 +237,10 @@ object AcquireMarkdown:
     ) ++ steps ++ r.dropIn.toList.flatMap(d => List("", s"> $d"))
       ++ r.assessment.toList.flatMap(a => List("", assessment(a)))).mkString("\n")
 
-  // ── calibre gaps (rendered host-side by the CLI) ─────────────────────────────────────────────
-
   def calibreGaps(g: CalibreGaps): String =
     if g.gaps.isEmpty then "_Every stored source is in Calibre._"
     else
-      // the original column only when the server said (an older server's listing has no such field)
+      // An older server's listing has no `storedOriginal`: the column only when the server sent it.
       val said = g.gaps.exists(_.storedOriginal.isDefined)
       val rows = g.gaps.map(x =>
         List(

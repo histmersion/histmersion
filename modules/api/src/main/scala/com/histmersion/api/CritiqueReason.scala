@@ -4,10 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A stored reason that one critique does not bear on what an article cites its sources for. An empty `reason` in a
-  * patch REMOVES it. `by`: who set it (`person`, `skeptic (agent run …)`, `fixer (…)`); the server fills it when a
-  * patch leaves it out.
-  */
 final case class CritiqueReason(src: String, dst: String, reason: String, by: Option[String] = None)
     derives KindlingsCodecAsObject:
   def ref: CritiqueRef = CritiqueRef(src, dst)
@@ -30,16 +26,13 @@ object CritiqueReason:
     )
     .modify(_.by)(_.description("Who set it (filled by the server when left out)"))
 
-  /** The longest reason kept: one line, like a coverage reason. */
   val MaxChars: Int = CoverageReason.MaxChars
 
-  /** `src>dst=why` (the CLI's `--critique-reason`); `src>dst=` removes. */
   def parse(s: String): Either[String, CritiqueReason] =
     val i = s.indexOf('=')
     if i < 0 then Left(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)")
     else CritiqueRef.parse(s.take(i)).map(r => CritiqueReason(r.src, r.dst, s.drop(i + 1).trim))
 
-  /** A reason as stored: one line, at most [[MaxChars]]; `Left` for a longer one. */
   def tidy(r: CritiqueReason): Either[String, CritiqueReason] =
     val text = Option(r.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
     if text.length > MaxChars then

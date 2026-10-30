@@ -5,10 +5,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
 
-/** `POST /api/maintenance/vacuum` (#1445) — `VACUUM` (with `analyze`, `VACUUM (ANALYZE)`) over the named tables, or
-  * over `maintenance.vacuum-tables` (the gazetteer and finding tables a re-seed rewrites) when none is named. A re-seed
-  * or a gazetteer load upserts every place, name and link, and leaves the old row versions behind as dead tuples — 1.2
-  * M in `place_names` after the 2026-10-09 clean-up — which autovacuum reaches only slowly on tables that size.
+/** A re-seed or a gazetteer load leaves the old row versions behind as dead tuples, which autovacuum reaches only
+  * slowly on tables that size.
   */
 final case class VacuumRequest(analyze: Boolean = false, tables: List[String] = Nil)
 object VacuumRequest:

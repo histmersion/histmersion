@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** One record a collection import ties to a place or event, with the reason. */
 final case class MediaSample(
     targetType: String,
     targetId: String,

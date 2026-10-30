@@ -1,8 +1,5 @@
 package com.histmersion.api
 
-/** An authority whose ids join places across sources. The wire spelling is `place_links.scheme`
-  * ([[PlaceLink.Schemes]]).
-  */
 enum LinkScheme:
   case Pleiades, Wikidata, Geonames, Tgn, Whg
 

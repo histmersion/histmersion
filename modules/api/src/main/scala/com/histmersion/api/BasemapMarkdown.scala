@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** How the terrain base map's answers read as Markdown (`histmersion basemap status|rm`). Pure. */
 object BasemapMarkdown:
 
   def status(s: BasemapStatus): String =
@@ -52,7 +51,6 @@ object BasemapMarkdown:
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
 
-  /** The on-demand relief in a line: to what zoom, its cache, whether it is reachable. Pure. */
   def onDemand(o: BasemapOnDemand): String =
     if !o.enabled then "Relief deeper than the extract: off (basemap.terrain.on-demand.enabled)."
     else
@@ -60,7 +58,6 @@ object BasemapMarkdown:
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
-  /** A layer read outside the extract (#3760) in a line: to what zoom, its cache, whether it is reachable. Pure. */
   def outside(what: String, key: String, o: BasemapOnDemand): String =
     if !o.enabled then s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled)."
     else
@@ -68,7 +65,6 @@ object BasemapMarkdown:
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
-  /** A credit line without its links (the page shows them; a terminal does not). */
   def plain(html: String): String = html.replaceAll("<[^>]+>", "")
 
   def removed(r: BasemapRemoved): String =

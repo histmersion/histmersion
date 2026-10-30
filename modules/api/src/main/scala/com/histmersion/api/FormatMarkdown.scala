@@ -2,12 +2,10 @@ package com.histmersion.api
 
 import com.histmersion.values.WireEnumValues
 
-/** How a formatting report reads on every Markdown surface (MCP, CLI). */
 object FormatMarkdown:
 
   def problems(n: Int): String = Plural.count(n, "formatting problem")
 
-  /** One line per issue: `body L12:3 error table-not-rendered — what goes wrong · "excerpt" · fix: …`. */
   def line(i: FormatIssue): String =
     val sev = summon[WireEnumValues[FormatSeverity]].wire(i.severity)
     val fld = summon[WireEnumValues[FormatField]].wire(i.field)
@@ -15,7 +13,6 @@ object FormatMarkdown:
     val fx = i.fix.fold("")(f => s" · fix: $f")
     s"$fld L${i.line}:${i.column} $sev ${i.rule.wire} — ${i.message}$ex$fx"
 
-  /** The section appended to an article or source after a read or a write: nothing when clean. */
   def notice(issues: List[FormatIssue]): String =
     if issues.isEmpty then ""
     else

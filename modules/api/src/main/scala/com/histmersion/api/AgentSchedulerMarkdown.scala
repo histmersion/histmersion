@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-/** The scheduler as Markdown — every surface (CLI, MCP) prints this. Pure. */
 object AgentSchedulerMarkdown:
   import AgentScheduler.*
 
@@ -12,7 +11,6 @@ object AgentSchedulerMarkdown:
       s"waited ${AgentSchedulerMarkdown.minutes(w.waitedMinutes)}) — _${w.code}_: ${w.why}" +
       (if w.behind.isEmpty then "" else s" · behind ${w.behind.mkString(", ")}")
 
-  /** `95` → `1 h 35 min`. */
   def minutes(m: Long): String =
     if m < 60 then s"$m min" else s"${m / 60} h" + (if m % 60 != 0 then s" ${m % 60} min" else "")
 

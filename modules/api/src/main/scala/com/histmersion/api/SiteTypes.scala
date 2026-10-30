@@ -2,24 +2,12 @@ package com.histmersion.api
 
 import com.histmersion.values.PlaceKind
 
-/** What a SITE is (#1449): a settlement, a fortification, a sanctuary, a burial… — a small set of TYPES the map draws
-  * as icons inside the site's dot, so a reader sees the kind of place before hovering it. Each type comes from what the
-  * gazetteer the site was imported from already says, never from a guess:
-  *
-  *   - Pleiades: the place's `feature_types` (comma-separated, `temple-2` a variant of `temple`);
-  *   - GeoNames: the feature code (`P.PPL` a populated place, `S.RUIN` ruins, `S.TMB` a tomb…);
-  *   - Wikidata: the item's own P31 classes the extract keeps (`properties.p31`, since 2026-10-28), else the root class
-  *     the import reached (`properties.class`: an archaeological site, a settlement, a castle, a church…); the P31
-  *     classes, read for the places on the map and walked up P279 through [[wikidataClasses]] alone, refine it (stored
-  *     in `places.site_type`).
-  *
-  * A site of no known type keeps the plain dot.
+/** Each type comes from what the site's gazetteer says: Pleiades' `feature_types` (comma-separated, `temple-2` a
+  * variant of `temple`), the GeoNames feature code (`P.PPL` a populated place, `S.RUIN` ruins, `S.TMB` a tomb),
+  * Wikidata's P31 classes walked up P279 through [[wikidataClasses]].
   */
 object SiteTypes:
 
-  /** One type: its wire name, its legend label and its icon (a name in `web.Glyphs`, legible at marker size: a theatre
-    * is a mask, not Lucide's curtained stage, which blurs below 20 px).
-    */
   final case class SiteType(id: String, label: String, icon: String)
 
   val Settlement = "settlement"
@@ -49,8 +37,6 @@ object SiteTypes:
     SiteType(Mine, "mine, quarry", "pickaxe"),
     SiteType(Port, "port, harbour", "anchor"),
     SiteType(Infrastructure, "road, canal, cistern", "route"),
-    // their own glyphs come with the icon family (docs/research-assets/web-ui/icons-licences-pleiades.md:
-    // Tabler building-bridge-2, an aqueduct arcade); until then a vendored glyph no other site type uses
     SiteType(Bridge, "bridge", "waves"),
     SiteType(Aqueduct, "aqueduct", "droplets"),
     SiteType(Tower, "tower", "shield"),
@@ -67,11 +53,6 @@ object SiteTypes:
   def get(id: String): Option[SiteType] = byId.get(id.trim.toLowerCase(java.util.Locale.ROOT))
   def icon(id: String): Option[String] = get(id).map(_.icon)
 
-  // ── Pleiades ────────────────────────────────────────────────────────────────────────────────
-
-  /** Pleiades feature types (without the `-2` variant suffix) → a type. Types that are not a kind of site (`province`,
-    * `region`, `river`, `people`, `unknown`) are absent: such a place keeps the dot.
-    */
   val pleiadesTypes: Map[String, String] = Map(
     "settlement" -> Settlement,
     "urban" -> Settlement,
@@ -159,9 +140,6 @@ object SiteTypes:
     "wreck" -> Shipwreck
   )
 
-  /** When a place lists several types, the most specific wins: a temple inside a settlement is drawn as a temple, a
-    * fortified settlement as a fortification. Lower = preferred.
-    */
   val preference: List[String] = List(
     Palace,
     Sanctuary,
@@ -187,7 +165,6 @@ object SiteTypes:
       .sortBy(t => preference.indexOf(t) match { case -1 => preference.size; case i => i })
       .headOption
 
-  /** Pure: the type of a Pleiades place from its `feature_types` (`"settlement,temple-2"`). */
   def pleiades(featureTypes: String): Option[String] =
     best(
       Option(featureTypes).toList
@@ -198,11 +175,6 @@ object SiteTypes:
         .flatMap(pleiadesTypes.get)
     )
 
-  // ── GeoNames ─────────────────────────────────────────────────────────────────────────────────
-
-  /** GeoNames feature codes → a type (the class letter and the code, `S.RUIN`). Only the obvious ones: a populated
-    * place is a settlement, a tomb a burial — a hotel or a school is no ancient site.
-    */
   val geonamesCodes: Map[String, String] = Map(
     "S.RUIN" -> Findspot,
     "S.ANS" -> Findspot,
@@ -249,23 +221,15 @@ object SiteTypes:
     "T.CAVE" -> Cave
   )
 
-  /** Pure: the type of a GeoNames place from its feature code. Every populated place (`P.*`) is a settlement.
-    */
   def geonames(fcode: String): Option[String] =
     Option(fcode).map(_.trim.toUpperCase(java.util.Locale.ROOT)).filter(_.nonEmpty).flatMap { c =>
       geonamesCodes.get(c).orElse(Option.when(c.startsWith("P."))(Settlement))
     }
 
-  // ── Wikidata ─────────────────────────────────────────────────────────────────────────────────
-
   val ArchaeologicalSite = "Q839954"
   val HumanSettlement = "Q486972"
 
-  /** The curated classes a Wikidata item's P31 (walked up P279 through THIS table only) maps to. Each id was checked
-    * against its Wikidata label on 2026-10-14, the heritage buildings' on 2026-10-28 (the label is the comment). A
-    * tower is a tower (a clock tower, a minaret, a watchtower's generic class); a watchtower, a defensive or fortified
-    * tower and a tower house are fortifications.
-    */
+  /** The comment beside each id is its Wikidata label. */
   val wikidataClasses: Map[String, String] = Map(
     HumanSettlement -> Settlement,
     "Q15661340" -> Settlement /* ancient city */,
@@ -345,30 +309,16 @@ object SiteTypes:
     ArchaeologicalSite -> Findspot
   )
 
-  /** Pure: the type of a Wikidata site from its classes — its own P31 values first (the most specific by [[preference]]
-    * among those the table knows), else the superclasses reached through P279 (the caller walks those, nearest first),
-    * else the class the import kept.
-    */
   def wikidata(p31: List[String], superclasses: List[String], importClass: Option[String]): Option[String] =
     wikidataOwn(p31)
       .orElse(superclasses.flatMap(wikidataClasses.get).headOption)
       .orElse(importClass.flatMap(wikidataClasses.get))
 
-  /** Pure: the type a Wikidata item's own P31 classes give — the most specific by [[preference]] among those
-    * [[wikidataClasses]] knows; None when it knows none.
-    */
   def wikidataOwn(p31: List[String]): Option[String] = best(p31.map(_.trim).flatMap(wikidataClasses.get))
 
-  /** Pure: the P31 classes in a Wikidata extract's `properties.p31` (a JSON array of ids, as text). */
   def p31Of(json: Option[String]): List[String] =
     json.toList.flatMap(s => "Q[0-9]+".r.findAllIn(s).toList)
 
-  // ── one place ────────────────────────────────────────────────────────────────────────────────
-
-  /** Pure: the type a place has on the map: the STORED one (a Wikidata refinement), else what its gazetteer's own
-    * fields say — Pleiades' feature types, GeoNames' feature code, the Wikidata item's own P31 classes, the Wikidata
-    * import's class. Only a site or a feature has one (a region is an area, a polity a state).
-    */
   def of(
       placeId: String,
       placeKind: String,

@@ -5,9 +5,6 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** The metadata fields a patch may CLEAR (store as NULL). Title, authors and status always have a value, so they are
-  * not here. The wire spelling is the JSON key of the field in [[MetadataPatch]].
-  */
 enum MetadataField:
   case Year, Venue, Doi, Provenance, CalibreId
 

@@ -4,9 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** What a covers/illustrations run did (or would do): the sources looked at, the covers and illustrations linked, each
-  * one, why others had none (per reason), and what failed.
-  */
 final case class MediaCoversReport(
     dryRun: Boolean,
     sources: Int = 0,
@@ -21,7 +18,6 @@ final case class MediaCoversReport(
 object MediaCoversReport:
   given Schema[MediaCoversReport] = summon[KindlingsSchema[MediaCoversReport]].schema
 
-  /** Pure: two runs' reports as one. */
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(
       a.dryRun && b.dryRun,

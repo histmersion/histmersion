@@ -2,10 +2,8 @@ package com.histmersion.api
 
 import scala.annotation.tailrec
 
-/** `histmersion about` — the About report as Markdown, like every other surface. Pure. */
 object AboutMarkdown:
 
-  /** `42 s`, `5 min`, `3 h`, `2 d` — how long ago, coarsely. */
   def age(seconds: Long): String =
     val s = math.max(0L, seconds)
     if s < 60 then s"$s s"

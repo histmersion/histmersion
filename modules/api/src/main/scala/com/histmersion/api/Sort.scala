@@ -3,9 +3,6 @@ package com.histmersion.api
 import io.circe.{Codec as CirceCodec, Decoder, Encoder}
 import sttp.tapir.Schema
 
-/** Result ordering. Wire form is the lowercase label (`relevance|cited|period|year|oldest|title`): `year` is the newest
-  * publication first, `oldest` the oldest first.
-  */
 enum Sort:
   case Relevance, Cited, PeriodStart, Year, Oldest, Title
 

@@ -4,9 +4,6 @@ import com.histmersion.values.{Citekey, Doi, Latitude, Longitude, WikidataId, Ye
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
-/** The wire instances of the newtypes: each maps its base type's, and a decoder refuses what the newtype's constraint
-  * does not admit.
-  */
 object ValueCodecs:
   given Encoder[Citekey] = Encoder.encodeString.contramap(_.value)
   given Decoder[Citekey] = Decoder.decodeString.emap(Citekey.parse)

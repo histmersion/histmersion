@@ -7,10 +7,6 @@ import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.values.{EdgeKind, SourceStatus}
 
-/** Full replace of one citekey. `body` is the paper's converted text (`ocr_markdown`); `notes` is the agent's own
-  * article about it. `edges` follow the same rule as a patch's (#766): every edge is stored FROM this source, so `src`
-  * may be omitted; one naming another source is refused.
-  */
 final case class SourcePut(
     title: String,
     authors: List[String] = Nil,
@@ -36,10 +32,8 @@ final case class SourcePut(
 object SourcePut:
   given Schema[SourcePut] = summon[KindlingsSchema[SourcePut]].schema
 
-  /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[SourcePut] = StrictJson.codec(KindlingsCodecAsObject.derived[SourcePut])
 
-  /** Round-trip helper: an existing source back into writer form. */
   def of(s: Source): SourcePut = SourcePut(
     title = s.title,
     authors = s.authors,

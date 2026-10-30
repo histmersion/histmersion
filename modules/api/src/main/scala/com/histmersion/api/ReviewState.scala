@@ -4,10 +4,6 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** Where an article stands with the `review-article` panel (rules reviewer, cold reader, skeptic and the mechanical
-  * checks), as one word: derived by the server from the review manager's item for the article and the article's review
-  * ledger (`domain.ArticleReviewStatus`).
-  */
 enum ReviewState(val wire: String, val meaning: String):
   case Unreviewed extends ReviewState("unreviewed", "no review of this article is recorded and none is queued")
   case Queued extends ReviewState("queued", "waiting for the review panel to take it up")

@@ -6,9 +6,6 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 
-/** One row of `merge_ledger`: the bundle's uid, the record here it maps to (and its label now), the revs merged, and
-  * the decision.
-  */
 final case class LedgerRow(
     foreignUid: UUID,
     kind: String,

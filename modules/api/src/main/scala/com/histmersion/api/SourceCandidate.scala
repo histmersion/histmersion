@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** A work found for a goal, deduplicated (#3761): `doi` is its key; `foundBy` every watch that found it. */
 final case class SourceCandidate(
     id: Long,
     goal: String,

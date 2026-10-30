@@ -4,7 +4,6 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** A kind of row a delete removes (or, for `EdgesIn`, parks). */
 enum DeletePart(val wire: String, val label: String):
   case Findings extends DeletePart("findings", "findings")
   case FindingPlaces extends DeletePart("finding-places", "gazetteer assignments of its findings")

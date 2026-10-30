@@ -1,18 +1,11 @@
 package com.histmersion.api
 
-/** Diacritic folding for Latin script — `Güterbock` → `Guterbock`, `Ḫattuša` → `Hattusa`, `Łukasz` → `Lukasz`, `Straße`
-  * → `Strasse` — as a pure lookup table, because the shared core is also compiled to Scala.js, which has no
-  * `java.text.Normalizer` (#878).
-  *
-  * Covers Latin-1 Supplement, Latin Extended-A and -B and Latin Extended Additional (the blocks the transliterations in
-  * the corpus use: `ḫ`, `ṣ`, `ṭ`, `ā`, `ś`, Vietnamese tone letters), plus the combining marks U+0300–U+036F of input
-  * that arrives already decomposed. Case is kept; every other character (other scripts, digits, punctuation) passes
-  * through unchanged. The single-letter part of the table was generated from Unicode NFD decompositions; the letters
-  * NFD does not decompose (`ß`, `æ`, `ø`, `ł`, `đ`, `þ`, …) are mapped by hand.
+/** Diacritic folding as a lookup table: this code is also compiled to Scala.js, which has no `java.text.Normalizer`.
+  * The single-letter part was generated from Unicode NFD decompositions; the letters NFD does not decompose (`ß`, `æ`,
+  * `ø`, `ł`, `đ`, `þ`, …) are mapped by hand.
   */
 object LatinFold:
 
-  /** Pairs `<letter><base>` for every letter that folds to ONE ASCII letter. */
   private val Pairs: String =
     // Latin-1 Supplement
     "ÀAÁAÂAÃAÄAÅAÇCÈEÉEÊEËEÌIÍIÎIÏIÐDÑNÒOÓOÔOÕOÖOØOÙUÚUÛUÜUÝYàaáaâaãaäaåaçcèeéeêeëeìi" +
@@ -36,9 +29,7 @@ object LatinFold:
       "ỌOọoỎOỏoỐOốoỒOồoỔOổoỖOỗoỘOộoỚOớoỜOờoỞOởoỠOỡoỢOợoỤUụuỦUủuỨUứuỪUừuỬUửuỮUữuỰUựuỲYỳy" +
       "ỴYỵyỶYỷyỸYỹy"
 
-  /** The letters that fold to more than one ASCII letter, and the transliteration half rings (`ʿ` ayin, `ʾ` aleph:
-    * `Baʿal` → `Baal`) that fold to nothing.
-    */
+  /** The transliteration half rings (`ʿ` ayin, `ʾ` aleph) fold to nothing: `Baʿal` → `Baal`. */
   private val Multi: Map[Char, String] = Map(
     '\u02bf' -> "",
     '\u02be' -> "",
@@ -75,22 +66,15 @@ object LatinFold:
   private val Table: Map[Char, String] =
     Pairs.grouped(2).map(p => p(0) -> p(1).toString).toMap ++ Multi
 
-  /** Every character the table maps (not the combining marks) — what a twin of this fold elsewhere (the SQL
-    * `histmersion_place_key`, V067) is checked against.
-    */
   def tableChars: Set[Char] = Table.keySet
 
   private def isCombiningMark(c: Char): Boolean = c >= '\u0300' && c <= '\u036f'
 
-  /** One character folded: its ASCII letter(s), `""` for a combining mark or a half ring, or the character itself.
-    * `fold(s)` is this over every character of `s`.
-    */
   def foldChar(c: Char): String =
     if isCombiningMark(c) then "" else Table.getOrElse(c, c.toString)
 
-  /** `s` with every Latin diacritic removed, case kept. */
   def fold(s: String): String =
-    val b = new StringBuilder(s.length) // local accumulator
+    val b = new StringBuilder(s.length)
     s.foreach { c =>
       if !isCombiningMark(c) then
         Table.get(c) match

@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import com.histmersion.values.Confidence
 
-/** A geo-located, time-scoped claim mined from a source. */
 final case class Finding(
     id: String,
     citekey: String,

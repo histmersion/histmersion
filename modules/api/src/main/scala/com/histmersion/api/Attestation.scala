@@ -4,15 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** ATTESTATIONS (plan §1.3): granular source references linking entities to specific passages. W3C Web Annotation
-  * selectors (TextQuoteSelector, TextPositionSelector), page labels, IIIF canvas+xywh, CTS URNs, and source_chunks
-  * ordinals.
-  */
-
-// ── vocabulary ─────────────────────────────────────────────────────────────────────────────────
-
-// ── DTOs ───────────────────────────────────────────────────────────────────────────────────────
-
 final case class Attestation(
     id: Long,
     citekey: String,

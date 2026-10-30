@@ -2,9 +2,6 @@ package com.histmersion.api
 
 import com.histmersion.values.GoalStatus
 
-/** What each research-goal stage means, in the order a goal moves through them: the goals window's legend and the
-  * tooltip of every goal-stage badge, in the web page and on the server's pages.
-  */
 object GoalStages:
   val all: List[(String, String)] = List(
     GoalStatus.Planned -> "created; nothing works on it yet",

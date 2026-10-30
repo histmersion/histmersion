@@ -4,15 +4,11 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** How the stored coverage has drifted from the live corpus and the body. */
 enum DriftKind(val wire: String):
-  /** A source the filter returns that is neither cited nor given a reason. */
   case Unplaced extends DriftKind("unplaced")
 
-  /** A reason for a source the body now cites (it is not shown; it is stale). */
   case ReasonForCited extends DriftKind("reason-for-cited")
 
-  /** A reason for a source the filter no longer returns. */
   case ReasonOutside extends DriftKind("reason-outside-filter")
 
 object DriftKind:

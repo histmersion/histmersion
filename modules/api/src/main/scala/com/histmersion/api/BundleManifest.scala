@@ -6,10 +6,6 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 
-/** `manifest.json`. Deterministic: there is no wall-clock export time — `asOf` is the newest change the bundle carries
-  * (the value to pass as the next `--since`), and `bundleId` is derived from the instance and the content, so two
-  * exports of an unchanged database are byte-identical.
-  */
 final case class BundleManifest(
     format: String,
     formatVersion: Int,

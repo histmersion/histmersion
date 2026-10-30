@@ -5,9 +5,6 @@ import com.histmersion.values.WireEnumValues
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
-/** What a bookmark, a note or a read mark is about: an item of the collection, a point on the map, a saved view of
-  * Explore or a period.
-  */
 enum ItemKind(val wire: String, val label: String):
   case Source extends ItemKind("source", "Source")
   case Article extends ItemKind("article", "Article")
@@ -19,19 +16,15 @@ enum ItemKind(val wire: String, val label: String):
   case Point extends ItemKind("point", "Place on the map")
   case Period extends ItemKind("period", "Period")
 
-  /** An item of the collection, named by its key. */
   def isItem: Boolean = ItemKind.Items.contains(this)
 
 object ItemKind:
   val Items: Set[ItemKind] = Set(Source, Article, Event, Place, Picture, Goal)
 
-  /** What a bookmark may point at: everything. */
   val Bookmarkable: Set[ItemKind] = values.toSet
 
-  /** What a note may be left on: an item or a point on the map. */
   val Notable: Set[ItemKind] = Items + Point
 
-  /** What is marked read: what is read. */
   val Readable: Set[ItemKind] = Set(Source, Article)
 
   def parse(s: String): Option[ItemKind] =

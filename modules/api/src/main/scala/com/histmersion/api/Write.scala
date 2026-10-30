@@ -4,37 +4,24 @@ import scala.annotation.tailrec
 import hearth.kindlings.circederivation.Configuration
 import com.histmersion.values.{Confidence, EdgeKind, SourceStatus}
 
-/** Honour Scala default values when DECODING. Without this, Kindlings requires every non-Option field in the JSON, so
-  * `{"tags":{"add":["sea-peoples"]}}` would be rejected for a missing `remove` — and the whole point of the patch DTOs
-  * is that what you omit is what you leave alone. Top-level in `com.histmersion.api`, so every DTO in this package
-  * decodes its defaults the same way; the domain and config packages import it (`import com.histmersion.api.given`) for
-  * the codecs they derive.
+/** Honour Scala default values when decoding: without this Kindlings requires every non-Option field in the JSON, so
+  * `{"tags":{"add":["sea-peoples"]}}` would be refused for a missing `remove`. The domain and config packages import it
+  * (`import com.histmersion.api.given`) for the codecs they derive.
   */
 given Configuration = Configuration.default.withDefaults
 
-/** Pure merge rules for the write operations. */
 object Write:
 
-  /** A text field given as blank means "none": trimmed, and empty becomes None (NULL), so an empty DOI can never be
-    * stored and then rendered or matched as if it were one.
-    */
   private[api] def blankToNone(v: Option[String]): Option[String] = v.map(_.trim).filter(_.nonEmpty)
 
-  /** [[ApiError.code]] values the endpoints map to HTTP statuses. */
   val CodeNotFound = "not_found"
   val CodePrecondition = "precondition_failed"
   val CodeInvalid = "invalid"
 
   def notFound(citekey: String): ApiError = ApiError(s"No source '$citekey'", Some(CodeNotFound))
 
-  /** Stable finding id. */
   def findingId(citekey: String, n: Int): String = s"$citekey#$n"
 
-  // -- put ------------------------------------------------------------------------------------
-  /** Build the complete stored [[Source]] for a full replace. Finding ids are (re)assigned from 0. Edges follow the
-    * patch rule (#766): an omitted `src` is this source, and so is one of its OLD citekeys (`aliases`, V027); any other
-    * `src` is refused rather than rewritten, and so is a self-edge.
-    */
   def applyPut(citekey: String, p: SourcePut, aliases: Set[String] = Set.empty): Either[String, Source] =
     for
       period <- periodOf(p.periodStart, p.periodEnd, "source")
@@ -69,8 +56,6 @@ object Write:
       updatedAt = None
     )
 
-  // -- patch ----------------------------------------------------------------------------------
-  /** The optimistic-concurrency check, separate so the endpoint can answer 412 specifically. */
   def precondition(existing: Source, patch: SourcePatch): Either[String, Unit] =
     patch.ifUpdatedAt match
       case None       => Right(())
@@ -83,9 +68,6 @@ object Write:
               s"updatedAt is '$actual'. Re-read the source and re-apply your patch."
           )
 
-  /** Merge a patch into the existing source. Absent parts are untouched; present parts replace only themselves. Pure —
-    * the caller persists the result and stamps a new `updatedAt`.
-    */
   def applyPatch(existing: Source, patch: SourcePatch): Either[String, Source] =
     for
       _ <- precondition(existing, patch)
@@ -108,7 +90,6 @@ object Write:
         title = meta.title.getOrElse(existing.title),
         authors = meta.authors.getOrElse(existing.authors),
         year = if cleared(MetadataField.Year) then None else meta.year.orElse(existing.year),
-        // an explicit "" CLEARS the field: stored as NULL, never as an empty string
         venue = if cleared(MetadataField.Venue) then None
         else meta.venue.fold(existing.venue)(v => blankToNone(Some(v))),
         doi = if cleared(MetadataField.Doi) then None
@@ -129,24 +110,17 @@ object Write:
         else meta.calibreId.map(_.trim).orElse(existing.calibreId)
       )
 
-  /** A patch sent to an OLD citekey (renamed, V027) may name that old key as an edge's `src`; it is the same source, so
-    * it is accepted as the canonical one rather than refused.
-    */
   def srcAliased(p: SourcePatch, requested: String, canonical: String): SourcePatch =
     if requested == canonical then p
     else
       def fix(e: EdgeInput) = if e.src.map(_.trim).contains(requested) then e.copy(src = None) else e
       p.copy(edges = p.edges.map(ep => EdgesPatch(ep.add.map(fix), ep.remove.map(fix))))
 
-  /** `replace` (when given) is the new baseline; then `remove`, then `add`. Order-preserving, deduped. */
   def applyList(current: List[String], p: ListPatch): List[String] =
     val base = p.replace.getOrElse(current)
     val removed = p.remove.toSet
     (base.filterNot(removed) ++ p.add.filterNot(removed)).distinct
 
-  /** `remove` first, then `add`, deduped; every edge is rooted at `citekey`. An edge whose `src` names another source,
-    * or whose `dst` is the source itself, is refused rather than rewritten.
-    */
   def applyEdges(citekey: String, current: List[Edge], p: EdgesPatch): Either[String, List[Edge]] =
     for
       removed <- traverse(p.remove)(edgeOf(citekey, Set.empty, "edges.remove", "patched source", _))
@@ -160,9 +134,6 @@ object Write:
       val gone = removed.toSet
       (current.map(_.copy(src = citekey)).filterNot(gone) ++ added.filterNot(gone)).distinct
 
-  /** One edge rooted at `citekey`. `src` may be omitted, or name `citekey` or one of its `aliases`; anything else is
-    * refused. `part` and `role` only word the refusal.
-    */
   private def edgeOf(
       citekey: String,
       aliases: Set[String],
@@ -179,7 +150,6 @@ object Write:
         )
       case _ => Right(Edge(citekey, in.dst.trim, EdgeKind.wireOf(in.kind)))
 
-  /** A field cannot be both set and cleared, and a Calibre id is the entry's number. */
   private def metadataCheck(m: MetadataPatch): Either[String, Unit] =
     val both = m.clear.filter {
       case MetadataField.Year       => m.year.isDefined
@@ -196,7 +166,6 @@ object Write:
           Left(s"metadata.calibreId: '$id' is not a Calibre id (the entry's number, e.g. 1805)")
         case _ => Right(())
 
-  /** `replace` renumbers from 0; `add` takes the next FREE `n` so ids stay stable across patches. */
   def applyFindings(citekey: String, current: List[Finding], p: FindingsPatch): Either[String, List[Finding]] =
     for
       base <- p.replace.fold[Either[String, List[Finding]]](Right(current))(numbered(citekey, _))
@@ -204,12 +173,9 @@ object Write:
       added <- allocate(citekey, kept, p.add)
     yield kept ++ added
 
-  // -- helpers --------------------------------------------------------------------------------
-  /** Ids 0..n-1, as [[Frontmatter]] does when it reads a note. */
   private def numbered(citekey: String, inputs: List[FindingInput]): Either[String, List[Finding]] =
     traverse(inputs.zipWithIndex)((in, i) => toFinding(citekey, findingId(citekey, i), in))
 
-  /** Ids are the smallest `n` not already taken, allocated left to right. */
   private def allocate(
       citekey: String,
       existing: List[Finding],
@@ -238,9 +204,6 @@ object Write:
         case _                  => None
       Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags, conf, in.significance)
 
-  /** A stated confidence must be one of the vocabulary: an unknown word is refused, never dropped (or, as the store
-    * once read it, taken as `high`). Blank = not stated.
-    */
   private def confidenceOf(raw: Option[String], what: String): Either[String, Option[Confidence]] =
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
@@ -250,7 +213,7 @@ object Write:
           .map(Some(_))
           .toRight(s"$what: confidence '$c' is not one of ${Confidence.values.map(_.wire).mkString("|")}")
 
-  /** A period needs BOTH bounds and `start <= end` (Postgres rejects an inverted int8range). */
+  /** Postgres rejects an inverted int8range. */
   private def periodOf(start: Option[Long], end: Option[Long], what: String): Either[String, Option[Period]] =
     def sane(v: Long) = v >= Filter.Earliest && v <= Filter.Latest
     (start, end) match
@@ -261,18 +224,10 @@ object Write:
       case (None, None)                 => Right(None)
       case _                            => Left(s"$what: give both period_start and period_end, or neither")
 
-  /** A period bound outside `[Filter.Earliest, Filter.Latest]` is refused on the way IN rather than stored: those are
-    * the sentinels every half-open filter range uses, so a stored period sitting on one of them makes "the caller gave
-    * no bound" and "the caller gave this bound" the same value, and the aggregation window then reads back as
-    * unbounded.
-    */
   private def outOfRange(what: String, field: String, v: Long): String =
     s"$what: $field ($v) is outside the representable range " +
       s"[${Filter.Earliest}, ${Filter.Latest}] — deep time is signed YEARS, BCE negative"
 
-  /** Setting status=superseded requires at least one `superseded_by` edge, either already existing or added in the same
-    * patch.
-    */
   private def supersededEdgeCheck(status: SourceStatus, edges: List[Edge]): Either[String, Unit] =
     if status == SourceStatus.Superseded && !edges.exists(_.kind == "superseded_by") then
       Left(

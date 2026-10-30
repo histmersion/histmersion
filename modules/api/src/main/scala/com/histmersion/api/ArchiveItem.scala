@@ -5,8 +5,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 /** @param lendingOnly
-  *   the item is access-restricted: it must be BORROWED on archive.org and is never downloaded here (no DRM
-  *   circumvention — the Python tool stopped at exactly this point and so do we).
+  *   the item must be borrowed on archive.org; it is never downloaded (no DRM circumvention)
   */
 final case class ArchiveItem(
     identifier: String,

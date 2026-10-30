@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** One historical version of an article's body (detail view — full body included). */
 final case class ArticleVersionFull(
     id: Long,
     slug: String,

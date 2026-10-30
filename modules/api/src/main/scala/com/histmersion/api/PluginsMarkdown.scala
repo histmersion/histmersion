@@ -1,14 +1,7 @@
 package com.histmersion.api
 
-/** What became of the plugins the server found (docs/research-plugins.md §2, §3): `/api/about`, `/api/config`,
-  * `histmersion about` and the server's `--self-check` report. Secrets are never in it: a setting that holds a secret
-  * shows its REFERENCE (`env:PORTAL_TOKEN`, `keepassxc:Portal#password`), and a literal `value:` reference is masked.
-  */
-
-/** The plugins as Markdown, like every other surface. Pure. */
 object PluginsMarkdown:
 
-  /** One line per plugin: `keepassxc 0.1.0 — registered (secret-vault:keepassxc)`. */
   def line(p: PluginStatus): String =
     val what = PluginState.parse(p.state) match
       case Some(PluginState.Registered) =>
@@ -18,7 +11,6 @@ object PluginsMarkdown:
       case _                         => p.state
     s"${p.id} ${p.version} — $what"
 
-  /** The `about` part: a summary line, then a line per plugin and per warning. */
   def summary(r: PluginsReport): List[String] =
     val enabled = r.plugins.count(_.enabled)
     val head = s"- plugins: ${Plural.count(r.plugins.size, "plugin")} in this binary · $enabled enabled" +
@@ -27,10 +19,6 @@ object PluginsMarkdown:
       r.plugins.flatMap(p => p.warnings.map(w => s"  - warning: $w")) ++
       r.warnings.map(w => s"  - warning: $w"))
 
-  /** The server's `--self-check` report: the config file, every plugin with its effective settings (secrets as
-    * references), the binary's own `checks` (ok, line — the time zones), and the verdict on the last line: passed only
-    * when every plugin and every check is.
-    */
   def selfCheck(file: ConfigFileInfo, r: PluginsReport, checks: List[(Boolean, String)] = Nil): String =
     val plugins = r.plugins.flatMap { p =>
       s"- ${line(p)}" :: (p.settings.map(s => s"    ${s.key} = ${s.value}") ++ p.warnings.map(w => s"    warning: $w"))

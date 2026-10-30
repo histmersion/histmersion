@@ -2,9 +2,6 @@ package com.histmersion.api
 
 import io.circe.Json
 
-/** What the merge review screen shows beside an issue: a pair of bundle lines described as the issue's sides, fields,
-  * spans and places, and an approved goal plan as one comparable line. Pure.
-  */
 object MergeIssueDetail:
 
   def describe(s: BundleSource): List[String] =
@@ -39,7 +36,6 @@ object MergeIssueDetail:
   def clip(s: Option[String], n: Int = 600): Option[String] =
     s.map(_.trim).filter(_.nonEmpty).map(t => if t.length <= n then t else t.take(n - 1) + "…")
 
-  /** A source pair, field by field (the three-column table: here | result | bundle). */
   def sourceFields(l: BundleSource, r: BundleSource): List[IssueField] =
     def range(p: Option[BundleRange]) = p.map(x => rangeText(Some(x)))
     def list(xs: List[String]) = Option(xs.mkString("; ")).filter(_.nonEmpty)
@@ -62,9 +58,6 @@ object MergeIssueDetail:
       )
     )
 
-  /** An event pair: its fields, both geometries (hex EWKB here; the database turns them into GeoJSON for the screen)
-    * and spans.
-    */
   def eventDetail(l: BundleEvent, r: BundleEvent): IssueDetail =
     def dates(e: BundleEvent) = Some(
       List(e.notBefore, e.beginBy, e.endFrom, e.notAfter).map(_.fold("…")(_.toString)).mkString(" · ")
@@ -97,7 +90,6 @@ object MergeIssueDetail:
       place = Some(IssuePlace(l.geom, r.geom, l.period.map(span), r.period.map(span)))
     )
 
-  /** An approved plan, as one line a person can compare. */
   def planText(j: Json): String =
     j.as[GoalPlans.Plan].toOption.fold(preview(j.noSpaces, 300)) { p =>
       List(

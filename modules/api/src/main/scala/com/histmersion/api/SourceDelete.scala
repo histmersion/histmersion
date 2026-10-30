@@ -1,11 +1,7 @@
 package com.histmersion.api
 
-/** The pure rules of a delete. */
 object SourceDelete:
 
-  /** The Calibre line of the answer: the linked entry, as the library says it is (`check`; `None`: not looked up — the
-    * line then says so rather than claim the entry exists).
-    */
   def calibreLine(calibreId: Option[String], check: Option[CalibreEntryCheck]): String =
     calibreId match
       case None     => "Calibre: no linked entry."
@@ -22,10 +18,6 @@ object SourceDelete:
             s"Calibre: the record links entry $id (not checked against the library); it is NOT touched — " +
               "remove it in Calibre if it is there and should go too."
 
-  /** Whether an attestation (of any source) loses its target when `ck` is deleted: a finding of it (`<ck>#<n>`), an
-    * edge FROM it (`<ck>|<dst>|<kind>`), or a dating it gives (an `event_dating` target naming it as a whole token). An
-    * attestation of an edge TO it stays: that edge is parked, not deleted.
-    */
   def attestationGone(targetType: String, targetId: String, ck: String): Boolean =
     targetType match
       case AttestationTarget.Finding     => targetId.startsWith(ck + "#")
@@ -33,10 +25,8 @@ object SourceDelete:
       case AttestationTarget.EventDating => Rename.replaceToken(targetId, ck, "\u0000") != targetId
       case _                             => false
 
-  /** Whether `text` links `ck` with a `[[…]]` wikilink (any label or anchor). */
   def links(text: String, ck: String): Boolean = ArticleLinks.targets(text).exists(_.equalsIgnoreCase(ck))
 
-  /** The `refused` message: every blocker, grouped by kind, and what to do about it. */
   def refusal(ck: String, blockers: List[DeleteBlocker]): String =
     val groups = blockers.groupBy(_.kind).toList.sortBy(_._1.ordinal).map { (k, bs) =>
       s"${k.label} ${bs.map(b => b.id + b.title.fold("")(t => s" ($t)")).mkString(", ")}"
@@ -44,7 +34,6 @@ object SourceDelete:
     s"'$ck' cannot be deleted — ${groups.mkString("; ")}. Fix those first (remove the citation from " +
       "each article, re-source the events, let the job finish); there is no override"
 
-  /** The line the log queue records for an applied delete: `deleted ck (Title): 3 findings, …`. */
   def logText(d: SourceDeletion): String =
     def short(p: DeletePart) = p match
       case DeletePart.EdgesIn => "edges in (parked)"
@@ -57,7 +46,6 @@ object SourceDelete:
         case Nil => ""
         case xs  => ": " + xs.mkString(", "))
 
-  /** As the CLI and the REST answer render it. */
   def markdown(d: SourceDeletion, calibre: Option[CalibreEntryCheck] = None): String =
     val head =
       if d.applied then s"# Deleted `${d.citekey}`"
