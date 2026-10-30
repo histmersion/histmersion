@@ -1,6 +1,6 @@
 # Top-level objects without a same-named type: where each goes
 
-Measured on master 58de5489: 1281 top-level `object`s in `modules/*/src/main`, of which **645** have no class, trait, enum or type of the same name in the same package (the brief counted 644 of 1313 with a slightly different scan). This file lists all 645 with the destination the design gives each. Rules O1–O7 and S1–S6 are in `../research-domain-model.md` §5; package names follow the subdomains of §3 (`domain.<subdomain>.<feature>`).
+Measured on master 58de5489: 1281 top-level `object`s in `modules/*/src/main`, of which **645** have no class, trait, enum or type of the same name in the same package (the brief counted 644 of 1313 with a slightly different scan). This file lists all 645 with the destination the design gives each. Rules O1–O7 and S1–S6 are in `../research-domain-model.md` §5; package names follow §3: domains `domain.<domain>.<feature>`, supporting areas `util.<area>`.
 
 The *kind* column is the scan's first classification (name patterns, `val X = "…"` counts, nested types); "decided per object" rows were placed by hand. Destinations are proposals for the slice that touches the feature; a slice may refine one, recording why in its as-built section.
 
@@ -36,7 +36,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | api | `api` | `ApiIndex` | 36 | decided per object | stays: `@main def generateApiIndex` + `ApiIndex` renderer of `Api.all` | an entry point and its renderer |
 | api | `api` | `ApprovalDigest` | 122 | namespace object | dissolves: nested types become top-level in package api.<subdomain>.<feature> | a namespace object stands in for a package |
 | api | `api` | `ApprovalDigestMarkdown` | 37 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
-| api | `api` | `ArticleCoverage` | 190 | decided per object | `Coverage` companion (api.writing.articles) | computes over Coverage |
+| api | `api` | `ArticleCoverage` | 190 | decided per object | `Coverage` companion (api.research.articles) | computes over Coverage |
 | api | `api` | `ArticleEdits` | 209 | namespace object | dissolves: nested types become top-level in package api.<subdomain>.<feature> | a namespace object stands in for a package |
 | api | `api` | `ArticleLinks` | 124 | plural helper | companion of ArticleLink | helper named after the type it works on |
 | api | `api` | `ArticleMarkdown` | 142 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
@@ -70,7 +70,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | api | `api` | `Corrections` | 51 | plural helper | companion of Correction | helper named after the type it works on |
 | api | `api` | `CorrespondingSource` | 12 | decided per object | `SourceRef` companion | about a source reference |
 | api | `api` | `CritiquePairing` | 170 | namespace object | dissolves: nested types become top-level in package api.<subdomain>.<feature> | a namespace object stands in for a package |
-| api | `api` | `Critiques` | 191 | decided per object | `CritiquePair` companion (api.writing.articles) | 12 of 24 functions take CritiquePair |
+| api | `api` | `Critiques` | 191 | decided per object | `CritiquePair` companion (api.research.articles) | 12 of 24 functions take CritiquePair |
 | api | `api` | `Csv` | 41 | decided per object | stays: util.text.Csv | a format writer over any rows |
 | api | `api` | `DataCredits` | 142 | plural helper | companion of DataCredit | helper named after the type it works on |
 | api | `api` | `DatingMethod` | 4 | decided per object | becomes an enum (wire strings kept) | closed vocabulary |
@@ -223,14 +223,14 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | config | `config.edit` | `SettingsReader` | 70 | decided per object | `SettingReading` companion | reads a setting |
 | core | `domain` | `AcquireMatch` | 188 | decided per object | `AcquireMatch.Decision` top-level; functions on its companion (domain.library.acquisition) | decides a match |
 | core | `domain` | `AcquireRecheck` | 220 | decided per object | dissolve into domain.library.acquisition.recheck: functions to `LastCheck`/`Candidate` companions | namespace of 9 types |
-| core | `domain` | `AgentProposals` | 164 | decided per object | `Proposal` companion (domain.automation.pipelines) | about proposals |
+| core | `domain` | `AgentProposals` | 164 | decided per object | `Proposal` companion (domain.library.workflows) | about proposals |
 | core | `domain` | `AgentVerify` | 208 | decided per object | `QuoteMatch`/`ToolUse` companions | verifies quotes and tool uses |
 | core | `domain` | `ApprovalModes` | 7 | plural helper | companion of ApprovalMode | helper named after the type it works on |
 | core | `domain` | `ArtInstitute` | 62 | decided per object | moves to plugins/media: `AicObject.fromJson` | an upstream parser |
 | core | `domain` | `ArticleReviewStatus` | 160 | decided per object | `ReviewState` companion (domain.research.articles): the article keeps its review state; the ledger is automation's | status derived from the ledger |
-| core | `domain` | `AutoEnrich` | 60 | decided per object | `PriorRun` companion (domain.automation.autopilot) | decides on prior runs |
+| core | `domain` | `AutoEnrich` | 60 | decided per object | `PriorRun` companion (domain.library.workflows) | decides on prior runs |
 | core | `domain` | `AutopilotPolicy` | 445 | decided per object | dissolve into domain.automation.autopilot: verdicts on `PlannedFacts`/`DraftFacts`/`GoalPlanFacts` | rules about those facts |
-| core | `domain` | `BundlePlan` | 182 | decided per object | `BundlePlan.Decision` top-level; plan on its companion (domain.exchange.bundle) | namespace |
+| core | `domain` | `BundlePlan` | 182 | decided per object | `BundlePlan.Decision` top-level; plan on its companion (util.data.exchange.bundle) | namespace |
 | core | `domain` | `CatalogDating` | 76 | decided per object | moves to `upstreams` (library): the dating rules the events plugin and the host's `PluginEvents.derive` share | dating of catalogue records |
 | core | `domain` | `CatalogMerge` | 136 | decided per object | `Placement` companion (domain.catalogue.events) | places a record |
 | core | `domain` | `CatalogProvider` | 48 | String vocabulary | becomes an enum (wire strings kept) in values/api | a closed vocabulary held as String constants |
@@ -241,19 +241,19 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | core | `domain` | `Commons` | 177 | decided per object | moves to `upstreams` (library): `CommonsFile.fromJson` + rights | Commons API parser shared by media plugins |
 | core | `domain` | `CommonsDepicts` | 66 | decided per object | moves to plugins/media | an upstream query builder |
 | core | `domain` | `CompareRuns` | 378 | decided per object | dissolve into domain.automation.agents: functions on `Run`/`Step` companions | namespace of 14 types |
-| core | `domain` | `CompileArticle` | 432 | decided per object | dissolve into domain.automation.pipelines.compile: `Claim`/`Evidence` companions | namespace of 10 types |
+| core | `domain` | `CompileArticle` | 432 | decided per object | dissolve into domain.research.workflows.compile: `Claim`/`Evidence` companions | namespace of 10 types |
 | core | `domain` | `CoreQuota` | 188 | decided per object | dissolve into domain.library.acquisition.fetching: `QuotaState` (was State) with its methods | namespace; methods about the state |
 | core | `domain` | `DeepTime` | 17 | decided per object | `Year`/`Period` companions in values (`Year.fromLong`, `Period.span`) | about Year/Period |
 | core | `domain` | `Diff3` | 118 | decided per object | stays: util.text.Diff3 | a text algorithm, no domain type |
-| core | `domain` | `EnrichSource` | 603 | decided per object | dissolve into domain.automation.pipelines.enrich: `StatedPeriod`/`FindingProposal` companions | namespace of 19 types |
+| core | `domain` | `EnrichSource` | 603 | decided per object | dissolve into domain.library.workflows.enrich: `StatedPeriod`/`FindingProposal` companions | namespace of 19 types |
 | core | `domain` | `Europeana` | 222 | decided per object | moves to plugins/media: `EuropeanaItem.fromJson`, `Exclusions` companion | an upstream parser |
 | core | `domain` | `EventMatcher` | 108 | decided per object | `NearFinding` companion (domain.catalogue.evidence) | scores near findings |
 | core | `domain` | `EventProviders` | 467 | decided per object | moves to plugins/events: `GvpRecord`/`NoaaRecord`/`WikidataEvent` parsers | upstream parsers |
 | core | `domain` | `ExternalIds` | 30 | plural helper | companion of ExternalId | helper named after the type it works on |
 | core | `domain` | `FigurePick` | 116 | decided per object | `Figure` companion (domain.media) | picks figures |
-| core | `domain` | `FilterInference` | 102 | decided per object | `FilterAnswer` companion (domain.automation.pipelines) | reads an answer into a filter |
+| core | `domain` | `FilterInference` | 102 | decided per object | `FilterAnswer` companion (domain.research.workflows) | reads an answer into a filter |
 | core | `domain` | `FreeTextDates` | 69 | decided per object | `StatedYear` companion (values/domain) — `StatedYear.parse(text)` | parses free-text dates |
-| core | `domain` | `GoalFocus` | 459 | decided per object | dissolve into domain.automation.goals.focus: `FocusFacts` (was Facts) methods | 17 of 28 functions take Facts |
+| core | `domain` | `GoalFocus` | 459 | decided per object | dissolve into domain.automation.goals.focus (engine: objective focus; the stage rules naming articles and sources are contributed by research and library): `FocusFacts` (was Facts) methods | 17 of 28 functions take Facts |
 | core | `domain` | `Highlight` | 123 | decided per object | new type `Snippet` (domain.library.search) with `Snippet.highlight` | produces highlighted snippets |
 | core | `domain` | `HintProposals` | 121 | plural helper | companion of HintProposal | helper named after the type it works on |
 | core | `domain` | `HttpPolicy` | 130 | decided per object | `OutboundPolicy` type in util.http (Step/Trust top-level) | policy of outbound HTTP |
@@ -265,33 +265,33 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | core | `domain` | `MediaMatch` | 150 | decided per object | `PlaceInfo` companion → `MediaMatch` becomes a type (rule × basis) | matches records to places |
 | core | `domain` | `MediaRoles` | 19 | decided per object | `MediaRole` enum (values) | about MediaRole |
 | core | `domain` | `MediaText` | 51 | decided per object | `MediaRecord` companion | text of a media record |
-| core | `domain` | `MergeFold` | 513 | decided per object | dissolve into domain.exchange.merge: `PlanOutcome`/`ArticleOutcome` companions | namespace |
-| core | `domain` | `MergePlanner` | 2425 | decided per object | dissolve into domain.exchange.merge.plan: `MergePlan.of(...)` + per-entity companions (`LedgerEntry`, `Row`) | 2425 lines, 9 nested types |
-| core | `domain` | `MergeText` | 299 | decided per object | `AuthorAgreement`/`MinHash` top-level in domain.exchange.merge | namespace |
+| core | `domain` | `MergeFold` | 513 | decided per object | split: the fold mechanism (`PlanOutcome`) into util.data.exchange.merge; the per-kind folds (`ArticleOutcome`, sources', events', goals') into each domain's merge rules | per-kind rules (§3.6) |
+| core | `domain` | `MergePlanner` | 2425 | decided per object | split: the session, ledger and plan mechanism (`MergePlan.of`, `LedgerEntry`, ≈ 680 lines) into util.data.exchange.merge; the rules per kind of record (≈ 1 750 lines: sources and findings 1 052, articles 315, events and places 288, goals 71, assets 20) into each domain's `MergeRules` | 2425 lines, 9 nested types; §3.6 |
+| core | `domain` | `MergeText` | 299 | decided per object | `AuthorAgreement` (domain.library merge rules: authors of sources); `MinHash` to util.text | namespace |
 | core | `domain` | `MetMuseum` | 64 | decided per object | moves to plugins/media: `MetObject.fromJson` | an upstream parser |
 | core | `domain` | `OpenContext` | 215 | decided per object | moves to plugins/media: `OpenContextItem.fromJson` | an upstream parser |
 | core | `domain` | `PassageFinder` | 244 | decided per object | `Passage` companion (domain.library.sources) | finds passages |
 | core | `domain` | `PlaceReview` | 221 | decided per object | dissolve into domain.catalogue.places.review: `Evidence`/`Proposal` companions | namespace |
-| core | `domain` | `PlanArticles` | 161 | decided per object | `ArticlesAnswer` companion (domain.automation.pipelines) | reads an answer |
+| core | `domain` | `PlanArticles` | 161 | decided per object | `ArticlesAnswer` companion (domain.research.workflows) | reads an answer |
 | core | `domain` | `PlanGoal` | 189 | decided per object | `PlanAnswer` companion (domain.automation.goals) | reads an answer |
 | core | `domain` | `PlanReadSchedule` | 28 | decided per object | `ReadSchedule` companion | plans a read schedule |
 | core | `domain` | `PleiadesLinks` | 83 | decided per object | moves to plugins/media: `PleiadesLink` companion | an upstream parser |
 | core | `domain` | `PointAreas` | 100 | decided per object | `PointArea` type (was Listed/Group) companion (domain.catalogue.places) | about point areas |
 | core | `domain` | `Read` | 31 | decided per object | stays: util.json.Read (cursor helpers for parsers) | JSON cursor helpers, no domain type |
 | core | `domain` | `RepositoryLanding` | 324 | decided per object | moves to `upstreams` (library): `LandingCandidate` companion, `LandingRules` | landing-page rules (fetcher + BrowserDownload) |
-| core | `domain` | `ReviewArticle` | 2013 | decided per object | dissolve into domain.automation.review: `Reviewer`, `Verdict`, `ReviewFinding` companions | 2013 lines, 36 nested types |
-| core | `domain` | `ReviewLedger` | 601 | decided per object | dissolve into domain.automation.review: `Ledger` methods | 17 of 49 functions take Ledger |
+| core | `domain` | `ReviewArticle` | 2013 | decided per object | dissolve into domain.research.workflows.review: `Reviewer`, `Verdict`, `ReviewFinding` companions | 2013 lines, 36 nested types |
+| core | `domain` | `ReviewLedger` | 601 | decided per object | dissolve into domain.research.workflows.review: `Ledger` methods | 17 of 49 functions take Ledger |
 | core | `domain` | `SchedulerPolicy` | 458 | decided per object | dissolve into domain.automation.scheduler: `Scored`/`SchedulerSettings` methods | rules about scored candidates |
 | core | `domain` | `Scheduling` | 218 | decided per object | `Pick`/`Ranking` companions (domain.automation.scheduler) | namespace |
 | core | `domain` | `Smithsonian` | 155 | decided per object | moves to plugins/media: `SmithsonianObject.fromJson` | an upstream parser |
-| core | `domain` | `SourceMatcher` | 240 | decided per object | `SourceMatch` type (was Pair/Evidence/Outcome) companions (domain.exchange.merge) | matches sources |
+| core | `domain` | `SourceMatcher` | 240 | decided per object | `SourceMatch` type (was Pair/Evidence/Outcome) companions (domain.library merge rules) | matches sources |
 | core | `domain` | `TextAnchor` | 95 | decided per object | `Anchor` top-level with methods (domain.research.articles) | about an anchor |
 | core | `domain` | `TileFeatures` | 90 | decided per object | `TileCell` companion (domain.catalogue.maptiles) | features of a cell |
 | core | `domain` | `VectorTileWriter` | 76 | decided per object | stays: util.tiles.VectorTileWriter | MVT encoding, an external format |
 | core | `domain` | `WatchSchedules` | 97 | decided per object | `GoalSchedule` companion (domain.automation.goals) | plans schedules |
 | core | `domain` | `Wikidata` | 73 | decided per object | moves to `upstreams` (library): `WikidataItem`/`Statement` companions | Wikidata entity parser |
 | core | `domain.automation.activity` | `ActivityRules` | 100 | decided per object | `ActivityQuery`/`Activity.Entry` companions (domain.automation.activity) | pilot code brought in line |
-| core | `domain.platform.jobs` | `JobControlRules` | 41 | decided per object | `JobAction` companion (domain.platform.jobs) | pilot code brought in line |
+| core | `util.jobs` | `JobControlRules` | 41 | decided per object | `JobAction` companion (util.jobs) | pilot code brought in line |
 | core | `domain.catalogue.maptiles` | `UndatedCells` | 64 | decided per object | `GridCell` companion (domain.catalogue.maptiles) | about grid cells |
 | db | `db` | `AcquireCheckRepo` | 87 | repository | stays: repository, `private[<feature>]` in domain.<subdomain>.<feature> (server module) | a repository is the feature's store, not a function about one type |
 | db | `db` | `AcquireRepo` | 234 | repository | stays: repository, `private[<feature>]` in domain.<subdomain>.<feature> (server module) | a repository is the feature's store, not a function about one type |
@@ -407,7 +407,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | server | `domain.personal` | `ReadingRepo` | 141 | decided per object | stays: repository (private[personal]) | pilot repo |
 | server | `domain.settings` | `SettingsViews` | 60 | decided per object | `SettingsSnapshot` companion | views of a snapshot |
 | server | `server` | `Article` | 357 | decided per object | server.web page builder → `ArticlePage` companion | renders an article page |
-| server | `server` | `BackgroundJob` | 182 | decided per object | `BackgroundJob` becomes a class (runner) with `Slot` top-level (domain.platform.jobs) | runs jobs |
+| server | `server` | `BackgroundJob` | 182 | decided per object | `BackgroundJob` becomes a class (runner) with `Slot` top-level (util.jobs) | runs jobs |
 | server | `server` | `ConfigViews` | 37 | decided per object | `UiSettings`/`PluginsReport` companions (server edge, Chimney transformers) | config → wire views |
 | server | `server` | `HtmlRender` | 100 | decided per object | stays: util.markdown.HtmlRender | HTML rendering of Markdown |
 | server | `server` | `IiifHandler` | 176 | handler / tools | becomes <Feature>Controllers (class) + endpoint wiring | rule 13: controllers take services |
@@ -422,13 +422,13 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | server | `server` | `OpsRoutes` | 25 | handler / tools | becomes <Feature>Controllers (class) + endpoint wiring | rule 13: controllers take services |
 | server | `server` | `OpsTools` | 225 | handler / tools | becomes <Feature>Controllers (class) + endpoint wiring | rule 13: controllers take services |
 | server | `server` | `Pages` | 291 | decided per object | server.web: `PageBuilder` companion | renders pages |
-| server | `server` | `PgRelocation` | 113 | decided per object | `PgRelocation.Result` → `Relocation` type (domain.operations.maintenance) | about relocation |
+| server | `server` | `PgRelocation` | 113 | decided per object | `PgRelocation.Result` → `Relocation` type (util.data.maintenance) | about relocation |
 | server | `server` | `ServerArgs` | 24 | decided per object | new type `ServerArgs` (parsed CLI args of the server) | arguments are a type |
 | server | `server` | `Static` | 15 | decided per object | stays: server.web static assets route | adapter |
-| server | `server` | `StorageProbe` | 225 | decided per object | `StorageLocation` (was Location) companion (domain.operations.maintenance) | probes a location |
+| server | `server` | `StorageProbe` | 225 | decided per object | `StorageLocation` (was Location) companion (util.data.maintenance) | probes a location |
 | server | `server` | `StoredOriginals` | 66 | decided per object | `OriginalStore` service (domain.library.ingest) | a store, trait + Implementation + InMemory |
 | server | `server` | `Supervisor` | 335 | decided per object | `Layout` top-level + `Supervisor` class (server) | supervises child processes |
-| server | `server` | `TimeZoneCheck` | 68 | decided per object | `Probe` top-level (domain.operations.instance self-check) | a self-check |
+| server | `server` | `TimeZoneCheck` | 68 | decided per object | `Probe` top-level (server.instance self-check) | a self-check |
 | server | `server.acquire` | `Clients` | 118 | decided per object | `AcquireClients` companion | builds upstream clients |
 | server | `server.acquire` | `FetcherGeneration` | 33 | decided per object | `Generation` extension (plugin host glue) | about a generation |
 | server | `server.acquire` | `Indexes` | 35 | decided per object | `ScholarlyIndex` companion | lists the indexes |
@@ -459,12 +459,12 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | server | `server.agents` | `StrictJsonSchema` | 130 | decided per object | stays: util.json.StrictJsonSchema | schema transformation for any schema |
 | server | `server.agents` | `ToolResultCap` | 95 | decided per object | `ToolResult` new type with `cap` | about a tool result |
 | server | `server.agents` | `Trace` | 35 | decided per object | `ConversationHistory` extension | about a conversation |
-| server | `server.basemap` | `BasemapFetch` | 424 | decided per object | dissolve into domain.operations.basemap: `FetchPlan` (was Plan) companion | plans a fetch |
+| server | `server.basemap` | `BasemapFetch` | 424 | decided per object | dissolve into util.basemap: `FetchPlan` (was Plan) companion | plans a fetch |
 | server | `server.basemap` | `BasemapLabels` | 360 | decided per object | `BasemapLabel` (was Label) companion | about labels |
 | server | `server.basemap` | `Mvt` | 343 | decided per object | stays: util.tiles.Mvt | an external file format |
 | server | `server.basemap` | `PmTiles` | 303 | decided per object | stays: util.tiles.PmTiles (Header/Entry top-level) | an external file format |
 | server | `server.basemap` | `Png` | 141 | decided per object | stays: util.images.Png | an external file format |
-| server | `server.basemap` | `TerrainResample` | 59 | decided per object | `TerrainGrid` type (domain.operations.basemap) | resamples a grid |
+| server | `server.basemap` | `TerrainResample` | 59 | decided per object | `TerrainGrid` type (util.basemap) | resamples a grid |
 | server | `server.basemap` | `TerrariumPng` | 142 | decided per object | stays: util.images.TerrariumPng | an external file format |
 | server | `server.basemap` | `Vp8l` | 509 | decided per object | stays: util.images.Vp8l | an external file format |
 | server | `server.events` | `BuiltinCatalogues` | 67 | built-in plugin list | moves to its plugin module (plugin slice) | plugin separation |
@@ -484,7 +484,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | server | `server.plugins` | `LegacyPlugins` | 128 | decided per object | stays: plugin host glue (maps old settings, a facade over Config) | maps a former plugin's keys |
 | server | `server.plugins` | `PluginSetResource` | 47 | decided per object | `PluginSet` companion (`fromClassLoader`) | reads a PluginSet |
 | server | `server.plugins` | `PluginTool` | 312 | decided per object | `@main def pluginTool` (relink-kit entry) | entry point |
-| server | `server.plugins` | `Plugins` | 153 | decided per object | stays: plugin host glue (`Plugins.load`) → `PluginGeneration` service in domain.platform.plugins | composition of the generation; not about the SPI `Plugin` |
+| server | `server.plugins` | `Plugins` | 153 | decided per object | stays: plugin host glue (`Plugins.load`) → `PluginGeneration` service in util.plugins | composition of the generation; not about the SPI `Plugin` |
 | values | `values` | `Ascii` | 15 | decided per object | `FoldedText`/util.text | text folding |
 | values | `values` | `EventEdgeKind` | 20 | String vocabulary | becomes an enum (wire strings kept) in values/api | a closed vocabulary held as String constants |
 | values | `values` | `EventLinkStatus` | 8 | String vocabulary | becomes an enum (wire strings kept) in values/api | a closed vocabulary held as String constants |
