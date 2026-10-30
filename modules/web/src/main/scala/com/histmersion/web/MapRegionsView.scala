@@ -148,7 +148,8 @@ object MapRegionsView:
           label("region",
             select(cls := "field map-region-pick",
               children <-- status.signal.map(_.toList.flatMap(choices).map(c => option(value := c.id, c.label))),
-              controlled(value <-- pick.signal, onChange.mapToValue --> (choose(_)))))),
+              // the options are made again when the status is read again: the choice is set again after them
+              controlled(value <-- status.signal.combineWith(pick.signal).map(_._2), onChange.mapToValue --> (choose(_)))))),
         div(cls := "form-field",
           label("box (west, south, east, north)",
             input(typ := "text", cls := "field map-region-bbox", placeholder := "minLon,minLat,maxLon,maxLat or world",
