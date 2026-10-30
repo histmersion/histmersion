@@ -18,8 +18,8 @@ class ConfigSuite extends munit.FunSuite:
     assert(List("zh", "ja", "ar", "hi", "mul").forall(langs.contains), s"an event outside Europe gets a label: $langs")
 
   test("env overrides (always strings) are accepted for numeric keys"):
-    val env = org.ekrich.config.ConfigFactory.parseMap(
-      java.util.Map.of("HISTMERSION_PORT", "8011", "HISTMERSION_SERVER_URL", "http://h:1"))
+    val env = org.ekrich.config.ConfigFactory
+      .parseMap(java.util.Map.of("HISTMERSION_PORT", "8011", "HISTMERSION_SERVER_URL", "http://h:1"))
     val cfg = AppConfig.load(env)
     assertEquals(cfg.server.port, 8011)
     assertEquals(cfg.cli.serverUrl, "http://h:1")
@@ -84,32 +84,63 @@ class ConfigSuite extends munit.FunSuite:
     assert(e.contains("port"), e)
     assert(e.contains("'histmersion.server.port' must be a number"), e)
     val shadowed = AppConfig.loadWithUserFile(env("HISTMERSION_PORT" -> "8011"), Some(f))
-    assert(shadowed.swap.exists(_.contains("'histmersion.server.port' must be a number")),
-      s"a mistyped setting is an error even while an env var shadows it: $shadowed")
+    assert(
+      shadowed.swap.exists(_.contains("'histmersion.server.port' must be a number")),
+      s"a mistyped setting is an error even while an env var shadows it: $shadowed"
+    )
     val nested = confFile("histmersion { agents { scheduler { enabled = sometimes } } }")
     val e2 = AppConfig.loadWithUserFile(env(), Some(nested)).swap.getOrElse(fail("loaded"))
-    assert(e2.contains(nested.toString) && e2.contains("'histmersion.agents.scheduler.enabled' must be true or false"), e2)
+    assert(
+      e2.contains(nested.toString) && e2.contains("'histmersion.agents.scheduler.enabled' must be true or false"),
+      e2
+    )
 
-  test("user file: the removed agents.scheduler.tick-seconds (phase 3) is ignored, not an error; the watch defaults load"):
+  test(
+    "user file: the removed agents.scheduler.tick-seconds (phase 3) is ignored, not an error; the watch defaults load"
+  ):
     val f = confFile("histmersion { agents { scheduler { tick-seconds = 60, min-interval-minutes = 90 } } }")
     val c = loaded(env(), f).config
     assertEquals(c.agents.scheduler.minIntervalMinutes, 90)
-    assertEquals((c.agents.managers.watch.cron, c.agents.managers.watch.autoIngestPerDay, c.agents.managers.watch.maxRuns),
-      ("@weekly", 5, 1))
+    assertEquals(
+      (c.agents.managers.watch.cron, c.agents.managers.watch.autoIngestPerDay, c.agents.managers.watch.maxRuns),
+      ("@weekly", 5, 1)
+    )
 
   test("CORE's budget: defaults under a personal key's limits, each one a setting with an env override"):
     val c = AppConfig.load(env()).acquire.core
-    assertEquals((c.perMinute, c.dailyTokens, c.searchDailyTokens, c.lookupCost, c.searchCost, c.exhaustedPauseSeconds,
-      c.maxWaitSeconds), (20, 900, 600, 1, 1, 60, 30))
+    assertEquals(
+      (
+        c.perMinute,
+        c.dailyTokens,
+        c.searchDailyTokens,
+        c.lookupCost,
+        c.searchCost,
+        c.exhaustedPauseSeconds,
+        c.maxWaitSeconds
+      ),
+      (20, 900, 600, 1, 1, 60, 30)
+    )
     assertEquals(c.key, None)
-    val e = AppConfig.load(env("HISTMERSION_ACQUIRE_CORE_DAILY_TOKENS" -> "4500", "HISTMERSION_ACQUIRE_CORE_SEARCH_DAILY_TOKENS" -> "3000",
-      "HISTMERSION_ACQUIRE_CORE_PER_MINUTE" -> "8", "HISTMERSION_ACQUIRE_CORE_API_KEY" -> " k ")).acquire.core
+    val e = AppConfig
+      .load(
+        env(
+          "HISTMERSION_ACQUIRE_CORE_DAILY_TOKENS" -> "4500",
+          "HISTMERSION_ACQUIRE_CORE_SEARCH_DAILY_TOKENS" -> "3000",
+          "HISTMERSION_ACQUIRE_CORE_PER_MINUTE" -> "8",
+          "HISTMERSION_ACQUIRE_CORE_API_KEY" -> " k "
+        )
+      )
+      .acquire
+      .core
     assertEquals((e.dailyTokens, e.searchDailyTokens, e.perMinute, e.key), (4500, 3000, 8, Some("k")))
 
   test("the autopilot's focus: defaults, the environment and the file"):
     val a = AppConfig.load(env()).agents.autopilot
     assertEquals((a.maxActiveGoals, a.focusRatio, a.maxOpenSubGoals, a.focusQueueShown), (8, 3, 5, 10))
-    assertEquals(AppConfig.load(env("HISTMERSION_AGENTS_AUTOPILOT_MAX_ACTIVE_GOALS" -> "3")).agents.autopilot.maxActiveGoals, 3)
+    assertEquals(
+      AppConfig.load(env("HISTMERSION_AGENTS_AUTOPILOT_MAX_ACTIVE_GOALS" -> "3")).agents.autopilot.maxActiveGoals,
+      3
+    )
     val f = confFile("histmersion { agents { autopilot { max-active-goals = 0, focus-ratio = 1 } } }")
     val c = loaded(env(), f).config.agents.autopilot
     assertEquals((c.maxActiveGoals, c.focusRatio, c.ingestPerDay), (0, 1, 20))
@@ -147,8 +178,18 @@ class ConfigSuite extends munit.FunSuite:
     val set = cc.envChanges.collect { case (k, Some(v)) => k -> v }.toMap
     assertEquals(set.get("CLAUDE_CODE_DISABLE_ARTIFACT"), Some("1"))
     assert(set.keySet.forall(_.startsWith("CLAUDE_CODE_DISABLE_")) && set.values.forall(_ == "1"), set)
-    List("THINKING", "ADAPTIVE_THINKING", "STRUCTURED_OUTPUTS", "WEB_FETCH", "REFUSAL_FALLBACK", "REFUSAL_RETRY",
-      "MODEL_ACCESS_FALLBACK", "NONSTREAMING_FALLBACK", "NONESSENTIAL_TRAFFIC", "ATTACHMENTS")
+    List(
+      "THINKING",
+      "ADAPTIVE_THINKING",
+      "STRUCTURED_OUTPUTS",
+      "WEB_FETCH",
+      "REFUSAL_FALLBACK",
+      "REFUSAL_RETRY",
+      "MODEL_ACCESS_FALLBACK",
+      "NONSTREAMING_FALLBACK",
+      "NONESSENTIAL_TRAFFIC",
+      "ATTACHMENTS"
+    )
       .foreach(n => assert(!set.contains(s"CLAUDE_CODE_DISABLE_$n"), n))
     assert(cc.disableSlashCommands)
 
@@ -169,8 +210,14 @@ class ConfigSuite extends munit.FunSuite:
 
   test("claude-code env: a variable in the server's own environment wins over the file and the default"):
     val f = confFile("""histmersion.agents.providers.claude-code.env { CLAUDE_CODE_DISABLE_CRON = "" }""")
-    val l = loaded(env("CLAUDE_CODE_DISABLE_CRON" -> "0", "CLAUDE_CODE_DISABLE_ARTIFACT" -> "",
-      "HISTMERSION_AGENTS_CLAUDE_DISABLE_SLASH_COMMANDS" -> "false"), f)
+    val l = loaded(
+      env(
+        "CLAUDE_CODE_DISABLE_CRON" -> "0",
+        "CLAUDE_CODE_DISABLE_ARTIFACT" -> "",
+        "HISTMERSION_AGENTS_CLAUDE_DISABLE_SLASH_COMMANDS" -> "false"
+      ),
+      f
+    )
     val ch = l.config.agents.providers.claudeCode.envChanges.toMap
     assertEquals(ch.get("CLAUDE_CODE_DISABLE_CRON"), Some(Some("0")))
     assertEquals(ch.get("CLAUDE_CODE_DISABLE_ARTIFACT"), Some(None))
@@ -187,17 +234,25 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(l.file, UserConfigFile(Some(t), loaded = true))
     assertEquals(l.config, AppConfig.load(env()))
     // its commented example, uncommented, is all real settings
-    val example = Files.readAllLines(t).asScala.dropWhile(!_.startsWith("# histmersion {"))
-      .map(_.stripPrefix("#")).mkString("\n")
+    val example = Files
+      .readAllLines(t)
+      .asScala
+      .dropWhile(!_.startsWith("# histmersion {"))
+      .map(_.stripPrefix("#"))
+      .mkString("\n")
     val ex = loaded(env(), confFile(example))
     assertEquals(ex.file.unknownKeys, Nil)
     assertEquals(ex.config.agents.step.maxTokens, 8192)
 
   test("the env-override layer holds exactly the keys whose ${?VAR} is set"):
-    val layer = ConfigLayers.envOverrides(ConfigLayers.reference,
-      env("HISTMERSION_PORT" -> "9", "ANTHROPIC_API_KEY" -> "k", "UNRELATED" -> "x"))
-    assertEquals(layer.entrySet.asScala.map(_.getKey).toSet,
-      Set("histmersion.server.port", "histmersion.agents.providers.anthropic.api-key"))
+    val layer = ConfigLayers.envOverrides(
+      ConfigLayers.reference,
+      env("HISTMERSION_PORT" -> "9", "ANTHROPIC_API_KEY" -> "k", "UNRELATED" -> "x")
+    )
+    assertEquals(
+      layer.entrySet.asScala.map(_.getKey).toSet,
+      Set("histmersion.server.port", "histmersion.agents.providers.anthropic.api-key")
+    )
     assertEquals(layer.getString("histmersion.server.port"), "9")
 
   test("plugins: histmersion.plugins is an open block — no unknown keys, the file and env kept for the host"):
@@ -222,33 +277,54 @@ class ConfigSuite extends munit.FunSuite:
 
   test("the generic env layer: any defaults tree, only keys that are exactly a set ${?VAR}"):
     val defaults = org.ekrich.config.ConfigFactory.parseString(
-      "max-items = 5\nmax-items = ${?P_MAX}\nname = n\nname = ${?P_NAME}\npath = \"a/\"${?P_SUB}\nnested { x = 1, x = ${?P_X} }")
+      "max-items = 5\nmax-items = ${?P_MAX}\nname = n\nname = ${?P_NAME}\npath = \"a/\"${?P_SUB}\nnested { x = 1, x = ${?P_X} }"
+    )
     val layer = EnvOverrides.layer(defaults, env("P_MAX" -> "9", "P_X" -> "2", "P_SUB" -> "b", "HOME" -> "/h"))
-    assertEquals(layer.entrySet.asScala.map(_.getKey).toSet, Set("max-items", "nested.x"),
-      "a derived value (path) and the variables themselves are no override")
+    assertEquals(
+      layer.entrySet.asScala.map(_.getKey).toSet,
+      Set("max-items", "nested.x"),
+      "a derived value (path) and the variables themselves are no override"
+    )
     assertEquals(layer.getString("max-items"), "9")
     assertEquals(EnvOverrides.layer(defaults, env()).isEmpty, true)
 
   test("the cache directory: XDG_CACHE_HOME, else ~/.cache, on every platform (#1403)"):
     def e(kv: (String, String)*): String => Option[String] = kv.toMap.get
     assertEquals(UserPaths.cacheDir(e("HOME" -> "/Users/u")), Some(Path.of("/Users/u/.cache/histmersion")))
-    assertEquals(UserPaths.cacheDir(e("HOME" -> "/home/u", "XDG_CACHE_HOME" -> "/xc")), Some(Path.of("/xc/histmersion")))
-    assertEquals(UserPaths.cacheDir(e("HOME" -> "/home/u", "XDG_CACHE_HOME" -> " ")), Some(Path.of("/home/u/.cache/histmersion")))
+    assertEquals(
+      UserPaths.cacheDir(e("HOME" -> "/home/u", "XDG_CACHE_HOME" -> "/xc")),
+      Some(Path.of("/xc/histmersion"))
+    )
+    assertEquals(
+      UserPaths.cacheDir(e("HOME" -> "/home/u", "XDG_CACHE_HOME" -> " ")),
+      Some(Path.of("/home/u/.cache/histmersion"))
+    )
     assertEquals(UserPaths.cacheDir(e()), None)
 
   test("the config file location: HISTMERSION_CONFIG, else XDG_CONFIG_HOME (default ~/.config) on every platform"):
     def e(kv: (String, String)*): String => Option[String] = kv.toMap.get
-    assertEquals(UserPaths.configFile(e("HOME" -> "/Users/u")),
-      Some(Path.of("/Users/u/.config/histmersion/histmersion.conf")))
-    assertEquals(UserPaths.configFile(e("HOME" -> "/Users/u", "HISTMERSION_DATA_DIR" -> "/d")),
-      Some(Path.of("/Users/u/.config/histmersion/histmersion.conf")), "the data dir never moves it")
-    assertEquals(UserPaths.configFile(e("HOME" -> "/Users/u", "HISTMERSION_CONFIG" -> "~/h.conf")),
-      Some(Path.of("/Users/u/h.conf")))
-    assertEquals(UserPaths.configFile(e("HOME" -> "/home/u", "XDG_CONFIG_HOME" -> "/x")),
-      Some(Path.of("/x/histmersion/histmersion.conf")))
+    assertEquals(
+      UserPaths.configFile(e("HOME" -> "/Users/u")),
+      Some(Path.of("/Users/u/.config/histmersion/histmersion.conf"))
+    )
+    assertEquals(
+      UserPaths.configFile(e("HOME" -> "/Users/u", "HISTMERSION_DATA_DIR" -> "/d")),
+      Some(Path.of("/Users/u/.config/histmersion/histmersion.conf")),
+      "the data dir never moves it"
+    )
+    assertEquals(
+      UserPaths.configFile(e("HOME" -> "/Users/u", "HISTMERSION_CONFIG" -> "~/h.conf")),
+      Some(Path.of("/Users/u/h.conf"))
+    )
+    assertEquals(
+      UserPaths.configFile(e("HOME" -> "/home/u", "XDG_CONFIG_HOME" -> "/x")),
+      Some(Path.of("/x/histmersion/histmersion.conf"))
+    )
     assertEquals(UserPaths.configFile(e()), None)
-    assertEquals(UserPaths.dataDir("", e("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xd"), "Linux"),
-      Some(Path.of("/xd/histmersion")))
+    assertEquals(
+      UserPaths.dataDir("", e("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xd"), "Linux"),
+      Some(Path.of("/xd/histmersion"))
+    )
     assertEquals(UserPaths.dataDir("/own", e("HOME" -> "/home/u"), "Linux"), Some(Path.of("/own")))
 
   test("the map's geo feed has its own cap, above a listing page: a range draws every state in it"):
@@ -257,7 +333,7 @@ class ConfigSuite extends munit.FunSuite:
     assert(c.places.geoMaxLimit > c.limits.maxPage)
     val p = c.places.copy(geoMaxLimit = 2000)
     assertEquals(p.geoLimit(Some(400), 100), 400)
-    assertEquals(p.geoLimit(Some(1744), 100), 1744)   // past limits.max-page
+    assertEquals(p.geoLimit(Some(1744), 100), 1744) // past limits.max-page
     assertEquals(p.geoLimit(Some(5000), 100), 2000)
     assertEquals(p.geoLimit(None, 100), 100)
     assertEquals(p.geoLimit(Some(0), 100), 100)
@@ -267,11 +343,15 @@ class ConfigSuite extends munit.FunSuite:
   /** Guard for plan §1.9: no port numbers / service URLs hardcoded anywhere in main sources. */
   test("no hardcoded ports or CDN hosts in src/main (only reference.conf may carry them)"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
-    val offenders = Files.walk(root.resolve("modules")).iterator.asScala
+    val offenders = Files
+      .walk(root.resolve("modules"))
+      .iterator
+      .asScala
       .filter(p => p.toString.contains("/src/main/") && !p.toString.contains("/vendor/"))
       .filter(p => p.toString.matches(""".*\.(scala|js|html|css)$"""))
       .filter(p => Files.readString(p).matches("""(?s).*(\b(8000|8100|5432)\b|unpkg\.com|localhost:\d+).*"""))
-      .map(root.relativize).toList
+      .map(root.relativize)
+      .toList
     assertEquals(offenders, Nil, "move these constants to reference.conf")
 
   test("plan pools' scheduled reads: the defaults, 0 as off from the environment, a negative value refused"):
@@ -280,15 +360,28 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(minutes(q.chatgptPlan.refreshEveryMinutes), Some(30))
     val off = AppConfig.load(env("HISTMERSION_AGENTS_CLAUDE_PLAN_REFRESH_EVERY_MINUTES" -> "0")).agents.quota.claudePlan
     assertEquals(off.refreshEveryMinutes, ScheduledRefresh.Off)
-    val e = intercept[RuntimeException](AppConfig.load(env("HISTMERSION_AGENTS_CHATGPT_PLAN_REFRESH_EVERY_MINUTES" -> "-1")))
+    val e =
+      intercept[RuntimeException](AppConfig.load(env("HISTMERSION_AGENTS_CHATGPT_PLAN_REFRESH_EVERY_MINUTES" -> "-1")))
     assert(e.getMessage.contains("-1 is not 0 (off) or a positive number of minutes"), e.getMessage)
 
   test("publishers that refuse scripts: the shipped hosts, replaced from the environment, none when empty"):
     val shipped = AppConfig.load(env()).acquire.landing.refusingHosts
-    assert(List("degruyter.com", "degruyterbrill.com", "mdpi.com", "stockholmuniversitypress.se").forall(shipped.contains), shipped)
-    assertEquals(AppConfig.load(env("HISTMERSION_ACQUIRE_LANDING_BROWSER_DOWNLOAD_HOSTS" -> "Example.org, b.example ")).acquire.landing.refusingHosts,
-      List("example.org", "b.example"))
-    assertEquals(AppConfig.load(env("HISTMERSION_ACQUIRE_LANDING_BROWSER_DOWNLOAD_HOSTS" -> "")).acquire.landing.refusingHosts, Nil)
+    assert(
+      List("degruyter.com", "degruyterbrill.com", "mdpi.com", "stockholmuniversitypress.se").forall(shipped.contains),
+      shipped
+    )
+    assertEquals(
+      AppConfig
+        .load(env("HISTMERSION_ACQUIRE_LANDING_BROWSER_DOWNLOAD_HOSTS" -> "Example.org, b.example "))
+        .acquire
+        .landing
+        .refusingHosts,
+      List("example.org", "b.example")
+    )
+    assertEquals(
+      AppConfig.load(env("HISTMERSION_ACQUIRE_LANDING_BROWSER_DOWNLOAD_HOSTS" -> "")).acquire.landing.refusingHosts,
+      Nil
+    )
 
   test("the schedule from config minutes: 0 is off, a negative number is refused"):
     assertEquals(ScheduledRefresh.fromMinutes(0), Right(ScheduledRefresh.Off))

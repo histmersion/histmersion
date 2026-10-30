@@ -4,18 +4,20 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The user-added plugins a binary was linked with (docs/research-plugins.md §7.3): what a relink
-  * writes into the image (`META-INF/histmersion/plugin-set.json`, in a small generated jar on the image
-  * class path) and beside the binary, what the server reports in `/api/about` and `--self-check`, and
-  * what `histmersion plugin status` recomputes over the plugins directory. First-party plugins are not
-  * in it: they are in every binary (§4.2 option B). */
+/** The user-added plugins a binary was linked with (docs/research-plugins.md §7.3): what a relink writes into the image
+  * (`META-INF/histmersion/plugin-set.json`, in a small generated jar on the image class path) and beside the binary,
+  * what the server reports in `/api/about` and `--self-check`, and what `histmersion plugin status` recomputes over the
+  * plugins directory. First-party plugins are not in it: they are in every binary (§4.2 option B).
+  */
 
-/** One plugin a jar provides, as `PluginTool describe` found it on the JVM: its info, what a
-  * registration with its defaults (enabled, nothing else set) contributes, and the access its source
-  * fetchers declare (`open`, `subscription`, `unauthorised`).
+/** One plugin a jar provides, as `PluginTool describe` found it on the JVM: its info, what a registration with its
+  * defaults (enabled, nothing else set) contributes, and the access its source fetchers declare (`open`,
+  * `subscription`, `unauthorised`).
   *
-  * @param error why it could not be instantiated or registered with its defaults (the access is then
-  *              unknown; the plugin may still work once configured) */
+  * @param error
+  *   why it could not be instantiated or registered with its defaults (the access is then unknown; the plugin may still
+  *   work once configured)
+  */
 final case class PluginDescription(
     id: String,
     version: String,
@@ -33,20 +35,27 @@ final case class PluginJar(file: String, sha256: String, plugins: List[PluginDes
 object PluginJar:
   given Schema[PluginJar] = KindlingsSchema.derived[PluginJar].schema
 
-/** A file a plugin set was linked with besides its jars: the POM beside a plugin jar (`x-1.0.pom`), or a
-  * dependency jar of the plugins directory's `lib/` (`lib/y-2.0.jar`); with its SHA-256. */
+/** A file a plugin set was linked with besides its jars: the POM beside a plugin jar (`x-1.0.pom`), or a dependency jar
+  * of the plugins directory's `lib/` (`lib/y-2.0.jar`); with its SHA-256.
+  */
 final case class PluginFile(file: String, sha256: String) derives KindlingsCodecAsObject
 object PluginFile:
   given Schema[PluginFile] = KindlingsSchema.derived[PluginFile].schema
 
-/** @param digest     SHA-256 over the sorted `<file> <sha256>` lines of the jars (order-independent); the
-  *                   empty set's digest for a binary linked with first-party plugins only
-  * @param spiVersion the plugin SPI the binary speaks
-  * @param mode       `native` (linked into the image) or `jvm` (on the JVM launcher's class path)
-  * @param kit        the kit (Histmersion version and commit) it was linked from
-  * @param linkedAt   when (ISO-8601)
-  * @param dependencies the POMs and `lib/` jars it was linked with; `None` in a record written before they
-  *                   were recorded */
+/** @param digest
+  *   SHA-256 over the sorted `<file> <sha256>` lines of the jars (order-independent); the empty set's digest for a
+  *   binary linked with first-party plugins only
+  * @param spiVersion
+  *   the plugin SPI the binary speaks
+  * @param mode
+  *   `native` (linked into the image) or `jvm` (on the JVM launcher's class path)
+  * @param kit
+  *   the kit (Histmersion version and commit) it was linked from
+  * @param linkedAt
+  *   when (ISO-8601)
+  * @param dependencies
+  *   the POMs and `lib/` jars it was linked with; `None` in a record written before they were recorded
+  */
 final case class PluginSet(
     digest: String,
     spiVersion: Int,

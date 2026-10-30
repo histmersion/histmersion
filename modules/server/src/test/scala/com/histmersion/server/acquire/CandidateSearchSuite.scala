@@ -11,9 +11,10 @@ import java.time.LocalDate
 import java.util.concurrent.ConcurrentLinkedQueue
 import com.histmersion.values.SourceStatus
 
-/** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it
-  * keeps, deduplication across indexes and against the corpus and the acquisition list, a failed index,
-  * a dry run, marking — and the supervisor's rule that nothing new starts no agent run. No network. */
+/** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it keeps,
+  * deduplication across indexes and against the corpus and the acquisition list, a failed index, a dry run, marking —
+  * and the supervisor's rule that nothing new starts no agent run. No network.
+  */
 class CandidateSearchSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -23,17 +24,20 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
   private val Goal = "zzcand-goal"
 
   /** An index answering `hits` for every query, recording the `since` it was asked. */
-  private final class FakeIndex(val name: String, hits: => Either[String, List[WorkRef]]) extends ScholarlyIndex:
+  final private class FakeIndex(val name: String, hits: => Either[String, List[WorkRef]]) extends ScholarlyIndex:
     val asked = ConcurrentLinkedQueue[(String, LocalDate)]()
     def search(query: String, since: LocalDate, limit: Int) = { asked.add((query, since)); hits }
 
-  private final class FakeAlerts extends CitationAlerts:
+  final private class FakeAlerts extends CitationAlerts:
     val asked = ConcurrentLinkedQueue[String]()
-    def citing(doi: String, since: LocalDate, limit: Int) = { asked.add(s"citing $doi"); Right(List(work("10.5555/zzcand.citing"))) }
+    def citing(doi: String, since: LocalDate, limit: Int) = {
+      asked.add(s"citing $doi"); Right(List(work("10.5555/zzcand.citing")))
+    }
     def authors(doi: String) = Right(List("A1", "A2", "A3"))
     def byAuthor(authorId: String, since: LocalDate, limit: Int) = { asked.add(s"author $authorId"); Right(Nil) }
 
-  private def work(doi: String, title: String = "A work") = WorkRef(doi = Some(doi), title = Some(title), year = Some(2026))
+  private def work(doi: String, title: String = "A work") =
+    WorkRef(doi = Some(doi), title = Some(title), year = Some(2026))
 
   private def fresh(): Unit =
     import com.augustnagro.magnum.*
@@ -49,23 +53,55 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
 
   test("a sweep stores what is new, deduplicated across indexes and against the corpus and the acquisition list"):
     fresh()
-    SourceRepo.upsert(ds, Source("zzcand_have", "Have", Nil, Some("10.5555/zzcand.have"), Some(2020), None, SourceStatus.Current,
-      Nil, Nil, Nil, None, None, None, None, None, None), cfg.limits.chunkChars)
+    SourceRepo.upsert(
+      ds,
+      Source(
+        "zzcand_have",
+        "Have",
+        Nil,
+        Some("10.5555/zzcand.have"),
+        Some(2020),
+        None,
+        SourceStatus.Current,
+        Nil,
+        Nil,
+        Nil,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None
+      ),
+      cfg.limits.chunkChars
+    )
     QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd("zzcand queued https://doi.org/10.5555/zzcand.queued"))
-    val oa = FakeIndex("openalex", Right(List(work("10.5555/zzcand.a"), work("10.5555/zzcand.have"), work("10.5555/zzcand.queued"))))
-    val cr = FakeIndex("crossref", Right(List(work("https://doi.org/10.5555/ZZCAND.A", "Same, other record"), work("10.5555/zzcand.b"))))
+    val oa = FakeIndex(
+      "openalex",
+      Right(List(work("10.5555/zzcand.a"), work("10.5555/zzcand.have"), work("10.5555/zzcand.queued")))
+    )
+    val cr = FakeIndex(
+      "crossref",
+      Right(List(work("https://doi.org/10.5555/ZZCAND.A", "Same, other record"), work("10.5555/zzcand.b")))
+    )
     val day = LocalDate.of(2026, 10, 24)
     val s = search(List(oa, cr), FakeAlerts(), day).sweep(Goal, dryRun = false).fold(e => fail(e.message), identity)
     assertEquals((s.found, s.added, s.again, s.unseen), (5, 2, 0, 2))
     assertEquals(s.skipped, Map("in the corpus or queued" -> 2))
     // the first read looks back acquire.candidates.lookback-days; the watermark is today's after it
     assertEquals(oa.asked.peek(), ("bronze age collapse", day.minusDays(cfg.acquire.candidates.lookbackDays.toLong)))
-    assertEquals(CandidateRepo.watches(ds, Goal).map(w => (w.index, w.watermark, w.lastFound)),
-      List(("crossref", Some("2026-10-24"), 2), ("openalex", Some("2026-10-24"), 3)))
+    assertEquals(
+      CandidateRepo.watches(ds, Goal).map(w => (w.index, w.watermark, w.lastFound)),
+      List(("crossref", Some("2026-10-24"), 2), ("openalex", Some("2026-10-24"), 3))
+    )
     val list = CandidateRepo.list(ds, Some(Goal), "new", 10, 0)
-    assertEquals(list.map(c => (c.doi, c.foundBy)), List(
-      "10.5555/zzcand.a" -> List("openalex query \"bronze age collapse\"", "crossref query \"bronze age collapse\""),
-      "10.5555/zzcand.b" -> List("crossref query \"bronze age collapse\"")))
+    assertEquals(
+      list.map(c => (c.doi, c.foundBy)),
+      List(
+        "10.5555/zzcand.a" -> List("openalex query \"bronze age collapse\"", "crossref query \"bronze age collapse\""),
+        "10.5555/zzcand.b" -> List("crossref query \"bronze age collapse\"")
+      )
+    )
 
   test("the next sweep reads from the watermark; what it finds again is not new; a failed index keeps its watermark"):
     fresh()
@@ -98,22 +134,50 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     val ids = CandidateRepo.list(ds, Some(Goal), "new", 10, 0).map(_.id)
     assertEquals(CandidateRepo.mark(ds, ids.take(1), "dismissed"), 1)
     assertEquals(CandidateRepo.markDois(ds, Goal, List("10.5555/zzcand.b"), "queued"), 1)
-    assertEquals(CandidateRepo.counts(ds, Some(Goal)).map(c => c.state -> c.count).toMap, Map("queued" -> 1, "dismissed" -> 1))
+    assertEquals(
+      CandidateRepo.counts(ds, Some(Goal)).map(c => c.state -> c.count).toMap,
+      Map("queued" -> 1, "dismissed" -> 1)
+    )
     // found again later: still decided, not new
     val again = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 25)).sweep(Goal, dryRun = false).toOption.get
     assertEquals((again.added, again.again, again.unseen), (0, 2, 0))
 
   test("the goal's sources: the works citing them and their first and last authors' newer works"):
     fresh()
-    SourceRepo.upsert(ds, Source("zzcand_src", "Source", Nil, Some("10.5555/zzcand.src"), Some(2010), None, SourceStatus.Current,
-      Nil, Nil, Nil, None, None, None, None, None, None), cfg.limits.chunkChars)
+    SourceRepo.upsert(
+      ds,
+      Source(
+        "zzcand_src",
+        "Source",
+        Nil,
+        Some("10.5555/zzcand.src"),
+        Some(2010),
+        None,
+        SourceStatus.Current,
+        Nil,
+        Nil,
+        Nil,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None
+      ),
+      cfg.limits.chunkChars
+    )
     assert(GoalLinkRepo.link(ds, Goal, LinkKind.Source, "zzcand_src", None))
     val alerts = FakeAlerts()
     val s = search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
     assertEquals(alerts.asked.toArray.toList, List("citing 10.5555/zzcand.src", "author A1", "author A3"))
-    assertEquals(s.watches.map(w => (w.kind, w.subject)), List(("citing", "10.5555/zzcand.src"), ("author", "A1"), ("author", "A3")))
-    assertEquals(CandidateRepo.list(ds, Some(Goal), "new", 10, 0).map(c => (c.doi, c.foundBy)),
-      List("10.5555/zzcand.citing" -> List("openalex citing 10.5555/zzcand.src")))
+    assertEquals(
+      s.watches.map(w => (w.kind, w.subject)),
+      List(("citing", "10.5555/zzcand.src"), ("author", "A1"), ("author", "A3"))
+    )
+    assertEquals(
+      CandidateRepo.list(ds, Some(Goal), "new", 10, 0).map(c => (c.doi, c.foundBy)),
+      List("10.5555/zzcand.citing" -> List("openalex citing 10.5555/zzcand.src"))
+    )
     assert(search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep("zzcand-nowhere", dryRun = false).isLeft)
 
   test("an index that may not be asked (CORE's budget, CORE's block) is left out of the sweep, which says so"):
@@ -126,13 +190,20 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       val name = "core"
       val asked = ConcurrentLinkedQueue[String]()
       override def unavailable = Option.when(!asked.isEmpty)("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)")
-      def search(query: String, since: LocalDate, limit: Int) = { asked.add(query); Left("CORE not asked: CORE answered HTTP 429") }
+      def search(query: String, since: LocalDate, limit: Int) = {
+        asked.add(query); Left("CORE not asked: CORE answered HTTP 429")
+      }
     val core = Throttled()
     val s = search(List(oa, core), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
     assertEquals(core.asked.size, 1, "asked once, then left out")
     assertEquals(oa.asked.size, 3, "the other indexes are read as usual")
-    assertEquals(s.notes, List("core not asked this sweep: CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429) — " +
-      "2 watches left unread, which keep their watermarks and are read next sweep"))
+    assertEquals(
+      s.notes,
+      List(
+        "core not asked this sweep: CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429) — " +
+          "2 watches left unread, which keep their watermarks and are read next sweep"
+      )
+    )
     assert(s.watches.filter(_.index == "core").forall(_.watermark.isEmpty), s.watches.toString)
     assertEquals(s.added, 1)
     // a budget spent before the sweep: CORE is not asked at all
@@ -141,5 +212,8 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       override def unavailable = Some("CORE's daily budget for searches is spent")
       def search(query: String, since: LocalDate, limit: Int) = fail("asked")
     val s2 = search(List(spent), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = true).toOption.get
-    assert(s2.notes.size == 1 && s2.notes.head.startsWith("core not asked this sweep: CORE's daily budget for searches is spent — 3 watches"),
-      s2.notes.toString)
+    assert(
+      s2.notes.size == 1 && s2.notes.head
+        .startsWith("core not asked this sweep: CORE's daily budget for searches is spent — 3 watches"),
+      s2.notes.toString
+    )

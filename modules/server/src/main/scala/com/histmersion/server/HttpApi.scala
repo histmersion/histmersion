@@ -11,8 +11,9 @@ import com.histmersion.api.personal.PersonalApi
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
-/** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same
-  * netty-sync server as MCP. */
+/** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same netty-sync server as
+  * MCP.
+  */
 final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acquire.AcquireHandlers):
 
   private val rest: List[ServerEndpoint[Any, Identity]] = List(
@@ -39,7 +40,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     Api.fixSourceFormat.serverLogic[Identity](ck => h.fixSource(ck)),
     OpsApi.lintMarkdown.serverLogicSuccess[Identity](in => h.lintText(in)),
     Api.sourceView.serverLogic[Identity](q =>
-      h.sourceMarkdown(q.citekey, q.fullText, q.section, q.heading, q.offset, q.chars)),
+      h.sourceMarkdown(q.citekey, q.fullText, q.section, q.heading, q.offset, q.chars)
+    ),
     Api.passages.serverLogic[Identity](q => h.passages(q)),
     Api.resolveId.serverLogic[Identity](h.resolveId),
     Api.getSource.serverLogic[Identity]((ck, body) => h.getSource(ck, body)),
@@ -169,7 +171,9 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     PersonalApi.opened.serverLogic[Identity](in => h.personal.opened(in)),
     PersonalApi.reading.serverLogic[Identity]((kind, show, limit) => h.personal.readMarks(kind, show, limit)),
     PersonalApi.setRead.serverLogic[Identity](in => h.personal.setRead(in)),
-    Api.activity.serverLogic[Identity]((show, since, goal, limit, before) => h.activity.page(show, since, goal, limit, before)),
+    Api.activity.serverLogic[Identity]((show, since, goal, limit, before) =>
+      h.activity.page(show, since, goal, limit, before)
+    ),
     Api.jobs.serverLogic[Identity]((f, limit, before, upTo) => h.ingest.jobsPage(f, limit, before, upTo)),
     Api.assets.serverLogicSuccess[Identity](ck => h.ingest.assets(ck)),
     Api.putAssets.serverLogic[Identity]((ck, in) => h.ingest.putAssets(ck, in)),
@@ -199,19 +203,19 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
   // ── the HTML source page (typed page model → HtmlRender; the Markdown in core is for MCP/CLI) ──
   private val pages = PageBuilder(h)
 
-  /** `/source/{citekey}`. An unknown citekey answers **404** with the same readable body it always
-    * had (item 21): a page that says "no such source" under a 200 lies to every cache, crawler and
-    * `curl -f` that asks. The status is an OUTPUT value rather than an error variant so the body is
-    * still produced by the same expression.
+  /** `/source/{citekey}`. An unknown citekey answers **404** with the same readable body it always had (item 21): a
+    * page that says "no such source" under a 200 lies to every cache, crawler and `curl -f` that asks. The status is an
+    * OUTPUT value rather than an error variant so the body is still produced by the same expression.
     *
-    * An OLD citekey (V027) answers **301** to the source's page under its current citekey, the
-    * query string kept — so bookmarks and links elsewhere land on the canonical URL. */
+    * An OLD citekey (V027) answers **301** to the source's page under its current citekey, the query string kept — so
+    * bookmarks and links elsewhere land on the canonical URL.
+    */
   private val sourcePage: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in("source" / path[String]("citekey"))
       .in(query[Boolean]("full").default(false))
       .in(query[Boolean]("fragment").default(false)) // fragment = inner HTML only (for the modal)
-      .in(query[Option[String]]("q"))                // highlight these terms in the article
+      .in(query[Option[String]]("q")) // highlight these terms in the article
       .out(statusCode)
       .out(header[Option[String]](sttp.model.HeaderNames.Location))
       .out(stringBody)
@@ -220,36 +224,46 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
         val now = h.canonical(ck)
         if now != ck then
           val to = Article.sourceUrl(now, full, fragment, q)
-          (sttp.model.StatusCode.MovedPermanently, Some(to),
-            s"""<p>Moved to <a href="${Article.esc(to)}">${Article.esc(now)}</a>.</p>""")
-        else pages.source(ck, full, q) match
-          case Some((title, inner)) =>
-            (sttp.model.StatusCode.Ok, None,
-              if fragment then inner else Article.page(title, inner, PageKind.Source))
-          case None =>
-            // ESCAPED: `ck` is whatever was in the URL, and this page is served as text/html
-            val body = s"<p>No source <code>${Article.esc(ck)}</code>.</p>"
-            (sttp.model.StatusCode.NotFound, None,
-              if fragment then body else Article.page("Not found", body, PageKind.Source))
+          (
+            sttp.model.StatusCode.MovedPermanently,
+            Some(to),
+            s"""<p>Moved to <a href="${Article.esc(to)}">${Article.esc(now)}</a>.</p>"""
+          )
+        else
+          pages.source(ck, full, q) match
+            case Some((title, inner)) =>
+              (sttp.model.StatusCode.Ok, None, if fragment then inner else Article.page(title, inner, PageKind.Source))
+            case None =>
+              // ESCAPED: `ck` is whatever was in the URL, and this page is served as text/html
+              val body = s"<p>No source <code>${Article.esc(ck)}</code>.</p>"
+              (
+                sttp.model.StatusCode.NotFound,
+                None,
+                if fragment then body else Article.page("Not found", body, PageKind.Source)
+              )
       }
 
   // ── static web UI from resources: / → web/index.html, /web/* → web/* ───────────────────────
 
-  /** An `/api/...` path that matched nothing above is a 404 with a JSON body, not the web UI.
-    * Registered after every real route and before [[index]], which would otherwise answer it: a
-    * client parsing JSON must not be handed `<!doctype html>` with a 200. */
+  /** An `/api/...` path that matched nothing above is a 404 with a JSON body, not the web UI. Registered after every
+    * real route and before [[index]], which would otherwise answer it: a client parsing JSON must not be handed
+    * `<!doctype html>` with a 200.
+    */
   private val apiNotFound: ServerEndpoint[Any, Identity] =
     endpoint
       .in("api" / paths)
-      .errorOut(statusCode(StatusCode.NotFound)).errorOut(jsonBody[ApiError])
+      .errorOut(statusCode(StatusCode.NotFound))
+      .errorOut(jsonBody[ApiError])
       .serverLogic[Identity](p => Left(ApiError(s"no such endpoint: /api/${p.mkString("/")}")))
 
-  /** The web UI, at its own pages' addresses only ([[WebPaths]]). It used to have no path input at all,
-    * so every unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page. */
+  /** The web UI, at its own pages' addresses only ([[WebPaths]]). It used to have no path input at all, so every
+    * unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page.
+    */
   private val index: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in(paths)
-      .errorOut(statusCode(StatusCode.NotFound)).errorOut(stringBody)
+      .errorOut(statusCode(StatusCode.NotFound))
+      .errorOut(stringBody)
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogic[Identity] { segments =>
@@ -279,14 +293,17 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
   private val acquireRoutes = com.histmersion.server.acquire.AcquireRoutes(acquire).endpoints
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
-    com.histmersion.server.events.EventCatalogRoutes(h) ++ rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(h.ops) ++ com.histmersion.server.agents.AgentsRoutes(h.agents) ++ com.histmersion.server.agents.ManagersRoutes(h.agents.managing) ++ acquireRoutes ++
+    com.histmersion.server.events.EventCatalogRoutes(h) ++ rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(
+      h.ops
+    ) ++ com.histmersion.server.agents.AgentsRoutes(h.agents) ++ com.histmersion.server.agents
+      .ManagersRoutes(h.agents.managing) ++ acquireRoutes ++
       List(iiifInfoRoute, iiifImageRoute, sourcePage, static, apiNotFound, index)
 
-
-/** Which standalone page a document is — the web bundle's page entry point reads it from
-  * `<body data-page>` to wire that page's behaviour (link previews, match navigation). */
+/** Which standalone page a document is — the web bundle's page entry point reads it from `<body data-page>` to wire
+  * that page's behaviour (link previews, match navigation).
+  */
 enum PageKind(val wire: String):
-  case Source  extends PageKind("source")
+  case Source extends PageKind("source")
   case Article extends PageKind("article")
 
 /** Pure helpers for the article pages. */
@@ -304,44 +321,51 @@ object Article:
       if fragment then Some("fragment=true") else None,
       q.map(t => "q=" + java.net.URLEncoder.encode(t, "UTF-8"))
     ).flatten
-    s"/source/${java.net.URLEncoder.encode(ck, "UTF-8")}" + (if params.isEmpty then "" else params.mkString("?", "&", ""))
+    s"/source/${java.net.URLEncoder.encode(ck, "UTF-8")}" + (if params.isEmpty then ""
+                                                             else params.mkString("?", "&", ""))
 
   def toggle(ck: String, full: Boolean, q: Option[String] = None): String =
     if full then s"""<p class="toggle"><a href="${link(ck, false, q)}">▲ hide full text</a></p>"""
     else s"""<p class="toggle"><a href="${link(ck, true, q)}">▼ show full text (whole paper)</a></p>"""
 
-  /** The match counter + jump control for `?q=`; empty when nothing matched (or no query).
-    * the web bundle's page entry point wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and
-    * the control NAMES that shortcut, because a keyboard shortcut nobody is told about is a
-    * shortcut nobody uses (item 14). */
+  /** The match counter + jump control for `?q=`; empty when nothing matched (or no query). the web bundle's page entry
+    * point wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and the control NAMES that shortcut,
+    * because a keyboard shortcut nobody is told about is a shortcut nobody uses (item 14).
+    */
   def matchNav(matches: Int): String =
     if matches <= 0 then ""
     else
       s"""<p class="toggle match-nav" data-matches="$matches">${Plural.count(matches, "match", "matches")} · """ +
         """<a href="#hl1" class="next-match">next ▼</a> <span class="kbd-hint">(n)</span></p>"""
 
-  /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is
-    * escaped here rather than at every call site. `bodyHtml` is already-rendered HTML and is not. */
+  /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is escaped here rather
+    * than at every call site. `bodyHtml` is already-rendered HTML and is not.
+    */
   def page(title: String, bodyHtml: String, kind: PageKind): String =
     s"""<!doctype html><html lang="en"><head><meta charset="utf-8">
-       |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · Histmersion</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
+       |<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(
+        title
+      )} · Histmersion</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
        |$ThemeScript<link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="${kind.wire}">
        |<div class="nav"><a href="/">← Histmersion</a></div>
        |<main id="page-content">$bodyHtml</main>
        |<script src="$BundlePath"></script>
        |</body></html>""".stripMargin
 
-  /** The reader's theme (the web UI's `Theme`, kept in `localStorage`), applied before the stylesheet
-    * paints so a page never flashes the other theme first; the stylesheet follows the system without it. */
+  /** The reader's theme (the web UI's `Theme`, kept in `localStorage`), applied before the stylesheet paints so a page
+    * never flashes the other theme first; the stylesheet follows the system without it.
+    */
   val ThemeScript =
     """<script>try{var t=localStorage.getItem("histmersion.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>"""
 
-  /** The Scala.js bundle — the same file the web UI's `index.html` loads, which carries every page's
-    * entry point (`web.Main` dispatches on the path). */
+  /** The Scala.js bundle — the same file the web UI's `index.html` loads, which carries every page's entry point
+    * (`web.Main` dispatches on the path).
+    */
   val BundlePath = "/web/app.bundle.js?v=2"
 
 object Static:
   def read(path: String): String =
     val is = Option(classOf[HttpApi].getClassLoader.getResourceAsStream(path))
       .getOrElse(throw new IllegalStateException(s"missing resource $path"))
-    try scala.io.Source.fromInputStream(is, "UTF-8").mkString finally is.close()
+    try scala.io.Source.fromInputStream(is, "UTF-8").mkString
+    finally is.close()

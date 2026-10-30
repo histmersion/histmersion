@@ -1,7 +1,8 @@
 package com.histmersion.domain
 
-/** The map's vector tiles, pure: the grid (which tiles exist, their bounds, where a point falls), the
-  * grouping rule, and the writer read back as MapLibre reads it. */
+/** The map's vector tiles, pure: the grid (which tiles exist, their bounds, where a point falls), the grouping rule,
+  * and the writer read back as MapLibre reads it.
+  */
 class VectorTilesSuite extends munit.FunSuite:
 
   private def tile(z: Int, x: Long, y: Long) = TileCoord.of(z, x, y, 22).toOption.get
@@ -60,7 +61,8 @@ class VectorTilesSuite extends munit.FunSuite:
   test("a written tile reads back: layer, extent, places and typed properties"):
     val pts = Seq(
       TilePoint(10, 20, Seq("k" -> TileValue.Text("a"), "n" -> TileValue.Whole(-3), "lo" -> TileValue.Real(-1500.5))),
-      TilePoint(4095, 0, Seq("k" -> TileValue.Text("b"), "f" -> TileValue.Flag(true), "n" -> TileValue.Whole(-3))))
+      TilePoint(4095, 0, Seq("k" -> TileValue.Text("b"), "f" -> TileValue.Flag(true), "n" -> TileValue.Whole(-3)))
+    )
     val layers = VectorTileReader.read(VectorTileWriter.tile(Seq("sites" -> pts, "empty" -> Nil)))
     assertEquals(layers.map(_.name), Vector("sites"))
     val l = layers.head
@@ -77,12 +79,29 @@ class VectorTilesSuite extends munit.FunSuite:
     val bytes = VectorTileWriter.layer("sites", pts)
     assertEquals(new String(bytes, "UTF-8").sliding(4).count(_ == "site"), 2) // the layer's name and the value
 
-  test("a picture's feature carries what its full-size view shows: the provider's page, the licence's text, the author"):
+  test(
+    "a picture's feature carries what its full-size view shows: the provider's page, the licence's text, the author"
+  ):
     import com.histmersion.api.{MediaGeoHit, TileProps as P}
-    val h = MediaGeoHit(None, "Lions_Gate.jpg", Some("photo"), 37.7, 22.7, None, None, None, "u1", Some("wikimedia-commons"),
-      Some("CC-BY-SA-3.0"), Some("Ann, via Commons"), Some("/media/u1/thumb"), fileUrl = Some("/media/u1/file"),
+    val h = MediaGeoHit(
+      None,
+      "Lions_Gate.jpg",
+      Some("photo"),
+      37.7,
+      22.7,
+      None,
+      None,
+      None,
+      "u1",
+      Some("wikimedia-commons"),
+      Some("CC-BY-SA-3.0"),
+      Some("Ann, via Commons"),
+      Some("/media/u1/thumb"),
+      fileUrl = Some("/media/u1/file"),
       sourceUrl = Some("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg"),
-      licenseUrl = Some("https://creativecommons.org/licenses/by-sa/3.0/"), author = Some("Ann"))
+      licenseUrl = Some("https://creativecommons.org/licenses/by-sa/3.0/"),
+      author = Some("Ann")
+    )
     val props = TileFeatures.media(TileCell("u1", 10, 20, 1, None, None, 22.7, 37.7, 22.7, 37.7), h).props.toMap
     assertEquals(props.get(P.SourceUrl), Some(TileValue.Text("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg")))
     assertEquals(props.get(P.LicenseUrl), Some(TileValue.Text("https://creativecommons.org/licenses/by-sa/3.0/")))

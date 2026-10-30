@@ -1,8 +1,9 @@
 package com.histmersion.cli
 
-/** The sources of each kind's new plugin, with the placeholders `PluginTemplate` fills in (`@Name@`,
-  * `@id@`, `@Plugin@`, `@Contribution@`). Each one works as written: it compiles, its tests pass, and
-  * the server registers it with its defaults alone. */
+/** The sources of each kind's new plugin, with the placeholders `PluginTemplate` fills in (`@Name@`, `@id@`,
+  * `@Plugin@`, `@Contribution@`). Each one works as written: it compiles, its tests pass, and the server registers it
+  * with its defaults alone.
+  */
 private[cli] object KindSources:
 
   def main(kind: PluginKind): String = kind match
@@ -47,9 +48,10 @@ private[cli] object KindSources:
       |
       |""".stripMargin
 
-  /** How a live suite starts: the mode from the environment (a replay of the case's recordings, the
-    * real site when asked, else skipped) and the plugin loaded as the server loads it. munit reports a
-    * skipped test without its reason, in a run that still passes, so the reason is printed too. */
+  /** How a live suite starts: the mode from the environment (a replay of the case's recordings, the real site when
+    * asked, else skipped) and the plugin loaded as the server loads it. munit reports a skipped test without its
+    * reason, in a run that still passes, so the reason is printed too.
+    */
   private val LiveStart =
     """    val mode = HttpMode.fromEnv(Path.of("recordings", "@case@"))
       |    mode.left.foreach(why => println(s"SKIPPED ${getClass.getSimpleName}: $why"))
@@ -129,7 +131,7 @@ private[cli] object KindSources:
       |
       |  test("finds and downloads a copy of a known work"):
 """.stripMargin + LiveStart.replace("@case@", "known-work") +
-    """      |    // the work as an ingest asks for it: its title, authors and year looked up by the DOI
+      """      |    // the work as an ingest asks for it: its title, authors and year looked up by the DOI
       |    val work   = WorkKey.fromDoi(doi, harness).getOrElse(WorkKey(doi = Doi.option(doi)))
       |    val report = harness.fetch(work, saveTo = Some(Path.of("target", "fetched")))
       |    assert(report.outcome.isInstanceOf[FetchOutcome.Found],
@@ -214,7 +216,7 @@ private[cli] object KindSources:
       |
       |  test("a search for a known place answers pictures the server would keep"):
 """.stripMargin + LiveStart.replace("@case@", "known-place") +
-    """      |    val report = harness.searchMedia("@id@", place)
+      """      |    val report = harness.searchMedia("@id@", place)
       |    assert(report.kept.nonEmpty, (report.requests ++ report.log.map(_.toString) ++ report.verdicts.map(_.toString)).mkString("\n"))
       |""".stripMargin
 
@@ -296,7 +298,7 @@ private[cli] object KindSources:
       |
       |  test("an import reads events the server would store"):
 """.stripMargin + LiveStart.replace("@case@", "an-import") +
-    """      |    val report = harness.readCatalogue("@id@", query)
+      """      |    val report = harness.readCatalogue("@id@", query)
       |    assert(report.failure.isEmpty && report.accepted.nonEmpty,
       |      (report.requests ++ report.log.map(_.toString) ++ report.refused :+ report.pages.toString).mkString("\n"))
       |""".stripMargin

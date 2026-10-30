@@ -12,22 +12,25 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.Files
 import com.histmersion.values.BundleKind
 
-/** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`,
-  * `POST /api/bundle/verify` and `POST /api/bundle/import` — the wiring, the write gate, the
-  * download name, and an instance importing its own bundle changing nothing. The behaviour in depth
-  * is `db.BundleSuite`'s. Skipped without HISTMERSION_TEST_DB_URL. */
+/** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`, `POST /api/bundle/verify` and
+  * `POST /api/bundle/import` — the wiring, the write gate, the download name, and an instance importing its own bundle
+  * changing nothing. The behaviour in depth is `db.BundleSuite`'s. Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private val Key  = "k3y"
+  private val Key = "k3y"
   private val http = HttpClient.newHttpClient()
   private val work = Files.createTempDirectory("histmersion-bundles")
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = Key),
-      bundles = base.bundles.copy(dir = work.toString))
+    base.copy(
+      db = base.db.copy(url = testDb.get),
+      auth = base.auth.copy(apiKey = Key),
+      bundles = base.bundles.copy(dir = work.toString)
+    )
 
   private def withServer(body: String => Unit): Unit =
     Migrate.run(testPool(cfg.db))
@@ -41,18 +44,24 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
     http.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofByteArray())
 
   private def post(url: String, body: Array[Byte], key: Option[String] = Some(Key)): HttpResponse[String] =
-    val b = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/octet-stream")
+    val b = HttpRequest
+      .newBuilder(URI.create(url))
+      .header("content-type", "application/octet-stream")
       .POST(HttpRequest.BodyPublishers.ofByteArray(body))
     http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
 
   private def postJson(url: String, json: String, key: Option[String] = Some(Key)): HttpResponse[String] =
-    val b = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
+    val b = HttpRequest
+      .newBuilder(URI.create(url))
+      .header("content-type", "application/json")
       .header("accept", "application/json, text/event-stream")
       .POST(HttpRequest.BodyPublishers.ofString(json))
     http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
 
   private def put(url: String, json: String, key: Option[String]): HttpResponse[String] =
-    val b = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
+    val b = HttpRequest
+      .newBuilder(URI.create(url))
+      .header("content-type", "application/json")
       .PUT(HttpRequest.BodyPublishers.ofString(json))
     http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
 
@@ -72,9 +81,14 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(exp.statusCode, 200)
       val cd = exp.headers.firstValue("content-disposition").orElse("")
       assert(cd.contains("histmersion-zz-work-") && cd.endsWith(".hmx\""), cd)
-      val r  = BundleTar.Reader(java.io.ByteArrayInputStream(exp.body))
-      val m  = r.next().toOption.flatten.filter(_.name == Bundle.ManifestPath)
-        .flatMap(_ => BundleFormat.parseManifest(r.readAll()).toOption).getOrElse(fail("no manifest"))
+      val r = BundleTar.Reader(java.io.ByteArrayInputStream(exp.body))
+      val m = r
+        .next()
+        .toOption
+        .flatten
+        .filter(_.name == Bundle.ManifestPath)
+        .flatMap(_ => BundleFormat.parseManifest(r.readAll()).toOption)
+        .getOrElse(fail("no manifest"))
       assertEquals(m.instance, BundleInstance(inst.id, Some("zz-work")))
       // the same bytes again: the export is deterministic
       assert(java.util.Arrays.equals(get(s"$url/api/bundle").body, exp.body))
@@ -99,14 +113,17 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
   test("merge plan over HTTP and MCP: upload by sha256, plan it (read-only), import it with resolutions"):
     withServer { url =>
       val exp = get(s"$url/api/bundle").body
-      val up  = post(s"$url/api/bundle/upload", exp)
+      val up = post(s"$url/api/bundle/upload", exp)
       assertEquals(up.statusCode, 200, up.body)
       val u = decode[BundleUpload](up.body)
       assertEquals(u.sha256, BundleFormat.sha256Hex(exp))
       assert(u.manifest.isDefined && u.problems.isEmpty, up.body)
       assertEquals(post(s"$url/api/bundle/upload", exp, None).statusCode, 401)
 
-      val pl = postJson(s"$url/api/merge/plan", s"""{"bundle":"${u.sha256}","resolutions":{"resolve":[{"issue":"S-00000000","decision":"keep-left"}]}}""")
+      val pl = postJson(
+        s"$url/api/merge/plan",
+        s"""{"bundle":"${u.sha256}","resolutions":{"resolve":[{"issue":"S-00000000","decision":"keep-left"}]}}"""
+      )
       assertEquals(pl.statusCode, 200, pl.body)
       val plan = decode[MergePlan](pl.body)
       // its own bundle: every source the same record by uid, nothing to decide; a resolution for no issue is an error
@@ -140,24 +157,33 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       val ap = postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"${clean.planHash}"}""")
       val applied = decode[MergeApplyJob](ap.body).result.getOrElse(fail(ap.body))
       assert(applied.applied && applied.mergeId.isEmpty && applied.backup.isEmpty, ap.body)
-      assertEquals(postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"x"}""", None).statusCode, 401)
+      assertEquals(
+        postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"x"}""", None).statusCode,
+        401
+      )
       val tools = postJson(s"$url/mcp", """{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}""")
       assert(!tools.body.contains("merge_apply"), "merge apply must not be an MCP tool")
 
       // the MCP tool reads the same plan
-      val mcp = postJson(s"$url/mcp",
-        s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"merge_plan","arguments":{"bundle":"${u.sha256}"}}}""")
+      val mcp = postJson(
+        s"$url/mcp",
+        s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"merge_plan","arguments":{"bundle":"${u.sha256}"}}}"""
+      )
       assertEquals(mcp.statusCode, 200, mcp.body)
       assert(mcp.body.contains(plan.planHash), mcp.body)
     }
 
   test("the review draft, resolution files, merge list/show/ledger and label renames over HTTP and MCP"):
     withServer { url =>
-      val ds  = testPool(cfg.db)
+      val ds = testPool(cfg.db)
       val sha = "a" * 64
       // the review screen's draft: empty until written, the whole set replaced, gated like any write
-      assertEquals(decode[MergeSession](String(get(s"$url/api/merge/sessions/$sha").body, "UTF-8")).resolutions, MergeResolutions())
-      val res = """{"resolve":[{"issue":"S-1234abcd","decision":"keep-left"},{"issue":"A-1234abcd","decision":"file:merged.md","text":"merged\n"}]}"""
+      assertEquals(
+        decode[MergeSession](String(get(s"$url/api/merge/sessions/$sha").body, "UTF-8")).resolutions,
+        MergeResolutions()
+      )
+      val res =
+        """{"resolve":[{"issue":"S-1234abcd","decision":"keep-left"},{"issue":"A-1234abcd","decision":"file:merged.md","text":"merged\n"}]}"""
       assertEquals(put(s"$url/api/merge/sessions/$sha", res, None).statusCode, 401)
       val saved = put(s"$url/api/merge/sessions/$sha", res, Some(Key))
       assertEquals(saved.statusCode, 200, saved.body)
@@ -193,7 +219,10 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       try
         val list = decode[List[MergeInfo]](String(get(s"$url/api/merges").body, "UTF-8"))
         val mine = list.find(_.id == mid).getOrElse(fail(list.toString))
-        assertEquals((mine.from.label, mine.planHash, mine.ledgerRows, mine.redirects), (Some("zz-home"), Some("cafe0123"), 1, 1))
+        assertEquals(
+          (mine.from.label, mine.planHash, mine.ledgerRows, mine.redirects),
+          (Some("zz-home"), Some("cafe0123"), 1, 1)
+        )
         val d = get(s"$url/api/merges/${mid.toString.take(8)}")
         assertEquals(d.statusCode, 200, String(d.body, "UTF-8"))
         assertEquals(decode[MergeDetail](String(d.body, "UTF-8")).merge.backup, Some("histmersion-x.dump"))
@@ -201,8 +230,10 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         val led = decode[MergeLedger](String(get(s"$url/api/merges/ledger?uid=zzmerge2020_ledger").body, "UTF-8"))
         assertEquals(led.entries.map(e => (e.label, e.decision)), List((Some("zzmerge2020_ledger"), "FastForward")))
         assertEquals(led.redirects.map(_.uid), List(src))
-        val mcp = postJson(s"$url/mcp",
-          """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"merges","arguments":{"action":"ledger","uid":"zzmerge2020_ledger"}}}""")
+        val mcp = postJson(
+          s"$url/mcp",
+          """{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"merges","arguments":{"action":"ledger","uid":"zzmerge2020_ledger"}}}"""
+        )
         assert(mcp.body.contains("zzmerge2020_ledger") && mcp.body.contains("Redirects"), mcp.body)
       finally
         transact(ds) {
@@ -224,14 +255,22 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-b").body, "UTF-8")).title, "again")
       assertEquals(postJson(s"$url/api/goals/zz-goal-b/rename", """{"to":"Not A Slug"}""").statusCode, 400)
       assertEquals(postJson(s"$url/api/goals/zz-goal-b/rename", """{"to":"zz-goal-c"}""", None).statusCode, 401)
-      val viaMcp = postJson(s"$url/mcp",
-        """{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"rename_label","arguments":{"kind":"goal","from":"zz-goal-b","to":"zz-goal-a"}}}""")
+      val viaMcp = postJson(
+        s"$url/mcp",
+        """{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"rename_label","arguments":{"kind":"goal","from":"zz-goal-b","to":"zz-goal-a"}}}"""
+      )
       assert(viaMcp.body.contains("Goal renamed"), viaMcp.body)
       // renaming back to the old slug drops that alias: the slug is the goal's own again
       assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-a").body, "UTF-8")).slug, "zz-goal-a")
       assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-b").body, "UTF-8")).slug, "zz-goal-a")
-      val _ = http.send(HttpRequest.newBuilder(URI.create(s"$url/api/goals/zz-goal-a")).DELETE()
-        .header("Authorization", s"Bearer $Key").build(), HttpResponse.BodyHandlers.ofString())
+      val _ = http.send(
+        HttpRequest
+          .newBuilder(URI.create(s"$url/api/goals/zz-goal-a"))
+          .DELETE()
+          .header("Authorization", s"Bearer $Key")
+          .build(),
+        HttpResponse.BodyHandlers.ofString()
+      )
     }
 
   // #888: the apply jobs were kept in memory — a restart answered 404 to the CLI's poll, and an apply
@@ -241,8 +280,11 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
     val name = "histmersion_bundlehttp_restart_test"
     def exec(stmt: String): Unit =
       val c = testPool(cfg.db).getConnection
-      try { val st = c.createStatement(); try { val _ = st.execute(stmt) } finally st.close() }
-      finally c.close()
+      try {
+        val st = c.createStatement();
+        try { val _ = st.execute(stmt) }
+        finally st.close()
+      } finally c.close()
     exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
     exec(s"CREATE DATABASE $name")
     val own = cfg.copy(db = cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
@@ -253,10 +295,11 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         finally b.stop()
       }
     try
-      var job = ""   // the apply of the first run, asked about in the second
+      var job = "" // the apply of the first run, asked about in the second
       serve { url =>
         val sha = decode[BundleUpload](post(s"$url/api/bundle/upload", get(s"$url/api/bundle").body).body).sha256
-        val ap  = decode[MergeApplyJob](postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"0badc0de"}""").body)
+        val ap =
+          decode[MergeApplyJob](postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"0badc0de"}""").body)
         assertEquals(ap.state, MergeJobState.Done)
         job = ap.job
       }
@@ -276,6 +319,9 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         assertEquals(postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"0badc0de"}""").statusCode, 200)
         // the jobs list shows it, by what it is
         val jobs = decode[List[JobInfo]](String(get(s"$url/api/jobs").body, "UTF-8"))
-        assert(jobs.exists(j => j.id == cut && j.kind == MergeApplyJob.JobKind && j.error.contains(JobState.Interrupted)), jobs.toString)
+        assert(
+          jobs.exists(j => j.id == cut && j.kind == MergeApplyJob.JobKind && j.error.contains(JobState.Interrupted)),
+          jobs.toString
+        )
       }
     finally exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")

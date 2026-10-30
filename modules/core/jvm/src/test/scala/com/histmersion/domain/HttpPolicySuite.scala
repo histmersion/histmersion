@@ -16,13 +16,18 @@ class HttpPolicySuite extends munit.FunSuite:
   test("the User-Agent never carries an e-mail, whatever the setting says"):
     assertEquals(HttpPolicy.userAgent("histmersion/0.1 (mailto:someone@example.org)"), "histmersion/0.1")
     assertEquals(HttpPolicy.userAgent("Histmersion someone@example.org"), "Histmersion")
-    assertEquals(HttpPolicy.userAgent("Histmersion (+https://github.com/x/histmersion)"),
-      "Histmersion (+https://github.com/x/histmersion)")
+    assertEquals(
+      HttpPolicy.userAgent("Histmersion (+https://github.com/x/histmersion)"),
+      "Histmersion (+https://github.com/x/histmersion)"
+    )
     assertEquals(HttpPolicy.userAgent("  "), "Histmersion")
 
   test("a slow-down waits for Retry-After (seconds or a date), else 1, 2, 4 s"):
     assertEquals(HttpPolicy.decide(429, Some("7"), 0, 5, 60, now), Step.Wait(7000, "HTTP 429"))
-    assertEquals(HttpPolicy.decide(503, Some("Sat, 10 Oct 2026 12:00:03 GMT"), 0, 5, 60, now), Step.Wait(3000, "HTTP 503"))
+    assertEquals(
+      HttpPolicy.decide(503, Some("Sat, 10 Oct 2026 12:00:03 GMT"), 0, 5, 60, now),
+      Step.Wait(3000, "HTTP 503")
+    )
     assertEquals(HttpPolicy.decide(503, None, 2, 5, 60, now), Step.Wait(4000, "HTTP 503"))
     assertEquals(HttpPolicy.decide(200, None, 0, 5, 60, now, Some("maxlag")), Step.Wait(1000, "maxlag"))
 
@@ -41,8 +46,10 @@ class HttpPolicySuite extends munit.FunSuite:
     import HttpPolicy.Trust
     assertEquals(HttpPolicy.trust(false, None, "Mac OS X"), List(Trust.Jdk))
     assertEquals(HttpPolicy.trust(true, None, "Mac OS X"), List(Trust.Jdk, Trust.Keychains(HttpPolicy.MacKeychains)))
-    assertEquals(HttpPolicy.trust(true, Some("/x.pem"), "Linux"),
-      List(Trust.Jdk, Trust.Bundle(HttpPolicy.LinuxBundles), Trust.PemFile("/x.pem")))
+    assertEquals(
+      HttpPolicy.trust(true, Some("/x.pem"), "Linux"),
+      List(Trust.Jdk, Trust.Bundle(HttpPolicy.LinuxBundles), Trust.PemFile("/x.pem"))
+    )
     assertEquals(HttpPolicy.trust(false, Some("/x.pem"), "Linux"), List(Trust.Jdk, Trust.PemFile("/x.pem")))
 
   test("pemCertificates: every CERTIFICATE block, decoded; anything else skipped"):

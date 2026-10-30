@@ -8,12 +8,13 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{AtomicMoveNotSupportedException, Files, LinkOption, Path, StandardCopyOption}
 import java.nio.file.attribute.PosixFileAttributeView
 
-/** The user's config file on disk, changed in place: the change is made to the file's text
-  * ([[ConfigTextEdit]]: comments, order, includes and unknown keys kept), checked against the schema
-  * ([[SettingPolicy]]), written to a temporary file beside it, read back WITH its includes (the change must be
-  * what the file now says), loaded as the server loads its config (`env` the environment it reads), and only
-  * then moved over the file in one step — the previous text kept as `<file>.bak`. Nothing here needs the
-  * server or the database: the command line uses it directly. */
+/** The user's config file on disk, changed in place: the change is made to the file's text ([[ConfigTextEdit]]:
+  * comments, order, includes and unknown keys kept), checked against the schema ([[SettingPolicy]]), written to a
+  * temporary file beside it, read back WITH its includes (the change must be what the file now says), loaded as the
+  * server loads its config (`env` the environment it reads), and only then moved over the file in one step — the
+  * previous text kept as `<file>.bak`. Nothing here needs the server or the database: the command line uses it
+  * directly.
+  */
 final class ConfigFileWriter(val path: Path, env: Config, schema: ConfigSchema):
 
   /** The file a symbolic link at `path` points to (the new text is written beside it), else `path`. */
@@ -29,23 +30,39 @@ final class ConfigFileWriter(val path: Path, env: Config, schema: ConfigSchema):
     catch case e: IOException => Left(SettingError.Io(e.getMessage))
 
   /** Make `edits`; `expected` is the version they were made against (`None`: whatever is there now). */
-  def write(edits: List[SettingEdit], expected: Option[FileVersion], literalConsent: Boolean): Either[SettingError, WriteOutcome] =
+  def write(
+      edits: List[SettingEdit],
+      expected: Option[FileVersion],
+      literalConsent: Boolean
+  ): Either[SettingError, WriteOutcome] =
     ConfigFileWriter.lock.synchronized {
       for
-        notes   <- SettingPolicy.all(edits, schema, literalConsent)
+        notes <- SettingPolicy.all(edits, schema, literalConsent)
         current <- read()
-        _       <- Either.cond(expected.forall(_ == current.version), (), SettingError.Changed)
-        edited  <- ConfigTextEdit(current.text.getOrElse(ConfigFileWriter.NewFileHeader), current.parsed, current.here, edits)
-        outcome <- if edited.changed.isEmpty then Right(WriteOutcome.of(path, schema, env, current.version, edited, None, notes))
-                   else commit(current, edited, ConfigTextEdit.intended(edits)).map(bak =>
-                     WriteOutcome.of(path, schema, env, current.version, edited, bak, notes)
-                     .copy(version = FileVersion.of(Some(edited.text)), created = current.text.isEmpty))
+        _ <- Either.cond(expected.forall(_ == current.version), (), SettingError.Changed)
+        edited <- ConfigTextEdit(
+          current.text.getOrElse(ConfigFileWriter.NewFileHeader),
+          current.parsed,
+          current.here,
+          edits
+        )
+        outcome <-
+          if edited.changed.isEmpty then Right(WriteOutcome.of(path, schema, env, current.version, edited, None, notes))
+          else
+            commit(current, edited, ConfigTextEdit.intended(edits)).map(bak =>
+              WriteOutcome
+                .of(path, schema, env, current.version, edited, bak, notes)
+                .copy(version = FileVersion.of(Some(edited.text)), created = current.text.isEmpty)
+            )
       yield outcome
     }
 
   /** Write `edited` beside the file, check it, keep the old text as `.bak`, and move the new one in. */
-  private def commit(current: ConfigFileState, edited: EditedText,
-      intended: Map[String, Option[SettingValue]]): Either[SettingError, Option[Path]] =
+  private def commit(
+      current: ConfigFileState,
+      edited: EditedText,
+      intended: Map[String, Option[SettingValue]]
+  ): Either[SettingError, Option[Path]] =
     val dir = target.toAbsolutePath.getParent
     try
       Files.createDirectories(dir)
@@ -54,11 +71,13 @@ final class ConfigFileWriter(val path: Path, env: Config, schema: ConfigSchema):
         Files.writeString(temp, edited.text, StandardCharsets.UTF_8)
         for
           parsed <- parse(temp).left.map(e => SettingError.Invalid(e.message))
-          _      <- ConfigTextEdit.verify(parsed, o => ConfigFileState.sameFile(o, temp), edited, intended)
-          _      <- AppConfig.loadWithUserFile(env, Some(temp)).left.map(m =>
-                      SettingError.Invalid(m.replace(temp.toString, path.toString)))
-          bak    <- backup(current)
-          _      <- move(temp, current)
+          _ <- ConfigTextEdit.verify(parsed, o => ConfigFileState.sameFile(o, temp), edited, intended)
+          _ <- AppConfig
+            .loadWithUserFile(env, Some(temp))
+            .left
+            .map(m => SettingError.Invalid(m.replace(temp.toString, path.toString)))
+          bak <- backup(current)
+          _ <- move(temp, current)
         yield bak
       finally
         val _ = Files.deleteIfExists(temp)
@@ -71,8 +90,9 @@ final class ConfigFileWriter(val path: Path, env: Config, schema: ConfigSchema):
       Files.copy(path, bak, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
       Right(Some(bak))
 
-  /** The new file in place in one step, with the old one's permissions (a file holding a reference to a
-    * password may be readable by its owner alone). */
+  /** The new file in place in one step, with the old one's permissions (a file holding a reference to a password may be
+    * readable by its owner alone).
+    */
   private def move(temp: Path, current: ConfigFileState): Either[SettingError, Unit] =
     if current.text.isDefined then
       Option(Files.getFileAttributeView(path, classOf[PosixFileAttributeView], LinkOption.NOFOLLOW_LINKS)).foreach { v =>

@@ -8,9 +8,10 @@ import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo.Target
 import com.histmersion.values.MediaRole
 
-/** Pictures that depict events (#1446) against a FAKE Wikidata and Commons: P1299 works' images
-  * first, then the P180 search's files, capped per event, judged by the Commons licence like every
-  * Commons picture, linked as `depiction`, and the checks recorded under the depictions' own name. */
+/** Pictures that depict events (#1446) against a FAKE Wikidata and Commons: P1299 works' images first, then the P180
+  * search's files, capped per event, judged by the Commons licence like every Commons picture, linked as `depiction`,
+  * and the checks recorded under the depictions' own name.
+  */
 class CommonsDepictionsSuite extends munit.FunSuite:
 
   private val kadesh = Target("event", "battle_of_kadesh", "Q203729", "Battle of Kadesh")
@@ -20,8 +21,11 @@ class CommonsDepictionsSuite extends munit.FunSuite:
     val pages = titles.zipWithIndex.map { (t, i) =>
       val meta = if t.contains("Dictionnaire") then
         """{"LicenseShortName":{"value":"CC BY 4.0"},"License":{"value":"cc-by-4.0"}}"""
-      else """{"Artist":{"value":"Zqmd"},"LicenseShortName":{"value":"CC BY-SA 4.0"},"License":{"value":"cc-by-sa-4.0"}}"""
-      s"""{"pageid":${i + 1},"ns":6,"title":${io.circe.Json.fromString(t).noSpaces},"imageinfo":[{"size":100,"width":10,"height":10,
+      else
+        """{"Artist":{"value":"Zqmd"},"LicenseShortName":{"value":"CC BY-SA 4.0"},"License":{"value":"cc-by-sa-4.0"}}"""
+      s"""{"pageid":${i + 1},"ns":6,"title":${io.circe.Json
+          .fromString(t)
+          .noSpaces},"imageinfo":[{"size":100,"width":10,"height":10,
          "thumburl":"https://upload.example/$i-$width.jpg","thumbwidth":$width,"thumbheight":$width,
          "url":"https://upload.example/$i.jpg","descriptionurl":"https://commons.wikimedia.org/wiki/F$i","mime":"image/jpeg",
          "extmetadata":$meta}]}"""
@@ -43,8 +47,11 @@ class CommonsDepictionsSuite extends munit.FunSuite:
         "Q5001":{"id":"Q5001","claims":{}}}}""")
     else if url.contains("list=search") then FakeMediaHttp.json(FakeMediaHttp.fixture("commons-depicts.json"))
     else if url.contains("prop=imageinfo") then
-      FakeMediaHttp.json(info(param(url, "titles").toList.flatMap(_.split('|')), param(url, "iiurlwidth").getOrElse("0")))
-    else if url.startsWith("https://upload.example/") then FakeMediaHttp.bytes(Array[Byte](-1, -40, -1) ++ url.getBytes("UTF-8"), "image/jpeg")
+      FakeMediaHttp.json(
+        info(param(url, "titles").toList.flatMap(_.split('|')), param(url, "iiurlwidth").getOrElse("0"))
+      )
+    else if url.startsWith("https://upload.example/") then
+      FakeMediaHttp.bytes(Array[Byte](-1, -40, -1) ++ url.getBytes("UTF-8"), "image/jpeg")
     else Left(s"unexpected $url")
   }
 
@@ -58,7 +65,10 @@ class CommonsDepictionsSuite extends munit.FunSuite:
     assertEquals(r.provider, MediaProvider.CommonsDepicts)
     assertEquals(r.statements, 3, "media.depicts.per-event")
     assertEquals(r.byRole, List(MediaCount(MediaRole.Depiction, 3)))
-    assertEquals(r.samples.map(_.basis), List("P1299 depicted by Q203729", "P180 depicts Q203729", "P180 depicts Q203729"))
+    assertEquals(
+      r.samples.map(_.basis),
+      List("P1299 depicted by Q203729", "P180 depicts Q203729", "P180 depicts Q203729")
+    )
     assertEquals(r.samples.head.key, "File:Kadesh relief.jpg")
     assert(store.saved.isEmpty && store.checks.isEmpty)
     assert(http.requests.map(_._1).exists(_.contains("srsearch=haswbstatement%3AP180%3DQ203729")))
@@ -69,14 +79,20 @@ class CommonsDepictionsSuite extends munit.FunSuite:
     val r = CommonsDepictions(polite, cfg).run(List(kadesh), dryRun = false, refresh = false, store)
     assertEquals((r.stored, r.linked), (3, 3))
     assert(store.saved.values.forall(_._2.provider == MediaProvider.Commons))
-    assertEquals(store.links.toList.map(l => (l._3, l._4, l._5)), List(
-      ("battle_of_kadesh", MediaRole.Depiction, 0), ("battle_of_kadesh", MediaRole.Depiction, 1),
-      ("battle_of_kadesh", MediaRole.Depiction, 2)))
+    assertEquals(
+      store.links.toList.map(l => (l._3, l._4, l._5)),
+      List(
+        ("battle_of_kadesh", MediaRole.Depiction, 0),
+        ("battle_of_kadesh", MediaRole.Depiction, 1),
+        ("battle_of_kadesh", MediaRole.Depiction, 2)
+      )
+    )
     assertEquals(store.checks.toMap, Map((MediaProvider.CommonsDepicts, "battle_of_kadesh") -> 3))
 
   test("a failed search leaves the event unrecorded, so it is asked again"):
     val http = FakeMediaHttp { url =>
-      if url.contains("list=search") then Right(HttpAnswer(404, Map.empty, Array.emptyByteArray)) else provider().get(url, Map.empty)
+      if url.contains("list=search") then Right(HttpAnswer(404, Map.empty, Array.emptyByteArray))
+      else provider().get(url, Map.empty)
     }
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
     val store = CollStore(Map.empty, Map.empty)

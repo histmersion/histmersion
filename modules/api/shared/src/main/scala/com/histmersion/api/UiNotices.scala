@@ -4,36 +4,38 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The web UI's toolbar notices: how many items each list holds that wait on someone (open approvals,
-  * open acquisitions, the open backlog), and which windows have something NEW since the reader last
-  * opened them — those buttons are drawn bold until the window is opened.
+/** The web UI's toolbar notices: how many items each list holds that wait on someone (open approvals, open
+  * acquisitions, the open backlog), and which windows have something NEW since the reader last opened them — those
+  * buttons are drawn bold until the window is opened.
   *
-  *   - a BOARD is a window the toolbar watches: its wire key is the window's own (`goals`, `tasks`,
-  *     …), so the page maps one to the other without a table;
-  *   - its `latest` is when the newest of its items was created or changed, its `seen` the `latest`
-  *     the reader's open window last showed (stored server-side, table `ui_seen`, so every browser and
-  *     device agrees). Something is new when `latest` is after `seen`;
+  *   - a BOARD is a window the toolbar watches: its wire key is the window's own (`goals`, `tasks`, …), so the page
+  *     maps one to the other without a table;
+  *   - its `latest` is when the newest of its items was created or changed, its `seen` the `latest` the reader's open
+  *     window last showed (stored server-side, table `ui_seen`, so every browser and device agrees). Something is new
+  *     when `latest` is after `seen`;
   *   - a deleted item is not news: only rows that still exist move `latest`.
   *
-  * Both instants are ISO-8601 UTC strings in ONE fixed format (`YYYY-MM-DDTHH:MM:SS.ffffffZ`, what
-  * the store renders), so they compare as strings. Adding a board is an enum case here and its
-  * `latest`/`count` query in the store (`UiRepo`). */
+  * Both instants are ISO-8601 UTC strings in ONE fixed format (`YYYY-MM-DDTHH:MM:SS.ffffffZ`, what the store renders),
+  * so they compare as strings. Adding a board is an enum case here and its `latest`/`count` query in the store
+  * (`UiRepo`).
+  */
 object UiNotices:
 
   /** A watched window. `counted`: its button carries a count (items that wait on someone). */
   enum Board(val wire: String, val counted: Boolean):
-    case Goals     extends Board("goals", counted = false)
-    case Tasks     extends Board("tasks", counted = true)
+    case Goals extends Board("goals", counted = false)
+    case Tasks extends Board("tasks", counted = true)
     case Approvals extends Board("approvals", counted = true)
-    case Acquire   extends Board("acquire", counted = true)
-    case Log       extends Board("log", counted = false)
+    case Acquire extends Board("acquire", counted = true)
+    case Log extends Board("log", counted = false)
 
   object Board:
     def parse(s: String): Option[Board] = values.find(_.wire == Option(s).map(_.trim.toLowerCase).getOrElse(""))
     def wires: List[String] = values.toList.map(_.wire)
 
-  /** One board on the wire: its key, the count (counted boards only), when its newest item changed,
-    * when the reader last saw it, and whether something is new (`latest` after `seen`). */
+  /** One board on the wire: its key, the count (counted boards only), when its newest item changed, when the reader
+    * last saw it, and whether something is new (`latest` after `seen`).
+    */
   final case class Counter(
       key: String,
       count: Option[Int] = None,
@@ -44,22 +46,23 @@ object UiNotices:
   object Counter:
     given Schema[Counter] = KindlingsSchema.derived[Counter].schema
 
-  /** The research agents at a glance, for the top bar's status: how many runs are running and how many
-    * wait their turn, whether the autopilot is on, and whether it is finishing current work before it
-    * pauses (draining). */
+  /** The research agents at a glance, for the top bar's status: how many runs are running and how many wait their turn,
+    * whether the autopilot is on, and whether it is finishing current work before it pauses (draining).
+    */
   final case class AgentsGlance(running: Int = 0, queued: Int = 0, on: Boolean = false, draining: Boolean = false)
       derives KindlingsCodecAsObject
   object AgentsGlance:
     given Schema[AgentsGlance] = KindlingsSchema.derived[AgentsGlance].schema
 
-  /** `GET /api/ui/counters` — every board, in the enum's order; `agents` only where the server runs
-    * research agents. */
+  /** `GET /api/ui/counters` — every board, in the enum's order; `agents` only where the server runs research agents.
+    */
   final case class Counters(boards: List[Counter], agents: Option[AgentsGlance] = None) derives KindlingsCodecAsObject
   object Counters:
     given Schema[Counters] = KindlingsSchema.derived[Counters].schema
 
-  /** `POST /api/ui/seen/{board}` — the reader opened the window, which showed items up to `at` (the
-    * `latest` it was given). Absent: up to now. The marker only moves forward. */
+  /** `POST /api/ui/seen/{board}` — the reader opened the window, which showed items up to `at` (the `latest` it was
+    * given). Absent: up to now. The marker only moves forward.
+    */
   final case class SeenMark(at: Option[String] = None) derives KindlingsCodecAsObject
   object SeenMark:
     given Schema[SeenMark] = KindlingsSchema.derived[SeenMark].schema

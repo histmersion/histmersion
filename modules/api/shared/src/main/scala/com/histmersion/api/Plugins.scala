@@ -4,10 +4,10 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** What became of the plugins the server found (docs/research-plugins.md §2, §3): `/api/about`,
-  * `/api/config`, `histmersion about` and the server's `--self-check` report. Secrets are never in it:
-  * a setting that holds a secret shows its REFERENCE (`env:PORTAL_TOKEN`, `keepassxc:Portal#password`),
-  * and a literal `value:` reference is masked. */
+/** What became of the plugins the server found (docs/research-plugins.md §2, §3): `/api/about`, `/api/config`,
+  * `histmersion about` and the server's `--self-check` report. Secrets are never in it: a setting that holds a secret
+  * shows its REFERENCE (`env:PORTAL_TOKEN`, `keepassxc:Portal#password`), and a literal `value:` reference is masked.
+  */
 
 /** One effective setting of a plugin's block (the user's keys over the plugin's defaults). */
 final case class PluginSetting(key: String, value: String) derives KindlingsCodecAsObject
@@ -18,10 +18,13 @@ object PluginSetting:
 enum PluginState:
   /** Enabled, decoded, its secrets resolved, `register` succeeded: its contributions are live. */
   case Registered
+
   /** Not enabled (`histmersion.plugins.<id>.enabled = false`, the default for first-party plugins). */
   case Disabled
+
   /** Enabled, but its block, its secrets or its `register` failed: it contributes nothing. */
   case Failed
+
   /** Not loaded at all: a foreign SPI version, an id used twice, an id that is no config key. */
   case Refused
 
@@ -30,11 +33,17 @@ enum PluginState:
 object PluginState:
   def parse(s: String): Option[PluginState] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
-/** @param state     a [[PluginState]]'s wire name
-  * @param provides  what it registered, `<registry>:<id>` (`secret-vault:keepassxc`)
-  * @param settings  its effective block, secrets as references (empty when it was refused)
-  * @param warnings  what works but should be changed (a secret written as `value:`)
-  * @param error     why it failed or was refused */
+/** @param state
+  *   a [[PluginState]]'s wire name
+  * @param provides
+  *   what it registered, `<registry>:<id>` (`secret-vault:keepassxc`)
+  * @param settings
+  *   its effective block, secrets as references (empty when it was refused)
+  * @param warnings
+  *   what works but should be changed (a secret written as `value:`)
+  * @param error
+  *   why it failed or was refused
+  */
 final case class PluginStatus(
     id: String,
     version: String,
@@ -49,13 +58,16 @@ final case class PluginStatus(
 object PluginStatus:
   given Schema[PluginStatus] = KindlingsSchema.derived[PluginStatus].schema
 
-/** Every plugin in this binary, in registration order, and what is wrong with the config around them
-  * (a block no plugin claims, an `order` entry naming no plugin). `spiVersion` is the SPI this server
-  * speaks. `set` is the user-added plugin set the binary was linked with (§7.3; `None`: first-party
-  * plugins only, as a stock image). */
-final case class PluginsReport(spiVersion: Int = 0, plugins: List[PluginStatus] = Nil, warnings: List[String] = Nil,
-    set: Option[PluginSet] = None)
-    derives KindlingsCodecAsObject:
+/** Every plugin in this binary, in registration order, and what is wrong with the config around them (a block no plugin
+  * claims, an `order` entry naming no plugin). `spiVersion` is the SPI this server speaks. `set` is the user-added
+  * plugin set the binary was linked with (§7.3; `None`: first-party plugins only, as a stock image).
+  */
+final case class PluginsReport(
+    spiVersion: Int = 0,
+    plugins: List[PluginStatus] = Nil,
+    warnings: List[String] = Nil,
+    set: Option[PluginSet] = None
+) derives KindlingsCodecAsObject:
   /** Every plugin that was enabled is registered, and none was refused. */
   def ok: Boolean = plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire)
 object PluginsReport:
@@ -83,9 +95,10 @@ object PluginsMarkdown:
       r.plugins.flatMap(p => p.warnings.map(w => s"  - warning: $w")) ++
       r.warnings.map(w => s"  - warning: $w"))
 
-  /** The server's `--self-check` report: the config file, every plugin with its effective settings
-    * (secrets as references), the binary's own `checks` (ok, line — the time zones), and the verdict on
-    * the last line: passed only when every plugin and every check is. */
+  /** The server's `--self-check` report: the config file, every plugin with its effective settings (secrets as
+    * references), the binary's own `checks` (ok, line — the time zones), and the verdict on the last line: passed only
+    * when every plugin and every check is.
+    */
   def selfCheck(file: ConfigFileInfo, r: PluginsReport, checks: List[(Boolean, String)] = Nil): String =
     val plugins = r.plugins.flatMap { p =>
       s"- ${line(p)}" :: (p.settings.map(s => s"    ${s.key} = ${s.value}") ++ p.warnings.map(w => s"    warning: $w"))
@@ -99,4 +112,7 @@ object PluginsMarkdown:
       s"- plugins: ${Plural.count(r.plugins.size, "plugin")} · ${r.plugins.count(_.enabled)} enabled",
       s"- plugin set: ${PluginSet.describe(r.set)}",
       s"- plugin-set digest: ${r.set.fold(PluginSet.EmptyDigest)(_.digest)}"
-    ) ++ checks.map((_, l) => s"- $l") ++ List("") ++ plugins ++ r.warnings.map(w => s"- warning: $w") ++ List("", verdict)).mkString("\n")
+    ) ++ checks.map((_, l) => s"- $l") ++ List("") ++ plugins ++ r.warnings.map(w => s"- warning: $w") ++ List(
+      "",
+      verdict
+    )).mkString("\n")

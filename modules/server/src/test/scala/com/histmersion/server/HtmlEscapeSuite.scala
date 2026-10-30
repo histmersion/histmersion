@@ -3,10 +3,11 @@ package com.histmersion.server
 import com.histmersion.config.AppConfig
 import ox.supervised
 
-/** The HTML pages are the only place this service emits markup, and both places it interpolated a
-  * caller- or agent-supplied string into it were unescaped. These are the regression tests. */
+/** The HTML pages are the only place this service emits markup, and both places it interpolated a caller- or
+  * agent-supplied string into it were unescaped. These are the regression tests.
+  */
 class HtmlEscapeSuite extends munit.FunSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val payload = """<script>alert(1)</script>"""
@@ -24,20 +25,22 @@ class HtmlEscapeSuite extends munit.FunSuite:
 
   test("GET /source/<script> reflects nothing executable, and /api/junk is a JSON 404"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       def get(u: String): (Int, String) =
         val c = java.net.http.HttpClient.newHttpClient()
-        val r = c.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u)).build(),
-          java.net.http.HttpResponse.BodyHandlers.ofString())
+        val r = c.send(
+          java.net.http.HttpRequest.newBuilder(java.net.URI.create(u)).build(),
+          java.net.http.HttpResponse.BodyHandlers.ofString()
+        )
         (r.statusCode, r.body)
 
       // the "No source <code>…</code>" page reflected the raw path segment.
       // (Item 21 gave that page a 404: no such source really is not found. The body is unchanged,
       // which is what this suite is about.)
-      val enc      = java.net.URLEncoder.encode(payload, "UTF-8")
+      val enc = java.net.URLEncoder.encode(payload, "UTF-8")
       val (s1, b1) = get(s"$url/source/$enc")
       assertEquals(s1, 404)
       assert(!b1.contains("<script>alert(1)</script>"), b1.take(400))

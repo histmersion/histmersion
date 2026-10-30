@@ -13,6 +13,7 @@ object TreeTab:
   private var config: Option[UiConfig] = None
   private var axis: Option[String] = None
   private var lastData: Option[TimeHistogram] = None
+
   /** Drops the answers to a superseded load ([[Latest]]). */
   private val latest = Latest()
   private var timer: Int = 0
@@ -20,8 +21,8 @@ object TreeTab:
 
   private val treeContent = Var[List[HtmlElement]](Nil)
   private val countText = Var("")
-  private val loading   = Var(false)
-  private val failed    = Var(false)
+  private val loading = Var(false)
+  private val failed = Var(false)
 
   def pane: HtmlElement =
     div(
@@ -33,9 +34,9 @@ object TreeTab:
 
   def show(tab: String): Unit =
     val mine = tab match
-      case "bytime"    => Some("time")
-      case "byregion"  => Some("region")
-      case _           => None
+      case "bytime"   => Some("time")
+      case "byregion" => Some("region")
+      case _          => None
     axis = mine
     mine match
       case Some(_) => load()
@@ -64,7 +65,7 @@ object TreeTab:
 
   def load(): Unit =
     config match
-      case None => ()
+      case None      => ()
       case Some(cfg) =>
         if axis.isEmpty then ()
         else
@@ -76,40 +77,52 @@ object TreeTab:
   private def doLoad(cfg: UiConfig, mine: Int): Unit =
     val by = axis.getOrElse("time")
     val f = UiState.toFilter()
-    val asOf = if by == "region" then
-      for a <- UiState.from.now(); b <- UiState.to.now() yield (a + b) / 2
+    val asOf = if by == "region" then for a <- UiState.from.now(); b <- UiState.to.now() yield (a + b) / 2
     else None
 
-    ApiClient.aggregate(Api.AggregateQuery.tree(
-      by = by,
-      filter = f,
-      depth = Some(cfg.treeDepth),
-      asOf = asOf,
-      samples = Some(cfg.treeSamples)
-    )).onComplete { r =>
-      if latest.isCurrent(mine) then
-        loading.set(false)
-        latest.answer(r, showTree, m => { failed.set(true); countText.set(s"Could not group the sources: $m") })
-    }
+    ApiClient
+      .aggregate(
+        Api.AggregateQuery.tree(
+          by = by,
+          filter = f,
+          depth = Some(cfg.treeDepth),
+          asOf = asOf,
+          samples = Some(cfg.treeSamples)
+        )
+      )
+      .onComplete { r =>
+        if latest.isCurrent(mine) then
+          loading.set(false)
+          latest.answer(r, showTree, m => { failed.set(true); countText.set(s"Could not group the sources: $m") })
+      }
 
   private def showTree(data: TimeHistogram): Unit =
     lastData = Some(data)
     val roots = data.tree
-    countText.set(countLine(data, roots.size, UiState.from.now().getOrElse(data.from), UiState.to.now().getOrElse(data.to)))
+    countText.set(
+      countLine(data, roots.size, UiState.from.now().getOrElse(data.from), UiState.to.now().getOrElse(data.to))
+    )
 
     if roots.isEmpty then
-      treeContent.set(List(
-        div(cls := "empty", p("nothing to group — widen the span or remove a chip"))
-      ))
-    else
-      treeContent.set(roots.map(b => renderNode(b, 0, data)))
+      treeContent.set(
+        List(
+          div(cls := "empty", p("nothing to group — widen the span or remove a chip"))
+        )
+      )
+    else treeContent.set(roots.map(b => renderNode(b, 0, data)))
 
   /** The count line, in the sidebar's one form ([[ResultsPaging]]): every source is in the tree, so
-    * `285 sources · 12 periods · 1475 BCE → 1465 BCE` (`· as of <year>` for regions). */
+    * `285 sources · 12 periods · 1475 BCE → 1465 BCE` (`· as of <year>` for regions).
+    */
   def countLine(data: TimeHistogram, roots: Int, from: Long, to: Long): String =
-    val groups = if data.by == "region" then Plural.count(roots.toLong, "region") else Plural.count(roots.toLong, "period")
-    ResultsPaging.countLine(data.total, data.total, "source",
-      extras = List(groups, ResultsPaging.span(Some(from), Some(to))) ++ data.asOf.map(a => s"as of ${Fmt.yr(a)}"))
+    val groups =
+      if data.by == "region" then Plural.count(roots.toLong, "region") else Plural.count(roots.toLong, "period")
+    ResultsPaging.countLine(
+      data.total,
+      data.total,
+      "source",
+      extras = List(groups, ResultsPaging.span(Some(from), Some(to))) ++ data.asOf.map(a => s"as of ${Fmt.yr(a)}")
+    )
 
   private def unitWord(n: Int): String = if n == 1 then "1 source" else s"$n sources"
 
@@ -127,12 +140,10 @@ object TreeTab:
 
     val perStr = if b.kind == "time" then "" else Fmt.periodStr(b.start, b.end)
 
-    val contestedStr = if b.contested && !b.label.toLowerCase.contains("contested") then
-      " (contested)"
+    val contestedStr = if b.contested && !b.label.toLowerCase.contains("contested") then " (contested)"
     else ""
 
-    val alsoStr = if b.alsoUnder.nonEmpty then
-      s" (also under ${b.alsoUnder.mkString(", ")})"
+    val alsoStr = if b.alsoUnder.nonEmpty then s" (also under ${b.alsoUnder.mkString(", ")})"
     else ""
 
     div(
@@ -151,10 +162,11 @@ object TreeTab:
           onClick --> { _ => act(b) }
         ),
         span(cls := "tcount", unitWord(b.count)),
-        span(cls := "tmeta",
+        span(
+          cls := "tmeta",
           overStr +
-          (if perStr.nonEmpty then s" · ${perStr}" else "") +
-          alsoStr
+            (if perStr.nonEmpty then s" · $perStr" else "") +
+            alsoStr
         ),
         onClick --> { ev =>
           val target = ev.target.asInstanceOf[dom.Element]
@@ -178,9 +190,15 @@ object TreeTab:
       )
     )
 
-  private def toggle(b: Bucket, depth: Int, data: TimeHistogram,
-      expanded: Var[Boolean], filled: Var[Boolean], kidElements: Var[List[HtmlElement]],
-      openable: Boolean): Unit =
+  private def toggle(
+      b: Bucket,
+      depth: Int,
+      data: TimeHistogram,
+      expanded: Var[Boolean],
+      filled: Var[Boolean],
+      kidElements: Var[List[HtmlElement]],
+      openable: Boolean
+  ): Unit =
     if !openable then ()
     else
       val opening = !expanded.now()
@@ -188,27 +206,31 @@ object TreeTab:
       if !opening || filled.now() then ()
       else
         filled.set(true)
-        if b.children.nonEmpty || b.samples.nonEmpty then
-          fillWith(b.children, b.samples, depth + 1, data, kidElements)
+        if b.children.nonEmpty || b.samples.nonEmpty then fillWith(b.children, b.samples, depth + 1, data, kidElements)
         else
-          kidElements.set(List(
-            div(cls := "tempty", styleAttr := s"--tdepth: ${depth + 1}", "loading…")
-          ))
+          kidElements.set(
+            List(
+              div(cls := "tempty", styleAttr := s"--tdepth: ${depth + 1}", "loading…")
+            )
+          )
           subtree(b, data).foreach { deeper =>
             val got = deeper.tree
             val (finalKids, finalSamples) =
-              if got.length == 1 && got.head.key == b.key then
-                (got.head.children, got.head.samples)
+              if got.length == 1 && got.head.key == b.key then (got.head.children, got.head.samples)
               else (got, Nil)
             fillWith(finalKids, if b.samples.nonEmpty then b.samples else finalSamples, depth + 1, data, kidElements)
           }
 
-  private def fillWith(kids: List[Bucket], samples: List[BucketSample], depth: Int,
-      data: TimeHistogram, kidElements: Var[List[HtmlElement]]): Unit =
+  private def fillWith(
+      kids: List[Bucket],
+      samples: List[BucketSample],
+      depth: Int,
+      data: TimeHistogram,
+      kidElements: Var[List[HtmlElement]]
+  ): Unit =
     val kidNodes = kids.map(c => renderNode(c, depth, data))
     val sampleNodes = samples.map(s => renderSample(s, depth))
-    val empty = if kids.isEmpty then
-      List(div(cls := "tempty", styleAttr := s"--tdepth: $depth", "no finer levels"))
+    val empty = if kids.isEmpty then List(div(cls := "tempty", styleAttr := s"--tdepth: $depth", "no finer levels"))
     else Nil
     kidElements.set(kidNodes ++ sampleNodes ++ empty)
 
@@ -233,15 +255,19 @@ object TreeTab:
     val f = UiState.toFilter()
     if b.kind == "time" then
       val narrowed = f.copy(period = for a <- b.start; b2 <- b.end yield Period(a, b2))
-      ApiClient.aggregate(Api.AggregateQuery.tree("time", narrowed, depth = Some(cfg.treeDepth), samples = Some(cfg.treeSamples)))
+      ApiClient.aggregate(
+        Api.AggregateQuery.tree("time", narrowed, depth = Some(cfg.treeDepth), samples = Some(cfg.treeSamples))
+      )
     else
       val narrowed = f.copy(places = b.placeId.toList)
-      ApiClient.aggregate(Api.AggregateQuery.tree("region", narrowed, depth = Some(cfg.treeDepth), asOf = data.asOf, samples = Some(cfg.treeSamples)))
+      ApiClient.aggregate(
+        Api.AggregateQuery
+          .tree("region", narrowed, depth = Some(cfg.treeDepth), asOf = data.asOf, samples = Some(cfg.treeSamples))
+      )
 
   private def act(b: Bucket): Unit =
     if b.kind == "time" then
-      for a <- b.start; b2 <- b.end do
-        UiState.set(UiState.from := Some(a), UiState.to := Some(b2))()
+      for a <- b.start; b2 <- b.end do UiState.set(UiState.from := Some(a), UiState.to := Some(b2))()
     else
       b.placeId.foreach { pid =>
         PlacesInput.preview(pid, lastData.flatMap(_.asOf))

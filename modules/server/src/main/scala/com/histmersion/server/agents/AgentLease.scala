@@ -4,11 +4,11 @@ import com.histmersion.db.ManagerRepo
 
 import javax.sql.DataSource
 
-/** One agent server per database (docs/research-process-managers.md §2): the server that holds the
-  * lease `agents` runs the engine, the scheduler and the managers; another one pointed at the same
-  * database runs none of them, and takes over when the holder's lease runs out (it renews it every
-  * `ttl / 3`; the ttl is 3 × the managers' tick). `owner` names this PROCESS (host and pid): two
-  * servers in one JVM (a test suite) share it; two processes never do. */
+/** One agent server per database (docs/research-process-managers.md §2): the server that holds the lease `agents` runs
+  * the engine, the scheduler and the managers; another one pointed at the same database runs none of them, and takes
+  * over when the holder's lease runs out (it renews it every `ttl / 3`; the ttl is 3 × the managers' tick). `owner`
+  * names this PROCESS (host and pid): two servers in one JVM (a test suite) share it; two processes never do.
+  */
 final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = AgentLease.ownerId()):
 
   @volatile private var held = false
@@ -17,13 +17,14 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
 
   def isHeld: Boolean = held
 
-  /** Has [[start]] run (agents on)? Only then is the lease kept — and claimed again on a swapped
-    * database. */
+  /** Has [[start]] run (agents on)? Only then is the lease kept — and claimed again on a swapped database.
+    */
   def started: Boolean = thread.isDefined
 
-  /** A swapped database (docs/research-plugins.md §3.6): claim the lease on `target` — the new pool,
-    * before the swap is published — when this server keeps it at all. `true` = held there. The renewal
-    * thread goes on renewing it through the server's DataSource, which then is the new pool. */
+  /** A swapped database (docs/research-plugins.md §3.6): claim the lease on `target` — the new pool, before the swap is
+    * published — when this server keeps it at all. `true` = held there. The renewal thread goes on renewing it through
+    * the server's DataSource, which then is the new pool.
+    */
   def claimOn(target: DataSource): Boolean =
     if !started then false
     else
@@ -36,8 +37,9 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
       held = ok
       ok
 
-  /** Give the lease up on `target` (an old database, when its generation closes) if this server holds
-    * it there; nothing otherwise. */
+  /** Give the lease up on `target` (an old database, when its generation closes) if this server holds it there; nothing
+    * otherwise.
+    */
   def releaseOn(target: DataSource): Unit =
     if started then
       try ManagerRepo.release(target, AgentLease.Name, owner)
@@ -51,7 +53,8 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
         case e: Exception =>
           scribe.warn(s"agent lease: could not claim or renew: ${e.getMessage}")
           false
-    if held && !ok then scribe.error(s"agent lease: LOST to ${holderText} — another server may now run agents on this database")
+    if held && !ok then
+      scribe.error(s"agent lease: LOST to $holderText — another server may now run agents on this database")
     held = ok
     ok
 
@@ -59,8 +62,9 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
     try ManagerRepo.holder(ds, AgentLease.Name).fold("nobody")((o, until, _) => s"$o until $until")
     catch case _: Exception => "unknown"
 
-  /** Keep the lease: claim now and every ttl/3. `onAcquired` runs (once) on the renewing thread the
-    * first time the lease is held — at once when the first claim wins. */
+  /** Keep the lease: claim now and every ttl/3. `onAcquired` runs (once) on the renewing thread the first time the
+    * lease is held — at once when the first claim wins.
+    */
   def start(onAcquired: () => Unit): Boolean =
     val first = claim()
     if first then onAcquired()
@@ -88,7 +92,8 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
     thread.foreach(_.interrupt())
     thread = None
     if held then
-      try ManagerRepo.release(ds, AgentLease.Name, owner) catch case _: Exception => ()
+      try ManagerRepo.release(ds, AgentLease.Name, owner)
+      catch case _: Exception => ()
       held = false
 
   /** For About and the doctor: (holder, until, expired, held by this server). */
@@ -100,5 +105,6 @@ object AgentLease:
   val Name = "agents"
 
   def ownerId(): String =
-    val host = try java.net.InetAddress.getLocalHost.getHostName catch case _: Exception => "localhost"
+    val host = try java.net.InetAddress.getLocalHost.getHostName
+    catch case _: Exception => "localhost"
     s"$host:${ProcessHandle.current().pid()}"

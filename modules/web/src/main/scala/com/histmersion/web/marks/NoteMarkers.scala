@@ -9,8 +9,9 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 
-/** The map's "My notes" layer: each note left at a place on the map, as a marker of the map's own kind — off
-  * until switched on under Layers. A click or Enter on one shows the note there, to read, change or delete. */
+/** The map's "My notes" layer: each note left at a place on the map, as a marker of the map's own kind — off until
+  * switched on under Layers. A click or Enter on one shows the note there, to read, change or delete.
+  */
 object NoteMarkers:
 
   // `var`/map: whether the layer is on, and the markers drawn by note id
@@ -20,7 +21,8 @@ object NoteMarkers:
   private var shown: Option[RootNode] = None
 
   /** The notes the layer draws: those left at a point. Pure. */
-  def placed(ns: List[Note]): List[Note] = ns.filter(n => n.target.kind == ItemKind.Point && n.target.lat.isDefined && n.target.lon.isDefined)
+  def placed(ns: List[Note]): List[Note] =
+    ns.filter(n => n.target.kind == ItemKind.Point && n.target.lat.isDefined && n.target.lon.isDefined)
 
   /** Follow the notes as they are written, changed and deleted. */
   def install(): Unit =
@@ -74,7 +76,10 @@ object NoteMarkers:
       TheMap.surface.popupBody(pop).foreach { body =>
         val box = dom.document.createElement("div")
         body.appendChild(box)
-        shown = Some(render(box, div(cls := "note-popup-body",
-          p(cls := "note-popup-where muted", Target.where(n.target)),
-          NoteList.card(n))))
+        shown = Some(
+          render(
+            box,
+            div(cls := "note-popup-body", p(cls := "note-popup-where muted", Target.where(n.target)), NoteList.card(n))
+          )
+        )
       }

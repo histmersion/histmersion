@@ -6,10 +6,11 @@ import com.histmersion.api.Agents.RunState
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}
 
-/** [[PolledList]] (#1798 item 6) — the one controller of the jobs, runs and approvals windows — with a
-  * fake server (promises completed by hand) and a fake clock: a poll keeps the pages loaded, a gone
-  * cursor restarts, a closed window drops a late answer, an older answer never overwrites a newer one;
-  * and the manager window's events keep their older pages on a poll. */
+/** [[PolledList]] (#1798 item 6) — the one controller of the jobs, runs and approvals windows — with a fake server
+  * (promises completed by hand) and a fake clock: a poll keeps the pages loaded, a gone cursor restarts, a closed
+  * window drops a late answer, an older answer never overwrites a newer one; and the manager window's events keep their
+  * older pages on a poll.
+  */
 class PolledListSuite extends munit.FunSuite:
 
   private given ExecutionContext = ExecutionContext.parasitic
@@ -18,15 +19,17 @@ class PolledListSuite extends munit.FunSuite:
   private def page(total: Int, next: Option[String], counts: (String, Int)*) = Paging.Page(total, next, counts.toList)
 
   /** A fake server: each request waits for the test to answer it; a fake clock holds the next poll. */
-  private final class Fixture(liveRows: Boolean):
+  final private class Fixture(liveRows: Boolean):
     val asked = mutable.ListBuffer.empty[(Option[String], Option[String], Promise[(List[JobInfo], Paging.Page)])]
     val timers = mutable.ListBuffer.empty[(Int, () => Unit)]
     val list = PolledList[JobInfo](
-      fetch = (upTo, before) => { val p = Promise[(List[JobInfo], Paging.Page)](); asked += ((upTo, before, p)); p.future },
+      fetch =
+        (upTo, before) => { val p = Promise[(List[JobInfo], Paging.Page)](); asked += ((upTo, before, p)); p.future },
       id = _.id,
       live = (_, _) => liveRows,
       later = (ms, f) => { timers += ((ms, f)); timers.size },
-      cancel = _ => ())
+      cancel = _ => ()
+    )
     def answer(i: Int, rows: List[JobInfo], pg: Paging.Page): Unit = asked(i)._3.success((rows, pg))
     def fail(i: Int, msg: String): Unit = asked(i)._3.failure(RuntimeException(msg))
 
@@ -88,7 +91,7 @@ class PolledListSuite extends munit.FunSuite:
     assertEquals(f.list.listing.now().rows.map(_.id), List("new"))
 
   /** One polled item (the agent run's window), on the same fake server and clock. */
-  private final class Single:
+  final private class Single:
     val asked = mutable.ListBuffer.empty[Promise[JobInfo]]
     val timers = mutable.ListBuffer.empty[(Int, () => Unit)]
     val settled = mutable.ListBuffer.empty[(Option[String], String)]
@@ -97,7 +100,8 @@ class PolledListSuite extends munit.FunSuite:
       live = j => !j.state.isTerminal,
       after = (before, now) => settled += ((before.map(_.status), now.status)),
       later = (ms, f) => { timers += ((ms, f)); timers.size },
-      cancel = _ => ())
+      cancel = _ => ()
+    )
 
   test("single (#1946): the item, polled while live, then backing off; none once it settles"):
     val f = Single()
@@ -138,7 +142,10 @@ class PolledListSuite extends munit.FunSuite:
 
   test("manager events: a poll's newest page keeps the older pages loaded below it"):
     val loaded = List(9L, 8L, 7L, 6L, 5L, 4L)
-    assertEquals(ListPaging.keepOlder(loaded, List(11L, 10L, 9L), (a: Long, b: Long) => a < b), List(11L, 10L, 9L, 8L, 7L, 6L, 5L, 4L))
+    assertEquals(
+      ListPaging.keepOlder(loaded, List(11L, 10L, 9L), (a: Long, b: Long) => a < b),
+      List(11L, 10L, 9L, 8L, 7L, 6L, 5L, 4L)
+    )
     assertEquals(ListPaging.keepOlder(loaded, Nil, (a: Long, b: Long) => a < b), Nil)
 
   test("runs: the state a person reads, not the wire word"):

@@ -1,7 +1,8 @@
 package com.histmersion.web
 
-/** The narrow (phone) layout's decisions, purely: which mode a width is, and how the bottom sheet
-  * steps and snaps. What the modes look like is the stylesheet's. */
+/** The narrow (phone) layout's decisions, purely: which mode a width is, and how the bottom sheet steps and snaps. What
+  * the modes look like is the stylesheet's.
+  */
 class ViewportSuite extends munit.FunSuite:
 
   test("a thin screen is narrow; so is a short TOUCH screen (a phone held sideways); a desktop is not"):
@@ -61,7 +62,7 @@ class ViewportSuite extends munit.FunSuite:
 
   // ── the drawers ───────────────────────────────────────────────────────────────────────────────
 
-  import MobileChrome.{Edge, swipesIn, swipesOut}
+  import MobileChrome.{swipesIn, swipesOut, Edge}
 
   test("a swipe in from an edge opens that edge's drawer; a short or vertical gesture does not"):
     assert(swipesIn(Edge.Left, 80, 10))
@@ -88,7 +89,10 @@ class ViewportSuite extends munit.FunSuite:
     MobileChrome.close()
 
   test("the ☰ badge counts the filters that are set but hidden in the drawer, not the search"):
-    val chips = List(UiState.ActiveChip("q", "search", "troy"), UiState.ActiveChip("tags", "tag", "argolid"),
-      UiState.ActiveChip("status", "status", "current"))
+    val chips = List(
+      UiState.ActiveChip("q", "search", "troy"),
+      UiState.ActiveChip("tags", "tag", "argolid"),
+      UiState.ActiveChip("status", "status", "current")
+    )
     assertEquals(MobileChrome.hiddenFilterCount(chips), 2)
     assertEquals(MobileChrome.hiddenFilterCount(Nil), 0)

@@ -3,10 +3,11 @@ package com.histmersion.api
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** How the map's area layer reads a time RANGE (`GET /api/places/geo?from=&to=&pick=`): a snapshot at
-  * one year of it — the middle (the default, what the map always did), the start or the end — or every
-  * state alive at ANY time in it, one shape per state: its earliest or its latest version there.
-  * "The same state over time" is the same kind and normalised label (`db.PlaceRepo.geoJsonQuery`). */
+/** How the map's area layer reads a time RANGE (`GET /api/places/geo?from=&to=&pick=`): a snapshot at one year of it —
+  * the middle (the default, what the map always did), the start or the end — or every state alive at ANY time in it,
+  * one shape per state: its earliest or its latest version there. "The same state over time" is the same kind and
+  * normalised label (`db.PlaceRepo.geoJsonQuery`).
+  */
 enum GeoPick:
   case Mid, Start, End, Earliest, Latest
 
@@ -39,19 +40,21 @@ object GeoPick:
     def fromWire(s: String): Option[GeoPick] = parse(s)
   given io.circe.Encoder[GeoPick] = WireEnum.encoder
   given io.circe.Decoder[GeoPick] = WireEnum.decoder
-  given Schema[GeoPick]           = WireEnum.schema
+  given Schema[GeoPick] = WireEnum.schema
 
-  /** Pure: the year a snapshot pick reads the range `lo..hi` at (`lo ≤ hi`). The middle is the map's
-    * own `(lo + hi) / 2` (truncated), so a snapshot shares its year — and its cached answer — with
-    * the sites layer and playback. */
+  /** Pure: the year a snapshot pick reads the range `lo..hi` at (`lo ≤ hi`). The middle is the map's own
+    * `(lo + hi) / 2` (truncated), so a snapshot shares its year — and its cached answer — with the sites layer and
+    * playback.
+    */
   def yearOf(pick: GeoPick, lo: Long, hi: Long): Long = pick match
     case Start => lo
     case End   => hi
     case _     => (lo + hi) / 2
 
-  /** Pure: what `GET /api/places/geo` draws for its time parameters. `from`/`to` give the range (one
-    * alone is a range of one year; reversed, they are put in order) and `pick` reads it; without them
-    * `asOf` is the year, and without that nothing is time-sliced. A range of one year is a snapshot. */
+  /** Pure: what `GET /api/places/geo` draws for its time parameters. `from`/`to` give the range (one alone is a range
+    * of one year; reversed, they are put in order) and `pick` reads it; without them `asOf` is the year, and without
+    * that nothing is time-sliced. A range of one year is a snapshot.
+    */
   def resolve(asOf: Option[Long], from: Option[Long], to: Option[Long], pick: GeoPick): GeoTime =
     val span = (from, to) match
       case (Some(a), Some(b)) => Some((a.min(b), a.max(b)))
@@ -67,10 +70,13 @@ object GeoPick:
 enum GeoTime:
   /** No time: every shape, successive versions all drawn. */
   case Always
+
   /** A snapshot: what was alive in `year`, each state once. */
   case At(year: Long)
-  /** Every state alive at any time in `from..to` (inclusive), one shape each: its earliest version
-    * there, or its latest when `latest`. */
+
+  /** Every state alive at any time in `from..to` (inclusive), one shape each: its earliest version there, or its latest
+    * when `latest`.
+    */
   case Within(from: Long, to: Long, latest: Boolean)
 
   /** The inclusive window a time rule reads, if any. */

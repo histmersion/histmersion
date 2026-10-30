@@ -51,7 +51,14 @@ class VocabularySuite extends munit.FunSuite:
     assertEquals(BundleKind.QueueItem.file, "entities/queue.ndjson")
 
   test("the string vocabularies list each value once"):
-    for all <- List(GoalStatus.all, PlaceKind.all, MediaRole.all, Historicity.all, EventEdgeKind.all, EventLinkStatus.all)
+    for all <- List(
+        GoalStatus.all,
+        PlaceKind.all,
+        MediaRole.all,
+        Historicity.all,
+        EventEdgeKind.all,
+        EventLinkStatus.all
+      )
     do assertEquals(all.distinct, all)
     assertEquals(EventEdgeKind.allen ++ EventEdgeKind.causal, EventEdgeKind.all.toSet)
 
@@ -72,6 +79,8 @@ class VocabularySuite extends munit.FunSuite:
   test("the spellings lower-case A-Z only, as Locale.ROOT does for them"):
     assertEquals(Ascii.lower("SupersededBy_X-1"), "supersededby_x-1")
     assertEquals(Ascii.lower("İK"), "İk")
-    assertEquals(SourceStatus.values.toList.map(_.wire),
-      List("foundational", "current", "contested", "superseded", "debunked", "retracted", "unassessed"))
+    assertEquals(
+      SourceStatus.values.toList.map(_.wire),
+      List("foundational", "current", "contested", "superseded", "debunked", "retracted", "unassessed")
+    )
     assertEquals(Confidence.values.toList.map(_.wire), List("high", "medium", "low", "contested"))

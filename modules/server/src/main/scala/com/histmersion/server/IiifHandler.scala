@@ -12,28 +12,29 @@ import javax.sql.DataSource
 
 /** Server-side implementation of the IIIF Image API Level 1 (plan §4.3).
   *
-  * Reads an asset's bytes from the database, decodes with `ImageIO`, applies the requested region
-  * and size transforms, and encodes the result in the requested format. Uses only JDK classes
-  * (`java.awt.image.BufferedImage`, `javax.imageio.ImageIO`) — no extra dependency.
+  * Reads an asset's bytes from the database, decodes with `ImageIO`, applies the requested region and size transforms,
+  * and encodes the result in the requested format. Uses only JDK classes (`java.awt.image.BufferedImage`,
+  * `javax.imageio.ImageIO`) — no extra dependency.
   *
-  * Stateless: the `DataSource` is a parameter. */
+  * Stateless: the `DataSource` is a parameter.
+  */
 object IiifHandler:
 
   /** Serve the IIIF info.json for an asset. Returns the JSON document or a left with an error. */
-  def info(ds: DataSource, citekey: String, name: String, baseUrl: String)
-      : Either[ApiError, io.circe.Json] =
+  def info(ds: DataSource, citekey: String, name: String, baseUrl: String): Either[ApiError, io.circe.Json] =
     val safeName = AssetLinks.safeName(name)
     AssetRepo.read(ds, citekey, safeName) match
-      case None => Left(ApiError(s"No asset '$safeName' for '$citekey'", Some(Write.CodeNotFound)))
+      case None             => Left(ApiError(s"No asset '$safeName' for '$citekey'", Some(Write.CodeNotFound)))
       case Some((_, bytes)) =>
         decodeImage(bytes) match
-          case None => Left(ApiError(s"Asset '$safeName' is not a decodable image"))
+          case None      => Left(ApiError(s"Asset '$safeName' is not a decodable image"))
           case Some(img) =>
             val id = s"$baseUrl/iiif/${enc(citekey)}/${enc(safeName)}"
             Right(Iiif.infoJson(id, img.getWidth, img.getHeight))
 
-  /** Serve a IIIF image request. Parses all IIIF parameters, applies region/size, encodes to the
-    * requested format, and returns `(bytes, contentType)`. */
+  /** Serve a IIIF image request. Parses all IIIF parameters, applies region/size, encodes to the requested format, and
+    * returns `(bytes, contentType)`.
+    */
   def image(
       ds: DataSource,
       citekey: String,
@@ -46,11 +47,11 @@ object IiifHandler:
     // parse the filename as `default.{format}`
     val safeName = AssetLinks.safeName(name)
     for
-      format   <- parseFilename(filename)
-      region   <- Iiif.Region.parse(regionStr).left.map(ApiError(_))
-      size     <- Iiif.Size.parse(sizeStr).left.map(ApiError(_))
-      _        <- validateRotation(rotationStr)
-      result   <- render(ds, citekey, safeName, region, size, format)
+      format <- parseFilename(filename)
+      region <- Iiif.Region.parse(regionStr).left.map(ApiError(_))
+      size <- Iiif.Size.parse(sizeStr).left.map(ApiError(_))
+      _ <- validateRotation(rotationStr)
+      result <- render(ds, citekey, safeName, region, size, format)
     yield result
 
   // ── internals ──────────────────────────────────────────────────────────────────────────────
@@ -93,7 +94,7 @@ object IiifHandler:
   /** Crop the image to the requested region. */
   private def applyRegion(img: BufferedImage, region: Iiif.Region): Either[ApiError, BufferedImage] =
     region match
-      case Iiif.Region.Full => Right(img)
+      case Iiif.Region.Full               => Right(img)
       case Iiif.Region.Pixels(x, y, w, h) =>
         val imgW = img.getWidth
         val imgH = img.getHeight
@@ -102,10 +103,8 @@ object IiifHandler:
         val cy = math.max(0, math.min(y, imgH))
         val cw = math.max(1, math.min(w, imgW - cx))
         val ch = math.max(1, math.min(h, imgH - cy))
-        if cx >= imgW || cy >= imgH then
-          Left(ApiError(s"region ($x,$y,$w,$h) is outside image bounds (${imgW}x${imgH})"))
-        else
-          Right(img.getSubimage(cx, cy, cw, ch))
+        if cx >= imgW || cy >= imgH then Left(ApiError(s"region ($x,$y,$w,$h) is outside image bounds (${imgW}x$imgH)"))
+        else Right(img.getSubimage(cx, cy, cw, ch))
 
   /** Scale the image to the requested size. */
   private def applySize(img: BufferedImage, size: Iiif.Size): Either[ApiError, BufferedImage] =
@@ -133,7 +132,7 @@ object IiifHandler:
         // scale to fit within the bounding box, maintaining aspect ratio
         val scaleW = maxW.toDouble / srcW
         val scaleH = maxH.toDouble / srcH
-        val scale  = math.min(scaleW, scaleH)
+        val scale = math.min(scaleW, scaleH)
         val w = math.max(1, (srcW * scale).round.toInt)
         val h = math.max(1, (srcH * scale).round.toInt)
         Right(scaleImage(img, w, h))
@@ -146,7 +145,8 @@ object IiifHandler:
       val g = dst.createGraphics()
       g.setRenderingHint(
         java.awt.RenderingHints.KEY_INTERPOLATION,
-        java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR
+      )
       g.drawImage(src, 0, 0, w, h, null)
       g.dispose()
       dst

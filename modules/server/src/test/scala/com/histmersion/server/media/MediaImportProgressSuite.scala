@@ -4,16 +4,19 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
-/** #1491: what a running media import job says — `n/total` asked — and which requests name ONE
-  * place or event (the only real import the synchronous endpoint still runs). Pure. */
+/** #1491: what a running media import job says — `n/total` asked — and which requests name ONE place or event (the only
+  * real import the synchronous endpoint still runs). Pure.
+  */
 class MediaImportProgressSuite extends munit.FunSuite:
 
-  private val r = MediaImportReport(MediaProvider.Commons, dryRun = false, targets = 100, stored = 80, linked = 82,
-    batches = 2)
+  private val r =
+    MediaImportReport(MediaProvider.Commons, dryRun = false, targets = 100, stored = 80, linked = 82, batches = 2)
 
   test("progress: n/total asked, the batch, what was written, the requests"):
-    assertEquals(MediaHandlers.progressLine(r, 300, 12),
-      "100/300 place(s)/event(s) asked · batch 2 · 80 stored · 82 linked · 12 request(s)")
+    assertEquals(
+      MediaHandlers.progressLine(r, 300, 12),
+      "100/300 place(s)/event(s) asked · batch 2 · 80 stored · 82 linked · 12 request(s)"
+    )
 
   test("progress: failures are counted; an unknown total is left out; a total passed is the count"):
     val failed = r.copy(failed = List("a", "b"))

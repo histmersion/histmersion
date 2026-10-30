@@ -9,12 +9,22 @@ import com.augustnagro.magnum.*
 import java.time.Instant
 
 /** A note as the table answers it, with its item's key and title now. */
-private[personal] final case class NoteRow(id: String, kind: String, key: Option[String], lat: Option[Double],
-    lon: Option[Double], from: Option[Long], to: Option[Long], body: String, title: Option[String], createdAt: String,
-    updatedAt: String) derives DbCodec:
+final private[personal] case class NoteRow(
+    id: String,
+    kind: String,
+    key: Option[String],
+    lat: Option[Double],
+    lon: Option[Double],
+    from: Option[Long],
+    to: Option[Long],
+    body: String,
+    title: Option[String],
+    createdAt: String,
+    updatedAt: String
+) derives DbCodec:
   def note: Option[Note] =
     for
-      t  <- PersonalRules.target(kind, key, lat, lon, None, from, to, None)
+      t <- PersonalRules.target(kind, key, lat, lon, None, from, to, None)
       id <- NoteId.parse(id).toOption
     yield Note(id, t, NoteText(body), PersonalRules.title(t, title, None), createdAt, updatedAt)
 
@@ -26,25 +36,38 @@ private[personal] object NoteRepo:
                ${title("n")}, ${iso("n.created_at")}, ${iso("n.updated_at")}
           FROM notes n ${joins("n")}"""
 
-  def list(user: UserId, kind: Option[ItemKind], itemKey: Option[String], words: List[String], limit: Int)(using DbCon): List[NoteRow] =
+  def list(user: UserId, kind: Option[ItemKind], itemKey: Option[String], words: List[String], limit: Int)(using
+      DbCon
+  ): List[NoteRow] =
     (Sql.of(s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL", Param.S(user.value)) ++
       kind.fold(Sql.empty)(k => Sql.of(" AND n.target_kind = ?", Param.S(k.wire))) ++
       itemKey.fold(Sql.empty)(k => Sql.of(s" AND (n.target_id = ? OR ${key("n")} = ?)", Param.S(k), Param.S(k))) ++
       ItemTitles.wordsSql(words, s"concat_ws(' ', n.body, ${title("n")}, ${key("n")})") ++
-      Sql.of(" ORDER BY n.updated_at DESC, n.id DESC LIMIT ?", Param.I(limit)))
-      .frag.query[NoteRow].run().toList
+      Sql.of(" ORDER BY n.updated_at DESC, n.id DESC LIMIT ?", Param.I(limit))).frag.query[NoteRow].run().toList
 
   def live(user: UserId, id: NoteId)(using DbCon): Option[NoteRow] =
-    Sql.of(s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL AND n.id = ?::uuid", Param.S(user.value), Param.S(id.value))
-      .frag.query[NoteRow].run().headOption
+    Sql
+      .of(
+        s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL AND n.id = ?::uuid",
+        Param.S(user.value),
+        Param.S(id.value)
+      )
+      .frag
+      .query[NoteRow]
+      .run()
+      .headOption
 
-  def insert(user: UserId, t: Target, text: NoteText, targetLabel: Option[String], uid: Option[String], at: Instant)(using DbCon): NoteId =
+  def insert(user: UserId, t: Target, text: NoteText, targetLabel: Option[String], uid: Option[String], at: Instant)(
+      using DbCon
+  ): NoteId =
     val stamp = PersonalRules.iso(at)
     val c = TargetColumns.of(t)
     val body: String = text.value
     val id = sql"""INSERT INTO notes (user_id, target_kind, target_id, target_uid, target_label, lat, lon, period_start,
                      period_end, body, created_at, updated_at)
-                   VALUES (${c.user(user)}, ${c.kind}, ${c.key}, ${uid}::uuid, $targetLabel, ${c.lat}, ${c.lon}, ${c.from},
+                   VALUES (${c.user(
+        user
+      )}, ${c.kind}, ${c.key}, $uid::uuid, $targetLabel, ${c.lat}, ${c.lon}, ${c.from},
                      ${c.to}, $body, $stamp::timestamptz, $stamp::timestamptz)
                    RETURNING id::text""".query[String].run().head
     NoteId.parse(id).fold(e => throw IllegalStateException(e), identity)

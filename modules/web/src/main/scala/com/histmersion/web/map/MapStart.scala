@@ -5,7 +5,8 @@ import com.histmersion.api.{MapStartConfig, MapStartMode}
 import scala.util.Try
 
 /** Where the map opens (`ui.map-start`): where this browser last left it ("last", kept per browser under
-  * [[StorageKey]]) or always at the configured place. */
+  * [[StorageKey]]) or always at the configured place.
+  */
 object MapStart:
   val StorageKey = "histmersion.mapView"
 
@@ -20,14 +21,14 @@ object MapStart:
   def decode(s: String): Option[(LatLon, Double)] =
     Option(s).map(_.split(',').map(_.trim).toList).collect { case List(a, b, c) => (a, b, c) }.flatMap { (a, b, c) =>
       for
-        lat  <- a.toDoubleOption.filter(v => v >= -90 && v <= 90)
-        lon  <- b.toDoubleOption.filter(v => v >= -180 && v <= 180)
+        lat <- a.toDoubleOption.filter(v => v >= -90 && v <= 90)
+        lon <- b.toDoubleOption.filter(v => v >= -180 && v <= 180)
         zoom <- c.toDoubleOption.filter(v => v >= 0 && v <= 22)
       yield (LatLon(lat, lon), zoom)
     }
 
-  /** The view the map opens on: the browser's last one under "last" (if it kept one), else the configured
-    * place. Pure. */
+  /** The view the map opens on: the browser's last one under "last" (if it kept one), else the configured place. Pure.
+    */
   def initial(cfg: MapStartConfig, stored: Option[String]): (LatLon, Double) =
     val place = (LatLon(cfg.lat, cfg.lon), cfg.zoom)
     MapStartMode.parse(cfg.mode) match

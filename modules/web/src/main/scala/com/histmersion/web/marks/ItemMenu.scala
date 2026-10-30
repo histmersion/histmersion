@@ -4,8 +4,9 @@ import com.histmersion.api.personal.ItemKind
 import com.histmersion.web.ui.{Clipboard, ContextMenu}
 import org.scalajs.dom
 
-/** The actions on one item a row's and the reading pane's menu offer: copy it as text, as Markdown or as a
-  * link; bookmark it; open it in a new tab. Each is also a button where the item is shown. */
+/** The actions on one item a row's and the reading pane's menu offer: copy it as text, as Markdown or as a link;
+  * bookmark it; open it in a new tab. Each is also a button where the item is shown.
+  */
 object ItemMenu:
 
   /** The item's link, whole (copied, it works elsewhere). Pure. */
@@ -18,7 +19,7 @@ object ItemMenu:
   /** The item as Markdown: a link with its title, and a source's `[[citekey]]` for the wiki. Pure. */
   def markdown(origin: String, ref: ItemRef, byline: String): String =
     val title = ref.title.replace("[", "\\[").replace("]", "\\]")
-    val cite  = ref.target.itemKey.filter(_ => ref.kind == ItemKind.Source).fold("")(ck => s" [[$ck]]")
+    val cite = ref.target.itemKey.filter(_ => ref.kind == ItemKind.Source).fold("")(ck => s" [[$ck]]")
     s"[$title](${link(origin, ref)})" + Option(byline.trim).filter(_.nonEmpty).fold("")(b => s" — $b") + cite
 
   def entries(ref: ItemRef, byline: String): List[ContextMenu.Entry] =
@@ -30,4 +31,8 @@ object ItemMenu:
       ContextMenu.Entry("Copy the link", () => Clipboard.copy(link(origin, ref), "the link")),
       ContextMenu.Separator,
       ContextMenu.Entry(if marked then "Remove the bookmark" else "Bookmark", () => ItemActions.bookmark(ref)),
-      ContextMenu.Entry("Open in a new tab", () => { val _ = dom.window.open(ItemRef.page(ref.target), "_blank", "noopener") }))
+      ContextMenu.Entry(
+        "Open in a new tab",
+        () => { val _ = dom.window.open(ItemRef.page(ref.target), "_blank", "noopener") }
+      )
+    )

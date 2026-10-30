@@ -6,17 +6,27 @@ import org.ekrich.config.{Config, ConfigObject, ConfigUtil}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
-/** Every setting as it stands, from the schema, the settings file as read and the merged settings it loaded
-  * into (`merged`: environment > file > reference.conf, `histmersion { … }`). The keys a file writes in an open
-  * block (a plugin's own settings) are listed too, after reference.conf's, and `extra` keys of open blocks
-  * the caller knows of (each plugin's `enabled` and settings). Pure. */
+/** Every setting as it stands, from the schema, the settings file as read and the merged settings it loaded into
+  * (`merged`: environment > file > reference.conf, `histmersion { … }`). The keys a file writes in an open block (a
+  * plugin's own settings) are listed too, after reference.conf's, and `extra` keys of open blocks the caller knows of
+  * (each plugin's `enabled` and settings). Pure.
+  */
 object SettingsReader:
 
-  def read(schema: ConfigSchema, state: ConfigFileState, merged: Config, env: Config,
-      prefix: Option[SettingKey], extra: List[SettingKey] = Nil): List[SettingReading] =
+  def read(
+      schema: ConfigSchema,
+      state: ConfigFileState,
+      merged: Config,
+      env: Config,
+      prefix: Option[SettingKey],
+      extra: List[SettingKey] = Nil
+  ): List[SettingReading] =
     val within = (k: SettingKey) => prefix.forall(p => k.within(p))
-    val known  = schema.fields.filter(f => within(f.key))
-    val open   = (openKeys(state.parsed) ++ extra).distinct.filter(within).filterNot(k => known.exists(_.key == k)).flatMap(schema.field)
+    val known = schema.fields.filter(f => within(f.key))
+    val open = (openKeys(state.parsed) ++ extra).distinct
+      .filter(within)
+      .filterNot(k => known.exists(_.key == k))
+      .flatMap(schema.field)
     (known ++ open).map(reading(_, state, merged, env))
 
   def reading(field: SettingField, state: ConfigFileState, merged: Config, env: Config): SettingReading =
@@ -26,7 +36,10 @@ object SettingsReader:
       case Written.Nowhere        => (None, None)
       case Written.Substituted(_) => (None, Some(SettingError.Substitution(key)))
       case Written.Elsewhere(f)   =>
-        (Try(state.parsed.getValue(key.hoconPath)).toOption.flatMap(SettingValue.fromConfig), Some(SettingError.FromInclude(key, f)))
+        (
+          Try(state.parsed.getValue(key.hoconPath)).toOption.flatMap(SettingValue.fromConfig),
+          Some(SettingError.FromInclude(key, f))
+        )
     val fromEnv = field.envVar.exists(v => env.hasPath(v))
     val source =
       if fromEnv then SettingSource.Environment
@@ -40,10 +53,13 @@ object SettingsReader:
 
   /** The keys the file writes inside the open blocks (each plugin's own settings, …). */
   def openKeys(parsed: Config): List[SettingKey] =
-    ConfigLayers.OpenBlocks.flatMap { block =>
-      val path = ConfigUtil.joinPath(block.asJava)
-      Try(parsed.getValue(path)).toOption.collect { case o: ConfigObject => leaves(o, block) }.getOrElse(Nil)
-    }.flatMap(ws => SettingKey.either(ws.mkString(".")).toOption).distinct
+    ConfigLayers.OpenBlocks
+      .flatMap { block =>
+        val path = ConfigUtil.joinPath(block.asJava)
+        Try(parsed.getValue(path)).toOption.collect { case o: ConfigObject => leaves(o, block) }.getOrElse(Nil)
+      }
+      .flatMap(ws => SettingKey.either(ws.mkString(".")).toOption)
+      .distinct
 
   private def leaves(o: ConfigObject, prefix: List[String]): List[List[String]] =
     Try(o.keySet.asScala.toList.sorted).getOrElse(Nil).flatMap { k =>

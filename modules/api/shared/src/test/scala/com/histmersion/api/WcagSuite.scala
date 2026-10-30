@@ -1,12 +1,15 @@
 package com.histmersion.api
 
-
 class WcagSuite extends munit.FunSuite:
 
   test("black on white is 21:1, a colour on itself 1:1, and the ratio is symmetric"):
     assertEqualsDouble(Wcag.contrast((0, 0, 0), (255, 255, 255)), 21.0, 1e-9)
     assertEqualsDouble(Wcag.contrast((120, 30, 200), (120, 30, 200)), 1.0, 1e-9)
-    assertEqualsDouble(Wcag.contrast((10, 20, 30), (200, 210, 220)), Wcag.contrast((200, 210, 220), (10, 20, 30)), 1e-12)
+    assertEqualsDouble(
+      Wcag.contrast((10, 20, 30), (200, 210, 220)),
+      Wcag.contrast((200, 210, 220), (10, 20, 30)),
+      1e-12
+    )
 
   test("the reference value: #777 on white is just under AA (4.48)"):
     assertEqualsDouble(Wcag.contrast(Wcag.hex("#777").get, Wcag.hex("#ffffff").get), 4.48, 0.01)

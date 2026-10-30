@@ -7,15 +7,18 @@ import com.raquo.laminar.api.L.*
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-/** The person's bookmarks, notes and read marks, as the page holds them: read once when it opens, changed in
-  * place by each write the server accepted, so every row, header and list shows the same state at once. A
-  * change refused says why ([[problem]]). */
+/** The person's bookmarks, notes and read marks, as the page holds them: read once when it opens, changed in place by
+  * each write the server accepted, so every row, header and list shows the same state at once. A change refused says
+  * why ([[problem]]).
+  */
 object MyItems:
 
   val bookmarks: Var[List[Bookmark]] = Var(Nil)
-  val notes: Var[List[Note]]         = Var(Nil)
+  val notes: Var[List[Note]] = Var(Nil)
+
   /** By [[Target.identity]]. */
   val marks: Var[Map[String, ReadMark]] = Var(Map.empty)
+
   /** The last change that did not go through, and why. */
   val problem: Var[Option[String]] = Var(None)
   val loaded: Var[Boolean] = Var(false)
@@ -58,7 +61,8 @@ object MyItems:
 
   def rename(b: Bookmark, label: Option[String]): Future[Bookmark] =
     tracked(ApiClient.editBookmark(b.id.value, BookmarkEdit(label.map(BookmarkLabel(_)))))(n =>
-      bookmarks.update(_.map(x => if x.id == n.id then n else x)))
+      bookmarks.update(_.map(x => if x.id == n.id then n else x))
+    )
 
   /** Bookmark the item, or take its bookmark away. */
   def toggle(ref: ItemRef): Unit =
@@ -75,7 +79,8 @@ object MyItems:
 
   def editNote(n: Note, text: String): Future[Note] =
     tracked(ApiClient.editNote(n.id.value, NoteEdit(NoteText(text), Some(n.updatedAt))))(m =>
-      notes.update(ns => m :: ns.filterNot(_.id == m.id)))
+      notes.update(ns => m :: ns.filterNot(_.id == m.id))
+    )
 
   def removeNote(n: Note): Future[Note] =
     tracked(ApiClient.removeNote(n.id.value))(_ => notes.update(_.filterNot(_.id == n.id)))
@@ -90,14 +95,17 @@ object MyItems:
   def setRead(ref: ItemRef, read: Boolean): Unit =
     ref.target.itemKey.foreach { key =>
       tracked(ApiClient.setRead(ReadMarkSet(ref.kind, ItemKey(key), read, Some(ref.title))))(m =>
-        marks.update(_ + (markKey(m) -> m))): Unit
+        marks.update(_ + (markKey(m) -> m))
+      ): Unit
     }
 
-  /** The person opened `ref` (Library's reading pane, an item's detail): kept for "Recently opened" when the
-    * page may write; nothing is marked read. */
+  /** The person opened `ref` (Library's reading pane, an item's detail): kept for "Recently opened" when the page may
+    * write; nothing is marked read.
+    */
   def opened(ref: ItemRef): Unit =
     if ref.readable && Auth.writableNow then
       ref.target.itemKey.foreach { key =>
-        ApiClient.opened(ReadOpened(ref.kind, ItemKey(key), Some(ref.title)))
+        ApiClient
+          .opened(ReadOpened(ref.kind, ItemKey(key), Some(ref.title)))
           .foreach(m => marks.update(_ + (markKey(m) -> m)))
       }

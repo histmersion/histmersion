@@ -16,7 +16,7 @@ object ResultsList:
       params: Option[Filter] = None
   )
 
-  private sealed trait LastRender
+  sealed private trait LastRender
   private case class LastSources(result: SearchResult, opts: SourceRenderOpts) extends LastRender
 
   private var last: Option[LastRender] = None
@@ -26,14 +26,17 @@ object ResultsList:
   private var pageOpts: Option[SourceRenderOpts] = None
 
   private val content = Var[List[HtmlElement]](Nil)
+
   /** How many sources the filter selects (the Sources tab's count), once answered. */
   val total: Var[Option[Int]] = Var(None)
   private val countText = Var("")
   private val isBusy = Var(false)
   private val isError = Var(false)
-  /** The "show more" button's label (none while a cluster is picked or every source is shown), and
-    * whether its page is on its way. */
-  private val moreLabel   = Var(Option.empty[String])
+
+  /** The "show more" button's label (none while a cluster is picked or every source is shown), and whether its page is
+    * on its way.
+    */
+  private val moreLabel = Var(Option.empty[String])
   private val moreLoading = Var(false)
 
   val element: HtmlElement =
@@ -58,8 +61,7 @@ object ResultsList:
             if idx >= 0 then
               ev.preventDefault()
               val nextIdx = idx + (if ev.key == "ArrowDown" then 1 else -1)
-              if nextIdx >= 0 && nextIdx < rows.length then
-                rows(nextIdx).asInstanceOf[dom.HTMLElement].focus()
+              if nextIdx >= 0 && nextIdx < rows.length then rows(nextIdx).asInstanceOf[dom.HTMLElement].focus()
         }
       ),
       ResultsPaging.moreButton(moreLabel.signal, moreLoading.signal, () => more())
@@ -91,17 +93,23 @@ object ResultsList:
     moreLoading.set(false)
     moreLabel.set(nextLabel())
 
-  /** List what a map bubble (or a dot of coincident findings) holds: its findings by source — a row opens
-    * the source — then its other dots (`others`: sites, events, pictures, each with its kind's icon), whose
-    * row opens what it is ([[DotCluster]]: a site's or an event's card pinned under the row, a picture's
-    * popup on the map). */
-  def pick(items: List[GeoHit], title: String, onZoom: Option[() => Unit],
-      others: List[(DotEntry, dom.Element => Unit)] = Nil): Unit =
+  /** List what a map bubble (or a dot of coincident findings) holds: its findings by source — a row opens the source —
+    * then its other dots (`others`: sites, events, pictures, each with its kind's icon), whose row opens what it is
+    * ([[DotCluster]]: a site's or an event's card pinned under the row, a picture's popup on the map).
+    */
+  def pick(
+      items: List[GeoHit],
+      title: String,
+      onZoom: Option[() => Unit],
+      others: List[(DotEntry, dom.Element => Unit)] = Nil
+  ): Unit =
     // on a phone the list is a sheet at the bottom: a picked cluster must be where the reader looks
     if Viewport.narrowNow && UiState.sheet.now() == Sheet.Peek then UiState.set(UiState.sheet := Sheet.Half)()
-    val bySource = scala.collection.mutable.LinkedHashMap.empty[String, (String, String, scala.collection.mutable.ListBuffer[GeoHit])]
+    val bySource = scala.collection.mutable.LinkedHashMap
+      .empty[String, (String, String, scala.collection.mutable.ListBuffer[GeoHit])]
     items.foreach { pt =>
-      val entry = bySource.getOrElseUpdate(pt.citekey, (pt.citekey, pt.title, scala.collection.mutable.ListBuffer.empty))
+      val entry =
+        bySource.getOrElseUpdate(pt.citekey, (pt.citekey, pt.title, scala.collection.mutable.ListBuffer.empty))
       entry._3 += pt
     }
 
@@ -121,12 +129,13 @@ object ResultsList:
       ),
       div(cls := "pick-title", title),
       onZoom match
-        case Some(fn) => button(
-          typ := "button",
-          cls := "btn btn--sm pick-zoom",
-          "zoom to cluster",
-          onClick --> { _ => fn() }
-        )
+        case Some(fn) =>
+          button(
+            typ := "button",
+            cls := "btn btn--sm pick-zoom",
+            "zoom to cluster",
+            onClick --> { _ => fn() }
+          )
         case None => emptyNode
     )
 
@@ -141,9 +150,7 @@ object ResultsList:
         tabIndex := 0,
         div(cls := "ck", pickIcon(CardIcons.GenericSource, "finding"), SourceLink(ck, pts.head.doi)),
         div(cls := "title", ttl),
-        div(cls := "meta",
-          s"${plural(pts.size, "finding")}" + (if per.nonEmpty then s" · ${per}" else "")
-        ),
+        div(cls := "meta", s"${plural(pts.size, "finding")}" + (if per.nonEmpty then s" · $per" else "")),
         div(cls := "claim", Fmt.clip(pts.head.claim, 140)),
         onClick --> { _ => ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse(""))) },
         onKeyDown --> { ev =>
@@ -159,7 +166,11 @@ object ResultsList:
 
   /** A kind's icon at the head of a picked row, as a card's title has it. */
   private def pickIcon(icon: String, kind: String): HtmlElement =
-    span(cls := "cite-tip-icon pick-icon", title := kind, onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(icon)))
+    span(
+      cls := "cite-tip-icon pick-icon",
+      title := kind,
+      onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(icon))
+    )
 
   /** A picked dot that is not a finding: its icon, its name, its kind and years; a click or Enter opens it. */
   private def otherRow(entry: DotEntry, open: dom.Element => Unit): HtmlElement =
@@ -189,8 +200,12 @@ object ResultsList:
       case Some(o) if o.inView => s"${Plural.count(o.findings, "finding")} in view / ${o.total} total"
       case Some(o)             => Plural.count(o.findings, "finding")
       case None                => ""
-    ResultsPaging.countLine(pageHits.length, pageTotal, "source",
-      extras = List(findings, ResultsPaging.span(UiState.from.now(), UiState.to.now())))
+    ResultsPaging.countLine(
+      pageHits.length,
+      pageTotal,
+      "source",
+      extras = List(findings, ResultsPaging.span(UiState.from.now(), UiState.to.now()))
+    )
 
   /** The next page's size: the request's own limit (at least 20). */
   private def pageSize: Int = pageParams.fold(20)(p => math.max(p.limit, 20))
@@ -216,8 +231,9 @@ object ResultsList:
       }
     }
 
-  /** A source's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens
-    * its window), what it is, why it matched, and "open in a new tab". */
+  /** A source's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
+    * window), what it is, why it matched, and "open in a new tab".
+    */
   private[web] def hitRow(h: Hit, inPanel: Boolean = false): HtmlElement =
     val src = h.source
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
@@ -236,17 +252,22 @@ object ResultsList:
       role := "button",
       tabIndex := 0,
       div(cls := "ck", SourceLink(src.citekey, src.doi)),
-      a(cls := "title row-link", href := SourceLink.href(src.citekey), src.title,
-        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); openSource(src.citekey, inPanel) } }),
+      a(
+        cls := "title row-link",
+        href := SourceLink.href(src.citekey),
+        src.title,
+        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); openSource(src.citekey, inPanel) } }
+      ),
       div(cls := "meta", meta),
-      src.snippet.filter(_.nonEmpty).map(s =>
-        div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(s)))
-      ).getOrElse(emptyNode),
-      if why.nonEmpty then
-        ul(cls := "why", why.map(w => li(w)))
+      src.snippet
+        .filter(_.nonEmpty)
+        .map(s => div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(s))))
+        .getOrElse(emptyNode),
+      if why.nonEmpty then ul(cls := "why", why.map(w => li(w)))
       else emptyNode,
       if matched.nonEmpty then
-        div(cls := "matches",
+        div(
+          cls := "matches",
           span(cls := "lbl", "matches:"),
           ul(
             shownMatches.map { m =>
@@ -255,18 +276,21 @@ object ResultsList:
                 span(cls := "claim", Fmt.clip(m.claim, 160)),
                 Fmt.periodStr(m.periodStart, m.periodEnd) match
                   case "" => emptyNode
-                  case p  => span(cls := "p", s" ${p}"),
+                  case p  => span(cls := "p", s" $p"),
                 m.regionName.filter(_.nonEmpty).map(r => span(cls := "rg", s" ${Fmt.display(r)}")).getOrElse(emptyNode),
                 if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.mkString(", ")}") else emptyNode
               )
             } ++ (if matched.length > shownMatches.length then
-              List(li(cls := "more-matches", s"+${matched.length - shownMatches.length} more"))
-            else Nil)
+                    List(li(cls := "more-matches", s"+${matched.length - shownMatches.length} more"))
+                  else Nil)
           )
         )
       else emptyNode,
-      marks.RowActions(marks.ItemRef.source(src.citekey, src.title), SourceLink.href(src.citekey),
-        List(src.authors.take(3).mkString(", "), src.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")),
+      marks.RowActions(
+        marks.ItemRef.source(src.citekey, src.title),
+        SourceLink.href(src.citekey),
+        List(src.authors.take(3).mkString(", "), src.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
+      ),
       onClick --> { ev =>
         val inLink = Option(ev.target.asInstanceOf[dom.Element].closest("a, button")).isDefined
         if !inLink then openSource(src.citekey, inPanel)
@@ -289,21 +313,36 @@ object ResultsList:
     causes += s"the span ${Fmt.yr(UiState.from.now())} → ${Fmt.yr(UiState.to.now())}"
     if chips.nonEmpty then causes += s"${plural(chips.length, "filter")} below"
 
-    div(cls := "empty",
+    div(
+      cls := "empty",
       p(s"No sources match ${causes.mkString(", ")}."),
       if chips.nonEmpty then
-        ul(cls := "empty-chips",
+        ul(
+          cls := "empty-chips",
           chips.map { c =>
             // a chosen place is named by its label and kind, never by its id (#places-fix)
             if c.key == UiState.placeIds.key then
-              li(child <-- PlacesInput.chipTextSignal(c.value).map(t =>
-                Chip(t, prefix = Some(s"${c.label}: "), extraCls = "place",
-                  remove = Some(() => UiState.removeChip(c.key, c.value)))))
+              li(
+                child <-- PlacesInput
+                  .chipTextSignal(c.value)
+                  .map(t =>
+                    Chip(
+                      t,
+                      prefix = Some(s"${c.label}: "),
+                      extraCls = "place",
+                      remove = Some(() => UiState.removeChip(c.key, c.value))
+                    )
+                  )
+              )
             else
-              li(Chip(c.shown.getOrElse(Fmt.displayTag(c.value)), prefix = Some(s"${c.label}: "),
-                remove = Some(() => UiState.removeChip(c.key, c.value))))
+              li(
+                Chip(
+                  c.shown.getOrElse(Fmt.displayTag(c.value)),
+                  prefix = Some(s"${c.label}: "),
+                  remove = Some(() => UiState.removeChip(c.key, c.value))
+                )
+              )
           }
         )
-      else
-        p(cls := "muted", "No filters are active — widen the span, or pan the map.")
+      else p(cls := "muted", "No filters are active — widen the span, or pan the map.")
     )

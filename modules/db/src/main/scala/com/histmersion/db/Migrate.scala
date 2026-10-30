@@ -8,10 +8,11 @@ import java.io.{InputStreamReader, Reader}
 import java.nio.charset.Charset
 import scala.jdk.CollectionConverters.*
 
-/** Flyway schema versioning. Migrations are SQL resources under `db/migration/V###__name.sql`,
-  * enumerated by the build-generated `db/migration/index.txt` (Flyway's classpath scanning does not
-  * work inside a native image; this provider works everywhere). `V001__baseline` is the original
-  * schema; an existing (pre-Flyway) database is baselined at 1. */
+/** Flyway schema versioning. Migrations are SQL resources under `db/migration/V###__name.sql`, enumerated by the
+  * build-generated `db/migration/index.txt` (Flyway's classpath scanning does not work inside a native image; this
+  * provider works everywhere). `V001__baseline` is the original schema; an existing (pre-Flyway) database is baselined
+  * at 1.
+  */
 object Migrate:
   private val Base = "db/migration"
 
@@ -22,24 +23,27 @@ object Migrate:
     try scala.io.Source.fromInputStream(is, "UTF-8").getLines().map(_.trim).filter(_.nonEmpty).toList
     finally is.close()
 
-  private final class Res(name: String) extends LoadableResource:
+  final private class Res(name: String) extends LoadableResource:
     def read(): Reader =
       InputStreamReader(getClass.getClassLoader.getResourceAsStream(s"$Base/$name"), Charset.forName("UTF-8"))
-    def getAbsolutePath: String       = s"$Base/$name"
+    def getAbsolutePath: String = s"$Base/$name"
     def getAbsolutePathOnDisk: String = getAbsolutePath
-    def getFilename: String           = name
-    def getRelativePath: String       = name
+    def getFilename: String = name
+    def getRelativePath: String = name
 
   private val provider: ResourceProvider = new ResourceProvider:
     private def all = migrationNames.map(Res(_))
     def getResource(name: String): LoadableResource =
       all.find(r => r.getAbsolutePath == name || r.getFilename == name).orNull
     def getResources(prefix: String, suffixes: Array[String]): java.util.Collection[LoadableResource] =
-      all.filter(r => r.getFilename.startsWith(prefix) && suffixes.exists(r.getFilename.endsWith))
-        .map(r => r: LoadableResource).asJavaCollection
+      all
+        .filter(r => r.getFilename.startsWith(prefix) && suffixes.exists(r.getFilename.endsWith))
+        .map(r => r: LoadableResource)
+        .asJavaCollection
 
   private[db] def flyway(ds: DataSource): Flyway =
-    Flyway.configure()
+    Flyway
+      .configure()
       .dataSource(ds)
       .locations(s"classpath:$Base")
       .resourceProvider(provider)
@@ -50,31 +54,33 @@ object Migrate:
 
   /** Apply pending migrations; returns the current schema version.
     *
-    * Safe when several servers migrate databases of ONE cluster at the same moment (#828). Roles are
-    * cluster-global while migrations are per-database, and V011's `IF NOT EXISTS … CREATE ROLE` is a
-    * check-then-act: two fresh databases both pass the check and the second CREATE fails on the
-    * role-name index (V011 is applied and cannot change). So the role is created first by
-    * [[ensureRole]], which tolerates losing that race; and a migration that fails on a catalog-level
-    * collision ([[transient]] — e.g. two `ALTER ROLE … SET` on the same role) is retried: Postgres
-    * rolls the failed migration back, so a retry starts from where the last success left off. */
+    * Safe when several servers migrate databases of ONE cluster at the same moment (#828). Roles are cluster-global
+    * while migrations are per-database, and V011's `IF NOT EXISTS … CREATE ROLE` is a check-then-act: two fresh
+    * databases both pass the check and the second CREATE fails on the role-name index (V011 is applied and cannot
+    * change). So the role is created first by [[ensureRole]], which tolerates losing that race; and a migration that
+    * fails on a catalog-level collision ([[transient]] — e.g. two `ALTER ROLE … SET` on the same role) is retried:
+    * Postgres rolls the failed migration back, so a retry starts from where the last success left off.
+    */
   def run(ds: DataSource): String =
     ensureRole(ds, QueryRole)
     val _ = acceptReplacedChecksums(ds)
     retrying(MigrateAttempts)(flyway(ds).migrate())
     current(ds).getOrElse("?")
 
-  /** A migration whose text was replaced after it had run: the checksum Flyway recorded for the text
-    * it ran with, and the one it computes for the text it has now. */
-  private[db] final case class ReplacedMigration(version: String, ranWith: Int, now: Int)
+  /** A migration whose text was replaced after it had run: the checksum Flyway recorded for the text it ran with, and
+    * the one it computes for the text it has now.
+    */
+  final private[db] case class ReplacedMigration(version: String, ranWith: Int, now: Int)
 
-  /** V097's text was replaced by a no-op after it had run: what it rewrote stays rewritten, and the
-    * text it ran with named a value this repository does not carry. */
+  /** V097's text was replaced by a no-op after it had run: what it rewrote stays rewritten, and the text it ran with
+    * named a value this repository does not carry.
+    */
   private[db] val Replaced: List[ReplacedMigration] = List(ReplacedMigration("097", 579586107, -983827574))
 
-  /** Move each history row that still carries a [[Replaced]] migration's old checksum to the new one,
-    * so that Flyway validates the replaced text instead of refusing to start. Touches those rows only
-    * (no other repair Flyway would make); does nothing before the history table exists or once the
-    * rows are moved. Returns how many rows it moved. */
+  /** Move each history row that still carries a [[Replaced]] migration's old checksum to the new one, so that Flyway
+    * validates the replaced text instead of refusing to start. Touches those rows only (no other repair Flyway would
+    * make); does nothing before the history table exists or once the rows are moved. Returns how many rows it moved.
+    */
   private[db] def acceptReplacedChecksums(ds: DataSource): Int =
     val c = ds.getConnection
     try
@@ -96,17 +102,17 @@ object Migrate:
 
   private val RoleName = "^[a-z_][a-z0-9_]*$".r
 
-  /** Create login role `name` with V011's attributes unless it exists — race-free: a concurrent
-    * creator in another database of the cluster is not an error, and neither is an application role
-    * that may not create roles (V011 then says so, as it always did). Idempotent. */
+  /** Create login role `name` with V011's attributes unless it exists — race-free: a concurrent creator in another
+    * database of the cluster is not an error, and neither is an application role that may not create roles (V011 then
+    * says so, as it always did). Idempotent.
+    */
   def ensureRole(ds: DataSource, name: String): Unit =
     require(RoleName.matches(name), s"not a plain role name: $name")
     val c = ds.getConnection
     try
       val st = c.createStatement()
       try
-        val _ = st.execute(
-          s"""DO $$$$
+        val _ = st.execute(s"""DO $$$$
              |BEGIN
              |  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '$name') THEN
              |    CREATE ROLE $name LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION;
@@ -118,17 +124,19 @@ object Migrate:
       finally st.close()
     finally c.close()
 
-  /** SQLSTATEs of a collision with a concurrent writer of the same CLUSTER catalog row: a role
-    * created twice (`unique_violation`, `duplicate_object`), a serialization failure or a deadlock. */
+  /** SQLSTATEs of a collision with a concurrent writer of the same CLUSTER catalog row: a role created twice
+    * (`unique_violation`, `duplicate_object`), a serialization failure or a deadlock.
+    */
   private val TransientStates = Set("23505", "42710", "40001", "40P01")
 
-  /** Whether `e` (or a cause) is a collision with another session that a retry resolves — including
-    * Postgres's "tuple concurrently updated" (XX000), what two `ALTER ROLE … SET` on one role meet. */
+  /** Whether `e` (or a cause) is a collision with another session that a retry resolves — including Postgres's "tuple
+    * concurrently updated" (XX000), what two `ALTER ROLE … SET` on one role meet.
+    */
   def transient(e: Throwable): Boolean =
     Iterator.iterate(e)(_.getCause).takeWhile(_ != null).take(16).exists {
       case s: java.sql.SQLException =>
         TransientStates.contains(s.getSQLState) ||
-          (s.getSQLState == "XX000" && Option(s.getMessage).exists(_.contains("concurrently updated")))
+        (s.getSQLState == "XX000" && Option(s.getMessage).exists(_.contains("concurrently updated")))
       case _ => false
     }
 
@@ -137,37 +145,40 @@ object Migrate:
     @annotation.tailrec
     def go(n: Int): A =
       scala.util.Try(f) match
-        case scala.util.Success(a) => a
+        case scala.util.Success(a)                                 => a
         case scala.util.Failure(e) if n < attempts && transient(e) =>
-          scribe.warn(s"migration collided with a concurrent one (${e.getMessage.take(200)}); retry $n of ${attempts - 1}")
+          scribe.warn(
+            s"migration collided with a concurrent one (${e.getMessage.take(200)}); retry $n of ${attempts - 1}"
+          )
           Thread.sleep(100L * n + scala.util.Random.nextInt(100))
           go(n + 1)
         case scala.util.Failure(e) => throw e
     go(1)
 
-  /** Flyway `validate` — run after a restore (plan §1.10) to prove the dump we just loaded carries
-    * the schema this build expects. Right = the current version, Left = why validation failed. */
+  /** Flyway `validate` — run after a restore (plan §1.10) to prove the dump we just loaded carries the schema this
+    * build expects. Right = the current version, Left = why validation failed.
+    */
   def validate(ds: DataSource): Either[String, String] =
     val _ = acceptReplacedChecksums(ds)
     val r = flyway(ds).validateWithResult()
     if r.validationSuccessful then Right(current(ds).getOrElse("?"))
     else Left(Option(r.getAllErrorMessages).map(_.trim).filter(_.nonEmpty).getOrElse("schema validation failed"))
 
-  /** The schema version: the highest successfully applied versioned migration, as Flyway's
-    * `info().current()` reports it (`"050"`), or `None` before the first migration.
+  /** The schema version: the highest successfully applied versioned migration, as Flyway's `info().current()` reports
+    * it (`"050"`), or `None` before the first migration.
     *
-    * Read from `flyway_schema_history` directly, NOT through a Flyway instance (#880): `/api/health`
-    * asks for it on every call, and each Flyway build logged its long `Database: jdbc:…` line and the
-    * "PostgreSQL N is newer than this version of Flyway" warning — several times per start and
-    * once per health check. Flyway itself is now built only to migrate or validate. */
+    * Read from `flyway_schema_history` directly, NOT through a Flyway instance (#880): `/api/health` asks for it on
+    * every call, and each Flyway build logged its long `Database: jdbc:…` line and the "PostgreSQL N is newer than this
+    * version of Flyway" warning — several times per start and once per health check. Flyway itself is now built only to
+    * migrate or validate.
+    */
   def current(ds: DataSource): Option[String] =
     val c = ds.getConnection
     try
       if !historyExists(c) then None
       else
         // versions are dotted numbers (`050`, `1`): compared as int arrays, not as text
-        val st = c.prepareStatement(
-          """SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL
+        val st = c.prepareStatement("""SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL
             |ORDER BY string_to_array(version, '.')::int[] DESC LIMIT 1""".stripMargin)
         try
           val rs = st.executeQuery()
@@ -177,4 +188,5 @@ object Migrate:
 
   private def historyExists(c: java.sql.Connection): Boolean =
     val st = c.prepareStatement("SELECT to_regclass('flyway_schema_history') IS NOT NULL")
-    try { val rs = st.executeQuery(); rs.next() && rs.getBoolean(1) } finally st.close()
+    try { val rs = st.executeQuery(); rs.next() && rs.getBoolean(1) }
+    finally st.close()

@@ -9,12 +9,13 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.values.{EdgeKind, SourceStatus}
 
-/** The citation graph of one source, in a window: a force layout on a canvas, a legend and the
-  * hovered node as a [[SourceLink]].
+/** The citation graph of one source, in a window: a force layout on a canvas, a legend and the hovered node as a
+  * [[SourceLink]].
   *
-  * A Laminar component with a real lifecycle: the canvas follows a SIZE SIGNAL fed by one
-  * ResizeObserver, created on mount and disconnected on unmount (closing the window), together with
-  * the animation frame — nothing outlives the window, and nothing is added again per render. */
+  * A Laminar component with a real lifecycle: the canvas follows a SIZE SIGNAL fed by one ResizeObserver, created on
+  * mount and disconnected on unmount (closing the window), together with the animation frame — nothing outlives the
+  * window, and nothing is added again per render.
+  */
 object GraphPanel:
 
   def open(citekey: String): Unit =
@@ -24,15 +25,17 @@ object GraphPanel:
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
-  /** The legend: the statuses and edge kinds this graph actually uses, in their enums' order —
-    * typed, so a new kind is a compile-time decision, not a stray string. */
+  /** The legend: the statuses and edge kinds this graph actually uses, in their enums' order — typed, so a new kind is
+    * a compile-time decision, not a stray string.
+    */
   def legend(g: SourceGraph): (List[SourceStatus], List[EdgeKind]) =
     val statuses = g.nodes.map(_.status.getOrElse(SourceStatus.Unassessed)).toSet
-    val kinds    = g.links.flatMap(l => EdgeKind.fromWire(l.kind)).toSet
+    val kinds = g.links.flatMap(l => EdgeKind.fromWire(l.kind)).toSet
     (SourceStatus.values.toList.filter(statuses), EdgeKind.values.toList.filter(kinds))
 
-  /** Links as node-index pairs. Every link of a V026 graph joins two of its nodes, so none is lost;
-    * a link to a node the graph does not carry is dropped rather than drawn to nowhere. */
+  /** Links as node-index pairs. Every link of a V026 graph joins two of its nodes, so none is lost; a link to a node
+    * the graph does not carry is dropped rather than drawn to nowhere.
+    */
   def indexLinks(g: SourceGraph): List[(Int, Int, String)] =
     val idx = g.nodes.zipWithIndex.map((n, i) => n.id -> i).toMap
     g.links.flatMap(l => for s <- idx.get(l.source); t <- idx.get(l.target) yield (s, t, l.kind))
@@ -45,23 +48,26 @@ object GraphPanel:
     case Loaded(g: SourceGraph)
 
   def element(citekey: String): HtmlElement =
-    val state   = Var[Load](Load.Loading)
+    val state = Var[Load](Load.Loading)
     val hovered = Var(Option.empty[GraphNode])
     ApiClient.graph(citekey, Some(Depth)).onComplete {
       case scala.util.Success(g) =>
         state.set(Load.Loaded(g))
-        g.nodes.find(_.id == g.root).flatMap(_.title).filter(_.trim.nonEmpty)
+        g.nodes
+          .find(_.id == g.root)
+          .flatMap(_.title)
+          .filter(_.trim.nonEmpty)
           .foreach(t => WindowManager.retitle(WindowKey.Graph(citekey), s"Citation graph · $t"))
       case scala.util.Failure(e) => state.set(Load.Failed(e.getMessage))
     }
     div(
       cls := "graph-panel",
       child <-- state.signal.map {
-        case Load.Loading     => div(cls := "graph-loading", "loading graph…")
-        case Load.Failed(m)   => div(cls := "graph-empty", s"could not load the graph: $m")
+        case Load.Loading                      => div(cls := "graph-loading", "loading graph…")
+        case Load.Failed(m)                    => div(cls := "graph-empty", s"could not load the graph: $m")
         case Load.Loaded(g) if g.links.isEmpty =>
           div(cls := "graph-empty", "no citation edges between stored sources for this source")
-        case Load.Loaded(g)   =>
+        case Load.Loaded(g) =>
           div(cls := "graph-body", legendView(g), stage(g, hovered), info(hovered.signal))
       }
     )
@@ -71,9 +77,13 @@ object GraphPanel:
     div(
       cls := "graph-legend",
       statuses.map(s => span(cls := "graph-legend-item", StatusBadge(s))),
-      kinds.map(k => span(cls := "graph-legend-item",
-        span(cls := "graph-legend-color", styleAttr := s"--c:var(${Palette.edge(EdgeKind.wireOf(k))})"),
-        Wording.capitalize(Label.display(EdgeKind.wireOf(k)))))
+      kinds.map(k =>
+        span(
+          cls := "graph-legend-item",
+          span(cls := "graph-legend-color", styleAttr := s"--c:var(${Palette.edge(EdgeKind.wireOf(k))})"),
+          Wording.capitalize(Label.display(EdgeKind.wireOf(k)))
+        )
+      )
     )
 
   private def info(node: Signal[Option[GraphNode]]): HtmlElement =
@@ -82,13 +92,29 @@ object GraphPanel:
       child <-- node.map {
         case None    => span(cls := "muted", "hover a node · double-click opens it · drag to move · wheel to zoom")
         case Some(n) =>
-          span(SourceLink(n.id), " ", n.title.getOrElse(""), n.year.fold("")(y => s" ($y)"), " ",
-            n.status.fold(emptyNode)(s => StatusBadge(s)))
+          span(
+            SourceLink(n.id),
+            " ",
+            n.title.getOrElse(""),
+            n.year.fold("")(y => s" ($y)"),
+            " ",
+            n.status.fold(emptyNode)(s => StatusBadge(s))
+          )
       }
     )
 
-  private final case class SimNode(id: String, title: String, year: Option[Int], status: Option[SourceStatus],
-      depth: Int, var x: Double, var y: Double, var vx: Double, var vy: Double, var pinned: Boolean)
+  final private case class SimNode(
+      id: String,
+      title: String,
+      year: Option[Int],
+      status: Option[SourceStatus],
+      depth: Int,
+      var x: Double,
+      var y: Double,
+      var vx: Double,
+      var vy: Double,
+      var pinned: Boolean
+  )
 
   /** The canvas and its simulation. Everything mutable lives inside this one mount. */
   private def stage(g: SourceGraph, hovered: Var[Option[GraphNode]]): HtmlElement =
@@ -98,7 +124,7 @@ object GraphPanel:
       cls := "graph-stage",
       onMountUnmountCallbackWithState(
         mount = ctx =>
-          val host   = ctx.thisNode.ref
+          val host = ctx.thisNode.ref
           val canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
           canvas.className = "graph-canvas"
           host.appendChild(canvas)
@@ -112,39 +138,56 @@ object GraphPanel:
           Theme.changes.foreach(_ => sim.resized())(using ctx.owner)
           measure(())
           sim.start()
-          (obs, sim),
-        unmount = (_, st) => st.foreach { (obs, sim) =>
-          val _ = obs.disconnect()
-          sim.stop()
-        }
+          (obs, sim)
+        ,
+        unmount = (_, st) =>
+          st.foreach { (obs, sim) =>
+            val _ = obs.disconnect()
+            sim.stop()
+          }
       )
     )
 
-  /** The force layout and its drawing — the size is read from the signal on every frame instead of
-    * captured once at start, and world (0,0) is kept at the canvas centre. */
-  private final class Simulation(g: SourceGraph, canvas: dom.html.Canvas, size: () => (Double, Double),
-      hovered: Var[Option[GraphNode]]):
-    private val ctx   = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-    private val dpr   = dom.window.devicePixelRatio.max(1.0)
-    private val byId  = g.nodes.map(n => n.id -> n).toMap
+  /** The force layout and its drawing — the size is read from the signal on every frame instead of captured once at
+    * start, and world (0,0) is kept at the canvas centre.
+    */
+  final private class Simulation(
+      g: SourceGraph,
+      canvas: dom.html.Canvas,
+      size: () => (Double, Double),
+      hovered: Var[Option[GraphNode]]
+  ):
+    private val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+    private val dpr = dom.window.devicePixelRatio.max(1.0)
+    private val byId = g.nodes.map(n => n.id -> n).toMap
     private val links = indexLinks(g).toArray
     private val nodes: Array[SimNode] = g.nodes.zipWithIndex.map { (n, i) =>
       val angle = 2 * Math.PI * i / g.nodes.length.max(1)
-      val r     = if n.id == g.root then 0.0 else 100.0 + n.depth * 60.0
-      SimNode(n.id, n.title.getOrElse(n.id), n.year, n.status, n.depth,
-        r * Math.cos(angle), r * Math.sin(angle), 0, 0, n.id == g.root)
+      val r = if n.id == g.root then 0.0 else 100.0 + n.depth * 60.0
+      SimNode(
+        n.id,
+        n.title.getOrElse(n.id),
+        n.year,
+        n.status,
+        n.depth,
+        r * Math.cos(angle),
+        r * Math.sin(angle),
+        0,
+        0,
+        n.id == g.root
+      )
     }.toArray
     private val rootIdx = nodes.indexWhere(_.id == g.root)
 
     // `var`s: the animation and the view are mutable by nature; they live and die with this mount
     private var frameId = 0
-    private var ticks   = 0
+    private var ticks = 0
     private var running = false
-    private var drag    = Option.empty[Int]
-    private var hover   = Option.empty[Int]
-    private var panX    = 0.0
-    private var panY    = 0.0
-    private var zoom    = 1.0
+    private var drag = Option.empty[Int]
+    private var hover = Option.empty[Int]
+    private var panX = 0.0
+    private var panY = 0.0
+    private var zoom = 1.0
 
     private def w = size()._1.max(1.0)
     private def h = size()._2.max(1.0)
@@ -170,57 +213,76 @@ object GraphPanel:
 
     private def nodeAt(sx: Double, sy: Double): Option[Int] =
       val (wx, wy) = toWorld(sx, sy)
-      nodes.indices.map(i => i -> Math.hypot(nodes(i).x - wx, nodes(i).y - wy))
-        .filter(_._2 < 15.0 / zoom).minByOption(_._2).map(_._1)
+      nodes.indices
+        .map(i => i -> Math.hypot(nodes(i).x - wx, nodes(i).y - wy))
+        .filter(_._2 < 15.0 / zoom)
+        .minByOption(_._2)
+        .map(_._1)
 
     private def local(e: dom.MouseEvent): (Double, Double) =
       val r = canvas.getBoundingClientRect()
       (e.clientX - r.left, e.clientY - r.top)
 
     private def wire(): Unit =
-      canvas.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-        val (sx, sy) = local(e)
-        nodeAt(sx, sy).foreach { i =>
-          drag = Some(i)
-          nodes(i).pinned = true
-          canvas.setPointerCapture(e.pointerId)
+      canvas.addEventListener(
+        "pointerdown",
+        { (e: dom.PointerEvent) =>
+          val (sx, sy) = local(e)
+          nodeAt(sx, sy).foreach { i =>
+            drag = Some(i)
+            nodes(i).pinned = true
+            canvas.setPointerCapture(e.pointerId)
+          }
         }
-      })
-      canvas.addEventListener("pointermove", { (e: dom.PointerEvent) =>
-        val (sx, sy) = local(e)
-        drag match
-          case Some(i) =>
-            val (wx, wy) = toWorld(sx, sy)
-            nodes(i).x = wx; nodes(i).y = wy
-            restart()
-          case None =>
-            val prev = hover
-            hover = nodeAt(sx, sy)
-            if prev != hover then
-              hovered.set(hover.flatMap(i => byId.get(nodes(i).id)))
-              draw()
-            canvas.classList.toggle("hovering", hover.isDefined)
-      })
-      canvas.addEventListener("pointerup", { (_: dom.PointerEvent) =>
-        drag.foreach(i => nodes(i).pinned = i == rootIdx)
-        drag = None
-      })
-      canvas.addEventListener("dblclick", { (e: dom.MouseEvent) =>
-        val (sx, sy) = local(e)
-        nodeAt(sx, sy).foreach(i => ArticleModal.open(nodes(i).id))
-      })
-      canvas.addEventListener("wheel", { (e: dom.WheelEvent) =>
-        e.preventDefault()
-        val (sx, sy) = local(e)
-        val factor  = if e.deltaY > 0 then 0.9 else 1.1
-        val newZoom = (zoom * factor).max(0.2).min(5.0)
-        // keep the point under the cursor fixed
-        val (cx, cy) = (sx - w / 2, sy - h / 2)
-        panX = cx - (cx - panX) * (newZoom / zoom)
-        panY = cy - (cy - panY) * (newZoom / zoom)
-        zoom = newZoom
-        draw()
-      }, js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions])
+      )
+      canvas.addEventListener(
+        "pointermove",
+        { (e: dom.PointerEvent) =>
+          val (sx, sy) = local(e)
+          drag match
+            case Some(i) =>
+              val (wx, wy) = toWorld(sx, sy)
+              nodes(i).x = wx; nodes(i).y = wy
+              restart()
+            case None =>
+              val prev = hover
+              hover = nodeAt(sx, sy)
+              if prev != hover then
+                hovered.set(hover.flatMap(i => byId.get(nodes(i).id)))
+                draw()
+              canvas.classList.toggle("hovering", hover.isDefined)
+        }
+      )
+      canvas.addEventListener(
+        "pointerup",
+        { (_: dom.PointerEvent) =>
+          drag.foreach(i => nodes(i).pinned = i == rootIdx)
+          drag = None
+        }
+      )
+      canvas.addEventListener(
+        "dblclick",
+        { (e: dom.MouseEvent) =>
+          val (sx, sy) = local(e)
+          nodeAt(sx, sy).foreach(i => ArticleModal.open(nodes(i).id))
+        }
+      )
+      canvas.addEventListener(
+        "wheel",
+        { (e: dom.WheelEvent) =>
+          e.preventDefault()
+          val (sx, sy) = local(e)
+          val factor = if e.deltaY > 0 then 0.9 else 1.1
+          val newZoom = (zoom * factor).max(0.2).min(5.0)
+          // keep the point under the cursor fixed
+          val (cx, cy) = (sx - w / 2, sy - h / 2)
+          panX = cx - (cx - panX) * (newZoom / zoom)
+          panY = cy - (cy - panY) * (newZoom / zoom)
+          zoom = newZoom
+          draw()
+        },
+        js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions]
+      )
 
     private def restart(): Unit =
       ticks = 0
@@ -230,7 +292,7 @@ object GraphPanel:
       for i <- nodes.indices; j <- (i + 1) until nodes.length do
         val (a, b) = (nodes(i), nodes(j))
         val dx = a.x - b.x; val dy = a.y - b.y
-        val dist  = Math.hypot(dx, dy).max(1.0)
+        val dist = Math.hypot(dx, dy).max(1.0)
         val force = GL.repulsion / (dist * dist)
         val fx = dx / dist * force; val fy = dy / dist * force
         if !a.pinned then { a.vx += fx; a.vy += fy }
@@ -238,7 +300,7 @@ object GraphPanel:
       for (s, t, _) <- links do
         val (a, b) = (nodes(s), nodes(t))
         val dx = b.x - a.x; val dy = b.y - a.y
-        val dist  = Math.hypot(dx, dy).max(1.0)
+        val dist = Math.hypot(dx, dy).max(1.0)
         val force = GL.springK * (dist - GL.restLen)
         val fx = dx / dist * force; val fy = dy / dist * force
         if !a.pinned then { a.vx += fx; a.vy += fy }
@@ -293,7 +355,7 @@ object GraphPanel:
         ctx.fillStyle = ThemeTokens(Palette.edge(kind))
         ctx.fill()
       for i <- nodes.indices do
-        val n  = nodes(i)
+        val n = nodes(i)
         val on = hover.contains(i)
         ctx.beginPath()
         ctx.arc(n.x, n.y, radius(i), 0, 2 * Math.PI)

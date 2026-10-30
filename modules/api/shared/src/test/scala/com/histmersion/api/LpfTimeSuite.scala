@@ -1,8 +1,8 @@
 package com.histmersion.api
 
-
-/** The LPF reader's years and timespans (#1403). Shared: it runs on the JVM AND under Scala.js, so a
-  * regex the JS backend cannot compile (a look-behind) fails here rather than in the browser. */
+/** The LPF reader's years and timespans (#1403). Shared: it runs on the JVM AND under Scala.js, so a regex the JS
+  * backend cannot compile (a look-behind) fails here rather than in the browser.
+  */
 class LpfTimeSuite extends munit.FunSuite:
 
   private def json(s: String) = io.circe.parser.parse(s).toOption.get
@@ -34,23 +34,39 @@ class LpfTimeSuite extends munit.FunSuite:
     assertEquals(Lpf.parseYear("bc 300"), Some(-300L), "at the very start")
 
   test("parseWhen: timespans, fuzzy bounds, flat shape, widest span"):
-    assertEquals(when("""{"timespans":[{"start":{"in":"-1650"},"end":{"in":"-1180"}}]}"""),
-      Some(Span(Some(-1650), Some(-1180))))
-    assertEquals(when("""{"timespans":[{"start":{"earliest":"-2000","latest":"-1900"},"end":{"latest":"-1500"}}]}"""),
-      Some(Span(Some(-2000), Some(-1500))), "fuzzy bounds take the OUTER edge")
-    assertEquals(when("""{"timespans":[{"start":{"in":"-1200"},"end":{"in":"-1000"}},{"start":{"in":"-900"},"end":{"in":"-800"}}]}"""),
-      Some(Span(Some(-1200), Some(-800))), "several timespans → the widest span")
+    assertEquals(
+      when("""{"timespans":[{"start":{"in":"-1650"},"end":{"in":"-1180"}}]}"""),
+      Some(Span(Some(-1650), Some(-1180)))
+    )
+    assertEquals(
+      when("""{"timespans":[{"start":{"earliest":"-2000","latest":"-1900"},"end":{"latest":"-1500"}}]}"""),
+      Some(Span(Some(-2000), Some(-1500))),
+      "fuzzy bounds take the OUTER edge"
+    )
+    assertEquals(
+      when(
+        """{"timespans":[{"start":{"in":"-1200"},"end":{"in":"-1000"}},{"start":{"in":"-900"},"end":{"in":"-800"}}]}"""
+      ),
+      Some(Span(Some(-1200), Some(-800))),
+      "several timespans → the widest span"
+    )
     assertEquals(when("""{"start":"-300","end":"100"}"""), Some(Span(Some(-300), Some(100))))
     assertEquals(when("""{"start":"100","end":"-300"}"""), Some(Span(Some(-300), Some(100))), "inverted: swapped")
     assertEquals(when("\"-500\""), Some(Span(Some(-500), Some(-500))), "a bare year is that one year")
     assertEquals(when("""{}"""), None)
 
   test("parseWhen: a one-ended timespan stays open on its other side (#1403)"):
-    assertEquals(when("""{"timespans":[{"start":{"in":"-1400"}}]}"""), Some(Span(Some(-1400), None)),
-      "from 1400 BCE on — not the one year 1400 BCE")
+    assertEquals(
+      when("""{"timespans":[{"start":{"in":"-1400"}}]}"""),
+      Some(Span(Some(-1400), None)),
+      "from 1400 BCE on — not the one year 1400 BCE"
+    )
     assertEquals(when("""{"timespans":[{"end":{"in":"1769"}}]}"""), Some(Span(None, Some(1769))), "until 1769")
-    assertEquals(when("""{"timespans":[{"start":{"in":"-800"}},{"start":{"in":"-1200"},"end":{"in":"-1000"}}]}"""),
-      Some(Span(Some(-1200), None)), "the widest span: an open timespan opens the whole")
+    assertEquals(
+      when("""{"timespans":[{"start":{"in":"-800"}},{"start":{"in":"-1200"},"end":{"in":"-1000"}}]}"""),
+      Some(Span(Some(-1200), None)),
+      "the widest span: an open timespan opens the whole"
+    )
     assertEquals(when("""{"start":{"earliest":"-500","latest":"-450"}}"""), Some(Span(Some(-500), None)))
 
   test("an open side reaches the place, its names and relations, and renders back open"):
@@ -74,8 +90,13 @@ class LpfTimeSuite extends munit.FunSuite:
 
   test("properties.period with one side missing stays open too"):
     def per(props: String) =
-      Lpf.parse(s"""{"type":"FeatureCollection","features":[{"type":"Feature","properties":$props,"geometry":null}]}""")
-        .toOption.get.head.place.bounds
+      Lpf
+        .parse(s"""{"type":"FeatureCollection","features":[{"type":"Feature","properties":$props,"geometry":null}]}""")
+        .toOption
+        .get
+        .head
+        .place
+        .bounds
     assertEquals(per("""{"title":"a","periodStart":-1200}"""), (Some(-1200L), None))
     assertEquals(per("""{"title":"b","maxDate":-330}"""), (None, Some(-330L)))
     assertEquals(per("""{"title":"c","period":[-750,-330]}"""), (Some(-750L), Some(-330L)))

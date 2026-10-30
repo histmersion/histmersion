@@ -6,6 +6,7 @@ import com.histmersion.api.{ApiError, JobInfo}
 final class JobControlControllers(jobs: JobControlService):
 
   def control(id: String, action: String): Either[ApiError, JobInfo] =
-    JobAction.parse(action)
+    JobAction
+      .parse(action)
       .toRight(ApiError(s"unknown action '$action' — one of: ${JobAction.values.map(_.wire).mkString(", ")}"))
       .flatMap(jobs.control(id.trim, _))

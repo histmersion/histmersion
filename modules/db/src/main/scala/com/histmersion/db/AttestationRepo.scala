@@ -18,21 +18,27 @@ object AttestationRepo:
 
   // ── reads ───────────────────────────────────────────────────────────────────────────────────
 
-  def list(ds: DataSource, citekey: Option[String], targetType: Option[String],
-      targetId: Option[String], limit: Int, offset: Int): AttestationList =
+  def list(
+      ds: DataSource,
+      citekey: Option[String],
+      targetType: Option[String],
+      targetId: Option[String],
+      limit: Int,
+      offset: Int
+  ): AttestationList =
     val ck = citekey.map(_.trim).filter(_.nonEmpty)
     val tt = targetType.map(_.trim).filter(_.nonEmpty)
     val ti = targetId.map(_.trim).filter(_.nonEmpty)
     connect(ds):
       val total = sql"""SELECT count(*)::int FROM attestations a
-            WHERE (${ck}::text IS NULL OR a.citekey = ${ck})
-              AND (${tt}::text IS NULL OR a.target_type = ${tt})
-              AND (${ti}::text IS NULL OR a.target_id = ${ti})
+            WHERE ($ck::text IS NULL OR a.citekey = $ck)
+              AND ($tt::text IS NULL OR a.target_type = $tt)
+              AND ($ti::text IS NULL OR a.target_id = $ti)
             """.query[Int].run().head
       val rows = sql"""SELECT ${SqlLiteral(cols)} FROM attestations a
-            WHERE (${ck}::text IS NULL OR a.citekey = ${ck})
-              AND (${tt}::text IS NULL OR a.target_type = ${tt})
-              AND (${ti}::text IS NULL OR a.target_id = ${ti})
+            WHERE ($ck::text IS NULL OR a.citekey = $ck)
+              AND ($tt::text IS NULL OR a.target_type = $tt)
+              AND ($ti::text IS NULL OR a.target_id = $ti)
             ORDER BY a.id
             LIMIT ${limit.max(1)} OFFSET ${offset.max(0)}
             """.query[Attestation].run().toList
@@ -41,7 +47,9 @@ object AttestationRepo:
   def get(ds: DataSource, id: Long): Option[Attestation] =
     connect(ds):
       sql"""SELECT ${SqlLiteral(cols)} FROM attestations a WHERE a.id = $id"""
-        .query[Attestation].run().headOption
+        .query[Attestation]
+        .run()
+        .headOption
 
   // ── writes ──────────────────────────────────────────────────────────────────────────────────
 
@@ -61,7 +69,9 @@ object AttestationRepo:
                              ${in.ctsUrn}, ${in.note})
                      RETURNING id""".query[Long].run().head
       sql"""SELECT ${SqlLiteral(cols)} FROM attestations a WHERE a.id = $id"""
-        .query[Attestation].run().head
+        .query[Attestation]
+        .run()
+        .head
 
   def patch(ds: DataSource, id: Long, p: AttestationPatch): Either[ApiError, Attestation] =
     transact(ds):
@@ -79,8 +89,12 @@ object AttestationRepo:
         p.xywh.foreach(v => sql"UPDATE attestations SET xywh = $v WHERE id = $id".update.run())
         p.ctsUrn.foreach(v => sql"UPDATE attestations SET cts_urn = $v WHERE id = $id".update.run())
         p.note.foreach(v => sql"UPDATE attestations SET note = $v WHERE id = $id".update.run())
-        Right(sql"""SELECT ${SqlLiteral(cols)} FROM attestations a WHERE a.id = $id"""
-          .query[Attestation].run().head)
+        Right(
+          sql"""SELECT ${SqlLiteral(cols)} FROM attestations a WHERE a.id = $id"""
+            .query[Attestation]
+            .run()
+            .head
+        )
 
   def delete(ds: DataSource, id: Long): Boolean =
     transact(ds):

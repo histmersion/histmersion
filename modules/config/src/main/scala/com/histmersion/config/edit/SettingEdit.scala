@@ -6,8 +6,9 @@ enum SettingEdit(val key: SettingKey):
   case Unset(setting: SettingKey) extends SettingEdit(setting)
 
 object SettingEdit:
-  /** A change as a person or a client gives it — the key as typed, the value as typed and read as the setting's
-    * kind (`None`: take it out). An unknown key is left to [[SettingPolicy]], which refuses it by name. */
+  /** A change as a person or a client gives it — the key as typed, the value as typed and read as the setting's kind
+    * (`None`: take it out). An unknown key is left to [[SettingPolicy]], which refuses it by name.
+    */
   def parse(key: String, value: Option[String], schema: ConfigSchema): Either[SettingError, SettingEdit] =
     SettingKey.parse(key).left.map(SettingError.BadKey(_)).flatMap { k =>
       value match
@@ -23,8 +24,9 @@ object SettingEdit:
     @scala.annotation.tailrec
     def loop(rest: List[(String, Option[String])], acc: List[SettingEdit]): Either[SettingError, List[SettingEdit]] =
       rest match
-        case Nil => Right(acc.reverse)
-        case (k, v) :: tail => parse(k, v, schema) match
-          case Left(e)  => Left(e)
-          case Right(e) => loop(tail, e :: acc)
+        case Nil            => Right(acc.reverse)
+        case (k, v) :: tail =>
+          parse(k, v, schema) match
+            case Left(e)  => Left(e)
+            case Right(e) => loop(tail, e :: acc)
     if changes.isEmpty then Left(SettingError.BadKey("no change was given")) else loop(changes, Nil)

@@ -137,8 +137,7 @@ class FmtSuite extends munit.FunSuite:
   // ── esc ───────────────────────────────────────────────────────────────────────
 
   test("esc escapes HTML special characters") {
-    assertEquals(Fmt.esc("""<script>alert("xss")</script>"""),
-      "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;")
+    assertEquals(Fmt.esc("""<script>alert("xss")</script>"""), "&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;")
   }
 
   test("esc handles ampersand and apostrophe") {

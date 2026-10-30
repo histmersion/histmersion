@@ -42,8 +42,8 @@ class IronNewtypeToNewtypeSuite extends munit.FunSuite:
 
   test("no constraint runs while converting: the counted constraint's check count does not move") {
     val checksBefore = NonBlankCounted.checksRun.get()
-    val view         = source.transformInto[api.SourceView]
-    val partialView  = source.transformIntoPartial[api.SourceView]
+    val view = source.transformInto[api.SourceView]
+    val partialView = source.transformIntoPartial[api.SourceView]
     assertEquals(NonBlankCounted.checksRun.get(), checksBefore)
     assertEquals(view.tags, expectedView.tags)
     assertEquals(partialView.asOption, Some(expectedView))
@@ -88,5 +88,8 @@ class IronNewtypeToNewtypeSuite extends munit.FunSuite:
       plain.EntryView("anthony", plain.ScoreView(7), Vector("da"), Some(0.5))
     )
     val excerpt = domain.Excerpt(citekey("anthony2007"), domain.Note("steppe"))
-    assertEquals(excerpt.transformInto[api.ExcerptView], api.ExcerptView(apiCitekey("anthony2007"), api.NoteView("steppe")))
+    assertEquals(
+      excerpt.transformInto[api.ExcerptView],
+      api.ExcerptView(apiCitekey("anthony2007"), api.NoteView("steppe"))
+    )
   }

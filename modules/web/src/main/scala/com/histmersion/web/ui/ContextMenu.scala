@@ -4,20 +4,32 @@ import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
-/** The ONE menu of actions on a thing — a row, the reading pane, the map, the timeline: opened by a right
-  * click, by the keyboard's menu key or Shift+F10 on the thing, or by its "⋯" button. Every action in it is
-  * also somewhere a person can see; none is only here. One menu is open at a time; ↑ ↓ Home End move, Enter
-  * runs, Escape or Tab closes it and gives the focus back. */
+/** The ONE menu of actions on a thing — a row, the reading pane, the map, the timeline: opened by a right click, by the
+  * keyboard's menu key or Shift+F10 on the thing, or by its "⋯" button. Every action in it is also somewhere a person
+  * can see; none is only here. One menu is open at a time; ↑ ↓ Home End move, Enter runs, Escape or Tab closes it and
+  * gives the focus back.
+  */
 object ContextMenu:
 
   /** One action. `disabled`: shown, with why it cannot run now (`hint`). */
-  final case class Entry(label: String, run: () => Unit, disabled: Boolean = false, hint: Option[String] = None,
-      pressed: Option[Boolean] = None)
+  final case class Entry(
+      label: String,
+      run: () => Unit,
+      disabled: Boolean = false,
+      hint: Option[String] = None,
+      pressed: Option[Boolean] = None
+  )
 
   /** A line between groups of actions. */
   val Separator: Entry = Entry("", () => ())
 
-  private final case class Open(title: String, entries: List[Entry], x: Double, y: Double, back: Option[dom.HTMLElement])
+  final private case class Open(
+      title: String,
+      entries: List[Entry],
+      x: Double,
+      y: Double,
+      back: Option[dom.HTMLElement]
+  )
 
   private val open = Var(Option.empty[Open])
 
@@ -26,8 +38,9 @@ object ContextMenu:
   /** The menu key: the keyboard's own, or Shift+F10. Pure. */
   def isMenuKey(key: String, shift: Boolean): Boolean = key == "ContextMenu" || (shift && key == "F10")
 
-  /** Where a menu of `w`×`h` opened at (`x`, `y`) stands so that it stays inside a `vw`×`vh` viewport (with a
-    * margin), flipped to the other side of the point where it would not fit. Pure. */
+  /** Where a menu of `w`×`h` opened at (`x`, `y`) stands so that it stays inside a `vw`×`vh` viewport (with a margin),
+    * flipped to the other side of the point where it would not fit. Pure.
+    */
   def place(x: Double, y: Double, w: Double, h: Double, vw: Double, vh: Double, margin: Double = 8): (Double, Double) =
     val px = if x + w + margin > vw then math.max(margin, x - w) else x
     val py = if y + h + margin > vh then math.max(margin, y - h) else y
@@ -46,9 +59,11 @@ object ContextMenu:
     val r = el.getBoundingClientRect()
     show(title, entries, r.left, r.bottom + 2, Some(el))
 
-  /** Where a right click keeps the browser's own menu: in a text field, over selected text, on a link inside
-    * what is read (its "open in a new tab" and "copy link" are the link's, not the item's). */
-  private val NativeHere = "input, textarea, select, [contenteditable], .note-text a, .reading-links a, .reading-findings a, .detail-card a"
+  /** Where a right click keeps the browser's own menu: in a text field, over selected text, on a link inside what is
+    * read (its "open in a new tab" and "copy link" are the link's, not the item's).
+    */
+  private val NativeHere =
+    "input, textarea, select, [contenteditable], .note-text a, .reading-links a, .reading-findings a, .detail-card a"
 
   private def nativeWanted(ev: dom.MouseEvent): Boolean =
     val selected = scala.util.Try(dom.window.getSelection().toString.trim.nonEmpty).getOrElse(false)
@@ -72,19 +87,25 @@ object ContextMenu:
             ev.stopPropagation()
             val focused = Option(dom.document.activeElement).collect { case e: dom.HTMLElement => e }
             showUnder(focused.getOrElse(ev.currentTarget.asInstanceOf[dom.HTMLElement]), title, es)
-      })
+      }
+    )
 
   /** The visible way in: a "⋯" button that opens the same menu under itself. */
   def button(title: String, entries: () => List[Entry], extraCls: String = ""): HtmlElement =
-    L.button(typ := "button", cls := s"btn btn--icon btn--sm menu-btn $extraCls".trim, aria.label := title,
-      L.title := title, aria.hasPopup := true,
+    L.button(
+      typ := "button",
+      cls := s"btn btn--icon btn--sm menu-btn $extraCls".trim,
+      aria.label := title,
+      L.title := title,
+      aria.hasPopup := true,
       aria.expanded <-- open.signal.map(_.exists(_.title == title)),
       com.histmersion.web.Icon(com.histmersion.web.Icon.More),
       onClick --> { ev =>
         ev.stopPropagation()
         if open.now().exists(_.title == title) then close(returnFocus = false)
         else showUnder(ev.currentTarget.asInstanceOf[dom.HTMLElement], title, entries())
-      })
+      }
+    )
 
   private def items(menu: dom.Element): List[dom.HTMLElement] =
     val ns = menu.querySelectorAll("[role=menuitem]:not([disabled]), [role=menuitemcheckbox]:not([disabled])")
@@ -106,7 +127,7 @@ object ContextMenu:
       styleAttr := s"--menu-x:${o.x}px;--menu-y:${o.y}px",
       onMountCallback { ctx =>
         val el = ctx.thisNode.ref
-        val r  = el.getBoundingClientRect()
+        val r = el.getBoundingClientRect()
         val (x, y) = place(o.x, o.y, r.width, r.height, dom.window.innerWidth, dom.window.innerHeight)
         el.style.setProperty("--menu-x", s"${x}px")
         el.style.setProperty("--menu-y", s"${y}px")
@@ -117,9 +138,9 @@ object ContextMenu:
         if t.closest(".context-menu") == null && t.closest(".menu-btn") == null then close(returnFocus = false)
       },
       onKeyDown --> { ev =>
-        val el  = ev.currentTarget.asInstanceOf[dom.Element]
+        val el = ev.currentTarget.asInstanceOf[dom.Element]
         val all = items(el)
-        val at  = all.indexWhere(_ == dom.document.activeElement)
+        val at = all.indexWhere(_ == dom.document.activeElement)
         def go(i: Int): Unit = if all.nonEmpty then { ev.preventDefault(); all((i + all.size) % all.size).focus() }
         ev.key match
           case "ArrowDown" => go(at + 1)
@@ -146,6 +167,7 @@ object ContextMenu:
             onClick --> { _ =>
               close()
               e.run()
-            })
+            }
+          )
       }
     )

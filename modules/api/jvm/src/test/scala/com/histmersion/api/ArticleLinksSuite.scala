@@ -1,8 +1,8 @@
 package com.histmersion.api
 
-
-/** The wikilink graph (plan §5.2 stream 2.7). Pure: this is the function that decides what ends up
-  * in `article_links`, so every shape the existing wiki actually contains is pinned here. */
+/** The wikilink graph (plan §5.2 stream 2.7). Pure: this is the function that decides what ends up in `article_links`,
+  * so every shape the existing wiki actually contains is pinned here.
+  */
 class ArticleLinksSuite extends munit.FunSuite:
 
   private val sources = Set("cline2014_year", "haak2015_massive")
@@ -13,8 +13,10 @@ class ArticleLinksSuite extends munit.FunSuite:
     assertEquals(ArticleLinks.targets(body), List("sea_peoples", "cline2014_year"))
 
   test("backslash-escaped links (as timeline/deep_time.md writes them) are real links"):
-    assertEquals(ArticleLinks.targets("""a \[\[haak2015_massive\]\] b \[\[europe\]\]"""),
-      List("haak2015_massive", "europe"))
+    assertEquals(
+      ArticleLinks.targets("""a \[\[haak2015_massive\]\] b \[\[europe\]\]"""),
+      List("haak2015_massive", "europe")
+    )
 
   test("image embeds and anchor-only links are not links"):
     assertEquals(ArticleLinks.targets("![[migrations_timeline.png]] and [[#Source catalog|the catalog]]"), Nil)
@@ -32,7 +34,9 @@ class ArticleLinksSuite extends munit.FunSuite:
         ArticleLink(ArticleLinks.TargetSource, "cline2014_year"),
         ArticleLink(ArticleLinks.TargetArticle, "sea_peoples"),
         // citekey-shaped but not in the corpus: an article slug, i.e. a forward link, not a citation
-        ArticleLink(ArticleLinks.TargetArticle, "nobody2019_ghost")))
+        ArticleLink(ArticleLinks.TargetArticle, "nobody2019_ghost")
+      )
+    )
 
   test("citekey shape"):
     assert(ArticleLinks.isCitekeyShaped("haak2015_massive"))
@@ -48,15 +52,19 @@ class ArticleLinksSuite extends munit.FunSuite:
   test("resolveMarkdown sends citekeys to /source and everything else to /article"):
     assertEquals(
       ArticleLinks.resolveMarkdown("[[cline2014_year]] vs [[sea_peoples]]", isSource),
-      "[cline2014_year](/source/cline2014_year) vs [sea_peoples](/article/sea_peoples)")
+      "[cline2014_year](/source/cline2014_year) vs [sea_peoples](/article/sea_peoples)"
+    )
 
   test("resolveMarkdown keeps the label, drops the anchor, un-escapes"):
-    assertEquals(ArticleLinks.resolveMarkdown("[[cline2014_year|Cline 2014]]", isSource),
-      "[Cline 2014](/source/cline2014_year)")
-    assertEquals(ArticleLinks.resolveMarkdown("[[europe#Neolithic]]", isSource),
-      "[europe](/article/europe)")
-    assertEquals(ArticleLinks.resolveMarkdown("""\[\[haak2015_massive\]\]""", isSource),
-      "[haak2015_massive](/source/haak2015_massive)")
+    assertEquals(
+      ArticleLinks.resolveMarkdown("[[cline2014_year|Cline 2014]]", isSource),
+      "[Cline 2014](/source/cline2014_year)"
+    )
+    assertEquals(ArticleLinks.resolveMarkdown("[[europe#Neolithic]]", isSource), "[europe](/article/europe)")
+    assertEquals(
+      ArticleLinks.resolveMarkdown("""\[\[haak2015_massive\]\]""", isSource),
+      "[haak2015_massive](/source/haak2015_massive)"
+    )
 
   test("resolveMarkdown leaves embeds and non-links exactly as they were"):
     val md = "![[map.png]] and [[Not A Key]] and $5 [[#anchor|x]]"
@@ -66,7 +74,7 @@ class ArticleLinksSuite extends munit.FunSuite:
 class ArticleLinkResolutionSuite extends munit.FunSuite:
 
   private val corpus = Map("allentoft2015" -> "allentoft2015_population", "knapp2016" -> "knapp2016_seven")
-  private val slugs  = Set("bronze_age_collapse", "sea_peoples")
+  private val slugs = Set("bronze_age_collapse", "sea_peoples")
   private def href(t: String) = ArticleLinks.hrefFor(t, corpus.get, slugs.contains)
 
   test("a citekey alias resolves to the full source, not to an article slug"):

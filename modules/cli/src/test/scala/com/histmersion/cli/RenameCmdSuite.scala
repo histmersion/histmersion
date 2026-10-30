@@ -2,22 +2,29 @@ package com.histmersion.cli
 
 import com.monovore.decline.Command
 
-/** `histmersion rename <old> <new> [--json]`: the arguments parse, and a new citekey the server would
-  * refuse is a usage error here, before any request. */
+/** `histmersion rename <old> <new> [--json]`: the arguments parse, and a new citekey the server would refuse is a usage
+  * error here, before any request.
+  */
 class RenameCmdSuite extends munit.FunSuite:
 
   private val cmd = Command("rename", "test")(RenameCmd.args)
   private def parse(args: String*) = cmd.parse(args.toList, Map.empty)
 
   test("two positional citekeys, --json optional"):
-    assertEquals(parse("page2024_history", "page1959_history"),
-      Right(RenameCmd.Args("page2024_history", "page1959_history", json = false)))
-    assertEquals(parse("page2024_history", "page1959_history", "--json"),
-      Right(RenameCmd.Args("page2024_history", "page1959_history", json = true)))
+    assertEquals(
+      parse("page2024_history", "page1959_history"),
+      Right(RenameCmd.Args("page2024_history", "page1959_history", json = false))
+    )
+    assertEquals(
+      parse("page2024_history", "page1959_history", "--json"),
+      Right(RenameCmd.Args("page2024_history", "page1959_history", json = true))
+    )
 
   test("the new citekey is trimmed"):
-    assertEquals(parse("latacz2023_troy", " latacz2004_troy "),
-      Right(RenameCmd.Args("latacz2023_troy", "latacz2004_troy", json = false)))
+    assertEquals(
+      parse("latacz2023_troy", " latacz2004_troy "),
+      Right(RenameCmd.Args("latacz2023_troy", "latacz2004_troy", json = false))
+    )
 
   test("a missing argument is a usage error"):
     assert(parse("page2024_history").isLeft)
@@ -43,10 +50,14 @@ class RenameCmdSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("rename-prune")
     try
       List("old2020_a.md", "new1999_a.md", "keep2020_b.md").foreach(n => Files.writeString(dir.resolve(n), "x"))
-      val out = RenameCmd.pruneRenamed(dir, List(
-        SourceAlias("old2020_a", "new1999_a"),
-        SourceAlias("gone2020_c", "new1999_c"),       // no file: nothing to report
-        SourceAlias("../keep2020_b", "x2020_y")))     // not a citekey: never a path outside `dir`
+      val out = RenameCmd.pruneRenamed(
+        dir,
+        List(
+          SourceAlias("old2020_a", "new1999_a"),
+          SourceAlias("gone2020_c", "new1999_c"), // no file: nothing to report
+          SourceAlias("../keep2020_b", "x2020_y")
+        )
+      ) // not a citekey: never a path outside `dir`
       assertEquals(out, List(Right("old2020_a → new1999_a")))
       assert(!Files.exists(dir.resolve("old2020_a.md")))
       assert(Files.exists(dir.resolve("new1999_a.md")))

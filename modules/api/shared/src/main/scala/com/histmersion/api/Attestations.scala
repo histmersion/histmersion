@@ -5,22 +5,24 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.circe.Codec
 
-/** ATTESTATIONS (plan §1.3): granular source references linking entities to specific passages.
-  * W3C Web Annotation selectors (TextQuoteSelector, TextPositionSelector), page labels, IIIF
-  * canvas+xywh, CTS URNs, and source_chunks ordinals. */
+/** ATTESTATIONS (plan §1.3): granular source references linking entities to specific passages. W3C Web Annotation
+  * selectors (TextQuoteSelector, TextPositionSelector), page labels, IIIF canvas+xywh, CTS URNs, and source_chunks
+  * ordinals.
+  */
 
 // ── vocabulary ─────────────────────────────────────────────────────────────────────────────────
 
 object AttestationTarget:
-  val Finding     = "finding"
-  val Event       = "event"
+  val Finding = "finding"
+  val Event = "event"
   val EventDating = "event_dating"
-  val Place       = "place"
-  val Edge        = "edge"
+  val Place = "place"
+  val Edge = "edge"
   val all: List[String] = List(Finding, Event, EventDating, Place, Edge)
 
-  /** Pure: a target type a write may name (trimmed, any case), or why not — checked before the insert, so
-    * an unknown one is a 400 naming the five, never the table's check constraint (a 500, #3770). */
+  /** Pure: a target type a write may name (trimmed, any case), or why not — checked before the insert, so an unknown
+    * one is a 400 naming the five, never the table's check constraint (a 500, #3770).
+    */
   def check(t: String): Either[String, String] =
     val n = Option(t).getOrElse("").trim.toLowerCase
     Either.cond(all.contains(n), n, s"unknown target type '$t' (${all.mkString(", ")})")
@@ -67,6 +69,7 @@ final case class AttestationPut(
 
 object AttestationPut:
   given Schema[AttestationPut] = KindlingsSchema.derived[AttestationPut].schema
+
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AttestationPut] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPut])
 
@@ -86,6 +89,7 @@ final case class AttestationPatch(
 
 object AttestationPatch:
   given Schema[AttestationPatch] = KindlingsSchema.derived[AttestationPatch].schema
+
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AttestationPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPatch])
 

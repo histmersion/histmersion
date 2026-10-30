@@ -3,25 +3,49 @@ package com.histmersion.web
 import com.histmersion.api.*
 import com.histmersion.values.{Confidence, MediaRole, PlaceKind, SourceStatus}
 
-/** Every card kind leads with an icon from the one registry (#1449): sources by what they are, places
-  * by kind and site type, regions and polities a map, events their kind, articles and pictures theirs.
-  * And the map's clusters: what a bubble holds and says. Pure. */
+/** Every card kind leads with an icon from the one registry (#1449): sources by what they are, places by kind and site
+  * type, regions and polities a map, events their kind, articles and pictures theirs. And the map's clusters: what a
+  * bubble holds and says. Pure.
+  */
 class CardIconsSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()
 
-  private def src(doi: Option[String] = None, venue: Option[String] = None, provenance: Option[String] = None,
-      tags: List[String] = Nil) =
-    SourceDetail("zz2020", "Zz", Nil, Some(2020), venue, SourceStatus.Current, Nil, Nil, tags, None, None, None, doi, None,
-      provenance = provenance)
+  private def src(
+      doi: Option[String] = None,
+      venue: Option[String] = None,
+      provenance: Option[String] = None,
+      tags: List[String] = Nil
+  ) =
+    SourceDetail(
+      "zz2020",
+      "Zz",
+      Nil,
+      Some(2020),
+      venue,
+      SourceStatus.Current,
+      Nil,
+      Nil,
+      tags,
+      None,
+      None,
+      None,
+      doi,
+      None,
+      provenance = provenance
+    )
 
   test("every icon a card or a marker can name is in the registry"):
     val names = SourceKinds.all.flatMap(k => List(CardIcons.sourceKind(k), CardIcons.sourceKind(k, marker = true))) ++
-      PlaceKind.all.map(CardIcons.place(_, None)) ++ SiteTypes.all.map(t => CardIcons.place(PlaceKind.Site, Some(t.id))) ++
+      PlaceKind.all.map(CardIcons.place(_, None)) ++ SiteTypes.all.map(t =>
+        CardIcons.place(PlaceKind.Site, Some(t.id))
+      ) ++
       List(CardIcons.Article, CardIcons.Media, CardIcons.Unknown, CardIcons.siteMarker(None))
     assertEquals(names.filterNot(Glyphs.inner.contains), Nil)
 
-  test("a source's kind: thesis, dataset, book or chapter by ISBN DOI, paper by any other DOI, book by cover or provenance"):
+  test(
+    "a source's kind: thesis, dataset, book or chapter by ISBN DOI, paper by any other DOI, book by cover or provenance"
+  ):
     assertEquals(CardIcons.kindOf(src(tags = List("PhD-thesis"))), SourceKinds.Thesis)
     assertEquals(CardIcons.kindOf(src(venue = Some("Doctoral dissertation, Uppsala"))), SourceKinds.Thesis)
     assertEquals(CardIcons.kindOf(src(doi = Some("10.5061/dryad.abc"))), SourceKinds.Dataset)
@@ -59,10 +83,20 @@ class CardIconsSuite extends munit.FunSuite:
     assertEquals(Preview.card(s).icon, Some("file-text"))
     val cover = MediaThumb("u", MediaRole.Cover, "/m/u/thumb", "c")
     assertEquals(Preview.card(SourceWithFindings(src(), Nil, illustration = Some(cover))).icon, Some("book"))
-    val fort = PlaceDetail(PlaceSummary("zz_f", "Zz fort", PlaceKind.Site, None, None, None, "Zz fort"),
-      None, Nil, Nil, 0, None, siteType = Some("fortification"))
+    val fort = PlaceDetail(
+      PlaceSummary("zz_f", "Zz fort", PlaceKind.Site, None, None, None, "Zz fort"),
+      None,
+      Nil,
+      Nil,
+      0,
+      None,
+      siteType = Some("fortification")
+    )
     assertEquals(Preview.card(fort).icon, Some("castle"))
-    assertEquals(Preview.card(fort.copy(place = fort.place.copy(kind = PlaceKind.Polity), siteType = None)).icon, Some("map"))
+    assertEquals(
+      Preview.card(fort.copy(place = fort.place.copy(kind = PlaceKind.Polity), siteType = None)).icon,
+      Some("map")
+    )
     val art = ArticleView(ArticleRow("zz", "Zz", "concept", "", None, Nil, Nil, None, None), Nil, Nil)
     assertEquals(Preview.card(art).icon, Some(CardIcons.Article))
 
@@ -76,12 +110,24 @@ class CardIconsSuite extends munit.FunSuite:
   private def dot(k: DotKind, mid: Option[Double] = None) =
     Member(k, 1, mid.toList, Certainty.NoSay, entry = Some(DotEntry(k, k.toString, k.toString, "x", mid)))
   private def finds(hs: GeoHit*) =
-    Member(DotKind.Finding, hs.size, hs.toList.flatMap(MapView.midOf),
-      Certainty.ofAll(hs.map(_.confidence)), findings = hs.toList)
+    Member(
+      DotKind.Finding,
+      hs.size,
+      hs.toList.flatMap(MapView.midOf),
+      Certainty.ofAll(hs.map(_.confidence)),
+      findings = hs.toList
+    )
 
   test("a bubble counts every point, a findings' point by its findings, and says what it holds in a fixed order"):
-    val c = DotCluster.Contents(List(finds(hit(-1300, -1200), hit(-1250, -1250)),
-      dot(DotKind.Event), dot(DotKind.Site), dot(DotKind.Site), dot(DotKind.Media)))
+    val c = DotCluster.Contents(
+      List(
+        finds(hit(-1300, -1200), hit(-1250, -1250)),
+        dot(DotKind.Event),
+        dot(DotKind.Site),
+        dot(DotKind.Site),
+        dot(DotKind.Media)
+      )
+    )
     assertEquals(c.total, 6)
     assertEquals(DotCluster.summary(c), "2 findings · 2 sites · 1 event · 1 picture")
     assert(DotCluster.mixed(c))
@@ -97,13 +143,20 @@ class CardIconsSuite extends munit.FunSuite:
     assertEquals(MapView.rangeOf(c.mids), Some((-1600.0, -1250.0)))
     assert(MapView.gradientOf(c.mids, (-1700L, -1200L), c.certainty).startsWith("linear-gradient("))
     assertEquals(DotCluster.Contents(List(dot(DotKind.Site))).certainty, Certainty.NoSay)
-    assertEquals(DotCluster.Contents(List(finds(hit(1, 2, Confidence.Low)), dot(DotKind.Site))).certainty, Certainty.Stated(Confidence.Low))
+    assertEquals(
+      DotCluster.Contents(List(finds(hit(1, 2, Confidence.Low)), dot(DotKind.Site))).certainty,
+      Certainty.Stated(Confidence.Low)
+    )
     assertEquals(MapView.gradientOf(Nil, (0L, 1L), Certainty.NoSay), MapView.colorFor(None, (0L, 1L), Certainty.NoSay))
 
   test("a bubble's list: by kind, then by name"):
     val open: org.scalajs.dom.Element => Unit = _ => ()
-    val xs = List(DotEntry(DotKind.Event, "e", "b", "x", None), DotEntry(DotKind.Site, "s2", "Zeta", "x", None),
-      DotEntry(DotKind.Site, "s1", "alpha", "x", None), DotEntry(DotKind.Media, "m", "a", "x", None)).map(_ -> open)
+    val xs = List(
+      DotEntry(DotKind.Event, "e", "b", "x", None),
+      DotEntry(DotKind.Site, "s2", "Zeta", "x", None),
+      DotEntry(DotKind.Site, "s1", "alpha", "x", None),
+      DotEntry(DotKind.Media, "m", "a", "x", None)
+    ).map(_ -> open)
     assertEquals(DotCluster.ordered(xs).map(_._1.id), List("s1", "s2", "e", "m"))
 
   test("a dated span's middle"):
@@ -112,8 +165,13 @@ class CardIconsSuite extends munit.FunSuite:
 
   test("a bubble's markup: its count, its colours as data, and what it holds as its title and accessible name"):
     val h = DotCluster.bubbleHtml(5, 24, ("red", "blue"), "hdb1", "hd-cluster--mixed", Some("2 findings · 3 sites"))
-    assert(h.startsWith("""<span class="hd-dot hd-cluster hd-cluster--mixed" style="--d:24px;--fs:12px;--ring:5px;--g0:red;--g1:blue" """ +
-      """role="img" title="2 findings · 3 sites" aria-label="2 findings · 3 sites">"""), h)
+    assert(
+      h.startsWith(
+        """<span class="hd-dot hd-cluster hd-cluster--mixed" style="--d:24px;--fs:12px;--ring:5px;--g0:red;--g1:blue" """ +
+          """role="img" title="2 findings · 3 sites" aria-label="2 findings · 3 sites">"""
+      ),
+      h
+    )
     assert(h.endsWith("""<span class="hd-dot-count">5</span></span>"""), h)
     assert(h.contains("""<linearGradient id="hdb1"""") && h.contains("""fill="url(#hdb1)""""), h)
     // a single dot's bubble has no count; without words, no role
@@ -127,11 +185,14 @@ class CardIconsSuite extends munit.FunSuite:
     for n <- List(3, 42, 120) do
       val d = 2 * (5 + 4 + 3 * n.toString.length)
       val h = DotCluster.bubbleHtml(n, d, ("red", "blue"), "g", "", None)
-      val cs = circle.findAllMatchIn(h).map(m => (m.group(1), m.group(2).toDouble, m.group(3).toDouble, m.group(4).toDouble)).toList
+      val cs = circle
+        .findAllMatchIn(h)
+        .map(m => (m.group(1), m.group(2).toDouble, m.group(3).toDouble, m.group(4).toDouble))
+        .toList
       assertEquals(cs.map(_._1), List("hd-bubble-fill", "hd-bubble-line", "hd-bubble-coin", "hd-bubble-line"), h)
       val s = d + 2 * DotCluster.Ring
       assert(h.contains(s"""viewBox="0 0 $s $s""""), h)
-      cs.foreach((_, cx, cy, _) => { assertEquals(cx, s / 2.0); assertEquals(cy, s / 2.0) })
+      cs.foreach { (_, cx, cy, _) => assertEquals(cx, s / 2.0); assertEquals(cy, s / 2.0) }
       // the disc, a 1-px line, the 3-px coin, a 1-px line: radii out from the disc's edge, the last line
       // ending exactly at the ring's reach
       assertEquals(cs.map(_._4), List(d / 2.0, d / 2.0 + 0.5, d / 2.0 + 2.5, d / 2.0 + 4.5))
@@ -139,9 +200,18 @@ class CardIconsSuite extends munit.FunSuite:
 
   test("a bubble's outline (#1647): square for events only, tabbed with events among others, round otherwise"):
     assertEquals(DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), dot(DotKind.Event)))), BubbleForm.Events)
-    assertEquals(DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), finds(hit(1, 2))))), BubbleForm.WithEvents)
-    assertEquals(DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), dot(DotKind.Site)))), BubbleForm.WithEvents)
-    assertEquals(DotCluster.form(DotCluster.Contents(List(finds(hit(1, 2), hit(3, 4)), dot(DotKind.Site)))), BubbleForm.Round)
+    assertEquals(
+      DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), finds(hit(1, 2))))),
+      BubbleForm.WithEvents
+    )
+    assertEquals(
+      DotCluster.form(DotCluster.Contents(List(dot(DotKind.Event), dot(DotKind.Site)))),
+      BubbleForm.WithEvents
+    )
+    assertEquals(
+      DotCluster.form(DotCluster.Contents(List(finds(hit(1, 2), hit(3, 4)), dot(DotKind.Site)))),
+      BubbleForm.Round
+    )
     assertEquals(DotCluster.form(DotCluster.Contents(Nil)), BubbleForm.Round)
 
   test("an events bubble is a rounded square, its rings squares about the same centre; a mixed one carries a tab"):
@@ -155,9 +225,11 @@ class CardIconsSuite extends munit.FunSuite:
       val rs = rect.findAllMatchIn(h).map(m => (m.group(1), (2 to 6).map(i => m.group(i).toDouble))).toList
       assertEquals(rs.map(_._1), List("hd-bubble-fill", "hd-bubble-line", "hd-bubble-coin", "hd-bubble-line"), h)
       // every square centred on the box's centre, square, its corner rounding by its distance out
-      rs.foreach { case (_, Seq(x, y, w, ht, _)) =>
-        assertEquals(x + w / 2, s / 2.0); assertEquals(y + ht / 2, s / 2.0); assertEquals(w, ht)
-      case other => fail(other.toString) }
+      rs.foreach {
+        case (_, Seq(x, y, w, ht, _)) =>
+          assertEquals(x + w / 2, s / 2.0); assertEquals(y + ht / 2, s / 2.0); assertEquals(w, ht)
+        case other => fail(other.toString)
+      }
       assertEquals(rs.map(_._2(2)), List(d.toDouble, d + 1.0, d + 5.0, d + 9.0))
       assertEquals(rs.map(_._2(4)), List(4.0, 4.5, 6.5, 8.5))
       // the outer line ends exactly at the rings' reach, as the round bubble's does
@@ -166,7 +238,12 @@ class CardIconsSuite extends munit.FunSuite:
     assert(mixed.startsWith("""<span class="hd-dot hd-cluster hd-cluster--with-events hd-cluster--mixed" """), mixed)
     assertEquals("""<circle """.r.findAllMatchIn(mixed).size, 4, mixed)
     val s = 24 + 2 * DotCluster.Ring
-    assert(mixed.contains(s"""<rect class="hd-bubble-tab" x="${s - DotCluster.Tab - 0.5}" y="0.5" width="${DotCluster.Tab}""""), mixed)
+    assert(
+      mixed.contains(
+        s"""<rect class="hd-bubble-tab" x="${s - DotCluster.Tab - 0.5}" y="0.5" width="${DotCluster.Tab}""""
+      ),
+      mixed
+    )
     // the round bubble is what it was: no tab, no square
     val round = DotCluster.bubbleHtml(4, 24, ("red", "blue"), "r", "", None)
     assert(!round.contains("<rect") && round.startsWith("""<span class="hd-dot hd-cluster" """), round)
@@ -189,5 +266,8 @@ class CardIconsSuite extends munit.FunSuite:
     assertEquals(MapView.clusterRadius(10, List((24, 24), (34, 34))), 34)
     assertEquals(MapView.clusterRadius(18, Nil), 36)
     // the map's own markers: none is wider than the bubbles' reach, so two drawn apart never overlap
-    assert(PointKinds.all.forall(k => k.box._1 <= MapView.clusterRadius(18, Nil) && k.box._2 <= MapView.clusterRadius(18, Nil)))
-
+    assert(
+      PointKinds.all.forall(k =>
+        k.box._1 <= MapView.clusterRadius(18, Nil) && k.box._2 <= MapView.clusterRadius(18, Nil)
+      )
+    )

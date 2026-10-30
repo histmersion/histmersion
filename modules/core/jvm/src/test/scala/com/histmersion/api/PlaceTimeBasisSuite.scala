@@ -6,13 +6,17 @@ import com.histmersion.config.given
 import com.histmersion.domain.given
 import com.histmersion.values.PlaceKind
 
-
 /** The time rule of the place views (2026-10-09): on what ground a view at a time shows a place. */
 class PlaceTimeBasisSuite extends munit.FunSuite:
   import PlaceTimeBasis.*
 
-  private def of(kind: String, modern: Boolean = false, imported: Boolean = false, undated: Boolean = false,
-      geometry: Boolean = true) = PlaceTimeBasis.of(kind, modern, imported, undated, geometry)
+  private def of(
+      kind: String,
+      modern: Boolean = false,
+      imported: Boolean = false,
+      undated: Boolean = false,
+      geometry: Boolean = true
+  ) = PlaceTimeBasis.of(kind, modern, imported, undated, geometry)
 
   test("a dated place, also one whose unknown start is a stored window, is judged by its period"):
     assertEquals(of(PlaceKind.Site), Dated)

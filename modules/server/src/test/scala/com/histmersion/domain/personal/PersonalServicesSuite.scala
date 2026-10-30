@@ -9,25 +9,35 @@ import com.augustnagro.magnum.*
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 
-/** Bookmarks, notes and read marks behave the same in memory and in the database (a scratch database of its
-  * own, gated on HISTMERSION_TEST_DB_URL): the same scenario runs over both. */
+/** Bookmarks, notes and read marks behave the same in memory and in the database (a scratch database of its own, gated
+  * on HISTMERSION_TEST_DB_URL): the same scenario runs over both.
+  */
 class PersonalServicesSuite extends com.histmersion.db.DbSuite:
 
   private val t0 = Instant.parse("2026-10-30T12:00:00.123456789Z")
   private def at(min: Int): Instant = t0.plusSeconds(min * 60L)
-  private val me    = UserId.Local
+  private val me = UserId.Local
   private val other = UserId("someone-else")
 
   /** The three services over one store, and how an item of the collection is added to it. */
-  private final case class World(bookmarks: BookmarkService, notes: NoteService, reading: ReadingService,
-      addSource: (String, String) => Unit, renameSource: (String, String) => Unit)
+  final private case class World(
+      bookmarks: BookmarkService,
+      notes: NoteService,
+      reading: ReadingService,
+      addSource: (String, String) => Unit,
+      renameSource: (String, String) => Unit
+  )
 
   private def inMemory: World =
     val state = AtomicReference(PersonalState())
     val reading = ReadingService.InMemory(state)
-    World(BookmarkService.InMemory(state), NoteService.InMemory(state), reading,
+    World(
+      BookmarkService.InMemory(state),
+      NoteService.InMemory(state),
+      reading,
       (ck, title) => reading.addItem(UnreadRow(ItemKind.Source, ItemKey(ck), title)),
-      (ck, title) => reading.addItem(UnreadRow(ItemKind.Source, ItemKey(ck), title)))
+      (ck, title) => reading.addItem(UnreadRow(ItemKind.Source, ItemKey(ck), title))
+    )
 
   private val testDb = com.histmersion.db.TestDb.url
   private lazy val scratch = ScratchDatabases("personal", AppConfig.load().db.copy(url = testDb.get))
@@ -35,9 +45,13 @@ class PersonalServicesSuite extends com.histmersion.db.DbSuite:
 
   private def onDatabase(name: String): World =
     val ds = scratch(name)
-    World(BookmarkService(ds), NoteService(ds), ReadingService(ds),
+    World(
+      BookmarkService(ds),
+      NoteService(ds),
+      ReadingService(ds),
       (ck, title) => connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES ($ck, $title)".update.run(): Unit),
-      (ck, title) => connect(ds)(sql"UPDATE sources SET title = $title WHERE citekey = $ck".update.run(): Unit))
+      (ck, title) => connect(ds)(sql"UPDATE sources SET title = $title WHERE citekey = $ck".update.run(): Unit)
+    )
 
   private def both(name: String)(body: World => Unit): Unit =
     test(s"$name (in memory)")(body(inMemory))
@@ -46,8 +60,13 @@ class PersonalServicesSuite extends com.histmersion.db.DbSuite:
       body(onDatabase(name.toLowerCase.replaceAll("[^a-z]+", "_").take(30)))
     }
 
-  private val point = Target(ItemKind.Point, lat = Some(Latitude(37.73)), lon = Some(Longitude(22.75)),
-    from = Some(Year(-1300)), to = Some(Year(-1100)))
+  private val point = Target(
+    ItemKind.Point,
+    lat = Some(Latitude(37.73)),
+    lon = Some(Longitude(22.75)),
+    from = Some(Year(-1300)),
+    to = Some(Year(-1100))
+  )
 
   both("an item is bookmarked once; a renamed source keeps its bookmark and shows its new title") { w =>
     w.addSource("zz_pers_a", "Zz the first title")
@@ -61,10 +80,17 @@ class PersonalServicesSuite extends com.histmersion.db.DbSuite:
     assertEquals(w.bookmarks.list(other, None, Nil, 10), Nil)
   }
 
-  both("an item the collection does not hold keeps the name it was bookmarked with; views and points are each their own") { w =>
+  both(
+    "an item the collection does not hold keeps the name it was bookmarked with; views and points are each their own"
+  ) { w =>
     w.bookmarks.add(me, Target.item(ItemKind.Place, "zz_place_1"), None, Some("Zz Tiryns"), at(0))
-    val v = Target(ItemKind.View, lat = Some(Latitude(37.6)), lon = Some(Longitude(22.8)), zoom = Some(MapZoom(7.5)),
-      view = Some(ViewState("from=-1300&to=-1100&tag=zz")))
+    val v = Target(
+      ItemKind.View,
+      lat = Some(Latitude(37.6)),
+      lon = Some(Longitude(22.8)),
+      zoom = Some(MapZoom(7.5)),
+      view = Some(ViewState("from=-1300&to=-1100&tag=zz"))
+    )
     w.bookmarks.add(me, v, Some(BookmarkLabel("Argolid")), None, at(1))
     w.bookmarks.add(me, v, Some(BookmarkLabel("Argolid again")), None, at(2))
     w.bookmarks.add(me, point, None, None, at(3))
@@ -90,7 +116,8 @@ class PersonalServicesSuite extends com.histmersion.db.DbSuite:
 
   both("notes: left on an item and on a point, edited with the time last seen, removed") { w =>
     w.addSource("zz_pers_n", "Zz noted source")
-    val n1 = w.notes.add(me, Target.item(ItemKind.Source, "zz_pers_n"), NoteText("Compare with **Langgut**."), None, at(0))
+    val n1 =
+      w.notes.add(me, Target.item(ItemKind.Source, "zz_pers_n"), NoteText("Compare with **Langgut**."), None, at(0))
     val n2 = w.notes.add(me, point, NoteText("Bridge here?"), None, at(1))
     assertEquals(n1.title, "Zz noted source")
     assertEquals(n2.title, "Place on the map")
@@ -101,8 +128,10 @@ class PersonalServicesSuite extends com.histmersion.db.DbSuite:
     assertEquals(n1.updatedAt, "2026-10-30T12:00:00.123456Z")
     val edited = w.notes.edit(me, n1.id, NoteText("Changed."), Some(n1.updatedAt), at(5))
     assertEquals(edited.map(_.text.value.toString), Right("Changed."))
-    assertEquals(w.notes.edit(me, n1.id, NoteText("Stale."), Some(n1.updatedAt), at(6)),
-      Left(NoteEditRefused.Changed(edited.toOption.get.updatedAt)))
+    assertEquals(
+      w.notes.edit(me, n1.id, NoteText("Stale."), Some(n1.updatedAt), at(6)),
+      Left(NoteEditRefused.Changed(edited.toOption.get.updatedAt))
+    )
     assertEquals(w.notes.list(me, None, None, Nil, 10).map(_.id), List(n1.id, n2.id))
     assertEquals(w.notes.remove(me, n1.id, at(7)).map(_.text.value.toString), Some("Changed."))
     assertEquals(w.notes.get(me, n1.id), None)
@@ -122,8 +151,10 @@ class PersonalServicesSuite extends com.histmersion.db.DbSuite:
     assertEquals(w.reading.list(me, None, ReadingShow.Read, 10).flatMap(_.readAt), List("2026-10-30T12:01:00.123456Z"))
     val zz = w.reading.unread(me, ItemKind.Source, 10, 0)
     assertEquals(zz.rows.map(_.id.value).filter(_.startsWith("zz_r_")), List("zz_r_a", "zz_r_c"))
-    assertEquals(w.reading.unread(other, ItemKind.Source, 10, 0).rows.map(_.id.value).filter(_.startsWith("zz_r_")),
-      List("zz_r_a", "zz_r_b", "zz_r_c"))
+    assertEquals(
+      w.reading.unread(other, ItemKind.Source, 10, 0).rows.map(_.id.value).filter(_.startsWith("zz_r_")),
+      List("zz_r_a", "zz_r_b", "zz_r_c")
+    )
     w.reading.setRead(me, ItemKind.Source, ItemKey("zz_r_b"), read = false, None, at(3))
     assertEquals(w.reading.list(me, None, ReadingShow.Read, 10), Nil)
     assertEquals(w.reading.list(me, None, ReadingShow.Opened, 10).map(_.id.value), List("zz_r_b"))

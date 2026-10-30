@@ -2,22 +2,40 @@ package com.histmersion.api
 
 import com.histmersion.values.{Confidence, SourceStatus}
 
-
 /** [[Markdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */
 class MarkdownSuite extends munit.FunSuite:
 
   private val detail = SourceDetail(
-    citekey = "cline2014_collapse", title = "1177 BC", authors = List("Eric H. Cline"), year = Some(2014),
-    venue = Some("PUP"), status = SourceStatus.Current, topics = List("collapse"), regions = List("Levant"),
-    tags = List("sea-peoples"), periodStart = Some(-1300), periodEnd = Some(-1100),
-    summary = Some("Systems collapse."), doi = Some("10.1/x"), ocrMarkdown = Some("BODY TEXT"))
+    citekey = "cline2014_collapse",
+    title = "1177 BC",
+    authors = List("Eric H. Cline"),
+    year = Some(2014),
+    venue = Some("PUP"),
+    status = SourceStatus.Current,
+    topics = List("collapse"),
+    regions = List("Levant"),
+    tags = List("sea-peoples"),
+    periodStart = Some(-1300),
+    periodEnd = Some(-1100),
+    summary = Some("Systems collapse."),
+    doi = Some("10.1/x"),
+    ocrMarkdown = Some("BODY TEXT")
+  )
 
-  private val finding = FindingRow("Ugarit destroyed", Some("Ugarit"), Some(35.78), Some(35.6),
-    Some(-1200), Some(-1180), None, List("destruction"), Some(Confidence.High))
+  private val finding = FindingRow(
+    "Ugarit destroyed",
+    Some("Ugarit"),
+    Some(35.78),
+    Some(35.6),
+    Some(-1200),
+    Some(-1180),
+    None,
+    List("destruction"),
+    Some(Confidence.High)
+  )
 
   test("notes are rendered under a Notes heading, after the summary and before the findings"):
-    val md = Markdown.source(detail.copy(notes = Some("  Our article about it.  ")),
-      Vector(finding), fullText = false)
+    val md = Markdown.source(detail.copy(notes = Some("  Our article about it.  ")), Vector(finding), fullText = false)
     assert(md.contains("## Notes\n\nOur article about it."), md)
     assert(md.indexOf("Systems collapse.") < md.indexOf("## Notes"), md)
     assert(md.indexOf("## Notes") < md.indexOf("## Findings (1)"), md)
@@ -41,8 +59,19 @@ class MarkdownSuite extends munit.FunSuite:
     assert(md.contains("**DOI:** 10.1/x"), md)
 
   test("searchResults(SearchResult) renders the FTS snippet quote line with its heading"):
-    val hit = SearchHit("k1_a", "T", Some(2020), SourceStatus.Current, Nil, Nil, None, None, Some("sum"),
-      snippet = Some("…the **Uluburun** wreck…"), matchedHeading = Some("CHAPTER 3"))
+    val hit = SearchHit(
+      "k1_a",
+      "T",
+      Some(2020),
+      SourceStatus.Current,
+      Nil,
+      Nil,
+      None,
+      None,
+      Some("sum"),
+      snippet = Some("…the **Uluburun** wreck…"),
+      matchedHeading = Some("CHAPTER 3")
+    )
     val md = Markdown.searchResults(SearchResult(1, List(Hit(hit, Nil, List("full text matches 'x'")))))
     assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)
 
@@ -115,14 +144,27 @@ class MarkdownSuite extends munit.FunSuite:
 class MarkdownHopsSuite extends munit.FunSuite:
 
   private val src = SourceDetail(
-    citekey = "x2020_y", title = "T", authors = List("A"), year = Some(2020), venue = None,
-    status = SourceStatus.Current, topics = List("steppe", "migration"), regions = List("anatolia"), tags = List("sea_peoples"),
-    periodStart = Some(-1500), periodEnd = Some(-1200), summary = None, doi = None,
-    ocrMarkdown = None)
+    citekey = "x2020_y",
+    title = "T",
+    authors = List("A"),
+    year = Some(2020),
+    venue = None,
+    status = SourceStatus.Current,
+    topics = List("steppe", "migration"),
+    regions = List("anatolia"),
+    tags = List("sea_peoples"),
+    periodStart = Some(-1500),
+    periodEnd = Some(-1200),
+    summary = None,
+    doi = None,
+    ocrMarkdown = None
+  )
 
   test("chipLinks points at the web UI hash keys the UI actually reads"):
-    assertEquals(Markdown.chipLinks("steppe, migration", "topic"),
-      "[steppe](/#topic=steppe), [migration](/#topic=migration)")
+    assertEquals(
+      Markdown.chipLinks("steppe, migration", "topic"),
+      "[steppe](/#topic=steppe), [migration](/#topic=migration)"
+    )
 
   test("chipLinks encodes a value that needs it"):
     assert(Markdown.chipLinks("near east", "tag").contains("(/#tag=near%20east)"))
@@ -143,8 +185,15 @@ class MarkdownHopsSuite extends munit.FunSuite:
     val rows = Vector(
       NeighborRow("out", "challenges", "cline2014_year", Some("1177 BC"), Some(SourceStatus.Current)),
       NeighborRow("in", "references", "drews1993_end", Some("The End of the Bronze Age")),
-      NeighborRow("out", "updates", "bronze_age_collapse", Some("Bronze Age collapse"), target = NeighborTarget.Article),
-      NeighborRow("out", "refutes", "ghost2019_absent", None, target = NeighborTarget.Unresolved))
+      NeighborRow(
+        "out",
+        "updates",
+        "bronze_age_collapse",
+        Some("Bronze Age collapse"),
+        target = NeighborTarget.Article
+      ),
+      NeighborRow("out", "refutes", "ghost2019_absent", None, target = NeighborTarget.Unresolved)
+    )
     val out = Markdown.neighbors("x2020_y", rows)
     assert(out.contains("**Outgoing (this → other)**\n- _challenges_ → [[cline2014_year]] — 1177 BC _(current)_"), out)
     assert(out.contains("**Incoming (other → this)**\n- _references_ → [[drews1993_end]]"), out)

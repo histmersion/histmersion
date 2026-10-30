@@ -1,7 +1,8 @@
 package com.histmersion.server.basemap
 
-/** Terrarium PNGs: what the encoder writes is a PNG any reader takes, with the elevation in its pixels, and
-  * the decoder reads it back. */
+/** Terrarium PNGs: what the encoder writes is a PNG any reader takes, with the elevation in its pixels, and the decoder
+  * reads it back.
+  */
 class TerrariumPngSuite extends munit.FunSuite:
 
   private val size = 16
@@ -22,7 +23,11 @@ class TerrariumPngSuite extends munit.FunSuite:
     metres.indices.foreach(i => assertEqualsDouble(back(i).toDouble, metres(i).toDouble, 1.0 / 256))
     assert(TerrariumPng.decode("PNG0/0/0".getBytes).isLeft)
     val grey = java.io.ByteArrayOutputStream()
-    javax.imageio.ImageIO.write(java.awt.image.BufferedImage(4, 4, java.awt.image.BufferedImage.TYPE_BYTE_GRAY), "png", grey)
+    javax.imageio.ImageIO.write(
+      java.awt.image.BufferedImage(4, 4, java.awt.image.BufferedImage.TYPE_BYTE_GRAY),
+      "png",
+      grey
+    )
     assert(TerrariumPng.decode(grey.toByteArray).left.exists(_.contains("colour type 0")))
 
   test("decoded: every PNG row filter (an image writer's RGB tile)"):

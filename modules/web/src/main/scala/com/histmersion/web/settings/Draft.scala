@@ -3,8 +3,9 @@ package com.histmersion.web.settings
 import com.histmersion.api.ConfigEdit
 import com.raquo.laminar.api.L.*
 
-/** The changes a Settings form holds before they are saved: each key's text to write, or `None` to take the
-  * setting out of the file (back to its default). */
+/** The changes a Settings form holds before they are saved: each key's text to write, or `None` to take the setting out
+  * of the file (back to its default).
+  */
 final class Draft:
   private val held = Var(Map.empty[String, Option[String]])
 

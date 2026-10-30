@@ -5,9 +5,10 @@ import com.monovore.decline.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 
-/** The shared [[Filter]] flags (plan §1.0): ONE definition, on every command that takes the filter —
-  * `search`, `facets`, `histogram`, `geo-when`, `article list`, `events search`. An object of its own
-  * so every command object can reach it without depending on another's initialisation order. */
+/** The shared [[Filter]] flags (plan §1.0): ONE definition, on every command that takes the filter — `search`,
+  * `facets`, `histogram`, `geo-when`, `article list`, `events search`. An object of its own so every command object can
+  * reach it without depending on another's initialisation order.
+  */
 object FilterFlags:
   // what each flag means is FilterDocs' (the REST parameters and the MCP tool inputs read it too)
   private def many(p: FilterDocs.Param) = Opts.options[String](p.rest, s"${p.doc} (repeatable)").orEmpty
@@ -29,8 +30,28 @@ object FilterFlags:
     Opts.option[Int](FilterDocs.offset.rest, FilterDocs.offset.doc).orNone,
     Opts.option[String](FilterDocs.title.rest, FilterDocs.title.doc).orNone,
     Opts.option[String](FilterDocs.goal.rest, FilterDocs.goal.doc).orNone
-  ).mapN { (tags, authors, places, topics, status, yearFrom, yearTo, from, to, bbox, sort, limit, offset, title, goal) =>
-    val b = bbox.flatMap(BBox.parse)
-    Filter.of(None, tags, authors, places, topics, status, yearFrom, yearTo, from, to,
-      b.map(_.minLon), b.map(_.minLat), b.map(_.maxLon), b.map(_.maxLat), sort, limit, offset, title, goal)
+  ).mapN {
+    (tags, authors, places, topics, status, yearFrom, yearTo, from, to, bbox, sort, limit, offset, title, goal) =>
+      val b = bbox.flatMap(BBox.parse)
+      Filter.of(
+        None,
+        tags,
+        authors,
+        places,
+        topics,
+        status,
+        yearFrom,
+        yearTo,
+        from,
+        to,
+        b.map(_.minLon),
+        b.map(_.minLat),
+        b.map(_.maxLon),
+        b.map(_.maxLat),
+        sort,
+        limit,
+        offset,
+        title,
+        goal
+      )
   }

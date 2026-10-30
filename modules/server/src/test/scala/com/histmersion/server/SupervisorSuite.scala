@@ -16,34 +16,52 @@ class SupervisorSuite extends munit.FunSuite:
   private def env(m: (String, String)*): String => Option[String] = m.toMap.get
 
   test("home defaults to the directory above the executable's bin/"):
-    val l = Supervisor.layout(rc(), Some(Path.of("/opt/histmersion/bin/histmersion-server")), env("HOME" -> "/Users/u"), "Mac OS X")
+    val l = Supervisor.layout(
+      rc(),
+      Some(Path.of("/opt/histmersion/bin/histmersion-server")),
+      env("HOME" -> "/Users/u"),
+      "Mac OS X"
+    )
     assertEquals(l.map(_.home), Right(Path.of("/opt/histmersion")))
     assertEquals(l.map(_.pgBin), Right(Path.of("/opt/histmersion/pg/bin")))
     assertEquals(l.map(_.python), Right(Path.of("/opt/histmersion/converter/python/bin/python3")))
 
   test("data defaults per platform: Application Support on macOS, XDG on Linux"):
     val exe = Some(Path.of("/b/bin/x"))
-    assertEquals(Supervisor.layout(rc(), exe, env("HOME" -> "/Users/u"), "Mac OS X").map(_.data),
-      Right(Path.of("/Users/u/Library/Application Support/Histmersion")))
-    assertEquals(Supervisor.layout(rc(), exe, env("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xdg"), "Linux").map(_.data),
-      Right(Path.of("/xdg/histmersion")))
-    assertEquals(Supervisor.layout(rc(), exe, env("HOME" -> "/home/u"), "Linux").map(_.data),
-      Right(Path.of("/home/u/.local/share/histmersion")))
+    assertEquals(
+      Supervisor.layout(rc(), exe, env("HOME" -> "/Users/u"), "Mac OS X").map(_.data),
+      Right(Path.of("/Users/u/Library/Application Support/Histmersion"))
+    )
+    assertEquals(
+      Supervisor.layout(rc(), exe, env("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xdg"), "Linux").map(_.data),
+      Right(Path.of("/xdg/histmersion"))
+    )
+    assertEquals(
+      Supervisor.layout(rc(), exe, env("HOME" -> "/home/u"), "Linux").map(_.data),
+      Right(Path.of("/home/u/.local/share/histmersion"))
+    )
 
   test("explicit home and data dir win; a missing HOME is an actionable error"):
     val l = Supervisor.layout(rc("/h", "/d"), None, env(), "Linux")
     assertEquals(l.map(x => (x.home, x.cluster, x.logs)), Right((Path.of("/h"), Path.of("/d/pg"), Path.of("/d/logs"))))
-    assert(Supervisor.layout(rc(), Some(Path.of("/b/bin/x")), env(), "Linux").left.exists(_.contains("HISTMERSION_DATA_DIR")))
+    assert(
+      Supervisor.layout(rc(), Some(Path.of("/b/bin/x")), env(), "Linux").left.exists(_.contains("HISTMERSION_DATA_DIR"))
+    )
 
   test("postgres listens on loopback TCP only — no Unix socket (macOS caps its path at 103 bytes)"):
     val o = Supervisor.pgOptions(5433)
-    assert(o.contains("-p 5433") && o.contains("listen_addresses=127.0.0.1") && o.contains("unix_socket_directories=''"), o)
+    assert(
+      o.contains("-p 5433") && o.contains("listen_addresses=127.0.0.1") && o.contains("unix_socket_directories=''"),
+      o
+    )
 
   test("postgres starts with memory sized from the machine's RAM, or as configured"):
     val GB = 1024L * 1024L * 1024L
     val auto = PgTuning("auto", "auto", "16MB")
-    assertEquals(Supervisor.pgSettings(auto, Some(48 * GB)),
-      List("shared_buffers" -> "2048MB", "effective_cache_size" -> "24576MB", "work_mem" -> "16MB"))
+    assertEquals(
+      Supervisor.pgSettings(auto, Some(48 * GB)),
+      List("shared_buffers" -> "2048MB", "effective_cache_size" -> "24576MB", "work_mem" -> "16MB")
+    )
     // RAM/16, never under initdb's 128 MB
     assertEquals(Supervisor.pgSettings(auto, Some(8 * GB)).head, "shared_buffers" -> "512MB")
     assertEquals(Supervisor.pgSettings(auto, Some(1 * GB)).head, "shared_buffers" -> "128MB")
@@ -51,7 +69,10 @@ class SupervisorSuite extends munit.FunSuite:
     assertEquals(Supervisor.pgSettings(auto, None), List("work_mem" -> "16MB"))
     assertEquals(Supervisor.pgSettings(PgTuning("1GB", "", ""), None), List("shared_buffers" -> "1GB"))
     // anything that is not a size never reaches the -o string
-    assertEquals(Supervisor.pgSettings(PgTuning("1GB -c fsync=off", "lots", "4 MB"), Some(GB)), List("work_mem" -> "4MB"))
+    assertEquals(
+      Supervisor.pgSettings(PgTuning("1GB -c fsync=off", "lots", "4 MB"), Some(GB)),
+      List("work_mem" -> "4MB")
+    )
     val o = Supervisor.pgOptions(5433, List("shared_buffers" -> "2048MB", "work_mem" -> "16MB"))
     assert(o.endsWith(" -c shared_buffers=2048MB -c work_mem=16MB"), o)
     assertEquals(base.runtime.postgres, auto, "reference.conf: auto, auto, 16MB")
@@ -90,4 +111,3 @@ class SupervisorSuite extends munit.FunSuite:
     val _ = ctl.toFile.setExecutable(true)
     assert(Supervisor.bundled(Some(home.resolve("bin/histmersion-server"))))
     assert(!Supervisor.bundled(Some(java.nio.file.Path.of("/usr/local/bin/histmersion-server"))))
-

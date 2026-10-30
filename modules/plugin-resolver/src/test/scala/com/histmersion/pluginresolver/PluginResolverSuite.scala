@@ -4,10 +4,10 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** `resolve` end to end, offline: the test plugin `hello-deps` (its POM lists `hello-lib`) from the
-  * fixture repository the build writes, a kit whose module list is the test's, a coursier cache of its
-  * own. The Scala library is in the kit's excludes, so nothing is looked up beyond the fixture
-  * repository. */
+/** `resolve` end to end, offline: the test plugin `hello-deps` (its POM lists `hello-lib`) from the fixture repository
+  * the build writes, a kit whose module list is the test's, a coursier cache of its own. The Scala library is in the
+  * kit's excludes, so nothing is looked up beyond the fixture repository.
+  */
 class PluginResolverSuite extends munit.FunSuite:
 
   private val fixtures: Path =
@@ -18,19 +18,20 @@ class PluginResolverSuite extends munit.FunSuite:
   private def published(artifact: String, ext: String): Path =
     fixtures.resolve(s"com/histmersion/$artifact/$Version/$artifact-$Version.$ext")
 
-  private final case class Setup(kit: Path, plugins: Path, lib: Path, cache: Path):
+  final private case class Setup(kit: Path, plugins: Path, lib: Path, cache: Path):
     def args(extra: String*): List[String] =
       List("resolve", "--kit", kit.toString, "--lib", lib.toString, "--repo", fixtures.toString) ++ extra
 
   /** A kit shipping `shipped` (and nothing of the Scala library), a plugins directory with the plugin. */
   private def setup(shipped: List[String], withPom: Boolean = true): Setup =
-    val root    = Files.createTempDirectory("plugin-resolver-suite")
-    val kit     = Files.createDirectories(root.resolve("kit"))
+    val root = Files.createTempDirectory("plugin-resolver-suite")
+    val kit = Files.createDirectories(root.resolve("kit"))
     val plugins = Files.createDirectories(root.resolve("plugins"))
     Files.writeString(kit.resolve("modules"), shipped.mkString("", "\n", "\n"))
     Files.writeString(kit.resolve("excludes"), "org.scala-lang:scala3-library_3\norg.scala-lang:scala-library\n")
     Files.copy(published("histmersion-plugin-hello-deps_3", "jar"), plugins.resolve("hello-deps-0.1.0.jar"))
-    if withPom then Files.copy(published("histmersion-plugin-hello-deps_3", "pom"), plugins.resolve("hello-deps-0.1.0.pom"))
+    if withPom then
+      Files.copy(published("histmersion-plugin-hello-deps_3", "pom"), plugins.resolve("hello-deps-0.1.0.pom"))
     Setup(kit, plugins, plugins.resolve("lib"), root.resolve("cache"))
 
   private def run(s: Setup, extra: String*): (Int, List[String], List[String]) =
@@ -47,26 +48,45 @@ class PluginResolverSuite extends munit.FunSuite:
     val s = setup(Nil)
     val (rc, out, err) = run(s)
     assertEquals(rc, 0, (out ++ err).mkString("\n"))
-    assert(out.exists(_.startsWith("dependency: com.histmersion:histmersion-plugin-hello-lib_3:0.1.0 (for hello-deps-0.1.0.jar)")), out.mkString("\n"))
+    assert(
+      out.exists(
+        _.startsWith("dependency: com.histmersion:histmersion-plugin-hello-lib_3:0.1.0 (for hello-deps-0.1.0.jar)")
+      ),
+      out.mkString("\n")
+    )
     val name = "com.histmersion-histmersion-plugin-hello-lib_3-0.1.0.jar"
     assertEquals(lines(s.lib.resolve(LibDirectory.Classpath)), List(name))
-    assertEquals(LibDirectory.sha256(s.lib.resolve(name)), LibDirectory.sha256(published("histmersion-plugin-hello-lib_3", "jar")))
-    assertEquals(lines(s.lib.resolve(LibDirectory.Inputs)).map(_.split("  ").last), List("hello-deps-0.1.0.jar", "hello-deps-0.1.0.pom"))
+    assertEquals(
+      LibDirectory.sha256(s.lib.resolve(name)),
+      LibDirectory.sha256(published("histmersion-plugin-hello-lib_3", "jar"))
+    )
+    assertEquals(
+      lines(s.lib.resolve(LibDirectory.Inputs)).map(_.split("  ").last),
+      List("hello-deps-0.1.0.jar", "hello-deps-0.1.0.pom")
+    )
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
 
   test("a module the server ships at the same or a newer version is not installed again"):
     val s = setup(List("com.histmersion:histmersion-plugin-hello-lib_3:0.2.0"))
     val (rc, out, err) = run(s)
     assertEquals(rc, 0, (out ++ err).mkString("\n"))
-    assert(out.exists(_.startsWith("provided by Histmersion: 1 module(s) (com.histmersion:histmersion-plugin-hello-lib_3)")), out.mkString("\n"))
+    assert(
+      out.exists(_.startsWith("provided by Histmersion: 1 module(s) (com.histmersion:histmersion-plugin-hello-lib_3)")),
+      out.mkString("\n")
+    )
     assertEquals(lines(s.lib.resolve(LibDirectory.Classpath)), Nil)
 
   test("a plugin that needs a NEWER version than the server ships is refused, naming the library and both versions"):
     val s = setup(List("com.histmersion:histmersion-plugin-hello-lib_3:0.0.9"))
     val (rc, _, err) = run(s)
     assertEquals(rc, 2)
-    assertEquals(err, List("refused: hello-deps-0.1.0.jar needs com.histmersion:histmersion-plugin-hello-lib_3 0.1.0, but this Histmersion " +
-      "ships 0.0.9 — build the plugin against 0.0.9 (the histmersion-plugin-platform POM), or install a Histmersion that ships 0.1.0"))
+    assertEquals(
+      err,
+      List(
+        "refused: hello-deps-0.1.0.jar needs com.histmersion:histmersion-plugin-hello-lib_3 0.1.0, but this Histmersion " +
+          "ships 0.0.9 — build the plugin against 0.0.9 (the histmersion-plugin-platform POM), or install a Histmersion that ships 0.1.0"
+      )
+    )
     assert(!Files.exists(s.lib), "nothing written on a refusal")
 
   test("--check resolves and reports, and leaves lib/ as it is"):
@@ -89,24 +109,42 @@ class PluginResolverSuite extends munit.FunSuite:
   test("the repositories of earlier runs are kept, and used when a run names none"):
     val s = setup(Nil)
     assertEquals(run(s)._1, 0)
-    val again = PluginResolver.parse(List("--kit", s.kit.toString, "--lib", s.lib.toString,
-      s.plugins.resolve("hello-deps-0.1.0.jar").toString)).fold(e => fail(e), identity)
+    val again = PluginResolver
+      .parse(List("--kit", s.kit.toString, "--lib", s.lib.toString, s.plugins.resolve("hello-deps-0.1.0.jar").toString))
+      .fold(e => fail(e), identity)
     assertEquals(PluginResolver.resolve(again.copy(cache = Some(s.cache)), _ => (), _ => ()), 0)
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
     val other = RepositoryUrl.fromArgument(s.kit.resolve("other-repo").toString).fold(e => fail(e), identity)
-    assertEquals(PluginResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)), _ => (), _ => ()), 0)
+    assertEquals(
+      PluginResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)), _ => (), _ => ()),
+      0
+    )
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(other.value, fixtures.toUri.toString))
 
   test("a SNAPSHOT plugin version resolves as well"):
-    val s   = setup(Nil)
+    val s = setup(Nil)
     val pom = s.plugins.resolve("hello-deps-0.1.0.pom")
-    Files.writeString(pom, Files.readString(pom).replace("<version>0.1.0</version>\n    <licenses>", "<version>0.2.0-SNAPSHOT</version>\n    <licenses>"))
-    assert(Files.readString(pom).contains("0.2.0-SNAPSHOT"), "the fixture POM's layout changed: fix the replacement above")
+    Files.writeString(
+      pom,
+      Files
+        .readString(pom)
+        .replace("<version>0.1.0</version>\n    <licenses>", "<version>0.2.0-SNAPSHOT</version>\n    <licenses>")
+    )
+    assert(
+      Files.readString(pom).contains("0.2.0-SNAPSHOT"),
+      "the fixture POM's layout changed: fix the replacement above"
+    )
     val (rc, out, err) = run(s)
     assertEquals(rc, 0, (out ++ err).mkString("\n"))
-    assertEquals(lines(s.lib.resolve(LibDirectory.Classpath)), List("com.histmersion-histmersion-plugin-hello-lib_3-0.1.0.jar"))
+    assertEquals(
+      lines(s.lib.resolve(LibDirectory.Classpath)),
+      List("com.histmersion-histmersion-plugin-hello-lib_3-0.1.0.jar")
+    )
 
   test("usage: the kit and lib are required, an unknown option is named"):
     assert(PluginResolver.parse(List("x.jar")).isLeft)
-    assertEquals(PluginResolver.parse(List("--kit", "k", "--lib", "l", "--nope")).left.toOption, Some("unknown option --nope"))
+    assertEquals(
+      PluginResolver.parse(List("--kit", "k", "--lib", "l", "--nope")).left.toOption,
+      Some("unknown option --nope")
+    )
     assertEquals(PluginResolver.run(List("nothing"), _ => (), _ => ()), 1)

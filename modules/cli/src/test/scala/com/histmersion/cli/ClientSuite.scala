@@ -12,7 +12,10 @@ class ClientSuite extends munit.FunSuite:
 
   test("other unexpected answers report the status as it is"):
     assert(Client.unexpected(404, "http://h:8000", write = false).contains("no such endpoint"))
-    assertEquals(Client.unexpected(502, "http://h:8000", write = false), "unexpected answer from http://h:8000: HTTP 502")
+    assertEquals(
+      Client.unexpected(502, "http://h:8000", write = false),
+      "unexpected answer from http://h:8000: HTTP 502"
+    )
 
   // #819: a refused GET (a backup or original download) said "refused this write"
   test("a refused read says 'this request', a refused write says 'this write'"):
@@ -22,5 +25,7 @@ class ClientSuite extends munit.FunSuite:
 
   test("only POST, PUT, PATCH and DELETE count as writes"):
     import sttp.model.Method
-    assertEquals(List(Method.GET, Method.HEAD, Method.POST, Method.PUT, Method.PATCH, Method.DELETE).map(Client.isWrite),
-      List(false, false, true, true, true, true))
+    assertEquals(
+      List(Method.GET, Method.HEAD, Method.POST, Method.PUT, Method.PATCH, Method.DELETE).map(Client.isWrite),
+      List(false, false, true, true, true, true)
+    )

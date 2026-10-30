@@ -17,4 +17,4 @@ object NonBlankCounted:
 
   given Constraint[String, NonBlankCounted]:
     override inline def test(inline value: String): Boolean = recordCheck(value.trim.nonEmpty)
-    override inline def message: String                   = "must not be blank"
+    override inline def message: String = "must not be blank"

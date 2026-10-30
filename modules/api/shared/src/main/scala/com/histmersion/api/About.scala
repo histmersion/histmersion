@@ -4,14 +4,15 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** `GET /api/about` — who the running server is and how it is doing, in ONE read: the web UI's About
-  * panel and `histmersion about`. Read-only; every number is a count the store already keeps. */
+/** `GET /api/about` — who the running server is and how it is doing, in ONE read: the web UI's About panel and
+  * `histmersion about`. Read-only; every number is a count the store already keeps.
+  */
 
-/** The running server's build. `gitCommit`/`commitDate` are stamped at compile time from the checkout
-  * it was built from (`None` when it was built outside a git checkout); `dirty` = built with
-  * uncommitted changes, so the commit alone does not say what is running. `licence` is the SPDX id
-  * the program is distributed under and `sourceUrl` where its source can be had (`None`: an older
-  * server). */
+/** The running server's build. `gitCommit`/`commitDate` are stamped at compile time from the checkout it was built from
+  * (`None` when it was built outside a git checkout); `dirty` = built with uncommitted changes, so the commit alone
+  * does not say what is running. `licence` is the SPDX id the program is distributed under and `sourceUrl` where its
+  * source can be had (`None`: an older server).
+  */
 final case class BuildStamp(
     version: String,
     gitCommit: Option[String] = None,
@@ -23,17 +24,24 @@ final case class BuildStamp(
 object BuildStamp:
   given Schema[BuildStamp] = KindlingsSchema.derived[BuildStamp].schema
 
-/** The AGPL (section 13) has a server offer everyone who uses it over a network the source of the very
-  * version that is running: the repository at the commit it was built from, or the repository itself
-  * when the commit is unknown. The `/tree/<commit>` form is the one GitHub, GitLab and Forgejo share. */
+/** The AGPL (section 13) has a server offer everyone who uses it over a network the source of the very version that is
+  * running: the repository at the commit it was built from, or the repository itself when the commit is unknown. The
+  * `/tree/<commit>` form is the one GitHub, GitLab and Forgejo share.
+  */
 object CorrespondingSource:
   def url(repository: String, commit: Option[String]): String =
     val repo = repository.trim.stripSuffix("/").stripSuffix(".git")
     commit.map(_.trim).filter(_.nonEmpty).fold(repo)(c => s"$repo/tree/$c")
 
 /** The OCR job queue, one count per [[JobState]]. */
-final case class JobCounts(queued: Int = 0, running: Int = 0, done: Int = 0, failed: Int = 0, paused: Int = 0,
-    cancelled: Int = 0) derives KindlingsCodecAsObject:
+final case class JobCounts(
+    queued: Int = 0,
+    running: Int = 0,
+    done: Int = 0,
+    failed: Int = 0,
+    paused: Int = 0,
+    cancelled: Int = 0
+) derives KindlingsCodecAsObject:
   def of(s: JobState): Int = s match
     case JobState.Queued    => queued
     case JobState.Running   => running
@@ -48,13 +56,13 @@ object JobCounts:
   def of(rows: List[(String, Int)]): JobCounts =
     rows.foldLeft(JobCounts()) { case (acc, (s, n)) =>
       JobState.parse(s) match
-        case Some(JobState.Queued)  => acc.copy(queued = acc.queued + n)
-        case Some(JobState.Running) => acc.copy(running = acc.running + n)
-        case Some(JobState.Done)    => acc.copy(done = acc.done + n)
-        case Some(JobState.Failed)  => acc.copy(failed = acc.failed + n)
+        case Some(JobState.Queued)    => acc.copy(queued = acc.queued + n)
+        case Some(JobState.Running)   => acc.copy(running = acc.running + n)
+        case Some(JobState.Done)      => acc.copy(done = acc.done + n)
+        case Some(JobState.Failed)    => acc.copy(failed = acc.failed + n)
         case Some(JobState.Paused)    => acc.copy(paused = acc.paused + n)
         case Some(JobState.Cancelled) => acc.copy(cancelled = acc.cancelled + n)
-        case None                   => acc
+        case None                     => acc
     }
 
 /** How big the store is: the corpus, the compiled wiki and the reference data. */
@@ -75,8 +83,9 @@ object CorpusCounts:
 
 /** The user config file the server read at startup (`reference.conf` < this file < the environment). */
 final case class ConfigFileInfo(
-    /** Where the file is looked for — `$HISTMERSION_CONFIG`, else the per-user default; `None` when
-      * no location could be worked out (HOME unset). */
+    /** Where the file is looked for — `$HISTMERSION_CONFIG`, else the per-user default; `None` when no location could
+      * be worked out (HOME unset).
+      */
     path: Option[String] = None,
     /** It was there and was read. */
     loaded: Boolean = false,
@@ -92,12 +101,13 @@ object ConfigFileInfo:
       case None    => "none (no location: HOME is unset)"
       case Some(p) =>
         val state = if c.loaded then "read" else "not found: defaults and environment only"
-        val keys  = if c.unknownKeys.isEmpty then ""
-          else s"; ignored unknown ${Plural.noun(c.unknownKeys.size, "key")}: ${c.unknownKeys.mkString(", ")}"
+        val keys = if c.unknownKeys.isEmpty then ""
+        else s"; ignored unknown ${Plural.noun(c.unknownKeys.size, "key")}: ${c.unknownKeys.mkString(", ")}"
         s"$p ($state$keys)"
 
-/** Who holds the agent lease (docs/research-process-managers.md §2): only that server runs the agent
-  * engine, the schedules and the managers on this database. */
+/** Who holds the agent lease (docs/research-process-managers.md §2): only that server runs the agent engine, the
+  * schedules and the managers on this database.
+  */
 final case class AgentLeaseInfo(owner: String, until: String, expired: Boolean, thisServer: Boolean)
     derives KindlingsCodecAsObject:
   def describe: String =
@@ -125,11 +135,12 @@ final case class About(
     agentLease: Option[AgentLeaseInfo] = None,
     /** The plugins in this binary and what became of each (secrets as references, never values). */
     plugins: PluginsReport = PluginsReport(),
-    /** Where the data is on disk and how big each part is (measured in the background, see
-      * [[StorageReport]]); empty from an older server. */
+    /** Where the data is on disk and how big each part is (measured in the background, see [[StorageReport]]); empty
+      * from an older server.
+      */
     storage: StorageReport = StorageReport(),
-    /** The metered upstreams' budgets today (CORE); empty before one was first asked, or from an older
-      * server. */
+    /** The metered upstreams' budgets today (CORE); empty before one was first asked, or from an older server.
+      */
     upstreams: List[UpstreamQuota] = Nil,
     /** The acquisition list's legal re-check; absent when it could not be read, or from an older server. */
     acquireRecheck: Option[AcquireChecks.RecheckStatus] = None
@@ -137,9 +148,10 @@ final case class About(
 object About:
   given Schema[About] = KindlingsSchema.derived[About].schema
 
-/** What a dependency's health text means. The converter reports free text (`ok`, `busy: 2 jobs`,
-  * `degraded: …`, `converter at … is unreachable`); a client shows the state and keeps the text as
-  * the detail, so a wording it has never seen still renders — as [[ServiceState.Unknown]] at worst. */
+/** What a dependency's health text means. The converter reports free text (`ok`, `busy: 2 jobs`, `degraded: …`,
+  * `converter at … is unreachable`); a client shows the state and keeps the text as the detail, so a wording it has
+  * never seen still renders — as [[ServiceState.Unknown]] at worst.
+  */
 enum ServiceState:
   case Ok, Busy, Down, Unknown
 
@@ -150,18 +162,29 @@ enum ServiceState:
     case Unknown => "unknown"
 
 object ServiceState:
-  private val DownWords = List("degraded", "error", "unreachable", "down", "failed", "refused", "timeout",
-    "did not", "no answer", "returned", "answered")
+  private val DownWords = List(
+    "degraded",
+    "error",
+    "unreachable",
+    "down",
+    "failed",
+    "refused",
+    "timeout",
+    "did not",
+    "no answer",
+    "returned",
+    "answered"
+  )
 
   /** Pure: the state behind a health text. */
   def of(text: Option[String]): ServiceState =
     text.map(_.trim.toLowerCase).filter(_.nonEmpty) match
-      case None                                             => Unknown
+      case None                                                               => Unknown
       case Some(t) if t == "ok" || t.startsWith("ok ") || t.startsWith("ok:") => Ok
-      case Some(t) if t.startsWith("busy") || t.contains(" busy") => Busy
-      case Some(t) if t == "unknown"                       => Unknown
-      case Some(t) if DownWords.exists(t.contains)         => Down
-      case Some(_)                                          => Unknown
+      case Some(t) if t.startsWith("busy") || t.contains(" busy")             => Busy
+      case Some(t) if t == "unknown"                                          => Unknown
+      case Some(t) if DownWords.exists(t.contains)                            => Down
+      case Some(_)                                                            => Unknown
 
 /** `histmersion about` — the About report as Markdown, like every other surface. Pure. */
 object AboutMarkdown:
@@ -175,11 +198,12 @@ object AboutMarkdown:
     else s"${s / 86400} d"
 
   def render(a: About): String =
-    val b      = a.build
+    val b = a.build
     val commit = b.gitCommit.fold("unknown")(c => if b.dirty then s"$c (with uncommitted changes)" else c)
-    val conv   = a.health.converter
+    val conv = a.health.converter
     val backup = a.lastBackup.fold("none")(bk =>
-      s"${bk.file} · ${Backup.humanBytes(bk.bytes)}" + a.lastBackupAgeSeconds.fold("")(s => s" · ${age(s)} ago"))
+      s"${bk.file} · ${Backup.humanBytes(bk.bytes)}" + a.lastBackupAgeSeconds.fold("")(s => s" · ${age(s)} ago")
+    )
     val j = a.jobs
     val lines = List(
       s"# ${a.name} ${b.version}",
@@ -191,16 +215,22 @@ object AboutMarkdown:
       s"- schema version: ${a.health.schemaVersion.getOrElse("unknown")}",
       s"- status: ${a.health.status}",
       s"- database: ${a.health.db}",
-      s"- converter: ${ServiceState.of(conv).label}" + conv.filterNot(_.trim.equalsIgnoreCase("ok")).fold("")(t => s" ($t)"),
+      s"- converter: ${ServiceState.of(conv).label}" + conv
+        .filterNot(_.trim.equalsIgnoreCase("ok"))
+        .fold("")(t => s" ($t)"),
       s"- jobs: ${j.queued} queued · ${j.running} running · ${j.done} done · ${j.failed} failed",
       s"- last backup: $backup",
       s"- config file: ${ConfigFileInfo.describe(a.configFile)}",
       s"- agent lease: ${a.agentLease.fold("none (no server runs agents on this database)")(_.describe)}"
     ) ++ a.upstreams.map(q => s"- ${UpstreamQuotaMarkdown.line(q)}") ++
-      a.acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList ++ PluginsMarkdown.summary(a.plugins) ++ a.counts.toList.flatMap(c => List(
-      s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
-        s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
-      s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period")} · ${Plural.count(c.presets, "preset")}"
-    )) ++ StorageMarkdown.render(a.storage) ++
+      a.acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList ++ PluginsMarkdown.summary(
+        a.plugins
+      ) ++ a.counts.toList.flatMap(c =>
+        List(
+          s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
+            s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
+          s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period")} · ${Plural.count(c.presets, "preset")}"
+        )
+      ) ++ StorageMarkdown.render(a.storage) ++
       (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))
     lines.mkString("\n")

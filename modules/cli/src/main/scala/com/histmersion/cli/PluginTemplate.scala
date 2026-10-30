@@ -5,32 +5,37 @@ import io.github.iltotore.iron.constraint.string.Match
 
 import java.nio.file.Path
 
-/** The extension point a new plugin contributes to: its name on the command line, the suffix of the
-  * contributed class's name, and what `histmersion plugin add` reports it provides. */
+/** The extension point a new plugin contributes to: its name on the command line, the suffix of the contributed class's
+  * name, and what `histmersion plugin add` reports it provides.
+  */
 enum PluginKind(val name: String, val classSuffix: String, val provides: String):
-  case SourceFetcher   extends PluginKind("source-fetcher", "Fetcher", "source-fetcher")
+  case SourceFetcher extends PluginKind("source-fetcher", "Fetcher", "source-fetcher")
   case MediaCollection extends PluginKind("media-collection", "Collection", "media-collection")
-  case EventCatalogue  extends PluginKind("event-catalogue", "Catalogue", "event-catalogue")
-  case AiProvider      extends PluginKind("ai-provider", "Provider", "ai-provider")
-  case SecretVault     extends PluginKind("secret-vault", "Vault", "secret-vault")
+  case EventCatalogue extends PluginKind("event-catalogue", "Catalogue", "event-catalogue")
+  case AiProvider extends PluginKind("ai-provider", "Provider", "ai-provider")
+  case SecretVault extends PluginKind("secret-vault", "Vault", "secret-vault")
 
 object PluginKind:
   val names: String = values.map(_.name).mkString(", ")
   def parse(raw: String): Either[String, PluginKind] =
     values.find(_.name == raw.trim).toRight(s"unknown plugin kind '$raw' (one of: $names)")
 
-/** A plugin id: the settings key (`histmersion.plugins.<id>`) and the source of the project's names.
-  * Stricter than the host's `[a-z0-9][a-z0-9-]*`: it must also make a Scala class name. */
+/** A plugin id: the settings key (`histmersion.plugins.<id>`) and the source of the project's names. Stricter than the
+  * host's `[a-z0-9][a-z0-9-]*`: it must also make a Scala class name.
+  */
 type PluginId = PluginId.T
 
 object PluginId extends RefinedType[String, Match["[a-z][a-z0-9]*(-[a-z0-9]+)*"]]:
   def parse(raw: String): Either[String, PluginId] =
-    either(raw).left.map(_ => s"'$raw' is not a plugin id: lower-case letters and digits in words joined by single " +
-      "dashes, starting with a letter ([a-z][a-z0-9]*(-[a-z0-9]+)*)")
+    either(raw).left.map(_ =>
+      s"'$raw' is not a plugin id: lower-case letters and digits in words joined by single " +
+        "dashes, starting with a letter ([a-z][a-z0-9]*(-[a-z0-9]+)*)"
+    )
 
   extension (id: PluginId)
     /** `my-mirror` → `MyMirror`. */
     def typeName: String = id.value.split('-').map(_.capitalize).mkString
+
     /** `my-mirror` → `mymirror`. */
     def packageName: String = id.value.replace("-", "")
 
@@ -45,26 +50,29 @@ object ScalaPackage extends RefinedType[String, Match["[a-z][a-z0-9_]*(\\.[a-z][
     /** `org.example` → `org/example`. */
     def path: String = pkg.value.replace('.', '/')
 
-/** A Maven repository named by URL: an `https://`, `http://` or `file:` URL, or a local directory as its
-  * `file:` URL. What `plugin add --repo` looks in, and what `plugin new --repo` writes into a project. */
+/** A Maven repository named by URL: an `https://`, `http://` or `file:` URL, or a local directory as its `file:` URL.
+  * What `plugin add --repo` looks in, and what `plugin new --repo` writes into a project.
+  */
 type PluginRepository = PluginRepository.T
 
 object PluginRepository extends RefinedType[String, Match["(https?|file):.+"]]:
-  /** An `https://`, `http://` or `file:` URL as given, or a local directory as its `file:` URL; a
-    * directory must exist. */
+  /** An `https://`, `http://` or `file:` URL as given, or a local directory as its `file:` URL; a directory must exist.
+    */
   def parse(raw: String, isDirectory: Path => Boolean): Either[String, PluginRepository] =
     val trimmed = raw.trim
     option(trimmed) match
       case Some(url) => Right(url)
-      case None =>
+      case None      =>
         val dir = Path.of(trimmed).toAbsolutePath.normalize
         if isDirectory(dir) then either(dir.toUri.toString) else Left(s"no such directory: $dir")
 
 /** Where a new plugin project resolves the plugin API, the platform and the testkit from. */
 enum TemplateRepository:
-  /** The local Maven repository (`~/.m2/repository`), which `histmersion plugin repo --m2` fills from the
-    * install's `maven/`. scala-cli names it `m2Local`, so the project names no path of this machine. */
+  /** The local Maven repository (`~/.m2/repository`), which `histmersion plugin repo --m2` fills from the install's
+    * `maven/`. scala-cli names it `m2Local`, so the project names no path of this machine.
+    */
   case MavenLocal
+
   /** A repository named with `--repo`. */
   case Remote(repository: PluginRepository)
 
@@ -73,33 +81,45 @@ enum TemplateRepository:
     case MavenLocal   => "m2Local"
     case Remote(repo) => repo.value
 
-/** Histmersion's own artifacts in that repository, at the version of the install this CLI belongs to:
-  * the plugin API (a jar, its sources, its POM) and the plugin platform (a POM whose dependencies are
-  * the libraries the server provides to plugins). */
+/** Histmersion's own artifacts in that repository, at the version of the install this CLI belongs to: the plugin API (a
+  * jar, its sources, its POM) and the plugin platform (a POM whose dependencies are the libraries the server provides
+  * to plugins).
+  */
 object PluginArtifacts:
-  val Api      = "histmersion-plugin-api"
+  val Api = "histmersion-plugin-api"
   val Platform = "histmersion-plugin-platform"
+
   /** What a plugin's tests load and run it with, as the server does. */
-  val Testkit  = "histmersion-plugin-testkit"
+  val Testkit = "histmersion-plugin-testkit"
 
   /** `group::name:version`, as scala-cli and `histmersion plugin add` write a Scala 3 artifact. */
-  def coordinates(name: String): String = s"${PluginBuildVersions.organization}::$name:${PluginBuildVersions.histmersion}"
+  def coordinates(name: String): String =
+    s"${PluginBuildVersions.organization}::$name:${PluginBuildVersions.histmersion}"
 
-  /** A file of the artifact relative to the repository's root: `com/histmersion/histmersion-plugin-api_3/<v>/…<suffix>`. */
+  /** A file of the artifact relative to the repository's root:
+    * `com/histmersion/histmersion-plugin-api_3/<v>/…<suffix>`.
+    */
   def path(name: String, suffix: String): String =
     val artifact = s"${name}_3"
-    val version  = PluginBuildVersions.histmersion
+    val version = PluginBuildVersions.histmersion
     s"${PluginBuildVersions.organization.replace('.', '/')}/$artifact/$version/$artifact-$version$suffix"
 
 /** One file of a new project: its path relative to the project directory, and its content. */
 final case class TemplateFile(path: String, content: String)
 
-/** What `histmersion plugin new` writes: a scala-cli project whose build is `project.scala`, whose two
-  * Scala files are the plugin and its tests, and the resources a plugin jar carries beside its classes.
-  * Pure: the caller writes the files. */
+/** What `histmersion plugin new` writes: a scala-cli project whose build is `project.scala`, whose two Scala files are
+  * the plugin and its tests, and the resources a plugin jar carries beside its classes. Pure: the caller writes the
+  * files.
+  */
 object PluginTemplate:
 
-  final case class Request(id: PluginId, kind: PluginKind, pkg: ScalaPackage, repository: TemplateRepository, agentNotes: Boolean)
+  final case class Request(
+      id: PluginId,
+      kind: PluginKind,
+      pkg: ScalaPackage,
+      repository: TemplateRepository,
+      agentNotes: Boolean
+  )
 
   /** The version a new plugin is published under, as its `PluginInfo` states it too. */
   val FirstVersion = "0.1.0"
@@ -113,16 +133,18 @@ object PluginTemplate:
   /** Files only the tests read (fixtures): on the test class path, never in the jar. */
   val TestResourceDir = "test-resources"
 
-  /** The system property the tests get the project's directory in: the testkit resolves a relative
-    * recordings directory against it, wherever `scala-cli test` was started. */
+  /** The system property the tests get the project's directory in: the testkit resolves a relative recordings directory
+    * against it, wherever `scala-cli test` was started.
+    */
   val ProjectProperty = "histmersion.plugin.project"
 
   val ServicesPath = "resources/META-INF/services/com.histmersion.plugin.Plugin"
 
   def defaultsPath(id: PluginId): String = s"resources/META-INF/histmersion/plugins/${id.value}.conf"
 
-  /** GraalVM's convention, `META-INF/native-image/<group>/<artifact>/`: the published organization and
-    * name, so no two jars' metadata files share a path. */
+  /** GraalVM's convention, `META-INF/native-image/<group>/<artifact>/`: the published organization and name, so no two
+    * jars' metadata files share a path.
+    */
   def nativeMetadataPath(id: PluginId, pkg: ScalaPackage): String =
     s"resources/META-INF/native-image/${pkg.value}/${id.value}/reachability-metadata.json"
 
@@ -143,16 +165,17 @@ object PluginTemplate:
       TemplateFile(defaultsPath(r.id), fill(r, KindSources.defaults(r.kind))),
       TemplateFile(nativeMetadataPath(r.id, r.pkg), nativeMetadata(r))
     )
-    if r.agentNotes then core ++ List(TemplateFile("AGENTS.md", fill(r, agentNotes(r))), TemplateFile("CLAUDE.md", "@AGENTS.md\n"))
+    if r.agentNotes then
+      core ++ List(TemplateFile("AGENTS.md", fill(r, agentNotes(r))), TemplateFile("CLAUDE.md", "@AGENTS.md\n"))
     else core
 
-  /** The build, in one file for every source: the server's Scala; the plugin API and the platform from
-    * the repository, compile-only (the server provides them, so the plugin's POM does not list them and
-    * its jar holds none of them); the resources; what `scala-cli publish` names the plugin. Then the
-    * tests: they run the plugin, so they need at run time what the server provides it with (a
-    * compile-only dependency is not on the test class path); the testkit loads and runs it as the server
-    * does, and brings the plugin API with it. A library of the plugin's own is a plain `//> using dep`:
-    * its POM lists it, and `histmersion plugin add` installs it beside the plugin. */
+  /** The build, in one file for every source: the server's Scala; the plugin API and the platform from the repository,
+    * compile-only (the server provides them, so the plugin's POM does not list them and its jar holds none of them);
+    * the resources; what `scala-cli publish` names the plugin. Then the tests: they run the plugin, so they need at run
+    * time what the server provides it with (a compile-only dependency is not on the test class path); the testkit loads
+    * and runs it as the server does, and brings the plugin API with it. A library of the plugin's own is a plain
+    * `//> using dep`: its POM lists it, and `histmersion plugin add` installs it beside the plugin.
+    */
   private def directives(r: Request): String =
     s"""// The build of the @Name@ plugin: every //> using directive of the project, for the plugin and its
        |// tests. Keep them all in this file when you add sources (scala-cli reads directives from any
@@ -192,35 +215,41 @@ object PluginTemplate:
 
   private def fill(r: Request, text: String): String =
     List(
-      "@id@"           -> r.id.value,
-      "@Name@"         -> r.id.typeName,
-      "@Plugin@"       -> pluginClass(r.id),
+      "@id@" -> r.id.value,
+      "@Name@" -> r.id.typeName,
+      "@Plugin@" -> pluginClass(r.id),
       "@Contribution@" -> contributionClass(r.id, r.kind),
-      "@package@"      -> r.pkg.value,
-      "@kind@"         -> r.kind.name,
-      "@provides@"     -> r.kind.provides,
-      "@metadata@"     -> nativeMetadataPath(r.id, r.pkg).stripPrefix("resources/"),
-      "@repository@"   -> r.repository.directive,
-      "@api@"          -> PluginArtifacts.coordinates(PluginArtifacts.Api),
-      "@platform@"     -> PluginArtifacts.coordinates(PluginArtifacts.Platform),
-      "@testkit@"      -> PluginArtifacts.coordinates(PluginArtifacts.Testkit),
-      "@apiSources@"   -> PluginArtifacts.path(PluginArtifacts.Api, "-sources.jar"),
-      "@coordinates@"  -> s"${r.pkg.value}::${r.id.value}:$FirstVersion",
-      "@publishDir@"   -> PublishDir,
+      "@package@" -> r.pkg.value,
+      "@kind@" -> r.kind.name,
+      "@provides@" -> r.kind.provides,
+      "@metadata@" -> nativeMetadataPath(r.id, r.pkg).stripPrefix("resources/"),
+      "@repository@" -> r.repository.directive,
+      "@api@" -> PluginArtifacts.coordinates(PluginArtifacts.Api),
+      "@platform@" -> PluginArtifacts.coordinates(PluginArtifacts.Platform),
+      "@testkit@" -> PluginArtifacts.coordinates(PluginArtifacts.Testkit),
+      "@apiSources@" -> PluginArtifacts.path(PluginArtifacts.Api, "-sources.jar"),
+      "@coordinates@" -> s"${r.pkg.value}::${r.id.value}:$FirstVersion",
+      "@publishDir@" -> PublishDir,
       "@projectProperty@" -> ProjectProperty
     ).foldLeft(text) { case (t, (k, v)) => t.replace(k, v) }
 
-  /** The fields Scala 3 lazy vals keep their value in (`<name>$lzy<n>`): a native image reaches them
-    * through a VarHandle, which needs them registered. The generated classes have one each: the
-    * plugin's `configReader` and the derived reader in every config companion. The compiler numbers
-    * the fields of one name through the source file, in the order they are written. */
+  /** The fields Scala 3 lazy vals keep their value in (`<name>$lzy<n>`): a native image reaches them through a
+    * VarHandle, which needs them registered. The generated classes have one each: the plugin's `configReader` and the
+    * derived reader in every config companion. The compiler numbers the fields of one name through the source file, in
+    * the order they are written.
+    */
   private def nativeMetadata(r: Request): String =
     val p = r.pkg.value
     val fields = (s"$p.${pluginClass(r.id)}" -> "configReader$lzy1") ::
-      KindSources.configTypes(r.kind).zipWithIndex.map((t, i) => s"$p.${fill(r, t)}$$" -> s"derived$$ConfigReader$$lzy${i + 1}")
-    val reflection = fields.map { (tpe, field) =>
-      s"""    { "type": "$tpe", "fields": [ { "name": "$field" } ] }"""
-    }.mkString(",\n")
+      KindSources
+        .configTypes(r.kind)
+        .zipWithIndex
+        .map((t, i) => s"$p.${fill(r, t)}$$" -> s"derived$$ConfigReader$$lzy${i + 1}")
+    val reflection = fields
+      .map { (tpe, field) =>
+        s"""    { "type": "$tpe", "fields": [ { "name": "$field" } ] }"""
+      }
+      .mkString(",\n")
     s"""{
        |  "reflection": [
        |$reflection

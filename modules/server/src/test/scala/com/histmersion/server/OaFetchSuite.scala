@@ -5,25 +5,26 @@ import com.histmersion.server.acquire.agent
 import com.histmersion.server.acquire.*
 import io.circe.Json
 
-/** The contact e-mail is a per-install setting: the repo's default is blank. Blank must mean
-  * "anonymous" — no `(mailto:)` stub in the User-Agent, and no Unpaywall call, which Unpaywall
-  * would refuse without an e-mail — while a configured one reaches every upstream as before. */
+/** The contact e-mail is a per-install setting: the repo's default is blank. Blank must mean "anonymous" — no
+  * `(mailto:)` stub in the User-Agent, and no Unpaywall call, which Unpaywall would refuse without an e-mail — while a
+  * configured one reaches every upstream as before.
+  */
 class OaFetchSuite extends munit.FunSuite:
 
   /** Answers nothing, records every URL asked for. */
-  private final class RecordingHttp extends Http:
+  final private class RecordingHttp extends Http:
     var urls: List[String] = Nil // a test double is the one place a var is the simplest thing
     private def miss(url: String) = { urls = urls :+ url; Left(s"$url: offline") }
-    def json(url: String, headers: Map[String, String]): Either[String, Json]          = miss(url)
-    def text(url: String, headers: Map[String, String]): Either[String, String]        = miss(url)
-    def bytes(url: String, headers: Map[String, String]): Either[String, Array[Byte]]  = miss(url)
+    def json(url: String, headers: Map[String, String]): Either[String, Json] = miss(url)
+    def text(url: String, headers: Map[String, String]): Either[String, String] = miss(url)
+    def bytes(url: String, headers: Map[String, String]): Either[String, Array[Byte]] = miss(url)
 
   private def acquire(email: String) = AppConfig.load().acquire.copy(contactEmail = email)
 
   private def asked(email: String): List[String] =
-    val cfg  = acquire(email)
+    val cfg = acquire(email)
     val http = RecordingHttp()
-    val _    = OaFetch(cfg, http, OpenAlexCrossref(cfg, http)).fetch(Some("10.1038/nature14317"), None)
+    val _ = OaFetch(cfg, http, OpenAlexCrossref(cfg, http)).fetch(Some("10.1038/nature14317"), None)
     http.urls
 
   test("the repository default has no contact e-mail"):
@@ -43,5 +44,7 @@ class OaFetchSuite extends munit.FunSuite:
     assertEquals(cfg.agent, cfg.userAgent)
     assert(!cfg.agent.contains("someone"), cfg.agent)
     val urls = asked("someone@example.org")
-    assert(urls.exists(u => u.startsWith(cfg.unpaywall.url) && u.contains("email=someone@example.org")),
-      urls.mkString("\n"))
+    assert(
+      urls.exists(u => u.startsWith(cfg.unpaywall.url) && u.contains("email=someone@example.org")),
+      urls.mkString("\n")
+    )

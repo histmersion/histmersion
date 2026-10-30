@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-
 import com.histmersion.api.ValueCodecs.given
 import com.histmersion.values.{Citekey, Doi, Latitude, Longitude, WikidataId, Year}
 import io.circe.parser.decode
@@ -20,4 +19,7 @@ class ValueCodecsSuite extends munit.FunSuite:
 
   test("the schemas are the base types'"):
     assertEquals(summon[sttp.tapir.Schema[Citekey]].schemaType.toString, sttp.tapir.Schema.string.schemaType.toString)
-    assertEquals(summon[sttp.tapir.Schema[Year]].schemaType.toString, sttp.tapir.Schema.schemaForInt.schemaType.toString)
+    assertEquals(
+      summon[sttp.tapir.Schema[Year]].schemaType.toString,
+      sttp.tapir.Schema.schemaForInt.schemaType.toString
+    )

@@ -110,14 +110,15 @@ class CliopatriaImporterSuite extends munit.FunSuite:
   test("same polity with different time slices gets a part_of relation to parent concept"):
     val places = CliopatriaImporter.transform(fixture).toOption.get
     val hittite1 = places.find(_.place.id.contains("-1650_-1401")).get
-    assert(hittite1.relations.exists(r =>
-      r.parentId == "cliopatria_hittite_empire" && r.kind == PlaceRelation.PartOf))
+    assert(hittite1.relations.exists(r => r.parentId == "cliopatria_hittite_empire" && r.kind == PlaceRelation.PartOf))
 
   test("MemberOf creates an additional relation"):
     val places = CliopatriaImporter.transform(fixture).toOption.get
     val elam = places.find(_.place.id.contains("kingdom_of_elam")).get
-    assert(elam.relations.exists(_.parentId == "cliopatria_sumerian_city_states"),
-      elam.relations.map(_.parentId).mkString(", "))
+    assert(
+      elam.relations.exists(_.parentId == "cliopatria_sumerian_city_states"),
+      elam.relations.map(_.parentId).mkString(", ")
+    )
 
   test("parentConcepts generates grouping nodes for each distinct polity"):
     val places = CliopatriaImporter.transform(fixture).toOption.get
@@ -142,8 +143,13 @@ class CliopatriaImporterSuite extends munit.FunSuite:
     assertEquals(parents("cliopatria_sumerian_city_states"), Some(Period(-3200, -2701)))
 
   test("a concept whose slices carry no years stays undated"):
-    val undated = CliopatriaImporter.readFeature(io.circe.parser.parse(
-      """{"type":"Feature","properties":{"Name":"Nowhere"},"geometry":null}""").toOption.get, 7).toOption.get
+    val undated = CliopatriaImporter
+      .readFeature(
+        io.circe.parser.parse("""{"type":"Feature","properties":{"Name":"Nowhere"},"geometry":null}""").toOption.get,
+        7
+      )
+      .toOption
+      .get
     assertEquals(CliopatriaImporter.parentConcepts(List(undated)).map(_.place.period), List(None))
 
   test("transform is idempotent"):

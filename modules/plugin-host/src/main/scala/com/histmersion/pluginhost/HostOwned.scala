@@ -1,22 +1,41 @@
 package com.histmersion.pluginhost
 
-/** A contribution that is Histmersion's OWN code registered through the plugin host (a built-in media
-  * collection, event catalogue or AI provider): it may take a reserved name, because it is the one the
-  * name is reserved for. */
+/** A contribution that is Histmersion's OWN code registered through the plugin host (a built-in media collection, event
+  * catalogue or AI provider): it may take a reserved name, because it is the one the name is reserved for.
+  */
 trait HostOwned
 
-/** The names a plugin's contribution may not take, because Histmersion's own providers answer to them:
-  * a plugin's pictures, events or models would be taken for theirs. The server's built-in registries
-  * define the same sets; a server suite fails when the two disagree. */
+/** The names a plugin's contribution may not take, because Histmersion's own providers answer to them: a plugin's
+  * pictures, events or models would be taken for theirs. The server's built-in registries define the same sets; a
+  * server suite fails when the two disagree.
+  */
 object ReservedNames:
   import com.histmersion.api.{Agents, MediaProvider}
   import com.histmersion.domain.CatalogProvider
 
-  /** The built-in media imports (`media import <name>`) and their aliases, and every provider pictures
-    * are stored under. */
+  /** The built-in media imports (`media import <name>`) and their aliases, and every provider pictures are stored
+    * under.
+    */
   val mediaCollections: Set[String] =
-    Set("wikidata", "depicts", "met", "cleveland", "aic", "loc", "pleiades", "opencontext", "smithsonian", "europeana",
-      "commons", "depictions", "cma", "artic", "oc", "si", "smithsonian-open-access") ++
+    Set(
+      "wikidata",
+      "depicts",
+      "met",
+      "cleveland",
+      "aic",
+      "loc",
+      "pleiades",
+      "opencontext",
+      "smithsonian",
+      "europeana",
+      "commons",
+      "depictions",
+      "cma",
+      "artic",
+      "oc",
+      "si",
+      "smithsonian-open-access"
+    ) ++
       MediaProvider.all ++ Set(MediaProvider.CommonsDepicts, MediaProvider.Pleiades)
 
   /** The built-in event catalogues and their aliases. */

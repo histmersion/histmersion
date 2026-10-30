@@ -6,14 +6,16 @@ import com.raquo.laminar.api.L.*
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-/** What a person downloads of the base map from the About window, as data: the regions to pick from, the
-  * fetch a choice asks for, and the dry run's sizes zoom by zoom. */
+/** What a person downloads of the base map from the About window, as data: the regions to pick from, the fetch a choice
+  * asks for, and the dry run's sizes zoom by zoom.
+  */
 object MapRegions:
 
   /** What a region's download holds. */
   enum Content(val label: String):
     /** Every layer of the map for the box: it takes the place of the region downloaded now. */
     case Map extends Content("the map, every layer (in place of the region downloaded now)")
+
     /** The relief from the extract's depth to the on-demand depth, kept beside the map until removed. */
     case Relief extends Content("the detailed relief, kept beside the map")
 
@@ -29,31 +31,48 @@ object MapRegions:
   def choices(s: BasemapStatus): List[RegionChoice] =
     val world = RegionChoice("world", "the whole world", Some("world"))
     val configured =
-      if s.bbox.trim.equalsIgnoreCase("world") then world.copy(id = "configured", label = "the configured region (the whole world)")
+      if s.bbox.trim.equalsIgnoreCase("world") then
+        world.copy(id = "configured", label = "the configured region (the whole world)")
       else RegionChoice("configured", s"the configured region (${s.bbox})", Some(s.bbox))
     List(configured) ++ s.regions.map(r => RegionChoice(r.name, s"${r.name} (${r.bbox})", Some(r.bbox))) ++
       Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(OwnBox, "a box of my own", None))
 
-  /** The fetch for a box, what it holds, the named region it is (if it is one) and the depth typed (blank:
-    * the configured one). A relief download is a focus region: the named one, or one named after its box. */
-  def request(box: String, content: Content, named: Option[String], maxZoom: String, dryRun: Boolean): Either[String, BasemapFetchQuery] =
+  /** The fetch for a box, what it holds, the named region it is (if it is one) and the depth typed (blank: the
+    * configured one). A relief download is a focus region: the named one, or one named after its box.
+    */
+  def request(
+      box: String,
+      content: Content,
+      named: Option[String],
+      maxZoom: String,
+      dryRun: Boolean
+  ): Either[String, BasemapFetchQuery] =
     for
       b <- Basemap.validBBox(box.trim)
       z <- maxZoom.trim match
-             case "" => Right(None)
-             case t  => t.toIntOption.filter(z => z >= 0 && z <= Basemap.MaxZoomCap).map(Some(_))
-                          .toRight(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}")
+        case "" => Right(None)
+        case t  =>
+          t.toIntOption
+            .filter(z => z >= 0 && z <= Basemap.MaxZoomCap)
+            .map(Some(_))
+            .toRight(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}")
     yield content match
-      case Content.Map => BasemapFetchQuery(bbox = Some(box.trim), maxZoom = z, dryRun = dryRun)
+      case Content.Map    => BasemapFetchQuery(bbox = Some(box.trim), maxZoom = z, dryRun = dryRun)
       case Content.Relief =>
-        BasemapFetchQuery(layer = BasemapLayer.Terrain.wire, bbox = Some(box.trim), terrainMaxZoom = z, dryRun = dryRun,
-          focus = Some(named.getOrElse(Basemap.focusNameOf(b))))
+        BasemapFetchQuery(
+          layer = BasemapLayer.Terrain.wire,
+          bbox = Some(box.trim),
+          terrainMaxZoom = z,
+          dryRun = dryRun,
+          focus = Some(named.getOrElse(Basemap.focusNameOf(b)))
+        )
 
   /** One layer of a dry run's answer: its line, and what each zoom would download. */
   final case class LayerSizes(line: String, zooms: List[String])
 
   /** A fetch's answer, layer by layer (`; ` between them; a layer's sizes by zoom follow it as
-    * `by zoom — zoom 0: … · zoom 1: …`). */
+    * `by zoom — zoom 0: … · zoom 1: …`).
+    */
   def sizes(answer: String): List[LayerSizes] =
     answer.split("; ").toList.map(_.trim).filter(_.nonEmpty).foldLeft(List.empty[LayerSizes]) { (acc, part) =>
       if part.startsWith("by zoom — ") && acc.nonEmpty then
@@ -61,10 +80,10 @@ object MapRegions:
       else acc :+ LayerSizes(part, Nil)
     }
 
-/** The About window's "Map regions" panel: pick a named region or type a box, see what it would download
-  * zoom by zoom (a dry run of the fetch job), download it and follow the job, and remove what was
-  * downloaded. Over the base map's REST: `GET /api/basemap`, `POST /api/basemap/fetch`, `GET /api/jobs/{id}`,
-  * `DELETE /api/basemap`. */
+/** The About window's "Map regions" panel: pick a named region or type a box, see what it would download zoom by zoom
+  * (a dry run of the fetch job), download it and follow the job, and remove what was downloaded. Over the base map's
+  * REST: `GET /api/basemap`, `POST /api/basemap/fetch`, `GET /api/jobs/{id}`, `DELETE /api/basemap`.
+  */
 object MapRegionsView:
   import MapRegions.*
 
@@ -72,25 +91,33 @@ object MapRegionsView:
 
   def configure(ui: UiConfig): Unit = jobPollMs = math.max(200, ui.jobPollMs)
 
-  private val status  = Var(Option.empty[BasemapStatus])
-  private val pick    = Var("configured")
-  private val box     = Var("")
+  private val status = Var(Option.empty[BasemapStatus])
+  private val pick = Var("configured")
+  private val box = Var("")
   private val content = Var(Content.Map)
-  private val depth   = Var("")
-  private val job     = Var(Option.empty[JobInfo])
+  private val depth = Var("")
+  private val job = Var(Option.empty[JobInfo])
+
   /** The fetch whose dry run succeeded last: downloading asks for the same, so its size was seen. */
   private val checked = Var(Option.empty[BasemapFetchQuery])
-  private val error   = Var(Option.empty[String])
+  private val error = Var(Option.empty[String])
   private val confirmAll = Var(false)
 
   /** The window is open (no polling into a closed one); mutable like the About window's own. */
   private var mounted = false
 
   private def load(): Unit =
-    ApiClient.basemap().onComplete(_.fold(e => error.set(Some(e.getMessage)), s => {
-      status.set(Some(s))
-      if box.now().isEmpty then box.set(s.bbox)
-    }))
+    ApiClient
+      .basemap()
+      .onComplete(
+        _.fold(
+          e => error.set(Some(e.getMessage)),
+          s => {
+            status.set(Some(s))
+            if box.now().isEmpty then box.set(s.bbox)
+          }
+        )
+      )
 
   private def namedOf(id: String): Option[String] =
     status.now().flatMap(_.regions.find(_.name == id)).map(_.name)
@@ -105,7 +132,7 @@ object MapRegionsView:
 
   private def start(dryRun: Boolean): Unit =
     current(dryRun) match
-      case Left(m) => error.set(Some(m))
+      case Left(m)  => error.set(Some(m))
       case Right(q) =>
         error.set(None)
         follow(ApiClient.basemapFetch(q), Option.when(dryRun)(q))
@@ -116,17 +143,27 @@ object MapRegionsView:
 
   private def poll(id: String, dry: Option[BasemapFetchQuery]): Unit =
     val _ = scala.scalajs.js.timers.setTimeout(jobPollMs.toDouble) {
-      if mounted then ApiClient.job(id).onComplete(_.fold(e => error.set(Some(e.getMessage)), j => {
-        job.set(Some(j))
-        if !j.isTerminal then poll(id, dry)
-        else
-          if j.succeeded then dry.foreach(q => checked.set(Some(q.copy(dryRun = false))))
-          load()
-      }))
+      if mounted then
+        ApiClient
+          .job(id)
+          .onComplete(
+            _.fold(
+              e => error.set(Some(e.getMessage)),
+              j => {
+                job.set(Some(j))
+                if !j.isTerminal then poll(id, dry)
+                else
+                  if j.succeeded then dry.foreach(q => checked.set(Some(q.copy(dryRun = false))))
+                  load()
+              }
+            )
+          )
     }
 
   private def remove(q: BasemapRemoveQuery): Unit =
-    ApiClient.basemapRemove(q).onComplete(_.fold(e => error.set(Some(e.getMessage)), _ => { confirmAll.set(false); load() }))
+    ApiClient
+      .basemapRemove(q)
+      .onComplete(_.fold(e => error.set(Some(e.getMessage)), _ => { confirmAll.set(false); load() }))
 
   private val canDownload: Signal[Boolean] =
     checked.signal.combineWith(box.signal, content.signal, depth.signal, pick.signal, job.signal, Auth.writable).map {
@@ -141,67 +178,165 @@ object MapRegionsView:
       cls := "about-section map-regions",
       onMountUnmountCallback(_ => { mounted = true; load() }, _ => mounted = false),
       h3(cls := "about-title", "Map regions"),
-      child.maybe <-- Auth.writable.map(w => Option.when(!w)(div(cls := "pane-note", Auth.keyNeeded("download map regions")))),
+      child.maybe <-- Auth.writable.map(w =>
+        Option.when(!w)(div(cls := "pane-note", Auth.keyNeeded("download map regions")))
+      ),
       child <-- status.signal.map(_.fold[HtmlElement](p(cls := "muted", "Loading…"))(downloaded)),
-      div(cls := "map-regions-form",
-        div(cls := "form-field",
-          label("region",
-            select(cls := "field map-region-pick",
+      div(
+        cls := "map-regions-form",
+        div(
+          cls := "form-field",
+          label(
+            "region",
+            select(
+              cls := "field map-region-pick",
               children <-- status.signal.map(_.toList.flatMap(choices).map(c => option(value := c.id, c.label))),
               // the options are made again when the status is read again: the choice is set again after them
-              controlled(value <-- status.signal.combineWith(pick.signal).map(_._2), onChange.mapToValue --> (choose(_)))))),
-        div(cls := "form-field",
-          label("box (west, south, east, north)",
-            input(typ := "text", cls := "field map-region-bbox", placeholder := "minLon,minLat,maxLon,maxLat or world",
-              controlled(value <-- box.signal, onInput.mapToValue --> { v => box.set(v); pick.set(OwnBox); checked.set(None) })))),
-        div(cls := "form-field",
-          label("download",
-            select(cls := "field map-region-content",
+              controlled(
+                value <-- status.signal.combineWith(pick.signal).map(_._2),
+                onChange.mapToValue --> (choose(_))
+              )
+            )
+          )
+        ),
+        div(
+          cls := "form-field",
+          label(
+            "box (west, south, east, north)",
+            input(
+              typ := "text",
+              cls := "field map-region-bbox",
+              placeholder := "minLon,minLat,maxLon,maxLat or world",
+              controlled(
+                value <-- box.signal,
+                onInput.mapToValue --> { v => box.set(v); pick.set(OwnBox); checked.set(None) }
+              )
+            )
+          )
+        ),
+        div(
+          cls := "form-field",
+          label(
+            "download",
+            select(
+              cls := "field map-region-content",
               Content.values.toList.map(c => option(value := c.toString, c.label)),
-              controlled(value <-- content.signal.map(_.toString), onChange.mapToValue --> { v => content.set(Content.parse(v)); checked.set(None) })))),
-        div(cls := "form-field",
-          label("deepest zoom",
-            input(typ := "text", cls := "field map-region-zoom", placeholder := "as configured",
-              controlled(value <-- depth.signal, onInput.mapToValue --> { v => depth.set(v); checked.set(None) })))),
+              controlled(
+                value <-- content.signal.map(_.toString),
+                onChange.mapToValue --> { v => content.set(Content.parse(v)); checked.set(None) }
+              )
+            )
+          )
+        ),
+        div(
+          cls := "form-field",
+          label(
+            "deepest zoom",
+            input(
+              typ := "text",
+              cls := "field map-region-zoom",
+              placeholder := "as configured",
+              controlled(value <-- depth.signal, onInput.mapToValue --> { v => depth.set(v); checked.set(None) })
+            )
+          )
+        ),
         child.maybe <-- error.signal.map(_.map(m => div(cls := "field-error", role := "alert", m))),
-        div(cls := "form-actions",
-          button(typ := "button", cls := "btn map-region-check", "check the size", disabled <-- busy,
-            onClick --> (_ => start(dryRun = true))),
-          button(typ := "button", cls := "btn btn--primary map-region-download", "download",
-            title := "check the size first", disabled <-- canDownload.map(!_), onClick --> (_ => start(dryRun = false))))),
+        div(
+          cls := "form-actions",
+          button(
+            typ := "button",
+            cls := "btn map-region-check",
+            "check the size",
+            disabled <-- busy,
+            onClick --> (_ => start(dryRun = true))
+          ),
+          button(
+            typ := "button",
+            cls := "btn btn--primary map-region-download",
+            "download",
+            title := "check the size first",
+            disabled <-- canDownload.map(!_),
+            onClick --> (_ => start(dryRun = false))
+          )
+        )
+      ),
       child.maybe <-- job.signal.map(_.map(jobView))
     )
 
   private def jobView(j: JobInfo): HtmlElement =
     val dry = j.detail.flatMap(_.about).exists(_.startsWith("dry run"))
     val state = if j.succeeded then ServiceState.Ok else if j.isTerminal then ServiceState.Down else ServiceState.Busy
-    div(cls := "map-region-job",
-      p(span(cls := s"about-state state-${state.label}", if dry then s"size check: ${j.status}" else s"download: ${j.status}"),
-        j.detail.flatMap(_.about).map(a => span(cls := "about-detail muted", a))),
+    div(
+      cls := "map-region-job",
+      p(
+        span(
+          cls := s"about-state state-${state.label}",
+          if dry then s"size check: ${j.status}" else s"download: ${j.status}"
+        ),
+        j.detail.flatMap(_.about).map(a => span(cls := "about-detail muted", a))
+      ),
       j.error.map(e => p(cls := "form-error", role := "alert", e)),
       j.progress.filter(_ => !j.isTerminal).map(t => p(cls := "muted map-region-progress", t)),
-      Option.when(j.isTerminal)(j.progress).flatten.map(t =>
-        div(cls := "map-region-sizes", sizes(t).map { l =>
-          div(p(cls := "map-region-layer", l.line),
-            Option.when(l.zooms.nonEmpty)(ul(cls := "map-region-zooms", l.zooms.map(z => li(z)))))
-        })))
+      Option
+        .when(j.isTerminal)(j.progress)
+        .flatten
+        .map(t =>
+          div(
+            cls := "map-region-sizes",
+            sizes(t).map { l =>
+              div(
+                p(cls := "map-region-layer", l.line),
+                Option.when(l.zooms.nonEmpty)(ul(cls := "map-region-zooms", l.zooms.map(z => li(z))))
+              )
+            }
+          )
+        )
+    )
 
   /** What is downloaded now: the map's region and each detailed-relief region, each with its remove. */
   private def downloaded(s: BasemapStatus): HtmlElement =
     val map = s.layers.find(l => l.layer == BasemapLayer.Vector.wire && l.present)
     val focus = s.layers.find(_.layer == BasemapLayer.Terrain.wire).toList.flatMap(_.focus)
-    dl(cls := "about-rows map-regions-downloaded",
+    dl(
+      cls := "about-rows map-regions-downloaded",
       map.toList.flatMap { m =>
-        List(dt("the map"), dd(span(s"${m.bbox.getOrElse("")}, zoom ≤ ${m.maxZoom.getOrElse(0)}"),
-          span(cls := "about-detail muted", s"${Backup.humanBytes(s.layers.filter(_.present).map(_.bytes).sum)} in all"),
-          button(typ := "button", cls := "btn btn--sm btn--danger map-region-remove-all",
-            child.text <-- confirmAll.signal.map(c => if c then "remove everything — sure?" else "remove everything"),
-            disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
-            onClick --> (_ => if confirmAll.now() then remove(BasemapRemoveQuery("all")) else confirmAll.set(true)))))
+        List(
+          dt("the map"),
+          dd(
+            span(s"${m.bbox.getOrElse("")}, zoom ≤ ${m.maxZoom.getOrElse(0)}"),
+            span(
+              cls := "about-detail muted",
+              s"${Backup.humanBytes(s.layers.filter(_.present).map(_.bytes).sum)} in all"
+            ),
+            button(
+              typ := "button",
+              cls := "btn btn--sm btn--danger map-region-remove-all",
+              child.text <-- confirmAll.signal.map(c => if c then "remove everything — sure?" else "remove everything"),
+              disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
+              onClick --> (_ => if confirmAll.now() then remove(BasemapRemoveQuery("all")) else confirmAll.set(true))
+            )
+          )
+        )
       } ++ focus.flatMap { f =>
-        List(dt(s"relief: ${f.name}"), dd(span(s"${f.bbox}, zoom ${f.minZoom}–${f.maxZoom}"),
-          span(cls := "about-detail muted", Backup.humanBytes(f.bytes)),
-          button(typ := "button", cls := "btn btn--sm map-region-remove", dataAttr("region") := f.name, "remove",
-            disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
-            onClick --> (_ => remove(BasemapRemoveQuery("none", focus = Some(f.name)))))))
-      } ++ Option.when(map.isEmpty && focus.isEmpty)(List(dt("nothing"), dd(span(cls := "muted", "no region is downloaded yet")))).toList.flatten)
+        List(
+          dt(s"relief: ${f.name}"),
+          dd(
+            span(s"${f.bbox}, zoom ${f.minZoom}–${f.maxZoom}"),
+            span(cls := "about-detail muted", Backup.humanBytes(f.bytes)),
+            button(
+              typ := "button",
+              cls := "btn btn--sm map-region-remove",
+              dataAttr("region") := f.name,
+              "remove",
+              disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
+              onClick --> (_ => remove(BasemapRemoveQuery("none", focus = Some(f.name))))
+            )
+          )
+        )
+      } ++ Option
+        .when(map.isEmpty && focus.isEmpty)(
+          List(dt("nothing"), dd(span(cls := "muted", "no region is downloaded yet")))
+        )
+        .toList
+        .flatten
+    )

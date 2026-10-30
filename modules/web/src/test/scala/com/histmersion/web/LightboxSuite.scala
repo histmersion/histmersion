@@ -4,9 +4,17 @@ import com.histmersion.api.MediaProvider
 
 class LightboxSuite extends munit.FunSuite:
 
-  private val item = Lightbox.Item("/media/u1/file", "Lions_Gate.jpg", Some("Lions_Gate.jpg"), Some("Photo: A. Author, via Commons"),
-    Some("A. Author"), Some("CC-BY-SA-3.0"), None, Some("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg"),
-    Some(MediaProvider.Commons))
+  private val item = Lightbox.Item(
+    "/media/u1/file",
+    "Lions_Gate.jpg",
+    Some("Lions_Gate.jpg"),
+    Some("Photo: A. Author, via Commons"),
+    Some("A. Author"),
+    Some("CC-BY-SA-3.0"),
+    None,
+    Some("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg"),
+    Some(MediaProvider.Commons)
+  )
 
   test("a thumbnail's attributes carry its full-size view, and read back as the same item") {
     val attrs = Lightbox.attrs(item)
@@ -16,7 +24,9 @@ class LightboxSuite extends munit.FunSuite:
   }
 
   test("the attributes are escaped") {
-    assert(Lightbox.attrs(item.copy(title = Some("a \"b\" <c>"))).contains("""data-lb-title="a &quot;b&quot; &lt;c&gt;""""))
+    assert(
+      Lightbox.attrs(item.copy(title = Some("a \"b\" <c>"))).contains("""data-lb-title="a &quot;b&quot; &lt;c&gt;"""")
+    )
   }
 
   test("a page's figure and a picture naming its full size open; another image does not") {

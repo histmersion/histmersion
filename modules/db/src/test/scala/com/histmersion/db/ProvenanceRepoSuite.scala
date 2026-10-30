@@ -7,12 +7,13 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
 
-/** A provenance is free text: every write path stores it as written. Against a real Postgres
-  * (HISTMERSION_TEST_DB_URL); skipped otherwise. */
+/** A provenance is free text: every write path stores it as written. Against a real Postgres (HISTMERSION_TEST_DB_URL);
+  * skipped otherwise.
+  */
 class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val cfg              = AppConfig.load()
+  private lazy val cfg = AppConfig.load()
   private lazy val ds =
     val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d); d
@@ -20,10 +21,23 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
   private val Prefix = "zzprov"
 
   private def source(ck: String, provenance: Option[String]) = Source(
-    citekey = ck, title = s"Title $ck", authors = List("A"), doi = None, year = Some(2020),
-    venue = None, status = SourceStatus.Current, topics = Nil, regions = Nil, tags = Nil,
-    period = None, summary = None, citedByCount = None, influentialCitations = None,
-    provenance = provenance, calibreId = None)
+    citekey = ck,
+    title = s"Title $ck",
+    authors = List("A"),
+    doi = None,
+    year = Some(2020),
+    venue = None,
+    status = SourceStatus.Current,
+    topics = Nil,
+    regions = Nil,
+    tags = Nil,
+    period = None,
+    summary = None,
+    citedByCount = None,
+    influentialCitations = None,
+    provenance = provenance,
+    calibreId = None
+  )
 
   private def stored(ck: String): Option[String] =
     connect(ds)(sql"SELECT source FROM sources WHERE citekey = $ck".query[Option[String]].run().head)
@@ -37,7 +51,11 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(stored(a), Some("Unheard-Of"))
     SourceRepo.upsert(ds, source(a, Some(Provenance.ExternalFile)), cfg.limits.chunkChars)
     assertEquals(SourceRepo.load(ds, a).flatMap(_.provenance), Some(Provenance.ExternalFile))
-    val patched = SourceRepo.patch(ds, a, SourcePatch(metadata = Some(MetadataPatch(provenance = Some("another-one")))),
-      cfg.limits.chunkChars)
+    val patched = SourceRepo.patch(
+      ds,
+      a,
+      SourcePatch(metadata = Some(MetadataPatch(provenance = Some("another-one")))),
+      cfg.limits.chunkChars
+    )
     assert(patched.isRight, patched.toString)
     assertEquals(stored(a), Some("another-one"))

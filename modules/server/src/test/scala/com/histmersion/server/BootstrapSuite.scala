@@ -8,10 +8,11 @@ import com.histmersion.db.{Db, JobRepo, Migrate, PeriodRepo}
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
 
-/** Named periods and the first-run job against a real Postgres (#719, #720); skipped without
-  * HISTMERSION_TEST_DB_URL. The network is a function the test supplies, and the data directory is a
-  * temporary one holding the REAL committed period seed — never the 16 000-place gazetteer, whose
-  * import re-materialises `finding_places` for the whole test database other suites assert on. */
+/** Named periods and the first-run job against a real Postgres (#719, #720); skipped without HISTMERSION_TEST_DB_URL.
+  * The network is a function the test supplies, and the data directory is a temporary one holding the REAL committed
+  * period seed — never the 16 000-place gazetteer, whose import re-materialises `finding_places` for the whole test
+  * database other suites assert on.
+  */
 class BootstrapSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -23,7 +24,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
 
   private val repoRoot = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
   private lazy val seedText = Files.readString(repoRoot.resolve("db/periods/periodo-seed.json"))
-  private lazy val seedIds  = PeriodO.parse(seedText).toOption.get.authorities.flatMap(a => a.periods.map(_.id))
+  private lazy val seedIds = PeriodO.parse(seedText).toOption.get.authorities.flatMap(a => a.periods.map(_.id))
   private val dump = scala.io.Source.fromResource("periods/periodo_dump.json").mkString
   private val fixtureIds = List("zzqauthiron", "zzqauthlba", "zzqauthbronze", "zzqauth", "zzqother01", "zzqother")
 
@@ -43,7 +44,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     transact(ds)(sql"DELETE FROM seed_versions WHERE name = ${Bootstrap.PeriodSeed}".update.run())
 
   override def beforeAll(): Unit = if testDb.nonEmpty then clean()
-  override def afterSuite(): Unit  = if testDb.nonEmpty then clean()
+  override def afterSuite(): Unit = if testDb.nonEmpty then clean()
 
   test("periods seed imports the bundled presets: the BSA's Bronze Age → Minoan → phases"):
     val r = bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message), identity)
@@ -63,7 +64,10 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     val seed = PeriodO.parse(seedText).toOption.get
     assertEquals(r.presets, seed.presets.size)
     val aegean = PeriodRepo.get(ds, "p0ds9qjq7b2").fold(fail("no Bronze Age (Greece)"))(identity)
-    assertEquals((aegean.label, aegean.region, aegean.preset), ("Bronze Age", Some("Greece"), Some(PresetRegion.Aegean)))
+    assertEquals(
+      (aegean.label, aegean.region, aegean.preset),
+      ("Bronze Age", Some("Greece"), Some(PresetRegion.Aegean))
+    )
     // ROAD's Eurasia-wide Bronze Age is still a period, but not a preset
     assertEquals(PeriodRepo.get(ds, "p0s2rwkwbsz").map(p => (p.label, p.preset)), Some(("Bronze Age", None)))
 
@@ -126,11 +130,14 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     assert(dead.fetchPeriods("periodo", List("zzqauth")).left.exists(_.message.contains("503")))
 
   test("init runs as a job: every step is attempted, a missing gazetteer seed is reported"):
-    val b   = bootstrap(dataDir())
+    val b = bootstrap(dataDir())
     val job = b.init(fetch = false).fold(e => fail(e.message), identity)
     assertEquals(job.kind, Bootstrap.JobKind)
-    val end = Iterator.continually { Thread.sleep(100); JobRepo.get(ds, job.id).get }
-      .take(300).find(_.isTerminal).getOrElse(fail("the init job did not finish"))
+    val end = Iterator
+      .continually { Thread.sleep(100); JobRepo.get(ds, job.id).get }
+      .take(300)
+      .find(_.isTerminal)
+      .getOrElse(fail("the init job did not finish"))
     assertEquals(end.state, JobState.Failed)
     assert(end.error.exists(_.contains("gazetteer: no gazetteer seed at")), end.toString)
     assert(end.progress.exists(_.contains("period presets:")), end.toString) // the periods still went in

@@ -3,9 +3,10 @@ package com.histmersion.server.agents
 import java.nio.file.{Files, Path}
 import java.util.concurrent.TimeoutException
 
-/** #1650: a CLI step must never outlive its timeout, whatever the CLI does — not read its stdin, sleep,
-  * or leave a grandchild holding its stdout — and a kill takes the whole process tree. Fake CLIs are
-  * shell scripts; nothing is spent. */
+/** #1650: a CLI step must never outlive its timeout, whatever the CLI does — not read its stdin, sleep, or leave a
+  * grandchild holding its stdout — and a kill takes the whole process tree. Fake CLIs are shell scripts; nothing is
+  * spent.
+  */
 class CliProcessSuite extends munit.FunSuite:
   override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
@@ -20,7 +21,8 @@ class CliProcessSuite extends munit.FunSuite:
 
   private def pidIn(f: Path): Long =
     val deadline = System.currentTimeMillis() + 5000
-    while (!Files.exists(f) || Files.readString(f).trim.isEmpty) && System.currentTimeMillis() < deadline do Thread.sleep(50)
+    while (!Files.exists(f) || Files.readString(f).trim.isEmpty) && System.currentTimeMillis() < deadline do
+      Thread.sleep(50)
     Files.readString(f).trim.toLong
 
   private def awaitDead(pid: Long, millis: Long = 5000): Boolean =
@@ -36,10 +38,13 @@ class CliProcessSuite extends munit.FunSuite:
   test("a CLI that reads its stdin and answers: lines, exit code, and a heartbeat per line"):
     val (f, dir) = script("cat; echo done; exit 3")
     val beats = java.util.concurrent.atomic.AtomicInteger()
-    val reg   = java.util.concurrent.atomic.AtomicInteger()
+    val reg = java.util.concurrent.atomic.AtomicInteger()
     val unreg = java.util.concurrent.atomic.AtomicInteger()
-    val hooks = CliProcess.Hooks(_ => { val _ = reg.incrementAndGet() }, _ => { val _ = unreg.incrementAndGet() },
-      () => { val _ = beats.incrementAndGet() })
+    val hooks = CliProcess.Hooks(
+      _ => { val _ = reg.incrementAndGet() },
+      _ => { val _ = unreg.incrementAndGet() },
+      () => { val _ = beats.incrementAndGet() }
+    )
     val r = CliProcess.withHooks(hooks)(CliProcess.run(List(f.toString), dir, _ => (), "a\nb\n", 10, "hint"))
     assertEquals(r.lines, List("a", "b", "done"))
     assertEquals(r.exit, 3)
@@ -50,14 +55,19 @@ class CliProcessSuite extends munit.FunSuite:
     val reg = java.util.concurrent.atomic.AtomicInteger()
     val hooks = CliProcess.Hooks(_ => { val _ = reg.incrementAndGet() }, _ => (), () => ())
     CliProcess.withHooks(hooks) {
-      val _ = ox.par(List(() => CliProcess.run(List(f.toString), dir, _ => (), "", 10, "hint"),
-        () => CliProcess.run(List(f.toString), dir, _ => (), "", 10, "hint")))
+      val _ = ox.par(
+        List(
+          () => CliProcess.run(List(f.toString), dir, _ => (), "", 10, "hint"),
+          () => CliProcess.run(List(f.toString), dir, _ => (), "", 10, "hint")
+        )
+      )
     }
     assertEquals(reg.get, 2)
 
   test("a missing executable still fails at start"):
     val dir = Files.createTempDirectory("hm-cliproc-")
-    val e = intercept[java.io.IOException](CliProcess.run(List("hm-no-such-cli-xyz"), dir, _ => (), "", 5, "install it"))
+    val e =
+      intercept[java.io.IOException](CliProcess.run(List("hm-no-such-cli-xyz"), dir, _ => (), "", 5, "install it"))
     assert(e.getMessage.contains("cannot run 'hm-no-such-cli-xyz'"), e.getMessage)
 
   test("#1650: a CLI that never reads stdin, given a 200 KB prompt, is killed at the timeout"):
@@ -85,9 +95,9 @@ class CliProcessSuite extends munit.FunSuite:
 
   test("a step cancelled mid-call (thread interrupt) kills the tree"):
     val (f, dir) = script(s"sleep 300 & echo $$! > @DIR@/child; sleep 300")
-    val t = Thread.ofVirtual().start(() => {
+    val t = Thread.ofVirtual().start { () =>
       val _ = scala.util.Try(CliProcess.run(List(f.toString), dir, _ => (), "", 120, "hint"))
-    })
+    }
     val child = pidIn(dir.resolve("child"))
     t.interrupt()
     t.join(java.time.Duration.ofSeconds(15))

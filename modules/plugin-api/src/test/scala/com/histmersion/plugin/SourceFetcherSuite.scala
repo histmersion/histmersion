@@ -5,8 +5,14 @@ class SourceFetcherSuite extends munit.FunSuite:
 
   test("a WorkKey with no identifier is empty; title, authors, year and format identify nothing"):
     assert(WorkKey().isEmpty)
-    assert(WorkKey(title = Some("Black Athena"), authors = List("Martin Bernal"), year = Some(Year(1987)),
-      format = Some("pdf")).isEmpty)
+    assert(
+      WorkKey(
+        title = Some("Black Athena"),
+        authors = List("Martin Bernal"),
+        year = Some(Year(1987)),
+        format = Some("pdf")
+      ).isEmpty
+    )
     assert(!WorkKey(doi = Some(Doi("10.1038/nature14317"))).isEmpty)
     assert(!WorkKey(archive = Some("racesofeurope")).isEmpty)
     assert(!WorkKey(pmcid = Some("PMC6091220")).isEmpty)
@@ -36,4 +42,7 @@ class SourceFetcherSuite extends munit.FunSuite:
     assertEquals(none.licence, None)
     val withIt = FetchedFile("oabooks", None, pdf, "pdf", Some(Licence("CC-BY-4.0")))
     assertEquals(withIt.licence.map(l => l.value: String), Some("CC-BY-4.0"))
-    assertEquals(none.copy(licence = Some(Licence("public-domain"))).licence.map(l => l.value: String), Some("public-domain"))
+    assertEquals(
+      none.copy(licence = Some(Licence("public-domain"))).licence.map(l => l.value: String),
+      Some("public-domain")
+    )

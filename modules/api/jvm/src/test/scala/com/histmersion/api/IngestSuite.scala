@@ -1,8 +1,8 @@
 package com.histmersion.api
 
-
-/** Pure tests for the ingest contract (plan §1.8): the four spellings of an image link, the job
-  * state machine and the Markdown renderers. No database, no HTTP. */
+/** Pure tests for the ingest contract (plan §1.8): the four spellings of an image link, the job state machine and the
+  * Markdown renderers. No database, no HTTP.
+  */
 class IngestSuite extends munit.FunSuite:
 
   private val md =
@@ -17,14 +17,14 @@ class IngestSuite extends munit.FunSuite:
 
   // ── figures/… → assets/… (the seed importer's normalisation) ─────────────────────────────────
   test("fromFigures rewrites only figures/ image links"):
-    val in  = "![a](figures/x.png)\n![b](assets/y.png)\n[c](figures/x.png)"
+    val in = "![a](figures/x.png)\n![b](assets/y.png)\n[c](figures/x.png)"
     val out = AssetLinks.fromFigures(in)
     assert(out.contains("![a](assets/x.png)"), out)
     assert(out.contains("![b](assets/y.png)"), out)
     assert(out.contains("[c](figures/x.png)"), "a plain link is not an image link: " + out)
 
   test("fromFigures rewrites an ABSOLUTE converter path, which is what the corpus actually stores"):
-    val in  = "![](/Users/me/research/md/olander2022_ielanguage/figures/paper.pdf-0023-02.png)"
+    val in = "![](/Users/me/research/md/olander2022_ielanguage/figures/paper.pdf-0023-02.png)"
     assertEquals(AssetLinks.fromFigures(in), "![](assets/paper.pdf-0023-02.png)")
 
   test("fromFigures accepts every other spelling of the same path"):
@@ -34,12 +34,12 @@ class IngestSuite extends munit.FunSuite:
       "md/ck/figures/x.png",
       "/abs/md/ck/figures/x.png",
       "file:///abs/md/ck/figures/x.png",
-      "C:\\corpus\\md\\ck\\figures\\x.png")
+      "C:\\corpus\\md\\ck\\figures\\x.png"
+    )
     cases.foreach(c => assertEquals(AssetLinks.fromFigures(s"![a]($c)"), "![a](assets/x.png)", c))
 
   test("fromFigures maps the name through safeName, so link and stored asset agree"):
-    assertEquals(AssetLinks.fromFigures("![](figures/a b&c.png)".replace(" ", "%20")),
-      "![](assets/a-b-c.png)")
+    assertEquals(AssetLinks.fromFigures("![](figures/a b&c.png)".replace(" ", "%20")), "![](assets/a-b-c.png)")
 
   test("fromFigures leaves assets/, remote and non-image links alone, and is idempotent"):
     val in = "![a](assets/x.png) ![b](https://e.org/figures/y.png) [c](figures/x.png)"
@@ -69,11 +69,13 @@ class IngestSuite extends munit.FunSuite:
 
   test("collapsePictureText leaves a body without the markers untouched, and is idempotent"):
     assertEquals(AssetLinks.collapsePictureText(md), md)
-    val once = AssetLinks.collapsePictureText("**----- Start of picture text -----**<br>x**----- End of picture text -----**")
+    val once =
+      AssetLinks.collapsePictureText("**----- Start of picture text -----**<br>x**----- End of picture text -----**")
     assertEquals(AssetLinks.collapsePictureText(once), once)
 
   test("normalizeBody does both, and stays idempotent"):
-    val in = "![](/abs/md/ck/figures/f.png)\n\n**----- Start of picture text -----**<br>t**----- End of picture text -----**"
+    val in =
+      "![](/abs/md/ck/figures/f.png)\n\n**----- Start of picture text -----**<br>t**----- End of picture text -----**"
     val once = AssetLinks.normalizeBody(in)
     assert(once.contains("![](assets/f.png)"), once)
     assert(once.contains("<details"), once)
@@ -135,17 +137,16 @@ class IngestSuite extends munit.FunSuite:
     assert(a.contains("![Figure 1](http://host:9/source/ck/assets/fig-1.png)"), a)
 
   test("toAbsolute with a blank public URL degrades to the served path"):
-    assertEquals(AssetLinks.toAbsolute("![a](assets/x.png)", "ck", "  "),
-      "![a](/source/ck/assets/x.png)")
+    assertEquals(AssetLinks.toAbsolute("![a](assets/x.png)", "ck", "  "), "![a](/source/ck/assets/x.png)")
 
   test("rewriting is idempotent — a rewritten body does not move again"):
-    val once  = AssetLinks.toWeb(md, "ck")
+    val once = AssetLinks.toWeb(md, "ck")
     assertEquals(AssetLinks.toWeb(once, "ck"), once)
 
   // ── rendered HTML ────────────────────────────────────────────────────────────────────────────
   test("lazyImages adds loading=lazy exactly once"):
     val html = """<p><img src="/source/ck/assets/a.png" alt="A" /></p>"""
-    val out  = AssetLinks.lazyImages(html)
+    val out = AssetLinks.lazyImages(html)
     assertEquals(out.sliding("loading=".length).count(_ == "loading="), 1)
     assert(out.startsWith("""<p><img loading="lazy" src="""), out)
 
@@ -184,8 +185,17 @@ class IngestSuite extends munit.FunSuite:
   /** SOI, one APP0 segment to be skipped, then SOF0 carrying height then width. */
   private def jpeg(w: Int, h: Int): Array[Byte] =
     val app0 = Array[Byte](0xff.toByte, 0xe0.toByte, 0, 4, 0, 0)
-    val sof0 = Array[Byte](0xff.toByte, 0xc0.toByte, 0, 17, 8,
-      ((h >>> 8) & 0xff).toByte, (h & 0xff).toByte, ((w >>> 8) & 0xff).toByte, (w & 0xff).toByte) ++
+    val sof0 = Array[Byte](
+      0xff.toByte,
+      0xc0.toByte,
+      0,
+      17,
+      8,
+      ((h >>> 8) & 0xff).toByte,
+      (h & 0xff).toByte,
+      ((w >>> 8) & 0xff).toByte,
+      (w & 0xff).toByte
+    ) ++
       new Array[Byte](8)
     Array[Byte](0xff.toByte, 0xd8.toByte) ++ app0 ++ sof0
 
@@ -239,8 +249,17 @@ class IngestSuite extends munit.FunSuite:
 
   // ── Markdown ─────────────────────────────────────────────────────────────────────────────────
   test("job Markdown names the status, the citekey and the failure"):
-    val j = JobInfo("abc", Ingest.KindIngest, "failed", Some("ck"), None, Some("converter down"),
-      Some("0123456789abcdef"), "t0", "t1")
+    val j = JobInfo(
+      "abc",
+      Ingest.KindIngest,
+      "failed",
+      Some("ck"),
+      None,
+      Some("converter down"),
+      Some("0123456789abcdef"),
+      "t0",
+      "t1"
+    )
     val out = IngestMarkdown.job(j)
     assert(out.contains("### job abc · ingest"), out)
     assert(out.contains("**error:** converter down"), out)
@@ -248,7 +267,10 @@ class IngestSuite extends munit.FunSuite:
 
   test("job Markdown names the acquisition item a job will tick off, and nothing when there is none"):
     val j = JobInfo("abc", Ingest.KindIngest, "running", Some("ck"), acquireItem = Some(42))
-    assert(IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"), IngestMarkdown.job(j))
+    assert(
+      IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"),
+      IngestMarkdown.job(j)
+    )
     assert(IngestMarkdown.job(j.copy(status = "failed")).contains("42 (left open: the job failed)"))
     assert(IngestMarkdown.job(j.copy(status = "done")).contains("**acquisition item:** 42\n"))
     assert(!IngestMarkdown.job(j.copy(acquireItem = None)).contains("acquisition item"))
@@ -274,9 +296,19 @@ class IngestSuite extends munit.FunSuite:
   // #770 / #771: an init job names what it imports; the periods it skipped are counted and listed
   test("an init job's Markdown says what it imports and which period definitions it skipped"):
     val plan = InitPlan(gazetteer = true, fetch = List("periodo"))
-    val j = JobInfo("j1", InitPlan.JobKind, "done", detail = Some(JobDetail(init = Some(plan),
-      skippedPeriods = List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150 lies outside")),
-      skippedPeriodCount = 1)))
+    val j = JobInfo(
+      "j1",
+      InitPlan.JobKind,
+      "done",
+      detail = Some(
+        JobDetail(
+          init = Some(plan),
+          skippedPeriods =
+            List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150 lies outside")),
+          skippedPeriodCount = 1
+        )
+      )
+    )
     val md = IngestMarkdown.job(j)
     assert(md.contains("- **imports:** bundled gazetteer, fetch periodo"), md)
     assert(md.contains("- **skipped:** 1 period definition (not imported)"), md)

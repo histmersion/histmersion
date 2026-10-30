@@ -15,12 +15,12 @@ import io.circe.Json
 import io.circe.syntax.*
 import java.nio.file.Path
 
-/** The ONE implementation of every acquisition & assessment operation (stream 2.6). REST routes and
-  * MCP tools both call these; the CLI reaches them over HTTP — the same rule the rest of the server
-  * follows, which is what makes "the CLI and the MCP tools agree" mechanical rather than hopeful.
+/** The ONE implementation of every acquisition & assessment operation (stream 2.6). REST routes and MCP tools both call
+  * these; the CLI reaches them over HTTP — the same rule the rest of the server follows, which is what makes "the CLI
+  * and the MCP tools agree" mechanical rather than hopeful.
   *
-  * Everything network-facing arrives as a trait, so a test can drive the whole handler from captured
-  * fixtures. Everything decision-making is a pure function in [[Acquire]].
+  * Everything network-facing arrives as a trait, so a test can drive the whole handler from captured fixtures.
+  * Everything decision-making is a pure function in [[Acquire]].
   */
 final class AcquireHandlers(
     deps: Deps,
@@ -37,22 +37,24 @@ final class AcquireHandlers(
     alerts: => CitationAlerts = NoAlerts,
     generation: => String = ""
 ):
-  private val ds  = deps.ds
+  private val ds = deps.ds
   private def cfg = deps.cfg
   private def acq = deps.cfg.acquire
 
-  /** The restore lock (plan §1.10). Acquisition WRITES — `assess --apply` patches a status,
-    * `followups` adds edges, `ingest`/`archive import` create sources, `calibre pushed` writes the
-    * Calibre id, the Retraction Watch refresh replaces a whole table — and none of it was covered.
-    * A source created while `pg_restore --clean` runs is a source in a schema being dropped. */
+  /** The restore lock (plan §1.10). Acquisition WRITES — `assess --apply` patches a status, `followups` adds edges,
+    * `ingest`/`archive import` create sources, `calibre pushed` writes the Calibre id, the Retraction Watch refresh
+    * replaces a whole table — and none of it was covered. A source created while `pg_restore --clean` runs is a source
+    * in a schema being dropped.
+    */
   private val maintenance = deps.maintenance
 
-  /** The Retraction Watch refresh runs in the background (see [[updateRetractions]]) and at most ONE
-    * may be in flight. Per INSTANCE, not per process: the handler is constructed once per server, and
-    * a test run holds several servers in one JVM — a process-global flag let one server's refresh
-    * block another's and, worse, made one server report the other's error. */
+  /** The Retraction Watch refresh runs in the background (see [[updateRetractions]]) and at most ONE may be in flight.
+    * Per INSTANCE, not per process: the handler is constructed once per server, and a test run holds several servers in
+    * one JVM — a process-global flag let one server's refresh block another's and, worse, made one server report the
+    * other's error.
+    */
   private val rwRunning = java.util.concurrent.atomic.AtomicBoolean(false)
-  private val rwError   = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
+  private val rwError = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
 
   private def err(msg: String): ApiError = ApiError(msg)
 
@@ -61,16 +63,28 @@ final class AcquireHandlers(
   private val search = CandidateSearch(ds, deps.cfg.acquire.candidates, indexes, alerts)
 
   /** A goal's (or every goal's) candidates in one state (`new` by default), with the counts per state. */
-  def candidates(goal: Option[String], state: Option[String], limit: Option[Int], offset: Option[Int]): Either[ApiError, CandidateList] =
+  def candidates(
+      goal: Option[String],
+      state: Option[String],
+      limit: Option[Int],
+      offset: Option[Int]
+  ): Either[ApiError, CandidateList] =
     val st = state.map(_.trim).filter(_.nonEmpty).getOrElse(Candidates.State.New.wire)
-    Candidates.State.parse(st).toRight(ApiError(s"unknown state '$st' (${Candidates.State.values.map(_.wire).mkString(", ")})",
-        Some(Write.CodeInvalid))).map { s =>
-      val g     = goal.map(_.trim).filter(_.nonEmpty)
-      val n     = cfg.limits.page(limit, cfg.limits.search)
-      val from  = offset.getOrElse(0).max(0)
-      val page  = CandidateRepo.list(ds, g, s.wire, n + 1, from)
-      CandidateList(g, s.wire, page.take(n), CandidateRepo.counts(ds, g), from, Option.when(page.size > n)(from + n))
-    }
+    Candidates.State
+      .parse(st)
+      .toRight(
+        ApiError(
+          s"unknown state '$st' (${Candidates.State.values.map(_.wire).mkString(", ")})",
+          Some(Write.CodeInvalid)
+        )
+      )
+      .map { s =>
+        val g = goal.map(_.trim).filter(_.nonEmpty)
+        val n = cfg.limits.page(limit, cfg.limits.search)
+        val from = offset.getOrElse(0).max(0)
+        val page = CandidateRepo.list(ds, g, s.wire, n + 1, from)
+        CandidateList(g, s.wire, page.take(n), CandidateRepo.counts(ds, g), from, Option.when(page.size > n)(from + n))
+      }
 
   /** Read a goal's watches from their watermarks and store what is new (no model). */
   def sweepCandidates(r: CandidateSweepRequest): Either[ApiError, CandidateSweep] =
@@ -79,8 +93,15 @@ final class AcquireHandlers(
 
   def markCandidates(m: CandidateMark): Either[ApiError, CandidateMarked] =
     maintenance.guard("candidates/mark"):
-      Candidates.State.parse(m.state).toRight(ApiError(s"unknown state '${m.state}' (${Candidates.State.values.map(_.wire).mkString(", ")})",
-          Some(Write.CodeInvalid))).map(s => CandidateMarked(s.wire, CandidateRepo.mark(ds, m.ids.distinct, s.wire)))
+      Candidates.State
+        .parse(m.state)
+        .toRight(
+          ApiError(
+            s"unknown state '${m.state}' (${Candidates.State.values.map(_.wire).mkString(", ")})",
+            Some(Write.CodeInvalid)
+          )
+        )
+        .map(s => CandidateMarked(s.wire, CandidateRepo.mark(ds, m.ids.distinct, s.wire)))
 
   // ── discover ────────────────────────────────────────────────────────────────────────────────
 
@@ -95,26 +116,30 @@ final class AcquireHandlers(
     val query = q.trim
     if query.isEmpty then Left(err("give a search query"))
     else
-      discovery.search(query, since, sort, cfg.limits.page(limit, acq.defaults.searchLimit))
-        .left.map(err)
+      discovery
+        .search(query, since, sort, cfg.limits.page(limit, acq.defaults.searchLimit))
+        .left
+        .map(err)
         .map { works =>
           // ONE index for the whole page: `mark` used to read `lower(doi) -> citekey` for the entire
           // corpus once per RESULT ROW, i.e. 25 full-table scans for one search.
-          val index  = AcquireRepo.doiIndex(ds)
+          val index = AcquireRepo.doiIndex(ds)
           val marked = works.map(mark(_, index))
-          val kept   = if notInDb then marked.filterNot(_.inDb) else marked
+          val kept = if notInDb then marked.filterNot(_.inDb) else marked
           DiscoverResult(query, kept.size, kept)
         }
 
   def meta(id: String): Either[ApiError, WorkRef] =
     Acquire.parseIdent(id).left.map(err).flatMap {
-      case Ident.Doi(doi)  => discovery.meta(doi).left.map(err).map(mark(_, AcquireRepo.doiIndex(ds)))
-      case Ident.Arxiv(a)  =>
+      case Ident.Doi(doi) => discovery.meta(doi).left.map(err).map(mark(_, AcquireRepo.doiIndex(ds)))
+      case Ident.Arxiv(a) =>
         discovery.meta(arxivDoi(a)).left.map(err).map(mark(_, AcquireRepo.doiIndex(ds)))
       case Ident.Citekey(k) =>
         SourceRepo.load(ds, k).toRight(Write.notFound(k)).flatMap { s =>
-          s.doi.toRight(err(s"'$k' has no DOI recorded — nothing to look up upstream"))
-            .flatMap(discovery.meta(_).left.map(err)).map(mark(_, AcquireRepo.doiIndex(ds)))
+          s.doi
+            .toRight(err(s"'$k' has no DOI recorded — nothing to look up upstream"))
+            .flatMap(discovery.meta(_).left.map(err))
+            .map(mark(_, AcquireRepo.doiIndex(ds)))
         }
     }
 
@@ -124,19 +149,21 @@ final class AcquireHandlers(
       r.copy(known = r.dois.filter(index.contains))
     }
 
-  /** Fill in `inDb` and keep the citekey the corpus would use. `index` is passed IN so a caller
-    * marking a whole page reads the DOI index once. */
+  /** Fill in `inDb` and keep the citekey the corpus would use. `index` is passed IN so a caller marking a whole page
+    * reads the DOI index once.
+    */
   private def mark(w: WorkRef, index: Map[String, String]): WorkRef =
-    val byDoi    = w.doi.flatMap(index.get)
+    val byDoi = w.doi.flatMap(index.get)
     // the generated key, or the pre-#878 key a record with an accented author may still carry
-    val keys     = w.citekey.toList ++
+    val keys = w.citekey.toList ++
       Option.when(w.citekey.isDefined)(Acquire.legacyCitekey(w.authors, w.year, w.title)).toList
-    val byKey    = keys.distinct.find(AcquireRepo.exists(ds, _))
+    val byKey = keys.distinct.find(AcquireRepo.exists(ds, _))
     val resolved = byDoi.orElse(byKey)
     w.copy(inDb = resolved.isDefined, citekey = resolved.orElse(w.citekey))
 
-  /** The generated key `generated`, unless no record has it and one has the pre-#878 key of the
-    * same metadata — then that one, so a re-import lands on the existing record, not a duplicate. */
+  /** The generated key `generated`, unless no record has it and one has the pre-#878 key of the same metadata — then
+    * that one, so a re-import lands on the existing record, not a duplicate.
+    */
   private def stored(generated: String, authors: List[String], year: Option[Int], title: Option[String]): String =
     val legacy = Acquire.legacyCitekey(authors, year, title)
     if legacy != generated && !AcquireRepo.exists(ds, generated) && AcquireRepo.exists(ds, legacy) then legacy
@@ -144,8 +171,9 @@ final class AcquireHandlers(
 
   // ── refs ────────────────────────────────────────────────────────────────────────────────────
 
-  /** The deposited reference list, with each entry resolved to a stored source where possible.
-    * `apply` writes those as `references` edges out of the target. */
+  /** The deposited reference list, with each entry resolved to a stored source where possible. `apply` writes those as
+    * `references` edges out of the target.
+    */
   def refs(req: RefsRequest): Either[ApiError, RefsResult] =
     target(req.id).flatMap { t =>
       t.doi.toRight(err(s"no DOI for '${req.id}' — a reference list needs one")).flatMap { doi =>
@@ -155,32 +183,36 @@ final class AcquireHandlers(
             if !req.apply then 0
             else
               t.citekey match
-                case None => 0
+                case None      => 0
                 case Some(src) =>
-                  AcquireRepo.addEdges(ds,
-                    resolved.flatMap(_.citekey).distinct.filter(_ != src).map(Edge(src, _, "references")))
-          RefsResult(req.id, Some(doi), backend, resolved.size, resolved.count(_.citekey.isDefined),
-            added, resolved)
+                  AcquireRepo.addEdges(
+                    ds,
+                    resolved.flatMap(_.citekey).distinct.filter(_ != src).map(Edge(src, _, "references"))
+                  )
+          RefsResult(req.id, Some(doi), backend, resolved.size, resolved.count(_.citekey.isDefined), added, resolved)
         }
       }
     }
 
-  /** Match a reference to a stored source: by DOI first, then by the citekey the metadata would
-    * generate, then by unique citekey PREFIX — the same widening `resolveEdges` does for short edge
-    * targets (`heggarty2023` → `heggarty2023_language`). */
+  /** Match a reference to a stored source: by DOI first, then by the citekey the metadata would generate, then by
+    * unique citekey PREFIX — the same widening `resolveEdges` does for short edge targets (`heggarty2023` →
+    * `heggarty2023_language`).
+    */
   private def resolveRefs(rows: List[RefRow]): List[RefRow] =
-    val index    = AcquireRepo.doiIndex(ds)
+    val index = AcquireRepo.doiIndex(ds)
     val citekeys = AcquireRepo.allCitekeys(ds)
     rows.map { r =>
       val byDoi = r.doi.flatMap(index.get)
       // the current key first, then the pre-#878 one (accented letters dropped) older records carry
       val guesses = Acquire.citekeyCandidates(r.authors, r.year, r.title)
-      val byKey   = guesses.find(citekeys.contains)
-      val byPrefix = guesses.iterator.map { guess =>
-        val stem = guess.takeWhile(_ != '_')
-        val hits = citekeys.filter(k => k == stem || k.startsWith(stem + "_"))
-        Option.when(hits.size == 1)(hits.head)
-      }.collectFirst { case Some(k) => k }
+      val byKey = guesses.find(citekeys.contains)
+      val byPrefix = guesses.iterator
+        .map { guess =>
+          val stem = guess.takeWhile(_ != '_')
+          val hits = citekeys.filter(k => k == stem || k.startsWith(stem + "_"))
+          Option.when(hits.size == 1)(hits.head)
+        }
+        .collectFirst { case Some(k) => k }
       r.copy(citekey = byDoi.orElse(byKey).orElse(byPrefix))
     }
 
@@ -190,106 +222,140 @@ final class AcquireHandlers(
   private def assessNow(req: AssessRequest, store: Boolean = true): Either[ApiError, Assessment] =
     target(req.id).flatMap { t =>
       t.doi.toRight(err(s"no DOI for '${req.id}' — an assessment needs one")).map { doi =>
-        val rw      = AcquireRepo.retractionsFor(ds, doi)
+        val rw = AcquireRepo.retractionsFor(ds, doi)
         val updates = discovery.updates(doi).getOrElse(Nil)
-        val work    = discovery.meta(doi).toOption
-        val stored  = t.citekey.flatMap(SourceRepo.load(ds, _))
-        val cited   = work.flatMap(_.citedByCount).orElse(stored.flatMap(_.citedByCount))
-        val year    = work.flatMap(_.year).orElse(stored.flatMap(_.year))
-        val d       = acq.defaults
-        val verdict = Acquire.verdict(rw, updates, work.exists(_.isRetracted), cited, year,
-          d.wellCitedAt, d.lowCitedAt, d.staleBefore)
+        val work = discovery.meta(doi).toOption
+        val stored = t.citekey.flatMap(SourceRepo.load(ds, _))
+        val cited = work.flatMap(_.citedByCount).orElse(stored.flatMap(_.citedByCount))
+        val year = work.flatMap(_.year).orElse(stored.flatMap(_.year))
+        val d = acq.defaults
+        val verdict = Acquire.verdict(
+          rw,
+          updates,
+          work.exists(_.isRetracted),
+          cited,
+          year,
+          d.wellCitedAt,
+          d.lowCitedAt,
+          d.staleBefore
+        )
 
         val checkedAt = t.citekey.filter(_ => store).map { ck =>
-          AcquireRepo.putAssessment(ds, ck, verdict, verdict == Acquire.Verdicts.Retracted,
-            noticesJson(rw, updates), cited, stored.flatMap(_.influentialCitations))
+          AcquireRepo.putAssessment(
+            ds,
+            ck,
+            verdict,
+            verdict == Acquire.Verdicts.Retracted,
+            noticesJson(rw, updates),
+            cited,
+            stored.flatMap(_.influentialCitations)
+          )
         }
         val decision = for
-          ck  <- t.citekey if req.apply
+          ck <- t.citekey if req.apply
           cur <- stored
-          d   <- Acquire.statusDecision(verdict, cur.status, req.forceStatus)
+          d <- Acquire.statusDecision(verdict, cur.status, req.forceStatus)
         yield ck -> d
         val applied = decision.flatMap {
           case (ck, Right(status)) =>
-            AcquireRepo.setStatus(ds, ck, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
-              .toOption.map(_ => status.wire)
+            AcquireRepo
+              .setStatus(ds, ck, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+              .toOption
+              .map(_ => status.wire)
           case (_, Left(_)) => None
         }
         val kept = decision.flatMap(_._2.left.toOption)
 
         Assessment(
-          target = req.id, doi = Some(doi), citekey = t.citekey, year = year, citedByCount = cited,
+          target = req.id,
+          doi = Some(doi),
+          citekey = t.citekey,
+          year = year,
+          citedByCount = cited,
           influentialCitations = stored.flatMap(_.influentialCitations),
           isRetracted = verdict == Acquire.Verdicts.Retracted,
-          retractionWatch = rw, crossrefUpdates = updates, flagged = Acquire.flagged(verdict),
-          verdict = verdict, recommendation = Acquire.recommendation(verdict, cited),
-          applied = applied, checkedAt = checkedAt, kept = kept)
+          retractionWatch = rw,
+          crossrefUpdates = updates,
+          flagged = Acquire.flagged(verdict),
+          verdict = verdict,
+          recommendation = Acquire.recommendation(verdict, cited),
+          applied = applied,
+          checkedAt = checkedAt,
+          kept = kept
+        )
       }
     }
 
-  /** The notices, verbatim, so a later reader sees WHY a verdict was reached without asking Crossref
-    * again. */
+  /** The notices, verbatim, so a later reader sees WHY a verdict was reached without asking Crossref again.
+    */
   private def noticesJson(rw: List[RetractionNotice], up: List[UpdateNotice]): String =
     Json.obj("retractionWatch" -> rw.asJson, "crossrefUpdates" -> up.asJson).noSpaces
 
-  /** Refresh the local Retraction Watch mirror — our ground truth, so an assessment never depends on
-    * a third party being up at the moment somebody asks.
+  /** Refresh the local Retraction Watch mirror — our ground truth, so an assessment never depends on a third party
+    * being up at the moment somebody asks.
     *
-    * The work is ~30 MB of CSV and ~60 000 rows, which does not fit in one HTTP request (the same
-    * constraint that made `reindex` resumable), so this STARTS the refresh on a virtual thread and
-    * returns immediately; callers poll [[retractionsStatus]]. The two fields of mutable state below
-    * are the price of that: a flag so two callers cannot run it twice, and the last error so a failed
-    * refresh is visible instead of silent.
+    * The work is ~30 MB of CSV and ~60 000 rows, which does not fit in one HTTP request (the same constraint that made
+    * `reindex` resumable), so this STARTS the refresh on a virtual thread and returns immediately; callers poll
+    * [[retractionsStatus]]. The two fields of mutable state below are the price of that: a flag so two callers cannot
+    * run it twice, and the last error so a failed refresh is visible instead of silent.
     */
   private def updateRetractionsNow(): Either[ApiError, RetractionsUpdate] =
     if !rwRunning.compareAndSet(false, true) then Right(retractionsStatus)
     else
       rwError.set(None)
       // on the generation (database, clients) the request was pinned to
-      val work = deps.pins.carry(
-        try
-          retractionWatch.csv() match
-            case Left(e) =>
-              scribe.warn(s"acquire: Retraction Watch refresh failed — $e")
-              rwError.set(Some(e))
-            case Right(csv) =>
-              val n = AcquireRepo.replaceRetractionWatch(ds, Acquire.parseRetractionWatch(csv))
-              scribe.info(s"acquire: Retraction Watch refreshed — $n row(s)")
-        catch
-          case e: Throwable =>
-            scribe.error(s"acquire: Retraction Watch refresh crashed: ${e.getMessage}", e)
-            rwError.set(Some(e.getMessage))
-        finally rwRunning.set(false))
+      val work = deps.pins.carry(try
+        retractionWatch.csv() match
+          case Left(e) =>
+            scribe.warn(s"acquire: Retraction Watch refresh failed — $e")
+            rwError.set(Some(e))
+          case Right(csv) =>
+            val n = AcquireRepo.replaceRetractionWatch(ds, Acquire.parseRetractionWatch(csv))
+            scribe.info(s"acquire: Retraction Watch refreshed — $n row(s)")
+      catch
+        case e: Throwable =>
+          scribe.error(s"acquire: Retraction Watch refresh crashed: ${e.getMessage}", e)
+          rwError.set(Some(e.getMessage))
+      finally rwRunning.set(false))
       val _ = Thread.ofVirtual().name("retraction-watch-refresh").start(() => work.run())
       Right(retractionsStatus.copy(running = true))
 
-  /** How the mirror is doing: how many rows it holds, whether a refresh is in flight, and the last
-    * failure if there was one. */
+  /** How the mirror is doing: how many rows it holds, whether a refresh is in flight, and the last failure if there was
+    * one.
+    */
   def retractionsStatus: RetractionsUpdate =
-    RetractionsUpdate(AcquireRepo.retractionCount(ds), acq.retractionWatch.csvUrl,
-      running = rwRunning.get, error = rwError.get)
+    RetractionsUpdate(
+      AcquireRepo.retractionCount(ds),
+      acq.retractionWatch.csvUrl,
+      running = rwRunning.get,
+      error = rwError.get
+    )
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
 
   private def followupsNow(req: FollowupsRequest): Either[ApiError, FollowupsResult] =
     target(req.id).flatMap { t =>
-      t.doi.toRight(err(s"no DOI for '${req.id}' — the citation graph is keyed by DOI"))
+      t.doi
+        .toRight(err(s"no DOI for '${req.id}' — the citation graph is keyed by DOI"))
         .flatMap { doi =>
           val work = discovery.meta(doi).getOrElse(WorkRef(doi = Some(doi)))
-          val cap  = cfg.limits.page(req.limit, acq.defaults.followupsLimit)
+          val cap = cfg.limits.page(req.limit, acq.defaults.followupsLimit)
           citations.citing(work, req.since, cap).left.map(err).map { (backend, rows) =>
-            val index    = AcquireRepo.doiIndex(ds)
+            val index = AcquireRepo.doiIndex(ds)
             val enriched = Acquire.rankFollowups(rows).map { r =>
               r.copy(
                 proposedKind = Acquire.classify(r.intents, r.contexts, r.isInfluential, r.year, work.year),
-                citekey = r.doi.flatMap(index.get))
+                citekey = r.doi.flatMap(index.get)
+              )
             }
             // an edge can only start at a source we actually hold: the citing paper must be in the
             // corpus, and so must the target
             val added = (req.apply, t.citekey) match
               case (true, Some(dst)) =>
-                AcquireRepo.addEdges(ds, enriched.flatMap(r =>
-                  r.citekey.filter(_ != dst).map(src => Edge(src, dst, r.proposedKind))))
+                AcquireRepo.addEdges(
+                  ds,
+                  enriched.flatMap(r => r.citekey.filter(_ != dst).map(src => Edge(src, dst, r.proposedKind)))
+                )
               case _ => 0
             FollowupsResult(req.id, Some(doi), backend, enriched.size, added, enriched)
           }
@@ -298,9 +364,10 @@ final class AcquireHandlers(
 
   // ── ingest by identifier ────────────────────────────────────────────────────────────────────
 
-  /** `histmersion ingest <doi|arxiv:id>`: metadata → legal OA PDF → the ingest job → reference edges →
-    * assessment. Every step is reported, including the ones that failed, because "no OA copy" is a
-    * normal outcome that the user answers with a manual drop-in. */
+  /** `histmersion ingest <doi|arxiv:id>`: metadata → legal OA PDF → the ingest job → reference edges → assessment.
+    * Every step is reported, including the ones that failed, because "no OA copy" is a normal outcome that the user
+    * answers with a manual drop-in.
+    */
   private def ingestNow(req: IngestRequest, path: AcquireHandlers.IngestPath): Either[ApiError, IngestReport] =
     Acquire.parseIdent(req.id).left.map(err).flatMap { ident =>
       val steps = List.newBuilder[IngestStep]
@@ -312,26 +379,33 @@ final class AcquireHandlers(
 
       val work = doi.flatMap(discovery.meta(_).toOption)
       work match
-        case Some(w) => steps += IngestStep("metadata", true,
-          s"${w.title.getOrElse("(untitled)")} (${w.year.map(_.toString).getOrElse("?")}), " +
-            s"${w.citedByCount.getOrElse(0)} citation(s)")
-        case None => steps += IngestStep("metadata", false,
-          s"no upstream record for ${doi.getOrElse(req.id)}")
+        case Some(w) =>
+          steps += IngestStep(
+            "metadata",
+            true,
+            s"${w.title.getOrElse("(untitled)")} (${w.year.map(_.toString).getOrElse("?")}), " +
+              s"${w.citedByCount.getOrElse(0)} citation(s)"
+          )
+        case None => steps += IngestStep("metadata", false, s"no upstream record for ${doi.getOrElse(req.id)}")
 
       val explicit = req.citekey.map(_.trim).filter(_.nonEmpty)
       val existing = ident match
         case Ident.Citekey(k) => Some(k)
         case _                => None
-      val citekey = explicit.orElse(work.flatMap(w => w.citekey.map(stored(_, w.authors, w.year, w.title))))
+      val citekey = explicit
+        .orElse(work.flatMap(w => w.citekey.map(stored(_, w.authors, w.year, w.title))))
         .orElse(existing)
 
       // METADATA GUARD. Without a title from an upstream we have nothing to name the source after,
       // and inventing one from the DOI produces exactly the `anonnd`-style junk entry the Calibre
       // guard exists to prevent. A typo'd or unregistered DOI must be an actionable error, not a row.
       if work.flatMap(_.title).isEmpty && citekey.isEmpty then
-        Left(err(
-          s"no upstream record for '${req.id}' (OpenAlex and Crossref both miss it) — check the " +
-            "identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"))
+        Left(
+          err(
+            s"no upstream record for '${req.id}' (OpenAlex and Crossref both miss it) — check the " +
+              "identifier, or pass --citekey to create the source anyway and fill the metadata in by hand"
+          )
+        )
       else
         // the citekey becomes a spool directory name, and it can come from the CALLER (--citekey)
         // or from an upstream record's title — neither is trustworthy as a path segment.
@@ -342,7 +416,11 @@ final class AcquireHandlers(
   private def acquireOnce(doi: String, text: String): (Int, Boolean) =
     QueueRepo.acquireNaming(ds, doi).headOption match
       case Some(existing) => (existing.id, false)
-      case None => (QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text, topic = Some(Acquire.BrowserDownloadTopic))).id, true)
+      case None           =>
+        (
+          QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text, topic = Some(Acquire.BrowserDownloadTopic))).id,
+          true
+        )
 
   /** The rest of an ingest, once we know what the source will be CALLED. */
   private def ingestWith(
@@ -353,135 +431,184 @@ final class AcquireHandlers(
       steps: scala.collection.mutable.Builder[IngestStep, List[IngestStep]],
       refetch: Boolean,
       path: AcquireHandlers.IngestPath
-  ): Either[ApiError, IngestReport] =
-    {
-      // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
-      // without (metadata only, e.g. created when no OA copy was found) is fetched and converted
-      val original = AcquireHandlers.originalOf(
-        SourceRepo.load(ds, citekey).map(_.ocrMarkdown), AssetRepo.sha256Of(ds, citekey))
-      val skip = original.filter(_ => !refetch)
+  ): Either[ApiError, IngestReport] = {
+    // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
+    // without (metadata only, e.g. created when no OA copy was found) is fetched and converted
+    val original =
+      AcquireHandlers.originalOf(SourceRepo.load(ds, citekey).map(_.ocrMarkdown), AssetRepo.sha256Of(ds, citekey))
+    val skip = original.filter(_ => !refetch)
 
-      // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal
-      //    ones alone for a watcher's auto-ingest and `--legal-only`) ──
-      val key = WorkLookup.key(doi, arxiv, work)
-      val chain = skip match
-        case Some(have) => FetchChain.Outcome(Left(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again"), Nil)
-        case None       => oa.fetchWorkExplained(key, path.legalChain)
-      if skip.isEmpty && path == AcquireHandlers.IngestPath.PersonLegal && acq.allowUnauthorised then
-        steps += IngestStep("legal-only", true, "the legal chain only: the fetchers the config marks unauthorised were not asked")
-      val fetched = chain.file
-      fetched match
-        case Right(f) => steps += IngestStep("fetch", true, s"${f.source}: ${f.bytes.length} bytes" +
-          AcquireHandlers.hostOf(f.url).fold("")(h => s" from $h") +
-          (if f.extension == "xml" then " (JATS full text — no PDF is published)" else "") +
-          f.licence.map(_.value.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
-          original.fold("")(h => s" (replacing $h: --refetch)"))
-        case Left(e)  => steps += IngestStep("fetch", skip.isDefined, e)
-      if chain.answers.nonEmpty then steps += IngestStep("chain", false, chain.answers.map(_.line).mkString("; "))
+    // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal
+    //    ones alone for a watcher's auto-ingest and `--legal-only`) ──
+    val key = WorkLookup.key(doi, arxiv, work)
+    val chain = skip match
+      case Some(have) =>
+        FetchChain.Outcome(
+          Left(s"skipped: `$citekey` already has $have — `--refetch` fetches and converts it again"),
+          Nil
+        )
+      case None => oa.fetchWorkExplained(key, path.legalChain)
+    if skip.isEmpty && path == AcquireHandlers.IngestPath.PersonLegal && acq.allowUnauthorised then
+      steps += IngestStep(
+        "legal-only",
+        true,
+        "the legal chain only: the fetchers the config marks unauthorised were not asked"
+      )
+    val fetched = chain.file
+    fetched match
+      case Right(f) =>
+        steps += IngestStep(
+          "fetch",
+          true,
+          s"${f.source}: ${f.bytes.length} bytes" +
+            AcquireHandlers.hostOf(f.url).fold("")(h => s" from $h") +
+            (if f.extension == "xml" then " (JATS full text — no PDF is published)" else "") +
+            f.licence.map(_.value.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
+            original.fold("")(h => s" (replacing $h: --refetch)")
+        )
+      case Left(e) => steps += IngestStep("fetch", skip.isDefined, e)
+    if chain.answers.nonEmpty then steps += IngestStep("chain", false, chain.answers.map(_.line).mkString("; "))
 
-      // a gold open-access work from a publisher that refuses scripts: a download in the browser, on every path
-      val browserOnly = Option.when(fetched.isLeft && skip.isEmpty)(work).flatten
-        .flatMap(w => Citekey.parse(citekey).toOption.flatMap(BrowserDownload.of(w, _, acq.landing.refusingHosts)))
-      browserOnly.foreach { b =>
-        val (id, added) = acquireOnce(b.doi.value, b.text)
-        if added then scribe.info(s"acquire: ${b.doi.value} is gold open access on ${b.publisher.value}, which refuses scripts: acquisition item #$id")
-        steps += IngestStep("acquire", true, s"gold open access on ${b.publisher.value}, which refuses scripts — " +
-          s"acquisition item #$id${if added then "" else " (already listed)"}: download it in the browser")
-      }
-
-      // a watcher's auto-ingest brings a work in only WITH its legal file: no metadata-only source
-      if path.needsFile && fetched.isLeft then
-        val answers = Option.when(chain.answers.nonEmpty)(chain.answers.map(_.line).mkString(" — ", "; ", "")).getOrElse("")
-        Left(err(s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}$answers"))
-      else
-        val spooled: Option[Path] = fetched.toOption.flatMap { f =>
-          Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
-            case Right(p) => Some(p)
-            case Left(e)  => steps += IngestStep("spool", false, e); None
-        }
-
-        // ── reference edges, before the source is written, so they land with it ──
-        val refRows = doi.toList.flatMap(d => discovery.references(d).toOption.toList.flatMap(_._2))
-        val edges   = resolveRefs(refRows).flatMap(_.citekey).distinct.filter(_ != citekey)
-          .map(Edge(citekey, _, "references"))
-        steps += IngestStep("references", refRows.nonEmpty,
-          s"${refRows.size} reference(s), ${edges.size} resolve to stored sources")
-
-        val meta = IngestMeta(
-          title = work.flatMap(_.title).getOrElse(citekey),
-          authors = work.map(_.authors).getOrElse(Nil),
-          doi = doi,
-          year = work.flatMap(_.year),
-          venue = work.flatMap(_.venue),
-          summary = work.flatMap(_.abstractText),
-          provenance = fetched.map(_.source).getOrElse("oa"),
-          edges = edges,
-          citedByCount = work.flatMap(_.citedByCount))
-
-        jobs.enqueue(spooled, citekey, meta).left.map(err).map { outcome =>
-          steps += IngestStep("store", true, outcome.detail)
-          // the copy's licence, when its fetcher knew it, becomes the source's if it has none (#2560)
-          fetched.toOption.flatMap(_.licence).map(_.value).foreach { l =>
-            if AcquireRepo.recordLicense(ds, citekey, l) then steps += IngestStep("licence", true, s"recorded ${l.trim}")
-          }
-          steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
-          // an open-access work no script may download goes to the acquisition list once, as a download
-          // in the browser (#1581) — a person's ingest only: a watcher's legal path queues its own
-          if fetched.isLeft && skip.isEmpty && !path.needsFile && browserOnly.isEmpty then
-            for
-              d    <- doi
-              w    <- work
-              text <- Acquire.browserDownloadText(w, d, citekey,
-                        chain.answers.filter(_.kind == FetchChain.Answer.Kind.Refused).map(a => s"${a.fetcher}: ${a.why}"))
-            do
-              // an item already naming the DOI was reported just above
-              if QueueRepo.acquireNaming(ds, d).isEmpty then
-                val (id, _) = acquireOnce(d, text)
-                steps += IngestStep("acquire", true, s"open access, but no script may download it — acquisition item #$id: download it in the browser")
-
-          // assess last: the source now exists, so the verdict can be recorded against it. The status is
-          // written for a source we JUST created, and for a retraction whatever the source's age — a
-          // retracted paper must never keep a curated "current".
-          val assessment = doi.flatMap { _ =>
-            assess(AssessRequest(citekey, apply = false)).toOption.map { a =>
-              val shouldApply = outcome.created || a.verdict == Acquire.Verdicts.Retracted
-              val applied = for
-                status <- Acquire.statusFor(a.verdict) if shouldApply
-                _      <- AcquireRepo.setStatus(ds, citekey, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm).toOption
-              yield status.wire
-              steps += IngestStep("assess", true, s"${a.verdict}${applied.fold("")(s => s" → status=$s")}")
-              a.copy(applied = applied)
-            }
-          }
-
-          IngestReport(
-            citekey = citekey,
-            doi = doi,
-            title = work.flatMap(_.title),
-            created = outcome.created,
-            pdf = fetched.toOption.map(f =>
-              PdfInfo(f.source, f.url, f.bytes.length.toLong, spooled.map(_.toString))),
-            edgesAdded = edges.size,
-            assessment = assessment,
-            steps = steps.result(),
-            dropIn = Option.when(fetched.isLeft && skip.isEmpty)(
-              s"No legal open-access PDF exists for this one. Get it through institutional access, " +
-                s"an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey $citekey"))
-        }
+    // a gold open-access work from a publisher that refuses scripts: a download in the browser, on every path
+    val browserOnly = Option
+      .when(fetched.isLeft && skip.isEmpty)(work)
+      .flatten
+      .flatMap(w => Citekey.parse(citekey).toOption.flatMap(BrowserDownload.of(w, _, acq.landing.refusingHosts)))
+    browserOnly.foreach { b =>
+      val (id, added) = acquireOnce(b.doi.value, b.text)
+      if added then
+        scribe.info(
+          s"acquire: ${b.doi.value} is gold open access on ${b.publisher.value}, which refuses scripts: acquisition item #$id"
+        )
+      steps += IngestStep(
+        "acquire",
+        true,
+        s"gold open access on ${b.publisher.value}, which refuses scripts — " +
+          s"acquisition item #$id${if added then "" else " (already listed)"}: download it in the browser"
+      )
     }
 
-  /** What the import will do about the open acquisition items (#970), said up front: the OCR job
-    * closes the ones naming this DOI when it succeeds ([[com.histmersion.server.IngestHandlers]]),
-    * and lists the merely similar ones without closing them. With no file there is no job, and an
-    * item asking for the work stays open — the record alone does not fulfil it. */
-  private def acquireSteps(doi: Option[String], title: String, authors: List[String],
-      jobId: Option[String]): List[IngestStep] =
+    // a watcher's auto-ingest brings a work in only WITH its legal file: no metadata-only source
+    if path.needsFile && fetched.isLeft then
+      val answers =
+        Option.when(chain.answers.nonEmpty)(chain.answers.map(_.line).mkString(" — ", "; ", "")).getOrElse("")
+      Left(err(s"${IngestBacklog.NoLegalCopy} ${doi.getOrElse(citekey)}: ${fetched.left.getOrElse("")}$answers"))
+    else
+      val spooled: Option[Path] = fetched.toOption.flatMap { f =>
+        Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
+          case Right(p) => Some(p)
+          case Left(e)  => steps += IngestStep("spool", false, e); None
+      }
+
+      // ── reference edges, before the source is written, so they land with it ──
+      val refRows = doi.toList.flatMap(d => discovery.references(d).toOption.toList.flatMap(_._2))
+      val edges = resolveRefs(refRows)
+        .flatMap(_.citekey)
+        .distinct
+        .filter(_ != citekey)
+        .map(Edge(citekey, _, "references"))
+      steps += IngestStep(
+        "references",
+        refRows.nonEmpty,
+        s"${refRows.size} reference(s), ${edges.size} resolve to stored sources"
+      )
+
+      val meta = IngestMeta(
+        title = work.flatMap(_.title).getOrElse(citekey),
+        authors = work.map(_.authors).getOrElse(Nil),
+        doi = doi,
+        year = work.flatMap(_.year),
+        venue = work.flatMap(_.venue),
+        summary = work.flatMap(_.abstractText),
+        provenance = fetched.map(_.source).getOrElse("oa"),
+        edges = edges,
+        citedByCount = work.flatMap(_.citedByCount)
+      )
+
+      jobs.enqueue(spooled, citekey, meta).left.map(err).map { outcome =>
+        steps += IngestStep("store", true, outcome.detail)
+        // the copy's licence, when its fetcher knew it, becomes the source's if it has none (#2560)
+        fetched.toOption.flatMap(_.licence).map(_.value).foreach { l =>
+          if AcquireRepo.recordLicense(ds, citekey, l) then steps += IngestStep("licence", true, s"recorded ${l.trim}")
+        }
+        steps ++= acquireSteps(doi, meta.title, meta.authors, outcome.jobId)
+        // an open-access work no script may download goes to the acquisition list once, as a download
+        // in the browser (#1581) — a person's ingest only: a watcher's legal path queues its own
+        if fetched.isLeft && skip.isEmpty && !path.needsFile && browserOnly.isEmpty then
+          for
+            d <- doi
+            w <- work
+            text <- Acquire.browserDownloadText(
+              w,
+              d,
+              citekey,
+              chain.answers.filter(_.kind == FetchChain.Answer.Kind.Refused).map(a => s"${a.fetcher}: ${a.why}")
+            )
+          do
+            // an item already naming the DOI was reported just above
+            if QueueRepo.acquireNaming(ds, d).isEmpty then
+              val (id, _) = acquireOnce(d, text)
+              steps += IngestStep(
+                "acquire",
+                true,
+                s"open access, but no script may download it — acquisition item #$id: download it in the browser"
+              )
+
+        // assess last: the source now exists, so the verdict can be recorded against it. The status is
+        // written for a source we JUST created, and for a retraction whatever the source's age — a
+        // retracted paper must never keep a curated "current".
+        val assessment = doi.flatMap { _ =>
+          assess(AssessRequest(citekey, apply = false)).toOption.map { a =>
+            val shouldApply = outcome.created || a.verdict == Acquire.Verdicts.Retracted
+            val applied = for
+              status <- Acquire.statusFor(a.verdict) if shouldApply
+              _ <- AcquireRepo
+                .setStatus(ds, citekey, status, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+                .toOption
+            yield status.wire
+            steps += IngestStep("assess", true, s"${a.verdict}${applied.fold("")(s => s" → status=$s")}")
+            a.copy(applied = applied)
+          }
+        }
+
+        IngestReport(
+          citekey = citekey,
+          doi = doi,
+          title = work.flatMap(_.title),
+          created = outcome.created,
+          pdf = fetched.toOption.map(f => PdfInfo(f.source, f.url, f.bytes.length.toLong, spooled.map(_.toString))),
+          edgesAdded = edges.size,
+          assessment = assessment,
+          steps = steps.result(),
+          dropIn = Option.when(fetched.isLeft && skip.isEmpty)(
+            s"No legal open-access PDF exists for this one. Get it through institutional access, " +
+              s"an interlibrary loan or the author, then run: histmersion ingest <file.pdf> --citekey $citekey"
+          )
+        )
+      }
+  }
+
+  /** What the import will do about the open acquisition items (#970), said up front: the OCR job closes the ones naming
+    * this DOI when it succeeds ([[com.histmersion.server.IngestHandlers]]), and lists the merely similar ones without
+    * closing them. With no file there is no job, and an item asking for the work stays open — the record alone does not
+    * fulfil it.
+    */
+  private def acquireSteps(
+      doi: Option[String],
+      title: String,
+      authors: List[String],
+      jobId: Option[String]
+  ): List[IngestStep] =
     val items = QueueRepo.list(ds, Queue.Kind.Acquire, all = false).toList
     AcquireMatch.decide(items, doi, title, authors, acq.defaults.titleMatchAt).map {
       case AcquireMatch.Decision.Close(i) =>
-        IngestStep("acquire", jobId.isDefined, jobId.fold(
-          s"acquisition item #${i.id} names this DOI — left open: no file was acquired")(j =>
-          s"acquisition item #${i.id} names this DOI — ticked off when job $j succeeds"))
+        IngestStep(
+          "acquire",
+          jobId.isDefined,
+          jobId.fold(s"acquisition item #${i.id} names this DOI — left open: no file was acquired")(j =>
+            s"acquisition item #${i.id} names this DOI — ticked off when job $j succeeds"
+          )
+        )
       case p => IngestStep("acquire", true, AcquireMatch.describe(p))
     }
 
@@ -494,52 +621,93 @@ final class AcquireHandlers(
     val query = q.trim
     if query.isEmpty then Left(err("give a search query"))
     else
-      archive.search(query, rows.filter(_ > 0).getOrElse(acq.defaults.archiveRows)).left.map(err)
+      archive
+        .search(query, rows.filter(_ > 0).getOrElse(acq.defaults.archiveRows))
+        .left
+        .map(err)
         .map(items => ArchiveSearchResult(query, items.size, items))
 
   def archiveInfo(id: String): Either[ApiError, ArchiveItem] = archive.info(id).left.map(err)
 
-  /** Import a PUBLIC archive.org item. A lending-only scan is refused, not worked around: it must be
-    * borrowed on archive.org, and circumventing that is not something this pipeline does. */
+  /** Import a PUBLIC archive.org item. A lending-only scan is refused, not worked around: it must be borrowed on
+    * archive.org, and circumventing that is not something this pipeline does.
+    */
   private def archiveImportNow(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
     archive.info(req.id).left.map(err).flatMap { item =>
       if item.lendingOnly then
-        Left(err(s"'${item.identifier}' is a lending-only item — borrow it on archive.org; " +
-          "it is not downloadable here (no DRM circumvention)"))
+        Left(
+          err(
+            s"'${item.identifier}' is a lending-only item — borrow it on archive.org; " +
+              "it is not downloadable here (no DRM circumvention)"
+          )
+        )
       else
-        AcquireParse.pickArchiveFile(item.files, req.format)
+        AcquireParse
+          .pickArchiveFile(item.files, req.format)
           .toRight(err(s"'${item.identifier}' has no epub/pdf file to download"))
           .flatMap { file =>
-            val steps   = List.newBuilder[IngestStep]
-            val rawCitekey = req.citekey.map(_.trim).filter(_.nonEmpty)
-              .getOrElse(stored(Acquire.citekey(item.creator, item.year, item.title),
-                item.creator, item.year, item.title))
+            val steps = List.newBuilder[IngestStep]
+            val rawCitekey = req.citekey
+              .map(_.trim)
+              .filter(_.nonEmpty)
+              .getOrElse(
+                stored(Acquire.citekey(item.creator, item.year, item.title), item.creator, item.year, item.title)
+              )
             Citekey.of(rawCitekey).flatMap { validCk =>
-            val citekey: String = validCk.value
-            steps += IngestStep("metadata", true,
-              s"${item.title.getOrElse(item.identifier)} (${item.year.map(_.toString).getOrElse("?")})")
-            // the download is the chain's `archive-org` fetcher (the legal chain: a public item only)
-            oa.fetchWork(com.histmersion.plugin.WorkKey(archive = Some(item.identifier), format = req.format,
-                title = item.title, authors = item.creator, year = item.year.map(com.histmersion.plugin.Year(_))), legalOnly = true)
-              .left.map(e => err(s"'${item.identifier}': $e")).flatMap { f =>
-              steps += IngestStep("fetch", true, s"archive.org: ${f.bytes.length} bytes (${file.name})")
-              val spooled = Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
-                case Right(p) => Some(p)
-                case Left(e)  => steps += IngestStep("spool", false, e); None
-              jobs.enqueue(spooled, citekey, IngestMeta(
-                title = item.title.getOrElse(citekey),
-                authors = item.creator,
-                year = item.year,
-                venue = item.publisher,
-                summary = item.description,
-                provenance = "archive_org")).left.map(err).map { outcome =>
-                steps += IngestStep("store", true, outcome.detail)
-                steps ++= acquireSteps(None, item.title.getOrElse(citekey), item.creator, outcome.jobId)
-                IngestReport(citekey, None, item.title, outcome.created,
-                  Some(PdfInfo("archive_org", None, f.bytes.length.toLong, spooled.map(_.toString))),
-                  0, None, steps.result())
-              }
-            } }
+              val citekey: String = validCk.value
+              steps += IngestStep(
+                "metadata",
+                true,
+                s"${item.title.getOrElse(item.identifier)} (${item.year.map(_.toString).getOrElse("?")})"
+              )
+              // the download is the chain's `archive-org` fetcher (the legal chain: a public item only)
+              oa.fetchWork(
+                com.histmersion.plugin.WorkKey(
+                  archive = Some(item.identifier),
+                  format = req.format,
+                  title = item.title,
+                  authors = item.creator,
+                  year = item.year.map(com.histmersion.plugin.Year(_))
+                ),
+                legalOnly = true
+              ).left
+                .map(e => err(s"'${item.identifier}': $e"))
+                .flatMap { f =>
+                  steps += IngestStep("fetch", true, s"archive.org: ${f.bytes.length} bytes (${file.name})")
+                  val spooled = Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
+                    case Right(p) => Some(p)
+                    case Left(e)  => steps += IngestStep("spool", false, e); None
+                  jobs
+                    .enqueue(
+                      spooled,
+                      citekey,
+                      IngestMeta(
+                        title = item.title.getOrElse(citekey),
+                        authors = item.creator,
+                        year = item.year,
+                        venue = item.publisher,
+                        summary = item.description,
+                        provenance = "archive_org"
+                      )
+                    )
+                    .left
+                    .map(err)
+                    .map { outcome =>
+                      steps += IngestStep("store", true, outcome.detail)
+                      steps ++= acquireSteps(None, item.title.getOrElse(citekey), item.creator, outcome.jobId)
+                      IngestReport(
+                        citekey,
+                        None,
+                        item.title,
+                        outcome.created,
+                        Some(PdfInfo("archive_org", None, f.bytes.length.toLong, spooled.map(_.toString))),
+                        0,
+                        None,
+                        steps.result()
+                      )
+                    }
+                }
+            }
           }
     }
 
@@ -551,19 +719,22 @@ final class AcquireHandlers(
     // which originals the server can hand the host's push (`GET /api/sources/{ck}/original`)
     val hashes = AcquireRepo.sha256s(ds, gaps.map(_.citekey))
     val stored = if hashes.isEmpty then Set.empty[String]
-      else com.histmersion.server.IngestHandlers.spooledHashes(java.nio.file.Path.of(cfg.converter.spoolDir))
+    else com.histmersion.server.IngestHandlers.spooledHashes(java.nio.file.Path.of(cfg.converter.spoolDir))
     val marked = gaps.map(g => g.copy(storedOriginal = Some(hashes.get(g.citekey).exists(stored))))
     CalibreGaps(marked.size, marked)
 
   def calibreMeta(citekey: String): Either[ApiError, CalibreGap] =
-    Citekey.of(citekey).flatMap(_ =>
-      AcquireRepo.calibrePushMeta(ds, citekey).toRight(Write.notFound(citekey)))
+    Citekey.of(citekey).flatMap(_ => AcquireRepo.calibrePushMeta(ds, citekey).toRight(Write.notFound(citekey)))
 
   def calibrePushed(req: CalibrePushRequest): Either[ApiError, CalibrePushResult] =
     maintenance.guard("calibre/pushed"):
-      Citekey.of(req.citekey).flatMap(_ =>
-      AcquireRepo.setCalibreId(ds, req.citekey, req.calibreId)
-        .map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = true)))
+      Citekey
+        .of(req.citekey)
+        .flatMap(_ =>
+          AcquireRepo
+            .setCalibreId(ds, req.citekey, req.calibreId)
+            .map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = true))
+        )
 
   // ── the maintenance lock: every acquisition WRITE goes through it ───────────────────────────
 
@@ -579,20 +750,25 @@ final class AcquireHandlers(
 
   /** A person's ingest; `legalOnly` asks the legal chain alone, and is otherwise the same. */
   def ingest(req: IngestRequest): Either[ApiError, IngestReport] =
-    maintenance.guard("acquire/ingest")(ingestNow(req,
-      if req.legalOnly then AcquireHandlers.IngestPath.PersonLegal else AcquireHandlers.IngestPath.Person))
+    maintenance.guard("acquire/ingest")(
+      ingestNow(
+        req,
+        if req.legalOnly then AcquireHandlers.IngestPath.PersonLegal else AcquireHandlers.IngestPath.Person
+      )
+    )
 
-  /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)) and the acquisition
-    * list's re-check: the LEGAL open-access chain only — no unauthorised fetcher is asked, whatever
-    * `acquire.allow-unauthorised` says — and a work with no legal file is refused (Left) rather than stored
-    * as metadata alone, so it goes to (or stays on) the acquisition list instead. An existing source with
-    * its original is never fetched again; a metadata-only one named by `req.citekey` is fetched and
-    * converted into, keeping its enrichment. */
+  /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)) and the acquisition list's
+    * re-check: the LEGAL open-access chain only — no unauthorised fetcher is asked, whatever
+    * `acquire.allow-unauthorised` says — and a work with no legal file is refused (Left) rather than stored as metadata
+    * alone, so it goes to (or stays on) the acquisition list instead. An existing source with its original is never
+    * fetched again; a metadata-only one named by `req.citekey` is fetched and converted into, keeping its enrichment.
+    */
   def ingestLegal(req: IngestRequest): Either[ApiError, IngestReport] =
     maintenance.guard("acquire/ingest")(ingestNow(req.copy(refetch = false), AcquireHandlers.IngestPath.Watcher))
 
-  /** The legal chain's generation now ([[FetcherGeneration]]): it changes when a legal fetcher or a fetcher
-    * plugin's settings or key change, which makes the acquisition list's items due for a re-check again. */
+  /** The legal chain's generation now ([[FetcherGeneration]]): it changes when a legal fetcher or a fetcher plugin's
+    * settings or key change, which makes the acquisition list's items due for a re-check again.
+    */
   def fetcherGeneration: String = generation
 
   def archiveImport(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
@@ -603,10 +779,11 @@ final class AcquireHandlers(
 
   // ── shared: what does the user's identifier point at? ───────────────────────────────────────
 
-  private final case class Target(doi: Option[String], citekey: Option[String])
+  final private case class Target(doi: Option[String], citekey: Option[String])
 
-  /** Resolve `<doi|arxiv:id|citekey>` to both a DOI (for the upstreams) and a stored citekey (for the
-    * writes), whichever of the two the caller happened to give us. */
+  /** Resolve `<doi|arxiv:id|citekey>` to both a DOI (for the upstreams) and a stored citekey (for the writes),
+    * whichever of the two the caller happened to give us.
+    */
   private def target(id: String): Either[ApiError, Target] =
     Acquire.parseIdent(id).left.map(err).map {
       case Ident.Doi(doi) =>
@@ -620,26 +797,31 @@ final class AcquireHandlers(
 
 object AcquireHandlers:
 
-  /** Who ingests by identifier: which fetchers it asks (`legalChain`: never one the config marks
-    * unauthorised), and whether a work it found no file for is refused instead of stored from its
-    * metadata (`needsFile`). */
+  /** Who ingests by identifier: which fetchers it asks (`legalChain`: never one the config marks unauthorised), and
+    * whether a work it found no file for is refused instead of stored from its metadata (`needsFile`).
+    */
   enum IngestPath(val legalChain: Boolean, val needsFile: Boolean):
     /** `histmersion ingest <doi>`. */
     case Person extends IngestPath(false, false)
+
     /** `histmersion ingest <doi> --legal-only`. */
     case PersonLegal extends IngestPath(true, false)
+
     /** A watcher's auto-ingest, the acquisition list's re-check. */
     case Watcher extends IngestPath(true, true)
 
-  /** The host a file was fetched from (`www.ebi.ac.uk`, `pmc-oa-opendata.s3.amazonaws.com`), for the
-    * fetch step: the provenance names the channel, this names where the copy actually came from. */
+  /** The host a file was fetched from (`www.ebi.ac.uk`, `pmc-oa-opendata.s3.amazonaws.com`), for the fetch step: the
+    * provenance names the channel, this names where the copy actually came from.
+    */
   def hostOf(url: Option[String]): Option[String] =
-    url.flatMap(u => scala.util.Try(java.net.URI.create(u).getHost).toOption).flatMap(Option(_))
+    url
+      .flatMap(u => scala.util.Try(java.net.URI.create(u).getHost).toOption)
+      .flatMap(Option(_))
       .filter(_.nonEmpty)
 
-  /** What original an existing source already has, in words — a converted body, else a stored file
-    * (`sources.sha256`) — or None for a metadata-only source (or no source at all). `body` is None
-    * when the source does not exist. */
+  /** What original an existing source already has, in words — a converted body, else a stored file (`sources.sha256`) —
+    * or None for a metadata-only source (or no source at all). `body` is None when the source does not exist.
+    */
   def originalOf(body: Option[Option[String]], sha256: Option[String]): Option[String] =
     body.flatMap { b =>
       if b.exists(_.trim.nonEmpty) then Some("a converted body")

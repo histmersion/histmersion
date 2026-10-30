@@ -10,15 +10,16 @@ import java.net.{URI, URLEncoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 
-/** `passages` (#954) over real HTTP and MCP against a seeded multi-heading body: hits, the offset
-  * round trip through `get_source`'s body slice, headings, limit, errors, and an old (renamed)
-  * citekey resolving. Skipped without HISTMERSION_TEST_DB_URL. */
+/** `passages` (#954) over real HTTP and MCP against a seeded multi-heading body: hits, the offset round trip through
+  * `get_source`'s body slice, headings, limit, errors, and an old (renamed) citekey resolving. Skipped without
+  * HISTMERSION_TEST_DB_URL.
+  */
 class PassagesHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Key = "k3y"
-  private val Ck  = "zzpass2020_theseus"
+  private val Ck = "zzpass2020_theseus"
   private val New = "zzpass2021_theseus"
 
   private val Body =
@@ -44,9 +45,15 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
   private def send(req: HttpRequest): HttpResponse[String] = http.send(req, HttpResponse.BodyHandlers.ofString())
   private def get(url: String) = send(HttpRequest.newBuilder(URI.create(url)).build())
   private def json(method: String, url: String, body: String) =
-    send(HttpRequest.newBuilder(URI.create(url)).header("Authorization", s"Bearer $Key")
-      .header("content-type", "application/json").header("accept", "application/json, text/event-stream")
-      .method(method, HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      HttpRequest
+        .newBuilder(URI.create(url))
+        .header("Authorization", s"Bearer $Key")
+        .header("content-type", "application/json")
+        .header("accept", "application/json, text/event-stream")
+        .method(method, HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
   private def enc(s: String) = URLEncoder.encode(s, UTF_8)
 
   private lazy val cfg =
@@ -70,8 +77,13 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
     }
 
   private def seed(url: String): Unit =
-    val put = json("PUT", s"$url/api/sources/$Ck",
-      io.circe.Json.obj("title" -> io.circe.Json.fromString("Theseus"), "body" -> io.circe.Json.fromString(Body)).noSpaces)
+    val put = json(
+      "PUT",
+      s"$url/api/sources/$Ck",
+      io.circe.Json
+        .obj("title" -> io.circe.Json.fromString("Theseus"), "body" -> io.circe.Json.fromString(Body))
+        .noSpaces
+    )
     assertEquals(put.statusCode, 200, put.body)
 
   private def passages(url: String, ck: String, q: String, extra: String = ""): PassageResult =
@@ -128,8 +140,11 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
     withServer { url =>
       seed(url)
       def call(args: String) =
-        json("POST", s"$url/mcp",
-          s"""{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"passages","arguments":$args}}""")
+        json(
+          "POST",
+          s"$url/mcp",
+          s"""{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"passages","arguments":$args}}"""
+        )
       val r = call(s"""{"citekey":"$Ck","query":"bones back"}""")
       assertEquals(r.statusCode, 200, r.body)
       assert(r.body.contains(s"## Passages: \\\"bones back\\\" in `$Ck`"), r.body)

@@ -5,12 +5,12 @@ import com.histmersion.config.AppConfig
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
-/** The write gate as the web UI meets it, in both modes: `/api/config` tells the page whether writes
-  * need a key (and never carries the key), reads stay open, and every write — a JSON PATCH, a queue
-  * edit, a raw-body upload — is refused with 401 until it carries `Authorization: Bearer <key>`.
-  * Skipped without HISTMERSION_TEST_DB_URL. */
+/** The write gate as the web UI meets it, in both modes: `/api/config` tells the page whether writes need a key (and
+  * never carries the key), reads stay open, and every write — a JSON PATCH, a queue edit, a raw-body upload — is
+  * refused with 401 until it carries `Authorization: Bearer <key>`. Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class AuthHttpSuite extends munit.FunSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -24,14 +24,26 @@ class AuthHttpSuite extends munit.FunSuite:
 
   private def get(url: String) = send(req(url, None).build())
   private def put(url: String, body: String, key: Option[String]) =
-    send(req(url, key).header("content-type", "application/json")
-      .PUT(HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      req(url, key)
+        .header("content-type", "application/json")
+        .PUT(HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
   private def patch(url: String, body: String, key: Option[String]) =
-    send(req(url, key).header("content-type", "application/json")
-      .method("PATCH", HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      req(url, key)
+        .header("content-type", "application/json")
+        .method("PATCH", HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
   private def upload(url: String, bytes: Array[Byte], key: Option[String]) =
-    send(req(url, key).header("content-type", "application/octet-stream")
-      .POST(HttpRequest.BodyPublishers.ofByteArray(bytes)).build())
+    send(
+      req(url, key)
+        .header("content-type", "application/octet-stream")
+        .POST(HttpRequest.BodyPublishers.ofByteArray(bytes))
+        .build()
+    )
 
   private val ck = "zz_http_auth"
 
@@ -40,7 +52,7 @@ class AuthHttpSuite extends munit.FunSuite:
 
   private def withServer(apiKey: String)(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = apiKey))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = apiKey))
     supervised {
       val b = Main.server(cfg, "127.0.0.1", 0, converter).start()
       try body(s"http://127.0.0.1:${b.port}")
@@ -93,7 +105,10 @@ class AuthHttpSuite extends munit.FunSuite:
       // the accepted job converts through the test's stub — not the converter configured at :8100
       val deadline = System.currentTimeMillis() + 10000
       while converter.converted.isEmpty && System.currentTimeMillis() < deadline do Thread.sleep(50)
-      assert(converter.converted.exists(_.endsWith(".pdf")), s"the upload never reached the stub: ${converter.converted}")
+      assert(
+        converter.converted.exists(_.endsWith(".pdf")),
+        s"the upload never reached the stub: ${converter.converted}"
+      )
       // …and a body-less write is gated the same way
       val del = HttpRequest.newBuilder(URI.create(s"$url/api/articles/zz-auth-none")).DELETE()
       assertEquals(send(del.build())._1, 401)

@@ -13,11 +13,22 @@ class PassageFinderSuite extends munit.FunSuite:
   private val Segs = List(
     Chunk(0, None, "Preamble line about nothing."),
     Chunk(1, Some("Theseus"), "Theseus was buried on Skyros.\nCimon brought the bones back to Athens."),
-    Chunk(2, Some("Theseus > Cult"), "The Theseia honoured him.\n\nAt Ḫattuša nothing like it is known; Güterbock said so.")
+    Chunk(
+      2,
+      Some("Theseus > Cult"),
+      "The Theseia honoured him.\n\nAt Ḫattuša nothing like it is known; Güterbock said so."
+    )
   )
 
-  private def find(q: String, regex: Boolean = false, limit: Int = 10, context: Int = 600,
-      segs: List[Chunk] = Segs, max: Int = 10000, timeoutMs: Long = 2000): PassageResult =
+  private def find(
+      q: String,
+      regex: Boolean = false,
+      limit: Int = 10,
+      context: Int = 600,
+      segs: List[Chunk] = Segs,
+      max: Int = 10000,
+      timeoutMs: Long = 2000
+  ): PassageResult =
     PassageFinder.find(Ck, segs, q, regex, limit, context, max, timeoutMs).fold(m => fail(m), identity)
 
   private def err(q: String, regex: Boolean): String =
@@ -64,7 +75,7 @@ class PassageFinderSuite extends munit.FunSuite:
 
   test("decomposed combining marks belong to the match; folded offsets map back to the original"):
     val segs = List(Chunk(0, None, "x Güterbock y"))
-    val p    = find("guterbock", segs = segs).passages.head
+    val p = find("guterbock", segs = segs).passages.head
     assertEquals(p.text.substring(p.matches.head.start, p.matches.head.end), "Güterbock")
     val e = find("u", segs = List(Chunk(0, None, "aüb"))).passages.head
     assertEquals(e.text.substring(e.matches.head.start, e.matches.head.end), "ü", "the mark rides with its letter")
@@ -76,7 +87,10 @@ class PassageFinderSuite extends munit.FunSuite:
 
   test("regex: case-insensitive, MULTILINE anchors, and an empty match is not a hit"):
     assertEquals(find("^cimon", regex = true).matches, 1)
-    assertEquals(find("^the", regex = true).matches, 2) // "Theseus …" and "The Theseia" start lines; "the bones" does not
+    assertEquals(
+      find("^the", regex = true).matches,
+      2
+    ) // "Theseus …" and "The Theseia" start lines; "the bones" does not
     assertEquals(find("these(us|ia)|cimon", regex = true).matches, 3)
     assertEquals(find("x*", regex = true).matches, 0)
 
@@ -96,9 +110,9 @@ class PassageFinderSuite extends munit.FunSuite:
     assert(r.left.exists(_.contains("ran longer than 50 ms")), r)
 
   test("context bounds: whole lines when a line break is in reach, else whole words, never past the budget"):
-    val long  = (1 to 400).map(i => s"w$i").mkString(" ") // one long line, no breaks
-    val segs  = List(Chunk(0, None, long))
-    val p     = find("w200", segs = segs, context = 100).passages.head
+    val long = (1 to 400).map(i => s"w$i").mkString(" ") // one long line, no breaks
+    val segs = List(Chunk(0, None, long))
+    val p = find("w200", segs = segs, context = 100).passages.head
     assert(p.text.length <= 100 + 4, p.text.length)
     assert(p.text.split(' ').forall(_.matches("""w\d+""")), p.text) // cut at word boundaries
     assert(p.text.contains("w200"))
@@ -113,7 +127,7 @@ class PassageFinderSuite extends munit.FunSuite:
   test("passages never cross into each other and dense matches merge instead of repeating text"):
     val body = (1 to 50).map(i => s"Line $i mentions Skyros once.").mkString("\n")
     val segs = List(Chunk(0, None, body))
-    val r    = find("skyros", segs = segs, context = 120, limit = 50)
+    val r = find("skyros", segs = segs, context = 120, limit = 50)
     assertEquals(r.matches, 50)
     val ps = r.passages
     ps.zip(ps.drop(1)).foreach((a, b) => assert(a.offset + a.text.length <= b.offset, (a, b)))
@@ -133,7 +147,7 @@ class PassageFinderSuite extends munit.FunSuite:
 
   test("limit truncates the passages shown; the total and the render say how many more"):
     val body = (1 to 30).map(i => s"Paragraph $i names Skyros.").mkString("\n\n")
-    val r    = find("skyros", segs = List(Chunk(0, Some("H"), body)), context = 10, limit = 3)
+    val r = find("skyros", segs = List(Chunk(0, Some("H"), body)), context = 10, limit = 3)
     assertEquals((r.matches, r.total, r.passages.size), (30, 30, 3))
     val md = PassagesMarkdown.render(r)
     assert(md.contains("_27 more — raise limit or narrow the query._"), md)
@@ -141,7 +155,7 @@ class PassageFinderSuite extends munit.FunSuite:
 
   test("matches are counted up to the cap, then the result says the count stopped"):
     val body = List.fill(20)("Skyros").mkString(" ")
-    val r    = find("skyros", segs = List(Chunk(0, None, body)), max = 5, context = 0)
+    val r = find("skyros", segs = List(Chunk(0, None, body)), max = 5, context = 0)
     assertEquals((r.matches, r.capped), (5, true))
     assert(PassagesMarkdown.render(r).contains("5+ matches (counting stopped)"))
 
@@ -152,7 +166,7 @@ class PassageFinderSuite extends munit.FunSuite:
     assertEquals(find("x", segs = Nil).bodyChars, 0)
 
   test("the render bolds every match and heads each passage with its offset and heading"):
-    val r  = find("theseus", context = 2000)
+    val r = find("theseus", context = 2000)
     val md = PassagesMarkdown.render(r)
     assert(md.startsWith("## Passages: \"theseus\" in `zz2020_body`"), md)
     assert(md.contains(s"### 1 · offset ${r.passages.head.offset} · § Theseus"), md)
@@ -166,7 +180,14 @@ class PassageFinderSuite extends munit.FunSuite:
     assertEquals(PassagesMarkdown.marked(p), "**abc****abc**")
 
   test("the configured limits clamp a caller's limit and context; absent means the default"):
-    val l = PassageLimits(limit = 10, maxLimit = 50, context = 600, maxContext = 3000, maxMatches = 10000, regexTimeoutMs = 2000)
+    val l = PassageLimits(
+      limit = 10,
+      maxLimit = 50,
+      context = 600,
+      maxContext = 3000,
+      maxMatches = 10000,
+      regexTimeoutMs = 2000
+    )
     assertEquals(List(None, Some(0), Some(-3), Some(7), Some(500)).map(l.limitOf), List(10, 10, 10, 7, 50))
     assertEquals(List(None, Some(-1), Some(0), Some(200), Some(9000)).map(l.contextOf), List(600, 600, 0, 200, 3000))
     assertEquals(AppConfig.load().limits.passages, l, "reference.conf carries these defaults")

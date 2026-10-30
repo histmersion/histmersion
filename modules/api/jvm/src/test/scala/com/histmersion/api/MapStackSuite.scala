@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-
 import MapStack.Pane
 
 class MapStackSuite extends munit.FunSuite:
@@ -9,7 +8,9 @@ class MapStackSuite extends munit.FunSuite:
     assert(MapStack.pointsAboveAreas(MapStack.order))
     val firstPoint = MapStack.order.indexWhere(_.point)
     assert(MapStack.order.take(firstPoint).forall(!_.point))
-    assert(MapStack.order.contains(Pane.Sites) && MapStack.order.indexOf(Pane.Sites) > MapStack.order.indexOf(Pane.Areas))
+    assert(
+      MapStack.order.contains(Pane.Sites) && MapStack.order.indexOf(Pane.Sites) > MapStack.order.indexOf(Pane.Areas)
+    )
 
   test("the soundness check catches an area above a point"):
     assert(!MapStack.pointsAboveAreas(List(Pane.Sites, Pane.Areas)))

@@ -7,8 +7,9 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** Where each [[AliasKind]]'s rows and old identifiers live (#1799): ONE resolution of an old
-  * identifier for every kind, so the rule ([[Aliases]]) cannot differ between them. */
+/** Where each [[AliasKind]]'s rows and old identifiers live (#1799): ONE resolution of an old identifier for every
+  * kind, so the rule ([[Aliases]]) cannot differ between them.
+  */
 object AliasRepo:
 
   /** The kind's table and identifier column, and its alias table and the column naming the record. */
@@ -27,9 +28,17 @@ object AliasRepo:
 
   private[db] def renamedToIn(k: AliasKind, id: String)(using DbCon): Option[String] =
     val t = tables(k)
-    Sql.of(s"SELECT x.${t.targetCol} FROM ${t.aliasTable} x WHERE x.alias = ? AND NOT EXISTS " +
-        s"(SELECT 1 FROM ${t.table} r WHERE r.${t.idCol} = ?)", Param.S(id), Param.S(id))
-      .frag.query[String].run().headOption
+    Sql
+      .of(
+        s"SELECT x.${t.targetCol} FROM ${t.aliasTable} x WHERE x.alias = ? AND NOT EXISTS " +
+          s"(SELECT 1 FROM ${t.table} r WHERE r.${t.idCol} = ?)",
+        Param.S(id),
+        Param.S(id)
+      )
+      .frag
+      .query[String]
+      .run()
+      .headOption
 
   /** The identifier a record answers to NOW: the one an old `id` was renamed to, else `id` itself. */
   def current(ds: DataSource, k: AliasKind, id: String): String =

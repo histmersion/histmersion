@@ -4,8 +4,9 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
-/** `ArticleRepo.listWhere` is a pure function of the query parameters — asserted here without a
-  * database, like `FilterSql` on the source side. */
+/** `ArticleRepo.listWhere` is a pure function of the query parameters — asserted here without a database, like
+  * `FilterSql` on the source side.
+  */
 class ArticleSqlSuite extends munit.FunSuite:
 
   private def where(kind: Option[String] = None, text: Option[String] = None, f: Filter = Filter()) =
@@ -25,9 +26,11 @@ class ArticleSqlSuite extends munit.FunSuite:
   test("a source tag selects the articles CITING a tagged source, through /api/sources' own predicate"):
     val f = Filter(tags = List("sea-peoples"))
     val s = where(f = f)
-    assertEquals(s.text,
+    assertEquals(
+      s.text,
       "EXISTS (SELECT 1 FROM article_links al WHERE al.src_slug = a.slug AND al.target_kind = 'source'" +
-        " AND al.target = ANY(ARRAY(SELECT s.citekey FROM sources s WHERE " + FilterSql.where(f).text + ")))")
+        " AND al.target = ANY(ARRAY(SELECT s.citekey FROM sources s WHERE " + FilterSql.where(f).text + ")))"
+    )
     assertEquals(s.params, FilterSql.where(f).params)
 
   test("title is the ARTICLE's title, never part of the source set"):
@@ -43,6 +46,8 @@ class ArticleSqlSuite extends munit.FunSuite:
 
   test("parameters stay in textual order when the parts are combined"):
     val s = where(Some("report"), Some("gods"), Filter(status = List("current"), title = Some("pie")))
-    assertEquals(s.params,
-      List(Param.S("current"), Param.S("%pie%"), Param.S("report"), Param.S("gods"), Param.S("%gods%")))
+    assertEquals(
+      s.params,
+      List(Param.S("current"), Param.S("%pie%"), Param.S("report"), Param.S("gods"), Param.S("%gods%"))
+    )
     assertEquals(s.text.count(_ == '?'), 5)

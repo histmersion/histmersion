@@ -8,11 +8,12 @@ import com.histmersion.api.Geocode.{Approximation, KindHint}
 import com.augustnagro.magnum.*
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 
-/** The geocoder against a real gazetteer (HISTMERSION_TEST_DB_URL; skipped otherwise), seeded to mirror
-  * the failures of 2026-10-06 (#981). Every fixture name starts with "Zz" and every id with `zzgeo_`,
-  * so whatever else the shared test database holds cannot match. */
+/** The geocoder against a real gazetteer (HISTMERSION_TEST_DB_URL; skipped otherwise), seeded to mirror the failures of
+  * 2026-10-06 (#981). Every fixture name starts with "Zz" and every id with `zzgeo_`, so whatever else the shared test
+  * database holds cannot match.
+  */
 class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
@@ -34,8 +35,14 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
   private val places: List[(String, String, String, String, Option[String], List[String])] = List(
     // Albania: an Iranian SITE that lists "Albania" among its names, the country, Caucasian Albania
     // (a dated Pleiades point), and a dated snapshot of the modern state
-    ("zzgeo_site_alb", "[Zzhulwan]/Zzchala/Zzalbania", PlaceKind.Site, "POINT(45.85589 34.46511)", Some("[-750,1600)"),
-      List("Zzhulwan", "Zzchala", "Zzalbania")),
+    (
+      "zzgeo_site_alb",
+      "[Zzhulwan]/Zzchala/Zzalbania",
+      PlaceKind.Site,
+      "POINT(45.85589 34.46511)",
+      Some("[-750,1600)"),
+      List("Zzhulwan", "Zzchala", "Zzalbania")
+    ),
     ("zzgeo_ne_alb", "Zzalbania", PlaceKind.Region, box(19.3, 39.7, 21.0, 42.6), None, Nil),
     ("zzgeo_cauc_alb", "Zzalbania", PlaceKind.Region, "POINT(48.16 41.38)", Some("[-330,2101)"), Nil),
     ("zzgeo_alb_1920", "Zzalbania", PlaceKind.Polity, box(19.4, 39.8, 20.9, 42.5), Some("[1920,1936)"), Nil),
@@ -72,7 +79,8 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
       connect(ds):
         places.foreach { (id, label, kind, wkt, period, names) =>
           val _ = sql"""INSERT INTO places (id, label, kind, geom, period, dataset)
-                        VALUES ($id, $label, $kind, ST_GeomFromText($wkt, 4326), coalesce(${period}::int8range, '(,)'::int8range), 'seed')""".update.run()
+                        VALUES ($id, $label, $kind, ST_GeomFromText($wkt, 4326), coalesce($period::int8range, '(,)'::int8range), 'seed')""".update
+            .run()
           (label :: names).distinct.foreach { n =>
             val _ = sql"INSERT INTO place_names (place_id, name) VALUES ($id, $n) ON CONFLICT DO NOTHING".update.run()
           }
@@ -92,13 +100,34 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     val chars = (LatinFold.tableChars ++ ('̀' to 'ͯ') ++ Geocode.Separators ++ Geocode.Apostrophes ++
       ('A' to 'Z') ++ ('a' to 'z') ++ ('0' to '9') ++ "Ἀωжא€".toSet).toList.sorted
     val samples = chars.map(c => s"x${c}y") ++ List(
-      "Kraków", "Kievan Rus'", "Ur(i)", "Levant (region)", "the Southern Levant", "The", "Theodosia",
-      "Tell el-Muqayyar", "  Ḫattuša  ", "Straße", "[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania", "Baʿal",
-      "a\t\nb", "Ἀθῆναι", "(only an aside)", "x (a) y (b) z", "unclosed (aside", "Æthelred", "ǅ")
+      "Kraków",
+      "Kievan Rus'",
+      "Ur(i)",
+      "Levant (region)",
+      "the Southern Levant",
+      "The",
+      "Theodosia",
+      "Tell el-Muqayyar",
+      "  Ḫattuša  ",
+      "Straße",
+      "[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania",
+      "Baʿal",
+      "a\t\nb",
+      "Ἀθῆναι",
+      "(only an aside)",
+      "x (a) y (b) z",
+      "unclosed (aside",
+      "Æthelred",
+      "ǅ"
+    )
     val got = connect(ds):
       sql"SELECT histmersion_place_key(s) FROM unnest($samples::text[]) WITH ORDINALITY AS t(s, n) ORDER BY n"
-        .query[String].run().toList
-    val diffs = samples.zip(got).filter((s, g) => Geocode.key(s) != g)
+        .query[String]
+        .run()
+        .toList
+    val diffs = samples
+      .zip(got)
+      .filter((s, g) => Geocode.key(s) != g)
       .map((s, g) => s"'$s': scala '${Geocode.key(s)}' sql '$g'")
     assertEquals(diffs, Nil)
 
@@ -152,8 +181,11 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(whole.lat > 33.0, whole)
     val e = resolve("eastern Zzlevant").get
     assert(e.lon > 35.5, e)
-    assertEquals(resolve("Western and Central Zzalbania").map(r => (r.lon, r.lat)),
-      resolve("Zzalbania").map(r => (r.lon, r.lat)), "two directions keep the whole shape's point")
+    assertEquals(
+      resolve("Western and Central Zzalbania").map(r => (r.lon, r.lat)),
+      resolve("Zzalbania").map(r => (r.lon, r.lat)),
+      "two directions keep the whole shape's point"
+    )
 
   test("unknown stays unknown: nothing is guessed"):
     assertEquals(resolve("Zzdead Sea"), None)
@@ -168,14 +200,29 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def point(id: String): (Double, Double, Option[String]) = connect(ds):
     sql"SELECT ST_X(geom), ST_Y(geom), region_name FROM findings WHERE id = $id"
-      .query[(Double, Double, Option[String])].run().head
+      .query[(Double, Double, Option[String])]
+      .run()
+      .head
 
   test("finding-geocode: only old-geocoder points move; hand-placed ones and the unchanged never do"):
     val siteLabel = "[Zzhulwan]/Zzchala/Zzalbania"
     val src = Source(
-      citekey = Ck, title = "Fixture", authors = List("A"), doi = None, year = Some(2025), venue = None,
-      status = SourceStatus.Current, topics = Nil, regions = Nil, tags = Nil, period = None, summary = None,
-      citedByCount = None, influentialCitations = None, provenance = None, calibreId = None,
+      citekey = Ck,
+      title = "Fixture",
+      authors = List("A"),
+      doi = None,
+      year = Some(2025),
+      venue = None,
+      status = SourceStatus.Current,
+      topics = Nil,
+      regions = Nil,
+      tags = Nil,
+      period = None,
+      summary = None,
+      citedByCount = None,
+      influentialCitations = None,
+      provenance = None,
+      calibreId = None,
       findings = List(
         // what the OLD pipeline wrote: the alias site's point under ITS label, the asked name in the run
         finding(0, siteLabel, 45.85589, 34.46511, "Albanians descend from early medieval Albania."),
@@ -186,11 +233,14 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
         // the old pick, dated 1000 CE: the snapshot with the smaller area, 1236-1240
         finding(3, "Zzkievan Rus'", 0, 0, "Rus in 1000.", Some(Period(1000, 1000))),
         // the old pick and the new one are the same place: nothing to do
-        finding(4, "Zzlevant", 0, 0, "Levant claim.")))
+        finding(4, "Zzlevant", 0, 0, "Levant claim.")
+      )
+    )
     SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
     connect(ds):
       // the stored point of #3/#4 is EXACTLY the old geocoder's (its point on the surface)
-      val _ = sql"""UPDATE findings SET geom = (SELECT ST_PointOnSurface(geom) FROM places WHERE id = 'zzgeo_kr_1236_1240')
+      val _ =
+        sql"""UPDATE findings SET geom = (SELECT ST_PointOnSurface(geom) FROM places WHERE id = 'zzgeo_kr_1236_1240')
                     WHERE id = ${Ck + "#3"}""".update.run()
       val _ = sql"""UPDATE findings SET geom = (SELECT ST_PointOnSurface(geom) FROM places WHERE id = 'zzgeo_levant')
                     WHERE id = ${Ck + "#4"}""".update.run()
@@ -203,10 +253,14 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
                     VALUES ('zzgeo_job', 4, 1, 'findings-1', 'llm', 'done', $out::jsonb)""".update.run()
 
     val moves = Geocoder.moves(ds, settings).filter(_.citekey == Ck)
-    assertEquals(moves.map(m => (m.findingId, m.asked, m.to.placeId)).sortBy(_._1), List(
-      (s"$Ck#0", "Zzalbania", "zzgeo_ne_alb"),
-      (s"$Ck#2", "Zzmesopotamia", "zzgeo_mesopotamia"),
-      (s"$Ck#3", "Zzkievan Rus'", "zzgeo_kr_990_1017")))
+    assertEquals(
+      moves.map(m => (m.findingId, m.asked, m.to.placeId)).sortBy(_._1),
+      List(
+        (s"$Ck#0", "Zzalbania", "zzgeo_ne_alb"),
+        (s"$Ck#2", "Zzmesopotamia", "zzgeo_mesopotamia"),
+        (s"$Ck#3", "Zzkievan Rus'", "zzgeo_kr_990_1017")
+      )
+    )
     assert(moves.forall(_.km > settings.repairKm), moves.map(_.km))
 
     // the lint rule lists the same moves, under the source
@@ -227,7 +281,10 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(lat3 > 50.0, (lon3, lat3))
     // finding_places follows the new points
     val inAlbania = connect(ds):
-      sql"SELECT count(*) FROM finding_places WHERE finding_id = ${Ck + "#0"} AND place_id = 'zzgeo_ne_alb'".query[Long].run().head
+      sql"SELECT count(*) FROM finding_places WHERE finding_id = ${Ck + "#0"} AND place_id = 'zzgeo_ne_alb'"
+        .query[Long]
+        .run()
+        .head
     assertEquals(inAlbania, 1L)
 
     // idempotent: nothing is left to move, and a stale move is not applied over a newer point

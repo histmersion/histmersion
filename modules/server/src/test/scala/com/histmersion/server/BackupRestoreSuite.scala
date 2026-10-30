@@ -11,21 +11,22 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
 import com.histmersion.values.SourceStatus
 
-/** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search`
-  * results. Runs `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH
-  * database created next to `HISTMERSION_TEST_DB_URL` — a restore drops every table, so it must never run
-  * against the database the other suites are using.
+/** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
+  * `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH database created next to
+  * `HISTMERSION_TEST_DB_URL` — a restore drops every table, so it must never run against the database the other suites
+  * are using.
   *
-  * Skipped, with a reason, when there is no test database or no PostgreSQL client tools. On macOS the
-  * client tools come from homebrew's keg-only libpq: `brew install libpq` puts them in
-  * `/opt/homebrew/opt/libpq/bin` (checked below), and the server finds them via
-  * `HISTMERSION_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin`. */
+  * Skipped, with a reason, when there is no test database or no PostgreSQL client tools. On macOS the client tools come
+  * from homebrew's keg-only libpq: `brew install libpq` puts them in `/opt/homebrew/opt/libpq/bin` (checked below), and
+  * the server finds them via `HISTMERSION_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin`.
+  */
 class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
   private val testDb = com.histmersion.db.TestDb.url
 
-  /** "" = the binaries are on PATH (they are, inside the server image); otherwise the
-    * directory holding them, from the same env var the server reads, then homebrew's libpq. */
+  /** "" = the binaries are on PATH (they are, inside the server image); otherwise the directory holding them, from the
+    * same env var the server reads, then homebrew's libpq.
+    */
   private val pgBinDir: Option[String] =
     def has(dir: String) = List("pg_dump", "pg_restore").forall(b => Files.isExecutable(Path.of(dir).resolve(b)))
     val onPath = Option(System.getenv("PATH")).toList
@@ -33,15 +34,19 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
       .find(d => d.nonEmpty && has(d))
     // an explicit HISTMERSION_PG_BIN_DIR wins over PATH, as in the server: a CI runner's PATH carries the
     // distro's pg_dump 16, which refuses to dump the PostgreSQL 18 the bundle ships
-    sys.env.get("HISTMERSION_PG_BIN_DIR").filter(d => d.nonEmpty && has(d))
+    sys.env
+      .get("HISTMERSION_PG_BIN_DIR")
+      .filter(d => d.nonEmpty && has(d))
       .orElse(onPath.map(_ => ""))
       .orElse(List("/opt/homebrew/opt/libpq/bin").find(has))
 
   private val skipReason: Option[String] =
     if testDb.isEmpty then Some("HISTMERSION_TEST_DB_URL is not set")
     else if pgBinDir.isEmpty then
-      Some("pg_dump/pg_restore not found on PATH, in $HISTMERSION_PG_BIN_DIR, or in /opt/homebrew/opt/libpq/bin " +
-        "(macOS: brew install libpq)")
+      Some(
+        "pg_dump/pg_restore not found on PATH, in $HISTMERSION_PG_BIN_DIR, or in /opt/homebrew/opt/libpq/bin " +
+          "(macOS: brew install libpq)"
+      )
     else None
 
   override def munitIgnore: Boolean = skipReason.isDefined
@@ -53,23 +58,27 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
   /** `…/histmersion_w25` → (`…/postgres`, `histmersion_w25_backup_test`). */
   private lazy val (adminUrl, scratchDb, scratchUrl) =
-    val url    = testDb.get.takeWhile(_ != '?')
+    val url = testDb.get.takeWhile(_ != '?')
     val prefix = url.take(url.lastIndexOf('/') + 1)
-    val name   = url.drop(url.lastIndexOf('/') + 1) + "_backup_test"
+    val name = url.drop(url.lastIndexOf('/') + 1) + "_backup_test"
     (prefix + "postgres", name, prefix + name)
 
   private def admin(sql: String): Unit =
     val c = testPool(base.db.copy(url = adminUrl)).getConnection
-    try { val s = c.createStatement(); try { val _ = s.execute(sql) } finally s.close() }
-    finally c.close()
+    try {
+      val s = c.createStatement();
+      try { val _ = s.execute(sql) }
+      finally s.close()
+    } finally c.close()
 
   private lazy val cfg: AppConfig =
     base.copy(
       db = base.db.copy(url = scratchUrl),
-      backups = base.backups.copy(dir = backupDir.toString, pgBinDir = pgBinDir.get))
+      backups = base.backups.copy(dir = backupDir.toString, pgBinDir = pgBinDir.get)
+    )
 
   private lazy val backupDir: Path = Files.createTempDirectory("histmersion-backup-e2e")
-  private lazy val ds              = testPool(cfg.db)
+  private lazy val ds = testPool(cfg.db)
 
   override def beforeAll(): Unit =
     if skipReason.isEmpty then
@@ -81,7 +90,9 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     if skipReason.isEmpty then
       scala.util.Try(admin(s"DROP DATABASE IF EXISTS $scratchDb WITH (FORCE)"))
       scala.util.Try {
-        Files.list(backupDir).forEach(p => { val _ = Files.deleteIfExists(p) })
+        Files.list(backupDir).forEach { p =>
+          val _ = Files.deleteIfExists(p)
+        }
         val _ = Files.deleteIfExists(backupDir)
       }
       ()
@@ -94,33 +105,62 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     val r = http.send(req, HttpResponse.BodyHandlers.ofString())
     (r.statusCode, r.body)
 
-  private def get(url: String): (Int, String)  = send(HttpRequest.newBuilder(URI.create(url)).build())
+  private def get(url: String): (Int, String) = send(HttpRequest.newBuilder(URI.create(url)).build())
   private def post(url: String, body: String): (Int, String) =
-    send(HttpRequest.newBuilder(URI.create(url)).header("Content-Type", "application/json")
-      .POST(HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      HttpRequest
+        .newBuilder(URI.create(url))
+        .header("Content-Type", "application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
 
   private def field(json: String, name: String): String =
-    s""""$name"\\s*:\\s*"([^"]*)"""".r.findFirstMatchIn(json).map(_.group(1))
+    s""""$name"\\s*:\\s*"([^"]*)"""".r
+      .findFirstMatchIn(json)
+      .map(_.group(1))
       .getOrElse(fail(s"no string field '$name' in $json"))
 
   private def number(json: String, name: String): Long =
-    s""""$name"\\s*:\\s*(-?\\d+)""".r.findFirstMatchIn(json).map(_.group(1).toLong)
+    s""""$name"\\s*:\\s*(-?\\d+)""".r
+      .findFirstMatchIn(json)
+      .map(_.group(1).toLong)
       .getOrElse(fail(s"no numeric field '$name' in $json"))
 
   private def sha256(bytes: Array[Byte]): String =
     java.security.MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"$b%02x").mkString
 
   private def fixture(ck: String, title: String) =
-    SourcePut(title = title, authors = List("Tester"), year = Some(2026), status = Some(SourceStatus.Current),
-      topics = List("backup"), regions = List("Anatolia"), tags = List("zz-backup-test"),
-      periodStart = Some(-1300), periodEnd = Some(-1100), summary = Some(s"fixture $ck"),
-      findings = List(FindingInput(claim = s"$ck says something", region = Some("Anatolia"),
-        lon = Some(32.0), lat = Some(39.0), periodStart = Some(-1250), periodEnd = Some(-1150))))
+    SourcePut(
+      title = title,
+      authors = List("Tester"),
+      year = Some(2026),
+      status = Some(SourceStatus.Current),
+      topics = List("backup"),
+      regions = List("Anatolia"),
+      tags = List("zz-backup-test"),
+      periodStart = Some(-1300),
+      periodEnd = Some(-1100),
+      summary = Some(s"fixture $ck"),
+      findings = List(
+        FindingInput(
+          claim = s"$ck says something",
+          region = Some("Anatolia"),
+          lon = Some(32.0),
+          lat = Some(39.0),
+          periodStart = Some(-1250),
+          periodEnd = Some(-1150)
+        )
+      )
+    )
 
   private def sql(statement: String): Unit =
     val c = ds.getConnection
-    try { val s = c.createStatement(); try { val _ = s.execute(statement) } finally s.close() }
-    finally c.close()
+    try {
+      val s = c.createStatement();
+      try { val _ = s.execute(statement) }
+      finally s.close()
+    } finally c.close()
 
   // ── the acceptance line ──────────────────────────────────────────────────────────────────────
 
@@ -132,7 +172,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     assertEquals(before, 2)
 
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // 1. POST /api/backup writes an archive and reports its size + checksum
@@ -146,9 +186,9 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
           Thread.sleep(500)
           bb = get(s"$url/api/backup/status")._2
         assertEquals(field(bb, "state"), "done", bb)
-        val file  = field(bb, "file")
+        val file = field(bb, "file")
         val bytes = number(bb, "bytes")
-        val hash  = field(bb, "sha256")
+        val hash = field(bb, "sha256")
         assert(Backup.safeName(file).isRight, file)
         assert(bytes > 0, bb)
         assertEquals(hash.length, 64, bb)
@@ -161,8 +201,10 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
         assert(lb.contains(file), lb)
 
         // 3. GET /api/backups/{file} streams the very same bytes (this is `backup --download`)
-        val dl = http.send(HttpRequest.newBuilder(URI.create(s"$url/api/backups/$file")).build(),
-          HttpResponse.BodyHandlers.ofByteArray())
+        val dl = http.send(
+          HttpRequest.newBuilder(URI.create(s"$url/api/backups/$file")).build(),
+          HttpResponse.BodyHandlers.ofByteArray()
+        )
         assertEquals(dl.statusCode, 200)
         assertEquals(dl.body.length.toLong, bytes)
         assertEquals(sha256(dl.body), hash)
@@ -219,7 +261,8 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     val c = d.getConnection
     try
       val rs = c.createStatement().executeQuery(q)
-      try { assert(rs.next(), q); rs.getString(1) } finally rs.close()
+      try { assert(rs.next(), q); rs.getString(1) }
+      finally rs.close()
     finally c.close()
 
   // A dump from another installation, whose roles are named differently, must still come back.
@@ -239,8 +282,10 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     val r = h.restore(RestoreRequest(dump.file, force = true))
     assert(r.isRight, r.toString)
     assert(!r.toOption.get.warnings.exists(_.contains("does not exist")), r.toString)
-    assertEquals(scalar(ds, "SELECT tableowner FROM pg_tables WHERE tablename = 'articles'"),
-      scalar(ds, "SELECT current_user"))
+    assertEquals(
+      scalar(ds, "SELECT tableowner FROM pg_tables WHERE tablename = 'articles'"),
+      scalar(ds, "SELECT current_user")
+    )
     // the read-only role was re-granted after the restore (the dump's GRANTs are skipped)
     val q = testQueryPool(cfg.db, cfg.query)
     assert(scalar(q, "SELECT count(*) FROM sources WHERE citekey = 'zz_backup_roles'") == "1")

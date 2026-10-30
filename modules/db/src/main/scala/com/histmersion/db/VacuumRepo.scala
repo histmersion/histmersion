@@ -5,12 +5,13 @@ import com.histmersion.api.Vacuum
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** `VACUUM` for `histmersion maintenance vacuum` (#1445). VACUUM cannot run inside a transaction block,
-  * so it gets a connection of its own in autocommit mode — never `transact`. */
+/** `VACUUM` for `histmersion maintenance vacuum` (#1445). VACUUM cannot run inside a transaction block, so it gets a
+  * connection of its own in autocommit mode — never `transact`.
+  */
 object VacuumRepo:
 
-  /** One table's dead row versions (the statistics collector's count) and its size with indexes and
-    * TOAST. */
+  /** One table's dead row versions (the statistics collector's count) and its size with indexes and TOAST.
+    */
   final case class TableState(deadRows: Long, bytes: Long)
 
   /** The ordinary tables of the `public` schema — what a vacuum may name. */
@@ -23,10 +24,15 @@ object VacuumRepo:
       sql"""SELECT coalesce((SELECT n_dead_tup FROM pg_stat_user_tables
                              WHERE schemaname = 'public' AND relname = $table), 0)::int8,
                    pg_total_relation_size(format('public.%I', $table::text)::regclass)::int8"""
-        .query[(Long, Long)].run().headOption.map(TableState.apply).getOrElse(TableState(0, 0))
+        .query[(Long, Long)]
+        .run()
+        .headOption
+        .map(TableState.apply)
+        .getOrElse(TableState(0, 0))
 
-  /** Run `VACUUM [(ANALYZE)]` on one table, outside any transaction. The name must have passed
-    * [[Vacuum.plan]] (shape and existence). */
+  /** Run `VACUUM [(ANALYZE)]` on one table, outside any transaction. The name must have passed [[Vacuum.plan]] (shape
+    * and existence).
+    */
   def vacuum(ds: DataSource, table: String, analyze: Boolean): Unit =
     val c = ds.getConnection()
     try

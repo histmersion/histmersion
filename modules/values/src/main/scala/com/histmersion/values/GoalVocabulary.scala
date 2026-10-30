@@ -14,9 +14,9 @@ object DraftMode:
 
 /** What a goal is linked to. */
 enum GoalLinkKind(val wire: String):
-  case Source    extends GoalLinkKind("source")
-  case Article   extends GoalLinkKind("article")
-  case Query     extends GoalLinkKind("query")
+  case Source extends GoalLinkKind("source")
+  case Article extends GoalLinkKind("article")
+  case Query extends GoalLinkKind("query")
   case QueueItem extends GoalLinkKind("queue-item")
 
 object GoalLinkKind:
@@ -26,10 +26,10 @@ object GoalLinkKind:
     def wire(e: GoalLinkKind): String = e.wire
     def fromWire(s: String): Option[GoalLinkKind] = parse(s)
 
-/** What a goal's schedule starts: a currency check of its sources, or an acquisition sweep of its
-  * queries. */
+/** What a goal's schedule starts: a currency check of its sources, or an acquisition sweep of its queries.
+  */
 enum ScheduleKind(val wire: String, val pipeline: Pipeline):
-  case Currency    extends ScheduleKind("currency", Pipeline.CurrencyCheck)
+  case Currency extends ScheduleKind("currency", Pipeline.CurrencyCheck)
   case Acquisition extends ScheduleKind("acquisition", Pipeline.AcquisitionSweep)
 
 object ScheduleKind:

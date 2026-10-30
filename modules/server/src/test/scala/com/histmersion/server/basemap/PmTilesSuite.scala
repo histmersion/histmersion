@@ -20,22 +20,49 @@ class PmTilesSuite extends munit.FunSuite:
       assertEquals(PmTiles.zxy(PmTiles.tileId(z, x, y)), (z, x, y))
 
   test("ids at one zoom are a permutation of its range"):
-    val z   = 4
+    val z = 4
     val ids = for x <- 0L until 16L; y <- 0L until 16L yield PmTiles.tileId(z, x, y)
     assertEquals(ids.sorted, (PmTiles.zoomBase(4) until PmTiles.zoomBase(5)).toVector)
 
   test("the header round-trips"):
-    val h = PmTiles.Header(127, 300, 427, 50, 477, 0, 477, 9999, 10, 8, 7, true,
-      PmTiles.Compression.Gzip, PmTiles.Compression.Gzip, PmTiles.TileType.Mvt, 0, 10,
-      -12.5, 20.25, 90.0, 62.0, 5, 30.0, 38.0)
+    val h = PmTiles.Header(
+      127,
+      300,
+      427,
+      50,
+      477,
+      0,
+      477,
+      9999,
+      10,
+      8,
+      7,
+      true,
+      PmTiles.Compression.Gzip,
+      PmTiles.Compression.Gzip,
+      PmTiles.TileType.Mvt,
+      0,
+      10,
+      -12.5,
+      20.25,
+      90.0,
+      62.0,
+      5,
+      30.0,
+      38.0
+    )
     val b = PmTiles.encodeHeader(h)
     assertEquals(b.length, 127)
     assertEquals(PmTiles.parseHeader(b), Right(h))
     assert(PmTiles.parseHeader(Array.fill(127)(0.toByte)).isLeft)
 
   test("a directory round-trips, contiguous offsets stored as 0"):
-    val es = Vector(PmTiles.Entry(0, 0, 10, 1), PmTiles.Entry(1, 10, 20, 3), PmTiles.Entry(9, 0, 10, 1),
-      PmTiles.Entry(20, 500, 7, 0))
+    val es = Vector(
+      PmTiles.Entry(0, 0, 10, 1),
+      PmTiles.Entry(1, 10, 20, 3),
+      PmTiles.Entry(9, 0, 10, 1),
+      PmTiles.Entry(20, 500, 7, 0)
+    )
     assertEquals(PmTiles.decodeDirectory(PmTiles.encodeDirectory(es)), Right(es))
     assert(PmTiles.decodeDirectory(Array(5.toByte)).isLeft)
 
@@ -46,15 +73,39 @@ class PmTilesSuite extends munit.FunSuite:
     assertEquals(PmTiles.find(es, 4), None)
     assertEquals(PmTiles.find(es, 99).map(_.isLeaf), Some(true))
 
-  private def template(maxZoom: Int) = PmTiles.Header(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true,
-    PmTiles.Compression.Gzip, PmTiles.Compression.None, PmTiles.TileType.Png, 0, maxZoom, 20, 34, 30, 42, 3, 25, 38)
+  private def template(maxZoom: Int) = PmTiles.Header(
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    true,
+    PmTiles.Compression.Gzip,
+    PmTiles.Compression.None,
+    PmTiles.TileType.Png,
+    0,
+    maxZoom,
+    20,
+    34,
+    30,
+    42,
+    3,
+    25,
+    38
+  )
 
   test("written and read back: tiles, runs of identical tiles, metadata"):
     val dir = Files.createTempDirectory("pmtiles")
     val out = dir.resolve("t.pmtiles")
-    val w   = PmTilesWriter(out)
+    val w = PmTilesWriter(out)
     val tiles = for z <- 0 to 3; x <- 0L until (1L << z); y <- 0L until (1L << z)
-      yield (PmTiles.tileId(z, x, y), if z == 3 && x > 3 then Array[Byte](9, 9) else s"$z/$x/$y".getBytes)
+    yield (PmTiles.tileId(z, x, y), if z == 3 && x > 3 then Array[Byte](9, 9) else s"$z/$x/$y".getBytes)
     tiles.sortBy(_._1).foreach((id, b) => w.add(id, b))
     w.finish(template(3), Json.obj("name" -> Json.fromString("test")))
     val r = PmTilesFile.open(out).fold(fail(_), identity)
@@ -72,7 +123,7 @@ class PmTilesSuite extends munit.FunSuite:
   test("many entries go to leaf directories, and are still found"):
     val dir = Files.createTempDirectory("pmtiles")
     val out = dir.resolve("big.pmtiles")
-    val w   = PmTilesWriter(out)
+    val w = PmTilesWriter(out)
     // irregular gaps and lengths: 40 000 entries that do not compress into one root
     val rnd = scala.util.Random(7)
     val ids = Iterator.iterate(0L)(_ + 2 + rnd.nextInt(5)).take(40000).toVector
@@ -91,12 +142,12 @@ class PmTilesSuite extends munit.FunSuite:
 
   test("a read interrupted mid-way (a cancelled tile request) does not break the archive for the other requests"):
     val dir = java.nio.file.Files.createTempDirectory("pmtiles-int")
-    val p   = BasemapFixtures.vectorArchive(dir.resolve("v.pmtiles"), maxZoom = 3)
-    val f   = PmTilesFile.open(p).fold(fail(_), identity)
+    val p = BasemapFixtures.vectorArchive(dir.resolve("v.pmtiles"), maxZoom = 3)
+    val f = PmTilesFile.open(p).fold(fail(_), identity)
     try
       val before = f.tile(2, 1, 1).fold(fail(_), identity).get
       // an interrupted thread reading: the JDK closes the shared channel
-      val t = Thread.ofVirtual().unstarted(() => { Thread.currentThread().interrupt(); scala.util.Try(f.tile(3, 2, 2)) })
+      val t = Thread.ofVirtual().unstarted { () => Thread.currentThread().interrupt(); scala.util.Try(f.tile(3, 2, 2)) }
       t.start(); t.join()
       assertEquals(f.tile(2, 1, 1).map(_.map(_.toList)), Right(Some(before.toList)), "read again on a reopened channel")
       assert(f.size > 0)

@@ -6,15 +6,15 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.PlaceKind
 
-/** `/api/aggregate` with the §1.6 axes over real HTTP: the nested tree, its parameters and its
-  * errors. Gated on HISTMERSION_TEST_DB_URL like every other server suite.
+/** `/api/aggregate` with the §1.6 axes over real HTTP: the nested tree, its parameters and its errors. Gated on
+  * HISTMERSION_TEST_DB_URL like every other server suite.
   *
-  * Writes its own source and its own two-level gazetteer through the API (so it does not depend on
-  * what else is in the test database) but deliberately does NOT call `POST /api/places/rebuild` —
-  * that re-materialises `finding_places` for the whole corpus and the db-module suites assert on it.
-  * The source reaches the tree through the `region_name` fallback that `put_source` now genuinely
-  * maintains (it re-materialises THIS citekey on every write); the containment path is covered by
-  * `TreeRepoSuite`. */
+  * Writes its own source and its own two-level gazetteer through the API (so it does not depend on what else is in the
+  * test database) but deliberately does NOT call `POST /api/places/rebuild` — that re-materialises `finding_places` for
+  * the whole corpus and the db-module suites assert on it. The source reaches the tree through the `region_name`
+  * fallback that `put_source` now genuinely maintains (it re-materialises THIS citekey on every write); the containment
+  * path is covered by `TreeRepoSuite`.
+  */
 class TreeHttpSuite extends munit.FunSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -29,20 +29,34 @@ class TreeHttpSuite extends munit.FunSuite:
     send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(url)).build())
 
   private def post(url: String, body: String) =
-    send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
-      .header("Content-Type", "application/json")
-      .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      java.net.http.HttpRequest
+        .newBuilder(java.net.URI.create(url))
+        .header("Content-Type", "application/json")
+        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
 
   private def put(url: String, body: String) =
-    send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
-      .header("Content-Type", "application/json")
-      .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      java.net.http.HttpRequest
+        .newBuilder(java.net.URI.create(url))
+        .header("Content-Type", "application/json")
+        .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
 
   /** Two nested regions; the inner one carries the name the fixture's finding is labelled with. */
-  private val places = Lpf.render(List(
-    PlaceInput(Place("zzg_world", "Zzg World", PlaceKind.Region), List(PlaceName("Zzg World"))),
-    PlaceInput(Place("zzg_land", "Zzg Land", PlaceKind.Region), List(PlaceName("Zzg Land")),
-      List(PlaceRelation("zzg_land", "zzg_world")))))
+  private val places = Lpf.render(
+    List(
+      PlaceInput(Place("zzg_world", "Zzg World", PlaceKind.Region), List(PlaceName("Zzg World"))),
+      PlaceInput(
+        Place("zzg_land", "Zzg Land", PlaceKind.Region),
+        List(PlaceName("Zzg Land")),
+        List(PlaceRelation("zzg_land", "zzg_world"))
+      )
+    )
+  )
 
   private val source =
     """{"title":"Tree HTTP fixture","authors":["T"],"year":2021,"status":"current",
@@ -53,9 +67,9 @@ class TreeHttpSuite extends munit.FunSuite:
 
   test("by=time,region returns the nested tree; by=time keeps the flat strip"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       val filter = "tag=zzg-tree&from=-1600&to=-1200"
 

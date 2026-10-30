@@ -5,10 +5,25 @@ import com.histmersion.values.{LocationPrecision, PlaceKind, SourceStatus}
 
 class PreviewSuite extends munit.FunSuite:
 
-  private val detail = SourceDetail("cline2014_year", "1177 BC", List("Eric H. Cline"), Some(2014),
-    Some("Princeton UP"), SourceStatus.Current, List("bronze_age_collapse"), List("Eastern_Mediterranean"),
-    List("sea_peoples"), Some(-1250), Some(-1100), Some("x" * 400), Some("10.1515/9781400849987"),
-    None, None, None, None)
+  private val detail = SourceDetail(
+    "cline2014_year",
+    "1177 BC",
+    List("Eric H. Cline"),
+    Some(2014),
+    Some("Princeton UP"),
+    SourceStatus.Current,
+    List("bronze_age_collapse"),
+    List("Eastern_Mediterranean"),
+    List("sea_peoples"),
+    Some(-1250),
+    Some(-1100),
+    Some("x" * 400),
+    Some("10.1515/9781400849987"),
+    None,
+    None,
+    None,
+    None
+  )
 
   test("a data-ck element previews a source, a data-slug element an article; a source wins"):
     assertEquals(Preview.targetOf(Some("a2020_b"), None), Some(Preview.Target.Source("a2020_b")))
@@ -36,15 +51,29 @@ class PreviewSuite extends munit.FunSuite:
   // ── a place's card says what the place is (2026-10-09) ─────────────────────────────────────────
 
   private val patones = PlaceDetail(
-    PlaceSummary("wikidata_q131839713", "Kingdom of Patones", PlaceKind.Polity, None, Some(1769L),
-      Some("Wikidata (wikidata.org), CC0"), "Kingdom of Patones, Reino de Patones",
-      dating = PlaceDating.EndOnly, importSource = Some("wikidata")),
-    geometry = Some("""{"type":"Point","coordinates":[-3.48,40.88]}"""), parents = Nil, children = Nil,
-    findings = 0, asOf = Some(-3900L),
+    PlaceSummary(
+      "wikidata_q131839713",
+      "Kingdom of Patones",
+      PlaceKind.Polity,
+      None,
+      Some(1769L),
+      Some("Wikidata (wikidata.org), CC0"),
+      "Kingdom of Patones, Reino de Patones",
+      dating = PlaceDating.EndOnly,
+      importSource = Some("wikidata")
+    ),
+    geometry = Some("""{"type":"Point","coordinates":[-3.48,40.88]}"""),
+    parents = Nil,
+    children = Nil,
+    findings = 0,
+    asOf = Some(-3900L),
     links = List(PlaceLink("wikidata_q131839713", "wikidata", "Q131839713", "exact_match")),
     hasBoundary = false,
-    descriptions = List(PlaceDescription("former country in Modern Day Spain", "en", "wikidata"),
-      PlaceDescription("microestado de Europa (siglo VIII-1769)", "es", "wikidata")))
+    descriptions = List(
+      PlaceDescription("former country in Modern Day Spain", "en", "wikidata"),
+      PlaceDescription("microestado de Europa (siglo VIII-1769)", "es", "wikidata")
+    )
+  )
 
   test("a place card: label, kind, the period as stated, the description, no boundary, the source and its page"):
     val c = Preview.card(patones)
@@ -56,39 +85,73 @@ class PreviewSuite extends munit.FunSuite:
     assertEquals(c.links, List("Wikidata Q131839713" -> "https://www.wikidata.org/wiki/Q131839713"))
 
   test("a place card: an undated import says so; a site's point is no missing boundary; a seed place names its source"):
-    val gn = patones.copy(place = patones.place.copy(id = "geonames_1", label = "Boğazkale", kind = PlaceKind.Site,
-      periodEnd = None, dating = PlaceDating.Unknown, importSource = Some("geonames")),
-      links = List(PlaceLink("geonames_1", "geonames", "1", "exact_match")), descriptions = Nil)
+    val gn = patones.copy(
+      place = patones.place.copy(
+        id = "geonames_1",
+        label = "Boğazkale",
+        kind = PlaceKind.Site,
+        periodEnd = None,
+        dating = PlaceDating.Unknown,
+        importSource = Some("geonames")
+      ),
+      links = List(PlaceLink("geonames_1", "geonames", "1", "exact_match")),
+      descriptions = Nil
+    )
     val c = Preview.card(gn)
     assertEquals(c.byline, "Site · date unknown")
     assert(!c.facts.contains(PlaceShape.NoBoundaryNote))
     assertEquals(c.links, List("GeoNames 1" -> "https://www.geonames.org/1"))
     assertEquals(c.summary, None)
-    val seed = gn.copy(place = gn.place.copy(importSource = None, dating = PlaceDating.Stated, kind = PlaceKind.Region,
-      periodStart = Some(-1650L), periodEnd = Some(-1180L), source = Some("Pleiades (pleiades.stoa.org), CC-BY")),
-      hasBoundary = true, links = Nil)
+    val seed = gn.copy(
+      place = gn.place.copy(
+        importSource = None,
+        dating = PlaceDating.Stated,
+        kind = PlaceKind.Region,
+        periodStart = Some(-1650L),
+        periodEnd = Some(-1180L),
+        source = Some("Pleiades (pleiades.stoa.org), CC-BY")
+      ),
+      hasBoundary = true,
+      links = Nil
+    )
     val s = Preview.card(seed)
     assertEquals(s.byline, "Region · 1650 BCE–1180 BCE")
     assert(s.facts.contains("source: Pleiades (pleiades.stoa.org), CC-BY"))
     assert(!s.facts.contains(PlaceShape.NoBoundaryNote))
 
   test("a place card at a time says when an undated place is there only by its findings"):
-    val anatolia = patones.copy(place = PlaceSummary("anatolia", "Anatolia", PlaceKind.Region, None, None, None, ""),
-      links = Nil, descriptions = Nil, timeBasis = PlaceTimeBasis.Findings)
+    val anatolia = patones.copy(
+      place = PlaceSummary("anatolia", "Anatolia", PlaceKind.Region, None, None, None, ""),
+      links = Nil,
+      descriptions = Nil,
+      timeBasis = PlaceTimeBasis.Findings
+    )
     assertEquals(Preview.card(anatolia).facts.headOption, Some(PlaceTimeBasis.FindingsNote))
     // across all time nothing is filtered, so nothing needs saying; a dated place never says it
     assert(!Preview.card(anatolia.copy(asOf = None)).facts.contains(PlaceTimeBasis.FindingsNote))
     assert(!Preview.card(patones).facts.contains(PlaceTimeBasis.FindingsNote))
 
   test("a place card: a grid-square point says it is approximate; a people is a group, not a missing boundary"):
-    val thessalia = patones.copy(place = patones.place.copy(id = "pleiades_1001895", label = "Thessalia",
-      kind = PlaceKind.Region, importSource = None, dating = PlaceDating.Stated, periodEnd = None),
-      links = Nil, descriptions = Nil, locationPrecision = LocationPrecision.GridCell)
+    val thessalia = patones.copy(
+      place = patones.place.copy(
+        id = "pleiades_1001895",
+        label = "Thessalia",
+        kind = PlaceKind.Region,
+        importSource = None,
+        dating = PlaceDating.Stated,
+        periodEnd = None
+      ),
+      links = Nil,
+      descriptions = Nil,
+      locationPrecision = LocationPrecision.GridCell
+    )
     val t = Preview.card(thessalia)
     assert(t.facts.contains("location: approximate (atlas grid square)"), t.facts.toString)
     assert(t.facts.contains(PlaceShape.NoBoundaryNote), t.facts.toString)
-    val ubii = thessalia.copy(place = thessalia.place.copy(id = "pleiades_109400", label = "Ubii", kind = PlaceKind.People),
-      locationPrecision = LocationPrecision.Stated)
+    val ubii = thessalia.copy(
+      place = thessalia.place.copy(id = "pleiades_109400", label = "Ubii", kind = PlaceKind.People),
+      locationPrecision = LocationPrecision.Stated
+    )
     val u = Preview.card(ubii)
     assertEquals(u.byline.takeWhile(_ != ' '), "People")
     assert(u.facts.contains(PlaceShape.PeopleNote), u.facts.toString)

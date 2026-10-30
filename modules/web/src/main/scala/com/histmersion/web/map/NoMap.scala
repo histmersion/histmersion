@@ -4,10 +4,11 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 
-/** The map that could not be drawn: the browser has no WebGL 2 (or WebGL is off), or the engine failed to
-  * start. Instead of a blank or a crashing page, the map's place says why and what to do
-  * ([[NoMap.message]]), and the app works on: every call is answered and draws nothing, markers are kept
-  * off screen, so the list, the timeline and the windows behave as with a map. */
+/** The map that could not be drawn: the browser has no WebGL 2 (or WebGL is off), or the engine failed to start.
+  * Instead of a blank or a crashing page, the map's place says why and what to do ([[NoMap.message]]), and the app
+  * works on: every call is answered and draws nothing, markers are kept off screen, so the list, the timeline and the
+  * windows behave as with a map.
+  */
 final class NoMapSurface(el: dom.HTMLElement, why: String, caps: Capabilities, maxZoom0: Double) extends MapSurface:
 
   // `var`s: the view the app asked for, kept so it reads back what it set; the max zoom
@@ -25,12 +26,16 @@ final class NoMapSurface(el: dom.HTMLElement, why: String, caps: Capabilities, m
   private val overlay = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
   overlay.className = "map-unavailable-overlay is-hidden"
   el.appendChild(overlay)
-  private val corners = Corner.values.map(c => c -> {
-    val d = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
-    d.className = "is-hidden"
-    overlay.appendChild(d)
-    d
-  }).toMap
+  private val corners = Corner.values
+    .map(c =>
+      c -> {
+        val d = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+        d.className = "is-hidden"
+        overlay.appendChild(d)
+        d
+      }
+    )
+    .toMap
   private val sets = mutable.LinkedHashMap.empty[String, ShapeSet]
 
   def zoom: Double = z
@@ -70,6 +75,7 @@ final class NoMapSurface(el: dom.HTMLElement, why: String, caps: Capabilities, m
   def baseMapDrawn(id: String): Int = 0
   def capabilities: Capabilities = caps
   def destroy(): Unit = { note.remove(); overlay.remove() }
+
   /** Why there is no map (what the message says first). */
   def unavailable: String = why
 
@@ -93,10 +99,12 @@ object NoMap:
 
   /** Pure: the message in the map's place — why, then what to do; the rest of the app works without it. */
   def message(why: String): (String, String) =
-    (s"The map cannot be drawn here: $why.",
+    (
+      s"The map cannot be drawn here: $why.",
       "Every base map — the online ones and the local ones — is drawn with WebGL 2. Turn on hardware " +
         "(graphics) acceleration in the browser's settings, or open the page in a current Chrome, Edge, " +
-        "Firefox or Safari. The list, the timeline and the articles work without the map.")
+        "Firefox or Safari. The list, the timeline and the articles work without the map."
+    )
 
   def html(why: String): String =
     val (head, body) = message(why)

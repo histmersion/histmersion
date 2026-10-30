@@ -15,8 +15,7 @@ class ApiValuesSuite extends munit.FunSuite:
     assertEquals(AggregateBy.Time.param, "time")
 
   test("AggregateBy values all have non-empty params"):
-    for v <- AggregateBy.values do
-      assert(v.param.nonEmpty, s"${v} has empty param")
+    for v <- AggregateBy.values do assert(v.param.nonEmpty, s"$v has empty param")
 
   test("SidebarTab covers all expected tabs"):
     val keys = SidebarTab.values.map(_.key).toSet
@@ -24,8 +23,8 @@ class ApiValuesSuite extends munit.FunSuite:
 
   test("SidebarTab keys are all non-empty"):
     for t <- SidebarTab.values do
-      assert(t.key.nonEmpty, s"${t} has empty key")
-      assert(t.label.nonEmpty, s"${t} has empty label")
+      assert(t.key.nonEmpty, s"$t has empty key")
+      assert(t.label.nonEmpty, s"$t has empty label")
 
   test("SidebarTab keys are unique"):
     val keys = SidebarTab.values.map(_.key)

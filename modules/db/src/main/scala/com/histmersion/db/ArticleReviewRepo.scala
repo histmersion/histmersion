@@ -7,13 +7,13 @@ import com.histmersion.values.ItemStatus
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** What the review manager and the review ledgers record about articles, read for their review
-  * state: per article the newest `article-review` item, the ledger's findings COUNTED in SQL (a
-  * ledger runs to hundreds of KB; a list page never decodes one), the pass a running review is in,
-  * and the approvals about it that wait for a person. */
+/** What the review manager and the review ledgers record about articles, read for their review state: per article the
+  * newest `article-review` item, the ledger's findings COUNTED in SQL (a ledger runs to hundreds of KB; a list page
+  * never decodes one), the pass a running review is in, and the approvals about it that wait for a person.
+  */
 object ArticleReviewRepo:
 
-  private final case class FactsRow(
+  final private case class FactsRow(
       slug: String,
       itemStatus: Option[String],
       outcome: Option[String],
@@ -27,10 +27,10 @@ object ArticleReviewRepo:
   )
   private given DbCodec[FactsRow] = DbCodec.derived
 
-  private final case class ApprovalRow(subject: String, id: Long, kind: String)
+  final private case class ApprovalRow(subject: String, id: Long, kind: String)
   private given DbCodec[ApprovalRow] = DbCodec.derived
 
-  private final case class GoalRow(slug: String, title: String, status: String)
+  final private case class GoalRow(slug: String, title: String, status: String)
   private given DbCodec[GoalRow] = DbCodec.derived
 
   /** The approval kinds that leave an article waiting for a person. */
@@ -38,8 +38,9 @@ object ArticleReviewRepo:
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
-  /** The review facts of each of `slugs`, and the time of its item's last change (UTC). A slug the
-    * manager and the ledgers know nothing of maps to empty facts. */
+  /** The review facts of each of `slugs`, and the time of its item's last change (UTC). A slug the manager and the
+    * ledgers know nothing of maps to empty facts.
+    */
   def facts(ds: DataSource, slugs: List[String]): Map[String, (Facts, Option[String])] =
     if slugs.isEmpty then Map.empty
     else
@@ -65,11 +66,15 @@ object ArticleReviewRepo:
             WHERE r.slug = a.slug) rl ON true
           LEFT JOIN LATERAL (
             SELECT max(split_part(s.name, '-', 2)::int) AS round FROM agent_steps s
-            WHERE mi.status = 'active' AND s.job_id = mi.run_id AND s.name ~ '^snapshot-[0-9]+') st ON true""".query[FactsRow].run()
+            WHERE mi.status = 'active' AND s.job_id = mi.run_id AND s.name ~ '^snapshot-[0-9]+') st ON true"""
+          .query[FactsRow]
+          .run()
         val waiting = approvals(slugs)
         rows.map { r =>
           val item = r.itemStatus.flatMap(ItemStatus.parse).map(s => ItemFacts(s, r.outcome, r.attempts.getOrElse(0)))
-          val ledger = r.findings.filter(_ > 0).map(n => LedgerFacts(r.openMajors.getOrElse(0), r.openMinors.getOrElse(0), n, r.runs.getOrElse(0)))
+          val ledger = r.findings
+            .filter(_ > 0)
+            .map(n => LedgerFacts(r.openMajors.getOrElse(0), r.openMinors.getOrElse(0), n, r.runs.getOrElse(0)))
           r.slug -> (Facts(item, ledger, r.round, waiting.getOrElse(r.slug, Nil)), r.updatedAt)
         }.toMap
 
@@ -90,5 +95,8 @@ object ArticleReviewRepo:
   def goals(ds: DataSource, slug: String): List[ReviewGoal] =
     connect(ds):
       sql"""SELECT g.slug, g.title, g.status FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
-            WHERE l.kind = 'article' AND l.ref = $slug ORDER BY g.slug""".query[GoalRow].run().toList
+            WHERE l.kind = 'article' AND l.ref = $slug ORDER BY g.slug"""
+        .query[GoalRow]
+        .run()
+        .toList
         .map(r => ReviewGoal(r.slug, r.title, r.status))

@@ -4,10 +4,11 @@ import com.histmersion.web.{LibrarySection, Router, StatusBadge}
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
-/** A page of a Library list as a table: a source's title and authors, year, status and period; an article's
-  * title and kind, and period. Every title is a real link to the item's page: a plain click chooses the row
-  * (the reading pane shows it), ⌘/Ctrl/middle click opens the page in a new tab, and Enter on a focused title
-  * opens the page here. ↑ and ↓ move the choice while a title has the focus. */
+/** A page of a Library list as a table: a source's title and authors, year, status and period; an article's title and
+  * kind, and period. Every title is a real link to the item's page: a plain click chooses the row (the reading pane
+  * shows it), ⌘/Ctrl/middle click opens the page in a new tab, and Enter on a focused title opens the page here. ↑ and
+  * ↓ move the choice while a title has the focus.
+  */
 object LibraryTable:
 
   private val colScope = htmlAttr("scope", com.raquo.laminar.codecs.StringAsIsCodec)
@@ -15,8 +16,12 @@ object LibraryTable:
   /** Choose `key` in `section`'s list: a step in the history (`push`), or the arrow keys' quiet move. */
   type Choose = (String, Boolean) => Unit
 
-  def element(section: LibrarySection, rows: Signal[List[TableRow]], chosen: Signal[Option[String]],
-      choose: Choose): HtmlElement =
+  def element(
+      section: LibrarySection,
+      rows: Signal[List[TableRow]],
+      chosen: Signal[Option[String]],
+      choose: Choose
+  ): HtmlElement =
     val sources = section != LibrarySection.Articles
     div(
       cls := "library-table-wrap",
@@ -41,11 +46,14 @@ object LibraryTable:
       table(
         cls := "library-table",
         aria.label := (if sources then "Sources" else "Articles"),
-        thead(tr(
-          th(colScope := "col", "Title"),
-          if sources then th(colScope := "col", cls := "col-year", "Year") else emptyNode,
-          th(colScope := "col", cls := "col-status", if sources then "Status" else "Kind"),
-          th(colScope := "col", cls := "col-period", "Period"))),
+        thead(
+          tr(
+            th(colScope := "col", "Title"),
+            if sources then th(colScope := "col", cls := "col-year", "Year") else emptyNode,
+            th(colScope := "col", cls := "col-status", if sources then "Status" else "Kind"),
+            th(colScope := "col", cls := "col-period", "Period")
+          )
+        ),
         tbody(children <-- rows.map(_.map(row(_, sources, chosen, choose))))
       )
     )
@@ -57,7 +65,11 @@ object LibraryTable:
   private def chosenKey(ev: dom.KeyboardEvent): Option[String] =
     Option(ev.currentTarget.asInstanceOf[dom.Element].querySelector("tbody tr.is-chosen"))
       .map(_.getAttribute("data-key"))
-      .orElse(Option(dom.document.activeElement).flatMap(el => Option(el.closest("tr[data-key]"))).map(_.getAttribute("data-key")))
+      .orElse(
+        Option(dom.document.activeElement)
+          .flatMap(el => Option(el.closest("tr[data-key]")))
+          .map(_.getAttribute("data-key"))
+      )
 
   private def focusRow(wrap: dom.Element, key: String): Unit =
     val rows = wrap.querySelectorAll("tbody tr[data-key]")
@@ -68,8 +80,10 @@ object LibraryTable:
   private def row(r: TableRow, sources: Boolean, chosen: Signal[Option[String]], choose: Choose): HtmlElement =
     val on = chosen.map(_.contains(r.key))
     val ref =
-      if sources then com.histmersion.web.marks.ItemRef.source(r.key, r.title) else com.histmersion.web.marks.ItemRef.article(r.key, r.title)
-    val unread = com.histmersion.web.marks.MyItems.loaded.signal.combineWith(com.histmersion.web.marks.MyItems.isRead(ref))
+      if sources then com.histmersion.web.marks.ItemRef.source(r.key, r.title)
+      else com.histmersion.web.marks.ItemRef.article(r.key, r.title)
+    val unread = com.histmersion.web.marks.MyItems.loaded.signal
+      .combineWith(com.histmersion.web.marks.MyItems.isRead(ref))
       .map((loaded, read) => loaded && !read)
     tr(
       cls := "lib-row",
@@ -80,18 +94,26 @@ object LibraryTable:
         val t = ev.target.asInstanceOf[dom.Element]
         if t.closest("a") == null && Router.plain(ev) then choose(r.key, true)
       },
-      com.histmersion.web.ui.ContextMenu.on(s"Actions: ${r.title}", () => com.histmersion.web.marks.ItemMenu.entries(ref, r.byline)),
-      td(cls := "col-title",
-        a(cls := "lib-title", href := r.page,
-          child.maybe <-- unread.map(u => Option.when(u)(span(cls := "unread-dot", title := "Not read yet", aria.label := "Not read yet"))),
+      com.histmersion.web.ui.ContextMenu
+        .on(s"Actions: ${r.title}", () => com.histmersion.web.marks.ItemMenu.entries(ref, r.byline)),
+      td(
+        cls := "col-title",
+        a(
+          cls := "lib-title",
+          href := r.page,
+          child.maybe <-- unread.map(u =>
+            Option.when(u)(span(cls := "unread-dot", title := "Not read yet", aria.label := "Not read yet"))
+          ),
           r.title,
           aria.current <-- on.map(if _ then "true" else "false"),
           onClick --> { ev =>
             if Router.plain(ev) then
               ev.preventDefault()
               choose(r.key, true)
-          }),
-        Option.when(r.byline.nonEmpty)(div(cls := "lib-byline", r.byline))),
+          }
+        ),
+        Option.when(r.byline.nonEmpty)(div(cls := "lib-byline", r.byline))
+      ),
       if sources then td(cls := "col-year", r.year.fold("")(_.toString)) else emptyNode,
       td(cls := "col-status", r.status.fold(span(cls := "lib-kind", r.kind))(StatusBadge(_))),
       td(cls := "col-period lib-period", r.period)

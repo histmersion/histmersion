@@ -16,7 +16,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   import McpTools.*
 
   private val ping =
-    tool("ping").description("Liveness check for the Histmersion MCP server").input[PingInput]
+    tool("ping")
+      .description("Liveness check for the Histmersion MCP server")
+      .input[PingInput]
       .handle(_ => ToolResult.text(s"${h.version.name} ${h.version.version} — ok"))
 
   private val search =
@@ -44,20 +46,20 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "title · year · status · period · one why-line, no snippets/matches/summaries. " +
           "Use when scanning a large result set before drilling in. FTS note: an AND is evaluated " +
           "within one chunk, so `sea peoples pottery` matches only when all three words appear in " +
-          "the same ~4 000-char section of one source.")
+          "the same ~4 000-char section of one source."
+      )
       .input[SearchInput]
       .handle { in =>
         in.groupBy.map(_.trim).filter(_.nonEmpty) match
           case None =>
             val f = in.toFilter
             val r = h.sources(f)
-            ToolResult.text(
-              if in.verbose then Markdown.searchResults(r)
-              else Markdown.briefResults(r))
+            ToolResult.text(if in.verbose then Markdown.searchResults(r)
+            else Markdown.briefResults(r))
           case Some(by) =>
             // A5/A26: MCP defaults depth:1, samples:0 unless asked, so a bare groupBy never overwhelms
-            val depth   = in.depth.orElse(Some(1))
-            val samp    = in.samples.orElse(Some(0))
+            val depth = in.depth.orElse(Some(1))
+            val samp = in.samples.orElse(Some(0))
             h.aggregate(Api.AggregateQuery.tree(by, in.toFilter, None, depth, in.asOf, samp)) match
               case Right(t) => ToolResult.text(Markdown.tree(t, "sources"))
               case Left(e)  => McpOut.error(e)
@@ -70,7 +72,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "number of DISTINCT sources each value would leave inside the CURRENT filter. Use this " +
           "before `search` to learn which tags/authors/places/topics actually exist (and how big each " +
           "is), and after a search to see how to narrow it further. `prefix` does case-insensitive " +
-          "prefix matching for autocompletion; the other parameters are the same filter as `search`.")
+          "prefix matching for autocompletion; the other parameters are the same filter as `search`."
+      )
       .input[FacetsInput]
       .handle { in =>
         h.facets(in.field, in.prefix, in.toFilter) match
@@ -79,18 +82,20 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       }
 
   private val getSource =
-    tool("get_source").description(
-      "Fetch one source by citekey. `section` selects what to return: summary (abstract), findings, " +
-        "notes (the agent's article about this source), toc (table of contents: headings with byte " +
-        "offsets into the body), body (the full converted text, sliceable), or all. Default returns " +
-        "summary + findings + notes. `heading` returns only the body chunks under one heading " +
-        "(case-insensitive prefix match). `offset`/`chars` slice the body: chars characters starting " +
-        "at offset (0-based), with a trailing '…N more chars — pass offset=M' when truncated. " +
-        "`fullText: true` is a shorthand for section=body without offset — capped at the configured " +
-        "limit (default 60 000 chars). Bodies are large (mean 450 KB, max 5.7 MB) — to find a word or " +
-        "a quotation inside one source use `passages`; otherwise prefer `search` snippets or a " +
-        "`section`/`heading` slice over the full body. " +
-        "Use after `search` to read what a source says — not to discover sources.")
+    tool("get_source")
+      .description(
+        "Fetch one source by citekey. `section` selects what to return: summary (abstract), findings, " +
+          "notes (the agent's article about this source), toc (table of contents: headings with byte " +
+          "offsets into the body), body (the full converted text, sliceable), or all. Default returns " +
+          "summary + findings + notes. `heading` returns only the body chunks under one heading " +
+          "(case-insensitive prefix match). `offset`/`chars` slice the body: chars characters starting " +
+          "at offset (0-based), with a trailing '…N more chars — pass offset=M' when truncated. " +
+          "`fullText: true` is a shorthand for section=body without offset — capped at the configured " +
+          "limit (default 60 000 chars). Bodies are large (mean 450 KB, max 5.7 MB) — to find a word or " +
+          "a quotation inside one source use `passages`; otherwise prefer `search` snippets or a " +
+          "`section`/`heading` slice over the full body. " +
+          "Use after `search` to read what a source says — not to discover sources."
+      )
       .input[GetSourceInput]
       .handle { in =>
         h.sourceMarkdown(in.citekey, in.fullText, in.section, in.heading, in.offset, in.chars) match
@@ -99,19 +104,22 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       }
 
   private val passages =
-    tool("passages").description(PassagesDoc)
+    tool("passages")
+      .description(PassagesDoc)
       .input[PassagesInput]
       .handle(in => ToolResult.text(passagesMarkdown(h, in)))
 
   private val geoWhen =
-    tool("geo_when").description(
-      "Findings at a place and/or deep-time range, as Markdown. Takes the SAME filters as `search`: " +
-        "`query` (free text), `tags` (ALL required), `authors`/`places` (any of), `topics`, `status`, " +
-        "`yearFrom`/`yearTo` (publication years), `from`/`to` (signed years, BCE negative), bbox. " +
-        "`region` is a deprecated alias for a `places` entry; `periodStart`/`periodEnd` are deprecated " +
-        "aliases for `from`/`to`. A page at a time: `limit`, and `offset` from the footer's " +
-        "`next: offset=N`. Use when you need to see individual findings rather than sources — " +
-        "not when a source list with `search` would suffice.")
+    tool("geo_when")
+      .description(
+        "Findings at a place and/or deep-time range, as Markdown. Takes the SAME filters as `search`: " +
+          "`query` (free text), `tags` (ALL required), `authors`/`places` (any of), `topics`, `status`, " +
+          "`yearFrom`/`yearTo` (publication years), `from`/`to` (signed years, BCE negative), bbox. " +
+          "`region` is a deprecated alias for a `places` entry; `periodStart`/`periodEnd` are deprecated " +
+          "aliases for `from`/`to`. A page at a time: `limit`, and `offset` from the footer's " +
+          "`next: offset=N`. Use when you need to see individual findings rather than sources — " +
+          "not when a source list with `search` would suffice."
+      )
       .input[GeoWhenInput]
       .handle(in => ToolResult.text(Markdown.geoPage(h.findingsPage(in.toQuery))))
 
@@ -125,7 +133,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "`region` is a deprecated alias for a `places` entry; `periodStart`/`periodEnd` are " +
           "deprecated aliases for `from`/`to`. Returns a Markdown table with bar chart. " +
           "Use when you need to see the temporal shape of the evidence — not when individual " +
-          "sources or findings are needed.")
+          "sources or findings are needed."
+      )
       .input[HistogramInput]
       .handle { in =>
         val unit = in.unit.getOrElse("sources")
@@ -135,19 +144,23 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       }
 
   private val neighbors =
-    tool("neighbors").description(
-      "Typed edges to/from a source: references, challenges, refutes, updates, superseded_by. " +
-        "The output has two sections: **Sources** (edges where the target resolves to a real source, " +
-        "with its status) and **Topics** (unresolved `references` targets collapsed to a list of " +
-        "article slugs). Use `kinds` to filter by edge kind. An empty result is not evidence of " +
-        "agreement — disagreement edges are extremely sparse in the corpus. Use `contradictions` " +
-        "for a focused disagreement view, not this.")
+    tool("neighbors")
+      .description(
+        "Typed edges to/from a source: references, challenges, refutes, updates, superseded_by. " +
+          "The output has two sections: **Sources** (edges where the target resolves to a real source, " +
+          "with its status) and **Topics** (unresolved `references` targets collapsed to a list of " +
+          "article slugs). Use `kinds` to filter by edge kind. An empty result is not evidence of " +
+          "agreement — disagreement edges are extremely sparse in the corpus. Use `contradictions` " +
+          "for a focused disagreement view, not this."
+      )
       .input[NeighborsInput]
       .handle { in =>
         val rows = h.neighbors(in.citekey, in.kinds)
         if rows.isEmpty then
-          ToolResult.text(s"_No references recorded for **${in.citekey}**._ " +
-            "An empty result is not evidence of agreement — disagreement edges are sparse.")
+          ToolResult.text(
+            s"_No references recorded for **${in.citekey}**._ " +
+              "An empty result is not evidence of agreement — disagreement edges are sparse."
+          )
         else ToolResult.text(Markdown.neighbors(in.citekey, rows.toVector))
       }
 
@@ -159,7 +172,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "year, status and BFS depth. Links carry the edge kind. Use `depth` to control how " +
           "far to walk (0–4, default 2). Edge kinds include: references, challenges, refutes, " +
           "updates, superseded_by, supersedes, confirms, cites, foundational_for, " +
-          "compilation_of, review_of, verifies.")
+          "compilation_of, review_of, verifies."
+      )
       .input[GraphInput]
       .handle { in =>
         val g = h.graph(in.citekey, in.depth)
@@ -167,13 +181,15 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       }
 
   private val contradictions =
-    tool("contradictions").description(
-      "Disagreement edges and contested statuses in the corpus. With a `citekey`: its " +
-        "challenges/refutes/updates/superseded_by edges in both directions, with the other side's " +
-        "year and status. Without: corpus-wide — every source that has such an edge OR whose status " +
-        "is contested|superseded|debunked|retracted. `since` filters on the challenging source's " +
-        "publication year. Edge kinds: references, challenges, refutes, updates, superseded_by. " +
-        "An empty result is not evidence of agreement — disagreement edges are extremely sparse.")
+    tool("contradictions")
+      .description(
+        "Disagreement edges and contested statuses in the corpus. With a `citekey`: its " +
+          "challenges/refutes/updates/superseded_by edges in both directions, with the other side's " +
+          "year and status. Without: corpus-wide — every source that has such an edge OR whose status " +
+          "is contested|superseded|debunked|retracted. `since` filters on the challenging source's " +
+          "publication year. Edge kinds: references, challenges, refutes, updates, superseded_by. " +
+          "An empty result is not evidence of agreement — disagreement edges are extremely sparse."
+      )
       .input[ContradictionsInput]
       .handle { in =>
         val result = h.contradictions(in.citekey, in.since)
@@ -193,13 +209,18 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "is erased and every finding is renumbered from #0. Edges are FROM this source, each " +
           "{dst,kind} (a src naming another source, or a self-edge, is refused). An unknown key is " +
           "refused, naming it. Use it only to CREATE a source or to " +
-          s"deliberately re-import one. $PatchFirst")
+          s"deliberately re-import one. $PatchFirst"
+      )
       .input[PutSourceInput]
       .handle { in =>
         h.putSource(in.citekey, in.source, in.strict) match
-          case Right(sw) => ToolResult.text(Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
-            Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)))
-          case Left(e)   => McpOut.error(e)
+          case Right(sw) =>
+            ToolResult.text(
+              Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
+                Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
+              )
+            )
+          case Left(e) => McpOut.error(e)
       }
 
   private val patchSource =
@@ -216,13 +237,18 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "instead of silently clobbering — when someone else changed the source meanwhile. An " +
           "unknown or misplaced key (e.g. status outside metadata) is refused, naming it and where it " +
           "belongs. The answer lists formatting problems in the summary and notes; `strict: true` " +
-          s"refuses a patch whose summary or notes have a formatting error. $PatchFirst")
+          s"refuses a patch whose summary or notes have a formatting error. $PatchFirst"
+      )
       .input[PatchSourceInput]
       .handle { in =>
         h.patchSource(in.citekey, in.patch, in.strict) match
-          case Right(sw) => ToolResult.text(Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
-            Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)))
-          case Left(e)   => McpOut.error(e)
+          case Right(sw) =>
+            ToolResult.text(
+              Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
+                Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
+              )
+            )
+          case Left(e) => McpOut.error(e)
       }
 
   private val renameSource =
@@ -237,7 +263,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "export_source, /source/<old> and [[old]] included.) Refused when the " +
           "new citekey is taken (by a source, or as an old citekey of another source) or is not " +
           "link-shaped. Use it only to fix an identifier; to change metadata (year, title) use " +
-          "patch_source.")
+          "patch_source."
+      )
       .input[RenameSourceInput]
       .handle { in =>
         h.renameSource(in.citekey, RenameRequest(in.newCitekey)) match
@@ -251,7 +278,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         "Render a source as the Markdown note it would be on disk: YAML frontmatter (citekey, doi, " +
           "title, authors, year, venue, status, topics, regions, tags, period_start/period_end, " +
           "summary, findings) plus the notes body. This is the git-friendly mirror of the database " +
-          s"and it round-trips back in through seed. $PatchFirst")
+          s"and it round-trips back in through seed. $PatchFirst"
+      )
       .input[ExportSourceInput]
       .handle { in =>
         h.exportSource(in.citekey) match
@@ -274,13 +302,25 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "item this document fulfils: the job ticks it off (`ingested as [[citekey]]`) when it " +
           "succeeds, and leaves it open when it fails. Without it, the job ticks off every open " +
           "acquisition item that names the source's DOI, and lists items with a similar title in its " +
-          "progress as possible matches — those are never closed for you.")
+          "progress as possible matches — those are never closed for you."
+      )
       .input[IngestInput]
       .handle { in =>
-        h.ingest.fromTool(in.citekey, in.path, in.base64, in.filename, in.quality, in.force,
-          in.title, in.authors, in.year, in.doi, in.acquireItem) match
-          case Right(a) => ToolResult.text(
-            s"queued job `${a.jobId}` for **${a.citekey}** — poll `job_status` with that id")
+        h.ingest.fromTool(
+          in.citekey,
+          in.path,
+          in.base64,
+          in.filename,
+          in.quality,
+          in.force,
+          in.title,
+          in.authors,
+          in.year,
+          in.doi,
+          in.acquireItem
+        ) match
+          case Right(a) =>
+            ToolResult.text(s"queued job `${a.jobId}` for **${a.citekey}** — poll `job_status` with that id")
           case Left(e) => McpOut.error(e)
       }
 
@@ -291,7 +331,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "it failed. Give `id` for one job, or omit it to list the recent ones — filtered on the server by " +
           "`status`, `kind` (ingest, reocr, agent, media-import, …), `since` / `until` (2026-10-01, an ISO instant, or " +
           "7d / 12h ago) and `subject` (text in what it is about); the listing heads with the counts per kind. A job that says 'interrupted' was killed by a server restart — re-run the " +
-          "same ingest, it is idempotent.")
+          "same ingest, it is idempotent."
+      )
       .input[JobStatusInput]
       .handle { in =>
         in.id.map(_.trim).filter(_.nonEmpty) match
@@ -301,9 +342,20 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               case Left(e)  => McpOut.error(e)
           case None =>
             val f = in.filter
-            ToolResult.text(h.ingest.jobsPage(f, in.limit, in.before, None).fold(McpOut.refusal, (js, page) =>
-              IngestMarkdown.jobs(js.toVector, page, f.qualifier,
-                Paging.olderLine(page, c => s"call `job_status` again with the same filters and `before: \"$c\"`"))))
+            ToolResult.text(
+              h.ingest
+                .jobsPage(f, in.limit, in.before, None)
+                .fold(
+                  McpOut.refusal,
+                  (js, page) =>
+                    IngestMarkdown.jobs(
+                      js.toVector,
+                      page,
+                      f.qualifier,
+                      Paging.olderLine(page, c => s"call `job_status` again with the same filters and `before: \"$c\"`")
+                    )
+                )
+            )
       }
 
   private val jobControlTool =
@@ -313,9 +365,12 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "or event import, a base-map download, an acquisition re-check, the init job's gazetteer loads — stops after " +
           "the part it is on: paused it keeps what it did and, resumed, goes on with the parts it had not done; " +
           "cancelled it is recorded as cancelled. An agent run takes its own pause, resume and cancel. Other jobs (an " +
-          "OCR, a vacuum) run as one piece and are refused. Only when the user asked for it.")
+          "OCR, a vacuum) run as one piece and are refused. Only when the user asked for it."
+      )
       .input[JobControlInput]
-      .handle(in => h.jobControl.control(in.id, in.action).fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j))))
+      .handle(in =>
+        h.jobControl.control(in.id, in.action).fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j)))
+      )
 
   private val activityTool =
     tool("activity")
@@ -324,11 +379,20 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "newest first, each naming what it touched (goal, run or job, source, article, list item, approval). `show`: " +
           "all (default) | running | agents | jobs | yours | problems; `since` (2026-10-01, an ISO instant, or 7d / 12h ago); " +
           "`goal` = one research goal's history; `limit` (default 30, at most 200); `before` = the cursor the last page " +
-          "gave, for the next older one. Use to see what happened recently or what is going on now.")
+          "gave, for the next older one. Use to see what happened recently or what is going on now."
+      )
       .input[ActivityInput]
       .handle { in =>
-        h.activity.page(in.show, in.since, in.goal, in.limit, in.before).fold(McpOut.error, p =>
-          ToolResult.text(ActivityMarkdown.page(p, c => s"_Older: call `activity` again with the same filters and `before: \"$c\"`._")))
+        h.activity
+          .page(in.show, in.since, in.goal, in.limit, in.before)
+          .fold(
+            McpOut.error,
+            p =>
+              ToolResult.text(
+                ActivityMarkdown
+                  .page(p, c => s"_Older: call `activity` again with the same filters and `before: \"$c\"`._")
+              )
+          )
       }
 
   private val assets =
@@ -336,7 +400,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .description(
         "The figures stored with a source — name, mime, pixel size and the URL each is served at. " +
           "The Markdown body links them as `assets/<name>`; `get_source` rewrites those to absolute " +
-          "URLs you can fetch. Use to check what figures are available — not to read the source.")
+          "URLs you can fetch. Use to check what figures are available — not to read the source."
+      )
       .input[AssetsInput]
       .handle { in =>
         val rows = h.ingest.assets(in.citekey)
@@ -349,13 +414,23 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     tool("patch_asset")
       .description(
         "Update metadata on an asset — kind (figure/photo/map/plan/scan), caption, license, " +
-          "geom (lat/lon) and period (periodStart/periodEnd as signed years).")
+          "geom (lat/lon) and period (periodStart/periodEnd as signed years)."
+      )
       .input[PatchAssetInput]
       .handle { in =>
-        h.patchAsset(in.citekey, in.name, AssetPatch(
-          kind = in.kind, caption = in.caption, license = in.license,
-          lat = in.lat, lon = in.lon, periodStart = in.periodStart, periodEnd = in.periodEnd
-        )) match
+        h.patchAsset(
+          in.citekey,
+          in.name,
+          AssetPatch(
+            kind = in.kind,
+            caption = in.caption,
+            license = in.license,
+            lat = in.lat,
+            lon = in.lon,
+            periodStart = in.periodStart,
+            periodEnd = in.periodEnd
+          )
+        ) match
           case Right(d) => ToolResult.text(Markdown.assetDetail(in.citekey, d))
           case Left(e)  => McpOut.error(e)
       }
@@ -365,7 +440,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .description(
         "Search/show ASSET LINKS — semantic relationships between assets and entities. " +
           "Filter by citekey, asset name, target_type (event/finding/place/source/article), target_id. " +
-          "With `create` fields, creates a new link instead.")
+          "With `create` fields, creates a new link instead."
+      )
       .input[AssetLinksInput]
       .handle { in =>
         in.relation match
@@ -377,13 +453,13 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               targetType = in.targetType.getOrElse(""),
               targetId = in.targetId.getOrElse(""),
               xywh = in.xywh,
-              notes = in.notes)
+              notes = in.notes
+            )
             h.createAssetLink(put) match
               case Right(l) => ToolResult.text(Markdown.assetLink(l))
               case Left(e)  => McpOut.error(e)
           case None =>
-            ToolResult.text(Markdown.assetLinkList(
-              h.listAssetLinks(in.citekey, in.asset, in.targetType, in.targetId)))
+            ToolResult.text(Markdown.assetLinkList(h.listAssetLinks(in.citekey, in.asset, in.targetType, in.targetId)))
       }
 
   private val deleteAssetLinkTool =
@@ -396,11 +472,13 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Left(e)  => McpOut.error(e)
       }
 
-  /** Backup is here because an agent asked to "save the state before a big reseed" should be able to
-    * do it; RESTORE deliberately is NOT — it drops the database, which is not a decision to leave to
-    * a tool call (`histmersion restore` asks a human to confirm). */
-  /** The config reload (docs/research-plugins.md §3.5): an agent that edited the user's config file
-    * on request applies it without a restart. */
+  /** Backup is here because an agent asked to "save the state before a big reseed" should be able to do it; RESTORE
+    * deliberately is NOT — it drops the database, which is not a decision to leave to a tool call (`histmersion
+    * restore` asks a human to confirm).
+    */
+  /** The config reload (docs/research-plugins.md §3.5): an agent that edited the user's config file on request applies
+    * it without a restart.
+    */
   private val configTool =
     tool("config")
       .description(
@@ -413,14 +491,15 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "a reference — env:NAME or <vault>:<entry> — and `value:` only with `literalConsent`. `reload` reads the " +
           "file again and switches the running server to it in place; `restart` restarts a server that runs " +
           "under its service, for the settings only a restart applies (the listening host/port, the bundled " +
-          "runtime, pool sizes).")
+          "runtime, pool sizes)."
+      )
       .input[ConfigInput]
       .handle { in =>
         def page(f: com.histmersion.api.ConfigEdit.Page => String, prefix: Option[String]) =
           h.settings.page(prefix).fold(McpOut.error, p => ToolResult.text(f(p)))
         in.action.trim.toLowerCase(java.util.Locale.ROOT) match
-          case "reload"  => ToolResult.text(ReloadMarkdown.report(h.configReload()))
-          case "get"     =>
+          case "reload" => ToolResult.text(ReloadMarkdown.report(h.configReload()))
+          case "get"    =>
             in.key.map(_.trim).filter(_.nonEmpty) match
               case Some(k) => page(p => p.field(k).fold(s"No setting called $k.")(ConfigEditMarkdown.field), Some(k))
               case None    => page(ConfigEditMarkdown.page, in.prefix)
@@ -429,11 +508,16 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               case None    => McpOut.error(ApiError(s"`${in.action}` needs a `key`"))
               case Some(k) =>
                 val value = if in.action.trim.equalsIgnoreCase("unset") then None else Some(in.value.getOrElse(""))
-                h.settings.write(com.histmersion.api.ConfigEdit.Write(List(com.histmersion.api.ConfigEdit.Change(k, value)),
-                  literalConsent = in.literalConsent.getOrElse(false)))
+                h.settings
+                  .write(
+                    com.histmersion.api.ConfigEdit.Write(
+                      List(com.histmersion.api.ConfigEdit.Change(k, value)),
+                      literalConsent = in.literalConsent.getOrElse(false)
+                    )
+                  )
                   .fold(McpOut.error, w => ToolResult.text(ConfigEditMarkdown.written(w)))
           case "restart" => h.settings.restart().fold(McpOut.error, r => ToolResult.text(ConfigEditMarkdown.restart(r)))
-          case other     => McpOut.error(ApiError(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
+          case other => McpOut.error(ApiError(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
       }
 
   private val backup =
@@ -442,7 +526,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
         "Take a full pg_dump backup of the Histmersion database, server-side, and return the file name, " +
           "size and SHA-256 checksum. Use it before a bulk reseed, a mass patch, or any other " +
           "operation you may need to undo. Restoring is NOT available as a tool: it destroys data, " +
-          "and is done by a human with `histmersion restore <file> --force`.")
+          "and is done by a human with `histmersion restore <file> --force`."
+      )
       .input[BackupInput]
       .handle { _ =>
         h.backup() match
@@ -450,8 +535,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Left(e)  => McpOut.error(e)
       }
 
-  /** VACUUM (#1445): after a re-seed, a gazetteer load or a place clean-up the place tables hold
-    * hundreds of thousands of dead row versions; an agent that just ran one can reclaim them. */
+  /** VACUUM (#1445): after a re-seed, a gazetteer load or a place clean-up the place tables hold hundreds of thousands
+    * of dead row versions; an agent that just ran one can reclaim them.
+    */
   private val vacuumTool =
     tool("vacuum")
       .description(
@@ -460,7 +546,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "(config maintenance.vacuum-tables) when none is named. Use it after `places seed`, a gazetteer " +
           "load or a place clean-up (`lint --fix` on the place rules), which leave dead row versions behind. " +
           "It runs as a server job, one table at a time, outside any transaction (no data changes, no table " +
-          "lock beyond VACUUM's own); it answers with the job — follow it with `job_status`.")
+          "lock beyond VACUUM's own); it answers with the job — follow it with `job_status`."
+      )
       .input[VacuumRequest]
       .handle(in => h.vacuum(in).fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j))))
 
@@ -498,7 +585,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "substring, `query` is full text over the article's title, summary and body (websearch " +
           "syntax: \"phrase\", -not, or) plus a title substring. Start here before compiling " +
           "anything: an article on the topic may already exist, in which case you extend it with " +
-          s"patch_article rather than starting a new one. $ArticleRules")
+          s"patch_article rather than starting a new one. $ArticleRules"
+      )
       .input[ListArticlesInput]
       .handle(in => ToolResult.text(ArticleMarkdown.list(h.listArticles(in.toQuery))))
 
@@ -512,7 +600,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "Pass a comma-separated list to get several parts (e.g. `parts: \"body,cited\"`). `coverage` is the " +
           "generated Not used list and Method note (from the article's recorded filter; see article_coverage). " +
           "Kinds: concept, myth, culture, region, timeline, report, index (the wiki's MOC pages). " +
-          s"$LinkRules Read the article before patching it. $PatchFirstArticle")
+          s"$LinkRules Read the article before patching it. $PatchFirstArticle"
+      )
       .input[GetArticleInput]
       .handle { in =>
         h.getArticle(in.slug) match
@@ -531,12 +620,16 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "region|timeline|report, `body` is the Markdown (open it with a '# Title' heading), " +
           "`summary` is the one-paragraph lede (omit it and the first paragraph is used), `period` " +
           "is signed years, BCE negative. " +
-          s"$ArticleRules $LinkRules $FormatRules $PatchFirstArticle")
+          s"$ArticleRules $LinkRules $FormatRules $PatchFirstArticle"
+      )
       .input[PutArticleInput]
       .handle { in =>
         h.putArticle(in.slug, in.article, in.strict) match
-          case Right(v) => ToolResult.text(Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v)))
-          case Left(e)  => McpOut.error(e)
+          case Right(v) =>
+            ToolResult.text(
+              Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v))
+            )
+          case Left(e) => McpOut.error(e)
       }
 
   private val patchArticle =
@@ -554,12 +647,16 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "challenges/refutes/updates/superseded_by touching a cited source) does not bear on the article (empty removes; " +
           "stored beside the article, it leaves updatedAt as it is). Pass ifUpdatedAt with the updatedAt you last read to be told — instead of " +
           s"silently clobbering — when someone else changed the article meanwhile. $ArticleRules " +
-          s"$LinkRules $FormatRules")
+          s"$LinkRules $FormatRules"
+      )
       .input[PatchArticleInput]
       .handle { in =>
         h.patchArticle(in.slug, in.patch, in.strict) match
-          case Right(v) => ToolResult.text(Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v)))
-          case Left(e)  => McpOut.error(e)
+          case Right(v) =>
+            ToolResult.text(
+              Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v))
+            )
+          case Left(e) => McpOut.error(e)
       }
 
   private val checkEdits =
@@ -587,7 +684,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "frontmatter (type, slug, title, summary, regions, tags, period_start/period_end, and the filter " +
           "and reasons it is compiled from) plus the body, then the generated Not used and Method sections " +
           "between markers an import drops. This is the git-friendly mirror of the database and it round-trips back in through " +
-          "seed.")
+          "seed."
+      )
       .input[ExportArticleInput]
       .handle { in =>
         h.exportArticle(in.slug) match
@@ -600,7 +698,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .description(
         "List the edit history of one article (newest first): version id, date, word count and the " +
           "first 200 chars of the summary at that point. Use it to see how an article changed over " +
-          "time, or to find the version id of a body you want to recover with `article_version`.")
+          "time, or to find the version id of a body you want to recover with `article_version`."
+      )
       .input[ArticleVersionsInput]
       .handle { in =>
         h.articleVersions(in.slug) match
@@ -612,7 +711,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     tool("article_version")
       .description(
         "Fetch the full body of one historical version of an article. Use it to read what the article " +
-          "said before a rewrite, or to recover text that a bad patch overwrote.")
+          "said before a rewrite, or to recover text that a bad patch overwrote."
+      )
       .input[ArticleVersionInput]
       .handle { in =>
         h.articleVersion(in.slug, in.versionId) match
@@ -626,8 +726,9 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   // POST /api/sources/{ck}/delete (#969) is deliberately NOT an MCP tool either, for the same reason:
   // removing a source, its findings and its stored original is a person's decision, made with
   // `histmersion delete <citekey> --apply` after reading the dry run.
-  /** The gazetteer (plan §1.6a). One tool with two modes so a model does not have to pick between
-    * four near-identical ones: no `id` → search, `id` → show that place with its hierarchy. */
+  /** The gazetteer (plan §1.6a). One tool with two modes so a model does not have to pick between four near-identical
+    * ones: no `id` → search, `id` → show that place with its hierarchy.
+    */
   private val places =
     tool("places")
       .description(
@@ -640,7 +741,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "contains, as an indented tree. `asOf` is a signed year (BCE negative) and selects the " +
           "hierarchy as it stood then — the same site is under 'Hittite Empire' at -1400 and under " +
           "'Phrygia' at -700. Counts are non-additive: a finding on a border belongs to every place " +
-          "that covers it.")
+          "that covers it."
+      )
       .input[PlacesInput]
       .handle { in =>
         in.id.map(_.trim).filter(_.nonEmpty) match
@@ -654,7 +756,6 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
             ToolResult.text(Markdown.places(h.places(in.name.orElse(in.query), in.asOf, in.limit).toVector, in.asOf))
       }
 
-
   /** A person's names for a place (#987): list, add or remove — the names a re-seed never deletes. */
   private val placeNames =
     tool("place_names")
@@ -665,13 +766,15 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "unknown) — use it when a well-known name finds no place in `places` (\"Lake Kinneret\" for the " +
           "Sea of Galilee), so the geocoder and `places=` filters know it from then on. With `remove: true` " +
           "it removes a name added by hand (a name the seed gives cannot be removed). Find the place id " +
-          "with `places` first.")
+          "with `places` first."
+      )
       .input[PlaceNamesInput]
       .handle { in =>
         val id = in.placeId.map(_.trim).filter(_.nonEmpty)
         (id, in.name.map(_.trim).filter(_.nonEmpty)) match
-          case (_, None) => ToolResult.text(Markdown.manualPlaceNames(h.manualPlaceNames(id)))
-          case (None, Some(_)) => ToolResult.text("_`placeId` is required to add or remove a name — find it with `places`_")
+          case (_, None)       => ToolResult.text(Markdown.manualPlaceNames(h.manualPlaceNames(id)))
+          case (None, Some(_)) =>
+            ToolResult.text("_`placeId` is required to add or remove a name — find it with `places`_")
           case (Some(pid), Some(n)) =>
             val r =
               if in.remove.getOrElse(false) then h.removePlaceName(pid, PlaceNameRemove(n, in.lang))
@@ -696,26 +799,40 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "period and point. `mergeInto` (a place id) merges the place into the one it is the same as (findings, " +
           "links and references move; its id resolves there) — for a duplicate a source withdrew; " +
           "`remove: true` deletes a place nothing refers to. Neither comes back with a re-seed. Find the " +
-          "place id with `places` first.")
+          "place id with `places` first."
+      )
       .input[PlaceOverrideInput]
       .handle { in =>
-        val id    = in.placeId.map(_.trim).filter(_.nonEmpty)
-        val into  = in.mergeInto.map(_.trim).filter(_.nonEmpty)
-        val gone  = into.isDefined || in.remove.getOrElse(false)
-        val ask   = gone || in.kind.exists(_.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
+        val id = in.placeId.map(_.trim).filter(_.nonEmpty)
+        val into = in.mergeInto.map(_.trim).filter(_.nonEmpty)
+        val gone = into.isDefined || in.remove.getOrElse(false)
+        val ask = gone || in.kind.exists(_.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
           in.pointLat.isDefined || in.pointLon.isDefined || in.reset.getOrElse(false)
         def text(r: Either[ApiError, String]) = ToolResult.text(r.fold(McpOut.refusal, identity))
         (id, ask) match
           case (_, false)   => ToolResult.text(Markdown.placeOverrides(h.placeOverrides(id)))
-          case (None, true) => ToolResult.text("_`placeId` is required to set, reset, merge or remove — find it with `places`_")
+          case (None, true) =>
+            ToolResult.text("_`placeId` is required to set, reset, merge or remove — find it with `places`_")
           case (Some(pid), true) =>
             (into, in.remove.getOrElse(false)) match
-              case (Some(_), true) => ToolResult.text("_`mergeInto` and `remove` exclude each other_")
+              case (Some(_), true)  => ToolResult.text("_`mergeInto` and `remove` exclude each other_")
               case (Some(t), false) => text(h.mergePlace(pid, PlaceMergeIn(t, in.reason)).map(Markdown.placeGone))
               case (None, true)     => text(h.removePlace(pid, PlaceRemoveIn(in.reason)).map(Markdown.placeGone))
-              case (None, false) =>
-                text(h.setPlaceOverride(pid, PlaceOverrideSet(in.kind, in.periodStart, in.periodEnd, in.reason,
-                  in.reset.getOrElse(false), in.pointLat, in.pointLon)).map(Markdown.placeOverrideChanged))
+              case (None, false)    =>
+                text(
+                  h.setPlaceOverride(
+                    pid,
+                    PlaceOverrideSet(
+                      in.kind,
+                      in.periodStart,
+                      in.periodEnd,
+                      in.reason,
+                      in.reset.getOrElse(false),
+                      in.pointLat,
+                      in.pointLon
+                    )
+                  ).map(Markdown.placeOverrideChanged)
+                )
       }
 
   /** A place of a person's own (#987). */
@@ -728,7 +845,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "id, a map, a publication): never estimate a point. `kind`: site | region | feature | polity; " +
           "`names` are further names; `periodStart`/`periodEnd` are signed years (BCE negative) when the " +
           "place existed only then. The place is this collection's own (`local_<label>` unless `id` is " +
-          "given), carried in a bundle and never touched by a re-seed. Refused when the id is taken.")
+          "given), carried in a bundle and never touched by a re-seed. Refused when the id is taken."
+      )
       .input[PlaceAdd]
       .handle(in => h.addPlace(in).fold(McpOut.error, p => ToolResult.text(Markdown.placeAdded(p))))
 
@@ -742,7 +860,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "by label (`query`), exact `region`, and/or overlap with `from`..`to`; with `id` it SHOWS " +
           "one period with what it is part of and how it is divided. Use it to turn a period name in " +
           "a question into the years to pass as `from`/`to` to `search`/`geo_when` — and cite the " +
-          "authority, since two authorities date the same name differently.")
+          "authority, since two authorities date the same name differently."
+      )
       .input[PeriodsInput]
       .handle { in =>
         in.id.map(_.trim).filter(_.nonEmpty) match
@@ -751,8 +870,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
               case Right(d) => ToolResult.text(PeriodsMarkdown.detail(d))
               case Left(e)  => McpOut.error(e)
           case None =>
-            ToolResult.text(PeriodsMarkdown.list(
-              h.periods(in.query.map(_.trim).filter(_.nonEmpty), in.region, in.from, in.to).toVector))
+            ToolResult.text(
+              PeriodsMarkdown
+                .list(h.periods(in.query.map(_.trim).filter(_.nonEmpty), in.region, in.from, in.to).toVector)
+            )
       }
 
   private val events =
@@ -766,7 +887,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "natural | human) and `historicity` (attested|inferred|contested|legendary|mythic). An event's " +
           "TIER is `attested` (a source in the corpus attests it) or `catalogue` (known only from a catalogue " +
           "— a research lead, not evidence); `show` lists the catalogues with licence and citation, the " +
-          "attesting sources, the findings near it and the sources that may discuss it (see `event_links`).")
+          "attesting sources, the findings near it and the sources that may discuss it (see `event_links`)."
+      )
       .input[EventsInput]
       .handle { in =>
         in.id.map(_.trim).filter(_.nonEmpty) match
@@ -777,7 +899,11 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case None =>
             val q = Api.EventQuery(
               Filter.of(from = in.from, to = in.to, limit = in.limit, offset = in.offset, title = in.title),
-              in.query, in.kind, in.historicity, in.placeId)
+              in.query,
+              in.kind,
+              in.historicity,
+              in.placeId
+            )
             ToolResult.text(Markdown.eventList(h.listEvents(q)))
       }
 
@@ -795,15 +921,25 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "created (GVP, NOAA, Wikidata) every changed field (label, kind, timeSpan, historicity, " +
           "description, geometry) is recorded as a correction and KEPT across re-imports of that catalogue " +
           "(retired once the catalogue agrees, flagged as a conflict when it changes to something else — " +
-          "`event_corrections`). Returns the event as `events` with `id` shows it.")
+          "`event_corrections`). Returns the event as `events` with `id` shows it."
+      )
       .input[PatchEventInput]
       .handle { in =>
         EventGeometry.of(in.geometry, in.lat, in.lon) match
-          case Left(msg) => McpOut.text(McpOut.refusal(msg))
+          case Left(msg)   => McpOut.text(McpOut.refusal(msg))
           case Right(geom) =>
-            val p = EventPatch(label = in.label, kind = in.kind, historicity = in.historicity,
-              geometry = geom, placeId = in.placeId, parentId = in.parentId,
-              description = in.description, citekey = in.citekey, scale = in.scale, wikidata = in.wikidata)
+            val p = EventPatch(
+              label = in.label,
+              kind = in.kind,
+              historicity = in.historicity,
+              geometry = geom,
+              placeId = in.placeId,
+              parentId = in.parentId,
+              description = in.description,
+              citekey = in.citekey,
+              scale = in.scale,
+              wikidata = in.wikidata
+            )
             h.patchEvent(in.id, p) match
               case Right(d) => ToolResult.text(Aliases.note(AliasKind.Event, in.id, d.event.id)(Markdown.event(d)))
               case Left(e)  => McpOut.error(e)
@@ -816,7 +952,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "to specific passages in a source. W3C Web Annotation selectors: TextQuoteSelector (quote/" +
           "prefix/suffix), TextPositionSelector (charStart/charEnd), chunk ordinals, page labels, " +
           "IIIF canvas+xywh, CTS URNs. Without `id` it LISTS attestations filtered by citekey/" +
-          "targetType/targetId; with `id` it SHOWS one attestation.")
+          "targetType/targetId; with `id` it SHOWS one attestation."
+      )
       .input[AttestationsInput]
       .handle { in =>
         in.id match
@@ -833,12 +970,26 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     tool("put_attestation")
       .description(
         "Create a new attestation linking an entity to a specific passage in a source. Returns the " +
-          "created attestation with its generated id. Target types: finding|event|event_dating|place|edge.")
+          "created attestation with its generated id. Target types: finding|event|event_dating|place|edge."
+      )
       .input[AttestationPutInput]
       .handle { in =>
-        val put = AttestationPut(in.citekey, in.targetType, in.targetId,
-          in.quote, in.prefix, in.suffix, in.charStart, in.charEnd, in.chunkOrd,
-          in.page, in.canvas, in.xywh, in.ctsUrn, in.note)
+        val put = AttestationPut(
+          in.citekey,
+          in.targetType,
+          in.targetId,
+          in.quote,
+          in.prefix,
+          in.suffix,
+          in.charStart,
+          in.charEnd,
+          in.chunkOrd,
+          in.page,
+          in.canvas,
+          in.xywh,
+          in.ctsUrn,
+          in.note
+        )
         h.createAttestation(put) match
           case Right(a) => ToolResult.text(Markdown.attestation(a))
           case Left(e)  => McpOut.error(e)
@@ -859,7 +1010,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .description(
         "Research GOALS: the project's research programs and topics. Without `slug` it LISTS goals " +
           "filtered by status (planned|seeding|compiled|reviewed|done); with `slug` it SHOWS one goal with " +
-          "its sub-goals, links (sources, articles, queries, queue items), schedules and approved plan.")
+          "its sub-goals, links (sources, articles, queries, queue items), schedules and approved plan."
+      )
       .input[GoalsInput]
       .handle { in =>
         in.slug.map(_.trim).filter(_.nonEmpty) match
@@ -877,11 +1029,12 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .description(
         "Create or replace a research goal. A goal tracks a research program: slug (kebab-case id), " +
           "title, status (planned|seeding|compiled|reviewed|done), notes (progress), tags, regions, " +
-          "period.")
+          "period."
+      )
       .input[GoalPutInput]
       .handle { in =>
-        val put = GoalPut(in.title, in.status, in.notes, in.tags, in.regions,
-          in.periodStart, in.periodEnd, in.parentSlug)
+        val put =
+          GoalPut(in.title, in.status, in.notes, in.tags, in.regions, in.periodStart, in.periodEnd, in.parentSlug)
         h.putGoal(in.slug, put) match
           case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
           case Left(e)  => McpOut.error(e)
@@ -892,8 +1045,17 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       .description("Update specific fields of a goal without replacing the whole row.")
       .input[GoalPatchInput]
       .handle { in =>
-        val p = GoalPatch(in.title, in.status, in.notes, in.tags, in.regions,
-          in.periodStart, in.periodEnd, in.parentSlug, in.budgetUsd)
+        val p = GoalPatch(
+          in.title,
+          in.status,
+          in.notes,
+          in.tags,
+          in.regions,
+          in.periodStart,
+          in.periodEnd,
+          in.parentSlug,
+          in.budgetUsd
+        )
         h.patchGoal(in.slug, p) match
           case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
           case Left(e)  => McpOut.error(e)
@@ -903,7 +1065,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
     tool("agent_state")
       .description(
         "Agent STATE: key-value JSONB store that survives across sessions. Without `key` it LISTS " +
-          "all keys; with `key` it SHOWS one entry; with `key` + `value` it SETS (upserts).")
+          "all keys; with `key` it SHOWS one entry; with `key` + `value` it SETS (upserts)."
+      )
       .input[AgentStateInput]
       .handle { in =>
         in.key.map(_.trim).filter(_.nonEmpty) match
@@ -943,15 +1106,18 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "uploads it and prints the sha256). `resolve` maps issue ids to decisions " +
           "(`keep-left`, `keep-right`, `both`, `map:<citekey>`, …) to see what would remain; `editions` " +
           "is merge|separate. Present the plan to the user; scholarly decisions (statuses, editions, " +
-          "articles) are theirs — never resolve them on their behalf.")
+          "articles) are theirs — never resolve them on their behalf."
+      )
       .input[MergePlanInput]
       .handle { in =>
         val editions = in.editions.map(_.trim).filter(_.nonEmpty)
         editions.map(e => EditionsPolicy.values.find(_.toString.equalsIgnoreCase(e)).toRight(e)) match
           case Some(Left(e)) => ToolResult.text(s"_editions '$e' is not merge or separate_")
-          case other =>
-            val res = MergeResolutions(in.resolve.toList.sortBy(_._1).map((k, v) => MergeResolution(k, v)),
-              MergePolicy(other.flatMap(_.toOption)))
+          case other         =>
+            val res = MergeResolutions(
+              in.resolve.toList.sortBy(_._1).map((k, v) => MergeResolution(k, v)),
+              MergePolicy(other.flatMap(_.toOption))
+            )
             h.bundles.plan(MergePlanRequest(in.bundle, res)) match
               case Right(p) => ToolResult.text(MergeMarkdown.plan(p, in.all))
               case Left(e)  => McpOut.error(e)
@@ -967,7 +1133,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "decisions it remembers; `ledger` — the merge ledger of one record (`uid`: a uid, here or " +
           "merged away, or a citekey) or of one merge (`id`): which record of the other collection " +
           "each one here came from, and the redirects of merged-away uids. Applying a merge is the " +
-          "user's (`histmersion merge apply`, or the /merge screen) — never an agent's.")
+          "user's (`histmersion merge apply`, or the /merge screen) — never an agent's."
+      )
       .input[MergesInput]
       .handle { in =>
         MergesAction.parse(in.action) match
@@ -975,9 +1142,11 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           case Some(MergesAction.List) => ToolResult.text(MergeMarkdown.merges(h.bundles.merges(in.limit)))
           case Some(MergesAction.Show) =>
             in.id.fold(ToolResult.text("_show needs `id` (a merge id from `list`)_"))(id =>
-              h.bundles.mergeDetail(id).fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d))))
+              h.bundles.mergeDetail(id).fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d)))
+            )
           case Some(MergesAction.Ledger) =>
-            h.bundles.mergeLedger(in.uid, in.id, in.limit)
+            h.bundles
+              .mergeLedger(in.uid, in.id, in.limit)
               .fold(McpOut.error, l => ToolResult.text(MergeMarkdown.ledger(l)))
       }
 
@@ -991,7 +1160,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
           "place's names, parents, footprints, events, attestations and finding assignments). " +
           s"${Aliases.Rule} (get_article / events / goals / places show the record under its new one, a " +
           "places filter on the old id still matches.) Refused when the new label " +
-          "is taken or is an old label of another record. For a source's citekey use rename_source.")
+          "is taken or is an old label of another record. For a source's citekey use rename_source."
+      )
       .input[RenameLabelInput]
       .handle { in =>
         val req = LabelRename(in.to)
@@ -1006,21 +1176,68 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
 
   // Declared LAST: every tool above must be initialised before the list is built.
   val server = McpServer(tools =
-    List(ping, search, facets, getSource, passages, geoWhen, histogram, neighbors, sourceGraph, contradictions,
-      putSource, patchSource, renameSource, exportSource,
-      backup, configTool, vacuumTool, listArticles, getArticle, putArticle, patchArticle, checkEdits, articleCoverage, articleReview, exportArticle,
-      articleVersions, articleVersion, places, placeNames, placeOverride, addPlaceTool, periods, events, patchEventTool,
-      attestations, putAttestation, deleteAttestationTool,
-      goalsToolRead, putGoalTool, patchGoalTool,
-      agentStateTool, deleteAgentStateTool,
-      ingest, jobStatus, jobControlTool, activityTool, assets, patchAssetTool, assetLinksTool, deleteAssetLinkTool, mergePlanTool, mergesTool,
-      renameLabel)
-      ++ OpsTools(h.ops, h)  // stream 2.8: lint · queue · query
-      ++ com.histmersion.domain.personal.PersonalTools(h.personal)  // the person's bookmarks and notes, read only
-      ++ com.histmersion.server.events.EventCatalogTools(h)  // #1449: event_links (proposed links, leads)
-      ++ com.histmersion.server.agents.AgentsTools(h.agents)  // embedded agents: start and follow runs
+    List(
+      ping,
+      search,
+      facets,
+      getSource,
+      passages,
+      geoWhen,
+      histogram,
+      neighbors,
+      sourceGraph,
+      contradictions,
+      putSource,
+      patchSource,
+      renameSource,
+      exportSource,
+      backup,
+      configTool,
+      vacuumTool,
+      listArticles,
+      getArticle,
+      putArticle,
+      patchArticle,
+      checkEdits,
+      articleCoverage,
+      articleReview,
+      exportArticle,
+      articleVersions,
+      articleVersion,
+      places,
+      placeNames,
+      placeOverride,
+      addPlaceTool,
+      periods,
+      events,
+      patchEventTool,
+      attestations,
+      putAttestation,
+      deleteAttestationTool,
+      goalsToolRead,
+      putGoalTool,
+      patchGoalTool,
+      agentStateTool,
+      deleteAgentStateTool,
+      ingest,
+      jobStatus,
+      jobControlTool,
+      activityTool,
+      assets,
+      patchAssetTool,
+      assetLinksTool,
+      deleteAssetLinkTool,
+      mergePlanTool,
+      mergesTool,
+      renameLabel
+    )
+      ++ OpsTools(h.ops, h) // stream 2.8: lint · queue · query
+      ++ com.histmersion.domain.personal.PersonalTools(h.personal) // the person's bookmarks and notes, read only
+      ++ com.histmersion.server.events.EventCatalogTools(h) // #1449: event_links (proposed links, leads)
+      ++ com.histmersion.server.agents.AgentsTools(h.agents) // embedded agents: start and follow runs
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
-      ++ com.histmersion.server.acquire.AcquireMcp(acquire).tools)
+      ++ com.histmersion.server.acquire.AcquireMcp(acquire).tools
+  )
 
   val endpoint = server.endpoint(List("mcp"))
 
@@ -1028,9 +1245,10 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   def toolNames: Set[String] = server.tools.map(_.name).toSet
 
 object McpTools:
-  /** Honour Scala default values when DECODING a tool's arguments — without it Kindlings requires
-    * every non-Option field, so `get_source {"citekey":"x"}` was rejected for a missing `fullText`.
-    * (`com.histmersion.api` carries the same given for the wire DTOs.) */
+  /** Honour Scala default values when DECODING a tool's arguments — without it Kindlings requires every non-Option
+    * field, so `get_source {"citekey":"x"}` was rejected for a missing `fullText`. (`com.histmersion.api` carries the
+    * same given for the wire DTOs.)
+    */
   given hearth.kindlings.circederivation.Configuration =
     hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
 
@@ -1039,8 +1257,9 @@ object McpTools:
   object PingInput:
     given Schema[PingInput] = KindlingsSchema.derived[PingInput].schema
 
-  /** The MCP spelling of [[com.histmersion.api.Filter]] — flat and all-optional, so a model can fill in only
-    * what it knows. `Filter.of` is the single interpreter of this shape (REST and CLI share it). */
+  /** The MCP spelling of [[com.histmersion.api.Filter]] — flat and all-optional, so a model can fill in only what it
+    * knows. `Filter.of` is the single interpreter of this shape (REST and CLI share it).
+    */
   final case class SearchInput(
       query: Option[String] = None,
       tags: List[String] = Nil,
@@ -1067,16 +1286,39 @@ object McpTools:
       samples: Option[Int] = None,
       verbose: Boolean = true
   ) derives KindlingsCodecAsObject:
-    def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
-      from, to, minLon, minLat, maxLon, maxLat, sort, limit, offset, title)
+    def toFilter: Filter = Filter.of(
+      query,
+      tags,
+      authors,
+      places,
+      topics,
+      status,
+      yearFrom,
+      yearTo,
+      from,
+      to,
+      minLon,
+      minLat,
+      maxLon,
+      maxLat,
+      sort,
+      limit,
+      offset,
+      title
+    )
   object SearchInput:
     // the filter's fields are described once, in FilterDocs (the REST parameters and the CLI flags read it too)
-    given Schema[SearchInput] = FilterDocs.describe(KindlingsSchema.derived[SearchInput].schema)
+    given Schema[SearchInput] = FilterDocs
+      .describe(KindlingsSchema.derived[SearchInput].schema)
       .modify(_.groupBy)(_.description("Group into a tree instead of listing: time|region|time,region|region,time"))
       .modify(_.depth)(_.description("Nesting levels for groupBy (1-3; default 1 for MCP)"))
       .modify(_.asOf)(_.description("Signed year the gazetteer hierarchy is read at for groupBy=region"))
       .modify(_.samples)(_.description("Sample sources per leaf (0-5; default 0 for MCP)"))
-      .modify(_.verbose)(_.description("false = compact listing: citekey/title/year/status/period/one-why-line, no snippets/matches/summaries"))
+      .modify(_.verbose)(
+        _.description(
+          "false = compact listing: citekey/title/year/status/period/one-why-line, no snippets/matches/summaries"
+        )
+      )
 
   final case class FacetsInput(
       field: String,
@@ -1097,10 +1339,28 @@ object McpTools:
       maxLat: Option[Double] = None,
       limit: Option[Int] = None
   ) derives KindlingsCodecAsObject:
-    def toFilter: Filter = Filter.of(query, tags, authors, places, topics, status, yearFrom, yearTo,
-      from, to, minLon, minLat, maxLon, maxLat, None, limit, None)
+    def toFilter: Filter = Filter.of(
+      query,
+      tags,
+      authors,
+      places,
+      topics,
+      status,
+      yearFrom,
+      yearTo,
+      from,
+      to,
+      minLon,
+      minLat,
+      maxLon,
+      maxLat,
+      None,
+      limit,
+      None
+    )
   object FacetsInput:
-    given Schema[FacetsInput] = FilterDocs.describe(KindlingsSchema.derived[FacetsInput].schema)
+    given Schema[FacetsInput] = FilterDocs
+      .describe(KindlingsSchema.derived[FacetsInput].schema)
       .modify(_.field)(_.description("Dimension to enumerate: tags|authors|places|topics|status|provenance"))
       .modify(_.prefix)(_.description("Case-insensitive prefix match for autocompletion"))
       .modify(_.limit)(_.description("At most this many values"))
@@ -1114,11 +1374,19 @@ object McpTools:
       chars: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object GetSourceInput:
-    given Schema[GetSourceInput] = KindlingsSchema.derived[GetSourceInput].schema
+    given Schema[GetSourceInput] = KindlingsSchema
+      .derived[GetSourceInput]
+      .schema
       .modify(_.citekey)(_.description("The source's citekey (e.g. haak2015_massive)"))
-      .modify(_.fullText)(_.description("Include the full converted text (shorthand for section=body; capped at the configured limit)"))
-      .modify(_.section)(_.description("What to return: summary|findings|notes|toc|body|all (default: summary+findings+notes)"))
-      .modify(_.heading)(_.description("Return only chunks under this heading (case-insensitive prefix match on source_chunks.heading)"))
+      .modify(_.fullText)(
+        _.description("Include the full converted text (shorthand for section=body; capped at the configured limit)")
+      )
+      .modify(_.section)(
+        _.description("What to return: summary|findings|notes|toc|body|all (default: summary+findings+notes)")
+      )
+      .modify(_.heading)(
+        _.description("Return only chunks under this heading (case-insensitive prefix match on source_chunks.heading)")
+      )
       .modify(_.offset)(_.description("Body slice start (0-based character offset)"))
       .modify(_.chars)(_.description("Body slice length in characters (default: configured full-text-chars limit)"))
 
@@ -1136,7 +1404,7 @@ object McpTools:
   /** `passages` as Markdown, with the same wording for an unknown citekey as `get_source`. */
   def passagesMarkdown(h: Handlers, in: PassagesInput): String =
     h.passages(Api.PassagesQuery(in.citekey, in.query, in.regex, in.limit, in.context)) match
-      case Right(r) => PassagesMarkdown.render(r)
+      case Right(r)                                       => PassagesMarkdown.render(r)
       case Left(e) if e.code.contains(Write.CodeNotFound) =>
         s"_No source '${in.citekey}' — find a citekey with search._"
       case Left(e) => McpOut.refusal(e)
@@ -1149,16 +1417,21 @@ object McpTools:
       context: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object PassagesInput:
-    given Schema[PassagesInput] = KindlingsSchema.derived[PassagesInput].schema
+    given Schema[PassagesInput] = KindlingsSchema
+      .derived[PassagesInput]
+      .schema
       .modify(_.citekey)(_.description("The source's citekey (an old, renamed one works too)"))
-      .modify(_.query)(_.description("The text to find, matched literally (case- and accent-insensitive); a regex when regex=true"))
+      .modify(_.query)(
+        _.description("The text to find, matched literally (case- and accent-insensitive); a regex when regex=true")
+      )
       .modify(_.regex)(_.description("Treat query as a Java regular expression (default false)"))
       .modify(_.limit)(_.description("Passages to show (default 10, max 50)"))
       .modify(_.context)(_.description("Characters of context around each match (default 600, max 3000)"))
 
-  /** The MCP spelling of [[com.histmersion.api.Filter]] for `geo_when` — now the FULL filter shape (A2),
-    * so `tags`/`authors`/`status`/`topics` work. `region` is an alias for a `places` entry (A1).
-    * `periodStart`/`periodEnd` are deprecated aliases for `from`/`to` — kept for one release. */
+  /** The MCP spelling of [[com.histmersion.api.Filter]] for `geo_when` — now the FULL filter shape (A2), so
+    * `tags`/`authors`/`status`/`topics` work. `region` is an alias for a `places` entry (A1). `periodStart`/`periodEnd`
+    * are deprecated aliases for `from`/`to` — kept for one release.
+    */
   final case class GeoWhenInput(
       query: Option[String] = None,
       tags: List[String] = Nil,
@@ -1185,30 +1458,55 @@ object McpTools:
   ) derives KindlingsCodecAsObject:
     def toQuery: Api.FindingsQuery =
       val effectiveFrom = from.orElse(periodStart)
-      val effectiveTo   = to.orElse(periodEnd)
+      val effectiveTo = to.orElse(periodEnd)
       val effectivePlaces = places ++ region.map(_.trim).filter(_.nonEmpty).toList
       Api.FindingsQuery(
-        Filter.of(query, tags, authors, effectivePlaces, topics, status, yearFrom, yearTo,
-          effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, None, limit, offset),
-        None) // region is folded into places, not passed separately
+        Filter.of(
+          query,
+          tags,
+          authors,
+          effectivePlaces,
+          topics,
+          status,
+          yearFrom,
+          yearTo,
+          effectiveFrom,
+          effectiveTo,
+          minLon,
+          minLat,
+          maxLon,
+          maxLat,
+          None,
+          limit,
+          offset
+        ),
+        None
+      ) // region is folded into places, not passed separately
   object GeoWhenInput:
-    given Schema[GeoWhenInput] = FilterDocs.describe(KindlingsSchema.derived[GeoWhenInput].schema)
+    given Schema[GeoWhenInput] = FilterDocs
+      .describe(KindlingsSchema.derived[GeoWhenInput].schema)
       .modify(_.region)(_.description("Deprecated alias for a places entry"))
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
       .modify(_.periodEnd)(_.description("Deprecated alias for to"))
 
   final case class NeighborsInput(citekey: String, kinds: List[String] = Nil) derives KindlingsCodecAsObject
   object NeighborsInput:
-    given Schema[NeighborsInput] = KindlingsSchema.derived[NeighborsInput].schema
+    given Schema[NeighborsInput] = KindlingsSchema
+      .derived[NeighborsInput]
+      .schema
       .modify(_.citekey)(_.description("The source's citekey"))
-      .modify(_.kinds)(_.description("Filter to these edge kinds only: references|challenges|refutes|updates|superseded_by"))
+      .modify(_.kinds)(
+        _.description("Filter to these edge kinds only: references|challenges|refutes|updates|superseded_by")
+      )
 
   final case class GraphInput(
       citekey: String,
       depth: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object GraphInput:
-    given Schema[GraphInput] = KindlingsSchema.derived[GraphInput].schema
+    given Schema[GraphInput] = KindlingsSchema
+      .derived[GraphInput]
+      .schema
       .modify(_.citekey)(_.description("Root source citekey to start BFS from"))
       .modify(_.depth)(_.description("BFS depth 0–4 (default 2)"))
 
@@ -1217,7 +1515,9 @@ object McpTools:
       since: Option[Long] = None
   ) derives KindlingsCodecAsObject
   object ContradictionsInput:
-    given Schema[ContradictionsInput] = KindlingsSchema.derived[ContradictionsInput].schema
+    given Schema[ContradictionsInput] = KindlingsSchema
+      .derived[ContradictionsInput]
+      .schema
       .modify(_.citekey)(_.description("Show contradictions for this source only; omit for corpus-wide"))
       .modify(_.since)(_.description("Filter by the challenging source's publication year (signed year, BCE negative)"))
 
@@ -1225,27 +1525,35 @@ object McpTools:
   // same shape — one contract, two transports.
   final case class PutSourceInput(citekey: String, source: SourcePut, strict: Boolean = false)
   object PutSourceInput:
-    given Schema[PutSourceInput] = KindlingsSchema.derived[PutSourceInput].schema
+    given Schema[PutSourceInput] = KindlingsSchema
+      .derived[PutSourceInput]
+      .schema
       .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PutSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutSourceInput]) // #813
 
   final case class PatchSourceInput(citekey: String, patch: SourcePatch, strict: Boolean = false)
   object PatchSourceInput:
-    given Schema[PatchSourceInput] = KindlingsSchema.derived[PatchSourceInput].schema
+    given Schema[PatchSourceInput] = KindlingsSchema
+      .derived[PatchSourceInput]
+      .schema
       .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PatchSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchSourceInput]) // #813
 
   final case class RenameSourceInput(citekey: String, newCitekey: String) derives KindlingsCodecAsObject
   object RenameSourceInput:
-    given Schema[RenameSourceInput] = KindlingsSchema.derived[RenameSourceInput].schema
+    given Schema[RenameSourceInput] = KindlingsSchema
+      .derived[RenameSourceInput]
+      .schema
       .modify(_.citekey)(_.description("The source's current citekey"))
       .modify(_.newCitekey)(_.description("The citekey it should have from now on"))
 
   final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject
   object ExportSourceInput:
     given Schema[ExportSourceInput] = KindlingsSchema.derived[ExportSourceInput].schema
+
   /** The MCP spelling of [[com.histmersion.api.Filter]] for `histogram` — now the FULL filter shape (A2).
-    * `periodStart`/`periodEnd` and `region` are deprecated aliases (A1). */
+    * `periodStart`/`periodEnd` and `region` are deprecated aliases (A1).
+    */
   final case class HistogramInput(
       query: Option[String] = None,
       tags: List[String] = Nil,
@@ -1273,24 +1581,51 @@ object McpTools:
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter =
       val effectiveFrom = from.orElse(periodStart)
-      val effectiveTo   = to.orElse(periodEnd)
+      val effectiveTo = to.orElse(periodEnd)
       val effectivePlaces = places ++ region.map(_.trim).filter(_.nonEmpty).toList
-      Filter.of(query, tags, authors, effectivePlaces, topics, status, yearFrom, yearTo,
-        effectiveFrom, effectiveTo, minLon, minLat, maxLon, maxLat, sort, limit, None)
+      Filter.of(
+        query,
+        tags,
+        authors,
+        effectivePlaces,
+        topics,
+        status,
+        yearFrom,
+        yearTo,
+        effectiveFrom,
+        effectiveTo,
+        minLon,
+        minLat,
+        maxLon,
+        maxLat,
+        sort,
+        limit,
+        None
+      )
   object HistogramInput:
-    given Schema[HistogramInput] = FilterDocs.describe(KindlingsSchema.derived[HistogramInput].schema)
+    given Schema[HistogramInput] = FilterDocs
+      .describe(KindlingsSchema.derived[HistogramInput].schema)
       .modify(_.unit)(_.description("What to count: sources (default) | findings"))
 
   /** The `config` tool's input: what to do with the server's configuration. */
-  final case class ConfigInput(action: String, key: Option[String] = None, value: Option[String] = None,
-      prefix: Option[String] = None, literalConsent: Option[Boolean] = None) derives KindlingsCodecAsObject
+  final case class ConfigInput(
+      action: String,
+      key: Option[String] = None,
+      value: Option[String] = None,
+      prefix: Option[String] = None,
+      literalConsent: Option[Boolean] = None
+  ) derives KindlingsCodecAsObject
   object ConfigInput:
-    given Schema[ConfigInput] = KindlingsSchema.derived[ConfigInput].schema
+    given Schema[ConfigInput] = KindlingsSchema
+      .derived[ConfigInput]
+      .schema
       .modify(_.action)(_.description("get | set | unset | reload | restart"))
       .modify(_.key)(_.description("the setting, e.g. backups.keep (get, set, unset)"))
       .modify(_.value)(_.description("set: the value as a person types it — text, a number, true/false, a list [a, b]"))
       .modify(_.prefix)(_.description("get: the settings under this block, e.g. acquire"))
-      .modify(_.literalConsent)(_.description("set: a credential may be written as value:… (the key itself in the file)"))
+      .modify(_.literalConsent)(
+        _.description("set: a credential may be written as value:… (the key itself in the file)")
+      )
 
   final case class BackupInput() derives KindlingsCodecAsObject
   object BackupInput:
@@ -1305,12 +1640,15 @@ object McpTools:
       limit: Option[Int] = None,
       offset: Option[Int] = None
   ) derives KindlingsCodecAsObject:
-    /** `tag` is the shared Filter's (a source tag: articles CITING such a source); `query` is the
-      * article's own full text — see [[Api.ArticleQuery]]. */
+    /** `tag` is the shared Filter's (a source tag: articles CITING such a source); `query` is the article's own full
+      * text — see [[Api.ArticleQuery]].
+      */
     def toQuery: Api.ArticleQuery =
       Api.ArticleQuery(Filter.of(tags = tag.toList, limit = limit, offset = offset, title = title), kind, query)
   object ListArticlesInput:
-    given Schema[ListArticlesInput] = KindlingsSchema.derived[ListArticlesInput].schema
+    given Schema[ListArticlesInput] = KindlingsSchema
+      .derived[ListArticlesInput]
+      .schema
       .modify(_.kind)(_.description("Article kind: concept|myth|culture|region|timeline|report|index"))
       .modify(_.query)(_.description("Full-text search over title, summary and body"))
       .modify(_.tag)(_.description("Only articles citing a source that carries this tag"))
@@ -1318,9 +1656,13 @@ object McpTools:
 
   final case class GetArticleInput(slug: String, parts: Option[String] = None) derives KindlingsCodecAsObject
   object GetArticleInput:
-    given Schema[GetArticleInput] = KindlingsSchema.derived[GetArticleInput].schema
+    given Schema[GetArticleInput] = KindlingsSchema
+      .derived[GetArticleInput]
+      .schema
       .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
-      .modify(_.parts)(_.description("Comma-separated parts to return: body,summary,coverage,cited,backlinks (default: all)"))
+      .modify(_.parts)(
+        _.description("Comma-separated parts to return: body,summary,coverage,cited,backlinks (default: all)")
+      )
 
   /** `article_coverage` as `/mcp` and an agent step both describe it. */
   val ArticleCoverageDoc: String =
@@ -1352,12 +1694,16 @@ object McpTools:
 
   final case class ArticleReviewInput(slug: String) derives KindlingsCodecAsObject
   object ArticleReviewInput:
-    given Schema[ArticleReviewInput] = KindlingsSchema.derived[ArticleReviewInput].schema
+    given Schema[ArticleReviewInput] = KindlingsSchema
+      .derived[ArticleReviewInput]
+      .schema
       .modify(_.slug)(_.description("The article's slug"))
 
   final case class ArticleCoverageInput(slug: String) derives KindlingsCodecAsObject
   object ArticleCoverageInput:
-    given Schema[ArticleCoverageInput] = KindlingsSchema.derived[ArticleCoverageInput].schema
+    given Schema[ArticleCoverageInput] = KindlingsSchema
+      .derived[ArticleCoverageInput]
+      .schema
       .modify(_.slug)(_.description("The article's slug"))
 
   /** `check_edits` as `/mcp` and an agent step both describe it. */
@@ -1375,14 +1721,24 @@ object McpTools:
     h.checkArticle(in.slug, ArticleEdits.ArticleCheckRequest(in.edits, in.body, in.kind))
       .fold(McpOut.refusal, ArticleEdits.markdown)
 
-  final case class CheckEditsInput(slug: String, edits: List[ArticleEdits.EditAnswer] = Nil, body: Option[String] = None,
-      kind: Option[String] = None) derives KindlingsCodecAsObject
+  final case class CheckEditsInput(
+      slug: String,
+      edits: List[ArticleEdits.EditAnswer] = Nil,
+      body: Option[String] = None,
+      kind: Option[String] = None
+  ) derives KindlingsCodecAsObject
   object CheckEditsInput:
-    given Schema[CheckEditsInput] = KindlingsSchema.derived[CheckEditsInput].schema
+    given Schema[CheckEditsInput] = KindlingsSchema
+      .derived[CheckEditsInput]
+      .schema
       .modify(_.slug)(_.description("The article's slug"))
       .modify(_.edits)(_.description("Edits to the current stored body, applied in order"))
       .modify(_.body)(_.description("Instead of edits: a whole draft body"))
-      .modify(_.kind)(_.description("Check the section set of this kind instead of the article's (index = none, for a fragment to be appended)"))
+      .modify(_.kind)(
+        _.description(
+          "Check the section set of this kind instead of the article's (index = none, for a fragment to be appended)"
+        )
+      )
 
   /** The `strict` flag of every Markdown-writing tool. */
   private val StrictDoc =
@@ -1391,15 +1747,20 @@ object McpTools:
 
   final case class PutArticleInput(slug: String, article: ArticlePut, strict: Boolean = false)
   object PutArticleInput:
-    given Schema[PutArticleInput] = KindlingsSchema.derived[PutArticleInput].schema
+    given Schema[PutArticleInput] = KindlingsSchema
+      .derived[PutArticleInput]
+      .schema
       .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PutArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutArticleInput]) // #813
 
   final case class PatchArticleInput(slug: String, patch: ArticlePatch, strict: Boolean = false)
   object PatchArticleInput:
-    given Schema[PatchArticleInput] = KindlingsSchema.derived[PatchArticleInput].schema
+    given Schema[PatchArticleInput] = KindlingsSchema
+      .derived[PatchArticleInput]
+      .schema
       .modify(_.strict)(_.description(StrictDoc))
-    given Codec.AsObject[PatchArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchArticleInput]) // #813
+    given Codec.AsObject[PatchArticleInput] =
+      StrictJson.codec(KindlingsCodecAsObject.derived[PatchArticleInput]) // #813
 
   final case class ExportArticleInput(slug: String) derives KindlingsCodecAsObject
   object ExportArticleInput:
@@ -1407,17 +1768,23 @@ object McpTools:
 
   final case class ArticleVersionsInput(slug: String) derives KindlingsCodecAsObject
   object ArticleVersionsInput:
-    given Schema[ArticleVersionsInput] = KindlingsSchema.derived[ArticleVersionsInput].schema
+    given Schema[ArticleVersionsInput] = KindlingsSchema
+      .derived[ArticleVersionsInput]
+      .schema
       .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
 
   final case class ArticleVersionInput(slug: String, versionId: Long) derives KindlingsCodecAsObject
   object ArticleVersionInput:
-    given Schema[ArticleVersionInput] = KindlingsSchema.derived[ArticleVersionInput].schema
+    given Schema[ArticleVersionInput] = KindlingsSchema
+      .derived[ArticleVersionInput]
+      .schema
       .modify(_.slug)(_.description("The article's slug"))
       .modify(_.versionId)(_.description("The version id from article_versions"))
-  /** Input of the `places` tool. Declared LAST in this file on purpose: native-image metadata indexes
-    * the derived lazies per compilation unit, so new `derives KindlingsCodecAsObject` types go at the
-    * end rather than in the middle. */
+
+  /** Input of the `places` tool. Declared LAST in this file on purpose: native-image metadata indexes the derived
+    * lazies per compilation unit, so new `derives KindlingsCodecAsObject` types go at the end rather than in the
+    * middle.
+    */
   final case class PlacesInput(
       query: Option[String] = None,
       name: Option[String] = None,
@@ -1426,7 +1793,9 @@ object McpTools:
       limit: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object PlacesInput:
-    given Schema[PlacesInput] = KindlingsSchema.derived[PlacesInput].schema
+    given Schema[PlacesInput] = KindlingsSchema
+      .derived[PlacesInput]
+      .schema
       .modify(_.query)(_.description("Name or label substring (case-insensitive); `name` is an alias"))
       .modify(_.name)(_.description("Alias of `query` — a place NAME to look up (not full-text search)"))
       .modify(_.id)(_.description("Place id to look up directly"))
@@ -1447,22 +1816,33 @@ object McpTools:
       acquireItem: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object IngestInput:
-    given Schema[IngestInput] = KindlingsSchema.derived[IngestInput].schema
+    given Schema[IngestInput] = KindlingsSchema
+      .derived[IngestInput]
+      .schema
       .modify(_.citekey)(_.description("Citekey to store the source under"))
       .modify(_.path)(_.description("Server-side file path (alternative to base64)"))
       .modify(_.base64)(_.description("Base64-encoded document (alternative to path)"))
       .modify(_.quality)(_.description("Use the slow, accurate OCR path (docling)"))
       .modify(_.force)(_.description("Accept a file already stored under another citekey"))
-      .modify(_.provenance)(_.description("How the source was acquired: manual|ill|author|scan|external-file|calibre|archive|oa"))
-      .modify(_.acquireItem)(_.description(
-        "Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds"))
+      .modify(_.provenance)(
+        _.description("How the source was acquired: manual|ill|author|scan|external-file|calibre|archive|oa")
+      )
+      .modify(_.acquireItem)(
+        _.description("Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds")
+      )
 
   final case class JobControlInput(id: String, action: String) derives KindlingsCodecAsObject, KindlingsSchema
   object JobControlInput:
     given Schema[JobControlInput] = summon[KindlingsSchema[JobControlInput]].schema
 
-  final case class ActivityInput(show: Option[String] = None, since: Option[String] = None, goal: Option[String] = None,
-      limit: Option[Int] = None, before: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema
+  final case class ActivityInput(
+      show: Option[String] = None,
+      since: Option[String] = None,
+      goal: Option[String] = None,
+      limit: Option[Int] = None,
+      before: Option[String] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
   object ActivityInput:
     given Schema[ActivityInput] = summon[KindlingsSchema[ActivityInput]].schema
 
@@ -1478,13 +1858,21 @@ object McpTools:
   ) derives KindlingsCodecAsObject:
     def filter: ListFilters.JobFilter = ListFilters.JobFilter(status.toList, kind, since, until, subject)
   object JobStatusInput:
-    given Schema[JobStatusInput] = KindlingsSchema.derived[JobStatusInput].schema
+    given Schema[JobStatusInput] = KindlingsSchema
+      .derived[JobStatusInput]
+      .schema
       .modify(_.id)(_.description("Job id to check (omit for a listing)"))
       .modify(_.status)(_.description("Filter listing: queued|running|done|failed (comma-separated for several)"))
-      .modify(_.kind)(_.description("Filter listing: these job kinds (ingest, reocr, agent, media-import, events-import, init, …)"))
-      .modify(_.since)(_.description("Filter listing: started at or after 2026-10-01, an ISO instant, or 7d / 12h / 30m ago"))
+      .modify(_.kind)(
+        _.description("Filter listing: these job kinds (ingest, reocr, agent, media-import, events-import, init, …)")
+      )
+      .modify(_.since)(
+        _.description("Filter listing: started at or after 2026-10-01, an ISO instant, or 7d / 12h / 30m ago")
+      )
       .modify(_.until)(_.description("Filter listing: started before the end of 2026-10-01, or an ISO instant"))
-      .modify(_.subject)(_.description("Filter listing: text in what the job is about (citekey, target, detail) or the start of its id"))
+      .modify(_.subject)(
+        _.description("Filter listing: text in what the job is about (citekey, target, detail) or the start of its id")
+      )
       .modify(_.before)(_.description("Listing: the next older page — the id of the last job shown"))
 
   final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject
@@ -1504,10 +1892,16 @@ object McpTools:
       offset: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object EventsInput:
-    given Schema[EventsInput] = KindlingsSchema.derived[EventsInput].schema
+    given Schema[EventsInput] = KindlingsSchema
+      .derived[EventsInput]
+      .schema
       .modify(_.query)(_.description("Text search over event label and description"))
       .modify(_.id)(_.description("Event id to look up directly (omit for listing)"))
-      .modify(_.kind)(_.description("Filter: a kind (eruption|earthquake|tsunami|flood|drought|climate_event|epidemic|famine|battle|naval_battle|siege|war|revolt|treaty|polity_formation|collapse|destruction|migration|invasion|technological_change|cultural_shift|era|…) or natural | human"))
+      .modify(_.kind)(
+        _.description(
+          "Filter: a kind (eruption|earthquake|tsunami|flood|drought|climate_event|epidemic|famine|battle|naval_battle|siege|war|revolt|treaty|polity_formation|collapse|destruction|migration|invasion|technological_change|cultural_shift|era|…) or natural | human"
+        )
+      )
       .modify(_.historicity)(_.description("Filter: attested|inferred|contested|legendary|mythic"))
       .modify(_.placeId)(_.description("Filter by place id"))
       .modify(_.from)(_.description("Overlap: events whose outer span reaches at or after this signed year"))
@@ -1530,7 +1924,9 @@ object McpTools:
       wikidata: Option[String] = None
   )
   object PatchEventInput:
-    given Schema[PatchEventInput] = KindlingsSchema.derived[PatchEventInput].schema
+    given Schema[PatchEventInput] = KindlingsSchema
+      .derived[PatchEventInput]
+      .schema
       .modify(_.id)(_.description("Event id"))
       .modify(_.scale)(_.description("local | regional | auto (clear: derived from kind, then place kind)"))
       .modify(_.placeId)(_.description("Gazetteer place id where the event happened (see `places`)"))
@@ -1550,7 +1946,9 @@ object McpTools:
       offset: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object AttestationsInput:
-    given Schema[AttestationsInput] = KindlingsSchema.derived[AttestationsInput].schema
+    given Schema[AttestationsInput] = KindlingsSchema
+      .derived[AttestationsInput]
+      .schema
       .modify(_.id)(_.description("Attestation id to look up directly (omit for listing)"))
       .modify(_.citekey)(_.description("Filter by source citekey"))
       .modify(_.targetType)(_.description("Filter: finding|event|event_dating|place|edge"))
@@ -1573,7 +1971,9 @@ object McpTools:
       note: Option[String] = None
   )
   object AttestationPutInput:
-    given Schema[AttestationPutInput] = KindlingsSchema.derived[AttestationPutInput].schema
+    given Schema[AttestationPutInput] = KindlingsSchema
+      .derived[AttestationPutInput]
+      .schema
       .modify(_.citekey)(_.description("Source citekey this attestation references"))
       .modify(_.targetType)(_.description("Entity type: finding|event|event_dating|place|edge"))
       .modify(_.targetId)(_.description("Id of the target entity"))
@@ -1587,11 +1987,14 @@ object McpTools:
       .modify(_.canvas)(_.description("IIIF canvas URI"))
       .modify(_.xywh)(_.description("IIIF region 'x,y,w,h'"))
       .modify(_.ctsUrn)(_.description("CTS URN for classical texts"))
-    given Codec.AsObject[AttestationPutInput] = StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPutInput]) // #813
+    given Codec.AsObject[AttestationPutInput] =
+      StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPutInput]) // #813
 
   final case class DeleteAttestationInput(id: Long) derives KindlingsCodecAsObject
   object DeleteAttestationInput:
-    given Schema[DeleteAttestationInput] = KindlingsSchema.derived[DeleteAttestationInput].schema
+    given Schema[DeleteAttestationInput] = KindlingsSchema
+      .derived[DeleteAttestationInput]
+      .schema
       .modify(_.id)(_.description("Id of the attestation to delete"))
 
   final case class GoalsInput(
@@ -1601,7 +2004,9 @@ object McpTools:
       offset: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object GoalsInput:
-    given Schema[GoalsInput] = KindlingsSchema.derived[GoalsInput].schema
+    given Schema[GoalsInput] = KindlingsSchema
+      .derived[GoalsInput]
+      .schema
       .modify(_.slug)(_.description("Goal slug to look up directly (omit for listing)"))
       .modify(_.status)(_.description("Filter: planned|seeding|compiled|reviewed|done"))
 
@@ -1617,7 +2022,9 @@ object McpTools:
       parentSlug: Option[String] = None
   )
   object GoalPutInput:
-    given Schema[GoalPutInput] = KindlingsSchema.derived[GoalPutInput].schema
+    given Schema[GoalPutInput] = KindlingsSchema
+      .derived[GoalPutInput]
+      .schema
       .modify(_.slug)(_.description("Kebab-case identifier for the goal"))
       .modify(_.status)(_.description("planned|seeding|compiled|reviewed|done"))
       .modify(_.periodStart)(_.description("Signed year the goal's period begins (BCE negative); alone = from then on"))
@@ -1637,10 +2044,16 @@ object McpTools:
       budgetUsd: Option[Double] = None
   )
   object GoalPatchInput:
-    given Schema[GoalPatchInput] = KindlingsSchema.derived[GoalPatchInput].schema
+    given Schema[GoalPatchInput] = KindlingsSchema
+      .derived[GoalPatchInput]
+      .schema
       .modify(_.slug)(_.description("Goal slug to patch"))
-      .modify(_.periodStart)(_.description("New start of the period (signed year, BCE negative); given alone, the end stays as stored"))
-      .modify(_.periodEnd)(_.description("New end of the period (signed year, BCE negative); given alone, the start stays as stored"))
+      .modify(_.periodStart)(
+        _.description("New start of the period (signed year, BCE negative); given alone, the end stays as stored")
+      )
+      .modify(_.periodEnd)(
+        _.description("New end of the period (signed year, BCE negative); given alone, the start stays as stored")
+      )
       .modify(_.budgetUsd)(_.description("Cost cap (USD) of the agent runs started for this goal; 0 clears it"))
     given Codec.AsObject[GoalPatchInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatchInput]) // #813
 
@@ -1649,13 +2062,17 @@ object McpTools:
       value: Option[String] = None
   ) derives KindlingsCodecAsObject
   object AgentStateInput:
-    given Schema[AgentStateInput] = KindlingsSchema.derived[AgentStateInput].schema
+    given Schema[AgentStateInput] = KindlingsSchema
+      .derived[AgentStateInput]
+      .schema
       .modify(_.key)(_.description("State key to get or set (omit for listing all keys)"))
       .modify(_.value)(_.description("JSON string value to set (omit to just read the key)"))
 
   final case class DeleteAgentStateInput(key: String) derives KindlingsCodecAsObject
   object DeleteAgentStateInput:
-    given Schema[DeleteAgentStateInput] = KindlingsSchema.derived[DeleteAgentStateInput].schema
+    given Schema[DeleteAgentStateInput] = KindlingsSchema
+      .derived[DeleteAgentStateInput]
+      .schema
       .modify(_.key)(_.description("State key to delete"))
 
   // ── media associations (plan §1.6) ──────────────────────────────────────────────────────────
@@ -1672,7 +2089,9 @@ object McpTools:
       periodEnd: Option[Long] = None
   )
   object PatchAssetInput:
-    given Schema[PatchAssetInput] = KindlingsSchema.derived[PatchAssetInput].schema
+    given Schema[PatchAssetInput] = KindlingsSchema
+      .derived[PatchAssetInput]
+      .schema
       .modify(_.citekey)(_.description("Source citekey"))
       .modify(_.name)(_.description("Asset file name"))
       .modify(_.kind)(_.description("Asset kind: figure, photo, map, plan, scan"))
@@ -1688,7 +2107,9 @@ object McpTools:
       notes: Option[String] = None
   ) derives KindlingsCodecAsObject
   object AssetLinksInput:
-    given Schema[AssetLinksInput] = KindlingsSchema.derived[AssetLinksInput].schema
+    given Schema[AssetLinksInput] = KindlingsSchema
+      .derived[AssetLinksInput]
+      .schema
       .modify(_.citekey)(_.description("Filter by citekey (or required for create)"))
       .modify(_.asset)(_.description("Filter by asset name (or required for create)"))
       .modify(_.targetType)(_.description("Filter by target type: event, finding, place, source, article"))
@@ -1697,7 +2118,9 @@ object McpTools:
 
   final case class DeleteAssetLinkInput(id: Long) derives KindlingsCodecAsObject
   object DeleteAssetLinkInput:
-    given Schema[DeleteAssetLinkInput] = KindlingsSchema.derived[DeleteAssetLinkInput].schema
+    given Schema[DeleteAssetLinkInput] = KindlingsSchema
+      .derived[DeleteAssetLinkInput]
+      .schema
       .modify(_.id)(_.description("Asset link id to delete"))
 
   /** Input of the `merge_plan` tool (docs/research-merge-import.md §6, M3). */
@@ -1708,8 +2131,12 @@ object McpTools:
       all: Boolean = false
   )
   object MergePlanInput:
-    given Schema[MergePlanInput] = KindlingsSchema.derived[MergePlanInput].schema
-      .modify(_.bundle)(_.description("sha256 of a bundle uploaded to the server (`histmersion merge plan <file>` prints it)"))
+    given Schema[MergePlanInput] = KindlingsSchema
+      .derived[MergePlanInput]
+      .schema
+      .modify(_.bundle)(
+        _.description("sha256 of a bundle uploaded to the server (`histmersion merge plan <file>` prints it)")
+      )
       .modify(_.resolve)(_.description("Issue id → decision, e.g. {\"S-3c1e7a2b\": \"map:guterbock1997_hittite\"}"))
       .modify(_.editions)(_.description("merge | separate: answers every year-gap (edition) question at once"))
       .modify(_.all)(_.description("List every default, info line and match, not only the first few"))
@@ -1732,7 +2159,9 @@ object McpTools:
       limit: Option[Int] = None
   )
   object MergesInput:
-    given Schema[MergesInput] = KindlingsSchema.derived[MergesInput].schema
+    given Schema[MergesInput] = KindlingsSchema
+      .derived[MergesInput]
+      .schema
       .modify(_.action)(_.description("list (default) | show | ledger"))
       .modify(_.id)(_.description("A merge id, or its first characters (show; ledger of one merge)"))
       .modify(_.uid)(_.description("ledger: the record — a uid (here, or merged away) or a citekey"))
@@ -1742,7 +2171,9 @@ object McpTools:
   /** Input of the `rename_label` tool (V042, V053, V055). */
   final case class RenameLabelInput(kind: String, from: String, to: String)
   object RenameLabelInput:
-    given Schema[RenameLabelInput] = KindlingsSchema.derived[RenameLabelInput].schema
+    given Schema[RenameLabelInput] = KindlingsSchema
+      .derived[RenameLabelInput]
+      .schema
       .modify(_.kind)(_.description("article | event | goal | place"))
       .modify(_.from)(_.description("The current slug (article, goal) or id (event, place)"))
       .modify(_.to)(_.description("The new one: lower-case letters, digits, '_', '.' and '-'"))
@@ -1757,7 +2188,9 @@ object McpTools:
       to: Option[Long] = None
   ) derives KindlingsCodecAsObject
   object PeriodsInput:
-    given Schema[PeriodsInput] = KindlingsSchema.derived[PeriodsInput].schema
+    given Schema[PeriodsInput] = KindlingsSchema
+      .derived[PeriodsInput]
+      .schema
       .modify(_.query)(_.description("Label substring (case-insensitive), e.g. 'Minoan'"))
       .modify(_.id)(_.description("Period id (a PeriodO id such as p0ds9qjq7b2) to show"))
       .modify(_.region)(_.description("Exact region, case-insensitive (e.g. 'Crete', 'Levant')"))
@@ -1778,13 +2211,19 @@ object McpTools:
       pointLon: Option[Double] = None
   )
   object PlaceOverrideInput:
-    given Schema[PlaceOverrideInput] = KindlingsSchema.derived[PlaceOverrideInput].schema
+    given Schema[PlaceOverrideInput] = KindlingsSchema
+      .derived[PlaceOverrideInput]
+      .schema
       .modify(_.placeId)(_.description("The place (an id from `places`); required to set or reset"))
       .modify(_.kind)(_.description(s"The kind it is: one of ${PlaceKind.all.mkString(", ")}"))
       .modify(_.periodStart)(_.description("Signed year it begins (BCE negative)"))
       .modify(_.periodEnd)(_.description("Signed year it ends (BCE negative)"))
-      .modify(_.reason)(_.description("Why: the evidence the decision rests on (with a point: the gazetteer value it comes from)"))
-      .modify(_.pointLat)(_.description("Latitude of the corrected point (with pointLon) — a place known by a point only"))
+      .modify(_.reason)(
+        _.description("Why: the evidence the decision rests on (with a point: the gazetteer value it comes from)")
+      )
+      .modify(_.pointLat)(
+        _.description("Latitude of the corrected point (with pointLon) — a place known by a point only")
+      )
       .modify(_.pointLon)(_.description("Longitude of the corrected point (with pointLat)"))
       .modify(_.reset)(_.description("true: drop the override and restore what the source says"))
       .modify(_.mergeInto)(_.description("The id of the place this one is the same as: merge it there"))
@@ -1799,7 +2238,9 @@ object McpTools:
       remove: Option[Boolean] = None
   )
   object PlaceNamesInput:
-    given Schema[PlaceNamesInput] = KindlingsSchema.derived[PlaceNamesInput].schema
+    given Schema[PlaceNamesInput] = KindlingsSchema
+      .derived[PlaceNamesInput]
+      .schema
       .modify(_.placeId)(_.description("The place (an id from `places`); required with `name`"))
       .modify(_.name)(_.description("The name to add (or remove); omit to list the names added by hand"))
       .modify(_.lang)(_.description("Language tag of the name: en, grc, la, pl …; omit when unknown"))

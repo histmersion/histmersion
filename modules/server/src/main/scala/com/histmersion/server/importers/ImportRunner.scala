@@ -9,24 +9,30 @@ import java.io.{ByteArrayOutputStream, InputStream}
 import java.net.{HttpURLConnection, URI}
 import java.util.zip.ZipInputStream
 
-/** Downloads, transforms and upserts external gazetteer data. Handles zip files (Cliopatria ships
-  * as a zip) and plain JSON. The heavy work is in the importer's `transform` — this class
-  * orchestrates fetch → unpack → transform → batch upsert. */
+/** Downloads, transforms and upserts external gazetteer data. Handles zip files (Cliopatria ships as a zip) and plain
+  * JSON. The heavy work is in the importer's `transform` — this class orchestrates fetch → unpack → transform → batch
+  * upsert.
+  */
 object ImportRunner:
 
   private val BatchSize = 1000
 
-  def fetchAndImport(imp: GazetteerImporter, ds: DataSource, dryRun: Boolean,
-      toleranceKm: Double): Either[String, PlaceImportResult] =
+  def fetchAndImport(
+      imp: GazetteerImporter,
+      ds: DataSource,
+      dryRun: Boolean,
+      toleranceKm: Double
+  ): Either[String, PlaceImportResult] =
     for
       json <- download(imp.fetchUrl)
       items <- imp.transform(json)
       parents = imp match
         case c: CliopatriaImporter.type => c.parentConcepts(items)
-        case _ => Nil
+        case _                          => Nil
       all = parents ++ items
-      result <- if dryRun then Right(PlaceImportResult(all.size, 0, 0, List("dry run")))
-                else batchUpsert(all, ds, toleranceKm)
+      result <-
+        if dryRun then Right(PlaceImportResult(all.size, 0, 0, List("dry run")))
+        else batchUpsert(all, ds, toleranceKm)
     yield result
 
   private[importers] def download(url: String): Either[String, String] =
@@ -59,14 +65,16 @@ object ImportRunner:
     try
       val zis = new ZipInputStream(new java.io.ByteArrayInputStream(data))
       var entry = zis.getNextEntry
-      while entry != null && (entry.isDirectory || entry.getName.startsWith("__MACOSX")) do
-        entry = zis.getNextEntry
+      while entry != null && (entry.isDirectory || entry.getName.startsWith("__MACOSX")) do entry = zis.getNextEntry
       if entry == null then Left("zip contains no usable file")
       else Right(new String(readAll(zis), "UTF-8"))
     catch case e: Exception => Left(s"unzip failed: ${e.getMessage}")
 
-  private def batchUpsert(items: List[PlaceInput], ds: DataSource,
-      toleranceKm: Double): Either[String, PlaceImportResult] =
+  private def batchUpsert(
+      items: List[PlaceInput],
+      ds: DataSource,
+      toleranceKm: Double
+  ): Either[String, PlaceImportResult] =
     try
       val batches = items.grouped(BatchSize).toList
       val nBatches = batches.size
@@ -76,8 +84,11 @@ object ImportRunner:
         scribe.info(s"[import] upserting batch $i/$nBatches (${batch.size} places)…")
         val r = PlaceRepo.upsertPlaces(ds, batch)
         PlaceImportResult(
-          acc.places + r.places, acc.names + r.names,
-          acc.relations + r.relations, (acc.failed ++ r.failed).take(20))
+          acc.places + r.places,
+          acc.names + r.names,
+          acc.relations + r.relations,
+          (acc.failed ++ r.failed).take(20)
+        )
       }
       scribe.info(s"[import] rebuilding finding_places…")
       PlaceRepo.rebuildFindingPlaces(ds, toleranceKm)

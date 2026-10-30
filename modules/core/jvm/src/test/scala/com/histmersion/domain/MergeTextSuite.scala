@@ -17,20 +17,30 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     assertEquals(MergeText.fold("Ḫattuša"), "hattusa")
 
   test("fingerprint: case, accents, punctuation and word order do not matter"):
-    assertEquals(MergeText.fingerprint("Perspectives on Hittite Civilization"),
-      MergeText.fingerprint("perspectives on hittite civilization."))
-    assertEquals(MergeText.fingerprint("The Ancient Near East, c. 3000–330 BC"),
-      MergeText.fingerprint("the ancient near east c 3000 330 bc"))
+    assertEquals(
+      MergeText.fingerprint("Perspectives on Hittite Civilization"),
+      MergeText.fingerprint("perspectives on hittite civilization.")
+    )
+    assertEquals(
+      MergeText.fingerprint("The Ancient Near East, c. 3000–330 BC"),
+      MergeText.fingerprint("the ancient near east c 3000 330 bc")
+    )
 
   test("mainTitle cuts the subtitle at a colon, a dash or a full stop"):
-    assertEquals(MergeText.mainTitle("Perspectives on Hittite Civilization: Selected Writings"), "Perspectives on Hittite Civilization")
+    assertEquals(
+      MergeText.mainTitle("Perspectives on Hittite Civilization: Selected Writings"),
+      "Perspectives on Hittite Civilization"
+    )
     assertEquals(MergeText.mainTitle("Troy and Homer — Towards a Solution"), "Troy and Homer")
     assertEquals(MergeText.mainTitle("Themis. A Study of the Social Origins"), "Themis")
     assertEquals(MergeText.mainTitle("No subtitle"), "No subtitle")
 
   test("titleKey: the first three significant words of the main title, sorted"):
     assertEquals(MergeText.titleKey("The Ancient Near East: c. 3000-330 BC"), "ancient east near")
-    assertEquals(MergeText.titleKey("Perspectives on Hittite civilization"), "hittite perspectives civilization".split(" ").sorted.mkString(" "))
+    assertEquals(
+      MergeText.titleKey("Perspectives on Hittite civilization"),
+      "hittite perspectives civilization".split(" ").sorted.mkString(" ")
+    )
 
   private def same(a: String, b: String): Boolean =
     (MergeText.person(a), MergeText.person(b)) match
@@ -61,15 +71,24 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     assert(MergeText.surnameKeys("López-Ruiz, Carolina").contains("lopezruiz"))
     assert(MergeText.surnameKeys("Carolina Lopez Ruiz").contains("ruiz"))
     assert(MergeText.surnameKeys("López-Ruiz, Carolina").contains("ruiz"))
-    assertEquals(MergeText.surnameKeys("Güterbock, Hans G.").intersect(MergeText.surnameKeys("H. G. Guterbock")), Set("guterbock"))
+    assertEquals(
+      MergeText.surnameKeys("Güterbock, Hans G.").intersect(MergeText.surnameKeys("H. G. Guterbock")),
+      Set("guterbock")
+    )
 
   test("author lists: order, name forms, overlap and disjointness"):
-    assertEquals(MergeText.authors(List("H. G. Güterbock", "Harry A. Hoffner"), List("Hoffner, Harry A.", "Guterbock, Hans G.")),
-      AuthorAgreement.Same)
-    assertEquals(MergeText.authors(List("Güterbock, Hans G.", "Hoffner, Harry A."), List("Hans G. Guterbock")),
-      AuthorAgreement.FirstAuthor)
-    assertEquals(MergeText.authors(List("A. Kuhrt", "B. Bryce", "C. Cline"), List("D. Dodds", "Bryce, B.", "Cline, C.")),
-      AuthorAgreement.Overlap)
+    assertEquals(
+      MergeText.authors(List("H. G. Güterbock", "Harry A. Hoffner"), List("Hoffner, Harry A.", "Guterbock, Hans G.")),
+      AuthorAgreement.Same
+    )
+    assertEquals(
+      MergeText.authors(List("Güterbock, Hans G.", "Hoffner, Harry A."), List("Hans G. Guterbock")),
+      AuthorAgreement.FirstAuthor
+    )
+    assertEquals(
+      MergeText.authors(List("A. Kuhrt", "B. Bryce", "C. Cline"), List("D. Dodds", "Bryce, B.", "Cline, C.")),
+      AuthorAgreement.Overlap
+    )
     assertEquals(MergeText.authors(List("M. Smith"), List("Smith, J.")), AuthorAgreement.Disjoint)
     assertEquals(MergeText.authors(Nil, List("Smith, J.")), AuthorAgreement.Unknown)
 
@@ -90,9 +109,9 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     assertEquals(MergeText.isbn13("080442957X"), Some("9780804429573"))
 
   test("MinHash: identical text 1, a light OCR difference high, an unrelated text low; deterministic"):
-    val rnd  = scala.util.Random(7)
+    val rnd = scala.util.Random(7)
     val base = (1 to 2000).map(_ => rnd.alphanumeric.take(3 + rnd.nextInt(6)).mkString).mkString(" ")
-    val ocr  = base.split(" ").zipWithIndex.map((w, i) => if i % 97 == 0 then w.reverse else w).mkString(" ")
+    val ocr = base.split(" ").zipWithIndex.map((w, i) => if i % 97 == 0 then w.reverse else w).mkString(" ")
     val other = (1 to 2000).map(_ => rnd.alphanumeric.take(3 + rnd.nextInt(6)).mkString).mkString(" ")
     val (a, b, c) = (MergeText.minHash(base), MergeText.minHash(ocr), MergeText.minHash(other))
     assertEquals(a.similarity(MergeText.minHash(base)), 1.0)

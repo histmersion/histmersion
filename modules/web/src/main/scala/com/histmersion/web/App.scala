@@ -80,9 +80,12 @@ object App:
         ),
         // the filter panel is Explore's and Library's lists' (one filter state): it lies over the map, or
         // beside the lists; elsewhere it is hidden and out of the keyboard's way like Explore
-        FilterBar.init(ui, library.MyLibrary.panelTop, List(library.MyLibrary.panelFoot, marks.SavedViews.panelSection)).amend(
-          cls("is-away") <-- Router.route.map(r => !filtersShown(r)),
-          inert <-- Router.route.map(r => !filtersShown(r))),
+        FilterBar
+          .init(ui, library.MyLibrary.panelTop, List(library.MyLibrary.panelFoot, marks.SavedViews.panelSection))
+          .amend(
+            cls("is-away") <-- Router.route.map(r => !filtersShown(r)),
+            inert <-- Router.route.map(r => !filtersShown(r))
+          ),
         MobileChrome.scrim,
         Pages.element(ui),
         ArticleModal.element,
@@ -143,37 +146,41 @@ object App:
 
   private def paramsKey(): String =
     val f = UiState.toFilter()
-    js.JSON.stringify(js.Dynamic.literal(
-      q = f.q.orNull,
-      title = f.title.orNull,
-      from = f.period.map(_.start.toDouble).getOrElse(0.0),
-      to = f.period.map(_.end.toDouble).getOrElse(0.0),
-      tags = f.tags.mkString(","),
-      authors = f.authors.mkString(","),
-      topics = f.topics.mkString(","),
-      status = f.status.mkString(","),
-      places = f.places.mkString(","),
-      sort = f.sort.toString,
-      bbox = f.bbox.map(b => s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}").orNull,
-      yearFrom = f.years.map(_.start.toDouble).getOrElse(0.0),
-      yearTo = f.years.map(_.end.toDouble).getOrElse(0.0)
-    ))
+    js.JSON.stringify(
+      js.Dynamic.literal(
+        q = f.q.orNull,
+        title = f.title.orNull,
+        from = f.period.map(_.start.toDouble).getOrElse(0.0),
+        to = f.period.map(_.end.toDouble).getOrElse(0.0),
+        tags = f.tags.mkString(","),
+        authors = f.authors.mkString(","),
+        topics = f.topics.mkString(","),
+        status = f.status.mkString(","),
+        places = f.places.mkString(","),
+        sort = f.sort.toString,
+        bbox = f.bbox.map(b => s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}").orNull,
+        yearFrom = f.years.map(_.start.toDouble).getOrElse(0.0),
+        yearTo = f.years.map(_.end.toDouble).getOrElse(0.0)
+      )
+    )
 
   private def nonTimeParamsKey(): String =
     val f = UiState.toFilter()
-    js.JSON.stringify(js.Dynamic.literal(
-      q = f.q.orNull,
-      title = f.title.orNull,
-      tags = f.tags.mkString(","),
-      authors = f.authors.mkString(","),
-      topics = f.topics.mkString(","),
-      status = f.status.mkString(","),
-      places = f.places.mkString(","),
-      sort = f.sort.toString,
-      bbox = f.bbox.map(b => s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}").orNull,
-      yearFrom = f.years.map(_.start.toDouble).getOrElse(0.0),
-      yearTo = f.years.map(_.end.toDouble).getOrElse(0.0)
-    ))
+    js.JSON.stringify(
+      js.Dynamic.literal(
+        q = f.q.orNull,
+        title = f.title.orNull,
+        tags = f.tags.mkString(","),
+        authors = f.authors.mkString(","),
+        topics = f.topics.mkString(","),
+        status = f.status.mkString(","),
+        places = f.places.mkString(","),
+        sort = f.sort.toString,
+        bbox = f.bbox.map(b => s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}").orNull,
+        yearFrom = f.years.map(_.start.toDouble).getOrElse(0.0),
+        yearTo = f.years.map(_.end.toDouble).getOrElse(0.0)
+      )
+    )
 
   private def quickRender(): Unit =
     val a = UiState.from.now().getOrElse(config.time.defaultFrom)
@@ -190,11 +197,15 @@ object App:
   def quickRenderIfCached(from: Long, to: Long): Unit =
     quickRenderRange(from, to)
 
-  /** The map drawn for the span `[from, to]` again, from the findings held — after playback, which drew
-    * its frames' windows: the findings, the legend's years, the tiled layers and the boundaries all of
-    * the whole span, as before it played (with no findings held too: the layers still follow the span). */
+  /** The map drawn for the span `[from, to]` again, from the findings held — after playback, which drew its frames'
+    * windows: the findings, the legend's years, the tiled layers and the boundaries all of the whole span, as before it
+    * played (with no findings held too: the layers still follow the span).
+    */
   def restoreSpan(from: Long, to: Long): Unit =
-    MapView.render(cachedFindings.filter(pt => pt.periodStart.forall(_ <= to) && pt.periodEnd.forall(_ >= from)), (from, to))
+    MapView.render(
+      cachedFindings.filter(pt => pt.periodStart.forall(_ <= to) && pt.periodEnd.forall(_ >= from)),
+      (from, to)
+    )
 
   private def schedule(): Unit =
     val key = paramsKey()
@@ -227,9 +238,9 @@ object App:
     // The sources used to be asked for only once the findings had arrived — a whole round trip and
     // the findings' query added to every list refresh; the list still renders once all are in.
     val sourceFilter = f.copy(limit = config.pageSize)
-    val pointsF  = ApiClient.findings(Api.FindingsQuery.of(f))
+    val pointsF = ApiClient.findings(Api.FindingsQuery.of(f))
     val sourcesF = ApiClient.sources(sourceFilter)
-    val totalF   =
+    val totalF =
       if inView then ApiClient.findings(Api.FindingsQuery.of(fNoBox)).map(_.length)
       else pointsF.map(_.length)
 
@@ -243,14 +254,21 @@ object App:
     // a failed load ends the "loading…" state with what went wrong, instead of leaving it there
     (for points <- pointsF; result <- sourcesF; total <- totalF yield (points, result, total)).onComplete { r =>
       if latest.isCurrent(mine) then
-        latest.answer(r, { (points, result, total) =>
-          totalCount = total
-          ResultsList.renderSources(result, ResultsList.SourceRenderOpts(
-            findings = points.length,
-            total = totalCount,
-            inView = inView,
-            params = Some(sourceFilter)
-          ))
-          statusVar.set("")
-        }, m => { statusVar.set(""); ResultsList.failed(s"Could not list sources: $m") })
+        latest.answer(
+          r,
+          { (points, result, total) =>
+            totalCount = total
+            ResultsList.renderSources(
+              result,
+              ResultsList.SourceRenderOpts(
+                findings = points.length,
+                total = totalCount,
+                inView = inView,
+                params = Some(sourceFilter)
+              )
+            )
+            statusVar.set("")
+          },
+          m => { statusVar.set(""); ResultsList.failed(s"Could not list sources: $m") }
+        )
     }

@@ -36,6 +36,7 @@ final case class GoalPut(
 
 object GoalPut:
   given Schema[GoalPut] = KindlingsSchema.derived[GoalPut].schema
+
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[GoalPut] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPut])
 
@@ -54,6 +55,7 @@ final case class GoalPatch(
 
 object GoalPatch:
   given Schema[GoalPatch] = KindlingsSchema.derived[GoalPatch].schema
+
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[GoalPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatch])
 
@@ -81,9 +83,10 @@ object GoalDeleted:
 
 // ── agent state ────────────────────────────────────────────────────────────────────────────────
 
-/** Value is stored as a JSON string — the server handles JSONB storage and round-trips it as a
-  * string through the wire so Kindlings/tapir Schema derivation works without a custom Schema for
-  * io.circe.Json. The agent parses/emits JSON at the CLI/MCP boundary. */
+/** Value is stored as a JSON string — the server handles JSONB storage and round-trips it as a string through the wire
+  * so Kindlings/tapir Schema derivation works without a custom Schema for io.circe.Json. The agent parses/emits JSON at
+  * the CLI/MCP boundary.
+  */
 final case class AgentStateEntry(
     key: String,
     value: String,
@@ -99,6 +102,7 @@ final case class AgentStatePut(
 
 object AgentStatePut:
   given Schema[AgentStatePut] = KindlingsSchema.derived[AgentStatePut].schema
+
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[AgentStatePut] = StrictJson.codec(KindlingsCodecAsObject.derived[AgentStatePut])
 

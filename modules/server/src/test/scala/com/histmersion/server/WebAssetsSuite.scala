@@ -1,11 +1,12 @@
 package com.histmersion.server
 
-/** Regression guards for how the web UI is shipped. The UI itself is Scala.js (`modules/web`,
-  * with its own suites); these read the served assets off the classpath — exactly as `Static.read`
-  * serves them — and assert the properties that once broke the page with no error at all.
+/** Regression guards for how the web UI is shipped. The UI itself is Scala.js (`modules/web`, with its own suites);
+  * these read the served assets off the classpath — exactly as `Static.read` serves them — and assert the properties
+  * that once broke the page with no error at all.
   *
-  * The precedent is `core`'s "no hardcoded ports in src/main" lint test: a grep over the real
-  * assets is a legitimate test when the property IS textual. */
+  * The precedent is `core`'s "no hardcoded ports in src/main" lint test: a grep over the real assets is a legitimate
+  * test when the property IS textual.
+  */
 class WebAssetsSuite extends munit.FunSuite:
 
   private def asset(name: String): String = Static.read(s"web/$name")
@@ -17,21 +18,44 @@ class WebAssetsSuite extends munit.FunSuite:
 
   test("the web UI's pages, its items' pages and the old list addresses serve the app; anything else does not"):
     def app(p: String) = com.histmersion.api.WebPaths.isApp(p.split('/').toList.filter(_.nonEmpty))
-    List("/", "/explore", "/library", "/library/upload", "/research", "/research/goals/bronze-age",
-      "/research/activity/jobs", "/settings/keys", "/place/pleiades:579885", "/event/ev1", "/run/3f2a",
-      "/manager/watch:x", "/job/77", "/acquire", "/tasks", "/log", "/merge").foreach(p => assert(app(p), p))
+    List(
+      "/",
+      "/explore",
+      "/library",
+      "/library/upload",
+      "/research",
+      "/research/goals/bronze-age",
+      "/research/activity/jobs",
+      "/settings/keys",
+      "/place/pleiades:579885",
+      "/event/ev1",
+      "/run/3f2a",
+      "/manager/watch:x",
+      "/job/77",
+      "/acquire",
+      "/tasks",
+      "/log",
+      "/merge"
+    ).foreach(p => assert(app(p), p))
     List("/source/x", "/article/y", "/run", "/run/a/b", "/nope", "/web/style.css", "/api/sources", "/jobs")
       .foreach(p => assert(!app(p), p))
 
   test("both page shells apply the reader's stored theme before the stylesheet paints"):
     val key = "localStorage.getItem(\"histmersion.theme\")"
-    for (name, html) <- List("index.html" -> asset("index.html"),
-        "a server page" -> Article.page("t", "<p>b</p>", PageKind.values.head)) do
+    for (name, html) <- List(
+        "index.html" -> asset("index.html"),
+        "a server page" -> Article.page("t", "<p>b</p>", PageKind.values.head)
+      )
+    do
       val at = html.indexOf(key)
       assert(at > 0, s"$name: no theme script")
       assert(at < html.indexOf("/web/style.css"), s"$name: the theme is applied after the stylesheet")
       assert(html.contains("setAttribute(\"data-theme\",t)") && html.contains("catch(e)"), name)
-    assert(asset("index.html").contains("""<link rel="preload" href="/web/vendor/source-fonts/SourceSans3-Regular.woff2" as="font""""))
+    assert(
+      asset("index.html").contains(
+        """<link rel="preload" href="/web/vendor/source-fonts/SourceSans3-Regular.woff2" as="font""""
+      )
+    )
 
   test("the bundle is a classic script, never type=module (its top-level `this` must be the window)"):
     val html = asset("index.html")
@@ -60,8 +84,11 @@ class WebAssetsSuite extends munit.FunSuite:
     // pane's origin.
     val css = asset("style.css")
     val keyframes = "@keyframes\\s+([\\w-]+)\\s*\\{((?:[^{}]*\\{[^{}]*\\})*[^{}]*)\\}".r
-      .findAllMatchIn(css).map(m => m.group(1) -> m.group(2)).toMap
-    val leafletPositioned = List("hd-marker", "hd-map-label-wrap", "hd-area-point-wrap", "hd-dot-wrap", "hd-point-wrap", "hd-event-wrap")
+      .findAllMatchIn(css)
+      .map(m => m.group(1) -> m.group(2))
+      .toMap
+    val leafletPositioned =
+      List("hd-marker", "hd-map-label-wrap", "hd-area-point-wrap", "hd-dot-wrap", "hd-point-wrap", "hd-event-wrap")
     for cls <- leafletPositioned do
       val rule = s"\\.$cls[^{]*\\{([^}]*)\\}".r.findAllMatchIn(css).map(_.group(1)).mkString
       val anims = "animation:\\s*([\\w-]+)".r.findAllMatchIn(rule).map(_.group(1)).toList
@@ -112,6 +139,7 @@ class WebAssetsSuite extends munit.FunSuite:
   private lazy val css = asset("style.css")
   private def ruleOf(selector: String): String =
     css.linesIterator.find(_.startsWith(selector + " {")).getOrElse(fail(s"no rule for $selector"))
+
   /** The full declaration block of the first rule whose selector is exactly `selector`. */
   private def block(selector: String): String =
     val at = css.indexOf("\n" + selector + " {")
@@ -119,8 +147,23 @@ class WebAssetsSuite extends munit.FunSuite:
     css.substring(at, css.indexOf("}", at))
 
   test("the control tokens are defined once on :root, and the narrow layout redefines them"):
-    val tokens = List("--space-1", "--space-4", "--space-6", "--fs-control", "--fs-icon", "--control-h", "--control-h-sm",
-      "--control-px", "--radius", "--gap-inline", "--gap-group", "--bar-px", "--bar-py", "--field-bg", "--on-accent")
+    val tokens = List(
+      "--space-1",
+      "--space-4",
+      "--space-6",
+      "--fs-control",
+      "--fs-icon",
+      "--control-h",
+      "--control-h-sm",
+      "--control-px",
+      "--radius",
+      "--gap-inline",
+      "--gap-group",
+      "--bar-px",
+      "--bar-py",
+      "--field-bg",
+      "--on-accent"
+    )
     val root = """(?s):root\s*\{(.*?)\}""".r.findAllMatchIn(css).map(_.group(1)).mkString
     tokens.foreach(t => assert(root.contains(s"$t:"), s"$t is not defined on :root"))
     val narrow = block("""[data-layout="narrow"]""")
@@ -134,8 +177,17 @@ class WebAssetsSuite extends munit.FunSuite:
       assert(b.contains("border-radius:var(--radius)"), b)
     }
     assert(ruleOf(".btn--icon").contains("font-size:var(--fs-icon)"), "an icon button's glyph is a token too")
-    List(".btn--primary", ".btn--ghost, .btn--toggle", ".btn--icon", ".btn--sm", ".btn--bare", ".btn--block",
-      ".btn--danger", ".btn-group", ".toolbar").foreach(ruleOf)
+    List(
+      ".btn--primary",
+      ".btn--ghost, .btn--toggle",
+      ".btn--icon",
+      ".btn--sm",
+      ".btn--bare",
+      ".btn--block",
+      ".btn--danger",
+      ".btn-group",
+      ".toolbar"
+    ).foreach(ruleOf)
     assert(ruleOf(".btn:focus-visible").contains("outline:2px solid var(--accent)"), "keyboard focus ring")
     assert(css.contains(""".btn--toggle[aria-pressed="true"]"""), "a pressed toggle is drawn pressed")
 
@@ -155,15 +207,25 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(block(".tl-ctl-end").contains("justify-self:end"))
 
   test("the one-off widget styles the shared classes replaced are gone, from the CSS and the code"):
-    val gone = List("layer-btn", "tl-btn", "action-btn", "text-input", "item-btn", "hd-layers-btn", "tl-play-active",
-      "layer-label")
+    val gone = List(
+      "layer-btn",
+      "tl-btn",
+      "action-btn",
+      "text-input",
+      "item-btn",
+      "hd-layers-btn",
+      "tl-play-active",
+      "layer-label"
+    )
     gone.foreach(c => assert(!css.contains(s".$c"), s"style.css still styles .$c"))
     val js = asset("app.bundle.js")
     List("layer-btn", "tl-btn", "action-btn", "text-input", "item-btn").foreach(c =>
-      assert(!js.contains("\"" + c) && !js.contains(" " + c + "\""), s"the UI still uses class $c"))
+      assert(!js.contains("\"" + c) && !js.contains(" " + c + "\""), s"the UI still uses class $c")
+    )
     // and what the code uses, the stylesheet defines
     List("btn btn--toggle", "btn btn--ghost", "btn btn--primary", "toolbar list-filters", "field").foreach(c =>
-      assert(js.contains(c), s"the bundle no longer uses '$c'"))
+      assert(js.contains(c), s"the bundle no longer uses '$c'")
+    )
 
   test("the toolbar's groups stack in the phone drawer, separated by a line across"):
     val stacked = block("""[data-layout="narrow"] .viewport-toggle .toolbar > .btn-group + .btn-group""")

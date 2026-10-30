@@ -23,5 +23,10 @@ class MediaSettingsSuite extends munit.FunSuite:
     val ex = m.europeana.europeanaExclusions
     assertEquals(ex.providers, List("OpenUp!"))
     assert(ex.dataProviders.contains("Natural History Museum") && ex.types.contains("PreservedSpecimen"), ex.toString)
-    assert(m.smithsonian.excludedProviders.contains("NMNHINV") && !m.smithsonian.excludedProviders.contains("NMNHANTHRO"))
-    assertEquals((m.met.excludedProviders, m.met.europeanaExclusions), (Nil, com.histmersion.domain.Europeana.Exclusions.none))
+    assert(
+      m.smithsonian.excludedProviders.contains("NMNHINV") && !m.smithsonian.excludedProviders.contains("NMNHANTHRO")
+    )
+    assertEquals(
+      (m.met.excludedProviders, m.met.europeanaExclusions),
+      (Nil, com.histmersion.domain.Europeana.Exclusions.none)
+    )

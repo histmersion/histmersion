@@ -8,18 +8,21 @@ import com.histmersion.domain.*
 
 import java.time.LocalDate
 
-/** One scholarly index a goal's saved queries are read from (#3761): the works matching a query that are
-  * newer than `since` (published, or deposited where the index says so), newest first. A small trait so a
-  * test hands fakes. */
+/** One scholarly index a goal's saved queries are read from (#3761): the works matching a query that are newer than
+  * `since` (published, or deposited where the index says so), newest first. A small trait so a test hands fakes.
+  */
 trait ScholarlyIndex:
   def name: String
   def search(query: String, since: LocalDate, limit: Int): Either[String, List[WorkRef]]
-  /** Why the index would not be asked now (CORE's budget spent, CORE asked to wait), if it would not: a
-    * sweep then leaves its watches unread, keeping their watermarks, and says so. */
+
+  /** Why the index would not be asked now (CORE's budget spent, CORE asked to wait), if it would not: a sweep then
+    * leaves its watches unread, keeping their watermarks, and says so.
+    */
   def unavailable: Option[String] = None
 
-/** The forward-citation and same-author alerts of a goal's sources (OpenAlex): the works citing one, a
-  * work's authors, and an author's newer works. */
+/** The forward-citation and same-author alerts of a goal's sources (OpenAlex): the works citing one, a work's authors,
+  * and an author's newer works.
+  */
 trait CitationAlerts:
   def citing(doi: String, since: LocalDate, limit: Int): Either[String, List[WorkRef]]
   def authors(doi: String): Either[String, List[String]]
@@ -29,20 +32,35 @@ trait CitationAlerts:
 final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex with CitationAlerts:
   val name = "openalex"
   private def works(filter: String, limit: Int, search: Option[String]): Either[String, List[WorkRef]] =
-    http.json(Url(cfg.openalex.url, "/works", (search.map("search" -> _).toList ++ List(
-      "filter" -> filter, "per-page" -> math.max(1, math.min(limit, 50)).toString, "sort" -> "publication_date:desc",
-      "select" -> ("id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations," +
-        "cited_by_count,is_retracted,type,abstract_inverted_index"),
-      "mailto" -> cfg.mailto))*)).map(AcquireParse.openalexWorks)
+    http
+      .json(
+        Url(
+          cfg.openalex.url,
+          "/works",
+          (search.map("search" -> _).toList ++ List(
+            "filter" -> filter,
+            "per-page" -> math.max(1, math.min(limit, 50)).toString,
+            "sort" -> "publication_date:desc",
+            "select" -> ("id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations," +
+              "cited_by_count,is_retracted,type,abstract_inverted_index"),
+            "mailto" -> cfg.mailto
+          ))*
+        )
+      )
+      .map(AcquireParse.openalexWorks)
 
   def search(query: String, since: LocalDate, limit: Int) =
     works(s"from_publication_date:$since,type:article|book|book-chapter", limit, Some(query))
 
   private def work(doi: String) =
-    http.json(Url(s"${cfg.openalex.url}/works/https://doi.org/$doi", "", "select" -> "id,authorships", "mailto" -> cfg.mailto))
+    http.json(
+      Url(s"${cfg.openalex.url}/works/https://doi.org/$doi", "", "select" -> "id,authorships", "mailto" -> cfg.mailto)
+    )
 
   def citing(doi: String, since: LocalDate, limit: Int) =
-    work(doi).flatMap(j => j.hcursor.get[String]("id").left.map(_.getMessage)).map(_.split("/").last)
+    work(doi)
+      .flatMap(j => j.hcursor.get[String]("id").left.map(_.getMessage))
+      .map(_.split("/").last)
       .flatMap(id => works(s"cites:$id,from_publication_date:$since", limit, None))
 
   def authors(doi: String) = work(doi).map(Candidates.openalexAuthorIds)
@@ -54,52 +72,106 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
 final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
   val name = "crossref"
   def search(query: String, since: LocalDate, limit: Int) =
-    http.json(Url(cfg.crossref.url, "/works",
-      "query" -> query, "rows" -> math.max(1, math.min(limit, 50)).toString, "sort" -> "created", "order" -> "desc",
-      "filter" -> s"from-created-date:$since,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book",
-      "select" -> "DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract",
-      "mailto" -> cfg.mailto)).map(AcquireParse.crossrefWorks)
+    http
+      .json(
+        Url(
+          cfg.crossref.url,
+          "/works",
+          "query" -> query,
+          "rows" -> math.max(1, math.min(limit, 50)).toString,
+          "sort" -> "created",
+          "order" -> "desc",
+          "filter" -> s"from-created-date:$since,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book",
+          "select" -> "DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract",
+          "mailto" -> cfg.mailto
+        )
+      )
+      .map(AcquireParse.crossrefWorks)
 
 /** Europe PMC: first publication since, newest first. */
 final class EuropePmcIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
   val name = "europepmc"
   def search(query: String, since: LocalDate, limit: Int) =
-    http.json(Url(cfg.europepmc.url, "/search",
-      "query" -> s"($query) AND FIRST_PDATE:[$since TO 3000-12-31]", "format" -> "json", "resultType" -> "core",
-      "pageSize" -> math.max(1, math.min(limit, 100)).toString, "sort" -> "FIRST_PDATE desc")).map(Candidates.europepmcWorks)
+    http
+      .json(
+        Url(
+          cfg.europepmc.url,
+          "/search",
+          "query" -> s"($query) AND FIRST_PDATE:[$since TO 3000-12-31]",
+          "format" -> "json",
+          "resultType" -> "core",
+          "pageSize" -> math.max(1, math.min(limit, 100)).toString,
+          "sort" -> "FIRST_PDATE desc"
+        )
+      )
+      .map(Candidates.europepmcWorks)
 
-/** arXiv: newest submissions first; the Atom feed has no date filter, so what is older than `since`'s
-  * year is dropped here (the stored candidates keep a work found twice from counting as new). */
+/** arXiv: newest submissions first; the Atom feed has no date filter, so what is older than `since`'s year is dropped
+  * here (the stored candidates keep a work found twice from counting as new).
+  */
 final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
   val name = "arxiv"
   def search(query: String, since: LocalDate, limit: Int) =
-    http.text(Url(cfg.candidates.arxivApiUrl, "",
-      "search_query" -> s"all:\"$query\"", "sortBy" -> "submittedDate", "sortOrder" -> "descending",
-      "max_results" -> math.max(1, math.min(limit, 100)).toString))
+    http
+      .text(
+        Url(
+          cfg.candidates.arxivApiUrl,
+          "",
+          "search_query" -> s"all:\"$query\"",
+          "sortBy" -> "submittedDate",
+          "sortOrder" -> "descending",
+          "max_results" -> math.max(1, math.min(limit, 100)).toString
+        )
+      )
       .map(Candidates.arxivWorks(_).filter(_.year.forall(_ >= since.getYear)))
 
-/** CORE: only with a key (its search refuses anonymous use) — the `oa-core` plugin's resolved
-  * `api-key`, else `acquire.core.api-key` — and through the server's CORE budget, at most
-  * `acquire.core.search-daily-tokens` a day. */
+/** CORE: only with a key (its search refuses anonymous use) — the `oa-core` plugin's resolved `api-key`, else
+  * `acquire.core.api-key` — and through the server's CORE budget, at most `acquire.core.search-daily-tokens` a day.
+  */
 final class CoreIndex(api: CoreApi, key: Option[String]) extends ScholarlyIndex:
   val name = "core"
   override def unavailable: Option[String] = api.unavailable(CoreQuota.Purpose.Search)
   def search(query: String, since: LocalDate, limit: Int) =
     key match
-      case None => Left("no CORE key (plugins.oa-core.api-key or acquire.core.api-key): CORE's search needs one")
+      case None    => Left("no CORE key (plugins.oa-core.api-key or acquire.core.api-key): CORE's search needs one")
       case Some(k) =>
-        api.searchWorks(k, s"($query) AND yearPublished>=${since.getYear}", math.max(1, math.min(limit, 100)),
-          CoreQuota.Purpose.Search).left.map(_.message).map(Candidates.coreWorks)
+        api
+          .searchWorks(
+            k,
+            s"($query) AND yearPublished>=${since.getYear}",
+            math.max(1, math.min(limit, 100)),
+            CoreQuota.Purpose.Search
+          )
+          .left
+          .map(_.message)
+          .map(Candidates.coreWorks)
 
 object Indexes:
-  /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). `coreKey`
-    * is CORE's key as the plugins resolved it ([[fetchers.CoreFetcher.key]]), else `acquire.core.api-key`;
-    * `core` the server's CORE budget. */
-  def of(cfg: AcquireConfig, http: Http, coreKey: Option[String] = None, core: CoreBudget = CoreBudget())
-      : (List[ScholarlyIndex], CitationAlerts) =
-    val key      = coreKey.orElse(cfg.core.key)
+  /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). `coreKey` is CORE's
+    * key as the plugins resolved it ([[fetchers.CoreFetcher.key]]), else `acquire.core.api-key`; `core` the server's
+    * CORE budget.
+    */
+  def of(
+      cfg: AcquireConfig,
+      http: Http,
+      coreKey: Option[String] = None,
+      core: CoreBudget = CoreBudget()
+  ): (List[ScholarlyIndex], CitationAlerts) =
+    val key = coreKey.orElse(cfg.core.key)
     val openalex = OpenAlexIndex(cfg, http)
-    val all: Map[String, ScholarlyIndex] = Map("openalex" -> openalex, "crossref" -> CrossrefIndex(cfg, http),
-      "europepmc" -> EuropePmcIndex(cfg, http), "arxiv" -> ArxivIndex(cfg, http), "core" -> CoreIndex(CoreApi(cfg, http, core), key))
+    val all: Map[String, ScholarlyIndex] = Map(
+      "openalex" -> openalex,
+      "crossref" -> CrossrefIndex(cfg, http),
+      "europepmc" -> EuropePmcIndex(cfg, http),
+      "arxiv" -> ArxivIndex(cfg, http),
+      "core" -> CoreIndex(CoreApi(cfg, http, core), key)
+    )
     // CORE only with its key (its search refuses anonymous use): without one it is not asked at all
-    (cfg.candidates.indexes.map(_.trim.toLowerCase).distinct.filter(n => n != "core" || key.isDefined).flatMap(all.get), openalex)
+    (
+      cfg.candidates.indexes
+        .map(_.trim.toLowerCase)
+        .distinct
+        .filter(n => n != "core" || key.isDefined)
+        .flatMap(all.get),
+      openalex
+    )

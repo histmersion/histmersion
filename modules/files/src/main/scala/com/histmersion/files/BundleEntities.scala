@@ -8,9 +8,10 @@ import io.circe.{Decoder, Encoder}
 import java.util.UUID
 import com.histmersion.values.BundleKind
 
-/** The entity content of a bundle, in memory — every NDJSON file of [[BundleFiles.all]] as its line
-  * type. Small by construction: the large things (OCR bodies, version bodies, asset bytes,
-  * originals) are blobs, referenced by sha256 and streamed separately. */
+/** The entity content of a bundle, in memory — every NDJSON file of [[BundleFiles.all]] as its line type. Small by
+  * construction: the large things (OCR bodies, version bodies, asset bytes, originals) are blobs, referenced by sha256
+  * and streamed separately.
+  */
 final case class BundleEntities(
     sources: List[BundleSource] = Nil,
     findings: List[BundleFinding] = Nil,
@@ -42,38 +43,40 @@ final case class BundleEntities(
 ):
   import BundleEntities.*
 
-  /** Every file's NDJSON payload, in [[BundleFiles.all]] order — empty files included, so a bundle
-    * always has the same set of entries. */
+  /** Every file's NDJSON payload, in [[BundleFiles.all]] order — empty files included, so a bundle always has the same
+    * set of entries.
+    */
   def payloads: List[(String, Array[Byte])] =
     def stamped[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))
-    def plain[A: Encoder.AsObject](as: List[A])   = BundleFormat.ndjson(as.map(BundleFormat.line(_)))
+    def plain[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.line(_)))
     List(
-      BundleKind.Source.file         -> stamped(sources),
-      BundleKind.Finding.file        -> stamped(findings),
-      BundleKind.Article.file        -> stamped(articles),
+      BundleKind.Source.file -> stamped(sources),
+      BundleKind.Finding.file -> stamped(findings),
+      BundleKind.Article.file -> stamped(articles),
       BundleKind.ArticleVersion.file -> stamped(versions),
-      BundleKind.Asset.file          -> stamped(assets),
-      BundleKind.AssetLink.file      -> stamped(assetLinks),
-      BundleKind.Attestation.file    -> stamped(attestations),
-      BundleKind.Event.file          -> stamped(events),
-      BundleKind.Goal.file           -> stamped(goals),
-      BundleKind.QueueItem.file      -> stamped(queue),
-      BundleKind.Place.file          -> stamped(places),
-      BundleKind.Period.file         -> stamped(periods),
-      BundleFiles.Edges              -> plain(edges),
-      BundleFiles.UnresolvedEdges    -> plain(unresolvedEdges),
-      BundleFiles.Assessments        -> plain(assessments),
-      BundleFiles.Aliases            -> plain(aliases),
-      BundleFiles.ArticleAliases     -> plain(articleAliases),
-      BundleFiles.EventAliases       -> plain(eventAliases),
-      BundleFiles.GoalAliases        -> plain(goalAliases),
-      BundleFiles.PlaceAliases       -> plain(placeAliases),
-      BundleFiles.EventCatalogue     -> plain(eventCatalogue),
-      BundleFiles.EventCandidates    -> plain(eventCandidates),
-      BundleFiles.EventChecks        -> plain(eventChecks),
-      BundleFiles.Corrections        -> plain(corrections),
-      BundleFiles.SiteTypes          -> plain(siteTypes),
-      BundleFiles.Tombstones         -> plain(tombstones))
+      BundleKind.Asset.file -> stamped(assets),
+      BundleKind.AssetLink.file -> stamped(assetLinks),
+      BundleKind.Attestation.file -> stamped(attestations),
+      BundleKind.Event.file -> stamped(events),
+      BundleKind.Goal.file -> stamped(goals),
+      BundleKind.QueueItem.file -> stamped(queue),
+      BundleKind.Place.file -> stamped(places),
+      BundleKind.Period.file -> stamped(periods),
+      BundleFiles.Edges -> plain(edges),
+      BundleFiles.UnresolvedEdges -> plain(unresolvedEdges),
+      BundleFiles.Assessments -> plain(assessments),
+      BundleFiles.Aliases -> plain(aliases),
+      BundleFiles.ArticleAliases -> plain(articleAliases),
+      BundleFiles.EventAliases -> plain(eventAliases),
+      BundleFiles.GoalAliases -> plain(goalAliases),
+      BundleFiles.PlaceAliases -> plain(placeAliases),
+      BundleFiles.EventCatalogue -> plain(eventCatalogue),
+      BundleFiles.EventCandidates -> plain(eventCandidates),
+      BundleFiles.EventChecks -> plain(eventChecks),
+      BundleFiles.Corrections -> plain(corrections),
+      BundleFiles.SiteTypes -> plain(siteTypes),
+      BundleFiles.Tombstones -> plain(tombstones)
+    )
 
   /** uid → (kind, rev, label) of every stamped entity. */
   def revs: Map[UUID, Rev] =
@@ -97,14 +100,17 @@ final case class BundleEntities(
 
   /** sha256 → what it is, for every blob these lines reference. */
   def blobRefs: Map[String, List[BlobUse]] =
-    (sources.flatMap(s => s.bodySha256.map(_ -> BlobUse.Body(s.uid)).toList ++
-        s.originalSha256.zip(s.originalExt).map((sha, ext) => sha -> BlobUse.Original(s.uid, ext)).toList) ++
+    (sources.flatMap(s =>
+      s.bodySha256.map(_ -> BlobUse.Body(s.uid)).toList ++
+        s.originalSha256.zip(s.originalExt).map((sha, ext) => sha -> BlobUse.Original(s.uid, ext)).toList
+    ) ++
       versions.map(v => v.bodySha256 -> BlobUse.VersionBody(v.uid)) ++
       assets.map(a => a.sha256 -> BlobUse.AssetBytes(a.uid)))
       .groupMap(_._1)(_._2)
 
-  /** The newest change these lines carry — the manifest's `asOf`. Timestamps share one fixed-width UTC
-    * format, so text order is time order. */
+  /** The newest change these lines carry — the manifest's `asOf`. Timestamps share one fixed-width UTC format, so text
+    * order is time order.
+    */
   def asOf: Option[String] =
     (sources.map(_.updatedAt) ++ findings.map(_.updatedAt) ++ assessments.map(_.checkedAt) ++
       aliases.map(_.createdAt) ++ articles.map(_.updatedAt) ++ versions.map(_.updatedAt) ++
@@ -116,22 +122,27 @@ final case class BundleEntities(
       corrections.map(_.updatedAt) ++ siteTypes.flatMap(_.checkedAt) ++
       tombstones.map(_.deletedAt)).maxOption
 
-  /** Every uid these lines REFER to (as opposed to own): what must exist in the bundle or locally.
-    * `owner` is the uid whose import writes the referring line (a source's edges, aliases and
-    * assessment are written with the source). An OPTIONAL reference (the target of an edge, an event's
-    * parent, a goal's parent) is dropped when its target is gone here; a required one makes the line
-    * impossible to write. */
+  /** Every uid these lines REFER to (as opposed to own): what must exist in the bundle or locally. `owner` is the uid
+    * whose import writes the referring line (a source's edges, aliases and assessment are written with the source). An
+    * OPTIONAL reference (the target of an edge, an event's parent, a goal's parent) is dropped when its target is gone
+    * here; a required one makes the line impossible to write.
+    */
   def references: List[Reference] =
     def req(kind: BundleKind, uid: UUID, owner: UUID, from: String) = Reference(kind, uid, owner, from, required = true)
-    def opt(kind: BundleKind, uid: UUID, owner: UUID, from: String) = Reference(kind, uid, owner, from, required = false)
+    def opt(kind: BundleKind, uid: UUID, owner: UUID, from: String) =
+      Reference(kind, uid, owner, from, required = false)
     findings.map(f => req(BundleKind.Source, f.sourceUid, f.uid, s"finding ${f.id}")) ++
       edges.map(e => opt(BundleKind.Source, e.dstUid, e.srcUid, s"edge ${e.kind}")) ++
       versions.map(v => req(BundleKind.Article, v.articleUid, v.uid, "article version")) ++
       assets.map(a => req(BundleKind.Source, a.sourceUid, a.uid, s"asset ${a.name}")) ++
       assetLinks.map(l => req(BundleKind.Asset, l.assetUid, l.uid, s"asset link to ${l.targetType} ${l.targetId}")) ++
-      attestations.map(t => req(BundleKind.Source, t.sourceUid, t.uid, s"attestation of ${t.targetType} ${t.targetId}")) ++
-      events.flatMap(e => e.parentUid.map(opt(BundleKind.Event, _, e.uid, s"event ${e.id} parent")).toList ++
-        e.edges.map(g => opt(BundleKind.Event, g.dstUid, e.uid, s"event ${e.id} edge ${g.kind}"))) ++
+      attestations.map(t =>
+        req(BundleKind.Source, t.sourceUid, t.uid, s"attestation of ${t.targetType} ${t.targetId}")
+      ) ++
+      events.flatMap(e =>
+        e.parentUid.map(opt(BundleKind.Event, _, e.uid, s"event ${e.id} parent")).toList ++
+          e.edges.map(g => opt(BundleKind.Event, g.dstUid, e.uid, s"event ${e.id} edge ${g.kind}"))
+      ) ++
       goals.flatMap(g => g.parentUid.map(opt(BundleKind.Goal, _, g.uid, s"goal ${g.slug} parent")).toList) ++
       // the owned sets: their source must at least be in the bundle or here
       edges.map(e => req(BundleKind.Source, e.srcUid, e.srcUid, s"edge ${e.kind}")) ++
@@ -143,8 +154,9 @@ final case class BundleEntities(
       goalAliases.map(a => opt(BundleKind.Goal, a.goalUid, a.goalUid, s"old goal slug ${a.alias}")) ++
       placeAliases.map(a => opt(BundleKind.Place, a.placeUid, a.placeUid, s"old place id ${a.alias}"))
 
-  /** References no line of this bundle satisfies — fine in an incremental bundle as long as the
-    * receiving side has them, a problem in a full one. */
+  /** References no line of this bundle satisfies — fine in an incremental bundle as long as the receiving side has
+    * them, a problem in a full one.
+    */
   def dangling: List[Reference] =
     val own = uids
     references.filterNot(r => own(r.uid))
@@ -153,8 +165,8 @@ object BundleEntities:
 
   final case class Rev(kind: BundleKind, rev: String, label: String)
 
-  /** One uid a line refers to, the uid the referring line is written under, and which line (for
-    * the message). */
+  /** One uid a line refers to, the uid the referring line is written under, and which line (for the message).
+    */
   final case class Reference(kind: BundleKind, uid: UUID, owner: UUID, from: String, required: Boolean)
 
   /** What a blob is for. */
@@ -164,8 +176,9 @@ object BundleEntities:
     case VersionBody(versionUid: UUID)
     case AssetBytes(assetUid: UUID)
 
-  /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the
-    * good ones kept. A missing file is an empty one. */
+  /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the good ones kept. A
+    * missing file is an empty one.
+    */
   def decode(payloads: Map[String, Array[Byte]]): (BundleEntities, List[String]) =
     val problems = List.newBuilder[String]
     def read[A: Decoder](path: String, stamped: Boolean): List[A] =
@@ -200,5 +213,6 @@ object BundleEntities:
       eventCandidates = read[BundleEventCandidate](BundleFiles.EventCandidates, false),
       eventChecks = read[BundleEventCheck](BundleFiles.EventChecks, false),
       corrections = read[BundleCorrection](BundleFiles.Corrections, false),
-      siteTypes = read[BundleSiteType](BundleFiles.SiteTypes, false))
+      siteTypes = read[BundleSiteType](BundleFiles.SiteTypes, false)
+    )
     (es, problems.result())

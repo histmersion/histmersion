@@ -8,8 +8,7 @@ import com.histmersion.config.given
 class HighlightSuite extends munit.FunSuite:
 
   test("terms: bare words, quoted phrases, longest first"):
-    assertEquals(Highlight.terms("""collapse "sea peoples" bronze"""),
-      List("sea peoples", "collapse", "bronze"))
+    assertEquals(Highlight.terms("""collapse "sea peoples" bronze"""), List("sea peoples", "collapse", "bronze"))
 
   test("terms: -excluded terms and the boolean operators are dropped"):
     assertEquals(Highlight.terms("""sea -egypt or bronze"""), List("bronze", "sea"))

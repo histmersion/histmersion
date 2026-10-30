@@ -7,11 +7,21 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 
-/** A CELL of a server tile: `n` items of one kind counted where there were more than a tile keeps
-  * alone (`ui.map-tiles`, docs/map-layers.md) — at the items' mean point, with the least and the
-  * greatest middle of their dates and their box. */
-final case class TileCellPoint(key: String, kind: DotKind, lat: Double, lon: Double, n: Int,
-    midLo: Option[Double], midHi: Option[Double], box: GeoBounds, undated: Int = 0)
+/** A CELL of a server tile: `n` items of one kind counted where there were more than a tile keeps alone
+  * (`ui.map-tiles`, docs/map-layers.md) — at the items' mean point, with the least and the greatest middle of their
+  * dates and their box.
+  */
+final case class TileCellPoint(
+    key: String,
+    kind: DotKind,
+    lat: Double,
+    lon: Double,
+    n: Int,
+    midLo: Option[Double],
+    midHi: Option[Double],
+    box: GeoBounds,
+    undated: Int = 0
+)
 
 /** The pure half of the tiled layers: a tile feature as the app's own point records. */
 object TileDecode:
@@ -28,44 +38,94 @@ object TileDecode:
   def cell(f: TilePointFeature, kind: DotKind): TileCellPoint =
     val p = f.props
     val box = (for w <- num(p, P.West); s <- num(p, P.South); e <- num(p, P.East); n <- num(p, P.North)
-      yield GeoBounds(s, w, n, e)).getOrElse(GeoBounds(f.at.lat, f.at.lon, f.at.lat, f.at.lon))
-    TileCellPoint(str(p, P.Key).getOrElse(s"${f.at.lat}|${f.at.lon}"), kind, f.at.lat, f.at.lon,
-      num(p, P.Count).fold(1)(_.toInt), num(p, P.MidLo), num(p, P.MidHi), box, num(p, P.Undated).fold(0)(_.toInt))
+    yield GeoBounds(s, w, n, e)).getOrElse(GeoBounds(f.at.lat, f.at.lon, f.at.lat, f.at.lon))
+    TileCellPoint(
+      str(p, P.Key).getOrElse(s"${f.at.lat}|${f.at.lon}"),
+      kind,
+      f.at.lat,
+      f.at.lon,
+      num(p, P.Count).fold(1)(_.toInt),
+      num(p, P.MidLo),
+      num(p, P.MidHi),
+      box,
+      num(p, P.Undated).fold(0)(_.toInt)
+    )
 
   def site(f: TilePointFeature): Option[SitePoint] =
     val p = f.props
     str(p, P.Id).map { id =>
       val period = for a <- num(p, P.PeriodStart); b <- num(p, P.PeriodEnd) yield (a, b)
-      SitePoint(Some(id), str(p, P.Label).getOrElse(""), str(p, P.Kind).getOrElse(com.histmersion.values.PlaceKind.Site),
-        str(p, P.SiteType), str(p, P.Basis), f.at.lat, f.at.lon, period, undated = num(p, P.Undated).exists(_ > 0))
+      SitePoint(
+        Some(id),
+        str(p, P.Label).getOrElse(""),
+        str(p, P.Kind).getOrElse(com.histmersion.values.PlaceKind.Site),
+        str(p, P.SiteType),
+        str(p, P.Basis),
+        f.at.lat,
+        f.at.lon,
+        period,
+        undated = num(p, P.Undated).exists(_ > 0)
+      )
     }
 
   def event(f: TilePointFeature): Option[EventGeo] =
     val p = f.props
-    for id <- str(p, P.Id) yield EventGeo(id, str(p, P.Label).getOrElse(id), str(p, P.Kind).getOrElse(""),
-      str(p, P.Scale).getOrElse(EventScale.Local), str(p, P.Historicity).getOrElse(""),
+    for id <- str(p, P.Id)
+    yield EventGeo(
+      id,
+      str(p, P.Label).getOrElse(id),
+      str(p, P.Kind).getOrElse(""),
+      str(p, P.Scale).getOrElse(EventScale.Local),
+      str(p, P.Historicity).getOrElse(""),
       TimeSpan(long(p, P.NotBefore), long(p, P.BeginBy), long(p, P.EndFrom), long(p, P.NotAfter)),
-      f.at.lat, f.at.lon, str(p, P.Anchor).getOrElse("event"), str(p, P.PlaceId), str(p, P.PlaceLabel), str(p, P.ParentId),
-      None, str(p, P.Tier).getOrElse(EventTier.Attested), str(p, P.Size), str(p, P.Precision).getOrElse(EventPrecision.Precise),
-      str(p, P.Dating))
+      f.at.lat,
+      f.at.lon,
+      str(p, P.Anchor).getOrElse("event"),
+      str(p, P.PlaceId),
+      str(p, P.PlaceLabel),
+      str(p, P.ParentId),
+      None,
+      str(p, P.Tier).getOrElse(EventTier.Attested),
+      str(p, P.Size),
+      str(p, P.Precision).getOrElse(EventPrecision.Precise),
+      str(p, P.Dating)
+    )
 
   def media(f: TilePointFeature): Option[MediaGeoHit] =
     val p = f.props
-    for uid <- str(p, P.Uid) yield MediaGeoHit(str(p, P.Citekey), str(p, P.AssetName).getOrElse(uid), str(p, P.Kind),
-      f.at.lat, f.at.lon, long(p, P.PeriodStart), long(p, P.PeriodEnd), str(p, P.Caption), uid, str(p, P.Provider),
-      str(p, P.License), str(p, P.Credit), str(p, P.ThumbUrl), fileUrl = Some(MediaThumb.filePath(uid)),
-      sourceUrl = str(p, P.SourceUrl), licenseUrl = str(p, P.LicenseUrl), author = str(p, P.Author))
+    for uid <- str(p, P.Uid)
+    yield MediaGeoHit(
+      str(p, P.Citekey),
+      str(p, P.AssetName).getOrElse(uid),
+      str(p, P.Kind),
+      f.at.lat,
+      f.at.lon,
+      long(p, P.PeriodStart),
+      long(p, P.PeriodEnd),
+      str(p, P.Caption),
+      uid,
+      str(p, P.Provider),
+      str(p, P.License),
+      str(p, P.Credit),
+      str(p, P.ThumbUrl),
+      fileUrl = Some(MediaThumb.filePath(uid)),
+      sourceUrl = str(p, P.SourceUrl),
+      licenseUrl = str(p, P.LicenseUrl),
+      author = str(p, P.Author)
+    )
 
 object TiledPoints:
-  /** Pure: what a tiled layer shows after a read at the same URL and zoom — the features read now, then those
-    * shown before that the read no longer has (the map let their tile go) and that `keep` (near the view). */
+  /** Pure: what a tiled layer shows after a read at the same URL and zoom — the features read now, then those shown
+    * before that the read no longer has (the map let their tile go) and that `keep` (near the view).
+    */
   def merge[A](fresh: Seq[A], was: Seq[A], key: A => String, keep: A => Boolean): Seq[A] =
     val now = fresh.iterator.map(key).toSet
     fresh ++ was.filter(a => !now(key(a)) && keep(a))
 
-/** The span the tiled layers are drawn for in playback: the playhead's window widened to whole buckets
-  * of the years `ui.map-tiles.playback-bucket-seconds` of playback cover (a round number of years), so
-  * the tiles' URL — and the request for them — changes once a bucket, and a replay finds them kept. */
+/** The span the tiled layers are drawn for in playback: the playhead's window widened to whole buckets of the years
+  * `ui.map-tiles.playback-bucket-seconds` of playback cover (a round number of years), so the tiles' URL — and the
+  * request for them — changes once a bucket, and a replay finds them kept.
+  */
 object PlaybackBuckets:
   /** Pure: the bucket of `yearsPerSecond` × `seconds`, up to a round 1, 2 or 5 × 10ⁿ years (at least 1). */
   def years(yearsPerSecond: Double, seconds: Double): Long =
@@ -80,8 +140,9 @@ object PlaybackBuckets:
     val b = bucket.max(1)
     (Math.floorDiv(lo, b) * b, Math.floorDiv(hi, b) * b + b - 1)
 
-/** The cells of a tiled layer drawn as bubbles ([[MapView.dots]] draws a cell alone as the bubble of
-  * its count): what they count for and where a click goes — into their box. */
+/** The cells of a tiled layer drawn as bubbles ([[MapView.dots]] draws a cell alone as the bubble of its count): what
+  * they count for and where a click goes — into their box.
+  */
 final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def shape: Shape = Shape.Circle
   def icon: Icon = Icon.PointSite
@@ -91,7 +152,8 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def key(c: TileCellPoint): String = c.key
   def at(c: TileCellPoint): (Double, Double) = (c.lat, c.lon)
   def inner(c: TileCellPoint): String = c.n.toString
-  def fill(c: TileCellPoint, span: (Long, Long)): String = MapView.rampEnds(c.midLo.toList ++ c.midHi, span, Certainty.NoSay)._1
+  def fill(c: TileCellPoint, span: (Long, Long)): String =
+    MapView.rampEnds(c.midLo.toList ++ c.midHi, span, Certainty.NoSay)._1
   def member(c: TileCellPoint): Member =
     Member(dot, c.n, (c.midLo.toList ++ c.midHi).distinct, Certainty.NoSay, cell = Some(c.box), undated = c.undated)
   override def classes(c: TileCellPoint): String = if c.undated == c.n then MapView.UndatedClass else ""
@@ -102,12 +164,18 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def open(key: String, c: TileCellPoint, row: dom.Element): Unit = MapView.zoomInto(List(c.box))
   override def recolour(m: DomMarker, c: TileCellPoint, span: (Long, Long)): Unit = MapView.repaintCell(m, member(c))
 
-/** One of the map's point layers read from the server's tiles (`GET /api/tiles`, [[PointTiles]]): its
-  * items in their [[PointLayer]] and the cells of the crowded tiles in another, both in the map's one
-  * cluster layer. The page sets the tiles' URL for the span and the layer's options ([[load]]); the
-  * features follow the view as the map brings its tiles in. Switched off, no tile is asked for. */
-final class TiledPoints[A](layer: TileLayer, val items: PointLayer[A], dot: DotKind, decode: TilePointFeature => Option[A],
-    maxZoom: () => Int):
+/** One of the map's point layers read from the server's tiles (`GET /api/tiles`, [[PointTiles]]): its items in their
+  * [[PointLayer]] and the cells of the crowded tiles in another, both in the map's one cluster layer. The page sets the
+  * tiles' URL for the span and the layer's options ([[load]]); the features follow the view as the map brings its tiles
+  * in. Switched off, no tile is asked for.
+  */
+final class TiledPoints[A](
+    layer: TileLayer,
+    val items: PointLayer[A],
+    dot: DotKind,
+    decode: TilePointFeature => Option[A],
+    maxZoom: () => Int
+):
   val cells: PointLayer[TileCellPoint] = PointLayer(CellKind(dot), () => MapView.dots, () => MapView.spanMid())
   // `var`s: the URL template and span asked for, whether the layer is on, the map's tiles once made, the
   // span the features shown were read for
@@ -157,10 +225,11 @@ final class TiledPoints[A](layer: TileLayer, val items: PointLayer[A], dot: DotK
       items.show(shown._1, s)
       cells.show(shown._2, s)
 
-  /** The features of the tiles in view, shown — once the tiles of the URL set last are all in. Read again for
-    * the same URL at the same zoom (the view moved, or only its size changed: a sidebar dragged), what was shown
-    * near the view and is no longer in a tile the map holds stays ([[TiledPoints.merge]]): the map lets go of
-    * the tiles a narrower view leaves, and their points went and came back, regrouping the bubbles near them. */
+  /** The features of the tiles in view, shown — once the tiles of the URL set last are all in. Read again for the same
+    * URL at the same zoom (the view moved, or only its size changed: a sidebar dragged), what was shown near the view
+    * and is no longer in a tile the map holds stays ([[TiledPoints.merge]]): the map lets go of the tiles a narrower
+    * view leaves, and their points went and came back, regrouping the bubbles near them.
+    */
   private def read(): Unit =
     tiles.filter(_.loaded).foreach { t =>
       val (cs, is) = t.features.partition(TileDecode.isCell)
@@ -172,20 +241,24 @@ final class TiledPoints[A](layer: TileLayer, val items: PointLayer[A], dot: DotK
           val s = TheMap.surface
           val margin = math.max(s.size._1, s.size._2)
           def near(p: (Double, Double)) = Clustering.inView(s, LatLon(p._1, p._2), margin)
-          (TiledPoints.merge(fresh._1, shown._1, items.kind.key, a => near(items.kind.at(a))),
-            TiledPoints.merge(fresh._2, shown._2, (c: TileCellPoint) => c.key, c => near((c.lat, c.lon))))
+          (
+            TiledPoints.merge(fresh._1, shown._1, items.kind.key, a => near(items.kind.at(a))),
+            TiledPoints.merge(fresh._2, shown._2, (c: TileCellPoint) => c.key, c => near((c.lat, c.lon)))
+          )
       readAt = Some(at)
       items.show(shown._1, span)
       cells.show(shown._2, span)
       changed.update(_ + 1)
     }
 
-  /** Ticks whenever what is shown changes (a tile read, the layer switched off): the lists of what is on the
-    * map follow it. */
+  /** Ticks whenever what is shown changes (a tile read, the layer switched off): the lists of what is on the map follow
+    * it.
+    */
   val changed: com.raquo.laminar.api.L.Var[Int] = com.raquo.laminar.api.L.Var(0)
 
-  /** What is shown in the map's view now: the items drawn as themselves, and how many more its cells there
-    * count. Nothing while the layer is off. */
+  /** What is shown in the map's view now: the items drawn as themselves, and how many more its cells there count.
+    * Nothing while the layer is off.
+    */
   def inViewNow(): (Seq[A], Int) =
     if !on || !TheMap.isUp then (Nil, 0)
     else

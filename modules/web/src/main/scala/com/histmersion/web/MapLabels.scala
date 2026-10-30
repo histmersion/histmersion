@@ -11,39 +11,39 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 
-/** The NAMES on the map: every region and polity on the boundaries layer is named, and the names that
-  * would collide are thinned out, events first, then larger shapes ([[LabelPlacement]] decides where
-  * and which, [[LabelMotion]] how they move; this object applies both to the map).
+/** The NAMES on the map: every region and polity on the boundaries layer is named, and the names that would collide are
+  * thinned out, events first, then larger shapes ([[LabelPlacement]] decides where and which, [[LabelMotion]] how they
+  * move; this object applies both to the map).
   *
-  *   - an area's name sits at its home (the pole of inaccessibility of its main part, or of an
-  *     archipelago's hull), computed once per shape (cached by its id and outline). When that is off
-  *     screen or too near the edge for the whole name, the name moves into the part of the shape still
-  *     on screen; it is hidden only when no place keeps it on screen, or when it collides;
-  *   - THE PASS (at the end of a pan or zoom, `moveend`, and when the set of shapes changes) does the
-  *     costly part once: size classes (writes), one layout read of every name's size, and the exact
-  *     place in the settled viewport ([[LabelPlacement.place]], a clip and a polylabel near the edge);
-  *   - THE FRAME (every animation frame while the map moves or a name is still moving) does the cheap
-  *     part: each name's target from what the pass cached ([[LabelPlacement.glide]], a clamp), the
-  *     collision cull with hysteresis, and the easing — a name glides toward its target, never jumps,
-  *     fades and grows in, shrinks and fades out, and scales a little with a zoom before it settles at
-  *     its size class. The name's marker stays at the home; the frame writes only the CSS custom
-  *     properties of the names that changed (`--dx --dy` offset, `--s` size, `--o` opacity), which the
-  *     stylesheet turns into a transform — no layout, no DOM rebuild. With reduced motion, positions and
-  *     sizes snap and the names only fade;
+  *   - an area's name sits at its home (the pole of inaccessibility of its main part, or of an archipelago's hull),
+  *     computed once per shape (cached by its id and outline). When that is off screen or too near the edge for the
+  *     whole name, the name moves into the part of the shape still on screen; it is hidden only when no place keeps it
+  *     on screen, or when it collides;
+  *   - THE PASS (at the end of a pan or zoom, `moveend`, and when the set of shapes changes) does the costly part once:
+  *     size classes (writes), one layout read of every name's size, and the exact place in the settled viewport
+  *     ([[LabelPlacement.place]], a clip and a polylabel near the edge);
+  *   - THE FRAME (every animation frame while the map moves or a name is still moving) does the cheap part: each name's
+  *     target from what the pass cached ([[LabelPlacement.glide]], a clamp), the collision cull with hysteresis, and
+  *     the easing — a name glides toward its target, never jumps, fades and grows in, shrinks and fades out, and scales
+  *     a little with a zoom before it settles at its size class. The name's marker stays at the home; the frame writes
+  *     only the CSS custom properties of the names that changed (`--dx --dy` offset, `--s` size, `--o` opacity), which
+  *     the stylesheet turns into a transform — no layout, no DOM rebuild. With reduced motion, positions and sizes snap
+  *     and the names only fade;
   *   - a point-only region or polity (no boundary yet) and a people keep their own interactive label
   *     ([[PlaceGlyph.labelMarker]]) and join the cull, ranked after every area;
-  *   - an event's name in playback ([[EventLayer]]) joins it too, ranked ABOVE every area and point
-  *     name ([[EventPlayback.rank]]): it is there for a moment, the static names come back when it
-  *     goes. Only its name is culled, never its dot. Point and event names fade and grow through a CSS
-  *     transition on `.is-culled`;
-  *   - the names' colours follow the base map's tone ([[MapTone]]): `.map-tone-light` /
-  *     `.map-tone-dark` on the map container, halo text either way (`style.css`);
-  *   - an area's name is the keyboard's way to the area (its shape is on the map's canvas): a button
-  *     that shows the place's card and chooses it ([[PlaceHover.bindName]]). */
+  *   - an event's name in playback ([[EventLayer]]) joins it too, ranked ABOVE every area and point name
+  *     ([[EventPlayback.rank]]): it is there for a moment, the static names come back when it goes. Only its name is
+  *     culled, never its dot. Point and event names fade and grow through a CSS transition on `.is-culled`;
+  *   - the names' colours follow the base map's tone ([[MapTone]]): `.map-tone-light` / `.map-tone-dark` on the map
+  *     container, halo text either way (`style.css`);
+  *   - an area's name is the keyboard's way to the area (its shape is on the map's canvas): a button that shows the
+  *     place's card and chooses it ([[PlaceHover.bindName]]).
+  */
 object MapLabels:
 
-  /** The pane the area names are drawn in: above the shapes, below the markers, and never a pointer
-    * target (the shape under a name answers the pointer). */
+  /** The pane the area names are drawn in: above the shapes, below the markers, and never a pointer target (the shape
+    * under a name answers the pointer).
+    */
   private def pane = TheMap.pane(MapStack.Pane.Labels)
 
   // `var`s: the one map, and the frames queued for it
@@ -55,20 +55,27 @@ object MapLabels:
   private val areaMarkers = mutable.LinkedHashMap.empty[String, DomMarker]
   private var areasOn = false
 
-  /** A name the pass places: its anchor, its rank (an area's zoom-0 size; a point label ranks below
-    * every area, an event above), the shape it names (areas only), its element once it is drawn
-    * it, and (events) its marker's element, whose corner IS the anchor — an event's name is beside its
-    * dot, stacked under another event's, so the pass measures where it actually is. */
-  private final class Entry(val latlng: LatLon, val rank: Double, val shape: Option[LabelPlacement.Shape],
-      val el: () => Option[dom.HTMLElement], val anchorEl: Option[() => Option[dom.HTMLElement]] = None,
-      val marker: Option[DomMarker] = None)
+  /** A name the pass places: its anchor, its rank (an area's zoom-0 size; a point label ranks below every area, an
+    * event above), the shape it names (areas only), its element once it is drawn it, and (events) its marker's element,
+    * whose corner IS the anchor — an event's name is beside its dot, stacked under another event's, so the pass
+    * measures where it actually is.
+    */
+  final private class Entry(
+      val latlng: LatLon,
+      val rank: Double,
+      val shape: Option[LabelPlacement.Shape],
+      val el: () => Option[dom.HTMLElement],
+      val anchorEl: Option[() => Option[dom.HTMLElement]] = None,
+      val marker: Option[DomMarker] = None
+  )
 
   private val entries = mutable.LinkedHashMap.empty[String, Entry]
 
-  /** What the frames need of one name between passes: its size and centre offset from its anchor
-    * (px, measured by the pass), its size class, the exact place of the settled view (areas), where it
-    * heads, how it moves, how visible and how big it is, and what was last written to it. */
-  private final class Live:
+  /** What the frames need of one name between passes: its size and centre offset from its anchor (px, measured by the
+    * pass), its size class, the exact place of the settled view (areas), where it heads, how it moves, how visible and
+    * how big it is, and what was last written to it.
+    */
+  final private class Live:
     var w = 0.0
     var h = 0.0
     var ox = 0.0
@@ -82,7 +89,7 @@ object MapLabels:
     var s = 1.0
     var vs = 0.0
     var shown = false
-    var wrote = Array(Double.NaN, Double.NaN, Double.NaN, Double.NaN)   // --dx --dy --s --o
+    var wrote = Array(Double.NaN, Double.NaN, Double.NaN, Double.NaN) // --dx --dy --s --o
 
   private val state = mutable.HashMap.empty[String, Live]
 
@@ -92,9 +99,11 @@ object MapLabels:
 
   /** What the names hold, for [[Diagnostics]]: the names placed, their per-name state, the shapes. */
   def stats: List[(String, BoundedCache.Stats)] =
-    List("labels.entries" -> BoundedCache.Stats(entries.size, 0, 0L, 0L),
+    List(
+      "labels.entries" -> BoundedCache.Stats(entries.size, 0, 0L, 0L),
       "labels.state" -> BoundedCache.Stats(state.size, 0, 0L, 0L),
-      "labels.shapes" -> BoundedCache.stats(shapes))
+      "labels.shapes" -> BoundedCache.stats(shapes)
+    )
   private def live(k: String): Live = state.getOrElseUpdate(k, Live())
 
   // the view: the zoom the size classes were chosen at, whether the view is the one the pass placed
@@ -108,9 +117,9 @@ object MapLabels:
     map = m
     // a pan or a zoom: the frames ease the names along (every frame reads the map's own view); its END
     // places them exactly (the pass)
-    m.on(MapEventKind.MoveStart)(_ => { moving = true; settled = false; loop() })
-    m.on(MapEventKind.ZoomStart)(_ => { moving = true; settled = false; loop() })
-    m.on(MapEventKind.MoveEnd)(_ => { moving = false; schedule() })
+    m.on(MapEventKind.MoveStart) { _ => moving = true; settled = false; loop() }
+    m.on(MapEventKind.ZoomStart) { _ => moving = true; settled = false; loop() }
+    m.on(MapEventKind.MoveEnd) { _ => moving = false; schedule() }
     val configured = MapTone.parse(ui.tilesTone)
     BaseMaps.shown.signal.foreach { b =>
       val c = m.container.classList
@@ -123,7 +132,7 @@ object MapLabels:
   def attach(): Unit = areasOn = true
 
   def detach(): Unit =
-    generation += 1   // the slices still placing names stop
+    generation += 1 // the slices still placing names stop
     areasOn = false
     if map != null then
       areaMarkers.values.foreach(pane.remove)
@@ -135,17 +144,24 @@ object MapLabels:
   private val PointKey = "p|"
   private val EventKey = "e|"
 
-  /** Name each area feature (a GeoJSON Feature with a Polygon or MultiPolygon) of the layer just
-    * drawn. `key` is the feature's key on the layer; `wrapClass` its label wrapper's classes; `release`
-    * is told when a feature's outline is no longer needed here (the caller then drops it).
+  /** Name each area feature (a GeoJSON Feature with a Polygon or MultiPolygon) of the layer just drawn. `key` is the
+    * feature's key on the layer; `wrapClass` its label wrapper's classes; `release` is told when a feature's outline is
+    * no longer needed here (the caller then drops it).
     *
-    * The areas whose label place is known (cached from an earlier answer) are named at once; the others
-    * are placed a slice at a time, [[SliceMs]] each, between the page's other work, and named together
-    * once all are placed (#1949): a whole range's 1 600 new shapes took one ~300 ms task, during which no
-    * input was answered. A newer call (or the layer switched off) stops the slices of an older one. */
-  def syncAreas(features: Seq[js.Dynamic], key: js.Dynamic => String, label: js.Dynamic => String,
-      wrapClass: js.Dynamic => String, place: js.Dynamic => Option[(String, String, String)],
-      asOf: () => Option[Long], release: js.Dynamic => Unit = _ => ()): Unit =
+    * The areas whose label place is known (cached from an earlier answer) are named at once; the others are placed a
+    * slice at a time, [[SliceMs]] each, between the page's other work, and named together once all are placed (#1949):
+    * a whole range's 1 600 new shapes took one ~300 ms task, during which no input was answered. A newer call (or the
+    * layer switched off) stops the slices of an older one.
+    */
+  def syncAreas(
+      features: Seq[js.Dynamic],
+      key: js.Dynamic => String,
+      label: js.Dynamic => String,
+      wrapClass: js.Dynamic => String,
+      place: js.Dynamic => Option[(String, String, String)],
+      asOf: () => Option[Long],
+      release: js.Dynamic => Unit = _ => ()
+  ): Unit =
     generation += 1
     if map == null || !areasOn then features.foreach(release)
     else
@@ -181,9 +197,14 @@ object MapLabels:
   private var generation = 0
 
   /** The names of `named` (the areas whose place is known), the others' names gone (fading out). */
-  private def applyAreas(named: Seq[(js.Dynamic, LabelPlacement.Shape)], key: js.Dynamic => String,
-      label: js.Dynamic => String, wrapClass: js.Dynamic => String, place: js.Dynamic => Option[(String, String, String)],
-      asOf: () => Option[Long]): Unit =
+  private def applyAreas(
+      named: Seq[(js.Dynamic, LabelPlacement.Shape)],
+      key: js.Dynamic => String,
+      label: js.Dynamic => String,
+      wrapClass: js.Dynamic => String,
+      place: js.Dynamic => Option[(String, String, String)],
+      asOf: () => Option[Long]
+  ): Unit =
     if map != null && areasOn then
       val keep = named.map((f, _) => AreaKey + key(f)).toSet
       entries.filterInPlace((k, _) => !k.startsWith(AreaKey) || keep(k))
@@ -219,7 +240,7 @@ object MapLabels:
             if !areaMarkers.contains(k) then
               val m = areaMarker(s, label(f), wrapClass(f))
               place(f).foreach((id, l, kind) => PlaceHover.bindName(m, id, l, kind, asOf))
-              state.remove(k)   // a new element: it fades in from nothing
+              state.remove(k) // a new element: it fades in from nothing
               areaMarkers(k) = m
               pane.add(m)
               register(k, m, s)
@@ -234,14 +255,17 @@ object MapLabels:
     marker.onAdded(() =>
       entries(k) = Entry(marker.at, -1.0, None, () => inner(marker))
       state.remove(k)
-      schedule())
+      schedule()
+    )
     marker.onRemoved(() =>
       // a newer marker of the same key may have taken its place already
-      entries.get(k).foreach(e => if e.el().forall(el => !el.isConnected) then { entries.remove(k); state.remove(k) }))
+      entries.get(k).foreach(e => if e.el().forall(el => !el.isConnected) then { entries.remove(k); state.remove(k) })
+    )
 
-  /** An event's name ([[EventLayer]]) takes part in the pass while it is shown: `label` is its name
-    * element (what a cull hides), `marker` its marker. Added hidden (`is-culled`, so it never flashes
-    * over another name); without a map pass it is simply shown. */
+  /** An event's name ([[EventLayer]]) takes part in the pass while it is shown: `label` is its name element (what a
+    * cull hides), `marker` its marker. Added hidden (`is-culled`, so it never flashes over another name); without a map
+    * pass it is simply shown.
+    */
   def trackEvent(key: String, marker: DomMarker, rank: Double, label: () => Option[dom.HTMLElement]): Unit =
     if map == null then label().foreach(_.classList.remove(Culled))
     else
@@ -269,7 +293,11 @@ object MapLabels:
 
   private def areaMarker(s: LabelPlacement.Shape, label: String, wrapClass: String): DomMarker =
     // hidden until the first pass has sized and placed it; it then fades and grows in
-    DomMarker(s.lat, s.lon, DomMarker.element(wrapClass, s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label)}</span>"""))
+    DomMarker(
+      s.lat,
+      s.lon,
+      DomMarker.element(wrapClass, s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label)}</span>""")
+    )
 
   // ── shapes ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -286,26 +314,28 @@ object MapLabels:
           else g.coordinates.asInstanceOf[js.Array[js.Dynamic]]
         Some((signature(f, parts), parts))
 
-  /** The label place of a feature when it is known without work: `Some(None)` for a feature that is
-    * not an area (nothing to place), `Some(Some(_))` from the cache, `None` when it must be computed. */
+  /** The label place of a feature when it is known without work: `Some(None)` for a feature that is not an area
+    * (nothing to place), `Some(Some(_))` from the cache, `None` when it must be computed.
+    */
   private def cachedShape(f: js.Dynamic): Option[Option[LabelPlacement.Shape]] =
     outline(f) match
-      case None              => Some(None)
-      case Some((sig, _))    => shapes.get(sig)
+      case None           => Some(None)
+      case Some((sig, _)) => shapes.get(sig)
 
   /** The label place of an area feature, from the cache when its outline was seen before. */
   private def shapeOf(f: js.Dynamic): Option[LabelPlacement.Shape] =
     outline(f).flatMap { (sig, parts) =>
       shapes.get(sig) match
         case Some(s) => s
-        case None =>
+        case None    =>
           val s = LabelPlacement.shape(parts.toSeq.map(polyRings))
           shapes.put(sig, s)
           s
     }
 
-  /** An outline's identity, cheaply: the feature's id, its parts, and each outer ring's length and
-    * first vertex — two years of one polity with the same outline share it. */
+  /** An outline's identity, cheaply: the feature's id, its parts, and each outer ring's length and first vertex — two
+    * years of one polity with the same outline share it.
+    */
   private def signature(f: js.Dynamic, parts: js.Array[js.Dynamic]): String =
     val id = Option(f.properties).filterNot(js.isUndefined).map(_.id.toString).getOrElse("")
     val sb = StringBuilder(id)
@@ -316,8 +346,9 @@ object MapLabels:
     }
     sb.toString
 
-  /** One polygon's rings as (lat, lon), thinned on the way in to at most
-    * [[LabelPlacement.MaxRingPoints]] each — the label needs the shape's room, not its coastline. */
+  /** One polygon's rings as (lat, lon), thinned on the way in to at most [[LabelPlacement.MaxRingPoints]] each — the
+    * label needs the shape's room, not its coastline.
+    */
   private def polyRings(p: js.Dynamic): Seq[Seq[(Double, Double)]] =
     p.asInstanceOf[js.Array[js.Array[js.Array[Double]]]].toSeq.map { ring =>
       val step = math.max(1, math.ceil(ring.length.toDouble / LabelPlacement.MaxRingPoints).toInt)
@@ -330,7 +361,7 @@ object MapLabels:
   def schedule(): Unit =
     if !queued && map != null then
       queued = true
-      dom.window.requestAnimationFrame(_ => { queued = false; run() })
+      dom.window.requestAnimationFrame { _ => queued = false; run() }
 
   private val Culled = "is-culled"
   private val TierClasses = LabelPlacement.Tier.values.map(_.css)
@@ -349,8 +380,9 @@ object MapLabels:
     val (w, h) = map.size
     Rect(p.x - w / 2 / scale, p.y - h / 2 / scale, p.x + w / 2 / scale, p.y + h / 2 / scale)
 
-  /** Size every name for the zoom (writes), measure them (one layout), place the area names exactly in
-    * the settled viewport (pure), then draw the first frame of the result. */
+  /** Size every name for the zoom (writes), measure them (one layout), place the area names exactly in the settled
+    * viewport (pure), then draw the first frame of the result.
+    */
   private def run(): Unit =
     val t0 = now()
     val z = zoomNow()
@@ -424,8 +456,9 @@ object MapLabels:
     if busy || moving then dom.window.requestAnimationFrame(tick)
     else looping = false
 
-  /** One frame: every name's target (cheap), the cull, the easing, and the writes of what changed.
-    * `true` while some name is still on its way. */
+  /** One frame: every name's target (cheap), the cull, the easing, and the writes of what changed. `true` while some
+    * name is still on its way.
+    */
   private def frame(t: Double, reduced: Boolean): Boolean =
     if map == null then false
     else
@@ -463,8 +496,10 @@ object MapLabels:
         e.shape match
           case Some(s) =>
             st.target.foreach { p =>
-              val inner = view.inset((st.w * zs / 2 + LabelPlacement.EdgePadPx) / scale,
-                (st.h * zs / 2 + LabelPlacement.EdgePadPx) / scale)
+              val inner = view.inset(
+                (st.w * zs / 2 + LabelPlacement.EdgePadPx) / scale,
+                (st.h * zs / 2 + LabelPlacement.EdgePadPx) / scale
+              )
               st.motion =
                 if st.motion == null || st.a == 0 || reduced then Motion.at(p)
                 else st.motion.toward(p, dt, reduced).within(inner)
@@ -492,8 +527,13 @@ object MapLabels:
       busy
 
   /** Write a name's offset from its home, its size and its opacity — only what changed. */
-  private def render(st: Live, el: dom.HTMLElement, s: LabelPlacement.Shape, scale: Double,
-      reduced: Boolean = false): Unit =
+  private def render(
+      st: Live,
+      el: dom.HTMLElement,
+      s: LabelPlacement.Shape,
+      scale: Double,
+      reduced: Boolean = false
+  ): Unit =
     if st.motion != null then
       write(st, el, 0, "--dx", (st.motion.p.x - s.home.x) * scale, 0.05, "px")
       write(st, el, 1, "--dy", (st.motion.p.y - s.home.y) * scale, 0.05, "px")

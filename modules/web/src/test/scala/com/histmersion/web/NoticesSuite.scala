@@ -2,8 +2,9 @@ package com.histmersion.web
 
 import com.histmersion.api.UiNotices.{Board, Counter}
 
-/** The pure parts of the toolbar's notices: which window watches which board, which open windows are
-  * marked read and at what, and what a button says. */
+/** The pure parts of the toolbar's notices: which window watches which board, which open windows are marked read and at
+  * what, and what a button says.
+  */
 class NoticesSuite extends munit.FunSuite:
 
   private val t1 = "2026-10-11T08:00:00.000000Z"
@@ -21,14 +22,24 @@ class NoticesSuite extends munit.FunSuite:
     assertEquals(Notices.boardOf(WindowKey.Goal("bronze-age")), None, "one goal's window is not the goals list")
     assertEquals(Notices.boardOf(WindowKey.Jobs), None)
     // every board is a page of Research's, which marks it read while it is shown
-    val pages = List(Route.Research(ResearchSection.Goals), Route.Research(ResearchSection.Decisions),
-      Route.Research(ResearchSection.Backlog), Route.Research(ResearchSection.Acquire), Route.Activity(ActivityTab.Worklog))
-    Board.values.foreach(b => assert(pages.exists(r => Route.board(r).flatMap(Notices.boardOf).contains(b)), b.toString))
+    val pages = List(
+      Route.Research(ResearchSection.Goals),
+      Route.Research(ResearchSection.Decisions),
+      Route.Research(ResearchSection.Backlog),
+      Route.Research(ResearchSection.Acquire),
+      Route.Activity(ActivityTab.Worklog)
+    )
+    Board.values.foreach(b =>
+      assert(pages.exists(r => Route.board(r).flatMap(Notices.boardOf).contains(b)), b.toString)
+    )
     assertEquals(Route.board(Route.Activity(ActivityTab.Jobs)), None)
 
   test("an open window with news is marked read at the latest change it showed"):
-    val cs = Map("tasks" -> c("tasks", Some(t2), Some(t1)), "goals" -> c("goals", Some(t2), Some(t1)),
-      "log" -> c("log", Some(t1), Some(t1)))
+    val cs = Map(
+      "tasks" -> c("tasks", Some(t2), Some(t1)),
+      "goals" -> c("goals", Some(t2), Some(t1)),
+      "log" -> c("log", Some(t1), Some(t1))
+    )
     assertEquals(Notices.toMark(List(WindowKey.Tasks, WindowKey.Jobs), cs), List(Board.Tasks -> t2))
     assertEquals(Notices.toMark(List(WindowKey.Log), cs), Nil, "nothing new: nothing to send")
     assertEquals(Notices.toMark(Nil, cs), Nil, "a closed window stays bold")

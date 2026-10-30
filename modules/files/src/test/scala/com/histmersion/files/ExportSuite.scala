@@ -4,8 +4,9 @@ import com.histmersion.api.*
 import com.histmersion.api.given
 import com.histmersion.values.{Confidence, SourceStatus}
 
-/** `Export.note` must be the inverse of `Frontmatter.parseNote` — that round trip is what lets the
-  * Markdown wiki stay a faithful mirror of the database (plan §1.9a `export` / `seed --force`). */
+/** `Export.note` must be the inverse of `Frontmatter.parseNote` — that round trip is what lets the Markdown wiki stay a
+  * faithful mirror of the database (plan §1.9a `export` / `seed --force`).
+  */
 class ExportSuite extends munit.FunSuite:
 
   private val ck = "haak2015_massive"
@@ -29,13 +30,23 @@ class ExportSuite extends munit.FunSuite:
     calibreId = Some("412"),
     ocrMarkdown = Some("MEGABYTES of converted paper that must NOT be exported"),
     findings = List(
-      Finding(s"$ck#0", ck, "Corded Ware derived ~75% of ancestry from Yamnaya.",
-        Some("Central Europe (Germany)"), Some(GeoPoint(10.4, 51.2)), Some(Period(-2500, -2200)),
-        Some("Late Neolithic / Corded Ware"), List("corded_ware", "yamnaya_culture"), Some(Confidence.High)),
-      Finding(s"$ck#1", ck, "An undated, unplaced claim.", None, None, None, None, Nil, None)),
+      Finding(
+        s"$ck#0",
+        ck,
+        "Corded Ware derived ~75% of ancestry from Yamnaya.",
+        Some("Central Europe (Germany)"),
+        Some(GeoPoint(10.4, 51.2)),
+        Some(Period(-2500, -2200)),
+        Some("Late Neolithic / Corded Ware"),
+        List("corded_ware", "yamnaya_culture"),
+        Some(Confidence.High)
+      ),
+      Finding(s"$ck#1", ck, "An undated, unplaced claim.", None, None, None, None, Nil, None)
+    ),
     edges = List(Edge(ck, "anthony2007_horse", "references")),
     notes = Some("# Massive migration\n\nSynthesis citing [[anthony2007_horse]].\n\n## References\n\n- one"),
-    updatedAt = Some("2026-08-25T10:00:00.000000Z"))
+    updatedAt = Some("2026-08-25T10:00:00.000000Z")
+  )
 
   test("export then parse round-trips every frontmatter field"):
     val back = Frontmatter.parseNote(Export.note(source), "wrong_fallback").get
@@ -70,16 +81,29 @@ class ExportSuite extends munit.FunSuite:
     assert(!Export.note(source).contains("MEGABYTES"))
 
   test("export is stable: exporting a parsed export gives the identical text"):
-    val once  = Export.note(source)
+    val once = Export.note(source)
     val twice = Export.note(Frontmatter.parseNote(once, ck).get)
     assertEquals(twice, once)
 
   test("a source with no findings, notes or optional metadata still round-trips"):
     val bare = Source(
-      citekey = "bare_one", title = "T", authors = Nil, doi = None, year = None, venue = None,
-      status = SourceStatus.Unassessed, topics = Nil, regions = Nil, tags = Nil, period = None,
-      summary = None, citedByCount = None, influentialCitations = None, provenance = None,
-      calibreId = None)
+      citekey = "bare_one",
+      title = "T",
+      authors = Nil,
+      doi = None,
+      year = None,
+      venue = None,
+      status = SourceStatus.Unassessed,
+      topics = Nil,
+      regions = Nil,
+      tags = Nil,
+      period = None,
+      summary = None,
+      citedByCount = None,
+      influentialCitations = None,
+      provenance = None,
+      calibreId = None
+    )
     val back = Frontmatter.parseNote(Export.note(bare), "fallback").get
     assertEquals(back.citekey, "bare_one")
     assertEquals(back.findings, Nil)
@@ -87,7 +111,7 @@ class ExportSuite extends munit.FunSuite:
     assertEquals(back.period, None)
 
   test("superseded_by is exported from the edge and parsed back into it"):
-    val s    = source.copy(edges = List(Edge(ck, "reich2018_who", "superseded_by")))
+    val s = source.copy(edges = List(Edge(ck, "reich2018_who", "superseded_by")))
     val back = Frontmatter.parseNote(Export.note(s), ck).get
     assert(back.edges.contains(Edge(ck, "reich2018_who", "superseded_by")), back.edges.toString)
 

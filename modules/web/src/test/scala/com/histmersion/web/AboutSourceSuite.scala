@@ -2,8 +2,9 @@ package com.histmersion.web
 
 import com.histmersion.api.*
 
-/** The About window offers everyone who uses the server the source of the running version (the AGPL's
-  * network clause): the licence, and a link to the repository at the commit. */
+/** The About window offers everyone who uses the server the source of the running version (the AGPL's network clause):
+  * the licence, and a link to the repository at the commit.
+  */
 class AboutSourceSuite extends munit.FunSuite:
 
   private def about(build: BuildStamp) =
@@ -13,9 +14,9 @@ class AboutSourceSuite extends munit.FunSuite:
     AboutView.sections(about(build)).find(_.title == "Server").get.rows
 
   test("the Server section names the licence and links the source at the running commit"):
-    val url  = "https://github.com/histmersion/histmersion/tree/abc123def456"
-    val rows = serverRows(BuildStamp("1.2.3", Some("abc123def456"), licence = Some("AGPL-3.0-or-later"),
-      sourceUrl = Some(url)))
+    val url = "https://github.com/histmersion/histmersion/tree/abc123def456"
+    val rows =
+      serverRows(BuildStamp("1.2.3", Some("abc123def456"), licence = Some("AGPL-3.0-or-later"), sourceUrl = Some(url)))
     val licence = rows.find(_.label == "licence").get
     assertEquals((licence.value, licence.href), ("AGPL-3.0-or-later", None))
     val source = rows.find(_.label == "source").get

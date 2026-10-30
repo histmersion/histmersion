@@ -11,14 +11,13 @@ import javax.sql.DataSource
 /** The SQL half of `histmersion lint` (plan §5.2 stream 2.8).
   *
   * Every rule is either
-  *   - a **projection**: one SQL statement yielding `(citekey, detail)` — the statement is a plain
-  *     `String` in [[projections]], so a test can read it, and the classifier is the WHERE clause; or
-  *   - a **fetch + pure classifier**: the graph and duplicate rules pull raw rows and hand them to
-  *     `Lint.danglingEdges` / `Lint.unresolvedShortCitekeys` / `Lint.duplicates`, which are pure and
-  *     unit-tested without a database.
+  *   - a **projection**: one SQL statement yielding `(citekey, detail)` — the statement is a plain `String` in
+  *     [[projections]], so a test can read it, and the classifier is the WHERE clause; or
+  *   - a **fetch + pure classifier**: the graph and duplicate rules pull raw rows and hand them to `Lint.danglingEdges`
+  *     / `Lint.unresolvedShortCitekeys` / `Lint.duplicates`, which are pure and unit-tested without a database.
   *
-  * No rule takes a parameter, so nothing here can be an injection vector; the statements are
-  * constants, spliced through [[Sql.raw]].
+  * No rule takes a parameter, so nothing here can be an injection vector; the statements are constants, spliced through
+  * [[Sql.raw]].
   */
 object LintRepo:
 
@@ -115,13 +114,14 @@ object LintRepo:
          ORDER BY s.citekey"""
   )
 
-  /** The raw fetches behind the pure classifiers, kept here so every statement this stream runs is
-    * visible in one place. */
+  /** The raw fetches behind the pure classifiers, kept here so every statement this stream runs is visible in one
+    * place.
+    */
   val citekeysSql = "SELECT citekey FROM sources"
   // both tables: the dangling-edge rules report the PARKED ones (V026), and must see them all
-  val edgesSql    = "SELECT src, dst, kind FROM edges UNION ALL SELECT src, dst, kind FROM unresolved_edges"
-  val doiSql      = "SELECT citekey, lower(btrim(doi)) FROM sources WHERE doi IS NOT NULL AND btrim(doi) <> ''"
-  val sha256Sql   = "SELECT citekey, lower(btrim(sha256)) FROM sources WHERE sha256 IS NOT NULL AND btrim(sha256) <> ''"
+  val edgesSql = "SELECT src, dst, kind FROM edges UNION ALL SELECT src, dst, kind FROM unresolved_edges"
+  val doiSql = "SELECT citekey, lower(btrim(doi)) FROM sources WHERE doi IS NOT NULL AND btrim(doi) <> ''"
+  val sha256Sql = "SELECT citekey, lower(btrim(sha256)) FROM sources WHERE sha256 IS NOT NULL AND btrim(sha256) <> ''"
   val staleCitekeysSql =
     """SELECT s.citekey, coalesce(length(s.ocr_markdown), 0)
        FROM sources s
@@ -134,8 +134,8 @@ object LintRepo:
   val sourceNamesSql = "SELECT citekey, authors, year FROM sources ORDER BY citekey"
   val sourceAliasesSql = "SELECT alias, citekey FROM source_aliases"
   // ── wave 3 fetches ────────────────────────────────────────────────────────────────────────
-  val tagsSql    = "SELECT citekey, tags FROM sources ORDER BY citekey"
-  val yearsSql   = "SELECT citekey, year FROM sources ORDER BY citekey"
+  val tagsSql = "SELECT citekey, tags FROM sources ORDER BY citekey"
+  val yearsSql = "SELECT citekey, year FROM sources ORDER BY citekey"
   val authorsSql = "SELECT citekey, authors FROM sources ORDER BY citekey"
   val articlesSql = "SELECT slug, body FROM articles ORDER BY slug"
   val articleSummariesSql = "SELECT slug, coalesce(summary, '') FROM articles ORDER BY slug"
@@ -146,25 +146,25 @@ object LintRepo:
 
   /** Every rule must be runnable — the report would otherwise lie by omission. */
   def sqlOf(rule: String): List[String] = rule match
-    case DanglingEdges | UnresolvedShortCitekeys  => List(citekeysSql, edgesSql)
-    case DuplicateDoi                             => List(doiSql)
-    case DuplicateSha256                          => List(sha256Sql)
-    case NonCanonicalTag                          => List(tagsSql)
-    case YearCitekeyMismatch                      => List(yearsSql)
-    case AuthorPipe                               => List(authorsSql)
-    case ArticleFiller | ArticleUncitedParagraph  => List(articlesSql)
-    case ArticleCritiquePairing                   => List(articlesSql, disagreementEdgesSql, sourceNamesSql, sourceAliasesSql)
-    case ArticleThinSummary                       => List(articleSummariesSql)
-    case ArticleFormat                            => List(articleTextsSql)
-    case NoteFormat                               => List(noteTextsSql)
-    case FindingGeocode                           => List(Geocoder.legacySql)
-    case FindingUnplaced                          => List(Geocoder.unplacedSql)
-    case PlaceKindRule                            => List("SELECT id FROM places WHERE import_source IS NULL")
-    case PlaceGridPoint                           => List("SELECT id FROM places WHERE location_precision = 'grid-cell'")
-    case PlaceImportedPointArea                   =>
+    case DanglingEdges | UnresolvedShortCitekeys => List(citekeysSql, edgesSql)
+    case DuplicateDoi                            => List(doiSql)
+    case DuplicateSha256                         => List(sha256Sql)
+    case NonCanonicalTag                         => List(tagsSql)
+    case YearCitekeyMismatch                     => List(yearsSql)
+    case AuthorPipe                              => List(authorsSql)
+    case ArticleFiller | ArticleUncitedParagraph => List(articlesSql)
+    case ArticleCritiquePairing => List(articlesSql, disagreementEdgesSql, sourceNamesSql, sourceAliasesSql)
+    case ArticleThinSummary     => List(articleSummariesSql)
+    case ArticleFormat          => List(articleTextsSql)
+    case NoteFormat             => List(noteTextsSql)
+    case FindingGeocode         => List(Geocoder.legacySql)
+    case FindingUnplaced        => List(Geocoder.unplacedSql)
+    case PlaceKindRule          => List("SELECT id FROM places WHERE import_source IS NULL")
+    case PlaceGridPoint         => List("SELECT id FROM places WHERE location_precision = 'grid-cell'")
+    case PlaceImportedPointArea =>
       List(s"SELECT id FROM places WHERE import_source IN ${PlaceRepo.ImportedList} AND ST_Dimension(geom) = 0")
-    case FindingPlaceholder                       => List(PlaceRepo.placeholderFindingsSql)
-    case r                                        => projections.get(r).toList
+    case FindingPlaceholder => List(PlaceRepo.placeholderFindingsSql)
+    case r                  => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
     Sql.raw(sql).frag.query[(String, String)].run().toList
@@ -175,18 +175,31 @@ object LintRepo:
   private def arrays(sql: String)(using DbCon): List[(String, List[String])] =
     Sql.raw(sql).frag.query[(String, List[String])].run().toList
 
-  /** Run the selected rules. One connection for the lot; the graph inputs (citekeys, edges) are
-    * fetched at most once even though two rules classify them. `pointAreaKinds` is
-    * `places.sources.point-area-kinds` (`place-imported-point-area`). */
-  def run(ds: DataSource, rules: List[Rule], maxItems: Int, suggestions: Int, format: FormatChecker,
-      geocode: Geocoder.Settings, pointAreaKinds: List[String] = Gazetteer.DefaultPointAreaKinds): LintReport =
+  /** Run the selected rules. One connection for the lot; the graph inputs (citekeys, edges) are fetched at most once
+    * even though two rules classify them. `pointAreaKinds` is `places.sources.point-area-kinds`
+    * (`place-imported-point-area`).
+    */
+  def run(
+      ds: DataSource,
+      rules: List[Rule],
+      maxItems: Int,
+      suggestions: Int,
+      format: FormatChecker,
+      geocode: Geocoder.Settings,
+      pointAreaKinds: List[String] = Gazetteer.DefaultPointAreaKinds
+  ): LintReport =
     connect(ds):
       lazy val citekeys = Sql.raw(citekeysSql).frag.query[String].run().toSet
-      lazy val edgeRows = Sql.raw(edgesSql).frag.query[(String, String, String)].run()
-        .map((src, dst, kind) => Edge(src, dst, kind)).toList
+      lazy val edgeRows = Sql
+        .raw(edgesSql)
+        .frag
+        .query[(String, String, String)]
+        .run()
+        .map((src, dst, kind) => Edge(src, dst, kind))
+        .toList
       // wave 3 fetches — lazy, shared across rules that need them
-      lazy val tagRows    = arrays(tagsSql)
-      lazy val yearRows   = pairs(yearsSql).map((ck, y) => (ck, Option(y).flatMap(_.toIntOption))) // year is nullable
+      lazy val tagRows = arrays(tagsSql)
+      lazy val yearRows = pairs(yearsSql).map((ck, y) => (ck, Option(y).flatMap(_.toIntOption))) // year is nullable
       lazy val authorRows = arrays(authorsSql)
       lazy val articleRows = pairs(articlesSql)
 
@@ -206,17 +219,27 @@ object LintRepo:
             case ArticleCritiquePairing  =>
               val c = pairingCorpusIn()
               Lint.articleCritiquePairing(articleRows, c.resolve, c.edges, c.work)
-            case ArticleThinSummary      => Lint.articleThinSummary(pairs(articleSummariesSql))
-            case ArticleFormat           => Lint.formatItems(triples(articleTextsSql).flatMap((slug, body, summary) =>
-                                              List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))), format)
-            case NoteFormat              => Lint.formatItems(triples(noteTextsSql).flatMap((ck, summary, notes) =>
-                                              List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))), format)
-            case FindingGeocode          => Geocoder.movesIn(geocode).map(m => LintItem(m.citekey, m.describe))
-            case FindingUnplaced         => Geocoder.placementsIn(geocode).map(p => LintItem(p.citekey, p.describe))
-            case PlaceKindRule           => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail))
-            case PlaceGridPoint          => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail))
-            case FindingPlaceholder      => PlaceRepo.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
-            case name =>
+            case ArticleThinSummary => Lint.articleThinSummary(pairs(articleSummariesSql))
+            case ArticleFormat      =>
+              Lint.formatItems(
+                triples(articleTextsSql).flatMap((slug, body, summary) =>
+                  List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))
+                ),
+                format
+              )
+            case NoteFormat =>
+              Lint.formatItems(
+                triples(noteTextsSql).flatMap((ck, summary, notes) =>
+                  List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))
+                ),
+                format
+              )
+            case FindingGeocode     => Geocoder.movesIn(geocode).map(m => LintItem(m.citekey, m.describe))
+            case FindingUnplaced    => Geocoder.placementsIn(geocode).map(p => LintItem(p.citekey, p.describe))
+            case PlaceKindRule      => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail))
+            case PlaceGridPoint     => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail))
+            case FindingPlaceholder => PlaceRepo.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
+            case name               =>
               projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
           Lint.report(r, items, maxItems)
       }
@@ -224,30 +247,55 @@ object LintRepo:
 
   // ── article-critique-pairing ─────────────────────────────────────────────────────────────────
 
-  /** What the pairing rule reads from the corpus: how a `[[target]]` resolves, the disagreement
-    * edges, and each source's names and year. */
-  final case class PairingCorpus(resolve: String => Option[String], edges: List[CoverageEdge],
-      work: String => Option[CritiquePairing.Work])
+  /** What the pairing rule reads from the corpus: how a `[[target]]` resolves, the disagreement edges, and each
+    * source's names and year.
+    */
+  final case class PairingCorpus(
+      resolve: String => Option[String],
+      edges: List[CoverageEdge],
+      work: String => Option[CritiquePairing.Work]
+  )
 
   private def pairingCorpusIn()(using DbCon): PairingCorpus =
-    val names = Sql.raw(sourceNamesSql).frag.query[(String, List[String], Option[Int])].run()
-      .map((ck, authors, year) => ck -> CritiquePairing.Work(ck, CritiquePairing.names(ck, Option(authors).getOrElse(Nil)), year)).toMap
+    val names = Sql
+      .raw(sourceNamesSql)
+      .frag
+      .query[(String, List[String], Option[Int])]
+      .run()
+      .map((ck, authors, year) =>
+        ck -> CritiquePairing.Work(ck, CritiquePairing.names(ck, Option(authors).getOrElse(Nil)), year)
+      )
+      .toMap
     val aliases = pairs(sourceAliasesSql).toMap
-    val edges = Sql.raw(disagreementEdgesSql).frag.query[(String, String, String)].run()
-      .map((src, kind, dst) => CoverageEdge(src, kind, dst)).toList
+    val edges = Sql
+      .raw(disagreementEdgesSql)
+      .frag
+      .query[(String, String, String)]
+      .run()
+      .map((src, kind, dst) => CoverageEdge(src, kind, dst))
+      .toList
     PairingCorpus(CritiquePairing.resolver(names.keySet, aliases), edges, names.get)
 
   /** One article the pairing repair would change: its token, the repaired body, the hits applied. */
-  final case class PairingRepair(slug: String, updatedAt: Option[String], body: String, applied: List[CritiquePairing.Hit])
+  final case class PairingRepair(
+      slug: String,
+      updatedAt: Option[String],
+      body: String,
+      applied: List[CritiquePairing.Hit]
+  )
 
-  /** The mechanical pairing repairs of every article ([[CritiquePairing.repair]]) — computed, not
-    * written: `histmersion lint --rule article-critique-pairing --fix` writes each through the article
-    * patch, guarded by its token. */
+  /** The mechanical pairing repairs of every article ([[CritiquePairing.repair]]) — computed, not written:
+    * `histmersion lint --rule article-critique-pairing --fix` writes each through the article patch, guarded by its
+    * token.
+    */
   def pairingRepairs(ds: DataSource): List[PairingRepair] =
     connect(ds):
       val c = pairingCorpusIn()
       sql"""SELECT slug, body, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM articles ORDER BY slug"""
-        .query[(String, String, Option[String])].run().toList.flatMap { (slug, body, at) =>
+        .query[(String, String, Option[String])]
+        .run()
+        .toList
+        .flatMap { (slug, body, at) =>
           val (fixed, done) = CritiquePairing.repair(body, CritiquePairing.hits(body, c.resolve, c.edges, c.work))
           Option.when(done.nonEmpty)(PairingRepair(slug, at, fixed, done))
         }
@@ -256,9 +304,10 @@ object LintRepo:
 
   /** Re-chunk the sources that have a body but no full-text chunks (`stale-chunks`).
     *
-    * Bounded by `maxChars` of body text per call — a whole-corpus rebuild takes minutes, far past any
-    * HTTP timeout — and always does at least one source, so repeated calls make progress. Returns the
-    * same shape as `/api/reindex`, with `remaining` = stale sources still untouched. */
+    * Bounded by `maxChars` of body text per call — a whole-corpus rebuild takes minutes, far past any HTTP timeout —
+    * and always does at least one source, so repeated calls make progress. Returns the same shape as `/api/reindex`,
+    * with `remaining` = stale sources still untouched.
+    */
   def reindexStale(ds: DataSource, chunkChars: Int, maxChars: Long): ReindexResult =
     val pending = connect(ds):
       Sql.raw(staleCitekeysSql).frag.query[(String, Int)].run()

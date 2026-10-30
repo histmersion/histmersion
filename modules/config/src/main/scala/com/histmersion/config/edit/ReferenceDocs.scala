@@ -2,10 +2,10 @@ package com.histmersion.config.edit
 
 import scala.annotation.tailrec
 
-/** What reference.conf says about a setting, read from its text: the comment lines just above the key, the
-  * comment at the end of its line and of its environment line (`key = ${?VAR}` right under it), and the
-  * comment lines under those that continue them (indented to the comments' column), and the variable it
-  * names. Pure. */
+/** What reference.conf says about a setting, read from its text: the comment lines just above the key, the comment at
+  * the end of its line and of its environment line (`key = ${?VAR}` right under it), and the comment lines under those
+  * that continue them (indented to the comments' column), and the variable it names. Pure.
+  */
 final class ReferenceDocs(lines: IndexedSeq[String]):
   import ReferenceDocs.*
 
@@ -26,10 +26,12 @@ final class ReferenceDocs(lines: IndexedSeq[String]):
   private def envLines(i: Int, leaf: String): List[Int] =
     @tailrec def loop(j: Int, acc: List[Int]): List[Int] =
       if j >= lines.size then acc.reverse
-      else EnvLine.findFirstMatchIn(content(lines(j))) match
-        case Some(m) if m.group(1) == leaf => loop(j + 1, j :: acc)
-        case _ if isCommentOnly(lines(j)) && commentColumn(lines(j)) > indentOf(lines(i)) + ContinuationIndent => loop(j + 1, acc)
-        case _ => acc.reverse
+      else
+        EnvLine.findFirstMatchIn(content(lines(j))) match
+          case Some(m) if m.group(1) == leaf => loop(j + 1, j :: acc)
+          case _ if isCommentOnly(lines(j)) && commentColumn(lines(j)) > indentOf(lines(i)) + ContinuationIndent =>
+            loop(j + 1, acc)
+          case _ => acc.reverse
     loop(i + 1, Nil)
 
   /** The comment-only lines right above line `i` that are not a continuation of the line above them. */
@@ -42,7 +44,8 @@ final class ReferenceDocs(lines: IndexedSeq[String]):
   /** The comment-only lines under line `i`, indented past the key: the end-of-line comment goes on there. */
   private def continuations(i: Int, indent: Int): List[String] =
     @tailrec def loop(j: Int, acc: List[String]): List[String] =
-      if j >= lines.size || !isCommentOnly(lines(j)) || commentColumn(lines(j)) <= indent + ContinuationIndent then acc.reverse
+      if j >= lines.size || !isCommentOnly(lines(j)) || commentColumn(lines(j)) <= indent + ContinuationIndent then
+        acc.reverse
       else loop(j + 1, commentText(lines(j)) :: acc)
     loop(i + 1, Nil)
 
@@ -60,11 +63,12 @@ object ReferenceDocs:
   private def commentStart(l: String): Option[Int] =
     @tailrec def loop(i: Int, quoted: Boolean): Option[Int] =
       if i >= l.length then None
-      else l.charAt(i) match
-        case '"' if i == 0 || l.charAt(i - 1) != '\\' => loop(i + 1, !quoted)
-        case '#' if !quoted                           => Some(i)
-        case '/' if !quoted && i + 1 < l.length && l.charAt(i + 1) == '/' => Some(i)
-        case _                                        => loop(i + 1, quoted)
+      else
+        l.charAt(i) match
+          case '"' if i == 0 || l.charAt(i - 1) != '\\'                     => loop(i + 1, !quoted)
+          case '#' if !quoted                                               => Some(i)
+          case '/' if !quoted && i + 1 < l.length && l.charAt(i + 1) == '/' => Some(i)
+          case _                                                            => loop(i + 1, quoted)
     loop(0, quoted = false)
 
   private def content(l: String): String = commentStart(l).fold(l)(l.take(_))

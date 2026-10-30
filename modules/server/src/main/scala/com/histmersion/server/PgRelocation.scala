@@ -6,25 +6,26 @@ import scala.jdk.CollectionConverters.*
 
 /** Makes the bundled PostgreSQL work from wherever the bundle was put.
   *
-  * conda-forge's PostgreSQL does not relocate at runtime: it looks for its libraries, extensions and
-  * share/ tree at the absolute prefix it was installed at (the pixi environment on the build
-  * machine). conda solves this at install time by rewriting that prefix inside every file, and so do
-  * we: `pg/.prefix` records the prefix the files currently carry (written by
-  * `scripts/bundle/postgres.sh`), and when it differs from where `pg/` actually is, every file is
-  * patched and the marker updated. A bundle that is moved again is simply relocated again.
+  * conda-forge's PostgreSQL does not relocate at runtime: it looks for its libraries, extensions and share/ tree at the
+  * absolute prefix it was installed at (the pixi environment on the build machine). conda solves this at install time
+  * by rewriting that prefix inside every file, and so do we: `pg/.prefix` records the prefix the files currently carry
+  * (written by `scripts/bundle/postgres.sh`), and when it differs from where `pg/` actually is, every file is patched
+  * and the marker updated. A bundle that is moved again is simply relocated again.
   *
-  * Text files get a plain replacement. In binaries the prefix sits inside NUL-terminated strings —
-  * conda pads the path constants to fixed 260-byte slots — so a string is rewritten in place and
-  * NUL-padded, never moving a byte after it; a string whose new form would not fit is left alone and
-  * counted. On macOS every patched Mach-O file is re-signed ad hoc, or arm64 refuses to run it. */
+  * Text files get a plain replacement. In binaries the prefix sits inside NUL-terminated strings — conda pads the path
+  * constants to fixed 260-byte slots — so a string is rewritten in place and NUL-padded, never moving a byte after it;
+  * a string whose new form would not fit is left alone and counted. On macOS every patched Mach-O file is re-signed ad
+  * hoc, or arm64 refuses to run it.
+  */
 object PgRelocation:
 
   val Marker = ".prefix"
 
   final case class Result(files: Int, signed: Int, tooLong: Int)
 
-  /** Rewrite `from` → `to` in `bytes`. Binary data (it holds a NUL) is patched string by string in
-    * place; text is replaced outright. Returns the new bytes and how many strings did not fit. */
+  /** Rewrite `from` → `to` in `bytes`. Binary data (it holds a NUL) is patched string by string in place; text is
+    * replaced outright. Returns the new bytes and how many strings did not fit.
+    */
   def patch(bytes: Array[Byte], from: Array[Byte], to: Array[Byte]): (Array[Byte], Int) =
     if !bytes.contains(0.toByte) then
       (String(bytes, UTF_8).replace(String(from, UTF_8), String(to, UTF_8)).getBytes(UTF_8), 0)
@@ -45,8 +46,9 @@ object PgRelocation:
         i = indexOf(d, from, end)
       (d, tooLong)
 
-  /** Relocate `pg` if its marker names another place. `None` when there is nothing to do: no marker
-    * (a pixi environment used in place) or already at home. */
+  /** Relocate `pg` if its marker names another place. `None` when there is nothing to do: no marker (a pixi environment
+    * used in place) or already at home.
+    */
   def relocate(pg: Path, macOS: Boolean): Option[Result] =
     val marker = pg.resolve(Marker)
     val here = pg.toRealPath().toString
@@ -57,19 +59,23 @@ object PgRelocation:
       val walk = Files.walk(pg)
       try
         walk.iterator.asScala
-          .filter(p => p != marker && Files.isRegularFile(p) && !Files.isSymbolicLink(p)).foreach { p =>
-          val bytes = Files.readAllBytes(p)
-          if indexOf(bytes, fb, 0) >= 0 then
-            val (out, skipped) = patch(bytes, fb, tb)
-            Files.write(p, out) // in place: keeps the file's permissions
-            files += 1
-            tooLong += skipped
-            if macOS && isMachO(out) then
-              val rc = ProcessBuilder("codesign", "--force", "--sign", "-", p.toString)
-                .redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.DISCARD).start().waitFor()
-              if rc != 0 then throw IllegalStateException(s"codesign failed on $p (exit $rc)")
-              signed += 1
-        }
+          .filter(p => p != marker && Files.isRegularFile(p) && !Files.isSymbolicLink(p))
+          .foreach { p =>
+            val bytes = Files.readAllBytes(p)
+            if indexOf(bytes, fb, 0) >= 0 then
+              val (out, skipped) = patch(bytes, fb, tb)
+              Files.write(p, out) // in place: keeps the file's permissions
+              files += 1
+              tooLong += skipped
+              if macOS && isMachO(out) then
+                val rc = ProcessBuilder("codesign", "--force", "--sign", "-", p.toString)
+                  .redirectErrorStream(true)
+                  .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                  .start()
+                  .waitFor()
+                if rc != 0 then throw IllegalStateException(s"codesign failed on $p (exit $rc)")
+                signed += 1
+          }
       finally walk.close()
       Files.writeString(marker, here)
       Result(files, signed, tooLong)

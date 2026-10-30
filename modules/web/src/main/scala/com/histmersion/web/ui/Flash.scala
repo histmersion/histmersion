@@ -3,8 +3,9 @@ package com.histmersion.web.ui
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
-/** A short line saying that something happened ("Copied the link"), read out by screen readers, gone after a
-  * few seconds. Mounted once by the page. */
+/** A short line saying that something happened ("Copied the link"), read out by screen readers, gone after a few
+  * seconds. Mounted once by the page.
+  */
 object Flash:
 
   private val line = Var(Option.empty[String])
@@ -17,6 +18,10 @@ object Flash:
     timer = dom.window.setTimeout(() => line.set(None), 3000)
 
   lazy val element: HtmlElement =
-    div(cls := "flash", role := "status", aria.live := "polite",
+    div(
+      cls := "flash",
+      role := "status",
+      aria.live := "polite",
       cls("is-on") <-- line.signal.map(_.isDefined),
-      child.text <-- line.signal.map(_.getOrElse("")))
+      child.text <-- line.signal.map(_.getOrElse(""))
+    )

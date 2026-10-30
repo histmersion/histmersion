@@ -8,33 +8,35 @@ import com.histmersion.values.{Confidence, SourceStatus}
 /** What a `[[wikilink]]` resolves to on an HTML page: a stored source or a compiled article. */
 type LinkTarget = SourceRef | ArticleRef
 
-/** A metadata dimension a chip filters the web UI by. `hashKey` is the web UI's URL-hash key, so a
-  * chip is a link that works in the modal, on a standalone page and pasted anywhere. */
+/** A metadata dimension a chip filters the web UI by. `hashKey` is the web UI's URL-hash key, so a chip is a link that
+  * works in the modal, on a standalone page and pasted anywhere.
+  */
 enum ChipField(val hashKey: String):
-  case Topic  extends ChipField("topic")
-  case Place  extends ChipField("place")
-  case Tag    extends ChipField("tag")
+  case Topic extends ChipField("topic")
+  case Place extends ChipField("place")
+  case Tag extends ChipField("tag")
   case Author extends ChipField("author")
 
-/** The HTML atoms of the server-rendered pages — PURE string builders, one shape per thing, so a
-  * source reference looks and behaves the same in an article's prose, its "Sources cited" footer, a
-  * source's "Cites / Cited by" list and the backlinks.
+/** The HTML atoms of the server-rendered pages — PURE string builders, one shape per thing, so a source reference looks
+  * and behaves the same in an article's prose, its "Sources cited" footer, a source's "Cites / Cited by" list and the
+  * backlinks.
   *
-  * This is the HUMAN surface. The Markdown in `core` ([[Markdown]], [[ArticleMarkdown]]) is the LLM
-  * surface (MCP, CLI) and deliberately stays separate: what reads well to an agent — `[[citekey]]`,
-  * "an empty result is not evidence of agreement" — is not what a reader wants on a page.
+  * This is the HUMAN surface. The Markdown in `core` ([[Markdown]], [[ArticleMarkdown]]) is the LLM surface (MCP, CLI)
+  * and deliberately stays separate: what reads well to an agent — `[[citekey]]`, "an empty result is not evidence of
+  * agreement" — is not what a reader wants on a page.
   *
-  * Every value that came from the database is escaped here, never at the call site. */
+  * Every value that came from the database is escaped here, never at the call site.
+  */
 object HtmlRender:
 
   def esc(s: String): String = HtmlAtoms.esc(s)
 
-
   // ── references ───────────────────────────────────────────────────────────────────────────────
 
-  /** THE source anchor: `<a class="src-ref" data-ck data-doi href="/source/ck">label</a>`. The web
-    * UI's one delegated hover handler previews anything carrying `data-ck`, and its click handler
-    * opens `/source/…` in a window — so every source link on every page gets both for free. */
+  /** THE source anchor: `<a class="src-ref" data-ck data-doi href="/source/ck">label</a>`. The web UI's one delegated
+    * hover handler previews anything carrying `data-ck`, and its click handler opens `/source/…` in a window — so every
+    * source link on every page gets both for free.
+    */
   def sourceLink(citekey: String, doi: Option[String], label: String): String =
     HtmlAtoms.sourceLink(citekey, doi, label)
 
@@ -43,8 +45,9 @@ object HtmlRender:
 
   def sourceRef(r: SourceRef, label: String): String = sourceLink(r.citekey, r.doi, label)
 
-  /** Where a READABLE label is wanted (prose, lists): "Cline 2014", or the title when the source has
-    * no authors — never a bare year. */
+  /** Where a READABLE label is wanted (prose, lists): "Cline 2014", or the title when the source has no authors — never
+    * a bare year.
+    */
   def readable(r: SourceRef): String =
     if r.authors.exists(_.trim.nonEmpty) then r.shortCite else r.title
 
@@ -66,8 +69,9 @@ object HtmlRender:
 
   // ── chips and badges ─────────────────────────────────────────────────────────────────────────
 
-  /** A filter chip: readable label ([[Label.display]] — never an underscore), the raw value in the
-    * link, so clicking it filters the web UI by exactly the stored value. */
+  /** A filter chip: readable label ([[Label.display]] — never an underscore), the raw value in the link, so clicking it
+    * filters the web UI by exactly the stored value.
+    */
   def chip(field: ChipField, value: String): String =
     s"""<a class="chip chip-${field.hashKey}" data-field="${field.hashKey}" data-value="${esc(value)}"""" +
       s""" href="/#${field.hashKey}=${esc(HtmlAtoms.segment(value))}">${esc(Label.display(value))}</a>"""
@@ -75,10 +79,13 @@ object HtmlRender:
   def chips(field: ChipField, values: List[String]): String =
     values.map(_.trim).filter(_.nonEmpty).distinct.map(chip(field, _)).mkString(" ")
 
-  /** A source's standing: the one status code — its mark (colour and shape, the stylesheet's `st-<status>`)
-    * and its word. */
+  /** A source's standing: the one status code — its mark (colour and shape, the stylesheet's `st-<status>`) and its
+    * word.
+    */
   def statusBadge(status: SourceStatus): String =
-    s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(status)} (${status.wire})">${Wording.status(status)}</span>"""
+    s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(
+        status
+      )} (${status.wire})">${Wording.status(status)}</span>"""
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */
   def confidenceBadge(c: Confidence): String = HtmlAtoms.confidenceBadge(c)
@@ -90,7 +97,7 @@ object HtmlRender:
       // Locale.ROOT: JDK 25's CLDR renders `35,60` under a comma-decimal default locale
       case (r, Some(la), Some(lo)) =>
         r.fold("")(_ + " ") + String.format(java.util.Locale.ROOT, "(%.2f, %.2f)", la, lo)
-      case (r, _, _)               => r.getOrElse("")
+      case (r, _, _) => r.getOrElse("")
     val period = YearFmt.period(f.periodStart, f.periodEnd)
     val meta = List(
       f.confidence.map(confidenceBadge).getOrElse(""),

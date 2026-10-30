@@ -3,52 +3,57 @@ package com.histmersion.api
 import com.histmersion.values.{ApprovalKind, ApprovalState, ManagerKind, Pipeline, RunState, SourceStatus}
 
 /** The kinds of background job the server runs: the `kind` of a jobs row. Every one has a name for a person
-  * ([[Wording.jobKind]]); the server's own constants are these wires, so a new kind starts here. */
+  * ([[Wording.jobKind]]); the server's own constants are these wires, so a new kind starts here.
+  */
 enum JobKind(val wire: String):
-  case Ingest          extends JobKind("ingest")
-  case Reocr           extends JobKind("reocr")
-  case Init            extends JobKind("init")
-  case MergeApply      extends JobKind("merge-apply")
-  case Vacuum          extends JobKind("vacuum")
-  case Agent           extends JobKind("agent")
-  case AcquireRecheck  extends JobKind("acquire_recheck")
-  case BasemapFetch    extends JobKind("basemap-fetch")
-  case PlacesFetch     extends JobKind("places-fetch")
+  case Ingest extends JobKind("ingest")
+  case Reocr extends JobKind("reocr")
+  case Init extends JobKind("init")
+  case MergeApply extends JobKind("merge-apply")
+  case Vacuum extends JobKind("vacuum")
+  case Agent extends JobKind("agent")
+  case AcquireRecheck extends JobKind("acquire_recheck")
+  case BasemapFetch extends JobKind("basemap-fetch")
+  case PlacesFetch extends JobKind("places-fetch")
   case PlacesHierarchy extends JobKind("places-hierarchy")
-  case EventsImport    extends JobKind("events-import")
+  case EventsImport extends JobKind("events-import")
   case EventsCandidates extends JobKind("events-candidates")
-  case EventsRederive  extends JobKind("events-rederive")
-  case SiteTypes       extends JobKind("site-types")
-  case MediaImport     extends JobKind("media-import")
-  case MediaCovers     extends JobKind("media-covers")
+  case EventsRederive extends JobKind("events-rederive")
+  case SiteTypes extends JobKind("site-types")
+  case MediaImport extends JobKind("media-import")
+  case MediaCovers extends JobKind("media-covers")
 
 object JobKind:
   def parse(s: String): Option[JobKind] = values.find(_.wire == s.trim.toLowerCase)
 
-/** THE label dictionary: every internal identifier the web UI shows — a pipeline, an approval's kind, a job's
-  * kind, a state, a scheduler strategy or pool, an allowance window, a manager's kind — as plain wording in
-  * sentence case ("Review an article", not `review-article`). The identifier itself stays the wire value, in
-  * the URL, the filters and a tooltip, for people who use the command line. An identifier the dictionary does
-  * not know (a plugin's, one added later) is never shown raw either: [[label]] spells it as words. Pure. */
+/** THE label dictionary: every internal identifier the web UI shows — a pipeline, an approval's kind, a job's kind, a
+  * state, a scheduler strategy or pool, an allowance window, a manager's kind — as plain wording in sentence case
+  * ("Review an article", not `review-article`). The identifier itself stays the wire value, in the URL, the filters and
+  * a tooltip, for people who use the command line. An identifier the dictionary does not know (a plugin's, one added
+  * later) is never shown raw either: [[label]] spells it as words. Pure.
+  */
 object Wording:
 
-  /** `type-balanced` / `seven_day` / `watch:bronze-age` → `Type balanced` / `Seven day` / `Watch: bronze age`:
-    * the identifier as words, its first letter upper-case — what an identifier the dictionary does not know
-    * reads as. */
+  /** `type-balanced` / `seven_day` / `watch:bronze-age` → `Type balanced` / `Seven day` / `Watch: bronze age`: the
+    * identifier as words, its first letter upper-case — what an identifier the dictionary does not know reads as.
+    */
   def humanize(id: String): String =
-    val words = id.trim.replace(':', '\u0000').replaceAll("[_-]+", " ").replace("\u0000", ": ").replaceAll("\\s+", " ").trim
+    val words =
+      id.trim.replace(':', '\u0000').replaceAll("[_-]+", " ").replace("\u0000", ": ").replaceAll("\\s+", " ").trim
     capitalize(words)
 
   /** The first letter upper-case, the rest as it is: sentence case for a label that is already words. */
   def capitalize(s: String): String = if s.isEmpty then s else s.substring(0, 1).toUpperCase + s.substring(1)
 
-  /** A data value (a topic, a tag, a region) as words: `bronze_age_collapse` → `bronze age collapse`. Its
-    * hyphens stay (`Indo-European`); only identifiers lose theirs ([[humanize]]). */
+  /** A data value (a topic, a tag, a region) as words: `bronze_age_collapse` → `bronze age collapse`. Its hyphens stay
+    * (`Indo-European`); only identifiers lose theirs ([[humanize]]).
+    */
   def value(s: String): String = Label.display(s)
 
   /** A heading made from a stored topic or group name: a slug-shaped one (`disputed-grand-theories`,
-    * `phoenician_levantine`) as words in sentence case, anything already written as words as it is, its first
-    * letter upper-case. */
+    * `phoenician_levantine`) as words in sentence case, anything already written as words as it is, its first letter
+    * upper-case.
+    */
   def heading(s: String): String =
     if s.trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then humanize(s) else capitalize(Label.display(s.trim))
 
@@ -113,27 +118,48 @@ object Wording:
   /** A manager by its id (`watch:bronze-age`, `review`): its kind's name, then the goal it serves as words. */
   def manager(id: String): String =
     val (kind, rest) = id.span(_ != ':')
-    ManagerKind.parse(kind).fold(humanize(id))(k =>
-      managerKind(k) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(g)}"))
+    ManagerKind
+      .parse(kind)
+      .fold(humanize(id))(k =>
+        managerKind(k) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(g)}")
+      )
 
   /** The scheduler's job types: the kind of work a manager item is. */
   val schedulerJobTypes: Map[String, String] = Map(
-    "goal-plan" -> "Plan a goal", "propose" -> "Propose articles", "sweep" -> "Look for copies to fetch",
-    "currency" -> "Check sources are current", "enrich" -> "Enrich a source", "compile" -> "Write an article",
-    "extend" -> "Extend an article", "filter" -> "Work out an article's filter", "review" -> "Review an article")
+    "goal-plan" -> "Plan a goal",
+    "propose" -> "Propose articles",
+    "sweep" -> "Look for copies to fetch",
+    "currency" -> "Check sources are current",
+    "enrich" -> "Enrich a source",
+    "compile" -> "Write an article",
+    "extend" -> "Extend an article",
+    "filter" -> "Work out an article's filter",
+    "review" -> "Review an article"
+  )
 
   /** Why a manager item waits (the scheduler's codes). */
   val waitCodes: Map[String, String] = Map(
-    "capacity" -> "No free place", "pool" -> "Plan is full", "manager-cap" -> "Manager is full",
-    "blocked" -> "Blocked", "busy" -> "Busy", "budget" -> "Spending cap reached",
+    "capacity" -> "No free place",
+    "pool" -> "Plan is full",
+    "manager-cap" -> "Manager is full",
+    "blocked" -> "Blocked",
+    "busy" -> "Busy",
+    "budget" -> "Spending cap reached",
     "drain" -> "Finishing current work, then pausing",
-    AgentScheduler.Code.Person -> "Needs your decision", AgentScheduler.Code.Held -> "Held by a person",
-    AgentScheduler.Code.NotDue -> "Not due yet", AgentScheduler.Code.Running -> "Running",
-    AgentScheduler.Code.Settled -> "Settled", AgentScheduler.Code.Paused -> "Paused")
+    AgentScheduler.Code.Person -> "Needs your decision",
+    AgentScheduler.Code.Held -> "Held by a person",
+    AgentScheduler.Code.NotDue -> "Not due yet",
+    AgentScheduler.Code.Running -> "Running",
+    AgentScheduler.Code.Settled -> "Settled",
+    AgentScheduler.Code.Paused -> "Paused"
+  )
 
   /** The scheduler's strategies, by name. */
   val strategies: Map[String, String] = Map(
-    "type-balanced" -> "Balance the kinds of work", "goal-first" -> "One goal at a time", "default" -> "The configured strategy")
+    "type-balanced" -> "Balance the kinds of work",
+    "goal-first" -> "One goal at a time",
+    "default" -> "The configured strategy"
+  )
 
   /** A subscription plan's pool (`claude-plan`): the plan's name. */
   def pool(id: String): String = id.trim.toLowerCase match
@@ -141,37 +167,40 @@ object Wording:
     case "chatgpt-plan" => "ChatGPT plan"
     case other          => humanize(other.stripSuffix("-plan")) + (if other.endsWith("-plan") then " plan" else "")
 
-  /** An allowance window as a provider names it — `five_hour`, `seven_day`, `seven_day_opus`, or a length in
-    * minutes (`300m`, `codex/10080m`) — as the limit it is. */
+  /** An allowance window as a provider names it — `five_hour`, `seven_day`, `seven_day_opus`, or a length in minutes
+    * (`300m`, `codex/10080m`) — as the limit it is.
+    */
   def allowanceWindow(kind: String): String =
     val k = kind.trim.toLowerCase.split('/').last
     def span(minutes: Long): String = minutes match
-      case 10080 => "This week's limit"
-      case 1440  => "Today's limit"
+      case 10080              => "This week's limit"
+      case 1440               => "Today's limit"
       case m if m % 1440 == 0 => s"${m / 1440}-day limit"
       case m if m % 60 == 0   => s"${m / 60}-hour limit"
       case m                  => s"$m-minute limit"
     val minutes = """^(\d+)m$""".r
     k match
-      case minutes(n)     => span(n.toLong)
-      case "five_hour"    => "5-hour limit"
-      case "seven_day"    => "This week's limit"
-      case "one_day" | "daily" => "Today's limit"
+      case minutes(n)                      => span(n.toLong)
+      case "five_hour"                     => "5-hour limit"
+      case "seven_day"                     => "This week's limit"
+      case "one_day" | "daily"             => "Today's limit"
       case s if s.startsWith("seven_day_") => s"This week's limit (${humanize(s.stripPrefix("seven_day_"))})"
       case s if s.startsWith("five_hour_") => s"5-hour limit (${humanize(s.stripPrefix("five_hour_"))})"
-      case other          => humanize(other)
+      case other                           => humanize(other)
 
   // ── the agents as a whole ────────────────────────────────────────────────────────────────────────────
 
-  /** The agents' state, as one control reads it: working; finishing current work, then pausing (draining);
-    * paused (the autopilot off). */
+  /** The agents' state, as one control reads it: working; finishing current work, then pausing (draining); paused (the
+    * autopilot off).
+    */
   def agentsState(autopilotOn: Boolean, draining: Boolean): String =
     if draining then "Agents: finishing current work, then pausing"
     else if autopilotOn then "Agents: working"
     else "Agents: paused"
 
-  /** The top bar's status of the agents: paused; finishing current work (draining) while runs remain;
-    * working, with how many runs are running or waiting; or on with nothing to do. */
+  /** The top bar's status of the agents: paused; finishing current work (draining) while runs remain; working, with how
+    * many runs are running or waiting; or on with nothing to do.
+    */
   def agentsGlance(a: UiNotices.AgentsGlance): String =
     def runs(n: Int) = if n == 1 then "1 run" else s"$n runs"
     if !a.on || (a.draining && a.running == 0) then "Agents paused"
@@ -206,7 +235,7 @@ object Wording:
     case Activity.EntryKind.Log      => "Note"
     case Activity.EntryKind.Decision => "You decided"
 
-  val Drain   = "Finish current work, then pause"
+  val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
 
   // ── background jobs ──────────────────────────────────────────────────────────────────────────────────
@@ -232,35 +261,47 @@ object Wording:
   def jobKindOf(wire: String): String = JobKind.parse(wire).fold(humanize(wire))(jobKind)
 
   def jobState(s: JobState): String = s match
-    case JobState.Queued  => "Queued"
-    case JobState.Running => "Running"
-    case JobState.Done    => "Done"
-    case JobState.Failed  => "Failed"
+    case JobState.Queued    => "Queued"
+    case JobState.Running   => "Running"
+    case JobState.Done      => "Done"
+    case JobState.Failed    => "Failed"
     case JobState.Paused    => "Paused"
     case JobState.Cancelled => "Cancelled"
 
   // ── plugins ──────────────────────────────────────────────────────────────────────────────────────────
 
-  /** A plugin by its id (`ai-anthropic`, `oa-unpaywall`, `media-europeana`, `events-noaa`): what it is, then
-    * its name. */
+  /** A plugin by its id (`ai-anthropic`, `oa-unpaywall`, `media-europeana`, `events-noaa`): what it is, then its name.
+    */
   def plugin(id: String): String =
     val families = List("ai-" -> "AI provider", "oa-" -> "Open access", "media-" -> "Pictures", "events-" -> "Events")
-    pluginNames.get(id).orElse(
-      families.collectFirst { case (prefix, family) if id.startsWith(prefix) => s"$family: ${humanize(id.stripPrefix(prefix))}" })
+    pluginNames
+      .get(id)
+      .orElse(families.collectFirst {
+        case (prefix, family) if id.startsWith(prefix) => s"$family: ${humanize(id.stripPrefix(prefix))}"
+      })
       .getOrElse(humanize(id))
 
-  /** The plugins whose names are spelt in their own way (the finders by the service each asks, the vaults by
-    * their product's name). */
+  /** The plugins whose names are spelt in their own way (the finders by the service each asks, the vaults by their
+    * product's name).
+    */
   private val pluginNames: Map[String, String] = Map(
-    "archive-org" -> "Internet Archive", "oa-unpaywall" -> "Open access: Unpaywall", "oa-core" -> "Open access: CORE",
-    "oa-openalex" -> "Open access: OpenAlex", "oa-landing" -> "Open access: publishers' own pages",
-    "pmc" -> "PubMed Central", "arxiv" -> "arXiv", "keepassxc" -> "KeePassXC", "1password" -> "1Password",
-    "bitwarden" -> "Bitwarden")
+    "archive-org" -> "Internet Archive",
+    "oa-unpaywall" -> "Open access: Unpaywall",
+    "oa-core" -> "Open access: CORE",
+    "oa-openalex" -> "Open access: OpenAlex",
+    "oa-landing" -> "Open access: publishers' own pages",
+    "pmc" -> "PubMed Central",
+    "arxiv" -> "arXiv",
+    "keepassxc" -> "KeePassXC",
+    "1password" -> "1Password",
+    "bitwarden" -> "Bitwarden"
+  )
 
   // ── any identifier ───────────────────────────────────────────────────────────────────────────────────
 
-  /** Every identifier the dictionary names, by wire. Where two vocabularies share a word, the more specific
-    * function above is the one a view calls; this is what a list's filter chips and every fall-back use. */
+  /** Every identifier the dictionary names, by wire. Where two vocabularies share a word, the more specific function
+    * above is the one a view calls; this is what a list's filter chips and every fall-back use.
+    */
   lazy val known: Map[String, String] =
     schedulerJobTypes ++ waitCodes ++ strategies ++
       JobKind.values.map(k => k.wire -> jobKind(k)) ++

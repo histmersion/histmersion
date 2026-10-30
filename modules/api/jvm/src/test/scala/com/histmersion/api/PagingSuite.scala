@@ -1,10 +1,10 @@
 package com.histmersion.api
 
-
 import com.histmersion.api.Agents.{ApprovalInfo, RunInfo}
 
-/** The paged lists' pure parts: the heading's wording, the counts header, the page from the counts,
-  * and how the jobs / runs / approvals listings say there is more. */
+/** The paged lists' pure parts: the heading's wording, the counts header, the page from the counts, and how the jobs /
+  * runs / approvals listings say there is more.
+  */
 class PagingSuite extends munit.FunSuite:
 
   test("the heading says what is shown, and of how many, only when the page is not the whole list"):
@@ -34,7 +34,7 @@ class PagingSuite extends munit.FunSuite:
 
   test("a page's total is its state's count under a filter, else every state's"):
     val counts = List("done" -> 10, "failed" -> 3)
-    val all    = Paging.Page.of(counts, None, Some("j9"))
+    val all = Paging.Page.of(counts, None, Some("j9"))
     assertEquals((all.total, all.next, all.hasMore, all.all), (13, Some("j9"), true, 13))
     assertEquals(Paging.Page.of(counts, Some("failed"), None).total, 3)
     assertEquals(Paging.Page.of(counts, Some("running"), None).total, 0)
@@ -54,8 +54,8 @@ class PagingSuite extends munit.FunSuite:
 
   test("the jobs, runs and approvals listings head a partial page and say how to go on"):
     val page = Paging.Page(250, Some("j2"), List("done" -> 240, "failed" -> 10))
-    val js   = Vector(JobInfo("j1", Ingest.KindIngest, "done"), JobInfo("j2", Ingest.KindIngest, "done"))
-    val md   = IngestMarkdown.jobs(js, page, Some("done"), Some("Older: `histmersion jobs --before j2`"))
+    val js = Vector(JobInfo("j1", Ingest.KindIngest, "done"), JobInfo("j2", Ingest.KindIngest, "done"))
+    val md = IngestMarkdown.jobs(js, page, Some("done"), Some("Older: `histmersion jobs --before j2`"))
     assert(md.startsWith("### Latest 2 of 250 done jobs\n"), md)
     assert(md.endsWith("\n\nOlder: `histmersion jobs --before j2`"), md)
     assert(IngestMarkdown.jobs(js).startsWith("### 2 jobs\n"))

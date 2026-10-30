@@ -1,7 +1,8 @@
 package com.histmersion.api
 
-/** Counted nouns for the Markdown renderers: `1 article`, `2 articles`, `0 events` — never
-  * `1 articles`. A regular noun takes `s`; an irregular one passes its plural. Pure. */
+/** Counted nouns for the Markdown renderers: `1 article`, `2 articles`, `0 events` — never `1 articles`. A regular noun
+  * takes `s`; an irregular one passes its plural. Pure.
+  */
 object Plural:
 
   def noun(n: Long, singular: String, plural: String = ""): String =

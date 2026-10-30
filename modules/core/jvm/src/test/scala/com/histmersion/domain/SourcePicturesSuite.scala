@@ -5,13 +5,13 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-
 import io.circe.parser.parse
 import com.histmersion.values.MediaRole
 
-/** The pure half of a source's picture (#1446): which figure illustrates a paper ([[FigurePick]]) —
-  * on the fixture the converter produced from a generated journal paper (converter/tests/test_figures.py)
-  * and on hand-made cases — and the reports' arithmetic and Markdown. */
+/** The pure half of a source's picture (#1446): which figure illustrates a paper ([[FigurePick]]) — on the fixture the
+  * converter produced from a generated journal paper (converter/tests/test_figures.py) and on hand-made cases — and the
+  * reports' arithmetic and Markdown.
+  */
 class SourcePicturesSuite extends munit.FunSuite:
 
   private val rules = FigurePick.Rules()
@@ -19,11 +19,17 @@ class SourcePicturesSuite extends munit.FunSuite:
     FigurePick.Figure(name, Some(w), Some(h), refs, at)
 
   test("the paper the converter cut up: the map on page 2, not the logo, the masthead or the badge"):
-    val json = parse(scala.io.Source.fromResource("figures/paper.json")(using scala.io.Codec.UTF8).mkString).toOption.get
+    val json =
+      parse(scala.io.Source.fromResource("figures/paper.json")(using scala.io.Codec.UTF8).mkString).toOption.get
     val figs = json.hcursor.downField("figures").values.get.toList.map { j =>
       val c = j.hcursor
-      FigurePick.Figure(c.get[String]("name").toOption.get, c.get[Int]("width").toOption, c.get[Int]("height").toOption,
-        c.get[Int]("refs").getOrElse(0), c.get[Double]("firstAt").toOption)
+      FigurePick.Figure(
+        c.get[String]("name").toOption.get,
+        c.get[Int]("width").toOption,
+        c.get[Int]("height").toOption,
+        c.get[Int]("refs").getOrElse(0),
+        c.get[Double]("firstAt").toOption
+      )
     }
     assertEquals(figs.size, 4)
     assertEquals(FigurePick.choose(figs, rules).map(_.name), Some("fig-0002-03.png"))
@@ -42,15 +48,18 @@ class SourcePicturesSuite extends munit.FunSuite:
   test("a figure linked again and again is a running header; a page-sized series is page scans"):
     assertEquals(FigurePick.reject(fig("fig-0001-01.png", 600, 400, refs = 9), rules), Some("repeated in the text"))
     val scans = (1 to 6).map(i => fig(f"fig-$i%04d-01.png", 1275 + i % 2, 1650)).toList
-    val real  = fig("fig-0003-02.png", 700, 500)
+    val real = fig("fig-0003-02.png", 700, 500)
     assertEquals(FigurePick.choose(scans :+ real, rules).map(_.name), Some("fig-0003-02.png"))
     assertEquals(FigurePick.choose(scans, rules), None, "nothing but page scans: no illustration")
-    assertEquals(FigurePick.choose(scans.take(3) :+ real, rules.copy(pageScanMin = 5)).map(_.width), Some(Some(1276)),
-      "three big portrait pictures are figures, not a scanned book")
+    assertEquals(
+      FigurePick.choose(scans.take(3) :+ real, rules.copy(pageScanMin = 5)).map(_.width),
+      Some(Some(1276)),
+      "three big portrait pictures are figures, not a scanned book"
+    )
 
   test("early pages win over a larger figure late in the paper; a size-less figure never"):
     val early = fig("fig-0002-01.png", 600, 400)
-    val late  = fig("fig-0019-01.png", 900, 500)
+    val late = fig("fig-0019-01.png", 900, 500)
     assertEquals(FigurePick.choose(List(late, early), rules).map(_.name), Some("fig-0002-01.png"))
     val huge = fig("fig-0019-02.png", 1600, 1000)
     assertEquals(FigurePick.choose(List(huge, early), rules).map(_.name), Some("fig-0019-02.png"), "unless far larger")
@@ -70,17 +79,36 @@ class SourcePicturesSuite extends munit.FunSuite:
     assertEquals(w.map(f => (f.name, f.refs, f.firstAt.isDefined)), List(("a.png", 2, true), ("c.png", 0, false)))
 
   test("reports: a job's batches add up; the covers report in Markdown"):
-    val a = MediaImportReport(MediaProvider.Commons, dryRun = false, targets = 50, files = 10, stored = 4,
-      byLicence = List(MediaCount("CC0-1.0", 2)), failed = List("x"), pending = 900, batches = 1)
-    val b = a.copy(targets = 20, stored = 1, byLicence = List(MediaCount("CC0-1.0", 1), MediaCount("CC-BY-4.0", 1)),
-      failed = Nil, pending = 880)
+    val a = MediaImportReport(
+      MediaProvider.Commons,
+      dryRun = false,
+      targets = 50,
+      files = 10,
+      stored = 4,
+      byLicence = List(MediaCount("CC0-1.0", 2)),
+      failed = List("x"),
+      pending = 900,
+      batches = 1
+    )
+    val b = a.copy(
+      targets = 20,
+      stored = 1,
+      byLicence = List(MediaCount("CC0-1.0", 1), MediaCount("CC-BY-4.0", 1)),
+      failed = Nil,
+      pending = 880
+    )
     val c = MediaImportReport.combine(a, b)
     assertEquals((c.targets, c.stored, c.batches, c.pending, c.failed), (70, 5, 2, 880, List("x")))
     assertEquals(c.byLicence, List(MediaCount("CC0-1.0", 3), MediaCount("CC-BY-4.0", 1)))
     assert(Markdown.mediaImportReport(c).contains("**Not asked yet:** 880 places/events · 2 batches run"))
-    val r = MediaCoversReport(dryRun = true, sources = 3, covers = 1, illustrations = 1,
+    val r = MediaCoversReport(
+      dryRun = true,
+      sources = 3,
+      covers = 1,
+      illustrations = 1,
       lines = List(MediaSourceLine("anthony2007", "cover", MediaProvider.Calibre, "Calibre id 12")),
-      skipped = List(MediaCount("illustration: no figures", 1)))
+      skipped = List(MediaCount("illustration: no figures", 1))
+    )
     val md = Markdown.mediaCoversReport(r)
     assert(md.contains("3 sources looked at · would link 1 cover and 1 illustration"), md)
     assert(md.contains("[[anthony2007]] — cover from Calibre library: `Calibre id 12`"), md)

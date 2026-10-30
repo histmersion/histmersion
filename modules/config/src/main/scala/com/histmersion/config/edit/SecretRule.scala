@@ -4,11 +4,15 @@ package com.histmersion.config.edit
 enum SecretRule:
   /** Not a credential. */
   case NotSecret
-  /** The setting holds the credential ITSELF (`auth.api-key`, `db.password`): it is never written into the
-    * file from Settings or the command line — the environment variable named for it is the place. */
+
+  /** The setting holds the credential ITSELF (`auth.api-key`, `db.password`): it is never written into the file from
+    * Settings or the command line — the environment variable named for it is the place.
+    */
   case FromEnvironment
+
   /** A plugin's credential, held as a REFERENCE to where the value is kept (`env:NAME`, `<vault>:<entry>`);
-    * `value:<literal>` only when the person asks for it. */
+    * `value:<literal>` only when the person asks for it.
+    */
   case Reference
 
 object SecretRule:

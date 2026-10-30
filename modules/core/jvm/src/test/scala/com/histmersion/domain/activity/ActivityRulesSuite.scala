@@ -17,13 +17,16 @@ class ActivityRulesSuite extends munit.FunSuite:
     Entry("log:11", "log", at(3), text = "a job's line", job = Some("j1"), by = Some("job")),
     Entry("log:12", "log", at(3), text = "a person's line"),
     Entry("decision:5", "decision", at(4), state = "approved", what = "edge", goal = Some("g1")),
-    Entry("job:j0", "job", at(60 * 24 * 9), state = "failed", what = "basemap-fetch"))
+    Entry("job:j0", "job", at(60 * 24 * 9), state = "failed", what = "basemap-fetch")
+  )
 
   private def keys(p: Activity.Page) = p.entries.map(_.key)
 
   test("newest first; entries of one instant by key, descending"):
-    assertEquals(keys(ActivityRules.page(entries, ActivityQuery(), Activity.Counts())),
-      List("run:r1", "job:j1", "log:12", "log:11", "log:10", "decision:5", "job:j0"))
+    assertEquals(
+      keys(ActivityRules.page(entries, ActivityQuery(), Activity.Counts())),
+      List("run:r1", "job:j1", "log:12", "log:11", "log:10", "decision:5", "job:j0")
+    )
 
   test("pages follow on without a gap or a repeat, also inside one instant"):
     def walk(q: ActivityQuery, acc: List[String]): List[String] =
@@ -32,8 +35,16 @@ class ActivityRulesSuite extends munit.FunSuite:
         case Some(c) => walk(q.copy(before = Some(ActivityCursor.parse(c).fold(fail(_), identity))), acc ++ keys(p))
         case None    => acc ++ keys(p)
     for size <- 1 to 4 do
-      assertEquals(walk(ActivityQuery(limit = size), Nil), keys(ActivityRules.page(entries, ActivityQuery(), Activity.Counts())), s"page size $size")
-    assertEquals(ActivityRules.page(entries, ActivityQuery(limit = 7), Activity.Counts()).next, None, "the last page has no next")
+      assertEquals(
+        walk(ActivityQuery(limit = size), Nil),
+        keys(ActivityRules.page(entries, ActivityQuery(), Activity.Counts())),
+        s"page size $size"
+      )
+    assertEquals(
+      ActivityRules.page(entries, ActivityQuery(limit = 7), Activity.Counts()).next,
+      None,
+      "the last page has no next"
+    )
 
   test("each chip shows what it names"):
     def shown(s: Show) = keys(ActivityRules.page(entries, ActivityQuery(show = s), Activity.Counts())).toSet
@@ -45,13 +56,20 @@ class ActivityRulesSuite extends munit.FunSuite:
     assertEquals(shown(Show.Everything).size, entries.size)
 
   test("a goal's slice and a time bound"):
-    assertEquals(keys(ActivityRules.page(entries, ActivityQuery(goal = Some("g1")), Activity.Counts())),
-      List("run:r1", "log:10", "decision:5"))
-    assertEquals(keys(ActivityRules.page(entries, ActivityQuery(since = Some(now.minusSeconds(150))), Activity.Counts())),
-      List("run:r1", "job:j1"))
+    assertEquals(
+      keys(ActivityRules.page(entries, ActivityQuery(goal = Some("g1")), Activity.Counts())),
+      List("run:r1", "log:10", "decision:5")
+    )
+    assertEquals(
+      keys(ActivityRules.page(entries, ActivityQuery(since = Some(now.minusSeconds(150))), Activity.Counts())),
+      List("run:r1", "job:j1")
+    )
 
   test("the counts: running now, and the problems of the last 7 days only"):
-    assertEquals(ActivityRules.counts(entries, now.minusSeconds(7 * 86400)), Activity.Counts(running = 1, problemsWeek = 1))
+    assertEquals(
+      ActivityRules.counts(entries, now.minusSeconds(7 * 86400)),
+      Activity.Counts(running = 1, problemsWeek = 1)
+    )
 
   test("a cursor round-trips; a bad one is refused"):
     val c = ActivityCursor(Instant.parse("2026-10-30T11:58:00.123456Z"), "log:12")
@@ -60,9 +78,16 @@ class ActivityRulesSuite extends munit.FunSuite:
     assert(ActivityCursor.parse("2026-10-30T11:58:00Z").isLeft)
 
   test("the query: the chips' words, a time ago, a capped limit; anything else a 400 naming what is allowed"):
-    assertEquals(ActivityRules.query(Some("problems"), Some("7d"), Some(" g1 "), Some(1000), None, now),
-      Right(ActivityQuery(Show.Problems, Some(now.minusSeconds(7 * 86400)), Some("g1"), Activity.MaxLimit, None)))
+    assertEquals(
+      ActivityRules.query(Some("problems"), Some("7d"), Some(" g1 "), Some(1000), None, now),
+      Right(ActivityQuery(Show.Problems, Some(now.minusSeconds(7 * 86400)), Some("g1"), Activity.MaxLimit, None))
+    )
     assertEquals(ActivityRules.query(None, None, None, None, None, now), Right(ActivityQuery()))
-    assert(ActivityRules.query(Some("everything else"), None, None, None, None, now).left.exists(_.message.contains("running")))
+    assert(
+      ActivityRules
+        .query(Some("everything else"), None, None, None, None, now)
+        .left
+        .exists(_.message.contains("running"))
+    )
     assert(ActivityRules.query(None, Some("last week"), None, None, None, now).isLeft)
     assert(ActivityRules.query(None, None, None, None, Some("nope"), now).isLeft)

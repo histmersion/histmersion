@@ -3,9 +3,9 @@ package com.histmersion.config
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** The pure half of the hot component graph (docs/research-plugins.md §3.6) and of a config reload
-  * (§3.5): order, cycles, what a set of changed keys rebuilds; which keys changed, which apply in
-  * place and which wait for a restart. */
+/** The pure half of the hot component graph (docs/research-plugins.md §3.6) and of a config reload (§3.5): order,
+  * cycles, what a set of changed keys rebuilds; which keys changed, which apply in place and which wait for a restart.
+  */
 class HotPlanSuite extends munit.FunSuite:
 
   private val nodes = List(
@@ -15,18 +15,25 @@ class HotPlanSuite extends munit.FunSuite:
     HotNode("lease", List("migrations"), Nil),
     HotNode("plugins", Nil, List("histmersion.plugins", "histmersion.acquire")),
     HotNode("acquisition", List("plugins"), List("histmersion.acquire")),
-    HotNode("watch", Nil, List("histmersion.config")))
+    HotNode("watch", Nil, List("histmersion.config"))
+  )
 
   test("order: dependencies first, declaration order among independent nodes"):
-    assertEquals(HotPlan.order(nodes),
-      Right(List("pool", "migrations", "query-pool", "lease", "plugins", "acquisition", "watch")))
+    assertEquals(
+      HotPlan.order(nodes),
+      Right(List("pool", "migrations", "query-pool", "lease", "plugins", "acquisition", "watch"))
+    )
     // declared out of order: still built after what it needs
     val shuffled = List(HotNode("b", List("a"), Nil), HotNode("c", Nil, Nil), HotNode("a", Nil, Nil))
     assertEquals(HotPlan.order(shuffled), Right(List("c", "a", "b")))
 
   test("order refuses a cycle, naming it; a dependency on no node; a name used twice"):
-    val cyc = List(HotNode("a", List("c"), Nil), HotNode("b", List("a"), Nil), HotNode("c", List("b"), Nil),
-      HotNode("free", Nil, Nil))
+    val cyc = List(
+      HotNode("a", List("c"), Nil),
+      HotNode("b", List("a"), Nil),
+      HotNode("c", List("b"), Nil),
+      HotNode("free", Nil, Nil)
+    )
     val e = HotPlan.order(cyc).swap.getOrElse(fail("a cycle was ordered"))
     assert(e.contains("cycle"), e)
     assert(e.contains("a → c → b → a"), e)
@@ -43,10 +50,15 @@ class HotPlanSuite extends munit.FunSuite:
     assert(!HotPlan.keyMatches("histmersion.query.user", "histmersion.db"))
 
   test("plan: the touched nodes and every dependent, in build order"):
-    assertEquals(HotPlan.plan(nodes, List("histmersion.db.url")),
-      Right(List("pool", "migrations", "query-pool", "lease")))
+    assertEquals(
+      HotPlan.plan(nodes, List("histmersion.db.url")),
+      Right(List("pool", "migrations", "query-pool", "lease"))
+    )
     assertEquals(HotPlan.plan(nodes, List("histmersion.query.password")), Right(List("query-pool")))
-    assertEquals(HotPlan.plan(nodes, List("histmersion.plugins.keepassxc.enabled")), Right(List("plugins", "acquisition")))
+    assertEquals(
+      HotPlan.plan(nodes, List("histmersion.plugins.keepassxc.enabled")),
+      Right(List("plugins", "acquisition"))
+    )
     assertEquals(HotPlan.plan(nodes, List("histmersion.acquire.chain")), Right(List("plugins", "acquisition")))
     assertEquals(HotPlan.plan(nodes, List("histmersion.limits.search")), Right(Nil))
     assertEquals(HotPlan.plan(nodes, Nil, forced = Set("lease")), Right(List("lease")))
@@ -61,15 +73,21 @@ class HotPlanSuite extends munit.FunSuite:
                    |PATH = "/bin"""".stripMargin)
     val b = conf("""histmersion { db { url = "b", pool.max = 8 }, limits.search = 5, plugins.y.enabled = true }
                    |PATH = "/usr/bin"""".stripMargin)
-    assertEquals(ConfigReload.changed(a, b),
-      List("histmersion.db.url", "histmersion.plugins.x.enabled", "histmersion.plugins.y.enabled"))
+    assertEquals(
+      ConfigReload.changed(a, b),
+      List("histmersion.db.url", "histmersion.plugins.x.enabled", "histmersion.plugins.y.enabled")
+    )
     assertEquals(ConfigReload.changed(a, a), Nil)
     // a list is one setting
-    assertEquals(ConfigReload.changed(conf("histmersion.l = [1, 2]"), conf("histmersion.l = [1, 3]")), List("histmersion.l"))
+    assertEquals(
+      ConfigReload.changed(conf("histmersion.l = [1, 2]"), conf("histmersion.l = [1, 3]")),
+      List("histmersion.l")
+    )
 
   test("split and effective: restart-only keys keep their running value"):
-    val running = conf("""histmersion { server { port = 8000, public-url = "u" }, db.url = "a", runtime.pg-port = 1 }""")
-    val next    = conf("""histmersion { server { port = 9000, public-url = "v" }, db.url = "b", runtime.pg-port = 2 }""")
+    val running =
+      conf("""histmersion { server { port = 8000, public-url = "u" }, db.url = "a", runtime.pg-port = 1 }""")
+    val next = conf("""histmersion { server { port = 9000, public-url = "v" }, db.url = "b", runtime.pg-port = 2 }""")
     val changed = ConfigReload.changed(running, next)
     val (applied, restart) = ConfigReload.split(changed)
     assertEquals(applied, List("histmersion.db.url", "histmersion.server.public-url"))
@@ -86,7 +104,10 @@ class HotPlanSuite extends munit.FunSuite:
     val env = org.ekrich.config.ConfigFactory.parseMap(Map("HISTMERSION_DB_POOL_MAX" -> "3").asJava)
     Files.writeString(f, """histmersion { db.url = "jdbc:postgresql://h/a_test", limits.search = 7 }""")
     val first = AppConfig.loadWithUserFile(env, Some(f)).fold(fail(_), identity)
-    Files.writeString(f, """histmersion { db.url = "jdbc:postgresql://h/b_test", limits.search = 7, server.port = 9123 }""")
+    Files.writeString(
+      f,
+      """histmersion { db.url = "jdbc:postgresql://h/b_test", limits.search = 7, server.port = 9123 }"""
+    )
     val second = AppConfig.loadWithUserFile(env, Some(f)).fold(fail(_), identity)
     val changed = ConfigReload.changed(first.merged, second.merged)
     assertEquals(changed, List("histmersion.db.url", "histmersion.server.port"))

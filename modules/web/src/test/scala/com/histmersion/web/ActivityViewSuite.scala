@@ -7,13 +7,17 @@ import com.histmersion.api.Activity.Entry
 class ActivityViewSuite extends munit.FunSuite:
 
   test("Activity's chips are the merged list's filters, in the mockup's order; the detailed lists are not chips"):
-    assertEquals(ActivityTab.values.toList.filter(_.isChip).map(_.label),
-      List("Everything", "Running now", "Agent work", "Background jobs", "Your actions", "Problems"))
+    assertEquals(
+      ActivityTab.values.toList.filter(_.isChip).map(_.label),
+      List("Everything", "Running now", "Agent work", "Background jobs", "Your actions", "Problems")
+    )
     assertEquals(ActivityTab.values.toList.filter(_.isChip).flatMap(_.show), Activity.Show.values.toList)
     assertEquals(ActivityTab.values.toList.filterNot(_.isChip).map(_.slug), List("runs", "all-jobs", "worklog"))
 
-  private def run(state: String) = Entry("run:r1", "run", "2026-10-30T12:00:00Z", state = state, what = "review-article", job = Some("r1"))
-  private def job(kind: String, state: String) = Entry("job:j1", "job", "2026-10-30T12:00:00Z", state = state, what = kind, job = Some("j1"))
+  private def run(state: String) =
+    Entry("run:r1", "run", "2026-10-30T12:00:00Z", state = state, what = "review-article", job = Some("r1"))
+  private def job(kind: String, state: String) =
+    Entry("job:j1", "job", "2026-10-30T12:00:00Z", state = state, what = kind, job = Some("j1"))
 
   test("a row's first words say what is going on, or what it was and when"):
     assertEquals(ActivityView.when(run("running"), "12:40"), "Running")
@@ -21,7 +25,10 @@ class ActivityViewSuite extends munit.FunSuite:
     assertEquals(ActivityView.when(job("media-import", "failed"), "11:02"), "Problem · 11:02")
     assertEquals(ActivityView.when(job("media-import", "paused"), "11:02"), "Paused · 11:02")
     assertEquals(ActivityView.when(Entry("log:1", "log", "x"), "09:12"), "Note · 09:12")
-    assertEquals(ActivityView.when(Entry("decision:1", "decision", "x", state = "approved"), "09:12"), "You decided · 09:12")
+    assertEquals(
+      ActivityView.when(Entry("decision:1", "decision", "x", state = "approved"), "09:12"),
+      "You decided · 09:12"
+    )
     assert(ActivityView.problem(job("media-import", "failed")) && !ActivityView.problem(run("running")))
 
   test("Pause and Cancel in place: agent runs and the long background jobs, by their state; nothing else"):

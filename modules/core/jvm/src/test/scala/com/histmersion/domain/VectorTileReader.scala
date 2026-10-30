@@ -2,14 +2,16 @@ package com.histmersion.domain
 
 import java.nio.charset.StandardCharsets
 
-/** Reads back the point layers [[VectorTileWriter]] writes — the tests' view of a tile, as MapLibre
-  * decodes it: each layer's name, extent and point features (place and properties). */
+/** Reads back the point layers [[VectorTileWriter]] writes — the tests' view of a tile, as MapLibre decodes it: each
+  * layer's name, extent and point features (place and properties).
+  */
 object VectorTileReader:
 
   final case class Feature(x: Int, y: Int, props: Map[String, TileValue]):
     def text(k: String): Option[String] = props.get(k).collect { case TileValue.Text(s) => s }
-    def whole(k: String): Option[Long]  = props.get(k).collect { case TileValue.Whole(n) => n }
-    def real(k: String): Option[Double] = props.get(k).collect { case TileValue.Real(d) => d; case TileValue.Whole(n) => n.toDouble }
+    def whole(k: String): Option[Long] = props.get(k).collect { case TileValue.Whole(n) => n }
+    def real(k: String): Option[Double] =
+      props.get(k).collect { case TileValue.Real(d) => d; case TileValue.Whole(n) => n.toDouble }
 
   final case class Layer(name: String, extent: Int, features: Vector[Feature])
 
@@ -33,11 +35,11 @@ object VectorTileReader:
 
   private def value(b: Array[Byte], from: Int, until: Int): TileValue =
     fields(b, from, until).headOption match
-      case Some((1, _, s, e)) => TileValue.Text(String(b, s, e - s, StandardCharsets.UTF_8))
+      case Some((1, _, s, e))    => TileValue.Text(String(b, s, e - s, StandardCharsets.UTF_8))
       case Some((3, bits, _, _)) => TileValue.Real(java.lang.Double.longBitsToDouble(bits))
-      case Some((6, v, _, _)) => TileValue.Whole(unzig(v))
-      case Some((7, v, _, _)) => TileValue.Flag(v != 0)
-      case other => throw IllegalArgumentException(s"unexpected value $other")
+      case Some((6, v, _, _))    => TileValue.Whole(unzig(v))
+      case Some((7, v, _, _))    => TileValue.Flag(v != 0)
+      case other                 => throw IllegalArgumentException(s"unexpected value $other")
 
   private def unzig(n: Long): Long = (n >>> 1) ^ -(n & 1)
 

@@ -6,13 +6,14 @@ import com.histmersion.api.given
 import org.yaml.snakeyaml.{DumperOptions, Yaml}
 import scala.jdk.CollectionConverters.*
 
-/** Render a stored [[Source]] back as a `wiki/sources/<citekey>.md` note — the Markdown mirror of the
-  * database (plan §1.9a `export`). The inverse of [[Frontmatter.parseNote]]: same key names and shapes
-  * as the research wiki's schema, so `export` then `seed --force` round-trips.
+/** Render a stored [[Source]] back as a `wiki/sources/<citekey>.md` note — the Markdown mirror of the database (plan
+  * §1.9a `export`). The inverse of [[Frontmatter.parseNote]]: same key names and shapes as the research wiki's schema,
+  * so `export` then `seed --force` round-trips.
   *
-  * The FRONTMATTER carries the catalog fields; the BODY carries [[Source.notes]] — the agent-written
-  * article about the source. `ocrMarkdown` (the paper's own converted text, often megabytes) is NOT
-  * exported: it lives in `md/<citekey>/paper.md` and is referenced from there, exactly as today. */
+  * The FRONTMATTER carries the catalog fields; the BODY carries [[Source.notes]] — the agent-written article about the
+  * source. `ocrMarkdown` (the paper's own converted text, often megabytes) is NOT exported: it lives in
+  * `md/<citekey>/paper.md` and is referenced from there, exactly as today.
+  */
 object Export:
 
   /** Frontmatter key order — matches the notes the research wiki already writes. */
@@ -59,10 +60,10 @@ object Export:
     m.put("significance", f.significance.orNull)
     m
 
-  /** Block style, no line folding: folding a long scalar is lossless for YAML but makes diffs noisy,
-    * and `git`-friendliness is the point of the export. `prettyFlow` is deliberately OFF so an empty
-    * list stays `[]` on one line, as the research wiki's own notes write it. A fresh Yaml per call —
-    * it is not thread-safe. */
+  /** Block style, no line folding: folding a long scalar is lossless for YAML but makes diffs noisy, and
+    * `git`-friendliness is the point of the export. `prettyFlow` is deliberately OFF so an empty list stays `[]` on one
+    * line, as the research wiki's own notes write it. A fresh Yaml per call — it is not thread-safe.
+    */
   private def dump(m: java.util.Map[String, Any]): String =
     val opts = new DumperOptions()
     opts.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)

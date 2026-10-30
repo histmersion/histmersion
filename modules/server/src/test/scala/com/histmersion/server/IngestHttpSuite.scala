@@ -10,25 +10,26 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
-/** The whole §1.8 path over real HTTP, with the converter STUBBED: upload → job → body + assets →
-  * the bytes served with the right headers → the figure rendered as a lazy `<img>` → the absolute
-  * URLs MCP hands out. Skipped without HISTMERSION_TEST_DB_URL.
+/** The whole §1.8 path over real HTTP, with the converter STUBBED: upload → job → body + assets → the bytes served with
+  * the right headers → the figure rendered as a lazy `<img>` → the absolute URLs MCP hands out. Skipped without
+  * HISTMERSION_TEST_DB_URL.
   *
-  * The stub is the point of `ConverterClient` being a trait: this suite proves the plumbing without
-  * a 5 GB OCR container, and the real sidecar is verified end to end separately. */
+  * The stub is the point of `ConverterClient` being a trait: this suite proves the plumbing without a 5 GB OCR
+  * container, and the real sidecar is verified end to end separately.
+  */
 class IngestHttpSuite extends munit.FunSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  override val munitTimeout         = scala.concurrent.duration.Duration(90, "s")
+  override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
   /** A client per REQUEST, HTTP/1.1.
     *
-    * HTTP/1.1 because java.net.http's HTTP/2 default mangles body-carrying requests against this
-    * server; one connection per request because a ZERO-LENGTH body (`post` with no JSON, an empty
-    * upload) can cost the NEXT request on its connection its own body — see [[ZeroLengthUploadSuite]],
-    * which is where that behaviour is deliberately exercised. This suite is about the ingest surface,
-    * so it takes connection reuse out of the picture entirely. It is also what the CLI does in
-    * practice: one process, one command, one connection. */
+    * HTTP/1.1 because java.net.http's HTTP/2 default mangles body-carrying requests against this server; one connection
+    * per request because a ZERO-LENGTH body (`post` with no JSON, an empty upload) can cost the NEXT request on its
+    * connection its own body — see [[ZeroLengthUploadSuite]], which is where that behaviour is deliberately exercised.
+    * This suite is about the ingest surface, so it takes connection reuse out of the picture entirely. It is also what
+    * the CLI does in practice: one process, one command, one connection.
+    */
   private def client() = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
 
   private def send(req: HttpRequest): (Int, String) =
@@ -39,46 +40,71 @@ class IngestHttpSuite extends munit.FunSuite:
 
   private def bytes(url: String): (Int, Array[Byte], Map[String, String]) =
     val r = client().send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofByteArray())
-    val hs = r.headers.map.entrySet.iterator.asInstanceOf[java.util.Iterator[java.util.Map.Entry[String, java.util.List[String]]]]
-    val m  = Iterator.continually(if hs.hasNext then Some(hs.next()) else None).takeWhile(_.isDefined).flatten
-      .map(e => e.getKey.toLowerCase -> e.getValue.get(0)).toMap
+    val hs = r.headers.map.entrySet.iterator
+      .asInstanceOf[java.util.Iterator[java.util.Map.Entry[String, java.util.List[String]]]]
+    val m = Iterator
+      .continually(if hs.hasNext then Some(hs.next()) else None)
+      .takeWhile(_.isDefined)
+      .flatten
+      .map(e => e.getKey.toLowerCase -> e.getValue.get(0))
+      .toMap
     (r.statusCode, r.body, m)
 
   private def upload(url: String, file: Path) =
-    send(HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/octet-stream")
-      .POST(HttpRequest.BodyPublishers.ofFile(file)).build())
-
+    send(
+      HttpRequest
+        .newBuilder(URI.create(url))
+        .header("content-type", "application/octet-stream")
+        .POST(HttpRequest.BodyPublishers.ofFile(file))
+        .build()
+    )
 
   private def post(url: String, body: String = "") =
-    send(HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
-      .POST(HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      HttpRequest
+        .newBuilder(URI.create(url))
+        .header("content-type", "application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
 
   private def patch(url: String, body: String) =
-    send(HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
-      .method("PATCH", HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      HttpRequest
+        .newBuilder(URI.create(url))
+        .header("content-type", "application/json")
+        .method("PATCH", HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
 
   private def field(json: String, name: String): Option[String] =
     s""""$name":"([^"]*)"""".r.findFirstMatchIn(json).map(_.group(1))
 
   // ── the stub ────────────────────────────────────────────────────────────────────────────────
   private val figure: Array[Byte] = Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, 42)
-  private val figureB64           = java.util.Base64.getEncoder.encodeToString(figure)
+  private val figureB64 = java.util.Base64.getEncoder.encodeToString(figure)
 
-  /** Returns a body that links one figure the canonical way, plus that figure twice — the second
-    * copy has identical bytes, so storage must deduplicate it. */
-  private final class FakeConverter(fail: Option[String] = None, beforeConvert: () => Unit = () => ()) extends ConverterClient:
+  /** Returns a body that links one figure the canonical way, plus that figure twice — the second copy has identical
+    * bytes, so storage must deduplicate it.
+    */
+  final private class FakeConverter(fail: Option[String] = None, beforeConvert: () => Unit = () => ())
+      extends ConverterClient:
     @volatile var calls: List[(String, Boolean)] = Nil
     def health = Right("ok")
     def convert(file: Path, filename: String, quality: Boolean) =
       beforeConvert()
       calls = calls :+ (filename, quality)
-      fail.toLeft(ConvertedDoc(
-        markdown = "# Converted\n\nBefore.\n\n![Figure 1](assets/fig-1.png)\n\nAfter.\n",
-        pages = 3,
-        images = List(
-          ConvertedImage("fig-1.png", "image/png", figureB64, Some(120), Some(80)),
-          ConvertedImage("fig-1-copy.png", "image/png", figureB64, Some(120), Some(80))),
-        filename = Some(filename)))
+      fail.toLeft(
+        ConvertedDoc(
+          markdown = "# Converted\n\nBefore.\n\n![Figure 1](assets/fig-1.png)\n\nAfter.\n",
+          pages = 3,
+          images = List(
+            ConvertedImage("fig-1.png", "image/png", figureB64, Some(120), Some(80)),
+            ConvertedImage("fig-1-copy.png", "image/png", figureB64, Some(120), Some(80))
+          ),
+          filename = Some(filename)
+        )
+      )
 
   private def tempPdf(marker: String): Path =
     val p = Files.createTempFile("histmersion-ingest-", ".pdf")
@@ -90,26 +116,27 @@ class IngestHttpSuite extends munit.FunSuite:
     base.copy(
       db = base.db.copy(url = testDb.get),
       server = base.server.copy(publicUrl = "http://histmersion.test"),
-      converter = base.converter.copy(spoolDir = Files.createTempDirectory("histmersion-spool").toString))
+      converter = base.converter.copy(spoolDir = Files.createTempDirectory("histmersion-spool").toString)
+    )
 
   /** Poll until the job leaves queued/running. */
   private def await(url: String, id: String): String =
     def go(n: Int): String =
       val (_, b) = get(s"$url/api/jobs/$id")
-      val st     = field(b, "status").getOrElse("")
+      val st = field(b, "status").getOrElse("")
       if st == "done" || st == "failed" || n > 300 then b
       else
         Thread.sleep(100)
         go(n + 1)
     go(0)
 
-  private val ck  = "zz_ingest"
+  private val ck = "zz_ingest"
   private val dup = "zz_ingest_dup"
 
   test("ingest → job → body + assets → served bytes → lazy <img> → absolute MCP URLs"):
     val conv = FakeConverter()
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0, conv).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("one")
 
@@ -166,7 +193,7 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("a duplicate upload is refused with the citekey that already holds it, unless forced"):
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("dupe")
 
@@ -189,7 +216,7 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("re-OCR replaces body and figures but preserves enrichment"):
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("reocr")
 
@@ -217,12 +244,12 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("a converter failure fails the job with the reason, and lists under status=failed"):
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0, FakeConverter(Some("converter at http://x is unreachable"))).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter(Some("converter at http://x is unreachable"))).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("boom")
 
       val id = field(upload(s"$url/api/ingest?citekey=zz_ingest_fail&force=true", pdf)._2, "jobId").get
-      val j  = await(url, id)
+      val j = await(url, id)
       assertEquals(field(j, "status"), Some("failed"), j)
       assert(j.contains("unreachable"), j)
 
@@ -275,10 +302,10 @@ class IngestHttpSuite extends munit.FunSuite:
         converting.countDown()
         if !release.await(30, TimeUnit.SECONDS) then throw IllegalStateException("test converter was not released")
       })
-      val b   = Main.server(cfg, "127.0.0.1", 0, conv).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil")
-      val id  = addItem(url, "zzfulfil Killen, The New Documents")
+      val id = addItem(url, "zzfulfil Killen, The New Documents")
 
       val (is, ib) = upload(s"$url/api/ingest?citekey=zz_fulfil&force=true&acquireItem=$id", pdf)
       assertEquals(is, 202, ib)
@@ -302,8 +329,11 @@ class IngestHttpSuite extends munit.FunSuite:
       // the MCP tool takes the same link, and job_status says which item it ticks off
       val id2 = addItem(url, "zzfulfil a second book")
       val b64 = java.util.Base64.getEncoder.encodeToString("%PDF-1.4 via mcp".getBytes("UTF-8"))
-      val (ms, mb) = mcp(url, "ingest",
-        s"""{"citekey":"zz_fulfil_mcp","base64":"$b64","filename":"b.pdf","force":true,"acquireItem":$id2}""")
+      val (ms, mb) = mcp(
+        url,
+        "ingest",
+        s"""{"citekey":"zz_fulfil_mcp","base64":"$b64","filename":"b.pdf","force":true,"acquireItem":$id2}"""
+      )
       assertEquals(ms, 200, mb)
       val mcpJob = """queued job `([^`]+)`""".r.findFirstMatchIn(mb).map(_.group(1)).getOrElse(fail(mb))
       assertEquals(field(await(url, mcpJob), "status"), Some("done"))
@@ -317,12 +347,13 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("a failed OCR leaves the acquisition item open"):
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0, FakeConverter(Some("converter exploded"))).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter(Some("converter exploded"))).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil-fail")
-      val id  = addItem(url, "zzfulfil a book whose scan fails")
+      val id = addItem(url, "zzfulfil a book whose scan fails")
 
-      val jobId = field(upload(s"$url/api/ingest?citekey=zz_fulfil_fail&force=true&acquireItem=$id", pdf)._2, "jobId").get
+      val jobId =
+        field(upload(s"$url/api/ingest?citekey=zz_fulfil_fail&force=true&acquireItem=$id", pdf)._2, "jobId").get
       assertEquals(field(await(url, jobId), "status"), Some("failed"))
       val it = item(url, id)
       assert(it.contains("\"status\":\"open\""), it)
@@ -336,14 +367,19 @@ class IngestHttpSuite extends munit.FunSuite:
   test("an upload naming an item it cannot fulfil is refused before a job is created"):
     supervised {
       val conv = FakeConverter()
-      val b    = Main.server(cfg, "127.0.0.1", 0, conv).start()
-      val url  = s"http://127.0.0.1:${b.port}"
-      val pdf  = tempPdf("fulfil-refused")
+      val b = Main.server(cfg, "127.0.0.1", 0, conv).start()
+      val url = s"http://127.0.0.1:${b.port}"
+      val pdf = tempPdf("fulfil-refused")
       val done = addItem(url, "zzfulfil already got")
       assertEquals(patch(s"$url/api/queue/items/$done", """{"status":"done"}""")._1, 200)
       val task = addItem(url, "zzfulfil a task, not a book", list = "tasks")
 
-      for (bad, why) <- List(done -> "already done", task -> "not the acquisition list", 999999 -> "no acquisition item") do
+      for (bad, why) <- List(
+          done -> "already done",
+          task -> "not the acquisition list",
+          999999 -> "no acquisition item"
+        )
+      do
         val (st, body) = upload(s"$url/api/ingest?citekey=zz_fulfil_bad&force=true&acquireItem=$bad", pdf)
         assertEquals(st, 400, body)
         assert(body.contains(why), body)
@@ -356,10 +392,10 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("empty and oversized uploads are refused before a job is created"):
     supervised {
-      val b     = Main.server(cfg.copy(limits = cfg.limits.copy(uploadBytes = 4)), "127.0.0.1", 0, FakeConverter()).start()
-      val url   = s"http://127.0.0.1:${b.port}"
+      val b = Main.server(cfg.copy(limits = cfg.limits.copy(uploadBytes = 4)), "127.0.0.1", 0, FakeConverter()).start()
+      val url = s"http://127.0.0.1:${b.port}"
       val empty = Files.createTempFile("histmersion-empty-", ".pdf")
-      val big   = tempPdf("far too long for a four byte limit")
+      val big = tempPdf("far too long for a four byte limit")
 
       val (os, ob) = upload(s"$url/api/ingest?citekey=zz_big", big)
       assertEquals(os, 400, ob)
@@ -385,16 +421,16 @@ class IngestHttpSuite extends munit.FunSuite:
         Right(ConvertedDoc(markdown = "# Busy\n", pages = 1, images = Nil, filename = Some(filename)))
     val c = cfg.copy(converter = cfg.converter.copy(healthCacheMs = 0))
     supervised {
-      val b   = Main.server(c, "127.0.0.1", 0, conv).start()
+      val b = Main.server(c, "127.0.0.1", 0, conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (_, idle) = get(s"$url/api/health")
         assertEquals(field(idle, "status"), Some("degraded"), idle)
         assert(!idle.contains("seconds-per-page"), "a health probe timing out is not about the page budget: " + idle)
 
-        val pdf     = tempPdf("busy")
+        val pdf = tempPdf("busy")
         val (_, ib) = upload(s"$url/api/ingest?citekey=zz_ingest_busy&force=true", pdf)
-        val jobId   = field(ib, "jobId").getOrElse(fail(ib))
+        val jobId = field(ib, "jobId").getOrElse(fail(ib))
         assert(entered.await(30, TimeUnit.SECONDS), "the conversion never started")
         val (hs, busy) = get(s"$url/api/health")
         assertEquals(hs, 200)
@@ -413,10 +449,10 @@ class IngestHttpSuite extends munit.FunSuite:
   // #652: `calibre push --replace` takes the file the server stored at ingest
   test("GET /api/sources/{ck}/original serves the stored original, named <citekey>.<ext>"):
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
-        val pdf     = tempPdf("original")
+        val pdf = tempPdf("original")
         val (_, ib) = upload(s"$url/api/ingest?citekey=zz_ingest_orig&filename=paper.pdf&force=true", pdf)
         assertEquals(field(await(url, field(ib, "jobId").get), "status"), Some("done"))
         val (os, ob, oh) = bytes(s"$url/api/sources/zz_ingest_orig/original")
@@ -430,9 +466,14 @@ class IngestHttpSuite extends munit.FunSuite:
 
   /** One MCP `tools/call`, over the same server. */
   private def mcp(url: String, tool: String, args: String): (Int, String) =
-    send(HttpRequest.newBuilder(URI.create(s"$url/mcp"))
-      .header("content-type", "application/json")
-      .header("accept", "application/json, text/event-stream")
-      .POST(HttpRequest.BodyPublishers.ofString(
-        s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$tool","arguments":$args}}"""))
-      .build())
+    send(
+      HttpRequest
+        .newBuilder(URI.create(s"$url/mcp"))
+        .header("content-type", "application/json")
+        .header("accept", "application/json, text/event-stream")
+        .POST(
+          HttpRequest.BodyPublishers
+            .ofString(s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$tool","arguments":$args}}""")
+        )
+        .build()
+    )

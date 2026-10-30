@@ -37,13 +37,14 @@ object ModuleCoordinates:
   def parse(raw: String): Either[String, ModuleCoordinates] = raw.trim.split(':').toList match
     case List(g, a, v) =>
       for
-        key     <- ModuleKey.parse(s"$g:$a")
+        key <- ModuleKey.parse(s"$g:$a")
         version <- ModuleVersion.either(v).left.map(e => s"'$raw': version $e")
       yield ModuleCoordinates(key, version)
     case _ => Left(s"not group:artifact:version: '$raw'")
 
-/** What the server's class path holds (the relink kit's `modules`), and the modules the build keeps off
-  * every class path (`excludes`): a plugin gets neither from its own dependencies. */
+/** What the server's class path holds (the relink kit's `modules`), and the modules the build keeps off every class
+  * path (`excludes`): a plugin gets neither from its own dependencies.
+  */
 final case class ServerModules(shipped: Map[ModuleKey, ModuleVersion], excluded: Set[ModuleKey]):
   def provides(key: ModuleKey): Boolean = shipped.contains(key) || excluded.contains(key)
 
@@ -52,7 +53,7 @@ object ServerModules:
   def parse(modules: List[String], excludes: List[String]): Either[String, ServerModules] =
     def entries(lines: List[String]) = lines.map(_.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
     for
-      shipped  <- traverse(entries(modules))(ModuleCoordinates.parse)
+      shipped <- traverse(entries(modules))(ModuleCoordinates.parse)
       excluded <- traverse(entries(excludes))(ModuleKey.parse)
     yield ServerModules(shipped.map(c => c.key -> c.version).toMap, excluded.toSet)
 
@@ -65,20 +66,23 @@ object RepositoryUrl extends RefinedType[String, Match["(https?|file):.+"]]:
     if trimmed.matches("(https?|file):.+") then either(trimmed)
     else either(Path.of(trimmed).toAbsolutePath.normalize.toUri.toString)
 
-/** A plugin jar to resolve the dependencies of, with the text of the POM that lists them when it was
-  * published with one. Without a POM it has no dependencies of its own. */
+/** A plugin jar to resolve the dependencies of, with the text of the POM that lists them when it was published with
+  * one. Without a POM it has no dependencies of its own.
+  */
 final case class PluginArtifact(jar: Path, pom: Option[String]):
   def fileName: String = jar.getFileName.toString
 
-/** One module a plugin's dependencies need that the server does not ship, and the plugin jars it is
-  * there for. */
+/** One module a plugin's dependencies need that the server does not ship, and the plugin jars it is there for.
+  */
 final case class Dependency(coordinates: ModuleCoordinates, file: Path, neededBy: List[String]):
-  /** The file name in the plugins directory's `lib/`: the group first, as two groups may publish
-    * artifacts of the same name and version (`core_3-1.0.2.jar`). */
+  /** The file name in the plugins directory's `lib/`: the group first, as two groups may publish artifacts of the same
+    * name and version (`core_3-1.0.2.jar`).
+    */
   def libName: String = s"${coordinates.key.group.value}-${file.getFileName.toString}"
 
-/** A plugin needs a module the server ships, at a NEWER version than the server's. One class loader
-  * holds one version, and the server's would win, so the plugin cannot be linked. */
+/** A plugin needs a module the server ships, at a NEWER version than the server's. One class loader holds one version,
+  * and the server's would win, so the plugin cannot be linked.
+  */
 final case class Conflict(plugin: String, key: ModuleKey, wanted: ModuleVersion, shipped: ModuleVersion):
   def message: String =
     s"$plugin needs $key ${wanted.value}, but this Histmersion ships ${shipped.value} — " +

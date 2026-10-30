@@ -7,23 +7,30 @@ import com.histmersion.api.Agents.{ApprovalState, RunState}
 
 import com.augustnagro.magnum.*
 
-/** Keyset paging of the jobs, agent-runs and approvals lists (core `Paging`, V086) against a real
-  * Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write jobs and approvals at the
-  * same time, so each fixture is kept apart: its jobs carry a status of their own, its runs a goal of
-  * their own, its approvals sit in 1971, older than anything another suite writes. */
+/** Keyset paging of the jobs, agent-runs and approvals lists (core `Paging`, V086) against a real Postgres
+  * (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write jobs and approvals at the same time, so each
+  * fixture is kept apart: its jobs carry a status of their own, its runs a goal of their own, its approvals sit in
+  * 1971, older than anything another suite writes.
+  */
 class PagingRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val tag = s"zzpg${System.nanoTime().toHexString.takeRight(8)}"
 
   /** `n` jobs of `status`/`kind`: two share each second (ties broken by id), newest = the highest index. */
-  private def jobs(prefix: String, status: String, n: Int, kind: String = "ingest", goal: Option[String] = None): List[String] =
+  private def jobs(
+      prefix: String,
+      status: String,
+      n: Int,
+      kind: String = "ingest",
+      goal: Option[String] = None
+  ): List[String] =
     val ids = (1 to n).map(i => f"$prefix-$i%03d").toList
     transact(ds):
       ids.zipWithIndex.foreach { (id, i) =>
@@ -41,8 +48,8 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
       ()
 
   test("jobs: newest first, ties broken by id, the cursor continues exactly, the counts are the table's"):
-    val st  = s"${tag}j"
-    val all = jobs(s"${tag}-j", st, 7)
+    val st = s"${tag}j"
+    val all = jobs(s"$tag-j", st, 7)
     val (p1, more1) = JobRepo.page(ds, Some(st), 3).toOption.get
     assertEquals(p1.map(_.id).toList, all.take(3))
     assert(more1)
@@ -59,8 +66,8 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(JobRepo.list(ds, Some(st), 7).map(_.id).toList, all)
 
   test("jobs: upTo is every row down to that one; a filter narrows the page, not the cursor's place"):
-    val st  = s"${tag}u"
-    val all = jobs(s"${tag}-u", st, 6)
+    val st = s"${tag}u"
+    val all = jobs(s"$tag-u", st, 6)
     val (rows, more) = JobRepo.page(ds, Some(st), 10, upTo = Some(all(3))).toOption.get
     assertEquals(rows.map(_.id).toList, all.take(4))
     assert(more, "rows older than the upTo row exist")
@@ -78,8 +85,8 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
 
   test("agent runs: one goal's runs page by keyset, and the counts are that goal's, per state"):
     val goal = s"${tag}g"
-    val done = jobs(s"${tag}-r", RunState.Done.wire, 5, Agents.JobKind, Some(goal))
-    val paused = jobs(s"${tag}-s", RunState.Paused.wire, 1, Agents.JobKind, Some(goal))
+    val done = jobs(s"$tag-r", RunState.Done.wire, 5, Agents.JobKind, Some(goal))
+    val paused = jobs(s"$tag-s", RunState.Paused.wire, 1, Agents.JobKind, Some(goal))
     val (p1, more) = AgentRepo.page(ds, Some(RunState.Done.wire), 2, Some(goal)).toOption.get
     assertEquals((p1.map(_.id).toList, more), (done.take(2), true))
     val (p2, _) = AgentRepo.page(ds, Some(RunState.Done.wire), 10, Some(goal), before = Some(p1.last.id)).toOption.get
@@ -88,7 +95,7 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(every.size, 6)
     assertEquals(AgentRepo.stateCounts(ds, Some(goal)).toMap, Map(RunState.Done.wire -> 5, RunState.Paused.wire -> 1))
     // an OCR job is not a run, wherever it sits
-    jobs(s"${tag}-x", RunState.Done.wire, 1, "ingest", Some(goal))
+    jobs(s"$tag-x", RunState.Done.wire, 1, "ingest", Some(goal))
     assertEquals(AgentRepo.stateCounts(ds, Some(goal)).toMap.get(RunState.Done.wire), Some(5))
     assert(AgentRepo.page(ds, None, 10, Some(goal), upTo = Some(s"$tag-nope")).isLeft)
     assertEquals(paused.size, 1)
@@ -96,7 +103,7 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
   test("approvals: newest first by created_at then id, the cursor and upTo, a state filter, the counts"):
     val ids = transact(ds):
       (1 to 5).toList.map { i =>
-        val at    = f"1971-01-01T00:00:${i / 2}%02dZ"
+        val at = f"1971-01-01T00:00:${i / 2}%02dZ"
         val state = if i == 2 then ApprovalState.Rejected.wire else ApprovalState.Open.wire
         sql"""INSERT INTO approvals (kind, citekey, status, proposal, state, created_at)
               VALUES ('status-change', ${s"$tag-a$i"}, 'contested', '{}'::jsonb, $state, $at::timestamptz)
@@ -115,8 +122,8 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals((rest.map(_.id), none), (newest.drop(3), false))
     val (open, _) = AgentRepo.approvalPage(ds, Some(ApprovalState.Open), 10, before = Some(probe.toString)).toOption.get
     assertEquals(open.map(_.id), newest.filterNot(_ == ids(1)))
-    val (down, older) = AgentRepo.approvalPage(ds, None, 10, before = Some(probe.toString), upTo = Some(newest(2).toString))
-      .toOption.get
+    val (down, older) =
+      AgentRepo.approvalPage(ds, None, 10, before = Some(probe.toString), upTo = Some(newest(2).toString)).toOption.get
     assertEquals((down.map(_.id), older), (newest.take(3), true))
     assert(AgentRepo.approvalCounts(ds).exists((s, n) => s == "zz" && n >= 1))
     assert(AgentRepo.approvalPage(ds, None, 3, before = Some("not-a-number")).isLeft)

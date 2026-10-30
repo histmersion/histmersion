@@ -1,31 +1,47 @@
 package com.histmersion.api
 
-/** The NAMES of the colour-coded categories. Their colours are the stylesheet's: every name here has
-  * a custom property in `web/style.css` (`--edge-cites`, `--status-current`, …, and a `-default` for
-  * anything unlisted), which `CssTokensSuite` (server) checks. Code refers to a colour by its token — as
-  * `var(--…)` in markup, or through the web UI's `ThemeTokens` where it must compute with the value (the graph's
-  * canvas) — so a theme is a change to the stylesheet alone. */
+/** The NAMES of the colour-coded categories. Their colours are the stylesheet's: every name here has a custom property
+  * in `web/style.css` (`--edge-cites`, `--status-current`, …, and a `-default` for anything unlisted), which
+  * `CssTokensSuite` (server) checks. Code refers to a colour by its token — as `var(--…)` in markup, or through the web
+  * UI's `ThemeTokens` where it must compute with the value (the graph's canvas) — so a theme is a change to the
+  * stylesheet alone.
+  */
 object Palette:
-  val edgeKinds: List[String] = List("references", "challenges", "refutes", "updates", "superseded_by",
-    "supersedes", "confirms", "cites", "foundational_for", "compilation_of", "review_of", "verifies")
+  val edgeKinds: List[String] = List(
+    "references",
+    "challenges",
+    "refutes",
+    "updates",
+    "superseded_by",
+    "supersedes",
+    "confirms",
+    "cites",
+    "foundational_for",
+    "compilation_of",
+    "review_of",
+    "verifies"
+  )
   val statuses: List[String] =
     List("foundational", "current", "contested", "superseded", "debunked", "retracted", "unassessed")
   val mediaKinds: List[String] = List("figure", "photo", "map", "plan", "scan")
   val confidences: List[String] = List("high", "medium", "low", "contested")
+
   /** A research goal's stages, in the order a goal moves through them. */
   val goalStages: List[String] = com.histmersion.values.GoalStatus.all
+
   /** The period ramp's stops, `--ramp-0` … `--ramp-4` (viridis by default). */
   val rampStops: Int = 5
 
   private def token(family: String, known: List[String], name: String): String =
     if known.contains(name) then s"--$family-$name" else s"--$family-default"
 
-  def edge(kind: String): String     = token("edge", edgeKinds, kind)
+  def edge(kind: String): String = token("edge", edgeKinds, kind)
   def status(status: String): String = token("status", statuses, status)
+
   /** A goal stage's mark colour; `goalStageSoft` its badge's ground. */
-  def goalStage(stage: String): String     = s"--stage-${stage.trim.toLowerCase}"
+  def goalStage(stage: String): String = s"--stage-${stage.trim.toLowerCase}"
   def goalStageSoft(stage: String): String = s"${goalStage(stage)}-soft"
-  def media(kind: String): String    = token("media", mediaKinds, kind)
+  def media(kind: String): String = token("media", mediaKinds, kind)
   def confidence(level: String): String = s"--conf-$level"
 
   /** Every token the palettes name — what the stylesheet must define. */
@@ -54,7 +70,8 @@ object Wcag:
     val h = s.trim.stripPrefix("#")
     val full = if h.length == 3 then h.flatMap(c => s"$c$c") else h
     Option.when(full.length == 6 && full.forall(c => Character.digit(c, 16) >= 0))(
-      (Integer.parseInt(full.take(2), 16), Integer.parseInt(full.slice(2, 4), 16), Integer.parseInt(full.drop(4), 16)))
+      (Integer.parseInt(full.take(2), 16), Integer.parseInt(full.slice(2, 4), 16), Integer.parseInt(full.drop(4), 16))
+    )
 
   /** The contrast ratio of two colours, 1 (none) to 21 (black on white). */
   def contrast(a: (Int, Int, Int), b: (Int, Int, Int)): Double =

@@ -2,11 +2,22 @@ package com.histmersion.pluginhost
 
 import com.histmersion.config.EnvOverrides
 import com.histmersion.files.*
-import com.histmersion.api.{PluginSetting, PluginState, PluginStatus, PluginsReport}
+import com.histmersion.api.{PluginSetting, PluginsReport, PluginState, PluginStatus}
 import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigDecodingError
-import org.ekrich.config.{Config, ConfigException, ConfigFactory, ConfigList, ConfigObject, ConfigParseOptions,
-  ConfigRenderOptions, ConfigUtil, ConfigValue, ConfigValueFactory, ConfigValueType}
+import org.ekrich.config.{
+  Config,
+  ConfigException,
+  ConfigFactory,
+  ConfigList,
+  ConfigObject,
+  ConfigParseOptions,
+  ConfigRenderOptions,
+  ConfigUtil,
+  ConfigValue,
+  ConfigValueFactory,
+  ConfigValueType
+}
 
 import java.util.ServiceLoader
 import scala.collection.immutable.ListMap
@@ -14,14 +25,16 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
 
-/** What the registered plugins contribute, one map per extension point, in registration order. Read
-  * by the rest of the app; an immutable snapshot of one [[Generation]]. */
+/** What the registered plugins contribute, one map per extension point, in registration order. Read by the rest of the
+  * app; an immutable snapshot of one [[Generation]].
+  */
 final case class Registries(
     secretVaults: ListMap[String, SecretVault] = ListMap.empty,
     sourceFetchers: ListMap[String, SourceFetcher] = ListMap.empty,
     mediaCollections: ListMap[String, MediaCollection] = ListMap.empty,
     eventCatalogues: ListMap[String, EventCatalogue] = ListMap.empty,
-    aiProviders: ListMap[String, AiProvider] = ListMap.empty):
+    aiProviders: ListMap[String, AiProvider] = ListMap.empty
+):
   def provides: List[String] =
     secretVaults.keys.toList.map(k => s"${Registries.SecretVault}:$k") ++
       sourceFetchers.keys.toList.map(k => s"${Registries.SourceFetcher}:$k") ++
@@ -31,31 +44,41 @@ final case class Registries(
 
   /** Every registry, the other's entries after this one's. */
   def ++(other: Registries): Registries =
-    Registries(secretVaults ++ other.secretVaults, sourceFetchers ++ other.sourceFetchers,
-      mediaCollections ++ other.mediaCollections, eventCatalogues ++ other.eventCatalogues,
-      aiProviders ++ other.aiProviders)
+    Registries(
+      secretVaults ++ other.secretVaults,
+      sourceFetchers ++ other.sourceFetchers,
+      mediaCollections ++ other.mediaCollections,
+      eventCatalogues ++ other.eventCatalogues,
+      aiProviders ++ other.aiProviders
+    )
 
 object Registries:
-  val SecretVault     = "secret-vault"
-  val SourceFetcher   = "source-fetcher"
+  val SecretVault = "secret-vault"
+  val SourceFetcher = "source-fetcher"
   val MediaCollection = "media-collection"
-  val EventCatalogue  = "event-catalogue"
-  val AiProvider      = "ai-provider"
+  val EventCatalogue = "event-catalogue"
+  val AiProvider = "ai-provider"
   val empty: Registries = Registries()
 
-/** One load of the plugins for one config: the registries and the report. Built by
-  * [[PluginHost.build]] as a pure function of (plugins, user config, environment, host services) —
-  * no global state, no static cache — so a later config reload (docs/research-plugins.md §3.5) builds
-  * the next generation beside the running one and swaps it in only when it is complete. */
-final case class Generation(registries: Registries, report: PluginsReport,
+/** One load of the plugins for one config: the registries and the report. Built by [[PluginHost.build]] as a pure
+  * function of (plugins, user config, environment, host services) — no global state, no static cache — so a later
+  * config reload (docs/research-plugins.md §3.5) builds the next generation beside the running one and swaps it in only
+  * when it is complete.
+  */
+final case class Generation(
+    registries: Registries,
+    report: PluginsReport,
     /** What each registered plugin contributed — what a partial rebuild carries over unchanged. */
     contributions: Map[String, Registries] = Map.empty,
-    /** The plugins this build registered afresh (all of them on a full build); the others were
-      * carried over from the previous generation (config reload, §3.5). */
+    /** The plugins this build registered afresh (all of them on a full build); the others were carried over from the
+      * previous generation (config reload, §3.5).
+      */
     rebuilt: List[String] = Nil,
-    /** The registered plugins whose config holds a secret: never carried over, so a reload resolves
-      * their secrets again (a rotated password needs only `config reload`, §3.7). */
-    withSecrets: Set[String] = Set.empty):
+    /** The registered plugins whose config holds a secret: never carried over, so a reload resolves their secrets again
+      * (a rotated password needs only `config reload`, §3.7).
+      */
+    withSecrets: Set[String] = Set.empty
+):
   /** A plugin's status and contributions, to carry into the next generation unchanged. */
   def carry(id: String): Option[(PluginStatus, Registries)] =
     report.plugins.find(_.id == id).map(st => st -> contributions.getOrElse(id, Registries.empty))
@@ -63,20 +86,24 @@ final case class Generation(registries: Registries, report: PluginsReport,
 object Generation:
   val empty: Generation = Generation(Registries.empty, PluginsReport(Spi.Version))
 
-/** What the host lends every plugin of a generation: the HTTP client (built on first use), the log
-  * and the environment read at startup. */
+/** What the host lends every plugin of a generation: the HTTP client (built on first use), the log and the environment
+  * read at startup.
+  */
 final case class HostServices(
     http: () => PluginHttp,
     env: Config,
-    log: (String, Boolean, String) => Unit) // (plugin id, is a warning, message)
+    log: (String, Boolean, String) => Unit
+) // (plugin id, is a warning, message)
 
-/** The host side of the SPI (docs/research-plugins.md §2–§3.7): ServiceLoader discovery, the config
-  * contract (each plugin's block layered over its own defaults resource, type-checked by key, decoded
-  * with the plugin's own reader), secret resolution, and registration into STAGED registries that are
-  * committed per plugin only when its `register` succeeded. */
+/** The host side of the SPI (docs/research-plugins.md §2–§3.7): ServiceLoader discovery, the config contract (each
+  * plugin's block layered over its own defaults resource, type-checked by key, decoded with the plugin's own reader),
+  * secret resolution, and registration into STAGED registries that are committed per plugin only when its `register`
+  * succeeded.
+  */
 object PluginHost:
 
   val Root = "histmersion.plugins"
+
   /** Keys of `histmersion.plugins` that are the host's, not a plugin's block. */
   val OrderKey = "order"
   private val Reserved = Set(OrderKey)
@@ -84,8 +111,9 @@ object PluginHost:
 
   // ── discovery ───────────────────────────────────────────────────────────────────────────────
 
-  /** Every `Plugin` provider on the class path. A provider that cannot be instantiated is reported,
-    * not fatal (the others still load). */
+  /** Every `Plugin` provider on the class path. A provider that cannot be instantiated is reported, not fatal (the
+    * others still load).
+    */
   def discover(loader: ClassLoader): (List[Plugin], List[String]) =
     val it = ServiceLoader.load(classOf[Plugin], loader).iterator
     // ServiceLoader's iterator is lazy and may throw per provider: walk it by hand, keeping going
@@ -115,8 +143,9 @@ object PluginHost:
       Option(e.getMessage).collect { case ProviderClass(c) => c }
     case _ => None
 
-  /** The plugin, once its [[Plugin.info]] could be read: a plugin built against an older SPI fails on it
-    * (SPI 1's `Spi.Version` was read at run time, and SPI 2 has no such member). */
+  /** The plugin, once its [[Plugin.info]] could be read: a plugin built against an older SPI fails on it (SPI 1's
+    * `Spi.Version` was read at run time, and SPI 2 has no such member).
+    */
   def described(p: Plugin): Either[Throwable, Plugin] =
     try
       val _ = p.info.id
@@ -125,10 +154,11 @@ object PluginHost:
       case e: LinkageError => Left(e)
       case NonFatal(e)     => Left(e)
 
-  /** The plugin SPI generation a plugin that failed to link was built against, when that is why `e` was
-    * thrown: a member of `com.histmersion.plugin` it calls is missing, or has another shape. SPI 1 is
-    * recognised by name (it read `Spi.Version`, which SPI 2 compiles into the plugin); `None` for another
-    * SPI type when the generation cannot be told. */
+  /** The plugin SPI generation a plugin that failed to link was built against, when that is why `e` was thrown: a
+    * member of `com.histmersion.plugin` it calls is missing, or has another shape. SPI 1 is recognised by name (it read
+    * `Spi.Version`, which SPI 2 compiles into the plugin); `None` for another SPI type when the generation cannot be
+    * told.
+    */
   def foreignSpi(e: Throwable): Option[Option[Int]] = e match
     case e: (NoSuchMethodError | NoSuchFieldError | AbstractMethodError | IncompatibleClassChangeError) =>
       val message = Option(e.getMessage).getOrElse("").replace('/', '.')
@@ -142,8 +172,9 @@ object PluginHost:
     s"it was built against ${built.fold("another plugin SPI")(v => s"plugin SPI $v")}; this Histmersion speaks " +
       s"SPI ${Spi.Version} — rebuild the plugin against SPI ${Spi.Version} (`histmersion plugin repo` has its API)"
 
-  /** The class a plugin needs that no jar on the class path has, when that is why `e` was thrown: the
-    * library it belongs to was neither shipped with Histmersion nor installed with the plugin. */
+  /** The class a plugin needs that no jar on the class path has, when that is why `e` was thrown: the library it
+    * belongs to was neither shipped with Histmersion nor installed with the plugin.
+    */
   def missingClass(e: Throwable): Option[String] = e match
     case e: NoClassDefFoundError   => Some(Option(e.getMessage).getOrElse("?").replace('/', '.'))
     case e: ClassNotFoundException => Some(Option(e.getMessage).getOrElse("?"))
@@ -151,36 +182,48 @@ object PluginHost:
 
   /** Why plugin code threw, in words that say what to do when a class is missing. */
   def failure(e: Throwable): String =
-    foreignSpi(e).map(rebuild).getOrElse(missingClass(e).fold(s"${e.getClass.getSimpleName}: ${e.getMessage}")(name =>
-      s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
-        "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies"))
+    foreignSpi(e)
+      .map(rebuild)
+      .getOrElse(
+        missingClass(e).fold(s"${e.getClass.getSimpleName}: ${e.getMessage}")(name =>
+          s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
+            "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies"
+        )
+      )
 
   // ── pure parts of the config contract ───────────────────────────────────────────────────────
 
-  /** Pure: why each refused descriptor is refused — a foreign SPI version, an id used twice (every
-    * plugin claiming it is refused: which one the user meant cannot be known), an id that is no
-    * config key, or a key the host keeps for itself. */
+  /** Pure: why each refused descriptor is refused — a foreign SPI version, an id used twice (every plugin claiming it
+    * is refused: which one the user meant cannot be known), an id that is no config key, or a key the host keeps for
+    * itself.
+    */
   def check(infos: List[PluginInfo], spi: Int): Map[String, String] =
-    val dup = infos.groupBy(_.id).collect { case (id, is) if is.size > 1 =>
-      id -> s"plugin id '$id' is claimed by ${is.size} plugins" }
+    val dup = infos.groupBy(_.id).collect {
+      case (id, is) if is.size > 1 =>
+        id -> s"plugin id '$id' is claimed by ${is.size} plugins"
+    }
     val bad = infos.flatMap { i =>
-      if i.spiVersion != spi then Some(i.id -> s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi — rebuild it against SPI $spi")
+      if i.spiVersion != spi then
+        Some(i.id -> s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi — rebuild it against SPI $spi")
       else if !i.id.matches(IdPattern) then Some(i.id -> s"'${i.id}': a plugin id is kebab-case $IdPattern")
       else if Reserved(i.id) then Some(i.id -> s"'${i.id}' is a key of $Root, not a plugin id")
       else None
     }.toMap
     bad ++ dup
 
-  /** Pure: registration order — the ids named in `histmersion.plugins.order` first, as listed, then the
-    * rest by id; with a warning per listed id that is no plugin here. */
+  /** Pure: registration order — the ids named in `histmersion.plugins.order` first, as listed, then the rest by id;
+    * with a warning per listed id that is no plugin here.
+    */
   def order(ids: List[String], configured: List[String]): (List[String], List[String]) =
-    val listed  = configured.distinct
-    val unknown = listed.filterNot(ids.contains).map(id => s"$Root.$OrderKey names '$id', which is no plugin in this binary")
+    val listed = configured.distinct
+    val unknown =
+      listed.filterNot(ids.contains).map(id => s"$Root.$OrderKey names '$id', which is no plugin in this binary")
     (listed.filter(ids.contains) ++ ids.filterNot(listed.contains).sorted, unknown)
 
-  /** Pure: one digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent. What
-    * a relink records in the image and `histmersion plugin status` recomputes over the plugins
-    * directory (docs/research-plugins.md §7.3; the one implementation is files' `PluginKit.digest`). */
+  /** Pure: one digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent. What a relink records
+    * in the image and `histmersion plugin status` recomputes over the plugins directory (docs/research-plugins.md §7.3;
+    * the one implementation is files' `PluginKit.digest`).
+    */
   def digest(entries: List[(String, String)]): String = com.histmersion.files.PluginKit.digest(entries)
 
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
@@ -188,27 +231,33 @@ object PluginHost:
     val path = s"$Root.$OrderKey"
     Try(user.withFallback(env).resolve()).toEither.left.map(e => s"$path: ${e.getMessage}").flatMap { c =>
       if !c.hasPath(path) then Right(Nil)
-      else Try(c.getStringList(path).asScala.toList.map(_.trim).filter(_.nonEmpty)).toEither
-        .left.map(_ => s"$path must be a list of plugin ids [ … ]")
+      else
+        Try(c.getStringList(path).asScala.toList.map(_.trim).filter(_.nonEmpty)).toEither.left
+          .map(_ => s"$path must be a list of plugin ids [ … ]")
     }
 
-  /** Pure: blocks under `histmersion.plugins` no plugin here claims — a typo, or a plugin left out of
-    * this binary. A warning, never an error: removing a plugin must not break startup. */
+  /** Pure: blocks under `histmersion.plugins` no plugin here claims — a typo, or a plugin left out of this binary. A
+    * warning, never an error: removing a plugin must not break startup.
+    */
   def unknownBlocks(user: Config, ids: Set[String]): List[String] =
     if !Try(user.hasPath(Root)).getOrElse(false) then Nil
-    else Try(user.getConfig(Root).root.keySet.asScala.toList.sorted).getOrElse(Nil)
-      .filterNot(k => ids(k) || Reserved(k))
+    else
+      Try(user.getConfig(Root).root.keySet.asScala.toList.sorted)
+        .getOrElse(Nil)
+        .filterNot(k => ids(k) || Reserved(k))
 
   /** Pure: the plugin's effective block — env overrides its defaults declare (`${?VAR}`) > the user's
-    * `histmersion.plugins.<id>` > the plugin's defaults; substitutions resolved against `env` only
-    * (never system properties: AGENTS.md). The environment's own keys are not part of the result. */
+    * `histmersion.plugins.<id>` > the plugin's defaults; substitutions resolved against `env` only (never system
+    * properties: AGENTS.md). The environment's own keys are not part of the result.
+    */
   def block(user: Config, defaults: Config, env: Config, id: String): Either[String, Config] =
     val path = s"$Root.$id"
     try
-      val own      = if user.hasPath(path) then user.getConfig(path) else ConfigFactory.empty
-      val keep     = defaults.root.keySet.asScala.toSet ++ own.root.keySet.asScala
-      val resolved = EnvOverrides.layer(defaults, env).withFallback(own).withFallback(defaults).withFallback(env).resolve()
-      val trimmed  = resolved.root.keySet.asScala.toList.filterNot(keep).foldLeft(resolved.root)(_.withoutKey(_))
+      val own = if user.hasPath(path) then user.getConfig(path) else ConfigFactory.empty
+      val keep = defaults.root.keySet.asScala.toSet ++ own.root.keySet.asScala
+      val resolved =
+        EnvOverrides.layer(defaults, env).withFallback(own).withFallback(defaults).withFallback(env).resolve()
+      val trimmed = resolved.root.keySet.asScala.toList.filterNot(keep).foldLeft(resolved.root)(_.withoutKey(_))
       Right(trimmed.toConfig)
     catch case e: ConfigException => Left(s"$path: ${e.getMessage}")
 
@@ -217,15 +266,17 @@ object PluginHost:
     if !block.hasPath("enabled") then Right(false)
     else
       val v = block.getValue("enabled")
-      Option(v.unwrapped).map(_.toString.trim.toLowerCase(java.util.Locale.ROOT)).flatMap(_.toBooleanOption)
+      Option(v.unwrapped)
+        .map(_.toString.trim.toLowerCase(java.util.Locale.ROOT))
+        .flatMap(_.toBooleanOption)
         .toRight(s"$Root.$id.enabled must be true or false")
 
-  /** Pure: each key the USER's block sets against the kind of value the plugin's defaults have there —
-    * the derived readers report a wrong type without its key ("Expected NUMBER but got STRING"), so
-    * the key is found here first, as `ConfigLayers.typeCheck` does for Histmersion's own settings. A
-    * numeric or boolean string passes (env overrides arrive as strings); a key whose default is
-    * `null` (an optional value) takes any value and is left to the reader. Keys the defaults do not
-    * have are reported as unknown. */
+  /** Pure: each key the USER's block sets against the kind of value the plugin's defaults have there — the derived
+    * readers report a wrong type without its key ("Expected NUMBER but got STRING"), so the key is found here first, as
+    * `ConfigLayers.typeCheck` does for Histmersion's own settings. A numeric or boolean string passes (env overrides
+    * arrive as strings); a key whose default is `null` (an optional value) takes any value and is left to the reader.
+    * Keys the defaults do not have are reported as unknown.
+    */
   def typeCheck(id: String, user: Config, defaults: Config): List[String] =
     import ConfigValueType.*
     val path = s"$Root.$id"
@@ -235,17 +286,20 @@ object PluginHost:
         val k = ConfigUtil.joinPath(keys.asJava)
         def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
         if k == "enabled" then
-          Option.unless(v.valueType == BOOLEAN || text.toBooleanOption.isDefined)(s"$path.enabled must be true or false")
+          Option.unless(v.valueType == BOOLEAN || text.toBooleanOption.isDefined)(
+            s"$path.enabled must be true or false"
+          )
         else if !Try(defaults.hasPathOrNull(k)).getOrElse(false) then
           Some(s"$path.$k: unknown setting (not in the plugin's defaults)")
         else if defaults.getIsNull(k) then None
         else
           val (ok, want) = defaults.getValue(k).valueType match
-            case NUMBER  => (v.valueType == NUMBER || v.valueType == STRING && text.toDoubleOption.isDefined, "a number")
-            case BOOLEAN => (v.valueType == BOOLEAN || v.valueType == STRING && text.toBooleanOption.isDefined, "true or false")
-            case LIST    => (v.valueType == LIST, "a list [ … ]")
-            case STRING  => (v.valueType != LIST && v.valueType != OBJECT, "a string")
-            case _       => (true, "")
+            case NUMBER => (v.valueType == NUMBER || v.valueType == STRING && text.toDoubleOption.isDefined, "a number")
+            case BOOLEAN =>
+              (v.valueType == BOOLEAN || v.valueType == STRING && text.toBooleanOption.isDefined, "true or false")
+            case LIST   => (v.valueType == LIST, "a list [ … ]")
+            case STRING => (v.valueType != LIST && v.valueType != OBJECT, "a string")
+            case _      => (true, "")
           Option.unless(ok)(s"$path.$k must be $want, not ${v.render(ConfigRenderOptions.concise)}")
       }
 
@@ -260,18 +314,20 @@ object PluginHost:
   /** Pure: a decoding error as `histmersion.plugins.<id>[.<key>]: what`. */
   def describe(id: String, err: ConfigDecodingError): String = err match
     case ConfigDecodingError.Multiple(errs) => errs.toList.map(describe(id, _)).mkString("; ")
-    case e => (s"$Root.$id" :: e.path).mkString(".") + s": ${e.message}"
+    case e                                  => (s"$Root.$id" :: e.path).mkString(".") + s": ${e.message}"
 
-  /** Decode a plugin's block with the plugin's own reader — the path-dependent type keeps the decoded
-    * value tied to the plugin that will receive it, with no cast. */
+  /** Decode a plugin's block with the plugin's own reader — the path-dependent type keeps the decoded value tied to the
+    * plugin that will receive it, with no cast.
+    */
   def decode(p: Plugin, conf: Config): Either[String, p.Config] =
     try p.configReader.from(conf.withoutPath("enabled").root).left.map(describe(p.info.id, _))
     catch
       case e: LinkageError => Left(s"$Root.${p.info.id}: ${failure(e)}")
       case NonFatal(e)     => Left(s"$Root.${p.info.id}: ${e.getMessage}")
 
-  /** Pure: every [[Secret]] inside a decoded config — case classes, options, collections and maps are
-    * walked through `productIterator` (generated code, no reflection), in order, without repeats. */
+  /** Pure: every [[Secret]] inside a decoded config — case classes, options, collections and maps are walked through
+    * `productIterator` (generated code, no reflection), in order, without repeats.
+    */
   def secretsIn(value: Any): List[Secret] =
     def walk(v: Any): List[Secret] =
       if v.isInstanceOf[Secret] then List(v.asInstanceOf[Secret])
@@ -282,9 +338,10 @@ object PluginHost:
       else Nil
     walk(value).distinct
 
-  /** Pure: the effective block as reported (`/api/config`, `/api/about`, `--self-check`): every
-    * setting but `enabled`, strings unquoted, a literal `value:` secret masked. A secret is held in
-    * the config only as its reference, so nothing else needs masking. */
+  /** Pure: the effective block as reported (`/api/config`, `/api/about`, `--self-check`): every setting but `enabled`,
+    * strings unquoted, a literal `value:` secret masked. A secret is held in the config only as its reference, so
+    * nothing else needs masking.
+    */
   def settings(block: Config): List[PluginSetting] =
     leaves(block.root.withoutKey("enabled"), Nil).map { (keys, v) =>
       val shown = v.valueType match
@@ -302,75 +359,98 @@ object PluginHost:
     case l: ConfigList   => ConfigValueFactory.fromIterable(l.asScala.map(masked).asJava)
     case o: ConfigObject => ConfigValueFactory.fromMap(o.asScala.view.mapValues(masked).toMap.asJava)
     case s if s.valueType == ConfigValueType.STRING => ConfigValueFactory.fromAnyRef(mask(s.unwrapped.toString))
-    case other => other
+    case other                                      => other
 
   /** The plugin's defaults resource, read through ITS class loader; absent = no defaults. */
   def defaults(p: Plugin): Either[String, Config] =
-    try Right(ConfigFactory.parseResources(p.getClass.getClassLoader, p.defaultsResource,
-      ConfigParseOptions.defaults.setAllowMissing(true)))
+    try
+      Right(
+        ConfigFactory.parseResources(
+          p.getClass.getClassLoader,
+          p.defaultsResource,
+          ConfigParseOptions.defaults.setAllowMissing(true)
+        )
+      )
     catch case e: ConfigException => Left(s"${p.info.id}: its defaults ${p.defaultsResource}: ${e.getMessage}")
 
   // ── secrets ─────────────────────────────────────────────────────────────────────────────────
 
-  /** Resolve one reference: `value:` is the literal, `env:` the variable of `env`, `<vault>:` asks the
-    * vault registered under that name. Errors name the reference (never a value). */
+  /** Resolve one reference: `value:` is the literal, `env:` the variable of `env`, `<vault>:` asks the vault registered
+    * under that name. Errors name the reference (never a value).
+    */
   def resolve(ref: SecretRef, env: Config, vaults: Map[String, SecretVault]): Either[String, String] =
     ref match
       case SecretRef.Value(v) => Right(v)
       case SecretRef.Env(n)   =>
-        Option(env.root.get(n)).flatMap(v => Option(v.unwrapped)).map(_.toString)
+        Option(env.root.get(n))
+          .flatMap(v => Option(v.unwrapped))
+          .map(_.toString)
           .toRight(s"secret ${ref.shown}: environment variable $n is not set")
       case SecretRef.Vault(name, r) =>
         vaults.get(name) match
-          case None    => Left(s"secret ${ref.shown}: no secret vault '$name' is registered (enable the plugin that provides it)")
+          case None =>
+            Left(s"secret ${ref.shown}: no secret vault '$name' is registered (enable the plugin that provides it)")
           case Some(v) =>
             try v.resolve(r).left.map(e => s"secret ${ref.shown}: $e")
             catch case NonFatal(e) => Left(s"secret ${ref.shown}: vault '$name' failed: ${e.getClass.getSimpleName}")
 
-  /** Resolve several references of ONE vault in one call ([[SecretVault.resolveAll]]): each answer as
-    * [[resolve]] words it; a reference the vault did not answer is an error, an answer to one not
-    * asked is dropped. A `resolveAll` that throws (the SPI's default throws whatever one `resolve`
-    * throws) is answered one reference at a time instead, so a throw fails only its own reference. */
+  /** Resolve several references of ONE vault in one call ([[SecretVault.resolveAll]]): each answer as [[resolve]] words
+    * it; a reference the vault did not answer is an error, an answer to one not asked is dropped. A `resolveAll` that
+    * throws (the SPI's default throws whatever one `resolve` throws) is answered one reference at a time instead, so a
+    * throw fails only its own reference.
+    */
   def resolveAll(name: String, refs: List[String], vault: SecretVault): Map[String, Either[String, String]] =
     val asked = refs.distinct
     def one(r: String) = resolve(SecretRef.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
     try
       val answers = Option(vault.resolveAll(asked)).getOrElse(Map.empty)
       asked.map { r =>
-        r -> answers.get(r).flatMap(Option(_)).getOrElse(Left(s"vault '$name' gave no answer for it"))
-          .left.map(e => s"secret ${SecretRef.Vault(name, r).shown}: $e")
+        r -> answers
+          .get(r)
+          .flatMap(Option(_))
+          .getOrElse(Left(s"vault '$name' gave no answer for it"))
+          .left
+          .map(e => s"secret ${SecretRef.Vault(name, r).shown}: $e")
       }.toMap
     catch case NonFatal(_) => asked.map(r => r -> one(r)).toMap
 
-  /** The secrets of one generation: each vault is asked ONCE for all its references that `wanted`
-    * lists — on the first reference of it any plugin needs, so a vault registered earlier in the same
-    * build is asked then too — and every answer, value or error, is kept for this generation only (a
-    * reload resolves again; nothing outlives the build's registrations). */
-  private final class GenerationSecrets(env: Config, wanted: Map[String, List[String]]):
+  /** The secrets of one generation: each vault is asked ONCE for all its references that `wanted` lists — on the first
+    * reference of it any plugin needs, so a vault registered earlier in the same build is asked then too — and every
+    * answer, value or error, is kept for this generation only (a reload resolves again; nothing outlives the build's
+    * registrations).
+    */
+  final private class GenerationSecrets(env: Config, wanted: Map[String, List[String]]):
     private val known = scala.collection.concurrent.TrieMap.empty[SecretRef, Either[String, String]]
     def apply(ref: SecretRef, vaults: Map[String, SecretVault]): Either[String, String] =
-      known.getOrElse(ref, {
-        ref match
-          case SecretRef.Vault(name, asked) if vaults.contains(name) =>
-            val batch = (wanted.getOrElse(name, Nil) :+ asked).distinct
-              .filterNot(r => known.contains(SecretRef.Vault(name, r)))
-            resolveAll(name, batch, vaults(name)).foreach((r, v) => known.update(SecretRef.Vault(name, r), v))
-          case _ => known.update(ref, resolve(ref, env, vaults))
-        known.getOrElse(ref, resolve(ref, env, vaults))
-      })
+      known.getOrElse(
+        ref, {
+          ref match
+            case SecretRef.Vault(name, asked) if vaults.contains(name) =>
+              val batch = (wanted.getOrElse(name, Nil) :+ asked).distinct
+                .filterNot(r => known.contains(SecretRef.Vault(name, r)))
+              resolveAll(name, batch, vaults(name)).foreach((r, v) => known.update(SecretRef.Vault(name, r), v))
+            case _ => known.update(ref, resolve(ref, env, vaults))
+          known.getOrElse(ref, resolve(ref, env, vaults))
+        }
+      )
 
   // ── a generation ────────────────────────────────────────────────────────────────────────────
 
-  /** One enabled plugin after its config was decoded, waiting to register: `call` is `p.register`
-    * applied to the value `p.configReader` decoded — built where that value still has type `p.Config`,
-    * so no cast is ever needed. */
-  private final case class Prepared(p: Plugin, block: Config, secrets: List[Secret],
-      call: PluginContext => Either[String, Unit], carried: Option[(PluginStatus, Registries)] = None)
+  /** One enabled plugin after its config was decoded, waiting to register: `call` is `p.register` applied to the value
+    * `p.configReader` decoded — built where that value still has type `p.Config`, so no cast is ever needed.
+    */
+  final private case class Prepared(
+      p: Plugin,
+      block: Config,
+      secrets: List[Secret],
+      call: PluginContext => Either[String, Unit],
+      carried: Option[(PluginStatus, Registries)] = None
+  )
 
-  /** A registry whose additions are kept apart until the plugin's `register` returned. Mutable, but
-    * owned by ONE register call: `close` ends it, after which any add (a plugin that kept the context)
-    * is refused. */
-  private final class Staged[A](kind: String, committed: Map[String, A], valid: (String, A) => Option[String])
+  /** A registry whose additions are kept apart until the plugin's `register` returned. Mutable, but owned by ONE
+    * register call: `close` ends it, after which any add (a plugin that kept the context) is refused.
+    */
+  final private class Staged[A](kind: String, committed: Map[String, A], valid: (String, A) => Option[String])
       extends Registry[A]:
     // the plugin's additions, in order; a var because the plugin calls `add` from inside `register`
     private var added: ListMap[String, A] = ListMap.empty
@@ -386,11 +466,19 @@ object PluginHost:
       open = false
       added
 
-  /** The context one plugin's `register` is called with: the host's services, its secrets, and the
-    * staged registries. The HTTP client is built on the first request. */
-  private final class RegistrationContext(id: String, services: HostServices, resolved: Secret => Either[String, String],
-      vaults: Staged[SecretVault], fetchers: Staged[SourceFetcher], media: Staged[MediaCollection],
-      events: Staged[EventCatalogue], ai: Staged[AiProvider]) extends PluginContext:
+  /** The context one plugin's `register` is called with: the host's services, its secrets, and the staged registries.
+    * The HTTP client is built on the first request.
+    */
+  final private class RegistrationContext(
+      id: String,
+      services: HostServices,
+      resolved: Secret => Either[String, String],
+      vaults: Staged[SecretVault],
+      fetchers: Staged[SourceFetcher],
+      media: Staged[MediaCollection],
+      events: Staged[EventCatalogue],
+      ai: Staged[AiProvider]
+  ) extends PluginContext:
     lazy val http: PluginHttp = services.http()
     val log: PluginLog = new PluginLog:
       def info(message: String) = services.log(id, false, message)
@@ -408,9 +496,10 @@ object PluginHost:
     else if f == null then Some(s"source fetcher '$id' is null")
     else None
 
-  /** A media collection: a kebab-case id; a plugin's may not take a name of the host's own providers
-    * (an import's name or an alias of one, or a provider pictures are stored under — its pictures would
-    * be mistaken for theirs); its role is one a collection's pictures may play. */
+  /** A media collection: a kebab-case id; a plugin's may not take a name of the host's own providers (an import's name
+    * or an alias of one, or a provider pictures are stored under — its pictures would be mistaken for theirs); its role
+    * is one a collection's pictures may play.
+    */
   private def validCollection(id: String, c: MediaCollection): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': a media collection id is $IdPattern")
     else if c == null then Some(s"media collection '$id' is null")
@@ -418,7 +507,9 @@ object PluginHost:
     else if ReservedNames.mediaCollections(id) then
       Some(s"'$id' is the name of one of Histmersion's own media providers")
     else if !MediaCollection.Roles(c.role) then
-      Some(s"media collection '$id': role '${c.role}' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}")
+      Some(
+        s"media collection '$id': role '${c.role}' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}"
+      )
     else None
 
   /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues. */
@@ -430,35 +521,43 @@ object PluginHost:
       Some(s"'$id' is the name of one of Histmersion's own event catalogues")
     else None
 
-  /** An AI provider: its name is the provider half of `provider:model`, so kebab-case; a plugin's may not
-    * take the name of one of the host's own providers (its models would be mistaken for theirs). */
+  /** An AI provider: its name is the provider half of `provider:model`, so kebab-case; a plugin's may not take the name
+    * of one of the host's own providers (its models would be mistaken for theirs).
+    */
   private def validAiProvider(id: String, a: AiProvider): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': an AI provider name is $IdPattern")
     else if a == null then Some(s"AI provider '$id' is null")
     else if a.isInstanceOf[HostOwned] then None
-    else if ReservedNames.aiProviders(id) then
-      Some(s"'$id' is the name of one of Histmersion's own AI providers")
+    else if ReservedNames.aiProviders(id) then Some(s"'$id' is the name of one of Histmersion's own AI providers")
     else None
 
   private def validVault(id: String, v: SecretVault): Option[String] =
-    if Set(SecretRef.ValueScheme, SecretRef.EnvScheme)(id) then Some(s"'$id' is a reserved secret scheme, not a vault name")
+    if Set(SecretRef.ValueScheme, SecretRef.EnvScheme)(id) then
+      Some(s"'$id' is a reserved secret scheme, not a vault name")
     else if !id.matches(IdPattern) then Some(s"'$id': a vault name is $IdPattern")
     else if v.name != id then Some(s"vault '${v.name}' registered under another name, '$id'")
     else None
 
   /** Build one generation: check, order, layer, type-check, decode, resolve secrets, register.
     *
-    * A plugin whose secrets name a vault no plugin has registered YET is set aside and retried after
-    * the others (a vault plugin may sort after the plugins that use it); one still waiting when no
-    * pass registers anything more fails, naming the vault. Every failure is that plugin's alone. */
-  def build(plugins: List[Plugin], user: Config, env: Config, services: HostServices,
+    * A plugin whose secrets name a vault no plugin has registered YET is set aside and retried after the others (a
+    * vault plugin may sort after the plugins that use it); one still waiting when no pass registers anything more
+    * fails, naming the vault. Every failure is that plugin's alone.
+    */
+  def build(
+      plugins: List[Plugin],
+      user: Config,
+      env: Config,
+      services: HostServices,
       discoveryErrors: List[String] = Nil,
-      /** Plugins whose block did not change since the previous generation (a config reload): their
-        * status and contributions are taken over as they are — not decoded, resolved or registered
-        * again. A registered one goes into the registries in its place in the order. */
-      carried: Map[String, (PluginStatus, Registries)] = Map.empty): Generation =
-    val infos    = plugins.map(_.info)
-    val refused  = check(infos, Spi.Version)
+      /** Plugins whose block did not change since the previous generation (a config reload): their status and
+        * contributions are taken over as they are — not decoded, resolved or registered again. A registered one goes
+        * into the registries in its place in the order.
+        */
+      carried: Map[String, (PluginStatus, Registries)] = Map.empty
+  ): Generation =
+    val infos = plugins.map(_.info)
+    val refused = check(infos, Spi.Version)
     val accepted = plugins.filterNot(p => refused.contains(p.info.id))
     val (configured, orderErr) = configuredOrder(user, env) match
       case Right(o) => (o, Nil)
@@ -470,10 +569,26 @@ object PluginHost:
     warnings.foreach(w => services.log("", true, w))
 
     val byId = accepted.map(p => p.info.id -> p).toMap
-    def status(p: Plugin, enabled: Boolean, state: PluginState, block: Option[Config] = None,
-        error: Option[String] = None, provides: List[String] = Nil, warns: List[String] = Nil) =
-      PluginStatus(p.info.id, p.info.version, p.info.spiVersion, enabled, state.wire, provides,
-        block.map(settings).getOrElse(Nil), warns, error)
+    def status(
+        p: Plugin,
+        enabled: Boolean,
+        state: PluginState,
+        block: Option[Config] = None,
+        error: Option[String] = None,
+        provides: List[String] = Nil,
+        warns: List[String] = Nil
+    ) =
+      PluginStatus(
+        p.info.id,
+        p.info.version,
+        p.info.spiVersion,
+        enabled,
+        state.wire,
+        provides,
+        block.map(settings).getOrElse(Nil),
+        warns,
+        error
+      )
 
     // the config of every accepted plugin, in order
     val prepared: List[(String, Either[PluginStatus, Prepared])] = ordered.map { id =>
@@ -481,18 +596,25 @@ object PluginHost:
       val r = carried.get(id) match
         case Some((st, _)) if st.state != PluginState.Registered.wire => Left(st)
         case Some(c) => Right(Prepared(p, ConfigFactory.empty, Nil, _ => Right(()), Some(c)))
-        case None =>
+        case None    =>
           for
-            defs  <- defaults(p).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
+            defs <- defaults(p).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
             // the defaults resolved on their own: `${?ENV}` lines leave the default standing
-            known  = Try(defs.resolve()).getOrElse(defs)
-            _     <- typeCheck(id, user, known) match
-                       case Nil  => Right(())
-                       case errs => Left(status(p, Try(user.getBoolean(s"$Root.$id.enabled")).getOrElse(false),
-                         PluginState.Failed, error = Some(errs.mkString("; "))))
-            conf  <- block(user, defs, env, id).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
-            on    <- enabled(conf, id).left.map(e => status(p, false, PluginState.Failed, Some(conf), Some(e)))
-            _     <- Either.cond(on, (), status(p, false, PluginState.Disabled, Some(conf)))
+            known = Try(defs.resolve()).getOrElse(defs)
+            _ <- typeCheck(id, user, known) match
+              case Nil  => Right(())
+              case errs =>
+                Left(
+                  status(
+                    p,
+                    Try(user.getBoolean(s"$Root.$id.enabled")).getOrElse(false),
+                    PluginState.Failed,
+                    error = Some(errs.mkString("; "))
+                  )
+                )
+            conf <- block(user, defs, env, id).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
+            on <- enabled(conf, id).left.map(e => status(p, false, PluginState.Failed, Some(conf), Some(e)))
+            _ <- Either.cond(on, (), status(p, false, PluginState.Disabled, Some(conf)))
             typed <- decode(p, conf).left.map(e => status(p, true, PluginState.Failed, Some(conf), Some(e)))
           yield Prepared(p, conf, secretsIn(typed), ctx => p.register(typed, ctx))
       id -> r
@@ -501,15 +623,22 @@ object PluginHost:
     // registration passes; the secrets are this generation's own (re-resolved on every build), each
     // vault asked once for every reference the plugins about to register hold
     val ready = prepared.collect { case (_, Right(pr)) => pr }
-    val wanted = ready.flatMap(_.secrets.map(_.ref)).collect { case SecretRef.Vault(v, r) => v -> r }.distinct
+    val wanted = ready
+      .flatMap(_.secrets.map(_.ref))
+      .collect { case SecretRef.Vault(v, r) => v -> r }
+      .distinct
       .groupMap(_._1)(_._2)
     val secrets = GenerationSecrets(env, wanted)
     @annotation.tailrec
-    def passes(waiting: List[Prepared], regs: Registries,
-        done: Map[String, (PluginStatus, Registries)]): (Registries, Map[String, (PluginStatus, Registries)]) =
+    def passes(
+        waiting: List[Prepared],
+        regs: Registries,
+        done: Map[String, (PluginStatus, Registries)]
+    ): (Registries, Map[String, (PluginStatus, Registries)]) =
       val (rs, ds, left, progressed) = waiting.foldLeft((regs, done, List.empty[Prepared], false)) {
         case ((rs, ds, left, prog), pr) =>
-          val missing = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }
+          val missing =
+            pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }
           if missing.nonEmpty then (rs, ds, left :+ pr, prog)
           else
             val (st, added) = pr.carried.getOrElse(register(pr, rs, services, secrets))
@@ -517,10 +646,21 @@ object PluginHost:
       }
       if left.isEmpty || !progressed then
         val stuck = left.map { pr =>
-          val names = pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }.distinct
-          pr.p.info.id -> (status(pr.p, true, PluginState.Failed, Some(pr.block),
-            Some(s"$Root.${pr.p.info.id}: no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered " +
-              "(enable the plugin that provides it)")), Registries.empty)
+          val names =
+            pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }.distinct
+          pr.p.info.id -> (
+            status(
+              pr.p,
+              true,
+              PluginState.Failed,
+              Some(pr.block),
+              Some(
+                s"$Root.${pr.p.info.id}: no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered " +
+                  "(enable the plugin that provides it)"
+              )
+            ),
+            Registries.empty
+          )
         }
         (rs, ds ++ stuck)
       else passes(left, rs, ds)
@@ -529,36 +669,61 @@ object PluginHost:
     val statuses = prepared.map {
       case (_, Left(st))  => st
       case (id, Right(_)) => registered(id)._1
-    } ++ plugins.filter(p => refused.contains(p.info.id)).map(p =>
-      status(p, false, PluginState.Refused, error = refused.get(p.info.id)))
-    statuses.filter(_.state == PluginState.Failed.wire).foreach(s =>
-      services.log(s.id, true, s.error.getOrElse("failed")))
-    Generation(registries, PluginsReport(Spi.Version, statuses, warnings),
+    } ++ plugins
+      .filter(p => refused.contains(p.info.id))
+      .map(p => status(p, false, PluginState.Refused, error = refused.get(p.info.id)))
+    statuses
+      .filter(_.state == PluginState.Failed.wire)
+      .foreach(s => services.log(s.id, true, s.error.getOrElse("failed")))
+    Generation(
+      registries,
+      PluginsReport(Spi.Version, statuses, warnings),
       registered.collect { case (id, (st, regs)) if st.state == PluginState.Registered.wire => id -> regs },
       plugins.map(_.info.id).filterNot(carried.contains),
-      ready.filter(_.secrets.nonEmpty).map(_.p.info.id).toSet)
+      ready.filter(_.secrets.nonEmpty).map(_.p.info.id).toSet
+    )
 
   /** Resolve one prepared plugin's secrets and call its `register` with a staged context. */
-  private def register(pr: Prepared, regs: Registries, services: HostServices,
-      secrets: GenerationSecrets): (PluginStatus, Registries) =
-    val p  = pr.p
+  private def register(
+      pr: Prepared,
+      regs: Registries,
+      services: HostServices,
+      secrets: GenerationSecrets
+  ): (PluginStatus, Registries) =
+    val p = pr.p
     val id = p.info.id
     def resolved(s: Secret): Either[String, String] = secrets(s.ref, regs.secretVaults)
     val literal = pr.secrets.exists(_.ref.isInstanceOf[SecretRef.Value])
-    val warns = if !literal then Nil else List(s"$Root.$id: a secret is written into the config (value:${SecretRef.Mask}) — " +
-      "use env:<NAME> or a vault reference")
+    val warns = if !literal then Nil
+    else
+      List(
+        s"$Root.$id: a secret is written into the config (value:${SecretRef.Mask}) — " +
+          "use env:<NAME> or a vault reference"
+      )
     warns.foreach(w => services.log(id, true, w))
     def fail(e: String) =
-      (PluginStatus(id, p.info.version, p.info.spiVersion, true, PluginState.Failed.wire, Nil, settings(pr.block),
-        warns, Some(s"$Root.$id: $e")), Registries.empty)
+      (
+        PluginStatus(
+          id,
+          p.info.version,
+          p.info.spiVersion,
+          true,
+          PluginState.Failed.wire,
+          Nil,
+          settings(pr.block),
+          warns,
+          Some(s"$Root.$id: $e")
+        ),
+        Registries.empty
+      )
     pr.secrets.iterator.map(resolved).collectFirst { case Left(e) => e } match
       case Some(e) => fail(e)
-      case None =>
-        val staged   = Staged[SecretVault](Registries.SecretVault, regs.secretVaults, validVault)
+      case None    =>
+        val staged = Staged[SecretVault](Registries.SecretVault, regs.secretVaults, validVault)
         val fetchers = Staged[SourceFetcher](Registries.SourceFetcher, regs.sourceFetchers, validFetcher)
-        val media    = Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection)
-        val events   = Staged[EventCatalogue](Registries.EventCatalogue, regs.eventCatalogues, validCatalogue)
-        val ai       = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider)
+        val media = Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection)
+        val events = Staged[EventCatalogue](Registries.EventCatalogue, regs.eventCatalogues, validCatalogue)
+        val ai = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider)
         val ctx = RegistrationContext(id, services, resolved, staged, fetchers, media, events, ai)
         val outcome =
           try pr.call(ctx)
@@ -567,7 +732,18 @@ object PluginHost:
             case NonFatal(e)     => Left(s"register threw ${failure(e)}")
         val added = Registries(staged.close(), fetchers.close(), media.close(), events.close(), ai.close())
         outcome match
-          case Left(e) => fail(e)
+          case Left(e)  => fail(e)
           case Right(_) =>
-            (PluginStatus(id, p.info.version, p.info.spiVersion, true, PluginState.Registered.wire,
-              added.provides, settings(pr.block), warns), added)
+            (
+              PluginStatus(
+                id,
+                p.info.version,
+                p.info.spiVersion,
+                true,
+                PluginState.Registered.wire,
+                added.provides,
+                settings(pr.block),
+                warns
+              ),
+              added
+            )

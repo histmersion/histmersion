@@ -13,23 +13,28 @@ import com.histmersion.db.{FocusRepo, GoalLinkRepo, ManagerRepo}
 import java.time.Instant
 import javax.sql.DataSource
 
-/** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"): while the autopilot is
-  * on and the cap (`agents.autopilot.max-active-goals`, or a person's `focus max`) is above 0, at most that
-  * many research goals are ACTIVE for model work. Every managers' tick, just before the dispatch
-  * ([[tick]]):
+/** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"): while the autopilot is on and the
+  * cap (`agents.autopilot.max-active-goals`, or a person's `focus max`) is above 0, at most that many research goals
+  * are ACTIVE for model work. Every managers' tick, just before the dispatch ([[tick]]):
   *
-  *  1. the facts of every goal are read in a few aggregate queries and [[GoalFocus.select]] decides the
-  *     active set (finish-first, depth-first, a person's pins and priority, then the oldest);
-  *  2. the goals that joined or left are recorded (`goal_focus`), as an `autopilot` event on the goal's
-  *     seeding manager (else its watcher) and one worklog line;
-  *  3. [[GoalFocus.holds]]: a pending model-using item of a goal that is not active is HELD with a `focus`
-  *     hold (nothing is cancelled; runs in flight finish); a focus hold whose goal became active is released.
+  *   1. the facts of every goal are read in a few aggregate queries and [[GoalFocus.select]] decides the active set
+  *      (finish-first, depth-first, a person's pins and priority, then the oldest);
+  *   2. the goals that joined or left are recorded (`goal_focus`), as an `autopilot` event on the goal's seeding
+  *      manager (else its watcher) and one worklog line;
+  *   3. [[GoalFocus.holds]]: a pending model-using item of a goal that is not active is HELD with a `focus` hold
+  *      (nothing is cancelled; runs in flight finish); a focus hold whose goal became active is released.
   *
-  * The currency check and the ingest backlog use no model and are never held; the enrich and review
-  * managers start the active goals' items first ([[fair]]: `focus-ratio` to one). Not in force (the
-  * autopilot off, a cap of 0), every focus hold is released and no goal is recorded active. The focus
-  * decides WHAT runs: `max-concurrent-runs`, the budgets, plan floors and daily caps decide how much. */
-final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histmersion.server.Handlers, agents: AgentsHandlers):
+  * The currency check and the ingest backlog use no model and are never held; the enrich and review managers start the
+  * active goals' items first ([[fair]]: `focus-ratio` to one). Not in force (the autopilot off, a cap of 0), every
+  * focus hold is released and no goal is recorded active. The focus decides WHAT runs: `max-concurrent-runs`, the
+  * budgets, plan floors and daily caps decide how much.
+  */
+final class GoalFocusService(
+    ds: DataSource,
+    cfg: => AgentsConfig,
+    h: com.histmersion.server.Handlers,
+    agents: AgentsHandlers
+):
 
   private def acfg = cfg.autopilot
 
@@ -37,16 +42,18 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
   def cap: (Int, String) =
     FocusRepo.maxOverride(ds).fold((math.max(0, acfg.maxActiveGoals), "config"))(n => (math.max(0, n), "person"))
 
-  /** The focus is in force — never since the central scheduler (#3933, [[SchedulerService]]) admits the
-    * managers' work: the focus holds nothing; it ranks the goals (what [[info]] shows), and its pins and
-    * priorities are the goals' priorities in the scheduler. */
+  /** The focus is in force — never since the central scheduler (#3933, [[SchedulerService]]) admits the managers' work:
+    * the focus holds nothing; it ranks the goals (what [[info]] shows), and its pins and priorities are the goals'
+    * priorities in the scheduler.
+    */
   def inForce: Boolean = false
 
   /** Every goal's facts as the focus reads them (the scheduler's goal priorities, ages and stages). */
   def facts(): List[Facts] = read().facts
 
-  /** The active goals of the last pass (None: the focus is not in force). Read by the dispatch, written by
-    * [[tick]]; a `var` because the supervisor's dispatch reads what the pass just before it decided. */
+  /** The active goals of the last pass (None: the focus is not in force). Read by the dispatch, written by [[tick]]; a
+    * `var` because the supervisor's dispatch reads what the pass just before it decided.
+    */
   @volatile private var current: Option[Set[String]] = None
 
   /** The active goals now, as the last pass decided them (None: not in force). */
@@ -61,31 +68,75 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
 
   // ── the facts ──────────────────────────────────────────────────────────────────────────────────
 
-  /** Does only a person decide an approval of `kind` opened by a run of a manager whose `autoApprove` is
-    * `auto` (the same rule as [[AutoApprovals.checked]])? */
+  /** Does only a person decide an approval of `kind` opened by a run of a manager whose `autoApprove` is `auto` (the
+    * same rule as [[AutoApprovals.checked]])?
+    */
   private def byPerson(kind: Option[String], autoApprove: Option[String]): Boolean =
     kind.flatMap(ApprovalKind.parse) match
       case Some(k) if List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish).contains(k) =>
         !autoApprove.flatMap(_.toBooleanOption).getOrElse(cfg.approvals.checked(k))
       case _ => true
 
-  private final case class Read(facts: List[Facts], work: List[FocusRepo.WorkRow], titles: Map[String, String],
-      left: Map[String, (Option[String], Option[String])], openPlans: Int)
+  final private case class Read(
+      facts: List[Facts],
+      work: List[FocusRepo.WorkRow],
+      titles: Map[String, String],
+      left: Map[String, (Option[String], Option[String])],
+      openPlans: Int
+  )
 
   private def read(): Read =
     val goals = FocusRepo.goals(ds)
-    val rows  = FocusRepo.work(ds)
-    val work  = rows.map(r => r.goals -> Work(r.id, r.kind, r.status, r.target, r.person, r.focusHeld, r.personHeld,
-      r.approval, r.approval.isDefined && byPerson(r.approvalKind, r.autoApprove)))
-    val base = goals.map(g => Facts(g.slug, g.parent, g.status, g.createdAt, pinned = g.pinned, priority = g.priority,
-      active = g.active, since = g.since))
-    val facts = GoalFocus.build(base, work, FocusRepo.sourceCounts(ds), GoalLinkRepo.articlesByGoal(ds),
-      ManagerRepo.passedReview(ds, ReviewId), FocusRepo.compileOpen(ds), FocusRepo.lastStops(ds))
-    Read(facts, rows, goals.map(g => g.slug -> g.title).toMap, goals.map(g => g.slug -> (g.leftAt, g.leftWhy)).toMap,
-      FocusRepo.openGoalPlans(ds))
+    val rows = FocusRepo.work(ds)
+    val work = rows.map(r =>
+      r.goals -> Work(
+        r.id,
+        r.kind,
+        r.status,
+        r.target,
+        r.person,
+        r.focusHeld,
+        r.personHeld,
+        r.approval,
+        r.approval.isDefined && byPerson(r.approvalKind, r.autoApprove)
+      )
+    )
+    val base = goals.map(g =>
+      Facts(
+        g.slug,
+        g.parent,
+        g.status,
+        g.createdAt,
+        pinned = g.pinned,
+        priority = g.priority,
+        active = g.active,
+        since = g.since
+      )
+    )
+    val facts = GoalFocus.build(
+      base,
+      work,
+      FocusRepo.sourceCounts(ds),
+      GoalLinkRepo.articlesByGoal(ds),
+      ManagerRepo.passedReview(ds, ReviewId),
+      FocusRepo.compileOpen(ds),
+      FocusRepo.lastStops(ds)
+    )
+    Read(
+      facts,
+      rows,
+      goals.map(g => g.slug -> g.title).toMap,
+      goals.map(g => g.slug -> (g.leftAt, g.leftWhy)).toMap,
+      FocusRepo.openGoalPlans(ds)
+    )
 
   private def settings(r: Read, max: Int): GoalFocus.Settings =
-    GoalFocus.Settings(max, cfg.seed.minSources, plansByPerson = !cfg.approvals.checked(ApprovalKind.GoalPlan), r.openPlans)
+    GoalFocus.Settings(
+      max,
+      cfg.seed.minSources,
+      plansByPerson = !cfg.approvals.checked(ApprovalKind.GoalPlan),
+      r.openPlans
+    )
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
@@ -95,7 +146,7 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       current = None
       queued = Set.empty
       val released = ManagerRepo.focusReleaseAll(ds)
-      val cleared  = FocusRepo.clearActive(ds, notInForce, now)
+      val cleared = FocusRepo.clearActive(ds, notInForce, now)
       if released + cleared == 0 then Nil
       else
         val line = s"autopilot focus: not in force ($notInForce): ${Plural.count(released, "item")} released, " +
@@ -103,7 +154,7 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
         log(line)
         List(line)
     else
-      val r    = read()
+      val r = read()
       val plan = GoalFocus.select(r.facts, settings(r, cap._1))
       current = Some(plan.activeSet)
       queued = r.facts.filter(f => !GoalFocus.finished(f.status) && !plan.activeSet(f.slug)).map(_.slug).toSet
@@ -143,20 +194,39 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
     val released = if hs.release.isEmpty then 0 else ManagerRepo.focusRelease(ds, hs.release)
     val heldBy = held.groupBy((id, _, _) => mgr.getOrElse(id, ""))
     heldBy.toList.sortBy(_._1).foreach { (m, xs) =>
-      ManagerRepo.event(ds, m, None, None, Feed.Held, s"focus: ${Plural.count(xs.size, "item")} held — ${xs.head._3}".take(2000))
+      ManagerRepo.event(
+        ds,
+        m,
+        None,
+        None,
+        Feed.Held,
+        s"focus: ${Plural.count(xs.size, "item")} held — ${xs.head._3}".take(2000)
+      )
     }
     hs.release.groupBy(id => mgr.getOrElse(id, "")).toList.sortBy(_._1).foreach { (m, xs) =>
-      ManagerRepo.event(ds, m, None, None, Feed.Held, s"focus: ${Plural.count(xs.size, "item")} released — its goal is active")
+      ManagerRepo.event(
+        ds,
+        m,
+        None,
+        None,
+        Feed.Held,
+        s"focus: ${Plural.count(xs.size, "item")} released — its goal is active"
+      )
     }
     (if held.isEmpty then Nil else List(s"${Plural.count(held.size, "item")} held")) ++
       (if released == 0 then Nil else List(s"${Plural.count(released, "item")} released"))
 
   // ── the library-wide managers ──────────────────────────────────────────────────────────────────
 
-  /** The enrich and review managers' due items in the order they start: `focus-ratio` items of active
-    * goals (and a person's) to one of any other, counting on from their last starts. Any other manager,
-    * or the focus not in force: as given. */
-  def fair(m: ManagerInfo, due: List[ManagerPolicy.Candidate], pending: List[ManagerItem]): List[ManagerPolicy.Candidate] =
+  /** The enrich and review managers' due items in the order they start: `focus-ratio` items of active goals (and a
+    * person's) to one of any other, counting on from their last starts. Any other manager, or the focus not in force:
+    * as given.
+    */
+  def fair(
+      m: ManagerInfo,
+      due: List[ManagerPolicy.Candidate],
+      pending: List[ManagerItem]
+  ): List[ManagerPolicy.Candidate] =
     current match
       case Some(active) if m.id == EnrichId || m.id == ReviewId =>
         val link = if m.id == EnrichId then GoalPlans.LinkKind.Source.wire else GoalPlans.LinkKind.Article.wire
@@ -170,18 +240,23 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
 
   // ── goal plans ─────────────────────────────────────────────────────────────────────────────────
 
-  /** Why a goal plan proposing `proposed` sub-goals for `goal` is not decided by code, if it is not: its
-    * unfinished sub-goals (every level below it) plus the new ones would pass `max-open-sub-goals`
-    * ([[AutopilotPolicy.goalPlanSubGoals]]). Whether the goal is "active" no longer matters (#3762 proposal 2:
-    * the focus and the plan approvals waited for each other — a goal waiting for its plan was never active,
-    * so code never decided its plan). */
+  /** Why a goal plan proposing `proposed` sub-goals for `goal` is not decided by code, if it is not: its unfinished
+    * sub-goals (every level below it) plus the new ones would pass `max-open-sub-goals`
+    * ([[AutopilotPolicy.goalPlanSubGoals]]). Whether the goal is "active" no longer matters (#3762 proposal 2: the
+    * focus and the plan approvals waited for each other — a goal waiting for its plan was never active, so code never
+    * decided its plan).
+    */
   def goalPlanBlock(goal: String, proposed: Int): Option[String] =
     val goals = FocusRepo.goals(ds)
     val kids = goals.filter(_.parent.isDefined).groupMap(_.parent.get)(identity)
     def open(s: String, seen: Set[String]): Int =
-      kids.getOrElse(s, Nil).filterNot(k => seen(k.slug)).map { k =>
-        (if GoalFocus.finished(k.status) then 0 else 1) + open(k.slug, seen + k.slug)
-      }.sum
+      kids
+        .getOrElse(s, Nil)
+        .filterNot(k => seen(k.slug))
+        .map { k =>
+          (if GoalFocus.finished(k.status) then 0 else 1) + open(k.slug, seen + k.slug)
+        }
+        .sum
     AutopilotPolicy.goalPlanSubGoals(goal, open(goal, Set(goal)), proposed, acfg.maxOpenSubGoals)
 
   /** How many goals with an approved plan are unfinished now. */
@@ -198,7 +273,7 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
   /** The focus as the next pass would decide it (read-only: with the autopilot off, what it WOULD focus on). */
   def info(now: Instant = Instant.now(), changes: List[String] = Nil): FocusInfo =
     val (max, from) = cap
-    val r    = read()
+    val r = read()
     val plan = GoalFocus.select(r.facts, settings(r, if max > 0 then max else acfg.maxActiveGoals))
     val pace = ManagerRepo.pace(ds, now.minusSeconds(7L * 86400L))
     val byGoal = r.facts.map(f => f.slug -> f).toMap
@@ -206,25 +281,52 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       val f = byGoal.get(p.slug)
       val ps = List(seedId(p.slug), watchId(p.slug)).flatMap(pace.get)
       val (open, done) = (f.fold(0)(_.work.size), ps.map(_._2).sum)
-      FocusGoal(p.slug, r.titles.getOrElse(p.slug, ""), f.fold("")(_.status), p.stage.wire, p.why, p.pinned,
-        f.fold(0)(_.priority), p.since, if active then f.flatMap(x => GoalFocus.doing(x.work)) else None,
-        open, done, GoalFocus.etaDays(open, done))
+      FocusGoal(
+        p.slug,
+        r.titles.getOrElse(p.slug, ""),
+        f.fold("")(_.status),
+        p.stage.wire,
+        p.why,
+        p.pinned,
+        f.fold(0)(_.priority),
+        p.since,
+        if active then f.flatMap(x => GoalFocus.doing(x.work)) else None,
+        open,
+        done,
+        GoalFocus.etaDays(open, done)
+      )
     val shown = math.max(0, acfg.focusQueueShown)
     val note =
       if !agents.autopilot.on then Some("the autopilot is off: nothing is held; this is what it would focus on")
-      else if !inForce then Some("the central scheduler admits the work (histmersion agent scheduler): the focus holds " +
-        "nothing; this is how it ranks the goals, and its pins and priorities are the goals' priorities in the scheduler")
-      else if max <= 0 then Some(s"no cap (max 0${if from == "person" then ", set by a person" else ""}): every goal is active; " +
-        s"the order shown is the one a cap of ${acfg.maxActiveGoals} would use")
+      else if !inForce then
+        Some(
+          "the central scheduler admits the work (histmersion agent scheduler): the focus holds " +
+            "nothing; this is how it ranks the goals, and its pins and priorities are the goals' priorities in the scheduler"
+        )
+      else if max <= 0 then
+        Some(
+          s"no cap (max 0${if from == "person" then ", set by a person" else ""}): every goal is active; " +
+            s"the order shown is the one a cap of ${acfg.maxActiveGoals} would use"
+        )
       else None
-    FocusInfo(inForce, max, from, plan.active.map(goal(_, active = true)), plan.queue.take(shown).map(goal(_, active = false)),
-      plan.queue.size, plan.waiting.map((s, c, w) => FocusWaiting(s, c, w, byGoal.get(s).exists(_.pinned))),
-      ManagerRepo.focusHeldCount(ds), note, changes)
+    FocusInfo(
+      inForce,
+      max,
+      from,
+      plan.active.map(goal(_, active = true)),
+      plan.queue.take(shown).map(goal(_, active = false)),
+      plan.queue.size,
+      plan.waiting.map((s, c, w) => FocusWaiting(s, c, w, byGoal.get(s).exists(_.pinned))),
+      ManagerRepo.focusHeldCount(ds),
+      note,
+      changes
+    )
 
   // ── a person's settings ────────────────────────────────────────────────────────────────────────
 
-  /** `pin` / `unpin` / `priority` a goal, or the cap (`max`; no value: back to the config's). Applied at
-    * the next managers' tick (nudged now); answers the focus as the next pass will decide it. */
+  /** `pin` / `unpin` / `priority` a goal, or the cap (`max`; no value: back to the config's). Applied at the next
+    * managers' tick (nudged now); answers the focus as the next pass will decide it.
+    */
   def set(in: FocusSet, now: Instant = Instant.now()): Either[ApiError, FocusInfo] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     def goal = in.goal.map(_.trim).filter(_.nonEmpty).toRight(ApiError(s"`${in.action}` needs `goal`"))
@@ -247,10 +349,13 @@ final class GoalFocusService(ds: DataSource, cfg: => AgentsConfig, h: com.histme
       case "max" =>
         in.value match
           case Some(n) if n < 0 => Left(ApiError("`max` is 0 (no cap) or more"))
-          case v =>
+          case v                =>
             FocusRepo.setMaxOverride(ds, v)
-            Right(v.fold(s"cap back to agents.autopilot.max-active-goals (${acfg.maxActiveGoals}) (by $by)")(n =>
-              s"cap $n${if n == 0 then " (no cap)" else ""} (by $by)"))
+            Right(
+              v.fold(s"cap back to agents.autopilot.max-active-goals (${acfg.maxActiveGoals}) (by $by)")(n =>
+                s"cap $n${if n == 0 then " (no cap)" else ""} (by $by)"
+              )
+            )
       case other => Left(ApiError(s"unknown focus action '$other' (one of: ${FocusSet.Actions.mkString(", ")})"))
     done.map { line =>
       log(s"autopilot focus: $line")

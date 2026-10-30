@@ -1,18 +1,17 @@
 package com.histmersion.api
 
-
 import com.histmersion.api.Query.*
 
-/** The pure half of the read-only query surface: the Markdown table and the generated tool
-  * description (plan §5.2 stream 2.8). Execution is `db.QueryRepo`, tested against Postgres. */
+/** The pure half of the read-only query surface: the Markdown table and the generated tool description (plan §5.2
+  * stream 2.8). Execution is `db.QueryRepo`, tested against Postgres.
+  */
 class QuerySuite extends munit.FunSuite:
 
   private def row(vs: String*): List[Option[String]] = vs.toList.map(v => if v == null then None else Some(v))
 
   test("a table renders header, rule and rows"):
     val md = markdownTable(List("citekey", "n"), List(row("a", "1"), row("b", "2")))
-    assertEquals(md,
-      "| citekey | n |\n|---|---|\n| a | 1 |\n| b | 2 |")
+    assertEquals(md, "| citekey | n |\n|---|---|\n| a | 1 |\n| b | 2 |")
 
   test("NULL renders as NULL, not as an empty cell that reads like an empty string"):
     assertEquals(markdownTable(List("x"), List(List(None))), "| x |\n|---|\n| NULL |")
@@ -42,15 +41,28 @@ class QuerySuite extends munit.FunSuite:
 
   // ── the generated tool description ───────────────────────────────────────────────────────────
 
-  private val schema = SchemaTables(List(
-    SchemaTable("sources", "table", List(
-      SchemaColumn("citekey", "text", false),
-      SchemaColumn("title", "text", false),
-      SchemaColumn("ocr_markdown", "text", true))),
-    SchemaTable("queue_items", "table", List(
-      SchemaColumn("id", "integer", false),
-      SchemaColumn("list", "text", false),
-      SchemaColumn("text", "text", false)))))
+  private val schema = SchemaTables(
+    List(
+      SchemaTable(
+        "sources",
+        "table",
+        List(
+          SchemaColumn("citekey", "text", false),
+          SchemaColumn("title", "text", false),
+          SchemaColumn("ocr_markdown", "text", true)
+        )
+      ),
+      SchemaTable(
+        "queue_items",
+        "table",
+        List(
+          SchemaColumn("id", "integer", false),
+          SchemaColumn("list", "text", false),
+          SchemaColumn("text", "text", false)
+        )
+      )
+    )
+  )
 
   test("the tool description names the tables that actually exist, with their key columns"):
     val d = Query.toolDescription(schema)
@@ -119,8 +131,17 @@ class QuerySuite extends munit.FunSuite:
     assert(Query.check("select 1; select 2").isLeft)
 
   test("a lone session/transaction-control statement is refused by keyword"):
-    List("SET TRANSACTION READ WRITE", "set statement_timeout = 0", "BEGIN", "commit", "ROLLBACK",
-      "RESET ALL", "DO $$ BEGIN END $$", "CALL something()", "discard all")
+    List(
+      "SET TRANSACTION READ WRITE",
+      "set statement_timeout = 0",
+      "BEGIN",
+      "commit",
+      "ROLLBACK",
+      "RESET ALL",
+      "DO $$ BEGIN END $$",
+      "CALL something()",
+      "discard all"
+    )
       .foreach(s => assert(Query.check(s).isLeft, s"'$s' was NOT refused"))
 
   test("the keyword check sees past leading comments"):

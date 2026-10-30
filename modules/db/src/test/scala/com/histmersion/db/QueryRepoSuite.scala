@@ -9,27 +9,30 @@ import com.histmersion.values.SourceStatus
 
 /** The read-only query path against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
-  * The point of these tests is the SAFETY PROPERTY: a write must fail at the Postgres level, not at
-  * a keyword blacklist we wrote — so every refusal below is asserted to carry Postgres's own
-  * "read-only transaction" message, and the store is checked afterwards to prove nothing changed. */
+  * The point of these tests is the SAFETY PROPERTY: a write must fail at the Postgres level, not at a keyword blacklist
+  * we wrote — so every refusal below is asserted to carry Postgres's own "read-only transaction" message, and the store
+  * is checked afterwards to prove nothing changed.
+  */
 class QueryRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private lazy val cfg    = AppConfig.load()
-  private lazy val dbCfg  = cfg.db.copy(url = testDb.get)
+  private lazy val cfg = AppConfig.load()
+  private lazy val dbCfg = cfg.db.copy(url = testDb.get)
 
-  /** The APPLICATION role — schema owner, superuser in every deployment we ship. Used here only to
-    * migrate and to seed the probe row. */
+  /** The APPLICATION role — schema owner, superuser in every deployment we ship. Used here only to migrate and to seed
+    * the probe row.
+    */
   private lazy val ds =
     val d = testPool(dbCfg)
     Migrate.run(d)
     d
 
-  /** The role `query` actually runs as: `histmersion_query` (migration V011), created by the migration and
-    * given its password here exactly as `Main` does at startup. */
+  /** The role `query` actually runs as: `histmersion_query` (migration V011), created by the migration and given its
+    * password here exactly as `Main` does at startup.
+    */
   private lazy val queryDs =
-    val _ = ds                                  // migrate first: V011 creates the role
+    val _ = ds // migrate first: V011 creates the role
     Db.provisionQueryRole(ds, cfg.query) match
       case Right(_) => ()
       case Left(m)  => fail(s"could not provision the read-only role: $m")
@@ -44,11 +47,28 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   override def beforeEach(context: BeforeEach): Unit =
     connect(ds)(sql"DELETE FROM sources WHERE citekey = $ck".update.run())
-    SourceRepo.upsert(ds, Source(
-      citekey = ck, title = "Probe", authors = List("A"), doi = None, year = Some(2020), venue = None,
-      status = SourceStatus.Current, topics = Nil, regions = Nil, tags = Nil,
-      period = Some(Period(-2000, -1500)), summary = Some("s"), citedByCount = None,
-      influentialCitations = None, provenance = None, calibreId = None), cfg.limits.chunkChars)
+    SourceRepo.upsert(
+      ds,
+      Source(
+        citekey = ck,
+        title = "Probe",
+        authors = List("A"),
+        doi = None,
+        year = Some(2020),
+        venue = None,
+        status = SourceStatus.Current,
+        topics = Nil,
+        regions = Nil,
+        tags = Nil,
+        period = Some(Period(-2000, -1500)),
+        summary = Some("s"),
+        citedByCount = None,
+        influentialCitations = None,
+        provenance = None,
+        calibreId = None
+      ),
+      cfg.limits.chunkChars
+    )
 
   private def probeExists: Boolean =
     connect(ds)(sql"SELECT count(*) FROM sources WHERE citekey = $ck".query[Int].run().head) == 1
@@ -75,8 +95,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.rows.head, List(Some("-2000"), Some("-1500")))
 
   test("PostGIS is available inside the read-only transaction"):
-    assertEquals(run("select ST_AsText(ST_MakePoint(32, 39))").toOption.get.rows,
-      List(List(Some("POINT(32 39)"))))
+    assertEquals(run("select ST_AsText(ST_MakePoint(32, 39))").toOption.get.rows, List(List(Some("POINT(32 39)"))))
 
   test("queue_items is visible to `query` (the tool description says it is)"):
     assert(run("select count(*) from queue_items").isRight)
@@ -94,13 +113,14 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   test("update is refused"):
     val _ = refused("update sources set title = 'hacked'")
-    assertEquals(run(s"select title from sources where citekey = '$ck'").toOption.get.rows,
-      List(List(Some("Probe"))))
+    assertEquals(run(s"select title from sources where citekey = '$ck'").toOption.get.rows, List(List(Some("Probe"))))
 
   test("insert is refused"):
     val _ = refused("insert into sources (citekey, title) values ('zzquery_evil', 'x')")
-    assertEquals(run("select count(*) from sources where citekey = 'zzquery_evil'").toOption.get.rows,
-      List(List(Some("0"))))
+    assertEquals(
+      run("select count(*) from sources where citekey = 'zzquery_evil'").toOption.get.rows,
+      List(List(Some("0")))
+    )
 
   test("create / drop / truncate are refused"):
     val _ = refused("create table zzquery_tmp (id int)")
@@ -188,10 +208,11 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
   // ── the ROLE is what stops a superuser-only function ─────────────────────────────────────────
 
   test("`query` does not run as a superuser"):
-    val r = run("select current_user, (select rolsuper from pg_roles where rolname = current_user)")
-      .toOption.getOrElse(fail("current_user query failed"))
+    val r = run("select current_user, (select rolsuper from pg_roles where rolname = current_user)").toOption.getOrElse(
+      fail("current_user query failed")
+    )
     assertEquals(r.rows.head(0), Some(cfg.query.user))
-    assertEquals(r.rows.head(1), Some("f"))    // pgjdbc renders a bool column as f/t
+    assertEquals(r.rows.head(1), Some("f")) // pgjdbc renders a bool column as f/t
 
   test("pg_read_file is permission denied — the read-only TRANSACTION never stopped this"):
     val e = run("select pg_read_file('/etc/hostname')").left
@@ -210,7 +231,11 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     val role = "zz_query_role_probe"
     def admin(sql: String): Unit =
       val c = ds.getConnection
-      try { val st = c.createStatement(); try { val _ = st.execute(sql) } finally st.close() } finally c.close()
+      try {
+        val st = c.createStatement();
+        try { val _ = st.execute(sql) }
+        finally st.close()
+      } finally c.close()
     scala.util.Try(admin(s"DROP OWNED BY $role")); admin(s"DROP ROLE IF EXISTS $role")
     val qc = cfg.query.copy(user = role, password = "probe-pw")
     try

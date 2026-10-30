@@ -3,8 +3,9 @@ package com.histmersion.web
 import com.histmersion.web.LabelMotion.*
 import com.histmersion.web.LabelPlacement.{Pt, Rect}
 
-/** #1447 — a map name never jumps: it eases toward its target, a new target only bends its path,
-  * it fades and grows in and out, and scales a little with a zoom before settling. */
+/** #1447 — a map name never jumps: it eases toward its target, a new target only bends its path, it fades and grows in
+  * and out, and scales a little with a zoom before settling.
+  */
 class LabelMotionSuite extends munit.FunSuite:
 
   test("damp: reaches its target without overshoot, from either side, at any frame rate"):
@@ -27,7 +28,7 @@ class LabelMotionSuite extends munit.FunSuite:
     val after = m.toward(Pt(4, 6), dt, reduced = false)
     val step = math.hypot(after.p.x - before.p.x, after.p.y - before.p.y)
     val speed = math.hypot(before.vx, before.vy) * dt
-    assert(step <= speed * 1.5 + 0.2, s"step $step vs the previous frame's ${speed}")
+    assert(step <= speed * 1.5 + 0.2, s"step $step vs the previous frame's $speed")
     // and with reduced motion it snaps
     assertEquals(m.toward(Pt(4, 6), dt, reduced = true).p, Pt(4, 6))
 
@@ -51,7 +52,9 @@ class LabelMotionSuite extends munit.FunSuite:
     assertEquals(grow, grow.sorted)
     assertEquals(appearScale(0, reduced = true), 1.0)
 
-  test("zoom: names follow part of the map's scaling and are 1 again when settled; a class change keeps the drawn width"):
+  test(
+    "zoom: names follow part of the map's scaling and are 1 again when settled; a class change keeps the drawn width"
+  ):
     assertEqualsDouble(zoomScale(6, 6, reduced = false), 1.0, 1e-12)
     assert(zoomScale(7, 6, reduced = false) > 1 && zoomScale(7, 6, reduced = false) < 2)
     assert(zoomScale(5, 6, reduced = false) < 1)

@@ -5,8 +5,9 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-/** The three-way merge of article bodies (docs/research-merge-import.md §5.4): clean when the two
-  * sides changed different places, a conflict when they changed one place differently. */
+/** The three-way merge of article bodies (docs/research-merge-import.md §5.4): clean when the two sides changed
+  * different places, a conflict when they changed one place differently.
+  */
 class Diff3Suite extends munit.FunSuite:
 
   private val base = "Intro.\n\nMiddle.\n\nEnd."
@@ -21,7 +22,8 @@ class Diff3Suite extends munit.FunSuite:
     assertEquals(Diff3.merge(base, "y", base).text, "y")
     val same = "Intro.\n\nMiddle, rewritten.\n\nEnd."
     assertEquals(Diff3.merge(base, same, same).text, same)
-    val both = Diff3.merge(base, "Intro.\n\nMiddle, rewritten.\n\nEnd (left).", "Intro (right).\n\nMiddle, rewritten.\n\nEnd.")
+    val both =
+      Diff3.merge(base, "Intro.\n\nMiddle, rewritten.\n\nEnd (left).", "Intro (right).\n\nMiddle, rewritten.\n\nEnd.")
     assert(both.clean)
     assertEquals(both.text, "Intro (right).\n\nMiddle, rewritten.\n\nEnd (left).")
 
@@ -30,7 +32,10 @@ class Diff3Suite extends munit.FunSuite:
     assert(!r.clean)
     assertEquals(r.conflicts, 1)
     val m = r.marked("here", "bundle")
-    assert(m.contains("<<<<<<< here\nMiddle (left).\n||||||| base\nMiddle.\n=======\nMiddle (right).\n>>>>>>> bundle"), m)
+    assert(
+      m.contains("<<<<<<< here\nMiddle (left).\n||||||| base\nMiddle.\n=======\nMiddle (right).\n>>>>>>> bundle"),
+      m
+    )
     assert(m.startsWith("Intro.\n"))
 
   test("inserted and deleted lines on either side merge; an insertion at one spot from both conflicts"):

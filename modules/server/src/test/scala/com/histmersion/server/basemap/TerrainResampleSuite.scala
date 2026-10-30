@@ -3,14 +3,16 @@ package com.histmersion.server.basemap
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 
-/** The lossless-WebP decoder against `libwebp`'s own (`dwebp`: the digests below are of its output for
-  * the same files), the terrarium resampling, and the PNG round trip. */
+/** The lossless-WebP decoder against `libwebp`'s own (`dwebp`: the digests below are of its output for the same files),
+  * the terrarium resampling, and the PNG round trip.
+  */
 class TerrainResampleSuite extends munit.FunSuite:
 
   private def resource(name: String): Array[Byte] =
     val in = getClass.getResourceAsStream(s"/basemap/webp/$name")
     assert(in != null, name)
-    try in.readAllBytes() finally in.close()
+    try in.readAllBytes()
+    finally in.close()
 
   /** The SHA-256 of an image's RGB bytes (what `dwebp -ppm` writes). */
   private def rgbDigest(img: Vp8l.Image): String =
@@ -29,7 +31,8 @@ class TerrainResampleSuite extends munit.FunSuite:
     ("noise.webp", 61, 45, "d2c1bd5ca0c6101baccf7e125e30e06f8123b7af5a4283f2399d11e82dce3de8"),
     ("noise-z1.webp", 61, 45, "d2c1bd5ca0c6101baccf7e125e30e06f8123b7af5a4283f2399d11e82dce3de8"),
     ("pal12.webp", 50, 33, "03fad86d3ed929e7391eb88c113646cc6a0c7bba113e3df834cdcc7cf34366c4"),
-    ("palette.webp", 37, 23, "9048d2ab3ebd65ec3172db5a77b2ee8c4315c6cd45d44c5fc3fd4daab9a37d06"))
+    ("palette.webp", 37, 23, "9048d2ab3ebd65ec3172db5a77b2ee8c4315c6cd45d44c5fc3fd4daab9a37d06")
+  )
 
   expected.foreach { (name, w, h, digest) =>
     test(s"a lossless WebP decodes as libwebp decodes it: $name") {
@@ -42,16 +45,21 @@ class TerrainResampleSuite extends munit.FunSuite:
 
   /** The browser fixture's relief (Mapterhorn's tiles, as `histmersion basemap fetch` stores them). */
   private def fixture: Option[Path] =
-    Iterator.iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent).takeWhile(_ != null)
-      .map(_.resolve("modules/web/test/fixtures/basemap/terrain.pmtiles")).find(Files.isRegularFile(_))
+    Iterator
+      .iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)
+      .takeWhile(_ != null)
+      .map(_.resolve("modules/web/test/fixtures/basemap/terrain.pmtiles"))
+      .find(Files.isRegularFile(_))
 
   test("the fixture's Mapterhorn relief tiles decode as libwebp decodes them") {
     val f = fixture.getOrElse(fail("the browser fixture is not in the repository"))
     val pm = PmTilesFile.open(f).fold(e => fail(e), identity)
     try
       val zero = pm.tile(0, 0, 0).fold(e => fail(e), identity).getOrElse(fail("no tile 0/0/0"))
-      assertEquals(rgbDigest(Vp8l.decode(zero).fold(e => fail(e), identity)),
-        "aaf149389ba79323fb5bfe65cc6c4fd4b9f39ec6a2c6cddb2ae3a9d6e6019a72")
+      assertEquals(
+        rgbDigest(Vp8l.decode(zero).fold(e => fail(e), identity)),
+        "aaf149389ba79323fb5bfe65cc6c4fd4b9f39ec6a2c6cddb2ae3a9d6e6019a72"
+      )
       // tile 4805 of the archive's order: a zoom-6 tile of the Aegean
       val (x, y) = (for x <- 0L until 64L; y <- 0L until 64L if PmTiles.tileId(6, x, y) == 4805L yield (x, y)).head
       val six = pm.tile(6, x, y).fold(e => fail(e), identity).getOrElse(fail(s"no tile 6/$x/$y"))
@@ -82,7 +90,7 @@ class TerrainResampleSuite extends munit.FunSuite:
     // a 4 × 4 ancestor: a ramp of heights across the 256 m step of terrarium's red byte
     val n = 4
     val src = Array.tabulate(n * n)(i => TerrainResample.encode(-2 + 1.5 * (i % n) + 0.25 * (i / n)))
-    val out = TerrainResample.resample(src, n, 1, 1, 0)   // the north-east quarter, one zoom deeper
+    val out = TerrainResample.resample(src, n, 1, 1, 0) // the north-east quarter, one zoom deeper
     val m = out.map(TerrainResample.metres)
     // monotone along a row, inside the source's range, nothing near ±256 m (a byte-wise blend's error)
     for j <- 0 until n do
@@ -92,7 +100,9 @@ class TerrainResampleSuite extends munit.FunSuite:
     // a flat ancestor stays flat at every depth
     val flat = Array.fill(n * n)(TerrainResample.encode(123.5))
     for dz <- 1 to 5 do
-      assert(TerrainResample.resample(flat, n, dz, 3, 7).forall(p => math.abs(TerrainResample.metres(p) - 123.5) < 1.0 / 256))
+      assert(
+        TerrainResample.resample(flat, n, dz, 3, 7).forall(p => math.abs(TerrainResample.metres(p) - 123.5) < 1.0 / 256)
+      )
   }
 
   test("PNG: what is encoded decodes to the same pixels") {

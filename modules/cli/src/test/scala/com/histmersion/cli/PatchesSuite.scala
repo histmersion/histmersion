@@ -4,8 +4,9 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.values.{EdgeKind, SourceStatus}
 
-/** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed
-  * must not turn into an empty list that wipes the stored value. */
+/** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed must not turn
+  * into an empty list that wipes the stored value.
+  */
 class PatchesSuite extends munit.FunSuite:
 
   private def build(
@@ -25,8 +26,25 @@ class PatchesSuite extends munit.FunSuite:
       bodyFile: Option[String] = None,
       addEdges: List[String] = Nil,
       removeEdges: List[String] = Nil
-  ) = Patches.build(json, tagsAdd, tagsRemove, tagsReplace, topics, regions, summary, status, title,
-    None, period, bodyFile, addFindings, removeFindings, ifUpdatedAt, addEdges, removeEdges)
+  ) = Patches.build(
+    json,
+    tagsAdd,
+    tagsRemove,
+    tagsReplace,
+    topics,
+    regions,
+    summary,
+    status,
+    title,
+    None,
+    period,
+    bodyFile,
+    addFindings,
+    removeFindings,
+    ifUpdatedAt,
+    addEdges,
+    removeEdges
+  )
 
   test("no flags at all → every part absent (the server changes nothing)"):
     assertEquals(build(), Right(SourcePatch()))
@@ -50,7 +68,8 @@ class PatchesSuite extends munit.FunSuite:
   test("--add-finding parses JSON; --remove-finding collects ids"):
     val p = build(
       addFindings = List("""{"claim":"c","lon":1.0,"lat":2.0}"""),
-      removeFindings = List("x#0", "x#1")).toOption.get
+      removeFindings = List("x#0", "x#1")
+    ).toOption.get
     assertEquals(p.findings.get.add, List(FindingInput("c", lon = Some(1.0), lat = Some(2.0))))
     assertEquals(p.findings.get.remove, List("x#0", "x#1"))
 
@@ -73,11 +92,21 @@ class PatchesSuite extends munit.FunSuite:
     val p = build(
       json = Some("""{"edges":{"add":[{"dst":"a","kind":"refutes"}]}}"""),
       addEdges = List("challenges:lord1968_oralpoet", "challenges: notopoulos1960_achaean"),
-      removeEdges = List("superseded_by:old2001_x")).toOption.get
-    assertEquals(p.edges, Some(EdgesPatch(
-      add = List(EdgeInput("a", EdgeKind.Refutes), EdgeInput("lord1968_oralpoet", EdgeKind.Challenges),
-        EdgeInput("notopoulos1960_achaean", EdgeKind.Challenges)),
-      remove = List(EdgeInput("old2001_x", EdgeKind.SupersededBy)))))
+      removeEdges = List("superseded_by:old2001_x")
+    ).toOption.get
+    assertEquals(
+      p.edges,
+      Some(
+        EdgesPatch(
+          add = List(
+            EdgeInput("a", EdgeKind.Refutes),
+            EdgeInput("lord1968_oralpoet", EdgeKind.Challenges),
+            EdgeInput("notopoulos1960_achaean", EdgeKind.Challenges)
+          ),
+          remove = List(EdgeInput("old2001_x", EdgeKind.SupersededBy))
+        )
+      )
+    )
 
   test("--add-edge with an unknown kind or no target is a usage error"):
     val bad = build(addEdges = List("disagrees:x")).swap.toOption.get
@@ -90,14 +119,17 @@ class PatchesSuite extends munit.FunSuite:
     val p = build(
       json = Some("""{"summary":"from json","topics":["t"],"tags":{"add":["from-json"]}}"""),
       tagsAdd = Some("from-flag"),
-      summary = Some("from flag")).toOption.get
+      summary = Some("from flag")
+    ).toOption.get
     assertEquals(p.summary, Some("from flag"))
     assertEquals(p.tags, Some(ListPatch(add = List("from-flag"))))
     assertEquals(p.topics, Some(List("t")))
 
   test("--if-updated-at is carried through as the precondition"):
-    assertEquals(build(ifUpdatedAt = Some("2026-08-25T10:00:00.000000Z")).toOption.get.ifUpdatedAt,
-      Some("2026-08-25T10:00:00.000000Z"))
+    assertEquals(
+      build(ifUpdatedAt = Some("2026-08-25T10:00:00.000000Z")).toOption.get.ifUpdatedAt,
+      Some("2026-08-25T10:00:00.000000Z")
+    )
 
   test("--tags-replace with --tags-remove keeps both parts"):
     val p = build(tagsReplace = Some("a,b"), tagsRemove = Some("b")).toOption.get
@@ -112,4 +144,3 @@ class PatchesSuite extends munit.FunSuite:
       assert(build(bodyFile = Some(f.toString + ".nope")).isLeft)
       assertEquals(build().map(_.body), Right(None), "absent flag → body untouched")
     finally java.nio.file.Files.deleteIfExists(f)
-

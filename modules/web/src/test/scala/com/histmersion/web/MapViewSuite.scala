@@ -8,8 +8,7 @@ class MapViewSuite extends munit.FunSuite:
   override def beforeAll(): Unit = TestTokens.install()
 
   private def hit(start: Long, end: Long, conf: Confidence = Confidence.High): GeoHit =
-    GeoHit("test", "Test", "claim", None, Some(30.0), Some(37.0),
-      Some(start), Some(end), Some(conf))
+    GeoHit("test", "Test", "claim", None, Some(30.0), Some(37.0), Some(start), Some(end), Some(conf))
 
   private def undatedHit: GeoHit =
     GeoHit("test", "Test", "claim", None, Some(30.0), Some(37.0), None, None, None)
@@ -54,7 +53,7 @@ class MapViewSuite extends munit.FunSuite:
     assert(range.isDefined)
     val (lo, hi) = range.get
     assertEqualsDouble(lo, -2500.0, 0.01) // earliest midpoint
-    assertEqualsDouble(hi, -750.0, 0.01)  // latest midpoint
+    assertEqualsDouble(hi, -750.0, 0.01) // latest midpoint
   }
 
   test("midRange returns None for empty input") {
@@ -89,7 +88,7 @@ class MapViewSuite extends munit.FunSuite:
 
   test("colorFor desaturates for low confidence") {
     val highC = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Certainty.Stated(Confidence.High))
-    val lowC  = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Certainty.Stated(Confidence.Low))
+    val lowC = MapView.colorFor(Some(-2000.0), (-3500L, -500L), Certainty.Stated(Confidence.Low))
     assert(highC != lowC, "low confidence should desaturate")
   }
 
@@ -133,7 +132,7 @@ class MapViewSuite extends munit.FunSuite:
 
   test("the finding popup links the source by DOI (else citekey) and shows a confidence badge") {
     val withDoi = hit(-1200, -1190, Confidence.Medium).copy(doi = Some("10.1/x"))
-    val html    = MapView.popupHtml(withDoi)
+    val html = MapView.popupHtml(withDoi)
     assert(html.contains(com.histmersion.api.HtmlAtoms.sourceLink("test", Some("10.1/x"), "10.1/x")), html)
     assert(html.contains("conf-badge conf-medium"), html)
     assert(!html.contains("(medium)"), "the bare parenthesised word is gone: " + html)
@@ -161,7 +160,10 @@ class MapViewSuite extends munit.FunSuite:
     val pt = hit(-1200, -1190).copy(citekey = "zz2026_x", title = "Zz title")
     assertEquals(MapView.markerLabel(pt), s"Zz title (${Fmt.periodStr(-1200L, -1190L)})")
     assertEquals(MapView.markerLabel(undatedHit.copy(title = "Zz")), "Zz")
-    assertEquals(MapView.markerLabel(pt.copy(title = " ", doi = Some("10.1/x"))), s"10.1/x (${Fmt.periodStr(-1200L, -1190L)})")
+    assertEquals(
+      MapView.markerLabel(pt.copy(title = " ", doi = Some("10.1/x"))),
+      s"10.1/x (${Fmt.periodStr(-1200L, -1190L)})"
+    )
     assertEquals(MapView.markerLabel(pt.copy(title = "")).startsWith("zz2026_x"), true)
   }
 
@@ -183,7 +185,10 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Mid, playback = false), GeoTime.At(-1500))
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Start, playback = false), GeoTime.At(-2000))
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.End, playback = false), GeoTime.At(-1000))
-    assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Latest, playback = false), GeoTime.Within(-2000, -1000, latest = true))
+    assertEquals(
+      MapView.areaTime((-2000L, -1000L), GeoPick.Latest, playback = false),
+      GeoTime.Within(-2000, -1000, latest = true)
+    )
     GeoPick.values.foreach(p => assertEquals(MapView.areaTime((-1210L, -1190L), p, playback = true), GeoTime.At(-1200)))
 
   test("the areas of a whole range are all asked for; a year keeps the year's limit"):
@@ -203,10 +208,20 @@ class MapViewSuite extends munit.FunSuite:
 
   test("the query carries a snapshot as asOf and a whole range as from/to/pick"):
     import com.histmersion.api.{Api, GeoTime}
-    assertEquals(MapView.geoQuery("polity", GeoTime.At(-1200), 400),
-      Api.PlacesGeoQuery(kind = Some("polity"), asOf = Some(-1200L), limit = Some(400)))
-    assertEquals(MapView.geoQuery("polity", GeoTime.Within(-2000, -1000, latest = false), 400),
-      Api.PlacesGeoQuery(kind = Some("polity"), limit = Some(400), from = Some(-2000L), to = Some(-1000L), pick = Some("earliest")))
+    assertEquals(
+      MapView.geoQuery("polity", GeoTime.At(-1200), 400),
+      Api.PlacesGeoQuery(kind = Some("polity"), asOf = Some(-1200L), limit = Some(400))
+    )
+    assertEquals(
+      MapView.geoQuery("polity", GeoTime.Within(-2000, -1000, latest = false), 400),
+      Api.PlacesGeoQuery(
+        kind = Some("polity"),
+        limit = Some(400),
+        from = Some(-2000L),
+        to = Some(-1000L),
+        pick = Some("earliest")
+      )
+    )
 
   test("a disabled layer option says which switch turns it on"):
     import com.histmersion.web.MapLayer

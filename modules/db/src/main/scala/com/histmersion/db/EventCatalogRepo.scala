@@ -7,56 +7,104 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-private[db] final case class StoredEventRow(id: String, kind: String, notBefore: Option[Long], beginBy: Option[Long],
-    endFrom: Option[Long], notAfter: Option[Long], lat: Option[Double], lon: Option[Double],
-    wikidata: Option[String], keys: List[String], catalogue: Option[String], label: String)
+final private[db] case class StoredEventRow(
+    id: String,
+    kind: String,
+    notBefore: Option[Long],
+    beginBy: Option[Long],
+    endFrom: Option[Long],
+    notAfter: Option[Long],
+    lat: Option[Double],
+    lon: Option[Double],
+    wikidata: Option[String],
+    keys: List[String],
+    catalogue: Option[String],
+    label: String
+)
 
-private[db] final case class CatalogueRefRow(provider: String, providerId: String, url: Option[String],
-    vei: Option[Int], magnitude: Option[Double], deaths: Option[Long], retrievedAt: String)
+final private[db] case class CatalogueRefRow(
+    provider: String,
+    providerId: String,
+    url: Option[String],
+    vei: Option[Int],
+    magnitude: Option[Double],
+    deaths: Option[Long],
+    retrievedAt: String
+)
 
-private[db] final case class NearFindingRow(id: String, citekey: String, claim: String, km: Double, yearGap: Long,
-    periodStart: Option[Long], periodEnd: Option[Long])
+final private[db] case class NearFindingRow(
+    id: String,
+    citekey: String,
+    claim: String,
+    km: Double,
+    yearGap: Long,
+    periodStart: Option[Long],
+    periodEnd: Option[Long]
+)
 
-private[db] final case class CandidateRow(eventId: String, citekey: String, score: Double, status: String,
-    title: Option[String], findings: List[String], passages: String, reasons: List[String])
+final private[db] case class CandidateRow(
+    eventId: String,
+    citekey: String,
+    score: Double,
+    status: String,
+    title: Option[String],
+    findings: List[String],
+    passages: String,
+    reasons: List[String]
+)
 
-final case class LeadRow(id: String, label: String, kind: String, notBefore: Option[Long],
-    beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long], tier: String, vei: Option[Int],
-    magnitude: Option[Double], findingsNear: Int, proposed: Int, attesting: Int)
+final case class LeadRow(
+    id: String,
+    label: String,
+    kind: String,
+    notBefore: Option[Long],
+    beginBy: Option[Long],
+    endFrom: Option[Long],
+    notAfter: Option[Long],
+    tier: String,
+    vei: Option[Int],
+    magnitude: Option[Double],
+    findingsNear: Int,
+    proposed: Int,
+    attesting: Int
+)
 
-given DbCodec[StoredEventRow]  = DbCodec.derived
+given DbCodec[StoredEventRow] = DbCodec.derived
 given DbCodec[CatalogueRefRow] = DbCodec.derived
-given DbCodec[NearFindingRow]  = DbCodec.derived
-given DbCodec[CandidateRow]    = DbCodec.derived
-given DbCodec[LeadRow]         = DbCodec.derived
+given DbCodec[NearFindingRow] = DbCodec.derived
+given DbCodec[CandidateRow] = DbCodec.derived
+given DbCodec[LeadRow] = DbCodec.derived
 
-/** Events from catalogues (#1449): what an import merges with and writes, the parts it has read, the
-  * proposed links to the corpus and the facts the leads are computed from. */
+/** Events from catalogues (#1449): what an import merges with and writes, the parts it has read, the proposed links to
+  * the corpus and the facts the leads are computed from.
+  */
 object EventCatalogRepo:
 
-  /** The SQL of an event's TIER over `events e`: attested when it names a source or an attestation
-    * names it. */
+  /** The SQL of an event's TIER over `events e`: attested when it names a source or an attestation names it.
+    */
   val TierSql: String =
     "CASE WHEN e.citekey IS NOT NULL OR EXISTS (SELECT 1 FROM attestations ta WHERE ta.target_type = 'event' " +
       s"AND ta.target_id = e.id) THEN '${EventTier.Attested}' ELSE '${EventTier.Catalogue}' END"
 
-  /** An event's anchor point over `events e` with its place `ep` joined: its own geometry, else its
-    * place's (a point, or the point-on-surface of an area). */
+  /** An event's anchor point over `events e` with its place `ep` joined: its own geometry, else its place's (a point,
+    * or the point-on-surface of an area).
+    */
   val AnchorSql: String =
     "(SELECT CASE WHEN GeometryType(g) = 'POINT' THEN g ELSE ST_PointOnSurface(g) END " +
       "FROM (SELECT coalesce(e.geom, ep.geom) AS g) x)"
 
-  /** SQL: the box `km` around the point `pt` in degrees — what lets the findings' geometry index answer
-    * before the exact geography distance is computed (a `::geography` cast cannot use it). */
+  /** SQL: the box `km` around the point `pt` in degrees — what lets the findings' geometry index answer before the
+    * exact geography distance is computed (a `::geography` cast cannot use it).
+    */
   private[db] def boxAround(pt: String, km: Double): String =
     val dy = km / 111.32
     s"ST_Expand($pt, $dy / greatest(cos(radians(ST_Y($pt))), 0.05), $dy)"
 
   // ── the import ──────────────────────────────────────────────────────────────────────────────
 
-  /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's
-    * choice never depends on the order rows come in — it ranks candidates itself — but a stable
-    * order keeps every run reproducible). */
+  /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's choice never depends
+    * on the order rows come in — it ranks candidates itself — but a stable order keeps every run reproducible).
+    */
   def stored(ds: DataSource): List[StoredEvent] =
     connect(ds):
       sql"""SELECT e.id, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
@@ -67,37 +115,51 @@ object EventCatalogRepo:
             FROM events e LEFT JOIN places ep ON ep.id = e.place_id
             CROSS JOIN LATERAL (SELECT ${SqlLiteral(AnchorSql)} AS pt) a
             ORDER BY e.id"""
-        .query[StoredEventRow].run().toList.map { r =>
-          StoredEvent(r.id, r.kind, TimeSpan(r.notBefore, r.beginBy, r.endFrom, r.notAfter), r.lat, r.lon, r.wikidata,
+        .query[StoredEventRow]
+        .run()
+        .toList
+        .map { r =>
+          StoredEvent(
+            r.id,
+            r.kind,
+            TimeSpan(r.notBefore, r.beginBy, r.endFrom, r.notAfter),
+            r.lat,
+            r.lon,
+            r.wikidata,
             r.keys.flatMap(k => k.split("\\|", 2) match { case Array(p, i) => Some(p -> i); case _ => None }).toSet,
-            r.catalogue.isDefined, r.label)
+            r.catalogue.isDefined,
+            r.label
+          )
         }
 
-  /** What [[save]] did: events created, events an import made before refreshed, catalogue rows
-    * written, and what became of the refreshed events' corrections by hand. */
+  /** What [[save]] did: events created, events an import made before refreshed, catalogue rows written, and what became
+    * of the refreshed events' corrections by hand.
+    */
   final case class Saved(created: Int, updated: Int, rows: Int, corrections: CorrectionCounts = CorrectionCounts())
 
-  /** Write placed records, in one transaction. A NEW event is created from the record it is named
-    * after (its label, kind, dating, point, historicity, Wikidata item). An event an import of a
-    * catalogue CREATED is refreshed from its OWNER record ([[CatalogRecord.owner]]: that catalogue's
-    * record it is named after) whenever that record is written again — with the corrections a person
-    * made to it applied over the catalogue's values (V088, [[Corrections]]: kept, retired when the
-    * catalogue now agrees, flagged when it changed to something else). An event made by hand or
-    * compiled from sources is never changed, except that an empty Wikidata item is filled and the
-    * names are added to. Every record is kept in `event_catalogue` under its key. */
+  /** Write placed records, in one transaction. A NEW event is created from the record it is named after (its label,
+    * kind, dating, point, historicity, Wikidata item). An event an import of a catalogue CREATED is refreshed from its
+    * OWNER record ([[CatalogRecord.owner]]: that catalogue's record it is named after) whenever that record is written
+    * again — with the corrections a person made to it applied over the catalogue's values (V088, [[Corrections]]: kept,
+    * retired when the catalogue now agrees, flagged when it changed to something else). An event made by hand or
+    * compiled from sources is never changed, except that an empty Wikidata item is filled and the names are added to.
+    * Every record is kept in `event_catalogue` under its key.
+    */
   def save(ds: DataSource, placed: List[(CatalogRecord, CatalogMerge.Placement)]): Saved =
     transact(ds):
       // `var`s: the counts of this write
       var created, updated = 0
       var counts = CorrectionCounts()
       placed.groupBy(_._2.eventId).toList.sortBy(_._1).foreach { (eventId, group) =>
-        val recs  = group.map(_._1).sortBy(_.key)
+        val recs = group.map(_._1).sortBy(_.key)
         val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
-        val wd    = recs.flatMap(_.wikidata).headOption
+        val wd = recs.flatMap(_.wikidata).headOption
         val catalogue = sql"SELECT catalogue FROM events WHERE id = $eventId".query[Option[String]].run().headOption
         def ownerIn(p: String): Option[CatalogRecord] =
           val storedKeys = sql"SELECT provider, provider_id FROM event_catalogue WHERE event_id = $eventId"
-            .query[(String, String)].run().toList
+            .query[(String, String)]
+            .run()
+            .toList
           CatalogRecord.owner(eventId, p, storedKeys ++ recs.map(_.key)).flatMap(k => recs.find(_.key == k))
         def refreshFrom(r: CatalogRecord): Unit =
           counts = counts + refresh(eventId, r, names, wd)
@@ -119,17 +181,20 @@ object EventCatalogRepo:
       }
       Saved(created, updated, placed.size, counts)
 
-  /** Refresh an import's own event from its owner record `r`, its applied corrections over `r`'s
-    * values; a span kept by hand drops the catalogue's stated year and ± (they do not explain it). */
-  private def refresh(id: String, r: CatalogRecord, names: List[String], wd: Option[String])(using DbCon): CorrectionCounts =
+  /** Refresh an import's own event from its owner record `r`, its applied corrections over `r`'s values; a span kept by
+    * hand drops the catalogue's stated year and ± (they do not explain it).
+    */
+  private def refresh(id: String, r: CatalogRecord, names: List[String], wd: Option[String])(using
+      DbCon
+  ): CorrectionCounts =
     val (keep, outcomes) = CorrectionRepo.reconcile(CorrectionTarget.Event, id, EventFields.upstream(r))
     def text(f: String): Option[Option[String]] = keep.get(f).map(_.asString)
     val label = text(EventFields.Label).flatten.getOrElse(r.label)
-    val kind  = text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind))
-    val hist  = text(EventFields.Historicity).flatten.getOrElse(r.historicity)
-    val desc  = text(EventFields.Description).getOrElse(r.description)
+    val kind = text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind))
+    val hist = text(EventFields.Historicity).flatten.getOrElse(r.historicity)
+    val desc = text(EventFields.Description).getOrElse(r.description)
     val spanKept = keep.contains(EventFields.Span)
-    val ts    = keep.get(EventFields.Span).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan)
+    val ts = keep.get(EventFields.Span).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan)
     val (central, pm, method) = if spanKept then (None, None, None) else (r.central, r.plusMinus, r.datingMethod)
     val geom: Option[String] = keep.get(EventFields.Geometry) match
       case Some(g) => Option.when(!g.isNull)(g.noSpaces)
@@ -164,36 +229,46 @@ object EventCatalogRepo:
           WHERE id = $id AND (wikidata IS DISTINCT FROM coalesce(wikidata, $wd)
             OR NOT (names @> $names::text[]))""".update.run()
 
-  /** The catalogue an event was created from, with its OWNER record ([[CatalogRecord.owner]]) — what
-    * the event's fields are compared with when a person corrects them. `None`: not an import's event. */
+  /** The catalogue an event was created from, with its OWNER record ([[CatalogRecord.owner]]) — what the event's fields
+    * are compared with when a person corrects them. `None`: not an import's event.
+    */
   private[db] def upstreamOf(id: String)(using DbCon): Option[(String, CatalogRecord)] =
     sql"SELECT catalogue FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten.flatMap { cat =>
       val rows = sql"""SELECT provider, provider_id, record::text FROM event_catalogue
                        WHERE event_id = $id AND provider = $cat ORDER BY provider_id"""
-        .query[(String, String, String)].run().toList
-      CatalogRecord.owner(id, cat, rows.map(r => (r._1, r._2)))
+        .query[(String, String, String)]
+        .run()
+        .toList
+      CatalogRecord
+        .owner(id, cat, rows.map(r => (r._1, r._2)))
         .flatMap(k => rows.find(r => (r._1, r._2) == k))
         .flatMap(r => Jsonb.read[CatalogRecord](r._3))
         .map(cat -> _)
     }
 
-  /** The stored records of `provider` (every catalogue's when `None`), as read, with the event each
-    * is of and that event's kind, in key order — what `events rederive` computes again. A row whose record no longer
-    * decodes is counted in the second value and left alone. */
+  /** The stored records of `provider` (every catalogue's when `None`), as read, with the event each is of and that
+    * event's kind, in key order — what `events rederive` computes again. A row whose record no longer decodes is
+    * counted in the second value and left alone.
+    */
   def records(ds: DataSource, provider: Option[String]): (List[(String, String, CatalogRecord)], Int) =
     connect(ds):
-      val rows = sql"""SELECT c.event_id, e.kind, c.record::text FROM event_catalogue c JOIN events e ON e.id = c.event_id
+      val rows =
+        sql"""SELECT c.event_id, e.kind, c.record::text FROM event_catalogue c JOIN events e ON e.id = c.event_id
                        WHERE ${provider.isEmpty} OR c.provider = ${provider.getOrElse("")}
                        ORDER BY c.provider, c.provider_id""".query[(String, String, String)].run().toList
       val decoded = rows.map((id, kind, j) => Jsonb.read[CatalogRecord](j).map((id, kind, _)))
       (decoded.flatten, decoded.count(_.isEmpty))
 
-  /** The kind each stored record of `provider` has, by key — what an item read again in another class
-    * is compared with ([[EventProviders.WikidataEvents.moreSpecific]]). */
+  /** The kind each stored record of `provider` has, by key — what an item read again in another class is compared with
+    * ([[EventProviders.WikidataEvents.moreSpecific]]).
+    */
   def storedKinds(ds: DataSource, provider: String): Map[(String, String), String] =
     connect(ds):
       sql"SELECT provider, provider_id, kind FROM event_catalogue WHERE provider = $provider"
-        .query[(String, String, String)].run().map((p, i, k) => (p, i) -> k).toMap
+        .query[(String, String, String)]
+        .run()
+        .map((p, i, k) => (p, i) -> k)
+        .toMap
 
   private def upsertRecord(eventId: String, r: CatalogRecord)(using DbCon): Unit =
     val json = Jsonb.write(r)
@@ -228,43 +303,65 @@ object EventCatalogRepo:
   def tierAndNames(ds: DataSource, id: String): Option[(String, List[String], Option[String])] =
     connect(ds):
       sql"""SELECT ${SqlLiteral(TierSql)}, e.names, e.catalogue FROM events e WHERE e.id = $id"""
-        .query[(String, List[String], Option[String])].run().headOption
+        .query[(String, List[String], Option[String])]
+        .run()
+        .headOption
 
   /** The catalogue rows of one event, with each provider's licence and citation. */
   def catalogueRefs(ds: DataSource, id: String): List[EventCatalogueRef] =
     connect(ds):
       sql"""SELECT provider, provider_id, url, vei, magnitude, deaths, retrieved_at::text
             FROM event_catalogue WHERE event_id = $id ORDER BY provider, provider_id"""
-        .query[CatalogueRefRow].run().toList.map { r =>
+        .query[CatalogueRefRow]
+        .run()
+        .toList
+        .map { r =>
           val info = CatalogProvider.info(r.provider)
-          EventCatalogueRef(r.provider, r.providerId, r.url.getOrElse(""), info.fold(r.provider)(_.title),
-            info.fold("")(_.licence), info.fold("")(_.citation), r.vei, r.magnitude, r.deaths, Some(r.retrievedAt))
+          EventCatalogueRef(
+            r.provider,
+            r.providerId,
+            r.url.getOrElse(""),
+            info.fold(r.provider)(_.title),
+            info.fold("")(_.licence),
+            info.fold("")(_.citation),
+            r.vei,
+            r.magnitude,
+            r.deaths,
+            Some(r.retrievedAt)
+          )
         }
 
   /** The sources attesting one event: its own citekey, then the attestations naming it. */
   def attestingSources(ds: DataSource, id: String): List[EventSourceRef] =
     connect(ds):
       val own = sql"""SELECT s.citekey, s.title, s.year FROM events e JOIN sources s ON s.citekey = e.citekey
-                      WHERE e.id = $id""".query[(String, Option[String], Option[Int])].run().toList
+                      WHERE e.id = $id"""
+        .query[(String, Option[String], Option[Int])]
+        .run()
+        .toList
         .map((ck, t, y) => EventSourceRef(ck, t, y, "citekey"))
       val att = sql"""SELECT DISTINCT ON (a.citekey) a.citekey, s.title, s.year, a.quote
                       FROM attestations a JOIN sources s ON s.citekey = a.citekey
                       WHERE a.target_type = 'event' AND a.target_id = $id ORDER BY a.citekey, a.id"""
-        .query[(String, Option[String], Option[Int], Option[String])].run().toList
+        .query[(String, Option[String], Option[Int], Option[String])]
+        .run()
+        .toList
         .map((ck, t, y, q) => EventSourceRef(ck, t, y, "attestation", q))
       (own ++ att.filterNot(a => own.exists(_.citekey == a.citekey)))
 
   /** The articles citing any of `citekeys`. */
   def articlesCiting(ds: DataSource, citekeys: List[String], limit: Int): List[EventArticleRef] =
     if citekeys.isEmpty then Nil
-    else connect(ds):
-      sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
+    else
+      connect(ds):
+        sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
             FROM article_links l JOIN articles a ON a.slug = l.src_slug
             WHERE l.target_kind = 'source' AND l.target = ANY($citekeys::text[])
             ORDER BY a.slug, l.target LIMIT $limit""".query[EventArticleRef].run().toList
 
-  /** The dated, placed findings within `km` of an event's anchor and `years` of its outer span, nearest
-    * in time then space first: their distance and the years between (0 = overlapping). */
+  /** The dated, placed findings within `km` of an event's anchor and `years` of its outer span, nearest in time then
+    * space first: their distance and the years between (0 = overlapping).
+    */
   def nearFindings(ds: DataSource, id: String, km: Double, years: Long, limit: Int): List[EventFindingRef] =
     connect(ds):
       sql"""WITH ev AS (
@@ -273,17 +370,25 @@ object EventCatalogRepo:
             SELECT f.id, f.citekey, f.claim,
                    ST_Distance(f.geom::geography, ev.pt::geography) / 1000.0,
                    CASE WHEN f.period && ev.span THEN 0
-                        ELSE greatest(${SqlLiteral(PeriodSql.start("f.period"))} - (${SqlLiteral(PeriodSql.end("ev.span"))}),
-                                      ${SqlLiteral(PeriodSql.start("ev.span"))} - (${SqlLiteral(PeriodSql.end("f.period"))})) END,
+                        ELSE greatest(${SqlLiteral(PeriodSql.start("f.period"))} - (${SqlLiteral(
+          PeriodSql.end("ev.span")
+        )}),
+                                      ${SqlLiteral(PeriodSql.start("ev.span"))} - (${SqlLiteral(
+          PeriodSql.end("f.period")
+        )})) END,
                    ${SqlLiteral(PeriodSql.cols("f.period"))}
             FROM ev JOIN findings f
               ON f.geom IS NOT NULL AND ev.pt IS NOT NULL AND ev.span IS NOT NULL
              AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
              AND f.geom && ${SqlLiteral(boxAround("ev.pt", km))}
              AND ST_DWithin(f.geom::geography, ev.pt::geography, ${km * 1000.0})
-             AND f.period && int8range(${SqlLiteral(PeriodSql.start("ev.span"))} - $years, ${SqlLiteral(PeriodSql.end("ev.span"))} + $years, '[]')
+             AND f.period && int8range(${SqlLiteral(PeriodSql.start("ev.span"))} - $years, ${SqlLiteral(
+          PeriodSql.end("ev.span")
+        )} + $years, '[]')
             ORDER BY 5, 4, f.id LIMIT $limit"""
-        .query[NearFindingRow].run().toList
+        .query[NearFindingRow]
+        .run()
+        .toList
         .map(r => EventFindingRef(r.id, r.citekey, r.claim, r.km, r.yearGap.max(0), r.periodStart, r.periodEnd))
 
   // ── proposed links ──────────────────────────────────────────────────────────────────────────
@@ -299,15 +404,19 @@ object EventCatalogRepo:
     connect(ds):
       sql"""SELECT c.event_id, c.citekey, c.score, c.status, s.title, c.findings, c.passages::text, c.reasons
             FROM event_link_candidates c JOIN sources s ON s.citekey = c.citekey
-            WHERE c.event_id = $id AND (${withRejected} OR c.status <> 'rejected')
+            WHERE c.event_id = $id AND ($withRejected OR c.status <> 'rejected')
             ORDER BY c.status = 'confirmed' DESC, c.score DESC, c.citekey"""
-        .query[CandidateRow].run().toList.map { r =>
+        .query[CandidateRow]
+        .run()
+        .toList
+        .map { r =>
           val ps = Jsonb.read[List[EventPassage]](r.passages).getOrElse(Nil)
           EventLinkCandidate(r.eventId, r.citekey, r.score, r.status, r.title, r.findings, ps, r.reasons)
         }
 
-  /** Replace the PROPOSED candidates of one event with `cs`; a source confirmed or rejected before keeps
-    * its status (its evidence is refreshed). Records the check. */
+  /** Replace the PROPOSED candidates of one event with `cs`; a source confirmed or rejected before keeps its status
+    * (its evidence is refreshed). Records the check.
+    */
   def saveCandidates(ds: DataSource, id: String, cs: List[EventLinkCandidate]): Unit =
     transact(ds):
       sql"DELETE FROM event_link_candidates WHERE event_id = $id AND status = 'proposed'".update.run()
@@ -323,8 +432,8 @@ object EventCatalogRepo:
 
   def setStatus(ds: DataSource, id: String, citekey: String, status: String): Boolean =
     transact(ds):
-      sql"UPDATE event_link_candidates SET status = $status WHERE event_id = $id AND citekey = $citekey"
-        .update.run() > 0
+      sql"UPDATE event_link_candidates SET status = $status WHERE event_id = $id AND citekey = $citekey".update
+        .run() > 0
 
   def isChecked(ds: DataSource, id: String): Boolean =
     connect(ds)(sql"SELECT 1 FROM event_link_checks WHERE event_id = $id".query[Int].run().nonEmpty)
@@ -338,13 +447,14 @@ object EventCatalogRepo:
 
   // ── leads ───────────────────────────────────────────────────────────────────────────────────
 
-  /** The facts of the leads of the events `where` selects (over `events e`, `ep` its place): tier,
-    * size, findings near (within `km`, `years`), proposed and confirmed sources. Catalogue events
-    * first, the largest first. */
+  /** The facts of the leads of the events `where` selects (over `events e`, `ep` its place): tier, size, findings near
+    * (within `km`, `years`), proposed and confirmed sources. Catalogue events first, the largest first.
+    */
   def leadRows(ds: DataSource, where: Sql, km: Double, years: Long, limit: Int, offset: Int): (Int, List[LeadRow]) =
     connect(ds):
-      val total = (Sql.raw("SELECT count(*)::int FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE ") ++ where)
-        .frag.query[Int].run().head
+      val total = (Sql.raw(
+        "SELECT count(*)::int FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE "
+      ) ++ where).frag.query[Int].run().head
       val rows = (Sql.raw(s"""SELECT e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
                  $TierSql AS tier,
                  (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
@@ -354,24 +464,36 @@ object EventCatalogRepo:
                      AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
                      AND f.geom && ${boxAround("a.pt", km)}
                      AND ST_DWithin(f.geom::geography, a.pt::geography, ?)
-                     AND f.period && int8range(${PeriodSql.start("e.outer_span")} - ?, ${PeriodSql.end("e.outer_span")} + ?, '[]')),
+                     AND f.period && int8range(${PeriodSql.start("e.outer_span")} - ?, ${PeriodSql.end(
+          "e.outer_span"
+        )} + ?, '[]')),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'proposed'),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'confirmed')
                FROM events e LEFT JOIN places ep ON ep.id = e.place_id
                CROSS JOIN LATERAL (SELECT $AnchorSql AS pt) a WHERE """) ++ where ++
-        Sql.raw(s" ORDER BY ($TierSql) = '${EventTier.Catalogue}' DESC," +
-          " (SELECT coalesce(max(c.vei), 0) + coalesce(max(c.magnitude), 0) FROM event_catalogue c WHERE c.event_id = e.id) DESC," +
-          " coalesce(e.not_before, e.begin_by), e.id") ++
+        Sql.raw(
+          s" ORDER BY ($TierSql) = '${EventTier.Catalogue}' DESC," +
+            " (SELECT coalesce(max(c.vei), 0) + coalesce(max(c.magnitude), 0) FROM event_catalogue c WHERE c.event_id = e.id) DESC," +
+            " coalesce(e.not_before, e.begin_by), e.id"
+        ) ++
         Sql.of(" LIMIT ? OFFSET ?", Param.I(limit.max(1)), Param.I(offset.max(0))))
       // the three `?` of the findings count come first in the text
       val withParams = Sql(rows.text, List(Param.D(km * 1000.0), Param.L(years), Param.L(years)) ++ rows.params)
       (total, withParams.frag.query[LeadRow].run().toList)
 
-  /** Catalogue events an article's period and region hold: those overlapping `period` within `km` of
-    * one of `citekeys`' dated findings of that period, and large enough (`minVei`, `minMagnitude`,
-    * or a war) — with how many of those findings are near each. */
-  def articleCandidates(ds: DataSource, citekeys: List[String], period: Option[(Long, Long)], km: Double,
-      minVei: Int, minMagnitude: Double, limit: Int): List[(String, String, String, TimeSpan, List[String], Option[Int], Option[Double], Int, String)] =
+  /** Catalogue events an article's period and region hold: those overlapping `period` within `km` of one of `citekeys`'
+    * dated findings of that period, and large enough (`minVei`, `minMagnitude`, or a war) — with how many of those
+    * findings are near each.
+    */
+  def articleCandidates(
+      ds: DataSource,
+      citekeys: List[String],
+      period: Option[(Long, Long)],
+      km: Double,
+      minVei: Int,
+      minMagnitude: Double,
+      limit: Int
+  ): List[(String, String, String, TimeSpan, List[String], Option[Int], Option[Double], Int, String)] =
     if citekeys.isEmpty then Nil
     else
       val (p0, p1) = period.getOrElse((Long.MinValue / 4, Long.MaxValue / 4))
@@ -393,31 +515,58 @@ object EventCatalogRepo:
                        AND (c.vei >= $minVei OR c.magnitude >= $minMagnitude)))
                 AND EXISTS (SELECT 1 FROM fs WHERE ST_DWithin(fs.geom::geography, e.geom::geography, ${km * 1000.0}))
               ORDER BY 11 DESC, e.id LIMIT $limit"""
-          .query[(String, String, String, Option[Long], Option[Long], Option[Long], Option[Long], List[String],
-            Option[Int], Option[Double], Int, String)].run().toList
+          .query[
+            (
+                String,
+                String,
+                String,
+                Option[Long],
+                Option[Long],
+                Option[Long],
+                Option[Long],
+                List[String],
+                Option[Int],
+                Option[Double],
+                Int,
+                String
+            )
+          ]
+          .run()
+          .toList
           .map { case (id, label, kind, a, b, c, d, names, vei, mag, n, prov) =>
             (id, label, kind, TimeSpan(a, b, c, d), names, vei, mag, n, prov)
           }
 
   // ── site types ──────────────────────────────────────────────────────────────────────────────
 
-  /** The Wikidata sites on the map (with a finding or a picture) whose type is still to be refined:
-    * never asked, or (`refresh`) asked before `before` (epoch ms — the start of this run). */
+  /** The Wikidata sites on the map (with a finding or a picture) whose type is still to be refined: never asked, or
+    * (`refresh`) asked before `before` (epoch ms — the start of this run).
+    */
   private def toTypeWhere(refresh: Boolean, before: Option[Long]): Sql =
     val asked = (refresh, before) match
-      case (true, Some(ms)) => Sql.of("(p.site_type_checked_at IS NULL OR p.site_type_checked_at < to_timestamp(? / 1000.0))", Param.L(ms))
-      case (true, None)     => Sql.raw("TRUE")
-      case _                => Sql.raw("p.site_type_checked_at IS NULL")
+      case (true, Some(ms)) =>
+        Sql.of("(p.site_type_checked_at IS NULL OR p.site_type_checked_at < to_timestamp(? / 1000.0))", Param.L(ms))
+      case (true, None) => Sql.raw("TRUE")
+      case _            => Sql.raw("p.site_type_checked_at IS NULL")
     Sql.raw("p.import_source = 'wikidata' AND p.id ~ '^wikidata_q[1-9][0-9]*$' AND ") ++ asked ++
-      Sql.raw(" AND (EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)" +
-        " OR EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'place' AND m.target_id = p.id))")
+      Sql.raw(
+        " AND (EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)" +
+          " OR EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'place' AND m.target_id = p.id))"
+      )
 
   /** (place id, Wikidata item, the class the import kept) of the next `limit` sites to refine. */
-  def sitesToType(ds: DataSource, limit: Int, refresh: Boolean, before: Option[Long]): List[(String, String, Option[String])] =
+  def sitesToType(
+      ds: DataSource,
+      limit: Int,
+      refresh: Boolean,
+      before: Option[Long]
+  ): List[(String, String, Option[String])] =
     connect(ds):
       (Sql.raw("SELECT p.id, upper(substr(p.id, 10)), p.properties->>'class' FROM places p WHERE ") ++
-        toTypeWhere(refresh, before) ++ Sql.of(" ORDER BY p.id LIMIT ?", Param.I(limit.max(0))))
-        .frag.query[(String, String, Option[String])].run().toList
+        toTypeWhere(refresh, before) ++ Sql.of(" ORDER BY p.id LIMIT ?", Param.I(limit.max(0)))).frag
+        .query[(String, String, Option[String])]
+        .run()
+        .toList
 
   def countSitesToType(ds: DataSource, refresh: Boolean, before: Option[Long]): Int =
     connect(ds):

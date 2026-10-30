@@ -20,11 +20,13 @@ class PlacesCmdSuite extends munit.FunSuite:
     assertEquals(
       PlacesCmd.seedFiles(root).map((f, k) => (root.relativize(f).toString, k)),
       List(
-        "01-natural-earth.json"           -> None,
-        "03-pleiades.json"                -> None,
-        "polities/eba.geojson"            -> Some("polity"),
-        "polities/lba.geojson"            -> Some("polity"),
-        "polities/macro_regions.geojson"  -> Some("polity")))
+        "01-natural-earth.json" -> None,
+        "03-pleiades.json" -> None,
+        "polities/eba.geojson" -> Some("polity"),
+        "polities/lba.geojson" -> Some("polity"),
+        "polities/macro_regions.geojson" -> Some("polity")
+      )
+    )
 
   test("the fallback kind comes from the directory name, singularised"):
     val root = Files.createTempDirectory("histmersion-places-kinds")
@@ -35,15 +37,15 @@ class PlacesCmdSuite extends munit.FunSuite:
       }
     assertEquals(
       PlacesCmd.seedFiles(root).map((f, k) => (f.getParent.getFileName.toString, k)).toMap,
-      Map("polities" -> Some("polity"), "sites" -> Some("site"), "regions" -> Some("region"),
-        "misc" -> None))
+      Map("polities" -> Some("polity"), "sites" -> Some("site"), "regions" -> Some("region"), "misc" -> None)
+    )
 
   test("an empty directory yields nothing (the caller turns that into a usage error)"):
     assertEquals(PlacesCmd.seedFiles(Files.createTempDirectory("histmersion-places-empty")), Nil)
 
   test("the curated supplement (CSV under supplement/) is build input, never imported as a seed file"):
     val root = tree()
-    val sup  = Files.createDirectories(root.resolve("supplement"))
+    val sup = Files.createDirectories(root.resolve("supplement"))
     List("names.csv", "places.csv").foreach(n => Files.writeString(sup.resolve(n), "id\n"))
     Files.writeString(root.resolve("05-curated.json"), "{}")
     val files = PlacesCmd.seedFiles(root).map((f, _) => root.relativize(f).toString)
@@ -63,9 +65,33 @@ class PlacesCmdSuite extends munit.FunSuite:
     assert(parses("places", "name", "list", "--place", "pleiades_678430", "--csv"))
     assert(!parses("places", "name", "add", "pleiades_678430"), "a name is required")
     assert(parses("places", "add", "Gornji Grad", "--lon", "15.98", "--lat", "45.81", "--source", "Wikidata Q1003020"))
-    assert(parses("places", "add", "Gornji Grad", "--kind", "region", "--lon", "15.98", "--lat", "45.81",
-      "--source", "a map", "--id", "local_gornji", "--name", "Gornij", "--name", "Gornji", "--lang", "hr",
-      "--from", "-1300", "--to", "-1100"))
+    assert(
+      parses(
+        "places",
+        "add",
+        "Gornji Grad",
+        "--kind",
+        "region",
+        "--lon",
+        "15.98",
+        "--lat",
+        "45.81",
+        "--source",
+        "a map",
+        "--id",
+        "local_gornji",
+        "--name",
+        "Gornij",
+        "--name",
+        "Gornji",
+        "--lang",
+        "hr",
+        "--from",
+        "-1300",
+        "--to",
+        "-1100"
+      )
+    )
     assert(!parses("places", "add", "Gornji Grad", "--lon", "15.98", "--lat", "45.81"), "--source is required")
     assert(!parses("places", "add", "Gornji Grad", "--source", "x"), "--lon/--lat are required")
 

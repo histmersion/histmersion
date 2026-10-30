@@ -7,19 +7,19 @@ import com.augustnagro.magnum.*
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
-/** `POST /api/sources/{ck}/rename` over real HTTP, with a write key configured: the write gate, the
-  * answer, and the old citekey still answering every read — the JSON routes, the resolver, the
-  * export, the article page's links, the MCP tool, and `/source/{old}` redirecting to the new URL.
-  * Skipped without HISTMERSION_TEST_DB_URL. */
+/** `POST /api/sources/{ck}/rename` over real HTTP, with a write key configured: the write gate, the answer, and the old
+  * citekey still answering every read — the JSON routes, the resolver, the export, the article page's links, the MCP
+  * tool, and `/source/{old}` redirecting to the new URL. Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class RenameHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private val Key   = "k3y"
-  private val Old   = "zzhttp2025_book"
-  private val New   = "zzhttp2011_book"
+  private val Key = "k3y"
+  private val Old = "zzhttp2025_book"
+  private val New = "zzhttp2011_book"
   private val Other = "zzhttpb2020_other"
-  private val Slug  = "zzhttp_article"
+  private val Slug = "zzhttp_article"
 
   // the JDK client does NOT follow redirects by default — which is what lets the 301 be asserted
   private val http = HttpClient.newHttpClient()
@@ -29,9 +29,13 @@ class RenameHttpSuite extends com.histmersion.db.DbSuite:
     key.fold(b)(k => b.header("Authorization", s"Bearer $k"))
   private def get(url: String) = send(req(url, None).build())
   private def json(method: String, url: String, body: String, key: Option[String] = Some(Key)) =
-    send(req(url, key).header("content-type", "application/json")
-      .header("accept", "application/json, text/event-stream")
-      .method(method, HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      req(url, key)
+        .header("content-type", "application/json")
+        .header("accept", "application/json, text/event-stream")
+        .method(method, HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
 
   private lazy val cfg =
     val base = AppConfig.load()
@@ -55,26 +59,49 @@ class RenameHttpSuite extends com.histmersion.db.DbSuite:
     }
 
   private def seed(url: String): Unit =
-    assertEquals(json("PUT", s"$url/api/sources/$Old",
-      s"""{"title":"The Ahhiyawa Texts","year":2011,"notes":"Self [[$Old]]."}""").statusCode, 200)
-    assertEquals(json("PUT", s"$url/api/sources/$Other",
-      s"""{"title":"Other","edges":[{"src":"$Other","dst":"$Old","kind":"references"}]}""").statusCode, 200)
-    assertEquals(json("PUT", s"$url/api/articles/$Slug",
-      s"""{"title":"Zz","kind":"concept","body":"# Zz\\n\\nSee [[$Old|the texts]]."}""").statusCode, 200)
+    assertEquals(
+      json(
+        "PUT",
+        s"$url/api/sources/$Old",
+        s"""{"title":"The Ahhiyawa Texts","year":2011,"notes":"Self [[$Old]]."}"""
+      ).statusCode,
+      200
+    )
+    assertEquals(
+      json(
+        "PUT",
+        s"$url/api/sources/$Other",
+        s"""{"title":"Other","edges":[{"src":"$Other","dst":"$Old","kind":"references"}]}"""
+      ).statusCode,
+      200
+    )
+    assertEquals(
+      json(
+        "PUT",
+        s"$url/api/articles/$Slug",
+        s"""{"title":"Zz","kind":"concept","body":"# Zz\\n\\nSee [[$Old|the texts]]."}"""
+      ).statusCode,
+      200
+    )
 
   test("the rename is a gated write, answers the renamed source with counts, and old ids keep resolving"):
     withServer { url =>
       seed(url)
       val renameUrl = s"$url/api/sources/$Old/rename"
-      val body      = s"""{"newCitekey":"$New"}"""
+      val body = s"""{"newCitekey":"$New"}"""
       assertEquals(json("POST", renameUrl, body, None).statusCode, 401)
       assertEquals(json("POST", renameUrl, body, Some("wrong")).statusCode, 401)
 
       val r = json("POST", renameUrl, body)
       assertEquals(r.statusCode, 200, r.body)
-      List(s""""oldCitekey":"$Old"""", s""""newCitekey":"$New"""", s""""citekey":"$New"""",
-        s""""articles":["$Slug"]""", s""""sources":["$New"]""",
-        "\"links\":3") // the article body, its summary (the lede, derived) and the source note
+      List(
+        s""""oldCitekey":"$Old"""",
+        s""""newCitekey":"$New"""",
+        s""""citekey":"$New"""",
+        s""""articles":["$Slug"]""",
+        s""""sources":["$New"]""",
+        "\"links\":3"
+      ) // the article body, its summary (the lede, derived) and the source note
         .foreach(s => assert(r.body.contains(s), s"missing $s in ${r.body}"))
 
       // JSON reads by the OLD citekey answer with the source under its NEW one
@@ -105,7 +132,10 @@ class RenameHttpSuite extends com.histmersion.db.DbSuite:
       val again = json("POST", renameUrl, s"""{"newCitekey":"zzhttp1999_book"}""")
       assertEquals(again.statusCode, 200, again.body)
       assert(again.body.contains(s""""oldCitekey":"$New"""") && again.body.contains("zzhttp1999_book"), again.body)
-      assertEquals(json("POST", s"$url/api/sources/zzhttp1999_book/rename", s"""{"newCitekey":"$New"}""").statusCode, 200)
+      assertEquals(
+        json("POST", s"$url/api/sources/zzhttp1999_book/rename", s"""{"newCitekey":"$New"}""").statusCode,
+        200
+      )
       val shadow = json("PUT", s"$url/api/sources/$Old", """{"title":"shadow"}""")
       assertEquals(shadow.statusCode, 200, shadow.body)
       assert(shadow.body.contains(s""""citekey":"$New"""") && shadow.body.contains("shadow"), shadow.body)

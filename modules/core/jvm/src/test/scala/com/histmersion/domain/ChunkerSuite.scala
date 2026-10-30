@@ -42,12 +42,15 @@ class ChunkerSuite extends munit.FunSuite:
          |later text
          |""".stripMargin
     val cs = Chunker.chunk(md, 1000)
-    assertEquals(cs.map(c => (c.heading, c.body)), List(
-      Some("Bronze Age")                            -> "intro text",
-      Some("Bronze Age > Collapse")                 -> "collapse text",
-      Some("Bronze Age > Collapse > Sea Peoples")   -> "raiders",
-      Some("Bronze Age > Aftermath")                -> "later text"
-    ))
+    assertEquals(
+      cs.map(c => (c.heading, c.body)),
+      List(
+        Some("Bronze Age") -> "intro text",
+        Some("Bronze Age > Collapse") -> "collapse text",
+        Some("Bronze Age > Collapse > Sea Peoples") -> "raiders",
+        Some("Bronze Age > Aftermath") -> "later text"
+      )
+    )
 
   test("text before the first heading has no heading; heading lines are not part of the body"):
     val cs = Chunker.chunk("preamble\n\n# Title\n\nbody", 1000)
@@ -60,15 +63,15 @@ class ChunkerSuite extends munit.FunSuite:
 
   test("long sections split on paragraph boundaries, never exceeding maxChars"):
     val para = "x" * 90
-    val md   = "# H\n\n" + List.fill(6)(para).mkString("\n\n")
-    val cs   = Chunker.chunk(md, 200)
+    val md = "# H\n\n" + List.fill(6)(para).mkString("\n\n")
+    val cs = Chunker.chunk(md, 200)
     assert(cs.forall(_.body.length <= 200), cs.map(_.body.length))
     assert(cs.forall(_.heading.contains("H")))
     assertEquals(cs.flatMap(_.body.split("\n\n").toList).size, 6) // no paragraph lost
 
   test("a single huge paragraph is split at whitespace — never mid-word"):
     val words = (1 to 500).map(i => s"word$i").mkString(" ")
-    val cs    = Chunker.chunk(words, 200)
+    val cs = Chunker.chunk(words, 200)
     assert(cs.size > 1)
     assert(cs.forall(_.body.length <= 200), cs.map(_.body.length))
     cs.foreach(c => assert(c.body.split(" ").forall(_.matches("""word\d+""")), c.body))
@@ -91,7 +94,7 @@ class ChunkerSuite extends munit.FunSuite:
 
   test("a 5 MB body chunks into bounded pieces (the tsvector 1 MB limit is per row)"):
     val body = ("lorem ipsum dolor sit amet " * 200_000).trim // ~5.4 MB
-    val cs   = Chunker.chunk(body, 4000)
+    val cs = Chunker.chunk(body, 4000)
     assert(cs.size > 1000, cs.size)
     assert(cs.forall(_.body.length <= 4000))
     assertEquals(cs.map(_.ord), cs.indices.toList)

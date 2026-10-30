@@ -5,12 +5,17 @@ import com.histmersion.domain.maptiles.UndatedCells
 
 import java.util.concurrent.atomic.AtomicReference
 
-/** The undated sites of a tile, over sites held in memory: counted by squares, the counts adding up to every
-  * site, and listed one by one but those the span already shows. */
+/** The undated sites of a tile, over sites held in memory: counted by squares, the counts adding up to every site, and
+  * listed one by one but those the span already shows.
+  */
 class UndatedSitesSuite extends munit.FunSuite:
   private val grid = TileGrid.of(maxZoom = 11, maxPoints = 600, cellPx = 32)
-  private val sites = (0 until 30).flatMap(i => (0 until 30).map(j =>
-    UndatedSite(f"u$i%02d$j%02d", 37.0 + i * 0.01, 22.0 + j * 0.01, Option.when(i % 2 == 0)("tower")))).toList
+  private val sites = (0 until 30)
+    .flatMap(i =>
+      (0 until 30)
+        .map(j => UndatedSite(f"u$i%02d$j%02d", 37.0 + i * 0.01, 22.0 + j * 0.01, Option.when(i % 2 == 0)("tower")))
+    )
+    .toList
   private val service = UndatedSites.InMemory(AtomicReference(sites))
 
   private def tileAt(z: Int, lat: Double, lon: Double): TileCoord =
@@ -22,7 +27,9 @@ class UndatedSitesSuite extends munit.FunSuite:
     val counted = service.counted(c, grid, None)
     assertEquals(counted.map(_.n).sum, 900)
     assertEquals(service.counted(c, grid, Some("tower")).map(_.n).sum, 450)
-    assert(counted.forall(g => g.gx / UndatedSites.perSideOf(grid) == c.x && g.gy / UndatedSites.perSideOf(grid) == c.y))
+    assert(
+      counted.forall(g => g.gx / UndatedSites.perSideOf(grid) == c.x && g.gy / UndatedSites.perSideOf(grid) == c.y)
+    )
 
   test("merged with no dated site, a crowded tile's cells all say how many have no known date"):
     val c = tileAt(6, 37.1, 22.1)

@@ -15,7 +15,8 @@ final case class UnreadRow(
     status: Option[String] = None,
     periodStart: Option[Long] = None,
     periodEnd: Option[Long] = None
-) derives KindlingsCodecAsObject, KindlingsSchema
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 object UnreadRow:
   given Schema[UnreadRow] = summon[KindlingsSchema[UnreadRow]].schema

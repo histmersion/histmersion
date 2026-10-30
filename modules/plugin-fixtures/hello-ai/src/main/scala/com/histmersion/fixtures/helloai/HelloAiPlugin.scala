@@ -4,19 +4,20 @@ import com.histmersion.plugin.*
 import com.histmersion.plugin.PluginConfig.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
-/** A TEST FIXTURE, not a product: the smallest third-party AI provider, compiled against plugin-api alone
-  * and packaged as its own jar (docs/research-plugins.md §22–§23). It calls no model and opens no socket:
-  * its answers are SCRIPTED in its config, so the suites can run a real pipeline through the host's tool
-  * loop with it.
+/** A TEST FIXTURE, not a product: the smallest third-party AI provider, compiled against plugin-api alone and packaged
+  * as its own jar (docs/research-plugins.md §22–§23). It calls no model and opens no socket: its answers are SCRIPTED
+  * in its config, so the suites can run a real pipeline through the host's tool loop with it.
   *
-  * Each turn answers with the first reply whose `when` occurs in the step's answer schema. A reply with a
-  * `tool` calls that tool once first (when the step offers it), then answers. The model `limited` reports
-  * its plan's usage limit, so a chain can be seen to move on. */
+  * Each turn answers with the first reply whose `when` occurs in the step's answer schema. A reply with a `tool` calls
+  * that tool once first (when the step offers it), then answers. The model `limited` reports its plan's usage limit, so
+  * a chain can be seen to move on.
+  */
 final case class Reply(when: String, text: String, tool: Option[String] = None, input: Option[String] = None)
     derives ConfigReader
 
-/** `name`: the provider name it registers (`hello-ai`); `token`: an optional secret it is given (a
-  * reference, resolved by the host — the provider only learns whether it got one). */
+/** `name`: the provider name it registers (`hello-ai`); `token`: an optional secret it is given (a reference, resolved
+  * by the host — the provider only learns whether it got one).
+  */
 final case class HelloAiConfig(name: String, token: Option[Secret], replies: List[Reply]) derives ConfigReader
 
 final class HelloAiPlugin extends Plugin:
@@ -40,8 +41,10 @@ final class HelloAiProvider(replies: List[Reply], hasToken: Boolean) extends AiP
   override def models(http: AiHttp): Either[String, List[String]] = Right(List("echo", "limited"))
 
   override def doctor(online: Boolean, http: AiHttp): List[AiCheck] =
-    List(AiCheck("script", if replies.isEmpty then "warn" else "ok", s"${replies.size} scripted repl(ies)"),
-      AiCheck("token", "ok", if hasToken then "given (never shown)" else "none asked"))
+    List(
+      AiCheck("script", if replies.isEmpty then "warn" else "ok", s"${replies.size} scripted repl(ies)"),
+      AiCheck("token", "ok", if hasToken then "given (never shown)" else "none asked")
+    )
 
   def turn(request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn] =
     val usage = Some(AiUsage(input = 100, output = 20))
@@ -49,11 +52,18 @@ final class HelloAiProvider(replies: List[Reply], hasToken: Boolean) extends AiP
     else
       val schema = request.answerSchema.getOrElse("")
       replies.find(r => schema.contains(r.when)) match
-        case None => Left(AiFailure.Error(s"no scripted reply for this step (${replies.size} repl(ies))"))
+        case None    => Left(AiFailure.Error(s"no scripted reply for this step (${replies.size} repl(ies))"))
         case Some(r) =>
           val answered = request.messages.exists(_.isInstanceOf[AiMessage.ToolResult])
           r.tool.filter(t => !answered && request.tools.exists(_.name == t)) match
             case Some(t) =>
-              Right(AiTurn("", List(AiToolCall("hello-1", t, r.input.getOrElse("{}"))), AiStop.ToolUse, usage,
-                Some(s"${request.model}-scripted")))
+              Right(
+                AiTurn(
+                  "",
+                  List(AiToolCall("hello-1", t, r.input.getOrElse("{}"))),
+                  AiStop.ToolUse,
+                  usage,
+                  Some(s"${request.model}-scripted")
+                )
+              )
             case None => Right(AiTurn(r.text, Nil, AiStop.EndTurn, usage, Some(s"${request.model}-scripted")))

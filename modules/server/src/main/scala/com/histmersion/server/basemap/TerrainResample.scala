@@ -3,14 +3,14 @@ package com.histmersion.server.basemap
 import java.io.ByteArrayOutputStream
 import java.util.zip.{CRC32, Deflater, Inflater}
 
-/** The relief deeper than any tile the server holds (docs/research-map-styles.md §4.4): a relief tile of
-  * zoom `z` that neither the extract, a focus region nor the on-demand relief has is cut from its
-  * nearest ancestor that exists and resampled — bilinearly, IN METRES (resampling terrarium's bytes
-  * would mix the high and the low byte) — and answered as a terrarium PNG. So the map's one elevation
-  * source reaches the deepest zoom kept anywhere (a focus region's), and the relief is shaded once
-  * everywhere: two overlapping elevation sources would shade a focus region twice.
+/** The relief deeper than any tile the server holds (docs/research-map-styles.md §4.4): a relief tile of zoom `z` that
+  * neither the extract, a focus region nor the on-demand relief has is cut from its nearest ancestor that exists and
+  * resampled — bilinearly, IN METRES (resampling terrarium's bytes would mix the high and the low byte) — and answered
+  * as a terrarium PNG. So the map's one elevation source reaches the deepest zoom kept anywhere (a focus region's), and
+  * the relief is shaded once everywhere: two overlapping elevation sources would shade a focus region twice.
   *
-  * Pure: pixels and bytes in, pixels and bytes out. */
+  * Pure: pixels and bytes in, pixels and bytes out.
+  */
 object TerrainResample:
 
   /** Terrarium's elevation of a pixel `0x??RRGGBB`, in metres. Pure. */
@@ -25,8 +25,9 @@ object TerrainResample:
     val b = math.min(255, math.floor((v - whole) * 256).toInt)
     0xff000000 | r << 16 | g << 8 | b
 
-  /** The part of an ancestor tile (`src`, `n` × `n` pixels) that tile `(ox, oy)` of the `2^dz` × `2^dz`
-    * under it covers, resampled to `n` × `n` pixels bilinearly in metres; terrarium pixels out. Pure. */
+  /** The part of an ancestor tile (`src`, `n` × `n` pixels) that tile `(ox, oy)` of the `2^dz` × `2^dz` under it
+    * covers, resampled to `n` × `n` pixels bilinearly in metres; terrarium pixels out. Pure.
+    */
   def resample(src: Array[Int], n: Int, dz: Int, ox: Long, oy: Long): Array[Int] =
     val s = 1L << dz
     val step = 1.0 / s
@@ -73,7 +74,7 @@ object Png:
     var y = 0
     while y < h do
       val row = y * (1 + 3 * w)
-      raw(row) = 1   // filter: Sub
+      raw(row) = 1 // filter: Sub
       var x = 0
       var pr, pg, pb = 0
       while x < w do
@@ -99,8 +100,16 @@ object Png:
     d.end()
     val out = ByteArrayOutputStream(z.size() + 64)
     out.write(Signature)
-    val ihdr = java.nio.ByteBuffer.allocate(13).putInt(w).putInt(h).put(8.toByte).put(2.toByte).put(0.toByte).put(0.toByte)
-      .put(0.toByte).array()
+    val ihdr = java.nio.ByteBuffer
+      .allocate(13)
+      .putInt(w)
+      .putInt(h)
+      .put(8.toByte)
+      .put(2.toByte)
+      .put(0.toByte)
+      .put(0.toByte)
+      .put(0.toByte)
+      .array()
     chunk(out, "IHDR", ihdr)
     chunk(out, "IDAT", z.toByteArray)
     chunk(out, "IEND", Array.emptyByteArray)
@@ -132,7 +141,8 @@ object Png:
         else
           t match
             case "IHDR" =>
-              w = be32(i + 8); h = be32(i + 12); depth = b(i + 16) & 0xff; colour = b(i + 17) & 0xff; interlace = b(i + 20) & 0xff
+              w = be32(i + 8); h = be32(i + 12); depth = b(i + 16) & 0xff; colour = b(i + 17) & 0xff;
+              interlace = b(i + 20) & 0xff
             case "IDAT" => idat.write(b, i + 8, n)
             case "IEND" => done = true
             case _      => ()
@@ -141,14 +151,16 @@ object Png:
         case 2 => 3
         case 6 => 4
         case _ => 0
-      if w <= 0 || h <= 0 || depth != 8 || bpp == 0 || interlace != 0 then Left("only 8-bit RGB(A) non-interlaced PNGs are read")
+      if w <= 0 || h <= 0 || depth != 8 || bpp == 0 || interlace != 0 then
+        Left("only 8-bit RGB(A) non-interlaced PNGs are read")
       else
         val stride = w * bpp
         val raw = new Array[Byte](h * (stride + 1))
         val inf = Inflater()
         inf.setInput(idat.toByteArray)
         var got = 0
-        while got < raw.length && !inf.finished() && !inf.needsInput() && !inf.needsDictionary() do got += inf.inflate(raw, got, raw.length - got)
+        while got < raw.length && !inf.finished() && !inf.needsInput() && !inf.needsDictionary() do
+          got += inf.inflate(raw, got, raw.length - got)
         inf.end()
         if got < raw.length then Left("truncated PNG data")
         else
@@ -173,7 +185,8 @@ object Png:
                   val p = a + up - c
                   val pa = math.abs(p - a); val pb = math.abs(p - up); val pc = math.abs(p - c)
                   v + (if pa <= pb && pa <= pc then a else if pb <= pc then up else c)
-                case _ => v) & 0xff
+                case _ => v
+              ) & 0xff
               x += 1
             var k = 0
             while k < w do

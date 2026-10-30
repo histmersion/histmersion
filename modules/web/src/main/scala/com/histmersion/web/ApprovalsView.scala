@@ -7,12 +7,13 @@ import com.histmersion.api.ListFilters
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-/** The approvals window (docs/research-embedded-agents.md §5.2): changes agent runs PROPOSED — a
-  * source's status, a disagreement edge — each with its evidence and the quote code verified, and
-  * approve / reject behind the write gate. Approving applies the change through the ordinary source
-  * patch. Reloaded when the window opens, after a decision, and when a run it watches settles
-  * ([[changed]]); there is nothing to poll for otherwise. A page at a time ([[ListPaging]]): a reload
-  * after a decision or a settled run keeps the pages loaded; the toggle and "refresh" start over. */
+/** The approvals window (docs/research-embedded-agents.md §5.2): changes agent runs PROPOSED — a source's status, a
+  * disagreement edge — each with its evidence and the quote code verified, and approve / reject behind the write gate.
+  * Approving applies the change through the ordinary source patch. Reloaded when the window opens, after a decision,
+  * and when a run it watches settles ([[changed]]); there is nothing to poll for otherwise. A page at a time
+  * ([[ListPaging]]): a reload after a decision or a settled run keeps the pages loaded; the toggle and "refresh" start
+  * over.
+  */
 object ApprovalsView:
 
   /** How many a page lists. */
@@ -23,38 +24,50 @@ object ApprovalsView:
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
-  /** What approving each kind does, and where it sits in a goal's life (goal-plan → article-plan →
-    * compile-article's article-publish → review); a tooltip on the kind wherever it is shown. */
+  /** What approving each kind does, and where it sits in a goal's life (goal-plan → article-plan → compile-article's
+    * article-publish → review); a tooltip on the kind wherever it is shown.
+    */
   def kindMeaning(kind: String): Option[String] = ApprovalKind.parse(kind).map {
-    case ApprovalKind.GoalPlan => "A research goal's plan: its sub-goals, search queries and works to read. " +
+    case ApprovalKind.GoalPlan =>
+      "A research goal's plan: its sub-goals, search queries and works to read. " +
         "Approving creates them; that unblocks proposing the goal's articles."
-    case ApprovalKind.ArticlePlan => "Which new articles a goal needs (propose-articles). " +
+    case ApprovalKind.ArticlePlan =>
+      "Which new articles a goal needs (propose-articles). " +
         "Approving unblocks its seeding manager to write drafts of them."
-    case ApprovalKind.ArticlePublish => "Makes the draft an agent wrote (compile-article) readable as an article, " +
+    case ApprovalKind.ArticlePublish =>
+      "Makes the draft an agent wrote (compile-article) readable as an article, " +
         "not yet reviewed (or appends its section). Approving unblocks its review."
-    case ApprovalKind.ArticleFilter => "An article's coverage filter: which sources it should account for. " +
+    case ApprovalKind.ArticleFilter =>
+      "An article's coverage filter: which sources it should account for. " +
         "Approving records it on the article; its review waits for this decision."
     case ApprovalKind.StatusChange => "A source's status (current, contested, superseded…). Approving changes it."
-    case ApprovalKind.Edge => "A typed link between two sources (challenges, refutes, superseded by…). Approving adds it."
-    case ApprovalKind.HintEffect => "An action for a manager (hold, prioritise, skip, a setting) a model proposed " +
+    case ApprovalKind.Edge         =>
+      "A typed link between two sources (challenges, refutes, superseded by…). Approving adds it."
+    case ApprovalKind.HintEffect =>
+      "An action for a manager (hold, prioritise, skip, a setting) a model proposed " +
         "from your hint. Applied only if you approve it."
   }
 
   /** What each state the filter buttons offer means; a tooltip on the button. */
   def stateMeaning(state: String): Option[String] =
     if state == "all" then Some("Every approval, whatever its state.")
-    else ApprovalState.parse(state).map {
-      case ApprovalState.Open     => "Waiting for a decision: approve it to apply the change, or reject it."
-      case ApprovalState.Approved => "Approved, and the change applied."
-      case ApprovalState.Rejected => "Rejected: kept on record, and nothing changed."
-      case ApprovalState.Failed   => "Approved, but applying it failed (its subject had changed or was gone); the reason is on its row."
-    }
+    else
+      ApprovalState.parse(state).map {
+        case ApprovalState.Open     => "Waiting for a decision: approve it to apply the change, or reject it."
+        case ApprovalState.Approved => "Approved, and the change applied."
+        case ApprovalState.Rejected => "Rejected: kept on record, and nothing changed."
+        case ApprovalState.Failed   =>
+          "Approved, but applying it failed (its subject had changed or was gone); the reason is on its row."
+      }
 
   /** Who decided an approval, in a sentence; a tooltip on the "decided by" chips. */
   def decidedByMeaning(by: String): Option[String] = ListFilters.DecidedBy.parse(by).map {
-    case ListFilters.DecidedBy.Person    => "Decided by a person: every decision that is not the autopilot's or an automatic one."
-    case ListFilters.DecidedBy.Autopilot => "Decided by the autopilot's code checks, within the day's cap, with no person involved."
-    case ListFilters.DecidedBy.Auto      => "Applied the moment it was proposed: its kind is set to be approved automatically."
+    case ListFilters.DecidedBy.Person =>
+      "Decided by a person: every decision that is not the autopilot's or an automatic one."
+    case ListFilters.DecidedBy.Autopilot =>
+      "Decided by the autopilot's code checks, within the day's cap, with no person involved."
+    case ListFilters.DecidedBy.Auto =>
+      "Applied the moment it was proposed: its kind is set to be approved automatically."
   }
 
   /** What an approval would change, in words. */
@@ -70,7 +83,8 @@ object ApprovalsView:
           s"${Plural.count(p.fold(0)(_.queries.size), "query", "queries")}, ${Plural.count(p.fold(0)(_.works.size), "work")}"
       case Some(ApprovalKind.ArticlePublish) =>
         a.article match
-          case Some(d) if d.mode == GoalPlans.DraftMode.Create => s"publish the new article ${a.subject.getOrElse("?")}: ${d.title}"
+          case Some(d) if d.mode == GoalPlans.DraftMode.Create =>
+            s"publish the new article ${a.subject.getOrElse("?")}: ${d.title}"
           case _ => s"append a section to the article ${a.subject.getOrElse("?")}"
       case Some(ApprovalKind.ArticleFilter) =>
         s"record the coverage filter of ${a.subject.getOrElse("?")}: ${a.filter.fold("?")(_.filter.line)}"
@@ -82,8 +96,9 @@ object ApprovalsView:
 
   def isOpen(a: ApprovalInfo): Boolean = a.state == ApprovalState.Open.wire
 
-  /** The evidence line under the change — unless the plan block shows it: a plan's evidence IS its
-    * rationale, which [[planBlock]] prints at its top (#882: it used to appear twice). */
+  /** The evidence line under the change — unless the plan block shows it: a plan's evidence IS its rationale, which
+    * [[planBlock]] prints at its top (#882: it used to appear twice).
+    */
   def evidenceLine(a: ApprovalInfo): Option[String] =
     Option(a.evidence).filter(_.nonEmpty).filterNot(e => a.plan.exists(_.rationale == e))
 
@@ -97,16 +112,26 @@ object ApprovalsView:
   def shownState(field: Option[String]): String = field.getOrElse(ApprovalState.Open.wire)
 
   /** The query the window sends, from its filter fields. Pure. */
-  def filterOf(state: Option[String], kinds: List[String], by: List[String], subject: Option[String]): ListFilters.ApprovalFilter =
+  def filterOf(
+      state: Option[String],
+      kinds: List[String],
+      by: List[String],
+      subject: Option[String]
+  ): ListFilters.ApprovalFilter =
     ListFilters.ApprovalFilter(state = state, kind = kinds, subject = subject, decidedBy = by)
 
   /** The filter in the window's fields now. */
   def currentFilter(): ListFilters.ApprovalFilter =
-    filterOf(UiState.approvalState.now(), UiState.approvalKinds.now(), UiState.approvalBy.now(), UiState.approvalSubject.now())
+    filterOf(
+      UiState.approvalState.now(),
+      UiState.approvalKinds.now(),
+      UiState.approvalBy.now(),
+      UiState.approvalSubject.now()
+    )
 
-  /** The rows a filter shows, from the rows already loaded — what the list shows the moment a state or
-    * a kind is picked, before the server's page replaces it. (The text and the decider are left to the
-    * server.) */
+  /** The rows a filter shows, from the rows already loaded — what the list shows the moment a state or a kind is
+    * picked, before the server's page replaces it. (The text and the decider are left to the server.)
+    */
   def visible(as: List[ApprovalInfo], f: ListFilters.ApprovalFilter): List[ApprovalInfo] =
     val n = f.normalized
     val state = shownState(n.state)
@@ -121,7 +146,12 @@ object ApprovalsView:
 
   /** What the confirmation of a bulk decision asks. */
   def confirmText(d: Decision, as: List[ApprovalInfo]): String =
-    val kinds = as.groupMapReduce(_.kind)(_ => 1)(_ + _).toList.sortBy(-_._2).map((k, n) => s"$n ${kindLabel(k).toLowerCase}").mkString(", ")
+    val kinds = as
+      .groupMapReduce(_.kind)(_ => 1)(_ + _)
+      .toList
+      .sortBy(-_._2)
+      .map((k, n) => s"$n ${kindLabel(k).toLowerCase}")
+      .mkString(", ")
     s"${if d == Decision.Approve then "Approve" else "Reject"} ${Plural.count(as.size, "approval")} ($kinds)? " +
       "Each is decided as if its own button were pressed, one after another, with the same checks."
 
@@ -135,31 +165,60 @@ object ApprovalsView:
 
   /** A plan, as a person weighs it: sub-goals, queries, works (in the corpus or to acquire), dropped. */
   private[web] def planBlock(plan: GoalPlans.Plan): HtmlElement =
-    div(cls := "approval-plan",
+    div(
+      cls := "approval-plan",
       Option(plan.rationale).filter(_.nonEmpty).map(r => p(cls := "approval-evidence", r)),
-      Option.when(plan.subGoals.nonEmpty)(div(h5("Sub-goals"), ul(plan.subGoals.map(g =>
-        li(code(g.slug), s" — ${g.title}", g.notes.map(n => span(cls := "muted", s": $n"))))))),
+      Option.when(plan.subGoals.nonEmpty)(
+        div(
+          h5("Sub-goals"),
+          ul(
+            plan.subGoals.map(g => li(code(g.slug), s" — ${g.title}", g.notes.map(n => span(cls := "muted", s": $n"))))
+          )
+        )
+      ),
       Option.when(plan.queries.nonEmpty)(div(h5("Search queries"), ul(plan.queries.map(q => li(q))))),
-      Option.when(plan.works.nonEmpty)(div(h5("Works"), ul(plan.works.map { w =>
-        li(w.title.getOrElse(w.doi), s" (${w.year.fold("n.d.")(_.toString)}) ",
-          a(href := s"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi),
-          if w.inCorpus then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
-          else span(cls := "muted", if w.isOa then " — to acquire (open access)" else " — to acquire"),
-          Option(w.why).filter(_.nonEmpty).map(y => div(cls := "muted", y)))
-      }))),
-      Option.when(plan.dropped.nonEmpty)(htmlTag("details")(htmlTag("summary")(s"dropped by code (${plan.dropped.size})"),
-        ul(plan.dropped.map(d => li(cls := "muted", d))))))
+      Option.when(plan.works.nonEmpty)(
+        div(
+          h5("Works"),
+          ul(plan.works.map { w =>
+            li(
+              w.title.getOrElse(w.doi),
+              s" (${w.year.fold("n.d.")(_.toString)}) ",
+              a(href := s"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi),
+              if w.inCorpus then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
+              else span(cls := "muted", if w.isOa then " — to acquire (open access)" else " — to acquire"),
+              Option(w.why).filter(_.nonEmpty).map(y => div(cls := "muted", y))
+            )
+          })
+        )
+      ),
+      Option.when(plan.dropped.nonEmpty)(
+        htmlTag("details")(
+          htmlTag("summary")(s"dropped by code (${plan.dropped.size})"),
+          ul(plan.dropped.map(d => li(cls := "muted", d)))
+        )
+      )
+    )
 
   /** A draft: its self-check, what it cites and leaves out, and the text itself. */
   private[web] def draftBlock(d: GoalPlans.ArticleDraft): HtmlElement =
-    div(cls := "approval-draft",
-      p(cls := "muted", s"${d.kind} · \"${d.title}\"" + d.section.fold("")(s => s" · under $s") +
-        s" · cites ${Plural.count(d.cited.size, "source")} · ${d.filter}"),
+    div(
+      cls := "approval-draft",
+      p(
+        cls := "muted",
+        s"${d.kind} · \"${d.title}\"" + d.section.fold("")(s => s" · under $s") +
+          s" · cites ${Plural.count(d.cited.size, "source")} · ${d.filter}"
+      ),
       p(cls := (if d.problems.isEmpty then "form-ok" else "run-paused"), selfCheck(d)),
       Option.when(d.problems.nonEmpty)(ul(d.problems.map(x => li(x)))),
-      Option.when(d.notUsed.nonEmpty)(htmlTag("details")(htmlTag("summary")(s"not used (${d.notUsed.size})"),
-        ul(d.notUsed.map(n => li(cls := "muted", n))))),
-      htmlTag("details")(htmlTag("summary")("the text"), pre(cls := "trace-body draft-text", d.text)))
+      Option.when(d.notUsed.nonEmpty)(
+        htmlTag("details")(
+          htmlTag("summary")(s"not used (${d.notUsed.size})"),
+          ul(d.notUsed.map(n => li(cls := "muted", n)))
+        )
+      ),
+      htmlTag("details")(htmlTag("summary")("the text"), pre(cls := "trace-body draft-text", d.text))
+    )
 
   // ── state and view ──────────────────────────────────────────────────────────────────────────────
 
@@ -169,17 +228,22 @@ object ApprovalsView:
 
   /** The filter, as a signal: a change restarts the list from the newest page. */
   private val filterSignal: Signal[ListFilters.ApprovalFilter] =
-    UiState.approvalState.signal.combineWith(UiState.approvalKinds.signal, UiState.approvalBy.signal,
-      UiState.approvalSubject.signal).map(filterOf).distinct
+    UiState.approvalState.signal
+      .combineWith(UiState.approvalKinds.signal, UiState.approvalBy.signal, UiState.approvalSubject.signal)
+      .map(filterOf)
+      .distinct
 
-  /** The rows and "Show older" ([[PolledList]]): nothing is polled — a decision, a settled run
-    * ([[changed]]) or a filter reloads — but the window gets the same restart when the last row shown
-    * is gone, and drops an answer that lands after it closed. */
+  /** The rows and "Show older" ([[PolledList]]): nothing is polled — a decision, a settled run ([[changed]]) or a
+    * filter reloads — but the window gets the same restart when the last row shown is gone, and drops an answer that
+    * lands after it closed.
+    */
   private val list = PolledList[ApprovalInfo](
     fetch = (upTo, before) => ApiClient.approvals(currentFilter(), Some(Limit), upTo = upTo, before = before),
     id = key,
-    live = (_, _) => false)
-  private val busy     = Var(Set.empty[Long])
+    live = (_, _) => false
+  )
+  private val busy = Var(Set.empty[Long])
+
   /** The open approvals ticked for a bulk decision. */
   private val selected = Var(Set.empty[Long])
   private val bulkBusy = Var(false)
@@ -199,27 +263,34 @@ object ApprovalsView:
       Notices.ownWrite(com.histmersion.api.UiNotices.Board.Approvals)
     }
 
-  /** A bulk decision, after the person confirmed it: one request per approval, ONE AFTER ANOTHER,
-    * each through the very endpoint (and checks) of its own button — an approval decided meanwhile
-    * is refused (409) and the rest go on; the refusals are reported together. */
+  /** A bulk decision, after the person confirmed it: one request per approval, ONE AFTER ANOTHER, each through the very
+    * endpoint (and checks) of its own button — an approval decided meanwhile is refused (409) and the rest go on; the
+    * refusals are reported together.
+    */
   private def decideAll(as: List[ApprovalInfo], d: Decision): Unit =
     bulkBusy.set(true)
     busy.update(_ ++ as.map(_.id))
     val done = as.foldLeft(scala.concurrent.Future.successful(List.empty[String])) { (acc, a) =>
-      acc.flatMap(errs => ApiClient.decide(a.id, d, None).transform(r =>
-        scala.util.Success(r.failed.toOption.fold(errs)(e => errs :+ s"#${a.id}: ${e.getMessage}"))))
+      acc.flatMap(errs =>
+        ApiClient
+          .decide(a.id, d, None)
+          .transform(r => scala.util.Success(r.failed.toOption.fold(errs)(e => errs :+ s"#${a.id}: ${e.getMessage}")))
+      )
     }
     done.foreach { errs =>
       bulkBusy.set(false)
       busy.update(_ -- as.map(_.id))
       selected.set(Set.empty)
-      list.failure.set(Option.when(errs.nonEmpty)(s"${Plural.count(errs.size, "approval")} not decided: ${errs.mkString("; ")}"))
+      list.failure.set(
+        Option.when(errs.nonEmpty)(s"${Plural.count(errs.size, "approval")} not decided: ${errs.mkString("; ")}")
+      )
       refresh()
       Notices.ownWrite(com.histmersion.api.UiNotices.Board.Approvals)
     }
 
-  /** The listing with the rows the filter shows — at once, from the rows loaded; the server's page
-    * replaces them a moment later. */
+  /** The listing with the rows the filter shows — at once, from the rows loaded; the server's page replaces them a
+    * moment later.
+    */
   private def shownSignal: Signal[(ListPaging.Listing[ApprovalInfo], ListFilters.ApprovalFilter)] =
     list.listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), f))
 
@@ -243,7 +314,9 @@ object ApprovalsView:
           stateMeaning(s).map(m => title := m),
           aria.pressed <-- UiState.approvalState.signal.map(v => (shownState(v) == s).toString),
           span(stateLabel(s)),
-          child.text <-- list.listing.signal.map(l => { val n = count(l, s); if n > 0 then s" ${Paging.grouped(n)}" else "" }),
+          child.text <-- list.listing.signal.map { l =>
+            val n = count(l, s); if n > 0 then s" ${Paging.grouped(n)}" else ""
+          },
           onClick --> (_ => UiState.set(UiState.approvalState := stateValue(s))())
         )
       }
@@ -255,19 +328,31 @@ object ApprovalsView:
     div(
       cls := "btn-group approvals-bulk",
       cls("is-hidden") <-- openShown.combineWith(Auth.writable).map((o, w) => o.isEmpty || !w),
-      button(typ := "button", cls := "btn btn--sm", disabled <-- bulkBusy.signal,
+      button(
+        typ := "button",
+        cls := "btn btn--sm",
+        disabled <-- bulkBusy.signal,
         child.text <-- openShown.map(o => s"select all ${o.size} shown"),
-        onClick(_.sample(openShown)) --> (o => selected.set(o.map(_.id).toSet))),
-      button(typ := "button", cls := "btn btn--sm btn--ghost", disabled <-- targets.map(_.isEmpty), "unselect",
-        onClick --> (_ => selected.set(Set.empty))),
+        onClick(_.sample(openShown)) --> (o => selected.set(o.map(_.id).toSet))
+      ),
+      button(
+        typ := "button",
+        cls := "btn btn--sm btn--ghost",
+        disabled <-- targets.map(_.isEmpty),
+        "unselect",
+        onClick --> (_ => selected.set(Set.empty))
+      ),
       List(Decision.Approve, Decision.Reject).map { d =>
-        button(typ := "button", cls := (if d == Decision.Approve then "btn btn--sm btn--primary" else "btn btn--sm"),
+        button(
+          typ := "button",
+          cls := (if d == Decision.Approve then "btn btn--sm btn--primary" else "btn btn--sm"),
           dataAttr("bulk") := d.wire,
           disabled <-- targets.combineWith(bulkBusy.signal).map((t, b) => t.isEmpty || b),
           child.text <-- targets.map(t => s"${Wording.capitalize(d.wire)} selected (${t.size})"),
           onClick(_.sample(targets)) --> { t =>
             if t.nonEmpty && org.scalajs.dom.window.confirm(confirmText(d, t)) then decideAll(t, d)
-          })
+          }
+        )
       }
     )
 
@@ -275,29 +360,47 @@ object ApprovalsView:
   def digestLine(g: com.histmersion.api.ApprovalDigest.KindGroup): String =
     s"${kindLabel(g.kind)} ${Paging.grouped(g.count)}" + g.oldest.fold("")(o => s" (oldest $o)") +
       (g.decidedBy match
-        case "checked"                                    => " · the autopilot's checks decide them within the day's cap"
-        case com.histmersion.api.ApprovalDigest.Waits     => " · waiting: nobody needs to decide them now"
-        case _                                            => " · a person decides")
+        case "checked"                                => " · the autopilot's checks decide them within the day's cap"
+        case com.histmersion.api.ApprovalDigest.Waits => " · waiting: nobody needs to decide them now"
+        case _                                        => " · a person decides")
 
-  /** The digest (#3762 proposal 3): everything waiting for a person, by kind — a click shows one kind in the
-    * list below (its kind filter), where the bulk bar decides them all at once. */
+  /** The digest (#3762 proposal 3): everything waiting for a person, by kind — a click shows one kind in the list below
+    * (its kind filter), where the bulk bar decides them all at once.
+    */
   private def digestBar: HtmlElement =
     val d = Var(Option.empty[com.histmersion.api.ApprovalDigest.Digest])
     def load(): Unit = ApiClient.approvalDigest.onComplete(_.toOption.foreach(x => d.set(Some(x))))
-    div(cls := "approvals-digest",
+    div(
+      cls := "approvals-digest",
       onMountCallback(_ => load()),
       changed.events --> (_ => load()),
       child.maybe <-- d.signal.map(_.filter(x => x.total > 0 || x.heldForPerson > 0).map { x =>
         div(
-          p(cls := "muted", s"Waiting for a person: ${Plural.count(x.total, "approval")}" +
-            (if x.heldForPerson > 0 then s", ${Plural.count(x.heldForPerson, "manager item")} held for a person" else "") +
-            " — pick a kind, then decide the shown ones at once."),
+          p(
+            cls := "muted",
+            s"Waiting for a person: ${Plural.count(x.total, "approval")}" +
+              (if x.heldForPerson > 0 then s", ${Plural.count(x.heldForPerson, "manager item")} held for a person"
+               else "") +
+              " — pick a kind, then decide the shown ones at once."
+          ),
           x.goalPlansWait.map(w => p(cls := "muted", s"${w.capitalize}; a person may still approve one.")),
-          div(cls := "btn-group", x.kinds.map(g =>
-            button(typ := "button", cls := "btn btn--sm", digestLine(g),
-              title := (kindMeaning(g.kind).toList :+ g.subjects.map(s => s"${s.subject} (${s.count})").mkString(", ")).mkString("\n"),
-              onClick --> (_ => UiState.set(UiState.approvalKinds := List(g.kind), UiState.approvalState := None)())))))
-      }))
+          div(
+            cls := "btn-group",
+            x.kinds.map(g =>
+              button(
+                typ := "button",
+                cls := "btn btn--sm",
+                digestLine(g),
+                title := (kindMeaning(g.kind).toList :+ g.subjects
+                  .map(s => s"${s.subject} (${s.count})")
+                  .mkString(", ")).mkString("\n"),
+                onClick --> (_ => UiState.set(UiState.approvalKinds := List(g.kind), UiState.approvalState := None)())
+              )
+            )
+          )
+        )
+      })
+    )
 
   def pane: HtmlElement =
     div(
@@ -308,101 +411,212 @@ object ApprovalsView:
       filterSignal.changes --> (_ => { selected.set(Set.empty); list.restart() }),
       // a tick outlives its row: once the row is gone or decided it is not a bulk target
       list.listing.signal.map(_.rows.filter(isOpen).map(_.id).toSet) --> (ids => selected.update(_.intersect(ids))),
-      div(cls := "pane-bar",
+      div(
+        cls := "pane-bar",
         stateButtons,
-        button(typ := "button", cls := "btn", "Refresh", onClick --> (_ => list.restart()))),
-      div(cls := "toolbar list-filters",
-        ListFilterBar.chips("kind", list.listing.signal.map(_.page.facet("kind")), UiState.approvalKinds, hint = kindMeaning,
-          about = "Show only approvals of the kinds picked (any of them): what the change is."),
-        ListFilterBar.chips("decided by", list.listing.signal.map(_.page.facet("decidedBy")), UiState.approvalBy,
-          hint = decidedByMeaning, about = "Show only approvals decided the ways picked (any of them)."),
-        div(cls := "btn-group",
+        button(typ := "button", cls := "btn", "Refresh", onClick --> (_ => list.restart()))
+      ),
+      div(
+        cls := "toolbar list-filters",
+        ListFilterBar.chips(
+          "kind",
+          list.listing.signal.map(_.page.facet("kind")),
+          UiState.approvalKinds,
+          hint = kindMeaning,
+          about = "Show only approvals of the kinds picked (any of them): what the change is."
+        ),
+        ListFilterBar.chips(
+          "decided by",
+          list.listing.signal.map(_.page.facet("decidedBy")),
+          UiState.approvalBy,
+          hint = decidedByMeaning,
+          about = "Show only approvals decided the ways picked (any of them)."
+        ),
+        div(
+          cls := "btn-group",
           ListFilterBar.text("subject: a goal, article, manager or citekey", UiState.approvalSubject),
-          ListFilterBar.clearButton(filterFields))),
-      p(cls := "muted", "Changes agent runs proposed. Approving applies the change; " +
-        "rejecting keeps it on record and changes nothing."),
+          ListFilterBar.clearButton(filterFields)
+        )
+      ),
+      p(
+        cls := "muted",
+        "Changes agent runs proposed. Approving applies the change; " +
+          "rejecting keeps it on record and changes nothing."
+      ),
       ErrorLine(list.failure.signal),
       bulkBar,
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
         val st = shownState(f.normalized.state)
-        Option.when(isLoaded && l.rows.nonEmpty)(p(cls := "muted list-heading",
-          ListPaging.heading(l, "approval", Option.when(st != "all")(st), _.state,
-            Option.when(st != "all")(stateLabel(st)).toList ++ f.normalized.kind.map(kindLabel))))
+        Option.when(isLoaded && l.rows.nonEmpty)(
+          p(
+            cls := "muted list-heading",
+            ListPaging.heading(
+              l,
+              "approval",
+              Option.when(st != "all")(st),
+              _.state,
+              Option.when(st != "all")(stateLabel(st)).toList ++ f.normalized.kind.map(kindLabel)
+            )
+          )
+        )
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
         if !isLoaded then Some(p(cls := "muted", "Loading…"))
-        else Option.when(l.rows.isEmpty)(p(cls := "muted",
-          if f.normalized != ListFilters.ApprovalFilter() then "No approvals match the filter."
-          else "Nothing waits for a decision."))
+        else
+          Option.when(l.rows.isEmpty)(
+            p(
+              cls := "muted",
+              if f.normalized != ListFilters.ApprovalFilter() then "No approvals match the filter."
+              else "Nothing waits for a decision."
+            )
+          )
       },
       // keyed by the row itself: an unchanged row keeps its element (and the note being typed in it)
-      ul(cls := "job-list approval-list", aria.busy <-- list.loading,
-        children <-- shownSignal.map(_._1.rows).split(identity)((a, _, _) =>
-          row(a, Option.when(isOpen(a))(Pick(selected.signal.map(_(a.id)), on => selected.update(s => if on then s + a.id else s - a.id)))))),
+      ul(
+        cls := "job-list approval-list",
+        aria.busy <-- list.loading,
+        children <-- shownSignal
+          .map(_._1.rows)
+          .split(identity)((a, _, _) =>
+            row(
+              a,
+              Option.when(isOpen(a))(
+                Pick(selected.signal.map(_(a.id)), on => selected.update(s => if on then s + a.id else s - a.id))
+              )
+            )
+          )
+      ),
       list.olderButton
     )
 
   /** A row's tick box for a bulk decision: whether it is ticked, and what a click does. */
-  private[web] final case class Pick(on: Signal[Boolean], set: Boolean => Unit)
+  final private[web] case class Pick(on: Signal[Boolean], set: Boolean => Unit)
 
-  /** One approval: what it would change, the evidence, and approve / reject. Shared with the goal
-    * window, which shows the open plan of its goal. */
+  /** One approval: what it would change, the evidence, and approve / reject. Shared with the goal window, which shows
+    * the open plan of its goal.
+    */
   private[web] def row(a: ApprovalInfo, pick: Option[Pick] = None): HtmlElement =
     // the note being typed is this row's own until a decision sends it
     val note = Var("")
     li(
       cls := s"job-row approval-row approval-${a.state}",
       dataAttr("kind") := a.kind,
-      pick.map(pk => child.maybe <-- Auth.writable.map(w => Option.when(w)(input(typ := "checkbox", cls := "approval-pick",
-        aria.label := s"select approval ${a.id}", checked <-- pk.on, onClick.mapToChecked --> (c => pk.set(c)))))),
+      pick.map(pk =>
+        child.maybe <-- Auth.writable.map(w =>
+          Option.when(w)(
+            input(
+              typ := "checkbox",
+              cls := "approval-pick",
+              aria.label := s"select approval ${a.id}",
+              checked <-- pk.on,
+              onClick.mapToChecked --> (c => pk.set(c))
+            )
+          )
+        )
+      ),
       span(cls := s"job-state state-${a.state}", title := a.state, stateLabel(a.state)),
       div(
         cls := "job-main",
-        div(cls := "job-subject approval-change",
+        div(
+          cls := "job-subject approval-change",
           ApprovalKind.parse(a.kind) match
             case Some(ApprovalKind.Edge) =>
-              span(SourceLink(a.citekey), s" ${a.edgeKind.map(_.replace('_', ' ')).getOrElse("?")} ",
-                a.target.fold(span("?"))(t => SourceLink(t)))
+              span(
+                SourceLink(a.citekey),
+                s" ${a.edgeKind.map(_.replace('_', ' ')).getOrElse("?")} ",
+                a.target.fold(span("?"))(t => SourceLink(t))
+              )
             case Some(ApprovalKind.GoalPlan) =>
-              span("Plan for the goal ", a.subject.fold(span("?"))(g =>
-                WinLink(WindowKey.Goal(g), title := g, Wording.humanize(g))))
+              span(
+                "Plan for the goal ",
+                a.subject.fold(span("?"))(g => WinLink(WindowKey.Goal(g), title := g, Wording.humanize(g)))
+              )
             case Some(ApprovalKind.ArticlePublish) =>
-              span(if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then "publish the new article " else "append a section to ",
-                a.subject.fold(span("?"))(s => if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then strong(s) else com.histmersion.web.ArticleLink(s, s)))
+              span(
+                if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then "publish the new article "
+                else "append a section to ",
+                a.subject.fold(span("?"))(s =>
+                  if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then strong(s)
+                  else com.histmersion.web.ArticleLink(s, s)
+                )
+              )
             case Some(ApprovalKind.HintEffect) =>
-              span(a.subject.fold(span("A manager"))(id =>
-                  WinLink(WindowKey.Manager(id), title := id, Wording.manager(id))),
-                ": ", strong(a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))),
-                a.hintEffect.map(p => span(cls := "muted", s" — proposed by ${Option(p.by).filter(_.nonEmpty).getOrElse("a model")} " +
-                  s"from hint #${p.hint}: “${p.text.take(200)}”")))
+              span(
+                a.subject.fold(span("A manager"))(id =>
+                  WinLink(WindowKey.Manager(id), title := id, Wording.manager(id))
+                ),
+                ": ",
+                strong(a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))),
+                a.hintEffect.map(p =>
+                  span(
+                    cls := "muted",
+                    s" — proposed by ${Option(p.by).filter(_.nonEmpty).getOrElse("a model")} " +
+                      s"from hint #${p.hint}: “${p.text.take(200)}”"
+                  )
+                )
+              )
             case Some(ApprovalKind.ArticleFilter) | Some(ApprovalKind.ArticlePlan) => span(describe(a))
-            case _ =>
-              span("status of ", SourceLink(a.citekey), s": ${a.current.getOrElse("?")} → ",
-                strong(a.status.getOrElse("?")))),
+            case _                                                                 =>
+              span(
+                "status of ",
+                SourceLink(a.citekey),
+                s": ${a.current.getOrElse("?")} → ",
+                strong(a.status.getOrElse("?"))
+              )
+        ),
         evidenceLine(a).map(e => p(cls := "approval-evidence", e)),
         a.plan.map(planBlock),
         a.article.map(draftBlock),
         a.quote.filter(_.nonEmpty).map(q => blockQuote(cls := "approval-quote", q)),
         a.note.filter(_.nonEmpty).map(n => p(cls := "muted", s"note: $n")),
         a.result.filter(_.nonEmpty).map(r => p(cls := "muted", r)),
-        div(cls := "job-meta muted",
+        div(
+          cls := "job-meta muted",
           span(s"#${a.id}"),
           a.runId.map(id => span(" · ", WinLink(WindowKey.Run(id), s"run ${id.take(8)}"))),
-          span(" · ", span(cls := "approval-kind", title := kindMeaning(a.kind).fold(a.kind)(m => s"$m (${a.kind})"), kindLabel(a.kind))),
+          span(
+            " · ",
+            span(
+              cls := "approval-kind",
+              title := kindMeaning(a.kind).fold(a.kind)(m => s"$m (${a.kind})"),
+              kindLabel(a.kind)
+            )
+          ),
           span(s" · proposed ${a.createdAt}"),
-          decidedLine(a).map(d => span(cls := "approval-decided", s" · $d"))),
-        Option.when(isOpen(a))(div(
-          cls := "approval-actions",
-          child <-- Auth.writable.map { w =>
-            if !w then Auth.keyNeeded("decide")
-            else
-              div(cls := "form-row",
-                input(typ := "text", cls := "field", aria.label := "note", placeholder := "note (optional)",
-                  controlled(value <-- note.signal, onInput.mapToValue --> note.writer)),
-                button(typ := "button", cls := "btn btn--primary", "Approve", disabled <-- busy.signal.map(_(a.id)),
-                  onClick --> (_ => decide(a, Decision.Approve, note.now()))),
-                button(typ := "button", cls := "btn", "Reject", disabled <-- busy.signal.map(_(a.id)),
-                  onClick --> (_ => decide(a, Decision.Reject, note.now()))))
-          }))
+          decidedLine(a).map(d => span(cls := "approval-decided", s" · $d"))
+        ),
+        Option.when(isOpen(a))(
+          div(
+            cls := "approval-actions",
+            child <-- Auth.writable.map { w =>
+              if !w then Auth.keyNeeded("decide")
+              else
+                div(
+                  cls := "form-row",
+                  input(
+                    typ := "text",
+                    cls := "field",
+                    aria.label := "note",
+                    placeholder := "note (optional)",
+                    controlled(value <-- note.signal, onInput.mapToValue --> note.writer)
+                  ),
+                  button(
+                    typ := "button",
+                    cls := "btn btn--primary",
+                    "Approve",
+                    disabled <-- busy.signal.map(_(a.id)),
+                    onClick --> (_ => decide(a, Decision.Approve, note.now()))
+                  ),
+                  button(
+                    typ := "button",
+                    cls := "btn",
+                    "Reject",
+                    disabled <-- busy.signal.map(_(a.id)),
+                    onClick --> (_ => decide(a, Decision.Reject, note.now()))
+                  )
+                )
+            }
+          )
+        )
       )
     )

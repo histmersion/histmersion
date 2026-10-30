@@ -5,14 +5,13 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-
 import com.histmersion.api.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.ModelChains.*
 
 class ModelChainsSuite extends munit.FunSuite:
 
   private val Sonnet = ModelRef(ProviderKind.ClaudeCode, "sonnet")
-  private val Qwen   = ModelRef(ProviderKind.Local, "qwen2.5-coder:32b")
+  private val Qwen = ModelRef(ProviderKind.Local, "qwen2.5-coder:32b")
 
   test("a chain is models separated by >, tried in order; one model is a chain of one; blank is none"):
     assertEquals(parseChain("claude-code:sonnet > local:qwen2.5-coder:32b"), Right(List(Sonnet, Qwen)))
@@ -26,7 +25,10 @@ class ModelChainsSuite extends munit.FunSuite:
     assert(parseModels(List("claude-code:sonnet", "claude-code:sonnet")).left.exists(_.contains("twice")))
 
   test("claude-code is a provider; its model ids are whatever the CLI accepts"):
-    assertEquals(ModelRef.parse("claude-code:claude-sonnet-4-5"), Right(ModelRef(ProviderKind.ClaudeCode, "claude-sonnet-4-5")))
+    assertEquals(
+      ModelRef.parse("claude-code:claude-sonnet-4-5"),
+      Right(ModelRef(ProviderKind.ClaudeCode, "claude-sonnet-4-5"))
+    )
 
   test("windows: names, n m|h|d|w, bounded to 1 minute .. 90 days, written back in the shortest exact unit"):
     assertEquals(Window.parse("5h").map(_.seconds), Right(5 * 3600L))
@@ -55,7 +57,8 @@ class ModelChainsSuite extends munit.FunSuite:
 
   test("allowances: the config grammar, provider-wide targets, a reserve"):
     val as = parseAllowances(
-      "claude-code:* = 2M tokens/5h, 20M tokens/7d, reserve 20%; local:qwen2.5-coder:32b = 1 usd/day").toOption.get
+      "claude-code:* = 2M tokens/5h, 20M tokens/7d, reserve 20%; local:qwen2.5-coder:32b = 1 usd/day"
+    ).toOption.get
     assertEquals(as.map(_.target.wire), List("claude-code:*", "local:qwen2.5-coder:32b"))
     assertEquals(as.head.reservePct, 20)
     assertEquals(as.head.limits.map(_.text), List("2M tokens/5h", "20M tokens/7d"))
@@ -65,15 +68,21 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(parseAllowances(""), Right(Nil))
 
   test("allowances: every malformed entry is reported — a typo must not lift a cap"):
-    val e = parseAllowances("claude-code:* 2M tokens/5h; nobody:* = 1 usd/day; local:x = 3 bananas/day; local:y = 1 usd/day, reserve 120%")
-      .left.toOption.get
-    List("is not <provider:model", "unknown provider 'nobody'", "neither tokens nor usd", "0 to 99").foreach(m => assert(e.contains(m), e))
+    val e = parseAllowances(
+      "claude-code:* 2M tokens/5h; nobody:* = 1 usd/day; local:x = 3 bananas/day; local:y = 1 usd/day, reserve 120%"
+    ).left.toOption.get
+    List("is not <provider:model", "unknown provider 'nobody'", "neither tokens nor usd", "0 to 99").foreach(m =>
+      assert(e.contains(m), e)
+    )
     assert(parseAllowances("local:x = 1 usd/day; local:x = 2 usd/day").left.exists(_.contains("twice")))
     assert(parseAllowances("local:x = 1 usd/day, 2 usd/day").left.exists(_.contains("same measure and window")))
 
   test("chains and allowances name a plugin provider only while it is registered"):
     assert(parseChain("gemini:pro > local:x").left.exists(_.contains("unknown provider 'gemini'")))
-    assertEquals(parseChain("gemini:pro > local:x", Set("gemini")).map(_.map(_.wire)), Right(List("gemini:pro", "local:x")))
+    assertEquals(
+      parseChain("gemini:pro > local:x", Set("gemini")).map(_.map(_.wire)),
+      Right(List("gemini:pro", "local:x"))
+    )
     assert(parseAllowances("gemini:* = 1 usd/day").left.exists(_.contains("unknown provider 'gemini'")))
     val a = parseAllowances("gemini:* = 1 usd/day", Set("gemini")).toOption.get.head
     assert(a.target.covers(ModelRef(ProviderKind.Plugin("gemini"), "pro")))
@@ -87,7 +96,7 @@ class ModelChainsSuite extends munit.FunSuite:
     val now = 10 * H
     val spends = List(Spend(now - 2 * H, 900, 0), Spend(now - H / 2, 600, 0), Spend(now - H / 4, 100, 0))
     val s = limitState(l, 0, spends, now)
-    assertEquals(s.used, BigDecimal(700))   // the one two hours ago has left the window
+    assertEquals(s.used, BigDecimal(700)) // the one two hours ago has left the window
     assertEquals(s.remaining, BigDecimal(300))
     assert(s.usable)
     // a 40% reserve: 400 must stay, so 700 used is over the line
@@ -108,7 +117,7 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(s.headroom, BigDecimal(0))
 
   test("usd limits sum cost; verdict needs every limit, frees at the latest; headroom is the least left"):
-    val day  = Limit(BigDecimal(5), Measure.Usd, Window(86400))
+    val day = Limit(BigDecimal(5), Measure.Usd, Window(86400))
     val hour = Limit(BigDecimal(80000), Measure.Tokens, Window(3600))
     val now = 100 * H
     val spends = List(Spend(now - 20 * H, 10, BigDecimal("4.5")), Spend(now - 30 * 60000L, 90000, BigDecimal("0.6")))
@@ -117,8 +126,10 @@ class ModelChainsSuite extends munit.FunSuite:
     val (ok, frees) = verdict(ss)
     assert(!ok)
     assertEquals(frees, Some(now - 20 * H + 86400L * 1000L), "the day limit frees last")
-    val fine = List(limitState(day, 0, Nil, now), limitState(hour.copy(amount = BigDecimal(100000)), 10,
-      List(Spend(now - 1000, 50000, 0)), now))
+    val fine = List(
+      limitState(day, 0, Nil, now),
+      limitState(hour.copy(amount = BigDecimal(100000)), 10, List(Spend(now - 1000, 50000, 0)), now)
+    )
     assertEquals(verdict(fine), (true, None))
     assertEquals(headroom(fine), (Some(40000L), Some(BigDecimal(5))))
 
@@ -131,22 +142,87 @@ class ModelChainsSuite extends munit.FunSuite:
 
   test("Markdown: the chains with the model a call would use, the allowances with use and reset, the doctor"):
     import Agents.*
-    val m = ModelsInfo(enabled = true, Nil, List("enrich-source"), 4, Nil,
-      chains = List(RoleChain("extractor", "saved", List(
-        ChainEntry("claude-code:sonnet", ready = true, usable = false, Some("below its allowance"), Some("2026-10-05T14:00:00Z")),
-        ChainEntry("local:qwen", ready = true, usable = true)), Some("local:qwen"))),
-      allowances = List(AllowanceStatus("claude-code:*", "config", 20, List(
-        LimitStatus("2M tokens/5h", Measure.Tokens, "5h", 2000000, 1900000, 100000, 400000, usable = false, Some("2026-10-05T14:00:00Z"))),
-        usable = false, Some("2026-10-05T14:00:00Z"), Some("counts what claude -p reported"))))
+    val m = ModelsInfo(
+      enabled = true,
+      Nil,
+      List("enrich-source"),
+      4,
+      Nil,
+      chains = List(
+        RoleChain(
+          "extractor",
+          "saved",
+          List(
+            ChainEntry(
+              "claude-code:sonnet",
+              ready = true,
+              usable = false,
+              Some("below its allowance"),
+              Some("2026-10-05T14:00:00Z")
+            ),
+            ChainEntry("local:qwen", ready = true, usable = true)
+          ),
+          Some("local:qwen")
+        )
+      ),
+      allowances = List(
+        AllowanceStatus(
+          "claude-code:*",
+          "config",
+          20,
+          List(
+            LimitStatus(
+              "2M tokens/5h",
+              Measure.Tokens,
+              "5h",
+              2000000,
+              1900000,
+              100000,
+              400000,
+              usable = false,
+              Some("2026-10-05T14:00:00Z")
+            )
+          ),
+          usable = false,
+          Some("2026-10-05T14:00:00Z"),
+          Some("counts what claude -p reported")
+        )
+      )
+    )
     val md = AgentsMarkdown.models(m)
-    assert(md.contains("| extractor | `claude-code:sonnet` (paused until 2026-10-05T14:00:00Z) → `local:qwen` | local:qwen | saved |"), md)
+    assert(
+      md.contains(
+        "| extractor | `claude-code:sonnet` (paused until 2026-10-05T14:00:00Z) → `local:qwen` | local:qwen | saved |"
+      ),
+      md
+    )
     assert(md.contains("`claude-code:*` (config, reserve 20%) — **below its reserve** until 2026-10-05T14:00:00Z"), md)
     assert(md.contains("2M tokens/5h: 1900k used, 100k left, reserve 400k — frees 2026-10-05T14:00:00Z"), md)
-    val none = AgentsMarkdown.models(m.copy(chains = List(RoleChain("writer", "config", Nil, None, Some("no model"))), allowances = Nil))
+    val none = AgentsMarkdown.models(
+      m.copy(chains = List(RoleChain("writer", "config", Nil, None, Some("no model"))), allowances = Nil)
+    )
     assert(none.contains("| writer | — | no model | config |") && none.contains("No allowance"), none)
-    val d = DoctorReport(enabled = false, online = false, List(ProviderDoctor("claude-code", used = true, List("claude-code:sonnet"),
-      List(DoctorCheck("login", CheckLevel.Ok, "logged in (claude.ai, plan max)"), DoctorCheck("bind", CheckLevel.Fail, "refused")))),
-      List(DoctorCheck("agents", CheckLevel.Warn, "off")))
+    val d = DoctorReport(
+      enabled = false,
+      online = false,
+      List(
+        ProviderDoctor(
+          "claude-code",
+          used = true,
+          List("claude-code:sonnet"),
+          List(
+            DoctorCheck("login", CheckLevel.Ok, "logged in (claude.ai, plan max)"),
+            DoctorCheck("bind", CheckLevel.Fail, "refused")
+          )
+        )
+      ),
+      List(DoctorCheck("agents", CheckLevel.Warn, "off"))
+    )
     val dm = AgentsMarkdown.doctor(d)
-    assert(dm.contains("# Agent doctor (offline)") && dm.contains("## claude-code — **FAIL** (used by: claude-code:sonnet)") &&
-      dm.contains("- **warn** · agents: off"), dm)
+    assert(
+      dm.contains("# Agent doctor (offline)") && dm.contains(
+        "## claude-code — **FAIL** (used by: claude-code:sonnet)"
+      ) &&
+        dm.contains("- **warn** · agents: off"),
+      dm
+    )

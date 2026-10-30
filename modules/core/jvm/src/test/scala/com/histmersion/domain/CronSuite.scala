@@ -7,8 +7,9 @@ import com.histmersion.config.given
 
 import java.time.Instant
 
-/** The five-field cron of a goal's schedules: parsing, the next firing in UTC, the day-of-month /
-  * day-of-week rule, shortcuts, and what is refused. */
+/** The five-field cron of a goal's schedules: parsing, the next firing in UTC, the day-of-month / day-of-week rule,
+  * shortcuts, and what is refused.
+  */
 class CronSuite extends munit.FunSuite:
 
   private def at(s: String) = Instant.parse(s)
@@ -16,7 +17,11 @@ class CronSuite extends munit.FunSuite:
 
   test("the next firing is strictly after the given instant, in UTC"):
     assertEquals(next("30 2 * * *", "2026-10-04T01:00:00Z"), Some(at("2026-10-04T02:30:00Z")))
-    assertEquals(next("30 2 * * *", "2026-10-04T02:30:00Z"), Some(at("2026-10-05T02:30:00Z")), "not the same minute again")
+    assertEquals(
+      next("30 2 * * *", "2026-10-04T02:30:00Z"),
+      Some(at("2026-10-05T02:30:00Z")),
+      "not the same minute again"
+    )
     assertEquals(next("30 2 * * *", "2026-10-04T02:29:59Z"), Some(at("2026-10-04T02:30:00Z")))
 
   test("steps, ranges and lists"):

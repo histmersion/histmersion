@@ -4,14 +4,15 @@ import com.histmersion.api.personal.Note
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
-/** The person's notes on one item, where the item is read: each with when it was written, its text, and
-  * Change and Delete. */
+/** The person's notes on one item, where the item is read: each with when it was written, its text, and Change and
+  * Delete.
+  */
 object NoteList:
 
   def on(ref: ItemRef): HtmlElement =
     ref.identity.fold(div(cls := "note-list is-hidden"))(i =>
-      div(cls := "note-list",
-        children <-- MyItems.notesOn(i).map(_.map(card))))
+      div(cls := "note-list", children <-- MyItems.notesOn(i).map(_.map(card)))
+    )
 
   def card(n: Note): HtmlElement =
     div(
@@ -19,8 +20,21 @@ object NoteList:
       dataAttr("note") := n.id.value,
       p(cls := "note-when muted", "Your note · ", child.text <-- Val(Ago.of(n.updatedAt))),
       NoteView(n.text.value),
-      div(cls := "btn-group note-card-acts",
-        button(typ := "button", cls := "btn btn--ghost btn--sm note-edit", "Change", onClick --> (_ => NoteEditor.edit(n))),
-        button(typ := "button", cls := "btn btn--ghost btn--sm note-delete", "Delete",
-          onClick --> { _ => if dom.window.confirm("Delete this note? It cannot be brought back here.") then MyItems.removeNote(n): Unit }))
+      div(
+        cls := "btn-group note-card-acts",
+        button(
+          typ := "button",
+          cls := "btn btn--ghost btn--sm note-edit",
+          "Change",
+          onClick --> (_ => NoteEditor.edit(n))
+        ),
+        button(
+          typ := "button",
+          cls := "btn btn--ghost btn--sm note-delete",
+          "Delete",
+          onClick --> { _ =>
+            if dom.window.confirm("Delete this note? It cannot be brought back here.") then MyItems.removeNote(n): Unit
+          }
+        )
+      )
     )

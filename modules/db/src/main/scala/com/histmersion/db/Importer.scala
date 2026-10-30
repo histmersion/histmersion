@@ -11,19 +11,26 @@ import scala.jdk.CollectionConverters.*
 
 /** Seed the DB from a `wiki/sources/` directory of Markdown notes. Idempotent (upsert by citekey).
   *
-  * The DB — not the Markdown — is the store of record, so a reseed must never silently wipe agent
-  * enrichment: a file whose mtime is OLDER than the stored row's `updated_at` is SKIPPED and reported
-  * in [[SeedResult.skipped]]. `force` overrides that (the deliberate re-import). */
+  * The DB — not the Markdown — is the store of record, so a reseed must never silently wipe agent enrichment: a file
+  * whose mtime is OLDER than the stored row's `updated_at` is SKIPPED and reported in [[SeedResult.skipped]]. `force`
+  * overrides that (the deliberate re-import).
+  */
 object Importer:
 
   def importDir(ds: DataSource, dir: Path, chunkChars: Int): SeedResult = importDir(ds, dir, chunkChars, force = false)
 
-  /** `chunkChars` (config `histmersion.limits.chunk-chars`) sizes the FTS body chunks written per source;
-    * `assetBytes` (`histmersion.limits.asset-bytes`) caps one figure picked up from `md/<ck>/figures/…`. */
-  def importDir(ds: DataSource, dir: Path, chunkChars: Int, force: Boolean,
+  /** `chunkChars` (config `histmersion.limits.chunk-chars`) sizes the FTS body chunks written per source; `assetBytes`
+    * (`histmersion.limits.asset-bytes`) caps one figure picked up from `md/<ck>/figures/…`.
+    */
+  def importDir(
+      ds: DataSource,
+      dir: Path,
+      chunkChars: Int,
+      force: Boolean,
       assetBytes: Long = Long.MaxValue,
       toleranceKm: Double = PlaceRepo.DefaultToleranceKm,
-      confineTo: Option[String] = None): SeedResult =
+      confineTo: Option[String] = None
+  ): SeedResult =
     // `Files.list` holds an OS directory handle; on a corpus-sized seed, leaking one per call
     // eventually exhausts the process's file descriptors.
     val files = scala.util.Using.resource(Files.list(dir)) { s =>
@@ -32,10 +39,10 @@ object Importer:
         .toList
         .sortBy(_.getFileName.toString)
     }
-    val stored   = if force then Map.empty[String, Long] else SourceRepo.updatedAtMillis(ds)
-    var ok       = 0
+    val stored = if force then Map.empty[String, Long] else SourceRepo.updatedAtMillis(ds)
+    var ok = 0
     val failures = scala.collection.mutable.ListBuffer.empty[String]
-    val skipped  = scala.collection.mutable.ListBuffer.empty[String]
+    val skipped = scala.collection.mutable.ListBuffer.empty[String]
     files.foreach { f =>
       try
         Frontmatter.parseFile(f, confineTo) match

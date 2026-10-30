@@ -11,14 +11,21 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.jdk.CollectionConverters.*
 
-/** #1491: `histmersion media import wikidata` starts the server's import JOB — the request answers at
-  * once — and follows it with the `n/total` progress line the job reports, to its summary; `--no-wait`
-  * prints the id and returns; a job that fails exits 2. A stand-in server, no database. */
+/** #1491: `histmersion media import wikidata` starts the server's import JOB — the request answers at once — and
+  * follows it with the `n/total` progress line the job reports, to its summary; `--no-wait` prints the id and returns;
+  * a job that fails exits 2. A stand-in server, no database.
+  */
 class MediaCmdSuite extends munit.FunSuite:
 
-  private val running = JobInfo("j7", "media-import", "running", progress = Some("100/300 place(s)/event(s) asked · batch 2"),
-    detail = Some(JobDetail(media = Some("Wikidata pictures of up to 300 places/events not asked yet"))))
-  private val done = running.copy(status = "done", progress = Some("300 place(s)/event(s) asked in 6 batch(es) · 284 stored"))
+  private val running = JobInfo(
+    "j7",
+    "media-import",
+    "running",
+    progress = Some("100/300 place(s)/event(s) asked · batch 2"),
+    detail = Some(JobDetail(media = Some("Wikidata pictures of up to 300 places/events not asked yet")))
+  )
+  private val done =
+    running.copy(status = "done", progress = Some("300 place(s)/event(s) asked in 6 batch(es) · 284 stored"))
 
   /** Answers the job start with `queued`, then each poll of the job with the next of `polls`. */
   private def withServer[A](polls: List[JobInfo])(body: (String, ConcurrentLinkedQueue[String]) => A): A =
@@ -27,22 +34,25 @@ class MediaCmdSuite extends munit.FunSuite:
     // `var`: the answer repeated once the list runs out
     var last = polls.head
     val srv = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-    srv.createContext("/", (ex: HttpExchange) =>
-      val path = ex.getRequestURI.getPath
-      val req  = new String(ex.getRequestBody.readAllBytes(), UTF_8)
-      seen.add(s"${ex.getRequestMethod} $path $req".trim)
-      val (code, json) =
-        if ex.getRequestMethod == "POST" && path == "/api/media/import/job" then
-          (202, running.copy(status = "queued", progress = None).asJson.noSpaces)
-        else if path == s"/api/jobs/${running.id}" then
-          synchronized { if next.hasNext then last = next.next() }
-          (200, last.asJson.noSpaces)
-        else (404, """{"message":"no"}""")
-      val bytes = json.getBytes(UTF_8)
-      ex.getResponseHeaders.add("Content-Type", "application/json")
-      ex.sendResponseHeaders(code, bytes.length.toLong)
-      ex.getResponseBody.write(bytes)
-      ex.close())
+    srv.createContext(
+      "/",
+      (ex: HttpExchange) =>
+        val path = ex.getRequestURI.getPath
+        val req = new String(ex.getRequestBody.readAllBytes(), UTF_8)
+        seen.add(s"${ex.getRequestMethod} $path $req".trim)
+        val (code, json) =
+          if ex.getRequestMethod == "POST" && path == "/api/media/import/job" then
+            (202, running.copy(status = "queued", progress = None).asJson.noSpaces)
+          else if path == s"/api/jobs/${running.id}" then
+            synchronized { if next.hasNext then last = next.next() }
+            (200, last.asJson.noSpaces)
+          else (404, """{"message":"no"}""")
+        val bytes = json.getBytes(UTF_8)
+        ex.getResponseHeaders.add("Content-Type", "application/json")
+        ex.sendResponseHeaders(code, bytes.length.toLong)
+        ex.getResponseBody.write(bytes)
+        ex.close()
+    )
     srv.start()
     try body(s"http://127.0.0.1:${srv.getAddress.getPort}", seen)
     finally srv.stop(0)
@@ -60,8 +70,13 @@ class MediaCmdSuite extends munit.FunSuite:
     withServer(List(running, done)) { (url, seen) =>
       val (r, out, err) = run(url, "media", "import", "wikidata", "--limit", "300")
       assertEquals(r, Right(()))
-      assert(seen.asScala.exists(s => s.startsWith("POST /api/media/import/job") && s.contains("\"limit\":300") &&
-        s.contains("\"dryRun\":false")), seen.toString)
+      assert(
+        seen.asScala.exists(s =>
+          s.startsWith("POST /api/media/import/job") && s.contains("\"limit\":300") &&
+            s.contains("\"dryRun\":false")
+        ),
+        seen.toString
+      )
       assert(out.contains("media import job `j7` started: Wikidata pictures of up to 300"), out)
       assert(err.contains("job j7: running — 100/300 place(s)/event(s) asked"), err)
       assert(out.contains("300 place(s)/event(s) asked in 6 batch(es) · 284 stored"), out)

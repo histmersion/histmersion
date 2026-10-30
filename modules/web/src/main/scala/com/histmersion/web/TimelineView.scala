@@ -2,7 +2,7 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.*
-import com.histmersion.web.ui.{Layout, AggregateBy, AggregateUnit}
+import com.histmersion.web.ui.{AggregateBy, AggregateUnit, Layout}
 import org.scalajs.dom
 
 import scala.compiletime.uninitialized
@@ -11,69 +11,74 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object TimelineView:
 
-  private val OH        = Layout.overviewHeight.value
-  private val O_BASE    = Layout.overviewBase.value
-  private val DH        = Layout.detailHeight.value
-  private val D_BASE    = Layout.detailBase.value
-  private val MIN_SPAN  = Layout.minSpan
-  private val HANDLE_W  = Layout.handleWidth
-  private val ZOOM      = 2.0
+  private val OH = Layout.overviewHeight.value
+  private val O_BASE = Layout.overviewBase.value
+  private val DH = Layout.detailHeight.value
+  private val D_BASE = Layout.detailBase.value
+  private val MIN_SPAN = Layout.minSpan
+  private val HANDLE_W = Layout.handleWidth
+  private val ZOOM = 2.0
 
   // ── state ─────────────────────────────────────────────────────────────────────────────────────
   private var limits: TimeConfig = uninitialized
 
-  /** The span shown IS `UiState.from/to` (no copy): a drag writes the fields live without
-    * committing, and commits once, on release. */
+  /** The span shown IS `UiState.from/to` (no copy): a drag writes the fields live without committing, and commits once,
+    * on release.
+    */
   private def spanFrom: Long = UiState.from.now().getOrElse(limits.defaultFrom)
-  private def spanTo: Long   = UiState.to.now().getOrElse(limits.defaultTo)
+  private def spanTo: Long = UiState.to.now().getOrElse(limits.defaultTo)
   private val detailBars = Var(List.empty[TimeBucket])
   private val overviewBars = Var(List.empty[TimeBucket])
-  private val loading   = Var(false)
-  private val failedAt  = Var(Option.empty[String])
+  private val loading = Var(false)
+  private val failedAt = Var(Option.empty[String])
   private val periodPresets = Var(List.empty[HistoricalPeriod])
   private val showPresets = Var(false)
+
   /** What the map showed when the preset menu was opened: its region's presets come first. */
   private val presetView = Var(Option.empty[BBox])
 
   private val renderTick = Var(0)
 
   // the detail strip's request a late answer must belong to
-  private val detailLatest         = Latest()
+  private val detailLatest = Latest()
+
   /** Whether the detail strip is unfolded in the narrow layout (a wide screen always shows it). */
-  private val detailOpen           = Var(false)
+  private val detailOpen = Var(false)
   // the overview's: only the newest answer is drawn
-  private val overviewLatest       = Latest()
-  private var timer: Int           = 0
+  private val overviewLatest = Latest()
+  private var timer: Int = 0
   private var overviewSvg: dom.Element = uninitialized
-  private var detailSvg: dom.Element   = uninitialized
+  private var detailSvg: dom.Element = uninitialized
 
   // Persistent layers, bottom to top; each render replaces only its own layer's children.
-  private var ovCurveLayer: dom.Element   = null
-  private var ovSelLayer: dom.Element     = null
-  private var dtUnderLayer: dom.Element   = null
-  private var dtCurveLayer: dom.Element   = null
-  private var dtAxisLayer: dom.Element    = null
+  private var ovCurveLayer: dom.Element = null
+  private var ovSelLayer: dom.Element = null
+  private var dtUnderLayer: dom.Element = null
+  private var dtCurveLayer: dom.Element = null
+  private var dtAxisLayer: dom.Element = null
   private var dtOverlayLayer: dom.Element = null
   // the hover markers, above everything of their strip
-  private var ovHoverLayer: dom.Element   = null
-  private var dtHoverLayer: dom.Element   = null
+  private var ovHoverLayer: dom.Element = null
+  private var dtHoverLayer: dom.Element = null
   // the points each curve was drawn through (the hover reads them)
   private var ovPts: Vector[TimelineCurve.Pt] = Vector.empty
   private var dtPts: Vector[TimelineCurve.Pt] = Vector.empty
-  private var lastOvWidth: Double         = 0
-  private var lastDtWidth: Double         = 0
-  private var lastOvHeight: Double        = 0
-  private var lastDtHeight: Double        = 0
-  private var lastOvBarsLen: Int          = -1
-  private var lastDtBarsLen: Int          = -1
-  private var ovResizeRaf: Int            = 0
+  private var lastOvWidth: Double = 0
+  private var lastDtWidth: Double = 0
+  private var lastOvHeight: Double = 0
+  private var lastDtHeight: Double = 0
+  private var lastOvBarsLen: Int = -1
+  private var lastDtBarsLen: Int = -1
+  private var ovResizeRaf: Int = 0
   // `var`s: the strips' size observers, disconnected when their strip leaves the page
   private var ovObserver: Option[js.Dynamic] = None
   private var dtObserver: Option[js.Dynamic] = None
-  private var dtResizeRaf: Int            = 0
+  private var dtResizeRaf: Int = 0
+
   /** The span the current `detailBars` were fetched for — not the span on screen. */
-  private var dtBarsRange: (Long, Long)   = (0L, 0L)
-  private var lastOvFilterKey: String     = ""
+  private var dtBarsRange: (Long, Long) = (0L, 0L)
+  private var lastOvFilterKey: String = ""
+
   /** What the detail curve layer was drawn for: (from, to, width). */
   private var dtDrawn: (Long, Long, Double) = (0L, 0L, 0.0)
 
@@ -81,9 +86,11 @@ object TimelineView:
     case LeftHandle, RightHandle, PanRange, ZoomDetail
 
   private case class DragInfo(
-    startX: Double, curX: Double,
-    kind: DragKind,
-    origFrom: Long, origTo: Long
+      startX: Double,
+      curX: Double,
+      kind: DragKind,
+      origFrom: Long,
+      origTo: Long
   )
   private val dragState = Var(Option.empty[DragInfo])
 
@@ -92,12 +99,13 @@ object TimelineView:
   private val foldedKey = "histmersion.timelineFolded"
 
   /** Whether the timeline is folded to its one line of controls (kept by this browser). */
-  val folded: Var[Boolean] = Var(
-    try Option(dom.window.localStorage.getItem(foldedKey)).contains("1") catch case _: Exception => false)
+  val folded: Var[Boolean] = Var(try Option(dom.window.localStorage.getItem(foldedKey)).contains("1")
+  catch case _: Exception => false)
 
   def setFolded(on: Boolean): Unit =
     folded.set(on)
-    try dom.window.localStorage.setItem(foldedKey, if on then "1" else "0") catch case _: Exception => ()
+    try dom.window.localStorage.setItem(foldedKey, if on then "1" else "0")
+    catch case _: Exception => ()
 
   // ── span algebra ──────────────────────────────────────────────────────────────────────────────
 
@@ -118,7 +126,8 @@ object TimelineView:
 
   def setLocked(on: Boolean): Unit =
     locked.set(on)
-    ui.Flash.say(if on then "The timeline is locked: its years stay until you unlock it." else "The timeline moves again.")
+    ui.Flash.say(if on then "The timeline is locked: its years stay until you unlock it."
+    else "The timeline moves again.")
 
   /** The person's own periods ([[marks.PeriodMarks]]) and the naming of a new one, in the presets menu. */
   private val namingPeriod = Var(Option.empty[String])
@@ -149,35 +158,39 @@ object TimelineView:
 
   private[web] val MAX_BUCKETS = Layout.maxBuckets
 
-  /** A bucket every [[TimelineCurve.PxPerBucket]] px (one a pixel drew a staircase of 1-px risers),
-    * and never more than `Layout.maxBuckets`. */
+  /** A bucket every [[TimelineCurve.PxPerBucket]] px (one a pixel drew a staircase of 1-px risers), and never more than
+    * `Layout.maxBuckets`.
+    */
   private[web] def bucketSizeFor(spanYears: Long, pixelWidth: Double): Long =
     val byPixels = Math.ceil(spanYears.toDouble / (Math.max(pixelWidth, 100) / TimelineCurve.PxPerBucket)).toLong
-    val byLimit  = Math.ceil(spanYears.toDouble / Layout.maxBuckets).toLong
+    val byLimit = Math.ceil(spanYears.toDouble / Layout.maxBuckets).toLong
     Math.max(1L, Math.max(byPixels, byLimit))
 
   private def loadOverview(pixelWidth: Double): Unit = overview(pixelWidth)
 
-  /** The overview follows every filter change — and every hovered suggestion — with ONE request in
-    * flight and the newest change next (it fired one per change, undebounced: sweeping the pointer
-    * down a suggestion list sent one per row). Only the newest answer is drawn. */
-  private val overview = LatestOnly[Double]((pixelWidth, done) => {
+  /** The overview follows every filter change — and every hovered suggestion — with ONE request in flight and the
+    * newest change next (it fired one per change, undebounced: sweeping the pointer down a suggestion list sent one per
+    * row). Only the newest answer is drawn.
+    */
+  private val overview = LatestOnly[Double] { (pixelWidth, done) =>
     val ticket = overviewLatest.start()
     val f = UiState.toFilter().copy(period = Some(Period(limits.min, limits.max)))
     val span = limits.max - limits.min
     val sz = bucketSizeFor(span, pixelWidth)
-    ApiClient.aggregate(Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz))).onComplete { result =>
-      if overviewLatest.isCurrent(ticket) then
-        result.fold(
-          e => dom.console.error("overview load failed", e.getMessage),
-          h => {
-            overviewBars.set(h.buckets)
-            bumpRender()
-          }
-        )
-      done()
-    }
-  })
+    ApiClient
+      .aggregate(Api.AggregateQuery(Some(AggregateBy.Time.param), AggregateUnit.Sources.param, f, size = Some(sz)))
+      .onComplete { result =>
+        if overviewLatest.isCurrent(ticket) then
+          result.fold(
+            e => dom.console.error("overview load failed", e.getMessage),
+            h => {
+              overviewBars.set(h.buckets)
+              bumpRender()
+            }
+          )
+        done()
+      }
+  }
 
   private def loadDetail(): Unit =
     // a load now answers whatever was scheduled: the strip's mount scheduled one and loaded at once,
@@ -213,8 +226,9 @@ object TimelineView:
 
   // ── drawing helpers ───────────────────────────────────────────────────────────────────────────
 
-  /** The element's drawn width, fractions of a pixel included (the drawing is made at exactly this size:
-    * a whole-pixel `clientWidth` stretched it by the fraction). */
+  /** The element's drawn width, fractions of a pixel included (the drawing is made at exactly this size: a whole-pixel
+    * `clientWidth` stretched it by the fraction).
+    */
   private def elWidth(el: dom.Element): Double =
     if el == null then 600.0
     else
@@ -225,8 +239,8 @@ object TimelineView:
         if w > 0 then w else 600.0
 
   private def niceInterval(raw: Double): Double =
-    val candidates = List(1.0, 2.0, 5.0, 10.0, 20.0, 25.0, 50.0, 100.0, 200.0, 250.0, 500.0,
-      1000.0, 2000.0, 2500.0, 5000.0, 10000.0)
+    val candidates =
+      List(1.0, 2.0, 5.0, 10.0, 20.0, 25.0, 50.0, 100.0, 200.0, 250.0, 500.0, 1000.0, 2000.0, 2500.0, 5000.0, 10000.0)
     candidates.find(_ >= raw).getOrElse(Math.pow(10, Math.ceil(Math.log10(raw))))
 
   /** The element's drawn height (its stylesheet height: fixed on a wide screen, `clamp()` on a phone). */
@@ -239,11 +253,19 @@ object TimelineView:
         val h = el.asInstanceOf[dom.SVGElement].clientHeight.toDouble
         if h > 0 then h else fallback
 
-  /** The area and line of the counts `bs` over `[from, to]`, `w` px wide, standing on `baseY`: a smooth
-    * monotone curve ([[TimelineCurve]]), no mark per bucket (the hover marker says one bucket's count).
-    * Answers the points drawn, for the hover. */
-  private def drawAreaCurve(svg: dom.Element, bs: List[TimeBucket], from: Long, to: Long,
-      w: Double, baseY: Double, gradId: String): Vector[TimelineCurve.Pt] =
+  /** The area and line of the counts `bs` over `[from, to]`, `w` px wide, standing on `baseY`: a smooth monotone curve
+    * ([[TimelineCurve]]), no mark per bucket (the hover marker says one bucket's count). Answers the points drawn, for
+    * the hover.
+    */
+  private def drawAreaCurve(
+      svg: dom.Element,
+      bs: List[TimeBucket],
+      from: Long,
+      to: Long,
+      w: Double,
+      baseY: Double,
+      gradId: String
+  ): Vector[TimelineCurve.Pt] =
     val ns = "http://www.w3.org/2000/svg"
     val pts = TimelineCurve.points(bs, from, to, w, baseY, top = 4)
     if pts.nonEmpty then
@@ -279,9 +301,15 @@ object TimelineView:
 
   // ── the hover marker: ONE per strip, the bucket under the pointer and its exact count ─────────
 
-  /** The bucket nearest screen x `px` of a curve drawn as `pts` and moved on screen by (`tx`, `scale`),
-    * and where it stands on screen. Pure. */
-  private[web] def hoverAt(pts: IndexedSeq[TimelineCurve.Pt], px: Double, tx: Double, scale: Double): Option[(Double, TimelineCurve.Pt)] =
+  /** The bucket nearest screen x `px` of a curve drawn as `pts` and moved on screen by (`tx`, `scale`), and where it
+    * stands on screen. Pure.
+    */
+  private[web] def hoverAt(
+      pts: IndexedSeq[TimelineCurve.Pt],
+      px: Double,
+      tx: Double,
+      scale: Double
+  ): Option[(Double, TimelineCurve.Pt)] =
     if scale <= 0 then None
     else TimelineCurve.nearest(pts, (px - tx) / scale).map(p => (tx + p.x * scale, p))
 
@@ -298,7 +326,10 @@ object TimelineView:
         dot.setAttribute("class", "tl-hover-dot")
         dot.setAttribute("cx", x.toString); dot.setAttribute("cy", p.y.toString); dot.setAttribute("r", "3")
         val span = (spanTo - spanFrom).toDouble.max(1)
-        dot.setAttribute("fill", Fmt.color((((p.bucket.start + p.bucket.end).toDouble / 2 - spanFrom) / span).max(0).min(1)))
+        dot.setAttribute(
+          "fill",
+          Fmt.color((((p.bucket.start + p.bucket.end).toDouble / 2 - spanFrom) / span).max(0).min(1))
+        )
         layer.appendChild(dot)
         val label = dom.document.createElementNS(svgNs, "text")
         label.setAttribute("class", "tl-hover-label")
@@ -343,9 +374,10 @@ object TimelineView:
     else g.setAttribute("transform", s"translate($tx 0) scale($scale 1)")
     !identity
 
-  /** The strips' heights as drawn (the stylesheet's, a `clamp()` on a phone) and where the curve stands
-    * in them: the label band under it keeps its height, the curve takes the rest — drawn at the size it
-    * is shown, so nothing is stretched. */
+  /** The strips' heights as drawn (the stylesheet's, a `clamp()` on a phone) and where the curve stands in them: the
+    * label band under it keeps its height, the curve takes the rest — drawn at the size it is shown, so nothing is
+    * stretched.
+    */
   private def ovHeight: Double = elHeight(overviewSvg, OH.toDouble)
   private def ovBase(h: Double): Double = h - (OH - O_BASE)
   private def dtHeight: Double = elHeight(detailSvg, DH.toDouble)
@@ -429,8 +461,8 @@ object TimelineView:
 
   // ── detail rendering ──────────────────────────────────────────────────────────────────────────
 
-  /** Overview buckets overlapping `[from, to]`, one neighbour kept on each side so the curve runs
-    * to the edges. */
+  /** Overview buckets overlapping `[from, to]`, one neighbour kept on each side so the curve runs to the edges.
+    */
   private[web] def underlayBuckets(bs: List[TimeBucket], from: Long, to: Long): List[TimeBucket] =
     val idx = bs.indices.filter(i => bs(i).end >= from && bs(i).start <= to)
     if idx.isEmpty then Nil
@@ -453,8 +485,9 @@ object TimelineView:
         lastDtBarsLen = bs.length
       alignDetail(w)
 
-  /** Keep the drawn curve under the span on screen. While it is stale (being refetched, or only
-    * partly covering a widened span) the overview curve shows beneath as a low-resolution stand-in. */
+  /** Keep the drawn curve under the span on screen. While it is stale (being refetched, or only partly covering a
+    * widened span) the overview curve shows beneath as a low-resolution stand-in.
+    */
   private def alignDetail(w: Double): Unit =
     val sf = spanFrom
     val st = spanTo
@@ -464,8 +497,15 @@ object TimelineView:
     val stale = moved || loading.now() || detailBars.now().isEmpty
     clearLayer(dtUnderLayer)
     if stale then
-      val _ = drawAreaCurve(dtUnderLayer, underlayBuckets(overviewBars.now(), sf, st), sf, st, w,
-        dtBase(dtHeight), "dtu-grad")
+      val _ = drawAreaCurve(
+        dtUnderLayer,
+        underlayBuckets(overviewBars.now(), sf, st),
+        sf,
+        st,
+        w,
+        dtBase(dtHeight),
+        "dtu-grad"
+      )
     renderDetailAxis(w)
 
   private def renderDetailAxis(w: Double): Unit =
@@ -573,23 +613,31 @@ object TimelineView:
 
   // ── the preset menu ───────────────────────────────────────────────────────────────────────────
 
-  /** One region heading, folded unless the map is looking at it; each row says the span, WHERE the
-    * definition applies (PeriodO's coverage) and WHO defines it, and its title says it in full. */
+  /** One region heading, folded unless the map is looking at it; each row says the span, WHERE the definition applies
+    * (PeriodO's coverage) and WHO defines it, and its title says it in full.
+    */
   private def presetGroup(g: PresetMenu.Group): HtmlElement =
     htmlTag[dom.HTMLElement]("details")(
       cls := "tl-preset-group",
       onMountCallback(ctx => if g.inView then ctx.thisNode.ref.setAttribute("open", "")),
-      htmlTag("summary")(cls := "tl-preset-region", g.region.label,
-        span(cls := "tl-preset-count", s" ${g.presets.size}")),
+      htmlTag("summary")(
+        cls := "tl-preset-region",
+        g.region.label,
+        span(cls := "tl-preset-count", s" ${g.presets.size}")
+      ),
       g.presets.map { p =>
         val years = s"${Fmt.yr(p.period.start)}–${Fmt.yr(p.period.end)}"
         val where = p.region.getOrElse("")
-        val who   = PresetMenu.source(p).getOrElse("")
+        val who = PresetMenu.source(p).getOrElse("")
         button(
           typ := "button",
           cls := "tl-preset-item",
-          title := List(s"${p.label}, $years", s"applies to: $where", s"defined by: $who",
-            PresetMenu.periodoId(p).fold("")(id => s"PeriodO $id")).filter(_.nonEmpty).mkString("\n"),
+          title := List(
+            s"${p.label}, $years",
+            s"applies to: $where",
+            s"defined by: $who",
+            PresetMenu.periodoId(p).fold("")(id => s"PeriodO $id")
+          ).filter(_.nonEmpty).mkString("\n"),
           span(cls := "tl-preset-line", span(cls := "tl-preset-label", p.label), span(cls := "tl-preset-years", years)),
           span(cls := "tl-preset-meta", s"$where · $who"),
           onClick --> { _ =>
@@ -604,16 +652,26 @@ object TimelineView:
   private def menuEntries(config: UiConfig): List[ui.ContextMenu.Entry] =
     val (a, b) = (spanFrom, spanTo)
     List(
-      ui.ContextMenu.Entry(if locked.now() then "Unlock the timeline" else "Lock the timeline", () => setLocked(!locked.now()),
-        pressed = Some(locked.now())),
-      ui.ContextMenu.Entry(s"Start the timeline at ${Fmt.periodStr(a, b)}", () => marks.PeriodMarks.startAt(a, b),
-        hint = Some("The years the timeline opens on, for everyone who opens Histmersion from this server")),
-      ui.ContextMenu.Entry("Add these years to my periods…", () => {
-        presetView.set(ViewportToggle.viewBox)
-        loadPresets()
-        namingPeriod.set(Some(Fmt.periodStr(a, b)))
-        showPresets.set(true)
-      }))
+      ui.ContextMenu.Entry(
+        if locked.now() then "Unlock the timeline" else "Lock the timeline",
+        () => setLocked(!locked.now()),
+        pressed = Some(locked.now())
+      ),
+      ui.ContextMenu.Entry(
+        s"Start the timeline at ${Fmt.periodStr(a, b)}",
+        () => marks.PeriodMarks.startAt(a, b),
+        hint = Some("The years the timeline opens on, for everyone who opens Histmersion from this server")
+      ),
+      ui.ContextMenu.Entry(
+        "Add these years to my periods…",
+        () => {
+          presetView.set(ViewportToggle.viewBox)
+          loadPresets()
+          namingPeriod.set(Some(Fmt.periodStr(a, b)))
+          showPresets.set(true)
+        }
+      )
+    )
 
   // ── public entry point ────────────────────────────────────────────────────────────────────────
 
@@ -628,23 +686,25 @@ object TimelineView:
       cls := "tl-presets-dropdown",
       aria.label := "period presets",
       hidden <-- showPresets.signal.map(!_),
-      marks.PeriodMarks.section(namingPeriod, () => (spanFrom, spanTo), (a, b) => { setSpan(a, b); showPresets.set(false) }),
+      marks.PeriodMarks
+        .section(namingPeriod, () => (spanFrom, spanTo), (a, b) => { setSpan(a, b); showPresets.set(false) }),
       children <-- periodPresets.signal.combineWith(presetView.signal).map { (ps, view) =>
         val groups = PresetMenu.groups(ps, view)
         if groups.isEmpty then List(div(cls := "tl-preset-loading", "no period presets available"))
         else
-          div(cls := "tl-preset-note muted",
+          div(
+            cls := "tl-preset-note muted",
             "Each age as one authority dates it for one region (PeriodO). ",
-            "The region the map shows comes first.") ::
-          groups.map(presetGroup)
+            "The region the map shows comes first."
+          ) ::
+            groups.map(presetGroup)
       },
       // the document's events for as long as the menu is on the page — bound and unbound with it
       // (they were added on mount and never removed: a remount added a second pair)
       documentEvents(_.onPointerDown) --> { e =>
         if showPresets.now() then
           val target = e.target.asInstanceOf[dom.Element]
-          if target.closest(".tl-preset-wrap") == null then
-            showPresets.set(false)
+          if target.closest(".tl-preset-wrap") == null then showPresets.set(false)
       },
       // an open preset list takes Escape first (the window manager's Escape runs after, on `window`)
       documentEvents(_.onKeyDown) --> { e =>
@@ -684,75 +744,85 @@ object TimelineView:
           ovHoverLayer = newLayer(svg, "tl-hover")
 
           renderOverview()
-          overviewBars.signal.foreach(_ => { lastOvBarsLen = -1; renderOverviewCurve() })(using ctx.owner)
+          overviewBars.signal.foreach { _ => lastOvBarsLen = -1; renderOverviewCurve() }(using ctx.owner)
           renderTick.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
           UiState.from.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
           UiState.to.signal.foreach(_ => renderOverviewSelection())(using ctx.owner)
           lastOvFilterKey = UiState.toFilter().copy(period = None).toString
           loadOverview(elWidth(svg))
 
-          svg.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-            if e.button == 0 && !locked.now() then
-              val rect = svg.getBoundingClientRect()
-              val w = if rect.width > 0 then rect.width else 600.0
-              val x = e.clientX - rect.left
-              val fullSpan = (limits.max - limits.min).toDouble.max(1)
-              val sf = spanFrom
-              val st = spanTo
-              val selX0 = (sf - limits.min).toDouble / fullSpan * w
-              val selX1 = (st - limits.min).toDouble / fullSpan * w
+          svg.addEventListener(
+            "pointerdown",
+            (e: dom.PointerEvent) =>
+              if e.button == 0 && !locked.now() then
+                val rect = svg.getBoundingClientRect()
+                val w = if rect.width > 0 then rect.width else 600.0
+                val x = e.clientX - rect.left
+                val fullSpan = (limits.max - limits.min).toDouble.max(1)
+                val sf = spanFrom
+                val st = spanTo
+                val selX0 = (sf - limits.min).toDouble / fullSpan * w
+                val selX1 = (st - limits.min).toDouble / fullSpan * w
 
-              val kind =
-                if Math.abs(x - selX0) <= HANDLE_W then DragKind.LeftHandle
-                else if Math.abs(x - selX1) <= HANDLE_W then DragKind.RightHandle
-                else if x > selX0 && x < selX1 then DragKind.PanRange
-                else
-                  val clickYear = limits.min.toDouble + (x / w) * fullSpan
-                  val half = (st - sf).toDouble / 2
-                  setSpan(Math.round(clickYear - half), Math.round(clickYear + half))
-                  DragKind.PanRange
+                val kind =
+                  if Math.abs(x - selX0) <= HANDLE_W then DragKind.LeftHandle
+                  else if Math.abs(x - selX1) <= HANDLE_W then DragKind.RightHandle
+                  else if x > selX0 && x < selX1 then DragKind.PanRange
+                  else
+                    val clickYear = limits.min.toDouble + (x / w) * fullSpan
+                    val half = (st - sf).toDouble / 2
+                    setSpan(Math.round(clickYear - half), Math.round(clickYear + half))
+                    DragKind.PanRange
 
-              dragState.set(Some(DragInfo(x, x, kind, sf, st)))
-              svg.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
-          })
+                dragState.set(Some(DragInfo(x, x, kind, sf, st)))
+                svg.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
+          )
 
-          svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
-            if dragState.now().isEmpty then
-              val rect = svg.getBoundingClientRect()
-              val w = if rect.width > 0 then rect.width else 600.0
-              showHover(ovHoverLayer, hoverAt(ovPts, e.clientX - rect.left, 0, if lastOvWidth > 0 then w / lastOvWidth else 1), w)
-          })
-          svg.addEventListener("pointerleave", { (_: dom.PointerEvent) => showHover(ovHoverLayer, None, 0) })
+          svg.addEventListener(
+            "pointermove",
+            (e: dom.PointerEvent) =>
+              if dragState.now().isEmpty then
+                val rect = svg.getBoundingClientRect()
+                val w = if rect.width > 0 then rect.width else 600.0
+                showHover(
+                  ovHoverLayer,
+                  hoverAt(ovPts, e.clientX - rect.left, 0, if lastOvWidth > 0 then w / lastOvWidth else 1),
+                  w
+                )
+          )
+          svg.addEventListener("pointerleave", (_: dom.PointerEvent) => showHover(ovHoverLayer, None, 0))
 
-          svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
-            dragState.now().foreach { d =>
-              showHover(ovHoverLayer, None, 0)
-              val rect = svg.getBoundingClientRect()
-              val w = if rect.width > 0 then rect.width else 600.0
-              val cur = e.clientX - rect.left
-              val fullSpan = (limits.max - limits.min).toDouble.max(1)
-              val pxToYear = fullSpan / w
+          svg.addEventListener(
+            "pointermove",
+            (e: dom.PointerEvent) =>
+              dragState.now().foreach { d =>
+                showHover(ovHoverLayer, None, 0)
+                val rect = svg.getBoundingClientRect()
+                val w = if rect.width > 0 then rect.width else 600.0
+                val cur = e.clientX - rect.left
+                val fullSpan = (limits.max - limits.min).toDouble.max(1)
+                val pxToYear = fullSpan / w
 
-              d.kind match
-                case DragKind.LeftHandle =>
-                  val yearDelta = ((cur - d.startX) * pxToYear).toLong
-                  val nf = Math.max(limits.min, Math.min(d.origTo - MIN_SPAN, d.origFrom + yearDelta))
-                  setSpan(nf, d.origTo, push = false)
-                case DragKind.RightHandle =>
-                  val yearDelta = ((cur - d.startX) * pxToYear).toLong
-                  val nt = Math.min(limits.max, Math.max(d.origFrom + MIN_SPAN, d.origTo + yearDelta))
-                  setSpan(d.origFrom, nt, push = false)
-                case DragKind.PanRange =>
-                  val yearDelta = ((cur - d.startX) * pxToYear).toLong
-                  val rangeWidth = d.origTo - d.origFrom
-                  var nf = d.origFrom + yearDelta
-                  var nt = d.origTo + yearDelta
-                  if nf < limits.min then { nf = limits.min; nt = nf + rangeWidth }
-                  if nt > limits.max then { nt = limits.max; nf = nt - rangeWidth }
-                  setSpan(nf, nt, push = false)
-                case _ => ()
-            }
-          })
+                d.kind match
+                  case DragKind.LeftHandle =>
+                    val yearDelta = ((cur - d.startX) * pxToYear).toLong
+                    val nf = Math.max(limits.min, Math.min(d.origTo - MIN_SPAN, d.origFrom + yearDelta))
+                    setSpan(nf, d.origTo, push = false)
+                  case DragKind.RightHandle =>
+                    val yearDelta = ((cur - d.startX) * pxToYear).toLong
+                    val nt = Math.min(limits.max, Math.max(d.origFrom + MIN_SPAN, d.origTo + yearDelta))
+                    setSpan(d.origFrom, nt, push = false)
+                  case DragKind.PanRange =>
+                    val yearDelta = ((cur - d.startX) * pxToYear).toLong
+                    val rangeWidth = d.origTo - d.origFrom
+                    var nf = d.origFrom + yearDelta
+                    var nt = d.origTo + yearDelta
+                    if nf < limits.min then { nf = limits.min; nt = nf + rangeWidth }
+                    if nt > limits.max then { nt = limits.max; nf = nt - rangeWidth }
+                    setSpan(nf, nt, push = false)
+                  case _ => ()
+              }
+          )
 
           val endDrag: js.Function1[dom.PointerEvent, Unit] = { (_: dom.PointerEvent) =>
             if dragState.now().isDefined then
@@ -768,17 +838,25 @@ object TimelineView:
                 // stretch now, redraw exactly once the width settles
                 renderOverviewSelection()
                 dom.window.clearTimeout(ovResizeRaf)
-                ovResizeRaf = dom.window.setTimeout(() => {
-                  if elWidth(svg) != lastOvWidth || ovHeight != lastOvHeight then
-                    lastOvBarsLen = -1
-                    renderOverview()
-                }, Layout.resizeSettleMs.toDouble)
+                ovResizeRaf = dom.window.setTimeout(
+                  () => {
+                    if elWidth(svg) != lastOvWidth || ovHeight != lastOvHeight then
+                      lastOvBarsLen = -1
+                      renderOverview()
+                  },
+                  Layout.resizeSettleMs.toDouble
+                )
               }: js.Function1[js.Any, Unit]
             )
             obs.observe(svg)
             ovObserver = Some(obs)
         },
-        onUnmountCallback { _ => ovObserver.foreach(o => { val _ = o.disconnect() }); ovObserver = None }
+        onUnmountCallback { _ =>
+          ovObserver.foreach { o =>
+            val _ = o.disconnect()
+          };
+          ovObserver = None
+        }
       ),
       // ── Detail bar (zoomed into selected range) ───────────────────────────────────────────
       div(
@@ -798,57 +876,67 @@ object TimelineView:
           dtHoverLayer = newLayer(svg, "tl-hover")
 
           renderDetail()
-          detailBars.signal.foreach(_ => { lastDtBarsLen = -1; renderDetailCurve() })(using ctx.owner)
+          detailBars.signal.foreach { _ => lastDtBarsLen = -1; renderDetailCurve() }(using ctx.owner)
           overviewBars.signal.foreach(_ => renderDetailOverlay())(using ctx.owner)
           renderTick.signal.foreach(_ => renderDetailOverlay())(using ctx.owner)
 
-          svg.addEventListener("wheel", { (e: dom.WheelEvent) =>
-            e.preventDefault()
-            if e.deltaY != 0 then
-              val rect = svg.getBoundingClientRect()
-              val px = e.clientX - rect.left
-              val w = if rect.width > 0 then rect.width else 600.0
-              val spanYears = (spanTo - spanFrom).toDouble
-              val anchor = spanFrom.toDouble + (px / w) * spanYears
-              val factor = if e.deltaY > 0 then ZOOM else 1.0 / ZOOM
-              val nf = Math.round(anchor - (anchor - spanFrom.toDouble) * factor)
-              val nt = Math.round(anchor + (spanTo.toDouble - anchor) * factor)
-              setSpan(nf, nt)
-          }, js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions])
-
-          svg.addEventListener("pointerdown", { (e: dom.PointerEvent) =>
-            if e.button == 0 && !locked.now() then
-              val rect = svg.getBoundingClientRect()
-              val x = e.clientX - rect.left
-              dragState.set(Some(DragInfo(x, x, DragKind.ZoomDetail, spanFrom, spanTo)))
-              svg.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
-          })
-
-          svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
-            if dragState.now().isEmpty then
-              val rect = svg.getBoundingClientRect()
-              val w = if rect.width > 0 then rect.width else 600.0
-              val (tx, scale) = realign(dtDrawn, (spanFrom, spanTo, w))
-              showHover(dtHoverLayer, hoverAt(dtPts, e.clientX - rect.left, tx, scale), w)
-          })
-          svg.addEventListener("pointerleave", { (_: dom.PointerEvent) => showHover(dtHoverLayer, None, 0) })
-
-          svg.addEventListener("pointermove", { (e: dom.PointerEvent) =>
-            dragState.now().foreach { d =>
-              showHover(dtHoverLayer, None, 0)
-              if d.kind == DragKind.ZoomDetail then
+          svg.addEventListener(
+            "wheel",
+            { (e: dom.WheelEvent) =>
+              e.preventDefault()
+              if e.deltaY != 0 then
                 val rect = svg.getBoundingClientRect()
-                val cur = e.clientX - rect.left
-                dragState.set(Some(d.copy(curX = cur)))
-                bumpRender()
-                if Math.abs(cur - d.startX) >= 3 then
-                  val w = elWidth(detailSvg)
-                  val spanYears = (d.origTo - d.origFrom).toDouble
-                  val y0 = d.origFrom + (Math.min(d.startX, cur) / w * spanYears).toLong
-                  val y1 = d.origFrom + (Math.max(d.startX, cur) / w * spanYears).toLong
-                  App.quickRenderIfCached(y0, y1)
-            }
-          })
+                val px = e.clientX - rect.left
+                val w = if rect.width > 0 then rect.width else 600.0
+                val spanYears = (spanTo - spanFrom).toDouble
+                val anchor = spanFrom.toDouble + (px / w) * spanYears
+                val factor = if e.deltaY > 0 then ZOOM else 1.0 / ZOOM
+                val nf = Math.round(anchor - (anchor - spanFrom.toDouble) * factor)
+                val nt = Math.round(anchor + (spanTo.toDouble - anchor) * factor)
+                setSpan(nf, nt)
+            },
+            js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions]
+          )
+
+          svg.addEventListener(
+            "pointerdown",
+            (e: dom.PointerEvent) =>
+              if e.button == 0 && !locked.now() then
+                val rect = svg.getBoundingClientRect()
+                val x = e.clientX - rect.left
+                dragState.set(Some(DragInfo(x, x, DragKind.ZoomDetail, spanFrom, spanTo)))
+                svg.asInstanceOf[js.Dynamic].setPointerCapture(e.pointerId)
+          )
+
+          svg.addEventListener(
+            "pointermove",
+            (e: dom.PointerEvent) =>
+              if dragState.now().isEmpty then
+                val rect = svg.getBoundingClientRect()
+                val w = if rect.width > 0 then rect.width else 600.0
+                val (tx, scale) = realign(dtDrawn, (spanFrom, spanTo, w))
+                showHover(dtHoverLayer, hoverAt(dtPts, e.clientX - rect.left, tx, scale), w)
+          )
+          svg.addEventListener("pointerleave", (_: dom.PointerEvent) => showHover(dtHoverLayer, None, 0))
+
+          svg.addEventListener(
+            "pointermove",
+            (e: dom.PointerEvent) =>
+              dragState.now().foreach { d =>
+                showHover(dtHoverLayer, None, 0)
+                if d.kind == DragKind.ZoomDetail then
+                  val rect = svg.getBoundingClientRect()
+                  val cur = e.clientX - rect.left
+                  dragState.set(Some(d.copy(curX = cur)))
+                  bumpRender()
+                  if Math.abs(cur - d.startX) >= 3 then
+                    val w = elWidth(detailSvg)
+                    val spanYears = (d.origTo - d.origFrom).toDouble
+                    val y0 = d.origFrom + (Math.min(d.startX, cur) / w * spanYears).toLong
+                    val y1 = d.origFrom + (Math.max(d.startX, cur) / w * spanYears).toLong
+                    App.quickRenderIfCached(y0, y1)
+              }
+          )
 
           val endDrag: js.Function1[dom.PointerEvent, Unit] = { (_: dom.PointerEvent) =>
             dragState.now().foreach { d =>
@@ -871,11 +959,14 @@ object TimelineView:
               { (_: js.Any) =>
                 renderDetailOverlay()
                 dom.window.clearTimeout(dtResizeRaf)
-                dtResizeRaf = dom.window.setTimeout(() => {
-                  if elWidth(svg) != lastDtWidth || dtHeight != lastDtHeight then
-                    lastDtBarsLen = -1
-                    renderDetail()
-                }, Layout.resizeSettleMs.toDouble)
+                dtResizeRaf = dom.window.setTimeout(
+                  () => {
+                    if elWidth(svg) != lastDtWidth || dtHeight != lastDtHeight then
+                      lastDtBarsLen = -1
+                      renderDetail()
+                  },
+                  Layout.resizeSettleMs.toDouble
+                )
               }: js.Function1[js.Any, Unit]
             )
             obs.observe(svg)
@@ -903,25 +994,48 @@ object TimelineView:
           loadDetail()
         },
         onUnmountCallback { _ =>
-          dtObserver.foreach(o => { val _ = o.disconnect() }); dtObserver = None
+          dtObserver.foreach { o =>
+            val _ = o.disconnect()
+          };
+          dtObserver = None
           dom.window.clearTimeout(timer)
           // an answer still on its way would draw into the strip that left the page
           detailLatest.cancel()
         }
       ),
-      div(cls := "tl-lock-note", cls("is-hidden") <-- locked.signal.map(!_), role := "status",
-        Icon(Icon.Lock), span("The timeline is locked"),
-        button(typ := "button", cls := "btn btn--sm tl-unlock", "Unlock", onClick --> (_ => setLocked(false)))),
+      div(
+        cls := "tl-lock-note",
+        cls("is-hidden") <-- locked.signal.map(!_),
+        role := "status",
+        Icon(Icon.Lock),
+        span("The timeline is locked"),
+        button(typ := "button", cls := "btn btn--sm tl-unlock", "Unlock", onClick --> (_ => setLocked(false)))
+      ),
       // ── Controls: playback · the span shown · zoom to a period, show all time, fold
-      div(cls := "tl-ctl",
+      div(
+        cls := "tl-ctl",
         TimelinePlayback.element(config),
-        div(cls := "tl-ctl-span", span(cls := "tl-span-label", aria.live := "polite",
-          child.text <-- renderTick.signal.map(_ => Fmt.periodStr(spanFrom, spanTo)))),
-        div(cls := "btn-group tl-ctl-end", role := "group", aria.label := "time span",
-          div(cls := "tl-preset-wrap",
-            button(typ := "button", cls := "btn btn--ghost tl-btn-presets", idAttr := "tl-zoom-period",
+        div(
+          cls := "tl-ctl-span",
+          span(
+            cls := "tl-span-label",
+            aria.live := "polite",
+            child.text <-- renderTick.signal.map(_ => Fmt.periodStr(spanFrom, spanTo))
+          )
+        ),
+        div(
+          cls := "btn-group tl-ctl-end",
+          role := "group",
+          aria.label := "time span",
+          div(
+            cls := "tl-preset-wrap",
+            button(
+              typ := "button",
+              cls := "btn btn--ghost tl-btn-presets",
+              idAttr := "tl-zoom-period",
               title := "Choose a named period (as an authority dates it for a region) and show its years",
-              aria.expanded <-- showPresets.signal, "Zoom to period ▾",
+              aria.expanded <-- showPresets.signal,
+              "Zoom to period ▾",
               onClick --> { _ =>
                 presetView.set(ViewportToggle.viewBox)
                 loadPresets()
@@ -931,19 +1045,32 @@ object TimelineView:
             presetsDropdown
           ),
           ui.ContextMenu.button("Timeline actions", () => menuEntries(config), "tl-menu-btn"),
-          button(typ := "button", cls := "btn btn--ghost tl-all-time", idAttr := "tl-all-time",
-            title := "Show every year the timeline holds", "Show all time",
-            onClick --> { _ => setSpan(limits.min, limits.max) }),
+          button(
+            typ := "button",
+            cls := "btn btn--ghost tl-all-time",
+            idAttr := "tl-all-time",
+            title := "Show every year the timeline holds",
+            "Show all time",
+            onClick --> { _ => setSpan(limits.min, limits.max) }
+          ),
           // shown in the narrow layout only, where the detail strip starts folded
-          button(cls := "btn tl-detail-btn", typ := "button",
+          button(
+            cls := "btn tl-detail-btn",
+            typ := "button",
             aria.expanded <-- detailOpen.signal,
             title <-- detailOpen.signal.map(o => if o then "hide the detail strip" else "show the detail strip"),
             child.text <-- detailOpen.signal.map(o => if o then "detail ▴" else "detail ▾"),
-            onClick --> (_ => detailOpen.update(!_))),
-          button(typ := "button", cls := "btn btn--ghost tl-fold", idAttr := "tl-fold",
+            onClick --> (_ => detailOpen.update(!_))
+          ),
+          button(
+            typ := "button",
+            cls := "btn btn--ghost tl-fold",
+            idAttr := "tl-fold",
             aria.expanded <-- folded.signal.map(!_),
             child.text <-- folded.signal.map(f => if f then "Show timeline ▴" else "Fold timeline ▾"),
-            onClick --> (_ => setFolded(!folded.now()))),
-          badgeEl)
+            onClick --> (_ => setFolded(!folded.now()))
+          ),
+          badgeEl
+        )
       )
     )

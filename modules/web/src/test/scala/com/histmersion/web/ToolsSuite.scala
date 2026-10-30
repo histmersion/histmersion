@@ -5,8 +5,9 @@ import com.histmersion.values.Citekey
 import com.histmersion.api.*
 import sttp.model.Method
 
-/** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form,
-  * the bookkeeping lists' text and order. */
+/** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form, the bookkeeping
+  * lists' text and order.
+  */
 class ToolsSuite extends munit.FunSuite:
 
   override def beforeEach(context: BeforeEach): Unit =
@@ -17,15 +18,33 @@ class ToolsSuite extends munit.FunSuite:
   // ── window keys ────────────────────────────────────────────────────────────────────────────────
 
   test("every window key round-trips through its hash spelling; unknown entries are dropped") {
-    val keys = List(WindowKey.Source("a2020_b"), WindowKey.Article("sea-peoples"), WindowKey.Graph("a2020_b"),
-      WindowKey.EditSource("x2020_v1.2"), WindowKey.Jobs, WindowKey.Upload, WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log, WindowKey.ApiKey, WindowKey.About,
-      WindowKey.Runs, WindowKey.Run("3f2a-77"), WindowKey.Models, WindowKey.Approvals, WindowKey.Goals, WindowKey.Goal("bronze-age"))
+    val keys = List(
+      WindowKey.Source("a2020_b"),
+      WindowKey.Article("sea-peoples"),
+      WindowKey.Graph("a2020_b"),
+      WindowKey.EditSource("x2020_v1.2"),
+      WindowKey.Jobs,
+      WindowKey.Upload,
+      WindowKey.Acquire,
+      WindowKey.Tasks,
+      WindowKey.Log,
+      WindowKey.ApiKey,
+      WindowKey.About,
+      WindowKey.Runs,
+      WindowKey.Run("3f2a-77"),
+      WindowKey.Models,
+      WindowKey.Approvals,
+      WindowKey.Goals,
+      WindowKey.Goal("bronze-age")
+    )
     keys.foreach(k => assertEquals(WindowKey.parse(k.wire), Some(k)))
     assertEquals(WindowKey.parse("nope"), None)
     assertEquals(WindowKey.parse("source:"), None)
     import FieldCodec.given
-    assertEquals(summon[FieldCodec[List[WindowKey]]].decode(List("jobs", "bogus", "jobs", "edit:a2020_b")),
-      Some(List(WindowKey.Jobs, WindowKey.EditSource("a2020_b"))))
+    assertEquals(
+      summon[FieldCodec[List[WindowKey]]].decode(List("jobs", "bogus", "jobs", "edit:a2020_b")),
+      Some(List(WindowKey.Jobs, WindowKey.EditSource("a2020_b")))
+    )
   }
 
   test("a window of one item can open in a new tab, as that item's page") {
@@ -65,8 +84,11 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("the API key is kept in the browser's storage and never in a shared link") {
-    UiState.set(UiState.apiKey := Some("s3cret"), UiState.jobStatus := Some(JobState.Failed),
-      UiState.open := List(WindowKey.Jobs))()
+    UiState.set(
+      UiState.apiKey := Some("s3cret"),
+      UiState.jobStatus := Some(JobState.Failed),
+      UiState.open := List(WindowKey.Jobs)
+    )()
     val h = UiState.hashString
     assert(!h.contains("s3cret") && !h.contains("apiKey"), h)
     assert(h.contains("jobs=failed"), h)
@@ -117,16 +139,36 @@ class ToolsSuite extends munit.FunSuite:
   test("every value a filter button, chip or menu offers has a meaning on hover") {
     import com.histmersion.values.{ApprovalState, ItemStatus, ManagerKind, ProviderKind, RunState}
     assert(JobState.values.forall(s => JobsView.stateMeaning(s).nonEmpty))
-    val jobKinds = List(Ingest.KindIngest, Ingest.KindReocr, InitPlan.JobKind, MergeApplyJob.JobKind, Vacuum.JobKind,
-      Agents.JobKind, "basemap-fetch", "places-fetch", "places-hierarchy", "events-import", "events-candidates",
-      "events-rederive", "site-types", "media-import", "media-covers")
+    val jobKinds = List(
+      Ingest.KindIngest,
+      Ingest.KindReocr,
+      InitPlan.JobKind,
+      MergeApplyJob.JobKind,
+      Vacuum.JobKind,
+      Agents.JobKind,
+      "basemap-fetch",
+      "places-fetch",
+      "places-hierarchy",
+      "events-import",
+      "events-candidates",
+      "events-rederive",
+      "site-types",
+      "media-import",
+      "media-covers"
+    )
     assertEquals(jobKinds.filter(JobsView.kindMeaning(_).isEmpty), Nil)
     assertEquals(JobsView.kindMeaning("something-new"), None)
     assert(RunState.values.forall(s => RunsView.stateMeaning(s).nonEmpty))
     assert(Agents.Origin.values.forall(o => RunsView.originMeaning(o.wire).nonEmpty))
     assertEquals(RunsView.originLabel("scheduler"), "by a goal's schedule")
-    val providers = List(ProviderKind.Anthropic, ProviderKind.OpenAI, ProviderKind.Local, ProviderKind.ClaudeCode,
-      ProviderKind.Codex, ProviderKind.Opencode)
+    val providers = List(
+      ProviderKind.Anthropic,
+      ProviderKind.OpenAI,
+      ProviderKind.Local,
+      ProviderKind.ClaudeCode,
+      ProviderKind.Codex,
+      ProviderKind.Opencode
+    )
     assert(providers.forall(p => RunsView.providerMeaning(p.wire).nonEmpty))
     assertEquals(RunsView.providerMeaning("some-plugin"), None)
     assert(ApprovalsView.States.forall(s => ApprovalsView.stateMeaning(s).nonEmpty))
@@ -138,9 +180,21 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(ManagersView.managerMeaning("nobody"), None)
     val jobTypes = List("goal-plan", "propose", "sweep", "currency", "enrich", "compile", "extend", "filter", "review")
     assertEquals(jobTypes.filter(ManagersView.jobTypeMeaning(_).isEmpty), Nil)
-    val codes = List("capacity", "pool", "manager-cap", "blocked", "busy", "budget", "drain",
-      AgentScheduler.Code.Person, AgentScheduler.Code.Held, AgentScheduler.Code.NotDue, AgentScheduler.Code.Running,
-      AgentScheduler.Code.Settled, AgentScheduler.Code.Paused)
+    val codes = List(
+      "capacity",
+      "pool",
+      "manager-cap",
+      "blocked",
+      "busy",
+      "budget",
+      "drain",
+      AgentScheduler.Code.Person,
+      AgentScheduler.Code.Held,
+      AgentScheduler.Code.NotDue,
+      AgentScheduler.Code.Running,
+      AgentScheduler.Code.Settled,
+      AgentScheduler.Code.Paused
+    )
     assertEquals(codes.filter(ManagersView.waitMeaning(_).isEmpty), Nil)
     assert(EventTier.all.forall(t => LayerFilters.tierMeaning(t).nonEmpty))
     assert(LayerFilters.tiers.forall(_.hint.nonEmpty))
@@ -154,8 +208,14 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(JobsView.what(init), Some("bundled gazetteer, bundled period presets, fetch periodo"))
     assertEquals(JobsView.what(job("a", JobState.Running)), None) // an OCR job's subject is its citekey
     assertEquals(JobsView.skippedLine(init), None)
-    val skipped = init.copy(detail = init.detail.map(_.copy(skippedPeriodCount = 3,
-      skippedPeriods = List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150")))))
+    val skipped = init.copy(detail =
+      init.detail.map(
+        _.copy(
+          skippedPeriodCount = 3,
+          skippedPeriods = List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150"))
+        )
+      )
+    )
     assertEquals(JobsView.skippedLine(skipped), Some("skipped 3 period definitions: p0x1 and 2 more"))
   }
 
@@ -179,18 +239,42 @@ class ToolsSuite extends munit.FunSuite:
 
   test("the upload form is validated field by field before anything is sent") {
     val bad = UploadView.validate(UploadView.Draft(citekey = "Bad Key", year = "twenty", doi = "nope"))
-    assertEquals(bad.left.toOption.get.map(_._1),
-      List(UploadView.Field.File, UploadView.Field.Citekey, UploadView.Field.Year, UploadView.Field.Doi))
-    val ok = UploadView.validate(UploadView.Draft(fileName = Some("a.pdf"), citekey = " anthony2007_horse ",
-      title = "  ", authors = List("David W. Anthony"), year = "2007", doi = "https://doi.org/10.1515/9781400831104",
-      quality = true))
-    assertEquals(ok, Right(IngestParams(citekey = "anthony2007_horse", filename = Some("a.pdf"), quality = true,
-      title = None, authors = List("David W. Anthony"), year = Some(2007), doi = Some("10.1515/9781400831104"))))
+    assertEquals(
+      bad.left.toOption.get.map(_._1),
+      List(UploadView.Field.File, UploadView.Field.Citekey, UploadView.Field.Year, UploadView.Field.Doi)
+    )
+    val ok = UploadView.validate(
+      UploadView.Draft(
+        fileName = Some("a.pdf"),
+        citekey = " anthony2007_horse ",
+        title = "  ",
+        authors = List("David W. Anthony"),
+        year = "2007",
+        doi = "https://doi.org/10.1515/9781400831104",
+        quality = true
+      )
+    )
+    assertEquals(
+      ok,
+      Right(
+        IngestParams(
+          citekey = "anthony2007_horse",
+          filename = Some("a.pdf"),
+          quality = true,
+          title = None,
+          authors = List("David W. Anthony"),
+          year = Some(2007),
+          doi = Some("10.1515/9781400831104")
+        )
+      )
+    )
   }
 
   test("an upload refusal lands next to the field it is about") {
-    assertEquals(UploadView.fieldOf(ApiFailure(409, ApiError("already stored as x", Some(Ingest.CodeConflict)))),
-      UploadView.Field.File)
+    assertEquals(
+      UploadView.fieldOf(ApiFailure(409, ApiError("already stored as x", Some(Ingest.CodeConflict)))),
+      UploadView.Field.File
+    )
     assertEquals(UploadView.fieldOf(ApiFailure(400, ApiError("invalid citekey 'X'"))), UploadView.Field.Citekey)
     assertEquals(UploadView.fieldOf(ApiFailure(400, ApiError("upload too large"))), UploadView.Field.Form)
   }
@@ -200,28 +284,50 @@ class ToolsSuite extends munit.FunSuite:
   test("an item's text is split into bold, italic, DOI, URL and citekey runs") {
     import QueueView.Seg.*
     assertEquals(
-      QueueView.segments("**Anthony 2007**, *The Horse* (doi 10.1515/9781400831104). See [[anthony2007_horse]] or https://x.org/a."),
-      List(Bold("Anthony 2007"), Text(", "), Italic("The Horse"), Text(" (doi "), Doi("10.1515/9781400831104"),
-        Text("). See "), Cite("anthony2007_horse"), Text(" or "), Url("https://x.org/a"), Text("."))
+      QueueView.segments(
+        "**Anthony 2007**, *The Horse* (doi 10.1515/9781400831104). See [[anthony2007_horse]] or https://x.org/a."
+      ),
+      List(
+        Bold("Anthony 2007"),
+        Text(", "),
+        Italic("The Horse"),
+        Text(" (doi "),
+        Doi("10.1515/9781400831104"),
+        Text("). See "),
+        Cite("anthony2007_horse"),
+        Text(" or "),
+        Url("https://x.org/a"),
+        Text(".")
+      )
     )
     assertEquals(QueueView.segments("plain text"), List(Text("plain text")))
     assertEquals(QueueView.segments("a * b * c"), List(Text("a * b * c")))
   }
 
   test("a topic path reads without underscores or bold markers") {
-    assertEquals(QueueView.heading(Some("**Highest value — get first** > greek_god_origins")),
-      ("Greek god origins", List("Highest value — get first")))
+    assertEquals(
+      QueueView.heading(Some("**Highest value — get first** > greek_god_origins")),
+      ("Greek god origins", List("Highest value — get first"))
+    )
     assertEquals(QueueView.heading(None), ("Uncategorised", Nil))
   }
 
   test("items are grouped by topic, groups in the order they were first added") {
     def item(id: Int, t: Option[String]) = Queue.QueueItem(id, "acquire", s"i$id", t, Queue.Open)
-    val gs = QueueView.groups(Queue.Kind.Acquire, List(item(5, Some("b")), item(2, Some("a")), item(9, Some("b")), item(1, Some("b"))))
+    val gs = QueueView.groups(
+      Queue.Kind.Acquire,
+      List(item(5, Some("b")), item(2, Some("a")), item(9, Some("b")), item(1, Some("b")))
+    )
     assertEquals(gs.map((t, is) => t -> is.map(_.id)), List(Some("b") -> List(1, 5, 9), Some("a") -> List(2)))
   }
 
-  private def qi(id: Int, list: String, topic: Option[String], status: String = Queue.Open,
-      createdAt: Option[String] = None) = Queue.QueueItem(id, list, s"i$id", topic, status, createdAt = createdAt)
+  private def qi(
+      id: Int,
+      list: String,
+      topic: Option[String],
+      status: String = Queue.Open,
+      createdAt: Option[String] = None
+  ) = Queue.QueueItem(id, list, s"i$id", topic, status, createdAt = createdAt)
 
   test("the new windows round-trip their wire names and titles read plainly") {
     assertEquals(WindowKey.Tasks.wire, "tasks")
@@ -234,8 +340,10 @@ class ToolsSuite extends munit.FunSuite:
     List(WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log).foreach(k => assert(!k.initialTitle.contains("_"), k))
     assertEquals(WindowKey.Tasks.pageHref, None)
     import FieldCodec.given
-    assertEquals(summon[FieldCodec[List[WindowKey]]].decode(List("acquire", "tasks", "log")),
-      Some(List(WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log)))
+    assertEquals(
+      summon[FieldCodec[List[WindowKey]]].decode(List("acquire", "tasks", "log")),
+      Some(List(WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log))
+    )
   }
 
   test("every queue kind has its window, and back; other windows show no queue") {
@@ -247,12 +355,17 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(WindowKey.queueOf(WindowKey.Source("a2020_b")), None)
   }
 
-
   test("the backlog groups by topic like the acquisition queue: groups in first-added order, items by id") {
-    val its = List(qi(40, "tasks", Some("Histmersion")), qi(12, "tasks", Some("Corpus hygiene")),
-      qi(7, "tasks", Some("Histmersion"), Queue.Done), qi(30, "tasks", None))
-    assertEquals(QueueView.groups(Queue.Kind.Tasks, its).map((t, is) => t -> is.map(_.id)),
-      List(Some("Histmersion") -> List(7, 40), Some("Corpus hygiene") -> List(12), None -> List(30)))
+    val its = List(
+      qi(40, "tasks", Some("Histmersion")),
+      qi(12, "tasks", Some("Corpus hygiene")),
+      qi(7, "tasks", Some("Histmersion"), Queue.Done),
+      qi(30, "tasks", None)
+    )
+    assertEquals(
+      QueueView.groups(Queue.Kind.Tasks, its).map((t, is) => t -> is.map(_.id)),
+      List(Some("Histmersion") -> List(7, 40), Some("Corpus hygiene") -> List(12), None -> List(30))
+    )
   }
 
   test("the worklog groups by date, newest date first, entries of a day in file order") {
@@ -264,28 +377,45 @@ class ToolsSuite extends munit.FunSuite:
       qi(90, "log", Some("2026-06-24/25 — a range"), createdAt = Some("2026-06-24T00:00:00Z")),
       // added later but dated earlier: its date decides, not its id
       qi(700, "log", Some("2026-01-02"), createdAt = Some("2026-09-27T12:00:00Z")),
-      qi(605, "log", Some("2026-09-27"), createdAt = Some("2026-09-27T08:13:11Z")))
-    assertEquals(QueueView.groups(Queue.Kind.Log, its).map((t, is) => t -> is.map(_.id)),
-      List(Some("2026-09-27") -> List(597, 605), Some("2026-09-26") -> List(426),
-        Some("2026-08-28") -> List(217, 218), Some("2026-06-24/25 — a range") -> List(90),
-        Some("2026-01-02") -> List(700)))
+      qi(605, "log", Some("2026-09-27"), createdAt = Some("2026-09-27T08:13:11Z"))
+    )
+    assertEquals(
+      QueueView.groups(Queue.Kind.Log, its).map((t, is) => t -> is.map(_.id)),
+      List(
+        Some("2026-09-27") -> List(597, 605),
+        Some("2026-09-26") -> List(426),
+        Some("2026-08-28") -> List(217, 218),
+        Some("2026-06-24/25 — a range") -> List(90),
+        Some("2026-01-02") -> List(700)
+      )
+    )
   }
 
   test("a worklog heading without a date falls back to when its entries were written; undated sorts last") {
     assertEquals(QueueView.logDate(Some("2026-06-24/25 — x"), Nil), "2026-06-24")
-    assertEquals(QueueView.logDate(Some("Session notes"),
-      List(qi(1, "log", None, createdAt = Some("2026-05-01T10:00:00Z")),
-        qi(2, "log", None, createdAt = Some("2026-05-03T10:00:00Z")))), "2026-05-03")
+    assertEquals(
+      QueueView.logDate(
+        Some("Session notes"),
+        List(
+          qi(1, "log", None, createdAt = Some("2026-05-01T10:00:00Z")),
+          qi(2, "log", None, createdAt = Some("2026-05-03T10:00:00Z"))
+        )
+      ),
+      "2026-05-03"
+    )
     assertEquals(QueueView.logDate(None, List(qi(3, "log", None))), "")
-    val its = List(qi(1, "log", None), qi(2, "log", Some("Notes"), createdAt = Some("2026-07-01T00:00:00Z")),
-      qi(3, "log", Some("2026-07-02")))
+    val its = List(
+      qi(1, "log", None),
+      qi(2, "log", Some("Notes"), createdAt = Some("2026-07-01T00:00:00Z")),
+      qi(3, "log", Some("2026-07-02"))
+    )
     assertEquals(QueueView.groups(Queue.Kind.Log, its).map(_._1), List(Some("2026-07-02"), Some("Notes"), None))
     assertEquals(QueueView.heading(None, QueueView.spec(Queue.Kind.Log).untitled), ("Undated", Nil))
   }
 
   test("each list's window: checkboxes and a show-done switch for acquire and tasks, neither for the log") {
-    val (acq, tasks, log) = (QueueView.spec(Queue.Kind.Acquire), QueueView.spec(Queue.Kind.Tasks),
-      QueueView.spec(Queue.Kind.Log))
+    val (acq, tasks, log) =
+      (QueueView.spec(Queue.Kind.Acquire), QueueView.spec(Queue.Kind.Tasks), QueueView.spec(Queue.Kind.Log))
     assert(acq.checkable && tasks.checkable && !log.checkable)
     assertEquals(acq.showDone, Some(UiState.acquireDone))
     assertEquals(tasks.showDone, Some(UiState.tasksDone))
@@ -300,8 +430,13 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(QueueView.summary(acq, mixed), "2 to get · 1 done")
     assertEquals(QueueView.summary(tasks, mixed), "2 open · 1 done")
     assertEquals(QueueView.summary(tasks, mixed.take(1)), "1 open")
-    assertEquals(QueueView.summary(log, List(qi(1, "log", Some("2026-09-27")), qi(2, "log", Some("2026-09-27")),
-      qi(3, "log", Some("2026-09-26")))), "3 entries · 2 days")
+    assertEquals(
+      QueueView.summary(
+        log,
+        List(qi(1, "log", Some("2026-09-27")), qi(2, "log", Some("2026-09-27")), qi(3, "log", Some("2026-09-26")))
+      ),
+      "3 entries · 2 days"
+    )
     assertEquals(QueueView.summary(log, List(qi(1, "log", Some("2026-09-27")))), "1 entry · 1 day")
   }
 
@@ -322,12 +457,18 @@ class ToolsSuite extends munit.FunSuite:
   test("an added item needs text; a blank topic or reason is left out; the worklog takes no reason") {
     val tasks = QueueView.spec(Queue.Kind.Tasks); val log = QueueView.spec(Queue.Kind.Log)
     assertEquals(QueueView.validateAdd(tasks, QueueView.AddDraft(text = "  \n ")), Left("Write the item's text first."))
-    assertEquals(QueueView.validateAdd(tasks, QueueView.AddDraft(" re-run the lint \n", "  ", " ")),
-      Right(Queue.QueueAdd("re-run the lint", None, reason = None)))
-    assertEquals(QueueView.validateAdd(tasks, QueueView.AddDraft("x", " Corpus hygiene ", " because ")),
-      Right(Queue.QueueAdd("x", Some("Corpus hygiene"), reason = Some("because"))))
-    assertEquals(QueueView.validateAdd(log, QueueView.AddDraft("ran the lint", "2026-09-27", "ignored")),
-      Right(Queue.QueueAdd("ran the lint", Some("2026-09-27"), reason = None)))
+    assertEquals(
+      QueueView.validateAdd(tasks, QueueView.AddDraft(" re-run the lint \n", "  ", " ")),
+      Right(Queue.QueueAdd("re-run the lint", None, reason = None))
+    )
+    assertEquals(
+      QueueView.validateAdd(tasks, QueueView.AddDraft("x", " Corpus hygiene ", " because ")),
+      Right(Queue.QueueAdd("x", Some("Corpus hygiene"), reason = Some("because")))
+    )
+    assertEquals(
+      QueueView.validateAdd(log, QueueView.AddDraft("ran the lint", "2026-09-27", "ignored")),
+      Right(Queue.QueueAdd("ran the lint", Some("2026-09-27"), reason = None))
+    )
     // a multi-line item keeps its inner lines
     assertEquals(QueueView.validateAdd(tasks, QueueView.AddDraft("a\n  b")).map(_.text), Right("a\n  b"))
   }
@@ -336,8 +477,10 @@ class ToolsSuite extends munit.FunSuite:
     val item = qi(3, "tasks", Some("Chores")).copy(text = "tidy up")
     assertEquals(QueueView.editPatch(item, "tidy up", "Chores"), Right(None))
     assertEquals(QueueView.editPatch(item, " tidy up \n", " Chores "), Right(None))
-    assertEquals(QueueView.editPatch(item, "tidy up well", "Chores"),
-      Right(Some(Queue.QueuePatch(text = Some("tidy up well")))))
+    assertEquals(
+      QueueView.editPatch(item, "tidy up well", "Chores"),
+      Right(Some(Queue.QueuePatch(text = Some("tidy up well"))))
+    )
     assertEquals(QueueView.editPatch(item, "tidy up", ""), Right(Some(Queue.QueuePatch(topic = Some("")))))
     assertEquals(QueueView.editPatch(item.copy(topic = None), "tidy up", "  "), Right(None))
     assertEquals(QueueView.editPatch(item, "tidy up", "Later"), Right(Some(Queue.QueuePatch(topic = Some("Later")))))
@@ -345,10 +488,17 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("topic suggestions: the list's own topics, first-used first, matching what is typed") {
-    val its = List(qi(9, "acquire", Some("linear_b")), qi(2, "acquire", Some("**Highest value** > greek_god_origins")),
-      qi(5, "acquire", Some("bronze_age_collapse")), qi(7, "acquire", Some("linear_b")), qi(8, "acquire", None))
-    assertEquals(QueueView.topicSuggestions(its, ""),
-      List("**Highest value** > greek_god_origins", "bronze_age_collapse", "linear_b"))
+    val its = List(
+      qi(9, "acquire", Some("linear_b")),
+      qi(2, "acquire", Some("**Highest value** > greek_god_origins")),
+      qi(5, "acquire", Some("bronze_age_collapse")),
+      qi(7, "acquire", Some("linear_b")),
+      qi(8, "acquire", None)
+    )
+    assertEquals(
+      QueueView.topicSuggestions(its, ""),
+      List("**Highest value** > greek_god_origins", "bronze_age_collapse", "linear_b")
+    )
     // typed as it reads (spaces for underscores, any case)
     assertEquals(QueueView.topicSuggestions(its, "Bronze Age"), List("bronze_age_collapse"))
     assertEquals(QueueView.topicSuggestions(its, "god orig"), List("**Highest value** > greek_god_origins"))
@@ -362,27 +512,36 @@ class ToolsSuite extends munit.FunSuite:
   test("Link existing source… ticks the item off with the core rule, addressed to the item") {
     // the rule itself (reason kept, no duplicate tag) is tested in core's QueueSuite
     val item = qi(567, "acquire", Some("mesopotamian_religion"))
-    assertEquals(QueueView.fulfil(item, "lambert2013_babylonian"),
-      567 -> Queue.QueuePatch(status = Some(Queue.Done), reason = Some("ingested as [[lambert2013_babylonian]]")))
+    assertEquals(
+      QueueView.fulfil(item, "lambert2013_babylonian"),
+      567 -> Queue.QueuePatch(status = Some(Queue.Done), reason = Some("ingested as [[lambert2013_babylonian]]"))
+    )
     // the reason renders the citekey as a source link
     assert(QueueView.segments(Queue.fulfilledReason(None, "a2020_b")).contains(QueueView.Seg.Cite("a2020_b")))
   }
 
   test("an upload started from an item names it as acquireItem; a plain upload names none") {
     val item = qi(515, "acquire", Some("linear_b"))
-    val d    = UploadView.Draft(fileName = Some("a.pdf"), citekey = "killen2024_new", year = "2024")
+    val d = UploadView.Draft(fileName = Some("a.pdf"), citekey = "killen2024_new", year = "2024")
     assertEquals(UploadView.validate(d.copy(forItem = Some(item))).map(_.acquireItem), Right(Some(515)))
     assertEquals(UploadView.validate(d).map(_.acquireItem), Right(None))
     // otherwise the link changes nothing the form sends
-    assertEquals(UploadView.validate(d.copy(forItem = Some(item))).map(_.copy(acquireItem = None)), UploadView.validate(d))
+    assertEquals(
+      UploadView.validate(d.copy(forItem = Some(item))).map(_.copy(acquireItem = None)),
+      UploadView.validate(d)
+    )
   }
 
   test("a finished job that ticks an item off is noticed once; other jobs are not") {
-    def job(id: String, st: JobState, item: Option[Int]) = JobInfo(id, "ingest", st.wire, Some("ck"), acquireItem = item)
+    def job(id: String, st: JobState, item: Option[Int]) =
+      JobInfo(id, "ingest", st.wire, Some("ck"), acquireItem = item)
     val running = List(job("a", JobState.Running, Some(7)), job("b", JobState.Running, None))
     assert(JobsView.ticksOff(running, List(job("a", JobState.Done, Some(7)), running(1))))
     assert(!JobsView.ticksOff(running, List(running(0), job("b", JobState.Done, None))), "no item, nothing to reload")
-    assert(!JobsView.ticksOff(running, List(job("a", JobState.Failed, Some(7)), running(1))), "a failed job ticks nothing")
+    assert(
+      !JobsView.ticksOff(running, List(job("a", JobState.Failed, Some(7)), running(1))),
+      "a failed job ticks nothing"
+    )
     val done = List(job("a", JobState.Done, Some(7)))
     assert(!JobsView.ticksOff(done, done), "already seen done")
   }
@@ -414,32 +573,74 @@ class ToolsSuite extends munit.FunSuite:
 
   test("an acquisition item's reference is read from its text: authors, title, year, DOI") {
     import QueueItemRef.{Ref, parse}
-    assertEquals(parse(Killen), Ref(List("John T. Killen"), Some("The New Documents in Mycenaean Greek"), Some(2024),
-      Some("10.1017/9781139029049")))
-    assertEquals(parse(Lambert), Ref(List("W.G. Lambert"), Some("Babylonian Creation Myths"), Some(2013),
-      Some("10.1515/9781575068619")))
-    assertEquals(parse(Finkelberg), Ref(List("M. Finkelberg"),
-      Some("The Cypria, the Iliad, and the Problem of Multiformity in Oral and Written Tradition"), Some(2000), None))
-    assertEquals(parse(Beckman), Ref(List("Beckman", "Bryce", "Cline"), Some("The Ahhiyawa Texts"), Some(2025),
-      Some("10.2307/jj.25577267")))
-    assertEquals(parse(Kristiansen), Ref(List("Kristiansen", "Kroonen", "Willerslev"),
-      Some("The Indo-European Puzzle Revisited: Integrating Archaeology, Genetics, and Linguistics"), Some(2023),
-      Some("10.1017/9781009261753")))
-    assertEquals(parse(AyaliDarshan), Ref(List("Ayali-Darshan", "Darshan"),
-      Some("Philo of Byblos' Version of the Storm God's Combat Against the Sea"), Some(2025), Some("10.1086/736959")))
-    assertEquals(parse(Bailey), Ref(List("D. Bailey"),
-      Some("Prehistoric Figurines: Representation and Corporeality in the Neolithic"), Some(2005),
-      Some("10.4324/9780203392454")))
+    assertEquals(
+      parse(Killen),
+      Ref(
+        List("John T. Killen"),
+        Some("The New Documents in Mycenaean Greek"),
+        Some(2024),
+        Some("10.1017/9781139029049")
+      )
+    )
+    assertEquals(
+      parse(Lambert),
+      Ref(List("W.G. Lambert"), Some("Babylonian Creation Myths"), Some(2013), Some("10.1515/9781575068619"))
+    )
+    assertEquals(
+      parse(Finkelberg),
+      Ref(
+        List("M. Finkelberg"),
+        Some("The Cypria, the Iliad, and the Problem of Multiformity in Oral and Written Tradition"),
+        Some(2000),
+        None
+      )
+    )
+    assertEquals(
+      parse(Beckman),
+      Ref(List("Beckman", "Bryce", "Cline"), Some("The Ahhiyawa Texts"), Some(2025), Some("10.2307/jj.25577267"))
+    )
+    assertEquals(
+      parse(Kristiansen),
+      Ref(
+        List("Kristiansen", "Kroonen", "Willerslev"),
+        Some("The Indo-European Puzzle Revisited: Integrating Archaeology, Genetics, and Linguistics"),
+        Some(2023),
+        Some("10.1017/9781009261753")
+      )
+    )
+    assertEquals(
+      parse(AyaliDarshan),
+      Ref(
+        List("Ayali-Darshan", "Darshan"),
+        Some("Philo of Byblos' Version of the Storm God's Combat Against the Sea"),
+        Some(2025),
+        Some("10.1086/736959")
+      )
+    )
+    assertEquals(
+      parse(Bailey),
+      Ref(
+        List("D. Bailey"),
+        Some("Prehistoric Figurines: Representation and Corporeality in the Neolithic"),
+        Some(2005),
+        Some("10.4324/9780203392454")
+      )
+    )
   }
 
   // #528 names a DOI — of the REVIEW it was found through; taking it would file the book under the review
   test("a DOI that is not the item's own (a review it was found through) is not taken; nor is its year") {
-    assertEquals(QueueItemRef.parse(Becks), QueueItemRef.Ref(List("Ralf Becks"),
-      Some("Troia VI und VII. Stratigraphie, Architektur, Befunde"), None, None))
+    assertEquals(
+      QueueItemRef.parse(Becks),
+      QueueItemRef.Ref(List("Ralf Becks"), Some("Troia VI und VII. Stratigraphie, Architektur, Befunde"), None, None)
+    )
   }
 
   test("text that is not a reference still gives a usable, editable guess") {
-    assertEquals(QueueItemRef.parse("Just a thing to get"), QueueItemRef.Ref(Nil, Some("Just a thing to get"), None, None))
+    assertEquals(
+      QueueItemRef.parse("Just a thing to get"),
+      QueueItemRef.Ref(Nil, Some("Just a thing to get"), None, None)
+    )
     assertEquals(QueueItemRef.parse(""), QueueItemRef.Ref(Nil, None, None, None))
     // only the first line is the reference
     assertEquals(QueueItemRef.parse(Lambert + "\n  (2019 reprint; 10.1/x)").doi, Some("10.1515/9781575068619"))
@@ -455,26 +656,38 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(ck(Bailey), Some("bailey2005_prehistoric"))
     assertEquals(ck(""), None)
     List(Killen, Lambert, Finkelberg, Becks, Beckman, Kristiansen, AyaliDarshan, Bailey)
-      .flatMap(ck).foreach(k => assert(Citekey.valid(k), k))
+      .flatMap(ck)
+      .foreach(k => assert(Citekey.valid(k), k))
   }
 
   test("Upload… fills the form from the item and links the upload to it") {
     val item = Queue.QueueItem(567, "acquire", Lambert, Some("mesopotamian_religion"), Queue.Open)
-    assertEquals(QueueItemRef.uploadDraft(item), UploadView.Draft(citekey = "lambert2013_babylonian",
-      title = "Babylonian Creation Myths", authors = List("W.G. Lambert"), year = "2013",
-      doi = "10.1515/9781575068619", forItem = Some(item)))
+    assertEquals(
+      QueueItemRef.uploadDraft(item),
+      UploadView.Draft(
+        citekey = "lambert2013_babylonian",
+        title = "Babylonian Creation Myths",
+        authors = List("W.G. Lambert"),
+        year = "2013",
+        doi = "10.1515/9781575068619",
+        forItem = Some(item)
+      )
+    )
     val becks = QueueItemRef.uploadDraft(item.copy(id = 528, text = Becks))
     assertEquals((becks.year, becks.doi, becks.citekey), ("", "", "becks_troia"))
     // a filled-in form still needs its file, and nothing else
-    assertEquals(UploadView.validate(QueueItemRef.uploadDraft(item)).left.map(_.map(_._1)), Left(List(UploadView.Field.File)))
+    assertEquals(
+      UploadView.validate(QueueItemRef.uploadDraft(item)).left.map(_.map(_._1)),
+      Left(List(UploadView.Field.File))
+    )
   }
 
   test("picking an item in the upload form fills only what the reader has not typed, and keeps the file") {
     val lambert = Queue.QueueItem(567, "acquire", Lambert, Some("mesopotamian_religion"), Queue.Open)
-    val becks   = Queue.QueueItem(528, "acquire", Becks, None, Queue.Open)
+    val becks = Queue.QueueItem(528, "acquire", Becks, None, Queue.Open)
     // a file dropped first, with the citekey suggested from its name and a title typed
     val typed = UploadView.Draft(fileName = Some("scan.pdf"), citekey = "my_own_key", title = "My title")
-    val d1    = UploadView.withItem(typed, lambert)
+    val d1 = UploadView.withItem(typed, lambert)
     assertEquals(d1.fileName, Some("scan.pdf"))
     assertEquals((d1.citekey, d1.title), ("my_own_key", "My title"), "the reader's text stays")
     assertEquals((d1.year, d1.doi, d1.authors), ("2013", "10.1515/9781575068619", List("W.G. Lambert")))
@@ -493,7 +706,10 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("the picker names an item by its id, and only an item it offers") {
-    val items = List(Queue.QueueItem(567, "acquire", Lambert, None, Queue.Open), Queue.QueueItem(9, "acquire", "**A**, B", None, Queue.Open))
+    val items = List(
+      Queue.QueueItem(567, "acquire", Lambert, None, Queue.Open),
+      Queue.QueueItem(9, "acquire", "**A**, B", None, Queue.Open)
+    )
     val label = UploadView.itemLabel(items.head)
     assert(label.startsWith("#567 Lambert, W.G., Babylonian Creation Myths"), label)
     assert(label.length <= 115 && label.endsWith("…"), label)
@@ -514,7 +730,8 @@ class ToolsSuite extends munit.FunSuite:
   // found in the browser: "…cited by cline2014_year… For achilles_origins" printed raw
   test("bare corpus identifiers in item text become Ident segments; DOIs and URLs keep precedence") {
     import QueueView.Seg
-    val segs = QueueView.segments("cited by cline2014_year, see https://x.org/a_b and 10.1000/a_b. For achilles_origins.")
+    val segs =
+      QueueView.segments("cited by cline2014_year, see https://x.org/a_b and 10.1000/a_b. For achilles_origins.")
     assert(segs.contains(Seg.Ident("cline2014_year")), segs.toString)
     assert(segs.contains(Seg.Ident("achilles_origins")), segs.toString)
     assert(segs.contains(Seg.Url("https://x.org/a_b")), segs.toString)
@@ -528,4 +745,3 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(QueueView.targetItem(""), None)
     assertEquals(QueueView.targetItem("?item=abc"), None)
     assertEquals(QueueView.itemAnchor(12), "queue-item-12")
-

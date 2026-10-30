@@ -53,7 +53,12 @@ class JatsSuite extends munit.FunSuite:
 
   test("back matter: acknowledgements and references, element- and mixed-citations"):
     assert(md.contains("## Acknowledgements\n\nWe thank the museums."), md)
-    assert(md.contains("## References\n\n- 1. Outram AK, et al. The earliest horse harnessing and milking. Science. 2009. 323(5919):1332\u20131335. doi:10.1126/science.1168594."), md)
+    assert(
+      md.contains(
+        "## References\n\n- 1. Outram AK, et al. The earliest horse harnessing and milking. Science. 2009. 323(5919):1332\u20131335. doi:10.1126/science.1168594."
+      ),
+      md
+    )
     assert(md.contains("- Anthony DW. *The Horse, the Wheel, and Language*. Princeton; 2007."), md)
     assert(!md.contains("19265018"), md)
 
@@ -72,11 +77,15 @@ class JatsSuite extends munit.FunSuite:
     assertEquals(out.trim, "link text")
 
   test("a body that opens with running text is set off from the abstract"):
-    val out = Jats.toMarkdown("<article><front><article-meta><abstract><p>Abs.</p></abstract></article-meta></front>" +
-      "<body><p>Intro.</p><sec><title>Results</title><p>R.</p></sec></body></article>")
+    val out = Jats.toMarkdown(
+      "<article><front><article-meta><abstract><p>Abs.</p></abstract></article-meta></front>" +
+        "<body><p>Intro.</p><sec><title>Results</title><p>R.</p></sec></body></article>"
+    )
     assertEquals(out, "## Abstract\n\nAbs.\n\n---\n\nIntro.\n\n## Results\n\nR.\n")
 
   test("a nested reference list with its parent's title gets no second heading"):
-    val out = Jats.toMarkdown("<article><back><ref-list><title>References</title><ref-list><title>References</title>" +
-      "<ref><mixed-citation>A. B.</mixed-citation></ref></ref-list></ref-list></back></article>")
+    val out = Jats.toMarkdown(
+      "<article><back><ref-list><title>References</title><ref-list><title>References</title>" +
+        "<ref><mixed-citation>A. B.</mixed-citation></ref></ref-list></ref-list></back></article>"
+    )
     assertEquals(out, "## References\n\n- A. B.\n")

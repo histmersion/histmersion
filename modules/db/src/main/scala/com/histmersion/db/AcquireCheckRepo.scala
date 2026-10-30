@@ -11,14 +11,19 @@ object AcquireCheckRepo:
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image).
 
-  /** An item's last check: when, under which fetcher generation, what it found, why, and how many times it
-    * was checked. */
+  /** An item's last check: when, under which fetcher generation, what it found, why, and how many times it was checked.
+    */
   final case class Row(item: Int, at: Instant, generation: String, outcome: String, reason: String, checks: Int):
     def last: AcquireRecheck.LastCheck =
-      AcquireRecheck.LastCheck(at, generation, failed = AcquireRecheck.Outcome.parse(outcome).contains(AcquireRecheck.Outcome.Failed))
+      AcquireRecheck.LastCheck(
+        at,
+        generation,
+        failed = AcquireRecheck.Outcome.parse(outcome).contains(AcquireRecheck.Outcome.Failed)
+      )
 
   private val Select = SqlLiteral(
-    "SELECT item_id, (extract(epoch FROM checked_at) * 1000)::bigint, generation, outcome, reason, checks FROM acquire_checks")
+    "SELECT item_id, (extract(epoch FROM checked_at) * 1000)::bigint, generation, outcome, reason, checks FROM acquire_checks"
+  )
 
   private def row(t: (Int, Long, String, String, String, Int)): Row =
     Row(t._1, Instant.ofEpochMilli(t._2), t._3, t._4, t._5, t._6)
@@ -28,18 +33,32 @@ object AcquireCheckRepo:
     if items.isEmpty then Map.empty
     else
       val ids = items.distinct.map(_.toString)
-      connect(ds)(sql"$Select WHERE item_id::text = ANY($ids::text[])".query[(Int, Long, String, String, String, Int)].run())
-        .map(row).map(r => r.item -> r).toMap
+      connect(ds)(
+        sql"$Select WHERE item_id::text = ANY($ids::text[])".query[(Int, Long, String, String, String, Int)].run()
+      )
+        .map(row)
+        .map(r => r.item -> r)
+        .toMap
 
   /** The checks of every OPEN acquisition item. */
   def open(ds: DataSource): Map[Int, Row] =
-    connect(ds)(sql"""$Select WHERE item_id IN (SELECT id FROM queue_items WHERE list = 'acquire' AND status = 'open')"""
-      .query[(Int, Long, String, String, String, Int)].run()).map(row).map(r => r.item -> r).toMap
+    connect(ds)(
+      sql"""$Select WHERE item_id IN (SELECT id FROM queue_items WHERE list = 'acquire' AND status = 'open')"""
+        .query[(Int, Long, String, String, String, Int)]
+        .run()
+    ).map(row).map(r => r.item -> r).toMap
 
   /** Record one check of `item` (its previous one replaced, the count kept). */
-  def record(ds: DataSource, item: Int, at: Instant, generation: String, outcome: AcquireRecheck.Outcome, reason: String): Unit =
+  def record(
+      ds: DataSource,
+      item: Int,
+      at: Instant,
+      generation: String,
+      outcome: AcquireRecheck.Outcome,
+      reason: String
+  ): Unit =
     val ms = at.toEpochMilli.toDouble / 1000
-    val o  = outcome.wire
+    val o = outcome.wire
     val _ = transact(ds):
       sql"""INSERT INTO acquire_checks (item_id, checked_at, generation, outcome, reason)
             VALUES ($item, to_timestamp($ms::float8), $generation, $o, $reason)
@@ -52,13 +71,17 @@ object AcquireCheckRepo:
     connect(ds)(sql"""SELECT outcome, count(*)::int FROM acquire_checks WHERE checked_at >= to_timestamp($ms::float8)
                       GROUP BY outcome""".query[(String, Int)].run().toMap)
 
-  /** The sources holding these DOIs (lower-cased): the citekey, and whether it has its original (a converted
-    * body or a stored file). One per DOI — the first citekey. */
+  /** The sources holding these DOIs (lower-cased): the citekey, and whether it has its original (a converted body or a
+    * stored file). One per DOI — the first citekey.
+    */
   def heldByDoi(ds: DataSource, dois: List[String]): Map[String, AcquireRecheck.Held] =
     val ds0 = dois.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if ds0.isEmpty then Map.empty
     else
-      connect(ds)(sql"""SELECT DISTINCT ON (lower(doi)) lower(doi), citekey,
+      connect(ds)(
+        sql"""SELECT DISTINCT ON (lower(doi)) lower(doi), citekey,
                                (coalesce(ocr_markdown, '') <> '' OR sha256 IS NOT NULL)
                         FROM sources WHERE lower(doi) = ANY($ds0::text[]) ORDER BY lower(doi), citekey"""
-        .query[(String, String, Boolean)].run()).map((d, ck, has) => d -> AcquireRecheck.Held(ck, has)).toMap
+          .query[(String, String, Boolean)]
+          .run()
+      ).map((d, ck, has) => d -> AcquireRecheck.Held(ck, has)).toMap

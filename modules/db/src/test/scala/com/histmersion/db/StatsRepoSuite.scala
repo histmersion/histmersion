@@ -6,16 +6,17 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 
-/** The About counts against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Other suites
-  * write into the same database at the same time, so each count is compared with its own table read
-  * in the same breath, not with a fixed number. */
+/** The About counts against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Other suites write into the
+  * same database at the same time, so each count is compared with its own table read in the same breath, not with a
+  * fixed number.
+  */
 class StatsRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private def count(table: String): Int =
@@ -33,9 +34,9 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
 
   test("#718: the job queue by state adds up to the jobs table"):
     val before = count("jobs")
-    val j      = StatsRepo.jobs(ds)
-    val after  = count("jobs")
-    val total  = JobState.values.toList.map(j.of).sum
+    val j = StatsRepo.jobs(ds)
+    val after = count("jobs")
+    val total = JobState.values.toList.map(j.of).sum
     assert(total >= before - 1 && total <= after + 1, s"$j vs $before..$after")
 
   test("storage: the database's size and its largest tables, largest first, at most n"):

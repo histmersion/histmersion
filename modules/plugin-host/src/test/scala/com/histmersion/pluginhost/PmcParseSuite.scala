@@ -5,8 +5,9 @@ import com.histmersion.api.given
 
 import io.circe.parser.parse
 
-/** Europe PMC search hits and NCBI's PMC Article Datasets records (#1523), from responses captured
-  * on 2026-10-11 (trimmed, in `src/test/resources/acquire`). */
+/** Europe PMC search hits and NCBI's PMC Article Datasets records (#1523), from responses captured on 2026-10-11
+  * (trimmed, in `src/test/resources/acquire`).
+  */
 class PmcParseSuite extends munit.FunSuite:
 
   private def text(name: String) = scala.io.Source.fromResource(s"acquire/$name").mkString
@@ -60,4 +61,7 @@ class PmcParseSuite extends munit.FunSuite:
     assertEquals(AcquireParse.pmcObject("https://example.org/PMC1.1/PMC1.1.pdf"), None)
     assertEquals(AcquireParse.pmcObject("s3://pmc-oa-opendata/PMC1.1/a/b.pdf"), None)
     assertEquals(AcquireParse.pmcObject("s3://pmc-oa-opendata/PMC1.1/.."), None)
-    assertEquals(AcquireParse.pmcObject("s3://pmc-oa-opendata/PMC1.1/PMC1.1.pdf"), Some(PmcObject("PMC1.1/PMC1.1.pdf", None)))
+    assertEquals(
+      AcquireParse.pmcObject("s3://pmc-oa-opendata/PMC1.1/PMC1.1.pdf"),
+      Some(PmcObject("PMC1.1/PMC1.1.pdf", None))
+    )

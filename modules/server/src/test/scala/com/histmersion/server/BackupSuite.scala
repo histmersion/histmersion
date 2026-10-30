@@ -7,9 +7,9 @@ import java.nio.file.{Files, Path}
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
 
-/** The parts of the server-side backup machinery that need no database and no `pg_dump`: the
-  * maintenance lock, and the listing/resolution that keeps a client-supplied name inside
-  * `backups.dir`. */
+/** The parts of the server-side backup machinery that need no database and no `pg_dump`: the maintenance lock, and the
+  * listing/resolution that keeps a client-supplied name inside `backups.dir`.
+  */
 class BackupSuite extends munit.FunSuite:
 
   private def cfgWith(dir: Path): AppConfig =
@@ -19,7 +19,9 @@ class BackupSuite extends munit.FunSuite:
   private val tmp = FunFixture[Path](
     setup = _ => Files.createTempDirectory("histmersion-backups-test"),
     teardown = d =>
-      Files.list(d).forEach(p => { val _ = Files.deleteIfExists(p) })
+      Files.list(d).forEach { p =>
+        val _ = Files.deleteIfExists(p)
+      }
       val _ = Files.deleteIfExists(d)
   )
 
@@ -91,7 +93,8 @@ class BackupSuite extends munit.FunSuite:
         s"../${outside.getFileName}",
         "../../etc/passwd.dump",
         outside.toAbsolutePath.toString,
-        "sub/histmersion.dump")
+        "sub/histmersion.dump"
+      )
       escapes.foreach(n => assert(svc.resolve(n).isLeft, s"should have been refused: '$n'"))
       // and nothing it returned can point outside the directory
       assert(svc.resolve(s"../${outside.getFileName}").isLeft)
@@ -100,8 +103,8 @@ class BackupSuite extends munit.FunSuite:
 
   tmp.test("a missing pg_dump is a clear, actionable error rather than an exception") { d =>
     val base = cfgWith(d)
-    val svc  = BackupService(base.copy(backups = base.backups.copy(pgBinDir = d.resolve("nowhere").toString)))
-    val err  = svc.create(Instant.now())
+    val svc = BackupService(base.copy(backups = base.backups.copy(pgBinDir = d.resolve("nowhere").toString)))
+    val err = svc.create(Instant.now())
     assert(err.isLeft, err.toString)
     assert(err.left.exists(_.message.contains("pg_dump")), err.toString)
     assert(err.left.exists(_.message.contains("HISTMERSION_PG_BIN_DIR")), err.toString)
@@ -120,11 +123,10 @@ class BackupSuite extends munit.FunSuite:
     val _ = fake.toFile.setExecutable(true)
 
     val base = cfgWith(d)
-    val svc  = BackupService(base.copy(backups =
-      base.backups.copy(pgBinDir = bin.toString, timeoutSeconds = 1)))
+    val svc = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, timeoutSeconds = 1)))
 
     val started = System.nanoTime()
-    val r       = svc.create(Instant.now())
+    val r = svc.create(Instant.now())
     val elapsed = (System.nanoTime() - started) / 1000000L
 
     assert(r.isLeft, r.toString)
@@ -138,13 +140,13 @@ class BackupSuite extends munit.FunSuite:
 
   tmp.test("a fast command's output still comes back, in order") { d =>
     // the output now goes to a file rather than a pipe; it must still be readable afterwards
-    val bin  = Files.createDirectory(d.resolve("bin"))
+    val bin = Files.createDirectory(d.resolve("bin"))
     val fake = bin.resolve("pg_dump")
     Files.writeString(fake, "#!/bin/sh\necho one\necho two >&2\nexit 3\n")
     val _ = fake.toFile.setExecutable(true)
     val base = cfgWith(d)
-    val svc  = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString)))
-    val r    = svc.create(Instant.now())
+    val svc = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString)))
+    val r = svc.create(Instant.now())
     assert(r.isLeft, r.toString)
     val msg = r.swap.toOption.get.message
     assert(msg.contains("exit 3"), msg)
@@ -157,7 +159,7 @@ class BackupSuite extends munit.FunSuite:
 
   /** A stand-in `pg_dump` that sleeps, then writes the `-f` target (or fails when `fail` is set). */
   private def fakeDump(d: Path, sleepS: Int, fail: Boolean = false): Path =
-    val bin  = Files.createDirectories(d.resolve("bin"))
+    val bin = Files.createDirectories(d.resolve("bin"))
     val fake = bin.resolve("pg_dump")
     val body =
       if fail then s"sleep $sleepS\necho 'pg_dump: error: connection refused' >&2\nexit 1\n"
@@ -171,32 +173,41 @@ class BackupSuite extends munit.FunSuite:
     BackupJobs(BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString))), waitS)
 
   private def cleanBin(bin: Path): Unit =
-    Files.list(bin).forEach(p => { val _ = Files.deleteIfExists(p) })
+    Files.list(bin).forEach { p =>
+      val _ = Files.deleteIfExists(p)
+    }
     val _ = Files.deleteIfExists(bin)
 
   tmp.test("a finished dump prunes the oldest archives down to backups.keep, and nothing else") { d =>
-    val bin  = fakeDump(d, sleepS = 0)
-    val old  = List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump",
-                    "histmersion-20260103T000000Z.dump", "histmersion-20260103T000000Z-2.dump")
+    val bin = fakeDump(d, sleepS = 0)
+    val old = List(
+      "histmersion-20260101T000000Z.dump",
+      "histmersion-20260102T000000Z.dump",
+      "histmersion-20260103T000000Z.dump",
+      "histmersion-20260103T000000Z-2.dump"
+    )
     old.foreach(n => Files.writeString(d.resolve(n), "old"))
-    Files.writeString(d.resolve("my-own-copy.dump"), "the user's")        // not ours: never pruned
+    Files.writeString(d.resolve("my-own-copy.dump"), "the user's") // not ours: never pruned
     val base = cfgWith(d)
-    val svc  = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 3)))
-    val r    = svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.message), identity)
+    val svc = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 3)))
+    val r = svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.message), identity)
     assertEquals(r.pruned, List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump"))
     val left = Files.list(d).map(_.getFileName.toString).toList.asScala.toSet - "bin"
-    assertEquals(left, Set(r.file, "histmersion-20260103T000000Z.dump", "histmersion-20260103T000000Z-2.dump",
-      "my-own-copy.dump"))
+    assertEquals(
+      left,
+      Set(r.file, "histmersion-20260103T000000Z.dump", "histmersion-20260103T000000Z-2.dump", "my-own-copy.dump")
+    )
     assert(Markdown.backup(r).contains("histmersion-20260101T000000Z.dump"), "the output says what went")
     cleanBin(bin)
   }
 
   tmp.test("keep = 0 keeps every archive") { d =>
     val bin = fakeDump(d, sleepS = 0)
-    (1 to 7).foreach(i => Files.writeString(d.resolve(f"histmersion-202601${i}%02dT000000Z.dump"), "old"))
+    (1 to 7).foreach(i => Files.writeString(d.resolve(f"histmersion-202601$i%02dT000000Z.dump"), "old"))
     val base = cfgWith(d)
     val r = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 0)))
-      .create(Instant.now()).fold(e => fail(e.message), identity)
+      .create(Instant.now())
+      .fold(e => fail(e.message), identity)
     assertEquals(r.pruned, Nil)
     assertEquals(Files.list(d).filter(_.toString.endsWith(".dump")).count(), 8L)
     cleanBin(bin)
@@ -204,7 +215,7 @@ class BackupSuite extends munit.FunSuite:
 
   tmp.test("a dump that outlasts the request wait is reported running, then done") { d =>
     val bin = fakeDump(d, sleepS = 2)
-    val j   = jobs(d, bin, waitS = 0)
+    val j = jobs(d, bin, waitS = 0)
     val first = j.start(Instant.now())
     assertEquals(first.map(_.stateOf), Right(Some(BackupState.Running)), first.toString)
     assert(j.running)
@@ -221,15 +232,15 @@ class BackupSuite extends munit.FunSuite:
 
   tmp.test("a dump that fits in the wait is answered done in the same request") { d =>
     val bin = fakeDump(d, sleepS = 0)
-    val r   = jobs(d, bin, waitS = 10).start(Instant.now())
+    val r = jobs(d, bin, waitS = 10).start(Instant.now())
     assertEquals(r.map(_.stateOf), Right(Some(BackupState.Done)), r.toString)
     cleanBin(bin)
   }
 
   tmp.test("a failed dump is reported failed, with pg_dump's own message") { d =>
     val bin = fakeDump(d, sleepS = 0, fail = true)
-    val j   = jobs(d, bin, waitS = 10)
-    val r   = j.start(Instant.now())
+    val j = jobs(d, bin, waitS = 10)
+    val r = j.start(Instant.now())
     assertEquals(r.map(_.stateOf), Right(Some(BackupState.Failed)), r.toString)
     assert(r.toOption.flatMap(_.error).exists(_.contains("connection refused")), r.toString)
     assertEquals(j.status.flatMap(_.stateOf), Some(BackupState.Failed))
@@ -239,4 +250,3 @@ class BackupSuite extends munit.FunSuite:
   test("no status before the first backup"):
     val base = AppConfig.load()
     assertEquals(BackupJobs(BackupService(base), 1).status, None)
-

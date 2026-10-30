@@ -20,11 +20,13 @@ object ArticleModal:
             case el: dom.HTMLElement => el.isContentEditable
             case _                   => false)
           if !editable && ev.key == "Escape" && Lightbox.isOpen then
-            ev.preventDefault()   // the lightbox takes this Escape, not the window under it
+            ev.preventDefault() // the lightbox takes this Escape, not the window under it
             Lightbox.close()
       },
       // a page's figure, or a picture on the map or a card that names its full size: the lightbox
-      documentEvents(_.onClick) --> { (ev: dom.MouseEvent) => val _ = Lightbox.onClick(ev) }
+      documentEvents(_.onClick) --> { (ev: dom.MouseEvent) =>
+        val _ = Lightbox.onClick(ev)
+      }
     )
 
   def open(id: String, opts: Map[String, String] = Map.empty): Unit =
@@ -37,4 +39,3 @@ object ArticleModal:
 
   /** Keep the windows in step with the URL (`UiState.open`): now, and on every back/forward. */
   def restore(): Unit = WindowManager.followState()
-

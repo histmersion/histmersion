@@ -10,8 +10,8 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
 
-/** The native bundle (nothing installed system-wide): the server runs the bundled PostgreSQL and OCR
-  * converter as its own child processes. Enabled by `runtime.enabled` (`HISTMERSION_RUNTIME=true`).
+/** The native bundle (nothing installed system-wide): the server runs the bundled PostgreSQL and OCR converter as its
+  * own child processes. Enabled by `runtime.enabled` (`HISTMERSION_RUNTIME=true`).
   *
   * {{{
   *   <home>/bin/histmersion-server        this process
@@ -23,28 +23,36 @@ import scala.jdk.OptionConverters.*
   *   <data>/backups  <data>/uploads  <data>/bundles
   * }}}
   *
-  * Postgres listens on 127.0.0.1 only and never on a Unix socket: macOS caps a socket path at 103
-  * bytes, which a data directory under "Application Support" can exceed. The converter is restarted
-  * with backoff when it dies; both stop in reverse order when the server does. */
+  * Postgres listens on 127.0.0.1 only and never on a Unix socket: macOS caps a socket path at 103 bytes, which a data
+  * directory under "Application Support" can exceed. The converter is restarted with backoff when it dies; both stop in
+  * reverse order when the server does.
+  */
 object Supervisor:
 
   final case class Layout(home: Path, data: Path):
-    def pgBin: Path        = home.resolve("pg").resolve("bin")
-    def projData: Path     = home.resolve("pg").resolve("share").resolve("proj")
-    def cluster: Path      = data.resolve("pg")
-    def logs: Path         = data.resolve("logs")
-    def backups: Path      = data.resolve("backups")
-    def uploads: Path      = data.resolve("uploads")
-    def bundles: Path      = data.resolve("bundles")
+    def pgBin: Path = home.resolve("pg").resolve("bin")
+    def projData: Path = home.resolve("pg").resolve("share").resolve("proj")
+    def cluster: Path = data.resolve("pg")
+    def logs: Path = data.resolve("logs")
+    def backups: Path = data.resolve("backups")
+    def uploads: Path = data.resolve("uploads")
+    def bundles: Path = data.resolve("bundles")
     def converterDir: Path = home.resolve("converter")
-    def python: Path       = converterDir.resolve("python").resolve("bin").resolve("python3")
-    def models: Path       = converterDir.resolve("models")
-    def initData: Path     = home.resolve("db")
+    def python: Path = converterDir.resolve("python").resolve("bin").resolve("python3")
+    def models: Path = converterDir.resolve("models")
+    def initData: Path = home.resolve("db")
 
   /** Where the bundle and its data live. Pure: `exe` is this executable, `env` the environment. */
-  private[server] def layout(rc: RuntimeConfig, exe: Option[Path], env: String => Option[String],
-      osName: String): Either[String, Layout] =
-    val home = Option(rc.home).map(_.trim).filter(_.nonEmpty).map(Path.of(_))
+  private[server] def layout(
+      rc: RuntimeConfig,
+      exe: Option[Path],
+      env: String => Option[String],
+      osName: String
+  ): Either[String, Layout] =
+    val home = Option(rc.home)
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .map(Path.of(_))
       .orElse(exe.flatMap(e => Option(e.toAbsolutePath.getParent)).flatMap(b => Option(b.getParent)))
     val data = UserPaths.dataDir(rc.dataDir, env, osName)
     for
@@ -52,72 +60,101 @@ object Supervisor:
       d <- data.toRight("runtime.data-dir is empty and HOME is unset (set HISTMERSION_DATA_DIR)")
     yield Layout(h.toAbsolutePath.normalize, d.toAbsolutePath.normalize)
 
-  /** The server options every start uses: loopback TCP only, no Unix socket (see the class doc), and
-    * the memory settings ([[pgSettings]]). */
+  /** The server options every start uses: loopback TCP only, no Unix socket (see the class doc), and the memory
+    * settings ([[pgSettings]]).
+    */
   private[server] def pgOptions(port: Int, settings: List[(String, String)] = Nil): String =
     (s"-p $port -c listen_addresses=127.0.0.1 -c unix_socket_directories=''" ::
       settings.map((k, v) => s"-c $k=$v")).mkString(" ")
 
   private[server] def pgStart(l: Layout, port: Int, settings: List[(String, String)] = Nil): List[String] =
-    List(l.pgBin.resolve("pg_ctl").toString, "-D", l.cluster.toString, "-l", l.logs.resolve("postgres.log").toString,
-      "-w", "-t", "300", "-o", pgOptions(port, settings), "start")
+    List(
+      l.pgBin.resolve("pg_ctl").toString,
+      "-D",
+      l.cluster.toString,
+      "-l",
+      l.logs.resolve("postgres.log").toString,
+      "-w",
+      "-t",
+      "300",
+      "-o",
+      pgOptions(port, settings),
+      "start"
+    )
 
   private val MB = 1024L * 1024L
 
   /** A Postgres size for `bytes`, in whole megabytes. */
   private def mb(bytes: Long): String = s"${math.max(1L, bytes / MB)}MB"
 
-  /** A configured size: a Postgres size (letters and digits only, so nothing can ride along into the
-    * `-o` string), `auto` from `ramBytes`, or nothing (Postgres' default — also for `auto` when the
-    * machine's memory is unknown). */
+  /** A configured size: a Postgres size (letters and digits only, so nothing can ride along into the `-o` string),
+    * `auto` from `ramBytes`, or nothing (Postgres' default — also for `auto` when the machine's memory is unknown).
+    */
   private def size(v: String, auto: Long => Long, ramBytes: Option[Long]): Option[String] =
     v.trim match
-      case "" => None
-      case a if a.equalsIgnoreCase("auto") => ramBytes.map(r => mb(auto(r)))
+      case ""                                         => None
+      case a if a.equalsIgnoreCase("auto")            => ramBytes.map(r => mb(auto(r)))
       case s if s.matches("[0-9]+\\s*(kB|MB|GB|TB)?") => Some(s.replaceAll("\\s", ""))
-      case other =>
+      case other                                      =>
         scribe.warn(s"runtime.postgres: '$other' is not a Postgres size (e.g. 512MB, 2GB) — left to Postgres")
         None
 
   /** Pure: the `-c` settings the bundled Postgres starts with, given the machine's RAM.
     *
-    *  - `shared_buffers` `auto` = RAM/16 within 128 MB…2 GB: initdb's 128 MB holds a fraction of the
-    *    gazetteer's indexes, so a place search or a text query re-read its pages through the kernel
-    *    on every keystroke (2 GB on a 48 GB machine: warm interactive p50s 10–60 % lower, 2026-10-09);
-    *  - `effective_cache_size` `auto` = RAM/2 — what the planner may assume the OS caches;
-    *  - `work_mem` — a sort or hash per query node (16 MB: a 24 000-row candidate sort stays in memory). */
+    *   - `shared_buffers` `auto` = RAM/16 within 128 MB…2 GB: initdb's 128 MB holds a fraction of the gazetteer's
+    *     indexes, so a place search or a text query re-read its pages through the kernel on every keystroke (2 GB on a
+    *     48 GB machine: warm interactive p50s 10–60 % lower, 2026-10-09);
+    *   - `effective_cache_size` `auto` = RAM/2 — what the planner may assume the OS caches;
+    *   - `work_mem` — a sort or hash per query node (16 MB: a 24 000-row candidate sort stays in memory).
+    */
   private[server] def pgSettings(t: PgTuning, ramBytes: Option[Long]): List[(String, String)] =
     List(
-      "shared_buffers"       -> size(t.sharedBuffers, r => math.max(128 * MB, math.min(2048 * MB, r / 16)), ramBytes),
+      "shared_buffers" -> size(t.sharedBuffers, r => math.max(128 * MB, math.min(2048 * MB, r / 16)), ramBytes),
       "effective_cache_size" -> size(t.effectiveCacheSize, r => math.max(512 * MB, r / 2), ramBytes),
-      "work_mem"             -> size(t.workMem, _ => 16 * MB, ramBytes)
+      "work_mem" -> size(t.workMem, _ => 16 * MB, ramBytes)
     ).collect { case (k, Some(v)) => k -> v }
 
   /** The machine's physical memory, when the platform says: `hw.memsize` on macOS, `MemTotal` on Linux. */
   private def physicalMemory(osName: String): Option[Long] =
-    scala.util.Try {
-      if osName.toLowerCase.contains("mac") then
-        val p = ProcessBuilder("/usr/sbin/sysctl", "-n", "hw.memsize").redirectErrorStream(true).start()
-        val out = scala.io.Source.fromInputStream(p.getInputStream).mkString.trim
-        p.waitFor()
-        out.toLongOption
-      else
-        Files.readAllLines(Path.of("/proc/meminfo")).asScala
-          .collectFirst { case l if l.startsWith("MemTotal:") => l.replaceAll("[^0-9]", "").toLong * 1024L }
-    }.toOption.flatten
+    scala.util
+      .Try {
+        if osName.toLowerCase.contains("mac") then
+          val p = ProcessBuilder("/usr/sbin/sysctl", "-n", "hw.memsize").redirectErrorStream(true).start()
+          val out = scala.io.Source.fromInputStream(p.getInputStream).mkString.trim
+          p.waitFor()
+          out.toLongOption
+        else
+          Files
+            .readAllLines(Path.of("/proc/meminfo"))
+            .asScala
+            .collectFirst { case l if l.startsWith("MemTotal:") => l.replaceAll("[^0-9]", "").toLong * 1024L }
+      }
+      .toOption
+      .flatten
 
   private[server] def pgStop(l: Layout): List[String] =
     List(l.pgBin.resolve("pg_ctl").toString, "-D", l.cluster.toString, "-m", "fast", "-w", "stop")
 
   private[server] def initdb(l: Layout, user: String, pwFile: Path): List[String] =
-    List(l.pgBin.resolve("initdb").toString, "-D", l.cluster.toString, "-U", user,
-      "--auth=scram-sha-256", s"--pwfile=$pwFile", "-E", "UTF8", "--locale=C")
+    List(
+      l.pgBin.resolve("initdb").toString,
+      "-D",
+      l.cluster.toString,
+      "-U",
+      user,
+      "--auth=scram-sha-256",
+      s"--pwfile=$pwFile",
+      "-E",
+      "UTF8",
+      "--locale=C"
+    )
 
   private[server] def converterCmd(l: Layout, port: Int): List[String] =
     List(l.python.toString, "-m", "uvicorn", "app:app", "--host", "127.0.0.1", "--port", port.toString)
 
-  /** The configuration with every endpoint and directory pointed at the bundle. Settings the user
-    * changed explicitly (a backups dir other than the default, a pg-bin-dir) are kept. */
+  /** The configuration with every endpoint and directory pointed at the bundle. Settings the user changed explicitly (a
+    * backups dir other than the default, a pg-bin-dir) are kept.
+    */
   private[server] def configure(cfg: AppConfig, l: Layout, explicitBind: Option[String] = None): AppConfig =
     val dbName = Backup.parseJdbc(cfg.db.url).toOption.map(_.database).filter(_.nonEmpty).getOrElse("histmersion")
     cfg.copy(
@@ -125,16 +162,19 @@ object Supervisor:
       // says otherwise (set HISTMERSION_BIND=0.0.0.0 to share on the LAN — and set HISTMERSION_API_KEY then)
       server = cfg.server.copy(host = explicitBind.filter(_.nonEmpty).getOrElse("127.0.0.1")),
       db = cfg.db.copy(url = s"jdbc:postgresql://127.0.0.1:${cfg.runtime.pgPort}/$dbName"),
-      converter = cfg.converter.copy(url = s"http://127.0.0.1:${cfg.runtime.converterPort}",
-        spoolDir = l.uploads.toString),
+      converter =
+        cfg.converter.copy(url = s"http://127.0.0.1:${cfg.runtime.converterPort}", spoolDir = l.uploads.toString),
       backups = cfg.backups.copy(
         dir = if cfg.backups.dir == DefaultBackupsDir then l.backups.toString else cfg.backups.dir,
-        pgBinDir = Option(cfg.backups.pgBinDir).filter(_.nonEmpty).getOrElse(l.pgBin.toString)),
-      bundles = cfg.bundles.copy(
-        dir = if cfg.bundles.dir == DefaultBundlesDir then l.bundles.toString else cfg.bundles.dir),
+        pgBinDir = Option(cfg.backups.pgBinDir).filter(_.nonEmpty).getOrElse(l.pgBin.toString)
+      ),
+      bundles =
+        cfg.bundles.copy(dir = if cfg.bundles.dir == DefaultBundlesDir then l.bundles.toString else cfg.bundles.dir),
       // the first-run data ships inside the bundle (scripts/bundle/server.sh copies db/ there)
       init = cfg.init.copy(dataDir =
-        if cfg.init.dataDir == DefaultInitDataDir then l.initData.toString else cfg.init.dataDir))
+        if cfg.init.dataDir == DefaultInitDataDir then l.initData.toString else cfg.init.dataDir
+      )
+    )
 
   /** `backups.dir`'s reference.conf value — relative, i.e. meaningless for a bundle. */
   private val DefaultBackupsDir = "backups"
@@ -145,10 +185,13 @@ object Supervisor:
   /** `init.data-dir`'s reference.conf value — the repo's `db/`, relative to a checkout. */
   private val DefaultInitDataDir = "db"
 
-  /** True when `exe` sits in a bundle (`<home>/bin/<exe>` beside `<home>/pg/bin/pg_ctl`): running the
-    * bundled server needs no configuration at all. */
+  /** True when `exe` sits in a bundle (`<home>/bin/<exe>` beside `<home>/pg/bin/pg_ctl`): running the bundled server
+    * needs no configuration at all.
+    */
   def bundled(exe: Option[Path]): Boolean =
-    exe.flatMap(e => Option(e.toAbsolutePath.getParent)).flatMap(b => Option(b.getParent))
+    exe
+      .flatMap(e => Option(e.toAbsolutePath.getParent))
+      .flatMap(b => Option(b.getParent))
       .exists(h => Files.isExecutable(h.resolve("pg").resolve("bin").resolve("pg_ctl")))
 
   def currentExecutable: Option[Path] =
@@ -156,23 +199,31 @@ object Supervisor:
 
   // ── effects ──────────────────────────────────────────────────────────────────────────────────
 
-  private val stopping  = AtomicBoolean(false)
+  private val stopping = AtomicBoolean(false)
   private val converter = AtomicReference[Option[Process]](None)
 
-  /** Start (or adopt) the bundled Postgres and the converter, register their shutdown, and return
-    * the configuration that points at them. Throws with an actionable message when the bundle is
-    * incomplete — the server cannot run without its database. */
+  /** Start (or adopt) the bundled Postgres and the converter, register their shutdown, and return the configuration
+    * that points at them. Throws with an actionable message when the bundle is incomplete — the server cannot run
+    * without its database.
+    */
   def start(cfg: AppConfig): AppConfig =
     val exe = currentExecutable
     val l = layout(cfg.runtime, exe, k => Option(System.getenv(k)), System.getProperty("os.name", ""))
       .fold(e => throw IllegalStateException(e), identity)
     if !Files.isExecutable(l.pgBin.resolve("pg_ctl")) then
-      throw IllegalStateException(s"no PostgreSQL in the bundle: ${l.pgBin.resolve("pg_ctl")} is missing (HISTMERSION_HOME=${l.home})")
+      throw IllegalStateException(
+        s"no PostgreSQL in the bundle: ${l.pgBin.resolve("pg_ctl")} is missing (HISTMERSION_HOME=${l.home})"
+      )
     List(l.data, l.logs, l.backups, l.uploads, l.bundles).foreach(d => Files.createDirectories(d))
     scribe.info(s"runtime: bundle ${l.home}, data ${l.data}")
-    PgRelocation.relocate(l.pgBin.getParent, System.getProperty("os.name", "").toLowerCase.contains("mac"))
-      .foreach(r => scribe.info(s"runtime: relocated PostgreSQL to ${l.pgBin.getParent} " +
-        s"(${r.files} files patched, ${r.signed} re-signed, ${r.tooLong} strings too long to patch)"))
+    PgRelocation
+      .relocate(l.pgBin.getParent, System.getProperty("os.name", "").toLowerCase.contains("mac"))
+      .foreach(r =>
+        scribe.info(
+          s"runtime: relocated PostgreSQL to ${l.pgBin.getParent} " +
+            s"(${r.files} files patched, ${r.signed} re-signed, ${r.tooLong} strings too long to patch)"
+        )
+      )
 
     val fresh = !Files.exists(l.cluster.resolve("PG_VERSION"))
     if fresh then initCluster(l, cfg.db.user, cfg.db.password)
@@ -182,7 +233,10 @@ object Supervisor:
       val settings = pgSettings(cfg.runtime.postgres, physicalMemory(System.getProperty("os.name", "")))
       scribe.info(s"runtime: postgres memory ${settings.map((k, v) => s"$k=$v").mkString(", ")}")
       val (rc, out) = run(pgStart(l, cfg.runtime.pgPort, settings), l)
-      if rc != 0 then throw IllegalStateException(s"postgres did not start (exit $rc): ${out.takeRight(5).mkString("; ")} — see ${l.logs.resolve("postgres.log")}")
+      if rc != 0 then
+        throw IllegalStateException(
+          s"postgres did not start (exit $rc): ${out.takeRight(5).mkString("; ")} — see ${l.logs.resolve("postgres.log")}"
+        )
       scribe.info(s"runtime: postgres up on 127.0.0.1:${cfg.runtime.pgPort}")
     val configured = configure(cfg, l, Option(System.getenv("HISTMERSION_BIND")))
     ensureDatabase(configured)
@@ -193,17 +247,20 @@ object Supervisor:
     Runtime.getRuntime.addShutdownHook(Thread(() => shutdown(l)))
     configured
 
-  /** How a config reload is fitted to the running bundle (docs/research-plugins.md §3.5): every
-    * reloaded config is pointed at the bundled Postgres and converter the way [[start]] pointed the
-    * first one (the children themselves, `runtime.*`, are restart-only), and a database the reload
-    * names is created in the bundled cluster before a pool opens on it. `started` is the config
-    * [[start]] was given. */
+  /** How a config reload is fitted to the running bundle (docs/research-plugins.md §3.5): every reloaded config is
+    * pointed at the bundled Postgres and converter the way [[start]] pointed the first one (the children themselves,
+    * `runtime.*`, are restart-only), and a database the reload names is created in the bundled cluster before a pool
+    * opens on it. `started` is the config [[start]] was given.
+    */
   def reloadSource(started: AppConfig, read: () => Either[String, LoadedConfig]): ConfigSource =
     val l = layout(started.runtime, currentExecutable, k => Option(System.getenv(k)), System.getProperty("os.name", ""))
       .fold(e => throw IllegalStateException(e), identity)
     val bind = Option(System.getenv("HISTMERSION_BIND"))
-    ConfigSource(read, c => configure(c, l, bind),
-      c => scala.util.Try(ensureDatabase(c)).toEither.left.map(e => s"cannot create the database: ${e.getMessage}"))
+    ConfigSource(
+      read,
+      c => configure(c, l, bind),
+      c => scala.util.Try(ensureDatabase(c)).toEither.left.map(e => s"cannot create the database: ${e.getMessage}")
+    )
 
   private def initCluster(l: Layout, user: String, password: String): Unit =
     val pw = Files.createTempFile("histmersion-pw", "")
@@ -229,8 +286,9 @@ object Supervisor:
         scribe.info(s"runtime: created database ${target.database}")
     finally c.close()
 
-  /** Run the converter; when it exits unexpectedly, restart it after 1, 2, 4 … 60 s (reset once a
-    * run has lasted a minute). */
+  /** Run the converter; when it exits unexpectedly, restart it after 1, 2, 4 … 60 s (reset once a run has lasted a
+    * minute).
+    */
   private def superviseConverter(l: Layout, port: Int): Unit =
     val t = Thread.ofPlatform().daemon(true).name("histmersion-converter").unstarted { () =>
       var backoffMs = 1000L
@@ -251,7 +309,9 @@ object Supervisor:
         converter.set(None)
         if !stopping.get() then
           if (System.nanoTime() - started) > 60_000_000_000L then backoffMs = 1000L
-          scribe.warn(s"runtime: converter exited ($code); restarting in ${backoffMs / 1000} s — see ${l.logs.resolve("converter.log")}")
+          scribe.warn(
+            s"runtime: converter exited ($code); restarting in ${backoffMs / 1000} s — see ${l.logs.resolve("converter.log")}"
+          )
           Thread.sleep(backoffMs)
           backoffMs = math.min(backoffMs * 2, 60000L)
     }
@@ -270,6 +330,6 @@ object Supervisor:
   private def run(cmd: List[String], l: Layout): (Int, List[String]) =
     val pb = ProcessBuilder(cmd.asJava).redirectErrorStream(true)
     pb.environment().put("PROJ_DATA", l.projData.toString)
-    val p   = pb.start()
+    val p = pb.start()
     val out = scala.io.Source.fromInputStream(p.getInputStream).getLines().toList
     (p.waitFor(), out)

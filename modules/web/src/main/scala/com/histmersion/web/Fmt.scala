@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.{ConfidenceStyle, YearFmt, Years, Label}
+import com.histmersion.api.{ConfidenceStyle, Label, YearFmt, Years}
 import com.histmersion.web.ui.ThemeTokens
 import scala.math.*
 import com.histmersion.values.Confidence
@@ -24,11 +24,11 @@ object Fmt:
     if stops.isEmpty then ""
     else
       val ct = max(0.0, min(1.0, t))
-      val f  = ct * (stops.length - 1)
-      val i  = f.toInt
-      val g  = f - i
-      val a  = stops(i)
-      val b  = stops(min(i + 1, stops.length - 1))
+      val f = ct * (stops.length - 1)
+      val i = f.toInt
+      val g = f - i
+      val a = stops(i)
+      val b = stops(min(i + 1, stops.length - 1))
       def lerp(av: Int, bv: Int) = (av + (bv - av) * g).round.toInt
       s"rgb(${lerp(a._1, b._1)},${lerp(a._2, b._2)},${lerp(a._3, b._3)})"
 
@@ -64,6 +64,6 @@ object Fmt:
     if s.length <= maxLen then s
     else
       val cut = s.substring(0, maxLen)
-      val sp  = cut.lastIndexOf(' ')
+      val sp = cut.lastIndexOf(' ')
       val base = if sp > maxLen * 0.6 then cut.substring(0, sp) else cut
       base.replaceAll("[\\s,;:.\\u2014-]+$", "") + "…"

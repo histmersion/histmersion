@@ -6,12 +6,13 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.PlaceKind
 
-/** The gazetteer over real HTTP (plan §1.6a): import a tiny Linked-Places document, then read it
-  * back through every route. Gated on HISTMERSION_TEST_DB_URL like the other server suites.
+/** The gazetteer over real HTTP (plan §1.6a): import a tiny Linked-Places document, then read it back through every
+  * route. Gated on HISTMERSION_TEST_DB_URL like the other server suites.
   *
-  * Deliberately does NOT call `POST /api/places/rebuild`: that re-materialises `finding_places` for
-  * the WHOLE corpus, and the db-module suites (which may run in another JVM against the same test
-  * database) assert on it. `PlaceRepoSuite` covers the rebuild. */
+  * Deliberately does NOT call `POST /api/places/rebuild`: that re-materialises `finding_places` for the WHOLE corpus,
+  * and the db-module suites (which may run in another JVM against the same test database) assert on it.
+  * `PlaceRepoSuite` covers the rebuild.
+  */
 class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -26,32 +27,53 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(url)).build())
 
   private def post(url: String, body: String) =
-    send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
-      .header("Content-Type", "application/json")
-      .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      java.net.http.HttpRequest
+        .newBuilder(java.net.URI.create(url))
+        .header("Content-Type", "application/json")
+        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
 
-  /** Two nested regions and a site, with a relation that is only valid in the Late Bronze Age. The
-    * land is dated: an undated region with a shape and no finding is in no view at a time (the time
-    * rule, `PlaceTimeSuite`), and the tree must walk through it. */
-  private val doc = Lpf.render(List(
-    PlaceInput(Place("zzh_world", "Zzh World", PlaceKind.Region), List(PlaceName("Zzh World"))),
-    PlaceInput(
-      Place("zzh_land", "Zzh Land", PlaceKind.Region,
-        Some("""{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}"""),
-        Some(Period(-3000, 0))),
-      List(PlaceName("Zzh Land"), PlaceName("Zzhland", "xx")),
-      List(PlaceRelation("zzh_land", "zzh_world"))),
-    PlaceInput(
-      Place("zzh_polity", "Zzh Polity", PlaceKind.Polity,
-        Some("""{"type":"Point","coordinates":[105.0,15.0]}"""), Some(Period(-1400, -1200))),
-      List(PlaceName("Zzh Polity")),
-      List(PlaceRelation("zzh_polity", "zzh_land", PlaceRelation.PartOf, Some(Period(-1400, -1200)))))))
+  /** Two nested regions and a site, with a relation that is only valid in the Late Bronze Age. The land is dated: an
+    * undated region with a shape and no finding is in no view at a time (the time rule, `PlaceTimeSuite`), and the tree
+    * must walk through it.
+    */
+  private val doc = Lpf.render(
+    List(
+      PlaceInput(Place("zzh_world", "Zzh World", PlaceKind.Region), List(PlaceName("Zzh World"))),
+      PlaceInput(
+        Place(
+          "zzh_land",
+          "Zzh Land",
+          PlaceKind.Region,
+          Some(
+            """{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}"""
+          ),
+          Some(Period(-3000, 0))
+        ),
+        List(PlaceName("Zzh Land"), PlaceName("Zzhland", "xx")),
+        List(PlaceRelation("zzh_land", "zzh_world"))
+      ),
+      PlaceInput(
+        Place(
+          "zzh_polity",
+          "Zzh Polity",
+          PlaceKind.Polity,
+          Some("""{"type":"Point","coordinates":[105.0,15.0]}"""),
+          Some(Period(-1400, -1200))
+        ),
+        List(PlaceName("Zzh Polity")),
+        List(PlaceRelation("zzh_polity", "zzh_land", PlaceRelation.PartOf, Some(Period(-1400, -1200))))
+      )
+    )
+  )
 
   test("import → search → detail → children → tree, all as of a year"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       val (is, ib) = post(s"$url/api/places/import", doc)
@@ -93,9 +115,9 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("a place id in the filter reaches sources through finding_places; an unknown one is a name"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       // no findings were ever materialised into zzh_land, so filtering by it must return nothing —
       // and must NOT fall back to matching the id as a region-name substring
@@ -108,33 +130,50 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     }
 
   private def put(url: String, body: String) =
-    send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
-      .header("Content-Type", "application/json")
-      .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      java.net.http.HttpRequest
+        .newBuilder(java.net.URI.create(url))
+        .header("Content-Type", "application/json")
+        .PUT(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
 
-  /** Its own places and source (`zzc_*`), far from `zzh_*`: the test above asserts `zzh_land` selects
-    * nothing, and a shared test database keeps what earlier runs wrote. */
-  private val countsDoc = Lpf.render(List(
-    PlaceInput(Place("zzc_world", "Zzc World", PlaceKind.Region), List(PlaceName("Zzc World"))),
-    PlaceInput(
-      Place("zzc_land", "Zzc Land", PlaceKind.Region,
-        Some("""{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}""")),
-      List(PlaceName("Zzc Land")),
-      List(PlaceRelation("zzc_land", "zzc_world")))))
+  /** Its own places and source (`zzc_*`), far from `zzh_*`: the test above asserts `zzh_land` selects nothing, and a
+    * shared test database keeps what earlier runs wrote.
+    */
+  private val countsDoc = Lpf.render(
+    List(
+      PlaceInput(Place("zzc_world", "Zzc World", PlaceKind.Region), List(PlaceName("Zzc World"))),
+      PlaceInput(
+        Place(
+          "zzc_land",
+          "Zzc Land",
+          PlaceKind.Region,
+          Some(
+            """{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}"""
+          )
+        ),
+        List(PlaceName("Zzc Land")),
+        List(PlaceRelation("zzc_land", "zzc_world"))
+      )
+    )
+  )
 
   test("#716: counts=true says what place=<id> selects — the place and its descendants"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(post(s"$url/api/places/import", countsDoc)._1, 200)
       // a source write materialises its findings into the places that cover them (odd years: the
       // aggregate suites assert on which periods exist anywhere in the shared test database)
-      val (ps, pb) = put(s"$url/api/sources/zzc_counted",
+      val (ps, pb) = put(
+        s"$url/api/sources/zzc_counted",
         """{"title":"Counted","authors":["A"],"year":2020,"status":"current",
           |"findings":[{"claim":"here","lon":125.0,"lat":15.0,"periodStart":-1337,"periodEnd":-1221},
-          |{"claim":"also here","lon":126.0,"lat":16.0,"periodStart":-1337,"periodEnd":-1221}]}""".stripMargin)
+          |{"claim":"also here","lon":126.0,"lat":16.0,"periodStart":-1337,"periodEnd":-1221}]}""".stripMargin
+      )
       assertEquals(ps, 200, pb)
 
       val (ls, lb) = get(s"$url/api/places/zzc_land?counts=true")
@@ -152,9 +191,9 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("#718: /api/about reports the build, health, job queue and store counts"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(post(s"$url/api/places/import", countsDoc)._1, 200)
       val (as, ab) = get(s"$url/api/about")
@@ -167,7 +206,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(about.health.db, "ok")
       assert(about.health.schemaVersion.isDefined, ab)
       val counts = about.counts.getOrElse(fail(s"no counts: $ab"))
-      assert(counts.places >= 2, ab)        // at least the two imported above
+      assert(counts.places >= 2, ab) // at least the two imported above
       assert(counts.sources >= 0 && counts.periods >= 0, ab)
       assert(about.jobs.queued >= 0, ab)
       b.stop()
@@ -175,19 +214,21 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("about: the Storage part — the database's size and largest tables, the configured directories, measured once"):
     val base = AppConfig.load()
-    val d    = java.nio.file.Files.createTempDirectory("about-storage")
+    val d = java.nio.file.Files.createTempDirectory("about-storage")
     java.nio.file.Files.createDirectories(d.resolve("backups"))
     java.nio.file.Files.write(d.resolve("backups/histmersion-20261001T100000Z.dump"), Array.fill[Byte](2048)(1))
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get),
+    val cfg = base.copy(
+      db = base.db.copy(url = testDb.get),
       runtime = base.runtime.copy(dataDir = d.resolve("data").toString),
       backups = base.backups.copy(dir = d.resolve("backups").toString),
       converter = base.converter.copy(spoolDir = d.resolve("uploads").toString),
       bundles = base.bundles.copy(dir = d.resolve("bundles").toString),
       basemap = base.basemap.copy(dir = d.resolve("basemap").toString),
       places = base.places.copy(sources = base.places.sources.copy(dir = d.resolve("gazetteer").toString)),
-      storage = base.storage.copy(waitMillis = 30000))
+      storage = base.storage.copy(waitMillis = 30000)
+    )
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
+      val b = Main.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val (as, ab) = get(s"$url/api/about")
       assertEquals(as, 200, ab)
@@ -209,18 +250,23 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   /** #987: a name added by hand and a place of one's own, over REST and MCP (`zzn_*`). */
   test("names added by hand and hand-added places: REST and MCP agree"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       val clean = testPool(cfg.db)
       def wipe() = com.augustnagro.magnum.connect(clean):
         import com.augustnagro.magnum.*
         val _ = sql"DELETE FROM places WHERE id LIKE 'zzn_%' OR id LIKE 'local_zzn_%'".update.run()
       wipe()
-      val lake = Lpf.render(List(PlaceInput(
-        Place("zzn_lake", "Zzn Sea", PlaceKind.Feature, Some("""{"type":"Point","coordinates":[140.5,-20.5]}""")),
-        List(PlaceName("Zzn Sea")))))
+      val lake = Lpf.render(
+        List(
+          PlaceInput(
+            Place("zzn_lake", "Zzn Sea", PlaceKind.Feature, Some("""{"type":"Point","coordinates":[140.5,-20.5]}""")),
+            List(PlaceName("Zzn Sea"))
+          )
+        )
+      )
       assertEquals(post(s"$url/api/places/import?dataset=seed", lake)._1, 200)
 
       val (as, ab) = post(s"$url/api/places/zzn_lake/names", """{"name":"Lake Zznkinneret","lang":"EN"}""")
@@ -228,7 +274,11 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       assert(ab.contains("\"lang\":\"en\"") && ab.contains("\"changed\":true"), ab)
       assertEquals(post(s"$url/api/places/zzn_nope/names", """{"name":"X"}""")._1, 404)
       assertEquals(post(s"$url/api/places/zzn_lake/names", """{"name":"  "}""")._1, 400)
-      assertEquals(post(s"$url/api/places/zzn_lake/names", """{"name":"X","language":"en"}""")._1, 400, "unknown keys are refused")
+      assertEquals(
+        post(s"$url/api/places/zzn_lake/names", """{"name":"X","language":"en"}""")._1,
+        400,
+        "unknown keys are refused"
+      )
 
       // a re-seed of the place keeps the name added by hand
       assertEquals(post(s"$url/api/places/import?dataset=seed", lake)._1, 200)
@@ -241,7 +291,10 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
       // a seed name cannot be removed; the hand-added one can
       assertEquals(post(s"$url/api/places/zzn_lake/names/remove", """{"name":"Zzn Sea"}""")._1, 400)
-      assertEquals(post(s"$url/api/places/zzn_lake/names/remove", """{"name":"Lake Zznkinneret","lang":"en"}""")._1, 200)
+      assertEquals(
+        post(s"$url/api/places/zzn_lake/names/remove", """{"name":"Lake Zznkinneret","lang":"en"}""")._1,
+        200
+      )
 
       // a place of one's own: local, its source required, its id never reused
       val place = """{"label":"Zzn Gornji","kind":"site","lon":140.25,"lat":-20.25,"source":"fixture map"}"""
@@ -253,29 +306,38 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
       // the MCP tools reach the same handlers
       def mcp(name: String, args: String): String =
-        send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(s"$url/mcp"))
-          .header("content-type", "application/json").header("accept", "application/json, text/event-stream")
-          .POST(java.net.http.HttpRequest.BodyPublishers.ofString(
-            s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$name","arguments":$args}}""")).build())._2
+        send(
+          java.net.http.HttpRequest
+            .newBuilder(java.net.URI.create(s"$url/mcp"))
+            .header("content-type", "application/json")
+            .header("accept", "application/json, text/event-stream")
+            .POST(
+              java.net.http.HttpRequest.BodyPublishers.ofString(
+                s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$name","arguments":$args}}"""
+              )
+            )
+            .build()
+        )._2
       val added = mcp("place_names", """{"placeId":"zzn_lake","name":"Zznkinnereth","lang":"he"}""")
       assert(added.contains("added the name **Zznkinnereth** (he)"), added)
       val listed = mcp("place_names", """{"placeId":"zzn_lake"}""")
       assert(listed.contains("Zznkinnereth"), listed)
-      val second = mcp("add_place", """{"label":"Zzn Arkona","kind":"site","lon":140.3,"lat":-20.3,"source":"fixture"}""")
+      val second =
+        mcp("add_place", """{"label":"Zzn Arkona","kind":"site","lon":140.3,"lat":-20.3,"source":"fixture"}""")
       assert(second.contains("`local_zzn_arkona`"), second)
-      val refusedMcp = mcp("add_place", """{"label":"Zzn Arkona","kind":"site","lon":140.3,"lat":-20.3,"source":"fixture"}""")
+      val refusedMcp =
+        mcp("add_place", """{"label":"Zzn Arkona","kind":"site","lon":140.3,"lat":-20.3,"source":"fixture"}""")
       assert(refusedMcp.contains("already the id of a place"), refusedMcp)
 
       wipe()
       b.stop()
     }
 
-
   test("V080: a kind and period set by hand — REST and MCP agree, a re-seed keeps it, a reset restores the source's"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       val clean = testPool(cfg.db)
       def wipe() = com.augustnagro.magnum.connect(clean):
@@ -284,18 +346,33 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
         val _ = sql"DELETE FROM place_aliases WHERE alias LIKE 'zzo_%'".update.run()
         val _ = sql"DELETE FROM place_removals WHERE id LIKE 'zzo_%'".update.run()
       wipe()
-      val regio = Lpf.render(List(PlaceInput(
-        Place("zzo_regio", "Zzo Regio XII", PlaceKind.Site, Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")),
-        List(PlaceName("Zzo Regio XII")))))
+      val regio = Lpf.render(
+        List(
+          PlaceInput(
+            Place(
+              "zzo_regio",
+              "Zzo Regio XII",
+              PlaceKind.Site,
+              Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")
+            ),
+            List(PlaceName("Zzo Regio XII"))
+          )
+        )
+      )
       assertEquals(post(s"$url/api/places/import?dataset=seed", regio)._1, 200)
 
-      val (ss, sb) = post(s"$url/api/places/zzo_regio/override", """{"kind":"Region","reason":"one of the 14 regiones"}""")
+      val (ss, sb) =
+        post(s"$url/api/places/zzo_regio/override", """{"kind":"Region","reason":"one of the 14 regiones"}""")
       assertEquals(ss, 200, sb)
       assert(sb.contains("\"kindBefore\":\"site\"") && sb.contains("\"kindAfter\":\"region\""), sb)
       assertEquals(post(s"$url/api/places/zzo_nope/override", """{"kind":"region"}""")._1, 404)
       assertEquals(post(s"$url/api/places/zzo_regio/override", """{"kind":"town"}""")._1, 400)
       assertEquals(post(s"$url/api/places/zzo_regio/override", """{}""")._1, 400, "nothing to set")
-      assertEquals(post(s"$url/api/places/zzo_regio/override", """{"kind":"region","why":"x"}""")._1, 400, "unknown keys are refused")
+      assertEquals(
+        post(s"$url/api/places/zzo_regio/override", """{"kind":"region","why":"x"}""")._1,
+        400,
+        "unknown keys are refused"
+      )
 
       // a re-seed sends kind site again; the override stays and the source's kind is remembered
       assertEquals(post(s"$url/api/places/import?dataset=seed", regio)._1, 200)
@@ -307,10 +384,18 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       assert(lb.contains("\"sourceKind\":\"site\"") && lb.contains("\"reason\":\"one of the 14 regiones\""), lb)
 
       def mcp(name: String, args: String): String =
-        send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(s"$url/mcp"))
-          .header("content-type", "application/json").header("accept", "application/json, text/event-stream")
-          .POST(java.net.http.HttpRequest.BodyPublishers.ofString(
-            s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$name","arguments":$args}}""")).build())._2
+        send(
+          java.net.http.HttpRequest
+            .newBuilder(java.net.URI.create(s"$url/mcp"))
+            .header("content-type", "application/json")
+            .header("accept", "application/json, text/event-stream")
+            .POST(
+              java.net.http.HttpRequest.BodyPublishers.ofString(
+                s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$name","arguments":$args}}"""
+              )
+            )
+            .build()
+        )._2
       val listed = mcp("place_override", """{"placeId":"zzo_regio"}""")
       assert(listed.contains("**Zzo Regio XII** `zzo_regio`: region _(the source says: site, undated)_"), listed)
       val dated = mcp("place_override", """{"placeId":"zzo_regio","periodStart":-7}""")
@@ -318,22 +403,48 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       val noId = mcp("place_override", """{"kind":"region"}""")
       assert(noId.contains("`placeId` is required"), noId)
       val reset = mcp("place_override", """{"placeId":"zzo_regio","reset":true}""")
-      assert(reset.contains("reset **Zzo Regio XII** `zzo_regio` to what its source says: kind region → site, period from 7 BCE → undated"), reset)
+      assert(
+        reset.contains(
+          "reset **Zzo Regio XII** `zzo_regio` to what its source says: kind region → site, period from 7 BCE → undated"
+        ),
+        reset
+      )
       assertEquals(post(s"$url/api/places/zzo_regio/override", """{"reset":true}""")._1, 404, "nothing left to reset")
       val (es, eb) = get(s"$url/api/places/overrides?place=zzo_regio")
       assertEquals((es, eb), (200, "[]"))
 
       // a merge (REST) and a removal (MCP); neither comes back with the seed
-      val two = Lpf.render(List(
-        PlaceInput(Place("zzo_dup", "Withdrawn: Zzo Regio XII", PlaceKind.Site, Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")),
-          List(PlaceName("Withdrawn: Zzo Regio XII"))),
-        PlaceInput(Place("zzo_road", "Withdrawn: Untitled", PlaceKind.Site, Some("""{"type":"Point","coordinates":[141.7,-21.7]}""")),
-          List(PlaceName("Withdrawn: Untitled")))))
+      val two = Lpf.render(
+        List(
+          PlaceInput(
+            Place(
+              "zzo_dup",
+              "Withdrawn: Zzo Regio XII",
+              PlaceKind.Site,
+              Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")
+            ),
+            List(PlaceName("Withdrawn: Zzo Regio XII"))
+          ),
+          PlaceInput(
+            Place(
+              "zzo_road",
+              "Withdrawn: Untitled",
+              PlaceKind.Site,
+              Some("""{"type":"Point","coordinates":[141.7,-21.7]}""")
+            ),
+            List(PlaceName("Withdrawn: Untitled"))
+          )
+        )
+      )
       assertEquals(post(s"$url/api/places/import?dataset=seed", two)._1, 200)
       val (ms, mb) = post(s"$url/api/places/zzo_dup/merge", """{"into":"zzo_regio","reason":"same place"}""")
       assertEquals(ms, 200, mb)
       assert(mb.contains("\"into\":\"zzo_regio\""), mb)
-      assertEquals(post(s"$url/api/places/zzo_dup/merge", """{"into":"zzo_regio"}""")._1, 400, "the old id is zzo_regio now: into itself")
+      assertEquals(
+        post(s"$url/api/places/zzo_dup/merge", """{"into":"zzo_regio"}""")._1,
+        400,
+        "the old id is zzo_regio now: into itself"
+      )
       val removed = mcp("place_override", """{"placeId":"zzo_road","remove":true,"reason":"withdrawn"}""")
       assert(removed.contains("removed **Withdrawn: Untitled** `zzo_road`; no re-seed brings it back"), removed)
       val both = mcp("place_override", """{"placeId":"zzo_regio","remove":true,"mergeInto":"zzo_x"}""")
@@ -344,10 +455,15 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       assert(rs == 200 && rb.contains("\"id\":\"zzo_regio\""), s"$rs $rb")
 
       // V081: a point set by hand — refused without the gazetteer value it comes from; kept by a re-seed
-      assertEquals(post(s"$url/api/places/zzo_regio/override", """{"pointLat":-21.0,"pointLon":141.0}""")._1, 400,
-        "a point needs a reason")
-      val (ps, pb) = post(s"$url/api/places/zzo_regio/override",
-        """{"pointLat":-21.0,"pointLon":141.0,"reason":"fixture gazetteer point"}""")
+      assertEquals(
+        post(s"$url/api/places/zzo_regio/override", """{"pointLat":-21.0,"pointLon":141.0}""")._1,
+        400,
+        "a point needs a reason"
+      )
+      val (ps, pb) = post(
+        s"$url/api/places/zzo_regio/override",
+        """{"pointLat":-21.0,"pointLon":141.0,"reason":"fixture gazetteer point"}"""
+      )
       assertEquals(ps, 200, pb)
       assert(pb.contains("\"latBefore\":-21.3") && pb.contains("\"latAfter\":-21.0"), pb)
       assertEquals(post(s"$url/api/places/import?dataset=seed", regio)._1, 200)
@@ -355,7 +471,10 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(gs, 200, gb)
       assert(gb.contains("141") && !gb.contains("141.5"), gb)
       val pointed = mcp("place_override", """{"placeId":"zzo_regio"}""")
-      assert(pointed.contains("point 21.0000 S 141.0000 E _(the source says: site, undated, point 21.3000 S 141.5000 E)_"), pointed)
+      assert(
+        pointed.contains("point 21.0000 S 141.0000 E _(the source says: site, undated, point 21.3000 S 141.5000 E)_"),
+        pointed
+      )
       val unpointed = mcp("place_override", """{"placeId":"zzo_regio","reset":true}""")
       assert(unpointed.contains("point 21.0000 S 141.0000 E → 21.3000 S 141.5000 E"), unpointed)
 
@@ -365,9 +484,9 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("#1064: /api/places/sources is routed before /api/places/{id}; load refuses an unknown source"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       val (ss, sb) = get(s"$url/api/places/sources")
       assertEquals(ss, 200, sb)

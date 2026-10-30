@@ -8,12 +8,13 @@ import com.histmersion.config.given
 import com.histmersion.domain.FilterInference.*
 import com.histmersion.domain.FilterInference.Limits
 
-/** infer-filter's code checks: the answer's shape, then what the filter returns against the article's
-  * citations and the hit bounds; a failing filter goes back, and on the last attempt nothing is proposed. */
+/** infer-filter's code checks: the answer's shape, then what the filter returns against the article's citations and the
+  * hit bounds; a failing filter goes back, and on the last attempt nothing is proposed.
+  */
 class FilterInferenceSuite extends munit.FunSuite:
 
   private val lim = Limits(minHits = 3, maxHits = 50, minCitedShare = 0.6)
-  private val f   = ArticleFilter(topics = List("tin"))
+  private val f = ArticleFilter(topics = List("tin"))
 
   test("filterOf: an empty filter, a blank rationale and an unknown status are refused; a filter is tidied"):
     assert(filterOf(FilterAnswer("why")).left.exists(_.head.contains("selects nothing")))
@@ -34,7 +35,7 @@ class FilterInferenceSuite extends munit.FunSuite:
     assert(missing.left.exists(ps => ps.head.contains("1 of the 3") && ps.head.contains("b, c")), missing.toString)
     judge("zz", f, "w", 2, Nil, Set.empty, Nil, lim, last = true) match
       case Right(Inferred(None, ps)) => assert(ps.nonEmpty)
-      case other => fail(other.toString)
+      case other                     => fail(other.toString)
 
   test("an article that cites nothing is judged by the bounds alone"):
     assert(judge("zz", f, "w", 5, Nil, Set.empty, Nil, lim, last = false).exists(_.proposal.isDefined))

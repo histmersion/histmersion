@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import com.histmersion.values.{LocationPrecision, PlaceKind}
 
-
 /** The point-only seed regions (2026-10-09): which points are only an atlas grid square's centre. */
 class PlaceCleanupSuite extends munit.FunSuite:
 
@@ -37,12 +36,20 @@ class PlaceCleanupSuite extends munit.FunSuite:
   test("a place's Markdown: the shape and, for a grid-square point, the location"):
     val pt = Some("""{"type":"Point","coordinates":[22.5,37.5]}""")
     def detail(kind: String, precision: LocationPrecision) = PlaceDetail(
-      PlaceSummary("pleiades_1001895", "Thessalia", kind, None, None, None, ""), pt, Nil, Nil, 0, None,
-      locationPrecision = precision)
+      PlaceSummary("pleiades_1001895", "Thessalia", kind, None, None, None, ""),
+      pt,
+      Nil,
+      Nil,
+      0,
+      None,
+      locationPrecision = precision
+    )
     val thess = Markdown.place(detail(PlaceKind.Polity, LocationPrecision.GridCell))
     assert(thess.contains(s"**Shape:** ${PlaceShape.NoBoundaryNote}"), thess)
     assert(thess.contains("**Location:** approximate (atlas grid square)"), thess)
-    assertEquals(detail(PlaceKind.Polity, LocationPrecision.GridCell).shapeNotes,
-      List(PlaceShape.NoBoundaryNote, "location: approximate (atlas grid square)"))
+    assertEquals(
+      detail(PlaceKind.Polity, LocationPrecision.GridCell).shapeNotes,
+      List(PlaceShape.NoBoundaryNote, "location: approximate (atlas grid square)")
+    )
     val ubii = Markdown.place(detail(PlaceKind.People, LocationPrecision.Stated))
     assert(ubii.contains(s"**Shape:** ${PlaceShape.PeopleNote}") && !ubii.contains("**Location:**"), ubii)

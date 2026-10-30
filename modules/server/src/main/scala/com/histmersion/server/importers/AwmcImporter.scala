@@ -8,24 +8,28 @@ import com.histmersion.values.PlaceKind
 
 /** Imports classical-world geographic features from the Ancient World Mapping Center (AWMC).
   *
-  * Source: https://github.com/AWMC/geodata
-  * License: ODbL (Open Database License)
-  * Coverage: Classical antiquity — 2620 regional names with Pleiades IDs, plus political extents.
+  * Source: https://github.com/AWMC/geodata License: ODbL (Open Database License) Coverage: Classical antiquity — 2620
+  * regional names with Pleiades IDs, plus political extents.
   *
-  * Primary dataset: `regional_names_linework.geojson` — named regions, peoples, mountains, etc.
-  * with TITLE, TYPE, PID (Pleiades ID). Geometry is MultiLineString (label placement lines),
-  * not polygons — but the Pleiades link lets us match to sites with real geometry. */
+  * Primary dataset: `regional_names_linework.geojson` — named regions, peoples, mountains, etc. with TITLE, TYPE, PID
+  * (Pleiades ID). Geometry is MultiLineString (label placement lines), not polygons — but the Pleiades link lets us
+  * match to sites with real geometry.
+  */
 object AwmcImporter extends GazetteerImporter:
 
   val name = "awmc"
   val description = "AWMC classical-world regional names and features (ODbL, ~2600 features)"
-  val fetchUrl = "https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson"
+  val fetchUrl =
+    "https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson"
 
   private val Source = "Ancient World Mapping Center (UNC), ODbL"
 
   def transform(rawJson: String): Either[String, List[PlaceInput]] =
     io.circe.parser.parse(rawJson).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
-      val features = doc.asObject.flatMap(_("features")).flatMap(_.asArray).map(_.toList)
+      val features = doc.asObject
+        .flatMap(_("features"))
+        .flatMap(_.asArray)
+        .map(_.toList)
         .orElse(doc.asArray.map(_.toList))
         .toRight("not a GeoJSON FeatureCollection")
       features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, i).toOption))
@@ -46,9 +50,9 @@ object AwmcImporter extends GazetteerImporter:
 
         val leftover = JsonObject.fromIterable(
           pid.map("pleiadesId" -> Json.fromString(_)).toList ++
-          List("awmcType" -> Json.fromString(pType)) ++
-          str(props, "NOTES", "notes").map("notes" -> Json.fromString(_)).toList ++
-          str(props, "CREATOR", "creator").map("creator" -> Json.fromString(_)).toList
+            List("awmcType" -> Json.fromString(pType)) ++
+            str(props, "NOTES", "notes").map("notes" -> Json.fromString(_)).toList ++
+            str(props, "CREATOR", "creator").map("creator" -> Json.fromString(_)).toList
         )
 
         val place = Place(

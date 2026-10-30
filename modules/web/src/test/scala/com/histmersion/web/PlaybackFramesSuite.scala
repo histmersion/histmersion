@@ -36,8 +36,12 @@ class PlaybackFramesSuite extends munit.FunSuite:
   }
 
   test("a window holds what overlaps it; undated findings never") {
-    val pts = Seq(hit(-3000, -2900, "a"), hit(-2950, -2950, "b"), hit(-2800, -2700, "c"),
-      GeoHit("zz", "Zz", "u", None, Some(30.0), Some(37.0), None, None, None))
+    val pts = Seq(
+      hit(-3000, -2900, "a"),
+      hit(-2950, -2950, "b"),
+      hit(-2800, -2700, "c"),
+      GeoHit("zz", "Zz", "u", None, Some(30.0), Some(37.0), None, None, None)
+    )
     assertEquals(PlaybackFeed.inWindow(pts, -2960, -2900).map(_.claim), List("a", "b"))
     assertEquals(PlaybackFeed.inWindow(pts, -2899, -2801).map(_.claim), Nil)
     assertEquals(PlaybackFeed.keep(pts, -2900).map(_.claim), List("a", "c", "u"))

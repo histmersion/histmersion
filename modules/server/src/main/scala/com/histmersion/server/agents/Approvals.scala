@@ -11,27 +11,34 @@ import com.histmersion.server.Handlers
 import javax.sql.DataSource
 import com.histmersion.values.SourceStatus
 
-/** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status,
-  * a disagreement edge — is applied by code only under the rules of [[AgentProposals.route]];
-  * otherwise it becomes an `approvals` row a person decides from the web UI or the CLI. Approving
-  * applies it through [[Handlers.patchSource]], exactly the patch a person would send.
+/** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
+  * edge — is applied by code only under the rules of [[AgentProposals.route]]; otherwise it becomes an `approvals` row
+  * a person decides from the web UI or the CLI. Approving applies it through [[Handlers.patchSource]], exactly the
+  * patch a person would send.
   *
-  * A run does not wait for its approvals: it finishes, and the proposal stays open until decided. */
-final class Approvals(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
-    applyHint: Managers.HintProposal => Either[String, String] = _ => Left("no managers to apply it")):
+  * A run does not wait for its approvals: it finishes, and the proposal stays open until decided.
+  */
+final class Approvals(
+    h: Handlers,
+    ds: DataSource,
+    cfg: => AgentsConfig,
+    applyHint: Managers.HintProposal => Either[String, String] = _ => Left("no managers to apply it")
+):
   import Approvals.Outcome
-
 
   private def current(ck: String): Option[SourceStatus] = h.getSource(ck, body = false).toOption.map(_.source.status)
 
   private def apply(p: Proposal): Either[String, String] =
     h.patchSource(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
 
-  /** [[propose]] inside a run, through its write gate: a dry run records the proposal on the step and
-    * neither applies nor records it. */
+  /** [[propose]] inside a run, through its write gate: a dry run records the proposal on the step and neither applies
+    * nor records it.
+    */
   def propose(ctx: RunCtx, p: Proposal): Outcome =
     import io.circe.syntax.*
-    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(ctx.run.id), p))(Outcome.NotProposed(p.describe))
+    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(ctx.run.id), p))(
+      Outcome.NotProposed(p.describe)
+    )
 
   /** Route one verified proposal: apply it now (and record it, already approved), or record it open. */
   def propose(runId: Option[String], p: Proposal): Outcome =
@@ -39,11 +46,18 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
     val now = if p.kind == ApprovalKind.StatusChange then current(p.citekey) else None
     AgentProposals.route(p, now, cfg.approvals.statusMode, cfg.approvals.edgeMode) match
       case Route.Skip(why) => Outcome.Skipped(s"${p.describe} ($why)")
-      case Route.Apply =>
+      case Route.Apply     =>
         apply(p) match
-          case Left(m) => Outcome.Failed(s"${p.describe}: $m")
+          case Left(m)  => Outcome.Failed(s"${p.describe}: $m")
           case Right(w) =>
-            val _ = AgentRepo.propose(ds, runId, p, now, ApprovalState.Approved, Some(s"${ListFilters.DecidedBy.AutoResult}: $w"))
+            val _ = AgentRepo.propose(
+              ds,
+              runId,
+              p,
+              now,
+              ApprovalState.Approved,
+              Some(s"${ListFilters.DecidedBy.AutoResult}: $w")
+            )
             Outcome.Applied(w)
       case Route.Ask =>
         AgentRepo.propose(ds, runId, p, now) match
@@ -53,12 +67,17 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
   def list(state: Option[String], limit: Option[Int], page: Int): Either[ApiError, List[ApprovalInfo]] =
     filter(state).map(st => AgentRepo.approvals(ds, st, page))
 
-  /** One page of the approvals ([[Paging]]) that match `f` ([[ListFilters.ApprovalFilter]]: no state =
-    * the open ones), with the per-state and the kind / decidedBy counts under the same filter. */
-  def page(f: ListFilters.ApprovalFilter, limit: Int, before: Option[String], upTo: Option[String])
-      : Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
+  /** One page of the approvals ([[Paging]]) that match `f` ([[ListFilters.ApprovalFilter]]: no state = the open ones),
+    * with the per-state and the kind / decidedBy counts under the same filter.
+    */
+  def page(
+      f: ListFilters.ApprovalFilter,
+      limit: Int,
+      before: Option[String],
+      upTo: Option[String]
+  ): Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
     for
-      q    <- com.histmersion.server.ListQueries.approvals(f)
+      q <- com.histmersion.server.ListQueries.approvals(f)
       page <- AgentRepo.approvalPage(ds, q, limit, before, upTo).left.map(ApiError(_, Some(Write.CodeNotFound)))
     yield
       val (rows, more) = page
@@ -70,49 +89,71 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
     state.map(_.trim).filter(_.nonEmpty) match
       case None        => Right(Some(ApprovalState.Open))
       case Some("all") => Right(None)
-      case Some(s) =>
-        ApprovalState.parse(s).map(Some(_))
-          .toRight(ApiError(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})"))
+      case Some(s)     =>
+        ApprovalState
+          .parse(s)
+          .map(Some(_))
+          .toRight(
+            ApiError(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})")
+          )
 
-  /** Approve (apply, then mark approved — or failed, with why) or reject an OPEN approval. 404 for an
-    * unknown id, 409 for one already decided. A BLOCKING approval (a goal's plan, an article to
-    * publish) is only decided here: the run waiting on it applies it when it resumes (the caller
-    * wakes it). */
+  /** Approve (apply, then mark approved — or failed, with why) or reject an OPEN approval. 404 for an unknown id, 409
+    * for one already decided. A BLOCKING approval (a goal's plan, an article to publish) is only decided here: the run
+    * waiting on it applies it when it resumes (the caller wakes it).
+    */
   def decide(id: Long, decision: String, note: Option[String]): Either[ApiError, ApprovalInfo] =
     val clean = note.map(_.trim).filter(_.nonEmpty).map(_.take(2000))
     for
       d <- Decision.parse(decision).toRight(ApiError(s"unknown decision '$decision' (approve or reject)"))
       a <- AgentRepo.approval(ds, id).toRight(ApiError(s"No approval $id", Some(Write.CodeNotFound)))
-      _ <- Either.cond(a.state == ApprovalState.Open.wire, (),
-             ApiError(s"approval $id is already ${a.state}", Some(AgentsApi.CodeConflict)))
+      _ <- Either.cond(
+        a.state == ApprovalState.Open.wire,
+        (),
+        ApiError(s"approval $id is already ${a.state}", Some(AgentsApi.CodeConflict))
+      )
       out <- a.approvalKind match
-               case Some(k) if k.blocking     => decideBlocking(a, d, clean)
-               case Some(k) if k.aboutSubject => decideSubject(a, k, d, clean)
-               case _                         => decideSource(id, d, clean)
+        case Some(k) if k.blocking     => decideBlocking(a, d, clean)
+        case Some(k) if k.aboutSubject => decideSubject(a, k, d, clean)
+        case _                         => decideSource(id, d, clean)
     yield out
 
-  /** A proposal about an article or a goal that no run waits for (managers, phase 2): an inferred
-    * coverage filter is recorded on the article when approved; an approved plan of articles is the
-    * seeding manager's to compile (the caller tells it). The decision is claimed first, as for a source. */
-  private def decideSubject(a: ApprovalInfo, k: ApprovalKind, d: Decision, note: Option[String]): Either[ApiError, ApprovalInfo] =
+  /** A proposal about an article or a goal that no run waits for (managers, phase 2): an inferred coverage filter is
+    * recorded on the article when approved; an approved plan of articles is the seeding manager's to compile (the
+    * caller tells it). The decision is claimed first, as for a source.
+    */
+  private def decideSubject(
+      a: ApprovalInfo,
+      k: ApprovalKind,
+      d: Decision,
+      note: Option[String]
+  ): Either[ApiError, ApprovalInfo] =
     val to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
     for
-      _ <- Either.cond(AgentRepo.decide(ds, a.id, to, note, None), (),
-             ApiError(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict)))
+      _ <- Either.cond(
+        AgentRepo.decide(ds, a.id, to, note, None),
+        (),
+        ApiError(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict))
+      )
       _ = (d, k) match
-            case (Decision.Reject, _) => AgentRepo.settle(ds, a.id, ApprovalState.Rejected, "rejected")
-            case (Decision.Approve, ApprovalKind.HintEffect) =>
-              a.hintEffect.toRight("the approval carries no readable action").flatMap(applyHint) match
-                case Right(w) => AgentRepo.settle(ds, a.id, ApprovalState.Approved, s"applied: $w".take(1000))
-                case Left(m)  => AgentRepo.settle(ds, a.id, ApprovalState.Failed, m.take(1000))
-            case (Decision.Approve, ApprovalKind.ArticleFilter) =>
-              a.filter.toRight("the approval carries no readable filter").flatMap(InferFilterPipeline.applyProposal(h, ds, _)) match
-                case Right(w) => AgentRepo.settle(ds, a.id, ApprovalState.Approved, s"applied: $w")
-                case Left(m)  => AgentRepo.settle(ds, a.id, ApprovalState.Failed, m.take(1000))
-            case (Decision.Approve, _) =>
-              AgentRepo.settle(ds, a.id, ApprovalState.Approved,
-                s"approved — the seeding manager ${Managers.seedId(a.subject.getOrElse("?"))} compiles " +
-                  Plural.count(a.articles.fold(0)(_.articles.size), "article"))
+        case (Decision.Reject, _) => AgentRepo.settle(ds, a.id, ApprovalState.Rejected, "rejected")
+        case (Decision.Approve, ApprovalKind.HintEffect) =>
+          a.hintEffect.toRight("the approval carries no readable action").flatMap(applyHint) match
+            case Right(w) => AgentRepo.settle(ds, a.id, ApprovalState.Approved, s"applied: $w".take(1000))
+            case Left(m)  => AgentRepo.settle(ds, a.id, ApprovalState.Failed, m.take(1000))
+        case (Decision.Approve, ApprovalKind.ArticleFilter) =>
+          a.filter
+            .toRight("the approval carries no readable filter")
+            .flatMap(InferFilterPipeline.applyProposal(h, ds, _)) match
+            case Right(w) => AgentRepo.settle(ds, a.id, ApprovalState.Approved, s"applied: $w")
+            case Left(m)  => AgentRepo.settle(ds, a.id, ApprovalState.Failed, m.take(1000))
+        case (Decision.Approve, _) =>
+          AgentRepo.settle(
+            ds,
+            a.id,
+            ApprovalState.Approved,
+            s"approved — the seeding manager ${Managers.seedId(a.subject.getOrElse("?"))} compiles " +
+              Plural.count(a.articles.fold(0)(_.articles.size), "article")
+          )
       out <- AgentRepo.approval(ds, a.id).toRight(ApiError(s"No approval ${a.id}", Some(Write.CodeNotFound)))
     yield out
 
@@ -121,8 +162,11 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
       case Decision.Approve => (ApprovalState.Approved, "approved — the run that proposed it continues and applies it")
       case Decision.Reject  => (ApprovalState.Rejected, "rejected — the run finishes without applying it")
     for
-      _ <- Either.cond(AgentRepo.decide(ds, a.id, to, note, Some(result)), (),
-             ApiError(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict)))
+      _ <- Either.cond(
+        AgentRepo.decide(ds, a.id, to, note, Some(result)),
+        (),
+        ApiError(s"approval ${a.id} was decided meanwhile", Some(AgentsApi.CodeConflict))
+      )
       out <- AgentRepo.approval(ds, a.id).toRight(ApiError(s"No approval ${a.id}", Some(Write.CodeNotFound)))
     yield out
 
@@ -132,14 +176,17 @@ final class Approvals(h: Handlers, ds: DataSource, cfg: => AgentsConfig,
       // claim the decision FIRST (compare-and-set on `open`), so two people approving at once apply
       // the change once; then apply it and record what happened
       to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
-      _ <- Either.cond(AgentRepo.decide(ds, id, to, clean, None), (),
-             ApiError(s"approval $id was decided meanwhile", Some(AgentsApi.CodeConflict)))
+      _ <- Either.cond(
+        AgentRepo.decide(ds, id, to, clean, None),
+        (),
+        ApiError(s"approval $id was decided meanwhile", Some(AgentsApi.CodeConflict))
+      )
       _ = d match
-            case Decision.Reject => AgentRepo.settle(ds, id, ApprovalState.Rejected, "rejected")
-            case Decision.Approve =>
-              apply(p) match
-                case Right(w) => AgentRepo.settle(ds, id, ApprovalState.Approved, s"applied: $w")
-                case Left(m)  => AgentRepo.settle(ds, id, ApprovalState.Failed, m.take(1000))
+        case Decision.Reject  => AgentRepo.settle(ds, id, ApprovalState.Rejected, "rejected")
+        case Decision.Approve =>
+          apply(p) match
+            case Right(w) => AgentRepo.settle(ds, id, ApprovalState.Approved, s"applied: $w")
+            case Left(m)  => AgentRepo.settle(ds, id, ApprovalState.Failed, m.take(1000))
       out <- AgentRepo.approval(ds, id).toRight(ApiError(s"No approval $id", Some(Write.CodeNotFound)))
     yield out
 
@@ -151,6 +198,7 @@ object Approvals:
     case AlreadyOpen(what: String)
     case Skipped(why: String)
     case Failed(why: String)
+
     /** A dry run's proposal: neither recorded nor applied (#992). */
     case NotProposed(what: String)
 

@@ -11,9 +11,10 @@ import scala.scalajs.js
 /** The pure half of the events in playback (#1440): when an event shows and how strongly. */
 object EventPlayback:
 
-  /** Pure: how visible an event is with the playhead at `playhead` — 0 before its span, 1 inside it,
-    * then falling linearly to 0 over `fadeYears` after it ends (a battle of one year stays on screen
-    * for the fade, not for one frame). */
+  /** Pure: how visible an event is with the playhead at `playhead` — 0 before its span, 1 inside it, then falling
+    * linearly to 0 over `fadeYears` after it ends (a battle of one year stays on screen for the fade, not for one
+    * frame).
+    */
   def alpha(span: (Long, Long), playhead: Long, fadeYears: Double): Double =
     val (start, end) = span
     if playhead < start then 0.0
@@ -24,78 +25,99 @@ object EventPlayback:
   /** Pure: the years a fade of `seconds` of playback takes at `yearsPerSecond`. */
   def fadeYears(seconds: Double, yearsPerSecond: Double): Double = (seconds * yearsPerSecond).max(0.0)
 
-  /** Pure: `alpha` rounded to twentieths — what the page is told, so a slow fade does not rewrite the
-    * same element on every frame. */
+  /** Pure: `alpha` rounded to twentieths — what the page is told, so a slow fade does not rewrite the same element on
+    * every frame.
+    */
   def step(alpha: Double): Double = math.round(alpha * 20).toDouble / 20
 
-  /** Pure: the events playback draws, with the years each covers: the dated ones precise enough to
-    * stand at a year ([[EventPrecision.mapped]] — the feed leaves the imprecise out already). */
+  /** Pure: the events playback draws, with the years each covers: the dated ones precise enough to stand at a year
+    * ([[EventPrecision.mapped]] — the feed leaves the imprecise out already).
+    */
   def playable(events: List[EventGeo]): Vector[(EventGeo, (Long, Long))] =
-    events.toVector.filter(e => EventPrecision.mapped(e.precision)).flatMap(e => EventGeo.outer(e.timeSpan).map(span => (e, span)))
+    events.toVector
+      .filter(e => EventPrecision.mapped(e.precision))
+      .flatMap(e => EventGeo.outer(e.timeSpan).map(span => (e, span)))
 
   /** Pure: the line under an event's name — its kind and its years. */
   def note(e: EventGeo): String =
     s"${Fmt.display(e.kind)} · ${YearFmt.span(e.timeSpan)}"
 
-  /** Pure: the key events share when they are drawn at the same point (a site with several
-    * destructions): their labels are stacked there rather than drawn over each other. */
+  /** Pure: the key events share when they are drawn at the same point (a site with several destructions): their labels
+    * are stacked there rather than drawn over each other.
+    */
   def anchorKey(e: EventGeo): String = f"${e.lat}%.4f|${e.lon}%.4f"
 
-  /** Pure: the stacking slot of each SHOWN event at one anchor — `ids` in their order there (by start),
-    * numbered 0, 1, 2… among those shown, so a label moves up when the one above it goes. */
+  /** Pure: the stacking slot of each SHOWN event at one anchor — `ids` in their order there (by start), numbered 0, 1,
+    * 2… among those shown, so a label moves up when the one above it goes.
+    */
   def slots(ids: Seq[String], shown: String => Boolean): Map[String, Int] =
     ids.filter(shown).zipWithIndex.toMap
 
-  /** Pure: an event name's rank in the map's collision pass ([[MapLabels]], [[LabelPlacement.cull]]):
-    * above every area name (whose rank is its zoom-0 area, at most the 256² px world) and point name
-    * — an event is on screen for a moment, the static names return when it goes; a local event above
-    * a regional one (the battle stays readable inside its war); among each, the later start first
-    * (the event just arrived wins over the one fading out). */
+  /** Pure: an event name's rank in the map's collision pass ([[MapLabels]], [[LabelPlacement.cull]]): above every area
+    * name (whose rank is its zoom-0 area, at most the 256² px world) and point name — an event is on screen for a
+    * moment, the static names return when it goes; a local event above a regional one (the battle stays readable inside
+    * its war); among each, the later start first (the event just arrived wins over the one fading out).
+    */
   def rank(e: EventGeo, start: Long): Double =
     (if e.scale == EventScale.Regional then RegionalRank else LocalRank) + start.toDouble
 
   private val RegionalRank = 1e9
-  private val LocalRank    = 2e9
+  private val LocalRank = 2e9
 
-  /** Pure: the label marker's markup. It is the point-only region label of [[PlaceGlyph]] — the same
-    * `.hd-area-point` halo name and note — inside an `.hd-event` wrapper that says local (with the dot
-    * at the site) or regional; the wrapper carries the visibility as `--a`. The name starts hidden
-    * (`is-culled`): the map's label pass shows it once it collides with no higher-ranked name. */
+  /** Pure: the label marker's markup. It is the point-only region label of [[PlaceGlyph]] — the same `.hd-area-point`
+    * halo name and note — inside an `.hd-event` wrapper that says local (with the dot at the site) or regional; the
+    * wrapper carries the visibility as `--a`. The name starts hidden (`is-culled`): the map's label pass shows it once
+    * it collides with no higher-ranked name.
+    */
   def html(e: EventGeo, alpha: Double): String =
     val local = e.scale != EventScale.Regional
-    val title = s"${e.label} — ${note(e)}${e.dating.fold("")(d => s" · $d")}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
+    val title =
+      s"${e.label} — ${note(e)}${e.dating.fold("")(d => s" · $d")}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
     // the dot carries the kind's icon (#1449): what happened reads before the name does
-    val dot = if local then s"""<span class="hd-event-dot hd-badge">${Glyphs.badge(EventTaxonomy.icon(e.kind))}</span>""" else ""
+    val dot = if local then
+      s"""<span class="hd-event-dot hd-badge">${Glyphs.badge(EventTaxonomy.icon(e.kind))}</span>"""
+    else ""
     val approx = if e.precision == EventPrecision.Approximate then " hd-event--approximate" else ""
-    s"""<span class="hd-event ${if local then "hd-event--local" else "hd-event--regional"}$approx" style="--a:$alpha" """ +
+    s"""<span class="hd-event ${
+        if local then "hd-event--local" else "hd-event--regional"
+      }$approx" style="--a:$alpha" """ +
       s"""title="${Fmt.esc(title)}">$dot<span class="hd-area-point is-culled">""" +
       s"""<span class="hd-area-point-name">${Fmt.esc(e.label)}</span>""" +
       s"""<span class="hd-area-point-note">${Fmt.esc(note(e))}</span></span></span>"""
 
-/** The events on the map while the timeline plays (#1440). Fetched ONCE when playback starts (the
-  * filter's events over the span played — `/api/events/geo`); every frame after that is local: each
-  * event's visibility is computed from the playhead, and only the events that appear, disappear or
-  * change visibility touch the page. A LOCAL event is a dot and its label at its site, fading out over
-  * `ui.events.local-fade-seconds` of playback after it ends; a REGIONAL one is its label at the
-  * region's point-on-surface and the region's faint outline for its span (an area known only by a
-  * point: the label at the point). */
+/** The events on the map while the timeline plays (#1440). Fetched ONCE when playback starts (the filter's events over
+  * the span played — `/api/events/geo`); every frame after that is local: each event's visibility is computed from the
+  * playhead, and only the events that appear, disappear or change visibility touch the page. A LOCAL event is a dot and
+  * its label at its site, fading out over `ui.events.local-fade-seconds` of playback after it ends; a REGIONAL one is
+  * its label at the region's point-on-surface and the region's faint outline for its span (an area known only by a
+  * point: the label at the point).
+  */
 object EventLayer:
 
   // `var`s: a shown event's visibility and stacking slot change frame by frame, in place
-  private final case class Shown(marker: DomMarker, outline: Boolean, var alpha: Double, var slot: Int)
+  final private case class Shown(marker: DomMarker, outline: Boolean, var alpha: Double, var slot: Int)
 
   /** The pane the labels go in: above the finding markers, so a bubble never hides an event. */
   private def pane = TheMap.pane(MapStack.Pane.Events)
 
   /** The regional events' outlines, drawn by the map (`ShapeSet` "event-outlines"). */
   val OutlineSet = "event-outlines"
-  private def outlines: Option[ShapeSet] = Option.when(TheMap.isUp)(TheMap.surface.shapes(OutlineSet,
-    // `.hd-event-outline`'s look: the accent, dashed, faint — its strength the event's visibility
-    ShapeStyle(fillOpacity = 0.06, lineWidth = 1.5, lineOpacity = 0.55, colour = Some(com.histmersion.web.ui.ThemeTokens("--accent")),
-      dash = List(2.7, 2.7))))
+  private def outlines: Option[ShapeSet] = Option.when(TheMap.isUp)(
+    TheMap.surface.shapes(
+      OutlineSet,
+      // `.hd-event-outline`'s look: the accent, dashed, faint — its strength the event's visibility
+      ShapeStyle(
+        fillOpacity = 0.06,
+        lineWidth = 1.5,
+        lineOpacity = 0.55,
+        colour = Some(com.histmersion.web.ui.ThemeTokens("--accent")),
+        dash = List(2.7, 2.7)
+      )
+    )
+  )
 
   private var running = false
-  private var config: EventsUiConfig  = null
+  private var config: EventsUiConfig = null
   private var items: Vector[(EventGeo, (Long, Long))] = Vector.empty
   // the events at each anchor, by start: who stacks over whom
   private var anchors: Map[String, Vector[String]] = Map.empty
@@ -123,7 +145,7 @@ object EventLayer:
   def frame(playhead: Long, yearsPerSecond: Double): Unit =
     lastFrame = Some((playhead, yearsPerSecond))
     if running && config != null && TheMap.isUp then
-      val localFade    = EventPlayback.fadeYears(config.localFadeSeconds, yearsPerSecond)
+      val localFade = EventPlayback.fadeYears(config.localFadeSeconds, yearsPerSecond)
       val regionalFade = EventPlayback.fadeYears(config.regionalFadeSeconds, yearsPerSecond)
       val moved = mutable.Set.empty[String]
       var outlinesChanged = false
@@ -173,17 +195,22 @@ object EventLayer:
     lastFrame = None
 
   private def drawOutlines(): Unit =
-    outlines.foreach(_.set(outlined.toSeq.map((id, g) => ShapeFeature(id, g, dashed = true, alpha = shown.get(id).fold(0.0)(_.alpha)))))
+    outlines.foreach(
+      _.set(outlined.toSeq.map((id, g) => ShapeFeature(id, g, dashed = true, alpha = shown.get(id).fold(0.0)(_.alpha))))
+    )
 
   private def add(e: EventGeo, start: Long, a: Double): Shown =
-    val outline = e.outline.filter(_ => e.scale == EventScale.Regional).flatMap { geometry =>
-      scala.util.Try(js.JSON.parse(geometry)).toOption.map { g =>
-        // a Feature or a bare geometry
-        val geom = if !js.isUndefined(g.geometry) then g.geometry else g
-        outlined(e.id) = geom
-        true
+    val outline = e.outline
+      .filter(_ => e.scale == EventScale.Regional)
+      .flatMap { geometry =>
+        scala.util.Try(js.JSON.parse(geometry)).toOption.map { g =>
+          // a Feature or a bare geometry
+          val geom = if !js.isUndefined(g.geometry) then g.geometry else g
+          outlined(e.id) = geom
+          true
+        }
       }
-    }.getOrElse(false)
+      .getOrElse(false)
     val el = DomMarker.element("hd-event-wrap", EventPlayback.html(e, a))
     val marker = DomMarker(e.lat, e.lon, el)
     // a regional label under the local ones: the battle stays readable inside its war

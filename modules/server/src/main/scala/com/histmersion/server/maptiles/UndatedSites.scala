@@ -22,13 +22,15 @@ trait UndatedSites:
   def items(c: TileCoord, siteType: Option[String], except: List[String]): List[TileCell]
 
 object UndatedSites:
-  /** Over the database: a tile up to `keptZoom` reads the counts kept ahead of time while they answer for
-    * every write to an undated site; when they do not, it counts from the sites and a rebuild of the kept
-    * counts is started (`background`, one at a time). */
+  /** Over the database: a tile up to `keptZoom` reads the counts kept ahead of time while they answer for every write
+    * to an undated site; when they do not, it counts from the sites and a rebuild of the kept counts is started
+    * (`background`, one at a time).
+    */
   def apply(ds: DataSource, keptZoom: () => Int, background: (() => Unit) => Unit): UndatedSites =
     Implementation(ds, keptZoom, background)
 
-  private final class Implementation(ds: DataSource, keptZoom: () => Int, background: (() => Unit) => Unit) extends UndatedSites:
+  final private class Implementation(ds: DataSource, keptZoom: () => Int, background: (() => Unit) => Unit)
+      extends UndatedSites:
     private val rebuilding = AtomicBoolean(false)
 
     def counted(c: TileCoord, grid: TileGrid, siteType: Option[String]): List[GridCell] =
@@ -67,26 +69,61 @@ object UndatedSites:
       val wanted = siteType.map(_.trim.toLowerCase).filter(_.nonEmpty)
       sites.get.flatMap { s =>
         val (px, py) = c.unitsOf(s.lat, s.lon)
-        Option.when(px >= 0 && px < TileCoord.Extent && py >= 0 && py < TileCoord.Extent &&
-          wanted.forall(t => s.siteType.contains(t)))((s, px, py))
+        Option.when(
+          px >= 0 && px < TileCoord.Extent && py >= 0 && py < TileCoord.Extent &&
+            wanted.forall(t => s.siteType.contains(t))
+        )((s, px, py))
       }
 
     def counted(c: TileCoord, grid: TileGrid, siteType: Option[String]): List[GridCell] =
       val perSide = perSideOf(grid)
       val cu = grid.cellUnits.max(1)
-      inTile(c, siteType).groupBy((_, px, py) => (c.x * perSide + math.floor(px / cu).toLong, c.y * perSide + math.floor(py / cu).toLong))
-        .toList.sortBy(_._1).map { case ((gx, gy), in) => square(gx, gy, in) }
+      inTile(c, siteType)
+        .groupBy((_, px, py) =>
+          (c.x * perSide + math.floor(px / cu).toLong, c.y * perSide + math.floor(py / cu).toLong)
+        )
+        .toList
+        .sortBy(_._1)
+        .map { case ((gx, gy), in) => square(gx, gy, in) }
 
     private def square(gx: Long, gy: Long, in: List[(UndatedSite, Double, Double)]): GridCell =
-      @tailrec def loop(rest: List[(UndatedSite, Double, Double)], sx: Double, sy: Double, w: Double, s: Double, e: Double,
-          n: Double, one: String): GridCell = rest match
+      @tailrec def loop(
+          rest: List[(UndatedSite, Double, Double)],
+          sx: Double,
+          sy: Double,
+          w: Double,
+          s: Double,
+          e: Double,
+          n: Double,
+          one: String
+      ): GridCell = rest match
         case (site, px, py) :: tail =>
-          loop(tail, sx + px, sy + py, w.min(site.lon), s.min(site.lat), e.max(site.lon), n.max(site.lat),
-            if one.isEmpty || site.id < one then site.id else one)
+          loop(
+            tail,
+            sx + px,
+            sy + py,
+            w.min(site.lon),
+            s.min(site.lat),
+            e.max(site.lon),
+            n.max(site.lat),
+            if one.isEmpty || site.id < one then site.id else one
+          )
         case Nil => GridCell(gx, gy, in.size, 0, sx, sy, 0, 0, None, None, w, s, e, n, one)
       loop(in, 0, 0, Double.MaxValue, Double.MaxValue, -Double.MaxValue, -Double.MaxValue, "")
 
     def items(c: TileCoord, siteType: Option[String], except: List[String]): List[TileCell] =
       inTile(c, siteType).filterNot((s, _, _) => except.contains(s.id)).map { (s, px, py) =>
-        TileCell(s.id, math.floor(px).toInt, math.floor(py).toInt, 1, None, None, s.lon, s.lat, s.lon, s.lat, undated = 1)
+        TileCell(
+          s.id,
+          math.floor(px).toInt,
+          math.floor(py).toInt,
+          1,
+          None,
+          None,
+          s.lon,
+          s.lat,
+          s.lon,
+          s.lat,
+          undated = 1
+        )
       }

@@ -10,22 +10,24 @@ import sttp.apispec.circe.*
 import sttp.client4.Backend
 import sttp.shared.Identity
 
-
-/** The model type a plugin provider's calls are built with: every capability, as the provider (not
-  * sttp-ai) decides what it can do. */
+/** The model type a plugin provider's calls are built with: every capability, as the provider (not sttp-ai) decides
+  * what it can do.
+  */
 private[agents] object PluginModel extends AIModel with Capability.All:
   def value: String = "plugin"
 
-/** A PLUGIN's AI provider as the engine sees it (docs/research-plugins.md §22): sttp-ai's own agent loop
-  * over a backend that asks the provider for ONE turn at a time. So the host keeps everything but the
-  * model call — the tools (run in process under the step's allowlist), the interceptors (trace, budget,
-  * LLM slots, the first-call probe, the allowance guard: each sees every turn), the typed answer's
-  * decoding — exactly as for the sttp-ai providers. */
+/** A PLUGIN's AI provider as the engine sees it (docs/research-plugins.md §22): sttp-ai's own agent loop over a backend
+  * that asks the provider for ONE turn at a time. So the host keeps everything but the model call — the tools (run in
+  * process under the step's allowlist), the interceptors (trace, budget, LLM slots, the first-call probe, the allowance
+  * guard: each sees every turn), the typed answer's decoding — exactly as for the sttp-ai providers.
+  */
 final class PluginAiClient(val model: ModelRef, provider: AiProvider, http: AiHttp) extends LlmClient:
 
   def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
-    val builder = AgentBuilder[Identity, PluginModel.type](conf => PluginAiClient.Turns(model, provider, http, conf))(
-      using sttp.monad.IdentityMonad)
+    val builder =
+      AgentBuilder[Identity, PluginModel.type](conf => PluginAiClient.Turns(model, provider, http, conf))(using
+        sttp.monad.IdentityMonad
+      )
     LlmClient.configure(builder, call).run(call.user)(PluginAiClient.NoHttp)
 
 object PluginAiClient:
@@ -33,20 +35,28 @@ object PluginAiClient:
   /** The sttp backend the loop is handed: the provider sends through [[AiHttp]], so it is never used. */
   private[agents] val NoHttp: Backend[Identity] = sttp.client4.testing.SyncBackendStub
 
-  /** The client for `ref`, or why it cannot be used here: a provider that spends the person's own plan
-    * beyond loopback, or one whose own check says no (no key, no URL). */
+  /** The client for `ref`, or why it cannot be used here: a provider that spends the person's own plan beyond loopback,
+    * or one whose own check says no (no key, no URL).
+    */
   def client(ref: ModelRef, provider: AiProvider, http: AiHttp, loopback: Boolean): Either[String, LlmClient] =
     if provider.spendsPersonalPlan && !loopback then
-      Left(s"${ref.provider.wire} is refused while the server listens beyond loopback: it spends your own plan, " +
-        "and another client could spend it")
+      Left(
+        s"${ref.provider.wire} is refused while the server listens beyond loopback: it spends your own plan, " +
+          "and another client could spend it"
+      )
     else
-      PluginAi.check(provider, ref.model).left.map(why => s"${ref.wire}: $why").map(_ => PluginAiClient(ref, provider, http))
+      PluginAi
+        .check(provider, ref.model)
+        .left
+        .map(why => s"${ref.wire}: $why")
+        .map(_ => PluginAiClient(ref, provider, http))
 
   /** Pure: the conversation sttp-ai keeps → the provider's messages (iteration markers dropped). */
   def messages(h: ConversationHistory): List[AiMessage] =
     h.entries.toList.collect {
       case ConversationEntry.UserPrompt(t)             => AiMessage.User(t)
-      case ConversationEntry.AssistantResponse(t, tcs) => AiMessage.Assistant(t, tcs.toList.map(c => AiToolCall(c.id, c.toolName, c.input)))
+      case ConversationEntry.AssistantResponse(t, tcs) =>
+        AiMessage.Assistant(t, tcs.toList.map(c => AiToolCall(c.id, c.toolName, c.input)))
       case ConversationEntry.ToolResult(id, name, out) => AiMessage.ToolResult(id, name, out)
     }
 
@@ -65,26 +75,51 @@ object PluginAiClient:
       case AiStop.ToolUse   => StopReason.ToolUse
       case AiStop.MaxTokens => StopReason.MaxTokens
       case AiStop.Other     => StopReason.EndTurn
-    val usage = t.usage.map(u => TokenUsage(Tokens(math.max(0L, u.input)), Tokens(math.max(0L, u.output)),
-      Tokens(math.max(0L, u.cacheRead)), Tokens.Zero, Tokens(math.max(0L, u.cacheWrite))))
-    AgentResponse(Option(t.text).getOrElse(""), t.toolCalls.map(c => ToolCall(c.id, c.tool, c.input)), stop, usage,
-      t.servedBy.map(_.trim).filter(_.nonEmpty).orElse(Some(model.model)))
+    val usage = t.usage.map(u =>
+      TokenUsage(
+        Tokens(math.max(0L, u.input)),
+        Tokens(math.max(0L, u.output)),
+        Tokens(math.max(0L, u.cacheRead)),
+        Tokens.Zero,
+        Tokens(math.max(0L, u.cacheWrite))
+      )
+    )
+    AgentResponse(
+      Option(t.text).getOrElse(""),
+      t.toolCalls.map(c => ToolCall(c.id, c.tool, c.input)),
+      stop,
+      usage,
+      t.servedBy.map(_.trim).filter(_.nonEmpty).orElse(Some(model.model))
+    )
 
-  /** One step's turns: each `sendRequest` is one [[AiProvider.turn]]. A provider's error, exception or
-    * `null` is a provider failure (an `IOException`: the run pauses with `provider`); its plan's own
-    * limit is [[ModelLimitReached]] (the chain's next model takes over). */
-  private[agents] final class Turns(model: ModelRef, provider: AiProvider, http: AiHttp, conf: AgentConfig[Identity])
+  /** One step's turns: each `sendRequest` is one [[AiProvider.turn]]. A provider's error, exception or `null` is a
+    * provider failure (an `IOException`: the run pauses with `provider`); its plan's own limit is [[ModelLimitReached]]
+    * (the chain's next model takes over).
+    */
+  final private[agents] class Turns(model: ModelRef, provider: AiProvider, http: AiHttp, conf: AgentConfig[Identity])
       extends AgentBackend[Identity]:
     def tools: Seq[AgentTool[Identity, ?]] = conf.userTools
     def systemPrompt: Option[String] = conf.systemPrompt
 
-    def sendRequest(history: ConversationHistory, backend: Backend[Identity], includeTools: Boolean,
-        iterationInfo: IterationInfo): Identity[AgentResponse] =
+    def sendRequest(
+        history: ConversationHistory,
+        backend: Backend[Identity],
+        includeTools: Boolean,
+        iterationInfo: IterationInfo
+    ): Identity[AgentResponse] =
       val offered = if includeTools && provider.capabilities.tools then conf.userTools.toList.map(tool) else Nil
-      val req = AiTurnRequest(model.model, conf.systemPrompt.getOrElse(""), messages(history), offered,
-        conf.responseSchema.map(schemaJson), conf.maxTokens.getOrElse(0), iterationInfo.iteration, iterationInfo.maxIterations)
+      val req = AiTurnRequest(
+        model.model,
+        conf.systemPrompt.getOrElse(""),
+        messages(history),
+        offered,
+        conf.responseSchema.map(schemaJson),
+        conf.maxTokens.getOrElse(0),
+        iterationInfo.iteration,
+        iterationInfo.maxIterations
+      )
       PluginAi.turn(provider, req, http) match
-        case Right(t) => response(t, model)
+        case Right(t)                               => response(t, model)
         case Left(AiFailure.LimitReached(m, until)) =>
           throw ModelLimitReached(model, until.map(java.time.Instant.ofEpochMilli), s"${model.wire}: $m".take(300))
         case Left(AiFailure.Error(m)) => throw java.io.IOException(s"${model.wire}: $m".take(600))

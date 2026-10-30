@@ -1,11 +1,14 @@
 package com.histmersion.values
 
-/** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted.
-  * Wire names are kebab-case (`article-version`), as the V031 trigger writes them. */
+/** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
+  * kebab-case (`article-version`), as the V031 trigger writes them.
+  */
 enum BundleKind:
   case Source, Finding, Article, ArticleVersion, Asset, AssetLink, Attestation, Event, Goal, QueueItem
-  /** A place or a named period added HERE (`dataset = 'local'`); the bundled seeds every instance
-    * imports itself are not carried (docs/research-merge-import.md §7.8). */
+
+  /** A place or a named period added HERE (`dataset = 'local'`); the bundled seeds every instance imports itself are
+    * not carried (docs/research-merge-import.md §7.8).
+    */
   case Place, Period
 
   def wire: String = BundleKind.wireOf(this)
@@ -45,6 +48,6 @@ object BundleKind:
   def fromWire(s: String): Option[BundleKind] = values.find(_.wire == s.trim.toLowerCase)
 
   given WireEnumValues[BundleKind]:
-    def all: Array[BundleKind]                  = BundleKind.values
-    def wire(e: BundleKind): String             = wireOf(e)
+    def all: Array[BundleKind] = BundleKind.values
+    def wire(e: BundleKind): String = wireOf(e)
     def fromWire(s: String): Option[BundleKind] = BundleKind.fromWire(s)

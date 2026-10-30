@@ -1,9 +1,9 @@
 package com.histmersion.web.marks
 
-/** The little Markdown a note is written in, read for its preview: headings (`#`), paragraphs, lists (`-`,
-  * `*`, `1.`), quotes (`>`), code blocks (```), and in a line `**strong**`, `*emphasis*`, `` `code` ``,
-  * `[text](https://…)` and `[[citekey]]`. Anything else is plain text. Pure: the page builds the elements
-  * from this, never HTML from the text. */
+/** The little Markdown a note is written in, read for its preview: headings (`#`), paragraphs, lists (`-`, `*`, `1.`),
+  * quotes (`>`), code blocks (```), and in a line `**strong**`, `*emphasis*`, `` `code` ``, `[text](https://…)` and
+  * `[[citekey]]`. Anything else is plain text. Pure: the page builds the elements from this, never HTML from the text.
+  */
 object NoteMarkdown:
 
   enum Inline:
@@ -22,25 +22,27 @@ object NoteMarkdown:
     case CodeBlock(text: String)
 
   private val Heading = """^(#{1,6})\s+(.*)$""".r
-  private val Bullet  = """^\s*[-*+]\s+(.*)$""".r
-  private val Number  = """^\s*\d+[.)]\s+(.*)$""".r
-  private val QuoteL  = """^\s*>\s?(.*)$""".r
+  private val Bullet = """^\s*[-*+]\s+(.*)$""".r
+  private val Number = """^\s*\d+[.)]\s+(.*)$""".r
+  private val QuoteL = """^\s*>\s?(.*)$""".r
 
   /** Only addresses a person can follow safely: the web, mail, or a page of this server. */
   def safeHref(h: String): Option[String] =
     val t = h.trim
-    Option.when(t.startsWith("https://") || t.startsWith("http://") || t.startsWith("mailto:") ||
-      (t.startsWith("/") && !t.startsWith("//")))(t)
+    Option.when(
+      t.startsWith("https://") || t.startsWith("http://") || t.startsWith("mailto:") ||
+        (t.startsWith("/") && !t.startsWith("//"))
+    )(t)
 
   def blocks(text: String): List[Block] =
     @annotation.tailrec
     def loop(lines: List[String], out: List[Block]): List[Block] = lines match
-      case Nil => out.reverse
-      case l :: rest if l.trim.isEmpty => loop(rest, out)
+      case Nil                                   => out.reverse
+      case l :: rest if l.trim.isEmpty           => loop(rest, out)
       case l :: rest if l.trim.startsWith("```") =>
         val (code, after) = rest.span(!_.trim.startsWith("```"))
         loop(after.drop(1), Block.CodeBlock(code.mkString("\n")) :: out)
-      case Heading(h, t) :: rest => loop(rest, Block.Heading(h.length, inlines(t.trim)) :: out)
+      case Heading(h, t) :: rest   => loop(rest, Block.Heading(h.length, inlines(t.trim)) :: out)
       case (l @ Bullet(_)) :: rest =>
         val (more, after) = rest.span { case Bullet(_) => true; case _ => false }
         loop(after, Block.Items(false, (l :: more).collect { case Bullet(t) => inlines(t) }) :: out)
@@ -58,9 +60,10 @@ object NoteMarkdown:
 
   private def starts(l: String): Boolean = l match
     case Heading(_, _) | Bullet(_) | Number(_) | QuoteL(_) => true
-    case _                                               => l.trim.startsWith("```")
+    case _                                                 => l.trim.startsWith("```")
 
-  private val Token = """\[\[([a-z][a-z0-9_.-]{1,120})\]\]|\[([^\]]+)\]\(([^)\s]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_""".r
+  private val Token =
+    """\[\[([a-z][a-z0-9_.-]{1,120})\]\]|\[([^\]]+)\]\(([^)\s]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_""".r
 
   def inlines(s: String): List[Inline] =
     val out = List.newBuilder[Inline]
@@ -68,12 +71,12 @@ object NoteMarkdown:
     var at = 0
     Token.findAllMatchIn(s).foreach { m =>
       if m.start > at then out += Inline.Text(s.substring(at, m.start))
-      out += (
-        if m.group(1) != null then Inline.Cite(m.group(1))
-        else if m.group(2) != null then safeHref(m.group(3)).fold(Inline.Text(m.matched))(Inline.Link(m.group(2), _))
-        else if m.group(4) != null then Inline.Code(m.group(4))
-        else if m.group(5) != null then Inline.Strong(m.group(5))
-        else Inline.Em(Option(m.group(6)).getOrElse(m.group(7))))
+      out += (if m.group(1) != null then Inline.Cite(m.group(1))
+              else if m.group(2) != null then
+                safeHref(m.group(3)).fold(Inline.Text(m.matched))(Inline.Link(m.group(2), _))
+              else if m.group(4) != null then Inline.Code(m.group(4))
+              else if m.group(5) != null then Inline.Strong(m.group(5))
+              else Inline.Em(Option(m.group(6)).getOrElse(m.group(7))))
       at = m.end
     }
     if at < s.length then out += Inline.Text(s.substring(at))

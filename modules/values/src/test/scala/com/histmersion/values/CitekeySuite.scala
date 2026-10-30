@@ -1,7 +1,8 @@
 package com.histmersion.values
 
-/** A citekey is a path segment on the server's disk (the ingest spool, the acquisition spool) and a
-  * URL segment. Nothing validated one before, which is how `../../../../tmp/x` became a directory. */
+/** A citekey is a path segment on the server's disk (the ingest spool, the acquisition spool) and a URL segment.
+  * Nothing validated one before, which is how `../../../../tmp/x` became a directory.
+  */
 class CitekeySuite extends munit.FunSuite:
 
   test("the shapes the corpus actually uses are accepted"):
@@ -26,8 +27,7 @@ class CitekeySuite extends munit.FunSuite:
     assert(Citekey.parse("a" * 121).isRight)
 
   test("surrounding whitespace is trimmed, not rejected"):
-    assertEquals(Citekey.parse("  cline2014_collapse  ").map(c => c.value: String),
-      Right("cline2014_collapse"))
+    assertEquals(Citekey.parse("  cline2014_collapse  ").map(c => c.value: String), Right("cline2014_collapse"))
 
   test("the message says what a citekey looks like"):
     val e = Citekey.parse("Bad Key!").swap.toOption.get

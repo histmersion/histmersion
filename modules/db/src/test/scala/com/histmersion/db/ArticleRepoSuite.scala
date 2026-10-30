@@ -6,31 +6,56 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.SourceStatus
 
-/** The article store against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
-  * Covers the acceptance lines of plan §5.2 stream 2.7 that need a database: put/patch, the link
-  * graph maintained from the body, backlinks in both directions, the cited-sources footer, and FTS. */
+/** The article store against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance lines
+  * of plan §5.2 stream 2.7 that need a database: put/patch, the link graph maintained from the body, backlinks in both
+  * directions, the cited-sources footer, and FTS.
+  */
 class ArticleRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val slug = "zz_article_sea"
 
   /** A source to cite, so a `[[citekey]]` in an article body is classifiable as a source link. */
   private def seedSource(ck: String, notes: Option[String] = None) =
-    SourceRepo.put(ds, Source(
-      citekey = ck, title = s"Title of $ck", authors = List("A"), doi = None, year = Some(2014),
-      venue = None, status = SourceStatus.Foundational, topics = Nil, regions = Nil, tags = Nil,
-      period = None, summary = None, citedByCount = None, influentialCitations = None,
-      provenance = None, calibreId = None, notes = notes), 4000)
+    SourceRepo.put(
+      ds,
+      Source(
+        citekey = ck,
+        title = s"Title of $ck",
+        authors = List("A"),
+        doi = None,
+        year = Some(2014),
+        venue = None,
+        status = SourceStatus.Foundational,
+        topics = Nil,
+        regions = Nil,
+        tags = Nil,
+        period = None,
+        summary = None,
+        citedByCount = None,
+        influentialCitations = None,
+        provenance = None,
+        calibreId = None,
+        notes = notes
+      ),
+      4000
+    )
 
   private def article(body: String, s: String = slug) = Article(
-    slug = s, title = "The Sea Peoples", kind = "concept", body = body,
-    summary = Some("A loose label."), tags = List("collapse", "sea-peoples"),
-    regions = List("Levant"), period = Some(Period(-1220, -1100)))
+    slug = s,
+    title = "The Sea Peoples",
+    kind = "concept",
+    body = body,
+    summary = Some("A loose label."),
+    tags = List("collapse", "sea-peoples"),
+    regions = List("Levant"),
+    period = Some(Period(-1220, -1100))
+  )
 
   private def reset(): Unit =
     List(slug, "zz_article_other", "zz_article_tmp", "zz_article_myth").foreach(s => ArticleRepo.delete(ds, s))
@@ -38,7 +63,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
   test("put → get round-trip, inclusive int8range bounds and a fresh updatedAt token"):
     reset()
     val token = ArticleRepo.put(ds, article("# The Sea Peoples\n\nbody"))
-    val r     = ArticleRepo.get(ds, slug).get
+    val r = ArticleRepo.get(ds, slug).get
     assertEquals(r.title, "The Sea Peoples")
     assertEquals(r.kind, "concept")
     assertEquals((r.periodStart, r.periodEnd), (Some(-1220L), Some(-1100L)))
@@ -51,35 +76,47 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     // back as two tags, and list/get/load disagreed with each other
     reset()
     val tags = List("trade, long-distance", "sea-peoples")
-    val _    = ArticleRepo.put(ds, article("# T\n\nbody").copy(tags = tags, regions = List("Syria, coast")))
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody").copy(tags = tags, regions = List("Syria, coast")))
     assertEquals(ArticleRepo.get(ds, slug).get.tags, tags)
     assertEquals(ArticleRepo.load(ds, slug).get.regions, List("Syria, coast"))
-    assertEquals(ArticleRepo.list(ds, Filter(), PlaceScope.empty, None, None, 50, 0).articles.find(_.slug == slug).map(_.tags),
-      Some(tags))
+    assertEquals(
+      ArticleRepo.list(ds, Filter(), PlaceScope.empty, None, None, 50, 0).articles.find(_.slug == slug).map(_.tags),
+      Some(tags)
+    )
     val _ = seedSource("zz_comma2020_authors")
-    val _ = SourceRepo.put(ds, SourceRepo.load(ds, "zz_comma2020_authors").get
-      .copy(authors = List("Stocker, Sharon R.", "Davis, Jack L.")), 4000)
+    val _ = SourceRepo.put(
+      ds,
+      SourceRepo
+        .load(ds, "zz_comma2020_authors")
+        .get
+        .copy(authors = List("Stocker, Sharon R.", "Davis, Jack L.")),
+      4000
+    )
     val _ = ArticleRepo.put(ds, article("# T\n\n[[zz_comma2020_authors]]"))
-    assertEquals(ArticleRepo.sourcesCited(ds, slug).map(_.authors),
-      List(List("Stocker, Sharon R.", "Davis, Jack L.")))
-    assertEquals(SourceRepo.get(ds, "zz_comma2020_authors").map(_._1.authors),
-      Some(List("Stocker, Sharon R.", "Davis, Jack L.")))
+    assertEquals(ArticleRepo.sourcesCited(ds, slug).map(_.authors), List(List("Stocker, Sharon R.", "Davis, Jack L.")))
+    assertEquals(
+      SourceRepo.get(ds, "zz_comma2020_authors").map(_._1.authors),
+      Some(List("Stocker, Sharon R.", "Davis, Jack L."))
+    )
 
   test("the link graph is written from the body: a known citekey is a source, everything else an article"):
     reset()
     val _ = seedSource("zz_cline2014_year")
-    val _ = ArticleRepo.put(ds, article(
-      "# T\n\n[[zz_cline2014_year]] and [[bronze_age_collapse]] and [[zz_ghost2019_absent]]"))
+    val _ = ArticleRepo.put(
+      ds,
+      article("# T\n\n[[zz_cline2014_year]] and [[bronze_age_collapse]] and [[zz_ghost2019_absent]]")
+    )
     assertEquals(ArticleRepo.sourcesCited(ds, slug).map(_.citekey), List("zz_cline2014_year"))
     val cited = ArticleRepo.sourcesCited(ds, slug).head
-    assertEquals((cited.title, cited.year, cited.status),
-      (Some("Title of zz_cline2014_year"), Some(2014), Some(SourceStatus.Foundational)))
+    assertEquals(
+      (cited.title, cited.year, cited.status),
+      (Some("Title of zz_cline2014_year"), Some(2014), Some(SourceStatus.Foundational))
+    )
     // the article link is stored too — it is what makes the target's backlinks work
     val _ = ArticleRepo.put(ds, article("# Other\n\n[[zz_article_sea]]", "zz_article_other"))
     // article backlinks only: a source note left behind by another test in this suite may also
     // mention this slug (that path is asserted separately, below)
-    assertEquals(ArticleRepo.backlinks(ds, slug).filter(_.kind == "article").map(_.id),
-      List("zz_article_other"))
+    assertEquals(ArticleRepo.backlinks(ds, slug).filter(_.kind == "article").map(_.id), List("zz_article_other"))
 
   test("a rewritten body replaces the links, it does not accumulate them"):
     reset()
@@ -104,7 +141,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(a1.tags, List("collapse", "sea-peoples", "levant"))
     assertEquals(a1.body, "# T\n\noriginal prose")
 
-    val _  = ArticleRepo.patch(ds, slug, ArticlePatch(append = Some("## More\n\n[[zz_ghost2019_absent]]")))
+    val _ = ArticleRepo.patch(ds, slug, ArticlePatch(append = Some("## More\n\n[[zz_ghost2019_absent]]")))
     val a2 = ArticleRepo.load(ds, slug).get
     assert(a2.body.contains("original prose") && a2.body.contains("## More"), a2.body)
     assertEquals(a2.tags, a1.tags)
@@ -120,28 +157,36 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
   test("a stale ifUpdatedAt is refused with the precondition code, not silently applied"):
     reset()
     val _ = ArticleRepo.put(ds, article("# T\n\nbody"))
-    val e = ArticleRepo.patch(ds, slug, ArticlePatch(summary = Some("x"), ifUpdatedAt = Some("stale")))
-      .left.toOption.get
+    val e =
+      ArticleRepo.patch(ds, slug, ArticlePatch(summary = Some("x"), ifUpdatedAt = Some("stale"))).left.toOption.get
     assertEquals(e.code, Some(Write.CodePrecondition))
     assertEquals(ArticleRepo.load(ds, slug).get.summary, Some("A loose label."))
 
   test("patching an unknown slug is not_found"):
-    assertEquals(ArticleRepo.patch(ds, "zz_no_such_article", ArticlePatch(summary = Some("x")))
-      .left.toOption.get.code, Some(Write.CodeNotFound))
+    assertEquals(
+      ArticleRepo.patch(ds, "zz_no_such_article", ArticlePatch(summary = Some("x"))).left.toOption.get.code,
+      Some(Write.CodeNotFound)
+    )
 
   test("list: kind and FTS (`text`) over title / summary / body"):
     reset()
     val _ = ArticleRepo.put(ds, article("# T\n\nthe Medinet Habu reliefs of Ramesses III"))
-    val _ = ArticleRepo.put(ds, article("# Other\n\nunrelated", "zz_article_other")
-      .copy(title = "Something else", tags = List("other"), summary = Some("nothing here")))
+    val _ = ArticleRepo.put(
+      ds,
+      article("# Other\n\nunrelated", "zz_article_other")
+        .copy(title = "Something else", tags = List("other"), summary = Some("nothing here"))
+    )
 
     def slugs(q: Option[String] = None, kind: Option[String] = None) =
-      ArticleRepo.list(ds, Filter(), PlaceScope.empty, kind, q, 50, 0).articles.map(_.slug)
+      ArticleRepo
+        .list(ds, Filter(), PlaceScope.empty, kind, q, 50, 0)
+        .articles
+        .map(_.slug)
         .filter(_.startsWith("zz_article"))
 
-    assertEquals(slugs(q = Some("Medinet")), List(slug))          // body (weight C)
-    assertEquals(slugs(q = Some("\"Sea Peoples\"")), List(slug))  // title phrase (weight A)
-    assertEquals(slugs(q = Some("loose")), List(slug))            // summary (weight B)
+    assertEquals(slugs(q = Some("Medinet")), List(slug)) // body (weight C)
+    assertEquals(slugs(q = Some("\"Sea Peoples\"")), List(slug)) // title phrase (weight A)
+    assertEquals(slugs(q = Some("loose")), List(slug)) // summary (weight B)
     assert(slugs(kind = Some("concept")).contains(slug))
     assertEquals(slugs(q = Some("zzznothingmatchesthis")), Nil)
 
@@ -177,9 +222,9 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
 
   test("load → render → parse → put round-trips byte-identically"):
     reset()
-    val _     = ArticleRepo.put(ds, article("# T\n\nbody with [[zz_ghost2019_absent]]"))
+    val _ = ArticleRepo.put(ds, article("# T\n\nbody with [[zz_ghost2019_absent]]"))
     val note1 = ArticleNote.render(ArticleRepo.load(ds, slug).get)
-    val _     = ArticleRepo.put(ds, ArticleNote.parse(note1, "zz", "zz").get)
+    val _ = ArticleRepo.put(ds, ArticleNote.parse(note1, "zz", "zz").get)
     assertEquals(ArticleNote.render(ArticleRepo.load(ds, slug).get), note1)
 
   test("slugs and updatedAtMillis cover the whole wiki (the seed guard reads them)"):
@@ -194,8 +239,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     reset()
     // 1. Create the article (first put — no previous row, so no version record)
     val _ = ArticleRepo.put(ds, article("# T\n\noriginal body"))
-    assertEquals(ArticleRepo.listVersions(ds, slug).size, 0,
-      "a fresh article has no previous versions")
+    assertEquals(ArticleRepo.listVersions(ds, slug).size, 0, "a fresh article has no previous versions")
 
     // 2. Patch it — rewrites the body; the ORIGINAL is now version 1
     val _ = ArticleRepo.patch(ds, slug, ArticlePatch(body = Some("# T\n\nrewritten body")))
@@ -243,20 +287,37 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
 
   test("#958: the filter and the reasons are stored and read back; a patch merges reasons, an empty filter clears"):
     reset()
-    val f = ArticleFilter(query = Some("sea"), topics = List("collapse"), status = List("current"), from = Some(-1300), to = Some(-1100),
-      extraQueries = List("Medinet Habu"))
-    val _ = ArticleRepo.put(ds, article("# T\n\nbody").copy(filter = Some(f), reasons = Map("zz_cov2001_egypt" -> "about Egypt")))
+    val f = ArticleFilter(
+      query = Some("sea"),
+      topics = List("collapse"),
+      status = List("current"),
+      from = Some(-1300),
+      to = Some(-1100),
+      extraQueries = List("Medinet Habu")
+    )
+    val _ = ArticleRepo.put(
+      ds,
+      article("# T\n\nbody").copy(filter = Some(f), reasons = Map("zz_cov2001_egypt" -> "about Egypt"))
+    )
     val a = ArticleRepo.load(ds, slug).get
     assertEquals((a.filter, a.reasons), (Some(f), Map("zz_cov2001_egypt" -> "about Egypt")))
-    val _ = ArticleRepo.patch(ds, slug, ArticlePatch(reasons = List(CoverageReason("zz_cov2002_hatti", "about Hatti"),
-      CoverageReason("zz_cov2001_egypt", ""))))
+    val _ = ArticleRepo.patch(
+      ds,
+      slug,
+      ArticlePatch(reasons =
+        List(CoverageReason("zz_cov2002_hatti", "about Hatti"), CoverageReason("zz_cov2001_egypt", ""))
+      )
+    )
     assertEquals(ArticleRepo.load(ds, slug).get.reasons, Map("zz_cov2002_hatti" -> "about Hatti"))
     assertEquals(ArticleRepo.load(ds, slug).get.filter, Some(f), "a patch that does not name the filter keeps it")
     val _ = ArticleRepo.patch(ds, slug, ArticlePatch(filter = Some(ArticleFilter())))
     assertEquals(ArticleRepo.load(ds, slug).get.filter, None)
     // an article written before V066 (no filter, no reasons) reads as such
     val _ = ArticleRepo.put(ds, article("# T\n\nbody", "zz_article_other"))
-    assertEquals(ArticleRepo.load(ds, "zz_article_other").map(x => (x.filter, x.reasons)), Some((None, Map.empty[String, String])))
+    assertEquals(
+      ArticleRepo.load(ds, "zz_article_other").map(x => (x.filter, x.reasons)),
+      Some((None, Map.empty[String, String]))
+    )
 
   test("#958: renaming a source moves a reason keyed by its citekey"):
     reset()
@@ -266,8 +327,11 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM sources WHERE citekey LIKE 'zz_covren%'".update.run()
     wipe()
     seedSource("zz_covren2001_old")
-    val _ = ArticleRepo.put(ds, article("# T\n\nbody").copy(filter = Some(ArticleFilter(tags = List("x"))),
-      reasons = Map("zz_covren2001_old" -> "about Egypt")))
+    val _ = ArticleRepo.put(
+      ds,
+      article("# T\n\nbody")
+        .copy(filter = Some(ArticleFilter(tags = List("x"))), reasons = Map("zz_covren2001_old" -> "about Egypt"))
+    )
     assert(SourceRepo.rename(ds, "zz_covren2001_old", "zz_covren2001_new").isRight)
     assertEquals(ArticleRepo.load(ds, slug).get.reasons, Map("zz_covren2001_new" -> "about Egypt"))
     wipe()

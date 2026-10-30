@@ -2,45 +2,112 @@ package com.histmersion.api
 
 import com.histmersion.api.GoalPlans.*
 
-/** `meta/GOALS.md` (task #906): the pure renderer. The fixture mirrors the live goals' shape — a few
-  * top-level goals with nested sub-goals, article and queue-item links (done and open), one goal with
-  * a period — plus the parts the live data does not have yet (a source, a search, a schedule, an
-  * approved plan, a dangling link). No database, no server. */
+/** `meta/GOALS.md` (task #906): the pure renderer. The fixture mirrors the live goals' shape — a few top-level goals
+  * with nested sub-goals, article and queue-item links (done and open), one goal with a period — plus the parts the
+  * live data does not have yet (a source, a search, a schedule, an approved plan, a dangling link). No database, no
+  * server.
+  */
 class GoalsExportSuite extends munit.FunSuite:
 
-  private def goal(slug: String, title: String, status: String, parent: Option[String] = None,
-      notes: Option[String] = None, tags: List[String] = Nil, regions: List[String] = Nil,
-      period: Option[(Long, Long)] = None) =
-    Goal(slug, title, status, notes, tags, regions, period.map(_._1), period.map(_._2), parent,
-      updatedAt = Some("2026-10-05 17:15:24.891961+02"))
+  private def goal(
+      slug: String,
+      title: String,
+      status: String,
+      parent: Option[String] = None,
+      notes: Option[String] = None,
+      tags: List[String] = Nil,
+      regions: List[String] = Nil,
+      period: Option[(Long, Long)] = None
+  ) =
+    Goal(
+      slug,
+      title,
+      status,
+      notes,
+      tags,
+      regions,
+      period.map(_._1),
+      period.map(_._2),
+      parent,
+      updatedAt = Some("2026-10-05 17:15:24.891961+02")
+    )
 
-  private def article(slug: String, title: String) = GoalLink(LinkKind.Article, slug, None, Some(title), "2026-10-05T15:00:00Z")
-  private def item(id: Int, text: String)          = GoalLink(LinkKind.QueueItem, id.toString, None, Some(text), "2026-10-05T15:00:00Z")
+  private def article(slug: String, title: String) =
+    GoalLink(LinkKind.Article, slug, None, Some(title), "2026-10-05T15:00:00Z")
+  private def item(id: Int, text: String) =
+    GoalLink(LinkKind.QueueItem, id.toString, None, Some(text), "2026-10-05T15:00:00Z")
 
   private val views: List[GoalView] = List(
-    GoalView(goal("bronze-age", "The Bronze Age and earlier; the Late Bronze Age collapse", "compiled",
-      notes = Some("The Bronze Age and the periods before it; the Late Bronze Age collapse — causes, sequence, debates."),
-      tags = List("bronze_age", "bronze_age_collapse"))),
-    GoalView(goal("bronze-age-collapse", "The Late Bronze Age collapse", "compiled", Some("bronze-age"),
-        notes = Some("Climate-primary vs stressor debate, resilience critiques."), period = Some((-1300L, -1050L))),
+    GoalView(
+      goal(
+        "bronze-age",
+        "The Bronze Age and earlier; the Late Bronze Age collapse",
+        "compiled",
+        notes =
+          Some("The Bronze Age and the periods before it; the Late Bronze Age collapse — causes, sequence, debates."),
+        tags = List("bronze_age", "bronze_age_collapse")
+      )
+    ),
+    GoalView(
+      goal(
+        "bronze-age-collapse",
+        "The Late Bronze Age collapse",
+        "compiled",
+        Some("bronze-age"),
+        notes = Some("Climate-primary vs stressor debate, resilience critiques."),
+        period = Some((-1300L, -1050L))
+      ),
       links = List(
         item(522, "Dafna Langgut, Climate and Environment in the Southern Levant, 1300–300 BCE"),
         article("sea_peoples", "The Sea Peoples"),
         item(495, "Ingest 10.1007/s10963-021-09163-7 (hybrid OA) — Meyer & Knapp 2021"),
         article("bronze_age_collapse", "Late Bronze Age Collapse (~1200 BCE)"),
         GoalLink(LinkKind.QueueItem, "9999", None, None, "2026-10-05T15:00:00Z"),
-        GoalLink(LinkKind.Source, "cline2014_year", Some("the anchor narrative"), Some("1177 B.C.: The Year Civilization Collapsed")),
-        GoalLink(LinkKind.Query, "late bronze age collapse drought")),
-      schedules = List(GoalSchedule("bronze-age-collapse", ScheduleKind.Currency, "0 6 * * 1", enabled = true,
-        budgetUsd = Some(0.5), nextRunAt = Some("2026-10-12T06:00:00Z"), lastNote = Some("started run abc")))),
-    GoalView(goal("homeric-historicity", "Homeric historicity: Troy, Ahhiyawa and oral tradition", "compiled", Some("bronze-age")),
-      links = List(article("ahhiyawa", "Ahhiyawa"))),
+        GoalLink(
+          LinkKind.Source,
+          "cline2014_year",
+          Some("the anchor narrative"),
+          Some("1177 B.C.: The Year Civilization Collapsed")
+        ),
+        GoalLink(LinkKind.Query, "late bronze age collapse drought")
+      ),
+      schedules = List(
+        GoalSchedule(
+          "bronze-age-collapse",
+          ScheduleKind.Currency,
+          "0 6 * * 1",
+          enabled = true,
+          budgetUsd = Some(0.5),
+          nextRunAt = Some("2026-10-12T06:00:00Z"),
+          lastNote = Some("started run abc")
+        )
+      )
+    ),
+    GoalView(
+      goal(
+        "homeric-historicity",
+        "Homeric historicity: Troy, Ahhiyawa and oral tradition",
+        "compiled",
+        Some("bronze-age")
+      ),
+      links = List(article("ahhiyawa", "Ahhiyawa"))
+    ),
     GoalView(goal("comparative-religion", "Comparative religion and folklore", "compiled")),
-    GoalView(goal("egyptian-religion", "Egyptian religion", "reviewed", Some("comparative-religion")),
-      links = List(item(601, "Acquire Assmann, The Search for God in Ancient Egypt"))),
-    GoalView(goal("mystery-cults", "Mystery cults and the ergot hypothesis", "reviewed", Some("comparative-religion")),
-      plan = Some(Plan("mystery-cults", "Eleusis first, then the ergot debate.",
-        subGoals = List(PlannedGoal("eleusis", "Eleusis")), queries = List("kykeon ergot")))),
+    GoalView(
+      goal("egyptian-religion", "Egyptian religion", "reviewed", Some("comparative-religion")),
+      links = List(item(601, "Acquire Assmann, The Search for God in Ancient Egypt"))
+    ),
+    GoalView(
+      goal("mystery-cults", "Mystery cults and the ergot hypothesis", "reviewed", Some("comparative-religion")),
+      plan = Some(
+        Plan(
+          "mystery-cults",
+          "Eleusis first, then the ergot debate.",
+          subGoals = List(PlannedGoal("eleusis", "Eleusis")),
+          queries = List("kykeon ergot")
+        )
+      )
+    ),
     GoalView(goal("eleusis", "Eleusis", "planned", Some("mystery-cults"))),
     GoalView(goal("historiography", "Historiography of the field", "seeding"))
   )
@@ -128,11 +195,15 @@ class GoalsExportSuite extends munit.FunSuite:
 
   private def diff(a: String, b: String): String =
     val (as, bs) = (a.linesIterator.toVector, b.linesIterator.toVector)
-    (0 until math.max(as.size, bs.size)).flatMap { i =>
-      (as.lift(i), bs.lift(i)) match
-        case (x, y) if x == y => None
-        case (x, y)           => Some(s"line ${i + 1}:\n  expected: ${x.getOrElse("<eof>")}\n  actual:   ${y.getOrElse("<eof>")}")
-    }.take(10).mkString("\n")
+    (0 until math.max(as.size, bs.size))
+      .flatMap { i =>
+        (as.lift(i), bs.lift(i)) match
+          case (x, y) if x == y => None
+          case (x, y)           =>
+            Some(s"line ${i + 1}:\n  expected: ${x.getOrElse("<eof>")}\n  actual:   ${y.getOrElse("<eof>")}")
+      }
+      .take(10)
+      .mkString("\n")
 
   test("the whole file: header, summary, the tree nested by heading depth, links, schedules, plan"):
     val out = GoalsExport.render(views, status)
@@ -154,9 +225,17 @@ class GoalsExportSuite extends munit.FunSuite:
 
   test("values that change on their own (updated_at, a schedule's next/last firing) are left out"):
     val ticked = views.map { v =>
-      v.copy(goal = v.goal.copy(updatedAt = Some("2027-01-01 00:00:00+00")),
-        schedules = v.schedules.map(_.copy(nextRunAt = Some("2027-01-01T06:00:00Z"), lastRunAt = Some("2026-12-31T06:00:00Z"),
-          lastRun = Some("run-xyz"), lastNote = Some("skipped: budget"))))
+      v.copy(
+        goal = v.goal.copy(updatedAt = Some("2027-01-01 00:00:00+00")),
+        schedules = v.schedules.map(
+          _.copy(
+            nextRunAt = Some("2027-01-01T06:00:00Z"),
+            lastRunAt = Some("2026-12-31T06:00:00Z"),
+            lastRun = Some("run-xyz"),
+            lastNote = Some("skipped: budget")
+          )
+        )
+      )
     }
     assertEquals(GoalsExport.render(ticked, status), GoalsExport.render(views, status))
 
@@ -166,8 +245,15 @@ class GoalsExportSuite extends munit.FunSuite:
     assert(out.contains("- `#495` (not found)"), out)
 
   test("an article or source link whose target is gone is marked, not dropped"):
-    val gone = List(GoalView(goal("g", "G", "planned"),
-      links = List(GoalLink(LinkKind.Article, "deleted_article", None, None), GoalLink(LinkKind.Source, "gone2020", Some("why"), None))))
+    val gone = List(
+      GoalView(
+        goal("g", "G", "planned"),
+        links = List(
+          GoalLink(LinkKind.Article, "deleted_article", None, None),
+          GoalLink(LinkKind.Source, "gone2020", Some("why"), None)
+        )
+      )
+    )
     val out = GoalsExport.render(gone, Map.empty)
     assert(out.contains("- [[deleted_article]] — (not found)"), out)
     assert(out.contains("- [[gone2020]] — (not found) · why"), out)
@@ -180,7 +266,8 @@ class GoalsExportSuite extends munit.FunSuite:
     val odd = List(
       GoalView(goal("orphan", "Orphan", "planned", Some("deleted-parent"))),
       GoalView(goal("a", "A", "planned", Some("b"))),
-      GoalView(goal("b", "B", "planned", Some("a"))))
+      GoalView(goal("b", "B", "planned", Some("a")))
+    )
     val placed = GoalsExport.tree(odd).map((v, d) => v.goal.slug -> d)
     assertEquals(placed, List("orphan" -> 0, "a" -> 0, "b" -> 0))
     val out = GoalsExport.render(odd, Map.empty)
@@ -190,7 +277,7 @@ class GoalsExportSuite extends munit.FunSuite:
 
   test("headings stop at ######: a deep tree does not produce invalid Markdown"):
     val chain = (0 to 6).toList.map(i => GoalView(goal(s"g$i", s"G$i", "planned", Option.when(i > 0)(s"g${i - 1}"))))
-    val out   = GoalsExport.render(chain, Map.empty)
+    val out = GoalsExport.render(chain, Map.empty)
     assert(out.contains("\n###### G4\n") && out.contains("\n###### G6\n") && !out.contains("#######"), out)
 
   test("an unknown status still counts, after the lifecycle ones"):

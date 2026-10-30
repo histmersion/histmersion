@@ -19,14 +19,14 @@ object ActivityService:
 
   def apply(ds: DataSource): ActivityService = Implementation(ds)
 
-  private final class Implementation(ds: DataSource) extends ActivityService:
+  final private class Implementation(ds: DataSource) extends ActivityService:
     def page(q: ActivityQuery, now: Instant): Activity.Page =
       connect(ds):
         val (entries, next) = ActivityRepo.page(q)
         Activity.Page(entries, next, ActivityRepo.counts(now.minus(ProblemsWindow)))
 
-  /** The same list over entries held in memory (tests): written with [[add]], as the store's tables write
-    * them. */
+  /** The same list over entries held in memory (tests): written with [[add]], as the store's tables write them.
+    */
   final class InMemory(entries: AtomicReference[List[Activity.Entry]] = AtomicReference(Nil)) extends ActivityService:
     def add(e: Activity.Entry): Unit = entries.updateAndGet(e :: _): Unit
 

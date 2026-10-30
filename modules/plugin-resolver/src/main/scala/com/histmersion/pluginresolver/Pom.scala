@@ -12,24 +12,26 @@ import javax.xml.parsers.DocumentBuilderFactory
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
-/** The one thing read from a plugin's POM here: whose it is. Everything else in it (dependencies,
-  * properties, parents, dependency management) is coursier's to read. */
+/** The one thing read from a plugin's POM here: whose it is. Everything else in it (dependencies, properties, parents,
+  * dependency management) is coursier's to read.
+  */
 object Pom:
 
   /** The POM's own coordinates; a group or version it does not state is its parent's, as in Maven. */
   def coordinates(xml: String): Either[String, ModuleCoordinates] =
     for
-      project  <- parse(xml)
-      parent    = child(project, "parent")
-      group    <- text(project, "groupId").orElse(parent.flatMap(text(_, "groupId"))).toRight("the POM names no groupId")
+      project <- parse(xml)
+      parent = child(project, "parent")
+      group <- text(project, "groupId").orElse(parent.flatMap(text(_, "groupId"))).toRight("the POM names no groupId")
       artifact <- text(project, "artifactId").toRight("the POM names no artifactId")
-      version  <- text(project, "version").orElse(parent.flatMap(text(_, "version"))).toRight("the POM names no version")
-      coords   <- ModuleCoordinates.parse(s"$group:$artifact:$version")
+      version <- text(project, "version").orElse(parent.flatMap(text(_, "version"))).toRight("the POM names no version")
+      coords <- ModuleCoordinates.parse(s"$group:$artifact:$version")
     yield coords
 
-  /** The POM published beside a jar (`x-1.0.jar` → `x-1.0.pom`), else the one Maven's jar plugin puts in
-    * the jar when it holds exactly one (`META-INF/maven/<group>/<artifact>/pom.xml`). A shaded jar holds
-    * several, of the libraries shaded into it: no POM can be told to be the plugin's then. */
+  /** The POM published beside a jar (`x-1.0.jar` → `x-1.0.pom`), else the one Maven's jar plugin puts in the jar when
+    * it holds exactly one (`META-INF/maven/<group>/<artifact>/pom.xml`). A shaded jar holds several, of the libraries
+    * shaded into it: no POM can be told to be the plugin's then.
+    */
   def of(jar: Path): Option[String] =
     val beside = besideJar(jar)
     if Files.isRegularFile(beside) then Some(Files.readString(beside, UTF_8)) else embedded(jar)
@@ -40,7 +42,11 @@ object Pom:
     Try {
       val zip = ZipFile(jar.toFile)
       try
-        zip.entries().asScala.filter(e => e.getName.startsWith("META-INF/maven/") && e.getName.endsWith("/pom.xml")).toList match
+        zip
+          .entries()
+          .asScala
+          .filter(e => e.getName.startsWith("META-INF/maven/") && e.getName.endsWith("/pom.xml"))
+          .toList match
           case List(only) => Some(String(zip.getInputStream(only).readAllBytes(), UTF_8))
           case _          => None
       finally zip.close()
@@ -57,7 +63,9 @@ object Pom:
       // the parse error is the Left below; the parser's own printing to stderr is not wanted
       builder.setErrorHandler(new DefaultHandler)
       builder.parse(ByteArrayInputStream(xml.getBytes(UTF_8))).getDocumentElement
-    }.toEither.left.map(e => s"not a POM: ${e.getMessage}").filterOrElse(_.getLocalName == "project", "not a POM: no <project>")
+    }.toEither.left
+      .map(e => s"not a POM: ${e.getMessage}")
+      .filterOrElse(_.getLocalName == "project", "not a POM: no <project>")
 
   private def child(e: Element, name: String): Option[Element] =
     val nodes = e.getChildNodes

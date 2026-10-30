@@ -4,10 +4,10 @@ import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
-
-/** A hover that waits: `enter(k)` fires `k` only after `delayMs` without a `leave(k)` or another
-  * `enter`, so sweeping the pointer across twenty polygons fetches nothing and the one it rests on
-  * fetches once. `later`/`cancel` are injectable so the timing is a unit test, like [[Throttle]]. */
+/** A hover that waits: `enter(k)` fires `k` only after `delayMs` without a `leave(k)` or another `enter`, so sweeping
+  * the pointer across twenty polygons fetches nothing and the one it rests on fetches once. `later`/`cancel` are
+  * injectable so the timing is a unit test, like [[Throttle]].
+  */
 final class HoverIntent[K](
     delayMs: Int,
     fire: K => Unit,
@@ -40,28 +40,30 @@ object PinRules:
   /** Does this key pin a focused place's card (and, on the map, choose the place)? */
   def activates(key: String): Boolean = key == "Enter" || key == " "
 
-  /** After a click (or Enter) on a map place that leaves it chosen as the filter or not: its card is
-    * pinned while it is chosen; the click that unchooses it closes the card too. */
+  /** After a click (or Enter) on a map place that leaves it chosen as the filter or not: its card is pinned while it is
+    * chosen; the click that unchooses it closes the card too.
+    */
   def pinAfterClick(chosenNow: Boolean): Boolean = chosenNow
 
-  /** Pure: a point in the map container (`x`, `y`, from its top-left) as a viewport point, when it is
-    * inside the container's `w`×`h` box at (`left`, `top`) — `None` while it is panned out of view. */
+  /** Pure: a point in the map container (`x`, `y`, from its top-left) as a viewport point, when it is inside the
+    * container's `w`×`h` box at (`left`, `top`) — `None` while it is panned out of view.
+    */
   def inView(x: Double, y: Double, left: Double, top: Double, w: Double, h: Double): Option[(Double, Double)] =
     Option.when(x >= 0 && y >= 0 && x <= w && y <= h)((left + x, top + y))
 
-/** The map's places — sites, polities, peoples, point labels, the chosen place's outline — answer the
-  * pointer the way the app's links do, with the same card ([[Preview]]):
-  *   - hovering one (after [[Layout.hoverDelayMs]] at rest) floats its card at the pointer — a card
-  *     that follows the pointer, to read;
-  *   - a click chooses it as THE place filter ([[PlacesInput.toggleFromMap]]) and PINS its card where
-  *     it was clicked, with a close button: it stays there (moving with the map) so its links can be
-  *     clicked, until its ✕, Escape, or a click on the empty map. A click on the chosen place clears
-  *     the filter and closes the card;
+/** The map's places — sites, polities, peoples, point labels, the chosen place's outline — answer the pointer the way
+  * the app's links do, with the same card ([[Preview]]):
+  *   - hovering one (after [[Layout.hoverDelayMs]] at rest) floats its card at the pointer — a card that follows the
+  *     pointer, to read;
+  *   - a click chooses it as THE place filter ([[PlacesInput.toggleFromMap]]) and PINS its card where it was clicked,
+  *     with a close button: it stays there (moving with the map) so its links can be clicked, until its ✕, Escape, or a
+  *     click on the empty map. A click on the chosen place clears the filter and closes the card;
   *   - a tap does the same as a click;
-  *   - on the keyboard each place is a button: focus shows the card, Enter or Space chooses the place
-  *     and pins the card with the focus inside it (Escape returns it to the place).
-  * A place drawn as a SHAPE (the map's canvas) is found under the pointer by the map
-  * ([[MapSurface.shapesAt]]); one drawn as a marker answers through its element. */
+  *   - on the keyboard each place is a button: focus shows the card, Enter or Space chooses the place and pins the card
+  *     with the focus inside it (Escape returns it to the place).
+  * A place drawn as a SHAPE (the map's canvas) is found under the pointer by the map ([[MapSurface.shapesAt]]); one
+  * drawn as a marker answers through its element.
+  */
 object PlaceHover:
 
   // `var`s: where the pointer last was over a place, and what kind of pointer last pressed the map
@@ -73,8 +75,8 @@ object PlaceHover:
   private var surface: MapSurface = null
   private var hoveredShape: Option[ShapeHit] = None
 
-  private val intent = HoverIntent[Preview.Target](Layout.hoverDelayMs, t =>
-    if hovered.contains(t) then Preview.showAt(t, lastX, lastY))
+  private val intent =
+    HoverIntent[Preview.Target](Layout.hoverDelayMs, t => if hovered.contains(t) then Preview.showAt(t, lastX, lastY))
 
   /** A set of shapes whose shapes are places: `place(id)` is the place a shape stands for. */
   final case class Places(place: String => Option[(String, String, String)], asOf: () => Option[Long])
@@ -89,16 +91,26 @@ object PlaceHover:
   /** The place shape topmost under `p`, if any. */
   private def placeAt(p: ScreenPt): Option[(ShapeHit, (String, String, String), Places)] =
     if surface == null then None
-    else surface.shapesAt(p).iterator.flatMap(h => shapeSets.get(h.set).flatMap(ps => ps.place(h.id).map(pl => (h, pl, ps)))).nextOption()
+    else
+      surface
+        .shapesAt(p)
+        .iterator
+        .flatMap(h => shapeSets.get(h.set).flatMap(ps => ps.place(h.id).map(pl => (h, pl, ps))))
+        .nextOption()
 
-  /** Once per map: remember the pointer type of each press, the shapes' hover and click, and drop a
-    * tapped card when the map itself is tapped or starts to move. */
+  /** Once per map: remember the pointer type of each press, the shapes' hover and click, and drop a tapped card when
+    * the map itself is tapped or starts to move.
+    */
   def install(m: MapSurface): Unit =
     if surface == null then
       surface = m
-      m.container.addEventListener("pointerdown", (e: dom.PointerEvent) => lastPointer = e.pointerType, useCapture = true)
+      m.container.addEventListener(
+        "pointerdown",
+        (e: dom.PointerEvent) => lastPointer = e.pointerType,
+        useCapture = true
+      )
       m.on(MapEventKind.PointerMove) { e =>
-        e.clientXY.foreach((x, y) => { lastX = x; lastY = y })
+        e.clientXY.foreach { (x, y) => lastX = x; lastY = y }
         val hit = if e.overMarker || isTouch(lastPointer) then None else e.point.flatMap(placeAt)
         if hit.map(_._1) != hoveredShape then
           hoveredShape.foreach(_ => dropHover())
@@ -116,11 +128,12 @@ object PlaceHover:
       }
       m.on(MapEventKind.Click) { e =>
         if !e.overMarker then
-          e.clientXY.foreach((x, y) => { lastX = x; lastY = y })
+          e.clientXY.foreach { (x, y) => lastX = x; lastY = y }
           e.point.flatMap(placeAt) match
             case Some((_, (id, label, kind), ps)) =>
               val on = PlacesInput.toggleFromMap(id, label, kind)
-              val anchor = e.at.map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
+              val anchor =
+                e.at.map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
               settle(Preview.Target.Place(id, ps.asOf()), on, anchor, None, keyboard = false)
             case None =>
               // a click on the empty map lets every card go
@@ -148,8 +161,13 @@ object PlaceHover:
     }
 
   /** Pin `t`'s card after a click or Enter that left the place `chosenNow`, or close it. */
-  private def settle(t: Preview.Target, chosenNow: Boolean, anchor: () => Option[Preview.Anchor],
-      owner: Option[dom.Element], keyboard: Boolean): Unit =
+  private def settle(
+      t: Preview.Target,
+      chosenNow: Boolean,
+      anchor: () => Option[Preview.Anchor],
+      owner: Option[dom.Element],
+      keyboard: Boolean
+  ): Unit =
     intent.cancelPending()
     if PinRules.pinAfterClick(chosenNow) then
       hovered = Some(t)
@@ -170,8 +188,9 @@ object PlaceHover:
       m.unproject(ScreenPt(e.clientX - r.left, e.clientY - r.top))
     }
 
-  /** A place drawn as a MARKER (a point-only region's name, a chosen place's point): its card on hover,
-    * a click (or Enter) chooses it. `asOf` is the year the card reads the hierarchy at. */
+  /** A place drawn as a MARKER (a point-only region's name, a chosen place's point): its card on hover, a click (or
+    * Enter) chooses it. `asOf` is the year the card reads the hierarchy at.
+    */
   def bind(m: DomMarker, id: String, label: String, kind: String, asOf: () => Option[Long]): Unit =
     def target = Preview.Target.Place(id, asOf())
     def choose(): Boolean = PlacesInput.toggleFromMap(id, label, kind)
@@ -183,7 +202,8 @@ object PlaceHover:
         e.stopPropagation()
         at(e)
         val on = choose()
-        val anchor = latLonOf(e).map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
+        val anchor =
+          latLonOf(e).map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
         settle(target, on, anchor, None, keyboard = false)
       override def focus(e: dom.FocusEvent): Unit = focusCard(m.el, target)
       override def blur(e: dom.FocusEvent): Unit = dropHover()
@@ -193,8 +213,9 @@ object PlaceHover:
           settle(target, choose(), anchorOn(m.el), Some(m.el), keyboard = true)
     button(m.el, s"$label — show only this place and pin its card")
 
-  /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the
-    * pointer passes through it to the shape under it. */
+  /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the pointer passes through
+    * it to the shape under it.
+    */
   def bindName(m: DomMarker, id: String, label: String, kind: String, asOf: () => Option[Long]): Unit =
     def target = Preview.Target.Place(id, asOf())
     val el = Option(m.el.firstElementChild).getOrElse(m.el)
@@ -234,22 +255,26 @@ object PlaceHover:
     hovered.foreach { t => intent.leave(t); Preview.hideAt(t) }
     hovered = None
 
-  /** A point on the map — any kind of [[PointLayer]] marker — answers like the app's links, the same way
-  * for every kind: resting the pointer on it (after [[Layout.hoverDelayMs]]) floats its card at the
-  * pointer (`target`, re-read on each hover: the point's content may have changed), focus shows it
-  * too, leaving drops it; it is a keyboard button named `label` (Enter or Space activates it); a click
-  * or Enter clears the hover card out of the way and `activate`s it — what that means is the kind's
-  * (a finding's popup, a place chosen and pinned, an event's card pinned…). A point that leaves the map
-  * (re-drawn, clustered, filtered away) takes its hover card with it. */
-  def bindPoint(m: DomMarker, target: () => Option[Preview.Target], label: () => String,
-      activate: Activation => Unit): Unit =
+  /** A point on the map — any kind of [[PointLayer]] marker — answers like the app's links, the same way for every
+    * kind: resting the pointer on it (after [[Layout.hoverDelayMs]]) floats its card at the pointer (`target`, re-read
+    * on each hover: the point's content may have changed), focus shows it too, leaving drops it; it is a keyboard
+    * button named `label` (Enter or Space activates it); a click or Enter clears the hover card out of the way and
+    * `activate`s it — what that means is the kind's (a finding's popup, a place chosen and pinned, an event's card
+    * pinned…). A point that leaves the map (re-drawn, clustered, filtered away) takes its hover card with it.
+    */
+  def bindPoint(
+      m: DomMarker,
+      target: () => Option[Preview.Target],
+      label: () => String,
+      activate: Activation => Unit
+  ): Unit =
     val el = m.el
     m.handlers = new MarkerHandlers:
       override def over(e: dom.MouseEvent): Unit = hoverIn(e, target())
       override def move(e: dom.MouseEvent): Unit = hoverMove(e)
       override def out(e: dom.MouseEvent): Unit = if !isTouch(lastPointer) then dropHover()
       override def click(e: dom.MouseEvent): Unit =
-        e.stopPropagation()   // the map's own click would close a card this click pins
+        e.stopPropagation() // the map's own click would close a card this click pins
         at(e)
         intent.cancelPending()
         hovered = None
@@ -266,9 +291,10 @@ object PlaceHover:
     m.onRemoved(() => if target().exists(t => hovered.contains(t)) then dropHover())
     button(el, label())
 
-  /** A place's point activated (a click or Enter): it is chosen as THE place filter and its card pinned
-    * there — beside the point clicked, or on the focused element with the focus moving in; activating
-    * the chosen place again lets it go and closes the card. */
+  /** A place's point activated (a click or Enter): it is chosen as THE place filter and its card pinned there — beside
+    * the point clicked, or on the focused element with the focus moving in; activating the chosen place again lets it
+    * go and closes the card.
+    */
   def activatePlace(id: String, label: String, kind: String, asOf: () => Option[Long], how: Activation): Unit =
     val t = Preview.Target.Place(id, asOf())
     val on = PlacesInput.toggleFromMap(id, label, kind)

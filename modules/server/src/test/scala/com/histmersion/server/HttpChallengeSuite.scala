@@ -10,9 +10,10 @@ import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.jdk.CollectionConverters.*
 
-/** The acquisition HTTP client against a FAKE upstream on a loopback port (#1523): a bot-protection
-  * challenge is "no copy" at once — never retried, never worked around — and a caller's own
-  * User-Agent (the PMC hosts get the project's public one) replaces the polite-pool identity. */
+/** The acquisition HTTP client against a FAKE upstream on a loopback port (#1523): a bot-protection challenge is "no
+  * copy" at once — never retried, never worked around — and a caller's own User-Agent (the PMC hosts get the project's
+  * public one) replaces the polite-pool identity.
+  */
 class HttpChallengeSuite extends munit.FunSuite:
 
   private val JustAMoment =
@@ -20,7 +21,7 @@ class HttpChallengeSuite extends munit.FunSuite:
 
   /** One request log per test; the server answers by path. */
   private def withServer(body: (String, ConcurrentLinkedQueue[(String, String)]) => Unit): Unit =
-    val seen   = ConcurrentLinkedQueue[(String, String)]()
+    val seen = ConcurrentLinkedQueue[(String, String)]()
     val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
     def reply(ex: HttpExchange, code: Int, text: String, headers: (String, String)*): Unit =
       headers.foreach((k, v) => ex.getResponseHeaders.add(k, v))
@@ -28,15 +29,18 @@ class HttpChallengeSuite extends munit.FunSuite:
       ex.sendResponseHeaders(code, b.length.toLong)
       ex.getResponseBody.write(b)
       ex.close()
-    server.createContext("/", (ex: HttpExchange) =>
-      seen.add(ex.getRequestURI.getPath -> Option(ex.getRequestHeaders.getFirst("User-Agent")).getOrElse(""))
-      ex.getRequestURI.getPath match
-        case "/challenge-403" => reply(ex, 403, JustAMoment)
-        case "/challenge-503" => reply(ex, 503, "<html>wait</html>", "cf-mitigated" -> "challenge")
-        case "/busy"          => reply(ex, 503, "busy")
-        case "/anubis-200"    => reply(ex, 200, Anubis)
-        case "/anubis-403"    => reply(ex, 403, Anubis)
-        case _                => reply(ex, 200, "ok"))
+    server.createContext(
+      "/",
+      (ex: HttpExchange) =>
+        seen.add(ex.getRequestURI.getPath -> Option(ex.getRequestHeaders.getFirst("User-Agent")).getOrElse(""))
+        ex.getRequestURI.getPath match
+          case "/challenge-403" => reply(ex, 403, JustAMoment)
+          case "/challenge-503" => reply(ex, 503, "<html>wait</html>", "cf-mitigated" -> "challenge")
+          case "/busy"          => reply(ex, 503, "busy")
+          case "/anubis-200"    => reply(ex, 200, Anubis)
+          case "/anubis-403"    => reply(ex, 403, Anubis)
+          case _                => reply(ex, 200, "ok")
+    )
     server.start()
     try body(s"http://127.0.0.1:${server.getAddress.getPort}", seen)
     finally server.stop(0)
@@ -101,11 +105,16 @@ class HttpChallengeSuite extends munit.FunSuite:
     assert(Challenge.isChallenge(401, Map.empty, anubis))
     assert(Challenge.isChallenge(403, Map.empty, anubis))
     assert(!Challenge.isChallenge(200, Map.empty, ("%PDF-1.7\n" + Anubis).getBytes("ISO-8859-1")))
-    assert(!Challenge.isChallenge(200, Map.empty, "<html><p>Anubis, the jackal-headed god</p></html>".getBytes("UTF-8")))
+    assert(
+      !Challenge.isChallenge(200, Map.empty, "<html><p>Anubis, the jackal-headed god</p></html>".getBytes("UTF-8"))
+    )
 
   test("every acquisition request is pinned to HTTP/1.1, keeping its URI and headers"):
-    val r = java.net.http.HttpRequest.newBuilder(java.net.URI.create("https://example.org/x"))
-      .header("User-Agent", "ua").GET().build()
+    val r = java.net.http.HttpRequest
+      .newBuilder(java.net.URI.create("https://example.org/x"))
+      .header("User-Agent", "ua")
+      .GET()
+      .build()
     val out = SttpTransport.http11(r)
     assertEquals(out.version(), java.util.Optional.of(java.net.http.HttpClient.Version.HTTP_1_1))
     assertEquals(out.uri(), r.uri())

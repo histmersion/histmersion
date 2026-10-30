@@ -7,7 +7,8 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /** "Add by DOI": a DOI or an arXiv id, looked up and brought in through the legal open-access chain only
-  * ([[DoiIngest]]); the answer says what was found and links to the new source. */
+  * ([[DoiIngest]]); the answer says what was found and links to the new source.
+  */
 object DoiForm:
 
   private enum State:
@@ -21,17 +22,27 @@ object DoiForm:
     val state = Var(State.Idle)
     def submit(): Unit =
       DoiIngest.request(typed.now()) match
-        case Left(m) => state.set(State.Failed(m))
+        case Left(m)    => state.set(State.Failed(m))
         case Right(req) =>
           state.set(State.Adding)
-          ApiClient.ingestId(req).onComplete(r => state.set(r.fold(
-            e => State.Failed(s"Could not add it: ${Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)}"),
-            State.Added(_))))
+          ApiClient
+            .ingestId(req)
+            .onComplete(r =>
+              state.set(
+                r.fold(
+                  e =>
+                    State.Failed(s"Could not add it: ${Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)}"),
+                  State.Added(_)
+                )
+              )
+            )
     div(
       cls := "tool-pane doi-pane",
-      p(cls := "doi-intro",
+      p(
+        cls := "doi-intro",
         "Histmersion looks the work up, fetches a legal open-access copy when there is one and reads its text. " +
-          "Without one, the source is added from its record alone; upload the file once you have it."),
+          "Without one, the source is added from its record alone; upload the file once you have it."
+      ),
       child <-- Auth.writable.map { w =>
         if !w then Auth.keyNeeded("add a source")
         else
@@ -39,13 +50,24 @@ object DoiForm:
             cls := "doi-form toolbar",
             onSubmit.preventDefault --> (_ => submit()),
             label(forId := "doi-input", cls := "doi-label", "DOI or arXiv id"),
-            div(cls := "btn-group",
-              input(typ := "text", cls := "field doi-input", idAttr := "doi-input", autoComplete := "off",
-                placeholder := "10.1017/S0003598X00000001", spellCheck := false,
-                controlled(value <-- typed.signal, onInput.mapToValue --> typed.writer)),
-              button(typ := "submit", cls := "btn btn--primary doi-add",
+            div(
+              cls := "btn-group",
+              input(
+                typ := "text",
+                cls := "field doi-input",
+                idAttr := "doi-input",
+                autoComplete := "off",
+                placeholder := "10.1017/S0003598X00000001",
+                spellCheck := false,
+                controlled(value <-- typed.signal, onInput.mapToValue --> typed.writer)
+              ),
+              button(
+                typ := "submit",
+                cls := "btn btn--primary doi-add",
                 disabled <-- state.signal.map(_ == State.Adding),
-                child.text <-- state.signal.map(s => if s == State.Adding then "Adding…" else "Add")))
+                child.text <-- state.signal.map(s => if s == State.Adding then "Adding…" else "Add")
+              )
+            )
           )
       },
       child <-- state.signal.map {
@@ -59,9 +81,14 @@ object DoiForm:
     div(
       cls := "doi-result",
       role := "status",
-      p(strong(if r.created then "Added: " else "Already in the library: "),
-        a(href := SourceLink.href(r.citekey), r.title.getOrElse(r.citekey))),
-      p(cls := "muted",
-        if r.pdf.isDefined then "A legal open-access copy was found; its text is being read (Research › Activity › Background jobs)."
-        else "No legal open-access copy was found: the source holds its record only.")
+      p(
+        strong(if r.created then "Added: " else "Already in the library: "),
+        a(href := SourceLink.href(r.citekey), r.title.getOrElse(r.citekey))
+      ),
+      p(
+        cls := "muted",
+        if r.pdf.isDefined then
+          "A legal open-access copy was found; its text is being read (Research › Activity › Background jobs)."
+        else "No legal open-access copy was found: the source holds its record only."
+      )
     )

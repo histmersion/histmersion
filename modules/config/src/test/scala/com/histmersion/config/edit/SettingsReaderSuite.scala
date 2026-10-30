@@ -17,7 +17,10 @@ class SettingsReaderSuite extends munit.FunSuite:
     val e = ConfigFactory.parseMap(env.asJava)
     val state = ConfigFileWriter(f, e, ConfigSchema.reference).read().fold(x => fail(x.message), identity)
     val merged = AppConfig.loadWithUserFile(e, Some(f)).fold(m => fail(m), _.merged)
-    SettingsReader.read(ConfigSchema.reference, state, merged, e, prefix.map(key)).map(r => r.field.key.relative -> r).toMap
+    SettingsReader
+      .read(ConfigSchema.reference, state, merged, e, prefix.map(key))
+      .map(r => r.field.key.relative -> r)
+      .toMap
 
   test("each setting's value in the file, what applies, and where that comes from"):
     val r = readings("histmersion { backups.keep = 3, ui.page-size = 40 }", Map("HISTMERSION_BACKUPS_KEEP" -> "9"))
@@ -30,8 +33,11 @@ class SettingsReaderSuite extends munit.FunSuite:
     assertEquals(r("lint.max-items").inFile, None)
 
   test("a credential is told only by how it is held"):
-    val r = readings("histmersion.plugins.oa-core.api-key = \"keepassxc:Histmersion/CORE#password\"\n" +
-      "histmersion.plugins.media-europeana.api-key = \"value:abc\"\n", Map("HISTMERSION_API_KEY" -> "s3cret"))
+    val r = readings(
+      "histmersion.plugins.oa-core.api-key = \"keepassxc:Histmersion/CORE#password\"\n" +
+        "histmersion.plugins.media-europeana.api-key = \"value:abc\"\n",
+      Map("HISTMERSION_API_KEY" -> "s3cret")
+    )
     assertEquals(r("plugins.oa-core.api-key").credential, Some(SecretForm.Vault))
     assertEquals(r("plugins.oa-core.api-key").shown, Some("keepassxc:Histmersion/CORE#password"))
     assertEquals(r("plugins.media-europeana.api-key").shown, Some("value:***"))

@@ -6,8 +6,8 @@ import sttp.tapir.Schema
 
 /** IIIF Image API Level 1 — the DTOs and parameter parsing (plan §4.3).
   *
-  * The IIIF Image API serves images at `/iiif/{identifier}/{region}/{size}/{rotation}/{quality}.{format}`.
-  * Level 1 compliance requires:
+  * The IIIF Image API serves images at `/iiif/{identifier}/{region}/{size}/{rotation}/{quality}.{format}`. Level 1
+  * compliance requires:
   *   - region: `full` or pixel `x,y,w,h`
   *   - size: `max`, `^max`, `w,`, `,h`, `w,h`, `!w,h`
   *   - rotation: `0` only
@@ -19,8 +19,8 @@ import sttp.tapir.Schema
 object Iiif:
 
   val ApiContext = "http://iiif.io/api/image/3/context.json"
-  val Protocol   = "http://iiif.io/api/image"
-  val Profile    = "level1"
+  val Protocol = "http://iiif.io/api/image"
+  val Profile = "level1"
 
   // ── region ──────────────────────────────────────────────────────────────────────────────────
 
@@ -31,7 +31,7 @@ object Iiif:
   object Region:
     def parse(s: String): Either[String, Region] = s.trim.toLowerCase match
       case "full" | "square" => Right(Full)
-      case other =>
+      case other             =>
         other.split(",").toList match
           case List(xs, ys, ws, hs) =>
             (for
@@ -47,36 +47,42 @@ object Iiif:
 
   enum Size:
     case Max
-    case ScaleUp                         // ^max
-    case Width(w: Int)                   // w,
-    case Height(h: Int)                  // ,h
-    case Exact(w: Int, h: Int)           // w,h
-    case BestFit(w: Int, h: Int)         // !w,h
+    case ScaleUp // ^max
+    case Width(w: Int) // w,
+    case Height(h: Int) // ,h
+    case Exact(w: Int, h: Int) // w,h
+    case BestFit(w: Int, h: Int) // !w,h
 
   object Size:
     def parse(s: String): Either[String, Size] =
       val t = s.trim
       t match
-        case "max"  => Right(Max)
-        case "^max" => Right(ScaleUp)
+        case "max"                  => Right(Max)
+        case "^max"                 => Right(ScaleUp)
         case _ if t.startsWith("!") =>
           t.drop(1).split(",").toList match
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
-               yield BestFit(w, h))
+              yield BestFit(w, h))
                 .toRight(s"invalid best-fit size: '$s'")
             case _ => Left(s"invalid size: '$s'")
         case _ if t.endsWith(",") =>
-          t.dropRight(1).toIntOption.filter(_ > 0)
-            .map(Width(_)).toRight(s"invalid width size: '$s'")
+          t.dropRight(1)
+            .toIntOption
+            .filter(_ > 0)
+            .map(Width(_))
+            .toRight(s"invalid width size: '$s'")
         case _ if t.startsWith(",") =>
-          t.drop(1).toIntOption.filter(_ > 0)
-            .map(Height(_)).toRight(s"invalid height size: '$s'")
+          t.drop(1)
+            .toIntOption
+            .filter(_ > 0)
+            .map(Height(_))
+            .toRight(s"invalid height size: '$s'")
         case _ =>
           t.split(",").toList match
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
-               yield Exact(w, h))
+              yield Exact(w, h))
                 .toRight(s"invalid exact size: '$s'")
             case _ => Left(s"invalid size: '$s'")
 
@@ -95,21 +101,22 @@ object Iiif:
 
   /** The IIIF Image Information document (info.json), Level 1 subset.
     *
-    * The `@context`, `type`, `protocol` and `profile` fields use circe's snake_case transform plus
-    * explicit `@`-prefixed keys, which `KindlingsCodecAsObject` handles via the Configuration. We
-    * instead use `io.circe.Json` to build the document directly, avoiding derivation complexity for
-    * a response that has `@`-prefixed keys circe derivation cannot produce. */
+    * The `@context`, `type`, `protocol` and `profile` fields use circe's snake_case transform plus explicit
+    * `@`-prefixed keys, which `KindlingsCodecAsObject` handles via the Configuration. We instead use `io.circe.Json` to
+    * build the document directly, avoiding derivation complexity for a response that has `@`-prefixed keys circe
+    * derivation cannot produce.
+    */
   def infoJson(id: String, width: Int, height: Int): io.circe.Json =
     import io.circe.Json
     import io.circe.syntax.*
     Json.obj(
       "@context" -> Json.fromString(ApiContext),
-      "id"       -> Json.fromString(id),
-      "type"     -> Json.fromString("ImageService3"),
+      "id" -> Json.fromString(id),
+      "type" -> Json.fromString("ImageService3"),
       "protocol" -> Json.fromString(Protocol),
-      "width"    -> Json.fromInt(width),
-      "height"   -> Json.fromInt(height),
-      "profile"  -> Json.fromString(Profile),
+      "width" -> Json.fromInt(width),
+      "height" -> Json.fromInt(height),
+      "profile" -> Json.fromString(Profile),
       "extraFormats" -> Json.arr(Json.fromString("png")),
       "extraQualities" -> Json.arr(),
       "extraFeatures" -> Json.arr(

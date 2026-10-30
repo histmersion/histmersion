@@ -16,9 +16,9 @@ import com.raquo.laminar.codecs.StringAsIsCodec
 
 /** Gazetteer place picker for the filter bar. Ported from places.js (241 lines).
   *
-  * Two kinds of chips: gazetteer ids (`UiState.placeIds`) and free-text names (`UiState.places`).
-  * Suggestions come from `ApiClient.places(q, asOf, limit)`. Selected places draw polygons on the
-  * map as shapes ([[ShapeSet]] "place-pick"). */
+  * Two kinds of chips: gazetteer ids (`UiState.placeIds`) and free-text names (`UiState.places`). Suggestions come from
+  * `ApiClient.places(q, asOf, limit)`. Selected places draw polygons on the map as shapes ([[ShapeSet]] "place-pick").
+  */
 object PlacesInput:
 
   /** Cached label/kind/contested for gazetteer ids. */
@@ -27,6 +27,7 @@ object PlacesInput:
 
   /** The labels' figures, for [[Diagnostics]]. */
   def cacheStats: BoundedCache.Stats = BoundedCache.stats(known)
+
   /** Moves whenever `known` learns a place, so every chip that names one re-reads its label. */
   private val knownVersion = Var(0)
 
@@ -47,15 +48,15 @@ object PlacesInput:
       periodEnd: Option[Long] = None
   )
 
-  private var items: List[SuggestItem]   = Nil
-  private var activeIdx: Int             = -1
-  private var timer: Int                 = 0
+  private var items: List[SuggestItem] = Nil
+  private var activeIdx: Int = -1
+  private var timer: Int = 0
   // the suggestions request a late answer must belong to
-  private val latest                     = Latest()
+  private val latest = Latest()
   private var inputEl: dom.HTMLInputElement = null
 
-  private val itemsVar   = Var(List.empty[SuggestItem])
-  private val activeVar  = Var(-1)
+  private val itemsVar = Var(List.empty[SuggestItem])
+  private val activeVar = Var(-1)
   private val menuHidden = Var(true)
 
   // The chip list renders from UiState directly
@@ -72,17 +73,17 @@ object PlacesInput:
 
   // the chosen places' and the previewed place's drawing: shapes on the map, a point-only region's name
   // as a marker; `layer` is whether the map is up for them
-  private var layer: Boolean       = false
+  private var layer: Boolean = false
   private val pickNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
   private val previewNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
   private val drawnPlaces = scala.collection.mutable.HashMap.empty[String, (String, String, String)]
   private var previewShown = false
-  private var previewId: String    = null
-  private var drawn: String        = ""
-  private var uiConfig: UiConfig   = null
+  private var previewId: String = null
+  private var drawn: String = ""
+  private var uiConfig: UiConfig = null
   private var lastTextJson: String = "[]"
 
-  private def ids(): List[String]   = UiState.placeIds.now()
+  private def ids(): List[String] = UiState.placeIds.now()
   private def texts(): List[String] = UiState.places.now()
 
   /** The year the gazetteer is read at: the middle of the selected span. */
@@ -117,8 +118,7 @@ object PlacesInput:
 
   private def addText(v: String): Unit =
     val t = Option(v).getOrElse("").trim
-    if t.nonEmpty && !texts().contains(t) then
-      UiState.set(UiState.places := texts() :+ t)()
+    if t.nonEmpty && !texts().contains(t) then UiState.set(UiState.places := texts() :+ t)()
     close()
     if inputEl != null then inputEl.value = ""
 
@@ -143,12 +143,21 @@ object PlacesInput:
         val show: List[PlaceHit] => Unit = rows =>
           if inputEl == null || dom.document.activeElement != inputEl then ()
           else
-            val gaz = Option(rows).getOrElse(Nil)
+            val gaz = Option(rows)
+              .getOrElse(Nil)
               .filterNot(p => ids().contains(p.id))
               .map { p =>
                 learn(p.id, KnownPlace(p.label, p.kind, p.contested))
-                SuggestItem(p.id, p.label, p.kind, Some(p.findings), p.contested, textFallback = false,
-                  p.periodStart, p.periodEnd)
+                SuggestItem(
+                  p.id,
+                  p.label,
+                  p.kind,
+                  Some(p.findings),
+                  p.contested,
+                  textFallback = false,
+                  p.periodStart,
+                  p.periodEnd
+                )
               }
             // the fallback row is always last unless it duplicates an existing text chip
             val fallback =
@@ -171,23 +180,53 @@ object PlacesInput:
 
   // ── polygon overlay ────────────────────────────────────────────────────────
 
-  /** The chosen places' shapes (`.hd-place-pick`'s colour; a disputed extent dashed and fainter), and
-    * the hovered suggestion's (`.hd-place-preview`, dotted). A point is drawn as a site's dot. */
-  private def pickSet: ShapeSet = TheMap.surface.shapes("place-pick", ShapeStyle(fillOpacity = 0.06, lineWidth = 2, lineOpacity = 0.9,
-    colour = Some(com.histmersion.web.ui.ThemeTokens("--place-pick")), dash = List(4, 3), dashedLineOpacity = Some(0.7),
-    circleRadius = uiConfig.markerRadius.toDouble, interactive = true))
-  private def previewSet: ShapeSet = TheMap.surface.shapes("place-preview", ShapeStyle(fillOpacity = 0.05, lineWidth = 2, lineOpacity = 0.9,
-    colour = Some(com.histmersion.web.ui.ThemeTokens("--place-preview")), dash = List(1, 2),
-    circleRadius = uiConfig.markerRadius.toDouble, interactive = true))
+  /** The chosen places' shapes (`.hd-place-pick`'s colour; a disputed extent dashed and fainter), and the hovered
+    * suggestion's (`.hd-place-preview`, dotted). A point is drawn as a site's dot.
+    */
+  private def pickSet: ShapeSet = TheMap.surface.shapes(
+    "place-pick",
+    ShapeStyle(
+      fillOpacity = 0.06,
+      lineWidth = 2,
+      lineOpacity = 0.9,
+      colour = Some(com.histmersion.web.ui.ThemeTokens("--place-pick")),
+      dash = List(4, 3),
+      dashedLineOpacity = Some(0.7),
+      circleRadius = uiConfig.markerRadius.toDouble,
+      interactive = true
+    )
+  )
+  private def previewSet: ShapeSet = TheMap.surface.shapes(
+    "place-preview",
+    ShapeStyle(
+      fillOpacity = 0.05,
+      lineWidth = 2,
+      lineOpacity = 0.9,
+      colour = Some(com.histmersion.web.ui.ThemeTokens("--place-preview")),
+      dash = List(1, 2),
+      circleRadius = uiConfig.markerRadius.toDouble,
+      interactive = true
+    )
+  )
 
   /** A place's geometry on the map: its shape (a point-only region or a people: its name instead). */
-  private def drawPlace(id: String, d: PlaceDetail, geo: js.Dynamic, names: scala.collection.mutable.ListBuffer[DomMarker],
-      at: () => Option[Long]): Option[ShapeFeature] =
+  private def drawPlace(
+      id: String,
+      d: PlaceDetail,
+      geo: js.Dynamic,
+      names: scala.collection.mutable.ListBuffer[DomMarker],
+      at: () => Option[Long]
+  ): Option[ShapeFeature] =
     drawnPlaces(id) = (id, d.place.label, d.place.kind)
     val t = if js.isUndefined(geo.selectDynamic("type")) then "" else geo.selectDynamic("type").toString
     if (t == "Point" || t == "MultiPoint") && PlaceGlyph.of(d.place.kind, "Point") == PlaceGlyph.Label then
       val c = if t == "Point" then geo.coordinates else geo.coordinates.selectDynamic("0")
-      val m = PlaceGlyph.labelMarker(c.selectDynamic("1").asInstanceOf[Double], c.selectDynamic("0").asInstanceOf[Double], d.place.label, d.place.kind)
+      val m = PlaceGlyph.labelMarker(
+        c.selectDynamic("1").asInstanceOf[Double],
+        c.selectDynamic("0").asInstanceOf[Double],
+        d.place.label,
+        d.place.kind
+      )
       PlaceHover.bind(m, id, d.place.label, d.place.kind, at)
       TheMap.pane(MapStack.Pane.AreaPoints).add(m)
       names += m
@@ -232,7 +271,7 @@ object PlacesInput:
 
   def init(config: UiConfig): HtmlElement =
     uiConfig = config
-    Preview.placeAsOf = () => asOf()   // a place chip's card reads the gazetteer at the map's year
+    Preview.placeAsOf = () => asOf() // a place chip's card reads the gazetteer at the map's year
     lastTextJson = js.JSON.stringify(texts().toJSArray)
 
     div(
@@ -243,23 +282,31 @@ object PlacesInput:
         children <-- chipsSignal.map { chips =>
           chips.zipWithIndex.map { case ((key, label, contested, isText), idx) =>
             if isText then
-              Chip(label, prefix = Some("text: "), extraCls = "place place-text",
+              Chip(
+                label,
+                prefix = Some("text: "),
+                extraCls = "place place-text",
                 tip = Some("matched as text against the finding's region name"),
                 remove = Some { () =>
                   // text chips come after gaz chips; compute text index
                   removeTextAt(idx - ids().length)
                   if inputEl != null then inputEl.focus()
-                })
+                }
+              )
             else
-              Chip(label, extraCls = s"place${if contested then " contested-chip" else ""}",
-                mods = List[Modifier[HtmlElement]](placeCard(key, label),
-                  if flag(contested, label) then
-                    span(cls := "contested", title := "disputed extent", " (contested)")
-                  else emptyNode),
+              Chip(
+                label,
+                extraCls = s"place${if contested then " contested-chip" else ""}",
+                mods = List[Modifier[HtmlElement]](
+                  placeCard(key, label),
+                  if flag(contested, label) then span(cls := "contested", title := "disputed extent", " (contested)")
+                  else emptyNode
+                ),
                 remove = Some { () =>
                   removeIdAt(idx)
                   if inputEl != null then inputEl.focus()
-                })
+                }
+              )
           }
         }
       ),
@@ -283,7 +330,8 @@ object PlacesInput:
             timer = 0
             latest.cancel()
             inputEl = null
-          }),
+          }
+        ),
         onInput --> { _ => schedule() },
         onFocus --> { _ =>
           if inputEl != null && inputEl.value.trim.nonEmpty then schedule()
@@ -315,7 +363,8 @@ object PlacesInput:
               e.stopPropagation()
               close()
           else if key == "Backspace" && inputEl != null && inputEl.value.isEmpty
-            && (ids().nonEmpty || texts().nonEmpty) then
+            && (ids().nonEmpty || texts().nonEmpty)
+          then
             e.preventDefault()
             if texts().nonEmpty then removeTextAt(texts().length - 1)
             else removeIdAt(ids().length - 1)
@@ -344,8 +393,9 @@ object PlacesInput:
               val findingsText = it.findings match
                 case Some(n) if n > 0 => s"$n finding${if n != 1 then "s" else ""}"
                 case _                => "no findings"
-              val detail = List(Fmt.display(it.kind), findingsText,
-                if period.nonEmpty then period else "").filter(_.nonEmpty).mkString(" · ")
+              val detail = List(Fmt.display(it.kind), findingsText, if period.nonEmpty then period else "")
+                .filter(_.nonEmpty)
+                .mkString(" · ")
               li(
                 role := "option",
                 cls("active") <-- activeVar.signal.map(_ == i),
@@ -395,8 +445,8 @@ object PlacesInput:
   def sync(): Unit =
     draw(fit = false)
 
-  /** Draw ONE place's shape as a TRANSIENT overlay and fit the map to it. Toggle behavior: same id
-    * clears it. */
+  /** Draw ONE place's shape as a TRANSIENT overlay and fit the map to it. Toggle behavior: same id clears it.
+    */
   def preview(id: String, asOfYear: Option[Long]): Unit =
     if !layer then ()
     else
@@ -404,8 +454,7 @@ object PlacesInput:
       previewSet.clear()
       clearNames(previewNames)
       previewShown = false
-      if wasShowing then
-        previewId = null
+      if wasShowing then previewId = null
       else
         previewId = id
         val effectiveAsOf = asOfYear.orElse(asOf())
@@ -427,32 +476,51 @@ object PlacesInput:
   def remember(id: String, label: String, kind: String, contested: Boolean = false): Unit =
     if label.trim.nonEmpty then learn(id, KnownPlace(label, kind, contested))
 
-  /** A click on place `id` on the map: it becomes the place filter — the same `UiState.placeIds` the
-    * box above sets, so the lists narrow to it and its descendants and its chip appears — or, when
-    * it already is chosen, it is unchosen. Returns whether it is chosen now. */
+  /** A click on place `id` on the map: it becomes the place filter — the same `UiState.placeIds` the box above sets, so
+    * the lists narrow to it and its descendants and its chip appears — or, when it already is chosen, it is unchosen.
+    * Returns whether it is chosen now.
+    */
   def toggleFromMap(id: String, label: String, kind: String): Boolean =
     remember(id, label, kind, known.get(id).exists(_.contested))
     chosenOnMap = true
     UiState.togglePlace(id)
 
-  /** The chosen places as chips ON the map — in the narrow layout the filter bar is a closed drawer,
-    * and a filter set by tapping the map must be visible (and clearable) where the tap happened. */
+  /** The chosen places as chips ON the map — in the narrow layout the filter bar is a closed drawer, and a filter set
+    * by tapping the map must be visible (and clearable) where the tap happened.
+    */
   def mapChips: HtmlElement =
     div(
       cls := "map-place-chips",
       cls("is-hidden") <-- UiState.placeIds.signal.map(_.isEmpty),
-      children <-- UiState.placeIds.signal.combineWith(knownVersion.signal).map((ids, _) => ids.map { id =>
-        ensureKnown(id)
-        Chip(chipText(id, describe), prefix = Some("place: "), extraCls = "place",
-          remove = Some(() => { val _ = UiState.togglePlace(id) }), mods = placeCard(id, chipText(id, describe)))
-      })
+      children <-- UiState.placeIds.signal
+        .combineWith(knownVersion.signal)
+        .map((ids, _) =>
+          ids.map { id =>
+            ensureKnown(id)
+            Chip(
+              chipText(id, describe),
+              prefix = Some("place: "),
+              extraCls = "place",
+              remove = Some { () =>
+                val _ = UiState.togglePlace(id)
+              },
+              mods = placeCard(id, chipText(id, describe))
+            )
+          }
+        )
     )
 
-  /** A gazetteer chip answers like the place on the map ([[Preview]]): hover or focus shows its card,
-    * a click or Enter pins it so its links can be followed. */
+  /** A gazetteer chip answers like the place on the map ([[Preview]]): hover or focus shows its card, a click or Enter
+    * pins it so its links can be followed.
+    */
   private def placeCard(id: String, label: String): Modifier[HtmlElement] =
-    List(dataAttr("place") := id, tabIndex := 0, role := "button", aria.hasPopup := true,
-      aria.label := s"$label — show its card")
+    List(
+      dataAttr("place") := id,
+      tabIndex := 0,
+      role := "button",
+      aria.hasPopup := true,
+      aria.label := s"$label — show its card"
+    )
 
   /** What a gazetteer id is CALLED. Falls back to the id when the label is not cached. */
   def labelOf(id: String): String =
@@ -461,8 +529,9 @@ object PlacesInput:
   /** The (label, kind) of a place this page has seen, if any. */
   def describe(id: String): Option[(String, String)] = known.get(id).map(k => (k.label, k.kind))
 
-  /** Pure: a chosen place as a chip names it — its label and kind ("Kingdom of Patones (polity)"),
-    * NEVER its id: while the label is still being fetched, "…". */
+  /** Pure: a chosen place as a chip names it — its label and kind ("Kingdom of Patones (polity)"), NEVER its id: while
+    * the label is still being fetched, "…".
+    */
   def chipText(id: String, lookup: String => Option[(String, String)]): String =
     lookup(id).fold("…")((label, kind) => if kind.trim.isEmpty then label else s"$label (${Label.display(kind)})")
 

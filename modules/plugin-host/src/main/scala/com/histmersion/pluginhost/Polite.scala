@@ -15,67 +15,92 @@ import scala.jdk.CollectionConverters.*
 /** One HTTP answer: the status, the headers (names in lower case, first value) and the body. */
 final case class HttpAnswer(code: Int, headers: Map[String, String], body: Array[Byte]):
   def header(name: String): Option[String] = headers.get(name.toLowerCase(Locale.ROOT))
-  def text: String                         = new String(body, UTF_8)
+  def text: String = new String(body, UTF_8)
 
-/** One GET on the wire: the seam between the host's HTTP policies ([[Polite]], [[PolicyHttp]]) and the
-  * network. A test supplies one that answers from fixtures or recordings and never opens a socket.
-  * Failures to talk at all are `Left`; any HTTP answer, a 429 included, is a `Right` — the policy
-  * decides what it means. */
+/** One GET on the wire: the seam between the host's HTTP policies ([[Polite]], [[PolicyHttp]]) and the network. A test
+  * supplies one that answers from fixtures or recordings and never opens a socket. Failures to talk at all are `Left`;
+  * any HTTP answer, a 429 included, is a `Right` — the policy decides what it means.
+  */
 trait HttpTransport:
   def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer]
 
-/** The real client: `java.net.http`, following redirects, the URL used exactly as built (the provider
-  * URLs are already percent-encoded). */
+/** The real client: `java.net.http`, following redirects, the URL used exactly as built (the provider URLs are already
+  * percent-encoded).
+  */
 final class JavaHttpTransport(timeoutSeconds: => Int) extends HttpTransport: // by name: read per request
-  private val client = HttpClient.newBuilder()
+  private val client = HttpClient
+    .newBuilder()
     .followRedirects(HttpClient.Redirect.NORMAL)
     .connectTimeout(Duration.ofSeconds(timeoutSeconds.toLong.max(1)))
     .version(HttpClient.Version.HTTP_1_1)
     .build()
 
   def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer] =
-    scala.util.Try {
-      val b = HttpRequest.newBuilder(URI.create(url)).GET().timeout(Duration.ofSeconds(timeoutSeconds.toLong.max(1)))
-      headers.foreach((k, v) => b.header(k, v))
-      val resp = client.send(b.build(), HttpResponse.BodyHandlers.ofByteArray())
-      val hs = resp.headers().map().asScala.toMap.flatMap((k, vs) =>
-        vs.asScala.headOption.map(v => k.toLowerCase(Locale.ROOT) -> v))
-      HttpAnswer(resp.statusCode(), hs, resp.body())
-    }.toEither.left.map(e => s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
+    scala.util
+      .Try {
+        val b = HttpRequest.newBuilder(URI.create(url)).GET().timeout(Duration.ofSeconds(timeoutSeconds.toLong.max(1)))
+        headers.foreach((k, v) => b.header(k, v))
+        val resp = client.send(b.build(), HttpResponse.BodyHandlers.ofByteArray())
+        val hs = resp
+          .headers()
+          .map()
+          .asScala
+          .toMap
+          .flatMap((k, vs) => vs.asScala.headOption.map(v => k.toLowerCase(Locale.ROOT) -> v))
+        HttpAnswer(resp.statusCode(), hs, resp.body())
+      }
+      .toEither
+      .left
+      .map(e => s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
 
-/** What to do with a media or catalogue answer: [[HttpPolicy]], the one outbound policy, plus
-  * MediaWiki's `maxlag` refusal (a 200 that means "slow down"). Pure. */
+/** What to do with a media or catalogue answer: [[HttpPolicy]], the one outbound policy, plus MediaWiki's `maxlag`
+  * refusal (a 200 that means "slow down"). Pure.
+  */
 object Politeness:
 
   type Step = HttpPolicy.Step
   val Step = HttpPolicy.Step
 
-  /** Does the answer say "slow down"? A 429, a 503/502/504, or MediaWiki's maxlag refusal — which
-    * comes back as HTTP 200 with a `MediaWiki-API-Error: maxlag` header and `error.code = maxlag`. */
+  /** Does the answer say "slow down"? A 429, a 503/502/504, or MediaWiki's maxlag refusal — which comes back as HTTP
+    * 200 with a `MediaWiki-API-Error: maxlag` header and `error.code = maxlag`.
+    */
   def isMaxlag(a: HttpAnswer): Boolean =
     a.header("mediawiki-api-error").exists(_.trim.equalsIgnoreCase("maxlag")) ||
       (a.body.length < 4096 && a.text.contains("\"code\":\"maxlag\""))
 
   /** Pure: the next step after the `attempt`-th answer (0-based) — [[HttpPolicy.decide]]. */
   def decide(a: HttpAnswer, attempt: Int, maxRetries: Int, maxRetryAfterSeconds: Int, now: Instant): Step =
-    HttpPolicy.decide(a.code, a.header("retry-after"), attempt, maxRetries, maxRetryAfterSeconds, now,
-      Option.when(isMaxlag(a))("maxlag"))
+    HttpPolicy.decide(
+      a.code,
+      a.header("retry-after"),
+      attempt,
+      maxRetries,
+      maxRetryAfterSeconds,
+      now,
+      Option.when(isMaxlag(a))("maxlag")
+    )
 
   /** Pure: a Retry-After value as milliseconds from `now` — [[HttpPolicy.retryAfterMs]]. */
   def retryAfterMs(v: Option[String], now: Instant): Option[Long] = HttpPolicy.retryAfterMs(v, now)
 
-/** A polite client of one run: requests go one at a time, at least `request-interval-ms` apart per
-  * host; every request carries the configured User-Agent (the project and its repository — no
-  * e-mail, no personal data); slow-down answers are honoured ([[Politeness]]). `sleep` and `clock` are
-  * parameters so a test runs without waiting.
+/** A polite client of one run: requests go one at a time, at least `request-interval-ms` apart per host; every request
+  * carries the configured User-Agent (the project and its repository — no e-mail, no personal data); slow-down answers
+  * are honoured ([[Politeness]]). `sleep` and `clock` are parameters so a test runs without waiting.
   *
-  * `refusalBackoffMs` (#2561, a collection's `refusal-backoff-seconds`): a host that refuses (HTTP 403)
-  * after answering is taken as rate limiting, not a ban — the request waits each step in turn and is
-  * asked again, and from the first refusal the host is asked at half the pace (each further refusal
-  * halves it again, down to [[MaxSlowdown]] times slower) for the rest of the run. When the steps run
-  * out the 403 stands: the caller stops. Empty (the default): a 403 is final at once. */
-final class Polite(http: HttpTransport, cfg: MediaConfig, sleep: Long => Unit = ms => Thread.sleep(ms),
-    clock: () => Long = () => System.currentTimeMillis(), refusalBackoffMs: List[Long] = Nil, log: HostLog = HostLog.scribe):
+  * `refusalBackoffMs` (#2561, a collection's `refusal-backoff-seconds`): a host that refuses (HTTP 403) after answering
+  * is taken as rate limiting, not a ban — the request waits each step in turn and is asked again, and from the first
+  * refusal the host is asked at half the pace (each further refusal halves it again, down to [[MaxSlowdown]] times
+  * slower) for the rest of the run. When the steps run out the 403 stands: the caller stops. Empty (the default): a 403
+  * is final at once.
+  */
+final class Polite(
+    http: HttpTransport,
+    cfg: MediaConfig,
+    sleep: Long => Unit = ms => Thread.sleep(ms),
+    clock: () => Long = () => System.currentTimeMillis(),
+    refusalBackoffMs: List[Long] = Nil,
+    log: HostLog = HostLog.scribe
+):
 
   // `var`/mutable: the time of the last request per host, each host's slow-down after refusals, and the
   // request count — a run's own state
@@ -99,43 +124,59 @@ final class Polite(http: HttpTransport, cfg: MediaConfig, sleep: Long => Unit = 
     }
     last(h) = clock()
 
-  /** One GET, paced and retried. `headers` are sent as given, except the User-Agent: always the
-    * configured one (a plugin's request too). */
+  /** One GET, paced and retried. `headers` are sent as given, except the User-Agent: always the configured one (a
+    * plugin's request too).
+    */
   def get(url: String, headers: Map[String, String] = Map.empty): Either[String, HttpAnswer] =
     val h = host(url)
-    val sent = headers.filterNot(_._1.equalsIgnoreCase("User-Agent")) + ("User-Agent" -> HttpPolicy.userAgent(cfg.userAgent))
+    val sent =
+      headers.filterNot(_._1.equalsIgnoreCase("User-Agent")) + ("User-Agent" -> HttpPolicy.userAgent(cfg.userAgent))
     def attempt(n: Int, refusals: Int): Either[String, HttpAnswer] =
       pace(h)
       count += 1
       http.get(url, sent).flatMap { a =>
         Politeness.decide(a, n, cfg.maxRetries, cfg.maxRetryAfterSeconds, Instant.ofEpochMilli(clock())) match
-          case Politeness.Step.Accept => Right(a)
+          case Politeness.Step.Accept        => Right(a)
           case Politeness.Step.Wait(ms, why) =>
-            log.info(s"media: $why from $h — waiting ${ms} ms")
+            log.info(s"media: $why from $h — waiting $ms ms")
             sleep(ms)
             attempt(n + 1, refusals)
           case Politeness.Step.GiveUp(why) if a.code == 403 && refusals < refusalBackoffMs.size =>
             val ms = refusalBackoffMs(refusals)
             slowdown(h) = (slowdown.getOrElse(h, 1) * 2).min(Polite.MaxSlowdown)
-            log.warn(s"media: $why from $h — taken as rate limiting: waiting ${ms} ms, then asking at " +
-              s"${intervalMs(h)} ms between requests")
+            log.warn(
+              s"media: $why from $h — taken as rate limiting: waiting $ms ms, then asking at " +
+                s"${intervalMs(h)} ms between requests"
+            )
             sleep(ms)
             attempt(n, refusals + 1)
           case Politeness.Step.GiveUp(why) =>
-            val waited = if a.code == 403 && refusals > 0 then s" (still, after waiting ${refusalBackoffMs.take(refusals).sum / 1000} s)" else ""
+            val waited = if a.code == 403 && refusals > 0 then
+              s" (still, after waiting ${refusalBackoffMs.take(refusals).sum / 1000} s)"
+            else ""
             Left(s"$h: $why$waited")
       }
     attempt(0, 0)
 
-  /** One GET answered as JSON. `headers` as for [[get]] — a key-gated API's key travels in one, never in
-    * the URL (which an error line or a log may show). */
+  /** One GET answered as JSON. `headers` as for [[get]] — a key-gated API's key travels in one, never in the URL (which
+    * an error line or a log may show).
+    */
   def json(url: String, headers: Map[String, String] = Map.empty): Either[String, Json] =
-    get(url, headers).flatMap(a => io.circe.parser.parse(a.text).left.map(e => s"${host(url)}: unparseable JSON (${e.getMessage})"))
+    get(url, headers).flatMap(a =>
+      io.circe.parser.parse(a.text).left.map(e => s"${host(url)}: unparseable JSON (${e.getMessage})")
+    )
 
   /** The bytes of a file and its type (the answer's Content-Type, else `fallbackMime`). */
   def file(url: String, fallbackMime: String): Either[String, (Array[Byte], String)] =
-    get(url).map(a => (a.body, a.header("content-type").map(_.split(";").head.trim).filter(_.nonEmpty)
-      .getOrElse(fallbackMime)))
+    get(url).map(a =>
+      (
+        a.body,
+        a.header("content-type")
+          .map(_.split(";").head.trim)
+          .filter(_.nonEmpty)
+          .getOrElse(fallbackMime)
+      )
+    )
 
 object Polite:
   /** A host is never asked more than this many times slower than its configured pace. */

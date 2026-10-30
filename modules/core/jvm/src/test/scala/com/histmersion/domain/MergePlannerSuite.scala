@@ -8,11 +8,21 @@ import com.histmersion.config.given
 
 import BundlePlan.Decision
 import MergeFixture.*
-import com.histmersion.values.{BundleKind, DecidedBy, DecisionKind, EditionsPolicy, IssueKind, IssueSeverity, MatchMethod, MatchOutcome}
+import com.histmersion.values.{
+  BundleKind,
+  DecidedBy,
+  DecisionKind,
+  EditionsPolicy,
+  IssueKind,
+  IssueSeverity,
+  MatchMethod,
+  MatchOutcome
+}
 
-/** `merge plan` as a pure function over the crafted fixture (docs/research-merge-import.md §8): the
-  * whole issue list in one run, conditional issues, resolutions (stale, invalid, partial), the
-  * editions policy, and the properties — determinism, stable ids, monotone resolution. */
+/** `merge plan` as a pure function over the crafted fixture (docs/research-merge-import.md §8): the whole issue list in
+  * one run, conditional issues, resolutions (stale, invalid, partial), the editions policy, and the properties —
+  * determinism, stable ids, monotone resolution.
+  */
 class MergePlannerSuite extends munit.FunSuite with Bounded:
 
   private def plan(in: MergePlanner.Input = input(), res: MergeResolutions = MergeResolutions()): MergePlanner.Result =
@@ -22,7 +32,9 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     MergeResolutions(pairs.toList.map((i, d) => MergeResolution(i, d)))
 
   private def issue(p: MergePlan, kind: IssueKind, right: String): MergeIssue =
-    p.issues.find(i => i.kind == kind && i.right.exists(_.label == right)).getOrElse(fail(s"no $kind on $right in\n${p.issues.mkString("\n")}"))
+    p.issues
+      .find(i => i.kind == kind && i.right.exists(_.label == right))
+      .getOrElse(fail(s"no $kind on $right in\n${p.issues.mkString("\n")}"))
 
   test("the crafted fixture: exactly the expected issues, in one run"):
     val p = plan().plan
@@ -30,7 +42,10 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(got -- expected, Set.empty, "unexpected issues")
     assertEquals(expected -- got, Set.empty, "missing issues")
     assertEquals(p.issues.size, expected.size, p.issues.mkString("\n"))
-    assertEquals(p.matches, MatchCounts(sources = 10, byUid = 1, byStrongKey = 2, byScore = 4, undecided = 1, unmatched = 2))
+    assertEquals(
+      p.matches,
+      MatchCounts(sources = 10, byUid = 1, byStrongKey = 2, byScore = 4, undecided = 1, unmatched = 2)
+    )
     assertEquals(p.problems, Nil)
     assertEquals(p.resolutionErrors, Nil)
     // ids are <letter>-<8 hex>, unique
@@ -53,8 +68,10 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(byRight("page2024_history").outcome, MatchOutcome.NeedsDecision)
     assertEquals(byRight("smith2019_ritual").outcome, MatchOutcome.New)
     // the citekey collision suggests the next title word
-    assertEquals(issue(p, IssueKind.CitekeyCollision, "smith2019_ritual").suggested.map(_.wire),
-      Some("rename-right:smith2019_ritualkingship"))
+    assertEquals(
+      issue(p, IssueKind.CitekeyCollision, "smith2019_ritual").suggested.map(_.wire),
+      Some("rename-right:smith2019_ritualkingship")
+    )
     // the gate suggests merging under ours (the score is high; only the year gap asks)
     assertEquals(issue(p, IssueKind.SameWork, "page2024_history").suggested.map(_.wire), Some("map:page1959_history"))
 
@@ -68,21 +85,31 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     // the gate is open: its source is held, not folded
     assertEquals(r.rows.find(_.foreignUid == uid("w-page")).map(_.decision), Some(Decision.Held))
     // the goal created on both sides under one slug is one goal
-    assert(r.apply.folds.contains(MergePlanner.Fold(BundleKind.Goal, uid("w-goal"), uid("h-goal"))), r.apply.folds.toString)
+    assert(
+      r.apply.folds.contains(MergePlanner.Fold(BundleKind.Goal, uid("w-goal"), uid("h-goal"))),
+      r.apply.folds.toString
+    )
     assertEquals(r.rows.find(_.foreignUid == uid("w-new")).map(_.decision), Some(Decision.Insert))
     assertEquals(r.rows.find(_.foreignUid == sharedThere.uid).map(_.decision), Some(Decision.Conflict))
 
   test("deciding the gate: map makes its conditional issues unconditional, both drops them"):
-    val p0   = plan().plan
+    val p0 = plan().plan
     val gate = issue(p0, IssueKind.SameWork, "page2024_history")
     val year = issue(p0, IssueKind.YearDiffers, "page2024_history")
     assertEquals(year.condition, Some(IssueCondition(gate.id, DecisionKind.Map)))
     val mapped = plan(res = resolve(gate.id -> "map:page1959_history")).plan
     assertEquals(issue(mapped, IssueKind.YearDiffers, "page2024_history").condition, None)
-    assertEquals(issue(mapped, IssueKind.YearDiffers, "page2024_history").id, year.id, "the id does not depend on the decision")
+    assertEquals(
+      issue(mapped, IssueKind.YearDiffers, "page2024_history").id,
+      year.id,
+      "the id does not depend on the decision"
+    )
     val both = plan(res = resolve(gate.id -> "both", year.id -> "keep-left")).plan
     assert(!both.issues.exists(_.id == year.id))
-    assert(both.resolutionErrors.exists(e => e.startsWith(year.id) && e.contains("applies only if")), both.resolutionErrors.toString)
+    assert(
+      both.resolutionErrors.exists(e => e.startsWith(year.id) && e.contains("applies only if")),
+      both.resolutionErrors.toString
+    )
     val bothRows = plan(res = resolve(gate.id -> "both")).rows
     assertEquals(bothRows.find(_.foreignUid == uid("w-page")).map(_.decision), Some(Decision.Insert))
 
@@ -97,18 +124,24 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(separate.sources.find(_.rightCitekey == "page2024_history").map(_.outcome), Some(MatchOutcome.New))
 
   test("resolutions: invalid decisions and unknown ids are errors, never ignored; valid ones are counted"):
-    val p0   = plan().plan
+    val p0 = plan().plan
     val gate = issue(p0, IssueKind.SameWork, "page2024_history")
     val coll = issue(p0, IssueKind.CitekeyCollision, "smith2019_ritual")
-    val r = plan(res = resolve(
-      gate.id -> "map:nonsense2000_x",
-      coll.id -> "keep-left",
-      "S-00000000" -> "keep-left",
-      issue(p0, IssueKind.DoiDiffers, "kuhrt1995_near").id -> "keep-right",
-      issue(p0, IssueKind.StatusDiffers, "bryce2005_kingdom").id -> "sideways",
-      coll.id + "x" -> "both")).plan
+    val r = plan(res =
+      resolve(
+        gate.id -> "map:nonsense2000_x",
+        coll.id -> "keep-left",
+        "S-00000000" -> "keep-left",
+        issue(p0, IssueKind.DoiDiffers, "kuhrt1995_near").id -> "keep-right",
+        issue(p0, IssueKind.StatusDiffers, "bryce2005_kingdom").id -> "sideways",
+        coll.id + "x" -> "both"
+      )
+    ).plan
     assertEquals(r.resolved, 1)
-    assert(r.resolutionErrors.exists(e => e.startsWith(gate.id) && e.contains("map takes one of")), r.resolutionErrors.toString)
+    assert(
+      r.resolutionErrors.exists(e => e.startsWith(gate.id) && e.contains("map takes one of")),
+      r.resolutionErrors.toString
+    )
     assert(r.resolutionErrors.exists(e => e.startsWith(coll.id) && e.contains("not a decision for this issue")))
     assert(r.resolutionErrors.exists(e => e.startsWith("S-00000000") && e.contains("stale")))
     assert(r.resolutionErrors.exists(_.contains("'sideways' is not a decision")))
@@ -118,10 +151,11 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assert(taken.resolutionErrors.exists(_.contains("already a citekey")), taken.resolutionErrors.toString)
 
   test("an id goes stale when a record it is about changes; the resolution is reported, not re-applied"):
-    val p0  = plan().plan
+    val p0 = plan().plan
     val doi = issue(p0, IssueKind.DoiDiffers, "kuhrt1995_near")
-    val changed = foreign.copy(sources = foreign.sources.map(s =>
-      if s.uid == uid("w-kuhrt") then s.copy(summary = Some("edited since")) else s))
+    val changed = foreign.copy(sources =
+      foreign.sources.map(s => if s.uid == uid("w-kuhrt") then s.copy(summary = Some("edited since")) else s)
+    )
     val p1 = plan(input(changed), resolve(doi.id -> "keep-left")).plan
     val again = issue(p1, IssueKind.DoiDiffers, "kuhrt1995_near")
     assertNotEquals(again.id, doi.id)
@@ -141,8 +175,8 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
 
   test("the importable decisions turn into row decisions"):
     val p0 = plan().plan
-    val both  = issue(p0, IssueKind.ChangedBothSides, "zzshared2001_alpha")
-    val gone  = p0.issues.find(_.kind == IssueKind.DeletedThereChangedHere).get
+    val both = issue(p0, IssueKind.ChangedBothSides, "zzshared2001_alpha")
+    val gone = p0.issues.find(_.kind == IssueKind.DeletedThereChangedHere).get
     val event = issue(p0, IssueKind.LabelTaken, "zz_siege")
     val left = plan(res = resolve(both.id -> "keep-left", gone.id -> "keep-right", event.id -> "keep-left"))
     assertEquals(left.rows.find(_.foreignUid == sharedThere.uid).map(_.decision), Some(Decision.Kept))
@@ -159,10 +193,17 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
   private def shuffled(rnd: scala.util.Random, in: MergePlanner.Input): MergePlanner.Input =
     val f = in.foreign
     in.copy(
-      foreign = f.copy(sources = rnd.shuffle(f.sources), aliases = rnd.shuffle(f.aliases), articles = rnd.shuffle(f.articles),
-        events = rnd.shuffle(f.events), goals = rnd.shuffle(f.goals), tombstones = rnd.shuffle(f.tombstones)),
+      foreign = f.copy(
+        sources = rnd.shuffle(f.sources),
+        aliases = rnd.shuffle(f.aliases),
+        articles = rnd.shuffle(f.articles),
+        events = rnd.shuffle(f.events),
+        goals = rnd.shuffle(f.goals),
+        tombstones = rnd.shuffle(f.tombstones)
+      ),
       sources = rnd.shuffle(in.sources),
-      labels = in.labels)
+      labels = in.labels
+    )
 
   test("property: the plan is deterministic, and the same under any order of the input lines"):
     val base = plan().plan
@@ -206,32 +247,38 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
 
   test("property: issue ids hash only their own records — editing one source moves only its issues"):
     val base = plan().plan
-    val rnd  = scala.util.Random(42L)
+    val rnd = scala.util.Random(42L)
     foreign.sources.foreach { s =>
-      val edited = foreign.copy(sources = foreign.sources.map(x =>
-        if x.uid == s.uid then x.copy(summary = Some(s"edit ${rnd.nextInt()}")) else x))
+      val edited = foreign.copy(sources =
+        foreign.sources.map(x => if x.uid == s.uid then x.copy(summary = Some(s"edit ${rnd.nextInt()}")) else x)
+      )
       val p = plan(input(edited)).plan
       val untouched = base.issues.filterNot(i => i.right.exists(_.uid == s.uid)).map(_.id).toSet
       assertEquals(untouched -- p.issues.map(_.id).toSet, Set.empty, s"editing ${s.citekey}")
-      base.issues.filter(i => i.right.exists(_.uid == s.uid) && i.kind != IssueKind.AliasConflict).foreach(i =>
-        assert(!p.issues.exists(_.id == i.id), s"editing ${s.citekey} kept ${i.id}"))
+      base.issues
+        .filter(i => i.right.exists(_.uid == s.uid) && i.kind != IssueKind.AliasConflict)
+        .foreach(i => assert(!p.issues.exists(_.id == i.id), s"editing ${s.citekey} kept ${i.id}"))
     }
 
   // ── the resolution file ───────────────────────────────────────────────────────────────────
 
   test("the template lists every issue; filled in, it reads back as the decisions written"):
     val p0 = plan().plan
-    val t  = MergeResolutionsFile.template(p0, MergeResolutions())
+    val t = MergeResolutionsFile.template(p0, MergeResolutions())
     p0.issues.foreach(i => assert(t.contains(i.id), s"${i.id} missing from\n$t"))
     assertEquals(MergeResolutionsFile.parse(t), Right(MergeResolutions(Nil, MergePolicy(None), Some(p0.bundleId))))
-    val doi  = issue(p0, IssueKind.DoiDiffers, "kuhrt1995_near").id
+    val doi = issue(p0, IssueKind.DoiDiffers, "kuhrt1995_near").id
     val coll = issue(p0, IssueKind.CitekeyCollision, "smith2019_ritual").id
     // (`editions: separate` answers the page gate: two sources, so no gate is left to decide)
-    val filled = t.replace(s"  $doi:", s"  $doi: keep-right").replace(s"  $coll:", s"  $coll: rename-right:smith2019_ritualkingship")
+    val filled = t
+      .replace(s"  $doi:", s"  $doi: keep-right")
+      .replace(s"  $coll:", s"  $coll: rename-right:smith2019_ritualkingship")
       .replace("  # editions: merge", "  editions: separate")
     val read = MergeResolutionsFile.parse(filled).fold(e => fail(e.mkString), identity)
-    assertEquals(read.resolve.map(r => r.issue -> r.decision).toMap,
-      Map(doi -> "keep-right", coll -> "rename-right:smith2019_ritualkingship"))
+    assertEquals(
+      read.resolve.map(r => r.issue -> r.decision).toMap,
+      Map(doi -> "keep-right", coll -> "rename-right:smith2019_ritualkingship")
+    )
     assertEquals(read.policy.editions, Some(EditionsPolicy.Separate))
     // and a partial re-plan shows what remains
     val again = plan(res = read).plan
@@ -244,7 +291,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
 
   test("the resolution file: unknown keys, bad policies and bad ids are all reported at once"):
     val bad = MergeResolutionsFile.parse("bundel: x\npolicy:\n  editions: sometimes\n  colour: red\nresolve: [1, 2]\n")
-    val es  = bad.left.getOrElse(fail("parsed"))
+    val es = bad.left.getOrElse(fail("parsed"))
     assert(es.exists(_.contains("unknown key 'bundel'")), es.toString)
     assert(es.exists(_.contains("'sometimes' is not merge or separate")))
     assert(es.exists(_.contains("policy: unknown key 'colour'")))
@@ -254,7 +301,10 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assert(MergeResolutionsFile.flag("S-12345678").isLeft)
 
   test("decisions: the wire form, arguments where they belong"):
-    assertEquals(MergeDecision.parse("map:guterbock1997_hittite"), Right(MergeDecision.withArg(DecisionKind.Map, "guterbock1997_hittite")))
+    assertEquals(
+      MergeDecision.parse("map:guterbock1997_hittite"),
+      Right(MergeDecision.withArg(DecisionKind.Map, "guterbock1997_hittite"))
+    )
     assertEquals(MergeDecision.parse(" keep-left "), Right(MergeDecision.of(DecisionKind.KeepLeft)))
     assert(MergeDecision.parse("map").isLeft)
     assert(MergeDecision.parse("keep-left:x").isLeft)
@@ -265,7 +315,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     }
 
   test("the Markdown plan names every open issue, its options and the plan hash"):
-    val p  = plan().plan
+    val p = plan().plan
     val md = MergeMarkdown.plan(p, all = true)
     p.issues.foreach(i => assert(md.contains(i.id), i.id))
     assert(md.contains(p.planHash))
@@ -277,28 +327,62 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
 
   private val At = "2026-10-01T09:00:00.000000Z"
   private def att(id: String, source: String, quote: String, origin: java.util.UUID): BundleAttestation =
-    BundleAttestation(uid(id), origin, uid(source), "place", id, None, Some(quote), None, None, Some(0), Some(quote.length),
-      None, None, None, None, None, None, At, At)
+    BundleAttestation(
+      uid(id),
+      origin,
+      uid(source),
+      "place",
+      id,
+      None,
+      Some(quote),
+      None,
+      None,
+      Some(0),
+      Some(quote.length),
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      At,
+      At
+    )
 
-  test("attestations: re-anchored into the body kept; one that cannot be is blocking, under each alternative of the body question"):
+  test(
+    "attestations: re-anchored into the body kept; one that cannot be is blocking, under each alternative of the body question"
+  ):
     val workBody = "Kuhrt body, work's OCR"
     val homeBody = "Kuhrt body, home's OCR"
-    val es = foreign.copy(attestations = List(att("t-found", "w-kuhrt", "Kuhrt body", work), att("t-lost", "w-kuhrt", "work's OCR", work)))
+    val es = foreign.copy(attestations =
+      List(att("t-found", "w-kuhrt", "Kuhrt body", work), att("t-lost", "w-kuhrt", "work's OCR", work))
+    )
     val in0 = input(es)
-    val in = in0.copy(local = in0.local.copy(attestations = List(att("t-home", "h-kuhrt", "home's OCR", home))),
-      bodies = Map(BundleFormat.sha256Hex(workBody) -> workBody, BundleFormat.sha256Hex(homeBody) -> homeBody))
+    val in = in0.copy(
+      local = in0.local.copy(attestations = List(att("t-home", "h-kuhrt", "home's OCR", home))),
+      bodies = Map(BundleFormat.sha256Hex(workBody) -> workBody, BundleFormat.sha256Hex(homeBody) -> homeBody)
+    )
     val r0 = MergePlanner.plan(in, sketches, MergeResolutions(), cfg)
     val body = issue(r0.plan, IssueKind.BodyDiffers, "kuhrt1995_near")
-    val lost = r0.plan.issues.find(i => i.kind == IssueKind.AttestationUnanchored && i.right.exists(_.uid == uid("t-lost"))).get
-    val mine = r0.plan.issues.find(i => i.kind == IssueKind.AttestationUnanchored && i.left.exists(_.uid == uid("t-home"))).get
+    val lost =
+      r0.plan.issues.find(i => i.kind == IssueKind.AttestationUnanchored && i.right.exists(_.uid == uid("t-lost"))).get
+    val mine =
+      r0.plan.issues.find(i => i.kind == IssueKind.AttestationUnanchored && i.left.exists(_.uid == uid("t-home"))).get
     // the body stays ours by default: work's lost attestation is a question now; home's would be one
     // only if work's body were taken — listed, conditional, so deciding the body reveals nothing new
     assertEquals(lost.condition, None)
     assertEquals(lost.severity, IssueSeverity.Blocking)
     assertEquals(mine.condition, Some(IssueCondition(body.id, DecisionKind.KeepRight)))
-    assert(!r0.plan.issues.exists(i => i.kind == IssueKind.AttestationUnanchored && i.right.exists(_.uid == uid("t-found"))))
+    assert(
+      !r0.plan.issues.exists(i => i.kind == IssueKind.AttestationUnanchored && i.right.exists(_.uid == uid("t-found")))
+    )
     // the quote that is in home's body arrives at its place there; the lost one, decided drop, is left out for good
-    val r1 = MergePlanner.plan(in, sketches, resolve(lost.id -> "drop", issue(r0.plan, IssueKind.DoiDiffers, "kuhrt1995_near").id -> "keep-left"), cfg)
+    val r1 = MergePlanner.plan(
+      in,
+      sketches,
+      resolve(lost.id -> "drop", issue(r0.plan, IssueKind.DoiDiffers, "kuhrt1995_near").id -> "keep-left"),
+      cfg
+    )
     val found = r1.localized.attestations.find(_.uid == uid("t-found")).get
     assertEquals(found.sourceUid, uid("h-kuhrt"))
     assertEquals(homeBody.substring(found.charStart.get, found.charEnd.get), "Kuhrt body")
@@ -316,30 +400,43 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     // work's olsen cites a record of the bundle's collection that this collection holds under home's
     // olsen (a redirect from an earlier merge): folding the two would make olsen cite itself
     val earlier = uid("w-olsen-earlier")
-    val es = foreign.copy(edges = List(BundleEdge(uid("w-olsen"), earlier, "superseded_by"), BundleEdge(uid("w-olsen"), uid("w-new"), "references")))
+    val es = foreign.copy(edges =
+      List(BundleEdge(uid("w-olsen"), earlier, "superseded_by"), BundleEdge(uid("w-olsen"), uid("w-new"), "references"))
+    )
     val in = input(es).copy(uidAliases = Map(earlier -> uid("h-olsen")))
-    val r  = MergePlanner.plan(in, sketches, MergeResolutions(), cfg)
+    val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg)
     val olsen = r.localized.edges.filter(_.srcUid == uid("h-olsen"))
     assertEquals(olsen, List(BundleEdge(uid("h-olsen"), uid("w-new"), "references")))
     assertEquals(r.apply.tally.selfLoopsDropped, 1)
     assert(r.plan.info.exists(_.contains("from a source to itself")), r.plan.info.mkString("\n"))
 
-  test("articles: a common version in the two histories merges three-way, or asks with the conflicting regions counted"):
+  test(
+    "articles: a common version in the two histories merges three-way, or asks with the conflicting regions counted"
+  ):
     val base = "Intro.\n\nMiddle.\n\nEnd."
     val baseSha = BundleFormat.sha256Hex(base)
     val shared = article("shared-art", "zz_shared", base)
     val theirs = shared.copy(body = "Intro (work).\n\nMiddle.\n\nEnd.")
-    val ours   = shared.copy(body = "Intro.\n\nMiddle.\n\nEnd (home).", origin = work)
+    val ours = shared.copy(body = "Intro.\n\nMiddle.\n\nEnd (home).", origin = work)
     val version = BundleArticleVersion(uid("v-base"), work, shared.uid, baseSha, None, At, At)
     val es = foreign.copy(articles = foreign.articles :+ theirs, versions = List(version))
     val in0 = input(es)
-    val ledgered = in0.ledger + (shared.uid -> MergePlanner.LedgerEntry(BundleFormat.stamp(shared).rev, shared.uid,
-      Some(BundleFormat.stamp(shared).rev)))
-    val in = in0.copy(ledger = ledgered, local = in0.local.copy(articles = in0.local.articles :+ ours),
-      articleHistory = Map(shared.uid -> List(baseSha -> base)))
+    val ledgered = in0.ledger + (shared.uid -> MergePlanner.LedgerEntry(
+      BundleFormat.stamp(shared).rev,
+      shared.uid,
+      Some(BundleFormat.stamp(shared).rev)
+    ))
+    val in = in0.copy(
+      ledger = ledgered,
+      local = in0.local.copy(articles = in0.local.articles :+ ours),
+      articleHistory = Map(shared.uid -> List(baseSha -> base))
+    )
     val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg)
     assert(!r.plan.issues.exists(_.left.exists(_.label == "zz_shared")), r.plan.issues.mkString("\n"))
-    assertEquals(r.localized.articles.find(_.uid == shared.uid).map(_.body), Some("Intro (work).\n\nMiddle.\n\nEnd (home)."))
+    assertEquals(
+      r.localized.articles.find(_.uid == shared.uid).map(_.body),
+      Some("Intro (work).\n\nMiddle.\n\nEnd (home).")
+    )
     assertEquals(r.rows.find(_.foreignUid == shared.uid).map(_.decision), Some(Decision.FastForward))
     assertEquals(r.apply.reviews, List("zz_shared"))
     assert(r.apply.snapshots(shared.uid))
@@ -350,8 +447,12 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(q.kind, IssueKind.ChangedBothSides)
     assert(q.title.contains("1 conflicting region"), q.title)
     // decided file:, the merged text is what is written
-    val f = MergePlanner.plan(in.copy(foreign = clash, manifest = manifest(clash)), sketches,
-      MergeResolutions(List(MergeResolution(q.id, "file:merged.md", Some("By hand.")))), cfg)
+    val f = MergePlanner.plan(
+      in.copy(foreign = clash, manifest = manifest(clash)),
+      sketches,
+      MergeResolutions(List(MergeResolution(q.id, "file:merged.md", Some("By hand.")))),
+      cfg
+    )
     assertEquals(f.localized.articles.find(_.uid == shared.uid).map(_.body), Some("By hand."))
 
   test("property: whatever is decided, the merged lines hold no edge to a source that is neither in them nor here"):
@@ -365,25 +466,36 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
         decided += MergeResolution(pick.id, someDecision(pick, rnd), Some("text"))
         current = plan(res = MergeResolutions(decided.toList))
       val known = current.localized.sources.map(_.uid).toSet ++ input().local.sources.map(_.uid)
-      current.localized.edges.foreach(e =>
-        assert(known(e.srcUid) && known(e.dstUid), s"round $round: dangling $e"))
+      current.localized.edges.foreach(e => assert(known(e.srcUid) && known(e.dstUid), s"round $round: dangling $e"))
       // a folded record is never written twice under one uid
       assertEquals(current.localized.sources.map(_.uid).distinct.size, current.localized.sources.size, s"round $round")
       assert(current.apply.folds.groupBy(_.foreignUid).forall(_._2.size == 1), s"round $round")
     }
 
-  test("the Markdown apply report: what was merged, the reviews, the idempotent re-plan; a refusal says nothing was written"):
+  test(
+    "the Markdown apply report: what was merged, the reviews, the idempotent re-plan; a refusal says nothing was written"
+  ):
     val r = plan()
-    val done = MergeApplyResult(foreign.sources.head.uid, BundleInstance(work, Some("work")), applied = true, r.plan.planHash,
-      mergeId = Some(uid("merge")), backup = Some("histmersion-20261004-1000.dump"),
-      counts = List(BundleKindCounts(BundleKind.Source, inserted = 2)), tally = r.apply.tally,
-      reviews = List("zz_shared"), logEntry = Some(590), replanChanges = Some(0))
+    val done = MergeApplyResult(
+      foreign.sources.head.uid,
+      BundleInstance(work, Some("work")),
+      applied = true,
+      r.plan.planHash,
+      mergeId = Some(uid("merge")),
+      backup = Some("histmersion-20261004-1000.dump"),
+      counts = List(BundleKindCounts(BundleKind.Source, inserted = 2)),
+      tally = r.apply.tally,
+      reviews = List("zz_shared"),
+      logEntry = Some(590),
+      replanChanges = Some(0)
+    )
     val md = MergeMarkdown.applied(done)
     assert(md.contains("histmersion-20261004-1000.dump"), md)
     assert(md.contains("+2 new"), md)
     assert(md.contains(s"${r.apply.tally.sourcesMerged} merged"), md)
     assert(md.contains("`zz_shared`") && md.contains("log entry #590"), md)
     assert(md.contains("0 changes (idempotent)"), md)
-    val refused = MergeMarkdown.applied(done.copy(applied = false, mergeId = None, problems = List("the plan is x, not y")))
+    val refused =
+      MergeMarkdown.applied(done.copy(applied = false, mergeId = None, problems = List("the plan is x, not y")))
     assert(refused.contains("nothing was written") && refused.contains("the plan is x, not y"), refused)
     assert(!md.contains("_merged") && !md.contains("Kept"), "no identifiers in user-facing text")

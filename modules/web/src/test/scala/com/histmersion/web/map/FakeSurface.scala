@@ -4,9 +4,10 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 
-/** A [[MapSurface]] in memory: Web Mercator on the 256-pixel grid, a fixed size, its events fired by
-  * hand, its shapes kept as data, its base maps recorded. The test double of the map engine — the
-  * view-model's logic (clustering, what is drawn, base-map decisions) runs on it without a browser. */
+/** A [[MapSurface]] in memory: Web Mercator on the 256-pixel grid, a fixed size, its events fired by hand, its shapes
+  * kept as data, its base maps recorded. The test double of the map engine — the view-model's logic (clustering, what
+  * is drawn, base-map decisions) runs on it without a browser.
+  */
 final class FakeSurface(w: Double = 1000, h: Double = 600, caps: Capabilities = Capabilities(true, false, "fake"))
     extends MapSurface:
   // `var`s: the view, as a map holds it
@@ -34,7 +35,8 @@ final class FakeSurface(w: Double = 1000, h: Double = 600, caps: Capabilities = 
     fire(MapEventKind.Move); fire(MapEventKind.MoveEnd); fire(MapEventKind.ZoomEnd)
   def fitBounds(b: GeoBounds, padding: Int, maxZoom: Double, animate: Boolean): Unit =
     setView(LatLon((b.south + b.north) / 2, (b.west + b.east) / 2), math.min(maxZoom, z + 1), animate)
-  def panBy(dx: Double, dy: Double, animate: Boolean): Unit = setView(unproject(ScreenPt(w / 2 + dx, h / 2 + dy)), z, animate)
+  def panBy(dx: Double, dy: Double, animate: Boolean): Unit =
+    setView(unproject(ScreenPt(w / 2 + dx, h / 2 + dy)), z, animate)
   def project(p: LatLon): ScreenPt =
     val (x, y) = world(p)
     val (cx, cy) = world(c)
@@ -86,5 +88,6 @@ final class FakeShapes(val id: String) extends ShapeSet:
       rebuilt += 1
       drawn.clear()
     shapes.foreach(s => drawn(s.id) = s)
-  def restyle(id: String, colour: String, alpha: Double): Unit = drawn.get(id).foreach(s => drawn(id) = s.copy(colour = colour, alpha = alpha))
+  def restyle(id: String, colour: String, alpha: Double): Unit =
+    drawn.get(id).foreach(s => drawn(id) = s.copy(colour = colour, alpha = alpha))
   def ids: Seq[String] = drawn.keys.toSeq

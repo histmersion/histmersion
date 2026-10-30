@@ -2,9 +2,10 @@ package com.histmersion.web
 
 import com.histmersion.web.LabelPlacement.*
 
-/** #1442 / #1447 — every region and polity is named at its shape's centre or, near the screen edge, in
-  * its visible part; sized by the whole shape on screen; hidden only by collisions (larger shapes
-  * first). The placement is pure; these are its rules. */
+/** #1442 / #1447 — every region and polity is named at its shape's centre or, near the screen edge, in its visible
+  * part; sized by the whole shape on screen; hidden only by collisions (larger shapes first). The placement is pure;
+  * these are its rules.
+  */
 class LabelPlacementSuite extends munit.FunSuite:
 
   private def ring(pts: (Double, Double)*): Vector[Pt] = pts.map((x, y) => Pt(x, y)).toVector
@@ -109,12 +110,12 @@ class LabelPlacementSuite extends munit.FunSuite:
     assertEqualsDouble(polyArea(clip(donut, Rect(0, 0, 6, 12))), 72.0 - 18.0, 1e-9)
 
   test("tier: the size of a name follows the whole shape on screen; only a shape a few pixels across has none"):
-    val size0 = 1.0   // 1 px² at zoom 0 → side 2^z px
-    assertEquals(tier(size0, 1.0, 2), None)              // 4 px across
-    assertEquals(tier(size0, 1.0, 3), Some(Tier.S))      // 8 px: named, small — the collisions decide
+    val size0 = 1.0 // 1 px² at zoom 0 → side 2^z px
+    assertEquals(tier(size0, 1.0, 2), None) // 4 px across
+    assertEquals(tier(size0, 1.0, 3), Some(Tier.S)) // 8 px: named, small — the collisions decide
     assertEquals(tier(size0, 1.0, 6), Some(Tier.S))
-    assertEquals(tier(size0, 1.0, 8), Some(Tier.M))      // 256 px
-    assertEquals(tier(size0, 1.0, 9), Some(Tier.L))      // 512 px
+    assertEquals(tier(size0, 1.0, 8), Some(Tier.M)) // 256 px
+    assertEquals(tier(size0, 1.0, 9), Some(Tier.L)) // 512 px
     // zooming in never shrinks a name
     val tiers = (0 to 12).flatMap(z => tier(0.05, 0.3, z)).map(_.ordinal)
     assertEquals(tiers, tiers.sorted)
@@ -149,14 +150,20 @@ class LabelPlacementSuite extends munit.FunSuite:
     val outline = box.parts.head.rings
     assert(signedDistance(p.x, p.y, outline) > 0, "on the shape")
     // the centre near the edge: on screen, but the name would not fit there → it moves inward
-    val near = Rect(box.home.x - 20 / z6, box.home.y - 400 / z6, box.home.x - 20 / z6 + 1200 / z6, box.home.y + 400 / z6)
+    val near =
+      Rect(box.home.x - 20 / z6, box.home.y - 400 / z6, box.home.x - 20 / z6 + 1200 / z6, box.home.y + 400 / z6)
     assert(near.contains(box.home))
     val q = place(box, near, z6, 50, 8).get
     assert(q != box.home && onScreen(q, near, 50, 8), q.toString)
 
   test("place: a name moved off its centre stays put on a small pan; a name with no room on screen is hidden"):
     val right = project(35.0, 34.0)
-    def v(shift: Double) = Rect(right.x - (150 + shift) / z6, right.y - 400 / z6, right.x - (150 + shift) / z6 + 1200 / z6, right.y + 400 / z6)
+    def v(shift: Double) = Rect(
+      right.x - (150 + shift) / z6,
+      right.y - 400 / z6,
+      right.x - (150 + shift) / z6 + 1200 / z6,
+      right.y + 400 / z6
+    )
     val p = place(box, v(0), z6, 50, 8).get
     assertEquals(place(box, v(10), z6, 50, 8, prev = Some(p)), Some(p))
     // only 30 px of the shape is on screen: the name is pulled on screen, still over that sliver
@@ -203,7 +210,7 @@ class LabelPlacementSuite extends munit.FunSuite:
     }
     val v = viewAt(project(40, 25), 1400, 900, math.pow(2, 5))
     def pass() = shapes.flatMap(s => place(s, v, math.pow(2, 5), 50, 8))
-    (0 until 5).foreach(_ => pass())   // warm the JIT
+    (0 until 5).foreach(_ => pass()) // warm the JIT
     val t0 = System.nanoTime()
     val placedN = pass().length
     val ms = (System.nanoTime() - t0) / 1e6
@@ -229,7 +236,7 @@ class LabelPlacementSuite extends munit.FunSuite:
     val right = project(35.0, 34.0)
     var prev = Option.empty[Pt]
     for i <- 0 to 60 do
-      val shift = 300.0 + i * 5   // the left edge sweeps across the shape's right side, 5 px a frame
+      val shift = 300.0 + i * 5 // the left edge sweeps across the shape's right side, 5 px a frame
       val v = Rect(right.x - shift / z6, right.y - 400 / z6, right.x - shift / z6 + 1200 / z6, right.y + 400 / z6)
       val g = glide(box, v, z6, 50, 8, Some(box.home))
       g.foreach { p =>
@@ -256,9 +263,9 @@ class LabelPlacementSuite extends munit.FunSuite:
     assertEquals(flips, 2, s"hidden once, shown once: $trace")
 
   test("cull: larger shapes win a collision; apart, everyone stays"):
-    val big   = Box("big", 100, 100, 80, 14, rank = 50)
+    val big = Box("big", 100, 100, 80, 14, rank = 50)
     val small = Box("small", 120, 104, 60, 12, rank = 5)
-    val far   = Box("far", 400, 400, 60, 12, rank = 1)
+    val far = Box("far", 400, 400, 60, 12, rank = 1)
     assertEquals(cull(Seq(small, big, far)), Set("big", "far"))
     // just past the padding: both stay
     val beside = small.copy(cx = 100 + 40 + 30 + PadPx + 1)
@@ -277,8 +284,9 @@ class LabelPlacementSuite extends munit.FunSuite:
 
   test("cull of 400 labels stays well under a frame"):
     val rnd = scala.util.Random(7)
-    val boxes = (0 until 400).map(i => Box(s"k$i", rnd.nextDouble() * 1600, rnd.nextDouble() * 900,
-      40 + rnd.nextDouble() * 120, 14, rnd.nextDouble()))
+    val boxes = (0 until 400).map(i =>
+      Box(s"k$i", rnd.nextDouble() * 1600, rnd.nextDouble() * 900, 40 + rnd.nextDouble() * 120, 14, rnd.nextDouble())
+    )
     val t0 = System.nanoTime()
     val kept = cull(boxes)
     val ms = (System.nanoTime() - t0) / 1e6

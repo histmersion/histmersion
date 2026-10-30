@@ -4,9 +4,9 @@ import com.histmersion.api.*
 import com.histmersion.api.given
 import com.histmersion.values.SourceStatus
 
-/** `wiki/<kind>/<slug>.md` ⇄ [[Article]] (plan §5.2 stream 2.7). The shapes asserted here are the
-  * ones the existing research wiki actually writes — that is what "the 40+ existing articles import"
-  * means in the acceptance line. */
+/** `wiki/<kind>/<slug>.md` ⇄ [[Article]] (plan §5.2 stream 2.7). The shapes asserted here are the ones the existing
+  * research wiki actually writes — that is what "the 40+ existing articles import" means in the acceptance line.
+  */
 class ArticleNoteSuite extends munit.FunSuite:
 
   // exactly the head of wiki/concepts/sea_peoples.md
@@ -57,7 +57,7 @@ class ArticleNoteSuite extends munit.FunSuite:
         |# The Two Sources of the Gods
         |""".stripMargin
     val a = ArticleNote.parse(note, "gods_and_migrations", "report").get
-    assertEquals(a.slug, "gods_and_migrations")     // no `slug:` key → the filename
+    assertEquals(a.slug, "gods_and_migrations") // no `slug:` key → the filename
     assertEquals(a.kind, "report")
     assertEquals(a.summary, Some("Which gods came from the Near East vs from PIE?"))
     assertEquals(a.tags, List("mycenaean_religion", "pie_religion", "Vedic", "Greek"))
@@ -71,11 +71,16 @@ class ArticleNoteSuite extends munit.FunSuite:
 
   test("render → parse → render is byte-stable (the export/import round trip)"):
     val a = Article(
-      slug = "sea_peoples", title = "The Sea Peoples", kind = "concept",
+      slug = "sea_peoples",
+      title = "The Sea Peoples",
+      kind = "concept",
       body = "# The Sea Peoples\n\nMedinet Habu [[cline2014_year]].",
-      summary = Some("A loose label."), tags = List("sea-peoples", "collapse"),
-      regions = List("Levant", "Egypt"), period = Some(Period(-1220, -1100)))
-    val once  = ArticleNote.render(a)
+      summary = Some("A loose label."),
+      tags = List("sea-peoples", "collapse"),
+      regions = List("Levant", "Egypt"),
+      period = Some(Period(-1220, -1100))
+    )
+    val once = ArticleNote.render(a)
     val again = ArticleNote.render(ArticleNote.parse(once, "zz", "zz").get)
     assertEquals(again, once)
     assert(once.startsWith("---\ntype: concept\n"), once.take(60))
@@ -95,19 +100,49 @@ class ArticleNoteSuite extends munit.FunSuite:
     assertEquals(Articles.lede("# T\n\n**A lede.**\n"), Some("A lede."))
     assertEquals(Articles.lede("# T\n\nsome *emphasis* inside\n"), Some("some *emphasis* inside"))
 
-  test("#958: the filter and reasons travel in the frontmatter; the generated sections are exported and dropped on import"):
+  test(
+    "#958: the filter and reasons travel in the frontmatter; the generated sections are exported and dropped on import"
+  ):
     val a = Article(
-      slug = "theseus_origins", title = "Theseus", kind = "myth", body = "# Theseus\n\nAn Attic hero [[walker1995_theseus]].",
+      slug = "theseus_origins",
+      title = "Theseus",
+      kind = "myth",
+      body = "# Theseus\n\nAn Attic hero [[walker1995_theseus]].",
       summary = Some("Where the hero Theseus came from."),
-      filter = Some(ArticleFilter(query = Some("Theseus"), topics = List("greek_myth"), from = Some(-1500), to = Some(-400),
-        extraQueries = List("synoikism"))),
-      reasons = Map("graves2017_greek" -> "retells the myths", "nilsson1927_minoan" -> "Attic origin only in passing"))
-    val c = ArticleCoverage.compute(a.slug, a.filter.get, 1, List(CoverageSource("graves2017_greek", "Greek Myths", Some(2017),
-      SourceStatus.Current)), Set.empty, List("walker1995_theseus"), a.reasons, Nil, Nil)
+      filter = Some(
+        ArticleFilter(
+          query = Some("Theseus"),
+          topics = List("greek_myth"),
+          from = Some(-1500),
+          to = Some(-400),
+          extraQueries = List("synoikism")
+        )
+      ),
+      reasons = Map("graves2017_greek" -> "retells the myths", "nilsson1927_minoan" -> "Attic origin only in passing")
+    )
+    val c = ArticleCoverage.compute(
+      a.slug,
+      a.filter.get,
+      1,
+      List(CoverageSource("graves2017_greek", "Greek Myths", Some(2017), SourceStatus.Current)),
+      Set.empty,
+      List("walker1995_theseus"),
+      a.reasons,
+      Nil,
+      Nil
+    )
     val text = ArticleNote.render(a, Some(ArticleCoverage.exported(c)))
-    assert(text.contains("filter:\n  query: Theseus\n  topics:\n  - greek_myth\n  from: -1500\n  to: -400\n  extra_queries:\n  - synoikism\n"), text)
+    assert(
+      text.contains(
+        "filter:\n  query: Theseus\n  topics:\n  - greek_myth\n  from: -1500\n  to: -400\n  extra_queries:\n  - synoikism\n"
+      ),
+      text
+    )
     assert(text.contains("reasons:\n  graves2017_greek: retells the myths\n"), text)
-    assert(text.contains("## Not used") && text.contains(ArticleCoverage.GeneratedStart) && text.contains("_Method: "), text)
+    assert(
+      text.contains("## Not used") && text.contains(ArticleCoverage.GeneratedStart) && text.contains("_Method: "),
+      text
+    )
     val back = ArticleNote.parse(text, "zz", "zz").get
     assertEquals(back.body, a.body, "the generated sections never reach the stored body")
     assertEquals((back.filter, back.reasons), (a.filter, a.reasons))
