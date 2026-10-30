@@ -277,12 +277,15 @@ package com.histmersion.domain.automation.workflows        // the engine's contr
 trait WorkflowDefinition:
   def id: WorkflowId                                         // "compile-article", "enrich-source", …
   def roles: List[AgentRole]                                 // models, prompts and budgets come from the engine
-  def tools: List[ToolContribution]                          // what its agents may call
+  def allowedTools(role: AgentRole): Set[ToolName]           // the ONLY tools this role's agents see and may call (Q31)
   def start(request: WorkflowRequest, run: RunContext): Either[WorkflowError, WorkflowPlan]
   def step(state: StepState, answer: StepAnswer, run: RunContext): StepOutcome   // next step, checkpoint, done, halt
   def settled(result: RunResult, run: RunContext): Either[WorkflowError, Settled] // writes through its own services
 
-/** An agent tool a domain offers: a schema and a call into its own services, run with the step's grant. */
+/** An agent tool a domain offers to the engine's toolbox: a schema and a call into its own services.
+  * Offering a tool grants nothing: a workflow names the tools each of its roles may use (`allowedTools`), possibly
+  * tools of other domains (compile-article in research uses library's `get_source`); the engine shows an agent only
+  * those, refuses any other call, and fails the workflow's registration if it names a tool nobody contributes. */
 trait ToolContribution:
   def name: ToolName                                         // "get_source", "check_edits", …
   def description: String
@@ -1317,7 +1320,7 @@ Q16, Q18, Q22 and Q24. Decided or superseded: Q17, Q20, Q25, Q27.
 | Q28 | Data management and file access: one supporting area or two, and their names (`util.data` + `util.storage`, or one `util.data` with a `storage` part)? | Two: `util.storage` (locations, stores, scratch files) is used by everything, data management included; `util.data` (registry, backup, bundle, merge, maintenance, checks, export, diagnostics) builds on it and on `util.database` |
 | Q29 | Jobs and record identity (uids, redirects, tombstones, aliases): supporting areas (`util.jobs`, `util.identity`) or a domain layer? | Supporting areas: they hold tables but no research meaning, every domain uses them, and their only domain knowledge (job details, alias tables) becomes contributions (`JobKinds`, `AliasTables`) |
 | Q30 | `ui_seen` (notices a person has seen): `server.instance` or `personal`? | `personal`: it is per person once #7843 lands; the instance pages read it through personal's service |
-| Q31 | Agent tools: contributed by the domain that owns the data (`ToolContribution`), or kept in the engine's toolbox? | Contributed: each tool calls its owner's service, with the step's grant; the engine keeps the toolbox mechanism (names, grants, result caps, MCP exposure) |
+| Q31 | Agent tools: contributed by the domain that owns the data, or kept in the engine's toolbox? | **Decided (user, 2026-10-31): contributed by the owning domain, AND each workflow tells which tools it can use.** Domains offer tools (`ToolContribution`, calling their own services); a workflow declares per role the tools its agents may use (`WorkflowDefinition.allowedTools`), across domains where needed; the engine exposes only those to the agent, refuses others, and rejects a workflow that names an unknown tool at registration. The engine keeps the toolbox mechanism (names, result caps, MCP exposure). |
 | Q32 | Managers and hints: mechanism in the engine, manager kinds (review, watch) contributed by research and library? | Yes: `ManagerSupervisor` is 76 % kind-specific by the block scan; the loop, holds, retries, cron, approvals settlement and hints stay the engine's |
 | Q33 | The agent definitions generator (Claude Code, Codex, opencode trees; `just plugin`): engine or contributed? | The engine's generator, fed by the canonical skills and agents plus the roles and tools the domains contribute |
 | Q34 | During the transition, the supporting-area and engine slices register today's per-kind code through thin adapters, which each domain's slice replaces? | Yes: it keeps every slice deployable and the snapshots unchanged; slice 12 checks no adapter is left |
