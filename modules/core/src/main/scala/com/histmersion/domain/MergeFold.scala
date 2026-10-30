@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import com.histmersion.api.{
   AssetLinks,
   BundleArticle,
@@ -205,30 +206,41 @@ object MergeFold:
   ): List[FindingMatch] =
     val rs = rights.sortBy(_.id)
     val ls = lefts.sortBy(_.id)
-    val same = rs.foldLeft((Map.empty[UUID, BundleFinding], Set.empty[UUID])) { case ((acc, taken), r) =>
-      ls.find(l =>
-        !taken(l.uid) && claimKey(l.claim) == claimKey(r.claim) && claimKey(r.claim).nonEmpty &&
-          overlap(l.period, r.period) && samePlace(l, r, withinKm)
-      ) match
-        case Some(l) => (acc + (r.uid -> l), taken + l.uid)
-        case None    => (acc, taken)
-    }
-    val near = rs
-      .filterNot(r => same._1.contains(r.uid))
-      .foldLeft((Map.empty[UUID, (BundleFinding, Double)], same._2)) { case ((acc, taken), r) =>
-        val w = claimWords(r.claim)
-        ls.filterNot(l => taken(l.uid))
-          .filter(l => l.period.isDefined && r.period.isDefined && overlap(l.period, r.period))
-          .map(l => l -> MergeText.jaccard(w, claimWords(l.claim)))
-          .filter(_._2 >= nearAtLeast)
-          .sortBy((l, j) => (-j, l.id))
-          .headOption match
-          case Some((l, j)) => (acc + (r.uid -> (l, j)), taken + l.uid)
-          case None         => (acc, taken)
-      }
-      ._1
+    @tailrec def pairSame(
+        rest: List[BundleFinding],
+        acc: Map[UUID, BundleFinding],
+        taken: Set[UUID]
+    ): (Map[UUID, BundleFinding], Set[UUID]) =
+      rest match
+        case Nil       => (acc, taken)
+        case r :: tail =>
+          ls.find(l =>
+            !taken(l.uid) && claimKey(l.claim) == claimKey(r.claim) && claimKey(r.claim).nonEmpty &&
+              overlap(l.period, r.period) && samePlace(l, r, withinKm)
+          ) match
+            case Some(l) => pairSame(tail, acc + (r.uid -> l), taken + l.uid)
+            case None    => pairSame(tail, acc, taken)
+    val (same, takenBySame) = pairSame(rs, Map.empty, Set.empty)
+    @tailrec def pairNear(
+        rest: List[BundleFinding],
+        acc: Map[UUID, (BundleFinding, Double)],
+        taken: Set[UUID]
+    ): Map[UUID, (BundleFinding, Double)] =
+      rest match
+        case Nil       => acc
+        case r :: tail =>
+          val w = claimWords(r.claim)
+          ls.filterNot(l => taken(l.uid))
+            .filter(l => l.period.isDefined && r.period.isDefined && overlap(l.period, r.period))
+            .map(l => l -> MergeText.jaccard(w, claimWords(l.claim)))
+            .filter(_._2 >= nearAtLeast)
+            .sortBy((l, j) => (-j, l.id))
+            .headOption match
+            case Some((l, j)) => pairNear(tail, acc + (r.uid -> (l, j)), taken + l.uid)
+            case None         => pairNear(tail, acc, taken)
+    val near = pairNear(rs.filterNot(r => same.contains(r.uid)), Map.empty, takenBySame)
     rs.map { r =>
-      same._1
+      same
         .get(r.uid)
         .map(FindingMatch.Same(r, _))
         .orElse(near.get(r.uid).map((l, j) => FindingMatch.Near(r, l, j)))

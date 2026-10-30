@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -56,16 +57,27 @@ object JobCounts:
 
   /** Pure: fold `(status, count)` rows into the counts; a status that is no [[JobState]] is dropped. */
   def of(rows: List[(String, Int)]): JobCounts =
-    rows.foldLeft(JobCounts()) { case (acc, (s, n)) =>
-      JobState.parse(s) match
-        case Some(JobState.Queued)    => acc.copy(queued = acc.queued + n)
-        case Some(JobState.Running)   => acc.copy(running = acc.running + n)
-        case Some(JobState.Done)      => acc.copy(done = acc.done + n)
-        case Some(JobState.Failed)    => acc.copy(failed = acc.failed + n)
-        case Some(JobState.Paused)    => acc.copy(paused = acc.paused + n)
-        case Some(JobState.Cancelled) => acc.copy(cancelled = acc.cancelled + n)
-        case None                     => acc
-    }
+    @tailrec def loop(
+        rest: List[(String, Int)],
+        queued: Int,
+        running: Int,
+        done: Int,
+        failed: Int,
+        paused: Int,
+        cancelled: Int
+    ): JobCounts =
+      rest match
+        case Nil            => JobCounts(queued, running, done, failed, paused, cancelled)
+        case (s, n) :: tail =>
+          JobState.parse(s) match
+            case Some(JobState.Queued)    => loop(tail, queued + n, running, done, failed, paused, cancelled)
+            case Some(JobState.Running)   => loop(tail, queued, running + n, done, failed, paused, cancelled)
+            case Some(JobState.Done)      => loop(tail, queued, running, done + n, failed, paused, cancelled)
+            case Some(JobState.Failed)    => loop(tail, queued, running, done, failed + n, paused, cancelled)
+            case Some(JobState.Paused)    => loop(tail, queued, running, done, failed, paused + n, cancelled)
+            case Some(JobState.Cancelled) => loop(tail, queued, running, done, failed, paused, cancelled + n)
+            case None                     => loop(tail, queued, running, done, failed, paused, cancelled)
+    loop(rows, 0, 0, 0, 0, 0, 0)
 
 /** How big the store is: the corpus, the compiled wiki and the reference data. */
 final case class CorpusCounts(

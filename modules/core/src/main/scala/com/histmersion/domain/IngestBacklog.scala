@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 
@@ -39,14 +40,14 @@ object IngestBacklog:
     */
   def drain(entries: List[Entry], ownLeft: Map[String, Int], shared: Option[Int], now: Instant, max: Int): List[Entry] =
     val ordered = entries.filter(_.notBefore.forall(!_.isAfter(now))).sortBy(e => (-e.priority, e.id))
-    ordered
-      .foldLeft((Vector.empty[Entry], ownLeft, shared)) { case ((acc, left, sh), e) =>
-        val mine = left.getOrElse(e.managerId, 0)
-        if acc.size >= math.max(0, max) || mine <= 0 || sh.exists(_ <= 0) then (acc, left, sh)
-        else (acc :+ e, left.updated(e.managerId, mine - 1), sh.map(_ - 1))
-      }
-      ._1
-      .toList
+    @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[String, Int], sh: Option[Int]): List[Entry] =
+      rest match
+        case Nil       => acc.toList
+        case e :: tail =>
+          val mine = left.getOrElse(e.managerId, 0)
+          if acc.size >= math.max(0, max) || mine <= 0 || sh.exists(_ <= 0) then take(tail, acc, left, sh)
+          else take(tail, acc :+ e, left.updated(e.managerId, mine - 1), sh.map(_ - 1))
+    take(ordered, Vector.empty, ownLeft, shared)
 
   /** Where a legal open-access pick goes when it is not ingested now: nowhere new when it is in the corpus already,
     * onto the open acquisition item that names its DOI (the goal linked to it), into the backlog entry another watcher
@@ -117,10 +118,14 @@ object IngestBacklog:
         val caps = lanes.map(l => math.max(0, if day == 0 then l.leftToday else l.perDay)).toVector
         val share = (if day == 0 then sharedLeftToday.orElse(sharedPerDay) else sharedPerDay).map(math.max(0, _))
         val order = bs.indices.sortBy(i => -bs(i))
-        val (next, _) = order.foldLeft((bs, share.getOrElse(Int.MaxValue))) { case ((cur, room), i) =>
-          val take = math.min(math.min(cur(i), caps(i)), room)
-          if take <= 0 then (cur, room) else (cur.updated(i, cur(i) - take), room - take)
-        }
+        @tailrec def drainDay(rest: List[Int], cur: Vector[Int], room: Int): Vector[Int] =
+          rest match
+            case Nil       => cur
+            case i :: tail =>
+              val take = math.min(math.min(cur(i), caps(i)), room)
+              if take <= 0 then drainDay(tail, cur, room)
+              else drainDay(tail, cur.updated(i, cur(i) - take), room - take)
+        val next = drainDay(order.toList, bs, share.getOrElse(Int.MaxValue))
         if day > 0 && next == bs then None // nothing drains on a full day: it never will
         else go(next, day + 1)
     val start = lanes.map(l => math.max(0, l.backlog)).toVector

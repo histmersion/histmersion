@@ -1,5 +1,6 @@
 package com.histmersion.cli
 
+import scala.annotation.tailrec
 import hearth.kindlings.optics.syntax.*
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -99,25 +100,30 @@ object Main:
     val files = Notes.markdownFiles(layout.sources)
     val total = files.size
     println(s"seeding $total note(s) from ${layout.sources}")
-    val acc = files.zipWithIndex.foldLeft(SeedResult(0, Nil, 0, Nil)) { case (sum, (f, i)) =>
-      val ck = f.getFileName.toString.stripSuffix(".md")
-      println(s"${i + 1}/$total $ck")
-      c.importNote(Notes.toImport(f, force)) match
-        case Right(r) =>
-          // the server cannot see the host's `md/<ck>/figures`, so the CLI uploads them (plan §1.8)
-          val figureFailure =
-            if r.imported == 0 then None
-            else
-              Notes.figures(f, ck, FigureBytes, FigureCount) match
-                case Nil => None
-                case fs  => c.putAssets(ck, fs).left.toOption.map(e => s"$ck (figures): ${e.message}")
-          sum.copy(
-            imported = sum.imported + r.imported,
-            failed = sum.failed ++ r.failed ++ figureFailure,
-            skipped = sum.skipped ++ r.skipped
-          )
-        case Left(e) => sum.modify(_.failed).using(_ :+ s"$ck: ${e.message}")
-    }
+    @tailrec def loop(
+        rest: List[Path],
+        number: Int,
+        imported: Int,
+        failed: List[String],
+        skipped: List[String]
+    ): SeedResult =
+      rest match
+        case Nil       => SeedResult(imported, failed, 0, skipped)
+        case f :: tail =>
+          val ck = f.getFileName.toString.stripSuffix(".md")
+          println(s"$number/$total $ck")
+          c.importNote(Notes.toImport(f, force)) match
+            case Right(r) =>
+              // the server cannot see the host's `md/<ck>/figures`, so the CLI uploads them (plan §1.8)
+              val figureFailure =
+                if r.imported == 0 then None
+                else
+                  Notes.figures(f, ck, FigureBytes, FigureCount) match
+                    case Nil => None
+                    case fs  => c.putAssets(ck, fs).left.toOption.map(e => s"$ck (figures): ${e.message}")
+              loop(tail, number + 1, imported + r.imported, failed ++ r.failed ++ figureFailure, skipped ++ r.skipped)
+            case Left(e) => loop(tail, number + 1, imported, failed :+ s"$ck: ${e.message}", skipped)
+    val acc = loop(files, 1, 0, Nil, Nil)
     val done = c.resolveEdges.map(e => report(acc.copy(edgesResolved = e.resolved)))
     layout.root.fold(done)(root =>
       done.map(_ => ArticleCli.report(ArticleCli.importAll(c, root, force, Set(ArticleCli.WikiLayout.SourcesDir))))

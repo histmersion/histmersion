@@ -1,5 +1,6 @@
 package com.histmersion.db
 
+import scala.annotation.tailrec
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -178,9 +179,16 @@ object GazetteerRepo:
 
     /** One batch, in its own transaction. */
     def batch(records: List[GazRecord]): GazetteerLoadCounts =
-      val (uniq, dup) = records.foldLeft((Vector.empty[GazRecord], List.empty[String])) { case ((ok, d), r) =>
-        if ok.exists(_.ref == r.ref) then (ok, d :+ s"${r.ref}: repeated") else (ok :+ r, d)
-      }
+      @tailrec def dedupe(
+          rest: List[GazRecord],
+          ok: Vector[GazRecord],
+          d: List[String]
+      ): (Vector[GazRecord], List[String]) =
+        rest match
+          case Nil                                    => (ok, d)
+          case r :: tail if ok.exists(_.ref == r.ref) => dedupe(tail, ok, d :+ s"${r.ref}: repeated")
+          case r :: tail                              => dedupe(tail, ok :+ r, d)
+      val (uniq, dup) = dedupe(records, Vector.empty, Nil)
       val rs = uniq.toList
       jdbc.setAutoCommit(false)
       val counts =

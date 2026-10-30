@@ -1,5 +1,6 @@
 package com.histmersion.server.agents
 
+import scala.annotation.tailrec
 import com.histmersion.api.Agents.Role
 import org.yaml.snakeyaml.{LoaderOptions, Yaml}
 import org.yaml.snakeyaml.constructor.SafeConstructor
@@ -161,13 +162,14 @@ object AgentDefinitions:
     val ms = Marker.findAllMatchIn(text).map(m => (m.group(1) == "/", m.group(2))).toList
     val unknown =
       ms.map(_._2).distinct.filterNot(a => Audience.values.exists(_.wire == a)).map(a => s"names no audience: only:$a")
-    val (open, errs) = ms.foldLeft((Option.empty[String], List.empty[String])) {
-      case ((None, e), (false, a))             => (Some(a), e)
-      case ((Some(o), e), (true, a)) if o == a => (None, e)
-      case ((Some(o), e), (false, a))          => (Some(a), e :+ s"only:$a opens inside only:$o")
-      case ((o, e), (true, a))                 => (o, e :+ s"/only:$a closes nothing open")
-    }
-    unknown ++ errs ++ open.map(o => s"only:$o is never closed").toList
+    @tailrec def pair(rest: List[(Boolean, String)], open: Option[String], errs: List[String]): List[String] =
+      (open, rest) match
+        case (_, Nil)                               => errs ++ open.map(o => s"only:$o is never closed").toList
+        case (None, (false, a) :: tail)             => pair(tail, Some(a), errs)
+        case (Some(o), (true, a) :: tail) if o == a => pair(tail, None, errs)
+        case (Some(o), (false, a) :: tail)          => pair(tail, Some(a), errs :+ s"only:$a opens inside only:$o")
+        case (o, (true, a) :: tail)                 => pair(tail, o, errs :+ s"/only:$a closes nothing open")
+    unknown ++ pair(ms, None, Nil)
 
   private val Placeholder = """\{\{tool:([a-z_]+|\*)\}\}""".r
 

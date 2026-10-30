@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import com.histmersion.api.BundleKindCounts
 import com.histmersion.api.given
 import com.histmersion.files.BundleEntities
@@ -90,20 +91,38 @@ object BundlePlan:
     * so it counts as unchanged.
     */
   def counts(kind: BundleKind, ds: Iterable[Decision]): BundleKindCounts =
-    ds.foldLeft(BundleKindCounts(kind)) { (c, d) =>
-      d match
-        case Decision.Insert          => c.copy(inserted = c.inserted + 1)
-        case Decision.FastForward     => c.copy(updated = c.updated + 1)
-        case Decision.Unchanged       => c.copy(unchanged = c.unchanged + 1)
-        case Decision.RecordTombstone => c.copy(unchanged = c.unchanged + 1)
-        case Decision.KeepLocal       => c.copy(keptLocal = c.keptLocal + 1)
-        case Decision.Conflict        => c.copy(conflicts = c.conflicts + 1)
-        case Decision.SkipDeleted     => c.copy(skippedDeleted = c.skippedDeleted + 1)
-        case Decision.Delete          => c.copy(deleted = c.deleted + 1)
-        case Decision.Kept            => c.copy(keptLocal = c.keptLocal + 1)
-        case Decision.Skip            => c.copy(keptLocal = c.keptLocal + 1)
-        case Decision.Held            => c.copy(held = c.held + 1)
-    }
+    val decisions = ds.iterator
+    @tailrec def loop(
+        inserted: Int,
+        updated: Int,
+        unchanged: Int,
+        keptLocal: Int,
+        conflicts: Int,
+        deleted: Int,
+        skippedDeleted: Int,
+        held: Int
+    ): BundleKindCounts =
+      if !decisions.hasNext then
+        BundleKindCounts(kind, inserted, updated, unchanged, keptLocal, conflicts, deleted, skippedDeleted, held = held)
+      else
+        decisions.next() match
+          case Decision.Insert =>
+            loop(inserted + 1, updated, unchanged, keptLocal, conflicts, deleted, skippedDeleted, held)
+          case Decision.FastForward =>
+            loop(inserted, updated + 1, unchanged, keptLocal, conflicts, deleted, skippedDeleted, held)
+          case Decision.Unchanged | Decision.RecordTombstone =>
+            loop(inserted, updated, unchanged + 1, keptLocal, conflicts, deleted, skippedDeleted, held)
+          case Decision.KeepLocal | Decision.Kept | Decision.Skip =>
+            loop(inserted, updated, unchanged, keptLocal + 1, conflicts, deleted, skippedDeleted, held)
+          case Decision.Conflict =>
+            loop(inserted, updated, unchanged, keptLocal, conflicts + 1, deleted, skippedDeleted, held)
+          case Decision.Delete =>
+            loop(inserted, updated, unchanged, keptLocal, conflicts, deleted + 1, skippedDeleted, held)
+          case Decision.SkipDeleted =>
+            loop(inserted, updated, unchanged, keptLocal, conflicts, deleted, skippedDeleted + 1, held)
+          case Decision.Held =>
+            loop(inserted, updated, unchanged, keptLocal, conflicts, deleted, skippedDeleted, held + 1)
+    loop(0, 0, 0, 0, 0, 0, 0, 0)
 
   /** The ledger row a decision leaves, when it changes it: the foreign rev merged and the local rev that merge left —
     * the new common ancestor. A row taken or found equal is in sync (both revs the foreign one); a row deleted here by

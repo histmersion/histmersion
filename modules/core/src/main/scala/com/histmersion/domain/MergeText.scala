@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import com.histmersion.api.LatinFold
 import com.histmersion.api.given
 
@@ -200,13 +201,14 @@ object MergeText:
     if pa.isEmpty || pb.isEmpty then AuthorAgreement.Unknown
     else
       // a greedy one-to-one pairing; author lists are short
-      val matched = pa
-        .foldLeft((0, pb)) { case ((n, left), p) =>
-          left.indexWhere(samePerson(p, _)) match
-            case -1 => (n, left)
-            case i  => (n + 1, left.patch(i, Nil, 1))
-        }
-        ._1
+      @tailrec def pair(rest: List[Person], n: Int, left: List[Person]): Int =
+        rest match
+          case Nil       => n
+          case p :: tail =>
+            left.indexWhere(samePerson(p, _)) match
+              case -1 => pair(tail, n, left)
+              case i  => pair(tail, n + 1, left.patch(i, Nil, 1))
+      val matched = pair(pa, 0, pb)
       if matched == pa.length && matched == pb.length then AuthorAgreement.Same
       else if samePerson(pa.head, pb.head) then AuthorAgreement.FirstAuthor
       else if matched * 2 >= math.max(pa.length, pb.length) then AuthorAgreement.Overlap

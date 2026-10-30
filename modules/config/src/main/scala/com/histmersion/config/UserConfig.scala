@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import scala.annotation.tailrec
 import org.ekrich.config.{
   Config,
   ConfigException,
@@ -198,16 +199,22 @@ private[config] object ConfigLayers:
     OpenBlocks.exists(b => keys.length > b.length && keys.startsWith(b))
 
   def check(user: Config, known: Config): Either[String, Keys] =
-    leaves(user.root, Nil).foldLeft[Either[String, Keys]](Right(Keys(Nil, Nil))) {
-      case (Left(e), _)                                 => Left(e)
-      case (Right(acc), (keys, _)) if inOpenBlock(keys) => Right(acc)
-      case (Right(acc), (keys, isBlock))                =>
-        val path = ConfigUtil.joinPath(keys.asJava)
-        if !Try(known.hasPathOrNull(path)).getOrElse(false) then Right(acc.copy(unknown = acc.unknown :+ path))
-        else if Try(known.getValue(path).valueType == ConfigValueType.OBJECT).getOrElse(false) then
-          if isBlock then Right(acc) else Left(s"'$path' is a block of settings ($path { … }), not a single value")
-        else Right(acc.copy(settings = acc.settings :+ path))
-    }
+    @tailrec def loop(
+        rest: List[(List[String], Boolean)],
+        settings: List[String],
+        unknown: List[String]
+    ): Either[String, Keys] =
+      rest match
+        case Nil                                    => Right(Keys(settings, unknown))
+        case (keys, _) :: tail if inOpenBlock(keys) => loop(tail, settings, unknown)
+        case (keys, isBlock) :: tail                =>
+          val path = ConfigUtil.joinPath(keys.asJava)
+          if !Try(known.hasPathOrNull(path)).getOrElse(false) then loop(tail, settings, unknown :+ path)
+          else if Try(known.getValue(path).valueType == ConfigValueType.OBJECT).getOrElse(false) then
+            if isBlock then loop(tail, settings, unknown)
+            else Left(s"'$path' is a block of settings ($path { … }), not a single value")
+          else loop(tail, settings :+ path, unknown)
+    loop(leaves(user.root, Nil), Nil, Nil)
 
   /** Each setting the user file sets against the KIND of value reference.conf has there. The derived readers do not say
     * which key a wrong type is at, so the key is found here first. A numeric or boolean string passes, as the readers

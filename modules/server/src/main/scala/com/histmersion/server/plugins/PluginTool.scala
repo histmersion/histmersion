@@ -1,5 +1,6 @@
 package com.histmersion.server.plugins
 
+import scala.annotation.tailrec
 import com.histmersion.pluginhost.{HostServices, PluginHost}
 import com.histmersion.files.*
 
@@ -213,23 +214,24 @@ object PluginTool:
     * loader: a second copy of a class is a conflict, never a choice (§7.1).
     */
   def duplicates(kit: Set[String], plugins: List[(String, Set[String])]): List[String] =
-    plugins
-      .foldLeft((kit.map(_ -> "the kit"), List.empty[String])) { case ((seen, acc), (name, classes)) =>
-        val owners = seen.toMap
-        val dups = classes.toList.sorted.filter(owners.contains)
-        val msg = if dups.isEmpty then Nil
-        else
-          val by = dups.groupBy(owners).toList.sortBy(_._1).map { (o, cs) =>
-            s"${cs.size} with $o (${cs.take(3).map(_.stripSuffix(".class").replace('/', '.')).mkString(", ")}" +
-              (if cs.size > 3 then ", …)" else ")")
-          }
-          List(
-            s"$name duplicates classes already on the class path: ${by.mkString("; ")} — one class loader holds one copy " +
-              "of a class: depend on the library in the plugin's POM instead of copying its classes into the jar"
-          )
-        (seen ++ classes.map(_ -> name), acc ++ msg)
-      }
-      ._2
+    @tailrec def loop(rest: List[(String, Set[String])], seen: Set[(String, String)], acc: List[String]): List[String] =
+      rest match
+        case Nil                     => acc
+        case (name, classes) :: tail =>
+          val owners = seen.toMap
+          val dups = classes.toList.sorted.filter(owners.contains)
+          val msg = if dups.isEmpty then Nil
+          else
+            val by = dups.groupBy(owners).toList.sortBy(_._1).map { (o, cs) =>
+              s"${cs.size} with $o (${cs.take(3).map(_.stripSuffix(".class").replace('/', '.')).mkString(", ")}" +
+                (if cs.size > 3 then ", …)" else ")")
+            }
+            List(
+              s"$name duplicates classes already on the class path: ${by.mkString("; ")} — one class loader holds one copy " +
+                "of a class: depend on the library in the plugin's POM instead of copying its classes into the jar"
+            )
+          loop(tail, seen ++ classes.map(_ -> name), acc ++ msg)
+    loop(plugins, kit.map(_ -> "the kit"), Nil)
 
   /** Everything that refuses linking these plugin jars, with their dependency jars `deps`, into this kit, and a line
     * per plugin found.
@@ -238,9 +240,16 @@ object PluginTool:
     val described = jars.map(j => describe(j, loader))
     val taken = hostIds(loader)
     // an id provided twice among the plugin jars, or already in the binary
-    val (_, idProblems) = described.foldLeft((taken, List.empty[String])) { case ((t, acc), j) =>
-      (t ++ j.plugins.filter(_.id.nonEmpty).map(_.id -> j.file), acc ++ PluginKit.refusals(j, Spi.Version, t))
-    }
+    @tailrec def idRefusals(rest: List[PluginJar], t: Map[String, String], acc: List[String]): List[String] =
+      rest match
+        case Nil       => acc
+        case j :: tail =>
+          idRefusals(
+            tail,
+            t ++ j.plugins.filter(_.id.nonEmpty).map(_.id -> j.file),
+            acc ++ PluginKit.refusals(j, Spi.Version, t)
+          )
+    val idProblems = idRefusals(described, taken, Nil)
     val kitJars = kitClassPath(kit)
     val kitClasses = kitJars.flatMap(classesOf).toSet
     val dups = duplicates(kitClasses, (deps ++ jars).map(j => j.getFileName.toString -> classesOf(j)))

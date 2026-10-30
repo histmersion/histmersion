@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import scala.annotation.tailrec
 import hearth.kindlings.circederivation.{Configuration, KindlingsCodecAsObject}
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Codec, Decoder, DecodingFailure, Encoder, Json}
@@ -509,12 +510,17 @@ object Write:
       existing: List[Finding],
       adds: List[FindingInput]
   ): Either[String, List[Finding]] =
-    val (_, out) = adds.foldLeft((existing.map(_.id).toSet, List.empty[Either[String, Finding]])) {
-      case ((used, acc), in) =>
-        val id = Iterator.from(0).map(findingId(citekey, _)).find(n => !used.contains(n)).get
-        (used + id, acc :+ toFinding(citekey, id, in))
-    }
-    traverse(out)(identity)
+    @tailrec def loop(
+        rest: List[FindingInput],
+        used: Set[String],
+        acc: List[Either[String, Finding]]
+    ): List[Either[String, Finding]] =
+      rest match
+        case Nil        => acc.reverse
+        case in :: tail =>
+          val id = Iterator.from(0).map(findingId(citekey, _)).find(n => !used.contains(n)).get
+          loop(tail, used + id, toFinding(citekey, id, in) :: acc)
+    traverse(loop(adds, existing.map(_.id).toSet, Nil))(identity)
 
   private def toFinding(citekey: String, id: String, in: FindingInput): Either[String, Finding] =
     val what = s"finding '${in.claim.take(40)}'"

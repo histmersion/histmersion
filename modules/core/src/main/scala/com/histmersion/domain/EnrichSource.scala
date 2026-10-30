@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import com.histmersion.api.{
   FindingInput,
   FindingsPatch,
@@ -227,15 +228,21 @@ object EnrichSource:
       .filter(_.nonEmpty)
       .flatMap(p => if p.length <= size then List(p) else p.grouped(size).toList)
     // fold paragraphs into windows, tracking the last heading seen
-    val (done, cur, curHead, _) =
-      paras.foldLeft((Vector.empty[(Option[String], String)], "", Option.empty[String], Option.empty[String])) {
-        case ((acc, buf, bufHead, lastHead), p) =>
+    @tailrec def windows(
+        rest: List[String],
+        acc: Vector[(Option[String], String)],
+        buf: String,
+        bufHead: Option[String],
+        lastHead: Option[String]
+    ): List[(Option[String], String)] =
+      rest match
+        case Nil       => (if buf.isEmpty then acc else acc :+ (bufHead, buf)).toList
+        case p :: tail =>
           val head = p.linesIterator.nextOption().collect { case Heading(h) => h.trim }.orElse(lastHead)
-          if buf.isEmpty then (acc, p, head, head)
-          else if buf.length + 2 + p.length <= size then (acc, buf + "\n\n" + p, bufHead, head)
-          else (acc :+ (bufHead, buf), p, head, head)
-      }
-    val all = (if cur.isEmpty then done else done :+ (curHead, cur)).toList
+          if buf.isEmpty then windows(tail, acc, p, head, head)
+          else if buf.length + 2 + p.length <= size then windows(tail, acc, buf + "\n\n" + p, bufHead, head)
+          else windows(tail, acc :+ (bufHead, buf), p, head, head)
+    val all = windows(paras, Vector.empty, "", None, None)
     val n = math.max(1, maxWindows)
     val picked =
       if all.size <= n then all

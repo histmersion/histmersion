@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import io.circe.Decoder
 import io.circe.parser.decode
 import com.histmersion.values.{Pipeline, RunState, StepStatus}
@@ -179,13 +180,14 @@ object CompareRuns:
   def unionInOrder(lists: List[List[String]]): List[String] =
     lists
       .foldLeft(Vector.empty[String]) { (acc, names) =>
-        names
-          .foldLeft((acc, -1)) { case ((a, pos), n) =>
-            a.indexOf(n) match
-              case -1 => (a.patch(pos + 1, List(n), 0), pos + 1)
-              case i  => (a, i)
-          }
-          ._1
+        @tailrec def place(rest: List[String], a: Vector[String], pos: Int): Vector[String] =
+          rest match
+            case Nil       => a
+            case n :: tail =>
+              a.indexOf(n) match
+                case -1 => place(tail, a.patch(pos + 1, List(n), 0), pos + 1)
+                case i  => place(tail, a, i)
+        place(names, acc, -1)
       }
       .toList
 
@@ -247,20 +249,24 @@ object CompareRuns:
     * readable answer checked nothing.
     */
   def quoteCheck(steps: List[Step]): (Int, Int) =
-    steps.filter(s => isFindings(s.name)).foldLeft((0, 0)) { case ((checked, passed), s) =>
-      if s.status == StepStatus.Done.wire then
-        s.output.flatMap(decode[VerifiedFindings](_).toOption).fold((checked, passed)) { v =>
-          val n = v.proposed.getOrElse(v.findings.size)
-          (checked + n, passed + n - v.quoteFailed.getOrElse(0))
-        }
-      else
-        s.output.flatMap(decode[Findings](_).toOption).fold((checked, passed)) { f =>
-          val n = f.findings.size
-          val fails =
-            math.min(n, s.error.fold(0)(e => e.split(java.util.regex.Pattern.quote(QuoteFailure), -1).length - 1))
-          (checked + n, passed + n - fails)
-        }
-    }
+    @tailrec def loop(rest: List[Step], checked: Int, passed: Int): (Int, Int) =
+      rest match
+        case Nil                                           => (checked, passed)
+        case s :: tail if s.status == StepStatus.Done.wire =>
+          s.output.flatMap(decode[VerifiedFindings](_).toOption) match
+            case Some(v) =>
+              val n = v.proposed.getOrElse(v.findings.size)
+              loop(tail, checked + n, passed + n - v.quoteFailed.getOrElse(0))
+            case None => loop(tail, checked, passed)
+        case s :: tail =>
+          s.output.flatMap(decode[Findings](_).toOption) match
+            case Some(f) =>
+              val n = f.findings.size
+              val fails =
+                math.min(n, s.error.fold(0)(e => e.split(java.util.regex.Pattern.quote(QuoteFailure), -1).length - 1))
+              loop(tail, checked + n, passed + n - fails)
+            case None => loop(tail, checked, passed)
+    loop(steps.filter(s => isFindings(s.name)), 0, 0)
 
   /** The claims a run's enrichment ended with: the geocoded findings, else what the findings steps kept. */
   private def claims(d: Run): List[String] =
@@ -348,11 +354,18 @@ object CompareRuns:
 
   /** Each pair of runs: how many of round 1's majors match one-to-one (greedily, in order). */
   def overlap(a: List[Finding], b: List[Finding]): List[(Finding, Finding)] =
-    a.foldLeft((List.empty[(Finding, Finding)], b)) { case ((acc, left), f) =>
-      left.find(sameMajor(f, _)) match
-        case Some(g) => (acc :+ (f -> g), left.filterNot(_ eq g))
-        case None    => (acc, left)
-    }._1
+    @tailrec def loop(
+        rest: List[Finding],
+        acc: List[(Finding, Finding)],
+        left: List[Finding]
+    ): List[(Finding, Finding)] =
+      rest match
+        case Nil       => acc.reverse
+        case f :: tail =>
+          left.find(sameMajor(f, _)) match
+            case Some(g) => loop(tail, (f -> g) :: acc, left.filterNot(_ eq g))
+            case None    => loop(tail, acc, left)
+    loop(a, Nil, b)
 
   private def majorOverlaps(runs: List[Run]): List[MajorOverlap] =
     val majors = runs.map(d => d.run.id -> output[Merged](d, "merge-1").toList.flatMap(_.majors))
