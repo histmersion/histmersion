@@ -9,8 +9,8 @@ import sbt.util.CacheImplicits.given
   * `target/<nativeImageName>`. Reachability metadata, captured by the tracing agent, lives in the module's
   * src/main/resources/META-INF/native-image/.
   *
-  * Enabled per module (`enablePlugins(NativeImage)`), which also forks `run`/`runMain` under the tracing agent and
-  * adds `writeClasspath`. The module sets `Compile / mainClass` and `nativeImageName` inline.
+  * Enabled per module (`enablePlugins(NativeImage)`), which also forks `run`/`runMain` under the tracing agent and adds
+  * `writeClasspath`. The module sets `Compile / mainClass` and `nativeImageName` inline.
   */
 object NativeImage extends AutoPlugin {
   override def requires = plugins.JvmPlugin
@@ -30,6 +30,7 @@ object NativeImage extends AutoPlugin {
     nativeImage := Def.uncached {
       val log = streams.value.log
       val conv = fileConverter.value // sbt 2.0: classpath entries are virtual file refs
+      // Compile's class path holds % Provided jars: read Runtime's before a binary depends on chimney-iron
       val entries = (Compile / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
       val cp = Sloth
         .patch(

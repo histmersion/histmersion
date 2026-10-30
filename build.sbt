@@ -178,24 +178,24 @@ def dbTestGroups(
   }
 )
 
-// ── values: the newtypes every layer speaks of (citekeys, years, periods, DOIs, Wikidata ids,
-//    coordinates) and the vocabularies domain, wire and store share (source statuses, edge kinds, place
-//    kinds, …), with no codec — Iron only, JVM and JS. Opaque, so the newtypes erase to their base types.
 lazy val values = projectMatrix
   .in(file("modules/values"))
-  .settings(name := "histmersion-values")
+  .settings(
+    name := "histmersion-values",
+    description := "The newtypes and shared vocabularies of every layer, on Iron alone (JVM and Scala.js)"
+  )
   .settings(commonDeps)
   .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
   .jvmPlatform(scalaVersions = Seq(scala3))
   .jsPlatform(scalaVersions = Seq(scala3))
 
-// ── api: what crosses the wire — the wire records, the Tapir endpoints with their circe codecs and
-//    schemas (Kindlings), the Markdown every surface renders, and the helpers they need. JVM and JS: the
-//    Scala.js frontend derives its client from the same endpoints. Depends on values only.
 lazy val api = projectMatrix
   .in(file("modules/api"))
   .dependsOn(values)
-  .settings(name := "histmersion-api")
+  .settings(
+    name := "histmersion-api",
+    description := "The wire contract: records, Tapir endpoints, circe codecs and schemas, Markdown (JVM and Scala.js)"
+  )
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
@@ -215,13 +215,13 @@ lazy val api = projectMatrix
     settings = Seq(libraryDependencies += "io.github.cquiroz" %% "scala-java-time" % V.scalaJavaTime)
   )
 
-// ── config: AppConfig and its readers — HOCON modelled as case classes (Kindlings sconfig derivation) over
-//    reference.conf, the user's file and the environment. JVM only. Depends on values only: the server
-//    converts what it hands to the wire (the page's `ui` block, the config file's line in /api/about).
 lazy val config = project
   .in(file("modules/config"))
   .dependsOn(values.jvm(scala3))
-  .settings(name := "histmersion-config")
+  .settings(
+    name := "histmersion-config",
+    description := "AppConfig and its readers: reference.conf, the user's file and the environment"
+  )
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
@@ -230,28 +230,25 @@ lazy val config = project
     )
   )
 
-// ── files: the local files a client and the server exchange or keep — the `.hmx` bundle's container and
-//    canonical JSON, the merge resolution file, the source and article notes of the Markdown mirror
-//    (frontmatter, export), the plugin set and relink kit's records, a directory's size, the gazetteer
-//    seed's file names, a book cover's source. JVM only. cli and core both take it, so the CLI's local
-//    commands need no domain. Depends on api only.
 lazy val files = project
   .in(file("modules/files"))
   .dependsOn(api.jvm(scala3) % "compile->compile;test->test")
-  .settings(name := "histmersion-files")
+  .settings(
+    name := "histmersion-files",
+    description := "The local files client and server exchange or keep: bundles, merge files, the Markdown mirror"
+  )
   .settings(commonDeps)
   .settings(libraryDependencies += "org.yaml" % "snakeyaml" % V.snakeyaml)
 
-// ── core: package `domain` — the logic server and db run on. JVM only. It depends on files and api
-//    (the wire records the domain works on where both sides have one shape, the pure helpers clients
-//    share, and the instances its own derived codecs need). Never on config: the domain takes settings
-//    records of its own, which the server converts from config. Its tests read reference.conf. NO
-//    database code.
 lazy val core = projectMatrix
   .in(file("modules/core"))
   .dependsOn(values, api % "compile->compile;test->test")
+  // config for its tests only: the domain takes settings records of its own, which the server converts
   .dependsOn(config % "test->test", files)
-  .settings(name := "histmersion-core")
+  .settings(
+    name := "histmersion-core",
+    description := "The domain logic the server and the store run on, with no database code"
+  )
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
@@ -270,14 +267,13 @@ lazy val core = projectMatrix
   )
   .jvmPlatform(scalaVersions = Seq(scala3))
 
-// ── plugin-api: the SPI a plugin compiles against (docs/research-plugins.md §2, decision D1). ──
-//    Interfaces, the `Secret` reference type, the lenient config readers and the SPI's own newtypes
-//    (years, periods, coordinates, DOIs, Wikidata ids, licences) — nothing else: sconfig +
-//    kindlings-sconfig-derivation + iron only (all three in the plugin platform), so no
-//    values/api/core/db/server class is ever on a plugin's classpath.
 lazy val pluginApi = project
   .in(file("modules/plugin-api"))
-  .settings(name := "histmersion-plugin-api")
+  // sconfig, kindlings-sconfig-derivation and iron only (all in the plugin platform): no Histmersion class on a plugin's class path
+  .settings(
+    name := "histmersion-plugin-api",
+    description := "The plugin SPI a plugin compiles against: interfaces, Secret, config readers, its own newtypes"
+  )
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
@@ -287,15 +283,13 @@ lazy val pluginApi = project
     )
   )
 
-// ── plugin-host: the host side of the plugin SPI that does not need the server — discovery, the config
-//    contract, secret resolution and staged registration (PluginHost), the acquisition client and its
-//    transports, the acquisition chain, and how the host reads a plugin's media collection, event
-//    catalogue and AI provider. The server runs it; the plugin testkit runs the SAME code, so a plugin's
-//    test sees what the server would. No database, no listener: core, config and plugin-api only.
 lazy val pluginHost = project
   .in(file("modules/plugin-host"))
   .dependsOn(core.jvm(scala3) % "compile->compile;test->test", config, pluginApi)
-  .settings(name := "histmersion-plugin-host")
+  .settings(
+    name := "histmersion-plugin-host",
+    description := "The host side of the plugin SPI, shared by the server and the testkit"
+  )
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
@@ -304,50 +298,52 @@ lazy val pluginHost = project
     )
   )
 
-// ── plugin-testkit: what a plugin's own tests depend on (`//> using test.dep`), shipped in the install's
-//    Maven repository beside plugin-api: load the plugin as the server does and run its contributions as
-//    the server does (plugin-host's code), with the server's HTTP client live, recording or replaying.
-//    Its public API is part of the plugin compatibility contract (plugin-testkit-api.txt).
 lazy val pluginTestkit = project
   .in(file("modules/plugin-testkit"))
   .dependsOn(pluginHost)
-  .settings(name := "histmersion-plugin-testkit")
+  .settings(
+    name := "histmersion-plugin-testkit",
+    description := "Runs a plugin in its own tests as the server does, with live, recorded or replayed HTTP"
+  )
   .settings(commonDeps)
 
-// ── plugin-vaults: the first-party secret vaults (KeePassXC, 1Password, Bitwarden) as built-in
-//    plugins, DISABLED by default (§3.7, D2). Compiled against plugin-api ONLY, as a third-party plugin
-//    would be; the server puts them on its classpath, so they are in every native image.
 lazy val pluginVaults = project
   .in(file("modules/plugin-vaults"))
   .dependsOn(pluginApi)
-  .settings(name := "histmersion-plugin-vaults")
+  .settings(
+    name := "histmersion-plugin-vaults",
+    description := "The built-in secret vaults (KeePassXC, 1Password, Bitwarden), disabled by default"
+  )
   .settings(commonDeps)
 
-// ── plugin-fixtures/hello: a TEST plugin (spike A's `hello`), compiled against plugin-api only and
-//    packaged as a jar of its own, as a third-party plugin is. Never on the server's class path: the
-//    plugin tests and scripts/bundle/smoke.sh's relink drop its jar into a plugins directory.
 lazy val pluginHello = project
   .in(file("modules/plugin-fixtures/hello"))
   .dependsOn(pluginApi)
-  .settings(name := "histmersion-plugin-hello", publish / skip := true)
+  .settings(
+    name := "histmersion-plugin-hello",
+    description := "A test plugin jar for the plugin and relink tests",
+    publish / skip := true
+  )
   .settings(commonDeps)
 
-// ── plugin-fixtures/hello-ai: a TEST AI provider (docs/research-plugins.md §23) — scripted, no network —
-//    compiled against plugin-api only and packaged as a jar of its own. Never on the server's class path:
-//    the AI-provider suites load its jar, as the plugin host would a user's plugin.
 lazy val pluginHelloAi = project
   .in(file("modules/plugin-fixtures/hello-ai"))
   .dependsOn(pluginApi)
-  .settings(name := "histmersion-plugin-hello-ai", publish / skip := true)
+  .settings(
+    name := "histmersion-plugin-hello-ai",
+    description := "A test AI-provider plugin jar: scripted, no network",
+    publish / skip := true
+  )
   .settings(commonDeps)
 
-// ── plugin-fixtures/hello-lib + hello-deps: a TEST plugin with a dependency of its own. Both are written
-//    to a test Maven repository (`pluginHelloDeps/fixturesRepo`) with their POMs, as a plugin author
-//    publishes a plugin; hello-deps's POM lists hello-lib, and plugin-api as `provided`. Never on the
-//    server's class path: the resolution suites and scripts/bundle/smoke.sh install hello-deps from there.
 lazy val pluginHelloLib = project
   .in(file("modules/plugin-fixtures/hello-lib"))
-  .settings(name := "histmersion-plugin-hello-lib", version := "0.1.0", publish / skip := true)
+  .settings(
+    name := "histmersion-plugin-hello-lib",
+    description := "A test library that the hello-deps test plugin depends on",
+    version := "0.1.0",
+    publish / skip := true
+  )
   .settings(commonDeps)
 
 val fixturesRepo = taskKey[File]("Write the test Maven repository with hello-lib and hello-deps")
@@ -355,7 +351,12 @@ val fixturesRepo = taskKey[File]("Write the test Maven repository with hello-lib
 lazy val pluginHelloDeps = project
   .in(file("modules/plugin-fixtures/hello-deps"))
   .dependsOn(pluginApi % Provided, pluginHelloLib)
-  .settings(name := "histmersion-plugin-hello-deps", version := "0.1.0", publish / skip := true)
+  .settings(
+    name := "histmersion-plugin-hello-deps",
+    description := "A test plugin with a dependency of its own, published to a fixture Maven repository",
+    version := "0.1.0",
+    publish / skip := true
+  )
   .settings(commonDeps)
   .settings(
     // UNCACHED: its output is files, not the task's result
@@ -381,15 +382,14 @@ lazy val pluginHelloDeps = project
     }
   )
 
-// ── plugin-resolver: the dependencies of user plugins (`histmersion plugin add`, the relink, JVM mode),
-//    resolved with coursier together with the server's own modules (the relink kit's `modules`): what the
-//    server ships is not added again, a plugin that needs a NEWER version of it is refused, the rest is
-//    fetched into the plugins directory's `lib/`. Run on the JVM from the relink kit's `tools/resolver/`
-//    beside `kit/lib`; never on the server's class path (coursier's jar carries native-image settings of
-//    its own, which the server's image must not pick up).
 lazy val pluginResolver = project
   .in(file("modules/plugin-resolver"))
-  .settings(name := "histmersion-plugin-resolver", publish / skip := true)
+  // run from the relink kit's tools/, never on the server's class path: coursier's jar carries native-image settings
+  .settings(
+    name := "histmersion-plugin-resolver",
+    description := "Resolves user plugins' dependencies against the server's modules (coursier)",
+    publish / skip := true
+  )
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
@@ -407,18 +407,13 @@ lazy val pluginResolver = project
     }.taskValue
   )
 
-// ── chimney-iron: a Chimney macro extension, found by ServiceLoader while Chimney's macros expand. It
-//    converts an Iron newtype into the same-named newtype of another layer over the same constraint as
-//    `To(from.value)`, with no check (AGENTS.md, Coding practices 4). Compile-time only: a consumer
-//    depends on it `% Provided`, and Chimney and Iron are Provided here, so neither the extension nor
-//    anything it pulls in is on a consumer's `Runtime / fullClasspath`. (`Compile / fullClasspath`
-//    includes Provided jars: the native-image tasks must read the Runtime one before a module that
-//    ships a binary depends on this.) It needs Scala 3.10+: Chimney 2
-//    and Iron 3.4 are compiled by 3.9 (unreadable to 3.8), and a Scala 3.9.0 compiler bug, fixed in 3.10.0,
-//    stops this module's compilation with a cyclic reference.
 lazy val chimneyIron = project
   .in(file("modules/chimney-iron"))
-  .settings(name := "histmersion-chimney-iron")
+  // consumers depend on it % Provided; Chimney 2 and Iron 3.4 need Scala 3.10+ (3.9.0 fails here on a cyclic reference)
+  .settings(
+    name := "histmersion-chimney-iron",
+    description := "A Chimney macro extension that converts an Iron newtype into another layer's"
+  )
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
@@ -427,11 +422,14 @@ lazy val chimneyIron = project
     )
   )
 
-// ── chimney-iron-tests: chimney-iron used the way a layer of Histmersion uses it, `% Provided`. ────
 lazy val chimneyIronTests = project
   .in(file("modules/chimney-iron-tests"))
   .dependsOn(chimneyIron % Provided)
-  .settings(name := "histmersion-chimney-iron-tests", publish / skip := true)
+  .settings(
+    name := "histmersion-chimney-iron-tests",
+    description := "chimney-iron used as a layer uses it, as a Provided dependency",
+    publish / skip := true
+  )
   .settings(commonDeps)
   .settings(
     libraryDependencies ++= Seq(
@@ -440,17 +438,15 @@ lazy val chimneyIronTests = project
     )
   )
 
-// ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
 lazy val db = project
   .in(file("modules/db"))
   .dependsOn(config, core.jvm(scala3) % "compile->compile;test->test")
-  .settings(name := "histmersion-db")
+  .settings(
+    name := "histmersion-db",
+    description := "The store: Magnum repositories over Postgres/PostGIS, Flyway migrations, the seed importer"
+  )
   .settings(commonDeps)
-  // Inside a group the suites run one at a time on purpose: several rewrite source_chunks/finding_places
-  // under each other; and since the DataSource is pooled (`db.pool.max`), suites side by side could park
-  // every pooled connection in a transaction blocked on a table lock `PlaceRepo.rebuildFindingPlaces`
-  // holds, while the transaction holding it is still queueing FOR a connection. Groups have separate
-  // databases, so they cannot.
+  // one suite at a time per group: several rewrite the same tables, and side by side they can deadlock the pool
   .settings(dbTestGroups("db", groups = 2, heap = "1g"))
   .settings(
     // db/migration/index.txt = the list of migration files. Flyway reads it through a ResourceProvider
@@ -504,17 +500,16 @@ def buildMetaSource(base: File): String = {
      |""".stripMargin
 }
 
-// ── server: MCP (Chimp) + REST (Tapir/netty-sync) + web UI; the only DB client. Native image. ───
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, pluginHost, pluginVaults)
-  .settings(name := "histmersion-server", Compile / mainClass := Some("com.histmersion.server.Main"))
+  .settings(
+    name := "histmersion-server",
+    description := "The server: MCP, REST and the web UI over the store; built as a native image",
+    Compile / mainClass := Some("com.histmersion.server.Main")
+  )
   .settings(commonDeps)
-  // Inside a group the suites run one at a time on purpose, for two reasons: the backup/restore suite
-  // creates+restores a scratch database (parallel suites saw "connection refused" mid-restore), and
-  // server startup RECONCILES the OCR job queue (§1.8) — `running`/`queued` rows become `failed:
-  // interrupted`, which is right for the one-server deployment but lets two suites booting at once
-  // cancel each other's jobs. Groups have separate databases, so neither reaches across them.
+  // one suite at a time per group: a restore drops connections, and a booting server fails the running jobs
   .settings(dbTestGroups("server", groups = 5, heap = "2g"))
   .enablePlugins(NativeImage)
   .settings(
@@ -775,11 +770,14 @@ lazy val server = project
     )
   )
 
-// ── cli: host-run, PURE HTTP CLIENT of the server (sttp client derived from api's endpoints). ────
 lazy val cli = project
   .in(file("modules/cli"))
   .dependsOn(api.jvm(scala3), config, files)
-  .settings(name := "histmersion-cli", Compile / mainClass := Some("com.histmersion.cli.Main"))
+  .settings(
+    name := "histmersion-cli",
+    description := "The command line, a pure HTTP client of the server; built as a native image",
+    Compile / mainClass := Some("com.histmersion.cli.Main")
+  )
   .settings(commonDeps)
   .enablePlugins(NativeImage)
   .settings(nativeImageName := "histmersion-cli")
@@ -810,15 +808,14 @@ lazy val cli = project
     }.taskValue
   )
 
-// ── web: Scala.js frontend — Laminar + sttp FetchBackend, derived from the same core endpoints. ──
-// Dev: `sbt ~web/fastLinkJS` + Vite (`cd modules/web && npx vite`) with proxy to the server.
-// Production: the server's resourceGenerator triggers web/fullLinkJS and copies main.js into the
-// server's classpath as web/app.bundle.js, served alongside vendor/ + CSS.
 lazy val web = project
   .in(file("modules/web"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(api.js(scala3))
-  .settings(name := "histmersion-web")
+  .settings(
+    name := "histmersion-web",
+    description := "The web UI page in Scala.js (Laminar), over a client derived from the api endpoints"
+  )
   .settings(commonDeps)
   .settings(
     scalaJSUseMainModuleInitializer := true,
@@ -854,4 +851,8 @@ lazy val root = project
     cli,
     web
   )
-  .settings(name := "histmersion", publish / skip := true)
+  .settings(
+    name := "histmersion",
+    description := "Histmersion: a geo-temporal research corpus with MCP, REST, a web UI and a CLI",
+    publish / skip := true
+  )
