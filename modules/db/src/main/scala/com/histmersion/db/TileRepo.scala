@@ -2,6 +2,7 @@ package com.histmersion.db
 
 import com.histmersion.api.*
 import com.histmersion.domain.*
+import com.histmersion.domain.maptiles.GridCell
 import com.histmersion.values.PlaceKind
 
 import com.augustnagro.magnum.*
@@ -95,34 +96,62 @@ object TileRepo:
     (s"(${held("(lon + 180) / 360.0")} * ${c.side} - ${c.x}) * ${TileCoord.Extent}",
       s"(${held(s"(1 - ln(tan($l) + 1 / cos($l)) / pi()) / 2")} * ${c.side} - ${c.y}) * ${TileCoord.Extent}")
 
-  /** The cells of tile `c` over `candidates` (columns `key`, `lon`, `lat`, `ps`, `pe`: an item's key,
-    * point and dates): the items placed in the tile — each in exactly one tile of a zoom, its units in
-    * `[0, extent)` — every one alone when there are at most `maxPoints`, else counted by cells of
-    * `cellUnits` (a cell of one item answers as the item). Rows as [[TileCell]]'s fields. Pure. */
-  private[db] def cellsSql(candidates: Sql, c: TileCoord, maxPoints: Int, cellUnits: Int): Sql =
+  /** The items of `candidates` placed in tile `c` (columns `key`, `lon`, `lat`, `ps`, `pe`, `ub`: an item's
+    * key, point, dates and whether it has no known date) — each in exactly one tile of a zoom, its units
+    * `px`/`py` in `[0, extent)` — as the CTEs `c`, `k`, `t` (`t` the tile's, with `mid` the middle of the
+    * dates). Pure. */
+  private def placedSql(candidates: Sql, c: TileCoord): Sql =
     val (ux, uy) = unitsSql(c)
     val e = TileCoord.Extent
-    val perSide = (e / cellUnits.max(1)).max(1)
     Sql.raw("WITH c AS MATERIALIZED (") ++ candidates ++ Sql.raw(
-      "), k AS MATERIALIZED (SELECT key, lon, lat, CASE WHEN ps IS NOT NULL AND pe IS NOT NULL THEN (ps + pe) / 2.0 END AS mid," +
+      "), k AS MATERIALIZED (SELECT key, lon, lat, ub, CASE WHEN ps IS NOT NULL AND pe IS NOT NULL THEN (ps + pe) / 2.0 END AS mid," +
         s" $ux AS px, $uy AS py FROM c)" +
-        s", t AS MATERIALIZED (SELECT * FROM k WHERE px >= 0 AND px < $e AND py >= 0 AND py < $e)" +
+        s", t AS MATERIALIZED (SELECT * FROM k WHERE px >= 0 AND px < $e AND py >= 0 AND py < $e)")
+
+  /** The cells of tile `c` over `candidates` ([[placedSql]]): every item alone when there are at most
+    * `maxPoints`, else counted by cells of `cellUnits` (a cell of one item answers as the item). Rows as
+    * [[TileCell]]'s fields, `undated` how many of a cell's items are marked `ub`. Pure. */
+  private[db] def cellsSql(candidates: Sql, c: TileCoord, maxPoints: Int, cellUnits: Int): Sql =
+    val perSide = (TileCoord.Extent / cellUnits.max(1)).max(1)
+    placedSql(candidates, c) ++ Sql.raw(
         ", total AS (SELECT count(*) AS n FROM t)" +
-        " SELECT key, floor(px)::int, floor(py)::int, 1, mid, mid, lon, lat, lon, lat FROM t") ++
+        " SELECT key, floor(px)::int, floor(py)::int, 1, mid, mid, lon, lat, lon, lat, CASE WHEN ub THEN 1 ELSE 0 END FROM t") ++
       Sql.of(" WHERE (SELECT n FROM total) <= ?", Param.I(maxPoints)) ++
       Sql.raw(s" UNION ALL SELECT CASE WHEN g.n = 1 THEN g.one ELSE 'c${c.z}/' || (${c.x * perSide} + g.gx) || '/' ||" +
-        s" (${c.y * perSide} + g.gy) END, floor(g.ax)::int, floor(g.ay)::int, g.n, g.lo, g.hi, g.w, g.s, g.e, g.nn" +
+        s" (${c.y * perSide} + g.gy) END, floor(g.ax)::int, floor(g.ay)::int, g.n, g.lo, g.hi, g.w, g.s, g.e, g.nn, g.u" +
         s" FROM (SELECT floor(px / ${cellUnits.max(1)})::bigint AS gx, floor(py / ${cellUnits.max(1)})::bigint AS gy," +
         " count(*)::int AS n, avg(px) AS ax, avg(py) AS ay, min(mid) AS lo, max(mid) AS hi," +
-        " min(lon) AS w, min(lat) AS s, max(lon) AS e, max(lat) AS nn, min(key) AS one FROM t") ++
+        " min(lon) AS w, min(lat) AS s, max(lon) AS e, max(lat) AS nn, min(key) AS one," +
+        " (count(*) FILTER (WHERE ub))::int AS u FROM t") ++
       Sql.of(" WHERE (SELECT n FROM total) > ? GROUP BY 1, 2) g", Param.I(maxPoints))
 
+  /** The items of `candidates` in tile `c` ([[placedSql]]) counted by the squares of `cellUnits`, whatever
+    * their number: one [[GridCell]] a square (`dup` those marked `ub`), its square on the world's grid of the
+    * tile's zoom. Pure. */
+  private[db] def gridCellsSql(candidates: Sql, c: TileCoord, cellUnits: Int): Sql =
+    val perSide = (TileCoord.Extent / cellUnits.max(1)).max(1)
+    val cu = cellUnits.max(1)
+    placedSql(candidates, c) ++ Sql.raw(
+      s" SELECT ${c.x * perSide} + floor(px / $cu)::bigint, ${c.y * perSide} + floor(py / $cu)::bigint," +
+        " count(*)::int, (count(*) FILTER (WHERE ub))::int, sum(px), sum(py)," +
+        " coalesce(sum(px) FILTER (WHERE ub), 0), coalesce(sum(py) FILTER (WHERE ub), 0), min(mid), max(mid)," +
+        " min(lon), min(lat), max(lon), max(lat), min(key) FROM t GROUP BY 1, 2")
+
   private given DbCodec[TileCell] = DbCodec.derived
+  private given DbCodec[GridCell] = DbCodec.derived
 
   /** The cells of tile `c` over a layer's `candidates` ([[cellsSql]]). */
   def cells(ds: DataSource, candidates: Sql, c: TileCoord, grid: TileGrid): List[TileCell] =
     connect(ds):
       cellsSql(candidates, c, grid.pointsAt(c), grid.cellUnits).frag.query[TileCell].run().toList
+
+  /** Every item of `candidates` in tile `c`, each alone. */
+  def items(candidates: Sql, c: TileCoord)(using DbCon): List[TileCell] =
+    cellsSql(candidates, c, Int.MaxValue, TileCoord.Extent).frag.query[TileCell].run().toList
+
+  /** The items of `candidates` in tile `c` counted by the grid's squares ([[gridCellsSql]]). */
+  def gridCells(candidates: Sql, c: TileCoord, grid: TileGrid)(using DbCon): List[GridCell] =
+    gridCellsSql(candidates, c, grid.cellUnits).frag.query[GridCell].run().toList
 
   // ── the sites ───────────────────────────────────────────────────────────────────────────────
 
@@ -132,10 +161,14 @@ object TileRepo:
     * the gazetteer has, imported from Wikidata as much as curated (the places layer draws an imported
     * place only once a finding names it; a site is no less a site for being in no source yet). Over
     * `places_site_map` (V105), whose predicate is stated word for word. */
-  private[db] def siteCandidates(window: (Long, Long), siteType: Option[String], modernFrom: Long, envelope: Sql): Sql =
+  private[db] def siteCandidates(window: (Long, Long), siteType: Option[String], modernFrom: Long, envelope: Sql,
+      markUndated: Boolean = false): Sql =
     val tw = Some(window)
+    // `ub`: a site of no known date the span shows by its findings or events — counted among the undated
+    // sites too when they are asked for ([[UndatedSiteRepo]])
+    val ub = if markUndated then "(lower_inf(p.period) AND upper_inf(p.period))" else "false"
     Sql.raw("SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat," +
-      s" ${PeriodSql.start("p.period")} AS ps, ${PeriodSql.end("p.period")} AS pe" +
+      s" ${PeriodSql.start("p.period")} AS ps, ${PeriodSql.end("p.period")} AS pe, $ub AS ub" +
       " FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom" +
       " ELSE ST_PointOnSurface(p.geom) END AS pt) q" +
       s" WHERE p.kind = '${PlaceKind.Site}' AND p.geom IS NOT NULL" +
@@ -158,6 +191,15 @@ object TileRepo:
   def siteCells(ds: DataSource, c: TileCoord, grid: TileGrid, window: (Long, Long), siteType: Option[String],
       modernFrom: Long): List[TileCell] =
     cells(ds, siteCandidates(window, siteType, modernFrom, envelope(c)), c, grid)
+
+  /** The sites tile `c` shows for `window` as candidates of [[items]] and [[gridCells]], an undated one the
+    * span shows by its findings marked (it is among the undated sites too). */
+  def datedSites(c: TileCoord, window: (Long, Long), siteType: Option[String], modernFrom: Long): Sql =
+    siteCandidates(window, siteType, modernFrom, envelope(c), markUndated = true)
+
+  /** An events tile's cells, with the events of no known date `undatedWhere` selects ([[EventRepo.tileCandidatesWithUndated]]). */
+  def eventCellsWithUndated(ds: DataSource, c: TileCoord, grid: TileGrid, where: Sql, undatedWhere: Sql): List[TileCell] =
+    cells(ds, EventRepo.tileCandidatesWithUndated(where, undatedWhere, envelope(c)), c, grid)
 
   /** An events tile's cells: the events `where` selects (over `events e` with its place `ep`,
     * [[EventRepo.listWhere]]). */

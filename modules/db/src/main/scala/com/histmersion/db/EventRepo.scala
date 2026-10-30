@@ -174,10 +174,23 @@ object EventRepo:
     * selection (`where`, over `events e` with `ep`), in the tile's box `envelope`. */
   private[db] def tileCandidates(where: Sql, envelope: Sql): Sql =
     Sql.raw(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
-                  ${PeriodSql.start("e.outer_span")} AS ps, ${PeriodSql.end("e.outer_span")} AS pe
+                  ${PeriodSql.start("e.outer_span")} AS ps, ${PeriodSql.end("e.outer_span")} AS pe, false AS ub
                 FROM $fromEvents $anchorJoins
                 WHERE s.g IS NOT NULL AND e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND s.g && """) ++
       envelope ++ Sql.raw(" AND ") ++ where
+
+  /** An event with no known date: its outer span open on both sides. */
+  private[db] val UndatedSql = "(lower_inf(e.outer_span) AND upper_inf(e.outer_span))"
+
+  /** [[tileCandidates]] and, beside them, the events `undatedWhere` selects that have no known date (whatever
+    * the span: `undatedWhere` is the selection without it), each marked (`ub`). */
+  private[db] def tileCandidatesWithUndated(where: Sql, undatedWhere: Sql, envelope: Sql): Sql =
+    Sql.raw(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
+                  ${PeriodSql.start("e.outer_span")} AS ps, ${PeriodSql.end("e.outer_span")} AS pe, $UndatedSql AS ub
+                FROM $fromEvents $anchorJoins
+                WHERE s.g IS NOT NULL AND s.g && """) ++ envelope ++
+      Sql.raw(s" AND ((e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND ") ++ where ++
+      Sql.raw(s") OR ($UndatedSql AND ") ++ undatedWhere ++ Sql.raw("))")
 
   def get(ds: DataSource, id: String): Option[EventDetail] =
     connect(ds):

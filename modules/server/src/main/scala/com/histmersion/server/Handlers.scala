@@ -912,7 +912,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     PlaceRepo.search(ds, q, asOf, cfg.limits.page(limit, cfg.places.searchLimit), cfg.places.modernFrom).toList
 
   /** The map's sites, events and pictures as vector tiles (`GET /api/tiles/…`). */
-  val tiles: MapTileService = MapTileService(ds, () => cfg.ui.mapTiles, () => cfg.places.modernFrom, f => scopeOf(f))
+  val tiles: MapTileService = MapTileService(ds, () => cfg.ui.mapTiles, () => cfg.places.modernFrom, f => scopeOf(f),
+    com.histmersion.server.maptiles.UndatedSites(ds, () => cfg.ui.mapTiles.undatedKeptZoom,
+      run => { val _ = Thread.ofVirtual().name("histmersion-undated-sites").start(() => run()) }))
 
   def tile(q: TilesApi.TileQuery): Either[ApiError, TilesApi.TileAnswer] = tiles.tile(q)
 

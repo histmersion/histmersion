@@ -4,6 +4,8 @@ import com.histmersion.api.*
 import com.histmersion.config.UiMapTilesSettings
 import com.histmersion.db.*
 import com.histmersion.domain.*
+import com.histmersion.domain.maptiles.UndatedCells
+import com.histmersion.server.maptiles.UndatedSites
 
 import sttp.model.StatusCode
 
@@ -50,12 +52,13 @@ object MapTiles:
   def key(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, versions: Map[String, Long]): String =
     val f = q.filter
     val time = f.period.fold("")(p => s"${p.start}..${p.end}")
+    val undated = if q.withUndated then "undated" else ""
     val params = layer match
-      case TileLayer.Sites => List(time, q.siteType.getOrElse(""))
+      case TileLayer.Sites => List(time, q.siteType.getOrElse(""), undated)
       case TileLayer.Media => List(time, q.kind.getOrElse(""), q.provider.getOrElse(""), q.license.getOrElse(""))
       case TileLayer.Events =>
         List(f.copy(limit = 0, offset = 0, sort = Filter().sort).toString, q.kind.getOrElse(""), q.tier.getOrElse(""),
-          q.historicity.getOrElse(""), q.context.fold("")(_.toString), q.text.getOrElse(""), q.placeId.getOrElse(""))
+          q.historicity.getOrElse(""), q.context.fold("")(_.toString), q.text.getOrElse(""), q.placeId.getOrElse(""), undated)
     val v = TileRepo.Groups(layer).map(g => s"$g=${versions.getOrElse(g, 0L)}")
     (List(layer.wire, s"${c.z}/${c.x}/${c.y}") ++ params ++ v).mkString("|")
 
@@ -71,7 +74,7 @@ object MapTiles:
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` ([[TilesApi]]): a layer's tile cut from the database, kept
   * ([[TileCache]]) under the versions of what it reads, and answered 304 when the browser holds it. */
 final class MapTileService(ds: DataSource, settings: () => UiMapTilesSettings, modernFrom: () => Long,
-    scopeOf: Filter => PlaceScope):
+    scopeOf: Filter => PlaceScope, undatedSites: UndatedSites):
   import MapTiles.*
 
   val cache: TileCache = TileCache(() => settings().cacheMb.toLong.max(1) * 1024 * 1024)
@@ -102,19 +105,36 @@ final class MapTileService(ds: DataSource, settings: () => UiMapTilesSettings, m
 
   private def window(f: Filter): Option[(Long, Long)] = f.period.map(p => (p.start.min(p.end), p.start.max(p.end)))
 
+  /** A sites tile with the sites of no known date: the dated ones of the span and the undated ones (an undated
+    * one the span shows by its findings counted once, as dated), each alone when the tile keeps that many,
+    * else counted by its grid's squares together ([[UndatedCells]]). */
+  private def sitesWithUndated(c: TileCoord, grid: TileGrid, window: (Long, Long), siteType: Option[String]): List[TileCell] =
+    val dated = TileRepo.datedSites(c, window, siteType, modernFrom())
+    val datedCounts = com.augustnagro.magnum.connect(ds)(TileRepo.gridCells(dated, c, grid))
+    val undatedCounts = undatedSites.counted(c, grid, siteType)
+    if UndatedCells.total(datedCounts, undatedCounts) <= grid.pointsAt(c) then
+      val datedItems = com.augustnagro.magnum.connect(ds)(TileRepo.items(dated, c))
+      val shownByFindings = datedItems.filter(_.undated > 0).map(_.key)
+      datedItems.map(_.copy(undated = 0)) ++ undatedSites.items(c, siteType, shownByFindings)
+    else UndatedCells.merge(c.z, datedCounts, undatedCounts)
+
   private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): Array[Byte] =
     val points = layer match
       case TileLayer.Sites =>
         // a sites tile with no span is every year's: the time rule needs a window
         val w = window(q.filter).getOrElse((Long.MinValue / 4, Long.MaxValue / 4))
-        val cells = TileRepo.siteCells(ds, c, grid, w, q.siteType, modernFrom())
+        val cells =
+          if q.withUndated then sitesWithUndated(c, grid, w, q.siteType)
+          else TileRepo.siteCells(ds, c, grid, w, q.siteType, modernFrom())
         val records = TileRepo.sitesOf(ds, cells.filter(_.isItem).map(_.key))
         TileFeatures.of(c.z, cells, records.get, TileFeatures.site)
       case TileLayer.Events =>
         val f = q.filter
-        val where = EventRepo.listWhere(f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId,
+        def where(f: Filter) = EventRepo.listWhere(f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId,
           EventRepo.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), None))
-        val cells = TileRepo.eventCells(ds, c, grid, where)
+        val cells =
+          if q.withUndated then TileRepo.eventCellsWithUndated(ds, c, grid, where(f), where(f.copy(period = None)))
+          else TileRepo.eventCells(ds, c, grid, where(f))
         val records = EventRepo.geoOf(ds, cells.filter(_.isItem).map(_.key))
         TileFeatures.of(c.z, cells, records.get, TileFeatures.event)
       case TileLayer.Media =>

@@ -85,6 +85,39 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(of("fortification"), Set("zztile_t3"))
     assertEquals(TileRepo.sitesOf(ds, List("zztile_t1")).get("zztile_t1").flatMap(_.siteType), Some("sanctuary"))
 
+  test("undated sites: listed in a tile but those excepted, counted by squares, the kept counts the same after a rebuild"):
+    site("zztile_u1", "Zztile Tower", "int8range(NULL, NULL)", importSource = Some("wikidata"), siteType = Some("tower"))
+    site("zztile_u2", "Zztile Ruin", "int8range(NULL, NULL)", dx = 0.01, importSource = Some("geonames"))
+    site("zztile_u3", "Zztile Ruin 2", "int8range(NULL, NULL)", dx = 0.3, dy = 0.3)
+    site("zztile_d1", "Zztile Dated", "int8range(-500, -100, '[]')", dx = 0.02)
+    val deep = tileAt(9)
+    val listed = connect(ds)(UndatedSiteRepo.items(deep, None, except = List("zztile_u2"))).filter(_.key.startsWith("zztile"))
+    assertEquals(listed.map(c => (c.key, c.undated)).toSet, Set("zztile_u1" -> 1))
+    assertEquals(connect(ds)(UndatedSiteRepo.items(deep, Some("tower"), Nil)).map(_.key).filter(_.startsWith("zztile")), List("zztile_u1"))
+    val shallow = tileAt(4)
+    val counted = connect(ds)(UndatedSiteRepo.counted(shallow, grid, None))
+    val v = connect(ds)(UndatedSiteRepo.version())
+    assert(transact(ds)(UndatedSiteRepo.rebuild(v, 16, 6)))
+    assertEquals(connect(ds)(UndatedSiteRepo.built()).map(_.version), Some(v))
+    val kept = connect(ds)(UndatedSiteRepo.kept(shallow, 16, None))
+    assertEquals(kept.map(k => (k.gx, k.gy, k.n)).sortBy(_._1), counted.map(k => (k.gx, k.gy, k.n)).sortBy(_._1))
+    kept.zip(counted.sortBy(_.gx)).foreach((k, c) => assertEqualsDouble(k.sumX, c.sumX, 1e-3))
+    assertEquals(counted.map(_.n).sum, 3)
+    // the dated site is no undated one, and the span's dated count marks no site as undated
+    assertEquals(connect(ds)(TileRepo.items(TileRepo.datedSites(deep, (-300, -300), None, 1500), deep)).filter(_.key.startsWith("zztile"))
+      .map(c => (c.key, c.undated)), List("zztile_d1" -> 0))
+
+  test("undated sites: a write to one moves the undated version; a write to a dated site does not"):
+    site("zztile_v1", "Zztile Dated V", "int8range(-500, -100, '[]')")
+    val before = connect(ds)(UndatedSiteRepo.version())
+    connect(ds)(sql"UPDATE places SET label = 'Zztile Dated W' WHERE id = 'zztile_v1'".update.run())
+    assertEquals(connect(ds)(UndatedSiteRepo.version()), before)
+    site("zztile_v2", "Zztile Undated V", "int8range(NULL, NULL)")
+    val after = connect(ds)(UndatedSiteRepo.version())
+    assert(after > before)
+    connect(ds)(sql"DELETE FROM places WHERE id = 'zztile_v2'".update.run())
+    assert(connect(ds)(UndatedSiteRepo.version()) > after)
+
   test("grouping: a tile of more items than it keeps alone counts them by cell, and the counts add up to every item"):
     // 900 sites on a 30 × 30 grid 0.01° apart: more than a tile keeps alone
     connect(ds):
@@ -126,6 +159,17 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(events(-1295, -1295), Set("zztile_e1"))
     assertEquals(events(-1500, 0), Set("zztile_e1", "zztile_e2"))
     assertEquals(EventRepo.geoOf(ds, List("zztile_e1")).get("zztile_e1").map(_.label), Some("Zztile battle"))
+    // an event with no known date: only when asked for, marked, whatever the span
+    connect(ds):
+      val _ = sql"""INSERT INTO events (id, label, kind, geom)
+                    VALUES ('zztile_e3', 'Zztile quake', 'earthquake', ST_SetSRID(ST_MakePoint(${Lon + 0.02}, ${Lat}), 4326))""".update.run()
+    assertEquals(events(-1500, 0), Set("zztile_e1", "zztile_e2"))
+    def withUndated(lo: Long, hi: Long) =
+      val f = Filter(period = Some(Period(lo, hi)))
+      TileRepo.eventCellsWithUndated(ds, c, grid, EventRepo.listWhere(f, PlaceScope.empty, None, None, None, None),
+        EventRepo.listWhere(f.copy(period = None), PlaceScope.empty, None, None, None, None))
+        .filter(_.key.startsWith("zztile")).map(x => x.key -> x.undated).toSet
+    assertEquals(withUndated(-1295, -1295), Set("zztile_e1" -> 0, "zztile_e3" -> 1))
     def media(window: Option[(Long, Long)], license: Option[String] = None) =
       TileRepo.mediaCells(ds, c, grid, None, Some("zztile"), license, window).filter(_.isItem)
         .flatMap(x => MediaRepo.geoOf(ds, List(x.key)).values.map(_.assetName)).toSet
