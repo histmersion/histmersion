@@ -99,7 +99,7 @@ class WebAssetsSuite extends munit.FunSuite:
     def rule(selector: String) =
       css.linesIterator.find(_.startsWith(selector + " {")).getOrElse(fail(s"no rule for $selector"))
     val bar = rule(".wm-taskbar")
-    assert(bar.contains("right:var(--sidebar-w, 360px)"), bar)
+    assert(bar.contains("right:var(--sidebar-w, 480px)"), bar)
     assert(!bar.contains("right:0"), bar)
     assert(rule("""[data-layout="narrow"] .wm-taskbar""").contains("right:0"))
     assert(rule("""[data-layout="narrow"] .histmersion-app:has(.wm-taskbar) .sidebar""").contains("padding-bottom"))
