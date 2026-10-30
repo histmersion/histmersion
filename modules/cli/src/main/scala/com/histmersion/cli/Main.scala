@@ -583,7 +583,7 @@ object Main:
     }
   }
 
-  private val command: Command[(Option[String], Option[String], Client => Either[CliError, Unit])] =
+  private[cli] val command: Command[(Option[String], Option[String], Client => Either[CliError, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (
         serverOpt,
