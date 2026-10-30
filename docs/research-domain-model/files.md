@@ -2,7 +2,7 @@
 
 Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/main`, master 58de5489), grouped by the package the design moves it to: `com.histmersion.domain.<subdomain>.<feature>` for services, repositories, controllers and pure rules (server and core modules), `com.histmersion.api.<subdomain>.<feature>` for wire records, endpoints and renderers, `com.histmersion.config.<subdomain>` for settings records. The first cut was made by name rules, then corrected file by file where the measured references said otherwise (§3.2 of the design and `dependencies.md`); the slice that moves a subdomain re-checks its rows. Files the slices split between several owners (`Handlers`, `OpsHandlers`, `api/Queue`, `db/QueueRepo`) are listed where most of their content goes. `agents/AcquireRecheckService` is listed under `library.acquisition`, where §3.5 moves it (the measurements count it where it is today, in automation). `cli` and `web` keep their own trees.
 
-`atlas` is a placeholder name (Q17); renaming it is one package rename.
+`catalogue` is a placeholder name (Q17); renaming it is one package rename.
 
 | package | files | lines |
 |---|---:|---:|
@@ -12,11 +12,11 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | `platform.maintenance` | 1 | 34 |
 | `platform.plugins` | 14 | 1127 |
 | `platform.worklist` | 2 | 460 |
-| `atlas.events` | 57 | 4311 |
-| `atlas.evidence` | 28 | 753 |
-| `atlas.maptiles` | 23 | 1219 |
-| `atlas.periods` | 16 | 600 |
-| `atlas.places` | 77 | 7268 |
+| `catalogue.events` | 57 | 4311 |
+| `catalogue.evidence` | 28 | 753 |
+| `catalogue.maptiles` | 23 | 1219 |
+| `catalogue.periods` | 16 | 600 |
+| `catalogue.places` | 77 | 7268 |
 | `media` | 93 | 7034 |
 | `library.acquisition` | 101 | 6810 |
 | `library.calibre` | 6 | 89 |
@@ -136,7 +136,7 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | api | `api/Queue.scala` | 323 |
 | db | `db/QueueRepo.scala` | 137 |
 
-## atlas.events
+## catalogue.events
 
 | module | file | lines |
 |---|---|---:|
@@ -198,7 +198,7 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | server | `server/events/EventsSettings.scala` | 16 |
 | server | `server/events/HostEventCatalogue.scala` | 21 |
 
-## atlas.evidence
+## catalogue.evidence
 
 | module | file | lines |
 |---|---|---:|
@@ -231,7 +231,7 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | db | `db/AttestationRepo.scala` | 101 |
 | db | `db/LeadRow.scala` | 23 |
 
-## atlas.maptiles
+## catalogue.maptiles
 
 | module | file | lines |
 |---|---|---:|
@@ -259,7 +259,7 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | server | `server/maptiles/UndatedSite.scala` | 10 |
 | server | `server/maptiles/UndatedSites.scala` | 126 |
 
-## atlas.periods
+## catalogue.periods
 
 | module | file | lines |
 |---|---|---:|
@@ -280,7 +280,7 @@ Every Scala source in `server`, `core`, `db`, `api`, `config` and `files` (`src/
 | db | `db/PeriodSql.scala` | 91 |
 | server | `server/importers/PeriodOFetch.scala` | 12 |
 
-## atlas.places
+## catalogue.places
 
 | module | file | lines |
 |---|---|---:|

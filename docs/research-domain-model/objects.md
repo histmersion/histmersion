@@ -75,7 +75,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | api | `api` | `DataCredits` | 142 | plural helper | companion of DataCredit | helper named after the type it works on |
 | api | `api` | `DatingMethod` | 4 | decided per object | becomes an enum (wire strings kept) | closed vocabulary |
 | api | `api` | `EventFields` | 50 | decided per object | `CatalogRecord`/`EventPatch` companions | field lists of those types |
-| api | `api` | `EventGeometry` | 41 | decided per object | new type `EventGeometry` (wire string) in api.atlas.events | helpers on a WKT string |
+| api | `api` | `EventGeometry` | 41 | decided per object | new type `EventGeometry` (wire string) in api.catalogue.events | helpers on a WKT string |
 | api | `api` | `EventKind` | 14 | String vocabulary | becomes an enum (wire strings kept) in values/api | a closed vocabulary held as String constants |
 | api | `api` | `EventLeads` | 70 | plural helper | companion of EventLead | helper named after the type it works on |
 | api | `api` | `EventLinksMarkdown` | 74 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
@@ -86,7 +86,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | api | `api` | `EventsApi` | 87 | endpoint group | stays: api.<subdomain>.<feature>.<Feature>Endpoints | a group of Tapir endpoint values, not about one type |
 | api | `api` | `FilterDocs` | 102 | decided per object | `Filter` companion (`Filter.docs`) | describes Filter |
 | api | `api` | `FormatMarkdown` | 32 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
-| api | `api` | `Gazetteer` | 272 | decided per object | dissolve into api.atlas.places: `GazRecord.fromJson` etc. on the record companions | parsers of gazetteer records |
+| api | `api` | `Gazetteer` | 272 | decided per object | dissolve into api.catalogue.places: `GazRecord.fromJson` etc. on the record companions | parsers of gazetteer records |
 | api | `api` | `Geocode` | 299 | namespace object | dissolves: nested types become top-level in package api.<subdomain>.<feature> | a namespace object stands in for a package |
 | api | `api` | `GoalPlans` | 119 | namespace object | dissolves: nested types become top-level in package api.<subdomain>.<feature> | a namespace object stands in for a package |
 | api | `api` | `GoalStages` | 14 | decided per object | `GoalStatus` enum (stages are its ordering) | about goal status |
@@ -102,7 +102,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | api | `api` | `LatinFold` | 84 | decided per object | new type `FoldedText` in util.text (`FoldedText.of`) | normalised text has meaning |
 | api | `api` | `Lint` | 478 | namespace object | dissolves: nested types become top-level in package api.<subdomain>.<feature> | a namespace object stands in for a package |
 | api | `api` | `ListFilters` | 241 | namespace object | dissolves: nested types become top-level in package api.<subdomain>.<feature> | a namespace object stands in for a package |
-| api | `api` | `Lpf` | 341 | decided per object | dissolve into api.atlas.places: `LpfDataset.fromJson`, `PlaceInput.fromLpf` | parser of Linked Places Format |
+| api | `api` | `Lpf` | 341 | decided per object | dissolve into api.catalogue.places: `LpfDataset.fromJson`, `PlaceInput.fromLpf` | parser of Linked Places Format |
 | api | `api` | `Managers` | 533 | namespace object | dissolves: nested types become top-level in package api.<subdomain>.<feature> | a namespace object stands in for a package |
 | api | `api` | `ManagersApi` | 177 | endpoint group | stays: api.<subdomain>.<feature>.<Feature>Endpoints | a group of Tapir endpoint values, not about one type |
 | api | `api` | `ManagersMarkdown` | 165 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
@@ -117,7 +117,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | api | `api` | `Paging` | 89 | decided per object | dissolve: `Page` top-level; functions on `Page`/`PageSize` companions | namespace + page arithmetic |
 | api | `api` | `Palette` | 46 | decided per object | stays: api.ui.Palette (CSS token names) | a table of token names, AGENTS.md styling rule |
 | api | `api` | `PassagesMarkdown` | 32 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
-| api | `api` | `PeriodO` | 202 | decided per object | dissolve into api.atlas.periods: `PeriodODataset.fromJson` | parser of PeriodO JSON |
+| api | `api` | `PeriodO` | 202 | decided per object | dissolve into api.catalogue.periods: `PeriodODataset.fromJson` | parser of PeriodO JSON |
 | api | `api` | `PeriodsMarkdown` | 52 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
 | api | `api` | `PlaceEdits` | 97 | decided per object | `PlaceAdd`/`ManualPlaceName` companions | checks on those inputs |
 | api | `api` | `PlaceOverrides` | 84 | plural helper | companion of PlaceOverride | helper named after the type it works on |
@@ -232,7 +232,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | core | `domain` | `AutopilotPolicy` | 445 | decided per object | dissolve into domain.automation.autopilot: verdicts on `PlannedFacts`/`DraftFacts`/`GoalPlanFacts` | rules about those facts |
 | core | `domain` | `BundlePlan` | 182 | decided per object | `BundlePlan.Decision` top-level; plan on its companion (domain.exchange.bundle) | namespace |
 | core | `domain` | `CatalogDating` | 76 | decided per object | moves to `upstreams` (library): the dating rules the events plugin and the host's `PluginEvents.derive` share | dating of catalogue records |
-| core | `domain` | `CatalogMerge` | 136 | decided per object | `Placement` companion (domain.atlas.events) | places a record |
+| core | `domain` | `CatalogMerge` | 136 | decided per object | `Placement` companion (domain.catalogue.events) | places a record |
 | core | `domain` | `CatalogProvider` | 48 | String vocabulary | becomes an enum (wire strings kept) in values/api | a closed vocabulary held as String constants |
 | core | `domain` | `Chunker` | 96 | decided per object | `util.ocr.Chunker` (the mechanical split); `Chunk` stays the library's stored chunk | produces Chunks |
 | core | `domain` | `Citekeys` | 10 | plural helper | companion of Citekey | helper named after the type it works on |
@@ -247,7 +247,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | core | `domain` | `Diff3` | 118 | decided per object | stays: util.text.Diff3 | a text algorithm, no domain type |
 | core | `domain` | `EnrichSource` | 603 | decided per object | dissolve into domain.automation.pipelines.enrich: `StatedPeriod`/`FindingProposal` companions | namespace of 19 types |
 | core | `domain` | `Europeana` | 222 | decided per object | moves to plugins/media: `EuropeanaItem.fromJson`, `Exclusions` companion | an upstream parser |
-| core | `domain` | `EventMatcher` | 108 | decided per object | `NearFinding` companion (domain.atlas.evidence) | scores near findings |
+| core | `domain` | `EventMatcher` | 108 | decided per object | `NearFinding` companion (domain.catalogue.evidence) | scores near findings |
 | core | `domain` | `EventProviders` | 467 | decided per object | moves to plugins/events: `GvpRecord`/`NoaaRecord`/`WikidataEvent` parsers | upstream parsers |
 | core | `domain` | `ExternalIds` | 30 | plural helper | companion of ExternalId | helper named after the type it works on |
 | core | `domain` | `FigurePick` | 116 | decided per object | `Figure` companion (domain.media) | picks figures |
@@ -271,12 +271,12 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | core | `domain` | `MetMuseum` | 64 | decided per object | moves to plugins/media: `MetObject.fromJson` | an upstream parser |
 | core | `domain` | `OpenContext` | 215 | decided per object | moves to plugins/media: `OpenContextItem.fromJson` | an upstream parser |
 | core | `domain` | `PassageFinder` | 244 | decided per object | `Passage` companion (domain.library.sources) | finds passages |
-| core | `domain` | `PlaceReview` | 221 | decided per object | dissolve into domain.atlas.places.review: `Evidence`/`Proposal` companions | namespace |
+| core | `domain` | `PlaceReview` | 221 | decided per object | dissolve into domain.catalogue.places.review: `Evidence`/`Proposal` companions | namespace |
 | core | `domain` | `PlanArticles` | 161 | decided per object | `ArticlesAnswer` companion (domain.automation.pipelines) | reads an answer |
 | core | `domain` | `PlanGoal` | 189 | decided per object | `PlanAnswer` companion (domain.automation.goals) | reads an answer |
 | core | `domain` | `PlanReadSchedule` | 28 | decided per object | `ReadSchedule` companion | plans a read schedule |
 | core | `domain` | `PleiadesLinks` | 83 | decided per object | moves to plugins/media: `PleiadesLink` companion | an upstream parser |
-| core | `domain` | `PointAreas` | 100 | decided per object | `PointArea` type (was Listed/Group) companion (domain.atlas.places) | about point areas |
+| core | `domain` | `PointAreas` | 100 | decided per object | `PointArea` type (was Listed/Group) companion (domain.catalogue.places) | about point areas |
 | core | `domain` | `Read` | 31 | decided per object | stays: util.json.Read (cursor helpers for parsers) | JSON cursor helpers, no domain type |
 | core | `domain` | `RepositoryLanding` | 324 | decided per object | moves to `upstreams` (library): `LandingCandidate` companion, `LandingRules` | landing-page rules (fetcher + BrowserDownload) |
 | core | `domain` | `ReviewArticle` | 2013 | decided per object | dissolve into domain.automation.review: `Reviewer`, `Verdict`, `ReviewFinding` companions | 2013 lines, 36 nested types |
@@ -286,13 +286,13 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | core | `domain` | `Smithsonian` | 155 | decided per object | moves to plugins/media: `SmithsonianObject.fromJson` | an upstream parser |
 | core | `domain` | `SourceMatcher` | 240 | decided per object | `SourceMatch` type (was Pair/Evidence/Outcome) companions (domain.exchange.merge) | matches sources |
 | core | `domain` | `TextAnchor` | 95 | decided per object | `Anchor` top-level with methods (domain.research.articles) | about an anchor |
-| core | `domain` | `TileFeatures` | 90 | decided per object | `TileCell` companion (domain.atlas.maptiles) | features of a cell |
+| core | `domain` | `TileFeatures` | 90 | decided per object | `TileCell` companion (domain.catalogue.maptiles) | features of a cell |
 | core | `domain` | `VectorTileWriter` | 76 | decided per object | stays: util.tiles.VectorTileWriter | MVT encoding, an external format |
 | core | `domain` | `WatchSchedules` | 97 | decided per object | `GoalSchedule` companion (domain.automation.goals) | plans schedules |
 | core | `domain` | `Wikidata` | 73 | decided per object | moves to `upstreams` (library): `WikidataItem`/`Statement` companions | Wikidata entity parser |
 | core | `domain.automation.activity` | `ActivityRules` | 100 | decided per object | `ActivityQuery`/`Activity.Entry` companions (domain.automation.activity) | pilot code brought in line |
 | core | `domain.platform.jobs` | `JobControlRules` | 41 | decided per object | `JobAction` companion (domain.platform.jobs) | pilot code brought in line |
-| core | `domain.atlas.maptiles` | `UndatedCells` | 64 | decided per object | `GridCell` companion (domain.atlas.maptiles) | about grid cells |
+| core | `domain.catalogue.maptiles` | `UndatedCells` | 64 | decided per object | `GridCell` companion (domain.catalogue.maptiles) | about grid cells |
 | db | `db` | `AcquireCheckRepo` | 87 | repository | stays: repository, `private[<feature>]` in domain.<subdomain>.<feature> (server module) | a repository is the feature's store, not a function about one type |
 | db | `db` | `AcquireRepo` | 234 | repository | stays: repository, `private[<feature>]` in domain.<subdomain>.<feature> (server module) | a repository is the feature's store, not a function about one type |
 | db | `db` | `AgentRepo` | 950 | repository | stays: repository, `private[<feature>]` in domain.<subdomain>.<feature> (server module) | a repository is the feature's store, not a function about one type |
@@ -413,7 +413,7 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | server | `server` | `IiifHandler` | 176 | handler / tools | becomes <Feature>Controllers (class) + endpoint wiring | rule 13: controllers take services |
 | server | `server` | `ListQueries` | 58 | decided per object | `ApprovalFilter`/`RunFilter` companions | parses list filters |
 | server | `server` | `Main` | 350 | entry point | top-level @main def | rule #7908 |
-| server | `server` | `MapTiles` | 51 | decided per object | `TileLayer` companion (domain.atlas.maptiles) | about tile layers |
+| server | `server` | `MapTiles` | 51 | decided per object | `TileLayer` companion (domain.catalogue.maptiles) | about tile layers |
 | server | `server` | `MarkdownFlavor` | 25 | decided per object | stays: util.markdown.MarkdownFlavor | flexmark configuration |
 | server | `server` | `MarkdownHtml` | 12 | decided per object | stays: util.markdown.MarkdownHtml | Markdown â†’ HTML |
 | server | `server` | `MarkdownLint` | 1336 | decided per object | dissolve into domain.research.articles.lint: `FormatFinding` (was Finding)/`Edit` companions, `LintContext` type | 1336 lines; rules about findings and edits |
@@ -470,12 +470,12 @@ The *kind* column is the scan's first classification (name patterns, `val X = "â
 | server | `server.events` | `BuiltinCatalogues` | 67 | built-in plugin list | moves to its plugin module (plugin slice) | plugin separation |
 | server | `server.events` | `EventCatalogRoutes` | 24 | handler / tools | becomes <Feature>Controllers (class) + endpoint wiring | rule 13: controllers take services |
 | server | `server.events` | `EventCatalogTools` | 107 | handler / tools | becomes <Feature>Controllers (class) + endpoint wiring | rule 13: controllers take services |
-| server | `server.importers` | `AwmcImporter` | 80 | decided per object | `GazetteerImporter` implementation (class) in domain.atlas.places.gazetteer | an importer |
-| server | `server.importers` | `ChronOntologyImporter` | 118 | decided per object | `PeriodImporter` implementation (domain.atlas.periods) | an importer |
+| server | `server.importers` | `AwmcImporter` | 80 | decided per object | `GazetteerImporter` implementation (class) in domain.catalogue.places.gazetteer | an importer |
+| server | `server.importers` | `ChronOntologyImporter` | 118 | decided per object | `PeriodImporter` implementation (domain.catalogue.periods) | an importer |
 | server | `server.importers` | `CliopatriaImporter` | 107 | decided per object | `GazetteerImporter` implementation | an importer |
 | server | `server.importers` | `GazetteerLoad` | 503 | decided per object | `GazetteerLoadService` (trait + Implementation + InMemory) | a service |
 | server | `server.importers` | `ImportRunner` | 96 | decided per object | `GazetteerImporter` companion (`run`) | runs an importer |
-| server | `server.importers` | `NaturalEarthLand` | 63 | decided per object | `LandImporter` (domain.atlas.places) | an importer |
+| server | `server.importers` | `NaturalEarthLand` | 63 | decided per object | `LandImporter` (domain.catalogue.places) | an importer |
 | server | `server.importers` | `PeriodOFetch` | 12 | decided per object | `PeriodImporter` companion | fetches PeriodO |
 | server | `server.media` | `BuiltinMedia` | 202 | built-in plugin list | moves to its plugin module (plugin slice) | plugin separation |
 | server | `server.media` | `KeyRefusal` | 11 | decided per object | moves to plugins/media (`KeyedConfig` companion) | about keyed collections |

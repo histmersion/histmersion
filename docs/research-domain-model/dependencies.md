@@ -10,11 +10,11 @@ The evidence behind §3.2–§3.4 of `../research-domain-model.md`. Two measurem
 
 ## References, the final grouping
 
-Read as "row depends on column". Layers, bottom first: platform, atlas, media, library, research, automation; exchange and operations at the top; personal beside.
+Read as "row depends on column". Layers, bottom first: platform, catalogue, media, library, research, automation; exchange and operations at the top; personal beside.
 
-| from \ to | atlas | automation | exchange | library | media | operations | personal | platform | research |
+| from \ to | catalogue | automation | exchange | library | media | operations | personal | platform | research |
 |---|---|---|---|---|---|---|---|---|---|
-| **atlas** | · | 0 | 0 | 11 | 6 | 0 | 0 | 12 | 0 |
+| **catalogue** | · | 0 | 0 | 11 | 6 | 0 | 0 | 12 | 0 |
 | **automation** | 7 | · | 0 | 80 | 0 | 1 | 0 | 43 | 56 |
 | **exchange** | 19 | 8 | · | 18 | 5 | 2 | 0 | 16 | 6 |
 | **library** | 27 | 10 | 2 | · | 15 | 1 | 0 | 25 | 10 |
@@ -29,12 +29,12 @@ Read as "row depends on column". Layers, bottom first: platform, atlas, media, l
 ```
 UP platform->library 21: {'AcquireRecheck': 2, 'AcquireChecks': 2, 'Edge': 2, 'BuiltinFetchers': 2, 'Ingest': 1, 'Frontmatter': 1, 'Hit': 1, 'SourceRepo': 1} | files {'Plugins': 7, 'LintRepo': 3, 'JobKind': 2, 'LegacyPlugins': 2, 'Queue': 2, 'JobActions': 1, 'JobDetail': 1, 'FormatSeverity': 1}
 UP research->automation 13: {'ReviewGoal': 3, 'ReviewApproval': 3, 'ReviewFinding': 2, 'ReviewRound': 2, 'GoalStages': 1, 'ReviewLedger': 1, 'GoalRow': 1} | files {'ArticleReviewView': 4, 'ArticleReviewStatus': 4, 'ArticleReviewRepo': 3, 'Pages': 2}
-UP platform->atlas 12: {'Place': 2, 'EventImportReport': 1, 'SkippedPeriod': 1, 'EventRederiveReport': 1, 'SiteTypes': 1, 'Geocoder': 1, 'Gazetteer': 1, 'PlaceRepo': 1} | files {'LintRepo': 5, 'JobDetail': 3, 'JobKind': 1, 'AliasKind': 1, 'AliasRepo': 1, 'Plugins': 1}
-UP atlas->library 11: {'Edge': 1, 'Finding': 1, 'PassageFinder': 1, 'Chunk': 1, 'SourceRepo': 1, 'BucketSample': 1, 'Aggregate': 1, 'Bucket': 1} | files {'EventCatalogHandlers': 3, 'Tree': 3, 'AttestationTarget': 2, 'ImportRunner': 2, 'PlaceRepo': 1}
+UP platform->catalogue 12: {'Place': 2, 'EventImportReport': 1, 'SkippedPeriod': 1, 'EventRederiveReport': 1, 'SiteTypes': 1, 'Geocoder': 1, 'Gazetteer': 1, 'PlaceRepo': 1} | files {'LintRepo': 5, 'JobDetail': 3, 'JobKind': 1, 'AliasKind': 1, 'AliasRepo': 1, 'Plugins': 1}
+UP catalogue->library 11: {'Edge': 1, 'Finding': 1, 'PassageFinder': 1, 'Chunk': 1, 'SourceRepo': 1, 'BucketSample': 1, 'Aggregate': 1, 'Bucket': 1} | files {'EventCatalogHandlers': 3, 'Tree': 3, 'AttestationTarget': 2, 'ImportRunner': 2, 'PlaceRepo': 1}
 UP library->research 10: {'ArticleLinks': 4, 'Citation': 2, 'ArticleRepo': 2, 'CitationCount': 1, 'TocEntry': 1} | files {'SourceRepo': 3, 'AcquireMarkdown': 1, 'AcquireDefaults': 1, 'BrowserDownload': 1, 'CandidateSearch': 1, 'Rename': 1, 'SourceDelete': 1, 'SourceDeleteRepo': 1}
 UP library->automation 10: {'ListFilters': 2, 'ManagerPolicy': 1, 'FollowupsInput': 1, 'GoalLinkRepo': 1, 'GoalRepo': 1, 'GoalPlans': 1, 'Goal': 1, 'Scheduling': 1} | files {'CandidateSearch': 5, 'IngestHandlers': 2, 'IngestBacklog': 1, 'AcquireMcp': 1, 'IngestMarkdown': 1}
 UP platform->operations 8: {'BasemapFetch': 2, 'Vacuum': 2, 'VacuumPlan': 1, 'ReindexResult': 1, 'Backup': 1, 'ConfigFileInfo': 1} | files {'JobDetail': 2, 'JobKind': 2, 'JobActions': 1, 'LintRepo': 1, 'Maintenance': 1, 'PluginsMarkdown': 1}
-UP atlas->media 6: {'MediaRepo': 3, 'MediaThumb': 2, 'MediaGeoHit': 1} | files {'EventDetail': 1, 'EventRepo': 1, 'TileFeatures': 1, 'TileRepo': 1, 'MapTileService': 1, 'PlaceDetail': 1}
+UP catalogue->media 6: {'MediaRepo': 3, 'MediaThumb': 2, 'MediaGeoHit': 1} | files {'EventDetail': 1, 'EventRepo': 1, 'TileFeatures': 1, 'TileRepo': 1, 'MapTileService': 1, 'PlaceDetail': 1}
 UP platform->research 6: {'CritiquePairing': 2, 'CoverageEdge': 2, 'Articles': 1, 'ResolvedArticle': 1} | files {'Lint': 3, 'LintRepo': 2, 'ResolvedId': 1}
 UP platform->automation 4: {'Goal': 2, 'BuiltinAi': 1, 'Scheduling': 1} | files {'AliasKind': 1, 'AliasRepo': 1, 'Plugins': 1, 'QueueRepo': 1}
 UP platform->exchange 3: {'InitPlan': 1, 'MergeApplyJob': 1, 'MergeApplyResult': 1} | files {'JobRepo': 2, 'JobDetail': 1}
@@ -45,7 +45,7 @@ UP personal->automation 2: {'Goal': 2} | files {'ItemKind': 1, 'ItemTitles': 1}
 UP operations->exchange 2: {'MergeSettings': 1, 'MergeConfig': 1} | files {'MergeSettingsViews': 2}
 UP automation->operations 1: {'BackupState': 1} | files {'AutopilotService': 1}
 UP media->research 1: {'Coverage': 1} | files {'OpenContext': 1}
-UP personal->atlas 1: {'Place': 1} | files {'ItemKind': 1}
+UP personal->catalogue 1: {'Place': 1} | files {'ItemKind': 1}
 UP platform->media 1: {'BuiltinMedia': 1} | files {'Plugins': 1}
 UP platform->personal 1: {'Note': 1} | files {'Queue': 1}
 UP library->operations 1: {'ReindexResult': 1} | files {'SourceRepo': 1}
@@ -67,7 +67,7 @@ The same scan over the starting proposal: corpus (sources, findings, citations, 
 | **platform** | 3 | 0 | 0 | 0 | 0 | 0 | 0 | · | 0 |
 | **writing** | 0 | 12 | 38 | 8 | 1 | 5 | 0 | 0 | · |
 
-622 references, 135 upward. The ones the user's rule forbids outright — a core subdomain (corpus, geography, writing, media, acquisition) depending on automation or operations — are **71** (55 into automation, mostly jobs and the queues; 16 into operations). In the final grouping the same measure (atlas, media, library, research into automation, exchange or operations) is **26**: library → automation 10, research → automation 13, library → exchange 2, library → operations 1, each with a named fix. The proposed `operations` referenced the research subdomains 146 times, 138 of them from `bundle` and `merge`.
+622 references, 135 upward. The ones the user's rule forbids outright — a core subdomain (corpus, geography, writing, media, acquisition) depending on automation or operations — are **71** (55 into automation, mostly jobs and the queues; 16 into operations). In the final grouping the same measure (catalogue, media, library, research into automation, exchange or operations) is **26**: library → automation 10, research → automation 13, library → exchange 2, library → operations 1, each with a named fix. The proposed `operations` referenced the research subdomains 146 times, 138 of them from `bundle` and `merge`.
 
 ```
 UP acquisition->automation 27: {'JobInfo': 4, 'Queue': 4, 'JobState': 3, 'QueueRepo': 3, 'JobKind': 2, 'ListFilters': 2, 'ManagerPolicy': 1, 'FollowupsInput': 1} | files {'CandidateSearch': 7, 'IngestHandlers': 7, 'IngestMarkdown': 3, 'AcquireChecks': 2, 'AcquireHandlers': 2, 'AcquireChecksMarkdown': 1, 'AcquireMatch': 1, 'AcquireRecheck': 1}
@@ -98,16 +98,16 @@ UP automation->personal 1: {'Note': 1} | files {'Queue': 1}
 
 ## An intermediate step: evidence in the library
 
-With attestations, event link candidates and checks and leads in the library instead of the atlas (everything else as final), atlas → library was 46 references (`EventCatalogHandlers` 18, `EventsApi` 5, `EventCatalogRepo` 5, `EventDetail` 4, …) and the upward total 160. Moving evidence into the atlas brought them to 11 and 125; making OCR a supporting area and naming research then gave the final 121.
+With attestations, event link candidates and checks and leads in the library instead of the catalogue (everything else as final), catalogue → library was 46 references (`EventCatalogHandlers` 18, `EventsApi` 5, `EventCatalogRepo` 5, `EventDetail` 4, …) and the upward total 160. Moving evidence into the catalogue brought them to 11 and 125; making OCR a supporting area and naming research then gave the final 121.
 
 ## Co-change, the final grouping
 
 commits used 408 (skipped 21: the reformat, the split and >60 files)
-| | automation | library | atlas | operations | platform | research | exchange | media | personal |
+| | automation | library | catalogue | operations | platform | research | exchange | media | personal |
 |---|---|---|---|---|---|---|---|---|---|
 | **automation** | **152** | 52 | 25 | 24 | 27 | 31 | 18 | 10 | 1 |
 | **library** | 52 | **145** | 41 | 33 | 31 | 37 | 20 | 15 | 1 |
-| **atlas** | 25 | 41 | **122** | 20 | 28 | 24 | 17 | 18 | 1 |
+| **catalogue** | 25 | 41 | **122** | 20 | 28 | 24 | 17 | 18 | 1 |
 | **operations** | 24 | 33 | 20 | **95** | 15 | 16 | 7 | 8 | 1 |
 | **platform** | 27 | 31 | 28 | 15 | **65** | 14 | 12 | 10 | 1 |
 | **research** | 31 | 37 | 24 | 16 | 14 | **55** | 16 | 7 | 1 |
@@ -117,15 +117,15 @@ commits used 408 (skipped 21: the reformat, the split and >60 files)
 | library | research | 0.23 | 37 | 145 / 55 |
 | exchange | research | 0.23 | 16 | 32 / 55 |
 | automation | library | 0.21 | 52 | 152 / 145 |
-| atlas | library | 0.18 | 41 | 122 / 145 |
+| catalogue | library | 0.18 | 41 | 122 / 145 |
 | automation | research | 0.18 | 31 | 152 / 55 |
-| atlas | platform | 0.18 | 28 | 122 / 65 |
+| catalogue | platform | 0.18 | 28 | 122 / 65 |
 | library | platform | 0.17 | 31 | 145 / 65 |
 | library | operations | 0.16 | 33 | 145 / 95 |
-| atlas | research | 0.16 | 24 | 122 / 55 |
+| catalogue | research | 0.16 | 24 | 122 / 55 |
 | automation | platform | 0.14 | 27 | 152 / 65 |
 | exchange | platform | 0.14 | 12 | 32 / 65 |
-| atlas | media | 0.13 | 18 | 122 / 31 |
+| catalogue | media | 0.13 | 18 | 122 / 31 |
 | platform | research | 0.13 | 14 | 65 / 55 |
 | exchange | library | 0.13 | 20 | 32 / 145 |
 
@@ -138,7 +138,7 @@ At the level of subdomains every pair is weak (Jaccard ≤ 0.23): features chang
 | article review ledger | pipelines 0.44 (15), agents 0.15, articles 0.12 | the review panel is automation; the article keeps only its review state |
 | ingest | jobs 0.23 (8), sources 0.17 (10), acquisition 0.14 (12) | ingest is the library's, and runs as a platform job |
 | jobs | ingest 0.23, worklist 0.14, merge 0.13, maintenance 0.12, bundle 0.11 | used by every subdomain that runs long work: platform |
-| events | media 0.18 (13), places 0.16 (19), merge 0.15, sources 0.14 | atlas, with pictures as a map layer |
+| events | media 0.18 (13), places 0.16 (19), merge 0.15, sources 0.14 | catalogue, with pictures as a map layer |
 | search | articles 0.29 (24), instance 0.21, sources 0.20, places 0.15 | the library's read side, used by every page |
 | lint | places 0.12 (11), sources 0.07, media 0.07, events 0.06 | rules per subdomain, one runner |
 | basemap | instance 0.18 (15) | a UI-facing feature without research data: operations |
