@@ -46,13 +46,22 @@ object ContextMenu:
     val r = el.getBoundingClientRect()
     show(title, entries, r.left, r.bottom + 2, Some(el))
 
+  /** Where a right click keeps the browser's own menu: in a text field, over selected text, on a link inside
+    * what is read (its "open in a new tab" and "copy link" are the link's, not the item's). */
+  private val NativeHere = "input, textarea, select, [contenteditable], .note-text a, .reading-links a, .reading-findings a, .detail-card a"
+
+  private def nativeWanted(ev: dom.MouseEvent): Boolean =
+    val selected = scala.util.Try(dom.window.getSelection().toString.trim.nonEmpty).getOrElse(false)
+    selected || Option(ev.target).collect { case e: dom.Element => e }.exists(_.closest(NativeHere) != null)
+
   /** A right click and the menu key on the element open its menu; `entries` is read when it opens. */
   def on(title: String, entries: () => List[Entry]): Modifier[HtmlElement] =
     List(
       onContextMenu --> { ev =>
-        val es = entries()
+        val es = if nativeWanted(ev) then Nil else entries()
         if es.nonEmpty then
           ev.preventDefault()
+          ev.stopPropagation()
           show(title, es, ev.clientX, ev.clientY, Option(ev.currentTarget.asInstanceOf[dom.HTMLElement]))
       },
       onKeyDown --> { ev =>

@@ -87,7 +87,10 @@ object WindowManager:
           case WindowKey.Merge => (math.min(Layout.mergeWindowMaxWidth, vw * 0.94), math.min(vh * 0.88, Layout.mergeWindowMaxHeight))
           case _               => (math.min(Layout.windowMaxWidth, vw * 0.7), math.min(vh * 0.75, Layout.windowMaxHeight))
         val offset = ((wid - 1) % Layout.windowCascadeSlots) * Layout.windowCascadeOffset
-        val x0 = math.max(if key == WindowKey.Merge then 8 else 20, (vw - w0) / 2 + offset)
+        // centred over what the results column leaves free (on a wide screen), so a pinned item never covers
+        // the column it was pinned from
+        val beside = if Viewport.narrowNow || key == WindowKey.Merge then 0.0 else ResultsPanel.width.now().toDouble
+        val x0 = math.max(if key == WindowKey.Merge then 8 else 20, math.min((vw - beside - w0) / 2 + offset, vw - w0 - 8))
         val y0 = math.max(20, (if key == WindowKey.Merge then 30 else 60) + offset)
         val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = false)
         shown += key -> wid

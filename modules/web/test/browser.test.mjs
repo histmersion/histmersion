@@ -3042,7 +3042,9 @@ test('#4431: at tablet widths the map keeps most of the screen, and every panel 
       await page.locator('.wm-window').waitFor({ state: 'detached' });
       // the list: a sheet at the side, pulled up by its handle and back down
       const peek = await box('.sidebar');
-      assert.ok(peek.r >= viewport.width - 1 && peek.w <= 421, `${at}: the list's sheet at the right: ${JSON.stringify(peek)}`);
+      // as wide as the results column (#7780: its five tabs and their counts fit), never two thirds of the screen
+      assert.ok(peek.r >= viewport.width - 1 && peek.w <= Math.min(500, viewport.width * 0.65),
+        `${at}: the list's sheet at the right: ${JSON.stringify(peek)}`);
       await page.locator('.sheet-handle').click();
       await page.waitForFunction(() => document.querySelector('.sidebar').classList.contains('sheet-half'));
       await page.waitForTimeout(300);
@@ -4087,7 +4089,8 @@ test('Library and Explore share one filter state; "Show these on the map" takes 
     // the same panel, visible beside the list, its chip the topic Explore set; the list asked for it
     assert.ok(await page.locator('.fbar').isVisible());
     assert.ok(await page.locator('.my-library').isVisible(), 'My library tops the panel in Library');
-    assert.equal(await page.locator('.my-library a').count(), 1, 'only the shelf that works is offered');
+    assert.deepEqual(await page.locator('.my-library a .side-label').allInnerTexts(),
+      ['Everything', 'Bookmarks', 'My notes', 'Not read yet', 'Recently opened'], 'the five shelves of My library');
     await page.locator('.filter-chips .chip', { hasText: 'zz topic' }).waitFor();
     assert.equal(asked.sources.at(-1).getAll('topic').join(), 'zz_topic');
     // a filter set in Library: the list reads again with it, and Explore has it too
