@@ -27,4 +27,4 @@ object FindersSection:
         Some("When you add a paper by its DOI, these places are asked in turn for an open-access copy. Turn off any " +
           "you do not want asked."),
         finders(ui).map(p => SettingsForm.Item(s"plugins.${p.id}.enabled", Some(Wording.plugin(p.id)),
-          Some(p.provides.mkString(", ")).filter(_.nonEmpty), fallback = Some(p.enabled.toString)))))
+          None, fallback = Some(p.enabled.toString)))))

@@ -17,7 +17,6 @@ object SettingsPages:
     case SettingsSection.Calibre  => Some("The Calibre library that keeps your originals, and the server's folders.")
     case SettingsSection.Backups  => Some("Copies of the database, kept on this computer.")
     case SettingsSection.Plugins  => Some("What the plugins add, each on or off.")
-    case SettingsSection.Advanced => Some("Every setting of the settings file.")
     case _                        => None
 
   def page(ui: UiConfig, s: SettingsSection): HtmlElement =

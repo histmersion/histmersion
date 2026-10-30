@@ -40,7 +40,7 @@ class ConfigSchemaSuite extends munit.FunSuite:
     val plugin = field("plugins.oa-core.api-key")
     assertEquals(plugin.kind, SettingKind.Any)
     assertEquals(plugin.secret, SecretRule.Reference)
-    assert(schema.field(key("plugins.whatever.enabled")).isDefined, "a plugin's block is open")
+    assertEquals(schema.field(key("plugins.whatever.enabled")).map(_.kind), Some(SettingKind.Flag), "a plugin's block is open; enabled is a flag")
     assert(schema.field(key("backups.kep")).isEmpty)
     assert(schema.isBlock(key("backups")))
     assertEquals(schema.closest(key("backups.kep")).map(_.relative).headOption, Some("backups.keep"))

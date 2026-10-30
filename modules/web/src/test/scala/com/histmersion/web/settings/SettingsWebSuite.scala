@@ -42,6 +42,8 @@ class SettingsWebSuite extends munit.FunSuite:
     assert(AdvancedSection.matches(f, "KEEP"))
     assert(AdvancedSection.matches(f, "dump"))
     assert(!AdvancedSection.matches(f, "timeout"))
+    assertEquals(AdvancedSection.sectionName("db"), "Database")
+    assertEquals(AdvancedSection.sectionName("backups"), "Backups")
 
   test("where the map opens: the zoom that shows a place whole, and what is written"):
     assertEquals(StartPlace.zoomFor(GeoBounds(36, 26, 42, 45)), 5.0)
@@ -57,6 +59,10 @@ class SettingsWebSuite extends munit.FunSuite:
     assertEquals(PluginsSection.state(PluginStatus("x", "1", 2, enabled = true, state = "registered")), "Working")
     assertEquals(PluginsSection.state(PluginStatus("x", "1", 2, enabled = false, state = "disabled")), "Turned off")
     assert(PluginsSection.state(PluginStatus("x", "1", 2, enabled = true, state = "failed", error = Some("no key"))).contains("no key"))
+
+  test("what a plugin adds, in words"):
+    assertEquals(PluginsSection.provides(PluginStatus("oa-core", "1", 2, enabled = true, state = "registered",
+      provides = List("source-fetcher:oa-core", "source-fetcher:core-index"))), List("Finds papers"))
 
   test("each section's lead"):
     assert(SettingsPages.lead(com.histmersion.web.SettingsSection.Keys).exists(_.contains("Never the key itself")))

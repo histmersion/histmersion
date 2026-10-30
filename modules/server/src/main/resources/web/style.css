@@ -2197,7 +2197,7 @@ img.is-zoomable { cursor:zoom-in; }
 .advanced-summary { cursor:pointer; padding:var(--space-5) 0; font-size:var(--fs-md); }
 .advanced-name { font-weight:var(--fw-strong); }
 .advanced-doc { font-size:var(--fs-sm); }
-.advanced-save { position:sticky; bottom:0; padding:var(--space-5) 0; background:var(--bg); border-top:1px solid var(--line); }
+.advanced-save { position:sticky; top:0; z-index:2; padding:var(--space-4) 0; background:var(--bg); border-bottom:1px solid var(--line); }
 .side-link.setup-again { color:var(--accent); }
 
 /* ── the first-run setup: steps on the left, one step at a time, no top bar ─────────────────────────── */
