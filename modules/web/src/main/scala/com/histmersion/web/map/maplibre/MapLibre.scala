@@ -107,6 +107,10 @@ class GlMap(options: js.Object) extends js.Object:
   val touchZoomRotate: js.Dynamic = js.native
   val dragRotate: js.Dynamic      = js.native
   val keyboard: js.Dynamic        = js.native
+  val dragPan: js.Dynamic         = js.native
+  val scrollZoom: js.Dynamic      = js.native
+  val boxZoom: js.Dynamic         = js.native
+  val doubleClickZoom: js.Dynamic = js.native
 
 @js.native
 @JSGlobal("maplibregl.Popup")

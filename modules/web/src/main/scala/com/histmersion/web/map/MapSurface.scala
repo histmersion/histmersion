@@ -238,6 +238,8 @@ trait MapSurface:
   /** The container changed size (a window resize, or the chrome around it: a folded filter row, a dragged
     * sidebar): the map takes it and is drawn again at once — nothing is fetched or made again. */
   def resize(): Unit
+  /** Locked, a person's drag, wheel, keys and pinch neither pan nor zoom it (the page's own moves still do). */
+  def setLocked(locked: Boolean): Unit = ()
   /** How many times a change of the container's size was taken (diagnostics). */
   def resizeCount: Int = 0
   def isMoving: Boolean

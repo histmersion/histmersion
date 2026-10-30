@@ -47,6 +47,7 @@ object App:
       com.histmersion.web.settings.DownloadJobs.configure(ui.jobPollMs)
 
       Router.init()
+      marks.MyItems.load()
       // a first run (no setup done, a settings file of nothing): the setup first, wherever the address points
       if ui.setupDue && Router.now() != Route.Setup && !com.histmersion.web.setup.SetupPage.left then
         Router.go(Route.Setup, push = false)
@@ -79,12 +80,15 @@ object App:
         ),
         // the filter panel is Explore's and Library's lists' (one filter state): it lies over the map, or
         // beside the lists; elsewhere it is hidden and out of the keyboard's way like Explore
-        FilterBar.init(ui, library.MyLibrary.panelTop, library.MyLibrary.panelFoot).amend(
+        FilterBar.init(ui, library.MyLibrary.panelTop, List(library.MyLibrary.panelFoot, marks.SavedViews.panelSection)).amend(
           cls("is-away") <-- Router.route.map(r => !filtersShown(r)),
           inert <-- Router.route.map(r => !filtersShown(r))),
         MobileChrome.scrim,
         Pages.element(ui),
         ArticleModal.element,
+        marks.NoteEditor.element,
+        com.histmersion.web.ui.ContextMenu.element,
+        com.histmersion.web.ui.Flash.element,
         statusElement
       )
 

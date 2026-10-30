@@ -14,8 +14,14 @@ import scala.scalajs.js
   * Its width is dragged; on a phone it is the bottom sheet. */
 object ResultsPanel:
 
-  /** The dragged width, px. */
-  val width: Var[Int] = Var(Layout.sidebarDefault.value)
+  /** The width, px: the one this browser kept, else the default. */
+  val width: Var[Int] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(Layout.sidebarDefault.value), viewport))
+
+  private def viewport: Double = scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue)
+
+  private def resizeTo(w: Int, keep: Boolean): Unit =
+    width.set(ResultsWidth.clamp(w, viewport))
+    if keep then ResultsWidth.keep(width.now())
 
   /** The item whose detail replaces the results. */
   val selected: Var[Option[Preview.Target]] = Var(None)
@@ -74,6 +80,20 @@ object ResultsPanel:
       sheetHandle,
       div(
         cls := "sidebar-resize",
+        role := "separator",
+        tabIndex := 0,
+        aria.orientation := "vertical",
+        aria.label := "Width of the results (← wider, → narrower)",
+        aria.valueMin := ResultsWidth.min.toDouble,
+        aria.valueMax <-- width.signal.map(_ => ResultsWidth.max(dom.window.innerWidth).toDouble),
+        aria.valueNow <-- width.signal.map(_.toDouble),
+        title := "Drag, or use ← and →, to change the width of the results",
+        onKeyDown --> { ev =>
+          ResultsWidth.step(width.now(), ev.key, ev.shiftKey, dom.window.innerWidth).foreach { w =>
+            ev.preventDefault()
+            resizeTo(w, keep = true)
+          }
+        },
         onPointerDown --> { ev =>
           ev.preventDefault()
           val startX = ev.clientX
@@ -81,9 +101,12 @@ object ResultsPanel:
           val target = ev.target.asInstanceOf[dom.HTMLElement]
           target.setPointerCapture(ev.pointerId)
           val move = { (me: dom.PointerEvent) =>
-            width.set(Math.max(Layout.sidebarMinWidth.value, Math.min(Layout.sidebarMaxWidth.value, startW - (me.clientX - startX).toInt)))
+            resizeTo(startW - (me.clientX - startX).toInt, keep = false)
           }: js.Function1[dom.PointerEvent, Unit]
-          val up = { (_: dom.PointerEvent) => target.removeEventListener("pointermove", move) }: js.Function1[dom.PointerEvent, Unit]
+          val up = { (_: dom.PointerEvent) =>
+            target.removeEventListener("pointermove", move)
+            ResultsWidth.keep(width.now())
+          }: js.Function1[dom.PointerEvent, Unit]
           target.addEventListener("pointermove", move)
           target.addEventListener("pointerup", up, js.Dynamic.literal(once = true).asInstanceOf[dom.EventListenerOptions])
         }

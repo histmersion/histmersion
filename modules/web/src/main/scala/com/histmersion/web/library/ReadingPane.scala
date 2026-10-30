@@ -53,9 +53,11 @@ object ReadingPane:
 
   // ── the actions ─────────────────────────────────────────────────────────────────────────────────
 
-  private def actions(section: LibrarySection, page: String, pin: () => Unit, showOnMap: () => Unit): HtmlElement =
+  private def actions(section: LibrarySection, page: String, pin: () => Unit, showOnMap: () => Unit,
+      ref: marks.ItemRef, byline: String): HtmlElement =
     div(
       cls := "reading-actions",
+      marks.ItemActions(ref, byline),
       button(typ := "button", cls := "btn btn--ghost btn--sm reading-back", "← Back to list",
         onClick --> (_ => Router.go(Route.Library(section)))),
       div(cls := "btn-group reading-acts",
@@ -97,11 +99,17 @@ object ReadingPane:
       ResultsPanel.show(Preview.Target.Source(ck))
       reading.now().flatMap(_.toOption).flatMap(r => bounds(r.source.findings))
         .foreach(b => TheMap.surface.fitBounds(b, 40, Layout.fitMaxZoom))
+    val ref    = marks.ItemRef.source(ck, row.map(_.title).getOrElse(ck))
+    val byline = row.fold("")(h => List(TableRow.authors(h.authors), h.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(", "))
     div(
       cls := "reading-item",
       dataAttr("key") := ck,
-      onMountCallback(_ => readSource(ck).onComplete(r => reading.set(Some(r.toEither.left.map(message))))),
-      actions(LibrarySection.Sources, page, () => WindowManager.open(WindowKey.Source(ck)), () => showOnMap()),
+      com.histmersion.web.ui.ContextMenu.on(s"Actions: ${ref.title}", () => marks.ItemMenu.entries(ref, byline)),
+      onMountCallback { _ =>
+        marks.MyItems.opened(ref)
+        readSource(ck).onComplete(r => reading.set(Some(r.toEither.left.map(message))))
+      },
+      actions(LibrarySection.Sources, page, () => WindowManager.open(WindowKey.Source(ck)), () => showOnMap(), ref, byline),
       div(
         cls := "reading-body",
         child <-- reading.signal.map {
@@ -111,7 +119,7 @@ object ReadingPane:
         child <-- reading.signal.map {
           case None           => emptyNode
           case Some(Left(m))  => ErrorLine.text(s"Could not read this source: $m")
-          case Some(Right(r)) => div(findings(ck, r.source.findings), sourceLinks(ck, r.counts))
+          case Some(Right(r)) => div(findings(ck, r.source.findings), marks.NoteList.on(ref), sourceLinks(ck, r.counts))
         }
       )
     )
@@ -163,11 +171,16 @@ object ReadingPane:
     def showOnMap(): Unit =
       Router.go(Route.Explore)
       ResultsPanel.show(Preview.Target.Article(slug))
+    val ref = marks.ItemRef.article(slug, row.map(_.title).getOrElse(slug))
     div(
       cls := "reading-item",
       dataAttr("key") := slug,
-      onMountCallback(_ => readArticle(slug).onComplete(r => reading.set(Some(r.toEither.left.map(message))))),
-      actions(LibrarySection.Articles, page, () => WindowManager.open(WindowKey.Article(slug)), () => showOnMap()),
+      com.histmersion.web.ui.ContextMenu.on(s"Actions: ${ref.title}", () => marks.ItemMenu.entries(ref, "")),
+      onMountCallback { _ =>
+        marks.MyItems.opened(ref)
+        readArticle(slug).onComplete(r => reading.set(Some(r.toEither.left.map(message))))
+      },
+      actions(LibrarySection.Articles, page, () => WindowManager.open(WindowKey.Article(slug)), () => showOnMap(), ref, ""),
       div(
         cls := "reading-body",
         child <-- reading.signal.map {
@@ -179,6 +192,7 @@ object ReadingPane:
           case Some(Left(m))  => ErrorLine.text(s"Could not read this article: $m")
           case Some(Right(v)) =>
             div(
+              marks.NoteList.on(ref),
               ArticleOpening.of(v.article.body, Layout.readingOpening)
                 .filterNot(o => v.article.summary.exists(_.trim == o))
                 .map(o => p(cls := "reading reading-opening", o)),

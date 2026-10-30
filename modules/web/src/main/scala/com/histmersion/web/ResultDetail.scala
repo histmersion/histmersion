@@ -53,11 +53,20 @@ object ResultDetail:
             title := s"Keep this ${kindOf(t)} open in a window over the map",
             onClick --> { ev => pin(t, ev.currentTarget.asInstanceOf[dom.Element]) }),
           a(cls := "btn btn--sm detail-tab", href := pageOf(t), target := "_blank", rel := "noopener", Icon(Icon.NewTab), "New tab"))),
+      // the item's own marks once its card says what it is called
+      child.maybe <-- card.signal.map(_.flatMap(_.toOption).map { c =>
+        val ref = marks.ItemRef.of(t, c.title)
+        marks.MyItems.opened(ref)
+        div(cls := "detail-marks",
+          com.histmersion.web.ui.ContextMenu.on(s"Actions: ${c.title}", () => marks.ItemMenu.entries(ref, c.byline)),
+          marks.ItemActions(ref, c.byline))
+      }),
       child <-- card.signal.map {
         case None           => p(cls := "muted", "Loading…")
         case Some(Left(m))  => p(cls := "form-error", role := "alert", s"Could not read it: $m")
         case Some(Right(c)) => div(cls := "cite-tooltip detail-card", Preview.cardView(c))
       },
+      child.maybe <-- card.signal.map(_.flatMap(_.toOption).map(c => marks.NoteList.on(marks.ItemRef.of(t, c.title)))),
       child.maybe <-- record.signal.map(_.filterNot(_.isEmpty).map(recordView))
     )
 

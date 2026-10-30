@@ -78,6 +78,17 @@ enum Icon(val paths: List[String]):
   case Graph      extends Icon(List("M6 6a2 2 0 1 0 0 .01", "M18 8a2 2 0 1 0 0 .01", "M12 18a2 2 0 1 0 0 .01",
                                     "M7.7 7.2l8.6 1.3", "M7 8l4 8.3", "M17 10l-4.2 6.4"))
 
+  /** A bookmark ribbon (filled while the item is bookmarked: `.is-on`). */
+  case Bookmark   extends Icon(List("M6 3.5h12v17l-6-4-6 4z"))
+  /** A note: a sheet with a folded corner and lines. */
+  case Note       extends Icon(List("M4.5 3.5h15v11l-6 6h-9z", "M13.5 20.5v-6h6", "M8 8h8", "M8 11.5h5"))
+  /** More actions: three dots. */
+  case More       extends Icon(List("M5 12h.01", "M12 12h.01", "M19 12h.01"))
+  /** A padlock: the map or the timeline locked. */
+  case Lock       extends Icon(List("M6 10.5h12v10H6z", "M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"))
+  /** Read: a tick in a circle. */
+  case Read       extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M8 12.5l2.5 2.5 5-5.5"))
+
 object Icon:
   /** Pure: the icon as markup, for the places that are HTML strings (the map's key). */
   def html(i: Icon): String =
@@ -98,6 +109,8 @@ enum MapLayer(val wire: String, val label: String, val icon: Icon):
   case Sites      extends MapLayer("sites", "Sites", Icon.PointSite)
   case Media      extends MapLayer("media", "Media", Icon.PointMedia)
   case Events     extends MapLayer("events", "Events", Icon.PointEvent)
+  /** The person's own notes left at places on the map (off until switched on). */
+  case Notes      extends MapLayer("notes", "My notes", Icon.Note)
 
 object MapLayer:
   def fromWire(s: String): Option[MapLayer] = values.find(_.wire == s.trim.toLowerCase)

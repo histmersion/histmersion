@@ -17,7 +17,8 @@ object LibraryPage:
 
   /** Choose `key` in `section`'s list: a step in the history unless `push` is false. */
   def choose(section: LibrarySection)(key: String, push: Boolean): Unit =
-    Router.go(Route.Library(section), push = push, search = LibraryAddress.search(Some(key)))
+    Router.go(Route.Library(section), push = push,
+      search = LibraryAddress.search(Some(key), LibraryAddress.shelf(Router.search.now())))
 
   def element(ui: UiConfig, section: LibrarySection): HtmlElement =
     val articles = section == LibrarySection.Articles
@@ -40,23 +41,38 @@ object LibraryPage:
           div(cls := "library-head-end",
             filtersButton(ui),
             AddSources.menu)),
-        div(cls := "library-toolbar toolbar",
-          span(cls := "library-range", role := "status",
-            child.text <-- page.map(p => ListPage.rangeLine(p, noun))),
-          if articles then span(cls := "library-order muted", "By kind, then title")
-          else sortSelect,
-          pager(section, page)),
-        child.maybe <-- page.map(_.error.map(m => ErrorLine.text(s"Could not list the $noun: $m"))),
-        LibraryTable.element(section, page.map(_.rows), chosen, choose(section)),
-        child.maybe <-- page.map(listed => Option.when(listed.loaded && listed.rows.isEmpty && listed.error.isEmpty)(
-          p(cls := "library-empty muted",
-            if articles then "No article cites the sources the filters select." else "No source matches the filters.")))
+        child <-- MyLibrary.shelf.map {
+          case Shelf.Everything => everythingList(section, articles, page, noun)
+          case s                => ShelfList.element(s, section, chosen)
+        }
       ),
       ReadingPane.element(section, chosen)
     )
 
+  private def everythingList(section: LibrarySection, articles: Boolean, page: Signal[ListPage[TableRow]], noun: String): HtmlElement =
+    div(
+      cls := "library-everything",
+      div(cls := "library-toolbar toolbar",
+        span(cls := "library-range", role := "status",
+          child.text <-- page.map(p => ListPage.rangeLine(p, noun))),
+        if articles then span(cls := "library-order muted", "By kind, then title")
+        else sortSelect,
+        pager(section, page)),
+      child.maybe <-- page.map(_.error.map(m => ErrorLine.text(s"Could not list the $noun: $m"))),
+      LibraryTable.element(section, page.map(_.rows), chosen, choose(section)),
+      child.maybe <-- page.map(listed => Option.when(listed.loaded && listed.rows.isEmpty && listed.error.isEmpty)(
+        p(cls := "library-empty muted",
+          if articles then "No article cites the sources the filters select." else "No source matches the filters.")))
+    )
+
   private def tab(s: LibrarySection, label: String, total: Signal[Int], on: LibrarySection): HtmlElement =
-    RouteLink(Route.Library(s), cls := "library-tab", cls("on") := s == on,
+    a(cls := "library-tab", cls("on") := s == on,
+      href <-- MyLibrary.shelf.map(sh => LibraryAddress.href(s, None, sh)),
+      onClick --> { ev =>
+        if Router.plain(ev) then
+          ev.preventDefault()
+          Router.go(Route.Library(s), search = LibraryAddress.search(None, LibraryAddress.shelf(Router.search.now())))
+      },
       aria.current := (if s == on then "page" else "false"),
       label, span(cls := "tab-count", child.text <-- total.map(n => s" · ${ListPage.grouped(n)}")))
 

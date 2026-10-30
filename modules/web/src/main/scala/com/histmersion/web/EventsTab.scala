@@ -34,7 +34,8 @@ object EventsTab:
   private def renderEvent(evt: EventSummary): HtmlElement =
     li(
       cls := "event-row",
-      NewTabLink(Route.Event(evt.id).path, evt.label),
+      marks.RowActions(marks.ItemRef(com.histmersion.api.personal.Target.item(com.histmersion.api.personal.ItemKind.Event, evt.id), evt.label),
+        Route.Event(evt.id).path, EventsTab.when(evt)),
       // its card on hover (Preview: the event's picture and credit, #1446); a plain click shows its detail
       a(cls := "event-label row-link", href := Route.Event(evt.id).path, dataAttr("event") := evt.id,
         onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); ResultsPanel.show(Preview.Target.Event(evt.id)) } },

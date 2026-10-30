@@ -67,6 +67,10 @@ object LibraryTable:
 
   private def row(r: TableRow, sources: Boolean, chosen: Signal[Option[String]], choose: Choose): HtmlElement =
     val on = chosen.map(_.contains(r.key))
+    val ref =
+      if sources then com.histmersion.web.marks.ItemRef.source(r.key, r.title) else com.histmersion.web.marks.ItemRef.article(r.key, r.title)
+    val unread = com.histmersion.web.marks.MyItems.loaded.signal.combineWith(com.histmersion.web.marks.MyItems.isRead(ref))
+      .map((loaded, read) => loaded && !read)
     tr(
       cls := "lib-row",
       cls("is-chosen") <-- on,
@@ -76,8 +80,11 @@ object LibraryTable:
         val t = ev.target.asInstanceOf[dom.Element]
         if t.closest("a") == null && Router.plain(ev) then choose(r.key, true)
       },
+      com.histmersion.web.ui.ContextMenu.on(s"Actions: ${r.title}", () => com.histmersion.web.marks.ItemMenu.entries(ref, r.byline)),
       td(cls := "col-title",
-        a(cls := "lib-title", href := r.page, r.title,
+        a(cls := "lib-title", href := r.page,
+          child.maybe <-- unread.map(u => Option.when(u)(span(cls := "unread-dot", title := "Not read yet", aria.label := "Not read yet"))),
+          r.title,
           aria.current <-- on.map(if _ then "true" else "false"),
           onClick --> { ev =>
             if Router.plain(ev) then

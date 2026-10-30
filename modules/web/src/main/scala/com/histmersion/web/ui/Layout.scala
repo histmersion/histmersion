@@ -3,9 +3,9 @@ package com.histmersion.web.ui
 /** The UI's behavioural numbers: drag limits, fetch limits, timings, layout maths. Colours and looks
   * are the stylesheet's (`web/style.css`), not these. */
 object Layout:
-  val sidebarMinWidth: Px  = Px(200)
+  val sidebarMinWidth: Px  = Px(320)
   val sidebarMaxWidth: Px  = Px(800)
-  val sidebarDefault: Px   = Px(360)
+  val sidebarDefault: Px   = Px(480)
   val overviewHeight: Px   = Px(44)
   val overviewBase: Px     = Px(30)
   val detailHeight: Px     = Px(58)

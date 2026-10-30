@@ -109,6 +109,22 @@ object ApiClient:
       before: Option[String]): Future[Activity.Page] = call(Api.activity)((show, since, goal, limit, before))
   def jobControl(id: String, action: String): Future[JobInfo] = call(Api.jobControl)((id, action))
 
+  // ── a person's bookmarks, notes and read marks ───────────────────────────────────────────────────
+
+  def bookmarks(): Future[List[personal.Bookmark]] = call(personal.PersonalApi.bookmarks)((None, None, Some(personal.PersonalIds.MaxLimit)))
+  def addBookmark(b: personal.BookmarkNew): Future[personal.Bookmark] = call(personal.PersonalApi.addBookmark)(b)
+  def editBookmark(id: String, e: personal.BookmarkEdit): Future[personal.Bookmark] = call(personal.PersonalApi.editBookmark)((id, e))
+  def removeBookmark(id: String): Future[personal.Bookmark] = call(personal.PersonalApi.removeBookmark)(id)
+  def notes(): Future[List[personal.Note]] = call(personal.PersonalApi.notes)((None, None, None, Some(personal.PersonalIds.MaxLimit)))
+  def addNote(n: personal.NoteNew): Future[personal.Note] = call(personal.PersonalApi.addNote)(n)
+  def editNote(id: String, e: personal.NoteEdit): Future[personal.Note] = call(personal.PersonalApi.editNote)((id, e))
+  def removeNote(id: String): Future[personal.Note] = call(personal.PersonalApi.removeNote)(id)
+  def readMarks(): Future[List[personal.ReadMark]] = call(personal.PersonalApi.reading)((None, Some("all"), Some(personal.PersonalIds.MaxLimit)))
+  def setRead(m: personal.ReadMarkSet): Future[personal.ReadMark] = call(personal.PersonalApi.setRead)(m)
+  def opened(o: personal.ReadOpened): Future[personal.ReadMark] = call(personal.PersonalApi.opened)(o)
+  def unread(kind: String, limit: Int, offset: Int): Future[personal.UnreadPage] =
+    call(personal.PersonalApi.unread)((Some(kind), Some(limit), Some(offset)))
+
   // ── Settings and the setup ───────────────────────────────────────────────────────────────────────
 
   def settings(prefix: Option[String] = None): Future[ConfigEdit.Page] = call(ConfigEditApi.get)(prefix)
