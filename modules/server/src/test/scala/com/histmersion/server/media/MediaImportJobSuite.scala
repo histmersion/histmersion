@@ -160,7 +160,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
         assert(mid.progress.exists(_.contains("batch 2")), mid.toString)
         // a second import while this one runs is refused, not queued behind it
         val (bs, bb) = post(s"$url/api/media/import/job", s"""{"dryRun":false,"limit":1}""")
-        assert(bs >= 400 && bb.contains("already going"), s"$bs $bb")
+        assert(bs >= 400 && bb.contains("a media run is already running"), s"$bs $bb")
         hold.countDown()
 
         val end = until(url, started.id, 1200)(_.isTerminal)
