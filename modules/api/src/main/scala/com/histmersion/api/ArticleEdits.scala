@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Decoder, Encoder}
@@ -179,14 +180,15 @@ object ArticleEdits:
     * decides what a skipped edit means (a retry, or — on the last attempt — a warning).
     */
   def applyAll(body: String, edits: List[EditAnswer], refuse: EditAnswer => Option[String] = _ => None): Applied =
-    val (text, results) = edits.zipWithIndex.foldLeft((body, Vector.empty[EditResult])) { case ((cur, acc), (a, i)) =>
-      val base = EditResult(i + 1, a.op, head(Option(a.anchor).getOrElse("")), a.text.getOrElse(""))
-      val next = parse(a).flatMap(e => refuse(a).toLeft(e)).flatMap(applyOne(cur, _))
-      next match
-        case Right(t) => (t, acc :+ base)
-        case Left(p)  => (cur, acc :+ base.copy(problem = Some(p)))
-    }
-    Applied(text, results.toList)
+    @tailrec def loop(rest: List[EditAnswer], number: Int, cur: String, acc: Vector[EditResult]): Applied =
+      rest match
+        case Nil       => Applied(cur, acc.toList)
+        case a :: tail =>
+          val base = EditResult(number, a.op, head(Option(a.anchor).getOrElse("")), a.text.getOrElse(""))
+          parse(a).flatMap(e => refuse(a).toLeft(e)).flatMap(applyOne(cur, _)) match
+            case Right(t) => loop(tail, number + 1, t, acc :+ base)
+            case Left(p)  => loop(tail, number + 1, cur, acc :+ base.copy(problem = Some(p)))
+    loop(edits, 1, body, Vector.empty)
 
   /** A draft to check: edits to the stored body, or a whole body. */
   enum Draft:

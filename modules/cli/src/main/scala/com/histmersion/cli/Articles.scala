@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import hearth.kindlings.optics.syntax.*
+import scala.annotation.tailrec
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -90,18 +90,22 @@ object ArticleCli:
     val fs = files(root, skip)
     val total = fs.size
     if total > 0 then println(s"importing $total article(s) from $root")
-    fs.zipWithIndex.foldLeft(SeedResult(0, Nil, 0, Nil)) { case (sum, ((f, kind), i)) =>
-      val name = f.getFileName.toString.stripSuffix(".md")
-      println(s"${i + 1}/$total $kind/$name")
-      c.importArticle(toImport(f, kind, force)) match
-        case Right(r) =>
-          sum.copy(
-            imported = sum.imported + r.imported,
-            failed = sum.failed ++ r.failed,
-            skipped = sum.skipped ++ r.skipped
-          )
-        case Left(e) => sum.modify(_.failed).using(_ :+ s"$name: ${e.message}")
-    }
+    @tailrec def loop(
+        rest: List[(Path, String)],
+        number: Int,
+        imported: Int,
+        failed: List[String],
+        skipped: List[String]
+    ): SeedResult =
+      rest match
+        case Nil               => SeedResult(imported, failed, 0, skipped)
+        case (f, kind) :: tail =>
+          val name = f.getFileName.toString.stripSuffix(".md")
+          println(s"$number/$total $kind/$name")
+          c.importArticle(toImport(f, kind, force)) match
+            case Right(r) => loop(tail, number + 1, imported + r.imported, failed ++ r.failed, skipped ++ r.skipped)
+            case Left(e)  => loop(tail, number + 1, imported, failed :+ s"$name: ${e.message}", skipped)
+    loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
   def exportAll(c: Client, out: Path): Either[CliError, Int] =

@@ -1,5 +1,6 @@
 package com.histmersion.web
 
+import scala.annotation.tailrec
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.*
 import com.histmersion.web.map.*
@@ -193,12 +194,15 @@ object MapView:
     for a <- pt.periodStart; b <- pt.periodEnd yield (a + b).toDouble / 2
 
   private[web] def avgMid(items: Iterable[GeoHit]): Option[Double] =
-    val (sum, n) = items.foldLeft((0.0, 0)) { case ((s, c), pt) =>
-      midOf(pt) match
-        case Some(m) => (s + m, c + 1)
-        case None    => (s, c)
-    }
-    if n > 0 then Some(sum / n) else None
+    val points = items.iterator
+    @tailrec def loop(sum: Double, n: Int): Option[Double] =
+      if points.hasNext then
+        midOf(points.next()) match
+          case Some(m) => loop(sum + m, n + 1)
+          case None    => loop(sum, n)
+      else if n > 0 then Some(sum / n)
+      else None
+    loop(0.0, 0)
 
   private[web] def colorFor(mid: Option[Double], span: (Long, Long), certainty: Certainty): String =
     val lo = span._1.min(span._2).toDouble

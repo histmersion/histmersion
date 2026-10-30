@@ -1,5 +1,6 @@
 package com.histmersion.server.plugins
 
+import scala.annotation.tailrec
 import com.histmersion.pluginhost.PluginHost
 
 import org.ekrich.config.{Config, ConfigValueFactory}
@@ -72,19 +73,20 @@ object LegacyPlugins:
           )
         case Some(old) =>
           val keys = old.root.keySet.asScala.toList.sorted
-          val (out, ignored) = keys.foldLeft((user.withoutPath(from), List.empty[String])) { case ((acc, ign), k) =>
-            val targets = if k == "enabled" then split.into else split.into.filter(id => known(id)(k))
-            if targets.isEmpty then (acc, ign :+ k)
-            else
-              val v = old.root.get(k)
-              (
-                targets.foldLeft(acc) { (c, id) =>
-                  val to = s"${path(id)}.${ConfigQuote(k)}"
-                  if has(c, to) then c else c.withValue(to, v)
-                },
-                ign
-              )
-          }
+          @tailrec def carry(rest: List[String], acc: Config, ign: List[String]): (Config, List[String]) =
+            rest match
+              case Nil       => (acc, ign)
+              case k :: tail =>
+                val targets = if k == "enabled" then split.into else split.into.filter(id => known(id)(k))
+                if targets.isEmpty then carry(tail, acc, ign :+ k)
+                else
+                  val v = old.root.get(k)
+                  val withK = targets.foldLeft(acc) { (c, id) =>
+                    val to = s"${path(id)}.${ConfigQuote(k)}"
+                    if has(c, to) then c else c.withValue(to, v)
+                  }
+                  carry(tail, withK, ign)
+          val (out, ignored) = carry(keys, user.withoutPath(from), Nil)
           val applied = keys.filterNot(ignored.contains)
           val warn = s"$from is deprecated: " + successors(split) +
             (if applied.isEmpty then "" else s"; its ${applied.mkString(", ")} applied to them") +

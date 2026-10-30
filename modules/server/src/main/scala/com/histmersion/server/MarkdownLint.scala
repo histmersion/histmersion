@@ -1,5 +1,6 @@
 package com.histmersion.server
 
+import scala.annotation.tailrec
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -113,13 +114,14 @@ object MarkdownLint:
       if fixable.isEmpty || round >= 3 then (t, done)
       else
         // non-overlapping, earliest first; an edit that overlaps an earlier one waits for the next round
-        val chosen = fixable
-          .sortBy(f => f.edits.map(_.start).min)
-          .foldLeft((List.empty[Finding], -1)) { case ((acc, reach), f) =>
-            val lo = f.edits.map(_.start).min
-            if lo < reach then (acc, reach) else (f :: acc, f.edits.map(_.end).max.max(lo + 1))
-          }
-          ._1
+        @tailrec def nonOverlapping(rest: List[Finding], acc: List[Finding], reach: Int): List[Finding] =
+          rest match
+            case Nil       => acc
+            case f :: tail =>
+              val lo = f.edits.map(_.start).min
+              if lo < reach then nonOverlapping(tail, acc, reach)
+              else nonOverlapping(tail, f :: acc, f.edits.map(_.end).max.max(lo + 1))
+        val chosen = nonOverlapping(fixable.sortBy(f => f.edits.map(_.start).min), Nil, -1)
         val edits = chosen.flatMap(_.edits).sortBy(e => (-e.start, -e.end))
         val next = edits.foldLeft(t)((s, e) => s.substring(0, e.start) + e.replacement + s.substring(e.end))
         val lines =

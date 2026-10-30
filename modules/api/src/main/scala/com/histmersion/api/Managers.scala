@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -339,17 +340,30 @@ object Managers:
     given Schema[ItemCounts] = summon[KindlingsSchema[ItemCounts]].schema
 
     def of(rows: List[(String, Int)]): ItemCounts =
-      rows.foldLeft(ItemCounts()) { case (c, (s, n)) =>
-        ItemStatus.parse(s) match
-          case Some(ItemStatus.Pending)   => c.copy(pending = c.pending + n)
-          case Some(ItemStatus.Held)      => c.copy(held = c.held + n)
-          case Some(ItemStatus.Active)    => c.copy(active = c.active + n)
-          case Some(ItemStatus.Done)      => c.copy(done = c.done + n)
-          case Some(ItemStatus.Stopped)   => c.copy(stopped = c.stopped + n)
-          case Some(ItemStatus.Failed)    => c.copy(failed = c.failed + n)
-          case Some(ItemStatus.Cancelled) => c.copy(cancelled = c.cancelled + n)
-          case None                       => c
-      }
+      @tailrec def loop(
+          rest: List[(String, Int)],
+          pending: Int,
+          held: Int,
+          active: Int,
+          done: Int,
+          stopped: Int,
+          failed: Int,
+          cancelled: Int
+      ): ItemCounts =
+        rest match
+          case Nil            => ItemCounts(pending, held, active, done, stopped, failed, cancelled)
+          case (s, n) :: tail =>
+            ItemStatus.parse(s) match
+              case Some(ItemStatus.Pending)   => loop(tail, pending + n, held, active, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Held)      => loop(tail, pending, held + n, active, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Active)    => loop(tail, pending, held, active + n, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Done)      => loop(tail, pending, held, active, done + n, stopped, failed, cancelled)
+              case Some(ItemStatus.Stopped)   => loop(tail, pending, held, active, done, stopped + n, failed, cancelled)
+              case Some(ItemStatus.Failed)    => loop(tail, pending, held, active, done, stopped, failed + n, cancelled)
+              case Some(ItemStatus.Cancelled) =>
+                loop(tail, pending, held, active, done, stopped, failed, cancelled + n)
+              case None => loop(tail, pending, held, active, done, stopped, failed, cancelled)
+      loop(rows, 0, 0, 0, 0, 0, 0, 0)
 
   /** One manager event. */
   final case class ManagerEvent(

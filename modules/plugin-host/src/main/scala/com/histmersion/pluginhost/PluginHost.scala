@@ -635,15 +635,24 @@ object PluginHost:
         regs: Registries,
         done: Map[String, (PluginStatus, Registries)]
     ): (Registries, Map[String, (PluginStatus, Registries)]) =
-      val (rs, ds, left, progressed) = waiting.foldLeft((regs, done, List.empty[Prepared], false)) {
-        case ((rs, ds, left, prog), pr) =>
-          val missing =
-            pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }
-          if missing.nonEmpty then (rs, ds, left :+ pr, prog)
-          else
-            val (st, added) = pr.carried.getOrElse(register(pr, rs, services, secrets))
-            (rs ++ added, ds.updated(pr.p.info.id, (st, added)), left, true)
-      }
+      @annotation.tailrec
+      def pass(
+          rest: List[Prepared],
+          rs: Registries,
+          ds: Map[String, (PluginStatus, Registries)],
+          left: List[Prepared],
+          prog: Boolean
+      ): (Registries, Map[String, (PluginStatus, Registries)], List[Prepared], Boolean) =
+        rest match
+          case Nil        => (rs, ds, left, prog)
+          case pr :: tail =>
+            val missing =
+              pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }
+            if missing.nonEmpty then pass(tail, rs, ds, left :+ pr, prog)
+            else
+              val (st, added) = pr.carried.getOrElse(register(pr, rs, services, secrets))
+              pass(tail, rs ++ added, ds.updated(pr.p.info.id, (st, added)), left, true)
+      val (rs, ds, left, progressed) = pass(waiting, regs, done, Nil, false)
       if left.isEmpty || !progressed then
         val stuck = left.map { pr =>
           val names =

@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import com.histmersion.api.{Acquire, AgentsMarkdown, FollowupRow, WorkRef}
 import com.histmersion.api.given
 
@@ -160,12 +161,14 @@ object Scheduling:
   def ingestOa[A, B](picks: List[A], isOa: A => Boolean, allowed: Int)(
       ingest: A => Either[String, B]
   ): (List[(A, B)], List[(A, String)]) =
-    val (done, failed) =
-      picks.filter(isOa).foldLeft((Vector.empty[(A, B)], Vector.empty[(A, String)])) { case ((ok, ko), p) =>
-        if ok.size >= allowed then (ok, ko)
-        else ingest(p).fold(why => (ok, ko :+ (p -> why)), b => (ok :+ (p -> b), ko))
-      }
-    (done.toList, failed.toList)
+    @tailrec def loop(rest: List[A], ok: Vector[(A, B)], ko: Vector[(A, String)]): (List[(A, B)], List[(A, String)]) =
+      rest match
+        case p :: tail if ok.size < allowed =>
+          ingest(p) match
+            case Left(why) => loop(tail, ok, ko :+ (p -> why))
+            case Right(b)  => loop(tail, ok :+ (p -> b), ko)
+        case _ => (ok.toList, ko.toList)
+    loop(picks.filter(isOa), Vector.empty, Vector.empty)
 
   /** The acquisition item a picked candidate becomes (the DOI as a resolver URL, so [[dois]] finds it). */
   def acquireText(c: Candidate, goal: String, why: String): String =

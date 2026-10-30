@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import scala.annotation.tailrec
+
 /** What a SOURCE is — a book, a chapter of one, a paper, a thesis, a dataset — as far as its record says, never a
   * guess: the map draws a finding's marker with its source's kind's icon, and the source's card leads with the same one
   * (web `CardIcons`). A source none of the rules recognise is `unknown`, and is drawn so (an exclamation mark), not as
@@ -60,9 +62,9 @@ object SourceKinds:
     if !(suffix.startsWith("978") || suffix.startsWith("979")) then None
     else
       // the 13 ISBN digits (hyphens between them allowed): what is left names a part of the book
-      val (digits, end) = suffix.iterator.zipWithIndex
-        .takeWhile((c, _) => c.isDigit || c == '-')
-        .foldLeft((0, 0)) { case ((n, at), (c, i)) =>
-          if n >= 13 then (n, at) else (if c.isDigit then n + 1 else n, i + 1)
-        }
-      if digits < 13 then None else Some(suffix.drop(end).exists(_.isLetterOrDigit))
+      @tailrec def isbnEnd(i: Int, digits: Int): Option[Int] =
+        if digits >= 13 then Some(i)
+        else if i < suffix.length && suffix(i).isDigit then isbnEnd(i + 1, digits + 1)
+        else if i < suffix.length && suffix(i) == '-' then isbnEnd(i + 1, digits)
+        else None
+      isbnEnd(0, 0).map(end => suffix.drop(end).exists(_.isLetterOrDigit))

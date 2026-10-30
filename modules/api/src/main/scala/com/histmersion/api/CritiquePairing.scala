@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 
 /** THE PAIRING RULE (lint `article-critique-pairing`, docs/research-review-convergence.md §6.9): a paragraph that cites
@@ -169,17 +170,23 @@ object CritiquePairing:
     else
       val crlf = body.contains("\r\n")
       val lines = body.replace("\r\n", "\n").split("\n", -1).toVector
-      val (out, done) =
-        todo.toList.sortBy(_._1).foldLeft((lines, List.empty[Hit])) { case ((ls, acc), ((from, to), xs)) =>
-          val add = xs.map(_.missing).distinct
-          (to to from by -1).find(j => ls(j).contains("]]")) match
-            case None    => (ls, acc)
-            case Some(j) =>
-              val l = ls(j)
-              val at = l.lastIndexOf("]]") + 2
-              val ins = add.map(ck => s" [[$ck]]").mkString
-              (ls.updated(j, l.substring(0, at) + ins + l.substring(at)), acc ++ xs.distinctBy(_.missing))
-        }
+      @tailrec def insert(
+          rest: List[((Int, Int), List[Hit])],
+          ls: Vector[String],
+          acc: List[Hit]
+      ): (Vector[String], List[Hit]) =
+        rest match
+          case Nil                      => (ls, acc)
+          case ((from, to), xs) :: tail =>
+            val add = xs.map(_.missing).distinct
+            (to to from by -1).find(j => ls(j).contains("]]")) match
+              case None    => insert(tail, ls, acc)
+              case Some(j) =>
+                val l = ls(j)
+                val at = l.lastIndexOf("]]") + 2
+                val ins = add.map(ck => s" [[$ck]]").mkString
+                insert(tail, ls.updated(j, l.substring(0, at) + ins + l.substring(at)), acc ++ xs.distinctBy(_.missing))
+      val (out, done) = insert(todo.toList.sortBy(_._1), lines, Nil)
       val text = out.mkString("\n")
       (if crlf then text.replace("\n", "\r\n") else text, done.sortBy(h => (h.unit, h.missing)))
 

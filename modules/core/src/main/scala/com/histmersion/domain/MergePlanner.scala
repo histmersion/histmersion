@@ -2244,16 +2244,37 @@ object MergePlanner:
     }
 
     // ── counts and info ──
-    val counts = fes.sources.foldLeft(MatchCounts(sources = fes.sources.size)) { (c, s) =>
-      fates(s.uid) match
-        case Fate.Same(_, false)                  => c.copy(byUid = c.byUid + 1)
-        case Fate.Same(_, true)                   => c.copy(byLedger = c.byLedger + 1)
-        case Fate.Deleted                         => c.copy(deletedHere = c.deletedHere + 1)
-        case Fate.Auto(p) if p.evidence.strongKey => c.copy(byStrongKey = c.byStrongKey + 1)
-        case Fate.Auto(_)                         => c.copy(byScore = c.byScore + 1)
-        case Fate.Gate(_, _)                      => c.copy(undecided = c.undecided + 1)
-        case Fate.New                             => c.copy(unmatched = c.unmatched + 1)
-    }
+    @annotation.tailrec
+    def countMatches(
+        rest: List[BundleSource],
+        byUid: Int,
+        byLedger: Int,
+        byStrongKey: Int,
+        byScore: Int,
+        undecided: Int,
+        unmatched: Int,
+        deletedHere: Int
+    ): MatchCounts =
+      rest match
+        case Nil =>
+          MatchCounts(fes.sources.size, byUid, byLedger, byStrongKey, byScore, undecided, unmatched, deletedHere)
+        case s :: tail =>
+          fates(s.uid) match
+            case Fate.Same(_, false) =>
+              countMatches(tail, byUid + 1, byLedger, byStrongKey, byScore, undecided, unmatched, deletedHere)
+            case Fate.Same(_, true) =>
+              countMatches(tail, byUid, byLedger + 1, byStrongKey, byScore, undecided, unmatched, deletedHere)
+            case Fate.Deleted =>
+              countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided, unmatched, deletedHere + 1)
+            case Fate.Auto(p) if p.evidence.strongKey =>
+              countMatches(tail, byUid, byLedger, byStrongKey + 1, byScore, undecided, unmatched, deletedHere)
+            case Fate.Auto(_) =>
+              countMatches(tail, byUid, byLedger, byStrongKey, byScore + 1, undecided, unmatched, deletedHere)
+            case Fate.Gate(_, _) =>
+              countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided + 1, unmatched, deletedHere)
+            case Fate.New =>
+              countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided, unmatched + 1, deletedHere)
+    val counts = countMatches(fes.sources, 0, 0, 0, 0, 0, 0, 0)
     val matches: List[SourceMatch] = fes.sources.sortBy(_.citekey).flatMap { s =>
       fates(s.uid) match
         case Fate.Same(_, _) => None

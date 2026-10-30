@@ -1,5 +1,6 @@
 package com.histmersion.server
 
+import scala.annotation.tailrec
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -40,21 +41,22 @@ final class VacuumJobs(
       }
 
   private def run(plan: VacuumPlan, progress: String => Unit): BackgroundJob.Outcome =
-    val (done, failed) = plan.tables.zipWithIndex.foldLeft((List.empty[String], Option.empty[String])) {
-      case (acc @ (_, Some(_)), _)     => acc // stop at the first failure
-      case ((lines, None), (table, i)) =>
-        if maintenance.active then (lines, Some(s"$table: a restore started; stopped"))
-        else
+    @tailrec def loop(rest: List[(String, Int)], lines: List[String]): BackgroundJob.Outcome =
+      def outcome(failed: Option[String]) =
+        BackgroundJob.Outcome(Option.when(lines.nonEmpty)(lines.mkString("; ")), failed)
+      rest match
+        case Nil                                   => outcome(None)
+        case (table, _) :: _ if maintenance.active => outcome(Some(s"$table: a restore started; stopped"))
+        case (table, i) :: tail                    =>
           progress(s"${Vacuum.describe(plan.copy(tables = List(table)))} (${i + 1}/${plan.tables.size})")
           val before = VacuumRepo.state(ds, table)
           val started = System.nanoTime()
           scala.util.Try(VacuumRepo.vacuum(ds, table, plan.analyze)).toEither match
-            case Left(e)  => (lines, Some(s"$table: ${e.getMessage}"))
+            case Left(e)  => outcome(Some(s"$table: ${e.getMessage}"))
             case Right(_) =>
               val after = VacuumRepo.state(ds, table)
               val ms = (System.nanoTime() - started) / 1000000L
               val line = Vacuum.tableLine(table, before.deadRows, after.deadRows, before.bytes, after.bytes, ms)
               scribe.info(s"[vacuum] $line")
-              (lines :+ line, None)
-    }
-    BackgroundJob.Outcome(Option.when(done.nonEmpty)(done.mkString("; ")), failed)
+              loop(tail, lines :+ line)
+    loop(plan.tables.zipWithIndex, Nil)

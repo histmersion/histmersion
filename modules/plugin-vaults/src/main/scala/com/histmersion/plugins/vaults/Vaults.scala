@@ -1,5 +1,6 @@
 package com.histmersion.plugins.vaults
 
+import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.PluginConfig.given
 import hearth.kindlings.sconfigderivation.ConfigReader
@@ -278,11 +279,17 @@ final class KeePassXcVault(
     */
   private def readAll(o: Opened, batched: List[(String, (String, String))]): Map[String, Either[String, String]] =
     val s = o.session
-    val (answers, _, _) =
-      batched.foldLeft((Map.empty[String, Either[String, String]], s.out.length, Option.empty[String])) {
-        case ((acc, _, Some(broken)), (ref, _)) =>
-          (acc.updated(ref, Left(s"$name: could not read '$ref' ($broken)")), 0, Some(broken))
-        case ((acc, mark, None), (ref, (entry, attr))) =>
+    @tailrec def read(
+        rest: List[(String, (String, String))],
+        acc: Map[String, Either[String, String]],
+        mark: Int,
+        broken: Option[String]
+    ): Map[String, Either[String, String]] =
+      (rest, broken) match
+        case (Nil, _)                    => acc
+        case ((ref, _) :: tail, Some(b)) =>
+          read(tail, acc.updated(ref, Left(s"$name: could not read '$ref' ($b)")), 0, broken)
+        case ((ref, (entry, attr)) :: tail, None) =>
           val cmd = KeePassXcSession.command(attr, entry)
           val errMark = s.err.length
           val answered = s.send(cmd).flatMap { _ =>
@@ -295,7 +302,8 @@ final class KeePassXcVault(
               else s"keepassxc-cli stopped: ${YubiKey.problem(s.err.drop(errMark))}")
           }
           answered match
-            case Left(broken) => (acc.updated(ref, Left(s"$name: could not read '$ref' ($broken)")), mark, Some(broken))
+            case Left(broken) =>
+              read(tail, acc.updated(ref, Left(s"$name: could not read '$ref' ($broken)")), mark, Some(broken))
             case Right((seg, next)) =>
               val v = KeePassXcSession.answer(seg, cmd)
               val result =
@@ -309,9 +317,8 @@ final class KeePassXcVault(
                       classify(entry)(err.toLowerCase(java.util.Locale.ROOT))
                         .getOrElse(s"$name: could not read '$ref' (${Subprocess.problem(err)})")
                     )
-              (acc.updated(ref, result), next, None)
-      }
-    answers
+              read(tail, acc.updated(ref, result), next, None)
+    read(batched, Map.empty, s.out.length, None)
 
   /** The connected serials, when `ykman` can tell; `None` = unknown (then every entry is tried). */
   private def connected(): Option[Set[Long]] =

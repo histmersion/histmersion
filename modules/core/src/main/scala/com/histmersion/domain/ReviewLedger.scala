@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{CritiqueRef, Plural, WireEnum}
 import com.histmersion.api.given
@@ -164,48 +165,57 @@ object ReviewLedger:
     * ids, in the order given.
     */
   def absorb(l: Ledger, fs: List[Finding], run: String, round: Int): (Ledger, List[Finding]) =
-    fs.foldLeft((l, Vector.empty[Finding], Set.empty[String])) { case ((led, out, seen), f) =>
-      led.entries.find(e => !seen(e.id) && same(e.finding, f)) match
-        case Some(e) =>
-          val id = e.id
-          val next: Entry = e.status match
-            case Status.Open =>
-              e.copy(finding = f.copy(id = id, escalated = f.escalated || e.finding.escalated), claimed = false)
-            case Status.Fixed =>
-              e.copy(
-                finding = f.copy(id = id),
-                status = Status.Open,
-                claimed = false,
-                notFixed = Some(s"fixed in pass ${e.closed.fold(0)(_.round)}, raised again in pass $round"),
-                reopened = e.reopened + 1,
-                closed = None
-              )
-            case Status.Rejected =>
-              e.copy(
-                finding = f.copy(id = id, escalated = true),
-                status = Status.Open,
-                claimed = false,
-                notFixed =
-                  e.closed.map(c => s"rejected before${c.citekey.fold("")(ck => s" ([[$ck]])")}: ${c.note}".take(300)),
-                closed = None
-              )
-            case Status.WontFix | Status.SetAside if f.major =>
-              e.copy(
-                finding = f.copy(id = id),
-                status = Status.Open,
-                claimed = false,
-                notFixed =
-                  e.closed.filter(_ => e.status == Status.SetAside).map(c => s"set aside before: ${c.note}".take(300)),
-                closed = None
-              )
-            case Status.WontFix | Status.SetAside => e
-          (update(led, id)(_ => next), out :+ next.finding, seen + id)
-        case None =>
-          val id = nextId(led, f.reviewer)
-          val g = f.copy(id = id)
-          (led.modify(_.entries).using(_ :+ Entry(g, run, round)), out :+ g, seen + id)
-    } match
-      case (led, out, _) => (led, out.toList)
+    @tailrec def absorbAll(
+        rest: List[Finding],
+        led: Ledger,
+        out: Vector[Finding],
+        seen: Set[String]
+    ): (Ledger, List[Finding]) =
+      rest match
+        case Nil       => (led, out.toList)
+        case f :: tail =>
+          led.entries.find(e => !seen(e.id) && same(e.finding, f)) match
+            case Some(e) =>
+              val id = e.id
+              val next: Entry = e.status match
+                case Status.Open =>
+                  e.copy(finding = f.copy(id = id, escalated = f.escalated || e.finding.escalated), claimed = false)
+                case Status.Fixed =>
+                  e.copy(
+                    finding = f.copy(id = id),
+                    status = Status.Open,
+                    claimed = false,
+                    notFixed = Some(s"fixed in pass ${e.closed.fold(0)(_.round)}, raised again in pass $round"),
+                    reopened = e.reopened + 1,
+                    closed = None
+                  )
+                case Status.Rejected =>
+                  e.copy(
+                    finding = f.copy(id = id, escalated = true),
+                    status = Status.Open,
+                    claimed = false,
+                    notFixed = e.closed.map(c =>
+                      s"rejected before${c.citekey.fold("")(ck => s" ([[$ck]])")}: ${c.note}".take(300)
+                    ),
+                    closed = None
+                  )
+                case Status.WontFix | Status.SetAside if f.major =>
+                  e.copy(
+                    finding = f.copy(id = id),
+                    status = Status.Open,
+                    claimed = false,
+                    notFixed = e.closed
+                      .filter(_ => e.status == Status.SetAside)
+                      .map(c => s"set aside before: ${c.note}".take(300)),
+                    closed = None
+                  )
+                case Status.WontFix | Status.SetAside => e
+              absorbAll(tail, update(led, id)(_ => next), out :+ next.finding, seen + id)
+            case None =>
+              val id = nextId(led, f.reviewer)
+              val g = f.copy(id = id)
+              absorbAll(tail, led.modify(_.entries).using(_ :+ Entry(g, run, round)), out :+ g, seen + id)
+    absorbAll(fs, l, Vector.empty, Set.empty)
 
   /** A reviewer's checks of its own findings: fixed → closed by that reviewer in this pass (with the quote of the fixed
     * text); not fixed → open, unclaimed, with the reviewer's note. A check of another reviewer's finding, or of a

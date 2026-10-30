@@ -1,5 +1,6 @@
 package com.histmersion.server.events
 
+import scala.annotation.tailrec
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport, PluginEvents, Polite}
 
@@ -549,19 +550,25 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
         if req.recompute then compute(d)
         val names = namesOf(d)
         val existing = AttestationRepo.list(ds, None, Some(AttestationTarget.Event), Some(eid), 1000, 0).attestations
-        val (attested, refused) =
-          req.confirm.map(_.trim).filter(_.nonEmpty).distinct.foldLeft((List.empty[Attestation], List.empty[String])) {
-            case ((ok, no), raw) =>
+        @tailrec def confirm(
+            rest: List[String],
+            ok: List[Attestation],
+            no: List[String]
+        ): (List[Attestation], List[String]) =
+          rest match
+            case Nil         => (ok, no)
+            case raw :: tail =>
               SourceRepo.canonical(ds, raw) match
-                case None     => (ok, no :+ s"$raw: no such source")
+                case None     => confirm(tail, ok, no :+ s"$raw: no such source")
                 case Some(ck) =>
                   if existing.exists(_.citekey == ck) then
                     val _ = EventCatalogRepo.setStatus(ds, eid, ck, EventLinkStatus.Confirmed)
-                    (ok, no :+ s"$ck: already attests it")
+                    confirm(tail, ok, no :+ s"$ck: already attests it")
                   else
                     EventMatcher.attestationPassage(passagesIn(ck, names, SourceRepo.bodyChunks(ds, ck))) match
                       case None =>
-                        (
+                        confirm(
+                          tail,
                           ok,
                           no :+ s"$ck: no passage of its text names the event (${names.mkString(", ")}) — not attested"
                         )
@@ -584,8 +591,8 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
                               )
                           )
                           val _ = EventCatalogRepo.setStatus(ds, eid, ck, EventLinkStatus.Confirmed)
-                        (ok :+ a, no)
-          }
+                        confirm(tail, ok :+ a, no)
+        val (attested, refused) = confirm(req.confirm.map(_.trim).filter(_.nonEmpty).distinct, Nil, Nil)
         val rejected = req.reject
           .map(_.trim)
           .filter(_.nonEmpty)
@@ -772,16 +779,16 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
       /** The superclasses of `classes` within `depth` P279 steps, nearest first (cached per run). */
       def supers(classes: List[String]): List[String] =
         val unknown = classes.filterNot(SiteTypes.wikidataClasses.contains)
-        (1 to ec.siteTypes.superclassDepth.max(0))
-          .foldLeft((unknown, List.empty[String])) { case ((frontier, acc), _) =>
+        @tailrec def walk(steps: Int, frontier: List[String], acc: List[String]): List[String] =
+          if steps <= 0 then acc
+          else
             val ask = frontier.filterNot(superCache.contains).distinct
             if ask.nonEmpty then
               val got = claims(ask, "P279")
               superCache ++= ask.map(q => q -> got.getOrElse(q, Nil))
             val next = frontier.flatMap(q => superCache.getOrElse(q, Nil)).distinct.filterNot(acc.contains)
-            (next.filterNot(SiteTypes.wikidataClasses.contains), acc ++ next)
-          }
-          ._2
+            walk(steps - 1, next.filterNot(SiteTypes.wikidataClasses.contains), acc ++ next)
+        walk(ec.siteTypes.superclassDepth.max(0), unknown, Nil)
       // `var`s: the walk
       var report = SiteTypesReport(dryRun = false)
       var batch = EventCatalogRepo.sitesToType(ds, ec.siteTypes.batch.min(cap), req.refresh, Some(started))

@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import com.histmersion.api.{ArticleFilter, Articles, Plural}
 import com.histmersion.api.given
 
@@ -107,44 +108,52 @@ object PlanArticles:
       existing: List[(String, Set[String])],
       limits: Limits
   ): ArticlePlan =
-    val (kept, out) = cs.foldLeft((Vector.empty[(ProposedArticle, Set[String])], Vector.empty[String])) {
-      case ((acc, drop), c) =>
-        if !slugFree(c.slug) then (acc, drop :+ s"'${c.slug}': an article with this slug exists (or did)")
-        else
-          val (n, set) = hits(c.filter)
-          val against = existing ++ acc.map((p, s) => (p.slug, s))
-          val worst = against.map((slug, theirs) => (slug, overlap(set, theirs))).maxByOption(_._2)
-          if n < limits.minSources then
-            (
-              acc,
-              drop :+ s"'${c.slug}': ${c.filter.line} returns ${Plural.count(n, "source")}; at least ${limits.minSources}"
-            )
+    @tailrec def loop(
+        rest: List[Candidate],
+        acc: Vector[(ProposedArticle, Set[String])],
+        drop: Vector[String]
+    ): ArticlePlan =
+      rest match
+        case Nil       => ArticlePlan(goal, rationale.trim, acc.map(_._1).toList, dropped ++ drop)
+        case c :: tail =>
+          if !slugFree(c.slug) then loop(tail, acc, drop :+ s"'${c.slug}': an article with this slug exists (or did)")
           else
-            worst match
-              case Some((o, share)) if share >= limits.maxOverlap =>
-                (
-                  acc,
-                  drop :+ f"'${c.slug}': ${share * 100}%.0f%% of its sources are [[$o]]'s already (less than ${limits.maxOverlap * 100}%.0f%%)"
-                )
-              case w =>
-                (
-                  acc :+ (
-                    ProposedArticle(
-                      c.slug,
-                      c.title,
-                      c.kind,
-                      c.filter,
-                      c.why,
-                      n,
-                      w.fold(0.0)(_._2),
-                      w.filter(_._2 > 0).map(_._1)
+            val (n, set) = hits(c.filter)
+            val against = existing ++ acc.map((p, s) => (p.slug, s))
+            val worst = against.map((slug, theirs) => (slug, overlap(set, theirs))).maxByOption(_._2)
+            if n < limits.minSources then
+              loop(
+                tail,
+                acc,
+                drop :+ s"'${c.slug}': ${c.filter.line} returns ${Plural.count(n, "source")}; at least ${limits.minSources}"
+              )
+            else
+              worst match
+                case Some((o, share)) if share >= limits.maxOverlap =>
+                  loop(
+                    tail,
+                    acc,
+                    drop :+ f"'${c.slug}': ${share * 100}%.0f%% of its sources are [[$o]]'s already (less than ${limits.maxOverlap * 100}%.0f%%)"
+                  )
+                case w =>
+                  loop(
+                    tail,
+                    acc :+ (
+                      ProposedArticle(
+                        c.slug,
+                        c.title,
+                        c.kind,
+                        c.filter,
+                        c.why,
+                        n,
+                        w.fold(0.0)(_._2),
+                        w.filter(_._2 > 0).map(_._1)
+                      ),
+                      set
                     ),
-                    set
-                  ),
-                  drop
-                )
-    }
-    ArticlePlan(goal, rationale.trim, kept.map(_._1).toList, dropped ++ out)
+                    drop
+                  )
+    loop(cs, Vector.empty, Vector.empty)
 
   /** The worklog line of a run. */
   def logLine(goal: String, plan: ArticlePlan, outcome: String, runId: String): String =

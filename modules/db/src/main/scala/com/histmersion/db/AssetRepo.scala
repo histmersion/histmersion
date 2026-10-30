@@ -1,5 +1,6 @@
 package com.histmersion.db
 
+import scala.annotation.tailrec
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -92,14 +93,14 @@ object AssetRepo:
   def reconcile(existing: List[(String, String)], incoming: List[(String, String)]): Reconciled =
     val incomingNames = incoming.map(_._1).toSet
     val byName = existing.filter((n, _) => incomingNames(n)).map(_._1).toSet
-    val (renames, claimed) =
-      incoming.filterNot((n, _) => byName(n)).foldLeft((List.empty[(String, String)], byName)) {
-        case ((acc, used), (name, sha)) =>
+    @tailrec def rename(rest: List[(String, String)], acc: List[(String, String)], used: Set[String]): Reconciled =
+      rest match
+        case Nil                 => Reconciled(acc.reverse, existing.map(_._1).filterNot(used))
+        case (name, sha) :: tail =>
           existing.find((n, s) => s == sha && !used(n)) match
-            case Some((from, _)) => (acc :+ (from -> name), used + from)
-            case None            => (acc, used)
-      }
-    Reconciled(renames, existing.map(_._1).filterNot(claimed))
+            case Some((from, _)) => rename(tail, (from -> name) :: acc, used + from)
+            case None            => rename(tail, acc, used)
+    rename(incoming.filterNot((n, _) => byName(n)), Nil, byName)
 
   /** Add to the set, leaving anything already stored under the same name alone (the seed importer's figures, and
     * `POST /api/sources/{ck}/assets`). Returns how many rows were written.
@@ -120,13 +121,14 @@ object AssetRepo:
 
   /** First writer of a given sha256 wins; later duplicates are dropped (not stored twice). */
   def dedupe(assets: List[Stored]): List[Stored] =
-    assets
-      .foldLeft((Set.empty[String], Set.empty[String], List.empty[Stored])) { case ((shas, names, acc), a) =>
-        val sha = sha256(a.bytes)
-        if shas.contains(sha) || names.contains(a.name) then (shas, names, acc)
-        else (shas + sha, names + a.name, acc :+ a)
-      }
-      ._3
+    @tailrec def loop(rest: List[Stored], shas: Set[String], names: Set[String], acc: List[Stored]): List[Stored] =
+      rest match
+        case Nil       => acc.reverse
+        case a :: tail =>
+          val sha = sha256(a.bytes)
+          if shas.contains(sha) || names.contains(a.name) then loop(tail, shas, names, acc)
+          else loop(tail, shas + sha, names + a.name, a :: acc)
+    loop(assets, Set.empty, Set.empty, Nil)
 
   /** `replaceExisting = false` is what [[add]] documents — "leave anything already stored under the same name alone" —
     * and it used to say `DO UPDATE`, i.e. the exact opposite: the seed importer's figures overwrote the (better) ones a

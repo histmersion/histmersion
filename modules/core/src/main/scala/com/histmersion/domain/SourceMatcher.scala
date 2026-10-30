@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import scala.annotation.tailrec
 import com.histmersion.api.BundleSource
 import com.histmersion.api.given
 
@@ -223,11 +224,12 @@ object SourceMatcher:
     }
     val order = scored.sortBy(s => (s.rank, -s.ev.score, s.right.uid.toString, s.left.uid.toString))
     // greedy one-to-one: the strongest pairs first
-    val (taken, _, _) = order.foldLeft((List.empty[Scored], Set.empty[UUID], Set.empty[UUID])) {
-      case ((acc, rs, ls), s) =>
-        if rs(s.right.uid) || ls(s.left.uid) then (acc, rs, ls)
-        else (s :: acc, rs + s.right.uid, ls + s.left.uid)
-    }
+    @tailrec def greedy(rest: List[Scored], acc: List[Scored], rs: Set[UUID], ls: Set[UUID]): List[Scored] =
+      rest match
+        case Nil                                            => acc
+        case s :: tail if rs(s.right.uid) || ls(s.left.uid) => greedy(tail, acc, rs, ls)
+        case s :: tail                                      => greedy(tail, s :: acc, rs + s.right.uid, ls + s.left.uid)
+    val taken = greedy(order, Nil, Set.empty, Set.empty)
     val pairs = taken.reverse.map { s =>
       val others = order
         .filter(o => o.right.uid == s.right.uid && o.left.uid != s.left.uid)
