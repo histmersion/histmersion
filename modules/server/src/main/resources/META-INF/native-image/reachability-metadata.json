@@ -15053,6 +15053,12 @@
       "glob": "db/migration/V105__map_tiles.sql"
     },
     {
+      "glob": "db/migration/V106__undated_sites.sql"
+    },
+    {
+      "glob": "db/migration/V107__cliopatria_licence.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {
